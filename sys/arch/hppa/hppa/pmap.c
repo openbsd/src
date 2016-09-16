@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.170 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.171 2016/09/16 02:35:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -269,8 +269,10 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 		
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
-		if (pmap->pm_ptphint == ptp)
-			pmap->pm_ptphint = RB_ROOT(&pmap->pm_obj.memt);
+		if (pmap->pm_ptphint == ptp) {
+			pmap->pm_ptphint = RBT_ROOT(uvm_objtree,
+			    &pmap->pm_obj.memt);
+		}
 		ptp->wire_count = 0;
 #ifdef DIAGNOSTIC
 		if (ptp->pg_flags & PG_BUSY)
@@ -710,7 +712,7 @@ pmap_destroy(struct pmap *pmap)
 	if (refs > 0)
 		return;
 
-	KASSERT(RB_EMPTY(&pmap->pm_obj.memt));
+	KASSERT(RBT_EMPTY(uvm_objtree, &pmap->pm_obj.memt));
 
 	pmap_sdir_set(pmap->pm_space, 0);
 

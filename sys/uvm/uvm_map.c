@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.224 2016/09/16 01:09:53 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.225 2016/09/16 02:35:42 dlg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2913,7 +2913,7 @@ uvm_object_printit(uobj, full, pr)
 		return;
 	}
 	(*pr)("  PAGES <pg,offset>:\n  ");
-	RB_FOREACH(pg, uvm_objtree, &uobj->memt) {
+	RBT_FOREACH(pg, uvm_objtree, &uobj->memt) {
 		(*pr)("<%p,0x%llx> ", pg, (long long)pg->offset);
 		if ((cnt % 3) == 2) {
 			(*pr)("\n  ");
@@ -2975,7 +2975,7 @@ uvm_page_printit(pg, full, pr)
 			uobj = pg->uobject;
 			if (uobj) {
 				(*pr)("  checking object list\n");
-				RB_FOREACH(tpg, uvm_objtree, &uobj->memt) {
+				RBT_FOREACH(tpg, uvm_objtree, &uobj->memt) {
 					if (tpg == pg) {
 						break;
 					}

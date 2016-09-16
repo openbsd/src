@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.13 2015/08/21 16:04:35 visa Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.14 2016/09/16 02:35:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ void
 uvm_objinit(struct uvm_object *uobj, struct uvm_pagerops *pgops, int refs)
 {
 	uobj->pgops = pgops;
-	RB_INIT(&uobj->memt);
+	RBT_INIT(uvm_objtree, &uobj->memt);
 	uobj->uo_npages = 0;
 	uobj->uo_refs = refs;
 }

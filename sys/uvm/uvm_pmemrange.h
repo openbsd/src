@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.12 2015/02/05 23:51:06 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.13 2016/09/16 02:35:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -23,8 +23,8 @@
 #ifndef _UVM_UVM_PMEMRANGE_H_
 #define _UVM_UVM_PMEMRANGE_H_
 
-RB_HEAD(uvm_pmr_addr, vm_page);
-RB_HEAD(uvm_pmr_size, vm_page);
+RBT_HEAD(uvm_pmr_addr, vm_page);
+RBT_HEAD(uvm_pmr_size, vm_page);
 
 /*
  * Page types available:
@@ -124,11 +124,11 @@ int	uvm_pmr_isfree(struct vm_page *pg);
  * Internal tree logic.
  */
 
-int	uvm_pmr_addr_cmp(struct vm_page *, struct vm_page *);
-int	uvm_pmr_size_cmp(struct vm_page *, struct vm_page *);
+int	uvm_pmr_addr_cmp(const struct vm_page *, const struct vm_page *);
+int	uvm_pmr_size_cmp(const struct vm_page *, const struct vm_page *);
 
-RB_PROTOTYPE(uvm_pmr_addr, vm_page, objt, uvm_pmr_addr_cmp);
-RB_PROTOTYPE(uvm_pmr_size, vm_page, objt, uvm_pmr_size_cmp);
+RBT_PROTOTYPE(uvm_pmr_addr, vm_page, objt, uvm_pmr_addr_cmp);
+RBT_PROTOTYPE(uvm_pmr_size, vm_page, objt, uvm_pmr_size_cmp);
 RB_PROTOTYPE(uvm_pmemrange_addr, uvm_pmemrange, pmr_addr,
     uvm_pmemrange_addr_cmp);
 

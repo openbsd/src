@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.192 2016/09/16 01:09:54 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.193 2016/09/16 02:35:41 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1251,7 +1251,7 @@ pmap_drop_ptp_86(struct pmap *pm, vaddr_t va, struct vm_page *ptp,
 	pm->pm_stats.resident_count--;
 	/* update hint */
 	if (pm->pm_ptphint == ptp)
-		pm->pm_ptphint = RB_ROOT(&pm->pm_obj.memt);
+		pm->pm_ptphint = RBT_ROOT(uvm_objtree, &pm->pm_obj.memt);
 	ptp->wire_count = 0;
 	/* Postpone free to after shootdown. */
 	uvm_pagerealloc(ptp, NULL, 0);
@@ -1348,7 +1348,7 @@ pmap_destroy(struct pmap *pmap)
 	LIST_REMOVE(pmap, pm_list);
 
 	/* Free any remaining PTPs. */
-	while ((pg = RB_ROOT(&pmap->pm_obj.memt)) != NULL) {
+	while ((pg = RBT_ROOT(uvm_objtree, &pmap->pm_obj.memt)) != NULL) {
 		pg->wire_count = 0;
 		uvm_pagefree(pg);
 	}

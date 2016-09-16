@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.118 2016/09/05 22:27:23 beck Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.119 2016/09/16 02:35:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -366,8 +366,8 @@ uvm_pmr_zero_everything(void)
 		}
 
 		/* Zero multi page ranges. */
-		while ((pg = RB_ROOT(&pmr->size[UVM_PMR_MEMTYPE_DIRTY]))
-		    != NULL) {
+		while ((pg = RBT_ROOT(uvm_pmr_size,
+		    &pmr->size[UVM_PMR_MEMTYPE_DIRTY])) != NULL) {
 			pg--; /* Size tree always has second page. */
 			uvm_pmr_remove(pmr, pg);
 			for (i = 0; i < pg->fpgsz; i++) {
@@ -405,8 +405,8 @@ uvm_pmr_dirty_everything(void)
 		}
 
 		/* Dirty multi page ranges. */
-		while ((pg = RB_ROOT(&pmr->size[UVM_PMR_MEMTYPE_ZERO]))
-		    != NULL) {
+		while ((pg = RBT_ROOT(uvm_pmr_size,
+		    &pmr->size[UVM_PMR_MEMTYPE_ZERO])) != NULL) {
 			pg--; /* Size tree always has second page. */
 			uvm_pmr_remove(pmr, pg);
 			for (i = 0; i < pg->fpgsz; i++)

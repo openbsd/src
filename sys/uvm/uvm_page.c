@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.144 2015/10/30 16:47:01 miod Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.145 2016/09/16 02:35:42 dlg Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -78,10 +78,10 @@
 /*
  * for object trees
  */
-RB_GENERATE(uvm_objtree, vm_page, objt, uvm_pagecmp);
+RBT_GENERATE(uvm_objtree, vm_page, objt, uvm_pagecmp);
 
 int
-uvm_pagecmp(struct vm_page *a, struct vm_page *b)
+uvm_pagecmp(const struct vm_page *a, const struct vm_page *b)
 {
 	return (a->offset < b->offset ? -1 : a->offset > b->offset);
 }
@@ -134,7 +134,7 @@ uvm_pageinsert(struct vm_page *pg)
 	struct vm_page	*dupe;
 
 	KASSERT((pg->pg_flags & PG_TABLED) == 0);
-	dupe = RB_INSERT(uvm_objtree, &pg->uobject->memt, pg);
+	dupe = RBT_INSERT(uvm_objtree, &pg->uobject->memt, pg);
 	/* not allowed to insert over another page */
 	KASSERT(dupe == NULL);
 	atomic_setbits_int(&pg->pg_flags, PG_TABLED);
@@ -150,7 +150,7 @@ static __inline void
 uvm_pageremove(struct vm_page *pg)
 {
 	KASSERT(pg->pg_flags & PG_TABLED);
-	RB_REMOVE(uvm_objtree, &pg->uobject->memt, pg);
+	RBT_REMOVE(uvm_objtree, &pg->uobject->memt, pg);
 
 	atomic_clearbits_int(&pg->pg_flags, PG_TABLED);
 	pg->uobject->uo_npages--;
@@ -1203,7 +1203,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 	struct vm_page pg;
 
 	pg.offset = off;
-	return (RB_FIND(uvm_objtree, &obj->memt, &pg));
+	return (RBT_FIND(uvm_objtree, &obj->memt, &pg));
 }
 
 /*

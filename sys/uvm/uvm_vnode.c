@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.92 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.93 2016/09/16 02:35:42 dlg Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -362,7 +362,7 @@ uvn_detach(struct uvm_object *uobj)
 	if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
 		LIST_REMOVE(uvn, u_wlist);
 	}
-	KASSERT(RB_EMPTY(&uobj->memt));
+	KASSERT(RBT_EMPTY(uvm_objtree, &uobj->memt));
 	oldflags = uvn->u_flags;
 	uvn->u_flags = 0;
 
@@ -462,7 +462,7 @@ uvm_vnp_terminate(struct vnode *vp)
 	while (uvn->u_obj.uo_npages) {
 #ifdef DEBUG
 		struct vm_page *pp;
-		RB_FOREACH(pp, uvm_objtree, &uvn->u_obj.memt) {
+		RBT_FOREACH(pp, uvm_objtree, &uvn->u_obj.memt) {
 			if ((pp->pg_flags & PG_BUSY) == 0)
 				panic("uvm_vnp_terminate: detected unbusy pg");
 		}

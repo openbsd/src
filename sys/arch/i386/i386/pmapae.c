@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.49 2016/03/07 05:32:47 naddy Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.50 2016/09/16 02:35:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -811,7 +811,7 @@ pmap_drop_ptp_pae(struct pmap *pm, vaddr_t va, struct vm_page *ptp,
 	pm->pm_stats.resident_count--;
 	/* update hint */
 	if (pm->pm_ptphint == ptp)
-		pm->pm_ptphint = RB_ROOT(&pm->pm_obj.memt);
+		pm->pm_ptphint = RBT_ROOT(uvm_objtree, &pm->pm_obj.memt);
 	ptp->wire_count = 0;
 	/* Postpone free to after shootdown. */
 	uvm_pagerealloc(ptp, NULL, 0);

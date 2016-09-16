@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.52 2015/08/28 00:03:54 deraadt Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.53 2016/09/16 02:35:42 dlg Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ again:
 		uobj->uo_refs--;
 		return;
 	}
-	KASSERT(uobj->uo_npages == 0 && RB_EMPTY(&uobj->memt));
+	KASSERT(uobj->uo_npages == 0 && RBT_EMPTY(uvm_objtree, &uobj->memt));
 
 	/* is it being held?   if so, wait until others are done. */
 	mtx_enter(&udv_lock);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.82 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.83 2016/09/16 02:35:42 dlg Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -869,7 +869,7 @@ uao_detach_locked(struct uvm_object *uobj)
 	 * Release swap resources then free the page.
  	 */
 	uvm_lock_pageq();
-	while((pg = RB_ROOT(&uobj->memt)) != NULL) {
+	while((pg = RBT_ROOT(uvm_objtree, &uobj->memt)) != NULL) {
 		if (pg->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 			uvm_unlock_pageq();

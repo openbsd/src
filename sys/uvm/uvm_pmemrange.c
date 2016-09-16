@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.50 2016/01/29 11:50:40 tb Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.51 2016/09/16 02:35:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -73,8 +73,6 @@
 /* Tree comparators. */
 int	uvm_pmemrange_addr_cmp(struct uvm_pmemrange *, struct uvm_pmemrange *);
 int	uvm_pmemrange_use_cmp(struct uvm_pmemrange *, struct uvm_pmemrange *);
-int	uvm_pmr_addr_cmp(struct vm_page *, struct vm_page *);
-int	uvm_pmr_size_cmp(struct vm_page *, struct vm_page *);
 int	uvm_pmr_pg_to_memtype(struct vm_page *);
 
 #ifdef DDB
@@ -95,8 +93,8 @@ uvm_pmr_pg_to_memtype(struct vm_page *pg)
 }
 
 /* Trees. */
-RB_GENERATE(uvm_pmr_addr, vm_page, objt, uvm_pmr_addr_cmp);
-RB_GENERATE(uvm_pmr_size, vm_page, objt, uvm_pmr_size_cmp);
+RBT_GENERATE(uvm_pmr_addr, vm_page, objt, uvm_pmr_addr_cmp);
+RBT_GENERATE(uvm_pmr_size, vm_page, objt, uvm_pmr_size_cmp);
 RB_GENERATE(uvm_pmemrange_addr, uvm_pmemrange, pmr_addr,
     uvm_pmemrange_addr_cmp);
 
@@ -206,7 +204,7 @@ uvm_pmemrange_use_cmp(struct uvm_pmemrange *lhs, struct uvm_pmemrange *rhs)
 }
 
 int
-uvm_pmr_addr_cmp(struct vm_page *lhs, struct vm_page *rhs)
+uvm_pmr_addr_cmp(const struct vm_page *lhs, const struct vm_page *rhs)
 {
 	paddr_t lhs_addr, rhs_addr;
 
@@ -217,7 +215,7 @@ uvm_pmr_addr_cmp(struct vm_page *lhs, struct vm_page *rhs)
 }
 
 int
-uvm_pmr_size_cmp(struct vm_page *lhs, struct vm_page *rhs)
+uvm_pmr_size_cmp(const struct vm_page *lhs, const struct vm_page *rhs)
 {
 	psize_t lhs_size, rhs_size;
 	int cmp;
@@ -245,14 +243,14 @@ uvm_pmr_nfindsz(struct uvm_pmemrange *pmr, psize_t sz, int mti)
 	if (sz == 1 && !TAILQ_EMPTY(&pmr->single[mti]))
 		return TAILQ_FIRST(&pmr->single[mti]);
 
-	node = RB_ROOT(&pmr->size[mti]);
+	node = RBT_ROOT(uvm_pmr_size, &pmr->size[mti]);
 	best = NULL;
 	while (node != NULL) {
 		if ((node - 1)->fpgsz >= sz) {
 			best = (node - 1);
-			node = RB_LEFT(node, objt);
+			node = RBT_LEFT(uvm_objtree, node);
 		} else
-			node = RB_RIGHT(node, objt);
+			node = RBT_RIGHT(uvm_objtree, node);
 	}
 	return best;
 }
@@ -271,9 +269,9 @@ uvm_pmr_nextsz(struct uvm_pmemrange *pmr, struct vm_page *pg, int mt)
 		if (TAILQ_NEXT(pg, pageq) != NULL)
 			return TAILQ_NEXT(pg, pageq);
 		else
-			npg = RB_MIN(uvm_pmr_size, &pmr->size[mt]);
+			npg = RBT_MIN(uvm_pmr_size, &pmr->size[mt]);
 	} else
-		npg = RB_NEXT(uvm_pmr_size, &pmr->size[mt], pg + 1);
+		npg = RBT_NEXT(uvm_pmr_size, pg + 1);
 
 	return npg == NULL ? NULL : npg - 1;
 }
@@ -292,11 +290,11 @@ uvm_pmr_pnaddr(struct uvm_pmemrange *pmr, struct vm_page *pg,
 {
 	KASSERT(pg_prev != NULL && pg_next != NULL);
 
-	*pg_next = RB_NFIND(uvm_pmr_addr, &pmr->addr, pg);
+	*pg_next = RBT_NFIND(uvm_pmr_addr, &pmr->addr, pg);
 	if (*pg_next == NULL)
-		*pg_prev = RB_MAX(uvm_pmr_addr, &pmr->addr);
+		*pg_prev = RBT_MAX(uvm_pmr_addr, &pmr->addr);
 	else
-		*pg_prev = RB_PREV(uvm_pmr_addr, &pmr->addr, *pg_next);
+		*pg_prev = RBT_PREV(uvm_pmr_addr, *pg_next);
 
 	KDASSERT(*pg_next == NULL ||
 	    VM_PAGE_TO_PHYS(*pg_next) > VM_PAGE_TO_PHYS(pg));
@@ -326,9 +324,9 @@ uvm_pmr_pnaddr(struct uvm_pmemrange *pmr, struct vm_page *pg,
 void
 uvm_pmr_remove_addr(struct uvm_pmemrange *pmr, struct vm_page *pg)
 {
-	KDASSERT(RB_FIND(uvm_pmr_addr, &pmr->addr, pg) == pg);
+	KDASSERT(RBT_FIND(uvm_pmr_addr, &pmr->addr, pg) == pg);
 	KDASSERT(pg->pg_flags & PQ_FREE);
-	RB_REMOVE(uvm_pmr_addr, &pmr->addr, pg);
+	RBT_REMOVE(uvm_pmr_addr, &pmr->addr, pg);
 
 	pmr->nsegs--;
 }
@@ -359,7 +357,7 @@ uvm_pmr_remove_size(struct uvm_pmemrange *pmr, struct vm_page *pg)
 	} else {
 		KDASSERT(RB_FIND(uvm_pmr_size, &pmr->size[memtype],
 		    pg + 1) == pg + 1);
-		RB_REMOVE(uvm_pmr_size, &pmr->size[memtype], pg + 1);
+		RBT_REMOVE(uvm_pmr_size, &pmr->size[memtype], pg + 1);
 	}
 }
 /* Remove from both trees. */
@@ -420,7 +418,7 @@ uvm_pmr_insert_addr(struct uvm_pmemrange *pmr, struct vm_page *pg, int no_join)
 		}
 	}
 
-	RB_INSERT(uvm_pmr_addr, &pmr->addr, pg);
+	RBT_INSERT(uvm_pmr_addr, &pmr->addr, pg);
 
 	pmr->nsegs++;
 
@@ -462,7 +460,7 @@ uvm_pmr_insert_size(struct uvm_pmemrange *pmr, struct vm_page *pg)
 	if (pg->fpgsz == 1)
 		TAILQ_INSERT_TAIL(&pmr->single[memtype], pg, pageq);
 	else
-		RB_INSERT(uvm_pmr_size, &pmr->size[memtype], pg + 1);
+		RBT_INSERT(uvm_pmr_size, &pmr->size[memtype], pg + 1);
 }
 /* Insert in both trees. */
 struct vm_page *
@@ -1364,14 +1362,14 @@ uvm_pmr_split(paddr_t pageno)
 	uvm_pmr_assertvalid(drain);
 	KASSERT(drain->nsegs == 0);
 
-	RB_FOREACH(rebuild, uvm_pmr_addr, &pmr->addr) {
+	RBT_FOREACH(rebuild, uvm_pmr_addr, &pmr->addr) {
 		if (atop(VM_PAGE_TO_PHYS(rebuild)) >= pageno)
 			break;
 	}
 	if (rebuild == NULL)
-		prev = RB_MAX(uvm_pmr_addr, &pmr->addr);
+		prev = RBT_MAX(uvm_pmr_addr, &pmr->addr);
 	else
-		prev = RB_PREV(uvm_pmr_addr, &pmr->addr, rebuild);
+		prev = RBT_PREV(uvm_pmr_addr, rebuild);
 	KASSERT(prev == NULL || atop(VM_PAGE_TO_PHYS(prev)) < pageno);
 
 	/*
@@ -1399,7 +1397,7 @@ uvm_pmr_split(paddr_t pageno)
 
 	/* Move free chunks that no longer fall in the range. */
 	for (; rebuild != NULL; rebuild = next) {
-		next = RB_NEXT(uvm_pmr_addr, &pmr->addr, rebuild);
+		next = RBT_NEXT(uvm_pmr_addr, rebuild);
 
 		uvm_pmr_remove(pmr, rebuild);
 		uvm_pmr_insert(drain, rebuild, 1);
@@ -1476,9 +1474,9 @@ uvm_pmr_allocpmr(void)
 	}
 	KASSERT(nw != NULL);
 	memset(nw, 0, sizeof(struct uvm_pmemrange));
-	RB_INIT(&nw->addr);
+	RBT_INIT(uvm_pmr_addr, &nw->addr);
 	for (i = 0; i < UVM_PMR_MEMTYPE_MAX; i++) {
-		RB_INIT(&nw->size[i]);
+		RBT_INIT(uvm_pmr_size, &nw->size[i]);
 		TAILQ_INIT(&nw->single[i]);
 	}
 	return nw;
@@ -1554,11 +1552,11 @@ uvm_pmr_isfree(struct vm_page *pg)
 	pmr = uvm_pmemrange_find(atop(VM_PAGE_TO_PHYS(pg)));
 	if (pmr == NULL)
 		return 0;
-	r = RB_NFIND(uvm_pmr_addr, &pmr->addr, pg);
+	r = RBT_NFIND(uvm_pmr_addr, &pmr->addr, pg);
 	if (r == NULL)
-		r = RB_MAX(uvm_pmr_addr, &pmr->addr);
+		r = RBT_MAX(uvm_pmr_addr, &pmr->addr);
 	else if (r != pg)
-		r = RB_PREV(uvm_pmr_addr, &pmr->addr, r);
+		r = RBT_PREV(uvm_pmr_addr, r);
 	if (r == NULL)
 		return 0; /* Empty tree. */
 
@@ -1600,9 +1598,9 @@ uvm_pmr_rootupdate(struct uvm_pmemrange *pmr, struct vm_page *init_root,
 	    atop(VM_PAGE_TO_PHYS(root)) + root->fpgsz,
 	    start, end)) {
 		if (direction == 1)
-			root = RB_RIGHT(root, objt);
+			root = RBT_RIGHT(uvm_objtree, root);
 		else
-			root = RB_LEFT(root, objt);
+			root = RBT_LEFT(uvm_objtree, root);
 	}
 	if (root == NULL || uvm_pmr_pg_to_memtype(root) == memtype)
 		return root;
@@ -1620,7 +1618,7 @@ uvm_pmr_rootupdate(struct uvm_pmemrange *pmr, struct vm_page *init_root,
 	 * Cache the upper page, so we can page-walk later.
 	 */
 	high = root;
-	high_next = RB_RIGHT(high, objt);
+	high_next = RBT_RIGHT(uvm_objtree, high);
 	while (high_next != NULL && PMR_INTERSECTS_WITH(
 	    atop(VM_PAGE_TO_PHYS(high_next)),
 	    atop(VM_PAGE_TO_PHYS(high_next)) + high_next->fpgsz,
@@ -1628,7 +1626,7 @@ uvm_pmr_rootupdate(struct uvm_pmemrange *pmr, struct vm_page *init_root,
 		high = high_next;
 		if (uvm_pmr_pg_to_memtype(high) == memtype)
 			return high;
-		high_next = RB_RIGHT(high, objt);
+		high_next = RBT_RIGHT(uvm_objtree, high);
 	}
 
 	/*
@@ -1636,7 +1634,7 @@ uvm_pmr_rootupdate(struct uvm_pmemrange *pmr, struct vm_page *init_root,
 	 * Cache the lower page, so we can page-walk later.
 	 */
 	low = root;
-	low_next = RB_LEFT(low, objt);
+	low_next = RBT_LEFT(uvm_objtree, low);
 	while (low_next != NULL && PMR_INTERSECTS_WITH(
 	    atop(VM_PAGE_TO_PHYS(low_next)),
 	    atop(VM_PAGE_TO_PHYS(low_next)) + low_next->fpgsz,
@@ -1644,16 +1642,16 @@ uvm_pmr_rootupdate(struct uvm_pmemrange *pmr, struct vm_page *init_root,
 		low = low_next;
 		if (uvm_pmr_pg_to_memtype(low) == memtype)
 			return low;
-		low_next = RB_LEFT(low, objt);
+		low_next = RBT_LEFT(uvm_objtree, low);
 	}
 
 	if (low == high)
 		return NULL;
 
 	/* No hits. Walk the address tree until we find something usable. */
-	for (low = RB_NEXT(uvm_pmr_addr, &pmr->addr, low);
+	for (low = RBT_NEXT(uvm_pmr_addr, low);
 	    low != high;
-	    low = RB_NEXT(uvm_pmr_addr, &pmr->addr, low)) {
+	    low = RBT_NEXT(uvm_pmr_addr, low)) {
 		KDASSERT(PMR_IS_SUBRANGE_OF(atop(VM_PAGE_TO_PHYS(low)),
 	    	    atop(VM_PAGE_TO_PHYS(low)) + low->fpgsz,
 	    	    start, end));
@@ -1719,7 +1717,7 @@ uvm_pmr_get1page(psize_t count, int memtype_init, struct pglist *result,
 				 * Note that a size tree gives pg[1] instead of
 				 * pg[0].
 				 */
-				found = RB_MIN(uvm_pmr_size,
+				found = RBT_MIN(uvm_pmr_size,
 				    &pmr->size[memtype]);
 				if (found != NULL) {
 					found--;
@@ -1735,7 +1733,7 @@ uvm_pmr_get1page(psize_t count, int memtype_init, struct pglist *result,
 				 * Try address-guided search to meet the page
 				 * number constraints.
 				 */
-				found = RB_ROOT(&pmr->addr);
+				found = RBT_ROOT(uvm_pmr_addr, &pmr->addr);
 				if (found != NULL) {
 					found = uvm_pmr_rootupdate(pmr, found,
 					    start, end, memtype);
@@ -1858,14 +1856,14 @@ uvm_pmr_print(void)
 		useq_len++;
 		free = 0;
 		for (mt = 0; mt < UVM_PMR_MEMTYPE_MAX; mt++) {
-			pg = RB_MAX(uvm_pmr_size, &pmr->size[mt]);
+			pg = RBT_MAX(uvm_pmr_size, &pmr->size[mt]);
 			if (pg != NULL)
 				pg--;
 			else
 				pg = TAILQ_FIRST(&pmr->single[mt]);
 			size[mt] = (pg == NULL ? 0 : pg->fpgsz);
 
-			RB_FOREACH(pg, uvm_pmr_addr, &pmr->addr)
+			RBT_FOREACH(pg, uvm_pmr_addr, &pmr->addr)
 				free += pg->fpgsz;
 		}
 
