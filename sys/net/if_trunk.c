@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.127 2016/04/13 11:41:15 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.128 2016/09/16 09:51:21 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -663,8 +663,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = tr->tr_detach(tr);
 		if (error != 0)
 			break;
-		for (i = 0; i < (sizeof(trunk_protos) /
-		    sizeof(trunk_protos[0])); i++) {
+		for (i = 0; i < nitems(trunk_protos); i++) {
 			if (trunk_protos[i].ti_proto == ra->ra_proto) {
 				if (tr->tr_ifflags & IFF_DEBUG)
 					printf("%s: using proto %u\n",
@@ -676,6 +675,8 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
 					if_ih_insert(tp->tp_if,
 					    trunk_input, tp);
+				/* Update trunk capabilities */
+				tr->tr_capabilities = trunk_capabilities(tr);
 				goto out;
 			}
 		}
