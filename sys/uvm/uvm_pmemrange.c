@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.51 2016/09/16 02:35:42 dlg Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.52 2016/09/16 02:47:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -71,7 +71,8 @@
 	(((pg_flags) & ~(PQ_FREE|PG_ZERO|PG_PMAPMASK)) == 0x0)
 
 /* Tree comparators. */
-int	uvm_pmemrange_addr_cmp(struct uvm_pmemrange *, struct uvm_pmemrange *);
+int	uvm_pmemrange_addr_cmp(const struct uvm_pmemrange *,
+	    const struct uvm_pmemrange *);
 int	uvm_pmemrange_use_cmp(struct uvm_pmemrange *, struct uvm_pmemrange *);
 int	uvm_pmr_pg_to_memtype(struct vm_page *);
 
@@ -95,7 +96,7 @@ uvm_pmr_pg_to_memtype(struct vm_page *pg)
 /* Trees. */
 RBT_GENERATE(uvm_pmr_addr, vm_page, objt, uvm_pmr_addr_cmp);
 RBT_GENERATE(uvm_pmr_size, vm_page, objt, uvm_pmr_size_cmp);
-RB_GENERATE(uvm_pmemrange_addr, uvm_pmemrange, pmr_addr,
+RBT_GENERATE(uvm_pmemrange_addr, uvm_pmemrange, pmr_addr,
     uvm_pmemrange_addr_cmp);
 
 /* Validation. */
@@ -181,7 +182,8 @@ pow2divide(psize_t num, psize_t denom)
  * Comparator: sort by address ascending.
  */
 int
-uvm_pmemrange_addr_cmp(struct uvm_pmemrange *lhs, struct uvm_pmemrange *rhs)
+uvm_pmemrange_addr_cmp(const struct uvm_pmemrange *lhs,
+    const struct uvm_pmemrange *rhs)
 {
 	return lhs->low < rhs->low ? -1 : lhs->low > rhs->low;
 }
@@ -1407,7 +1409,7 @@ uvm_pmr_split(paddr_t pageno)
 	uvm_pmr_assertvalid(pmr);
 	uvm_pmr_assertvalid(drain);
 
-	RB_INSERT(uvm_pmemrange_addr, &uvm.pmr_control.addr, drain);
+	RBT_INSERT(uvm_pmemrange_addr, &uvm.pmr_control.addr, drain);
 	uvm_pmemrange_use_insert(&uvm.pmr_control.use, drain);
 	uvm_unlock_fpageq();
 }
@@ -1437,7 +1439,7 @@ uvm_pmr_use_inc(paddr_t low, paddr_t high)
 	sz = 0;
 	uvm_lock_fpageq();
 	/* Increase use count on segments in range. */
-	RB_FOREACH(pmr, uvm_pmemrange_addr, &uvm.pmr_control.addr) {
+	RBT_FOREACH(pmr, uvm_pmemrange_addr, &uvm.pmr_control.addr) {
 		if (PMR_IS_SUBRANGE_OF(pmr->low, pmr->high, low, high)) {
 			TAILQ_REMOVE(&uvm.pmr_control.use, pmr, pmr_use);
 			pmr->use++;
@@ -1495,7 +1497,7 @@ uvm_pmr_init(void)
 	int i;
 
 	TAILQ_INIT(&uvm.pmr_control.use);
-	RB_INIT(&uvm.pmr_control.addr);
+	RBT_INIT(uvm_pmemrange_addr, &uvm.pmr_control.addr);
 	TAILQ_INIT(&uvm.pmr_control.allocs);
 
 	/* By default, one range for the entire address space. */
@@ -1503,7 +1505,7 @@ uvm_pmr_init(void)
 	new_pmr->low = 0;
 	new_pmr->high = atop((paddr_t)-1) + 1; 
 
-	RB_INSERT(uvm_pmemrange_addr, &uvm.pmr_control.addr, new_pmr);
+	RBT_INSERT(uvm_pmemrange_addr, &uvm.pmr_control.addr, new_pmr);
 	uvm_pmemrange_use_insert(&uvm.pmr_control.use, new_pmr);
 
 	for (i = 0; uvm_md_constraints[i] != NULL; i++) {
@@ -1523,12 +1525,12 @@ uvm_pmemrange_find(paddr_t pageno)
 {
 	struct uvm_pmemrange *pmr;
 
-	pmr = RB_ROOT(&uvm.pmr_control.addr);
+	pmr = RBT_ROOT(uvm_pmemrange_addr, &uvm.pmr_control.addr);
 	while (pmr != NULL) {
 		if (pmr->low > pageno)
-			pmr = RB_LEFT(pmr, pmr_addr);
+			pmr = RBT_LEFT(uvm_pmemrange_addr, pmr);
 		else if (pmr->high <= pageno)
-			pmr = RB_RIGHT(pmr, pmr_addr);
+			pmr = RBT_RIGHT(uvm_pmemrange_addr, pmr);
 		else
 			break;
 	}

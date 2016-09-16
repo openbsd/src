@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.13 2016/09/16 02:35:42 dlg Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.14 2016/09/16 02:47:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -52,7 +52,7 @@ struct uvm_pmemrange {
 
 	TAILQ_ENTRY(uvm_pmemrange) pmr_use;
 					/* pmr, sorted by use */
-	RB_ENTRY(uvm_pmemrange) pmr_addr;
+	RBT_ENTRY(uvm_pmemrange) pmr_addr;
 					/* pmr, sorted by address */
 };
 
@@ -94,7 +94,7 @@ struct uvm_pmalloc {
 #define UVM_PMA_FAIL	0x10	/* page daemon cannot free pages */
 #define UVM_PMA_FREED	0x20	/* at least one page in the range was freed */
 
-RB_HEAD(uvm_pmemrange_addr, uvm_pmemrange);
+RBT_HEAD(uvm_pmemrange_addr, uvm_pmemrange);
 TAILQ_HEAD(uvm_pmemrange_use, uvm_pmemrange);
 
 /*
@@ -129,7 +129,7 @@ int	uvm_pmr_size_cmp(const struct vm_page *, const struct vm_page *);
 
 RBT_PROTOTYPE(uvm_pmr_addr, vm_page, objt, uvm_pmr_addr_cmp);
 RBT_PROTOTYPE(uvm_pmr_size, vm_page, objt, uvm_pmr_size_cmp);
-RB_PROTOTYPE(uvm_pmemrange_addr, uvm_pmemrange, pmr_addr,
+RBT_PROTOTYPE(uvm_pmemrange_addr, uvm_pmemrange, pmr_addr,
     uvm_pmemrange_addr_cmp);
 
 struct vm_page		*uvm_pmr_insert_addr(struct uvm_pmemrange *,
