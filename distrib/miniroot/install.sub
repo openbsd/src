@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.918 2016/09/13 21:25:29 halex Exp $
+#	$OpenBSD: install.sub,v 1.919 2016/09/16 13:28:20 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2737,7 +2737,7 @@ do_upgrade(){
 	check_fs
 
 	# Mount filesystems in /etc/fstab.
-	umount /mnt || { echo "Can't umount $ROOTDEV!"; exit; }
+	umount -f /mnt || { echo "Can't umount $ROOTDEV!"; exit; }
 	mount_fs
 
 	# Feed the random pool some entropy before we read from it.
