@@ -1336,6 +1336,8 @@
 ./usr/share/man/man4/hppa/uturn.4
 ./usr/share/man/man4/hppa/wax.4
 ./usr/share/man/man4/hsq.4
+./usr/share/man/man4/hvn.4
+./usr/share/man/man4/hyperv.4
 ./usr/share/man/man4/i386/amdmsr.4
 ./usr/share/man/man4/i386/amdpcib.4
 ./usr/share/man/man4/i386/apm.4

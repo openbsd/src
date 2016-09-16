@@ -649,6 +649,7 @@
 ./usr/include/dev/rasops/rasops.h
 ./usr/include/dev/rasops/rasops_bitops.h
 ./usr/include/dev/rasops/rasops_masks.h
+./usr/include/dev/rndis.h
 ./usr/include/dev/rndvar.h
 ./usr/include/dev/sbus
 ./usr/include/dev/sbus/asioreg.h

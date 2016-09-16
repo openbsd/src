@@ -1105,6 +1105,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/rasops/rasops.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/rasops/rasops_bitops.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/rasops/rasops_masks.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/rndis.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/rndvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/sbus
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/sbus/asioreg.ph
