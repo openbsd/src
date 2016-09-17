@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.207 2016/09/17 09:25:36 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.208 2016/09/17 09:26:07 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -914,6 +914,7 @@ pinger(int s)
 
 		memcpy(&outpack[ECHOLEN], &payload, sizeof(payload));
 	}
+
 	cc = ECHOLEN + datalen;
 
 	smsgiov.iov_len = cc;

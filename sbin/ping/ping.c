@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.191 2016/09/17 09:22:31 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.192 2016/09/17 09:26:07 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -891,7 +891,7 @@ pinger(int s)
 		memcpy(&outpack[ECHOLEN], &payload, sizeof(payload));
 	}
 
-	cc = datalen + ECHOLEN;			/* skips ICMP portion */
+	cc = ECHOLEN + datalen;
 
 	/* compute ICMP checksum here */
 	icp->icmp_cksum = in_cksum((u_short *)icp, cc);
