@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.200 2016/09/17 09:34:03 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.201 2016/09/17 09:34:57 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -423,7 +423,7 @@ main(int argc, char *argv[])
 		hostname = res->ai_canonname ? strdup(res->ai_canonname) :
 		    target;
 		if (!hostname)
-			errx(1, "malloc");
+			err(1, "malloc");
 	}
 
 	if (res->ai_next) {

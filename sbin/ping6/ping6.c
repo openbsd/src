@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.216 2016/09/17 09:34:28 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.217 2016/09/17 09:34:57 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -372,7 +372,7 @@ main(int argc, char *argv[])
 	if (inet_aton(*argv, &dst4.sin_addr) != 0) {
 		hostname = *argv;
 		if ((target = strdup(inet_ntoa(dst4.sin_addr))) == NULL)
-			errx(1, "malloc");
+			err(1, "malloc");
 	} else
 #endif
 		target = *argv;
@@ -404,7 +404,7 @@ main(int argc, char *argv[])
 		hostname = res->ai_canonname ? strdup(res->ai_canonname) :
 		    target;
 		if (!hostname)
-			errx(1, "malloc");
+			err(1, "malloc");
 	}
 
 	if (res->ai_next) {
@@ -579,7 +579,7 @@ main(int argc, char *argv[])
 	if (hoplimit != -1) {
 		/* set IP6 packet options */
 		if ((scmsg = malloc( CMSG_SPACE(sizeof(int)))) == NULL)
-			errx(1, "can't allocate enough memory");
+			err(1, "malloc");
 		smsghdr.msg_control = (caddr_t)scmsg;
 		smsghdr.msg_controllen =  CMSG_SPACE(sizeof(int));
 
