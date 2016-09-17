@@ -1,5 +1,32 @@
-.\"	$OpenBSD: ping.8,v 1.54 2016/09/03 13:56:17 akfaew Exp $
+.\"	$OpenBSD: ping.8,v 1.55 2016/09/17 18:36:15 florian Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
+.\"
+.\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the project nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,11 +57,12 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 3 2016 $
+.Dd $Mdocdate: September 17 2016 $
 .Dt PING 8
 .Os
 .Sh NAME
-.Nm ping
+.Nm ping ,
+.Nm ping6
 .Nd send ICMP ECHO_REQUEST packets to network hosts
 .Sh SYNOPSIS
 .Nm ping
@@ -52,6 +80,18 @@
 .Op Fl w Ar maxwait
 .Ar host
 .Ek
+.Nm ping6
+.Op Fl dEefHLmnqv
+.Op Fl c Ar count
+.Op Fl h Ar hoplimit
+.Op Fl I Ar sourceaddr
+.Op Fl i Ar wait
+.Op Fl l Ar preload
+.Op Fl p Ar pattern
+.Op Fl s Ar packetsize
+.Op Fl V Ar rtable
+.Op Fl w Ar maxwait
+.Ar host
 .Sh DESCRIPTION
 .Nm
 uses the ICMP protocol's mandatory
@@ -82,6 +122,7 @@ is 0, send an unlimited number of packets.
 Set the
 .Dv Don't Fragment
 bit.
+This option is not available for IPv6.
 .It Fl d
 Set the
 .Dv SO_DEBUG
@@ -118,6 +159,9 @@ This can be very hard on a network and should be used with caution.
 .Ef
 .It Fl H
 Try reverse lookups for addresses.
+.It Fl h Ar hoplimit
+Set the IPv6 hoplimit.
+This option is not available for IPv4.
 .It Fl I Ar ifaddr
 Specify the interface address to transmit from
 on machines with multiple interfaces.
@@ -144,6 +188,17 @@ is specified,
 sends that many packets as fast as possible before falling into its normal
 mode of behavior.
 Only root may set a preload value.
+.It Fl m
+By default,
+.Nm ping6
+asks the kernel to fragment packets to fit into the minimum IPv6 MTU.
+.Fl m
+will suppress the behavior in the following two levels:
+when the option is specified once, the behavior will be disabled for
+unicast packets.
+When the option is specified more than once, it will be disabled for both
+unicast and multicast packets.
+This option is not available for IPv4.
 .It Fl n
 Numeric output only.
 No attempt will be made to look up symbolic names from addresses in the reply.
@@ -173,12 +228,13 @@ packet,
 .Nm
 will print the route list and then truncate it at the correct spot.
 Many hosts ignore or discard this option.
+This option is not available for IPv6.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
 The default is 56,
 which translates into 64 ICMP data bytes
 when combined with the 8 bytes of ICMP header data.
-The maximum packet size is 65467.
+The maximum packet size is 65467 for IPv4 and 65527 for IPv6.
 .It Fl T Ar toskeyword
 Change IPv4 TOS value.
 .Ar toskeyword
@@ -194,8 +250,10 @@ or one of the DiffServ Code Points:
 .Ar af11 ... af43 ,
 .Ar cs0 ... cs7 ;
 or a number in either hex or decimal.
+This option is not available for IPv6.
 .It Fl t Ar ttl
 Use the specified time-to-live.
+This option is not available for IPv6.
 .It Fl V Ar rtable
 Set the routing table to be used for outgoing packets.
 .It Fl v
@@ -362,13 +420,15 @@ exits 0 if at least one reply is received,
 and \*(Gt0 if no reply is received or an error occurred.
 .Sh SEE ALSO
 .Xr netstat 1 ,
-.Xr ifconfig 8 ,
-.Xr ping6 8
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.3 .
+The
+.Nm ping6
+command with first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
 .Sh BUGS
 Many hosts and gateways ignore the
 .Dv RECORD_ROUTE
