@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.187 2016/09/17 09:17:55 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.188 2016/09/17 09:19:44 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -474,7 +474,7 @@ main(int argc, char *argv[])
 	if (!(packet = malloc((size_t)packlen)))
 		err(1, "malloc");
 	if (!(options & F_PINGFILLED))
-		for (i = sizeof(struct payload); i < datalen; ++i)
+		for (i = ECHOTMLEN; i < datalen; ++i)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
