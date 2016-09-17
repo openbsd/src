@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.213 2016/09/17 09:31:04 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.214 2016/09/17 09:32:54 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -428,6 +428,49 @@ main(int argc, char *argv[])
 		freeaddrinfo(res);
 		if (bind(s, from, from->sa_len) < 0)
 			err(1, "bind");
+	} else if (options & F_VERBOSE) {
+		/*
+		 * get the source address. XXX since we revoked the root
+		 * privilege, we cannot use a raw socket for this.
+		 */
+		int dummy;
+		socklen_t len = sizeof(from6);
+
+		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+			err(1, "UDP socket");
+
+		from6.sin6_family = AF_INET6;
+		from6.sin6_addr = dst6.sin6_addr;
+		from6.sin6_port = ntohs(DUMMY_PORT);
+		from6.sin6_scope_id = dst6.sin6_scope_id;
+
+		if (pktinfo &&
+		    setsockopt(dummy, IPPROTO_IPV6, IPV6_PKTINFO,
+		    (void *)pktinfo, sizeof(*pktinfo)))
+			err(1, "UDP setsockopt(IPV6_PKTINFO)");
+
+		if (hoplimit != -1 &&
+		    setsockopt(dummy, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
+		    (void *)&hoplimit, sizeof(hoplimit)))
+			err(1, "UDP setsockopt(IPV6_UNICAST_HOPS)");
+
+		if (hoplimit != -1 &&
+		    setsockopt(dummy, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+		    (void *)&hoplimit, sizeof(hoplimit)))
+			err(1, "UDP setsockopt(IPV6_MULTICAST_HOPS)");
+
+		if (rtableid > 0 &&
+		    setsockopt(dummy, SOL_SOCKET, SO_RTABLE, &rtableid,
+		    sizeof(rtableid)) < 0)
+			err(1, "setsockopt(SO_RTABLE)");
+
+		if (connect(dummy, (struct sockaddr *)&from6, len) < 0)
+			err(1, "UDP connect");
+
+		if (getsockname(dummy, (struct sockaddr *)&from6, &len) < 0)
+			err(1, "getsockname");
+
+		close(dummy);
 	}
 
 	if (options & F_SO_DEBUG)
@@ -546,51 +589,6 @@ main(int argc, char *argv[])
 		scmsg->cmsg_level = IPPROTO_IPV6;
 		scmsg->cmsg_type = IPV6_HOPLIMIT;
 		*(int *)(CMSG_DATA(scmsg)) = hoplimit;
-	}
-
-	if (!source && options & F_VERBOSE) {
-		/*
-		 * get the source address. XXX since we revoked the root
-		 * privilege, we cannot use a raw socket for this.
-		 */
-		int dummy;
-		socklen_t len = sizeof(from6);
-
-		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-			err(1, "UDP socket");
-
-		from6.sin6_family = AF_INET6;
-		from6.sin6_addr = dst6.sin6_addr;
-		from6.sin6_port = ntohs(DUMMY_PORT);
-		from6.sin6_scope_id = dst6.sin6_scope_id;
-
-		if (pktinfo &&
-		    setsockopt(dummy, IPPROTO_IPV6, IPV6_PKTINFO,
-		    (void *)pktinfo, sizeof(*pktinfo)))
-			err(1, "UDP setsockopt(IPV6_PKTINFO)");
-
-		if (hoplimit != -1 &&
-		    setsockopt(dummy, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
-		    (void *)&hoplimit, sizeof(hoplimit)))
-			err(1, "UDP setsockopt(IPV6_UNICAST_HOPS)");
-
-		if (hoplimit != -1 &&
-		    setsockopt(dummy, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
-		    (void *)&hoplimit, sizeof(hoplimit)))
-			err(1, "UDP setsockopt(IPV6_MULTICAST_HOPS)");
-
-		if (rtableid > 0 &&
-		    setsockopt(dummy, SOL_SOCKET, SO_RTABLE, &rtableid,
-		    sizeof(rtableid)) < 0)
-			err(1, "setsockopt(SO_RTABLE)");
-
-		if (connect(dummy, (struct sockaddr *)&from6, len) < 0)
-			err(1, "UDP connect");
-
-		if (getsockname(dummy, (struct sockaddr *)&from6, &len) < 0)
-			err(1, "getsockname");
-
-		close(dummy);
 	}
 
 	optval = 1;
