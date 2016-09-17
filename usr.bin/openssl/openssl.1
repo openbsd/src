@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.74 2016/09/15 20:57:07 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.75 2016/09/17 15:10:50 deraadt Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 15 2016 $
+.Dd $Mdocdate: September 17 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2399,7 +2399,6 @@ The
 .Nm pkcs7
 command processes PKCS#7 files in DER or PEM format.
 The PKCS#7 routines only understand PKCS#7 v 1.5 as specified in RFC 2315.
-They cannot currently parse, for example, the new CMS as described in RFC 2630.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
