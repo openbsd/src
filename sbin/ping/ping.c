@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.204 2016/09/17 09:37:19 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.205 2016/09/17 09:38:26 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1037,7 +1037,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			/* check the data */
 			if (cc - ECHOLEN < datalen)
 				(void)printf(" (TRUNC!)");
-			cp = (u_char *)&icp->icmp_data[sizeof(struct payload)];
+			cp = (u_char *)&icp->icmp_data[ECHOTMLEN];
 			dp = &outpack[ECHOLEN + ECHOTMLEN];
 			for (i = ECHOLEN + ECHOTMLEN;
 			    i < cc && i < datalen;
