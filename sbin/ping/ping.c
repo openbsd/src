@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.188 2016/09/17 09:19:44 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.189 2016/09/17 09:21:16 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -471,8 +471,9 @@ main(int argc, char *argv[])
 	if (datalen >= sizeof(struct payload))	/* can we time transfer */
 		timing = 1;
 	packlen = datalen + MAXIPLEN + MAXICMPLEN;
-	if (!(packet = malloc((size_t)packlen)))
+	if (!(packet = malloc(packlen)))
 		err(1, "malloc");
+
 	if (!(options & F_PINGFILLED))
 		for (i = ECHOTMLEN; i < datalen; ++i)
 			*datap++ = i;

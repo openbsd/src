@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.201 2016/09/17 09:20:39 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.202 2016/09/17 09:21:16 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -452,7 +452,7 @@ main(int argc, char *argv[])
 		packlen = datalen + IP6LEN + ECHOLEN + EXTRA;
 
 	if (!(packet = malloc(packlen)))
-		err(1, "Unable to allocate packet");
+		err(1, "malloc");
 
 	if (!(options & F_PINGFILLED))
 		for (i = ECHOTMLEN; i < datalen; ++i)
