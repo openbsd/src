@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.206 2016/09/17 14:58:42 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.207 2016/09/17 21:30:02 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -938,9 +938,9 @@ void
 summary(void)
 {
 	if (v6flag)
-		printf("\n--- %s ping statistics ---\n", hostname);
-	else
 		printf("\n--- %s ping6 statistics ---\n", hostname);
+	else
+		printf("\n--- %s ping statistics ---\n", hostname);
 	printf("%lld packets transmitted, ", ntransmitted);
 	printf("%lld packets received, ", nreceived);
 
