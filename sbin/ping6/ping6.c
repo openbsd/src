@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.215 2016/09/17 09:33:32 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.216 2016/09/17 09:34:28 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -638,7 +638,7 @@ main(int argc, char *argv[])
 	seeninfo = 0;
 
 	for (;;) {
-		struct msghdr	m;
+		struct msghdr		m;
 		union {
 			struct cmsghdr hdr;
 			u_char buf[CMSG_SPACE(1024)];
