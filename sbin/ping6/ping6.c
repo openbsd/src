@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.218 2016/09/17 09:35:27 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.219 2016/09/17 09:36:12 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -551,8 +551,6 @@ main(int argc, char *argv[])
 	    setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &loop,
 	    sizeof(loop)) < 0)
 		err(1, "setsockopt IP6_MULTICAST_LOOP");
-
-	optval = 1;
 
 	optval = IPV6_DEFHLIM;
 	if (IN6_IS_ADDR_MULTICAST(&dst6.sin6_addr))
