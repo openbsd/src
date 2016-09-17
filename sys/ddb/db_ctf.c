@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.2 2016/09/17 17:39:34 jasper Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.3 2016/09/17 17:45:37 jasper Exp $	*/
 
 /*
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -29,9 +29,9 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_elf.h>
 #include <ddb/db_output.h>
-#include <ddb/db_ctf.h>
 
 #include <sys/exec_elf.h>
+#include <sys/ctf.h>
 #include <sys/malloc.h>
 #include <lib/libz/zlib.h>
 
