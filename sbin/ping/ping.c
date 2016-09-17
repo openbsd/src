@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.196 2016/09/17 09:30:26 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.197 2016/09/17 09:31:04 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -392,7 +392,7 @@ main(int argc, char *argv[])
 	if (inet_aton(*argv, &dst4.sin_addr) != 0) {
 		hostname = *argv;
 		if ((target = strdup(inet_ntoa(dst4.sin_addr))) == NULL)
-			errx(1, "malloc");
+			err(1, "malloc");
 	} else
 		target = *argv;
 
@@ -436,27 +436,26 @@ main(int argc, char *argv[])
 	freeaddrinfo(res);
 
 	if (source) {
-		memset(&from4, 0, sizeof(from4));
-		from4.sin_family = AF_INET;
-		if (inet_aton(source, &from4.sin_addr) == 0) {
-			memset(&hints, 0, sizeof(hints));
-			hints.ai_family = AF_INET;
-			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-			if ((error = getaddrinfo(source, NULL, &hints, &res)))
-				errx(1, "%s: %s", source, gai_strerror(error));
-			if (res->ai_addrlen != sizeof(from4))
-				errx(1, "size of sockaddr mismatch");
-			memcpy(&from4, res->ai_addr, res->ai_addrlen);
-			freeaddrinfo(res);
+		if (inet_aton(source, &from4.sin_addr) != 0) {
+			if ((source = strdup(inet_ntoa(from4.sin_addr))) ==
+			    NULL)
+				err(1, "malloc");
 		}
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_INET;
+		if ((error = getaddrinfo(source, NULL, &hints, &res)))
+			errx(1, "%s: %s", source, gai_strerror(error));
+		if (res->ai_addrlen != sizeof(from4))
+			errx(1, "size of sockaddr mismatch");
+		memcpy(from, res->ai_addr, res->ai_addrlen);
+		freeaddrinfo(res);
 
 		if (IN_MULTICAST(ntohl(dst4.sin_addr.s_addr))) {
 			if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
 			    &from4.sin_addr, sizeof(from4.sin_addr)) < 0)
 				err(1, "setsockopt IP_MULTICAST_IF");
 		} else {
-			if (bind(s, (struct sockaddr *)&from4, sizeof(from4))
-			    < 0)
+			if (bind(s, from, from->sa_len) < 0)
 				err(1, "bind");
 		}
 	}

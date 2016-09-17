@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.212 2016/09/17 09:30:26 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.213 2016/09/17 09:31:04 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -417,23 +417,16 @@ main(int argc, char *argv[])
 	freeaddrinfo(res);
 
 	if (source) {
-		memset(&hints, 0, sizeof(struct addrinfo));
-		hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_INET6;
-		hints.ai_socktype = SOCK_RAW;
-		hints.ai_protocol = IPPROTO_ICMPV6;
-
-		error = getaddrinfo(source, NULL, &hints, &res);
-		if (error)
-			errx(1, "invalid source address: %s", 
-			     gai_strerror(error));
-
+		if ((error = getaddrinfo(source, NULL, &hints, &res)))
+			errx(1, "%s: %s", source, gai_strerror(error));
 		if (res->ai_family != AF_INET6 || res->ai_addrlen !=
 		    sizeof(from6))
 			errx(1, "invalid source address");
-		memcpy(&from6, res->ai_addr, sizeof(from6));
+		memcpy(from, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
-		if (bind(s, (struct sockaddr *)&from6, sizeof(from6)) != 0)
+		if (bind(s, from, from->sa_len) < 0)
 			err(1, "bind");
 	}
 
