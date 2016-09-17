@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.205 2016/09/17 09:23:42 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.206 2016/09/17 09:24:51 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -501,6 +501,9 @@ main(int argc, char *argv[])
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVDSTOPTS, &opton,
 		    (socklen_t)sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVDSTOPTS)");
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVRTHDR, &opton,
+		    sizeof(opton)))
+			err(1, "setsockopt(IPV6_RECVRTHDR)");
 	}
 
 	if ((moptions & MULTICAST_NOLOOP) &&
@@ -537,15 +540,6 @@ main(int argc, char *argv[])
 	if (setsockopt(s, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
 	    (socklen_t)sizeof(filt)) < 0)
 		err(1, "setsockopt(ICMP6_FILTER)");
-
-	/* let the kernel pass extension headers of incoming packets */
-	if ((options & F_VERBOSE) != 0) {
-		int opton = 1;
-
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVRTHDR, &opton,
-		    sizeof(opton)))
-			err(1, "setsockopt(IPV6_RECVRTHDR)");
-	}
 
 	if (hoplimit != -1) {
 		/* set IP6 packet options */
