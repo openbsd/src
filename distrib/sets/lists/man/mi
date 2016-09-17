@@ -493,6 +493,7 @@
 ./usr/share/man/man1/zforce.1
 ./usr/share/man/man1/zmore.1
 ./usr/share/man/man1/znew.1
+./usr/share/man/man3/legacy_coding.3
 ./usr/share/man/man3p/AnyDBM_File.3p
 ./usr/share/man/man3p/App::Cpan.3p
 ./usr/share/man/man3p/App::Prove.3p
