@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.199 2016/09/17 09:17:55 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.200 2016/09/17 09:18:43 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -445,6 +445,21 @@ main(int argc, char *argv[])
 	if (datalen >= sizeof(struct payload))	/* can we time transfer */
 		timing = 1;
 
+	/* in F_VERBOSE case, we may get non-echoreply packets*/
+	if (options & F_VERBOSE && datalen < 2048)
+		packlen = 2048 + IP6LEN + ECHOLEN + EXTRA; /* XXX 2048? */
+	else
+		packlen = datalen + IP6LEN + ECHOLEN + EXTRA;
+
+	if (!(packet = malloc(packlen)))
+		err(1, "Unable to allocate packet");
+
+	if (!(options & F_PINGFILLED))
+		for (i = ECHOLEN; i < packlen; ++i)
+			*datap++ = i;
+
+	ident = getpid() & 0xFFFF;
+
 	/*
 	 * let the kernel pass extension headers of incoming packets,
 	 * for privileged socket options
@@ -465,15 +480,6 @@ main(int argc, char *argv[])
 	    sizeof(loop)) < 0)
 		err(1, "setsockopt IP6_MULTICAST_LOOP");
 
-	/* in F_VERBOSE case, we may get non-echoreply packets*/
-	if (options & F_VERBOSE && datalen < 2048)
-		packlen = 2048 + IP6LEN + ECHOLEN + EXTRA; /* XXX 2048? */
-	else
-		packlen = datalen + IP6LEN + ECHOLEN + EXTRA;
-
-	if (!(packet = malloc(packlen)))
-		err(1, "Unable to allocate packet");
-
 	/*
 	 * When trying to send large packets, you must increase the
 	 * size of both the send and receive buffers...
@@ -490,12 +496,6 @@ main(int argc, char *argv[])
 	if (maxsize < packlen &&
 	    setsockopt(s, SOL_SOCKET, SO_RCVBUF, &packlen, sizeof(maxsize)) < 0)
 		err(1, "setsockopt");
-
-	if (!(options & F_PINGFILLED))
-		for (i = ECHOLEN; i < packlen; ++i)
-			*datap++ = i;
-
-	ident = getpid() & 0xFFFF;
 
 	optval = 1;
 
