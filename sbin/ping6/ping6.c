@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.204 2016/09/17 09:23:04 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.205 2016/09/17 09:23:42 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -225,6 +225,7 @@ main(int argc, char *argv[])
 	struct sockaddr_in6 from, from6, dst;
 	struct cmsghdr *scmsg = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
+	struct icmp6_filter filt;
 	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error, s, hoplimit = -1;
@@ -527,9 +528,6 @@ main(int argc, char *argv[])
 			err(1, "setsockopt(IPV6_RECVPATHMTU)");
 	}
 
-
-    {
-	struct icmp6_filter filt;
 	if (!(options & F_VERBOSE)) {
 		ICMP6_FILTER_SETBLOCKALL(&filt);
 		ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filt);
@@ -539,7 +537,6 @@ main(int argc, char *argv[])
 	if (setsockopt(s, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
 	    (socklen_t)sizeof(filt)) < 0)
 		err(1, "setsockopt(ICMP6_FILTER)");
-    }
 
 	/* let the kernel pass extension headers of incoming packets */
 	if ((options & F_VERBOSE) != 0) {
