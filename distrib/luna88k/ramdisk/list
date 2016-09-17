@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.36 2016/09/13 22:27:50 rpe Exp $
+#	$OpenBSD: list,v 1.37 2016/09/17 15:03:39 florian Exp $
 
 SRCDIRS distrib/special
 
@@ -40,8 +40,7 @@ LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/mount_nfs
 LINK	instbin					sbin/newfs
-LINK	instbin					sbin/ping
-LINK	instbin					sbin/ping6
+LINK	instbin					sbin/ping sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
 LINK	instbin					sbin/sysctl
