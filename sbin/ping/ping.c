@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.184 2016/09/13 07:17:40 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.185 2016/09/17 09:14:30 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -151,6 +151,8 @@ int options;
 int moptions;
 #define	MULTICAST_NOLOOP	0x001
 #define	MULTICAST_TTL		0x002
+
+#define DUMMY_PORT	10101
 
 /*
  * MAX_DUP_CHK is the number of bits in received table, i.e. the maximum
@@ -553,6 +555,44 @@ main(int argc, char *argv[])
 		warnx("Could only allocate a receive buffer of %d bytes (default %d)",
 		    bufspace, IP_MAXPACKET);
 
+	if (!source && options & F_VERBOSE) {
+		/*
+		 * get the source address. XXX since we revoked the root
+		 * privilege, we cannot use a raw socket for this.
+		 */
+		int dummy;
+		socklen_t len = sizeof(from4);
+
+		if ((dummy = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+			err(1, "UDP socket");
+
+		from4.sin_family = AF_INET;
+		from4.sin_addr = dst.sin_addr;
+		from4.sin_port = ntohs(DUMMY_PORT);
+
+		if ((moptions & MULTICAST_NOLOOP) &&
+		    setsockopt(dummy, IPPROTO_IP, IP_MULTICAST_LOOP, &loop,
+		    sizeof(loop)) < 0)
+			err(1, "setsockopt IP_MULTICAST_LOOP");
+		if ((moptions & MULTICAST_TTL) &&
+		    setsockopt(dummy, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
+		    sizeof(ttl)) < 0)
+		err(1, "setsockopt IP_MULTICAST_TTL");
+
+		if (rtableid > 0 &&
+		    setsockopt(dummy, SOL_SOCKET, SO_RTABLE, &rtableid,
+		    sizeof(rtableid)) < 0)
+			err(1, "setsockopt(SO_RTABLE)");
+
+		if (connect(dummy, (struct sockaddr *)&from4, len) < 0)
+			err(1, "UDP connect");
+
+		if (getsockname(dummy, (struct sockaddr *)&from4, &len) < 0)
+			err(1, "getsockname");
+
+		close(dummy);
+	}
+
 	if (options & F_HOSTNAME) {
 		if (pledge("stdio inet dns", NULL) == -1)
 			err(1, "pledge");
@@ -564,8 +604,12 @@ main(int argc, char *argv[])
 	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
 	arc4random_buf(&mac_key, sizeof(mac_key));
 
-	printf("PING %s (%s): %d data bytes\n", hostname,
-	    pr_addr((struct sockaddr *)&dst, sizeof(dst)), datalen);
+	printf("PING %s (", hostname);
+	if (0 && (options & F_VERBOSE))
+		printf("%s --> ", pr_addr((struct sockaddr *)&from4,
+		    sizeof(from4)));
+	printf("%s): %d data bytes\n", pr_addr((struct sockaddr *)&dst,
+	    sizeof(dst)), datalen);
 
 	smsghdr.msg_name = &dst;
 	smsghdr.msg_namelen = sizeof(dst);
