@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.206 2016/09/17 09:24:51 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.207 2016/09/17 09:25:36 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -504,6 +504,10 @@ main(int argc, char *argv[])
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVRTHDR, &opton,
 		    sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVRTHDR)");
+		ICMP6_FILTER_SETPASSALL(&filt);
+	} else {
+		ICMP6_FILTER_SETBLOCKALL(&filt);
+		ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filt);
 	}
 
 	if ((moptions & MULTICAST_NOLOOP) &&
@@ -531,12 +535,6 @@ main(int argc, char *argv[])
 			err(1, "setsockopt(IPV6_RECVPATHMTU)");
 	}
 
-	if (!(options & F_VERBOSE)) {
-		ICMP6_FILTER_SETBLOCKALL(&filt);
-		ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filt);
-	} else {
-		ICMP6_FILTER_SETPASSALL(&filt);
-	}
 	if (setsockopt(s, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
 	    (socklen_t)sizeof(filt)) < 0)
 		err(1, "setsockopt(ICMP6_FILTER)");
