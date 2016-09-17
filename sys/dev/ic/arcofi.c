@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.14 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.15 2016/09/17 07:29:04 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -195,7 +195,6 @@ int	arcofi_set_param(struct arcofi_softc *, int, int, int,
 
 void	arcofi_close(void *);
 int	arcofi_commit_settings(void *);
-int	arcofi_drain(void *);
 int	arcofi_getdev(void *, struct audio_device *);
 int	arcofi_get_port(void *, mixer_ctrl_t *);
 int	arcofi_get_props(void *);
@@ -291,31 +290,6 @@ arcofi_close(void *v)
 	arcofi_halt_input(v);
 	arcofi_halt_output(v);
 	sc->sc_open = 0;
-}
-
-int
-arcofi_drain(void *v)
-{
-	struct arcofi_softc *sc = (struct arcofi_softc *)v;
-
-	mtx_enter(&audio_lock);
-	if ((arcofi_read(sc, ARCOFI_FIFO_SR) & FIFO_SR_OUT_EMPTY) == 0) {
-		/* enable output FIFO empty interrupt... */
-		arcofi_write(sc, ARCOFI_FIFO_IR,
-		    arcofi_read(sc, ARCOFI_FIFO_IR) |
-		    FIFO_IR_ENABLE(FIFO_IR_OUT_EMPTY));
-		/* ...and wait for it to fire */
-		if (msleep(&sc->sc_xmit, &audio_lock, 0, "arcofidr",
-		    1 + (ARCOFI_FIFO_SIZE * hz) / 8000) != 0) {
-			printf("%s: drain did not complete\n",
-			    sc->sc_dev.dv_xname);
-			arcofi_write(sc, ARCOFI_FIFO_IR,
-			    arcofi_read(sc, ARCOFI_FIFO_IR) &
-			    ~FIFO_IR_ENABLE(FIFO_IR_OUT_EMPTY));
-		}
-	}
-	mtx_leave(&audio_lock);
-	return 0;
 }
 
 /*
