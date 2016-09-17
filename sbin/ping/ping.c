@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.190 2016/09/17 09:21:59 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.191 2016/09/17 09:22:31 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -503,9 +503,8 @@ main(int argc, char *argv[])
 			err(1, "Cannot set the receive buffer size");
 	}
 	if (bufspace < IP_MAXPACKET)
-		warnx("Could only allocate a receive buffer of %d bytes (default %d)",
-		    bufspace, IP_MAXPACKET);
-
+		warnx("Could only allocate a receive buffer of %d bytes "
+		    "(default %d)", bufspace, IP_MAXPACKET);
 
 	if (options & F_TTL) {
 		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
