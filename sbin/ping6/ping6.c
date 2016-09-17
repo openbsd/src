@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.220 2016/09/17 09:36:42 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.221 2016/09/17 09:37:56 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -923,8 +923,6 @@ pinger(int s)
 	return (0);
 }
 
-#define MINIMUM(a,b) (((a)<(b))?(a):(b))
-
 /*
  * pr_pack --
  *	Print out the packet, if it came from us.  This logic is necessary
@@ -1036,15 +1034,10 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
+			if (cc - ECHOLEN < datalen)
+				(void)printf(" (TRUNC!)");
 			cp = buf + ECHOLEN + ECHOTMLEN;
 			dp = outpack + ECHOLEN + ECHOTMLEN;
-			if (cc != ECHOLEN + datalen) {
-				int delta = cc - (datalen + ECHOLEN);
-
-				(void)printf(" (%d bytes %s)",
-				    abs(delta), delta > 0 ? "extra" : "short");
-				end = buf + MINIMUM(cc, ECHOLEN + datalen);
-			}
 			for (i = ECHOLEN; cp < end; ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
 					(void)printf("\nwrong data byte #%d "
