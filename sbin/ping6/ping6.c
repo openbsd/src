@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.203 2016/09/17 09:21:59 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.204 2016/09/17 09:23:04 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -228,6 +228,7 @@ main(int argc, char *argv[])
 	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error, s, hoplimit = -1;
+	int bufspace = IP_MAXPACKET;
 	u_char *datap, *packet, loop = 1;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	const char *errstr;
@@ -471,11 +472,20 @@ main(int argc, char *argv[])
 	    setsockopt(s, SOL_SOCKET, SO_SNDBUF, &packlen, sizeof(maxsize)) < 0)
 		err(1, "setsockopt");
 
-	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &maxsize, &maxsizelen) < 0)
-		err(1, "getsockopt");
-	if (maxsize < packlen &&
-	    setsockopt(s, SOL_SOCKET, SO_RCVBUF, &packlen, sizeof(maxsize)) < 0)
-		err(1, "setsockopt");
+	/*
+	 * When pinging the broadcast address, you can get a lot of answers.
+	 * Doing something so evil is useful if you are trying to stress the
+	 * ethernet, or just want to fill the arp cache to get some stuff for
+	 * /etc/ethers.
+	 */
+	while (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
+	    (void*)&bufspace, sizeof(bufspace)) < 0) {
+		if ((bufspace -= 1024) <= 0)
+			err(1, "Cannot set the receive buffer size");
+	}
+	if (bufspace < IP_MAXPACKET)
+		warnx("Could only allocate a receive buffer of %d bytes "
+		    "(default %d)", bufspace, IP_MAXPACKET);
 
 	/*
 	 * let the kernel pass extension headers of incoming packets,
