@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.104 2015/03/24 12:00:39 dlg Exp $
+#	$OpenBSD: Makefile,v 1.105 2016/09/17 18:37:01 florian Exp $
 
 SUBDIR=	atactl badsect bioctl clri dhclient \
 	disklabel dmesg dump dumpfs fdisk fsck fsck_ext2fs fsck_ffs  \
@@ -7,7 +7,7 @@ SUBDIR=	atactl badsect bioctl clri dhclient \
 	mount_cd9660 mount_ext2fs mount_ffs mount_msdos \
 	mount_nfs mount_ntfs mount_tmpfs mount_udf \
 	mount_vnd mountd ncheck_ffs newfs newfs_ext2fs newfs_msdos \
-	nfsd nologin pdisk pfctl pflogd ping ping6 quotacheck \
+	nfsd nologin pdisk pfctl pflogd ping quotacheck \
 	reboot restore route savecore scan_ffs \
 	scsi shutdown swapctl sysctl ttyflags tunefs \
 	umount wsconsctl
