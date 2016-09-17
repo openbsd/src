@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.182 2016/09/04 17:22:40 jsing Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.183 2016/09/17 00:42:35 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -65,6 +65,7 @@
 #include <sys/pledge.h>
 
 #include "audio.h"
+#include "pf.h"
 #include "pty.h"
 
 #if defined(__amd64__)
@@ -1211,7 +1212,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_PF)) {
-#ifndef SMALL_KERNEL
+#if NPF > 0
 		switch (com) {
 		case DIOCADDRULE:
 		case DIOCGETSTATUS:
@@ -1231,7 +1232,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 				return (0);
 			break;
 		}
-#endif /* !SMALL_KERNEL */
+#endif
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_TTY)) {
