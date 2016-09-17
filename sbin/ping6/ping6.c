@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.200 2016/09/17 09:18:43 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.201 2016/09/17 09:20:39 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -455,7 +455,7 @@ main(int argc, char *argv[])
 		err(1, "Unable to allocate packet");
 
 	if (!(options & F_PINGFILLED))
-		for (i = ECHOLEN; i < packlen; ++i)
+		for (i = ECHOTMLEN; i < datalen; ++i)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
