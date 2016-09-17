@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.217 2016/09/17 09:34:57 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.218 2016/09/17 09:35:27 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -378,7 +378,7 @@ main(int argc, char *argv[])
 		target = *argv;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_INET6;
+	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_protocol = 0;
 	hints.ai_flags = AI_CANONNAME;
