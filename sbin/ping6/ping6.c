@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.197 2016/09/17 09:15:38 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.198 2016/09/17 09:16:32 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -83,6 +83,9 @@
 #include <sys/uio.h>
 
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/ip_var.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/ip_ah.h>
