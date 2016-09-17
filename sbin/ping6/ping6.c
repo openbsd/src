@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.221 2016/09/17 09:37:56 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.222 2016/09/17 09:39:09 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1037,12 +1037,21 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			if (cc - ECHOLEN < datalen)
 				(void)printf(" (TRUNC!)");
 			cp = buf + ECHOLEN + ECHOTMLEN;
-			dp = outpack + ECHOLEN + ECHOTMLEN;
-			for (i = ECHOLEN; cp < end; ++i, ++cp, ++dp) {
+			dp = &outpack[ECHOLEN + ECHOTMLEN];
+			for (i = ECHOLEN + ECHOTMLEN;
+			    i < cc && i < datalen;
+			    ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
 					(void)printf("\nwrong data byte #%d "
 					    "should be 0x%x but was 0x%x",
-					    i, *dp, *cp);
+					    i - ECHOLEN, *dp, *cp);
+					cp = buf + ECHOLEN;
+					for (i = ECHOLEN; i < cc && i < datalen;
+					     ++i, ++cp) {
+						if ((i % 32) == 8)
+							(void)printf("\n\t");
+						(void)printf("%x ", *cp);
+					}
 					break;
 				}
 			}
