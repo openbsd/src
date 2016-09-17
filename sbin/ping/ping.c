@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.189 2016/09/17 09:21:16 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.190 2016/09/17 09:21:59 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -480,6 +480,33 @@ main(int argc, char *argv[])
 
 	ident = getpid() & 0xFFFF;
 
+	/*
+	 * When trying to send large packets, you must increase the
+	 * size of both the send and receive buffers...
+	 */
+	maxsizelen = sizeof maxsize;
+	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &maxsize, &maxsizelen) < 0)
+		err(1, "getsockopt");
+	if (maxsize < packlen &&
+	    setsockopt(s, SOL_SOCKET, SO_SNDBUF, &packlen, sizeof(maxsize)) < 0)
+		err(1, "setsockopt");
+
+	/*
+	 * When pinging the broadcast address, you can get a lot of answers.
+	 * Doing something so evil is useful if you are trying to stress the
+	 * ethernet, or just want to fill the arp cache to get some stuff for
+	 * /etc/ethers.
+	 */
+	while (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
+	    (void*)&bufspace, sizeof(bufspace)) < 0) {
+		if ((bufspace -= 1024) <= 0)
+			err(1, "Cannot set the receive buffer size");
+	}
+	if (bufspace < IP_MAXPACKET)
+		warnx("Could only allocate a receive buffer of %d bytes (default %d)",
+		    bufspace, IP_MAXPACKET);
+
+
 	if (options & F_TTL) {
 		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
 			moptions |= MULTICAST_TTL;
@@ -532,32 +559,6 @@ main(int argc, char *argv[])
 	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
 	    sizeof(ttl)) < 0)
 		err(1, "setsockopt IP_MULTICAST_TTL");
-
-	/*
-	 * When trying to send large packets, you must increase the
-	 * size of both the send and receive buffers...
-	 */
-	maxsizelen = sizeof maxsize;
-	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &maxsize, &maxsizelen) < 0)
-		err(1, "getsockopt");
-	if (maxsize < packlen &&
-	    setsockopt(s, SOL_SOCKET, SO_SNDBUF, &packlen, sizeof(maxsize)) < 0)
-		err(1, "setsockopt");
-
-	/*
-	 * When pinging the broadcast address, you can get a lot of answers.
-	 * Doing something so evil is useful if you are trying to stress the
-	 * ethernet, or just want to fill the arp cache to get some stuff for
-	 * /etc/ethers.
-	 */
-	while (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
-	    (void*)&bufspace, sizeof(bufspace)) < 0) {
-		if ((bufspace -= 1024) <= 0)
-			err(1, "Cannot set the receive buffer size");
-	}
-	if (bufspace < IP_MAXPACKET)
-		warnx("Could only allocate a receive buffer of %d bytes (default %d)",
-		    bufspace, IP_MAXPACKET);
 
 	if (!source && options & F_VERBOSE) {
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.202 2016/09/17 09:21:16 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.203 2016/09/17 09:21:59 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -461,6 +461,23 @@ main(int argc, char *argv[])
 	ident = getpid() & 0xFFFF;
 
 	/*
+	 * When trying to send large packets, you must increase the
+	 * size of both the send and receive buffers...
+	 */
+	maxsizelen = sizeof maxsize;
+	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &maxsize, &maxsizelen) < 0)
+		err(1, "getsockopt");
+	if (maxsize < packlen &&
+	    setsockopt(s, SOL_SOCKET, SO_SNDBUF, &packlen, sizeof(maxsize)) < 0)
+		err(1, "setsockopt");
+
+	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &maxsize, &maxsizelen) < 0)
+		err(1, "getsockopt");
+	if (maxsize < packlen &&
+	    setsockopt(s, SOL_SOCKET, SO_RCVBUF, &packlen, sizeof(maxsize)) < 0)
+		err(1, "setsockopt");
+
+	/*
 	 * let the kernel pass extension headers of incoming packets,
 	 * for privileged socket options
 	 */
@@ -479,23 +496,6 @@ main(int argc, char *argv[])
 	    setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &loop,
 	    sizeof(loop)) < 0)
 		err(1, "setsockopt IP6_MULTICAST_LOOP");
-
-	/*
-	 * When trying to send large packets, you must increase the
-	 * size of both the send and receive buffers...
-	 */
-	maxsizelen = sizeof maxsize;
-	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &maxsize, &maxsizelen) < 0)
-		err(1, "getsockopt");
-	if (maxsize < packlen &&
-	    setsockopt(s, SOL_SOCKET, SO_SNDBUF, &packlen, sizeof(maxsize)) < 0)
-		err(1, "setsockopt");
-
-	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &maxsize, &maxsizelen) < 0)
-		err(1, "getsockopt");
-	if (maxsize < packlen &&
-	    setsockopt(s, SOL_SOCKET, SO_RCVBUF, &packlen, sizeof(maxsize)) < 0)
-		err(1, "setsockopt");
 
 	optval = 1;
 
