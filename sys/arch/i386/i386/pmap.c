@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.193 2016/09/16 02:35:41 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.194 2016/09/17 07:37:57 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2448,58 +2448,6 @@ pmap_growkernel_86(vaddr_t maxkvaddr)
 out:
 	return (VM_MIN_KERNEL_ADDRESS + (nkpde * NBPD));
 }
-
-#ifdef DEBUG
-void		 pmap_dump_86(struct pmap *, vaddr_t, vaddr_t);
-
-/*
- * pmap_dump: dump all the mappings from a pmap
- *
- * => caller should not be holding any pmap locks
- */
-
-void
-pmap_dump_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
-{
-	pt_entry_t *ptes, *pte;
-	vaddr_t blkendva;
-
-	/*
-	 * if end is out of range truncate.
-	 * if (end == start) update to max.
-	 */
-
-	if (eva > VM_MAXUSER_ADDRESS || eva <= sva)
-		eva = VM_MAXUSER_ADDRESS;
-
-	ptes = pmap_map_ptes_86(pmap);	/* locks pmap */
-
-	/*
-	 * dumping a range of pages: we dump in PTP sized blocks (4MB)
-	 */
-
-	for (/* null */ ; sva < eva ; sva = blkendva) {
-
-		/* determine range of block */
-		blkendva = i386_round_pdr(sva+1);
-		if (blkendva > eva)
-			blkendva = eva;
-
-		/* valid block? */
-		if (!pmap_valid_entry(PDE(pmap, pdei(sva))))
-			continue;
-
-		pte = &ptes[atop(sva)];
-		for (/* null */; sva < blkendva ; sva += NBPG, pte++) {
-			if (!pmap_valid_entry(*pte))
-				continue;
-			printf("va %#lx -> pa %#x (pte=%#x)\n",
-			       sva, *pte, *pte & PG_FRAME);
-		}
-	}
-	pmap_unmap_ptes_86(pmap);
-}
-#endif
 
 #ifdef MULTIPROCESSOR
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.101 2016/09/16 02:35:41 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.102 2016/09/17 07:37:57 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2393,60 +2393,6 @@ pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
 
 	return (va);
 }
-
-#ifdef DEBUG
-void pmap_dump(struct pmap *, vaddr_t, vaddr_t);
-
-/*
- * pmap_dump: dump all the mappings from a pmap
- *
- * => caller should not be holding any pmap locks
- */
-
-void
-pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
-{
-	pt_entry_t *ptes, *pte;
-	pd_entry_t **pdes;
-	vaddr_t blkendva;
-	paddr_t scr3;
-
-	/*
-	 * if end is out of range truncate.
-	 * if (end == start) update to max.
-	 */
-
-	if (eva > VM_MAXUSER_ADDRESS || eva <= sva)
-		eva = VM_MAXUSER_ADDRESS;
-
-	pmap_map_ptes(pmap, &ptes, &pdes, &scr3);
-
-	/*
-	 * dumping a range of pages: we dump in PTP sized blocks (4MB)
-	 */
-
-	for (/* null */ ; sva < eva ; sva = blkendva) {
-
-		/* determine range of block */
-		blkendva = x86_round_pdr(sva+1);
-		if (blkendva > eva)
-			blkendva = eva;
-
-		/* valid block? */
-		if (!pmap_pdes_valid(sva, pdes, NULL))
-			continue;
-
-		pte = &ptes[pl1_i(sva)];
-		for (/* null */; sva < blkendva ; sva += PAGE_SIZE, pte++) {
-			if (!pmap_valid_entry(*pte))
-				continue;
-			printf("va %#lx -> pa %#llx (pte=%#llx)\n",
-			       sva, *pte, *pte & PG_FRAME);
-		}
-	}
-	pmap_unmap_ptes(pmap, scr3);
-}
-#endif
 
 void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)

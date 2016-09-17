@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.50 2016/09/16 02:35:41 dlg Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.51 2016/09/17 07:37:57 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1915,54 +1915,3 @@ pmap_flush_page_pae(paddr_t pa)
 	*pte = 0;
 	pmap_update_pg(va);
 }
-
-#ifdef DEBUG
-void		 pmap_dump_pae(struct pmap *, vaddr_t, vaddr_t);
-/*
- * pmap_dump: dump all the mappings from a pmap
- *
- * => caller should not be holding any pmap locks
- */
-
-void
-pmap_dump_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
-{
-	pt_entry_t *ptes, *pte;
-	vaddr_t blkendva;
-
-	/*
-	 * if end is out of range truncate.
-	 * if (end == start) update to max.
-	 */
-
-	if (eva > VM_MAXUSER_ADDRESS || eva <= sva)
-		eva = VM_MAXUSER_ADDRESS;
-
-	ptes = pmap_map_ptes_pae(pmap);	/* locks pmap */
-
-	/*
-	 * dumping a range of pages: we dump in PTP sized blocks (4MB)
-	 */
-
-	for (/* null */ ; sva < eva ; sva = blkendva) {
-
-		/* determine range of block */
-		blkendva = i386_round_pdr(sva+1);
-		if (blkendva > eva)
-			blkendva = eva;
-
-		/* valid block? */
-		if (!pmap_valid_entry(PDE(pmap, pdei(sva))))
-			continue;
-
-		pte = &ptes[atop(sva)];
-		for (/* null */; sva < blkendva ; sva += NBPG, pte++) {
-			if (!pmap_valid_entry(*pte))
-				continue;
-			printf("va %#lx -> pa %#llx (pte=%#llx)\n",
-			       sva, *pte, *pte & PG_FRAME);
-		}
-	}
-	pmap_unmap_ptes_pae(pmap);
-}
-#endif
