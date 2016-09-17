@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.117 2016/09/13 08:32:44 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.118 2016/09/17 14:56:12 jasper Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -308,7 +308,6 @@ extern int (*mountroot)(void);
 #if defined(DDB) || defined(KGDB)
 /* debugger entry points */
 void	Debugger(void);	/* in DDB only */
-int	read_symtab_from_file(struct proc *,struct vnode *,const char *);
 #endif
 
 #ifdef BOOT_CONFIG
