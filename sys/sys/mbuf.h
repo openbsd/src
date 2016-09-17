@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.219 2016/09/15 00:00:40 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.220 2016/09/17 00:38:43 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -387,10 +387,6 @@ u_int mextfree_register(void (*)(caddr_t, u_int, void *));
  * pool headers (mbpool and mclpool).
  */
 struct mbstat {
-	u_long	_m_spare;	/* formerly m_mbufs */
-	u_long	_m_spare1;	/* formerly m_clusters */
-	u_long	_m_spare2;	/* spare field */
-	u_long	_m_spare3;	/* formely m_clfree - free clusters */
 	u_long	m_drops;	/* times failed to find space */
 	u_long	m_wait;		/* times waited for space */
 	u_long	m_drain;	/* times drained protocols for space */
