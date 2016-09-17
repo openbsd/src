@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.84 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.85 2016/09/17 06:43:38 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3797,7 +3797,6 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		 *  direct cache access (CPUIDECX_DCA)
 		 *  x2APIC (CPUIDECX_X2APIC)
 		 *  apic deadline (CPUIDECX_DEADLINE)
-		 *  performance monitoring (CPUIDECX_PDCM)
 		 *  timestamp (CPUID_TSC)
 		 *  apic (CPUID_APIC)
 		 *  psn (CPUID_PSN)
@@ -3814,7 +3813,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		    CPUIDECX_VMX | CPUIDECX_DTES64 |
 		    CPUIDECX_DSCPL | CPUIDECX_SMX |
 		    CPUIDECX_CNXTID | CPUIDECX_SDBG |
-		    CPUIDECX_XTPR | CPUIDECX_PDCM |
+		    CPUIDECX_XTPR |
 		    CPUIDECX_PCID | CPUIDECX_DCA |
 		    CPUIDECX_X2APIC | CPUIDECX_DEADLINE);
 		*rdx = curcpu()->ci_feature_flags &
