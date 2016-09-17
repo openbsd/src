@@ -436,12 +436,12 @@ cmd_ichar(char *cs, int clen)
 	/*
 	 * Make room for the new character (shift the tail of the buffer right).
 	 */
-	for (s = &cmdbuf[strlen(cmdbuf)];  s >= cp;  s--)
+	for (s = &cmdbuf[strlen(cmdbuf)]; s >= cp; s--)
 		s[clen] = s[0];
 	/*
 	 * Insert the character into the buffer.
 	 */
-	for (s = cp;  s < cp + clen;  s++)
+	for (s = cp; s < cp + clen; s++)
 		*s = *cs++;
 	/*
 	 * Reprint the tail of the line from the inserted char.
@@ -883,12 +883,12 @@ delimit_word(void)
 	 * without a corresponding close quote), we return everything
 	 * from the open quote, including spaces.
 	 */
-	for (word = cmdbuf;  word < cp;  word++)
+	for (word = cmdbuf; word < cp; word++)
 		if (*word != ' ')
 			break;
 	if (word >= cp)
 		return (cp);
-	for (p = cmdbuf;  p < cp;  p++) {
+	for (p = cmdbuf; p < cp; p++) {
 		if (meta_quoted) {
 			meta_quoted = 0;
 		} else if (esclen > 0 && p + esclen < cp &&
@@ -1155,7 +1155,7 @@ cmd_int(long *frac)
 	off_t n = 0;
 	int err;
 
-	for (p = cmdbuf;  *p >= '0' && *p <= '9';  p++)
+	for (p = cmdbuf; *p >= '0' && *p <= '9'; p++)
 		n = (n * 10) + (*p - '0');
 	*frac = 0;
 	if (*p++ == '.') {
@@ -1239,7 +1239,7 @@ init_cmdhist(void)
 		return;
 	}
 	while (fgets(line, sizeof (line), f) != NULL) {
-		for (p = line;  *p != '\0';  p++) {
+		for (p = line; *p != '\0'; p++) {
 			if (*p == '\n' || *p == '\r') {
 				*p = '\0';
 				break;
@@ -1274,12 +1274,12 @@ save_mlist(struct mlist *ml, FILE *f)
 		histsize = 100;
 
 	ml = ml->prev;
-	for (n = 0;  n < histsize;  n++) {
+	for (n = 0; n < histsize; n++) {
 		if (ml->string == NULL)
 			break;
 		ml = ml->prev;
 	}
-	for (ml = ml->next;  ml->string != NULL;  ml = ml->next)
+	for (ml = ml->next; ml->string != NULL; ml = ml->next)
 		(void) fprintf(f, "\"%s\n", ml->string);
 }
 

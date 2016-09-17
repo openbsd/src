@@ -125,7 +125,7 @@ shell_quote(const char *s)
 	 * Determine how big a string we need to allocate.
 	 */
 	len = 1; /* Trailing null byte */
-	for (p = s;  *p != '\0';  p++) {
+	for (p = s; *p != '\0'; p++) {
 		len++;
 		if (*p == openquote || *p == closequote)
 			have_quotes = 1;
@@ -233,7 +233,7 @@ fexpand(char *s)
 	 * need to allocate for the expanded string.
 	 */
 	n = 0;
-	for (fr = s;  *fr != '\0';  fr++) {
+	for (fr = s; *fr != '\0'; fr++) {
 		switch (*fr) {
 		case '%':
 		case '#':
@@ -270,7 +270,7 @@ fexpand(char *s)
 	 * Now copy the string, expanding any "%" or "#".
 	 */
 	to = e;
-	for (fr = s;  *fr != '\0';  fr++) {
+	for (fr = s; *fr != '\0'; fr++) {
 		switch (*fr) {
 		case '%':
 		case '#':
@@ -762,7 +762,7 @@ last_component(char *name)
 {
 	char *slash;
 
-	for (slash = name + strlen(name);  slash > name; ) {
+	for (slash = name + strlen(name); slash > name; ) {
 		--slash;
 		if (*slash == '/')
 			return (slash + 1);

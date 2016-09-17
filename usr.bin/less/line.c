@@ -181,7 +181,7 @@ plinenum(off_t pos)
 		if (n < MIN_LINENUM_WIDTH)
 			n = MIN_LINENUM_WIDTH;
 		snprintf(linebuf+curr, size_linebuf-curr, "%*s ", n, buf);
-		n++;  /* One space after the line number. */
+		n++;	/* One space after the line number. */
 		for (i = 0; i < n; i++)
 			attr[curr+i] = AT_NORMAL;
 		curr += n;
@@ -464,7 +464,7 @@ in_ansi_esc_seq(void)
 	 * Search backwards for either an ESC (which means we ARE in a seq);
 	 * or an end char (which means we're NOT in a seq).
 	 */
-	for (p = &linebuf[curr];  p > linebuf; ) {
+	for (p = &linebuf[curr]; p > linebuf; ) {
 		LWCHAR ch = step_char(&p, -1, linebuf);
 		if (IS_CSI_START(ch))
 			return (1);
@@ -596,7 +596,7 @@ store_tab(int attr, off_t pos)
 		to_tab = tabdefault -
 		    ((to_tab - tabstops[ntabstops-1]) % tabdefault);
 	else {
-		for (i = ntabstops - 2;  i >= 0;  i--)
+		for (i = ntabstops - 2; i >= 0; i--)
 			if (to_tab >= tabstops[i])
 				break;
 		to_tab = tabstops[i+1] - to_tab;

@@ -421,7 +421,7 @@ wherechar(const char *p, int *wp)
 		case 'b':   *wp = BOTTOM;		break;
 		case 'B':   *wp = BOTTOM_PLUS_ONE;	break;
 		case 'j':   *wp = adjsline(jump_sline);	break;
-		default:    *wp = TOP;  p--;		break;
+		default:    *wp = TOP; p--;		break;
 		}
 	}
 	return (p);

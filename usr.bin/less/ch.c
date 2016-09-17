@@ -82,7 +82,7 @@ struct filestate {
  * Macros to manipulate the list of buffers in thisfile->buflist.
  */
 #define	FOR_BUFS(bn) \
-	for ((bn) = ch_bufhead;  (bn) != END_OF_CHAIN;  (bn) = (bn)->next)
+	for ((bn) = ch_bufhead; (bn) != END_OF_CHAIN; (bn) = (bn)->next)
 
 #define	BUF_RM(bn) \
 	(bn)->next->prev = (bn)->prev; \
@@ -104,7 +104,7 @@ struct filestate {
  * Macros to manipulate the list of buffers in thisfile->hashtbl[n].
  */
 #define	FOR_BUFS_IN_CHAIN(h, bn) \
-	for ((bn) = thisfile->hashtbl[h].hnext;  \
+	for ((bn) = thisfile->hashtbl[h].hnext; \
 	    (bn) != END_OF_HCHAIN(h); (bn) = (bn)->hnext)
 
 #define	BUF_HASH_RM(bn) \
@@ -384,7 +384,7 @@ sync_logfile(void)
 	BLOCKNUM nblocks;
 
 	nblocks = (ch_fpos + LBUFSIZE - 1) / LBUFSIZE;
-	for (block = 0;  block < nblocks;  block++) {
+	for (block = 0; block < nblocks; block++) {
 		int wrote = FALSE;
 		FOR_BUFS(bn) {
 			bp = bufnode_buf(bn);

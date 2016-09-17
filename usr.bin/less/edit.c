@@ -58,7 +58,7 @@ init_textlist(struct textlist *tlist, char *str)
 
 	tlist->string = skipsp(str);
 	tlist->endstring = tlist->string + strlen(tlist->string);
-	for (s = str;  s < tlist->endstring;  s++) {
+	for (s = str; s < tlist->endstring; s++) {
 		if (meta_quoted) {
 			meta_quoted = 0;
 		} else if (esclen > 0 && s + esclen < tlist->endstring &&

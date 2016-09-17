@@ -208,7 +208,7 @@ repaint_hilite(int on)
 		return;
 	}
 
-	for (slinenum = TOP;  slinenum < TOP + sc_height-1;  slinenum++) {
+	for (slinenum = TOP; slinenum < TOP + sc_height-1; slinenum++) {
 		pos = position(slinenum);
 		if (pos == -1)
 			continue;
@@ -405,7 +405,7 @@ add_hilite(struct hilite *anchor, struct hilite *hl)
 	 * Hilites are sorted in the list; find where new one belongs.
 	 * Insert new one after ihl.
 	 */
-	for (ihl = anchor;  ihl->hl_next != NULL;  ihl = ihl->hl_next)
+	for (ihl = anchor; ihl->hl_next != NULL; ihl = ihl->hl_next)
 	{
 		if (ihl->hl_next->hl_startpos > hl->hl_startpos)
 			break;

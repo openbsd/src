@@ -81,7 +81,7 @@ clr_linenum(void)
 	 * Put all the entries on the free list.
 	 * Leave one for the "spare".
 	 */
-	for (p = pool;  p < &pool[NPOOL-2];  p++)
+	for (p = pool; p < &pool[NPOOL-2]; p++)
 		p->next = p+1;
 	pool[NPOOL-2].next = NULL;
 	freelist = pool;
@@ -132,7 +132,7 @@ add_lnum(off_t linenum, off_t pos)
 	 * Find the proper place in the list for the new one.
 	 * The entries are sorted by position.
 	 */
-	for (p = anchor.next;  p != &anchor && p->pos < pos;  p = p->next)
+	for (p = anchor.next; p != &anchor && p->pos < pos; p = p->next)
 		if (p->line == linenum)
 			/* We already have this one. */
 			return;
@@ -185,7 +185,7 @@ add_lnum(off_t linenum, off_t pos)
 		 * not computed by calcgap.
 		 */
 		mingap = anchor.next->gap;
-		for (p = anchor.next;  p->next != &anchor;  p = p->next) {
+		for (p = anchor.next; p->next != &anchor; p = p->next) {
 			if (p->gap <= mingap) {
 				spare = p;
 				mingap = p->gap;
@@ -257,7 +257,7 @@ find_linenum(off_t pos)
 	/*
 	 * Find the entry nearest to the position we want.
 	 */
-	for (p = anchor.next;  p != &anchor && p->pos < pos;  p = p->next)
+	for (p = anchor.next; p != &anchor && p->pos < pos; p = p->next)
 		continue;
 	if (p->pos == pos)
 		/* Found it exactly. */
@@ -355,7 +355,7 @@ find_pos(off_t linenum)
 	/*
 	 * Find the entry nearest to the line number we want.
 	 */
-	for (p = anchor.next;  p != &anchor && p->line < linenum;  p = p->next)
+	for (p = anchor.next; p != &anchor && p->line < linenum; p = p->next)
 		continue;
 	if (p->line == linenum)
 		/* Found it exactly. */

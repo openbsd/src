@@ -63,7 +63,7 @@ add_forw_pos(off_t pos)
 	/*
 	 * Scroll the position table up.
 	 */
-	for (i = 1;  i < sc_height;  i++)
+	for (i = 1; i < sc_height; i++)
 		table[i-1] = table[i];
 	table[sc_height - 1] = pos;
 }
@@ -79,7 +79,7 @@ add_back_pos(off_t pos)
 	/*
 	 * Scroll the position table down.
 	 */
-	for (i = sc_height - 1;  i > 0;  i--)
+	for (i = sc_height - 1; i > 0; i--)
 		table[i] = table[i-1];
 	table[0] = pos;
 }
@@ -92,7 +92,7 @@ pos_clear(void)
 {
 	int i;
 
-	for (i = 0;  i < sc_height;  i++)
+	for (i = 0; i < sc_height; i++)
 		table[i] = -1;
 }
 
@@ -135,7 +135,7 @@ onscreen(off_t pos)
 
 	if (pos < table[0])
 		return (-1);
-	for (i = 1;  i < sc_height;  i++)
+	for (i = 1; i < sc_height; i++)
 		if (pos < table[i])
 			return (i-1);
 	return (-1);
@@ -155,7 +155,7 @@ empty_lines(int s, int e)
 {
 	int i;
 
-	for (i = s;  i <= e;  i++)
+	for (i = s; i <= e; i++)
 		if (table[i] != -1 && table[i] != 0)
 			return (0);
 	return (1);
@@ -178,7 +178,7 @@ get_scrpos(struct scrpos *scrpos)
 	 * Find the first line on the screen which has something on it,
 	 * and return the screen line number and the file position.
 	 */
-	for (i = 0; i < sc_height;  i++)
+	for (i = 0; i < sc_height; i++)
 		if (table[i] != -1) {
 			scrpos->ln = i+1;
 			scrpos->pos = table[i];

@@ -49,7 +49,7 @@
 
 struct optname {
 	char *oname;		/* Long (GNU-style) option name */
-	struct optname *onext;  /* List of synonymous option names */
+	struct optname *onext;	/* List of synonymous option names */
 };
 
 #define	OPTNAME_MAX	32	/* Max length of long option name */

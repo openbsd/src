@@ -462,7 +462,7 @@ opt_x(int type, char *s)
 	case QUERY:
 		(void) strlcpy(tabs, "Tab stops ", sizeof(tabs));
 		if (ntabstops > 2) {
-			for (i = 1;  i < ntabstops;  i++) {
+			for (i = 1; i < ntabstops; i++) {
 				if (i > 1)
 					strlcat(tabs, ",", sizeof(tabs));
 				(void) snprintf(tabs+strlen(tabs),

@@ -483,7 +483,7 @@ clean_line(char *s)
 	int i;
 
 	s = skipsp(s);
-	for (i = 0;  s[i] != '\n' && s[i] != '\r' && s[i] != '\0';  i++)
+	for (i = 0; s[i] != '\n' && s[i] != '\r' && s[i] != '\0'; i++)
 		if (s[i] == '#' && (i == 0 || s[i-1] != '\\'))
 			break;
 	s[i] = '\0';
@@ -580,7 +580,7 @@ findaction(char *actname)
 {
 	int i;
 
-	for (i = 0;  currtable->names[i].cn_name != NULL;  i++)
+	for (i = 0; currtable->names[i].cn_name != NULL; i++)
 		if (strcmp(currtable->names[i].cn_name, actname) == 0)
 			return (currtable->names[i].cn_action);
 	lkerr("unknown action");

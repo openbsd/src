@@ -154,7 +154,7 @@ lsignal(int s, void (*a)(int))
 
 	sa.sa_handler = a;
 	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = 0;                /* don't restart system calls */
+	sa.sa_flags = 0;		/* don't restart system calls */
 	if (sigaction(s, &sa, &osa) != 0)
 		return (SIG_ERR);
 	return (osa.sa_handler);

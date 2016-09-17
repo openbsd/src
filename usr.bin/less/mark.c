@@ -40,7 +40,7 @@ init_mark(void)
 {
 	int i;
 
-	for (i = 0;  i < NMARKS;  i++)
+	for (i = 0; i < NMARKS; i++)
 		marks[i].m_scrpos.pos = -1;
 }
 
@@ -239,7 +239,7 @@ unmark(IFILE ifile)
 {
 	int i;
 
-	for (i = 0;  i < NMARKS;  i++)
+	for (i = 0; i < NMARKS; i++)
 		if (marks[i].m_ifile == ifile)
 			marks[i].m_scrpos.pos = -1;
 }

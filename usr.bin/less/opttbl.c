@@ -436,7 +436,7 @@ init_option(void)
 {
 	struct loption *o;
 
-	for (o = option;  o->oletter != '\0';  o++) {
+	for (o = option; o->oletter != '\0'; o++) {
 		/*
 		 * Set each variable to its default.
 		 */
@@ -455,7 +455,7 @@ findopt(int c)
 {
 	struct loption *o;
 
-	for (o = option;  o->oletter != '\0';  o++) {
+	for (o = option; o->oletter != '\0'; o++) {
 		if (o->oletter == c)
 			return (o);
 		if ((o->otype & TRIPLE) &&
@@ -500,17 +500,17 @@ findopt_name(char **p_optname, char **p_oname, int *p_err)
 	/*
 	 * Check all options.
 	 */
-	for (o = option;  o->oletter != '\0';  o++) {
+	for (o = option; o->oletter != '\0'; o++) {
 		/*
 		 * Check all names for this option.
 		 */
-		for (oname = o->onames;  oname != NULL;  oname = oname->onext) {
+		for (oname = o->onames; oname != NULL; oname = oname->onext) {
 			/*
 			 * Try normal match first (uppercase == 0),
 			 * then, then if it's a TRIPLE option,
 			 * try uppercase match (uppercase == 1).
 			 */
-			for (uppercase = 0;  uppercase <= 1;  uppercase++) {
+			for (uppercase = 0; uppercase <= 1; uppercase++) {
 				len = sprefix(optname, oname->oname, uppercase);
 				if (len <= 0 || is_optchar(optname[len])) {
 					/*

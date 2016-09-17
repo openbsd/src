@@ -346,7 +346,7 @@ sprefix(char *ps, char *s, int uppercase)
 	int sc;
 	int len = 0;
 
-	for (; *s != '\0';  s++, ps++) {
+	for (; *s != '\0'; s++, ps++) {
 		c = *ps;
 		if (uppercase) {
 			if (len == 0 && islower(c))

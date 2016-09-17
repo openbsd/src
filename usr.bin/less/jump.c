@@ -210,7 +210,7 @@ jump_loc(off_t pos, int sline)
 		 * call forw() and put the desired line at the
 		 * sline-th line on the screen.
 		 */
-		for (nline = 0;  nline < sline;  nline++) {
+		for (nline = 0; nline < sline; nline++) {
 			if (bpos != -1 && pos <= bpos) {
 				/*
 				 * Surprise!  The desired line is
@@ -244,7 +244,7 @@ jump_loc(off_t pos, int sline)
 		 * can call back() and put the desired line at the
 		 * sline-th line on the screen.
 		 */
-		for (nline = sline;  nline < sc_height - 1;  nline++) {
+		for (nline = sline; nline < sc_height - 1; nline++) {
 			pos = forw_line(pos);
 			if (pos == -1) {
 				/*

@@ -199,7 +199,7 @@ find_ifile(const char *filename)
 {
 	struct ifile *p;
 
-	for (p = anchor.h_next;  p != &anchor;  p = p->h_next)
+	for (p = anchor.h_next; p != &anchor; p = p->h_next)
 		if (strcmp(filename, p->h_filename) == 0)
 			return (p);
 	return (NULL);

@@ -43,7 +43,7 @@ cvt_alloc_chpos(int len)
 	int i;
 	int *chpos = ecalloc(sizeof (int), len);
 	/* Initialize all entries to an invalid position. */
-	for (i = 0;  i < len;  i++)
+	for (i = 0; i < len; i++)
 		chpos[i] = -1;
 	return (chpos);
 }
@@ -67,7 +67,7 @@ cvt_text(char *odst, char *osrc, int *chpos, int *lenp, int ops)
 	else
 		src_end = osrc + strlen(osrc);
 
-	for (src = osrc, dst = odst;  src < src_end; ) {
+	for (src = osrc, dst = odst; src < src_end; ) {
 		int src_pos = src - osrc;
 		int dst_pos = dst - odst;
 		ch = step_char(&src, +1, src_end);
@@ -79,7 +79,7 @@ cvt_text(char *odst, char *osrc, int *chpos, int *lenp, int ops)
 			    !IS_ASCII_OCTET(*dst) && !IS_UTF8_LEAD(*dst));
 		} else if ((ops & CVT_ANSI) && IS_CSI_START(ch)) {
 			/* Skip to end of ANSI escape sequence. */
-			src++;  /* skip the CSI start char */
+			src++;	/* skip the CSI start char */
 			while (src < src_end)
 				if (!is_ansi_middle(*src++))
 					break;

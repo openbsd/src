@@ -281,7 +281,7 @@ is_utf8_well_formed(const char *s)
 			return (0);
 	}
 
-	for (i = 1;  i < len;  i++)
+	for (i = 1; i < len; i++)
 		if (!IS_UTF8_TRAIL(s[i]))
 			return (0);
 	return (1);
@@ -867,7 +867,7 @@ is_combining_char(LWCHAR ch1, LWCHAR ch2)
 {
 	/* The table is small; use linear search. */
 	int i;
-	for (i = 0;  i < sizeof (comb_table) / sizeof (*comb_table);  i++) {
+	for (i = 0; i < sizeof (comb_table) / sizeof (*comb_table); i++) {
 		if (ch1 == comb_table[i].first &&
 		    ch2 == comb_table[i].last)
 			return (1);

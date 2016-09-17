@@ -572,7 +572,7 @@ optstring(char *s, char **p_str, char *printopt, char *validchars)
 	*p_str = ecalloc(strlen(s)+1, sizeof (char));
 	out = *p_str;
 
-	for (p = s;  *p != '\0';  p++) {
+	for (p = s; *p != '\0'; p++) {
 		if (opt_use_backslash && *p == '\\' && p[1] != '\0') {
 			/* Take next char literally. */
 			++p;

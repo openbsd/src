@@ -45,7 +45,7 @@ put_line(void)
 		return;
 	}
 
-	for (i = 0;  (c = gline(i, &a)) != '\0';  i++) {
+	for (i = 0; (c = gline(i, &a)) != '\0'; i++) {
 		at_switch(a);
 		if (c == '\b')
 			putbs();

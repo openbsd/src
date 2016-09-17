@@ -339,7 +339,7 @@ mca_opt_nonfirst_char(int c)
 		 */
 		cmd_reset();
 		mca_opt_toggle();
-		for (p = oname;  *p != '\0';  p++) {
+		for (p = oname; *p != '\0'; p++) {
 			c = *p;
 			if (!opt_lower && islower(c))
 				c = toupper(c);
@@ -775,7 +775,7 @@ ungetsc(char *s)
 {
 	char *p;
 
-	for (p = s + strlen(s) - 1;  p >= s;  p--)
+	for (p = s + strlen(s) - 1; p >= s; p--)
 		ungetcc(*p);
 }
 

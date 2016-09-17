@@ -242,12 +242,12 @@ expand_special_keys(char *table, int len)
 	char *repl;
 	int klen;
 
-	for (fm = table;  fm < table + len; ) {
+	for (fm = table; fm < table + len; ) {
 		/*
 		 * Rewrite each command in the table with any
 		 * special key abbreviations expanded.
 		 */
-		for (to = fm;  *fm != '\0'; ) {
+		for (to = fm; *fm != '\0'; ) {
 			if (*fm != SK_SPECIAL_KEY) {
 				*to++ = *fm++;
 				continue;
@@ -380,7 +380,7 @@ cmd_search(const char *cmd, char *table, char *endtable, char **sp)
 	int a;
 
 	*sp = NULL;
-	for (p = table, q = cmd;  p < endtable;  p++, q++) {
+	for (p = table, q = cmd; p < endtable; p++, q++) {
 		if (*p == *q) {
 			/*
 			 * Current characters match.
@@ -462,7 +462,7 @@ cmd_decode(struct tablelist *tlist, const char *cmd, char **sp)
 	 * Search thru all the command tables.
 	 * Stop when we find an action which is not A_INVALID.
 	 */
-	for (t = tlist;  t != NULL;  t = t->t_next) {
+	for (t = tlist; t != NULL; t = t->t_next) {
 		action = cmd_search(cmd, t->t_start, t->t_end, sp);
 		if (action != A_INVALID)
 			break;
