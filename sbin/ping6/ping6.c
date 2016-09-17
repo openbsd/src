@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.211 2016/09/17 09:30:00 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.212 2016/09/17 09:30:26 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
-	struct sockaddr *dst;
+	struct sockaddr *from, *dst;
 	struct sockaddr_in6 from6, dst6;
 	struct cmsghdr *scmsg = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
@@ -390,6 +390,7 @@ main(int argc, char *argv[])
 		if (res->ai_addrlen != sizeof(dst6))
 		    errx(1, "size of sockaddr mismatch");
 		dst = (struct sockaddr *)&dst6;
+		from = (struct sockaddr *)&from6;
 		break;
 	case AF_INET:
 	default:
@@ -620,8 +621,7 @@ main(int argc, char *argv[])
 
 	printf("PING6 %s (", hostname);
 	if (options & F_VERBOSE)
-		printf("%s --> ", pr_addr((struct sockaddr *)&from6,
-		    sizeof(from6)));
+		printf("%s --> ", pr_addr(from, from->sa_len));
 	printf("%s): %d data bytes\n", pr_addr(dst, dst->sa_len), datalen);
 
 	smsghdr.msg_name = dst;
