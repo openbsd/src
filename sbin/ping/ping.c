@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.198 2016/09/17 09:32:54 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.199 2016/09/17 09:33:32 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -464,13 +464,12 @@ main(int argc, char *argv[])
 		 * privilege, we cannot use a raw socket for this.
 		 */
 		int dummy;
-		socklen_t len = sizeof(from4);
+		socklen_t len = dst->sa_len;
 
-		if ((dummy = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		if ((dummy = socket(dst->sa_family, SOCK_DGRAM, 0)) < 0)
 			err(1, "UDP socket");
 
-		from4.sin_family = AF_INET;
-		from4.sin_addr = dst4.sin_addr;
+		memcpy(from, dst, dst->sa_len);
 		from4.sin_port = ntohs(DUMMY_PORT);
 
 		if ((moptions & MULTICAST_NOLOOP) &&
@@ -487,10 +486,10 @@ main(int argc, char *argv[])
 		    sizeof(rtableid)) < 0)
 			err(1, "setsockopt(SO_RTABLE)");
 
-		if (connect(dummy, (struct sockaddr *)&from4, len) < 0)
+		if (connect(dummy, from, len) < 0)
 			err(1, "UDP connect");
 
-		if (getsockname(dummy, (struct sockaddr *)&from4, &len) < 0)
+		if (getsockname(dummy, from, &len) < 0)
 			err(1, "getsockname");
 
 		close(dummy);
