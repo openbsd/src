@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.6 2016/09/15 13:09:44 phessler Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.7 2016/09/17 07:35:05 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -54,57 +54,76 @@
 #define BFD_FLAG_M			0x01
 
 struct bfd_msghdr {
-	unsigned short rtm_msglen;     /* to skip over non-understood msgs */
-	unsigned char  rtm_version;    /* future binary compatibility */
-	unsigned char  rtm_type;       /* message type */
-	unsigned short rtm_hdrlen;     /* to skip over the header */
+	unsigned short	bm_msglen;
+	unsigned char	bm_version;
+	unsigned char	bm_type;
+	unsigned short	bm_hdrlen;
+	/* above matches rtm_msghdr */
 
-	uint16_t	mode;		/* */
-	uint32_t	mintx;		/* minimum time (us) to send */
-	uint32_t	minrx;		/* minimum window (us) to receive */
-	uint16_t	multiplier;	/* Retry backoff multiplier */
+	uint16_t	bm_mode;
+	uint32_t	bm_mintx;
+	uint32_t	bm_minrx;
+	uint16_t	bm_multiplier;
 
-	time_t		uptime;
-	time_t		lastuptime;
-	int		state;
-	int		laststate;
-	int		error;
+	time_t		bm_uptime;
+	time_t		bm_lastuptime;
+	int		bm_state;
+	int		bm_laststate;
+	int		bm_error;
 
-	uint32_t	localdiscr;
-	uint32_t	localdiag;
-	uint32_t	remotediscr;
-	uint32_t	remotediag;
+	uint32_t	bm_localdiscr;
+	uint32_t	bm_localdiag;
+	uint32_t	bm_remotediscr;
+	uint32_t	bm_remotediag;
 };
 
 #ifdef _KERNEL
-struct bfd_softc {
-	TAILQ_ENTRY(bfd_softc)	 bfd_next;
-	struct socket		*sc_so;
-	struct socket		*sc_soecho;
-	struct socket		*sc_sosend;
-	struct rtentry		*sc_rt;
-	struct bfd_state	*sc_peer;
-	struct timeval		*sc_time;
-	struct task		 sc_bfd_task;
-	struct task		 sc_bfd_send_task;
-	struct timeout		 sc_timo_rx;
-	struct timeout		 sc_timo_tx;
-	time_t			 lastuptime;
-	int			 laststate;
-	int			 state;
-	int			 mode;
-	int			 error;
-	int			 minrx;
-	int			 mintx;
-	int			 multiplier;
+/* state machine from RFC 5880 6.8.1*/
+struct bfd_neighbor {
+	uint32_t	bn_lstate;		/* SessionState */
+	uint32_t	bn_rstate;		/* RemoteSessionState */
+	uint32_t	bn_ldiscr;		/* LocalDiscr */
+	uint32_t	bn_rdiscr;		/* RemoteDiscr */
+	uint32_t	bn_ldiag;		/* LocalDiag */
+	uint32_t	bn_rdiag;		/* RemoteDiag */
+	uint32_t	bn_mintx;		/* DesiredMinTxInterval */
+	uint32_t	bn_req_minrx;		/* RequiredMinRxInterval */
+	uint32_t	bn_rminrx;		/* RemoteMinRxInterval */
+	uint32_t	bn_demand;		/* DemandMode */
+	uint32_t	bn_rdemand;		/* RemoteDemandMode */
+	uint32_t	bn_mult;		/* DetectMult */
+	uint32_t	bn_authtype;		/* AuthType */
+	uint32_t	bn_rauthseq;		/* RcvAuthSeq */
+	uint32_t	bn_lauthseq;		/* XmitAuthSeq */
+	uint32_t	bn_authseqknown;	/* AuthSeqKnown */
 };
-#endif /* _KERNEL */
 
-int		 bfd_rtalloc(struct rtentry *);
-void		 bfd_rtfree(struct rtentry *);
+struct bfd_config {
+	TAILQ_ENTRY(bfd_config)	 bc_entry;
+	struct socket		*bc_so;
+	struct socket		*bc_soecho;
+	struct socket		*bc_sosend;
+	struct rtentry		*bc_rt;
+	struct bfd_neighbor	*bc_neighbor;
+	struct timeval		*bc_time;
+	struct task		 bc_bfd_task;
+	struct task		 bc_bfd_send_task;
+	struct timeout		 bc_timo_rx;
+	struct timeout		 bc_timo_tx;
+	time_t			 bc_lastuptime;
+	int			 bc_laststate;
+	int			 bc_state;
+	int			 bc_mode;
+	int			 bc_error;
+	int			 bc_minrx;
+	int			 bc_mintx;
+	int			 bc_multiplier;
+};
+
+int		 bfdset(struct rtentry *);
+void		 bfdclear(struct rtentry *);
 void		 bfdinit(void);
-void		 bfddestroy(void);
 
-struct bfd_softc *bfd_lookup(struct rtentry *);
+#endif /* _KERNEL */
 
 #endif /* _NET_BFD_H_ */
