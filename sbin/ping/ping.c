@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.202 2016/09/17 09:35:27 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.203 2016/09/17 09:36:42 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -167,6 +167,7 @@ int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
 int datalen = DEFDATALEN;
+int maxpayload;
 u_char outpackhdr[IP_MAXPACKET+sizeof(struct ip)];
 u_char *outpack = outpackhdr+sizeof(struct ip);
 char BSPACE = '\b';		/* characters written for flood */
@@ -248,6 +249,7 @@ main(int argc, char *argv[])
 		err(1, "setresuid");
 
 	preload = 0;
+	maxpayload = MAXPAYLOAD;
 	datap = &outpack[ECHOLEN + ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
 	    "DEI:LRS:c:defHi:l:np:qs:T:t:V:vw:")) != -1) {
@@ -331,7 +333,7 @@ main(int argc, char *argv[])
 			options |= F_RROUTE;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = strtonum(optarg, 0, MAXPAYLOAD, &errstr);
+			datalen = strtonum(optarg, 0, maxpayload, &errstr);
 			if (errstr)
 				errx(1, "packet size is %s: %s", errstr,
 				    optarg);
@@ -741,7 +743,7 @@ fill(char *bp, char *patp)
 
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXPAYLOAD - (ECHOLEN + ECHOTMLEN + ii);
+		    kk <= maxpayload - (ECHOLEN + ECHOTMLEN + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];

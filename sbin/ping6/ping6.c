@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.219 2016/09/17 09:36:12 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.220 2016/09/17 09:36:42 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -122,7 +122,7 @@ struct payload {
 #define	DEFDATALEN	(64 - ECHOLEN)		/* default data length */
 #define	IP6LEN		40
 #define	EXTRA		256	/* for AH and various other headers. weird. */
-#define	MAXPAYLOAD	IPV6_MAXPACKET - IP6LEN - ECHOLEN
+#define	MAXPAYLOAD6	IPV6_MAXPACKET - IP6LEN - ECHOLEN
 #define	MAXWAIT_DEFAULT	10			/* secs to wait for response */
 
 #define	A(bit)		rcvd_tbl[(bit)>>3]	/* identify byte in array */
@@ -165,6 +165,7 @@ int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
 int datalen = DEFDATALEN;
+int maxpayload;
 u_char outpackhdr[IP_MAXPACKET+sizeof(struct ip)];
 u_char *outpack = outpackhdr+sizeof(struct ip);
 char BSPACE = '\b';		/* characters written for flood */
@@ -248,6 +249,7 @@ main(int argc, char *argv[])
 		err(1, "setresuid");
 
 	preload = 0;
+	maxpayload = MAXPAYLOAD6;
 	datap = &outpack[ECHOLEN + ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
 	    "c:dEefHh:I:i:Ll:mNnp:qS:s:V:vw:")) != -1) {
@@ -332,7 +334,7 @@ main(int argc, char *argv[])
 			options |= F_QUIET;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = strtonum(optarg, 0, MAXPAYLOAD, &errstr);
+			datalen = strtonum(optarg, 0, maxpayload, &errstr);
 			if (errstr)
 				errx(1, "packet size is %s: %s", errstr,
 				    optarg);
@@ -755,7 +757,7 @@ fill(char *bp, char *patp)
 
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXPAYLOAD - (ECHOLEN + ECHOTMLEN + ii);
+		    kk <= maxpayload - (ECHOLEN + ECHOTMLEN + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
