@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.199 2016/09/17 09:33:32 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.200 2016/09/17 09:34:03 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -479,7 +479,7 @@ main(int argc, char *argv[])
 		if ((moptions & MULTICAST_TTL) &&
 		    setsockopt(dummy, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
 		    sizeof(ttl)) < 0)
-		err(1, "setsockopt IP_MULTICAST_TTL");
+			err(1, "setsockopt IP_MULTICAST_TTL");
 
 		if (rtableid > 0 &&
 		    setsockopt(dummy, SOL_SOCKET, SO_RTABLE, &rtableid,
