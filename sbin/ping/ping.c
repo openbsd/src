@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.193 2016/09/17 09:26:49 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.194 2016/09/17 09:29:27 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
-	struct sockaddr_in from4, dst;
+	struct sockaddr_in from4, dst4;
 	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error, s;
@@ -386,11 +386,11 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	memset(&dst, 0, sizeof(dst));
+	memset(&dst4, 0, sizeof(dst4));
 
-	if (inet_aton(*argv, &dst.sin_addr) != 0) {
+	if (inet_aton(*argv, &dst4.sin_addr) != 0) {
 		hostname = *argv;
-		if ((target = strdup(inet_ntoa(dst.sin_addr))) == NULL)
+		if ((target = strdup(inet_ntoa(dst4.sin_addr))) == NULL)
 			errx(1, "malloc");
 	} else
 		target = *argv;
@@ -405,7 +405,7 @@ main(int argc, char *argv[])
 
 	switch (res->ai_family) {
 	case AF_INET:
-		if (res->ai_addrlen != sizeof(dst))
+		if (res->ai_addrlen != sizeof(dst4))
 		    errx(1, "size of sockaddr mismatch");
 		break;
 	case AF_INET6:
@@ -414,7 +414,7 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	memcpy(&dst, res->ai_addr, res->ai_addrlen);
+	memcpy(&dst4, res->ai_addr, res->ai_addrlen);
 
 	if (!hostname) {
 		hostname = res->ai_canonname ? strdup(res->ai_canonname) :
@@ -447,7 +447,7 @@ main(int argc, char *argv[])
 			freeaddrinfo(res);
 		}
 
-		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr))) {
+		if (IN_MULTICAST(ntohl(dst4.sin_addr.s_addr))) {
 			if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
 			    &from4.sin_addr, sizeof(from4.sin_addr)) < 0)
 				err(1, "setsockopt IP_MULTICAST_IF");
@@ -507,7 +507,7 @@ main(int argc, char *argv[])
 		    "(default %d)", bufspace, IP_MAXPACKET);
 
 	if (options & F_TTL) {
-		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
+		if (IN_MULTICAST(ntohl(dst4.sin_addr.s_addr)))
 			moptions |= MULTICAST_TTL;
 		else
 			options |= F_HDRINCL;
@@ -532,12 +532,12 @@ main(int argc, char *argv[])
 			ip->ip_src = from4.sin_addr;
 		else
 			ip->ip_src.s_addr = INADDR_ANY;
-		ip->ip_dst = dst.sin_addr;
+		ip->ip_dst = dst4.sin_addr;
 	}
 
 	/* record route option */
 	if (options & F_RROUTE) {
-		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
+		if (IN_MULTICAST(ntohl(dst4.sin_addr.s_addr)))
 			errx(1, "record route not valid to multicast destinations");
 		memset(rspace, 0, sizeof(rspace));
 		rspace[IPOPT_OPTVAL] = IPOPT_RR;
@@ -571,7 +571,7 @@ main(int argc, char *argv[])
 			err(1, "UDP socket");
 
 		from4.sin_family = AF_INET;
-		from4.sin_addr = dst.sin_addr;
+		from4.sin_addr = dst4.sin_addr;
 		from4.sin_port = ntohs(DUMMY_PORT);
 
 		if ((moptions & MULTICAST_NOLOOP) &&
@@ -612,11 +612,11 @@ main(int argc, char *argv[])
 	if (0 && (options & F_VERBOSE))
 		printf("%s --> ", pr_addr((struct sockaddr *)&from4,
 		    sizeof(from4)));
-	printf("%s): %d data bytes\n", pr_addr((struct sockaddr *)&dst,
-	    sizeof(dst)), datalen);
+	printf("%s): %d data bytes\n", pr_addr((struct sockaddr *)&dst4,
+	    sizeof(dst4)), datalen);
 
-	smsghdr.msg_name = &dst;
-	smsghdr.msg_namelen = sizeof(dst);
+	smsghdr.msg_name = &dst4;
+	smsghdr.msg_namelen = sizeof(dst4);
 	smsgiov.iov_base = (caddr_t)outpack;
 	smsghdr.msg_iov = &smsgiov;
 	smsghdr.msg_iovlen = 1;

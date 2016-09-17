@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.209 2016/09/17 09:26:49 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.210 2016/09/17 09:29:27 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
-	struct sockaddr_in6 from6, dst;
+	struct sockaddr_in6 from6, dst6;
 	struct cmsghdr *scmsg = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct icmp6_filter filt;
@@ -365,12 +365,12 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	memset(&dst, 0, sizeof(dst));
+	memset(&dst6, 0, sizeof(dst6));
 
 #if 0
-	if (inet_aton(*argv, &dst.sin_addr) != 0) {
+	if (inet_aton(*argv, &dst4.sin_addr) != 0) {
 		hostname = *argv;
-		if ((target = strdup(inet_ntoa(dst.sin_addr))) == NULL)
+		if ((target = strdup(inet_ntoa(dst4.sin_addr))) == NULL)
 			errx(1, "malloc");
 	} else
 #endif
@@ -386,7 +386,7 @@ main(int argc, char *argv[])
 
 	switch (res->ai_family) {
 	case AF_INET6:
-		if (res->ai_addrlen != sizeof(dst))
+		if (res->ai_addrlen != sizeof(dst6))
 		    errx(1, "size of sockaddr mismatch");
 		break;
 	case AF_INET:
@@ -395,7 +395,7 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	memcpy(&dst, res->ai_addr, res->ai_addrlen);
+	memcpy(&dst6, res->ai_addr, res->ai_addrlen);
 
 	if (!hostname) {
 		hostname = res->ai_canonname ? strdup(res->ai_canonname) :
@@ -518,7 +518,7 @@ main(int argc, char *argv[])
 	optval = 1;
 
 	optval = IPV6_DEFHLIM;
-	if (IN6_IS_ADDR_MULTICAST(&dst.sin6_addr))
+	if (IN6_IS_ADDR_MULTICAST(&dst6.sin6_addr))
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 		    &optval, (socklen_t)sizeof(optval)) == -1)
 			err(1, "IPV6_MULTICAST_HOPS");
@@ -564,9 +564,9 @@ main(int argc, char *argv[])
 			err(1, "UDP socket");
 
 		from6.sin6_family = AF_INET6;
-		from6.sin6_addr = dst.sin6_addr;
+		from6.sin6_addr = dst6.sin6_addr;
 		from6.sin6_port = ntohs(DUMMY_PORT);
-		from6.sin6_scope_id = dst.sin6_scope_id;
+		from6.sin6_scope_id = dst6.sin6_scope_id;
 
 		if (pktinfo &&
 		    setsockopt(dummy, IPPROTO_IPV6, IPV6_PKTINFO,
@@ -620,11 +620,11 @@ main(int argc, char *argv[])
 	if (options & F_VERBOSE)
 		printf("%s --> ", pr_addr((struct sockaddr *)&from6,
 		    sizeof(from6)));
-	printf("%s): %d data bytes\n", pr_addr((struct sockaddr *)&dst,
-	    sizeof(dst)), datalen);
+	printf("%s): %d data bytes\n", pr_addr((struct sockaddr *)&dst6,
+	    sizeof(dst6)), datalen);
 
-	smsghdr.msg_name = &dst;
-	smsghdr.msg_namelen = sizeof(dst);
+	smsghdr.msg_name = &dst6;
+	smsghdr.msg_namelen = sizeof(dst6);
 	smsgiov.iov_base = (caddr_t)outpack;
 	smsghdr.msg_iov = &smsgiov;
 	smsghdr.msg_iovlen = 1;
@@ -716,7 +716,7 @@ main(int argc, char *argv[])
 			 * exceptions (currently the only possibility is
 			 * a path MTU notification.)
 			 */
-			if ((mtu = get_pathmtu(&m, &dst)) > 0) {
+			if ((mtu = get_pathmtu(&m, &dst6)) > 0) {
 				if ((options & F_VERBOSE) != 0) {
 					printf("new path MTU (%d) is "
 					    "notified\n", mtu);
