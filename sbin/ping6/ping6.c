@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.196 2016/09/13 07:17:40 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.197 2016/09/17 09:15:38 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -167,7 +167,6 @@ char BSPACE = '\b';		/* characters written for flood */
 char DOT = '.';
 char *hostname;
 int ident;			/* process id to identify our packets */
-int hoplimit = -1;		/* hoplimit */
 
 /* counters */
 int64_t npackets;		/* max packets to transmit */
@@ -224,7 +223,7 @@ main(int argc, char *argv[])
 	struct in6_pktinfo *pktinfo = NULL;
 	socklen_t maxsizelen;
 	int64_t preload;
-	int ch, i, optval = 1, packlen, maxsize, error, s;
+	int ch, i, optval = 1, packlen, maxsize, error, s, hoplimit = -1;
 	u_char *datap, *packet, loop = 1;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	const char *errstr;
