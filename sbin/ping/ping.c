@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.192 2016/09/17 09:26:07 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.193 2016/09/17 09:26:49 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
-	struct sockaddr_in  from, from4, dst;
+	struct sockaddr_in from4, dst;
 	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error, s;
@@ -640,15 +640,16 @@ main(int argc, char *argv[])
 	seeninfo = 0;
 
 	for (;;) {
-		struct msghdr	m;
+		struct msghdr		m;
 		union {
 			struct cmsghdr hdr;
 			u_char buf[CMSG_SPACE(1024)];
-		}		cmsgbuf;
-		struct iovec	iov[1];
-		struct pollfd	pfd;
-		ssize_t		cc;
-		int		timeout;
+		}			cmsgbuf;
+		struct iovec		iov[1];
+		struct pollfd		pfd;
+		struct sockaddr_in	peer;
+		ssize_t			cc;
+		int			timeout;
 
 		/* signal handling */
 		if (seenint)
@@ -682,8 +683,8 @@ main(int argc, char *argv[])
 		if (poll(&pfd, 1, timeout) <= 0)
 			continue;
 
-		m.msg_name = &from;
-		m.msg_namelen = sizeof(from);
+		m.msg_name = &peer;
+		m.msg_namelen = sizeof(peer);
 		memset(&iov, 0, sizeof(iov));
 		iov[0].iov_base = (caddr_t)packet;
 		iov[0].iov_len = packlen;

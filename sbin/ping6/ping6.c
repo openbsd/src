@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.208 2016/09/17 09:26:07 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.209 2016/09/17 09:26:49 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
-	struct sockaddr_in6 from, from6, dst;
+	struct sockaddr_in6 from6, dst;
 	struct cmsghdr *scmsg = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct icmp6_filter filt;
@@ -652,11 +652,12 @@ main(int argc, char *argv[])
 		union {
 			struct cmsghdr hdr;
 			u_char buf[CMSG_SPACE(1024)];
-		}		cmsgbuf;
-		struct iovec	iov[1];
-		struct pollfd	pfd;
-		ssize_t		cc;
-		int		timeout;
+		}			cmsgbuf;
+		struct iovec		iov[1];
+		struct pollfd		pfd;
+		struct sockaddr_in6	peer;
+		ssize_t			cc;
+		int			timeout;
 
 		/* signal handling */
 		if (seenint)
@@ -690,8 +691,8 @@ main(int argc, char *argv[])
 		if (poll(&pfd, 1, timeout) <= 0)
 			continue;
 
-		m.msg_name = &from;
-		m.msg_namelen = sizeof(from);
+		m.msg_name = &peer;
+		m.msg_namelen = sizeof(peer);
 		memset(&iov, 0, sizeof(iov));
 		iov[0].iov_base = (caddr_t)packet;
 		iov[0].iov_len = packlen;
