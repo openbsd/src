@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.35 2016/07/28 21:57:56 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.36 2016/09/17 20:20:25 guenther Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -231,6 +231,14 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 		struct apic_attach_args aaa;
 
 		switch (entry->madt_lapic.apic_type) {
+		case ACPI_MADT_LAPIC_OVERRIDE:
+			if (entry->madt_lapic_override.lapic_address !=
+			    madt->local_apic_address) {
+				printf("%s: ignored LAPIC override 0x%llx\n",
+				    self->dv_xname,
+				    entry->madt_lapic_override.lapic_address);
+			}
+			break;
 		case ACPI_MADT_LAPIC:
 			dprintf("%s: LAPIC: acpi_proc_id %x, apic_id %x, flags 0x%x\n",
 			    self->dv_xname, entry->madt_lapic.acpi_proc_id,
