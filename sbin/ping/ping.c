@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.203 2016/09/17 09:36:42 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.204 2016/09/17 09:37:19 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -903,8 +903,7 @@ pinger(int s)
 		cc += sizeof(struct ip);
 		ip->ip_len = htons(cc);
 		ip->ip_sum = in_cksum((u_short *)outpackhdr, cc);
-	} else
-		smsgiov.iov_base = (caddr_t)outpack;
+	}
 
 	smsgiov.iov_len = cc;
 
