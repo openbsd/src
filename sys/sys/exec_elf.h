@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.63 2016/09/07 20:12:42 jasper Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.64 2016/09/17 17:39:34 jasper Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -264,6 +264,7 @@ typedef struct {
 /* Section names */
 #define ELF_BSS         ".bss"		/* uninitialized data */
 #define ELF_DATA        ".data"		/* initialized data */
+#define ELF_CTF		".SUNW_ctf"	/* CTF data */
 #define ELF_DEBUG       ".debug"	/* debug */
 #define ELF_DYNAMIC     ".dynamic"	/* dynamic linking information */
 #define ELF_DYNSTR      ".dynstr"	/* dynamic string table */

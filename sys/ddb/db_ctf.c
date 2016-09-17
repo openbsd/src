@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.1 2016/09/16 19:13:17 jasper Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.2 2016/09/17 17:39:34 jasper Exp $	*/
 
 /*
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -55,8 +55,6 @@ static const char	*db_elf_find_ctftab(db_symtab_t *, size_t *);
 static char		*db_ctf_decompress(const char *, size_t, off_t);
 static int		 db_ctf_print_functions();
 static int		 db_ctf_nsyms(void);
-
-#define	ELF_CTF ".SUNW_ctf"
 
 /*
  * Entrypoint to verify CTF presence, initialize the header, decompress
