@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.186 2016/09/17 09:16:32 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.187 2016/09/17 09:17:55 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -167,7 +167,7 @@ int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
 int datalen = DEFDATALEN;
-u_char outpackhdr[IP_MAXPACKET]; /* Max packet size = 65535 */
+u_char outpackhdr[IP_MAXPACKET+sizeof(struct ip)];
 u_char *outpack = outpackhdr+sizeof(struct ip);
 char BSPACE = '\b';		/* characters written for flood */
 char DOT = '.';
