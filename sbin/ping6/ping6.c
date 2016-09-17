@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.210 2016/09/17 09:29:27 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.211 2016/09/17 09:30:00 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,6 +222,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
+	struct sockaddr *dst;
 	struct sockaddr_in6 from6, dst6;
 	struct cmsghdr *scmsg = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
@@ -388,6 +389,7 @@ main(int argc, char *argv[])
 	case AF_INET6:
 		if (res->ai_addrlen != sizeof(dst6))
 		    errx(1, "size of sockaddr mismatch");
+		dst = (struct sockaddr *)&dst6;
 		break;
 	case AF_INET:
 	default:
@@ -395,7 +397,7 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	memcpy(&dst6, res->ai_addr, res->ai_addrlen);
+	memcpy(dst, res->ai_addr, res->ai_addrlen);
 
 	if (!hostname) {
 		hostname = res->ai_canonname ? strdup(res->ai_canonname) :
@@ -620,11 +622,10 @@ main(int argc, char *argv[])
 	if (options & F_VERBOSE)
 		printf("%s --> ", pr_addr((struct sockaddr *)&from6,
 		    sizeof(from6)));
-	printf("%s): %d data bytes\n", pr_addr((struct sockaddr *)&dst6,
-	    sizeof(dst6)), datalen);
+	printf("%s): %d data bytes\n", pr_addr(dst, dst->sa_len), datalen);
 
-	smsghdr.msg_name = &dst6;
-	smsghdr.msg_namelen = sizeof(dst6);
+	smsghdr.msg_name = dst;
+	smsghdr.msg_namelen = dst->sa_len;
 	smsgiov.iov_base = (caddr_t)outpack;
 	smsghdr.msg_iov = &smsgiov;
 	smsghdr.msg_iovlen = 1;
