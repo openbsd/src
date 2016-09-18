@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.208 2016/09/18 13:56:15 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.209 2016/09/18 13:59:51 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -765,7 +765,7 @@ main(int argc, char *argv[])
 	arc4random_buf(&mac_key, sizeof(mac_key));
 
 	printf("PING %s (", hostname);
-	if (v6flag && (options & F_VERBOSE))
+	if (options & F_VERBOSE)
 		printf("%s --> ", pr_addr(from, from->sa_len));
 	printf("%s): %d data bytes\n", pr_addr(dst, dst->sa_len), datalen);
 
