@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.4 2016/09/16 18:41:20 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.5 2016/09/18 11:04:42 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -154,8 +154,6 @@ void	 swofp_forward_ofs(struct switch_softc *, struct switch_flow_classify *,
 int	 swofp_input(struct switch_softc *, struct mbuf *);
 int	 swofp_output(struct switch_softc *, struct mbuf *);
 void	 swofp_timer(void *);
-struct mbuf
-	*swofp_mbuf_align(struct mbuf *);
 
 struct ofp_oxm_class
 	*swofp_lookup_oxm_handler(struct ofp_ox_match *);
@@ -3112,11 +3110,14 @@ swofp_action_output_controller(struct switch_softc *sc, struct mbuf *m0,
 	    htons(m->m_pkthdr.len + ntohs(pin->pin_total_len));
 
 	if (frame_max_len) {
-		n = m_copym2(m0, 0, ntohs(pin->pin_total_len), M_DONTWAIT);
+		/* Truncate the excess packet bytes. */
+		match_len = m0->m_pkthdr.len - ntohs(pin->pin_total_len);
+		n = m_dup_pkt(m0, 0, M_DONTWAIT);
 		if (n == NULL) {
 			m_freem(m);
 			return (ENOBUFS);
 		}
+		m_adj(n, -match_len);
 		/* m_cat() doesn't update m_pkthdr.len */
 		m_cat(m, n);
 		m->m_pkthdr.len += ntohs(pin->pin_total_len);
@@ -5003,7 +5004,7 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 {
 	struct ofp_packet_out		*pout;
 	struct ofp_action_header	*ah;
-	struct mbuf			*mc = NULL;
+	struct mbuf			*mc = NULL, *mcn;
 	int				 al_start, al_len, off;
 	struct switch_flow_classify	 swfcl = {};
 	struct swofp_pipline_desc	 swpld = { .swpld_swfcl = &swfcl };
@@ -5024,13 +5025,21 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	if (pout->pout_buffer_id != OFP_CONTROLLER_MAXLEN_NO_BUFFER) {
 		/*
 		 * It's not necessary to deep copy at here because it's done
-		 * in m_pkt_dup().
+		 * in m_dup_pkt().
 		 */
 		if ((mc = m_split(m, (al_start + al_len), M_NOWAIT)) == NULL) {
 			m_freem(m);
 			return (ENOBUFS);
 		}
-		mc = swofp_mbuf_align(mc);
+
+		mcn = m_dup_pkt(mc, ETHER_ALIGN, M_NOWAIT);
+		m_freem(mc);
+		if (mcn == NULL) {
+			m_freem(m);
+			return (ENOBUFS);
+		}
+
+		mc = mcn;
 	}
 
 	TAILQ_INIT(&swpld.swpld_fwdp_q);
@@ -5224,7 +5233,7 @@ swofp_multipart_reply(struct switch_softc *sc, struct swofp_mpmsg *swmp)
 
 		if (swmp->swmp_body.ml_tail != NULL) {
 			omp->mp_flags |= htons(OFP_MP_FLAG_REPLY_MORE);
-			if ((hdr = m_copym2(swmp->swmp_hdr, 0, M_COPYALL,
+			if ((hdr = m_dup_pkt(swmp->swmp_hdr, 0,
 			    M_WAITOK)) == NULL) {
 				error = ENOBUFS;
 				goto error;
@@ -6031,23 +6040,4 @@ swofp_barrier_reply(struct switch_softc *sc, struct mbuf *m)
 	oh->oh_type = OFP_T_BARRIER_REPLY;
 
 	(void)swofp_output(sc, m);
-}
-
-struct mbuf *
-swofp_mbuf_align(struct mbuf *m)
-{
-	struct mbuf *m1, *m2;
-
-	m1 = m_copym2(m, 0, ETHER_HDR_LEN, M_DONTWAIT);
-	if (m1 == NULL)
-		return (NULL);
-	m2 = m_copym2(m, ETHER_HDR_LEN, M_COPYALL, M_DONTWAIT);
-	if (m2 == NULL) {
-		m_freem(m1);
-		return (NULL);
-	}
-	m_cat(m1, m2);
-	m_freem(m);
-
-	return (m1);
 }
