@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.13 2016/09/13 17:13:37 deraadt Exp $ */
+/*	$Id: main.c,v 1.14 2016/09/18 20:18:25 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,6 +26,7 @@
 #include <unistd.h>
 
 #include "extern.h"
+#include "parse.h"
 
 #define SSL_DIR "/etc/ssl/acme"
 #define SSL_PRIV_DIR "/etc/ssl/acme/private"
@@ -42,23 +43,6 @@ struct authority authorities[] = {
 	    "https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf",
 	    "https://acme-staging.api.letsencrypt.org/directory"},
 };
-
-/*
- * This isn't RFC1035 compliant, but does the bare minimum in making
- * sure that we don't get bogus domain names on the command line, which
- * might otherwise screw up our directory structure.
- * Returns zero on failure, non-zero on success.
- */
-static int
-domain_valid(const char *cp)
-{
-
-	for (; '\0' != *cp; cp++)
-		if (!('.' == *cp || '-' == *cp ||
-		    '_' == *cp || isalnum((int)*cp)))
-			return (0);
-	return (1);
-}
 
 /*
  * Wrap around asprintf(3), which sometimes nullifies the input values,

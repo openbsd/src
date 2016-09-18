@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.432 2016/09/11 19:44:32 natano Exp $
+#	$OpenBSD: Makefile,v 1.433 2016/09/18 20:18:25 benno Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -30,16 +30,15 @@ kernels: bootblocks ${ALL_KERNELS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-MUTABLE=changelist daily etc.${MACHINE}/disktab etc.${MACHINE}/login.conf \
-	ftpusers gettytab group ksh.kshrc locate.rc mailer.conf \
-	moduli monthly netstart networks newsyslog.conf ntpd.conf \
+MUTABLE=acme-client.conf changelist daily etc.${MACHINE}/disktab \
+	etc.${MACHINE}/login.conf ftpusers gettytab group ksh.kshrc locate.rc \
+	mailer.conf moduli monthly netstart networks newsyslog.conf ntpd.conf \
 	pf.os protocols rc rc.conf rpc services shells syslog.conf weekly
 
 # -rw-r--r--
-EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports \
-	httpd.conf ifstated.conf inetd.conf \
-	man.conf mixerctl.conf mrouted.conf \
-	ntpd.conf pkg.conf printcap rbootd.conf \
+EXAMPLES=acme-client.conf chio.conf dhclient.conf dhcpd.conf exports \
+	httpd.conf ifstated.conf inetd.conf man.conf mixerctl.conf \
+	mrouted.conf ntpd.conf pkg.conf printcap rbootd.conf \
 	remote sensorsd.conf wsconsctl.conf
 
 # -rw-------

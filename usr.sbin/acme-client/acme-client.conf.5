@@ -1,0 +1,163 @@
+.\"	$OpenBSD: acme-client.conf.5,v 1.1 2016/09/18 20:18:25 benno Exp $
+.\"
+.\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
+.\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
+.\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+.\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 18 2016 $
+.Dt ACME-CLIENT.CONF 5
+.Os
+.Sh NAME
+.Nm acme-client.conf
+.Nd Automatic Certificate Management Environment (ACME) client
+configuration file
+.Sh DESCRIPTION
+.Xr acme-client 8
+implements the Automatic Certificate Management Environment (ACME) protocol.
+.Sh SECTIONS
+The
+.Nm
+config file is divided into three main sections.
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy Authorities
+TLS authorities that can be contacted via ACME.
+.It Sy Domains
+Domains that the user wants to receive TLS-Certificates for.
+.El
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/acme-client.sub.conf"
+.Ed
+.Pp
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
+Care should be taken when commenting out multi-line text:
+the comment is effective until the end of the entire block.
+.Pp
+Argument names not beginning with a letter, digit, underscore or '/'
+must be quoted.
+.Pp
+.Sh MACROS
+Macros can be defined that will later be expanded in context.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
+Macro names may not be reserved words.
+Macros are not expanded inside quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+le="letsencrypt"
+domain example.com {
+	sign with $le
+}
+.Ed
+.Pp
+.Sh AUTHORITIES
+The configured certificate authorities.
+.Pp
+Each authority section starts with a declaration of the name identifying a
+certificate authority.
+.Pp
+.Bl -tag -width Ds
+.It Ic authority Ar name Brq ...
+The
+.Ar name
+is is a string used to reference this certificate authority.
+.El
+.Pp
+It is followed by a block of options that is enclosed in curly brackets:
+.Bl -tag -width Ds
+.It Ic agreement url Ar url
+Specify the
+.Ar url
+of a contract under which the certificates are supplied by the certificate
+authority.
+.It Ic api url Ar url
+Specify the
+.Ar url
+under which the ACME API is reachable.
+.It Ic account key Ar file
+Specify a
+.Ar file
+used to identify the user of this CA.
+.El
+.Pp
+An example authority block:
+.Bd -literal -offset indent
+authority letsencrypt {
+	agreement url https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf
+	api url "https://acme-v01.api.letsencrypt.org/directory"
+	account key /etc/ssl/private/my-acme.key
+}
+.Ed
+.Pp
+.Sh DOMAINS
+The domains that are configured to obtain SSL certificates through ACME.
+.Pp
+.Bl -tag -width Ds
+.It Ic domain Ar name Brq ...
+Each domain section begins with the
+.Ic domain
+keyword followed by the domain name.
+.El
+.Pp
+It is followed by a block of options that is enclosed in curly brackets:
+.Bl -tag -width Ds
+.It Ic alternative names Brq ...
+Specify a list of alternative names the certificate will be valid for.
+.It Ic domain key Ar file
+The private key file for which the certificate will be obtained.
+.It Ic domain certificate Ar file
+The filename of the certificate that will be issued.
+With
+.It Ic sign with Ar authority
+the certificate authority (as declared above in the
+.Sx AUTHORITIES
+section) to use for this domain is selected.
+.El
+.Pp
+An example domain declaration looks like this:
+.Bd -literal -offset indent
+domain example.com {
+	alternative names { secure.example.com }
+	domain key /etc/ssl/private/example.com.key
+	domain certificate /etc/ssl/example.com.crt
+	sign with letsencrypt
+}
+.Ed
+.Pp
+.Sh FILES
+.Bl -tag -width "/etc/acme-client.conf" -compact
+.It Pa /etc/acme-client.conf
+.Xr acme-client 8
+configuration file
+.El
+.Sh SEE ALSO
+.Xr acme-client 8 ,
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 6.1 .
