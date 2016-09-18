@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2016/09/11 07:42:02 guenther Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2016/09/18 08:58:13 natano Exp $
 
 .include <bsd.own.mk>
 
@@ -102,8 +102,8 @@ install: maninstall
 	    tooldir=${PREFIX} \
 	    BSDSRCDIR=${BSDSRCDIR} \
 	    INSTALL_MODULES='${INSTALL_MODULES}' \
-	    INSTALL_PROGRAM='install -c -S ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}' \
-	    INSTALL_DATA='install -c -o ${DOCOWN} -g ${DOCGRP} -m ${NONBINMODE}' \
+	    INSTALL_PROGRAM='${INSTALL} -c -S ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}' \
+	    INSTALL_DATA='${INSTALL} -c -o ${DOCOWN} -g ${DOCGRP} -m ${NONBINMODE}' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
 	      install install-info
 
