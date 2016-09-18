@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.128 2016/09/12 07:43:10 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.129 2016/09/18 09:51:24 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1023,16 +1023,34 @@ usbd_status
 usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 		int speed, int port, struct usbd_port *up)
 {
-	struct usbd_device *dev, *adev;
-	struct usbd_device *hub;
+	struct usbd_device *dev, *adev, *hub;
 	usb_device_descriptor_t *dd;
 	usbd_status err;
-	int addr;
-	int i;
-	int p;
+	uint32_t mps, mps0;
+	int addr, i, p;
 
 	DPRINTF(("usbd_new_device bus=%p port=%d depth=%d speed=%d\n",
 		 bus, port, depth, speed));
+
+	/*
+	 * Fixed size for ep0 max packet, FULL device variable size is
+	 * handled below.
+	 */
+	switch (speed) {
+	case USB_SPEED_LOW:
+		mps0 = 8;
+		break;
+	case USB_SPEED_HIGH:
+	case USB_SPEED_FULL:
+		mps0 = 64;
+		break;
+	case USB_SPEED_SUPER:
+		mps0 = 512;
+		break;
+	default:
+		return (USBD_INVAL);
+	}
+
 	addr = usbd_getnewaddr(bus);
 	if (addr < 0) {
 		printf("%s: No free USB addresses, new device ignored.\n",
@@ -1054,8 +1072,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	dev->def_ep_desc.bDescriptorType = UDESC_ENDPOINT;
 	dev->def_ep_desc.bEndpointAddress = USB_CONTROL_ENDPOINT;
 	dev->def_ep_desc.bmAttributes = UE_CONTROL;
-	USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
 	dev->def_ep_desc.bInterval = 0;
+	USETW(dev->def_ep_desc.wMaxPacketSize, mps0);
 
 	dev->quirks = &usbd_no_quirk;
 	dev->address = USB_START_ADDR;
@@ -1063,6 +1081,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	dev->depth = depth;
 	dev->powersrc = up;
 	dev->myhub = up->parent;
+	dev->speed = speed;
+	dev->langid = USBD_NOLANG;
 
 	up->device = dev;
 
@@ -1084,8 +1104,6 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	} else {
 		dev->myhsport = NULL;
 	}
-	dev->speed = speed;
-	dev->langid = USBD_NOLANG;
 
 	/* Establish the default pipe. */
 	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
@@ -1143,36 +1161,33 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 		return (err);
 	}
 
-	if (speed == USB_SPEED_HIGH) {
-		/* Max packet size must be 64 (sec 5.5.3). */
-		if (dd->bMaxPacketSize != USB_2_MAX_CTRL_PACKET) {
-#ifdef DIAGNOSTIC
-			printf("%s: addr=%d bad max packet size %d\n", __func__,
-			    addr, dd->bMaxPacketSize);
-#endif
-			dd->bMaxPacketSize = USB_2_MAX_CTRL_PACKET;
-		}
-	}
-
 	DPRINTF(("usbd_new_device: adding unit addr=%d, rev=%02x, class=%d, "
 		 "subclass=%d, protocol=%d, maxpacket=%d, len=%d, speed=%d\n",
 		 addr,UGETW(dd->bcdUSB), dd->bDeviceClass, dd->bDeviceSubClass,
 		 dd->bDeviceProtocol, dd->bMaxPacketSize, dd->bLength,
 		 dev->speed));
 
-	if (dd->bDescriptorType != UDESC_DEVICE) {
+	if ((dd->bDescriptorType != UDESC_DEVICE) ||
+	    (dd->bLength < USB_DEVICE_DESCRIPTOR_SIZE)) {
 		usb_free_device(dev);
 		up->device = NULL;
 		return (USBD_INVAL);
 	}
 
-	if (dd->bLength < USB_DEVICE_DESCRIPTOR_SIZE) {
-		usb_free_device(dev);
-		up->device = NULL;
-		return (USBD_INVAL);
+	mps = dd->bMaxPacketSize;
+	if (speed == USB_SPEED_SUPER && mps == 0xff)
+		mps = 512;
+
+	if (mps != mps0) {
+		if ((speed == USB_SPEED_LOW) ||
+		    (mps != 8 || mps != 16 || mps != 32 || mps != 64)) {
+			usb_free_device(dev);
+			up->device = NULL;
+			return (USBD_INVAL);
+		}
+		USETW(dev->def_ep_desc.wMaxPacketSize, mps);
 	}
 
-	USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
 
 	/* Set the address if the HC didn't do it already. */
 	if (bus->methods->dev_setaddr != NULL &&
