@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.77 2016/09/16 20:16:06 guenther Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.78 2016/09/18 23:56:45 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -699,8 +699,11 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_ci = ci;
 			break;
 		}
-	if (ci == NULL)
-		printf("unable to find cpu %d\n", sc->sc_dev.dv_unit);
+	if (ci == NULL) {
+		printf(": no cpu matching ACPI ID %d\n", sc->sc_cpu);
+		return;
+	}
+
 	sc->sc_prev_sleep = 1000000;
 
 	acpicpu_set_pdc(sc);

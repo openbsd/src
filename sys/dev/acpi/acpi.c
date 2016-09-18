@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.315 2016/09/03 14:46:56 naddy Exp $ */
+/* $OpenBSD: acpi.c,v 1.316 2016/09/18 23:56:45 guenther Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1958,12 +1958,10 @@ acpi_add_device(struct aml_node *node, void *arg)
 	struct device *self = arg;
 	struct acpi_softc *sc = arg;
 	struct acpi_attach_args aaa;
-#ifdef MULTIPROCESSOR
 	struct aml_value res;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	int proc_id = -1;
-#endif
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_node = node;
@@ -1976,7 +1974,6 @@ acpi_add_device(struct aml_node *node, void *arg)
 	case AML_OBJTYPE_PROCESSOR:
 		if (nacpicpus >= ncpus)
 			return 0;
-#ifdef MULTIPROCESSOR
 		if (aml_evalnode(sc, aaa.aaa_node, 0, NULL, &res) == 0) {
 			if (res.type == AML_OBJTYPE_PROCESSOR)
 				proc_id = res.v_processor.proc_id;
@@ -1988,7 +1985,6 @@ acpi_add_device(struct aml_node *node, void *arg)
 		}
 		if (ci == NULL)
 			return 0;
-#endif
 		nacpicpus++;
 
 		aaa.aaa_name = "acpicpu";
