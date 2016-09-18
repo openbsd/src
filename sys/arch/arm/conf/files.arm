@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.40 2016/08/14 11:30:54 jsg Exp $
+#	$OpenBSD: files.arm,v 1.41 2016/09/18 17:50:25 kettenis Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -16,7 +16,7 @@ file	arch/arm/arm/disassem.c			ddb
 file	arch/arm/arm/fiq.c			fiq
 file	arch/arm/arm/fiq_subr.S			fiq
 
-define	fdt {}
+define	fdt {[early = 0]}
 
 # mainbus files
 device	mainbus: fdt

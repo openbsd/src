@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.8 2016/07/27 11:45:02 patrick Exp $ */
+/* $OpenBSD: simplebus.c,v 1.9 2016/09/18 17:50:26 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -44,6 +44,7 @@ struct simplebus_softc {
 	struct bus_space	 sc_bus;
 	int			*sc_ranges;
 	int			 sc_rangeslen;
+	int			 sc_early;
 };
 
 struct cfattach simplebus_ca = {
@@ -109,12 +110,24 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Scan the whole tree. */
-	for (node = OF_child(sc->sc_node);
-	    node != 0;
-	    node = OF_peer(node))
-	{
+	sc->sc_early = 1;
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) 
 		simplebus_attach_node(self, node);
-	}
+
+	sc->sc_early = 0;
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) 
+		simplebus_attach_node(self, node);
+}
+
+int
+simplebus_submatch(struct device *self, void *match, void *aux)
+{
+	struct simplebus_softc	*sc = (struct simplebus_softc *)self;
+	struct cfdata *cf = match;
+
+	if (cf->cf_loc[0] == sc->sc_early)
+		return (*cf->cf_attach->ca_match)(self, match, aux);
+	return 0;
 }
 
 /*
@@ -182,9 +195,7 @@ simplebus_attach_node(struct device *self, int node)
 		OF_getpropintarray(node, "interrupts", fa.fa_intr, len);
 	}
 
-	/* TODO: attach the device's clocks first? */
-
-	config_found(self, &fa, NULL);
+	config_found_sm(self, &fa, NULL, simplebus_submatch);
 
 	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(struct fdt_reg));
 	free(fa.fa_intr, M_DEVBUF, fa.fa_nintr * sizeof(uint32_t));
