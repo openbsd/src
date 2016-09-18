@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.257 2016/09/04 09:22:29 mpi Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.258 2016/09/18 12:36:28 jasper Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ void	start_cleaner(void *);
 void	start_update(void *);
 void	start_reaper(void *);
 void	crypto_init(void);
+void	db_ctf_init(void);
 void	prof_init(void);
 void	init_exec(void);
 void	kqueue_init(void);
@@ -529,6 +530,10 @@ main(void *framep)
 #endif
 
 	config_process_deferred_mountroot();
+
+#ifdef DDBCTF
+	db_ctf_init();
+#endif
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
