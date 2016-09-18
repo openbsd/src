@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.2 2016/09/14 13:46:51 rzalamena Exp $	*/
+/*	$OpenBSD: proc.c,v 1.3 2016/09/18 13:17:40 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -300,7 +300,6 @@ proc_setup(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 
 	for (src = 0; src < nproc; src++) {
 		procs[src].p_ps = ps;
-		procs[src].p_env = ps->ps_env;
 		if (procs[src].p_cb == NULL)
 			procs[src].p_cb = proc_dispatch_null;
 

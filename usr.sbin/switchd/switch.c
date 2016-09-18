@@ -1,4 +1,4 @@
-/*	$OpenBSD: switch.c,v 1.2 2016/07/20 20:07:02 reyk Exp $	*/
+/*	$OpenBSD: switch.c,v 1.3 2016/09/18 13:17:40 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -46,8 +46,8 @@ switch_init(struct switchd *sc)
 int
 switch_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct switchd		*sc = p->p_env;
 	struct privsep		*ps = p->p_ps;
+	struct switchd		*sc = ps->ps_env;
 	struct switch_control	*sw;
 	struct macaddr		*mac;
 	struct iovec		 iov[2];
