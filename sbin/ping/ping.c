@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.209 2016/09/18 13:59:51 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.210 2016/09/18 14:52:14 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -681,7 +681,7 @@ main(int argc, char *argv[])
 			if ((scmsg = malloc( CMSG_SPACE(sizeof(int)))) == NULL)
 				err(1, "malloc");
 			smsghdr.msg_control = (caddr_t)scmsg;
-			smsghdr.msg_controllen =  CMSG_SPACE(sizeof(int));
+			smsghdr.msg_controllen = CMSG_SPACE(sizeof(int));
 
 			scmsg->cmsg_len = CMSG_LEN(sizeof(int));
 			scmsg->cmsg_level = IPPROTO_IPV6;
@@ -1002,7 +1002,7 @@ retransmit(int s)
 	 * maxwait seconds if we haven't.
 	 */
 	if (nreceived) {
-		itimer.it_value.tv_sec =  2 * tmax / 1000;
+		itimer.it_value.tv_sec = 2 * tmax / 1000;
 		if (itimer.it_value.tv_sec == 0)
 			itimer.it_value.tv_sec = 1;
 	} else
@@ -1097,7 +1097,7 @@ pinger(int s)
 
 	i = sendmsg(s, &smsghdr, 0);
 
-	if (i < 0 || i != cc)  {
+	if (i < 0 || i != cc) {
 		if (i < 0)
 			warn("sendmsg");
 		printf("ping: wrote %s %d chars, ret=%d\n", hostname, cc, i);
@@ -1286,7 +1286,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 						cp = (u_char *)
 						    &icp->icmp_data[0];
 					for (i = ECHOLEN; i < cc && i < datalen;
-					     ++i, ++cp) {
+					    ++i, ++cp) {
 						if ((i % 32) == 8)
 							(void)printf("\n\t");
 						(void)printf("%x ", *cp);
@@ -1454,7 +1454,7 @@ in_cksum(u_short *addr, int len)
 	 * sequential 16 bit words to it, and at the end, fold back all the
 	 * carry bits from the top 16 bits into the lower 16 bits.
 	 */
-	while (nleft > 1)  {
+	while (nleft > 1) {
 		sum += *w++;
 		nleft -= 2;
 	}
@@ -1729,20 +1729,19 @@ map_tos(char *key, int *val)
 		{ "netcontrol",		IPTOS_PREC_NETCONTROL },
 		{ "reliability",	IPTOS_RELIABILITY },
 		{ "throughput",		IPTOS_THROUGHPUT },
-		{ NULL, 		-1 },
+		{ NULL,			-1 },
 	};
-	
+
 	for (t = toskeywords; t->keyword != NULL; t++) {
 		if (strcmp(key, t->keyword) == 0) {
 			*val = t->val;
 			return (1);
 		}
 	}
-	
+
 	return (0);
 }
 #endif	/* SMALL */
-
 
 void
 pr_exthdrs(struct msghdr *mhdr)
@@ -1750,7 +1749,7 @@ pr_exthdrs(struct msghdr *mhdr)
 	struct cmsghdr *cm;
 
 	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(mhdr); cm;
-	     cm = (struct cmsghdr *)CMSG_NXTHDR(mhdr, cm)) {
+	    cm = (struct cmsghdr *)CMSG_NXTHDR(mhdr, cm)) {
 		if (cm->cmsg_level != IPPROTO_IPV6)
 			continue;
 
@@ -1878,7 +1877,7 @@ get_pathmtu(struct msghdr *mhdr, struct sockaddr_in6 *dst)
 	struct ip6_mtuinfo *mtuctl = NULL;
 
 	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(mhdr); cm;
-	     cm = (struct cmsghdr *)CMSG_NXTHDR(mhdr, cm)) {
+	    cm = (struct cmsghdr *)CMSG_NXTHDR(mhdr, cm)) {
 		if (cm->cmsg_len == 0)
 			return(0);
 
@@ -1896,16 +1895,17 @@ get_pathmtu(struct msghdr *mhdr, struct sockaddr_in6 *dst)
 			 * in which case the scope ID value is 0.
 			 */
 			if (!IN6_ARE_ADDR_EQUAL(&mtuctl->ip6m_addr.sin6_addr,
-						&dst->sin6_addr) ||
+			    &dst->sin6_addr) ||
 			    (mtuctl->ip6m_addr.sin6_scope_id &&
-			     dst->sin6_scope_id &&
-			     mtuctl->ip6m_addr.sin6_scope_id !=
-			     dst->sin6_scope_id)) {
+			    dst->sin6_scope_id &&
+			    mtuctl->ip6m_addr.sin6_scope_id !=
+			    dst->sin6_scope_id)) {
 				if ((options & F_VERBOSE) != 0) {
 					printf("path MTU for %s is notified. "
-					       "(ignored)\n",
-					   pr_addr((struct sockaddr *)&mtuctl->ip6m_addr,
-					   sizeof(mtuctl->ip6m_addr)));
+					    "(ignored)\n",
+					    pr_addr((struct sockaddr *)
+					    &mtuctl->ip6m_addr,
+					    sizeof(mtuctl->ip6m_addr)));
 				}
 				return(0);
 			}
