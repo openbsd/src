@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.178 2016/08/09 15:08:15 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.179 2016/09/18 15:21:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -89,6 +89,7 @@ static	int		  koptions(int *, char *);
 static	int		  moptions(int *, char *);
 static	void		  mmsg(enum mandocerr, enum mandoclevel,
 				const char *, int, int, const char *);
+static	void		  outdata_alloc(struct curparse *);
 static	void		  parse(struct curparse *, int, const char *);
 static	void		  passthrough(const char *, int, int);
 static	pid_t		  spawn_pager(struct tag_files *);
@@ -435,8 +436,11 @@ main(int argc, char *argv[])
 				passthrough(resp->file, fd,
 				    conf.output.synopsisonly);
 
-			if (argc > 1 && curp.outtype <= OUTT_UTF8)
+			if (argc > 1 && curp.outtype <= OUTT_UTF8) {
+				if (curp.outdata == NULL)
+					outdata_alloc(&curp);
 				terminal_sepline(curp.outdata);
+			}
 		} else if (rc < MANDOCLEVEL_ERROR)
 			rc = MANDOCLEVEL_ERROR;
 
@@ -692,32 +696,8 @@ parse(struct curparse *curp, int fd, const char *file)
 	if (rctmp != MANDOCLEVEL_OK && curp->wstop)
 		return;
 
-	/* If unset, allocate output dev now (if applicable). */
-
-	if (curp->outdata == NULL) {
-		switch (curp->outtype) {
-		case OUTT_HTML:
-			curp->outdata = html_alloc(curp->outopts);
-			break;
-		case OUTT_UTF8:
-			curp->outdata = utf8_alloc(curp->outopts);
-			break;
-		case OUTT_LOCALE:
-			curp->outdata = locale_alloc(curp->outopts);
-			break;
-		case OUTT_ASCII:
-			curp->outdata = ascii_alloc(curp->outopts);
-			break;
-		case OUTT_PDF:
-			curp->outdata = pdf_alloc(curp->outopts);
-			break;
-		case OUTT_PS:
-			curp->outdata = ps_alloc(curp->outopts);
-			break;
-		default:
-			break;
-		}
-	}
+	if (curp->outdata == NULL)
+		outdata_alloc(curp);
 
 	mparse_result(curp->mp, &man, NULL);
 
@@ -770,6 +750,33 @@ parse(struct curparse *curp, int fd, const char *file)
 		default:
 			break;
 		}
+	}
+}
+
+static void
+outdata_alloc(struct curparse *curp)
+{
+	switch (curp->outtype) {
+	case OUTT_HTML:
+		curp->outdata = html_alloc(curp->outopts);
+		break;
+	case OUTT_UTF8:
+		curp->outdata = utf8_alloc(curp->outopts);
+		break;
+	case OUTT_LOCALE:
+		curp->outdata = locale_alloc(curp->outopts);
+		break;
+	case OUTT_ASCII:
+		curp->outdata = ascii_alloc(curp->outopts);
+		break;
+	case OUTT_PDF:
+		curp->outdata = pdf_alloc(curp->outopts);
+		break;
+	case OUTT_PS:
+		curp->outdata = ps_alloc(curp->outopts);
+		break;
+	default:
+		break;
 	}
 }
 
