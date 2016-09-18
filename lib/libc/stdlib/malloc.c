@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.195 2016/09/01 10:41:02 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.196 2016/09/18 13:46:28 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -376,6 +376,11 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	for (i = 0; i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p == NULL) {
+			if (mopts.malloc_junk && !mopts.malloc_freeunmap) {
+				size_t amt = mopts.malloc_junk == 1 ?
+				    MALLOC_MAXCHUNK : sz;
+				memset(p, SOME_FREEJUNK, amt);
+			}
 			if (mopts.malloc_hint)
 				madvise(p, sz, MADV_FREE);
 			if (mopts.malloc_freeunmap)
@@ -1335,11 +1340,6 @@ ofree(struct dir_info *argpool, void *p)
 					wrterror(pool, "mprotect", NULL);
 			}
 			STATS_SUB(pool->malloc_guarded, mopts.malloc_guard);
-		}
-		if (mopts.malloc_junk && !mopts.malloc_freeunmap) {
-			size_t amt = mopts.malloc_junk == 1 ? MALLOC_MAXCHUNK :
-			    PAGEROUND(sz) - mopts.malloc_guard;
-			memset(p, SOME_FREEJUNK, amt);
 		}
 		unmap(pool, p, PAGEROUND(sz));
 		delete(pool, r);
