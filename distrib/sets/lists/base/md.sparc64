@@ -121,7 +121,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ddb/db_access.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ddb/db_break.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ddb/db_command.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/ddb/db_ctf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ddb/db_elf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ddb/db_extern.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ddb/db_interface.ph
@@ -1531,6 +1530,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/chio.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/core.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/ctf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/device.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/dir.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/dirent.ph

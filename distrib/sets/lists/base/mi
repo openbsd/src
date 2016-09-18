@@ -611,8 +611,8 @@
 ./usr/games
 ./usr/include
 ./usr/lib
-./usr/lib/libc.so.89.1
-./usr/lib/libc.so.89.1.a
+./usr/lib/libc.so.89.2
+./usr/lib/libc.so.89.2.a
 ./usr/lib/libcrypto.so.38.1
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2

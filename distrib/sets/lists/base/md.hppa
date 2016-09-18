@@ -523,7 +523,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ddb/db_access.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ddb/db_break.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ddb/db_command.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/ddb/db_ctf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ddb/db_elf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ddb/db_extern.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ddb/db_interface.ph
@@ -1927,6 +1926,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/chio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/core.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/ctf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/device.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/dir.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/dirent.ph

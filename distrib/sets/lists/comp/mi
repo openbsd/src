@@ -67,7 +67,6 @@
 ./usr/include/ddb/db_access.h
 ./usr/include/ddb/db_break.h
 ./usr/include/ddb/db_command.h
-./usr/include/ddb/db_ctf.h
 ./usr/include/ddb/db_elf.h
 ./usr/include/ddb/db_extern.h
 ./usr/include/ddb/db_interface.h
@@ -1290,6 +1289,7 @@
 ./usr/include/sys/chio.h
 ./usr/include/sys/conf.h
 ./usr/include/sys/core.h
+./usr/include/sys/ctf.h
 ./usr/include/sys/device.h
 ./usr/include/sys/dir.h
 ./usr/include/sys/dirent.h

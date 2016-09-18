@@ -460,7 +460,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_access.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_break.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_command.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_ctf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_elf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_extern.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_interface.ph
@@ -1837,6 +1836,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/chio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/core.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ctf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/device.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/dir.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/dirent.ph
