@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.211 2016/09/18 15:14:08 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.212 2016/09/18 17:27:25 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -488,7 +488,7 @@ main(int argc, char *argv[])
 		hints.ai_family = dst->sa_family;
 		if ((error = getaddrinfo(source, NULL, &hints, &res)))
 			errx(1, "%s: %s", source, gai_strerror(error));
-		if (res->ai_addrlen != sizeof(from4))
+		if (res->ai_addrlen != dst->sa_len)
 			errx(1, "size of sockaddr mismatch");
 		memcpy(from, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
