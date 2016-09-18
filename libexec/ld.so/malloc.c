@@ -256,6 +256,11 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	for (i = 0; i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p == NULL) {
+			if (mopts.malloc_junk && !mopts.malloc_freeunmap) {
+				size_t amt = mopts.malloc_junk == 1 ?
+				     MALLOC_MAXCHUNK : sz;
+				_dl_memset(p, SOME_FREEJUNK, amt);
+			}
 			if (mopts.malloc_freeunmap)
 				_dl_mprotect(p, sz, PROT_NONE);
 			r->p = p;
@@ -907,11 +912,6 @@ ofree(void *p)
 				    PROT_READ | PROT_WRITE))
 					wrterror("mprotect");
 			}
-		}
-		if (mopts.malloc_junk && !mopts.malloc_freeunmap) {
-			size_t amt = mopts.malloc_junk == 1 ? MALLOC_MAXCHUNK :
-			    PAGEROUND(sz) - mopts.malloc_guard;
-			_dl_memset(p, SOME_FREEJUNK, amt);
 		}
 		unmap(g_pool, p, PAGEROUND(sz));
 		delete(g_pool, r);
