@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.54 2016/09/15 21:55:51 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.55 2016/09/18 18:16:00 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -40,11 +40,11 @@ armliicc*	at cortex?
 
 # iMX
 imx0		at mainbus?		# iMX SoC
-imxccm*		at imx?			# clock control module
-imxiomuxc*	at imx?			# iomux controller
+imxocotp*	at imx?			# on-chip otp controller
+imxccm*		at fdt? early 1		# clock control module
+imxiomuxc*	at fdt? early 1		# iomux controller
 imxgpc*		at fdt?			# power controller
 imxdog*		at fdt?			# watchdog timer
-imxocotp*	at imx?			# on-chip otp controller
 imxtemp*	at fdt?			# temperature monitor
 imxgpio*	at fdt?			# user-visible GPIO pins?
 fec*		at fdt?			# Ethernet

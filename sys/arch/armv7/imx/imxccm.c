@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.5 2015/05/30 08:09:19 jsg Exp $ */
+/* $OpenBSD: imxccm.c,v 1.6 2016/09/18 18:16:00 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -24,9 +24,13 @@
 #include <sys/evcount.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <armv7/armv7/armv7var.h>
+#include <machine/fdt.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define CCM_CCR		0x00
@@ -198,7 +202,17 @@ enum clocks {
 
 struct imxccm_softc *imxccm_sc;
 
-void imxccm_attach(struct device *parent, struct device *self, void *args);
+int	imxccm_match(struct device *, void *, void *);
+void	imxccm_attach(struct device *parent, struct device *self, void *args);
+
+struct cfattach	imxccm_ca = {
+	sizeof (struct imxccm_softc), imxccm_match, imxccm_attach
+};
+
+struct cfdriver imxccm_cd = {
+	NULL, "imxccm", DV_DULL
+};
+
 int imxccm_cpuspeed(int *);
 unsigned int imxccm_decode_pll(enum clocks, unsigned int);
 unsigned int imxccm_get_pll2_pfd(unsigned int);
@@ -224,25 +238,30 @@ void imxccm_enable_enet(void);
 void imxccm_enable_sata(void);
 void imxccm_enable_pcie(void);
 
-struct cfattach	imxccm_ca = {
-	sizeof (struct imxccm_softc), NULL, imxccm_attach
-};
+int
+imxccm_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
 
-struct cfdriver imxccm_cd = {
-	NULL, "imxccm", DV_DULL
-};
+	return (OF_is_compatible(faa->fa_node, "fsl,imx6q-ccm") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6sl-cmm") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6sx-cmm") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6ul-cmm"));
+}
 
 void
-imxccm_attach(struct device *parent, struct device *self, void *args)
+imxccm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct imxccm_softc *sc = (struct imxccm_softc *) self;
+	struct imxccm_softc *sc = (struct imxccm_softc *)self;
+	struct fdt_attach_args *faa = aux;
+
+	KASSERT(faa->fa_nreg >= 1);
 
 	imxccm_sc = sc;
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("imxccm_attach: bus_space_map failed!");
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size + 0x1000, 0, &sc->sc_ioh))
+		panic("%s: bus_space_map failed!", __func__);
 
 	printf(": imx6 rev 1.%d CPU freq: %d MHz",
 	    HREAD4(sc, CCM_ANALOG_DIGPROG) & CCM_ANALOG_DIGPROG_MINOR_MASK,

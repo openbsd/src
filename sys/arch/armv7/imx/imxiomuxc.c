@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiomuxc.c,v 1.7 2016/09/10 18:33:01 jsg Exp $ */
+/* $OpenBSD: imxiomuxc.c,v 1.8 2016/09/18 18:16:00 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -27,12 +27,13 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define IOMUXC_GPR1			0x004
@@ -116,35 +117,47 @@ struct imxiomuxc_softc {
 
 struct imxiomuxc_softc *imxiomuxc_sc;
 
-void imxiomuxc_attach(struct device *parent, struct device *self, void *args);
-int imxiomuxc_pinctrl(uint32_t, void *);
+int	imxiomuxc_match(struct device *, void *, void *);
+void	imxiomuxc_attach(struct device *, struct device *, void *);
 
 struct cfattach imxiomuxc_ca = {
-	sizeof (struct imxiomuxc_softc), NULL, imxiomuxc_attach
+	sizeof (struct imxiomuxc_softc), imxiomuxc_match, imxiomuxc_attach
 };
 
 struct cfdriver imxiomuxc_cd = {
 	NULL, "imxiomuxc", DV_DULL
 };
 
-void
-imxiomuxc_attach(struct device *parent, struct device *self, void *args)
+int	imxiomuxc_pinctrl(uint32_t, void *);
+
+int
+imxiomuxc_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct imxiomuxc_softc *sc = (struct imxiomuxc_softc *) self;
-	int node;
+	struct fdt_attach_args *faa = aux;
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("imxiomuxc_attach: bus_space_map failed!");
+	return (OF_is_compatible(faa->fa_node, "fsl,imx6q-iomuxc") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6dl-iomuxc") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6sl-iomuxc") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6sx-iomuxc") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6ul-iomuxc"));
+}
 
-	node = OF_finddevice("/soc/aips-bus@02000000/iomuxc@020e0000");
-	if (node != -1)
-		pinctrl_register(node, imxiomuxc_pinctrl, sc);
+void
+imxiomuxc_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct imxiomuxc_softc *sc = (struct imxiomuxc_softc *)self;
+	struct fdt_attach_args *faa = aux;
 
-	printf("\n");
+	KASSERT(faa->fa_nreg >= 1);
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
+		panic("%s: bus_space_map failed!", __func__);
+
+	pinctrl_register(faa->fa_node, imxiomuxc_pinctrl, sc);
 	imxiomuxc_sc = sc;
+	printf("\n");
 }
 
 int

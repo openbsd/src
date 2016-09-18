@@ -1,4 +1,4 @@
-#	$OpenBSD: files.imx,v 1.17 2016/08/14 19:08:44 kettenis Exp $
+#	$OpenBSD: files.imx,v 1.18 2016/09/18 18:16:00 kettenis Exp $
 
 define imx {}
 device imx: imx
@@ -13,11 +13,11 @@ attach	imxuart at fdt
 file	arch/armv7/imx/imxuart.c		imxuart
 
 device imxccm
-attach imxccm at imx
+attach imxccm at fdt
 file	arch/armv7/imx/imxccm.c		imxccm
 
 device imxiomuxc
-attach imxiomuxc at imx
+attach imxiomuxc at fdt
 file	arch/armv7/imx/imxiomuxc.c	imxiomuxc
 
 device imxgpc
