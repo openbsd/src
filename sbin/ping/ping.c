@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.210 2016/09/18 14:52:14 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.211 2016/09/18 15:14:08 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -170,7 +170,7 @@ int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
 int datalen = DEFDATALEN;
-int maxpayload;
+int maxpayload = MAXPAYLOAD;
 u_char outpackhdr[IP_MAXPACKET+sizeof(struct ip)];
 u_char *outpack = outpackhdr+sizeof(struct ip);
 char BSPACE = '\b';		/* characters written for flood */
@@ -248,9 +248,8 @@ main(int argc, char *argv[])
 	struct icmp6_filter filt;
 	socklen_t maxsizelen;
 	int64_t preload;
-	int ch, i, optval = 1, packlen, maxsize, error, s4, s6, s;
+	int ch, i, optval = 1, packlen, maxsize, error, s;
 	int df = 0, tos = 0, bufspace = IP_MAXPACKET, hoplimit = -1, mflag = 0;
-	int v4sock_errno = 0, v6sock_errno = 0;
 	u_char *datap, *packet, loop = 1;
 	u_char ttl = MAXTTL;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
@@ -261,33 +260,20 @@ main(int argc, char *argv[])
 	u_int rtableid = 0;
 	extern char *__progname;
 
-	if ((s4 = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-		v4sock_errno = errno;
-	if ((s6 = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
-		v6sock_errno = errno;
+	if (strcmp("ping6", __progname) == 0) {
+		v6flag = 1;
+		maxpayload = MAXPAYLOAD6;
+		if ((s = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) == -1)
+			err(1, "socket");
+	} else {
+		if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1)
+			err(1, "socket");
+	}
 
 	/* revoke privs */
 	uid = getuid();
 	if (setresuid(uid, uid, uid) == -1)
 		err(1, "setresuid");
-
-	if (strcmp("ping6", __progname) == 0) {
-		v6flag = 1;
-		if (v6sock_errno != 0)
-			errc(1, v6sock_errno, "socket");
-		s = s6;
-		if (s4 >= 0)
-			close(s4);
-		maxpayload = MAXPAYLOAD6;
-	} else {
-		v6flag = 0;
-		if (v4sock_errno != 0)
-			errc(1, v4sock_errno, "socket");
-		s = s4;
-		if (s6 >= 0)
-			close(s6);
-		maxpayload = MAXPAYLOAD;
-	}
 
 	preload = 0;
 	datap = &outpack[ECHOLEN + ECHOTMLEN];
