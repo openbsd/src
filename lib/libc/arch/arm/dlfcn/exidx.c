@@ -1,4 +1,4 @@
-/*	$OpenBSD: exidx.c,v 1.1 2016/09/17 20:13:48 kettenis Exp $ */
+/*	$OpenBSD: exidx.c,v 1.2 2016/09/18 00:19:37 jsg Exp $ */
 /*
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 #include <link.h>
+#include <stddef.h>
 
 void *dl_unwind_find_exidx(const void *pc, int *pcount) __attribute__((weak));
 
