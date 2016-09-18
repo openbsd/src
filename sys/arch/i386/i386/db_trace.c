@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.21 2016/09/10 06:36:26 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.22 2016/09/18 13:38:01 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -34,6 +34,9 @@
 
 #include <machine/db_machdep.h>
 
+#ifdef DDBCTF
+#include <ddb/db_extern.h>
+#endif
 #include <ddb/db_sym.h>
 #include <ddb/db_access.h>
 #include <ddb/db_variables.h>
@@ -74,7 +77,7 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
 #define	INTERRUPT	3
 #define	AST		4
 
-int db_numargs(struct callframe *);
+int db_numargs(struct callframe *, const char *);
 void db_nextframe(struct callframe **, db_addr_t *, int *, int,
     int (*pr)(const char *, ...));
 
@@ -82,8 +85,11 @@ void db_nextframe(struct callframe **, db_addr_t *, int *, int,
  * Figure out how many arguments were passed into the frame at "fp".
  */
 int
-db_numargs(struct callframe *fp)
+db_numargs(struct callframe *fp, const char *sym)
 {
+#ifdef DDBCTF
+	return db_ctf_func_numargs(sym);
+#else
 	int	*argp;
 	int	inst;
 	int	args;
@@ -102,6 +108,7 @@ db_numargs(struct callframe *fp)
 			args = 5;
 	}
 	return (args);
+#endif
 }
 
 /*
@@ -245,7 +252,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		} else {
 		normal:
 			is_trap = NONE;
-			narg = db_numargs(frame);
+			narg = db_numargs(frame, name);
 		}
 
 		(*pr)("%s(", name);
