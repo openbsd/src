@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.94 2016/09/11 17:52:47 jsing Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.95 2016/09/18 15:13:10 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -271,11 +271,10 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 	if (((((u_int32_t)buf) & ~0xffff) !=
 	    (((u_int32_t)buf + bbsize) & ~0xffff)) ||
 	    (((u_int32_t)buf) >= 0x100000)) {
-		/*
-		 * XXX we believe that all the io is buffered
-		 * by fs routines, so no big reads anyway
-		 */
-		bb = bb1 = alloc(bbsize);
+		bb = bb1 = alloc(bbsize * 2);
+		if ((((u_int32_t)bb) & ~0xffff) !=
+		    (((u_int32_t)bb + bbsize - 1) & ~0xffff))
+			bb = (void *)(((u_int32_t)bb + bbsize - 1) & ~0xffff);
 		if (rw != F_READ)
 			bcopy(buf, bb, bbsize);
 	} else
@@ -329,7 +328,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 
 	if (bb != buf && rw == F_READ)
 		bcopy(bb, buf, bbsize);
-	free(bb1, bbsize);
+	free(bb1, bbsize * 2);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
