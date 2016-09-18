@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.178 2016/07/16 08:53:38 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.179 2016/09/18 14:28:25 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -171,11 +171,7 @@ extern	caddr_t msgbufaddr;
 int sparc_led_blink = 1;
 
 #ifdef APERTURE
-#ifdef INSECURE
-int allowaperture = 1;
-#else
 int allowaperture = 0;
-#endif
 #endif
 
 extern int ceccerrs;

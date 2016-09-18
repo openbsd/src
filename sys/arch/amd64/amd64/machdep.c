@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.221 2016/05/21 00:56:43 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.222 2016/09/18 14:28:24 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -284,11 +284,7 @@ void	kgdb_port_init(void);
 #endif /* KGDB */
 
 #ifdef APERTURE
-#ifdef INSECURE
-int allowaperture = 1;
-#else
 int allowaperture = 0;
-#endif
 #endif
 
 /*

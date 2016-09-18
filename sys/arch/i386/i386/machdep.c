@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.589 2016/09/03 12:12:43 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.590 2016/09/18 14:28:25 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -302,11 +302,7 @@ void kgdb_port_init(void);
 #endif /* KGDB */
 
 #ifdef APERTURE
-#ifdef INSECURE
-int allowaperture = 1;
-#else
 int allowaperture = 0;
-#endif
 #endif
 
 int has_rdrand;

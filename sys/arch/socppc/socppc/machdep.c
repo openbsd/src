@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2016/05/23 18:14:47 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.70 2016/09/18 14:28:25 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -108,11 +108,7 @@ extern struct bd_info **fwargsave;
 extern struct fdt_head *fwfdtsave;
 
 #ifdef APERTURE
-#ifdef INSECURE
-int allowaperture = 1;
-#else
 int allowaperture = 0;
-#endif
 #endif
 
 void dumpsys(void);
