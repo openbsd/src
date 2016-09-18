@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.12 2016/09/15 22:00:55 jsg Exp $
+#	$OpenBSD: Makefile,v 1.13 2016/09/18 07:03:37 jsg Exp $
 
-MAN=	cpsw.4 dmtimer.4 edma.4 fec.4 gptimer.4 \
+MAN=	agtimer.4 ampintc.4 amptimer.4 armliicc.4 \
+	cortex.4 cpsw.4 dmtimer.4 edma.4 fec.4 gptimer.4 \
 	imx.4 imxesdhc.4 imxiic.4 imxtemp.4 \
 	intc.4 intro.4 \
 	omap.4 omdog.4 omgpio.4 ommmc.4 omwugen.4 \
