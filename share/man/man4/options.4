@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.243 2016/03/10 08:56:46 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.244 2016/09/18 14:28:04 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: March 10 2016 $
+.Dd $Mdocdate: September 18 2016 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -341,23 +341,6 @@ While not IP specific, this option is usually used in conjunction with option
 .Em IPSEC .
 .It Cd option EISAVERBOSE
 Makes the boot process more verbose for EISA peripherals.
-.It Cd option INSECURE
-Hardwires the kernel security level at \-1.
-This means that the system always runs in securelevel 0 mode, even when
-running multiuser.
-See
-.Xr init 8
-for details on the implications of this.
-The kernel secure level may be manipulated by the superuser by altering the
-.Em kern.securelevel
-sysctl variable.
-(It should be noted that the securelevel may only be lowered by a call from
-process ID 1, i.e.,
-.Xr init 8 . )
-See also
-.Xr sysctl 8
-and
-.Xr sysctl 3 .
 .It Cd option KMEMSTATS
 The kernel memory allocator,
 .Xr malloc 9 ,

@@ -1,9 +1,7 @@
-#	$OpenBSD: GENERIC,v 1.234 2016/09/16 19:13:17 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.235 2016/09/18 14:28:05 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
-
-#option		INSECURE	# default to secure
 
 option		DDB		# in-kernel debugger
 #option		DDBPROF		# ddb(4) based profiling

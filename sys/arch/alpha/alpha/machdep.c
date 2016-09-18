@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.174 2016/05/21 00:56:41 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.175 2016/09/18 14:28:04 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -150,11 +150,7 @@ struct vm_map *phys_map = NULL;
 int   safepri = 0;
 
 #ifdef APERTURE
-#ifdef INSECURE
-int allowaperture = 1;
-#else
 int allowaperture = 0;
-#endif
 #endif
 
 int	totalphysmem;		/* total amount of physical memory in system */
