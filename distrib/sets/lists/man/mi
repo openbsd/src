@@ -1167,6 +1167,11 @@
 ./usr/share/man/man4/aps.4
 ./usr/share/man/man4/arc.4
 ./usr/share/man/man4/arcofi.4
+./usr/share/man/man4/armv7/agtimer.4
+./usr/share/man/man4/armv7/ampintc.4
+./usr/share/man/man4/armv7/amptimer.4
+./usr/share/man/man4/armv7/armliicc.4
+./usr/share/man/man4/armv7/cortex.4
 ./usr/share/man/man4/armv7/cpsw.4
 ./usr/share/man/man4/armv7/dmtimer.4
 ./usr/share/man/man4/armv7/edma.4
@@ -2252,7 +2257,6 @@
 ./usr/share/man/man8/pfctl.8
 ./usr/share/man/man8/pflogd.8
 ./usr/share/man/man8/ping.8
-./usr/share/man/man8/ping6.8
 ./usr/share/man/man8/pkg_check.8
 ./usr/share/man/man8/portmap.8
 ./usr/share/man/man8/pppd.8
