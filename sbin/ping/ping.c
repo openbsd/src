@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.207 2016/09/17 21:30:02 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.208 2016/09/18 13:56:15 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -764,10 +764,7 @@ main(int argc, char *argv[])
 	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
 	arc4random_buf(&mac_key, sizeof(mac_key));
 
-	if (v6flag)
-		printf("PING6 %s (", hostname);
-	else
-		printf("PING %s (", hostname);
+	printf("PING %s (", hostname);
 	if (v6flag && (options & F_VERBOSE))
 		printf("%s --> ", pr_addr(from, from->sa_len));
 	printf("%s): %d data bytes\n", pr_addr(dst, dst->sa_len), datalen);
@@ -937,10 +934,7 @@ fill(char *bp, char *patp)
 void
 summary(void)
 {
-	if (v6flag)
-		printf("\n--- %s ping6 statistics ---\n", hostname);
-	else
-		printf("\n--- %s ping statistics ---\n", hostname);
+	printf("\n--- %s ping statistics ---\n", hostname);
 	printf("%lld packets transmitted, ", ntransmitted);
 	printf("%lld packets received, ", nreceived);
 
@@ -1106,12 +1100,7 @@ pinger(int s)
 	if (i < 0 || i != cc)  {
 		if (i < 0)
 			warn("sendmsg");
-		if (v6flag)
-			printf("ping6: wrote %s %d chars, ret=%d\n", hostname,
-			    cc, i);
-		else
-			printf("ping: wrote %s %d chars, ret=%d\n", hostname,
-			    cc, i);
+		printf("ping: wrote %s %d chars, ret=%d\n", hostname, cc, i);
 	}
 	if (!(options & F_QUIET) && options & F_FLOOD)
 		(void)write(STDOUT_FILENO, &DOT, 1);
