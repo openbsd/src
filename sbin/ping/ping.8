@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.55 2016/09/17 18:36:15 florian Exp $
+.\"	$OpenBSD: ping.8,v 1.56 2016/09/18 10:20:21 jmc Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,7 +57,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 17 2016 $
+.Dd $Mdocdate: September 18 2016 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -66,7 +66,6 @@
 .Nd send ICMP ECHO_REQUEST packets to network hosts
 .Sh SYNOPSIS
 .Nm ping
-.Bk -words
 .Op Fl DdEefHLnqRv
 .Op Fl c Ar count
 .Op Fl I Ar ifaddr
@@ -79,7 +78,6 @@
 .Op Fl V Ar rtable
 .Op Fl w Ar maxwait
 .Ar host
-.Ek
 .Nm ping6
 .Op Fl dEefHLmnqv
 .Op Fl c Ar count
@@ -108,6 +106,7 @@ followed by a
 and then an arbitrary number of
 .Dq pad
 bytes used to fill out the packet.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c Ar count
@@ -428,7 +427,7 @@ command appeared in
 .Bx 4.3 .
 The
 .Nm ping6
-command with first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
+command first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
 .Sh BUGS
 Many hosts and gateways ignore the
 .Dv RECORD_ROUTE
