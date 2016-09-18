@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.1 2016/09/05 10:56:48 pascal Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2016/09/18 22:26:03 kettenis Exp $
 
 LLVM_SRCS?=	${.CURDIR}/../../../llvm
 
@@ -15,7 +15,11 @@ CPPFLAGS+=	-DNDEBUG
 CPPFLAGS+=	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
 		-D__STDC_FORMAT_MACROS
 
+.if ${MACHINE_ARCH} == "arm"
+TRIPLE=		armv7-unknown-openbsd${OSREV}-gnueabi
+.else
 TRIPLE=		${MACHINE_ARCH}-unknown-openbsd${OSREV}
+.endif
 CPPFLAGS+=	-DLLVM_DEFAULT_TARGET_TRIPLE=\"${TRIPLE}\"
 CPPFLAGS+=	-DLLVM_HOST_TRIPLE=\"${TRIPLE}\"
 CPPFLAGS+=	-DLLVM_PREFIX=\"/usr\"
