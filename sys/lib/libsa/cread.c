@@ -1,4 +1,4 @@
-/*	$OpenBSD: cread.c,v 1.14 2016/09/16 15:50:11 jasper Exp $	*/
+/*	$OpenBSD: cread.c,v 1.15 2016/09/18 15:14:52 jsing Exp $	*/
 /*	$NetBSD: cread.c,v 1.2 1997/02/04 18:38:20 thorpej Exp $	*/
 
 /*
@@ -416,15 +416,18 @@ lseek(int fd, off_t offset, int where)
 			while(toskip > 0) {
 #define DUMMYBUFSIZE 256
 				char dummybuf[DUMMYBUFSIZE];
-				off_t len = toskip;
+				size_t len = toskip;
+				ssize_t n;
 
 				if (len > DUMMYBUFSIZE)
 					len = DUMMYBUFSIZE;
-				if (read(fd, dummybuf, len) != len) {
-					errno = EOFFSET;
+				n = read(fd, dummybuf, len);
+				if (n <= 0) {
+					if (n == 0)
+						errno = EINVAL;
 					return((off_t)-1);
 				}
-				toskip -= len;
+				toskip -= n;
 			}
 		}
 #ifdef DEBUG
