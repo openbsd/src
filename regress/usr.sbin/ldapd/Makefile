@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2016/09/10 06:45:35 landry Exp $
+# $OpenBSD: Makefile,v 1.4 2016/09/18 21:00:15 bluhm Exp $
 
 OUT=${.CURDIR}/out
 DIT=dc=example,dc=com
@@ -14,8 +14,10 @@ PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
 .if ! empty (PERL_REQUIRE)
 regress:
 	@echo "${PERL_REQUIRE}"
-	@echo install p5-ldap
-	@exit 1
+	@echo install package p5-ldap
+	@echo SKIPPED
+.else
+regress: bootstrap connect import perl purge #cpan
 .endif
 
 bootstrap:
@@ -27,8 +29,6 @@ bootstrap:
 	@grep -a startup ${.OBJDIR}/log |sed -e 's/.*\[// ; s/\].*//' > ${.OBJDIR}/ldapd.pid
 .END:
 	@[ -f ${.OBJDIR}/ldapd.pid ] && ${SUDO} kill $$(cat ${.OBJDIR}/ldapd.pid)
-
-all: bootstrap connect import perl purge #cpan
 
 connect:
 	-ldapsearch -x -H ldapi://%2ftmp%2fldapi | diff - ${OUT}/empty.log
