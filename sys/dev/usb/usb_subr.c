@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.129 2016/09/18 09:51:24 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.130 2016/09/19 10:20:17 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1175,8 +1175,12 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	}
 
 	mps = dd->bMaxPacketSize;
-	if (speed == USB_SPEED_SUPER && mps == 0xff)
-		mps = 512;
+	if (speed == USB_SPEED_SUPER) {
+		if (mps == 0xff)
+			mps = 9;
+		/* xHCI Section 4.8.2.1 */
+		mps = (1 << mps);
+	}
 
 	if (mps != mps0) {
 		if ((speed == USB_SPEED_LOW) ||
