@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 11:38:16 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2016/09/19 11:26:43 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -163,6 +163,53 @@ SRCS+=	${file}.S
 SRCS+=	${file}.c
 .	endif
 .endfor
+
+.if ${RTARCH} == "arm"
+SRCS+=	aeabi_cdcmp.S \
+	aeabi_cdcmpeq_check_nan.c \
+	aeabi_cfcmp.S \
+	aeabi_cfcmpeq_check_nan.c \
+	aeabi_dcmp.S \
+	aeabi_div0.c \
+	aeabi_drsub.c \
+	aeabi_fcmp.S \
+	aeabi_frsub.c \
+	aeabi_idivmod.S \
+	aeabi_ldivmod.S \
+	aeabi_memcmp.S \
+	aeabi_memcpy.S \
+	aeabi_memmove.S \
+	aeabi_memset.S \
+	aeabi_uidivmod.S \
+	aeabi_uldivmod.S \
+	bswapdi2.S \
+	bswapsi2.S \
+	switch16.S \
+	switch32.S \
+	switch8.S \
+	switchu8.S \
+	sync_fetch_and_add_4.S \
+	sync_fetch_and_add_8.S \
+	sync_fetch_and_and_4.S \
+	sync_fetch_and_and_8.S \
+	sync_fetch_and_max_4.S \
+	sync_fetch_and_max_8.S \
+	sync_fetch_and_min_4.S \
+	sync_fetch_and_min_8.S \
+	sync_fetch_and_nand_4.S \
+	sync_fetch_and_nand_8.S \
+	sync_fetch_and_or_4.S \
+	sync_fetch_and_or_8.S \
+	sync_fetch_and_sub_4.S \
+	sync_fetch_and_sub_8.S \
+	sync_fetch_and_umax_4.S \
+	sync_fetch_and_umax_8.S \
+	sync_fetch_and_umin_4.S \
+	sync_fetch_and_umin_8.S \
+	sync_fetch_and_xor_4.S \
+	sync_fetch_and_xor_8.S \
+	sync_synchronize.S
+.endif
 
 .if ${RTARCH} == "ppc"
 SRCS+=	divtc3.c \
