@@ -1547,6 +1547,7 @@
 ./usr/share/man/man4/octeon/cnmac.4
 ./usr/share/man/man4/octeon/octrng.4
 ./usr/share/man/man4/octeon/octrtc.4
+./usr/share/man/man4/octeon/octuctl.4
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/onewire.4
 ./usr/share/man/man4/oosiop.4
@@ -1907,6 +1908,7 @@
 ./usr/share/man/man4/zero.4
 ./usr/share/man/man4/zyd.4
 ./usr/share/man/man5/acct.5
+./usr/share/man/man5/acme-client.conf.5
 ./usr/share/man/man5/aliases.5
 ./usr/share/man/man5/ar.5
 ./usr/share/man/man5/bgpd.conf.5
