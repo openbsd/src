@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.212 2016/09/18 17:27:25 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.213 2016/09/19 07:08:30 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -427,12 +427,7 @@ main(int argc, char *argv[])
 	memset(&dst4, 0, sizeof(dst4));
 	memset(&dst6, 0, sizeof(dst6));
 
-	if (inet_aton(*argv, &dst4.sin_addr) != 0) {
-		hostname = *argv;
-		if ((target = strdup(inet_ntoa(dst4.sin_addr))) == NULL)
-			err(1, "malloc");
-	} else
-		target = *argv;
+	target = *argv;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = v6flag ? AF_INET6 : AF_INET;
@@ -479,11 +474,6 @@ main(int argc, char *argv[])
 	freeaddrinfo(res);
 
 	if (source) {
-		if (inet_aton(source, &from4.sin_addr) != 0) {
-			if ((source = strdup(inet_ntoa(from4.sin_addr))) ==
-			    NULL)
-				err(1, "malloc");
-		}
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = dst->sa_family;
 		if ((error = getaddrinfo(source, NULL, &hints, &res)))
