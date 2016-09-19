@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.30 2016/09/19 07:58:57 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.31 2016/09/19 09:03:41 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -227,7 +227,7 @@ bfdclear(struct rtentry *rt)
 
 	TAILQ_REMOVE(&bfd_queue, bfd, bc_entry);
 
-	/* send suicide packets immediately */
+	/* inform our neighbor */
 	if (rtisvalid(bfd->bc_rt))
 		bfd_senddown(bfd);
 
@@ -279,8 +279,9 @@ bfddestroy(void)
 {
 	struct bfd_config	*bfd;
 
-	/* send suicide packets immediately */
+	/* inform our neighbor we are rebooting */
 	while ((bfd = TAILQ_FIRST(&bfd_queue))) {
+		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_FIB_DOWN;
 		bfdclear(bfd->bc_rt);
 	}
 
