@@ -1,31 +1,31 @@
-/*	$OpenBSD: db_trace.c,v 1.6 2016/04/20 07:59:25 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2016/09/19 17:59:18 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
-/* 
+/*
  * Copyright (c) 2000, 2001 Ben Harris
  * Copyright (c) 1996 Scott K. Stevens
  *
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -52,7 +52,7 @@ db_regs_t ddb_regs;
  * a structure to represent them is a good idea.
  *
  * Here's the diagram from the APCS.  Increasing address is _up_ the page.
- * 
+ *
  *          save code pointer       [fp]        <- fp points to here
  *          return link value       [fp, #-4]
  *          return sp value         [fp, #-8]
@@ -69,9 +69,9 @@ db_regs_t ddb_regs;
  *          [saved a2 value]
  *          [saved a1 value]
  *
- * The save code pointer points twelve bytes beyond the start of the 
- * code sequence (usually a single STM) that created the stack frame.  
- * We have to disassemble it if we want to know which of the optional 
+ * The save code pointer points twelve bytes beyond the start of the
+ * code sequence (usually a single STM) that created the stack frame.
+ * We have to disassemble it if we want to know which of the optional
  * fields are actually present.
  */
 
@@ -112,7 +112,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
-			}	
+			}
 			u = p->p_addr;
 			frame = (u_int32_t *)(u->u_pcb.pcb_un.un_32.pcb32_r11);
 			(*pr)("at %p\n", frame);

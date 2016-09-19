@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.46 2016/08/14 08:23:52 visa Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.47 2016/09/19 17:59:19 jasper Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -151,13 +151,13 @@ db_ktrap(int type, struct trapframe *fp)
 		}
 		printf("stopped on non ddb fault\n");
 	}
-	
+
 #ifdef MULTIPROCESSOR
 	mtx_enter(&ddb_mp_mutex);
 	if (ddb_state == DDB_STATE_EXITING)
 		ddb_state = DDB_STATE_NOT_RUNNING;
 	mtx_leave(&ddb_mp_mutex);
-	
+
 	while (db_enter_ddb()) {
 #endif
 		bcopy((void *)fp, (void *)&ddb_regs, NUMSAVEREGS * sizeof(register_t));
@@ -167,7 +167,7 @@ db_ktrap(int type, struct trapframe *fp)
 		db_trap(type, 0);
 		cnpollc(FALSE);
 		db_active--;
-		
+
 		bcopy((void *)&ddb_regs, (void *)fp, NUMSAVEREGS * sizeof(register_t));
 #ifdef MULTIPROCESSOR
 		if (!db_switch_cpu)
@@ -512,7 +512,7 @@ struct db_command mips_db_command_table[] = {
 	{ "startcpu",   db_startproc_cmd,       0,      NULL },
 	{ "stopcpu",    db_stopproc_cmd,        0,      NULL },
 	{ "ddbcpu",     db_ddbproc_cmd,         0,      NULL },
-#endif   
+#endif
 	{ NULL,		NULL,			0,	NULL }
 };
 
@@ -582,7 +582,7 @@ void
 db_stopproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int cpu_n;
-	
+
 	if (have_addr) {
 		cpu_n = addr;
 		if (cpu_n >= 0 && cpu_n < ncpus &&
@@ -607,7 +607,7 @@ db_startcpu(int cpu)
 		get_cpu_info(cpu)->ci_ddb = CI_DDB_RUNNING;
 		mtx_leave(&ddb_mp_mutex);
 	}
-}   
+}
 
 void
 db_stopcpu(int cpu)
@@ -615,7 +615,7 @@ db_stopcpu(int cpu)
 	mtx_enter(&ddb_mp_mutex);
 	if (cpu != cpu_number() && cpu < ncpus &&
 	    get_cpu_info(cpu)->ci_ddb != CI_DDB_STOPPED) {
-		get_cpu_info(cpu)->ci_ddb = CI_DDB_SHOULDSTOP;  
+		get_cpu_info(cpu)->ci_ddb = CI_DDB_SHOULDSTOP;
 		mtx_leave(&ddb_mp_mutex);
 		mips64_send_ipi(cpu, MIPS64_IPI_DDB);
 	} else {
