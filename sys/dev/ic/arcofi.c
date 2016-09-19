@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.16 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.17 2016/09/19 22:21:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -218,7 +218,6 @@ int	arcofi_start_output(void *, void *, int, void (*)(void *), void *);
 	.start_input = arcofi_start_input,
 	.halt_output = arcofi_halt_output,
 	.halt_input = arcofi_halt_input,
-	.getdev = arcofi_getdev,
 	.set_port = arcofi_set_port,
 	.get_port = arcofi_get_port,
 	.query_devinfo = arcofi_query_devinfo,
