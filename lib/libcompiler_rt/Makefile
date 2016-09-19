@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2016/09/19 11:26:43 kettenis Exp $
+# $OpenBSD: Makefile,v 1.3 2016/09/19 12:19:34 pascal Exp $
 
 .include <bsd.own.mk>
 
@@ -221,9 +221,7 @@ SRCS+=	divtc3.c \
 	gcc_qdiv.c \
 	gcc_qmul.c \
 	gcc_qsub.c \
-	multc3.c \
-	restFP.S \
-	saveFP.S
+	multc3.c
 .endif
 
 .include <bsd.lib.mk>
