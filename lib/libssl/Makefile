@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2016/09/14 06:26:03 natano Exp $
+# $OpenBSD: Makefile,v 1.23 2016/09/19 03:25:22 bcook Exp $
 
 SUBDIR= man
 PC_FILES=openssl.pc libssl.pc
@@ -15,7 +15,7 @@ CFLAGS+= -Werror
 CFLAGS+= -DLIBRESSL_INTERNAL
 CFLAGS+= -I${.CURDIR}
 
-LDADD+= -L${BSDOBJDIR}/lib/libcrypto/crypto -lcrypto
+LDADD+= -L${BSDOBJDIR}/lib/libcrypto -lcrypto
 
 SRCS=\
 	s3_srvr.c s3_clnt.c s3_lib.c s3_pkt.c s3_both.c \
@@ -31,7 +31,7 @@ SRCS=\
 SRCS+=	s3_cbc.c
 SRCS+=	bs_ber.c bs_cbb.c bs_cbs.c
 
-HDRS=	srtp.h ssl.h ssl2.h ssl3.h ssl23.h tls1.h dtls1.h 
+HDRS=	srtp.h ssl.h ssl2.h ssl3.h ssl23.h tls1.h dtls1.h
 
 .PATH:	${.CURDIR}
 
