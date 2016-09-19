@@ -175,7 +175,7 @@
 # endif
 #endif // __sun__
 
-#if defined(__CloudABI__)
+#if defined(__CloudABI__) || defined(__OpenBSD__)
   // Certain architectures provide arc4random(). Prefer using
   // arc4random() over /dev/{u,}random to make it possible to obtain
   // random data even when using sandboxing mechanisms such as chroots,
