@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.76 2016/09/19 12:55:04 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.77 2016/09/19 12:57:45 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -4579,6 +4579,65 @@ Run
 .Ar number
 benchmarks in parallel.
 .El
+.Sh SPKAC
+.nr nS 1
+.Nm "openssl spkac"
+.Op Fl challenge Ar string
+.Op Fl in Ar file
+.Op Fl key Ar keyfile
+.Op Fl noout
+.Op Fl out Ar file
+.Op Fl passin Ar arg
+.Op Fl pubkey
+.Op Fl spkac Ar spkacname
+.Op Fl spksect Ar section
+.Op Fl verify
+.nr nS 0
+.Pp
+The
+.Nm spkac
+command processes signed public key and challenge (SPKAC) files.
+It can print out their contents, verify the signature,
+and produce its own SPKACs from a supplied private key.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl challenge Ar string
+The challenge string, if an SPKAC is being created.
+.It Fl in Ar file
+The input file to read from,
+or standard input if not specified.
+Ignored if the
+.Fl key
+option is used.
+.It Fl key Ar keyfile
+Create an SPKAC file using the private key in
+.Ar keyfile .
+The
+.Fl in , noout , spksect ,
+and
+.Fl verify
+options are ignored, if present.
+.It Fl noout
+Do not output the text version of the SPKAC.
+.It Fl out Ar file
+The output file to write to,
+or standard output if not specified.
+.It Fl passin Ar arg
+The key password source.
+.It Fl pubkey
+Output the public key of an SPKAC.
+.It Fl spkac Ar spkacname
+An alternative name for the variable containing the SPKAC.
+The default is "SPKAC".
+This option affects both generated and input SPKAC files.
+.It Fl spksect Ar section
+An alternative name for the
+.Ar section
+containing the SPKAC.
+.It Fl verify
+Verify the digital signature on the supplied SPKAC.
+.El
 .Sh TS
 .nr nS 1
 .Nm "openssl ts"
@@ -4944,65 +5003,6 @@ be included in the SigningCertificate signed attribute.
 If this variable is set to no,
 only the signing certificate identifier is included.
 The default is no.
-.El
-.Sh SPKAC
-.nr nS 1
-.Nm "openssl spkac"
-.Op Fl challenge Ar string
-.Op Fl in Ar file
-.Op Fl key Ar keyfile
-.Op Fl noout
-.Op Fl out Ar file
-.Op Fl passin Ar arg
-.Op Fl pubkey
-.Op Fl spkac Ar spkacname
-.Op Fl spksect Ar section
-.Op Fl verify
-.nr nS 0
-.Pp
-The
-.Nm spkac
-command processes signed public key and challenge (SPKAC) files.
-It can print out their contents, verify the signature,
-and produce its own SPKACs from a supplied private key.
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl challenge Ar string
-The challenge string, if an SPKAC is being created.
-.It Fl in Ar file
-The input file to read from,
-or standard input if not specified.
-Ignored if the
-.Fl key
-option is used.
-.It Fl key Ar keyfile
-Create an SPKAC file using the private key in
-.Ar keyfile .
-The
-.Fl in , noout , spksect ,
-and
-.Fl verify
-options are ignored, if present.
-.It Fl noout
-Do not output the text version of the SPKAC.
-.It Fl out Ar file
-The output file to write to,
-or standard output if not specified.
-.It Fl passin Ar arg
-The key password source.
-.It Fl pubkey
-Output the public key of an SPKAC.
-.It Fl spkac Ar spkacname
-An alternative name for the variable containing the SPKAC.
-The default is "SPKAC".
-This option affects both generated and input SPKAC files.
-.It Fl spksect Ar section
-An alternative name for the
-.Ar section
-containing the SPKAC.
-.It Fl verify
-Verify the digital signature on the supplied SPKAC.
 .El
 .Sh VERIFY
 .nr nS 1
