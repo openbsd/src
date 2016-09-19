@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.137 2016/09/10 17:08:44 jsing Exp $ */
+/* $OpenBSD: bioctl.c,v 1.138 2016/09/19 17:46:52 jsing Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 			password = optarg;
 			break;
 		case 'r':
-			rflag = strtonum(optarg, 1000, 1<<30, &errstr);
+			rflag = strtonum(optarg, 4, 1<<30, &errstr);
 			if (errstr != NULL)
 				errx(1, "number of KDF rounds is %s: %s",
 				    errstr, optarg);
@@ -964,8 +964,8 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 		errx(1, "invalid KDF info");
 
 	kdfinfo->pbkdf.generic.len = sizeof(kdfinfo->pbkdf);
-	kdfinfo->pbkdf.generic.type = SR_CRYPTOKDFT_PKCS5_PBKDF2;
-	kdfinfo->pbkdf.rounds = rflag ? rflag : 8192;
+	kdfinfo->pbkdf.generic.type = SR_CRYPTOKDFT_BCRYPT_PBKDF;
+	kdfinfo->pbkdf.rounds = rflag ? rflag : 16;
 
 	kdfinfo->flags = SR_CRYPTOKDF_KEY | SR_CRYPTOKDF_HINT;
 	kdfinfo->len = sizeof(*kdfinfo);
@@ -1105,8 +1105,11 @@ bio_changepass(char *dev)
 	/* Current passphrase. */
 	bio_kdf_derive(&kdfinfo1, &kdfhint, "Old passphrase: ", 0);
 
-	/* Keep the previous number of rounds, unless specified. */
-	if (!rflag)
+	/*
+	 * Unless otherwise specified, keep the previous number of rounds as
+	 * long as we're using the same KDF.
+	 */
+	if (kdfhint.generic.type == SR_CRYPTOKDFT_BCRYPT_PBKDF && !rflag)
 		rflag = kdfhint.rounds;
 
 	/* New passphrase. */
