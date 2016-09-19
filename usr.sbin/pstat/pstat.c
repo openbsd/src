@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.108 2016/08/14 22:47:26 guenther Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.109 2016/09/19 20:08:12 tb Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -89,6 +89,7 @@ struct e_vnode {
 	struct vnode vnode;
 };
 
+int	need_nlist;
 int	usenumflag;
 int	totalflag;
 int	kflag;
@@ -141,7 +142,7 @@ main(int argc, char *argv[])
 	const char *dformat = NULL;
 	extern char *optarg;
 	extern int optind;
-	int i, need_nlist;
+	int i;
 
 	hideroot = getuid();
 
@@ -869,7 +870,7 @@ ttymode(void)
 	struct itty itty, *itp;
 	size_t nlen;
 
-	if (kd == 0) {
+	if (!need_nlist) {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_TTYCOUNT;
 		nlen = sizeof(ntty);
@@ -879,7 +880,7 @@ ttymode(void)
 		KGET(TTY_NTTY, ntty);
 	(void)printf("%d terminal device%s\n", ntty, ntty == 1 ? "" : "s");
 	(void)printf("%s", hdr);
-	if (kd == 0) {
+	if (!need_nlist) {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_TTY;
 		mib[2] = KERN_TTY_INFO;
