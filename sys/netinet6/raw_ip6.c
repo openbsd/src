@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.95 2016/08/22 10:33:22 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.96 2016/09/19 18:09:09 tedu Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -735,7 +735,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			bzero(&tmp, sizeof(tmp));
 			tmp.sin6_family = AF_INET6;
 			tmp.sin6_len = sizeof(struct sockaddr_in6);
-			bcopy(&in6p->inp_faddr6, &tmp.sin6_addr,
+			memcpy(&tmp.sin6_addr, &in6p->inp_faddr6,
 			    sizeof(struct in6_addr));
 			dst = &tmp;
 		} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.215 2016/09/14 16:59:28 jca Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.216 2016/09/19 18:09:09 tedu Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -967,7 +967,7 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 	optbuf[2] = IP6OPT_JUMBO;
 	optbuf[3] = 4;
 	v = (u_int32_t)htonl(plen + JUMBOOPTLEN);
-	bcopy(&v, &optbuf[4], sizeof(u_int32_t));
+	memcpy(&optbuf[4], &v, sizeof(u_int32_t));
 
 	/* finally, adjust the packet header length */
 	exthdrs->ip6e_ip6->m_pkthdr.len += JUMBOOPTLEN;
@@ -1862,11 +1862,11 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 #define PKTOPT_EXTHDRCPY(type) \
 do {\
 	if (src->type) {\
-		int hlen = (((struct ip6_ext *)src->type)->ip6e_len + 1) << 3;\
+		size_t hlen = (((struct ip6_ext *)src->type)->ip6e_len + 1) << 3;\
 		dst->type = malloc(hlen, M_IP6OPT, canwait);\
 		if (dst->type == NULL && canwait == M_NOWAIT)\
 			goto bad;\
-		bcopy(src->type, dst->type, hlen);\
+		memcpy(dst->type, src->type, hlen);\
 	}\
 } while (/*CONSTCOND*/ 0)
 
@@ -1949,7 +1949,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			error = EINVAL;
 			break;
 		}
-		bcopy(mtod(m, u_int *), &ifindex, sizeof(ifindex));
+		memcpy(&ifindex, mtod(m, u_int *), sizeof(ifindex));
 		if (ifindex != 0) {
 			ifp = if_get(ifindex);
 			if (ifp == NULL) {
@@ -1976,7 +1976,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			error = EINVAL;
 			break;
 		}
-		bcopy(mtod(m, u_int *), &optval, sizeof(optval));
+		memcpy(&optval, mtod(m, u_int *), sizeof(optval));
 		if (optval < -1 || optval >= 256)
 			error = EINVAL;
 		else if (optval == -1)
@@ -1995,7 +1995,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			error = EINVAL;
 			break;
 		}
-		bcopy(mtod(m, u_int *), &loop, sizeof(loop));
+		memcpy(&loop, mtod(m, u_int *), sizeof(loop));
 		if (loop > 1) {
 			error = EINVAL;
 			break;
@@ -2451,7 +2451,7 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		opt->ip6po_hbh = malloc(hbhlen, M_IP6OPT, M_NOWAIT);
 		if (opt->ip6po_hbh == NULL)
 			return (ENOBUFS);
-		bcopy(hbh, opt->ip6po_hbh, hbhlen);
+		memcpy(opt->ip6po_hbh, hbh, hbhlen);
 
 		break;
 	}
@@ -2495,7 +2495,7 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		*newdest = malloc(destlen, M_IP6OPT, M_NOWAIT);
 		if (*newdest == NULL)
 			return (ENOBUFS);
-		bcopy(dest, *newdest, destlen);
+		memcpy(*newdest, dest, destlen);
 
 		break;
 	}
@@ -2535,7 +2535,7 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		opt->ip6po_rthdr = malloc(rthlen, M_IP6OPT, M_NOWAIT);
 		if (opt->ip6po_rthdr == NULL)
 			return (ENOBUFS);
-		bcopy(rth, opt->ip6po_rthdr, rthlen);
+		memcpy(opt->ip6po_rthdr, rth, rthlen);
 		break;
 	}
 
