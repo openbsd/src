@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.52 2016/09/14 06:12:19 ratchov Exp $ */
+/*      $OpenBSD: eap.c,v 1.53 2016/09/19 06:46:44 ratchov Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -169,7 +169,6 @@ int	eap_halt_output(void *);
 int	eap_halt_input(void *);
 int	eap_resume(struct eap_softc *);
 void    eap1370_write_codec(struct eap_softc *, int, int);
-int	eap_getdev(void *, struct audio_device *);
 int	eap1370_mixer_set_port(void *, mixer_ctrl_t *);
 int	eap1370_mixer_get_port(void *, mixer_ctrl_t *);
 int	eap1371_mixer_set_port(void *, mixer_ctrl_t *);
@@ -208,7 +207,6 @@ struct audio_hw_if eap1370_hw_if = {
 	eap_halt_output,
 	eap_halt_input,
 	NULL,
-	eap_getdev,
 	NULL,
 	eap1370_mixer_set_port,
 	eap1370_mixer_get_port,
@@ -234,7 +232,6 @@ struct audio_hw_if eap1371_hw_if = {
 	eap_halt_output,
 	eap_halt_input,
 	NULL,
-	eap_getdev,
 	NULL,
 	eap1371_mixer_set_port,
 	eap1371_mixer_get_port,
@@ -257,12 +254,6 @@ struct midi_hw_if eap_midi_hw_if = {
 	0,				/* ioctl */
 };
 #endif
-
-struct audio_device eap_device = {
-	"Ensoniq AudioPCI",
-	"",
-	"eap"
-};
 
 const struct pci_matchid eap_devices[] = {
 	{ PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_EV1938 },
@@ -1111,13 +1102,6 @@ eap_halt_input(void *addr)
 	sc->sc_rrun = 0;
 #endif
 	mtx_leave(&audio_lock);
-	return (0);
-}
-
-int
-eap_getdev(void *addr, struct audio_device *retp)
-{
-	*retp = eap_device;
 	return (0);
 }
 

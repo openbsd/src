@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.28 2016/09/14 06:12:19 ratchov Exp $ */
+/*	$OpenBSD: fms.c,v 1.29 2016/09/19 06:46:44 ratchov Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -80,7 +80,6 @@ int	fms_set_params(void *, int, int, struct audio_params *,
 int	fms_round_blocksize(void *, int);
 int	fms_halt_output(void *);
 int	fms_halt_input(void *);
-int	fms_getdev(void *, struct audio_device *);
 int	fms_set_port(void *, mixer_ctrl_t *);
 int	fms_get_port(void *, mixer_ctrl_t *);
 int	fms_query_devinfo(void *, mixer_devinfo_t *);
@@ -100,13 +99,6 @@ struct cfattach fms_ca = {
 	sizeof (struct fms_softc), fms_match, fms_attach
 };
 
-struct audio_device fms_device = {
-	"Forte Media 801",
-	"1.0",
-	"fms"
-};
-
-
 struct audio_hw_if fms_hw_if = {
 	fms_open,
 	fms_close,
@@ -120,7 +112,6 @@ struct audio_hw_if fms_hw_if = {
 	fms_halt_output,
 	fms_halt_input,
 	NULL,
-	fms_getdev,
 	NULL,
 	fms_set_port,
 	fms_get_port,
@@ -543,13 +534,6 @@ fms_halt_input(void *addr)
 			  (k1 & ~(FM_REC_STOPNOW | FM_REC_START)) |
 			  FM_REC_BUF1_LAST | FM_REC_BUF2_LAST);
 	mtx_leave(&audio_lock);
-	return 0;
-}
-
-int
-fms_getdev(void *addr, struct audio_device *retp)
-{
-	*retp = fms_device;
 	return 0;
 }
 

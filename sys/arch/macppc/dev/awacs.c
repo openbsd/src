@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.33 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.34 2016/09/19 06:46:43 ratchov Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -104,7 +104,6 @@ int awacs_trigger_input(void *, void *, void *, int, void (*)(void *),
 			    void *, struct audio_params *);
 int awacs_halt_output(void *);
 int awacs_halt_input(void *);
-int awacs_getdev(void *, struct audio_device *);
 int awacs_set_port(void *, mixer_ctrl_t *);
 int awacs_get_port(void *, mixer_ctrl_t *);
 int awacs_query_devinfo(void *, mixer_devinfo_t *);
@@ -140,7 +139,6 @@ struct audio_hw_if awacs_hw_if = {
 	awacs_halt_output,
 	awacs_halt_input,
 	NULL,			/* speaker_ctl */
-	awacs_getdev,
 	NULL,			/* getfd */
 	awacs_set_port,
 	awacs_get_port,
@@ -151,12 +149,6 @@ struct audio_hw_if awacs_hw_if = {
 	awacs_get_props,
 	awacs_trigger_output,
 	awacs_trigger_input
-};
-
-struct audio_device awacs_device = {
-	"AWACS",
-	"",
-	"awacs"
 };
 
 /* register offset */
@@ -571,13 +563,6 @@ awacs_halt_input(void *h)
 	dbdma_stop(sc->sc_idma);
 	dbdma_reset(sc->sc_idma);
 	mtx_leave(&audio_lock);
-	return 0;
-}
-
-int
-awacs_getdev(void *h, struct audio_device *retp)
-{
-	*retp = awacs_device;
 	return 0;
 }
 

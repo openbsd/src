@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hwvar.h,v 1.2 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: nec86hwvar.h,v 1.3 2016/09/19 06:46:43 ratchov Exp $	*/
 /*	$NecBSD: nec86hwvar.h,v 1.10 1998/03/14 07:04:55 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -213,7 +213,6 @@ void	nec86fifo_padding(struct nec86hw_softc *, int);
 
 int	nec86hw_intr(void *);
 
-int	nec86getdev(void *, struct audio_device *);
 int 	nec86_get_props(void *);
 
 #endif	/* _KERNEL */

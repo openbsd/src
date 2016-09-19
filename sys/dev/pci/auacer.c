@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.19 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.20 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -91,8 +91,6 @@ struct auacer_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
-	audio_device_t sc_audev;
-
 	bus_space_tag_t iot;
 	bus_space_handle_t mix_ioh;
 	bus_space_handle_t aud_ioh;
@@ -158,7 +156,6 @@ int	auacer_set_params(void *, int, int, struct audio_params *,
 int	auacer_round_blocksize(void *, int);
 int	auacer_halt_output(void *);
 int	auacer_halt_input(void *);
-int	auacer_getdev(void *, struct audio_device *);
 int	auacer_set_port(void *, mixer_ctrl_t *);
 int	auacer_get_port(void *, mixer_ctrl_t *);
 int	auacer_query_devinfo(void *, mixer_devinfo_t *);
@@ -195,7 +192,6 @@ struct audio_hw_if auacer_hw_if = {
 	auacer_halt_output,
 	auacer_halt_input,
 	NULL,			/* speaker_ctl */
-	auacer_getdev,
 	NULL,			/* getfd */
 	auacer_set_port,
 	auacer_get_port,
@@ -257,11 +253,6 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-
-	strlcpy(sc->sc_audev.name, "M5455 AC97", MAX_AUDIO_DEV_LEN);
-	snprintf(sc->sc_audev.version, MAX_AUDIO_DEV_LEN,
-		 "0x%02x", PCI_REVISION(pa->pa_class));
-	strlcpy(sc->sc_audev.config, sc->sc_dev.dv_xname, MAX_AUDIO_DEV_LEN);
 
 	printf(": %s\n", intrstr);
 
@@ -566,16 +557,6 @@ int
 auacer_halt_input(void *v)
 {
 	DPRINTF(ALI_DEBUG_DMA, ("auacer_halt_input\n"));
-	return (0);
-}
-
-int
-auacer_getdev(void *v, struct audio_device *adp)
-{
-	struct auacer_softc *sc = v;
-
-	DPRINTF(ALI_DEBUG_API, ("auacer_getdev\n"));
-	*adp = sc->sc_audev;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.114 2016/09/14 06:12:20 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.115 2016/09/19 06:46:44 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -386,7 +386,6 @@ int	uaudio_trigger_input
 	 struct audio_params *);
 int	uaudio_halt_in_dma(void *);
 int	uaudio_halt_out_dma(void *);
-int	uaudio_getdev(void *, struct audio_device *);
 int	uaudio_mixer_set_port(void *, mixer_ctrl_t *);
 int	uaudio_mixer_get_port(void *, mixer_ctrl_t *);
 int	uaudio_query_devinfo(void *, mixer_devinfo_t *);
@@ -405,7 +404,6 @@ struct audio_hw_if uaudio_hw_if = {
 	uaudio_halt_out_dma,
 	uaudio_halt_in_dma,
 	NULL,
-	uaudio_getdev,
 	NULL,
 	uaudio_mixer_set_port,
 	uaudio_mixer_get_port,
@@ -416,12 +414,6 @@ struct audio_hw_if uaudio_hw_if = {
 	uaudio_get_props,
 	uaudio_trigger_output,
 	uaudio_trigger_input
-};
-
-struct audio_device uaudio_device = {
-	"USB audio",
-	"",
-	"uaudio"
 };
 
 int uaudio_match(struct device *, void *, void *); 
@@ -2162,19 +2154,6 @@ uaudio_halt_in_dma(void *addr)
 		uaudio_chan_free_buffers(sc, &sc->sc_recchan);
 		sc->sc_recchan.intr = NULL;
 	}
-	return (0);
-}
-
-int
-uaudio_getdev(void *addr, struct audio_device *retp)
-{
-	struct uaudio_softc *sc = addr;
-
-	DPRINTF(("uaudio_mixer_getdev:\n"));
-	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
-
-	*retp = uaudio_device;
 	return (0);
 }
 

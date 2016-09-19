@@ -1,4 +1,4 @@
-/*	$OpenBSD: gusvar.h,v 1.9 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: gusvar.h,v 1.10 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -329,7 +329,6 @@ int	gusmax_dma_input(void *, void *, int, void (*)(void *), void *);
 int	gusmax_halt_out_dma(void *);
 int	gusmax_halt_in_dma(void *);
 int	gusmax_speaker_ctl(void *, int);
-int	gus_getdev(void *, struct audio_device *);
 
 void	gus_deinterleave(struct gus_softc *, void *, int);
 
@@ -408,7 +407,6 @@ extern const int gus_addrs;
 #define splgus splaudio
 
 extern struct audio_hw_if gus_hw_if;
-extern struct audio_device gus_device;
 
 #define FLIP_REV	5		/* This rev has flipped mixer chans */
 

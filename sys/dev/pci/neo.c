@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.31 2016/09/14 06:12:19 ratchov Exp $       */
+/*      $OpenBSD: neo.c,v 1.32 2016/09/19 06:46:44 ratchov Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -188,7 +188,6 @@ int	neo_trigger_input(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	neo_halt_output(void *);
 int	neo_halt_input(void *);
-int	neo_getdev(void *, struct audio_device *);
 int	neo_mixer_set_port(void *, mixer_ctrl_t *);
 int	neo_mixer_get_port(void *, mixer_ctrl_t *);
 int     neo_attach_codec(void *sc, struct ac97_codec_if *);
@@ -213,12 +212,6 @@ struct cfattach neo_ca = {
 	neo_activate
 };
 
-
-struct audio_device neo_device = {
-	"NeoMagic 256",
-	"",
-	"neo"
-};
 
 #if 0
 static u_int32_t badcards[] = {
@@ -261,7 +254,6 @@ struct audio_hw_if neo_hw_if = {
 	neo_halt_output,
 	neo_halt_input,
 	NULL,
-	neo_getdev,
 	NULL,
 	neo_mixer_set_port,
 	neo_mixer_get_port,
@@ -887,13 +879,6 @@ neo_halt_input(void *addr)
 
 	sc->rintr = 0;
 	mtx_leave(&audio_lock);
-	return (0);
-}
-
-int
-neo_getdev(void *addr, struct audio_device *retp)
-{
-	*retp = neo_device;
 	return (0);
 }
 

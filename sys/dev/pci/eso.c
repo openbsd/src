@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.42 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: eso.c,v 1.43 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ int	eso_set_params(void *, int, int, struct audio_params *,
 int	eso_round_blocksize(void *, int);
 int	eso_halt_output(void *);
 int	eso_halt_input(void *);
-int	eso_getdev(void *, struct audio_device *);
 int	eso_set_port(void *, mixer_ctrl_t *);
 int	eso_get_port(void *, mixer_ctrl_t *);
 int	eso_query_devinfo(void *, mixer_devinfo_t *);
@@ -137,7 +136,6 @@ struct audio_hw_if eso_hw_if = {
 	eso_halt_output,
 	eso_halt_input,
 	NULL,			/* speaker_ctl */
-	eso_getdev,
 	NULL,			/* setfd */
 	eso_set_port,
 	eso_get_port,
@@ -799,24 +797,6 @@ eso_halt_input(void *hdl)
 	    ESO_DMAC_MASK_MASK);
 
 	return (error == EWOULDBLOCK ? 0 : error);
-}
-
-int
-eso_getdev(void *hdl, struct audio_device *retp)
-{
-	struct eso_softc *sc = hdl;
-
-	strlcpy(retp->name, "ESS Solo-1", sizeof retp->name);
-	snprintf(retp->version, sizeof retp->version, "0x%02x",
-	    sc->sc_revision);
-	if (sc->sc_revision <
-	    sizeof (eso_rev2model) / sizeof (eso_rev2model[0]))
-		strlcpy(retp->config, eso_rev2model[sc->sc_revision],
-		    sizeof retp->config);
-	else
-		strlcpy(retp->config, "unknown", sizeof retp->config);
-
-	return (0);
 }
 
 int

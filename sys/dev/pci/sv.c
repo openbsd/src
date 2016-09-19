@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.33 2016/09/14 06:12:19 ratchov Exp $ */
+/*      $OpenBSD: sv.c,v 1.34 2016/09/19 06:46:44 ratchov Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -124,12 +124,6 @@ struct cfattach sv_ca = {
 	sizeof(struct sv_softc), sv_match, sv_attach
 };
 
-struct audio_device sv_device = {
-	"S3 SonicVibes",
-	"",
-	"sv"
-};
-
 #define ARRAY_SIZE(foo)  ((sizeof(foo)) / sizeof(foo[0]))
 
 int	sv_allocmem(struct sv_softc *, size_t, size_t, struct sv_dma *);
@@ -145,7 +139,6 @@ int	sv_dma_output(void *, void *, int, void (*)(void *), void *);
 int	sv_dma_input(void *, void *, int, void (*)(void *), void *);
 int	sv_halt_in_dma(void *);
 int	sv_halt_out_dma(void *);
-int	sv_getdev(void *, struct audio_device *);
 int	sv_mixer_set_port(void *, mixer_ctrl_t *);
 int	sv_mixer_get_port(void *, mixer_ctrl_t *);
 int	sv_query_devinfo(void *, mixer_devinfo_t *);
@@ -168,7 +161,6 @@ struct audio_hw_if sv_hw_if = {
 	sv_halt_out_dma,
 	sv_halt_in_dma,
 	NULL,
-	sv_getdev,
 	NULL,
 	sv_mixer_set_port,
 	sv_mixer_get_port,
@@ -821,14 +813,6 @@ sv_halt_in_dma(void *addr)
 	mtx_leave(&audio_lock);
         return (0);
 }
-
-int
-sv_getdev(void *addr, struct audio_device *retp)
-{
-	*retp = sv_device;
-        return (0);
-}
-
 
 /*
  * Mixer related code is here

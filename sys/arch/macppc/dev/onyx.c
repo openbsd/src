@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.11 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.12 2016/09/19 06:46:43 ratchov Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -67,7 +67,6 @@
 void kiic_setmode(struct kiic_softc *, u_int, u_int);
 int kiic_write(struct device *, int, int, const void *, int);
 
-int onyx_getdev(void *, struct audio_device *);
 int onyx_match(struct device *, void *, void *);
 void onyx_attach(struct device *, struct device *, void *);
 void onyx_defer(struct device *);
@@ -94,7 +93,6 @@ struct audio_hw_if onyx_hw_if = {
 	i2s_halt_output,
 	i2s_halt_input,
 	NULL,
-	onyx_getdev,
 	NULL,
 	i2s_set_port,
 	i2s_get_port,
@@ -105,12 +103,6 @@ struct audio_hw_if onyx_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input
-};
-
-struct audio_device onyx_device = {
-	"ONYX",
-	"",
-	"onyx"
 };
 
 int
@@ -177,13 +169,6 @@ onyx_defer(struct device *dev)
 
 	deq_reset(sc);
 	onyx_set_volume(sc, 192, 192);
-}
-
-int
-onyx_getdev(void *h, struct audio_device *retp)
-{
-	*retp = onyx_device;
-	return (0);
 }
 
 void

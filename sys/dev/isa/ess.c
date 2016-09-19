@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.23 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: ess.c,v 1.24 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ int	ess_setup_sc(struct ess_softc *, int);
 int	ess_open(void *, int);
 void	ess_1788_close(void *);
 void	ess_1888_close(void *);
-int	ess_getdev(void *, struct audio_device *);
 
 int	ess_set_params(void *, int, int, struct audio_params *,
 	    struct audio_params *);
@@ -139,8 +138,6 @@ void	ess_audio1_poll(void *);
 void	ess_audio2_poll(void *);
 
 int	ess_speaker_ctl(void *, int);
-
-int	ess_getdev(void *, struct audio_device *);
 
 int	ess_set_port(void *, mixer_ctrl_t *);
 int	ess_get_port(void *, mixer_ctrl_t *);
@@ -196,12 +193,6 @@ static char *essmodel[] = {
 	"1878",
 };
 
-struct audio_device ess_device = {
-	"ESS Technology",
-	"x",
-	"ess"
-};
-
 /*
  * Define our interface to the higher level audio driver.
  */
@@ -219,7 +210,6 @@ struct audio_hw_if ess_1788_hw_if = {
 	ess_audio1_halt,
 	ess_audio1_halt,
 	ess_speaker_ctl,
-	ess_getdev,
 	NULL,
 	ess_set_port,
 	ess_get_port,
@@ -245,7 +235,6 @@ struct audio_hw_if ess_1888_hw_if = {
 	ess_audio2_halt,
 	ess_audio1_halt,
 	ess_speaker_ctl,
-	ess_getdev,
 	NULL,
 	ess_set_port,
 	ess_get_port,
@@ -985,11 +974,6 @@ essattach(struct ess_softc *sc)
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
 
-	snprintf(ess_device.name, sizeof ess_device.name, "ES%s",
-	    essmodel[sc->sc_model]);
-	snprintf(ess_device.version, sizeof ess_device.version, "0x%04x",
-	    sc->sc_version);
-
 	if (ESS_USE_AUDIO1(sc->sc_model))
 		audio_attach_mi(&ess_1788_hw_if, sc, &sc->sc_dev);
 	else
@@ -1076,13 +1060,6 @@ ess_speaker_ctl(void *addr, int newstate)
 		ess_speaker_off(sc);
 		sc->spkr_state = SPKR_OFF;
 	}
-	return (0);
-}
-
-int
-ess_getdev(void *addr, struct audio_device *retp)
-{
-	*retp = ess_device;
 	return (0);
 }
 

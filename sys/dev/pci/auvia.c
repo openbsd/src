@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.56 2016/09/14 06:12:19 ratchov Exp $ */
+/*	$OpenBSD: auvia.c,v 1.57 2016/09/19 06:46:44 ratchov Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -81,7 +81,6 @@ int	auvia_set_params(void *, int, int, struct audio_params *,
 int	auvia_round_blocksize(void *, int);
 int	auvia_halt_output(void *);
 int	auvia_halt_input(void *);
-int	auvia_getdev(void *, struct audio_device *);
 int	auvia_set_port(void *, mixer_ctrl_t *);
 int	auvia_get_port(void *, mixer_ctrl_t *);
 int	auvia_query_devinfo(void *, mixer_devinfo_t *);
@@ -192,7 +191,6 @@ struct audio_hw_if auvia_hw_if = {
 	auvia_halt_output,
 	auvia_halt_input,
 	NULL, /* speaker_ctl */
-	auvia_getdev,
 	NULL, /* setfd */
 	auvia_set_port,
 	auvia_get_port,
@@ -689,23 +687,6 @@ auvia_halt_input(void *addr)
 
 	CH_WRITE1(sc, ch, AUVIA_RP_CONTROL, AUVIA_RPCTRL_TERMINATE);
 	ch->sc_intr = NULL;
-	return 0;
-}
-
-
-int
-auvia_getdev(void *addr, struct audio_device *retp)
-{
-	struct auvia_softc *sc = addr;
-
-	if (retp) {
-		strncpy(retp->name,
-		    sc->sc_flags & AUVIA_FLAGS_VT8233? "VIA VT8233" :
-		    "VIA VT82C686A", sizeof(retp->name));
-		strncpy(retp->version, sc->sc_revision, sizeof(retp->version));
-		strncpy(retp->config, "auvia", sizeof(retp->config));
-	}
-
 	return 0;
 }
 

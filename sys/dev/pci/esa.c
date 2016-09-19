@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.30 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: esa.c,v 1.31 2016/09/19 06:46:44 ratchov Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -91,12 +91,6 @@ static struct esa_card_type {
 	{ 0, 0, 0, 0, 0 }
 };
 
-struct audio_device esa_device = {
-	"ESS Allegro",
-	"",
-	"esa"
-};
-
 int		esa_match(struct device *, void *, void *);
 void		esa_attach(struct device *, struct device *, void *);
 int		esa_detach(struct device *, int);
@@ -116,7 +110,6 @@ int		esa_get_port(void *, mixer_ctrl_t *);
 int		esa_query_devinfo(void *, mixer_devinfo_t *);
 void *		esa_malloc(void *, int, size_t, int, int);
 void		esa_free(void *, void *, int);
-int		esa_getdev(void *, struct audio_device *);
 size_t		esa_round_buffersize(void *, int, size_t);
 int		esa_get_props(void *);
 int		esa_trigger_output(void *, void *, void *, int,
@@ -172,7 +165,6 @@ struct audio_hw_if esa_hw_if = {
 	esa_halt_output,
 	esa_halt_input,
 	NULL,			/* speaker_ctl */
-	esa_getdev,
 	NULL,			/* getfd */
 	esa_set_port,
 	esa_get_port,
@@ -462,15 +454,6 @@ esa_free(void *hdl, void *addr, int type)
 			free(p, type, 0);
 			return;
 		}
-}
-
-int
-esa_getdev(void *hdl, struct audio_device *ret)
-{
-
-	*ret = esa_device;
-
-	return (0);
 }
 
 int

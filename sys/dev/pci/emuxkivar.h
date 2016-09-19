@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxkivar.h,v 1.10 2008/12/09 12:30:12 brad Exp $	*/
+/*	$OpenBSD: emuxkivar.h,v 1.11 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: emuxkivar.h,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -219,7 +219,6 @@ struct emuxki_stream {
 
 struct emuxki_softc {
 	struct device   sc_dev;
-	struct audio_device sc_audv;
 
 	/* Autoconfig parameters */
 	bus_space_tag_t 	sc_iot;

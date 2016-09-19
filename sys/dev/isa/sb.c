@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.28 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: sb.c,v 1.29 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -89,14 +89,6 @@ struct midi_hw_if sb_mpu401_hw_if = {
 };
 #endif
 
-struct audio_device sb_device = {
-	"SoundBlaster",
-	"x",
-	"sb"
-};
-
-int	sb_getdev(void *, struct audio_device *);
-
 /*
  * Define our interface to the higher level audio driver.
  */
@@ -114,7 +106,6 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_haltdma,
 	sbdsp_haltdma,
 	sbdsp_speaker_ctl,
-	sb_getdev,
 	0,
 	sbdsp_mixer_set_port,
 	sbdsp_mixer_get_port,
@@ -286,31 +277,6 @@ sbattach(sc)
 /*
  * Various routines to interface to higher level audio driver
  */
-
-int
-sb_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
-{
-	struct sbdsp_softc *sc = addr;
-	static char *names[] = SB_NAMES;
-	char *config;
-
-	if (sc->sc_model == SB_JAZZ)
-		strlcpy(retp->name, "MV Jazz16", sizeof retp->name);
-	else
-		strlcpy(retp->name, "SoundBlaster", sizeof retp->name);
-	snprintf(retp->version, sizeof retp->version, "%d.%02d", 
-		 SBVER_MAJOR(sc->sc_version),
-		 SBVER_MINOR(sc->sc_version));
-	if (0 <= sc->sc_model && sc->sc_model < sizeof names / sizeof names[0])
-		config = names[sc->sc_model];
-	else
-		config = "??";
-	strlcpy(retp->config, config, sizeof retp->config);
-		
-	return 0;
-}
 
 #if NMIDI > 0
 

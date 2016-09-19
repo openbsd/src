@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.14 2016/09/14 06:12:19 ratchov Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.15 2016/09/19 06:46:44 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -166,8 +166,6 @@ struct auglx_softc {
 	struct device		 sc_dev;
 	void			*sc_ih;
 
-	audio_device_t		 sc_audev;
-
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 	bus_dma_tag_t		 sc_dmat;
@@ -219,7 +217,6 @@ int auglx_set_params(void *, int, int, struct audio_params *,
 int auglx_round_blocksize(void *, int);
 int auglx_halt_output(void *);
 int auglx_halt_input(void *);
-int auglx_getdev(void *, struct audio_device *);
 int auglx_set_port(void *, mixer_ctrl_t *);
 int auglx_get_port(void *, mixer_ctrl_t *);
 int auglx_query_devinfo(void *, mixer_devinfo_t *);
@@ -250,7 +247,6 @@ struct audio_hw_if auglx_hw_if = {
 	auglx_halt_output,
 	auglx_halt_input,
 	NULL,			/* speaker_ctl */
-	auglx_getdev,
 	NULL,			/* getfd */
 	auglx_set_port,
 	auglx_get_port,
@@ -325,13 +321,7 @@ auglx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	strlcpy(sc->sc_audev.name, "CS5536 AC97", sizeof sc->sc_audev.name);
-	snprintf(sc->sc_audev.version, sizeof sc->sc_audev.version, "0x%02x",
-		 PCI_REVISION(pa->pa_class));
-	strlcpy(sc->sc_audev.config, sc->sc_dev.dv_xname,
-		sizeof sc->sc_audev.config);
-
-	printf(": %s, %s\n", intrstr, sc->sc_audev.name);
+	printf(": %s, %s\n", intrstr, "CS5536 AC97");
 
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auglx_attach_codec;
@@ -549,14 +539,6 @@ auglx_halt_input(void *v)
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ACC_BM1_CMD, 0x00);
 	sc->bm1.intr = NULL;
-	return 0;
-}
-
-int
-auglx_getdev(void *v, struct audio_device *adp)
-{
-	struct auglx_softc *sc = v;
-	*adp = sc->sc_audev;
 	return 0;
 }
 

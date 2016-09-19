@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofivar.h,v 1.2 2011/12/25 00:07:27 miod Exp $	*/
+/*	$OpenBSD: arcofivar.h,v 1.3 2016/09/19 06:46:44 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -24,7 +24,6 @@ struct arcofi_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	struct audio_device	sc_audio_device;
 	void			*sc_sih;
 
 	int			sc_open;

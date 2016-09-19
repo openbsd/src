@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.37 2016/09/14 06:12:19 ratchov Exp $ */
+/* $OpenBSD: auixp.c,v 1.38 2016/09/19 06:46:44 ratchov Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -125,7 +125,6 @@ int	auixp_get_port(void *, mixer_ctrl_t *);
 int	auixp_query_devinfo(void *, mixer_devinfo_t *);
 void *	auixp_malloc(void *, int, size_t, int, int);
 void	auixp_free(void *, void *, int);
-int	auixp_getdev(void *, struct audio_device *);
 size_t	auixp_round_buffersize(void *, int, size_t);
 int	auixp_get_props(void *);
 int	auixp_intr(void *);
@@ -177,7 +176,6 @@ struct audio_hw_if auixp_hw_if = {
 	auixp_halt_output,
 	auixp_halt_input,
 	NULL,			/* speaker_ctl */
-	auixp_getdev,
 	NULL,			/* getfd */
 	auixp_set_port,
 	auixp_get_port,
@@ -423,14 +421,6 @@ auixp_free(void *hdl, void *addr, int pool)
 			return;
 		}
 	}
-}
-
-int
-auixp_getdev(void *v, struct audio_device *adp)
-{
-	struct auixp_softc *sc = v;
-	*adp = sc->sc_audev;
-	return 0;
 }
 
 /* pass request to AC'97 codec code */
@@ -1030,12 +1020,6 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf(": %s\n", intrstr);
-
-	strlcpy(sc->sc_audev.name, "ATI IXP AC97", sizeof sc->sc_audev.name);
-	snprintf(sc->sc_audev.version, sizeof sc->sc_audev.version, "0x%02x",
-	    PCI_REVISION(pa->pa_class));
-	strlcpy(sc->sc_audev.config, sc->sc_dev.dv_xname,
-	    sizeof sc->sc_audev.config);
 
 	/* power up chip */
 	pci_set_powerstate(pc, tag, PCI_PMCSR_STATE_D0);

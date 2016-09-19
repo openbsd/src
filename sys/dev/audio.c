@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.152 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.153 2016/09/19 06:46:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1023,7 +1023,6 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	    (ops->start_input == 0 && ops->trigger_input == 0) ||
 	    ops->halt_output == 0 ||
 	    ops->halt_input == 0 ||
-	    ops->getdev == 0 ||
 	    ops->set_port == 0 ||
 	    ops->get_port == 0 ||
 	    ops->query_devinfo == 0 ||

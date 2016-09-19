@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.32 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.33 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
  * Generic interface to hardware driver.
  */
 
-struct audio_device;
 struct mixer_devinfo;
 struct mixer_ctrl;
 
@@ -113,7 +112,6 @@ struct audio_hw_if {
 #define SPKR_ON		1
 #define SPKR_OFF	0
 
-	int	(*getdev)(void *, struct audio_device *);
 	int	(*setfd)(void *, int);
 
 	/* Mixer (in/out ports) */

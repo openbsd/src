@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.105 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: auich.c,v 1.106 2016/09/19 06:46:44 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -170,8 +170,6 @@ struct auich_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
-	audio_device_t sc_audev;
-
 	pcireg_t pci_id;
 	bus_space_tag_t iot;
 	bus_space_tag_t iot_mix;
@@ -298,7 +296,6 @@ int auich_round_blocksize(void *, int);
 void auich_halt_pipe(struct auich_softc *, int, struct auich_ring *);
 int auich_halt_output(void *);
 int auich_halt_input(void *);
-int auich_getdev(void *, struct audio_device *);
 int auich_set_port(void *, mixer_ctrl_t *);
 int auich_get_port(void *, mixer_ctrl_t *);
 int auich_query_devinfo(void *, mixer_devinfo_t *);
@@ -331,7 +328,6 @@ struct audio_hw_if auich_hw_if = {
 	auich_halt_output,
 	auich_halt_input,
 	NULL,			/* speaker_ctl */
-	auich_getdev,
 	NULL,			/* getfd */
 	auich_set_port,
 	auich_get_port,
@@ -451,14 +447,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		if (PCI_PRODUCT(pa->pa_id) == auich_devices[i].product)
 			break;
 
-	snprintf(sc->sc_audev.name, sizeof sc->sc_audev.name, "%s AC97",
-		 auich_devices[i].name);
-	snprintf(sc->sc_audev.version, sizeof sc->sc_audev.version, "0x%02x",
-		 PCI_REVISION(pa->pa_class));
-	strlcpy(sc->sc_audev.config, sc->sc_dev.dv_xname,
-		sizeof sc->sc_audev.config);
-
-	printf(": %s, %s\n", intrstr, sc->sc_audev.name);
+	printf(": %s, %s\n", intrstr, auich_devices[i].name);
 
 	/* SiS 7012 needs special handling */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS &&
@@ -851,14 +840,6 @@ auich_halt_input(void *v)
 
 	sc->pcmi.intr = NULL;
 	mtx_leave(&audio_lock);
-	return 0;
-}
-
-int
-auich_getdev(void *v, struct audio_device *adp)
-{
-	struct auich_softc *sc = v;
-	*adp = sc->sc_audev;
 	return 0;
 }
 

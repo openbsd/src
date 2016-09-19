@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.35 2016/09/14 06:12:19 ratchov Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.36 2016/09/19 06:46:44 ratchov Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -154,7 +154,6 @@ int cs4281_set_params(void *, int, int, struct audio_params *,
 				     struct audio_params *);
 int cs4281_halt_output(void *);
 int cs4281_halt_input(void *);
-int cs4281_getdev(void *, struct audio_device *);
 int cs4281_trigger_output(void *, void *, void *, int, void (*)(void *),
 			  void *, struct audio_params *);
 int cs4281_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -208,7 +207,6 @@ struct audio_hw_if cs4281_hw_if = {
 	cs4281_halt_output,
 	cs4281_halt_input,
 	NULL,
-	cs4281_getdev,
 	NULL,
 	cs4281_mixer_set_port,
 	cs4281_mixer_get_port,
@@ -246,13 +244,6 @@ struct cfattach clct_ca = {
 struct cfdriver clct_cd = {
 	NULL, "clct", DV_DULL
 };
-
-struct audio_device cs4281_device = {
-	"CS4281",
-	"",
-	"cs4281"
-};
-
 
 int
 cs4281_match(parent, match, aux)
@@ -484,17 +475,6 @@ cs4281_halt_input(addr)
 #endif
 	return (0);
 }
-
-/* trivial */
-int
-cs4281_getdev(addr, retp)
-     void *addr;
-     struct audio_device *retp;
-{
-	*retp = cs4281_device;
-	return (0);
-}
-
 
 int
 cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)

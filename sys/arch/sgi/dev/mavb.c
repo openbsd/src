@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.19 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.20 2016/09/19 06:46:43 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -165,7 +165,6 @@ int mavb_set_params(void *, int, int, struct audio_params *,
 int mavb_round_blocksize(void *hdl, int bs);
 int mavb_halt_output(void *);
 int mavb_halt_input(void *);
-int mavb_getdev(void *, struct audio_device *);
 int mavb_set_port(void *, struct mixer_ctrl *);
 int mavb_get_port(void *, struct mixer_ctrl *);
 int mavb_query_devinfo(void *, struct mixer_devinfo *);
@@ -188,7 +187,6 @@ struct audio_hw_if mavb_sa_hw_if = {
 	mavb_halt_output,
 	mavb_halt_input,
 	0,
-	mavb_getdev,
 	0,
 	mavb_set_port,
 	mavb_get_port,
@@ -199,12 +197,6 @@ struct audio_hw_if mavb_sa_hw_if = {
 	mavb_get_props,
 	mavb_trigger_output,
 	mavb_trigger_input
-};
-
-struct audio_device mavb_device = {
-	"A3",
-	"",
-	"mavb"
 };
 
 int
@@ -387,13 +379,6 @@ mavb_halt_input(void *hdl)
 	mtx_enter(&audio_lock);
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL1_CONTROL, 0);
 	mtx_leave(&audio_lock);
-	return (0);
-}
-
-int
-mavb_getdev(void *hdl, struct audio_device *ret)
-{
-	*ret = mavb_device;
 	return (0);
 }
 

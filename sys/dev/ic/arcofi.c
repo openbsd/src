@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.15 2016/09/17 07:29:04 ratchov Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.16 2016/09/19 06:46:44 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -195,7 +195,6 @@ int	arcofi_set_param(struct arcofi_softc *, int, int, int,
 
 void	arcofi_close(void *);
 int	arcofi_commit_settings(void *);
-int	arcofi_getdev(void *, struct audio_device *);
 int	arcofi_get_port(void *, mixer_ctrl_t *);
 int	arcofi_get_props(void *);
 int	arcofi_halt_input(void *);
@@ -542,15 +541,6 @@ arcofi_halt_output(void *v)
 		    arcofi_read(sc, ARCOFI_CSR) & ~CSR_DATA_FIFO_ENABLE);
 
 	mtx_leave(&audio_lock);
-	return 0;
-}
-
-int
-arcofi_getdev(void *v, struct audio_device *ad)
-{
-	struct arcofi_softc *sc = (struct arcofi_softc *)v;
-
-	bcopy(&sc->sc_audio_device, ad, sizeof(*ad));
 	return 0;
 }
 
@@ -1135,13 +1125,6 @@ arcofi_attach(struct arcofi_softc *sc, const char *version)
 
 	arcofi_write(sc, ARCOFI_FIFO_IR, 0);
 	arcofi_write(sc, ARCOFI_CSR, CSR_INTR_ENABLE);
-
-	strlcpy(sc->sc_audio_device.name, arcofi_cd.cd_name,
-	    sizeof(sc->sc_audio_device.name));
-	strlcpy(sc->sc_audio_device.version, version,
-	    sizeof(sc->sc_audio_device.version));
-	strlcpy(sc->sc_audio_device.config, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_audio_device.config));
 
 	audio_attach_mi(&arcofi_hw_if, sc, &sc->sc_dev);
 	return;

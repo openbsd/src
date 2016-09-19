@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.44 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: gus.c,v 1.45 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -278,7 +278,6 @@ struct audio_hw_if gus_hw_if = {
 	gus_halt_in_dma,
 	gus_speaker_ctl,
 
-	gus_getdev,
 	NULL,
 	gus_mixer_set_port,
 	gus_mixer_get_port,
@@ -311,7 +310,6 @@ static struct audio_hw_if gusmax_hw_if = {
 
 	gusmax_speaker_ctl,
 
-	gus_getdev,
 	NULL,
 	gusmax_mixer_set_port,
 	gusmax_mixer_get_port,
@@ -324,16 +322,6 @@ static struct audio_hw_if gusmax_hw_if = {
 	NULL,
 	NULL
 };
-
-/*
- * Some info about the current audio device
- */
-struct audio_device gus_device = {
-	"UltraSound",
-	"",
-	"gus",
-};
-
 
 int
 gusopen(void *addr, int flags)
@@ -2111,18 +2099,6 @@ gus_init_cs4231(struct gus_softc *sc)
 	}
 }
 
-
-/*
- * Return info about the audio device, for the AUDIO_GETINFO ioctl
- */
-
-int
-gus_getdev(void *addr, struct audio_device *dev)
-{
-	*dev = gus_device;
-	return 0;
-}
-
 /*
  * stubs (XXX)
  */
@@ -3363,9 +3339,6 @@ gus_subattach(struct gus_softc *sc, struct isa_attach_args *ia)
 	 * of the board version. Simply use the revision register as
 	 * identification.
 	 */
-	snprintf(gus_device.version, sizeof gus_device.version, "%d",
-	    sc->sc_revision);
-
 	printf(": ver %d", sc->sc_revision);
 	if (sc->sc_revision >= 10)
 		printf(", MAX");

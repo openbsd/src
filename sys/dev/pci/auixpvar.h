@@ -1,4 +1,4 @@
-/* $OpenBSD: auixpvar.h,v 1.3 2010/09/21 02:09:15 jakemsr Exp $ */
+/* $OpenBSD: auixpvar.h,v 1.4 2016/09/19 06:46:44 ratchov Exp $ */
 /* $NetBSD: auixpvar.h,v 1.3 2005/01/12 15:54:34 kent Exp $*/
 
 /*
@@ -82,7 +82,6 @@ struct auixp_codec {
 
 struct auixp_softc {
 	struct device		sc_dev;
-	audio_device_t		sc_audev;
 	void			*sc_ih;
 
 	/* card properties */

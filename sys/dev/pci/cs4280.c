@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.49 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.50 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -201,8 +201,6 @@ int	cs4280_round_blocksize(void *, int);
 int	cs4280_halt_output(void *);
 int	cs4280_halt_input(void *);
 
-int	cs4280_getdev(void *, struct audio_device *);
-
 int	cs4280_mixer_set_port(void *, mixer_ctrl_t *);
 int	cs4280_mixer_get_port(void *, mixer_ctrl_t *);
 int	cs4280_query_devinfo(void *addr, mixer_devinfo_t *dip);
@@ -249,7 +247,6 @@ struct audio_hw_if cs4280_hw_if = {
 	cs4280_halt_output,
 	cs4280_halt_input,
 	NULL,
-	cs4280_getdev,
 	NULL,
 	cs4280_mixer_set_port,
 	cs4280_mixer_get_port,
@@ -274,13 +271,6 @@ struct midi_hw_if cs4280_midi_hw_if = {
 #endif
 
 	
-
-struct audio_device cs4280_device = {
-	"CS4280",
-	"",
-	"cs4280"
-};
-
 const struct pci_matchid cs4280_devices[] = {
 	{ PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280 },
 	{ PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4610 },
@@ -1146,13 +1136,6 @@ cs4280_halt_input(void *addr)
 	sc->sc_rrun = 0;
 #endif
 	mtx_leave(&audio_lock);
-	return (0);
-}
-
-int
-cs4280_getdev(void *addr, struct audio_device *retp)
-{
-	*retp = cs4280_device;
 	return (0);
 }
 

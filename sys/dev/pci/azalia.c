@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.228 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.229 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -254,7 +254,6 @@ int	azalia_set_params(void *, int, int, audio_params_t *,
 int	azalia_round_blocksize(void *, int);
 int	azalia_halt_output(void *);
 int	azalia_halt_input(void *);
-int	azalia_getdev(void *, struct audio_device *);
 int	azalia_set_port(void *, mixer_ctrl_t *);
 int	azalia_get_port(void *, mixer_ctrl_t *);
 int	azalia_query_devinfo(void *, mixer_devinfo_t *);
@@ -302,7 +301,6 @@ struct audio_hw_if azalia_hw_if = {
 	azalia_halt_output,
 	azalia_halt_input,
 	NULL,			/* speaker_ctl */
-	azalia_getdev,
 	NULL,			/* setfd */
 	azalia_set_port,
 	azalia_get_port,
@@ -4035,19 +4033,6 @@ azalia_halt_input(void *v)
 	DPRINTFN(1, ("%s\n", __func__));
 	az = v;
 	return azalia_stream_halt(&az->rstream);
-}
-
-int
-azalia_getdev(void *v, struct audio_device *dev)
-{
-	azalia_t *az;
-
-	az = v;
-	strlcpy(dev->name, "HD-Audio", MAX_AUDIO_DEV_LEN);
-	snprintf(dev->version, MAX_AUDIO_DEV_LEN,
-	    "%d.%d", AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
-	strlcpy(dev->config, XNAME(az), MAX_AUDIO_DEV_LEN);
-	return 0;
 }
 
 int

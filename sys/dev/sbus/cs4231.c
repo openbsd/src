@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.36 2016/09/14 06:12:20 ratchov Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.37 2016/09/19 06:46:44 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -140,7 +140,6 @@ int	cs4231_round_blocksize(void *, int);
 int	cs4231_commit_settings(void *);
 int	cs4231_halt_output(void *);
 int	cs4231_halt_input(void *);
-int	cs4231_getdev(void *, struct audio_device *);
 int	cs4231_set_port(void *, mixer_ctrl_t *);
 int	cs4231_get_port(void *, mixer_ctrl_t *);
 int	cs4231_query_devinfo(void *, mixer_devinfo_t *);
@@ -165,7 +164,6 @@ struct audio_hw_if cs4231_sa_hw_if = {
 	cs4231_halt_output,
 	cs4231_halt_input,
 	0,
-	cs4231_getdev,
 	0,
 	cs4231_set_port,
 	cs4231_get_port,
@@ -184,12 +182,6 @@ struct cfattach audiocs_ca = {
 
 struct cfdriver audiocs_cd = {
 	NULL, "audiocs", DV_DULL
-};
-
-struct audio_device cs4231_device = {
-	"SUNW,CS4231",
-	"b",
-	"onboard1",
 };
 
 int
@@ -646,13 +638,6 @@ cs4231_halt_input(void *vsc)
 	    cs4231_read(sc, SP_INTERFACE_CONFIG) & (~CAPTURE_ENABLE));
 	sc->sc_capture.cs_locked = 0;
 	mtx_leave(&audio_lock);
-	return (0);
-}
-
-int
-cs4231_getdev(void *vsc, struct audio_device *retp)
-{
-	*retp = cs4231_device;
 	return (0);
 }
 

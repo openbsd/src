@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.32 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.33 2016/09/19 06:46:43 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -62,7 +62,6 @@ int     harmony_round_blocksize(void *, int);
 int     harmony_commit_settings(void *);
 int     harmony_halt_output(void *);
 int     harmony_halt_input(void *);
-int     harmony_getdev(void *, struct audio_device *);
 int     harmony_set_port(void *, mixer_ctrl_t *);
 int     harmony_get_port(void *, mixer_ctrl_t *);
 int     harmony_query_devinfo(void *addr, mixer_devinfo_t *);
@@ -88,7 +87,6 @@ struct audio_hw_if harmony_sa_hw_if = {
 	harmony_halt_output,
 	harmony_halt_input,
 	NULL,
-	harmony_getdev,
 	NULL,
 	harmony_set_port,
 	harmony_get_port,
@@ -251,13 +249,6 @@ harmony_attach(parent, self, aux)
 
 	if ((rev & CS4215_REV_VER) >= CS4215_REV_VER_E)
 		sc->sc_hasulinear8 = 1;
-
-	strlcpy(sc->sc_audev.name, ga->ga_name, sizeof(sc->sc_audev.name));
-	snprintf(sc->sc_audev.version, sizeof sc->sc_audev.version,
-	    "%u.%u;%u", ga->ga_type.iodc_sv_rev,
-	    ga->ga_type.iodc_model, ga->ga_type.iodc_revision);
-	strlcpy(sc->sc_audev.config, sc->sc_dv.dv_xname,
-	    sizeof(sc->sc_audev.config));
 
 	audio_attach_mi(&harmony_sa_hw_if, sc, &sc->sc_dv);
 
@@ -547,16 +538,6 @@ harmony_halt_input(void *vsc)
 
 	/* XXX: disable interrupts */
 	sc->sc_capturing = 0;
-	return (0);
-}
-
-int
-harmony_getdev(void *vsc, struct audio_device *retp)
-{
-	struct harmony_softc *sc = vsc;
-
-	*retp = sc->sc_audev;
-
 	return (0);
 }
 

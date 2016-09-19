@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.25 2016/09/14 06:12:19 ratchov Exp $
+.\"	$OpenBSD: audio.9,v 1.26 2016/09/19 06:46:43 ratchov Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 14 2016 $
+.Dd $Mdocdate: September 19 2016 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -64,7 +64,6 @@ struct audio_hw_if {
 #define SPKR_ON  1
 #define SPKR_OFF 0
 
-	int	(*getdev)(void *, struct audio_device *);
 	int	(*setfd)(void *, int);
 
 	int	(*set_port)(void *, struct mixer_ctrl *);
@@ -279,11 +278,6 @@ If supplied, it is called when a half duplex device changes between
 playing and recording.
 It can, e.g., be used to turn the speaker on and off.
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*getdev)" "void *hdl" "struct audio_device *ret"
-This function fills
-.Fa ret
-with relevant information about the driver and returns 0 on success,
-or it returns an error code on failure.
 .It Fn "int (*setfd)" "void *hdl" "int fd"
 This function is optional.
 If supplied, it is called when the device is opened in full-duplex mode,

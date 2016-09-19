@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930var.h,v 1.4 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: am7930var.h,v 1.5 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: am7930var.h,v 1.10 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
@@ -102,7 +102,6 @@ void	am7930_init(struct am7930_softc *, int);
  * audio(9) MI callbacks from upper-level audio layer.
  */
 
-struct audio_device;
 struct audio_params;
 
 int	am7930_open(void *, int);
@@ -113,7 +112,6 @@ int	am7930_commit_settings(void *);
 int	am7930_round_blocksize(void *, int);
 int	am7930_halt_output(void *);
 int	am7930_halt_input(void *);
-int	am7930_getdev(void *, struct audio_device *);
 int	am7930_get_props(void *);
 int	am7930_set_port(void *, mixer_ctrl_t *);
 int	am7930_get_port(void *, mixer_ctrl_t *);

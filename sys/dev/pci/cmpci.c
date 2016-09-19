@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.41 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.42 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -135,7 +135,6 @@ int cmpci_set_params(void *, int, int,
 int cmpci_round_blocksize(void *, int);
 int cmpci_halt_output(void *);
 int cmpci_halt_input(void *);
-int cmpci_getdev(void *, struct audio_device *);
 int cmpci_set_port(void *, mixer_ctrl_t *);
 int cmpci_get_port(void *, mixer_ctrl_t *);
 int cmpci_query_devinfo(void *, mixer_devinfo_t *);
@@ -163,7 +162,6 @@ struct audio_hw_if cmpci_hw_if = {
 	cmpci_halt_output,	/* halt_output */
 	cmpci_halt_input,	/* halt_input */
 	NULL,			/* speaker_ctl */
-	cmpci_getdev,		/* getdev */
 	NULL,			/* setfd */
 	cmpci_set_port,		/* set_port */
 	cmpci_get_port,		/* get_port */
@@ -871,35 +869,6 @@ cmpci_halt_input(void *handle)
 	delay(10);
 	cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_RESET);
 	mtx_leave(&audio_lock);
-	return 0;
-}
-
-/* get audio device information */
-int
-cmpci_getdev(void *handle, struct audio_device *ad)
-{
-	struct cmpci_softc *sc = handle;
-
-	strncpy(ad->name, "CMI PCI Audio", sizeof(ad->name));
-	snprintf(ad->version, sizeof(ad->version), "0x%02x (%d)",
-		 PCI_REVISION(sc->sc_class), sc->sc_version);
-	switch (PCI_PRODUCT(sc->sc_id)) {
-	case PCI_PRODUCT_CMI_CMI8338A:
-		strncpy(ad->config, "CMI8338A", sizeof(ad->config));
-		break;
-	case PCI_PRODUCT_CMI_CMI8338B:
-		strncpy(ad->config, "CMI8338B", sizeof(ad->config));
-		break;
-	case PCI_PRODUCT_CMI_CMI8738:
-		strncpy(ad->config, "CMI8738", sizeof(ad->config));
-		break;
-	case PCI_PRODUCT_CMI_CMI8738B:
-		strncpy(ad->config, "CMI8738B", sizeof(ad->config));
-		break;
-	default:
-		strncpy(ad->config, "unknown", sizeof(ad->config));
-	}
-
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.40 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: autri.c,v 1.41 2016/09/19 06:46:44 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -130,7 +130,6 @@ int	autri_trigger_input(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	autri_halt_output(void *);
 int	autri_halt_input(void *);
-int	autri_getdev(void *, struct audio_device *);
 int	autri_mixer_set_port(void *, mixer_ctrl_t *);
 int	autri_mixer_get_port(void *, mixer_ctrl_t *);
 void   *autri_malloc(void *, int, size_t, int, int);
@@ -153,7 +152,6 @@ struct audio_hw_if autri_hw_if = {
 	autri_halt_output,
 	autri_halt_input,
 	NULL,			/* speaker_ctl */
-	autri_getdev,
 	NULL,			/* setfd */
 	autri_mixer_set_port,
 	autri_mixer_get_port,
@@ -950,37 +948,6 @@ autri_halt_input(void *addr)
 	autri_stopch(sc, sc->sc_rec.ch, sc->sc_rec.ch_intr);
 	autri_disable_interrupt(sc, sc->sc_rec.ch_intr);
 	mtx_leave(&audio_lock);
-	return 0;
-}
-
-int
-autri_getdev(void *addr, struct audio_device *retp)
-{
-	struct autri_softc *sc = addr;
-
-	DPRINTF(("autri_getdev().\n"));
-
-	strncpy(retp->name, "Trident 4DWAVE", sizeof(retp->name));
-	snprintf(retp->version, sizeof(retp->version), "0x%02x",
-	    PCI_REVISION(sc->sc_class));
-
-	switch (sc->sc_devid) {
-	case AUTRI_DEVICE_ID_4DWAVE_DX:
-		strncpy(retp->config, "4DWAVE-DX", sizeof(retp->config));
-		break;
-	case AUTRI_DEVICE_ID_4DWAVE_NX:
-		strncpy(retp->config, "4DWAVE-NX", sizeof(retp->config));
-		break;
-	case AUTRI_DEVICE_ID_SIS_7018:
-		strncpy(retp->config, "SiS 7018", sizeof(retp->config));
-		break;
-	case AUTRI_DEVICE_ID_ALI_M5451:
-		strncpy(retp->config, "ALi M5451", sizeof(retp->config));
-		break;
-	default:
-		strncpy(retp->config, "unknown", sizeof(retp->config));
-	}
-
 	return 0;
 }
 

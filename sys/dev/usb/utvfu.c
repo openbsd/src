@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.8 2016/09/14 06:12:20 ratchov Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.9 2016/09/19 06:46:44 ratchov Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -776,7 +776,6 @@ int		utvfu_audio_set_params(void *, int, int,
 		    struct audio_params *, struct audio_params *);
 int		utvfu_audio_halt_out(void *);
 int		utvfu_audio_halt_in(void *);
-int		utvfu_audio_getdev(void *, struct audio_device *);
 int		utvfu_audio_mixer_set_port(void *, struct mixer_ctrl *);
 int		utvfu_audio_mixer_get_port(void *, struct mixer_ctrl *);
 int		utvfu_audio_query_devinfo(void *, struct mixer_devinfo *);
@@ -827,13 +826,6 @@ struct video_hw_if utvfu_vid_hw_if = {
 	utvfu_start_read	/* start stream for read */
 };
 
-
-struct audio_device utvfu_audio_device = {
-	"UTVFU Audio",	/* name */
-	"",		/* version */
-	"utvfu"		/* config */
-};
-
 struct audio_hw_if utvfu_au_hw_if = {
 	utvfu_audio_open,		/* open hardware */
 	utvfu_audio_close,		/* close hardware */
@@ -847,7 +839,6 @@ struct audio_hw_if utvfu_au_hw_if = {
 	utvfu_audio_halt_out,
 	utvfu_audio_halt_in,
 	NULL,
-	utvfu_audio_getdev,
 	NULL,
 	utvfu_audio_mixer_set_port,
 	utvfu_audio_mixer_get_port,
@@ -1920,18 +1911,6 @@ utvfu_audio_halt_in(void *v)
 	utvfu_audio_stop(sc);
 	utvfu_audio_clear_client(sc);
 
-	return (0);
-}
-
-int
-utvfu_audio_getdev(void *v, struct audio_device *retp)
-{
-	struct utvfu_softc *sc = v;
-
-	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
-
-	*retp = utvfu_audio_device;
 	return (0);
 }
 

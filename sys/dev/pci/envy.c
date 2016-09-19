@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.67 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.68 2016/09/19 06:46:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -108,7 +108,6 @@ int envy_trigger_input(void *, void *, void *, int,
     void (*)(void *), void *, struct audio_params *);
 int envy_halt_output(void *);
 int envy_halt_input(void *);
-int envy_getdev(void *, struct audio_device *);
 int envy_query_devinfo(void *, struct mixer_devinfo *);
 int envy_get_port(void *, struct mixer_ctrl *);
 int envy_set_port(void *, struct mixer_ctrl *);
@@ -189,7 +188,6 @@ struct audio_hw_if envy_hw_if = {
 	envy_halt_output,	/* halt_output */
 	envy_halt_input,	/* halt_input */
 	NULL,			/* speaker_ctl */
-	envy_getdev,		/* getdev */
 	NULL,			/* setfd */
 	envy_set_port,		/* set_port */
 	envy_get_port,		/* get_port */
@@ -2165,17 +2163,6 @@ envy_halt_input(void *self)
 		envy_pintr(sc);
 #endif
 	mtx_leave(&audio_lock);
-	return 0;
-}
-
-int
-envy_getdev(void *self, struct audio_device *dev)
-{
-	struct envy_softc *sc = (struct envy_softc *)self;
-
-	strlcpy(dev->name, sc->isht ? "Envy24HT" : "Envy24", MAX_AUDIO_DEV_LEN);
-	strlcpy(dev->version, "-", MAX_AUDIO_DEV_LEN);
-	strlcpy(dev->config, sc->card->name, MAX_AUDIO_DEV_LEN);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.6 2016/09/14 06:12:20 ratchov Exp $	*/
+/*	$OpenBSD: bba.c,v 1.7 2016/09/19 06:46:44 ratchov Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -143,7 +143,6 @@ struct am7930_glue bba_glue = {
 int	bba_round_blocksize(void *, int);
 int	bba_halt_output(void *);
 int	bba_halt_input(void *);
-int	bba_getdev(void *, struct audio_device *);
 void	*bba_allocm(void *, int, size_t, int, int);
 void	bba_freem(void *, void *, int);
 size_t	bba_round_buffersize(void *, int, size_t);
@@ -166,7 +165,6 @@ struct audio_hw_if bba_hw_if = {
 	bba_halt_output,		/* md */
 	bba_halt_input,			/* md */
 	NULL,
-	bba_getdev,
 	NULL,
 	am7930_set_port,
 	am7930_get_port,
@@ -177,12 +175,6 @@ struct audio_hw_if bba_hw_if = {
 	bba_get_props,
 	bba_trigger_output,		/* md */
 	bba_trigger_input		/* md */
-};
-
-static struct audio_device bba_device = {
-	"am7930",
-	"x",
-	"bba"
 };
 
 int	bba_intr(void *);
@@ -414,13 +406,6 @@ bba_halt_input(void *v)
 		d->active = 0;
 	}
 
-	return 0;
-}
-
-int
-bba_getdev(void *v, struct audio_device *retp)
-{
-	*retp = bba_device;
 	return 0;
 }
 

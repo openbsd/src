@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.41 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.42 2016/09/19 06:46:44 ratchov Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -441,7 +441,6 @@ struct maestro_softc {
 
 	struct ac97_codec_if	*codec_if;
 	struct ac97_host_if	host_if;
-	struct audio_device	*sc_audev;
 
 	int			suspend;
 
@@ -472,7 +471,6 @@ int	maestro_set_params(void *, int, int, struct audio_params *,
 int	maestro_round_blocksize(void *, int);
 int	maestro_halt_output(void *);
 int	maestro_halt_input(void *);
-int	maestro_getdev(void *, struct audio_device *);
 int	maestro_set_port(void *, mixer_ctrl_t *);
 int	maestro_get_port(void *, mixer_ctrl_t *);
 int	maestro_query_devinfo(void *, mixer_devinfo_t *);
@@ -542,7 +540,6 @@ struct audio_hw_if maestro_hw_if = {
 	maestro_halt_output,
 	maestro_halt_input,
 	NULL,
-	maestro_getdev,
 	NULL,
 	maestro_set_port,
 	maestro_get_port,
@@ -553,10 +550,6 @@ struct audio_hw_if maestro_hw_if = {
 	maestro_get_props,
 	maestro_trigger_output,
 	maestro_trigger_input
-};
-
-struct audio_device maestro_audev = {
-	"ESS Maestro", "", "maestro"
 };
 
 struct {
@@ -616,7 +609,6 @@ maestro_attach(struct device *parent, struct device *self, void *aux)
 	int dmastage = 0;
 	int rseg;
 
-	sc->sc_audev = &maestro_audev;
 	sc->flags = maestro_get_flags(pa);
 
 	sc->pc = pa->pa_pc;
@@ -861,15 +853,6 @@ maestro_get_props(void *self)
 	/* struct maestro_softc *sc = (struct maestro_softc *)self; */
 
 	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT); /* XXX */
-}
-
-int
-maestro_getdev(void *self, struct audio_device *retp)
-{
-	struct maestro_softc *sc = (struct maestro_softc *)self;
-
-	*retp = *sc->sc_audev;
-	return 0;
 }
 
 int

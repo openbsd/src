@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.53 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: yds.c,v 1.54 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -161,7 +161,6 @@ int	yds_trigger_input(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	yds_halt_output(void *);
 int	yds_halt_input(void *);
-int	yds_getdev(void *, struct audio_device *);
 int	yds_mixer_set_port(void *, mixer_ctrl_t *);
 int	yds_mixer_get_port(void *, mixer_ctrl_t *);
 void   *yds_malloc(void *, int, size_t, int, int);
@@ -213,7 +212,6 @@ static struct audio_hw_if yds_hw_if = {
 	yds_halt_output,
 	yds_halt_input,
 	NULL,
-	yds_getdev,
 	NULL,
 	yds_mixer_set_port,
 	yds_mixer_get_port,
@@ -224,12 +222,6 @@ static struct audio_hw_if yds_hw_if = {
 	yds_get_props,
 	yds_trigger_output,
 	yds_trigger_input
-};
-
-struct audio_device yds_device = {
-	"Yamaha DS-1",
-	"",
-	"yds"
 };
 
 const static struct {
@@ -1480,14 +1472,6 @@ yds_halt_input(void *addr)
 	}
 	sc->sc_rec.intr = NULL;
 	mtx_leave(&audio_lock);
-	return 0;
-}
-
-int
-yds_getdev(void *addr, struct audio_device *retp)
-{
-	*retp = yds_device;
-
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.50 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.51 2016/09/19 06:46:44 ratchov Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -172,7 +172,6 @@ int	emuxki_trigger_input(void *, void *, void *, int, void (*) (void *),
 int	emuxki_halt_output(void *);
 int	emuxki_halt_input(void *);
 
-int	emuxki_getdev(void *, struct audio_device *);
 int	emuxki_set_port(void *, mixer_ctrl_t *);
 int	emuxki_get_port(void *, mixer_ctrl_t *);
 int	emuxki_query_devinfo(void *, mixer_devinfo_t *);
@@ -226,7 +225,6 @@ struct audio_hw_if emuxki_hw_if = {
 	emuxki_halt_output,
 	emuxki_halt_input,
 	NULL,			/* speaker_ctl */
-	emuxki_getdev,
 	NULL,			/* setfd */
 	emuxki_set_port,
 	emuxki_get_port,
@@ -460,29 +458,19 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
                 if (PCI_REVISION(pa->pa_class) == 0x04 ||
 		    PCI_REVISION(pa->pa_class) == 0x08) {
 			sc->sc_flags |= EMUXKI_AUDIGY2;
-			strlcpy(sc->sc_audv.name, "Audigy2", sizeof sc->sc_audv.name);
-		} else {
-			strlcpy(sc->sc_audv.name, "Audigy", sizeof sc->sc_audv.name);
 		}
 	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY2) {
 		sc->sc_flags |= EMUXKI_AUDIGY | EMUXKI_AUDIGY2;
 		if (pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    PCI_SUBSYS_ID_REG) == 0x10011102) {
 			sc->sc_flags |= EMUXKI_CA0108;
-			strlcpy(sc->sc_audv.name, "Audigy2Value", sizeof sc->sc_audv.name);
-		} else
-			strlcpy(sc->sc_audv.name, "Audigy2", sizeof sc->sc_audv.name);
+		}
 	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG) == EMU_SUBSYS_APS) {
 		sc->sc_flags |= EMUXKI_APS;
-		strlcpy(sc->sc_audv.name, "E-mu APS", sizeof sc->sc_audv.name);
 	} else {
 		sc->sc_flags |= EMUXKI_SBLIVE;
-		strlcpy(sc->sc_audv.name, "SB Live!", sizeof sc->sc_audv.name);
 	}
-	snprintf(sc->sc_audv.version, sizeof sc->sc_audv.version, "0x%02x",
-		 PCI_REVISION(pa->pa_class));
-	strlcpy(sc->sc_audv.config, "emuxki", sizeof sc->sc_audv.config);
 
 	if (emuxki_scinit(sc, 0) ||
 	    /* APS has no ac97 XXX */
@@ -2167,14 +2155,6 @@ emuxki_halt_input(void *addr)
 		return (ENXIO);
 	emuxki_voice_halt(sc->rvoice);
 	return (0);
-}
-
-int
-emuxki_getdev(void *v, struct audio_device *adp)
-{
-	struct emuxki_softc *sc = v;
-	*adp = sc->sc_audv;
-	return 0;
 }
 
 int

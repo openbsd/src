@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.36 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.37 2016/09/19 06:46:43 ratchov Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -59,7 +59,6 @@ int kiic_write(struct device *, int, int, const void *, int);
 int kiic_writereg(struct device *, int, u_int);
 
 void snapper_init(struct snapper_softc *);
-int snapper_getdev(void *, struct audio_device *);
 int snapper_match(struct device *, void *, void *);
 void snapper_attach(struct device *, struct device *, void *);
 void snapper_defer(struct device *);
@@ -91,7 +90,6 @@ struct audio_hw_if snapper_hw_if = {
 	i2s_halt_output,
 	i2s_halt_input,
 	NULL,
-	snapper_getdev,
 	NULL,
 	i2s_set_port,
 	i2s_get_port,
@@ -102,12 +100,6 @@ struct audio_hw_if snapper_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input
-};
-
-struct audio_device snapper_device = {
-	"SNAPPER",
-	"",
-	"snapper"
 };
 
 const uint8_t snapper_trebletab[] = {
@@ -727,11 +719,4 @@ snapper_init(struct snapper_softc *sc)
 	/* Mic in, reflects tas3004_initdata.ACR */
 	sc->sc_record_source = 1 << 1;
 	snapper_set_input(sc, sc->sc_record_source);
-}
-
-int
-snapper_getdev(void *h, struct audio_device *retp)
-{
-	*retp = snapper_device;
-	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: daca.c,v 1.9 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: daca.c,v 1.10 2016/09/19 06:46:43 ratchov Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -57,7 +57,6 @@
 int kiic_write(struct device *, int, int, const void *, int);
 int kiic_writereg(struct device *, int, u_int);
 
-int daca_getdev(void *, struct audio_device *);
 int daca_match(struct device *, void *, void *);
 void daca_attach(struct device *, struct device *, void *);
 void daca_defer(struct device *);
@@ -85,7 +84,6 @@ struct audio_hw_if daca_hw_if = {
 	i2s_halt_output,
 	i2s_halt_input,
 	NULL,
-	daca_getdev,
 	NULL,
 	i2s_set_port,
 	i2s_get_port,
@@ -96,12 +94,6 @@ struct audio_hw_if daca_hw_if = {
 	i2s_get_props,
 	i2s_trigger_output,
 	i2s_trigger_input
-};
-
-struct audio_device daca_device = {
-	"DACA",
-	"",
-	"daca"
 };
 
 /* DAC3550A registers */
@@ -172,13 +164,6 @@ daca_init(struct daca_softc *sc)
 {
 	i2s_set_rate(sc, 44100);
 	kiic_writereg(sc->sc_i2c, 4, 0x01 | 0x02 | 0x04);
-}
-
-int
-daca_getdev(void *h, struct audio_device *retp)
-{
-	*retp = daca_device;
-	return (0);
 }
 
 void
