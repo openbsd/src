@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.5 2016/09/18 11:04:42 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.6 2016/09/19 14:43:22 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -42,6 +42,7 @@
 #include <netinet/if_ether.h>
 #include <net/if_bridge.h>
 #include <net/if_switch.h>
+#include <net/if_vlan_var.h>
 #include <net/ofp.h>
 
 /*
@@ -2838,28 +2839,13 @@ swofp_flow_lookup(struct swofp_flow_table *swft,
 struct mbuf *
 swofp_expand_8021q_tag(struct mbuf *m)
 {
-	struct ether_vlan_header	 evh;
-
 	if ((m->m_flags & M_VLANTAG) == 0)
 		return (m);
 
-	m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
-
-	evh.evl_proto = evh.evl_encap_proto;
 	/* H/W tagging supports only 802.1Q */
-	evh.evl_encap_proto = htons(ETHERTYPE_VLAN);
-	evh.evl_tag = htons(EVL_VLANOFTAG(m->m_pkthdr.ether_vtag) |
-	    EVL_PRIOFTAG(m->m_pkthdr.ether_vtag));
-
-	m_adj(m, ETHER_HDR_LEN);
-	M_PREPEND(m, sizeof(evh), M_DONTWAIT);
-	if (m == NULL)
-		return (NULL);
-
-	m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
-	m->m_flags &= ~M_VLANTAG;
-
-	return (m);
+	return (vlan_inject(m, ETHERTYPE_VLAN,
+	    EVL_VLANOFTAG(m->m_pkthdr.ether_vtag) |
+	    EVL_PRIOFTAG(m->m_pkthdr.ether_vtag)));
 }
 
 struct mbuf *
