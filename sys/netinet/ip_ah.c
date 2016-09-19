@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.122 2016/09/13 19:56:55 markus Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.123 2016/09/19 18:09:22 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -151,7 +151,7 @@ ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	tdbp->tdb_amxkeylen = ii->ii_authkeylen;
 	tdbp->tdb_amxkey = malloc(tdbp->tdb_amxkeylen, M_XDATA, M_WAITOK);
 
-	bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
+	memcpy(tdbp->tdb_amxkey, ii->ii_authkey, tdbp->tdb_amxkeylen);
 
 	/* Initialize crypto session. */
 	memset(&cria, 0, sizeof(cria));
@@ -312,7 +312,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 				/* Zeroize all other options. */
 				count = ptr[off + 1];
-				bcopy(ipseczeroes, ptr, count);
+				memcpy(ptr, ipseczeroes, count);
 				off += count;
 				break;
 			}
@@ -422,7 +422,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 					/* If mutable option, zeroize. */
 					if (ptr[count] & IP6OPT_MUTABLE)
-						bcopy(ipseczeroes, ptr + count,
+						memcpy(ptr + count, ipseczeroes,
 						    ptr[count + 1]);
 
 					count += ad;
@@ -642,7 +642,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	if ((tdb->tdb_wnd > 0) && (tdb->tdb_flags & TDBF_ESN)) {
 		esn = htonl(esn);
-		bcopy(&esn, crda->crd_esn, 4);
+		memcpy(crda->crd_esn, &esn, 4);
 		crda->crd_flags |= CRD_F_ESN;
 	}
 
@@ -689,7 +689,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_rdomain = tdb->tdb_rdomain;
-	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
+	memcpy(&tc->tc_dst, &tdb->tdb_dst, sizeof(union sockaddr_union));
 
 	return crypto_dispatch(crp);
 }
@@ -1114,7 +1114,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		u_int32_t esn;
 
 		esn = htonl((u_int32_t)(tdb->tdb_rpl >> 32));
-		bcopy(&esn, crda->crd_esn, 4);
+		memcpy(crda->crd_esn, &esn, 4);
 		crda->crd_flags |= CRD_F_ESN;
 	}
 
@@ -1138,9 +1138,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	 */
 	switch (tdb->tdb_dst.sa.sa_family) {
 	case AF_INET:
-		bcopy(((caddr_t)(tc + 1)) +
-		    offsetof(struct ip, ip_len),
-		    (caddr_t) &iplen, sizeof(u_int16_t));
+		memcpy((caddr_t) &iplen, ((caddr_t)(tc + 1)) +
+		    offsetof(struct ip, ip_len), sizeof(u_int16_t));
 		iplen = htons(ntohs(iplen) + rplen + ahx->authsize);
 		m_copyback(m, offsetof(struct ip, ip_len),
 		    sizeof(u_int16_t), &iplen, M_NOWAIT);
@@ -1148,9 +1147,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 #ifdef INET6
 	case AF_INET6:
-		bcopy(((caddr_t)(tc + 1)) +
-		    offsetof(struct ip6_hdr, ip6_plen),
-		    (caddr_t) &iplen, sizeof(u_int16_t));
+		memcpy((caddr_t) &iplen, ((caddr_t)(tc + 1)) +
+		    offsetof(struct ip6_hdr, ip6_plen), sizeof(u_int16_t));
 		iplen = htons(ntohs(iplen) + rplen + ahx->authsize);
 		m_copyback(m, offsetof(struct ip6_hdr, ip6_plen),
 		    sizeof(u_int16_t), &iplen, M_NOWAIT);
@@ -1188,7 +1186,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_rdomain = tdb->tdb_rdomain;
-	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
+	memcpy(&tc->tc_dst, &tdb->tdb_dst, sizeof(union sockaddr_union));
 
 	return crypto_dispatch(crp);
 }

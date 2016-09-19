@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.215 2016/09/15 03:37:09 dlg Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.216 2016/09/19 18:09:22 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -238,8 +238,8 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 
 
 		tdbp->tdb_spi = spi;
-		bcopy(&dst->sa, &tdbp->tdb_dst.sa, SA_LEN(&dst->sa));
-		bcopy(&src->sa, &tdbp->tdb_src.sa, SA_LEN(&src->sa));
+		memcpy(&tdbp->tdb_dst.sa, &dst->sa, SA_LEN(&dst->sa));
+		memcpy(&tdbp->tdb_src.sa, &src->sa, SA_LEN(&src->sa));
 		tdbp->tdb_sproto = sproto;
 		tdbp->tdb_flags |= TDBF_INVALID; /* Mark SA invalid for now. */
 		tdbp->tdb_satype = SADB_SATYPE_UNSPEC;

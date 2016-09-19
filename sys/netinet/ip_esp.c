@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.140 2016/09/13 19:56:55 markus Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.141 2016/09/19 18:09:22 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -262,7 +262,7 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 		tdbp->tdb_emxkeylen = ii->ii_enckeylen;
 		tdbp->tdb_emxkey = malloc(tdbp->tdb_emxkeylen, M_XDATA,
 		    M_WAITOK);
-		bcopy(ii->ii_enckey, tdbp->tdb_emxkey, tdbp->tdb_emxkeylen);
+		memcpy(tdbp->tdb_emxkey, ii->ii_enckey, tdbp->tdb_emxkeylen);
 
 		memset(&crie, 0, sizeof(crie));
 
@@ -283,7 +283,7 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 		tdbp->tdb_amxkeylen = ii->ii_authkeylen;
 		tdbp->tdb_amxkey = malloc(tdbp->tdb_amxkeylen, M_XDATA,
 		    M_WAITOK);
-		bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
+		memcpy(tdbp->tdb_amxkey, ii->ii_authkey, tdbp->tdb_amxkeylen);
 
 		memset(&cria, 0, sizeof(cria));
 
@@ -474,7 +474,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 		if ((tdb->tdb_wnd > 0) && (tdb->tdb_flags & TDBF_ESN)) {
 			esn = htonl(esn);
-			bcopy(&esn, crda->crd_esn, 4);
+			memcpy(crda->crd_esn, &esn, 4);
 			crda->crd_flags |= CRD_F_ESN;
 		}
 
@@ -504,7 +504,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_rdomain = tdb->tdb_rdomain;
-	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
+	memcpy(&tc->tc_dst, &tdb->tdb_dst, sizeof(union sockaddr_union));
 
 	/* Decryption descriptor */
 	if (espx) {
@@ -922,7 +922,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    sizeof(u_int32_t));
 	tdb->tdb_rpl++;
 	replay = htonl((u_int32_t)tdb->tdb_rpl);
-	bcopy((caddr_t) &replay, mtod(mo, caddr_t) + roff + sizeof(u_int32_t),
+	memcpy(mtod(mo, caddr_t) + roff + sizeof(u_int32_t), (caddr_t) &replay,
 	    sizeof(u_int32_t));
 
 #if NPFSYNC > 0
@@ -1000,7 +1000,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_rdomain = tdb->tdb_rdomain;
-	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
+	memcpy(&tc->tc_dst, &tdb->tdb_dst, sizeof(union sockaddr_union));
 
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
@@ -1024,7 +1024,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			u_int32_t esn;
 
 			esn = htonl((u_int32_t)(tdb->tdb_rpl >> 32));
-			bcopy(&esn, crda->crd_esn, 4);
+			memcpy(crda->crd_esn, &esn, 4);
 			crda->crd_flags |= CRD_F_ESN;
 		}
 
