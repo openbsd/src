@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.29 2016/09/19 07:28:40 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.30 2016/09/19 07:58:57 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -587,7 +587,6 @@ bfd_timeout_rx(void *v)
 
 	if (++bfd->bc_error >= bfd->bc_neighbor->bn_mult) {
 		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_EXPIRED;
-printf("%s: failed, bfd->bc_error %u\n", __func__, bfd->bc_error);
 		bfd_reset(bfd);
 		if (bfd->bc_state > BFD_STATE_DOWN)
 			bfd_set_state(bfd, BFD_STATE_DOWN);
@@ -623,9 +622,6 @@ bfd_senddown(struct bfd_config *bfd)
 void
 bfd_reset(struct bfd_config *bfd)
 {
-if (bfd->bc_error)
-printf("%s: error=%u\n", __func__, bfd->bc_error);
-
 	/* Clean */
 	bfd->bc_neighbor->bn_rdiscr = 0;
 	bfd->bc_neighbor->bn_demand = 0;
@@ -653,7 +649,6 @@ printf("%s: error=%u\n", __func__, bfd->bc_error);
 	bfd->bc_minecho = 0;	//XXX - BFD_SECOND;
 
 	bfd_set_uptime(bfd);
-printf("%s: localdiscr: %u\n", __func__, bfd->bc_neighbor->bn_ldiscr);
 
 	return;
 }
@@ -698,8 +693,6 @@ bfd_input(struct bfd_config *bfd, struct mbuf *m)
 	if ((ntohl(peer->bfd_your_discriminator) != 0) &&
 	    (ntohl(peer->bfd_your_discriminator) != bfd->bc_neighbor->bn_ldiscr)) {
 		bfd->bc_error++;
-printf("%s: peer your discr %u != local %u\n",
-    __func__, ntohl(peer->bfd_your_discriminator), bfd->bc_neighbor->bn_ldiscr);
 		goto discard;
 	}
 
@@ -767,22 +760,14 @@ printf("%s: peer your discr %u != local %u\n",
 			bfd_set_state(bfd, BFD_STATE_DOWN);
 		}
 	} else if (bfd->bc_neighbor->bn_lstate == BFD_STATE_DOWN) {
-printf("%s: BFD_STATE_DOWN remote 0x%x  ", __func__, ntohl(peer->bfd_my_discriminator));
-printf("local 0x%x\n", ntohl(peer->bfd_your_discriminator));
-bfd_debug(bfd);
 		if (bfd->bc_neighbor->bn_rstate == BFD_STATE_DOWN)
 			bfd_set_state(bfd, BFD_STATE_INIT);
 		else if (bfd->bc_neighbor->bn_rstate == BFD_STATE_INIT) {
-printf("%s: set BFD_STATE_UP\n", __func__);
 			bfd->bc_neighbor->bn_ldiag = 0;
 			bfd_set_state(bfd, BFD_STATE_UP);
 		}
 	} else if (bfd->bc_neighbor->bn_lstate == BFD_STATE_INIT) {
-printf("%s: BFD_STATE_INIT remote 0x%x  ", __func__, ntohl(peer->bfd_my_discriminator));
-printf("local 0x%x\n", ntohl(peer->bfd_your_discriminator));
-
 		if (bfd->bc_neighbor->bn_rstate >= BFD_STATE_INIT) {
-printf("%s: set BFD_STATE_UP\n", __func__);
 			bfd->bc_neighbor->bn_ldiag = 0;
 			bfd_set_state(bfd, BFD_STATE_UP);
 		} else {
@@ -790,7 +775,6 @@ printf("%s: set BFD_STATE_UP\n", __func__);
 		}
 	} else {
 		if (bfd->bc_neighbor->bn_rstate == BFD_STATE_DOWN) {
-printf("%s: set BFD_STATE_DOWN\n", __func__);
 			bfd->bc_neighbor->bn_ldiag = BFD_DIAG_NEIGHBOR_SIGDOWN;
 			bfd_set_state(bfd, BFD_STATE_DOWN);
 			goto discard;
@@ -809,7 +793,6 @@ printf("%s: set BFD_STATE_DOWN\n", __func__);
 	bfd->bc_neighbor->bn_rdiag = diag;
 	m_free(m);
 
-	//XXX task_add(bfdtq, &bfd->bc_bfd_send_task);	
 	timeout_add_usec(&bfd->bc_timo_rx, bfd->bc_minrx);
 
 	return;
