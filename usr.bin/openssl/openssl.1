@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.75 2016/09/17 15:10:50 deraadt Exp $
+.\" $OpenBSD: openssl.1,v 1.76 2016/09/19 12:55:04 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 17 2016 $
+.Dd $Mdocdate: September 19 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -4687,7 +4687,7 @@ The number of bytes must match the message digest algorithm in use.
 A previously created time stamp request in DER
 format that will be printed into the output file.
 Useful for examining the content of a request in human-readable format.
-.It Fl md4|md5|ripemd160|sha|sha1
+.It Fl md4 | md5 | ripemd160 | sha | sha1
 The message digest to apply to the data file.
 It supports all the message digest algorithms that are supported by the
 .Nm dgst
@@ -5004,13 +5004,9 @@ containing the SPKAC.
 .It Fl verify
 Verify the digital signature on the supplied SPKAC.
 .El
-.\"
-.\" VERIFY
-.\"
 .Sh VERIFY
 .nr nS 1
 .Nm "openssl verify"
-.Bk -words
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl check_ss_sig
@@ -5028,9 +5024,7 @@ Verify the digital signature on the supplied SPKAC.
 .Op Fl untrusted Ar file
 .Op Fl verbose
 .Op Fl x509_strict
-.Op Fl
 .Op Ar certificates
-.Ek
 .nr nS 0
 .Pp
 The
@@ -5054,63 +5048,55 @@ should contain multiple certificates in PEM format, concatenated together.
 A
 .Ar directory
 of trusted certificates.
-The certificates should have names of the form
-.Em hash.0 ,
-or have symbolic links to them of this form
-("hash" is the hashed certificate subject name: see the
+The certificates, or symbolic links to them,
+should have names of the form
+.Ar hash Ns .0 ,
+where
+.Ar hash
+is the hashed certificate subject name
+(see the
 .Fl hash
 option of the
 .Nm x509
 utility).
-The
-.Nm c_rehash
-script distributed with OpenSSL
-will automatically create symbolic links to a directory of certificates.
 .It Fl crl_check
-Checks end entity certificate validity by attempting to look up a valid CRL.
+Check end entity certificate validity by attempting to look up a valid CRL.
 If a valid CRL cannot be found an error occurs.
 .It Fl crl_check_all
-Checks the validity of all certificates in the chain by attempting
+Check the validity of all certificates in the chain by attempting
 to look up valid CRLs.
 .It Fl explicit_policy
-Set policy variable require-explicit-policy (see RFC 3280 et al).
+Set policy variable require-explicit-policy (RFC 3280).
 .It Fl extended_crl
 Enable extended CRL features such as indirect CRLs and alternate CRL
 signing keys.
 .It Fl help
-Prints out a usage message.
+Print a usage message.
 .It Fl ignore_critical
-Normally if an unhandled critical extension is present which is not
-supported by
-.Nm OpenSSL ,
-the certificate is rejected (as required by RFC 3280 et al).
-If this option is set, critical extensions are ignored.
+Ignore critical extensions instead of rejecting the certificate.
 .It Fl inhibit_any
-Set policy variable inhibit-any-policy (see RFC 3280 et al).
+Set policy variable inhibit-any-policy (RFC 3280).
 .It Fl inhibit_map
-Set policy variable inhibit-policy-mapping (see RFC 3280 et al).
+Set policy variable inhibit-policy-mapping (RFC 3280).
 .It Fl issuer_checks
-Print out diagnostics relating to searches for the issuer certificate
-of the current certificate.
-This shows why each candidate issuer certificate was rejected.
-However the presence of rejection messages
-does not itself imply that anything is wrong: during the normal
-verify process several rejections may take place.
+Print diagnostics relating to searches for the issuer certificate
+of the current certificate
+showing why each candidate issuer certificate was rejected.
+The presence of rejection messages
+does not itself imply that anything is wrong:
+during the normal verify process several rejections may take place.
 .It Fl policy_check
-Enables certificate policy processing.
+Enable certificate policy processing.
 .It Fl purpose Ar purpose
 The intended use for the certificate.
 Without this option no chain verification will be done.
 Currently accepted uses are
-.Ar sslclient , sslserver ,
-.Ar nssslserver , smimesign ,
-.Ar smimeencrypt , crlsign ,
-.Ar any ,
+.Cm sslclient , sslserver ,
+.Cm nssslserver , smimesign ,
+.Cm smimeencrypt , crlsign ,
+.Cm any ,
 and
-.Ar ocsphelper .
-See the
-.Sx VERIFY OPERATION
-section for more information.
+.Cm ocsphelper .
 .It Fl untrusted Ar file
 A
 .Ar file
@@ -5123,35 +5109,25 @@ Print extra information about the operations being performed.
 .It Fl x509_strict
 Disable workarounds for broken certificates which have to be disabled
 for strict X.509 compliance.
-.It Fl
-Marks the last option.
-All arguments following this are assumed to be certificate files.
-This is useful if the first certificate filename begins with a
-.Sq - .
 .It Ar certificates
-One or more
+One or more PEM
 .Ar certificates
 to verify.
 If no certificate files are included, an attempt is made to read
 a certificate from standard input.
-They should all be in PEM format.
+If the first certificate filename begins with a dash,
+use a lone dash to mark the last option.
 .El
-.Sh VERIFY OPERATION
+.Pp
 The
 .Nm verify
 program uses the same functions as the internal SSL and S/MIME verification,
-therefore this description applies to these verify operations too.
-.Pp
-There is one crucial difference between the verify operations performed
-by the
-.Nm verify
-program: wherever possible an attempt is made to continue
-after an error, whereas normally the verify operation would halt on the
-first error.
+with one crucial difference:
+wherever possible an attempt is made to continue after an error,
+whereas normally the verify operation would halt on the first error.
 This allows all the problems with a certificate chain to be determined.
 .Pp
-The verify operation consists of a number of separate steps:
-.Pp
+The verify operation consists of a number of separate steps.
 Firstly a certificate chain is built up starting from the supplied certificate
 and ending in the root CA.
 It is an error if the whole chain cannot be built up.
@@ -5160,32 +5136,20 @@ certificate.
 If a certificate is found which is its own issuer, it is assumed
 to be the root CA.
 .Pp
-The process of
-.Qq looking up the issuer's certificate
-itself involves a number of steps.
-In versions of
-.Nm OpenSSL
-before 0.9.5a the first certificate whose subject name matched the issuer
-of the current certificate was assumed to be the issuer's certificate.
-In
-.Nm OpenSSL
-0.9.6 and later all certificates whose subject name matches the issuer name
+All certificates whose subject name matches the issuer name
 of the current certificate are subject to further tests.
 The relevant authority key identifier components of the current certificate
-.Pq if present
-must match the subject key identifier
-.Pq if present
-and issuer and serial number of the candidate issuer; in addition the
-.Em keyUsage
-extension of the candidate issuer
-.Pq if present
-must permit certificate signing.
+(if present) must match the subject key identifier (if present)
+and issuer and serial number of the candidate issuer;
+in addition the
+.Cm keyUsage
+extension of the candidate issuer (if present) must permit certificate signing.
 .Pp
 The lookup first looks in the list of untrusted certificates and if no match
 is found the remaining lookups are from the trusted certificates.
-The root CA is always looked up in the trusted certificate list: if the
-certificate to verify is a root certificate, then an exact match must be
-found in the trusted list.
+The root CA is always looked up in the trusted certificate list:
+if the certificate to verify is a root certificate,
+then an exact match must be found in the trusted list.
 .Pp
 The second operation is to check every untrusted certificate's extensions for
 consistency with the supplied purpose.
@@ -5198,35 +5162,30 @@ certificate must have extensions compatible with the supplied purpose
 and all other certificates must also be valid CA certificates.
 The precise extensions required are described in more detail in
 the
-.Sx X.509 CERTIFICATE EXTENSIONS
+.Nm X509
 section below.
 .Pp
 The third operation is to check the trust settings on the root CA.
 The root CA should be trusted for the supplied purpose.
-For compatibility with previous versions of
-.Nm SSLeay
-and
-.Nm OpenSSL ,
-a certificate with no trust settings is considered to be valid for
+A certificate with no trust settings is considered to be valid for
 all purposes.
 .Pp
 The final operation is to check the validity of the certificate chain.
 The validity period is checked against the current system time and the
-.Em notBefore
+.Cm notBefore
 and
-.Em notAfter
+.Cm notAfter
 dates in the certificate.
 The certificate signatures are also checked at this point.
 .Pp
 If all operations complete successfully, the certificate is considered
 valid.
 If any operation fails then the certificate is not valid.
-.Sh VERIFY DIAGNOSTICS
 When a verify operation fails, the output messages can be somewhat cryptic.
 The general form of the error message is:
-.Bd -unfilled
-\& server.pem: /C=AU/ST=Queensland/O=CryptSoft Pty Ltd/CN=Test CA (1024-bit)
-\& error 24 at 1 depth lookup:invalid CA certificate
+.Bd -literal
+server.pem: /C=AU/ST=Queensland/O=CryptSoft Pty Ltd/CN=Test CA (1024-bit)
+error 24 at 1 depth lookup:invalid CA certificate
 .Ed
 .Pp
 The first line contains the name of the certificate being verified, followed by
@@ -5240,141 +5199,124 @@ Finally a text version of the error number is presented.
 An exhaustive list of the error codes and messages is shown below; this also
 includes the name of the error code as defined in the header file
 .In openssl/x509_vfy.h .
-Some of the error codes are defined but never returned: these are described
-as
+Some of the error codes are defined but never returned: these are described as
 .Qq unused .
 .Bl -tag -width "XXXX"
-.It Ar "0 X509_V_OK: ok"
+.It "0 X509_V_OK: ok"
 The operation was successful.
-.It Ar 2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate
+.It 2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate
 The issuer certificate could not be found: this occurs if the issuer certificate
 of an untrusted certificate cannot be found.
-.It Ar 3 X509_V_ERR_UNABLE_TO_GET_CRL: unable to get certificate CRL
+.It 3 X509_V_ERR_UNABLE_TO_GET_CRL: unable to get certificate CRL
 The CRL of a certificate could not be found.
-.It Ar 4 X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE: unable to decrypt certificate's signature
+.It 4 X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE: unable to decrypt certificate's signature
 The certificate signature could not be decrypted.
 This means that the actual signature value could not be determined rather
 than it not matching the expected value.
 This is only meaningful for RSA keys.
-.It Ar 5 X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE: unable to decrypt CRL's signature
+.It 5 X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE: unable to decrypt CRL's signature
 The CRL signature could not be decrypted: this means that the actual
 signature value could not be determined rather than it not matching the
 expected value.
 Unused.
-.It Ar 6 X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY: unable to decode issuer public key
+.It 6 X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY: unable to decode issuer public key
 The public key in the certificate
-.Em SubjectPublicKeyInfo
+.Cm SubjectPublicKeyInfo
 could not be read.
-.It Ar 7 X509_V_ERR_CERT_SIGNATURE_FAILURE: certificate signature failure
+.It 7 X509_V_ERR_CERT_SIGNATURE_FAILURE: certificate signature failure
 The signature of the certificate is invalid.
-.It Ar 8 X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure
+.It 8 X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure
 The signature of the certificate is invalid.
-.It Ar 9 X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid
+.It 9 X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid
 The certificate is not yet valid: the
-.Em notBefore
+.Cm notBefore
 date is after the current time.
-.It Ar 10 X509_V_ERR_CERT_HAS_EXPIRED: certificate has expired
+.It 10 X509_V_ERR_CERT_HAS_EXPIRED: certificate has expired
 The certificate has expired; that is, the
-.Em notAfter
+.Cm notAfter
 date is before the current time.
-.It Ar 11 X509_V_ERR_CRL_NOT_YET_VALID: CRL is not yet valid
+.It 11 X509_V_ERR_CRL_NOT_YET_VALID: CRL is not yet valid
 The CRL is not yet valid.
-.It Ar 12 X509_V_ERR_CRL_HAS_EXPIRED: CRL has expired
+.It 12 X509_V_ERR_CRL_HAS_EXPIRED: CRL has expired
 The CRL has expired.
-.It Ar 13 X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD: format error in certificate's notBefore field
+.It 13 X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD: format error in certificate's notBefore field
 The certificate
-.Em notBefore
+.Cm notBefore
 field contains an invalid time.
-.It Ar 14 X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD: format error in certificate's notAfter field
+.It 14 X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD: format error in certificate's notAfter field
 The certificate
-.Em notAfter
+.Cm notAfter
 field contains an invalid time.
-.It Ar 15 X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD: format error in CRL's lastUpdate field
+.It 15 X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD: format error in CRL's lastUpdate field
 The CRL
-.Em lastUpdate
+.Cm lastUpdate
 field contains an invalid time.
-.It Ar 16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD: format error in CRL's nextUpdate field
+.It 16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD: format error in CRL's nextUpdate field
 The CRL
-.Em nextUpdate
+.Cm nextUpdate
 field contains an invalid time.
-.It Ar 17 X509_V_ERR_OUT_OF_MEM: out of memory
+.It 17 X509_V_ERR_OUT_OF_MEM: out of memory
 An error occurred trying to allocate memory.
 This should never happen.
-.It Ar 18 X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: self signed certificate
+.It 18 X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: self signed certificate
 The passed certificate is self-signed and the same certificate cannot be
 found in the list of trusted certificates.
-.It Ar 19 X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN: self signed certificate in certificate chain
+.It 19 X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN: self signed certificate in certificate chain
 The certificate chain could be built up using the untrusted certificates but
 the root could not be found locally.
-.It Ar 20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY: unable to get local issuer certificate
+.It 20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY: unable to get local issuer certificate
 The issuer certificate of a locally looked up certificate could not be found.
 This normally means the list of trusted certificates is not complete.
-.It Ar 21 X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE: unable to verify the first certificate
+.It 21 X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE: unable to verify the first certificate
 No signatures could be verified because the chain contains only one
 certificate and it is not self-signed.
-.It Ar 22 X509_V_ERR_CERT_CHAIN_TOO_LONG: certificate chain too long
+.It 22 X509_V_ERR_CERT_CHAIN_TOO_LONG: certificate chain too long
 The certificate chain length is greater than the supplied maximum depth.
 Unused.
-.It Ar 23 X509_V_ERR_CERT_REVOKED: certificate revoked
+.It 23 X509_V_ERR_CERT_REVOKED: certificate revoked
 The certificate has been revoked.
-.It Ar 24 X509_V_ERR_INVALID_CA: invalid CA certificate
+.It 24 X509_V_ERR_INVALID_CA: invalid CA certificate
 A CA certificate is invalid.
 Either it is not a CA or its extensions are not consistent
 with the supplied purpose.
-.It Ar 25 X509_V_ERR_PATH_LENGTH_EXCEEDED: path length constraint exceeded
+.It 25 X509_V_ERR_PATH_LENGTH_EXCEEDED: path length constraint exceeded
 The
-.Em basicConstraints
+.Cm basicConstraints
 pathlength parameter has been exceeded.
-.It Ar 26 X509_V_ERR_INVALID_PURPOSE: unsupported certificate purpose
+.It 26 X509_V_ERR_INVALID_PURPOSE: unsupported certificate purpose
 The supplied certificate cannot be used for the specified purpose.
-.It Ar 27 X509_V_ERR_CERT_UNTRUSTED: certificate not trusted
+.It 27 X509_V_ERR_CERT_UNTRUSTED: certificate not trusted
 The root CA is not marked as trusted for the specified purpose.
-.It Ar 28 X509_V_ERR_CERT_REJECTED: certificate rejected
+.It 28 X509_V_ERR_CERT_REJECTED: certificate rejected
 The root CA is marked to reject the specified purpose.
-.It Ar 29 X509_V_ERR_SUBJECT_ISSUER_MISMATCH: subject issuer mismatch
+.It 29 X509_V_ERR_SUBJECT_ISSUER_MISMATCH: subject issuer mismatch
 The current candidate issuer certificate was rejected because its subject name
 did not match the issuer name of the current certificate.
 Only displayed when the
 .Fl issuer_checks
 option is set.
-.It Ar 30 X509_V_ERR_AKID_SKID_MISMATCH: authority and subject key identifier mismatch
+.It 30 X509_V_ERR_AKID_SKID_MISMATCH: authority and subject key identifier mismatch
 The current candidate issuer certificate was rejected because its subject key
 identifier was present and did not match the authority key identifier current
 certificate.
 Only displayed when the
 .Fl issuer_checks
 option is set.
-.It Ar 31 X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH: authority and issuer serial number mismatch
+.It 31 X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH: authority and issuer serial number mismatch
 The current candidate issuer certificate was rejected because its issuer name
 and serial number were present and did not match the authority key identifier
 of the current certificate.
 Only displayed when the
 .Fl issuer_checks
 option is set.
-.It Ar 32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN:key usage does not include certificate signing
+.It 32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN:key usage does not include certificate signing
 The current candidate issuer certificate was rejected because its
-.Em keyUsage
+.Cm keyUsage
 extension does not permit certificate signing.
-.It Ar 50 X509_V_ERR_APPLICATION_VERIFICATION: application verification failure
+.It 50 X509_V_ERR_APPLICATION_VERIFICATION: application verification failure
 An application specific error.
 Unused.
 .El
-.Sh VERIFY BUGS
-Although the issuer checks are a considerable improvement over the old
-technique, they still suffer from limitations in the underlying
-X509_LOOKUP API.
-One consequence of this is that trusted certificates with matching subject
-name must either appear in a file (as specified by the
-.Fl CAfile
-option) or a directory (as specified by
-.Fl CApath ) .
-If they occur in both, only the certificates in the file will
-be recognised.
-.Pp
-Previous versions of
-.Nm OpenSSL
-assumed certificates with matching subject name were identical and
-mishandled them.
 .\"
 .\" VERSION
 .\"
