@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.7 2016/09/17 07:35:05 phessler Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.8 2016/09/19 07:28:40 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -58,6 +58,7 @@ struct bfd_msghdr {
 	unsigned char	bm_version;
 	unsigned char	bm_type;
 	unsigned short	bm_hdrlen;
+	int		bm_addrs;
 	/* above matches rtm_msghdr */
 
 	uint16_t	bm_mode;
@@ -68,6 +69,7 @@ struct bfd_msghdr {
 	time_t		bm_uptime;
 	time_t		bm_lastuptime;
 	int		bm_state;
+	int		bm_remotestate;
 	int		bm_laststate;
 	int		bm_error;
 
@@ -114,9 +116,11 @@ struct bfd_config {
 	int			 bc_laststate;
 	int			 bc_state;
 	int			 bc_mode;
+	int			 bc_poll;
 	int			 bc_error;
 	int			 bc_minrx;
 	int			 bc_mintx;
+	int			 bc_minecho;
 	int			 bc_multiplier;
 };
 
