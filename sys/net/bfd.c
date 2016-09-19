@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.31 2016/09/19 09:03:41 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.32 2016/09/19 10:03:40 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -814,26 +814,35 @@ bfd_set_state(struct bfd_config *bfd, int state)
 		return;
 	}
 
-	bfd->bc_state = bfd->bc_neighbor->bn_lstate = state;
-	if (bfd->bc_state > BFD_STATE_ADMINDOWN)
+	bfd->bc_neighbor->bn_lstate = state;
+	if (state > BFD_STATE_ADMINDOWN)
 		bfd->bc_neighbor->bn_ldiag = 0;
 
 	if (!rtisvalid(rt))
 		bfd->bc_neighbor->bn_lstate = BFD_STATE_ADMINDOWN;
 
 	switch (state) {
-	case BFD_STATE_ADMINDOWN:	/* FALLTHROUGH */
+	case BFD_STATE_ADMINDOWN:
+		bfd->bc_laststate = bfd->bc_state;
+	/* FALLTHROUGH */
 	case BFD_STATE_DOWN:
-		if (bfd->bc_laststate == BFD_STATE_UP)
+		if (bfd->bc_laststate == BFD_STATE_UP) {
+			bfd->bc_laststate = bfd->bc_state;
 			bfd_set_uptime(bfd);
+		}
 		break;
 	case BFD_STATE_INIT:
+		bfd->bc_laststate = bfd->bc_state;
 		break;
 	case BFD_STATE_UP:
+		bfd->bc_laststate =
+		    bfd->bc_state == BFD_STATE_INIT ?
+		    bfd->bc_laststate : bfd->bc_state;
 		bfd_set_uptime(bfd);
 		break;
 	}
 
+	bfd->bc_state = state;
 //	rt_bfdmsg(bfd);
 	if_put(ifp);
 
@@ -847,7 +856,6 @@ bfd_set_uptime(struct bfd_config *bfd)
 
 	microtime(&tv);
 	bfd->bc_lastuptime = tv.tv_sec - bfd->bc_time->tv_sec;
-	bfd->bc_laststate = bfd->bc_state;
 	memcpy(bfd->bc_time, &tv, sizeof(tv));
 }
 
