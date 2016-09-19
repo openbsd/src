@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.146 2016/09/03 22:00:06 benno Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.147 2016/09/19 07:08:01 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -543,12 +543,7 @@ main(int argc, char *argv[])
 	memset(&to4, 0, sizeof(to4));
 	memset(&to6, 0, sizeof(to6));
 
-	if (inet_aton(*argv, &to4.sin_addr) != 0) {
-		hostname = *argv;
-		if ((dest = strdup(inet_ntoa(to4.sin_addr))) == NULL)
-			errx(1, "malloc");
-	} else
-		dest = *argv;
+	dest = *argv;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = v6flag ? PF_INET6 : PF_INET;
