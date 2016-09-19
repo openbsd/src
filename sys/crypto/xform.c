@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.54 2015/12/10 21:00:51 naddy Exp $	*/
+/*	$OpenBSD: xform.c,v 1.55 2016/09/19 18:09:40 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -491,7 +491,7 @@ aes_xts_reinit(caddr_t key, u_int8_t *iv)
 	 * Prepare tweak as E_k2(IV). IV is specified as LE representation
 	 * of a 64-bit block number which we allow to be passed in directly.
 	 */
-	bcopy(iv, &blocknum, AES_XTS_IVSIZE);
+	memcpy(&blocknum, iv, AES_XTS_IVSIZE);
 	for (i = 0; i < AES_XTS_IVSIZE; i++) {
 		ctx->tweak[i] = blocknum & 0xff;
 		blocknum >>= 8;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmac.c,v 1.8 2015/11/07 17:46:49 mikeb Exp $	*/
+/*	$OpenBSD: gmac.c,v 1.9 2016/09/19 18:09:40 tedu Exp $	*/
 
 /*
  * Copyright (c) 2010 Mike Belopuhov
@@ -144,7 +144,7 @@ AES_GMAC_Update(void *xctx, const uint8_t *data, uint16_t len)
 			(*ghash_update)(&ctx->ghash, (uint8_t *)data,
 			    len - plen);
 		if (plen) {
-			bcopy((uint8_t *)data + (len - plen), (uint8_t *)blk,
+			memcpy((uint8_t *)blk, (uint8_t *)data + (len - plen),
 			    plen);
 			(*ghash_update)(&ctx->ghash, (uint8_t *)blk,
 			    GMAC_BLOCK_LEN);
