@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.32 2016/09/19 10:03:40 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.33 2016/09/19 10:54:18 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -281,7 +281,7 @@ bfddestroy(void)
 
 	/* inform our neighbor we are rebooting */
 	while ((bfd = TAILQ_FIRST(&bfd_queue))) {
-		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_FIB_DOWN;
+		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_FIB_RESET;
 		bfdclear(bfd->bc_rt);
 	}
 
