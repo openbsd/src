@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2016/09/19 11:23:16 kettenis Exp $
+# $OpenBSD: Makefile,v 1.3 2016/09/19 22:37:23 kettenis Exp $
 
 HDRDIR=		${.CURDIR}/include
 SRCDIR=		${.CURDIR}/src
@@ -39,6 +39,7 @@ SRCS+=		abort_message.cpp\
 		libunwind.cpp
 
 CPPFLAGS+=	-I${SHDRDIR} -I${HDRDIR} -I${UHDRDIR}
+CPPFLAGS+=	-D_LIBUNWIND_IS_NATIVE_ONLY
 CXXFLAGS+=	-nostdlib -nostdinc++ -funwind-tables
 .if empty(CXXFLAGS:M-std=*)
 CXXFLAGS+=	-std=c++11
