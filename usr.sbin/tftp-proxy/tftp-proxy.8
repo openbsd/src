@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp-proxy.8,v 1.6 2015/12/01 07:32:20 deraadt Exp $
+.\"	$OpenBSD: tftp-proxy.8,v 1.7 2016/09/19 12:52:14 jmc Exp $
 .\"
 .\" Copyright (c) 2005 joshua stein <jcs@openbsd.org>
 .\"
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 1 2015 $
+.Dd $Mdocdate: September 19 2016 $
 .Dt TFTP-PROXY 8
 .Os
 .Sh NAME
@@ -127,7 +127,7 @@ anchor "tftp-proxy/*"
 pass in quick on $int_if inet proto udp from $lan to port tftp \e
     divert-to 127.0.0.1 port 6969
 pass out quick on $ext_if inet proto udp from $lan to port tftp \e
-    group proxy divert-reply
+    group _tftp_proxy divert-reply
 .Ed
 .Sh SEE ALSO
 .Xr tftp 1 ,
