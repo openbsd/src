@@ -1,3 +1,5 @@
+/*	$OpenBSD: tcpbench.c,v 1.52 2016/09/19 18:58:39 bluhm Exp $	*/
+
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
  * Copyright (c) 2011 Christiano F. Haesbaert <haesbaert@haesbaert.org>
