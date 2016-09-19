@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.18 2016/09/19 17:59:18 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.19 2016/09/19 21:18:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -171,12 +171,8 @@ disp(x)
  *	symbols available.
  */
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-	int		(*pr)(const char *, ...);
+db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif, int (*pr)(const char *, ...))
 {
 	u_long		*frame;
 	int		i, framesize;

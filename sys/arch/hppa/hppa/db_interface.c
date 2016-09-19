@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.37 2016/03/01 21:35:13 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.38 2016/09/19 21:18:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -134,10 +134,7 @@ Debugger()
 }
 
 void
-db_read_bytes(addr, size, data)
-	vaddr_t addr;
-	size_t size;
-	char *data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	register char *src = (char *)addr;
 
@@ -146,10 +143,7 @@ db_read_bytes(addr, size, data)
 }
 
 void
-db_write_bytes(addr, size, data)
-	vaddr_t addr;
-	size_t size;
-	char *data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
 	register char *dst = (char *)addr;
 
@@ -166,8 +160,7 @@ db_write_bytes(addr, size, data)
  * Print trap reason.
  */
 void
-kdbprinttrap(type, code)
-	int type, code;
+kdbprinttrap(int type, int code)
 {
 	type &= ~T_USER;	/* just in case */
 	db_printf("kernel: ");
@@ -182,9 +175,7 @@ kdbprinttrap(type, code)
  *  db_ktrap - field a BPT trap
  */
 int
-db_ktrap(type, code, regs)
-	int type, code;
-	db_regs_t *regs;
+db_ktrap(int type, int code, db_regs_t *regs)
 {
 	extern label_t *db_recover;
 	int s;
@@ -226,19 +217,14 @@ db_ktrap(type, code, regs)
  *  Any address is allowed for now.
  */
 int
-db_valid_breakpoint(addr)
-	db_addr_t addr;
+db_valid_breakpoint(db_addr_t addr)
 {
 	return (1);
 }
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char		*modif;
-	int		(*pr)(const char *, ...);
+db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif, int (*pr)(const char *, ...))
 {
 	register_t *fp, pc, rp, *argp;
 	db_sym_t sym;
