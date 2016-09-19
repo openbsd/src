@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.130 2016/09/19 10:20:17 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.131 2016/09/19 16:46:10 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1184,7 +1184,7 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 
 	if (mps != mps0) {
 		if ((speed == USB_SPEED_LOW) ||
-		    (mps != 8 || mps != 16 || mps != 32 || mps != 64)) {
+		    (mps != 8 && mps != 16 && mps != 32 && mps != 64)) {
 			usb_free_device(dev);
 			up->device = NULL;
 			return (USBD_INVAL);
