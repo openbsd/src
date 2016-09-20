@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.2 2002/01/03 00:43:47 art Exp $
+# $OpenBSD: Makefile,v 1.3 2016/09/20 17:04:34 otto Exp $
 
 PROG=	cancel
-
+LDADD=	-lutil
 .include <bsd.regress.mk>
