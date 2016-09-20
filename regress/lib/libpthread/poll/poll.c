@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.5 2016/09/20 17:04:35 otto Exp $	*/
+/*	$OpenBSD: poll.c,v 1.6 2016/09/20 17:25:06 otto Exp $	*/
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
 #include <pthread.h>
@@ -64,7 +64,7 @@ main(int argc, char *argv[])
 
 	CHECKe(zero = open(_PATH_DEV "zero", O_RDONLY));
 	CHECKe(null = open(_PATH_DEV "null", O_WRONLY));
-	CHECKe(openpty(&tty, &dummy, NULL, NULL, NULL));
+	CHECKe(openpty(&dummy, &tty, NULL, NULL, NULL));
 
 	/* Try both descriptors being ready */
 	p[0].fd = zero;
