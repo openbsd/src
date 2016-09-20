@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.8,v 1.6 2015/08/25 01:12:59 yasuoka Exp $
+.\"	$OpenBSD: radiusd.8,v 1.7 2016/09/20 09:16:37 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Internet Initiative Japan Inc.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2015 $
+.Dd $Mdocdate: September 20 2016 $
 .Dt RADIUSD 8
 .Os
 .Sh NAME
@@ -28,6 +28,12 @@
 The
 .Nm
 daemon implements the RADIUS protocol.
+.Pp
+.Nm
+can be enabled during system boot by setting the following in
+.Pa /etc/rc.conf.local :
+.Pp
+.Dl radiusd_flags=\&"\&"
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -49,7 +55,10 @@ Only check the configuration file for validity.
 Default configuration file.
 .El
 .Sh SEE ALSO
-.Xr radiusd.conf 5
+.Xr radiusd.conf 5 ,
+.Xr radiusctl 8 ,
+.Xr rc.conf 8
+.Sh STANDARDS
 .Rs
 .%R RFC 2865
 .%T "Remote Authentication Dial In User Service (RADIUS)"
