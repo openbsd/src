@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2016/09/18 20:18:25 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.2 2016/09/20 19:16:32 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -24,17 +24,17 @@
  */
 
 %{
+#include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/stat.h>
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
-#include <sys/queue.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 #include "parse.h"
 
