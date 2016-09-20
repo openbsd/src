@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.9 2016/09/15 15:52:22 rzalamena Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.10 2016/09/20 16:45:09 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -172,6 +172,9 @@ main(int argc, char *argv[])
 	if ((ps->ps_pw =  getpwnam(SWITCHD_USER)) == NULL)
 		fatalx("unknown user " SWITCHD_USER);
 
+	log_init(debug, LOG_DAEMON);
+	log_verbose(verbose);
+
 	/* Configure the control socket */
 	ps->ps_csock.cs_name = SWITCHD_SOCKET;
 	ps->ps_instance = proc_instance;
@@ -180,9 +183,6 @@ main(int argc, char *argv[])
 
 	/* Only the parent returns. */
 	proc_init(ps, procs, nitems(procs), argc0, argv, proc_id);
-
-	log_init(debug, LOG_DAEMON);
-	log_verbose(verbose);
 
 	if (!debug && daemon(0, 0) == -1)
 		fatal("failed to daemonize");
