@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.56 2016/09/18 10:20:21 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.57 2016/09/20 12:32:35 jmc Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,7 +57,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 18 2016 $
+.Dd $Mdocdate: September 20 2016 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -97,15 +97,12 @@ uses the ICMP protocol's mandatory
 datagram to elicit an ICMP
 .Dv ECHO_REPLY
 from a host or gateway.
-.Dv ECHO_REQUEST
-datagrams
-.Pq Dq pings
+These datagrams
+.Pq pings
 have an IP and ICMP header,
 followed by a
-.Dq struct timeval
-and then an arbitrary number of
-.Dq pad
-bytes used to fill out the packet.
+.Qq struct timeval
+and then an arbitrary number of pad bytes used to fill out the packet.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -118,10 +115,10 @@ If
 .Ar count
 is 0, send an unlimited number of packets.
 .It Fl D
+.Pq IPv4 only
 Set the
 .Dv Don't Fragment
 bit.
-This option is not available for IPv6.
 .It Fl d
 Set the
 .Dv SO_DEBUG
@@ -159,8 +156,8 @@ This can be very hard on a network and should be used with caution.
 .It Fl H
 Try reverse lookups for addresses.
 .It Fl h Ar hoplimit
-Set the IPv6 hoplimit.
-This option is not available for IPv4.
+.Pq IPv6 only
+Set the hoplimit.
 .It Fl I Ar ifaddr
 Specify the interface address to transmit from
 on machines with multiple interfaces.
@@ -180,40 +177,30 @@ Disable the loopback, so the transmitting host doesn't see the ICMP
 requests.
 For multicast pings.
 .It Fl l Ar preload
-If
+Send
 .Ar preload
-is specified,
-.Nm
-sends that many packets as fast as possible before falling into its normal
-mode of behavior.
+packets as fast as possible before reverting to normal behavior.
 Only root may set a preload value.
 .It Fl m
-By default,
-.Nm ping6
-asks the kernel to fragment packets to fit into the minimum IPv6 MTU.
-.Fl m
-will suppress the behavior in the following two levels:
-when the option is specified once, the behavior will be disabled for
-unicast packets.
-When the option is specified more than once, it will be disabled for both
-unicast and multicast packets.
-This option is not available for IPv4.
+.Pq IPv6 only
+Do not fragment unicast packets to fit the minimum IPv6 MTU.
+If specified twice,
+do this for multicast packets as well.
 .It Fl n
 Numeric output only.
 No attempt will be made to look up symbolic names from addresses in the reply.
 .It Fl p Ar pattern
-You may specify up to 16
-.Dq pad
-bytes to fill out the packet you send.
+Specify up to 16 pad bytes to fill out the packet sent.
 This is useful for diagnosing data-dependent problems in a network.
 For example,
-.Dq -p ff
-will cause the sent packet to be filled with all ones.
+.Qq -p ff
+causes the sent packet to be filled with all ones.
 .It Fl q
 Quiet output.
 Nothing is displayed except the summary lines at startup time and
 when finished.
 .It Fl R
+.Pq IPv4 only
 Record route.
 Includes the
 .Dv RECORD_ROUTE
@@ -227,32 +214,31 @@ packet,
 .Nm
 will print the route list and then truncate it at the correct spot.
 Many hosts ignore or discard this option.
-This option is not available for IPv6.
 .It Fl s Ar packetsize
-Specifies the number of data bytes to be sent.
+Specify the number of data bytes to be sent.
 The default is 56,
 which translates into 64 ICMP data bytes
 when combined with the 8 bytes of ICMP header data.
 The maximum packet size is 65467 for IPv4 and 65527 for IPv6.
 .It Fl T Ar toskeyword
-Change IPv4 TOS value.
+.Pq IPv4 only
+Change the TOS value.
 .Ar toskeyword
 may be one of
-.Ar critical ,
-.Ar inetcontrol ,
-.Ar lowdelay ,
-.Ar netcontrol ,
-.Ar throughput ,
-.Ar reliability ,
+.Cm critical ,
+.Cm inetcontrol ,
+.Cm lowdelay ,
+.Cm netcontrol ,
+.Cm throughput ,
+.Cm reliability ,
 or one of the DiffServ Code Points:
-.Ar ef ,
-.Ar af11 ... af43 ,
-.Ar cs0 ... cs7 ;
+.Cm ef ,
+.Cm af11 ... af43 ,
+.Cm cs0 ... cs7 ;
 or a number in either hex or decimal.
-This option is not available for IPv6.
 .It Fl t Ar ttl
+.Pq IPv4 only
 Use the specified time-to-live.
-This option is not available for IPv6.
 .It Fl V Ar rtable
 Set the routing table to be used for outgoing packets.
 .It Fl v
@@ -261,7 +247,7 @@ ICMP packets other than
 .Dv ECHO_REPLY
 that are received are listed.
 .It Fl w Ar maxwait
-Specifies the maximum number of seconds to wait for responses
+Specify the maximum number of seconds to wait for responses
 after the last request has been sent.
 The default is 10.
 .El
@@ -416,7 +402,7 @@ Others may use completely wild values.
 .Sh EXIT STATUS
 .Nm
 exits 0 if at least one reply is received,
-and \*(Gt0 if no reply is received or an error occurred.
+and >0 if no reply is received or an error occurred.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr ifconfig 8
@@ -427,7 +413,8 @@ command appeared in
 .Bx 4.3 .
 The
 .Nm ping6
-command first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
+command was originally a separate program
+and first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
 .Sh BUGS
 Many hosts and gateways ignore the
 .Dv RECORD_ROUTE
