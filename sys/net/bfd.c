@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.33 2016/09/19 10:54:18 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.34 2016/09/20 19:38:16 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -217,6 +217,7 @@ void
 bfdclear(struct rtentry *rt)
 {
 	struct bfd_config *bfd;
+	int s;
 
 	if ((bfd = bfd_lookup(rt)) == NULL)
 		return;
@@ -231,6 +232,7 @@ bfdclear(struct rtentry *rt)
 	if (rtisvalid(bfd->bc_rt))
 		bfd_senddown(bfd);
 
+	s = splsoftnet();
 	if (bfd->bc_so) {
 		/* remove upcall before calling soclose or it will be called */
 		bfd->bc_so->so_upcall = NULL;
@@ -242,6 +244,7 @@ bfdclear(struct rtentry *rt)
 	}
 	if (bfd->bc_sosend)
 		soclose(bfd->bc_sosend);
+	splx(s);
 
 	rtfree(bfd->bc_rt);
 
@@ -319,8 +322,10 @@ void
 bfd_start_task(void *arg)
 {
 	struct bfd_config	*bfd = (struct bfd_config *)arg;
+	int s;
 
 	/* start listeners */
+	s = splsoftnet();
 	bfd->bc_so = bfd_listener(bfd, BFD_UDP_PORT_CONTROL);
 	if (!bfd->bc_so)
 		printf("bfd_listener(%d) failed\n",
@@ -336,6 +341,7 @@ bfd_start_task(void *arg)
 		task_set(&bfd->bc_bfd_send_task, bfd_send_task, bfd);
 		task_add(bfdtq, &bfd->bc_bfd_send_task);	
 	}
+	splx(s);
 
 	return;
 }
@@ -345,6 +351,7 @@ bfd_send_task(void *arg)
 {
 	struct bfd_config	*bfd = (struct bfd_config *)arg;
 	struct rtentry		*rt = bfd->bc_rt;
+	int s;
 
 	if (ISSET(rt->rt_flags, RTF_UP)) {
 		bfd_send_control(bfd);
@@ -356,8 +363,9 @@ bfd_send_task(void *arg)
 			bfd_set_state(bfd, BFD_STATE_DOWN);
 		}
 	}
-
+s = splsoftnet();
 //rt_bfdmsg(bfd);
+splx(s);
 
 	/* re-add 70%-90% jitter to our transmits, rfc 5880 6.8.7 */
 	timeout_add_usec(&bfd->bc_timo_tx,
@@ -551,21 +559,24 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 	struct bfd_config *bfd = (struct bfd_config *)arg;
 	struct mbuf *m;
 	struct uio uio;
-	int flags, error;
+	int flags, error, s;
 
 	uio.uio_procp = NULL;
 	do {
 		uio.uio_resid = 1000000000;
 		flags = MSG_DONTWAIT;
+		s = splsoftnet();
 		error = soreceive(so, NULL, &uio, &m, NULL, &flags, 0);
 		if (error && error != EAGAIN) {
 			bfd->bc_error++;
+			splx(s);
 			return;
 		}
 		if (m != NULL)
 			bfd_input(bfd, m);
 	} while (m != NULL);
 
+	splx(s);
 	return;
 }
 
@@ -804,6 +815,7 @@ bfd_set_state(struct bfd_config *bfd, int state)
 {
 	struct ifnet	*ifp;
 	struct rtentry	*rt = bfd->bc_rt;
+	int s;
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL) {
@@ -843,7 +855,9 @@ bfd_set_state(struct bfd_config *bfd, int state)
 	}
 
 	bfd->bc_state = state;
+	s = splsoftnet();
 //	rt_bfdmsg(bfd);
+	splx(s);
 	if_put(ifp);
 
 	return;
@@ -901,13 +915,18 @@ int
 bfd_send(struct bfd_config *bfd, struct mbuf *m)
 {
 	struct rtentry *rt = bfd->bc_rt;
+	int error, s;
 
 	if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_UP)) {
 		m_freem(m);
 		return (EHOSTDOWN);
 	}
 
-	return (sosend(bfd->bc_sosend, NULL, NULL, m, NULL, MSG_DONTWAIT));
+	s = splsoftnet();
+	error = sosend(bfd->bc_sosend, NULL, NULL, m, NULL, MSG_DONTWAIT);
+	splx(s);
+
+	return (error);
 }
 
 /*
