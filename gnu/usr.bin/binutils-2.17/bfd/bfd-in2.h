@@ -2907,6 +2907,12 @@ pc-relative or some form of GOT-indirect relocation.  */
 /* 31-bit PC relative address.  */
   BFD_RELOC_ARM_PREL31,
 
+/* Low and High halfword relocations for MOVW and MOVT instructions.  */
+  BFD_RELOC_ARM_MOVW,
+  BFD_RELOC_ARM_MOVT,
+  BFD_RELOC_ARM_MOVW_PCREL,
+  BFD_RELOC_ARM_MOVT_PCREL,
+
 /* Relocations for setting up GOTs and PLTs for shared libraries.  */
   BFD_RELOC_ARM_JUMP_SLOT,
   BFD_RELOC_ARM_GLOB_DAT,
