@@ -187,6 +187,7 @@ void	hv_handle_free(struct hv_channel *, uint32_t);
 int	hv_channel_open(struct hv_channel *, void *, size_t, void (*)(void *),
 	    void *);
 int	hv_channel_close(struct hv_channel *);
+void	hv_evcount_attach(struct hv_channel *, const char *);
 int	hv_channel_send(struct hv_channel *, void *, uint32_t, uint64_t,
 	    int, uint32_t);
 int	hv_channel_send_sgl(struct hv_channel *, struct vmbus_gpa *,

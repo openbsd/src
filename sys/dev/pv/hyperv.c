@@ -1918,3 +1918,11 @@ hv_attach_devices(struct hv_softc *sc)
 	}
 	return (0);
 }
+
+void
+hv_evcount_attach(struct hv_channel *ch, const char *name)
+{
+	struct hv_softc *sc = ch->ch_sc;
+
+	evcount_attach(&ch->ch_evcnt, name, &sc->sc_idtvec);
+}
