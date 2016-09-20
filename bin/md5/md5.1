@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.45 2015/09/23 17:39:36 jmc Exp $
+.\"	$OpenBSD: md5.1,v 1.46 2016/09/20 12:14:42 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: September 23 2015 $
+.Dd $Mdocdate: September 20 2016 $
 .Dt MD5 1
 .Os
 .Sh NAME
@@ -97,7 +97,9 @@ instead of stdout.
 Echoes stdin to stdout and appends the
 checksum to stdout.
 .It Fl q
-Only print the checksum (quiet mode).
+Only print the checksum (quiet mode) or if used in conjunction with the
+.Fl c
+flag, only print the failed cases.
 .It Fl r
 Reverse the format of the hash algorithm output, making
 it match the output format used by
