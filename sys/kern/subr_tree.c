@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_tree.c,v 1.5 2016/09/16 01:05:34 dlg Exp $ */
+/*	$OpenBSD: subr_tree.c,v 1.6 2016/09/20 01:11:27 dlg Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -112,7 +112,7 @@ rbe_rotate_left(const struct rb_type *t, struct rb_tree *rbt,
 	if (parent != NULL) {
 		if (rbe == RBE_LEFT(parent))
 			RBE_LEFT(parent) = tmp;
-                else
+		else
 			RBE_RIGHT(parent) = tmp;
 	} else
 		RBH_ROOT(rbt) = tmp;
@@ -146,7 +146,7 @@ rbe_rotate_right(const struct rb_type *t, struct rb_tree *rbt,
 	if (parent != NULL) {
 		if (rbe == RBE_LEFT(parent))
 			RBE_LEFT(parent) = tmp;
-                else
+		else
 			RBE_RIGHT(parent) = tmp;
 	} else
 		RBH_ROOT(rbt) = tmp;
@@ -444,7 +444,7 @@ _rb_find(const struct rb_type *t, struct rb_tree *rbt, const void *key)
 {
 	struct rb_entry *tmp = RBH_ROOT(rbt);
 	void *node;
-        int comp;
+	int comp;
 
 	while (tmp != NULL) {
 		node = rb_e2n(t, tmp);
@@ -464,14 +464,14 @@ _rb_find(const struct rb_type *t, struct rb_tree *rbt, const void *key)
 void *
 _rb_nfind(const struct rb_type *t, struct rb_tree *rbt, const void *key)
 {
-        struct rb_entry *tmp = RBH_ROOT(rbt);
+	struct rb_entry *tmp = RBH_ROOT(rbt);
 	void *node;
 	void *res = NULL;
 	int comp;
 
-        while (tmp != NULL) {
+	while (tmp != NULL) {
 		node = rb_e2n(t, tmp);
-                comp = (*t->t_compare)(key, node);
+		comp = (*t->t_compare)(key, node);
 		if (comp < 0) {
 			res = node;
 			tmp = RBE_LEFT(tmp);
