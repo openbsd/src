@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.216 2016/09/19 18:09:22 tedu Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.217 2016/09/20 14:01:04 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -504,55 +504,67 @@ void
 tdb_timeout(void *v)
 {
 	struct tdb *tdb = v;
+	int s;
 
 	if (!(tdb->tdb_flags & TDBF_TIMER))
 		return;
 
+	s = splsoftnet();
 	/* If it's an "invalid" TDB do a silent expiration. */
 	if (!(tdb->tdb_flags & TDBF_INVALID))
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	tdb_delete(tdb);
+	splx(s);
 }
 
 void
 tdb_firstuse(void *v)
 {
 	struct tdb *tdb = v;
+	int s;
 
 	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
 		return;
 
+	s = splsoftnet();
 	/* If the TDB hasn't been used, don't renew it. */
 	if (tdb->tdb_first_use != 0)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	tdb_delete(tdb);
+	splx(s);
 }
 
 void
 tdb_soft_timeout(void *v)
 {
 	struct tdb *tdb = v;
+	int s;
 
 	if (!(tdb->tdb_flags & TDBF_SOFT_TIMER))
 		return;
 
+	s = splsoftnet();
 	/* Soft expirations. */
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
+	splx(s);
 }
 
 void
 tdb_soft_firstuse(void *v)
 {
 	struct tdb *tdb = v;
+	int s;
 
 	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
 		return;
 
+	s = splsoftnet();
 	/* If the TDB hasn't been used, don't renew it. */
 	if (tdb->tdb_first_use != 0)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
+	splx(s);
 }
 
 /*
