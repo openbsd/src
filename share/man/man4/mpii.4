@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpii.4,v 1.13 2015/05/07 15:14:02 mikeb Exp $
+.\"	$OpenBSD: mpii.4,v 1.14 2016/09/20 07:16:16 jmatthew Exp $
 .\"
 .\" Copyright (c) 2010 Marco Peereboom <marco@openbsd.org>
 .\" Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 7 2015 $
+.Dd $Mdocdate: September 20 2016 $
 .Dt MPII 4
 .Os
 .Sh NAME
@@ -36,16 +36,21 @@ LSISAS2004,
 LSISAS2008,
 LSISAS2108,
 LSISAS2208,
-LSISAS2308
+LSISAS2308,
+LSISAS3004,
+LSISAS3008,
+LSISAS3108
 .El
 .Pp
 These chipsets can be found on the following controllers:
 .Pp
 .Bl -dash -offset indent -compact
 .It
-Dell PERC H200
+Dell PERC H200, HBA330
 .It
 IBM ServeRAID H1110
+.It
+Lenovo N2215
 .It
 LSI SAS 9200-8e, SAS 9207-8i, SAS 9211-4i, SAS 9211-8i
 .El
