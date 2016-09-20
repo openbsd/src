@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.78 2016/09/20 16:40:05 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.79 2016/09/20 16:45:38 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -5316,9 +5316,6 @@ extension does not permit certificate signing.
 An application specific error.
 Unused.
 .El
-.\"
-.\" VERSION
-.\"
 .Sh VERSION
 .Nm openssl version
 .Op Fl abdfopv
@@ -5326,7 +5323,7 @@ Unused.
 The
 .Nm version
 command is used to print out version information about
-.Nm OpenSSL .
+.Nm openssl .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -5334,7 +5331,7 @@ The options are as follows:
 All information: this is the same as setting all the other flags.
 .It Fl b
 The date the current version of
-.Nm OpenSSL
+.Nm openssl
 was built.
 .It Fl d
 .Ev OPENSSLDIR
@@ -5347,19 +5344,9 @@ Option information: various options set when the library was built.
 Platform setting.
 .It Fl v
 The current
-.Nm OpenSSL
+.Nm openssl
 version.
 .El
-.Sh VERSION NOTES
-The output of
-.Nm openssl version -a
-would typically be used when sending in a bug report.
-.Sh VERSION HISTORY
-The
-.Fl d
-option was added in
-.Nm OpenSSL
-0.9.7.
 .\"
 .\" X509
 .\"
