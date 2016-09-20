@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.35 2016/09/20 19:40:53 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.36 2016/09/20 19:43:56 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -206,6 +206,7 @@ bfdset(struct rtentry *rt)
 	task_add(bfdtq, &bfd->bc_bfd_task);
 
 	TAILQ_INSERT_TAIL(&bfd_queue, bfd, bc_entry);
+	bfd_set_state(bfd, BFD_STATE_DOWN);
 
 	return (0);
 }
@@ -357,7 +358,7 @@ bfd_send_task(void *arg)
 		bfd_send_control(bfd);
 	} else {
 		bfd->bc_error++;
-		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_ADMIN_DOWN;
+		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_PATH_DOWN;
 		if (bfd->bc_neighbor->bn_lstate > BFD_STATE_DOWN) {
 			bfd_reset(bfd);
 			bfd_set_state(bfd, BFD_STATE_DOWN);
