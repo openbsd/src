@@ -1,4 +1,5 @@
 #!/bin/ksh
+#  $OpenBSD: check_sym,v 1.2 2016/09/20 04:27:27 guenther Exp $
 #
 #  check_sym -- compare the symbols and external function references in two
 #	versions of a shared library
