@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-process.c,v 1.11 2016/09/04 18:08:04 bluhm Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.12 2016/09/20 23:05:27 bluhm Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -7,26 +7,22 @@
 #include <sys/event.h>
 #include <sys/wait.h>
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <err.h>
 #include <errno.h>
-#include <unistd.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "main.h"
 
 static int process_child(void);
-
-#define ASS(cond, mess) do { if (!(cond)) { mess; return 1; } } while (0)
-
-#define ASSX(cond) ASS(cond, warnx("assertion " #cond " failed on line %d", __LINE__))
 
 static void
 usr1handler(int signum)
 {
 	/* nada */
 }
-
-int do_process(void);
 
 int
 do_process(void)
@@ -44,7 +40,8 @@ do_process(void)
 	ts.tv_sec = 10;
 	ts.tv_nsec = 0;
 
-	ASS((kq = kqueue()) >= 0, warn("kqueue"));
+	ASS((kq = kqueue()) >= 0,
+	    warn("kqueue"));
 
 	/*
 	 * Install a signal handler so that we can use pause() to synchronize
@@ -103,14 +100,13 @@ do_process(void)
 		}
 	}
 
-	if (pid2 == -1)
-		return (1);
+	ASSX(pid2 != -1);
 
 	/* Both children now sleeping. */
 
 	ASSX(didchild == 1);
 	ASSX(didfork == 1);
-	
+
 	kill(pid2, SIGUSR1);	/* sync 2.1 */
 	kill(pid, SIGUSR1);	/* sync 2 */
 

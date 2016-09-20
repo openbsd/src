@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-pipe.c,v 1.6 2015/08/13 10:13:05 uebayasi Exp $	*/
+/*	$OpenBSD: kqueue-pipe.c,v 1.7 2016/09/20 23:05:27 bluhm Exp $	*/
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -28,15 +28,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/event.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
 
-int do_pipe(void);
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "main.h"
 
 int
 do_pipe(void)
@@ -48,22 +51,21 @@ do_pipe(void)
 	struct timespec ts;
 	char buf[8000];
 
-	if (pipe(fd) == -1)
-		return (1);
-	if (fcntl(fd[1], F_SETFL, O_NONBLOCK) == -1)
-		return (1);
+	ASS(pipe(fd) == 0,
+	    warn("pipe"));
+	ASS(fcntl(fd[1], F_SETFL, O_NONBLOCK) == 0,
+	    warn("fcntl"));
 
-	if ((kq = kqueue()) == -1)
-		return (1);
+	ASS((kq = kqueue()) >= 0,
+	    warn("fcntl"));
 
 	memset(&ev, 0, sizeof(ev));
 	ev.ident = fd[1];
 	ev.filter = EVFILT_WRITE;
 	ev.flags = EV_ADD | EV_ENABLE;
 	n = kevent(kq, &ev, 1, NULL, 0, NULL);
-	if (n == -1)
-		return (1);
-	
+	ASSX(n != -1);
+
 	memset(buf, 0, sizeof(buf));
 	while ((n = write(fd[1], buf, sizeof(buf))) == sizeof(buf))
 		;
@@ -71,16 +73,14 @@ do_pipe(void)
 	ts.tv_sec = 0;
 	ts.tv_nsec = 0;
 	n = kevent(kq, NULL, 0, &ev, 1, &ts);
-	if (n != 0)
-		return (1);
+	ASSX(n == 0);
 
 	read(fd[0], buf, sizeof(buf));
 
 	ts.tv_sec = 0;
 	ts.tv_nsec = 0;
 	n = kevent(kq, NULL, 0, &ev, 1, &ts);
-	if (n == -1 || n == 0)
-		return (1);
+	ASSX(n != -1 && n != 0);
 
 	close(fd[0]);
 	close(fd[1]);

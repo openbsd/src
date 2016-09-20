@@ -1,28 +1,26 @@
-/*	$OpenBSD: kqueue-fork.c,v 1.2 2003/07/31 21:48:08 deraadt Exp $	*/
+/*	$OpenBSD: kqueue-fork.c,v 1.3 2016/09/20 23:05:27 bluhm Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <err.h>
-#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/wait.h>
 
-int check_inheritance(void);
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "main.h"
 
 int
 check_inheritance(void)
 {
 	int kq, status;
 
-	if ((kq = kqueue()) < 0) {
-		warn("kqueue");
-		return (1);
-	}
+	ASS((kq = kqueue()) >= 0,
+	    warn("kqueue"));
 
 	/*
 	 * Check if the kqueue is properly closed on fork().

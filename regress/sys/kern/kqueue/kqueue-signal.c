@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-signal.c,v 1.2 2016/07/14 05:55:08 guenther Exp $	*/
+/*	$OpenBSD: kqueue-signal.c,v 1.3 2016/09/20 23:05:27 bluhm Exp $	*/
 /*
  *	Written by Philip Guenther <guenther@openbsd.org> 2011 Public Domain
  */
@@ -9,17 +9,15 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <err.h>
 #include <errno.h>
-#include <unistd.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#define ASS(cond, mess) do { if (!(cond)) { mess; return 1; } } while (0)
-
-#define ASSX(cond) ASS(cond, warnx("assertion " #cond " failed on line %d", __LINE__))
+#include "main.h"
 
 volatile sig_atomic_t saw_usr1 = 0;
 volatile sig_atomic_t result = 0;
@@ -48,9 +46,6 @@ usr1handler(int signum)
 	saw_usr1 = 1;
 	result = sigtest(SIGUSR1, 1);
 }
-
-
-int do_signal(void);
 
 int
 do_signal(void)
@@ -82,12 +77,10 @@ do_signal(void)
 	ASSX(saw_usr1 == 1);
 
 	kill(pid, SIGUSR2);
-	if (sigtest(SIGUSR2, 1))
-		return (1);
+	ASSX(sigtest(SIGUSR2, 1) == 0);
 	kill(pid, SIGUSR2);
 	kill(pid, SIGUSR2);
-	if (sigtest(SIGUSR2, 2))
-		return (1);
+	ASSX(sigtest(SIGUSR2, 2) == 0);
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGUSR1);
@@ -102,4 +95,3 @@ do_signal(void)
 
 	return (0);
 }
-

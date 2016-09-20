@@ -1,22 +1,13 @@
-/*	$OpenBSD: main.c,v 1.8 2015/12/05 10:51:49 blambert Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2016/09/20 23:05:27 bluhm Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-int do_pipe(void);
-int check_inheritance(void);
-int do_process(void);
-int do_signal(void);
-int do_random(void);
-int do_pty(void);
-int do_tun(void);
-int do_fdpass(void);
-int do_flock(void);
-int do_timer(void);
+#include "main.h"
 
 int
 main(int argc, char **argv)

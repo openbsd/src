@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-flock.c,v 1.3 2015/08/13 10:13:55 uebayasi Exp $	*/
+/*	$OpenBSD: kqueue-flock.c,v 1.4 2016/09/20 23:05:27 bluhm Exp $	*/
 /*
  *	Written by Philip Guenther <guenther@openbsd.org> 2012 Public Domain
  */
@@ -7,6 +7,7 @@
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -15,9 +16,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#define FILE "lock.test"
+#include "main.h"
 
-int do_flock(void);
+#define FILE "lock.test"
 
 static void
 check_lock(int fd, const char *msg)

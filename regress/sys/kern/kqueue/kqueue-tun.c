@@ -1,4 +1,4 @@
-/* $OpenBSD: kqueue-tun.c,v 1.4 2010/06/26 22:54:04 blambert Exp $ */
+/* $OpenBSD: kqueue-tun.c,v 1.5 2016/09/20 23:05:27 bluhm Exp $ */
 /* $Gateweaver: tunkq.c,v 1.2 2003/11/27 22:47:41 cmaxwell Exp $ */
 /*
  * Copyright 2003 Christopher J. Maxwell <cmaxwell@themanor.net>
@@ -26,19 +26,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+
 #include <netinet/in.h>
 #include <net/if.h>
 #include <net/if_tun.h>
-#include <errno.h>
+
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include "main.h"
 
 #define TUN0		"tun98"
 #define TUN1		"tun99"

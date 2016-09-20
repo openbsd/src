@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-timer.c,v 1.1 2015/12/05 10:51:49 blambert Exp $	*/
+/*	$OpenBSD: kqueue-timer.c,v 1.2 2016/09/20 23:05:27 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -14,14 +14,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/event.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
 
-int do_timer(void);
+#include <err.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "main.h"
 
 int
 do_timer(void)
@@ -30,22 +33,22 @@ do_timer(void)
 	struct kevent ev;
 	struct timespec ts;
 
-	if ((kq = kqueue()) == -1)
-		return (1);
+	ASS((kq = kqueue()) >= 0,
+	    warn("kqueue"));
 
 	memset(&ev, 0, sizeof(ev));
 	ev.filter = EVFILT_TIMER;
 	ev.flags = EV_ADD | EV_ENABLE | EV_ONESHOT;
 	ev.data = 500;			/* 1/2 second in ms */
 
-	if (kevent(kq, &ev, 1, NULL, 0, NULL) == -1)
-		return (1);
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	ASSX(n != -1);
 
 	ts.tv_sec = 2;			/* wait 2s for kqueue timeout */
 	ts.tv_nsec = 0;
 
-	if ((n = kevent(kq, NULL, 0, &ev, 1, &ts)) != 1)
-		return (1);
+	n = kevent(kq, NULL, 0, &ev, 1, &ts);
+	ASSX(n == 1);
 
 	/* Now retry w/o EV_ONESHOT, as EV_CLEAR is implicit */
 
@@ -54,14 +57,14 @@ do_timer(void)
 	ev.flags = EV_ADD | EV_ENABLE;
 	ev.data = 500;			/* 1/2 second in ms */
 
-	if (kevent(kq, &ev, 1, NULL, 0, NULL) == -1)
-		return (1);
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	ASSX(n != -1);
 
 	ts.tv_sec = 2;			/* wait 2s for kqueue timeout */
 	ts.tv_nsec = 0;
 
-	if ((n = kevent(kq, NULL, 0, &ev, 1, &ts)) != 1)
-		return (1);
+	n = kevent(kq, NULL, 0, &ev, 1, &ts);
+	ASSX(n == 1);
 
 	return (0);
 }

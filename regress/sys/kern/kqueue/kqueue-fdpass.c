@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-fdpass.c,v 1.2 2015/08/13 10:14:41 uebayasi Exp $	*/
+/*	$OpenBSD: kqueue-fdpass.c,v 1.3 2016/09/20 23:05:27 bluhm Exp $	*/
 /*
  *	Written by Philip Guenther <guenther@openbsd.org> 2011 Public Domain
  */
@@ -9,20 +9,15 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <err.h>
 #include <errno.h>
-#include <unistd.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#define ASS(cond, mess) do { if (!(cond)) { mess; return 1; } } while (0)
-
-#define ASSX(cond) ASS(cond, warnx("assertion " #cond " failed on line %d", __LINE__))
-
-
-int do_fdpass(void);
+#include "main.h"
 
 int
 do_fdpass(void)
@@ -80,4 +75,3 @@ do_fdpass(void)
 
 	return (0);
 }
-
