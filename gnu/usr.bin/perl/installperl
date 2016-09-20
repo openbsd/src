@@ -69,8 +69,8 @@ $opts{destdir} = '';
     my $usage = 0;
     if (!GetOptions(\%opts, 'notify|n', 'strip|s', 'silent|S',
                     'skip-otherperls|o', 'force|f', 'verbose|V', 'archname|A',
-                    'netware', 'nopods|p', 'destdir:s', 'help|h|?',
-                    'versiononly|v' => \$versiononly, '<>' => sub {
+                    'netware', 'nopods|p', 'destdir:s', 'help|h|?', 'user|u:s',
+		    'group|g:s', 'versiononly|v' => \$versiononly, '<>' => sub {
                         if ($_[0] eq '+v') {
                             $versiononly = 0;
                         } else {
@@ -99,6 +99,8 @@ Usage $0: [switches]
   -A        Also install perl with the architecture's name in the perl binary's
             name.
   -p        Don't install the pod files. [This will break use diagnostics;]
+  -g group  install files with the specified group
+  -u user   install files with the specified user 
   -netware  Install correctly on a Netware server.
   -destdir  Prefix installation directories by this string.
   -h        Display this help message.
@@ -106,6 +108,8 @@ EOT
         exit $usage;
     }
 }
+$opts{'uid'} = getpwnam($opts{'user'}) if exists($opts{'user'});
+$opts{'gid'} = getgrnam($opts{'group'}) if exists($opts{'group'});
 
 $versiononly = 1 if $Config{versiononly} && !defined $versiononly;
 my (@scripts, @tolink);
@@ -462,6 +466,9 @@ if (!$Is_NetWare && $dbg eq '') {
 	safe_unlink("$installbin/$base$exe_ext");
 	copy("x2p/a2p$exe_ext", "$installbin/$base$exe_ext");
 	strip("$installbin/$base$exe_ext");
+	if (defined($opts{uid}) || defined($opts{gid})) {
+	    chown($opts{uid}, $opts{gid}, "$installbin/$base$exe_ext");
+	}
 	chmod(0755, "$installbin/$base$exe_ext");
     }
 }
@@ -583,6 +590,9 @@ if (!$versiononly && !$opts{'skip-otherperls'}) {
 }
 
 $packlist->write() unless $opts{notify};
+if (defined($opts{uid}) || defined($opts{gid})) {
+    chown($opts{uid}, $opts{gid}, $packlist->packlist_file());
+}
 print "  Installation complete\n" if $opts{verbose};
 
 exit 0;
@@ -621,6 +631,7 @@ sub safe_unlink {
 
 sub copy {
     my($from,$to) = @_;
+    my($success) = 0;
 
     my $xto = $to;
     $xto =~ s/^\Q$opts{destdir}\E//;
@@ -628,11 +639,14 @@ sub copy {
 	unless $opts{silent};
     print "  creating new version of $xto\n"
 	if $Is_VMS and -e $to and !$opts{silent};
-    unless ($opts{notify} or File::Copy::copy($from, $to)) {
+    unless ($opts{notify} or File::Copy::copy($from, $to) and ++$success) {
 	# Might have been that F::C::c can't overwrite the target
 	warn "Couldn't copy $from to $to: $!\n"
 	    unless -f $to and (chmod(0666, $to), unlink $to)
-		   and File::Copy::copy($from, $to);
+		   and File::Copy::copy($from, $to) and ++$success;
+    }
+    if (defined($opts{uid}) || defined($opts{gid})) {
+	chown($opts{uid}, $opts{gid}, $to) if $success;
     }
     $packlist->{$xto} = { type => 'file' };
 }
@@ -643,6 +657,8 @@ sub install {
     my $xto = $to;
     my $cmd = join(' ', @installcmd);
     $cmd .= " -m $mode" if $mode;
+    $cmd .= " -o $opts{uid}" if defined($opts{uid});
+    $cmd .= " -g $opts{gid}" if defined($opts{gid});
     $cmd .= " -s" if $opts{strip};
     $cmd .= " $from $to";
     $xto =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
