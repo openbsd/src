@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.77 2016/09/19 12:57:45 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.78 2016/09/20 16:40:05 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 19 2016 $
+.Dd $Mdocdate: September 20 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -5202,118 +5202,117 @@ includes the name of the error code as defined in the header file
 Some of the error codes are defined but never returned: these are described as
 .Qq unused .
 .Bl -tag -width "XXXX"
-.It "0 X509_V_OK: ok"
+.It 0 X509_V_OK
 The operation was successful.
-.It 2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate
-The issuer certificate could not be found: this occurs if the issuer certificate
-of an untrusted certificate cannot be found.
-.It 3 X509_V_ERR_UNABLE_TO_GET_CRL: unable to get certificate CRL
+.It 2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT
+The issuer certificate of an untrusted certificate could not be found.
+.It 3 X509_V_ERR_UNABLE_TO_GET_CRL
 The CRL of a certificate could not be found.
-.It 4 X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE: unable to decrypt certificate's signature
+.It 4 X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE
 The certificate signature could not be decrypted.
-This means that the actual signature value could not be determined rather
-than it not matching the expected value.
+This means that the actual signature value could not be determined
+rather than it not matching the expected value.
 This is only meaningful for RSA keys.
-.It 5 X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE: unable to decrypt CRL's signature
-The CRL signature could not be decrypted: this means that the actual
-signature value could not be determined rather than it not matching the
-expected value.
+.It 5 X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE
+The CRL signature could not be decrypted.
+This means that the actual signature value could not be determined
+rather than it not matching the expected value.
 Unused.
-.It 6 X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY: unable to decode issuer public key
+.It 6 X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY
 The public key in the certificate
 .Cm SubjectPublicKeyInfo
 could not be read.
-.It 7 X509_V_ERR_CERT_SIGNATURE_FAILURE: certificate signature failure
+.It 7 X509_V_ERR_CERT_SIGNATURE_FAILURE
 The signature of the certificate is invalid.
-.It 8 X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure
+.It 8 X509_V_ERR_CRL_SIGNATURE_FAILURE
 The signature of the certificate is invalid.
-.It 9 X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid
+.It 9 X509_V_ERR_CERT_NOT_YET_VALID
 The certificate is not yet valid: the
 .Cm notBefore
 date is after the current time.
-.It 10 X509_V_ERR_CERT_HAS_EXPIRED: certificate has expired
+.It 10 X509_V_ERR_CERT_HAS_EXPIRED
 The certificate has expired; that is, the
 .Cm notAfter
 date is before the current time.
-.It 11 X509_V_ERR_CRL_NOT_YET_VALID: CRL is not yet valid
+.It 11 X509_V_ERR_CRL_NOT_YET_VALID
 The CRL is not yet valid.
-.It 12 X509_V_ERR_CRL_HAS_EXPIRED: CRL has expired
+.It 12 X509_V_ERR_CRL_HAS_EXPIRED
 The CRL has expired.
-.It 13 X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD: format error in certificate's notBefore field
+.It 13 X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD
 The certificate
 .Cm notBefore
 field contains an invalid time.
-.It 14 X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD: format error in certificate's notAfter field
+.It 14 X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD
 The certificate
 .Cm notAfter
 field contains an invalid time.
-.It 15 X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD: format error in CRL's lastUpdate field
+.It 15 X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD
 The CRL
 .Cm lastUpdate
 field contains an invalid time.
-.It 16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD: format error in CRL's nextUpdate field
+.It 16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD
 The CRL
 .Cm nextUpdate
 field contains an invalid time.
-.It 17 X509_V_ERR_OUT_OF_MEM: out of memory
+.It 17 X509_V_ERR_OUT_OF_MEM
 An error occurred trying to allocate memory.
 This should never happen.
-.It 18 X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: self signed certificate
+.It 18 X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
 The passed certificate is self-signed and the same certificate cannot be
 found in the list of trusted certificates.
-.It 19 X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN: self signed certificate in certificate chain
+.It 19 X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN
 The certificate chain could be built up using the untrusted certificates but
 the root could not be found locally.
-.It 20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY: unable to get local issuer certificate
+.It 20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
 The issuer certificate of a locally looked up certificate could not be found.
 This normally means the list of trusted certificates is not complete.
-.It 21 X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE: unable to verify the first certificate
+.It 21 X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE
 No signatures could be verified because the chain contains only one
 certificate and it is not self-signed.
-.It 22 X509_V_ERR_CERT_CHAIN_TOO_LONG: certificate chain too long
+.It 22 X509_V_ERR_CERT_CHAIN_TOO_LONG
 The certificate chain length is greater than the supplied maximum depth.
 Unused.
-.It 23 X509_V_ERR_CERT_REVOKED: certificate revoked
+.It 23 X509_V_ERR_CERT_REVOKED
 The certificate has been revoked.
-.It 24 X509_V_ERR_INVALID_CA: invalid CA certificate
+.It 24 X509_V_ERR_INVALID_CA
 A CA certificate is invalid.
 Either it is not a CA or its extensions are not consistent
 with the supplied purpose.
-.It 25 X509_V_ERR_PATH_LENGTH_EXCEEDED: path length constraint exceeded
+.It 25 X509_V_ERR_PATH_LENGTH_EXCEEDED
 The
 .Cm basicConstraints
 pathlength parameter has been exceeded.
-.It 26 X509_V_ERR_INVALID_PURPOSE: unsupported certificate purpose
+.It 26 X509_V_ERR_INVALID_PURPOSE
 The supplied certificate cannot be used for the specified purpose.
-.It 27 X509_V_ERR_CERT_UNTRUSTED: certificate not trusted
+.It 27 X509_V_ERR_CERT_UNTRUSTED
 The root CA is not marked as trusted for the specified purpose.
-.It 28 X509_V_ERR_CERT_REJECTED: certificate rejected
+.It 28 X509_V_ERR_CERT_REJECTED
 The root CA is marked to reject the specified purpose.
-.It 29 X509_V_ERR_SUBJECT_ISSUER_MISMATCH: subject issuer mismatch
+.It 29 X509_V_ERR_SUBJECT_ISSUER_MISMATCH
 The current candidate issuer certificate was rejected because its subject name
 did not match the issuer name of the current certificate.
 Only displayed when the
 .Fl issuer_checks
 option is set.
-.It 30 X509_V_ERR_AKID_SKID_MISMATCH: authority and subject key identifier mismatch
+.It 30 X509_V_ERR_AKID_SKID_MISMATCH
 The current candidate issuer certificate was rejected because its subject key
 identifier was present and did not match the authority key identifier current
 certificate.
 Only displayed when the
 .Fl issuer_checks
 option is set.
-.It 31 X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH: authority and issuer serial number mismatch
+.It 31 X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH
 The current candidate issuer certificate was rejected because its issuer name
 and serial number were present and did not match the authority key identifier
 of the current certificate.
 Only displayed when the
 .Fl issuer_checks
 option is set.
-.It 32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN:key usage does not include certificate signing
+.It 32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN
 The current candidate issuer certificate was rejected because its
 .Cm keyUsage
 extension does not permit certificate signing.
-.It 50 X509_V_ERR_APPLICATION_VERIFICATION: application verification failure
+.It 50 X509_V_ERR_APPLICATION_VERIFICATION
 An application specific error.
 Unused.
 .El
