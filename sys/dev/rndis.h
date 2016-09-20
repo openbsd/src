@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndis.h,v 1.1 2016/09/16 10:32:40 mikeb Exp $ */
+/*	$OpenBSD: rndis.h,v 1.2 2016/09/20 10:34:41 mikeb Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -35,6 +35,7 @@
 #define RNDIS_STATUS_NOT_SUPPORTED 	0xC00000BBL
 #define RNDIS_STATUS_RESOURCES 		0xC000009AL
 #define RNDIS_STATUS_INVALID_DATA 	0xC0010015L
+#define RNDIS_STATUS_OFFLOAD_CURRENT_CONFIG	0x40020006
 
 #define OID_GEN_SUPPORTED_LIST		0x00010101
 #define OID_GEN_HARDWARE_STATUS		0x00010102
