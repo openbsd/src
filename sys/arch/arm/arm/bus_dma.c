@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.34 2016/08/26 21:50:42 patrick Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.35 2016/09/20 16:31:56 patrick Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -345,6 +345,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	struct arm32_dma_range *dr;
 	bus_addr_t paddr, baddr, bmask, lastaddr = 0;
 	bus_size_t plen, sgsize, mapsize;
+	vaddr_t vaddr;
 	int first = 1;
 	int i, seg = 0;
 
@@ -368,6 +369,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 
 	for (i = 0; i < nsegs && size > 0; i++) {
 		paddr = segs[i].ds_addr;
+		vaddr = segs[i]._ds_vaddr;
 		plen = MIN(segs[i].ds_len, size);
 
 		if (!segs[i]._ds_coherent)
@@ -414,6 +416,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			if (first) {
 				map->dm_segs[seg].ds_addr = paddr;
 				map->dm_segs[seg].ds_len = sgsize;
+				map->dm_segs[seg]._ds_vaddr = vaddr;
 				first = 0;
 			} else {
 				if (paddr == lastaddr &&
@@ -428,10 +431,12 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 						return (EINVAL);
 					map->dm_segs[seg].ds_addr = paddr;
 					map->dm_segs[seg].ds_len = sgsize;
+					map->dm_segs[seg]._ds_vaddr = vaddr;
 				}
 			}
 
 			paddr += sgsize;
+			vaddr += sgsize;
 			plen -= sgsize;
 			size -= sgsize;
 
