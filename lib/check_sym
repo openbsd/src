@@ -1,0 +1,268 @@
+#!/bin/ksh
+#
+#  check_sym -- compare the symbols and external function references in two
+#	versions of a shared library
+#
+#  SYNOPSIS
+#	check_sym [-ch] [old [new]]
+#
+#  DESCRIPTION
+#	Library developers need to be aware when they have changed the
+#	ABI of a library.  To assist them, check_sym examines two versions
+#	of a shared library and reports changes to the following:
+#	 * the set of exported symbols and their strengths
+#	 * the set of undefined symbols referenced
+#	 * the set of lazily-resolved functions (PLT)
+#
+#	In each case, additions and removals are reported; for exported
+#	symbols it also reports when a symbol is weakened or strengthened.
+#
+#	The shared libraries to compare can be specified on the
+#	command-line.  Otherwise, check_sym expects to be run from the
+#	source directory of a library, with a shlib_version file specifying
+#	the version being built and the new library in the obj subdirectory.
+#	If the old library to compare against, wasn't specified either then
+#	check_sym will take the highest version of that library in the
+#	*current* directory, or the highest version of that library in
+#	/usr/lib if it wasn't present in the current directory.
+#
+#	check_sym uses fixed names in /tmp for its intermediate files,
+#	as they contain useful details for those trying to understand
+#	what changed.  If any of them cannot be created by the user,
+#	the command will fail.  The files can be cleaned up using
+#	the -c option.
+#
+#
+#	The *basic* rules of thumb for library versions are: if you
+#	 * stop exporting a symbol, or
+#	 * change the size of a data symbol (not reported by check_sym)
+#	 * start exporting a symbol that an inter-dependent library needs
+#	then you need to bump the MAJOR version of the library.
+#
+#	Otherwise, if you:
+#	 * start exporting a symbol
+#	then you need to bump the MINOR version of the library.
+#
+#  SEE ALSO
+#	readelf(1), elf(5)
+#
+#  AUTHORS
+#	Philip Guenther <guenther@openbsd.org>
+#
+#  CAVEATS
+#	The elf format is infinitely extendable, but check_sym only
+#	handles a few weirdnesses.  Running it on or against new archs
+#	may result in meaningless results.
+#
+#  BUGS
+#	Should report changes in the size of exported data objects.
+#
+
+get_lib_name()
+{
+	sed -n 's/^[ 	]*LIB[ 	]*=[ 	]*\([^ 	]*\).*/\1/p' "$@"
+}
+
+pick_highest()
+{
+	old=
+	omaj=-1
+	omin=0
+	for i
+	do
+		[[ -f $i ]] || continue
+		maj=${i%.*}; maj=${maj##*.}
+		min=${i##*.}
+		if [[ $maj -gt $omaj || ( $maj -eq $omaj && $min -gt $omin ) ]]
+		then
+			old=$i
+			omaj=$maj
+			omin=$min
+		fi
+	done
+	[[ $old != "" ]]
+}
+
+cpu=$(uname -p)
+if [[ $cpu = mips64* ]]
+then
+	file_list=/tmp/{D{,S,W,Y},J,S,U,d,j,r,s}{1,2}
+else
+	file_list=/tmp/{D{,S,W},J,S,U,d,j,r,s}{1,2}
+fi
+
+if [[ $1 = "-h" ]]
+then
+	echo "usage: $0 [-ch] [old [new]]"
+	exit 0
+elif [[ $1 = "-c" ]]
+then
+	rm -f $file_list
+	exit 0
+fi
+
+# Old library?
+if [[ $1 = ?(*/)lib*.so* ]]
+then
+	if [[ ! -f $1 ]]
+	then
+		echo "$1 doesn't exist" >&2
+		exit 1
+	fi
+	old=$1
+	lib=${old##*/}
+	lib=${lib%%.so.*}
+	shift
+else
+	# try determining it from the current directory
+	if [[ -f Makefile ]] && lib=$(get_lib_name Makefile) &&
+	   [[ $lib != "" ]]
+	then
+		lib=lib$lib
+	else
+		lib=libc
+	fi
+
+	# Is there a copy of that lib in the current directory?
+	# If so, use the highest numbered one
+	if ! pick_highest $lib.so.* && ! pick_highest /usr/lib/$lib.so.*
+	then
+		echo "unable to find $lib.so.*" >&2
+		exit 1
+	fi
+fi
+
+# New library?
+if [[ $1 = ?(*/)lib*.so* ]]
+then
+	if [[ ! -f $1 ]]
+	then
+		echo "$1 doesn't exist" >&2
+		exit 1
+	fi
+	new=$1
+	shift
+else
+	# Dig info out of the just built library
+	. ./shlib_version
+	new=obj/${lib}.so.${major}.${minor}
+fi
+
+# Filter the output of readelf -s to be easier to parse by removing a
+# field that only appears on some symbols: [<other>: 88]
+# Not really arch-specific, but I've only seen it on alpha
+filt_symtab() {
+	sed 's/\[<other>: [0-9a-f]*\]//'
+}
+
+# precreate all the files we'll use, but with noclobber set to avoid
+# symlink attacks
+set -C
+files=
+trap 'rm -f $files' 1 2 15 ERR
+for i in $file_list
+do
+	rm -f $i
+	3>$i
+	files="$files $i"
+done
+set +C
+
+readelf -rW $old > /tmp/r1
+readelf -rW $new > /tmp/r2
+
+readelf -sW $old | filt_symtab > /tmp/s1
+readelf -sW $new | filt_symtab > /tmp/s2
+
+
+if [[ $cpu = mips64* ]]
+then
+	readelf -d $old >/tmp/DY1
+	readelf -d $new >/tmp/DY2
+else
+	rm -f /tmp/DY[12]
+fi
+
+jump_slots() { 
+	case $cpu in
+	hppa*)	awk '/IPLT/ && $5 != ""{print $5}' /tmp/r$1
+		;;
+	mips*)	gotsym=$(awk '$2 ~ /MIPS_GOTSYM/{print $3}' /tmp/DY$1)
+		# the $(($foo)) is to convert hex to decimal
+		awk -v g=$(($gotsym)) \
+			'/^Symbol table ..symtab/{exit}
+			$1+0 >= g && $4 == "FUNC" {print $8}' /tmp/s$1
+		;;
+	*)	awk '/JU*MP_SL/ && $5 != ""{print $5}' /tmp/r$1
+		;;
+	esac | sort -o /tmp/j$1
+}
+
+dynamic_sym() {
+	# truncate the output files, to guarantee they exist
+	>/tmp/U$1 >/tmp/DS$1 >/tmp/DW$1 >/tmp/D$1
+	awk -v s=$1 '/^Symbol table ..symtab/{exit}
+		! /^ *[1-9]/   {next}
+		$7 == "UND"    {print $8 | ("sort -o /tmp/U" s); next }
+		$5 == "GLOBAL" {print $8 | ("sort -o /tmp/DS" s) }
+		$5 == "WEAK"   {print $8 | ("sort -o /tmp/DW" s) }
+		$5 != "LOCAL"  {print $8 | ("sort -o /tmp/D" s) }
+		{print $4, $5, $6, $8}' /tmp/s$1 | sort -o /tmp/d$1
+#	awk -v s=$1 '$2 == "GLOBAL" {print $4 | ("sort -o /tmp/DS" s) }
+#		     $2 == "WEAK"   {print $4 | ("sort -o /tmp/DW" s) }
+#		     $1 != "SECTION"{print $4}' /tmp/d$1 | sort -o /tmp/D$1
+}
+
+static_sym() { 
+	awk '/^Symbol table ..symtab/{s=1}
+	     /LOCAL/{next}
+	     s&&/^ *[1-9]/{print $4, $5, $6, $8}' /tmp/s$1 | sort -o /tmp/S$1
+}
+
+output_if_not_empty() {
+	leader=$1
+	shift
+	if "$@" | grep -q .
+	then
+		echo "$leader"
+		"$@" | sed 's:^:	:'
+		echo
+	fi
+}
+
+
+for i in 1 2
+do
+	jump_slots $i
+	dynamic_sym $i
+	static_sym $i
+	comm -23 /tmp/j$i /tmp/U$i >/tmp/J$i
+done
+
+echo "$old --> $new"
+if cmp -s /tmp/d[12]
+then
+	printf "No dynamic export changes\n"
+else
+	printf "Dynamic export changes:\n"
+	output_if_not_empty "added:" comm -13 /tmp/D[12]
+	output_if_not_empty "removed:" comm -23 /tmp/D[12]
+	output_if_not_empty "weakened:" comm -12 /tmp/DS1 /tmp/DW2
+	output_if_not_empty "strengthened:" comm -12 /tmp/DW1 /tmp/DS2
+fi
+if ! cmp -s /tmp/U[12]
+then
+	printf "External reference changes:\n"
+	output_if_not_empty "added:" comm -13 /tmp/U[12]
+	output_if_not_empty "removed:" comm -23 /tmp/U[12]
+fi
+
+if false; then
+	printf "\nReloc counts:\nbefore:\n" 
+	grep ^R /tmp/r1
+	printf "\nafter:\n"
+	grep ^R /tmp/r2
+fi
+
+output_if_not_empty "PLT added:" comm -13 /tmp/J1 /tmp/J2
+output_if_not_empty "PLT removed:" comm -23 /tmp/J1 /tmp/J2
