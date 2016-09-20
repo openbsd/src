@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.34 2016/09/20 19:38:16 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.35 2016/09/20 19:40:53 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -72,8 +72,8 @@ struct bfd_header {
 	uint8_t	bfd_ver_diag;
 	uint8_t	bfd_sta_flags;
 
-	uint8_t	bfd_detect_multi;		/* detection time multiplier */
-	uint8_t	bfd_length;			/* in bytes */
+	uint8_t		bfd_detect_multi;	/* detection time multiplier */
+	uint8_t		bfd_length;		/* in bytes */
 	uint32_t	bfd_my_discriminator;		/* From this system */
 	uint32_t	bfd_your_discriminator;		/* Received */
 	uint32_t	bfd_desired_min_tx_interval;	/* in microseconds */
@@ -195,7 +195,7 @@ bfdset(struct rtentry *rt)
 
 	microtime(bfd->bc_time);
 	bfd_reset(bfd);
-	bfd->bc_neighbor->bn_ldiscr = arc4random();	/* XXX - MUST be globally unique */
+	bfd->bc_neighbor->bn_ldiscr = arc4random();
 
 	if (!timeout_initialized(&bfd->bc_timo_rx))
 		timeout_set(&bfd->bc_timo_rx, bfd_timeout_rx, bfd);
@@ -688,8 +688,9 @@ bfd_input(struct bfd_config *bfd, struct mbuf *m)
 	state = BFD_STATE(peer->bfd_sta_flags);
 	flags = BFD_FLAGS(peer->bfd_sta_flags);
 
-	if (peer->bfd_length + offp != mp->m_len) {
-		printf("%s: bad len %d != %d\n", __func__, peer->bfd_length + offp, mp->m_len);
+	if (peer->bfd_length + offp > mp->m_len) {
+		printf("%s: bad len %d != %d\n", __func__,
+		    peer->bfd_length + offp, mp->m_len);
 		goto discard;
 	}
 
@@ -703,7 +704,8 @@ bfd_input(struct bfd_config *bfd, struct mbuf *m)
 	    BFD_STATE(peer->bfd_sta_flags) > BFD_STATE_DOWN)
 		goto discard;
 	if ((ntohl(peer->bfd_your_discriminator) != 0) &&
-	    (ntohl(peer->bfd_your_discriminator) != bfd->bc_neighbor->bn_ldiscr)) {
+	    (ntohl(peer->bfd_your_discriminator) !=
+	    bfd->bc_neighbor->bn_ldiscr)) {
 		bfd->bc_error++;
 		goto discard;
 	}
