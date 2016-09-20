@@ -822,6 +822,8 @@ hvn_nvs_attach(struct hvn_softc *sc)
 		return (-1);
 	}
 
+	hv_evcount_attach(sc->sc_chan, sc->sc_dev.dv_xname);
+
 	mtx_init(&sc->sc_nvslck, IPL_NET);
 
 	memset(&cmd, 0, sizeof(cmd));
