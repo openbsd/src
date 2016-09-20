@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.51 2016/06/07 06:12:37 deraadt Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.52 2016/09/20 14:04:37 bluhm Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
-#include <sys/unpcb.h>
 #include <sys/unistd.h>
 
 #include <miscfs/fifofs/fifo.h>
@@ -143,7 +142,7 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_writesock = wso;
-		if ((error = unp_connect2(wso, rso)) != 0) {
+		if ((error = soconnect2(wso, rso)) != 0) {
 			(void)soclose(wso);
 			(void)soclose(rso);
 			free(fip, M_VNODE, sizeof *fip);
@@ -350,20 +349,25 @@ fifo_close(void *v)
 	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fifoinfo *fip = vp->v_fifoinfo;
-	int error1 = 0, error2 = 0;
+	int s, error1 = 0, error2 = 0;
 
 	if (fip == NULL)
 		return (0);
 
 	if (ap->a_fflag & FREAD) {
-		if (--fip->fi_readers == 0)
+		if (--fip->fi_readers == 0) {
+			s = splsoftnet();
 			socantsendmore(fip->fi_writesock);
+			splx(s);
+		}
 	}
 	if (ap->a_fflag & FWRITE) {
 		if (--fip->fi_writers == 0) {
+			s = splsoftnet();
 			/* SS_ISDISCONNECTED will result in POLLHUP */
 			fip->fi_readsock->so_state |= SS_ISDISCONNECTED;
 			socantrcvmore(fip->fi_readsock);
+			splx(s);
 		}
 	}
 	if (fip->fi_readers == 0 && fip->fi_writers == 0) {
