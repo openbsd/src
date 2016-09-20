@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.448 2016/09/13 08:15:01 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.449 2016/09/20 16:14:43 mikeb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1041,7 +1041,7 @@ if_clone_create(const char *name, int rdomain)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
-	int unit, ret;
+	int unit, ret, s;
 
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
@@ -1050,8 +1050,11 @@ if_clone_create(const char *name, int rdomain)
 	if (ifunit(name) != NULL)
 		return (EEXIST);
 
-	if ((ret = (*ifc->ifc_create)(ifc, unit)) != 0 ||
-	    (ifp = ifunit(name)) == NULL)
+	s = splsoftnet();
+	ret = (*ifc->ifc_create)(ifc, unit);
+	splx(s);
+
+	if (ret != 0 || (ifp = ifunit(name)) == NULL)
 		return (ret);
 
 	if_addgroup(ifp, ifc->ifc_name);
@@ -1069,7 +1072,7 @@ if_clone_destroy(const char *name)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
-	int s;
+	int error, s;
 
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
@@ -1088,7 +1091,10 @@ if_clone_destroy(const char *name)
 		splx(s);
 	}
 
-	return ((*ifc->ifc_destroy)(ifp));
+	s = splsoftnet();
+	error = (*ifc->ifc_destroy)(ifp);
+	splx(s);
+	return (error);
 }
 
 /*
