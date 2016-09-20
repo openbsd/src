@@ -1,4 +1,4 @@
-.\"	$OpenBSD: switch.4,v 1.3 2016/09/04 19:03:34 jmc Exp $
+.\"	$OpenBSD: switch.4,v 1.4 2016/09/20 10:04:07 sthen Exp $
 .\"
 .\" Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2016 $
+.Dd $Mdocdate: September 20 2016 $
 .Dt SWITCH 4
 .Os
 .Sh NAME
@@ -38,11 +38,10 @@ and it works along with a controller which usually is
 or
 .Xr switchctl 8 through the device
 .Pa /dev/switchN .
-As the protocol between the
+The
 .Nm
-device
-and the controller,
-OpenFlow 1.3 is supported.
+device and the controller communicate using the OpenFlow
+1.3 protocol.
 .Pp
 A
 .Nm
