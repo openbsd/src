@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.178 2016/05/18 08:15:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.179 2016/09/20 13:24:42 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1393,7 +1393,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	const u_int8_t *tstamp, *ssid, *rates, *xrates, *edcaie, *wmmie;
 	const u_int8_t *rsnie, *wpaie, *htcaps, *htop;
 	u_int16_t capinfo, bintval;
-	u_int8_t chan, bchan, erp;
+	u_int8_t chan, bchan, erp, dtim_count, dtim_period;
 	int is_new;
 
 	/*
@@ -1436,6 +1436,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	chan = bchan;
 	erp = 0;
+	dtim_count = dtim_period = 0;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
 			ic->ic_stats.is_rx_elem_toosmall++;
@@ -1476,6 +1477,12 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			break;
 		case IEEE80211_ELEMID_HTOP:
 			htop = frm;
+			break;
+		case IEEE80211_ELEMID_TIM:
+			if (frm[1] > 3) {
+				dtim_count = frm[2];
+				dtim_period = frm[3];
+			}
 			break;
 		case IEEE80211_ELEMID_VENDOR:
 			if (frm[1] < 4) {
@@ -1567,6 +1574,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
 	if (htop && !ieee80211_setup_htop(ni, htop + 2, htop[1]))
 		htop = NULL; /* invalid HTOP */
+
+	ni->ni_dtimcount = dtim_count;
+	ni->ni_dtimperiod = dtim_period;
 
 	/*
 	 * When operating in station mode, check for state updates

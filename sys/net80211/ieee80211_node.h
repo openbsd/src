@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.61 2016/09/15 03:32:48 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.62 2016/09/20 13:24:42 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -188,9 +188,10 @@ struct ieee80211_node {
 	struct ieee80211_channel *ni_chan;
 	u_int8_t		ni_erp;		/* 11g only */
 
-#ifdef notyet
 	/* DTIM and contention free period (CFP) */
+	u_int8_t		ni_dtimcount;
 	u_int8_t		ni_dtimperiod;
+#ifdef notyet
 	u_int8_t		ni_cfpperiod;	/* # of DTIMs between CFPs */
 	u_int16_t		ni_cfpduremain;	/* remaining cfp duration */
 	u_int16_t		ni_cfpmaxduration;/* max CFP duration in TU */
