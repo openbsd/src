@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.18 2016/09/10 09:32:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -3503,7 +3503,7 @@ struct iwm_ac_qos {
  * @id_and_color: ID and color of the MAC
  * @action: action to perform, one of IWM_FW_CTXT_ACTION_*
  * @mac_type: one of IWM_FW_MAC_TYPE_*
- * @tsd_id: TSF HW timer, one of IWM_TSF_ID_*
+ * @tsf_id: TSF HW timer, one of IWM_TSF_ID_*
  * @node_addr: MAC address
  * @bssid_addr: BSSID
  * @cck_rates: basic rates available for CCK
@@ -3572,7 +3572,7 @@ struct iwm_nonqos_seq_query_cmd {
 #define IWM_POWER_LPRX_RSSI_THRESHOLD_MIN	30
 
 /**
- * Masks for power table command flags
+ * Masks for iwm_mac_power_cmd command flags
  * @IWM_POWER_FLAGS_POWER_SAVE_ENA_MSK: '1' Allow to save power by turning off
  *		receiver and transmitter. '0' - does not allow.
  * @IWM_POWER_FLAGS_POWER_MANAGEMENT_ENA_MSK: '0' Driver disables power management,
@@ -3600,54 +3600,21 @@ struct iwm_nonqos_seq_query_cmd {
 #define IWM_POWER_VEC_SIZE 5
 
 /**
- * struct iwm_powertable_cmd - legacy power command. Beside old API support this
- *	is used also with a new	power API for device wide power settings.
- * IWM_POWER_TABLE_CMD = 0x77 (command, has simple generic response)
- *
- * @flags:		Power table command flags from IWM_POWER_FLAGS_*
- * @keep_alive_seconds: Keep alive period in seconds. Default - 25 sec.
- *			Minimum allowed:- 3 * DTIM. Keep alive period must be
- *			set regardless of power scheme or current power state.
- *			FW use this value also when PM is disabled.
- * @rx_data_timeout:    Minimum time (usec) from last Rx packet for AM to
- *			PSM transition - legacy PM
- * @tx_data_timeout:    Minimum time (usec) from last Tx packet for AM to
- *			PSM transition - legacy PM
- * @sleep_interval:	not in use
- * @skip_dtim_periods:	Number of DTIM periods to skip if Skip over DTIM flag
- *			is set. For example, if it is required to skip over
- *			one DTIM, this value need to be set to 2 (DTIM periods).
- * @lprx_rssi_threshold: Signal strength up to which LP RX can be enabled.
- *			Default: 80dbm
- */
-struct iwm_powertable_cmd {
-	/* PM_POWER_TABLE_CMD_API_S_VER_6 */
-	uint16_t flags;
-	uint8_t keep_alive_seconds;
-	uint8_t debug_flags;
-	uint32_t rx_data_timeout;
-	uint32_t tx_data_timeout;
-	uint32_t sleep_interval[IWM_POWER_VEC_SIZE];
-	uint32_t skip_dtim_periods;
-	uint32_t lprx_rssi_threshold;
-} __packed;
-
-/**
  * Masks for device power command flags
- * @DEVIC_POWER_FLAGS_POWER_SAVE_ENA_MSK: '1' Allow to save power by turning off
- *	receiver and transmitter. '0' - does not allow. This flag should be
- *	always set to '1' unless one need to disable actual power down for debug
- *	purposes.
- * @IWM_DEVICE_POWER_FLAGS_CAM_MSK: '1' CAM (Continuous Active Mode) is set, meaning
- *	that power management is disabled. '0' Power management is enabled, one
- *	of power schemes is applied.
-*/
+ * @IWM_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK:
+ *   '1' Allow to save power by turning off receiver and transmitter.
+ *   '0' Do not allow. This flag should be always set to '1' unless
+ *       one needs to disable actual power down for debug purposes.
+ * @IWM_DEVICE_POWER_FLAGS_CAM_MSK:
+ *   '1' CAM (Continuous Active Mode) is set, power management is disabled.
+ *   '0' Power management is enabled, one of the power schemes is applied.
+ */
 #define IWM_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK	(1 << 0)
 #define IWM_DEVICE_POWER_FLAGS_CAM_MSK			(1 << 13)
 
 /**
  * struct iwm_device_power_cmd - device wide power command.
- * IWM_DEVICE_POWER_CMD = 0x77 (command, has simple generic response)
+ * IWM_POWER_TABLE_CMD = 0x77 (command, has simple generic response)
  *
  * @flags:	Power table command flags from IWM_DEVICE_POWER_FLAGS_*
  */
@@ -3726,6 +3693,9 @@ struct iwm_mac_power_cmd {
 	uint8_t limited_ps_threshold;
 	uint8_t reserved;
 } __packed;
+
+#define IWM_DEFAULT_PS_TX_DATA_TIMEOUT      (100 * 1000)
+#define IWM_DEFAULT_PS_RX_DATA_TIMEOUT      (100 * 1000)
 
 /*
  * struct iwm_uapsd_misbehaving_ap_notif - FW sends this notification when
