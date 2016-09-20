@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.116 2015/10/25 15:52:49 doug Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.117 2016/09/20 04:25:09 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2847,13 +2847,22 @@ SSL_get_SSL_CTX(const SSL *ssl)
 SSL_CTX *
 SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 {
+	CERT *ocert = ssl->cert;
 	if (ssl->ctx == ctx)
 		return (ssl->ctx);
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
-	if (ssl->cert != NULL)
-		ssl_cert_free(ssl->cert);
 	ssl->cert = ssl_cert_dup(ctx->cert);
+	if (ocert != NULL) {
+		int i;
+		/* Copy negotiated digests from original */
+		for (i = 0; i < SSL_PKEY_NUM; i++) {
+			CERT_PKEY *cpk = ocert->pkeys + i;
+			CERT_PKEY *rpk = ssl->cert->pkeys + i;
+			rpk->digest = cpk->digest;
+		}
+		ssl_cert_free(ocert);
+	}
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	SSL_CTX_free(ssl->ctx); /* decrement reference count */
 	ssl->ctx = ctx;
