@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.138 2016/09/19 17:46:52 jsing Exp $ */
+/* $OpenBSD: bioctl.c,v 1.139 2016/09/21 17:50:05 jsing Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <limits.h>
 #include <vis.h>
@@ -66,6 +67,7 @@ int			bio_parse_devlist(char *, dev_t *);
 void			bio_kdf_derive(struct sr_crypto_kdfinfo *,
 			    struct sr_crypto_pbkdf *, char *, int);
 void			bio_kdf_generate(struct sr_crypto_kdfinfo *);
+int			bcrypt_pbkdf_autorounds(void);
 void			derive_key(u_int32_t, int, u_int8_t *, size_t,
 			    u_int8_t *, size_t, char *, int);
 
@@ -172,6 +174,10 @@ main(int argc, char *argv[])
 			password = optarg;
 			break;
 		case 'r':
+			if (strcmp(optarg, "auto") == 0) {
+				rflag = -1;
+				break;
+			}
 			rflag = strtonum(optarg, 4, 1<<30, &errstr);
 			if (errstr != NULL)
 				errx(1, "number of KDF rounds is %s: %s",
@@ -963,6 +969,9 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 	if (!kdfinfo)
 		errx(1, "invalid KDF info");
 
+	if (rflag == -1)
+		rflag = bcrypt_pbkdf_autorounds();
+
 	kdfinfo->pbkdf.generic.len = sizeof(kdfinfo->pbkdf);
 	kdfinfo->pbkdf.generic.type = SR_CRYPTOKDFT_BCRYPT_PBKDF;
 	kdfinfo->pbkdf.rounds = rflag ? rflag : 16;
@@ -1264,6 +1273,37 @@ bio_patrol(char *arg)
 	}
 }
 
+/*
+ * Measure this system's performance by measuring the time for 100 rounds.
+ * We are aiming for something that takes around 1s.
+ */
+int
+bcrypt_pbkdf_autorounds(void)
+{
+	struct timespec before, after;
+	char buf[SR_CRYPTO_MAXKEYBYTES], salt[128];
+	int r = 100;
+	int duration;
+
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &before);
+	if (bcrypt_pbkdf("testpassword", strlen("testpassword"),
+	    salt, sizeof(salt), buf, sizeof(buf), r) != 0)
+		errx(1, "bcrypt pbkdf failed");
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &after);
+
+	duration = after.tv_sec - before.tv_sec;
+	duration *= 1000000;
+	duration += (after.tv_nsec - before.tv_nsec) / 1000;
+
+	duration /= r;
+	r = 1000000 / duration;
+
+	if (r < 16)
+		r = 16;
+
+	return r;
+}
+
 void
 derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
     u_int8_t *salt, size_t saltsz, char *prompt, int verify)
@@ -1331,10 +1371,16 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 
 	/* derive key from passphrase */
 	if (type == SR_CRYPTOKDFT_PKCS5_PBKDF2) {
+		if (verbose)
+			printf("Deriving key using PKCS#5 PBKDF2 with %i rounds...\n",
+			    rounds);
 		if (pkcs5_pbkdf2(passphrase, strlen(passphrase), salt, saltsz,
 		    key, keysz, rounds) != 0)
 			errx(1, "pkcs5_pbkdf2 failed");
 	} else if (type == SR_CRYPTOKDFT_BCRYPT_PBKDF) {
+		if (verbose)
+			printf("Deriving key using bcrypt PBKDF with %i rounds...\n",
+			    rounds);
 		if (bcrypt_pbkdf(passphrase, strlen(passphrase), salt, saltsz,
 		    key, keysz, rounds) != 0)
 			errx(1, "bcrypt_pbkdf failed");
