@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.16 2016/08/19 18:25:53 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.17 2016/09/21 10:28:47 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -221,7 +221,6 @@ struct fec_softc {
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih; /* Interrupt handler */
 	bus_dma_tag_t		sc_dma_tag;
-	uint32_t		intr_status;	/* soft interrupt status */
 	struct fec_dma_alloc	txdma;		/* bus_dma glue for tx desc */
 	struct fec_buf_desc	*tx_desc_base;
 	struct fec_dma_alloc	rxdma;		/* bus_dma glue for rx desc */
@@ -250,7 +249,6 @@ void fec_iff(struct fec_softc *);
 struct mbuf * fec_newbuf(void);
 int fec_intr(void *);
 void fec_recv(struct fec_softc *);
-int fec_wait_intr(struct fec_softc *, int, int);
 int fec_miibus_readreg(struct device *, int, int);
 void fec_miibus_writereg(struct device *, int, int, int);
 void fec_miibus_statchg(struct device *);
@@ -680,7 +678,6 @@ fec_init(struct fec_softc *sc)
 
 	/* enable interrupts for tx/rx */
 	HWRITE4(sc, ENET_EIMR, ENET_EIR_TXF | ENET_EIR_RXF);
-	HWRITE4(sc, ENET_EIMR, 0xffffffff);
 
 	fec_start(ifp);
 }
@@ -900,15 +897,6 @@ fec_intr(void *arg)
 	HWRITE4(sc, ENET_EIR, status);
 
 	/*
-	 * Wake up the blocking process to service command
-	 * related interrupt(s).
-	 */
-	if (ISSET(status, ENET_EIR_MII)) {
-		sc->intr_status |= status;
-		wakeup(&sc->intr_status);
-	}
-
-	/*
 	 * Handle incoming packets.
 	 */
 	if (ISSET(status, ENET_EIR_RXF)) {
@@ -978,28 +966,6 @@ done:
 	HWRITE4(sc, ENET_RDAR, ENET_RDAR_RDAR);
 
 	if_input(ifp, &ml);
-}
-
-int
-fec_wait_intr(struct fec_softc *sc, int mask, int timo)
-{
-	int status;
-	int s;
-
-	s = splnet();
-
-	status = sc->intr_status;
-	while (status == 0) {
-		if (tsleep(&sc->intr_status, PWAIT, "hcintr", timo)
-		    == EWOULDBLOCK) {
-			break;
-		}
-		status = sc->intr_status;
-	}
-	sc->intr_status &= ~status;
-
-	splx(s);
-	return status;
 }
 
 /*
