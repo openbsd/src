@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.268 2016/09/07 17:30:12 natano Exp $
+.\"	$OpenBSD: sysctl.3,v 1.269 2016/09/21 16:43:17 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 7 2016 $
+.Dd $Mdocdate: September 21 2016 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -409,7 +409,6 @@ information.
 .Bl -column "KERN_PROC_NOBROADCASTKILL" "u_int64_t[CPUSTATES]" "no" -offset indent
 .It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv KERN_ARGMAX Ta "integer" Ta "no"
-.It Dv KERN_ARND Ta "char[]" Ta "no"
 .It Dv KERN_BOOTTIME Ta "struct timeval" Ta "no"
 .It Dv KERN_BUFCACHEPERCENT Ta "integer" Ta "yes"
 .It Dv KERN_CCPU Ta "integer" Ta "no"
@@ -482,13 +481,6 @@ information.
 .It Dv KERN_ARGMAX
 The maximum number of bytes allowed among the arguments to
 .Xr exec 3 .
-.It Dv KERN_ARND
-Returns a maximum of 256 random bytes from the kernel using the
-.Xr arc4random 9
-function.
-Consider using
-.Xr getentropy 2
-directly.
 .It Dv KERN_BOOTTIME
 A
 .Li struct timeval
