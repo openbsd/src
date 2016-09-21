@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.18 2015/02/11 00:14:11 dlg Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.19 2016/09/21 07:44:36 mpi Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -51,8 +51,8 @@
  *  set, call rw_exit_waiters with the old contents of the lock.
  */
 
-#ifndef SYS_RWLOCK_H
-#define SYS_RWLOCK_H
+#ifndef _SYS_RWLOCK_H
+#define _SYS_RWLOCK_H
 
 struct proc;
 
@@ -72,27 +72,6 @@ struct rwlock {
 
 #define RWLOCK_READER_SHIFT	3UL
 #define RWLOCK_READ_INCR	(1UL << RWLOCK_READER_SHIFT)
-
-void rw_init(struct rwlock *, const char *);
-
-void rw_enter_read(struct rwlock *);
-void rw_enter_write(struct rwlock *);
-void rw_exit_read(struct rwlock *);
-void rw_exit_write(struct rwlock *);
-
-#ifdef DIAGNOSTIC
-void rw_assert_wrlock(struct rwlock *);
-void rw_assert_rdlock(struct rwlock *);
-void rw_assert_unlocked(struct rwlock *);
-#else
-#define rw_assert_wrlock(rwl) ((void)0)
-#define rw_assert_rdlock(rwl) ((void)0)
-#define rw_assert_unlocked(rwl) ((void)0)
-#endif
-
-int rw_enter(struct rwlock *, int);
-void rw_exit(struct rwlock *);
-int rw_status(struct rwlock *);
 
 #define RW_WRITE	0x0001UL	/* exclusive lock */
 #define RW_READ		0x0002UL	/* shared lock */
@@ -116,9 +95,34 @@ struct rrwlock {
 	uint32_t	rrwl_wcnt;	/* # writers. */
 };
 
+#ifdef _KERNEL
+
+void rw_init(struct rwlock *, const char *);
+
+void rw_enter_read(struct rwlock *);
+void rw_enter_write(struct rwlock *);
+void rw_exit_read(struct rwlock *);
+void rw_exit_write(struct rwlock *);
+
+#ifdef DIAGNOSTIC
+void rw_assert_wrlock(struct rwlock *);
+void rw_assert_rdlock(struct rwlock *);
+void rw_assert_unlocked(struct rwlock *);
+#else
+#define rw_assert_wrlock(rwl) ((void)0)
+#define rw_assert_rdlock(rwl) ((void)0)
+#define rw_assert_unlocked(rwl) ((void)0)
+#endif
+
+int rw_enter(struct rwlock *, int);
+void rw_exit(struct rwlock *);
+int rw_status(struct rwlock *);
+
 void	rrw_init(struct rrwlock *, char *);
 int	rrw_enter(struct rrwlock *, int);
 void	rrw_exit(struct rrwlock *);
 int	rrw_status(struct rrwlock *);
 
-#endif
+#endif /* _KERNEL */
+
+#endif /* _SYS_RWLOCK_H */
