@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.132 2016/09/12 10:18:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.133 2016/09/21 12:56:43 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4896,6 +4896,7 @@ iwm_ack_rates(struct iwm_softc *sc, struct iwm_node *in, int *cck_rates,
     int *ofdm_rates)
 {
 	struct ieee80211_node *ni = &in->in_ni;
+	struct ieee80211_rateset *rs = &ni->ni_rates;
 	int lowest_present_ofdm = 100;
 	int lowest_present_cck = 100;
 	uint8_t cck = 0;
@@ -4904,15 +4905,19 @@ iwm_ack_rates(struct iwm_softc *sc, struct iwm_node *in, int *cck_rates,
 
 	if (ni->ni_chan == IEEE80211_CHAN_ANYC ||
 	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
-		for (i = 0; i <= IWM_LAST_CCK_RATE; i++) {
+		for (i = 0; i < MIN(IWM_FIRST_OFDM_RATE, rs->rs_nrates); i++) {
+			if ((rs->rs_rates[i] & IEEE80211_RATE_BASIC) == 0)
+				continue;
 			cck |= (1 << i);
 			if (lowest_present_cck > i)
 				lowest_present_cck = i;
 		}
 	}
-	for (i = IWM_FIRST_OFDM_RATE; i <= IWM_LAST_NON_HT_RATE; i++) {
-		int adj = i - IWM_FIRST_OFDM_RATE;
-		ofdm |= (1 << adj);
+	for (i = IWM_FIRST_OFDM_RATE;
+	    i <= MIN(IWM_LAST_NON_HT_RATE, rs->rs_nrates - 1); i++) {
+		if ((rs->rs_rates[i] & IEEE80211_RATE_BASIC) == 0)
+			continue;	
+		ofdm |= (1 << (i - IWM_FIRST_OFDM_RATE));
 		if (lowest_present_ofdm > i)
 			lowest_present_ofdm = i;
 	}
