@@ -1,4 +1,4 @@
-/* 	$OpenBSD: kern_compat.h,v 1.4 2016/06/07 07:57:59 mpi Exp $ */
+/* 	$OpenBSD: kern_compat.h,v 1.5 2016/09/21 07:13:02 mpi Exp $ */
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -64,5 +64,10 @@ struct pool {
 extern struct domain *domains[];
 
 #define IPL_SOFTNET	0
+
+#define rw_init(rwl, name)
+#define rw_enter_write(rwl)
+#define rw_exit_write(rwl)
+#define rw_assert_wrlock(rwl)
 
 #endif /* _KERN_COMPAT_H_ */
