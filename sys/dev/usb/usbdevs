@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.668 2016/09/12 07:55:33 mpi Exp $
+$OpenBSD: usbdevs,v 1.669 2016/09/21 08:55:21 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3839,6 +3839,7 @@ product SIERRA USB305		0x68a3	USB305
 product SIERRA MC8355		0x9013	MC8355
 product SIERRA AIRCARD_340U	0x9051	Aircard 340U
 product SIERRA AIRCARD_770S	0x9053	Aircard 770S
+product SIERRA MC7455		0x9071	MC7455
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
