@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.23 2016/09/12 10:18:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -501,10 +501,6 @@ struct iwm_node {
 
 	uint16_t in_id;
 	uint16_t in_color;
-	int in_tsfid;
-
-	/* status "bits" */
-	int in_assoc;
 
 	struct iwm_lq_cmd in_lq;
 	struct ieee80211_amrr_node in_amn;

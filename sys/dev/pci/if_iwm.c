@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.136 2016/09/21 13:29:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.137 2016/09/21 13:53:18 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -402,10 +402,10 @@ int	iwm_config_umac_scan(struct iwm_softc *);
 int	iwm_umac_scan(struct iwm_softc *);
 void	iwm_ack_rates(struct iwm_softc *, struct iwm_node *, int *, int *);
 void	iwm_mac_ctxt_cmd_common(struct iwm_softc *, struct iwm_node *,
-	    struct iwm_mac_ctx_cmd *, uint32_t);
+	    struct iwm_mac_ctx_cmd *, uint32_t, int);
 void	iwm_mac_ctxt_cmd_fill_sta(struct iwm_softc *, struct iwm_node *,
 	    struct iwm_mac_data_sta *, int);
-int	iwm_mac_ctxt_cmd(struct iwm_softc *, struct iwm_node *, uint32_t);
+int	iwm_mac_ctxt_cmd(struct iwm_softc *, struct iwm_node *, uint32_t, int);
 int	iwm_update_quotas(struct iwm_softc *, struct iwm_node *);
 int	iwm_auth(struct iwm_softc *);
 int	iwm_assoc(struct iwm_softc *);
@@ -2432,7 +2432,7 @@ iwm_htprot_task(void *arg)
 	int err;
 
 	/* This call updates HT protection based on in->in_ni.ni_htop1. */
-	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY);
+	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 1);
 	if (err)
 		printf("%s: could not change HT protection: error %d\n",
 		    DEVNAME(sc), err);
@@ -4992,7 +4992,7 @@ iwm_ack_rates(struct iwm_softc *sc, struct iwm_node *in, int *cck_rates,
 
 void
 iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
-    struct iwm_mac_ctx_cmd *cmd, uint32_t action)
+    struct iwm_mac_ctx_cmd *cmd, uint32_t action, int assoc)
 {
 #define IWM_EXP2(x)	((1 << (x)) - 1)	/* CWmin = 2^ECWmin - 1 */
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -5005,14 +5005,11 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 	cmd->action = htole32(action);
 
 	cmd->mac_type = htole32(IWM_FW_MAC_TYPE_BSS_STA);
-	cmd->tsf_id = htole32(in->in_tsfid);
+	cmd->tsf_id = htole32(IWM_TSF_ID_A);
 
 	IEEE80211_ADDR_COPY(cmd->node_addr, ic->ic_myaddr);
-	if (in->in_assoc) {
-		IEEE80211_ADDR_COPY(cmd->bssid_addr, ni->ni_bssid);
-	} else {
-		IEEE80211_ADDR_COPY(cmd->bssid_addr, etherbroadcastaddr);
-	}
+	IEEE80211_ADDR_COPY(cmd->bssid_addr, ni->ni_bssid);
+
 	iwm_ack_rates(sc, in, &cck_ack_rates, &ofdm_ack_rates);
 	cmd->cck_rates = htole32(cck_ack_rates);
 	cmd->ofdm_rates = htole32(ofdm_ack_rates);
@@ -5067,45 +5064,47 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 
 void
 iwm_mac_ctxt_cmd_fill_sta(struct iwm_softc *sc, struct iwm_node *in,
-    struct iwm_mac_data_sta *ctxt_sta, int force_assoc_off)
+    struct iwm_mac_data_sta *sta, int assoc)
 {
 	struct ieee80211_node *ni = &in->in_ni;
-	struct ieee80211com *ic = &sc->sc_ic;
+	uint32_t dtim_off;
+	uint64_t tsf;
 
-	ctxt_sta->is_assoc = htole32(0);
-	ctxt_sta->bi = htole32(ni->ni_intval);
-	ctxt_sta->bi_reciprocal = htole32(iwm_reciprocal(ni->ni_intval));
-	ctxt_sta->dtim_interval = htole32(ni->ni_intval * ic->ic_dtim_period);
-	ctxt_sta->dtim_reciprocal =
-	    htole32(iwm_reciprocal(ni->ni_intval * ic->ic_dtim_period));
+	dtim_off = ni->ni_dtimcount * ni->ni_intval * IEEE80211_DUR_TU;
+	memcpy(&tsf, ni->ni_tstamp, sizeof(tsf));
+	tsf = letoh64(tsf);
 
-	/* 10 = CONN_MAX_LISTEN_INTERVAL */
-	ctxt_sta->listen_interval = htole32(10);
-	ctxt_sta->assoc_id = htole32(ni->ni_associd);
+	sta->is_assoc = htole32(assoc);
+	sta->dtim_time = htole32(ni->ni_rstamp + dtim_off);
+	sta->dtim_tsf = htole64(tsf + dtim_off);
+	sta->bi = htole32(ni->ni_intval);
+	sta->bi_reciprocal = htole32(iwm_reciprocal(ni->ni_intval));
+	sta->dtim_interval = htole32(ni->ni_intval * ni->ni_dtimperiod);
+	sta->dtim_reciprocal = htole32(iwm_reciprocal(sta->dtim_interval));
+	sta->listen_interval = htole32(10);
+	sta->assoc_id = htole32(ni->ni_associd);
+	sta->assoc_beacon_arrive_time = htole32(ni->ni_rstamp);
 }
 
 int
-iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
+iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action,
+    int assoc)
 {
+	struct ieee80211_node *ni = &in->in_ni;
 	struct iwm_mac_ctx_cmd cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
 
-	iwm_mac_ctxt_cmd_common(sc, in, &cmd, action);
+	iwm_mac_ctxt_cmd_common(sc, in, &cmd, action, assoc);
 
 	/* Allow beacons to pass through as long as we are not associated or we
 	 * do not have dtim period information */
-	if (!in->in_assoc || !sc->sc_ic.ic_dtim_period)
+	if (!assoc || !ni->ni_associd || !ni->ni_dtimperiod)
 		cmd.filter_flags |= htole32(IWM_MAC_FILTER_IN_BEACON);
 	else
-		cmd.filter_flags &= ~htole32(IWM_MAC_FILTER_IN_BEACON);
+		iwm_mac_ctxt_cmd_fill_sta(sc, in, &cmd.sta, assoc);
 
-	/* Fill the data specific for station mode */
-	iwm_mac_ctxt_cmd_fill_sta(sc, in,
-	    &cmd.sta, action == IWM_FW_CTXT_ACTION_ADD);
-
-	return iwm_send_cmd_pdu(sc, IWM_MAC_CONTEXT_CMD, 0, sizeof(cmd),
-	    &cmd);
+	return iwm_send_cmd_pdu(sc, IWM_MAC_CONTEXT_CMD, 0, sizeof(cmd), &cmd);
 }
 
 int
@@ -5179,8 +5178,6 @@ iwm_auth(struct iwm_softc *sc)
 	uint32_t duration;
 	int err;
 
-	in->in_assoc = 0;
-
 	err = iwm_sf_config(sc, IWM_SF_FULL_ON);
 	if (err)
 		return err;
@@ -5204,7 +5201,7 @@ iwm_auth(struct iwm_softc *sc)
 	if (err)
 		return err;
 
-	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY);
+	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 0);
 	if (err) {
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
 		return err;
@@ -5232,14 +5229,6 @@ iwm_assoc(struct iwm_softc *sc)
 	err = iwm_add_sta_cmd(sc, in, 1);
 	if (err)
 		return err;
-
-	in->in_assoc = 1;
-
-	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY);
-	if (err) {
-		printf("%s: failed to update MAC\n", DEVNAME(sc));
-		return err;
-	}
 
 	return 0;
 }
@@ -5444,10 +5433,6 @@ iwm_newstate_task(void *psc)
 	/* Reset the device if moving out of AUTH, ASSOC, or RUN. */
 	/* XXX Is there a way to switch states without a full reset? */
 	if (ostate > IEEE80211_S_SCAN && nstate < ostate) {
-		in = (struct iwm_node *)ic->ic_bss;
-		if (in)
-			in->in_assoc = 0;
-
 		iwm_stop_device(sc);
 		iwm_init_hw(sc);
 
@@ -5501,16 +5486,46 @@ iwm_newstate_task(void *psc)
 
 	case IEEE80211_S_RUN:
 		in = (struct iwm_node *)ic->ic_bss;
-		iwm_power_mac_update_mode(sc, in);
+
+		/* We have now been assigned an associd by the AP. */
+		err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 1);
+		if (err) {
+			printf("%s: failed to update MAC\n", DEVNAME(sc));
+			return;
+		}
+
+		err = iwm_power_update_device(sc);
+		if (err) {
+			printf("%s: could send power command (error %d)\n",
+			    DEVNAME(sc), err);
+			return;
+		}
 #ifdef notyet
 		/* 
 		 * Disabled for now. Default beacon filter settings
 		 * prevent net80211 from getting ERP and HT protection
 		 * updates from beacons.
 		 */
-		iwm_enable_beacon_filter(sc, in);
+		err = iwm_enable_beacon_filter(sc, in);
+		if (err) {
+			printf("%s: could not enable beacon filter\n",
+			    DEVNAME(sc));
+			return;
+		}
 #endif
-		iwm_update_quotas(sc, in);
+		err = iwm_power_mac_update_mode(sc, in);
+		if (err) {
+			printf("%s: could not update MAC power (error %d)\n",
+			    DEVNAME(sc), err);
+			return;
+		}
+
+		err = iwm_update_quotas(sc, in);
+		if (err) {
+			printf("%s: could not update quotas (error %d)\n",
+			    DEVNAME(sc), err);
+			return;
+		}
 
 		ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
 
@@ -5875,7 +5890,7 @@ iwm_init_hw(struct iwm_softc *sc)
 		}
 	}
 
-	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD);
+	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD, 0);
 	if (err) {
 		printf("%s: could not add MAC context (error %d)\n",
 		    DEVNAME(sc), err);
@@ -6031,7 +6046,6 @@ iwm_stop(struct ifnet *ifp, int disable)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	in->in_phyctxt = NULL;
-	in->in_assoc = 0;
 
 	task_del(systq, &sc->init_task);
 	task_del(sc->sc_nswq, &sc->newstate_task);
