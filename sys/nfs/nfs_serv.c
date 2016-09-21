@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.109 2016/07/04 18:34:03 natano Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.110 2016/09/21 13:22:44 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1733,24 +1733,26 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (error)
 		vrele(nd.ni_startdir);
 	else {
-	    if (info.nmi_v3) {
-		nd.ni_cnd.cn_nameiop = LOOKUP;
-		nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART | FOLLOW);
-		nd.ni_cnd.cn_flags |= (NOFOLLOW | LOCKLEAF);
-		nd.ni_cnd.cn_proc = procp;
-		nd.ni_cnd.cn_cred = cred;
-		error = vfs_lookup(&nd);
-		if (!error) {
-			memset(fhp, 0, sizeof(nfh));
-			fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;
-			error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
-			if (!error)
-				error = VOP_GETATTR(nd.ni_vp, &va, cred,
-					procp);
-			vput(nd.ni_vp);
-		}
-	    } else
-		vrele(nd.ni_startdir);
+		if (info.nmi_v3) {
+			nd.ni_cnd.cn_nameiop = LOOKUP;
+			nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART |
+			    FOLLOW);
+			nd.ni_cnd.cn_flags |= (NOFOLLOW | LOCKLEAF);
+			nd.ni_cnd.cn_proc = procp;
+			nd.ni_cnd.cn_cred = cred;
+			error = vfs_lookup(&nd);
+			if (!error) {
+				memset(fhp, 0, sizeof(nfh));
+				fhp->fh_fsid =
+				    nd.ni_vp->v_mount->mnt_stat.f_fsid;
+				error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
+				if (!error)
+					error = VOP_GETATTR(nd.ni_vp, &va, cred,
+					    procp);
+				vput(nd.ni_vp);
+			}
+		} else
+			vrele(nd.ni_startdir);
 		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	}
 out:
