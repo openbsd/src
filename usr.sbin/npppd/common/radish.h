@@ -1,4 +1,4 @@
-/*	$OpenBSD: radish.h,v 1.3 2015/12/17 08:01:55 tb Exp $ */
+/*	$OpenBSD: radish.h,v 1.4 2016/09/21 04:45:23 yasuoka Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -81,7 +81,7 @@ struct radish_head {
 #define Bcmp(a, b, n) bcmp(((caddr_t)(a)), ((caddr_t)(b)), (unsigned)(n))
 #define Bcopy(a, b, n) bcopy(((caddr_t)(a)), ((caddr_t)(b)), (unsigned)(n))
 #define Bzero(p, n) bzero((caddr_t)(p), (unsigned)(n));
-#define R_Malloc(p, t, n) (p = (t) malloc((unsigned long)(n), M_RTABLE, M_DONTWAIT))
+#define R_Malloc(p, t, n) (p = (t) malloc((n), M_RTABLE, M_DONTWAIT))
 #define Free(p) free((caddr_t)p, M_RTABLE);
 #else /* KERNEL */
 #ifndef Bcmp
@@ -90,7 +90,7 @@ struct radish_head {
 #ifndef Bzero
 #define Bzero(p, n) memset((char *)(p), 0, (size_t)(n))
 #endif
-#define R_Malloc(p, t, n) (p = (t) malloc((unsigned int)(n)))
+#define R_Malloc(p, t, n) (p = (t) malloc((n)))
 #define Free(p) free((char *)p);
 #endif /* KERNEL */
 
