@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.231 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.232 2016/09/21 07:41:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -353,9 +353,7 @@ pfsync_clone_destroy(struct ifnet *ifp)
 {
 	struct pfsync_softc *sc = ifp->if_softc;
 	struct pfsync_deferral *pd;
-	int s;
 
-	s = splsoftnet();
 	timeout_del(&sc->sc_bulkfail_tmo);
 	timeout_del(&sc->sc_bulk_tmo);
 	timeout_del(&sc->sc_tmo);
@@ -384,7 +382,6 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	pfsyncif = NULL;
-	splx(s);
 
 	return (0);
 }

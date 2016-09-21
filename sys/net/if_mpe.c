@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.54 2016/04/13 11:41:15 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.55 2016/09/21 07:41:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -117,15 +117,12 @@ int
 mpe_clone_destroy(struct ifnet *ifp)
 {
 	struct mpe_softc	*mpeif = ifp->if_softc;
-	int			s;
 
 	LIST_REMOVE(mpeif, sc_list);
 
 	if (mpeif->sc_smpls.smpls_label) {
-		s = splsoftnet();
 		rt_ifa_del(&mpeif->sc_ifa, RTF_MPLS,
 		    smplstosa(&mpeif->sc_smpls));
-		splx(s);
 	}
 
 	if_detach(ifp);

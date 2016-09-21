@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.14 2016/04/13 11:41:15 mpi Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.15 2016/09/21 07:41:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -120,15 +120,12 @@ int
 mpw_clone_destroy(struct ifnet *ifp)
 {
 	struct mpw_softc *sc = ifp->if_softc;
-	int s;
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
 	if (sc->sc_smpls.smpls_label) {
-		s = splsoftnet();
 		rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
 		    smplstosa(&sc->sc_smpls));
-		splx(s);
 	}
 
 	if_ih_remove(ifp, mpw_input, NULL);
