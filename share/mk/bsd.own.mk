@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.178 2016/09/08 18:59:49 kettenis Exp $
+#	$OpenBSD: bsd.own.mk,v 1.179 2016/09/21 18:27:55 natano Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -72,11 +72,6 @@ DOCDIR?=	/usr/share/doc
 DOCGRP?=	bin
 DOCOWN?=	root
 DOCMODE?=	${NONBINMODE}
-
-LKMDIR?=	/usr/lkm
-LKMGRP?=	${BINGRP}
-LKMOWN?=	${BINOWN}
-LKMMODE?=	${NONBINMODE}
 
 LOCALEDIR?=	/usr/share/locale
 LOCALEGRP?=	wheel
