@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.101 2016/09/21 17:08:04 jsing Exp $
+.\"	$OpenBSD: bioctl.8,v 1.102 2016/09/21 17:57:33 jsing Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -266,7 +266,11 @@ passphrase into a key, in order to create a new encrypted volume or change the
 passphrase of an existing encrypted volume.
 A larger number of iterations takes more time, but offers increased resistance
 against passphrase guessing attacks.
-The minimum is 4 rounds and the default is 16.
+If
+.Ar rounds
+is specified as "auto", the number of rounds will be automatically determined
+based on system performance.
+Otherwise the minimum is 4 rounds and the default is 16.
 .It Fl s
 Read the passphrase for the selected crypto volume from
 .Pa /dev/stdin
