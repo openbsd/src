@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.212 2016/08/29 20:31:56 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.213 2016/09/21 11:54:57 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -225,8 +225,9 @@ struct	tls *server_ctx;
 struct	tls_config *client_config, *server_config;
 const char *CAfile = "/etc/ssl/cert.pem"; /* file containing CA certificates */
 int	NoVerify = 0;		/* do not verify TLS server x509 certificate */
-char	*ClientCertfile = NULL;
-char	*ClientKeyfile = NULL;
+const char *ClientCertfile = NULL;
+const char *ClientKeyfile = NULL;
+const char *ServerCAfile = NULL;
 int	tcpbuf_dropped = 0;	/* count messages dropped from TCP or TLS */
 
 #define CTL_READING_CMD		1
@@ -356,7 +357,7 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
-	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hk:m:np:S:s:T:U:uV"))
+	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hK:k:m:np:S:s:T:U:uV"))
 	    != -1)
 		switch (ch) {
 		case '4':		/* disable IPv6 */
@@ -387,6 +388,9 @@ main(int argc, char *argv[])
 			break;
 		case 'h':		/* RFC 3164 hostnames */
 			IncludeHostname = 1;
+			break;
+		case 'K':		/* verify client with CA file */
+			ServerCAfile = optarg;
 			break;
 		case 'k':		/* file containing client key */
 			ClientKeyfile = optarg;
@@ -625,6 +629,17 @@ main(int argc, char *argv[])
 			break;
 		}
 
+		if (ServerCAfile) {
+			if (tls_config_set_ca_file(server_config,
+			    ServerCAfile) == -1) {
+				logerrortlsconf("Load server TLS CA failed",
+				    server_config);
+				/* avoid reading default certs in chroot */
+				tls_config_set_ca_mem(server_config, "", 0);
+			} else
+				logdebug("Server CAfile %s\n", ServerCAfile);
+			tls_config_verify_client(server_config);
+		}
 		tls_config_set_protocols(server_config, TLS_PROTOCOLS_ALL);
 		if (tls_config_set_ciphers(server_config, "compat") != 0)
 			logerrortlsconf("Set server TLS ciphers failed",
@@ -1453,9 +1468,9 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "usage: syslogd [-46dFhnuV] [-a path] [-C CAfile] [-c cert_file]\n"
-	    "\t[-f config_file] [-k key_file] [-m mark_interval]\n"
-	    "\t[-p log_socket] [-S listen_address] [-s reporting_socket]\n"
-	    "\t[-T listen_address] [-U bind_address]\n");
+	    "\t[-f config_file] [-K server_CAfile] [-k key_file]\n"
+	    "\t[-m mark_interval] [-p log_socket] [-S listen_address]\n"
+	    "\t[-s reporting_socket] [-T listen_address] [-U bind_address]\n");
 	exit(1);
 }
 
