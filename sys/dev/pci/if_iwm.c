@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.133 2016/09/21 12:56:43 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.134 2016/09/21 13:08:34 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4982,6 +4982,7 @@ void
 iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
     struct iwm_mac_ctx_cmd *cmd, uint32_t action)
 {
+#define IWM_EXP2(x)	((1 << (x)) - 1)	/* CWmin = 2^ECWmin - 1 */
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	int cck_ack_rates, ofdm_ack_rates;
@@ -5011,15 +5012,18 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 	    = htole32((ic->ic_flags & IEEE80211_F_SHSLOT)
 	      ? IWM_MAC_FLG_SHORT_SLOT : 0);
 
-	for (i = 0; i < IWM_AC_NUM+1; i++) {
-		int txf = i;
+	for (i = 0; i < EDCA_NUM_AC; i++) {
+		struct ieee80211_edca_ac_params *ac = &ic->ic_edca_ac[i];
+		int txf = iwm_ac_to_tx_fifo[i];
 
-		cmd->ac[txf].cw_min = htole16(0x0f);
-		cmd->ac[txf].cw_max = htole16(0x3f);
-		cmd->ac[txf].aifsn = 1;
+		cmd->ac[txf].cw_min = htole16(IWM_EXP2(ac->ac_ecwmin));
+		cmd->ac[txf].cw_max = htole16(IWM_EXP2(ac->ac_ecwmax));
+		cmd->ac[txf].aifsn = ac->ac_aifsn;
 		cmd->ac[txf].fifos_mask = (1 << txf);
-		cmd->ac[txf].edca_txop = 0;
+		cmd->ac[txf].edca_txop = htole16(ac->ac_txoplimit * 32);
 	}
+	if (ni->ni_flags & IEEE80211_NODE_QOS)
+		cmd->qos_flags |= htole32(IWM_MAC_QOS_FLG_UPDATE_EDCA);
 
 	if (ni->ni_flags & IEEE80211_NODE_HT) {
 		enum ieee80211_htprot htprot =
@@ -5046,6 +5050,7 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 		cmd->protection_flags |= htole32(IWM_MAC_PROT_FLG_TGG_PROTECT);
 
 	cmd->filter_flags = htole32(IWM_MAC_FILTER_ACCEPT_GRP);
+#undef IWM_EXP2
 }
 
 void
