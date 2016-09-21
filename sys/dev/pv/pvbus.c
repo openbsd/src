@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.12 2016/06/06 17:17:54 mikeb Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.13 2016/09/21 16:00:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -49,6 +49,7 @@
 
 int has_hv_cpuid = 0;
 
+extern char *hw_vendor;
 extern void rdrand(void *);
 
 int	 pvbus_activate(struct device *, int);
@@ -167,6 +168,7 @@ pvbus_identify(void)
 		char		str[CPUID_HV_SIGNATURE_STRLEN];
 	} r;
 	int i, cnt;
+	const char *pv_name;
 
 	for (base = CPUID_HV_SIGNATURE_START, cnt = 0;
 	    base < CPUID_HV_SIGNATURE_END;
@@ -190,6 +192,19 @@ pvbus_identify(void)
 			hv->hv_base = base;
 			if (pvbus_types[i].init != NULL)
 				(pvbus_types[i].init)(hv);
+			if (hw_vendor == NULL) {
+				pv_name = pvbus_types[i].name;
+
+				/*
+				 * Use the HV name as a fallback if we didn't
+				 * get the vendor name from the firmware/BIOS.
+				 */
+				if ((hw_vendor = malloc(strlen(pv_name) + 1,
+	                            M_DEVBUF, M_NOWAIT)) != NULL) {
+					strlcpy(hw_vendor, pv_name,
+					    strlen(pv_name) + 1);
+				}
+			}
 			cnt++;
 		}
 	}
