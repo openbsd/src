@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.310 2016/09/18 14:32:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.311 2016/09/21 14:06:50 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -410,19 +410,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &somaxconn));
 	case KERN_SOMINCONN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &sominconn));
-	case KERN_ARND: {
-		char buf[512];
-
-		if (*oldlenp > sizeof(buf))
-			return (EINVAL);
-		if (oldp) {
-			arc4random_buf(buf, *oldlenp);
-			if ((error = copyout(buf, oldp, *oldlenp)))
-				return (error);
-			explicit_bzero(buf, sizeof(buf));
-		}
-		return (0);
-	}
 	case KERN_NOSUIDCOREDUMP:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &nosuidcoredump));
 	case KERN_FSYNC:

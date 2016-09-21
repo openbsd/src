@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.220 2016/09/02 11:11:48 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.221 2016/09/21 14:06:49 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -397,7 +397,6 @@ parse(char *string, int flags)
 			special |= BOOTTIME;
 			break;
 		case KERN_HOSTID:
-		case KERN_ARND:
 			special |= UNSIGNED;
 			special |= SMALLBUF;
 			break;

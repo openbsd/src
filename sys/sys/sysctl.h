@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.165 2016/09/07 17:30:12 natano Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.166 2016/09/21 14:06:50 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ struct ctlname {
 #define	KERN_SYSVMSG		34	/* int: SysV message queue suppoprt */
 #define	KERN_SYSVSEM		35	/* int: SysV semaphore support */
 #define	KERN_SYSVSHM		36	/* int: SysV shared memory support */
-#define	KERN_ARND		37	/* int: random integer from arc4rnd */
+/* was	KERN_ARND		37	*/
 #define	KERN_MSGBUFSIZE		38	/* int: size of message buffer */
 #define KERN_MALLOCSTATS	39	/* node: malloc statistics */
 #define KERN_CPTIME		40	/* array: cp_time */
@@ -218,7 +218,7 @@ struct ctlname {
 	{ "somaxconn", CTLTYPE_INT }, \
 	{ "sominconn", CTLTYPE_INT }, \
 	{ "gap", 0 }, \
-	{ "random", CTLTYPE_STRUCT }, \
+	{ "gap", 0 }, \
 	{ "nosuidcoredump", CTLTYPE_INT }, \
 	{ "fsync", CTLTYPE_INT }, \
 	{ "sysvmsg", CTLTYPE_INT }, \
