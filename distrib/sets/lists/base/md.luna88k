@@ -1032,9 +1032,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/hypervreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/hypervvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/if_hvnreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/ndis.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/pvreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/pvvar.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/rndisreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/xenreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/xenvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/radio_if.ph

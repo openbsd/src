@@ -641,7 +641,7 @@
 ./usr/include/dev/pv/if_hvnreg.h
 ./usr/include/dev/pv/pvreg.h
 ./usr/include/dev/pv/pvvar.h
-./usr/include/dev/pv/rndisreg.h
+./usr/include/dev/pv/ndis.h
 ./usr/include/dev/pv/xenreg.h
 ./usr/include/dev/pv/xenvar.h
 ./usr/include/dev/radio_if.h

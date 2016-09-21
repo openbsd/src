@@ -1097,9 +1097,9 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pv/hypervreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pv/hypervvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pv/if_hvnreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pv/ndis.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pv/pvreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pv/pvvar.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pv/rndisreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pv/xenreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pv/xenvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/radio_if.ph
