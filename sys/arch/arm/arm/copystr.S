@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.6 2016/04/25 04:46:56 jsg Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.7 2016/09/21 11:33:05 kettenis Exp $	*/
 /*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/errno.h>
 
 	.text
-	.align	0
+	.align	2
 #ifdef MULTIPROCESSOR
 .Lcpu_info:
 	.word	_C_LABEL(cpu_info)
@@ -210,5 +210,5 @@ ENTRY(copyoutstr)
 
 Lcopystrpcbfaulttext:
 	.asciz	"No valid PCB during copyinoutstr() addr1=%08x addr2=%08x\n"
-	.align	0
+	.align	2
 #endif

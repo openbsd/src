@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.4 2016/05/27 16:32:38 deraadt Exp $	*/
+/*	$OpenBSD: profile.h,v 1.5 2016/09/21 11:33:05 kettenis Exp $	*/
 /*	$NetBSD: profile.h,v 1.5 2002/03/24 15:49:40 bjh21 Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 
 #define	MCOUNT								\
 	__asm__(".text");						\
-	__asm__(".align	0");						\
+	__asm__(".align	2");						\
 	__asm__(".type	" MCOUNT_ASM_NAME ",%function");		\
 	__asm__(".global	" MCOUNT_ASM_NAME);			\
 	__asm__(MCOUNT_ASM_NAME ":");					\

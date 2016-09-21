@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm.S,v 1.4 2016/04/25 04:46:56 jsg Exp $	*/
+/*	$OpenBSD: cpufunc_asm.S,v 1.5 2016/09/21 11:33:05 kettenis Exp $	*/
 /*	$NetBSD: cpufunc_asm.S,v 1.12 2003/09/06 09:14:52 rearnsha Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #include <arm/sysreg.h>
 
 	.text
-	.align	0
+	.align	2
 
 ENTRY(cpufunc_nullop)
 	mov	pc, lr

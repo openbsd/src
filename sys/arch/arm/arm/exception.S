@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.5 2015/01/18 12:03:11 jsg Exp $	*/
+/*	$OpenBSD: exception.S,v 1.6 2016/09/21 11:33:05 kettenis Exp $	*/
 /*	$NetBSD: exception.S,v 1.13 2003/10/31 16:30:15 scw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #include "assym.h"
 
 	.text	
-	.align	0
+	.align	2
 
 AST_LOCALS
 
@@ -120,7 +120,7 @@ abortprefetch:
 
 abortprefetchmsg:
         .asciz  "abortprefetch"
-        .align  0
+        .align  2
 
 /*
  * data_abort_entry:
@@ -157,7 +157,7 @@ abortdata:
 
 abortdatamsg:
         .asciz  "abortdata"
-        .align  0
+        .align  2
 
 /*
  * address_exception_entry:
@@ -231,7 +231,7 @@ ENTRY_NP(undefinedinstruction_bounce)
 	b	_C_LABEL(undefinedinstruction)
 
 	.data
-	.align	0
+	.align	2
 
 /*
  * Indirection data

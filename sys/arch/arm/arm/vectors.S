@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: vectors.S,v 1.2 2016/09/21 11:33:05 kettenis Exp $	*/
 /*	$NetBSD: vectors.S,v 1.4 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 	.text
-	.align	0
+	.align	2
 	.global	_C_LABEL(page0), _C_LABEL(page0_data), _C_LABEL(page0_end)
 	.global _C_LABEL(fiqvector)
 
@@ -97,7 +97,7 @@ _C_LABEL(page0_end):
 
 #ifdef __ARM_FIQ_INDIRECT
 	.data
-	.align	0
+	.align	2
 _C_LABEL(fiqvector):
 	subs	pc, lr, #4
 	.org	_C_LABEL(fiqvector) + 0x100

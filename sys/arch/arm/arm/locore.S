@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2016/04/25 04:46:56 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 2016/09/21 11:33:05 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 	.text
-	.align	0
+	.align	2
 
 ENTRY_NP(kernel_text)
 
@@ -98,14 +98,14 @@ ASENTRY_NP(start)
 
 .Lmainreturned:
 	.asciz	"main() returned"
-	.align	0
+	.align	2
 
 	.bss
 svcstk:
 	.space	INIT_ARM_STACK_SIZE
 
 	.text
-	.align	0
+	.align	2
 
 #ifndef OFW
 	/* OFW based systems will use OF_boot() */

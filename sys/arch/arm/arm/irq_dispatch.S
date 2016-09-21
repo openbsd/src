@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.11 2016/04/25 04:46:56 jsg Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.12 2016/09/21 11:33:05 kettenis Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -86,7 +86,7 @@
  *	which can be used by different platforms.
  */
 	.text
-	.align	0
+	.align	2
 .Lcpu_info_primary:
 	.word	_C_LABEL(cpu_info_primary)
 
@@ -129,7 +129,7 @@ ASENTRY_NP(irq_entry)
 	movs	pc, lr			/* Exit */
 
 	.bss
-	.align	0
+	.align	2
 
 	.global _C_LABEL(astpending)
 _C_LABEL(astpending):

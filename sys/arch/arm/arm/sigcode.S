@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.S,v 1.4 2016/05/23 20:11:49 deraadt Exp $	*/
+/*	$OpenBSD: sigcode.S,v 1.5 2016/09/21 11:33:05 kettenis Exp $	*/
 /*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 	.section .rodata
-	.align	0
+	.align	2
 	.globl	sigcode
 	.type	x,_ASM_TYPE_FUNCTION
 sigcode:
@@ -54,7 +54,7 @@ sigcode:
  */
 /*	mov	r0, sp */
 	add	r0, sp, #SIGF_SC
-	ldr	r12, =SYS_sigreturn
+	mov	r12, #SYS_sigreturn
 	swi	SYS_sigreturn
 	.globl  _C_LABEL(sigcoderet)
 _C_LABEL(sigcoderet):
@@ -64,7 +64,7 @@ _C_LABEL(sigcoderet):
 	swi	SYS_exit
 	b	. - 8
 
-	.align	0
+	.align	2
         .global _C_LABEL(esigcode)
 _C_LABEL(esigcode):
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 2016/05/27 16:32:38 deraadt Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 2016/09/21 11:33:05 kettenis Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #endif
 
 #ifndef _ALIGN_TEXT
-# define _ALIGN_TEXT .align 0
+# define _ALIGN_TEXT .align 2
 #endif
 
 /*
