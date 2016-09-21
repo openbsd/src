@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.134 2016/09/21 13:08:34 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.135 2016/09/21 13:22:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4203,14 +4203,15 @@ void
 iwm_power_build_cmd(struct iwm_softc *sc, struct iwm_node *in,
     struct iwm_mac_power_cmd *cmd)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = &in->in_ni;
-	int dtimper, dtimper_msec;
-	int keep_alive;
+	int dtim_period, dtim_msec, keep_alive;
 
 	cmd->id_and_color = htole32(IWM_FW_CMD_ID_AND_COLOR(in->in_id,
 	    in->in_color));
-	dtimper = ic->ic_dtim_period ?: 1;
+	if (ni->ni_dtimperiod)
+		dtim_period = ni->ni_dtimperiod;
+	else
+		dtim_period = 1;
 
 	/*
 	 * Regardless of power management state the driver must set
@@ -4218,11 +4219,16 @@ iwm_power_build_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	 * immediately after association. Check that keep alive period
 	 * is at least 3 * DTIM.
 	 */
-	dtimper_msec = dtimper * ni->ni_intval;
-	keep_alive
-	    = MAX(3 * dtimper_msec, 1000 * IWM_POWER_KEEP_ALIVE_PERIOD_SEC);
+	dtim_msec = dtim_period * ni->ni_intval;
+	keep_alive = MAX(3 * dtim_msec, 1000 * IWM_POWER_KEEP_ALIVE_PERIOD_SEC);
 	keep_alive = roundup(keep_alive, 1000) / 1000;
 	cmd->keep_alive_seconds = htole16(keep_alive);
+
+#ifdef notyet
+	cmd->flags = htole16(IWM_POWER_FLAGS_POWER_SAVE_ENA_MSK);
+	cmd->rx_data_timeout = IWM_DEFAULT_PS_RX_DATA_TIMEOUT;
+	cmd->tx_data_timeout = IWM_DEFAULT_PS_TX_DATA_TIMEOUT;
+#endif
 }
 
 int
@@ -4250,7 +4256,9 @@ int
 iwm_power_update_device(struct iwm_softc *sc)
 {
 	struct iwm_device_power_cmd cmd = {
+#ifdef notyet
 		.flags = htole16(IWM_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK),
+#endif
 	};
 
 	if (!(sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_DEVICE_PS_CMD))
@@ -5830,7 +5838,7 @@ iwm_init_hw(struct iwm_softc *sc)
 
 	err = iwm_power_update_device(sc);
 	if (err) {
-		printf("%s: could send power update command (error %d)\n",
+		printf("%s: could send power command (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
 	}
