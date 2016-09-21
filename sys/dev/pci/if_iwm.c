@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.138 2016/09/21 13:57:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.139 2016/09/21 14:02:33 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5297,17 +5297,15 @@ iwm_setrates(struct iwm_node *in)
 	struct iwm_host_cmd cmd = {
 		.id = IWM_LQ_CMD,
 		.len = { sizeof(in->in_lq), },
-		.flags = 0,
+		.flags = IWM_LQ_FLAG_USE_RTS_MSK,
 	};
 
 	memset(lq, 0, sizeof(*lq));
 	lq->sta_id = IWM_STATION_ID;
 
-	/* For HT, enable RTS/CTS, and SGI (if supported). */
-	if (ni->ni_flags & IEEE80211_NODE_HT) {
-		lq->flags |= IWM_LQ_FLAG_USE_RTS_MSK;
+	if (ni->ni_flags & IEEE80211_NODE_HT)
 		sgi_ok = (ni->ni_htcaps & IEEE80211_HTCAP_SGI20);
-	} else
+	else
 		sgi_ok = 0;
 
 	/*
