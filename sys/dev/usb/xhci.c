@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.67 2016/09/15 02:00:17 dlg Exp $ */
+/* $OpenBSD: xhci.c,v 1.68 2016/09/21 07:56:22 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1088,9 +1088,10 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
+	uint32_t mps = UE_GET_SIZE(UGETW(ed->wMaxPacketSize));
 	uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 	uint8_t ival, speed, cerr = 0;
-	uint32_t mps, route = 0, rhport = 0;
+	uint32_t route = 0, rhport = 0;
 	struct usbd_device *hub;
 
 	/*
@@ -1112,29 +1113,22 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	case USB_SPEED_LOW:
 		ival= 3;
 		speed = XHCI_SPEED_LOW;
-		mps = 8;
 		break;
 	case USB_SPEED_FULL:
 		ival = 3;
 		speed = XHCI_SPEED_FULL;
-		mps = 8;
 		break;
 	case USB_SPEED_HIGH:
 		ival = min(3, ed->bInterval);
 		speed = XHCI_SPEED_HIGH;
-		mps = 64;
 		break;
 	case USB_SPEED_SUPER:
 		ival = min(3, ed->bInterval);
 		speed = XHCI_SPEED_SUPER;
-		mps = 512;
 		break;
 	default:
 		return;
 	}
-
-	/* XXX Until we fix wMaxPacketSize for ctrl ep depending on the speed */
-	mps = max(mps, UE_GET_SIZE(UGETW(ed->wMaxPacketSize)));
 
 	if (pipe->interval != USBD_DEFAULT_INTERVAL)
 		ival = min(ival, pipe->interval);
