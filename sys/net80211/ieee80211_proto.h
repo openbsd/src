@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.41 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.42 2016/09/21 12:21:27 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -161,5 +161,10 @@ extern	int ieee80211_addba_request(struct ieee80211com *,
 	    struct ieee80211_node *,  u_int16_t, u_int8_t);
 extern	void ieee80211_delba_request(struct ieee80211com *,
 	    struct ieee80211_node *, u_int16_t, u_int8_t, u_int8_t);
+extern	void ieee80211_addba_req_accept(struct ieee80211com *,
+	    struct ieee80211_node *, uint8_t);
+extern	void ieee80211_addba_req_refuse(struct ieee80211com *,
+	    struct ieee80211_node *, uint8_t);
+
 
 #endif /* _NET80211_IEEE80211_PROTO_H_ */

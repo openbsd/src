@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.179 2016/09/20 13:24:42 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.180 2016/09/21 12:21:27 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2424,8 +2424,9 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm;
 	struct ieee80211_rx_ba *ba;
-	u_int16_t params, ssn, bufsz, timeout, status;
+	u_int16_t params, ssn, bufsz, timeout;
 	u_int8_t token, tid;
+	int err;
 
 	if (!(ni->ni_flags & IEEE80211_NODE_HT)) {
 		DPRINTF(("received ADDBA req from non-HT STA %s\n",
@@ -2467,32 +2468,33 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 			ieee80211_ba_move_window(ic, ni, tid, ssn);
 		return;
 	}
+
+	/* If the driver does not support A-MPDU, refuse the request. */
+	if (ic->ic_ampdu_rx_start == NULL)
+		goto refuse;
+
 	/* if PBAC required but RA does not support it, refuse request */
 	if ((ic->ic_flags & IEEE80211_F_PBAR) &&
 	    (!(ni->ni_flags & IEEE80211_NODE_MFP) ||
-	     !(ni->ni_rsncaps & IEEE80211_RSNCAP_PBAC))) {
-		status = IEEE80211_STATUS_REFUSED;
-		goto resp;
-	}
+	     !(ni->ni_rsncaps & IEEE80211_RSNCAP_PBAC)))
+		goto refuse;
 	/*
 	 * If the TID for which the Block Ack agreement is requested is
 	 * configured with a no-ACK policy, refuse the agreement.
 	 */
-	if (ic->ic_tid_noack & (1 << tid)) {
-		status = IEEE80211_STATUS_REFUSED;
-		goto resp;
-	}
+	if (ic->ic_tid_noack & (1 << tid))
+		goto refuse;
+
 	/* check that we support the requested Block Ack Policy */
 	if (!(ic->ic_htcaps & IEEE80211_HTCAP_DELAYEDBA) &&
-	    !(params & IEEE80211_ADDBA_BA_POLICY)) {
-		status = IEEE80211_STATUS_INVALID_PARAM;
-		goto resp;
-	}
+	    !(params & IEEE80211_ADDBA_BA_POLICY))
+		goto refuse;
 
 	/* setup Block Ack agreement */
 	ba->ba_state = IEEE80211_BA_INIT;
 	ba->ba_timeout_val = timeout * IEEE80211_DUR_TU;
 	ba->ba_ni = ni;
+	ba->ba_token = token;
 	timeout_set(&ba->ba_to, ieee80211_rx_ba_timeout, ba);
 	timeout_set(&ba->ba_gap_to, ieee80211_input_ba_gap_timeout, ba);
 	ba->ba_winsize = bufsz;
@@ -2506,31 +2508,61 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	/* allocate and setup our reordering buffer */
 	ba->ba_buf = malloc(IEEE80211_BA_MAX_WINSZ * sizeof(*ba->ba_buf),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ba->ba_buf == NULL) {
-		status = IEEE80211_STATUS_REFUSED;
-		goto resp;
-	}
+	if (ba->ba_buf == NULL)
+		goto refuse;
+
 	ba->ba_head = 0;
 
 	/* notify drivers of this new Block Ack agreement */
-	if (ic->ic_ampdu_rx_start == NULL ||
-	    ic->ic_ampdu_rx_start(ic, ni, tid) != 0) {
+	err = ic->ic_ampdu_rx_start(ic, ni, tid);
+	if (err == EBUSY) {
+		/* driver will accept or refuse agreement when done */
+		return;
+	} else if (err) {
 		/* driver failed to setup, rollback */
-		free(ba->ba_buf, M_DEVBUF, 0);
-		ba->ba_buf = NULL;
-		status = IEEE80211_STATUS_REFUSED;
-		goto resp;
-	}
+		ieee80211_addba_req_refuse(ic, ni, tid);
+	} else
+		ieee80211_addba_req_accept(ic, ni, tid);
+	return;
+
+ refuse:
+	/* MLME-ADDBA.response */
+	IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_BA,
+	    IEEE80211_ACTION_ADDBA_RESP,
+	    IEEE80211_STATUS_REFUSED << 16 | token << 8 | tid);
+}
+
+void
+ieee80211_addba_req_accept(struct ieee80211com *ic, struct ieee80211_node *ni,
+    uint8_t tid)
+{
+	struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
+
 	ba->ba_state = IEEE80211_BA_AGREED;
 	ic->ic_stats.is_ht_rx_ba_agreements++;
 	/* start Block Ack inactivity timer */
 	if (ba->ba_timeout_val != 0)
 		timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
-	status = IEEE80211_STATUS_SUCCESS;
- resp:
+
 	/* MLME-ADDBA.response */
 	IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_BA,
-	    IEEE80211_ACTION_ADDBA_RESP, status << 16 | token << 8 | tid);
+	    IEEE80211_ACTION_ADDBA_RESP,
+	    IEEE80211_STATUS_SUCCESS << 16 | ba->ba_token << 8 | tid);
+}
+
+void
+ieee80211_addba_req_refuse(struct ieee80211com *ic, struct ieee80211_node *ni,
+    uint8_t tid)
+{
+	struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
+
+	free(ba->ba_buf, M_DEVBUF, 0);
+	ba->ba_buf = NULL;
+
+	/* MLME-ADDBA.response */
+	IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_BA,
+	    IEEE80211_ACTION_ADDBA_RESP,
+	    IEEE80211_STATUS_REFUSED << 16 | ba->ba_token << 8 | tid);
 }
 
 /*-
