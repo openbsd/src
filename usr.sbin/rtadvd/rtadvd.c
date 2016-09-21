@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.79 2016/09/15 16:16:03 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.80 2016/09/21 18:51:05 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -371,8 +371,8 @@ rtsock_cb(int fd, short event, void *arg)
 			if (sflag)
 				break;	/* we aren't interested in prefixes  */
 
-			addr = get_addr(msg);
-			plen = get_prefixlen(msg);
+			addr = get_addr(next);
+			plen = get_prefixlen(next);
 			/* sanity check for plen */
 			/* as RFC2373, prefixlen is at least 4 */
 			if (plen < 4 || plen > 127) {
@@ -400,8 +400,8 @@ rtsock_cb(int fd, short event, void *arg)
 			if (sflag)
 				break;
 
-			addr = get_addr(msg);
-			plen = get_prefixlen(msg);
+			addr = get_addr(next);
+			plen = get_prefixlen(next);
 			/* sanity check for plen */
 			/* as RFC2373, prefixlen is at least 4 */
 			if (plen < 4 || plen > 127) {
