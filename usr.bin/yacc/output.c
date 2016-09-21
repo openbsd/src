@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.25 2015/12/11 20:25:47 mmcc Exp $	*/
+/*	$OpenBSD: output.c,v 1.26 2016/09/21 16:26:30 otto Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -281,9 +281,9 @@ token_actions(void)
 
 	actionrow = NEW2(2*ntokens, short);
 	for (i = 0; i < nstates; ++i) {
-	if (parser[i]) {
-		for (j = 0; j < 2 * ntokens; ++j)
-			actionrow[j] = 0;
+		if (parser[i]) {
+			for (j = 0; j < 2 * ntokens; ++j)
+				actionrow[j] = 0;
 			shiftcount = 0;
 			reducecount = 0;
 			for (p = parser[i]; p; p = p->next) {
