@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.6 2015/11/02 00:48:17 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.7 2016/09/21 12:01:17 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -62,7 +62,14 @@ sub child {
 			    Domain              => $self->{connectdomain},
 			    PeerAddr            => $self->{connectaddr},
 			    PeerPort            => $self->{connectport},
-			    SSL_verify_mode     => SSL_VERIFY_NONE,
+			    $self->{sslcert} ?
+				(SSL_cert_file => $self->{sslcert}) : (),
+			    $self->{sslkey} ?
+				(SSL_key_file => $self->{sslkey}) : (),
+			    $self->{sslca} ?
+				(SSL_ca_file => $self->{sslca}) : (),
+			    SSL_verify_mode     => ($self->{sslca} ?
+				SSL_VERIFY_PEER : SSL_VERIFY_NONE),
 			    $self->{sslversion} ?
 				(SSL_version => $self->{sslversion}) : (),
 			    $self->{sslciphers} ?

@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.8 2016/07/12 09:57:20 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.9 2016/09/21 12:01:17 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -54,9 +54,10 @@ sub listen {
 	    $self->{listenport}	? (LocalPort => $self->{listenport}) : (),
 	    SSL_key_file	=> "server.key",
 	    SSL_cert_file	=> "server.crt",
-	    SSL_ca_file		=> ($self->{cacrt} || "ca.crt"),
-	    $self->{sslverify}	? (SSL_verify_mode => SSL_VERIFY_PEER) : (),
-	    $self->{sslverify}	? (SSL_verifycn_scheme => "none") : (),
+	    SSL_ca_file		=> ($self->{sslca} || "ca.crt"),
+	    SSL_verify_mode     => ($self->{sslca} ?
+		SSL_VERIFY_PEER : SSL_VERIFY_NONE),
+	    $self->{sslca}	? (SSL_verifycn_scheme => "none") : (),
 	    $self->{sslversion}	? (SSL_version => $self->{sslversion}) : (),
 	    $self->{sslciphers}	? (SSL_cipher_list => $self->{sslciphers}) : (),
 	) or die ref($self), " $iosocket socket failed: $!,$SSL_ERROR";
@@ -104,7 +105,7 @@ sub child {
 		print STDERR "ssl version: ",$as->get_sslversion(),"\n";
 		print STDERR "ssl cipher: ",$as->get_cipher(),"\n";
 		print STDERR "ssl subject: ", $as->peer_certificate("subject")
-		    ,"\n" if $self->{sslverify};
+		    ,"\n" if $self->{sslca};
 	}
 
 	*STDIN = *STDOUT = $self->{as} = $as;

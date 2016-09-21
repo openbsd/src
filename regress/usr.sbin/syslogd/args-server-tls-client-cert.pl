@@ -22,7 +22,7 @@ our %args = (
     },
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tls", addr => "localhost" },
-	sslverify => 1,
+	sslca => "ca.crt",
 	loggrep => {
 	    qr/ssl subject: /.
 		qr{/L=OpenBSD/O=syslogd-regress/OU=client/CN=localhost} => 1,
