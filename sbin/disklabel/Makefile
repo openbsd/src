@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 2016/09/01 09:46:42 tedu Exp $
+#	$OpenBSD: Makefile,v 1.64 2016/09/21 20:12:27 fcambus Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -47,10 +47,6 @@ CFLAGS+= -DSEEALSO="\"fdisk(8), pdisk(8)\""
 
 .if (${MACHINE} == "sparc64")
 CFLAGS+= -DSEEALSO="\"installboot(8)\"" -DSUN_CYLCHECK -DSUN_AAT0
-.endif
-
-.if (${MACHINE} == "zaurus")
-CFLAGS+= -DSEEALSO="\"fdisk(8)\""
 .endif
 
 .ifdef NOPIC
