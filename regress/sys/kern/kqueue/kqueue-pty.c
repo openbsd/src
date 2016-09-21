@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-pty.c,v 1.7 2016/09/20 23:05:27 bluhm Exp $	*/
+/*	$OpenBSD: kqueue-pty.c,v 1.8 2016/09/21 15:26:54 bluhm Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003, Public Domain	*/
 
@@ -31,14 +31,26 @@ pty_check(int kq, struct kevent *ev, int n, int rm, int rs, int wm, int ws)
 
 	for (i = 0; i < n; i++, ev++) {
 		if (ev->filter == EVFILT_READ) {
-			ASSX(rm > 0 || ev->ident != -rm);
-			ASSX(rs > 0 || ev->ident != -rs);
+			ASSX(ev->ident != -rm);
+			ASSX(ev->ident != -rs);
+			if (ev->ident == rm)
+				rm = 0;
+			if (ev->ident == rs)
+				rs = 0;
 		} else if (ev->filter == EVFILT_WRITE) {
-			ASSX(wm > 0 || ev->ident != -wm);
-			ASSX(ws > 0 || ev->ident != -ws);
+			ASSX(ev->ident != -wm);
+			ASSX(ev->ident != -ws);
+			if (ev->ident == wm)
+				wm = 0;
+			if (ev->ident == ws)
+				ws = 0;
 		} else
 			errx(1, "unknown event");
 	}
+	ASSX(rm <= 0);
+	ASSX(rs <= 0);
+	ASSX(wm <= 0);
+	ASSX(ws <= 0);
 
 	return (0);
 }
@@ -48,10 +60,13 @@ do_pty(void)
 {
 	struct kevent ev[4];
 	struct termios tt;
-	int kq, massa, slave;
+	int fd, kq, massa, slave;
 	char buf[1024];
 
-	tcgetattr(STDIN_FILENO, &tt);
+	ASS((fd = open("/dev/console", O_RDONLY, &tt)) > 0,
+	    warn("open /dev/console"));
+	ASS(tcgetattr(fd, &tt) == 0,
+	    warn("tcgetattr"));
 	cfmakeraw(&tt);
 	tt.c_lflag &= ~ECHO;
 	if (openpty(&massa, &slave, NULL, &tt, NULL) < 0)
@@ -71,7 +86,9 @@ do_pty(void)
 	if (kevent(kq, ev, 4, NULL, 0, NULL) < 0)
 		err(1, "slave: kevent add");
 
-	memset(buf, 0, sizeof buf);
+	memset(buf, 0, sizeof(buf));
+
+	ASSX(pty_check(kq, ev, 4, -massa, -slave, massa, slave) == 0);
 
 	if (write(massa, " ", 1) != 1)
 		err(1, "massa: write");
