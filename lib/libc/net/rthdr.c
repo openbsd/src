@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthdr.c,v 1.11 2015/09/14 11:01:47 guenther Exp $	*/
+/*	$OpenBSD: rthdr.c,v 1.12 2016/09/21 04:38:56 guenther Exp $	*/
 /*	$KAME: rthdr.c,v 1.22 2006/02/09 08:18:58 keiichi Exp $	*/
 
 /*
@@ -120,8 +120,7 @@ inet6_rth_reverse(const void *in, void *out)
 		segments = rth0_in->ip6r0_len / 2;
 
 		/* we can't use memcpy here, since in and out may overlap */
-		memmove((void *)rth0_out, (void *)rth0_in,
-			((rth0_in->ip6r0_len) + 1) << 3);
+		memmove(rth0_out, rth0_in, ((rth0_in->ip6r0_len) + 1) << 3);
 		rth0_out->ip6r0_segleft = segments;
 
 		/* reverse the addresses */

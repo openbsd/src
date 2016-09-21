@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.29 2015/12/25 19:10:29 mmcc Exp $ */
+/*	$OpenBSD: strftime.c,v 1.30 2016/09/21 04:38:57 guenther Exp $ */
 /*
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
@@ -680,7 +680,7 @@ _loc(void)
 	(void) strlcpy(lbuf, name, bufsize);
 	p = lbuf + namesize;
 	plim = p + st.st_size;
-	if (read(fd, p, (size_t) st.st_size) != st.st_size)
+	if (read(fd, p, st.st_size) != st.st_size)
 		goto bad_lbuf;
 	if (close(fd) != 0)
 		goto bad_lbuf;

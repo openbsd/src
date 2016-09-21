@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_close.c,v 1.12 2015/07/16 04:27:33 tedu Exp $	*/
+/*	$OpenBSD: rec_close.c,v 1.13 2016/09/21 04:38:56 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -124,7 +124,7 @@ __rec_sync(const DB *dbp, u_int flags)
 		return (RET_ERROR);
 
 	/* Rewind the file descriptor. */
-	if (lseek(t->bt_rfd, (off_t)0, SEEK_SET) != 0)
+	if (lseek(t->bt_rfd, 0, SEEK_SET) != 0)
 		return (RET_ERROR);
 
 	/* Save the cursor. */
@@ -164,7 +164,7 @@ __rec_sync(const DB *dbp, u_int flags)
 
 	if (status == RET_ERROR)
 		return (RET_ERROR);
-	if ((off = lseek(t->bt_rfd, (off_t)0, SEEK_CUR)) == -1)
+	if ((off = lseek(t->bt_rfd, 0, SEEK_CUR)) == -1)
 		return (RET_ERROR);
 	if (ftruncate(t->bt_rfd, off))
 		return (RET_ERROR);

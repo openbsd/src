@@ -1,4 +1,4 @@
-/*	$OpenBSD: fvwrite.c,v 1.17 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: fvwrite.c,v 1.18 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,7 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 	}
 
 #define	MIN(a, b) ((a) < (b) ? (a) : (b))
-#define	COPY(n)	  (void)memcpy((void *)fp->_p, (void *)p, (size_t)(n))
+#define	COPY(n)	  (void)memcpy(fp->_p, p, n)
 
 	iov = uio->uio_iov;
 	p = iov->iov_base;
@@ -164,7 +164,7 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 		do {
 			GETIOV(nlknown = 0);
 			if (!nlknown) {
-				nl = memchr((void *)p, '\n', len);
+				nl = memchr(p, '\n', len);
 				nldist = nl ? nl + 1 - p : len + 1;
 				nlknown = 1;
 			}

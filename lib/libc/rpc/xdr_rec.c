@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_rec.c,v 1.21 2015/10/04 06:37:21 guenther Exp $ */
+/*	$OpenBSD: xdr_rec.c,v 1.22 2016/09/21 04:38:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -321,8 +321,8 @@ xdrrec_getpos(XDR *xdrs)
 	RECSTREAM *rstrm = (RECSTREAM *)xdrs->x_private;
 	off_t pos;
 
-	pos = lseek((int)(long)rstrm->tcp_handle, (off_t)0, SEEK_CUR);
-	if (pos != (off_t)-1)
+	pos = lseek((int)(long)rstrm->tcp_handle, 0, SEEK_CUR);
+	if (pos != -1)
 		switch (xdrs->x_op) {
 
 		case XDR_ENCODE:
@@ -646,7 +646,7 @@ get_input_bytes(RECSTREAM *rstrm, caddr_t addr, int len)
 	if (rstrm->nonblock) {
 		if (len > (int)(rstrm->in_boundry - rstrm->in_finger))
 			return FALSE;
-		memcpy(addr, rstrm->in_finger, (size_t)len);
+		memcpy(addr, rstrm->in_finger, len);
 		rstrm->in_finger += len;
 		return (TRUE);
 	}
@@ -730,7 +730,7 @@ realloc_stream(RECSTREAM *rstrm, int size)
 	char *buf;
 
 	if (size > rstrm->recvsize) {
-		buf = realloc(rstrm->in_base, (size_t)size);
+		buf = realloc(rstrm->in_base, size);
 		if (buf == NULL)
 			return (FALSE);
 		diff = buf - rstrm->in_base;

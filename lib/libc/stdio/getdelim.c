@@ -1,4 +1,4 @@
-/*	$OpenBSD: getdelim.c,v 1.4 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: getdelim.c,v 1.5 2016/09/21 04:38:56 guenther Exp $	*/
 /* $NetBSD: getdelim.c,v 1.13 2011/07/22 23:12:30 joerg Exp $ */
 
 /*
@@ -73,7 +73,7 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 		}
 
 		/* Scan through looking for the separator */
-		p = memchr(fp->_p, sep, (size_t)fp->_r);
+		p = memchr(fp->_p, sep, fp->_r);
 		if (p == NULL)
 			len = fp->_r;
 		else

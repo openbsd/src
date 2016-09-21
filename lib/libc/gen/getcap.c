@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.33 2015/09/14 16:09:13 tedu Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.34 2016/09/21 04:38:56 guenther Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -537,8 +537,7 @@ tc_exp:	{
 	if (r_end > rp) {
 		char *nrecord;
 
-		if ((nrecord =
-		     realloc(record, (size_t)(rp - record))) == NULL) {
+		if ((nrecord = realloc(record, rp - record)) == NULL) {
 			free(record);
 			errno = ENOMEM;
 			return (-2);
@@ -772,7 +771,7 @@ cgetnext(char **cap, char **db_array)
 		 */
 		if (*record != '\0' && *record != '#') {
 			/* Rewind to end of record */
-			fseeko(pfp, (off_t)(bp - b_end), SEEK_CUR);
+			fseeko(pfp, bp - b_end, SEEK_CUR);
 			toprec = record;
 			topreclen = rp - record;
 			break;
@@ -924,7 +923,7 @@ cgetstr(char *buf, const char *cap, char **str)
 	if (m_room != 0) {
 		char *nmem;
 
-		if ((nmem = realloc(mem, (size_t)(mp - mem))) == NULL) {
+		if ((nmem = realloc(mem, mp - mem)) == NULL) {
 			free(mem);
 			return (-2);
 		}

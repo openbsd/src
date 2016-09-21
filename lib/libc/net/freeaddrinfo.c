@@ -1,4 +1,4 @@
-/*	$OpenBSD: freeaddrinfo.c,v 1.8 2015/12/28 22:08:18 mmcc Exp $	*/
+/*	$OpenBSD: freeaddrinfo.c,v 1.9 2016/09/21 04:38:56 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, Craig Metz, All rights reserved.
@@ -44,7 +44,7 @@ freeaddrinfo(struct addrinfo *ai)
 		p = ai;
 		ai = ai->ai_next;
 		free(p->ai_canonname);
-		free((void *)p);
+		free(p);
 	} while (ai);
 }
 DEF_WEAK(freeaddrinfo);

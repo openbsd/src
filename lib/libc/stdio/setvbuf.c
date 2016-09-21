@@ -1,4 +1,4 @@
-/*	$OpenBSD: setvbuf.c,v 1.13 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: setvbuf.c,v 1.14 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ setvbuf(FILE *fp, char *buf, int mode, size_t size)
 	fp->_r = fp->_lbfsize = 0;
 	flags = fp->_flags;
 	if (flags & __SMBF)
-		free((void *)fp->_bf._base);
+		free(fp->_bf._base);
 	flags &= ~(__SLBF | __SNBF | __SMBF | __SOPT | __SNPT | __SEOF);
 
 	/* If setting unbuffered mode, skip all the hard work. */

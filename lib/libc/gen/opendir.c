@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.29 2015/09/12 13:34:22 guenther Exp $ */
+/*	$OpenBSD: opendir.c,v 1.30 2016/09/21 04:38:56 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,7 @@ __fdopendir(int fd)
 
 	pageoffset = getpagesize() - 1;
 	dirp->dd_len = ((int)sb.st_blksize * 4 + pageoffset) & ~pageoffset;
-	dirp->dd_buf = malloc((size_t)dirp->dd_len);
+	dirp->dd_buf = malloc(dirp->dd_len);
 	if (dirp->dd_buf == NULL) {
 		free(dirp);
 		return (NULL);

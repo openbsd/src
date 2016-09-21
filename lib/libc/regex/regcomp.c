@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.28 2015/12/28 22:08:18 mmcc Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.29 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -1294,8 +1294,7 @@ dupl(struct parse *p,
 		return(ret);
 	if (!enlarge(p, p->ssize + len)) /* this many unexpected additions */
 		return(ret);
-	(void) memcpy((char *)(p->strip + p->slen),
-		(char *)(p->strip + start), (size_t)len*sizeof(sop));
+	(void) memcpy(p->strip + p->slen, p->strip + start, len * sizeof(sop));
 	p->slen += len;
 	return(ret);
 }

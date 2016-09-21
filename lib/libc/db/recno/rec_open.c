@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_open.c,v 1.12 2015/07/16 04:27:33 tedu Exp $	*/
+/*	$OpenBSD: rec_open.c,v 1.13 2016/09/21 04:38:56 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -112,7 +112,7 @@ __rec_open(const char *fname, int flags, int mode, const RECNOINFO *openinfo,
 		 * and check the errno values.
 		 */
 		errno = 0;
-		if (lseek(rfd, (off_t)0, SEEK_CUR) == -1 && errno == ESPIPE) {
+		if (lseek(rfd, 0, SEEK_CUR) == -1 && errno == ESPIPE) {
 			switch (flags & O_ACCMODE) {
 			case O_RDONLY:
 				F_SET(t, R_RDONLY);

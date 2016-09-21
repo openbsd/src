@@ -1,4 +1,4 @@
-/*	$OpenBSD: getw.c,v 1.6 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: getw.c,v 1.7 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,6 @@ getw(FILE *fp)
 {
 	int x;
 
-	return (fread((void *)&x, sizeof(x), 1, fp) == 1 ? x : EOF);
+	return (fread(&x, sizeof(x), 1, fp) == 1 ? x : EOF);
 }
 DEF_WEAK(getw);

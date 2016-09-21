@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.32 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.33 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -401,7 +401,7 @@ literal:
 				}
 				nread += sum;
 			} else {
-				size_t r = fread((void *)va_arg(ap, char *), 1,
+				size_t r = fread(va_arg(ap, char *), 1,
 				    width, fp);
 
 				if (r == 0)

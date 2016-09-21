@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.196 2016/09/18 13:46:28 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.197 2016/09/21 04:38:56 guenther Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -83,14 +83,14 @@
 #define SOME_JUNK		0xd0	/* as in "Duh" :-) */
 #define SOME_FREEJUNK		0xdf
 
-#define MMAP(sz)	mmap(NULL, (size_t)(sz), PROT_READ | PROT_WRITE, \
-    MAP_ANON | MAP_PRIVATE, -1, (off_t) 0)
+#define MMAP(sz)	mmap(NULL, (sz), PROT_READ | PROT_WRITE, \
+    MAP_ANON | MAP_PRIVATE, -1, 0)
 
-#define MMAPA(a,sz)	mmap((a), (size_t)(sz), PROT_READ | PROT_WRITE, \
-    MAP_ANON | MAP_PRIVATE, -1, (off_t) 0)
+#define MMAPA(a,sz)	mmap((a), (sz), PROT_READ | PROT_WRITE, \
+    MAP_ANON | MAP_PRIVATE, -1, 0)
 
-#define MQUERY(a, sz)	mquery((a), (size_t)(sz), PROT_READ | PROT_WRITE, \
-    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t)0)
+#define MQUERY(a, sz)	mquery((a), (sz), PROT_READ | PROT_WRITE, \
+    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0)
 
 struct region_info {
 	void *p;		/* page; low bits used to mark chunks */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetln.c,v 1.15 2016/08/25 19:21:33 schwarze Exp $ */
+/*	$OpenBSD: fgetln.c,v 1.16 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,7 +76,7 @@ fgetln(FILE *fp, size_t *lenp)
 		goto error;
 
 	/* look for a newline in the input */
-	if ((p = memchr((void *)fp->_p, '\n', fp->_r)) != NULL) {
+	if ((p = memchr(fp->_p, '\n', fp->_r)) != NULL) {
 		/*
 		 * Found one.  Flag buffer as modified to keep fseek from
 		 * `optimising' a backward seek, in case the user stomps on
@@ -112,15 +112,14 @@ fgetln(FILE *fp, size_t *lenp)
 		 */
 		if (__slbexpand(fp, len + OPTIMISTIC))
 			goto error;
-		(void)memcpy((void *)(fp->_lb._base + off), (void *)fp->_p,
-		    len - off);
+		(void)memcpy(fp->_lb._base + off, fp->_p, len - off);
 		off = len;
 		if (__srefill(fp)) {
 			if (fp->_flags & __SEOF)
 				break;
 			goto error;
 		}
-		if ((p = memchr((void *)fp->_p, '\n', fp->_r)) == NULL)
+		if ((p = memchr(fp->_p, '\n', fp->_r)) == NULL)
 			continue;
 
 		/* got it: finish up the line (like code above) */
@@ -129,8 +128,7 @@ fgetln(FILE *fp, size_t *lenp)
 		len += diff;
 		if (__slbexpand(fp, len))
 			goto error;
-		(void)memcpy((void *)(fp->_lb._base + off), (void *)fp->_p,
-		    diff);
+		(void)memcpy(fp->_lb._base + off, fp->_p, diff);
 		fp->_r -= diff;
 		fp->_p = p;
 		break;

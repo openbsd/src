@@ -102,9 +102,9 @@ Bfree
 	if (v) {
 		if (v->k > Kmax)
 #ifdef FREE
-			FREE((void*)v);
+			FREE(v);
 #else
-			free((void*)v);
+			free(v);
 #endif
 		else {
 			ACQUIRE_DTOA_LOCK(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.12 2015/09/13 21:36:08 guenther Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.13 2016/09/21 04:38:56 guenther Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -46,9 +46,9 @@ inet_ntop(int af, const void *src, char *dst, socklen_t size)
 {
 	switch (af) {
 	case AF_INET:
-		return (inet_ntop4(src, dst, (size_t)size));
+		return (inet_ntop4(src, dst, size));
 	case AF_INET6:
-		return (inet_ntop6(src, dst, (size_t)size));
+		return (inet_ntop6(src, dst, size));
 	default:
 		errno = EAFNOSUPPORT;
 		return (NULL);
@@ -167,7 +167,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 		/* Is this address an encapsulated IPv4? */
 		if (i == 6 && best.base == 0 &&
 		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
-			if (!inet_ntop4(src+12, tp, (size_t)(ep - tp)))
+			if (!inet_ntop4(src+12, tp, ep - tp))
 				return (NULL);
 			tp += strlen(tp);
 			break;

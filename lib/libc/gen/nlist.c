@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.66 2015/12/29 22:31:21 mmcc Exp $ */
+/*	$OpenBSD: nlist.c,v 1.67 2016/09/21 04:38:56 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -101,7 +101,7 @@ __fdnlist(int fd, struct nlist *list)
 	size_t left, len;
 
 	/* Make sure obj is OK */
-	if (pread(fd, &ehdr, sizeof(Elf_Ehdr), (off_t)0) != sizeof(Elf_Ehdr) ||
+	if (pread(fd, &ehdr, sizeof(Elf_Ehdr), 0) != sizeof(Elf_Ehdr) ||
 	    !__elf_is_okay__(&ehdr) || fstat(fd, &st) < 0)
 		return (-1);
 
@@ -116,15 +116,14 @@ __fdnlist(int fd, struct nlist *list)
 	}
 
 	/* mmap section header table */
-	shdr = (Elf_Shdr *)mmap(NULL, (size_t)shdr_size, PROT_READ,
-	    MAP_SHARED|MAP_FILE, fd, (off_t) ehdr.e_shoff);
+	shdr = mmap(NULL, shdr_size, PROT_READ, MAP_SHARED|MAP_FILE, fd,
+	    ehdr.e_shoff);
 	if (shdr == MAP_FAILED) {
 		usemalloc = 1;
 		if ((shdr = malloc(shdr_size)) == NULL)
 			return (-1);
 
-		if (pread(fd, shdr, shdr_size, (off_t)ehdr.e_shoff) !=
-		    shdr_size) {
+		if (pread(fd, shdr, shdr_size, ehdr.e_shoff) != shdr_size) {
 			free(shdr);
 			return (-1);
 		}
@@ -194,21 +193,20 @@ __fdnlist(int fd, struct nlist *list)
 	if (usemalloc) {
 		if ((strtab = malloc(symstrsize)) == NULL)
 			return (-1);
-		if (pread(fd, strtab, symstrsize, (off_t)symstroff) !=
-		    symstrsize) {
+		if (pread(fd, strtab, symstrsize, symstroff) != symstrsize) {
 			free(strtab);
 			return (-1);
 		}
 	} else {
-		strtab = mmap(NULL, (size_t)symstrsize, PROT_READ,
-		    MAP_SHARED|MAP_FILE, fd, (off_t) symstroff);
+		strtab = mmap(NULL, symstrsize, PROT_READ, MAP_SHARED|MAP_FILE,
+		    fd, symstroff);
 		if (strtab == MAP_FAILED)
 			return (-1);
 	}
 
 	while (symsize >= sizeof(Elf_Sym)) {
 		cc = MINIMUM(symsize, sizeof(sbuf));
-		if (pread(fd, sbuf, cc, (off_t)symoff) != cc)
+		if (pread(fd, sbuf, cc, symoff) != cc)
 			break;
 		symsize -= cc;
 		symoff += cc;

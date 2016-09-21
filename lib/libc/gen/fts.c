@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.55 2016/06/28 17:21:48 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.56 2016/09/21 04:38:56 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -654,7 +654,7 @@ fts_build(FTS *sp, int type)
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
-		if (!(p = fts_alloc(sp, dp->d_name, (size_t)dp->d_namlen)))
+		if (!(p = fts_alloc(sp, dp->d_name, dp->d_namlen)))
 			goto mem1;
 		if (dp->d_namlen >= maxlen) {	/* include space for NUL */
 			oldaddr = sp->fts_path;
@@ -894,7 +894,7 @@ fts_sort(FTS *sp, FTSENT *head, int nitems)
 	}
 	for (ap = sp->fts_array, p = head; p; p = p->fts_link)
 		*ap++ = p;
-	qsort((void *)sp->fts_array, nitems, sizeof(FTSENT *), sp->fts_compar);
+	qsort(sp->fts_array, nitems, sizeof(FTSENT *), sp->fts_compar);
 	for (head = *(ap = sp->fts_array); --nitems; ++ap)
 		ap[0]->fts_link = ap[1];
 	ap[0]->fts_link = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fopen.c,v 1.8 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: fopen.c,v 1.9 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,7 @@ fopen(const char *file, const char *mode)
 	 * fseek and ftell.)
 	 */
 	if (oflags & O_APPEND)
-		(void) __sseek((void *)fp, (fpos_t)0, SEEK_END);
+		(void) __sseek(fp, 0, SEEK_END);
 	return (fp);
 }
 DEF_STRONG(fopen);

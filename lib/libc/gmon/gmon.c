@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.29 2016/05/07 19:30:52 guenther Exp $ */
+/*	$OpenBSD: gmon.c,v 1.30 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -77,19 +77,19 @@ monstartup(u_long lowpc, u_long highpc)
 	p->tossize = p->tolimit * sizeof(struct tostruct);
 
 	addr = mmap(NULL, p->kcountsize,  PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
+	    MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (addr == MAP_FAILED)
 		goto mapfailed;
 	p->kcount = addr;
 
 	addr = mmap(NULL, p->fromssize,  PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
+	    MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (addr == MAP_FAILED)
 		goto mapfailed;
 	p->froms = addr;
 
 	addr = mmap(NULL, p->tossize,  PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
+	    MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (addr == MAP_FAILED)
 		goto mapfailed;
 	p->tos = addr;

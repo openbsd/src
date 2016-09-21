@@ -1,4 +1,4 @@
-/*	$OpenBSD: freopen.c,v 1.15 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: freopen.c,v 1.16 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -165,7 +165,7 @@ freopen(const char *file, const char *mode, FILE *fp)
 	 * fseek and ftell.)
 	 */
 	if (oflags & O_APPEND)
-		(void) __sseek((void *)fp, (fpos_t)0, SEEK_END);
+		(void) __sseek(fp, 0, SEEK_END);
 	FUNLOCKFILE(fp);
 	return (fp);
 }

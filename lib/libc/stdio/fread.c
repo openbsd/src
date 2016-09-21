@@ -1,4 +1,4 @@
-/*	$OpenBSD: fread.c,v 1.14 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: fread.c,v 1.15 2016/09/21 04:38:56 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,7 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 	}
 
 	while (resid > (r = fp->_r)) {
-		(void)memcpy((void *)p, (void *)fp->_p, (size_t)r);
+		(void)memcpy(p, fp->_p, r);
 		fp->_p += r;
 		/* fp->_r = 0 ... done in __srefill */
 		p += r;
@@ -95,7 +95,7 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 			return ((total - resid) / size);
 		}
 	}
-	(void)memcpy((void *)p, (void *)fp->_p, resid);
+	(void)memcpy(p, fp->_p, resid);
 	fp->_r -= resid;
 	fp->_p += resid;
 	FUNLOCKFILE(fp);

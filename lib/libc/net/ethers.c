@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.24 2015/09/14 11:01:47 guenther Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.25 2016/09/21 04:38:56 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -144,7 +144,7 @@ ether_ntohost(char *hostname, struct ether_addr *e)
 		}
 #endif
 		if (ether_line(buf, &try, hostname) == 0 &&
-		    memcmp((void *)&try, (void *)e, sizeof(try)) == 0) {
+		    memcmp(&try, e, sizeof(try)) == 0) {
 			(void)fclose(f);
 			return (0);
 		}     
