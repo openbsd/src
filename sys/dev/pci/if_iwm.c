@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.135 2016/09/21 13:22:40 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.136 2016/09/21 13:29:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2379,13 +2379,16 @@ void
 iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
     uint16_t ssn, int start)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_add_sta_cmd_v7 cmd;
 	struct iwm_node *in = (void *)ni;
 	int err, s;
 	uint32_t status;
 
-	if (start && sc->sc_rx_ba_sessions >= IWM_MAX_RX_BA_SESSIONS)
+	if (start && sc->sc_rx_ba_sessions >= IWM_MAX_RX_BA_SESSIONS) {
+		ieee80211_addba_req_refuse(ic, ni, tid);
 		return;
+	}
 
 	memset(&cmd, 0, sizeof(cmd));
 
@@ -2406,17 +2409,18 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	status = IWM_ADD_STA_SUCCESS;
 	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(cmd), &cmd,
 	    &status);
-	if (err)
-		return;
 
-	if (status == IWM_ADD_STA_SUCCESS) {
-		s = splnet();
-		if (start)
+	s = splnet();
+	if (err == 0 && status == IWM_ADD_STA_SUCCESS) {
+		if (start) {
 			sc->sc_rx_ba_sessions++;
-		else if (sc->sc_rx_ba_sessions > 0)
+			ieee80211_addba_req_accept(ic, ni, tid);
+		} else if (sc->sc_rx_ba_sessions > 0)
 			sc->sc_rx_ba_sessions--;
-		splx(s);
-	}
+	} else if (start)
+		ieee80211_addba_req_refuse(ic, ni, tid);
+
+	splx(s);
 }
 
 void
@@ -2479,7 +2483,7 @@ iwm_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
 	sc->ba_ssn = htole16(ba->ba_winstart);
 	task_add(systq, &sc->ba_task);
 
-	return 0; /* XXX firmware may still fail to add BA agreement... */
+	return EBUSY;
 }
 
 /*
