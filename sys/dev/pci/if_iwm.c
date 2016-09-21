@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.137 2016/09/21 13:53:18 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.138 2016/09/21 13:57:35 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5211,9 +5211,11 @@ iwm_auth(struct iwm_softc *sc)
 	 * Prevent the FW from wandering off channel during association
 	 * by "protecting" the session with a time event.
 	 */
-	/* XXX duration is in units of TU, not MS */
-	duration = IWM_TE_SESSION_PROTECTION_MAX_TIME_MS;
-	iwm_protect_session(sc, in, duration, 500 /* XXX magic number */);
+	if (in->in_ni.ni_intval)
+		duration = in->in_ni.ni_intval * 2;
+	else
+		duration = IEEE80211_DUR_TU; 
+	iwm_protect_session(sc, in, duration, in->in_ni.ni_intval / 2);
 	DELAY(100);
 
 	return 0;
