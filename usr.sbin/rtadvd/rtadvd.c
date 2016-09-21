@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.80 2016/09/21 18:51:05 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.81 2016/09/21 18:54:24 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -73,6 +73,8 @@ static size_t sndcmsgbuflen;
 struct msghdr sndmhdr;
 struct iovec rcviov[2];
 struct iovec sndiov[2];
+static char *rtsockbuf;
+static size_t rtsockbuflen;
 struct sockaddr_in6 from;
 struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
 int sock;
@@ -301,17 +303,17 @@ rtsock_cb(int fd, short event, void *arg)
 {
 	int n, type, ifindex = 0, plen;
 	size_t len;
-	char msg[2048], *next, *lim;
+	char *next, *lim;
 	u_char ifname[IF_NAMESIZE];
 	struct prefix *prefix;
 	struct rainfo *rai;
 	struct in6_addr *addr;
 	char addrbuf[INET6_ADDRSTRLEN];
 
-	n = read(rtsock, msg, sizeof(msg));
+	n = read(rtsock, rtsockbuf, rtsockbuflen);
 	log_debug("received a routing message "
-	    "(type = %d, len = %d)", rtmsg_type(msg), n);
-	if (n > rtmsg_len(msg)) {
+	    "(type = %d, len = %d)", rtmsg_type(rtsockbuf), n);
+	if (n > rtmsg_len(rtsockbuf)) {
 		/*
 		 * This usually won't happen for messages received on
 		 * a routing socket.
@@ -319,15 +321,15 @@ rtsock_cb(int fd, short event, void *arg)
 		log_debug("received data length is larger than "
 		    "1st routing message len. multiple messages? "
 		    "read %d bytes, but 1st msg len = %d",
-		    n, rtmsg_len(msg));
+		    n, rtmsg_len(rtsockbuf));
 #if 0
 		/* adjust length */
-		n = rtmsg_len(msg);
+		n = rtmsg_len(rtsockbuf);
 #endif
 	}
 
-	lim = msg + n;
-	for (next = msg; next < lim; next += len) {
+	lim = rtsockbuf + n;
+	for (next = rtsockbuf; next < lim; next += len) {
 		int oldifflags;
 
 		next = get_next_msg(next, lim, &len);
@@ -1189,6 +1191,11 @@ rtsock_open(void)
 	if (setsockopt(rtsock, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
+
+	rtsockbuflen = 2048;
+	rtsockbuf = malloc(rtsockbuflen);
+	if (rtsockbuf == NULL)
+		fatal(NULL);
 }
 
 static struct rainfo *
