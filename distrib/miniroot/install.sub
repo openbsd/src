@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.920 2016/09/16 15:35:05 krw Exp $
+#	$OpenBSD: install.sub,v 1.921 2016/09/22 20:45:22 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2891,9 +2891,7 @@ SANESETS="${SANESETS:-bsd} base${VERSION}.tgz"
 COLUMNS=$(stty -a </dev/console | sed -n '/columns/{s/^.* \([0-9]*\) columns.*$/\1/;p;}')
 ((COLUMNS == 0)) && COLUMNS=80
 
-# Decide upon an editor.
-: ${EDITOR:=ed}
-[[ -x /usr/bin/vi ]] && EDITOR=vi
+EDITOR=ed
 export EDITOR COLUMNS
 
 # umount all filesystems, just in case we are re-running install or upgrade.
