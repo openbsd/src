@@ -170,11 +170,7 @@ EVP_EncryptFinal(), EVP_DecryptFinal() and EVP_CipherFinal() are
 identical to EVP_EncryptFinal_ex(), EVP_DecryptFinal_ex() and
 EVP_CipherFinal_ex(). In previous releases of OpenSSL they also used to clean
 up the B<ctx>, but this is no longer done and EVP_CIPHER_CTX_clean()
-must be called to free any context resources. As of LibreSSL 2.4,
-EVP_EncryptFinal() and EVP_DecryptFinal() will always clean up, and
-EVP_CipherFinal() also cleans up as of LibreSSL 2.5. The use of
-EVP_EncryptFinal(), EVP_DecryptFinal() and EVP_CipherFinal() is not
-recommended.
+must be called to free any context resources.
 
 EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 return an EVP_CIPHER structure when passed a cipher name, a NID or an
