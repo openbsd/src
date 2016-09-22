@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.211 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.212 2016/09/22 06:18:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2559,10 +2559,10 @@ relay_get_ticket_key(unsigned char keyname[16])
 {
 	if (keyname) {
 		if (timingsafe_memcmp(keyname,
-		    env->sc_tls_ticket_bak.tt_key_name, sizeof(keyname)) == 0)
+		    env->sc_tls_ticket_bak.tt_key_name, 16) == 0)
 			return &env->sc_tls_ticket_bak;
 		if (timingsafe_memcmp(keyname,
-		    env->sc_tls_ticket.tt_key_name, sizeof(keyname)) == 0)
+		    env->sc_tls_ticket.tt_key_name, 16) == 0)
 			return &env->sc_tls_ticket;
 		return NULL;
 	}
