@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.80 2016/09/22 13:30:49 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.81 2016/09/22 13:44:02 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -318,7 +318,7 @@ into a nested structure.
 .Op Fl infiles
 .Op Fl key Ar keyfile
 .Op Fl keyfile Ar arg
-.Op Fl keyform Ar PEM
+.Op Fl keyform Ar pem
 .Op Fl md Ar arg
 .Op Fl msie_hack
 .Op Fl name Ar section
@@ -393,7 +393,7 @@ Since on some systems the command line arguments are visible,
 this option should be used with caution.
 .It Fl keyfile Ar file
 The private key to sign requests with.
-.It Fl keyform Ar PEM
+.It Fl keyform Ar pem
 Private key file format.
 .It Fl md Ar alg
 The message digest to use.
@@ -545,14 +545,10 @@ The
 of the configuration file containing CRL extensions to include.
 If no CRL extension section is present then a V1 CRL is created;
 if the CRL extension section is present
-.Pq even if it is empty
+(even if it is empty)
 then a V2 CRL is created.
-The CRL extensions specified are CRL extensions and
-.Em not
-CRL entry extensions.
-It should be noted that some software
-.Pq for example Netscape
-can't handle V2 CRLs.
+The CRL extensions specified are CRL extensions and not CRL entry extensions.
+It should be noted that some software can't handle V2 CRLs.
 .It Fl crlhours Ar num
 The number of hours before the next CRL is due.
 .It Fl gencrl
@@ -725,9 +721,8 @@ is accepted by both to produce a reasonable output.
 If neither option is present, the format used in earlier versions of
 .Nm openssl
 is used.
-Use of the old format is
-.Em strongly
-discouraged because it only displays fields mentioned in the
+Use of the old format is strongly discouraged
+because it only displays fields mentioned in the
 .Cm policy
 section,
 mishandles multicharacter string types and does not display extensions.
@@ -1697,9 +1692,7 @@ Use NULL cipher (no encryption or decryption of input).
 Disable standard block padding.
 .It Fl nosalt
 Don't use a salt in the key derivation routines.
-This option should
-.Em NEVER
-be used
+This option should never be used
 since it makes it possible to perform efficient dictionary
 attacks on the password and to attack stream cipher encrypted data.
 .It Fl out Ar file
@@ -2064,10 +2057,8 @@ specifies the HTTP path name to use, or
 .Pa /
 by default.
 .It Fl issuer Ar file
-The current issuer certificate,
-in PEM format.
-Can be used multiple times
-and must come before any
+The current issuer certificate, in PEM format.
+Can be used multiple times and must come before any
 .Fl cert
 options.
 .It Fl no_cert_checks
@@ -2306,12 +2297,6 @@ If the OCSP responder is a global responder,
 which can give details about multiple CAs
 and has its own separate certificate chain,
 then its root CA can be trusted for OCSP signing.
-For example:
-.Bd -literal -offset indent
-$ openssl x509 -in ocspCA.pem -addtrust OCSPSigning \e
-	-out trustedCA.pem
-.Ed
-.Pp
 Alternatively, the responder certificate itself can be explicitly trusted
 with the
 .Fl VAfile
@@ -2655,8 +2640,7 @@ certificate using 40-bit RC2.
 Create a PKCS#12 file (rather than parsing one).
 .It Fl in Ar file
 The input file to read from,
-or standard input if not specified,
-in PEM format.
+or standard input if not specified.
 The order doesn't matter but one private key and its corresponding
 certificate should be present.
 If additional certificates are present, they will also be included
@@ -2692,8 +2676,6 @@ This name is typically displayed in list boxes by software importing the file.
 Don't attempt to provide the MAC integrity.
 .It Fl nomaciter , noiter
 Affect the iteration counts on the MAC and key algorithms.
-Unless you wish to produce files compatible with MSIE 4.0, you should leave
-these options alone.
 .Pp
 To discourage attacks by using large dictionaries of common passwords,
 the algorithm that derives keys from passwords can have an iteration count
@@ -2706,9 +2688,6 @@ using these options the MAC and encryption iteration counts can be set to 1.
 Since this reduces the file security you should not use these options
 unless you really have to.
 Most software supports both MAC and key iteration counts.
-MSIE 4.0 doesn't support MAC iteration counts, so it needs the
-.Fl nomaciter
-option.
 .It Fl out Ar file
 The output file to write to,
 or standard output if not specified.
@@ -3015,9 +2994,7 @@ pseudo-random bytes.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl base64
-Perform
-.Em base64
-encoding on the output.
+Perform base64 encoding on the output.
 .It Fl hex
 Specify hexadecimal output.
 .It Fl out Ar file
@@ -3108,7 +3085,8 @@ It also accepts PKCS#8 format private keys for PEM format files.
 The format of the private key file specified in the
 .Fl key
 argument.
-The default is PEM.
+The default is
+.Cm pem .
 .It Fl keyout Ar file
 The file to write the newly created private key to.
 If this option is not specified,
@@ -3974,10 +3952,8 @@ must end with CRLF).
 Generate SSL/TLS session IDs prefixed by
 .Ar arg .
 This is mostly useful for testing any SSL/TLS code
-(e.g. proxies)
-that wish to deal with multiple servers, when each of which might be
-generating a unique range of session IDs
-(e.g. with a certain prefix).
+that wish to deal with multiple servers,
+when each of which might be generating a unique range of session IDs.
 .It Fl key Ar keyfile
 The private key to use.
 If not specified, the certificate file will be used.
@@ -6055,9 +6031,6 @@ The following environment variables affect the execution of
 .It Ev OPENSSL_CONF
 The location of the master configuration file.
 .El
-.\"
-.\" FILES
-.\"
 .Sh FILES
 .Bl -tag -width "/etc/ssl/openssl.cnf" -compact
 .It Pa /etc/ssl/
@@ -6075,9 +6048,6 @@ Default configuration file for
 .Nm x509
 certificates.
 .El
-.\"
-.\" SEE ALSO
-.\"
 .Sh SEE ALSO
 .Xr acme-client 1 ,
 .Xr nc 1 ,
