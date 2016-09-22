@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.82 2015/09/27 10:12:09 semarie Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.83 2016/09/22 10:25:34 jsg Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -456,20 +456,20 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 #if NIOAPIC > 0
 	struct mp_intr_map *mip;
 
- 	if (mp_busses != NULL) {
- 		int mpspec_pin = irq;
- 		int airq;
+	if (mp_busses != NULL) {
+		int mpspec_pin = irq;
+		int airq;
 
 		if (mp_isa_bus == NULL)
 			panic("no isa bus");
 
- 		for (mip = mp_isa_bus->mb_intrs; mip != NULL;
- 		    mip = mip->next) {
- 			if (mip->bus_pin == mpspec_pin) {
- 				airq = mip->ioapic_ih | irq;
- 				break;
- 			}
- 		}
+		for (mip = mp_isa_bus->mb_intrs; mip != NULL;
+		    mip = mip->next) {
+			if (mip->bus_pin == mpspec_pin) {
+				airq = mip->ioapic_ih | irq;
+				break;
+			}
+		}
 		if (mip == NULL && mp_eisa_bus) {
 			for (mip = mp_eisa_bus->mb_intrs; mip != NULL;
 			    mip = mip->next) {
