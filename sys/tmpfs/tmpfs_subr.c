@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.16 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.17 2016/09/22 10:23:27 jsg Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -1112,13 +1112,13 @@ tmpfs_chtimes(struct vnode *vp, const struct timespec *atime,
 	    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
 	    	return error;
 
- 	if (atime->tv_nsec != VNOVAL)
+	if (atime->tv_nsec != VNOVAL)
 		node->tn_atime = *atime;
- 
- 	if (mtime->tv_nsec != VNOVAL)
+
+	if (mtime->tv_nsec != VNOVAL)
 		node->tn_mtime = *mtime;
 
- 	if (mtime->tv_nsec != VNOVAL || (vaflags & VA_UTIMES_CHANGE))
+	if (mtime->tv_nsec != VNOVAL || (vaflags & VA_UTIMES_CHANGE))
 		tmpfs_update(VP_TO_TMPFS_NODE(vp), TMPFS_NODE_CHANGED);
 
 	VN_KNOTE(vp, NOTE_ATTRIB);
