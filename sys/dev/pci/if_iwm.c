@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.139 2016/09/21 14:02:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.140 2016/09/22 08:27:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5303,10 +5303,8 @@ iwm_setrates(struct iwm_node *in)
 	memset(lq, 0, sizeof(*lq));
 	lq->sta_id = IWM_STATION_ID;
 
-	if (ni->ni_flags & IEEE80211_NODE_HT)
-		sgi_ok = (ni->ni_htcaps & IEEE80211_HTCAP_SGI20);
-	else
-		sgi_ok = 0;
+	sgi_ok = ((ni->ni_flags & IEEE80211_NODE_HT) &&
+	    (ni->ni_htcaps & IEEE80211_HTCAP_SGI20));
 
 	/*
 	 * Fill the LQ rate selection table with legacy and/or HT rates
