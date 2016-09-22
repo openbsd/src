@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.c,v 1.123 2016/09/21 19:53:12 djm Exp $ */
+/* $OpenBSD: kex.c,v 1.124 2016/09/22 17:52:53 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -90,6 +90,7 @@ static const struct kexalg kexalgs[] = {
 	    SSH_DIGEST_SHA512 },
 #endif
 	{ KEX_CURVE25519_SHA256, KEX_C25519_SHA256, 0, SSH_DIGEST_SHA256 },
+	{ KEX_CURVE25519_SHA256_OLD, KEX_C25519_SHA256, 0, SSH_DIGEST_SHA256 },
 	{ NULL, -1, -1, -1},
 };
 
