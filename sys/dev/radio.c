@@ -1,4 +1,4 @@
-/* $OpenBSD: radio.c,v 1.10 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: radio.c,v 1.11 2016/09/22 00:47:19 jsg Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
@@ -124,7 +124,7 @@ radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (sc->hw_if->get_info)
 			error = (sc->hw_if->get_info)(sc->hw_hdl,
 					(struct radio_info *)data);
-			break;
+		break;
 	case RIOCSINFO:
 		if (!(flags & FWRITE))
 			return (EACCES);
