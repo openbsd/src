@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.281 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.282 2016/09/22 10:12:25 jsg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1118,10 +1118,12 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 			memcpy(&ipaddr.sin_addr, cp + off,
 			    sizeof(ipaddr.sin_addr));
 			if (opt == IPOPT_SSRR) {
-			    if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(&ipaddr),
-				m->m_pkthdr.ph_rtableid))) == NULL)
-				ia = ifatoia(ifa_ifwithnet(sintosa(&ipaddr),
-				    m->m_pkthdr.ph_rtableid));
+				if ((ia = ifatoia(ifa_ifwithdstaddr(
+				    sintosa(&ipaddr),
+				    m->m_pkthdr.ph_rtableid))) == NULL)
+					ia = ifatoia(ifa_ifwithnet(
+					    sintosa(&ipaddr),
+					    m->m_pkthdr.ph_rtableid));
 				if (ia == NULL) {
 					type = ICMP_UNREACH;
 					code = ICMP_UNREACH_SRCFAIL;
