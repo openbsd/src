@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.258 2016/09/18 12:36:28 jasper Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.259 2016/09/22 12:55:24 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -144,6 +144,7 @@ void	prof_init(void);
 void	init_exec(void);
 void	kqueue_init(void);
 void	taskq_init(void);
+void	timeout_proc_init(void);
 void	pool_gc_pages(void *);
 
 extern char sigcode[], esigcode[], sigcoderet[];
@@ -335,6 +336,9 @@ main(void *framep)
 	sleep_queue_init();
 	sched_init_cpu(curcpu());
 	p->p_cpu->ci_randseed = (arc4random() & 0x7fffffff) + 1;
+
+	/* Initialize timeouts in process context. */
+	timeout_proc_init();
 
 	/* Initialize task queues */
 	taskq_init();

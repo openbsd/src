@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.25 2014/12/22 04:43:38 dlg Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.26 2016/09/22 12:55:24 mpi Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -67,6 +67,7 @@ struct timeout {
 /*
  * flags in the to_flags field.
  */
+#define TIMEOUT_NEEDPROCCTX	1	/* timeout needs a process context */
 #define TIMEOUT_ONQUEUE		2	/* timeout is on the todo queue */
 #define TIMEOUT_INITIALIZED	4	/* timeout is initialized */
 #define TIMEOUT_TRIGGERED	8	/* timeout is running or ran */
@@ -88,6 +89,7 @@ struct timeout {
 struct bintime;
 
 void timeout_set(struct timeout *, void (*)(void *), void *);
+void timeout_set_proc(struct timeout *, void (*)(void *), void *);
 int timeout_add(struct timeout *, int);
 int timeout_add_tv(struct timeout *, const struct timeval *);
 int timeout_add_ts(struct timeout *, const struct timespec *);

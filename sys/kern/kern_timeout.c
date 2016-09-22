@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.48 2016/07/06 15:53:01 tedu Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.49 2016/09/22 12:55:24 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -27,7 +27,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/kthread.h>
 #include <sys/timeout.h>
 #include <sys/mutex.h>
 #include <sys/kernel.h>
@@ -54,6 +54,7 @@
 
 struct circq timeout_wheel[BUCKETS];	/* Queues of timeouts */
 struct circq timeout_todo;		/* Worklist */
+struct circq timeout_proc;		/* Due timeouts needing proc. context */
 
 #define MASKWHEEL(wheel, time) (((time) >> ((wheel)*WHEELBITS)) & WHEELMASK)
 
@@ -127,6 +128,9 @@ struct mutex timeout_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 
 #define CIRCQ_EMPTY(elem) (CIRCQ_FIRST(elem) == (elem))
 
+void softclock_thread(void *);
+void softclock_create_thread(void *);
+
 /*
  * Some of the "math" in here is a bit tricky.
  *
@@ -147,8 +151,15 @@ timeout_startup(void)
 	int b;
 
 	CIRCQ_INIT(&timeout_todo);
+	CIRCQ_INIT(&timeout_proc);
 	for (b = 0; b < nitems(timeout_wheel); b++)
 		CIRCQ_INIT(&timeout_wheel[b]);
+}
+
+void
+timeout_proc_init(void)
+{
+	kthread_create_deferred(softclock_create_thread, NULL);
 }
 
 void
@@ -159,6 +170,12 @@ timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 	new->to_flags = TIMEOUT_INITIALIZED;
 }
 
+void
+timeout_set_proc(struct timeout *new, void (*fn)(void *), void *arg)
+{
+	timeout_set(new, fn, arg);
+	new->to_flags |= TIMEOUT_NEEDPROCCTX;
+}
 
 int
 timeout_add(struct timeout *new, int to_ticks)
@@ -334,38 +351,90 @@ timeout_hardclock_update(void)
 }
 
 void
+timeout_run(struct timeout *to)
+{
+	void (*fn)(void *);
+	void *arg;
+
+	MUTEX_ASSERT_LOCKED(&timeout_mutex);
+
+	to->to_flags &= ~TIMEOUT_ONQUEUE;
+	to->to_flags |= TIMEOUT_TRIGGERED;
+
+	fn = to->to_func;
+	arg = to->to_arg;
+
+	mtx_leave(&timeout_mutex);
+	fn(arg);
+	mtx_enter(&timeout_mutex);
+}
+
+void
 softclock(void *arg)
 {
 	int delta;
 	struct circq *bucket;
 	struct timeout *to;
-	void (*fn)(void *);
 
 	mtx_enter(&timeout_mutex);
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
 		to = timeout_from_circq(CIRCQ_FIRST(&timeout_todo));
 		CIRCQ_REMOVE(&to->to_list);
 
-		/* If due run it, otherwise insert it into the right bucket. */
+		/*
+		 * If due run it or defer execution to the thread,
+		 * otherwise insert it into the right bucket.
+		 */
 		delta = to->to_time - ticks;
 		if (delta > 0) {
 			bucket = &BUCKET(delta, to->to_time);
 			CIRCQ_INSERT(&to->to_list, bucket);
+		} else if (to->to_flags & TIMEOUT_NEEDPROCCTX) {
+			CIRCQ_INSERT(&to->to_list, &timeout_proc);
+			wakeup(&timeout_proc);
 		} else {
 #ifdef DEBUG
 			if (delta < 0)
 				printf("timeout delayed %d\n", delta);
 #endif
-			to->to_flags &= ~TIMEOUT_ONQUEUE;
-			to->to_flags |= TIMEOUT_TRIGGERED;
-
-			fn = to->to_func;
-			arg = to->to_arg;
-
-			mtx_leave(&timeout_mutex);
-			fn(arg);
-			mtx_enter(&timeout_mutex);
+			timeout_run(to);
 		}
+	}
+	mtx_leave(&timeout_mutex);
+}
+
+void
+softclock_create_thread(void *arg)
+{
+	if (kthread_create(softclock_thread, NULL, NULL, "softclock"))
+		panic("fork softclock");
+}
+
+void
+softclock_thread(void *arg)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	struct timeout *to;
+
+	KERNEL_ASSERT_LOCKED();
+
+	/* Be conservative for the moment */
+	CPU_INFO_FOREACH(cii, ci) {
+		if (CPU_IS_PRIMARY(ci))
+			break;
+	}
+	KASSERT(ci != NULL);
+	sched_peg_curproc(ci);
+
+	mtx_enter(&timeout_mutex);
+	for (;;) {
+		while (CIRCQ_EMPTY(&timeout_proc))
+			msleep(&timeout_proc, &timeout_mutex, PSWP, "bored", 0);
+
+		to = timeout_from_circq(CIRCQ_FIRST(&timeout_proc));
+		CIRCQ_REMOVE(&to->to_list);
+		timeout_run(to);
 	}
 	mtx_leave(&timeout_mutex);
 }
