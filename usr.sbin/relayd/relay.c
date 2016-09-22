@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.212 2016/09/22 06:18:58 jsg Exp $	*/
+/*	$OpenBSD: relay.c,v 1.213 2016/09/22 07:56:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -86,8 +86,8 @@ void		 relay_tls_connected(struct ctl_relay_event *);
 void		 relay_tls_readcb(int, short, void *);
 void		 relay_tls_writecb(int, short, void *);
 
-struct tls_ticket	*relay_get_ticket_key(unsigned char [16]);
-int			 relay_tls_session_ticket(SSL *, unsigned char [16],
+struct tls_ticket	*relay_get_ticket_key(unsigned char *);
+int			 relay_tls_session_ticket(SSL *, unsigned char *,
 			    unsigned char *, EVP_CIPHER_CTX *, HMAC_CTX *, int);
 
 char		*relay_load_file(const char *, off_t *);
@@ -2555,7 +2555,7 @@ relay_tls_writecb(int fd, short event, void *arg)
 }
 
 struct tls_ticket *
-relay_get_ticket_key(unsigned char keyname[16])
+relay_get_ticket_key(unsigned char *keyname)
 {
 	if (keyname) {
 		if (timingsafe_memcmp(keyname,
@@ -2570,7 +2570,7 @@ relay_get_ticket_key(unsigned char keyname[16])
 }
 
 int
-relay_tls_session_ticket(SSL *ssl, unsigned char keyname[16], unsigned char *iv,
+relay_tls_session_ticket(SSL *ssl, unsigned char *keyname, unsigned char *iv,
     EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int mode)
 {
 	struct tls_ticket	*key;
