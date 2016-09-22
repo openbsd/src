@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.13 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.14 2016/09/22 18:19:59 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #include "DEFS.h"
 
-	.globl	_C_LABEL(__errno)
+	.globl	_HIDDEN(__errno)
 
 /*
  * long long __cerror(register_t errcode)
@@ -44,29 +44,17 @@
  */
 
 ASENTRY(__cerror)
-	/* if %r26 has been initialized, don't bother setting up a frame */
-	bcnd	ne0, %r26, has_r26
-
-	subu	%r31,%r31,16
-	st	%r25,%r0,%r31
-	st	%r1,%r31,4
-
-#ifdef __PIC__
-	bsr.n	_C_LABEL(__errno)#plt
-#else
-	bsr.n	_C_LABEL(__errno)
-#endif
-	 or	%r25,%r0,%r2
-	or	%r26,%r0,%r2	/* save errno ptr */
-	or	%r2,%r0,%r25	/* and restore errno value */
-
-	ld	%r1,%r31,4
-	ld	%r25,%r0,%r31
-	addu	%r31,%r31,16
-
-has_r26:
-	st	%r2,%r0,%r26
-	subu	%r2,%r0,1
+	subu	%r4,%r27,8
+	subu	%r3,%r0,1
+	st	%r2,%r4,%r0
 	jmp.n	%r1
-	 or	%r3, %r0, %r2
+	 or	%r2, %r0, %r3
 END(__cerror)
+
+#if 0
+/* ahh, if only */
+ASENTRY(__errno)
+	jmp.n	%r1
+	 subu	%r2,%r27,8
+END(__errno)
+#endif
