@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.185 2016/09/04 16:15:30 kettenis Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.186 2016/09/22 22:04:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -806,14 +806,6 @@ random_start(void)
 	rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
 	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
 	rnd_states[RND_SRC_TRUE].max_entropy = 1;
-
-	/* Provide some data from this kernel */
-	add_entropy_words((u_int32_t *)version,
-	    strlen(version) / sizeof(u_int32_t));
-
-	/* Provide some data from this kernel */
-	add_entropy_words((u_int32_t *)cfdata,
-	    8192 / sizeof(u_int32_t));
 
 	/* Message buffer may contain data from previous boot */
 	if (msgbufp->msg_magic == MSG_MAGIC)
