@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.10 2016/08/25 22:56:13 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.11 2016/09/22 01:16:29 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -41,35 +41,36 @@ sub new {
 	    Proto		=> "tcp",
 	    ReuseAddr		=> 1,
 	    Domain		=> $self->{listendomain},
-	    Listen		=> 1,
 	    $self->{listenaddr} ? (LocalAddr => $self->{listenaddr}) : (),
 	    $self->{listenport} ? (LocalPort => $self->{listenport}) : (),
 	    SSL_key_file	=> "server.key",
 	    SSL_cert_file	=> "server.crt",
 	    SSL_verify_mode	=> SSL_VERIFY_NONE,
-	) or die ref($self), " $iosocket socket listen failed: $!,$SSL_ERROR";
+	) or die ref($self), " $iosocket socket failed: $!,$SSL_ERROR";
 	if ($self->{sndbuf}) {
 		setsockopt($ls, SOL_SOCKET, SO_SNDBUF,
 		    pack('i', $self->{sndbuf}))
-		    or die ref($self), " set sndbuf SO_SNDBUF failed: $!";
+		    or die ref($self), " set SO_SNDBUF failed: $!";
 	}
 	if ($self->{rcvbuf}) {
 		setsockopt($ls, SOL_SOCKET, SO_RCVBUF,
 		    pack('i', $self->{rcvbuf}))
-		    or die ref($self), " set rcvbuf SO_RCVBUF failed: $!";
+		    or die ref($self), " set SO_RCVBUF failed: $!";
 	}
 	my $packstr = $Config{longsize} == 8 ? 'ql!' :
 	    $Config{byteorder} == 1234 ? 'lxxxxl!' : 'xxxxll!';
 	if ($self->{sndtimeo}) {
 		setsockopt($ls, SOL_SOCKET, SO_SNDTIMEO,
 		    pack($packstr, $self->{sndtimeo}, 0))
-		    or die ref($self), " set SO_SNDTIMEO failed failed: $!";
+		    or die ref($self), " set SO_SNDTIMEO failed: $!";
 	}
 	if ($self->{rcvtimeo}) {
 		setsockopt($ls, SOL_SOCKET, SO_RCVTIMEO,
 		    pack($packstr, $self->{rcvtimeo}, 0))
-		    or die ref($self), " set SO_RCVTIMEO failed failed: $!";
+		    or die ref($self), " set SO_RCVTIMEO failed: $!";
 	}
+	listen($ls, 1)
+	    or die ref($self), " socket listen failed: $!";
 	my $log = $self->{log};
 	print $log "listen sock: ",$ls->sockhost()," ",$ls->sockport(),"\n";
 	$self->{listenaddr} = $ls->sockhost() unless $self->{listenaddr};

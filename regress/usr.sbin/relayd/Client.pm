@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.11 2015/07/18 22:11:34 benno Exp $
+#	$OpenBSD: Client.pm,v 1.12 2016/09/22 01:16:29 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -61,22 +61,22 @@ sub child {
 	if ($self->{sndbuf}) {
 		setsockopt($cs, SOL_SOCKET, SO_SNDBUF,
 		    pack('i', $self->{sndbuf}))
-		    or die ref($self), " set sndbuf listen failed: $!";
+		    or die ref($self), " set SO_SNDBUF failed: $!";
 	}
 	if ($self->{rcvbuf}) {
 		setsockopt($cs, SOL_SOCKET, SO_RCVBUF,
 		    pack('i', $self->{rcvbuf}))
-		    or die ref($self), " set rcvbuf listen failed: $!";
+		    or die ref($self), " set SO_SNDBUF failed: $!";
 	}
 	if ($self->{sndtimeo}) {
 		setsockopt($cs, SOL_SOCKET, SO_SNDTIMEO,
 		    pack('l!l!', $self->{sndtimeo}, 0))
-		    or die ref($self), " set SO_SNDTIMEO failed failed: $!";
+		    or die ref($self), " set SO_SNDTIMEO failed: $!";
 	}
 	if ($self->{rcvtimeo}) {
 		setsockopt($cs, SOL_SOCKET, SO_RCVTIMEO,
 		    pack('l!l!', $self->{rcvtimeo}, 0))
-		    or die ref($self), " set SO_RCVTIMEO failed failed: $!";
+		    or die ref($self), " set SO_RCVTIMEO failed: $!";
 	}
 
 	print STDERR "connect sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";
