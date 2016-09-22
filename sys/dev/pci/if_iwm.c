@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.140 2016/09/22 08:27:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.141 2016/09/22 08:28:38 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -389,8 +389,6 @@ int	iwm_disable_beacon_filter(struct iwm_softc *);
 int	iwm_add_sta_cmd(struct iwm_softc *, struct iwm_node *, int);
 int	iwm_add_aux_sta(struct iwm_softc *);
 uint16_t iwm_scan_rx_chain(struct iwm_softc *);
-uint32_t iwm_scan_max_out_time(struct iwm_softc *, uint32_t, int);
-uint32_t iwm_scan_suspend_time(struct iwm_softc *, int);
 uint32_t iwm_scan_rate_n_flags(struct iwm_softc *, int, int);
 uint16_t iwm_get_active_dwell(struct iwm_softc *, int, int);
 uint16_t iwm_get_passive_dwell(struct iwm_softc *, int);
@@ -4420,26 +4418,6 @@ iwm_scan_rx_chain(struct iwm_softc *sc)
 	rx_chain |= rx_ant << IWM_PHY_RX_CHAIN_FORCE_SEL_POS;
 	rx_chain |= 0x1 << IWM_PHY_RX_CHAIN_DRIVER_FORCE_POS;
 	return htole16(rx_chain);
-}
-
-#define ieee80211_tu_to_usec(a) (1024*(a))
-
-uint32_t
-iwm_scan_max_out_time(struct iwm_softc *sc, uint32_t flags, int is_assoc)
-{
-	if (!is_assoc)
-		return 0;
-	if (flags & 0x1)
-		return htole32(ieee80211_tu_to_usec(SHORT_OUT_TIME_PERIOD));
-	return htole32(ieee80211_tu_to_usec(LONG_OUT_TIME_PERIOD));
-}
-
-uint32_t
-iwm_scan_suspend_time(struct iwm_softc *sc, int is_assoc)
-{
-	if (!is_assoc)
-		return 0;
-	return htole32(ieee80211_tu_to_usec(SUSPEND_TIME_PERIOD));
 }
 
 uint32_t
