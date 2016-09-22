@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsetjmp.S,v 1.16 2016/05/23 00:18:57 guenther Exp $ */
+/* $OpenBSD: sigsetjmp.S,v 1.17 2016/09/22 18:23:58 guenther Exp $ */
 /*-
  * Copyright (c) 2002 Steve Murphree, Jr.
  * All rights reserved.
@@ -79,16 +79,14 @@ ENTRY(sigsetjmp)
 	st	%r4,%r2,80	/* setjmp type to _setjmp */
 	bcnd.n	eq0,%r3,1f	/* skip signal stuff if savemask == 0 */
 	 st	%r3,%r2,84	/* save `savemask' value */
-	or	%r14,%r2,0	/* store address of env in r14 */
-#ifdef __PIC__
-	bsr.n	_C_LABEL(_libc_sigblock)#plt /* r2 = sigblock(0) */
-#else
-	bsr.n	_C_LABEL(_libc_sigblock) /* r2 = sigblock(0) */
-#endif
-	 or	%r2,%r0,%r0
-	st	%r2,%r14,4	/* save signal set in offset 4 of env */
-	ld	%r1,%r14,0
-	ld	%r14,%r14,8
+
+	or	%r4,%r2,0	/* save r2 in r4 */
+	or	%r3,%r0,0	/* set = empty */
+	or	%r2,%r0,1	/* how = SIG_BLOCK */
+	__DO_SYSCALL(sigprocmask)
+	or	%r0,%r0,%r0	/* NOP to fill error case of syscall */
+	st	%r2,%r4,4	/* save signal set in offset 4 of env */
+	ld	%r1,%r4,0
 1:
 	jmp.n	%r1		/* return 0 */
 	 or	%r2,%r0,0
@@ -124,16 +122,15 @@ ENTRY(siglongjmp)
 	bcnd.n	eq0,%r4,1f
 	 ld	%r31,%r2,76
 
-	subu	%r31,%r31,16	/* get a temporary stack */
-	st.d	%r2,%r31,0	/* save r2 and r3 on stack (env + return val) */
-#ifdef __PIC__
-	bsr.n	_C_LABEL(_libc_sigsetmask)#plt /* restore the signal set */
-#else
-	bsr.n	_C_LABEL(_libc_sigsetmask) /* restore the signal set */
-#endif
-	 ld	%r2,%r2,4
-	ld.d	%r2,%r31,0	/* restore r2 and r3 from stack */
-	addu	%r31,%r31,16
+	or	%r4,%r2,0	/* save r2 in r4 */
+	or	%r5,%r3,0	/* and r3 in r5 */
+	ld	%r3,%r2,4	/* load the saved mask into r3 */
+	or	%r2,%r0,3	/* how = SIG_SETMASK */
+	__DO_SYSCALL(sigprocmask)
+	or	%r0,%r0,%r0	/* NOP to fill error case of syscall */
+	or	%r2,%r4,0	/* restore r2 */
+	or	%r3,%r5,0	/* restore r3 */
+
 1:
 	bcnd.n	ne0,%r3,1f
 	 ld	%r1,%r2,0		/* restore r1 */
@@ -142,14 +139,5 @@ ENTRY(siglongjmp)
 	jmp.n	%r1
 	 or	%r2,%r3,%r0
 
-2:	subu	%r31,%r31,16	/* get a temporary stack */
-	st	%r1,%r31,0	/* save r1 on stack (return address) */
-#ifdef __PIC__
-	bsr	_libc_abort#plt	/* NO RETURN */
-#else
-	bsr	_libc_abort	/* NO RETURN */
-#endif
-	ld	%r1,%r31,0	/* restore r1 from stack */
-	jmp.n	%r1	/* this should not happen but we are prepared */
-	 addu	%r31,%r31,16	/* restore the stack */
+2:	br	_HIDDEN(abort)	/* NO RETURN */
 END(siglongjmp)

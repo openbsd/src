@@ -1,4 +1,4 @@
-/* $OpenBSD: _setjmp.S,v 1.13 2016/05/23 00:18:57 guenther Exp $ */
+/* $OpenBSD: _setjmp.S,v 1.14 2016/09/22 18:23:58 guenther Exp $ */
 /*-
  * Copyright (c) 2002 Steve Murphree, Jr.
  * All rights reserved.
@@ -113,14 +113,5 @@ ENTRY(_longjmp)
 	or	%r2,%r0,1		/* never return zero! */
 1:	jmp	%r1
 
-2:	subu	%r31,%r31,16	/* get a temporary stack */
-	st	%r1,%r31,0	/* save r1 on stack (return address) */
-#ifdef __PIC__
-	bsr	_libc_abort#plt	/* NO RETURN */
-#else
-	bsr	_libc_abort	/* NO RETURN */
-#endif
-	ld	%r1,%r31,0	/* restore r1 from stack */
-	jmp.n	%r1	/* this should not happen but we are prepared */
-	 addu	%r31,%r31,16	/* restore the stack */
+2:	br	_HIDDEN(abort)		/* NO RETURN */
 END(_longjmp)
