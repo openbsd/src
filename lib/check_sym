@@ -1,5 +1,5 @@
 #!/bin/ksh
-#  $OpenBSD: check_sym,v 1.3 2016/09/22 21:35:25 guenther Exp $
+#  $OpenBSD: check_sym,v 1.4 2016/09/22 21:37:02 guenther Exp $
 #
 # Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
 #
@@ -99,13 +99,7 @@ pick_highest()
 	[[ $old != "" ]]
 }
 
-cpu=$(uname -p)
-if [[ $cpu = mips64* ]]
-then
-	file_list=/tmp/{D{,S,W,Y},J,S,U,d,j,r,s}{1,2}
-else
-	file_list=/tmp/{D{,S,W},J,S,U,d,j,r,s}{1,2}
-fi
+file_list=/tmp/{D{,S,W},J,S,U,d,j,r,s}{1,2}
 
 if [[ $1 = "-h" ]]
 then
@@ -191,21 +185,19 @@ readelf -sW $old | filt_symtab > /tmp/s1
 readelf -sW $new | filt_symtab > /tmp/s2
 
 
+cpu=$(uname -p)
 if [[ $cpu = mips64* ]]
 then
-	readelf -d $old >/tmp/DY1
-	readelf -d $new >/tmp/DY2
-else
-	rm -f /tmp/DY[12]
+	gotsym1=$(readelf -d $old | awk '$2 ~ /MIPS_GOTSYM/{print $3}')
+	gotsym2=$(readelf -d $new | awk '$2 ~ /MIPS_GOTSYM/{print $3}')
 fi
 
 jump_slots() { 
 	case $cpu in
 	hppa*)	awk '/IPLT/ && $5 != ""{print $5}' /tmp/r$1
 		;;
-	mips*)	gotsym=$(awk '$2 ~ /MIPS_GOTSYM/{print $3}' /tmp/DY$1)
-		# the $(($foo)) is to convert hex to decimal
-		awk -v g=$(($gotsym)) \
+	mips*)	# the $((gotsym$1)) converts hex to decimal
+		awk -v g=$((gotsym$1)) \
 			'/^Symbol table ..symtab/{exit}
 			$1+0 >= g && $4 == "FUNC" {print $8}' /tmp/s$1
 		;;
@@ -215,8 +207,6 @@ jump_slots() {
 }
 
 dynamic_sym() {
-	# truncate the output files, to guarantee they exist
-	>/tmp/U$1 >/tmp/DS$1 >/tmp/DW$1 >/tmp/D$1
 	awk -v s=$1 '/^Symbol table ..symtab/{exit}
 		! /^ *[1-9]/   {next}
 		$7 == "UND"    {print $8 | ("sort -o /tmp/U" s); next }
