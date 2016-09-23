@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.115 2016/09/19 06:46:44 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.116 2016/09/23 08:21:22 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -177,6 +177,8 @@ struct uaudio_devs {
 	struct usb_devno	 uv_dev;
 	int			 flags;
 } uaudio_devs[] = {
+	{ { USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_UR22 },
+		UAUDIO_FLAG_VENDOR_CLASS },
 	{ { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ADA70 },
 		UAUDIO_FLAG_BAD_ADC } ,
 	{ { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ASC495 },
