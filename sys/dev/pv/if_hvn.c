@@ -696,8 +696,8 @@ hvn_tx_ring_create(struct hvn_softc *sc)
 	for (i = 0; i < HVN_TX_DESC; i++) {
 		txd = &sc->sc_tx_desc[i];
 		if (bus_dmamap_create(sc->sc_dmat, HVN_TX_PKT_SIZE,
-		    HVN_TX_FRAGS, HVN_TX_FRAG_SIZE, 0, BUS_DMA_WAITOK,
-		    &txd->txd_dmap)) {
+		    HVN_TX_FRAGS, HVN_TX_FRAG_SIZE, PAGE_SIZE,
+		    BUS_DMA_WAITOK, &txd->txd_dmap)) {
 			DPRINTF("%s: failed to create map for TX descriptors\n",
 			    sc->sc_dev.dv_xname);
 			goto errout;
