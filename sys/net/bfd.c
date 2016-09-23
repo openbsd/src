@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.36 2016/09/20 19:43:56 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.37 2016/09/23 10:09:07 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -218,7 +218,8 @@ void
 bfdclear(struct rtentry *rt)
 {
 	struct bfd_config *bfd;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if ((bfd = bfd_lookup(rt)) == NULL)
 		return;
@@ -233,7 +234,6 @@ bfdclear(struct rtentry *rt)
 	if (rtisvalid(bfd->bc_rt))
 		bfd_senddown(bfd);
 
-	s = splsoftnet();
 	if (bfd->bc_so) {
 		/* remove upcall before calling soclose or it will be called */
 		bfd->bc_so->so_upcall = NULL;
@@ -245,7 +245,6 @@ bfdclear(struct rtentry *rt)
 	}
 	if (bfd->bc_sosend)
 		soclose(bfd->bc_sosend);
-	splx(s);
 
 	rtfree(bfd->bc_rt);
 
@@ -282,12 +281,15 @@ void
 bfddestroy(void)
 {
 	struct bfd_config	*bfd;
+	int s;
 
 	/* inform our neighbor we are rebooting */
+	s = splsoftnet();
 	while ((bfd = TAILQ_FIRST(&bfd_queue))) {
 		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_FIB_RESET;
 		bfdclear(bfd->bc_rt);
 	}
+	splx(s);
 
 	taskq_destroy(bfdtq);
 	pool_destroy(&bfd_pool_time);
@@ -323,10 +325,8 @@ void
 bfd_start_task(void *arg)
 {
 	struct bfd_config	*bfd = (struct bfd_config *)arg;
-	int s;
 
 	/* start listeners */
-	s = splsoftnet();
 	bfd->bc_so = bfd_listener(bfd, BFD_UDP_PORT_CONTROL);
 	if (!bfd->bc_so)
 		printf("bfd_listener(%d) failed\n",
@@ -342,7 +342,6 @@ bfd_start_task(void *arg)
 		task_set(&bfd->bc_bfd_send_task, bfd_send_task, bfd);
 		task_add(bfdtq, &bfd->bc_bfd_send_task);	
 	}
-	splx(s);
 
 	return;
 }
@@ -560,24 +559,21 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 	struct bfd_config *bfd = (struct bfd_config *)arg;
 	struct mbuf *m;
 	struct uio uio;
-	int flags, error, s;
+	int flags, error;
 
 	uio.uio_procp = NULL;
 	do {
 		uio.uio_resid = 1000000000;
 		flags = MSG_DONTWAIT;
-		s = splsoftnet();
 		error = soreceive(so, NULL, &uio, &m, NULL, &flags, 0);
 		if (error && error != EAGAIN) {
 			bfd->bc_error++;
-			splx(s);
 			return;
 		}
 		if (m != NULL)
 			bfd_input(bfd, m);
 	} while (m != NULL);
 
-	splx(s);
 	return;
 }
 
@@ -918,18 +914,13 @@ int
 bfd_send(struct bfd_config *bfd, struct mbuf *m)
 {
 	struct rtentry *rt = bfd->bc_rt;
-	int error, s;
 
 	if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_UP)) {
 		m_freem(m);
 		return (EHOSTDOWN);
 	}
 
-	s = splsoftnet();
-	error = sosend(bfd->bc_sosend, NULL, NULL, m, NULL, MSG_DONTWAIT);
-	splx(s);
-
-	return (error);
+	return(sosend(bfd->bc_sosend, NULL, NULL, m, NULL, MSG_DONTWAIT));
 }
 
 /*
