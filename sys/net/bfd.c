@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.38 2016/09/23 10:20:20 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.39 2016/09/23 12:50:17 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -724,15 +724,8 @@ bfd_input(struct bfd_config *bfd, struct mbuf *m)
 #endif
 	}
 
-	if ((bfd->bc_neighbor->bn_rdiscr == 0) &&
-	    (ntohl(peer->bfd_my_discriminator) != 0))
-		bfd->bc_neighbor->bn_rdiscr = ntohl(peer->bfd_my_discriminator);
-
-	if (bfd->bc_neighbor->bn_rdiscr != ntohl(peer->bfd_my_discriminator))
-		goto discard;
-
+	bfd->bc_neighbor->bn_rdiscr = ntohl(peer->bfd_my_discriminator);
 	bfd->bc_neighbor->bn_rstate = state;
-
 	bfd->bc_neighbor->bn_rdemand = (flags & BFD_FLAG_D);
 	bfd->bc_poll = (flags & BFD_FLAG_F);
 
