@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.213 2016/09/22 07:56:48 jsg Exp $	*/
+/*	$OpenBSD: relay.c,v 1.214 2016/09/23 12:06:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2559,10 +2559,12 @@ relay_get_ticket_key(unsigned char *keyname)
 {
 	if (keyname) {
 		if (timingsafe_memcmp(keyname,
-		    env->sc_tls_ticket_bak.tt_key_name, 16) == 0)
+		    env->sc_tls_ticket_bak.tt_key_name,
+		    sizeof(env->sc_tls_ticket_bak.tt_key_name)) == 0)
 			return &env->sc_tls_ticket_bak;
 		if (timingsafe_memcmp(keyname,
-		    env->sc_tls_ticket.tt_key_name, 16) == 0)
+		    env->sc_tls_ticket.tt_key_name,
+		    sizeof(env->sc_tls_ticket.tt_key_name)) == 0)
 			return &env->sc_tls_ticket;
 		return NULL;
 	}
@@ -2578,11 +2580,12 @@ relay_tls_session_ticket(SSL *ssl, unsigned char *keyname, unsigned char *iv,
 	if (mode == 1) {
 		/* create new session */
 		key = relay_get_ticket_key(NULL);
-		memcpy(keyname, key->tt_key_name, 16);
+		memcpy(keyname, key->tt_key_name, sizeof(key->tt_key_name));
 		arc4random_buf(iv, EVP_MAX_IV_LENGTH);
 		EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL,
 		    key->tt_aes_key, iv);
-		HMAC_Init_ex(hctx, key->tt_hmac_key, 16, EVP_sha256(), NULL);
+		HMAC_Init_ex(hctx, key->tt_hmac_key, sizeof(key->tt_hmac_key),
+		    EVP_sha256(), NULL);
 		return 0;
 	} else {
 		/* get key by name */
@@ -2592,7 +2595,8 @@ relay_tls_session_ticket(SSL *ssl, unsigned char *keyname, unsigned char *iv,
 
 		EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL,
 		    key->tt_aes_key, iv);
-		HMAC_Init_ex(hctx, key->tt_hmac_key, 16, EVP_sha256(), NULL);
+		HMAC_Init_ex(hctx, key->tt_hmac_key, sizeof(key->tt_hmac_key),
+		    EVP_sha256(), NULL);
 
 		/* time to renew the ticket? */
 		if (key->tt_backup) {
