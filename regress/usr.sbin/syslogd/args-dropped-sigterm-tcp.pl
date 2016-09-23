@@ -32,6 +32,7 @@ our %args = (
     },
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tcp", addr => "localhost" },
+	rcvbuf => 2**12,
 	redo => 0,
 	func => sub {
 	    my $self = shift;
@@ -49,7 +50,7 @@ our %args = (
 	    get_thirdlog() => 0,
 	    get_testgrep() => 0,
 	    qr/syslogd: start/ => 1,
-	    get_charlog() => '>=10',
+	    get_charlog() => '~88',
 	},
     },
     file => {
@@ -60,7 +61,7 @@ our %args = (
 	    get_testgrep() => 0,
 	    qr/syslogd: start/ => 1,
 	    get_charlog() => 300,
-	    qr/syslogd: dropped 2[0-9][0-9] messages to remote loghost/ => 1,
+	    qr/syslogd: dropped 2[0-2][0-9] messages to remote loghost/ => 1,
 	},
     },
     pipe => { nocheck => 1 },

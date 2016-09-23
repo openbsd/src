@@ -1,4 +1,4 @@
-# The client writes 310 messages to Sys::Syslog native method.
+# The client writes 400 messages to Sys::Syslog native method.
 # The syslogd writes it into a file and through a pipe.
 # The syslogd passes it via TLS to the loghost.
 # The server blocks the message on its TLS socket.
@@ -6,7 +6,7 @@
 # The server receives the message on its TLS socket.
 # The client waits until the server as read the first message.
 # Find the message in client, file, pipe, syslogd, server log.
-# Check that the 310 messages are in syslogd and file log.
+# Check that the 400 messages are in syslogd and file log.
 # Check that the dropped message is in server and file log.
 
 use strict;
@@ -18,7 +18,7 @@ our %args = (
 	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
 	    write_message($self, get_secondlog());
-	    write_lines($self, 310, 1024);
+	    write_lines($self, 400, 1024);
 	    write_message($self, get_thirdlog());
 	    ${$self->{server}}->loggrep(get_secondlog(), 5)
 		or die ref($self), " server did not receive second log";
@@ -30,8 +30,8 @@ our %args = (
 	loghost => '@tls://localhost:$connectport',
 	loggrep => {
 	    get_between2loggrep(),
-	    get_charlog() => 310,
-	    qr/ \(dropped\)/ => '>=10',
+	    get_charlog() => 400,
+	    qr/ \(dropped\)/ => '~68',
 	    qr/SSL3_WRITE_PENDING/ => 0,
 	},
     },
@@ -43,12 +43,13 @@ our %args = (
 		or die ref($self), " syslogd did not receive third log";
 	    read_log($self);
 	},
+	rcvbuf => 2**12,
 	loggrep => {
 	    get_between2loggrep(),
 	    get_secondlog() => 1,
 	    get_thirdlog() => 0,
-	    get_charlog() => '~287',
-	    qr/syslogd: dropped [12][0-9] messages to loghost/ => 1,
+	    get_charlog() => '~333',
+	    qr/syslogd: dropped [67][0-9] messages to loghost/ => 1,
 	},
     },
     file => {
@@ -56,8 +57,8 @@ our %args = (
 	    get_between2loggrep(),
 	    get_secondlog() => 1,
 	    get_thirdlog() => 1,
-	    get_charlog() => 310,
-	    qr/syslogd: dropped [12][0-9] messages to loghost/ => 1,
+	    get_charlog() => 400,
+	    qr/syslogd: dropped [67][0-9] messages to loghost/ => 1,
 	},
     },
 );

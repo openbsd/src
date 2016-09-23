@@ -34,6 +34,7 @@ our %args = (
     },
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tls", addr => "localhost" },
+	rcvbuf => 2**12,
 	redo => 0,
 	func => sub { read_between2logs(shift, sub {
 	    my $self = shift;
@@ -56,8 +57,8 @@ our %args = (
 	    get_thirdlog() => 0,
 	    qr/syslogd: start/ => 1,
 	    qr/syslogd: restart/ => 1,
-	    get_charlog() => '~43',
-	    qr/syslogd: dropped 2[0-9][0-9] messages to remote loghost/ => 1,
+	    get_charlog() => '~88',
+	    qr/syslogd: dropped 2[0-2][0-9] messages to remote loghost/ => 1,
 	},
     },
     file => {
@@ -68,7 +69,7 @@ our %args = (
 	    qr/syslogd: start/ => 1,
 	    qr/syslogd: restart/ => 1,
 	    get_charlog() => 300,
-	    qr/syslogd: dropped 2[0-9][0-9] messages to remote loghost/ => 1,
+	    qr/syslogd: dropped 2[0-2][0-9] messages to remote loghost/ => 1,
 	},
     },
 );

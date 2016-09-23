@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.7 2016/09/21 12:01:17 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.8 2016/09/23 14:35:15 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -76,6 +76,16 @@ sub child {
 				(SSL_cipher_list => $self->{sslciphers}) : (),
 			) or die ref($self), " $iosocket socket connect ".
 			    "failed: $!,$SSL_ERROR";
+			if ($self->{sndbuf}) {
+				setsockopt($cs, SOL_SOCKET, SO_SNDBUF,
+				    pack('i', $self->{sndbuf})) or die
+				    ref($self), " set SO_SNDBUF failed: $!";
+			}
+			if ($self->{rcvbuf}) {
+				setsockopt($cs, SOL_SOCKET, SO_RCVBUF,
+				    pack('i', $self->{rcvbuf})) or die
+				    ref($self), " set SO_RCVBUF failed: $!";
+			}
 			print STDERR "connect sock: ",$cs->sockhost()," ",
 			    $cs->sockport(),"\n";
 			print STDERR "connect peer: ",$cs->peerhost()," ",
