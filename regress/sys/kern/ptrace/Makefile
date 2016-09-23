@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2005/07/20 15:41:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/09/23 18:56:49 bluhm Exp $
 
 PROG=	ptrace
 
@@ -22,5 +22,7 @@ io_read_d_bad:
 
 REGRESS_TARGETS=read_i read_d read_i_bad read_d_bad \
 	io_read_i io_read_d io_read_i_bad io_read_d_bad
+
+${REGRESS_TARGETS}: ${PROG}
 
 .include <bsd.regress.mk>
