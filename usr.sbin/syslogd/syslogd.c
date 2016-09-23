@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.214 2016/09/23 13:13:13 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.215 2016/09/23 15:46:39 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1472,9 +1472,9 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "usage: syslogd [-46dFhnuV] [-a path] [-C CAfile] [-c cert_file]\n"
-	    "\t[-f config_file] [-K server_CAfile] [-k key_file]\n"
-	    "\t[-m mark_interval] [-p log_socket] [-S listen_address]\n"
-	    "\t[-s reporting_socket] [-T listen_address] [-U bind_address]\n");
+	    "\t[-f config_file] [-K CAfile] [-k key_file] [-m mark_interval]\n"
+	    "\t[-p log_socket] [-S listen_address] [-s reporting_socket]\n"
+	    "\t[-T listen_address] [-U bind_address]\n");
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.45 2016/09/23 12:04:25 bluhm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.46 2016/09/23 15:46:39 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm syslogd
-.Nd log systems messages
+.Nd log system messages
 .Sh SYNOPSIS
 .Nm syslogd
 .Bk -words
@@ -44,7 +44,7 @@
 .Op Fl C Ar CAfile
 .Op Fl c Ar cert_file
 .Op Fl f Ar config_file
-.Op Fl K Ar server_CAfile
+.Op Fl K Ar CAfile
 .Op Fl k Ar key_file
 .Op Fl m Ar mark_interval
 .Op Fl p Ar log_socket
@@ -80,14 +80,10 @@ of various chroot filespaces, though the need for these is
 less urgent after the introduction of
 .Xr sendsyslog 2 .
 .It Fl C Ar CAfile
-PEM encoded file containing CA certificates used for certificate validation;
+PEM encoded file containing CA certificates used for certificate
+validation of a remote loghost;
 the default is
 .Pa /etc/ssl/cert.pem .
-Remote server certificates and their hostnames are validated with this
-CA to prevent malicious servers from reading messages.
-Validation can be explicitly turned off using the
-.Fl V
-option.
 .It Fl c Ar cert_file
 PEM encoded file containing the client certificate for TLS connections
 to a remote host.
@@ -107,12 +103,10 @@ the default is
 .Pa /etc/syslog.conf .
 .It Fl h
 Include the hostname when forwarding messages to a remote host.
-.It Fl K Ar server_CAfile
-PEM encoded file containing CA certificates used for certificate
+.It Fl K Ar CAfile
+PEM encoded file containing CA certificates used for client certificate
 validation on the local server socket.
 By default incoming connections from any TLS server are allowed.
-Enforce client certificates and validate them with this CA to prevent
-malicious clients from sending fake messages.
 .It Fl k Ar key_file
 PEM encoded file containing the client private key for TLS connections
 to a remote host.
@@ -140,19 +134,9 @@ bind it to the specified address.
 A port number may be specified using the
 .Ar host : Ns Ar port
 syntax.
-The syslog server will attempt to look up a private key in
-.Pa /etc/ssl/private/host:port.key
-and a public certificate in
-.Pa /etc/ssl/host:port.crt ,
-where
-.Ar host
-is the specified host name or IP address and
-.Ar port
-is the specified port if given on the command line.
-If these files are not present, syslogd will continue to look in
-.Pa /etc/ssl/private/host.key
-and
-.Pa /etc/ssl/host.crt .
+The parameter is also used to find a suitable server key and
+certificate in
+.Pa /etc/ssl/ .
 .It Fl s Ar reporting_socket
 Specify path to an
 .Dv AF_LOCAL
@@ -226,6 +210,41 @@ decimal number in angle braces, for example,
 This priority code should map into the priorities defined in the
 include file
 .In sys/syslog.h .
+.Pp
+When sending syslog messages to a remote loghost via TLS, the
+server's certificate and hostname are validated to prevent malicious
+servers from reading messages.
+If the server has a certificate with a matching hostname signed by
+a CA in
+.Pa /etc/ssl/cert.pem ,
+it is verified with that by default.
+If the server has a certificate with a matching hostname signed by
+a private CA, use the
+.Fl C
+option and put that CA into
+.Ar CAfile .
+Validation can be explicitly turned off using the
+.Fl V
+option.
+If the server is not accepting messages from anybody, use the
+.Fl k
+and
+.Fl c
+options to to authenticate
+.Nm
+with a client certificate.
+.Pp
+When receiving syslog messages from a TLS client, there must be
+a server key and certificate in
+.Pa /etc/ssl/private/host Ns Oo : Ns Ar port Oc Ns Ar .key
+and
+.Pa /etc/ssl/host Ns Oo : Ns Ar port Oc Ns Ar .crt .
+If the client uses certificates to authenticate, the CA of the
+client's certificate may be added to
+.Ar CAfile
+using the
+.Fl K
+option to protect from messages being spoofed by malicious clients.
 .Sh FILES
 .Bl -tag -width /var/run/syslog.pid -compact
 .It Pa /etc/syslog.conf
