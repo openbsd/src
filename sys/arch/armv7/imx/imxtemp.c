@@ -97,6 +97,7 @@ struct cfdriver imxtemp_cd = {
 	NULL, "imxtemp", DV_DULL
 };
 
+void	imxtemp_calibration(struct device *);
 int32_t imxtemp_calc_temp(struct imxtemp_softc *, uint32_t);
 void	imxtemp_refresh_sensors(void *);
 void	imxtemp_pickup_sensors(void *);
@@ -117,7 +118,6 @@ imxtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct imxtemp_softc *sc = (struct imxtemp_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	uint32_t calibration;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -128,6 +128,15 @@ imxtemp_attach(struct device *parent, struct device *self, void *aux)
 		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
+
+	config_mountroot(self, imxtemp_calibration);
+}
+
+void
+imxtemp_calibration(struct device *self)
+{
+	struct imxtemp_softc *sc = (struct imxtemp_softc *)self;
+	uint32_t calibration;
 
 	calibration = imxocotp_get_temperature_calibration();
 	sc->sc_hot_count = (calibration >> OCOTP_ANA1_HOT_COUNT_SHIFT) &

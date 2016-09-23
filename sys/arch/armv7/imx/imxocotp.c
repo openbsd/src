@@ -1,4 +1,4 @@
-/* $OpenBSD: imxocotp.c,v 1.3 2016/08/14 19:08:44 kettenis Exp $ */
+/* $OpenBSD: imxocotp.c,v 1.4 2016/09/23 17:59:17 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -23,11 +23,15 @@
 #include <sys/evcount.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxocotpvar.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define OCOTP_ANA0	0x4d0
@@ -44,29 +48,40 @@ struct imxocotp_softc {
 
 struct imxocotp_softc *imxocotp_sc;
 
-void imxocotp_attach(struct device *parent, struct device *self, void *args);
+int	imxocotp_match(struct device *, void *, void *);
+void	imxocotp_attach(struct device *, struct device *, void *);
 
 struct cfattach imxocotp_ca = {
-	sizeof (struct imxocotp_softc), NULL, imxocotp_attach
+	sizeof (struct imxocotp_softc), imxocotp_match, imxocotp_attach
 };
 
 struct cfdriver imxocotp_cd = {
 	NULL, "imxocotp", DV_DULL
 };
 
-void
-imxocotp_attach(struct device *parent, struct device *self, void *args)
+int
+imxocotp_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct imxocotp_softc *sc = (struct imxocotp_softc *) self;
+	struct fdt_attach_args *faa = aux;
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("imxocotp_attach: bus_space_map failed!");
+	return OF_is_compatible(faa->fa_node, "fsl,imx6q-ocotp");
+}
 
-	printf("\n");
+void
+imxocotp_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct imxocotp_softc *sc = (struct imxocotp_softc *)self;
+	struct fdt_attach_args *faa = aux;
+
+	KASSERT(faa->fa_nreg >= 1);
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
+		panic("%s: bus_space_map failed!", __func__);
+
 	imxocotp_sc = sc;
+	printf("\n");
 }
 
 void
