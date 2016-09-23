@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.186 2016/09/22 22:04:02 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.187 2016/09/23 02:37:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -85,9 +85,8 @@
  * The output of this single ChaCha20 engine is then shared amongst many
  * consumers in the kernel and userland via a few interfaces:
  * arc4random_buf(), arc4random(), arc4random_uniform(), randomread()
- * for the set of /dev/random nodes, the sysctl kern.arandom, and the
- * system call getentropy(), which provides seeds for process-context
- * pseudorandom generators.
+ * for the set of /dev/random nodes and the system call getentropy(),
+ * which provides seeds for process-context pseudorandom generators.
  *
  * Acknowledgements:
  * =================
