@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.39 2016/09/23 12:50:17 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.40 2016/09/23 14:06:29 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -136,8 +136,8 @@ struct bfd_auth_header {
 #define BFD_UDP_PORT_ECHO		3785
 
 #define BFD_SECOND			1000000 /* 1,000,000 us == 1 second */
-/* We cannot handle more often than 10ms, so force a minimum */
-#define BFD_MINIMUM			10000	/* 10,000 us == 10 ms */
+/* We currently tick every 10ms, so force a minimum that can be handled */
+#define BFD_MINIMUM			50000	/* 50,000 us == 50 ms */
 
 
 struct pool	 bfd_pool, bfd_pool_neigh, bfd_pool_time;
@@ -729,7 +729,7 @@ bfd_input(struct bfd_config *bfd, struct mbuf *m)
 	bfd->bc_neighbor->bn_rdemand = (flags & BFD_FLAG_D);
 	bfd->bc_poll = (flags & BFD_FLAG_F);
 
-	/* Local change to the algorithm, we don't accept below 10ms */
+	/* Local change to the algorithm, we don't accept below 50ms */
 	if (ntohl(peer->bfd_required_min_rx_interval) < BFD_MINIMUM)
 		goto discard;
 	/*
