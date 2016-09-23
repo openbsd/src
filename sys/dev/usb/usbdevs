@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.669 2016/09/21 08:55:21 mpi Exp $
+$OpenBSD: usbdevs,v 1.670 2016/09/23 08:18:00 ratchov Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4443,6 +4443,7 @@ product YCCABLE PL2303		0x0fba	PL2303 Serial
 product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 
 /* Yamaha products */
+product YAMAHA UR22		0x1509	UR22
 product YAMAHA UX256		0x1000	UX256 MIDI I/F
 product	YAMAHA UX96		0x1008	UX96 MIDI I/F
 product YAMAHA RPU200		0x3104	RP-U200
