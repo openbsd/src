@@ -105,6 +105,10 @@ struct rndis_cmd {
 };
 TAILQ_HEAD(rndis_queue, rndis_cmd);
 
+#define HVN_MAXMTU			(9 * 1024)
+
+#define HVN_RNDIS_XFER_SIZE		2048
+
 /*
  * Tx ring
  */
@@ -803,6 +807,7 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	struct hvn_nvs_init cmd;
 	struct hvn_nvs_init_resp *rsp;
 	struct hvn_nvs_ndis_init ncmd;
+	struct hvn_nvs_ndis_conf ccmd;
 	uint64_t tid;
 	uint32_t ndisver;
 	int i;
@@ -845,6 +850,17 @@ hvn_nvs_attach(struct hvn_softc *sc)
 		DPRINTF("%s: failed to negotiate NVSP version\n",
 		    sc->sc_dev.dv_xname);
 		return (-1);
+	}
+
+	if (sc->sc_proto >= HVN_NVS_PROTO_VERSION_2) {
+		memset(&ccmd, 0, sizeof(ccmd));
+		ccmd.nvs_type = HVN_NVS_TYPE_NDIS_CONF;
+		ccmd.nvs_mtu = HVN_MAXMTU;
+		ccmd.nvs_caps = HVN_NVS_NDIS_CONF_VLAN;
+
+		tid = atomic_inc_int_nv(&sc->sc_nvstid);
+		if (hvn_nvs_cmd(sc, &ccmd, sizeof(ccmd), tid, 100))
+			return (-1);
 	}
 
 	memset(&ncmd, 0, sizeof(ncmd));
@@ -1136,7 +1152,7 @@ hvn_rndis_attach(struct hvn_softc *sc)
 	req->rm_rid = rc->rc_id;
 	req->rm_ver_major = RNDIS_VERSION_MAJOR;
 	req->rm_ver_minor = RNDIS_VERSION_MINOR;
-	req->rm_max_xfersz = 2048; /* XXX */
+	req->rm_max_xfersz = HVN_RNDIS_XFER_SIZE;
 
 	rc->rc_cmplen = sizeof(*cmp);
 
