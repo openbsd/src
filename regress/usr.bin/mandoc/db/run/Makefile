@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2016/08/30 22:20:03 schwarze Exp $
+# $OpenBSD: Makefile,v 1.4 2016/09/23 15:08:10 bluhm Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -41,6 +41,7 @@ CLEANFILES =	${ALL_TESTS:C/$/.db/}
 CLEANFILES +=	${ALL_TESTS:C/$/.dout/} ${ALL_TESTS:C/$/.derr/} all.derr
 CLEANFILES +=	${MOB_TESTS:C/$/.mout/} all.mout
 CLEANFILES +=	${MEB_TESTS:C/$/.merr/} all.merr
+CLEANFILES +=	binedit dbm_dump makeinodes
 
 # === MAIN REGRESSION TARGETS ==========================================
 
@@ -76,7 +77,7 @@ diff.merr: all.merr
 cleandir: cleandir_local
 
 cleandir_local:
-	rm -rf man binedit dbm_dump makeinodes
+	rm -rf man
 
 
 # === RUNNING DBM_DUMP =================================================
@@ -490,11 +491,7 @@ badfmagic.db: binedit empty.db
 # === GETTING ACCESS TO THE UTILITIES ==================================
 
 binedit dbm_dump makeinodes:
-	@if [ -x ${.CURDIR}/../$@/obj/$@ ]; \
-		then ln -s ${.CURDIR}/../$@/obj/$@; \
-		elif [ -x ${.CURDIR}/../$@/$@ ]; \
-		then ln -s ${.CURDIR}/../$@/$@; \
-		else echo "Cannot find $@ binary; run 'make' in .." 1>&2; \
-		exit 1; fi
+	cd ${.CURDIR}/../$@ && make all
+	ln -sf ${.OBJDIR}/../$@/$@ .
 
 .include <bsd.regress.mk>
