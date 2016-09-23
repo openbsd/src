@@ -188,6 +188,7 @@ int	hvn_rx_ring_create(struct hvn_softc *);
 int	hvn_rx_ring_destroy(struct hvn_softc *);
 int	hvn_tx_ring_create(struct hvn_softc *);
 void	hvn_tx_ring_destroy(struct hvn_softc *);
+int	hvn_set_capabilities(struct hvn_softc *);
 int	hvn_get_lladdr(struct hvn_softc *);
 int	hvn_set_lladdr(struct hvn_softc *);
 void	hvn_get_link_status(struct hvn_softc *);
@@ -269,13 +270,17 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = hvn_start;
 	ifp->if_softc = sc;
 
-#ifdef notyet
 	ifp->if_capabilities = IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-	    IFCAP_CSUM_UDPv4;
+	    IFCAP_CSUM_TCPv6;
+	if (sc->sc_ndisver >= NDIS_VERSION_6_30)
+		ifp->if_capabilities |= IFCAP_CSUM_UDPv4 | IFCAP_CSUM_UDPv6;
+
+	if (sc->sc_proto >= HVN_NVS_PROTO_VERSION_2) {
+		ifp->if_hardmtu = HVN_MAXMTU;
+#if NVLAN > 0 && notyet
+		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING | IFCAP_VLAN_MTU;
 #endif
-#if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
+	}
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, HVN_TX_DESC - 1);
 
@@ -288,6 +293,12 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 
 	if (hvn_rndis_attach(sc)) {
 		printf(": failed to init RNDIS\n");
+		goto detach;
+	}
+
+	if (hvn_set_capabilities(sc)) {
+		printf(": failed to setup offloading\n");
+		hvn_rndis_detach(sc);
 		goto detach;
 	}
 
@@ -1188,6 +1199,34 @@ errout:
 		bus_dmamap_destroy(sc->sc_dmat, rc->rc_dmap);
 	}
 	return (-1);
+}
+
+int
+hvn_set_capabilities(struct hvn_softc *sc)
+{
+	struct ndis_offload_params params;
+	size_t len = sizeof(params);
+
+	memset(&params, 0, sizeof(params));
+
+	params.ndis_hdr.ndis_type = NDIS_OBJTYPE_DEFAULT;
+	if (sc->sc_ndisver < NDIS_VERSION_6_30) {
+		params.ndis_hdr.ndis_rev = NDIS_OFFLOAD_PARAMS_REV_2;
+		len = params.ndis_hdr.ndis_size = NDIS_OFFLOAD_PARAMS_SIZE_6_1;
+	} else {
+		params.ndis_hdr.ndis_rev = NDIS_OFFLOAD_PARAMS_REV_3;
+		len = params.ndis_hdr.ndis_size = NDIS_OFFLOAD_PARAMS_SIZE;
+	}
+
+	params.ndis_ip4csum = NDIS_OFFLOAD_PARAM_TXRX;
+	params.ndis_tcp4csum = NDIS_OFFLOAD_PARAM_TXRX;
+	params.ndis_tcp6csum = NDIS_OFFLOAD_PARAM_TXRX;
+	if (sc->sc_ndisver >= NDIS_VERSION_6_30) {
+		params.ndis_udp4csum = NDIS_OFFLOAD_PARAM_TXRX;
+		params.ndis_udp6csum = NDIS_OFFLOAD_PARAM_TXRX;
+	}
+
+	return (hvn_rndis_set(sc, OID_TCP_OFFLOAD_PARAMETERS, &params, len));
 }
 
 int
