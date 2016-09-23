@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.70 2016/03/17 05:27:10 bentley Exp $	*/
+/*	$OpenBSD: ps.c,v 1.71 2016/09/23 06:28:08 bentley Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -105,7 +105,10 @@ main(int argc, char *argv[])
 	termwidth = 0;
 	if ((cols = getenv("COLUMNS")) != NULL)
 		termwidth = strtonum(cols, 1, INT_MAX, NULL);
-	if (termwidth == 0 && ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 &&
+	if (termwidth == 0 &&
+	    (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 ||
+	    ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == 0 ||
+	    ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == 0) &&
 	    ws.ws_col > 0)
 		termwidth = ws.ws_col - 1;
 	if (termwidth == 0)
