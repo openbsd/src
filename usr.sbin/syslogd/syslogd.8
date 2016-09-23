@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.46 2016/09/23 15:46:39 bluhm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.47 2016/09/23 16:29:28 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -211,7 +211,7 @@ This priority code should map into the priorities defined in the
 include file
 .In sys/syslog.h .
 .Pp
-When sending syslog messages to a remote loghost via TLS, the
+When sending syslog messages to a remote loghost via TLS, this
 server's certificate and hostname are validated to prevent malicious
 servers from reading messages.
 If the server has a certificate with a matching hostname signed by
@@ -226,13 +226,14 @@ option and put that CA into
 Validation can be explicitly turned off using the
 .Fl V
 option.
-If the server is not accepting messages from anybody, use the
+If the server is accepting messages only from clients with a trusted
+client certificate, use the
 .Fl k
 and
 .Fl c
-options to to authenticate
+options to authenticate
 .Nm
-with a client certificate.
+with this certificate.
 .Pp
 When receiving syslog messages from a TLS client, there must be
 a server key and certificate in
