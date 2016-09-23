@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.213 2016/09/21 11:54:57 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.214 2016/09/23 13:13:13 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -343,6 +343,7 @@ int	socket_bind(const char *, const char *, const char *, int,
     int *, int *);
 int	unix_socket(char *, int, mode_t);
 void	double_sockbuf(int, int);
+void	set_sockbuf(int);
 void	tailify_replytext(char *, int);
 
 int
@@ -886,6 +887,10 @@ socket_bind(const char *proto, const char *host, const char *port,
 			*fdp = -1;
 			continue;
 		}
+		if (!shutread && res->ai_protocol == IPPROTO_UDP)
+			double_sockbuf(*fdp, SO_RCVBUF);
+		else if (res->ai_protocol == IPPROTO_TCP)
+			set_sockbuf(*fdp);
 		reuseaddr = 1;
 		if (setsockopt(*fdp, SOL_SOCKET, SO_REUSEADDR, &reuseaddr,
 		    sizeof(reuseaddr)) == -1) {
@@ -916,8 +921,6 @@ socket_bind(const char *proto, const char *host, const char *port,
 			*fdp = -1;
 			continue;
 		}
-		if (!shutread && res->ai_protocol == IPPROTO_UDP)
-			double_sockbuf(*fdp, SO_RCVBUF);
 	}
 
 	freeaddrinfo(res0);
@@ -1257,6 +1260,7 @@ tcp_socket(struct filed *f)
 		logerror(ebuf);
 		return (-1);
 	}
+	set_sockbuf(s);
 	if (connect(s, (struct sockaddr *)&f->f_un.f_forw.f_addr,
 	    f->f_un.f_forw.f_addr.ss_len) == -1 && errno != EINPROGRESS) {
 		snprintf(ebuf, sizeof(ebuf), "connect \"%s\"",
@@ -2909,6 +2913,17 @@ double_sockbuf(int fd, int optname)
 		if (setsockopt(fd, SOL_SOCKET, optname, &newsize, len) == -1)
 			logerror("setsockopt bufsize");
 	}
+}
+
+void
+set_sockbuf(int fd)
+{
+	int size = 65536;
+
+	if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == -1)
+		logerror("setsockopt sndbufsize");
+	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) == -1)
+		logerror("setsockopt rcvbufsize");
 }
 
 void
