@@ -461,7 +461,9 @@ hvn_start(struct ifnet *ifp)
 
 		if (hvn_rndis_output(sc, txd)) {
 			hvn_decap(sc, txd);
+			ifp->if_oerrors++;
 			m_freem(m);
+			continue;
 		}
 
 		sc->sc_tx_next++;
