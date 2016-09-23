@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.9 2016/06/10 06:42:22 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.10 2016/09/23 07:29:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -288,7 +288,7 @@ resamp_getcnt(struct resamp *p, int *icnt, int *ocnt)
 
 /*
  * Resample the given number of frames. The number of output frames
- * must match the coresponding number the input frames. Either always
+ * must match the coresponding number of input frames. Either always
  * use icnt and ocnt such that:
  *
  *	 icnt * oblksz = ocnt * iblksz
@@ -407,14 +407,14 @@ resamp_init(struct resamp *p, unsigned int iblksz,
 	unsigned int i, g;
 
 	/*
-	 * reduice iblksz/oblksz fraction
+	 * reduce iblksz/oblksz fraction
 	 */
 	g = uint_gcd(iblksz, oblksz);
 	iblksz /= g;
 	oblksz /= g;
 
 	/*
-	 * ensure weired rates dont cause integer overflows
+	 * ensure weird rates don't cause integer overflow
 	 */
 	while (iblksz > ADATA_UNIT || oblksz > ADATA_UNIT) {
 		iblksz >>= 1;
@@ -587,7 +587,7 @@ enc_init(struct conv *p, struct aparams *par, int nch)
 }
 
 /*
- * decode "todo" frames from from foreign to native encoding
+ * decode "todo" frames from foreign to native encoding
  */
 void
 dec_do(struct conv *p, unsigned char *in, unsigned char *out, int todo)
@@ -829,7 +829,7 @@ cmap_add(struct cmap *p, void *in, void *out, int vol, int todo)
 }
 
 /*
- * overwrite output with "todo" input frames with with the given volume
+ * overwrite output with "todo" input frames with the given volume
  */
 void
 cmap_copy(struct cmap *p, void *in, void *out, int vol, int todo)
