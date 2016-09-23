@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.51 2016/09/18 14:32:54 deraadt Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.52 2016/09/23 11:38:21 kettenis Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ cpu_startup()
 	 * Identify ourselves for the msgbuf (everything printed earlier will
 	 * not be buffered).
 	 */
-	printf(version);
+	printf("%s", version);
 
 	printf("real mem  = %lu (%luMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
