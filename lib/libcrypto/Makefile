@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2016/09/14 06:26:02 natano Exp $
+# $OpenBSD: Makefile,v 1.7 2016/09/23 21:49:30 natano Exp $
 
 LIB=	crypto
 
@@ -395,7 +395,7 @@ includes: obj_mac.h
 CFLAGS+= -I${.OBJDIR}
 
 GENERATED=obj_mac.h obj_dat.h
-CLEANFILES=${GENERATED} obj_mac.num.tmp
+CLEANFILES+=${GENERATED} obj_mac.num.tmp
 SSL_OBJECTS=${LCRYPTO_SRC}/objects
 
 obj_mac.h: ${SSL_OBJECTS}/objects.h ${SSL_OBJECTS}/obj_mac.num ${SSL_OBJECTS}/objects.txt
