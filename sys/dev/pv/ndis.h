@@ -79,7 +79,7 @@ struct ndis_offload_params {
 
 #define	NDIS_OFFLOAD_PARAMS_SIZE	sizeof(struct ndis_offload_params)
 #define	NDIS_OFFLOAD_PARAMS_SIZE_6_1	\
-	__offsetof(struct ndis_offload_params, ndis_rsc_ip4)
+	offsetof(struct ndis_offload_params, ndis_rsc_ip4)
 
 #define	NDIS_OFFLOAD_PARAMS_REV_2	2	/* NDIS 6.1 */
 #define	NDIS_OFFLOAD_PARAMS_REV_3	3	/* NDIS 6.30 */
@@ -123,8 +123,7 @@ struct ndis_offload_params {
 #define	NDIS_VLAN_INFO_PRI_MASK		0x0007
 #define	NDIS_VLAN_INFO_ID_MASK		0xfff0
 #define	NDIS_VLAN_INFO(id, pri)			\
-	(((pri) & NDIS_VLAN_INFO_PRI_MASK) |	\
-	(((id) & 0xfff) << 4))
+	(((pri) & NDIS_VLAN_INFO_PRI_MASK) | (((id) & 0xfff) << 4))
 #define	NDIS_VLAN_INFO_ID(inf)		(((inf) & NDIS_VLAN_INFO_ID_MASK) >> 4)
 #define	NDIS_VLAN_INFO_PRI(inf)		( (inf) & NDIS_VLAN_INFO_PRI_MASK)
 
