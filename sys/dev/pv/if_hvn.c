@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2012 Microsoft Corp.
+ * Copyright (c) 2009-2012,2016 Microsoft Corp.
  * Copyright (c) 2010-2012 Citrix Inc.
  * Copyright (c) 2012 NetApp Inc.
  * Copyright (c) 2016 Mike Belopuhov <mike@esdenera.com>
@@ -85,10 +85,6 @@
 #define HVN_RNDIS_CTLREQS		4
 #define HVN_RNDIS_CMPBUFSZ		512
 
-#define HVN_RNDIS_MSG_LEN		\
-	(sizeof(struct rndis_packet_msg) + NDIS_VLAN_INFO_SIZE + \
-	 NDIS_RXCSUM_INFO_SIZE)
-
 struct rndis_cmd {
 	uint32_t			 rc_id;
 	struct hvn_nvs_rndis		 rc_msg;
@@ -113,9 +109,14 @@ TAILQ_HEAD(rndis_queue, rndis_cmd);
  * Tx ring
  */
 #define HVN_TX_DESC			128
-#define HVN_TX_FRAGS			31
+#define HVN_TX_FRAGS			15		/* 31 is the max */
 #define HVN_TX_FRAG_SIZE		PAGE_SIZE
 #define HVN_TX_PKT_SIZE			16384
+
+#define HVN_RNDIS_PKT_LEN					\
+	(sizeof(struct rndis_packet_msg) +			\
+	 sizeof(struct rndis_pktinfo) + NDIS_VLAN_INFO_SIZE +	\
+	 sizeof(struct rndis_pktinfo) + NDIS_TXCSUM_INFO_SIZE)
 
 struct hvn_tx_desc {
 	uint32_t			 txd_id;
@@ -490,13 +491,36 @@ hvn_start(struct ifnet *ifp)
 	}
 }
 
+static inline char *
+hvn_rndis_pktinfo_append(struct rndis_packet_msg *pkt, size_t pktsize,
+    size_t datalen, uint32_t type)
+{
+	struct rndis_pktinfo *pi;
+	size_t pi_size = sizeof(*pi) + datalen;
+	char *cp;
+
+	KASSERT(pkt->rm_pktinfooffset + pkt->rm_pktinfolen + pi_size <=
+	    pktsize);
+
+	cp = (char *)pkt + pkt->rm_pktinfooffset + pkt->rm_pktinfolen;
+	pi = (struct rndis_pktinfo *)cp;
+	pi->rm_size = pi_size;
+	pi->rm_type = type;
+	pi->rm_pktinfooffset = sizeof(*pi);
+	pkt->rm_pktinfolen += pi_size;
+	pkt->rm_dataoffset += pi_size;
+	pkt->rm_len += pi_size;
+	return ((char *)pi->rm_data);
+}
+
 int
 hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 {
 	struct hvn_tx_desc *txd;
+	struct rndis_packet_msg *pkt;
 	bus_dma_segment_t *seg;
-	size_t rlen;
-	int i;
+	size_t pktlen;
+	int i, rv;
 
 	/* XXX use queues? */
 	txd = &sc->sc_tx_desc[sc->sc_tx_next];
@@ -506,29 +530,67 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 		txd = &sc->sc_tx_desc[sc->sc_tx_next];
 	}
 
-	memset(txd->txd_req, 0, sizeof(*txd->txd_req));
-	txd->txd_req->rm_type = REMOTE_NDIS_PACKET_MSG;
-	txd->txd_req->rm_dataoffset = RNDIS_DATA_OFFSET;
-	txd->txd_req->rm_datalen = m->m_pkthdr.len;
-	txd->txd_req->rm_pktinfooffset = RNDIS_DATA_OFFSET;
-	rlen = sizeof(struct rndis_packet_msg);
+	pkt = txd->txd_req;
+	memset(pkt, 0, sizeof(*pkt));
+	pkt->rm_type = REMOTE_NDIS_PACKET_MSG;
+	pkt->rm_len = sizeof(*pkt) + m->m_pkthdr.len;
+	pkt->rm_dataoffset = RNDIS_DATA_OFFSET;
+	pkt->rm_datalen = m->m_pkthdr.len;
+	pkt->rm_pktinfooffset = sizeof(*pkt); /* adjusted below */
+	pkt->rm_pktinfolen = 0;
 
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmap, m, BUS_DMA_READ |
-	    BUS_DMA_NOWAIT)) {
+	rv = bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmap, m, BUS_DMA_READ |
+	    BUS_DMA_NOWAIT);
+	switch (rv) {
+	case 0:
+		break;
+	case EFBIG:
+		if (m_defrag(m, M_NOWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmap, m,
+		    BUS_DMA_READ | BUS_DMA_NOWAIT) == 0)
+			break;
+	default:
 		DPRINTF("%s: failed to load mbuf\n", sc->sc_dev.dv_xname);
 		return (-1);
 	}
 	txd->txd_buf = m;
 
-	/* Per-packet info adjusts rlen */
+#if NVLAN > 0
+	if (m->m_flags & M_VLANTAG) {
+		uint32_t vlan;
+		char *cp;
 
-	/* Final length value for the RNDIS header and data */
-	txd->txd_req->rm_len = txd->txd_req->rm_datalen + rlen;
+		vlan = NDIS_VLAN_INFO(EVL_VLANOFTAG(m->m_pkthdr.ether_vtag),
+		    EVL_PRIOFTAG(m->m_pkthdr.ether_vtag));
+		cp = hvn_rndis_pktinfo_append(pkt, HVN_RNDIS_PKT_LEN,
+		    NDIS_VLAN_INFO_SIZE, NDIS_PKTINFO_TYPE_VLAN);
+		memcpy(cp, &vlan, NDIS_VLAN_INFO_SIZE);
+	}
+#endif
+
+	if (m->m_pkthdr.csum_flags & (M_IPV4_CSUM_OUT | M_UDP_CSUM_OUT |
+	    M_TCP_CSUM_OUT)) {
+		uint32_t csum = NDIS_TXCSUM_INFO_IPV4;
+		char *cp;
+
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			csum |= NDIS_TXCSUM_INFO_IPCS;
+		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
+			csum |= NDIS_TXCSUM_INFO_TCPCS;
+		if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
+			csum |= NDIS_TXCSUM_INFO_UDPCS;
+		cp = hvn_rndis_pktinfo_append(pkt, HVN_RNDIS_PKT_LEN,
+		    NDIS_TXCSUM_INFO_SIZE, NDIS_PKTINFO_TYPE_CSUM);
+		memcpy(cp, &csum, NDIS_TXCSUM_INFO_SIZE);
+	}
+
+	pktlen = pkt->rm_pktinfooffset + pkt->rm_pktinfolen;
+	pkt->rm_pktinfooffset -= RNDIS_HEADER_OFFSET;
 
 	/* Attach an RNDIS message into the first slot */
 	txd->txd_sgl[0].gpa_page = txd->txd_gpa.gpa_page;
 	txd->txd_sgl[0].gpa_ofs = txd->txd_gpa.gpa_ofs;
-	txd->txd_sgl[0].gpa_len = rlen;
+	txd->txd_sgl[0].gpa_len = pktlen;
 	txd->txd_nsge = txd->txd_dmap->dm_nsegs + 1;
 
 	for (i = 0; i < txd->txd_dmap->dm_nsegs; i++) {
@@ -682,7 +744,7 @@ hvn_tx_ring_create(struct hvn_softc *sc)
 	int i, rsegs;
 	paddr_t pa;
 
-	msgsize = roundup(HVN_RNDIS_MSG_LEN, 128);
+	msgsize = roundup(HVN_RNDIS_PKT_LEN, 128);
 
 	/* Allocate memory to store RNDIS messages */
 	if (bus_dmamem_alloc(sc->sc_dmat, msgsize * HVN_TX_DESC, PAGE_SIZE, 0,
@@ -765,7 +827,7 @@ hvn_tx_ring_destroy(struct hvn_softc *sc)
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_rmap);
 	}
 	if (sc->sc_tx_msgs) {
-		size_t msgsize = roundup(HVN_RNDIS_MSG_LEN, 128);
+		size_t msgsize = roundup(HVN_RNDIS_PKT_LEN, 128);
 
 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_tx_msgs,
 		    msgsize * HVN_TX_DESC);
@@ -1366,8 +1428,7 @@ hvn_devget(struct hvn_softc *sc, caddr_t buf, uint32_t len)
 }
 
 void
-hvn_rxeof(struct hvn_softc *sc, caddr_t buf, uint32_t len,
-    struct mbuf_list *ml)
+hvn_rxeof(struct hvn_softc *sc, caddr_t buf, uint32_t len, struct mbuf_list *ml)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct rndis_packet_msg *pkt;
@@ -1378,7 +1439,7 @@ hvn_rxeof(struct hvn_softc *sc, caddr_t buf, uint32_t len,
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
 
-	if (len < RNDIS_HEADER_OFFSET + sizeof(*pkt)) {
+	if (len < sizeof(*pkt)) {
 		printf("%s: data packet too short: %u\n",
 		    sc->sc_dev.dv_xname, len);
 		return;
@@ -1398,24 +1459,24 @@ hvn_rxeof(struct hvn_softc *sc, caddr_t buf, uint32_t len,
 		return;
 	}
 
+	if (pkt->rm_pktinfooffset + pkt->rm_pktinfolen > len) {
+		printf("%s: pktinfo is out of bounds: %u@%u vs %u\n",
+		    sc->sc_dev.dv_xname, pkt->rm_pktinfolen,
+		    pkt->rm_pktinfooffset, len);
+		goto done;
+	}
 	pi = (struct rndis_pktinfo *)((caddr_t)pkt + RNDIS_HEADER_OFFSET +
 	    pkt->rm_pktinfooffset);
 	while (pkt->rm_pktinfolen > 0) {
-		if (pkt->rm_pktinfooffset + pkt->rm_pktinfolen > len) {
-			printf("%s: PI out of bounds: %u@%u\n",
-			    sc->sc_dev.dv_xname, pkt->rm_pktinfolen,
-			    pkt->rm_pktinfooffset);
-			break;
-		}
 		if (pi->rm_size > pkt->rm_pktinfolen) {
-			printf("%s: invalid PI size: %u/%u\n",
+			printf("%s: invalid pktinfo size: %u/%u\n",
 			    sc->sc_dev.dv_xname, pi->rm_size,
 			    pkt->rm_pktinfolen);
 			break;
 		}
 		switch (pi->rm_type) {
 		case NDIS_PKTINFO_TYPE_CSUM:
-			memcpy(&csum, (caddr_t)pi + pi->rm_size, sizeof(csum));
+			memcpy(&csum, pi->rm_data, sizeof(csum));
 			if (csum & NDIS_RXCSUM_INFO_IPCS_OK)
 				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 			if (csum & NDIS_RXCSUM_INFO_TCPCS_OK)
@@ -1424,20 +1485,25 @@ hvn_rxeof(struct hvn_softc *sc, caddr_t buf, uint32_t len,
 				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 			break;
 		case NDIS_PKTINFO_TYPE_VLAN:
-			memcpy(&vlan, (caddr_t)pi + pi->rm_size, sizeof(vlan));
+			memcpy(&vlan, pi->rm_data, sizeof(vlan));
 #if NVLAN > 0
-			m->m_pkthdr.ether_vtag = vlan & 0xffff;
-			m->m_flags |= M_VLANTAG;
+			if (vlan != 0xffffffff) {
+				m->m_pkthdr.ether_vtag =
+				    NDIS_VLAN_INFO_ID(vlan) |
+				    (NDIS_VLAN_INFO_PRI(vlan) << EVL_PRIO_BITS);
+				m->m_flags |= M_VLANTAG;
+			}
 #endif
 			break;
 		default:
-			DPRINTF("%s: unhandled PI %u\n", sc->sc_dev.dv_xname,
-			    pi->rm_type);
+			DPRINTF("%s: unhandled pktinfo type %u\n",
+			    sc->sc_dev.dv_xname, pi->rm_type);
 		}
 		pkt->rm_pktinfolen -= pi->rm_size;
 		pi = (struct rndis_pktinfo *)((caddr_t)pi + pi->rm_size);
 	}
 
+ done:
 	ml_enqueue(ml, m);
 }
 
