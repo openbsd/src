@@ -422,7 +422,6 @@
 ./usr/share/man/man1/spell.1
 ./usr/share/man/man1/splain.1
 ./usr/share/man/man1/split.1
-./usr/share/man/man1/sqlite3.1
 ./usr/share/man/man1/ssh-add.1
 ./usr/share/man/man1/ssh-agent.1
 ./usr/share/man/man1/ssh-keygen.1

@@ -1912,8 +1912,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/spawn.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/sqlite3.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ssl
 ./usr/libdata/perl5/site_perl/sh-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/stdbool.ph

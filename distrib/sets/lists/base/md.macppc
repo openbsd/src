@@ -1944,8 +1944,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/spe.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sqlite3.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stdbool.ph
