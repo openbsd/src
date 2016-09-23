@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2016/09/02 21:30:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.14 2016/09/23 20:04:21 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -18,6 +18,15 @@ regress:
 	@echo "${PERL_REQUIRE}"
 	@echo install these perl packages for additional tests
 	@echo SKIPPED
+.endif
+
+.if make (regress) || make (all)
+.BEGIN:
+.if empty (REMOTE_SSH)
+	${SUDO} true
+.else
+	ssh -t ${REMOTE_SSH} ${SUDO} true
+.endif
 .endif
 
 # Fill out these variables if you want to test relayd with
@@ -59,7 +68,6 @@ run-regress-$a: $a
 	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}relayd.pl copy ${PERLPATH}$a
 	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}relayd.pl splice ${PERLPATH}$a
 .else
-	ssh -t ${REMOTE_SSH} ${SUDO} true
 	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}remote.pl copy ${LOCAL_ADDR} ${REMOTE_ADDR} ${REMOTE_SSH} ${PERLPATH}$a
 	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}remote.pl splice ${LOCAL_ADDR} ${REMOTE_ADDR} ${REMOTE_SSH} ${PERLPATH}$a
 .endif
