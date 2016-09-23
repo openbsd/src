@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2016/09/02 21:30:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/09/23 20:02:00 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -19,16 +19,6 @@ regress:
 	@echo install these perl packages for additional tests
 	@echo SKIPPED
 .endif
-
-# Fill out these variables if you want to test httpd with
-# the httpd process running on a remote machine.  You have to specify
-# a local and remote ip address for the tcp connections.  To control
-# the remote machine you need a hostname for ssh to log in.  All the
-# test files must be in the same directory local and remote.
-
-LOCAL_ADDR ?=
-REMOTE_ADDR ?=
-REMOTE_SSH ?=
 
 # Automatically generate regress targets from test cases in directory.
 
