@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.39 2016/09/01 09:05:37 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.40 2016/09/24 13:43:25 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -376,13 +376,12 @@ copy_io_area_map(pd_entry_t *new_pd)
  *   Setting up page tables for the kernel.
  */
 u_int
-initarm(void *arg0, void *arg1, void *arg2)
+initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 {
 	int loop, loop1, i, physsegs = VM_PHYSSEG_MAX;
 	u_int l1pagetable;
 	pv_addr_t kernel_l1pt;
 	pv_addr_t fdt;
-	paddr_t loadaddr;
 	struct fdt_reg reg;
 	paddr_t memstart;
 	psize_t memsize;
@@ -397,7 +396,9 @@ initarm(void *arg0, void *arg1, void *arg2)
 	int	(*map_func_save)(void *, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 
-	loadaddr = (paddr_t)arg0;
+	if (arg0)
+		esym = (uint32_t)arg0;
+
 	board_id = (uint32_t)arg1;
 	/*
 	 * u-boot has decided the top four bits are

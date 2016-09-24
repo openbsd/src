@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.4 2011/10/19 20:18:31 drahn Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.5 2016/09/24 13:43:25 kettenis Exp $	*/
 /* $NetBSD: machdep.h,v 1.7 2002/02/21 02:52:21 thorpej Exp $ */
 
 #ifndef _ARM_MACHDEP_H_
@@ -16,7 +16,7 @@ void dumpsys	(void);
  * note that we use void * as all the platforms have different ideas on what
  * the structure is
  */
-u_int initarm (void *, void *, void *);
+u_int initarm (void *, void *, void *, paddr_t);
 
 /* from arm/arm/intr.c */
 void dosoftints (void);
