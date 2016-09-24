@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.147 2016/09/04 10:32:01 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.148 2016/09/24 19:27:10 phessler Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -356,6 +356,7 @@ struct mbuf;
 struct socket;
 struct ifnet;
 struct sockaddr_in6;
+struct bfd_config;
 
 void	 route_init(void);
 int	 route_output(struct mbuf *, ...);
@@ -363,6 +364,7 @@ int	 route_usrreq(struct socket *, int, struct mbuf *,
 			   struct mbuf *, struct mbuf *, struct proc *);
 void	 rt_ifmsg(struct ifnet *);
 void	 rt_ifannouncemsg(struct ifnet *, int);
+void	 rt_bfdmsg(struct bfd_config *);
 void	 rt_maskedcopy(struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *);
 struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);

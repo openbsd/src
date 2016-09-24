@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.205 2016/09/17 07:35:05 phessler Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.206 2016/09/24 19:27:10 phessler Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1100,6 +1100,11 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo)
 	case RTM_IFANNOUNCE:
 		len = sizeof(struct if_announcemsghdr);
 		break;
+#ifdef BFD
+	case RTM_BFD:
+		len = sizeof(struct bfd_msghdr);
+		break;
+#endif
 	default:
 		len = sizeof(struct rt_msghdr);
 		break;
@@ -1332,6 +1337,52 @@ rt_ifannouncemsg(struct ifnet *ifp, int what)
 	route_proto.sp_protocol = 0;
 	route_input(m, &route_proto, &route_src, &route_dst);
 }
+
+#ifdef BFD
+/*
+ * This is used to generate routing socket messages indicating
+ * the state of a BFD session.
+ */
+void
+rt_bfdmsg(struct bfd_config *bfd)
+{
+	struct bfd_msghdr	*bfdm;
+	struct mbuf		*m;
+	struct rt_addrinfo	 info;
+
+	if (route_cb.any_count == 0)
+		return;
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = rt_key(bfd->bc_rt);
+	info.rti_info[RTAX_IFA] = bfd->bc_rt->rt_ifa->ifa_addr;
+
+	m = rt_msg1(RTM_BFD, &info);
+	if (m == NULL)
+		return;
+	bfdm = mtod(m, struct bfd_msghdr *);
+
+	bfdm->bm_mode = bfd->bc_mode;
+	bfdm->bm_mintx = bfd->bc_mintx;
+	bfdm->bm_minrx = bfd->bc_minrx;
+	bfdm->bm_minecho = bfd->bc_minecho;
+	bfdm->bm_multiplier = bfd->bc_multiplier;
+
+	bfdm->bm_uptime = bfd->bc_time->tv_sec;
+	bfdm->bm_lastuptime = bfd->bc_lastuptime;
+	bfdm->bm_state = bfd->bc_state;
+	bfdm->bm_remotestate = bfd->bc_neighbor->bn_rstate;
+	bfdm->bm_laststate = bfd->bc_laststate;
+	bfdm->bm_error = bfd->bc_error;
+
+	bfdm->bm_localdiscr = bfd->bc_neighbor->bn_ldiscr;
+	bfdm->bm_localdiag = bfd->bc_neighbor->bn_ldiag;
+	bfdm->bm_remotediscr = bfd->bc_neighbor->bn_rdiscr;
+	bfdm->bm_remotediag = bfd->bc_neighbor->bn_rdiag;
+
+	route_proto.sp_protocol = 0;
+	route_input(m, &route_proto, &route_src, &route_dst);
+}
+#endif /* BFD */
 
 /*
  * This is used in dumping the kernel table via sysctl().
