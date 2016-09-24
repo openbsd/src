@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.15 2014/04/18 14:38:21 guenther Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.16 2016/09/24 07:26:14 otto Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -135,6 +135,8 @@ noexec_mmap(void *p, size_t size)
 	memcpy(p + page_size * 2, p, page_size);
 	fdcache(p + page_size * 1, TESTSZ);
 	fdcache(p + page_size * 2, TESTSZ);
+	if (mprotect(p, size + 2 * page_size, PROT_READ|PROT_EXEC) != 0)
+		err(1, "mprotect");
 
 	/* here we must fail on segv since we said it gets executable */
 	fail = 1;
@@ -242,7 +244,7 @@ main(int argc, char *argv[])
 				(void) strlcat(label, "-mmap", sizeof(label));
 			} else {
 				if ((ptr = mmap(p, size + 2 * page_size,
-				    PROT_READ|PROT_WRITE|PROT_EXEC,
+				    PROT_READ|PROT_WRITE,
 				    MAP_ANON, -1, 0)) == MAP_FAILED)
 					err(1, "mmap");
 				func = &noexec_mmap;
