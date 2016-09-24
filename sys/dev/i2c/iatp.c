@@ -1,4 +1,4 @@
-/* $OpenBSD: iatp.c,v 1.2 2016/09/04 10:45:29 jsg Exp $ */
+/* $OpenBSD: iatp.c,v 1.3 2016/09/24 18:32:18 kettenis Exp $ */
 /*
  * Atmel maXTouch i2c touchscreen/touchpad driver
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
@@ -548,8 +548,7 @@ iatp_init(struct iatp_softc *sc)
 
 			/* find this machine's button config */
 			sc->t19_button_bit = -1;
-			if (hw_vendor == NULL || hw_prod == NULL ||
-			    sc->sc_hid == NULL)
+			if (hw_vendor == NULL || hw_prod == NULL)
 				break;
 
 			for (m = mxt_t19_button_map_devs; m->vendor != NULL;
