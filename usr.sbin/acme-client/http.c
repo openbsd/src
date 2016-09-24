@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.8 2016/09/13 17:13:37 deraadt Exp $ */
+/*	$Id: http.c,v 1.9 2016/09/24 15:18:10 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -149,12 +149,6 @@ http_write(const char *buf, size_t sz, const struct http *http)
 	return (xfer);
 }
 
-/*
- * Between 5.8 and 5.9, libtls changed its semantics.
- * In the old way, tls_close() will close the underlying file
- * descriptors.
- * In the new way, it won't.
- */
 void
 http_disconnect(struct http *http)
 {
@@ -166,10 +160,8 @@ http_disconnect(struct http *http)
 			    tls_error(http->ctx));
 		if (NULL != http->ctx)
 			tls_free(http->ctx);
-#if ! defined(TLS_READ_AGAIN) && ! defined(TLS_WRITE_AGAIN)
 		if (-1 == close(http->fd))
 			warn("%s: close", http->src.ip);
-#endif
 	} else if (-1 != http->fd) {
 		/* Non-TLS connection. */
 		if (-1 == close(http->fd))
