@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.48 2016/09/23 19:05:55 bluhm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.49 2016/09/24 11:30:59 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"	$NetBSD: syslogd.8,v 1.3 1996/01/02 17:41:48 perry Exp $
 .\"
-.Dd $Mdocdate: September 23 2016 $
+.Dd $Mdocdate: September 24 2016 $
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -55,9 +55,11 @@
 .Ek
 .Sh DESCRIPTION
 .Nm
-reads and logs messages to the system console, log files, pipes to
-other programs, other machines and/or users as specified by its
-configuration file.
+writes system messages to log files or a user's terminal.
+Output can be sent to other programs
+for further processing.
+It can also securely send and receive log messages
+to and from remote hosts.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
