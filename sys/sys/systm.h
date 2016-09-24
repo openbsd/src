@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.118 2016/09/17 14:56:12 jasper Exp $	*/
+/*	$OpenBSD: systm.h,v 1.119 2016/09/24 18:35:52 tedu Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -150,6 +150,7 @@ void vfs_op_init(void);
 int	seltrue(dev_t dev, int which, struct proc *);
 int	selfalse(dev_t dev, int which, struct proc *);
 void	*hashinit(int, int, int, u_long *);
+void	 hashfree(void *, int, int);
 int	sys_nosys(struct proc *, void *, register_t *);
 
 void	panic(const char *, ...)

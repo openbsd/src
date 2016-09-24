@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.47 2016/03/15 04:19:26 stefan Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.48 2016/09/24 18:35:52 tedu Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -174,6 +174,20 @@ hashinit(int elements, int type, int flags, u_long *hashmask)
 		LIST_INIT(&hashtbl[i]);
 	*hashmask = hashsize - 1;
 	return (hashtbl);
+}
+
+void
+hashfree(void *hash, int elements, int type)
+{
+	u_long hashsize;
+	LIST_HEAD(generic, generic) *hashtbl = hash;
+
+	if (elements <= 0)
+		panic("hashfree: bad cnt");
+	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
+		continue;
+
+	free(hashtbl, type, sizeof(*hashtbl) * hashsize);
 }
 
 /*
