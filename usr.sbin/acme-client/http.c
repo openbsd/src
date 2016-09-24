@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.10 2016/09/24 15:19:33 jsing Exp $ */
+/*	$Id: http.c,v 1.11 2016/09/24 15:24:48 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -159,10 +159,8 @@ http_disconnect(struct http *http)
 			warnx("%s: tls_close: %s", http->src.ip,
 			    tls_error(http->ctx));
 		tls_free(http->ctx);
-		if (-1 == close(http->fd))
-			warn("%s: close", http->src.ip);
-	} else if (-1 != http->fd) {
-		/* Non-TLS connection. */
+	}
+	if (-1 != http->fd) {
 		if (-1 == close(http->fd))
 			warn("%s: close", http->src.ip);
 	}
