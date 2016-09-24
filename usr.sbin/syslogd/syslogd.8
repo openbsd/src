@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.49 2016/09/24 11:30:59 jmc Exp $
+.\"	$OpenBSD: syslogd.8,v 1.50 2016/09/24 11:32:25 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -250,11 +250,6 @@ using the
 option to protect from messages being spoofed by malicious clients.
 .Sh FILES
 .Bl -tag -width /var/run/syslog.pid -compact
-.It Pa /etc/syslog.conf
-Configuration file.
-.It Pa /var/run/syslog.pid
-Process ID of current
-.Nm .
 .It Pa /dev/log
 Name of the
 .Ux Ns -domain
@@ -263,6 +258,11 @@ datagram log socket.
 Kernel log device.
 .It Pa /etc/ssl/
 Private keys and public certificates.
+.It Pa /etc/syslog.conf
+Configuration file.
+.It Pa /var/run/syslog.pid
+Process ID of current
+.Nm .
 .El
 .Sh SEE ALSO
 .Xr logger 1 ,
