@@ -696,6 +696,10 @@ sub installlib {
 	return;
     }
 
+    # If we have different install version, install that instead
+    return if -e "$_.install";
+    $name =~ s/\.install$//;
+
     # ignore patch backups, RCS files, emacs backup & temp files and the
     # .exists files, .PL files, and test files.
     return if $name =~ m{\.orig$|\.rej$|~$|^#.+#$|,v$|^\.exists|\.PL$|\.plc$|\.t$|^test\.pl$|^dbm_filter_util\.pl$|^filter-util\.pl$|^uupacktool\.pl$|^\.gitignore$} ||
@@ -763,19 +767,6 @@ sub installlib {
 	return unless $do_installarchlib;
     } else {
 	return unless $do_installprivlib;
-    }
-
-    if ($name eq 'Config_heavy.pl') {
-        open my $ifh, '<', $_ or die $!;
-        $_ = "$_.orig";
-        open my $ofh, '>', $_ or die $!;
-        while (my $l = <$ifh>) {
-            $l =~ s,^(ccflags|cppflags)[^=]*='[^']+,$& -I/usr/local/include,;
-            $l =~ s,^(ldflags|lddlflags)[^=]*='[^']+,$& -L/usr/local/lib,;
-            print $ofh $l;
-        }
-        close $ifh;
-        close $ofh;
     }
 
     if ($Is_NetWare && !$opts{netware} && /\.(?:nlp|nlm|bs)$/) {
