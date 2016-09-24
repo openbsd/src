@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hashinit.9,v 1.8 2016/09/24 18:35:52 tedu Exp $
+.\"	$OpenBSD: hashinit.9,v 1.9 2016/09/24 18:59:04 tedu Exp $
 .\"
 .\" Copyright (c) 2001 Tobias Weingartner
 .\" All rights reserved.
@@ -59,6 +59,17 @@ The
 .Fa mask
 argument is used to pass back the mask for use with the allocated
 hashing table.
+.Pp
+The
+.Fn hashfree
+function causes memory allocated by the
+.Fn hashinit
+function to be released.
+The
+.Fa num
+and
+.Fa type
+arguments of related calls must match.
 .Sh RETURN VALUES
 The
 .Fn hashinit
