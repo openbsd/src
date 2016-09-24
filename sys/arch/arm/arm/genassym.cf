@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.15 2016/03/24 08:52:30 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.16 2016/09/24 21:02:31 patrick Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -99,6 +99,7 @@ member	PCB_LR			pcb_un.un_32.pcb32_lr
 member	PCB_PC			pcb_un.un_32.pcb32_pc
 member	PCB_UND_SP		pcb_un.un_32.pcb32_und_sp
 member	pcb_onfault
+member	pcb_tcb
 # XXX use USER_SIZEOF in new code whenever possible
 define	USER_SIZE		sizeof(struct user)
 

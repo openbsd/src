@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.12 2016/08/26 11:59:04 kettenis Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.13 2016/09/24 21:02:31 patrick Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -261,6 +261,10 @@ ENTRY(cpu_switchto)
 
 	/* rem: r6 = new proc */
 	/* rem: r9 = new PCB */
+
+	/* stick tcb into user visable register */
+	ldr	r3, [r9, #(PCB_TCB)]
+	mcr	CP15_TPIDRURO(r3)
 
 	mrs	r3, cpsr
 	cps	#(PSR_UND32_MODE)

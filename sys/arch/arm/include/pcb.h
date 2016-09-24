@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.6 2015/05/05 02:13:46 guenther Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.7 2016/09/24 21:02:31 patrick Exp $	*/
 /*	$NetBSD: pcb.h,v 1.10 2003/10/13 21:46:39 scw Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ struct pcb {
 		struct	pcb_arm32 un_32;
 	} pcb_un;
 	struct	fpe_sp_state pcb_fpstate;	/* Floating Point state */
+	void	*pcb_tcb;
 };
 
 #endif	/* _ARM_PCB_H_ */
