@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.40 2016/09/23 14:06:29 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.41 2016/09/24 19:29:55 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -592,7 +592,7 @@ void
 bfd_timeout_rx(void *v)
 {
 	struct bfd_config *bfd = v;
-
+	int s;
 
 	if (++bfd->bc_error >= bfd->bc_neighbor->bn_mult) {
 		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_EXPIRED;
@@ -602,6 +602,10 @@ bfd_timeout_rx(void *v)
 
 		return;
 	}
+
+	s = splsoftnet();
+	rt_bfdmsg(bfd);
+	splx(s);
 
 	timeout_add_usec(&bfd->bc_timo_rx, bfd->bc_minrx);
 }
@@ -848,7 +852,7 @@ bfd_set_state(struct bfd_config *bfd, int state)
 
 	bfd->bc_state = state;
 	s = splsoftnet();
-//	rt_bfdmsg(bfd);
+	rt_bfdmsg(bfd);
 	splx(s);
 	if_put(ifp);
 
