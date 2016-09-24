@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.83 2016/09/16 02:35:42 dlg Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.84 2016/09/24 18:40:29 tedu Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -388,7 +388,8 @@ uao_free(struct uvm_aobj *aobj)
 				pool_put(&uao_swhash_elt_pool, elt);
 			}
 		}
-		free(aobj->u_swhash, M_UVMAOBJ, 0);
+
+		hashfree(aobj->u_swhash, UAO_SWHASH_BUCKETS(aobj->u_pages), M_UVMAOBJ);
 	} else {
 		int i;
 
@@ -470,7 +471,7 @@ uao_shrink_hash(struct uvm_object *uobj, int pages)
 		}
 	}
 
-	free(aobj->u_swhash, M_UVMAOBJ, 0);
+	hashfree(aobj->u_swhash, UAO_SWHASH_BUCKETS(aobj->u_pages), M_UVMAOBJ);
 
 	aobj->u_swhash = new_swhash;
 	aobj->u_pages = pages;
@@ -507,7 +508,7 @@ uao_shrink_convert(struct uvm_object *uobj, int pages)
 		}
 	}
 
-	free(aobj->u_swhash, M_UVMAOBJ, 0);
+	hashfree(aobj->u_swhash, UAO_SWHASH_BUCKETS(aobj->u_pages), M_UVMAOBJ);
 
 	aobj->u_swslots = new_swslots;
 	aobj->u_pages = pages;
@@ -627,7 +628,7 @@ uao_grow_hash(struct uvm_object *uobj, int pages)
 		}
 	}
 
-	free(aobj->u_swhash, M_UVMAOBJ, 0);
+	hashfree(aobj->u_swhash, UAO_SWHASH_BUCKETS(aobj->u_pages), M_UVMAOBJ);
 
 	aobj->u_swhash = new_swhash;
 	aobj->u_pages = pages;
