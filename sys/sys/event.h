@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.22 2016/08/13 17:05:02 tedu Exp $	*/
+/*	$OpenBSD: event.h,v 1.23 2016/09/24 18:39:17 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -122,6 +122,8 @@ SLIST_HEAD(klist, knote);
 					if ((list) != NULL) \
 						knote((list), (hint)); \
 				} while (0)
+
+#define	KN_HASHSIZE		64		/* XXX should be tunable */
 
 /*
  * Flag indicating hint is a signal.  Used by EVFILT_SIGNAL, and also

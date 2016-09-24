@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.135 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.136 2016/09/24 18:39:17 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1096,7 +1096,7 @@ fdfree(struct proc *p)
 	if (fdp->fd_rdir)
 		vrele(fdp->fd_rdir);
 	free(fdp->fd_knlist, M_TEMP, fdp->fd_knlistsize * sizeof(struct klist));
-	free(fdp->fd_knhash, M_TEMP, 0);
+	hashfree(fdp->fd_knhash, KN_HASHSIZE, M_TEMP);
 	pool_put(&fdesc_pool, fdp);
 }
 
