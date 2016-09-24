@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.37 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.38 2016/09/24 12:59:42 kettenis Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1492,56 +1492,6 @@ dwc2_detach(struct dwc2_softc *sc, int flags)
 
 	return rv;
 }
-
-bool
-dwc2_shutdown(struct device *self, int flags)
-{
-	struct dwc2_softc *sc = (void *)self;
-
-	sc = sc;
-
-	return true;
-}
-
-void
-dwc2_childdet(struct device *self, struct device *child)
-{
-	struct dwc2_softc *sc = (void *)self;
-
-	sc = sc;
-}
-
-int
-dwc2_activate(struct device *self, int act)
-{
-	struct dwc2_softc *sc = (void *)self;
-
-	sc = sc;
-
-	return 0;
-}
-
-#if 0
-bool
-dwc2_resume(struct device *dv, const pmf_qual_t *qual)
-{
-	struct dwc2_softc *sc = (void *)dv;
-
-	sc = sc;
-
-	return true;
-}
-
-bool
-dwc2_suspend(struct device *dv, const pmf_qual_t *qual)
-{
-	struct dwc2_softc *sc = (void *)dv;
-
-	sc = sc;
-
-	return true;
-}
-#endif
 
 /***********************************************************************/
 int

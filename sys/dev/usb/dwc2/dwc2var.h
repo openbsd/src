@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.16 2015/09/03 14:22:27 visa Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.17 2016/09/24 12:59:42 kettenis Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -120,13 +120,6 @@ int		dwc2_dma_config(struct dwc2_softc *,
 				struct dwc2_core_dma_config *);
 int		dwc2_intr(void *);
 int		dwc2_detach(dwc2_softc_t *, int);
-bool		dwc2_shutdown(struct device *, int);
-void		dwc2_childdet(struct device *, struct device *);
-int		dwc2_activate(struct device *, int);
-#if 0
-bool		dwc2_resume(struct device *, const pmf_qual_t *);
-bool		dwc2_suspend(struct device *, const pmf_qual_t *);
-#endif
 
 void		dwc2_worker(struct task *, void *);
 
