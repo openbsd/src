@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.27 2015/09/14 16:09:13 tedu Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.28 2016/09/24 12:43:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -704,20 +704,18 @@ innetgr(const char *grp, const char *host, const char *user, const char *domain)
 		if (in_lookup(ypdom, grp, user, domain, _NG_KEYBYUSER))
 			return 1;
 	}
-	/* If a domainname is given, we would have found a match */
-	if (domain != NULL)
-		return 0;
-
-	grpdup = strdup(grp);
-	if (grpdup == NULL)
-		return 0;
 
 	/* Too bad need the slow recursive way */
 	sl = _ng_sl_init();
-	if (sl == NULL) {
-		free(grpdup);
+	if (sl == NULL)
+		return 0;
+
+	grpdup = strdup(grp);
+	if (grpdup == NULL) {
+		_ng_sl_free(sl, 1);
 		return 0;
 	}
+
 	found = in_find(ypdom, sl, grpdup, host, user, domain);
 	_ng_sl_free(sl, 1);
 
