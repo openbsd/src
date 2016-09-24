@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2013/12/28 03:19:02 martynas Exp $
+# $OpenBSD: Makefile,v 1.15 2016/09/24 01:01:38 bluhm Exp $
 
 C_MODULES?=	strlcpy strlcat getcwd memcpy fread memcpy declare \
 		sscanf vararray md builtins
@@ -28,7 +28,7 @@ REGRESS_TARGETS= ${C_TARGETS} ${CPP_TARGETS}
 .  for j in ${C_${i:U}}
 C_TARGETS+= c-${i}-${j} 
 c-${i}-${j}:
-	${TCC} ${TCFLAGS} -o /dev/null ${i}-${j}.c 2>&1 | sed '/^\/tmp\//d' | diff -u - ${.CURDIR}/${i}-${j}.c${EXP}
+	${TCC} ${TCFLAGS} -o /dev/null ${i}-${j}.c 2>&1 | sed '/^\/tmp\//d;s/(\.text+0x[0-9a-f]*)//' | diff -u - ${.CURDIR}/${i}-${j}.c${EXP}
 .  endfor
 .endfor
 
