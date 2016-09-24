@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.80 2015/12/02 08:47:00 claudio Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.81 2016/09/24 14:51:37 naddy Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -507,11 +507,8 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 }
 
 int
-etherip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp, *newp;
-	size_t *oldlenp, newlen;
+etherip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
 {
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.47 2016/09/13 19:56:55 markus Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.48 2016/09/24 14:51:37 naddy Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -80,10 +80,7 @@ ipcomp_attach(void)
  * ipcomp_init() is called when an CPI is being set up.
  */
 int
-ipcomp_init(tdbp, xsp, ii)
-	struct tdb     *tdbp;
-	struct xformsw *xsp;
-	struct ipsecinit *ii;
+ipcomp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 {
 	struct comp_algo *tcomp = NULL;
 	struct cryptoini cric;
@@ -120,8 +117,7 @@ ipcomp_init(tdbp, xsp, ii)
  * ipcomp_zeroize() used when IPCA is deleted
  */
 int
-ipcomp_zeroize(tdbp)
-	struct tdb *tdbp;
+ipcomp_zeroize(struct tdb *tdbp)
 {
 	int err;
 
@@ -134,11 +130,7 @@ ipcomp_zeroize(tdbp)
  * ipcomp_input() gets called to uncompress an input packet
  */
 int
-ipcomp_input(m, tdb, skip, protoff)
-	struct mbuf    *m;
-	struct tdb     *tdb;
-	int             skip;
-	int             protoff;
+ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
 	struct comp_algo *ipcompx = (struct comp_algo *) tdb->tdb_compalgxform;
 	struct tdb_crypto *tc;
@@ -361,12 +353,8 @@ baddone:
  * IPComp output routine, called by ipsp_process_packet()
  */
 int
-ipcomp_output(m, tdb, mp, skip, protoff)
-	struct mbuf    *m;
-	struct tdb     *tdb;
-	struct mbuf   **mp;
-	int             skip;
-	int             protoff;
+ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
+    int protoff)
 {
 	struct comp_algo *ipcompx = (struct comp_algo *) tdb->tdb_compalgxform;
 	int             hlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ecn.c,v 1.7 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: ip_ecn.c,v 1.8 2016/09/24 14:51:37 naddy Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.9 2000/10/01 12:44:48 itojun Exp $	*/
 
 /*
@@ -84,10 +84,7 @@
  * call it after you've done the default initialization/copy for the outer.
  */
 void
-ip_ecn_ingress(mode, outer, inner)
-	int mode;
-	u_int8_t *outer;
-	u_int8_t *inner;
+ip_ecn_ingress(int mode, u_int8_t *outer, u_int8_t *inner)
 {
 	if (!outer || !inner)
 		panic("NULL pointer passed to ip_ecn_ingress");
@@ -120,10 +117,7 @@ ip_ecn_ingress(mode, outer, inner)
  * the caller should drop the packet if the return value is 0.
  */
 int
-ip_ecn_egress(mode, outer, inner)
-	int mode;
-	u_int8_t *outer;
-	u_int8_t *inner;
+ip_ecn_egress(int mode, u_int8_t *outer, u_int8_t *inner)
 {
 	if (!outer || !inner)
 		panic("NULL pointer passed to ip_ecn_egress");

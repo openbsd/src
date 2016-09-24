@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.155 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.156 2016/09/24 14:51:37 naddy Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -186,8 +186,7 @@ tcp_init(void)
  * into just an IP overlay pointer, with casting as appropriate for v6. rja
  */
 struct mbuf *
-tcp_template(tp)
-	struct tcpcb *tp;
+tcp_template(struct tcpcb *tp)
 {
 	struct inpcb *inp = tp->t_inpcb;
 	struct mbuf *m;
@@ -488,9 +487,7 @@ tcp_newtcpcb(struct inpcb *inp)
  * then send a RST to peer.
  */
 struct tcpcb *
-tcp_drop(tp, errno)
-	struct tcpcb *tp;
-	int errno;
+tcp_drop(struct tcpcb *tp, int errno)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
 
@@ -595,9 +592,7 @@ tcp_rscale(struct tcpcb *tp, u_long hiwat)
  * (for now, won't do anything until can select for soft error).
  */
 void
-tcp_notify(inp, error)
-	struct inpcb *inp;
-	int error;
+tcp_notify(struct inpcb *inp, int error)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 	struct socket *so = inp->inp_socket;
@@ -863,9 +858,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
  * Path MTU Discovery handlers.
  */
 void
-tcp6_mtudisc_callback(sin6, rdomain)
-	struct sockaddr_in6 *sin6;
-	u_int rdomain;
+tcp6_mtudisc_callback(struct sockaddr_in6 *sin6, u_int rdomain)
 {
 	(void) in6_pcbnotify(&tcbtable, sin6, 0,
 	    &sa6_any, 0, rdomain, PRC_MSGSIZE, NULL, tcp_mtudisc);
@@ -878,9 +871,7 @@ tcp6_mtudisc_callback(sin6, rdomain)
  * that all packets will be received.
  */
 void
-tcp_mtudisc(inp, errno)
-	struct inpcb *inp;
-	int errno;
+tcp_mtudisc(struct inpcb *inp, int errno)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 	struct rtentry *rt = in_pcbrtentry(inp);
@@ -913,9 +904,7 @@ tcp_mtudisc(inp, errno)
 }
 
 void
-tcp_mtudisc_increase(inp, errno)
-	struct inpcb *inp;
-	int errno;
+tcp_mtudisc_increase(struct inpcb *inp, int errno)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 	struct rtentry *rt = in_pcbrtentry(inp);
@@ -985,10 +974,8 @@ tcp_signature_tdb_attach(void)
 }
 
 int
-tcp_signature_tdb_init(tdbp, xsp, ii)
-	struct tdb *tdbp;
-	struct xformsw *xsp;
-	struct ipsecinit *ii;
+tcp_signature_tdb_init(struct tdb *tdbp, struct xformsw *xsp,
+    struct ipsecinit *ii)
 {
 	if ((ii->ii_authkeylen < 1) || (ii->ii_authkeylen > 80))
 		return (EINVAL);
@@ -1003,8 +990,7 @@ tcp_signature_tdb_init(tdbp, xsp, ii)
 }
 
 int
-tcp_signature_tdb_zeroize(tdbp)
-	struct tdb *tdbp;
+tcp_signature_tdb_zeroize(struct tdb *tdbp)
 {
 	if (tdbp->tdb_amxkey) {
 		explicit_bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
@@ -1016,29 +1002,20 @@ tcp_signature_tdb_zeroize(tdbp)
 }
 
 int
-tcp_signature_tdb_input(m, tdbp, skip, protoff)
-	struct mbuf *m;
-	struct tdb *tdbp;
-	int skip, protoff;
+tcp_signature_tdb_input(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 {
 	return (0);
 }
 
 int
-tcp_signature_tdb_output(m, tdbp, mp, skip, protoff)
-	struct mbuf *m;
-	struct tdb *tdbp;
-	struct mbuf **mp;
-	int skip, protoff;
+tcp_signature_tdb_output(struct mbuf *m, struct tdb *tdbp, struct mbuf **mp,
+    int skip, int protoff)
 {
 	return (EINVAL);
 }
 
 int
-tcp_signature_apply(fstate, data, len)
-	caddr_t fstate;
-	caddr_t data;
-	unsigned int len;
+tcp_signature_apply(caddr_t fstate, caddr_t data, unsigned int len)
 {
 	MD5Update((MD5_CTX *)fstate, (char *)data, len);
 	return 0;

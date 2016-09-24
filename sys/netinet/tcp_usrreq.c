@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.134 2016/07/20 19:57:53 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.135 2016/09/24 14:51:37 naddy Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -124,11 +124,8 @@ int tcp_ident(void *, size_t *, void *, size_t, int);
  */
 /*ARGSUSED*/
 int
-tcp_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct proc *p)
 {
 	struct sockaddr_in *sin;
 	struct inpcb *inp;
@@ -455,11 +452,8 @@ tcp_usrreq(so, req, m, nam, control, p)
 }
 
 int
-tcp_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+tcp_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **mp)
 {
 	int error = 0, s;
 	struct inpcb *inp;
@@ -626,8 +620,7 @@ tcp_ctloutput(op, so, level, optname, mp)
  * bufer space, and entering LISTEN state if to accept connections.
  */
 int
-tcp_attach(so)
-	struct socket *so;
+tcp_attach(struct socket *so)
 {
 	struct tcpcb *tp;
 	struct inpcb *inp;
@@ -676,8 +669,7 @@ tcp_attach(so)
  * send segment to peer (with FIN).
  */
 struct tcpcb *
-tcp_disconnect(tp)
-	struct tcpcb *tp;
+tcp_disconnect(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
 
@@ -706,8 +698,7 @@ tcp_disconnect(tp)
  * We can let the user exit from the close as soon as the FIN is acked.
  */
 struct tcpcb *
-tcp_usrclosed(tp)
-	struct tcpcb *tp;
+tcp_usrclosed(struct tcpcb *tp)
 {
 
 	switch (tp->t_state) {
@@ -858,13 +849,8 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
  * Sysctl for tcp variables.
  */
 int
-tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
 {
 	int error, nval;
 
