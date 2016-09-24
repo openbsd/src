@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.7 2016/08/10 06:51:57 kettenis Exp $ */
+/* $OpenBSD: agtimer.c,v 1.8 2016/09/24 13:03:47 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -123,16 +123,6 @@ agtimer_set_ctrl(uint32_t val)
 	//isb();
 
 	return (0);
-}
-
-static inline int
-agtimer_get_tval(void)
-{
-	uint32_t val;
-
-	__asm volatile("mrc p15, 0, %0, c14, c2, 0" : "=r" (val));
-
-	return (val);
 }
 
 static inline int

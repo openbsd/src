@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.52 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.53 2016/09/24 13:03:47 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -446,24 +446,10 @@ pmap_tlb_flushID_SE(pmap_t pm, vaddr_t va)
 }
 
 static __inline void
-pmap_tlb_flushD_SE(pmap_t pm, vaddr_t va)
-{
-	if (pmap_is_current(pm))
-		cpu_tlb_flushD_SE(va);
-}
-
-static __inline void
 pmap_tlb_flushID(pmap_t pm)
 {
 	if (pmap_is_current(pm))
 		cpu_tlb_flushID();
-}
-
-static __inline void
-pmap_tlb_flushD(pmap_t pm)
-{
-	if (pmap_is_current(pm))
-		cpu_tlb_flushD();
 }
 
 /*
@@ -2217,11 +2203,7 @@ pmap_get_pde_pte(pmap_t pm, vaddr_t va, pd_entry_t **pdp, pt_entry_t **ptp)
 		return (TRUE);
 	}
 
-	if (pm->pm_l2 == NULL)
-		return (FALSE);
-
 	l2 = pm->pm_l2[L2_IDX(l1idx)];
-
 	if (l2 == NULL ||
 	    (ptep = l2->l2_bucket[L2_BUCKET(l1idx)].l2b_kva) == NULL) {
 		return (FALSE);

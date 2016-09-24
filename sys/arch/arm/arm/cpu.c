@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.32 2016/08/14 11:30:54 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.33 2016/09/24 13:03:47 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -99,16 +99,6 @@ static const char * const generic_steppings[16] = {
 static const char * const pxa2x0_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step B-1",
 	"step B-2",	"step C-0",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
-/* Steppings for PXA255/26x.
- * rev 5: PXA26x B0, rev 6: PXA255 A0
- */
-static const char * const pxa255_steppings[16] = {
-	"rev 0",	"rev 1",	"rev 2",	"step A-0",
-	"rev 4",	"step B-0",	"step A-0",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15"
 };
