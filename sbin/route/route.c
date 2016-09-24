@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.191 2016/09/15 12:51:20 phessler Exp $	*/
+/*	$OpenBSD: route.c,v 1.192 2016/09/24 19:36:49 phessler Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,6 +40,11 @@
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netmpls/mpls.h>
+
+#ifdef BFD
+#include <sys/time.h>
+#include <net/bfd.h>
+#endif
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -90,6 +95,12 @@ void	 sodump(sup, char *);
 char	*priorityname(uint8_t);
 uint8_t	 getpriority(char *);
 void	 print_getmsg(struct rt_msghdr *, int);
+#ifdef BFD
+const char *bfd_state(unsigned int);
+const char *bfd_diag(unsigned int);
+const char *bfd_calc_uptime(time_t);
+void	 print_bfdmsg(struct rt_msghdr *);
+#endif
 const char *get_linkstate(int, int);
 void	 print_rtmsg(struct rt_msghdr *, int);
 void	 pmsg_common(struct rt_msghdr *);
@@ -1333,9 +1344,11 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		}
 		printf("\n");
 		break;
+#ifdef BFD
 	case RTM_BFD:
-		printf("bfd\n");	/* XXX - expand*/
+		print_bfdmsg(rtm);
 		break;
+#endif
 	default:
 		printf(", priority %d, table %u, ifidx %u, ",
 		    rtm->rtm_priority, rtm->rtm_tableid, rtm->rtm_index);
@@ -1526,6 +1539,124 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 	}
 #undef	RTA_IGN
 }
+
+#ifdef BFD
+const char *
+bfd_state(unsigned int state)
+{
+	switch (state) {
+	case BFD_STATE_ADMINDOWN:
+		return("admindown");
+		break;
+	case BFD_STATE_DOWN:
+		return("down");
+		break;
+	case BFD_STATE_INIT:
+		return("init");
+		break;
+	case BFD_STATE_UP:
+		return("up");
+		break;
+	}
+	return "invalid";
+}
+
+const char *
+bfd_diag(unsigned int diag)
+{
+	switch (diag) {
+	case BFD_DIAG_NONE:
+		return("none");
+		break;
+	case BFD_DIAG_EXPIRED:
+		return("expired");
+		break;
+	case BFD_DIAG_ECHO_FAILED:
+		return("echo-failed");
+		break;
+	case BFD_DIAG_NEIGHBOR_SIGDOWN:
+		return("neighbor-down");
+		break;
+	case BFD_DIAG_FIB_RESET:
+		return("fib-reset");
+		break;
+	case BFD_DIAG_PATH_DOWN:
+		return("path-down");
+		break;
+	case BFD_DIAG_CONCAT_PATH_DOWN:
+		return("concat-path-down");
+		break;
+	case BFD_DIAG_ADMIN_DOWN:
+		return("admindown");
+		break;
+	case BFD_DIAG_CONCAT_REVERSE_DOWN:
+		return("concat-reverse-down");
+		break;
+	}
+	return "invalid";
+}
+
+const char *
+bfd_calc_uptime(time_t time)
+{
+	static char buf[256];
+	struct tm *tp;
+	const char *fmt;
+
+	if (time > 2*86400)
+		fmt = "%dd%kh%Mm%Ss";
+	else if (time > 2*3600)
+		fmt = "%kh%Mm%Ss";
+	else if (time > 2*60)
+		fmt = "%Mm%Ss";
+	else
+		fmt = "%Ss";
+
+	tp = localtime(&time);
+	(void)strftime(buf, sizeof(buf), fmt, tp);
+	return (buf);		
+}
+
+void
+print_bfdmsg(struct rt_msghdr *rtm)
+{
+	struct bfd_msghdr *bfdm = (struct bfd_msghdr *)rtm;
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+
+	printf(" mode ");
+	switch (bfdm->bm_mode) {
+	case BFD_MODE_ASYNC:
+		printf("async");
+		break;
+	case BFD_MODE_DEMAND:
+		printf("demand");
+		break;
+	default:
+		printf("unknown %u", bfdm->bm_mode);
+		break;
+	}
+	printf(" state %s", bfd_state(bfdm->bm_state));
+	printf(" remotestate %s", bfd_state(bfdm->bm_remotestate));
+	printf(" laststate %s", bfd_state(bfdm->bm_laststate));
+
+	printf(" error %d", bfdm->bm_error);
+	printf(" localdiscr %u", bfdm->bm_localdiscr);
+	printf(" remotediscr %u", bfdm->bm_remotediscr);
+	printf(" localdiag %s", bfd_diag(bfdm->bm_localdiag));
+	printf(" remotediag %s", bfd_diag(bfdm->bm_remotediag));
+	printf(" uptime %s", bfd_calc_uptime(tv.tv_sec - bfdm->bm_uptime));
+	printf(" lastuptime %s", bfd_calc_uptime(bfdm->bm_lastuptime));
+
+	printf(" mintx %u", bfdm->bm_mintx);
+	printf(" minrx %u", bfdm->bm_minrx);
+	printf(" minecho %u", bfdm->bm_minecho);
+	printf(" multiplier %u", bfdm->bm_multiplier);
+
+	pmsg_addrs(((char *)rtm + rtm->rtm_hdrlen), rtm->rtm_addrs);
+}
+#endif /* BFD */
 
 void
 pmsg_common(struct rt_msghdr *rtm)
