@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.922 2016/09/22 20:48:37 rpe Exp $
+#	$OpenBSD: install.sub,v 1.923 2016/09/25 06:06:52 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -107,7 +107,7 @@ bsort() {
 	done
 
 	# Output the smallest value found.
-	echo -n "$_a "
+	(($#)) && echo -n "$_a " || echo -n "$_a"
 
 	# Sort remaining values.
 	bsort $_l
@@ -130,19 +130,19 @@ addel() {
 	local _a=$1
 
 	shift
-	echo -n "$*"
-	isin "$_a" $* || echo -n " $_a"
+	isin "$_a" $* && echo -n "$*" || echo -n "${*:+$* }$_a"
 }
 
 # Remove all occurrences of first argument from list formed by the remaining
 # arguments.
 rmel() {
-	local _a=$1 _b
+	local _a=$1 _b _c
 
 	shift
 	for _b; do
-		[[ $_a != $_b ]] && echo -n "$_b "
+		[[ $_a != $_b ]] && _c="${_c:+$_c }$_b"
 	done
+	echo -n "$_c"
 }
 
 # If possible, print the timestamp received from the ftplist.cgi output,
