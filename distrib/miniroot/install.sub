@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.923 2016/09/25 06:06:52 rpe Exp $
+#	$OpenBSD: install.sub,v 1.924 2016/09/25 15:48:15 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -60,6 +60,7 @@
 # Misc functions
 # ------------------------------------------------------------------------------
 
+# Show usage of the installer script and exit.
 usage() {
 	echo "usage: ${0##*/} [-a] [-f filename] [-m install | upgrade]" >&2
 	exit 1
@@ -179,8 +180,8 @@ showcols() {
 	rm -rf -- $_cdir
 }
 
-# Echo the file $1 to standard output, skipping any lines that begin with a
-# '#'. i.e. strip comment lines from the file.
+# Echo file $1 to stdout. Skip comment lines and delete everything after the
+# first '#' from other lines.
 stripcom () {
 	local _l
 
@@ -282,12 +283,12 @@ scan_disknames() {
 	bsort $(for _n in $(sysctl -n hw.disknames); do echo "${_n%%:*} "; done | sed -n "$1")
 }
 
-# Return list of disk devices.
+# Return disk devices found in hw.disknames.
 get_dkdevs () {
 	echo $(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
 }
 
-# Return list of CDROM devices.
+# Return CDROM devices found in hw.disknames.
 get_cddevs () {
 	echo $(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 }
@@ -379,6 +380,7 @@ disk_has() {
 disklabel_autolayout() {
 	local _disk=$1 _f=$2 _dl=/tmp/i/disklabel.auto _op
 
+	# Skip disklabel auto-layout for any disk except the root disk.
 	[[ $_disk != $ROOTDISK ]] && return
 
 	while $AUTO; do
@@ -410,6 +412,7 @@ disklabel_autolayout() {
 	done
 }
 
+# Create a partition table and configure the partition layout for disk $1.
 configure_disk() {
 	local _disk=$1 _fstab=/tmp/i/fstab.$1
 
@@ -660,17 +663,18 @@ _ask() {
 	return $_redo
 }
 
-# Ask for user input, which is returned in $resp.
-# Any parameters are passed on to _ask(), which is called
-# repeatedly until it succeds.
+# Ask for user input presenting question $1 with an optional default answer $2.
+# Save the answer in the global variable $resp. Additionally write the question
+# and the answer to a logfile. Parameters $1 and $2 are passed on to _ask(),
+# which is called repeatedly until it succeds.
 ask() {
 	while ! _ask "$1" "$2"; do done
 	log_answers "$1" "$resp"
 }
 
-# Ask the user for a y or n, and insist on 'y', 'yes', 'n' or 'no'.
+# Ask the user a yes/no question, and insist on 'y', 'yes', 'n' or 'no'.
 # Return 'y' or 'n' in $resp.
-# Exit code: yes => 0, no => 1
+# Exit code: (y)es => 0, (n)o => 1
 #
 # Parameters:
 #
@@ -2446,7 +2450,8 @@ __EOT
 }
 
 do_install(){
-	# Ask for/set the system hostname and add the hostname specific siteXX set.
+	# Ask for and set the system hostname and add the hostname specific
+	# siteXX set.
 	ask_until "System hostname? (short form, e.g. 'foo')" "$(hostname -s)"
 	[[ ${resp%%.*} != $(hostname -s) ]] && hostname "$resp"
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
@@ -2456,8 +2461,8 @@ do_install(){
 	# Configure the network.
 	donetconfig
 
-	# If there's network connectivity, fetch list of mirror servers and installer
-	# choices from previous runs.
+	# If there's network connectivity, fetch list of mirror servers and
+	# installer choices from previous runs.
 	((NIFS)) && startcgiinfo
 
 	echo
@@ -2476,7 +2481,8 @@ do_install(){
 		[[ $resp != none ]] && rootkey=$resp
 	fi
 
-	# Ask user about daemon startup on boot, X Window usage and console setup.
+	# Ask user about daemon startup on boot, X Window usage and console
+	# setup.
 	questions
 
 	# Gather information for setting up the initial user account.
@@ -2559,7 +2565,8 @@ do_install(){
 		echo " 1 2"
 	done >>/tmp/i/fstab
 
-	# Create a skeletal /etc/fstab which is usable for the installation process.
+	# Create a skeletal /etc/fstab which is usable for the installation
+	# process.
 	munge_fstab
 
 	# Use async options for faster mounts of the filesystems.
@@ -2568,7 +2575,8 @@ do_install(){
 	# Feed the random pool some entropy before we read from it.
 	feed_random
 
-	# Ask the user for locations, and install whatever sets the user selected.
+	# Ask the user for locations, and install whatever sets the user
+	# selected.
 	install_sets
 
 	# Set 'wxallowed' mount option for the filesystem /usr/local resides on.
@@ -2727,7 +2735,8 @@ do_upgrade(){
 	# Configure the network.
 	enable_network
 
-	# Fetch the list of mirror servers and installer choices from previous runs.
+	# Fetch the list of mirror servers and installer choices from previous
+	# runs.
 	startcgiinfo
 
 	# Create a skeletal /etc/fstab which is usable for the upgrade process.
@@ -2746,7 +2755,8 @@ do_upgrade(){
 	# Ensure that previous installer choices (e.g. method) are available.
 	waitcgiinfo
 
-	# Ask the user for locations, and install whatever sets the user selected.
+	# Ask the user for locations, and install whatever sets the user
+	# selected.
 	install_sets
 
 	# Perform final steps common to both an install and an upgrade.
@@ -2754,13 +2764,10 @@ do_upgrade(){
 }
 
 # ------------------------------------------------------------------------------
-#
 # Initial actions common to both installs and upgrades.
 #
-# Some may require machine dependent routines, which may
-# call functions defined above, so it's safest to put this
-# code here rather than at the top of the file.
-#
+# Some may require machine dependent routines, which may call functions defined
+# above, so it's safest to put this code here rather than at the top.
 # ------------------------------------------------------------------------------
 
 # Parse parameters.
@@ -2779,6 +2786,8 @@ done
 shift $((OPTIND-1))
 (($# == 0)) || usage
 
+# The installer can be started by using the symbolic links 'install', 'upgrade'
+# and 'autoinstall' pointing to this script. Set MODE and AUTO based on that.
 if [[ -z $MODE ]]; then
 	case $PROGNAME in
 	autoinstall)		AUTO=true;;
