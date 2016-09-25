@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.86 2016/09/25 07:45:02 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.87 2016/09/25 08:20:40 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -122,6 +122,7 @@ int vcpu_writeregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reset_regs_vmx(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reset_regs_svm(struct vcpu *, struct vcpu_reg_state *);
+int vcpu_reload_vmcs_vmx(uint64_t *);
 int vcpu_init(struct vcpu *);
 int vcpu_init_vmx(struct vcpu *);
 int vcpu_init_svm(struct vcpu *);
@@ -1146,6 +1147,42 @@ vm_impl_deinit(struct vm *vm)
 }
 
 /*
+ * vcpu_reload_vmcs_vmx
+ *
+ * Loads 'vmcs' on the current CPU, possibly flushing any old vmcs state
+ * of the previous occupant.
+ *
+ * Parameters:
+ *  vmcs: Pointer to uint64_t containing the PA of the vmcs to load
+ *
+ * Return values:
+ *  0: if successful
+ *  EINVAL: an error occurred during flush or reload
+ */ 
+int
+vcpu_reload_vmcs_vmx(uint64_t *vmcs)
+{
+	uint64_t old;
+
+	/* Flush any old state */
+	if (!vmptrst(&old)) {
+		if (old != 0xFFFFFFFFFFFFFFFFULL) {
+			if (vmclear(&old))
+				return (EINVAL);
+		}
+	} else
+		return (EINVAL);
+
+	/*
+	 * Load the VMCS onto this PCPU
+	 */
+	if (vmptrld(vmcs))
+		return (EINVAL);
+
+	return (0);
+}
+
+/*
  * vcpu_readregs_vmx
  *
  * Reads 'vcpu's registers
@@ -1164,28 +1201,12 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
     struct vcpu_reg_state *vrs)
 {
 	int i, ret = 0;
-	uint64_t sel, limit, ar, vmcs_ptr;
+	uint64_t sel, limit, ar;
 	uint64_t *gprs = vrs->vrs_gprs;
 	uint64_t *crs = vrs->vrs_crs;
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
 
-	/* Flush any old state */
-	if (!vmptrst(&vmcs_ptr)) {
-		if (vmcs_ptr != 0xFFFFFFFFFFFFFFFFULL) {
-			if (vmclear(&vmcs_ptr))
-				return (EINVAL);
-		}
-	} else
-		return (EINVAL);
-
-	/* Flush the VMCS */
-	if (vmclear(&vcpu->vc_control_pa))
-		return (EINVAL);
-
-	/*
-	 * Load the VMCS onto this PCPU so we can write registers
-	 */
-	if (vmptrld(&vcpu->vc_control_pa))
+	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
 		return (EINVAL);
 
 	if (regmask & VM_RWREGS_GPRS) {
@@ -1293,29 +1314,13 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
     struct vcpu_reg_state *vrs)
 {
 	int i, ret = 0;
-	uint64_t sel, limit, ar, vmcs_ptr;
+	uint64_t sel, limit, ar;
 	uint64_t *gprs = vrs->vrs_gprs;
 	uint64_t *crs = vrs->vrs_crs;
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
 
 	if (loadvmcs) {
-		/* Flush any old state */
-		if (!vmptrst(&vmcs_ptr)) {
-			if (vmcs_ptr != 0xFFFFFFFFFFFFFFFFULL) {
-				if (vmclear(&vmcs_ptr))
-					return (EINVAL);
-			}
-		} else
-			return (EINVAL);
-
-		/* Flush the VMCS */
-		if (vmclear(&vcpu->vc_control_pa))
-			return (EINVAL);
-
-		/*
-		 * Load the VMCS onto this PCPU so we can write registers
-		 */
-		if (vmptrld(&vcpu->vc_control_pa))
+		if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
 			return (EINVAL);
 	}
 
@@ -1517,39 +1522,15 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	uint32_t cr0, cr4;
 	uint32_t pinbased, procbased, procbased2, exit, entry;
 	uint32_t want1, want0;
-	uint64_t msr, ctrlval, eptp, vmcs_ptr, cr3;
+	uint64_t msr, ctrlval, eptp, cr3;
 	uint16_t ctrl;
 	struct vmx_msr_store *msr_store;
 
 	ret = 0;
 	ug = 0;
 
-	/* Flush any old state */
-	if (!vmptrst(&vmcs_ptr)) {
-		if (vmcs_ptr != 0xFFFFFFFFFFFFFFFFULL) {
-			if (vmclear(&vmcs_ptr)) {
-				ret = EINVAL;
-				goto exit;
-			}
-		}
-	} else {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	/* Flush the VMCS */
-	if (vmclear(&vcpu->vc_control_pa)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	/*
-	 * Load the VMCS onto this PCPU so we can write registers
-	 */
-	if (vmptrld(&vcpu->vc_control_pa)) {
-		ret = EINVAL;
-		goto exit;
-	}
+	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
+		return (EINVAL);
 
 	/* Compute Basic Entry / Exit Controls */
 	vcpu->vc_vmx_basic = rdmsr(IA32_VMX_BASIC);
