@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.59 2016/09/25 13:54:00 florian Exp $	*/
+/*	$OpenBSD: config.c,v 1.60 2016/09/25 13:54:39 florian Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -176,11 +176,11 @@ getconfig(char *intface)
 	}
 
 	MAYHAVE(val, "rltime", tmp->maxinterval * 3);
-	if (val && (val < tmp->maxinterval || val > MAXROUTERLIFETIME)) {
+	if (val && (val < tmp->maxinterval || val > MAX_ROUTERLIFETIME)) {
 		log_warnx("router lifetime (%ld) on %s is invalid "
 		    "(must be 0 or between %d and %d)",
 		    val, intface,
-		    tmp->maxinterval, MAXROUTERLIFETIME);
+		    tmp->maxinterval, MAX_ROUTERLIFETIME);
 		exit(1);
 	}
 	/*
@@ -201,10 +201,10 @@ getconfig(char *intface)
 	tmp->lifetime = val & 0xffff;
 
 	MAYHAVE(val, "rtime", DEF_ADVREACHABLETIME);
-	if (val < 0 || val > MAXREACHABLETIME) {
+	if (val < 0 || val > MAX_REACHABLETIME) {
 		log_warnx("reachable time (%ld) on %s is invalid"
 		    " (must be no greater than %d)",
-		    val, intface, MAXREACHABLETIME);
+		    val, intface, MAX_REACHABLETIME);
 		exit(1);
 	}
 	tmp->reachabletime = (u_int32_t)val;
