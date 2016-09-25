@@ -1,4 +1,4 @@
-.\" $OpenBSD: switchd.8,v 1.1 2016/07/19 16:54:26 reyk Exp $
+.\" $OpenBSD: switchd.8,v 1.2 2016/09/25 23:05:29 jsg Exp $
 .\"
 .\" Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2016 $
+.Dd $Mdocdate: September 25 2016 $
 .Dt SWITCHD 8
 .Os
 .Sh NAME
@@ -22,13 +22,52 @@
 .Nd software-defined networking (SDN) sflow controller
 .Sh SYNOPSIS
 .Nm switchd
-.Op Fl 6dnSTtv
+.Op Fl dnv
+.Op Fl c Ar cachesize
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
+.Op Fl t Ar timeout
 .Sh DESCRIPTION
 .Nm
 is an controller for software-defined networking (SDN) and is
 compatible with the OpenFlow protocol.
+.Pp
+The options are as follows:
+.Bl -tag -width "-c cachesize"
+.It Fl c Ar cachesize
+Number of MAC addresses to cache.
+The default is 4096.
+.It Fl D Ar macro Ns = Ns Ar value
+Set a
+.Ar macro
+to a
+.Ar value .
+Macros can be referenced in the configuration files.
+.It Fl d
+Debug mode.
+Don't detach or become a daemon.
+This allows for easy monitoring of
+.Nm .
+.It Fl f Ar file
+Specifies the configuration file.
+The default is
+.Pa /etc/switchd.conf .
+.It Fl n
+Check that the configuration is valid, but don't start the daemon.
+.It Fl t Ar timeout
+Timeout in seconds for learned MAC addresses.
+The default is 240 seconds.
+.It Fl v
+Verbose mode.
+Multiple
+.Fl v
+options increase the verbosity.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/switchd.conf" -compact
+.It Pa /etc/switchd.conf
+Default configuration file.
+.El
 .Sh STANDARDS
 .Rs
 .%A Open Networking Foundation (ONF)
