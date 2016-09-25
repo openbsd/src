@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trpt.8,v 1.16 2007/05/31 19:20:30 jmc Exp $
+.\"	$OpenBSD: trpt.8,v 1.17 2016/09/25 23:31:50 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)trpt.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 25 2016 $
 .Dt TRPT 8
 .Os
 .Sh NAME
@@ -119,6 +119,13 @@ many sockets using the debugging option, the
 option may be useful in checking to see if
 any trace records are present for the socket in
 question.
+.Pp
+.Nm
+requires the ability to open
+.Pa /dev/kmem
+which may be restricted based upon the value of the
+.Ar kern.allowkmem
+.Xr sysctl 8 .
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy no namelist
