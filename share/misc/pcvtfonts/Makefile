@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2002/05/13 15:27:58 mickey Exp $
+#	$OpenBSD: Makefile,v 1.7 2016/09/25 17:43:11 natano Exp $
 
 FONTS	= 	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
 		vt220l.816 vt220h.816 vt220l.810 vt220h.810 \
@@ -16,12 +16,9 @@ FONTDIR =	${BINDIR}/misc/pcvtfonts
 all: $(FONTS)
 
 install: ${FONTS}
-	@if [ ! -d ${DESTDIR}${FONTDIR} ]; then mkdir ${DESTDIR}${FONTDIR};fi
-	@for i in ${FONTS}; do \
-		echo "installing font $$i into ${DESTDIR}${FONTDIR}"; \
-		install -c -m ${LIBMODE} -o ${LIBOWN} -g ${LIBGRP} \
-		$$i ${DESTDIR}${FONTDIR}; \
-	done
+	${INSTALL} -d -o root -g wheel ${DESTDIR}${FONTDIR}
+	${INSTALL} ${INSTALL_COPY} -m ${LIBMODE} -o ${LIBOWN} -g ${LIBGRP} \
+	    ${FONTS} ${DESTDIR}${FONTDIR}
 
 clean:
 	rm -f ${CLEANFILES}
