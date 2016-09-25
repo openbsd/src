@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.27 2016/08/20 15:05:52 jca Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.28 2016/09/25 13:54:00 florian Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -44,11 +44,10 @@
 #define DEF_ADVVALIDLIFETIME 2592000
 #define DEF_ADVPREFERREDLIFETIME 604800
 
-/* XXX int-to-double comparison for INTERVAL items */
 #define MAXROUTERLIFETIME 9000
-#define MIN_MAXINTERVAL 4.0
+#define MIN_MAXINTERVAL 4
 #define MAX_MAXINTERVAL 1800
-#define MIN_MININTERVAL	3.0
+#define MIN_MININTERVAL	3
 #define MAXREACHABLETIME 3600000
 
 #define MAX_INITIAL_RTR_ADVERT_INTERVAL  16

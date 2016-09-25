@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.58 2016/08/02 17:00:09 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.59 2016/09/25 13:54:00 florian Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ getconfig(char *intface)
 	MAYHAVE(val, "maxinterval", DEF_MAXRTRADVINTERVAL);
 	if (val < MIN_MAXINTERVAL || val > MAX_MAXINTERVAL) {
 		log_warnx("maxinterval (%ld) on %s is invalid "
-		    "(must be between %e and %u)", val,
+		    "(must be between %u and %u)", val,
 		    intface, MIN_MAXINTERVAL, MAX_MAXINTERVAL);
 		exit(1);
 	}
@@ -156,7 +156,7 @@ getconfig(char *intface)
 	MAYHAVE(val, "mininterval", tmp->maxinterval/3);
 	if (val < MIN_MININTERVAL || val > (tmp->maxinterval * 3) / 4) {
 		log_warnx("mininterval (%ld) on %s is invalid "
-		    "(must be between %e and %d)",
+		    "(must be between %u and %u)",
 		    val, intface, MIN_MININTERVAL, (tmp->maxinterval * 3) / 4);
 		exit(1);
 	}
