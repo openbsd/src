@@ -1,1 +1,1 @@
-: warning: vsprintf() is often misused, please use vsnprintf()
+vsprintf-3.c:: warning: warning: vsprintf() is often misused, please use vsnprintf()

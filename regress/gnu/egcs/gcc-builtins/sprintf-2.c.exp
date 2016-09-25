@@ -1,1 +1,1 @@
-: warning: sprintf() is often misused, please use snprintf()
+sprintf-2.c:: warning: warning: sprintf() is often misused, please use snprintf()

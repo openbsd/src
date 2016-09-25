@@ -1,1 +1,1 @@
-: warning: stpcpy() is dangerous; do not use it
+stpcpy-1.c:: warning: warning: stpcpy() is dangerous; do not use it

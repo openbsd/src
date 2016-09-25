@@ -1,1 +1,1 @@
-: warning: strcpy() is almost always misused, please use strlcpy()
+strcpy-1.c:: warning: warning: strcpy() is almost always misused, please use strlcpy()
