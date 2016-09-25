@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2016/08/15 22:01:59 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2016/09/25 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -58,13 +58,17 @@
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
+	extern int allowkmem;
 
 	switch (minor(dev)) {
-		case 0:
-		case 1:
-		case 2:
-		case 12:
+	case 0:
+	case 1:
+		if (securelevel <= 0 || allowkmem)
 			break;
+		return (EPERM);
+	case 2:
+	case 12:
+		break;
 #ifdef xAPERTURE
 	case 4:
 	        if (suser(p, 0) != 0 || !allowaperture)
@@ -76,8 +80,8 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 		ap_open_count++;
 		break;
 #endif
-		default:
-			return (ENXIO);
+	default:
+		return (ENXIO);
 	}
 	return (0);
 }

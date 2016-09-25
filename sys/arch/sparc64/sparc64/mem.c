@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.17 2016/08/16 18:17:36 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.18 2016/09/25 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -62,7 +62,20 @@ caddr_t zeropage;
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
+	extern int allowkmem;
 
+	switch (minor(dev)) {
+	case 0:
+	case 1:
+		if (securelevel <= 0 || allowkmem)
+			break;
+		return (EPERM);
+	case 2:
+	case 12:
+		break;
+	default:
+		return (ENXIO);		
+	}
 	return (0);
 }
 

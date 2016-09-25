@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.18 2016/08/16 18:21:54 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.19 2016/09/25 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -101,15 +101,20 @@ extern int allowaperture;
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
+	extern int allowkmem;
+
 	switch (minor(dev)) {
-		case 0:
-		case 1:
-		case 2:
-		case 12:
+	case 0:
+	case 1:
+		if (securelevel <= 0 || allowkmem)
 			break;
+		return (EPERM);
+	case 2:
+	case 12:
+		break;
 #ifdef APERTURE
 	case 4:
-	        if (suser(p, 0) != 0 || !allowaperture)
+		if (suser(p, 0) != 0 || !allowaperture)
 			return (EPERM);
 
 		/* authorize only one simultaneous open() unless
@@ -119,8 +124,8 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 		ap_open_count++;
 		break;
 #endif
-		default:
-			return (ENXIO);
+	default:
+		return (ENXIO);
 	}
 	return (0);
 }

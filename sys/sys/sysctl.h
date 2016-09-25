@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.166 2016/09/21 14:06:50 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.167 2016/09/25 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ struct ctlname {
 #define	KERN_SYSVMSG		34	/* int: SysV message queue suppoprt */
 #define	KERN_SYSVSEM		35	/* int: SysV semaphore support */
 #define	KERN_SYSVSHM		36	/* int: SysV shared memory support */
-/* was	KERN_ARND		37	*/
+/* was KERN_ARND		37	*/
 #define	KERN_MSGBUFSIZE		38	/* int: size of message buffer */
 #define KERN_MALLOCSTATS	39	/* node: malloc statistics */
 #define KERN_CPTIME		40	/* array: cp_time */
@@ -152,7 +152,7 @@ struct ctlname {
 #define	KERN_POOL		49	/* struct: pool information */
 #define	KERN_STACKGAPRANDOM	50	/* int: stackgap_random */
 #define	KERN_SYSVIPC_INFO	51	/* struct: SysV sem/shm/msg info */
-/* was KERN_USERCRYPTO		52	*/
+#define KERN_ALLOWKMEM		52	/* int: allowkmem */
 /* was KERN_CRYPTODEVALLOWSOFT	53	*/
 #define KERN_SPLASSERT		54	/* int: splassert */
 #define KERN_PROC_ARGS		55	/* node: proc args and env */
@@ -224,7 +224,7 @@ struct ctlname {
 	{ "sysvmsg", CTLTYPE_INT }, \
 	{ "sysvsem", CTLTYPE_INT }, \
 	{ "sysvshm", CTLTYPE_INT }, \
-	{ "arandom", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
 	{ "msgbufsize", CTLTYPE_INT }, \
 	{ "malloc", CTLTYPE_NODE }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
@@ -239,7 +239,7 @@ struct ctlname {
 	{ "pool", CTLTYPE_NODE }, \
 	{ "stackgap_random", CTLTYPE_INT }, \
 	{ "sysvipc_info", CTLTYPE_INT }, \
-	{ "gap", 0 }, \
+	{ "allowkmem", CTLTYPE_INT }, \
 	{ "gap", 0 }, \
 	{ "splassert", CTLTYPE_INT }, \
 	{ "procargs", CTLTYPE_NODE }, \

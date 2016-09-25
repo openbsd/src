@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.15 2014/03/13 21:14:08 brynet Exp $
+.\"	$OpenBSD: acpidump.8,v 1.16 2016/09/25 15:23:37 deraadt Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.8,v 1.9 2001/09/05 19:21:25 dd Exp $
 .\"
-.Dd $Mdocdate: March 13 2014 $
+.Dd $Mdocdate: September 25 2016 $
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
@@ -60,6 +60,13 @@ ports tree or package system:
 # pkg_add acpica
 $ iasl -d <prefix>.<sig>.<id>
 .Ed
+.Pp
+.Nm
+requires the ability to open
+.Pa /dev/kmem
+which may be restricted based upon the value of the
+.Ar kern.allowkmem
+.Xr sysctl 8 .
 .Sh FILES
 .Bl -tag -width /dev/mem
 .It Pa /dev/mem

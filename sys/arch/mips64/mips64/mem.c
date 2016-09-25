@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.21 2016/08/01 15:58:22 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.22 2016/09/25 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -71,16 +71,21 @@ cdev_decl(mm);
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
+	extern int allowkmem;
 
 	switch (minor(dev)) {
 	case 0:
 	case 1:
+		if (securelevel <= 0 || allowkmem)
+			break;
+		return (EPERM);
 	case 2:
 	case 12:
-		return (0);
+		break;
 	default:
 		return (ENXIO);
 	}
+	return (0);
 }
 
 int

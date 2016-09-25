@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2016/08/19 20:48:36 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 2016/09/25 15:23:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -302,6 +302,20 @@ viper_eisa_en(void)
 int
 mmopen(dev_t dev, int flag, int ioflag, struct proc *p)
 {
+	extern int allowkmem;
+
+	switch (minor(dev)) {
+	case 0:
+	case 1:
+		if (securelevel <= 0 || allowkmem)
+			break;
+		return (EPERM);
+	case 2:
+	case 12:
+		break;
+	default:
+		return (ENXIO);
+	}
 	return (0);
 }
 

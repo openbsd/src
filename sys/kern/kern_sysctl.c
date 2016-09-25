@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.311 2016/09/21 14:06:50 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.312 2016/09/25 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -117,6 +117,8 @@ extern struct disklist_head disklist;
 extern fixpt_t ccpu;
 extern  long numvnodes;
 extern u_int net_livelocks;
+
+int allowkmem;
 
 extern void nmbclust_update(void);
 
@@ -340,6 +342,12 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (EPERM);
 		securelevel = level;
 		return (0);
+	case KERN_ALLOWKMEM:
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
+			    allowkmem));
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &allowkmem));
 	case KERN_HOSTNAME:
 		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
 		    hostname, sizeof(hostname));
