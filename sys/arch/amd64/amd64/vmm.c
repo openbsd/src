@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.85 2016/09/17 06:43:38 jsg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.86 2016/09/25 07:45:02 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2123,12 +2123,6 @@ vcpu_init_vmx(struct vcpu *vcpu)
 
 	vmcs = (struct vmcs *)vcpu->vc_control_va;
 	vmcs->vmcs_revision = curcpu()->ci_vmm_cap.vcc_vmx.vmx_vmxon_revision;
-
-	/* Flush the VMCS */
-	if (vmclear(&vcpu->vc_control_pa)) {
-		ret = EINVAL;
-		goto exit;
-	}
 
 	/*
 	 * Load the VMCS onto this PCPU so we can write registers
