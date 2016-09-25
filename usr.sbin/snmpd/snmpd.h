@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.67 2016/08/16 18:41:57 tedu Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.68 2016/09/25 14:58:00 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -24,7 +24,6 @@
 #include <net/if_dl.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <net/pfvar.h>
