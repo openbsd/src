@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.185 2016/09/04 17:24:02 jsing Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.186 2016/09/26 16:43:58 jca Exp $	*/
 
 /*
  * System call switch table.
