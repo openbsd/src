@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.145 2016/09/08 09:02:42 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.146 2016/09/26 19:39:24 sthen Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -358,7 +358,7 @@ nd6_rs_attach(struct ifnet *ifp)
 	}
 
 	/*
-	 * (re)send solicitation regardless if we are enableing autoconf
+	 * (re)send solicitation regardless if we are enabling autoconf
 	 * for the first time or if the link comes up
 	 */
 	nd6_rs_output_set_timo(ND6_RS_OUTPUT_QUICK_INTERVAL);
