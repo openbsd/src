@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.12 2016/09/01 12:50:53 akfaew Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.13 2016/09/26 16:42:34 jca Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -212,7 +212,7 @@ $1 ~ /^#[ 	]*else/ {
 	print > sysprotos
 	print > sysnames
 	if (savedepth <= 0) {
-		printf "%s: line %d: unbalenced #else\n", \
+		printf "%s: line %d: unbalanced #else\n", \
 		    infile, NR
 		exit 1
 	}
@@ -222,7 +222,7 @@ $1 ~ /^#[ 	]*else/ {
 $1 ~ /^#/ {
 	if ($1 ~ /^#[       ]*endif/) {
 		if (savedepth <= 0) {
-			printf "%s: line %d: unbalenced #endif\n", \
+			printf "%s: line %d: unbalanced #endif\n", \
 			    infile, NR
 			exit 1
 		}
