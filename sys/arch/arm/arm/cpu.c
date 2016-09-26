@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.33 2016/09/24 13:03:47 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.34 2016/09/26 13:34:11 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -84,29 +84,13 @@ cpu_attach(struct device *dv)
 
 enum cpu_class {
 	CPU_CLASS_NONE,
-	CPU_CLASS_XSCALE,
-	CPU_CLASS_ARMv7
+	CPU_CLASS_ARMv7,
+	CPU_CLASS_ARMv8
 };
 
 static const char * const generic_steppings[16] = {
 	"rev 0",	"rev 1",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
-/* Steppings for PXA2[15]0 */
-static const char * const pxa2x0_steppings[16] = {
-	"step A-0",	"step A-1",	"step B-0",	"step B-1",
-	"step B-2",	"step C-0",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
-/* Steppings for PXA270 */
-static const char * const pxa27x_steppings[16] = {
-	"step A-0",	"step A-1",	"step B-0",	"step B-1",
-	"step C-0",	"step ?",	"step ?",	"step C-5",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15"
 };
@@ -119,21 +103,6 @@ struct cpuidtab {
 };
 
 const struct cpuidtab cpuids[] = {
-	{ CPU_ID_PXA250A,	CPU_CLASS_XSCALE,	"PXA250",
-	  pxa2x0_steppings },
-	{ CPU_ID_PXA210A,	CPU_CLASS_XSCALE,	"PXA210",
-	  pxa2x0_steppings },
-	{ CPU_ID_PXA250B,	CPU_CLASS_XSCALE,	"PXA250",
-	  pxa2x0_steppings },
-	{ CPU_ID_PXA210B,	CPU_CLASS_XSCALE,	"PXA210",
-	  pxa2x0_steppings },
-	{ CPU_ID_PXA250C, 	CPU_CLASS_XSCALE,	"PXA250",
-	  pxa2x0_steppings },
-	{ CPU_ID_PXA27X,	CPU_CLASS_XSCALE,	"PXA27x",
-	  pxa27x_steppings },
-	{ CPU_ID_PXA210C, 	CPU_CLASS_XSCALE,	"PXA210",
-	  pxa2x0_steppings },
-
 	{ CPU_ID_CORTEX_A5,	CPU_CLASS_ARMv7,	"ARM Cortex A5",
 	  generic_steppings },
 	{ CPU_ID_CORTEX_A7,	CPU_CLASS_ARMv7,	"ARM Cortex A7",
@@ -171,21 +140,21 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEX_A17_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A17 R1",
 	  generic_steppings },
 
-	{ CPU_ID_CORTEX_A35,	CPU_CLASS_ARMv7,	"ARM Cortex A35",
+	{ CPU_ID_CORTEX_A35,	CPU_CLASS_ARMv8,	"ARM Cortex A35",
 	  generic_steppings },
-	{ CPU_ID_CORTEX_A53,	CPU_CLASS_ARMv7,	"ARM Cortex A53",
+	{ CPU_ID_CORTEX_A53,	CPU_CLASS_ARMv8,	"ARM Cortex A53",
 	  generic_steppings },
-	{ CPU_ID_CORTEX_A53_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A53 R1",
+	{ CPU_ID_CORTEX_A53_R1,	CPU_CLASS_ARMv8,	"ARM Cortex A53 R1",
 	  generic_steppings },
-	{ CPU_ID_CORTEX_A57,	CPU_CLASS_ARMv7,	"ARM Cortex A57",
+	{ CPU_ID_CORTEX_A57,	CPU_CLASS_ARMv8,	"ARM Cortex A57",
 	  generic_steppings },
-	{ CPU_ID_CORTEX_A57_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A57 R1",
+	{ CPU_ID_CORTEX_A57_R1,	CPU_CLASS_ARMv8,	"ARM Cortex A57 R1",
 	  generic_steppings },
-	{ CPU_ID_CORTEX_A72,	CPU_CLASS_ARMv7,	"ARM Cortex A72",
+	{ CPU_ID_CORTEX_A72,	CPU_CLASS_ARMv8,	"ARM Cortex A72",
 	  generic_steppings },
-	{ CPU_ID_CORTEX_A72_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A72 R1",
+	{ CPU_ID_CORTEX_A72_R1,	CPU_CLASS_ARMv8,	"ARM Cortex A72 R1",
 	  generic_steppings },
-	{ CPU_ID_CORTEX_A73,	CPU_CLASS_ARMv7,	"ARM Cortex A73",
+	{ CPU_ID_CORTEX_A73,	CPU_CLASS_ARMv8,	"ARM Cortex A73",
 	  generic_steppings },
 
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
@@ -196,11 +165,10 @@ struct cpu_classtab {
 	const char	*class_option;
 };
 
-const struct cpu_classtab cpu_classes[] = {
-	{ "unknown",	NULL },			/* CPU_CLASS_NONE */
-	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
-	{ "ARMv7",	"CPU_ARMv7" }		/* CPU_CLASS_ARMv7 */
-
+const char *cpu_classes[] = {
+	"unknown",		/* CPU_CLASS_NONE */
+	"ARMv7",		/* CPU_CLASS_ARMv7 */
+	"ARMv8"			/* CPU_CLASS_ARMv8 */
 };
 
 /*
@@ -249,7 +217,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 			    "%s %s (%s core)", cpuids[i].cpu_name,
 			    cpuids[i].cpu_steppings[cpuid &
 						    CPU_ID_REVISION_MASK],
-			    cpu_classes[cpu_class].class_name);
+			    cpu_classes[cpu_class]);
 			break;
 		}
 
@@ -262,8 +230,8 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	printf("%s:", dv->dv_xname);
 
 	switch (cpu_class) {
-	case CPU_CLASS_XSCALE:
 	case CPU_CLASS_ARMv7:
+	case CPU_CLASS_ARMv8:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			printf(" DC disabled");
 		else
@@ -311,29 +279,16 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
  skip_pcache:
 
 	switch (cpu_class) {
-#ifdef CPU_ARMv7
 	case CPU_CLASS_ARMv7:
-#endif
-
-#if defined(CPU_XSCALE_PXA2X0)
-	case CPU_CLASS_XSCALE:
-#endif
+	case CPU_CLASS_ARMv8:
 		break;
 	default:
-		if (cpu_classes[cpu_class].class_option != NULL)
-			printf("%s: %s does not fully support this CPU."
-			       "\n", dv->dv_xname, ostype);
-		else {
-			printf("%s: This kernel does not fully support "
-			       "this CPU.\n", dv->dv_xname);
-			printf("%s: Recompile with \"options %s\" to "
-			       "correct this.\n", dv->dv_xname,
-			       cpu_classes[cpu_class].class_option);
-		}
+		printf("%s: %s does not fully support this CPU."
+		       "\n", dv->dv_xname, ostype);
 		break;
 	}
-			       
 }
+
 #ifdef MULTIPROCESSOR
 int
 cpu_alloc_idlepcb(struct cpu_info *ci)
