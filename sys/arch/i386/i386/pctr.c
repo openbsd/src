@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.28 2016/04/14 07:00:24 mlarkin Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.29 2016/09/26 03:33:03 guenther Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -81,7 +81,7 @@ pctrattach(int num)
 		return;
 
 	pctr_isamd = (strcmp(cpu_vendor, "AuthenticAMD") == 0);
-	if (!pctr_isamd) {
+	if (!pctr_isamd && cpuid_level >= 0xa) {
 		pctr_isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
 		CPUID(0xa, pctr_intel_cap, dummy, dummy, dummy);
 	}
