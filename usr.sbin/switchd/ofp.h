@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.3 2016/08/25 11:00:44 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.4 2016/09/26 12:33:04 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -249,8 +249,8 @@ struct ofp_instruction_goto_table {
 struct ofp_instruction_actions {
 	uint16_t	ia_type;
 	uint16_t	ia_len;
-	uint8_t		pad[4];
-};
+	uint8_t		ia_pad[4];
+} __packed;
 
 /* Meter instruction */
 struct ofp_instruction_meter {
@@ -268,21 +268,21 @@ struct ofp_instruction_experimenter {
 
 /* Actions */
 #define OFP_ACTION_OUTPUT		0	/* Output to switch port */
-#define OFP_ACTION_COPY_TTL_OUT		11	/* ? */
-#define OFP_ACTION_COPY_TTL_IN		12	/* ? */
-#define OFP_ACTION_SET_MPLS_TTL		15	/* ? */
-#define OFP_ACTION_DEC_MPLS_TTL		16	/* ? */
-#define OFP_ACTION_PUSH_VLAN		17	/* ? */
-#define OFP_ACTION_POP_VLAN		18	/* ? */
-#define OFP_ACTION_PUSH_MPLS		19	/* ? */
-#define OFP_ACTION_POP_MPLS		20	/* ? */
-#define OFP_ACTION_SET_QUEUE		21	/* ? */
-#define OFP_ACTION_GROUP		22	/* ? */
-#define OFP_ACTION_SET_NW_TTL		23	/* ? */
-#define OFP_ACTION_DEC_NW_TTL		24	/* ? */
-#define OFP_ACTION_SET_FIELD		25	/* ? */
-#define OFP_ACTION_PUSH_PBB		26	/* ? */
-#define OFP_ACTION_POP_PBB		27	/* ? */
+#define OFP_ACTION_COPY_TTL_OUT		11	/* Copy TTL outwards */
+#define OFP_ACTION_COPY_TTL_IN		12	/* Copy TTL inwards */
+#define OFP_ACTION_SET_MPLS_TTL		15	/* MPLS TTL */
+#define OFP_ACTION_DEC_MPLS_TTL		16	/* Decrement MPLS TTL */
+#define OFP_ACTION_PUSH_VLAN		17	/* Push a new VLAN tag */
+#define OFP_ACTION_POP_VLAN		18	/* Pop the outer VLAN tag */
+#define OFP_ACTION_PUSH_MPLS		19	/* Push a new MPLS tag */
+#define OFP_ACTION_POP_MPLS		20	/* Pop the outer MPLS tag */
+#define OFP_ACTION_SET_QUEUE		21	/* Set queue id when outputing to a port */
+#define OFP_ACTION_GROUP		22	/* Apply group */
+#define OFP_ACTION_SET_NW_TTL		23	/* Set IP TTL */
+#define OFP_ACTION_DEC_NW_TTL		24	/* Decrement IP TTL */
+#define OFP_ACTION_SET_FIELD		25	/* Set a header field using OXM TLV format */
+#define OFP_ACTION_PUSH_PBB		26	/* Push a new PBB service tag (I-TAG) */
+#define OFP_ACTION_POP_PBB		27	/* Pop the outer PBB service tag (I-TAG) */
 #define OFP_ACTION_EXPERIMENTER		0xffff	/* Vendor-specific action */
 
 /* Action Header */
@@ -355,47 +355,49 @@ struct ofp_packet_out {
 	/* Followed by optional packet data if buffer_id == 0xffffffff */
 } __packed;
 
+#define OFP_PKTOUT_NO_BUFFER		0xffffffff
+
 /* Flow match fields for basic class */
-#define OFP_XM_T_IN_PORT		0	/* ? */
-#define OFP_XM_T_IN_PHY_PORT		1	/* ? */
-#define OFP_XM_T_META			2	/* ? */
-#define OFP_XM_T_ETH_DST		3	/* ? */
-#define OFP_XM_T_ETH_SRC		4	/* ? */
-#define OFP_XM_T_ETH_TYPE		5	/* ? */
-#define OFP_XM_T_VLAN_VID		6	/* ? */
-#define OFP_XM_T_VLAN_PCP		7	/* ? */
-#define OFP_XM_T_IP_DSCP		8	/* ? */
-#define OFP_XM_T_IP_ECN			9	/* ? */
-#define OFP_XM_T_IP_PROTO		10	/* ? */
-#define OFP_XM_T_IPV4_SRC		11	/* ? */
-#define OFP_XM_T_IPV4_DST		12	/* ? */
-#define OFP_XM_T_TCP_SRC		13	/* ? */
-#define OFP_XM_T_TCP_DST		14	/* ? */
-#define OFP_XM_T_UDP_SRC		15	/* ? */
-#define OFP_XM_T_UDP_DST		16	/* ? */
-#define OFP_XM_T_SCTP_SRC		17	/* ? */
-#define OFP_XM_T_SCTP_DST		18	/* ? */
-#define OFP_XM_T_ICMPV4_TYPE		19	/* ? */
-#define OFP_XM_T_ICMPV4_CODE		20	/* ? */
-#define OFP_XM_T_ARP_OP			21	/* ? */
-#define OFP_XM_T_ARP_SPA		22	/* ? */
-#define OFP_XM_T_ARP_TPA		23	/* ? */
-#define OFP_XM_T_ARP_SHA		24	/* ? */
-#define OFP_XM_T_ARP_THA		25	/* ? */
-#define OFP_XM_T_IPV6_SRC		26	/* ? */
-#define OFP_XM_T_IPV6_DST		27	/* ? */
-#define OFP_XM_T_IPV6_FLABEL		28	/* ? */
-#define OFP_XM_T_ICMPV6_TYPE		29	/* ? */
-#define OFP_XM_T_ICMPV6_CODE		30	/* ? */
-#define OFP_XM_T_IPV6_ND_TARGET		31	/* ? */
-#define OFP_XM_T_IPV6_ND_SLL		32	/* ? */
-#define OFP_XM_T_IPV6_ND_TLL		33	/* ? */
-#define OFP_XM_T_MPLS_LABEL		34	/* ? */
-#define OFP_XM_T_MPLS_TC		35	/* ? */
-#define OFP_XM_T_MPLS_BOS		36	/* ? */
-#define OFP_XM_T_PBB_ISID		37	/* ? */
-#define OFP_XM_T_TUNNEL_ID		38	/* ? */
-#define OFP_XM_T_IPV6_EXTHDR		39	/* ? */
+#define OFP_XM_T_IN_PORT		0	/* Switch input port */
+#define OFP_XM_T_IN_PHY_PORT		1	/* Switch physical input port */
+#define OFP_XM_T_META			2	/* Metadata passed between tables */
+#define OFP_XM_T_ETH_DST		3	/* Ethernet destination address */
+#define OFP_XM_T_ETH_SRC		4	/* Ethernet source address */
+#define OFP_XM_T_ETH_TYPE		5	/* Ethernet frame type */
+#define OFP_XM_T_VLAN_VID		6	/* VLAN id */
+#define OFP_XM_T_VLAN_PCP		7	/* VLAN priority */
+#define OFP_XM_T_IP_DSCP		8	/* IP DSCP (6 bits in ToS field) */
+#define OFP_XM_T_IP_ECN			9	/* IP ECN (2 bits in ToS field) */
+#define OFP_XM_T_IP_PROTO		10	/* IP protocol */
+#define OFP_XM_T_IPV4_SRC		11	/* IPv4 source address */
+#define OFP_XM_T_IPV4_DST		12	/* IPv4 destination address */
+#define OFP_XM_T_TCP_SRC		13	/* TCP source port */
+#define OFP_XM_T_TCP_DST		14	/* TCP destination port */
+#define OFP_XM_T_UDP_SRC		15	/* UDP source port */
+#define OFP_XM_T_UDP_DST		16	/* UDP destination port */
+#define OFP_XM_T_SCTP_SRC		17	/* SCTP source port */
+#define OFP_XM_T_SCTP_DST		18	/* SCTP destination port */
+#define OFP_XM_T_ICMPV4_TYPE		19	/* ICMP type */
+#define OFP_XM_T_ICMPV4_CODE		20	/* ICMP code */
+#define OFP_XM_T_ARP_OP			21	/* ARP opcode */
+#define OFP_XM_T_ARP_SPA		22	/* ARP source IPv4 address */
+#define OFP_XM_T_ARP_TPA		23	/* ARP target IPv4 address */
+#define OFP_XM_T_ARP_SHA		24	/* ARP source hardware address */
+#define OFP_XM_T_ARP_THA		25	/* ARP target hardware address */
+#define OFP_XM_T_IPV6_SRC		26	/* IPv6 source address */
+#define OFP_XM_T_IPV6_DST		27	/* IPv6 destination address */
+#define OFP_XM_T_IPV6_FLABEL		28	/* IPv6 Flow Label */
+#define OFP_XM_T_ICMPV6_TYPE		29	/* ICMPv6 type */
+#define OFP_XM_T_ICMPV6_CODE		30	/* ICMPv6 code */
+#define OFP_XM_T_IPV6_ND_TARGET		31	/* Target address for ND */
+#define OFP_XM_T_IPV6_ND_SLL		32	/* Source link-layer for ND */
+#define OFP_XM_T_IPV6_ND_TLL		33	/* Target link-layer for ND */
+#define OFP_XM_T_MPLS_LABEL		34	/* MPLS label */
+#define OFP_XM_T_MPLS_TC		35	/* MPLS TC */
+#define OFP_XM_T_MPLS_BOS		36	/* MPLS BoS bit */
+#define OFP_XM_T_PBB_ISID		37	/* PBB I-SID */
+#define OFP_XM_T_TUNNEL_ID		38	/* Logical Port Metadata */
+#define OFP_XM_T_IPV6_EXTHDR		39	/* IPv6 Extension Header pseudo-field */
 #define OFP_XM_T_MAX			40	/* ? */
 
 /* Flow match fields for nxm1 class */
@@ -415,10 +417,21 @@ struct ofp_packet_out {
 #define OFP_XM_VID_PRESENT		0x1000	/* VLAN ID present */
 #define OFP_XM_VID_NONE			0x0000	/* No VLAN ID */
 
+#define OFP_XM_IPV6_EXTHDR_NONEXT	(1 << 0)
+#define OFP_XM_IPV6_EXTHDR_ESP		(1 << 1)
+#define OFP_XM_IPV6_EXTHDR_AUTH		(1 << 2)
+#define OFP_XM_IPV6_EXTHDR_DEST		(1 << 3)
+#define OFP_XM_IPV6_EXTHDR_FRAG		(1 << 4)
+#define OFP_XM_IPV6_EXTHDR_ROUTER	(1 << 5)
+#define OFP_XM_IPV6_EXTHDR_HOP		(1 << 6)
+#define OFP_XM_IPV6_EXTHDR_UNREP	(1 << 7)
+#define OFP_XM_IPV6_EXTHDR_UNSEQ	(1 << 8)
+
 struct ofp_ox_match {
 	uint16_t	oxm_class;
 	uint8_t		oxm_fh;
 	uint8_t		oxm_length;
+	uint8_t		oxm_value[0];
 };
 
 #define OFP_OXM_GET_FIELD(o)	(((o)->oxm_fh) >> 1)
