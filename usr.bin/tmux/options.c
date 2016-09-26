@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.18 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.19 2016/09/26 09:02:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -128,19 +128,23 @@ options_set_string(struct options *oo, const char *name, const char *fmt, ...)
 {
 	struct options_entry	*o;
 	va_list			 ap;
+	char			*s;
 
+	s = NULL;
 	if ((o = options_find1(oo, name)) == NULL) {
 		o = xmalloc(sizeof *o);
 		o->name = xstrdup(name);
 		RB_INSERT(options_tree, &oo->tree, o);
 		memcpy(&o->style, &grid_default_cell, sizeof o->style);
 	} else if (o->type == OPTIONS_STRING)
-		free(o->str);
+		s = o->str;
 
 	va_start(ap, fmt);
 	o->type = OPTIONS_STRING;
 	xvasprintf(&o->str, fmt, ap);
 	va_end(ap);
+
+	free(s);
 	return (o);
 }
 
