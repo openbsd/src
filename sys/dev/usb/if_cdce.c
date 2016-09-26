@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.70 2016/04/13 11:03:37 mpi Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.71 2016/09/26 07:09:32 fcambus Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -52,8 +52,8 @@
 
 #include <net/if.h>
 
-#include <net/bpf.h>
 #if NBPFILTER > 0
+#include <net/bpf.h>
 #endif
 
 #include <netinet/in.h>
