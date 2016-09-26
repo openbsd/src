@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.7 2016/05/07 19:30:53 guenther Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.8 2016/09/26 15:43:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -77,11 +77,7 @@ MD_START(MD_START_ARGS)
 	MD_START_SETUP
 #endif
 
-#ifndef MD_NO_CLEANUP
 	environp = _csu_finish(argv, envp, cleanup);
-#else
-	environp = _csu_finish(argv, envp, NULL);
-#endif
 
 #ifdef MCRT0
 	atexit(_mcleanup);
