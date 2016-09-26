@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.132 2016/09/14 13:20:16 rzalamena Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.133 2016/09/26 17:17:01 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -82,10 +82,11 @@
 #define CONSTRAINT_PASSFD		(STDERR_FILENO + 1)
 #define CONSTRAINT_CA			"/etc/ssl/cert.pem"
 
-#define PARENT_SOCK_FILENO		3
+#define PARENT_SOCK_FILENO		CONSTRAINT_PASSFD
 
 #define NTP_PROC_NAME			"ntp_main"
 #define NTPDNS_PROC_NAME		"ntp_dns"
+#define CONSTRAINT_PROC_NAME		"constraint"
 
 enum client_state {
 	STATE_NONE,
@@ -357,8 +358,8 @@ int	 constraint_check(double);
 void	 constraint_msg_dns(u_int32_t, u_int8_t *, size_t);
 void	 constraint_msg_result(u_int32_t, u_int8_t *, size_t);
 void	 constraint_msg_close(u_int32_t, u_int8_t *, size_t);
-void	 priv_constraint_msg(u_int32_t, u_int8_t *, size_t,
-	    const char *, uid_t, gid_t);
+void	 priv_constraint_msg(u_int32_t, u_int8_t *, size_t, int, char **);
+void	 priv_constraint_child(const char *, uid_t, gid_t);
 void	 priv_constraint_kill(u_int32_t);
 int	 priv_constraint_dispatch(struct pollfd *);
 void	 priv_constraint_check_child(pid_t, int);

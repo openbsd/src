@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.31 2016/09/14 09:26:10 reyk Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.32 2016/09/26 17:17:01 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -57,8 +57,8 @@ void	 constraint_reset(void);
 int	 constraint_cmp(const void *, const void *);
 
 void	 priv_constraint_close(int, int);
-void	 priv_constraint_child(struct constraint *, struct ntp_addr_msg *,
-	    u_int8_t *, int[2], const char *, uid_t, gid_t);
+void	 priv_constraint_readquery(struct constraint *, struct ntp_addr_msg *,
+	    uint8_t **);
 
 struct httpsdate *
 	 httpsdate_init(const char *, const char *, const char *,
@@ -210,8 +210,8 @@ constraint_query(struct constraint *cstr)
 }
 
 void
-priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len,
-    const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
+priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len, int argc,
+    char **argv)
 {
 	struct ntp_addr_msg	 am;
 	struct ntp_addr		*h;
@@ -246,40 +246,80 @@ priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len,
 	constraint_add(cstr);
 	constraint_cnt++;
 
-	if (socketpair(AF_UNIX, SOCK_DGRAM, AF_UNSPEC, pipes) == -1)
+	if (socketpair(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC,
+	    pipes) == -1)
 		fatal("%s pipes", __func__);
+
+	/* Prepare and send constraint data to child. */
+	cstr->fd = pipes[0];
+	imsg_init(&cstr->ibuf, cstr->fd);
+	if (imsg_compose(&cstr->ibuf, IMSG_CONSTRAINT_QUERY, id, 0, -1,
+	    data, len) == -1)
+		fatal("%s: imsg_compose", __func__);
+	if (imsg_flush(&cstr->ibuf) == -1)
+		fatal("%s: imsg_flush", __func__);
 
 	/*
 	 * Fork child handlers and make sure to do any sensitive work in the
 	 * the (unprivileged) child.  The parent should not do any parsing,
 	 * certificate loading etc.
 	 */
-	switch (cstr->pid = fork()) {
-	case -1:
-		cstr->senderrors++;
-		close(pipes[0]);
-		close(pipes[1]);
-		return;
-	case 0:
-		priv_constraint_child(cstr, &am, data + sizeof(am), pipes,
-		    pw_dir, pw_uid, pw_gid);
-
-		_exit(0);
-		/* NOTREACHED */
-	default:
-		/* Parent */
-		close(pipes[1]);
-		cstr->fd = pipes[0];
-
-		imsg_init(&cstr->ibuf, cstr->fd);
-		break;
-	}
+	start_child(CONSTRAINT_PROC_NAME, pipes[1], argc, argv);
 }
 
 void
-priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
-    u_int8_t *data, int pipes[2], const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
+priv_constraint_readquery(struct constraint *cstr, struct ntp_addr_msg *am,
+    uint8_t **data)
 {
+	struct ntp_addr		*h;
+	uint8_t			*dptr;
+	int			 n;
+	struct imsg		 imsg;
+	size_t			 mlen;
+
+	/* Read the message our parent left us. */
+	if (((n = imsg_read(&cstr->ibuf)) == -1 && errno != EAGAIN) || n == 0)
+		fatal("%s: imsg_read", __func__);
+	if (((n = imsg_get(&cstr->ibuf, &imsg)) == -1) || n == 0)
+		fatal("%s: imsg_get", __func__);
+	if (imsg.hdr.type != IMSG_CONSTRAINT_QUERY)
+		fatalx("%s: invalid message type", __func__);
+
+	/*
+	 * Copy the message contents just like our father:
+	 * priv_constraint_msg().
+	 */
+	mlen = imsg.hdr.len - IMSG_HEADER_SIZE;
+	if (mlen < sizeof(*am))
+		fatalx("%s: mlen < sizeof(*am)", __func__);
+
+	memcpy(am, imsg.data, sizeof(*am));
+	if (mlen != (sizeof(*am) + am->namelen + am->pathlen))
+		fatalx("%s: mlen < sizeof(*am) + am->namelen + am->pathlen",
+		    __func__);
+
+	if ((h = calloc(1, sizeof(*h))) == NULL ||
+	    (*data = calloc(1, mlen)) == NULL)
+		fatal("%s: calloc", __func__);
+
+	memcpy(h, &am->a, sizeof(*h));
+	h->next = NULL;
+
+	cstr->id = imsg.hdr.peerid;
+	cstr->addr = h;
+	cstr->addr_head.a = h;
+
+	dptr = imsg.data;
+	memcpy(*data, dptr + sizeof(*am), mlen - sizeof(*am));
+	imsg_free(&imsg);
+}
+
+void
+priv_constraint_child(const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
+{
+	struct constraint	*cstr;
+	struct ntp_addr_msg	*am;
+	uint8_t			*data;
 	static char		 addr[NI_MAXHOST];
 	struct timeval		 rectv, xmttv;
 	struct sigaction	 sa;
@@ -291,6 +331,10 @@ priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
 
 	if (setpriority(PRIO_PROCESS, 0, 0) == -1)
 		log_warn("could not set priority");
+
+	if ((cstr = calloc(1, sizeof(*cstr))) == NULL ||
+	    (am = calloc(1, sizeof(*am))) == NULL)
+		fatal("%s: calloc", __func__);
 
 	/* Init TLS and load CA certs before chroot() */
 	if (tls_init() == -1)
@@ -320,6 +364,10 @@ priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
 	if (pledge("stdio inet", NULL) == -1)
 		fatal("pledge");
 
+	cstr->fd = CONSTRAINT_PASSFD;
+	imsg_init(&cstr->ibuf, cstr->fd);
+	priv_constraint_readquery(cstr, am, &data);
+
 	/*
 	 * Get the IP address as name and set the process title accordingly.
 	 * This only converts an address into a string and does not trigger
@@ -334,14 +382,6 @@ priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
 
 	log_debug("constraint request to %s", addr);
 	setproctitle("constraint from %s", addr);
-
-	/* Set file descriptors */
-	if (dup2(pipes[1], CONSTRAINT_PASSFD) == -1)
-		fatal("%s dup2 CONSTRAINT_PASSFD", __func__);
-	if (pipes[0] != CONSTRAINT_PASSFD)
-		close(pipes[0]);
-	if (pipes[1] != CONSTRAINT_PASSFD)
-		close(pipes[1]);
 	(void)closefrom(CONSTRAINT_PASSFD + 1);
 
 	/*
@@ -352,9 +392,6 @@ priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
 	 */
 	if (fcntl(CONSTRAINT_PASSFD, F_SETFD, FD_CLOEXEC) == -1)
 		fatal("%s fcntl F_SETFD", __func__);
-
-	cstr->fd = CONSTRAINT_PASSFD;
-	imsg_init(&cstr->ibuf, cstr->fd);
 
 	/* Get remaining data from imsg in the unpriv child */
 	if (am->namelen) {
@@ -387,6 +424,8 @@ priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
 
 	/* Tear down the TLS connection after sending the result */
 	httpsdate_free(ctx);
+
+	exit(0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.110 2016/09/26 16:55:02 rzalamena Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.111 2016/09/26 17:17:01 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,7 @@ void		sighdlr(int);
 __dead void	usage(void);
 int		main(int, char *[]);
 void		check_child(void);
-int		dispatch_imsg(struct ntpd_conf *, const char *, uid_t, gid_t);
+int		dispatch_imsg(struct ntpd_conf *, int, char **);
 int		dispatch_imsg_ctl(struct ntpd_conf *);
 void		reset_adjtime(void);
 int		ntpd_adjtime(double);
@@ -196,6 +196,9 @@ main(int argc, char *argv[])
 			ntp_main(&lconf, pw, argc0, argv0);
 		else if (strcmp(NTPDNS_PROC_NAME, pname) == 0)
 			ntp_dns(&lconf, pw);
+		else if (strcmp(CONSTRAINT_PROC_NAME, pname) == 0)
+			priv_constraint_child(pw->pw_dir, pw->pw_uid,
+			    pw->pw_gid);
 		else
 			fatalx("%s: invalid process name '%s'", __func__,
 			    pname);
@@ -248,10 +251,8 @@ main(int argc, char *argv[])
 	 * Constraint processes are forked with certificates in memory,
 	 * then privdrop into chroot before speaking to the outside world.
 	 */
-#if 0	
-	if (pledge("stdio rpath inet settime proc id", NULL) == -1)
+	if (pledge("stdio rpath inet settime proc exec id", NULL) == -1)
 		err(1, "pledge");
-#endif
 
 	while (quit == 0) {
 		new_cnt = PFD_MAX + constraint_cnt;
@@ -306,7 +307,7 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && pfd[PFD_PIPE].revents & POLLIN) {
 			nfds--;
-			if (dispatch_imsg(&lconf, pw_dir, pw_uid, pw_gid) == -1)
+			if (dispatch_imsg(&lconf, argc0, argv0) == -1)
 				quit = 1;
 		}
 
@@ -353,8 +354,7 @@ check_child(void)
 }
 
 int
-dispatch_imsg(struct ntpd_conf *lconf, const char *pw_dir,
-    uid_t pw_uid, gid_t pw_gid)
+dispatch_imsg(struct ntpd_conf *lconf, int argc, char **argv)
 {
 	struct imsg		 imsg;
 	int			 n;
@@ -404,7 +404,7 @@ dispatch_imsg(struct ntpd_conf *lconf, const char *pw_dir,
 		case IMSG_CONSTRAINT_QUERY:
 			priv_constraint_msg(imsg.hdr.peerid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE,
-			    pw_dir, pw_uid, pw_gid);
+			    argc, argv);
 			break;
 		case IMSG_CONSTRAINT_KILL:
 			priv_constraint_kill(imsg.hdr.peerid);
