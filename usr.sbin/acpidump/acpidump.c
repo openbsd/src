@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.16 2015/10/12 04:02:57 semarie Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.17 2016/09/26 19:58:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -167,6 +167,7 @@ LIST_HEAD(acpi_user_mapping_list, acpi_user_mapping) maplist;
 
 int		acpi_mem_fd = -1;
 char		*aml_dumpfile;
+int		aml_dumpdir;
 FILE		*fhdr;
 
 int	acpi_checksum(void *_p, size_t _length);
@@ -343,8 +344,9 @@ aml_dump(struct ACPIsdt *hdr)
 	int		fd;
 	mode_t		mode;
 
-	snprintf(name, sizeof(name), "%s.%c%c%c%c.%d", 
-	    aml_dumpfile, hdr->signature[0], hdr->signature[1], 
+	snprintf(name, sizeof(name), "%s%c%c%c%c%c.%d",
+	    aml_dumpfile, aml_dumpdir ? '/' : '.',
+	    hdr->signature[0], hdr->signature[1],
 	    hdr->signature[2], hdr->signature[3],
 	    hdr_index++);
 
@@ -529,7 +531,8 @@ asl_dump_from_devmem(void)
 	struct ACPIsdt	*rsdp;
 	char		name[PATH_MAX];
 
-	snprintf(name, sizeof(name), "%s.headers", aml_dumpfile);
+	snprintf(name, sizeof(name), "%s%cheaders", aml_dumpfile,
+	    aml_dumpdir ? '/' : '.');
 
 	acpi_user_init();
 
@@ -560,13 +563,14 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s -o prefix_for_output\n", __progname);
+	fprintf(stderr, "usage: %s -o prefix\n", __progname);
 	exit(1);
 }
 
 int
 main(int argc, char *argv[])
 {
+	struct stat	st;
 	char		c;
 
 	while ((c = getopt(argc, argv, "o:")) != -1) {
@@ -582,6 +586,9 @@ main(int argc, char *argv[])
 
 	if (aml_dumpfile == NULL)
 		usage();
+
+	if (stat(aml_dumpfile, &st) == 0 && S_ISDIR(st.st_mode))
+		aml_dumpdir = 1;
 
 	asl_dump_from_devmem();
 
