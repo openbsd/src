@@ -21,6 +21,7 @@ _fingerd:*:33:
 _sshagnt:*:34:
 _x11:*:35:
 utmp:*:45:
+_ping:*:51:
 _rebound:*:52:
 _unbound:*:53:
 _dpb:*:54:

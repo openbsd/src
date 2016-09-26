@@ -2,6 +2,7 @@ root::0:0:daemon:0:0:Charlie &:/root:/bin/ksh
 daemon:*:1:1::0:0:The devil himself:/root:/sbin/nologin
 operator:*:2:5::0:0:System &:/operator:/sbin/nologin
 bin:*:3:7::0:0:Binaries Commands and Source:/:/sbin/nologin
+_ping:*:51:51::0:0:ping privdrop user:/var/empty:/sbin/nologin
 _dhcp:*:77:77::0:0:DHCP programs:/var/empty:/sbin/nologin
 _sndio:*:99:99::0:0:sndio privsep:/var/empty:/sbin/nologin
 _file:*:104:104::0:0:file privsep:/var/empty:/sbin/nologin
