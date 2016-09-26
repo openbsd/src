@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.214 2016/09/20 15:21:34 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.215 2016/09/26 16:42:46 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,6 +98,7 @@
 #include <limits.h>
 #include <math.h>
 #include <poll.h>
+#include <pwd.h>
 #include <signal.h>
 #include <siphash.h>
 #include <stdint.h>
@@ -158,7 +159,8 @@ int moptions;
 #define	MULTICAST_NOLOOP	0x001
 #define	MULTICAST_TTL		0x002
 
-#define DUMMY_PORT	10101
+#define	DUMMY_PORT	10101
+#define	PING_USER	"_ping"
 
 /*
  * MAX_DUP_CHK is the number of bits in received table, i.e. the maximum
@@ -246,6 +248,7 @@ main(int argc, char *argv[])
 	struct cmsghdr *scmsg = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct icmp6_filter filt;
+	struct passwd *pw;
 	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error, s;
@@ -272,8 +275,12 @@ main(int argc, char *argv[])
 
 	/* revoke privs */
 	uid = getuid();
-	if (setresuid(uid, uid, uid) == -1)
-		err(1, "setresuid");
+	if ((pw = getpwnam(PING_USER)) == NULL)
+		errx(1, "no %s user", PING_USER);
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		err(1, "unable to revoke privs");
 
 	preload = 0;
 	datap = &outpack[ECHOLEN + ECHOTMLEN];
@@ -302,8 +309,8 @@ main(int argc, char *argv[])
 			options |= F_AUD_RECV;
 			break;
 		case 'f':
-			if (getuid())
-				errx(1, "%s", strerror(EPERM));
+			if (uid)
+				errc(1, EPERM, NULL);
 			options |= F_FLOOD;
 			setvbuf(stdout, NULL, _IONBF, 0);
 			break;
@@ -323,10 +330,8 @@ main(int argc, char *argv[])
 			intval = strtod(optarg, &e);
 			if (*optarg == '\0' || *e != '\0')
 				errx(1, "illegal timing interval %s", optarg);
-			if (intval < 1 && getuid()) {
-				errx(1, "%s: only root may use interval < 1s",
-				    strerror(EPERM));
-			}
+			if (intval < 1 && uid)
+				errx(1, "only root may use interval < 1s");
 			interval.tv_sec = (time_t)intval;
 			interval.tv_usec =
 			    (long)((intval - interval.tv_sec) * 1000000);
@@ -344,8 +349,8 @@ main(int argc, char *argv[])
 			loop = 0;
 			break;
 		case 'l':
-			if (getuid())
-				errx(1, "%s", strerror(EPERM));
+			if (uid)
+				errc(1, EPERM, NULL);
 			preload = strtonum(optarg, 1, INT64_MAX, &errstr);
 			if (errstr)
 				errx(1, "preload value is %s: %s", errstr,
