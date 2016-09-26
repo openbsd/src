@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.119 2016/09/26 17:49:52 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.120 2016/09/26 21:47:54 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -365,6 +365,8 @@ createsig(const char *seckeyfile, const char *msgfile, uint8_t *msg,
 		/* basename may or may not modify input */
 		if (!(keyname = strrchr(seckeyfile, '/')))
 			keyname = seckeyfile;
+		else
+			keyname++;
 		if ((nr = snprintf(sigcomment, sizeof(sigcomment), VERIFYWITH "%.*s.pub",
 		    (int)strlen(keyname) - 4, keyname)) == -1 || nr >= sizeof(sigcomment))
 			errx(1, "comment too long");
