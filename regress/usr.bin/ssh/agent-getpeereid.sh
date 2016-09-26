@@ -1,4 +1,4 @@
-#	$OpenBSD: agent-getpeereid.sh,v 1.6 2016/05/03 14:41:04 djm Exp $
+#	$OpenBSD: agent-getpeereid.sh,v 1.7 2016/09/26 21:34:38 bluhm Exp $
 #	Placed in the Public Domain.
 
 tid="disallow agent attach from other uid"
@@ -10,7 +10,16 @@ SSH_AUTH_SOCK=/nonexistent
 case "x$SUDO" in
 	xsudo) sudo=1;;
 	xdoas) ;;
-	x) fatal "need SUDO to switch to uid $UNPRIV, test won't work without";;
+	x)
+		if [ -x /usr/local/bin/sudo -a -f /etc/sudoers ]; then
+			sudo=1
+			SUDO=/usr/local/sbin/sudo
+		elif [ -f /etc/doas.conf ]; then
+			SUDO=/usr/bin/doas
+		else
+			fatal "need SUDO to switch to uid $UNPRIV," \
+			    "test won't work without"
+		fi ;;
 	*) fatal 'unsupported $SUDO - "doas" and "sudo" are allowed' ;;
 esac
 
