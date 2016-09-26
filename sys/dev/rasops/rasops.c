@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.42 2015/09/07 18:00:58 kettenis Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.43 2016/09/26 20:41:08 fcambus Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1577,8 +1577,10 @@ rasops_vcons_erasecols(void *cookie, int row, int col, int num, long attr)
 	int i;
 
 	for (i = 0; i < num; i++) {
-		scr->rs_bs[row * cols + col + i].uc = ' ';
-		scr->rs_bs[row * cols + col + i].attr = attr;
+		int off = row * cols + col + i;
+
+		scr->rs_bs[off].uc = ' ';
+		scr->rs_bs[off].attr = attr;
 	}
 
 	if (!scr->rs_visible)
@@ -1626,8 +1628,10 @@ rasops_vcons_eraserows(void *cookie, int row, int num, long attr)
 	int i;
 
 	for (i = 0; i < num * cols; i++) {
-		scr->rs_bs[row * cols + i].uc = ' ';
-		scr->rs_bs[row * cols + i].attr = attr;
+		int off = row * cols + i;
+
+		scr->rs_bs[off].uc = ' ';
+		scr->rs_bs[off].attr = attr;
 	}
 
 	if (!scr->rs_visible)
@@ -1695,8 +1699,10 @@ rasops_wronly_erasecols(void *cookie, int row, int col, int num, long attr)
 	int i;
 
 	for (i = 0; i < num; i++) {
-		ri->ri_bs[row * cols + col + i].uc = ' ';
-		ri->ri_bs[row * cols + col + i].attr = attr;
+		int off = row * cols + col + i;
+
+		ri->ri_bs[off].uc = ' ';
+		ri->ri_bs[off].attr = attr;
 	}
 
 	return ri->ri_erasecols(ri, row, col, num, attr);
@@ -1734,8 +1740,10 @@ rasops_wronly_eraserows(void *cookie, int row, int num, long attr)
 	int i;
 
 	for (i = 0; i < num * cols; i++) {
-		ri->ri_bs[row * cols + i].uc = ' ';
-		ri->ri_bs[row * cols + i].attr = attr;
+		int off = row * cols + i;
+
+		ri->ri_bs[off].uc = ' ';
+		ri->ri_bs[off].attr = attr;
 	}
 
 	return ri->ri_eraserows(ri, row, num, attr);
