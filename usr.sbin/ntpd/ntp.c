@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.143 2016/09/14 13:20:16 rzalamena Exp $ */
+/*	$OpenBSD: ntp.c,v 1.144 2016/09/26 16:55:02 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -425,13 +425,8 @@ ntp_dispatch_imsg(void)
 	struct imsg		 imsg;
 	int			 n;
 
-	if ((n = imsg_read(ibuf_main)) == -1 && errno != EAGAIN)
+	if (((n = imsg_read(ibuf_main)) == -1 && errno != EAGAIN) || n == 0)
 		return (-1);
-
-	if (n == 0) {	/* connection closed */
-		log_warnx("ntp_dispatch_imsg in ntp engine: pipe closed");
-		return (-1);
-	}
 
 	for (;;) {
 		if ((n = imsg_get(ibuf_main, &imsg)) == -1)
@@ -477,13 +472,8 @@ ntp_dispatch_imsg_dns(void)
 	struct ntp_addr		*h;
 	int			 n;
 
-	if ((n = imsg_read(ibuf_dns)) == -1)
+	if (((n = imsg_read(ibuf_dns)) == -1 && errno != EAGAIN) || n == 0)
 		return (-1);
-
-	if (n == 0) {	/* connection closed */
-		log_warnx("ntp_dispatch_imsg_dns in ntp engine: pipe closed");
-		return (-1);
-	}
 
 	for (;;) {
 		if ((n = imsg_get(ibuf_dns, &imsg)) == -1)
