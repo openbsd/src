@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.53 2016/09/02 12:12:51 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.54 2016/09/26 16:25:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -359,7 +359,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT, -1);
 			break;
 		case IMSG_CTL_POLL:
-			proc_compose(env->sc_ps, PROC_HCE, IMSG_CTL_POLL, NULL, 0);
+			proc_compose(env->sc_ps, PROC_HCE,
+			    IMSG_CTL_POLL, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK,
 			    0, ps->ps_instance + 1, -1, NULL, 0);
 			break;

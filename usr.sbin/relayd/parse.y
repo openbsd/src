@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.211 2016/09/03 14:44:21 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.212 2016/09/26 16:25:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -385,7 +385,8 @@ main		: INTERVAL NUMBER	{
 			conf->sc_conf.opts |= $2;
 		}
 		| TIMEOUT timeout	{
-			bcopy(&$2, &conf->sc_conf.timeout, sizeof(struct timeval));
+			bcopy(&$2, &conf->sc_conf.timeout,
+			    sizeof(struct timeval));
 		}
 		| PREFORK NUMBER	{
 			if ($2 <= 0 || $2 > PROC_MAX_INSTANCES) {

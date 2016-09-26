@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.62 2016/08/01 21:25:53 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.63 2016/09/26 16:25:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1790,7 +1790,7 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 			DPRINTF("%s: session %d, res %d", __func__,
 			    con->se_id, res);
 			if (res == RES_BAD || res == RES_INTERNAL)
-				return(res);
+				return (res);
 			res = 0;
 			r = TAILQ_NEXT(r, rule_entry);
 		}
