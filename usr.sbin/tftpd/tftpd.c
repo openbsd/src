@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.37 2016/09/04 14:41:49 florian Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.38 2016/09/26 17:15:19 jca Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -1584,6 +1584,12 @@ getip(void *s)
 int
 rdaemon(int devnull)
 {
+	if (devnull == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (fcntl(devnull, F_GETFL) == -1)
+		return (-1);
 
 	switch (fork()) {
 	case -1:

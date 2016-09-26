@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.35 2016/09/15 16:16:03 jca Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.36 2016/09/26 17:15:19 jca Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -633,6 +633,7 @@ main(int argc, char *argv[])
 	verbose		= 0;
 
 	/* Other initialization. */
+	devnull		= -1;
 	id_count	= 1;
 	session_count	= 0;
 
@@ -1142,6 +1143,12 @@ usage(void)
 int
 rdaemon(int devnull)
 {
+	if (devnull == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (fcntl(devnull, F_GETFL) == -1)
+		return (-1);
 
 	switch (fork()) {
 	case -1:

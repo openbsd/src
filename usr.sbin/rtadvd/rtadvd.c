@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.81 2016/09/21 18:54:24 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.82 2016/09/26 17:15:19 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -1320,6 +1320,12 @@ ra_timer_update(struct rainfo *rai)
 int
 rdaemon(int devnull)
 {
+	if (devnull == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (fcntl(devnull, F_GETFL) == -1)
+		return (-1);
 
 	switch (fork()) {
 	case -1:
