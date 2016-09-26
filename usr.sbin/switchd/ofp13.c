@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.5 2016/07/21 14:25:36 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.6 2016/09/26 08:46:00 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -290,6 +290,15 @@ ofp13_validate_error(struct switchd *sc,
 	switch (ntohs(err->err_type)) {
 	case OFP_ERRTYPE_FLOW_MOD_FAILED:
 		code = print_map(ntohs(err->err_code), ofp_errflowmod_map);
+		break;
+	case OFP_ERRTYPE_BAD_MATCH:
+		code = print_map(ntohs(err->err_code), ofp_errmatch_map);
+		break;
+	case OFP_ERRTYPE_BAD_INSTRUCTION:
+		code = print_map(ntohs(err->err_code), ofp_errinst_map);
+		break;
+	case OFP_ERRTYPE_BAD_REQUEST:
+		code = print_map(ntohs(err->err_code), ofp_errreq_map);
 		break;
 	default:
 		code = NULL;

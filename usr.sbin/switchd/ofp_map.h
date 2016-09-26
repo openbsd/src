@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_map.h,v 1.3 2016/07/20 19:57:54 reyk Exp $	*/
+/*	$OpenBSD: ofp_map.h,v 1.4 2016/09/26 08:46:00 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -52,5 +52,8 @@ extern struct constmap ofp_flowcmd_map[];
 extern struct constmap ofp_flowflag_map[];
 extern struct constmap ofp_errtype_map[];
 extern struct constmap ofp_errflowmod_map[];
+extern struct constmap ofp_errmatch_map[];
+extern struct constmap ofp_errinst_map[];
+extern struct constmap ofp_errreq_map[];
 
 #endif /* _SWITCHD_OFP_MAP_H */
