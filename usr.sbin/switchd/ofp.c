@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.7 2016/09/14 13:46:51 rzalamena Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.8 2016/09/26 08:48:05 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -146,6 +146,7 @@ void
 ofp_close(struct switch_connection *con)
 {
 	log_info("%s: connection %u closed", __func__, con->con_id);
+	event_del(&con->con_ev);
 	switch_remove(con->con_sc, con->con_switch);
 	close(con->con_fd);
 	TAILQ_REMOVE(&conn_head, con, con_next);
@@ -203,7 +204,7 @@ ofp_read(int fd, short event, void *arg)
 	if ((len = read(fd, buf, sizeof(buf))) == -1)
 		goto fail;
 	if (len == 0)
-		return;
+		goto fail;
 
 	if ((ibuf = ibuf_new(buf, len)) == NULL)
 		goto fail;
@@ -236,6 +237,7 @@ ofp_read(int fd, short event, void *arg)
 		goto fail;
 	}
 
+	ibuf_release(ibuf);
 	return;
 
  fail:
