@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.118 2016/09/10 12:23:16 deraadt Exp $ */
+/* $OpenBSD: signify.c,v 1.119 2016/09/26 17:49:52 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -361,8 +361,12 @@ createsig(const char *seckeyfile, const char *msgfile, uint8_t *msg,
 
 	secname = strstr(seckeyfile, ".sec");
 	if (secname && strlen(secname) == 4) {
+		const char *keyname;
+		/* basename may or may not modify input */
+		if (!(keyname = strrchr(seckeyfile, '/')))
+			keyname = seckeyfile;
 		if ((nr = snprintf(sigcomment, sizeof(sigcomment), VERIFYWITH "%.*s.pub",
-		    (int)strlen(seckeyfile) - 4, seckeyfile)) == -1 || nr >= sizeof(sigcomment))
+		    (int)strlen(keyname) - 4, keyname)) == -1 || nr >= sizeof(sigcomment))
 			errx(1, "comment too long");
 	} else {
 		if ((nr = snprintf(sigcomment, sizeof(sigcomment), "signature from %s",
@@ -468,23 +472,28 @@ static void
 readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
     const char *sigcomment, const char *keytype)
 {
-	const char *safepath = "/etc/signify/";
+	const char *safepath = "/etc/signify";
+	char keypath[1024];
 
 	if (!pubkeyfile) {
 		pubkeyfile = strstr(sigcomment, VERIFYWITH);
-		if (pubkeyfile) {
+		if (pubkeyfile && strchr(pubkeyfile, '/') == NULL) {
 			pubkeyfile += strlen(VERIFYWITH);
-			if (strncmp(pubkeyfile, safepath, strlen(safepath)) != 0 ||
-			    strstr(pubkeyfile, "/../") != NULL)
-				errx(1, "untrusted path %s", pubkeyfile);
 #ifndef VERIFYONLY
 			if (keytype)
 				check_keytype(pubkeyfile, keytype);
 #endif
+			if (snprintf(keypath, sizeof(keypath), "%s/%s",
+			    safepath, pubkeyfile) >= sizeof(keypath))
+				errx(1, "name too long %s", pubkeyfile);
 		} else
 			usage("must specify pubkey");
+	} else {
+		if (strlcpy(keypath, pubkeyfile, sizeof(keypath)) >=
+		    sizeof(keypath))
+			errx(1, "name too long %s", pubkeyfile);
 	}
-	readb64file(pubkeyfile, pubkey, sizeof(*pubkey), NULL);
+	readb64file(keypath, pubkey, sizeof(*pubkey), NULL);
 }
 
 static void
