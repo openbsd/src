@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.3 2016/07/21 08:39:23 reyk Exp $	*/
+/*	$OpenBSD: packet.c,v 1.4 2016/09/26 08:55:43 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -63,7 +63,7 @@ packet_input(struct switchd *sc, struct switch_control *sw, uint32_t srcport,
 		return (-1);
 
 	pkt->pkt_len = ibuf_dataleft(ibuf);
-	if ((pkt->pkt_eh = eh = ibuf_getdata(ibuf, sizeof(*eh))) == NULL) {
+	if ((eh = ibuf_getdata(ibuf, sizeof(*eh))) == NULL) {
 		log_debug("short packet");
 		return (-1);
 	}
@@ -86,6 +86,9 @@ packet_input(struct switchd *sc, struct switch_control *sw, uint32_t srcport,
 
 	if (dstport)
 		*dstport = dst == NULL ? OFP_PORT_ANY : dst->mac_port;
+
+	pkt->pkt_eh = eh;
+	pkt->pkt_buf = (uint8_t *)eh;
 
 	return (0);
 }
