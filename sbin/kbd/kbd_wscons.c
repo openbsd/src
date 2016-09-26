@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.28 2015/01/16 06:39:59 deraadt Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.29 2016/09/26 21:19:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -65,25 +65,6 @@ enum {	SA_PCKBD,
 	SA_MAX
 };
 
-#ifndef NOKVM
-struct nlist nl[] = {
-	{ "_pckbd_keydesctab" },
-	{ "_ukbd_keydesctab" },
-	{ "_akbd_keydesctab" },
-	{ "_lkkbd_keydesctab" },
-	{ "_sunkbd_keydesctab" },
-	{ "_sunkbd5_keydesctab" },
-	{ "_hilkbd_keydesctab" },
-	{ "_gsckbd_keydesctab" },
-	{ "_wssgi_keydesctab" },
-	{ NULL },
-};
-#endif /* NOKVM */
-
-#ifndef NOKVM
-int rebuild = 0;
-#endif
-
 struct nameint {
 	int value;
 	char *name;
@@ -110,66 +91,13 @@ void	kbd_set(char *name, int verbose);
 void
 kbd_show_enc(kvm_t *kd, int idx)
 {
-#ifndef NOKVM
-	struct wscons_keydesc r;
-	unsigned long p;
-	int found;
-	u_int32_t variant;
-	struct nameint *n;
-#else
 	int i;
-#endif /* NOKVM */
-
-#ifndef NOKVM
-	p = nl[idx].n_value;
-	if (p == 0) {
-		printf("no tables available for %s keyboard\n\n",
-		    kbtype_tab[idx]);
-		return;
-	}
-#endif
 
 	printf("tables available for %s keyboard:\nencoding\n\n",
 	    kbtype_tab[idx]);
 
-#ifdef NOKVM
 	for (i = 0; kbdenc_tab[i].value; i++)
 		printf("%s\n", kbdenc_tab[i].name);
-#else
-	kvm_read(kd, p, &r, sizeof(r));
-	while (r.name != 0) {
-		n = &kbdenc_tab[0];
-		found = 0;
-		while (n->value) {
-			if (n->value == KB_ENCODING(r.name)) {
-				printf("%s",n->name);
-				found++;
-			}
-			n++;
-		}
-		if (found == 0) {
-			printf("<encoding 0x%04x>",KB_ENCODING(r.name));
-			rebuild++;
-		}
-		n = &kbdvar_tab[0];
-		found = 0;
-		variant = KB_VARIANT(r.name);
-		while (n->value) {
-			if ((n->value & KB_VARIANT(r.name)) == n->value) {
-				printf(".%s",n->name);
-				variant &= ~n->value;
-			}
-			n++;
-		}
-		if (variant != 0) {
-			printf(".<variant 0x%08x>",variant);
-			rebuild++;
-		}
-		printf("\n");
-		p += sizeof(r);
-		kvm_read(kd, p, &r, sizeof(r));
-	}
-#endif
 	printf("\n");
 }
 
@@ -180,9 +108,6 @@ kbd_list(void)
 	int	fd, i, kbtype;
 	char	device[PATH_MAX];
 	kvm_t	*kd = NULL;
-#ifndef NOKVM
-	char	errbuf[LINE_MAX];
-#endif
 
 	bzero(kbds, sizeof(kbds));
 
@@ -230,23 +155,9 @@ kbd_list(void)
 		}
 	}
 
-#ifndef NOKVM
-	if ((kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf)) == NULL)
-		errx(1, "kvm_openfiles: %s", errbuf);
-
-	if (kvm_nlist(kd, nl) == -1)
-		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
-#endif
-
 	for (i = 0; i < SA_MAX; i++)
 		if (kbds[i] != 0)
 			kbd_show_enc(kd, i);
-
-#ifndef NOKVM
-	kvm_close(kd);
-	if (rebuild > 0)
-		printf("Unknown encoding or variant. kbd(8) needs to be rebuilt.\n");
-#endif
 }
 
 void
