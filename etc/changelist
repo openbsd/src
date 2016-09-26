@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.112 2016/04/20 12:41:30 sthen Exp $
+#	$OpenBSD: changelist,v 1.113 2016/09/26 06:51:23 ajacoutot Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -8,6 +8,7 @@
 #
 
 /etc/Distfile
+/etc/acme-client.conf
 /etc/adduser.conf
 /etc/adduser.message
 /etc/bgpd.conf
