@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.8 2013/12/28 03:19:02 martynas Exp $
+# $OpenBSD: Makefile,v 1.9 2016/09/26 22:56:30 bluhm Exp $
 
-SUBDIR+= gcc gcc-bounds gcc-builtins libiberty
+SUBDIR+= gcc-bounds gcc-builtins
 
 install:
 
