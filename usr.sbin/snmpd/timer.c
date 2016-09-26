@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.5 2016/08/27 01:50:07 guenther Exp $	*/
+/*	$OpenBSD: timer.c,v 1.6 2016/09/26 14:00:05 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -70,9 +70,9 @@ timer_cpu(int fd, short event, void *arg)
 		(void)percentages(CPUSTATES, cptime2, cp_time[n],
 		    cp_old[n], cp_diff[n]);
 #ifdef DEBUG
-		log_debug("timer_cpu: cpu%d %d%% idle in %ds", n,
+		log_debug("timer_cpu: cpu%d %lld%% idle in %llds", n,
 		    (cptime2[CP_IDLE] > 1000 ?
-		    1000 : (cptime2[CP_IDLE] / 10)), tv.tv_sec);
+		    1000 : (cptime2[CP_IDLE] / 10)), (long long) tv.tv_sec);
 #endif
 	}
 
