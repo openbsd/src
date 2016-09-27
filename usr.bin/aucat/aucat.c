@@ -531,6 +531,8 @@ slot_mix_badd(struct slot *s, adata_t *odata)
 	while (otodo > 0) {
 		idata = (adata_t *)abuf_rgetblk(&s->buf, &len);
 		icnt = len / s->bpf;
+		if (icnt > s->round)
+			icnt = s->round;
 		ocnt = otodo;
 		slot_getcnt(s, &icnt, &ocnt);
 		if (icnt == 0)
@@ -605,6 +607,8 @@ slot_sub_bcopy(struct slot *s, adata_t *idata, int itodo)
 	while (itodo > 0) {
 		odata = (adata_t *)abuf_wgetblk(&s->buf, &len);
 		ocnt = len / s->bpf;
+		if (ocnt > s->round)
+			ocnt = s->round;
 		icnt = itodo;
 		slot_getcnt(s, &icnt, &ocnt);
 		if (ocnt == 0)
