@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.7 2016/09/26 12:33:04 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.8 2016/09/27 19:40:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -267,8 +267,13 @@ ofp13_validate_packet_in(struct switchd *sc,
 
 	/* Calculate offset from the beginning */
 	len = ntohs(pin->pin_total_len);
-	if ((p = ibuf_seek(ibuf, off, len)) == NULL)
-		return (-1);
+	if ((p = ibuf_seek(ibuf, off, len)) == NULL) {
+		/* Buffer packets can be truncated */
+		if (pin->pin_buffer_id != OFP_PKTOUT_NO_BUFFER)
+			len = ibuf_length(ibuf) - off;
+		else
+			return (-1);
+	}
 	if (sc->sc_tap != -1)
 		(void)write(sc->sc_tap, p, len);
 	return (0);
