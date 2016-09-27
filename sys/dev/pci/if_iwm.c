@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.141 2016/09/22 08:28:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.142 2016/09/27 15:54:33 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5171,6 +5171,13 @@ iwm_auth(struct iwm_softc *sc)
 		return err;
 	in->in_phyctxt = &sc->sc_phyctxt[0];
 
+	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD, 0);
+	if (err) {
+		printf("%s: could not add MAC context (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+ 	}
+
 	err = iwm_binding_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD);
 	if (err)
 		return err;
@@ -5743,7 +5750,6 @@ int
 iwm_init_hw(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwm_node *in = (struct iwm_node *)ic->ic_bss;
 	int err, i, ac;
 
 	err = iwm_preinit(sc);
@@ -5865,13 +5871,6 @@ iwm_init_hw(struct iwm_softc *sc)
 			goto err;
 		}
 	}
-
-	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD, 0);
-	if (err) {
-		printf("%s: could not add MAC context (error %d)\n",
-		    DEVNAME(sc), err);
-		goto err;
- 	}
 
 	err = iwm_disable_beacon_filter(sc);
 	if (err) {
