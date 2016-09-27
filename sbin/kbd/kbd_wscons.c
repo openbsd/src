@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.29 2016/09/26 21:19:02 kettenis Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.30 2016/09/27 22:03:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -31,10 +31,8 @@
 
 #include <err.h>
 #include <errno.h>
-#include <kvm.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <nlist.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -84,12 +82,12 @@ struct nameint kbdvar_tab[] = {
 
 extern char *__progname;
 
-void	kbd_show_enc(kvm_t *kd, int idx);
+void	kbd_show_enc(int idx);
 void	kbd_list(void);
 void	kbd_set(char *name, int verbose);
 
 void
-kbd_show_enc(kvm_t *kd, int idx)
+kbd_show_enc(int idx)
 {
 	int i;
 
@@ -107,7 +105,6 @@ kbd_list(void)
 	int	kbds[SA_MAX];
 	int	fd, i, kbtype;
 	char	device[PATH_MAX];
-	kvm_t	*kd = NULL;
 
 	bzero(kbds, sizeof(kbds));
 
@@ -157,7 +154,7 @@ kbd_list(void)
 
 	for (i = 0; i < SA_MAX; i++)
 		if (kbds[i] != 0)
-			kbd_show_enc(kd, i);
+			kbd_show_enc(i);
 }
 
 void
