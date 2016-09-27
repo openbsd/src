@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.486 2016/07/10 09:08:18 rpe Exp $
+#	$OpenBSD: rc,v 1.487 2016/09/27 20:18:34 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -449,6 +449,11 @@ mount -a -N
 # if core dumps are to be saved.
 if [[ -d /var/crash ]]; then
 	savecore $savecore_flags /var/crash
+fi
+
+# Store ACPI tables in /var/db/acpi to be used by sendbug(1).
+if [[ -x /usr/sbin/acpidump ]]; then
+	acpidump -o /var/db/acpi/
 fi
 
 if [[ $check_quotas == YES ]]; then

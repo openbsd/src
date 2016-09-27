@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.289 2016/09/07 18:31:00 jmc Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.290 2016/09/27 20:18:34 rpe Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -623,6 +623,8 @@ var
 
     # ./var/db
     db
+        acpi
+	..
         ldap			mode=0700
         ..
         ns
