@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.986 2016/09/27 02:51:12 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.987 2016/09/27 04:57:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -293,12 +293,11 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 			mrm->r->states_cur++;			\
 	} while (0)
 
-static __inline int pf_src_compare(const struct pf_src_node *,
-	const struct pf_src_node *);
-static __inline int pf_state_compare_key(const struct pf_state_key *,
-	const struct pf_state_key *);
-static __inline int pf_state_compare_id(const struct pf_state *,
-	const struct pf_state *);
+static __inline int pf_src_compare(struct pf_src_node *, struct pf_src_node *);
+static __inline int pf_state_compare_key(struct pf_state_key *,
+	struct pf_state_key *);
+static __inline int pf_state_compare_id(struct pf_state *,
+	struct pf_state *);
 static __inline void pf_cksum_uncover(u_int16_t *, u_int16_t, u_int8_t);
 static __inline void pf_cksum_cover(u_int16_t *, u_int16_t, u_int8_t);
 
@@ -307,17 +306,16 @@ struct pf_src_tree tree_src_tracking;
 struct pf_state_tree_id tree_id;
 struct pf_state_queue state_list;
 
-RBT_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
-RBT_GENERATE(pf_state_tree, pf_state_key, entry, pf_state_compare_key);
-RBT_GENERATE(pf_state_tree_id, pf_state,
+RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
+RB_GENERATE(pf_state_tree, pf_state_key, entry, pf_state_compare_key);
+RB_GENERATE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
 
 SLIST_HEAD(pf_rule_gcl, pf_rule)	pf_rule_gcl =
 	SLIST_HEAD_INITIALIZER(pf_rule_gcl);
 
 __inline int
-pf_addr_compare(const struct pf_addr *a, const struct pf_addr *b,
-    sa_family_t af)
+pf_addr_compare(struct pf_addr *a, struct pf_addr *b, sa_family_t af)
 {
 	switch (af) {
 	case AF_INET:
@@ -351,7 +349,7 @@ pf_addr_compare(const struct pf_addr *a, const struct pf_addr *b,
 }
 
 static __inline int
-pf_src_compare(const struct pf_src_node *a, const struct pf_src_node *b)
+pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
 {
 	int	diff;
 
@@ -482,7 +480,7 @@ pf_src_connlimit(struct pf_state **state)
 			struct pf_state *st;
 
 			pf_status.lcounters[LCNT_OVERLOAD_FLUSH]++;
-			RBT_FOREACH(st, pf_state_tree_id, &tree_id) {
+			RB_FOREACH(st, pf_state_tree_id, &tree_id) {
 				sk = st->key[PF_SK_WIRE];
 				/*
 				 * Kill states from this source.  (Only those
@@ -530,7 +528,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 		PF_ACPY(&k.addr, src, af);
 		k.rule.ptr = rule;
 		pf_status.scounters[SCNT_SRC_NODE_SEARCH]++;
-		*sn = RBT_FIND(pf_src_tree, &tree_src_tracking, &k);
+		*sn = RB_FIND(pf_src_tree, &tree_src_tracking, &k);
 	}
 	if (*sn == NULL) {
 		if (!rule->max_src_nodes ||
@@ -551,7 +549,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 		PF_ACPY(&(*sn)->addr, src, af);
 		if (raddr)
 			PF_ACPY(&(*sn)->raddr, raddr, af);
-		if (RBT_INSERT(pf_src_tree,
+		if (RB_INSERT(pf_src_tree,
 		    &tree_src_tracking, *sn) != NULL) {
 			if (pf_status.debug >= LOG_NOTICE) {
 				log(LOG_NOTICE,
@@ -586,7 +584,7 @@ pf_remove_src_node(struct pf_src_node *sn)
 	if (sn->rule.ptr->states_cur == 0 &&
 	    sn->rule.ptr->src_nodes == 0)
 		pf_rm_rule(NULL, sn->rule.ptr);
-	RBT_REMOVE(pf_src_tree, &tree_src_tracking, sn);
+	RB_REMOVE(pf_src_tree, &tree_src_tracking, sn);
 	pf_status.scounters[SCNT_SRC_NODE_REMOVALS]++;
 	pf_status.src_nodes--;
 	pool_put(&pf_src_tree_pl, sn);
@@ -627,7 +625,7 @@ pf_state_rm_src_node(struct pf_state *s, struct pf_src_node *sn)
 /* state table stuff */
 
 static __inline int
-pf_state_compare_key(const struct pf_state_key *a, const struct pf_state_key *b)
+pf_state_compare_key(struct pf_state_key *a, struct pf_state_key *b)
 {
 	int	diff;
 
@@ -649,7 +647,7 @@ pf_state_compare_key(const struct pf_state_key *a, const struct pf_state_key *b)
 }
 
 static __inline int
-pf_state_compare_id(const struct pf_state *a, const struct pf_state *b)
+pf_state_compare_id(struct pf_state *a, struct pf_state *b)
 {
 	if (a->id > b->id)
 		return (1);
@@ -671,7 +669,7 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 	struct pf_state		*olds = NULL;
 
 	KASSERT(s->key[idx] == NULL);
-	if ((cur = RBT_INSERT(pf_state_tree, &pf_statetbl, sk)) != NULL) {
+	if ((cur = RB_INSERT(pf_state_tree, &pf_statetbl, sk)) != NULL) {
 		/* key exists. check for same kif, if none, add to key */
 		TAILQ_FOREACH(si, &cur->states, entry)
 			if (si->s->kif == s->kif &&
@@ -770,7 +768,7 @@ pf_state_key_detach(struct pf_state *s, int idx)
 	sk = s->key[idx];
 	s->key[idx] = NULL;
 	if (TAILQ_EMPTY(&sk->states)) {
-		RBT_REMOVE(pf_state_tree, &pf_statetbl, sk);
+		RB_REMOVE(pf_state_tree, &pf_statetbl, sk);
 		sk->removed = 1;
 		pf_state_key_unlink_reverse(sk);
 		pf_inpcb_unlink_state_key(sk->inp);
@@ -946,7 +944,7 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skw,
 		s->id = htobe64(pf_status.stateid++);
 		s->creatorid = pf_status.hostid;
 	}
-	if (RBT_INSERT(pf_state_tree_id, &tree_id, s) != NULL) {
+	if (RB_INSERT(pf_state_tree_id, &tree_id, s) != NULL) {
 		if (pf_status.debug >= LOG_NOTICE) {
 			log(LOG_NOTICE, "pf: state insert failed: "
 			    "id: %016llx creatorid: %08x",
@@ -971,7 +969,7 @@ pf_find_state_byid(struct pf_state_cmp *key)
 {
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	return (RBT_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
+	return (RB_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
 }
 
 int
@@ -1050,7 +1048,7 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 	}
 
 	if (sk == NULL) {
-		if ((sk = RBT_FIND(pf_state_tree, &pf_statetbl,
+		if ((sk = RB_FIND(pf_state_tree, &pf_statetbl,
 		    (struct pf_state_key *)key)) == NULL)
 			return (NULL);
 		if (dir == PF_OUT && pkt_sk &&
@@ -1086,7 +1084,7 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int dir, int *more)
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	sk = RBT_FIND(pf_state_tree, &pf_statetbl, (struct pf_state_key *)key);
+	sk = RB_FIND(pf_state_tree, &pf_statetbl, (struct pf_state_key *)key);
 
 	if (sk != NULL) {
 		TAILQ_FOREACH(si, &sk->states, entry)
@@ -1271,13 +1269,14 @@ pf_purge_expired_src_nodes(int waslocked)
 	struct pf_src_node		*cur, *next;
 	int				 locked = waslocked;
 
-	for (cur = RBT_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
-		next = RBT_NEXT(pf_src_tree, cur);
+	for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
+	next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
 
 		if (cur->states == 0 && cur->expire <= time_uptime) {
 			if (! locked) {
 				rw_enter_write(&pf_consistency_lock);
-				next = RBT_NEXT(pf_src_tree, cur);
+				next = RB_NEXT(pf_src_tree,
+				    &tree_src_tracking, cur);
 				locked = 1;
 			}
 			pf_remove_src_node(cur);
@@ -1328,7 +1327,7 @@ pf_remove_state(struct pf_state *cur)
 		    TH_RST|TH_ACK, 0, 0, 0, 1, cur->tag,
 		    cur->key[PF_SK_WIRE]->rdomain);
 	}
-	RBT_REMOVE(pf_state_tree_id, &tree_id, cur);
+	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
 #if NPFLOW > 0
 	if (cur->state_flags & PFSTATE_PFLOW)
 		export_pflow(cur);
@@ -3026,7 +3025,7 @@ pf_step_into_anchor(int *depth, struct pf_ruleset **rs,
 	f->r = *r;
 	if ((*r)->anchor_wildcard) {
 		f->parent = &(*r)->anchor->children;
-		if ((f->child = RBT_MIN(pf_anchor_node, f->parent)) == NULL) {
+		if ((f->child = RB_MIN(pf_anchor_node, f->parent)) == NULL) {
 			*r = NULL;
 			return;
 		}
@@ -3051,7 +3050,7 @@ pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs,
 			break;
 		f = pf_anchor_stack + *depth - 1;
 		if (f->parent != NULL && f->child != NULL) {
-			f->child = RBT_NEXT(pf_anchor_node, f->child);
+			f->child = RB_NEXT(pf_anchor_node, f->parent, f->child);
 			if (f->child != NULL) {
 				*rs = &f->child->ruleset;
 				*r = TAILQ_FIRST((*rs)->rules.active.ptr);

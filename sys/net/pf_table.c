@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.119 2016/09/27 02:51:12 dlg Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.120 2016/09/27 04:57:17 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -177,8 +177,8 @@ struct pfr_ktable	*pfr_create_ktable(struct pfr_table *, time_t, int,
 			    int);
 void			 pfr_destroy_ktables(struct pfr_ktableworkq *, int);
 void			 pfr_destroy_ktable(struct pfr_ktable *, int);
-int			 pfr_ktable_compare(const struct pfr_ktable *,
-			    const struct pfr_ktable *);
+int			 pfr_ktable_compare(struct pfr_ktable *,
+			    struct pfr_ktable *);
 void			 pfr_ktable_winfo_update(struct pfr_ktable *,
 			    struct pfr_kentry *);
 struct pfr_ktable	*pfr_lookup_table(struct pfr_table *);
@@ -190,8 +190,8 @@ int			 pfr_skip_table(struct pfr_table *,
 struct pfr_kentry	*pfr_kentry_byidx(struct pfr_ktable *, int, int);
 int			 pfr_islinklocal(sa_family_t, struct pf_addr *);
 
-RBT_PROTOTYPE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
-RBT_GENERATE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
+RB_PROTOTYPE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
+RB_GENERATE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
 
 struct pfr_ktablehead	 pfr_ktables;
 struct pfr_table	 pfr_nulltable;
@@ -1273,7 +1273,7 @@ pfr_clr_tables(struct pfr_table *filter, int *ndel, int flags)
 		return (ENOENT);
 
 	SLIST_INIT(&workq);
-	RBT_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
+	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		if (pfr_skip_table(filter, p, flags))
 			continue;
 		if (!strcmp(p->pfrkt_anchor, PF_RESERVED_ANCHOR))
@@ -1311,7 +1311,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 		    flags & PFR_FLAG_USERIOCTL))
 			senderr(EINVAL);
 		key.pfrkt_flags |= PFR_TFLAG_ACTIVE;
-		p = RBT_FIND(pfr_ktablehead, &pfr_ktables, &key);
+		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p == NULL) {
 			p = pfr_create_ktable(&key.pfrkt_t, tzero, 1,
 			    !(flags & PFR_FLAG_USERIOCTL));
@@ -1328,7 +1328,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 
 			/* find or create root table */
 			bzero(key.pfrkt_anchor, sizeof(key.pfrkt_anchor));
-			r = RBT_FIND(pfr_ktablehead, &pfr_ktables, &key);
+			r = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 			if (r != NULL) {
 				p->pfrkt_root = r;
 				goto _skip;
@@ -1387,7 +1387,7 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 		if (pfr_validate_table(&key.pfrkt_t, 0,
 		    flags & PFR_FLAG_USERIOCTL))
 			return (EINVAL);
-		p = RBT_FIND(pfr_ktablehead, &pfr_ktables, &key);
+		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p != NULL && (p->pfrkt_flags & PFR_TFLAG_ACTIVE)) {
 			SLIST_FOREACH(q, &workq, pfrkt_workq)
 				if (!pfr_ktable_compare(p, q))
@@ -1425,7 +1425,7 @@ pfr_get_tables(struct pfr_table *filter, struct pfr_table *tbl, int *size,
 		*size = n;
 		return (0);
 	}
-	RBT_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
+	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		if (pfr_skip_table(filter, p, flags))
 			continue;
 		if (n-- <= 0)
@@ -1463,7 +1463,7 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 		return (0);
 	}
 	SLIST_INIT(&workq);
-	RBT_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
+	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		if (pfr_skip_table(filter, p, flags))
 			continue;
 		if (n-- <= 0)
@@ -1504,7 +1504,7 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 			return (EFAULT);
 		if (pfr_validate_table(&key.pfrkt_t, 0, 0))
 			return (EINVAL);
-		p = RBT_FIND(pfr_ktablehead, &pfr_ktables, &key);
+		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p != NULL) {
 			SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
 			xzero++;
@@ -1539,7 +1539,7 @@ pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
 		if (pfr_validate_table(&key.pfrkt_t, 0,
 		    flags & PFR_FLAG_USERIOCTL))
 			return (EINVAL);
-		p = RBT_FIND(pfr_ktablehead, &pfr_ktables, &key);
+		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p != NULL && (p->pfrkt_flags & PFR_TFLAG_ACTIVE)) {
 			p->pfrkt_nflags = (p->pfrkt_flags | setflag) &
 			    ~clrflag;
@@ -1582,7 +1582,7 @@ pfr_ina_begin(struct pfr_table *trs, u_int32_t *ticket, int *ndel, int flags)
 	if (rs == NULL)
 		return (ENOMEM);
 	SLIST_INIT(&workq);
-	RBT_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
+	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		if (!(p->pfrkt_flags & PFR_TFLAG_INACTIVE) ||
 		    pfr_skip_table(trs, p, 0))
 			continue;
@@ -1625,7 +1625,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		return (EBUSY);
 	tbl->pfrt_flags |= PFR_TFLAG_INACTIVE;
 	SLIST_INIT(&tableq);
-	kt = RBT_FIND(pfr_ktablehead, &pfr_ktables, (struct pfr_ktable *)tbl);
+	kt = RB_FIND(pfr_ktablehead, &pfr_ktables, (struct pfr_ktable *)tbl);
 	if (kt == NULL) {
 		kt = pfr_create_ktable(tbl, 0, 1,
 		    !(flags & PFR_FLAG_USERIOCTL));
@@ -1639,7 +1639,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		/* find or create root table */
 		bzero(&key, sizeof(key));
 		strlcpy(key.pfrkt_name, tbl->pfrt_name, sizeof(key.pfrkt_name));
-		rt = RBT_FIND(pfr_ktablehead, &pfr_ktables, &key);
+		rt = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (rt != NULL) {
 			kt->pfrkt_root = rt;
 			goto _skip;
@@ -1721,7 +1721,7 @@ pfr_ina_rollback(struct pfr_table *trs, u_int32_t ticket, int *ndel, int flags)
 	if (rs == NULL || !rs->topen || ticket != rs->tticket)
 		return (0);
 	SLIST_INIT(&workq);
-	RBT_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
+	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		if (!(p->pfrkt_flags & PFR_TFLAG_INACTIVE) ||
 		    pfr_skip_table(trs, p, 0))
 			continue;
@@ -1755,7 +1755,7 @@ pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
 		return (EBUSY);
 
 	SLIST_INIT(&workq);
-	RBT_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
+	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		if (!(p->pfrkt_flags & PFR_TFLAG_INACTIVE) ||
 		    pfr_skip_table(trs, p, 0))
 			continue;
@@ -1928,7 +1928,7 @@ pfr_insert_ktables(struct pfr_ktableworkq *workq)
 void
 pfr_insert_ktable(struct pfr_ktable *kt)
 {
-	RBT_INSERT(pfr_ktablehead, &pfr_ktables, kt);
+	RB_INSERT(pfr_ktablehead, &pfr_ktables, kt);
 	pfr_ktable_cnt++;
 	if (kt->pfrkt_root != NULL)
 		if (!kt->pfrkt_root->pfrkt_refcnt[PFR_REFCNT_ANCHOR]++)
@@ -1959,7 +1959,7 @@ pfr_setflags_ktable(struct pfr_ktable *kt, int newf)
 	if (!(newf & PFR_TFLAG_ACTIVE))
 		newf &= ~PFR_TFLAG_USRMASK;
 	if (!(newf & PFR_TFLAG_SETMASK)) {
-		RBT_REMOVE(pfr_ktablehead, &pfr_ktables, kt);
+		RB_REMOVE(pfr_ktablehead, &pfr_ktables, kt);
 		if (kt->pfrkt_root != NULL)
 			if (!--kt->pfrkt_root->pfrkt_refcnt[PFR_REFCNT_ANCHOR])
 				pfr_setflags_ktable(kt->pfrkt_root,
@@ -2082,7 +2082,7 @@ pfr_destroy_ktable(struct pfr_ktable *kt, int flushaddr)
 }
 
 int
-pfr_ktable_compare(const struct pfr_ktable *p, const struct pfr_ktable *q)
+pfr_ktable_compare(struct pfr_ktable *p, struct pfr_ktable *q)
 {
 	int d;
 
@@ -2095,7 +2095,7 @@ struct pfr_ktable *
 pfr_lookup_table(struct pfr_table *tbl)
 {
 	/* struct pfr_ktable start like a struct pfr_table */
-	return (RBT_FIND(pfr_ktablehead, &pfr_ktables,
+	return (RB_FIND(pfr_ktablehead, &pfr_ktables,
 	    (struct pfr_ktable *)tbl));
 }
 

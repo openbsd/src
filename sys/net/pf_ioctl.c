@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.301 2016/09/27 02:51:12 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.302 2016/09/27 04:57:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -169,8 +169,8 @@ pfattach(int num)
 		pf_pool_limits[PF_LIMIT_TABLE_ENTRIES].limit =
 		    PFR_KENTRY_HIWAT_SMALL;
 
-	RBT_INIT(pf_src_tree, &tree_src_tracking);
-	RBT_INIT(pf_anchor_global, &pf_anchors);
+	RB_INIT(&tree_src_tracking);
+	RB_INIT(&pf_anchors);
 	pf_init_ruleset(&pf_main_ruleset);
 	TAILQ_INIT(&pf_queues[0]);
 	TAILQ_INIT(&pf_queues[1]);
@@ -1418,8 +1418,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_state_kill *psk = (struct pfioc_state_kill *)addr;
 		u_int			 killed = 0;
 
-		for (s = RBT_MIN(pf_state_tree_id, &tree_id); s; s = nexts) {
-			nexts = RBT_NEXT(pf_state_tree_id, s);
+		for (s = RB_MIN(pf_state_tree_id, &tree_id); s; s = nexts) {
+			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
 
 			if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
 			    s->kif->pfik_name)) {
@@ -1456,8 +1456,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
-		for (s = RBT_MIN(pf_state_tree_id, &tree_id); s; s = nexts) {
-			nexts = RBT_NEXT(pf_state_tree_id, s);
+		for (s = RB_MIN(pf_state_tree_id, &tree_id); s;
+		    s = nexts) {
+			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
 
 			if (s->direction == PF_OUT) {
 				sk = s->key[PF_SK_STACK];
@@ -1753,11 +1754,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pr->nr = 0;
 		if (ruleset->anchor == NULL) {
 			/* XXX kludge for pf_main_ruleset */
-			RBT_FOREACH(anchor, pf_anchor_global, &pf_anchors)
+			RB_FOREACH(anchor, pf_anchor_global, &pf_anchors)
 				if (anchor->parent == NULL)
 					pr->nr++;
 		} else {
-			RBT_FOREACH(anchor, pf_anchor_node,
+			RB_FOREACH(anchor, pf_anchor_node,
 			    &ruleset->anchor->children)
 				pr->nr++;
 		}
@@ -1778,14 +1779,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pr->name[0] = 0;
 		if (ruleset->anchor == NULL) {
 			/* XXX kludge for pf_main_ruleset */
-			RBT_FOREACH(anchor, pf_anchor_global, &pf_anchors)
+			RB_FOREACH(anchor, pf_anchor_global, &pf_anchors)
 				if (anchor->parent == NULL && nr++ == pr->nr) {
 					strlcpy(pr->name, anchor->name,
 					    sizeof(pr->name));
 					break;
 				}
 		} else {
-			RBT_FOREACH(anchor, pf_anchor_node,
+			RB_FOREACH(anchor, pf_anchor_node,
 			    &ruleset->anchor->children)
 				if (nr++ == pr->nr) {
 					strlcpy(pr->name, anchor->name,
@@ -2235,7 +2236,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		int			 space = psn->psn_len;
 
 		if (space == 0) {
-			RBT_FOREACH(n, pf_src_tree, &tree_src_tracking)
+			RB_FOREACH(n, pf_src_tree, &tree_src_tracking)
 				nr++;
 			psn->psn_len = sizeof(struct pf_src_node) * nr;
 			break;
@@ -2244,7 +2245,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pstore = malloc(sizeof(*pstore), M_TEMP, M_WAITOK);
 
 		p = psn->psn_src_nodes;
-		RBT_FOREACH(n, pf_src_tree, &tree_src_tracking) {
+		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
 			int	secs = time_uptime, diff;
 
 			if ((nr + 1) * sizeof(*p) > (unsigned)psn->psn_len)
@@ -2288,9 +2289,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_src_node	*n;
 		struct pf_state		*state;
 
-		RBT_FOREACH(state, pf_state_tree_id, &tree_id)
+		RB_FOREACH(state, pf_state_tree_id, &tree_id)
 			pf_src_tree_remove_state(state);
-		RBT_FOREACH(n, pf_src_tree, &tree_src_tracking)
+		RB_FOREACH(n, pf_src_tree, &tree_src_tracking)
 			n->expire = 1;
 		pf_purge_expired_src_nodes(1);
 		break;
@@ -2303,7 +2304,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    (struct pfioc_src_node_kill *)addr;
 		u_int			killed = 0;
 
-		RBT_FOREACH(sn, pf_src_tree, &tree_src_tracking) {
+		RB_FOREACH(sn, pf_src_tree, &tree_src_tracking) {
 			if (PF_MATCHA(psnk->psnk_src.neg,
 				&psnk->psnk_src.addr.v.a.addr,
 				&psnk->psnk_src.addr.v.a.mask,
@@ -2314,7 +2315,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				&sn->raddr, sn->af)) {
 				/* Handle state to src_node linkage */
 				if (sn->states != 0)
-					RBT_FOREACH(s, pf_state_tree_id,
+					RB_FOREACH(s, pf_state_tree_id,
 					   &tree_id)
 						pf_state_rm_src_node(s, sn);
 				sn->expire = 1;

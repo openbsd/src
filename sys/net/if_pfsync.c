@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.233 2016/09/27 02:51:12 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.234 2016/09/27 04:57:17 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -747,8 +747,8 @@ pfsync_in_clr(caddr_t buf, int len, int count, int flags)
 		    (kif = pfi_kif_find(clr->ifname)) == NULL)
 			continue;
 
-		for (st = RBT_MIN(pf_state_tree_id, &tree_id); st; st = nexts) {
-			nexts = RBT_NEXT(pf_state_tree_id, st);
+		for (st = RB_MIN(pf_state_tree_id, &tree_id); st; st = nexts) {
+			nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
 			if (st->creatorid == creatorid &&
 			    ((kif && st->kif == kif) || !kif)) {
 				SET(st->state_flags, PFSTATE_NOSYNC);
