@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.44 2016/08/20 20:18:42 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.45 2016/09/27 12:32:26 fcambus Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -101,8 +101,6 @@ void	ptransfer(int);
 void	recvrequest(const char *, const char *, const char *,
 	    const char *, int, int);
 char   *remglob(char **, int, char **);
-#ifndef SMALL
-#endif /* !SMALL */
 off_t	remotesize(const char *, int);
 time_t	remotemodtime(const char *, int);
 void	reset(int, char **);
