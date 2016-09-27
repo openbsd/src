@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.160 2016/09/03 14:09:04 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.161 2016/09/27 21:39:27 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -245,6 +245,7 @@ main(int argc, char *argv[])
 
 	proc_connect(ps);
 
+	relay_http(NULL);
 	if (load_config(env->sc_conffile, env) == -1) {
 		proc_kill(env->sc_ps);
 		exit(1);
