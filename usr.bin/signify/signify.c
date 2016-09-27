@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.120 2016/09/26 21:47:54 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.121 2016/09/27 02:02:47 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -488,14 +488,11 @@ readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
 			if (snprintf(keypath, sizeof(keypath), "%s/%s",
 			    safepath, pubkeyfile) >= sizeof(keypath))
 				errx(1, "name too long %s", pubkeyfile);
+			pubkeyfile = keypath;
 		} else
 			usage("must specify pubkey");
-	} else {
-		if (strlcpy(keypath, pubkeyfile, sizeof(keypath)) >=
-		    sizeof(keypath))
-			errx(1, "name too long %s", pubkeyfile);
 	}
-	readb64file(keypath, pubkey, sizeof(*pubkey), NULL);
+	readb64file(pubkeyfile, pubkey, sizeof(*pubkey), NULL);
 }
 
 static void
