@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.224 2016/09/02 13:59:51 pirofti Exp $ */
+/* $OpenBSD: dsdt.c,v 1.225 2016/09/27 10:04:19 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2472,7 +2472,8 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 			    val, mode, fld->v_field.flags);
 			break;
 		default:
-			aml_die("Unsupported RegionSpace");
+			aml_die("Unsupported RegionSpace 0x%x",
+			    ref1->v_opregion.iospace);
 			break;
 		}
 	} else if (mode == ACPI_IOREAD) {
