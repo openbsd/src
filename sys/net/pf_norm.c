@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.192 2016/09/15 02:00:18 dlg Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.193 2016/09/27 02:51:12 dlg Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -74,7 +74,7 @@ struct pf_frent {
 	u_int16_t	 fe_mff;	/* more fragment flag */
 };
 
-/* keep synced with struct pf_fragment, used in RB_FIND */
+/* keep synced with struct pf_fragment, used in RBT_FIND */
 struct pf_fragment_cmp {
 	struct pf_addr	fr_src;
 	struct pf_addr	fr_dst;
@@ -92,7 +92,7 @@ struct pf_fragment {
 	u_int8_t	fr_proto;	/* protocol of this fragment */
 	u_int8_t	fr_direction;	/* pf packet direction */
 
-	RB_ENTRY(pf_fragment) fr_entry;
+	RBT_ENTRY(pf_fragment) fr_entry;
 	TAILQ_ENTRY(pf_fragment) frag_next;
 	TAILQ_HEAD(pf_fragq, pf_frent) fr_queue;
 	int32_t		fr_timeout;
@@ -107,11 +107,11 @@ struct pf_fragment_tag {
 
 TAILQ_HEAD(pf_fragqueue, pf_fragment)	pf_fragqueue;
 
-static __inline int	 pf_frag_compare(struct pf_fragment *,
-			    struct pf_fragment *);
-RB_HEAD(pf_frag_tree, pf_fragment)	pf_frag_tree, pf_cache_tree;
-RB_PROTOTYPE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
-RB_GENERATE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
+static __inline int	 pf_frag_compare(const struct pf_fragment *,
+			    const struct pf_fragment *);
+RBT_HEAD(pf_frag_tree, pf_fragment)	pf_frag_tree, pf_cache_tree;
+RBT_PROTOTYPE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
+RBT_GENERATE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
 
 /* Private prototypes */
 void			 pf_flush_fragments(void);
@@ -151,7 +151,7 @@ pf_normalize_init(void)
 }
 
 static __inline int
-pf_frag_compare(struct pf_fragment *a, struct pf_fragment *b)
+pf_frag_compare(const struct pf_fragment *a, const struct pf_fragment *b)
 {
 	int	diff;
 
@@ -211,7 +211,7 @@ pf_free_fragment(struct pf_fragment *frag)
 {
 	struct pf_frent		*frent;
 
-	RB_REMOVE(pf_frag_tree, &pf_frag_tree, frag);
+	RBT_REMOVE(pf_frag_tree, &pf_frag_tree, frag);
 	TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
 
 	/* Free all fragment entries */
@@ -229,7 +229,7 @@ pf_find_fragment(struct pf_fragment_cmp *key, struct pf_frag_tree *tree)
 {
 	struct pf_fragment	*frag;
 
-	frag = RB_FIND(pf_frag_tree, tree, (struct pf_fragment *)key);
+	frag = RBT_FIND(pf_frag_tree, tree, (struct pf_fragment *)key);
 	if (frag != NULL) {
 		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
 		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
@@ -309,7 +309,7 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 		frag->fr_timeout = time_uptime;
 		frag->fr_maxlen = frent->fe_len;
 
-		RB_INSERT(pf_frag_tree, &pf_frag_tree, frag);
+		RBT_INSERT(pf_frag_tree, &pf_frag_tree, frag);
 		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
 
 		/* We do not have a previous fragment */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.12 2016/07/19 13:34:12 henning Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.13 2016/09/27 02:51:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -79,13 +79,14 @@
 struct pf_anchor_global	 pf_anchors;
 struct pf_anchor	 pf_main_anchor;
 
-static __inline int pf_anchor_compare(struct pf_anchor *, struct pf_anchor *);
+static __inline int pf_anchor_compare(const struct pf_anchor *,
+    const struct pf_anchor *);
 
-RB_GENERATE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare);
-RB_GENERATE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
+RBT_GENERATE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare);
+RBT_GENERATE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
 
 static __inline int
-pf_anchor_compare(struct pf_anchor *a, struct pf_anchor *b)
+pf_anchor_compare(const struct pf_anchor *a, const struct pf_anchor *b)
 {
 	int c = strcmp(a->path, b->path);
 
@@ -111,7 +112,7 @@ pf_find_anchor(const char *path)
 	if (key == NULL)
 		return (NULL);
 	strlcpy(key->path, path, sizeof(key->path));
-	found = RB_FIND(pf_anchor_global, &pf_anchors, key);
+	found = RBT_FIND(pf_anchor_global, &pf_anchors, key);
 	rs_free(key);
 	return (found);
 }
@@ -180,7 +181,7 @@ pf_find_or_create_ruleset(const char *path)
 			rs_free(p);
 			return (NULL);
 		}
-		RB_INIT(&anchor->children);
+		RBT_INIT(pf_anchor_node, &anchor->children);
 		strlcpy(anchor->name, q, sizeof(anchor->name));
 		if (parent != NULL) {
 			strlcpy(anchor->path, parent->path,
@@ -188,10 +189,10 @@ pf_find_or_create_ruleset(const char *path)
 			strlcat(anchor->path, "/", sizeof(anchor->path));
 		}
 		strlcat(anchor->path, anchor->name, sizeof(anchor->path));
-		if ((dup = RB_INSERT(pf_anchor_global, &pf_anchors, anchor)) !=
+		if ((dup = RBT_INSERT(pf_anchor_global, &pf_anchors, anchor)) !=
 		    NULL) {
 			DPFPRINTF(LOG_NOTICE,
-			    "pf_find_or_create_ruleset: RB_INSERT1 "
+			    "pf_find_or_create_ruleset: RBT_INSERT1 "
 			    "'%s' '%s' collides with '%s' '%s'",
 			    anchor->path, anchor->name, dup->path, dup->name);
 			rs_free(anchor);
@@ -200,14 +201,14 @@ pf_find_or_create_ruleset(const char *path)
 		}
 		if (parent != NULL) {
 			anchor->parent = parent;
-			if ((dup = RB_INSERT(pf_anchor_node, &parent->children,
+			if ((dup = RBT_INSERT(pf_anchor_node, &parent->children,
 			    anchor)) != NULL) {
 				DPFPRINTF(LOG_NOTICE,
 				    "pf_find_or_create_ruleset: "
-				    "RB_INSERT2 '%s' '%s' collides with "
+				    "RBT_INSERT2 '%s' '%s' collides with "
 				    "'%s' '%s'", anchor->path, anchor->name,
 				    dup->path, dup->name);
-				RB_REMOVE(pf_anchor_global, &pf_anchors,
+				RBT_REMOVE(pf_anchor_global, &pf_anchors,
 				    anchor);
 				rs_free(anchor);
 				rs_free(p);
@@ -233,7 +234,7 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 
 	while (ruleset != NULL) {
 		if (ruleset == &pf_main_ruleset || ruleset->anchor == NULL ||
-		    !RB_EMPTY(&ruleset->anchor->children) ||
+		    !RBT_EMPTY(pf_anchor_node, &ruleset->anchor->children) ||
 		    ruleset->anchor->refcnt > 0 || ruleset->tables > 0 ||
 		    ruleset->topen)
 			return;
@@ -241,9 +242,9 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 		    !TAILQ_EMPTY(ruleset->rules.inactive.ptr) ||
 		    ruleset->rules.inactive.open)
 			return;
-		RB_REMOVE(pf_anchor_global, &pf_anchors, ruleset->anchor);
+		RBT_REMOVE(pf_anchor_global, &pf_anchors, ruleset->anchor);
 		if ((parent = ruleset->anchor->parent) != NULL)
-			RB_REMOVE(pf_anchor_node, &parent->children,
+			RBT_REMOVE(pf_anchor_node, &parent->children,
 			    ruleset->anchor);
 		rs_free(ruleset->anchor);
 		if (parent == NULL)

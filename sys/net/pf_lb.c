@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.55 2016/07/19 12:51:19 henning Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.56 2016/09/27 02:51:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -275,7 +275,7 @@ pf_map_addr_sticky(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	PF_ACPY(&k.addr, saddr, af);
 	k.rule.ptr = r;
 	pf_status.scounters[SCNT_SRC_NODE_SEARCH]++;
-	sns[type] = RB_FIND(pf_src_tree, &tree_src_tracking, &k);
+	sns[type] = RBT_FIND(pf_src_tree, &tree_src_tracking, &k);
 	if (sns[type] == NULL)
 		return (-1);
 
@@ -307,7 +307,7 @@ pf_map_addr_sticky(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		}
 		if (sns[type]->states != 0) {
 			/* XXX expensive */
-			RB_FOREACH(s, pf_state_tree_id,
+			RBT_FOREACH(s, pf_state_tree_id,
 			   &tree_id)
 				pf_state_rm_src_node(s,
 				    sns[type]);

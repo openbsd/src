@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.84 2016/09/15 02:00:18 dlg Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.85 2016/09/27 02:51:12 dlg Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -72,12 +72,12 @@ void		 pfi_table_update(struct pfr_ktable *, struct pfi_kif *,
 void		 pfi_kifaddr_update(void *);
 void		 pfi_instance_add(struct ifnet *, u_int8_t, int);
 void		 pfi_address_add(struct sockaddr *, sa_family_t, u_int8_t);
-int		 pfi_if_compare(struct pfi_kif *, struct pfi_kif *);
+int		 pfi_if_compare(const struct pfi_kif *, const struct pfi_kif *);
 int		 pfi_skip_if(const char *, struct pfi_kif *);
 int		 pfi_unmask(void *);
 
-RB_PROTOTYPE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
-RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
+RBT_PROTOTYPE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
+RBT_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 
 #define PFI_BUFFER_MAX		0x10000
 #define PFI_MTYPE		M_IFADDR
@@ -105,7 +105,7 @@ pfi_kif_find(const char *kif_name)
 
 	bzero(&s, sizeof(s));
 	strlcpy(s.pfik_name, kif_name, sizeof(s.pfik_name));
-	return (RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&s));
+	return (RBT_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&s));
 }
 
 struct pfi_kif *
@@ -130,7 +130,7 @@ pfi_kif_get(const char *kif_name)
 		kif->pfik_flags_new |= PFI_IFLAG_ANY;
 	}
 
-	RB_INSERT(pfi_ifhead, &pfi_ifs, kif);
+	RBT_INSERT(pfi_ifhead, &pfi_ifs, kif);
 	return (kif);
 }
 
@@ -195,7 +195,7 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	if (kif->pfik_rules || kif->pfik_states || kif->pfik_routes)
 		return;
 
-	RB_REMOVE(pfi_ifhead, &pfi_ifs, kif);
+	RBT_REMOVE(pfi_ifhead, &pfi_ifs, kif);
 	free(kif, PFI_MTYPE, 0);
 }
 
@@ -628,7 +628,7 @@ pfi_kifaddr_update(void *v)
 }
 
 int
-pfi_if_compare(struct pfi_kif *p, struct pfi_kif *q)
+pfi_if_compare(const struct pfi_kif *p, const struct pfi_kif *q)
 {
 	return (strncmp(p->pfik_name, q->pfik_name, IFNAMSIZ));
 }
@@ -644,7 +644,7 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 
 	s = splsoftnet();
 	if (*name == '\0' && pfs == NULL) {
-		RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
+		RBT_FOREACH(p, pfi_ifhead, &pfi_ifs) {
 			bzero(p->pfik_packets, sizeof(p->pfik_packets));
 			bzero(p->pfik_bytes, sizeof(p->pfik_bytes));
 			p->pfik_tzero = time_second;
@@ -654,7 +654,7 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 	}
 
 	strlcpy(key.pfik_name, name, sizeof(key.pfik_name));
-	p = RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&key);
+	p = RBT_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&key);
 	if (p == NULL) {
 		splx(s);
 		return;
@@ -704,8 +704,8 @@ pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
 	int		 s, n = 0;
 
 	s = splsoftnet();
-	for (p = RB_MIN(pfi_ifhead, &pfi_ifs); p; p = nextp) {
-		nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
+	for (p = RBT_MIN(pfi_ifhead, &pfi_ifs); p; p = nextp) {
+		nextp = RBT_NEXT(pfi_ifhead, p);
 		if (pfi_skip_if(name, p))
 			continue;
 		if (*size > n++) {
@@ -717,7 +717,7 @@ pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
 				splx(s);
 				return (EFAULT);
 			}
-			nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
+			nextp = RBT_NEXT(pfi_ifhead, p);
 			pfi_kif_unref(p, PFI_KIF_REF_RULE);
 		}
 	}
@@ -755,7 +755,7 @@ pfi_set_flags(const char *name, int flags)
 	int		 s;
 
 	s = splsoftnet();
-	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
+	RBT_FOREACH(p, pfi_ifhead, &pfi_ifs) {
 		if (pfi_skip_if(name, p))
 			continue;
 		p->pfik_flags_new = p->pfik_flags | flags;
@@ -771,7 +771,7 @@ pfi_clear_flags(const char *name, int flags)
 	int		 s;
 
 	s = splsoftnet();
-	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
+	RBT_FOREACH(p, pfi_ifhead, &pfi_ifs) {
 		if (pfi_skip_if(name, p))
 			continue;
 		p->pfik_flags_new = p->pfik_flags & ~flags;
@@ -787,7 +787,7 @@ pfi_xcommit(void)
 	int		 s;
 
 	s = splsoftnet();
-	RB_FOREACH(p, pfi_ifhead, &pfi_ifs)
+	RBT_FOREACH(p, pfi_ifhead, &pfi_ifs)
 		p->pfik_flags = p->pfik_flags_new;
 	splx(s);
 }

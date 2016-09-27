@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.438 2016/09/03 17:11:40 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.439 2016/09/27 02:51:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -619,7 +619,7 @@ SLIST_HEAD(pf_rule_slist, pf_rule_item);
 enum pf_sn_types { PF_SN_NONE, PF_SN_NAT, PF_SN_RDR, PF_SN_ROUTE, PF_SN_MAX };
 
 struct pf_src_node {
-	RB_ENTRY(pf_src_node)	 entry;
+	RBT_ENTRY(pf_src_node)	 entry;
 	struct pf_addr		 addr;
 	struct pf_addr		 raddr;
 	union pf_rule_ptr	 rule;
@@ -682,7 +682,7 @@ struct pf_state_peer {
 
 TAILQ_HEAD(pf_state_queue, pf_state);
 
-/* keep synced with struct pf_state_key, used in RB_FIND */
+/* keep synced with struct pf_state_key, used in RBT_FIND */
 struct pf_state_key_cmp {
 	struct pf_addr	 addr[2];
 	u_int16_t	 port[2];
@@ -705,7 +705,7 @@ struct pf_state_key {
 	sa_family_t	 af;
 	u_int8_t	 proto;
 
-	RB_ENTRY(pf_state_key)	 entry;
+	RBT_ENTRY(pf_state_key)	 entry;
 	struct pf_statelisthead	 states;
 	struct pf_state_key	*reverse;
 	struct inpcb		*inp;
@@ -716,7 +716,7 @@ struct pf_state_key {
 	((key[PF_SK_WIRE]->af != key[PF_SK_STACK]->af) &&	\
 	 (key[PF_SK_WIRE]->af != (family)))
 
-/* keep synced with struct pf_state, used in RB_FIND */
+/* keep synced with struct pf_state, used in RBT_FIND */
 struct pf_state_cmp {
 	u_int64_t		 id;
 	u_int32_t		 creatorid;
@@ -732,7 +732,7 @@ struct pf_state {
 
 	TAILQ_ENTRY(pf_state)	 sync_list;
 	TAILQ_ENTRY(pf_state)	 entry_list;
-	RB_ENTRY(pf_state)	 entry_id;
+	RBT_ENTRY(pf_state)	 entry_id;
 	struct pf_state_peer	 src;
 	struct pf_state_peer	 dst;
 	struct pf_rule_slist	 match_rules;
@@ -916,11 +916,11 @@ struct pf_ruleset {
 	int			 topen;
 };
 
-RB_HEAD(pf_anchor_global, pf_anchor);
-RB_HEAD(pf_anchor_node, pf_anchor);
+RBT_HEAD(pf_anchor_global, pf_anchor);
+RBT_HEAD(pf_anchor_node, pf_anchor);
 struct pf_anchor {
-	RB_ENTRY(pf_anchor)	 entry_global;
-	RB_ENTRY(pf_anchor)	 entry_node;
+	RBT_ENTRY(pf_anchor)	 entry_global;
+	RBT_ENTRY(pf_anchor)	 entry_node;
 	struct pf_anchor	*parent;
 	struct pf_anchor_node	 children;
 	char			 name[PF_ANCHOR_NAME_SIZE];
@@ -929,8 +929,8 @@ struct pf_anchor {
 	int			 refcnt;	/* anchor rules */
 	int			 match;
 };
-RB_PROTOTYPE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare)
-RB_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare)
+RBT_PROTOTYPE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare)
+RBT_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare)
 
 #define PF_RESERVED_ANCHOR	"_pf"
 
@@ -1080,10 +1080,10 @@ struct pfr_kentry_all {
 #define pfrke_rkif	u.kr.kif
 
 SLIST_HEAD(pfr_ktableworkq, pfr_ktable);
-RB_HEAD(pfr_ktablehead, pfr_ktable);
+RBT_HEAD(pfr_ktablehead, pfr_ktable);
 struct pfr_ktable {
 	struct pfr_tstats	 pfrkt_ts;
-	RB_ENTRY(pfr_ktable)	 pfrkt_tree;
+	RBT_ENTRY(pfr_ktable)	 pfrkt_tree;
 	SLIST_ENTRY(pfr_ktable)	 pfrkt_workq;
 	struct radix_node_head	*pfrkt_ip4;
 	struct radix_node_head	*pfrkt_ip6;
@@ -1109,19 +1109,19 @@ struct pfr_ktable {
 #define pfrkt_nomatch	pfrkt_ts.pfrts_nomatch
 #define pfrkt_tzero	pfrkt_ts.pfrts_tzero
 
-RB_HEAD(pf_state_tree, pf_state_key);
-RB_PROTOTYPE(pf_state_tree, pf_state_key, entry, pf_state_compare_key)
+RBT_HEAD(pf_state_tree, pf_state_key);
+RBT_PROTOTYPE(pf_state_tree, pf_state_key, entry, pf_state_compare_key)
 
-RB_HEAD(pf_state_tree_ext_gwy, pf_state_key);
-RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state_key,
+RBT_HEAD(pf_state_tree_ext_gwy, pf_state_key);
+RBT_PROTOTYPE(pf_state_tree_ext_gwy, pf_state_key,
     entry_ext_gwy, pf_state_compare_ext_gwy)
 
-RB_HEAD(pfi_ifhead, pfi_kif);
+RBT_HEAD(pfi_ifhead, pfi_kif);
 
 /* state tables */
 extern struct pf_state_tree	 pf_statetbl;
 
-/* keep synced with pfi_kif, used in RB_FIND */
+/* keep synced with pfi_kif, used in RBT_FIND */
 struct pfi_kif_cmp {
 	char				 pfik_name[IFNAMSIZ];
 };
@@ -1131,7 +1131,7 @@ struct ifg_group;
 
 struct pfi_kif {
 	char				 pfik_name[IFNAMSIZ];
-	RB_ENTRY(pfi_kif)		 pfik_tree;
+	RBT_ENTRY(pfi_kif)		 pfik_tree;
 	u_int64_t			 pfik_packets[2][2][2];
 	u_int64_t			 pfik_bytes[2][2][2];
 	time_t				 pfik_tzero;
@@ -1641,12 +1641,12 @@ struct pfioc_iface {
 #define DIOCGETQSTATS	_IOWR('D', 96, struct pfioc_qstats)
 
 #ifdef _KERNEL
-RB_HEAD(pf_src_tree, pf_src_node);
-RB_PROTOTYPE(pf_src_tree, pf_src_node, entry, pf_src_compare);
+RBT_HEAD(pf_src_tree, pf_src_node);
+RBT_PROTOTYPE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 extern struct pf_src_tree tree_src_tracking;
 
-RB_HEAD(pf_state_tree_id, pf_state);
-RB_PROTOTYPE(pf_state_tree_id, pf_state,
+RBT_HEAD(pf_state_tree_id, pf_state);
+RBT_PROTOTYPE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
 extern struct pf_state_tree_id tree_id;
 extern struct pf_state_queue state_list;
@@ -1842,8 +1842,8 @@ void		 pf_tag2tagname(u_int16_t, char *);
 void		 pf_tag_ref(u_int16_t);
 void		 pf_tag_unref(u_int16_t);
 void		 pf_tag_packet(struct mbuf *, int, int);
-int		 pf_addr_compare(struct pf_addr *, struct pf_addr *,
-		    sa_family_t);
+int		 pf_addr_compare(const struct pf_addr *,
+		    const struct pf_addr *, sa_family_t);
 
 extern struct pf_status	pf_status;
 extern struct pool	pf_frent_pl, pf_frag_pl;
