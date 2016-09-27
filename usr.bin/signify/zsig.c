@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.12 2016/09/10 12:23:16 deraadt Exp $ */
+/* $OpenBSD: zsig.c,v 1.13 2016/09/27 02:16:40 tedu Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -52,10 +52,7 @@ struct gzheader {
 
 static uint8_t fake[10] = { 0x1f, 0x8b, 8, FCOMMENT_FLAG, 0, 0, 0, 0, 0, 3 };
 
-/* XXX no static there, confuses the hell out of gcc which displays
- * non-existent warnings.
- */
-uint8_t *
+static uint8_t *
 readgz_header(struct gzheader *h, int fd)
 {
 	size_t sz = 1024;
