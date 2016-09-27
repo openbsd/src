@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.119 2016/09/16 02:35:41 dlg Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.120 2016/09/27 02:53:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -118,7 +118,7 @@ int hibernate_write_rle(union hibernate_info *, paddr_t, paddr_t, daddr_t *,
 struct hiballoc_entry {
 	size_t			hibe_use;
 	size_t			hibe_space;
-	RB_ENTRY(hiballoc_entry) hibe_entry;
+	RBT_ENTRY(hiballoc_entry) hibe_entry;
 };
 
 /*
@@ -154,7 +154,7 @@ hibernate_sort_ranges(union hibernate_info *hib_info)
  * we just compare the hiballoc_entry pointers.
  */
 static __inline int
-hibe_cmp(struct hiballoc_entry *l, struct hiballoc_entry *r)
+hibe_cmp(const struct hiballoc_entry *l, const struct hiballoc_entry *r)
 {
 	vaddr_t vl = (vaddr_t)l;
 	vaddr_t vr = (vaddr_t)r;
@@ -162,7 +162,7 @@ hibe_cmp(struct hiballoc_entry *l, struct hiballoc_entry *r)
 	return vl < vr ? -1 : (vl > vr);
 }
 
-RB_PROTOTYPE(hiballoc_addr, hiballoc_entry, hibe_entry, hibe_cmp)
+RBT_PROTOTYPE(hiballoc_addr, hiballoc_entry, hibe_entry, hibe_cmp)
 
 /*
  * Given a hiballoc entry, return the address it manages.
@@ -190,7 +190,7 @@ hib_addr_to_entry(void *addr_param)
 	return (struct hiballoc_entry*)addr;
 }
 
-RB_GENERATE(hiballoc_addr, hiballoc_entry, hibe_entry, hibe_cmp)
+RBT_GENERATE(hiballoc_addr, hiballoc_entry, hibe_entry, hibe_cmp);
 
 /*
  * Allocate memory from the arena.
@@ -220,9 +220,9 @@ hib_alloc(struct hiballoc_arena *arena, size_t alloc_sz)
 	 * a sufficiently large space.
 	 */
 	find_sz = alloc_sz + HIB_SIZEOF(struct hiballoc_entry);
-	entry = RB_ROOT(&arena->hib_addrs);
+	entry = RBT_ROOT(hiballoc_addr, &arena->hib_addrs);
 	if (entry != NULL && entry->hibe_space < find_sz) {
-		RB_FOREACH_REVERSE(entry, hiballoc_addr, &arena->hib_addrs) {
+		RBT_FOREACH_REVERSE(entry, hiballoc_addr, &arena->hib_addrs) {
 			if (entry->hibe_space >= find_sz)
 				break;
 		}
@@ -245,7 +245,7 @@ hib_alloc(struct hiballoc_arena *arena, size_t alloc_sz)
 	/*
 	 * Insert entry.
 	 */
-	if (RB_INSERT(hiballoc_addr, &arena->hib_addrs, new_entry) != NULL)
+	if (RBT_INSERT(hiballoc_addr, &arena->hib_addrs, new_entry) != NULL)
 		panic("hib_alloc: insert failure");
 	entry->hibe_space = 0;
 
@@ -280,7 +280,7 @@ hib_free(struct hiballoc_arena *arena, void *addr)
 	 * Derive entry from addr and check it is really in this arena.
 	 */
 	entry = hib_addr_to_entry(addr);
-	if (RB_FIND(hiballoc_addr, &arena->hib_addrs, entry) != entry)
+	if (RBT_FIND(hiballoc_addr, &arena->hib_addrs, entry) != entry)
 		panic("hib_free: freed item %p not in hib arena", addr);
 
 	/*
@@ -289,12 +289,12 @@ hib_free(struct hiballoc_arena *arena, void *addr)
 	 * If entry has no predecessor, change its used space into free space
 	 * instead.
 	 */
-	prev = RB_PREV(hiballoc_addr, &arena->hib_addrs, entry);
+	prev = RBT_PREV(hiballoc_addr, entry);
 	if (prev != NULL &&
 	    (void *)((caddr_t)prev + HIB_SIZEOF(struct hiballoc_entry) +
 	    prev->hibe_use + prev->hibe_space) == entry) {
 		/* Merge entry. */
-		RB_REMOVE(hiballoc_addr, &arena->hib_addrs, entry);
+		RBT_REMOVE(hiballoc_addr, &arena->hib_addrs, entry);
 		prev->hibe_space += HIB_SIZEOF(struct hiballoc_entry) +
 		    entry->hibe_use + entry->hibe_space;
 	} else {
@@ -316,7 +316,7 @@ hiballoc_init(struct hiballoc_arena *arena, void *p_ptr, size_t p_len)
 	caddr_t ptr;
 	size_t len;
 
-	RB_INIT(&arena->hib_addrs);
+	RBT_INIT(hiballoc_addr, &arena->hib_addrs);
 
 	/*
 	 * Hib allocator enforces HIB_ALIGN alignment.
@@ -338,7 +338,7 @@ hiballoc_init(struct hiballoc_arena *arena, void *p_ptr, size_t p_len)
 	entry = (struct hiballoc_entry*)ptr;
 	entry->hibe_use = 0;
 	entry->hibe_space = len - HIB_SIZEOF(struct hiballoc_entry);
-	RB_INSERT(hiballoc_addr, &arena->hib_addrs, entry);
+	RBT_INSERT(hiballoc_addr, &arena->hib_addrs, entry);
 
 	return 0;
 }
