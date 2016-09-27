@@ -9,6 +9,7 @@ _rstatd:*:30:30::0:0:rpc.rstatd:/var/empty:/sbin/nologin
 _rusersd:*:32:32::0:0:rpc.rusersd:/var/empty:/sbin/nologin
 _fingerd:*:33:33::0:0:fingerd:/var/empty:/sbin/nologin
 _x11:*:35:35::0:0:X Server:/var/empty:/sbin/nologin
+_traceroute:*:50:50::0:0:traceroute privdrop user:/var/empty:/sbin/nologin
 _ping:*:51:51::0:0:ping privdrop user:/var/empty:/sbin/nologin
 _rebound:*:52:52::0:0:Rebound DNS Daemon:/var/empty:/sbin/nologin
 _unbound:*:53:53:unbound:0:0:Unbound Daemon:/var/unbound:/sbin/nologin
