@@ -7248,6 +7248,7 @@
 ./var/cron/atjobs
 ./var/cron/tabs
 ./var/db
+./var/db/acpi
 ./var/db/ldap
 ./var/db/ns
 ./var/db/pkg
