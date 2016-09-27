@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.121 2016/09/27 02:02:47 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.122 2016/09/27 02:13:27 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -449,26 +449,25 @@ verifymsg(struct pubkey *pubkey, uint8_t *msg, unsigned long long msglen,
 	free(dummybuf);
 }
 
-#ifndef VERIFYONLY
 static void
 check_keytype(const char *pubkeyfile, const char *keytype)
 {
-	size_t len;
-	char *cmp;
-	int slen;
+	const char *p;
+	size_t typelen;
 
-	len = strlen(pubkeyfile);
-	slen = asprintf(&cmp, "-%s.pub", keytype);
-	if (slen < 0)
-		err(1, "asprintf error");
-	if (len < slen)
-		errx(1, "too short");
+	if (!(p = strrchr(pubkeyfile, '-')))
+		goto bad;
+	p++;
+	typelen = strlen(keytype);
+	if (strncmp(p, keytype, typelen) != 0)
+		goto bad;
+	if (strcmp(p + typelen, ".pub") != 0)
+		goto bad;
+	return;
 
-	if (strcmp(pubkeyfile + len - slen, cmp) != 0)
-		errx(1, "wrong keytype");
-	free(cmp);
+bad:
+	errx(1, "incorrect keytype: %s is not %s", pubkeyfile, keytype);
 }
-#endif
 
 static void
 readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
@@ -481,10 +480,8 @@ readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
 		pubkeyfile = strstr(sigcomment, VERIFYWITH);
 		if (pubkeyfile && strchr(pubkeyfile, '/') == NULL) {
 			pubkeyfile += strlen(VERIFYWITH);
-#ifndef VERIFYONLY
 			if (keytype)
 				check_keytype(pubkeyfile, keytype);
-#endif
 			if (snprintf(keypath, sizeof(keypath), "%s/%s",
 			    safepath, pubkeyfile) >= sizeof(keypath))
 				errx(1, "name too long %s", pubkeyfile);
