@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.180 2016/09/04 17:21:44 nicm Exp $
+.\"	$OpenBSD: ksh.1,v 1.181 2016/09/27 23:58:38 czarkoff Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: September 4 2016 $
+.Dd $Mdocdate: September 27 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1006,12 +1006,6 @@ Note that
 has the same effect as
 .Ic $(cat foo) ,
 but it is carried out more efficiently because no process is started.
-.Pp
-.Sy Note :
-.Pf $( Ar command )
-expressions are currently parsed by finding the matching parenthesis,
-regardless of quoting.
-This should be fixed soon.
 .Pp
 Arithmetic substitutions are replaced by the value of the specified expression.
 For example, the command
@@ -5580,3 +5574,14 @@ The
 .Pa CONTRIBUTORS
 file in the source distribution contains a more complete list of people and
 their part in the shell's development.
+.Sh BUGS
+.Pf $( Ar command )
+expressions are currently parsed by finding the closest matching (unquoted)
+parenthesis.
+Thus constructs inside
+.Pf $( Ar command )
+may produce an error.
+For example, the parenthesis in
+.Ql x);;
+is interpreted as the closing parenthesis in
+.Ql $(case x in x);; *);; esac) .
