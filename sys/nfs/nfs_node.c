@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.64 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.65 2016/09/27 01:37:38 dlg Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -72,8 +72,14 @@ nfsnode_cmp(const struct nfsnode *a, const struct nfsnode *b)
 	return (memcmp(a->n_fhp, b->n_fhp, a->n_fhsize));
 }
 
-RB_PROTOTYPE(nfs_nodetree, nfsnode, n_entry, nfsnode_cmp);
-RB_GENERATE(nfs_nodetree, nfsnode, n_entry, nfsnode_cmp);
+RBT_PROTOTYPE(nfs_nodetree, nfsnode, n_entry, nfsnode_cmp);
+RBT_GENERATE(nfs_nodetree, nfsnode, n_entry, nfsnode_cmp);
+
+void
+nfs_ninit(struct nfsmount *nmp)
+{
+	RBT_INIT(nfs_nodetree, &nmp->nm_ntree);
+}
 
 /*
  * Look up a vnode/nfsnode by file handle and store the pointer in *npp.
@@ -95,7 +101,7 @@ loop:
 	rw_enter_write(&nfs_hashlock);
 	find.n_fhp = fh;
 	find.n_fhsize = fhsize;
-	np = RB_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
+	np = RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
 		rw_exit_write(&nfs_hashlock);
 		vp = NFSTOV(np);
@@ -124,7 +130,7 @@ loop:
 		return (error);
 	}
 	nvp->v_flag |= VLARVAL;
-	np = RB_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
+	np = RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
 		vgone(nvp);
 		rw_exit_write(&nfs_hashlock);
@@ -153,7 +159,7 @@ loop:
 	np->n_fhp = &np->n_fh;
 	bcopy(fh, np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
-	np2 = RB_INSERT(nfs_nodetree, &nmp->nm_ntree, np);
+	np2 = RBT_INSERT(nfs_nodetree, &nmp->nm_ntree, np);
 	KASSERT(np2 == NULL);
 	np->n_accstamp = -1;
 	rw_exit(&nfs_hashlock);
@@ -234,7 +240,7 @@ nfs_reclaim(void *v)
 #endif
 	nmp = VFSTONFS(vp->v_mount);
 	rw_enter_write(&nfs_hashlock);
-	RB_REMOVE(nfs_nodetree, &nmp->nm_ntree, np);
+	RBT_REMOVE(nfs_nodetree, &nmp->nm_ntree, np);
 	rw_exit_write(&nfs_hashlock);
 
 	if (np->n_rcred)
