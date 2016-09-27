@@ -1,10 +1,9 @@
 /*
  * Public Domain 2003 Dale Rahn
  *
- * $OpenBSD: aa.C,v 1.1 2003/02/01 19:56:17 drahn Exp $
+ * $OpenBSD: aa.C,v 1.2 2016/09/27 06:52:50 kettenis Exp $
  */
 
-#include "iostream.h"
 #include "aa.h"
 int a;
 

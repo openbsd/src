@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.16 2016/03/20 05:13:22 guenther Exp $
+#	$OpenBSD: Makefile,v 1.17 2016/09/27 06:52:50 kettenis Exp $
 
 SUBDIR+= elf hidden weak dlsym dlopen dlclose lazy
-#SUBDIR+= constructor 
+SUBDIR+= constructor 
 SUBDIR+= link-order edgecases initfirst
 SUBDIR+= df_1_noopen randomdata subst dependencies
 SUBDIR+= init-env
