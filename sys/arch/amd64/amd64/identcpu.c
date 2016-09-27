@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.75 2016/09/27 08:04:49 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.76 2016/09/27 08:06:22 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -803,7 +803,8 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 	}
 
 	/*
-	 * Check for EPT (Intel Nested Paging)
+	 * Check for EPT (Intel Nested Paging) and other secondary
+	 * controls
 	 */
 	if (ci->ci_vmm_flags & CI_VMM_VMX) {
 		/* Secondary controls available? */
