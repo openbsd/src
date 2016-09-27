@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.48 2016/09/10 17:15:44 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.49 2016/09/27 08:04:49 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -861,6 +861,7 @@
 #define IA32_VMX_TRUE_PROCBASED_CTLS	0x48E
 #define IA32_VMX_TRUE_EXIT_CTLS		0x48F
 #define IA32_VMX_TRUE_ENTRY_CTLS	0x490
+#define IA32_VMX_VMFUNC			0x491
 
 #define IA32_EPT_VPID_CAP_PAGE_WALK_4	(1ULL << 6)
 #define IA32_EPT_VPID_CAP_WB		(1ULL << 14)

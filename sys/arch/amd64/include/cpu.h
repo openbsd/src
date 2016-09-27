@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.103 2016/09/04 09:22:28 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.104 2016/09/27 08:04:49 mlarkin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ struct vmx {
 	uint64_t	vmx_cr4_fixed1;
 	uint32_t	vmx_vmxon_revision;
 	uint32_t	vmx_msr_table_size;
+	uint64_t	vmx_vm_func;
 };
 
 /*
