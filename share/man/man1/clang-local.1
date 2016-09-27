@@ -1,0 +1,60 @@
+.\" $OpenBSD: clang-local.1,v 1.1 2016/09/27 18:13:27 pascal Exp $
+.\"
+.\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
+.\" 
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\" 
+.\" 
+.Dd $Mdocdate: September 27 2016 $
+.Dt CLANG-LOCAL 1
+.Os
+.Sh NAME
+.Nm clang-local
+.Nd OpenBSD-specific behavior of LLVM/clang
+.Sh DESCRIPTION
+On
+.Ox ,
+the LLVM/clang compiler exhibits the following characteristics:
+.Bl -dash
+.It
+.Nm clang
+comes with stack protection enabled by default, equivalent to the
+.Fl fstack-protector-strong
+option on other systems.
+The system will report any violation of the stack protector cookie along
+with the function name via
+.Xr syslog 3
+at
+.Dv LOG_CRIT
+priority.
+.It
+.Nm clang
+will generate PIE code by default, allowing the system to load the resulting
+binary at a random location.
+This behavior can be turned off by passing
+.Fl fno-pie
+to the compiler and
+.Fl nopie
+to the linker.
+.It
+The
+.Fl fstrict-aliasing
+option is turned off by default.
+.It
+The
+.Fl pg
+flag is an alias of
+.Fl p .
+.El
+.Sh SEE ALSO
+.Xr clang 1
