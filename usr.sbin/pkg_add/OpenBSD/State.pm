@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.38 2016/09/14 14:14:22 espie Exp $
+# $OpenBSD: State.pm,v 1.39 2016/09/27 21:31:20 naddy Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -346,7 +346,6 @@ sub handle_options
 	});
 	$state->{v} = $state->opt('v');
 
-	# XXX switch not flipped
 	if ($state->defines('newsign')) {
 		$state->{signature_style} //= 'new';
 	} elsif ($state->defines('unsigned')) {
@@ -354,7 +353,7 @@ sub handle_options
 	} elsif ($state->defines('oldsign')) {
 		$state->{signature_style} //= 'old';
 	} else {
-		$state->{signature_style} //= 'old';
+		$state->{signature_style} //= 'new';
 	}
 
 	return if $state->{no_exports};
