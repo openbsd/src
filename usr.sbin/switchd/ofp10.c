@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.7 2016/09/27 19:40:43 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.8 2016/09/27 22:27:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -114,7 +114,7 @@ ofp10_validate_packet_in(struct switchd *sc,
 {
 	struct ofp10_packet_in	*pin;
 	uint8_t			*p;
-	size_t			 len;
+	size_t			 len, plen;
 	off_t			 off;
 
 	off = 0;
@@ -126,15 +126,22 @@ ofp10_validate_packet_in(struct switchd *sc,
 	    print_map(ntohs(pin->pin_port), ofp10_port_map),
 	    ntohs(pin->pin_total_len),
 	    pin->pin_reason);
-	len = ntohs(pin->pin_total_len);
 	off += sizeof(*pin);
-	if ((p = ibuf_seek(ibuf, off, len)) == NULL) {
-		/* Buffer packets can be truncated */
+
+	len = ntohs(pin->pin_total_len);
+	plen = ibuf_length(ibuf) - off;
+
+	if (plen < len) {
+		log_debug("\ttruncated packet %zu < %zu", plen, len);
+
+		/* Buffered packets can be truncated */
 		if (pin->pin_buffer_id != OFP_PKTOUT_NO_BUFFER)
-			len = ibuf_length(ibuf) - off;
+			len = plen;
 		else
 			return (-1);
 	}
+	if ((p = ibuf_seek(ibuf, off, len)) == NULL)
+		return (-1);
 	if (sc->sc_tap != -1)
 		(void)write(sc->sc_tap, p, len);
 

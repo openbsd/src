@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.8 2016/09/27 19:40:43 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.9 2016/09/27 22:27:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -225,7 +225,7 @@ ofp13_validate_packet_in(struct switchd *sc,
 	struct ofp_match	*om;
 	struct ofp_ox_match	*oxm;
 	uint8_t			*p;
-	ssize_t			 len, mlen;
+	ssize_t			 len, mlen, plen;
 	off_t			 moff, off;
 
 	off = 0;
@@ -265,17 +265,23 @@ ofp13_validate_packet_in(struct switchd *sc,
 		break;
 	}
 
-	/* Calculate offset from the beginning */
 	len = ntohs(pin->pin_total_len);
-	if ((p = ibuf_seek(ibuf, off, len)) == NULL) {
-		/* Buffer packets can be truncated */
+	plen = ibuf_length(ibuf) - off;
+
+	if (plen < len) {
+		log_debug("\ttruncated packet %zu < %zu", plen, len);
+
+		/* Buffered packets can be truncated */
 		if (pin->pin_buffer_id != OFP_PKTOUT_NO_BUFFER)
-			len = ibuf_length(ibuf) - off;
+			len = plen;
 		else
 			return (-1);
 	}
+	if ((p = ibuf_seek(ibuf, off, len)) == NULL)
+		return (-1);
 	if (sc->sc_tap != -1)
 		(void)write(sc->sc_tap, p, len);
+
 	return (0);
 }
 
