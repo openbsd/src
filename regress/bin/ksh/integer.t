@@ -40,7 +40,7 @@ stdin:
 	typeset -i2 a=2+
 	echo $a
 expected-stderr-pattern:
-	/^([#\$] )?.*:.*2+.*\n.*:.*2+.*\n$/
+	/^([#\$] )?.*:.*2+.*\n.*:.*2+.*\n$/m
 expected-stdout:
 	4#22
 	4#22

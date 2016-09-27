@@ -1,4 +1,4 @@
-#	$OpenBSD: history.t,v 1.1 2013/12/02 20:39:44 millert Exp $
+#	$OpenBSD: history.t,v 1.2 2016/09/27 15:35:34 bluhm Exp $
 
 # Not tested yet:
 #	- commands in history file are not numbered negatively
@@ -18,7 +18,7 @@ expected-stdout:
 	hi
 	1	echo hi
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-e-minus-1
@@ -37,7 +37,7 @@ expected-stdout:
 	there
 	there
 expected-stderr-pattern:
-	/^X*echo there\nX*$/
+	/^X*echo there\nX*$/m
 ---
 
 name: history-e-minus-2
@@ -56,7 +56,7 @@ stdin:
 expected-stdout-pattern:
 	/X*hi\nX*there\nX*echo there\nthere\nX*/
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-e-minus-3
@@ -74,7 +74,7 @@ stdin:
 expected-stdout:
 	ok
 expected-stderr-pattern:
-	/^X*.*:.*history.*\nX*$/
+	/^X*.*:.*history.*\nX*$/m
 ---
 
 name: history-e-minus-4
@@ -93,7 +93,7 @@ expected-stdout:
 	A abc
 	ok
 expected-stderr-pattern:
-	/^X*echo abc\nX*/
+	/^X*echo abc\nX*/m
 ---
 
 name: history-e-minus-5
@@ -116,7 +116,7 @@ expected-stdout:
 	3	echo ghi jkl
 	4	fc -l 2 4
 expected-stderr-pattern:
-	/^X*echo ghi jkl\nX*$/
+	/^X*echo ghi jkl\nX*$/m
 ---
 
 name: history-list-1
@@ -139,7 +139,7 @@ expected-stdout:
 	2	echo line 2
 	3	echo line 3
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-list-2
@@ -164,7 +164,7 @@ expected-stdout:
 	2	echo line 2
 	3	echo line 3
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-list-3
@@ -188,7 +188,7 @@ expected-stdout:
 	2	echo line 2
 	3	echo line 3
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-list-4
@@ -211,7 +211,7 @@ expected-stdout:
 	line 4
 	4	echo line 4
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-list-5
@@ -237,7 +237,7 @@ expected-stdout:
 	4	echo line 4
 	5	fc -l -1 -1
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-list-6
@@ -264,7 +264,7 @@ expected-stdout:
 	4	echo line 4
 	5	echo line 5
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-list-7
@@ -291,7 +291,7 @@ expected-stdout:
 	5	echo line 5
 	6	fc -l 1 30
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-list-r-1
@@ -318,7 +318,7 @@ expected-stdout:
 	3	echo line 3
 	2	echo line 2
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-list-r-2
@@ -345,7 +345,7 @@ expected-stdout:
 	3	echo line 3
 	2	echo line 2
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-list-r-3
@@ -372,7 +372,7 @@ expected-stdout:
 	3	echo line 3
 	4	echo line 4
 expected-stderr-pattern:
-	/^X*$/
+	/^X*$/m
 ---
 
 name: history-subst-1
@@ -391,7 +391,7 @@ expected-stdout:
 	ghi jkl
 	AB def
 expected-stderr-pattern:
-	/^X*echo AB def\nX*$/
+	/^X*echo AB def\nX*$/m
 ---
 
 name: history-subst-2
@@ -410,7 +410,7 @@ expected-stdout:
 	ghi jkl
 	ghi XYZQRT
 expected-stderr-pattern:
-	/^X*echo ghi XYZQRT\nX*$/
+	/^X*echo ghi XYZQRT\nX*$/m
 ---
 
 name: history-subst-3
@@ -429,7 +429,7 @@ expected-stdout:
 	ghi jkl
 	ghi XYZQRT
 expected-stderr-pattern:
-	/^X*echo ghi XYZQRT\nX*$/
+	/^X*echo ghi XYZQRT\nX*$/m
 ---
 
 name: history-subst-4
@@ -447,7 +447,7 @@ expected-stdout:
 	abc def asjj sadjhasdjh asdjhasd
 	FooBARbc def FooBARsjj sFooBARdjhFooBARsdjh FooBARsdjhFooBARsd
 expected-stderr-pattern:
-	/^X*echo FooBARbc def FooBARsjj sFooBARdjhFooBARsdjh FooBARsdjhFooBARsd\nX*$/
+	/^X*echo FooBARbc def FooBARsjj sFooBARdjhFooBARsdjh FooBARsdjhFooBARsd\nX*$/m
 ---
 
 name: history-subst-5
@@ -467,7 +467,7 @@ expected-stdout:
 	ghi jkl
 	AB def
 expected-stderr-pattern:
-	/^X*echo AB def\nX*$/
+	/^X*echo AB def\nX*$/m
 ---
 
 name: history-ed-1
@@ -492,7 +492,7 @@ expected-stdout:
 	16
 	FOOBAR def
 expected-stderr-pattern:
-	/^X*echo FOOBAR def\nX*$/
+	/^X*echo FOOBAR def\nX*$/m
 ---
 
 name: history-ed-2
@@ -521,7 +521,7 @@ expected-stdout:
 	23
 	line 2 is changed
 expected-stderr-pattern:
-	/^X*echo line 2 is changed\nX*$/
+	/^X*echo line 2 is changed\nX*$/m
 ---
 
 name: history-ed-3
@@ -555,5 +555,5 @@ expected-stdout:
 	2	echo FOOBAR def
 		echo a new line
 expected-stderr-pattern:
-	/^X*echo FOOBAR def\necho a new line\nX*$/
+	/^X+echo FOOBAR def\necho a new line\nX*$/m
 ---

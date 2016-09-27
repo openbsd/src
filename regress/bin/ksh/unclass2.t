@@ -157,8 +157,8 @@ stdin:
 	echo hi${XXX}there
 expected-stdout:
 	hi_there
-expected-stderr: !
-	XX
+expected-stderr-pattern:
+	/^XX$/m
 ---
 
 name: single-quotes-in-braces
