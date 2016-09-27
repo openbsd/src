@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.389 2016/09/16 23:35:45 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.390 2016/09/27 15:17:58 jca Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -167,6 +167,7 @@ char *lease_as_string(struct interface_info *, char *, struct client_lease *);
 struct client_lease *packet_to_lease(struct interface_info *, struct in_addr,
     struct option_data *);
 void go_daemon(void);
+int rdaemon(int);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -531,6 +532,9 @@ main(int argc, char *argv[])
 	    PF_UNSPEC, socket_fd) == -1)
 		error("socketpair: %s", strerror(errno));
 
+	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
+		error("cannot open %s: %s", _PATH_DEVNULL, strerror(errno));
+
 	fork_privchld(ifi, socket_fd[0], socket_fd[1]);
 
 	close(socket_fd[0]);
@@ -550,9 +554,6 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&ifi->client->offered_leases);
 
 	read_client_conf(ifi);
-
-	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
-		error("cannot open %s: %s", _PATH_DEVNULL, strerror(errno));
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("no such user: _dhcp");
@@ -2057,17 +2058,8 @@ go_daemon(void)
 	/* Stop logging to stderr. */
 	log_perror = 0;
 
-	if (daemon(1, 0) == -1)
-		error("daemon");
-
-	/* we are chrooted, daemon(3) fails to open /dev/null */
-	if (nullfd != -1) {
-		dup2(nullfd, STDIN_FILENO);
-		dup2(nullfd, STDOUT_FILENO);
-		dup2(nullfd, STDERR_FILENO);
-		close(nullfd);
-		nullfd = -1;
-	}
+	if (rdaemon(nullfd) == -1)
+		error("Cannot daemonize: %s", strerror(errno));
 
 	/* Catch stuff that might be trying to terminate the program. */
 	signal(SIGHUP, sighdlr);
@@ -2077,6 +2069,37 @@ go_daemon(void)
 	signal(SIGUSR2, sighdlr);
 
 	signal(SIGPIPE, SIG_IGN);
+}
+
+int
+rdaemon(int devnull)
+{
+	if (devnull == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (fcntl(devnull, F_GETFL) == -1)
+		return (-1);
+
+	switch (fork()) {
+	case -1:
+		return (-1);
+	case 0:
+		break;
+	default:
+		_exit(0);
+	}
+
+	if (setsid() == -1)
+		return (-1);
+
+	(void)dup2(devnull, STDIN_FILENO);
+	(void)dup2(devnull, STDOUT_FILENO);
+	(void)dup2(devnull, STDERR_FILENO);
+	if (devnull > 2)
+		(void)close(devnull);
+
+	return (0);
 }
 
 int
