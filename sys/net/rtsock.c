@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.206 2016/09/24 19:27:10 phessler Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.207 2016/09/27 18:41:11 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -302,28 +302,34 @@ rt_senddesync(void *data)
 	struct rawcb	*rp;
 	struct routecb	*rop;
 	struct mbuf	*desync_mbuf;
+	int		 s;
 
 	rp = (struct rawcb *)data;
 	rop = (struct routecb *)rp;
 
 	/* If we are in a DESYNC state, try to send a RTM_DESYNC packet */
-	if ((rop->flags & ROUTECB_FLAG_DESYNC) != 0) {
-		/*
-		 * If we fail to alloc memory or if sbappendaddr() 
-		 * fails, re-add timeout and try again.
-		 */
-		desync_mbuf = rt_msg1(RTM_DESYNC, NULL);
-		if ((desync_mbuf != NULL) && 
-		    (sbappendaddr(&rp->rcb_socket->so_rcv, &route_src, 
-		    desync_mbuf, (struct mbuf *)NULL) != 0)) {
+	if ((rop->flags & ROUTECB_FLAG_DESYNC) == 0)
+		return;
+
+	/*
+	 * If we fail to alloc memory or if sbappendaddr() 
+	 * fails, re-add timeout and try again.
+	 */
+	desync_mbuf = rt_msg1(RTM_DESYNC, NULL);
+	if (desync_mbuf != NULL) {
+		s = splsoftnet();
+		if (sbappendaddr(&rp->rcb_socket->so_rcv, &route_src, 
+		    desync_mbuf, NULL) != 0) {
 			rop->flags &= ~ROUTECB_FLAG_DESYNC;
 			sorwakeup(rp->rcb_socket);
-		} else {
-			m_freem(desync_mbuf);
-			/* Re-add timeout to try sending msg again */
-			timeout_add(&rop->timeout, ROUTE_DESYNC_RESEND_TIMEOUT);
+			splx(s);
+			return;
 		}
+		splx(s);
+		m_freem(desync_mbuf);
 	}
+	/* Re-add timeout to try sending msg again */
+	timeout_add(&rop->timeout, ROUTE_DESYNC_RESEND_TIMEOUT);
 }
 
 void
