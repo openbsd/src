@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo-fault.c,v 1.2 2014/06/24 19:05:42 matthew Exp $	*/
+/*	$OpenBSD: siginfo-fault.c,v 1.3 2016/09/28 08:55:11 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -48,21 +48,25 @@ checksig(int expsigno, int expcode, volatile char *expaddr)
 {
 	int fail = 0;
 	if (expsigno != gotsigno) {
-		printf("signo: expect %d (%s)", expsigno, strsignal(expsigno));
-		printf(", actual %d (%s)\n", gotsigno, strsignal(gotsigno));
+		fprintf(stderr, "signo: expect %d (%s), actual %d (%s)\n",
+		    expsigno, strsignal(expsigno),
+		    gotsigno, strsignal(gotsigno));
 		++fail;
 	}
 	if (expsigno != gotsi.si_signo) {
-		printf("signo: expect %d (%s)", expsigno, strsignal(expsigno));
-		printf(", actual %d (%s)\n", gotsi.si_signo, strsignal(gotsi.si_signo));
+		fprintf(stderr, "signo: expect %d (%s), actual %d (%s)\n",
+		    expsigno, strsignal(expsigno),
+		    gotsi.si_signo, strsignal(gotsi.si_signo));
 		++fail;
 	}
 	if (expcode != gotsi.si_code) {
-		printf("si_code: expect %d, actual %d\n", expcode, gotsi.si_code);
+		fprintf(stderr, "si_code: expect %d, actual %d\n",
+		    expcode, gotsi.si_code);
 		++fail;
 	}
 	if (expaddr != gotsi.si_addr) {
-		printf("si_addr: expect %p, actual %p\n", expaddr, gotsi.si_addr);
+		fprintf(stderr, "si_addr: expect %p, actual %p\n",
+		    expaddr, gotsi.si_addr);
 		++fail;
 	}
 	CHECK_EQ(0, fail);
