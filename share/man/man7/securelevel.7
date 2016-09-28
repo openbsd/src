@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.28 2016/09/28 17:54:01 jmc Exp $
+.\"     $OpenBSD: securelevel.7,v 1.29 2016/09/28 17:58:17 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -73,41 +73,22 @@ raw disk devices of mounted file systems are read-only
 system immutable and append-only file flags may not be removed
 .It
 the
-.Va fs.posix.setuid
-.Xr sysctl 8
-variable may not be changed
-.It
-the
-.Va hw.allowpowerdown
-.Xr sysctl 8
-variable may not be changed
-.It
-the
-.Va net.inet.ip.sourceroute
-.Xr sysctl 8
-variable may not be changed
-.It
-the
+.Va fs.posix.setuid ,
+.Va hw.allowpowerdown ,
+.Va kern.allowkmem ,
+.Va net.inet.ip.sourceroute ,
+and
 .Va machdep.kbdreset
 .Xr sysctl 8
-variable may not be changed
+variables may not be changed
 .It
 the
-.Va kern.allowkmem
-.Xr sysctl 8
-variable may not be changed
-.It
-the
-.Va ddb.console
+.Va ddb.console ,
+.Va ddb.panic ,
 and
-.Va ddb.panic
-.Xr sysctl 8
-variables may not be raised
-.It
-the
 .Va machdep.allowaperture
 .Xr sysctl 8
-variable may not be raised
+variables may not be raised
 .It
 .Xr gpioctl 8
 may only access GPIO pins configured at system startup
