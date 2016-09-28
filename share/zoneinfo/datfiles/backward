@@ -1,4 +1,4 @@
-# $OpenBSD: backward,v 1.31 2016/03/15 19:51:30 millert Exp $
+# $OpenBSD: backward,v 1.32 2016/09/28 21:12:14 millert Exp $
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -37,6 +37,7 @@ Link	Asia/Shanghai		Asia/Harbin
 Link	Asia/Urumqi		Asia/Kashgar
 Link	Asia/Kathmandu		Asia/Katmandu
 Link	Asia/Macau		Asia/Macao
+Link	Asia/Yangon		Asia/Rangoon
 Link	Asia/Ho_Chi_Minh	Asia/Saigon
 Link	Asia/Jerusalem		Asia/Tel_Aviv
 Link	Asia/Thimphu		Asia/Thimbu
