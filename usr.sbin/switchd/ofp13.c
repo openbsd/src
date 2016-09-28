@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.9 2016/09/27 22:27:38 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.10 2016/09/28 17:48:35 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -576,7 +576,8 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 		 * action.
 		 */
 		if ((ia = ibuf_advance(obuf, sizeof(*ia))) == NULL ||
-		    action_output(obuf, dstport, 0) == -1)
+		    action_output(obuf, dstport,
+		    OFP_CONTROLLER_MAXLEN_NO_BUFFER) == -1)
 			goto done;
 
 		ia->ia_type = htons(OFP_INSTRUCTION_T_APPLY_ACTIONS);
@@ -592,7 +593,8 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 		pout->pout_actions_len =
 		    htons(sizeof(struct ofp_action_output));
 
-		if (action_output(obuf, dstport, 0) == -1)
+		if (action_output(obuf, dstport,
+		    OFP_CONTROLLER_MAXLEN_NO_BUFFER) == -1)
 			goto done;
 
 		/* Add optional packet payload */
