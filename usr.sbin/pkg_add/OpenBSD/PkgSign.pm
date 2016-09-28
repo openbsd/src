@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.10 2016/09/15 13:14:03 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.11 2016/09/28 12:32:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -43,6 +43,8 @@ sub handle_options
 			    push(@{$state->{signature_params}}, shift);
 		    },
 	};
+	$state->{signature_style} = 'unsigned';
+
 	$state->SUPER::handle_options('Cij:o:S:s:',
 	    '[-Cv] [-D name[=value]] -s x509|signify|signify2 [-s cert] -s priv',
 	    '[-o dir] [-S source] [pkg-name...]');
