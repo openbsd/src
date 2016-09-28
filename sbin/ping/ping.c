@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.215 2016/09/26 16:42:46 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.216 2016/09/28 06:39:12 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -259,7 +259,8 @@ main(int argc, char *argv[])
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 	const char *errstr;
 	double intval;
-	uid_t uid;
+	uid_t ouid, uid;
+	gid_t gid;
 	u_int rtableid = 0;
 	extern char *__progname;
 
@@ -274,12 +275,17 @@ main(int argc, char *argv[])
 	}
 
 	/* revoke privs */
-	uid = getuid();
-	if ((pw = getpwnam(PING_USER)) == NULL)
-		errx(1, "no %s user", PING_USER);
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+	ouid = getuid();
+	if ((pw = getpwnam(PING_USER)) != NULL) {
+		uid = pw->pw_uid;
+		gid = pw->pw_gid;
+	} else {
+		uid = getuid();
+		gid = getgid();
+	}
+	if (setgroups(1, &gid) ||
+	    setresgid(gid, gid, gid) ||
+	    setresuid(uid, uid, uid))
 		err(1, "unable to revoke privs");
 
 	preload = 0;
@@ -309,7 +315,7 @@ main(int argc, char *argv[])
 			options |= F_AUD_RECV;
 			break;
 		case 'f':
-			if (uid)
+			if (ouid)
 				errc(1, EPERM, NULL);
 			options |= F_FLOOD;
 			setvbuf(stdout, NULL, _IONBF, 0);
@@ -330,7 +336,7 @@ main(int argc, char *argv[])
 			intval = strtod(optarg, &e);
 			if (*optarg == '\0' || *e != '\0')
 				errx(1, "illegal timing interval %s", optarg);
-			if (intval < 1 && uid)
+			if (intval < 1 && ouid)
 				errx(1, "only root may use interval < 1s");
 			interval.tv_sec = (time_t)intval;
 			interval.tv_usec =
@@ -349,7 +355,7 @@ main(int argc, char *argv[])
 			loop = 0;
 			break;
 		case 'l':
-			if (uid)
+			if (ouid)
 				errc(1, EPERM, NULL);
 			preload = strtonum(optarg, 1, INT64_MAX, &errstr);
 			if (errstr)

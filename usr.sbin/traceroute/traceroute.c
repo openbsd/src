@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.148 2016/09/27 05:33:46 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.149 2016/09/28 06:39:12 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -328,7 +328,8 @@ main(int argc, char *argv[])
 	char *ep, hbuf[NI_MAXHOST], *dest, *source = NULL;
 	const char *errstr;
 	long l;
-	uid_t uid;
+	uid_t ouid, uid;
+	gid_t gid;
 	u_int rtableid;
 	socklen_t len;
 
@@ -346,12 +347,17 @@ main(int argc, char *argv[])
 		v4sock_errno = errno;
 
 	/* revoke privs */
-	uid = getuid();
-	if ((pw = getpwnam(TRACEROUTE_USER)) == NULL)
-		errx(1, "no %s user", TRACEROUTE_USER);
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+	ouid = getuid();
+	if ((pw = getpwnam(TRACEROUTE_USER)) != NULL) {
+		uid = pw->pw_uid;
+		gid = pw->pw_gid;
+	} else {
+		uid = getuid();
+		gid = getgid();
+	}
+	if (setgroups(1, &gid) ||
+	    setresgid(gid, gid, gid) ||
+	    setresuid(uid, uid, uid))
 		err(1, "unable to revoke privs");
 
 	if (strcmp("traceroute6", __progname) == 0) {
@@ -670,13 +676,13 @@ main(int argc, char *argv[])
 			if (inet_aton(source, &from4.sin_addr) == 0)
 				errx(1, "unknown host %s", source);
 			ip->ip_src = from4.sin_addr;
-			if (uid != 0 &&
+			if (ouid != 0 &&
 			    (ntohl(from4.sin_addr.s_addr) & 0xff000000U) ==
 			    0x7f000000U && (ntohl(to4.sin_addr.s_addr) &
 			    0xff000000U) != 0x7f000000U)
 				errx(1, "source is on 127/8, destination is"
 				    " not");
-			if (uid && bind(sndsock, (struct sockaddr *)&from4,
+			if (ouid && bind(sndsock, (struct sockaddr *)&from4,
 			    sizeof(from4)) < 0)
 				err(1, "bind");
 		}
