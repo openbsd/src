@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.102 2016/07/15 00:42:56 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.103 2016/09/28 14:40:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -961,7 +961,7 @@ input_reply(struct input_ctx *ictx, const char *fmt, ...)
 	char   *reply;
 
 	va_start(ap, fmt);
-	vasprintf(&reply, fmt, ap);
+	xvasprintf(&reply, fmt, ap);
 	va_end(ap);
 
 	bufferevent_write(ictx->wp->event, reply, strlen(reply));

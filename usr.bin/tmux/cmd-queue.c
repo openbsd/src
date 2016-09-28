@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.36 2016/04/29 14:05:24 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.37 2016/09/28 14:40:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -80,7 +80,7 @@ cmdq_print(struct cmd_q *cmdq, const char *fmt, ...)
 		/* nothing */;
 	else if (c->session == NULL || (c->flags & CLIENT_CONTROL)) {
 		if (~c->flags & CLIENT_UTF8) {
-			vasprintf(&tmp, fmt, ap);
+			xvasprintf(&tmp, fmt, ap);
 			msg = utf8_sanitize(tmp);
 			free(tmp);
 			evbuffer_add(c->stdout_data, msg, strlen(msg));
