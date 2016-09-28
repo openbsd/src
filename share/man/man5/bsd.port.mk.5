@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.439 2016/09/06 10:32:51 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.440 2016/09/28 19:34:54 danj Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 6 2016 $
+.Dd $Mdocdate: September 28 2016 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1566,6 +1566,8 @@ stage.
 Defaults to all distfiles, can even be set to empty.
 .It Ev EXTRACT_SUFX
 Used to set DISTFILES default value to ${DISTNAME}${EXTRACT_SUFX}.
+The decompression tool needed will be automatically added as
+.Ev BUILD_DEPENDS .
 Default value is .tar.gz.
 .It Ev FAKE_FLAGS
 Extra flags passed to ${MAKE_PROGRAM} during the
