@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.206 2016/09/23 02:37:26 deraadt Exp $
+.\"	$OpenBSD: sysctl.8,v 1.207 2016/09/28 17:48:58 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: September 23 2016 $
+.Dd $Mdocdate: September 28 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -162,6 +162,7 @@ and a few require a kernel compiled with non-standard
 .It kern.fscale Ta integer Ta no
 .It kern.nprocs Ta integer Ta no
 .It kern.stackgap_random Ta integer Ta yes
+.It kern.allowkmem Ta integer Ta yes
 .It kern.splassert Ta integer Ta yes
 .It kern.nfiles Ta integer Ta no
 .It kern.ttycount Ta integer Ta no
