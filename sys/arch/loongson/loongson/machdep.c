@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.65 2016/08/23 12:54:09 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.66 2016/09/28 14:03:19 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -126,6 +126,7 @@ caddr_t	esym;
 caddr_t	ekern;
 
 struct phys_mem_desc mem_layout[MAXMEMSEGS];
+paddr_t	loongson_memlo_alias;
 
 pcitag_t (*pci_make_tag_early)(int, int, int);
 pcireg_t (*pci_conf_read_early)(pcitag_t, int);
@@ -217,30 +218,32 @@ loongson_identify(const char *version, int envtype)
 	const struct bonito_flavour *f;
 
 	switch (envtype) {
+#ifdef CPU_LOONGSON3
 	case PMON_ENVTYPE_EFI:
-		return NULL;
-		break;
+		return &lemote3a_platform;
+#endif
 
 	default:
 	case PMON_ENVTYPE_ENVP:
 		if (version == NULL) {
+#ifdef CPU_LOONGSON2
 			/*
 		 	 * If there is no `Version' variable, we expect to be
 			 * running on a 2E system, use the generic code and
 			 * hope for the best.
 		 	 */
-			if (loongson_ver == 0x2e) {
+			if (loongson_ver == 0x2e)
 				return &generic2e_platform;
-			} else {
-				pmon_printf("Unable to figure out model!\n");
-				return NULL;
-			}
+#endif
+			pmon_printf("Unable to figure out model!\n");
+			return NULL;
 		}
 
 		for (f = bonito_flavours; f->prefix != NULL; f++)
 			if (strncmp(version, f->prefix, strlen(f->prefix)) == 0)
 				return f->platform;
 
+#ifdef CPU_LOONGSON2
 		/*
 	 	 * Early Lemote designs shipped without a model prefix.
 	 	 *
@@ -308,12 +311,126 @@ loongson_identify(const char *version, int envtype)
 				return p;
 			}
 		}
+#endif
 	}
 
 	pmon_printf("This kernel doesn't support model \"%s\"." "\n", version);
 	return NULL;
 }
 
+/*
+ * Figure out machine parameters using the 'EFI-like' interface.
+ */
+int
+loongson_efi_setup(void)
+{
+	const struct pmon_env_mem *mem;
+	const struct pmon_env_mem_entry *entry;
+	paddr_t fp, lp;
+	uint32_t i, seg = 0;
+
+	bootcpu_hwinfo.clock = pmon_get_env_cpu()->speed;
+
+	mem = pmon_get_env_mem();
+	physmem = 0;
+	for (i = 0; i < mem->nentries && seg < MAXMEMSEGS; i++) {
+		entry = &mem->mem_map[i];
+		if (entry->node != 0 ||
+		    (entry->type != PMON_MEM_SYSTEM_LOW &&
+		     entry->type != PMON_MEM_SYSTEM_HIGH))
+			continue;
+		fp = atop(entry->address);
+		lp = atop(entry->address + (entry->size << 20));
+		if (lp > atop(pfn_to_pad(PG_FRAME)) + 1)
+			lp = atop(pfn_to_pad(PG_FRAME)) + 1;
+		if (fp >= lp)
+			continue;
+		physmem += lp - fp;
+		mem_layout[seg].mem_first_page = fp;
+		mem_layout[seg].mem_last_page = lp;
+		seg++;
+	}
+
+	return 0;
+}
+
+/*
+ * Figure out machine parameters using the PMON interface.
+ */
+int
+loongson_envp_setup(void)
+{
+	const char *envvar;
+	u_long cpuspeed, memlo, memhi;
+
+	/*
+	 * Figure out processor clock speed.
+	 * Hopefully the processor speed, in Hertz, will not overflow
+	 * uint32_t...
+	 */
+
+	cpuspeed = 0;
+	envvar = pmon_getenv("cpuclock");
+	if (envvar != NULL)
+		cpuspeed = atoi(envvar, 10);	/* speed in Hz */
+	if (cpuspeed < 100 * 1000000)
+		cpuspeed = 797000000;  /* Reasonable default */
+	bootcpu_hwinfo.clock = cpuspeed;
+
+	/*
+	 * Figure out memory information.
+	 * PMON reports it in two chunks, the memory under the 256MB
+	 * CKSEG limit, and memory above that limit.  We need to do the
+	 * math ourselves.
+	 */
+
+	envvar = pmon_getenv("memsize");
+	if (envvar == NULL) {
+		pmon_printf("Could not get memory information"
+		    " from the firmware\n");
+		return -1;
+	}
+	memlo = atoi(envvar, 10);	/* size in MB */
+	if (memlo < 0 || memlo > 256) {
+		pmon_printf("Incorrect low memory size `%s'\n", envvar);
+		return -1;
+	}
+
+	/* 3A PMON only reports up to 240MB as low memory */
+	if (memlo >= 240) {
+		envvar = pmon_getenv("highmemsize");
+		if (envvar == NULL)
+			memhi = 0;
+		else
+			memhi = atoi(envvar, 10);	/* size in MB */
+		if (memhi < 0 || memhi > (64 * 1024) - 256) {
+			pmon_printf("Incorrect high memory size `%s'\n",
+			    envvar);
+			/* better expose the problem than limit to 256MB */
+			return -1;
+		}
+	} else
+		memhi = 0;
+
+	switch (loongson_ver) {
+	default:
+#ifdef CPU_LOONGSON2
+	case 0x2e:
+		loongson2e_setup(memlo, memhi);
+		break;
+	case 0x2f:
+		loongson2f_setup(memlo, memhi);
+		break;
+#endif
+#ifdef CPU_LOONGSON3
+	case 0x3a:
+		loongson3a_setup(memlo, memhi);
+		break;
+#endif
+	}
+
+	return 0;
+}
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -325,7 +442,6 @@ mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
     char *boot_esym)
 {
 	uint32_t prid;
-	u_long memlo, memhi, cpuspeed;
 	vaddr_t xtlb_handler;
 	const char *envvar;
 	int i;
@@ -390,7 +506,7 @@ mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
 	 * While the kernel supports other processor types than Loongson,
 	 * we are currently not expecting to run on a system with a
 	 * different processor.  Just to be on the safe side, refuse to
-	 * run on non-Loongson2 processors for now.
+	 * run on non-Loongson processors for now.
 	 */
 
 	switch ((prid >> 8) & 0xff) {
@@ -436,10 +552,6 @@ mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
 		goto unsupported;
 
 	case PMON_ENVTYPE_EFI:
-		/*
-		 * We can reasonably expect to be running on a beast we can
-		 * tame, here.
-		 */
 		break;
 
 	case PMON_ENVTYPE_ENVP:
@@ -471,76 +583,22 @@ mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
 	snprintf(cpu_model, sizeof cpu_model, "Loongson %X", loongson_ver);
 
 	/*
-	 * Figure out processor clock speed.
-	 * Hopefully the processor speed, in Hertz, will not overflow
-	 * uint32_t...
-	 */
-
-	cpuspeed = 0;
-	envvar = pmon_getenv("cpuclock");
-	if (envvar != NULL)
-		cpuspeed = atoi(envvar, 10);	/* speed in Hz */
-	if (cpuspeed < 100 * 1000000)
-		cpuspeed = 797000000;  /* Reasonable default */
-	bootcpu_hwinfo.clock = cpuspeed;
-
-	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 
 	boothowto = RB_AUTOBOOT;
 	dobootopts(argc);
 
-	/*
-	 * Figure out memory information.
-	 * PMON reports it in two chunks, the memory under the 256MB
-	 * CKSEG limit, and memory above that limit.  We need to do the
-	 * math ourselves.
-	 */
-
-	envvar = pmon_getenv("memsize");
-	if (envvar == NULL) {
-		pmon_printf("Could not get memory information"
-		    " from the firmware\n");
-		goto unsupported;
-	}
-	memlo = atoi(envvar, 10);	/* size in MB */
-	if (memlo < 0 || memlo > 256) {
-		pmon_printf("Incorrect low memory size `%s'\n", envvar);
-		goto unsupported;
-	}
-
-	/* 3A PMON only reports up to 240MB as low memory */
-	if (memlo >= 240) {
-		envvar = pmon_getenv("highmemsize");
-		if (envvar == NULL)
-			memhi = 0;
-		else
-			memhi = atoi(envvar, 10);	/* size in MB */
-		if (memhi < 0 || memhi > (64 * 1024) - 256) {
-			pmon_printf("Incorrect high memory size `%s'\n",
-			    envvar);
-			/* better expose the problem than limit to 256MB */
+	switch (pmon_getenvtype()) {
+	case PMON_ENVTYPE_EFI:
+		if (loongson_efi_setup() != 0)
 			goto unsupported;
-		}
-	} else
-		memhi = 0;
+		break;
 
-	switch (loongson_ver) {
-	default:
-#ifdef CPU_LOONGSON2
-	case 0x2e:
-		loongson2e_setup(memlo, memhi);
+	case PMON_ENVTYPE_ENVP:
+		if (loongson_envp_setup() != 0)
+			goto unsupported;
 		break;
-	case 0x2f:
-		loongson2f_setup(memlo, memhi);
-		break;
-#endif
-#ifdef CPU_LOONGSON3
-	case 0x3a:
-		loongson3a_setup(memlo, memhi);
-		break;
-#endif
 	}
 
 	if (sys_platform->setup != NULL)
@@ -567,13 +625,16 @@ mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
 		firstkernpa = CKSEG0_TO_PHYS((vaddr_t)start);
 		lastkernpa = CKSEG0_TO_PHYS((vaddr_t)ekern);
 
-		firstkernpage = atop(trunc_page(firstkernpa)) +
-		    mem_layout[0].mem_first_page - 1;
+		firstkernpage = atop(trunc_page(firstkernpa));
 #ifdef HIBERNATE
 		firstkernpage -= HIBERNATE_RESERVED_PAGES;
 #endif
-		lastkernpage = atop(round_page(lastkernpa)) +
-		    mem_layout[0].mem_first_page - 1;
+		lastkernpage = atop(round_page(lastkernpa));
+
+		if (loongson_memlo_alias != 0) {
+			firstkernpage += atop(loongson_memlo_alias);
+			lastkernpage += atop(loongson_memlo_alias);
+		}
 
 		fp = mem_layout[i].mem_first_page;
 		lp = mem_layout[i].mem_last_page;

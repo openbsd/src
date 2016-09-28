@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.15 2014/03/27 21:58:57 miod Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.16 2016/09/28 14:03:19 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -37,6 +37,7 @@
 #include <loongson/dev/bonitoreg.h>
 
 extern struct phys_mem_desc mem_layout[MAXMEMSEGS];
+extern paddr_t loongson_memlo_alias;
 
 boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	loongson2e_setup(u_long, u_long);
@@ -155,6 +156,7 @@ loongson2f_setup(u_long memlo, u_long memhi)
 		mem_layout[0].mem_last_page = atop(DDR_WINDOW_BASE) +
 		    memlo + memhi;
 		loongson_dma_base = PCI_DDR_BASE ^ DDR_WINDOW_BASE;
+		loongson_memlo_alias = DDR_WINDOW_BASE;
 	} else {
 		/* do NOT stomp on exception area */
 		mem_layout[0].mem_first_page = atop(DDR_PHYSICAL_BASE) + 1;
