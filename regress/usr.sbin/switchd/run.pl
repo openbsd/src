@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $OpenBSD: run.pl,v 1.2 2016/09/28 08:10:18 reyk Exp $
+# $OpenBSD: run.pl,v 1.3 2016/09/28 08:11:26 reyk Exp $
 
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 #
@@ -72,7 +72,7 @@ sub ofp_hello {
 
 	# XXX timeout
 	$self->{sock}->send($pkt);
-	$self->{sock}->recv($resppkt, 1024);
+	$self->{sock}->recv($resppkt, 65535);
 
 	$resp = NetPacket::OFP->decode($resppkt) or
 	    fatal($class, "recv'ed packet");
@@ -105,7 +105,7 @@ sub ofp_packet_in {
 
 	# XXX timeout
 	$self->{sock}->send($pkt);
-	$self->{sock}->recv($resppkt, 1024);
+	$self->{sock}->recv($resppkt, 65535);
 
 	$resp = NetPacket::OFP->decode($resppkt) or
 	    fatal($class, "recv'ed packet");
