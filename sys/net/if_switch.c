@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.5 2016/09/04 17:11:09 goda Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.6 2016/09/28 08:31:42 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -629,6 +629,23 @@ done:
 	return (error);
 }
 
+void
+switch_port_detach(struct ifnet *ifp)
+{
+	struct switch_softc	*sc = ifp->if_softc;
+	struct switch_port	*swpo;
+
+	swpo = (struct switch_port *)ifp->if_switchport;
+	if (swpo->swpo_flags & IFBIF_LOCAL)
+		switch_port_unset_local(sc, swpo);
+
+	ifp->if_switchport = NULL;
+	ifpromisc(ifp, 0);
+	if_ih_remove(ifp, switch_input, NULL);
+	TAILQ_REMOVE(&sc->sc_swpo_list, swpo, swpo_list_next);
+	free(swpo, M_DEVBUF, sizeof(*swpo));
+}
+
 int
 switch_port_del(struct switch_softc *sc, struct ifbreq *req)
 {
@@ -645,13 +662,7 @@ switch_port_del(struct switch_softc *sc, struct ifbreq *req)
 	}
 
 	if (swpo) {
-		if (swpo->swpo_flags & IFBIF_LOCAL)
-			switch_port_unset_local(sc, swpo);
-		ifs->if_switchport = NULL;
-		ifpromisc(ifs, 0);
-		if_ih_remove(ifs, switch_input, NULL);
-		TAILQ_REMOVE(&sc->sc_swpo_list, swpo, swpo_list_next);
-		free(swpo, M_DEVBUF, sizeof(*swpo));
+		switch_port_detach(ifs);
 		if_put(ifs);
 		error = 0;
 	} else

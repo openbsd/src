@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.450 2016/09/22 14:50:11 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.451 2016/09/28 08:31:42 rzalamena Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -128,6 +128,10 @@
 
 #if NPF > 0
 #include <net/pfvar.h>
+#endif
+
+#if NSWITCH > 0
+#include <net/if_switch.h>
 #endif
 
 void	if_attachsetup(struct ifnet *);
@@ -895,6 +899,11 @@ if_deactivate(struct ifnet *ifp)
 	/* Remove the interface from any bridge it is part of.  */
 	if (ifp->if_bridgeport)
 		bridge_ifdetach(ifp);
+#endif
+
+#if NSWITCH > 0
+	if (ifp->if_switchport)
+		switch_port_detach(ifp);
 #endif
 
 #if NCARP > 0
