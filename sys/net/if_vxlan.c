@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.45 2016/09/28 14:10:35 yasuoka Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.46 2016/09/28 14:26:43 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -776,11 +776,11 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 
 #if NBRIDGE > 0
 	if ((brtag = bridge_tunnel(m)) != NULL) {
-		dst = &brtag->brtag_dst.sa;
+		dst = &brtag->brtag_src.sa;
 
 		/* If accepting any VNI, source ip address is from brtag */
 		if (sc->sc_vnetid == VXLAN_VNI_ANY) {
-			src = &brtag->brtag_src.sa;
+			src = &brtag->brtag_dst.sa;
 			tag = (uint32_t)brtag->brtag_id;
 			af = src->sa_family;
 		}
