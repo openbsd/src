@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.161 2016/09/27 21:39:27 bluhm Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.162 2016/09/28 12:16:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -410,7 +410,8 @@ parent_shutdown(struct relayd *env)
 int
 parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct relayd		*env = p->p_env;
+	struct privsep		*ps = p->p_ps;
+	struct relayd		*env = ps->ps_env;
 	struct ctl_demote	 demote;
 	struct ctl_netroute	 crt;
 	u_int			 v;
@@ -457,8 +458,8 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct relayd		*env = p->p_env;
-	struct privsep		*ps = env->sc_ps;
+	struct privsep		*ps = p->p_ps;
+	struct relayd		*env = ps->ps_env;
 	struct ctl_script	 scr;
 
 	switch (imsg->hdr.type) {
@@ -481,8 +482,8 @@ parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct relayd		*env = p->p_env;
-	struct privsep		*ps = env->sc_ps;
+	struct privsep		*ps = p->p_ps;
+	struct relayd		*env = ps->ps_env;
 	struct ctl_bindany	 bnd;
 	int			 s;
 
@@ -519,7 +520,8 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct relayd		*env = p->p_env;
+	struct privsep		*ps = p->p_ps;
+	struct relayd		*env = ps->ps_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CFG_DONE:

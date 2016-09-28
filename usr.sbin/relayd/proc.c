@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.32 2016/09/03 14:44:21 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.33 2016/09/28 12:16:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -115,7 +115,7 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 		p = &procs[proc];
 
 		/* Update args with process title. */
-		nargv[proc_i] = (char *) p->p_title;
+		nargv[proc_i] = (char *)(uintptr_t)p->p_title;
 
 		/* Fire children processes. */
 		for (i = 0; i < ps->ps_instances[p->p_id]; i++) {
@@ -300,7 +300,6 @@ proc_setup(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 
 	for (src = 0; src < nproc; src++) {
 		procs[src].p_ps = ps;
-		procs[src].p_env = ps->ps_env;
 		if (procs[src].p_cb == NULL)
 			procs[src].p_cb = proc_dispatch_null;
 
