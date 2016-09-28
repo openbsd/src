@@ -98,11 +98,11 @@ sub encode {
 	if ($self->{version} == 1) {
 		# PACKET_IN
 		if ($self->{type} == 10) {
-			$self->{length} += length($self->{data});
+			$self->{length} += 10 + length($self->{data});
 			$pkt = pack("CCnNNnnCCa*",
 			    $self->{version}, $self->{type},
 			    $self->{length}, $self->{xid}, $self->{buffer_id},
-			    $self->{length} - 8,
+			    length($self->{data}),
 			    $self->{port}, 0, 0, $self->{data});
 		}
 	}
