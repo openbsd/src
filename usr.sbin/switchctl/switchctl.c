@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.2 2016/07/20 21:04:44 reyk Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.3 2016/09/28 09:13:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -309,7 +309,7 @@ show_summary_msg(struct imsg *imsg, int type)
 			break;
 
 		getmonotime(&tv);
-		printf("%-4u\t%-4ld\t%-8s\t%-24s\tage %llds\n",
+		printf("%-4u\t%-4u\t%-8s\t%-24s\tage %llds\n",
 		    sw_id, mac->mac_port, "mac",
 		    print_ether(mac->mac_addr),
 		    (long long)tv.tv_sec - mac->mac_age);
