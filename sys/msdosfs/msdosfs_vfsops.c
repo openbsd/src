@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.80 2016/09/07 17:30:12 natano Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.81 2016/09/28 18:49:11 jca Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -592,8 +592,6 @@ msdosfs_unmount(struct mount *mp, int mntflags,struct proc *p)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#ifdef QUOTA
-#endif
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
