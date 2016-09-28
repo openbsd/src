@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2016/09/18 21:00:15 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2016/09/28 18:00:01 bluhm Exp $
 
 OUT=${.CURDIR}/out
 DIT=dc=example,dc=com
@@ -16,9 +16,9 @@ regress:
 	@echo "${PERL_REQUIRE}"
 	@echo install package p5-ldap
 	@echo SKIPPED
-.else
-regress: bootstrap connect import perl purge #cpan
 .endif
+
+REGRESS_TARGETS = bootstrap connect import perl purge #cpan
 
 bootstrap:
 	@[ -z "${SUDO}" ] || ${SUDO} true
