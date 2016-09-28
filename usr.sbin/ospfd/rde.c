@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.104 2016/09/04 10:10:23 krw Exp $ */
+/*	$OpenBSD: rde.c,v 1.105 2016/09/28 14:39:52 krw Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -177,7 +177,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	cand_list_init();
 	rt_init();
 
-	/* remove unneded stuff from config */
+	/* remove unneeded stuff from config */
 	LIST_FOREACH(area, &rdeconf->area_list, entry)
 		LIST_FOREACH(iface, &area->iface_list, entry)
 			md_list_clr(&iface->auth_md_list);
