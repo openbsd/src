@@ -1,6 +1,6 @@
 This is a test framework for the ospfd routing daemon.  For each
 test one fresh daemon is started with an individual config.  It is
-talking OSPF via a tun interface.  At the process side of the tun
+talking OSPF via a tap interface.  At the process side of the tap
 device a client is running.  This test programm is parsing the OSPF
 packets and generates new ones.  It simulates other OSPF daemons.
 

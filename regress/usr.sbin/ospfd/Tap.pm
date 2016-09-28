@@ -1,4 +1,4 @@
-#	$OpenBSD: Tun.pm,v 1.2 2014/07/11 22:28:51 bluhm Exp $
+#	$OpenBSD: Tap.pm,v 1.1 2016/09/28 12:40:35 bluhm Exp $
 
 # Copyright (c) 2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -14,14 +14,14 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# Encapsulate tun interface handling into separate module.
+# Encapsulate tap interface handling into separate module.
 
 use strict;
 use warnings;
 
-package Tun;
+package Tap;
 use parent 'Exporter';
-our @EXPORT_OK = qw(opentun);
+our @EXPORT_OK = qw(opentap);
 
 use Carp;
 use Fcntl;
@@ -30,30 +30,30 @@ use POSIX qw(_exit);
 use PassFd 'recvfd';
 use Socket;
 
-sub opentun {
-    my ($tun_number) = @_;
-    my $tun_device = "/dev/tun$tun_number";
+sub opentap {
+    my ($tap_number) = @_;
+    my $tap_device = "/dev/tap$tap_number";
 
     if ($> == 0) {
-	sysopen(my $tun, $tun_device, O_RDWR)
-	    or croak "Open $tun_device failed: $!";
-	return $tun;
+	sysopen(my $tap, $tap_device, O_RDWR)
+	    or croak "Open $tap_device failed: $!";
+	return $tap;
     }
 
     if (!$ENV{SUDO}) {
-	die "To open the device $tun_device you must run as root or\n".
+	die "To open the device $tap_device you must run as root or\n".
 	    "set the SUDO environment variable and allow closefrom_override.\n";
     }
 
-    my $opentun;
+    my $opentap;
     my $curdir = dirname($0) || ".";
-    if (-x "$curdir/opentun") {
-	$opentun = "$curdir/opentun";
-    } elsif (-x "./opentun") {
-	$opentun = "./opentun";
+    if (-x "$curdir/opentap") {
+	$opentap = "$curdir/opentap";
+    } elsif (-x "./opentap") {
+	$opentap = "./opentap";
     } else {
-	die "To open the device $tun_device the tool opentun is needed.\n".
-	    "Executable opentun not found in $curdir or current directory.\n";
+	die "To open the device $tap_device the tool opentap is needed.\n".
+	    "Executable opentap not found in $curdir or current directory.\n";
     }
 
     socketpair(my $parent, my $child, AF_UNIX, SOCK_STREAM, PF_UNSPEC)
@@ -70,8 +70,8 @@ sub opentun {
 	    warn "Close parent socket failed: $!";
 	    _exit(3);
 	};
-	my @cmd = ($ENV{SUDO}, '-C', $child->fileno()+1, $opentun,
-	    $child->fileno(), $tun_number);
+	my @cmd = ($ENV{SUDO}, '-C', $child->fileno()+1, $opentap,
+	    $child->fileno(), $tap_number);
 	exec(@cmd);
 	warn "Exec '@cmd' failed: $!";
 	_exit(3);
@@ -80,14 +80,14 @@ sub opentun {
     # parent process
     close($child)
 	or croak "Close child socket failed: $!";
-    my $tun = recvfd($parent)
+    my $tap = recvfd($parent)
 	or croak "Recvfd failed: $!";
     wait()
 	or croak "Wait failed: $!";
     $? == 0
 	or croak "Child process failed: $?";
 
-    return $tun;
+    return $tap;
 }
 
 1;

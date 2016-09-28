@@ -4,14 +4,14 @@
 
 use strict;
 use warnings;
-use Default qw($area $tun_number $ospfd_ip $ospfd_rtrid);
+use Default qw($area $tap_number $ospfd_ip $ospfd_rtrid);
 
 our %tst_args = (
     ospfd => {
 	conf => {
 	    areas => {
 		$area => {
-		    "tun$tun_number:$ospfd_ip" => {
+		    "tap$tap_number:$ospfd_ip" => {
 			'router-priority' => '2',
 		    },
 		},

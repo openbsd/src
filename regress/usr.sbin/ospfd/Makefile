@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2016/09/02 21:30:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2016/09/28 12:40:35 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-AnyEvent		provide framework for multiple event loops
@@ -21,10 +21,10 @@ regress:
 .endif
 
 # Fill out these variables with your own system parameters
-# You need a tun device and an unused /24 IPv4 network.
+# You need a tap device and an unused /24 IPv4 network.
 
-TUNNUM ?=		3
-TUNIP ?=		10.188.6.17
+TAPNUM ?=		3
+TAPIP ?=		10.188.6.17
 RTRID ?=		10.188.0.17
 
 # Automatically generate regress targets from test cases in directory.
@@ -32,7 +32,7 @@ RTRID ?=		10.188.0.17
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
 TARGETS ?=		${ARGS}
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES +=		*.log ospfd.conf ktrace.out stamp-* opentun
+CLEANFILES +=		*.log ospfd.conf ktrace.out stamp-* opentap
 PERLHEADER !=		perl -MConfig -e 'print "$$Config{archlib}/CORE"'
 CLEANFILES +=		PassFd.c PassFd.o PassFd.so
 CFLAGS =		-Wall
@@ -42,9 +42,9 @@ CFLAGS =		-Wall
 .if make (regress) || make (all)
 .BEGIN:
 	@echo
-	[ -c /dev/tun${TUNNUM} ]
-	[ -z "${SUDO}" ] || ${SUDO} -C 3 true
-	${SUDO} ifconfig tun${TUNNUM} ${TUNIP} netmask 255.255.255.0 link0
+	[ -c /dev/tap${TAPNUM} ]
+	[ -z "${SUDO}" ] || ${SUDO} -C 4 true
+	${SUDO} ifconfig tap${TAPNUM} ${TAPIP} netmask 255.255.255.0
 .endif
 
 # Set variables so that make runs with and without obj directory.
@@ -62,9 +62,9 @@ PERLPATH =	${.CURDIR}/
 # test parameters.
 
 .for a in ${ARGS}
-run-regress-$a: $a opentun PassFd.so
+run-regress-$a: $a opentap PassFd.so
 	@echo '\n======== $@ ========'
-	time TUNNUM=${TUNNUM} TUNIP=${TUNIP} RTRID=${RTRID} SUDO=${SUDO} KTRACE=${KTRACE} OSPFD=${OSPFD} perl ${PERLINC} ${PERLPATH}ospfd.pl ${PERLPATH}$a
+	time TAPNUM=${TAPNUM} TAPIP=${TAPIP} RTRID=${RTRID} SUDO=${SUDO} KTRACE=${KTRACE} OSPFD=${OSPFD} perl ${PERLINC} ${PERLPATH}ospfd.pl ${PERLPATH}$a
 .endfor
 
 # make perl syntax check for all args files
@@ -75,7 +75,7 @@ syntax: stamp-syntax
 
 stamp-syntax: ${ARGS} stamp-passfd
 .for a in ${ARGS}
-	@TUNNUM=${TUNNUM} TUNIP=${TUNIP} RTRID=${RTRID} perl ${PERLINC} -c ${PERLPATH}$a
+	@TAPNUM=${TAPNUM} TAPIP=${TAPIP} RTRID=${RTRID} perl ${PERLINC} -c ${PERLPATH}$a
 .endfor
 	@date >$@
 

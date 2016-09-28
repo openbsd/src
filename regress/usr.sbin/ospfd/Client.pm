@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.4 2015/01/16 17:06:43 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.5 2016/09/28 12:40:35 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014-2015 Florian Riehm <mail@friehm.de>
@@ -32,9 +32,9 @@ use AnyEvent::Handle;
 use AnyEvent::Strict;
 
 use Packet;
-use Tun 'opentun';
+use Tap 'opentap';
 
-my $tun_number;
+my $tap_number;
 my $area;
 my $hello_interval;
 # Parameters for interface state machine of the test
@@ -342,25 +342,25 @@ sub child {
 	or croak ref($self), " client ospf address missing";
     $ism_rtrid = $self->{router_id}
 	or croak ref($self), " client router id missing";
-    $tun_number =  $self->{tun_number}
-	or croak ref($self), " tun device number missing";
+    $tap_number =  $self->{tap_number}
+	or croak ref($self), " tap device number missing";
     $ospfd_ip = $self->{ospfd_ip}
 	or croak ref($self), " ospfd ip missing";
     $ospfd_rtrid = $self->{ospfd_rtrid}
 	or croak ref($self), " ospfd router id missing";
 
-    my $tun = opentun($tun_number);
+    my $tap = opentap($tap_number);
 
     $handle = AnyEvent::Handle->new(
-	fh => $tun,
+	fh => $tap,
 	read_size => 70000,  # little more then max ip size
 	on_error => sub {
-	    $cv->croak("error on tun device $tun_number: $!");
+	    $cv->croak("error on tap device $tap_number: $!");
 	    $handle->destroy();
 	    undef $handle;
 	},
 	on_eof => sub {
-	    $cv->croak("end-of-file on tun device $tun_number: $!");
+	    $cv->croak("end-of-file on tap device $tap_number: $!");
 	    $handle->destroy();
 	    undef $handle;
 	},

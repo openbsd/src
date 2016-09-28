@@ -1,4 +1,4 @@
-/*	$OpenBSD: opentun.c,v 1.2 2014/07/11 22:28:51 bluhm Exp $ */
+/*	$OpenBSD: opentap.c,v 1.1 2016/09/28 12:40:35 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014 Alexander Bluhm <bluhm@openbsd.org>
@@ -31,16 +31,16 @@ void usage(void);
 void
 usage(void)
 {
-	fprintf(stderr, "usage: sudo %s fd# tun#\n", getprogname());
+	fprintf(stderr, "usage: sudo %s fd# tap#\n", getprogname());
 	fprintf(stderr, "  fd#   number of file descriptor for fd passing\n");
-	fprintf(stderr, "  tun#  number of tun device to open\n");
+	fprintf(stderr, "  tap#  number of tap device to open\n");
 	exit(2);
 }
 
 int
 main(int argc, char *argv[])
 {
-	int		 fd, tun;
+	int		 fd, tap;
 	char		 dev[FILENAME_MAX];
 	const char	*errstr;
 	struct msghdr	 msg;
@@ -56,12 +56,12 @@ main(int argc, char *argv[])
 	fd = strtonum(argv[1], 0, INT_MAX, &errstr);
 	if (errstr)
 		errx(2, "file descriptor number %s: %s", errstr, argv[1]);
-	tun = strtonum(argv[2], 0, INT_MAX, &errstr);
+	tap = strtonum(argv[2], 0, INT_MAX, &errstr);
 	if (errstr)
-		errx(2, "tun device number %s: %s", errstr, argv[2]);
-	snprintf(dev, FILENAME_MAX, "/dev/tun%d", tun);
+		errx(2, "tap device number %s: %s", errstr, argv[2]);
+	snprintf(dev, FILENAME_MAX, "/dev/tap%d", tap);
 
-	if ((tun = open(dev, O_RDWR)) == -1)
+	if ((tap = open(dev, O_RDWR)) == -1)
 		err(1, "open %s", dev);
 
 	memset(&msg, 0, sizeof(msg));
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
-	*(int *)CMSG_DATA(cmsg) = tun;
+	*(int *)CMSG_DATA(cmsg) = tap;
 
 	if (sendmsg(fd, &msg, 0) == -1)
 		err(1, "sendmsg %d", fd);
