@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.89 2016/08/13 17:47:41 markus Exp $
+#	$OpenBSD: Makefile,v 1.90 2016/09/28 16:33:07 djm Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -15,7 +15,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c \
 	auth2-chall.c groupaccess.c \
 	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
-	monitor_mm.c monitor.c monitor_wrap.c \
+	monitor.c monitor_wrap.c \
 	sftp-server.c sftp-common.c \
 	sandbox-pledge.c
 
