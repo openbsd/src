@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmon.c,v 1.5 2014/03/29 23:59:49 miod Exp $	*/
+/*	$OpenBSD: pmon.c,v 1.6 2016/09/28 14:46:34 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Miodrag Vallat.
@@ -80,16 +80,15 @@ pmon_init(int32_t argc, int32_t argv, int32_t envp, int32_t callvec,
 		 * only safely check the first two fields of the `smbios'
 		 * struct:
 		 * - the version number must be small
-		 * - the `vga bios' pointer must be aligned to an 1MB boundary,
-		 *   and below 4GB.
+		 * - the `vga bios' pointer must point to the kseg0 segment.
 		 *
 		 * Of course, I can reasonably expect these assumptions to
 		 * be broken in future systems.  Where would be the fun if
 		 * not?
 		 */
 		if (env->efi.bios.version < 0x2000 &&
-		    (env->efi.bios.vga_bios & 0xfffff) == 0 &&
-		    (env->efi.bios.vga_bios >> 32) == 0) {
+		    env->efi.bios.vga_bios >= CKSEG0_BASE &&
+		    env->efi.bios.vga_bios < CKSEG0_BASE + CKSEG_SIZE) {
 			pmon_envtype = PMON_ENVTYPE_EFI;
 		} else {
 			pmon_envtype = PMON_ENVTYPE_ENVP;
