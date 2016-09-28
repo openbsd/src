@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $OpenBSD: run.pl,v 1.1 2016/07/19 17:04:19 reyk Exp $
+# $OpenBSD: run.pl,v 1.2 2016/09/28 08:10:18 reyk Exp $
 
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 #
@@ -43,6 +43,8 @@ sub fatal {
 sub ofp_debug {
 	my $dir = shift;
 	my $ofp = shift;
+
+	fatal("OFP", "empty response") if (!$ofp->{version});
 
 	printf("OFP ".$dir." version %d type %d length %d xid %d\n",
 	    $ofp->{version},
@@ -157,8 +159,7 @@ sub packet_send {
 	    NetPacket::Ethernet::ETH_TYPE_IP,
 	    $pkt);
 
-	return (main::ofp_packet_in($self, $self->{data}));
-	
+	return (main::ofp_packet_in($self, $self->{data}));	
 }
 
 sub packet_decode {
@@ -188,6 +189,7 @@ sub process {
 	my ($filename, $dirs, $suffix) = fileparse($path, ".pm");
 	(my $func = $filename) =~ s/-/_/g;
 	my $state;
+	local $@;
 
 	print "- $filename\n";
 
@@ -196,6 +198,7 @@ sub process {
 	eval {
 		$state = $func->init($sock);
 	};
+	die if($@);
 
 	return if not $state->{pcap};
 
@@ -210,6 +213,7 @@ sub process {
 		eval {
 			$func->next($state);
 		};
+		die if($@);
 	}
 
 	Net::Pcap::close($pcap_t);
