@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.6 2016/09/19 14:43:22 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.7 2016/09/28 06:39:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -2999,7 +2999,7 @@ swofp_action_output_controller(struct switch_softc *sc, struct mbuf *m0,
 	struct ofp_packet_in		*pin;
 	struct ofp_match		*om;
 	struct ofp_ox_match		*oxm;
-	struct mbuf			*m, *n;
+	struct mbuf			*m;
 	caddr_t				 tail;
 	int				 match_len;
 
@@ -3029,12 +3029,16 @@ swofp_action_output_controller(struct switch_softc *sc, struct mbuf *m0,
 	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
+	if (m == NULL) {
+		m_freem(m0);
 		return (ENOBUFS);
+	}
 	if ((sizeof(*pin) + match_len) >= MHLEN) {
 		MCLGET(m, M_DONTWAIT);
-		if (m == NULL)
+		if (m == NULL) {
+			m_freem(m0);
 			return (ENOBUFS);
+		}
 	}
 
 	pin = mtod(m, struct ofp_packet_in *);
@@ -3044,13 +3048,24 @@ swofp_action_output_controller(struct switch_softc *sc, struct mbuf *m0,
 	pin->pin_oh.oh_type = OFP_T_PACKET_IN;
 	pin->pin_oh.oh_xid = htonl(swofs->swofs_xidnxt++);
 
-	pin->pin_buffer_id = -1; /* no buffered */
+	pin->pin_buffer_id = -1; /* not buffered */
 	pin->pin_table_id = swpld->swpld_table_id;
 	pin->pin_cookie = swpld->swpld_cookie;
 	pin->pin_reason = reason;
+
 	if (frame_max_len) {
-		pin->pin_total_len = (m0->m_pkthdr.len < frame_max_len) ?
-		    htons(m0->m_pkthdr.len) : htons(frame_max_len);
+		/*
+		 * The switch should only truncate packets if it implements
+		 * buffering or the controller might end up sending PACKET_OUT
+		 * responses with truncated packets that will eventually end
+		 * up on the network.
+		 */
+		if (frame_max_len < m0->m_pkthdr.len) {
+			m_freem(m);
+			m_freem(m0);
+			return (EMSGSIZE);
+		}
+		pin->pin_total_len = htons(m0->m_pkthdr.len);
 	}
 
 	/*
@@ -3096,16 +3111,8 @@ swofp_action_output_controller(struct switch_softc *sc, struct mbuf *m0,
 	    htons(m->m_pkthdr.len + ntohs(pin->pin_total_len));
 
 	if (frame_max_len) {
-		/* Truncate the excess packet bytes. */
-		match_len = m0->m_pkthdr.len - ntohs(pin->pin_total_len);
-		n = m_dup_pkt(m0, 0, M_DONTWAIT);
-		if (n == NULL) {
-			m_freem(m);
-			return (ENOBUFS);
-		}
-		m_adj(n, -match_len);
-		/* m_cat() doesn't update m_pkthdr.len */
-		m_cat(m, n);
+		/* m_cat() doesn't update the m_pkthdr.len */
+		m_cat(m, m0);
 		m->m_pkthdr.len += ntohs(pin->pin_total_len);
 	}
 
