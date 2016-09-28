@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.4 2016/09/26 12:33:04 rzalamena Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.5 2016/09/28 20:17:58 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -84,14 +84,14 @@ struct ofp_header {
 struct ofp_hello_element_header {
 	uint16_t	he_type;
 	uint16_t	he_length;
-};
+} __packed;
 
 #define OPF_HELLO_T_VERSION_BITMAP	1	/* Supported version bitmap */
 
 struct ofp_hello_element_versionbitmap {
 	uint16_t	hev_type;
 	uint16_t	hev_length;
-};
+} __packed;
 
 /* Ports */
 #define OFP_PORT_MAX		0xffffff00	/* Maximum number of physical ports */
@@ -132,7 +132,7 @@ struct ofp_switch_port {
 	uint32_t	swp_peer;		/* Advertised by peer */
 	uint32_t	swp_cur_speed;		/* Current port speed in Kbps*/
 	uint32_t	swp_max_speed;		/* Support port max speed in Kbps*/
-};
+} __packed;
 
 /* Physical port configuration */
 #define OFP_PORTCONFIG_PORT_DOWN	0x1	/* Port is down */
@@ -175,7 +175,7 @@ struct ofp_switch_features {
 	uint8_t			swf_pad[2];	/* Align to 64 bits */
 	uint32_t		swf_capabilities; /* Capability flags */
 	uint32_t		swf_actions;	/* Supported action flags */
-};
+} __packed;
 
 /* Switch capabilities */
 #define OFP_SWCAP_FLOW_STATS		0x1	/* Flow statistics */
@@ -217,7 +217,7 @@ struct ofp_packet_in {
 struct ofp_instruction {
 	uint16_t	i_type;
 	uint16_t	i_len;
-};
+} __packed;
 
 /* Instruction types */
 #define OFP_INSTRUCTION_T_GOTO_TABLE	1	/* Goto-Table */
@@ -235,7 +235,7 @@ struct ofp_instruction_write_metadata {
 	uint8_t		iwm_pad[4];
 	uint64_t	iwm_metadata;
 	uint64_t	iwm_metadata_mask;
-};
+} __packed;
 
 /* Goto-Table instruction */
 struct ofp_instruction_goto_table {
@@ -243,7 +243,7 @@ struct ofp_instruction_goto_table {
 	uint16_t	igt_len;
 	uint8_t		igt_table_id;
 	uint8_t		igt_pad[3];
-};
+} __packed;
 
 /* Apply-Actions instruction */
 struct ofp_instruction_actions {
@@ -257,14 +257,14 @@ struct ofp_instruction_meter {
 	uint16_t	im_type;
 	uint16_t	im_len;
 	uint32_t	im_meter_id;
-};
+} __packed;
 
 /* Experimenter instruction */
 struct ofp_instruction_experimenter {
 	uint16_t	ie_type;
 	uint16_t	ie_len;
 	uint32_t	ie_experimenter;
-};
+} __packed;
 
 /* Actions */
 #define OFP_ACTION_OUTPUT		0	/* Output to switch port */
@@ -432,7 +432,7 @@ struct ofp_ox_match {
 	uint8_t		oxm_fh;
 	uint8_t		oxm_length;
 	uint8_t		oxm_value[0];
-};
+} __packed;
 
 #define OFP_OXM_GET_FIELD(o)	(((o)->oxm_fh) >> 1)
 #define OFP_OXM_GET_HASMASK(o)	(((o)->oxm_fh) & 0x1)
