@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.61 2016/09/02 11:25:14 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.62 2016/09/28 12:01:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -398,7 +398,8 @@ parent_shutdown(struct httpd *env)
 int
 parent_dispatch_server(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct httpd		*env = p->p_env;
+	struct privsep		*ps = p->p_ps;
+	struct httpd		*env = ps->ps_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CFG_DONE:
@@ -414,7 +415,8 @@ parent_dispatch_server(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 parent_dispatch_logger(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct httpd		*env = p->p_env;
+	struct privsep		*ps = p->p_ps;
+	struct httpd		*env = ps->ps_env;
 	unsigned int		 v;
 	char			*str = NULL;
 
