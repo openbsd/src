@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.645 2016/09/16 13:43:41 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.646 2016/09/28 08:30:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -893,6 +893,8 @@ struct window_pane {
 
 	int		 fd;
 	struct bufferevent *event;
+
+	struct event	 resize_timer;
 
 	u_int		 wmark_size;
 	u_int		 wmark_hits;
