@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.44 2016/09/04 11:14:44 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.45 2016/09/28 14:10:35 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -576,7 +576,6 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	int			 vni;
 	struct ifnet		*ifp;
 	int			 skip;
-	struct ether_header	*eh;
 #if NBRIDGE > 0
 	struct bridge_tunneltag	*brtag;
 #endif
@@ -636,11 +635,11 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	return (0);
 
  found:
+	if (m->m_pkthdr.len < skip + sizeof(struct ether_header) + ETHERMIN)
+		return (EINVAL);
+
 	m_adj(m, skip);
 	ifp = &sc->sc_ac.ac_if;
-
-	if ((eh = mtod(m, struct ether_header *)) == NULL)
-		return (EINVAL);
 
 #if NBRIDGE > 0
 	/* Store the tunnel src/dst IP and vni for the bridge or switch */
