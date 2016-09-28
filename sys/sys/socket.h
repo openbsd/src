@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.91 2016/09/12 19:41:20 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.92 2016/09/28 18:50:20 jca Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -56,9 +56,6 @@ typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 /*
  * Definitions related to sockets: types, address families, options.
  */
-
-/* Maximum number of alternate routing tables */
-#define	RT_TABLEID_MAX	255
 
 /*
  * Types
@@ -142,6 +139,12 @@ struct	splice {
 	off_t	sp_max;			/* if set, maximum bytes to splice */
 	struct	timeval	sp_idle;	/* idle timeout */
 };
+
+/*
+ * Maximum number of alternate routing tables
+ */
+#define	RT_TABLEID_MAX	255
+
 #endif /* __BSD_VISIBLE */
 
 /*
