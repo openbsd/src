@@ -1,4 +1,5 @@
 #!/bin/sh
+#	$OpenBSD: dasho.sh,v 1.2 2016/09/28 11:46:45 bluhm Exp $
 
 : ${FTP:=ftp}
 

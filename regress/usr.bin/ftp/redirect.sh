@@ -1,4 +1,5 @@
 #!/bin/sh
+#	$OpenBSD: redirect.sh,v 1.2 2016/09/28 11:46:45 bluhm Exp $
 
 : ${FTP:=ftp}
 
@@ -14,7 +15,7 @@ echo "Testing $req1 => $loc => $req2"
 # Be sure to kill any previous nc running on our port
 while pkill -fx "nc -l $rport1" && sleep 1; do done
 
-echo "HTTP/1.0 302 Found\r\nLocation: $loc\r\n\r" | nc -l $rport1 >&- &
+echo "HTTP/1.0 302 Found\r\nLocation: $loc\r\n\r" | nc -l $rport1 >/dev/null &
 
 # Give the "server" some time to start
 sleep .1
