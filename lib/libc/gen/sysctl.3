@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.270 2016/09/28 17:48:58 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.271 2016/09/28 17:53:13 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -210,9 +210,9 @@ writing to
 .Dv DBCTL_TRIGGER
 causes the system to enter
 .Xr ddb 4 .
-If
+When running with a
 .Xr securelevel 7
-is greater than 0,
+greater than 0,
 the process writing to this variable must be running
 on the console in order to enter
 .Xr ddb 4 .
@@ -261,9 +261,10 @@ the
 and
 .Va S_ISGID
 bits to be cleared.
-As detailed in
-.Xr securelevel 7 ,
-this variable may not be changed if the securelevel is \*(Gt 0.
+When running with a
+.Xr securelevel 7
+greater than 0,
+this variable may not be changed.
 .El
 .Ss CTL_HW
 The string and integer information available for the
@@ -305,7 +306,8 @@ When this variable is set, such an event will cause the system to
 perform a regular shutdown and power off the machine.
 When running with a
 .Xr securelevel 7
-greater than 0, this variable may not be changed.
+greater than 0,
+this variable may not be changed.
 .It Dv HW_BYTEORDER
 The byteorder (4321 or 1234).
 .It Dv HW_CPUSPEED
@@ -1502,9 +1504,10 @@ and should normally be enabled on all systems.
 .It Li ip.sourceroute
 Returns 1 when forwarding of source-routed packets is enabled for
 the host.
-As detailed in
-.Xr securelevel 7 ,
-this variable may not be changed if the securelevel is \*(Gt 0.
+When running with a
+.Xr securelevel 7
+greater than 0,
+this variable may not be changed.
 .It Li ip.stats
 Returns the IP statistics in a struct ipstat.
 .It Li ip.ttl
@@ -1595,7 +1598,8 @@ is returned specifying the bitmask of
 ports that can only be bound by processes with root euid.
 When running with a
 .Xr securelevel 7
-greater than 0, this variable may not be changed.
+greater than 0,
+this variable may not be changed.
 .It Li tcp.rstppslimit
 This variable specifies the maximum number of outgoing TCP RST packets
 per second.
