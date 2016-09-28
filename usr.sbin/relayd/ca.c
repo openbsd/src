@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.22 2016/09/03 14:09:04 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.23 2016/09/28 15:03:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -285,7 +285,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 
 	iov[cnt].iov_base = &cko;
 	iov[cnt++].iov_len = sizeof(cko);
-	iov[cnt].iov_base = (void *)from;
+	iov[cnt].iov_base = (void *)(uintptr_t)from;
 	iov[cnt++].iov_len = flen;
 
 	/*
