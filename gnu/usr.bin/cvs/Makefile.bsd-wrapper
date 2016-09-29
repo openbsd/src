@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.54 2016/09/20 18:36:57 natano Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.55 2016/09/29 09:16:21 natano Exp $
 
 .include <bsd.own.mk>
 
@@ -28,21 +28,23 @@ CF=
 config: .FORCE
 	-rm -f config.cache
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY}" \
-		ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
-		MAKEINFO='makeinfo --no-split' \
-		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
-			--datadir=/usr/libdata ${CF}
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+	INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+	INSTALL_DATA="${INSTALL} ${INSTALL_COPY} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE}" \
+	ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
+	MAKEINFO='makeinfo --no-split' \
+	sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
+		--datadir=/usr/libdata ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY}" \
-		ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
-		MAKEINFO='makeinfo --no-split' \
-		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
-			--datadir=/usr/libdata ${CF}
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+	INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+	INSTALL_DATA="${INSTALL} ${INSTALL_COPY} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE}" \
+	ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
+	MAKEINFO='makeinfo --no-split' \
+	sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
+		--datadir=/usr/libdata ${CF}
 
 .ifdef NOMAN
 maninstall:
