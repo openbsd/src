@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.51 2016/09/03 13:46:57 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.52 2016/09/29 11:37:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -409,8 +409,8 @@ struct bridge_iflist {
  * Bridge tunnel tagging
  */
 struct bridge_tunneltag {
-	union pfsockaddr_union		brtag_src;
-	union pfsockaddr_union		brtag_dst;
+	union pfsockaddr_union		brtag_peer;
+	union pfsockaddr_union		brtag_local;
 	u_int32_t			brtag_id;
 };
 

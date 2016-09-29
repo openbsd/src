@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.6 2016/09/28 08:31:42 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.7 2016/09/29 11:37:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1396,8 +1396,8 @@ switch_flow_classifier_tunnel(struct mbuf *m, int *offset,
 	if ((brtag = bridge_tunnel(m)) == NULL)
 		goto out;
 
-	if ((brtag->brtag_dst.sa.sa_family != AF_INET) &&
-	    (brtag->brtag_dst.sa.sa_family != AF_INET6))
+	if ((brtag->brtag_peer.sa.sa_family != AF_INET) &&
+	    (brtag->brtag_peer.sa.sa_family != AF_INET6))
 		goto out;
 
 	swfcl->swfcl_tunnel = pool_get(&swfcl_pool, PR_NOWAIT|PR_ZERO);
@@ -1406,18 +1406,18 @@ switch_flow_classifier_tunnel(struct mbuf *m, int *offset,
 		return (NULL);
 	}
 
-	swfcl->swfcl_tunnel->tun_af = brtag->brtag_dst.sa.sa_family;
+	swfcl->swfcl_tunnel->tun_af = brtag->brtag_peer.sa.sa_family;
 	swfcl->swfcl_tunnel->tun_key = htobe64(brtag->brtag_id);
 	if (swfcl->swfcl_tunnel->tun_af == AF_INET) {
 		swfcl->swfcl_tunnel->tun_ipv4_src =
-		    brtag->brtag_src.sin.sin_addr;
+		    brtag->brtag_local.sin.sin_addr;
 		swfcl->swfcl_tunnel->tun_ipv4_dst =
-		    brtag->brtag_dst.sin.sin_addr;
+		    brtag->brtag_peer.sin.sin_addr;
 	} else {
 		swfcl->swfcl_tunnel->tun_ipv6_src =
-		    brtag->brtag_src.sin6.sin6_addr;
+		    brtag->brtag_local.sin6.sin6_addr;
 		swfcl->swfcl_tunnel->tun_ipv6_dst =
-		    brtag->brtag_dst.sin6.sin6_addr;
+		    brtag->brtag_peer.sin6.sin6_addr;
 	}
 	bridge_tunneluntag(m);
  out:

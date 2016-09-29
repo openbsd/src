@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.46 2016/09/28 14:26:43 yasuoka Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.47 2016/09/29 11:37:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -646,8 +646,8 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	if ((ifp->if_bridgeport != NULL || ifp->if_switchport != NULL) &&
 	    srcsa->sa_family != AF_UNSPEC &&
 	    ((brtag = bridge_tunneltag(m)) != NULL)) {
-		memcpy(&brtag->brtag_src.sa, srcsa, srcsa->sa_len);
-		memcpy(&brtag->brtag_dst.sa, dstsa, dstsa->sa_len);
+		memcpy(&brtag->brtag_peer.sa, srcsa, srcsa->sa_len);
+		memcpy(&brtag->brtag_local.sa, dstsa, dstsa->sa_len);
 		brtag->brtag_id = vni;
 	}
 #endif
@@ -776,11 +776,11 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 
 #if NBRIDGE > 0
 	if ((brtag = bridge_tunnel(m)) != NULL) {
-		dst = &brtag->brtag_src.sa;
+		dst = &brtag->brtag_peer.sa;
 
 		/* If accepting any VNI, source ip address is from brtag */
 		if (sc->sc_vnetid == VXLAN_VNI_ANY) {
-			src = &brtag->brtag_dst.sa;
+			src = &brtag->brtag_local.sa;
 			tag = (uint32_t)brtag->brtag_id;
 			af = src->sa_family;
 		}

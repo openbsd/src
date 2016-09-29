@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.284 2016/09/03 13:46:57 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.285 2016/09/29 11:37:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -813,14 +813,9 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 
 sendunicast:
 	if ((dst_p != NULL) &&
-	    (dst_p->brt_tunnel.brtag_dst.sa.sa_family != AF_UNSPEC) &&
-	    ((brtag = bridge_tunneltag(m)) != NULL)) {
-		memcpy(&brtag->brtag_src, &dst_p->brt_tunnel.brtag_src.sa,
-		    dst_p->brt_tunnel.brtag_src.sa.sa_len);
-		memcpy(&brtag->brtag_dst, &dst_p->brt_tunnel.brtag_dst.sa,
-		    dst_p->brt_tunnel.brtag_dst.sa.sa_len);
-		brtag->brtag_id = dst_p->brt_tunnel.brtag_id;
-	}
+	    (dst_p->brt_tunnel.brtag_peer.sa.sa_family != AF_UNSPEC) &&
+	    ((brtag = bridge_tunneltag(m)) != NULL))
+		bridge_copytag(&dst_p->brt_tunnel, brtag);
 
 	bridge_span(sc, m);
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
@@ -2002,8 +1997,8 @@ bridge_copytag(struct bridge_tunneltag *src, struct bridge_tunneltag *dst)
 	if (src == NULL) {
 		memset(dst, 0, sizeof(*dst));
 	} else {
-		bridge_copyaddr(&src->brtag_src.sa, &dst->brtag_src.sa);
-		bridge_copyaddr(&src->brtag_dst.sa, &dst->brtag_dst.sa);
+		bridge_copyaddr(&src->brtag_peer.sa, &dst->brtag_peer.sa);
+		bridge_copyaddr(&src->brtag_local.sa, &dst->brtag_local.sa);
 		dst->brtag_id = src->brtag_id;
 	}
 }
