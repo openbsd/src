@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.13 2016/09/29 15:10:23 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.14 2016/09/29 18:16:50 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -55,6 +55,7 @@ int	 ofp13_validate_error(struct switchd *,
 	    struct ofp_header *, struct ibuf *);
 int	 ofp13_error(struct switchd *, struct switch_connection *,
 	    struct ofp_header *, struct ibuf *);
+int	 ofp13_validate_oxm_basic(struct ibuf *, off_t, int, uint8_t);
 int	 ofp13_validate_oxm(struct switchd *, struct ofp_ox_match *,
 	    struct ofp_header *, struct ibuf *, off_t);
 int	 ofp13_validate_packet_in(struct switchd *,
@@ -86,6 +87,8 @@ int	 ofp13_multipart_request_validate(struct switchd *,
 	    struct ofp_header *, struct ibuf *);
 
 int	 ofp13_desc(struct switchd *, struct switch_connection *);
+int	 ofp13_flow_stats(struct switchd *, struct switch_connection *,
+	    uint32_t, uint32_t, uint8_t);
 int	 ofp13_table_features(struct switchd *, struct switch_connection *,
 	    uint8_t);
 
@@ -201,38 +204,220 @@ ofp13_validate(struct switchd *sc,
 }
 
 int
+ofp13_validate_oxm_basic(struct ibuf *ibuf, off_t off, int hasmask,
+    uint8_t type)
+{
+	uint8_t		*ui8;
+	uint16_t	*ui16;
+	uint32_t	*ui32;
+	uint64_t	*ui64;
+	int		 i, len;
+	char		 hex[8], buf[64], maskbuf[64];
+
+	switch (type) {
+	case OFP_XM_T_IN_PORT:
+	case OFP_XM_T_IN_PHY_PORT:
+	case OFP_XM_T_MPLS_LABEL:
+		if ((ui32 = ibuf_seek(ibuf, off, sizeof(*ui32))) == NULL)
+			return (-1);
+
+		log_debug("\t\t%u", ntohl(*ui32));
+		break;
+
+	case OFP_XM_T_META:
+	case OFP_XM_T_TUNNEL_ID:
+		len = sizeof(*ui64);
+		if (hasmask)
+			len *= 2;
+
+		if ((ui64 = ibuf_seek(ibuf, off, len)) == NULL)
+			return (-1);
+
+		if (hasmask)
+			log_debug("\t\t%llu mask %#16llx",
+			    be64toh(*ui64), be64toh(*(ui64 + 1)));
+		else
+			log_debug("\t\t%llu", be64toh(*ui64));
+		break;
+
+	case OFP_XM_T_ETH_DST:
+	case OFP_XM_T_ETH_SRC:
+	case OFP_XM_T_ARP_SHA:
+	case OFP_XM_T_ARP_THA:
+	case OFP_XM_T_IPV6_ND_SLL:
+	case OFP_XM_T_IPV6_ND_TLL:
+		len = ETHER_ADDR_LEN;
+		if (hasmask)
+			len *= 2;
+
+		if ((ui8 = ibuf_seek(ibuf, off, len)) == NULL)
+			return (-1);
+
+		buf[0] = 0;
+		for (i = 0; i < ETHER_ADDR_LEN; i++) {
+			snprintf(hex, sizeof(hex), "%02x", *(ui8 + i));
+			strlcat(buf, hex, sizeof(buf));
+		}
+
+		if (hasmask) {
+			maskbuf[0] = 0;
+			for (i = 0; i < ETHER_ADDR_LEN; i++) {
+				snprintf(hex, sizeof(hex), "%02x", *(ui8 +
+				    (i + ETHER_ADDR_LEN)));
+				strlcat(maskbuf, hex, sizeof(maskbuf));
+			}
+			log_debug("\t\t%s mask %s", buf, maskbuf);
+		} else
+			log_debug("\t\t%s", buf);
+		break;
+
+	case OFP_XM_T_ARP_OP:
+	case OFP_XM_T_VLAN_VID:
+	case OFP_XM_T_IP_PROTO:
+	case OFP_XM_T_TCP_SRC:
+	case OFP_XM_T_TCP_DST:
+	case OFP_XM_T_UDP_SRC:
+	case OFP_XM_T_UDP_DST:
+	case OFP_XM_T_SCTP_SRC:
+	case OFP_XM_T_SCTP_DST:
+	case OFP_XM_T_IPV6_EXTHDR:
+		len = sizeof(*ui16);
+		if (hasmask)
+			len *= 2;
+
+		if ((ui16 = ibuf_seek(ibuf, off, len)) == NULL)
+			return (-1);
+
+		if (type == OFP_XM_T_VLAN_VID) {
+			/* Remove the VID present bit to display. */
+			if (hasmask)
+				log_debug("\t\t%d mask %#04x",
+				    ntohs(*ui16) & ~OFP_XM_VID_PRESENT,
+				    ntohs(*(ui16 + 1)));
+			else
+				log_debug("\t\t%d",
+				    ntohs(*ui16) & ~OFP_XM_VID_PRESENT);
+			break;
+		}
+
+		if (hasmask)
+			log_debug("\t\t%d mask %#04x",
+			    ntohs(*ui16), ntohs(*(ui16 + 1)));
+		else
+			log_debug("\t\t%d", ntohs(*ui16));
+		break;
+
+	case OFP_XM_T_IP_DSCP:
+	case OFP_XM_T_IP_ECN:
+	case OFP_XM_T_ICMPV4_TYPE:
+	case OFP_XM_T_ICMPV4_CODE:
+	case OFP_XM_T_ICMPV6_TYPE:
+	case OFP_XM_T_ICMPV6_CODE:
+	case OFP_XM_T_MPLS_TC:
+	case OFP_XM_T_MPLS_BOS:
+		if ((ui8 = ibuf_seek(ibuf, off, sizeof(*ui8))) == NULL)
+			return (-1);
+
+		log_debug("\t\t%#02x", *ui8);
+		break;
+
+	case OFP_XM_T_IPV4_SRC:
+	case OFP_XM_T_IPV4_DST:
+	case OFP_XM_T_ARP_SPA:
+	case OFP_XM_T_ARP_TPA:
+	case OFP_XM_T_IPV6_FLABEL:
+		len = sizeof(*ui32);
+		if (hasmask)
+			len *= 2;
+
+		if ((ui32 = ibuf_seek(ibuf, off, len)) == NULL)
+			return (-1);
+
+		if (hasmask)
+			log_debug("\t\t%#08x mask %#08x",
+			    ntohl(*ui32), ntohl(*(ui32 + 1)));
+		else
+			log_debug("\t\t%#08x", ntohl(*ui32));
+		break;
+
+	case OFP_XM_T_IPV6_SRC:
+	case OFP_XM_T_IPV6_DST:
+	case OFP_XM_T_IPV6_ND_TARGET:
+		len = sizeof(struct in6_addr);
+		if (hasmask)
+			len *= 2;
+
+		if ((ui8 = ibuf_seek(ibuf, off, len)) == NULL)
+			return (-1);
+
+		buf[0] = 0;
+		for (i = 0; i < (int)sizeof(struct in6_addr); i++) {
+			snprintf(hex, sizeof(hex), "%02x", *(ui8 + i));
+			strlcat(buf, hex, sizeof(buf));
+		}
+
+		if (hasmask) {
+			maskbuf[0] = 0;
+			for (i = 0; i < (int)sizeof(struct in6_addr); i++) {
+				snprintf(hex, sizeof(hex), "%02x", *(ui8 +
+				    (i + sizeof(struct in6_addr))));
+				strlcat(maskbuf, hex, sizeof(maskbuf));
+			}
+			log_debug("\t\t%s mask %s", buf, maskbuf);
+		} else
+			log_debug("\t\t%s", buf);
+		break;
+
+	case OFP_XM_T_PBB_ISID:
+		/* TODO teach me how to read 24 bits and convert to be. */
+		break;
+
+	default:
+		log_debug("\t\tUnknown type");
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
 ofp13_validate_oxm(struct switchd *sc, struct ofp_ox_match *oxm,
     struct ofp_header *oh, struct ibuf *ibuf, off_t off)
 {
 	uint16_t	 class;
 	uint8_t		 type;
-	uint32_t	 port;
-	void		*ptr;
+	int		 hasmask;
 
 	/* match element is always followed by data */
 	if (oxm->oxm_length == 0)
 		return (0);
 
 	type = OFP_OXM_GET_FIELD(oxm);
+	hasmask = OFP_OXM_GET_HASMASK(oxm);
 	class = ntohs(oxm->oxm_class);
+	off += sizeof(*oxm);
 
-	log_debug("\tox match class %s type %s length %u",
+	log_debug("\tox match class %s type %s hasmask %s length %u",
 	    print_map(class, ofp_oxm_c_map),
 	    print_map(type, ofp_xm_t_map),
+	    hasmask ? "yes" : "no",
 	    oxm->oxm_length);
 
 	switch (class) {
-	case OFP_OXM_C_OPENFLOW_BASIC:
-		switch (type) {
-		case OFP_XM_T_IN_PORT:
-			off += sizeof(*oxm);
-			if ((ptr = ibuf_seek(ibuf, off, sizeof(port))) == NULL)
-				return (-1);
-			port = *(uint32_t *)ptr;
-			log_debug("\t\tport %u", ntohl(port));
-			break;
-		}
+	case OFP_OXM_C_NXM_0:
+	case OFP_OXM_C_NXM_1:
+		/* TODO teach me how to read NXM_*. */
 		break;
+
+	case OFP_OXM_C_OPENFLOW_BASIC:
+		return (ofp13_validate_oxm_basic(ibuf, off, hasmask, type));
+
+	case OFP_OXM_C_OPENFLOW_EXPERIMENTER:
+		/* Implementation dependent: there is nothing to do here. */
+		break;
+
+	default:
+		return (-1);
 	}
 
 	return (0);
@@ -438,6 +623,8 @@ ofp13_hello(struct switchd *sc, struct switch_connection *con,
 		return (-1);
 	ofp_send(con, oh, NULL);
 
+	ofp13_flow_stats(sc, con, OFP_PORT_ANY, OFP_GROUP_ANY,
+	    OFP_TABLE_ID_ALL);
 	ofp13_table_features(sc, con, 0);
 	ofp13_desc(sc, con);
 
@@ -896,10 +1083,13 @@ ofp13_multipart_reply_validate(struct switchd *sc,
 {
 	struct ofp_multipart		*mp;
 	struct ofp_table_features	*tf;
+	struct ofp_flow_stats		*fs;
 	struct ofp_desc			*d;
+	struct ofp_match		*om;
+	struct ofp_ox_match		*oxm;
 	int				 mptype, mpflags, hlen;
-	int				 remaining;
-	off_t				 off;
+	int				 remaining, matchlen, matchtype;
+	off_t				 off, moff;
 
 	remaining = ntohs(oh->oh_length);
 
@@ -933,6 +1123,44 @@ ofp13_multipart_reply_validate(struct switchd *sc,
 		break;
 
 	case OFP_MP_T_FLOW:
+ read_next_flow:
+		if ((fs = ibuf_seek(ibuf, off, sizeof(*fs))) == NULL)
+			return (-1);
+
+		hlen = ntohs(fs->fs_length);
+		remaining -= hlen;
+		moff = off + sizeof(*fs);
+		off += hlen;
+
+		log_debug("\tflow length %d table_id %d duration sec %u "
+		    "nsec %u prio %d timeout idle %d hard %d flags %#04x "
+		    "cookie %llu packet count %llu byte count %llu",
+		    hlen, fs->fs_table_id, ntohl(fs->fs_duration_sec),
+		    ntohl(fs->fs_duration_nsec), ntohs(fs->fs_priority),
+		    ntohs(fs->fs_idle_timeout), ntohs(fs->fs_hard_timeout),
+		    ntohs(fs->fs_flags), be64toh(fs->fs_cookie),
+		    be64toh(fs->fs_packet_count), be64toh(fs->fs_byte_count));
+
+		om = &fs->fs_match;
+		matchtype = ntohs(om->om_type);
+		matchlen = ntohs(om->om_length) - sizeof(*om);
+
+		/* We don't know how to parse anything else yet. */
+		if (matchtype != OFP_MATCH_OXM)
+			break;
+
+		while (matchlen) {
+			if ((oxm = ibuf_seek(ibuf, moff, sizeof(*oxm))) == NULL)
+				return (-1);
+			if (ofp13_validate_oxm(sc, oxm, oh, ibuf, moff) == -1)
+				return (-1);
+			moff += sizeof(*oxm) + oxm->oxm_length;
+			matchlen -= sizeof(*oxm) + oxm->oxm_length;
+		}
+		if (remaining)
+			goto read_next_flow;
+		break;
+
 	case OFP_MP_T_AGGREGATE:
 	case OFP_MP_T_TABLE:
 	case OFP_MP_T_PORT_STATS:
@@ -1000,8 +1228,12 @@ ofp13_multipart_request_validate(struct switchd *sc,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
 	struct ofp_multipart		*mp;
-	off_t				 off;
+	struct ofp_match		*om;
+	struct ofp_flow_stats_request	*fsr;
+	struct ofp_ox_match		*oxm;
+	off_t				 off, moff;
 	int				 type, flags, totallen;
+	int				 matchlen, matchtype;
 
 	off = 0;
 	if ((mp = ibuf_seek(ibuf, off, sizeof(*mp))) == NULL)
@@ -1022,6 +1254,40 @@ ofp13_multipart_request_validate(struct switchd *sc,
 		break;
 
 	case OFP_MP_T_FLOW:
+		if ((fsr = ibuf_seek(ibuf, off, sizeof(*fsr))) == NULL)
+			return (-1);
+
+		om = &fsr->fsr_match;
+		matchtype = ntohs(om->om_type);
+		matchlen = ntohs(om->om_length);
+		log_debug("\ttable_id %d out_port %u out_group %u "
+		    "cookie %llu mask %llu match type %s length %d (padded to %d)",
+		    fsr->fsr_table_id, ntohl(fsr->fsr_out_port),
+		    ntohl(fsr->fsr_out_group), be64toh(fsr->fsr_cookie),
+		    be64toh(fsr->fsr_cookie_mask),
+		    print_map(matchtype, ofp_match_map), matchlen,
+		    OFP_ALIGN(matchlen));
+
+		/* Get the first OXM byte offset. */
+		moff = off + sizeof(*fsr);
+
+		/* Don't count the header bytes. */
+		matchlen -= sizeof(*om);
+
+		/* We don't know how to parse anything else yet. */
+		if (matchtype != OFP_MATCH_OXM)
+			break;
+
+		while (matchlen) {
+			if ((oxm = ibuf_seek(ibuf, moff, sizeof(*oxm))) == NULL)
+				return (-1);
+			if (ofp13_validate_oxm(sc, oxm, oh, ibuf, moff) == -1)
+				return (-1);
+			moff += sizeof(*oxm) + oxm->oxm_length;
+			matchlen -= sizeof(*oxm) + oxm->oxm_length;
+		}
+		break;
+
 	case OFP_MP_T_AGGREGATE:
 	case OFP_MP_T_TABLE:
 	case OFP_MP_T_PORT_STATS:
@@ -1067,6 +1333,46 @@ ofp13_desc(struct switchd *sc, struct switch_connection *con)
 
 	oh = &mp->mp_oh;
 	oh->oh_length = htons(sizeof(*mp));
+	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
+		return (-1);
+
+	ofp_send(con, NULL, ibuf);
+	ibuf_release(ibuf);
+	return (0);
+}
+
+int
+ofp13_flow_stats(struct switchd *sc, struct switch_connection *con,
+    uint32_t out_port, uint32_t out_group, uint8_t table_id)
+{
+	struct ofp_header		*oh;
+	struct ofp_multipart		*mp;
+	struct ofp_flow_stats_request	*fsr;
+	struct ofp_match		*om;
+	struct ibuf			*ibuf;
+	int				 padsize;
+
+	if ((ibuf = ibuf_static()) == NULL)
+		return (-1);
+
+	if ((mp = ofp13_multipart_request(con, ibuf, OFP_MP_T_FLOW, 0)) == NULL)
+		return (-1);
+	if ((fsr = ibuf_advance(ibuf, sizeof(*fsr))) == NULL)
+		return (-1);
+
+	oh = &mp->mp_oh;
+	fsr->fsr_table_id = table_id;
+	fsr->fsr_out_port = htonl(out_port);
+	fsr->fsr_out_group = htonl(out_group);
+
+	om = &fsr->fsr_match;
+	om->om_type = htons(OFP_MATCH_OXM);
+	om->om_length = htons(sizeof(*om));
+	padsize = OFP_ALIGN(sizeof(*om)) - sizeof(*om);
+	if (padsize && ibuf_advance(ibuf, padsize) == NULL)
+		return (-1);
+
+	oh->oh_length = htons(ibuf_length(ibuf));
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
 		return (-1);
 
