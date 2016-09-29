@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2016/09/29 18:13:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -76,6 +76,7 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 {
 	struct sockaddr_in	*a4, *b4;
 	struct sockaddr_in6	*a6, *b6;
+	struct sockaddr_un	*au, *bu;
 	uint32_t		 av[4], bv[4], mv[4];
 
 	if (a->sa_family == AF_UNSPEC || b->sa_family == AF_UNSPEC)
@@ -129,6 +130,10 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 		if ((av[0] & mv[0]) < (bv[0] & mv[0]))
 			return (-1);
 		break;
+	case AF_UNIX:
+		au = (struct sockaddr_un *)a;
+		bu = (struct sockaddr_un *)b;
+		return (strcmp(au->sun_path, bu->sun_path));
 	}
 
 	return (0);
@@ -206,7 +211,7 @@ print_host(struct sockaddr_storage *ss, char *buf, size_t len)
 	if (ss->ss_family == AF_UNSPEC) {
 		strlcpy(buf, "any", len);
 		return (buf);
-	} else if (ss->ss_family == AF_LOCAL) {
+	} else if (ss->ss_family == AF_UNIX) {
 		un = (struct sockaddr_un *)ss;
 		strlcpy(buf, un->sun_path, len);
 		return (buf);
