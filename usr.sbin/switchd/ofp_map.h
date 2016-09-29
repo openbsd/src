@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_map.h,v 1.4 2016/09/26 08:46:00 rzalamena Exp $	*/
+/*	$OpenBSD: ofp_map.h,v 1.5 2016/09/29 13:04:50 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -39,14 +39,16 @@ extern struct constmap ofp_v_map[];
 extern struct constmap ofp_t_map[];
 extern struct constmap ofp_pktin_map[];
 extern struct constmap ofp_port_map[];
-extern struct constmap ofp_oxm_map[];
+extern struct constmap ofp_oxm_c_map[];
 extern struct constmap ofp_xm_t_map[];
 extern struct constmap ofp_config_map[];
+extern struct constmap ofp_instruction_t_map[];
 extern struct constmap ofp_portstate_map[];
 extern struct constmap ofp_portconfig_map[];
 extern struct constmap ofp_portmedia_map[];
 extern struct constmap ofp_swcap_map[];
 extern struct constmap ofp_match_map[];
+extern struct constmap ofp_mp_t_map[];
 extern struct constmap ofp_action_map[];
 extern struct constmap ofp_flowcmd_map[];
 extern struct constmap ofp_flowflag_map[];
@@ -55,5 +57,6 @@ extern struct constmap ofp_errflowmod_map[];
 extern struct constmap ofp_errmatch_map[];
 extern struct constmap ofp_errinst_map[];
 extern struct constmap ofp_errreq_map[];
+extern struct constmap ofp_table_featprop_map[];
 
 #endif /* _SWITCHD_OFP_MAP_H */

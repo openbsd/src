@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.5 2016/09/28 20:17:58 rzalamena Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.6 2016/09/29 13:04:50 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -654,21 +654,21 @@ struct ofp_multipart {
 #define OFP_MP_FLAG_REPLY_MORE		1
 
 /* Multipart types */
-#define OFP_MP_T_DESC			0
-#define OFP_MP_T_FLOW			1
-#define OFP_MP_T_AGGREGATE		2
-#define OFP_MP_T_TABLE			3
-#define OFP_MP_T_PORT_STATS		4
-#define OFP_MP_T_QUEUE			5
-#define OFP_MP_T_GROUP			6
-#define OFP_MP_T_GROUP_DESC		7
-#define OFP_MP_T_GROUP_FEATURES		8
-#define OFP_MP_T_METER			9
-#define OFP_MP_T_METER_CONFIG		10
-#define OFP_MP_T_METER_FEATURES		11
-#define OFP_MP_T_TABLE_FEATURES		12
-#define OFP_MP_T_PORT_DESC		13
-#define OFP_MP_T_EXPERIMENTER		0xffff
+#define OFP_MP_T_DESC			0	/* Description of the switch */
+#define OFP_MP_T_FLOW			1	/* Individual flow statistics */
+#define OFP_MP_T_AGGREGATE		2	/* Aggregate flow statistics */
+#define OFP_MP_T_TABLE			3	/* Flow table statistics */
+#define OFP_MP_T_PORT_STATS		4	/* Port statistics */
+#define OFP_MP_T_QUEUE			5	/* Queue statistics for a port */
+#define OFP_MP_T_GROUP			6	/* Group counter statistics */
+#define OFP_MP_T_GROUP_DESC		7	/* Group description */
+#define OFP_MP_T_GROUP_FEATURES		8	/* Group features */
+#define OFP_MP_T_METER			9	/* Meter statistics */
+#define OFP_MP_T_METER_CONFIG		10	/* Meter configuration */
+#define OFP_MP_T_METER_FEATURES		11	/* Meter features */
+#define OFP_MP_T_TABLE_FEATURES		12	/* Table features */
+#define OFP_MP_T_PORT_DESC		13	/* Port description */
+#define OFP_MP_T_EXPERIMENTER		0xffff	/* Experimenter extension */
 
 #define OFP_DESC_STR_LEN		256
 #define OFP_SERIAL_NUM_LEN		32
@@ -742,22 +742,22 @@ struct ofp_table_stats {
 } __packed;
 
 /* Table features */
-#define OFP_TABLE_FEATPROP_INSTRUCTION		0
-#define OFP_TABLE_FEATPROP_INSTRUCTION_MISS	1
-#define OFP_TABLE_FEATPROP_NEXT_TABLES		2
-#define OFP_TABLE_FEATPROP_NEXT_TABLES_MISS	3
-#define OFP_TABLE_FEATPROP_WRITE_ACTIONS	4
-#define OFP_TABLE_FEATPROP_WRITE_ACTIONS_MISS	5
-#define OFP_TABLE_FEATPROP_APPLY_ACTIONS	6
-#define OFP_TABLE_FEATPROP_APPLY_ACTIONS_MISS	7
-#define OFP_TABLE_FEATPROP_MATCH		8
-#define OFP_TABLE_FEATPROP_WILDCARDS		10
-#define OFP_TABLE_FEATPROP_WRITE_SETFIELD	12
-#define OFP_TABLE_FEATPROP_WRITE_SETFIELD_MISS	13
-#define OFP_TABLE_FEATPROP_APPLY_SETFIELD	14
-#define OFP_TABLE_FEATPROP_APPLY_SETFIELD_MISS	15
-#define OFP_TABLE_FEATPROP_EXPERIMENTER		0xfffe
-#define OFP_TABLE_FEATPROP_EXPERIMENTER_MISS	0xffff
+#define OFP_TABLE_FEATPROP_INSTRUCTION		0	/* Instruction property */
+#define OFP_TABLE_FEATPROP_INSTRUCTION_MISS	1	/* Instruction for table-miss  */
+#define OFP_TABLE_FEATPROP_NEXT_TABLES		2	/* Next table property */
+#define OFP_TABLE_FEATPROP_NEXT_TABLES_MISS	3	/* Next table for table-miss */
+#define OFP_TABLE_FEATPROP_WRITE_ACTIONS	4	/* Write actions property */
+#define OFP_TABLE_FEATPROP_WRITE_ACTIONS_MISS	5	/* Write actions for table-miss */
+#define OFP_TABLE_FEATPROP_APPLY_ACTIONS	6	/* Apply actions property */
+#define OFP_TABLE_FEATPROP_APPLY_ACTIONS_MISS	7	/* Apply actions for table-miss */
+#define OFP_TABLE_FEATPROP_MATCH		8	/* Match property */
+#define OFP_TABLE_FEATPROP_WILDCARDS		10	/* Wildcards property */
+#define OFP_TABLE_FEATPROP_WRITE_SETFIELD	12	/* Write set-field property */
+#define OFP_TABLE_FEATPROP_WRITE_SETFIELD_MISS	13	/* Write set-field for table-miss */
+#define OFP_TABLE_FEATPROP_APPLY_SETFIELD	14	/* Apply set-field property */
+#define OFP_TABLE_FEATPROP_APPLY_SETFIELD_MISS	15	/* Apply set-field for table-miss */
+#define OFP_TABLE_FEATPROP_EXPERIMENTER		0xfffe	/* Experimenter property */
+#define OFP_TABLE_FEATPROP_EXPERIMENTER_MISS	0xffff	/* Experimenter for table-miss */
 
 #define OFP_TABLE_MAX_NAME_LEN			32
 
