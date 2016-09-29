@@ -5720,6 +5720,7 @@
 ./usr/share/zoneinfo/Asia/Vientiane
 ./usr/share/zoneinfo/Asia/Vladivostok
 ./usr/share/zoneinfo/Asia/Yakutsk
+./usr/share/zoneinfo/Asia/Yangon
 ./usr/share/zoneinfo/Asia/Yekaterinburg
 ./usr/share/zoneinfo/Asia/Yerevan
 ./usr/share/zoneinfo/Atlantic
@@ -6337,6 +6338,7 @@
 ./usr/share/zoneinfo/posix/Asia/Vientiane
 ./usr/share/zoneinfo/posix/Asia/Vladivostok
 ./usr/share/zoneinfo/posix/Asia/Yakutsk
+./usr/share/zoneinfo/posix/Asia/Yangon
 ./usr/share/zoneinfo/posix/Asia/Yekaterinburg
 ./usr/share/zoneinfo/posix/Asia/Yerevan
 ./usr/share/zoneinfo/posix/Atlantic
@@ -6955,6 +6957,7 @@
 ./usr/share/zoneinfo/right/Asia/Vientiane
 ./usr/share/zoneinfo/right/Asia/Vladivostok
 ./usr/share/zoneinfo/right/Asia/Yakutsk
+./usr/share/zoneinfo/right/Asia/Yangon
 ./usr/share/zoneinfo/right/Asia/Yekaterinburg
 ./usr/share/zoneinfo/right/Asia/Yerevan
 ./usr/share/zoneinfo/right/Atlantic
