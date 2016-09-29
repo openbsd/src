@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.11 2016/09/29 13:04:50 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.12 2016/09/29 13:30:48 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -85,6 +85,7 @@ int	 ofp13_multipart_request_validate(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
 
+int	 ofp13_desc(struct switchd *, struct switch_connection *);
 int	 ofp13_table_features(struct switchd *, struct switch_connection *,
 	    uint8_t);
 
@@ -438,6 +439,7 @@ ofp13_hello(struct switchd *sc, struct switch_connection *con,
 	ofp_send(con, oh, NULL);
 
 	ofp13_table_features(sc, con, 0);
+	ofp13_desc(sc, con);
 
 	return (0);
 }
@@ -899,6 +901,7 @@ ofp13_multipart_reply_validate(struct switchd *sc,
 {
 	struct ofp_multipart		*mp;
 	struct ofp_table_features	*tf;
+	struct ofp_desc			*d;
 	int				 mptype, mpflags, hlen;
 	int				 remaining;
 	off_t				 off;
@@ -923,6 +926,17 @@ ofp13_multipart_reply_validate(struct switchd *sc,
 
 	switch (mptype) {
 	case OFP_MP_T_DESC:
+		if ((d = ibuf_seek(ibuf, off, sizeof(*d))) == NULL)
+			return (-1);
+
+		off += sizeof(*d);
+		remaining -= sizeof(*d);
+		log_debug("\tmfr_desc \"%s\" hw_desc \"%s\" sw_desc \"%s\" "
+		    "serial_num \"%s\" dp_desc \"%s\"",
+		    d->d_mfr_desc, d->d_hw_desc, d->d_sw_desc,
+		    d->d_serial_num, d->d_dp_desc);
+		break;
+
 	case OFP_MP_T_FLOW:
 	case OFP_MP_T_AGGREGATE:
 	case OFP_MP_T_TABLE:
@@ -1007,6 +1021,11 @@ ofp13_multipart_request_validate(struct switchd *sc,
 
 	switch (type) {
 	case OFP_MP_T_DESC:
+		/* This type doesn't use a payload. */
+		if (totallen != sizeof(*mp))
+			return (-1);
+		break;
+
 	case OFP_MP_T_FLOW:
 	case OFP_MP_T_AGGREGATE:
 	case OFP_MP_T_TABLE:
@@ -1035,6 +1054,29 @@ ofp13_multipart_request_validate(struct switchd *sc,
 		return (-1);
 	}
 
+	return (0);
+}
+
+int
+ofp13_desc(struct switchd *sc, struct switch_connection *con)
+{
+	struct ofp_header		*oh;
+	struct ofp_multipart		*mp;
+	struct ibuf			*ibuf;
+
+	if ((ibuf = ibuf_static()) == NULL)
+		return (-1);
+
+	if ((mp = ofp13_multipart_request(con, ibuf, OFP_MP_T_DESC, 0)) == NULL)
+		return (-1);
+
+	oh = &mp->mp_oh;
+	oh->oh_length = htons(sizeof(*mp));
+	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
+		return (-1);
+
+	ofp_send(con, NULL, ibuf);
+	ibuf_release(ibuf);
 	return (0);
 }
 
