@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2016/08/17 05:07:13 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.8 2016/09/29 22:42:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -55,10 +55,10 @@ static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	control_dispatch_vmm }
 };
 
-pid_t
+void
 control(struct privsep *ps, struct privsep_proc *p)
 {
-	return (proc_run(ps, p, procs, nitems(procs), control_run, NULL));
+	proc_run(ps, p, procs, nitems(procs), control_run, NULL);
 }
 
 void
@@ -67,9 +67,11 @@ control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	/*
 	 * pledge in the control process:
  	 * stdio - for malloc and basic I/O including events.
+	 * cpath - for managing the control socket.
 	 * unix - for the control socket.
+	 * recvfd - for the proc fd exchange.
 	 */
-	if (pledge("stdio unix", NULL) == -1)
+	if (pledge("stdio cpath unix recvfd", NULL) == -1)
 		fatal("pledge");
 }
 
@@ -78,16 +80,16 @@ control_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct ctl_conn		*c;
 
-	if ((c = control_connbyfd(imsg->hdr.peerid)) == NULL) {
-		log_warnx("%s: fd %d: not found", __func__, imsg->hdr.peerid);
-		return (-1);
-	}
-
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_RESPONSE:
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
 	case IMSG_VMDOP_GET_INFO_VM_END_DATA:
+		if ((c = control_connbyfd(imsg->hdr.peerid)) == NULL) {
+			log_warnx("%s: fd %d: not found",
+			    __func__, imsg->hdr.peerid);
+			return (-1);
+		}
 		imsg_compose_event(&c->iev, imsg->hdr.type,
 		    0, 0, -1, imsg->data, IMSG_DATA_SIZE(imsg));
 		break;

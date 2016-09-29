@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.29 2016/08/17 05:07:13 deraadt Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.30 2016/09/29 22:42:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -219,12 +219,6 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 void
 vmd_sighdlr(int sig, short event, void *arg)
 {
-	struct privsep	*ps = arg;
-	int		 die = 0, status, fail, id;
-	pid_t		 pid;
-	char		*cause;
-	const char	*title = "vm";
-
 	if (privsep_process != PROC_PARENT)
 		return;
 
@@ -246,49 +240,7 @@ vmd_sighdlr(int sig, short event, void *arg)
 		break;
 	case SIGTERM:
 	case SIGINT:
-		die = 1;
-		/* FALLTHROUGH */
-	case SIGCHLD:
-		do {
-			int len;
-
-			pid = waitpid(-1, &status, WNOHANG);
-			if (pid <= 0)
-				continue;
-
-			fail = 0;
-			if (WIFSIGNALED(status)) {
-				fail = 1;
-				len = asprintf(&cause, "terminated; signal %d",
-				    WTERMSIG(status));
-			} else if (WIFEXITED(status)) {
-				if (WEXITSTATUS(status) != 0) {
-					fail = 1;
-					len = asprintf(&cause,
-					    "exited abnormally");
-				} else
-					len = asprintf(&cause, "exited okay");
-			} else
-				fatalx("unexpected cause of SIGCHLD");
-
-			if (len == -1)
-				fatal("asprintf");
-
-			for (id = 0; id < PROC_MAX; id++) {
-				if (pid == ps->ps_pid[id]) {
-					die = 1;
-					title = ps->ps_title[id];
-					break;
-				}
-			}
-			if (fail)
-				log_warnx("lost child: %s %s", title, cause);
-
-			free(cause);
-		} while (pid > 0 || (pid == -1 && errno == EINTR));
-
-		if (die)
-			vmd_shutdown();
+		vmd_shutdown();
 		break;
 	default:
 		fatalx("unexpected signal");
@@ -307,9 +259,13 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	struct privsep	*ps;
-	int		 ch;
-	const char	*conffile = VMD_CONF;
+	struct privsep		*ps;
+	int			 ch;
+	const char		*conffile = VMD_CONF;
+	enum privsep_procid	 proc_id = PROC_PARENT;
+	int			 proc_instance = 0;
+	const char		*errp, *title = NULL;
+	int			 argc0 = argc;
 
 	/* log to stderr until daemonized */
 	log_init(1, LOG_DAEMON);
@@ -317,7 +273,7 @@ main(int argc, char **argv)
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
-	while ((ch = getopt(argc, argv, "D:df:vn")) != -1) {
+	while ((ch = getopt(argc, argv, "D:P:I:df:vn")) != -1) {
 		switch (ch) {
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -336,10 +292,26 @@ main(int argc, char **argv)
 		case 'n':
 			env->vmd_noaction = 1;
 			break;
+		case 'P':
+			title = optarg;
+			proc_id = proc_getid(procs, nitems(procs), title);
+			if (proc_id == PROC_MAX)
+				fatalx("invalid process name");
+			break;
+		case 'I':
+			proc_instance = strtonum(optarg, 0,
+			    PROC_MAX_INSTANCES, &errp);
+			if (errp)
+				fatalx("invalid process instance");
+			break;
 		default:
 			usage();
 		}
 	}
+
+	argc -= optind;
+	if (argc > 0)
+		usage();
 
 	if (env->vmd_noaction && !env->vmd_debug)
 		env->vmd_debug = 1;
@@ -376,34 +348,38 @@ main(int argc, char **argv)
 	log_init(env->vmd_debug, LOG_DAEMON);
 	log_verbose(env->vmd_verbose);
 
+	if (env->vmd_noaction)
+		ps->ps_noaction = 1;
+	ps->ps_instance = proc_instance;
+	if (title != NULL)
+		ps->ps_title[proc_id] = title;
+
+	/* only the parent returns */
+	proc_init(ps, procs, nitems(procs), argc0, argv, proc_id);
+
+	log_procinit("parent");
 	if (!env->vmd_debug && daemon(0, 0) == -1)
 		fatal("can't daemonize");
 
-	log_procinit("parent");
-
-	ps->ps_ninstances = 1;
-
-	if (!env->vmd_noaction)
-		proc_init(ps, procs, nitems(procs));
+	if (ps->ps_noaction == 0)
+		log_info("startup");
 
 	event_init();
 
 	signal_set(&ps->ps_evsigint, SIGINT, vmd_sighdlr, ps);
 	signal_set(&ps->ps_evsigterm, SIGTERM, vmd_sighdlr, ps);
-	signal_set(&ps->ps_evsigchld, SIGCHLD, vmd_sighdlr, ps);
 	signal_set(&ps->ps_evsighup, SIGHUP, vmd_sighdlr, ps);
 	signal_set(&ps->ps_evsigpipe, SIGPIPE, vmd_sighdlr, ps);
 	signal_set(&ps->ps_evsigusr1, SIGUSR1, vmd_sighdlr, ps);
 
 	signal_add(&ps->ps_evsigint, NULL);
 	signal_add(&ps->ps_evsigterm, NULL);
-	signal_add(&ps->ps_evsigchld, NULL);
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
 	signal_add(&ps->ps_evsigusr1, NULL);
 
 	if (!env->vmd_noaction)
-		proc_listen(ps, procs, nitems(procs));
+		proc_connect(ps);
 
 	if (vmd_configure() == -1)
 		fatalx("configuration failed");
