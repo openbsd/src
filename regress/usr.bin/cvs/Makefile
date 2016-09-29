@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2010/07/13 21:31:17 nicm Exp $
+#	$OpenBSD: Makefile,v 1.29 2016/09/29 06:45:38 otto Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -263,10 +263,10 @@ test-cvs-rlog:
 	@eval 'test `${CVSCMD} -Q -d ${MYCVSROOT} rlog seed | wc -l` -eq 65'
 
 test-cvs-status:
-	@cd ${REGRESS_SEED}; eval 'test `${CVSCMD} -Q status | wc -l` -eq 18'
+	@cd ${REGRESS_SEED}; eval 'test `${CVSCMD} -Q status | wc -l` -eq 21'
 
 test-cvs-status-vflag:
-	@cd ${REGRESS_SEED}; eval 'test `${CVSCMD} -Q status -v | wc -l` -eq 30'
+	@cd ${REGRESS_SEED}; eval 'test `${CVSCMD} -Q status -v | wc -l` -eq 33'
 
 test-cvs-tag:
 	@cd ${REGRESS_SEED}; ${CVSCMD} -Q tag FIRST_TAG > /dev/null
