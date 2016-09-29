@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.12 2016/09/29 13:30:48 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.13 2016/09/29 15:10:23 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -461,7 +461,6 @@ int
 ofp13_packet_match(struct ibuf *ibuf, struct packet *pkt, struct ofp_match *om)
 {
 	struct ether_header	*eh = pkt->pkt_eh;
-	int			 unalignedsize;
 	size_t			 padsize, startpos, endpos, omlen;
 
 	if (eh == NULL)
@@ -475,11 +474,7 @@ ofp13_packet_match(struct ibuf *ibuf, struct packet *pkt, struct ofp_match *om)
 	endpos = ibuf->wpos;
 
 	omlen = sizeof(*om) + (endpos - startpos);
-	unalignedsize = (omlen % 8);
-	if (unalignedsize)
-		padsize = 8 - unalignedsize;
-	else
-		padsize = 0;
+	padsize = OFP_ALIGN(omlen) - omlen;
 
 	om->om_type = htons(OFP_MATCH_OXM);
 	om->om_length = htons(omlen);
