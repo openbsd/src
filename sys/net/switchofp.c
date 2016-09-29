@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.7 2016/09/28 06:39:33 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.8 2016/09/29 12:18:33 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -273,6 +273,9 @@ struct mbuf
 	    struct switch_flow_classify *, struct switch_flow_classify *);
 struct mbuf
 	*swofp_apply_set_field_ether(struct mbuf *, int,
+	    struct switch_flow_classify *, struct switch_flow_classify *);
+struct mbuf
+	*swofp_apply_set_field_tunnel(struct mbuf *, int,
 	    struct switch_flow_classify *, struct switch_flow_classify *);
 struct mbuf
 	*swofp_apply_set_field(struct mbuf *, struct swofp_pipline_desc *);
@@ -3737,9 +3740,57 @@ swofp_apply_set_field_ether(struct mbuf *m, int off,
 }
 
 struct mbuf *
+swofp_apply_set_field_tunnel(struct mbuf *m, int off,
+    struct switch_flow_classify *pre_swfcl, struct switch_flow_classify *swfcl)
+{
+	struct bridge_tunneltag	*brtag;
+
+	if (pre_swfcl->swfcl_tunnel) {
+		if ((brtag = bridge_tunneltag(m)) == NULL) {
+			m_freem(m);
+			return (NULL);
+		}
+
+		brtag->brtag_id = be64toh(pre_swfcl->swfcl_tunnel->tun_key);
+
+		if (pre_swfcl->swfcl_tunnel->tun_ipv4_dst.s_addr !=
+		    INADDR_ANY) {
+			brtag->brtag_peer.sin.sin_family =
+			    brtag->brtag_local.sin.sin_family = AF_INET;
+			brtag->brtag_local.sin.sin_addr =
+			    pre_swfcl->swfcl_tunnel->tun_ipv4_src;
+			brtag->brtag_peer.sin.sin_addr =
+			    pre_swfcl->swfcl_tunnel->tun_ipv4_dst;
+		} else if (!IN6_ARE_ADDR_EQUAL(
+		    &pre_swfcl->swfcl_tunnel->tun_ipv6_dst, &in6addr_any)) {
+			brtag->brtag_peer.sin6.sin6_family =
+			    brtag->brtag_local.sin.sin_family = AF_INET6;
+			brtag->brtag_local.sin6.sin6_addr =
+			    pre_swfcl->swfcl_tunnel->tun_ipv6_src;
+			brtag->brtag_peer.sin6.sin6_addr =
+			    pre_swfcl->swfcl_tunnel->tun_ipv6_dst;
+		} else {
+			bridge_tunneluntag(m);
+			m_freem(m);
+			return (NULL);
+		}
+
+		/*
+		 * It can't be used by apply-action instruction.
+		 */
+		if (swfcl->swfcl_tunnel) {
+			memcpy(swfcl->swfcl_tunnel, pre_swfcl->swfcl_tunnel,
+			    sizeof(*pre_swfcl->swfcl_tunnel));
+		}
+	}
+
+	return swofp_apply_set_field_ether(m, 0, pre_swfcl, swfcl);
+}
+
+struct mbuf *
 swofp_apply_set_field(struct mbuf *m, struct swofp_pipline_desc *swpld)
 {
-	return swofp_apply_set_field_ether(m, 0,
+	return swofp_apply_set_field_tunnel(m, 0,
 	    &swpld->swpld_pre_swfcl, swpld->swpld_swfcl);
 }
 
