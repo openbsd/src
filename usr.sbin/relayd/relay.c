@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.215 2016/09/26 16:25:16 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.216 2016/09/29 22:04:28 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1822,7 +1822,7 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 			fatalx("relay_dispatch_pfe: invalid table id");
 
 		DPRINTF("%s: [%d] state %d for "
-		    "host %u %s", __func__, ps->ps_instance, st.up,
+		    "host %u %s", __func__, p->p_ps->ps_instance, st.up,
 		    host->conf.id, host->conf.name);
 
 		if ((st.up == HOST_UNKNOWN && host->up == HOST_DOWN) ||
