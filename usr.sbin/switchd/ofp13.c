@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.14 2016/09/29 18:16:50 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.15 2016/09/29 18:25:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -621,7 +621,7 @@ ofp13_hello(struct switchd *sc, struct switch_connection *con,
 	oh->oh_xid = htonl(con->con_xidnxt++);
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
 		return (-1);
-	ofp_send(con, oh, NULL);
+	ofp_output(con, oh, NULL);
 
 	ofp13_flow_stats(sc, con, OFP_PORT_ANY, OFP_GROUP_ANY,
 	    OFP_TABLE_ID_ALL);
@@ -639,7 +639,7 @@ ofp13_echo_request(struct switchd *sc, struct switch_connection *con,
 	oh->oh_type = OFP_T_ECHO_REPLY;
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
 		return (-1);
-	ofp_send(con, oh, NULL);
+	ofp_output(con, oh, NULL);
 
 	return (0);
 }
@@ -819,7 +819,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, obuf) != 0)
 		return (-1);
 
-	ofp_send(con, NULL, obuf);
+	ofp_output(con, NULL, obuf);
 
 	if (sendbuffer) {
 		ibuf_release(obuf);
@@ -1336,7 +1336,7 @@ ofp13_desc(struct switchd *sc, struct switch_connection *con)
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
 		return (-1);
 
-	ofp_send(con, NULL, ibuf);
+	ofp_output(con, NULL, ibuf);
 	ibuf_release(ibuf);
 	return (0);
 }
@@ -1376,7 +1376,7 @@ ofp13_flow_stats(struct switchd *sc, struct switch_connection *con,
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
 		return (-1);
 
-	ofp_send(con, NULL, ibuf);
+	ofp_output(con, NULL, ibuf);
 	ibuf_release(ibuf);
 	return (0);
 }
@@ -1401,7 +1401,7 @@ ofp13_table_features(struct switchd *sc, struct switch_connection *con,
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
 		return (-1);
 
-	ofp_send(con, NULL, ibuf);
+	ofp_output(con, NULL, ibuf);
 	ibuf_release(ibuf);
 	return (0);
 }

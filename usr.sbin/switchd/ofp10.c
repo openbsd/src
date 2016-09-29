@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.8 2016/09/27 22:27:38 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.9 2016/09/29 18:25:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -268,7 +268,7 @@ ofp10_hello(struct switchd *sc, struct switch_connection *con,
 	oh->oh_xid = htonl(con->con_xidnxt++);
 	if (ofp10_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
 		return (-1);
-	ofp_send(con, oh, NULL);
+	ofp_output(con, oh, NULL);
 
 #if 0
 	(void)write(fd, &oh, sizeof(oh));
@@ -292,7 +292,7 @@ ofp10_echo_request(struct switchd *sc, struct switch_connection *con,
 	oh->oh_type = OFP10_T_ECHO_REPLY;
 	if (ofp10_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
 		return (-1);
-	ofp_send(con, oh, NULL);
+	ofp_output(con, oh, NULL);
 
 	return (0);
 }
@@ -410,7 +410,7 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 	if (ofp10_validate(sc, &con->con_local, &con->con_peer, oh, obuf) != 0)
 		goto done;
 
-	ofp_send(con, NULL, obuf);
+	ofp_output(con, NULL, obuf);
 
 	if (addflow && addpacket) {
 		/* loop to output the packet again */
