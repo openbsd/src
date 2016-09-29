@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.109 2016/09/02 15:44:26 mpi Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.110 2016/09/29 00:40:08 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -297,7 +297,7 @@ interface_status(struct interface_info *ifi)
 		 */
 #ifdef DEBUG
 		if (errno != EINVAL && errno != ENOTTY)
-			debug("ioctl(SIOCGIFMEDIA) on %s: %s", ifname,
+			debug("ioctl(SIOCGIFMEDIA) on %s: %s", ifi->name,
 			    strerror(errno));
 #endif
 
