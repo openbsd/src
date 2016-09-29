@@ -12,10 +12,10 @@ description:
 descr
 ----------------------------
 revision 1.3
-date: 2006/01/01 00:00:00;  author: foo;  state: Exp;  lines: +1 -0
+date: 2006/01/01 00:00:00;  author: foo;  state: Exp;  lines: +1 -0;
 third rev
 ----------------------------
 revision 1.2
-date: 2006/01/01 00:00:00;  author: foo;  state: Exp;  lines: +1 -0
+date: 2006/01/01 00:00:00;  author: foo;  state: Exp;  lines: +1 -0;
 second rev
 =============================================================================

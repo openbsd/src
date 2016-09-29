@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2008/02/02 16:23:44 xsa Exp $
+#	$OpenBSD: Makefile,v 1.42 2016/09/29 05:58:22 otto Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -596,7 +596,7 @@ test-ci-parse-keywords2: clean
 test-co-parse-truncated: clean
 	@sh -c 'ulimit -d 5000 && ${CO} -q ${.CURDIR}/test-truncated > truncated.out 2>&1' || \
 	    case "$$?" in 1) exit 0;; esac && exit 1
-	@grep -q 'co: problem parsing deltatexts' truncated.out
+	@grep -q 'co: could not parse admin data' truncated.out
 
 test-ci-2files: clean
 	@touch foo bar
