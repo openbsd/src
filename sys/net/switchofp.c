@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.8 2016/09/29 12:18:33 yasuoka Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.9 2016/09/29 20:38:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4288,7 +4288,7 @@ swofp_input(struct switch_softc *sc, struct mbuf *m)
 		return (EMSGSIZE);
 	}
 
-	VDPRINTF(sc, "recived ofp massage type=%s xid=%x len=%d\n",
+	VDPRINTF(sc, "recived ofp message type=%s xid=%x len=%d\n",
 	    swofp_mtype_str(oh->oh_type), ntohl(oh->oh_xid),
 	    ntohs(oh->oh_length));
 
@@ -4313,7 +4313,7 @@ swofp_output(struct switch_softc *sc, struct mbuf *m)
 	}
 
 	oh = mtod(m, struct ofp_header *);
-	VDPRINTF(sc, "sending ofp massage type=%s xid=%x len=%d\n",
+	VDPRINTF(sc, "sending ofp message type=%s xid=%x len=%d\n",
 		 swofp_mtype_str(oh->oh_type), ntohl(oh->oh_xid),
 		 ntohs(oh->oh_length));
 
