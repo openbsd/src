@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2016/09/29 18:13:50 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2016/09/29 20:46:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -291,6 +291,27 @@ print_verbose(const char *emsg, ...)
 		vfprintf(stderr, emsg, ap);
 		va_end(ap);
 	}
+}
+
+void
+print_hex(uint8_t *buf, off_t offset, size_t length)
+{
+	unsigned int	 i;
+	extern int	 verbose;
+
+	if (verbose < 3 || !length)
+		return;
+
+	for (i = 0; i < length; i++) {
+		if (i && (i % 4) == 0) {
+			if ((i % 32) == 0)
+				print_debug("\n");
+			else
+				print_debug(" ");
+		}
+		print_debug("%02x", buf[offset + i]);
+	}
+	print_debug("\n");
 }
 
 int

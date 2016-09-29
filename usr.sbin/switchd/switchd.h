@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.9 2016/09/29 18:25:54 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.10 2016/09/29 20:46:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -173,6 +173,7 @@ void		 print_verbose(const char *emsg, ...)
 		    __attribute__((__format__ (printf, 1, 2)));
 void		 print_debug(const char *emsg, ...)
 		    __attribute__((__format__ (printf, 1, 2)));
+void		 print_hex(uint8_t *, off_t, size_t);
 void		 getmonotime(struct timeval *);
 int		 parsehostport(const char *, struct sockaddr *, socklen_t);
 
