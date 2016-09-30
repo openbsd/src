@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.47 2016/09/29 11:37:44 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.48 2016/09/30 10:22:05 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -635,7 +635,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	return (0);
 
  found:
-	if (m->m_pkthdr.len < skip + sizeof(struct ether_header) + ETHERMIN)
+	if (m->m_pkthdr.len < skip + sizeof(struct ether_header))
 		return (EINVAL);
 
 	m_adj(m, skip);
