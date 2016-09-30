@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.49 2016/09/27 08:04:49 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.50 2016/09/30 07:33:06 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -1056,6 +1056,7 @@
 #define IA32_VMX_EPT_FAULT_WAS_EXECABLE (1ULL << 5)
 
 #define IA32_VMX_MSR_LIST_SIZE_MASK	(7ULL << 25)
+#define IA32_VMX_CR3_TGT_SIZE_MASK	(0x1FFULL << 16)
 
 /*
  * SVM

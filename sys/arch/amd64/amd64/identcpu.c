@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.76 2016/09/27 08:06:22 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.77 2016/09/30 07:33:06 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -848,6 +848,10 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 		msr = rdmsr(IA32_VMX_MISC);
 		ci->ci_vmm_cap.vcc_vmx.vmx_msr_table_size =
 			(uint32_t)(msr & IA32_VMX_MSR_LIST_SIZE_MASK) >> 25;
+
+		/* CR3 target count size */
+		ci->ci_vmm_cap.vcc_vmx.vmx_cr3_tgt_count =
+			(uint32_t)(msr & IA32_VMX_CR3_TGT_SIZE_MASK) >> 16;
 	}
 
 	/*
