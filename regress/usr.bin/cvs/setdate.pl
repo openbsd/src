@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: setdate.pl,v 1.1 2008/03/10 20:03:21 tobias Exp $
+# $OpenBSD: setdate.pl,v 1.2 2016/09/30 22:11:37 bluhm Exp $
 #
 # Sets "date x;" of specified revision in rcsfile to date.
 # This script is needed to make -D checks available.  CVS adjusts dates
@@ -31,4 +31,3 @@ for (@lines) {
 	print FILE "$_";
 }
 close FILE;
-

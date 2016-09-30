@@ -1,2 +1,0 @@
-$Id: seed1.txt,v 1.1 2007/06/05 05:49:41 niallo Exp $
-a test file for the seed repository

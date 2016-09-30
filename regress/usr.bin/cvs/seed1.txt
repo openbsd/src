@@ -1,0 +1,2 @@
+$Id: seed1.txt,v 1.1 2016/09/30 22:11:37 bluhm Exp $
+a test file for the seed repository
