@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.16 2016/09/30 11:57:57 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.17 2016/09/30 12:48:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -23,6 +23,8 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#include <net/ofp.h>
+
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/tcp.h>
@@ -38,7 +40,6 @@
 #include <imsg.h>
 #include <event.h>
 
-#include "ofp.h"
 #include "switchd.h"
 #include "ofp_map.h"
 

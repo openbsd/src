@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcconn.c,v 1.10 2016/09/30 11:57:57 reyk Exp $	*/
+/*	$OpenBSD: ofcconn.c,v 1.11 2016/09/30 12:48:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -21,6 +21,8 @@
 #include <sys/uio.h>
 #include <sys/socket.h>
 
+#include <net/ofp.h>
+
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -30,7 +32,6 @@
 #include <unistd.h>
 #include <imsg.h>
 
-#include "ofp.h"
 #include "ofp10.h"
 #include "types.h"
 #include "switchd.h"

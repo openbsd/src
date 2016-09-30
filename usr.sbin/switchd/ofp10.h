@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.h,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: ofp10.h,v 1.2 2016/09/30 12:48:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -19,7 +19,7 @@
 #ifndef _NET_OFP10_H_
 #define _NET_OFP10_H_
 
-#include <ofp.h>
+#include <net/ofp.h>
 
 /* OpenFlow message type */
 #define OFP10_T_HELLO			0	/* Hello */

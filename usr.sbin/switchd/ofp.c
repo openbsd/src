@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.11 2016/09/30 12:33:43 reyk Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.12 2016/09/30 12:48:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -24,6 +24,7 @@
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <net/ofp.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +34,6 @@
 #include <pwd.h>
 #include <event.h>
 
-#include "ofp.h"
 #include "ofp10.h"
 #include "switchd.h"
 #include "ofp_map.h"
