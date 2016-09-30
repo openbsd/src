@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.85 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.86 2016/09/30 10:53:11 jca Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -336,11 +336,13 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	if (vp->v_type != VCHR && count > LLONG_MAX - *poff)
 		return (EINVAL);
 
+	if (vp->v_type == VDIR)
+		return (EISDIR);
+
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	uio->uio_offset = *poff;
-	if (vp->v_type != VDIR)
-		error = VOP_READ(vp, uio,
-		    (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0, cred);
+	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
+	    cred);
 	*poff += count - uio->uio_resid;
 	VOP_UNLOCK(vp, p);
 	return (error);
