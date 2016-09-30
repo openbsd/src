@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.12 2016/09/30 11:57:57 reyk Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.13 2016/09/30 12:32:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -289,12 +289,18 @@ switchd_listen(struct sockaddr *sock)
 int
 switchd_tap(void)
 {
-	int	 fd;
-	if ((fd = open("/dev/tap0", O_WRONLY)) == -1)
-		return (-1);
-	return (fd);
-}
+	char	 path[PATH_MAX];
+	int	 i, fd;
 
+	for (i = 0; i < SWITCHD_MAX_TAP; i++) {
+		snprintf(path, PATH_MAX, "/dev/tap%d", i);
+		fd = open(path, O_RDWR | O_NONBLOCK);
+		if (fd != -1)
+			return (fd);
+	}
+
+	return (-1);
+}
 
 struct switch_connection *
 switchd_connbyid(struct switchd *sc, unsigned int id, unsigned int instance)

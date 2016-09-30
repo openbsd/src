@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.4 2016/09/30 11:57:57 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.5 2016/09/30 12:32:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -30,11 +30,12 @@
 #endif
 #define SWITCHD_SOCKET	"/var/run/" SWITCHD_NAME "d.sock"
 
-#define SWITCHD_MAX_SESSIONS	0xffff
 #define	SWITCHD_FD_RESERVE	5
 #define SWITCHD_CYCLE_BUFFERS	8	/* # of static buffers for mapping */
 #define SWITCHD_READ_BUFFER	0xffff
 #define SWITCHD_MSGBUF_MAX	0xffff
+#define SWITCHD_MAX_TAP		256
+#define SWITCHD_MAX_SESSIONS	0xffff
 
 #define SWITCHD_CTLR_PORT	6633	/* Previously used by OpenFlow */
 #define SWITCHD_CTLR_IANA_PORT	6653	/* Assigned by IANA for OpenFlow */
