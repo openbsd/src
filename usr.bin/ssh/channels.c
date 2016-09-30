@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.354 2016/09/30 09:19:13 markus Exp $ */
+/* $OpenBSD: channels.c,v 1.355 2016/09/30 20:24:46 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2445,7 +2445,8 @@ channel_proxy_downstream(Channel *downstream)
 	char *ctype = NULL, *listen_host = NULL;
 	u_char type;
 	size_t have;
-	int ret = -1, r, id, remote_id, listen_port, idx;
+	int ret = -1, r, idx;
+	u_int id, remote_id, listen_port;
 
 	/* sshbuf_dump(&downstream->input, stderr); */
 	if ((r = sshbuf_get_string_direct(&downstream->input, &cp, &have))
@@ -2536,6 +2537,11 @@ channel_proxy_downstream(Channel *downstream)
 			error("%s: parse error %s", __func__, ssh_err(r));
 			goto out;
 		}
+		if (listen_port > 65535) {
+			error("%s: tcpip-forward for %s: bad port %u",
+			    __func__, listen_host, listen_port);
+			goto out;
+		}
 		/* Record that connection to this host/port is permitted. */
 		permitted_opens = xreallocarray(permitted_opens,
 		    num_permitted_opens + 1, sizeof(*permitted_opens));
@@ -2543,7 +2549,7 @@ channel_proxy_downstream(Channel *downstream)
 		permitted_opens[idx].host_to_connect = xstrdup("<mux>");
 		permitted_opens[idx].port_to_connect = -1;
 		permitted_opens[idx].listen_host = listen_host;
-		permitted_opens[idx].listen_port = listen_port;
+		permitted_opens[idx].listen_port = (int)listen_port;
 		permitted_opens[idx].downstream = downstream;
 		listen_host = NULL;
 		break;
