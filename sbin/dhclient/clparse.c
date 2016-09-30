@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.101 2016/09/01 13:27:04 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.102 2016/09/30 13:20:57 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -502,7 +502,7 @@ parse_client_lease_statement(FILE *cfile, int is_static, struct interface_info *
 	if (opt1->len && opt2->len && (opt1->len != opt2->len ||
 	    memcmp(opt1->data, opt2->data, opt1->len))) {
 		note("Obsolete client identifier (%s) in recorded lease",
-		    pretty_print_option( DHO_DHCP_CLIENT_IDENTIFIER, opt1, 0));
+		    pretty_print_option(DHO_DHCP_CLIENT_IDENTIFIER, opt1, 0));
 		free_client_lease(lease);
 		return;
 	}
