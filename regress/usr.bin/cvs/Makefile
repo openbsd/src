@@ -1,10 +1,13 @@
-#	$OpenBSD: Makefile,v 1.29 2016/09/29 06:45:38 otto Exp $
+#	$OpenBSD: Makefile,v 1.30 2016/09/30 14:33:10 bluhm Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
 # Based on OpenRCS regression framework.
 
-CVS?=		opencvs
+.include <bsd.own.mk>
+
+OPENCVS=	${BSDSRCDIR}/usr.bin/cvs/obj/opencvs
+CVS?=		${OPENCVS}
 CVSCMD=		${CVS} -f
 
 REGRESS_ROOT=	${.OBJDIR}/regress_cvs_root
@@ -19,7 +22,7 @@ TESTFILE=	$(CVS_SERVER)
 TESTFILE=	cvs
 .endif
 .else
-TESTFILE=	${CVS}
+TESTFILE=	${CVS:T}
 MYCVSROOT?=	${REGRESS_ROOT}
 .endif
 
@@ -27,7 +30,6 @@ DIFF=		diff -u
 
 CLEANFILES=	regress_cvs_root regress_cvs_wcopy regress_cvs_stderr \
 		regress_cvs_stdout
-
 
 # These must be done in order.
 LTESTS= cvs-initial \
@@ -73,6 +75,7 @@ LTESTS= cvs-initial \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
+test-${t}: ${CVS}
 .endfor
 
 # XXX - should not print anything
@@ -338,5 +341,11 @@ test-cvs-update-with-local:
 
 clean:
 	@rm -rf ${CLEANFILES}
+
+# opencvs is not linked to the build, so make it on demand as a workaround
+${OPENCVS}:
+	cd ${BSDSRCDIR}/usr.bin/cvs && ${MAKE} obj
+	cd ${BSDSRCDIR}/usr.bin/cvs && ${MAKE} depend
+	cd ${BSDSRCDIR}/usr.bin/cvs && ${MAKE} all
 
 .include <bsd.regress.mk>
