@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2016/09/30 11:57:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -159,7 +159,7 @@ opttls		: /* empty */	{ $$ = 0; }
 device		: DEVICE STRING optofcconn {
 			struct switch_device		*c;
 
-			TAILQ_FOREACH(c, &conf->sc_conns, sdv_next) {
+			TAILQ_FOREACH(c, &conf->sc_devs, sdv_next) {
 				if (strcmp(c->sdv_device, $2) == 0)
 					break;
 			}
@@ -173,7 +173,7 @@ device		: DEVICE STRING optofcconn {
 				YYERROR;
 			}
 			free($2);
-			TAILQ_INSERT_TAIL(&conf->sc_conns, $3, sdv_next);
+			TAILQ_INSERT_TAIL(&conf->sc_devs, $3, sdv_next);
 		}
 		;
 

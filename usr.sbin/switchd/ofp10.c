@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.9 2016/09/29 18:25:54 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.10 2016/09/30 11:57:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -258,7 +258,6 @@ ofp10_hello(struct switchd *sc, struct switch_connection *con,
 	if (oh->oh_version == OFP_V_1_0 &&
 	    switch_add(con) == NULL) {
 		log_debug("%s: failed to add switch", __func__);
-		ofp_close(con);
 		return (-1);
 	}
 

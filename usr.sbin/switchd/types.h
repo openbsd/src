@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.3 2016/09/14 13:46:51 rzalamena Exp $	*/
+/*	$OpenBSD: types.h,v 1.4 2016/09/30 11:57:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,8 @@
 #endif
 #define SWITCHD_SOCKET	"/var/run/" SWITCHD_NAME "d.sock"
 
+#define SWITCHD_MAX_SESSIONS	0xffff
+#define	SWITCHD_FD_RESERVE	5
 #define SWITCHD_CYCLE_BUFFERS	8	/* # of static buffers for mapping */
 #define SWITCHD_READ_BUFFER	0xffff
 #define SWITCHD_MSGBUF_MAX	0xffff
@@ -41,6 +43,7 @@
 #define SWITCHD_CACHE_TIMEOUT	240	/* t/o in seconds for learned MACs */
 
 #define SWITCHD_OFCCONN_TIMEOUT	20	/* connect timeout for OpenFlow ch. */
+
 
 #ifndef ETHER_ADDR_LEN
 #define ETHER_ADDR_LEN		6
@@ -66,7 +69,8 @@ enum imsg_type {
 	IMSG_CTL_MAC,
 	IMSG_CTL_SHOW_SUM,
 	IMSG_CTL_DEVICE_CONNECT,
-	IMSG_CTL_DEVICE_DISCONNECT
+	IMSG_CTL_DEVICE_DISCONNECT,
+	IMSG_TAPFD
 };
 
 enum privsep_procid {

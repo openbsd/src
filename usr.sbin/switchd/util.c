@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2016/09/29 20:46:06 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2016/09/30 11:57:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -26,11 +26,13 @@
 #include <netinet/if_ether.h>
 #include <netinet/tcp.h>
 
+#include <unistd.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
+#include <errno.h>
 #include <event.h>
 
 #include "switchd.h"
@@ -53,6 +55,25 @@ socket_set_blockmode(int fd, enum blockmodes bm)
 
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
 		fatal("fcntl F_SETFL");
+}
+
+int
+accept4_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
+    int flags, int reserve, volatile int *counter)
+{
+	int	 fd;
+
+	if (getdtablecount() + reserve + *counter >= getdtablesize()) {
+		errno = EMFILE;
+		return (-1);
+	}
+
+	if ((fd = accept4(sockfd, addr, addrlen, flags)) != -1) {
+		(*counter)++;
+		DPRINTF("%s: inflight incremented, now %d",__func__, *counter);
+	}
+
+	return (fd);
 }
 
 in_port_t

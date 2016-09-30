@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.4 2016/09/29 17:03:00 reyk Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.5 2016/09/30 11:57:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2016 Reyk Floeter <reyk@openbsd.org>
@@ -204,6 +204,15 @@ ibuf_setsize(struct ibuf *buf, size_t len)
 	if (len > buf->size)
 		return (-1);
 	buf->wpos = len;
+	return (0);
+}
+
+int
+ibuf_setmax(struct ibuf *buf, size_t len)
+{
+	if (len > buf->size)
+		return (-1);
+	buf->max = len;
 	return (0);
 }
 

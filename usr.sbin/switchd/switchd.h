@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.10 2016/09/29 20:46:06 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.11 2016/09/30 11:57:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -68,23 +68,36 @@ RB_HEAD(switch_head, switch_control);
 
 struct switch_connection {
 	unsigned int		 con_id;
+	unsigned int		 con_instance;
+
 	int			 con_fd;
+	int			 con_inflight;
+
 	struct sockaddr_storage	 con_peer;
 	struct sockaddr_storage	 con_local;
-	struct switch_control	*con_switch;
 	in_port_t		 con_port;
-	struct event		 con_ev;
-	struct switchd		*con_sc;
 	uint32_t		 con_xidnxt;
+
+	struct event		 con_ev;
+	struct ibuf		*con_rbuf;
+	struct ibuf		*con_ibuf;
+	struct msgbuf		 con_wbuf;
+
+	struct switch_control	*con_switch;
+	struct switchd		*con_sc;
+	struct switch_server	*con_srv;
+
 	TAILQ_ENTRY(switch_connection)
-				 con_next;
+				 con_entry;
 };
+TAILQ_HEAD(switch_connections, switch_connection);
 
 struct switch_server {
 	int			 srv_fd;
 	int			 srv_tls;
 	struct sockaddr_storage	 srv_addr;
 	struct event		 srv_ev;
+	struct event		 srv_evt;
 	struct switchd		*srv_sc;
 };
 
@@ -99,6 +112,7 @@ struct switch_device {
 	TAILQ_ENTRY(switch_device)
 				 sdv_next;
 };
+TAILQ_HEAD(switch_devices, switch_device);
 
 struct switchd {
 	struct privsep		 sc_ps;
@@ -110,7 +124,8 @@ struct switchd {
 	unsigned int		 sc_cache_timeout;
 	char			 sc_conffile[PATH_MAX];
 	uint8_t			 sc_opts;
-	TAILQ_HEAD(, switch_device)
+	struct switch_devices	 sc_devs;
+	struct switch_connections
 				 sc_conns;
 };
 
@@ -132,6 +147,10 @@ int		 switchd_listen(struct sockaddr *);
 int		 switchd_sockaddr(const char *, in_port_t, struct sockaddr_storage *);
 int		 switchd_tap(void);
 int		 switchd_open_device(struct privsep *, const char *, size_t);
+struct switch_connection *
+		 switchd_connbyid(struct switchd *, unsigned int, unsigned int);
+struct switch_connection *
+		 switchd_connbyaddr(struct switchd *, struct sockaddr *);
 
 /* packet.c */
 int		 packet_input(struct switchd *, struct switch_control *,
@@ -161,6 +180,8 @@ void		 timer_del(struct switchd *, struct timer *);
 
 /* util.c */
 void		 socket_set_blockmode(int, enum blockmodes);
+int		 accept4_reserve(int, struct sockaddr *, socklen_t *,
+		    int, int, volatile int *);
 in_port_t	 socket_getport(struct sockaddr_storage *);
 int		 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);
 struct in6_addr *prefixlen2mask6(uint8_t, uint32_t *);
@@ -177,16 +198,24 @@ void		 print_hex(uint8_t *, off_t, size_t);
 void		 getmonotime(struct timeval *);
 int		 parsehostport(const char *, struct sockaddr *, socklen_t);
 
+/* ofrelay.c */
+void		 ofrelay(struct privsep *, struct privsep_proc *);
+void		 ofrelay_run(struct privsep *, struct privsep_proc *, void *);
+int		 ofrelay_attach(struct switch_server *, int,
+		    struct sockaddr *);
+void		 ofrelay_close(struct switch_connection *);
+
 /* ofp.c */
 void		 ofp(struct privsep *, struct privsep_proc *);
 void		 ofp_close(struct switch_connection *);
-void		 ofp_read(int, short, void *);
+int		 ofp_open(struct privsep *, struct switch_connection *);
 int		 ofp_output(struct switch_connection *, struct ofp_header *,
 		    struct ibuf *);
 void		 ofp_accept(int, short, void *);
 int		 ofp_validate_header(struct switchd *,
 		    struct sockaddr_storage *, struct sockaddr_storage *,
 		    struct ofp_header *, uint8_t);
+int		 ofp_input(struct switch_connection *, struct ibuf *);
 
 /* ofp10.c */
 int		 ofp10_hello(struct switchd *, struct switch_connection *,
@@ -212,6 +241,7 @@ int		 ibuf_cat(struct ibuf *, struct ibuf *);
 void		 ibuf_release(struct ibuf *);
 size_t		 ibuf_length(struct ibuf *);
 int		 ibuf_setsize(struct ibuf *, size_t);
+int		 ibuf_setmax(struct ibuf *, size_t);
 uint8_t		*ibuf_data(struct ibuf *);
 void		*ibuf_getdata(struct ibuf *, size_t);
 ssize_t		 ibuf_dataleft(struct ibuf *);

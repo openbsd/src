@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.15 2016/09/29 18:25:54 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.16 2016/09/30 11:57:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -595,12 +595,15 @@ ofp13_input(struct switchd *sc, struct switch_connection *con,
 		return (-1);
 
 	if (ofp13_callbacks[oh->oh_type].cb == NULL) {
-		log_debug("message not supported: %s",
+		log_debug("%s: message not supported: %s", __func__,
 		    print_map(oh->oh_type, ofp_t_map));
 		return (-1);
 	}
-	if (ofp13_callbacks[oh->oh_type].cb(sc, con, oh, ibuf) != 0)
+	if (ofp13_callbacks[oh->oh_type].cb(sc, con, oh, ibuf) != 0) {
+		log_debug("%s: message parsing failed: %s", __func__,
+		    print_map(oh->oh_type, ofp_t_map));
 		return (-1);
+	}
 
 	return (0);
 }
@@ -611,7 +614,6 @@ ofp13_hello(struct switchd *sc, struct switch_connection *con,
 {
 	if (switch_add(con) == NULL) {
 		log_debug("%s: failed to add switch", __func__);
-		ofp_close(con);
 		return (-1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.11 2016/09/25 23:05:29 jsg Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.12 2016/09/30 11:57:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -51,9 +51,9 @@ int	 switch_device_cmp(struct switch_device *, struct switch_device *);
 __dead void	usage(void);
 
 static struct privsep_proc procs[] = {
-	{ "ofp",	PROC_OFP, NULL, ofp },
-	{ "control",	PROC_CONTROL, parent_dispatch_control, control },
-	{ "ofcconn",	PROC_OFCCONN, NULL, ofcconn }
+	{ "ofp",	PROC_OFP,	NULL, ofp },
+	{ "control",	PROC_CONTROL,	parent_dispatch_control, control },
+	{ "ofcconn",	PROC_OFCCONN,	NULL, ofcconn }
 };
 
 __dead void
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 	ps = &sc->sc_ps;
 	ps->ps_env = sc;
 	TAILQ_INIT(&ps->ps_rcsocks);
-	TAILQ_INIT(&sc->sc_conns);
+	TAILQ_INIT(&sc->sc_devs);
 
 	if (parse_config(sc->sc_conffile, sc) == -1) {
 		proc_kill(&sc->sc_ps);
@@ -296,6 +296,33 @@ switchd_tap(void)
 }
 
 
+struct switch_connection *
+switchd_connbyid(struct switchd *sc, unsigned int id, unsigned int instance)
+{
+	struct switch_connection	*con;
+
+	TAILQ_FOREACH(con, &sc->sc_conns, con_entry) {
+		if (con->con_id == id && con->con_instance == instance)
+			return (con);
+	}
+
+	return (NULL);
+}
+
+struct switch_connection *
+switchd_connbyaddr(struct switchd *sc, struct sockaddr *sa)
+{
+	struct switch_connection	*con;
+
+	TAILQ_FOREACH(con, &sc->sc_conns, con_entry) {
+		if (sockaddr_cmp((struct sockaddr *)
+		    &con->con_peer, sa, -1) == 0)
+			return (con);
+	}
+
+	return (NULL);
+}
+
 void
 parent_sig_handler(int sig, short event, void *arg)
 {
@@ -330,8 +357,14 @@ int
 parent_configure(struct switchd *sc)
 {
 	struct switch_device	*c;
+	int			 fd;
 
-	TAILQ_FOREACH(c, &sc->sc_conns, sdv_next) {
+	if ((fd = switchd_tap()) == -1)
+		fatal("%s: tap", __func__);
+	proc_compose_imsg(&sc->sc_ps, PROC_OFP, -1,
+	    IMSG_TAPFD, -1, fd, NULL, 0);
+
+	TAILQ_FOREACH(c, &sc->sc_devs, sdv_next) {
 		parent_device_connect(&sc->sc_ps, c);
 	}
 
@@ -346,20 +379,21 @@ parent_reload(struct switchd *sc)
 	enum privsep_procid		 procid;
 
 	memset(&newconf, 0, sizeof(newconf));
+	TAILQ_INIT(&newconf.sc_devs);
 	TAILQ_INIT(&newconf.sc_conns);
 
 	if (parse_config(sc->sc_conffile, &newconf) != -1) {
-		TAILQ_FOREACH_SAFE(sdv, &sc->sc_conns, sdv_next, sdvn) {
-			TAILQ_FOREACH(osdv, &newconf.sc_conns, sdv_next) {
+		TAILQ_FOREACH_SAFE(sdv, &sc->sc_devs, sdv_next, sdvn) {
+			TAILQ_FOREACH(osdv, &newconf.sc_devs, sdv_next) {
 				if (switch_device_cmp(osdv, sdv) == 0) {
-					TAILQ_REMOVE(&newconf.sc_conns,
+					TAILQ_REMOVE(&newconf.sc_devs,
 					    osdv, sdv_next);
 					break;
 				}
 			}
 			if (osdv == NULL) {
 				/* Removed */
-				TAILQ_REMOVE(&sc->sc_conns, sdv, sdv_next);
+				TAILQ_REMOVE(&sc->sc_devs, sdv, sdv_next);
 				procid = (sdv->sdv_swc.swc_type ==
 				    SWITCH_CONN_LOCAL)
 				    ? PROC_OFP : PROC_OFCCONN;
@@ -368,15 +402,15 @@ parent_reload(struct switchd *sc)
 				    -1, -1, sdv, sizeof(*sdv));
 			} else {
 				/* Keep the existing one */
-				TAILQ_REMOVE(&newconf.sc_conns, osdv, sdv_next);
+				TAILQ_REMOVE(&newconf.sc_devs, osdv, sdv_next);
 				free(osdv);
 			}
 		}
-		TAILQ_FOREACH(sdv, &newconf.sc_conns, sdv_next) {
+		TAILQ_FOREACH(sdv, &newconf.sc_devs, sdv_next) {
 			procid =
 			    (sdv->sdv_swc.swc_type == SWITCH_CONN_LOCAL)
 			    ? PROC_OFP : PROC_OFCCONN;
-			TAILQ_INSERT_TAIL(&sc->sc_conns, sdv, sdv_next);
+			TAILQ_INSERT_TAIL(&sc->sc_devs, sdv, sdv_next);
 			parent_device_connect(&sc->sc_ps, sdv);
 		}
 	}
