@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.181 2016/09/27 23:58:38 czarkoff Exp $
+.\"	$OpenBSD: ksh.1,v 1.182 2016/09/30 17:02:55 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: September 27 2016 $
+.Dd $Mdocdate: September 30 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -4717,7 +4717,6 @@ offer a selection of signal names for the first argument to
 .Xr kill 1 :
 .Pp
 .Dl set -A complete_kill_1 -- -9 -HUP -INFO -KILL -TERM
-.Pp
 .It complete-command: ^X^[
 Automatically completes as much as is unique of the command name having the
 partial word up to the cursor as its prefix, as in the
