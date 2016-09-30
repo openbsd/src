@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.30 2016/09/27 22:03:49 deraadt Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.31 2016/09/30 12:07:23 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -82,31 +83,82 @@ struct nameint kbdvar_tab[] = {
 
 extern char *__progname;
 
-void	kbd_show_enc(int idx);
+void	kbd_show_enc(struct wskbd_encoding_data *encs, int idx);
+void	kbd_get_encs(int fd, struct wskbd_encoding_data *encs);
 void	kbd_list(void);
 void	kbd_set(char *name, int verbose);
 
 void
-kbd_show_enc(int idx)
+kbd_show_enc(struct wskbd_encoding_data *encs, int idx)
 {
+	int found;
+	kbd_t encoding, variant;
+	struct nameint *n;
 	int i;
 
 	printf("tables available for %s keyboard:\nencoding\n\n",
 	    kbtype_tab[idx]);
 
-	for (i = 0; kbdenc_tab[i].value; i++)
-		printf("%s\n", kbdenc_tab[i].name);
+	for (i = 0; i < encs->nencodings; i++) {
+		n = &kbdenc_tab[0];
+		found = 0;
+		encoding = encs->encodings[i];
+		while (n->value) {
+			if (n->value == KB_ENCODING(encoding)) {
+				printf("%s", n->name);
+				found++;
+			}
+			n++;
+		}
+		if (found == 0)
+			printf("<encoding 0x%04x>", KB_ENCODING(encoding));
+		n = &kbdvar_tab[0];
+		found = 0;
+		variant = KB_VARIANT(encoding);
+		while (n->value) {
+			if ((n->value & KB_VARIANT(encoding)) == n->value) {
+				printf(".%s", n->name);
+				variant &= ~n->value;
+			}
+			n++;
+		}
+		if (variant != 0)
+			printf(".<variant 0x%08x>", variant);
+		printf("\n");
+	}
 	printf("\n");
+}
+
+void
+kbd_get_encs(int fd, struct wskbd_encoding_data *encs)
+{
+	int nencodings = 64;
+
+	encs->nencodings = nencodings;
+	while (encs->nencodings == nencodings) {
+		encs->encodings = reallocarray(encs->encodings,
+		    encs->nencodings, sizeof(kbd_t));
+		if (encs->encodings == NULL)
+			err(1, NULL);
+		if (ioctl(fd, WSKBDIO_GETENCODINGS, encs) < 0)
+			err(1, "WSKBDIO_GETENCODINGS");
+		if (encs->nencodings == nencodings) {
+			nencodings *= 2;
+			encs->nencodings = nencodings;
+		}
+	}
 }
 
 void
 kbd_list(void)
 {
 	int	kbds[SA_MAX];
-	int	fd, i, kbtype;
+	struct wskbd_encoding_data encs[SA_MAX];
+	int	fd, i, kbtype, t;
 	char	device[PATH_MAX];
 
-	bzero(kbds, sizeof(kbds));
+	memset(kbds, 0, sizeof(kbds));
+	memset(encs, 0, sizeof(encs));
 
 	/* Go through all keyboards. */
 	for (i = 0; i < NUM_KBD; i++) {
@@ -120,41 +172,53 @@ kbd_list(void)
 			switch (kbtype) {
 			case WSKBD_TYPE_PC_XT:
 			case WSKBD_TYPE_PC_AT:
-				kbds[SA_PCKBD]++;
+				t = SA_PCKBD;
 				break;
 			case WSKBD_TYPE_USB:
-				kbds[SA_UKBD]++;
+				t = SA_UKBD;
 				break;
 			case WSKBD_TYPE_ADB:
-				kbds[SA_AKBD]++;
+				t = SA_AKBD;
 				break;
 			case WSKBD_TYPE_LK201:
 			case WSKBD_TYPE_LK401:
-				kbds[SA_LKKBD]++;
+				t = SA_LKKBD;
 				break;
 			case WSKBD_TYPE_SUN:
-				kbds[SA_SUNKBD]++;
+				t = SA_SUNKBD;
 				break;
 			case WSKBD_TYPE_SUN5:
-				kbds[SA_SUN5KBD]++;
+				t = SA_SUN5KBD;
 				break;
 			case WSKBD_TYPE_HIL:
-				kbds[SA_HILKBD]++;
+				t = SA_HILKBD;
 				break;
 			case WSKBD_TYPE_GSC:
-				kbds[SA_GSCKBD]++;
+				t = SA_GSCKBD;
 				break;
 			case WSKBD_TYPE_SGI:
-				kbds[SA_SGIKBD]++;
+				t = SA_SGIKBD;
+				break;
+			default:
+				t = SA_MAX;
 				break;
 			};
+
+			if (t != SA_MAX) {
+				kbds[t]++;
+				if (encs[t].encodings == NULL)
+					kbd_get_encs(fd, &encs[t]);
+			}
 			close(fd);
 		}
 	}
 
 	for (i = 0; i < SA_MAX; i++)
 		if (kbds[i] != 0)
-			kbd_show_enc(i);
+			kbd_show_enc(&encs[i], i);
+
+	for (i = 0; i < SA_MAX; i++)
+		free(encs[i].encodings);
 }
 
 void
