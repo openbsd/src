@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrelay.c,v 1.1 2016/09/30 11:57:57 reyk Exp $	*/
+/*	$OpenBSD: ofrelay.c,v 1.2 2016/09/30 12:33:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -265,6 +265,17 @@ ofrelay_read(struct ibuf *rbuf, void *buf, size_t size)
 	return ((ssize_t)len);
 }
 
+void
+ofrelay_write(struct switch_connection *con, struct ibuf *buf)
+{
+	ibuf_close(&con->con_wbuf, buf);
+
+	event_del(&con->con_ev);
+	event_set(&con->con_ev, con->con_fd, EV_READ|EV_WRITE,
+	    ofrelay_event, con);
+	event_add(&con->con_ev, NULL);
+}
+
 void *
 ofrelay_input_open(struct switch_connection *con,
     struct ibuf *buf, ssize_t *len)
@@ -351,16 +362,19 @@ ofrelay_output(int fd, short event, void *arg)
 	size_t				 len;
 	void				*base;
 
-	if (!wbuf->queued)
-		return (0);
-
 	/*
 	 * Only write one packet at a time, this is currently needed
 	 * for switch(4) and other OpenFlow implementations that do
 	 * not handle multiple openflow packets in a single buffer.
 	 */
-	if ((buf = TAILQ_FIRST(&wbuf->bufs)) == NULL)
+	if (!wbuf->queued ||
+	    (buf = TAILQ_FIRST(&wbuf->bufs)) == NULL) {
+		event_del(&con->con_ev);
+		event_set(&con->con_ev, con->con_fd, EV_READ,
+		    ofrelay_event, con);
+		event_add(&con->con_ev, NULL);
 		return (0);
+	}
 
 	base = buf->buf + buf->rpos;
 	len = buf->wpos - buf->rpos;
@@ -488,8 +502,7 @@ ofrelay_attach(struct switch_server *srv, int s, struct sockaddr *sa)
 	con->con_wbuf.fd = s;
 
 	memset(&con->con_ev, 0, sizeof(con->con_ev));
-	event_set(&con->con_ev, con->con_fd, EV_READ|EV_WRITE,
-	    ofrelay_event, con);
+	event_set(&con->con_ev, con->con_fd, EV_READ, ofrelay_event, con);
 	event_add(&con->con_ev, NULL);
 
 	ret = ofp_open(ps, con);

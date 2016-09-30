@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.11 2016/09/30 11:57:57 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.12 2016/09/30 12:33:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -204,6 +204,7 @@ void		 ofrelay_run(struct privsep *, struct privsep_proc *, void *);
 int		 ofrelay_attach(struct switch_server *, int,
 		    struct sockaddr *);
 void		 ofrelay_close(struct switch_connection *);
+void		 ofrelay_write(struct switch_connection *, struct ibuf *);
 
 /* ofp.c */
 void		 ofp(struct privsep *, struct privsep_proc *);
