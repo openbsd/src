@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.83 2015/12/12 12:30:18 jung Exp $ */
+/* $OpenBSD: wskbd.c,v 1.84 2016/09/30 12:05:46 kettenis Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1001,9 +1001,11 @@ wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
 	struct wskbd_bell_data *ubdp, *kbdp;
 	struct wskbd_keyrepeat_data *ukdp, *kkdp;
 	struct wskbd_map_data *umdp;
+	struct wskbd_encoding_data *uedp;
 	kbd_t enc;
 	void *buf;
 	int len, error;
+	int count, i;
 
 	switch (cmd) {
 	case WSKBDIO_BELL:
@@ -1158,6 +1160,20 @@ getkeyrepeat:
 		if (sc->sc_base.me_parent != NULL)
 			wsmux_set_layout(sc->sc_base.me_parent, enc);
 #endif
+		return (0);
+
+	case WSKBDIO_GETENCODINGS:
+		uedp = (struct wskbd_encoding_data *)data;
+		for (count = 0; sc->id->t_keymap.keydesc[count].name; count++)
+			;
+		if (uedp->nencodings > count)
+			uedp->nencodings = count;
+		for (i = 0; i < uedp->nencodings; i++) {
+			error = copyout(&sc->id->t_keymap.keydesc[i].name,
+			    &uedp->encodings[i], sizeof(kbd_t));
+			if (error)
+				return (error);
+		}
 		return (0);
 
 	case WSKBDIO_GETBACKLIGHT:

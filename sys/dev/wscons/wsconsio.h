@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.75 2016/09/14 03:25:51 jcs Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.76 2016/09/30 12:05:46 kettenis Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -206,6 +206,12 @@ struct wskbd_backlight {
 #define WSKBDIO_GETMODE		_IOR('W', 20, int)
 #define		WSKBD_TRANSLATED	0
 #define		WSKBD_RAW		1
+
+struct wskbd_encoding_data {
+	int	nencodings;
+	kbd_t	*encodings;
+};
+#define WSKBDIO_GETENCODINGS	_IOWR('W', 21, struct wskbd_encoding_data)
 
 /*
  * Mouse ioctls (32 - 63)
