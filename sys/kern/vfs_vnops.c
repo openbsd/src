@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.86 2016/09/30 10:53:11 jca Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.87 2016/09/30 10:55:22 jca Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ int
 vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	struct vnode *vp = fp->f_data;
-	int error = 0;
+	int error;
 	size_t count = uio->uio_resid;
 	struct proc *p = uio->uio_procp;
 
