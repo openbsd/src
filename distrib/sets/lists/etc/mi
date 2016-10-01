@@ -1,6 +1,5 @@
 ./.cshrc
 ./.profile
-./etc/acme
 ./etc/acme-client.conf
 ./etc/changelist
 ./etc/dumpdates
@@ -40,8 +39,6 @@
 ./etc/spwd.db
 ./etc/ssh/ssh_config
 ./etc/ssh/sshd_config
-./etc/ssl/acme
-./etc/ssl/acme/private
 ./etc/ssl/cert.pem
 ./etc/ssl/ikeca.cnf
 ./etc/ssl/openssl.cnf
@@ -74,7 +71,6 @@
 ./var/nsd/etc/nsd.conf
 ./var/sysmerge/etcsum
 ./var/unbound/etc/unbound.conf
-./var/www/acme
 ./var/www/conf/bgplg.css
 ./var/www/conf/bgplg.foot
 ./var/www/conf/bgplg.head

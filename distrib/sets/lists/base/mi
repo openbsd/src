@@ -44,6 +44,7 @@
 ./dev
 ./dev/MAKEDEV
 ./etc
+./etc/acme
 ./etc/amd
 ./etc/amd/master.sample
 ./etc/authpf
@@ -221,6 +222,8 @@
 ./etc/skel/.ssh
 ./etc/ssh
 ./etc/ssl
+./etc/ssl/acme
+./etc/ssl/acme/private
 ./etc/ssl/lib
 ./etc/ssl/private
 ./etc/termcap
@@ -7296,6 +7299,7 @@
 ./var/unbound/db
 ./var/unbound/etc
 ./var/www
+./var/www/acme
 ./var/www/bin
 ./var/www/bin/bgpctl
 ./var/www/bin/ping
