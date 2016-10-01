@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.10 2016/07/23 16:22:17 jsg Exp $
+dnl	$OpenBSD: prep,v 1.11 2016/10/01 01:33:20 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -52,3 +52,36 @@ script.
 	=> bootefi ${kernel_addr_r} ${fdt_addr_r}
 The bootloader will then run and try to load sd0a:/bsd off an FFS
 filesystem after a timeout.
+
+Install on systems without a supported miniroot:
+
+  If a miniroot is not available for your system you will have to modify
+  an existing image before booting it.
+
+  To do so first install the u-boot and dtb packages.  Write one of the
+  provided miniroot images to an SD card:
+
+ 	dd if=miniroot-beagle-{:--:}OSrev.fs of=/dev/rsdXc
+
+  Add a board specific DTB file:
+
+ 	mount /dev/sdXi /mnt
+ 	cp /usr/local/share/dtb/arm/board.dtb /mnt/
+ 	umount /mnt
+
+  For systems based on Texas Instruments OMAP and AMxxxx SoCs:
+
+ 	mount /dev/sdXi /mnt
+ 	cp /usr/local/share/u-boot/board/{MLO,u-boot.img} /mnt/
+ 	umount /mnt
+
+  For systems based on Freescale/NXP i.MX SoCs:
+
+ 	dd if=/usr/local/share/u-boot/board/SPL of=/dev/rsdXc bs=1024 seek=1
+ 	dd if=/usr/local/share/u-boot/board/u-boot.img \
+ 	    of=/dev/rsdXc bs=1024 seek=69
+
+  For systems based on Allwinner Axx Socs:
+
+ 	dd if=/usr/local/share/u-boot/board/u-boot-sunxi-with-spl.bin \
+ 	    of=/dev/rsdXc bs=1024 seek=8
