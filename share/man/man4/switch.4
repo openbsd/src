@@ -1,4 +1,4 @@
-.\"	$OpenBSD: switch.4,v 1.4 2016/09/20 10:04:07 sthen Exp $
+.\"	$OpenBSD: switch.4,v 1.5 2016/10/01 18:04:25 jmc Exp $
 .\"
 .\" Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 20 2016 $
+.Dd $Mdocdate: October 1 2016 $
 .Dt SWITCH 4
 .Os
 .Sh NAME
@@ -32,11 +32,12 @@
 The
 .Nm
 driver provides a network interface pseudo-device.
-The interface is the forwarding part of a network switch,
-and it works along with a controller which usually is
+The interface is the forwarding part of a network switch
+and it works along with a controller, usually
 .Xr switchd 8
 or
-.Xr switchctl 8 through the device
+.Xr switchctl 8 ,
+through the device
 .Pa /dev/switchN .
 The
 .Nm
@@ -45,7 +46,7 @@ device and the controller communicate using the OpenFlow
 .Pp
 A
 .Nm
-interface is created using the
+interface is created using
 .Ic ifconfig switch Ns Ar N Ic create
 or by opening the character device
 .Pa /dev/switchN .
@@ -56,12 +57,12 @@ is the OpenFlow channel of the interface
 It is used for exchanging OpenFlow messages.
 The device guarantees
 .Xr read 2
-returns a complete OpenFlow message - it never return a message partially.
-The program which uses the
+returns a complete OpenFlow message - it never returns a partial message.
+Any programs using
 .Pa /dev/switchN
 must
 .Xr write 2
-per a complete OpenFlow message.
+a complete OpenFlow message.
 .Sh IOCTLS
 A
 .Nm
@@ -72,10 +73,10 @@ calls specific to other interfaces listed in
 .Pp
 The following
 .Xr ioctl 2
-calls are used commonly by
+calls and their structures are commonly used by
 .Nm
 and
-.Xr bridge 4 .
+.Xr bridge 4 :
 .Pp
 .Bl -bullet -offset indent -compact
 .It
@@ -87,11 +88,6 @@ and
 .It
 .Dv SIOCBRDGGIFFLGS
 .El
-.Pp
-Also the parameter structures are used commonly by
-.Nm
-and
-.Xr bridge 4 .
 .Pp
 The following
 .Xr ioctl 2
