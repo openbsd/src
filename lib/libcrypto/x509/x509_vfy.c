@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.49 2016/03/11 07:08:45 mmcc Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.50 2016/10/02 20:45:04 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1658,7 +1658,8 @@ X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 
 	memset(&tm1, 0, sizeof(tm1));
 
-	if ((type = asn1_time_parse(ctm->data, ctm->length, &tm1, 0)) == -1)
+	type = asn1_time_parse(ctm->data, ctm->length, &tm1, ctm->type);
+	if (type == -1)
 		goto out; /* invalid time */
 
 	/* RFC 5280 section 4.1.2.5 */
