@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctf.h,v 1.1 2016/09/17 17:45:37 jasper Exp $	*/
+/*	$OpenBSD: ctf.h,v 1.2 2016/10/02 08:08:11 jasper Exp $	*/
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -131,6 +131,8 @@ struct ctf_enum {
 #define _CTF_ENCODING(e)	(((e) & 0xff000000) >> 24)
 #define _CTF_OFFSET(e)		(((e) & 0x00ff0000) >> 16)
 #define _CTF_BITS(e)		(((e) & 0x0000ffff))
+#define _CTF_DATA(encoding, offset, bits) \
+	(((encoding) << 24) | ((offset) << 16) | (bits))
 
 #define CTF_INT_ENCODING(e)	_CTF_ENCODING(e)
 #define  CTF_INT_SIGNED		(1 << 0)
@@ -139,6 +141,7 @@ struct ctf_enum {
 #define  CTF_INT_VARARGS	(1 << 3)
 #define CTF_INT_OFFSET(e)	_CTF_OFFSET(e)
 #define CTF_INT_BITS(e)		_CTF_BITS(e)
+#define CTF_INT_DATA(e, o, b)	_CTF_DATA(e, o, b)
 
 #define CTF_FP_ENCODING(e)	_CTF_ENCODING(e)
 #define  CTF_FP_SINGLE		1
@@ -155,6 +158,7 @@ struct ctf_enum {
 #define  CTF_FP_LDIMAGRY	12
 #define CTF_FP_OFFSET(e)	_CTF_OFFSET(e)
 #define CTF_FP_BITS(e)		_CTF_BITS(e)
+#define CTF_FP_DATA(e, o, b)	_CTF_DATA(e, o, b)
 
 /*
  * Name reference macro.
