@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_udf.c,v 1.9 2014/12/16 03:21:10 tedu Exp $	*/
+/*	$OpenBSD: kvm_udf.c,v 1.10 2016/10/02 23:11:55 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -95,6 +95,7 @@ _kvm_stat_udf(kvm_t *kd, struct kinfo_file *kf, struct vnode *vp)
 	kf->va_fileid = (long)up.u_ino;
 	kf->va_mode = udf_permtomode(&up); /* XXX */
 	kf->va_rdev = 0;
+	kf->va_nlink = letoh16(fentry.link_cnt);
 	if (vp->v_type & VDIR) {
 		/*
 		 * Directories that are recorded within their ICB will show

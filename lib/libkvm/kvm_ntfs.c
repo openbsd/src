@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_ntfs.c,v 1.4 2013/11/16 00:37:11 guenther Exp $	*/
+/*	$OpenBSD: kvm_ntfs.c,v 1.5 2016/10/02 23:11:55 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ _kvm_stat_ntfs(kvm_t *kd, struct kinfo_file *kf, struct vnode *vp)
 	kf->va_mode = (mode_t)ntm.ntm_mode | _kvm_getftype(vp->v_type);
 	kf->va_size = fn.f_size;
 	kf->va_rdev = 0;  /* XXX */
+	kf->va_nlink = 1;
 
 	return (0);
 }

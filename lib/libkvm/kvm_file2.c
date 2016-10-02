@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.49 2016/05/04 01:28:42 zhuk Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.50 2016/10/02 23:11:55 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -798,6 +798,7 @@ ufs_filestat(kvm_t *kd, struct kinfo_file *kf, struct vnode *vp)
 	kf->va_mode = inode.i_ffs1_mode;
 	kf->va_size = inode.i_ffs1_size;
 	kf->va_rdev = inode.i_ffs1_rdev;
+	kf->va_nlink = inode.i_ffs1_nlink;
 
 	return (0);
 }
@@ -826,6 +827,7 @@ ext2fs_filestat(kvm_t *kd, struct kinfo_file *kf, struct vnode *vp)
 	kf->va_mode = inode.i_e2fs_mode;
 	kf->va_size = inode.i_e2fs_size;
 	kf->va_rdev = 0;	/* XXX */
+	kf->va_nlink = inode.i_e2fs_nlink;
 
 	return (0);
 }
@@ -851,6 +853,7 @@ msdos_filestat(kvm_t *kd, struct kinfo_file *kf, struct vnode *vp)
 	kf->va_mode = (mp.pm_mask & 0777) | _kvm_getftype(vp->v_type);
 	kf->va_size = de.de_FileSize;
 	kf->va_rdev = 0;  /* msdosfs doesn't support device files */
+	kf->va_nlink = 1;
 
 	return (0);
 }
@@ -870,6 +873,7 @@ nfs_filestat(kvm_t *kd, struct kinfo_file *kf, struct vnode *vp)
 	kf->va_size = nfsnode.n_size;
 	kf->va_rdev = nfsnode.n_vattr.va_rdev;
 	kf->va_mode = (mode_t)nfsnode.n_vattr.va_mode | _kvm_getftype(vp->v_type);
+	kf->va_nlink = nfsnode.n_vattr.va_nlink;
 
 	return (0);
 }

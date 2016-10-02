@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.312 2016/09/25 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.313 2016/10/02 23:11:55 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1065,6 +1065,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 			kf->va_size = va.va_size;
 			kf->va_rdev = va.va_rdev;
 			kf->va_fsid = va.va_fsid & 0xffffffff;
+			kf->va_nlink = va.va_nlink;
 		}
 		break;
 

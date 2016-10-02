@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.167 2016/09/25 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.168 2016/10/02 23:11:55 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -748,6 +748,8 @@ struct kinfo_file {
 	uint64_t	t_rcv_wnd;	/* ULONG: tcp receive window */
 	uint64_t	t_snd_wnd;	/* ULONG: tcp send window */
 	uint64_t	t_snd_cwnd;	/* ULONG: congestion-controlled win */
+
+	uint32_t	va_nlink;	/* NLINK_T: number of references to file */
 };
 
 /*
