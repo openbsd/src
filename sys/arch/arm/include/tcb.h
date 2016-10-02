@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.2 2016/09/24 21:02:31 patrick Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.3 2016/10/02 20:11:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -51,8 +51,7 @@ __arm_read_tcb(void)
 	return tcb;
 }
 
-#define TCB_GET(p)		\
-	__arm_read_tcb()
+#define TCB_GET()		__arm_read_tcb()
 
 #endif /* _KERNEL */
 
