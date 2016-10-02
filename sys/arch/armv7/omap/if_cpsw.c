@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.40 2016/08/12 03:22:41 jsg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.41 2016/10/02 23:38:32 jsg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -444,7 +444,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	    CPSW_SS_IDVER_RTL(idver), ether_sprintf(ac->ac_enaddr));
 
 	ifp->if_softc = sc;
-	ifp->if_capabilities = 0;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = cpsw_start;
 	ifp->if_ioctl = cpsw_ioctl;
