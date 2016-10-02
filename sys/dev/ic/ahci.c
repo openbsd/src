@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.27 2016/10/02 18:54:02 patrick Exp $ */
+/*	$OpenBSD: ahci.c,v 1.28 2016/10/02 18:56:05 patrick Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1313,6 +1313,7 @@ ahci_pmp_port_portreset(struct ahci_port *ap, int pmp_port)
 	DPRINTF(AHCI_D_VERBOSE, "%s.%d: PMP port reset\n", PORTNAME(ap),
 	    pmp_port);
 
+	/* Save previous command register state */
 	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
 
 	/* turn off power management and disable the PHY */
@@ -1390,6 +1391,8 @@ ahci_pmp_port_portreset(struct ahci_port *ap, int pmp_port)
 
 	rc = 0;
 err:
+	/* Restore preserved port state */
+	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
 	splx(s);
 	return (rc);
 }
