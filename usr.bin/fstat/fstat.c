@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.88 2016/05/04 19:48:08 jca Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.89 2016/10/02 23:16:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -441,7 +441,9 @@ vtrans(struct kinfo_file *kf)
 		(void)snprintf(mode, sizeof(mode), "%o", kf->va_mode);
 	else
 		strmode(kf->va_mode, mode);
-	printf(" %8llu %11s", kf->va_fileid, mode);
+	printf(" %8llu%s %11s", kf->va_fileid,
+	    kf->va_nlink == 0 ? "*" : " ",
+	    mode);
 	rw[0] = '\0';
 	if (kf->f_flag & FREAD)
 		strlcat(rw, "r", sizeof rw);
