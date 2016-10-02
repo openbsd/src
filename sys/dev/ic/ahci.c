@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.25 2016/10/02 18:51:44 patrick Exp $ */
+/*	$OpenBSD: ahci.c,v 1.26 2016/10/02 18:53:28 patrick Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -253,6 +253,13 @@ ahci_attach(struct ahci_softc *sc)
 	}
 noccc:
 #endif
+	/*
+	 * Given that ahci_port_alloc() will grab one CCB for error recovery
+	 * in the NCQ case from the pool of CCBs sized based on sc->sc_ncmds
+	 * pretend at least 2 command slots for devices without NCQ support.
+	 * That way, also at least 1 slot is made available for atascsi(4).
+	 */
+	sc->sc_ncmds = max(2, sc->sc_ncmds);
 	for (i = 0; i < AHCI_MAX_PORTS; i++) {
 		if (!ISSET(pi, 1 << i)) {
 			/* dont allocate stuff if the port isnt implemented */
