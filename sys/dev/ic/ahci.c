@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.26 2016/10/02 18:53:28 patrick Exp $ */
+/*	$OpenBSD: ahci.c,v 1.27 2016/10/02 18:54:02 patrick Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -277,6 +277,7 @@ noccc:
 	aaa.aaa_nports = AHCI_MAX_PORTS;
 	aaa.aaa_ncmds = sc->sc_ncmds - 1;
 	if (!(sc->sc_flags & AHCI_F_NO_NCQ) &&
+	    sc->sc_ncmds > 2 &&
 	    (sc->sc_cap & AHCI_REG_CAP_SNCQ)) {
 		aaa.aaa_capability |= ASAA_CAP_NCQ | ASAA_CAP_PMP_NCQ;
 		/* XXX enabling ASAA_CAP_PMP_NCQ with FBS:
