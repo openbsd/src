@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.36 2015/11/02 14:55:41 mpi Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.37 2016/10/02 06:36:39 kettenis Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -130,6 +130,7 @@ struct ehci_softc {
 	int sc_flags;			/* misc flags */
 #define EHCIF_DROPPED_INTR_WORKAROUND	0x01
 #define EHCIF_PCB_INTR			0x02
+#define EHCIF_USBMODE			0x04
 
 	char sc_vendor[16];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */

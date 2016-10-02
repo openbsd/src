@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.193 2016/09/15 02:00:17 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.194 2016/10/02 06:36:39 kettenis Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1114,7 +1114,7 @@ ehci_activate(struct device *self, int act)
 usbd_status
 ehci_reset(struct ehci_softc *sc)
 {
-	u_int32_t hcr;
+	u_int32_t hcr, usbmode;
 	int i;
 
 	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
@@ -1128,6 +1128,9 @@ ehci_reset(struct ehci_softc *sc)
 	if (!hcr)
 		printf("%s: halt timeout\n", sc->sc_bus.bdev.dv_xname);
 
+	if (sc->sc_flags & EHCIF_USBMODE)
+		usbmode = EOREAD4(sc, EHCI_USBMODE);
+
 	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
 	for (i = 0; i < 100; i++) {
 		usb_delay_ms(&sc->sc_bus, 1);
@@ -1140,6 +1143,9 @@ ehci_reset(struct ehci_softc *sc)
 		printf("%s: reset timeout\n", sc->sc_bus.bdev.dv_xname);
 		return (USBD_IOERROR);
 	}
+
+	if (sc->sc_flags & EHCIF_USBMODE)
+		EOWRITE4(sc, EHCI_USBMODE, usbmode);
 
 	return (USBD_NORMAL_COMPLETION);
 }

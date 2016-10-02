@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.17 2016/08/13 11:08:58 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.18 2016/10/02 06:36:39 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -58,9 +58,6 @@
 /* ehci */
 #define USB_EHCI_OFFSET			0x100
 
-#define EHCI_USBMODE			0xa8
-
-#define EHCI_USBMODE_HOST		(3 << 0)
 #define EHCI_PS_PTS_UTMI_MASK	((1 << 25) | (3 << 30))
 
 /* usb non-core */
@@ -144,6 +141,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.iot = faa->fa_iot;
 	sc->sc.sc_bus.dmatag = faa->fa_dmat;
 	sc->sc.sc_size = faa->fa_reg[0].size - USB_EHCI_OFFSET;
+	sc->sc.sc_flags = EHCIF_USBMODE;
 
 	/* Map I/O space */
 	if (bus_space_map(sc->sc.iot, faa->fa_reg[0].addr,
@@ -247,8 +245,8 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	    USBPHY_CTRL_ENUTMILEVEL2 | USBPHY_CTRL_ENUTMILEVEL3);
 
 	/* set host mode */
-	EWRITE4(&sc->sc, EHCI_USBMODE,
-	    EREAD4(&sc->sc, EHCI_USBMODE) | EHCI_USBMODE_HOST);
+	EOWRITE4(&sc->sc, EHCI_USBMODE,
+	    EOREAD4(&sc->sc, EHCI_USBMODE) | EHCI_USBMODE_CM_HOST);
 
 	/* set to UTMI mode */
 	EOWRITE4(&sc->sc, EHCI_PORTSC(1),
