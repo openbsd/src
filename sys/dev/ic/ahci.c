@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.24 2016/03/10 13:56:14 krw Exp $ */
+/*	$OpenBSD: ahci.c,v 1.25 2016/10/02 18:51:44 patrick Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2610,7 +2610,7 @@ ahci_dmamem_alloc(struct ahci_softc *sc, size_t size)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &adm->adm_seg, nsegs, size,
-	    &adm->adm_kva, BUS_DMA_NOWAIT) != 0)
+	    &adm->adm_kva, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0)
 		goto free;
 
 	if (bus_dmamap_load(sc->sc_dmat, adm->adm_map, adm->adm_kva, size,
