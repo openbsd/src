@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.91 2016/10/02 21:05:44 guenther Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.92 2016/10/02 21:18:08 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2233,8 +2233,13 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	eticklen -= mlen;
 
 	/* Check HMAC of encrypted ticket */
-	HMAC_Update(&hctx, etick, eticklen);
-	HMAC_Final(&hctx, tick_hmac, NULL);
+	if (HMAC_Update(&hctx, etick, eticklen) <= 0 ||
+	    HMAC_Final(&hctx, tick_hmac, NULL) <= 0) {
+		HMAC_CTX_cleanup(&hctx);
+		EVP_CIPHER_CTX_cleanup(&ctx);
+		return -1;
+	}
+
 	HMAC_CTX_cleanup(&hctx);
 	if (timingsafe_memcmp(tick_hmac, etick + eticklen, mlen)) {
 		EVP_CIPHER_CTX_cleanup(&ctx);
@@ -2246,11 +2251,12 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
 	eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
 	sdec = malloc(eticklen);
-	if (!sdec) {
+	if (sdec == NULL ||
+	    EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
+		free(sdec);
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		return -1;
 	}
-	EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen);
 	if (EVP_DecryptFinal_ex(&ctx, sdec + slen, &mlen) <= 0) {
 		free(sdec);
 		EVP_CIPHER_CTX_cleanup(&ctx);
