@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.68 2016/09/25 14:58:00 fcambus Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.69 2016/10/03 12:16:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -19,6 +19,8 @@
 
 #ifndef SNMPD_H
 #define SNMPD_H
+
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
