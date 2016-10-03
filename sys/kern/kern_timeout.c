@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.49 2016/09/22 12:55:24 mpi Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.50 2016/10/03 11:54:29 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -375,6 +375,7 @@ softclock(void *arg)
 	int delta;
 	struct circq *bucket;
 	struct timeout *to;
+	int needsproc = 0;
 
 	mtx_enter(&timeout_mutex);
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
@@ -391,7 +392,7 @@ softclock(void *arg)
 			CIRCQ_INSERT(&to->to_list, bucket);
 		} else if (to->to_flags & TIMEOUT_NEEDPROCCTX) {
 			CIRCQ_INSERT(&to->to_list, &timeout_proc);
-			wakeup(&timeout_proc);
+			needsproc = 1;
 		} else {
 #ifdef DEBUG
 			if (delta < 0)
@@ -401,6 +402,9 @@ softclock(void *arg)
 		}
 	}
 	mtx_leave(&timeout_mutex);
+
+	if (needsproc)
+		wakeup(&timeout_proc);
 }
 
 void
@@ -415,6 +419,7 @@ softclock_thread(void *arg)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+	struct sleep_state sls;
 	struct timeout *to;
 
 	KERNEL_ASSERT_LOCKED();
@@ -427,16 +432,18 @@ softclock_thread(void *arg)
 	KASSERT(ci != NULL);
 	sched_peg_curproc(ci);
 
-	mtx_enter(&timeout_mutex);
 	for (;;) {
-		while (CIRCQ_EMPTY(&timeout_proc))
-			msleep(&timeout_proc, &timeout_mutex, PSWP, "bored", 0);
+		sleep_setup(&sls, &timeout_proc, PSWP, "bored");
+		sleep_finish(&sls, CIRCQ_EMPTY(&timeout_proc));
 
-		to = timeout_from_circq(CIRCQ_FIRST(&timeout_proc));
-		CIRCQ_REMOVE(&to->to_list);
-		timeout_run(to);
+		mtx_enter(&timeout_mutex);
+		while (!CIRCQ_EMPTY(&timeout_proc)) {
+			to = timeout_from_circq(CIRCQ_FIRST(&timeout_proc));
+			CIRCQ_REMOVE(&to->to_list);
+			timeout_run(to);
+		}
+		mtx_leave(&timeout_mutex);
 	}
-	mtx_leave(&timeout_mutex);
 }
 
 #ifndef SMALL_KERNEL
