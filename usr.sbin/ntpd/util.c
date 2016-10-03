@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.22 2016/09/14 13:20:16 rzalamena Exp $ */
+/*	$OpenBSD: util.c,v 1.23 2016/10/03 12:30:43 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -184,7 +185,11 @@ start_child(char *pname, int cfd, int argc, char **argv)
 		break;
 	case 0:
 		/* Prepare the parent socket and execute. */
-		dup2(cfd, PARENT_SOCK_FILENO);
+		if (cfd != PARENT_SOCK_FILENO) {
+			if (dup2(cfd, PARENT_SOCK_FILENO) == -1)
+				fatal("dup2");
+		} else if (fcntl(cfd, F_SETFD, 0) == -1)
+			fatal("fcntl");
 
 		execvp(argv[0], nargv);
 		fatal("%s: execvp", __func__);
