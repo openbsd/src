@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.52 2016/09/29 11:37:44 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.53 2016/10/03 12:26:13 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -398,6 +398,7 @@ struct bridge_iflist {
 	struct brl_head			bif_brlout;	/* output rules */
 	struct				ifnet *ifp;	/* member interface */
 	u_int32_t			bif_flags;	/* member flags */
+	void				*bif_dhcookie;
 };
 #define bif_state			bif_stp->bp_state
 
@@ -450,7 +451,6 @@ struct bridge_softc {
 extern const u_int8_t bstp_etheraddr[];
 struct llc;
 
-void	bridge_ifdetach(struct ifnet *);
 int	bridge_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
 void	bridge_update(struct ifnet *, struct ether_addr *, int);

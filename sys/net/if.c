@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.451 2016/09/28 08:31:42 rzalamena Exp $	*/
+/*	$OpenBSD: if.c,v 1.452 2016/10/03 12:26:13 rzalamena Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -894,12 +894,6 @@ if_deactivate(struct ifnet *ifp)
 	 * the hooks have to be added to the head!
 	 */
 	dohooks(ifp->if_detachhooks, HOOK_REMOVE | HOOK_FREE);
-
-#if NBRIDGE > 0
-	/* Remove the interface from any bridge it is part of.  */
-	if (ifp->if_bridgeport)
-		bridge_ifdetach(ifp);
-#endif
 
 #if NSWITCH > 0
 	if (ifp->if_switchport)

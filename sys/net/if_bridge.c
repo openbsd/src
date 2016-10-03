@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.285 2016/09/29 11:37:44 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.286 2016/10/03 12:26:13 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -106,6 +106,7 @@
 
 void	bridgeattach(int);
 int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
+void	bridge_ifdetach(void *);
 int	bridge_input(struct ifnet *, struct mbuf *, void *);
 void	bridge_process(struct ifnet *, struct mbuf *);
 void	bridgeintr_frame(struct bridge_softc *, struct ifnet *, struct mbuf *);
@@ -244,6 +245,7 @@ bridge_delete(struct bridge_softc *sc, struct bridge_iflist *p)
 
 	p->ifp->if_bridgeport = NULL;
 	error = ifpromisc(p->ifp, 0);
+	hook_disestablish(p->ifp->if_detachhooks, p->bif_dhcookie);
 
 	if_ih_remove(p->ifp, bridge_input, NULL);
 	TAILQ_REMOVE(&sc->sc_iflist, p, next);
@@ -356,6 +358,8 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		SIMPLEQ_INIT(&p->bif_brlin);
 		SIMPLEQ_INIT(&p->bif_brlout);
 		ifs->if_bridgeport = (caddr_t)p;
+		p->bif_dhcookie = hook_establish(ifs->if_detachhooks, 0,
+		    bridge_ifdetach, ifs);
 		if_ih_insert(p->ifp, bridge_input, NULL);
 		TAILQ_INSERT_TAIL(&sc->sc_iflist, p, next);
 		break;
@@ -567,8 +571,9 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 /* Detach an interface from a bridge.  */
 void
-bridge_ifdetach(struct ifnet *ifp)
+bridge_ifdetach(void *arg)
 {
+	struct ifnet *ifp = (struct ifnet *)arg;
 	struct bridge_softc *sc;
 	struct bridge_iflist *bif;
 
