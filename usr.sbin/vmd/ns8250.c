@@ -1,3 +1,4 @@
+/* $OpenBSD: ns8250.c,v 1.5 2016/10/03 06:00:17 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
