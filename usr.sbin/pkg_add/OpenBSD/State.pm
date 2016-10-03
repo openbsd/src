@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.39 2016/09/27 21:31:20 naddy Exp $
+# $OpenBSD: State.pm,v 1.40 2016/10/03 13:58:09 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -346,12 +346,10 @@ sub handle_options
 	});
 	$state->{v} = $state->opt('v');
 
-	if ($state->defines('newsign')) {
-		$state->{signature_style} //= 'new';
-	} elsif ($state->defines('unsigned')) {
+	if ($state->defines('unsigned')) {
 		$state->{signature_style} //= 'unsigned';
 	} elsif ($state->defines('oldsign')) {
-		$state->{signature_style} //= 'old';
+		$state->fatal('old style signature no longer supported');
 	} else {
 		$state->{signature_style} //= 'new';
 	}

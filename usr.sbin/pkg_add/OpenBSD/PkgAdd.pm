@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.90 2016/09/14 14:14:22 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.91 2016/10/03 13:58:09 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -304,14 +304,6 @@ sub display_timestamp
 	my ($pkgname, $plist, $state) = @_;
 
 	return unless $plist->is_signed;
-	if ($state->defines('nosig')) {
-		$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
-		    $pkgname);
-		return;
-	}
-	if (!$plist->check_signature($state)) {
-		$state->fatal("#1 is corrupted", $pkgname);
-	}
 	$state->display_timestamp($pkgname,
 	    $plist->get('digital-signature')->iso8601);
 }
@@ -684,43 +676,6 @@ sub iterate
 	}
 }
 
-sub check_digital_signature
-{
-	my ($set, $state) = @_;
-	for my $handle ($set->newer) {
-		$state->set_name_from_handle($handle, '+');
-		my $plist = $handle->plist;
-		my $pkgname = $plist->pkgname;
-		if ($plist->is_signed) {
-			if ($state->defines('nosig')) {
-				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
-				    $pkgname);
-			} else {
-				if (!$plist->check_signature($state)) {
-					$state->fatal("#1 is corrupted",
-					    $pkgname);
-				}
-				$plist->{check_digest} = 1;
-				$state->{packages_with_sig}++;
-			}
-		} else {
-			$state->{packages_without_sig}{$pkgname} = 1;
-			return if $state->{signature_style} eq 'unsigned';
-			my $okay = 0;
-			my $url;
-			if (defined $handle->location) {
-				$url = $handle->location->url;
-			} else {
-				$url = $pkgname;
-			}
-			$okay = $state->confirm("UNSIGNED PACKAGE $url: install anyway", 0);
-			if (!$okay) {
-				$state->fatal("Unsigned package #1", $url);
-			}
-		}
-	}
-}
-
 sub delete_old_packages
 {
 	my ($set, $state) = @_;
@@ -769,8 +724,6 @@ sub really_add
 	my ($set, $state) = @_;
 
 	my $errors = 0;
-
-	check_digital_signature($set, $state);
 
 	if ($state->{not}) {
 		$state->status->what("Pretending to add");
@@ -1180,17 +1133,6 @@ sub finish_display
 	OpenBSD::Add::manpages_index($state);
 
 	# and display delayed thingies.
-	my $warn = 1;
-	if ($state->{signature_style} eq 'unsigned') {
-		$warn = 0;
-	}
-	if ($state->{packages_with_sig}) {
-		$warn = 1;
-	}
-	if ($warn && $state->{packages_without_sig}) {
-		$state->say("UNSIGNED PACKAGES: #1",
-		    join(', ', keys %{$state->{packages_without_sig}}));
-	}
 	if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
 		$state->say("Forced updates, bogus dependencies for ",
 		    join(' ', sort(keys %{$state->{updatedepends}})),
