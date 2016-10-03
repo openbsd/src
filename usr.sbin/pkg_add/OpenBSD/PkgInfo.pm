@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.41 2016/07/27 12:58:21 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.42 2016/10/03 10:38:30 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -497,7 +497,8 @@ sub print_info
 					require OpenBSD::x509;
 					$state->banner("Certificate info:");
 					OpenBSD::x509::print_certificate_info($plist);
-				} elsif ($sig->{key} eq 'signify') {
+				} elsif ($sig->{key} eq 'signify' ||
+				    $sig->{key} eq 'signify2') {
 					$state->say("reportedly signed by #1", 
 					    $plist->get('signer')->name);
 				}
