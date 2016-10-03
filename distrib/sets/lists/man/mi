@@ -1186,6 +1186,7 @@
 ./usr/share/man/man4/armv7/omdog.4
 ./usr/share/man/man4/armv7/omgpio.4
 ./usr/share/man/man4/armv7/ommmc.4
+./usr/share/man/man4/armv7/ompinmux.4
 ./usr/share/man/man4/armv7/omwugen.4
 ./usr/share/man/man4/armv7/plrtc.4
 ./usr/share/man/man4/armv7/pluart.4
