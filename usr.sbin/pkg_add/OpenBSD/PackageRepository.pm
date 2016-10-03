@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.135 2016/09/15 12:53:08 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.136 2016/10/03 14:15:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -398,6 +398,9 @@ sub signify_pipe
 sub check_signed
 {
 	my ($self, $object) = @_;
+	if ($object->{repository}{trusted}) {
+		return 0;
+	}
 	if ($self->{state}{signature_style} eq 'new') {
 		$object->{is_signed} = 1;
 		return 1;
