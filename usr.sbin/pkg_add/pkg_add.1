@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.138 2016/06/14 17:06:23 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.139 2016/10/03 14:24:18 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: June 14 2016 $
+.Dd $Mdocdate: October 3 2016 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -98,13 +98,13 @@ If a package is digitally signed:
 .Bl -bullet
 .It
 .Nm
-checks that its packing-list is not corrupted and matches the cryptographic
-signature stored within.
+checks that its signature is valid and that the compressed package
+data matches the signature.
 .It
 .Nm
-verifies that the signature was emitted by a valid user certificate, signed
-by one of the authorities in
-.Pa /etc/ssl/pkgca.pem
+verifies that the signature was emitted by a valid signing key, as
+stored in
+.Pa /etc/signify/*-pkg.pub
 .It
 .Nm
 verifies that each file matches its sha256 checksum right after extraction,
@@ -113,6 +113,16 @@ before doing anything with it.
 .Nm
 verifies that any dangerous mode or owner is registered in the packing-list.
 .El
+.Pp
+By default,
+.Nm
+enforces signed packages, except if they come from a trusted source
+.Po
+.Ev TRUSTED_PKG_PATH
+.Pc
+or if
+.Fl D Ar unsigned
+is specified.
 .Pp
 In normal mode,
 the package names given on the command lines are names of new packages that
@@ -138,11 +148,16 @@ suffix) or a URL referring to FTP, HTTP, HTTPS, or SCP locations.
 If the given package names are not found in the current working directory,
 .Nm
 will search for them in each directory (local or remote) named by the
+.Ev TRUSTED_PKG_PATH
+environment variable,
+then the
 .Ev PKG_PATH
 environment variable.
-If
+If neither
+.Ev TRUSTED_PKG_PATH
+nor
 .Ev PKG_PATH
-is not defined,
+are defined,
 .Nm
 will use the path named by
 .Ar installpath
@@ -161,7 +176,12 @@ that is, package names without any version specification.
 For instance, with
 .Sq Nm Ar kdelibs ,
 .Nm
-will look in the current directory (or the PKG_PATH) for a
+will look in the current directory
+.Po
+or the
+.Ev PKG_PATH
+.Pc
+for a
 .Ar kdelibs
 package.
 .Pp
@@ -301,9 +321,9 @@ in update mode, reinstall an existing package with the same update signature.
 library specifications may not be fulfilled.
 .It Ar nonroot
 install even if not running as root.
-.It Ar nosig
-do not check digital signatures.
-Still displays a very prominent message if a signature is found.
+.\" .It Ar nosig
+.\" do not check digital signatures.
+.\" Still displays a very prominent message if a signature is found.
 .It Ar paranoid
 very safe update: don't run any @exec/@unexec.
 .It Ar repair
@@ -779,6 +799,12 @@ in
 .It Ev PKG_TMPDIR
 Temporary area where package information files will be extracted, instead of
 .Pa /var/tmp .
+.It Ev TRUSTED_PKG_PATH
+Same semantics as
+.Ev PKG_PATH ,
+but it is searched before
+.Ev PKG_PATH
+and waves any kind of signature checking.
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
