@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.31 2016/09/30 12:07:23 kettenis Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.32 2016/10/03 13:03:49 jca Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -100,27 +100,23 @@ kbd_show_enc(struct wskbd_encoding_data *encs, int idx)
 	    kbtype_tab[idx]);
 
 	for (i = 0; i < encs->nencodings; i++) {
-		n = &kbdenc_tab[0];
 		found = 0;
 		encoding = encs->encodings[i];
-		while (n->value) {
+		for (n = &kbdenc_tab[0]; n->value; n++) {
 			if (n->value == KB_ENCODING(encoding)) {
 				printf("%s", n->name);
 				found++;
 			}
-			n++;
 		}
 		if (found == 0)
 			printf("<encoding 0x%04x>", KB_ENCODING(encoding));
-		n = &kbdvar_tab[0];
 		found = 0;
 		variant = KB_VARIANT(encoding);
-		while (n->value) {
+		for (n = &kbdvar_tab[0]; n->value; n++) {
 			if ((n->value & KB_VARIANT(encoding)) == n->value) {
 				printf(".%s", n->name);
 				variant &= ~n->value;
 			}
-			n++;
 		}
 		if (variant != 0)
 			printf(".<variant 0x%08x>", variant);
@@ -248,11 +244,9 @@ kbd_set(char *name, int verbose)
 			*b++ = *c++;
 		*b = '\0';
 		v = 0;
-		n = &kbdvar_tab[0];
-		while (n->value) {
+		for (n = &kbdvar_tab[0]; n->value; n++) {
 			if (strcmp(n->name, buf) == 0)
 				v = n->value;
-			n++;
 		}
 		if (v == 0)
 			errx(1, "unknown variant %s", buf);
