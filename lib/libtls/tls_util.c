@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.3 2015/09/09 19:49:07 jsing Exp $ */
+/* $OpenBSD: tls_util.c,v 1.4 2016/10/03 04:13:58 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -105,7 +105,8 @@ tls_load_file(const char *name, size_t *len, char *password)
 	FILE *fp;
 	EVP_PKEY *key = NULL;
 	BIO *bio = NULL;
-	char *data, *buf = NULL;
+	char *data;
+	uint8_t *buf = NULL;
 	struct stat st;
 	size_t size;
 	int fd = -1;
