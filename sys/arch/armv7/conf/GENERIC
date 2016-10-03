@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.56 2016/09/23 17:59:17 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.57 2016/10/03 01:59:20 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -66,7 +66,7 @@ intc*		at fdt?			# OMAP3 interrupt controller
 omwugen*	at fdt?			# Wake-up generator
 #edma*		at omap?		# OMAP3 dma controller
 prcm*		at omap?		# power/clock controller
-sitaracm*	at omap?		# sitara control module
+ompinmux*	at fdt?			# pin muxing
 omdog*		at fdt?			# watchdog timer
 omgpio*		at fdt?			# user-visible GPIO pins?
 gpio*		at omgpio?

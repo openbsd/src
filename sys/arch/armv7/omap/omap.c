@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.19 2016/08/11 04:33:06 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.20 2016/10/03 01:59:20 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -47,7 +47,6 @@ struct board_dev omap3_dev[] = {
 
 struct board_dev am33xx_dev[] = {
 	{ "prcm",	0 },
-	{ "sitaracm",	0 },
 	{ "edma",	0 },
 	{ "dmtimer",	0 },
 	{ "dmtimer",	1 },
