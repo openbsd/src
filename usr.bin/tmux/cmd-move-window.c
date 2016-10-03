@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-move-window.c,v 1.25 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-move-window.c,v 1.26 2016/10/03 22:52:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -65,9 +65,6 @@ cmd_move_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct winlink	*wl = cmdq->state.sflag.wl;
 	char		*cause;
 	int		 idx = cmdq->state.tflag.idx, kflag, dflag, sflag;
-
-	kflag = args_has(self->args, 'k');
-	dflag = args_has(self->args, 'd');
 
 	if (args_has(args, 'r')) {
 		session_renumber_windows(dst);

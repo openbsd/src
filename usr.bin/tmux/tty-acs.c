@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-acs.c,v 1.4 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: tty-acs.c,v 1.5 2016/10/03 22:52:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -22,14 +22,14 @@
 
 #include "tmux.h"
 
-int	tty_acs_cmp(const void *, const void *);
+static int	tty_acs_cmp(const void *, const void *);
 
 /* Table mapping ACS entries to UTF-8. */
 struct tty_acs_entry {
 	u_char	 	 key;
 	const char	*string;
 };
-const struct tty_acs_entry tty_acs_table[] = {
+static const struct tty_acs_entry tty_acs_table[] = {
 	{ '+', "\342\206\222" },	/* arrow pointing right */
 	{ ',', "\342\206\220" },	/* arrow pointing left */
 	{ '-', "\342\206\221" },	/* arrow pointing up */
@@ -64,7 +64,7 @@ const struct tty_acs_entry tty_acs_table[] = {
 	{ '~', "\302\267" }		/* bullet */
 };
 
-int
+static int
 tty_acs_cmp(const void *key, const void *value)
 {
 	const struct tty_acs_entry	*entry = value;

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.152 2016/09/12 15:40:58 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.153 2016/10/03 22:52:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -948,13 +948,13 @@ window_copy_key_input(struct window_pane *wp, key_code key)
 			data->searchtype = data->inputtype;
 			data->searchstr = xstrdup(data->inputstr);
 			for (; np != 0; np--)
-				window_copy_search_up(wp, data->inputstr, 0);
+				window_copy_search_up(wp, data->inputstr, 1);
 			break;
 		case WINDOW_COPY_SEARCHDOWN:
 			data->searchtype = data->inputtype;
 			data->searchstr = xstrdup(data->inputstr);
 			for (; np != 0; np--)
-				window_copy_search_down(wp, data->inputstr, 0);
+				window_copy_search_down(wp, data->inputstr, 1);
 			break;
 		case WINDOW_COPY_NAMEDBUFFER:
 			window_copy_copy_selection(wp, data->inputstr);
