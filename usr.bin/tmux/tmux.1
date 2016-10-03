@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.495 2016/09/12 15:40:58 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.496 2016/10/03 20:58:39 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 12 2016 $
+.Dd $Mdocdate: October 3 2016 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3321,12 +3321,14 @@ Run when the program running in a pane exits.
 Hooks are managed with these commands:
 .Bl -tag -width Ds
 .It Xo Ic set-hook
-.Op Fl g
+.Op Fl gu
 .Op Fl t Ar target-session
 .Ar hook-name
 .Ar command
 .Xc
-Sets hook
+Sets (or with
+.Fl u
+unsets) hook
 .Ar hook-name
 to
 .Ar command .
