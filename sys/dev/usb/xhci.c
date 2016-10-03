@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.68 2016/09/21 07:56:22 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.69 2016/10/03 14:05:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -243,7 +243,8 @@ usbd_dma_contig_alloc(struct usbd_bus *bus, struct usbd_dma_info *dma,
 	if (error != 0)
 		goto unmap;
 
-	bus_dmamap_sync(dma->tag, dma->map, 0, size, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(dma->tag, dma->map, 0, size, BUS_DMASYNC_PREREAD |
+	    BUS_DMASYNC_PREWRITE);
 
 	dma->paddr = dma->map->dm_segs[0].ds_addr;
 	if (kvap != NULL)
@@ -376,7 +377,7 @@ xhci_init(struct xhci_softc *sc)
 	sc->sc_erst.segs[0].er_size = htole32(XHCI_MAX_EVTS);
 	sc->sc_erst.segs[0].er_rsvd = 0;
 	bus_dmamap_sync(sc->sc_erst.dma.tag, sc->sc_erst.dma.map, 0,
-	    sc->sc_erst.dma.size, BUS_DMASYNC_PREWRITE);
+	    sc->sc_erst.dma.size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Get the number of scratch pages and configure them if necessary. */
 	hcr = XREAD4(sc, XHCI_HCSPARAMS2);
@@ -830,6 +831,10 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 
 	trb = &sc->sc_cmd_ring.trbs[trb_idx];
 
+	bus_dmamap_sync(sc->sc_cmd_ring.dma.tag, sc->sc_cmd_ring.dma.map,
+	    TRBOFF(&sc->sc_cmd_ring, trb), sizeof(struct xhci_trb),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 	flags = letoh32(trb->trb_flags);
 
 	slot = XHCI_TRB_GET_SLOT(flags);
@@ -1208,7 +1213,7 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	sdev->input_ctx->add_flags |= htole32(XHCI_INCTX_MASK_DCI(0));
 
 	bus_dmamap_sync(sdev->ictx_dma.tag, sdev->ictx_dma.map, 0,
-	    sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
+	    sc->sc_pagesize, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 int
@@ -1289,7 +1294,7 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 	memset(sdev->ep_ctx[xp->dci - 1], 0, sizeof(struct xhci_epctx));
 
 	bus_dmamap_sync(sdev->ictx_dma.tag, sdev->ictx_dma.map, 0,
-	    sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
+	    sc->sc_pagesize, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	if (xhci_cmd_configure_ep(sc, xp->slot, sdev->ictx_dma.paddr))
 		DPRINTF(("%s: error clearing ep (%d)\n", DEVNAME(sc), xp->dci));
@@ -1391,12 +1396,13 @@ xhci_scratchpad_alloc(struct xhci_softc *sc, int npage)
 	}
 
 	bus_dmamap_sync(sc->sc_spad.table_dma.tag, sc->sc_spad.table_dma.map, 0,
-	    npage * sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
+	    npage * sizeof(uint64_t), BUS_DMASYNC_PREREAD |
+	    BUS_DMASYNC_PREWRITE);
 
 	/*  Entry 0 points to the table of scratchpad pointers. */
 	sc->sc_dcbaa.segs[0] = htole64(sc->sc_spad.table_dma.paddr);
 	bus_dmamap_sync(sc->sc_dcbaa.dma.tag, sc->sc_dcbaa.dma.map, 0,
-	    sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
+	    sizeof(uint64_t), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sc->sc_spad.npage = npage;
 
@@ -1408,7 +1414,7 @@ xhci_scratchpad_free(struct xhci_softc *sc)
 {
 	sc->sc_dcbaa.segs[0] = 0;
 	bus_dmamap_sync(sc->sc_dcbaa.dma.tag, sc->sc_dcbaa.dma.map, 0,
-	    sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
+	    sizeof(uint64_t), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	usbd_dma_contig_free(&sc->sc_bus, &sc->sc_spad.pages_dma);
 	usbd_dma_contig_free(&sc->sc_bus, &sc->sc_spad.table_dma);
@@ -1462,9 +1468,11 @@ xhci_ring_reset(struct xhci_softc *sc, struct xhci_ring *ring)
 
 		trb->trb_paddr = htole64(ring->dma.paddr);
 		trb->trb_flags = htole32(XHCI_TRB_TYPE_LINK | XHCI_TRB_LINKSEG);
-	}
-	bus_dmamap_sync(ring->dma.tag, ring->dma.map, 0, size,
-	    BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(ring->dma.tag, ring->dma.map, 0, size,
+		    BUS_DMASYNC_PREWRITE);
+	} else
+		bus_dmamap_sync(ring->dma.tag, ring->dma.map, 0, size,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 struct xhci_trb*
@@ -1499,7 +1507,8 @@ xhci_ring_produce(struct xhci_softc *sc, struct xhci_ring *ring)
 	KASSERT(ring->index < ring->ntrb);
 
 	bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, trb),
-	    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD);
+	    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD |
+	    BUS_DMASYNC_POSTWRITE);
 
 	ring->index++;
 
@@ -1508,7 +1517,8 @@ xhci_ring_produce(struct xhci_softc *sc, struct xhci_ring *ring)
 		struct xhci_trb *lnk = &ring->trbs[ring->index];
 
 		bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, lnk),
-		    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD);
+		    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD |
+		    BUS_DMASYNC_POSTWRITE);
 
 		lnk->trb_flags ^= htole32(XHCI_TRB_CYCLE);
 
@@ -1807,7 +1817,8 @@ xhci_softdev_alloc(struct xhci_softc *sc, uint8_t slot)
 
 	sc->sc_dcbaa.segs[slot] = htole64(sdev->octx_dma.paddr);
 	bus_dmamap_sync(sc->sc_dcbaa.dma.tag, sc->sc_dcbaa.dma.map,
-	    slot * sizeof(uint64_t), sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
+	    slot * sizeof(uint64_t), sizeof(uint64_t), BUS_DMASYNC_PREREAD |
+	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
 }
@@ -1819,7 +1830,8 @@ xhci_softdev_free(struct xhci_softc *sc, uint8_t slot)
 
 	sc->sc_dcbaa.segs[slot] = 0;
 	bus_dmamap_sync(sc->sc_dcbaa.dma.tag, sc->sc_dcbaa.dma.map,
-	    slot * sizeof(uint64_t), sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
+	    slot * sizeof(uint64_t), sizeof(uint64_t), BUS_DMASYNC_PREREAD |
+	    BUS_DMASYNC_PREWRITE);
 
 	usbd_dma_contig_free(&sc->sc_bus, &sdev->octx_dma);
 	usbd_dma_contig_free(&sc->sc_bus, &sdev->ictx_dma);
@@ -2472,6 +2484,9 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 		);
 		trb->trb_flags = htole32(flags);
 
+		bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+		    TRBOFF(&xp->ring, trb), sizeof(struct xhci_trb),
+		    BUS_DMASYNC_PREWRITE);
 	}
 
 	/* Status TRB */
@@ -2484,6 +2499,10 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	trb->trb_paddr = 0;
 	trb->trb_status = htole32(XHCI_TRB_INTR(0));
 	trb->trb_flags = htole32(flags);
+
+	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+	    TRBOFF(&xp->ring, trb), sizeof(struct xhci_trb),
+	    BUS_DMASYNC_PREWRITE);
 
 	/* Setup TRB */
 	flags = XHCI_TRB_TYPE_SETUP | XHCI_TRB_IDT | toggle0;
@@ -2499,7 +2518,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	trb0->trb_flags = htole32(flags);
 
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
-	    TRBOFF(&xp->ring, trb0), 3 * sizeof(struct xhci_trb),
+	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb),
 	    BUS_DMASYNC_PREWRITE);
 
 	s = splusb();
@@ -2596,6 +2615,10 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 		);
 		trb->trb_flags = htole32(flags);
 
+		bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+		    TRBOFF(&xp->ring, trb), sizeof(struct xhci_trb),
+		    BUS_DMASYNC_PREWRITE);
+
 		remain -= len;
 		paddr += len;
 		len = min(remain, XHCI_TRB_MAXSIZE);
@@ -2615,7 +2638,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	trb0->trb_flags = htole32(flags);
 
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
-	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb) * ntrb,
+	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb),
 	    BUS_DMASYNC_PREWRITE);
 
 	s = splusb();
