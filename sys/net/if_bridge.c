@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.286 2016/10/03 12:26:13 rzalamena Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.287 2016/10/03 15:53:09 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -107,6 +107,7 @@
 void	bridgeattach(int);
 int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
 void	bridge_ifdetach(void *);
+void	bridge_spandetach(void *);
 int	bridge_input(struct ifnet *, struct mbuf *, void *);
 void	bridge_process(struct ifnet *, struct mbuf *);
 void	bridgeintr_frame(struct bridge_softc *, struct ifnet *, struct mbuf *);
@@ -215,10 +216,8 @@ bridge_clone_destroy(struct ifnet *ifp)
 	bridge_rtflush(sc, IFBF_FLUSHALL);
 	while ((bif = TAILQ_FIRST(&sc->sc_iflist)) != NULL)
 		bridge_delete(sc, bif);
-	while ((bif = TAILQ_FIRST(&sc->sc_spanlist)) != NULL) {
-		TAILQ_REMOVE(&sc->sc_spanlist, bif, next);
-		free(bif, M_DEVBUF, sizeof *bif);
-	}
+	while ((bif = TAILQ_FIRST(&sc->sc_spanlist)) != NULL)
+		bridge_spandetach(bif);
 
 	bstp_destroy(sc->sc_stp);
 
@@ -408,6 +407,9 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		p->ifp = ifs;
 		p->bif_flags = IFBIF_SPAN;
+		p->bridge_sc = sc;
+		p->bif_dhcookie = hook_establish(ifs->if_detachhooks, 0,
+		    bridge_spandetach, p);
 		SIMPLEQ_INIT(&p->bif_brlin);
 		SIMPLEQ_INIT(&p->bif_brlout);
 		TAILQ_INSERT_TAIL(&sc->sc_spanlist, p, next);
@@ -418,8 +420,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		TAILQ_FOREACH(p, &sc->sc_spanlist, next) {
 			if (strncmp(p->ifp->if_xname, req->ifbr_ifsname,
 			    sizeof(p->ifp->if_xname)) == 0) {
-				TAILQ_REMOVE(&sc->sc_spanlist, p, next);
-				free(p, M_DEVBUF, sizeof *p);
+				bridge_spandetach(p);
 				break;
 			}
 		}
@@ -581,6 +582,17 @@ bridge_ifdetach(void *arg)
 	sc = bif->bridge_sc;
 
 	bridge_delete(sc, bif);
+}
+
+void
+bridge_spandetach(void *arg)
+{
+	struct bridge_iflist *p = (struct bridge_iflist *)arg;
+	struct bridge_softc *sc = p->bridge_sc;
+
+	hook_disestablish(p->ifp->if_detachhooks, p->bif_dhcookie);
+	TAILQ_REMOVE(&sc->sc_spanlist, p, next);
+	free(p, M_DEVBUF, sizeof(*p));
 }
 
 int
