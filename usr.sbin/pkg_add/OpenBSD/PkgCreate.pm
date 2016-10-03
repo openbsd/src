@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.122 2016/09/06 10:41:51 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.123 2016/10/03 13:17:30 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1501,11 +1501,6 @@ sub parse_and_run
 		$state->fatal("can't continue");
 	}
 	$state->{bad} = 0;
-
-	if (defined $state->{signer}) {
-		$state->add_signature($plist);
-		$plist->save if $regen_package;
-	}
 
 	my $wname;
 	if ($regen_package) {

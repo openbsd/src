@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.9 2016/10/03 10:59:54 espie Exp $
+# $OpenBSD: Signer.pm,v 1.10 2016/10/03 13:17:30 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -26,8 +26,6 @@ package OpenBSD::Signer;
 use OpenBSD::PackageInfo;
 
 my $h = {
-	x509 => 'OpenBSD::Signer::X509',
-	signify => 'OpenBSD::Signer::SIGNIFY',
 	signify2 => 'OpenBSD::Signer::SIGNIFY2',
 };
 
@@ -42,120 +40,6 @@ sub factory
 	} else {
 		$state->usage("Unknown signature scheme $p[0]");
 	}
-}
-
-sub sign
-{
-	my ($signer, $pkg, $state, $tmp) = @_;
-
-	my $dir = $pkg->info;
-	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
-	# In incremental mode, don't bother signing known packages
-	$plist->set_infodir($dir);
-	$state->add_signature($plist);
-	$plist->save;
-	my $wrarc = $state->create_archive($tmp, ".");
-
-	my $fh;
-	my $url = $pkg->url;
-	my $buffer;
-
-	if (defined $pkg->{length} and 
-	    $url =~ s/^file:// and open($fh, "<", $url) and
-	    $fh->seek($pkg->{length}, 0) and $fh->read($buffer, 2)
-	    and $buffer eq "\x1f\x8b" and $fh->seek($pkg->{length}, 0)) {
-	    	#$state->say("FAST #1", $plist->pkgname);
-		$wrarc->destdir($pkg->info);
-		my $e = $wrarc->prepare('+CONTENTS');
-		$e->write;
-		close($wrarc->{fh});
-		delete $wrarc->{fh};
-
-		open(my $fh2, ">>", $tmp) or 
-		    $state->fatal("Can't append to #1", $tmp);
-		require File::Copy;
-		File::Copy::copy($fh, $fh2) or 
-		    $state->fatal("Error in copy #1", $!);
-		close($fh2);
-	} else {
-	    	#$state->say("SLOW #1", $plist->pkgname);
-		$plist->copy_over($state, $wrarc, $pkg);
-		$wrarc->close;
-	}
-	close($fh) if defined $fh;
-
-	$pkg->wipe_info;
-}
-
-sub want_local
-{
-	return 0;
-}
-
-package OpenBSD::Signer::X509;
-our @ISA = qw(OpenBSD::Signer);
-sub new
-{
-	my ($class, $state, @p) = @_;
-
-	if (@p != 3 || !-f $p[1] || !-f $p[2]) {
-		$state->usage("$p[0] signature wants -s cert -s privkey");
-	}
-	bless {cert => $p[1], privkey => $p[2]}, $class;
-}
-
-sub new_sig
-{
-	require OpenBSD::x509;
-	return OpenBSD::PackingElement::DigitalSignature->blank('x509');
-}
-
-sub compute_signature
-{
-	my ($self, $state, $plist) = @_;
-	return OpenBSD::x509::compute_signature($plist, $self->{cert}, 
-	    $self->{privkey});
-}
-
-package OpenBSD::Signer::SIGNIFY;
-our @ISA = qw(OpenBSD::Signer);
-sub new
-{
-	my ($class, $state, @p) = @_;
-	if (@p != 2 || !-f $p[1]) {
-		$state->usage("$p[0] signature wants -s privkey");
-	}
-	my $o = bless {privkey => $p[1]}, $class;
-	my $signer = $o->{privkey};
-	$signer =~ s/\.sec$//;
-	my $pubkey = "$signer.pub";
-	$signer =~ s,.*/,,;
-	$o->{signer} = $signer;
-	if (!-f $pubkey) {
-		$pubkey =~ s,.*/,/etc/signify/,;
-		if (!-f $pubkey) {
-			$state->errsay("warning: public key not found");
-			return $o;
-		}
-	}
-	$o->{pubkey} = $pubkey;
-	return $o;
-}
-
-sub new_sig
-{
-	require OpenBSD::signify;
-	return OpenBSD::PackingElement::DigitalSignature->blank('signify');
-}
-
-sub compute_signature
-{
-	my ($self, $state, $plist) = @_;
-
-	OpenBSD::PackingElement::Signer->add($plist, $self->{signer});
-
-	return OpenBSD::signify::compute_signature($plist, $state, 
-	    $self->{privkey}, $self->{pubkey});
 }
 
 package OpenBSD::Signer::SIGNIFY2;
@@ -214,32 +98,6 @@ sub new_gstream
 	    -Level => $level, -Time => 0, -Append => 1) or
 		$state->fatal("Can't append to archive #1: #2", 
 		    $state->{archive_filename}, $!);
-}
-
-sub add_signature
-{
-	my ($state, $plist) = @_;
-
-	if ($plist->has('digital-signature') || $plist->has('signer')) {
-		if ($state->defines('resign')) {
-			if ($state->defines('nosig')) {
-				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
-				    $plist->pkgname);
-			} else {
-				if (!$plist->check_signature($state)) {
-					$state->fatal("#1 is corrupted",
-					    $plist->pkgname);
-				}
-			}
-			$state->errsay("Resigning #1", $plist->pkgname);
-			delete $plist->{'digital-signature'};
-			delete $plist->{signer};
-		}
-	}
-
-	my $sig = $state->{signer}->new_sig;
-	$sig->add_object($plist);
-	$sig->{b64sig} = $state->{signer}->compute_signature($state, $plist);
 }
 
 sub ntodo
