@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.92 2016/08/24 09:41:12 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.93 2016/10/03 12:33:21 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -104,8 +104,8 @@ ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 		ip6stat.ip6s_cantforward++;
-		if (ip6_log_time + ip6_log_interval < time_second) {
-			ip6_log_time = time_second;
+		if (ip6_log_time + ip6_log_interval < time_uptime) {
+			ip6_log_time = time_uptime;
 			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			log(LOG_DEBUG,
@@ -193,8 +193,8 @@ reroute:
 		ip6stat.ip6s_cantforward++;
 		ip6stat.ip6s_badscope++;
 
-		if (ip6_log_time + ip6_log_interval < time_second) {
-			ip6_log_time = time_second;
+		if (ip6_log_time + ip6_log_interval < time_uptime) {
+			ip6_log_time = time_uptime;
 			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			log(LOG_DEBUG,

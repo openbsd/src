@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.192 2016/09/04 10:32:01 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.193 2016/10/03 12:33:21 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCGIFALIFETIME_IN6:
 		ifr->ifr_ifru.ifru_lifetime = ia6->ia6_lifetime;
 		if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
-			time_t maxexpire;
+			time_t expire, maxexpire;
 			struct in6_addrlifetime *retlt =
 			    &ifr->ifr_ifru.ifru_lifetime;
 
@@ -365,8 +365,13 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			    (time_t)~(1ULL << ((sizeof(maxexpire) * 8) - 1));
 			if (ia6->ia6_lifetime.ia6t_vltime <
 			    maxexpire - ia6->ia6_updatetime) {
-				retlt->ia6t_expire = ia6->ia6_updatetime +
+				expire = ia6->ia6_updatetime +
 				    ia6->ia6_lifetime.ia6t_vltime;
+				if (expire != 0) {
+					expire -= time_uptime;
+					expire += time_second;
+				}
+				retlt->ia6t_expire = expire;
 			} else
 				retlt->ia6t_expire = maxexpire;
 		}
@@ -604,7 +609,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia6->ia_ifa.ifa_addr = sin6tosa(&ia6->ia_addr);
 		ia6->ia_addr.sin6_family = AF_INET6;
 		ia6->ia_addr.sin6_len = sizeof(ia6->ia_addr);
-		ia6->ia6_createtime = ia6->ia6_updatetime = time_second;
+		ia6->ia6_createtime = ia6->ia6_updatetime = time_uptime;
 		if ((ifp->if_flags & (IFF_POINTOPOINT | IFF_LOOPBACK)) != 0) {
 			/*
 			 * XXX: some functions expect that ifa_dstaddr is not
@@ -667,12 +672,12 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	ia6->ia6_lifetime = ifra->ifra_lifetime;
 	if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
 		ia6->ia6_lifetime.ia6t_expire =
-		    time_second + ia6->ia6_lifetime.ia6t_vltime;
+		    time_uptime + ia6->ia6_lifetime.ia6t_vltime;
 	} else
 		ia6->ia6_lifetime.ia6t_expire = 0;
 	if (ia6->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
 		ia6->ia6_lifetime.ia6t_preferred =
-		    time_second + ia6->ia6_lifetime.ia6t_pltime;
+		    time_uptime + ia6->ia6_lifetime.ia6t_pltime;
 	} else
 		ia6->ia6_lifetime.ia6t_preferred = 0;
 

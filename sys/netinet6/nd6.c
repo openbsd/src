@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.192 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.193 2016/10/03 12:33:21 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -447,7 +447,7 @@ nd6_timer_work(void *null)
 
 	/* expire default router list */
 	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr)
-		if (dr->expire && dr->expire < time_second)
+		if (dr->expire && dr->expire < time_uptime)
 			defrtrlist_del(dr);
 
 	/*
@@ -479,7 +479,7 @@ nd6_timer_work(void *null)
 		 * prefix is not necessary.
 		 */
 		if (pr->ndpr_vltime != ND6_INFINITE_LIFETIME &&
-		    time_second - pr->ndpr_lastupdate > pr->ndpr_vltime) {
+		    time_uptime - pr->ndpr_lastupdate > pr->ndpr_vltime) {
 			/*
 			 * address expiration and prefix expiration are
 			 * separate.  NEVER perform in6_purgeaddr here.
@@ -764,9 +764,9 @@ nd6_free(struct rtentry *rt, int gc)
 			 * XXX: the check for ln_state would be redundant,
 			 *      but we intentionally keep it just in case.
 			 */
-			if (dr->expire > time_second) {
+			if (dr->expire > time_uptime) {
 				nd6_llinfo_settimer(ln,
-				    dr->expire - time_second);
+				    dr->expire - time_uptime);
 			} else
 				nd6_llinfo_settimer(ln, nd6_gctimer);
 			splx(s);
@@ -1686,6 +1686,7 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 	int error = 0, s;
 	struct in6_defrouter *d = NULL, *de = NULL;
 	struct nd_defrouter *dr;
+	time_t expire;
 	size_t l;
 
 	s = splsoftnet();
@@ -1704,7 +1705,12 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 			in6_recoverscope(&d->rtaddr, &dr->rtaddr);
 			d->flags = dr->flags;
 			d->rtlifetime = dr->rtlifetime;
-			d->expire = dr->expire;
+			expire = dr->expire;
+			if (expire != 0) {
+				expire -= time_uptime;
+				expire += time_second;
+			}
+			d->expire = expire;
 			d->if_index = dr->ifp->if_index;
 		}
 
