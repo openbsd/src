@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.19 2016/09/04 08:49:18 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.20 2016/10/03 04:53:54 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -300,7 +300,7 @@ struct vm_rwregs_params {
 #define VMX_FAIL_LAUNCH_INVALID_VMCS 2
 #define VMX_FAIL_LAUNCH_VALID_VMCS 3
 
-#define VMX_NUM_MSR_STORE 7
+#define VMX_NUM_MSR_STORE 6
 
 /* MSR bitmap manipulation macros */
 #define MSRIDX(m) ((m) / 8)

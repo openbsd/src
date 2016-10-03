@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.87 2016/09/25 08:20:40 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.88 2016/10/03 04:53:54 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1555,35 +1555,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		vcpu->vc_vmx_procbased2_ctls = rdmsr(IA32_VMX_PROCBASED2_CTLS);
 
 
-# if 0
-	/* XXX not needed now with MSR list */
-
-	/* Default Guest PAT (if applicable) */
-	if ((vcpu_vmx_check_cap(vcpu, IA32_VMX_ENTRY_CTLS,
-	    IA32_VMX_LOAD_IA32_PAT_ON_ENTRY, 1)) ||
-	    vcpu_vmx_check_cap(vcpu, IA32_VMX_EXIT_CTLS,
-	    IA32_VMX_SAVE_IA32_PAT_ON_EXIT, 1)) {
-		pat_default = PATENTRY(0, PAT_WB) | PATENTRY(1, PAT_WT) |
-		    PATENTRY(2, PAT_UCMINUS) | PATENTRY(3, PAT_UC) |
-		    PATENTRY(4, PAT_WB) | PATENTRY(5, PAT_WT) |
-		    PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
-		if (vmwrite(VMCS_GUEST_IA32_PAT, pat_default)) {
-			ret = EINVAL;
-			goto exit;
-		}
-	}
-
-	/* Host PAT (if applicable) */
-	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_EXIT_CTLS,
-	    IA32_VMX_LOAD_IA32_PAT_ON_EXIT, 1)) {
-		msr = rdmsr(MSR_CR_PAT);
-		if (vmwrite(VMCS_HOST_IA32_PAT, msr)) {
-			ret = EINVAL;
-			goto exit;
-		}
-	}
-#endif
-
 	/*
 	 * Pinbased ctrls
 	 *
@@ -1876,26 +1847,24 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vrs->vrs_crs[VCPU_REGS_CR4] = cr4;
 
 	/*
-	 * Select MSRs to be loaded on exit
+	 * Select host MSRs to be loaded on exit
 	 */
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_load_va;
 	msr_store[0].vms_index = MSR_EFER;
 	msr_store[0].vms_data = rdmsr(MSR_EFER);
-	msr_store[1].vms_index = MSR_CR_PAT;
-	msr_store[1].vms_data = rdmsr(MSR_CR_PAT);
-	msr_store[2].vms_index = MSR_STAR;
-	msr_store[2].vms_data = rdmsr(MSR_STAR);
-	msr_store[3].vms_index = MSR_LSTAR;
-	msr_store[3].vms_data = rdmsr(MSR_LSTAR);
-	msr_store[4].vms_index = MSR_CSTAR;
-	msr_store[4].vms_data = rdmsr(MSR_CSTAR);
-	msr_store[5].vms_index = MSR_SFMASK;
-	msr_store[5].vms_data = rdmsr(MSR_SFMASK);
-	msr_store[6].vms_index = MSR_KERNELGSBASE;
-	msr_store[6].vms_data = rdmsr(MSR_KERNELGSBASE);
+	msr_store[1].vms_index = MSR_STAR;
+	msr_store[1].vms_data = rdmsr(MSR_STAR);
+	msr_store[2].vms_index = MSR_LSTAR;
+	msr_store[2].vms_data = rdmsr(MSR_LSTAR);
+	msr_store[3].vms_index = MSR_CSTAR;
+	msr_store[3].vms_data = rdmsr(MSR_CSTAR);
+	msr_store[4].vms_index = MSR_SFMASK;
+	msr_store[4].vms_data = rdmsr(MSR_SFMASK);
+	msr_store[5].vms_index = MSR_KERNELGSBASE;
+	msr_store[5].vms_data = rdmsr(MSR_KERNELGSBASE);
 
 	/*
-	 * Select MSRs to be loaded on entry / saved on exit
+	 * Select guest MSRs to be loaded on entry / saved on exit
 	 */
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
 
@@ -1909,18 +1878,16 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	else
 		msr_store[0].vms_data = EFER_LME;
 
-	msr_store[1].vms_index = MSR_CR_PAT;
+	msr_store[1].vms_index = MSR_STAR;
 	msr_store[1].vms_data = 0ULL;		/* Initial value */
-	msr_store[2].vms_index = MSR_STAR;
+	msr_store[2].vms_index = MSR_LSTAR;
 	msr_store[2].vms_data = 0ULL;		/* Initial value */
-	msr_store[3].vms_index = MSR_LSTAR;
+	msr_store[3].vms_index = MSR_CSTAR;
 	msr_store[3].vms_data = 0ULL;		/* Initial value */
-	msr_store[4].vms_index = MSR_CSTAR;
+	msr_store[4].vms_index = MSR_SFMASK;
 	msr_store[4].vms_data = 0ULL;		/* Initial value */
-	msr_store[5].vms_index = MSR_SFMASK;
+	msr_store[5].vms_index = MSR_KERNELGSBASE;
 	msr_store[5].vms_data = 0ULL;		/* Initial value */
-	msr_store[6].vms_index = MSR_KERNELGSBASE;
-	msr_store[6].vms_data = 0ULL;		/* Initial value */
 
 	/*
 	 * Currently we have the same count of entry/exit MSRs loads/stores
@@ -1977,13 +1944,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 */
 	memset((uint8_t *)vcpu->vc_msr_bitmap_va, 0xFF, PAGE_SIZE);
 	vmx_setmsrbrw(vcpu, MSR_IA32_FEATURE_CONTROL);
-	vmx_setmsrbrw(vcpu, MSR_MTRRcap);
 	vmx_setmsrbrw(vcpu, MSR_SYSENTER_CS);
 	vmx_setmsrbrw(vcpu, MSR_SYSENTER_ESP);
 	vmx_setmsrbrw(vcpu, MSR_SYSENTER_EIP);
-	vmx_setmsrbrw(vcpu, MSR_MTRRvarBase);
-	vmx_setmsrbrw(vcpu, MSR_CR_PAT);
-	vmx_setmsrbrw(vcpu, MSR_MTRRdefType);
 	vmx_setmsrbrw(vcpu, MSR_EFER);
 	vmx_setmsrbrw(vcpu, MSR_STAR);
 	vmx_setmsrbrw(vcpu, MSR_LSTAR);
@@ -3154,6 +3117,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			printf("vcpu_run_vmx: failed launch with valid "
 			    "vmcs, code=%lld (%s)\n", exit_reason,
 			    vmx_instruction_error_decode(exit_reason));
+
 			if (vmread(VMCS_INSTRUCTION_ERROR, &insn_error)) {
 				printf("vcpu_run_vmx: can't read"
 				    " insn error field\n");
@@ -3779,6 +3743,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		 *  hyperthreading (CPUID_HTT)
 		 *  pending break enabled (CPUID_PBE)
 		 *  MTRR (CPUID_MTRR)
+		 *  PAT (CPUID_PAT)
 		 * plus:
 		 *  hypervisor (CPUIDECX_HV)
 		 */
@@ -3795,7 +3760,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC |
 		      CPUID_HTT | CPUID_DS | CPUID_APIC |
 		      CPUID_PSN | CPUID_SS | CPUID_PBE |
-		      CPUID_MTRR);
+		      CPUID_MTRR | CPUID_PAT);
 		break;
 	case 0x02:	/* Cache and TLB information */
 		DPRINTF("vmx_handle_cpuid: function 0x02 (cache/TLB) not"
