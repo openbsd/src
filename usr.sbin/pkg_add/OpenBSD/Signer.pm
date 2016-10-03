@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.8 2016/09/15 13:14:03 espie Exp $
+# $OpenBSD: Signer.pm,v 1.9 2016/10/03 10:59:54 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -87,6 +87,11 @@ sub sign
 	$pkg->wipe_info;
 }
 
+sub want_local
+{
+	return 0;
+}
+
 package OpenBSD::Signer::X509;
 our @ISA = qw(OpenBSD::Signer);
 sub new
@@ -170,10 +175,19 @@ sub sign
 	my ($signer, $pkg, $state, $tmp) = @_;
 	my $privkey = $signer->{privkey};
  	my $url = $pkg->url;
+	if (!$pkg->{repository}->is_local_file) {
+		$pkg->close(1);
+		$state->fatal("Signing distant package #1 is not supported",
+		    $url);
+	}
 	$url =~ s/^file://;
 	$state->system(OpenBSD::Paths->signify, '-zS', '-s', $privkey, '-m', $url, '-x', $tmp);
 }
 
+sub want_local
+{
+	return 1;
+}
 # specific parameter handling plus element creation
 package OpenBSD::CreateSign::State;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);

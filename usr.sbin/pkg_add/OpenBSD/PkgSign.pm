@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.11 2016/09/28 12:32:13 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.12 2016/10/03 10:59:54 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -189,6 +189,9 @@ sub sign_existing_repository
 	my ($self, $state, $source) = @_;
 	require OpenBSD::PackageRepository;
 	my $repo = OpenBSD::PackageRepository->new($source, $state);
+	if ($state->{signer}->want_local && !$repo->is_local_file) {
+		$state->fatal("Signing distant source is not supported");
+	}
 	my @list = sort @{$repo->list};
 	if (@list == 0) {
 		$state->errsay('Source repository "#1" is empty', $source);
