@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.8 2016/09/08 18:56:58 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.9 2016/10/03 22:13:30 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -58,9 +58,7 @@
 	"	.type " #entry_pt ",%function	\n" \
 	"	.align 4			\n" \
 	#entry_pt":				\n" \
-	"	mov ip, sp			\n" \
-	"	stmfd sp!, {fp, ip, lr, pc}	\n" \
-	"	sub fp, ip, #4			\n" \
+	"	push	{r4, lr}		\n" \
 	"	/* fall thru */			\n" \
 	"	.previous")
 
@@ -68,7 +66,7 @@
 #define MD_SECTION_EPILOGUE(sect)		\
 	__asm (					\
 	".section "#sect",\"ax\",%progbits	\n" \
-	"	ldmea	fp, {fp, sp, pc}	\n" \
+	"	pop	{r4, pc}		\n" \
 	"	.previous")
 
 
