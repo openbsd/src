@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.19 2016/09/03 11:35:24 nayden Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.20 2016/10/03 05:59:24 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -813,10 +813,8 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
 	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr +
-	    dev->vq[0].vq_availoffset);
-	used = (struct vring_used *)(vr +
-	    dev->vq[0].vq_usedoffset);
+	avail = (struct vring_avail *)(vr + dev->vq[0].vq_availoffset);
+	used = (struct vring_used *)(vr + dev->vq[0].vq_usedoffset);
 
 	idx = dev->vq[0].last_avail & VIONET_QUEUE_MASK;
 
