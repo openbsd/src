@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_sign.1,v 1.8 2015/09/25 16:56:26 schwarze Exp $
+.\"	$OpenBSD: pkg_sign.1,v 1.9 2016/10/03 13:11:38 espie Exp $
 .\" Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 25 2015 $
+.Dd $Mdocdate: October 3 2016 $
 .Dt PKG_SIGN 1
 .Os
 .Sh NAME
@@ -26,8 +26,7 @@
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl j Ar maxjobs
 .Op Fl o Ar dir
-.Fl s Cm signify Ns | Ns Cm x509
-.Op Fl s Ar cert
+.Fl s Cm signify2
 .Fl s Ar privkey
 .Op Fl S Ar source
 .Op Ar pkg-name ...
@@ -50,15 +49,15 @@ Append
 checksums to
 .Pa SHA256
 in the output directory, then sort it.
-.It Fl D Ar resign
-Allows signing over already signed packages.
-Obviously, this checks the existing signature first,
-so the
-.Fl D Ar SIGNER
-and
-.Fl D Ar nosig
-also apply with the same semantics as
-.Xr pkg_add 1 .
+.\" .It Fl D Ar resign
+.\" Allows signing over already signed packages.
+.\" Obviously, this checks the existing signature first,
+.\" so the
+.\" .Fl D Ar SIGNER
+.\" and
+.\" .Fl D Ar nosig
+.\" also apply with the same semantics as
+.\" .Xr pkg_add 1 .
 .It Fl i
 Incremental mode.
 Ignore packages that are already in the output repository.
@@ -72,27 +71,26 @@ Specify output directory for signing packages.
 Otherwise, unsigned packages are created in the current directory.
 .It Fl S Ar source
 Source repository for packages to be signed.
-This can be any url admissible for a
-.Ev PKG_PATH ,
-so that it is possible to sign packages during a transfer, e.g.,
-.Bd -literal -offset indent
-pkg_sign -s signify -s mykey-pkg.sec \e
-	-o output -S scp://build-machine/packages/
-.Ed
+.\" This can be any url admissible for a
+.\" .Ev PKG_PATH ,
+.\" so that it is possible to sign packages during a transfer, e.g.,
+.\" .Bd -literal -offset indent
+.\" pkg_sign -s signify -s mykey-pkg.sec \e
+.\" 	-o output -S scp://build-machine/packages/
+.\" .Ed
 .It Xo
-.Fl s Cm signify Ns | Ns Cm x509
-.Op Fl s Ar cert
+.Fl s Cm signify2
 .Fl s Ar privkey
 .Xc
 Specify signature parameters for signed packages.
 Option parameters are as follows:
-.Bl -tag -width signify|x509 -compact
-.It Cm signify Ns | Ns Cm x509
+.Bl -tag -width signify2 -compact
+.It Cm signify2
 choose
 .Xr signify 1
-or X.509-style signatures.
-.It Ar cert
-the path to the signer's certificate (X.509 only)
+new style signatures, where the
+.Xr gzip 1
+compressed data is signed.
 .It Ar privkey
 the path to the signer's private key.
 For
@@ -103,21 +101,24 @@ annotation.
 If a corresponding public key is found, the first signatures will be
 checked for key mismatches.
 .El
-.Pp
-For X.509, the signer's certificate and the signer's private key
-should be generated using standard openssl x509 commands.
-This assumes the existence of a certificate authority (or several), whose
-public information is recorded as a
-.Pa /etc/ssl/pkgca.pem
-file.
 .It Fl v
 Turn on verbose output, display
 .Sq Signed output/pkg.tgz
 after each package is signed.
 .El
 .Sh SIGNATURE DETAILS
-The packing-list is extracted from the source package:
-it already contains a complete manifest of files within the package,
+The signature is stored within the
+.Xr gzip 1
+comment, as plain text data, according to
+.Xr signify 1
+.Fl zS
+mode.
+It contains the ed25519 signature, some meta-information,
+and
+SHA512/256 checksums for each 64K block of compressed data.
+.Pp
+Additionally, for further manual checking, the packing-list contains
+a complete manifest of files within the package,
 checksummed with
 .Xr sha256 1
 and annotated with proper
@@ -130,19 +131,17 @@ will refuse to give special rights to any file which isn't properly annotated,
 and so that it will abort on installation of a file whose checksum does not
 match.
 .Pp
-That packing list is a text file that is signed using the provided method,
+Meta-information from
+.Xr signify 1
+gets inserted in the packing list during extraction,
 adding a
 .Cm @digital-signature
-annotation.
-The signed package is then created, by putting the signed packing-list at
-the start of the new package, and then blindly copying the rest of the source
-package: there is no need to re-checksum any of the files;
-if someone tampers with them later, their checksum will not match.
+annotation and a
+.Cm @signer
+annotation for further manual inspection.
 .Sh SEE ALSO
-.Xr openssl 1 ,
+.Xr cksum 1 ,
 .Xr pkg_add 1 ,
-.Xr pkg_create 1 ,
-.Xr sha256 1 ,
 .Xr signify 1 ,
 .Xr tar 1 ,
 .Xr package 5
@@ -151,5 +150,7 @@ The
 .Nm
 command first appeared in
 .Ox 5.5 .
+The signature process was completely redesigned for
+.Ox 6.1 .
 .Sh AUTHORS
 .An Marc Espie
