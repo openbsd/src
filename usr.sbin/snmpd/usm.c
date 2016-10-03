@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.9 2015/01/16 00:05:13 deraadt Exp $	*/
+/*	$OpenBSD: usm.c,v 1.10 2016/10/03 12:19:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -605,7 +605,7 @@ usm_crypt(struct snmp_message *msg, u_char *inbuf, int inlen, u_char *outbuf,
 		EVP_CIPHER_CTX_set_padding(&ctx, 0);
 
 	if (EVP_CipherUpdate(&ctx, outbuf, &len, inbuf, inlen) &&
-	    EVP_CipherFinal(&ctx, outbuf + len, &len2))
+	    EVP_CipherFinal_ex(&ctx, outbuf + len, &len2))
 		rv = len + len2;
 	else
 		rv = -1;
