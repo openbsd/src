@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.12 2016/10/03 10:59:54 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.13 2016/10/03 12:14:08 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -120,8 +120,13 @@ sub sign_list
 	$state->{total} = scalar @$l;
 	$maxjobs //= 1;
 	my $code = sub {
-		my $pkg = $repo->find(shift);
-		$self->sign_existing_package($state, $pkg);
+		my $name = shift;
+		my $pkg = $repo->find($name);
+		if (!defined $pkg) {
+			$state->errsay("#1 not found", $name);
+		} else {
+			$self->sign_existing_package($state, $pkg);
+		}
 	    };
 	my $display = $state->verbose ?
 	    sub {
