@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.43 2016/09/11 14:17:04 natano Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.44 2016/10/03 21:24:40 natano Exp $
 
 INFODIR=	infodir=/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -55,9 +55,11 @@ maninstall:
 .endif
 
 install:	maninstall
+	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} ${DESTDIR}/usr/share/texinfo
 	${FSFMAKE} mandir= INSTALL_MAN= DESTDIR=${DESTDIR} install
 	sh ${.CURDIR}/util/gen-dir-node ${DESTDIR}/usr/share/info > \
 	    ${DESTDIR}/usr/share/info/dir
+	chown ${MANOWN}:${MANGRP} ${DESTDIR}/usr/share/info/dir
 
 clean cleandir:
 	rm -f ${CLEANFILES}

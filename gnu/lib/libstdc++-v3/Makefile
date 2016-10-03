@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libstdc++/Makefile,v 1.63.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.11 2016/09/01 11:03:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.12 2016/10/03 21:24:40 natano Exp $
 
 .include "${.CURDIR}/Makefile.common"
 
@@ -603,6 +603,7 @@ CLEANFILES+=	${VERSION_MAP}
 prereq: c++config.h ${THRHDRS}
 
 includes: prereq
+	${INSTALL} -d -o root -g bin ${CXXINCLUDEDIR}/${GCC_TARGET}
 .for group in ${INCSGROUPS}
 	test -d ${${group}DIR} || \
 	    ${INSTALL} -d -o root -g bin -m 755 \
