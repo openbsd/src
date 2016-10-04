@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.153 2016/09/19 06:46:43 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.154 2016/10/04 23:02:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -80,7 +80,10 @@ struct wskbd_vol
 	int step;			/* increment/decrement step */
 	int nch;			/* channels in the value control */
 	int val_pending;		/* pending change of val */
-	int mute_pending;		/* pending mute toggles */
+	int mute_pending;		/* pending change of mute */
+#define WSKBD_MUTE_TOGGLE	1
+#define WSKBD_MUTE_DISABLE	2
+#define WSKBD_MUTE_ENABLE	3
 };
 #endif
 
@@ -1885,7 +1888,17 @@ wskbd_mixer_update(struct audio_softc *sc, struct wskbd_vol *vol)
 			DPRINTF("%s: get mute err = %d\n", DEVNAME(sc), error);
 			return;
 		}
-		ctrl.un.ord = ctrl.un.ord ^ mute_pending;
+		switch (mute_pending) {
+		case WSKBD_MUTE_TOGGLE:
+			ctrl.un.ord = !ctrl.un.ord;
+			break;
+		case WSKBD_MUTE_DISABLE:
+			ctrl.un.ord = 0;
+			break;
+		case WSKBD_MUTE_ENABLE:
+			ctrl.un.ord = 1;
+			break;
+		}
 		DPRINTFN(1, "%s: wskbd mute setting to %d\n",
 		    DEVNAME(sc), ctrl.un.ord);
 		error = sc->ops->set_port(sc->arg, &ctrl);
@@ -1936,6 +1949,25 @@ wskbd_mixer_cb(void *addr)
 }
 
 int
+wskbd_set_mixermute(long mute, long out)
+{
+	struct audio_softc *sc;
+	struct wskbd_vol *vol;
+
+	sc = (struct audio_softc *)device_lookup(&audio_cd, 0);
+	if (sc == NULL)
+		return ENODEV;
+	vol = out ? &sc->spkr : &sc->mic;
+	vol->mute_pending = mute ? WSKBD_MUTE_ENABLE : WSKBD_MUTE_DISABLE;
+	if (!sc->wskbd_taskset) {
+		task_set(&sc->wskbd_task, wskbd_mixer_cb, sc);
+		task_add(systq, &sc->wskbd_task);
+		sc->wskbd_taskset = 1;
+	}
+	return 0;
+}
+
+int
 wskbd_set_mixervolume(long dir, long out)
 {
 	struct audio_softc *sc;
@@ -1946,7 +1978,7 @@ wskbd_set_mixervolume(long dir, long out)
 		return ENODEV;
 	vol = out ? &sc->spkr : &sc->mic;
 	if (dir == 0)
-		vol->mute_pending ^= 1;
+		vol->mute_pending ^= WSKBD_MUTE_TOGGLE;
 	else
 		vol->val_pending += dir;
 	if (!sc->wskbd_taskset) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.52 2016/05/05 05:12:49 jsg Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.53 2016/10/04 23:02:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -105,6 +105,8 @@
 #define THINKPAD_NSENSORS 9
 #define THINKPAD_NTEMPSENSORS 8
 
+#define THINKPAD_ECOFFSET_VOLUME	0x30
+#define THINKPAD_ECOFFSET_VOLUME_MUTE_MASK 0x40
 #define THINKPAD_ECOFFSET_FANLO		0x84
 #define THINKPAD_ECOFFSET_FANHI		0x85
 
@@ -163,6 +165,9 @@ void    thinkpad_sensor_attach(struct acpithinkpad_softc *sc);
 void    thinkpad_sensor_refresh(void *);
 
 #if NAUDIO > 0 && NWSKBD > 0
+void thinkpad_attach_deferred(void *);
+int thinkpad_get_volume_mute(struct acpithinkpad_softc *);
+extern int wskbd_set_mixermute(long, long);
 extern int wskbd_set_mixervolume(long, long);
 #endif
 
@@ -257,6 +262,12 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode = aa->aaa_node;
 
 	printf("\n");
+
+#if NAUDIO > 0 && NWSKBD > 0
+	/* Defer speaker mute */
+	if (thinkpad_get_volume_mute(sc) == 1)
+		startuphook_establish(thinkpad_attach_deferred, sc);
+#endif
 
 	/* Set event mask to receive everything */
 	thinkpad_enable_events(sc);
@@ -589,12 +600,20 @@ thinkpad_activate(struct device *self, int act)
 
 	struct acpithinkpad_softc *sc = (struct acpithinkpad_softc *)self;
 	int64_t res;
+#if NAUDIO > 0 && NWSKBD > 0
+	int mute;
+#endif
 
-	switch(act) {
+	switch (act) {
 	case DVACT_WAKEUP:
 		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "GTRW",
 		    0, NULL, &res) == 0)
 			thinkpad_adaptive_change(sc);
+#if NAUDIO > 0 && NWSKBD > 0
+		mute = thinkpad_get_volume_mute(sc);
+		if (mute != -1)
+			wskbd_set_mixermute(mute, 1);
+#endif
 		break;
 	}
 	return (0);
@@ -722,3 +741,24 @@ thinkpad_set_param(struct wsdisplay_param *dp)
 		return -1;
 	}
 }
+
+#if NAUDIO > 0 && NWSKBD > 0
+void
+thinkpad_attach_deferred(void *v __unused)
+{
+	wskbd_set_mixermute(1, 1);
+}
+
+int
+thinkpad_get_volume_mute(struct acpithinkpad_softc *sc)
+{
+	u_int8_t vol = 0;
+
+	if (sc->sc_acpi->sc_ec == NULL)
+		return (-1);
+
+	acpiec_read(sc->sc_acpi->sc_ec, THINKPAD_ECOFFSET_VOLUME, 1, &vol);
+	return ((vol & THINKPAD_ECOFFSET_VOLUME_MUTE_MASK) ==
+	    THINKPAD_ECOFFSET_VOLUME_MUTE_MASK);
+}
+#endif
