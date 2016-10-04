@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.9 2016/02/03 14:24:05 reyk Exp $ */
+/*	$OpenBSD: vmt.c,v 1.10 2016/10/04 09:59:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -419,7 +419,7 @@ vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 		goto done;
 	}
 
-	if (vm_rpc_send_rpci_tx(sc, buf) != 0) {
+	if (vm_rpc_send_rpci_tx(sc, "%s", buf) != 0) {
 		DPRINTF("%s: error sending command: %s\n", DEVNAME(sc), buf);
 		sc->sc_rpc_error = 1;
 		error = EIO;
