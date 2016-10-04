@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.31 2016/08/05 14:02:23 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.32 2016/10/04 22:47:51 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -248,16 +248,16 @@ create_priority_list(unsigned char *priority_list, unsigned char *prl,
 	for(i = 0; i < prl_len; i++) {
 		if (stored_list[prl[i]])
 			continue;
-		priority_list[priority_len++] = prl[i];	
+		priority_list[priority_len++] = prl[i];
 		stored_list[prl[i]] = 1;
-	}	
+	}
 
 	/* Default priority list. */
 	prl = dhcp_option_default_priority_list;
 	for(i = 0; i < 256; i++) {
 		if (stored_list[prl[i]])
 			continue;
-		priority_list[priority_len++] = prl[i];	
+		priority_list[priority_len++] = prl[i];
 		stored_list[prl[i]] = 1;
 	}
 }

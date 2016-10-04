@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.46 2016/08/05 14:02:23 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.47 2016/10/04 22:47:51 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -343,15 +343,15 @@ dhcprequest(struct packet *packet)
 		return;
 	}
 
- 	/*
+	/*
 	 * Do not ACK a REQUEST intended for another server.
- 	 */
+	 */
 	if (packet->options[DHO_DHCP_SERVER_IDENTIFIER].len == 4) {
 		if (memcmp(packet->options[DHO_DHCP_SERVER_IDENTIFIER].data,
 		    &packet->interface->primary_address, 4))
 			return;
- 	}
- 
+	}
+
 	/*
 	 * If we own the lease that the client is asking for,
 	 * and it's already been assigned to the client, ack it.

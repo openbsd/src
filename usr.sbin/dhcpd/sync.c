@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.17 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: sync.c,v 1.18 2016/10/04 22:47:51 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -355,7 +355,7 @@ sync_send(struct iovec *iov, int iovlen)
 {
 	struct sync_host *shost;
 	struct msghdr msg;
-	
+
 	if (syncfd == -1)
 		return;
 
