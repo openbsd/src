@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.293 2016/07/25 16:44:04 benno Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.294 2016/10/04 13:54:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -831,9 +831,9 @@ carp_new_vhost(struct carp_softc *sc, int vhid, int advskew)
 	vhe->vhid = vhid;
 	vhe->advskew = advskew;
 	vhe->state = INIT;
-	timeout_set(&vhe->ad_tmo, carp_send_ad, vhe);
-	timeout_set(&vhe->md_tmo, carp_master_down, vhe);
-	timeout_set(&vhe->md6_tmo, carp_master_down, vhe);
+	timeout_set_proc(&vhe->ad_tmo, carp_send_ad, vhe);
+	timeout_set_proc(&vhe->md_tmo, carp_master_down, vhe);
+	timeout_set_proc(&vhe->md6_tmo, carp_master_down, vhe);
 
 	KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
 

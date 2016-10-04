@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.234 2016/09/27 04:57:17 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.235 2016/10/04 13:54:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -328,9 +328,9 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	ifp->if_hdrlen = sizeof(struct pfsync_header);
 	ifp->if_mtu = ETHERMTU;
-	timeout_set(&sc->sc_tmo, pfsync_timeout, sc);
-	timeout_set(&sc->sc_bulk_tmo, pfsync_bulk_update, sc);
-	timeout_set(&sc->sc_bulkfail_tmo, pfsync_bulk_fail, sc);
+	timeout_set_proc(&sc->sc_tmo, pfsync_timeout, sc);
+	timeout_set_proc(&sc->sc_bulk_tmo, pfsync_bulk_update, sc);
+	timeout_set_proc(&sc->sc_bulkfail_tmo, pfsync_bulk_fail, sc);
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -1720,7 +1720,7 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	sc->sc_deferred++;
 	TAILQ_INSERT_TAIL(&sc->sc_deferrals, pd, pd_entry);
 
-	timeout_set(&pd->pd_tmo, pfsync_defer_tmo, pd);
+	timeout_set_proc(&pd->pd_tmo, pfsync_defer_tmo, pd);
 	timeout_add_msec(&pd->pd_tmo, 20);
 
 	schednetisr(NETISR_PFSYNC);

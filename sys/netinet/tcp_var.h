@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.115 2016/07/20 19:57:53 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.116 2016/10/04 13:54:32 mpi Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ extern int tcp_delack_ticks;
 void	tcp_delack(void *);
 
 #define TCP_INIT_DELACK(tp)						\
-	timeout_set(&(tp)->t_delack_to, tcp_delack, tp)
+	timeout_set_proc(&(tp)->t_delack_to, tcp_delack, tp)
 
 #define TCP_RESTART_DELACK(tp)						\
 	timeout_add(&(tp)->t_delack_to, tcp_delack_ticks)
