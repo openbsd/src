@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.328 2016/09/19 16:06:25 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.329 2016/10/04 13:56:50 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3348,7 +3348,7 @@ do {									\
 	    TCPTV_SRTTDFLT * tcp_backoff[(sc)->sc_rxtshift], TCPTV_MIN,	\
 	    TCPTV_REXMTMAX);						\
 	if (!timeout_initialized(&(sc)->sc_timer))			\
-		timeout_set(&(sc)->sc_timer, syn_cache_timer, (sc));	\
+		timeout_set_proc(&(sc)->sc_timer, syn_cache_timer, (sc)); \
 	timeout_add(&(sc)->sc_timer, (sc)->sc_rxtcur * (hz / PR_SLOWHZ)); \
 } while (/*CONSTCOND*/0)
 
