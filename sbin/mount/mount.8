@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.85 2016/09/10 18:33:28 jmc Exp $
+.\"	$OpenBSD: mount.8,v 1.86 2016/10/04 21:10:51 natano Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: September 10 2016 $
+.Dd $Mdocdate: October 4 2016 $
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -199,8 +199,14 @@ This option is useful for a server that has file systems containing
 binaries for architectures other than its own.
 .It noperm
 (FFS only)
-Allow the owner of the mount point to perform operations on the file system
-usually only allowed as the root user.
+Do not check permissions when creating, accessing or modifying files and
+directories in the mounted file system.
+This allows unprivileged users to construct a file hierarchy containing
+special device nodes and files with arbitrary file mode, owner or group
+without restriction.
+The noperm option also enables the nodev and noexec options to ensure
+that interpretation of the file modes and special devices cannot be
+used to gain privileges.
 .It norw
 An alias for rdonly.
 .It nosuid
