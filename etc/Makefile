@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.434 2016/09/18 21:47:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.435 2016/10/04 16:54:31 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -221,8 +221,8 @@ distribution-etc-root-var: distrib-dirs
 	chown root:wheel ${DESTDIR}/var/sysmerge/etc.tgz
 
 distribution:
-	exec ${SUDO} ${MAKE} distribution-etc-root-var
-	cd .. && exec ${SUDO} ${MAKE} install
+	exec ${MAKE} distribution-etc-root-var
+	cd .. && exec ${MAKE} install
 
 distrib-dirs:
 	if [ ! -d ${DESTDIR}/. ]; then \
@@ -243,7 +243,7 @@ release:
 
 release-sets:
 	cd ${RELEASEDIR} && rm -f SHA256
-	cd ../distrib/sets && exec ${SUDO} sh maketars ${OSrev}
+	cd ../distrib/sets && exec sh maketars ${OSrev}
 
 sha:
 	-cd ${RELEASEDIR}; \
@@ -262,7 +262,7 @@ release-sets: distribution kernels
 
 distrib:
 	cd ../distrib && \
-	    ${MAKE} && exec ${SUDO} ${MAKE} install
+	    ${MAKE} && exec ${MAKE} install
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
 	release allarchs kernels release-sets m4 install-mtree \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.125 2015/08/23 14:22:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.126 2016/10/04 16:54:31 deraadt Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -50,7 +50,7 @@ regression-tests:
 	@cd ${.CURDIR}/regress && ${MAKE} depend && exec ${MAKE} regress
 
 includes:
-	cd ${.CURDIR}/include && ${MAKE} prereq && exec ${SUDO} ${MAKE} includes
+	cd ${.CURDIR}/include && ${MAKE} prereq && exec ${MAKE} includes
 
 beforeinstall:
 	cd ${.CURDIR}/etc && exec ${MAKE} DESTDIR=${DESTDIR} distrib-dirs
@@ -72,15 +72,15 @@ build:
 .ifdef GLOBAL_AUTOCONF_CACHE
 	cp /dev/null ${GLOBAL_AUTOCONF_CACHE}
 .endif
-	cd ${.CURDIR}/share/mk && exec ${SUDO} ${MAKE} install
-	cd ${.CURDIR}/include && ${MAKE} prereq && exec ${SUDO} ${MAKE} includes
-	${SUDO} ${MAKE} cleandir
+	cd ${.CURDIR}/share/mk && exec ${MAKE} install
+	cd ${.CURDIR}/include && ${MAKE} prereq && exec ${MAKE} includes
+	${MAKE} cleandir
 	cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && \
-	    NOMAN=1 exec ${SUDO} ${MAKE} install
+	    NOMAN=1 exec ${MAKE} install
 	cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && \
-	    NOMAN=1 exec ${SUDO} ${MAKE} install
-	${MAKE} depend && ${MAKE} && exec ${SUDO} ${MAKE} install
-	${SUDO} /bin/sh ${.CURDIR}/distrib/sets/makeetcset ${.CURDIR} ${MAKE}
+	    NOMAN=1 exec ${MAKE} install
+	${MAKE} depend && ${MAKE} && exec ${MAKE} install
+	/bin/sh ${.CURDIR}/distrib/sets/makeetcset ${.CURDIR} ${MAKE}
 .endif
 
 CROSS_TARGETS=cross-env cross-dirs cross-obj cross-includes cross-binutils \
