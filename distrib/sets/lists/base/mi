@@ -1127,8 +1127,6 @@
 ./usr/libdata/perl5/OpenBSD/Ustar.pm
 ./usr/libdata/perl5/OpenBSD/Vstat.pm
 ./usr/libdata/perl5/OpenBSD/md5.pm
-./usr/libdata/perl5/OpenBSD/signify.pm
-./usr/libdata/perl5/OpenBSD/x509.pm
 ./usr/libdata/perl5/Package
 ./usr/libdata/perl5/Package/Constants.pm
 ./usr/libdata/perl5/Params
