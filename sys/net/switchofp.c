@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.9 2016/09/29 20:38:01 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.10 2016/10/04 17:58:09 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -5768,16 +5768,21 @@ swofp_table_features_put_actions(struct mbuf *m, int *off, uint16_t tp_type)
 {
 	struct ofp_table_feature_property	 tp;
 	struct ofp_action_header		 action;
-	uint32_t				 padding = 0;
 	int					 i, supported = 0;
+	int					 actionlen, padsize;
+	uint8_t					 padding[8];
 
 	for (i = 0 ; i < nitems(ofp_action_handlers); i++) {
 		if (ofp_action_handlers[i].action)
 			supported++;
 	}
 
+	actionlen = sizeof(action) - sizeof(action.ah_pad);
 	tp.tp_type = htons(tp_type);
-	tp.tp_length = htons((sizeof(action) * supported) + sizeof(tp));
+	tp.tp_length = (actionlen * supported) + sizeof(tp);
+
+	padsize = OFP_ALIGN(tp.tp_length) - tp.tp_length;
+	tp.tp_length = htons(tp.tp_length);
 
 	if (m_copyback(m, *off, sizeof(tp), (caddr_t)&tp, M_NOWAIT))
 		return (OFP_ERRREQ_MULTIPART_OVERFLOW);
@@ -5787,25 +5792,24 @@ swofp_table_features_put_actions(struct mbuf *m, int *off, uint16_t tp_type)
 		if (ofp_action_handlers[i].action == NULL)
 			continue;
 
-		memset(&action, 0, sizeof(action));
+		memset(&action, 0, actionlen);
 		action.ah_type = ntohs(ofp_action_handlers[i].action_type);
-		action.ah_len = ntohs(sizeof(action));
+		/* XXX action length is different for experimenter type. */
+		action.ah_len = ntohs(actionlen);
 
-		if (m_copyback(m, *off, sizeof(action),
+		if (m_copyback(m, *off, actionlen,
 		    (caddr_t)&action, M_NOWAIT))
 			return (OFP_ERRREQ_MULTIPART_OVERFLOW);
-		*off += sizeof(action);
+		*off += actionlen;
 	}
 
-	/*
-	 * It's always necessary to use 4 byte padding because:
-	 *  - struct ofp_action_header is 8 byte so it is aligned
-	 *  - struct ofp_table_feature_property is 4 byte so it needs padding
-	 */
-	if (m_copyback(m, *off, sizeof(padding),
-	    (caddr_t)&padding, M_NOWAIT))
-		return (OFP_ERRREQ_MULTIPART_OVERFLOW);
-	*off += sizeof(padding);
+	if (padsize) {
+		memset(padding, 0, padsize);
+		if (m_copyback(m, *off, padsize, &padding, M_NOWAIT))
+			return (OFP_ERRREQ_MULTIPART_OVERFLOW);
+
+		*off += padsize;
+	}
 
 	return (0);
 }
