@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.193 2016/10/03 12:33:21 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.194 2016/10/04 14:04:19 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1217,7 +1217,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 	}
 
 	if (newhost)
-		rt_ifa_addlocal(&(ia6->ia_ifa));
+		error = rt_ifa_addlocal(&(ia6->ia_ifa));
 
 	return (error);
 }

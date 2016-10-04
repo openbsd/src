@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.330 2016/09/17 07:35:05 phessler Exp $	*/
+/*	$OpenBSD: route.c,v 1.331 2016/10/04 14:04:19 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1324,9 +1324,9 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 	if (!ISSET(ifa->ifa_ifp->if_flags, (IFF_LOOPBACK|IFF_POINTOPOINT)))
 		flags |= RTF_LLINFO;
 
-	/* If there is no loopback entry, allocate one. */
+	/* If there is no local entry, allocate one. */
 	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
-	if (rt == NULL || !ISSET(rt->rt_flags, flags))
+	if (rt == NULL || ISSET(rt->rt_flags, flags) != flags)
 		error = rt_ifa_add(ifa, flags, ifa->ifa_addr);
 	rtfree(rt);
 
@@ -1375,7 +1375,7 @@ rt_ifa_dellocal(struct ifaddr *ifa)
 	 * to a shared medium.
 	 */
 	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
-	if (rt != NULL && ISSET(rt->rt_flags, flags))
+	if (rt != NULL && ISSET(rt->rt_flags, flags) == flags)
 		error = rt_ifa_del(ifa, flags, ifa->ifa_addr);
 	rtfree(rt);
 
