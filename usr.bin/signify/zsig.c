@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.13 2016/09/27 02:16:40 tedu Exp $ */
+/* $OpenBSD: zsig.c,v 1.14 2016/10/04 14:40:41 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -94,7 +94,7 @@ readgz_header(struct gzheader *h, int fd)
 			h->os = buf[9];
 			/* magic gzip header */
 			if (buf[0] != 0x1f || buf[1] != 0x8b || buf[2] != 8)
-				err(1, "invalud magic in gzheader");
+				err(1, "invalid magic in gzheader");
 			/* XXX special code that only caters to our needs */
 			if (h->flg & ~ (FCOMMENT_FLAG | FNAME_FLAG))
 				err(1, "invalid flags in gzheader");
