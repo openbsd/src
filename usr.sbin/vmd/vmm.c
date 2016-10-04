@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.45 2016/09/29 22:42:04 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.46 2016/10/04 17:17:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -34,6 +34,8 @@
 #include <machine/specialreg.h>
 #include <machine/vmmvar.h>
 
+#include <net/if.h>
+
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -63,7 +65,7 @@ io_fn_t ioports_map[MAX_PORTS];
 
 void vmm_sighdlr(int, short, void *);
 int start_client_vmd(void);
-int opentap(void);
+int opentap(char *);
 int start_vm(struct imsg *, uint32_t *);
 int terminate_vm(struct vm_terminate_params *);
 int get_info_vm(struct privsep *, struct imsg *, int);
@@ -374,11 +376,14 @@ terminate_vm(struct vm_terminate_params *vtp)
  *
  * Opens the next available tap device, up to MAX_TAP.
  *
+ * Parameters
+ *  ifname: an optional buffer of at least IF_NAMESIZE bytes.
+ *
  * Returns a file descriptor to the tap node opened, or -1 if no tap
  * devices were available.
  */
 int
-opentap(void)
+opentap(char *ifname)
 {
 	int i, fd;
 	char path[PATH_MAX];
@@ -386,8 +391,11 @@ opentap(void)
 	for (i = 0; i < MAX_TAP; i++) {
 		snprintf(path, PATH_MAX, "/dev/tap%d", i);
 		fd = open(path, O_RDWR | O_NONBLOCK);
-		if (fd != -1)
+		if (fd != -1) {
+			if (ifname != NULL)
+				snprintf(ifname, IF_NAMESIZE, "tap%d", i);
 			return (fd);
+		}
 	}
 
 	return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.25 2016/09/29 22:42:04 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.26 2016/10/04 17:17:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -18,8 +18,11 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
 
 #include <machine/vmmvar.h>
+
+#include <net/if.h>
 
 #include <limits.h>
 #include <pthread.h>
@@ -34,7 +37,7 @@
 #define SOCKET_NAME		"/var/run/vmd.sock"
 #define VMM_NODE		"/dev/vmm"
 #define VM_NAME_MAX		64
-#define VM_TTYNAME_MAX		12
+#define VM_TTYNAME_MAX		16
 #define MAX_TAP			256
 #define NR_BACKLOG		5
 
@@ -52,12 +55,13 @@ enum imsg_type {
 	IMSG_VMDOP_START_VM_RESPONSE,
 	IMSG_VMDOP_TERMINATE_VM_REQUEST,
 	IMSG_VMDOP_TERMINATE_VM_RESPONSE,
+	IMSG_VMDOP_TERMINATE_VM_EVENT,
 	IMSG_VMDOP_GET_INFO_VM_REQUEST,
 	IMSG_VMDOP_GET_INFO_VM_DATA,
 	IMSG_VMDOP_GET_INFO_VM_END_DATA,
 	IMSG_VMDOP_LOAD,
 	IMSG_VMDOP_RELOAD,
-	IMSG_VMDOP_TERMINATE_VM_EVENT
+	IMSG_VMDOP_PRIV_IFDESCR
 };
 
 struct vmop_result {
@@ -77,6 +81,12 @@ struct vmop_id {
 	char			 vid_name[VMM_MAX_NAME_LEN];
 };
 
+struct vmop_ifreq {
+	uint32_t		 vfr_id;
+	char			 vfr_name[IF_NAMESIZE];
+	char			 vfr_value[VM_NAME_MAX];
+};
+
 struct vmd_vm {
 	struct vm_create_params	 vm_params;
 	pid_t			 vm_pid;
@@ -84,7 +94,8 @@ struct vmd_vm {
 	int			 vm_kernel;
 	int			 vm_disks[VMM_MAX_DISKS_PER_VM];
 	int			 vm_ifs[VMM_MAX_NICS_PER_VM];
-	char			 vm_ttyname[VM_TTYNAME_MAX];
+	char			*vm_ifnames[VMM_MAX_NICS_PER_VM];
+	char			*vm_ttyname;
 	int			 vm_tty;
 	uint32_t		 vm_peerid;
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
@@ -115,11 +126,15 @@ struct vmd_vm *vm_getbypid(pid_t);
 void	 vm_remove(struct vmd_vm *);
 char	*get_string(uint8_t *, size_t);
 
+/* priv.c */
+void	 priv(struct privsep *, struct privsep_proc *);
+int	 vm_priv_ifconfig(struct privsep *, struct vmd_vm *);
+
 /* vmm.c */
 void	 vmm(struct privsep *, struct privsep_proc *);
 int	 write_mem(paddr_t, void *buf, size_t);
 int	 read_mem(paddr_t, void *buf, size_t);
-int	 opentap(void);
+int	 opentap(char *);
 int	 fd_hasdata(int);
 void	 mutex_lock(pthread_mutex_t *);
 void	 mutex_unlock(pthread_mutex_t *);

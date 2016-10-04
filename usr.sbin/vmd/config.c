@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.12 2016/09/29 22:42:04 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.13 2016/10/04 17:17:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -20,6 +20,9 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/uio.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +47,7 @@ config_init(struct vmd *env)
 	/* Global configuration */
 	ps->ps_what[PROC_PARENT] = CONFIG_ALL;
 	ps->ps_what[PROC_VMM] = CONFIG_VMS;
+	ps->ps_what[PROC_PRIV] = 0;
 
 	/* Other configuration */
 	what = ps->ps_what[privsep_process];
@@ -110,6 +114,8 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 	int			 fd, ttys_fd;
 	int			 kernfd = -1, *diskfds = NULL, *tapfds = NULL;
 	int			 saved_errno = 0;
+	char			 ptyname[VM_TTYNAME_MAX];
+	char			 ifname[IF_NAMESIZE];
 
 	errno = 0;
 
@@ -149,13 +155,15 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 
 	TAILQ_INSERT_TAIL(env->vmd_vms, vm, vm_entry);
 
-	if (privsep_process != PROC_PARENT) {
+	switch (privsep_process) {
+	case PROC_VMM:
 		if (kernel_fd == -1) {
 			log_debug("invalid kernel fd");
 			goto fail;
 		}
 		vm->vm_kernel = kernel_fd;
-	} else {
+		break;
+	case PROC_PARENT:
 		diskfds = reallocarray(NULL, vcp->vcp_ndisks, sizeof(*diskfds));
 		if (diskfds == NULL) {
 			saved_errno = errno;
@@ -197,16 +205,22 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 
 		/* Open disk network interfaces */
 		for (i = 0 ; i < vcp->vcp_nnics; i++) {
-			if ((tapfds[i] = opentap()) == -1) {
+			if ((tapfds[i] = opentap(ifname)) == -1) {
 				saved_errno = errno;
 				log_warn("%s: can't open tap", __func__);
+				goto fail;
+			}
+
+			if ((vm->vm_ifnames[i] = strdup(ifname)) == NULL) {
+				saved_errno = errno;
+				log_warn("%s: can't save ifname", __func__);
 				goto fail;
 			}
 		}
 
 		/* Open TTY */
-		if (openpty(&fd, &ttys_fd,
-		    vm->vm_ttyname, NULL, NULL) == -1) {
+		if (openpty(&fd, &ttys_fd, ptyname, NULL, NULL) == -1 ||
+		    (vm->vm_ttyname = strdup(ptyname)) == NULL) {
 			saved_errno = errno;
 			log_warn("%s: can't open tty", __func__);
 			goto fail;
@@ -229,8 +243,10 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 		}
 
 		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd,
-		    vcp, sizeof(*vcp));
+		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd,  NULL, 0);
+		break;
+	default:
+		fatalx("vm received by invalid process");
 	}
 
 	free(diskfds);
@@ -303,10 +319,15 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 	if (n >= vm->vm_params.vcp_nnics ||
 	    vm->vm_ifs[n] != -1 || imsg->fd == -1) {
 		log_debug("invalid interface id");
-		errno = EINVAL;
-		return (-1);
+		goto fail;
 	}
 	vm->vm_ifs[n] = imsg->fd;
 
 	return (0);
+ fail:
+	if (imsg->fd != -1)
+		close(imsg->fd);
+	errno = EINVAL;
+	return (-1);
+	
 }

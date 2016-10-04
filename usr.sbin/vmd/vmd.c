@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.30 2016/09/29 22:42:04 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.31 2016/10/04 17:17:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -49,9 +49,16 @@ int	 vmd_dispatch_vmm(int, struct privsep_proc *, struct imsg *);
 struct vmd	*env;
 
 static struct privsep_proc procs[] = {
+	/* Keep "priv" on top as procs[0] */
+	{ "priv",	PROC_PRIV,	NULL, priv },
 	{ "control",	PROC_CONTROL,	vmd_dispatch_control, control },
 	{ "vmm",	PROC_VMM,	vmd_dispatch_vmm, vmm },
+
 };
+
+/* For the privileged process */
+static struct privsep_proc *proc_priv = &procs[0];
+static struct passwd proc_privpw;
 
 int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
@@ -176,10 +183,18 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			errno = vmr.vmr_result;
 			log_warn("%s: failed to start vm", vcp->vcp_name);
 			vm_remove(vm);
-		} else {
-			log_info("%s: started vm %d successfully, tty %s",
-			    vcp->vcp_name, vcp->vcp_id, vm->vm_ttyname);
+			break;
 		}
+
+		/* Now configure all the interfaces */
+		if (vm_priv_ifconfig(ps, vm) == -1) {
+			log_warn("%s: failed to configure vm", vcp->vcp_name);
+			vm_remove(vm);
+			break;
+		}
+
+		log_info("%s: started vm %d successfully, tty %s",
+		    vcp->vcp_name, vcp->vcp_id, vm->vm_ttyname);
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
@@ -196,9 +211,10 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
 		IMSG_SIZE_CHECK(imsg, &vir);
 		memcpy(&vir, imsg->data, sizeof(vir));
-		if ((vm = vm_getbyid(vir.vir_info.vir_id)) != NULL)
+		if ((vm = vm_getbyid(vir.vir_info.vir_id)) != NULL) {
 			(void)strlcpy(vir.vir_ttyname, vm->vm_ttyname,
 			    sizeof(vir.vir_ttyname));
+		}
 		if (proc_compose_imsg(ps, PROC_CONTROL, -1, imsg->hdr.type,
 		    imsg->hdr.peerid, -1, &vir, sizeof(vir)) == -1) {
 			vm_remove(vm);
@@ -324,6 +340,7 @@ main(int argc, char **argv)
 
 	ps = &env->vmd_ps;
 	ps->ps_env = env;
+	env->vmd_fd = -1;
 
 	if (config_init(env) == -1)
 		fatal("failed to initialize configuration");
@@ -331,9 +348,9 @@ main(int argc, char **argv)
 	if ((ps->ps_pw = getpwnam(VMD_USER)) == NULL)
 		fatal("unknown user %s", VMD_USER);
 
-	/* Configure the control socket */
-	ps->ps_csock.cs_name = SOCKET_NAME;
-	TAILQ_INIT(&ps->ps_rcsocks);
+	/* First proc runs as root without pledge but in default chroot */
+	proc_priv->p_pw = &proc_privpw; /* initialized to all 0 */
+	proc_priv->p_chroot = ps->ps_pw->pw_dir; /* from VMD_USER */
 
 	/* Open /dev/vmm */
 	if (env->vmd_noaction == 0) {
@@ -341,6 +358,10 @@ main(int argc, char **argv)
 		if (env->vmd_fd == -1)
 			fatal("%s", VMM_NODE);
 	}
+
+	/* Configure the control socket */
+	ps->ps_csock.cs_name = SOCKET_NAME;
+	TAILQ_INIT(&ps->ps_rcsocks);
 
 	/* Configuration will be parsed after forking the children */
 	env->vmd_conffile = conffile;
@@ -517,12 +538,14 @@ vm_remove(struct vmd_vm *vm)
 	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++) {
 		if (vm->vm_ifs[i] != -1)
 			close(vm->vm_ifs[i]);
+		free(vm->vm_ifnames[i]);
 	}
 	if (vm->vm_kernel != -1)
 		close(vm->vm_kernel);
 	if (vm->vm_tty != -1)
 		close(vm->vm_tty);
 
+	free(vm->vm_ttyname);
 	free(vm);
 }
 

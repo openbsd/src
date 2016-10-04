@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.7 2016/09/29 22:42:04 reyk Exp $	*/
+/*	$OpenBSD: proc.h,v 1.8 2016/10/04 17:17:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -89,6 +89,7 @@ enum privsep_procid {
 	PROC_PARENT	= 0,
 	PROC_CONTROL,
 	PROC_VMM,
+	PROC_PRIV,
 	PROC_MAX,
 } privsep_process;
 
@@ -135,9 +136,10 @@ struct privsep_proc {
 				    struct imsg *);
 	void			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
-	const char		*p_chroot;
-	struct privsep		*p_ps;
 	void			(*p_shutdown)(void);
+	const char		*p_chroot;
+	struct passwd		*p_pw;
+	struct privsep		*p_ps;
 };
 
 struct privsep_fd {
