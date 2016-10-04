@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.141 2016/09/27 21:31:20 naddy Exp $
+# $OpenBSD: PackingList.pm,v 1.142 2016/10/04 14:24:45 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -537,24 +537,6 @@ sub to_installation
 	return if $main::not;
 
 	$self->tofile(OpenBSD::PackageInfo::installed_contents($self->pkgname));
-}
-
-sub check_signature
-{
-	my ($plist, $state) = @_;
-	my $sig = $plist->get('digital-signature');
-	if ($sig->{key} eq 'x509') {
-		require OpenBSD::x509;
-		return OpenBSD::x509::check_signature($plist, $state);
-	} elsif ($sig->{key} eq 'signify' && $state->defines('oldsign')) {
-		require OpenBSD::signify;
-		return OpenBSD::signify::check_signature($plist, $state);
-	} elsif ($sig->{key} eq 'signify2') {
-		return 1;
-	} else {
-		$state->log("Error: unknown signature style $sig->{key}");
-		return 0;
-	}
 }
 
 sub forget
