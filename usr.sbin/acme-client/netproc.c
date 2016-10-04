@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.8 2016/09/13 17:13:37 deraadt Exp $ */
+/*	$Id: netproc.c,v 1.9 2016/10/04 15:41:07 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -559,7 +559,7 @@ dofullchain(struct conn *c, const char *addr)
 }
 
 /*
- * Here we communicate with the letsencrypt server.
+ * Here we communicate with the ACME server.
  * For this, we'll need the certificate we want to upload and our
  * account key information.
  */
