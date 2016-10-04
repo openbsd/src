@@ -1,11 +1,11 @@
-#	$OpenBSD: airport,v 1.56 2016/07/10 13:52:27 schwarze Exp $
+#	$OpenBSD: airport,v 1.57 2016/10/04 17:27:39 fcambus Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
 # http://www.uni-karlsruhe.de/~un9v/atm/ase.html, more are
 # available at http://www.mapping.com/airportcodes.shtml
 #
-# Only use the IATA airport codes.
+# Only use the IATA airport codes, and only add ones you have been to.
 #
 # Airport Code : Airport
 AAA:Anaa, Anaa, French Polynesia
@@ -1457,6 +1457,7 @@ RUN:Roland Garros Airport, Reunion Island, France
 RUT:Rutland, Vermont, USA
 RWI:Wilson, Rocky Mount, North Carolina, USA
 RWN:Rivne International, Rivne, Ukraine
+RZE:Jasionka, Rzeszow, Poland
 SAB:Saba Island, Netherlands Antilles
 SAF:Santa Fe, New Mexico, USA
 SAH:Sanaa International, Yemen
