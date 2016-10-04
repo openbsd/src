@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.14 2016/09/12 06:20:18 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.15 2016/10/04 17:25:52 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 12 2016 $
+.Dd $Mdocdate: October 4 2016 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -128,16 +128,35 @@ A requested VM-based operation could not be completed.
 .El
 .Sh EXAMPLES
 Create a 4.5 Gigabyte disk image, disk.img:
-.Dl $ vmctl create disk.img -s 4.5G
+.Bd -literal -offset indent
+$ vmctl create disk.img -s 4.5G
+.Ed
 .Pp
 Create a new VM with 512MB memory, one network interface, one disk image
 ('disk.img') and boot from kernel '/bsd':
 .Bd -literal -offset indent
-$ vmctl start "myvm" -m 512M -i 1 -d disk.img -k /bsd
+# vmctl start "myvm" -m 512M -i 1 -d disk.img -k /bsd
+.Ed
+.Pp
+.Xr vmd 8
+will create a new
+.Xr tap 4
+network interface on the host side and set the description to indicate
+the VM by ID, interface number, and name:
+.Bd -literal -offset indent
+# ifconfig tap0
+tap0: flags=8842<BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	lladdr fe:e1:ba:d8:50:d1
+	description: vm1-if0-myvm
+	index 15 priority 0 llprio 3
+	groups: tap
+	status: active
 .Ed
 .Pp
 Terminate VM number 1:
-.Dl $ vmctl stop 1
+.Bd -literal -offset indent
+# vmctl stop 1
+.Ed
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr pf 4 ,
