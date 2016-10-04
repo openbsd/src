@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.215 2016/09/23 15:46:39 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.216 2016/10/04 22:09:21 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -153,7 +153,7 @@ struct filed {
 		} f_mb;		/* Memory buffer */
 	} f_un;
 	char	f_prevline[MAXSVLINE];		/* last message logged */
-	char	f_lasttime[16];			/* time of last occurrence */
+	char	f_lasttime[33];			/* time of last occurrence */
 	char	f_prevhost[HOST_NAME_MAX+1];	/* host from which recd. */
 	int	f_prevpri;			/* pri of f_prevline */
 	int	f_prevlen;			/* length of f_prevline */
@@ -210,6 +210,7 @@ int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 int	NoDNS = 0;		/* when true, will refrain from doing DNS lookups */
+int	ZuluTime = 0;		/* display date and time in UTC ISO format */
 int	IncludeHostname = 0;	/* include RFC 3164 style hostnames when forwarding */
 int	Family = PF_UNSPEC;	/* protocol family, may disable IPv4 or IPv6 */
 char	*bind_host = NULL;	/* bind UDP receive socket */
@@ -358,7 +359,7 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
-	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hK:k:m:np:S:s:T:U:uV"))
+	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hK:k:m:np:S:s:T:U:uVZ"))
 	    != -1)
 		switch (ch) {
 		case '4':		/* disable IPv6 */
@@ -437,6 +438,9 @@ main(int argc, char *argv[])
 			break;
 		case 'V':		/* do not verify certificates */
 			NoVerify = 1;
+			break;
+		case 'Z':		/* time stamps in UTC ISO format */
+			ZuluTime = 1;
 			break;
 		default:
 			usage();
@@ -1471,7 +1475,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-46dFhnuV] [-a path] [-C CAfile] [-c cert_file]\n"
+	    "usage: syslogd [-46dFhnuVZ] [-a path] [-C CAfile] [-c cert_file]\n"
 	    "\t[-f config_file] [-K CAfile] [-k key_file] [-m mark_interval]\n"
 	    "\t[-p log_socket] [-S listen_address] [-s reporting_socket]\n"
 	    "\t[-T listen_address] [-U bind_address]\n");
@@ -1583,8 +1587,9 @@ void
 logmsg(int pri, char *msg, char *from, int flags)
 {
 	struct filed *f;
+	struct tm *tm;
 	int fac, msglen, prilev, i;
-	char *timestamp;
+	char timestamp[33];
 	char prog[NAME_MAX+1];
 
 	logdebug("logmsg: pri 0%o, flags 0x%x, from %s, msg %s\n",
@@ -1593,18 +1598,80 @@ logmsg(int pri, char *msg, char *from, int flags)
 	/*
 	 * Check to see if msg looks non-standard.
 	 */
+	timestamp[0] = '\0';
 	msglen = strlen(msg);
-	if (msglen < 16 || msg[3] != ' ' || msg[6] != ' ' ||
-	    msg[9] != ':' || msg[12] != ':' || msg[15] != ' ')
-		flags |= ADDDATE;
+	if ((flags & ADDDATE) == 0) {
+		if (msglen >= 16 && msg[3] == ' ' && msg[6] == ' ' &&
+		    msg[9] == ':' && msg[12] == ':' && msg[15] == ' ') {
+			/* BSD syslog TIMESTAMP, RFC 3164 */
+			strlcpy(timestamp, msg, 16);
+			msg += 16;
+			msglen -= 16;
+			if (ZuluTime)
+				flags |= ADDDATE;
+		} else if (msglen >= 20 &&
+		    isdigit(msg[0]) && isdigit(msg[1]) && isdigit(msg[2]) && 
+		    isdigit(msg[3]) && msg[4] == '-' &&
+		    isdigit(msg[5]) && isdigit(msg[6]) && msg[7] == '-' &&
+		    isdigit(msg[8]) && isdigit(msg[9]) && msg[10] == 'T' &&
+		    isdigit(msg[11]) && isdigit(msg[12]) && msg[13] == ':' &&
+		    isdigit(msg[14]) && isdigit(msg[15]) && msg[16] == ':' &&
+		    isdigit(msg[17]) && isdigit(msg[18]) && (msg[19] == '.' ||
+		    msg[19] == 'Z' || msg[19] == '+' || msg[19] == '-')) {
+			/* FULL-DATE "T" FULL-TIME, RFC 5424 */
+			strlcpy(timestamp, msg, sizeof(timestamp));
+			msg += 19;
+			msglen -= 19;
+			i = 0;
+			if (msglen >= 3 && msg[0] == '.' && isdigit(msg[1])) {
+				/* TIME-SECFRAC */
+				msg += 2;
+				msglen -= 2;
+				i += 2;
+				while(i < 7 && msglen >= 1 && isdigit(msg[0])) {
+					msg++;
+					msglen--; 
+					i++;
+				}
+			}
+			if (msglen >= 2 && msg[0] == 'Z' && msg[1] == ' ') {
+				/* "Z" */
+				timestamp[20+i] = '\0';
+				msg += 2;
+				msglen -= 2;
+			} else if (msglen >= 7 &&
+			    (msg[0] == '+' || msg[0] == '-') &&
+			    isdigit(msg[1]) && isdigit(msg[2]) &&
+			    msg[3] == ':' &&
+			    isdigit(msg[4]) && isdigit(msg[5]) &&
+			    msg[6] == ' ') {
+				/* TIME-NUMOFFSET */
+				timestamp[25+i] = '\0';
+				msg += 7;
+				msglen -= 7;
+			} else {
+				/* invalid time format, roll back */
+				timestamp[0] = '\0';
+				msg -= 19 + i;
+				msglen += 19 + i;
+				flags |= ADDDATE;
+			}
+		} else if (msglen >= 2 && msg[0] == '-' && msg[1] == ' ') {
+			/* NILVALUE, RFC 5424 */
+			msg += 2;
+			msglen -= 2;
+			flags |= ADDDATE;
+		} else
+			flags |= ADDDATE;
+	}
 
 	(void)time(&now);
-	if (flags & ADDDATE)
-		timestamp = ctime(&now) + 4;
-	else {
-		timestamp = msg;
-		msg += 16;
-		msglen -= 16;
+	if (flags & ADDDATE) {
+		if (ZuluTime) {
+			tm = gmtime(&now);
+			strftime(timestamp, sizeof(timestamp), "%FT%TZ", tm);
+		} else
+			strlcpy(timestamp, ctime(&now) + 4, 16);
 	}
 
 	/* extract facility and priority level */
@@ -1666,7 +1733,8 @@ logmsg(int pri, char *msg, char *from, int flags)
 		if ((flags & MARK) == 0 && msglen == f->f_prevlen &&
 		    !strcmp(msg, f->f_prevline) &&
 		    !strcmp(from, f->f_prevhost)) {
-			strlcpy(f->f_lasttime, timestamp, 16);
+			strlcpy(f->f_lasttime, timestamp,
+			    sizeof(f->f_lasttime));
 			f->f_prevcount++;
 			logdebug("msg repeated %d times, %ld sec of %d\n",
 			    f->f_prevcount, (long)(now - f->f_time),
@@ -1687,7 +1755,8 @@ logmsg(int pri, char *msg, char *from, int flags)
 				fprintlog(f, 0, (char *)NULL);
 			f->f_repeatcount = 0;
 			f->f_prevpri = pri;
-			strlcpy(f->f_lasttime, timestamp, 16);
+			strlcpy(f->f_lasttime, timestamp,
+			    sizeof(f->f_lasttime));
 			strlcpy(f->f_prevhost, from,
 			    sizeof(f->f_prevhost));
 			if (msglen < MAXSVLINE) {
@@ -1729,7 +1798,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		v++;
 	} else if (f->f_lasttime[0] != '\0') {
 		v->iov_base = f->f_lasttime;
-		v->iov_len = 15;
+		v->iov_len = strlen(f->f_lasttime);
 		v++;
 		v->iov_base = " ";
 		v->iov_len = 1;
@@ -1785,7 +1854,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 	case F_FORWUDP:
 		logdebug(" %s\n", f->f_un.f_forw.f_loghost);
 		l = snprintf(line, MINIMUM(MAX_UDPMSG + 1, sizeof(line)),
-		    "<%d>%.15s %s%s%s", f->f_prevpri, (char *)iov[0].iov_base,
+		    "<%d>%.32s %s%s%s", f->f_prevpri, (char *)iov[0].iov_base,
 		    IncludeHostname ? LocalHostName : "",
 		    IncludeHostname ? " " : "",
 		    (char *)iov[4].iov_base);
@@ -1827,7 +1896,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		 * buffer synchronisation, helps legacy implementations,
 		 * and makes line based testing easier.
 		 */
-		l = snprintf(line, sizeof(line), "<%d>%.15s %s%s\n",
+		l = snprintf(line, sizeof(line), "<%d>%.32s %s%s\n",
 		    f->f_prevpri, (char *)iov[0].iov_base,
 		    IncludeHostname ? LocalHostName : "",
 		    IncludeHostname ? " " : "");
@@ -1837,7 +1906,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 			break;
 		}
 		l = evbuffer_add_printf(f->f_un.f_forw.f_bufev->output,
-		    "%zu <%d>%.15s %s%s%s\n",
+		    "%zu <%d>%.32s %s%s%s\n",
 		    (size_t)l + strlen(iov[4].iov_base),
 		    f->f_prevpri, (char *)iov[0].iov_base,
 		    IncludeHostname ? LocalHostName : "",
@@ -1934,7 +2003,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_MEMBUF:
 		logdebug("\n");
-		snprintf(line, sizeof(line), "%.15s %s %s",
+		snprintf(line, sizeof(line), "%.32s %s %s",
 		    (char *)iov[0].iov_base, (char *)iov[2].iov_base,
 		    (char *)iov[4].iov_base);
 		if (ringbuf_append_line(f->f_un.f_mb.f_rb, line) == 1)

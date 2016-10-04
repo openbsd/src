@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.50 2016/09/24 11:32:25 jmc Exp $
+.\"	$OpenBSD: syslogd.8,v 1.51 2016/10/04 22:09:21 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"	$NetBSD: syslogd.8,v 1.3 1996/01/02 17:41:48 perry Exp $
 .\"
-.Dd $Mdocdate: September 24 2016 $
+.Dd $Mdocdate: October 4 2016 $
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm syslogd
 .Bk -words
-.Op Fl 46dFhnuV
+.Op Fl 46dFhnuVZ
 .Op Fl a Ar path
 .Op Fl C Ar CAfile
 .Op Fl c Ar cert_file
@@ -169,6 +169,10 @@ attacks over the network, including attackers remotely filling logs.
 .It Fl V
 Do not perform remote server certificate and hostname validation
 when sending messages.
+.It Fl Z
+Generate timestamps in ISO format.
+This includes the year and the timezone, and all logging is done
+in UTC.
 .El
 .Pp
 .Nm
