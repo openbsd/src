@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.136 2016/10/03 14:15:55 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.137 2016/10/04 14:46:13 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -279,6 +279,8 @@ sub parse_problems
 		$url = $object->url;
 	}
 	my $notyet = 1;
+	my $broken = 0;
+	my $signify_error = 0;
 	while(<$fh>) {
 		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/o;
 		next if m/^EPSV command not understood/o;
@@ -292,14 +294,20 @@ sub parse_problems
 		next if m/^Success?fully retrieved file/o;
 		next if m/^\d+\s+bytes\s+received\s+in/o;
 		next if m/^ftp: connect to address.*: No route to host/o;
+		if (m/^ftp: Writing -: Broken pipe/o) {
+			$broken = 1;
+			next;
+		}
 
 		if (defined $hint && $hint == 0) {
 			next if m/^ftp: -: short write/o;
 			next if m/^ftp: local: -: Broken pipe/o;
-			next if m/^ftp: Writing -: Broken pipe/o;
 			next if m/^421\s+/o;
 		}
-		s/.*unsigned .*archive.*/unsigned package/;
+		if (m/^signify:/) {
+			$signify_error = 1;
+			s/.*unsigned .*archive.*/unsigned package/;
+		}
 		if ($notyet) {
 			$self->{state}->errsay("Error from #1", $url);
 			$notyet = 0;
@@ -317,6 +325,11 @@ sub parse_problems
 			$self->{lasterror} = 550;
 		}
 		$self->{state}->errprint("#1", $_);
+	}
+	if ($broken) {
+		unless ($signify_error || defined $hint && $hint == 0) { 
+			$self->{state}->errprint('#1', "ftp: Broken pipe");
+		}
 	}
 	CORE::close($fh);
 	OpenBSD::Temp->reclaim($filename);
