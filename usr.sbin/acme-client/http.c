@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.12 2016/10/04 15:39:58 jsing Exp $ */
+/*	$Id: http.c,v 1.13 2016/10/04 15:49:42 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,6 +33,8 @@
 #include "http.h"
 #include "extern.h"
 
+#define DEFAULT_CA_FILE "/etc/ssl/cert.pem"
+
 /*
  * A buffer for transferring HTTP/S data.
  */
@@ -57,11 +59,12 @@ struct	http {
 	struct source	   src;    /* endpoint (raw) host */
 	char		  *path;   /* path to request */
 	char		  *host;   /* name of endpoint host */
-	struct tls_config *cfg;    /* if TLS */
 	struct tls	  *ctx;    /* if TLS */
 	writefp		   writer; /* write function */
 	readfp		   reader; /* read function */
 };
+
+struct tls_config *tlscfg;
 
 static ssize_t
 dosysread(char *buf, size_t sz, const struct http *http)
@@ -113,6 +116,43 @@ dotlswrite(const void *buf, size_t sz, const struct http *http)
 		warnx("%s: tls_write: %s", http->src.ip,
 		    tls_error(http->ctx));
 	return (rc);
+}
+
+int
+http_init()
+{
+	if (NULL != tlscfg)
+		return (0);
+
+	if (-1 == tls_init()) {
+		warn("tls_init");
+		goto err;
+	}
+
+	tlscfg = tls_config_new();
+	if (NULL == tlscfg) {
+		warn("tls_config_new");
+		goto err;
+	}
+
+	tls_config_set_protocols(tlscfg, TLS_PROTOCOLS_ALL);
+
+	if (-1 == tls_config_set_ca_file(tlscfg, DEFAULT_CA_FILE)) {
+		warn("tls_config_set_ca_file: %s", tls_config_error(tlscfg));
+		goto err;
+	}
+	if (-1 == tls_config_set_ciphers(tlscfg, "compat")) {
+		warn("tls_config_set_ciphers: %s", tls_config_error(tlscfg));
+		goto err;
+	}
+
+	return (0);
+
+ err:
+	tls_config_free(tlscfg);
+	tlscfg = NULL;
+
+	return (-1);
 }
 
 static ssize_t
@@ -182,7 +222,6 @@ http_free(struct http *http)
 	if (NULL == http)
 		return;
 	http_disconnect(http);
-	tls_config_free(http->cfg);
 	free(http->host);
 	free(http->path);
 	free(http->src.ip);
@@ -278,29 +317,10 @@ again:
 	http->writer = dotlswrite;
 	http->reader = dotlsread;
 
-	if (-1 == tls_init()) {
-		warn("tls_init");
-		goto err;
-	}
-
-	http->cfg = tls_config_new();
-	if (NULL == http->cfg) {
-		warn("tls_config_new");
-		goto err;
-	}
-
-	tls_config_set_protocols(http->cfg, TLS_PROTOCOLS_ALL);
-
-	/* FIXME: is this necessary? */
-	tls_config_insecure_noverifycert(http->cfg);
-
-	if (-1 == tls_config_set_ciphers(http->cfg, "compat")) {
-		warn("tls_config_set_ciphers");
-		goto err;
-	} else if (NULL == (http->ctx = tls_client())) {
+	if (NULL == (http->ctx = tls_client())) {
 		warn("tls_client");
 		goto err;
-	} else if (-1 == tls_configure(http->ctx, http->cfg)) {
+	} else if (-1 == tls_configure(http->ctx, tlscfg)) {
 		warnx("%s: tls_configure: %s",
 			http->src.ip, tls_error(http->ctx));
 		goto err;
@@ -740,6 +760,9 @@ main(void)
 	addrs[1].family = 4;
 	addrsz = 2;
 #endif
+
+	if (http_init() == -1)
+		errx(EXIT_FAILURE, "http_init");
 
 #if 0
 	g = http_get(addrs, addrsz, "localhost", 80, "/index.html");

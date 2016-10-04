@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.9 2016/10/04 15:41:07 jsing Exp $ */
+/*	$Id: netproc.c,v 1.10 2016/10/04 15:49:42 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -578,6 +578,16 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 
 	memset(&paths, 0, sizeof(struct capaths));
 	memset(&c, 0, sizeof(struct conn));
+
+	if (pledge("stdio inet rpath", NULL) == -1) {
+		warn("pledge");
+		goto out;
+	}
+
+	if (http_init() == -1) {
+		warn("http_init");
+		goto out;
+	}
 
 	if (pledge("stdio inet", NULL) == -1) {
 		warn("pledge");
