@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.h,v 1.10 2016/09/15 00:58:23 deraadt Exp $ */
+/* $OpenBSD: doas.h,v 1.11 2016/10/05 17:36:53 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -28,8 +28,6 @@ struct rule {
 extern struct rule **rules;
 extern int nrules;
 extern int parse_errors;
-
-size_t arraylen(const char **);
 
 char **prepenv(struct rule *);
 

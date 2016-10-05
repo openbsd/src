@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.22 2016/09/15 00:58:23 deraadt Exp $ */
+/* $OpenBSD: parse.y,v 1.23 2016/10/05 17:36:53 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -54,6 +54,18 @@ static int obsolete_warned = 0;
 
 static void yyerror(const char *, ...);
 static int yylex(void);
+
+static size_t
+arraylen(const char **arr)
+{
+	size_t cnt = 0;
+
+	while (*arr) {
+		cnt++;
+		arr++;
+	}
+	return cnt;
+}
 
 %}
 
