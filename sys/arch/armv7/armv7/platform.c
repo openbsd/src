@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.15 2016/10/05 07:29:59 patrick Exp $	*/
+/*	$OpenBSD: platform.c,v 1.16 2016/10/05 22:06:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -26,7 +26,6 @@
 #include <armv7/armv7/armv7_machdep.h>
 #include <arm/cortex/smc.h>
 
-#include "imx.h"
 #include "omap.h"
 #include "sunxi.h"
 #include "exynos.h"
@@ -41,16 +40,12 @@ void	imxuart_init_cons(void);
 void	com_fdt_init_cons(void);
 void	pluart_init_cons(void);
 
-struct armv7_platform *imx_platform_match(void);
 struct armv7_platform *omap_platform_match(void);
 struct armv7_platform *sunxi_platform_match(void);
 struct armv7_platform *exynos_platform_match(void);
 struct armv7_platform *vexpress_platform_match(void);
 
 struct armv7_platform * (*plat_match[])(void) = {
-#if NIMX > 0
-	imx_platform_match,
-#endif
 #if NOMAP > 0
 	omap_platform_match,
 #endif

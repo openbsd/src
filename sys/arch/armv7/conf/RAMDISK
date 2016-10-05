@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.52 2016/10/03 01:59:20 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.53 2016/10/05 22:06:48 kettenis Exp $
 
 machine		armv7 arm
 
@@ -38,7 +38,6 @@ agtimer*	at fdt?
 armliicc*	at cortex?
 
 # iMX
-imx0		at mainbus?		# iMX SoC
 imxccm*		at fdt? early 1		# clock control module
 imxiomuxc*	at fdt? early 1		# iomux controller
 imxocotp*	at fdt?			# on-chip otp controller

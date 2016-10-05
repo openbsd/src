@@ -1,16 +1,8 @@
-#	$OpenBSD: files.imx,v 1.19 2016/09/23 17:59:17 kettenis Exp $
+#	$OpenBSD: files.imx,v 1.20 2016/10/05 22:06:48 kettenis Exp $
 
-define imx {}
-device imx: imx
-attach imx at fdt
-file	arch/armv7/imx/imx_machdep.c		imx	needs-flag
-file	arch/armv7/imx/imx.c			imx
-file	arch/armv7/imx/imx6.c
-
-# serial ports
 device imxuart
 attach	imxuart at fdt
-file	arch/armv7/imx/imxuart.c		imxuart
+file	arch/armv7/imx/imxuart.c	imxuart
 
 device imxccm
 attach imxccm at fdt
@@ -30,11 +22,11 @@ file	arch/armv7/imx/imxdog.c		imxdog
 
 device imxocotp
 attach imxocotp at fdt
-file	arch/armv7/imx/imxocotp.c		imxocotp
+file	arch/armv7/imx/imxocotp.c	imxocotp
 
 device imxgpio
 attach imxgpio at fdt
-file	arch/armv7/imx/imxgpio.c		imxgpio
+file	arch/armv7/imx/imxgpio.c	imxgpio
 
 device	imxiic: i2cbus
 attach	imxiic at fdt
@@ -46,16 +38,16 @@ file	arch/armv7/imx/if_fec.c		fec
 
 device imxehci: usbus
 attach imxehci at fdt
-file	arch/armv7/imx/imxehci.c		imxehci
+file	arch/armv7/imx/imxehci.c	imxehci
 
 device imxesdhc: sdmmcbus
 attach imxesdhc at fdt
-file	arch/armv7/imx/imxesdhc.c		imxesdhc
+file	arch/armv7/imx/imxesdhc.c	imxesdhc
 
 device imxahci: scsi, atascsi
 attach imxahci at fdt
-file	arch/armv7/imx/imxahci.c		imxahci
+file	arch/armv7/imx/imxahci.c	imxahci
 
 device imxtemp
 attach imxtemp at fdt
-file	arch/armv7/imx/imxtemp.c		imxtemp
+file	arch/armv7/imx/imxtemp.c	imxtemp
