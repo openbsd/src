@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.88 2016/10/03 04:53:54 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.89 2016/10/05 08:04:14 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2155,7 +2155,10 @@ exit:
 		if (vcpu->vc_vmx_msr_entry_load_va)
 			km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
 			    PAGE_SIZE, &kv_page, &kp_zero);
-	}
+	} else {
+		if (vmclear(&vcpu->vc_control_pa))
+			ret = EINVAL;
+	}	
 
 	return (ret);
 }
