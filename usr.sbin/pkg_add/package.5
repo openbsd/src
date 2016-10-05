@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.24 2015/09/10 15:16:44 schwarze Exp $
+.\"	$OpenBSD: package.5,v 1.25 2016/10/05 14:59:19 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: October 5 2016 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -142,14 +142,14 @@ of
 .Sm off
 .Ar style :
 .Ar date :
-.Ar b64sig
+.Ar details
 .Sm on
 .Xc
-Record a digital signature of the packing-list, corresponding
-to
-.Xr pkg_create 1 Ns 's
-.Fl s
-option.
+Record a digital signature of the packing-list, synthetized by
+.Xr pkg_add 1
+from
+.Xr signify 1
+output.
 .Pp
 .It Cm @link Ar name
 Added after a file entry by
@@ -238,16 +238,16 @@ Packing-lists can be signed.
 If a signature is found, then it will be checked
 during installation, and failure to verify will prevent the package from
 installing correctly.
-Currently,
+.Pp
+Starting with
+.Ox 6.1 ,
 .Xr signify 1
-and X.509-style signatures are supported.
-X.509 signatures rely on a certificate authority file being present as
-.Pa /etc/ssl/pkgca.pem
-and all signatures will be checked against it.
-Once the packing-list signature is checked, all individual packing elements
-will be checksummed, resulting in a
+.Fl zS
+.Xr gzip 1
+header signatures are the only supported format.
+This allows for
 .Sq just-in-time
-signature checking.
+signature checking, as the binary data is checked in 64K bytes long chunks.
 .Pp
 Fat packages were removed in
 .Ox 5.1 ,
