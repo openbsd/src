@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.135 2016/09/05 08:18:40 tedu Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.136 2016/10/05 21:26:54 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1526,6 +1526,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 	WPI_WRITE(sc, WPI_FH_RX_WPTR, hw & ~7);
 }
 
+#ifdef WPI_DEBUG
 /*
  * Dump the error log of the firmware when a firmware panic occurs.  Although
  * we can't debug the firmware because it is neither open source nor free, it
@@ -1593,6 +1594,7 @@ wpi_fatal_intr(struct wpi_softc *sc)
 	printf("  802.11 state %d\n", sc->sc_ic.ic_state);
 #undef N
 }
+#endif
 
 int
 wpi_intr(void *arg)
@@ -1622,7 +1624,9 @@ wpi_intr(void *arg)
 	if (r1 & (WPI_INT_SW_ERR | WPI_INT_HW_ERR)) {
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		/* Dump firmware error log and stop. */
+#ifdef WPI_DEBUG
 		wpi_fatal_intr(sc);
+#endif
 		wpi_stop(ifp, 1);
 		task_add(systq, &sc->init_task);
 		return 1;
