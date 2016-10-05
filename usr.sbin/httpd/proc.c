@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.29 2016/10/05 17:09:59 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.30 2016/10/05 17:13:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -135,7 +136,12 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 					fatal("setsid");
 
 				/* Prepare parent socket. */
-				dup2(fd, PROC_PARENT_SOCK_FILENO);
+				if (fd != PROC_PARENT_SOCK_FILENO) {
+					if (dup2(fd, PROC_PARENT_SOCK_FILENO)
+					    == -1)
+						fatal("dup2");
+				} else if (fcntl(fd, F_SETFD, 0) == -1)
+					fatal("fcntl");
 
 				execvp(argv[0], nargv);
 				fatal("%s: execvp", __func__);
