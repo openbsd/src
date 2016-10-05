@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrelay.c,v 1.2 2016/09/30 12:33:43 reyk Exp $	*/
+/*	$OpenBSD: ofrelay.c,v 1.3 2016/10/05 12:01:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -154,6 +154,9 @@ ofrelay_event(int fd, short event, void *arg)
 			error = "read";
 			goto fail;
 		}
+
+		DPRINTF("%s: connection %u.%u read %zd bytes", __func__,
+		    con->con_id, con->con_instance, rlen);
 
 		if ((len = ofrelay_input_close(con, rbuf, rlen)) == -1) {
 			error = "close input";
