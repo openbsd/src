@@ -1,4 +1,4 @@
-.Dd $Mdocdate: November 12 2015 $
+.Dd $Mdocdate: October 5 2016 $
 .Dt CRYPTO 3
 .Os
 .Sh NAME
@@ -21,12 +21,10 @@ and a cryptographic pseudo-random number generator.
 .Bl -tag -width Ds
 .It SYMMETRIC CIPHERS
 .Xr blowfish 3 ,
-cast,
-.Xr des 3 ,
-idea,
-rc2,
-.Xr rc4 3 ,
-rc5
+CAST, DES, IDEA, RC2,
+.Xr RC4 3 ,
+RC5, see
+.Xr EVP_EncryptInit 3
 .It PUBLIC KEY CRYPTOGRAPHY AND KEY AGREEMENT
 .Xr dsa 3 ,
 .Xr dh 3 ,
@@ -35,12 +33,13 @@ rc5
 .Xr x509 3 ,
 x509v3
 .It AUTHENTICATION CODES, HASH FUNCTIONS
-.Xr hmac 3 ,
+.Xr HMAC 3 ,
 .Xr MD2 3 ,
 .Xr MD4 3 ,
 .Xr MD5 3 ,
-.Xr ripemd 3 ,
-.Xr sha 3
+.Xr RIPEMD160 3 ,
+.Xr sha1 3 ,
+.Xr sha2 3
 .It AUXILIARY FUNCTIONS
 .Xr ERR 3 ,
 .Xr threads 3 ,
@@ -48,14 +47,14 @@ x509v3
 .Xr OPENSSL_VERSION_NUMBER 3
 .It INPUT/OUTPUT, DATA ENCODING
 asn1,
-.Xr bio 3 ,
+.Xr BIO 3 ,
 .Xr evp 3 ,
-.Xr pem 3 ,
+.Xr PEM 3 ,
 pkcs7,
 pkcs12
 .It INTERNAL FUNCTIONS
 .Xr bn 3 ,
-.Xr buffer 3 ,
+.Xr BIO_f_buffer 3 ,
 .Xr ec 3 ,
 .Xr lh_new 3 ,
 objects,
