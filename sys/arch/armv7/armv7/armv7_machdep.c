@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.40 2016/09/24 13:43:25 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.41 2016/10/05 07:29:59 patrick Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -218,6 +218,8 @@ int comcnmode = CONMODE;
 
 int stdout_node = 0;
 
+void (*cpuresetfn)(void);
+
 /*
  * void boot(int howto, char *bootstr)
  *
@@ -243,7 +245,8 @@ boot(int howto)
 		}
 		printf("rebooting...\n");
 		delay(500000);
-		platform_watchdog_reset();
+		if (cpuresetfn)
+			(*cpuresetfn)();
 		printf("reboot failed; spinning\n");
 		while(1);
 		/*NOTREACHED*/
@@ -290,7 +293,8 @@ boot(int howto)
 
 	printf("rebooting...\n");
 	delay(500000);
-	platform_watchdog_reset();
+	if (cpuresetfn)
+		(*cpuresetfn)();
 	printf("reboot failed; spinning\n");
 	for (;;) ;
 	/* NOTREACHED */
