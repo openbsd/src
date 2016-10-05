@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.75 2016/09/02 12:17:33 tb Exp $
+.\"	$OpenBSD: release.8,v 1.76 2016/10/05 09:12:13 tb Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: September 2 2016 $
+.Dd $Mdocdate: October 5 2016 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -38,12 +38,23 @@ Make the third party packages.
 Create boot and installation disk images.
 .El
 .Pp
-The following sections describe each of the required steps in detail.
+The following sections describe each of the required steps
+for the
+.Em release
+and
+.Em stable
+branches.
+To build a
+.Em current
+release, additional steps may be required.
+See
+.Lk https://www.openbsd.org/faq/current.html
+for any needed workarounds.
 .Pp
 Commands to be run as a user are preceded by a dollar sign
-.Pq Sq $ .
+.Sq $ .
 Commands that must be run as the superuser are preceded by a hash mark
-.Pq Sq # .
+.Sq # .
 .Ss 1. Update sources
 A
 .Nm
@@ -51,101 +62,69 @@ should always start from a known set of
 .Em coherent
 sources.
 The easiest way to ensure that the sources are complete and coherent
-is to check them out using the
-.Tn CVS
-tag the
-.Ox
-developers add to the repository prior to making a release.
-There are two tags, one which identifies the release as it exists on the
-.Tn CD-ROM
-and another which identifies the
-.Em stable
-branch.
-The
-.Em stable
-branch, starting with
-.Ox 2.7 ,
-contains the patches described in
-.Lk https://www.openbsd.org/errata.html .
-The tags are of the form:
+is to check them out using the appropriate
+.Xr cvs 1
+tag.
+There are two families of tags:
 .Bl -tag -width OPENBSD_x_y_BASE
 .It Va OPENBSD_x_y_BASE
-This tag marks the source as it exists on the release
-.Tn CD-ROM
-where
-.Ar x
-is the major release number and
-.Ar y
-is the minor release number.
+This tag marks the source for the
+.Ox x.y
+release.
 .It Va OPENBSD_x_y
 This tag is a moving target.
-It marks the sources that belong to the stable branch.
-This branch
-.Em only
-contains errata, no new features.
+It marks the sources that belong to the stable branch and
+contains the patches described in
+.Lk https://www.openbsd.org/stable.html .
 .El
 .Pp
-To update your sources to the versions identified by one of the above
-tags use the commands:
+See
+.Lk https://www.openbsd.org/anoncvs.html
+for instructions on fetching the sources for the first time.
+.Pp
+To update existing sources to the versions identified by one of the above
+tags, use the commands:
 .Bd -literal -offset indent
 $ cd /usr/src && cvs up -r TAG -Pd
 $ cd XSRCDIR && cvs up -r TAG -Pd
 $ cd PORTSPATH && cvs up -r TAG -Pd
 .Ed
 .Pp
-Replace
+Here,
 .Va XSRCDIR
-with the path to your X Window System sources, typically
-.Pa /usr/xenocara .
-Replace
+and
 .Va PORTSPATH
-with the path to your ports tree sources, typically
+are the path to the X Window System and ports tree sources, typically
+.Pa /usr/xenocara
+and
 .Pa /usr/ports .
-The above commands assume an existing source tree.
-.Pp
-See
-.Lk http://www.openbsd.org/anoncvs.html
-for instructions on fetching the sources for the first time.
 .Pp
 .Sy Warning :
-.Tn CVS
+.Xr cvs 1
 tags are
 .Sq sticky .
 See
 .Xr cvs 1
 for more information.
 .Ss 2. Build and install a new kernel
-For safety, you should always build and install a new kernel before
+Always build and install a new kernel and reboot before
 building the programs that will use the kernel.
 This ensures that any new system calls, for example, will be present
 when needed.
-To build a kernel the steps are:
 .Pp
-Change the current working directory.
-.Va ${ARCH}
-is the architecture of your machine, e.g.\&
-.Li i386 .
+Change to the kernel configuration directory
 .Pp
 .Dl $ cd /usr/src/sys/arch/${ARCH}/conf
 .Pp
-Edit the kernel configuration file.
+where
+.Va ${ARCH}
+is the architecture of the machine, e.g.\&
+.Li i386 .
+Choose a kernel
+.Xr config 8
+file
 .Va ${NAME}
-is your kernel configuration file.
-You should
-.Em not
-edit
-.Li GENERIC ;
-create your own kernel configuration if you need to make modifications.
-If using
-.Li GENERIC
-you can skip this step.
-And yes, you may use
-.Xr vi 1 ,
-.Xr mg 1 ,
-or any other editor you choose.
-.Pp
-.Dl $ vi ${NAME}
-.Pp
+or create a new one.
 Build the kernel compilation directory and compile the kernel:
 .Bd -literal -offset indent
 $ config ${NAME}
@@ -153,62 +132,43 @@ $ cd ../compile/${NAME}
 $ make clean && make
 .Ed
 .Pp
-(In this instance
-.Li "make clean"
-is your friend.)
+Install the new kernel with
+.Bd -literal -offset indent
+# make install
+.Ed
 .Pp
-Replace the old kernel and reboot.
 The current kernel is copied to
 .Pa /obsd
 and the new kernel to
 .Pa /bsd .
-.Bd -literal -offset indent
-$ su
-# make install
-# shutdown -r now
-.Ed
-.Pp
-If the system does not come up you can boot using
-.Pa /obsd .
+Reboot.
 .Ss 3. Build a new system
-Now that you are running your new kernel you can build a new system.
-It's safer (but slower) to remove your object directories and re-create
-them before the build.
-The steps are:
-.Pp
-Move all your existing object files out of the way and then remove
-them in the background:
-.Bd -literal -offset indent
-$ cd /usr/obj && mkdir -p .old && doas mv * .old && \e
-	doas rm -rf .old &
-.Ed
-.Pp
-Re-build your obj directories:
+The build process will place the object files in a tree under
+.Pa /usr/obj ,
+which is assumed to be empty.
+Create the tree of obj directories with
 .Pp
 .Dl $ cd /usr/src && make obj
 .Pp
-Create directories that might be missing:
+and begin the build:
 .Pp
-.Dl $ cd /usr/src/etc && doas env DESTDIR=/ make distrib-dirs
+.Dl # make build
 .Pp
-Begin the build:
-.Pp
-.Dl $ cd /usr/src && make SUDO=doas build
-.Pp
-Update
+After the build is completed, update
 .Pa /etc ,
 .Pa /var ,
 and
-.Pa /dev/MAKEDEV ,
-either by hand or using
-.Xr sysmerge 8 .
+.Pa /dev ,
+using
+.Xr sysmerge 8
+and
+.Xr MAKEDEV 8 .
 .Pp
-At this point your system is up-to-date and running the code that you
-are going to make into a release.
+At this point, the system is up-to-date and running the code that will be
+made into a release.
 .Ss 4. Make and validate the system release
 The system release consists of at least one generic kernel,
-some installation media, the release
-.Sq tarballs ,
+some installation media, the release tarballs,
 installation instructions, and checksum files.
 .Pp
 The release process requires two work areas.
@@ -217,14 +177,9 @@ They are:
 .It Va DESTDIR
 This is the name of a directory which will be the root of a complete
 .Ox
-installation, thus it must be on a disk partition large enough to store the
-entire operating system (less the X Window System and any third party
-.Sq packages ) .
-The directory can be removed once the release is created.
-In any case the release process ensures the directory is empty before starting.
+installation.
 .It Va RELEASEDIR
 This is the name of a directory where the release output files are stored.
-The following process will create the directory if necessary.
 .It " "
 .Sy Warning :
 .Va DESTDIR
@@ -241,39 +196,21 @@ device, vnd0,
 is also used and must not be configured.
 .El
 .Pp
-The release process is:
-.Pp
 Ensure
 .Va ${DESTDIR}
 exists as an empty directory and
 .Va ${RELEASEDIR}
 exists.
-.Va ${RELEASEDIR}
-need not be empty.
-You must be root to create a release:
-.Bd -literal -offset indent
-$ su
-# export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
-# test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && \e
-	rm -rf ${DESTDIR}- &
-# mkdir -p ${DESTDIR} ${RELEASEDIR}
-.Ed
 .Pp
 Make the release and check that the contents of
 .Va ${DESTDIR}
-pretty much match the contents of the release
-.Sq tarballs :
+match the contents of the release tarballs:
 .Bd -literal -offset indent
+# export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
 # cd /usr/src/etc && make release
 # cd /usr/src/distrib/sets && sh checkflist
 # unset RELEASEDIR DESTDIR
 .Ed
-.Pp
-At this point you have most of an
-.Ox
-release.
-The only thing missing is the X Window System
-(which is covered in the next section).
 .Ss 5. Build and install xenocara
 .Va Xenocara
 is based on the X.Org modular build system.
@@ -289,7 +226,6 @@ The
 tree is also needed while building xenocara.
 The following steps will build and install everything for the first time.
 .Bd -literal -offset indent
-$ su
 # cd XSRCDIR
 # make bootstrap
 # make obj
@@ -311,28 +247,20 @@ system, be aware that the existing contents of
 will be removed as part of the xenocara build (this is necessary for
 release checklist processing).
 .Pp
-The steps to build the release are (assuming you are still root, and still in
-.Va XSRCDIR ) :
+The steps to build the release are:
 .Bd -literal -offset indent
 # export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
-# test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && \e
-	rm -rf ${DESTDIR}- &
-# mkdir -p ${DESTDIR} ${RELEASEDIR}
 # make release
 # unset RELEASEDIR DESTDIR
 .Ed
 .Pp
-At this point you have both
+At this point,
 .Ox
-system and X Window System
-.Sq tarballs
-in your release directory.
+system and X Window System tarballs are in
+.Va RELEASEDIR .
 .Ss 7. Make the third party packages
-The
-.Sq ports
-subsystem of contributed applications is capable of producing
-.Sq packages
-for installation, either individually or in bulk.
+The ports subsystem of contributed applications is capable of producing
+packages for installation, either individually or in bulk.
 This is described in
 .Xr ports 7 .
 .Ss 8. Create boot and installation disk images
@@ -361,8 +289,8 @@ The two installer images are now stored in the local release
 directory.
 .Sh SEE ALSO
 .Xr cvs 1 ,
-.Xr doas 1 ,
 .Xr pkg_add 1 ,
+.Xr mk.conf 5 ,
 .Xr ports 7 ,
 .Xr sysmerge 8
 .Sh HISTORY
