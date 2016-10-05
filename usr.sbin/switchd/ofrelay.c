@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrelay.c,v 1.3 2016/10/05 12:01:15 reyk Exp $	*/
+/*	$OpenBSD: ofrelay.c,v 1.4 2016/10/05 15:28:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -161,10 +161,8 @@ ofrelay_event(int fd, short event, void *arg)
 		if ((len = ofrelay_input_close(con, rbuf, rlen)) == -1) {
 			error = "close input";
 			goto fail;
-		} else if (len == 0) {
-			ofrelay_close(con);
-			return;
-		}
+		} else if (rlen == 0)
+			error = "done";
 
 		do {
 			rlen = ofrelay_input(fd, event, arg);
@@ -215,8 +213,11 @@ ofrelay_input(int fd, short event, void *arg)
 
 	if ((len = ofrelay_input_close(con, ibuf, rlen)) == -1)
 		return (-1);
-	else if (len == 0)
+	else if (rlen == 0) {
+		if (ibuf_left(ibuf))
+			return (0);
 		goto done;
+	}
 
 	/* After we verified the openflow header, set the size accordingly */
 	if (oh != NULL && (hlen + rlen) == sizeof(*oh)) {
