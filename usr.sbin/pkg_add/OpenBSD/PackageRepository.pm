@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.137 2016/10/04 14:46:13 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.138 2016/10/05 13:50:20 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -389,6 +389,9 @@ sub uncompress
 					$result .= "\@digital-signature signify2:$1:external\n";
 				}
 			}
+		} else {
+			$fh->close;
+			return undef;
 		}
 	}
 	$object->{extra_content} = $result;
