@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.142 2016/09/27 15:54:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.143 2016/10/05 18:13:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5282,11 +5282,11 @@ iwm_setrates(struct iwm_node *in)
 	struct iwm_host_cmd cmd = {
 		.id = IWM_LQ_CMD,
 		.len = { sizeof(in->in_lq), },
-		.flags = IWM_LQ_FLAG_USE_RTS_MSK,
 	};
 
 	memset(lq, 0, sizeof(*lq));
 	lq->sta_id = IWM_STATION_ID;
+	lq->flags = IWM_LQ_FLAG_USE_RTS_MSK;
 
 	sgi_ok = ((ni->ni_flags & IEEE80211_NODE_HT) &&
 	    (ni->ni_htcaps & IEEE80211_HTCAP_SGI20));
