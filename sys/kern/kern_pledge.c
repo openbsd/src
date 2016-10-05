@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.183 2016/09/17 00:42:35 tedu Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.184 2016/10/05 05:22:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -398,6 +398,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *)request;
 		syscallarg(const char **)paths;
 	} */	*uap = v;
+	struct process *pr = p->p_p;
 	uint64_t flags = 0;
 	int error;
 
@@ -438,8 +439,8 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 		 * flags doesn't contain flags outside _USERSET: they will be
 		 * relearned.
 		 */
-		if (ISSET(p->p_p->ps_flags, PS_PLEDGE) &&
-		    (((flags | p->p_p->ps_pledge) != p->p_p->ps_pledge)))
+		if (ISSET(pr->ps_flags, PS_PLEDGE) &&
+		    (((flags | pr->ps_pledge) != pr->ps_pledge)))
 			return (EPERM);
 	}
 
@@ -455,7 +456,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 		size_t maxargs = 0;
 		int i, error;
 
-		if (p->p_p->ps_pledgepaths)
+		if (pr->ps_pledgepaths)
 			return (EPERM);
 
 		/* Count paths */
@@ -519,12 +520,12 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 			free(wl, M_TEMP, wl->wl_size);
 			return (error);
 		}
-		p->p_p->ps_pledgepaths = wl;
+		pr->ps_pledgepaths = wl;
 
 #ifdef DEBUG_PLEDGE
 		/* print paths registered as whilelisted (viewed as without chroot) */
 		DNPRINTF(1, "pledge: %s(%d): paths loaded:\n", p->p_comm,
-		    p->p_pid);
+		    pr->ps_pid);
 		for (i = 0; i < wl->wl_count; i++)
 			if (wl->wl_paths[i].name)
 				DNPRINTF(1, "pledge: %d=\"%s\" [%lld]\n", i,
@@ -535,8 +536,8 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	}
 
 	if (SCARG(uap, request)) {
-		p->p_p->ps_pledge = flags;
-		p->p_p->ps_flags |= PS_PLEDGE;
+		pr->ps_pledge = flags;
+		pr->ps_flags |= PS_PLEDGE;
 	}
 
 	return (0);
@@ -574,7 +575,7 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 			codes = pledgenames[i].name;
 			break;
 		}
-	printf("%s(%d): syscall %d \"%s\"\n", p->p_comm, p->p_pid,
+	printf("%s(%d): syscall %d \"%s\"\n", p->p_comm, p->p_p->ps_pid,
 	    p->p_pledge_syscall, codes);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PLEDGE))
@@ -761,7 +762,7 @@ pledge_namei_wlpath(struct proc *p, struct nameidata *ni)
 	if (ni->ni_p_path == NULL)
 		return(0);
 
-	KASSERT(p->p_p->ps_pledgepaths);
+	KASSERT(wl != NULL);
 
 	// XXX change later or more help from namei?
 	error = resolvpath(p, &rdir, &rdirlen, &cwd, &cwdlen,
@@ -822,7 +823,7 @@ pledge_namei_wlpath(struct proc *p, struct nameidata *ni)
 	if (error == ENOENT)
 		/* print the path that is reported as ENOENT */
 		DNPRINTF(1, "pledge: %s(%d): wl_path ENOENT: \"%s\"\n",
-		    p->p_comm, p->p_pid, resolved);
+		    p->p_comm, p->p_p->ps_pid, resolved);
 #endif
 
 	free(resolved, M_TEMP, resolvedlen);
@@ -1049,7 +1050,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 		return (0);
 
 	printf("%s(%d): sysctl %d: %d %d %d %d %d %d\n",
-	    p->p_comm, p->p_pid, miblen, mib[0], mib[1],
+	    p->p_comm, p->p_p->ps_pid, miblen, mib[0], mib[1],
 	    mib[2], mib[3], mib[4], mib[5]);
 	return pledge_fail(p, EINVAL, 0);
 }
