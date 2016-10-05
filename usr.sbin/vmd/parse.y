@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2016/10/05 17:30:13 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2016/10/05 17:31:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -97,7 +97,7 @@ extern const char		*vmd_descsw[];
 
 typedef struct {
 	union {
-		u_int8_t	 lladdr[ETHER_ADDR_LEN];
+		uint8_t		 lladdr[ETHER_ADDR_LEN];
 		int64_t		 number;
 		char		*string;
 	} v;
