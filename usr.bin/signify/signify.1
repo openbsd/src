@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.39 2016/09/19 21:15:58 tedu Exp $
+.\" $OpenBSD: signify.1,v 1.40 2016/10/05 15:45:13 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: September 19 2016 $
+.Dd $Mdocdate: October 5 2016 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -63,6 +63,11 @@ should be the signed output of
 .Xr sha256 1 .
 .It Fl G
 Generate a new key pair.
+Keynames should follow the convention of
+.Pa keyname.pub
+and
+.Pa keyname.sec
+for the public and secret keys, respectively.
 .It Fl S
 Sign the specified message file and create a signature.
 .It Fl V
@@ -127,10 +132,10 @@ The key and signature files created by
 have the same format.
 The first line of the file is a free form text comment that may be edited,
 so long as it does not exceed a single line.
-.\" Signature comments will be generated based on the name of the secret
-.\" key used for signing.
-.\" This comment can then be used as a hint for the name of the public key
-.\" when verifying.
+Signature comments will be generated based on the name of the secret
+key used for signing.
+This comment can then be used as a hint for the name of the public key
+when verifying.
 The second line of the file is the actual key or signature base64 encoded.
 .Sh EXIT STATUS
 .Ex -std signify
