@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.40 2016/09/04 09:52:03 rpe Exp $
+#	$OpenBSD: install.md,v 1.41 2016/10/05 16:06:02 visa Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,12 +109,6 @@ You will now create an OpenBSD disklabel. The disklabel must have an
 The 'p' partition must be retained since it contains the SGI Volume Header;
 this in turn contains the boot loader. No other partitions should overlap
 with the SGI Volume Header, which by default will use the first 3134 sectors.
-
-Additionally, the 'a' partition must be the first partition on the disk,
-immediately following the SGI Volume Header. If the default SGI Volume Header
-size is used, the 'a' partition should be located at offset 3135. If the
-'a' partition is not located immediately after the SGI Volume Header the
-boot loader will not be able to locate and load the kernel.
 
 Do not change any parameters except the partition layout and the label name.
 
