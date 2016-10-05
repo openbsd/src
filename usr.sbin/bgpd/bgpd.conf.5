@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.146 2016/08/17 08:14:40 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.147 2016/10/05 07:38:06 phessler Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 17 2016 $
+.Dd $Mdocdate: October 5 2016 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -268,6 +268,11 @@ Log received and sent updates.
 .Pq Ic inet Ns | Ns Ic inet6
 .Ic connected Op Ic set ...\&
 .Xc
+.It Xo
+.Ic network
+.Pq Ic inet Ns | Ns Ic inet6
+.Ic rtlabel Ar label Op Ic set ...\&
+.Xc
 Announce the specified network as belonging to our AS.
 If set to
 .Ic connected ,
@@ -275,6 +280,11 @@ routes to directly attached networks will be announced.
 If set to
 .Ic static ,
 all static routes will be announced.
+If set to
+.Ic rtlabel ,
+routes with the specified
+.Ar label
+will be announced.
 .Bd -literal -offset indent
 network 192.168.7.0/24
 .Ed

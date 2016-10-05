@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.288 2016/06/21 21:35:24 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.289 2016/10/05 07:38:06 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -671,6 +671,25 @@ network		: NETWORK prefix filter_set	{
 			n->net.prefixlen = $2.len;
 			filterset_move($3, &n->net.attrset);
 			free($3);
+
+			TAILQ_INSERT_TAIL(netconf, n, entry);
+		}
+		| NETWORK family RTLABEL STRING filter_set	{
+			struct network	*n;
+
+			if ((n = calloc(1, sizeof(struct network))) == NULL)
+				fatal("new_network");
+			if (afi2aid($2, SAFI_UNICAST, &n->net.prefix.aid) ==
+			    -1) {
+				yyerror("unknown family");
+				filterset_free($5);
+				free($5);
+				YYERROR;
+			}
+			n->net.type = NETWORK_RTLABEL;
+			n->net.rtlabel = rtlabel_name2id($4);
+			filterset_move($5, &n->net.attrset);
+			free($5);
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
 		}
