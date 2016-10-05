@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.290 2016/09/27 20:18:34 rpe Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.291 2016/10/05 21:40:01 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -416,8 +416,6 @@ usr
     # ./usr/mdec
     mdec
     ..
-    obj				gname=wsrc mode=0775
-    ..
     sbin
     ..
 
@@ -591,10 +589,6 @@ usr
             US			gname=bin uname=root mode=0555
             ..
         ..
-   ..
-
-   # ./usr/xobj
-   xobj				gname=wsrc mode=0775
    ..
 ..
 
