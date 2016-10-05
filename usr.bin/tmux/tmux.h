@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.646 2016/09/28 08:30:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.647 2016/10/05 12:34:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1587,6 +1587,8 @@ void		 cfg_show_causes(struct session *);
 /* paste.c */
 struct paste_buffer;
 const char	*paste_buffer_name(struct paste_buffer *);
+u_int		 paste_buffer_order(struct paste_buffer *);
+time_t		 paste_buffer_created(struct paste_buffer *);
 const char	*paste_buffer_data(struct paste_buffer *, size_t *);
 struct paste_buffer *paste_walk(struct paste_buffer *);
 struct paste_buffer *paste_get_top(const char **);
