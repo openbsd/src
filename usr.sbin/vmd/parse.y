@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.y,v 1.7 2016/06/21 21:35:25 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2016/10/05 17:30:13 reyk Exp $	*/
 
 /*
- * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,9 +25,14 @@
 %{
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
 
 #include <machine/vmmvar.h>
+
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,14 +83,21 @@ char		*symget(const char *);
 ssize_t		 parse_size(char *, int64_t);
 int		 parse_disk(char *);
 
-static struct vm_create_params	 vcp;
-static int			 vcp_disable = 0;
-static int			 errors = 0;
-
+static struct vmop_create_params vmc;
+static struct vm_create_params	*vcp;
+static struct vmd_switch	*vsw;
+static struct vmd_if		*vif;
+static unsigned int		 vsw_unit;
+static char			 vsw_type[IF_NAMESIZE];
+static int			 vcp_disable;
+static size_t			 vcp_nnics;
+static int			 errors;
 extern struct vmd		*env;
+extern const char		*vmd_descsw[];
 
 typedef struct {
 	union {
+		u_int8_t	 lladdr[ETHER_ADDR_LEN];
 		int64_t		 number;
 		char		*string;
 	} v;
@@ -96,12 +108,15 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	DISK NIFS PATH SIZE VMID
-%token	ENABLE DISABLE VM KERNEL MEMORY
+%token	ADD DISK DOWN INTERFACE NIFS PATH SIZE SWITCH UP VMID
+%token	ENABLE DISABLE VM KERNEL LLADDR MEMORY
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	disable
+%type	<v.number>	updown
+%type	<v.lladdr>	lladdr
 %type	<v.string>	string
+%type	<v.string>	optstring
 
 %%
 
@@ -109,7 +124,8 @@ grammar		: /* empty */
 		| grammar include '\n'
 		| grammar '\n'
 		| grammar varset '\n'
-		| grammar main '\n'
+		| grammar switch '\n'
+		| grammar vm '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -144,41 +160,143 @@ varset		: STRING '=' STRING		{
 		}
 		;
 
-main		: VM string			{
-			memset(&vcp, 0, sizeof(vcp));
+switch		: SWITCH string			{
+			if ((vsw = calloc(1, sizeof(*vsw))) == NULL)
+				fatal("could not allocate switch");
+
+			vsw->sw_id = env->vmd_nswitches + 1;
+			vsw->sw_name = $2;
+			vsw->sw_flags = IFF_UP;
+			snprintf(vsw->sw_ifname, sizeof(vsw->sw_ifname),
+			    "%s%u", vsw_type, vsw_unit++);
+			TAILQ_INIT(&vsw->sw_ifs);
+
 			vcp_disable = 0;
-			if (strlcpy(vcp.vcp_name, $2, sizeof(vcp.vcp_name)) >=
-			    sizeof(vcp.vcp_name)) {
+		} '{' optnl switch_opts_l '}'	{
+			TAILQ_INSERT_TAIL(env->vmd_switches, vsw, sw_entry);
+			env->vmd_nswitches++;
+
+			if (vcp_disable) {
+				log_debug("%s:%d: switch \"%s\""
+				    " skipped (disabled)",
+				    file->name, yylval.lineno, vsw->sw_name);
+			} else if (!env->vmd_noaction) {
+				/*
+				 * XXX Configure the switch right away -
+				 * XXX this should be done after parsing
+				 * XXX the configuration.
+				 */
+				if (vm_priv_brconfig(&env->vmd_ps, vsw) == -1) {
+					log_warn("%s:%d: switch \"%s\" failed",
+					    file->name, yylval.lineno,
+					    vsw->sw_name);
+					YYERROR;
+				} else {
+					log_debug("%s:%d: switch \"%s\""
+					    " configured",
+					    file->name, yylval.lineno,
+					    vsw->sw_name);
+				}
+			}
+		}
+		;
+
+switch_opts_l	: switch_opts_l switch_opts nl
+		| switch_opts optnl
+		;
+
+switch_opts	: disable			{
+			vcp_disable = $1;
+		}
+		| ADD string			{
+			char		type[IF_NAMESIZE];
+
+			if ((vif = calloc(1, sizeof(*vif))) == NULL)
+				fatal("could not allocate interface");
+
+			if (priv_getiftype($2, type, NULL) == -1) {
+				yyerror("invalid interface: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			vif->vif_name = $2;
+
+			TAILQ_INSERT_TAIL(&vsw->sw_ifs, vif, vif_entry);
+		}
+		| INTERFACE string		{
+			if (priv_getiftype($2, vsw_type, &vsw_unit) == -1 ||
+			    priv_findname(vsw_type, vmd_descsw) == -1) {
+				yyerror("invalid switch interface: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			vsw_unit++;
+
+			if (strlcpy(vsw->sw_ifname, $2,
+			    sizeof(vsw->sw_ifname)) >= sizeof(vsw->sw_ifname)) {
+				yyerror("switch interface too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| updown			{
+			if ($1)
+				vsw->sw_flags |= IFF_UP;
+			else
+				vsw->sw_flags &= ~IFF_UP;
+		}
+		;
+
+vm		: VM string			{
+			unsigned int	 i;
+
+			memset(&vmc, 0, sizeof(vmc));
+			vcp = &vmc.vmc_params;
+			vcp_disable = 0;
+			vcp_nnics = 0;
+
+			for (i = 0; i < VMM_MAX_NICS_PER_VM; i++) {
+				/* Set the interface to UP by default */
+				vmc.vmc_ifflags[i] |= IFF_UP;
+			}
+
+			if (strlcpy(vcp->vcp_name, $2, sizeof(vcp->vcp_name)) >=
+			    sizeof(vcp->vcp_name)) {
 				yyerror("vm name too long");
 				YYERROR;
 			}
 		} '{' optnl vm_opts_l '}'	{
 			int ret;
 
+			/* configured interfaces vs. number of interfaces */
+			if (vcp_nnics > vcp->vcp_nnics)
+				vcp->vcp_nnics = vcp_nnics;
+
 			if (vcp_disable) {
 				log_debug("%s:%d: vm \"%s\" skipped (disabled)",
-				    file->name, yylval.lineno, vcp.vcp_name);
+				    file->name, yylval.lineno, vcp->vcp_name);
 			} else if (!env->vmd_noaction) {
 				/*
 				 * XXX Start the vm right away -
 				 * XXX this should be done after parsing
 				 * XXX the configuration.
 				 */
-				ret = config_getvm(&env->vmd_ps, &vcp, -1, -1);
+				ret = config_getvm(&env->vmd_ps, &vmc, -1, -1);
 				if (ret == -1 && errno == EALREADY) {
 					log_debug("%s:%d: vm \"%s\""
 					    " skipped (running)",
 					    file->name, yylval.lineno,
-					    vcp.vcp_name);
+					    vcp->vcp_name);
 				} else if (ret == -1) {
 					log_warn("%s:%d: vm \"%s\" failed",
 					    file->name, yylval.lineno,
-					    vcp.vcp_name);
+					    vcp->vcp_name);
 					YYERROR;
 				} else {
 					log_debug("%s:%d: vm \"%s\" enabled",
 					    file->name, yylval.lineno,
-					    vcp.vcp_name);
+					    vcp->vcp_name);
 				}
 			}
 		}
@@ -199,14 +317,47 @@ vm_opts		: disable			{
 			}
 			free($2);
 		}
-		| KERNEL string			{
-			if (vcp.vcp_kernel[0] != '\0') {
-				yyerror("kernel specified more than once");
+		| INTERFACE optstring iface_opts_o {
+			unsigned int	i;
+			char		type[IF_NAMESIZE];
+
+			i = vcp_nnics;
+			if (++vcp_nnics > VMM_MAX_NICS_PER_VM) {
+				yyerror("too many interfaces: %zu", vcp_nnics);
 				free($2);
 				YYERROR;
 			}
-			if (strlcpy(vcp.vcp_kernel, $2,
-			    sizeof(vcp.vcp_kernel)) >= sizeof(vcp.vcp_kernel)) {
+
+			if ($2 != NULL) {
+				if (strcmp($2, "tap") != 0 &&
+				    (priv_getiftype($2, type, NULL) == -1 ||
+				    strcmp(type, "tap") != 0)) {
+					yyerror("invalid interface: %s", $2);
+					free($2);
+					YYERROR;
+				}
+
+				if (strlcpy(vmc.vmc_ifnames[i], $2,
+				    sizeof(vmc.vmc_ifnames[i])) >=
+				    sizeof(vmc.vmc_ifnames[i])) {
+					yyerror("interface name too long: %s",
+					    $2);
+					free($2);
+					YYERROR;
+				}
+			}
+			free($2);
+		}
+		| KERNEL string			{
+			if (vcp->vcp_kernel[0] != '\0') {
+				yyerror("kernel specified more than once");
+				free($2);
+				YYERROR;
+
+			}
+			if (strlcpy(vcp->vcp_kernel, $2,
+			    sizeof(vcp->vcp_kernel)) >=
+			    sizeof(vcp->vcp_kernel)) {
 				yyerror("kernel name too long");
 				free($2);
 				YYERROR;
@@ -214,7 +365,7 @@ vm_opts		: disable			{
 			free($2);
 		}
 		| NIFS NUMBER			{
-			if (vcp.vcp_nnics != 0) {
+			if (vcp->vcp_nnics != 0) {
 				yyerror("interfaces specified more than once");
 				YYERROR;
 			}
@@ -222,11 +373,11 @@ vm_opts		: disable			{
 				yyerror("too many interfaces: %lld", $2);
 				YYERROR;
 			}
-			vcp.vcp_nnics = (size_t)$2;
+			vcp->vcp_nnics = (size_t)$2;
 		}
 		| MEMORY NUMBER			{
 			ssize_t	 res;
-			if (vcp.vcp_memranges[0].vmr_size != 0) {
+			if (vcp->vcp_memranges[0].vmr_size != 0) {
 				yyerror("memory specified more than once");
 				YYERROR;
 			}
@@ -234,11 +385,11 @@ vm_opts		: disable			{
 				yyerror("failed to parse size: %lld", $2);
 				YYERROR;
 			}
-			vcp.vcp_memranges[0].vmr_size = (size_t)res;
+			vcp->vcp_memranges[0].vmr_size = (size_t)res;
 		}
 		| MEMORY STRING			{
 			ssize_t	 res;
-			if (vcp.vcp_memranges[0].vmr_size != 0) {
+			if (vcp->vcp_memranges[0].vmr_size != 0) {
 				yyerror("argument specified more than once");
 				free($2);
 				YYERROR;
@@ -248,17 +399,71 @@ vm_opts		: disable			{
 				free($2);
 				YYERROR;
 			}
-			vcp.vcp_memranges[0].vmr_size = (size_t)res;
+			vcp->vcp_memranges[0].vmr_size = (size_t)res;
 		}
 		;
 
-string		: STRING string				{
+iface_opts_o	: '{' optnl iface_opts_l '}'
+		| /* empty */
+		;
+
+iface_opts_l	: iface_opts_l iface_opts optnl
+		| iface_opts optnl
+		;
+
+iface_opts	: SWITCH string			{
+			unsigned int	i = vcp_nnics;
+
+			/* No need to check if the switch exists */
+			if (strlcpy(vmc.vmc_ifswitch[i], $2,
+			    sizeof(vmc.vmc_ifswitch[i])) >=
+			    sizeof(vmc.vmc_ifswitch[i])) {
+				yyerror("switch name too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| LLADDR lladdr			{
+			memcpy(vcp->vcp_macs[vcp_nnics], $2, ETHER_ADDR_LEN);
+		}
+		| updown			{
+			if ($1)
+				vmc.vmc_ifflags[vcp_nnics] |= IFF_UP;
+			else
+				vmc.vmc_ifflags[vcp_nnics] &= ~IFF_UP;
+		}
+		;
+
+optstring	: STRING			{ $$ = $1; }
+		| /* empty */			{ $$ = NULL; }
+		;
+
+string		: STRING string			{
 			if (asprintf(&$$, "%s%s", $1, $2) == -1)
 				fatal("asprintf string");
 			free($1);
 			free($2);
 		}
 		| STRING
+		;
+
+lladdr		: STRING			{
+			struct ether_addr *ea;
+
+			if ((ea = ether_aton($1)) == NULL) {
+				yyerror("invalid address: %s\n", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+
+			memcpy($$, ea, ETHER_ADDR_LEN);
+		}
+		;
+
+updown		: UP				{ $$ = 1; }
+		| DOWN				{ $$ = 0; }
 		;
 
 disable		: ENABLE			{ $$ = 0; }
@@ -306,15 +511,21 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "add",		ADD },
 		{ "disable",		DISABLE },
 		{ "disk",		DISK },
+		{ "down",		DOWN },
 		{ "enable",		ENABLE },
 		{ "id",			VMID },
 		{ "include",		INCLUDE },
+		{ "interface",		INTERFACE },
 		{ "interfaces",		NIFS },
 		{ "kernel",		KERNEL },
+		{ "lladdr",		LLADDR },
 		{ "memory",		MEMORY },
 		{ "size",		SIZE },
+		{ "switch",		SWITCH },
+		{ "up",			UP },
 		{ "vm",			VM }
 	};
 	const struct keywords	*p;
@@ -631,6 +842,9 @@ parse_config(const char *filename)
 	topfile = file;
 	setservent(1);
 
+	/* Set the default switch type */
+	(void)strlcpy(vsw_type, VMD_SWITCH_TYPE, sizeof(vsw_type));
+
 	yyparse();
 	errors = file->errors;
 	popfile();
@@ -760,18 +974,18 @@ parse_size(char *word, int64_t val)
 int
 parse_disk(char *word)
 {
-	if (vcp.vcp_ndisks >= VMM_MAX_DISKS_PER_VM) {
+	if (vcp->vcp_ndisks >= VMM_MAX_DISKS_PER_VM) {
 		log_warnx("too many disks");
 		return (-1);
 	}
 
-	if (strlcpy(vcp.vcp_disks[vcp.vcp_ndisks], word,
+	if (strlcpy(vcp->vcp_disks[vcp->vcp_ndisks], word,
 	    VMM_MAX_PATH_DISK) >= VMM_MAX_PATH_DISK) {
 		log_warnx("disk path too long");
 		return (-1);
 	}
 
-	vcp.vcp_ndisks++;
+	vcp->vcp_ndisks++;
 
 	return (0);
 }

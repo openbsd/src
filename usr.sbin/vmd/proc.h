@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.8 2016/10/04 17:17:30 reyk Exp $	*/
+/*	$OpenBSD: proc.h,v 1.9 2016/10/05 17:30:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -48,9 +48,9 @@ struct imsgev {
 	short			 events;
 };
 
-#define IMSG_SIZE_CHECK(imsg, p) do {				\
-	if (IMSG_DATA_SIZE(imsg) < sizeof(*p))			\
-		fatalx("bad length imsg received");		\
+#define IMSG_SIZE_CHECK(imsg, p) do {					\
+	if (IMSG_DATA_SIZE(imsg) < sizeof(*p))				\
+		fatalx("bad length imsg received (%s)",	#p);		\
 } while (0)
 #define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
 
@@ -95,6 +95,7 @@ enum privsep_procid {
 
 #define CONFIG_RELOAD		0x00
 #define CONFIG_VMS		0x01
+#define CONFIG_SWITCHES		0x02
 #define CONFIG_ALL		0xff
 
 struct privsep_pipes {

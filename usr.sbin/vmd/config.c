@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.13 2016/10/04 17:17:30 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.14 2016/10/05 17:30:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -38,6 +38,9 @@
 #include "proc.h"
 #include "vmd.h"
 
+/* Supported bridge types */
+const char *vmd_descsw[] = { "switch", "bridge", NULL };
+
 int
 config_init(struct vmd *env)
 {
@@ -56,6 +59,12 @@ config_init(struct vmd *env)
 			return (-1);
 		TAILQ_INIT(env->vmd_vms);
 	}
+	if (what & CONFIG_SWITCHES) {
+		if ((env->vmd_switches = calloc(1,
+		    sizeof(*env->vmd_switches))) == NULL)
+			return (-1);
+		TAILQ_INIT(env->vmd_switches);
+	}
 
 	return (0);
 }
@@ -65,13 +74,19 @@ config_purge(struct vmd *env, unsigned int reset)
 {
 	struct privsep		*ps = &env->vmd_ps;
 	struct vmd_vm		*vm;
+	struct vmd_switch	*vsw;
 	unsigned int		 what;
 
 	what = ps->ps_what[privsep_process] & reset;
 	if (what & CONFIG_VMS && env->vmd_vms != NULL) {
 		while ((vm = TAILQ_FIRST(env->vmd_vms)) != NULL)
 			vm_remove(vm);
-		env->vmd_vmcount = 0;
+		env->vmd_nvm = 0;
+	}
+	if (what & CONFIG_SWITCHES && env->vmd_switches != NULL) {
+		while ((vsw = TAILQ_FIRST(env->vmd_switches)) != NULL)
+			switch_remove(vsw);
+		env->vmd_nswitches = 0;
 	}
 }
 
@@ -105,17 +120,21 @@ config_getreset(struct vmd *env, struct imsg *imsg)
 }
 
 int
-config_getvm(struct privsep *ps, struct vm_create_params *vcp,
+config_getvm(struct privsep *ps, struct vmop_create_params *vmc,
     int kernel_fd, uint32_t peerid)
 {
 	struct vmd		*env = ps->ps_env;
 	struct vmd_vm		*vm = NULL;
+	struct vmd_if		*vif;
+	struct vm_create_params	*vcp = &vmc->vmc_params;
 	unsigned int		 i;
 	int			 fd, ttys_fd;
 	int			 kernfd = -1, *diskfds = NULL, *tapfds = NULL;
 	int			 saved_errno = 0;
 	char			 ptyname[VM_TTYNAME_MAX];
-	char			 ifname[IF_NAMESIZE];
+	char			 ifname[IF_NAMESIZE], *s;
+	char			 path[PATH_MAX];
+	unsigned int		 unit;
 
 	errno = 0;
 
@@ -146,7 +165,7 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 	for (i = 0; i < vcp->vcp_ndisks; i++)
 		vm->vm_disks[i] = -1;
 	for (i = 0; i < vcp->vcp_nnics; i++)
-		vm->vm_ifs[i] = -1;
+		vm->vm_ifs[i].vif_fd = -1;
 	vm->vm_kernel = -1;
 	vm->vm_vmid = env->vmd_nvm + 1;
 
@@ -203,19 +222,58 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 			}
 		}
 
-		/* Open disk network interfaces */
+		/* Open network interfaces */
 		for (i = 0 ; i < vcp->vcp_nnics; i++) {
-			if ((tapfds[i] = opentap(ifname)) == -1) {
+			vif = &vm->vm_ifs[i];
+
+			/* Check if the user has requested a specific tap(4) */
+			s = vmc->vmc_ifnames[i];
+			if (*s != '\0' && strcmp("tap", s) != 0) {
+				if (priv_getiftype(s, ifname, &unit) == -1 ||
+				    strcmp(ifname, "tap") != 0) {
+					saved_errno = errno;
+					log_warn("%s: invalid tap name",
+					    __func__);
+					goto fail;
+				}
+			} else
+				s = NULL;
+
+			/*
+			 * Either open the requested tap(4) device or get
+			 * the next available one.
+			 */
+			if (s != NULL) {
+				snprintf(path, PATH_MAX, "/dev/%s", s);
+				tapfds[i] = open(path, O_RDWR | O_NONBLOCK);
+			} else {
+				tapfds[i] = opentap(ifname);
+				s = ifname;
+			}
+			if (tapfds[i] == -1) {
 				saved_errno = errno;
-				log_warn("%s: can't open tap", __func__);
+				log_warn("%s: can't open %s", __func__, s);
 				goto fail;
 			}
-
-			if ((vm->vm_ifnames[i] = strdup(ifname)) == NULL) {
+			if ((vif->vif_name = strdup(s)) == NULL) {
 				saved_errno = errno;
 				log_warn("%s: can't save ifname", __func__);
 				goto fail;
 			}
+
+			/* Check if the the interface is attached to a switch */
+			s = vmc->vmc_ifswitch[i];
+			if (*s != '\0') {
+				if ((vif->vif_switch = strdup(s)) == NULL) {
+					saved_errno = errno;
+					log_warn("%s: can't save switch",
+					    __func__);
+					goto fail;
+				}
+			}
+
+			/* Set the interface status */
+			vif->vif_flags = vmc->vmc_ifflags[i] & IFF_UP;
 		}
 
 		/* Open TTY */
@@ -230,7 +288,7 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 		/* Send VM information */
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_START_VM_REQUEST, vm->vm_vmid, kernfd,
-		    vcp, sizeof(*vcp));
+		    vmc, sizeof(*vmc));
 		for (i = 0; i < vcp->vcp_ndisks; i++) {
 			proc_compose_imsg(ps, PROC_VMM, -1,
 			    IMSG_VMDOP_START_VM_DISK, vm->vm_vmid, diskfds[i],
@@ -317,11 +375,11 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
 	if (n >= vm->vm_params.vcp_nnics ||
-	    vm->vm_ifs[n] != -1 || imsg->fd == -1) {
+	    vm->vm_ifs[n].vif_fd != -1 || imsg->fd == -1) {
 		log_debug("invalid interface id");
 		goto fail;
 	}
-	vm->vm_ifs[n] = imsg->fd;
+	vm->vm_ifs[n].vif_fd = imsg->fd;
 
 	return (0);
  fail:
@@ -329,5 +387,4 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 		close(imsg->fd);
 	errno = EINVAL;
 	return (-1);
-	
 }

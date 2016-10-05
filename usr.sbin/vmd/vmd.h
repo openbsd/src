@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.26 2016/10/04 17:17:30 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.27 2016/10/05 17:30:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -40,6 +40,7 @@
 #define VM_TTYNAME_MAX		16
 #define MAX_TAP			256
 #define NR_BACKLOG		5
+#define VMD_SWITCH_TYPE		"bridge"
 
 #ifdef VMD_DEBUG
 #define dprintf(x...)   do { log_debug(x); } while(0)
@@ -61,7 +62,11 @@ enum imsg_type {
 	IMSG_VMDOP_GET_INFO_VM_END_DATA,
 	IMSG_VMDOP_LOAD,
 	IMSG_VMDOP_RELOAD,
-	IMSG_VMDOP_PRIV_IFDESCR
+	IMSG_VMDOP_PRIV_IFDESCR,
+	IMSG_VMDOP_PRIV_IFADD,
+	IMSG_VMDOP_PRIV_IFCREATE,
+	IMSG_VMDOP_PRIV_IFUP,
+	IMSG_VMDOP_PRIV_IFDOWN
 };
 
 struct vmop_result {
@@ -87,14 +92,41 @@ struct vmop_ifreq {
 	char			 vfr_value[VM_NAME_MAX];
 };
 
+struct vmop_create_params {
+	struct vm_create_params	 vmc_params;
+
+	/* userland-only part of the create params */
+	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
+	char			 vmc_ifnames[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
+	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
+};
+
+struct vmd_if {
+	char			*vif_name;
+	char			*vif_switch;
+	int			 vif_fd;
+	unsigned int		 vif_flags;
+	TAILQ_ENTRY(vmd_if)	 vif_entry;
+};
+TAILQ_HEAD(viflist, vmd_if);
+
+struct vmd_switch {
+	uint32_t		 sw_id;
+	char			*sw_name;
+	char			 sw_ifname[IF_NAMESIZE];
+	unsigned int		 sw_flags;
+	struct viflist		 sw_ifs;
+	TAILQ_ENTRY(vmd_switch)	 sw_entry;
+};
+TAILQ_HEAD(switchlist, vmd_switch);
+
 struct vmd_vm {
 	struct vm_create_params	 vm_params;
 	pid_t			 vm_pid;
 	uint32_t		 vm_vmid;
 	int			 vm_kernel;
 	int			 vm_disks[VMM_MAX_DISKS_PER_VM];
-	int			 vm_ifs[VMM_MAX_NICS_PER_VM];
-	char			*vm_ifnames[VMM_MAX_NICS_PER_VM];
+	struct vmd_if		 vm_ifs[VMM_MAX_NICS_PER_VM];
 	char			*vm_ttyname;
 	int			 vm_tty;
 	uint32_t		 vm_peerid;
@@ -109,10 +141,12 @@ struct vmd {
 	int			 vmd_debug;
 	int			 vmd_verbose;
 	int			 vmd_noaction;
-	int			 vmd_vmcount;
 
 	uint32_t		 vmd_nvm;
 	struct vmlist		*vmd_vms;
+
+	uint32_t		 vmd_nswitches;
+	struct switchlist	*vmd_switches;
 
 	int			 vmd_fd;
 };
@@ -124,11 +158,16 @@ struct vmd_vm *vm_getbyid(uint32_t);
 struct vmd_vm *vm_getbyname(const char *);
 struct vmd_vm *vm_getbypid(pid_t);
 void	 vm_remove(struct vmd_vm *);
+void	 switch_remove(struct vmd_switch *);
+struct vmd_switch *switch_getbyname(const char *);
 char	*get_string(uint8_t *, size_t);
 
 /* priv.c */
 void	 priv(struct privsep *, struct privsep_proc *);
+int	 priv_getiftype(char *, char *, unsigned int *);
+int	 priv_findname(const char *, const char **);
 int	 vm_priv_ifconfig(struct privsep *, struct vmd_vm *);
+int	 vm_priv_brconfig(struct privsep *, struct vmd_switch *);
 
 /* vmm.c */
 void	 vmm(struct privsep *, struct privsep_proc *);
@@ -144,7 +183,7 @@ int	 config_init(struct vmd *);
 void	 config_purge(struct vmd *, unsigned int);
 int	 config_setreset(struct vmd *, unsigned int);
 int	 config_getreset(struct vmd *, struct imsg *);
-int	 config_getvm(struct privsep *, struct vm_create_params *,
+int	 config_getvm(struct privsep *, struct vmop_create_params *,
 	    int, uint32_t);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);

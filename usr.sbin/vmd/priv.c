@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.1 2016/10/04 17:17:30 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.2 2016/10/05 17:30:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -25,6 +25,9 @@
 #include <sys/tree.h>
 
 #include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <net/if_bridge.h>
 
 #include <errno.h>
 #include <event.h>
@@ -40,9 +43,6 @@
 
 int	 priv_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void	 priv_run(struct privsep *, struct privsep_proc *, void *);
-
-int	 priv_getiftype(char *, char *, unsigned int *);
-int	 priv_findname(const char *, const char **);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	priv_dispatch_parent }
@@ -77,24 +77,71 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_ifreq	 vfr;
 	struct vmd		*env = ps->ps_env;
 	struct ifreq		 ifr;
+	struct ifbreq		 ifbr;
 	char			 type[IF_NAMESIZE];
-	unsigned int		 unit;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_PRIV_IFDESCR:
+	case IMSG_VMDOP_PRIV_IFCREATE:
+	case IMSG_VMDOP_PRIV_IFADD:
+	case IMSG_VMDOP_PRIV_IFUP:
+	case IMSG_VMDOP_PRIV_IFDOWN:
 		IMSG_SIZE_CHECK(imsg, &vfr);
 		memcpy(&vfr, imsg->data, sizeof(vfr));
 
 		/* We should not get malicious requests from the parent */
-		if (priv_getiftype(vfr.vfr_name, type, &unit) == -1 ||
+		if (priv_getiftype(vfr.vfr_name, type, NULL) == -1 ||
 		    priv_findname(type, desct) == -1)
 			fatalx("%s: rejected priv operation on interface: %s",
 			    __func__, vfr.vfr_name);
+		break;
+	default:
+		return (-1);
+	}
 
+	switch (imsg->hdr.type) {
+	case IMSG_VMDOP_PRIV_IFDESCR:
+		/* Set the interface description */
 		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
 		ifr.ifr_data = (caddr_t)vfr.vfr_value;
 		if (ioctl(env->vmd_fd, SIOCSIFDESCR, &ifr) < 0)
 			log_warn("SIOCSIFDESCR");
+		break;
+	case IMSG_VMDOP_PRIV_IFCREATE:
+		/* Create the bridge if it doesn't exist */
+		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
+		if (ioctl(env->vmd_fd, SIOCIFCREATE, &ifr) < 0 &&
+		    errno != EEXIST)
+			log_warn("SIOCIFCREATE");
+		break;
+	case IMSG_VMDOP_PRIV_IFADD:
+		if (priv_getiftype(vfr.vfr_value, type, NULL) == -1)
+			fatalx("%s: rejected to add interface: %s",
+			    __func__, vfr.vfr_value);
+
+		/* Attach the device to the bridge */
+		strlcpy(ifbr.ifbr_name, vfr.vfr_name,
+		    sizeof(ifbr.ifbr_name));
+		strlcpy(ifbr.ifbr_ifsname, vfr.vfr_value,
+		    sizeof(ifbr.ifbr_ifsname));
+		if (ioctl(env->vmd_fd, SIOCBRDGADD, &ifbr) < 0 &&
+		    errno != EEXIST)
+			log_warn("SIOCBRDGADD");
+		break;
+	case IMSG_VMDOP_PRIV_IFUP:
+	case IMSG_VMDOP_PRIV_IFDOWN:
+		/* Set the interface status */
+		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
+		if (ioctl(env->vmd_fd, SIOCGIFFLAGS, &ifr) < 0) {
+			log_warn("SIOCGIFFLAGS");
+			break;
+		}
+		if (imsg->hdr.type == IMSG_VMDOP_PRIV_IFUP)
+			ifr.ifr_flags |= IFF_UP;
+		else
+			ifr.ifr_flags &= ~IFF_UP;
+		if (ioctl(env->vmd_fd, SIOCSIFFLAGS, &ifr) < 0)
+			log_warn("SIOCSIFFLAGS");
 		break;
 	default:
 		return (-1);
@@ -148,14 +195,18 @@ int
 vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 {
 	struct vm_create_params	*vcp = &vm->vm_params;
+	struct vmd_if		*vif;
+	struct vmd_switch	*vsw;
 	unsigned int		 i;
-	struct vmop_ifreq	 vfr;
+	struct vmop_ifreq	 vfr, vfbr;
 
 	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++) {
-		if (vm->vm_ifnames[i] == NULL)
+		vif = &vm->vm_ifs[i];
+
+		if (vif->vif_name == NULL)
 			break;
 
-		if (strlcpy(vfr.vfr_name, vm->vm_ifnames[i],
+		if (strlcpy(vfr.vfr_name, vif->vif_name,
 		    sizeof(vfr.vfr_name)) >= sizeof(vfr.vfr_name))
 			return (-1);
 
@@ -163,11 +214,79 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 		(void)snprintf(vfr.vfr_value, sizeof(vfr.vfr_value),
 		    "vm%u-if%u-%s", vm->vm_vmid, i, vcp->vcp_name);
 
+		log_debug("%s: interface %s description %s", __func__,
+		    vfr.vfr_name, vfr.vfr_value);
+
 		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFDESCR,
 		    &vfr, sizeof(vfr));
 
-		/* XXX Add interface to bridge/switch */
+		/* Add interface to bridge/switch */
+		if ((vsw = switch_getbyname(vif->vif_switch)) != NULL) {
+			if (strlcpy(vfbr.vfr_name, vsw->sw_ifname,
+			    sizeof(vfbr.vfr_name)) >= sizeof(vfbr.vfr_name))
+				return (-1);
+			if (strlcpy(vfbr.vfr_value, vif->vif_name,
+			    sizeof(vfbr.vfr_value)) >= sizeof(vfbr.vfr_value))
+				return (-1);
+
+			log_debug("%s: interface %s add %s", __func__,
+			    vfbr.vfr_name, vfbr.vfr_value);
+
+			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFCREATE,
+			    &vfbr, sizeof(vfbr));
+			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFADD,
+			    &vfbr, sizeof(vfbr));
+		} else if (vif->vif_switch != NULL)
+			log_warnx("switch %s not found", vif->vif_switch);
+
+		/* Set the new interface status to up or down */
+		proc_compose(ps, PROC_PRIV, (vif->vif_flags & IFF_UP) ?
+		    IMSG_VMDOP_PRIV_IFUP : IMSG_VMDOP_PRIV_IFDOWN,
+		    &vfr, sizeof(vfr));
 	}
+
+	return (0);
+}
+
+int
+vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
+{
+	struct vmd_if		*vif;
+	struct vmop_ifreq	 vfr;
+
+	if (strlcpy(vfr.vfr_name, vsw->sw_ifname,
+	    sizeof(vfr.vfr_name)) >= sizeof(vfr.vfr_name))
+		return (-1);
+
+	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFCREATE,
+	    &vfr, sizeof(vfr));
+
+	/* Description can be truncated */
+	(void)snprintf(vfr.vfr_value, sizeof(vfr.vfr_value),
+	    "switch%u-%s", vsw->sw_id, vsw->sw_name);
+
+	log_debug("%s: interface %s description %s", __func__,
+	    vfr.vfr_name, vfr.vfr_value);
+
+	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFDESCR,
+	    &vfr, sizeof(vfr));
+
+	TAILQ_FOREACH(vif, &vsw->sw_ifs, vif_entry) {
+		if (strlcpy(vfr.vfr_value, vif->vif_name,
+		    sizeof(vfr.vfr_value)) >= sizeof(vfr.vfr_value))
+			return (-1);
+
+		log_debug("%s: interface %s add %s", __func__,
+		    vfr.vfr_name, vfr.vfr_value);
+
+		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFADD,
+		    &vfr, sizeof(vfr));
+	}
+
+	/* Set the new interface status to up or down */
+	proc_compose(ps, PROC_PRIV, (vsw->sw_flags & IFF_UP) ?
+	    IMSG_VMDOP_PRIV_IFUP : IMSG_VMDOP_PRIV_IFDOWN,
+	    &vfr, sizeof(vfr));
 
 	return (0);
 }

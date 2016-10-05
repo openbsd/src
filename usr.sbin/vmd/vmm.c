@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.46 2016/10/04 17:17:30 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.47 2016/10/05 17:30:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -177,7 +177,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep		*ps = p->p_ps;
 	int			 res = 0, cmd = 0;
-	struct vm_create_params	 vcp;
+	struct vmop_create_params vmc;
 	struct vm_terminate_params vtp;
 	struct vmop_result	 vmr;
 	uint32_t		 id = 0;
@@ -185,9 +185,9 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
-		IMSG_SIZE_CHECK(imsg, &vcp);
-		memcpy(&vcp, imsg->data, sizeof(vcp));
-		res = config_getvm(ps, &vcp, imsg->fd, imsg->hdr.peerid);
+		IMSG_SIZE_CHECK(imsg, &vmc);
+		memcpy(&vmc, imsg->data, sizeof(vmc));
+		res = config_getvm(ps, &vmc, imsg->fd, imsg->hdr.peerid);
 		if (res == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
@@ -388,6 +388,7 @@ opentap(char *ifname)
 	int i, fd;
 	char path[PATH_MAX];
 
+	strlcpy(ifname, "tap", IF_NAMESIZE);
 	for (i = 0; i < MAX_TAP; i++) {
 		snprintf(path, PATH_MAX, "/dev/tap%d", i);
 		fd = open(path, O_RDWR | O_NONBLOCK);
@@ -432,7 +433,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 	struct vmd_vm		*vm;
 	size_t			 i;
 	int			 ret = EINVAL;
-	int			 fds[2];
+	int			 fds[2], nicfds[VMM_MAX_NICS_PER_VM];
 	struct vcpu_reg_state vrs;
 
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
@@ -470,8 +471,8 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		}
 
 		for (i = 0 ; i < vcp->vcp_nnics; i++) {
-			close(vm->vm_ifs[i]);
-			vm->vm_ifs[i] = -1;
+			close(vm->vm_ifs[i].vif_fd);
+			vm->vm_ifs[i].vif_fd = -1;
 		}
 
 		close(vm->vm_kernel);
@@ -549,8 +550,11 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1)
 			fatal("failed to set nonblocking mode on console");
 
+		for (i = 0; i < VMM_MAX_NICS_PER_VM; i++)
+			nicfds[i] = vm->vm_ifs[i].vif_fd;
+
 		/* Execute the vcpu run loop(s) for this VM */
-		ret = run_vm(vm->vm_disks, vm->vm_ifs, vcp, &vrs);
+		ret = run_vm(vm->vm_disks, nicfds, vcp, &vrs);
 
 		_exit(ret != 0);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.31 2016/10/04 17:17:30 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.32 2016/10/05 17:30:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep			*ps = p->p_ps;
 	int				 res = 0, cmd = 0, v = 0;
-	struct vm_create_params		 vcp;
+	struct vmop_create_params	 vmc;
 	struct vmop_id			 vid;
 	struct vm_terminate_params	 vtp;
 	struct vmop_result		 vmr;
@@ -75,9 +75,9 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
-		IMSG_SIZE_CHECK(imsg, &vcp);
-		memcpy(&vcp, imsg->data, sizeof(vcp));
-		res = config_getvm(ps, &vcp, -1, imsg->hdr.peerid);
+		IMSG_SIZE_CHECK(imsg, &vmc);
+		memcpy(&vmc, imsg->data, sizeof(vmc));
+		res = config_getvm(ps, &vmc, -1, imsg->hdr.peerid);
 		if (res == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
@@ -500,6 +500,8 @@ vm_getbyname(const char *name)
 {
 	struct vmd_vm	*vm;
 
+	if (name == NULL)
+		return (NULL);
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 		if (strcmp(vm->vm_params.vcp_name, name) == 0)
 			return (vm);
@@ -536,9 +538,10 @@ vm_remove(struct vmd_vm *vm)
 			close(vm->vm_disks[i]);
 	}
 	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++) {
-		if (vm->vm_ifs[i] != -1)
-			close(vm->vm_ifs[i]);
-		free(vm->vm_ifnames[i]);
+		if (vm->vm_ifs[i].vif_fd != -1)
+			close(vm->vm_ifs[i].vif_fd);
+		free(vm->vm_ifs[i].vif_name);
+		free(vm->vm_ifs[i].vif_switch);
 	}
 	if (vm->vm_kernel != -1)
 		close(vm->vm_kernel);
@@ -547,6 +550,42 @@ vm_remove(struct vmd_vm *vm)
 
 	free(vm->vm_ttyname);
 	free(vm);
+}
+
+void
+switch_remove(struct vmd_switch *vsw)
+{
+	struct vmd_if	*vif;
+
+	if (vsw == NULL)
+		return;
+
+	TAILQ_REMOVE(env->vmd_switches, vsw, sw_entry);
+
+	while ((vif = TAILQ_FIRST(&vsw->sw_ifs)) != NULL) {
+		free(vif->vif_name);
+		free(vif->vif_switch);
+		TAILQ_REMOVE(&vsw->sw_ifs, vif, vif_entry);
+		free(vif);
+	}
+
+	free(vsw->sw_name);
+	free(vsw);
+}
+
+struct vmd_switch *
+switch_getbyname(const char *name)
+{
+	struct vmd_switch	*vsw;
+
+	if (name == NULL)
+		return (NULL);
+	TAILQ_FOREACH(vsw, env->vmd_switches, sw_entry) {
+		if (strcmp(vsw->sw_name, name) == 0)
+			return (vsw);
+	}
+
+	return (NULL);
 }
 
 char *

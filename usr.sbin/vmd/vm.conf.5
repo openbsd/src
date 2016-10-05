@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.5 2016/05/05 09:00:44 schwarze Exp $
+.\" $OpenBSD: vm.conf.5,v 1.6 2016/10/05 17:30:13 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 5 2016 $
+.Dd $Mdocdate: October 5 2016 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -38,6 +38,8 @@ User-defined variables may be defined and used later, simplifying the
 configuration file.
 .It Sy VM Configuration
 Configuration for each individual virtual machine.
+.It Sy Switch Configuration
+Configuration for virtual switches.
 .El
 .Pp
 Within the sections,
@@ -110,18 +112,133 @@ Disk image file (may be specified multiple times to add multiple disk images).
 Kernel to load when booting the VM.
 .It Cm memory Ar bytes
 Memory size of the VM, in bytes, rounded to megabytes.
+.It Cm interface Oo name Oc Op Brq ...
+Network interface to add to the VM.
+The optional
+.Ar name
+can be either
+.Sq tap
+to select the next available
+.Xr tap 4
+interface on the VM host side, this is the default, or
+.Ar tapN
+to select a specific one.
+Valid options are:
+.Bl -tag -width Ds
+.It Cm lladdr Ar etheraddr
+Change the link layer address (MAC address) of the interface on the
+VM guest side.
+The
+.Ar etheraddr
+is specified as six colon-separated hex values.
+If not specified, the address will be set to all zeros and eventually
+randomized by the guest OS inside the VM.
+.It Cm switch Ar name
+Set the virtual switch
+by
+.Ar name .
+See the
+.Sx SWITCH CONFIGURATION
+section about virtual switches.
+This option is ignored if a switch with a matching name cannot be found.
+.Sx
+.It Cm up
+Start the interface forwarding packets.
+This is the default.
+.It Cm down
+Stop the interface from forwarding packets.
+.El
 .It Cm interfaces Ar count
-Number of network interfaces to add to the VM.
+Optional minimum number of network interfaces to add to the VM.
+If the
+.Ar count
+is greater than the number of
+.Ic interface
+statements, additional default interfaces will be added.
+.El
+.Sh SWITCH CONFIGURATION
+Virtual switches can be configured at any point in the configuration file;
+they allow
+.Nm switchd
+to add network interfaces of VMs to the underlying switch interfaces
+automatically.
+It is possible to pre-configure switch interfaces using
+.Xr hostname.if 5
+or
+.Xr ifconfig 8 ,
+see the sections
+.Sx BRIDGE
+or
+.Sx SWITCH
+in
+.Xr ifconfig 8
+accordingly.
+.Pp
+Each
+.Ic switch
+section starts with a declaration of the virtual switch:
+.Bl -tag -width Ds
+.It Ic switch Ar name Brq ...
+This name can be any string, and is typically a network name.
+.El
+.Pp
+Followed by a block of parameters that is enclosed in curly brackets:
+.Bl -tag -width Ds
+.It Cm add Ar interface
+Add
+.Ar interface
+as a member of the switch.
+Any network interface can be added, typically as an uplink interface,
+but it can be a member of at most one switch.
+.It Cm enable
+Automatically configure the switch.
+This is the default if neither
+.Cm enable
+nor
+.Cm disable
+is specified.
+.It Cm disable
+Do not configure this switch.
+.It Cm interface Ar name
+Set the
+.Xr switch 4
+or
+.Xr bridge 4
+network interface of this switch.
+If not specified,
+.Ar bridge0
+will be used where the interface unit will be incremented for each switch,
+eg.
+.Ar bridge0 , bridge1 , ...
+If the type is changed to
+.Ar switch0 ,
+it will be used for each following switch.
+.It Cm up
+Start the switch forwarding packets.
+This is the default.
+.It Cm down
+Stop the switch from forwarding packets.
 .El
 .Sh EXAMPLES
-Create a new VM with 512MB memory, 1 network interface, one disk image
-('disk.img') and boot from kernel '/bsd':
+Create a new VM with 512MB memory, 1 network interface connected to
+.Dq uplink ,
+one disk image 
+.Sq disk.img
+and boot from kernel
+.Sq /bsd :
 .Bd -literal -offset indent
 vm "vm2.example.com" {
 	memory 512M
-	interfaces 1
 	disk "/var/vmm/vm2-disk.img"
 	kernel "/bsd"
+	interface { switch "uplink" }
+}
+.Ed
+.Pp
+Create the switch "uplink" with an additional physical network interface:
+.Bd -literal -offset indent
+switch "uplink" {
+	add em0
 }
 .Ed
 .Sh SEE ALSO
