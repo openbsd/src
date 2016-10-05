@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_space.c,v 1.8 2016/08/08 14:47:52 kettenis Exp $ */
+/*	$OpenBSD: armv7_space.c,v 1.9 2016/10/05 07:44:24 patrick Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -165,7 +165,7 @@ struct bus_space armv7_bs_tag = {
 };
 
 int
-armv7_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
+armv7_bs_map(void *t, uint64_t bpa, bus_size_t size,
 	      int flags, bus_space_handle_t *bshp)
 {
 	u_long startpa, endpa, pa;

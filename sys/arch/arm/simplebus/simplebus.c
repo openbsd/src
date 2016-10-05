@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.9 2016/09/18 17:50:26 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.10 2016/10/05 07:44:24 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,7 +30,7 @@ int simplebus_match(struct device *, void *, void *);
 void simplebus_attach(struct device *, struct device *, void *);
 
 void simplebus_attach_node(struct device *, int);
-int simplebus_bs_map(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+int simplebus_bs_map(void *, uint64_t, bus_size_t, int, bus_space_handle_t *);
 
 struct simplebus_softc {
 	struct device		 sc_dev;
@@ -205,7 +205,7 @@ simplebus_attach_node(struct device *self, int node)
  * Translate memory address if needed.
  */
 int
-simplebus_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
+simplebus_bs_map(void *t, uint64_t bpa, bus_size_t size,
     int flag, bus_space_handle_t *bshp)
 {
 	struct simplebus_softc *sc = (struct simplebus_softc *)t;

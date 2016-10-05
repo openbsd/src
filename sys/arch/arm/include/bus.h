@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.15 2016/08/26 21:50:43 patrick Exp $	*/
+/*	$OpenBSD: bus.h,v 1.16 2016/10/05 07:44:24 patrick Exp $	*/
 /*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ struct bus_space {
 	void		*bs_cookie;
 
 	/* mapping/unmapping */
-	int		(*bs_map) (void *, bus_addr_t, bus_size_t,
+	int		(*bs_map) (void *, uint64_t, bus_size_t,
 			    int, bus_space_handle_t *);
 	void		(*bs_unmap) (void *, bus_space_handle_t,
 			    bus_size_t);
@@ -373,7 +373,7 @@ struct bus_space {
  */
 
 #define bs_map_proto(f)							\
-int	__bs_c(f,_bs_map) (void *t, bus_addr_t addr,		\
+int	__bs_c(f,_bs_map) (void *t, uint64_t addr,		\
 	    bus_size_t size, int flags, bus_space_handle_t *bshp);
 
 #define bs_unmap_proto(f)						\
