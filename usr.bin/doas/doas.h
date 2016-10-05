@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.h,v 1.11 2016/10/05 17:36:53 tedu Exp $ */
+/* $OpenBSD: doas.h,v 1.12 2016/10/05 17:40:25 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -30,8 +30,6 @@ extern int nrules;
 extern int parse_errors;
 
 char **prepenv(struct rule *);
-
-int yyparse(void);
 
 #define PERMIT	1
 #define DENY	2
