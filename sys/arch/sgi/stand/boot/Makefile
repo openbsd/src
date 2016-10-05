@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2016/07/30 03:25:49 guenther Exp $
+#	$OpenBSD: Makefile,v 1.17 2016/10/05 11:55:45 visa Exp $
 
 NOMAN=		noman
 
@@ -13,14 +13,14 @@ AFLAGS+=	${SAABI}
 
 S=		${.CURDIR}/../../../..
 SRCS=		start.S arcbios.c boot.c conf.c diskio.c filesystem.c \
-		netfs.c netio.c strchr.c strstr.c
+		netfs.c netio.c strstr.c
 
 .PATH:		${S}/lib/libsa
 SRCS+=		loadfile.c
 
 .PATH:		${S}/lib/libkern/arch/mips64 ${S}/lib/libkern
-SRCS+=		strlcpy.c memcpy.c strlen.c strrchr.c strlcat.c strncmp.c \
-		strcmp.S
+SRCS+=		memcpy.c strchr.c strcmp.S strlcat.c strlcpy.c strlen.c \
+		strncmp.c strrchr.c
 
 CLEANFILES+=	machine mips64
 
