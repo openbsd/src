@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.124 2016/10/05 15:48:39 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.125 2016/10/05 15:58:50 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -341,6 +341,27 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 		errx(1, "comment too long");
 	writekeyfile(pubkeyfile, commentbuf, &pubkey,
 	    sizeof(pubkey), O_EXCL, 0666);
+}
+
+static void
+check_keyname_compliance(const char *pubkeyfile, const char *seckeyfile)
+{
+	size_t len;
+
+	len = strlen(pubkeyfile);
+	if (strlen(seckeyfile) != len)
+		goto bad;
+	if (len < 5) /* ?.key */
+		goto bad;
+	if (strcmp(pubkeyfile + len - 4, ".pub") != 0 ||
+	    strcmp(seckeyfile + len - 4, ".sec") != 0)
+		goto bad;
+	if (strncmp(pubkeyfile, seckeyfile, len - 4) != 0)
+		goto bad;
+
+	return;
+bad:
+	errx(1, "please use naming scheme of keyname.pub and keyname.sec");
 }
 
 uint8_t *
@@ -842,6 +863,7 @@ main(int argc, char **argv)
 		/* no pledge */
 		if (!pubkeyfile || !seckeyfile)
 			usage("must specify pubkey and seckey");
+		check_keyname_compliance(pubkeyfile, seckeyfile);
 		generate(pubkeyfile, seckeyfile, rounds, comment);
 		break;
 	case SIGN:
