@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.331 2016/10/04 14:04:19 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.332 2016/10/05 08:07:46 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1465,7 +1465,7 @@ rt_timer_init(void)
 	    "rttmr", NULL);
 
 	LIST_INIT(&rttimer_queue_head);
-	timeout_set(&rt_timer_timeout, rt_timer_timer, &rt_timer_timeout);
+	timeout_set_proc(&rt_timer_timeout, rt_timer_timer, &rt_timer_timeout);
 	timeout_add_sec(&rt_timer_timeout, 1);
 	rt_init_done = 1;
 }
