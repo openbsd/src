@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2016/10/03 12:06:43 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/10/05 16:53:34 bluhm Exp $
 
 MOUNT_NOSUID != mount | grep ^$$(df -P . | tail -1 | awk '{ print $$1 }') | \
     grep nosuid || true
@@ -123,3 +123,8 @@ sgidexec-install: sgidexec sgidexec_none sgidexec_inherit setresgid_real_exec se
 	${SUDO} chmod 2555 ./sgidexec
 
 .include <bsd.regress.mk>
+
+.ifmake all || regress
+.END:
+	${SUDO} chmod 0555 ./suidexec ./sgidexec
+.endif
