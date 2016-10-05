@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.127 2016/09/12 00:35:54 schwarze Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.128 2016/10/05 02:31:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -899,7 +899,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 				    sizeof(pathbuf), NULL);
 				log(LOG_NOTICE,
 				    "%s(%d): W^X binary outside wxallowed mountpoint\n",
-				    error ? "" : pathbuf, p->p_pid);
+				    error ? "" : pathbuf, p->p_p->ps_pid);
 				error = EACCES;
 				goto out1;
 			}

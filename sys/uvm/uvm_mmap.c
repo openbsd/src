@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.140 2016/09/16 01:09:53 dlg Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.141 2016/10/05 02:31:53 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ uvm_wxcheck(struct proc *p, char *call)
 	/* Report W^X failures, and potentially SIGABRT */
 	if (pr->ps_wxcounter++ == 0)
 		log(LOG_NOTICE, "%s(%d): %s W^X violation\n",
-		    p->p_comm, p->p_pid, call);
+		    p->p_comm, p->p_p->ps_pid, call);
 	if (uvm_wxabort) {
 		struct sigaction sa;
 
@@ -464,10 +464,10 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		 */
 		if ((flags & (MAP_SHARED|MAP_PRIVATE)) == 0) {
 #if defined(DEBUG)
-			printf("WARNING: defaulted mmap() share type to "
-			   "%s (pid %d comm %s)\n", vp->v_type == VCHR ?
-			   "MAP_SHARED" : "MAP_PRIVATE", p->p_pid,
-			    p->p_comm);
+			printf("WARNING: defaulted mmap() share type to"
+			    " %s (pid %d comm %s)\n",
+			    vp->v_type == VCHR ? "MAP_SHARED" : "MAP_PRIVATE",
+			    p->p_p->ps_pid, p->p_comm);
 #endif
 			if (vp->v_type == VCHR)
 				flags |= MAP_SHARED;	/* for a device */

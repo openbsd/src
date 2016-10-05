@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.205 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.206 2016/10/05 02:31:52 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -749,7 +749,7 @@ pgsignal(struct pgrp *pgrp, int signum, int checkctty)
 }
 
 /*
- * Send a signal caused by a trap to the current process.
+ * Send a signal caused by a trap to the current thread
  * If it will be caught immediately, deliver it with correct code.
  * Otherwise, post it normally.
  */
@@ -1203,14 +1203,14 @@ issignal(struct proc *p)
 			/*
 			 * Don't take default actions on system processes.
 			 */
-			if (p->p_pid <= 1) {
+			if (pr->ps_pid <= 1) {
 #ifdef DIAGNOSTIC
 				/*
 				 * Are you sure you want to ignore SIGSEGV
 				 * in init? XXX
 				 */
-				printf("Process (pid %d) got signal %d\n",
-				    p->p_pid, signum);
+				printf("Process (pid %d) got signal"
+				    " %d\n", pr->ps_pid, signum);
 #endif
 				break;		/* == ignore */
 			}
@@ -1511,7 +1511,7 @@ coredump(struct proc *p)
 		 * that core will silently fail.
 		 */
 		len = snprintf(name, sizeof(name), "%s/%s/%u.core",
-		    dir, p->p_comm, p->p_pid);
+		    dir, p->p_comm, pr->ps_pid);
 	} else if (incrash && nosuidcoredump == 2)
 		len = snprintf(name, sizeof(name), "%s/%s.core",
 		    dir, p->p_comm);
@@ -1613,10 +1613,10 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 		if (error) {
 			if (error == ENOSPC)
 				log(LOG_ERR, "coredump of %s(%d) failed, filesystem full\n",
-				    io->io_proc->p_comm, io->io_proc->p_pid);
+				    io->io_proc->p_comm, io->io_proc->p_p->ps_pid);
 			else
 				log(LOG_ERR, "coredump of %s(%d), write failed: errno %d\n",
-				    io->io_proc->p_comm, io->io_proc->p_pid, error);
+				    io->io_proc->p_comm, io->io_proc->p_p->ps_pid, error);
 			return (error);
 		}
 

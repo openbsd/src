@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.30 2016/09/03 14:46:56 naddy Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.31 2016/10/05 02:31:52 guenther Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ scdebug_call(struct proc *p, register_t code, const register_t args[])
 	     sy->sy_call == sys_nosys))
 		return;
 		
-	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
+	printf("proc %d (%s): %s num ", p->p_p->ps_pid, p->p_comm, em->e_name);
 	if (code < 0 || code >= em->e_nsysent)
 		printf("OUT OF RANGE (%d)", code);
 	else {
@@ -138,7 +138,7 @@ scdebug_ret(struct proc *p, register_t code, int error,
 	    sy->sy_call == sys_nosys))
 		return;
 		
-	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
+	printf("proc %d (%s): %s num ", p->p_p->ps_pid, p->p_comm, em->e_name);
 	if (code < 0 || code >= em->e_nsysent)
 		printf("OUT OF RANGE (%d)", code);
 	else
