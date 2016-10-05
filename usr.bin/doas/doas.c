@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.67 2016/10/05 17:40:25 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.68 2016/10/05 23:28:28 tb Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -166,6 +166,7 @@ parseconfig(const char *filename, int checkperms)
 			errx(1, "%s is not owned by root", filename);
 	}
 
+	yyparse();
 	fclose(yyfp);
 	if (parse_errors)
 		exit(1);
