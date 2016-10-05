@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.122 2016/09/27 02:13:27 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.123 2016/10/05 14:48:58 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -327,8 +327,8 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	explicit_bzero(digest, sizeof(digest));
 	explicit_bzero(xorkey, sizeof(xorkey));
 
-	if ((nr = snprintf(commentbuf, sizeof(commentbuf), "%s secret key",
-	    comment)) == -1 || nr >= sizeof(commentbuf))
+	nr = snprintf(commentbuf, sizeof(commentbuf), "%s secret key", comment);
+	if (nr == -1 || nr >= sizeof(commentbuf))
 		errx(1, "comment too long");
 	writekeyfile(seckeyfile, commentbuf, &enckey,
 	    sizeof(enckey), O_EXCL, 0600);
@@ -336,8 +336,8 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 
 	memcpy(pubkey.pkalg, PKALG, 2);
 	memcpy(pubkey.keynum, keynum, KEYNUMLEN);
-	if ((nr = snprintf(commentbuf, sizeof(commentbuf), "%s public key",
-	    comment)) == -1 || nr >= sizeof(commentbuf))
+	nr = snprintf(commentbuf, sizeof(commentbuf), "%s public key", comment);
+	if (nr == -1 || nr >= sizeof(commentbuf))
 		errx(1, "comment too long");
 	writekeyfile(pubkeyfile, commentbuf, &pubkey,
 	    sizeof(pubkey), O_EXCL, 0666);
@@ -367,12 +367,14 @@ createsig(const char *seckeyfile, const char *msgfile, uint8_t *msg,
 			keyname = seckeyfile;
 		else
 			keyname++;
-		if ((nr = snprintf(sigcomment, sizeof(sigcomment), VERIFYWITH "%.*s.pub",
-		    (int)strlen(keyname) - 4, keyname)) == -1 || nr >= sizeof(sigcomment))
+		nr = snprintf(sigcomment, sizeof(sigcomment),
+		    VERIFYWITH "%.*s.pub", (int)strlen(keyname) - 4, keyname);
+		if (nr == -1 || nr >= sizeof(sigcomment))
 			errx(1, "comment too long");
 	} else {
-		if ((nr = snprintf(sigcomment, sizeof(sigcomment), "signature from %s",
-		    comment)) == -1 || nr >= sizeof(sigcomment))
+		nr = snprintf(sigcomment, sizeof(sigcomment),
+		    "signature from %s", comment);
+		if (nr == -1 || nr >= sizeof(sigcomment))
 			errx(1, "comment too long");
 	}
 
@@ -827,8 +829,9 @@ main(int argc, char **argv)
 		int nr;
 		if (strcmp(msgfile, "-") == 0)
 			usage("must specify sigfile with - message");
-		if ((nr = snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
-		    msgfile)) == -1 || nr >= sizeof(sigfilebuf))
+		nr = snprintf(sigfilebuf, sizeof(sigfilebuf),
+		    "%s.sig", msgfile);
+		if (nr == -1 || nr >= sizeof(sigfilebuf))
 			errx(1, "path too long");
 		sigfile = sigfilebuf;
 	}
