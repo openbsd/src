@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.28 2016/10/05 16:58:19 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.29 2016/10/05 17:09:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -130,6 +130,10 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 				fatal("%s: fork", __func__);
 				break;
 			case 0:
+				/* First create a new session */
+				if (setsid() == -1)
+					fatal("setsid");
+
 				/* Prepare parent socket. */
 				dup2(fd, PROC_PARENT_SOCK_FILENO);
 
