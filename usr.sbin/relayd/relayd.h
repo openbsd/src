@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.234 2016/09/28 12:16:44 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.235 2016/10/05 16:58:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1031,6 +1031,7 @@ struct privsep_proc {
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	void			(*p_shutdown)(void);
+	struct passwd		*p_pw;
 };
 
 struct privsep_fd {

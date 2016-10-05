@@ -1,7 +1,7 @@
-/*	$OpenBSD: proc.c,v 1.27 2016/09/28 12:01:04 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.28 2016/10/05 16:58:19 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -498,7 +498,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
     struct privsep_proc *procs, unsigned int nproc,
     void (*run)(struct privsep *, struct privsep_proc *, void *), void *arg)
 {
-	struct passwd		*pw = ps->ps_pw;
+	struct passwd		*pw;
 	const char		*root;
 	struct control_sock	*rcs;
 
@@ -517,6 +517,12 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 			if (control_init(ps, rcs) == -1)
 				fatalx(__func__);
 	}
+
+	/* Use non-standard user */
+	if (p->p_pw != NULL)
+		pw = p->p_pw;
+	else
+		pw = ps->ps_pw;
 
 	/* Change root directory */
 	if (p->p_chroot != NULL)

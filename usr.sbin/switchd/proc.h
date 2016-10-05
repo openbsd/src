@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.3 2016/09/18 13:17:40 rzalamena Exp $	*/
+/*	$OpenBSD: proc.h,v 1.4 2016/10/05 16:58:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -76,7 +76,7 @@ struct privsep_proc {
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	void			(*p_shutdown)(void);
-	unsigned int		 p_instance;
+	struct passwd		*p_pw;
 };
 
 struct privsep_fd {
