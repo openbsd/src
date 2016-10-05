@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.123 2016/10/05 14:48:58 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.124 2016/10/05 15:48:39 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -351,7 +351,7 @@ createsig(const char *seckeyfile, const char *msgfile, uint8_t *msg,
 	uint8_t xorkey[sizeof(enckey.seckey)];
 	struct sig sig;
 	char *sighdr;
-	char *secname;
+	char *extname;
 	uint8_t digest[SHA512_DIGEST_LENGTH];
 	int i, nr, rounds;
 	SHA2_CTX ctx;
@@ -359,8 +359,8 @@ createsig(const char *seckeyfile, const char *msgfile, uint8_t *msg,
 
 	readb64file(seckeyfile, &enckey, sizeof(enckey), comment);
 
-	secname = strstr(seckeyfile, ".sec");
-	if (secname && strlen(secname) == 4) {
+	extname = strrchr(seckeyfile, '.');
+	if (extname && strcmp(extname, ".sec") == 0) {
 		const char *keyname;
 		/* basename may or may not modify input */
 		if (!(keyname = strrchr(seckeyfile, '/')))
