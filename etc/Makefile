@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.435 2016/10/04 16:54:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.436 2016/10/05 18:00:41 natano Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -241,6 +241,15 @@ release:
 	@false
 .else
 
+release:
+	@if [[ `id -u` -ne 0 ]]; then \
+		echo 'must be called by root' 2>&1; \
+		false; \
+	fi
+	su ${BUILDUSER} -c 'exec ${MAKE} release-sets'
+	${MAKE} distrib
+	su ${BUILDUSER} -c 'exec ${MAKE} sha'
+
 release-sets:
 	cd ${RELEASEDIR} && rm -f SHA256
 	cd ../distrib/sets && exec sh maketars ${OSrev}
@@ -251,9 +260,6 @@ sha:
 	    cksum -a sha256 BUILDINFO INSTALL.`arch -ks` \
 	    ${ALL_KERNELS} ${MDEXT} ${MISETS} | sort > SHA256
 
-release: sha
-sha: distrib
-distrib: release-sets kernels
 release-sets: distribution kernels
 
 .endif

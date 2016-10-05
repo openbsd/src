@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.126 2016/10/04 16:54:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.127 2016/10/05 18:00:41 natano Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -72,14 +72,23 @@ build:
 .ifdef GLOBAL_AUTOCONF_CACHE
 	cp /dev/null ${GLOBAL_AUTOCONF_CACHE}
 .endif
+	@if [[ `id -u` -ne 0 ]]; then \
+		echo 'must be called by root' 2>&1; \
+		false; \
+	fi
 	cd ${.CURDIR}/share/mk && exec ${MAKE} install
-	cd ${.CURDIR}/include && ${MAKE} prereq && exec ${MAKE} includes
+	cd ${.CURDIR}/include && \
+	    su ${BUILDUSER} -c 'exec ${MAKE} prereq' && \
+	    exec ${MAKE} includes
 	${MAKE} cleandir
-	cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && \
+	cd ${.CURDIR}/lib && \
+	    su ${BUILDUSER} -c '${MAKE} depend && exec ${MAKE}' && \
 	    NOMAN=1 exec ${MAKE} install
-	cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && \
+	cd ${.CURDIR}/gnu/lib && \
+	    su ${BUILDUSER} -c '${MAKE} depend && exec ${MAKE}' && \
 	    NOMAN=1 exec ${MAKE} install
-	${MAKE} depend && ${MAKE} && exec ${MAKE} install
+	su ${BUILDUSER} -c '${MAKE} depend && exec ${MAKE}' && \
+	    exec ${MAKE} install
 	/bin/sh ${.CURDIR}/distrib/sets/makeetcset ${.CURDIR} ${MAKE}
 .endif
 
