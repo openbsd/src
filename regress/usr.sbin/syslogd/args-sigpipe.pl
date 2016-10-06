@@ -20,7 +20,7 @@ our %args = (
     syslogd => {
 	ktrace => {
 	    qr/syslogd  PSIG  SIGPIPE/ => 0,
-	    qr/syslogd  RET   execve 0/ => 1,
+	    qr/syslogd  RET   execve 0/ => 2,
 	},
 	loggrep => { get_between2loggrep() },
     },
