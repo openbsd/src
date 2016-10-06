@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.54 2016/08/05 14:02:23 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.55 2016/10/06 16:12:43 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -136,11 +136,13 @@ struct lease {
 	unsigned char uid_buf[32];
 	char *hostname;
 	char *client_hostname;
+	uint8_t *client_identifier;
 	struct host_decl *host;
 	struct subnet *subnet;
 	struct shared_network *shared_network;
 	struct hardware hardware_addr;
 
+	int client_identifier_len;
 	int flags;
 #define STATIC_LEASE		1
 #define BOOTP_LEASE		2

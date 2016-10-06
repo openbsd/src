@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.48 2016/10/05 00:50:00 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.49 2016/10/06 16:12:43 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -589,7 +589,9 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	struct dhcp_packet raw;
 	unsigned char nak = DHCPNAK;
 	struct packet outgoing;
-	struct tree_cache *options[256], dhcpnak_tree, dhcpmsg_tree, server_tree;
+	struct tree_cache *options[256];
+	struct tree_cache dhcpnak_tree, dhcpmsg_tree;
+	struct tree_cache client_tree, server_tree;
 
 	memset(options, 0, sizeof options);
 	memset(&outgoing, 0, sizeof outgoing);
@@ -614,13 +616,26 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	options[i]->buf_size = strlen(dhcp_message);
 	options[i]->timeout = -1;
 	options[i]->tree = NULL;
-	options[i]->flags = 0; 
+	options[i]->flags = 0;
+
 	/* Include server identifier in the NAK. At least one
 	 * router vendor depends on it when using dhcp relay proxy mode.
 	 */
 	i = DHO_DHCP_SERVER_IDENTIFIER;
 	if (packet->options[i].len) {
 		options[i] = &server_tree;
+		options[i]->value = packet->options[i].data,
+		options[i]->len = packet->options[i].len;
+		options[i]->buf_size = packet->options[i].len;
+		options[i]->timeout = -1;
+		options[i]->tree = NULL;
+		options[i]->flags = 0;
+	}
+
+	/* Echo back the client-identifier as RFC 6842 mandates. */
+	i = DHO_DHCP_CLIENT_IDENTIFIER;
+	if (packet->options[i].len) {
+		options[i] = &client_tree;
 		options[i]->value = packet->options[i].data,
 		options[i]->len = packet->options[i].len;
 		options[i]->buf_size = packet->options[i].len;
@@ -775,6 +790,27 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	} else if (lease->client_hostname) {
 		free(lease->client_hostname);
 		lease->client_hostname = 0;
+	}
+
+	/* Replace the lease client identifier with a new one. */
+	i = DHO_DHCP_CLIENT_IDENTIFIER;
+	if (packet->options[i].len && lease->client_identifier &&
+	    (strlen(lease->client_identifier) == packet->options[i].len) &&
+	    !memcmp(lease->client_identifier, packet->options[i].data,
+	    packet->options[i].len)) {
+		/* Same client identifier. */
+	} else if (packet->options[i].len) {
+		free(lease->client_identifier);
+		lease->client_identifier = malloc(packet->options[i].len);
+		if (!lease->client_identifier)
+			error("no memory for client identifier.\n");
+		lease->client_identifier_len = packet->options[i].len;
+		memcpy(lease->client_identifier, packet->options[i].data,
+		    packet->options[i].len);
+	} else if (lease->client_identifier) {
+		free(lease->client_identifier);
+		lease->client_identifier = NULL;
+		lease->client_identifier_len = 0;
 	}
 
 	/*
@@ -1201,9 +1237,18 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->tree = NULL;
 	}
 
-	/* RFC 2131: MUST NOT send client identifier option in OFFER/ACK! */
+	/* Echo back the client-identifier as RFC 6842 mandates. */
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
-	memset(&state->options[i], 0, sizeof(state->options[i]));
+	if (lease->client_identifier) {
+		state->options[i] = new_tree_cache("dhcp-client-identifier");
+		state->options[i]->flags = TC_TEMPORARY;
+		state->options[i]->value = lease->client_identifier;
+		state->options[i]->len = lease->client_identifier_len;
+		state->options[i]->buf_size = lease->client_identifier_len;
+		state->options[i]->timeout = -1;
+		state->options[i]->tree = NULL;
+	} else
+		memset(&state->options[i], 0, sizeof(state->options[i]));
 
 	lease->state = state;
 
