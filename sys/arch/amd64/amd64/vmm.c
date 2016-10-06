@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.91 2016/10/06 07:51:10 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.92 2016/10/06 18:52:09 reyk Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -432,6 +432,9 @@ pledge_ioctl_vmm(struct proc *p, long com)
 		/* XXX VM processes should only terminate themselves */
 	case VMM_IOC_RUN:
 	case VMM_IOC_RESETCPU:
+	case VMM_IOC_INTR:
+	case VMM_IOC_READREGS:
+	case VMM_IOC_WRITEREGS:
 		return (0);
 	}
 
