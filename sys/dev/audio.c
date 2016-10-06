@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.154 2016/10/04 23:02:03 deraadt Exp $	*/
+/*	$OpenBSD: audio.c,v 1.155 2016/10/06 05:29:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -590,6 +590,18 @@ audio_stop(struct audio_softc *sc)
 	audio_clear(sc);
 	sc->active = 0;
 	return 0;
+}
+
+int
+audio_canstart(struct audio_softc *sc)
+{
+	if (sc->active || sc->pause)
+		return 0;
+	if ((sc->mode & AUMODE_RECORD) && sc->rec.used != 0)
+		return 0;
+	if ((sc->mode & AUMODE_PLAY) && sc->play.used != sc->play.len)
+		return 0;
+	return 1;
 }
 
 int
@@ -1377,7 +1389,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 
 	/* start automatically if audio_ioc_start() was never called */
 	mtx_enter(&audio_lock);
-	if (!sc->active && !sc->pause && sc->rec.used == 0) {
+	if (audio_canstart(sc)) {
 		mtx_leave(&audio_lock);
 		error = audio_start(sc);
 		if (error)
@@ -1500,8 +1512,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		audio_buf_wcommit(&sc->play, count);
 
 		/* start automatically if audio_ioc_start() was never called */
-		if (!sc->active && !sc->pause &&
-		    sc->play.used == sc->play.len) {
+		if (audio_canstart(sc)) {
 			mtx_leave(&audio_lock);
 			error = audio_start(sc);
 			if (error)
