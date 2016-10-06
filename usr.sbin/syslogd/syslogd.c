@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.216 2016/10/04 22:09:21 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.217 2016/10/06 11:24:04 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1577,7 +1577,7 @@ printsys(char *msg)
 	}
 }
 
-time_t	now;
+struct timeval	now;
 
 /*
  * Log a message to the appropriate log files, users, etc. based on
@@ -1587,7 +1587,6 @@ void
 logmsg(int pri, char *msg, char *from, int flags)
 {
 	struct filed *f;
-	struct tm *tm;
 	int fac, msglen, prilev, i;
 	char timestamp[33];
 	char prog[NAME_MAX+1];
@@ -1665,13 +1664,22 @@ logmsg(int pri, char *msg, char *from, int flags)
 			flags |= ADDDATE;
 	}
 
-	(void)time(&now);
+	(void)gettimeofday(&now, NULL);
 	if (flags & ADDDATE) {
 		if (ZuluTime) {
-			tm = gmtime(&now);
-			strftime(timestamp, sizeof(timestamp), "%FT%TZ", tm);
+			struct tm *tm;
+			size_t l;
+
+			tm = gmtime(&now.tv_sec);
+			l = strftime(timestamp, sizeof(timestamp), "%FT%T", tm);
+			/*
+			 * Use only millisecond precision as some time has
+			 * passed since syslog(3) was called.
+			 */
+			snprintf(timestamp + l, sizeof(timestamp) - l,
+			    ".%03ldZ", now.tv_usec / 1000);
 		} else
-			strlcpy(timestamp, ctime(&now) + 4, 16);
+			strlcpy(timestamp, ctime(&now.tv_sec) + 4, 16);
 	}
 
 	/* extract facility and priority level */
@@ -1724,7 +1732,8 @@ logmsg(int pri, char *msg, char *from, int flags)
 			continue;
 
 		/* don't output marks to recently written files */
-		if ((flags & MARK) && (now - f->f_time) < MarkInterval / 2)
+		if ((flags & MARK) &&
+		    (now.tv_sec - f->f_time) < MarkInterval / 2)
 			continue;
 
 		/*
@@ -1737,7 +1746,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 			    sizeof(f->f_lasttime));
 			f->f_prevcount++;
 			logdebug("msg repeated %d times, %ld sec of %d\n",
-			    f->f_prevcount, (long)(now - f->f_time),
+			    f->f_prevcount, (long)(now.tv_sec - f->f_time),
 			    repeatinterval[f->f_repeatcount]);
 			/*
 			 * If domark would have logged this by now,
@@ -1745,7 +1754,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 			 * but back off so we'll flush less often
 			 * in the future.
 			 */
-			if (now > REPEATTIME(f)) {
+			if (now.tv_sec > REPEATTIME(f)) {
 				fprintlog(f, flags, (char *)NULL);
 				BACKOFF(f);
 			}
@@ -1787,7 +1796,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 	if (f->f_type == F_WALL) {
 		l = snprintf(greetings, sizeof(greetings),
 		    "\r\n\7Message from syslogd@%s at %.24s ...\r\n",
-		    f->f_prevhost, ctime(&now));
+		    f->f_prevhost, ctime(&now.tv_sec));
 		if (l < 0 || (size_t)l >= sizeof(greetings))
 			l = strlen(greetings);
 		v->iov_base = greetings;
@@ -1844,7 +1853,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 	v++;
 
 	logdebug("Logging to %s", TypeNames[f->f_type]);
-	f->f_time = now;
+	f->f_time = now.tv_sec;
 
 	switch (f->f_type) {
 	case F_UNUSED:
@@ -1946,8 +1955,8 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 			/* pipe is non-blocking. log and drop message if full */
 			if (e == EAGAIN && f->f_type == F_PIPE) {
-				if (now - f->f_lasterrtime > 120) {
-					f->f_lasterrtime = now;
+				if (now.tv_sec - f->f_lasterrtime > 120) {
+					f->f_lasterrtime = now.tv_sec;
 					logerror(f->f_un.f_fname);
 				}
 				break;
@@ -2884,7 +2893,7 @@ markit(void)
 {
 	struct filed *f;
 
-	now = time(NULL);
+	(void)gettimeofday(&now, NULL);
 	MarkSeq += TIMERINTVL;
 	if (MarkSeq >= MarkInterval) {
 		logmsg(LOG_INFO, "-- MARK --",
@@ -2893,7 +2902,7 @@ markit(void)
 	}
 
 	SIMPLEQ_FOREACH(f, &Files, f_next) {
-		if (f->f_prevcount && now >= REPEATTIME(f)) {
+		if (f->f_prevcount && now.tv_sec >= REPEATTIME(f)) {
 			logdebug("flush %s: repeated %d times, %d sec.\n",
 			    TypeNames[f->f_type], f->f_prevcount,
 			    repeatinterval[f->f_repeatcount]);
