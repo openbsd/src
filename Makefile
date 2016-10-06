@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.128 2016/10/06 16:22:43 tb Exp $
+#	$OpenBSD: Makefile,v 1.129 2016/10/06 18:56:17 natano Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -75,7 +75,7 @@ build:
 	cp /dev/null ${GLOBAL_AUTOCONF_CACHE}
 .endif
 	@if [[ `id -u` -ne 0 ]]; then \
-		echo 'must be called by root' 2>&1; \
+		echo $@ must be called by root >&2; \
 		false; \
 	fi
 	cd ${.CURDIR}/share/mk && exec ${MAKE} install

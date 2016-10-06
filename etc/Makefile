@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.438 2016/10/06 15:37:42 natano Exp $
+#	$OpenBSD: Makefile,v 1.439 2016/10/06 18:56:17 natano Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -249,7 +249,7 @@ release:
 
 release:
 	@if [[ `id -u` -ne 0 ]]; then \
-		echo 'must be called by root' 2>&1; \
+		echo $@ must be called by root >&2; \
 		false; \
 	fi
 	${MAKE} release-sets
