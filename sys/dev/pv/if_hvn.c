@@ -278,7 +278,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_proto >= HVN_NVS_PROTO_VERSION_2) {
 		ifp->if_hardmtu = HVN_MAXMTU;
-#if NVLAN > 0 && notyet
+#if NVLAN > 0
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING | IFCAP_VLAN_MTU;
 #endif
 	}
