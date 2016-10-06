@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.90 2016/10/06 07:37:51 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.91 2016/10/06 07:51:10 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -40,10 +40,10 @@
 
 #include <dev/isa/isareg.h>
 
-#define VMM_DEBUG
+/* #define VMM_DEBUG */
 
 #ifdef VMM_DEBUG
-int vmm_debug = 1;
+int vmm_debug = 0;
 #define DPRINTF(x...)	do { if (vmm_debug) printf(x); } while(0)
 #else
 #define DPRINTF(x...)
