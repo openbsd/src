@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.303 2016/09/02 10:47:17 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.304 2016/10/06 13:02:31 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -2386,6 +2386,7 @@ parse_autotable(char *filename)
 		    idx + 1, sizeof(*sa))) == NULL)
 			err(1, NULL);
 		sa = &(alloc_table[0].table[idx]);
+		memset(sa, 0, sizeof(*sa));
 		idx++;
 
 		if ((sa->mp = get_token(&buf, &len)) == NULL ||
