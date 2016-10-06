@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.161 2016/09/20 14:27:43 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.162 2016/10/06 17:02:10 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -152,9 +152,9 @@ socreate(int dom, struct socket **aso, int type, int proto)
 int
 sobind(struct socket *so, struct mbuf *nam, struct proc *p)
 {
-	int s = splsoftnet();
-	int error;
+	int s, error;
 
+	s = splsoftnet();
 	error = (*so->so_proto->pr_usrreq)(so, PRU_BIND, NULL, nam, NULL, p);
 	splx(s);
 	return (error);
@@ -234,9 +234,9 @@ int
 soclose(struct socket *so)
 {
 	struct socket *so2;
-	int s = splsoftnet();		/* conservative */
-	int error = 0;
+	int s, error = 0;
 
+	s = splsoftnet();
 	if (so->so_options & SO_ACCEPTCONN) {
 		while ((so2 = TAILQ_FIRST(&so->so_q0)) != NULL) {
 			(void) soqremque(so2, 0);
@@ -318,8 +318,7 @@ soaccept(struct socket *so, struct mbuf *nam)
 int
 soconnect(struct socket *so, struct mbuf *nam)
 {
-	int s;
-	int error;
+	int s, error;
 
 	if (so->so_options & SO_ACCEPTCONN)
 		return (EOPNOTSUPP);
@@ -344,9 +343,9 @@ soconnect(struct socket *so, struct mbuf *nam)
 int
 soconnect2(struct socket *so1, struct socket *so2)
 {
-	int s = splsoftnet();
-	int error;
+	int s, error;
 
+	s = splsoftnet();
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2, NULL,
 	    (struct mbuf *)so2, NULL, curproc);
 	splx(s);
