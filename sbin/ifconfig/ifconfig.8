@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.274 2016/09/09 06:59:41 jasper Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.275 2016/10/06 14:47:00 naddy Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: September 9 2016 $
+.Dd $Mdocdate: October 6 2016 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1533,7 +1533,7 @@ as a local port of the switch.
 Local port is a special port connected with the local system's network stack.
 Only
 .Xr vether 4
-can be use for the
+can be used for the
 .Ar interface .
 Only one interface can be added as a local port.
 .It Cm datapath Ar datapath_id
