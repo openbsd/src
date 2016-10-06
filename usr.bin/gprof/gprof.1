@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gprof.1,v 1.23 2016/09/21 05:57:32 jmc Exp $
+.\"	$OpenBSD: gprof.1,v 1.24 2016/10/06 07:17:06 jmc Exp $
 .\"	$NetBSD: gprof.1,v 1.6 1995/11/21 22:24:55 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)gprof.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 21 2016 $
+.Dd $Mdocdate: October 6 2016 $
 .Dt GPROF 1
 .Os
 .Sh NAME
@@ -56,10 +56,7 @@ default) which is created by programs
 that are compiled with the
 .Fl pg
 option of
-.Xr cc 1 ,
-.Xr pc ,
-and
-.Xr f77 .
+.Xr cc 1 .
 The
 .Fl pg
 option also links in versions of the library routines
@@ -92,9 +89,7 @@ Cycles are also shown, with an entry for the cycle as a whole and
 a listing of the members of the cycle and their contributions to the
 time and call counts of the cycle.
 .Pp
-Second, a flat profile is given,
-similar to that provided by
-.Xr prof .
+Second, a flat profile is given.
 This listing gives the total execution times, the call counts,
 the time in milliseconds the call spent in the routine itself, and
 the time in milliseconds the call spent in the routine itself including
