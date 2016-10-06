@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.113 2016/09/26 06:51:23 ajacoutot Exp $
+#	$OpenBSD: changelist,v 1.114 2016/10/06 20:20:41 reyk Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -132,6 +132,7 @@
 /etc/suid_profile
 /etc/sysctl.conf
 /etc/syslog.conf
+/etc/switchd.conf
 /etc/sysmerge.ignore
 /etc/ttys
 /etc/usermgmt.conf

@@ -58,4 +58,5 @@ _vmd:*:107:107::0:0:VM Daemon:/var/empty:/sbin/nologin
 _tftp_proxy:*:108:108::0:0:tftp proxy daemon:/nonexistent:/sbin/nologin
 _ftp_proxy:*:109:109::0:0:ftp proxy daemon:/nonexistent:/sbin/nologin
 _sndiop:*:110:110::0:0:sndio privileged user:/var/empty:/sbin/nologin
+_switchd:*:111:111::0:0:Switch Daemon:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin

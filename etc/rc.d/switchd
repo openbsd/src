@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# $OpenBSD: switchd,v 1.1 2016/10/06 20:20:41 reyk Exp $
+
+daemon="/usr/sbin/switchd"
+
+. /etc/rc.d/rc.subr
+
+# child will not return a config loading error to the parent
+rc_pre() {
+	${daemon} -n ${daemon_flags}
+}
+
+rc_cmd $1
