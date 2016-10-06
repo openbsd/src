@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.80 2016/04/13 10:49:26 mpi Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.81 2016/10/06 15:18:48 stsp Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -265,6 +265,9 @@ rt2560_attach(void *xsc, int id)
 	ic->ic_node_alloc = rt2560_node_alloc;
 	ic->ic_newassoc = rt2560_newassoc;
 	ic->ic_updateslot = rt2560_updateslot;
+
+	/* XXX RTS causes throughput problems -- where is the bug? */
+	ic->ic_rtsthreshold = IEEE80211_RTS_MAX;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
@@ -959,9 +962,10 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 		case RT2560_TX_FAIL_INVALID:
 		case RT2560_TX_FAIL_OTHER:
 		default:
-			printf("%s: sending data frame failed 0x%08x\n",
-			    sc->sc_dev.dv_xname, letoh32(desc->flags));
+			DPRINTF(("%s: sending data frame failed 0x%08x\n",
+			    sc->sc_dev.dv_xname, letoh32(desc->flags)));
 			ifp->if_oerrors++;
+			break;
 		}
 
 		/* descriptor is no longer valid */
@@ -1031,8 +1035,9 @@ rt2560_prio_intr(struct rt2560_softc *sc)
 		case RT2560_TX_FAIL_INVALID:
 		case RT2560_TX_FAIL_OTHER:
 		default:
-			printf("%s: sending mgt frame failed 0x%08x\n",
-			    sc->sc_dev.dv_xname, letoh32(desc->flags));
+			DPRINTF(("%s: sending mgt frame failed 0x%08x\n",
+			    sc->sc_dev.dv_xname, letoh32(desc->flags)));
+			break;
 		}
 
 		/* descriptor is no longer valid */
@@ -1945,6 +1950,8 @@ rt2560_start(struct ifnet *ifp)
 				break;
 
 		} else {
+			/* Because RTS/CTS requires an extra frame we need
+			 * space for 2 frames on the regular Tx queue. */
 			if (sc->txq.queued >= RT2560_TX_RING_COUNT - 1) {
 				ifq_set_oactive(&ifp->if_snd);
 				sc->sc_flags |= RT2560_DATA_OACTIVE;
