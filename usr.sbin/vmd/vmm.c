@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.47 2016/10/05 17:30:13 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.48 2016/10/06 18:48:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -311,6 +311,25 @@ vmm_sighdlr(int sig, short event, void *arg)
 		break;
 	default:
 		fatalx("unexpected signal");
+	}
+}
+
+/*
+ * vmm_shutdown
+ * 
+ * Terminate VMs on shutdown to avoid "zombie VM" processes.
+ */
+void
+vmm_shutdown(void)
+{
+	struct vm_terminate_params vtp;
+	struct vmd_vm *vm, *vm_next;
+
+	TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry, vm_next) {
+		vtp.vtp_vm_id = vm->vm_params.vcp_id;
+
+		/* XXX suspend or request graceful shutdown */
+		terminate_vm(&vtp);
 	}
 }
 
