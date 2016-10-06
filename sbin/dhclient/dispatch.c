@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.110 2016/09/29 00:40:08 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.111 2016/10/06 16:29:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -86,8 +86,7 @@ get_hw_address(struct interface_info *ifi)
 	found = 0;
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
-		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
-		    (!(ifa->ifa_flags & IFF_UP)))
+		    (ifa->ifa_flags & IFF_POINTOPOINT))
 			continue;
 
 		if (strcmp(ifi->name, ifa->ifa_name) != 0)

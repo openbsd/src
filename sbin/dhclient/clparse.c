@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.102 2016/09/30 13:20:57 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.103 2016/10/06 16:29:17 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -466,7 +466,6 @@ parse_client_lease_statement(FILE *cfile, int is_static, struct interface_info *
 {
 	struct client_state	*client = ifi->client;
 	struct client_lease	*lease, *lp, *pl;
-	struct option_data	*opt1, *opt2;
 	int			 token;
 
 	token = next_token(NULL, cfile);
@@ -495,31 +494,28 @@ parse_client_lease_statement(FILE *cfile, int is_static, struct interface_info *
 	token = next_token(NULL, cfile);
 
 	/*
-	 * If the new lease is for an obsolete client-identifier, toss it.
-	 */
-	opt1 = &lease->options[DHO_DHCP_CLIENT_IDENTIFIER];
-	opt2 = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
-	if (opt1->len && opt2->len && (opt1->len != opt2->len ||
-	    memcmp(opt1->data, opt2->data, opt1->len))) {
-		note("Obsolete client identifier (%s) in recorded lease",
-		    pretty_print_option(DHO_DHCP_CLIENT_IDENTIFIER, opt1, 0));
-		free_client_lease(lease);
-		return;
-	}
-
-	/*
-	 * The new lease will supersede a lease of the same type and for
-	 * the same address or the same SSID.
+	 * The new lease will supersede a lease which is of the same type
+	 * AND the same ssid AND the same Client Identifier AND the same
+	 * IP address.
 	 */
 	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
 		if (lp->is_static != is_static)
 			continue;
-		if ((strcmp(lp->ssid, ifi->ssid) == 0) ||
-		    (lp->address.s_addr == lease->address.s_addr)) {
-			TAILQ_REMOVE(&client->leases, lp, next);
-			lp->is_static = 0;	/* Else it won't be freed. */
-			free_client_lease(lp);
-		}
+		if (strcmp(lp->ssid, ifi->ssid) != 0)
+			continue;
+		if ((lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len != 0) &&
+		    ((lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len !=
+		    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len) ||
+		    memcmp(lp->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
+		    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
+		    lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len)))
+			continue;
+		if (lp->address.s_addr != lease->address.s_addr)
+			continue;
+
+		TAILQ_REMOVE(&client->leases, lp, next);
+		lp->is_static = 0;	/* Else it won't be freed. */
+		free_client_lease(lp);
 	}
 
 	/*

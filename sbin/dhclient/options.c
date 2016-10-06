@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.78 2016/09/02 15:44:26 mpi Exp $	*/
+/*	$OpenBSD: options.c,v 1.79 2016/10/06 16:29:17 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -711,6 +711,22 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 				    (unsigned char *)packet->sname,
 				    sizeof(packet->sname));
 		}
+
+		/*
+		 * RFC 6842 says if the server sends a client identifier
+		 * that doesn't match then the packet must be dropped.
+		 */
+		i = DHO_DHCP_CLIENT_IDENTIFIER;
+		if ((options[i].len != 0) &&
+		    ((options[i].len != config->send_options[i].len) ||
+		    memcmp(options[i].data, config->send_options[i].data,
+		    options[i].len) != 0)) {
+#ifdef DEBUG
+			debug("Discarding packet with client-identifier '%s'",
+			    pretty_print_option(i, &options[i], 0));
+#endif
+			goto done;
+		}
 	}
 
 	type = "<unknown>";
@@ -757,6 +773,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 
 	free(info);
 
+done:
 	for (i = 0; i < 256; i++)
 		free(options[i].data);
 }
