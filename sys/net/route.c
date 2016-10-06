@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.332 2016/10/05 08:07:46 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.333 2016/10/06 19:09:08 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -533,8 +533,6 @@ ifafree(struct ifaddr *ifa)
  * destination to go through the given gateway.
  * Normally called as a result of a routing redirect
  * message from the network layer.
- *
- * N.B.: must be called at splsoftnet
  */
 void
 rtredirect(struct sockaddr *dst, struct sockaddr *gateway,

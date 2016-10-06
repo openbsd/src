@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.987 2016/09/27 04:57:17 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.988 2016/10/06 19:09:08 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1308,7 +1308,6 @@ pf_src_tree_remove_state(struct pf_state *s)
 	}
 }
 
-/* callers should be at splsoftnet */
 void
 pf_remove_state(struct pf_state *cur)
 {
@@ -1354,8 +1353,7 @@ pf_remove_divert_state(struct pf_state_key *sk)
 	}
 }
 
-/* callers should be at splsoftnet and hold the
- * write_lock on pf_consistency_lock */
+/* callers should hold the write_lock on pf_consistency_lock */
 void
 pf_free_state(struct pf_state *cur)
 {

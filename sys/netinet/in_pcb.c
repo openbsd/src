@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.215 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.216 2016/10/06 19:09:08 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -655,8 +655,6 @@ in_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
  * cmds that are uninteresting (e.g., no error in the map).
  * Call the protocol specific routine (if any) to report
  * any errors for each matching socket.
- *
- * Must be called at splsoftnet.
  */
 void
 in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rdomain,

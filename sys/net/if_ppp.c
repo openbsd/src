@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.100 2016/06/22 19:44:26 jca Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.101 2016/10/06 19:09:08 bluhm Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -300,7 +300,7 @@ pppalloc(pid_t pid)
 }
 
 /*
- * Deallocate a ppp unit.  Must be called at splsoftnet or higher.
+ * Deallocate a ppp unit.
  */
 void
 pppdealloc(struct ppp_softc *sc)
@@ -807,7 +807,6 @@ bad:
 /*
  * After a change in the NPmode for some NP, move packets from the
  * npqueue to the send queue or the fast queue as appropriate.
- * Should be called at splsoftnet.
  */
 static void
 ppp_requeue(struct ppp_softc *sc)
@@ -1001,7 +1000,7 @@ ppp_dequeue(struct ppp_softc *sc)
 }
 
 /*
- * Software interrupt routine, called at splsoftnet.
+ * Software interrupt routine.
  */
 void
 pppintr(void)
