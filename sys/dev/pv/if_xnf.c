@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.40 2016/10/06 17:00:25 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.41 2016/10/06 17:02:22 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -1015,16 +1015,12 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmap[i], 0, 0,
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_dmap[i]);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_dmap[i]);
+		sc->sc_tx_dmap[i] = NULL;
 		if (sc->sc_tx_buf[i] == NULL)
 			continue;
 		m_free(sc->sc_tx_buf[i]);
 		sc->sc_tx_buf[i] = NULL;
-	}
-	for (i = 0; i < XNF_TX_DESC; i++) {
-		if (sc->sc_tx_dmap[i] == NULL)
-			continue;
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_dmap[i]);
-		sc->sc_tx_dmap[i] = NULL;
 	}
 	if (sc->sc_tx_rmap) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
