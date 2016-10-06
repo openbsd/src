@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.44 2016/09/14 03:25:51 jcs Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.45 2016/10/06 07:30:19 fcambus Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -139,32 +139,29 @@ static struct font builtin_fonts[] = {
 #ifdef FONT_BOLD8x16_ISO1
 	BUILTIN_FONT(bold8x16_iso1, 2),
 #endif
-#ifdef FONT_COURIER11x18
-	BUILTIN_FONT(courier11x18, 3),
-#endif
 #ifdef FONT_GALLANT12x22
-	BUILTIN_FONT(gallant12x22, 4),
+	BUILTIN_FONT(gallant12x22, 3),
 #endif
 #ifdef FONT_LUCIDA16x29
-	BUILTIN_FONT(lucida16x29, 5),
+	BUILTIN_FONT(lucida16x29, 4),
 #endif
 #ifdef FONT_QVSS8x15
-	BUILTIN_FONT(qvss8x15, 6),
+	BUILTIN_FONT(qvss8x15, 5),
 #endif
 #ifdef FONT_VT220L8x8
-	BUILTIN_FONT(vt220l8x8, 7),
+	BUILTIN_FONT(vt220l8x8, 6),
 #endif
 #ifdef FONT_VT220L8x10
-	BUILTIN_FONT(vt220l8x10, 8),
+	BUILTIN_FONT(vt220l8x10, 7),
 #endif
 #ifdef FONT_SONY8x16
-	BUILTIN_FONT(sony8x16, 9),
+	BUILTIN_FONT(sony8x16, 8),
 #endif
 #ifdef FONT_SONY12x24
-	BUILTIN_FONT(sony12x24, 10),
+	BUILTIN_FONT(sony12x24, 9),
 #endif
 #ifdef FONT_OMRON12x20
-	BUILTIN_FONT(omron12x20, 11),
+	BUILTIN_FONT(omron12x20, 10),
 #endif
 #undef BUILTIN_FONT
 };
