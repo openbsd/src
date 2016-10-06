@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.89 2016/10/05 08:04:14 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.90 2016/10/06 07:37:51 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -168,6 +168,7 @@ void vmx_setmsrbrw(struct vcpu *, uint32_t);
 #ifdef VMM_DEBUG
 void dump_vcpu(struct vcpu *);
 void vmx_vcpu_dump_regs(struct vcpu *);
+void vmx_dump_vmcs(struct vcpu *);
 const char *msr_name_decode(uint32_t);
 void vmm_segment_desc_decode(uint64_t);
 void vmm_decode_cr0(uint64_t);
@@ -2875,6 +2876,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			    vcpu->vc_id);
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
+			vmx_dump_vmcs(vcpu);
 			break;
 		case VMX_EXIT_ENTRY_FAILED_GUEST_STATE:
 			DPRINTF("%s: vm %d vcpu %d failed entry "
@@ -3291,6 +3293,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 		    vcpu->vc_parent->vm_id, vcpu->vc_id);
 		vmx_vcpu_dump_regs(vcpu);
 		dump_vcpu(vcpu);
+		vmx_dump_vmcs(vcpu);
 #endif /* VMM_DEBUG */
 		ret = EAGAIN;
 		update_rip = 0;
@@ -4106,8 +4109,8 @@ vcpu_state_decode(u_int state)
 void
 dump_vcpu(struct vcpu *vcpu)
 {
-	printf("vcpu @ 0x%llx\n", (uint64_t)vcpu);
-	printf("    parent vm @ 0x%llx\n", (uint64_t)vcpu->vc_parent);
+	printf("vcpu @ %p\n", vcpu);
+	printf("    parent vm @ %p\n", vcpu->vc_parent);
 	printf("    mode: ");
 	if (vcpu->vc_virt_mode == VMM_MODE_VMX ||
 	    vcpu->vc_virt_mode == VMM_MODE_EPT) {
@@ -4203,6 +4206,557 @@ dump_vcpu(struct vcpu *vcpu)
 		CTRL_DUMP(vcpu, EXIT, CLEAR_IA32_BNDCFGS_ON_EXIT);
 		CTRL_DUMP(vcpu, EXIT, CONCEAL_VM_EXITS_FROM_PT);
 	}
+}
+
+/*
+ * vmx_dump_vmcs_field
+ *
+ * Debug function to dump the contents of a single VMCS field
+ *
+ * Parameters:
+ *  fieldid: VMCS Field ID
+ *  msg: string to display
+ */
+void
+vmx_dump_vmcs_field(uint16_t fieldid, const char *msg)
+{
+	uint8_t width;
+	uint64_t val;
+
+
+	DPRINTF("%s (0x%04x): ", msg, fieldid);
+	if (vmread(fieldid, &val))
+		DPRINTF("???? ");
+	else {
+		/*
+		 * Field width encoding : bits 13:14
+		 *
+		 * 0: 16-bit
+		 * 1: 64-bit
+		 * 2: 32-bit
+		 * 3: natural width
+		 */
+		width = (fieldid >> 13) & 0x3;
+		switch (width) {
+			case 0: DPRINTF("0x%04llx ", val); break;
+			case 1:
+			case 3: DPRINTF("0x%016llx ", val); break;
+			case 2: DPRINTF("0x%08llx ", val);
+		}
+	}
+}
+
+/*
+ * vmx_dump_vmcs
+ *
+ * Debug function to dump the contents of the current VMCS.
+ */
+void
+vmx_dump_vmcs(struct vcpu *vcpu)
+{
+	int has_sec, i;
+	uint32_t cr3_tgt_ct;
+
+	/* XXX save and load new vmcs, restore at end */
+
+	DPRINTF("--CURRENT VMCS STATE--\n");
+	DPRINTF("VMXON revision : 0x%x\n",
+	    curcpu()->ci_vmm_cap.vcc_vmx.vmx_vmxon_revision);
+	DPRINTF("CR0 fixed0: 0x%llx\n",
+	    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0);
+	DPRINTF("CR0 fixed1: 0x%llx\n",
+	    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1);
+	DPRINTF("CR4 fixed0: 0x%llx\n",
+	    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0);
+	DPRINTF("CR4 fixed1: 0x%llx\n",
+	    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1);
+	DPRINTF("MSR table size: 0x%x\n",
+	    512 * (curcpu()->ci_vmm_cap.vcc_vmx.vmx_msr_table_size + 1));
+	
+	has_sec = vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
+	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1);
+	
+	if (has_sec) {
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_VPID, 1)) {
+			vmx_dump_vmcs_field(VMCS_GUEST_VPID, "VPID");
+		}
+	}
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PINBASED_CTLS,
+	    IA32_VMX_PROCESS_POSTED_INTERRUPTS, 1)) {
+		vmx_dump_vmcs_field(VMCS_POSTED_INT_NOTIF_VECTOR,
+		    "Posted Int Notif Vec");
+	}
+
+	if (has_sec) {
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_EPT_VIOLATION_VE, 1)) {
+			vmx_dump_vmcs_field(VMCS_EPTP_INDEX, "EPTP idx");
+		}
+	}
+
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_ES_SEL, "G.ES");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_CS_SEL, "G.CS");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_SS_SEL, "G.SS");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_DS_SEL, "G.DS");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_FS_SEL, "G.FS");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_GS_SEL, "G.GS");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_LDTR_SEL, "LDTR");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_TR_SEL, "G.TR");
+
+	if (has_sec) {
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_VIRTUAL_INTERRUPT_DELIVERY, 1)) {
+			vmx_dump_vmcs_field(VMCS_GUEST_INTERRUPT_STATUS,
+			    "Int sts");
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_PML, 1)) {
+			vmx_dump_vmcs_field(VMCS_GUEST_PML_INDEX, "PML Idx");
+		}
+	}
+
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_ES_SEL, "H.ES");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_CS_SEL, "H.CS");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_SS_SEL, "H.SS");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_DS_SEL, "H.DS");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_FS_SEL, "H.FS");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_GS_SEL, "H.GS");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_IO_BITMAP_A, "I/O Bitmap A");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_IO_BITMAP_B, "I/O Bitmap B");
+	DPRINTF("\n");
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
+	    IA32_VMX_USE_MSR_BITMAPS, 1)) {
+		vmx_dump_vmcs_field(VMCS_MSR_BITMAP_ADDRESS, "MSR Bitmap");
+		DPRINTF("\n");
+	}
+
+	vmx_dump_vmcs_field(VMCS_EXIT_STORE_MSR_ADDRESS, "Exit Store MSRs");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_EXIT_LOAD_MSR_ADDRESS, "Exit Load MSRs");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_ENTRY_LOAD_MSR_ADDRESS, "Entry Load MSRs");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_EXECUTIVE_VMCS_POINTER, "Exec VMCS Ptr");
+	DPRINTF("\n");
+
+	if (has_sec) {
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_PML, 1)) {
+			vmx_dump_vmcs_field(VMCS_PML_ADDRESS, "PML Addr");
+			DPRINTF("\n");
+		}
+	}
+
+	vmx_dump_vmcs_field(VMCS_TSC_OFFSET, "TSC Offset");
+	DPRINTF("\n");
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
+	    IA32_VMX_USE_TPR_SHADOW, 1)) {
+		vmx_dump_vmcs_field(VMCS_VIRTUAL_APIC_ADDRESS,
+		    "Virtual APIC Addr");
+		DPRINTF("\n");
+	}
+
+	if (has_sec) {
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_VIRTUALIZE_APIC, 1)) {
+			vmx_dump_vmcs_field(VMCS_APIC_ACCESS_ADDRESS,
+			    "APIC Access Addr");
+			DPRINTF("\n");
+		}
+	}
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PINBASED_CTLS,
+	    IA32_VMX_PROCESS_POSTED_INTERRUPTS, 1)) {
+		vmx_dump_vmcs_field(VMCS_POSTED_INTERRUPT_DESC,
+		    "Posted Int Desc Addr");
+		DPRINTF("\n");
+	}
+
+	if (has_sec) {
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_VM_FUNCTIONS, 1)) {
+			vmx_dump_vmcs_field(VMCS_VM_FUNCTION_CONTROLS,
+			    "VM Function Controls");
+			DPRINTF("\n");
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_EPT, 1)) {
+			vmx_dump_vmcs_field(VMCS_GUEST_IA32_EPTP,
+			    "EPT Pointer");
+			DPRINTF("\n");
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_VIRTUAL_INTERRUPT_DELIVERY, 1)) {
+			vmx_dump_vmcs_field(VMCS_EOI_EXIT_BITMAP_0,
+			    "EOI Exit Bitmap 0");
+			DPRINTF("\n");
+			vmx_dump_vmcs_field(VMCS_EOI_EXIT_BITMAP_1,
+			    "EOI Exit Bitmap 1");
+			DPRINTF("\n");
+			vmx_dump_vmcs_field(VMCS_EOI_EXIT_BITMAP_2,
+			    "EOI Exit Bitmap 2");
+			DPRINTF("\n");
+			vmx_dump_vmcs_field(VMCS_EOI_EXIT_BITMAP_3,
+			    "EOI Exit Bitmap 3");
+			DPRINTF("\n");
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_VM_FUNCTIONS, 1)) {
+			/* We assume all CPUs have the same VMFUNC caps */
+			if (curcpu()->ci_vmm_cap.vcc_vmx.vmx_vm_func & 0x1) {
+				vmx_dump_vmcs_field(VMCS_EPTP_LIST_ADDRESS,
+				    "EPTP List Addr");
+				DPRINTF("\n");
+			}
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_VMCS_SHADOWING, 1)) {
+			vmx_dump_vmcs_field(VMCS_VMREAD_BITMAP_ADDRESS,
+			    "VMREAD Bitmap Addr");
+			DPRINTF("\n");
+			vmx_dump_vmcs_field(VMCS_VMWRITE_BITMAP_ADDRESS,
+			    "VMWRITE Bitmap Addr");
+			DPRINTF("\n");
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_EPT_VIOLATION_VE, 1)) {
+			vmx_dump_vmcs_field(VMCS_VIRTUALIZATION_EXC_ADDRESS,
+			    "#VE Addr");
+			DPRINTF("\n");
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_XSAVES_XRSTORS, 1)) {
+			vmx_dump_vmcs_field(VMCS_XSS_EXITING_BITMAP,
+			    "XSS exiting bitmap addr");
+			DPRINTF("\n");
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_ENCLS_EXITING, 1)) {
+			vmx_dump_vmcs_field(VMCS_ENCLS_EXITING_BITMAP,
+			    "Encls exiting bitmap addr");
+			DPRINTF("\n");
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_TSC_SCALING, 1)) {
+			vmx_dump_vmcs_field(VMCS_TSC_MULTIPLIER,
+			    "TSC scaling factor");
+			DPRINTF("\n");
+		}
+
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_EPT, 1)) {
+			vmx_dump_vmcs_field(VMCS_GUEST_PHYSICAL_ADDRESS,
+			    "Guest PA");
+			DPRINTF("\n");
+		}
+	}
+
+	vmx_dump_vmcs_field(VMCS_LINK_POINTER, "VMCS Link Pointer");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_DEBUGCTL, "Guest DEBUGCTL");
+	DPRINTF("\n");
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_ENTRY_CTLS,
+	    IA32_VMX_LOAD_IA32_PAT_ON_ENTRY, 1) ||
+	    vcpu_vmx_check_cap(vcpu, IA32_VMX_EXIT_CTLS,
+	    IA32_VMX_SAVE_IA32_PAT_ON_EXIT, 1)) {
+		vmx_dump_vmcs_field(VMCS_GUEST_IA32_PAT,
+		    "Guest PAT");
+		DPRINTF("\n");
+	}
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_ENTRY_CTLS,
+	    IA32_VMX_LOAD_IA32_EFER_ON_ENTRY, 1) ||
+	    vcpu_vmx_check_cap(vcpu, IA32_VMX_EXIT_CTLS,
+	    IA32_VMX_SAVE_IA32_EFER_ON_EXIT, 1)) {
+		vmx_dump_vmcs_field(VMCS_GUEST_IA32_EFER,
+		    "Guest EFER");
+		DPRINTF("\n");
+	}
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_ENTRY_CTLS,
+	    IA32_VMX_LOAD_IA32_PERF_GLOBAL_CTRL_ON_ENTRY, 1)) {
+		vmx_dump_vmcs_field(VMCS_GUEST_IA32_PERF_GBL_CTRL,
+		    "Guest Perf Global Ctrl");
+		DPRINTF("\n");
+	}
+
+	if (has_sec) {
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_ENABLE_EPT, 1)) {
+			vmx_dump_vmcs_field(VMCS_GUEST_PDPTE0, "Guest PDPTE0");
+			DPRINTF("\n");
+			vmx_dump_vmcs_field(VMCS_GUEST_PDPTE1, "Guest PDPTE1");
+			DPRINTF("\n");
+			vmx_dump_vmcs_field(VMCS_GUEST_PDPTE2, "Guest PDPTE2");
+			DPRINTF("\n");
+			vmx_dump_vmcs_field(VMCS_GUEST_PDPTE3, "Guest PDPTE3");
+			DPRINTF("\n");
+		}
+	}
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_ENTRY_CTLS,
+	    IA32_VMX_LOAD_IA32_BNDCFGS_ON_ENTRY, 1) ||
+	    vcpu_vmx_check_cap(vcpu, IA32_VMX_EXIT_CTLS,
+	    IA32_VMX_CLEAR_IA32_BNDCFGS_ON_EXIT, 1)) {
+		vmx_dump_vmcs_field(VMCS_GUEST_IA32_BNDCFGS,
+		    "Guest BNDCFGS");
+		DPRINTF("\n");
+	}
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_EXIT_CTLS,
+	    IA32_VMX_LOAD_IA32_PAT_ON_EXIT, 1)) {
+		vmx_dump_vmcs_field(VMCS_HOST_IA32_PAT,
+		    "Host PAT");
+		DPRINTF("\n");
+	}
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_EXIT_CTLS,
+	    IA32_VMX_LOAD_IA32_EFER_ON_EXIT, 1)) {
+		vmx_dump_vmcs_field(VMCS_HOST_IA32_EFER,
+		    "Host EFER");
+		DPRINTF("\n");
+	}
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_EXIT_CTLS,
+	    IA32_VMX_LOAD_IA32_PERF_GLOBAL_CTRL_ON_EXIT, 1)) {
+		vmx_dump_vmcs_field(VMCS_HOST_IA32_PERF_GBL_CTRL,
+		    "Host Perf Global Ctrl");
+		DPRINTF("\n");
+	}
+
+	vmx_dump_vmcs_field(VMCS_PINBASED_CTLS, "Pinbased Ctrls");
+	vmx_dump_vmcs_field(VMCS_PROCBASED_CTLS, "Procbased Ctrls");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_EXCEPTION_BITMAP, "Exception Bitmap");
+	vmx_dump_vmcs_field(VMCS_PF_ERROR_CODE_MASK, "#PF Err Code Mask");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_PF_ERROR_CODE_MATCH, "#PF Err Code Match");
+	vmx_dump_vmcs_field(VMCS_CR3_TARGET_COUNT, "CR3 Tgt Count");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_EXIT_CTLS, "Exit Ctrls");
+	vmx_dump_vmcs_field(VMCS_EXIT_MSR_STORE_COUNT, "Exit MSR Store Ct");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_EXIT_MSR_LOAD_COUNT, "Exit MSR Load Ct");
+	vmx_dump_vmcs_field(VMCS_ENTRY_CTLS, "Entry Ctrls");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_ENTRY_MSR_LOAD_COUNT, "Entry MSR Load Ct");
+	vmx_dump_vmcs_field(VMCS_ENTRY_INTERRUPTION_INFO, "Entry Int. Info");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_ENTRY_EXCEPTION_ERROR_CODE,
+	    "Entry Ex. Err Code");
+	vmx_dump_vmcs_field(VMCS_ENTRY_INSTRUCTION_LENGTH, "Entry Insn Len");
+	DPRINTF("\n");
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
+	    IA32_VMX_USE_TPR_SHADOW, 1)) {
+		vmx_dump_vmcs_field(VMCS_TPR_THRESHOLD, "TPR Threshold");
+		DPRINTF("\n");
+	}
+
+	if (has_sec) {
+		vmx_dump_vmcs_field(VMCS_PROCBASED2_CTLS, "2ndary Ctrls");
+		DPRINTF("\n");
+		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
+		    IA32_VMX_PAUSE_LOOP_EXITING, 1)) {
+			vmx_dump_vmcs_field(VMCS_PLE_GAP, "PLE Gap");
+			vmx_dump_vmcs_field(VMCS_PLE_WINDOW, "PLE Window");
+		}
+		DPRINTF("\n");
+	}
+
+	vmx_dump_vmcs_field(VMCS_INSTRUCTION_ERROR, "Insn Error");
+	vmx_dump_vmcs_field(VMCS_EXIT_REASON, "Exit Reason");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_EXIT_INTERRUPTION_INFO, "Exit Int. Info");
+	vmx_dump_vmcs_field(VMCS_EXIT_INTERRUPTION_ERR_CODE,
+	    "Exit Int. Err Code");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_IDT_VECTORING_INFO, "IDT vect info");
+	vmx_dump_vmcs_field(VMCS_IDT_VECTORING_ERROR_CODE,
+	    "IDT vect err code");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_INSTRUCTION_LENGTH, "Insn Len");
+	vmx_dump_vmcs_field(VMCS_EXIT_INSTRUCTION_INFO, "Exit Insn Info");
+	DPRINTF("\n");
+	
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_ES_LIMIT, "G. ES Lim");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_CS_LIMIT, "G. CS Lim");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_SS_LIMIT, "G. SS Lim");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_DS_LIMIT, "G. DS Lim");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_FS_LIMIT, "G. FS Lim");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_GS_LIMIT, "G. GS Lim");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_LDTR_LIMIT, "G. LDTR Lim");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_TR_LIMIT, "G. TR Lim");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_GDTR_LIMIT, "G. GDTR Lim");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_IDTR_LIMIT, "G. IDTR Lim");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_ES_AR, "G. ES AR");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_CS_AR, "G. CS AR");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_SS_AR, "G. SS AR");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_DS_AR, "G. DS AR");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_FS_AR, "G. FS AR");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_GS_AR, "G. GS AR");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_LDTR_AR, "G. LDTR AR");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_TR_AR, "G. TR AR");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_INTERRUPTIBILITY_ST, "G. Int St.");
+	vmx_dump_vmcs_field(VMCS_GUEST_ACTIVITY_STATE, "G. Act St.");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_GUEST_SMBASE, "G. SMBASE");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_SYSENTER_CS, "G. SYSENTER CS");
+	DPRINTF("\n");
+
+	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PINBASED_CTLS,
+	    IA32_VMX_ACTIVATE_VMX_PREEMPTION_TIMER, 1)) {
+		vmx_dump_vmcs_field(VMCS_VMX_PREEMPTION_TIMER_VAL,
+		    "VMX Preempt Timer");
+		DPRINTF("\n");
+	}
+
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_SYSENTER_CS, "H. SYSENTER CS");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_CR0_MASK, "CR0 Mask");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_CR4_MASK, "CR4 Mask");
+	DPRINTF("\n");
+
+	vmx_dump_vmcs_field(VMCS_CR0_READ_SHADOW, "CR0 RD Shadow");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_CR4_READ_SHADOW, "CR4 RD Shadow");
+	DPRINTF("\n");
+
+	/* We assume all CPUs have the same max CR3 target ct */
+	cr3_tgt_ct = curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr3_tgt_count;
+	DPRINTF("Max CR3 target count: 0x%x\n", cr3_tgt_ct);
+	if (cr3_tgt_ct <= VMX_MAX_CR3_TARGETS) {
+		for (i = 0 ; i < cr3_tgt_ct; i++) {
+			vmx_dump_vmcs_field(VMCS_CR3_TARGET_0 + (2 * i),
+			    "CR3 Target");
+			DPRINTF("\n");
+		}
+	} else {
+		DPRINTF("(Bogus CR3 Target Count > %d", VMX_MAX_CR3_TARGETS);
+	}
+
+	vmx_dump_vmcs_field(VMCS_GUEST_EXIT_QUALIFICATION, "G. Exit Qual");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_IO_RCX, "I/O RCX");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_IO_RSI, "I/O RSI");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_IO_RDI, "I/O RDI");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_IO_RIP, "I/O RIP");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_LINEAR_ADDRESS, "G. Lin Addr");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_CR0, "G. CR0");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_CR3, "G. CR3");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_CR4, "G. CR4");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_ES_BASE, "G. ES Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_CS_BASE, "G. CS Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_SS_BASE, "G. SS Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_DS_BASE, "G. DS Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_FS_BASE, "G. FS Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_GS_BASE, "G. GS Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_LDTR_BASE, "G. LDTR Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_TR_BASE, "G. TR Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_GDTR_BASE, "G. GDTR Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_IDTR_BASE, "G. IDTR Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_DR7, "G. DR7");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_RSP, "G. RSP");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_RIP, "G. RIP");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_RFLAGS, "G. RFLAGS");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_PENDING_DBG_EXC, "G. Pend Dbg Exc");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_SYSENTER_ESP, "G. SYSENTER ESP");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_GUEST_IA32_SYSENTER_EIP, "G. SYSENTER EIP");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_CR0, "H. CR0");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_CR3, "H. CR3");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_CR4, "H. CR4");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_FS_BASE, "H. FS Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_GS_BASE, "H. GS Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_TR_BASE, "H. TR Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_GDTR_BASE, "H. GDTR Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_IDTR_BASE, "H. IDTR Base");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_SYSENTER_ESP, "H. SYSENTER ESP");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_SYSENTER_EIP, "H. SYSENTER EIP");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_RSP, "H. RSP");
+	DPRINTF("\n");
+	vmx_dump_vmcs_field(VMCS_HOST_IA32_RIP, "H. RIP");
+	DPRINTF("\n");
 }
 
 /*
