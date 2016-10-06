@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.15 2016/05/10 11:00:54 mlarkin Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.16 2016/10/06 16:53:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -64,6 +64,7 @@ int
 start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
     char *kernel)
 {
+	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
 	int i;
 
@@ -80,11 +81,12 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 	if (nnics == 0)
 		warnx("starting without network interfaces");
 
-	vcp = malloc(sizeof(struct vm_create_params));
-	if (vcp == NULL)
+	vmc = calloc(1, sizeof(struct vmop_create_params));
+	if (vmc == NULL)
 		return (ENOMEM);
 
-	bzero(vcp, sizeof(struct vm_create_params));
+	/* vcp includes configuration that is shared with the kernel */
+	vcp = &vmc->vmc_params;
 
 	/*
 	 * XXX: vmd(8) fills in the actual memory ranges. vmctl(8)
@@ -105,7 +107,7 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 	vcp->vcp_nnics = nnics;
 
 	imsg_compose(ibuf, IMSG_VMDOP_START_VM_REQUEST, 0, 0, -1,
-	    vcp, sizeof(struct vm_create_params));
+	    vmc, sizeof(struct vmop_create_params));
 
 	free(vcp);
 	return (0);
