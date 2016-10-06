@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.127 2016/10/05 18:00:41 natano Exp $
+#	$OpenBSD: Makefile,v 1.128 2016/10/06 16:22:43 tb Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -50,7 +50,9 @@ regression-tests:
 	@cd ${.CURDIR}/regress && ${MAKE} depend && exec ${MAKE} regress
 
 includes:
-	cd ${.CURDIR}/include && ${MAKE} prereq && exec ${MAKE} includes
+	cd ${.CURDIR}/include && \
+		su ${BUILDUSER} -c 'exec ${MAKE} prereq' && \
+		exec ${MAKE} includes
 
 beforeinstall:
 	cd ${.CURDIR}/etc && exec ${MAKE} DESTDIR=${DESTDIR} distrib-dirs
@@ -77,10 +79,8 @@ build:
 		false; \
 	fi
 	cd ${.CURDIR}/share/mk && exec ${MAKE} install
-	cd ${.CURDIR}/include && \
-	    su ${BUILDUSER} -c 'exec ${MAKE} prereq' && \
-	    exec ${MAKE} includes
-	${MAKE} cleandir
+	exec ${MAKE} includes
+	exec ${MAKE} cleandir
 	cd ${.CURDIR}/lib && \
 	    su ${BUILDUSER} -c '${MAKE} depend && exec ${MAKE}' && \
 	    NOMAN=1 exec ${MAKE} install
