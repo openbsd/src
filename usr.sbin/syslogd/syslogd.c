@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.217 2016/10/06 11:24:04 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.218 2016/10/06 13:03:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -208,6 +208,7 @@ int	Initialized = 0;	/* set when we have initialized ourselves */
 
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
+int	PrivChild = 0;		/* Exec the privileged parent process */
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 int	NoDNS = 0;		/* when true, will refrain from doing DNS lookups */
 int	ZuluTime = 0;		/* display date and time in UTC ISO format */
@@ -359,7 +360,7 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
-	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hK:k:m:np:S:s:T:U:uVZ"))
+	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hK:k:m:nP:p:S:s:T:U:uVZ"))
 	    != -1)
 		switch (ch) {
 		case '4':		/* disable IPv6 */
@@ -406,6 +407,11 @@ main(int argc, char *argv[])
 		case 'n':		/* don't do DNS lookups */
 			NoDNS = 1;
 			break;
+		case 'P':		/* used internally, exec the parent */
+			PrivChild = strtonum(optarg, 2, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "priv child %s: %s", errstr, optarg);
+			break;
 		case 'p':		/* path */
 			path_unix[0] = optarg;
 			break;
@@ -445,7 +451,7 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
-	if ((argc -= optind) != 0)
+	if (argc != optind)
 		usage();
 
 	if (Debug)
@@ -462,6 +468,9 @@ main(int argc, char *argv[])
 				die(0);
 			}
 	}
+
+	if (PrivChild > 1)
+		priv_exec(ConfFile, NoDNS, PrivChild, argc, argv);
 
 	consfile.f_type = F_CONSOLE;
 	(void)strlcpy(consfile.f_un.f_fname, ctty,
@@ -695,8 +704,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Privilege separation begins here */
-	if (priv_init(ConfFile, NoDNS, lockpipe[1], nullfd, argv) < 0)
-		errx(1, "unable to privsep");
+	priv_init(lockpipe[1], nullfd, argc, argv);
 
 	if (pledge("stdio unix inet recvfd", NULL) == -1)
 		err(1, "pledge");
