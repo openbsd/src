@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.6 2016/10/05 17:30:13 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.7 2016/10/06 10:59:14 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 5 2016 $
+.Dd $Mdocdate: October 6 2016 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -120,7 +120,7 @@ can be either
 .Sq tap
 to select the next available
 .Xr tap 4
-interface on the VM host side, this is the default, or
+interface on the VM host side (the default) or
 .Ar tapN
 to select a specific one.
 Valid options are:
@@ -141,7 +141,6 @@ See the
 .Sx SWITCH CONFIGURATION
 section about virtual switches.
 This option is ignored if a switch with a matching name cannot be found.
-.Sx
 .It Cm up
 Start the interface forwarding packets.
 This is the default.
@@ -208,7 +207,7 @@ network interface of this switch.
 If not specified,
 .Ar bridge0
 will be used where the interface unit will be incremented for each switch,
-eg.
+e.g.\&
 .Ar bridge0 , bridge1 , ...
 If the type is changed to
 .Ar switch0 ,
@@ -222,7 +221,7 @@ Stop the switch from forwarding packets.
 .Sh EXAMPLES
 Create a new VM with 512MB memory, 1 network interface connected to
 .Dq uplink ,
-one disk image 
+one disk image
 .Sq disk.img
 and boot from kernel
 .Sq /bsd :
