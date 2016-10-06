@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.87 2016/10/06 11:43:30 schwarze Exp $
+.\"	$OpenBSD: mount.8,v 1.88 2016/10/06 21:00:00 natano Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -204,6 +204,8 @@ directories in the mounted file system.
 This allows unprivileged users to construct a file hierarchy containing
 special device nodes and files with arbitrary file mode, owner or group
 without restriction.
+Only the owner, group and mode of the root directory of the filesystem
+will be honored so access to the filesystem can be locked down.
 The noperm option also enables the nodev and noexec options to ensure
 that interpretation of the file modes and special devices cannot be
 used to gain privileges.
