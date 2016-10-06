@@ -13,7 +13,7 @@ use Sys::Hostname;
 (my $host = hostname()) =~ s/\..*//;
 
 # 2016-09-28T15:38:09Z
-my $iso = qr/20\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ/;
+my $iso = qr/20\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ/;
 my $bsd = qr/\w\w\w [ \d]\d \d\d:\d\d:\d\d/;
 
 our %args = (
