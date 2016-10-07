@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.11 2014/03/27 22:16:03 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.12 2016/10/07 04:08:30 visa Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -62,6 +62,8 @@
 #if NWSDISPLAY > 0
 #include <dev/wscons/wsdisplayvar.h>
 #endif
+#include "radeonfb.h"
+extern int radeonfb_cnattach(bus_space_tag_t, bus_space_tag_t, pcitag_t, pcireg_t);
 #include "sisfb.h"
 extern int sisfb_cnattach(bus_space_tag_t, bus_space_tag_t, pcitag_t, pcireg_t);
 #include "smfb.h"
@@ -85,12 +87,14 @@ extern int smfb_cnattach(bus_space_tag_t, bus_space_tag_t, pcitag_t, pcireg_t);
 
 cons_decl(ws);
 
+#include <machine/pmon.h>
+
 void
 wscnprobe(struct consdev *cp)
 {
 	pcitag_t tag;
 	pcireg_t id, class;
-	int maj, dev;
+	int maj, dev, bus, maxbus;
 
 	cp->cn_pri = CN_DEAD;
 
@@ -106,24 +110,37 @@ wscnprobe(struct consdev *cp)
 	}
 
 	/*
+	 * Loongson 3A systems have their video board on the second bus.
+	 *
+	 * XXX We might need a pci_maxdevs_early() routine if more systems
+	 * XXX end up needing more than one bus to be walked.
+	 */
+	if (loongson_ver >= 0x3a)
+		maxbus = 2;
+	else
+		maxbus = 1;
+
+	/*
 	 * Look for a suitable video device.
 	 */
 
-	for (dev = 0; dev < 32; dev++) {
-		tag = pci_make_tag_early(0, dev, 0);
-		id = pci_conf_read_early(tag, PCI_ID_REG);
-		if (id == 0 || PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-			continue;
+	for (bus = 0; bus < maxbus; bus++) {
+		for (dev = 0; dev < 32; dev++) {
+			tag = pci_make_tag_early(bus, dev, 0);
+			id = pci_conf_read_early(tag, PCI_ID_REG);
+			if (id == 0 || PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+				continue;
 
-		class = pci_conf_read_early(tag, PCI_CLASS_REG);
-		if (!DEVICE_IS_VGA_PCI(class) &&
-		    !(PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
-		      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_MISC))
-			continue;
+			class = pci_conf_read_early(tag, PCI_CLASS_REG);
+			if (!DEVICE_IS_VGA_PCI(class) &&
+			    !(PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
+			      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_MISC))
+				continue;
 
-		cp->cn_dev = makedev(maj, 0);
-		cp->cn_pri = CN_MIDPRI;
-		break;
+			cp->cn_dev = makedev(maj, 0);
+			cp->cn_pri = CN_MIDPRI;
+			return;
+		}
 	}
 }
 
@@ -133,7 +150,7 @@ wscninit(struct consdev *cp)
 static	int initted;
 	pcitag_t tag;
 	pcireg_t id, class;
-	int dev, rc;
+	int dev, bus, maxbus, rc;
 	extern struct consdev pmoncons;
 
 	if (initted)
@@ -144,49 +161,70 @@ static	int initted;
 	cn_tab = &pmoncons;	/* to be able to panic */
 
 	/*
+	 * Loongson 3A systems have their video board on the second bus.
+	 *
+	 * XXX We might need a pci_maxdevs_early() routine if more systems
+	 * XXX end up needing more than one bus to be walked.
+	 */
+	if (loongson_ver >= 0x3a)
+		maxbus = 2;
+	else
+		maxbus = 1;
+
+	/*
 	 * Look for a suitable video device.
 	 */
 
-	for (dev = 0; dev < 32; dev++) {
-		tag = pci_make_tag_early(0, dev, 0);
-		id = pci_conf_read_early(tag, PCI_ID_REG);
-		if (id == 0 || PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-			continue;
+	for (bus = 0; bus < maxbus; bus++) {
+		for (dev = 0; dev < 32; dev++) {
+			tag = pci_make_tag_early(bus, dev, 0);
+			id = pci_conf_read_early(tag, PCI_ID_REG);
+			if (id == 0 || PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+				continue;
 
-		class = pci_conf_read_early(tag, PCI_CLASS_REG);
-		if (!DEVICE_IS_VGA_PCI(class) &&
-		    !(PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
-		      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_MISC))
-			continue;
+			class = pci_conf_read_early(tag, PCI_CLASS_REG);
+			if (!DEVICE_IS_VGA_PCI(class) &&
+			    !(PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
+			      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_MISC))
+				continue;
 
-		/*
-		 * Try to configure this device as glass console.
-		 */
+			/*
+			 * Try to configure this device as glass console.
+			 */
 
-		rc = ENXIO;
+			rc = ENXIO;
 
-		/* bitmapped frame buffer won't be of PREHISTORIC class */
-		if (PCI_CLASS(class) == PCI_CLASS_DISPLAY) {
+			/*
+			 * Bitmapped frame buffer won't be of PREHISTORIC
+			 * class.
+			 */
+			if (PCI_CLASS(class) == PCI_CLASS_DISPLAY) {
+#if NRADEONFB > 0
+				if (rc != 0)
+					rc = radeonfb_cnattach(early_mem_t,
+					    early_io_t, tag, id);
+#endif
 #if NSISFB > 0
-			if (rc != 0 && early_io_t != NULL)
-				rc = sisfb_cnattach(early_mem_t,
-				    early_io_t, tag, id);
+				if (rc != 0 && early_io_t != NULL)
+					rc = sisfb_cnattach(early_mem_t,
+					    early_io_t, tag, id);
 #endif
 #if NSMFB > 0
-			if (rc != 0 && early_io_t != NULL)
-				rc = smfb_cnattach(early_mem_t,
-				    early_io_t, tag, id);
+				if (rc != 0 && early_io_t != NULL)
+					rc = smfb_cnattach(early_mem_t,
+					    early_io_t, tag, id);
 #endif
 			}
 #if NVGA > 0
-		if (rc != 0 && early_io_t != NULL) {
-			/* thanks $DEITY the pci_chipset_tag_t arg is ignored */
-			rc = vga_pci_cnattach(early_io_t,
-			    early_mem_t, NULL, 0, dev, 0);
-		}
+			if (rc != 0 && early_io_t != NULL) {
+				/* thanks $DEITY the pci_chipset_tag_t arg is ignored */
+				rc = vga_pci_cnattach(early_io_t,
+				    early_mem_t, NULL, 0, dev, 0);
+			}
 #endif
-		if (rc == 0)
-			goto setup_kbd;
+			if (rc == 0)
+				goto setup_kbd;
+		}
 	}
 
 	cn_tab = cp;
