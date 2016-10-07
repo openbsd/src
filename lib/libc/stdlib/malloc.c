@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.198 2016/10/07 05:54:35 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.199 2016/10/07 05:55:37 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -63,7 +63,7 @@
 #define MALLOC_DELAYED_CHUNK_MASK	15
 #define MALLOC_INITIAL_REGIONS	512
 #define MALLOC_DEFAULT_CACHE	64
-#define	MALLOC_CHUNK_LISTS	4
+#define MALLOC_CHUNK_LISTS	4
 #define CHUNK_CHECK_LENGTH	32
 
 /*
