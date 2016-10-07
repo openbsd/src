@@ -2008,6 +2008,7 @@
 ./usr/share/man/man5/spamd.conf.5
 ./usr/share/man/man5/ssh_config.5
 ./usr/share/man/man5/sshd_config.5
+./usr/share/man/man5/switchd.conf.5
 ./usr/share/man/man5/sysctl.conf.5
 ./usr/share/man/man5/syslog.conf.5
 ./usr/share/man/man5/table.5
@@ -2344,6 +2345,8 @@
 ./usr/share/man/man8/starttls.8
 ./usr/share/man/man8/sticky.8
 ./usr/share/man/man8/swapctl.8
+./usr/share/man/man8/switchctl.8
+./usr/share/man/man8/switchd.8
 ./usr/share/man/man8/sync.8
 ./usr/share/man/man8/sysctl.8
 ./usr/share/man/man8/syslogc.8

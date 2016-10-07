@@ -194,6 +194,7 @@
 ./etc/rc.d/spamlogd
 ./etc/rc.d/sshd
 ./etc/rc.d/statd
+./etc/rc.d/switchd
 ./etc/rc.d/syslogd
 ./etc/rc.d/tftpd
 ./etc/rc.d/tftpproxy
@@ -2423,6 +2424,8 @@
 ./usr/sbin/snmpd
 ./usr/sbin/spamdb
 ./usr/sbin/sshd
+./usr/sbin/switchctl
+./usr/sbin/switchd
 ./usr/sbin/sysctl
 ./usr/sbin/syslogc
 ./usr/sbin/syslogd
