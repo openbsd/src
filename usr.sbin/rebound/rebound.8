@@ -1,4 +1,4 @@
-.\" $OpenBSD: rebound.8,v 1.4 2015/12/04 04:50:43 gsoares Exp $
+.\" $OpenBSD: rebound.8,v 1.5 2016/10/07 19:07:36 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: December 4 2015 $
+.Dd $Mdocdate: October 7 2016 $
 .Dt REBOUND 8
 .Os
 .Sh NAME
@@ -29,13 +29,18 @@ The
 daemon proxies DNS requests.
 It listens on localhost and forwards queries to another server.
 .Pp
+When
+.Nm
+starts, it sets the
+.Dv kern.dnsjacking
+.Xr sysctl 3
+which enables it to intercept all DNS traffic.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c Ar config
 Specify an alternative configuration file, instead of the default
-.Pa /etc/rebound.conf .
-At present, the config file consists of a single line containing the next
-hop DNS server.
+.Pa /etc/resolv.conf .
 .Nm
 will reload the configuration file when sent a SIGHUP signal.
 .It Fl d
@@ -46,8 +51,8 @@ does not
 into the background.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/rebound.confXX" -compact
-.It Pa /etc/rebound.conf
+.Bl -tag -width "/etc/resolv.confXX" -compact
+.It Pa /etc/resolv.conf
 Default
 .Nm
 configuration file.

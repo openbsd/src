@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.70 2016/09/01 10:57:24 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.71 2016/10/07 19:07:36 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <sys/sysctl.h>
 
 #include <signal.h>
 #include <syslog.h>
@@ -33,10 +34,12 @@
 #include <string.h>
 #include <err.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <errno.h>
 #include <getopt.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #define MINIMUM(a,b) (((a)<(b))?(a):(b))
 
@@ -455,34 +458,51 @@ fail:
 }
 
 static int
-readconfig(FILE *conf, union sockun *remoteaddr)
+readconfig(int conffd, union sockun *remoteaddr)
 {
+	const char ns[] = "nameserver";
 	char buf[1024];
+	char *p;
 	struct sockaddr_in *sin = &remoteaddr->i;
 	struct sockaddr_in6 *sin6 = &remoteaddr->i6;
+	FILE *conf;
+	int rv = -1;
 
-	if (fgets(buf, sizeof(buf), conf) == NULL)
-		return -1;
-	buf[strcspn(buf, "\n")] = '\0';
+	conf = fdopen(conffd, "r");
 
-	memset(remoteaddr, 0, sizeof(*remoteaddr));
-	if (inet_pton(AF_INET, buf, &sin->sin_addr) == 1) {
-		sin->sin_len = sizeof(*sin);
-		sin->sin_family = AF_INET;
-		sin->sin_port = htons(53);
-		return AF_INET;
-	} else if (inet_pton(AF_INET6, buf, &sin6->sin6_addr) == 1) {
-		sin6->sin6_len = sizeof(*sin6);
-		sin6->sin6_family = AF_INET6;
-		sin6->sin6_port = htons(53);
-		return AF_INET6;
-	} else {
-		return -1;
+	while (fgets(buf, sizeof(buf), conf) != NULL) {
+		buf[strcspn(buf, "\n")] = '\0';
+
+		if (strncmp(buf, ns, strlen(ns)) != 0)
+			continue;
+		p = buf + strlen(ns) + 1;
+		while (isspace((unsigned char)*p))
+			p++;
+
+		/* this will not end well */
+		if (strcmp(p, "127.0.0.1") == 0)
+			continue;
+
+		memset(remoteaddr, 0, sizeof(*remoteaddr));
+		if (inet_pton(AF_INET, p, &sin->sin_addr) == 1) {
+			sin->sin_len = sizeof(*sin);
+			sin->sin_family = AF_INET;
+			sin->sin_port = htons(53);
+			rv = AF_INET;
+		} else if (inet_pton(AF_INET6, p, &sin6->sin6_addr) == 1) {
+			sin6->sin6_len = sizeof(*sin6);
+			sin6->sin6_family = AF_INET6;
+			sin6->sin6_port = htons(53);
+			rv = AF_INET6;
+		}
+		break;
 	}
+	fclose(conf);
+	return rv;
 }
 
 static int
-launch(FILE *conf, int ud, int ld, int kq)
+launch(int conffd, int ud, int ld)
 {
 	union sockun remoteaddr;
 	struct kevent ch[2], kev[4];
@@ -490,16 +510,13 @@ launch(FILE *conf, int ud, int ld, int kq)
 	struct request *req;
 	struct dnscache *ent;
 	struct passwd *pwd;
-	int i, r, af;
+	int i, r, af, kq;
 	pid_t parent, child;
 
 	parent = getpid();
 	if (!debug) {
-		if ((child = fork())) {
-			fclose(conf);
+		if ((child = fork()))
 			return child;
-		}
-		close(kq);
 	}
 
 	kq = kqueue();
@@ -526,8 +543,7 @@ launch(FILE *conf, int ud, int ld, int kq)
 	if (pledge("stdio inet", NULL) == -1)
 		logerr("pledge failed");
 
-	af = readconfig(conf, &remoteaddr);
-	fclose(conf);
+	af = readconfig(conffd, &remoteaddr);
 	if (af == -1)
 		logerr("parse error in config file");
 
@@ -647,6 +663,23 @@ launch(FILE *conf, int ud, int ld, int kq)
 	exit(1);
 }
 
+static int
+openconfig(const char *confname, int kq)
+{
+	struct kevent kev;
+	int conffd;
+
+	conffd = open(confname, O_RDONLY);
+	if (conffd == -1)
+		logerr("failed to open config %s", confname);
+	if (kq != -1) {
+		EV_SET(&kev, conffd, EVFILT_VNODE, EV_ADD,
+		    NOTE_DELETE | NOTE_ATTRIB, 0, NULL);
+		kevent(kq, &kev, 1, NULL, 0, NULL);
+	}
+	return conffd;
+}
+
 static void __dead
 usage(void)
 {
@@ -657,16 +690,16 @@ usage(void)
 int
 main(int argc, char **argv)
 {
+	int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
+	int jackport = 54;
 	union sockun bindaddr;
-	int r, kq, ld, ud, ch;
-	int one;
-	int childdead, hupped;
+	int r, kq, ld, ud, ch, conffd;
+	int one = 1;
 	pid_t child;
 	struct kevent kev;
 	struct rlimit rlim;
 	struct timespec ts, *timeout = NULL;
-	const char *confname = "/etc/rebound.conf";
-	FILE *conf;
+	const char *confname = "/etc/resolv.conf";
 
 	while ((ch = getopt(argc, argv, "c:d")) != -1) {
 		switch (ch) {
@@ -708,7 +741,7 @@ main(int argc, char **argv)
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.i.sin_len = sizeof(bindaddr.i);
 	bindaddr.i.sin_family = AF_INET;
-	bindaddr.i.sin_port = htons(53);
+	bindaddr.i.sin_port = htons(jackport);
 	inet_aton("127.0.0.1", &bindaddr.i.sin_addr);
 
 	ud = socket(AF_INET, SOCK_DGRAM, 0);
@@ -720,23 +753,21 @@ main(int argc, char **argv)
 	ld = socket(AF_INET, SOCK_STREAM, 0);
 	if (ld == -1)
 		logerr("socket: %s", strerror(errno));
-	one = 1;
 	setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 	if (bind(ld, &bindaddr.a, bindaddr.a.sa_len) == -1)
 		logerr("bind: %s", strerror(errno));
 	if (listen(ld, 10) == -1)
 		logerr("listen: %s", strerror(errno));
 
-	conf = fopen(confname, "r");
-	if (!conf)
-		logerr("failed to open config %s", confname);
-
+	sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
+	
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
 
-	if (debug)
-		return launch(conf, ud, ld, -1);
+	if (debug) {
+		conffd = openconfig(confname, -1);
+		return launch(conffd, ud, ld);
+	}
 
 	if (daemon(0, 0) == -1)
 		logerr("daemon: %s", strerror(errno));
@@ -744,12 +775,20 @@ main(int argc, char **argv)
 
 	kq = kqueue();
 
+	/* catch these signals with kevent */
+	signal(SIGHUP, SIG_IGN);
 	EV_SET(&kev, SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	kevent(kq, &kev, 1, NULL, 0, NULL);
+	signal(SIGTERM, SIG_IGN);
+	EV_SET(&kev, SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	kevent(kq, &kev, 1, NULL, 0, NULL);
 	while (1) {
-		hupped = 0;
-		childdead = 0;
-		child = launch(conf, ud, ld, kq);
+		int hupped = 0;
+		int childdead = 0;
+	
+		conffd = openconfig(confname, kq);
+
+		child = launch(conffd, ud, ld);
 		if (child == -1)
 			logerr("failed to launch");
 
@@ -767,17 +806,28 @@ main(int argc, char **argv)
 			if (r == 0) {
 				/* timeout expired */
 				logerr("child died without HUP");
-			} else if (kev.filter == EVFILT_SIGNAL) {
+			} else if (kev.filter == EVFILT_VNODE) {
+				/* config file changed */
+				logmsg(LOG_INFO, "config changed, reloading");
+				sleep(1);
+				raise(SIGHUP);
+			} else if (kev.filter == EVFILT_SIGNAL &&
+			    kev.ident == SIGHUP) {
 				/* signaled. kill child. */
 				logmsg(LOG_INFO, "received HUP, restarting");
 				hupped = 1;
 				if (childdead)
 					break;
 				kill(child, SIGHUP);
-				conf = fopen(confname, "r");
-				if (!conf)
-					logerr("failed to open config %s",
-					    confname);
+			} else if (kev.filter == EVFILT_SIGNAL &&
+			    kev.ident == SIGTERM) {
+				/* good bye */
+				logmsg(LOG_INFO, "received TERM, quitting");
+				kill(child, SIGTERM);
+				jackport = 0;
+				sysctl(dnsjacking, 2, NULL, NULL, &jackport,
+				    sizeof(jackport));
+				exit(0);
 			} else if (kev.filter == EVFILT_PROC) {
 				/* child died. wait for our own HUP. */
 				logmsg(LOG_INFO, "observed child exit");
@@ -791,6 +841,7 @@ main(int argc, char **argv)
 				logerr("don't know what happened");
 			}
 		}
+		close(conffd);
 		wait(NULL);
 	}
 	return 1;
