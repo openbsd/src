@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.489 2016/10/06 20:20:41 reyk Exp $
+#	$OpenBSD: rc,v 1.490 2016/10/07 05:47:24 otto Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -31,7 +31,7 @@ update_limit() {
 	local _cap=$2 _val	# login.conf capability and its value
 	local _suffix
 
-	for _suffix in {,-cur,-max}; do
+	for _suffix in {,-max,-cur}; do
 		_val=$(getcap -f /etc/login.conf -s ${_cap}${_suffix} daemon 2>/dev/null)
 		[[ -n $_val ]] || continue
 		[[ $_val == infinity ]] && _val=unlimited
