@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mk.conf.5,v 1.32 2016/07/04 18:01:44 guenther Exp $
+.\"	$OpenBSD: mk.conf.5,v 1.33 2016/10/07 15:15:30 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 4 2016 $
+.Dd $Mdocdate: October 7 2016 $
 .Dt MK.CONF 5
 .Os
 .Sh NAME
@@ -161,6 +161,13 @@ or in a make configuration file to modify the behaviour of the system build
 process (default values are in brackets along with comments, if set by
 .In bsd.own.mk ) :
 .Bl -tag -width GLOBAL_AUTOCONF_CACHE
+.It Ev BUILDUSER
+De-escalate privileges to user
+.Ev BUILDUSER
+when building the base system from source
+or making release tarballs.
+Defaults to
+.Ev $USER .
 .It Ev DEBUG
 Add
 .Fl g
