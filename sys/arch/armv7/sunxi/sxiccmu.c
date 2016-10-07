@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.19 2016/09/10 23:09:03 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.20 2016/10/07 18:52:36 patrick Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -318,7 +318,7 @@ sxiccmu_attach_clock(struct sxiccmu_softc *sc, int node)
 
 /*
  * A "generic" function that simply gets the clock frequency from the
- * parent clock.  Useful for clock gating devices that don't scale the
+ * parent clock.  Useful for clock gating devices that don't scale
  * their clocks.
  */
 uint32_t
