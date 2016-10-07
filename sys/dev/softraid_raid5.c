@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.26 2016/05/31 15:19:12 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.27 2016/10/07 19:17:50 krw Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
@@ -77,7 +77,6 @@ sr_raid5_discipline_init(struct sr_discipline *sd)
 	strlcpy(sd->sd_name, "RAID 5", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
 	    SR_CAP_REBUILD | SR_CAP_REDUNDANT;
-	sd->sd_max_ccb_per_wu = 4; /* only if stripsize <= MAXPHYS */
 	sd->sd_max_wu = SR_RAID5_NOWU + 2;	/* Two for scrub/rebuild. */
 
 	/* Setup discipline specific function pointers. */
@@ -131,6 +130,8 @@ sr_raid5_init(struct sr_discipline *sd)
 		sr_error(sd->sd_sc, "invalid strip size");
 		return EINVAL;
 	}
+
+	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
 
 	return 0;
 }
