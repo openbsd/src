@@ -1,4 +1,4 @@
-.\" $OpenBSD: rebound.8,v 1.5 2016/10/07 19:07:36 tedu Exp $
+.\" $OpenBSD: rebound.8,v 1.6 2016/10/07 21:03:06 jmc Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -32,7 +32,7 @@ It listens on localhost and forwards queries to another server.
 When
 .Nm
 starts, it sets the
-.Dv kern.dnsjacking
+.Dv kern.dnsjackport
 .Xr sysctl 3
 which enables it to intercept all DNS traffic.
 .Pp
