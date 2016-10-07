@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.188 2016/10/07 15:50:12 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.189 2016/10/07 15:59:36 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -289,7 +289,6 @@ enqueue_randomness(u_int state, u_int val)
 {
 	struct rand_event *rep;
 	struct timespec	ts;
-	u_int	time;
 
 #ifdef DIAGNOSTIC
 	if (state >= RND_SRC_NUM)
@@ -300,8 +299,6 @@ enqueue_randomness(u_int state, u_int val)
 		nanotime(&ts);
 
 	val += state << 13;
-
-	time = (ts.tv_nsec >> 10) + (ts.tv_sec << 20);
 
 	mtx_enter(&entropylock);
 
