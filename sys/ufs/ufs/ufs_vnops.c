@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.132 2016/10/06 21:00:00 natano Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.133 2016/10/07 07:51:16 natano Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ ufs_access(void *v)
 	if ((mode & VWRITE) && (DIP(ip, flags) & IMMUTABLE))
 		return (EPERM);
 
-	if (vp->v_mount->mnt_flag & MNT_NOPERM &&
+	if ((vp->v_mount->mnt_flag & MNT_NOPERM) &&
 	    (vp->v_flag & VROOT) == 0)
 		return (0);
 
