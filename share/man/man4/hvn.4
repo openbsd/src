@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hvn.4,v 1.3 2016/09/15 18:27:27 mikeb Exp $
+.\"	$OpenBSD: hvn.4,v 1.4 2016/10/07 11:43:08 mikeb Exp $
 .\"
 .\" Copyright (c) 2016 Mike Belopuhov
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2016 $
+.Dd $Mdocdate: October 7 2016 $
 .Dt HVN 4
 .Os
 .Sh NAME
@@ -31,6 +31,16 @@ Service Provider (VSP) in the management operating system via the VMBus.
 .Pp
 NetVSC emulates an RNDIS 1.0 compliant device on top of a custom NVS
 protocol operating over the VMBus channel ring.
+.Pp
+Individual networking interfaces can be renamed by issuing a
+.Dq Rename-VMNetworkAdapter
+PowerShell command in the management domain.
+In order to enable sending and receiving of IEEE 802.1q (VLAN) frames,
+the virtual port needs to be put into the
+.Em Trunk
+mode with 
+.Dq Set-VMNetworkAdapterVlan
+command.
 .Sh SEE ALSO
 .Xr autoconf 4 ,
 .Xr hyperv 4 ,
