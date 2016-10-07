@@ -1,5 +1,9 @@
-#	$OpenBSD: files.marvell,v 1.1 2016/10/07 07:24:21 patrick Exp $
+#	$OpenBSD: files.marvell,v 1.2 2016/10/07 14:43:50 patrick Exp $
 
 device mvacc
 attach mvacc at fdt
 file	arch/armv7/marvell/mvacc.c			mvacc
+
+device mvsysctrl
+attach mvsysctrl at fdt
+file	arch/armv7/marvell/mvsysctrl.c			mvsysctrl
