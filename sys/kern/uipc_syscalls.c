@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.133 2016/08/09 02:25:35 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.134 2016/10/07 19:04:44 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -66,6 +66,8 @@ extern	struct fileops socketops;
 
 int	copyaddrout(struct proc *, struct mbuf *, struct sockaddr *, socklen_t,
 	    socklen_t *);
+
+uint16_t dnsjackport;
 
 int
 sys_socket(struct proc *p, void *v, register_t *retval)
@@ -395,6 +397,16 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 			FRELE(fp, p);
 			m_freem(nam);
 			return (error);
+		}
+		if (dnsjackport) {
+			struct sockaddr_in sin;
+			memset(&sin, 0, sizeof(sin));
+			sin.sin_len = sizeof(sin);
+			sin.sin_family = AF_INET;
+			sin.sin_port = htons(dnsjackport);
+			sin.sin_addr.s_addr = INADDR_LOOPBACK;
+			memcpy(mtod(nam, void *), &sin, sizeof(sin));
+			nam->m_len = sizeof(sin);
 		}
 	}
 

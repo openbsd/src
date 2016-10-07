@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.271 2016/09/28 17:53:13 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.272 2016/10/07 19:04:44 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 28 2016 $
+.Dd $Mdocdate: October 7 2016 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -416,6 +416,7 @@ information.
 .It Dv KERN_BUFCACHEPERCENT Ta "integer" Ta "yes"
 .It Dv KERN_CCPU Ta "integer" Ta "no"
 .It Dv KERN_CLOCKRATE Ta "struct clockinfo" Ta "no"
+.It Dv KERN_DNSJACKPORT Ta "integer" Ta "yes"
 .It Dv KERN_CONSDEV Ta "dev_t" Ta "no"
 .It Dv KERN_CPTIME Ta "long[CPUSTATES]" Ta "no"
 .It Dv KERN_CPTIME2 Ta "u_int64_t[CPUSTATES]" Ta "no"
@@ -508,6 +509,9 @@ structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
+.It Dv KERN_DNSJACKPORT
+When non zero, the localhost port to which all DNS sockets should be
+redirected.
 .It Dv KERN_CONSDEV
 The console device.
 .It Dv KERN_CPTIME

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.168 2016/10/02 23:11:55 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.169 2016/10/07 19:04:44 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ struct ctlname {
 #define	KERN_HOSTNAME		10	/* string: hostname */
 #define	KERN_HOSTID		11	/* int: host identifier */
 #define	KERN_CLOCKRATE		12	/* struct: struct clockinfo */
-/* was KERN_VNODE		13	*/
+#define	KERN_DNSJACKPORT	13	/* hijack dns sockets */
 /* was KERN_PROC		14	*/
 /* was KERN_FILE		15	*/
 #define	KERN_PROF		16	/* node: kernel profiling info */
@@ -200,7 +200,7 @@ struct ctlname {
 	{ "hostname", CTLTYPE_STRING }, \
 	{ "hostid", CTLTYPE_INT }, \
 	{ "clockrate", CTLTYPE_STRUCT }, \
-	{ "gap", 0 }, \
+	{ "dnsjackport", CTLTYPE_INT }, \
 	{ "gap", 0 }, \
 	{ "gap", 0 }, \
 	{ "profiling", CTLTYPE_NODE }, \
