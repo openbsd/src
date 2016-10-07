@@ -1,3 +1,4 @@
+/* $OpenBSD: mvacc.c,v 1.2 2016/10/07 07:25:58 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
