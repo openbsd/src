@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.13 2016/09/30 12:48:27 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.14 2016/10/07 08:31:08 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -67,6 +67,15 @@ struct switch_control {
 };
 RB_HEAD(switch_head, switch_control);
 
+struct multipart_message {
+	SLIST_ENTRY(multipart_message)
+				 mm_entry;
+
+	uint32_t		 mm_xid;
+	uint8_t			 mm_type;
+};
+SLIST_HEAD(multipart_list, multipart_message);
+
 struct switch_connection {
 	unsigned int		 con_id;
 	unsigned int		 con_instance;
@@ -87,6 +96,8 @@ struct switch_connection {
 	struct switch_control	*con_switch;
 	struct switchd		*con_sc;
 	struct switch_server	*con_srv;
+
+	struct multipart_list	 con_mmlist;
 
 	TAILQ_ENTRY(switch_connection)
 				 con_entry;
@@ -218,6 +229,13 @@ int		 ofp_validate_header(struct switchd *,
 		    struct sockaddr_storage *, struct sockaddr_storage *,
 		    struct ofp_header *, uint8_t);
 int		 ofp_input(struct switch_connection *, struct ibuf *);
+
+int		 ofp_multipart_add(struct switch_connection *, uint32_t,
+		    uint8_t);
+void		 ofp_multipart_del(struct switch_connection *, uint32_t);
+void		 ofp_multipart_free(struct switch_connection *,
+		    struct multipart_message *);
+void		 ofp_multipart_clear(struct switch_connection *);
 
 /* ofp10.c */
 int		 ofp10_hello(struct switchd *, struct switch_connection *,

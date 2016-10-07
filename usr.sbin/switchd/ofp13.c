@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.17 2016/09/30 12:48:27 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.18 2016/10/07 08:31:08 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -54,8 +54,6 @@ int	 ofp13_echo_request(struct switchd *, struct switch_connection *,
 int	 ofp13_validate_error(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
-int	 ofp13_error(struct switchd *, struct switch_connection *,
-	    struct ofp_header *, struct ibuf *);
 int	 ofp13_validate_oxm_basic(struct ibuf *, off_t, int, uint8_t);
 int	 ofp13_validate_oxm(struct switchd *, struct ofp_ox_match *,
 	    struct ofp_header *, struct ibuf *, off_t);
@@ -92,6 +90,8 @@ int	 ofp13_flow_stats(struct switchd *, struct switch_connection *,
 	    uint32_t, uint32_t, uint8_t);
 int	 ofp13_table_features(struct switchd *, struct switch_connection *,
 	    uint8_t);
+int	 ofp13_error(struct switchd *, struct switch_connection *,
+	    struct ofp_header *, struct ibuf *, uint16_t, uint16_t);
 
 struct ofp_group_mod *
 	    ofp13_group(struct switch_connection *, struct ibuf *,
@@ -1048,19 +1048,34 @@ ofp13_multipart_reply(struct switchd *sc, struct switch_connection *con,
 {
 	struct ofp_multipart		*mp;
 	struct ofp_table_features	*tf;
-	int				 readlen, type;
+	int				 readlen, type, flags;
 	int				 remaining;
 
 	if ((mp = ibuf_getdata(ibuf, sizeof(*mp))) == NULL)
 		return (-1);
 
-	if (mp->mp_flags & OFP_MP_FLAG_REPLY_MORE) {
-		/* TODO support multiple fragments. */
-		return (-1);
-	}
-
 	type = ntohs(mp->mp_type);
+	flags = ntohs(mp->mp_flags);
 	remaining = ntohs(oh->oh_length) - sizeof(*mp);
+
+	if (flags & OFP_MP_FLAG_REPLY_MORE) {
+		if (ofp_multipart_add(con, oh->oh_xid, type) == -1) {
+			ofp13_error(sc, con, oh, ibuf,
+			    OFP_ERRTYPE_BAD_REQUEST,
+			    OFP_ERRREQ_MULTIPART_OVERFLOW);
+			ofp_multipart_del(con, oh->oh_xid);
+			return (0);
+		}
+
+		/*
+		 * We don't need to concatenate with other messages,
+		 * because the specification says that switches don't
+		 * break objects. We should only need this if our parser
+		 * requires the whole data before hand, but then we have
+		 * better ways to achieve the same thing.
+		 */
+	} else
+		ofp_multipart_del(con, oh->oh_xid);
 
 	switch (type) {
 	case OFP_MP_T_TABLE_FEATURES:
@@ -1407,6 +1422,45 @@ ofp13_table_features(struct switchd *sc, struct switch_connection *con,
 	ofp_output(con, NULL, ibuf);
 	ibuf_release(ibuf);
 	return (0);
+}
+
+int
+ofp13_error(struct switchd *sc, struct switch_connection *con,
+    struct ofp_header *oh, struct ibuf *ibuf, uint16_t type, uint16_t code)
+{
+	struct ibuf		*obuf;
+	struct ofp_error	*err;
+	struct ofp_header	*header;
+	int			 rv, dlen;
+
+	if ((obuf = ibuf_static()) == NULL ||
+	    (err = ibuf_advance(obuf, sizeof(*err))) == NULL)
+		return (-1);
+
+	header = &err->err_oh;
+	err->err_type = htons(type);
+	err->err_code = htons(code);
+
+	/* Copy the first message bytes for the error payload. */
+	dlen = ibuf_size(ibuf);
+	if (dlen > OFP_ERRDATA_MAX)
+		dlen = OFP_ERRDATA_MAX;
+	if (ibuf_add(obuf, ibuf_seek(ibuf, 0, dlen), dlen) == -1)
+		return (-1);
+
+	header->oh_version = OFP_V_1_3;
+	header->oh_type = OFP_T_ERROR;
+	header->oh_length = htons(ibuf_length(obuf));
+	header->oh_xid = oh->oh_xid;
+	if (ofp13_validate(sc, &con->con_peer, &con->con_local, header,
+	    obuf) == -1) {
+		ibuf_release(obuf);
+		return (-1);
+	}
+
+	rv = ofp_output(con, NULL, obuf);
+	ibuf_release(obuf);
+	return (rv);
 }
 
 /*
@@ -2232,4 +2286,62 @@ oxm_ipv6exthdr(struct ibuf *ibuf, int hasmask, uint16_t exthdr, uint16_t mask)
 		memcpy(oxm->oxm_value + sizeof(exthdr), &mask, sizeof(mask));
 	}
 	return (0);
+}
+
+int
+ofp_multipart_add(struct switch_connection *con, uint32_t xid, uint8_t type)
+{
+	struct multipart_message	*mm;
+
+	/* A multipart reply have the same xid and type in all parts. */
+	SLIST_FOREACH(mm, &con->con_mmlist, mm_entry) {
+		if (mm->mm_xid != xid)
+			continue;
+		if (mm->mm_type != type)
+			return (-1);
+
+		return (0);
+	}
+
+	if ((mm = calloc(1, sizeof(*mm))) == NULL)
+		return (-1);
+
+	mm->mm_xid = xid;
+	mm->mm_type = type;
+	SLIST_INSERT_HEAD(&con->con_mmlist, mm, mm_entry);
+	return (0);
+}
+
+void
+ofp_multipart_del(struct switch_connection *con, uint32_t xid)
+{
+	struct multipart_message	*mm;
+
+	SLIST_FOREACH(mm, &con->con_mmlist, mm_entry)
+		if (mm->mm_xid == xid)
+			break;
+
+	if (mm == NULL)
+		return;
+
+	ofp_multipart_free(con, mm);
+}
+
+void
+ofp_multipart_free(struct switch_connection *con,
+    struct multipart_message *mm)
+{
+	SLIST_REMOVE(&con->con_mmlist, mm, multipart_message, mm_entry);
+	free(mm);
+}
+
+void
+ofp_multipart_clear(struct switch_connection *con)
+{
+	struct multipart_message	*mm;
+
+	while (!SLIST_EMPTY(&con->con_mmlist)) {
+		mm = SLIST_FIRST(&con->con_mmlist);
+		ofp_multipart_free(con, mm);
+	}
 }
