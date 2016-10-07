@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.48 2016/09/30 10:22:05 yasuoka Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.49 2016/10/07 06:16:03 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -579,6 +579,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 #if NBRIDGE > 0
 	struct bridge_tunneltag	*brtag;
 #endif
+	struct mbuf		*m0;
 
 	/* XXX Should verify the UDP port first before copying the packet */
 	skip = iphlen + sizeof(*uh);
@@ -657,6 +658,16 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
+	if ((m = m_pullup(m, sizeof(struct ether_header))) == NULL)
+		return (ENOBUFS);
+
+	if (!ALIGNED_POINTER(mtod(m, caddr_t) + ETHER_HDR_LEN, uint32_t)) {
+		m0 = m;
+		m = m_dup_pkt(m0, ETHER_ALIGN, M_NOWAIT);
+		m_freem(m0);
+		if (m == NULL)
+			return (ENOBUFS);
+	}
 
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
@@ -755,13 +766,20 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 #endif
 	int			 error, af;
 	uint32_t		 tag;
+	struct mbuf		*m0;
 
 	/* VXLAN header */
-	M_PREPEND(m, sizeof(*vu), M_DONTWAIT);
-	if (m == NULL) {
+	MGETHDR(m0, M_DONTWAIT, m->m_type);
+	if (m0 == NULL) {
 		ifp->if_oerrors++;
 		return (ENOBUFS);
 	}
+	M_MOVE_PKTHDR(m0, m);
+	m0->m_next = m;
+	m = m0;
+	MH_ALIGN(m, sizeof(*vu));
+	m->m_len = sizeof(*vu);
+	m->m_pkthdr.len += sizeof(*vu);
 
 	src = (struct sockaddr *)&sc->sc_src;
 	dst = (struct sockaddr *)&sc->sc_dst;
