@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.71 2016/10/07 19:07:36 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.72 2016/10/07 19:14:56 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -680,6 +680,15 @@ openconfig(const char *confname, int kq)
 	return conffd;
 }
 
+static void
+resetport(void)
+{
+	int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
+	int jackport = 0;
+
+	sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
+}
+
 static void __dead
 usage(void)
 {
@@ -759,6 +768,7 @@ main(int argc, char **argv)
 	if (listen(ld, 10) == -1)
 		logerr("listen: %s", strerror(errno));
 
+	atexit(resetport);
 	sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
 	
 	signal(SIGPIPE, SIG_IGN);
@@ -824,9 +834,6 @@ main(int argc, char **argv)
 				/* good bye */
 				logmsg(LOG_INFO, "received TERM, quitting");
 				kill(child, SIGTERM);
-				jackport = 0;
-				sysctl(dnsjacking, 2, NULL, NULL, &jackport,
-				    sizeof(jackport));
 				exit(0);
 			} else if (kev.filter == EVFILT_PROC) {
 				/* child died. wait for our own HUP. */
