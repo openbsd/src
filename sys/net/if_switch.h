@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.h,v 1.3 2016/09/28 08:31:42 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.h,v 1.4 2016/10/07 08:18:22 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -174,6 +174,7 @@ struct switch_port {
 	struct timespec			 swpo_appended;
 	struct switch_softc		*swpo_switch;
 	uint32_t			 swpo_flags;
+	void				*swpo_dhcookie;
 	void				(*swop_bk_start)(struct ifnet *);
 };
 
@@ -215,7 +216,6 @@ void	 switch_port_egress(struct switch_softc *, struct switch_fwdp_queue *,
 int	 switch_swfcl_dup(struct switch_flow_classify *,
 	    struct switch_flow_classify *);
 void	 switch_swfcl_free(struct switch_flow_classify *);
-void	 switch_port_detach(struct ifnet *);
 
 /* switchctl.c */
 void	 switch_dev_destroy(struct switch_softc *);

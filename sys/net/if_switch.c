@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.7 2016/09/29 11:37:44 reyk Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.8 2016/10/07 08:18:22 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -74,6 +74,7 @@ int	 switch_port_set_local(struct switch_softc *, struct switch_port *);
 int	 switch_port_unset_local(struct switch_softc *, struct switch_port *);
 int	 switch_ioctl(struct ifnet *, unsigned long, caddr_t);
 int	 switch_port_add(struct switch_softc *, struct ifbreq *);
+void	 switch_port_detach(void *);
 int	 switch_port_del(struct switch_softc *, struct ifbreq *);
 int	 switch_port_list(struct switch_softc *, struct ifbifconf *);
 int	 switch_output(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -215,16 +216,9 @@ switch_clone_destroy(struct ifnet *ifp)
 	struct ifnet		*ifs;
 
 	TAILQ_FOREACH_SAFE(swpo, &sc->sc_swpo_list, swpo_list_next, tp) {
-		if ((ifs = if_get(swpo->swpo_ifindex)) != NULL) {
-			if (swpo->swpo_flags & IFBIF_LOCAL)
-				switch_port_unset_local(sc, swpo);
-			ifs->if_switchport = NULL;
-			ifpromisc(ifs, 0);
-			if_ih_remove(ifs, switch_input, NULL);
-			if_put(ifs);
-			TAILQ_REMOVE(&sc->sc_swpo_list, swpo, swpo_list_next);
-			free(swpo, M_DEVBUF, sizeof(*swpo));
-		} else
+		if ((ifs = if_get(swpo->swpo_ifindex)) != NULL)
+			switch_port_detach(ifs);
+		else
 			log(LOG_ERR, "failed to cleanup on ifindex(%d)\n",
 			    swpo->swpo_ifindex);
 	}
@@ -576,6 +570,8 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 	ifs->if_switchport = (caddr_t)swpo;
 	if_ih_insert(ifs, switch_input, NULL);
 	swpo->swpo_port_no = swofp_assign_portno(sc, ifs->if_index);
+	swpo->swpo_dhcookie = hook_establish(ifs->if_detachhooks, 0,
+	    switch_port_detach, ifs);
 
 	nanouptime(&swpo->swpo_appended);
 
@@ -630,8 +626,9 @@ done:
 }
 
 void
-switch_port_detach(struct ifnet *ifp)
+switch_port_detach(void *arg)
 {
+	struct ifnet		*ifp = (struct ifnet *)arg;
 	struct switch_softc	*sc = ifp->if_softc;
 	struct switch_port	*swpo;
 
@@ -640,6 +637,7 @@ switch_port_detach(struct ifnet *ifp)
 		switch_port_unset_local(sc, swpo);
 
 	ifp->if_switchport = NULL;
+	hook_disestablish(ifp->if_detachhooks, swpo->swpo_dhcookie);
 	ifpromisc(ifp, 0);
 	if_ih_remove(ifp, switch_input, NULL);
 	TAILQ_REMOVE(&sc->sc_swpo_list, swpo, swpo_list_next);
