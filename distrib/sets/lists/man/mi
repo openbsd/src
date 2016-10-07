@@ -1176,7 +1176,6 @@
 ./usr/share/man/man4/armv7/edma.4
 ./usr/share/man/man4/armv7/fec.4
 ./usr/share/man/man4/armv7/gptimer.4
-./usr/share/man/man4/armv7/imx.4
 ./usr/share/man/man4/armv7/imxesdhc.4
 ./usr/share/man/man4/armv7/imxiic.4
 ./usr/share/man/man4/armv7/imxtemp.4
