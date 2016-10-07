@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.60 2016/10/07 14:43:50 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.61 2016/10/07 19:10:46 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -135,6 +135,7 @@ usb*		at dwctwo?
 
 # Marvell SoC
 mvacc*		at fdt? early 1
+mvagc*		at fdt?
 mvsysctrl*	at fdt?
 
 crosec*		at iic?

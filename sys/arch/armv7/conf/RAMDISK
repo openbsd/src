@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.55 2016/10/07 14:43:50 patrick Exp $
+#	$OpenBSD: RAMDISK,v 1.56 2016/10/07 19:10:46 patrick Exp $
 
 machine		armv7 arm
 
@@ -133,6 +133,7 @@ usb*		at dwctwo?
 
 # Marvell SoC
 mvacc*		at fdt? early 1
+mvagc*		at fdt?
 mvsysctrl*	at fdt?
 
 crosec*		at iic?
