@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.187 2016/09/23 02:37:24 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.188 2016/10/07 15:50:12 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -204,13 +204,6 @@ struct mutex entropylock = MUTEX_INITIALIZER(IPL_HIGH);
  * add_*_randomness() provide data which is put into the entropy queue.
  * Almost completely under the entropylock.
  */
-struct timer_rand_state {	/* There is one of these per entropy source */
-	u_int	last_time;
-	u_int	last_delta;
-	u_int	last_delta2;
-	u_int	dont_count_entropy : 1;
-	u_int	max_entropy : 1;
-} rnd_states[RND_SRC_NUM];
 
 #define QEVLEN (1024 / sizeof(struct rand_event))
 #define QEVSLOW (QEVLEN * 3 / 4) /* yet another 0.75 for 60-minutes hour /-; */
@@ -223,7 +216,6 @@ struct timer_rand_state {	/* There is one of these per entropy source */
 #define EBUFSIZE KEYSZ + IVSZ
 
 struct rand_event {
-	struct timer_rand_state *re_state;
 	u_int re_time;
 	u_int re_val;
 } rnd_event_space[QEVLEN];
@@ -295,11 +287,9 @@ rnd_qlen(void)
 void
 enqueue_randomness(u_int state, u_int val)
 {
-	int	delta, delta2, delta3;
-	struct timer_rand_state *p;
 	struct rand_event *rep;
 	struct timespec	ts;
-	u_int	time, nbits;
+	u_int	time;
 
 #ifdef DIAGNOSTIC
 	if (state >= RND_SRC_NUM)
@@ -309,72 +299,14 @@ enqueue_randomness(u_int state, u_int val)
 	if (timeout_initialized(&rnd_timeout))
 		nanotime(&ts);
 
-	p = &rnd_states[state];
 	val += state << 13;
 
 	time = (ts.tv_nsec >> 10) + (ts.tv_sec << 20);
-	nbits = 0;
-
-	/*
-	 * Calculate the number of bits of randomness that we probably
-	 * added.  We take into account the first and second order
-	 * deltas in order to make our estimate.
-	 */
-	if (!p->dont_count_entropy) {
-		delta  = time   - p->last_time;
-		delta2 = delta  - p->last_delta;
-		delta3 = delta2 - p->last_delta2;
-
-		if (delta < 0) delta = -delta;
-		if (delta2 < 0) delta2 = -delta2;
-		if (delta3 < 0) delta3 = -delta3;
-		if (delta > delta2) delta = delta2;
-		if (delta > delta3) delta = delta3;
-		delta3 = delta >>= 1;
-		/*
-		 * delta &= 0xfff;
-		 * we don't do it since our time sheet is different from linux
-		 */
-
-		if (delta & 0xffff0000) {
-			nbits = 16;
-			delta >>= 16;
-		}
-		if (delta & 0xff00) {
-			nbits += 8;
-			delta >>= 8;
-		}
-		if (delta & 0xf0) {
-			nbits += 4;
-			delta >>= 4;
-		}
-		if (delta & 0xc) {
-			nbits += 2;
-			delta >>= 2;
-		}
-		if (delta & 2) {
-			nbits += 1;
-			delta >>= 1;
-		}
-		if (delta & 1)
-			nbits++;
-	} else if (p->max_entropy)
-		nbits = 8 * sizeof(val) - 1;
-
-	/* given the multi-order delta logic above, this should never happen */
-	if (nbits >= 32)
-		return;
 
 	mtx_enter(&entropylock);
-	if (!p->dont_count_entropy) {
-		p->last_time = time;
-		p->last_delta  = delta3;
-		p->last_delta2 = delta2;
-	}
 
 	rep = rnd_put();
 
-	rep->re_state = p;
 	rep->re_time += ts.tv_nsec ^ (ts.tv_sec << 20);
 	rep->re_val += val;
 
@@ -801,10 +733,6 @@ random_start(void)
 
 	_rs_clearseed(entropy_pool0, sizeof entropy_pool0);
 	_rs_clearseed(rs_buf0, sizeof rs_buf0);
-
-	rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
-	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
-	rnd_states[RND_SRC_TRUE].max_entropy = 1;
 
 	/* Message buffer may contain data from previous boot */
 	if (msgbufp->msg_magic == MSG_MAGIC)
