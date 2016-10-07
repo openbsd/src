@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hvn.4,v 1.4 2016/10/07 11:43:08 mikeb Exp $
+.\"	$OpenBSD: hvn.4,v 1.5 2016/10/07 14:42:27 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Mike Belopuhov
 .\"
@@ -33,13 +33,13 @@ NetVSC emulates an RNDIS 1.0 compliant device on top of a custom NVS
 protocol operating over the VMBus channel ring.
 .Pp
 Individual networking interfaces can be renamed by issuing a
-.Dq Rename-VMNetworkAdapter
+.Cm Rename-VMNetworkAdapter
 PowerShell command in the management domain.
 In order to enable sending and receiving of IEEE 802.1q (VLAN) frames,
-the virtual port needs to be put into the
+the virtual port needs to be put into
 .Em Trunk
-mode with 
-.Dq Set-VMNetworkAdapterVlan
+mode with the
+.Cm Set-VMNetworkAdapterVlan
 command.
 .Sh SEE ALSO
 .Xr autoconf 4 ,
