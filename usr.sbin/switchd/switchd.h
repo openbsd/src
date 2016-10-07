@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.14 2016/10/07 08:31:08 rzalamena Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.15 2016/10/07 08:49:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -230,13 +230,6 @@ int		 ofp_validate_header(struct switchd *,
 		    struct ofp_header *, uint8_t);
 int		 ofp_input(struct switch_connection *, struct ibuf *);
 
-int		 ofp_multipart_add(struct switch_connection *, uint32_t,
-		    uint8_t);
-void		 ofp_multipart_del(struct switch_connection *, uint32_t);
-void		 ofp_multipart_free(struct switch_connection *,
-		    struct multipart_message *);
-void		 ofp_multipart_clear(struct switch_connection *);
-
 /* ofp10.c */
 int		 ofp10_hello(struct switchd *, struct switch_connection *,
 		    struct ofp_header *, struct ibuf *);
@@ -249,6 +242,58 @@ int		 ofp10_input(struct switchd *, struct switch_connection *,
 /* ofp13.c */
 int		 ofp13_input(struct switchd *, struct switch_connection *,
 		    struct ofp_header *, struct ibuf *);
+
+/* ofp_common.c */
+int		 ofp_multipart_add(struct switch_connection *, uint32_t,
+		    uint8_t);
+void		 ofp_multipart_del(struct switch_connection *, uint32_t);
+void		 ofp_multipart_free(struct switch_connection *,
+		    struct multipart_message *);
+void		 ofp_multipart_clear(struct switch_connection *);
+int		 action_new(struct ibuf *, uint16_t);
+int		 action_group(struct ibuf *, uint32_t);
+int		 action_output(struct ibuf *, uint32_t, uint16_t);
+int		 action_push(struct ibuf *, uint16_t, uint16_t);
+int		 action_pop_vlan(struct ibuf *);
+int		 action_pop_mpls(struct ibuf *, uint16_t);
+int		 action_copyttlout(struct ibuf *);
+int		 action_copyttlin(struct ibuf *);
+int		 action_decnwttl(struct ibuf *);
+struct ofp_action_set_field *
+		 action_setfield(struct ibuf *ibuf);
+struct ofp_ox_match *
+		 oxm_get(struct ibuf *, uint16_t, int, uint8_t);
+int		 oxm_inport(struct ibuf *, uint32_t);
+int		 oxm_inphyport(struct ibuf *, uint32_t);
+int		 oxm_metadata(struct ibuf *, int, uint64_t, uint64_t);
+int		 oxm_etheraddr(struct ibuf *, int, uint8_t *, uint8_t *);
+int		 oxm_ethertype(struct ibuf *, uint16_t);
+int		 oxm_vlanvid(struct ibuf *, int, uint16_t, uint16_t);
+int		 oxm_vlanpcp(struct ibuf *, uint8_t);
+int		 oxm_ipdscp(struct ibuf *, uint8_t);
+int		 oxm_ipecn(struct ibuf *, uint8_t);
+int		 oxm_ipproto(struct ibuf *, uint8_t);
+int		 oxm_ipaddr(struct ibuf *, int, int, uint32_t, uint32_t);
+int		 oxm_tcpport(struct ibuf *, int, uint16_t);
+int		 oxm_udpport(struct ibuf *, int, uint16_t);
+int		 oxm_sctpport(struct ibuf *, int, uint16_t);
+int		 oxm_icmpv4type(struct ibuf *, uint8_t);
+int		 oxm_icmpv4code(struct ibuf *, uint8_t);
+int		 oxm_arpop(struct ibuf *, uint16_t);
+int		 oxm_arpaddr(struct ibuf *, int, int, uint32_t, uint32_t);
+int		 oxm_arphaddr(struct ibuf *, int, uint8_t *, uint8_t *);
+int		 oxm_ipv6addr(struct ibuf *, int, struct in6_addr *,
+		    struct in6_addr *);
+int		 oxm_ipv6flowlabel(struct ibuf *, int, uint32_t, uint32_t);
+int		 oxm_icmpv6type(struct ibuf *, uint8_t);
+int		 oxm_icmpv6code(struct ibuf *, uint8_t);
+int		 oxm_ipv6ndtarget(struct ibuf *, struct in6_addr *);
+int		 oxm_ipv6ndlinkaddr(struct ibuf *, int, uint8_t *);
+int		 oxm_mplslabel(struct ibuf *, uint32_t);
+int		 oxm_mplstc(struct ibuf *, uint8_t);
+int		 oxm_mplsbos(struct ibuf *, uint8_t);
+int		 oxm_tunnelid(struct ibuf *, int, uint64_t, uint64_t);
+int		 oxm_ipv6exthdr(struct ibuf *, int, uint16_t, uint16_t);
 
 /* ofcconn.c */
 void		 ofcconn(struct privsep *, struct privsep_proc *);
