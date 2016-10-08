@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.24 2016/09/05 16:07:01 claudio Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.25 2016/10/08 03:32:25 claudio Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -142,12 +142,12 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 	if (control && control->m_len) {
-		error = EOPNOTSUPP;
-		goto release;
+		m_freem(m);
+		return (EOPNOTSUPP);
 	}
 	if (rp == 0) {
-		error = EINVAL;
-		goto release;
+		m_freem(m);
+		return (EINVAL);
 	}
 	s = splsoftnet();
 	switch (req) {
@@ -271,7 +271,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		panic("raw_usrreq");
 	}
 	splx(s);
-release:
 	m_freem(m);
 	return (error);
 }
