@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.172 2016/09/05 08:18:18 tedu Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.173 2016/10/08 14:35:19 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2595,6 +2595,7 @@ iwn_wakeup_intr(struct iwn_softc *sc)
 	}
 }
 
+#ifdef IWN_DEBUG
 /*
  * Dump the error log of the firmware when a firmware panic occurs.  Although
  * we can't debug the firmware because it is neither open source nor free, it
@@ -2605,9 +2606,6 @@ iwn_fatal_intr(struct iwn_softc *sc)
 {
 	struct iwn_fw_dump dump;
 	int i;
-
-	/* Force a complete recalibration on next init. */
-	sc->sc_flags &= ~IWN_FLAG_CALIB_DONE;
 
 	/* Check that the error log address is valid. */
 	if (sc->errptr < IWN_FW_DATA_BASE ||
@@ -2657,6 +2655,7 @@ iwn_fatal_intr(struct iwn_softc *sc)
 	printf("  rx ring: cur=%d\n", sc->rxq.cur);
 	printf("  802.11 state %d\n", sc->sc_ic.ic_state);
 }
+#endif
 
 int
 iwn_intr(void *arg)
@@ -2711,8 +2710,14 @@ iwn_intr(void *arg)
 	}
 	if (r1 & (IWN_INT_SW_ERR | IWN_INT_HW_ERR)) {
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
+
+		/* Force a complete recalibration on next init. */
+		sc->sc_flags &= ~IWN_FLAG_CALIB_DONE;
+
 		/* Dump firmware error log and stop. */
+#ifdef IWN_DEBUG
 		iwn_fatal_intr(sc);
+#endif
 		iwn_stop(ifp, 1);
 		task_add(systq, &sc->init_task);
 		return 1;
