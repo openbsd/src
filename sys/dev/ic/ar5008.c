@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.35 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.36 2016/10/08 14:35:56 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1467,8 +1467,12 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 				ds->ds_ctl0 |= AR_TXC0_CTS_ENABLE;
 		}
 	}
+	/* 
+	 * Disable multi-rate retries when protection is used.
+	 * The RTS/CTS frame's duration field is fixed and won't be
+	 * updated by hardware when the data rate changes.
+	 */
 	if (ds->ds_ctl0 & (AR_TXC0_RTS_ENABLE | AR_TXC0_CTS_ENABLE)) {
-		/* Disable multi-rate retries when protection is used. */
 		ridx[1] = ridx[2] = ridx[3] = ridx[0];
 	}
 	/* Setup multi-rate retries. */

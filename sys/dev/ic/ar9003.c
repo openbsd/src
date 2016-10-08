@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.39 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.40 2016/10/08 14:35:56 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1613,8 +1613,12 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 				ds->ds_ctl11 |= AR_TXC11_CTS_ENABLE;
 		}
 	}
+	/* 
+	 * Disable multi-rate retries when protection is used.
+	 * The RTS/CTS frame's duration field is fixed and won't be
+	 * updated by hardware when the data rate changes.
+	 */
 	if (ds->ds_ctl11 & (AR_TXC11_RTS_ENABLE | AR_TXC11_CTS_ENABLE)) {
-		/* Disable multi-rate retries when protection is used. */
 		ridx[1] = ridx[2] = ridx[3] = ridx[0];
 	}
 	/* Setup multi-rate retries. */
