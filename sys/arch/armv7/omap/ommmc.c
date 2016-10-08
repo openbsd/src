@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.29 2016/08/12 03:22:41 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.30 2016/10/08 03:42:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -193,6 +193,7 @@ struct ommmc_softc {
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih; /* Interrupt handler */
 	uint32_t		sc_flags;
+#define FL_HSS		(1 << 0)
 
 	struct device *sdmmc;		/* generic SD/MMC device */
 	int clockbit;			/* clock control bit */
@@ -298,7 +299,7 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 	struct ommmc_softc		*sc = (struct ommmc_softc *) self;
 	struct fdt_attach_args		*faa = aux;
 	struct sdmmcbus_attach_args	 saa;
-	uint32_t			 caps;
+	uint32_t			 caps, width;
 	uint32_t			 addr, size;
 	int				 len, unit;
 	char				 hwmods[128];
@@ -432,8 +433,19 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_busname = "sdmmc";
 	saa.sct = &ommmc_functions;
 	saa.sch = sc;
-	if (caps & MMCHS_CAPA_HSS)
-		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
+	if (OF_getproplen(faa->fa_node, "ti,needs-special-hs-handling") == 0 &&
+	    (caps & MMCHS_CAPA_HSS)) {
+		sc->sc_flags |= FL_HSS;
+		saa.caps |= SMC_CAPS_MMC_HIGHSPEED | SMC_CAPS_SD_HIGHSPEED;
+	}
+	width = OF_getpropint(faa->fa_node, "bus-width", 1);
+	/* with bbb emmc width > 1 ommmc_wait_intr MMCHS_STAT_CC times out */
+	if (unit != 0)
+		width = 1;
+	if (width >= 8)
+		saa.caps |= SMC_CAPS_8BIT_MODE;
+	if (width >= 4)
+		saa.caps |= SMC_CAPS_4BIT_MODE;
 
 	sc->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (sc->sdmmc == NULL) {
@@ -717,10 +729,10 @@ ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	reg |= div << MMCHS_SYSCTL_CLKD_SH;
 	HWRITE4(sc, MMCHS_SYSCTL, reg);
 
-	if (timing == SDMMC_TIMING_LEGACY)
-		HCLR4(sc, MMCHS_HCTL, MMCHS_HCTL_HSPE);
-	else
+	if ((timing == SDMMC_TIMING_HIGHSPEED) && (sc->sc_flags & FL_HSS))
 		HSET4(sc, MMCHS_HCTL, MMCHS_HCTL_HSPE);
+	else
+		HCLR4(sc, MMCHS_HCTL, MMCHS_HCTL_HSPE);
 
 	/*
 	 * Start internal clock.  Wait 10ms for stabilization.
