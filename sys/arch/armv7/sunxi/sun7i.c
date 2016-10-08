@@ -1,4 +1,4 @@
-/* $OpenBSD: sun7i.c,v 1.5 2016/08/13 13:55:25 kettenis Exp $ */
+/* $OpenBSD: sun7i.c,v 1.6 2016/10/08 09:50:14 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -25,13 +25,6 @@
 #include <armv7/sunxi/sunxireg.h>
 
 struct armv7_dev sxia20_devs[] = {
-
-	/* 'Port IO' */
-	{ .name = "sxipio",
-	  .unit = 0,
-	  .mem = { { PIO_ADDR, PIOx_SIZE } },
-	  .irq = { PIO_IRQ }
-	},
 
 	/* Clock Control Module/Unit */
 	{ .name = "sxiccmu",

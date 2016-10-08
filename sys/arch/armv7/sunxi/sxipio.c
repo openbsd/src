@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.13 2016/08/28 20:20:37 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.14 2016/10/08 09:50:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -24,14 +24,15 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 #include <machine/intr.h>
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/fdt.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxipiovar.h>
 
@@ -70,7 +71,6 @@ struct sxipio_softc {
 	void			*sc_ih_l;
 	int 			sc_max_il;
 	int 			sc_min_il;
-	int			sc_irq;
 
 	struct sxipio_pin	*sc_pins;
 	int			sc_npins;
@@ -91,23 +91,24 @@ struct sxipio_softc {
 #define	SXIPIO_INT_STA		0x0214
 #define	SXIPIO_INT_DEB		0x0218 /* debounce register */
 
-void sxipio_attach(struct device *, struct device *, void *);
-void sxipio_attach_gpio(struct device *);
+int	sxipio_match(struct device *, void *, void *);
+void	sxipio_attach(struct device *, struct device *, void *);
 
 struct cfattach sxipio_ca = {
-	sizeof (struct sxipio_softc), NULL, sxipio_attach
+	sizeof (struct sxipio_softc), sxipio_match, sxipio_attach
 };
 
 struct cfdriver sxipio_cd = {
 	NULL, "sxipio", DV_DULL
 };
 
+void	sxipio_attach_gpio(struct device *);
 int	sxipio_pinctrl(uint32_t, void *);
 void	sxipio_config_pin(void *, uint32_t *, int);
 int	sxipio_get_pin(void *, uint32_t *);
 void	sxipio_set_pin(void *, uint32_t *, int);
 
-struct sxipio_softc	*sxipio_sc = NULL;
+struct sxipio_softc *sxipio_sc;
 
 #include "sxipio_pins.h"
 
@@ -140,30 +141,36 @@ struct sxipio_pins sxipio_pins[] = {
 	}
 };
 
+int
+sxipio_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+	int i;
+
+	for (i = 0; i < nitems(sxipio_pins); i++) {
+		if (OF_is_compatible(faa->fa_node, sxipio_pins[i].compat))
+			return 1;
+	}
+
+	return 0;
+}
+
 void
-sxipio_attach(struct device *parent, struct device *self, void *args)
+sxipio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sxipio_softc *sc = (struct sxipio_softc *)self;
-	struct armv7_attach_args *aa = args;
-	int node, i;
+	struct fdt_attach_args	*faa = aux;
+	int i;
 
-	/* XXX check unit, bail if != 0 */
-
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("sxipio_attach: bus_space_map failed!");
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
+		panic("%s: bus_space_map failed!", __func__);
 
 	sxipio_sc = sc;
 
-	sc->sc_irq = aa->aa_dev->irq[0];
-
-	node = OF_finddevice("/soc/pinctrl@01c20800");
-	if (node == -1)
-		panic("sxipio: can't find device tree node");
-
 	for (i = 0; i < nitems(sxipio_pins); i++) {
-		if (OF_is_compatible(node, sxipio_pins[i].compat)) {
+		if (OF_is_compatible(faa->fa_node, sxipio_pins[i].compat)) {
 			sc->sc_pins = sxipio_pins[i].pins;
 			sc->sc_npins = sxipio_pins[i].npins;
 			break;
@@ -171,9 +178,9 @@ sxipio_attach(struct device *parent, struct device *self, void *args)
 	}
 
 	KASSERT(sc->sc_pins);
-	pinctrl_register(node, sxipio_pinctrl, sc);
+	pinctrl_register(faa->fa_node, sxipio_pinctrl, sc);
 
-	sc->sc_gc.gc_node = node;
+	sc->sc_gc.gc_node = faa->fa_node;
 	sc->sc_gc.gc_cookie = sc;
 	sc->sc_gc.gc_config_pin = sxipio_config_pin;
 	sc->sc_gc.gc_get_pin = sxipio_get_pin;

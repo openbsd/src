@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.57 2016/10/08 06:45:02 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.58 2016/10/08 09:50:14 kettenis Exp $
 
 machine		armv7 arm
 
@@ -85,7 +85,7 @@ sunxi0		at mainbus?
 
 # Sunxi on-chip devices
 sxiintc*	at fdt?			# A1x interrupt controller
-sxipio*		at sunxi?		# GPIO pins for leds & PHYs
+sxipio*		at fdt? early 1		# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at sunxi?		# Clock Control Module/Unit
 sxitimer*	at sunxi?
