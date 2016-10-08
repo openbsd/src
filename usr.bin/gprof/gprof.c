@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.25 2016/09/01 09:49:44 tedu Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.26 2016/10/08 19:55:39 guenther Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 	    cyclethreshold = atoi( *++argv );
 	    break;
 	case 'c':
-#if defined(__i386__) || defined(__sparc64__)
+#if defined(__i386__) || defined(__mips64__)
 	    cflag = TRUE;
 #else
 	    fprintf(stderr, "%s: -c isn't supported on this architecture yet\n", __progname);
