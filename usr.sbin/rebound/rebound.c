@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.72 2016/10/07 19:14:56 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.73 2016/10/08 03:46:58 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -341,8 +341,6 @@ minttl(struct dnspacket *resp, size_t rlen)
 	}
 	return minttl;
 }
-
-
 
 static void
 sendreply(int ud, struct request *req)
