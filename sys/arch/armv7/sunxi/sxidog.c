@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.10 2016/09/04 11:56:59 mglocker Exp $ */
+/* $OpenBSD: sxidog.c,v 1.11 2016/10/08 11:21:41 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,19 +17,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
+#include <armv7/armv7/armv7_machdep.h>
 #include <armv7/sunxi/sunxireg.h>
-#include <armv7/armv7/armv7var.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
@@ -109,6 +103,7 @@ sxidog_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_type = SXIDOG_A10;
 
 	sxidog_sc = sc;
+	cpuresetfn = sxidog_reset;
 
 #ifndef SMALL_KERNEL
 	wdog_register(sxidog_callback, sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxi_machdep.c,v 1.12 2016/08/20 13:24:38 patrick Exp $	*/
+/*	$OpenBSD: sunxi_machdep.c,v 1.13 2016/10/08 11:21:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -23,49 +23,20 @@
 #include <machine/bus.h>
 #include <machine/bootconfig.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
 #include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
-extern void sxidog_reset(void);
 extern struct board_dev *sunxi_board_devs(void);
 extern void sunxi_board_init(void);
-
-void
-sunxi_platform_smc_write(bus_space_tag_t iot, bus_space_handle_t ioh,
-    bus_size_t off, uint32_t op, uint32_t val)
-{
-
-}
 
 void
 sunxi_platform_init_mainbus(struct device *self)
 {
 	mainbus_legacy_found(self, "cortex");
 	mainbus_legacy_found(self, "sunxi");
-}
-
-void
-sunxi_platform_watchdog_reset(void)
-{
-	sxidog_reset();
-}
-
-void
-sunxi_platform_powerdown(void)
-{
-
-}
-
-void
-sunxi_platform_disable_l2_if_needed(void)
-{
-
 }
 
 void
@@ -76,10 +47,6 @@ sunxi_platform_board_init(void)
 
 struct armv7_platform sunxi_platform = {
 	.board_init = sunxi_platform_board_init,
-	.smc_write = sunxi_platform_smc_write,
-	.watchdog_reset = sunxi_platform_watchdog_reset,
-	.powerdown = sunxi_platform_powerdown,
-	.disable_l2_if_needed = sunxi_platform_disable_l2_if_needed,
 	.init_mainbus = sunxi_platform_init_mainbus,
 };
 
