@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.35 2014/04/03 09:15:06 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.36 2016/10/08 05:42:38 guenther Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -104,9 +104,7 @@ endif
 struct	proc
 member	p_addr
 member	p_stat
-member	p_wchan
 member	p_vmspace
-member	p_pid
 member	p_cpu
 member	P_FPSTATE	p_md.md_fpstate
 member	P_MD_ASTPENDING	p_md.md_astpending
