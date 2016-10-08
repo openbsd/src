@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.73 2016/10/08 03:46:58 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.74 2016/10/08 06:33:59 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -700,7 +700,7 @@ main(int argc, char **argv)
 	int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
 	int jackport = 54;
 	union sockun bindaddr;
-	int r, kq, ld, ud, ch, conffd;
+	int r, kq, ld, ud, ch, conffd = -1;
 	int one = 1;
 	pid_t child;
 	struct kevent kev;
@@ -794,7 +794,8 @@ main(int argc, char **argv)
 		int hupped = 0;
 		int childdead = 0;
 	
-		conffd = openconfig(confname, kq);
+		if (conffd == -1)
+			conffd = openconfig(confname, kq);
 
 		child = launch(conffd, ud, ld);
 		if (child == -1)
@@ -817,6 +818,8 @@ main(int argc, char **argv)
 			} else if (kev.filter == EVFILT_VNODE) {
 				/* config file changed */
 				logmsg(LOG_INFO, "config changed, reloading");
+				close(conffd);
+				conffd = -1;
 				sleep(1);
 				raise(SIGHUP);
 			} else if (kev.filter == EVFILT_SIGNAL &&
@@ -846,7 +849,6 @@ main(int argc, char **argv)
 				logerr("don't know what happened");
 			}
 		}
-		close(conffd);
 		wait(NULL);
 	}
 	return 1;
