@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.208 2016/04/08 08:27:53 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.209 2016/10/08 05:52:06 guenther Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -100,7 +100,7 @@
 				/* Internal types and structures */
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
 
-#define DRM_CURRENTPID		curproc->p_pid
+#define DRM_CURRENTPID		curproc->p_p->ps_pid
 #define DRM_MAXUNITS		8
 
 /* DRM_SUSER returns true if the user is superuser */
@@ -200,7 +200,7 @@ drm_can_sleep(void)
 
 #define DRM_ERROR(fmt, arg...) \
 	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\
-	    curproc->p_pid, __func__ , ## arg)
+	    curproc->p_p->ps_pid, __func__ , ## arg)
 
 
 #ifdef DRMDEBUG
@@ -215,8 +215,8 @@ drm_can_sleep(void)
 #undef DRM_DEBUG
 #define DRM_DEBUG(fmt, arg...) do {					\
 	if (drm_debug_flag)						\
-		printf("[" DRM_NAME ":pid%d:%s] " fmt, curproc->p_pid,	\
-			__func__ , ## arg);				\
+		printf("[" DRM_NAME ":pid%d:%s] " fmt,			\
+		    curproc->p_p->ps_pid, __func__ , ## arg);		\
 } while (0)
 #else
 #define DRM_DEBUG(fmt, arg...) do { } while(/* CONSTCOND */ 0)
@@ -226,8 +226,8 @@ drm_can_sleep(void)
 #undef DRM_DEBUG_KMS
 #define DRM_DEBUG_KMS(fmt, arg...) do {					\
 	if (drm_debug_flag)						\
-		printf("[" DRM_NAME ":pid%d:%s] " fmt, curproc->p_pid,	\
-			__func__ , ## arg);				\
+		printf("[" DRM_NAME ":pid%d:%s] " fmt,			\
+		    curproc->p_p->ps_pid, __func__ , ## arg);		\
 } while (0)
 #else
 #define DRM_DEBUG_KMS(fmt, arg...) do { } while(/* CONSTCOND */ 0)
@@ -247,8 +247,8 @@ drm_can_sleep(void)
 #undef DRM_DEBUG_DRIVER
 #define DRM_DEBUG_DRIVER(fmt, arg...) do {					\
 	if (drm_debug_flag)						\
-		printf("[" DRM_NAME ":pid%d:%s] " fmt, curproc->p_pid,	\
-			__func__ , ## arg);				\
+		printf("[" DRM_NAME ":pid%d:%s] " fmt,			\
+		    curproc->p_p->ps_pid, __func__ , ## arg);		\
 } while (0)
 #else
 #define DRM_DEBUG_DRIVER(fmt, arg...) do { } while(/* CONSTCOND */ 0)

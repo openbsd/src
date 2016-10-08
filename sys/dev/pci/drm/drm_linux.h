@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.47 2016/04/05 20:44:03 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.48 2016/10/08 05:52:06 guenther Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -129,23 +129,23 @@ typedef off_t loff_t;
 #endif
 
 #define dev_warn(dev, fmt, arg...)				\
-	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_pid,	\
+	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 #define dev_notice(dev, fmt, arg...)				\
-	printf("drm:pid%d:%s *NOTICE* " fmt, curproc->p_pid,	\
+	printf("drm:pid%d:%s *NOTICE* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 #define dev_crit(dev, fmt, arg...)				\
-	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_pid,	\
+	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 #define dev_err(dev, fmt, arg...)				\
-	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_pid,	\
+	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 
 #ifdef DRMDEBUG
 #define dev_info(dev, fmt, arg...)				\
 	printf("drm: " fmt, ## arg)
 #define dev_debug(dev, fmt, arg...)				\
-	printf("drm:pid%d:%s *DEBUG* " fmt, curproc->p_pid,	\
+	printf("drm:pid%d:%s *DEBUG* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 #else
 #define dev_info(dev, fmt, arg...) 				\
