@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.134 2016/10/07 19:04:44 tedu Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.135 2016/10/08 02:16:43 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -496,6 +496,10 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	}
 	error = copyout(sv, SCARG(uap, rsv), 2 * sizeof (int));
 	if (error == 0) {
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrfds(p, sv, 2);
+#endif
 		if (flags & SOCK_NONBLOCK) {
 			(*fp1->f_ops->fo_ioctl)(fp1, FIONBIO, (caddr_t)&flags,
 			    p);

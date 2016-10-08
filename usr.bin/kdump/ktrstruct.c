@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.22 2016/08/26 08:52:19 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.23 2016/10/08 02:16:43 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -318,6 +318,20 @@ ktrtfork(const struct __tfork *tf)
 }
 
 static void
+ktrfds(const char *data, size_t count)
+{
+	size_t i;
+	int fd;
+
+	for (i = 0; i < count - 1; i++) {
+		memcpy(&fd, &data[i * sizeof(fd)], sizeof(fd));
+		printf("fd[%zu] = %d, ", i, fd);
+	}
+	memcpy(&fd, &data[i * sizeof(fd)], sizeof(fd));
+	printf("fd[%zu] = %d\n", i, fd);
+}
+
+static void
 ktrfdset(struct fd_set *fds, int len)
 {
 	int nfds, i, start = -1;
@@ -586,6 +600,10 @@ ktrstruct(char *buf, size_t buflen)
 			goto invalid;
 		memcpy(&tf, data, datalen);
 		ktrtfork(&tf);
+	} else if (strcmp(name, "fds") == 0) {
+		if (datalen % sizeof(int))
+			goto invalid;
+		ktrfds(data, datalen / sizeof(int));
 	} else if (strcmp(name, "fdset") == 0) {
 		struct fd_set *fds;
 

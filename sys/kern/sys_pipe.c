@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.74 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.75 2016/10/08 02:16:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -40,6 +40,9 @@
 #include <sys/event.h>
 #include <sys/lock.h>
 #include <sys/poll.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -175,6 +178,10 @@ dopipe(struct proc *p, int *ufds, int flags)
 		fdrelease(p, fds[0]);
 		fdrelease(p, fds[1]);
 	}
+#ifdef KTRACE
+	else if (KTRPOINT(p, KTR_STRUCT))
+		ktrfds(p, fds, 2);
+#endif
 	fdpunlock(fdp);
 	return (error);
 
