@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.10 2016/10/04 17:58:09 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.11 2016/10/08 20:36:35 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4510,7 +4510,7 @@ swofp_send_flow_removed(struct switch_softc *sc, struct swofp_flow_entry *swfe,
 	MGETHDR(m, M_WAITOK, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
-	if ((sizeof(*ofr) + match_len) >=  MINCLSIZE) {
+	if ((sizeof(*ofr) + match_len) >= MHLEN) {
 		MCLGET(m, M_WAITOK);
 		if (m == NULL)
 			return (ENOBUFS);
