@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysreg.4,v 1.1 2015/06/14 13:53:49 jsg Exp $
+.\"	$OpenBSD: sysreg.4,v 1.2 2016/10/08 06:45:02 jsg Exp $
 .\"
 .\" Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,20 +14,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2015 $
+.Dd $Mdocdate: October 8 2016 $
 .Dt SYSREG 4 armv7
 .Os
 .Sh NAME
 .Nm sysreg
 .Nd ARM Motherboard Express microATX system registers
 .Sh SYNOPSIS
-.Cd "sysreg* at vexpress?"
+.Cd "sysreg* at fdt?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports the ARM Motherboard Express microATX system registers.
-.Sh SEE ALSO
-.Xr vexpress 4
 .Rs
 .%T ARM Motherboard Express microATX Technical Reference Manual
 .Re

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vexpress,v 1.7 2016/08/31 16:19:40 jsg Exp $
+#	$OpenBSD: files.vexpress,v 1.8 2016/10/08 06:45:02 jsg Exp $
 
 define vexpress {}
 device vexpress: vexpress
@@ -12,5 +12,5 @@ attach	virtio at fdt with virtio_mmio
 file	arch/armv7/vexpress/virtio_mmio.c	virtio_mmio
 
 device sysreg
-attach sysreg at vexpress
+attach sysreg at fdt
 file	arch/armv7/vexpress/sysreg.c	sysreg

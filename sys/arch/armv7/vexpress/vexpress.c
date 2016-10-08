@@ -1,4 +1,4 @@
-/*	$OpenBSD: vexpress.c,v 1.8 2016/08/06 00:54:02 jsg Exp $	*/
+/*	$OpenBSD: vexpress.c,v 1.9 2016/10/08 06:45:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -39,7 +39,6 @@ struct cfdriver vexpress_cd = {
 };
 
 struct board_dev vexpress_devs[] = {
-	{ "sysreg",	0 },
 	{ NULL,		0 }
 };
 
