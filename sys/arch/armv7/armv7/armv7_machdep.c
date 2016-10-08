@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.42 2016/10/05 07:44:24 patrick Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.43 2016/10/08 17:02:48 tom Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -237,19 +237,9 @@ boot(int howto)
 #endif
 
 	if (cold) {
-		config_suspend_all(DVACT_POWERDOWN);
-		if ((howto & (RB_HALT | RB_USERREQ)) != RB_USERREQ) {
-			printf("The operating system has halted.\n");
-			printf("Please press any key to reboot.\n\n");
-			cngetc();
-		}
-		printf("rebooting...\n");
-		delay(500000);
-		if (cpuresetfn)
-			(*cpuresetfn)();
-		printf("reboot failed; spinning\n");
-		while(1);
-		/*NOTREACHED*/
+		if ((howto & RB_USERREQ) == 0)
+			howto |= RB_HALT;
+		goto haltsys;
 	}
 
 	/* Disable console buffering */
@@ -274,6 +264,7 @@ boot(int howto)
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
 
+haltsys:
 	config_suspend_all(DVACT_POWERDOWN);
 
 	/* Make sure IRQ's are disabled */
@@ -296,7 +287,8 @@ boot(int howto)
 	if (cpuresetfn)
 		(*cpuresetfn)();
 	printf("reboot failed; spinning\n");
-	for (;;) ;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 
