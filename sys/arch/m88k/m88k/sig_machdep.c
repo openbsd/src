@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.26 2016/06/21 12:31:19 aoyama Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.27 2016/10/08 23:31:57 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -183,8 +183,8 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sendsig(%d): sig %d returns\n", p->p_pid, sig);
+	    ((sigdebug & SDB_KSTACK) && p->p_p->ps_pid == sigpid))
+		printf("sendsig(%d): sig %d returns\n", p->p_p->ps_pid, sig);
 #endif
 }
 
