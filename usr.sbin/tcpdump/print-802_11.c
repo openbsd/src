@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.33 2016/09/02 17:11:46 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.34 2016/10/08 14:45:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -1075,8 +1075,13 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 	if (RADIOTAP(RATE)) {
 		TCHECK2(*t, 1);
-		if (vflag)
-			printf(", %uMbit/s", (*(u_int8_t*)t) / 2);
+		if (vflag) {
+			uint8_t rate = *(u_int8_t*)t;
+			if (rate & 0x80)
+				printf(", MCS %u", rate & 0x7f);
+			else
+				printf(", %uMbit/s", rate / 2);
+		}
 		t += 1;
 	}
 
