@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_radiotap.h,v 1.13 2016/01/12 09:28:09 stsp Exp $ */
+/* $OpenBSD: ieee80211_radiotap.h,v 1.14 2016/10/08 14:42:36 stsp Exp $ */
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
 /* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
@@ -90,9 +90,10 @@ struct ieee80211_radiotap_header {
  *      For frequency-hopping radios, the hop set (first byte)
  *      and pattern (second byte).
  *
- * IEEE80211_RADIOTAP_RATE              u_int8_t        500kb/s
+ * IEEE80211_RADIOTAP_RATE              u_int8_t        500kb/s or MCS index
  *
- *      Tx/Rx data rate
+ *      Tx/Rx data rate in units of 500kb/s. If the high bit (0x80) is set
+ *      the remaining bits contain an MCS index instead of a date rate.
  *
  * IEEE80211_RADIOTAP_DBM_ANTSIGNAL     int8_t          decibels from
  *                                                      one milliwatt (dBm)
