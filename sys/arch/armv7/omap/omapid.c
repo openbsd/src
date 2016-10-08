@@ -1,4 +1,4 @@
-/* $OpenBSD: omapid.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: omapid.c,v 1.3 2016/10/08 05:55:03 jsg Exp $ */
 /*
  * Copyright (c) 2013 Dale Rahn <drahn@dalerahn.com>
  *
@@ -26,6 +26,8 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 #include <armv7/armv7/armv7var.h>
+
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define O4_ID_SIZE	0x1000
@@ -68,6 +70,7 @@ omapid_attach(struct device *parent, struct device *self, void *args)
 	uint32_t rev;
 	uint32_t newclockrate = 0;
 	char *board;
+	void *node;
 
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
@@ -76,9 +79,13 @@ omapid_attach(struct device *parent, struct device *self, void *args)
 
 	omapid_sc = sc;
 
+	node = fdt_find_node("/");
+	if (node == NULL)
+		panic("%s: could not get fdt root node",
+		    sc->sc_dev.dv_xname);
+
 	board = "unknown";
-	switch (board_id) {
-	case BOARD_ID_OMAP4_PANDA:
+	if (fdt_is_compatible(node, "ti,omap4")) {
 		rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, O4_ID_CODE);
 		switch ((rev >> 12) & 0xffff) {
 		case 0xB852:
@@ -91,9 +98,6 @@ omapid_attach(struct device *parent, struct device *self, void *args)
 			newclockrate = 350 * 1000 * 1000;
 			break;
 		}
-		break;
-	default:
-		break;
 	}
 	printf(": %s\n", board);
 	if (newclockrate != 0)
