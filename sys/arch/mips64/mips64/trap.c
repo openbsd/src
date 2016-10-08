@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.118 2016/08/16 13:03:58 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.119 2016/10/08 05:49:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -614,7 +614,7 @@ fault_common_no_miss:
 #ifdef DEBUG
 				printf("trap: %s (%d): breakpoint at %p "
 				    "(insn %08x)\n",
-				    p->p_comm, p->p_pid,
+				    p->p_comm, p->p_p->ps_pid,
 				    (void *)p->p_md.md_ss_addr,
 				    p->p_md.md_ss_instr);
 #endif
@@ -1075,7 +1075,7 @@ process_sstep(struct proc *p, int sstep)
 			if (rc != 0)
 				printf("WARNING: %s (%d): can't restore "
 				    "instruction at %p: %08x\n",
-				    p->p_comm, p->p_pid,
+				    p->p_comm, p->p_p->ps_pid,
 				    (void *)p->p_md.md_ss_addr,
 				    p->p_md.md_ss_instr);
 #endif
@@ -1101,7 +1101,8 @@ process_sstep(struct proc *p, int sstep)
 	if (p->p_md.md_ss_addr != 0) {
 		printf("WARNING: %s (%d): breakpoint request "
 		    "at %p, already set at %p\n",
-		    p->p_comm, p->p_pid, (void *)va, (void *)p->p_md.md_ss_addr);
+		    p->p_comm, p->p_p->ps_pid, (void *)va,
+		    (void *)p->p_md.md_ss_addr);
 		return EFAULT;
 	}
 #endif
@@ -1120,7 +1121,7 @@ process_sstep(struct proc *p, int sstep)
 
 #ifdef DEBUG
 	printf("%s (%d): breakpoint set at %p: %08x (pc %p %08x)\n",
-		p->p_comm, p->p_pid, (void *)p->p_md.md_ss_addr,
+		p->p_comm, p->p_p->ps_pid, (void *)p->p_md.md_ss_addr,
 		p->p_md.md_ss_instr, (void *)locr0->pc, curinstr);
 #endif
 	return 0;
@@ -1371,7 +1372,7 @@ end:
 		}
 	} else {
 		if (curproc)
-			(*pr)("User-level: pid %d\n", curproc->p_pid);
+			(*pr)("User-level: pid %d\n", curproc->p_p->ps_pid);
 		else
 			(*pr)("User-level: curproc NULL\n");
 	}

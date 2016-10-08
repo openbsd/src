@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm86.c,v 1.22 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: vm86.c,v 1.23 2016/10/08 05:49:08 guenther Exp $	*/
 /*	$NetBSD: vm86.c,v 1.15 1996/05/03 19:42:33 christos Exp $	*/
 
 /*-
@@ -235,7 +235,7 @@ vm86_return(struct proc *p, int retval)
 	if (p->p_sigmask & sigmask(SIGURG)) {
 #ifdef DIAGNOSTIC
 		printf("pid %d killed on VM86 protocol screwup (SIGURG blocked)\n",
-		       p->p_pid);
+		    p->p_p->ps_pid);
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */

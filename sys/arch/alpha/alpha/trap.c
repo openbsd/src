@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.81 2016/03/30 15:39:46 afresh1 Exp $ */
+/* $OpenBSD: trap.c,v 1.82 2016/10/08 05:49:08 guenther Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -205,8 +205,8 @@ printtrap(const unsigned long a0, const unsigned long a1,
 	printf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
 	printf("    curproc    = %p\n", curproc);
 	if (curproc != NULL)
-		printf("        pid = %d, comm = %s\n", curproc->p_pid,
-		       curproc->p_comm);
+		printf("        pid = %d, comm = %s\n",
+		    curproc->p_p->ps_pid, curproc->p_comm);
 	printf("\n");
 }
 
@@ -459,8 +459,8 @@ do_fault:
 			typ = SEGV_MAPERR;
 			if (rv == ENOMEM) {
 				printf("UVM: pid %u (%s), uid %d killed: "
-			           "out of swap\n", p->p_pid, p->p_comm,
-			           p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
+				   "out of swap\n", p->p_p->ps_pid, p->p_comm,
+				   p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 				i = SIGKILL;
 			} else {
 				i = SIGSEGV;
@@ -982,7 +982,7 @@ unaligned_fixup(va, opcode, reg, p)
 	if (doprint) {
 		uprintf(
 		"pid %u (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=",
-		    p->p_pid, p->p_comm, va,
+		    p->p_p->ps_pid, p->p_comm, va,
 		    p->p_md.md_tf->tf_regs[FRAME_PC] - 4,
 		    p->p_md.md_tf->tf_regs[FRAME_RA]);
 		uprintf(selected_tab->type,opcode);

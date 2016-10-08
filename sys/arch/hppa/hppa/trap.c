@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.139 2016/02/27 13:08:06 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.140 2016/10/08 05:49:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -913,7 +913,7 @@ syscall(struct trapframe *frame)
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
 		    "syscall(0x%x, 0x%lx, 0x%lx, 0x%lx...) EXIT, PID %d\n",
 		    curcpu()->ci_cpl, code, args[0], args[1], args[2],
-		    p->p_pid);
+		    p->p_p->ps_pid);
 		curcpu()->ci_cpl = oldcpl;
 	}
 #endif

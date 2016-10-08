@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2016/08/20 19:22:05 stefan Exp $	*/
+/*	$OpenBSD: trap.c,v 1.51 2016/10/08 05:49:08 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -164,9 +164,9 @@ trap(struct trapframe *frame)
 		       "cr2 %llx cpl %x\n",
 		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel);
-		printf("curproc %p\n", curproc);
-		if (curproc)
-			printf("pid %d\n", p->p_pid);
+		printf("curproc %p\n", (void *)p);
+		if (p != NULL)
+			printf("pid %d\n", p->p_p->ps_pid);
 	}
 #endif
 
@@ -244,8 +244,8 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_NMI|T_USER:
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): BUS at rip %llx addr %llx\n",
-		    p->p_pid, p->p_comm, frame->tf_rip, rcr2());
+		printf("pid %d (%s): %s at rip %llx addr %llx\n",
+		    p->p_p->ps_pid, p->p_comm, "BUS", frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
 		sv.sival_ptr = (void *)frame->tf_rip;
@@ -268,8 +268,8 @@ copyfault:
 		goto out;
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): ILL at rip %llx addr %llx\n",
-		    p->p_pid, p->p_comm, frame->tf_rip, rcr2());
+		printf("pid %d (%s): %s at rip %llx addr %llx\n",
+		    p->p_p->ps_pid, p->p_comm, "ILL", frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
 		sv.sival_ptr = (void *)frame->tf_rip;
@@ -393,15 +393,16 @@ faultcommon:
 			goto we_re_toast;
 		}
 		if (error == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
-			       p->p_pid, p->p_comm,
-			       p->p_ucred ?  (int)p->p_ucred->cr_uid : -1);
+			printf("UVM: pid %d (%s), uid %d killed:"
+			    " out of swap\n", p->p_p->ps_pid, p->p_comm,
+			    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 			sv.sival_ptr = (void *)fa;
 			trapsignal(p, SIGKILL, T_PAGEFLT, SEGV_MAPERR, sv);
 		} else {
 #ifdef TRAP_SIGDEBUG
-			printf("pid %d (%s): SEGV at rip %llx addr %lx\n",
-			    p->p_pid, p->p_comm, frame->tf_rip, fa);
+			printf("pid %d (%s): %s at rip %llx addr %llx\n",
+			    p->p_p->ps_pid, p->p_comm, "SEGV", frame->tf_rip,
+			    rcr2());
 			frame_dump(frame);
 #endif
 			sv.sival_ptr = (void *)fa;

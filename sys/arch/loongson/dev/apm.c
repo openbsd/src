@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.30 2016/09/03 14:46:56 naddy Exp $	*/
+/*	$OpenBSD: apm.c,v 1.31 2016/10/08 05:49:08 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -153,7 +153,7 @@ apmopen(dev_t dev, int flag, int mode, struct proc *p)
 		return ENXIO;
 
 	DPRINTF(("apmopen: dev %d pid %d flag %x mode %x\n",
-	    APMDEV(dev), p->p_pid, flag, mode));
+	    APMDEV(dev), p->p_p->ps_pid, flag, mode));
 
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
@@ -191,7 +191,8 @@ apmclose(dev_t dev, int flag, int mode, struct proc *p)
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
 
-	DPRINTF(("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
+	DPRINTF(("apmclose: pid %d flag %x mode %x\n",
+	    p->p_p->ps_pid, flag, mode));
 
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:

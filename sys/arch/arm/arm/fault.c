@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.23 2016/08/24 13:09:52 kettenis Exp $	*/
+/*	$OpenBSD: fault.c,v 1.24 2016/10/08 05:49:08 guenther Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -422,7 +422,7 @@ data_abort_handler(trapframe_t *tf)
 	sv.sival_ptr = (u_int32_t *)far;
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
-		    "out of swap\n", p->p_pid, p->p_comm,
+		    "out of swap\n", p->p_p->ps_pid, p->p_comm,
 		    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 		sd.signo = SIGKILL;
 	} else
@@ -720,7 +720,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	sv.sival_ptr = (u_int32_t *)far;
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
-		    "out of swap\n", p->p_pid, p->p_comm,
+		    "out of swap\n", p->p_p->ps_pid, p->p_comm,
 		    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 		trapsignal(p, SIGKILL, 0, SEGV_MAPERR, sv);
 	} else

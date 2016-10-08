@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.125 2016/02/28 15:46:18 naddy Exp $	*/
+/*	$OpenBSD: trap.c,v 1.126 2016/10/08 05:49:08 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -332,7 +332,7 @@ trap(struct trapframe *frame)
 
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
-		    p->p_pid);
+		    p->p_p->ps_pid);
 		sv.sival_int = frame->tf_eip;
 		KERNEL_LOCK();
 		trapsignal(p, SIGKILL, type &~ T_USER, FPE_FLTINV, sv);
@@ -639,7 +639,8 @@ syscall(struct trapframe *frame)
 	if (lapic_tpr != ocpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
 		    "syscall(0x%lx, 0x%lx, 0x%lx, 0x%lx...) EXIT, PID %d\n",
-		    lapic_tpr, code, args[0], args[1], args[2], p->p_pid);
+		    lapic_tpr, code, args[0], args[1], args[2],
+		    p->p_p->ps_pid);
 		lapic_tpr = ocpl;
 	}
 #endif

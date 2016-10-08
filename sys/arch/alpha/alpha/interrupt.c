@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.38 2016/06/13 01:26:14 dlg Exp $ */
+/* $OpenBSD: interrupt.c,v 1.39 2016/10/08 05:49:08 guenther Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -347,7 +347,7 @@ fatal:
 	printf("    ra      = 0x%lx\n", framep->tf_regs[FRAME_RA]);
 	printf("    curproc = %p\n", curproc);
 	if (curproc != NULL)
-		printf("        pid = %d, comm = %s\n", curproc->p_pid,
+		printf("        pid = %d, comm = %s\n", curproc->p_p->ps_pid,
 		    curproc->p_comm);
 	printf("\n");
 	panic("machine check");

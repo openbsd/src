@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.44 2016/09/11 03:14:04 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.45 2016/10/08 05:49:09 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -984,7 +984,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 	}
 	db_printf("process %p:", p);
 	db_printf("pid:%d vmspace:%p pmap:%p ctx:%x wchan:%p pri:%d upri:%d\n",
-	    p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap,
+	    p->p_p->ps_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap,
 	    p->p_vmspace->vm_map.pmap->pm_ctx,
 	    p->p_wchan, p->p_priority, p->p_usrpri);
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
@@ -1012,12 +1012,12 @@ db_ctx_cmd(addr, have_addr, count, modif)
 		if (p->p_stat) {
 			db_printf("process %p:", p);
 			db_printf("pid:%d pmap:%p ctx:%x tf:%p fpstate %p "
-				"lastcall:%s\n",
-				p->p_pid, p->p_vmspace->vm_map.pmap,
-				p->p_vmspace->vm_map.pmap->pm_ctx,
-				p->p_md.md_tf, p->p_md.md_fpstate,
-				(p->p_addr->u_pcb.lastcall)?
-				p->p_addr->u_pcb.lastcall : "Null");
+			    "lastcall:%s\n",
+			    p->p_p->ps_pid, p->p_vmspace->vm_map.pmap,
+			    p->p_vmspace->vm_map.pmap->pm_ctx,
+			    p->p_md.md_tf, p->p_md.md_fpstate,
+			    (p->p_addr->u_pcb.lastcall)?
+			    p->p_addr->u_pcb.lastcall : "Null");
 		}
 	}
 	return;
