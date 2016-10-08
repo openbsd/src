@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.97 2016/10/07 14:43:13 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.98 2016/10/08 12:56:18 otto Exp $
 .\"
-.Dd $Mdocdate: October 7 2016 $
+.Dd $Mdocdate: October 8 2016 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -380,7 +380,7 @@ has been modified.
 .It Dq chunk canary corrupted 0xhhhhllll
 A byte after the requested size has been overwritten,
 indicating a heap overflow.
-The high word is the length of the chunk;
+The high word is the requested length of the chunk;
 the low word is the offset at which corruption was detected.
 .It Dq recursive call
 An attempt was made to call recursively into these functions, i.e., from a
