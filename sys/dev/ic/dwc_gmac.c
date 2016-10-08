@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac.c,v 1.2 2016/08/15 18:31:28 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac.c,v 1.3 2016/10/08 11:20:26 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $ */
 
 /*-
@@ -99,8 +99,7 @@ int dwc_gmac_queue(struct dwc_gmac_softc *, struct mbuf *);
 int dwc_gmac_ioctl(struct ifnet *, u_long, caddr_t);
 void dwc_gmac_tx_intr(struct dwc_gmac_softc *);
 void dwc_gmac_rx_intr(struct dwc_gmac_softc *);
-void dwc_gmac_setmulti(struct dwc_gmac_softc *);
-int dwc_gmac_ifflags_cb(struct arpcom *);
+void dwc_gmac_iff(struct dwc_gmac_softc *);
 static uint32_t	bitrev32(uint32_t);
 
 #define	TX_DESC_OFFSET(N)	((DWGE_RX_RING_COUNT+(N)) \
@@ -749,10 +748,6 @@ int
 dwc_gmac_init(struct ifnet *ifp)
 {
 	struct dwc_gmac_softc *sc = ifp->if_softc;
-	uint32_t ffilt;
-
-	if (ifp->if_flags & IFF_RUNNING)
-		return 0;
 
 	dwc_gmac_stop(ifp, 0);
 
@@ -766,25 +761,9 @@ dwc_gmac_init(struct ifnet *ifp)
 	    2 << GMAC_BUSMODE_PBL_SHIFT);
 
 	/*
-	 * Set up address filter
+	 * Program promiscuous mode and multicast filters
 	 */
-	ffilt = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT);
-	if (ifp->if_flags & IFF_PROMISC) {
-		ffilt |= AWIN_GMAC_MAC_FFILT_PR;
-	} else {
-		ffilt &= ~AWIN_GMAC_MAC_FFILT_PR;
-	}
-	if (ifp->if_flags & IFF_BROADCAST) {
-		ffilt &= ~AWIN_GMAC_MAC_FFILT_DBF;
-	} else {
-		ffilt |= AWIN_GMAC_MAC_FFILT_DBF;
-	}
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT, ffilt);
-
-	/*
-	 * Set up multicast filter
-	 */
-	dwc_gmac_setmulti(sc);
+	dwc_gmac_iff(sc);
 
 	/*
 	 * Set up dma pointer for RX and TX ring
@@ -961,22 +940,68 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 }
 
 /*
- * If the interface is up and running, only modify the receive
- * filter when setting promiscuous or debug mode.  Otherwise fall
- * through to ether_ioctl, which will reset the chip.
+ * Reverse order of bits - http://aggregate.org/MAGIC/#Bit%20Reversal
  */
-int
-dwc_gmac_ifflags_cb(struct arpcom *ac)
+static uint32_t
+bitrev32(uint32_t x)
 {
-	struct ifnet *ifp = &ac->ac_if;
-	struct dwc_gmac_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	x = (((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1));
+	x = (((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2));
+	x = (((x & 0xf0f0f0f0) >> 4) | ((x & 0x0f0f0f0f) << 4));
+	x = (((x & 0xff00ff00) >> 8) | ((x & 0x00ff00ff) << 8));
 
-	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
-		return ENETRESET;
-	if ((change & IFF_PROMISC) != 0)
-		dwc_gmac_setmulti(sc);
-	return 0;
+	return (x >> 16) | (x << 16);
+}
+
+void
+dwc_gmac_iff(struct dwc_gmac_softc *sc)
+{
+	struct ifnet * const ifp = &sc->sc_ac.ac_if;
+	struct arpcom *ac = &sc->sc_ac;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t hashes[2] = { 0, 0 };
+	uint32_t ffilt, h;
+	int mcnt = 0;
+
+	ffilt = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT);
+	ffilt &= ~(AWIN_GMAC_MAC_FFILT_DBF | AWIN_GMAC_MAC_FFILT_HMC |
+		   AWIN_GMAC_MAC_FFILT_PM | AWIN_GMAC_MAC_FFILT_PR |
+		   AWIN_GMAC_MAC_FFILT_RA);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			ffilt |= AWIN_GMAC_MAC_FFILT_PR;
+		else
+			ffilt |= AWIN_GMAC_MAC_FFILT_PM;
+		hashes[0] = hashes[1] = 0xffffffff;
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = bitrev32(~ether_crc32_le(enm->enm_addrlo,
+				     ETHER_ADDR_LEN)) >> 26;
+			hashes[h >> 5] |= (1 << (h & 0x1f));
+
+			mcnt++;
+			ETHER_NEXT_MULTI(step, enm);
+		}
+
+		if (mcnt)
+			ffilt |= AWIN_GMAC_MAC_FFILT_HMC;
+	}
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW,
+	    hashes[0]);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH,
+	    hashes[1]);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT,
+	    ffilt);
+
+#ifdef DWC_GMAC_DEBUG
+	dwc_gmac_dump_ffilt(sc, ffilt);
+#endif
 }
 
 int
@@ -1018,11 +1043,10 @@ dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			dwc_gmac_ifflags_cb(&sc->sc_ac);
+			dwc_gmac_iff(sc);
 		error = 0;
 	}
 
-	sc->sc_if_flags = sc->sc_ac.ac_if.if_flags;
 	splx(s);
 	return error;
 }
@@ -1205,98 +1229,6 @@ skip:
 	sc->sc_rxq.r_cur = i;
 
 	if_input(ifp, &ml);
-}
-
-/*
- * Reverse order of bits - http://aggregate.org/MAGIC/#Bit%20Reversal
- */
-static uint32_t
-bitrev32(uint32_t x)
-{
-	x = (((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1));
-	x = (((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2));
-	x = (((x & 0xf0f0f0f0) >> 4) | ((x & 0x0f0f0f0f) << 4));
-	x = (((x & 0xff00ff00) >> 8) | ((x & 0x00ff00ff) << 8));
-
-	return (x >> 16) | (x << 16);
-}
-
-void
-dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
-{
-	struct ifnet * const ifp = &sc->sc_ac.ac_if;
-	struct ether_multi *enm;
-	struct ether_multistep step;
-	uint32_t hashes[2] = { 0, 0 };
-	uint32_t ffilt, h;
-	int mcnt, s;
-
-	s = splnet();
-
-	ffilt = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT);
-	
-	if (ifp->if_flags & IFF_PROMISC) {
-		ffilt |= AWIN_GMAC_MAC_FFILT_PR;
-		goto special_filter;
-	}
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	ffilt &= ~(AWIN_GMAC_MAC_FFILT_PM|AWIN_GMAC_MAC_FFILT_PR);
-
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW, 0);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH, 0);
-
-	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
-	mcnt = 0;
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0) {
-			ffilt |= AWIN_GMAC_MAC_FFILT_PM;
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto special_filter;
-		}
-
-		h = bitrev32(
-			~ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN)
-		    ) >> 26;
-		hashes[h >> 5] |= (1 << (h & 0x1f));
-
-		mcnt++;
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	if (mcnt)
-		ffilt |= AWIN_GMAC_MAC_FFILT_HMC;
-	else
-		ffilt &= ~AWIN_GMAC_MAC_FFILT_HMC;
-
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT, ffilt);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW,
-	    hashes[0]);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH,
-	    hashes[1]);
-	sc->sc_if_flags = sc->sc_ac.ac_if.if_flags;
-
-	splx(s);
-
-#ifdef DWC_GMAC_DEBUG
-	dwc_gmac_dump_ffilt(sc, ffilt);
-#endif
-	return;
-
-special_filter:
-#ifdef DWC_GMAC_DEBUG
-	dwc_gmac_dump_ffilt(sc, ffilt);
-#endif
-	/* no MAC hashes, ALLMULTI or PROMISC */
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT,
-	    ffilt);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW,
-	    0xffffffff);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH,
-	    0xffffffff);
-	sc->sc_if_flags = sc->sc_ac.ac_if.if_flags;
-	splx(s);
 }
 
 int

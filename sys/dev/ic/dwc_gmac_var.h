@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac_var.h,v 1.2 2016/08/15 18:31:28 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac_var.h,v 1.3 2016/10/08 11:20:27 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac_var.h,v 1.6 2014/11/22 18:31:03 jmcneill Exp $ */
 
 /*-
@@ -87,7 +87,6 @@ struct dwc_gmac_softc {
 	bus_dma_segment_t sc_dma_ring_seg;	/* and TX ring */
 	struct dwc_gmac_rx_ring sc_rxq;
 	struct dwc_gmac_tx_ring sc_txq;
-	short sc_if_flags;			/* shadow of ether flags */
 	uint16_t sc_mii_clk;
 };
 
