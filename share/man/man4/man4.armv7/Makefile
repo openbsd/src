@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2016/10/07 20:24:52 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.16 2016/10/09 01:40:42 jsg Exp $
 
 MAN=	agtimer.4 ampintc.4 amptimer.4 armliicc.4 \
 	cortex.4 cpsw.4 dmtimer.4 edma.4 fec.4 gptimer.4 \
@@ -8,7 +8,7 @@ MAN=	agtimer.4 ampintc.4 amptimer.4 armliicc.4 \
 	plrtc.4 pluart.4 prcm.4 sitaracm.4 \
 	sunxi.4 sxiccmu.4 sxidog.4 sxie.4 sxiintc.4 \
 	sximmc.4 sxipio.4 sxitimer.4 \
-	sysreg.4 vexpress.4
+	sysreg.4
 
 MANSUBDIR=armv7
 

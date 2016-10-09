@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.58 2016/10/08 09:50:14 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.59 2016/10/09 01:40:42 jsg Exp $
 
 machine		armv7 arm
 
@@ -102,7 +102,6 @@ usb*		at ehci?	#flags 0x1
 #usb*		at ohci?
 
 # ARM Versatile Express
-vexpress0	at mainbus?
 sysreg*		at fdt?
 pluart*		at fdt?
 plrtc*		at fdt?

@@ -1,12 +1,4 @@
-#	$OpenBSD: files.vexpress,v 1.8 2016/10/08 06:45:02 jsg Exp $
-
-define vexpress {}
-device vexpress: vexpress
-attach vexpress at fdt
-file	arch/armv7/vexpress/vexpress_machdep.c	vexpress needs-flag
-file	arch/armv7/vexpress/vexpress.c		vexpress
-file	arch/armv7/vexpress/vexpress_a9.c	vexpress
-file	arch/armv7/vexpress/vexpress_a15.c	vexpress
+#	$OpenBSD: files.vexpress,v 1.9 2016/10/09 01:40:43 jsg Exp $
 
 attach	virtio at fdt with virtio_mmio
 file	arch/armv7/vexpress/virtio_mmio.c	virtio_mmio

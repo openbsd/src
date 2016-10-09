@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7var.h,v 1.13 2016/10/05 22:06:48 kettenis Exp $ */
+/* $OpenBSD: armv7var.h,v 1.14 2016/10/09 01:40:43 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -75,7 +75,6 @@ int	armv7_submatch(struct device *, void *, void *);
 /* board identification - from uboot */
 #define BOARD_ID_OMAP3_BEAGLE 1546
 #define BOARD_ID_OMAP3_OVERO 1798
-#define BOARD_ID_VEXPRESS 2272
 #define BOARD_ID_OMAP4_PANDA 2791
 #define BOARD_ID_EXYNOS4_SMDKC210 2838
 #define BOARD_ID_EXYNOS4_NURI 3379
