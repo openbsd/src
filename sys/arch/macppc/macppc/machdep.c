@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.178 2016/09/18 14:28:25 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.179 2016/10/09 11:25:40 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -784,7 +784,8 @@ haltsys:
 	OF_interpret("reset-all", 0);
 	OF_exit();
 	printf("boot failed, spinning\n");
-	for (;;) ;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 

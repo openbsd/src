@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.64 2015/02/11 07:05:39 dlg Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.65 2016/10/09 11:25:40 tom Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -572,7 +572,8 @@ cpu_emergency_disable()
 	set_psr(get_psr() | PSR_IND);
 	splhigh();
 
-	for (;;) ;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 

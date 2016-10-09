@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 2016/10/09 11:25:40 tom Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -149,5 +149,7 @@ _rtt(void)
 	*((volatile uint32_t *)(RCR)) = RCR_SWHR;
 
 	printf("RESET FAILED\n");
-	for (;;) ;
+	for (;;)
+		continue;
+	/* NOTREACHED */
 }

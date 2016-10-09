@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.12 2016/10/07 04:08:30 visa Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.13 2016/10/09 11:25:39 tom Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -272,7 +272,9 @@ wscngetc(dev_t dev)
 
 	return c;
 #else
-	for (;;) ;
+	for (;;)
+		continue;
+	/* NOTREACHED */
 #endif
 }
 

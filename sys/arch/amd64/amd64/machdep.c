@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.222 2016/09/18 14:28:24 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.223 2016/10/09 11:25:39 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -772,7 +772,8 @@ haltsys:
 	if (cpureset_delay > 0)
 		delay(cpureset_delay * 1000);
 	cpu_reset();
-	for (;;) ;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 
@@ -1660,7 +1661,9 @@ cpu_reset(void)
 	tlbflush(); 
 #endif
 
-	for (;;);
+	for (;;)
+		continue;
+	/* NOTREACHED */
 }
 
 /*

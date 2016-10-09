@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.120 2016/07/16 08:53:37 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.121 2016/10/09 11:25:40 tom Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -497,7 +497,8 @@ haltsys:
 		*((volatile unsigned *)0x6d000010) = 0;
 	}
 
-	for (;;) ;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 
@@ -742,7 +743,9 @@ secondary_pre_main()
 		printf("cpu%d: unable to get startup stack\n", ci->ci_cpuid);
 		hatch_pending_count--;
 		__cpu_simple_unlock(&cpu_hatch_mutex);
-		for (;;) ;
+		for (;;)
+			continue;
+		/* NOTREACHED */
 	}
 
 	return ci->ci_curpcb;

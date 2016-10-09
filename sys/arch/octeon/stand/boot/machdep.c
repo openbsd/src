@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2016/03/19 11:34:22 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 2016/10/09 11:25:40 tom Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -177,5 +177,7 @@ __dead void
 _rtt()
 {
 	octeon_xkphys_write_8(OCTEON_CIU_BASE + CIU_SOFT_RST, 1);
-	for (;;) ;
+	for (;;)
+		continue;
+	/* NOTREACHED */
 }

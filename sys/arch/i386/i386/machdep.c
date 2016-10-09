@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.590 2016/09/18 14:28:25 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.591 2016/10/09 11:25:39 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2711,7 +2711,8 @@ haltsys:
 
 	printf("rebooting...\n");
 	cpu_reset();
-	for (;;) ;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 
@@ -3436,7 +3437,9 @@ cpu_reset(void)
 	tlbflush();
 #endif
 
-	for (;;);
+	for (;;)
+		continue;
+	/* NOTREACHED */
 }
 
 void

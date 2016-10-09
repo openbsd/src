@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.175 2016/09/18 14:28:04 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.176 2016/10/09 11:25:39 tom Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1047,7 +1047,8 @@ haltsys:
 	printf("%s\n\n",
 	    (howto & RB_HALT) != 0 ? "halted." : "rebooting...");
 	prom_halt((howto & RB_HALT) != 0);
-	for (;;) ;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 

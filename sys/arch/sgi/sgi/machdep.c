@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.152 2016/08/16 13:03:58 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.153 2016/10/09 11:25:40 tom Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -302,7 +302,9 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		    sys_config.system_type);
 		bios_printf("Halting system.\n");
 		Bios_Halt();
-		for (;;) ;
+		for (;;)
+			continue;
+		/* NOTREACHED */
 	}
 
 	/*
@@ -492,7 +494,9 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		}
 		bios_printf("Halting system.\n");
 		Bios_Halt();
-		for (;;) ;
+		for (;;)
+			continue;
+		/* NOTREACHED */
 		break;
 	}
 
@@ -869,7 +873,8 @@ haltsys:
 	md_halt(howto);
 
 	printf("Failed!!! Please reset manually.\n");
-	for (;;) ;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 

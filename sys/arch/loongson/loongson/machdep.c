@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.66 2016/09/28 14:03:19 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.67 2016/10/09 11:25:39 tom Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -1021,7 +1021,8 @@ haltsys:
 		__reset();
 	}
 
-	for (;;) ;
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 
