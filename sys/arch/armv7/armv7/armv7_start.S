@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.10 2016/09/24 13:43:25 kettenis Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.11 2016/10/09 11:01:31 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -245,15 +245,6 @@ ENTRY(omap4_smc_call)
 	stmfd   sp!, {r2-r12, lr}
 	mov     r12, r0
 	mov     r0, r1
-#if 0
-	dsb
-#else
-	.word	0xf57ff040
-#endif
-#if 0
-	smc     #0	/* XXX or #1 ??? */
-#else
-	.word	0xe1600070
-#endif
+	dsb	sy
+	smc     #0
 	ldmfd   sp!, {r2-r12, pc}
-
