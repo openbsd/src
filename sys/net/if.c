@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.453 2016/10/07 08:18:22 rzalamena Exp $	*/
+/*	$OpenBSD: if.c,v 1.454 2016/10/09 20:05:10 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -93,6 +93,7 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
+#include <net/radix.h>	/* for rn_refines */
 #include <net/netisr.h>
 
 #include <netinet/in.h>
