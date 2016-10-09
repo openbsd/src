@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.11 2016/10/09 11:01:31 jsg Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.12 2016/10/09 23:46:23 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -40,6 +40,7 @@
 
 #define ELR	.long	0xe12ef30e		@ msr	ELR_hyp, lr
 #define ERET	.long	0xe160006e		@ eret
+#define HVC	.word	0xe1400070		@ hvc
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -192,6 +193,14 @@ mmu_init_table2:
 	.word 0	/* end of table */
 
 	.text
+
+ENTRY(smc_call)
+	smc	#0
+	bx	lr
+
+ENTRY(hvc_call)
+	HVC
+	bx	lr
 
 /*-
  * Copyright (c) 2011

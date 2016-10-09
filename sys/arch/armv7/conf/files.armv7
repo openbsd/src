@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.27 2016/10/07 07:24:21 patrick Exp $
+#	$OpenBSD: files.armv7,v 1.28 2016/10/09 23:46:23 jsg Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -87,3 +87,7 @@ file	arch/armv7/dev/pluart.c			pluart
 device	plrtc
 attach	plrtc at fdt
 file	arch/armv7/dev/plrtc.c			plrtc
+
+device	psci
+attach	psci at fdt
+file	arch/armv7/dev/psci.c			psci
