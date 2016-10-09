@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.924 2016/09/25 15:48:15 rpe Exp $
+#	$OpenBSD: install.sub,v 1.925 2016/10/09 10:20:53 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1330,6 +1330,7 @@ unpriv2() {
 install_files() {
 	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS \
 		_tmpfs _tmpsrc _cfile _fsrc _unver _t _issue _srclocal
+	local _unpriv=unpriv
 
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
@@ -1406,10 +1407,10 @@ install_files() {
 		_cfile=$_tmpsrc/SHA256
 		_srclocal=false
 		_t=Get/Verify
-		[[ $_src == file://* ]] && _srclocal=true _t='Verifying '
+		[[ $_src == file://* ]] && _srclocal=true _t='Verifying ' _unpriv=
 
 		# Fetch signature file.
-		! unpriv ftp -D "$_t" -Vmo - "$_src/SHA256.sig" >"$_cfile.sig" &&
+		! $_unpriv ftp -D "$_t" -Vmo - "$_src/SHA256.sig" >"$_cfile.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
 
 		# Verify signature file with public keys.
@@ -1424,7 +1425,7 @@ install_files() {
 			# Create a flag file in case ftp failed. Sets from net
 			# are written to prefetch area, the output of local sets
 			# is discarded.
-			( unpriv ftp -D "$_t" -Vmo - "$_src/$_f" || >"$_tmpsrc/fail" ) |
+			( $_unpriv ftp -D "$_t" -Vmo - "$_src/$_f" || >"$_tmpsrc/fail" ) |
 			( $_srclocal && unpriv2 sha256 >"$_tmpsrc/h" ||
 				unpriv2 -f "$_tmpsrc/h" sha256 -ph "$_tmpsrc/h" >"$_tmpsrc/$_f" )
 
@@ -1462,16 +1463,16 @@ install_files() {
 
 	for _f in $_get_sets; do
 		_fsrc="$_src/$_f"
-		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
+		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f" _unpriv=
 		case $_fsrc in
-		*.tgz)	unpriv ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt
+		*.tgz)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt
 			if [[ $_f == ?(x)base*.tgz && $MODE == install ]]; then
 				ftp -D Extracting -Vmo - \
 				file:///mnt/var/sysmerge/${_f%%base*}etc.tgz |
 				tar -zxphf - -C /mnt
 			fi
 			;;
-		*)	unpriv ftp -D Installing -Vmo - "$_fsrc" >"/mnt/$_f"
+		*)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" >"/mnt/$_f"
 			;;
 		esac
 		if (($?)); then
