@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.65 2016/10/09 11:25:40 tom Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.66 2016/10/09 20:16:50 guenther Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -191,8 +191,11 @@ setregs(p, pack, stack, retval)
 		 * won't be returning through the regular path, and
 		 * need to explicitely set up nip and fip (note that
 		 * 88110 do not need such a test).
+		 * Note that this isn't 100% correct, as it mishandles
+		 * a real execve() from userspace by process 1.  However
+		 * our init will never do that, so it's okay.
 		 */
-		if (p->p_pid == 1) {
+		if (p->p_p->ps_pid == 1) {
 			tf->tf_snip = tf->tf_sfip;
 			tf->tf_sfip += 4;
 		}
