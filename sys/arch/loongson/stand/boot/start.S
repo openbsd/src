@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.1 2010/02/14 22:39:33 miod Exp $	*/
+/*	$OpenBSD: start.S,v 1.2 2016/10/09 03:07:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -18,6 +18,7 @@
 
 #include <machine/asm.h>
 #include <machine/regdef.h>
+#include <mips64/mips_cpu.h>
 
 	.set	noreorder
 	.set	mips3
@@ -38,8 +39,8 @@ __start:
 	PTR_S	ra, pmon_ra		# save pmon return address
 	PTR_S	sp, pmon_sp		# and stack
 	move	sp, t0
-	jal	pmon_init		# pmon_init(argc, argv, envp, callvec)
-	nop
+	jal	pmon_init		# pmon_init(argc, argv, envp, callvec,
+	mfc0	a4, COP_0_PRID		#     prid)
 	jal	main
 	nop
 	/* FALLTHROUGH */
