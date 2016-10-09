@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.20 2016/10/07 18:52:36 patrick Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.21 2016/10/09 11:14:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -28,13 +28,14 @@
 #include <arm/cpufunc.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 #include <machine/intr.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/fdt.h>
 
 #ifdef DEBUG_CCMU
 #define DPRINTF(x)	do { printf x; } while (0)
@@ -64,10 +65,11 @@ struct sxiccmu_softc {
 	struct reset_device	sc_rd;
 };
 
+int	sxiccmu_match(struct device *, void *, void *);
 void	sxiccmu_attach(struct device *, struct device *, void *);
 
 struct cfattach	sxiccmu_ca = {
-	sizeof (struct sxiccmu_softc), NULL, sxiccmu_attach
+	sizeof (struct sxiccmu_softc), sxiccmu_match, sxiccmu_attach
 };
 
 struct cfdriver sxiccmu_cd = {
@@ -81,39 +83,49 @@ int	sxiccmu_ccu_set_frequency(void *, uint32_t *, uint32_t);
 void	sxiccmu_ccu_enable(void *, uint32_t *, int);
 void	sxiccmu_ccu_reset(void *, uint32_t *, int);
 
+int
+sxiccmu_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	if (faa->fa_node == OF_finddevice("/clocks")) {
+		int node = OF_parent(faa->fa_node);
+
+		return (OF_is_compatible(node, "allwinner,sun4i-a10") ||
+		    OF_is_compatible(node, "allwinner,sun5i-a10s") ||
+		    OF_is_compatible(node, "allwinner,sun5i-r8") ||
+		    OF_is_compatible(node, "allwinner,sun7i-a20") ||
+		    OF_is_compatible(node, "allwinner,sun8i-h3"));
+	}
+
+	return OF_is_compatible(faa->fa_node, "allwinner,sun8i-h3-ccu");
+}
+
 void
-sxiccmu_attach(struct device *parent, struct device *self, void *args)
+sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sxiccmu_softc *sc = (struct sxiccmu_softc *)self;
-	struct armv7_attach_args *aa = args;
-	int node;
+	struct fdt_attach_args *faa = aux;
+	int node = faa->fa_node;
 
-	sc->sc_iot = aa->aa_iot;
-
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("sxiccmu_attach: bus_space_map failed!");
-
-	node = OF_finddevice("/clocks");
-	if (node == -1)
-		panic("%s: can't find clocks", __func__);
+	sc->sc_iot = faa->fa_iot;
+	if (faa->fa_nreg > 0 && bus_space_map(sc->sc_iot,
+	    faa->fa_reg[0].addr, faa->fa_reg[0].size, 0, &sc->sc_ioh))
+		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
 
-	for (node = OF_child(node); node; node = OF_peer(node))
-		sxiccmu_attach_clock(sc, node);
-
-	node = OF_finddevice("/soc/clock@01c20000");
-	if (node == -1)
-		return;
-
 	if (OF_is_compatible(node, "allwinner,sun8i-h3-ccu")) {
+		KASSERT(faa->fa_nreg > 0);
 		sc->sc_gates = sun8i_h3_gates;
 		sc->sc_ngates = nitems(sun8i_h3_gates);
 		sc->sc_resets = sun8i_h3_resets;
 		sc->sc_nresets = nitems(sun8i_h3_resets);
+	} else {
+		for (node = OF_child(node); node; node = OF_peer(node))
+			sxiccmu_attach_clock(sc, node);
 	}
-		
+
 	if (sc->sc_gates) {
 		sc->sc_cd.cd_node = node;
 		sc->sc_cd.cd_cookie = sc;

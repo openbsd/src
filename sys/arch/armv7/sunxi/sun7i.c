@@ -1,4 +1,4 @@
-/* $OpenBSD: sun7i.c,v 1.6 2016/10/08 09:50:14 kettenis Exp $ */
+/* $OpenBSD: sun7i.c,v 1.7 2016/10/09 11:14:22 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -25,12 +25,6 @@
 #include <armv7/sunxi/sunxireg.h>
 
 struct armv7_dev sxia20_devs[] = {
-
-	/* Clock Control Module/Unit */
-	{ .name = "sxiccmu",
-	  .unit = 0,
-	  .mem = { { CCMU_ADDR, CCMU_SIZE } },
-	},
 
 	/* Terminator */
 	{ .name = NULL,

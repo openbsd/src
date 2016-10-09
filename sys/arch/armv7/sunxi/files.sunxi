@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sunxi,v 1.14 2016/10/08 09:50:14 kettenis Exp $
+#	$OpenBSD: files.sunxi,v 1.15 2016/10/09 11:14:22 kettenis Exp $
 
 define	sunxi {}
 device	sunxi: sunxi
@@ -9,7 +9,7 @@ file	arch/armv7/sunxi/sun4i.c
 file	arch/armv7/sunxi/sun7i.c
 
 device	sxiccmu
-attach	sxiccmu at sunxi
+attach	sxiccmu at fdt
 file	arch/armv7/sunxi/sxiccmu.c		sxiccmu
 
 device	sxipio {}: gpiobus
