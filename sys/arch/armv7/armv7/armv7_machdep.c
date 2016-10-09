@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.43 2016/10/08 17:02:48 tom Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.44 2016/10/09 00:53:43 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -219,6 +219,7 @@ int comcnmode = CONMODE;
 int stdout_node = 0;
 
 void (*cpuresetfn)(void);
+void (*powerdownfn)(void);
 
 /*
  * void boot(int howto, char *bootstr)
@@ -274,7 +275,8 @@ haltsys:
 		if ((howto & RB_POWERDOWN) != 0) {
 			printf("\nAttempting to power down...\n");
 			delay(500000);
-			platform_powerdown();
+			if (powerdownfn)
+				(*powerdownfn)();
 		}
 
 		printf("The operating system has halted.\n");
