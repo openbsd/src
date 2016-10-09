@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.66 2016/10/06 19:09:08 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.67 2016/10/09 19:33:34 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ sbunlock(struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
 {
-	int s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
 
 	selwakeup(&sb->sb_sel);
 	sb->sb_flagsintr &= ~SB_SEL;
@@ -323,7 +323,6 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 		sb->sb_flagsintr &= ~SB_WAIT;
 		wakeup(&sb->sb_cc);
 	}
-	splx(s);
 	if (so->so_state & SS_ASYNC)
 		csignal(so->so_pgid, SIGIO, so->so_siguid, so->so_sigeuid);
 }
