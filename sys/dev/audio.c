@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.155 2016/10/06 05:29:19 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.156 2016/10/09 11:37:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1800,45 +1800,57 @@ audiopoll(dev_t dev, int events, struct proc *p)
 int
 wskbd_initmute(struct audio_softc *sc, struct mixer_devinfo *vol)
 {
-	struct mixer_devinfo mi;
+	struct mixer_devinfo *mi;
+	int index = -1;
 
-	mi.index = vol->next;
-	for (mi.index = vol->next; mi.index != -1; mi.index = mi.next) {
-		if (sc->ops->query_devinfo(sc->arg, &mi) != 0)
+	mi = malloc(sizeof(struct mixer_devinfo), M_TEMP, M_WAITOK);
+
+	for (mi->index = vol->next; mi->index != -1; mi->index = mi->next) {
+		if (sc->ops->query_devinfo(sc->arg, mi) != 0)
 			break;
-		if (strcmp(mi.label.name, AudioNmute) == 0)
-			return mi.index;
+		if (strcmp(mi->label.name, AudioNmute) == 0) {
+			index = mi->index;
+			break;
+		}
 	}
-	return -1;
+
+	free(mi, M_TEMP, sizeof(struct mixer_devinfo));
+	return index;
 }
 
 int
 wskbd_initvol(struct audio_softc *sc, struct wskbd_vol *vol, char *cn, char *dn)
 {
-	struct mixer_devinfo dev, cls;
+	struct mixer_devinfo *dev, *cls;
 
-	for (dev.index = 0; ; dev.index++) {
-		if (sc->ops->query_devinfo(sc->arg, &dev) != 0)
+	vol->val = vol->mute = -1;
+	dev = malloc(sizeof(struct mixer_devinfo), M_TEMP, M_WAITOK);
+	cls = malloc(sizeof(struct mixer_devinfo), M_TEMP, M_WAITOK);
+
+	for (dev->index = 0; ; dev->index++) {
+		if (sc->ops->query_devinfo(sc->arg, dev) != 0)
 			break;
-		if (dev.type != AUDIO_MIXER_VALUE)
+		if (dev->type != AUDIO_MIXER_VALUE)
 			continue;
-		cls.index = dev.mixer_class;
-		if (sc->ops->query_devinfo(sc->arg, &cls) != 0)
+		cls->index = dev->mixer_class;
+		if (sc->ops->query_devinfo(sc->arg, cls) != 0)
 			continue;
-		if (strcmp(cls.label.name, cn) == 0 &&
-		    strcmp(dev.label.name, dn) == 0) {
-			vol->val = dev.index;
-			vol->nch = dev.un.v.num_channels;
-			vol->step = dev.un.v.delta > 8 ? dev.un.v.delta : 8;
-			vol->mute = wskbd_initmute(sc, &dev);
+		if (strcmp(cls->label.name, cn) == 0 &&
+		    strcmp(dev->label.name, dn) == 0) {
+			vol->val = dev->index;
+			vol->nch = dev->un.v.num_channels;
+			vol->step = dev->un.v.delta > 8 ? dev->un.v.delta : 8;
+			vol->mute = wskbd_initmute(sc, dev);
 			vol->val_pending = vol->mute_pending = 0;
-			DPRINTF("%s: wskbd using %s.%s%s\n",
-			    DEVNAME(sc), cn, dn, vol->mute >= 0 ? ", mute control" : "");
-			return 1;
+			DPRINTF("%s: wskbd using %s.%s%s\n", DEVNAME(sc),
+			    cn, dn, vol->mute >= 0 ? ", mute control" : "");
+			break;
 		}
 	}
-	vol->val = vol->mute = -1;
-	return 0;
+
+	free(cls, M_TEMP, sizeof(struct mixer_devinfo));
+	free(dev, M_TEMP, sizeof(struct mixer_devinfo));
+	return (vol->val != -1);
 }
 
 void
