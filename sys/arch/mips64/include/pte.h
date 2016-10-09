@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.20 2016/09/06 13:41:29 visa Exp $	*/
+/*	$OpenBSD: pte.h,v 1.21 2016/10/09 03:29:53 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,7 @@ typedef u_int32_t pt_entry_t;
 #define	PTE_OFFS	4
 #endif
 
-#ifdef CPU_MIPS64R2
+#if defined(CPU_MIPS64R2) && !defined(CPU_LOONGSON2)
 #define	PTE_CLEAR_SWBITS(reg)						\
 	.set	push;							\
 	.set	mips64r2;						\
