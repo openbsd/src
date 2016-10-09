@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.230 2016/01/08 17:48:04 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.231 2016/10/09 18:16:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -629,10 +629,10 @@ termp_it_pre(DECL_ARGS)
 		width = term_len(p, 2);
 		break;
 	case LIST_hang:
+	case LIST_tag:
 		width = term_len(p, 8);
 		break;
 	case LIST_column:
-	case LIST_tag:
 		width = term_len(p, 10);
 		break;
 	default:

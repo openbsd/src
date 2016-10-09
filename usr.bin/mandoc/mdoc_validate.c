@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.224 2016/08/20 14:43:39 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.225 2016/10/09 18:16:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -65,7 +65,6 @@ static	void	 post_bf(POST_ARGS);
 static	void	 post_bk(POST_ARGS);
 static	void	 post_bl(POST_ARGS);
 static	void	 post_bl_block(POST_ARGS);
-static	void	 post_bl_block_tag(POST_ARGS);
 static	void	 post_bl_head(POST_ARGS);
 static	void	 post_bl_norm(POST_ARGS);
 static	void	 post_bx(POST_ARGS);
@@ -1090,22 +1089,7 @@ post_bl_block(POST_ARGS)
 
 	post_prevpar(mdoc);
 
-	/*
-	 * These are fairly complicated, so we've broken them into two
-	 * functions.  post_bl_block_tag() is called when a -tag is
-	 * specified, but no -width (it must be guessed).  The second
-	 * when a -width is specified (macro indicators must be
-	 * rewritten into real lengths).
-	 */
-
 	n = mdoc->last;
-
-	if (n->norm->Bl.type == LIST_tag &&
-	    n->norm->Bl.width == NULL) {
-		post_bl_block_tag(mdoc);
-		assert(n->norm->Bl.width != NULL);
-	}
-
 	for (ni = n->body->child; ni != NULL; ni = ni->next) {
 		if (ni->body == NULL)
 			continue;
@@ -1160,71 +1144,6 @@ rewrite_macro2len(char **arg)
 
 	free(*arg);
 	mandoc_asprintf(arg, "%zun", width);
-}
-
-static void
-post_bl_block_tag(POST_ARGS)
-{
-	struct roff_node *n, *nn;
-	size_t		  sz, ssz;
-	int		  i;
-	char		  buf[24];
-
-	/*
-	 * Calculate the -width for a `Bl -tag' list if it hasn't been
-	 * provided.  Uses the first head macro.  NOTE AGAIN: this is
-	 * ONLY if the -width argument has NOT been provided.  See
-	 * rewrite_macro2len() for converting the -width string.
-	 */
-
-	sz = 10;
-	n = mdoc->last;
-
-	for (nn = n->body->child; nn != NULL; nn = nn->next) {
-		if (nn->tok != MDOC_It)
-			continue;
-
-		assert(nn->type == ROFFT_BLOCK);
-		nn = nn->head->child;
-
-		if (nn == NULL)
-			break;
-
-		if (nn->type == ROFFT_TEXT) {
-			sz = strlen(nn->string) + 1;
-			break;
-		}
-
-		if (0 != (ssz = macro2len(nn->tok)))
-			sz = ssz;
-
-		break;
-	}
-
-	/* Defaults to ten ens. */
-
-	(void)snprintf(buf, sizeof(buf), "%un", (unsigned int)sz);
-
-	/*
-	 * We have to dynamically add this to the macro's argument list.
-	 * We're guaranteed that a MDOC_Width doesn't already exist.
-	 */
-
-	assert(n->args != NULL);
-	i = (int)(n->args->argc)++;
-
-	n->args->argv = mandoc_reallocarray(n->args->argv,
-	    n->args->argc, sizeof(struct mdoc_argv));
-
-	n->args->argv[i].arg = MDOC_Width;
-	n->args->argv[i].line = n->line;
-	n->args->argv[i].pos = n->pos;
-	n->args->argv[i].sz = 1;
-	n->args->argv[i].value = mandoc_malloc(sizeof(char *));
-	n->args->argv[i].value[0] = mandoc_strdup(buf);
-
-	/* Set our width! */
-	n->norm->Bl.width = n->args->argv[i].value[0];
 }
 
 static void

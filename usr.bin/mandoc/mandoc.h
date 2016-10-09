@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.151 2016/01/08 02:53:09 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.152 2016/10/09 18:16:46 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -98,7 +98,7 @@ enum	mandocerr {
 	MANDOCERR_ARG_EMPTY, /* empty argument, using 0n: macro arg */
 	MANDOCERR_BD_NOTYPE, /* missing display type, using -ragged: Bd */
 	MANDOCERR_BL_LATETYPE, /* list type is not the first argument: Bl arg */
-	MANDOCERR_BL_NOWIDTH, /* missing -width in -tag list, using 8n */
+	MANDOCERR_BL_NOWIDTH, /* missing -width in -tag list, using 6n */
 	MANDOCERR_EX_NONAME, /* missing utility name, using "": Ex */
 	MANDOCERR_FO_NOHEAD, /* missing function name, using "": Fo */
 	MANDOCERR_IT_NOHEAD, /* empty head in list item: Bl -type It */
