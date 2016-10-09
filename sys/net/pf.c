@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.988 2016/10/06 19:09:08 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.989 2016/10/09 18:01:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -264,7 +264,7 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 
 #define STATE_LOOKUP(i, k, d, s, m)					\
 	do {								\
-		s = pf_find_state(i, k, d, m);			\
+		s = pf_find_state(i, k, d, m);				\
 		if (s == NULL || (s)->timeout == PFTM_PURGE)		\
 			return (PF_DROP);				\
 		if (d == PF_OUT &&					\
