@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.441 2016/10/09 14:23:10 natano Exp $
+#	$OpenBSD: Makefile,v 1.442 2016/10/09 20:55:16 natano Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -259,10 +259,6 @@ release:
 	fi; \
 	if [[ `stat -f '%Su %Lp' $${destmp}` != '${BUILDUSER} 700' ]]; then \
 		echo $${destmp} must have owner BUILDUSER and mode 700 >&2; \
-		false; \
-	fi
-	@if [[ `stat -f '%Su %Lp' ${RELEASEDIR}` != '${BUILDUSER} 700' ]]; then \
-		echo ${RELEASEDIR} must have owner BUILDUSER and mode 700 >&2; \
 		false; \
 	fi
 	${MAKE} release-sets
