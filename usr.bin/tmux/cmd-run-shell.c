@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.36 2016/02/12 12:24:52 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.37 2016/10/09 08:06:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -97,7 +97,7 @@ cmd_run_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 	shellcmd = format_expand(ft, args->argv[0]);
 	format_free(ft);
 
-	cdata = xmalloc(sizeof *cdata);
+	cdata = xcalloc(1, sizeof *cdata);
 	cdata->cmd = shellcmd;
 	cdata->bflag = args_has(args, 'b');
 	cdata->wp_id = wp != NULL ? (int) wp->id : -1;
