@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.10 2016/10/10 18:10:40 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.11 2016/10/10 18:13:21 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -65,12 +65,6 @@ rm_tree(char **argv)
 	FTSENT *p;
 	int flags;
 
-	/*
-	 * If the -i option is specified, the user can skip on the pre-order
-	 * visit.  The fts_number field flags skipped directories.
-	 */
-#define	SKIPPED	1
-
 	flags = FTS_PHYSICAL;
 	flags |= FTS_NOSTAT;
 	if (!(fts = fts_open(argv, flags, NULL)))
@@ -86,20 +80,8 @@ rm_tree(char **argv)
 			continue;
 		case FTS_ERR:
 			errc(1, p->fts_errno, "%s", p->fts_path);
-		case FTS_NS:
-			/*
-			 * FTS_NS: assume that if can't stat the file, it
-			 * can't be unlinked.
-			 */
-			break;
 		case FTS_D:
-			/* Pre-order: give user chance to skip. */
 			continue;
-		case FTS_DP:
-			/* Post-order: see if user skipped. */
-			if (p->fts_number == SKIPPED)
-				continue;
-			break;
 		default:
 			break;
 		}
