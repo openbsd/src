@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.9 2016/09/12 16:24:37 krw Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.10 2016/10/10 08:33:32 bluhm Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 12 2016 $
+.Dd $Mdocdate: October 10 2016 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
@@ -96,7 +96,7 @@ is valid.
 specifies the number of instructions in
 .Fa pc .
 .Pp
-.Fn bfp_tap
+.Fn bpf_tap
 runs the filters on the BPF interface referenced by
 .Fa bpf
 in the direction
@@ -105,7 +105,7 @@ against the packet in the
 .Fa pkt
 buffer.
 .Pp
-.Fn bfp_mtap
+.Fn bpf_mtap
 runs the filters on the BPF interface referenced by
 .Fa bpf
 in the direction
@@ -113,7 +113,7 @@ in the direction
 against the packet in mbuf chain
 .Fa m .
 .Pp
-.Fn bfp_mtap_hdr
+.Fn bpf_mtap_hdr
 runs the filters on the BPF interface referenced by
 .Fa bpf
 in the direction
