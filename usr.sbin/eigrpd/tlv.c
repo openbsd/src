@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.14 2016/09/02 16:46:29 renato Exp $ */
+/*	$OpenBSD: tlv.c,v 1.15 2016/10/10 02:26:24 gsoares Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -103,7 +103,7 @@ gen_sw_version_tlv(struct ibuf *buf)
 	memset(&ts, 0, sizeof(ts));
 	ts.type = htons(TLV_TYPE_SW_VERSION);
 	ts.length = htons(TLV_TYPE_SW_VERSION_LEN);
-	if (uname(&u) == 0) {
+	if (uname(&u) >= 0) {
 		if (sscanf(u.release, "%u.%u", &vendor_os_major,
 		    &vendor_os_minor) == 2) {
 			ts.vendor_os_major = (uint8_t) vendor_os_major;
