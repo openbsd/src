@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: etherip_1.sh,v 1.1 2016/10/07 02:06:57 yasuoka Exp $
+#	$OpenBSD: etherip_1.sh,v 1.2 2016/10/10 18:25:26 bluhm Exp $
 
 
 cleanup()
@@ -38,13 +38,6 @@ ALL_IFS="bridge$IFNO2 bridge$IFNO1 vether$IFNO2 vether$IFNO1 etherip$IFNO2
 #
 # Check pre-conditions
 #
-# etherip is enabled by sysctl?
-VAL=$(sysctl -n net.inet.etherip.allow)
-VAL=${VAL:-0}
-if [ $VAL -eq 0 ]; then
-	echo "SKIPPED  Disabled etherip by sysctl net.inet.etherip.allow" >&2
-	exit 255
-fi
 # interfaces are busy?
 for if in $ALL_IFS; do
 	if iface_exists $if; then
