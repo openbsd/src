@@ -34,8 +34,7 @@ our %args = (
 	    qr{Server CAfile fake-ca.crt} => 1,
 	    qr{tls logger .* accepted} => 1,
 	    qr/syslogd: tls logger .* connection error: /.
-		qr/handshake failed: error:.*/.
-		qr/RSA_padding_check_PKCS1_type_1:block type is not 01/ => 1,
+		qr/handshake failed: error:.*RSA_/ => 1,
 	},
     },
     server => {

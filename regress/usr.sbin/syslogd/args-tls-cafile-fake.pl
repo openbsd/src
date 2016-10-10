@@ -16,8 +16,7 @@ our %args = (
 	    qr/CAfile fake-ca.crt/ => 1,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
 	    qr/syslogd: loghost .* connection error: /.
-		qr/handshake failed: error:.*/.
-		qr/RSA_padding_check_PKCS1_type_1:block type is not 01/ => 2,
+		qr/handshake failed: error:.*RSA_/ => 2,
 	    get_testgrep() => 1,
 	},
 	cacrt => "fake-ca.crt",
