@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.36 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.37 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,9 +33,9 @@
  * Open pipe to redirect pane output. If already open, close first.
  */
 
-enum cmd_retval	 cmd_pipe_pane_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_pipe_pane_exec(struct cmd *, struct cmd_q *);
 
-void	cmd_pipe_pane_error_callback(struct bufferevent *, short, void *);
+static void cmd_pipe_pane_error_callback(struct bufferevent *, short, void *);
 
 const struct cmd_entry cmd_pipe_pane_entry = {
 	.name = "pipe-pane",
@@ -50,7 +50,7 @@ const struct cmd_entry cmd_pipe_pane_entry = {
 	.exec = cmd_pipe_pane_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_pipe_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
@@ -142,7 +142,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 }
 
-void
+static void
 cmd_pipe_pane_error_callback(__unused struct bufferevent *bufev,
     __unused short what, void *data)
 {

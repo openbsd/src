@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.42 2016/03/05 07:47:52 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.43 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -31,8 +31,9 @@
  * Loads a paste buffer from a file.
  */
 
-enum cmd_retval	 cmd_load_buffer_exec(struct cmd *, struct cmd_q *);
-void		 cmd_load_buffer_callback(struct client *, int, void *);
+static enum cmd_retval	 cmd_load_buffer_exec(struct cmd *, struct cmd_q *);
+
+static void		 cmd_load_buffer_callback(struct client *, int, void *);
 
 const struct cmd_entry cmd_load_buffer_entry = {
 	.name = "load-buffer",
@@ -45,7 +46,7 @@ const struct cmd_entry cmd_load_buffer_entry = {
 	.exec = cmd_load_buffer_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_load_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
@@ -132,7 +133,7 @@ error:
 	return (CMD_RETURN_ERROR);
 }
 
-void
+static void
 cmd_load_buffer_callback(struct client *c, int closed, void *data)
 {
 	const char	*bufname = data;

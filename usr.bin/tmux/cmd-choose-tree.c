@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.31 2015/12/14 00:31:54 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.32 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -41,7 +41,7 @@
 	"#{window_index}: #{window_name}#{window_flags} "	\
 	"\"#{pane_title}\""
 
-enum cmd_retval	cmd_choose_tree_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_choose_tree_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_choose_tree_entry = {
 	.name = "choose-tree",
@@ -83,7 +83,7 @@ const struct cmd_entry cmd_choose_window_entry = {
 	.exec = cmd_choose_tree_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_choose_tree_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args			*args = self->args;

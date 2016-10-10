@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.36 2016/08/25 09:33:14 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.37 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -32,7 +32,7 @@
 	"#{window_name}, current pane #{pane_index} "	\
 	"- (%H:%M %d-%b-%y)"
 
-enum cmd_retval	 cmd_display_message_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_display_message_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_display_message_entry = {
 	.name = "display-message",
@@ -49,7 +49,7 @@ const struct cmd_entry cmd_display_message_entry = {
 	.exec = cmd_display_message_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;

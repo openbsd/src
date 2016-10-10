@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.20 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.21 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,7 +28,7 @@
  * Respawn a pane (restart the command). Kill existing if -k given.
  */
 
-enum cmd_retval	 cmd_respawn_pane_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_respawn_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_respawn_pane_entry = {
 	.name = "respawn-pane",
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_respawn_pane_entry = {
 	.exec = cmd_respawn_pane_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_respawn_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;

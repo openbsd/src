@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.28 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.29 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -27,7 +27,7 @@
  * Send keys to client.
  */
 
-enum cmd_retval	 cmd_send_keys_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_send_keys_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_send_keys_entry = {
 	.name = "send-keys",
@@ -55,7 +55,7 @@ const struct cmd_entry cmd_send_prefix_entry = {
 	.exec = cmd_send_keys_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_send_keys_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;

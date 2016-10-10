@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-move-window.c,v 1.26 2016/10/03 22:52:11 nicm Exp $ */
+/* $OpenBSD: cmd-move-window.c,v 1.27 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -26,7 +26,7 @@
  * Move a window.
  */
 
-enum cmd_retval	 cmd_move_window_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_move_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_move_window_entry = {
 	.name = "move-window",
@@ -56,7 +56,7 @@ const struct cmd_entry cmd_link_window_entry = {
 	.exec = cmd_move_window_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_move_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;

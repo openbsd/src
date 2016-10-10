@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unbind-key.c,v 1.25 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-unbind-key.c,v 1.26 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -26,9 +26,9 @@
  * Unbind key from command.
  */
 
-enum cmd_retval	cmd_unbind_key_exec(struct cmd *, struct cmd_q *);
-enum cmd_retval	cmd_unbind_key_mode_table(struct cmd *, struct cmd_q *,
-		    key_code);
+static enum cmd_retval	cmd_unbind_key_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_unbind_key_mode_table(struct cmd *, struct cmd_q *,
+			    key_code);
 
 const struct cmd_entry cmd_unbind_key_entry = {
 	.name = "unbind-key",
@@ -41,7 +41,7 @@ const struct cmd_entry cmd_unbind_key_entry = {
 	.exec = cmd_unbind_key_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_unbind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
@@ -98,7 +98,7 @@ cmd_unbind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 	return (CMD_RETURN_NORMAL);
 }
 
-enum cmd_retval
+static enum cmd_retval
 cmd_unbind_key_mode_table(struct cmd *self, struct cmd_q *cmdq, key_code key)
 {
 	struct args			*args = self->args;

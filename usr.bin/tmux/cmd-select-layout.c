@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.29 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.30 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -26,7 +26,7 @@
  * Switch window to selected layout.
  */
 
-enum cmd_retval	 cmd_select_layout_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_select_layout_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_select_layout_entry = {
 	.name = "select-layout",
@@ -67,7 +67,7 @@ const struct cmd_entry cmd_previous_layout_entry = {
 	.exec = cmd_select_layout_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_select_layout_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;

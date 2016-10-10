@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-environment.c,v 1.18 2016/03/03 14:15:22 nicm Exp $ */
+/* $OpenBSD: cmd-set-environment.c,v 1.19 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -27,7 +27,7 @@
  * Set an environment variable.
  */
 
-enum cmd_retval	 cmd_set_environment_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_set_environment_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_set_environment_entry = {
 	.name = "set-environment",
@@ -42,7 +42,7 @@ const struct cmd_entry cmd_set_environment_entry = {
 	.exec = cmd_set_environment_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_set_environment_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;

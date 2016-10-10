@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.37 2016/03/01 11:58:45 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.38 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,7 +28,7 @@
 
 #define BREAK_PANE_TEMPLATE "#{session_name}:#{window_index}.#{pane_index}"
 
-enum cmd_retval	 cmd_break_pane_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_break_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_break_pane_entry = {
 	.name = "break-pane",
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_break_pane_entry = {
 	.exec = cmd_break_pane_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_break_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;

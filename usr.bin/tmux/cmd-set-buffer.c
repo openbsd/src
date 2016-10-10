@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.25 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.26 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -27,7 +27,7 @@
  * Add, set, append to or delete a paste buffer.
  */
 
-enum cmd_retval	 cmd_set_buffer_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_set_buffer_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_set_buffer_entry = {
 	.name = "set-buffer",
@@ -51,7 +51,7 @@ const struct cmd_entry cmd_delete_buffer_entry = {
 	.exec = cmd_set_buffer_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_set_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;

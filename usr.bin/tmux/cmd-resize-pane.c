@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.24 2016/10/10 17:28:30 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.25 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -26,9 +26,10 @@
  * Increase or decrease pane size.
  */
 
-enum cmd_retval	 cmd_resize_pane_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_resize_pane_exec(struct cmd *, struct cmd_q *);
 
-void	cmd_resize_pane_mouse_update(struct client *, struct mouse_event *);
+static void	cmd_resize_pane_mouse_update(struct client *,
+		    struct mouse_event *);
 
 const struct cmd_entry cmd_resize_pane_entry = {
 	.name = "resize-pane",
@@ -44,7 +45,7 @@ const struct cmd_entry cmd_resize_pane_entry = {
 	.exec = cmd_resize_pane_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_resize_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
@@ -123,7 +124,7 @@ cmd_resize_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	return (CMD_RETURN_NORMAL);
 }
 
-void
+static void
 cmd_resize_pane_mouse_update(struct client *c, struct mouse_event *m)
 {
 	struct winlink		*wl;
@@ -154,12 +155,14 @@ cmd_resize_pane_mouse_update(struct client *c, struct mouse_event *m)
 			continue;
 
 		if (wp->xoff + wp->sx == m->lx &&
-		    wp->yoff <= 1 + ly && wp->yoff + wp->sy >= ly) {
+		    wp->yoff <= 1 + ly &&
+		    wp->yoff + wp->sy >= ly) {
 			layout_resize_pane(wp, LAYOUT_LEFTRIGHT, m->x - m->lx, 0);
 			found = 1;
 		}
 		if (wp->yoff + wp->sy == ly &&
-		    wp->xoff <= 1 + m->lx && wp->xoff + wp->sx >= m->lx) {
+		    wp->xoff <= 1 + m->lx &&
+		    wp->xoff + wp->sx >= m->lx) {
 			layout_resize_pane(wp, LAYOUT_TOPBOTTOM, y - ly, 0);
 			found = 1;
 		}

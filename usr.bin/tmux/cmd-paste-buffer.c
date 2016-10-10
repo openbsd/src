@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.34 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.35 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,10 +28,7 @@
  * Paste paste buffer if present.
  */
 
-enum cmd_retval	 cmd_paste_buffer_exec(struct cmd *, struct cmd_q *);
-
-void	cmd_paste_buffer_filter(struct window_pane *,
-	    const char *, size_t, const char *, int);
+static enum cmd_retval	 cmd_paste_buffer_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_paste_buffer_entry = {
 	.name = "paste-buffer",
@@ -47,7 +44,7 @@ const struct cmd_entry cmd_paste_buffer_entry = {
 	.exec = cmd_paste_buffer_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;

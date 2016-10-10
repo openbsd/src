@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.29 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.30 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -30,7 +30,7 @@
 #define CHOOSE_BUFFER_TEMPLATE						\
 	"#{buffer_name}: #{buffer_size} bytes: #{buffer_sample}"
 
-enum cmd_retval	 cmd_choose_buffer_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_choose_buffer_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_choose_buffer_entry = {
 	.name = "choose-buffer",
@@ -45,7 +45,7 @@ const struct cmd_entry cmd_choose_buffer_entry = {
 	.exec = cmd_choose_buffer_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_choose_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args			*args = self->args;

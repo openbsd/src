@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.26 2016/09/12 15:40:58 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.27 2016/10/10 21:51:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -27,10 +27,10 @@
  * Bind a key to a command, this recurses through cmd_*.
  */
 
-enum cmd_retval	 cmd_bind_key_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	 cmd_bind_key_exec(struct cmd *, struct cmd_q *);
 
-enum cmd_retval	 cmd_bind_key_mode_table(struct cmd *, struct cmd_q *,
-		     key_code);
+static enum cmd_retval	 cmd_bind_key_mode_table(struct cmd *, struct cmd_q *,
+			     key_code);
 
 const struct cmd_entry cmd_bind_key_entry = {
 	.name = "bind-key",
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_bind_key_entry = {
 	.exec = cmd_bind_key_exec
 };
 
-enum cmd_retval
+static enum cmd_retval
 cmd_bind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
@@ -93,7 +93,7 @@ cmd_bind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 	return (CMD_RETURN_NORMAL);
 }
 
-enum cmd_retval
+static enum cmd_retval
 cmd_bind_key_mode_table(struct cmd *self, struct cmd_q *cmdq, key_code key)
 {
 	struct args			*args = self->args;
