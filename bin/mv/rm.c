@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.8 2016/10/10 18:07:03 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.9 2016/10/10 18:09:40 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -46,40 +46,19 @@
 #include <pwd.h>
 #include <grp.h>
 
-#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
-
-extern char *__progname;
-
-static int eval, stdin_ok;
+static int eval;
 
 static void	checkdot(char **);
 static void	rm_tree(char **);
 
-static void __dead
-usage(void)
-{
-	(void)fprintf(stderr, "usage: %s [-dfiPRr] file ...\n", __progname);
-	exit(1);
-}
-
-/*
- * rm --
- *	This rm is different from historic rm's, but is expected to match
- *	POSIX 1003.2 behavior.  The most visible difference is that -f
- *	has two specific effects now, ignore non-existent files and force
- * 	file removal.
- */
 int
 rmmain(int argc, char *argv[])
 {
 
 	checkdot(argv);
 
-	if (*argv) {
-		stdin_ok = isatty(STDIN_FILENO);
-
+	if (*argv)
 		rm_tree(argv);
-	}
 
 	return (eval);
 }
