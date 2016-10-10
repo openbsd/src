@@ -1190,6 +1190,7 @@
 ./usr/share/man/man4/armv7/plrtc.4
 ./usr/share/man/man4/armv7/pluart.4
 ./usr/share/man/man4/armv7/prcm.4
+./usr/share/man/man4/armv7/psci.4
 ./usr/share/man/man4/armv7/sitaracm.4
 ./usr/share/man/man4/armv7/sunxi.4
 ./usr/share/man/man4/armv7/sxiccmu.4
@@ -1200,7 +1201,6 @@
 ./usr/share/man/man4/armv7/sxipio.4
 ./usr/share/man/man4/armv7/sxitimer.4
 ./usr/share/man/man4/armv7/sysreg.4
-./usr/share/man/man4/armv7/vexpress.4
 ./usr/share/man/man4/arp.4
 ./usr/share/man/man4/asbtm.4
 ./usr/share/man/man4/asmc.4
