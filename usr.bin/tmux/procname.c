@@ -1,4 +1,4 @@
-/* $OpenBSD: procname.c,v 1.15 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: procname.c,v 1.16 2016/10/10 21:29:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,10 +36,10 @@
 #define is_stopped(p) \
 	((p)->p_stat == SSTOP || (p)->p_stat == SDEAD)
 
-struct kinfo_proc	*cmp_procs(struct kinfo_proc *, struct kinfo_proc *);
-char			*get_proc_name(int, char *);
+static struct kinfo_proc *cmp_procs(struct kinfo_proc *, struct kinfo_proc *);
+char	*get_proc_name(int, char *);
 
-struct kinfo_proc *
+static struct kinfo_proc *
 cmp_procs(struct kinfo_proc *p1, struct kinfo_proc *p2)
 {
 	if (is_runnable(p1) && !is_runnable(p2))

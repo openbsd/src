@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-set.c,v 1.15 2016/08/03 09:07:02 nicm Exp $ */
+/* $OpenBSD: layout-set.c,v 1.16 2016/10/10 21:29:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -27,11 +27,11 @@
  * one-off and generate a layout tree.
  */
 
-void	layout_set_even_h(struct window *);
-void	layout_set_even_v(struct window *);
-void	layout_set_main_h(struct window *);
-void	layout_set_main_v(struct window *);
-void	layout_set_tiled(struct window *);
+static void	layout_set_even_h(struct window *);
+static void	layout_set_even_v(struct window *);
+static void	layout_set_main_h(struct window *);
+static void	layout_set_main_v(struct window *);
+static void	layout_set_tiled(struct window *);
 
 const struct {
 	const char	*name;
@@ -114,7 +114,7 @@ layout_set_previous(struct window *w)
 	return (layout);
 }
 
-void
+static void
 layout_set_even_h(struct window *w)
 {
 	struct window_pane	*wp;
@@ -168,7 +168,7 @@ layout_set_even_h(struct window *w)
 	server_redraw_window(w);
 }
 
-void
+static void
 layout_set_even_v(struct window *w)
 {
 	struct window_pane	*wp;
@@ -222,7 +222,7 @@ layout_set_even_v(struct window *w)
 	server_redraw_window(w);
 }
 
-void
+static void
 layout_set_main_h(struct window *w)
 {
 	struct window_pane	*wp;
@@ -345,7 +345,7 @@ layout_set_main_h(struct window *w)
 	server_redraw_window(w);
 }
 
-void
+static void
 layout_set_main_v(struct window *w)
 {
 	struct window_pane	*wp;

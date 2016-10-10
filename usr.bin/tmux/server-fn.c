@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.99 2016/06/16 10:55:47 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.100 2016/10/10 21:29:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,8 +28,8 @@
 
 #include "tmux.h"
 
-struct session *server_next_session(struct session *);
-void		server_callback_identify(int, short, void *);
+static struct session	*server_next_session(struct session *);
+static void		 server_callback_identify(int, short, void *);
 
 void
 server_fill_environ(struct session *s, struct environ *env)
@@ -355,7 +355,7 @@ server_destroy_session_group(struct session *s)
 	}
 }
 
-struct session *
+static struct session *
 server_next_session(struct session *s)
 {
 	struct session *s_loop, *s_out;
@@ -454,7 +454,7 @@ server_clear_identify(struct client *c, struct window_pane *wp)
 	server_redraw_client(c);
 }
 
-void
+static void
 server_callback_identify(__unused int fd, __unused short events, void *data)
 {
 	server_clear_identify(data, NULL);

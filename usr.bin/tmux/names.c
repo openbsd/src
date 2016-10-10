@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.35 2016/07/15 09:27:35 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.36 2016/10/10 21:29:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -25,10 +25,10 @@
 
 #include "tmux.h"
 
-void	name_time_callback(int, short, void *);
-int	name_time_expired(struct window *, struct timeval *);
+static void	name_time_callback(int, short, void *);
+static int	name_time_expired(struct window *, struct timeval *);
 
-void
+static void
 name_time_callback(__unused int fd, __unused short events, void *arg)
 {
 	struct window	*w = arg;
@@ -37,7 +37,7 @@ name_time_callback(__unused int fd, __unused short events, void *arg)
 	log_debug("@%u name timer expired", w->id);
 }
 
-int
+static int
 name_time_expired(struct window *w, struct timeval *tv)
 {
 	struct timeval	offset;

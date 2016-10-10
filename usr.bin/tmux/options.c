@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.19 2016/09/26 09:02:34 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.20 2016/10/10 21:29:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -35,8 +35,7 @@ struct options {
 };
 
 static int	options_cmp(struct options_entry *, struct options_entry *);
-RB_PROTOTYPE(options_tree, options_entry, entry, options_cmp);
-RB_GENERATE(options_tree, options_entry, entry, options_cmp);
+RB_GENERATE_STATIC(options_tree, options_entry, entry, options_cmp);
 
 static void	options_free1(struct options *, struct options_entry *);
 

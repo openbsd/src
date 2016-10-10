@@ -1,4 +1,4 @@
-/* $OpenBSD: environ.c,v 1.15 2016/07/15 09:52:34 nicm Exp $ */
+/* $OpenBSD: environ.c,v 1.16 2016/10/10 21:29:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,11 +28,10 @@
  */
 
 RB_HEAD(environ, environ_entry);
-int	environ_cmp(struct environ_entry *, struct environ_entry *);
-RB_PROTOTYPE(environ, environ_entry, entry, environ_cmp);
-RB_GENERATE(environ, environ_entry, entry, environ_cmp);
+static int environ_cmp(struct environ_entry *, struct environ_entry *);
+RB_GENERATE_STATIC(environ, environ_entry, entry, environ_cmp);
 
-int
+static int
 environ_cmp(struct environ_entry *envent1, struct environ_entry *envent2)
 {
 	return (strcmp(envent1->name, envent2->name));

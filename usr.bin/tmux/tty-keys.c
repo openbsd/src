@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.89 2016/04/29 10:42:16 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.90 2016/10/10 21:29:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -50,7 +50,7 @@ struct tty_default_key_raw {
 	const char	       *string;
 	key_code	 	key;
 };
-const struct tty_default_key_raw tty_default_raw_keys[] = {
+static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	/*
 	 * Numeric keypad. Just use the vt100 escape sequences here and always
 	 * put the terminal into keypad_xmit mode. Translation of numbers
@@ -170,7 +170,7 @@ struct tty_default_key_code {
 	enum tty_code_code	code;
 	key_code	 	key;
 };
-const struct tty_default_key_code tty_default_code_keys[] = {
+static const struct tty_default_key_code tty_default_code_keys[] = {
 	/* Function keys. */
 	{ TTYC_KF1, KEYC_F1 },
 	{ TTYC_KF2, KEYC_F2 },

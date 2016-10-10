@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.170 2016/05/27 17:05:42 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.171 2016/10/10 21:29:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,10 +44,10 @@ struct hooks	*global_hooks;
 struct timeval	 start_time;
 const char	*socket_path;
 
-__dead void	 usage(void);
-static char	*make_label(const char *);
+static __dead void	 usage(void);
+static char		*make_label(const char *);
 
-__dead void
+static __dead void
 usage(void)
 {
 	fprintf(stderr,

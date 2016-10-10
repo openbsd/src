@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.40 2016/09/02 20:57:20 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.41 2016/10/10 21:29:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -24,8 +24,8 @@
 
 #include "tmux.h"
 
-void	screen_resize_x(struct screen *, u_int);
-void	screen_resize_y(struct screen *, u_int);
+static void	screen_resize_x(struct screen *, u_int);
+static void	screen_resize_y(struct screen *, u_int);
 
 /* Create a new screen. */
 void
@@ -139,7 +139,7 @@ screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
 		screen_reflow(s, sx);
 }
 
-void
+static void
 screen_resize_x(struct screen *s, u_int sx)
 {
 	struct grid		*gd = s->grid;
@@ -161,7 +161,7 @@ screen_resize_x(struct screen *s, u_int sx)
 	gd->sx = sx;
 }
 
-void
+static void
 screen_resize_y(struct screen *s, u_int sy)
 {
 	struct grid	*gd = s->grid;
@@ -221,8 +221,8 @@ screen_resize_y(struct screen *s, u_int sy)
 		needed = sy - oldy;
 
 		/*
-		 * Try to pull as much as possible out of scrolled history, if is
-		 * is enabled.
+		 * Try to pull as much as possible out of scrolled history, if
+		 * is is enabled.
 		 */
 		available = gd->hscrolled;
 		if (gd->flags & GRID_HISTORY && available > 0) {
