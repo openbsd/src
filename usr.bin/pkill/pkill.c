@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.38 2015/10/11 03:08:20 deraadt Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.39 2016/10/10 02:22:59 gsoares Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ SLIST_HEAD(listhead, list);
 
 struct kinfo_proc	*plist;
 char	*selected;
-char	*delim = "\n";
+const char	*delim = "\n";
 int	nproc;
 int	pgrep;
 int	signum = SIGTERM;
@@ -101,17 +101,16 @@ struct listhead tdevlist = SLIST_HEAD_INITIALIZER(list);
 struct listhead sidlist = SLIST_HEAD_INITIALIZER(list);
 struct listhead rtablist = SLIST_HEAD_INITIALIZER(list);
 
-int	main(int, char **);
-void	usage(void);
-int	killact(struct kinfo_proc *, int);
-int	grepact(struct kinfo_proc *, int);
-void	makelist(struct listhead *, enum listtype, char *);
-char	*getargv(struct kinfo_proc *);
-int	askyn(struct kinfo_proc *);
+static void __dead	usage(void);
+static int	killact(struct kinfo_proc *, int);
+static int	grepact(struct kinfo_proc *, int);
+static void	makelist(struct listhead *, enum listtype, char *);
+static char	*getargv(struct kinfo_proc *);
+static int	askyn(struct kinfo_proc *);
 
 extern char *__progname;
 
-char *
+static char *
 getargv(struct kinfo_proc *kp)
 {
 	static char buf[_POSIX2_LINE_MAX];
@@ -141,8 +140,6 @@ getargv(struct kinfo_proc *kp)
 int
 main(int argc, char **argv)
 {
-	extern char *optarg;
-	extern int optind;
 	char buf[_POSIX2_LINE_MAX], *mstr, *p, *q;
 	int i, j, ch, bestidx, rv, criteria;
 	int (*action)(struct kinfo_proc *, int);
@@ -276,10 +273,10 @@ main(int argc, char **argv)
 	if (matchargs == 0 && confirmkill == 0) {
 		if (action == killact) {
 			if (pledge("stdio proc", NULL) == -1)
-				err(1, "pledge");
+				err(STATUS_ERROR, "pledge");
 		} else if (action == grepact) {
 			if (pledge("stdio", NULL) == -1)
-				err(1, "pledge");
+				err(STATUS_ERROR, "pledge");
 		}
 	}
 
@@ -460,10 +457,10 @@ main(int argc, char **argv)
 	if (pgrep && j && !quiet)
 		putchar('\n');
 
-	exit(rv);
+	return(rv);
 }
 
-void
+static void __dead
 usage(void)
 {
 	const char *ustr;
@@ -480,7 +477,7 @@ usage(void)
 	exit(STATUS_BADUSAGE);
 }
 
-int
+static int
 askyn(struct kinfo_proc *kp)
 {
 	int first, ch;
@@ -494,7 +491,7 @@ askyn(struct kinfo_proc *kp)
 	return (first == 'y' || first == 'Y');
 }
 
-int
+static int
 killact(struct kinfo_proc *kp, int dummy)
 {
 	int doit;
@@ -516,7 +513,7 @@ killact(struct kinfo_proc *kp, int dummy)
 	return (STATUS_MATCH);
 }
 
-int
+static int
 grepact(struct kinfo_proc *kp, int printdelim)
 {
 	char **argv;
@@ -543,7 +540,7 @@ grepact(struct kinfo_proc *kp, int printdelim)
 	return (STATUS_MATCH);
 }
 
-void
+static void
 makelist(struct listhead *head, enum listtype type, char *src)
 {
 	struct list *li;
