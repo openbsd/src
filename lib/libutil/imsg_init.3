@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.15 2015/12/29 18:05:23 benno Exp $
+.\" $OpenBSD: imsg_init.3,v 1.16 2016/10/10 17:15:30 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 29 2015 $
+.Dd $Mdocdate: October 10 2016 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -501,9 +501,12 @@ library is used to monitor the socket file descriptor.
 When the socket is ready for writing, queued messages are transmitted with
 .Fn msgbuf_write :
 .Bd -literal -offset indent
-	if (msgbuf_write(&ibuf-\*(Gtw) \*(Lt= 0 && errno != EAGAIN) {
+	if ((n = msgbuf_write(&ibuf-\*(Gtw)) == -1 && errno != EAGAIN) {
 		/* handle write failure */
 	}
+	if (n == 0) {
+		/* handle closed connection */
+	}	
 .Ed
 .Pp
 And when ready for reading, messages are first received using
@@ -518,8 +521,11 @@ dispatch_imsg(struct imsgbuf *ibuf)
 	ssize_t         n, datalen;
 	int		idata;
 
-	if (((n = imsg_read(ibuf)) == -1 && errno != EAGAIN) || n == 0) {
-		/* handle socket error */
+	if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN) {
+		/* handle read error */
+	}
+	if (n == 0) {
+		/* handle closed connection */
 	}
 
 	for (;;) {
