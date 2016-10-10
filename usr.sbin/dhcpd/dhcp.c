@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.49 2016/10/06 16:12:43 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.50 2016/10/10 15:53:36 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -1224,18 +1224,12 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->tree = NULL;
 	}
 
-	/* Echo back the relay agent information, if present */
+	/*
+	 * RFC 3046: MUST NOT echo relay agent information if the server
+	 * does not understand/use the data. We don't.
+	 */
 	i = DHO_RELAY_AGENT_INFORMATION;
-	if (state->giaddr.s_addr && !state->options[i] &&
-	    packet->options[i].data && packet->options[i].len) {
-		state->options[i] = new_tree_cache("relay-agent-information");
-		state->options[i]->flags = TC_TEMPORARY;
-		state->options[i]->value = packet->options[i].data;
-		state->options[i]->len = packet->options[i].len;
-		state->options[i]->buf_size = packet->options[i].len;
-		state->options[i]->timeout = -1;
-		state->options[i]->tree = NULL;
-	}
+	memset(&state->options[i], 0, sizeof(state->options[i]));
 
 	/* Echo back the client-identifier as RFC 6842 mandates. */
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
