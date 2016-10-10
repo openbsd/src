@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.231 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.232 2016/10/10 00:34:50 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -603,9 +603,13 @@ m_copym(struct mbuf *m0, int off, int len, int wait)
 			n->m_data = m->m_data + off;
 			n->m_ext = m->m_ext;
 			MCLADDREFERENCE(m, n);
-		} else
+		} else {
+			n->m_data += m->m_data -
+			    (m->m_flags & M_PKTHDR ? m->m_pktdat : m->m_dat);
+			n->m_data += off;
 			memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
 			    n->m_len);
+		}
 		if (len != M_COPYALL)
 			len -= n->m_len;
 		off += n->m_len;
