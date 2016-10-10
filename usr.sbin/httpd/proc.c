@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.30 2016/10/05 17:13:53 rzalamena Exp $	*/
+/*	$OpenBSD: proc.c,v 1.31 2016/10/10 11:13:48 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -317,7 +317,7 @@ proc_setup(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 		ps->ps_title[id] = procs[src].p_title;
 		if ((ps->ps_ievs[id] = calloc(ps->ps_instances[id],
 		    sizeof(struct imsgev))) == NULL)
-			fatal(__func__);
+			fatal("%s: calloc", __func__);
 
 		/* With this set up, we are ready to call imsg_init(). */
 		for (i = 0; i < ps->ps_instances[id]; i++) {
@@ -426,7 +426,7 @@ proc_open(struct privsep *ps, int src, int dst)
 			if (socketpair(AF_UNIX,
 			    SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
 			    PF_UNSPEC, fds) == -1)
-				fatal(__func__);
+				fatal("%s: socketpair", __func__);
 
 			pa->pp_pipes[dst][j] = fds[0];
 			pb->pp_pipes[src][i] = fds[1];
@@ -522,10 +522,10 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 
 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
 		if (control_init(ps, &ps->ps_csock) == -1)
-			fatalx(__func__);
+			fatalx("%s: control_init", __func__);
 		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
 			if (control_init(ps, rcs) == -1)
-				fatalx(__func__);
+				fatalx("%s: control_init", __func__);
 	}
 
 	/* Use non-standard user */
@@ -575,10 +575,10 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
 		TAILQ_INIT(&ctl_conns);
 		if (control_listen(&ps->ps_csock) == -1)
-			fatalx(__func__);
+			fatalx("%s: control_listen", __func__);
 		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
 			if (control_listen(rcs) == -1)
-				fatalx(__func__);
+				fatalx("%s: control_listen", __func__);
 	}
 
 	DPRINTF("%s: %s %d/%d, pid %d", __func__, p->p_title,
@@ -610,7 +610,7 @@ proc_dispatch(int fd, short event, void *arg)
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal(__func__);
+			fatal("%s: imsg_read", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			event_del(&iev->ev);
@@ -621,12 +621,12 @@ proc_dispatch(int fd, short event, void *arg)
 
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			fatal(__func__);
+			fatal("%s: msgbuf_write", __func__);
 	}
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal(__func__);
+			fatal("%s: imsg_get", __func__);
 		if (n == 0)
 			break;
 
@@ -661,12 +661,11 @@ proc_dispatch(int fd, short event, void *arg)
 			    pf.pf_instance);
 			break;
 		default:
-			log_warnx("%s: %s %d got invalid imsg %d peerid %d "
+			fatalx("%s: %s %d got invalid imsg %d peerid %d "
 			    "from %s %d",
 			    __func__, title, ps->ps_instance + 1,
 			    imsg.hdr.type, imsg.hdr.peerid,
 			    p->p_title, imsg.hdr.pid);
-			fatalx(__func__);
 		}
 		imsg_free(&imsg);
 	}
