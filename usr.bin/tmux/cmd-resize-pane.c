@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.23 2016/03/01 12:06:07 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.24 2016/10/10 17:28:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -111,13 +111,13 @@ cmd_resize_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	if (args_has(self->args, 'L'))
-		layout_resize_pane(wp, LAYOUT_LEFTRIGHT, -adjust);
+		layout_resize_pane(wp, LAYOUT_LEFTRIGHT, -adjust, 1);
 	else if (args_has(self->args, 'R'))
-		layout_resize_pane(wp, LAYOUT_LEFTRIGHT, adjust);
+		layout_resize_pane(wp, LAYOUT_LEFTRIGHT, adjust, 1);
 	else if (args_has(self->args, 'U'))
-		layout_resize_pane(wp, LAYOUT_TOPBOTTOM, -adjust);
+		layout_resize_pane(wp, LAYOUT_TOPBOTTOM, -adjust, 1);
 	else if (args_has(self->args, 'D'))
-		layout_resize_pane(wp, LAYOUT_TOPBOTTOM, adjust);
+		layout_resize_pane(wp, LAYOUT_TOPBOTTOM, adjust, 1);
 	server_redraw_window(wl->window);
 
 	return (CMD_RETURN_NORMAL);
@@ -155,12 +155,12 @@ cmd_resize_pane_mouse_update(struct client *c, struct mouse_event *m)
 
 		if (wp->xoff + wp->sx == m->lx &&
 		    wp->yoff <= 1 + ly && wp->yoff + wp->sy >= ly) {
-			layout_resize_pane(wp, LAYOUT_LEFTRIGHT, m->x - m->lx);
+			layout_resize_pane(wp, LAYOUT_LEFTRIGHT, m->x - m->lx, 0);
 			found = 1;
 		}
 		if (wp->yoff + wp->sy == ly &&
 		    wp->xoff <= 1 + m->lx && wp->xoff + wp->sx >= m->lx) {
-			layout_resize_pane(wp, LAYOUT_TOPBOTTOM, y - ly);
+			layout_resize_pane(wp, LAYOUT_TOPBOTTOM, y - ly, 0);
 			found = 1;
 		}
 	}
