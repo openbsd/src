@@ -182,6 +182,30 @@ test_bit(u_int b, volatile void *p)
 	return !!(((volatile u_int *)p)[b >> 5] & (1 << (b & 0x1f)));
 }
 
+extern const struct hv_guid hv_guid_network;
+extern const struct hv_guid hv_guid_ide;
+extern const struct hv_guid hv_guid_scsi;
+extern const struct hv_guid hv_guid_shutdown;
+extern const struct hv_guid hv_guid_timesync;
+extern const struct hv_guid hv_guid_heartbeat;
+extern const struct hv_guid hv_guid_kvp;
+#ifdef HYPERV_DEBUG
+extern const struct hv_guid hv_guid_vss;
+extern const struct hv_guid hv_guid_dynmem;
+extern const struct hv_guid hv_guid_mouse;
+extern const struct hv_guid hv_guid_kbd;
+extern const struct hv_guid hv_guid_video;
+extern const struct hv_guid hv_guid_fc;
+extern const struct hv_guid hv_guid_fcopy;
+extern const struct hv_guid hv_guid_pcie;
+extern const struct hv_guid hv_guid_netdir;
+extern const struct hv_guid hv_guid_rdesktop;
+extern const struct hv_guid hv_guid_avma1;
+extern const struct hv_guid hv_guid_avma2;
+extern const struct hv_guid hv_guid_avma3;
+extern const struct hv_guid hv_guid_avma4;
+#endif	/* HYPERV_DEBUG */
+
 int	hv_handle_alloc(struct hv_channel *, void *, uint32_t, uint32_t *);
 void	hv_handle_free(struct hv_channel *, uint32_t);
 int	hv_channel_open(struct hv_channel *, void *, size_t, void (*)(void *),

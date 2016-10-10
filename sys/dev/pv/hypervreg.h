@@ -40,9 +40,7 @@ struct hv_guid {
 #define VMBUS_GPADL_START		0xffff /* 0x10000 effectively */
 
 /*
- * ============================================================================
- * hyperv_reg.h
- * ============================================================================
+ * $FreeBSD: head/sys/dev/hyperv/vmbus/hyperv_reg.h 303283 2016-07-25 03:12:40Z sephe $
  */
 
 /*
@@ -202,9 +200,7 @@ struct hypercall_postmsg_in {
 } __packed;
 
 /*
- * ============================================================================
- * vmbus.h
- * ============================================================================
+ * $FreeBSD: head/sys/dev/hyperv/include/vmbus.h 306389 2016-09-28 04:25:25Z sephe $
  */
 
 /*
@@ -265,9 +261,7 @@ struct vmbus_chanpkt_hdr {
 	    VMBUS_CHANPKT_GETLEN((pkt)->cph_hlen)))
 
 /*
- * ============================================================================
- * vmbus_reg.h
- * ============================================================================
+ * $FreeBSD: head/sys/dev/hyperv/vmbus/vmbus_reg.h 305405 2016-09-05 03:21:31Z sephe $
  */
 
 /*
@@ -620,19 +614,5 @@ struct hv_heartbeat_msg {
 	uint64_t 	seq_num;
 	uint32_t 	reserved[8];
 } __packed;
-
-/*
- * ============================================================================
- * Helper macros
- * ============================================================================
- */
-
-/* How many PFNs can be referenced by the header */
-#define HV_NPFNHDR	((VMBUS_MSG_DSIZE_MAX -	\
-	  sizeof(struct vmbus_chanmsg_gpadl_conn)) / sizeof(uint64_t))
-
-/* How many PFNs can be referenced by the body */
-#define HV_NPFNBODY	((VMBUS_MSG_DSIZE_MAX -	\
-	  sizeof(struct vmbus_chanmsg_gpadl_subconn)) / sizeof(uint64_t))
 
 #endif	/* _DEV_PV_HYPERVREG_H_ */
