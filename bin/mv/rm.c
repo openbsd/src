@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.9 2016/10/10 18:09:40 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.10 2016/10/10 18:10:40 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -31,8 +31,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mount.h>
 
 #include <err.h>
 #include <errno.h>
@@ -42,9 +40,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
-#include <pwd.h>
-#include <grp.h>
 
 static int eval;
 
