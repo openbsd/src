@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootsect.h,v 1.6 2015/10/23 10:45:31 krw Exp $	*/
+/*	$OpenBSD: bootsect.h,v 1.7 2016/10/10 00:34:50 bluhm Exp $	*/
 /*	$NetBSD: bootsect.h,v 1.8 1997/10/17 11:23:29 ws Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ struct bootsector50 {
 struct bootsector710 {
 	u_int8_t	bsJump[3];		/* jump inst E9xxxx or EBxx90 */
 	int8_t		bsOEMName[8];		/* OEM name and version */
-	int8_t		bsPBP[53];		/* BIOS parameter block */
+	int8_t		bsBPB[53];		/* BIOS parameter block */
 	int8_t		bsExt[26];		/* Bootsector Extension */
 	int8_t		bsBootCode[418];	/* pad so structure is 512b */
 	u_int8_t	bsBootSectSig2;		/* 2 & 3 are only defined for FAT32? */

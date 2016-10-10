@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.23 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.24 2016/10/10 00:34:50 bluhm Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ readboot(int dosfs, struct bootblock *boot)
 		 * the two-byte signature at the end, the BIOS parameter
 		 * block (which starts after the 3-byte JMP and the 8-byte
 		 * OEM name/version) and the filesystem information that
-		 * follows the BPB (bsPBP[53] and bsExt[26] for FAT32, so we
+		 * follows the BPB (bsBPB[53] and bsExt[26] for FAT32, so we
 		 * check 79 bytes).
 		 */
 		if (backup[510] != 0x55 || backup[511] != 0xaa) {
