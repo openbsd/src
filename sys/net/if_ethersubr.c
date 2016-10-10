@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.239 2016/07/12 09:33:13 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.240 2016/10/10 02:44:17 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -286,9 +286,10 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if (mcopy)
 		if_input_local(ifp, mcopy, dst->sa_family);
 
-	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
+	M_PREPEND(m, sizeof(struct ether_header) + ETHER_ALIGN, M_DONTWAIT);
 	if (m == NULL)
 		return (ENOBUFS);
+	m_adj(m, ETHER_ALIGN);
 	eh = mtod(m, struct ether_header *);
 	eh->ether_type = etype;
 	memcpy(eh->ether_dhost, edst, sizeof(eh->ether_dhost));

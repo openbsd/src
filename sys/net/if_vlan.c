@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.166 2016/09/03 13:46:57 reyk Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.167 2016/10/10 02:44:17 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -315,9 +315,11 @@ vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
 	evh.evl_encap_proto = htons(type);
 	evh.evl_tag = htons(tag);
 	m_adj(m, ETHER_HDR_LEN);
-	M_PREPEND(m, sizeof(evh), M_DONTWAIT);
+	M_PREPEND(m, sizeof(evh) + ETHER_ALIGN, M_DONTWAIT);
 	if (m == NULL)
 		return (NULL);
+
+	m_adj(m, ETHER_ALIGN);
 
 	m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
 	CLR(m->m_flags, M_VLANTAG);
