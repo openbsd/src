@@ -1,4 +1,4 @@
-/*	$OpenBSD: uname.c,v 1.17 2015/12/24 15:01:24 tb Exp $	*/
+/*	$OpenBSD: uname.c,v 1.18 2016/10/10 02:23:54 gsoares Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 		print_mask = PRINT_SYSNAME;
 	}
 
-	if (uname(&u))
+	if (uname(&u) == -1)
 		err(1, NULL);
 
 	if (print_mask & PRINT_SYSNAME) {
