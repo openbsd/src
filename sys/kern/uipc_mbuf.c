@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.232 2016/10/10 00:34:50 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.233 2016/10/10 00:41:17 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -914,24 +914,24 @@ m_getptr(struct mbuf *m, int loc, int *off)
 	while (loc >= 0) {
 		/* Normal end of search */
 		if (m->m_len > loc) {
-	    		*off = loc;
-	    		return (m);
+			*off = loc;
+			return (m);
 		} else {
-	    		loc -= m->m_len;
+			loc -= m->m_len;
 
-	    		if (m->m_next == NULL) {
+			if (m->m_next == NULL) {
 				if (loc == 0) {
- 					/* Point at the end of valid data */
-		    			*off = m->m_len;
-		    			return (m);
+					/* Point at the end of valid data */
+					*off = m->m_len;
+					return (m);
 				} else {
-		  			return (NULL);
+					return (NULL);
 				}
-	    		} else {
+			} else {
 				m = m->m_next;
 			}
 		}
-    	}
+	}
 
 	return (NULL);
 }
