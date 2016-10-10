@@ -1,4 +1,4 @@
-/*	$OpenBSD: sub.c,v 1.16 2016/08/02 20:17:06 martijn Exp $	*/
+/*	$OpenBSD: sub.c,v 1.17 2016/10/10 17:36:03 martijn Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed
@@ -182,7 +182,7 @@ substitute_matching_text(regex_t *pat, line_t *lp, int gflag, int kth)
 	int changed = 0;
 	int matchno = 0;
 	int i = 0;
-	int inf = 0;
+	int nempty = -1;
 	regmatch_t rm[SE_MAX];
 	char *txt;
 	char *eot, *eom;
@@ -194,6 +194,12 @@ substitute_matching_text(regex_t *pat, line_t *lp, int gflag, int kth)
 	eot = txt + lp->len;
 	if (!regexec(pat, txt, SE_MAX, rm, 0)) {
 		do {
+/* Don't do a 0-length match directly after a non-0-length */
+			if (rm[0].rm_eo == nempty) {
+				rm[0].rm_so++;
+				rm[0].rm_eo = lp->len;
+				continue;
+			}
 			if (!kth || kth == ++matchno) {
 				changed = 1;
 				i = rm[0].rm_so - (eom - txt);
@@ -211,18 +217,14 @@ substitute_matching_text(regex_t *pat, line_t *lp, int gflag, int kth)
 					break;
 			}
 			if (rm[0].rm_so == rm[0].rm_eo)
-				inf = 1;
-			rm[0].rm_so = rm[0].rm_eo;
+				rm[0].rm_so = rm[0].rm_eo + 1;
+			else
+				nempty = rm[0].rm_so = rm[0].rm_eo;
 			rm[0].rm_eo = lp->len;
 		} while (rm[0].rm_so < lp->len &&
-		    (!changed || ((gflag & GSG) && !inf)) &&
 		    !regexec(pat, txt, SE_MAX, rm, REG_STARTEND | REG_NOTBOL));
 		i = eot - eom;
 		REALLOC(rbuf, rbufsz, off + i + 2, ERR);
-		if (i > 0 && (gflag & GSG) && inf) {
-			seterrmsg("infinite substitution loop");
-			return  ERR;
-		}
 		if (isbinary)
 			NEWLINE_TO_NUL(eom, i);
 		memcpy(rbuf + off, eom, i);
