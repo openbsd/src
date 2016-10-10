@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.13 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.14 2016/10/10 13:54:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -35,12 +35,13 @@ struct args_entry {
 	RB_ENTRY(args_entry)	 entry;
 };
 
-struct args_entry	*args_find(struct args *, u_char);
+static struct args_entry	*args_find(struct args *, u_char);
 
-RB_GENERATE(args_tree, args_entry, entry, args_cmp);
+static int	args_cmp(struct args_entry *, struct args_entry *);
+RB_GENERATE_STATIC(args_tree, args_entry, entry, args_cmp);
 
 /* Arguments tree comparison function. */
-int
+static int
 args_cmp(struct args_entry *a1, struct args_entry *a2)
 {
 	return (a1->flag - a2->flag);
@@ -71,7 +72,7 @@ args_create(int argc, ...)
 }
 
 /* Find a flag in the arguments tree. */
-struct args_entry *
+static struct args_entry *
 args_find(struct args *args, u_char ch)
 {
 	struct args_entry	entry;

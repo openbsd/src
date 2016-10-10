@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.648 2016/10/09 16:24:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.649 2016/10/10 13:54:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1798,8 +1798,6 @@ void		tty_keys_free(struct tty *);
 key_code	tty_keys_next(struct tty *);
 
 /* arguments.c */
-int		 args_cmp(struct args_entry *, struct args_entry *);
-RB_PROTOTYPE(args_tree, args_entry, entry, args_cmp);
 struct args	*args_create(int, ...);
 struct args	*args_parse(const char *, int, char **);
 void		 args_free(struct args *);
