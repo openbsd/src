@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.171 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.172 2016/10/11 13:21:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,6 +47,9 @@ const char	*socket_path;
 static __dead void	 usage(void);
 static char		*make_label(const char *);
 
+static const char	*getshell(void);
+static int		 checkshell(const char *);
+
 static __dead void
 usage(void)
 {
@@ -57,7 +60,7 @@ usage(void)
 	exit(1);
 }
 
-const char *
+static const char *
 getshell(void)
 {
 	struct passwd	*pw;
@@ -74,7 +77,7 @@ getshell(void)
 	return (_PATH_BSHELL);
 }
 
-int
+static int
 checkshell(const char *shell)
 {
 	if (shell == NULL || *shell == '\0' || *shell != '/')

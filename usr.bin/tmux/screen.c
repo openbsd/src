@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.41 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.42 2016/10/11 13:21:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -26,6 +26,8 @@
 
 static void	screen_resize_x(struct screen *, u_int);
 static void	screen_resize_y(struct screen *, u_int);
+
+static void	screen_reflow(struct screen *, u_int);
 
 /* Create a new screen. */
 void
@@ -370,7 +372,7 @@ screen_check_selection(struct screen *s, u_int px, u_int py)
 }
 
 /* Reflow wrapped lines. */
-void
+static void
 screen_reflow(struct screen *s, u_int new_x)
 {
 	struct grid	*old = s->grid;

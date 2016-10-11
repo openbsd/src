@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.100 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.101 2016/10/11 13:21:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -30,6 +30,7 @@
 
 static struct session	*server_next_session(struct session *);
 static void		 server_callback_identify(int, short, void *);
+static void		 server_destroy_session_group(struct session *);
 
 void
 server_fill_environ(struct session *s, struct environ *env)
@@ -339,7 +340,7 @@ server_destroy_pane(struct window_pane *wp, int hooks)
 		server_redraw_window(w);
 }
 
-void
+static void
 server_destroy_session_group(struct session *s)
 {
 	struct session_group	*sg;

@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.36 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.37 2016/10/11 13:21:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -25,8 +25,10 @@
 
 #include "tmux.h"
 
-static void	name_time_callback(int, short, void *);
-static int	name_time_expired(struct window *, struct timeval *);
+static void	 name_time_callback(int, short, void *);
+static int	 name_time_expired(struct window *, struct timeval *);
+
+static char	*format_window_name(struct window *);
 
 static void
 name_time_callback(__unused int fd, __unused short events, void *arg)
@@ -115,7 +117,7 @@ default_window_name(struct window *w)
 	return (s);
 }
 
-char *
+static char *
 format_window_name(struct window *w)
 {
 	struct format_tree	*ft;
