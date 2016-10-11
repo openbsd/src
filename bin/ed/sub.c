@@ -1,4 +1,4 @@
-/*	$OpenBSD: sub.c,v 1.17 2016/10/10 17:36:03 martijn Exp $	*/
+/*	$OpenBSD: sub.c,v 1.18 2016/10/11 06:54:05 martijn Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed
@@ -221,7 +221,7 @@ substitute_matching_text(regex_t *pat, line_t *lp, int gflag, int kth)
 			else
 				nempty = rm[0].rm_so = rm[0].rm_eo;
 			rm[0].rm_eo = lp->len;
-		} while (rm[0].rm_so < lp->len &&
+		} while (rm[0].rm_so < lp->len && (gflag & GSG || kth) &&
 		    !regexec(pat, txt, SE_MAX, rm, REG_STARTEND | REG_NOTBOL));
 		i = eot - eom;
 		REALLOC(rbuf, rbufsz, off + i + 2, ERR);
