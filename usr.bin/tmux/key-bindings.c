@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.58 2016/10/11 07:23:34 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.59 2016/10/11 09:30:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -263,6 +263,8 @@ key_bindings_init(void)
 		"bind -Tcopy-mode MouseDragEnd1Pane send -X copy-selection-and-cancel",
 		"bind -Tcopy-mode WheelUpPane send -N5 -X scroll-up",
 		"bind -Tcopy-mode WheelDownPane send -N5 -X scroll-down",
+		"bind -Tcopy-mode DoubleClick1Pane send -X select-word",
+		"bind -Tcopy-mode TripleClick1Pane send -X select-line",
 		"bind -Tcopy-mode NPage send -X page-down",
 		"bind -Tcopy-mode PPage send -X page-up",
 		"bind -Tcopy-mode Up send -X cursor-up",
@@ -359,6 +361,8 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi MouseDragEnd1Pane send -X copy-selection-and-cancel",
 		"bind -Tcopy-mode-vi WheelUpPane send -N5 -X scroll-up",
 		"bind -Tcopy-mode-vi WheelDownPane send -N5 -X scroll-down",
+		"bind -Tcopy-mode-vi DoubleClick1Pane send -X select-word",
+		"bind -Tcopy-mode-vi TripleClick1Pane send -X select-line",
 		"bind -Tcopy-mode-vi BSpace send -X cursor-left",
 		"bind -Tcopy-mode-vi NPage send -X page-down",
 		"bind -Tcopy-mode-vi PPage send -X page-up",

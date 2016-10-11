@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.39 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.40 2016/10/11 09:30:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -98,6 +98,12 @@ static const struct {
 	KEYC_MOUSE_STRING(MOUSEDRAGEND3, MouseDragEnd3),
 	KEYC_MOUSE_STRING(WHEELUP, WheelUp),
 	KEYC_MOUSE_STRING(WHEELDOWN, WheelDown),
+	KEYC_MOUSE_STRING(DOUBLECLICK1, DoubleClick1),
+	KEYC_MOUSE_STRING(DOUBLECLICK2, DoubleClick2),
+	KEYC_MOUSE_STRING(DOUBLECLICK3, DoubleClick3),
+	KEYC_MOUSE_STRING(TRIPLECLICK1, TripleClick1),
+	KEYC_MOUSE_STRING(TRIPLECLICK2, TripleClick2),
+	KEYC_MOUSE_STRING(TRIPLECLICK3, TripleClick3),
 };
 
 /* Find key string in table. */
