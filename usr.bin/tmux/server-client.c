@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.190 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.191 2016/10/11 07:23:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -95,6 +95,13 @@ server_client_get_key_table(struct client *c)
 	if (*name == '\0')
 		return ("root");
 	return (name);
+}
+
+/* Is this client using the default key table? */
+int
+server_client_is_default_key_table(struct client *c)
+{
+	return (strcmp(c->keytable->name, server_client_get_key_table(c)) == 0);
 }
 
 /* Create a new client. */
@@ -587,6 +594,7 @@ server_client_handle_key(struct client *c, key_code key)
 	struct window		*w;
 	struct window_pane	*wp;
 	struct timeval		 tv;
+	const char		*name;
 	struct key_table	*table;
 	struct key_binding	 bd_find, *bd;
 	int			 xtimeout;
@@ -595,6 +603,10 @@ server_client_handle_key(struct client *c, key_code key)
 	if (s == NULL || (c->flags & (CLIENT_DEAD|CLIENT_SUSPENDED)) != 0)
 		return;
 	w = s->curw->window;
+	if (KEYC_IS_MOUSE(key))
+		wp = cmd_mouse_pane(m, NULL, NULL);
+	else
+		wp = w->active;
 
 	/* Update the activity timer. */
 	if (gettimeofday(&c->activity_time, NULL) != 0)
@@ -645,9 +657,21 @@ server_client_handle_key(struct client *c, key_code key)
 		goto forward;
 
 retry:
+	/*
+	 * Work out the current key table. If the pane is in a mode, use
+	 * the mode table instead of the default key table.
+	 */
+	name = NULL;
+	if (wp != NULL && wp->mode != NULL && wp->mode->key_table != NULL)
+		name = wp->mode->key_table(wp);
+	if (name == NULL || !server_client_is_default_key_table(c))
+		table = c->keytable;
+	else
+		table = key_bindings_get_table(name, 1);
+
 	/* Try to see if there is a key binding in the current table. */
 	bd_find.key = key;
-	bd = RB_FIND(key_bindings, &c->keytable->key_bindings, &bd_find);
+	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
 	if (bd != NULL) {
 		/*
 		 * Key was matched in this table. If currently repeating but a
@@ -665,7 +689,6 @@ retry:
 		 * Take a reference to this table to make sure the key binding
 		 * doesn't disappear.
 		 */
-		table = c->keytable;
 		table->references++;
 
 		/*
@@ -704,7 +727,7 @@ retry:
 	}
 
 	/* If no match and we're not in the root table, that's it. */
-	if (strcmp(c->keytable->name, server_client_get_key_table(c)) != 0) {
+	if (name == NULL && !server_client_is_default_key_table(c)) {
 		server_client_set_key_table(c, NULL);
 		server_status_client(c);
 		return;
@@ -724,10 +747,6 @@ retry:
 forward:
 	if (c->flags & CLIENT_READONLY)
 		return;
-	if (KEYC_IS_MOUSE(key))
-		wp = cmd_mouse_pane(m, NULL, NULL);
-	else
-		wp = w->active;
 	if (wp != NULL)
 		window_pane_key(wp, c, s, key, m);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.167 2016/09/28 08:30:44 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.168 2016/10/11 07:23:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1124,6 +1124,7 @@ window_pane_reset_mode(struct window_pane *wp)
 
 	wp->mode->free(wp);
 	wp->mode = NULL;
+	wp->modeprefix = 1;
 
 	wp->screen = &wp->base;
 	wp->flags |= (PANE_REDRAW|PANE_CHANGED);

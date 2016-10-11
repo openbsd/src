@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.152 2016/10/11 07:11:40 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.153 2016/10/11 07:23:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -867,7 +867,7 @@ status_prompt_key(struct client *c, key_code key)
 	struct utf8_data	 tmp, *first, *last, *ud;
 
 	size = utf8_strlen(c->prompt_buffer);
-	switch (mode_key_lookup(&c->prompt_mdata, key, NULL, NULL)) {
+	switch (mode_key_lookup(&c->prompt_mdata, key)) {
 	case MODEKEYEDIT_CURSORLEFT:
 		if (c->prompt_index > 0) {
 			c->prompt_index--;
