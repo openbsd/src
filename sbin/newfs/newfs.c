@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.108 2016/07/25 15:30:36 krw Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.109 2016/10/11 07:02:46 natano Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_WXALLOWED,
+	MOPT_NOPERM,
 	MOPT_ASYNC,
 	MOPT_UPDATE,
 	MOPT_FORCE,
@@ -522,6 +523,8 @@ havelabel:
 		args.export_info.ex_root = -2;
 		if (mntflags & MNT_RDONLY)
 			args.export_info.ex_flags = MNT_EXRDONLY;
+		if (mntflags & MNT_NOPERM)
+			mntflags |= MNT_NODEV | MNT_NOEXEC;
 
 		switch (pid = fork()) {
 		case -1:
