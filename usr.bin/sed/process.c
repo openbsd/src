@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.28 2016/05/30 18:10:29 martijn Exp $	*/
+/*	$OpenBSD: process.c,v 1.29 2016/10/11 19:27:39 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -404,7 +404,7 @@ substitute(struct s_command *cp)
 	    regexec_e(re, ps, REG_NOTBOL, 0, le, psl));
 
 	/* Did not find the requested number of matches. */
-	if (n > 1)
+	if (n > 0)
 		return (0);
 
 	/* Copy the trailing retained string. */
