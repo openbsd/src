@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: sedtest.sh,v 1.5 2010/07/03 02:34:36 phessler Exp $
+#	$OpenBSD: sedtest.sh,v 1.6 2016/10/11 19:31:15 martijn Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -420,6 +420,9 @@ u2/g' lines1
 	mark '8.20'
 	printf 'a\\b(c\n' |
 	$SED 'y%ABCDEFGHIJKLMNOPQRSTUVWXYZ, /\\()"%abcdefghijklmnopqrstuvwxyz,------%'
+	mark '8.21'
+# Test if an unmatched line is only printed once.
+	printf 'z\n' | $SED -e 's/^a*/b/2p'
 }
 
 test_error()
