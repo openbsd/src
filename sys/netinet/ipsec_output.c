@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.63 2016/09/13 19:56:55 markus Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.64 2016/10/11 22:08:01 mikeb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -65,7 +65,7 @@ int	udpencap_port = 4500;	/* triggers decapsulation */
 int
 ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 {
-	int i, off, error;
+	int hlen, off, error;
 	struct mbuf *mp;
 #ifdef INET6
 	struct ip6_ext ip6e;
@@ -154,16 +154,16 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		 */
 		if (af == tdb->tdb_dst.sa.sa_family) {
 			if (af == AF_INET)
-				i = sizeof(struct ip);
+				hlen = sizeof(struct ip);
 
 #ifdef INET6
 			if (af == AF_INET6)
-				i = sizeof(struct ip6_hdr);
+				hlen = sizeof(struct ip6_hdr);
 #endif /* INET6 */
 
 			/* Bring the network header in the first mbuf. */
-			if (m->m_len < i) {
-				if ((m = m_pullup(m, i)) == NULL)
+			if (m->m_len < hlen) {
+				if ((m = m_pullup(m, hlen)) == NULL)
 					return ENOBUFS;
 			}
 
@@ -188,13 +188,13 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		    (tdb->tdb_flags & TDBF_TUNNELING) || /* Tunneling needed */
 		    (tdb->tdb_xform->xf_type == XF_IP4) || /* ditto */
 		    ((tdb->tdb_dst.sa.sa_family == AF_INET) &&
-			(tdb->tdb_dst.sin.sin_addr.s_addr != INADDR_ANY) &&
-			(tdb->tdb_dst.sin.sin_addr.s_addr != ip->ip_dst.s_addr)) ||
+		     (tdb->tdb_dst.sin.sin_addr.s_addr != INADDR_ANY) &&
+		     (tdb->tdb_dst.sin.sin_addr.s_addr != ip->ip_dst.s_addr)) ||
 #ifdef INET6
 		    ((tdb->tdb_dst.sa.sa_family == AF_INET6) &&
-			(!IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_dst.sin6.sin6_addr)) &&
-			(!IN6_ARE_ADDR_EQUAL(&tdb->tdb_dst.sin6.sin6_addr,
-			    &ip6->ip6_dst))) ||
+		     (!IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_dst.sin6.sin6_addr)) &&
+		     (!IN6_ARE_ADDR_EQUAL(&tdb->tdb_dst.sin6.sin6_addr,
+		      &ip6->ip6_dst))) ||
 #endif /* INET6 */
 		    0) {
 			/* Fix IPv4 header checksum and length. */
@@ -272,14 +272,14 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	switch (tdb->tdb_dst.sa.sa_family) {
 	case AF_INET:
 		ip = mtod(m, struct ip *);
-		i = ip->ip_hl << 2;
+		hlen = ip->ip_hl << 2;
 		off = offsetof(struct ip, ip_p);
 		break;
 
 #ifdef INET6
 	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);
-		i = sizeof(struct ip6_hdr);
+		hlen = sizeof(struct ip6_hdr);
 		off = offsetof(struct ip6_hdr, ip6_nxt);
 		nxt = ip6->ip6_nxt;
 		/*
@@ -323,19 +323,20 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 				}
 
 				/* skip this header */
-				m_copydata(m, i, sizeof(ip6e), (caddr_t)&ip6e);
+				m_copydata(m, hlen, sizeof(ip6e),
+				    (caddr_t)&ip6e);
 				nxt = ip6e.ip6e_nxt;
-				off = i + offsetof(struct ip6_ext, ip6e_nxt);
+				off = hlen + offsetof(struct ip6_ext, ip6e_nxt);
 				/*
 				 * we will never see nxt == IPPROTO_AH
 				 * so it is safe to omit AH case.
 				 */
-				i += (ip6e.ip6e_len + 1) << 3;
+				hlen += (ip6e.ip6e_len + 1) << 3;
 				break;
 			default:
 				goto exitip6loop;
 			}
-		} while (i < m->m_pkthdr.len);
+		} while (hlen < m->m_pkthdr.len);
 	exitip6loop:;
 		break;
 #endif /* INET6 */
@@ -343,7 +344,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/* Non expansion policy for IPCOMP */
 	if (tdb->tdb_sproto == IPPROTO_IPCOMP) {
-		if ((m->m_pkthdr.len - i) < tdb->tdb_compalgxform->minlen) {
+		if ((m->m_pkthdr.len - hlen) < tdb->tdb_compalgxform->minlen) {
 			/* No need to compress, leave the packet untouched */
 			ipcompstat.ipcomps_minlen++;
 			return ipsp_process_done(m, tdb);
@@ -351,7 +352,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	}
 
 	/* Invoke the IPsec transform. */
-	return (*(tdb->tdb_xform->xf_output))(m, tdb, NULL, i, off);
+	return (*(tdb->tdb_xform->xf_output))(m, tdb, NULL, hlen, off);
 }
 
 /*
