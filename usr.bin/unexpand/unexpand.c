@@ -1,4 +1,4 @@
-/*	$OpenBSD: unexpand.c,v 1.12 2015/11/11 02:52:46 deraadt Exp $	*/
+/*	$OpenBSD: unexpand.c,v 1.13 2016/10/11 16:22:15 millert Exp $	*/
 /*	$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $	*/
 
 /*-
@@ -33,6 +33,7 @@
 /*
  * unexpand - put tabs into a file replacing blanks
  */
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,13 +41,13 @@
 
 char	genbuf[BUFSIZ];
 char	linebuf[BUFSIZ];
-int	all;
 
-void tabify(char);
+void tabify(bool);
 
 int
 main(int argc, char *argv[])
 {
+	bool all = false;
 	char *cp;
 
 	if (pledge("stdio rpath", NULL) == -1) {
@@ -60,7 +61,7 @@ main(int argc, char *argv[])
 			fprintf(stderr, "usage: unexpand [-a] [file ...]\n");
 			exit(1);
 		}
-		all++;
+		all = true;
 		argc--, argv++;
 	}
 	do {
@@ -84,7 +85,7 @@ main(int argc, char *argv[])
 }
 
 void
-tabify(char c)
+tabify(bool all)
 {
 	char *cp, *dp;
 	int dcol;
@@ -127,7 +128,7 @@ tabify(char c)
 				}
 				ocol++;
 			}
-			if (*cp == 0 || c == 0) {
+			if (*cp == '\0' || !all) {
 				strlcpy(dp, cp, len);
 				return;
 			}
