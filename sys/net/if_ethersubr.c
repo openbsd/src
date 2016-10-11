@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.240 2016/10/10 02:44:17 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.241 2016/10/11 11:40:12 mikeb Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -319,6 +319,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	struct ether_header *eh_tmp;
 #endif
 
+	/* Drop short frames */
+	if (m->m_len < ETHER_HDR_LEN)
+		goto dropanyway;
+
 	ac = (struct arpcom *)ifp;
 	eh = mtod(m, struct ether_header *);
 	m_adj(m, ETHER_HDR_LEN);
@@ -435,7 +439,8 @@ decapsulate:
 		return (1);
 #endif
 	default:
-		if (llcfound || etype > ETHERMTU)
+		if (llcfound || etype > ETHERMTU ||
+		    m->m_len < sizeof(struct llc))
 			goto dropanyway;
 		llcfound = 1;
 		l = mtod(m, struct llc *);
