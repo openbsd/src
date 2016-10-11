@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.54 2015/04/05 14:20:22 millert Exp $
+.\"	$OpenBSD: sort.1,v 1.55 2016/10/11 13:08:20 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 5 2015 $
+.Dd $Mdocdate: October 11 2016 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -52,7 +52,11 @@ The
 .Nm
 utility sorts text and binary files by lines.
 A line is a record separated from the subsequent record by a
-newline (default) or NUL \'\\0\' character (-z option).
+newline (default) or NUL \'\\0\' character
+.Po
+.Fl z
+option
+.Pc .
 A record can contain any printable or unprintable characters.
 Comparisons are based on one or more sort keys extracted from
 each line of input, and are performed lexicographically,
