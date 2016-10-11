@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.33 2016/05/27 22:57:27 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.34 2016/10/11 07:11:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -234,6 +234,33 @@ utf8_sanitize(const char *src)
 	dst = xreallocarray(dst, n + 1, sizeof *dst);
 	dst[n] = '\0';
 	return (dst);
+}
+
+/* Get UTF-8 buffer length. */
+size_t
+utf8_strlen(const struct utf8_data *s)
+{
+	size_t	i;
+
+	for (i = 0; s[i].size != 0; i++)
+		/* nothing */;
+	return (i);
+}
+
+/* Get UTF-8 string width. */
+u_int
+utf8_strwidth(const struct utf8_data *s, ssize_t n)
+{
+	ssize_t	i;
+	u_int	width;
+
+	width = 0;
+	for (i = 0; s[i].size != 0; i++) {
+		if (n != -1 && n == i)
+			break;
+		width += s[i].width;
+	}
+	return (width);
 }
 
 /*
