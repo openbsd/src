@@ -103,15 +103,7 @@ struct hv_channel *
 	hv_channel_lookup(struct hv_softc *, uint32_t);
 int	hv_channel_ring_create(struct hv_channel *, uint32_t, uint32_t);
 void	hv_channel_ring_destroy(struct hv_channel *);
-void	hv_attach_internal(struct hv_softc *);
-void	hv_heartbeat(void *);
-void	hv_kvp_init(struct hv_channel *);
-void	hv_kvp(void *);
-int	hv_kvop(void *, int, char *, char *, size_t);
-void	hv_shutdown_init(struct hv_channel *);
-void	hv_shutdown(void *);
-void	hv_timesync_init(struct hv_channel *);
-void	hv_timesync(void *);
+extern void hv_attach_icdevs(struct hv_softc *);
 int	hv_attach_devices(struct hv_softc *);
 
 struct {
@@ -315,8 +307,6 @@ hv_deferred(void *arg)
 
 	if (hv_channel_scan(sc))
 		return;
-
-	hv_attach_internal(sc);
 
 	if (hv_attach_devices(sc))
 		return;
@@ -1617,273 +1607,6 @@ hv_handle_free(struct hv_channel *ch, uint32_t handle)
 		    sc->sc_dev.dv_xname, rv);
 }
 
-const struct {
-	const char		 *id_name;
-	const struct hv_guid	 *id_type;
-	void			(*id_init)(struct hv_channel *);
-	void			(*id_handler)(void *);
-} hv_internal_devs[] = {
-	{ "heartbeat",	&hv_guid_heartbeat, NULL,		hv_heartbeat },
-	{ "kvp",	&hv_guid_kvp,	    hv_kvp_init,	hv_kvp },
-	{ "shutdown",	&hv_guid_shutdown,  hv_shutdown_init,	hv_shutdown },
-	{ "timesync",	&hv_guid_timesync,  hv_timesync_init,	hv_timesync }
-};
-
-void
-hv_attach_internal(struct hv_softc *sc)
-{
-	struct hv_channel *ch;
-	int i;
-
-	TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
-		if (ch->ch_state != HV_CHANSTATE_OFFERED)
-			continue;
-		if (ch->ch_flags & CHF_MONITOR)
-			continue;
-		for (i = 0; i < nitems(hv_internal_devs); i++) {
-			if (memcmp(hv_internal_devs[i].id_type, &ch->ch_type,
-			    sizeof(ch->ch_type)) != 0)
-				continue;
-			/*
-			 * These services are not performance critical and
-			 * do not need batched reading. Furthermore, some
-			 * services such as KVP can only handle one message
-			 * from the host at a time.
-			 */
-			ch->ch_flags &= ~CHF_BATCHED;
-
-			if (hv_internal_devs[i].id_init)
-				hv_internal_devs[i].id_init(ch);
-
-			ch->ch_buf = km_alloc(PAGE_SIZE, &kv_any, &kp_zero,
-			    (cold ? &kd_nowait : &kd_waitok));
-			if (ch->ch_buf == NULL) {
-				hv_channel_ring_destroy(ch);
-				printf("%s: failed to allocate channel data "
-				    "buffer for \"%s\"", sc->sc_dev.dv_xname,
-				    hv_internal_devs[i].id_name);
-				continue;
-			}
-			ch->ch_buflen = PAGE_SIZE;
-
-			if (hv_channel_open(ch, NULL, 0,
-			    hv_internal_devs[i].id_handler, ch)) {
-				km_free(ch->ch_buf, PAGE_SIZE, &kv_any,
-				    &kp_zero);
-				ch->ch_buf = NULL;
-				ch->ch_buflen = 0;
-				printf("%s: failed to open channel for \"%s\"\n",
-				    sc->sc_dev.dv_xname,
-				    hv_internal_devs[i].id_name);
-			}
-			evcount_attach(&ch->ch_evcnt,
-			    hv_internal_devs[i].id_name, &sc->sc_idtvec);
-			break;
-		}
-	}
-}
-
-int
-hv_service_common(struct hv_channel *ch, uint32_t *rlen, uint64_t *rid,
-    struct hv_icmsg_hdr **hdr)
-{
-	struct hv_icmsg_negotiate *msg;
-	int rv;
-
-	rv = hv_channel_recv(ch, ch->ch_buf, ch->ch_buflen, rlen, rid, 0);
-	if (rv || *rlen == 0)
-		return (rv);
-	*hdr = (struct hv_icmsg_hdr *)&ch->ch_buf[sizeof(struct hv_pipe_hdr)];
-	if ((*hdr)->icmsgtype == HV_ICMSGTYPE_NEGOTIATE) {
-		msg = (struct hv_icmsg_negotiate *)(*hdr + 1);
-		if (msg->icframe_vercnt >= 2 &&
-		    msg->icversion_data[1].major == 3) {
-			msg->icversion_data[0].major = 3;
-			msg->icversion_data[0].minor = 0;
-			msg->icversion_data[1].major = 3;
-			msg->icversion_data[1].minor = 0;
-		} else {
-			msg->icversion_data[0].major = 1;
-			msg->icversion_data[0].minor = 0;
-			msg->icversion_data[1].major = 1;
-			msg->icversion_data[1].minor = 0;
-		}
-		msg->icframe_vercnt = 1;
-		msg->icmsg_vercnt = 1;
-		(*hdr)->icmsgsize = 0x10;
-	}
-	return (0);
-}
-
-void
-hv_heartbeat(void *arg)
-{
-	struct hv_channel *ch = arg;
-	struct hv_softc *sc = ch->ch_sc;
-	struct hv_icmsg_hdr *hdr;
-	struct hv_heartbeat_msg *msg;
-	uint64_t rid;
-	uint32_t rlen;
-	int rv;
-
-	rv = hv_service_common(ch, &rlen, &rid, &hdr);
-	if (rv || rlen == 0) {
-		if (rv != EAGAIN)
-			printf("heartbeat: rv=%d rlen=%u\n", rv, rlen);
-		return;
-	}
-	if (hdr->icmsgtype == HV_ICMSGTYPE_HEARTBEAT) {
-		msg = (struct hv_heartbeat_msg *)(hdr + 1);
-		msg->seq_num += 1;
-	} else if (hdr->icmsgtype != HV_ICMSGTYPE_NEGOTIATE) {
-		printf("%s: unhandled heartbeat message type %u\n",
-		    sc->sc_dev.dv_xname, hdr->icmsgtype);
-	}
-	hdr->icflags = HV_ICMSGHDRFLAG_TRANSACTION | HV_ICMSGHDRFLAG_RESPONSE;
-	hv_channel_send(ch, ch->ch_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
-}
-
-void
-hv_kvp_init(struct hv_channel *ch)
-{
-	struct hv_softc *sc = ch->ch_sc;
-
-	sc->sc_pvbus->hv_kvop = hv_kvop;
-	sc->sc_pvbus->hv_arg = sc;
-}
-
-void
-hv_kvp(void *arg)
-{
-}
-
-int
-hv_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
-{
-	switch (op) {
-	case PVBUS_KVWRITE:
-	case PVBUS_KVREAD:
-	default:
-		return (EOPNOTSUPP);
-	}
-}
-
-static void
-hv_shutdown_task(void *arg)
-{
-	extern int allowpowerdown;
-
-	if (allowpowerdown == 0)
-		return;
-
-	suspend_randomness();
-
-	log(LOG_KERN | LOG_NOTICE, "Shutting down in response to "
-	    "request from Hyper-V host\n");
-	prsignal(initprocess, SIGUSR2);
-}
-
-void
-hv_shutdown_init(struct hv_channel *ch)
-{
-	struct hv_softc *sc = ch->ch_sc;
-
-	task_set(&sc->sc_sdtask, hv_shutdown_task, sc);
-}
-
-void
-hv_shutdown(void *arg)
-{
-	struct hv_channel *ch = arg;
-	struct hv_softc *sc = ch->ch_sc;
-	struct hv_icmsg_hdr *hdr;
-	struct hv_shutdown_msg *msg;
-	uint64_t rid;
-	uint32_t rlen;
-	int rv, shutdown = 0;
-
-	rv = hv_service_common(ch, &rlen, &rid, &hdr);
-	if (rv || rlen == 0) {
-		if (rv != EAGAIN)
-			printf("shutdown: rv=%d rlen=%u\n", rv, rlen);
-		return;
-	}
-	if (hdr->icmsgtype == HV_ICMSGTYPE_SHUTDOWN) {
-		msg = (struct hv_shutdown_msg *)(hdr + 1);
-		if (msg->flags == 0 || msg->flags == 1) {
-			shutdown = 1;
-			hdr->status = HV_ICMSG_STATUS_OK;
-		} else
-			hdr->status = HV_ICMSG_STATUS_FAIL;
-	} else if (hdr->icmsgtype != HV_ICMSGTYPE_NEGOTIATE) {
-		printf("%s: unhandled shutdown message type %u\n",
-		    sc->sc_dev.dv_xname, hdr->icmsgtype);
-	}
-
-	hdr->icflags = HV_ICMSGHDRFLAG_TRANSACTION | HV_ICMSGHDRFLAG_RESPONSE;
-	hv_channel_send(ch, ch->ch_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
-
-	if (shutdown)
-		task_add(systq, &sc->sc_sdtask);
-}
-
-void
-hv_timesync_init(struct hv_channel *ch)
-{
-	struct hv_softc *sc = ch->ch_sc;
-
-	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_sensordev.xname));
-
-	sc->sc_sensor.type = SENSOR_TIMEDELTA;
-	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
-
-	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
-	sensordev_install(&sc->sc_sensordev);
-}
-
-void
-hv_timesync(void *arg)
-{
-	struct hv_channel *ch = arg;
-	struct hv_softc *sc = ch->ch_sc;
-	struct hv_icmsg_hdr *hdr;
-	struct hv_timesync_msg *msg;
-	struct timespec guest, host, diff;
-	uint64_t tns;
-	uint64_t rid;
-	uint32_t rlen;
-	int rv;
-
-	rv = hv_service_common(ch, &rlen, &rid, &hdr);
-	if (rv || rlen == 0) {
-		if (rv != EAGAIN)
-			printf("timesync: rv=%d rlen=%u\n", rv, rlen);
-		return;
-	}
-	if (hdr->icmsgtype == HV_ICMSGTYPE_TIMESYNC) {
-		msg = (struct hv_timesync_msg *)(hdr + 1);
-		if (msg->flags == HV_TIMESYNC_SYNC ||
-		    msg->flags == HV_TIMESYNC_SAMPLE) {
-			microtime(&sc->sc_sensor.tv);
-			nanotime(&guest);
-			tns = (msg->parent_time - 116444736000000000LL) * 100;
-			host.tv_sec = tns / 1000000000LL;
-			host.tv_nsec = tns % 1000000000LL;
-			timespecsub(&guest, &host, &diff);
-			sc->sc_sensor.value = (int64_t)diff.tv_sec *
-			    1000000000LL + diff.tv_nsec;
-			sc->sc_sensor.status = SENSOR_S_OK;
-		}
-	} else if (hdr->icmsgtype != HV_ICMSGTYPE_NEGOTIATE) {
-		printf("%s: unhandled timesync message type %u\n",
-		    sc->sc_dev.dv_xname, hdr->icmsgtype);
-	}
-
-	hdr->icflags = HV_ICMSGHDRFLAG_TRANSACTION | HV_ICMSGHDRFLAG_RESPONSE;
-	hv_channel_send(ch, ch->ch_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
-}
-
 static int
 hv_attach_print(void *aux, const char *name)
 {
@@ -1903,6 +1626,9 @@ hv_attach_devices(struct hv_softc *sc)
 
 	SLIST_INIT(&sc->sc_devs);
 	mtx_init(&sc->sc_devlck, IPL_NET);
+
+	/* Attach heartbeat, KVP and other "internal" services */
+	hv_attach_icdevs(sc);
 
 	TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
 		if (ch->ch_state != HV_CHANSTATE_OFFERED)
