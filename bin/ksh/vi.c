@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.39 2015/12/22 08:39:26 mmcc Exp $	*/
+/*	$OpenBSD: vi.c,v 1.40 2016/10/11 19:52:54 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -12,6 +12,7 @@
 #include <sys/stat.h>		/* completion */
 
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "sh.h"
@@ -21,11 +22,11 @@
 #define CTRL(c)		(c & 0x1f)
 
 struct edstate {
-	int	winleft;
-	char	*cbuf;
-	int	cbufsize;
-	int	linelen;
-	int	cursor;
+	char	*cbuf;		/* main buffer to build the command line */
+	int	cbufsize;	/* number of bytes allocated for cbuf */
+	int	linelen;	/* current number of bytes in cbuf */
+	int	winleft;	/* first byte# in cbuf to be displayed */
+	int	cursor;		/* byte# in cbuf having the cursor */
 };
 
 
@@ -68,6 +69,7 @@ static void	vi_pprompt(int);
 static void	vi_error(void);
 static void	vi_macro_reset(void);
 static int	x_vi_putbuf(const char *, size_t);
+static int	isu8cont(unsigned char);
 
 #define C_	0x1		/* a valid command that isn't a M_, E_, U_ */
 #define M_	0x2		/* movement command (h, l, etc.) */
@@ -148,7 +150,7 @@ static void		restore_edstate(struct edstate *old, struct edstate *new);
 static void		free_edstate(struct edstate *old);
 
 static struct edstate	ebuf;
-static struct edstate	undobuf = { 0, undocbuf, CMDLEN, 0, 0 };
+static struct edstate	undobuf = { undocbuf, CMDLEN, 0, 0, 0 };
 
 static struct edstate	*es;			/* current editor state */
 static struct edstate	*undo;
@@ -157,7 +159,7 @@ static char	ibuf[CMDLEN];		/* input buffer */
 static int	first_insert;		/* set when starting in insert mode */
 static int	saved_inslen;		/* saved inslen for first insert */
 static int	inslen;			/* length of input buffer */
-static int	srchlen;		/* length of current search pattern */
+static int	srchlen;		/* number of bytes in search pattern */
 static char	ybuf[CMDLEN];		/* yank buffer */
 static int	yanklen;		/* length of yank buffer */
 static int	fsavecmd = ' ';		/* last find command */
@@ -166,7 +168,7 @@ static char	lastcmd[MAXVICMD];	/* last non-move command */
 static int	lastac;			/* argcnt for lastcmd */
 static int	lastsearch = ' ';	/* last search command */
 static char	srchpat[SRCHLEN];	/* last search pattern */
-static int	insert;			/* non-zero in insert mode */
+static int	insert;			/* mode: INSERT, REPLACE, or 0 */
 static int	hnum;			/* position in history */
 static int	ohnum;			/* history line copied (after mod) */
 static int	hlast;			/* 1 past last position in history */
@@ -399,8 +401,12 @@ vi_hook(int ch)
 			state = VCMD;
 		} else if (ch == edchars.erase || ch == CTRL('h')) {
 			if (srchlen != 0) {
-				srchlen--;
-				es->linelen -= char_len((unsigned char)locpat[srchlen]);
+				do {
+					srchlen--;
+					es->linelen -= char_len(
+					    (unsigned char)locpat[srchlen]);
+				} while (srchlen > 0 &&
+				    isu8cont(locpat[srchlen]));
 				es->cursor = es->linelen;
 				refresh(0);
 				return 0;
@@ -568,25 +574,28 @@ vi_insert(int ch)
 				vi_error();
 				return 0;
 			}
-			if (inslen > 0)
-				inslen--;
-			es->cursor--;
-			if (es->cursor >= undo->linelen)
-				es->linelen--;
-			else
-				es->cbuf[es->cursor] = undo->cbuf[es->cursor];
 		} else {
 			if (es->cursor == 0) {
 				/* x_putc(BEL); no annoying bell here */
 				return 0;
 			}
-			if (inslen > 0)
-				inslen--;
-			es->cursor--;
-			es->linelen--;
-			memmove(&es->cbuf[es->cursor], &es->cbuf[es->cursor+1],
-			    es->linelen - es->cursor + 1);
 		}
+		tcursor = es->cursor - 1;
+		while(tcursor > 0 && isu8cont(es->cbuf[tcursor]))
+			tcursor--;
+		if (insert == INSERT)
+			memmove(es->cbuf + tcursor, es->cbuf + es->cursor,
+			    es->linelen - es->cursor);
+		if (insert == REPLACE && es->cursor < undo->linelen)
+			memcpy(es->cbuf + tcursor, undo->cbuf + tcursor,
+			    es->cursor - tcursor);
+		else
+			es->linelen -= es->cursor - tcursor;
+		if (inslen < es->cursor - tcursor)
+			inslen = 0;
+		else
+			inslen -= es->cursor - tcursor;
+		es->cursor = tcursor;
 		expanded = NONE;
 		return 0;
 	}
@@ -760,7 +769,8 @@ vi_cmd(int argcnt, const char *cmd)
 		case 'a':
 			modified = 1; hnum = hlast;
 			if (es->linelen != 0)
-				es->cursor++;
+				while (isu8cont(es->cbuf[++es->cursor]))
+					continue;
 			insert = INSERT;
 			break;
 
@@ -963,22 +973,25 @@ vi_cmd(int argcnt, const char *cmd)
 			if (es->linelen == 0)
 				return -1;
 			modified = 1; hnum = hlast;
-			if (es->cursor + argcnt > es->linelen)
-				argcnt = es->linelen - es->cursor;
-			yank_range(es->cursor, es->cursor + argcnt);
-			del_range(es->cursor, es->cursor + argcnt);
+			for (cur = es->cursor; cur < es->linelen; cur++)
+				if (!isu8cont(es->cbuf[cur]))
+					if (argcnt-- == 0)
+						break;
+			yank_range(es->cursor, cur);
+			del_range(es->cursor, cur);
 			break;
 
 		case 'X':
-			if (es->cursor > 0) {
-				modified = 1; hnum = hlast;
-				if (es->cursor < argcnt)
-					argcnt = es->cursor;
-				yank_range(es->cursor - argcnt, es->cursor);
-				del_range(es->cursor - argcnt, es->cursor);
-				es->cursor -= argcnt;
-			} else
+			if (es->cursor == 0)
 				return -1;
+			modified = 1; hnum = hlast;
+			for (cur = es->cursor; cur > 0; cur--)
+				if (!isu8cont(es->cbuf[cur]))
+					if (argcnt-- == 0)
+						break;
+			yank_range(cur, es->cursor);
+			del_range(cur, es->cursor);
+			es->cursor = cur;
 			break;
 
 		case 'u':
@@ -1208,20 +1221,20 @@ domove(int argcnt, const char *cmd, int sub)
 	case CTRL('h'):
 		if (!sub && es->cursor == 0)
 			return -1;
-		ncursor = es->cursor - argcnt;
-		if (ncursor < 0)
-			ncursor = 0;
+		for (ncursor = es->cursor; ncursor > 0; ncursor--)
+			if (!isu8cont(es->cbuf[ncursor]))
+				if (argcnt-- == 0)
+					break;
 		break;
 
 	case ' ':
 	case 'l':
 		if (!sub && es->cursor + 1 >= es->linelen)
 			return -1;
-		if (es->linelen != 0) {
-			ncursor = es->cursor + argcnt;
-			if (ncursor > es->linelen)
-				ncursor = es->linelen;
-		}
+		for (ncursor = es->cursor; ncursor < es->linelen; ncursor++)
+			if (!isu8cont(es->cbuf[ncursor]))
+				if (argcnt-- == 0)
+					break;
 		break;
 
 	case 'w':
@@ -1301,7 +1314,8 @@ redo_insert(int count)
 		if (putbuf(ibuf, inslen, insert==REPLACE) != 0)
 			return -1;
 	if (es->cursor > 0)
-		es->cursor--;
+		while (isu8cont(es->cbuf[--es->cursor]))
+			continue;
 	insert = 0;
 	return 0;
 }
@@ -1346,16 +1360,15 @@ bracktype(int ch)
  *	Non user interface editor routines below here
  */
 
-static int	cur_col;		/* current column on line */
-static int	pwidth;			/* width of prompt */
+static int	cur_col;		/* current display column */
+static int	pwidth;			/* display columns needed for prompt */
 static int	prompt_trunc;		/* how much of prompt to truncate */
 static int	prompt_skip;		/* how much of prompt to skip */
-static int	winwidth;		/* width of window */
-static char	*wbuf[2];		/* window buffers */
+static int	winwidth;		/* available column positions */
+static char	*wbuf[2];		/* current & previous window buffer */
 static int	wbuf_len;		/* length of window buffers (x_cols-3)*/
-static int	win;			/* window buffer in use */
+static int	win;			/* number of window buffer in use */
 static char	morec;			/* more character at right of window */
-static int	lastref;		/* argument to last refresh() */
 static char	holdbuf[CMDLEN];	/* place to hold last edit buffer */
 static int	holdlen;		/* length of holdbuf */
 
@@ -1443,7 +1456,6 @@ edit_reset(char *buf, size_t len)
 	winwidth = x_cols - pwidth - 3;
 	win = 0;
 	morec = ' ';
-	lastref = 1;
 	holdlen = 0;
 }
 
@@ -1720,10 +1732,6 @@ redraw_line(int newline)
 static void
 refresh(int leftside)
 {
-	if (leftside < 0)
-		leftside = lastref;
-	else
-		lastref = leftside;
 	if (outofwin())
 		rewindow();
 	display(wbuf[1 - win], wbuf[win], leftside);
@@ -1770,24 +1778,38 @@ rewindow(void)
 	es->winleft = holdcur1;
 }
 
+/* Printing the byte ch at display column col moves to which column? */
 static int
 newcol(int ch, int col)
 {
 	if (ch == '\t')
 		return (col | 7) + 1;
+	if (isu8cont(ch))
+		return col;
 	return col + char_len(ch);
 }
 
+/* Display wb1 assuming that wb2 is currently displayed. */
 static void
 display(char *wb1, char *wb2, int leftside)
 {
+	char	*twb1;	/* pointer into the buffer to display */
+	char	*twb2;	/* pointer into the previous display buffer */
+	static int lastb = -1; /* last byte# written from wb1, if UTF-8 */
+	int	 cur;	/* byte# in the main command line buffer */
+	int	 col;	/* display column loop variable */
+	int	 ncol;	/* display column of the cursor */
+	int	 cnt;	/* remaining display columns to fill */
+	int	 moreright;
+	char	 mc;	/* new "more character" at the right of window */
 	unsigned char ch;
-	char	*twb1, *twb2, mc;
-	int	cur, col, cnt;
-	int	ncol = 0;
-	int	moreright;
 
-	col = 0;
+	/*
+	 * Fill the current display buffer with data from cbuf.
+	 * In this first loop, col does not include the prompt.
+	 */
+
+	ncol = col = 0;
 	cur = es->winleft;
 	moreright = 0;
 	twb1 = wb1;
@@ -1816,7 +1838,8 @@ display(char *wb1, char *wb2, int leftside)
 					}
 				} else {
 					*twb1++ = ch;
-					col++;
+					if (!isu8cont(ch))
+						col++;
 				}
 			}
 		}
@@ -1826,6 +1849,9 @@ display(char *wb1, char *wb2, int leftside)
 	}
 	if (cur == es->cursor)
 		ncol = col + pwidth;
+
+	/* Pad the current display buffer to the right margin. */
+
 	if (col < winwidth) {
 		while (col < winwidth) {
 			*twb1++ = ' ';
@@ -1835,21 +1861,62 @@ display(char *wb1, char *wb2, int leftside)
 		moreright++;
 	*twb1 = ' ';
 
+	/*
+	 * Update the terminal display with data from wb1.
+	 * In this final loop, col includes the prompt.
+	 */
+
 	col = pwidth;
 	cnt = winwidth;
-	twb1 = wb1;
-	twb2 = wb2;
-	while (cnt--) {
+	for (twb1 = wb1, twb2 = wb2; cnt; twb1++, twb2++) {
 		if (*twb1 != *twb2) {
+
+			/*
+			 * When a byte changes in the middle of a UTF-8
+			 * character, back up to the start byte, unless
+			 * the previous byte was the last one written.
+			 */
+
+			if (col > 0 && isu8cont(*twb1)) {
+				col--;
+				if (lastb >= 0 && twb1 == wb1 + lastb + 1)
+					cur_col = col;
+				else while (twb1 > wb1 && isu8cont(*twb1)) {
+					twb1--;
+					twb2--;
+				}
+			}
+
 			if (cur_col != col)
 				ed_mov_opt(col, wb1);
+
+			/*
+			 * Always write complete characters, and
+			 * advance all pointers accordingly.
+			 */
+
 			x_putc(*twb1);
+			while (isu8cont(twb1[1])) {
+				x_putc(*++twb1);
+				twb2++;
+			}
+			lastb = *twb1 & 0x80 ? twb1 - wb1 : -1;
 			cur_col++;
-		}
-		twb1++;
-		twb2++;
+		} else if (isu8cont(*twb1))
+			continue;
+
+		/*
+		 * For changed continuation bytes, we backed up.
+		 * For unchanged ones, we jumped to the next byte.
+		 * So, getting here, we had a real column.
+		 */
+
 		col++;
+		cnt--;
 	}
+
+	/* Update the "more character". */
+
 	if (es->winleft > 0 && moreright)
 		/* POSIX says to use * for this but that is a globbing
 		 * character and may confuse people; + is more innocuous
@@ -1866,31 +1933,52 @@ display(char *wb1, char *wb2, int leftside)
 		x_putc(mc);
 		cur_col++;
 		morec = mc;
+		lastb = -1;
 	}
-	if (cur_col != ncol)
+
+	/* Move the cursor to its new position. */
+
+	if (cur_col != ncol) {
 		ed_mov_opt(ncol, wb1);
+		lastb = -1;
+	}
 }
 
+/* Move the display cursor to display column number col. */
 static void
 ed_mov_opt(int col, char *wb)
 {
-	if (col < cur_col) {
-		if (col + 1 < cur_col - col) {
+	int ci;
+
+	/* The cursor is already at the right place. */
+
+	if (cur_col == col)
+		return;
+
+	/* The cursor is too far right. */
+
+	if (cur_col > col) {
+		if (cur_col > 2 * col + 1) {
+			/* Much too far right, redraw from scratch. */
 			x_putc('\r');
 			vi_pprompt(0);
 			cur_col = pwidth;
-			while (cur_col++ < col)
-				x_putc(*wb++);
 		} else {
-			while (cur_col-- > col)
+			/* Slightly too far right, back up. */
+			do {
 				x_putc('\b');
+			} while (--cur_col > col);
+			return;
 		}
-	} else {
-		wb = &wb[cur_col - pwidth];
-		while (cur_col++ < col)
-			x_putc(*wb++);
 	}
-	cur_col = col;
+
+	/* Advance the cursor. */
+
+	for (ci = pwidth; ci < col || isu8cont(*wb);
+	     ci = newcol((unsigned char)*wb++, ci))
+		if (ci > cur_col || (ci == cur_col && !isu8cont(*wb)))
+			x_putc(*wb);
+	cur_col = ci;
 }
 
 
@@ -2075,7 +2163,11 @@ print_expansions(struct edstate *e, int command)
 	return 0;
 }
 
-/* How long is char when displayed (not counting tabs) */
+/*
+ * The number of bytes needed to encode byte c.
+ * Control bytes get "M-" or "^" prepended.
+ * This function does not handle tabs.
+ */
 static int
 char_len(int c)
 {
@@ -2129,4 +2221,9 @@ vi_macro_reset(void)
 	}
 }
 
+static int
+isu8cont(unsigned char c)
+{
+	return MB_CUR_MAX > 1 && !Flag(FVISHOW8) && (c & (0x80 | 0x40)) == 0x80;
+}
 #endif	/* VI */
