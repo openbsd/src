@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.46 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.47 2016/10/11 13:45:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,13 +28,13 @@
 
 #include "tmux.h"
 
-char		 *cfg_file;
-struct cmd_q	 *cfg_cmd_q;
-int		  cfg_finished;
-int		  cfg_references;
-char		**cfg_causes;
-u_int		  cfg_ncauses;
-struct client	 *cfg_client;
+char			 *cfg_file;
+static struct cmd_q	 *cfg_cmd_q;
+int			  cfg_finished;
+int			  cfg_references;
+static char		**cfg_causes;
+static u_int		  cfg_ncauses;
+struct client		 *cfg_client;
 
 static void	  cfg_default_done(struct cmd_q *);
 

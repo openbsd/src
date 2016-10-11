@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-set.c,v 1.16 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: layout-set.c,v 1.17 2016/10/11 13:45:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ static void	layout_set_main_h(struct window *);
 static void	layout_set_main_v(struct window *);
 static void	layout_set_tiled(struct window *);
 
-const struct {
+static const struct {
 	const char	*name;
 	void	      	(*arrange)(struct window *);
 } layout_sets[] = {

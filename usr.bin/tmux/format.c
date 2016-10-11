@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.108 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.109 2016/10/11 13:45:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -91,7 +91,7 @@ struct format_job {
 /* Format job tree. */
 static struct event format_job_event;
 static int format_job_cmp(struct format_job *, struct format_job *);
-RB_HEAD(format_job_tree, format_job) format_jobs = RB_INITIALIZER();
+static RB_HEAD(format_job_tree, format_job) format_jobs = RB_INITIALIZER();
 RB_GENERATE_STATIC(format_job_tree, format_job, entry, format_job_cmp);
 
 /* Format job tree comparison function. */
