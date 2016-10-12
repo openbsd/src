@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.33 2014/01/30 20:02:42 jmc Exp $
+.\" $OpenBSD: crontab.5,v 1.34 2016/10/12 17:27:08 schwarze Exp $
 .\"
-.Dd $Mdocdate: January 30 2014 $
+.Dd $Mdocdate: October 12 2016 $
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -193,6 +193,14 @@ will be changed into newline characters, and all data
 after the first
 .Ql %
 will be sent to the command as standard input.
+If the
+.Ar command
+field begins with
+.Ql -q ,
+execution will not be logged.
+Use whitespace to separate
+.Ql -q
+from the command.
 .Pp
 Commands are executed by
 .Xr cron 8
@@ -320,6 +328,9 @@ Ranges may include
 .Dq steps .
 .It
 Months or days of the week can be specified by name.
+.It
+Logging can be suppressed with
+.Ql -q .
 .It
 Environment variables can be set in a crontab.
 .It
