@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.19 2016/07/12 15:44:58 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.20 2016/10/12 23:02:25 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -68,9 +68,9 @@ sub new {
 	open(my $fh, '>', $self->{conffile})
 	    or die ref($self), " create conf file $self->{conffile} failed: $!";
 	print $fh "*.*\t$self->{outfile}\n";
-	print $fh "*.*\t|dd of=$self->{outpipe}\n";
-	print $fh "*.*\t/dev/console\n";
-	print $fh "*.*\tsyslogd-regress\n";
+	print $fh "*.*\t|dd of=$self->{outpipe}\n" unless $self->{nopipe};
+	print $fh "*.*\t/dev/console\n" unless $self->{noconsole};
+	print $fh "*.*\tsyslogd-regress\n" unless $self->{nouser};
 	my $memory = $self->{memory};
 	print $fh "*.*\t:$memory->{size}:$memory->{name}\n" if $memory;
 	my $loghost = $self->{loghost};
@@ -189,7 +189,7 @@ sub up {
 		# check fstat kqueue entry to detect statup
 		open(my $fh, '<', $self->{fstatfile}) or die ref($self),
 		    " open $self->{fstatfile} for reading failed: $!";
-		last if grep { /kqueue/ } <$fh>;
+		last if grep { /kqueue .* state: W/ } <$fh>;
 		time() < $end
 		    or croak ref($self), " no 'kqueue' in $self->{fstatfile} ".
 		    "after $timeout seconds";
@@ -210,6 +210,29 @@ sub up {
 	}
 
 	return $self;
+}
+
+sub down {
+	my $self = Proc::up(shift, @_);
+	return $self unless $self->{daemon};
+
+	my $timeout = shift || 10;
+	my $end = time() + $timeout;
+
+	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : "env";
+	my @pkill = (@sudo, "pkill", "-TERM", "-x", "syslogd");
+	my @pgrep = ("pgrep", "-x", "syslogd");
+	system(@pkill) && $? != 256
+	    and die ref($self), " system '@pkill' failed: $?";
+	do {
+		sleep .1;
+		system(@pgrep) && $? != 256
+		    and die ref($self), " system '@pgrep' failed: $?";
+		return $self if $? == 256;
+		print STDERR "syslogd still running\n";
+	} while (time() < $end);
+
+	return;
 }
 
 sub fstat {

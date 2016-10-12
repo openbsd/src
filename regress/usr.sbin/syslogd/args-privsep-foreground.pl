@@ -14,6 +14,9 @@ use warnings;
 our %args = (
     syslogd => {
 	foreground => 1,
+	nopipe => 1,
+	noconsole => 1,
+	nouser => 1,
 	loggrep => {
 	    qr/ -F / => 1,
 	    qr/ -d / => 0,
@@ -31,8 +34,8 @@ our %args = (
 	    qr/^_syslogd .* internet/ => 2,
 	},
 	ktrace => {
-	    qr/CALL  setresuid(.*"_syslogd".*){3}/ => 2,
-	    qr/CALL  setresgid(.*"_syslogd".*){3}/ => 2,
+	    qr/CALL  setresuid(.*"_syslogd".*){3}/ => 1,
+	    qr/CALL  setresgid(.*"_syslogd".*){3}/ => 1,
 	    qr/CALL  setsid/ => 0,
 	},
     },
