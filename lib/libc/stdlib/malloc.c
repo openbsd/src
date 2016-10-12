@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.199 2016/10/07 05:55:37 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.200 2016/10/12 07:36:38 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -165,6 +165,7 @@ struct chunk_info {
 	u_short shift;			/* how far to shift for this size */
 	u_short free;			/* how many free chunks */
 	u_short total;			/* how many chunks */
+	u_short offset;			/* requested size table offset */
 					/* which chunks are free */
 	u_short bits[1];
 };
@@ -916,6 +917,7 @@ omalloc_make_chunks(struct dir_info *d, int bits, int listnum)
 		bp->size = 1U << bits;
 		bp->shift = bits;
 		bp->total = bp->free = MALLOC_PAGESIZE >> bits;
+		bp->offset = howmany(bp->total, MALLOC_BITS);
 		bp->page = pp;
 	}
 
@@ -1025,7 +1027,7 @@ malloc_bytes(struct dir_info *d, size_t argsize, void *f)
 	k += (lp - bp->bits) * MALLOC_BITS;
 	
 	if (mopts.chunk_canaries)
-		bp->bits[howmany(bp->total, MALLOC_BITS) + k] = argsize;
+		bp->bits[bp->offset + k] = argsize;
 
 	k <<= bp->shift;
 
@@ -1056,8 +1058,7 @@ find_chunknum(struct dir_info *d, struct region_info *r, void *ptr, int check)
 	/* Find the chunk number on the page */
 	chunknum = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
 	if (check && mopts.chunk_canaries && info->size > 0) {
-		size_t sz = info->bits[howmany(info->total, MALLOC_BITS) +
-		    chunknum];
+		size_t sz = info->bits[info->offset + chunknum];
 		size_t check_sz = info->size - sz;
 		u_char *p, *q;
 
@@ -1280,7 +1281,8 @@ malloc(size_t size)
 /*DEF_STRONG(malloc);*/
 
 static void
-validate_junk(struct dir_info *pool, void *p) {
+validate_junk(struct dir_info *pool, void *p)
+{
 	struct region_info *r;
 	size_t byte, sz;
 
