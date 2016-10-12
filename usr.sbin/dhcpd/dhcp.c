@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.50 2016/10/10 15:53:36 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.51 2016/10/12 13:36:39 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -795,7 +795,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	/* Replace the lease client identifier with a new one. */
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
 	if (packet->options[i].len && lease->client_identifier &&
-	    (strlen(lease->client_identifier) == packet->options[i].len) &&
+	    lease->client_identifier_len == packet->options[i].len &&
 	    !memcmp(lease->client_identifier, packet->options[i].data,
 	    packet->options[i].len)) {
 		/* Same client identifier. */
