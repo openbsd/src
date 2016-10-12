@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.65 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.66 2016/10/12 11:11:56 fcambus Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -155,7 +155,8 @@ void
 cvs_annotate_local(struct cvs_file *cf)
 {
 	int i;
-	char date[10], rnum[13], *p;
+	u_char *p;
+	char date[10], rnum[13];
 	RCSNUM *bnum, *rev;
 	struct rcs_line *line;
 	struct rcs_line **alines;
