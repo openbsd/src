@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.37 2016/10/11 13:45:47 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.38 2016/10/12 09:07:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -17,10 +17,10 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <vis.h>
 
 #include "tmux.h"
