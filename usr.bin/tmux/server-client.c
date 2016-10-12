@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.192 2016/10/11 09:30:36 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.193 2016/10/12 13:03:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -727,9 +727,10 @@ server_client_handle_key(struct client *c, key_code key)
 		server_clear_identify(c, NULL);
 	}
 	if (c->prompt_string != NULL) {
-		if (!(c->flags & CLIENT_READONLY))
-			status_prompt_key(c, key);
-		return;
+		if (c->flags & CLIENT_READONLY)
+			return;
+		if (status_prompt_key(c, key) == 0)
+			return;
 	}
 
 	/* Check for mouse keys. */
