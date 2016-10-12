@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.49 2016/10/06 20:41:28 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.50 2016/10/12 06:56:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1349,9 +1349,8 @@ vcpu_exit(struct vm_run_params *vrp)
 		    __progname, vrp->vrp_exit_reason);
 	}
 
-	/* XXX this may not be irq 9 all the time */
-	if (vionet_process_rx())
-		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, 9);
+	/* Process any pending traffic */
+	vionet_process_rx(vrp->vrp_vm_id);
 
 	vrp->vrp_continue = 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.9 2016/09/01 16:40:06 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.10 2016/10/12 06:56:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -32,7 +32,7 @@ struct pci pci;
 extern char *__progname;
 
 /* PIC IRQs, assigned to devices in order */
-const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 9, 10, 11};
+const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 7, 9, 10, 11, 14};
 
 /*
  * pci_add_bar
@@ -98,6 +98,26 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 	}
 
 	return (0);
+}
+
+/*
+ * pci_get_dev_irq
+ *
+ * Returns the IRQ for the specified PCI device
+ *
+ * Parameters:
+ *  id: PCI device id to return IRQ for
+ *
+ * Return values:
+ *  The IRQ for the device, or 0xff if no device IRQ assigned
+ */
+uint8_t
+pci_get_dev_irq(uint8_t id)
+{
+	if (pci.pci_devices[id].pd_int)
+		return pci.pci_devices[id].pd_irq;
+	else
+		return 0xFF;
 }
 
 /*

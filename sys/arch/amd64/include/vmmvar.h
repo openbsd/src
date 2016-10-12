@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.21 2016/10/06 07:37:51 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.22 2016/10/12 06:56:54 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -30,7 +30,7 @@
 #define VMM_MAX_KERNEL_PATH	128
 #define VMM_MAX_VCPUS_PER_VM	64
 #define VMM_MAX_VM_MEM_SIZE	(512 * 1024)
-#define VMM_MAX_NICS_PER_VM	2
+#define VMM_MAX_NICS_PER_VM	4
 
 #define VMM_PCI_MMIO_BAR_BASE	0xF0000000
 #define VMM_PCI_MMIO_BAR_END	0xF0FFFFFF

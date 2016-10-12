@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.21 2016/10/05 17:30:13 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.22 2016/10/12 06:56:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -945,13 +945,15 @@ vionet_rx_event(int fd, short kind, void *arg)
  * called on VCPU exit: it can happen that not all data fits into the
  * receive queue of the vionet_dev immediately. So any outstanding data
  * is handled here.
+ *
+ * Parameters:
+ *  vm_id: VM ID of the VM for which to process vionet events
  */
-int
-vionet_process_rx(void)
+void
+vionet_process_rx(uint32_t vm_id)
 {
-	int i, num_enq;
+	int i;
 
-	num_enq = 0;
 	for (i = 0 ; i < nr_vionet; i++) {
 		mutex_lock(&vionet[i].mutex);
 		if (!vionet[i].rx_added) {
@@ -959,16 +961,13 @@ vionet_process_rx(void)
 			continue;
 		}
 
-		if (vionet[i].rx_pending)
-			num_enq += vionet_rx(&vionet[i]);
+		if (vionet[i].rx_pending) {
+			if (vionet_rx(&vionet[i])) {
+				vcpu_assert_pic_irq(vm_id, 0, vionet[i].irq);
+			}
+		}
 		mutex_unlock(&vionet[i].mutex);
 	}
-
-	/*
-	 * XXX returns the number of packets enqueued across all vionet, which
-	 * may not be right for VMs with more than one vionet.
-	 */
-	return (num_enq);
 }
 
 /*
@@ -1295,7 +1294,7 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 			vionet[i].fd = child_taps[i];
 			vionet[i].rx_pending = 0;
 			vionet[i].vm_id = vcp->vcp_id;
-			vionet[i].irq = 9; /* XXX */
+			vionet[i].irq = pci_get_dev_irq(id);
 
 			event_set(&vionet[i].event, vionet[i].fd,
 			    EV_READ | EV_PERSIST, vionet_rx_event, &vionet[i]);
