@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.14 2016/10/05 17:30:13 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.15 2016/10/12 10:58:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -139,7 +139,7 @@ config_getvm(struct privsep *ps, struct vmop_create_params *vmc,
 	errno = 0;
 
 	if (vm_getbyname(vcp->vcp_name) != NULL) {
-		errno = EALREADY;
+		saved_errno = errno = EALREADY;
 		goto fail;
 	}
 
