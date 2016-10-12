@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.658 2016/10/12 14:50:14 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.659 2016/10/12 15:26:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1559,9 +1559,7 @@ int printflike(4, 5) hooks_wait(struct hooks *, struct cmd_q *,
 		    struct cmd_find_state *, const char *, ...);
 
 /* mode-key.c */
-extern struct mode_key_tree mode_key_tree_vi_edit;
 extern struct mode_key_tree mode_key_tree_vi_choice;
-extern struct mode_key_tree mode_key_tree_emacs_edit;
 extern struct mode_key_tree mode_key_tree_emacs_choice;
 int	mode_key_cmp(struct mode_key_binding *, struct mode_key_binding *);
 RB_PROTOTYPE(mode_key_tree, mode_key_binding, entry, mode_key_cmp);
