@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.19 2016/10/07 08:49:53 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.20 2016/10/12 15:18:56 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -99,6 +99,12 @@ struct ofp_group_mod *
 struct ofp_bucket *
 	    ofp13_bucket(struct ibuf *, uint16_t, uint32_t, uint32_t);
 
+int	 ofp13_setconfig_validate(struct switchd *,
+	    struct sockaddr_storage *, struct sockaddr_storage *,
+	    struct ofp_header *, struct ibuf *);
+int	 ofp13_setconfig(struct switchd *, struct switch_connection *,
+	    uint16_t, uint16_t);
+
 struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_HELLO,			ofp13_hello, NULL },
 	{ OFP_T_ERROR,			NULL, ofp13_validate_error },
@@ -109,7 +115,7 @@ struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_FEATURES_REPLY,		NULL, NULL },
 	{ OFP_T_GET_CONFIG_REQUEST,	NULL, NULL },
 	{ OFP_T_GET_CONFIG_REPLY,	NULL, NULL },
-	{ OFP_T_SET_CONFIG,		NULL, NULL },
+	{ OFP_T_SET_CONFIG,		NULL, ofp13_setconfig_validate },
 	{ OFP_T_PACKET_IN,		ofp13_packet_in,
 					ofp13_validate_packet_in },
 	{ OFP_T_FLOW_REMOVED,		ofp13_flow_removed, NULL },
@@ -585,6 +591,8 @@ ofp13_hello(struct switchd *sc, struct switch_connection *con,
 	    OFP_TABLE_ID_ALL);
 	ofp13_table_features(sc, con, 0);
 	ofp13_desc(sc, con);
+	ofp13_setconfig(sc, con, OFP_CONFIG_FRAG_NORMAL,
+	    OFP_CONTROLLER_MAXLEN_NO_BUFFER);
 
 	return (0);
 }
@@ -1461,4 +1469,48 @@ ofp13_bucket(struct ibuf *ibuf, uint16_t weight, uint32_t watchport,
 	b->b_watch_port = htonl(watchport);
 	b->b_watch_group = htonl(watchgroup);
 	return (b);
+}
+
+int
+ofp13_setconfig_validate(struct switchd *sc,
+    struct sockaddr_storage *src, struct sockaddr_storage *dst,
+    struct ofp_header *oh, struct ibuf *ibuf)
+{
+	struct ofp_switch_config	*cfg;
+
+	if ((cfg = ibuf_seek(ibuf, 0, sizeof(*cfg))) == NULL)
+		return (-1);
+
+	log_debug("\tflags %#04x miss_send_len %d",
+	    ntohs(cfg->cfg_flags), ntohs(cfg->cfg_miss_send_len));
+	return (0);
+}
+
+int
+ofp13_setconfig(struct switchd *sc, struct switch_connection *con,
+     uint16_t flags, uint16_t misslen)
+{
+	struct ibuf			*ibuf;
+	struct ofp_switch_config	*cfg;
+	struct ofp_header		*oh;
+	int				 rv;
+
+	if ((ibuf = ibuf_static()) == NULL ||
+	    (cfg = ibuf_advance(ibuf, sizeof(*cfg))) == NULL)
+		return (-1);
+
+	cfg->cfg_flags = htons(flags);
+	cfg->cfg_miss_send_len = htons(misslen);
+
+	oh = &cfg->cfg_oh;
+	oh->oh_version = OFP_V_1_3;
+	oh->oh_type = OFP_T_SET_CONFIG;
+	oh->oh_length = htons(ibuf_length(ibuf));
+	oh->oh_xid = htonl(con->con_xidnxt++);
+	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
+		return (-1);
+
+	rv = ofp_output(con, NULL, ibuf);
+	ibuf_free(ibuf);
+	return (rv);
 }
