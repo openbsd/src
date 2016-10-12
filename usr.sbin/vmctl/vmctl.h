@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.8 2016/09/03 20:49:05 deraadt Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.9 2016/10/12 19:10:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -27,6 +27,7 @@ enum actions {
 	CMD_CREATE,
 	CMD_LOAD,
 	CMD_RELOAD,
+	CMD_RESET,
 	CMD_START,
 	CMD_STATUS,
 	CMD_STOP,
@@ -44,6 +45,7 @@ struct parse_result {
 	size_t			 ndisks;
 	char			**disks;
 	int			 disable;
+	unsigned int		 mode;
 	struct ctl_command	*ctl;
 };
 

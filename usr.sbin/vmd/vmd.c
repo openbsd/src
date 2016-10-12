@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.33 2016/10/06 18:48:41 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.34 2016/10/12 19:10:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -63,7 +63,8 @@ int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep			*ps = p->p_ps;
-	int				 res = 0, cmd = 0, v = 0;
+	int				 res = 0, cmd = 0;
+	unsigned int			 v = 0;
 	struct vmop_create_params	 vmc;
 	struct vmop_id			 vid;
 	struct vm_terminate_params	 vtp;
@@ -103,14 +104,18 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		proc_forward_imsg(ps, imsg, PROC_VMM, -1);
 		break;
-	case IMSG_VMDOP_RELOAD:
-		v = 1;
 	case IMSG_VMDOP_LOAD:
-		if (IMSG_DATA_SIZE(imsg) > 0)
-			str = get_string((uint8_t *)imsg->data,
-			    IMSG_DATA_SIZE(imsg));
-		vmd_reload(v, str);
+		IMSG_SIZE_CHECK(imsg, str); /* at least one byte for path */
+		str = get_string((uint8_t *)imsg->data,
+		    IMSG_DATA_SIZE(imsg));
+	case IMSG_VMDOP_RELOAD:
+		vmd_reload(0, str);
 		free(str);
+		break;
+	case IMSG_CTL_RESET:
+		IMSG_SIZE_CHECK(imsg, &v);
+		memcpy(&v, imsg->data, sizeof(v));
+		vmd_reload(v, str);
 		break;
 	default:
 		return (-1);
@@ -245,7 +250,7 @@ vmd_sighdlr(int sig, short event, void *arg)
 		 * This is safe because libevent uses async signal handlers
 		 * that run in the event loop and not in signal context.
 		 */
-		vmd_reload(1, NULL);
+		vmd_reload(0, NULL);
 		break;
 	case SIGPIPE:
 		log_info("%s: ignoring SIGPIPE", __func__);
@@ -441,7 +446,7 @@ vmd_configure(void)
 }
 
 void
-vmd_reload(int reset, const char *filename)
+vmd_reload(unsigned int reset, const char *filename)
 {
 	/* Switch back to the default config file */
 	if (filename == NULL || *filename == '\0')
@@ -449,12 +454,16 @@ vmd_reload(int reset, const char *filename)
 
 	log_debug("%s: level %d config file %s", __func__, reset, filename);
 
-	if (reset)
-		config_setreset(env, CONFIG_ALL);
-
-	if (parse_config(filename) == -1) {
-		log_debug("%s: failed to load config file %s",
-		    __func__, filename);
+	if (reset) {
+		/* Purge the configuration */
+		config_purge(env, reset);
+		config_setreset(env, reset);
+	} else {
+		/* Reload the configuration */
+		if (parse_config(filename) == -1) {
+			log_debug("%s: failed to load config file %s",
+			    __func__, filename);
+		}
 	}
 }
 

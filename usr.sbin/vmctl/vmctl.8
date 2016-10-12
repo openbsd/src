@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.15 2016/10/04 17:25:52 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.16 2016/10/12 19:10:03 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2016 $
+.Dd $Mdocdate: October 12 2016 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -56,10 +56,16 @@ Creates a VM disk image file with the specified
 and
 .Ar size ,
 rounded to megabytes.
-.It Cm load Op Ar filename
+.It Cm load Ar filename
 Load the configuration from the specified file.
-.It Cm reload Op Ar filename
+.It Cm reload
 Reload the configuration from the default configuration file.
+.It Cm reset Op Cm all
+Reset the running state.
+.It Cm reset switches
+Reset the configured switches.
+.It Cm reset vms
+Reset and terminate all VMs.
 .It Xo Cm start Op Ar name
 .Op Fl c
 .Fl k Ar path

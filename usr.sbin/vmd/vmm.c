@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.50 2016/10/12 06:56:54 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.51 2016/10/12 19:10:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -179,6 +179,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_result	 vmr;
 	uint32_t		 id = 0;
 	struct vmd_vm		*vm;
+	unsigned int		 mode;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
@@ -225,6 +226,15 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		cmd = IMSG_VMDOP_GET_INFO_VM_END_DATA;
 		break;
 	case IMSG_CTL_RESET:
+		IMSG_SIZE_CHECK(imsg, &mode);
+		memcpy(&mode, imsg->data, sizeof(mode));
+
+		if (mode & CONFIG_VMS) {
+			/* Terminate and remove all VMs */
+			vmm_shutdown();
+			mode &= ~CONFIG_VMS;
+		}
+
 		config_getreset(env, imsg);
 		break;
 	default:
@@ -326,7 +336,8 @@ vmm_shutdown(void)
 		vtp.vtp_vm_id = vm->vm_params.vcp_id;
 
 		/* XXX suspend or request graceful shutdown */
-		terminate_vm(&vtp);
+		if (terminate_vm(&vtp) == ENOENT)
+			vm_remove(vm);
 	}
 }
 

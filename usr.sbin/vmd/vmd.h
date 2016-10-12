@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.28 2016/10/06 18:48:41 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.29 2016/10/12 19:10:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -152,7 +152,7 @@ struct vmd {
 };
 
 /* vmd.c */
-void	 vmd_reload(int, const char *);
+void	 vmd_reload(unsigned int, const char *);
 struct vmd_vm *vm_getbyvmid(uint32_t);
 struct vmd_vm *vm_getbyid(uint32_t);
 struct vmd_vm *vm_getbyname(const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2016/05/10 11:00:54 mlarkin Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2016/10/12 19:10:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,8 @@ int		 vmm_action(struct parse_result *);
 int		 ctl_console(struct parse_result *, int, char *[]);
 int		 ctl_create(struct parse_result *, int, char *[]);
 int		 ctl_load(struct parse_result *, int, char *[]);
+int		 ctl_reload(struct parse_result *, int, char *[]);
+int		 ctl_reset(struct parse_result *, int, char *[]);
 int		 ctl_start(struct parse_result *, int, char *[]);
 int		 ctl_status(struct parse_result *, int, char *[]);
 int		 ctl_stop(struct parse_result *, int, char *[]);
@@ -57,8 +59,9 @@ int		 ctl_stop(struct parse_result *, int, char *[]);
 struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
 	{ "create",	CMD_CREATE,	ctl_create,	"\"path\" -s size", 1 },
-	{ "load",	CMD_LOAD,	ctl_load,	"[path]" },
-	{ "reload",	CMD_RELOAD,	ctl_load,	"[path]" },
+	{ "load",	CMD_LOAD,	ctl_load,	"\"path\"" },
+	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
+	{ "reset",	CMD_RESET,	ctl_reset,	"[all|vms|switches]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
 	    " [-c] -k kernel -m size [-i count] [-d disk]*" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
@@ -204,14 +207,18 @@ vmmaction(struct parse_result *res)
 	case CMD_CONSOLE:
 		get_info_vm(res->id, res->name, 1);
 		break;
-	case CMD_RELOAD:
-		imsg_compose(ibuf, IMSG_VMDOP_RELOAD, 0, 0, -1,
-		    res->path, res->path == NULL ? 0 : strlen(res->path) + 1);
-		done = 1;
-		break;
 	case CMD_LOAD:
 		imsg_compose(ibuf, IMSG_VMDOP_LOAD, 0, 0, -1,
-		    res->path, res->path == NULL ? 0 : strlen(res->path) + 1);
+		    res->path, strlen(res->path) + 1);
+		done = 1;
+		break;
+	case CMD_RELOAD:
+		imsg_compose(ibuf, IMSG_VMDOP_RELOAD, 0, 0, -1, NULL, 0);
+		done = 1;
+		break;
+	case CMD_RESET:
+		imsg_compose(ibuf, IMSG_CTL_RESET, 0, 0, -1,
+		    &res->mode, sizeof(res->mode));
 		done = 1;
 		break;
 	case CMD_CREATE:
@@ -431,16 +438,41 @@ ctl_status(struct parse_result *res, int argc, char *argv[])
 int
 ctl_load(struct parse_result *res, int argc, char *argv[])
 {
-	char	*config_file = NULL;
-
-	if (argc == 2)
-		config_file = argv[1];
-	else if (argc > 2)
+	if (argc != 2)
 		ctl_usage(res->ctl);
 
-	if (config_file != NULL &&
-	    (res->path = strdup(config_file)) == NULL)
+	if ((res->path = strdup(argv[1])) == NULL)
 		err(1, "strdup");
+
+	return (vmmaction(res));
+}
+
+int
+ctl_reload(struct parse_result *res, int argc, char *argv[])
+{
+	if (argc != 1)
+		ctl_usage(res->ctl);
+
+	return (vmmaction(res));
+}
+
+int
+ctl_reset(struct parse_result *res, int argc, char *argv[])
+{
+	if (argc == 2) {
+		if (strcasecmp("all", argv[1]) == 0)
+			res->mode = CONFIG_ALL;
+		else if (strcasecmp("vms", argv[1]) == 0)
+			res->mode = CONFIG_VMS;
+		else if (strcasecmp("switches", argv[1]) == 0)
+			res->mode = CONFIG_SWITCHES;
+		else
+			ctl_usage(res->ctl);
+	} else if (argc > 2)
+		ctl_usage(res->ctl);
+
+	if (res->mode == 0)
+		res->mode = CONFIG_ALL;
 
 	return (vmmaction(res));
 }
