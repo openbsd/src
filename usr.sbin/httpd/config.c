@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.48 2016/09/01 16:07:55 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.49 2016/10/12 10:57:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -210,6 +210,14 @@ config_setserver(struct httpd *env, struct server *srv)
 					    __func__, srv->srv_conf.name);
 					return (-1);
 				}
+
+				/* Prevent fd exhaustion in the parent. */
+				if (proc_flush_imsg(ps, id, n) == -1) {
+					log_warn("%s: failed to flush "
+					    "IMSG_CFG_SERVER imsg for `%s'",
+					    __func__, srv->srv_conf.name);
+					return (-1);
+				}
 			}
 
 			/* Configure TLS if necessary. */
@@ -223,6 +231,12 @@ config_setserver(struct httpd *env, struct server *srv)
 				return (-1);
 			}
 		}
+	}
+
+	/* Close server socket early to prevent fd exhaustion in the parent. */
+	if (srv->srv_s != -1) {
+		close(srv->srv_s);
+		srv->srv_s = -1;
 	}
 
 	return (0);
