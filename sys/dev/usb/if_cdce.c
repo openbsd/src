@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.71 2016/09/26 07:09:32 fcambus Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.72 2016/10/12 21:51:11 fcambus Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -93,13 +93,13 @@ static uint32_t	 cdce_crc32(const void *, size_t);
 const struct cdce_type cdce_devs[] = {
     {{ USB_VENDOR_ACERLABS, USB_PRODUCT_ACERLABS_M5632 }, 0 },
     {{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2501 }, 0 },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5500 }, CDCE_ZAURUS },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_A300 }, CDCE_ZAURUS },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5600 }, CDCE_ZAURUS },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C700 }, CDCE_ZAURUS },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C750 }, CDCE_ZAURUS },
-    {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, CDCE_ZAURUS },
-    {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, CDCE_ZAURUS },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5500 }, CDCE_CRC32 },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_A300 }, CDCE_CRC32 },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5600 }, CDCE_CRC32 },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C700 }, CDCE_CRC32 },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C750 }, CDCE_CRC32 },
+    {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, CDCE_CRC32 },
+    {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, CDCE_CRC32 },
     {{ USB_VENDOR_GMATE, USB_PRODUCT_GMATE_YP3X00 }, 0 },
     {{ USB_VENDOR_NETCHIP, USB_PRODUCT_NETCHIP_ETHERNETGADGET }, 0 },
     {{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQLINUX }, 0 },
@@ -409,8 +409,8 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	c = &sc->cdce_cdata.cdce_tx_chain[idx];
 
 	m_copydata(m, 0, m->m_pkthdr.len, c->cdce_buf);
-	if (sc->cdce_flags & CDCE_ZAURUS) {
-		/* Zaurus wants a 32-bit CRC appended to every frame */
+	if (sc->cdce_flags & CDCE_CRC32) {
+		/* Some devices want a 32-bit CRC appended to every frame */
 		u_int32_t crc;
 
 		crc = cdce_crc32(c->cdce_buf, m->m_pkthdr.len);
@@ -741,8 +741,8 @@ cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	sc->cdce_rxeof_errors = 0;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
-	if (sc->cdce_flags & CDCE_ZAURUS)
-		total_len -= 4;	/* Strip off CRC added by Zaurus */
+	if (sc->cdce_flags & CDCE_CRC32)
+		total_len -= 4;	/* Strip off added CRC */
 	if (total_len <= 1)
 		goto done;
 

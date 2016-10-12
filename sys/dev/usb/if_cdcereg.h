@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcereg.h,v 1.6 2013/12/04 00:52:52 deraadt Exp $ */
+/*	$OpenBSD: if_cdcereg.h,v 1.7 2016/10/12 21:51:11 fcambus Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
 struct cdce_type {
 	struct usb_devno	 cdce_dev;
 	u_int16_t		 cdce_flags;
-#define CDCE_ZAURUS	1
+#define CDCE_CRC32	1
 #define CDCE_SWAPUNION	2
 };
 
