@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.2 2016/10/12 19:07:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -30,21 +30,20 @@ enum actions {
 	LOG_VERBOSE,
 	LOG_BRIEF,
 	RESETALL,
-	ADD_DEVICE,
-	REMOVE_DEVICE
+	CONNECT,
+	DISCONNECT
 };
 
 struct parse_result {
-	enum actions	 action;
-	struct imsgbuf	*ibuf;
-	char		*path;
-	char		*caname;
-	char		*pass;
-	char		*host;
-	char		*peer;
-	char		*uri;
-	int		 htype;
-	int		 quiet;
+	enum actions		 action;
+	struct imsgbuf		*ibuf;
+	char			*path;
+	char			*caname;
+	char			*pass;
+	char			*peer;
+	char			*uri;
+	struct sockaddr_storage	 addr;
+	int			 quiet;
 };
 
 #define HOST_IPADDR	1

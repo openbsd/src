@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2016/09/14 13:46:51 rzalamena Exp $	*/
+/*	$OpenBSD: control.c,v 1.5 2016/10/12 19:07:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2016 Reyk Floeter <reyk@openbsd.org>
@@ -340,8 +340,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			proc_compose(&env->sc_ps, PROC_OFP,
 			    imsg.hdr.type, &fd, sizeof(fd));
 			break;
-		case IMSG_CTL_DEVICE_CONNECT:
-		case IMSG_CTL_DEVICE_DISCONNECT:
+		case IMSG_CTL_CONNECT:
+		case IMSG_CTL_DISCONNECT:
 			proc_compose(&env->sc_ps, PROC_PARENT,
 			    imsg.hdr.type, imsg.data, IMSG_DATA_SIZE(&imsg));
 			break;

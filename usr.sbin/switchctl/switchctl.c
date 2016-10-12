@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.3 2016/09/28 09:13:30 reyk Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.4 2016/10/12 19:07:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -83,8 +83,8 @@ main(int argc, char *argv[])
 	struct sockaddr_un	 sun;
 	struct parse_result	*res;
 	struct imsg		 imsg;
-	struct switch_device	 sdv;
-	struct switch_controller *swc;
+	struct switch_client	 swc;
+	struct switch_address	*to;
 	int			 ctl_sock;
 	int			 done = 1;
 	int			 n;
@@ -92,6 +92,7 @@ main(int argc, char *argv[])
 	int			 v = 0;
 	int			 quiet = 0;
 	const char		*sock = SWITCHD_SOCKET;
+	size_t			 len;
 
 	while ((ch = getopt(argc, argv, "qs:")) != -1) {
 		switch (ch) {
@@ -186,40 +187,42 @@ main(int argc, char *argv[])
 		    "Switch", "Port", "Type", "Name", "Info");
 		done = 0;
 		break;
-	case ADD_DEVICE:
-	case REMOVE_DEVICE:
-		memset(&sdv, 0, sizeof(sdv));
-		swc = &sdv.sdv_swc;
-		if (res->path[0] != '/')
-			strlcpy(sdv.sdv_device, "/dev/",
-			    sizeof(sdv.sdv_device));
-		if (strlcat(sdv.sdv_device, res->path,
-		    sizeof(sdv.sdv_device)) >= sizeof(sdv.sdv_device))
-			errx(1, "path is too long");
-		if (res->action == REMOVE_DEVICE) {
-			imsg_compose(ibuf, IMSG_CTL_DEVICE_DISCONNECT, 0, 0, -1,
-			    &sdv, sizeof(sdv));
+	case CONNECT:
+	case DISCONNECT:
+		memset(&swc, 0, sizeof(swc));
+		if (res->addr.ss_family == AF_UNSPEC)
+			errx(1, "invalid address");
+
+		memcpy(&swc.swc_addr.swa_addr, &res->addr, sizeof(res->addr));
+		if (res->action == DISCONNECT) {
+			imsg_compose(ibuf, IMSG_CTL_DISCONNECT, 0, 0, -1,
+			    &swc, sizeof(swc));
 			break;
 		}
-		if (res->uri == NULL || res->uri[0] == '\0')
-			swc->swc_type = SWITCH_CONN_LOCAL;
-		else {
-			if (strncmp(res->uri, "tcp:", 4) == 0)
-				swc->swc_type = SWITCH_CONN_TCP;
-			else if (strncmp(res->uri, "tls:", 4) == 0)
-				swc->swc_type = SWITCH_CONN_TLS;
-			else
-				errx(1, "protocol field is unknown");
 
-			if (parsehostport(res->uri + 4,
-			    (struct sockaddr *)&swc->swc_addr,
-			    sizeof(swc->swc_addr)) != 0)
+		to = &swc.swc_target;
+		if (res->uri == NULL || res->uri[0] == '\0')
+			to->swa_type = SWITCH_CONN_LOCAL;
+		else {
+			len = 4;
+			if (strncmp(res->uri, "tcp:", len) == 0)
+				to->swa_type = SWITCH_CONN_TCP;
+			else if (strncmp(res->uri, "tls:", len) == 0)
+				to->swa_type = SWITCH_CONN_TLS;
+			else {
+				/* set the default */
+				to->swa_type = SWITCH_CONN_TCP;
+				len = 0;
+			}
+
+			if (parsehostport(res->uri + len,
+			    (struct sockaddr *)&to->swa_addr,
+			    sizeof(to->swa_addr)) != 0)
 				errx(1,
 				    "couldn't parse name-or-address and port");
-			warnx("%s", sdv.sdv_device);
 		}
-		imsg_compose(ibuf, IMSG_CTL_DEVICE_CONNECT, 0, 0, -1,
-		    &sdv, sizeof(sdv));
+		imsg_compose(ibuf, IMSG_CTL_CONNECT, 0, 0, -1,
+		    &swc, sizeof(swc));
 		break;
 	case RESETALL:
 		imsg_compose(ibuf, IMSG_CTL_RESET, 0, 0, -1, &v, sizeof(v));

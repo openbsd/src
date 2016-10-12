@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrelay.c,v 1.5 2016/10/07 08:31:08 rzalamena Exp $	*/
+/*	$OpenBSD: ofrelay.c,v 1.6 2016/10/12 19:07:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -76,7 +76,7 @@ ofrelay_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	struct switch_server	*srv = &sc->sc_server;
 
 	TAILQ_INIT(&sc->sc_conns);
-	TAILQ_INIT(&sc->sc_devs);
+	TAILQ_INIT(&sc->sc_clients);
 
 	srv->srv_sc = sc;
 	event_set(&srv->srv_ev, srv->srv_fd, EV_READ, ofrelay_accept, srv);

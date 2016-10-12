@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.13 2016/10/05 16:40:55 reyk Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.14 2016/10/12 19:07:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -93,8 +93,7 @@ ofp_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep			*ps = p->p_ps;
 	struct switchd			*sc = ps->ps_env;
-	struct sockaddr_un		 un;
-	struct switch_device		*sdv;
+	struct switch_client		 swc;
 	struct switch_connection	*con;
 
 	switch (imsg->hdr.type) {
@@ -103,24 +102,16 @@ ofp_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			close(sc->sc_tap);
 		sc->sc_tap = imsg->fd;
 		return (0);
-	case IMSG_CTL_DEVICE_CONNECT:
-	case IMSG_CTL_DEVICE_DISCONNECT:
-		IMSG_SIZE_CHECK(imsg, sdv);
-		sdv = imsg->data;
+	case IMSG_CTL_CONNECT:
+	case IMSG_CTL_DISCONNECT:
+		IMSG_SIZE_CHECK(imsg, &swc);
+		memcpy(&swc, imsg->data, sizeof(swc));
 
-		if (strlcpy(un.sun_path, sdv->sdv_device,
-		    sizeof(un.sun_path)) >= sizeof(un.sun_path)) {
-			log_warnx("invalid device: %s", sdv->sdv_device);
-			return (0);
-		}
-		un.sun_family = AF_UNIX;
-		un.sun_len = sizeof(un);
-
-		if (imsg->hdr.type == IMSG_CTL_DEVICE_CONNECT)
-			ofrelay_attach(&sc->sc_server,
-			    imsg->fd, (struct sockaddr *)&un);
-		else if ((con =
-		    switchd_connbyaddr(sc, (struct sockaddr *)&un)) != NULL)
+		if (imsg->hdr.type == IMSG_CTL_CONNECT)
+			ofrelay_attach(&sc->sc_server, imsg->fd,
+			    (struct sockaddr *)&swc.swc_addr.swa_addr);
+		else if ((con = switchd_connbyaddr(sc,
+		    (struct sockaddr *)&swc.swc_addr.swa_addr)) != NULL)
 			ofp_close(con);
 		return (0);
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2016/09/30 11:57:57 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2016/10/12 19:07:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/un.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -79,7 +80,7 @@ typedef struct {
 		int64_t		 number;
 		char		*string;
 		in_port_t	 port;
-		struct switch_device
+		struct switch_client
 				*conn;
 	} v;
 	int lineno;
@@ -157,51 +158,73 @@ opttls		: /* empty */	{ $$ = 0; }
 		;
 
 device		: DEVICE STRING optofcconn {
-			struct switch_device		*c;
+			struct switch_client		*c;
+			struct switch_address		 s;
+			struct sockaddr_un		*un;
 
-			TAILQ_FOREACH(c, &conf->sc_devs, sdv_next) {
-				if (strcmp(c->sdv_device, $2) == 0)
+			memset(&s, 0, sizeof(s));
+			un = (struct sockaddr_un *)&s.swa_addr;
+
+			if (*$2 != '/') {
+				yyerror("not an absolute path: %s", $2);
+				free($2);
+				YYERROR;
+			}
+
+			un->sun_family = AF_LOCAL;
+			un->sun_len = sizeof(*un);
+			if (strlcpy(un->sun_path, $2,
+			    sizeof(un->sun_path)) >= sizeof(un->sun_path)) {
+				yyerror("device name is too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			TAILQ_FOREACH(c, &conf->sc_clients, swc_next) {
+				if (sockaddr_cmp((struct sockaddr *)
+				    &c->swc_addr.swa_addr,
+				    (struct sockaddr *)&s.swa_addr, -1) == 0)
 					break;
 			}
 			if (c != NULL) {
 				yyerror("device name is duplicated");
 				YYERROR;
 			}
-			if (strlcpy($3->sdv_device, $2, sizeof($3->sdv_device))
-			    >= sizeof($3->sdv_device)) {
-				yyerror("device name is too long");
-				YYERROR;
-			}
-			free($2);
-			TAILQ_INSERT_TAIL(&conf->sc_devs, $3, sdv_next);
+
+			memcpy(&$3->swc_addr, &s, sizeof(s));
+
+			TAILQ_INSERT_TAIL(&conf->sc_clients, $3, swc_next);
 		}
 		;
 
 optofcconn	: /* empty */ {
 			if (($$ = calloc(1,
-			    sizeof(struct switch_device))) == NULL)
+			    sizeof(struct switch_client))) == NULL)
 				fatal("calloc");
-			$$->sdv_swc.swc_type = SWITCH_CONN_LOCAL;
+			$$->swc_addr.swa_type = $$->swc_target.swa_type =
+			    SWITCH_CONN_LOCAL;
 		}
 		| FORWARD TO STRING {
+			size_t	 len;
+
 			if (($$ = calloc(1,
-			    sizeof(struct switch_device))) == NULL)
+			    sizeof(struct switch_client))) == NULL)
 				fatal("calloc");
-			if (strncmp($3, "tcp:", 4) == 0)
-				$$->sdv_swc.swc_type = SWITCH_CONN_TCP;
-			else if (strncmp($3, "tls:", 4) == 0)
-				$$->sdv_swc.swc_type = SWITCH_CONN_TLS;
+			len = 4;
+			if (strncmp($3, "tcp:", len) == 0)
+				$$->swc_target.swa_type = SWITCH_CONN_TCP;
+			else if (strncmp($3, "tls:", len) == 0)
+				$$->swc_target.swa_type = SWITCH_CONN_TLS;
 			else {
-				yyerror("foward to proto is not supported");
-				free($$);
-				free($3);
-				YYERROR;
+				len = 0;
+				$$->swc_target.swa_type = SWITCH_CONN_TCP;
 			}
-			if (parsehostport($3 + 4,
-			    (struct sockaddr *)&$$->sdv_swc.swc_addr,
-			    sizeof($$->sdv_swc.swc_addr)) == -1) {
+			if (parsehostport($3 + len,
+			    (struct sockaddr *)&$$->swc_target.swa_addr,
+			    sizeof($$->swc_target.swa_addr)) == -1) {
 				yyerror("could not parse host and port part "
-				    "of connect-to");
+				    "of forward target");
 				free($$);
 				free($3);
 				YYERROR;

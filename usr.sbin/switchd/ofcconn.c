@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcconn.c,v 1.11 2016/09/30 12:48:27 reyk Exp $	*/
+/*	$OpenBSD: ofcconn.c,v 1.12 2016/10/12 19:07:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 #include <net/ofp.h>
 
@@ -78,7 +79,7 @@ void		 ofsw_on_io(int, short, void *);
 int		 ofsw_write(struct ofsw *, struct ofcconn *);
 int		 ofsw_ofc_write_ready(struct ofsw *);
 void		 ofsw_reset_event_handlers(struct ofsw *);
-int		 ofsw_new_ofcconn(struct ofsw *, struct switch_controller *);
+int		 ofsw_new_ofcconn(struct ofsw *, struct switch_address *);
 int		 ofcconn_connect(struct ofcconn *);
 void		 ofcconn_on_sockio(int, short, void *);
 void		 ofcconn_connect_again(struct ofcconn *);
@@ -126,30 +127,33 @@ int
 ofcconn_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct ofsw			*os;
-	struct switch_device		*sdv;
-	struct switch_controller	*swc;
+	struct switch_client		 swc;
+	struct sockaddr_un		*un;
 
 	switch (imsg->hdr.type) {
-	case IMSG_CTL_DEVICE_CONNECT:
-		if (IMSG_DATA_SIZE(imsg) < sizeof(*sdv)) {
-			log_warnx("%s: IMSG_CTL_DEVICE_CONNECT: "
+	case IMSG_CTL_CONNECT:
+		if (IMSG_DATA_SIZE(imsg) < sizeof(swc)) {
+			log_warnx("%s: IMSG_CTL_CONNECT: "
 			    "invalid message size", __func__);
 			return (0);
 		}
-		sdv = imsg->data;
-		swc = &sdv->sdv_swc;
-		if ((os = ofsw_create(sdv->sdv_device, imsg->fd)) != NULL)
-			ofsw_new_ofcconn(os, swc);
+		memcpy(&swc, imsg->data, sizeof(swc));
+		un = (struct sockaddr_un *)&swc.swc_addr.swa_addr;
+
+		if ((os = ofsw_create(un->sun_path, imsg->fd)) != NULL)
+			ofsw_new_ofcconn(os, &swc.swc_target);
 		return (0);
-	case IMSG_CTL_DEVICE_DISCONNECT:
-		if (IMSG_DATA_SIZE(imsg) < sizeof(*sdv)) {
+	case IMSG_CTL_DISCONNECT:
+		if (IMSG_DATA_SIZE(imsg) < sizeof(swc)) {
 			log_warnx("%s: IMSG_CTL_DEVICE_DISCONNECT: "
 			    "invalid message size", __func__);
 			return (0);
 		}
-		sdv = imsg->data;
+		memcpy(&swc, imsg->data, sizeof(swc));
+		un = (struct sockaddr_un *)&swc.swc_addr.swa_addr;
+
 		TAILQ_FOREACH(os, &ofsw_list, os_next) {
-			if (!strcmp(os->os_name, sdv->sdv_device))
+			if (!strcmp(os->os_name, un->sun_path))
 				break;
 		}
 		if (os) {
@@ -375,7 +379,7 @@ ofsw_reset_event_handlers(struct ofsw *os)
 }
 
 int
-ofsw_new_ofcconn(struct ofsw *os, struct switch_controller *swc)
+ofsw_new_ofcconn(struct ofsw *os, struct switch_address *swa)
 {
 	struct ofcconn	*oc = NULL;
 	char		 buf[128];
@@ -386,7 +390,7 @@ ofsw_new_ofcconn(struct ofsw *os, struct switch_controller *swc)
 	}
 
 	if (asprintf(&oc->oc_name, "tcp:%s",
-	    print_host(&swc->swc_addr, buf, sizeof(buf))) == -1) {
+	    print_host(&swa->swa_addr, buf, sizeof(buf))) == -1) {
 		log_warn("%s: strdup failed", __func__);
 		goto fail;
 	}
@@ -396,7 +400,7 @@ ofsw_new_ofcconn(struct ofsw *os, struct switch_controller *swc)
 	}
 	oc->oc_sw = os;
 	oc->oc_sock = -1;
-	memcpy(&oc->oc_peer, &swc->swc_addr, sizeof(oc->oc_peer));
+	memcpy(&oc->oc_peer, &swa->swa_addr, sizeof(oc->oc_peer));
 
 	if (ntohs(((struct sockaddr_in *)&oc->oc_peer)->sin_port) == 0)
 		((struct sockaddr_in *)&oc->oc_peer)->sin_port =
@@ -444,7 +448,7 @@ ofcconn_connect(struct ofcconn *oc)
 	    ofcconn_on_sockio, oc);
 	event_add(&oc->oc_evsock, NULL);
 
-	tv.tv_sec = SWITCHD_OFCCONN_TIMEOUT;
+	tv.tv_sec = SWITCHD_CONNECT_TIMEOUT;
 	tv.tv_usec = 0;
 	event_add(&oc->oc_evtimer, &tv);
 

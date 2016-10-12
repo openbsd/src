@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.6 2016/10/06 20:27:44 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.7 2016/10/12 19:07:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -43,8 +43,7 @@
 #define SWITCHD_CACHE_MAX	4096	/* Default MAC address cache limit */
 #define SWITCHD_CACHE_TIMEOUT	240	/* t/o in seconds for learned MACs */
 
-#define SWITCHD_OFCCONN_TIMEOUT	20	/* connect timeout for OpenFlow ch. */
-
+#define SWITCHD_CONNECT_TIMEOUT	5
 
 #ifndef ETHER_ADDR_LEN
 #define ETHER_ADDR_LEN		6
@@ -69,8 +68,8 @@ enum imsg_type {
 	IMSG_CTL_SWITCH,
 	IMSG_CTL_MAC,
 	IMSG_CTL_SHOW_SUM,
-	IMSG_CTL_DEVICE_CONNECT,
-	IMSG_CTL_DEVICE_DISCONNECT,
+	IMSG_CTL_CONNECT,
+	IMSG_CTL_DISCONNECT,
 	IMSG_TAPFD
 };
 

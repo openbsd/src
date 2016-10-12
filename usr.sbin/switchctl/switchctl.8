@@ -1,4 +1,4 @@
-.\" $OpenBSD: switchctl.8,v 1.1 2016/07/19 16:54:26 reyk Exp $
+.\" $OpenBSD: switchctl.8,v 1.2 2016/10/12 19:07:42 reyk Exp $
 .\"
 .\" Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2016 $
+.Dd $Mdocdate: October 12 2016 $
 .Dt SWITCHCTL 8
 .Os
 .Sh NAME
@@ -49,11 +49,25 @@ to communicate with
 The following commands are available to control
 .Xr switchd 8 :
 .Bl -tag -width Ds
-.It Cm device add Ar filename
-Add new
+.It Cm connect Ar address Op Cm forward-to Ar address
+Connect to a new switch by
+.Ar address ,
+for example
+.Ar 10.1.1.1 ,
+or a
 .Xr switch 4
 control device, for example
 .Pa /dev/switch0 .
+.Nm switchd
+will forward all OpenFlow requests of the switch to a remote controller
+if the optional
+.Cm forward-to
+.Ar address
+is specified.
+.It Cm disconnect Ar address
+Close the client connection to a remote switch or a
+.Xr switch 4
+control device.
 .It Cm load Ar filename
 Reload the configuration from the specified file.
 .It Cm log brief

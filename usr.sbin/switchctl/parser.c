@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2016/07/19 18:09:39 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.3 2016/10/12 19:07:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
+#include <sys/un.h>
 
 #include <err.h>
 #include <errno.h>
@@ -41,8 +42,6 @@ enum token_type {
 	KEYWORD,
 	PATH,
 	ADDRESS,
-	FQDN,
-	DEVICE,
 	URI
 };
 
@@ -58,14 +57,14 @@ static const struct token t_reset[];
 static const struct token t_log[];
 static const struct token t_load[];
 static const struct token t_show[];
-static const struct token t_device[];
-static const struct token t_device_add[];
-static const struct token t_device_remove[];
-static const struct token t_connect_to[];
+static const struct token t_connect[];
+static const struct token t_disconnect[];
+static const struct token t_forward_to[];
 static const struct token t_uri[];
 
 static const struct token t_main[] = {
-	{ KEYWORD,	"device",	NONE,		t_device },
+	{ KEYWORD,	"connect",	CONNECT,	t_connect },
+	{ KEYWORD,	"disconnect",	DISCONNECT,	t_disconnect },
 	{ KEYWORD,	"load",		LOAD,		t_load },
 	{ KEYWORD,	"log",		NONE,		t_log },
 	{ KEYWORD,	"monitor",	MONITOR,	NULL },
@@ -97,21 +96,17 @@ static const struct token t_show[] = {
 	{ KEYWORD,	"macs",		SHOW_MACS,	NULL },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
-static const struct token t_device[] = {
-	{ KEYWORD,	"add",		ADD_DEVICE,	t_device_add },
-	{ KEYWORD,	"remove",	REMOVE_DEVICE,	t_device_remove },
+static const struct token t_connect[] = {
+	{ ADDRESS,	"",		NONE,		t_forward_to },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
-static const struct token t_device_add[] = {
-	{ DEVICE,	"",		NONE,		t_connect_to },
+static const struct token t_disconnect[] = {
+	{ ADDRESS,	"",		NONE,		NULL },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
-static const struct token t_device_remove[] = {
-	{ DEVICE,	"",		NONE,		NULL },
-	{ ENDTOKEN,	"",		NONE,		NULL }
-};
-static const struct token t_connect_to[] = {
-	{ KEYWORD,	"connect-to",	NONE,		t_uri },
+static const struct token t_forward_to[] = {
+	{ NOTOKEN,	"",		NONE,		NULL },
+	{ KEYWORD,	"forward-to",	NONE,		t_uri },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 static const struct token  t_uri[] = {
@@ -123,7 +118,8 @@ static struct parse_result	 res;
 
 const struct token		*match_token(char *, const struct token []);
 void				 show_valid_args(const struct token []);
-int				 parse_addr(const char *);
+int				 parse_addr(const char *,
+				    struct sockaddr_storage *);
 
 struct parse_result *
 parse(int argc, char *argv[])
@@ -158,19 +154,60 @@ parse(int argc, char *argv[])
 }
 
 int
-parse_addr(const char *word)
+parse_addr(const char *word, struct sockaddr_storage *ss)
 {
-	struct addrinfo hints, *r;
+	struct addrinfo		 hints, *ai;
+	struct sockaddr_un	*un;
 
-	bzero(&hints, sizeof(hints));
-	hints.ai_socktype = SOCK_DGRAM; /* dummy */
-	hints.ai_family = PF_UNSPEC;
-	hints.ai_flags = AI_NUMERICHOST;
-	if (getaddrinfo(word, "0", &hints, &r) == 0) {
+	memset(ss, 0, sizeof(*ss));
+
+	/* device */
+	if (*word == '/') {
+		un = (struct sockaddr_un *)ss;
+		if (strlcpy(un->sun_path, word, sizeof(un->sun_path)) >=
+		    sizeof(un->sun_path)) {
+			warnx("invalid path");
+			return (-1);
+		}
+		un->sun_family = AF_LOCAL;
+		un->sun_len = sizeof(*un);
 		return (0);
 	}
 
-	return (1);
+	/* address */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM; /* dummy */
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(word, "0", &hints, &ai) == 0) {
+		if (ai->ai_addrlen > sizeof(*ss)) {
+			warnx("invalid address length");
+			return (-1);
+		}
+		memcpy(ss, ai->ai_addr, ai->ai_addrlen);
+		ss->ss_len = ai->ai_addrlen;
+		freeaddrinfo(ai);
+		return (0);
+	}
+
+	/* FQDN */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM; /* dummy */
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_flags = AI_ADDRCONFIG;
+	if (getaddrinfo(word, "0", &hints, &ai) == 0) {
+		/* Pick first name only */
+		if (ai->ai_addrlen > sizeof(*ss)) {
+			warnx("invalid address length");
+			return (-1);
+		}
+		memcpy(ss, ai->ai_addr, ai->ai_addrlen);
+		ss->ss_len = ai->ai_addrlen;
+		freeaddrinfo(ai);
+		return (0);
+	}
+
+	return (-1);
 }
 
 
@@ -197,7 +234,6 @@ match_token(char *word, const struct token table[])
 					res.action = t->value;
 			}
 			break;
-		case DEVICE:
 		case PATH:
 			if (!match && word != NULL && strlen(word) > 0) {
 				res.path = strdup(word);
@@ -206,14 +242,8 @@ match_token(char *word, const struct token table[])
 			}
 			break;
 		case ADDRESS:
-		case FQDN:
 			if (!match && word != NULL && strlen(word) > 0) {
-				parse_addr(word);
-				res.host = strdup(word);
-				if (parse_addr(word) == 0)
-					res.htype = HOST_IPADDR;
-				else
-					res.htype = HOST_FQDN;
+				parse_addr(word, &res.addr);
 				match++;
 				t = &table[i];
 			}
@@ -260,13 +290,7 @@ show_valid_args(const struct token table[])
 			fprintf(stderr, "  <path>\n");
 			break;
 		case ADDRESS:
-			fprintf(stderr, "  <ipaddr>\n");
-			break;
-		case FQDN:
-			fprintf(stderr, "  <fqdn>\n");
-			break;
-		case DEVICE:
-			fprintf(stderr, "  <device>\n");
+			fprintf(stderr, "  <address>\n");
 			break;
 		case URI:
 			fprintf(stderr, "  <uri>\n");
