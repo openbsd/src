@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2015/12/07 12:10:02 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2016/10/12 11:47:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -109,19 +109,21 @@ vlog(int pri, const char *fmt, va_list ap)
 void
 log_warn(const char *emsg, ...)
 {
-	char	*nfmt;
-	va_list	 ap;
+	char		*nfmt;
+	va_list		 ap;
+	int		 saved_errno = errno;
 
 	/* best effort to even work in out of memory situations */
 	if (emsg == NULL)
-		logit(LOG_CRIT, "%s", strerror(errno));
+		logit(LOG_CRIT, "%s", strerror(saved_errno));
 	else {
 		va_start(ap, emsg);
 
-		if (asprintf(&nfmt, "%s: %s", emsg, strerror(errno)) == -1) {
+		if (asprintf(&nfmt, "%s: %s", emsg,
+		    strerror(saved_errno)) == -1) {
 			/* we tried it... */
 			vlog(LOG_CRIT, emsg, ap);
-			logit(LOG_CRIT, "%s", strerror(errno));
+			logit(LOG_CRIT, "%s", strerror(saved_errno));
 		} else {
 			vlog(LOG_CRIT, nfmt, ap);
 			free(nfmt);
@@ -167,6 +169,7 @@ vfatal(const char *emsg, va_list ap)
 {
 	static char	s[BUFSIZ];
 	const char	*sep;
+	int		 saved_errno = errno;
 
 	if (emsg != NULL) {
 		(void)vsnprintf(s, sizeof(s), emsg, ap);
@@ -175,9 +178,9 @@ vfatal(const char *emsg, va_list ap)
 		s[0] = '\0';
 		sep = "";
 	}
-	if (errno)
+	if (saved_errno)
 		logit(LOG_CRIT, "%s: %s%s%s",
-		    log_procname, s, sep, strerror(errno));
+		    log_procname, s, sep, strerror(saved_errno));
 	else
 		logit(LOG_CRIT, "%s%s%s", log_procname, sep, s);
 }
