@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.2 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: hash.c,v 1.3 2016/10/12 15:51:44 millert Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -44,7 +44,7 @@ hash_table_init(struct hash_table *htable, size_t hsize)
 		hsize = 1 << power;
 	}
 
-	htable->h_table = xcalloc(hsize, sizeof(struct hash_head *));
+	htable->h_table = xcalloc(hsize, sizeof(struct hash_head));
 	htable->h_size = hsize;
 
 	for (i = 0; i < htable->h_size; i++)
