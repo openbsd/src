@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unbind-key.c,v 1.26 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-unbind-key.c,v 1.27 2016/10/12 14:50:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -34,8 +34,8 @@ const struct cmd_entry cmd_unbind_key_entry = {
 	.name = "unbind-key",
 	.alias = "unbind",
 
-	.args = { "acnt:T:", 0, 1 },
-	.usage = "[-acn] [-t mode-table] [-T key-table] key",
+	.args = { "ant:T:", 0, 1 },
+	.usage = "[-an] [-t mode-table] [-T key-table] key",
 
 	.flags = 0,
 	.exec = cmd_unbind_key_exec
@@ -122,7 +122,6 @@ cmd_unbind_key_mode_table(struct cmd *self, struct cmd_q *cmdq, key_code key)
 	}
 
 	mtmp.key = key;
-	mtmp.mode = !!args_has(args, 'c');
 	if ((mbind = RB_FIND(mode_key_tree, mtab->tree, &mtmp)) != NULL) {
 		RB_REMOVE(mode_key_tree, mtab->tree, mbind);
 		free(mbind);

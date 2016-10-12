@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.28 2016/10/11 07:23:34 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.29 2016/10/12 14:50:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -120,11 +120,9 @@ cmd_bind_key_mode_table(struct cmd *self, struct cmd_q *cmdq, key_code key)
 	}
 
 	mtmp.key = key;
-	mtmp.mode = !!args_has(args, 'c');
 	if ((mbind = RB_FIND(mode_key_tree, mtab->tree, &mtmp)) == NULL) {
 		mbind = xmalloc(sizeof *mbind);
 		mbind->key = mtmp.key;
-		mbind->mode = mtmp.mode;
 		RB_INSERT(mode_key_tree, mtab->tree, mbind);
 	}
 	mbind->cmd = cmd;
