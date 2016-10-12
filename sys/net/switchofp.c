@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.12 2016/10/11 16:37:11 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.13 2016/10/12 09:50:55 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -85,6 +85,7 @@ struct swofp_flow_entry {
 	uint16_t				 swfe_hard_timeout;
 	uint16_t				 swfe_flags;
 	uint32_t				 swfe_id; /* internal used */
+	int					 swfe_tablemiss;
 };
 
 struct swofp_flow_table {
@@ -125,6 +126,7 @@ struct swofp_pipline_desc {
 	struct switch_fwdp_queue	 swpld_fwdp_q;
 	struct swofp_action_set		 swpld_action_set[SWOFP_ACTION_SET_MAX];
 	struct ofp_action_header	*swpld_set_fields[OFP_XM_T_MAX];
+	int				 swpld_tablemiss;
 };
 
 struct swofp_ofs {
@@ -3153,7 +3155,8 @@ swofp_action_output(struct switch_softc *sc, struct mbuf *m,
 	switch (ntohl(oao->ao_port)) {
 	case OFP_PORT_CONTROLLER:
 		swofp_action_output_controller(sc, mc, swpld,
-		    ntohs(oao->ao_max_len), OFP_PKTIN_REASON_ACTION);
+		    ntohs(oao->ao_max_len), swpld->swpld_tablemiss ?
+		    OFP_PKTIN_REASON_NO_MATCH : OFP_PKTIN_REASON_ACTION);
 		break;
 	case OFP_PORT_FLOWTABLE:
 		swofp_forward_ofs(sc, swpld->swpld_swfcl, mc);
@@ -4228,6 +4231,7 @@ swofp_forward_ofs(struct switch_softc *sc, struct switch_flow_classify *swfcl,
 		/* Set pipeline parameters */
 		swpld->swpld_cookie = swfe->swfe_cookie;
 		swpld->swpld_table_id = swft->swft_table_id;
+		swpld->swpld_tablemiss = swfe->swfe_tablemiss;
 
 		/* Update statistics */
 		nanouptime(&swfe->swfe_idle_time);
@@ -4688,6 +4692,14 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 		goto ofp_error_free_flow;
 	}
 	memcpy(swfe->swfe_match, om, ntohs(om->om_length));
+
+	/*
+	 * If the ofp_match structure is empty and priority is zero, then
+	 * this is a special flow type called table-miss which is the last
+	 * flow to match.
+	 */
+	if (ntohs(om->om_length) == sizeof(*om) && swfe->swfe_priority == 0)
+		swfe->swfe_tablemiss = 1;
 
 	if ((error = swofp_flow_entry_put_instructions(&m, swfe)))
 		goto ofp_error_free_flow;
