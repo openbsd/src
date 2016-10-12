@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.96 2016/10/05 22:00:29 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.97 2016/10/12 13:24:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1141,12 +1141,8 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 
 	/* Write to the screen. */
 	if (selected) {
-		memcpy(&tmp_gc, &s->sel.cell, sizeof tmp_gc);
-		utf8_copy(&tmp_gc.data, &gc->data);
-		tmp_gc.attr = tmp_gc.attr & ~GRID_ATTR_CHARSET;
-		tmp_gc.attr |= gc->attr & GRID_ATTR_CHARSET;
-		tmp_gc.flags = gc->flags;
 		screen_write_flush(ctx);
+		screen_select_cell(s, &tmp_gc, gc);
 		ttyctx.cell = &tmp_gc;
 		tty_write(tty_cmd_cell, &ttyctx);
 		ctx->written++;
