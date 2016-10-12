@@ -893,7 +893,6 @@ hvn_nvs_attach(struct hvn_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
-	sc->sc_chan->ch_buflen = PAGE_SIZE * 4;
 
 	/* Associate our interrupt handler with the channel */
 	if (hv_channel_open(sc->sc_chan, NULL, 0, hvn_nvs_intr, sc)) {

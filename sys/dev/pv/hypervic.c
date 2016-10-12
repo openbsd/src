@@ -71,20 +71,24 @@
 #include <dev/pv/hypervvar.h>
 #include <dev/pv/hypervicreg.h>
 
+struct hv_ic_dev;
+
 void	hv_heartbeat(void *);
-void	hv_kvp_attach(struct hv_channel *);
+void	hv_kvp_attach(struct hv_ic_dev *);
 void	hv_kvp(void *);
 int	hv_kvop(void *, int, char *, char *, size_t);
-void	hv_shutdown_attach(struct hv_channel *);
+void	hv_shutdown_attach(struct hv_ic_dev *);
 void	hv_shutdown(void *);
-void	hv_timesync_attach(struct hv_channel *);
+void	hv_timesync_attach(struct hv_ic_dev *);
 void	hv_timesync(void *);
 
-const struct {
+struct hv_ic_dev {
 	const char		 *dv_name;
 	const struct hv_guid	 *dv_type;
-	void			(*dv_attach)(struct hv_channel *);
+	void			(*dv_attach)(struct hv_ic_dev *);
 	void			(*dv_handler)(void *);
+	struct hv_channel	 *dv_ch;
+	uint8_t			 *dv_buf;
 } hv_ic_devs[] = {
 	{
 		"Heartbeat",
@@ -115,61 +119,61 @@ const struct {
 void
 hv_attach_icdevs(struct hv_softc *sc)
 {
+	struct hv_ic_dev *dv;
 	struct hv_channel *ch;
 	int i, header = 0;
 
-	TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
-		if (ch->ch_state != HV_CHANSTATE_OFFERED)
-			continue;
-		if (ch->ch_flags & CHF_MONITOR)
-			continue;
-		for (i = 0; i < nitems(hv_ic_devs); i++) {
-			if (memcmp(hv_ic_devs[i].dv_type, &ch->ch_type,
-			    sizeof(ch->ch_type)) != 0)
+	for (i = 0; i < nitems(hv_ic_devs); i++) {
+		dv = &hv_ic_devs[i];
+
+		TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
+			if (ch->ch_state != HV_CHANSTATE_OFFERED)
 				continue;
-			/*
-			 * These services are not performance critical and
-			 * do not need batched reading. Furthermore, some
-			 * services such as KVP can only handle one message
-			 * from the host at a time.
-			 */
-			ch->ch_flags &= ~CHF_BATCHED;
-
-			ch->ch_buf = km_alloc(PAGE_SIZE, &kv_any, &kp_zero,
-			    (cold ? &kd_nowait : &kd_waitok));
-			if (ch->ch_buf == NULL) {
-				printf("%s: failed to allocate channel data "
-				    "buffer for %s", sc->sc_dev.dv_xname,
-				    hv_ic_devs[i].dv_name);
+			if (ch->ch_flags & CHF_MONITOR)
 				continue;
-			}
-			ch->ch_buflen = PAGE_SIZE;
-
-			if (hv_channel_open(ch, NULL, 0,
-			    hv_ic_devs[i].dv_handler, ch)) {
-				km_free(ch->ch_buf, PAGE_SIZE, &kv_any,
-				    &kp_zero);
-				ch->ch_buf = NULL;
-				ch->ch_buflen = 0;
-				printf("%s: failed to open channel for %s\n",
-				    sc->sc_dev.dv_xname, hv_ic_devs[i].dv_name);
-				continue;
-			}
-			evcount_attach(&ch->ch_evcnt, hv_ic_devs[i].dv_name,
-			    &sc->sc_idtvec);
-
-			if (hv_ic_devs[i].dv_attach)
-				hv_ic_devs[i].dv_attach(ch);
-
-			if (!header) {
-				printf("%s: %s", sc->sc_dev.dv_xname,
-				    hv_ic_devs[i].dv_name);
-				header = 1;
-			} else
-				printf(", %s", hv_ic_devs[i].dv_name);
-
-			break;
+			if (memcmp(dv->dv_type, &ch->ch_type,
+			    sizeof(ch->ch_type)) == 0)
+				break;
 		}
+		if (ch == NULL)
+			continue;
+
+		dv->dv_ch = ch;
+
+		/*
+		 * These services are not performance critical and
+		 * do not need batched reading. Furthermore, some
+		 * services such as KVP can only handle one message
+		 * from the host at a time.
+		 */
+		dv->dv_ch->ch_flags &= ~CHF_BATCHED;
+
+		dv->dv_buf = km_alloc(VMBUS_IC_BUFRINGSIZE, &kv_any,
+		    &kp_zero, (cold ? &kd_nowait : &kd_waitok));
+		if (dv->dv_buf == NULL) {
+			printf("%s: failed to allocate ring buffer for %s",
+			    sc->sc_dev.dv_xname, dv->dv_name);
+			continue;
+		}
+
+		if (hv_channel_open(ch, NULL, 0, dv->dv_handler, dv)) {
+			km_free(dv->dv_buf, VMBUS_IC_BUFRINGSIZE,
+			    &kv_any, &kp_zero);
+			dv->dv_buf = NULL;
+			printf("%s: failed to open channel for %s\n",
+			    sc->sc_dev.dv_xname, dv->dv_name);
+			continue;
+		}
+		evcount_attach(&ch->ch_evcnt, dv->dv_name, &sc->sc_idtvec);
+
+		if (dv->dv_attach)
+			dv->dv_attach(dv);
+
+		if (!header) {
+			printf("%s: %s", sc->sc_dev.dv_xname, dv->dv_name);
+			header = 1;
+		} else
+			printf(", %s", dv->dv_name);
 	}
 	if (header)
 		printf("\n");
@@ -197,7 +201,8 @@ hv_ic_negotiate(struct vmbus_icmsg_hdr *hdr)
 void
 hv_heartbeat(void *arg)
 {
-	struct hv_channel *ch = arg;
+	struct hv_ic_dev *dv = arg;
+	struct hv_channel *ch = dv->dv_ch;
 	struct hv_softc *sc = ch->ch_sc;
 	struct vmbus_icmsg_hdr *hdr;
 	struct vmbus_icmsg_heartbeat *msg;
@@ -205,7 +210,8 @@ hv_heartbeat(void *arg)
 	uint32_t rlen;
 	int rv;
 
-	rv = hv_channel_recv(ch, ch->ch_buf, ch->ch_buflen, &rlen, &rid, 0);
+	rv = hv_channel_recv(ch, dv->dv_buf, VMBUS_IC_BUFRINGSIZE, &rlen,
+	    &rid, 0);
 	if (rv || rlen == 0) {
 		if (rv != EAGAIN)
 			DPRINTF("%s: heartbeat rv=%d rlen=%u\n",
@@ -217,7 +223,7 @@ hv_heartbeat(void *arg)
 			    sc->sc_dev.dv_xname, rlen);
 		return;
 	}
-	hdr = (struct vmbus_icmsg_hdr *)ch->ch_buf;
+	hdr = (struct vmbus_icmsg_hdr *)dv->dv_buf;
 	switch (hdr->ic_type) {
 	case VMBUS_ICMSG_TYPE_NEGOTIATE:
 		hv_ic_negotiate(hdr);
@@ -232,32 +238,7 @@ hv_heartbeat(void *arg)
 		return;
 	}
 	hdr->ic_flags = VMBUS_ICMSG_FLAG_TRANSACTION | VMBUS_ICMSG_FLAG_RESPONSE;
-	hv_channel_send(ch, ch->ch_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
-}
-
-void
-hv_kvp_attach(struct hv_channel *ch)
-{
-	struct hv_softc *sc = ch->ch_sc;
-
-	sc->sc_pvbus->hv_kvop = hv_kvop;
-	sc->sc_pvbus->hv_arg = sc;
-}
-
-void
-hv_kvp(void *arg)
-{
-}
-
-int
-hv_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
-{
-	switch (op) {
-	case PVBUS_KVWRITE:
-	case PVBUS_KVREAD:
-	default:
-		return (EOPNOTSUPP);
-	}
+	hv_channel_send(ch, dv->dv_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
 }
 
 static void
@@ -276,8 +257,9 @@ hv_shutdown_task(void *arg)
 }
 
 void
-hv_shutdown_attach(struct hv_channel *ch)
+hv_shutdown_attach(struct hv_ic_dev *dv)
 {
+	struct hv_channel *ch = dv->dv_ch;
 	struct hv_softc *sc = ch->ch_sc;
 
 	task_set(&sc->sc_sdtask, hv_shutdown_task, sc);
@@ -286,7 +268,8 @@ hv_shutdown_attach(struct hv_channel *ch)
 void
 hv_shutdown(void *arg)
 {
-	struct hv_channel *ch = arg;
+	struct hv_ic_dev *dv = arg;
+	struct hv_channel *ch = dv->dv_ch;
 	struct hv_softc *sc = ch->ch_sc;
 	struct vmbus_icmsg_hdr *hdr;
 	struct vmbus_icmsg_shutdown *msg;
@@ -294,7 +277,8 @@ hv_shutdown(void *arg)
 	uint32_t rlen;
 	int rv, shutdown = 0;
 
-	rv = hv_channel_recv(ch, ch->ch_buf, ch->ch_buflen, &rlen, &rid, 0);
+	rv = hv_channel_recv(ch, dv->dv_buf, VMBUS_IC_BUFRINGSIZE, &rlen,
+	    &rid, 0);
 	if (rv || rlen == 0) {
 		if (rv != EAGAIN)
 			DPRINTF("%s: shutdown rv=%d rlen=%u\n",
@@ -306,7 +290,7 @@ hv_shutdown(void *arg)
 			    sc->sc_dev.dv_xname, rlen);
 		return;
 	}
-	hdr = (struct vmbus_icmsg_hdr *)ch->ch_buf;
+	hdr = (struct vmbus_icmsg_hdr *)dv->dv_buf;
 	switch (hdr->ic_type) {
 	case VMBUS_ICMSG_TYPE_NEGOTIATE:
 		hv_ic_negotiate(hdr);
@@ -326,15 +310,16 @@ hv_shutdown(void *arg)
 	}
 
 	hdr->ic_flags = VMBUS_ICMSG_FLAG_TRANSACTION | VMBUS_ICMSG_FLAG_RESPONSE;
-	hv_channel_send(ch, ch->ch_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
+	hv_channel_send(ch, dv->dv_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
 
 	if (shutdown)
 		task_add(systq, &sc->sc_sdtask);
 }
 
 void
-hv_timesync_attach(struct hv_channel *ch)
+hv_timesync_attach(struct hv_ic_dev *dv)
 {
+	struct hv_channel *ch = dv->dv_ch;
 	struct hv_softc *sc = ch->ch_sc;
 
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
@@ -350,7 +335,8 @@ hv_timesync_attach(struct hv_channel *ch)
 void
 hv_timesync(void *arg)
 {
-	struct hv_channel *ch = arg;
+	struct hv_ic_dev *dv = arg;
+	struct hv_channel *ch = dv->dv_ch;
 	struct hv_softc *sc = ch->ch_sc;
 	struct vmbus_icmsg_hdr *hdr;
 	struct vmbus_icmsg_timesync *msg;
@@ -360,7 +346,8 @@ hv_timesync(void *arg)
 	uint32_t rlen;
 	int rv;
 
-	rv = hv_channel_recv(ch, ch->ch_buf, ch->ch_buflen, &rlen, &rid, 0);
+	rv = hv_channel_recv(ch, dv->dv_buf, VMBUS_IC_BUFRINGSIZE, &rlen,
+	    &rid, 0);
 	if (rv || rlen == 0) {
 		if (rv != EAGAIN)
 			DPRINTF("%s: timesync rv=%d rlen=%u\n",
@@ -372,7 +359,7 @@ hv_timesync(void *arg)
 			    sc->sc_dev.dv_xname, rlen);
 		return;
 	}
-	hdr = (struct vmbus_icmsg_hdr *)ch->ch_buf;
+	hdr = (struct vmbus_icmsg_hdr *)dv->dv_buf;
 	switch (hdr->ic_type) {
 	case VMBUS_ICMSG_TYPE_NEGOTIATE:
 		hv_ic_negotiate(hdr);
@@ -399,5 +386,31 @@ hv_timesync(void *arg)
 	}
 
 	hdr->ic_flags = VMBUS_ICMSG_FLAG_TRANSACTION | VMBUS_ICMSG_FLAG_RESPONSE;
-	hv_channel_send(ch, ch->ch_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
+	hv_channel_send(ch, dv->dv_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
+}
+
+void
+hv_kvp_attach(struct hv_ic_dev *dv)
+{
+	struct hv_channel *ch = dv->dv_ch;
+	struct hv_softc *sc = ch->ch_sc;
+
+	sc->sc_pvbus->hv_kvop = hv_kvop;
+	sc->sc_pvbus->hv_arg = sc;
+}
+
+void
+hv_kvp(void *arg)
+{
+}
+
+int
+hv_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
+{
+	switch (op) {
+	case PVBUS_KVWRITE:
+	case PVBUS_KVREAD:
+	default:
+		return (EOPNOTSUPP);
+	}
 }

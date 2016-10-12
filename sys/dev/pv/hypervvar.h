@@ -81,8 +81,6 @@ struct hv_channel {
 
 	void				(*ch_handler)(void *);
 	void				 *ch_ctx;
-	uint8_t				 *ch_buf;
-	int				  ch_buflen;
 	struct evcount			  ch_evcnt;
 
 	uint32_t			 ch_flags;
