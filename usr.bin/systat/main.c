@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.65 2016/10/13 05:46:20 tedu Exp $	 */
+/* $Id: main.c,v 1.66 2016/10/13 11:22:46 otto Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -52,7 +52,7 @@
 #include "engine.h"
 #include "systat.h"
 
-#define TIMEPOS 55
+#define TIMEPOS (80 - 8 - 20 - 1)
 
 double	dellave;
 
@@ -67,7 +67,6 @@ int	ut, hz, stathz;
 char    hostname[HOST_NAME_MAX+1];
 WINDOW  *wnd;
 int	CMDLINE;
-char	hostbuf[26];
 char	timebuf[26];
 char	uloadbuf[TIMEPOS];
 
@@ -107,10 +106,8 @@ print_header(void)
 		getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
 
 		snprintf(uloadbuf, sizeof(uloadbuf),
-		    "%5d users    Load %.2f %.2f %.2f", 
+		    "%4d users Load %.2f %.2f %.2f", 
 		    ucount(), avenrun[0], avenrun[1], avenrun[2]);
-
-		gethostname(hostbuf, sizeof hostbuf);
 
 		time(&now);
 		ctim = ctime(&now);
@@ -127,7 +124,8 @@ print_header(void)
 		    "%s %s", uloadbuf,
 		    paused ? "PAUSED" : "");
 		
-	snprintf(header, sizeof(header), "%-45s%25.25s %s", tmpbuf, hostbuf, timebuf);
+	snprintf(header, sizeof(header), "%-*s %19.19s %s", TIMEPOS - 1,
+	    tmpbuf, hostname, timebuf);
 
 	if (rawmode)
 		printf("\n\n%s\n", header);
