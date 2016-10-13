@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.267 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: file.c,v 1.268 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -977,9 +977,7 @@ cvs_file_free(struct cvs_file *cf)
 	free(cf->file_name);
 	free(cf->file_wd);
 	free(cf->file_path);
-
-	if (cf->file_rcsrev != NULL)
-		rcsnum_free(cf->file_rcsrev);
+	free(cf->file_rcsrev);
 	free(cf->file_rpath);
 	if (cf->file_ent != NULL)
 		cvs_ent_free(cf->file_ent);

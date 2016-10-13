@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.66 2016/10/12 11:11:56 fcambus Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.67 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -179,7 +179,7 @@ cvs_annotate_local(struct cvs_file *cf)
 			rev = rcsnum_parse(cvs_specified_tag);
 			if (rev == NULL)
 				fatal("no such tag %s", cvs_specified_tag);
-                        rcsnum_free(rev);
+                        free(rev);
 			rev = rcsnum_alloc();
 			rcsnum_cpy(cf->file_rcs->rf_head, rev, 0);
 		}
@@ -206,9 +206,9 @@ cvs_annotate_local(struct cvs_file *cf)
 		 */
 		if (bnum != rev) {
 			rcs_annotate_getlines(cf->file_rcs, rev, &alines);
-			rcsnum_free(bnum);
+			free(bnum);
 		}
-		rcsnum_free(rev);
+		free(rev);
 	} else {
 		rcs_rev_getlines(cf->file_rcs, (cvs_specified_date != -1 ||
 		    cvs_directory_date != -1) ? cf->file_rcsrev :

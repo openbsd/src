@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.161 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: diff.c,v 1.162 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -407,7 +407,7 @@ cvs_diff_local(struct cvs_file *cf)
 			/* -f is not allowed for unknown symbols */
 			if ((diff_rev1 = rcsnum_parse(rev1)) == NULL)
 				fatal("no such tag %s", rev1);
-			rcsnum_free(diff_rev1);
+			free(diff_rev1);
 
 			diff_rev1 = cf->file_rcs->rf_head;
 		}
@@ -444,7 +444,7 @@ cvs_diff_local(struct cvs_file *cf)
 			/* -f is not allowed for unknown symbols */
 			if ((diff_rev2 = rcsnum_parse(rev2)) == NULL)
 				fatal("no such tag %s", rev2);
-			rcsnum_free(diff_rev2);
+			free(diff_rev2);
 
 			diff_rev2 = cf->file_rcs->rf_head;
 		}

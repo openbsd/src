@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.105 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: import.c,v 1.106 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -371,8 +371,8 @@ import_new(struct cvs_file *cf)
 	rcs_write(cf->file_rcs);
 	import_printf("N %s/%s\n", import_repository, cf->file_path);
 
-	rcsnum_free(branch);
-	rcsnum_free(brev);
+	free(branch);
+	free(brev);
 }
 
 static void
@@ -403,7 +403,7 @@ import_update(struct cvs_file *cf)
 	buf_free(b2);
 	if (ret == 0) {
 		import_tag(cf, brev, rev);
-		rcsnum_free(brev);
+		free(brev);
 		if (cvs_noexec != 1)
 			rcs_write(cf->file_rcs);
 		import_printf("U %s/%s\n", import_repository, cf->file_path);
@@ -438,7 +438,7 @@ import_update(struct cvs_file *cf)
 	if (kflag)
 		rcs_kwexp_set(cf->file_rcs, kflag);
 
-	rcsnum_free(brev);
+	free(brev);
 	rcs_write(cf->file_rcs);
 }
 

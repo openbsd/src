@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.66 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: admin.c,v 1.67 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -334,11 +334,11 @@ cvs_admin_local(struct cvs_file *cf)
 		if (rcs_rev_setlog(cf->file_rcs, rev, logmsg) < 0) {
 			cvs_log(LP_ERR, "failed to set logmsg for `%s' to `%s'",
 			    logstr, logmsg);
-			rcsnum_free(rev);
+			free(rev);
 			return;
 		}
 
-		rcsnum_free(rev);
+		free(rev);
 	}
 
 	if (orange != NULL) {
@@ -380,7 +380,7 @@ cvs_admin_local(struct cvs_file *cf)
 
 		(void)rcs_state_set(cf->file_rcs, rev, state);
 
-		rcsnum_free(rev);
+		free(rev);
 	}
 
 	if (lkmode != RCS_LOCK_INVAL)

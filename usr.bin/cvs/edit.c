@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.51 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: edit.c,v 1.52 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -413,7 +413,7 @@ cvs_unedit_local(struct cvs_file *cf)
 		free(entry);
 	}
 
-	rcsnum_free(ba_rev);
+	free(ba_rev);
 
 	(void)cvs_base_handle(cf, BASE_REMOVE);
 

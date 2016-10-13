@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.83 2015/12/22 21:36:57 mmcc Exp $	*/
+/*	$OpenBSD: tag.c,v 1.84 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -285,7 +285,7 @@ cvs_tag_check_files(struct cvs_file *cf)
 			goto bad;
 		rcsnum_tostr(rev, rbuf, sizeof(rbuf));
 		fi->crevstr = xstrdup(rbuf);
-		rcsnum_free(rev);
+		free(rev);
 	} else if (runflags & T_DELETE)
 		goto bad;
 
@@ -314,8 +314,7 @@ bad:
 	free(fi->nrevstr);
 	free(fi->tag_new);
 	free(fi->tag_old);
-	if (rev != NULL)
-		rcsnum_free(rev);
+	free(rev);
 	free(fi);
 }
 
@@ -425,11 +424,11 @@ tag_add(struct cvs_file *cf)
 	trev = rcs_sym_getrev(cf->file_rcs, tag_name);
 	if (trev != NULL) {
 		if (rcsnum_cmp(srev, trev, 0) == 0) {
-			rcsnum_free(trev);
+			free(trev);
 			return (-1);
 		}
 		(void)rcsnum_tostr(trev, trevbuf, sizeof(trevbuf));
-		rcsnum_free(trev);
+		free(trev);
 
 		if (!(runflags & T_FORCE_MOVE)) {
 			cvs_printf("W %s : %s ", cf->file_path, tag_name);
@@ -460,10 +459,10 @@ tag_add(struct cvs_file *cf)
 			    "failed to set tag %s to revision %s in %s",
 			    tag_name, revbuf, cf->file_rcs->rf_path);
 		}
-		rcsnum_free(trev);
+		free(trev);
 		return (-1);
 	}
 
-	rcsnum_free(trev);
+	free(trev);
 	return (0);
 }

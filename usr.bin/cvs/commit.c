@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.154 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: commit.c,v 1.155 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -365,7 +365,7 @@ cvs_commit_check_files(struct cvs_file *cf)
 			if (brev != NULL) {
 				if (RCSNUM_ISBRANCH(brev))
 					goto next;
-				rcsnum_free(brev);
+				free(brev);
 			}
 
 			brev = rcs_translate_tag(tag, cf->file_rcs);
@@ -382,7 +382,7 @@ cvs_commit_check_files(struct cvs_file *cf)
 				    "a branch for file %s", tag,
 				    cf->file_path);
 				conflicts_found++;
-				rcsnum_free(brev);
+				free(brev);
 				return;
 			}
 
@@ -391,8 +391,8 @@ cvs_commit_check_files(struct cvs_file *cf)
 				    "a branch for file %s", tag,
 				    cf->file_path);
 				conflicts_found++;
-				rcsnum_free(branch);
-				rcsnum_free(brev);
+				free(branch);
+				free(brev);
 				return;
 			}
 
@@ -401,18 +401,16 @@ cvs_commit_check_files(struct cvs_file *cf)
 				    "a branch for file %s", tag,
 				    cf->file_path);
 				conflicts_found++;
-				rcsnum_free(branch);
-				rcsnum_free(brev);
+				free(branch);
+				free(brev);
 				return;
 			}
 		}
 	}
 
 next:
-	if (branch != NULL)
-		rcsnum_free(branch);
-	if (brev != NULL)
-		rcsnum_free(brev);
+	free(branch);
+	free(brev);
 
 	if (cf->file_status != FILE_ADDED &&
 	    cf->file_status != FILE_REMOVED &&
@@ -488,7 +486,7 @@ cvs_commit_local(struct cvs_file *cf)
 	d = NULL;
 
 	if (cf->file_rcs != NULL && cf->file_rcs->rf_branch != NULL) {
-		rcsnum_free(cf->file_rcs->rf_branch);
+		free(cf->file_rcs->rf_branch);
 		cf->file_rcs->rf_branch = NULL;
 	}
 
@@ -500,8 +498,8 @@ cvs_commit_local(struct cvs_file *cf)
 			    cf->file_path);
 
 		if (tag != NULL) {
-			rcsnum_free(crev);
-			rcsnum_free(rrev);
+			free(crev);
+			free(rrev);
 			brev = rcs_sym_getrev(cf->file_rcs, tag);
 			crev = rcs_translate_tag(tag, cf->file_rcs);
 			if (brev == NULL || crev == NULL) {
@@ -525,8 +523,8 @@ cvs_commit_local(struct cvs_file *cf)
 				fatal("this isnt suppose to happen, honestly");
 			}
 
-			rcsnum_free(brev);
-			rcsnum_free(rrev);
+			free(brev);
+			free(rrev);
 			rrev = rcsnum_branch_root(nrev);
 
 			/* branch stuff was checked in cvs_commit_check_files */
@@ -538,8 +536,7 @@ cvs_commit_local(struct cvs_file *cf)
 		strlcpy(rbuf, "Non-existent", sizeof(rbuf));
 	}
 
-	if (rrev != NULL)
-		rcsnum_free(rrev);
+	free(rrev);
 	isnew = 0;
 	if (cf->file_status == FILE_ADDED) {
 		isnew = 1;
@@ -715,8 +712,7 @@ cvs_commit_local(struct cvs_file *cf)
 		break;
 	}
 
-	if (crev != NULL)
-		rcsnum_free(crev);
+	free(crev);
 
 	if (histtype != -1)
 		cvs_history_add(histtype, cf, NULL);

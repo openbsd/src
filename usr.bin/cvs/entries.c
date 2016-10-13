@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.106 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: entries.c,v 1.107 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -385,8 +385,7 @@ cvs_ent_line_str(const char *name, char *rev, char *tstamp, char *opts,
 void
 cvs_ent_free(struct cvs_ent *ent)
 {
-	if (ent->ce_rev != NULL)
-		rcsnum_free(ent->ce_rev);
+	free(ent->ce_rev);
 	free(ent->ce_time);
 	free(ent->ce_buf);
 	free(ent);
@@ -533,7 +532,7 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 			if ((rev = rcsnum_parse(tag)) != NULL) {
 				(void)xsnprintf(sticky, sizeof(sticky),
 				    "N%s", tag);
-				rcsnum_free(rev);
+				free(rev);
 			} else {
 				(void)xsnprintf(sticky, sizeof(sticky),
 				    "T%s", tag);

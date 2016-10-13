@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.12 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.13 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -343,7 +343,7 @@ rcsparse_free(RCSFILE *rfp)
 
 	free(pdp->rp_buf);
 	if (pdp->rp_token == RCS_TYPE_REVISION)
-		rcsnum_free(pdp->rp_value.rev);
+		free(pdp->rp_value.rev);
 	free(pdp);
 }
 
@@ -557,12 +557,12 @@ rcsparse_textrevision(RCSFILE *rfp, struct rcs_pdata *pdp)
 	if (rdp == NULL) {
 		rcsparse_warnx(rfp, "delta for revision \"%s\" not found",
 		    pdp->rp_buf);
-		rcsnum_free(pdp->rp_value.rev);
+		free(pdp->rp_value.rev);
 		return (1);
 	}
 	pdp->rp_delta = rdp;
 
-	rcsnum_free(pdp->rp_value.rev);
+	free(pdp->rp_value.rev);
 	return (0);
 }
 
@@ -1028,7 +1028,7 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 			return (0);
 		}
 		if (datenum->rn_len != 6) {
-			rcsnum_free(datenum);
+			free(datenum);
 			rcsparse_warnx(rfp, "invalid date \"%s\"", pdp->rp_buf);
 			return (0);
 		}
@@ -1040,7 +1040,7 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 		pdp->rp_value.date.tm_hour = datenum->rn_id[3];
 		pdp->rp_value.date.tm_min = datenum->rn_id[4];
 		pdp->rp_value.date.tm_sec = datenum->rn_id[5];
-		rcsnum_free(datenum);
+		free(datenum);
 		break;
 	case RCS_TYPE_NUMBER:
 		pdp->rp_value.rev = rcsnum_parse(pdp->rp_buf);
@@ -1058,7 +1058,7 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 			return (0);
 		}
 		if (!RCSNUM_ISBRANCH(pdp->rp_value.rev)) {
-			rcsnum_free(pdp->rp_value.rev);
+			free(pdp->rp_value.rev);
 			rcsparse_warnx(rfp, "expected branch, got \"%s\"",
 			    pdp->rp_buf);
 			return (0);
@@ -1078,7 +1078,7 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 		pdp->rp_value.rev = rcsnum_parse(pdp->rp_buf);
 		if (pdp->rp_value.rev != NULL) {
 			if (RCSNUM_ISBRANCH(pdp->rp_value.rev)) {
-				rcsnum_free(pdp->rp_value.rev);
+				free(pdp->rp_value.rev);
 				rcsparse_warnx(rfp,
 				    "expected revision, got \"%s\"",
 				    pdp->rp_buf);

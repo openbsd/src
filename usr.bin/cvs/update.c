@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.171 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: update.c,v 1.172 2016/10/13 20:51:25 fcambus Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -712,11 +712,8 @@ update_join_file(struct cvs_file *cf)
 		update_clear_conflict(cf);
 
 out:
-	if (rev1 != NULL)
-		rcsnum_free(rev1);
-	if (rev2 != NULL)
-		rcsnum_free(rev2);
-
+	free(rev1);
+	free(rev2);
 	free(jrev1);
 	free(jrev2);
 }
