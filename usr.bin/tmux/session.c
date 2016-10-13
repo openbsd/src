@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.64 2016/10/11 13:21:59 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.65 2016/10/13 21:37:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -358,9 +358,6 @@ session_new(struct session *s, const char *name, int argc, char **argv,
 	winlink_set_window(wl, w);
 	notify_window_linked(s, w);
 	environ_free(env);
-
-	if (options_get_number(s->options, "set-remain-on-exit"))
-		options_set_number(w->options, "remain-on-exit", 1);
 
 	session_group_synchronize_from(s);
 	return (wl);

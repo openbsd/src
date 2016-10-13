@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.74 2016/10/03 22:52:11 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.75 2016/10/13 21:37:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -318,12 +318,6 @@ const struct options_table_entry options_table[] = {
 	  .minimum = 0,
 	  .maximum = SHRT_MAX,
 	  .default_num = 500
-	},
-
-	{ .name = "set-remain-on-exit",
-	  .type = OPTIONS_TABLE_FLAG,
-	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_num = 0
 	},
 
 	{ .name = "set-titles",

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.503 2016/10/13 20:09:19 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.504 2016/10/13 21:37:03 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -2696,19 +2696,6 @@ flag to
 Repeat is enabled for the default keys bound to the
 .Ic resize-pane
 command.
-.It Xo Ic set-remain-on-exit
-.Op Ic on | off
-.Xc
-Set the
-.Ic remain-on-exit
-window option for any windows first created in this session.
-When this option is true, windows in which the running program has
-exited do not close, instead remaining open but inactivate.
-Use the
-.Ic respawn-window
-command to reactivate such a window, or the
-.Ic kill-window
-command to destroy it.
 .It Xo Ic set-titles
 .Op Ic on | off
 .Xc
