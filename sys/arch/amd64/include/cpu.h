@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.105 2016/09/30 07:33:06 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.106 2016/10/13 19:36:25 martijn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -183,6 +183,7 @@ struct cpu_info {
 #define	CI_VMM_SVM	(1 << 1)
 #define	CI_VMM_RVI	(1 << 2)
 #define	CI_VMM_EPT	(1 << 3)
+#define	CI_VMM_DIS	(1 << 4)
 	union		vmm_cpu_cap ci_vmm_cap;
 	paddr_t		ci_vmxon_region_pa;
 	struct vmxon_region *ci_vmxon_region;

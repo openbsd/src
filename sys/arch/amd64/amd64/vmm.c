@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.92 2016/10/06 18:52:09 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.93 2016/10/13 19:36:25 martijn Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -259,7 +259,7 @@ vmm_probe(struct device *parent, void *match, void *aux)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	const char **busname = (const char **)aux;
-	int found_vmx, found_svm;
+	int found_vmx, found_svm, vm_disabled;
 
 	/* Check if this probe is for us */
 	if (strcmp(*busname, vmm_cd.cd_name) != 0)
@@ -274,13 +274,19 @@ vmm_probe(struct device *parent, void *match, void *aux)
 			found_vmx = 1;
 		if (ci->ci_vmm_flags & CI_VMM_SVM)
 			found_svm = 1;
+		if (ci->ci_vmm_flags & CI_VMM_DIS)
+			vm_disabled = 1;
 	}
 
 	/* Don't support both SVM and VMX at the same time */
 	if (found_vmx && found_svm)
 		return (0);
 
-	return (found_vmx || found_svm);
+	if (found_vmx || found_svm)
+		return 1;
+	if (vm_disabled)
+		printf("vmm disabled by firmware\n");
+	return 0;
 }
 
 /*
