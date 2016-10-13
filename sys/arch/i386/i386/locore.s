@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.170 2016/07/16 06:04:29 mlarkin Exp $	*/
+/*	$OpenBSD: locore.s,v 1.171 2016/10/13 09:01:04 mlarkin Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -178,7 +178,8 @@
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(cpu_miscinfo)
 	.globl	_C_LABEL(cpu_feature), _C_LABEL(cpu_ecxfeature)
-	.globl	_C_LABEL(ecpu_feature), _C_LABEL(ecpu_ecxfeature)
+	.globl	_C_LABEL(ecpu_feature), _C_LABEL(ecpu_eaxfeature)
+	.globl	_C_LABEL(ecpu_ecxfeature)
 	.globl	_C_LABEL(cpu_cache_eax), _C_LABEL(cpu_cache_ebx)
 	.globl	_C_LABEL(cpu_cache_ecx), _C_LABEL(cpu_cache_edx)
 	.globl	_C_LABEL(cpu_perf_eax)
@@ -222,6 +223,7 @@ _C_LABEL(cpu_miscinfo):	.long	0	# misc info (apic/brand id) from 'cpuid'
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid' instruction
 _C_LABEL(ecpu_feature): .long	0	# extended feature flags from 'cpuid'
 _C_LABEL(cpu_ecxfeature):.long	0	# ecx feature flags from 'cpuid'
+_C_LABEL(ecpu_eaxfeature): .long 0	# extended eax feature flags
 _C_LABEL(ecpu_ecxfeature): .long 0	# extended ecx feature flags
 _C_LABEL(cpuid_level):	.long	-1	# max. lvl accepted by 'cpuid' insn
 _C_LABEL(cpu_cache_eax):.long	0
@@ -447,6 +449,7 @@ try586:	/* Use the `cpuid' instruction. */
 	jbe	2f
 	movl	$0x80000001,%eax
 	cpuid
+	movl	%eax,RELOC(_C_LABEL(ecpu_eaxfeature))
 	movl	%edx,RELOC(_C_LABEL(ecpu_feature))
 	movl	%ecx,RELOC(_C_LABEL(ecpu_ecxfeature))
 	movl	$0x80000002,%eax
