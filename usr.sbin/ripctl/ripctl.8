@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripctl.8,v 1.11 2015/07/27 18:48:05 sobrado Exp $
+.\"	$OpenBSD: ripctl.8,v 1.12 2016/10/13 15:20:40 jca Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: October 13 2016 $
 .Dt RIPCTL 8
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nd control the Routing Information Protocol daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl s Ar socket
 .Ar command
 .Op Ar argument ...
 .Sh DESCRIPTION
@@ -35,6 +36,17 @@ Commands may be abbreviated to the minimum unambiguous prefix; for example,
 .Cm s n
 for
 .Cm show neighbor .
+.Pp
+The following options are available:
+.Bl -tag -width Ds
+.It Fl s Ar socket
+Use
+.Ar socket
+instead of the default
+.Pa /var/run/ripd.sock
+to communicate with
+.Xr ripd 8 .
+.El
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
