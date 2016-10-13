@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.60 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.61 2016/10/13 10:01:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -151,6 +151,8 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 
 		format_free(ft);
 	}
+
+	cmd_find_from_winlink(&cmdq->current, s, wl);
 
 	if (to_free != NULL)
 		free((void *)to_free);

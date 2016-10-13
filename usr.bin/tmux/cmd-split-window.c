@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.71 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.72 2016/10/13 10:01:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -177,6 +177,13 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		format_free(ft);
 	}
 	notify_window_layout_changed(w);
+
+	cmd_find_clear_state(&cmdq->current, NULL, 0);
+	cmdq->current.s = s;
+	cmdq->current.wl = wl;
+	cmdq->current.w = wl->window;
+	cmdq->current.wp = new_wp;
+	cmd_find_log_state(__func__, &cmdq->current);
 
 	if (to_free != NULL)
 		free((void *)to_free);

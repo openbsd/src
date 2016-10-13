@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.27 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.28 2016/10/13 10:01:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -123,6 +123,13 @@ cmd_swap_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 	server_redraw_window(src_w);
 	server_redraw_window(dst_w);
+
+	cmd_find_clear_state(&cmdq->current, NULL, 0);
+	cmdq->current.s = cmdq->state.tflag.s;
+	cmdq->current.wl = cmdq->state.tflag.wl;
+	cmdq->current.w = dst_w;
+	cmdq->current.wp = src_wp;
+	cmd_find_log_state(__func__, &cmdq->current);
 
 	return (CMD_RETURN_NORMAL);
 }

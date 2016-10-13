@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.659 2016/10/12 15:26:37 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.660 2016/10/13 10:01:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1730,6 +1730,7 @@ int		 cmd_find_target(struct cmd_find_state *,
 struct client	*cmd_find_client(struct cmd_q *, const char *, int);
 void		 cmd_find_clear_state(struct cmd_find_state *, struct cmd_q *,
 		     int);
+int		 cmd_find_empty_state(struct cmd_find_state *);
 int		 cmd_find_valid_state(struct cmd_find_state *);
 void		 cmd_find_copy_state(struct cmd_find_state *,
 		     struct cmd_find_state *);
