@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.169 2016/10/11 13:21:59 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.170 2016/10/13 20:27:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1023,7 +1023,7 @@ window_pane_alternate_on(struct window_pane *wp, struct grid_cell *gc,
 	}
 	memcpy(&wp->saved_cell, gc, sizeof wp->saved_cell);
 
-	grid_view_clear(s->grid, 0, 0, sx, sy);
+	grid_view_clear(s->grid, 0, 0, sx, sy, 8);
 
 	wp->base.grid->flags &= ~GRID_HISTORY;
 
