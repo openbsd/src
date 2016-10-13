@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.18 2015/10/20 11:29:07 sthen Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.19 2016/10/13 08:48:15 phessler Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -134,6 +134,7 @@ struct bgp_attr {
 #define BGPTYPE_EXTD_COMMUNITIES	16	/* RFC4360 */
 #define BGPTYPE_AS4_PATH		17	/* RFC4893 */
 #define BGPTYPE_AGGREGATOR4		18	/* RFC4893 */
+#define BGPTYPE_LARGE_COMMUNITIES	30	/* draft-ietf-idr-large-community */
 
 #define BGP_AS_SET             1
 #define BGP_AS_SEQUENCE        2
@@ -265,7 +266,8 @@ static const char *bgpattr_type[] = {
 	"MULTI_EXIT_DISC", "LOCAL_PREF", "ATOMIC_AGGREGATE", "AGGREGATOR",
 	"COMMUNITIES", "ORIGINATOR_ID", "CLUSTER_LIST", "DPA",
 	"ADVERTISERS", "RCID_PATH", "MP_REACH_NLRI", "MP_UNREACH_NLRI",
-	"EXTD_COMMUNITIES", "AS4_PATH", "AGGREGATOR4",
+	"EXTD_COMMUNITIES", "AS4_PATH", "AGGREGATOR4", NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "LARGE_COMMUNITIES",
 };
 #define bgp_attr_type(x) \
 	num_or_str(bgpattr_type, \
@@ -544,6 +546,21 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			}
 			tlen -= 4;
 			p += 4;
+		}
+		break;
+	case BGPTYPE_LARGE_COMMUNITIES:
+		if (len == 0 || len % 12) {
+			printf(" invalid len");
+			break;
+		}
+		while (tlen>0) {
+			TCHECK2(p[0], 12);
+			printf(" %u:%u:%u",
+			EXTRACT_32BITS(p),
+			EXTRACT_32BITS(p + 4),
+			EXTRACT_32BITS(p + 8));
+			tlen -= 12;
+			p += 12;
 		}
 		break;
 	case BGPTYPE_ORIGINATOR_ID:
