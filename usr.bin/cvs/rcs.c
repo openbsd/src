@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.313 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.314 2016/10/13 20:31:45 millert Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1795,18 +1795,11 @@ rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct rcs_line ***alines)
 		goto done;
 
 again:
-	for (;;) {
+	while (rdp != NULL) {
 		if (rdp->rd_next->rn_len != 0) {
 			trdp = rcs_findrev(rfp, rdp->rd_next);
 			if (trdp == NULL)
 				fatal("failed to grab next revision");
-		} else {
-			/*
-			 * XXX Fail, although the caller does not always do the
-			 * right thing (eg cvs diff when the tree is ahead of
-			 * the repository).
-			 */
-			break;
 		}
 
 		if (rdp->rd_tlen == 0) {
@@ -1857,7 +1850,7 @@ again:
 	}
 
 next:
-	if (!rcsnum_differ(rdp->rd_num, frev))
+	if (rdp == NULL || !rcsnum_differ(rdp->rd_num, frev))
 		done = 1;
 
 	if (RCSNUM_ISBRANCHREV(frev) && done != 1) {
@@ -2057,8 +2050,14 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 		expmode = rcs_kwexp_get(rfp);
 
 		if (!(expmode & RCS_KWEXP_NONE)) {
-			if ((rdp = rcs_findrev(rfp, rev)) == NULL)
-				fatal("could not fetch revision");
+			if ((rdp = rcs_findrev(rfp, rev)) == NULL) {
+				char version[RCSNUM_MAXSTR];
+
+				rcsnum_tostr(rev, version, sizeof(version));
+				fatal("could not find desired version %s in %s",
+				    version, rfp->rf_path);
+			}
+
 			expand = 1;
 		}
 	}
