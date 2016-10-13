@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.47 2016/10/13 18:16:42 tom Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -841,7 +841,7 @@ vdsk_dring_alloc(bus_dma_tag_t t, int nentries)
 
 	if (bus_dmamap_create(t, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &vd->vd_map) != 0)
-		return (NULL);
+		goto error;
 
 	if (bus_dmamem_alloc(t, size, PAGE_SIZE, 0, &vd->vd_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT) != 0)
@@ -868,6 +868,8 @@ free:
 	bus_dmamem_free(t, &vd->vd_seg, 1);
 destroy:
 	bus_dmamap_destroy(t, vd->vd_map);
+error:
+	free(vd, M_DEVBUF, sizeof(struct vdsk_dring));
 
 	return (NULL);
 }

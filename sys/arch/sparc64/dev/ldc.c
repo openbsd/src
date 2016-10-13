@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
+/*	$OpenBSD: ldc.c,v 1.13 2016/10/13 18:16:42 tom Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -510,7 +510,7 @@ ldc_queue_alloc(bus_dma_tag_t t, int nentries)
 
 	if (bus_dmamap_create(t, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &lq->lq_map) != 0)
-		return (NULL);
+		goto error;
 
 	if (bus_dmamem_alloc(t, size, PAGE_SIZE, 0, &lq->lq_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT) != 0)
@@ -534,6 +534,8 @@ free:
 	bus_dmamem_free(t, &lq->lq_seg, 1);
 destroy:
 	bus_dmamap_destroy(t, lq->lq_map);
+error:
+	free(lq, M_DEVBUF, sizeof(struct ldc_queue));
 
 	return (NULL);
 }
