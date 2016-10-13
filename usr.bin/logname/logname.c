@@ -1,4 +1,4 @@
-/*	$OpenBSD: logname.c,v 1.9 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: logname.c,v 1.10 2016/10/13 11:51:02 schwarze Exp $	*/
 /*	$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $	*/
 
 /*-
@@ -30,13 +30,17 @@
  * SUCH DAMAGE.
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <locale.h>
 #include <unistd.h>
-#include <err.h>
 
-void usage(void);
+static void __dead
+usage(void)
+{
+	(void)fprintf(stderr, "usage: logname\n");
+	exit(1);
+}
 
 int
 main(int argc, char *argv[])
@@ -44,33 +48,21 @@ main(int argc, char *argv[])
 	int ch;
 	char *p;
 
-	setlocale(LC_ALL, "");
-
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
-		case '?':
 		default:
 			usage();
-			/* NOTREACHED */
 		}
 
-	if (argc != optind) {
+	if (argc != optind)
 		usage();
-		/* NOTREACHED */
-	}
 
 	if ((p = getlogin()) == NULL)
 		err(1, NULL);
-	(void)printf("%s\n", p);
-	exit(0);
-}
 
-void
-usage(void)
-{
-	(void)fprintf(stderr, "usage: logname\n");
-	exit(1);
+	(void)printf("%s\n", p);
+	return 0;
 }
