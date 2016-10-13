@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.27 2016/10/13 10:01:49 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.28 2016/10/13 22:48:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -155,13 +155,6 @@ cmd_join_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	else
 		notify_window_layout_changed(src_w);
 	notify_window_layout_changed(dst_w);
-
-	cmd_find_clear_state(&cmdq->current, NULL, 0);
-	cmdq->current.s = dst_s;
-	cmdq->current.wl = dst_wl;
-	cmdq->current.w = dst_w;
-	cmdq->current.wp = dst_wp;
-	cmd_find_log_state(__func__, &cmdq->current);
 
 	return (CMD_RETURN_NORMAL);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-window.c,v 1.18 2016/10/13 10:01:49 nicm Exp $ */
+/* $OpenBSD: cmd-swap-window.c,v 1.19 2016/10/13 22:48:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -83,13 +83,6 @@ cmd_swap_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		server_redraw_session_group(dst);
 	}
 	recalculate_sizes();
-
-	cmd_find_clear_state(&cmdq->current, NULL, 0);
-	cmdq->current.s = dst;
-	cmdq->current.wl = wl_dst;
-	cmdq->current.w = wl_dst->window;
-	cmdq->current.wp = cmdq->state.sflag.wp;
-	cmd_find_log_state(__func__, &cmdq->current);
 
 	return (CMD_RETURN_NORMAL);
 }

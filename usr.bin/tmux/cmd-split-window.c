@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.72 2016/10/13 10:01:49 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.73 2016/10/13 22:48:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -66,6 +66,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct layout_cell	*lc;
 	struct format_tree	*ft;
 	struct environ_entry	*envent;
+	struct cmd_find_state    fs;
 
 	server_unzoom_window(w);
 
@@ -178,15 +179,17 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 	notify_window_layout_changed(w);
 
-	cmd_find_clear_state(&cmdq->current, NULL, 0);
-	cmdq->current.s = s;
-	cmdq->current.wl = wl;
-	cmdq->current.w = wl->window;
-	cmdq->current.wp = new_wp;
-	cmd_find_log_state(__func__, &cmdq->current);
-
 	if (to_free != NULL)
 		free((void *)to_free);
+
+	cmd_find_clear_state(&fs, NULL, 0);
+	fs.s = s;
+	fs.wl = wl;
+	fs.w = w;
+	fs.wp = new_wp;
+	cmd_find_log_state(__func__, &fs);
+	if (hooks_wait(s->hooks, cmdq, &fs, "after-split-window") == 0)
+		return (CMD_RETURN_WAIT);
 	return (CMD_RETURN_NORMAL);
 
 error:

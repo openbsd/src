@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.61 2016/10/13 10:01:49 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.62 2016/10/13 22:48:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,6 +61,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	int			 argc, detached;
 	struct format_tree	*ft;
 	struct environ_entry	*envent;
+	struct cmd_find_state	 fs;
 
 	if (args_has(args, 'a')) {
 		if ((idx = winlink_shuffle_up(s, wl)) == -1) {
@@ -152,10 +153,12 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		format_free(ft);
 	}
 
-	cmd_find_from_winlink(&cmdq->current, s, wl);
-
 	if (to_free != NULL)
 		free((void *)to_free);
+
+	cmd_find_from_winlink(&fs, s, wl);
+	if (hooks_wait(s->hooks, cmdq, &fs, "after-new-window") == 0)
+		return (CMD_RETURN_WAIT);
 	return (CMD_RETURN_NORMAL);
 
 error:

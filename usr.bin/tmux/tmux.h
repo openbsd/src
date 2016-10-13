@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.661 2016/10/13 20:27:27 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.662 2016/10/13 22:48:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1339,8 +1339,7 @@ struct cmd_q {
 	int			 references;
 	int			 flags;
 #define CMD_Q_DEAD 0x1
-#define CMD_Q_REENTRY 0x2
-#define CMD_Q_NOHOOKS 0x4
+#define CMD_Q_NOHOOKS 0x2
 
 	struct client		*client;
 	int			 client_exit;
@@ -1404,6 +1403,7 @@ struct cmd_entry {
 
 #define CMD_STARTSERVER 0x1
 #define CMD_READONLY 0x2
+#define CMD_AFTERHOOK 0x4
 	int		 flags;
 
 	enum cmd_retval		 (*exec)(struct cmd *, struct cmd_q *);
