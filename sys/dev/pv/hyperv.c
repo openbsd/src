@@ -1276,7 +1276,7 @@ hv_ring_write(struct hv_ring_data *wrd, struct iovec *iov, int iov_cnt,
 	for (i = 0; i < iov_cnt; i++)
 		hv_ring_put(wrd, iov[i].iov_base, iov[i].iov_len);
 
-	indices = (uint64_t)wrd->rd_prod << 32;
+	indices = (uint64_t)oprod << 32;
 	hv_ring_put(wrd, (uint8_t *)&indices, sizeof(indices));
 
 	membar_sync();
