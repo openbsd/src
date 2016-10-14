@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.39 2016/06/28 18:00:59 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.40 2016/10/14 10:51:57 schwarze Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 
-#include <locale.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -72,8 +71,6 @@ int
 main(int argc, char *argv[])
 {
 	int ch, rflag;
-
-	setlocale(LC_ALL, "");
 
 	Pflag = rflag = 0;
 	while ((ch = getopt(argc, argv, "dfiPRr")) != -1)
@@ -124,7 +121,7 @@ main(int argc, char *argv[])
 			rm_file(argv);
 	}
 
-	exit(eval);
+	return (eval);
 }
 
 void

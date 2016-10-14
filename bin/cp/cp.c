@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.43 2016/03/07 18:56:33 tb Exp $	*/
+/*	$OpenBSD: cp.c,v 1.44 2016/10/14 10:51:57 schwarze Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -58,12 +58,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
-#include <locale.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 
 #include "extern.h"
 
@@ -87,8 +86,6 @@ main(int argc, char *argv[])
 	enum op type;
 	int Hflag, Lflag, Pflag, ch, fts_options, r;
 	char *target;
-
-	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1)
@@ -232,7 +229,7 @@ main(int argc, char *argv[])
 		type = FILE_TO_DIR;
 	}
 
-	exit(copy(argv, type, fts_options));
+	return (copy(argv, type, fts_options));
 }
 
 char *
