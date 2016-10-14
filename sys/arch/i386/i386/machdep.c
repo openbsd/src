@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.591 2016/10/09 11:25:39 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.592 2016/10/14 04:53:26 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1815,13 +1815,18 @@ identifycpu(struct cpu_info *ci)
 	} else if (vendor == CPUVENDOR_AMD && class == CPUCLASS_686) {
 		u_int regs[4];
 		cpuid(0x80000000, regs);
+
+		if (regs[0] >= 0x80000005)
+			cpuid(0x80000005, ci->ci_amdcacheinfo);
+
 		if (regs[0] >= 0x80000006) {
-			cpuid(0x80000006, regs);
-			cachesize = (regs[2] >> 16);
+			cpuid(0x80000006, ci->ci_extcacheinfo);
+			cachesize = (ci->ci_extcacheinfo[2] >> 16);
 		}
 	}
 
 	if (vendor == CPUVENDOR_INTEL) {
+		u_int regs[4];
 		/*
 		 * PIII, Core Solo and Core Duo CPUs have known
 		 * errata stating:
@@ -1837,11 +1842,14 @@ identifycpu(struct cpu_info *ci)
 			/* to get the cacheline size you must do cpuid
 			 * with eax 0x01
 			 */
-			u_int regs[4];
 
 			cpuid(0x01, regs); 
 			ci->ci_cflushsz = ((regs[1] >> 8) & 0xff) * 8;
 		}
+
+		cpuid(0x80000000, regs);
+		if (regs[0] >= 0x80000006)
+			cpuid(0x80000006, ci->ci_extcacheinfo);
 	}
 
 	/* Remove leading, trailing and duplicated spaces from cpu_brandstr */

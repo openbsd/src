@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.148 2016/07/28 21:57:57 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.149 2016/10/14 04:53:26 mlarkin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -127,6 +127,8 @@ struct cpu_info {
 	u_int32_t	ci_feature_tpmflags;	/* thermal & power bits */
 	u_int32_t	cpu_class;		/* CPU class */
 	u_int32_t	ci_cflushsz;		/* clflush cache-line size */
+	u_int32_t	ci_amdcacheinfo[4];	/* AMD cache info */
+	u_int32_t	ci_extcacheinfo[4];	/* Intel cache info */
 
 	int		ci_inatomic;
 
