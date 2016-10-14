@@ -1,7 +1,9 @@
-/*	$OpenBSD: rde_filter.c,v 1.77 2016/06/03 17:36:37 benno Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.78 2016/10/14 16:05:36 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
+ * Copyright (c) 2016 Job Snijders <job@instituut.net>
+ * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +38,7 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 	struct filter_set	*set;
 	u_char			*np;
 	int			 as, type;
+	int64_t			 las, ld1, ld2;
 	u_int32_t		 prep_as;
 	u_int16_t		 nl;
 	u_int8_t		 prepend;
@@ -181,6 +184,84 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 
 			community_delete(asp, as, type);
 			break;
+		case ACTION_SET_LARGE_COMMUNITY:
+			switch (set->action.large_community.as) {
+			case COMMUNITY_ERROR:
+				fatalx("rde_apply_set bad large community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				las = peer->conf.remote_as;
+				break;
+			case COMMUNITY_ANY:
+			default:
+				las = set->action.large_community.as;
+				break;
+			}
+
+			switch (set->action.large_community.ld1) {
+			case COMMUNITY_ERROR:
+				fatalx("rde_apply_set bad large community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				ld1 = peer->conf.remote_as;
+				break;
+			case COMMUNITY_ANY:
+			default:
+				ld1 = set->action.large_community.ld1;
+				break;
+			}
+
+			switch (set->action.large_community.ld2) {
+			case COMMUNITY_ERROR:
+				fatalx("rde_apply_set bad large community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				ld2 = peer->conf.remote_as;
+				break;
+			case COMMUNITY_ANY:
+			default:
+				ld2 = set->action.large_community.ld2;
+				break;
+			}
+
+			community_large_set(asp, las, ld1, ld2);
+			break;
+		case ACTION_DEL_LARGE_COMMUNITY:
+			switch (set->action.large_community.as) {
+			case COMMUNITY_ERROR:
+				fatalx("rde_apply_set bad large community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				las = peer->conf.remote_as;
+				break;
+			case COMMUNITY_ANY:
+			default:
+				las = set->action.large_community.as;
+				break;
+			}
+
+			switch (set->action.large_community.ld1) {
+			case COMMUNITY_ERROR:
+				fatalx("rde_apply_set bad large community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				ld1 = peer->conf.remote_as;
+				break;
+			case COMMUNITY_ANY:
+			default:
+				ld1 = set->action.large_community.ld1;
+				break;
+			}
+
+			switch (set->action.large_community.ld2) {
+			case COMMUNITY_ERROR:
+				fatalx("rde_apply_set bad large community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				ld2 = peer->conf.remote_as;
+				break;
+			case COMMUNITY_ANY:
+			default:
+				ld2 = set->action.large_community.ld2;
+				break;
+			}
+
+			community_large_delete(asp, las, ld1, ld2);
+			break;
 		case ACTION_PFTABLE:
 			/* convert pftable name to an id */
 			set->action.id = pftable_name2id(set->action.pftable);
@@ -223,6 +304,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 {
 	u_int32_t	pas;
 	int		cas, type;
+	int64_t		las, ld1, ld2;
 
 	if (asp != NULL && f->match.as.type != AS_NONE) {
 		if (f->match.as.flags & AS_FLAG_NEIGHBORAS)
@@ -270,6 +352,44 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		if (community_ext_match(asp, &f->match.ext_community,
 		    peer->conf.remote_as) == 0)
 			return (0);
+	if (asp != NULL && f->match.large_community.as !=
+	    COMMUNITY_UNSET) {
+		switch (f->match.large_community.as) {
+		case COMMUNITY_ERROR:
+			fatalx("rde_apply_set bad community string");
+		case COMMUNITY_NEIGHBOR_AS:
+			las = peer->conf.remote_as;
+			break;
+		default:
+			las = f->match.large_community.as;
+			break;
+		}
+
+		switch (f->match.large_community.ld1) {
+		case COMMUNITY_ERROR:
+			fatalx("rde_apply_set bad community string");
+		case COMMUNITY_NEIGHBOR_AS:
+			ld1 = peer->conf.remote_as;
+			break;
+		default:
+			ld1 = f->match.large_community.ld1;
+			break;
+		}
+
+		switch (f->match.large_community.ld2) {
+		case COMMUNITY_ERROR:
+			fatalx("rde_apply_set bad community string");
+		case COMMUNITY_NEIGHBOR_AS:
+			ld2 = peer->conf.remote_as;
+			break;
+		default:
+			ld2 = f->match.large_community.ld2;
+			break;
+		}
+
+		if (community_large_match(asp, las, ld1, ld2) == 0)
+			return (0);
+	}
 
 	if (f->match.prefix.addr.aid != 0) {
 		if (f->match.prefix.addr.aid != prefix->aid)
@@ -547,6 +667,14 @@ filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
 			    sizeof(a->action.community)) == 0)
 				continue;
 			break;
+		case ACTION_DEL_LARGE_COMMUNITY:
+		case ACTION_SET_LARGE_COMMUNITY:
+			if (a->type == b->type &&
+			    memcmp(&a->action.large_community,
+			    &b->action.large_community,
+			    sizeof(a->action.large_community)) == 0)
+				continue;
+			break;
 		case ACTION_PFTABLE:
 		case ACTION_PFTABLE_ID:
 			if (b->type == ACTION_PFTABLE)
@@ -630,6 +758,10 @@ filterset_name(enum action_types type)
 		return ("community");
 	case ACTION_DEL_COMMUNITY:
 		return ("community delete");
+	case ACTION_SET_LARGE_COMMUNITY:
+		return ("large-community");
+	case ACTION_DEL_LARGE_COMMUNITY:
+		return ("large-community delete");
 	case ACTION_PFTABLE:
 	case ACTION_PFTABLE_ID:
 		return ("pftable");

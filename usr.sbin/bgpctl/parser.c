@@ -1,7 +1,9 @@
-/*	$OpenBSD: parser.c,v 1.73 2015/10/11 19:53:57 sthen Exp $ */
+/*	$OpenBSD: parser.c,v 1.74 2016/10/14 16:05:35 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2016 Job Snijders <job@instituut.net>
+ * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,6 +46,7 @@ enum token_type {
 	PEERDESC,
 	RIBNAME,
 	COMMUNITY,
+	LARGE_COMMUNITY,
 	LOCALPREF,
 	MED,
 	NEXTHOP,
@@ -90,11 +93,13 @@ static const struct token t_show_mrt_as[];
 static const struct token t_show_prefix[];
 static const struct token t_show_ip[];
 static const struct token t_show_community[];
+static const struct token t_show_largecommunity[];
 static const struct token t_network[];
 static const struct token t_network_show[];
 static const struct token t_prefix[];
 static const struct token t_set[];
 static const struct token t_community[];
+static const struct token t_largecommunity[];
 static const struct token t_localpref[];
 static const struct token t_med[];
 static const struct token t_nexthop[];
@@ -160,6 +165,7 @@ static const struct token t_show_rib[] = {
 	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_rib_as},
 	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_rib},
 	{ KEYWORD,	"community",	NONE,		t_show_community},
+	{ KEYWORD,	"large-community", NONE,	t_show_largecommunity},
 	{ FLAG,		"best",		F_CTL_ACTIVE,	t_show_rib},
 	{ FLAG,		"selected",	F_CTL_ACTIVE,	t_show_rib},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
@@ -275,6 +281,11 @@ static const struct token t_show_community[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
+static const struct token t_show_largecommunity[] = {
+	{ LARGE_COMMUNITY,	"",	NONE,		t_show_rib},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
 static const struct token t_network[] = {
 	{ KEYWORD,	"add",		NETWORK_ADD,	t_prefix},
 	{ KEYWORD,	"delete",	NETWORK_REMOVE,	t_prefix},
@@ -299,6 +310,7 @@ static const struct token t_network_show[] = {
 static const struct token t_set[] = {
 	{ NOTOKEN,	"",			NONE,	NULL},
 	{ KEYWORD,	"community",		NONE,	t_community},
+	{ KEYWORD,	"large-community",	NONE,	t_largecommunity},
 	{ KEYWORD,	"localpref",		NONE,	t_localpref},
 	{ KEYWORD,	"med",			NONE,	t_med},
 	{ KEYWORD,	"metric",		NONE,	t_med},
@@ -314,6 +326,11 @@ static const struct token t_set[] = {
 
 static const struct token t_community[] = {
 	{ COMMUNITY,	"",			NONE,	t_set},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_largecommunity[] = {
+	{ LARGE_COMMUNITY,	"",		NONE,	t_set},
 	{ ENDTOKEN,	"",			NONE,	NULL}
 };
 
@@ -391,6 +408,8 @@ int			 parse_number(const char *, struct parse_result *,
 			     enum token_type);
 int			 getcommunity(const char *);
 int			 parse_community(const char *, struct parse_result *);
+u_int			 getlargecommunity(const char *);
+int			 parse_largecommunity(const char *, struct parse_result *);
 int			 parse_nexthop(const char *, struct parse_result *);
 int			 bgpctl_getopt(int *, char **[], int);
 
@@ -403,6 +422,9 @@ parse(int argc, char *argv[])
 	bzero(&res, sizeof(res));
 	res.community.as = COMMUNITY_UNSET;
 	res.community.type = COMMUNITY_UNSET;
+	res.large_community.as = COMMUNITY_UNSET;
+	res.large_community.ld1 = COMMUNITY_UNSET;
+	res.large_community.ld2 = COMMUNITY_UNSET;
 	TAILQ_INIT(&res.set);
 	if ((res.irr_outdir = getcwd(NULL, 0)) == NULL) {
 		fprintf(stderr, "getcwd failed: %s\n", strerror(errno));
@@ -556,6 +578,13 @@ match_token(int *argc, char **argv[], const struct token table[])
 				t = &table[i];
 			}
 			break;
+		case LARGE_COMMUNITY:
+			if (word != NULL && wordlen > 0 &&
+			    parse_largecommunity(word, &res)) {
+				match++;
+				t = &table[i];
+			}
+			break;
 		case LOCALPREF:
 		case MED:
 		case PREPNBR:
@@ -667,6 +696,9 @@ show_valid_args(const struct token table[])
 			break;
 		case COMMUNITY:
 			fprintf(stderr, "  <community>\n");
+			break;
+		case LARGE_COMMUNITY:
+			fprintf(stderr, "  <large-community>\n");
 			break;
 		case LOCALPREF:
 		case MED:
@@ -956,6 +988,57 @@ done:
 
 	r->community.as = as;
 	r->community.type = type;
+
+	TAILQ_INSERT_TAIL(&r->set, fs, entry);
+	return (1);
+}
+
+u_int
+getlargecommunity(const char *s)
+{
+	const char	*errstr;
+	u_int32_t	 uval;
+
+	if (strcmp(s, "*") == 0)
+		return (COMMUNITY_ANY);
+
+	uval = strtonum(s, 0, UINT_MAX, &errstr);
+	if (errstr)
+		errx(1, "Large Community is %s: %s", errstr, s);
+
+	return (uval);
+}
+
+int
+parse_largecommunity(const char *word, struct parse_result *r)
+{
+	struct filter_set *fs;
+	char		*p = strdup(word);
+	char 		*array[3];
+	int64_t		 as, ld1, ld2;
+	int		 i = 0;
+
+	while (p != NULL) {
+		array[i++] = p;
+		p = strchr(p, ':');
+		if (p)
+			*p++ = 0;
+	}
+
+	as   = getlargecommunity(array[0]);
+	ld1  = getlargecommunity(array[1]);
+	ld2  = getlargecommunity(array[2]);
+
+	if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
+		err(1, NULL);
+	fs->type = ACTION_SET_LARGE_COMMUNITY;
+	fs->action.large_community.as = as;
+	fs->action.large_community.ld1 = ld1;
+	fs->action.large_community.ld2 = ld2;
+
+	r->large_community.as = as;
+	r->large_community.ld1 = ld1;
+	r->large_community.ld2 = ld2;
 
 	TAILQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);

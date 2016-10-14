@@ -1,10 +1,12 @@
-/*	$OpenBSD: parse.y,v 1.289 2016/10/05 07:38:06 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.290 2016/10/14 16:05:36 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Daniel Hartmeier.  All rights reserved.
  * Copyright (c) 2001 Theo de Raadt.  All rights reserved.
+ * Copyright (c) 2016 Job Snijders <job@instituut.net>
+ * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -138,6 +140,8 @@ struct filter_rule	*get_rule(enum action_types);
 
 int		 getcommunity(char *);
 int		 parsecommunity(struct filter_community *, char *);
+u_int		 getlargecommunity(char *);
+int		 parselargecommunity(struct filter_largecommunity *, char *);
 int		 parsesubtype(char *);
 int		 parseextvalue(char *, u_int32_t *);
 int		 parseextcommunity(struct filter_extcommunity *, char *,
@@ -185,7 +189,7 @@ typedef struct {
 %token	QUICK
 %token	FROM TO ANY
 %token	CONNECTED STATIC
-%token	COMMUNITY EXTCOMMUNITY
+%token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS PEERAS DELETE MAXASLEN MAXASSEQ
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN
@@ -1712,10 +1716,12 @@ filter_as	: as4number_any		{
 filter_match_h	: /* empty */			{
 			bzero(&$$, sizeof($$));
 			$$.m.community.as = COMMUNITY_UNSET;
+			$$.m.large_community.as = COMMUNITY_UNSET;
 		}
 		| {
 			bzero(&fmopts, sizeof(fmopts));
 			fmopts.m.community.as = COMMUNITY_UNSET;
+			fmopts.m.large_community.as = COMMUNITY_UNSET;
 		}
 		    filter_match		{
 			memcpy(&$$, &fmopts, sizeof($$));
@@ -1771,6 +1777,18 @@ filter_elm	: filter_prefix_h	{
 				YYERROR;
 			}
 			if (parsecommunity(&fmopts.m.community, $2) == -1) {
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| LARGECOMMUNITY STRING	{
+			if (fmopts.m.large_community.as != COMMUNITY_UNSET) {
+				yyerror("\"large-community\" already specified");
+				free($2);
+				YYERROR;
+			}
+			if (parselargecommunity(&fmopts.m.large_community, $2) == -1) {
 				free($2);
 				YYERROR;
 			}
@@ -2131,6 +2149,31 @@ filter_set_opt	: LOCALPREF NUMBER		{
 				YYERROR;
 			}
 		}
+		| LARGECOMMUNITY delete STRING	{
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			if ($2)
+				$$->type = ACTION_DEL_LARGE_COMMUNITY;
+			else
+				$$->type = ACTION_SET_LARGE_COMMUNITY;
+
+			if (parselargecommunity(&$$->action.large_community,
+			    $3) == -1) {
+				free($3);
+				free($$);
+				YYERROR;
+			}
+			free($3);
+			/* Don't allow setting of any match */
+			if (!$2 &&
+			    ($$->action.large_community.as == COMMUNITY_ANY ||
+			    $$->action.large_community.ld1 == COMMUNITY_ANY ||
+			    $$->action.large_community.ld2 == COMMUNITY_ANY)) {
+				yyerror("'*' is not allowed in set community");
+				free($$);
+				YYERROR;
+			}
+		}
 		| EXTCOMMUNITY delete STRING STRING {
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
@@ -2266,6 +2309,7 @@ lookup(char *s)
 		{ "inet6",		IPV6},
 		{ "ipsec",		IPSEC},
 		{ "key",		KEY},
+		{ "large-community",	LARGECOMMUNITY},
 		{ "listen",		LISTEN},
 		{ "local-address",	LOCALADDR},
 		{ "localpref",		LOCALPREF},
@@ -2910,6 +2954,59 @@ parsecommunity(struct filter_community *c, char *s)
 	return (0);
 }
 
+u_int
+getlargecommunity(char *s)
+{
+	u_int		 val;
+	const char	*errstr;
+
+	if (strcmp(s, "*") == 0)
+		return (COMMUNITY_ANY);
+	if (strcmp(s, "neighbor-as") == 0)
+		return (COMMUNITY_NEIGHBOR_AS);
+	val = strtonum(s, 0, UINT_MAX, &errstr);
+	if (errstr) {
+		yyerror("Large Community %s is %s (max: %u)",
+		    s, errstr, UINT_MAX);
+		return (COMMUNITY_ERROR);
+	}
+	return (val);
+}
+
+int
+parselargecommunity(struct filter_largecommunity *c, char *s)
+{
+	char *p, *q;
+	int64_t as, ld1, ld2;
+
+	if ((p = strchr(s, ':')) == NULL) {
+		yyerror("Bad community syntax");
+		return (-1);
+	}
+	*p++ = 0;
+
+	if ((q = strchr(p, ':')) == NULL) {
+		yyerror("Bad community syntax");
+		return (-1);
+	}
+	*q++ = 0;
+
+	if ((as = getlargecommunity(s)) == COMMUNITY_ERROR)
+		return (-1);
+
+	if ((ld1 = getlargecommunity(p)) == COMMUNITY_ERROR)
+		return (-1);
+
+	if ((ld2 = getlargecommunity(q)) == COMMUNITY_ERROR)
+		return (-1);
+
+	c->as = as;
+	c->ld1 = ld1;
+	c->ld2 = ld2;
+
+	return (0);
+}
+
 int
 parsesubtype(char *type)
 {
@@ -3527,6 +3624,10 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 				yyerror("community is already set");
 			else if (s->type == ACTION_DEL_COMMUNITY)
 				yyerror("community will already be deleted");
+			else if (s->type == ACTION_SET_LARGE_COMMUNITY)
+				yyerror("large-community is already set");
+			else if (s->type == ACTION_DEL_LARGE_COMMUNITY)
+				yyerror("large-community will already be deleted");
 			else if (s->type == ACTION_SET_EXT_COMMUNITY)
 				yyerror("ext-community is already set");
 			else if (s->type == ACTION_DEL_EXT_COMMUNITY)
@@ -3554,6 +3655,18 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 				    t->action.community.as &&
 				    s->action.community.type <
 				    t->action.community.type)) {
+					TAILQ_INSERT_BEFORE(t, s, entry);
+					return (0);
+				}
+				break;
+			case ACTION_SET_LARGE_COMMUNITY:
+			case ACTION_DEL_LARGE_COMMUNITY:
+				if (s->action.large_community.as <
+				    t->action.large_community.as ||
+				    (s->action.large_community.as ==
+				    t->action.large_community.as &&
+				    s->action.large_community.ld1 <
+				    t->action.large_community.ld2 )) {
 					TAILQ_INSERT_BEFORE(t, s, entry);
 					return (0);
 				}
@@ -3634,6 +3747,7 @@ get_rule(enum action_types type)
 		r->dir = out ? DIR_OUT : DIR_IN;
 		r->action = ACTION_NONE;
 		r->match.community.as = COMMUNITY_UNSET;
+		r->match.large_community.as = COMMUNITY_UNSET;
 		TAILQ_INIT(&r->set);
 		if (curpeer == curgroup) {
 			/* group */

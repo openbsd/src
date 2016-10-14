@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.147 2016/10/05 07:38:06 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.148 2016/10/14 16:05:35 phessler Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 5 2016 $
+.Dd $Mdocdate: October 14 2016 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1143,6 +1143,37 @@ may be set to
 which is expanded to the current neighbor remote AS number.
 .Pp
 .It Xo
+.Ic large-community
+.Ar as-number : Ns Ar local : Ns Ar local
+This rule applies only to
+.Em UPDATES
+where the
+.Ic Large community
+path attribute is present and matches.
+Communities are specified as
+.Ar as-number : Ns Ar local : Ns Ar local ,
+where
+.Ar as-number
+is an AS number and
+.Ar local
+is a locally significant number between zero and
+.Li 4294967295.
+Both
+.Ar as-number
+and
+.Ar local
+may be set to
+.Sq *
+to do wildcard matching.
+Both
+.Ar as-number
+and
+.Ar local
+may be set to
+.Ic neighbor-as ,
+which is expanded to the current neighbor remote AS number.
+.Pp
+.It Xo
 .Ic ext-community
 .Ar subtype Ar as-number : Ns Ar local
 .Xc
@@ -1364,6 +1395,35 @@ Alternately, well-known communities may be specified by name:
 .Ic NO_EXPORT_SUBCONFED ,
 or
 .Ic NO_PEER .
+For
+.Cm delete ,
+both
+.Ar as-number
+and
+.Ar local
+may be set to
+.Sq *
+to do wildcard matching.
+.Pp
+.It Xo
+.Ic large-community Op Ar delete
+.Ar as-number : Ns Ar local : Ns Ar local
+.Xc
+.It Xo
+.Ic large-community Op Ar delete
+.Ar name
+.Xc
+Set or delete the
+.Em Large Communities
+path attribute.
+Communities are specified as
+.Ar as-number : Ns Ar local : Ns Ar local ,
+where
+.Ar as-number
+is an AS number and
+.Ar local
+is a locally-significant number between zero and
+.Li 4294967295 .
 For
 .Cm delete ,
 both

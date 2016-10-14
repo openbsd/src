@@ -1,7 +1,9 @@
-/*	$OpenBSD: rde_attr.c,v 1.95 2015/10/24 08:00:42 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.96 2016/10/14 16:05:36 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
+ * Copyright (c) 2016 Job Snijders <job@instituut.net>
+ * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1351,4 +1353,148 @@ community_ext_matchone(struct filter_extcommunity *c, u_int16_t neighas,
 	}
 
 	return (0);
+}
+
+int
+community_large_match(struct rde_aspath *asp, int64_t as, int64_t ld1,
+    int64_t ld2)
+{
+	struct wire_largecommunity	*bar;
+	struct attr	*a;
+	u_int8_t	*p;
+	u_int16_t	 len;
+	u_int32_t	 eas, eld1, eld2;
+
+	a = attr_optget(asp, ATTR_LARGE_COMMUNITIES);
+	if (a == NULL)
+		/* no communities, no match */
+		return (0);
+
+	p = a->data;
+	for (len = a->len / 12; len > 0; len--) {
+		bar = (struct wire_largecommunity *)p;
+		p += 12;
+		eas = betoh32(bar->as);
+		eld1 = betoh32(bar->ld1);
+		eld2 = betoh32(bar->ld2);
+
+		if ((as == COMMUNITY_ANY || as == eas) &&
+		    (ld1 == COMMUNITY_ANY || ld1 == eld1) &&
+		    (ld2 == COMMUNITY_ANY || ld2 == eld2))
+			return (1);
+	}
+	return (0);
+}
+
+int
+community_large_set(struct rde_aspath *asp, int64_t as, int64_t ld1,
+    int64_t ld2)
+{
+	struct wire_largecommunity	*bar;
+	struct attr	*attr;
+	u_int8_t	*p = NULL;
+	unsigned int	 i, ncommunities = 0;
+	u_int8_t	 f = ATTR_OPTIONAL|ATTR_TRANSITIVE;
+
+	attr = attr_optget(asp, ATTR_LARGE_COMMUNITIES);
+	if (attr != NULL) {
+		p = attr->data;
+		ncommunities = attr->len / 12;
+	}
+
+	/* first check if the community is not already set */
+	for (i = 0; i < ncommunities; i++) {
+		bar = (struct wire_largecommunity *)p;
+		if (bar->as == as && bar->ld1 == ld1 && bar->ld2 == ld2)
+			/* already present, nothing todo */
+			return (1);
+		p += 12;
+	}
+
+	if (ncommunities++ >= USHRT_MAX / 12)
+		/* overflow */
+		return (0);
+
+	if ((p = reallocarray(NULL, ncommunities, 12)) == NULL)
+		fatal("community_set");
+
+	bar = (struct wire_largecommunity *)p;
+	bar->as = htobe32(as);
+	bar->ld1 = htobe32(ld1);
+	bar->ld2 = htobe32(ld2);
+
+	if (attr != NULL) {
+		memcpy(p + 12, attr->data, attr->len);
+		f = attr->flags;
+		attr_free(asp, attr);
+	}
+
+	attr_optadd(asp, f, ATTR_LARGE_COMMUNITIES, p, ncommunities * 12);
+
+	free(p);
+	return (1);
+}
+
+void
+community_large_delete(struct rde_aspath *asp, int64_t as, int64_t ld1,
+    int64_t ld2)
+{
+	struct wire_largecommunity	*bar;
+	struct attr	*attr;
+	u_int8_t	*p, *n;
+	u_int16_t	 l = 0, len = 0;
+	u_int32_t	 eas, eld1, eld2;
+	u_int8_t	 f;
+
+	attr = attr_optget(asp, ATTR_LARGE_COMMUNITIES);
+	if (attr == NULL)
+		/* no attr nothing to do */
+		return;
+
+	p = attr->data;
+	for (len = 0; l < attr->len; l += 12) {
+		bar = (struct wire_largecommunity *)p;
+		p += 12;
+		eas = betoh32(bar->as);
+		eld1 = betoh32(bar->ld1);
+		eld2 = betoh32(bar->ld2);
+
+		if ((as == COMMUNITY_ANY || as == eas) &&
+		    (ld1 == COMMUNITY_ANY || ld1 == eld1) &&
+		    (ld2 == COMMUNITY_ANY || ld2 == eld2))
+			/* match */
+			continue;
+		len += 12;
+	}
+
+	if (len == 0) {
+		attr_free(asp, attr);
+		return;
+	}
+
+	if ((n = malloc(len)) == NULL)
+		fatal("community_delete");
+
+	p = attr->data;
+	for (l = 0; l < len && p < attr->data + attr->len; ) {
+		bar = (struct wire_largecommunity *)p;
+		p += 12;
+		eas = betoh32(bar->as);
+		eld1 = betoh32(bar->ld1);
+		eld2 = betoh32(bar->ld2);
+
+		if ((as == COMMUNITY_ANY || as == eas) &&
+		    (ld1 == COMMUNITY_ANY || ld1 == eld1) &&
+		    (ld2 == COMMUNITY_ANY || ld2 == eld2))
+			/* match */
+			continue;
+		memcpy(n + l, bar, sizeof(*bar));
+		l += 12;
+	}
+
+	f = attr->flags;
+
+	attr_free(asp, attr);
+	attr_optadd(asp, f, ATTR_LARGE_COMMUNITIES, n, len);
+	free(n);
 }

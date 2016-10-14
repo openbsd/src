@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.149 2015/11/06 16:23:26 phessler Exp $ */
+/*	$OpenBSD: rde.h,v 1.150 2016/10/14 16:05:36 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -112,7 +112,8 @@ enum attrtypes {
 	ATTR_MP_UNREACH_NLRI=15,
 	ATTR_EXT_COMMUNITIES=16,
 	ATTR_AS4_PATH=17,
-	ATTR_AS4_AGGREGATOR=18
+	ATTR_AS4_AGGREGATOR=18,
+	ATTR_LARGE_COMMUNITIES=30,
 };
 
 /* attribute flags. 4 low order bits reserved */
@@ -367,6 +368,12 @@ int		 aspath_lenmatch(struct aspath *, enum aslen_spec, u_int);
 int		 community_match(struct rde_aspath *, int, int);
 int		 community_set(struct rde_aspath *, int, int);
 void		 community_delete(struct rde_aspath *, int, int);
+int		 community_large_match(struct rde_aspath *, int64_t, int64_t,
+		    int64_t);
+int		 community_large_set(struct rde_aspath *, int64_t, int64_t,
+		    int64_t);
+void		 community_large_delete(struct rde_aspath *, int64_t,
+		    int64_t, int64_t);
 int		 community_ext_match(struct rde_aspath *,
 		    struct filter_extcommunity *, u_int16_t);
 int		 community_ext_set(struct rde_aspath *,

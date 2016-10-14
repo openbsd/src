@@ -1,7 +1,9 @@
-/*	$OpenBSD: bgpctl.c,v 1.189 2016/10/14 09:40:54 phessler Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.190 2016/10/14 16:05:35 phessler Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2016 Job Snijders <job@instituut.net>
+ * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -82,6 +84,7 @@ void		 show_rib_brief(struct ctl_show_rib *, u_char *);
 void		 show_rib_detail(struct ctl_show_rib *, u_char *, int);
 void		 show_attr(void *, u_int16_t);
 void		 show_community(u_char *, u_int16_t);
+void		 show_large_community(u_char *, u_int16_t);
 void		 show_ext_community(u_char *, u_int16_t);
 char		*fmt_mem(int64_t);
 int		 show_rib_memory_msg(struct imsg *);
@@ -254,6 +257,13 @@ main(int argc, char *argv[])
 			    sizeof(res->community));
 			type = IMSG_CTL_SHOW_RIB_COMMUNITY;
 		}
+		if (res->large_community.as != COMMUNITY_UNSET &&
+		    res->large_community.ld1 != COMMUNITY_UNSET &&
+		    res->large_community.ld2 != COMMUNITY_UNSET) {
+			memcpy(&ribreq.large_community, &res->large_community,
+			    sizeof(res->large_community));
+			type = IMSG_CTL_SHOW_RIB_LARGECOMMUNITY;
+		}
 		memcpy(&ribreq.neighbor, &neighbor, sizeof(ribreq.neighbor));
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		ribreq.aid = res->aid;
@@ -275,6 +285,11 @@ main(int argc, char *argv[])
 		    res->community.type != COMMUNITY_UNSET)
 			memcpy(&ribreq.community, &res->community,
 			    sizeof(res->community));
+		if (res->large_community.as != COMMUNITY_UNSET &&
+		    res->large_community.ld1 != COMMUNITY_UNSET &&
+		    res->large_community.ld2 != COMMUNITY_UNSET)
+			memcpy(&ribreq.large_community, &res->large_community,
+			    sizeof(res->large_community));
 		memcpy(&ribreq.neighbor, &neighbor, sizeof(ribreq.neighbor));
 		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
@@ -377,6 +392,11 @@ main(int argc, char *argv[])
 		    res->community.type != COMMUNITY_UNSET)
 			memcpy(&ribreq.community, &res->community,
 			    sizeof(res->community));
+		if (res->large_community.as != COMMUNITY_UNSET &&
+		    res->large_community.ld1 != COMMUNITY_UNSET &&
+		    res->large_community.ld2 != COMMUNITY_UNSET)
+			memcpy(&ribreq.large_community, &res->large_community,
+			    sizeof(res->large_community));
 		memcpy(&ribreq.neighbor, &neighbor, sizeof(ribreq.neighbor));
 		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
@@ -1425,6 +1445,11 @@ show_attr(void *b, u_int16_t len)
 		show_community(data, alen);
 		printf("\n");
 		break;
+	case ATTR_LARGE_COMMUNITIES:
+		printf("    Large Communities: ");
+		show_large_community(data, alen);
+		printf("\n");
+		break;
 	case ATTR_AGGREGATOR:
 		memcpy(&as, data, sizeof(as));
 		memcpy(&id, data + sizeof(as), sizeof(id));
@@ -1515,6 +1540,29 @@ show_community(u_char *data, u_int16_t len)
 			printf("%hu:%hu", a, v);
 
 		if (i + 4 < len)
+			printf(" ");
+	}
+}
+
+void
+show_large_community(u_char *data, u_int16_t len)
+{
+	u_int32_t	a, l1, l2;
+	u_int16_t	i;
+
+	if (len % 12)
+		return;
+
+	for (i = 0; i < len; i += 12) {
+		memcpy(&a, data + i, sizeof(a));
+		memcpy(&l1, data + i + 4, sizeof(l1));
+		memcpy(&l2, data + i + 8, sizeof(l2));
+		a = ntohl(a);
+		l1 = ntohl(l1);
+		l2 = ntohl(l2);
+		printf("%u:%u:%u", a, l1, l2);
+
+		if (i + 12 < len)
 			printf(" ");
 	}
 }

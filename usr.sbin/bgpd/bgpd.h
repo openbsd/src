@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.296 2016/10/05 07:38:06 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.297 2016/10/14 16:05:35 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -377,6 +377,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_RIB_PREFIX,
 	IMSG_CTL_SHOW_RIB_ATTR,
 	IMSG_CTL_SHOW_RIB_COMMUNITY,
+	IMSG_CTL_SHOW_RIB_LARGECOMMUNITY,
 	IMSG_CTL_SHOW_NETWORK,
 	IMSG_CTL_SHOW_RIB_MEM,
 	IMSG_CTL_SHOW_TERSE,
@@ -648,6 +649,18 @@ struct filter_community {
 	int		type;
 };
 
+struct filter_largecommunity {
+	int64_t		as;
+	int64_t		ld1;
+	int64_t		ld2;
+};
+
+struct wire_largecommunity {
+	uint32_t	as;
+	uint32_t	ld1;
+	uint32_t	ld2;
+};
+
 struct filter_extcommunity {
 	u_int16_t	flags;
 	u_int8_t	type;
@@ -675,6 +688,7 @@ struct ctl_show_rib_request {
 	struct bgpd_addr	prefix;
 	struct filter_as	as;
 	struct filter_community community;
+	struct filter_largecommunity large_community;
 	u_int32_t		peerid;
 	pid_t			pid;
 	u_int16_t		flags;
@@ -793,6 +807,7 @@ struct filter_match {
 	struct filter_as		as;
 	struct filter_aslen		aslen;
 	struct filter_community		community;
+	struct filter_largecommunity	large_community;
 	struct filter_extcommunity	ext_community;
 };
 
@@ -834,6 +849,8 @@ enum action_types {
 	ACTION_SET_NEXTHOP_SELF,
 	ACTION_SET_COMMUNITY,
 	ACTION_DEL_COMMUNITY,
+	ACTION_DEL_LARGE_COMMUNITY,
+	ACTION_SET_LARGE_COMMUNITY,
 	ACTION_SET_EXT_COMMUNITY,
 	ACTION_DEL_EXT_COMMUNITY,
 	ACTION_PFTABLE,
@@ -852,6 +869,7 @@ struct filter_set {
 		int32_t			relative;
 		struct bgpd_addr	nexthop;
 		struct filter_community	community;
+		struct filter_largecommunity	large_community;
 		struct filter_extcommunity	ext_community;
 		char			pftable[PFTABLE_LEN];
 		char			rtlabel[RTLABEL_LEN];

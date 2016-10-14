@@ -1,7 +1,9 @@
-/*	$OpenBSD: printconf.c,v 1.98 2016/10/05 07:38:06 phessler Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.99 2016/10/14 16:05:36 phessler Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2016 Job Snijders <job@instituut.net>
+ * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +30,7 @@
 
 void		 print_op(enum comp_ops);
 void		 print_community(int, int);
+void		 print_largecommunity(int64_t, int64_t, int64_t);
 void		 print_extcommunity(struct filter_extcommunity *);
 void		 print_origin(u_int8_t);
 void		 print_set(struct filter_set_head *);
@@ -100,6 +103,33 @@ print_community(int as, int type)
 	else
 		printf("%d ", type);
 }
+
+void
+print_largecommunity(int64_t as, int64_t ld1, int64_t ld2)
+{
+	if (as == COMMUNITY_ANY)
+		printf("*:");
+	else if (as == COMMUNITY_NEIGHBOR_AS)
+		printf("neighbor-as:");
+	else
+		printf("%lld:", as);
+
+	if (ld1 == COMMUNITY_ANY)
+		printf("*:");
+	else if (ld1 == COMMUNITY_NEIGHBOR_AS)
+		printf("neighbor-as:");
+	else
+		printf("%lld:", ld1);
+
+	if (ld2 == COMMUNITY_ANY)
+		printf("* ");
+	else if (ld2 == COMMUNITY_NEIGHBOR_AS)
+		printf("neighbor-as ");
+	else
+		printf("%lld ", ld2);
+
+}
+
 
 void
 print_extcommunity(struct filter_extcommunity *c)
@@ -200,6 +230,20 @@ print_set(struct filter_set_head *set)
 			printf("community ");
 			print_community(s->action.community.as,
 			    s->action.community.type);
+			printf(" ");
+			break;
+		case ACTION_DEL_LARGE_COMMUNITY:
+			printf("large-community delete ");
+			print_largecommunity(s->action.large_community.as,
+			    s->action.large_community.ld1,
+			    s->action.large_community.ld2);
+			printf(" ");
+			break;
+		case ACTION_SET_LARGE_COMMUNITY:
+			printf("large-community ");
+			print_largecommunity(s->action.large_community.as,
+			    s->action.large_community.ld1,
+			    s->action.large_community.ld2);
 			printf(" ");
 			break;
 		case ACTION_PFTABLE:
@@ -627,6 +671,12 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 	if (r->match.ext_community.flags & EXT_COMMUNITY_FLAG_VALID) {
 		printf("ext-community ");
 		print_extcommunity(&r->match.ext_community);
+	}
+	if (r->match.large_community.as != COMMUNITY_UNSET) {
+		printf("large-community ");
+		print_largecommunity(r->match.large_community.as,
+		    r->match.large_community.ld1,
+		    r->match.large_community.ld2);
 	}
 
 	print_set(&r->set);
