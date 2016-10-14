@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2014/11/26 08:18:25 stsp Exp $
+#	$OpenBSD: Makefile,v 1.24 2016/10/14 18:44:20 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -81,10 +81,9 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 bsd:
-	cd ${TOP}/../../sys/arch/sparc64/conf && config ${KERNEL}
 	cd ${TOP}/../../sys/arch/sparc64/compile/${KERNEL} && \
-	    ${MAKE} clean && COPTS=-Os exec ${MAKE}
-	cp ${TOP}/../../sys/arch/sparc64/compile/${KERNEL}/bsd bsd
+	    su ${BUILDUSER} '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
+	cp -p ${TOP}/../../sys/arch/sparc64/compile/${KERNEL}/obj/bsd bsd
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}

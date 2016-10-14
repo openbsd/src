@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2013/11/29 12:35:47 aoyama Exp $
+#	$OpenBSD: Makefile,v 1.18 2016/10/14 18:44:19 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -34,11 +34,10 @@ ${IMAGE}: rd_setup do_files rd_teardown
 
 bsd:
 .ifndef(NOBUILD)
-	cd ${.CURDIR}/../../../sys/arch/luna88k/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK && \
-	    ${MAKE} clean && exec ${MAKE}
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
 .endif
-	cp ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK/obj/bsd bsd
 
 rd_test: rd_setup rd_teardown
 

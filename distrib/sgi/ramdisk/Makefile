@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2015/09/20 12:55:11 miod Exp $
+#	$OpenBSD: Makefile,v 1.22 2016/10/14 18:44:20 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -45,11 +45,10 @@ all:	${ALLBSDRD}
 .for IP in ${ALLIP}
 bsd.IP${IP}:
 .ifndef NOBUILD
-	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP${IP}
 	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP${IP} && \
-	    ${MAKE} clean && exec ${MAKE}
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
 .endif
-	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP${IP}/bsd bsd.IP${IP}
+	cp -p ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP${IP}/obj/bsd bsd.IP${IP}
 
 ${BSD_RD}.IP${IP}: ${CBIN} ${IMAGE} bsd.IP${IP} rdsetroot
 	cp bsd.IP${IP} ${BSD_RD}.IP${IP}

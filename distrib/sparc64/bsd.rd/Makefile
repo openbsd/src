@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2014/11/22 15:02:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.29 2016/10/14 18:44:20 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -50,10 +50,9 @@ bsd.rd_unz: bsd ${IMAGE} rdsetroot
 	${.OBJDIR}/rdsetroot bsd.rd_unz ${IMAGE}
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/sparc64/conf && config ${RAMDISK}
 	cd ${.CURDIR}/../../../sys/arch/sparc64/compile/${RAMDISK} && \
-	    ${MAKE} clean && COPTS=-Os exec ${MAKE}
-	cp ${.CURDIR}/../../../sys/arch/sparc64/compile/${RAMDISK}/bsd bsd
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
+	cp -p ${.CURDIR}/../../../sys/arch/sparc64/compile/${RAMDISK}/obj/bsd bsd
 
 ${IMAGE}:	do_prep do_mount do_files do_umount
 	mv -f ${REALIMAGE} ${IMAGE}

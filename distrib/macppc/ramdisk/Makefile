@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2013/10/15 22:46:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 2016/10/14 18:44:20 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -68,10 +68,9 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 bsd:
-	cd ${TOP}/../../sys/arch/macppc/conf && config RAMDISK
 	cd ${TOP}/../../sys/arch/macppc/compile/RAMDISK && \
-	    ${MAKE} clean && exec ${MAKE}
-	cp ${TOP}/../../sys/arch/macppc/compile/RAMDISK/bsd bsd
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
+	cp -p ${TOP}/../../sys/arch/macppc/compile/RAMDISK/obj/bsd bsd
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}

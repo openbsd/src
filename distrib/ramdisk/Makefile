@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2016/09/01 10:08:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.47 2016/10/14 18:44:20 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -73,10 +73,9 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	rm -f ${REALIMAGE}
 
 bsd:
-	cd ${.CURDIR}/../../sys/arch/${MACHINE}/conf && config ${KERNEL}
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL} && \
-	    ${MAKE} clean && ${MAKE} depend && COPTS=-Os ${MAKE}
-	cp ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/bsd bsd
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
+	cp -p ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/obj/bsd bsd
 
 bsd.rd:	bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd

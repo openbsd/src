@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.28 2015/09/07 01:41:35 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.29 2016/10/14 18:44:19 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -78,10 +78,9 @@ bsd.rd:	${IMAGE} bsd rdsetroot
 
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/amd64/conf && config ${RAMDISK}
 	cd ${.CURDIR}/../../../sys/arch/amd64/compile/${RAMDISK} && \
-	    ${MAKE} clean && COPTS=-Os exec ${MAKE}
-	cp ${.CURDIR}/../../../sys/arch/amd64/compile/${RAMDISK}/bsd bsd
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
+	cp -p ${.CURDIR}/../../../sys/arch/amd64/compile/${RAMDISK}/obj/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
 
