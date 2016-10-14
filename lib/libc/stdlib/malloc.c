@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.200 2016/10/12 07:36:38 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.201 2016/10/14 17:33:36 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -81,8 +81,8 @@
  * when the 'J' option is enabled. Use SOME_JUNK right after alloc,
  * and SOME_FREEJUNK right before free.
  */
-#define SOME_JUNK		0xd0	/* as in "Duh" :-) */
-#define SOME_FREEJUNK		0xdf
+#define SOME_JUNK		0xdb	/* deadbeef */
+#define SOME_FREEJUNK		0xdf	/* dead, free */
 
 #define MMAP(sz)	mmap(NULL, (sz), PROT_READ | PROT_WRITE, \
     MAP_ANON | MAP_PRIVATE, -1, 0)
