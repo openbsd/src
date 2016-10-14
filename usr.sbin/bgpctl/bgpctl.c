@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.188 2016/06/03 17:36:37 benno Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.189 2016/10/14 09:40:54 phessler Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1393,6 +1393,7 @@ show_attr(void *b, u_int16_t len)
 	u_int32_t	 as;
 	u_int16_t	 alen, ioff;
 	u_int8_t	 flags, type;
+	int		 i;
 
 	if (len < 3)
 		errx(1, "show_attr: too short bgp attr");
@@ -1448,8 +1449,29 @@ show_attr(void *b, u_int16_t len)
 		show_ext_community(data, alen);
 		printf("\n");
 		break;
+	case ATTR_ATOMIC_AGGREGATE:
+		/* ignore */
+		break;
 	default:
 		/* ignore unknown attributes */
+		printf("    Unknown Attribute #%u", type);
+		if (flags) {
+			printf(" flags [");
+			if (flags & ATTR_OPTIONAL)
+				printf("O");
+			if (flags & ATTR_TRANSITIVE)
+				printf("T");
+			if (flags & ATTR_PARTIAL)
+				printf("P");
+			printf("]");
+		}
+		printf(" len %u", alen);
+		if (alen) {
+			printf(":");
+			for (i=0; i < alen; i++)
+				printf(" %02x", *(data+i) & 0xFF);
+		}
+		printf("\n");
 		break;
 	}
 }
