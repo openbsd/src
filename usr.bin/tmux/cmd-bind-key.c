@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.29 2016/10/12 14:50:14 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.30 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,7 +40,7 @@ const struct cmd_entry cmd_bind_key_entry = {
 	.usage = "[-cnr] [-t mode-table] [-T key-table] key "
 	         "command [arguments]",
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_bind_key_exec
 };
 

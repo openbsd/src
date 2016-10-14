@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-server.c,v 1.23 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-lock-server.c,v 1.24 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ const struct cmd_entry cmd_lock_server_entry = {
 	.args = { "", 0, 0 },
 	.usage = "",
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_lock_server_exec
 };
 
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_lock_session_entry = {
 
 	.tflag = CMD_SESSION,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_lock_server_exec
 };
 
@@ -59,7 +59,7 @@ const struct cmd_entry cmd_lock_client_entry = {
 
 	.tflag = CMD_CLIENT,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_lock_server_exec
 };
 

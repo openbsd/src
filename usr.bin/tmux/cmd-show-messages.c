@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.21 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.22 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,7 +40,7 @@ const struct cmd_entry cmd_show_messages_entry = {
 
 	.tflag = CMD_CLIENT,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_show_messages_exec
 };
 
@@ -51,7 +51,7 @@ const struct cmd_entry cmd_server_info_entry = {
 	.args = { "", 0, 0 },
 	.usage = "",
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_show_messages_exec
 };
 

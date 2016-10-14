@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.38 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.39 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,7 +54,7 @@ const struct cmd_entry cmd_list_windows_entry = {
 
 	.tflag = CMD_SESSION,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_list_windows_exec
 };
 

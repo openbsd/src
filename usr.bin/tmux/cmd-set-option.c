@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.99 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.100 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,7 +73,7 @@ const struct cmd_entry cmd_set_option_entry = {
 
 	.tflag = CMD_WINDOW_CANFAIL,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_set_option_exec
 };
 
@@ -86,7 +86,7 @@ const struct cmd_entry cmd_set_window_option_entry = {
 
 	.tflag = CMD_WINDOW_CANFAIL,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_set_option_exec
 };
 

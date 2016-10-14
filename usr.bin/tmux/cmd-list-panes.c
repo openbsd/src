@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.28 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.29 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_list_panes_entry = {
 
 	.tflag = CMD_WINDOW,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_list_panes_exec
 };
 

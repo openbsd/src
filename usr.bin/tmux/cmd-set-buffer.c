@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.26 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.27 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_set_buffer_entry = {
 	.args = { "ab:n:", 0, 1 },
 	.usage = "[-a] " CMD_BUFFER_USAGE " [-n new-buffer-name] data",
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_set_buffer_exec
 };
 
@@ -47,7 +47,7 @@ const struct cmd_entry cmd_delete_buffer_entry = {
 	.args = { "b:", 0, 0 },
 	.usage = CMD_BUFFER_USAGE,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_set_buffer_exec
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-hook.c,v 1.7 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-set-hook.c,v 1.8 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -38,7 +38,7 @@ const struct cmd_entry cmd_set_hook_entry = {
 
 	.tflag = CMD_SESSION_CANFAIL,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_set_hook_exec
 };
 
@@ -51,7 +51,7 @@ const struct cmd_entry cmd_show_hooks_entry = {
 
 	.tflag = CMD_SESSION,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_set_hook_exec
 };
 

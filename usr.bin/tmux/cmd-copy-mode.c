@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.28 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.29 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -35,7 +35,7 @@ const struct cmd_entry cmd_copy_mode_entry = {
 
 	.tflag = CMD_PANE,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_copy_mode_exec
 };
 
@@ -48,7 +48,7 @@ const struct cmd_entry cmd_clock_mode_entry = {
 
 	.tflag = CMD_PANE,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_copy_mode_exec
 };
 

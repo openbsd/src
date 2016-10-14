@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.30 2016/10/11 07:23:34 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.31 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -38,7 +38,7 @@ const struct cmd_entry cmd_send_keys_entry = {
 
 	.tflag = CMD_PANE,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_send_keys_exec
 };
 
@@ -51,7 +51,7 @@ const struct cmd_entry cmd_send_prefix_entry = {
 
 	.tflag = CMD_PANE,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_send_keys_exec
 };
 

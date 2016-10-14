@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.23 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.24 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -133,7 +133,8 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, const char *file,
 			if (argc == 0)
 				goto out;
 
-			*cmdlist = cmd_list_parse(argc, argv, file, line, cause);
+			*cmdlist = cmd_list_parse(argc, argv, file, line,
+			    cause);
 			if (*cmdlist == NULL)
 				goto out;
 

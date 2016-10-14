@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-window.c,v 1.17 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-rename-window.c,v 1.18 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,7 +37,7 @@ const struct cmd_entry cmd_rename_window_entry = {
 
 	.tflag = CMD_WINDOW,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_rename_window_exec
 };
 

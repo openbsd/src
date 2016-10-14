@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.28 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.29 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_list_clients_entry = {
 
 	.tflag = CMD_SESSION,
 
-	.flags = CMD_READONLY,
+	.flags = CMD_READONLY|CMD_AFTERHOOK,
 	.exec = cmd_list_clients_exec
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.31 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.32 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_list_buffers_entry = {
 	.args = { "F:", 0, 0 },
 	.usage = "[-F format]",
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_list_buffers_exec
 };
 

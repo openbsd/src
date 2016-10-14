@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.30 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.31 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,7 +37,7 @@ const struct cmd_entry cmd_select_layout_entry = {
 
 	.tflag = CMD_WINDOW,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_select_layout_exec
 };
 
@@ -50,7 +50,7 @@ const struct cmd_entry cmd_next_layout_entry = {
 
 	.tflag = CMD_WINDOW,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_select_layout_exec
 };
 
@@ -63,7 +63,7 @@ const struct cmd_entry cmd_previous_layout_entry = {
 
 	.tflag = CMD_WINDOW,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_select_layout_exec
 };
 

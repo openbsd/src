@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.39 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.40 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_capture_pane_entry = {
 
 	.tflag = CMD_PANE,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_capture_pane_exec
 };
 

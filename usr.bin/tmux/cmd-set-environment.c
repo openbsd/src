@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-environment.c,v 1.19 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-set-environment.c,v 1.20 2016/10/14 22:14:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -38,7 +38,7 @@ const struct cmd_entry cmd_set_environment_entry = {
 
 	.tflag = CMD_SESSION_CANFAIL,
 
-	.flags = 0,
+	.flags = CMD_AFTERHOOK,
 	.exec = cmd_set_environment_exec
 };
 
