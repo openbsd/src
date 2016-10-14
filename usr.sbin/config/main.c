@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2016/09/12 14:33:12 akfaew Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2016/10/14 18:51:04 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 	int ch, eflag, uflag, fflag;
 	char dirbuffer[PATH_MAX];
 
-	if (pledge("stdio rpath wpath cpath flock", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath flock proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	pflag = eflag = uflag = fflag = 0;
@@ -664,6 +664,7 @@ void
 setupdirs(void)
 {
 	struct stat st;
+	FILE *fp;
 
 	/* srcdir must be specified if builddir is not specified or if
 	 * no configuration filename was specified. */
@@ -699,6 +700,33 @@ setupdirs(void)
 		    srcdir);
 		exit(2);
 	}
+
+	if (bflag) {
+		if (pledge("stdio rpath wpath cpath flock", NULL) == -1)
+			err(1, "pledge");
+		return;
+	}
+
+	if (stat("obj", &st) == 0)
+		goto reconfig;
+
+	fp = fopen("Makefile", "w");
+	if (!fp) {
+		(void)fprintf(stderr, "config: cannot create Makefile\n");
+		exit(2);
+	}
+	if (fprintf(fp, ".include \"../Makefile.inc\"\n") < 0) {
+		(void)fprintf(stderr, "config: cannot create Makefile\n");
+		exit(2);
+	}
+	fclose(fp);
+
+reconfig:
+	if (system("make obj") != 0)
+		exit(2);
+	if (system("make config") != 0)
+		exit(2);
+	exit(0);
 }
 
 struct opt {
