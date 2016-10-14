@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcpy.c,v 1.13 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: strlcpy.c,v 1.14 2016/10/14 18:19:04 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <string.h>
+#include <stdint.h>
 
 /*
  * Copy string src to buffer dst of size dsize.  At most dsize-1
@@ -46,6 +47,11 @@ strlcpy(char *dst, const char *src, size_t dsize)
 			;
 	}
 
-	return(src - osrc - 1);	/* count does not include NUL */
+	/*
+	 * Cast pointers to unsigned type before calculation, to avoid signed
+	 * overflow when the string ends where the MSB has changed.
+	 * Return value does not include NUL.
+	 */
+	return((uintptr_t)src - (uintptr_t)osrc - 1); 
 }
 DEF_WEAK(strlcpy);
