@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.14 2016/09/24 19:13:03 kettenis Exp $
+#	$OpenBSD: Makefile.armv7,v 1.15 2016/10/14 18:43:01 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -130,6 +130,8 @@ lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
+
+obj:
 
 depend:
 	@touch $@

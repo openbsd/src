@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.23 2016/09/24 19:13:03 kettenis Exp $
+#	$OpenBSD: Makefile.octeon,v 1.24 2016/10/14 18:43:02 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -28,7 +28,7 @@ S!=	cd ../../../..; pwd
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
-INCLUDES=	-nostdinc -I$S -I. -I$S/arch
+INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-main -Wno-uninitialized -Wno-pointer-sign \
@@ -137,6 +137,8 @@ lint:
 symbols.sort: ${_machdir}/${_mach}/symbols.raw
 	grep -v '^#' ${_machdir}/${_mach}/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
+
+obj:
 
 depend:
 	@touch $@

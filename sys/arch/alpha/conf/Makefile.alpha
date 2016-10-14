@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.89 2016/09/24 19:13:03 kettenis Exp $
+#	$OpenBSD: Makefile.alpha,v 1.90 2016/10/14 18:43:01 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -21,7 +21,7 @@ S!=	cd ../../../..; pwd
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
-INCLUDES=	-nostdinc -I$S -I. -I$S/arch
+INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-main -Wno-uninitialized -Wno-pointer-sign \
@@ -125,6 +125,8 @@ lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
+
+obj:
 
 depend:
 	@touch $@

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2013/12/08 14:46:39 espie Exp $
+#	$OpenBSD: Makefile,v 1.22 2016/10/14 18:42:58 deraadt Exp $
 
 S=	${.CURDIR}/../..
 KFILE=	GENERIC
@@ -11,7 +11,7 @@ TAGS=	${.CURDIR}/tags
 NOPROG=
 NOMAN=
 NOOBJ=
-SUBDIR=	stand
+SUBDIR=	stand compile
 
 # config the fattest kernel we can find into a temporary dir
 # to create a Makefile.  Then use make to pull some variables
