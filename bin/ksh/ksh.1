@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.183 2016/10/07 16:09:49 tedu Exp $
+.\"	$OpenBSD: ksh.1,v 1.184 2016/10/14 11:06:32 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: October 7 2016 $
+.Dd $Mdocdate: October 14 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -2803,9 +2803,7 @@ for more information.
 .Ar ...
 .Xc
 The specified editing command is bound to the given
-.Ar string ,
-which should consist of a control character
-optionally preceded by one of the two prefix characters.
+.Ar string .
 Future input of the
 .Ar string
 will cause the editing command to be immediately invoked.
@@ -2816,10 +2814,23 @@ flag is given, the specified input
 will afterwards be immediately replaced by the given
 .Ar substitute
 string, which may contain editing commands.
+Control characters may be written using caret notation.
+For example, ^X represents Control-X.
 .Pp
-Control characters may be written using caret notation
-i.e. ^X represents Control-X.
-Multi-character sequences are supported.
+If a certain character occurs as the first character of any bound
+multi-character
+.Ar string
+sequence, that character becomes a command prefix character.
+Any character sequence that starts with a command prefix character
+but that is not bound to a command or substitute
+is implicitly considered as bound to the
+.Sq error
+command.
+By default, two command prefix characters exist:
+Escape
+.Pq ^[
+and Control-X
+.Pq ^X .
 .Pp
 The following default bindings show how the arrow keys
 on an ANSI terminal or xterm are bound
