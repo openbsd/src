@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.442 2016/10/09 20:55:16 natano Exp $
+#	$OpenBSD: Makefile,v 1.443 2016/10/14 18:45:12 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -15,16 +15,15 @@ KERNELS = GENERIC bsd
 .for CONF K in ${KERNELS}
 .  if !target($K)
 $K:
-	cd ../sys/arch/${MACHINE}/conf && config ${CONF}
-	cd ../sys/arch/${MACHINE}/compile/${CONF} && \
+	cd ../sys/arch/${MACHINE}/compile/${CONF} && ${MAKE} config && \
 	    ${MAKE} clean && exec ${MAKE}
 .  endif
 ALL_KERNELS += $K
 .endfor
 
-kernels: bootblocks ${ALL_KERNELS}
+kernels: ${ALL_KERNELS}
 .for CONF K in ${KERNELS}
-	cp ../sys/arch/${MACHINE}/compile/${CONF}/bsd ${RELEASEDIR}/$K
+	cp ../sys/arch/${MACHINE}/compile/${CONF}/obj/bsd ${RELEASEDIR}/$K
 .endfor
 
 # -rw-r--r--
@@ -267,7 +266,8 @@ release:
 
 release-sets:
 	su ${BUILDUSER} -c 'exec ${MAKE} distribution'
-	${MAKE} kernels
+	su ${BUILDUSER} -c 'exec ${MAKE} kernels'
+	${MAKE} bootblocks
 	cd ${RELEASEDIR} && rm -f SHA256
 	cd ../distrib/sets && exec su ${BUILDUSER} -c 'exec sh maketars ${OSrev}'
 
