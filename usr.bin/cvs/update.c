@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.172 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: update.c,v 1.173 2016/10/14 20:37:07 fcambus Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -480,10 +480,8 @@ cvs_update_local(struct cvs_file *cf)
 		if (cvs_cmdop != CVS_OP_UPDATE)
 			break;
 
-		if (reset_tag != 1 && reset_option != 1)
-			break;
-
-		if (cf->file_ent != NULL && cf->file_ent->ce_tag == NULL)
+		if (reset_tag != 1 && reset_option != 1 &&
+		    cvs_specified_tag == NULL && cvs_specified_date == -1)
 			break;
 
 		if (cf->file_rcs->rf_dead != 1 &&
