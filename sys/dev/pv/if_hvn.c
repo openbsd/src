@@ -1038,17 +1038,10 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 		rv = msleep(&sc->sc_nvsrsp, &sc->sc_nvslck, PRIBIO, "hvnvsp",
 		    timo);
 		mtx_leave(&sc->sc_nvslck);
-#ifdef HVN_DEBUG
-		switch (rv) {
-		case EINTR:
-			rv = 0;
-			break;
-		case EWOULDBLOCK:
+		if (rv == EWOULDBLOCK)
 			printf("%s: NVSP opertaion %d timed out\n",
 			    sc->sc_dev.dv_xname, hdr->nvs_type);
-		}
 	}
-#endif
 	return (rv);
 }
 
@@ -1125,6 +1118,14 @@ hvn_complete_cmd(struct hvn_softc *sc, uint32_t id)
 		mtx_leave(&sc->sc_cntl_cqlck);
 	}
 	return (rc);
+}
+
+static inline void
+hvn_release_cmd(struct hvn_softc *sc, struct rndis_cmd *rc)
+{
+	mtx_enter(&sc->sc_cntl_cqlck);
+	TAILQ_REMOVE(&sc->sc_cntl_cq, rc, rc_entry);
+	mtx_leave(&sc->sc_cntl_cqlck);
 }
 
 static inline int
@@ -1327,28 +1328,27 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 	    BUS_DMASYNC_POSTWRITE);
 
 	mtx_enter(&rc->rc_mtx);
-	rv = msleep(rc, &rc->rc_mtx, PRIBIO, "rndisctl", timo);
+	rv = msleep(rc, &rc->rc_mtx, PRIBIO | PCATCH, "rndisctl", timo);
 	mtx_leave(&rc->rc_mtx);
 
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
 	    BUS_DMASYNC_POSTREAD);
 
-#ifdef HVN_DEBUG
 	switch (rv) {
-	case EINTR:
-		rv = 0;
+	case 0:
+		hvn_release_cmd(sc, rc);
 		break;
+	case EINTR:
 	case EWOULDBLOCK:
 		if (hvn_rollback_cmd(sc, rc)) {
-			/* failed to rollback? go for one sleep cycle */
-			tsleep(rc, PRIBIO, "rndisctl2", 1);
+			hvn_release_cmd(sc, rc);
 			rv = 0;
-			break;
+		} else if (rv == EWOULDBLOCK) {
+			printf("%s: RNDIS opertaion %d timed out\n",
+			    sc->sc_dev.dv_xname, hdr->rm_type);
 		}
-		printf("%s: RNDIS opertaion %d timed out\n", sc->sc_dev.dv_xname,
-		    hdr->rm_type);
+		break;
 	}
-#endif
 	return (rv);
 }
 
