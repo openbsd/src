@@ -1,6 +1,6 @@
 #ifndef VAR_H
 #define VAR_H
-/* $OpenBSD: var.h,v 1.17 2014/01/06 12:08:18 espie Exp $ */
+/* $OpenBSD: var.h,v 1.18 2016/10/14 09:27:21 natano Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -64,9 +64,9 @@ extern void Var_Deletei(const char *, const char *);
 #define PREFIX_INDEX	1
 #define ARCHIVE_INDEX	2
 #define MEMBER_INDEX	3
-#define OODATE_INDEX	4
-#define ALLSRC_INDEX	5
-#define IMPSRC_INDEX	6
+#define IMPSRC_INDEX	4
+#define OODATE_INDEX	5
+#define ALLSRC_INDEX	6
 
 #define Var(idx, gn)	((gn)->context.locals[idx])
 

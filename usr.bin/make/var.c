@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.99 2015/09/27 16:58:16 guenther Exp $	*/
+/*	$OpenBSD: var.c,v 1.100 2016/10/14 09:27:21 natano Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -147,9 +147,9 @@ static char *varnames[] = {
 	PREFIX,
 	ARCHIVE,
 	MEMBER,
+	IMPSRC,
 	OODATE,
 	ALLSRC,
-	IMPSRC,
 	FTARGET,
 	DTARGET,
 	FPREFIX,
@@ -157,7 +157,9 @@ static char *varnames[] = {
 	FARCHIVE,
 	DARCHIVE,
 	FMEMBER,
-	DMEMBER
+	DMEMBER,
+	FIMPSRC,
+	DIMPSRC
 };
 
 static bool xtlist[] = {
@@ -166,9 +168,9 @@ static bool xtlist[] = {
 	false,	/* $* */
 	false,	/* $! */
 	true,	/* $% */
+	true,	/* $< */
 	false,	/* $? */
 	false,	/* $> */
-	true,	/* $< */
 	true,	/* ${@F} */
 	true,	/* ${@D} */
 	false,	/* ${*F} */
@@ -177,6 +179,8 @@ static bool xtlist[] = {
 	false,	/* ${!D} */
 	true,	/* ${%F} */
 	true,	/* ${%D} */
+	true,	/* ${<F} */
+	true,	/* ${<D} */
 };
 
 /* so that we can access tlist[-1] */
@@ -194,6 +198,8 @@ static bool *tlist = xtlist+1;
 #define DARCHIVE_INDEX	12
 #define FMEMBER_INDEX	13
 #define DMEMBER_INDEX	14
+#define FIMPSRC_INDEX	15
+#define DIMPSRC_INDEX	16
 
 #define GLOBAL_INDEX	-1
 
@@ -365,7 +371,15 @@ classify_var(const char *name, const char **enamePtr, uint32_t *pk)
 		break;
 	case K_DMEMBER % MAGICSLOTS1:
 		if (name[0] == DMEMBER[0] && name[1] == DMEMBER[1] && len == 2)
-		    return DMEMBER_INDEX;
+			return DMEMBER_INDEX;
+		break;
+	case K_FIMPSRC % MAGICSLOTS1:
+		if (name[0] == FIMPSRC[0] && name[1] == FIMPSRC[1] && len == 2)
+			return FIMPSRC_INDEX;
+		break;
+	case K_DIMPSRC % MAGICSLOTS1:
+		if (name[0] == DIMPSRC[0] && name[1] == DIMPSRC[1] && len == 2)
+			return DIMPSRC_INDEX;
 		break;
 	default:
 		break;
