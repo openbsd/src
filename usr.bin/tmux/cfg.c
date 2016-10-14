@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.47 2016/10/11 13:45:47 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.48 2016/10/14 18:41:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -129,7 +129,10 @@ load_cfg(const char *path, struct cmd_q *cmdq, int quiet)
 static void
 cfg_default_done(__unused struct cmd_q *cmdq)
 {
-	if (--cfg_references != 0)
+	log_debug("%s: %u references%s", __func__, cfg_references,
+	    cfg_finished ? " (finished)" : "");
+
+	if (cfg_finished || --cfg_references != 0)
 		return;
 	cfg_finished = 1;
 
