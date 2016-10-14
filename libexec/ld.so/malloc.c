@@ -68,8 +68,8 @@
  * when the 'J' option is enabled. Use SOME_JUNK right after alloc,
  * and SOME_FREEJUNK right before free.
  */
-#define SOME_JUNK		0xd0	/* as in "Duh" :-) */
-#define SOME_FREEJUNK		0xdf
+#define SOME_JUNK		0xdb	/* deadbeef */
+#define SOME_FREEJUNK		0xdf	/* dead, free */
 
 #define MMAP(sz)	_dl_mmap(NULL, (size_t)(sz), PROT_READ | PROT_WRITE, \
     MAP_ANON | MAP_PRIVATE, -1, (off_t) 0)
