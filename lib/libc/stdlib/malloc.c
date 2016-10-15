@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.201 2016/10/14 17:33:36 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.202 2016/10/15 18:24:40 guenther Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1249,6 +1249,7 @@ _malloc_init(int from_rthreads)
 		mprotect(&malloc_readonly, sizeof(malloc_readonly), PROT_READ);
 	_MALLOC_UNLOCK(0);
 }
+DEF_STRONG(_malloc_init);
 
 void *
 malloc(size_t size)

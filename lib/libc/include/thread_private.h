@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.28 2016/09/01 10:41:02 otto Exp $ */
+/* $OpenBSD: thread_private.h,v 1.29 2016/10/15 18:24:40 guenther Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -9,6 +9,9 @@
 
 #define _MALLOC_MUTEXES 4
 void _malloc_init(int);
+#ifdef __LIBC__
+PROTO_NORMAL(_malloc_init);
+#endif /* __LIBC__ */
 
 /*
  * The callbacks needed by libc to handle the threaded case.
