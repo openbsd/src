@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.663 2016/10/15 00:01:01 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.664 2016/10/15 00:09:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1742,6 +1742,8 @@ int		 cmd_find_from_session(struct cmd_find_state *,
 		     struct session *);
 int		 cmd_find_from_winlink(struct cmd_find_state *,
 		     struct session *, struct winlink *);
+int		 cmd_find_from_session_window(struct cmd_find_state *,
+		     struct session *, struct window *);
 int		 cmd_find_from_window(struct cmd_find_state *, struct window *);
 int		 cmd_find_from_pane(struct cmd_find_state *,
 		     struct window_pane *);

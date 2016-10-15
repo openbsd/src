@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.506 2016/10/14 17:40:47 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.507 2016/10/15 00:09:30 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2016 $
+.Dd $Mdocdate: October 15 2016 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3244,6 +3244,10 @@ Run when the program running in a pane exits, but
 is on so the pane has not closed.
 .It pane-exited
 Run when the program running in a pane exits.
+.It session-renamed
+Run when a session is renamed.
+.It window-renamed
+Run when a window is renamed.
 .El
 .Pp
 Hooks are managed with these commands:
