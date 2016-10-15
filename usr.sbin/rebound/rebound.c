@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.74 2016/10/08 06:33:59 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.75 2016/10/15 21:50:59 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
+#include <ctype.h>
 #include <err.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -63,8 +64,10 @@ struct dnspacket {
 	uint16_t ancount;
 	uint16_t nscount;
 	uint16_t arcount;
+	char qname[];
 	/* ... */
 };
+#define NAMELEN 256
 
 /*
  * requests will point to cache entries until a response is received.
@@ -102,6 +105,8 @@ struct request {
 	uint16_t clientid;
 	uint16_t reqid;
 	struct dnscache *cacheent;
+	char origname[NAMELEN];
+	char newname[NAMELEN];
 };
 static TAILQ_HEAD(, request) reqfifo;
 
@@ -157,11 +162,46 @@ cachecmp(struct dnscache *c1, struct dnscache *c2)
 }
 RB_GENERATE_STATIC(cachetree, dnscache, cachenode, cachecmp)
 
+static void
+lowercase(unsigned char *s)
+{
+	while (*s) {
+		*s = tolower(*s);
+		s++;
+	}
+}
+
+static void
+randomcase(unsigned char *s)
+{
+	unsigned char bits[NAMELEN / 8], *b;
+	u_int i = 0;
+
+	arc4random_buf(bits, (strlen(s) + 7) / 8);
+	b = bits;
+	while (*s) {
+		*s = (*b & (1 << i)) ? toupper(*s) : tolower(*s);
+		s++;
+		i++;
+		if (i == 8) {
+			b++;
+			i = 0;
+		}
+	}
+}
+
 static struct dnscache *
 cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 {
 	struct dnscache *hit, key;
+	unsigned char origname[NAMELEN];
 	uint16_t origid;
+
+	if (ntohs(dnsreq->qdcount) != 1)
+		return NULL;
+
+	strlcpy(origname, dnsreq->qname, sizeof(origname));
+	lowercase(dnsreq->qname);
 
 	origid = dnsreq->id;
 	dnsreq->id = 0;
@@ -172,6 +212,7 @@ cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 	if (hit)
 		cachehits += 1;
 
+	strlcpy(dnsreq->qname, origname, sizeof(origname));
 	dnsreq->id = origid;
 	return hit;
 }
@@ -237,10 +278,16 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	r = recvfrom(ud, buf, sizeof(buf), 0, &from.a, &fromlen);
 	if (r == 0 || r == -1 || r < sizeof(struct dnspacket))
 		return NULL;
+	if (ntohs(dnsreq->qdcount) == 1) {
+		/* some more checking */
+		if (!memchr(dnsreq->qname, '\0', r - sizeof(struct dnspacket)))
+			return NULL;
+	}
 
 	conntotal += 1;
 	if ((hit = cachelookup(dnsreq, r))) {
 		hit->resp->id = dnsreq->id;
+		strlcpy(hit->resp->qname, dnsreq->qname, strlen(hit->resp->qname) + 1);
 		sendto(ud, hit->resp, hit->resplen, 0, &from.a, fromlen);
 		return NULL;
 	}
@@ -260,21 +307,27 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	req->clientid = dnsreq->id;
 	req->reqid = randomid();
 	dnsreq->id = req->reqid;
+	if (ntohs(dnsreq->qdcount) == 1) {
+		strlcpy(req->origname, dnsreq->qname, sizeof(req->origname));
+		randomcase(dnsreq->qname);
+		strlcpy(req->newname, dnsreq->qname, sizeof(req->newname));
 
-	hit = calloc(1, sizeof(*hit));
-	if (hit) {
-		hit->req = malloc(r);
-		if (hit->req) {
-			memcpy(hit->req, dnsreq, r);
-			hit->reqlen = r;
-			hit->req->id = 0;
-		} else {
-			free(hit);
-			hit = NULL;
+		hit = calloc(1, sizeof(*hit));
+		if (hit) {
+			hit->req = malloc(r);
+			if (hit->req) {
+				memcpy(hit->req, dnsreq, r);
+				hit->reqlen = r;
+				hit->req->id = 0;
+				lowercase(hit->req->qname);
+			} else {
+				free(hit);
+				hit = NULL;
 
+			}
 		}
+		req->cacheent = hit;
 	}
-	req->cacheent = hit;
 
 	req->s = socket(remoteaddr->sa_family, SOCK_DGRAM, 0);
 	if (req->s == -1)
@@ -359,6 +412,14 @@ sendreply(int ud, struct request *req)
 	if (resp->id != req->reqid)
 		return;
 	resp->id = req->clientid;
+	if (ntohs(resp->qdcount) == 1) {
+		/* some more checking */
+		if (!memchr(resp->qname, '\0', r - sizeof(struct dnspacket)))
+			return;
+		if (strcmp(resp->qname, req->newname) != 0)
+			return;
+		strlcpy(resp->qname, req->origname, strlen(resp->qname) + 1);
+	}
 	sendto(ud, buf, r, 0, &req->from.a, req->fromlen);
 	if ((ent = req->cacheent)) {
 		/*
