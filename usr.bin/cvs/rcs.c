@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.315 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.316 2016/10/15 22:20:17 millert Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2427,7 +2427,7 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct rcs_lines *lines,
 					    "truncated");
 
 				lp = xcalloc(1, sizeof(*lp));
-				xasprintf(&(lp->l_line), "%s%s\n",
+				xasprintf((char **)&(lp->l_line), "%s%s\n",
 				    prefix, linebuf);
 				lp->l_len = strlen(lp->l_line);
 				TAILQ_INSERT_AFTER(&(lines->l_lines), cur, lp,
@@ -2441,10 +2441,10 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct rcs_lines *lines,
 					lp = xcalloc(1, sizeof(*lp));
 
 					if (l_line[0] == '\0') {
-						xasprintf(&(lp->l_line), "%s\n",
-						    sprefix);
+						xasprintf((char **)&(lp->l_line),
+						    "%s\n", sprefix);
 					} else {
-						xasprintf(&(lp->l_line),
+						xasprintf((char **)&(lp->l_line),
 						    "%s%s\n", prefix, l_line);
 					}
 

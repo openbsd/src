@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.83 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: buf.c,v 1.84 2016/10/15 22:20:17 millert Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -106,7 +106,7 @@ buf_load_fd(int fd)
 	if (lseek(fd, 0, SEEK_SET) == -1)
 		fatal("buf_load_fd: lseek: %s", strerror(errno));
 
-	if (st.st_size > SIZE_MAX)
+	if ((uintmax_t)st.st_size > SIZE_MAX)
 		fatal("buf_load_fd: file size too big");
 	buf = buf_alloc(st.st_size);
 	if (atomicio(read, fd, buf->cb_buf, buf->cb_size) != buf->cb_size)

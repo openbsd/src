@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.59 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.60 2016/10/15 22:20:17 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -295,7 +295,8 @@ diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 	free(overlap);
 	free(de);
 
-	de = d13 = d23 = overlap = NULL;
+	de = d13 = d23 = NULL;
+	overlap = NULL;
 
 	increase();
 
@@ -793,7 +794,7 @@ edscript(int n)
 		(void)fseek(fp[2], (long)de[n].new.from, SEEK_SET);
 		for (k = de[n].new.to-de[n].new.from; k > 0; k-= j) {
 			j = k > BUFSIZ ? BUFSIZ : k;
-			if (fread(block, 1, j, fp[2]) != j)
+			if (fread(block, 1, j, fp[2]) != (size_t)j)
 				return (-1);
 			block[j] = '\0';
 			diff_output("%s", block);

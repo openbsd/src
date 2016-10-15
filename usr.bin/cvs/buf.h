@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.28 2010/08/01 09:55:40 zinovik Exp $	*/
+/*	$OpenBSD: buf.h,v 1.29 2016/10/15 22:20:17 millert Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -30,6 +30,7 @@
 #include <sys/types.h>
 
 typedef struct buf BUF;
+struct timeval;
 
 BUF		*buf_alloc(size_t);
 BUF		*buf_load(const char *);

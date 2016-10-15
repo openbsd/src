@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.99 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.100 2016/10/15 22:20:17 millert Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -234,7 +234,7 @@ cvs_log_local(struct cvs_file *cf)
 	if (logrev != NULL)
 		nrev = cvs_revision_select(cf->file_rcs, logrev);
 	else if (logdate != NULL) {
-		if ((nrev = date_select(cf->file_rcs, logdate)) == -1) {
+		if ((nrev = date_select(cf->file_rcs, logdate)) == (u_int)-1) {
 			cvs_log(LP_ERR, "invalid date: %s", logdate);
 			return;
 		}

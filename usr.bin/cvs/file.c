@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.268 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: file.c,v 1.269 2016/10/15 22:20:17 millert Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -461,12 +461,10 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		fatal("cvs_file_walkdir: %s %s", cf->file_path,
 		    strerror(errno));
 
-	if (st.st_size > SIZE_MAX)
+	if ((uintmax_t)st.st_size > SIZE_MAX)
 		fatal("cvs_file_walkdir: %s: file size too big", cf->file_name);
 
-	bufsize = st.st_size;
-	if (bufsize < st.st_blksize)
-		bufsize = st.st_blksize;
+	bufsize = (st.st_size > st.st_blksize) ? st.st_size : st.st_blksize;
 
 	buf = xmalloc(bufsize);
 	RB_INIT(&fl);
@@ -1030,7 +1028,7 @@ cvs_file_cmp(const char *file1, const char *file2)
 	if (S_ISREG(stb1.st_mode)) {
 		void *p1, *p2;
 
-		if (stb1.st_size > SIZE_MAX) {
+		if ((uintmax_t)stb1.st_size > SIZE_MAX) {
 			ret = 1;
 			goto out;
 		}
@@ -1087,7 +1085,7 @@ cvs_file_copy(const char *from, const char *to)
 		char *p;
 		int saved_errno;
 
-		if (st.st_size > SIZE_MAX) {
+		if ((uintmax_t)st.st_size > SIZE_MAX) {
 			ret = -1;
 			goto out;
 		}
@@ -1106,7 +1104,7 @@ cvs_file_copy(const char *from, const char *to)
 
 		madvise(p, st.st_size, MADV_SEQUENTIAL);
 
-		if (atomicio(vwrite, dst, p, st.st_size) != st.st_size) {
+		if (atomicio(vwrite, dst, p, st.st_size) != (size_t)st.st_size) {
 			saved_errno = errno;
 			(void)unlink(to);
 			fatal("cvs_file_copy: `%s': %s", from,

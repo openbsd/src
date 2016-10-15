@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.58 2016/08/16 19:00:59 tb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.59 2016/10/15 22:20:17 millert Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -59,7 +59,7 @@ cvs_logmsg_read(const char *path)
 	if ((fp = fdopen(fd, "r")) == NULL)
 		fatal("cvs_logmsg_read: fdopen %s", strerror(errno));
 
-	if (st.st_size > SIZE_MAX)
+	if ((uintmax_t)st.st_size > SIZE_MAX)
 		fatal("cvs_logmsg_read: %s: file size too big", path);
 
 	lbuf = NULL;
@@ -142,7 +142,7 @@ cvs_logmsg_create(char *dir, struct cvs_flisthead *added,
 			if ((rp = fdopen(rd, "r")) == NULL)
 				fatal("cvs_logmsg_create: fdopen %s",
 				    strerror(errno));
-			if (st.st_size > SIZE_MAX)
+			if ((uintmax_t)st.st_size > SIZE_MAX)
 				fatal("cvs_logmsg_create: %s: file size "
 				    "too big", line->line);
 			logmsg = xmalloc(st.st_size);
