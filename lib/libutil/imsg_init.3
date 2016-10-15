@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.16 2016/10/10 17:15:30 reyk Exp $
+.\" $OpenBSD: imsg_init.3,v 1.17 2016/10/15 12:33:22 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 10 2016 $
+.Dd $Mdocdate: October 15 2016 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -506,7 +506,7 @@ When the socket is ready for writing, queued messages are transmitted with
 	}
 	if (n == 0) {
 		/* handle closed connection */
-	}	
+	}
 .Ed
 .Pp
 And when ready for reading, messages are first received using
