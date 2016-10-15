@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.75 2016/10/15 21:50:59 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.76 2016/10/15 21:56:40 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -354,43 +354,43 @@ fail:
 }
 
 static uint32_t
-minttl(struct dnspacket *resp, size_t rlen)
+minttl(struct dnspacket *resp, u_int rlen)
 {
-	uint32_t minttl = UINT_MAX, ttl, cnt, i;
+	uint32_t minttl = -1, ttl, cnt, i;
 	uint16_t len;
 	char *p = (char *)resp;
-	char *end = p + rlen;
+	u_int used = 0;
 
 	/* skip past packet header */
-	p += sizeof(struct dnspacket);
-	if (p >= end)
+	used += sizeof(struct dnspacket);
+	if (used >= rlen)
 		return -1;
 	if (ntohs(resp->qdcount) != 1)
 		return -1;
 	/* skip past query name, type, and class */
-	p += strnlen(p, end - p);
-	p += 2;
-	p += 2;
+	used += strnlen(p + used, rlen - used);
+	used += 2;
+	used += 2;
 	cnt = ntohs(resp->ancount);
 	for (i = 0; i < cnt; i++) {
-		if (p >= end)
+		if (used >= rlen)
 			return -1;
 		/* skip past answer name, type, and class */
-		p += strnlen(p, end - p);
-		p += 2;
-		p += 2;
-		if (p + 4 >= end)
+		used += strnlen(p + used, rlen - used);
+		used += 2;
+		used += 2;
+		if (used + 4 >= rlen)
 			return -1;
-		memcpy(&ttl, p, 4);
-		p += 4;
-		if (p + 2 >= end)
+		memcpy(&ttl, p + used, 4);
+		used += 4;
+		if (used + 2 >= rlen)
 			return -1;
 		ttl = ntohl(ttl);
 		if (ttl < minttl)
 			minttl = ttl;
-		memcpy(&len, p, 2);
-		p += 2;
-		p += ntohs(len);
+		memcpy(&len, p + used, 2);
+		used += 2;
+		used += ntohs(len);
 	}
 	return minttl;
 }
