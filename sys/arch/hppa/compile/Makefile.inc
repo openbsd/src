@@ -11,7 +11,7 @@ config:
 config:
 	config -b ${.OBJDIR} -s ${SYSDIR} ${CONFDIR}/${.CURDIR:T}
 
-clean:
+cleandir clean:
 
 .endif
 
