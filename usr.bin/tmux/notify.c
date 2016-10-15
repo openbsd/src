@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.11 2016/10/15 00:09:30 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.12 2016/10/15 00:12:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -147,7 +147,7 @@ notify_drain(void)
 			control_notify_session_created(ne->session);
 			break;
 		case NOTIFY_SESSION_CLOSED:
-			control_notify_session_close(ne->session);
+			control_notify_session_closed(ne->session);
 			break;
 		}
 		TAILQ_REMOVE(&notify_queue, ne, entry);

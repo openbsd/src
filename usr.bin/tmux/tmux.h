@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.664 2016/10/15 00:09:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.665 2016/10/15 00:12:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2208,7 +2208,7 @@ void	control_notify_window_renamed(struct window *);
 void	control_notify_attached_session_changed(struct client *);
 void	control_notify_session_renamed(struct session *);
 void	control_notify_session_created(struct session *);
-void	control_notify_session_close(struct session *);
+void	control_notify_session_closed(struct session *);
 
 /* session.c */
 extern struct sessions sessions;
