@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.184 2016/10/14 11:06:32 schwarze Exp $
+.\"	$OpenBSD: ksh.1,v 1.185 2016/10/15 14:36:38 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: October 14 2016 $
+.Dd $Mdocdate: October 15 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1408,10 +1408,7 @@ If
 .Ev HISTFILE
 isn't set, no history file is used.
 This is different from the original Korn shell, which uses
-.Pa $HOME/.sh_history ;
-in the future,
-.Nm ksh
-may also use a default history file.
+.Pa $HOME/.sh_history .
 .It Ev HISTSIZE
 The number of commands normally stored for history.
 The default is 500.
@@ -2425,19 +2422,6 @@ inside a function interferes with using
 .Ic getopts
 outside the function).
 .El
-.Pp
-In the future, the following differences will also be added:
-.Bl -bullet
-.It
-A separate trap/signal environment will be used during the execution of
-functions.
-This will mean that traps set inside a function will not affect the
-shell's traps and signals that are not ignored in the shell (but may be
-trapped) will have their default effect in a function.
-.It
-The EXIT trap, if set in a function, will be executed after the function
-returns.
-.El
 .Ss POSIX mode
 The shell is intended to be POSIX compliant;
 however, in some cases, POSIX behaviour is contrary either to
@@ -2466,9 +2450,6 @@ output.
 In POSIX mode, only signal names are listed (in a single line);
 in non-POSIX mode,
 signal numbers, names, and descriptions are printed (in columns).
-In the future, a new option
-.Pq Fl v No perhaps
-will be added to distinguish the two behaviours.
 .It
 .Ic echo
 options.
@@ -2687,11 +2668,6 @@ regular commands
 .Ic \&[ , echo , let ,
 .Ic print , suspend , test ,
 .Ic ulimit , whence
-.Pp
-In the future, the additional
-.Nm
-special and regular commands may be treated
-differently from the POSIX special and regular commands.
 .Pp
 Once the type of command has been determined, any command-line parameter
 assignments are performed and exported for the duration of the command.
@@ -3632,8 +3608,8 @@ See above for a description of what this means.
 Do not kill running jobs with a
 .Dv SIGHUP
 signal when a login shell exits.
-Currently set by default, but this will
-change in the future to be compatible with the original Korn shell (which
+Currently set by default;
+this is different from the original Korn shell (which
 doesn't have this option, but does send the
 .Dv SIGHUP
 signal).
