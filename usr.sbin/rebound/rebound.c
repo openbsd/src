@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.76 2016/10/15 21:56:40 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.77 2016/10/15 22:09:51 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -561,7 +561,7 @@ readconfig(int conffd, union sockun *remoteaddr)
 }
 
 static int
-launch(int conffd, int ud, int ld)
+workerloop(int conffd, int ud, int ld)
 {
 	union sockun remoteaddr;
 	struct kevent ch[2], kev[4];
@@ -570,15 +570,16 @@ launch(int conffd, int ud, int ld)
 	struct dnscache *ent;
 	struct passwd *pwd;
 	int i, r, af, kq;
-	pid_t parent, child;
-
-	parent = getpid();
-	if (!debug) {
-		if ((child = fork()))
-			return child;
-	}
 
 	kq = kqueue();
+
+	if (!debug) {
+		pid_t parent = getppid();
+		/* would need pledge(proc) to do this below */
+		EV_SET(&kev[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+		if (kevent(kq, kev, 1, NULL, 0, NULL) == -1)
+			logerr("kevent1: %d", errno);
+	}
 
 	if (!(pwd = getpwnam("_rebound")))
 		logerr("getpwnam failed");
@@ -593,11 +594,6 @@ launch(int conffd, int ud, int ld)
 	    setresgid(pwd->pw_gid, pwd->pw_gid, pwd->pw_gid) ||
 	    setresuid(pwd->pw_uid, pwd->pw_uid, pwd->pw_uid))
 		logerr("failed to privdrop");
-
-	/* would need pledge(proc) to do this below */
-	EV_SET(&kev[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-	if (kevent(kq, kev, 1, NULL, 0, NULL) == -1)
-		logerr("kevent1: %d", errno);
 
 	if (pledge("stdio inet", NULL) == -1)
 		logerr("pledge failed");
@@ -739,6 +735,94 @@ openconfig(const char *confname, int kq)
 	return conffd;
 }
 
+static int
+monitorloop(int ud, int ld, const char *confname)
+{
+	pid_t child;
+	struct kevent kev;
+	int r, kq;
+	int conffd = -1;
+	struct timespec ts, *timeout = NULL;
+
+	kq = kqueue();
+
+	/* catch these signals with kevent */
+	signal(SIGHUP, SIG_IGN);
+	EV_SET(&kev, SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	kevent(kq, &kev, 1, NULL, 0, NULL);
+	signal(SIGTERM, SIG_IGN);
+	EV_SET(&kev, SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	kevent(kq, &kev, 1, NULL, 0, NULL);
+	while (1) {
+		int hupped = 0;
+		int childdead = 0;
+	
+		if (conffd == -1)
+			conffd = openconfig(confname, kq);
+
+		switch ((child = fork())) {
+		case -1:
+			logerr("failed to fork");
+			break;
+		case 0:
+			return workerloop(conffd, ud, ld);
+		default:
+			break;
+		}
+
+		/* monitor child */
+		EV_SET(&kev, child, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+		kevent(kq, &kev, 1, NULL, 0, NULL);
+
+		/* wait for something to happen: HUP or child exiting */
+		timeout = NULL;
+		while (1) {
+			r = kevent(kq, NULL, 0, &kev, 1, timeout);
+			if (r == -1)
+				logerr("kevent failed (%d)", errno);
+
+			if (r == 0) {
+				/* timeout expired */
+				logerr("child died without HUP");
+			} else if (kev.filter == EVFILT_VNODE) {
+				/* config file changed */
+				logmsg(LOG_INFO, "config changed, reloading");
+				close(conffd);
+				conffd = -1;
+				sleep(1);
+				raise(SIGHUP);
+			} else if (kev.filter == EVFILT_SIGNAL &&
+			    kev.ident == SIGHUP) {
+				/* signaled. kill child. */
+				logmsg(LOG_INFO, "received HUP, restarting");
+				hupped = 1;
+				if (childdead)
+					break;
+				kill(child, SIGHUP);
+			} else if (kev.filter == EVFILT_SIGNAL &&
+			    kev.ident == SIGTERM) {
+				/* good bye */
+				logmsg(LOG_INFO, "received TERM, quitting");
+				kill(child, SIGTERM);
+				exit(0);
+			} else if (kev.filter == EVFILT_PROC) {
+				/* child died. wait for our own HUP. */
+				logmsg(LOG_INFO, "observed child exit");
+				childdead = 1;
+				if (hupped)
+					break;
+				memset(&ts, 0, sizeof(ts));
+				ts.tv_sec = 1;
+				timeout = &ts;
+			} else {
+				logerr("don't know what happened");
+			}
+		}
+		wait(NULL);
+	}
+	return 1;
+}
+
 static void
 resetport(void)
 {
@@ -761,12 +845,9 @@ main(int argc, char **argv)
 	int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
 	int jackport = 54;
 	union sockun bindaddr;
-	int r, kq, ld, ud, ch, conffd = -1;
+	int ld, ud, ch;
 	int one = 1;
-	pid_t child;
-	struct kevent kev;
 	struct rlimit rlim;
-	struct timespec ts, *timeout = NULL;
 	const char *confname = "/etc/resolv.conf";
 
 	while ((ch = getopt(argc, argv, "c:d")) != -1) {
@@ -834,83 +915,13 @@ main(int argc, char **argv)
 	signal(SIGUSR1, SIG_IGN);
 
 	if (debug) {
-		conffd = openconfig(confname, -1);
-		return launch(conffd, ud, ld);
+		int conffd = openconfig(confname, -1);
+		return workerloop(conffd, ud, ld);
 	}
 
 	if (daemon(0, 0) == -1)
 		logerr("daemon: %s", strerror(errno));
 	daemonized = 1;
 
-	kq = kqueue();
-
-	/* catch these signals with kevent */
-	signal(SIGHUP, SIG_IGN);
-	EV_SET(&kev, SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	kevent(kq, &kev, 1, NULL, 0, NULL);
-	signal(SIGTERM, SIG_IGN);
-	EV_SET(&kev, SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	kevent(kq, &kev, 1, NULL, 0, NULL);
-	while (1) {
-		int hupped = 0;
-		int childdead = 0;
-	
-		if (conffd == -1)
-			conffd = openconfig(confname, kq);
-
-		child = launch(conffd, ud, ld);
-		if (child == -1)
-			logerr("failed to launch");
-
-		/* monitor child */
-		EV_SET(&kev, child, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-		kevent(kq, &kev, 1, NULL, 0, NULL);
-
-		/* wait for something to happen: HUP or child exiting */
-		timeout = NULL;
-		while (1) {
-			r = kevent(kq, NULL, 0, &kev, 1, timeout);
-			if (r == -1)
-				logerr("kevent failed (%d)", errno);
-
-			if (r == 0) {
-				/* timeout expired */
-				logerr("child died without HUP");
-			} else if (kev.filter == EVFILT_VNODE) {
-				/* config file changed */
-				logmsg(LOG_INFO, "config changed, reloading");
-				close(conffd);
-				conffd = -1;
-				sleep(1);
-				raise(SIGHUP);
-			} else if (kev.filter == EVFILT_SIGNAL &&
-			    kev.ident == SIGHUP) {
-				/* signaled. kill child. */
-				logmsg(LOG_INFO, "received HUP, restarting");
-				hupped = 1;
-				if (childdead)
-					break;
-				kill(child, SIGHUP);
-			} else if (kev.filter == EVFILT_SIGNAL &&
-			    kev.ident == SIGTERM) {
-				/* good bye */
-				logmsg(LOG_INFO, "received TERM, quitting");
-				kill(child, SIGTERM);
-				exit(0);
-			} else if (kev.filter == EVFILT_PROC) {
-				/* child died. wait for our own HUP. */
-				logmsg(LOG_INFO, "observed child exit");
-				childdead = 1;
-				if (hupped)
-					break;
-				memset(&ts, 0, sizeof(ts));
-				ts.tv_sec = 1;
-				timeout = &ts;
-			} else {
-				logerr("don't know what happened");
-			}
-		}
-		wait(NULL);
-	}
-	return 1;
+	return monitorloop(ud, ld, confname);
 }
