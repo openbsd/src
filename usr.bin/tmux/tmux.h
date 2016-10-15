@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.662 2016/10/13 22:48:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.663 2016/10/15 00:01:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1577,8 +1577,7 @@ void	mode_key_init(struct mode_key_data *, struct mode_key_tree *);
 enum mode_key_cmd mode_key_lookup(struct mode_key_data *, key_code);
 
 /* notify.c */
-void	notify_enable(void);
-void	notify_disable(void);
+void	notify_drain(void);
 void	notify_input(struct window_pane *, struct evbuffer *);
 void	notify_window_layout_changed(struct window *);
 void	notify_window_unlinked(struct session *, struct window *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.41 2016/10/14 18:41:53 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.42 2016/10/15 00:01:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -248,10 +248,8 @@ cmdq_continue(struct cmd_q *cmdq)
 	enum cmd_retval		 retval;
 	int			 empty;
 
-	cmdq->references++;
-	notify_disable();
-
 	log_debug("continuing cmdq %p: flags %#x (%p)", cmdq, cmdq->flags, c);
+	cmdq->references++;
 
 	empty = TAILQ_EMPTY(&cmdq->queue);
 	if (empty)
@@ -296,9 +294,7 @@ empty:
 	empty = 1;
 
 out:
-	notify_enable();
 	cmdq_free(cmdq);
-
 	return (empty);
 }
 
