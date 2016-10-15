@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.207 2016/09/28 17:48:58 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.208 2016/10/15 14:43:53 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: September 28 2016 $
+.Dd $Mdocdate: October 15 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -126,6 +126,7 @@ and a few require a kernel compiled with non-standard
 .It kern.hostname Ta string Ta yes
 .It kern.hostid Ta u_int Ta yes
 .It kern.clockrate Ta struct Ta no
+.It kern.dnsjackport Ta integer Ta yes
 .It kern.posix1version Ta integer Ta no
 .It kern.ngroups Ta integer Ta no
 .It kern.job_control Ta integer Ta no
