@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.189 2016/09/03 14:29:05 jca Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.190 2016/10/15 05:09:01 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -554,7 +554,6 @@ int
 ispidtaken(pid_t pid)
 {
 	uint32_t i;
-	struct process *pr;
 
 	for (i = 0; i < nitems(oldpids); i++)
 		if (pid == oldpids[i])
@@ -564,11 +563,8 @@ ispidtaken(pid_t pid)
 		return (1);
 	if (pgfind(pid) != NULL)
 		return (1);
-	LIST_FOREACH(pr, &zombprocess, ps_list) {
-		if (pr->ps_pid == pid ||
-		    (pr->ps_pgrp && pr->ps_pgrp->pg_id == pid))
-			return (1);
-	}
+	if (zombiefind(pid) != NULL)
+		return (1);
 	return (0);
 }
 
