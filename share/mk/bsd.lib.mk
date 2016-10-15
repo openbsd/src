@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.77 2016/07/04 18:01:44 guenther Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.78 2016/10/15 13:00:07 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -227,14 +227,13 @@ cleandir: _SUBDIRUSE clean
 
 .if defined(SRCS)
 afterdepend: .depend
-	@(TMP=`mktemp -q /tmp/_dependXXXXXXXXXX`; \
-	if [ $$? -ne 0 ]; then \
-		echo "$$0: cannot create temp file, exiting..."; \
-		exit 1; \
-	fi; \
-	sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.do:/' \
-	      < .depend > $$TMP; \
-	mv $$TMP .depend)
+	@TMP=`mktemp .dependXXXXXXXXXX` || exit 1; \
+	if sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.do:/' \
+	      < .depend > $$TMP; then \
+		mv $$TMP .depend; \
+    	else \
+		rm -f $$TMP; \
+	fi
 .endif
 
 .if !target(install)
