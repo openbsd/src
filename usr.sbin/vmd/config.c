@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.15 2016/10/12 10:58:32 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.16 2016/10/15 14:02:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -267,6 +267,17 @@ config_getvm(struct privsep *ps, struct vmop_create_params *vmc,
 				if ((vif->vif_switch = strdup(s)) == NULL) {
 					saved_errno = errno;
 					log_warn("%s: can't save switch",
+					    __func__);
+					goto fail;
+				}
+			}
+
+			/* Check if the the interface is assigned to a group */
+			s = vmc->vmc_ifgroup[i];
+			if (*s != '\0') {
+				if ((vif->vif_group = strdup(s)) == NULL) {
+					saved_errno = errno;
+					log_warn("%s: can't save group",
 					    __func__);
 					goto fail;
 				}

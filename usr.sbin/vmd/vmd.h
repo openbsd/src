@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.29 2016/10/12 19:10:03 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.30 2016/10/15 14:02:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -66,7 +66,8 @@ enum imsg_type {
 	IMSG_VMDOP_PRIV_IFADD,
 	IMSG_VMDOP_PRIV_IFCREATE,
 	IMSG_VMDOP_PRIV_IFUP,
-	IMSG_VMDOP_PRIV_IFDOWN
+	IMSG_VMDOP_PRIV_IFDOWN,
+	IMSG_VMDOP_PRIV_IFGROUP
 };
 
 struct vmop_result {
@@ -99,11 +100,13 @@ struct vmop_create_params {
 	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
 	char			 vmc_ifnames[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
+	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 };
 
 struct vmd_if {
 	char			*vif_name;
 	char			*vif_switch;
+	char			*vif_group;
 	int			 vif_fd;
 	unsigned int		 vif_flags;
 	TAILQ_ENTRY(vmd_if)	 vif_entry;
@@ -166,6 +169,7 @@ char	*get_string(uint8_t *, size_t);
 void	 priv(struct privsep *, struct privsep_proc *);
 int	 priv_getiftype(char *, char *, unsigned int *);
 int	 priv_findname(const char *, const char **);
+int	 priv_validgroup(const char *);
 int	 vm_priv_ifconfig(struct privsep *, struct vmd_vm *);
 int	 vm_priv_brconfig(struct privsep *, struct vmd_switch *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.34 2016/10/12 19:10:03 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.35 2016/10/15 14:02:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -550,6 +550,7 @@ vm_remove(struct vmd_vm *vm)
 			close(vm->vm_ifs[i].vif_fd);
 		free(vm->vm_ifs[i].vif_name);
 		free(vm->vm_ifs[i].vif_switch);
+		free(vm->vm_ifs[i].vif_group);
 	}
 	if (vm->vm_kernel != -1)
 		close(vm->vm_kernel);

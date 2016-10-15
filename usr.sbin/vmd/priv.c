@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.2 2016/10/05 17:30:13 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.3 2016/10/15 14:02:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -37,6 +37,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <ctype.h>
 
 #include "proc.h"
 #include "vmd.h"
@@ -78,6 +79,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmd		*env = ps->ps_env;
 	struct ifreq		 ifr;
 	struct ifbreq		 ifbr;
+	struct ifgroupreq	 ifgr;
 	char			 type[IF_NAMESIZE];
 
 	switch (imsg->hdr.type) {
@@ -86,6 +88,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_PRIV_IFADD:
 	case IMSG_VMDOP_PRIV_IFUP:
 	case IMSG_VMDOP_PRIV_IFDOWN:
+	case IMSG_VMDOP_PRIV_IFGROUP:
 		IMSG_SIZE_CHECK(imsg, &vfr);
 		memcpy(&vfr, imsg->data, sizeof(vfr));
 
@@ -143,6 +146,20 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (ioctl(env->vmd_fd, SIOCSIFFLAGS, &ifr) < 0)
 			log_warn("SIOCSIFFLAGS");
 		break;
+	case IMSG_VMDOP_PRIV_IFGROUP:
+		if (priv_validgroup(vfr.vfr_value) == -1)
+			fatalx("%s: invalid group name", __func__);
+
+		if (strlcpy(ifgr.ifgr_name, vfr.vfr_name,
+		    sizeof(ifgr.ifgr_name)) >= sizeof(ifgr.ifgr_name) ||
+		    strlcpy(ifgr.ifgr_group, vfr.vfr_value,
+		    sizeof(ifgr.ifgr_group)) >= sizeof(ifgr.ifgr_group))
+			fatalx("%s: group name too long", __func__);
+
+		if (ioctl(env->vmd_fd, SIOCAIFGROUP, &ifgr) < 0 &&
+		    errno != EEXIST)
+			log_warn("SIOCAIFGROUP");
+		break;
 	default:
 		return (-1);
 	}
@@ -187,6 +204,17 @@ priv_findname(const char *name, const char **names)
 	return (-1);
 }
 
+int
+priv_validgroup(const char *name)
+{
+	if (strlen(name) >= IF_NAMESIZE)
+		return (-1);
+	/* Group can not end with a digit */
+	if (name[0] && isdigit(name[strlen(name) - 1]))
+		return (-1);
+	return (0);
+}
+
 /*
  * Called from the process peer
  */
@@ -219,6 +247,18 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 
 		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFDESCR,
 		    &vfr, sizeof(vfr));
+
+		if (vif->vif_group) {
+			if (strlcpy(vfr.vfr_value, vif->vif_group,
+			    sizeof(vfr.vfr_value)) >= sizeof(vfr.vfr_value))
+				return (-1);
+
+			log_debug("%s: interface %s group %s", __func__,
+			    vfr.vfr_name, vfr.vfr_value);
+
+			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFGROUP,
+			    &vfr, sizeof(vfr));
+		}
 
 		/* Add interface to bridge/switch */
 		if ((vsw = switch_getbyname(vif->vif_switch)) != NULL) {

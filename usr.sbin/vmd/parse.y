@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2016/10/05 17:31:22 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2016/10/15 14:02:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -108,7 +108,7 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	ADD DISK DOWN INTERFACE NIFS PATH SIZE SWITCH UP VMID
+%token	ADD DISK DOWN GROUP INTERFACE NIFS PATH SIZE SWITCH UP VMID
 %token	ENABLE DISABLE VM KERNEL LLADDR MEMORY
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -424,6 +424,20 @@ iface_opts	: SWITCH string			{
 			}
 			free($2);
 		}
+		| GROUP string			{
+			unsigned int	i = vcp_nnics;
+
+			if (priv_validgroup($2) == -1) {
+				yyerror("invalid group name: %s", $2);
+				free($2);
+				YYERROR;
+			}
+
+			/* No need to check if the group exists */
+			(void)strlcpy(vmc.vmc_ifgroup[i], $2,
+			    sizeof(vmc.vmc_ifgroup[i]));
+			free($2);
+		}
 		| LLADDR lladdr			{
 			memcpy(vcp->vcp_macs[vcp_nnics], $2, ETHER_ADDR_LEN);
 		}
@@ -516,6 +530,7 @@ lookup(char *s)
 		{ "disk",		DISK },
 		{ "down",		DOWN },
 		{ "enable",		ENABLE },
+		{ "group",		GROUP },
 		{ "id",			VMID },
 		{ "include",		INCLUDE },
 		{ "interface",		INTERFACE },

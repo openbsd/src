@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.7 2016/10/06 10:59:14 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.8 2016/10/15 14:02:11 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 6 2016 $
+.Dd $Mdocdate: October 15 2016 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -125,6 +125,15 @@ interface on the VM host side (the default) or
 to select a specific one.
 Valid options are:
 .Bl -tag -width Ds
+.It Cm group Ar group-name
+Assign the interface to a specific interface
+.Dq group .
+For example, this can be used to write
+.Xr pf.conf 5
+rules for several VM interfaces in the same group.
+The
+.Ar group-name
+must not end with a digit.
 .It Cm lladdr Ar etheraddr
 Change the link layer address (MAC address) of the interface on the
 VM guest side.
