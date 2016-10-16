@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.38 2015/06/13 20:15:21 nicm Exp $	*/
+/*	$OpenBSD: diff.c,v 1.39 2016/10/16 13:35:51 okan Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -437,13 +437,13 @@ prepare(int i, FILE *fd, off_t filesize, int flags)
 
 	rewind(fd);
 
-	sz = (filesize <= SIZE_MAX ? filesize : SIZE_MAX) / 25;
+	sz = ((uintmax_t)filesize <= SIZE_MAX ? (size_t)filesize : SIZE_MAX) / 25;
 	if (sz < 100)
 		sz = 100;
 
 	p = xcalloc(sz + 3, sizeof(*p));
 	for (j = 0; (h = readhash(fd, flags));) {
-		if (j == sz) {
+		if ((size_t)j == sz) {
 			sz = sz * 3 / 2;
 			p = xreallocarray(p, sz + 3, sizeof(*p));
 		}
