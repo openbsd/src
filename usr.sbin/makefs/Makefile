@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2016/10/16 20:26:56 natano Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/10/16 20:56:44 natano Exp $
 #	$NetBSD: Makefile,v 1.36 2013/08/05 14:41:57 reinoud Exp $
 #
 
@@ -26,7 +26,7 @@ SRCS+=	msdosfs_lookup.c msdosfs_denode.c msdosfs_vnops.c msdosfs_unicode.c
 MAN=	makefs.8
 
 CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/fs/cd9660
-CPPFLAGS+=	-DMSDOS_EI -I${.CURDIR}/fs/msdosfs -I${.CURDIR}/newfs_msdos
+CPPFLAGS+=	-I${.CURDIR}/fs/msdosfs -I${.CURDIR}/newfs_msdos
 #CPPFLAGS+=	-DMSDOSFS_DEBUG
 
 DPADD+= ${LIBUTIL}
