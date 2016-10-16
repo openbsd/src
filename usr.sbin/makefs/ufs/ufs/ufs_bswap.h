@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bswap.h,v 1.4 2016/10/16 22:23:08 tedu Exp $	*/
+/*	$OpenBSD: ufs_bswap.h,v 1.5 2016/10/16 22:26:34 tedu Exp $	*/
 /*	$NetBSD: ufs_bswap.h,v 1.21 2016/04/29 03:05:04 christos Exp $	*/
 
 /*
@@ -49,10 +49,5 @@ ufs_rw64(uint64_t a, int ns)
 {
 	return a;
 }
-
-#define ufs_add32(a, b, ns) \
-	(a) = ufs_rw32(ufs_rw32((a), (ns)) + (b), (ns))
-#define ufs_add64(a, b, ns) \
-	(a) = ufs_rw64(ufs_rw64((a), (ns)) + (b), (ns))
 
 #endif /* !_UFS_UFS_BSWAP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.5 2016/10/16 22:19:10 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.6 2016/10/16 22:26:34 tedu Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.29 2016/06/24 19:24:11 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
@@ -334,24 +334,24 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 		for (i = frags; i < fs->fs_frag; i++)
 			setbit(cg_blksfree(cgp, 0), bpref + i);
 		i = fs->fs_frag - frags;
-		ufs_add32(cgp->cg_cs.cs_nffree, i, 0);
+		cgp->cg_cs.cs_nffree += i;
 		fs->fs_cstotal.cs_nffree += i;
 		fs->fs_cs(fs, cg).cs_nffree += i;
 		fs->fs_fmod = 1;
-		ufs_add32(cgp->cg_frsum[i], 1, 0);
+		cgp->cg_frsum[i] += 1;
 		bdwrite(bp);
 		return (bno);
 	}
 	bno = ffs_mapsearch(fs, cgp, bpref, allocsiz);
 	for (i = 0; i < frags; i++)
 		clrbit(cg_blksfree(cgp, 0), bno + i);
-	ufs_add32(cgp->cg_cs.cs_nffree, -frags, 0);
+	cgp->cg_cs.cs_nffree -= frags;
 	fs->fs_cstotal.cs_nffree -= frags;
 	fs->fs_cs(fs, cg).cs_nffree -= frags;
 	fs->fs_fmod = 1;
-	ufs_add32(cgp->cg_frsum[allocsiz], -1, 0);
+	cgp->cg_frsum[allocsiz] -= 1;
 	if (frags != allocsiz)
-		ufs_add32(cgp->cg_frsum[allocsiz - frags], 1, 0);
+		cgp->cg_frsum[allocsiz - frags] += 1;
 	blkno = cg * fs->fs_fpg + bno;
 	bdwrite(bp);
 	return blkno;
@@ -401,7 +401,7 @@ gotit:
 	blkno = ffs_fragstoblks(fs, bno);
 	ffs_clrblock(fs, blksfree, (long)blkno);
 	ffs_clusteracct(fs, cgp, blkno, -1);
-	ufs_add32(cgp->cg_cs.cs_nbfree, -1, 0);
+	cgp->cg_cs.cs_nbfree -= 1;
 	fs->fs_cstotal.cs_nbfree--;
 	fs->fs_cs(fs, ufs_rw32(cgp->cg_cgx, 0)).cs_nbfree--;
 	fs->fs_fmod = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.6 2016/10/16 21:59:28 tedu Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.7 2016/10/16 22:26:34 tedu Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -1075,11 +1075,11 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 		    "ffs_write_inode: cg %d out of inodes for ino %u",
 		    cg, ino);
 	setbit(cg_inosused(cgp, 0), cgino);
-	ufs_add32(cgp->cg_cs.cs_nifree, -1, 0);
+	cgp->cg_cs.cs_nifree -= 1;
 	fs->fs_cstotal.cs_nifree--;
 	fs->fs_cs(fs, cg).cs_nifree--;
 	if (S_ISDIR(DIP(dp, mode))) {
-		ufs_add32(cgp->cg_cs.cs_ndir, 1, 0);
+		cgp->cg_cs.cs_ndir += 1;
 		fs->fs_cstotal.cs_ndir++;
 		fs->fs_cs(fs, cg).cs_ndir++; 
 	}

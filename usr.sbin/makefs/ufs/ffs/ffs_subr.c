@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.4 2016/10/16 22:19:10 tedu Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.5 2016/10/16 22:26:34 tedu Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.49 2016/05/07 11:59:08 maxv Exp $	*/
 
 /*
@@ -204,11 +204,11 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 	i = back + forw + 1;
 	if (i > fs->fs_contigsumsize)
 		i = fs->fs_contigsumsize;
-	ufs_add32(sump[i], cnt, 0);
+	sump[i] += cnt;
 	if (back > 0)
-		ufs_add32(sump[back], -cnt, 0);
+		sump[back] -= cnt;
 	if (forw > 0)
-		ufs_add32(sump[forw], -cnt, 0);
+		sump[forw] -= cnt;
 
 	/*
 	 * Update cluster summary information.
