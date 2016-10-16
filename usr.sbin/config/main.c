@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.53 2016/10/16 08:47:17 natano Exp $	*/
+/*	$OpenBSD: main.c,v 1.54 2016/10/16 09:19:15 natano Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -57,9 +57,6 @@
 
 int	firstfile(const char *);
 int	yyparse(void);
-
-extern char *optarg;
-extern int optind;
 
 static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
