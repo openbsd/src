@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.41 2015/01/16 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.42 2016/10/16 17:50:00 tb Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -80,14 +80,12 @@ mkmakefile(void)
 	    machine, machine);
 	ifname = sourcepath(buf);
 	if ((ifp = fopen(ifname, "r")) == NULL) {
-		(void)fprintf(stderr, "config: cannot read %s: %s\n",
-		    ifname, strerror(errno));
+		warn("cannot read %s", ifname);
 		free(ifname);
 		return (1);
 	}
 	if ((ofp = fopen("Makefile", "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write Makefile: %s\n",
-		    strerror(errno));
+		warn("cannot write Makefile");
 		free(ifname);
 		(void)fclose(ifp);
 		return (1);
@@ -125,9 +123,7 @@ mkmakefile(void)
 			goto wrerror;
 	}
 	if (ferror(ifp)) {
-		(void)fprintf(stderr,
-		    "config: error reading %s (at line %d): %s\n",
-		    ifname, lineno, strerror(errno));
+		warn("error reading %s (at line %d)", ifname, lineno);
 		goto bad;
 	}
 	if (fclose(ofp)) {
@@ -138,8 +134,7 @@ mkmakefile(void)
 	free(ifname);
 	return (0);
 wrerror:
-	(void)fprintf(stderr, "config: error writing Makefile: %s\n",
-	    strerror(errno));
+	warn("error writing Makefile");
 bad:
 	if (ofp != NULL)
 		(void)fclose(ofp);

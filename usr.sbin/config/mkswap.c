@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkswap.c,v 1.15 2015/01/16 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.16 2016/10/16 17:50:00 tb Exp $	*/
 /*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>	/* NODEV */
 
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,8 +90,7 @@ mkoneswap(struct config *cf)
 
 	(void)snprintf(fname, sizeof fname, "swap%s.c", cf->cf_name);
 	if ((fp = fopen(fname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    fname, strerror(errno));
+		warn("cannot write %s", fname);
 		return (1);
 	}
 	if (fputs("\
@@ -125,8 +125,7 @@ mkoneswap(struct config *cf)
 	}
 	return (0);
 wrerror:
-	(void)fprintf(stderr, "config: error writing %s: %s\n",
-	    fname, strerror(errno));
+	warn("error writing %s", fname);
 	if (fp != NULL)
 		(void)fclose(fp);
 	/* (void)unlink(fname); */

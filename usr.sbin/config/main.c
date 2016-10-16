@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.55 2016/10/16 09:36:46 natano Exp $	*/
+/*	$OpenBSD: main.c,v 1.56 2016/10/16 17:50:00 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static void optiondelta(void);
 
 int	verbose;
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;
@@ -169,19 +169,15 @@ main(int argc, char *argv[])
 
 	if (eflag) {
 #ifdef MAKE_BOOTSTRAP
-		fprintf(stderr, "config: UKC not available in this binary\n");
-		exit(1);
+		errx(1, "UKC not available in this binary");
 #else
 		return (ukc(argv[0], outfile, uflag, fflag));
 #endif
 	}
 
 	conffile = (argc == 1) ? argv[0] : "CONFIG";
-	if (firstfile(conffile)) {
-		(void)fprintf(stderr, "config: cannot read %s: %s\n",
-		    conffile, strerror(errno));
-		exit(2);
-	}
+	if (firstfile(conffile))
+		err(2, "cannot read %s", conffile);
 
 	/*
 	 * Init variables.
@@ -246,8 +242,7 @@ main(int argc, char *argv[])
 			    defmaxusers);
 			maxusers = defmaxusers;
 		} else {
-			(void)fprintf(stderr,
-			    "config: need \"maxusers\" line\n");
+			warnx("need \"maxusers\" line");
 			errors++;
 		}
 	}
@@ -269,7 +264,7 @@ main(int argc, char *argv[])
 	    mkioconf())
 		stop();
 	optiondelta();
-	exit(0);
+	return (0);
 }
 
 static int
@@ -278,11 +273,11 @@ mksymlink(const char *value, const char *path)
 	int ret = 0;
 
 	if (remove(path) && errno != ENOENT) {
-		warn("config: remove(%s)", path);
+		warn("remove(%s)", path);
 		ret = 1;
 	}
 	if (symlink(value, path)) {
-		warn("config: symlink(%s -> %s)", path, value);
+		warn("symlink(%s -> %s)", path, value);
 		ret = 1;
 	}
 	return (ret);
@@ -624,8 +619,7 @@ badstar(void)
 		continue;
 	foundstar:
 		if (ht_lookup(needcnttab, d->d_name)) {
-			(void)fprintf(stderr,
-		    "config: %s's cannot be *'d until its driver is fixed\n",
+			warnx("%s's cannot be *'d until its driver is fixed",
 			    d->d_name);
 			errs++;
 			continue;
@@ -662,26 +656,14 @@ setupdirs(void)
 		builddir = defbuilddir;
 
 	if (stat(builddir, &st) != 0) {
-		if (mkdir(builddir, 0777)) {
-			(void)fprintf(stderr, "config: cannot create %s: %s\n",
-			    builddir, strerror(errno));
-			exit(2);
-		}
-	} else if (!S_ISDIR(st.st_mode)) {
-		(void)fprintf(stderr, "config: %s is not a directory\n",
-		    builddir);
-		exit(2);
-	}
-	if (chdir(builddir) != 0) {
-		(void)fprintf(stderr, "config: cannot change to %s\n",
-		    builddir);
-		exit(2);
-	}
-	if (stat(srcdir, &st) != 0 || !S_ISDIR(st.st_mode)) {
-		(void)fprintf(stderr, "config: %s is not a directory\n",
-		    srcdir);
-		exit(2);
-	}
+		if (mkdir(builddir, 0777))
+			err(2, "cannot create %s", builddir);
+	} else if (!S_ISDIR(st.st_mode))
+		errc(2, ENOTDIR, "%s", builddir);
+	if (chdir(builddir) != 0)
+		errx(2, "cannot change to %s", builddir);
+	if (stat(srcdir, &st) != 0 || !S_ISDIR(st.st_mode))
+		errc(2, ENOTDIR, "%s", srcdir);
 
 	if (bflag) {
 		if (pledge("stdio rpath wpath cpath flock", NULL) == -1)
@@ -693,15 +675,10 @@ setupdirs(void)
 		goto reconfig;
 
 	fp = fopen("Makefile", "w");
-	if (!fp) {
-		(void)fprintf(stderr, "config: cannot create Makefile\n");
-		exit(2);
-	}
-	if (fprintf(fp, ".include \"../Makefile.inc\"\n") < 0) {
-		(void)fprintf(stderr, "config: cannot create Makefile\n");
-		exit(2);
-	}
-	fclose(fp);
+	if (!fp)
+		errx(2, "cannot create Makefile");
+	if (fprintf(fp, ".include \"../Makefile.inc\"\n") < 0 || fclose(fp))
+		errx(2, "cannot write Makefile");
 
 reconfig:
 	if (system("make obj") != 0)

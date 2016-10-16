@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkheaders.c,v 1.21 2015/01/16 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.22 2016/10/16 17:50:00 tb Exp $	*/
 /*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
  */
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +52,7 @@
 
 static int emitcnt(struct nvlist *);
 static int emitopt(struct nvlist *);
-static int err(const char *, char *, FILE *);
+static int emitwarn(const char *, char *, FILE *);
 static char *cntname(const char *);
 
 /*
@@ -102,22 +103,19 @@ emitcnt(struct nvlist *head)
 		nv = nv->nv_next;
 	}
 	if (ferror(fp))
-		return (err("read", fname, fp));
+		return (emitwarn("read", fname, fp));
 	(void)fclose(fp);
 	if (nv == NULL)
 		return (0);
 writeit:
-	if ((fp = fopen(fname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    fname, strerror(errno));
-		return (1);
-	}
+	if ((fp = fopen(fname, "w")) == NULL)
+		return (emitwarn("writ", fname, NULL));
 	for (nv = head; nv != NULL; nv = nv->nv_next)
 		if (fprintf(fp, "#define\t%s\t%d\n",
 		    cntname(nv->nv_name), nv->nv_int) < 0)
-			return (err("writ", fname, fp));
+			return (emitwarn("writ", fname, fp));
 	if (fclose(fp))
-		return (err("writ", fname, NULL));
+		return (emitwarn("writ", fname, NULL));
 	return (0);
 }
 
@@ -149,7 +147,7 @@ emitopt(struct nvlist *nv)
 	}
 
 	if (totlen < 0 || totlen >= sizeof new_contents) {
-		fprintf(stderr, "config: string too long\n");
+		warnx("string too long");
 		return (1);
 	}
 
@@ -166,7 +164,7 @@ emitopt(struct nvlist *nv)
 			goto writeit;
 	}
 	if (ferror(fp))
-		return (err("read", fname, fp));
+		return (emitwarn("read", fname, fp));
 	(void)fclose(fp);
 	if (nlines == 1)
 		return (0);
@@ -174,24 +172,20 @@ writeit:
 	/*
 	 * They're different, or the file doesn't exist.
 	 */
-	if ((fp = fopen(fname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    fname, strerror(errno));
-		return (1);
-	}
+	if ((fp = fopen(fname, "w")) == NULL)
+		return (emitwarn("writ", fname, NULL));
 	if (fprintf(fp, "%s", new_contents) < 0)
-		return (err("writ", fname, fp));
+		return (emitwarn("writ", fname, fp));
 	if (fclose(fp))
-		return (err("writ", fname, fp));
+		return (emitwarn("writ", fname, fp));
 	return (0);
 }
 
 static int
-err(const char *what, char *fname, FILE *fp)
+emitwarn(const char *what, char *fname, FILE *fp)
 {
 
-	(void)fprintf(stderr, "config: error %sing %s: %s\n",
-	    what, fname, strerror(errno));
+	warn("error %sing %s", what, fname);
 	if (fp)
 		(void)fclose(fp);
 	return (1);
