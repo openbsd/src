@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.213 2016/09/23 09:18:05 sthen Exp $
+#	$OpenBSD: Makefile,v 1.214 2016/10/16 19:28:44 tb Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -29,14 +29,14 @@ LDIRS=	crypto ddb dev isofs miscfs msdosfs net netinet netinet6 \
 	netmpls net80211 nfs ntfs scsi sys ufs uvm
 
 # Places that need a prerequisite target met before includes
-PRDIRS=
+PRDIRS=	../lib/libcrypto ../lib/librpcsvc
 
 # Directories with an includes target
-RDIRS=	../lib/libcrypto ../lib/libcurses ../lib/libedit \
+RDIRS=	../lib/libcurses ../lib/libedit \
 	../lib/libevent ../lib/libexpat ../lib/libform \
 	../lib/libfuse ../lib/libkeynote ../lib/libmenu \
 	../lib/libossaudio ../lib/libpanel ../lib/libpcap \
-	../lib/libradius ../lib/librpcsvc ../lib/librthread \
+	../lib/libradius ../lib/librthread \
 	../lib/libskey ../lib/libssl  ../lib/libtls \
 	../lib/libusbhid ../lib/libutil ../lib/libz \
 	../usr.bin/lex ../gnu/lib/libreadline \
@@ -47,8 +47,7 @@ RDIRS+= ../gnu/usr.bin/gcc ../gnu/lib/libobjc
 PRDIRS+= ../gnu/lib/libstdc++
 .else
 RDIRS+= ../gnu/usr.bin/cc/libobjc
-PRDIRS+= ../gnu/lib/libstdc++-v3
-RDIRS+= ../gnu/usr.bin/cc/include
+PRDIRS+= ../gnu/lib/libstdc++-v3 ../gnu/usr.bin/cc/include
 .endif
 
 # prereq implies includes
