@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.32 2016/10/14 22:14:22 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.33 2016/10/16 19:04:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -30,7 +30,7 @@
 #define LIST_BUFFERS_TEMPLATE						\
 	"#{buffer_name}: #{buffer_size} bytes: \"#{buffer_sample}\""
 
-static enum cmd_retval	 cmd_list_buffers_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_list_buffers_exec(struct cmd *, struct cmdq_item *);
 
 const struct cmd_entry cmd_list_buffers_entry = {
 	.name = "list-buffers",
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_list_buffers_entry = {
 };
 
 static enum cmd_retval
-cmd_list_buffers_exec(struct cmd *self, struct cmd_q *cmdq)
+cmd_list_buffers_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
 	struct paste_buffer	*pb;
@@ -57,11 +57,11 @@ cmd_list_buffers_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	pb = NULL;
 	while ((pb = paste_walk(pb)) != NULL) {
-		ft = format_create(cmdq, 0);
+		ft = format_create(item, 0);
 		format_defaults_paste_buffer(ft, pb);
 
 		line = format_expand(ft, template);
-		cmdq_print(cmdq, "%s", line);
+		cmdq_print(item, "%s", line);
 		free(line);
 
 		format_free(ft);

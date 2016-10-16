@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-server.c,v 1.24 2016/10/14 22:14:22 nicm Exp $ */
+/* $OpenBSD: cmd-lock-server.c,v 1.25 2016/10/16 19:04:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -24,7 +24,7 @@
  * Lock commands.
  */
 
-static enum cmd_retval	 cmd_lock_server_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_lock_server_exec(struct cmd *, struct cmdq_item *);
 
 const struct cmd_entry cmd_lock_server_entry = {
 	.name = "lock-server",
@@ -64,14 +64,14 @@ const struct cmd_entry cmd_lock_client_entry = {
 };
 
 static enum cmd_retval
-cmd_lock_server_exec(struct cmd *self, __unused struct cmd_q *cmdq)
+cmd_lock_server_exec(struct cmd *self, __unused struct cmdq_item *item)
 {
 	if (self->entry == &cmd_lock_server_entry)
 		server_lock();
 	else if (self->entry == &cmd_lock_session_entry)
-		server_lock_session(cmdq->state.tflag.s);
+		server_lock_session(item->state.tflag.s);
 	else
-		server_lock_client(cmdq->state.c);
+		server_lock_client(item->state.c);
 
 	recalculate_sizes();
 

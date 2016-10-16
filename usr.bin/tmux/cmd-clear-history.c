@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-clear-history.c,v 1.20 2016/10/14 22:14:22 nicm Exp $ */
+/* $OpenBSD: cmd-clear-history.c,v 1.21 2016/10/16 19:04:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -24,7 +24,8 @@
  * Clear pane history.
  */
 
-static enum cmd_retval	 cmd_clear_history_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_clear_history_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_clear_history_entry = {
 	.name = "clear-history",
@@ -40,12 +41,12 @@ const struct cmd_entry cmd_clear_history_entry = {
 };
 
 static enum cmd_retval
-cmd_clear_history_exec(__unused struct cmd *self, struct cmd_q *cmdq)
+cmd_clear_history_exec(__unused struct cmd *self, struct cmdq_item *item)
 {
-	struct window_pane	*wp = cmdq->state.tflag.wp;
+	struct window_pane	*wp = item->state.tflag.wp;
 	struct grid		*gd;
 
-	gd = cmdq->state.tflag.wp->base.grid;
+	gd = item->state.tflag.wp->base.grid;
 
 	if (wp->mode == &window_copy_mode)
 		window_pane_reset_mode(wp);

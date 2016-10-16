@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.61 2016/10/16 17:55:14 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.62 2016/10/16 19:04:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -389,9 +389,9 @@ key_bindings_init(void)
 }
 
 static enum cmd_retval
-key_bindings_read_only(struct cmd_q *cmdq, __unused void *data)
+key_bindings_read_only(struct cmdq_item *item, __unused void *data)
 {
-	cmdq_error(cmdq, "client is read-only");
+	cmdq_error(item, "client is read-only");
 	return (CMD_RETURN_ERROR);
 }
 
