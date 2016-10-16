@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2016/10/16 17:50:00 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2016/10/16 18:02:03 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -677,7 +677,8 @@ setupdirs(void)
 	fp = fopen("Makefile", "w");
 	if (!fp)
 		errx(2, "cannot create Makefile");
-	if (fprintf(fp, ".include \"../Makefile.inc\"\n") < 0 || fclose(fp))
+	if (fprintf(fp, ".include \"../Makefile.inc\"\n") < 0 ||
+	    fclose(fp) == EOF)
 		errx(2, "cannot write Makefile");
 
 reconfig:
