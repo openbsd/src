@@ -1,4 +1,4 @@
-/* $OpenBSD: ringbuf.c,v 1.9 2015/07/06 16:12:16 millert Exp $ */
+/* $OpenBSD: ringbuf.c,v 1.10 2016/10/16 22:12:50 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -153,7 +153,8 @@ ringbuf_to_string(char *buf, size_t len, struct ringbuf *rb)
 		n = rb->len - rb->start;
 		memcpy(buf, rb->buf + rb->start, MINIMUM(n, copy_len));
 		if (copy_len > n)
-			memcpy(buf + n, rb->buf, MINIMUM(rb->end, copy_len - n));
+			memcpy(buf + n, rb->buf,
+			    MINIMUM(rb->end, copy_len - n));
 	}
 	buf[copy_len] = '\0';
 

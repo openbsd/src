@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.63 2016/10/16 22:00:14 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.64 2016/10/16 22:12:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -67,7 +67,7 @@ enum cmd_types {
 	PRIV_CONFIG_MODIFIED,	/* check if config file has been modified */
 	PRIV_GETADDRINFO,	/* resolve host/service names */
 	PRIV_GETNAMEINFO,	/* resolve numeric address into hostname */
-	PRIV_DONE_CONFIG_PARSE	/* signal that the initial config parse is done */
+	PRIV_DONE_CONFIG_PARSE	/* signal that initial config parse is done */
 };
 
 static int priv_fd = -1;

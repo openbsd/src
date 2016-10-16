@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.219 2016/10/16 22:00:14 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.220 2016/10/16 22:12:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -210,9 +210,9 @@ int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	PrivChild = 0;		/* Exec the privileged parent process */
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
-int	NoDNS = 0;		/* when true, will refrain from doing DNS lookups */
+int	NoDNS = 0;		/* when true, refrain from doing DNS lookups */
 int	ZuluTime = 0;		/* display date and time in UTC ISO format */
-int	IncludeHostname = 0;	/* include RFC 3164 style hostnames when forwarding */
+int	IncludeHostname = 0;	/* include RFC 3164 hostnames when forwarding */
 int	Family = PF_UNSPEC;	/* protocol family, may disable IPv4 or IPv6 */
 char	*bind_host = NULL;	/* bind UDP receive socket */
 char	*bind_port = NULL;
@@ -236,7 +236,7 @@ int	tcpbuf_dropped = 0;	/* count messages dropped from TCP or TLS */
 #define CTL_WRITING_REPLY	2
 #define CTL_WRITING_CONT_REPLY	3
 int	ctl_state = 0;		/* What the control socket is up to */
-int	membuf_drop = 0;	/* logs were dropped in continuous membuf read */
+int	membuf_drop = 0;	/* logs dropped in continuous membuf read */
 
 /*
  * Client protocol NB. all numeric fields in network byte order
@@ -1618,7 +1618,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 			if (ZuluTime)
 				flags |= ADDDATE;
 		} else if (msglen >= 20 &&
-		    isdigit(msg[0]) && isdigit(msg[1]) && isdigit(msg[2]) && 
+		    isdigit(msg[0]) && isdigit(msg[1]) && isdigit(msg[2]) &&
 		    isdigit(msg[3]) && msg[4] == '-' &&
 		    isdigit(msg[5]) && isdigit(msg[6]) && msg[7] == '-' &&
 		    isdigit(msg[8]) && isdigit(msg[9]) && msg[10] == 'T' &&
@@ -1638,7 +1638,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 				i += 2;
 				while(i < 7 && msglen >= 1 && isdigit(msg[0])) {
 					msg++;
-					msglen--; 
+					msglen--;
 					i++;
 				}
 			}
@@ -1779,7 +1779,8 @@ logmsg(int pri, char *msg, char *from, int flags)
 			    sizeof(f->f_prevhost));
 			if (msglen < MAXSVLINE) {
 				f->f_prevlen = msglen;
-				strlcpy(f->f_prevline, msg, sizeof(f->f_prevline));
+				strlcpy(f->f_prevline, msg,
+				    sizeof(f->f_prevline));
 				fprintlog(f, flags, (char *)NULL);
 			} else {
 				f->f_prevline[0] = 0;
@@ -2438,7 +2439,8 @@ init(void)
 				break;
 
 			case F_USERS:
-				for (i = 0; i < MAXUNAMES && *f->f_un.f_uname[i]; i++)
+				for (i = 0; i < MAXUNAMES &&
+				    *f->f_un.f_uname[i]; i++)
 					printf("%s, ", f->f_un.f_uname[i]);
 				break;
 
