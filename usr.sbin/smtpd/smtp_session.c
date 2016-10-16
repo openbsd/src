@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.288 2016/10/13 15:47:32 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.289 2016/10/16 17:15:15 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -47,12 +47,6 @@
 
 #define	DATA_HIWAT			65535
 #define	APPEND_DOMAIN_BUFFER_SIZE	4096
-
-enum smtp_phase {
-	PHASE_INIT = 0,
-	PHASE_SETUP,
-	PHASE_TRANSACTION
-};
 
 enum smtp_state {
 	STATE_NEW = 0,
@@ -146,7 +140,6 @@ struct smtp_session {
 	char			 smtpname[HOST_NAME_MAX+1];
 
 	int			 flags;
-	int			 phase;
 	enum smtp_state		 state;
 
 	char			 helo[LINE_MAX];
@@ -661,7 +654,6 @@ smtp_session(struct listener *listener, int sock,
 	io_set_write(&s->io);
 
 	s->state = STATE_NEW;
-	s->phase = PHASE_INIT;
 
 	(void)strlcpy(s->smtpname, listener->hostname, sizeof(s->smtpname));
 
@@ -797,7 +789,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			s->tx->msgid = msgid;
 			s->tx->evp.id = msgid_to_evpid(msgid);
 			s->tx->rcptcount = 0;
-			s->phase = PHASE_TRANSACTION;
 			smtp_reply(s, "250 %s: Ok",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		} else {
@@ -920,7 +911,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		}
 		smtp_tx_free(s->tx);
 		s->mailcount++;
-		s->phase = PHASE_SETUP;
 		smtp_enter_state(s, STATE_HELO);
 		io_reload(&s->io);
 		return;
@@ -1090,7 +1080,6 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 				smtp_reply(s, "250-AUTH PLAIN LOGIN");
 			smtp_reply(s, "250 HELP");
 		}
-		s->phase = PHASE_SETUP;
 		io_reload(&s->io);
 		return;
 
@@ -1156,7 +1145,6 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 			line = line ? line : "Message rejected";
 			smtp_reply(s, "%d %s", code, line);
 			smtp_enter_state(s, STATE_HELO);
-			s->phase = PHASE_SETUP;
 			io_reload(&s->io);
 			return;
 		}
@@ -1262,7 +1250,7 @@ smtp_io(struct io *io, int evt)
 		    s->id, ss_to_text(&s->ss), s->hostname, ssl_to_text(s->io.ssl));
 
 		s->flags |= SF_SECURE;
-		s->phase = PHASE_INIT;
+		s->helo[0] = '\0';
 
 		if (smtp_verify_certificate(s)) {
 			io_pause(&s->io, IO_PAUSE_IN);
@@ -1555,7 +1543,6 @@ smtp_data_io_done(struct smtp_session *s)
 			smtp_reply(s, "421 Internal server error");
 		smtp_tx_free(s->tx);
 		smtp_enter_state(s, STATE_HELO);
-		s->phase = PHASE_SETUP;
 		io_reload(&s->io);
 	}
 	else {
@@ -1612,7 +1599,7 @@ smtp_command(struct smtp_session *s, char *line)
 	 */
 	case CMD_HELO:
 	case CMD_EHLO:
-		if (s->phase != PHASE_INIT) {
+		if (s->helo[0]) {
 			smtp_reply(s, "503 %s %s: Already identified",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
 			    esc_description(ESC_INVALID_COMMAND));
@@ -1647,7 +1634,7 @@ smtp_command(struct smtp_session *s, char *line)
 	 * SETUP
 	 */
 	case CMD_STARTTLS:
-		if (s->phase != PHASE_SETUP) {
+		if (s->helo[0] == '\0' || s->tx) {
 			smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
 			    esc_description(ESC_INVALID_COMMAND));
@@ -1679,7 +1666,7 @@ smtp_command(struct smtp_session *s, char *line)
 		break;
 
 	case CMD_AUTH:
-		if (s->phase != PHASE_SETUP) {
+		if (s->helo[0] == '\0' || s->tx) {
 			smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
 			    esc_description(ESC_INVALID_COMMAND));
@@ -1725,7 +1712,7 @@ smtp_command(struct smtp_session *s, char *line)
 		break;
 
 	case CMD_MAIL_FROM:
-		if (s->phase != PHASE_SETUP) {
+		if (s->helo[0] == '\0' || s->tx) {
 			smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
 			    esc_description(ESC_INVALID_COMMAND));
@@ -1785,7 +1772,7 @@ smtp_command(struct smtp_session *s, char *line)
 	 * TRANSACTION
 	 */
 	case CMD_RCPT_TO:
-		if (s->phase != PHASE_TRANSACTION) {
+		if (s->tx == NULL) {
 			smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
 			    esc_description(ESC_INVALID_COMMAND));
@@ -1813,7 +1800,7 @@ smtp_command(struct smtp_session *s, char *line)
 		break;
 
 	case CMD_RSET:
-		if (s->phase != PHASE_TRANSACTION && s->phase != PHASE_SETUP) {
+		if (s->helo[0] == '\0') {
 			smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
 			    esc_description(ESC_INVALID_COMMAND));
@@ -1828,14 +1815,12 @@ smtp_command(struct smtp_session *s, char *line)
 		}
 
 		smtp_filter_rset(s);
-
-		s->phase = PHASE_SETUP;
 		smtp_reply(s, "250 %s: Reset state",
 		    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		break;
 
 	case CMD_DATA:
-		if (s->phase != PHASE_TRANSACTION) {
+		if (s->tx == NULL) {
 			smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
 			    esc_description(ESC_INVALID_COMMAND));
@@ -2167,8 +2152,6 @@ smtp_message_end(struct smtp_session *s)
 	log_debug("debug: %p: end of message, msgflags=0x%04x", s, s->tx->msgflags);
 
 	tree_xpop(&wait_filter_data, s->id);
-
-	s->phase = PHASE_SETUP;
 
 	if (s->tx->msgflags & MF_ERROR) {
 		smtp_filter_tx_rollback(s);
