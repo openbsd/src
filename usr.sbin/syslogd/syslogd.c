@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.218 2016/10/06 13:03:47 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.219 2016/10/16 22:00:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -279,9 +279,8 @@ size_t	ctl_reply_offset = 0;	/* Number of bytes of reply written so far */
 char	*linebuf;
 int	 linesize;
 
-int		 fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys, fd_udp, fd_udp6,
-		 fd_bind, fd_listen, fd_tls, fd_unix[MAXUNIX];
-struct event	 *ev_ctlaccept, *ev_ctlread, *ev_ctlwrite;
+int		 fd_ctlconn, fd_udp, fd_udp6, fd_tls;
+struct event	*ev_ctlaccept, *ev_ctlread, *ev_ctlwrite;
 
 struct peer {
 	struct buffertls	 p_buftls;
@@ -359,6 +358,8 @@ main(int argc, char *argv[])
 	char		*p;
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
+	int		 fd_ctlsock, fd_klog, fd_sendsys, fd_bind, fd_listen;
+	int		 fd_unix[MAXUNIX];
 
 	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hK:k:m:nP:p:S:s:T:U:uVZ"))
 	    != -1)

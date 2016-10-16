@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.62 2016/10/06 13:03:47 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.63 2016/10/16 22:00:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -139,31 +139,11 @@ priv_init(int lockfd, int nullfd, int argc, char *argv[])
 	if (nullfd > 2)
 		close(nullfd);
 
-	/* Close descriptors that only the unpriv child needs */
-	if (fd_ctlconn != -1)
-		close(fd_ctlconn);
-	if (fd_ctlsock != -1)
-		close(fd_ctlsock);
-	if (fd_klog != -1)
-		close(fd_klog);
-	if (fd_sendsys != -1)
-		close(fd_sendsys);
-	if (fd_udp != -1)
-		close(fd_udp);
-	if (fd_udp6 != -1)
-		close(fd_udp6);
-	if (fd_bind != -1)
-		close(fd_bind);
-	if (fd_listen != -1)
-		close(fd_listen);
-	if (fd_tls != -1)
-		close(fd_tls);
-	for (i = 0; i < nunix; i++)
-		if (fd_unix[i] != -1)
-			close(fd_unix[i]);
-
 	if (dup3(socks[0], 3, 0) == -1)
 		err(1, "dup3 priv sock failed");
+	if (closefrom(4) == -1)
+		err(1, "closefrom 4 failed");
+
 	snprintf(childnum, sizeof(childnum), "%d", child_pid);
 	if ((privargv = reallocarray(NULL, argc + 3, sizeof(char *))) == NULL)
 		err(1, "alloc priv argv failed");
