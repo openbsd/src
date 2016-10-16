@@ -1,3 +1,4 @@
+$OpenBSD: README,v 1.2 2016/10/16 20:26:56 natano Exp $
 $NetBSD: README,v 1.7 2015/01/12 19:50:47 christos Exp $
 
 makefs - build a file system image from a directory tree

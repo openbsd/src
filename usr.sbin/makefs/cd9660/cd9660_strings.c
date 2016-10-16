@@ -1,3 +1,4 @@
+/*	$OpenBSD: cd9660_strings.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: cd9660_strings.c,v 1.6 2015/12/24 15:52:37 christos Exp $	*/
 
 /*

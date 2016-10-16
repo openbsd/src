@@ -1,3 +1,4 @@
+/*	$OpenBSD: ffs.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: msdosfs_fat.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $	*/
 
 /*-

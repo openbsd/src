@@ -1,3 +1,5 @@
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
  * Copyright (C) 1994, 1995, 1997 TooLs GmbH.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: msdosfs_unicode.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: msdosfs_unicode.c,v 1.2 2016/02/06 14:11:58 joerg Exp $	*/
 
 /*

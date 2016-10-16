@@ -1,3 +1,4 @@
+/*	$OpenBSD: cd9660_conversion.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: cd9660_conversion.c,v 1.4 2007/03/14 14:11:17 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: msdosfs_denode.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.7 2015/03/29 05:52:59 agc Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mkfs.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mkfs_msdos.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: mkfs_msdos.c,v 1.10 2016/04/03 11:00:13 mlelstv Exp $	*/
 
 /*

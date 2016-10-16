@@ -1,3 +1,4 @@
+/*	$OpenBSD: ffs_balloc.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.21 2015/03/29 05:52:59 agc Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 

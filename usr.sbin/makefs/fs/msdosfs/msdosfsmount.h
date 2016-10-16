@@ -1,3 +1,4 @@
+/*	$OpenBSD: msdosfsmount.h,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.21 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-

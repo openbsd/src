@@ -1,3 +1,4 @@
+/*	$OpenBSD: cd9660_eltorito.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: bootblock.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: bootblock.h,v 1.57 2014/09/14 17:39:06 nonaka Exp $	*/
 
 /*-

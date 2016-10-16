@@ -1,3 +1,4 @@
+/*	$OpenBSD: newfs_extern.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: newfs_extern.h,v 1.4 2015/12/21 00:58:08 christos Exp $	*/
 /* From: NetBSD: extern.h,v 1.3 2000/12/01 12:03:27 simonb Exp $ */
 

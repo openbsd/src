@@ -1,3 +1,4 @@
+/*	$OpenBSD: msdos.c,v 1.4 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-

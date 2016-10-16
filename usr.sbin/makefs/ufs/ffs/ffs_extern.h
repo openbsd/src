@@ -1,3 +1,4 @@
+/*	$OpenBSD: ffs_extern.h,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.83 2016/10/01 13:15:45 jdolecek Exp $	*/
 
 /*-

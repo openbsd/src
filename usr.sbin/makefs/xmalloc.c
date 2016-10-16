@@ -1,3 +1,5 @@
+/*	$OpenBSD: xmalloc.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>

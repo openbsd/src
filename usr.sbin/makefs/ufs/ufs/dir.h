@@ -1,3 +1,4 @@
+/*	$OpenBSD: dir.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp $	*/
 
 /*

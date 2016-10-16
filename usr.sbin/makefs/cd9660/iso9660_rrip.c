@@ -1,3 +1,4 @@
+/*	$OpenBSD: iso9660_rrip.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: iso9660_rrip.c,v 1.14 2014/05/30 13:14:47 martin Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: walk.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $	*/
 
 /*

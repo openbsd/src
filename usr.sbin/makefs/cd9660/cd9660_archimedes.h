@@ -1,3 +1,4 @@
+/* $OpenBSD: cd9660_archimedes.h,v 1.2 2016/10/16 20:26:56 natano Exp $ */
 /* $NetBSD: cd9660_archimedes.h,v 1.1 2009/01/10 22:06:29 bjh21 Exp $ */
 
 /*-

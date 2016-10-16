@@ -1,3 +1,4 @@
+/*	$OpenBSD: msdosfs_lookup.c,v 1.4 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.35 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-

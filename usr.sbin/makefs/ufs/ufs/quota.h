@@ -1,3 +1,4 @@
+/*	$OpenBSD: quota.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: quota.h,v 1.30 2012/08/26 02:32:14 dholland Exp $	*/
 
 /*

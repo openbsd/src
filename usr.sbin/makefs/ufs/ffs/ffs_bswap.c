@@ -1,3 +1,4 @@
+/*	$OpenBSD: ffs_bswap.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: ffs_bswap.c,v 1.39 2015/05/20 18:21:17 riastradh Exp $	*/
 
 /*

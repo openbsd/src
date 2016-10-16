@@ -1,3 +1,4 @@
+/*	$OpenBSD: makefs.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
