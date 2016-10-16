@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.17 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.18 2016/10/16 13:03:40 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -543,7 +543,7 @@ edscript(int n)
 	int j,k;
 	char block[BUFSIZ];
 
-	for (n = n; n > 0; n--) {
+	for (; n > 0; n--) {
 		if (!oflag || !overlap[n])
 			prange(&de[n].old);
 		else
