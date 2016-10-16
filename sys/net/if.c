@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.454 2016/10/09 20:05:10 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.455 2016/10/16 21:45:17 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -665,7 +665,9 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 			bpf_mtap_af(if_bpf, af, m, BPF_DIRECTION_OUT);
 	}
 #endif
+	m_resethdr(m);
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
