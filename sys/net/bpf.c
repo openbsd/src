@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.149 2016/09/12 16:24:37 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.150 2016/10/16 18:05:41 jca Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1343,8 +1343,8 @@ bpf_mtap_ether(caddr_t arg, const struct mbuf *m, u_int direction)
 
 /*
  * Move the packet data from interface memory (pkt) into the
- * store buffer.  Return 1 if it's time to wakeup a listener (buffer full),
- * otherwise 0.  "copy" is the routine called to do the actual data
+ * store buffer.  Wake up listeners if needed.
+ * "copy" is the routine called to do the actual data
  * transfer.  bcopy is passed in to copy contiguous chunks, while
  * bpf_mcopy is passed in to copy mbuf chains.  In the latter case,
  * pkt is really an mbuf.
