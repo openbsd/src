@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.4 2016/10/16 20:30:40 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 		err(1, "Unable to get system time");
 
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:M:m:O:o:rs:S:t:T:Z")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:d:f:M:m:O:o:rs:S:t:T:")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -219,10 +219,6 @@ main(int argc, char *argv[])
 			if (get_tstamp(optarg, &stampst) == -1)
 				errx(1, "Cannot get timestamp from `%s'",
 				    optarg);
-			break;
-
-		case 'Z':
-			fsoptions.sparse = 1;
 			break;
 
 		case '?':
@@ -415,7 +411,7 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 
 	prog = getprogname();
 	fprintf(stderr,
-"Usage: %s [-rZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
+"Usage: %s [-r] [-B endian] [-b free-blocks] [-d debug-mask]\n"
 "\t[-f free-files] [-M minimum-size] [-m maximum-size]\n"
 "\t[-O offset] [-o fs-options] [-S sector-size]\n"
 "\t[-s image-size] [-T <timestamp/file>] [-t fs-type]"

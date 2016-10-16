@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makefs.8,v 1.2 2016/10/16 20:26:56 natano Exp $
+.\"	$OpenBSD: makefs.8,v 1.3 2016/10/16 20:30:40 natano Exp $
 .\"	$NetBSD: makefs.8,v 1.55 2015/11/25 16:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
 .Nd create a file system image from a directory tree
 .Sh SYNOPSIS
 .Nm
-.Op Fl rZ
+.Op Fl r
 .Op Fl B Ar endian
 .Op Fl b Ar free-blocks
 .Op Fl d Ar debug-mask
@@ -170,10 +170,6 @@ ISO 9660 file system.
 .It Sy msdos
 FAT12, FAT16, or FAT32 file system.
 .El
-.It Fl Z
-Create a sparse file for
-.Sy ffs .
-This is useful for virtual machine images.
 .El
 .Pp
 Where sizes are specified, a decimal number of bytes is expected.

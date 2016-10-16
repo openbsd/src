@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: makefs.h,v 1.3 2016/10/16 20:30:40 natano Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -158,7 +158,6 @@ typedef struct makefs_fsinfo {
 	int	freeblockpc;	/* free block % */
 	int	needswap;	/* non-zero if byte swapping needed */
 	int	sectorsize;	/* sector size */
-	int	sparse;		/* sparse image, don't fill it with zeros */
 	int	replace;	/* replace files when merging */
 
 	void	*fs_specific;	/* File system specific additions. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.4 2016/10/16 20:30:40 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -481,23 +481,13 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 #endif
 	bufrem = fsopts->size;
 
-	if (fsopts->sparse) {
-		if (ftruncate(fsopts->fd, bufrem) == -1) {
-			printf ("ERROR in truncate. Sparse option disabled\n");
-			fsopts->sparse = 0;
-		} else {
-			bufrem = 0; /* File truncated at bufrem. Remaining is 0 */
-			buf = NULL;
-		}
-	}
-
 	if (fsopts->offset != 0)
 		if (lseek(fsopts->fd, fsopts->offset, SEEK_SET) == -1) {
 			warn("can't seek");
 			return -1;
 		}
 
-	if ((debug & DEBUG_FS_CREATE_IMAGE) && fsopts->sparse == 0)
+	if ((debug & DEBUG_FS_CREATE_IMAGE))
 		printf(
 		    "zero-ing image `%s', %lld sectors, using %d byte chunks\n",
 		    image, (long long)bufrem, bufsize);
