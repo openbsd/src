@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.4 2016/10/16 20:30:40 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.5 2016/10/16 20:45:07 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 		err(1, "Unable to get system time");
 
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:M:m:O:o:rs:S:t:T:")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:d:f:M:m:O:o:s:S:t:T:")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -190,10 +190,6 @@ main(int argc, char *argv[])
 			break;
 		}
 
-		case 'r':
-			fsoptions.replace = 1;
-			break;
-
 		case 's':
 			fsoptions.minsize = fsoptions.maxsize =
 			    strsuftoll("size", optarg, 1LL, LLONG_MAX);
@@ -237,25 +233,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 2)
+	if (argc != 2)
 		usage(fstype, &fsoptions);
 
 				/* walk the tree */
 	TIMER_START(start);
-	root = walk_dir(argv[1], ".", NULL, NULL, fsoptions.replace);
+	root = walk_dir(argv[1], ".", NULL, NULL);
 	TIMER_RESULTS(start, "walk_dir");
-
-	/* append extra directory */
-	for (i = 2; i < argc; i++) {
-		struct stat sb;
-		if (stat(argv[i], &sb) == -1)
-			err(1, "Can't stat `%s'", argv[i]);
-		if (!S_ISDIR(sb.st_mode))
-			errx(1, "%s: not a directory", argv[i]);
-		TIMER_START(start);
-		root = walk_dir(argv[i], ".", NULL, root, fsoptions.replace);
-		TIMER_RESULTS(start, "walk_dir2");
-	}
 
 	if (debug & DEBUG_DUMP_FSNODES) {
 		printf("\nparent: %s\n", argv[1]);
@@ -411,11 +395,11 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 
 	prog = getprogname();
 	fprintf(stderr,
-"Usage: %s [-r] [-B endian] [-b free-blocks] [-d debug-mask]\n"
+"Usage: %s [-B endian] [-b free-blocks] [-d debug-mask]\n"
 "\t[-f free-files] [-M minimum-size] [-m maximum-size]\n"
 "\t[-O offset] [-o fs-options] [-S sector-size]\n"
 "\t[-s image-size] [-T <timestamp/file>] [-t fs-type]"
-" image-file directory [extra-directory ...]\n",
+" image-file directory\n",
 	    prog);
 
 	if (fstype) {

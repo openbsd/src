@@ -1,4 +1,4 @@
-/*	$OpenBSD: walk.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: walk.c,v 1.4 2016/10/16 20:45:07 natano Exp $	*/
 /*	$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -62,8 +62,7 @@ static	fsinode	*link_check(fsinode *);
  *	at the start of the list, and without ".." entries.
  */
 fsnode *
-walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
-    int replace)
+walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join)
 {
 	fsnode		*first, *cur, *prev, *last;
 	DIR		*dirp;
@@ -141,30 +140,13 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 						printf("merging %s with %p\n",
 						    path, cur->child);
 					cur->child = walk_dir(root, rp, cur,
-					    cur->child, replace);
+					    cur->child);
 					continue;
 				}
-				if (!replace)
-					errx(1, "Can't merge %s `%s' with "
-					    "existing %s",
-					    inode_type(stbuf.st_mode), path,
-					    inode_type(cur->type));
-				else {
-					if (debug & DEBUG_WALK_DIR_NODE)
-						printf("replacing %s %s\n",
-						    inode_type(stbuf.st_mode),
-						    path);
-					if (cur == join->next)
-						join->next = cur->next;
-					else {
-						fsnode *p;
-						for (p = join->next;
-						    p->next != cur; p = p->next)
-							continue;
-						p->next = cur->next;
-					}
-					free(cur);
-				}
+				errx(1, "Can't merge %s `%s' with "
+				    "existing %s",
+				    inode_type(stbuf.st_mode), path,
+				    inode_type(cur->type));
 			}
 		}
 
@@ -185,8 +167,7 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 				first = cur;
 			cur->first = first;
 			if (S_ISDIR(cur->type)) {
-				cur->child = walk_dir(root, rp, cur, NULL,
-				    replace);
+				cur->child = walk_dir(root, rp, cur, NULL);
 				continue;
 			}
 		}

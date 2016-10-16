@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makefs.8,v 1.3 2016/10/16 20:30:40 natano Exp $
+.\"	$OpenBSD: makefs.8,v 1.4 2016/10/16 20:45:07 natano Exp $
 .\"	$NetBSD: makefs.8,v 1.55 2015/11/25 16:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -42,7 +42,6 @@
 .Nd create a file system image from a directory tree
 .Sh SYNOPSIS
 .Nm
-.Op Fl r
 .Op Fl B Ar endian
 .Op Fl b Ar free-blocks
 .Op Fl d Ar debug-mask
@@ -57,7 +56,6 @@
 .Op Fl t Ar fs-type
 .Ar image-file
 .Ar directory
-.Op Ar extra-directory ...
 .Sh DESCRIPTION
 The utility
 .Nm
@@ -65,13 +63,6 @@ creates a file system image into
 .Ar image-file
 from the directory tree
 .Ar directory .
-If any optional directory trees are passed in the
-.Ar extra-directory
-arguments, then the directory tree of each argument will be merged
-into the
-.Ar directory
-first before creating
-.Ar image-file .
 No special devices or privileges are required to perform this task.
 .Pp
 The options are as follows:
@@ -135,8 +126,6 @@ Set file system specific options.
 .Ar fs-options
 is a comma separated list of options.
 Valid file system specific options are detailed below.
-.It Fl r
-When merging multiple directories replace duplicate files with the last found.
 .It Fl S Ar sector-size
 Set the file system sector size to
 .Ar sector-size .
