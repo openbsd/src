@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2016/09/07 18:36:52 akfaew Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 2016/10/16 09:35:40 tb Exp $	*/
 /*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
 
 /*
@@ -52,7 +52,8 @@
 
 #include "config.h"
 
-static void vxerror(const char *, int, const char *, va_list);
+static void vxerror(const char *, int, const char *, va_list)
+		__attribute__((__format__ (printf, 3, 0)));
 
 /*
  * Malloc, with abort on error.

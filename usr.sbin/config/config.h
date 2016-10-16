@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.28 2015/01/16 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.29 2016/10/16 09:35:40 tb Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -368,9 +368,12 @@ void	*emalloc(size_t);
 void	*ereallocarray(void *, size_t, size_t);
 void	*ecalloc(size_t, size_t);
 char	*sourcepath(const char *);
-void	error(const char *, ...);			/* immediate errs */
-void	xerror(const char *, int, const char *, ...);	/* delayed errs */
-__dead void panic(const char *, ...);
+void	error(const char *, ...)			/* immediate errs */
+		__attribute__((__format__ (printf, 1, 2)));
+void	xerror(const char *, int, const char *, ...)	/* delayed errs */
+		__attribute__((__format__ (printf, 3, 4)));
+__dead void panic(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
 struct nvlist *newnv(const char *, const char *, void *, int, struct nvlist *);
 void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
