@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.20 2015/11/26 19:00:40 deraadt Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.21 2016/10/16 10:40:58 jca Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -206,7 +206,7 @@ bp_getfile_res *
 bootparamproc_getfile_1_svc(bp_getfile_arg *getfile, struct svc_req *rqstp)
 {
 	static bp_getfile_res res;
-	int err;
+	int error;
 
 	if (debug)
 		warnx("getfile got question for \"%s\" and file \"%s\"",
@@ -223,15 +223,15 @@ bootparamproc_getfile_1_svc(bp_getfile_arg *getfile, struct svc_req *rqstp)
 		goto failed;
 
 	strlcpy(askname, he->h_name, sizeof askname);
-	err = lookup_bootparam(askname, NULL, getfile->file_id,
+	error = lookup_bootparam(askname, NULL, getfile->file_id,
 	    &res.server_name, &res.server_path);
-	if (err == 0) {
+	if (error == 0) {
 		he = gethostbyname(res.server_name);
 		if (!he)
 			goto failed;
 		bcopy(he->h_addr, &res.server_address.bp_address_u.ip_addr, 4);
 		res.server_address.address_type = IP_ADDR_TYPE;
-	} else if (err == ENOENT && !strcmp(getfile->file_id, "dump")) {
+	} else if (error == ENOENT && !strcmp(getfile->file_id, "dump")) {
 		/* Special for dump, answer with null strings. */
 		res.server_name[0] = '\0';
 		res.server_path[0] = '\0';
