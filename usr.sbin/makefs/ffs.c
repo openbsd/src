@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.4 2016/10/16 20:30:40 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.5 2016/10/16 21:44:43 tedu Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -992,7 +992,7 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 	de.d_fileno = ufs_rw32(node->inode->ino, needswap);
 	de.d_type = IFTODT(node->type);
 	de.d_namlen = (uint8_t)strlen(name);
-	strcpy(de.d_name, name);
+	strlcpy(de.d_name, name, sizeof de.d_name);
 	reclen = UFS_DIRSIZ(0, &de, needswap);
 	de.d_reclen = ufs_rw16(reclen, needswap);
 
