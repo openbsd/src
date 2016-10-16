@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.22 2016/10/12 06:56:54 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.23 2016/10/16 19:07:05 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1308,7 +1308,7 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 			if (memcmp(zero_mac, &vcp->vcp_macs[i], 6) != 0) {
 				vionet[i].cfg.device_feature =
 				    VIRTIO_NET_F_MAC;
-				bcopy(&vcp->vcp_macs[i], &vionet[i].mac, 6);
+				memcpy(&vionet[i].mac, &vcp->vcp_macs[i], 6);
 			}
 		}
 	}
