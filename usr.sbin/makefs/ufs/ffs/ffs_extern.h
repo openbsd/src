@@ -86,9 +86,7 @@ void	ffs_csumtotal_swap(struct csum_total *, struct csum_total *);
 void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 /* ffs_subr.c */
-void	ffs_fragacct(struct fs *, int, int32_t[], int, int);
 int	ffs_isblock(struct fs *, u_char *, int32_t);
-int	ffs_isfreeblock(struct fs *, u_char *, int32_t);
 void	ffs_clrblock(struct fs *, u_char *, int32_t);
 void	ffs_setblock(struct fs *, u_char *, int32_t);
 void	ffs_itimes(struct inode *, const struct timespec *,

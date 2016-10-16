@@ -307,14 +307,10 @@ int deextend(struct denode *, u_long, struct kauth_cred *);
 int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
 int detrunc(struct denode *, u_long, int, struct kauth_cred *);
 int deupdat(struct denode *, int);
-int doscheckpath(struct denode *, struct denode *);
-int dosdirempty(struct denode *);
 int readde(struct denode *, struct buf **, struct direntry **);
 int readep(struct msdosfsmount *, u_long, u_long,
 		struct buf **, struct direntry **);
-int removede(struct denode *, struct denode *);
 int uniqdosname(struct denode *, struct componentname *, u_char *);
-int findwin95(struct denode *);
 int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, struct kauth_cred *);
 void msdosfs_gop_markupdate(struct vnode *, int);
 void msdosfs_detimes(struct denode *, const struct timespec *,

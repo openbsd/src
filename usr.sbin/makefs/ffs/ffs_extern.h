@@ -52,7 +52,6 @@ void panic(const char *, ...)
 int ffs_alloc(struct inode *, daddr_t, daddr_t, int, daddr_t *);
 daddr_t ffs_blkpref_ufs1(struct inode *, daddr_t, int, int32_t *);
 daddr_t ffs_blkpref_ufs2(struct inode *, daddr_t, int, int64_t *);
-void ffs_blkfree(struct inode *, daddr_t, long);
 void ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 
 	/* ffs_balloc.c */
@@ -66,9 +65,7 @@ void ffs_csum_swap(struct csum *, struct csum *, int);
 void ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 	/* ffs_subr.c */
-void ffs_fragacct(struct fs *, int, int32_t[], int, int);
 int ffs_isblock(struct fs *, u_char *, int32_t);
-int ffs_isfreeblock(struct fs *, u_char *, int32_t);
 void ffs_clrblock(struct fs *, u_char *, int32_t);
 void ffs_setblock(struct fs *, u_char *, int32_t);
 

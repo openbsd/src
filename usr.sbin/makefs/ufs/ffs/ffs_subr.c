@@ -47,40 +47,6 @@ void    panic(const char *, ...)
 
 
 /*
- * Update the frsum fields to reflect addition or deletion
- * of some frags.
- */
-void
-ffs_fragacct(struct fs *fs, int fragmap, int32_t fraglist[], int cnt,
-    int needswap)
-{
-	int inblk;
-	int field, subfield;
-	int siz, pos;
-
-	inblk = (int)(fragtbl[fs->fs_frag][fragmap]) << 1;
-	fragmap <<= 1;
-	for (siz = 1; siz < fs->fs_frag; siz++) {
-		if ((inblk & (1 << (siz + (fs->fs_frag & (NBBY - 1))))) == 0)
-			continue;
-		field = around[siz];
-		subfield = inside[siz];
-		for (pos = siz; pos <= fs->fs_frag; pos++) {
-			if ((fragmap & field) == subfield) {
-				fraglist[siz] = ufs_rw32(
-				    ufs_rw32(fraglist[siz], needswap) + cnt,
-				    needswap);
-				pos += siz;
-				field <<= siz;
-				subfield <<= siz;
-			}
-			field <<= 1;
-			subfield <<= 1;
-		}
-	}
-}
-
-/*
  * block operations
  *
  * check if a block is available
@@ -106,30 +72,6 @@ ffs_isblock(struct fs *fs, u_char *cp, int32_t h)
 		return ((cp[h >> 3] & mask) == mask);
 	default:
 		panic("ffs_isblock: unknown fs_fragshift %d",
-		    (int)fs->fs_fragshift);
-	}
-}
-
-/*
- * check if a block is completely allocated
- *  returns true if all the corresponding bits in the free map are 0
- *  returns false if any corresponding bit in the free map is 1
- */
-int
-ffs_isfreeblock(struct fs *fs, u_char *cp, int32_t h)
-{
-
-	switch ((int)fs->fs_fragshift) {
-	case 3:
-		return (cp[h] == 0);
-	case 2:
-		return ((cp[h >> 1] & (0x0f << ((h & 0x1) << 2))) == 0);
-	case 1:
-		return ((cp[h >> 2] & (0x03 << ((h & 0x3) << 1))) == 0);
-	case 0:
-		return ((cp[h >> 3] & (0x01 << (h & 0x7))) == 0);
-	default:
-		panic("ffs_isfreeblock: unknown fs_fragshift %d",
 		    (int)fs->fs_fragshift);
 	}
 }
