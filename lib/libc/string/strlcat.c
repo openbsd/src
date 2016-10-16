@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcat.c,v 1.17 2016/10/14 18:19:04 dtucker Exp $	*/
+/*	$OpenBSD: strlcat.c,v 1.18 2016/10/16 17:37:39 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 #include <string.h>
-#include <stdint.h>
 
 /*
  * Appends src to string dst of size dsize (unlike strncat, dsize is the
@@ -38,7 +37,7 @@ strlcat(char *dst, const char *src, size_t dsize)
 	/* Find the end of dst and adjust bytes left but don't go past end. */
 	while (n-- != 0 && *dst != '\0')
 		dst++;
-	dlen = (uintptr_t)dst - (uintptr_t)odst;
+	dlen = dst - odst;
 	n = dsize - dlen;
 
 	if (n-- == 0)
@@ -52,11 +51,6 @@ strlcat(char *dst, const char *src, size_t dsize)
 	}
 	*dst = '\0';
 
-        /*
-	 * Cast pointers to unsigned type before calculation, to avoid signed
-	 * overflow when the string ends where the MSB has changed.
-	 * Return value does not include NUL.
-	 */
-	return (dlen + ((uintptr_t)src - (uintptr_t)osrc));
+	return(dlen + (src - osrc));	/* count does not include NUL */
 }
 DEF_WEAK(strlcat);

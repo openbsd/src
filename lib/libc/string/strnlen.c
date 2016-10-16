@@ -1,4 +1,4 @@
-/*	$OpenBSD: strnlen.c,v 1.7 2016/10/14 18:19:04 dtucker Exp $	*/
+/*	$OpenBSD: strnlen.c,v 1.8 2016/10/16 17:37:39 dtucker Exp $	*/
 
 /*
  * Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include <string.h>
-#include <stdint.h>
 
 size_t
 strnlen(const char *str, size_t maxlen)
@@ -29,10 +28,6 @@ strnlen(const char *str, size_t maxlen)
 	for (cp = str; maxlen != 0 && *cp != '\0'; cp++, maxlen--)
 		;
 
-	/*
-	 * Cast pointers to unsigned type before calculation, to avoid signed
-	 * overflow when the string ends where the MSB has changed.
-	 */
-	return (size_t)((uintptr_t)cp - (uintptr_t)str);
+	return (size_t)(cp - str);
 }
 DEF_WEAK(strnlen);
