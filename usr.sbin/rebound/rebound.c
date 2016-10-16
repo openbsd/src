@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.77 2016/10/15 22:09:51 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.78 2016/10/16 00:08:31 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -560,26 +560,26 @@ readconfig(int conffd, union sockun *remoteaddr)
 	return rv;
 }
 
-static int
-workerloop(int conffd, int ud, int ld)
+static void
+workerinit(void)
 {
-	union sockun remoteaddr;
-	struct kevent ch[2], kev[4];
-	struct timespec ts, *timeout = NULL;
-	struct request *req;
-	struct dnscache *ent;
+	struct rlimit rlim;
 	struct passwd *pwd;
-	int i, r, af, kq;
 
-	kq = kqueue();
+	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
+		logerr("getrlimit: %s", strerror(errno));
+	rlim.rlim_cur = rlim.rlim_max;
+	if (setrlimit(RLIMIT_NOFILE, &rlim) == -1)
+		logerr("setrlimit: %s", strerror(errno));
+	connmax = rlim.rlim_cur - 10;
+	if (connmax > 512)
+		connmax = 512;
 
-	if (!debug) {
-		pid_t parent = getppid();
-		/* would need pledge(proc) to do this below */
-		EV_SET(&kev[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-		if (kevent(kq, kev, 1, NULL, 0, NULL) == -1)
-			logerr("kevent1: %d", errno);
-	}
+	cachemax = 10000; /* something big, but not huge */
+
+	TAILQ_INIT(&reqfifo);
+	TAILQ_INIT(&cachefifo);
+	RB_INIT(&cachetree);
 
 	if (!(pwd = getpwnam("_rebound")))
 		logerr("getpwnam failed");
@@ -597,6 +597,29 @@ workerloop(int conffd, int ud, int ld)
 
 	if (pledge("stdio inet", NULL) == -1)
 		logerr("pledge failed");
+}
+
+static int
+workerloop(int conffd, int ud, int ld)
+{
+	union sockun remoteaddr;
+	struct kevent ch[2], kev[4];
+	struct timespec ts, *timeout = NULL;
+	struct request *req;
+	struct dnscache *ent;
+	int i, r, af, kq;
+
+	kq = kqueue();
+
+	if (!debug) {
+		pid_t parent = getppid();
+		/* would need pledge(proc) to do this below */
+		EV_SET(&kev[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+		if (kevent(kq, kev, 1, NULL, 0, NULL) == -1)
+			logerr("kevent1: %d", errno);
+	}
+
+	workerinit();
 
 	af = readconfig(conffd, &remoteaddr);
 	if (af == -1)
@@ -735,6 +758,27 @@ openconfig(const char *confname, int kq)
 	return conffd;
 }
 
+static pid_t
+reexec(int conffd, int ud, int ld)
+{
+	pid_t child;
+
+	if (conffd != 6 || ud != 3 || ld != 4)
+		logerr("can't re-exec, fds are wrong");
+
+	switch ((child = fork())) {
+	case -1:
+		logerr("failed to fork");
+		break;
+	case 0:
+		execl("/usr/sbin/rebound", "rebound", "-W", NULL);
+		logerr("re-exec failed");
+	default:
+		break;
+	}
+	return child;
+}
+
 static int
 monitorloop(int ud, int ld, const char *confname)
 {
@@ -760,15 +804,7 @@ monitorloop(int ud, int ld, const char *confname)
 		if (conffd == -1)
 			conffd = openconfig(confname, kq);
 
-		switch ((child = fork())) {
-		case -1:
-			logerr("failed to fork");
-			break;
-		case 0:
-			return workerloop(conffd, ud, ld);
-		default:
-			break;
-		}
+		child = reexec(conffd, ud, ld);
 
 		/* monitor child */
 		EV_SET(&kev, child, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
@@ -847,10 +883,15 @@ main(int argc, char **argv)
 	union sockun bindaddr;
 	int ld, ud, ch;
 	int one = 1;
-	struct rlimit rlim;
 	const char *confname = "/etc/resolv.conf";
 
-	while ((ch = getopt(argc, argv, "c:d")) != -1) {
+	tzset();
+	openlog("rebound", LOG_PID | LOG_NDELAY, LOG_DAEMON);
+
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGUSR1, SIG_IGN);
+
+	while ((ch = getopt(argc, argv, "c:dW")) != -1) {
 		switch (ch) {
 		case 'c':
 			confname = optarg;
@@ -858,6 +899,10 @@ main(int argc, char **argv)
 		case 'd':
 			debug = 1;
 			break;
+		case 'W':
+			daemonized = 1;
+			/* parent responsible for setting up fds */
+			return workerloop(6, 3, 4);
 		default:
 			usage();
 			break;
@@ -869,23 +914,8 @@ main(int argc, char **argv)
 	if (argc)
 		usage();
 
-	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
-		logerr("getrlimit: %s", strerror(errno));
-	rlim.rlim_cur = rlim.rlim_max;
-	if (setrlimit(RLIMIT_NOFILE, &rlim) == -1)
-		logerr("setrlimit: %s", strerror(errno));
-	connmax = rlim.rlim_cur - 10;
-	if (connmax > 512)
-		connmax = 512;
-
-	cachemax = 10000; /* something big, but not huge */
-
-	tzset();
-	openlog("rebound", LOG_PID | LOG_NDELAY, LOG_DAEMON);
-
-	TAILQ_INIT(&reqfifo);
-	TAILQ_INIT(&cachefifo);
-	RB_INIT(&cachetree);
+	/* make sure we consistently open fds */
+	closefrom(3);
 
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.i.sin_len = sizeof(bindaddr.i);
@@ -911,9 +941,6 @@ main(int argc, char **argv)
 	atexit(resetport);
 	sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
 	
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGUSR1, SIG_IGN);
-
 	if (debug) {
 		int conffd = openconfig(confname, -1);
 		return workerloop(conffd, ud, ld);
