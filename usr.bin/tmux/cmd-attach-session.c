@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.62 2016/10/10 21:51:39 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.63 2016/10/16 17:55:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -145,7 +145,7 @@ cmd_attach_session(struct cmd_q *cmdq, int dflag, int rflag, const char *cflag,
 		if (~c->flags & CLIENT_CONTROL)
 			proc_send(c->peer, MSG_READY, -1, NULL, 0);
 		hooks_run(c->session->hooks, c, NULL, "client-attached");
-		cmdq->client_exit = 0;
+		c->flags |= CLIENT_ATTACHED;
 	}
 	recalculate_sizes();
 	alerts_check_session(s);

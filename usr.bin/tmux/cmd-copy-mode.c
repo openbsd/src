@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.29 2016/10/14 22:14:22 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.30 2016/10/16 17:55:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,7 +61,7 @@ cmd_copy_mode_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct window_pane	*wp = cmdq->state.tflag.wp;
 
 	if (args_has(args, 'M')) {
-		if ((wp = cmd_mouse_pane(&cmdq->item->mouse, &s, NULL)) == NULL)
+		if ((wp = cmd_mouse_pane(&cmdq->mouse, &s, NULL)) == NULL)
 			return (CMD_RETURN_NORMAL);
 		if (c == NULL || c->session != s)
 			return (CMD_RETURN_NORMAL);
@@ -80,7 +80,7 @@ cmd_copy_mode_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (args_has(args, 'M')) {
 		if (wp->mode != NULL && wp->mode != &window_copy_mode)
 			return (CMD_RETURN_NORMAL);
-		window_copy_start_drag(c, &cmdq->item->mouse);
+		window_copy_start_drag(c, &cmdq->mouse);
 	}
 	if (wp->mode == &window_copy_mode && args_has(self->args, 'u'))
 		window_copy_pageup(wp, 0);

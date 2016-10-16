@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.73 2016/10/13 22:48:51 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.74 2016/10/16 17:55:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -188,8 +188,8 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	fs.w = w;
 	fs.wp = new_wp;
 	cmd_find_log_state(__func__, &fs);
-	if (hooks_wait(s->hooks, cmdq, &fs, "after-split-window") == 0)
-		return (CMD_RETURN_WAIT);
+	hooks_insert(s->hooks, cmdq, &fs, "after-split-window");
+
 	return (CMD_RETURN_NORMAL);
 
 error:

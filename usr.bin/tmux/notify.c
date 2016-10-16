@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.12 2016/10/15 00:12:58 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.13 2016/10/16 17:55:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -66,7 +66,7 @@ notify_hook(struct notify_entry *ne)
 	const char		*name;
 	struct cmd_find_state	 fs;
 	struct hook		*hook;
-	struct cmd_q		*hooks_cmdq;
+	struct cmd_q		*new_cmdq, *loop;
 
 	name = notify_hooks[ne->type];
 	if (name == NULL)
@@ -87,14 +87,12 @@ notify_hook(struct notify_entry *ne)
 		return;
 	log_debug("notify hook %s", name);
 
-	hooks_cmdq = cmdq_new(NULL);
-	hooks_cmdq->flags |= CMD_Q_NOHOOKS;
+	new_cmdq = cmdq_get_command(hook->cmdlist, &fs, NULL, CMD_Q_NOHOOKS);
 
-	cmd_find_copy_state(&hooks_cmdq->current, &fs);
-	hooks_cmdq->parent = NULL;
+	for (loop = new_cmdq; loop != NULL; loop = loop->next)
+		loop->hook = xstrdup(name);
 
-	cmdq_run(hooks_cmdq, hook->cmdlist, NULL);
-	cmdq_free(hooks_cmdq);
+	cmdq_append(NULL, new_cmdq);
 }
 
 static void

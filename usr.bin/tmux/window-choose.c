@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.80 2016/10/13 20:27:27 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.81 2016/10/16 17:55:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -246,6 +246,7 @@ window_choose_data_run(struct window_choose_data *cdata)
 {
 	struct cmd_list	*cmdlist;
 	char		*cause;
+	struct cmd_q	*cmdq;
 
 	/*
 	 * The command template will have already been replaced. But if it's
@@ -263,7 +264,8 @@ window_choose_data_run(struct window_choose_data *cdata)
 		return;
 	}
 
-	cmdq_run(cdata->start_client->cmdq, cmdlist, NULL);
+	cmdq = cmdq_get_command(cmdlist, NULL, NULL, 0);
+	cmdq_append(cdata->start_client, cmdq);
 	cmd_list_free(cmdlist);
 }
 

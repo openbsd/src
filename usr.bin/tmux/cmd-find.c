@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.35 2016/10/15 00:09:30 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.36 2016/10/16 17:55:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1006,7 +1006,7 @@ cmd_find_target(struct cmd_find_state *fs, struct cmd_find_state *current,
 
 	/* Mouse target is a plain = or {mouse}. */
 	if (strcmp(target, "=") == 0 || strcmp(target, "{mouse}") == 0) {
-		m = &cmdq->item->mouse;
+		m = &cmdq->mouse;
 		switch (type) {
 		case CMD_FIND_PANE:
 			fs->wp = cmd_mouse_pane(m, &fs->s, &fs->wl);
