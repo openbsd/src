@@ -46,6 +46,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/time.h>
 
 #include <ffs/buf.h>
 
@@ -85,6 +86,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	int	ronly = 0, error, tmp;
 	int	bsize;
 	struct msdos_options *m = devvp->fs->fs_specific;
+	struct timezone tz;
 	uint64_t psize = m->create_size;
 	unsigned secsize = 512;
 
@@ -126,6 +128,12 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	pmp->pm_SecPerTrack = getushort(b50->bpbSecPerTrack);
 	pmp->pm_Heads = getushort(b50->bpbHeads);
 	pmp->pm_Media = b50->bpbMedia;
+
+	if (gettimeofday(NULL, &tz) == -1) {
+		error = errno;
+		goto error_exit;
+	}
+	pmp->pm_minuteswest = tz.tz_minuteswest;
 
 	DPRINTF(("%s(BytesPerSec=%u, ResSectors=%u, FATs=%d, RootDirEnts=%u, "
 	    "Sectors=%u, FATsecs=%lu, SecPerTrack=%u, Heads=%u, Media=%u)\n",

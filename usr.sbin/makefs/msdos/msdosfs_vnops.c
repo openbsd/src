@@ -94,8 +94,8 @@ msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
 {
 	struct timespec at = st->st_atimespec;
 	struct timespec mt = st->st_mtimespec;
-	unix2dostime(&at, pmp->pm_gmtoff, &dep->de_ADate, NULL, NULL);
-	unix2dostime(&mt, pmp->pm_gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
+	unix2dostime(&at, pmp->pm_minuteswest, &dep->de_ADate, NULL, NULL);
+	unix2dostime(&mt, pmp->pm_minuteswest, &dep->de_MDate, &dep->de_MTime, NULL);
 }
 
 /*
@@ -135,20 +135,17 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 
 	pmp = dp->de_pmp;
 
-	switch (unix2dosfn((const u_char *)cnp->cn_nameptr, dosfilename,
-	    cnp->cn_namelen, 0)) {
+	switch (unix2dosfn(cnp->cn_nameptr, dosfilename, cnp->cn_namelen, 0)) {
 	case 0:
 		return (EINVAL);
 	case 1:
 		break;
 	case 2:
-		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
+		wincnt = winSlotCnt(cnp->cn_nameptr, cnp->cn_namelen) + 1;
 		break;
 	case 3:
 		olddos = 0;
-		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
+		wincnt = winSlotCnt(cnp->cn_nameptr, cnp->cn_namelen) + 1;
 		break;
 	}
 
@@ -229,11 +226,10 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 					if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
 						continue;
 
-					chksum = winChkName((const u_char *)cnp->cn_nameptr,
+					chksum = winChkName(cnp->cn_nameptr,
 							    cnp->cn_namelen,
 							    (struct winentry *)dep,
-							    chksum,
-							    pmp->pm_flags & MSDOSFSMNT_UTF8);
+							    chksum);
 					continue;
 				}
 
@@ -572,7 +568,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	putushort(denp[0].deStartCluster, newcluster);
 	putushort(denp[0].deCDate, ndirent.de_CDate);
 	putushort(denp[0].deCTime, ndirent.de_CTime);
-	denp[0].deCHundredth = ndirent.de_CHun;
+	denp[0].deCTimeHundredth = ndirent.de_CHun;
 	putushort(denp[0].deADate, ndirent.de_ADate);
 	putushort(denp[0].deMDate, ndirent.de_MDate);
 	putushort(denp[0].deMTime, ndirent.de_MTime);
@@ -584,7 +580,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	putushort(denp[1].deStartCluster, pcl);
 	putushort(denp[1].deCDate, ndirent.de_CDate);
 	putushort(denp[1].deCTime, ndirent.de_CTime);
-	denp[1].deCHundredth = ndirent.de_CHun;
+	denp[1].deCTimeHundredth = ndirent.de_CHun;
 	putushort(denp[1].deADate, ndirent.de_ADate);
 	putushort(denp[1].deMDate, ndirent.de_MDate);
 	putushort(denp[1].deMTime, ndirent.de_MTime);

@@ -1,4 +1,5 @@
-/*	$NetBSD: direntry.h,v 1.11 2016/02/01 02:59:33 christos Exp $	*/
+/*	$OpenBSD: direntry.h,v 1.2 2016/10/16 18:55:10 natano Exp $	*/
+/*	$NetBSD: direntry.h,v 1.13 1997/10/17 11:23:45 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,19 +47,17 @@
  *
  * October 1992
  */
-#ifndef _MSDOSFS_DIRENTRY_H_
-#define _MSDOSFS_DIRENTRY_H_
 
 /*
  * Structure of a dos directory entry.
  */
 struct direntry {
-	uint8_t		deName[8];	/* filename, blank filled */
+	u_int8_t	deName[8];	/* filename, blank filled */
 #define	SLOT_EMPTY	0x00		/* slot has never been used */
 #define	SLOT_E5		0x05		/* the real value is 0xe5 */
 #define	SLOT_DELETED	0xe5		/* file in this slot deleted */
-	uint8_t		deExtension[3];	/* extension, blank filled */
-	uint8_t		deAttributes;	/* file attributes */
+	u_int8_t	deExtension[3];	/* extension, blank filled */
+	u_int8_t	deAttributes;	/* file attributes */
 #define	ATTR_NORMAL	0x00		/* normal file */
 #define	ATTR_READONLY	0x01		/* file is readonly */
 #define	ATTR_HIDDEN	0x02		/* file is hidden */
@@ -66,39 +65,35 @@ struct direntry {
 #define	ATTR_VOLUME	0x08		/* entry is a volume label */
 #define	ATTR_DIRECTORY	0x10		/* entry is a directory name */
 #define	ATTR_ARCHIVE	0x20		/* file is new or modified */
-	uint8_t		deReserved;	/* reserved */
-	uint8_t		deCHundredth;	/* hundredth of seconds in CTime */
-	uint8_t		deCTime[2];	/* create time */
-	uint8_t		deCDate[2];	/* create date */
-	uint8_t		deADate[2];	/* access date */
-	uint8_t		deHighClust[2];	/* high bytes of cluster number */
-	uint8_t		deMTime[2];	/* last update time */
-	uint8_t		deMDate[2];	/* last update date */
-	uint8_t		deStartCluster[2]; /* starting cluster of file */
-	uint8_t		deFileSize[4];	/* size of file in bytes */
+	u_int8_t	deLowerCase;	/* case for base and extension */
+#define	CASE_LOWER_BASE	0x08		/* base is lower case */
+#define	CASE_LOWER_EXT	0x10		/* extension is lower case */
+	u_int8_t	deCTimeHundredth; /* create time, 1/100th of a sec */
+	u_int8_t	deCTime[2];	/* create time */
+	u_int8_t	deCDate[2];	/* create date */
+	u_int8_t	deADate[2];	/* access date */
+	u_int8_t	deHighClust[2];	/* high byte of cluster number */
+	u_int8_t	deMTime[2];	/* last update time */
+	u_int8_t	deMDate[2];	/* last update date */
+	u_int8_t	deStartCluster[2]; /* starting cluster of file */
+	u_int8_t	deFileSize[4];	/* size of file in bytes */
 };
-
-static __inline uint8_t
-msdos_dirchar(const struct direntry *de, size_t i) {
-	return i < sizeof(de->deName) ? de->deName[i] :
-	    de->deExtension[i - sizeof(de->deName)];
-}
 
 /*
  * Structure of a Win95 long name directory entry
  */
 struct winentry {
-	uint8_t		weCnt;
+	u_int8_t	weCnt;
 #define	WIN_LAST	0x40
 #define	WIN_CNT		0x3f
-	uint8_t		wePart1[10];
-	uint8_t		weAttributes;
+	u_int8_t	wePart1[10];
+	u_int8_t	weAttributes;
 #define	ATTR_WIN95	0x0f
-	uint8_t		weReserved1;
-	uint8_t		weChksum;
-	uint8_t		wePart2[12];
-	uint16_t	weReserved2;
-	uint8_t		wePart3[4];
+	u_int8_t	weReserved1;
+	u_int8_t	weChksum;
+	u_int8_t	wePart2[12];
+	u_int16_t	weReserved2;
+	u_int8_t	wePart3[4];
 };
 #define	WIN_CHARS	13	/* Number of chars per winentry */
 
@@ -126,20 +121,11 @@ struct winentry {
 #define DD_YEAR_MASK		0xFE00	/* year - 1980 */
 #define DD_YEAR_SHIFT		9
 
-struct dirent;
-void	unix2dostime(const struct timespec *tsp, int gmtoff, uint16_t *ddp,
-	    uint16_t *dtp, uint8_t *dhp);
-void	dos2unixtime(unsigned int dd, unsigned int dt, unsigned int dh,
-	    int gmtoff, struct timespec *tsp);
-int	dos2unixfn(unsigned char dn[11], unsigned char *un, int lower);
-int	unix2dosfn(const unsigned char *un, unsigned char dn[12], int unlen,
-	    unsigned int gen);
-int	unix2winfn(const unsigned char *un, int unlen, struct winentry *wep,
-	    int cnt, int chksum, int utf8);
-int	winChkName(const unsigned char *un, int unlen, struct winentry *wep,
-	    int chksum, int utf8);
-int	win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,	
-	    uint16_t *namlen, int utf8);
-uint8_t winChksum(uint8_t *name);
-int	winSlotCnt(const unsigned char *un, int unlen, int utf8);
-#endif /* _MSDOSFS_DIRENTRY_H_ */
+void	unix2dostime(struct timespec *tsp, int minuteswest, u_int16_t *ddp,
+	    u_int16_t *dtp, u_int8_t *dhp);
+int	unix2dosfn(u_char *un, u_char dn[12], int unlen, u_int gen);
+int	unix2winfn(u_char *un, int unlen, struct winentry *wep, int cnt,
+	    int chksum);
+int	winChkName(u_char *un, int unlen, struct winentry *wep, int chksum);
+u_int8_t winChksum(u_int8_t *name);
+int	winSlotCnt(u_char *un, int unlen);

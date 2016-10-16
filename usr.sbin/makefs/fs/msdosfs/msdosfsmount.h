@@ -59,20 +59,15 @@
 #define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
 #define	MSDOSFSMNT_GEMDOSFS	8	/* This is a GEMDOS-flavour */
 #define MSDOSFSMNT_VERSIONED	16	/* Struct is versioned */
-#define MSDOSFSMNT_UTF8		32	/* Use UTF8 filenames */
 
 /* All flags above: */
 #define	MSDOSFSMNT_MNTOPT \
 	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95 \
-	 |MSDOSFSMNT_GEMDOSFS|MSDOSFSMNT_VERSIONED|MSDOSFSMNT_UTF8)
+	 |MSDOSFSMNT_GEMDOSFS|MSDOSFSMNT_VERSIONED)
 
 #define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
 #define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
 #define	MSDOSFS_FATMIRROR	0x20000000	/* FAT is mirrored */
-
-#define MSDOSFSMNT_BITS "\177\20" \
-    "b\00shortname\0b\01longname\0b\02nowin95\0b\03gemdosfs\0b\04mntversioned\0" \
-    "b\05utf8\0b\037ronly\0b\036waitonfat\0b\035fatmirror\0"
 
 
 /*
@@ -87,7 +82,7 @@ struct msdosfsmount {
 				   for files */
 	mode_t pm_dirmask;	/* mask to and with file protection bits
 				   for directories */
-	int pm_gmtoff;		/* offset from UTC in seconds */
+	int pm_minuteswest;	/* of Greenwitch */
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
 	u_long pm_FATsecs;	/* actual number of FAT sectors */

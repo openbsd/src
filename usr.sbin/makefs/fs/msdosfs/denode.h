@@ -210,7 +210,7 @@ struct denode {
 #define DE_INTERNALIZE(dep, dp)				\
 	(memcpy((dep)->de_Name, (dp)->deName, 11),	\
 	 (dep)->de_Attributes = (dp)->deAttributes,	\
-	 (dep)->de_CHun = (dp)->deCHundredth,		\
+	 (dep)->de_CHun = (dp)->deCTimeHundredth,	\
 	 (dep)->de_CTime = getushort((dp)->deCTime),	\
 	 (dep)->de_CDate = getushort((dp)->deCDate),	\
 	 (dep)->de_ADate = getushort((dp)->deADate),	\
@@ -227,7 +227,7 @@ struct denode {
 #define DE_EXTERNALIZE(dp, dep)				\
 	(memcpy((dp)->deName, (dep)->de_Name, 11),	\
 	 (dp)->deAttributes = (dep)->de_Attributes,	\
-	 (dp)->deCHundredth = (dep)->de_CHun,		\
+	 (dp)->deCTimeHundredth = (dep)->de_CHun,	\
 	 putushort((dp)->deCTime, (dep)->de_CTime),	\
 	 putushort((dp)->deCDate, (dep)->de_CDate),	\
 	 putushort((dp)->deADate, (dep)->de_ADate),	\

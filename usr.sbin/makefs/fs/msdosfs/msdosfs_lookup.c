@@ -168,8 +168,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 				fndoffset -= sizeof(struct direntry);
 			}
 			if (!unix2winfn(un, unlen, (struct winentry *)ndep,
-					wcnt, chksum,
-					ddep->de_pmp->pm_flags & MSDOSFSMNT_UTF8))
+					wcnt, chksum))
 				break;
 		}
 	}
@@ -557,8 +556,7 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 		/*
 		 * Generate DOS name with generation number
 		 */
-		if (!unix2dosfn((const u_char *)cnp->cn_nameptr, cp,
-		    cnp->cn_namelen, gen))
+		if (!unix2dosfn(cnp->cn_nameptr, cp, cnp->cn_namelen, gen))
 			return gen == 1 ? EINVAL : EEXIST;
 
 		/*

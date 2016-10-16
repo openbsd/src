@@ -21,7 +21,6 @@ SRCS+=	buf.c mkfs.c
 # msdos
 SRCS+=	mkfs_msdos.c msdosfs_fat.c msdosfs_conv.c msdosfs_vfsops.c
 SRCS+=	msdosfs_lookup.c msdosfs_denode.c msdosfs_vnops.c msdosfs_unicode.c
-SRCS+=	clock_subr.c
 
 MAN=	makefs.8
 
