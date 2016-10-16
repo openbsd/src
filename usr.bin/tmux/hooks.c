@@ -1,4 +1,4 @@
-/* $OpenBSD: hooks.c,v 1.8 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: hooks.c,v 1.9 2016/10/16 19:36:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -146,7 +146,7 @@ hooks_run(struct hooks *hooks, struct client *c, struct cmd_find_state *fs,
 	struct hook		*hook;
 	va_list			 ap;
 	char			*name;
-	struct cmdq_item	*new_item, *loop;
+	struct cmdq_item	*new_item;
 
 	va_start(ap, fmt);
 	xvasprintf(&name, fmt, ap);
@@ -160,12 +160,10 @@ hooks_run(struct hooks *hooks, struct client *c, struct cmd_find_state *fs,
 	log_debug("running hook %s", name);
 
 	new_item = cmdq_get_command(hook->cmdlist, fs, NULL, CMDQ_NOHOOKS);
-
-	for (loop = new_item; loop != NULL; loop = loop->next)
-		loop->hook = xstrdup(name);
-	free(name);
-
+	cmdq_format(new_item, "hook", "%s", name);
 	cmdq_append(c, new_item);
+
+	free(name);
 }
 
 void
@@ -175,7 +173,7 @@ hooks_insert(struct hooks *hooks, struct cmdq_item *item,
 	struct hook		*hook;
 	va_list			 ap;
 	char			*name;
-	struct cmdq_item	*new_item, *loop;
+	struct cmdq_item	*new_item;
 
 	if (item->flags & CMDQ_NOHOOKS)
 		return;
@@ -192,13 +190,11 @@ hooks_insert(struct hooks *hooks, struct cmdq_item *item,
 	log_debug("running hook %s (parent %p)", name, item);
 
 	new_item = cmdq_get_command(hook->cmdlist, fs, NULL, CMDQ_NOHOOKS);
-
-	for (loop = new_item; loop != NULL; loop = loop->next)
-		loop->hook = xstrdup(name);
-	free(name);
-
+	cmdq_format(new_item, "hook", "%s", name);
 	if (item != NULL)
 		cmdq_insert_after(item, new_item);
 	else
 		cmdq_append(NULL, new_item);
+
+	free(name);
 }
