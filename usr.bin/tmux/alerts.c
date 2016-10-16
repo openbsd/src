@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.12 2016/10/03 22:52:11 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.13 2016/10/16 22:18:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -75,17 +75,12 @@ alerts_callback(__unused int fd, __unused short events, __unused void *arg)
 static void
 alerts_run_hook(struct session *s, struct winlink *wl, int flags)
 {
-	struct cmd_find_state	 fs;
-
-	if (cmd_find_from_winlink(&fs, s, wl) != 0)
-		return;
-
 	if (flags & WINDOW_BELL)
-		hooks_run(s->hooks, NULL, &fs, "alert-bell");
+		notify_winlink("alert-bell", s, wl);
 	if (flags & WINDOW_SILENCE)
-		hooks_run(s->hooks, NULL, &fs, "alert-silence");
+		notify_winlink("alert-silence", s, wl);
 	if (flags & WINDOW_ACTIVITY)
-		hooks_run(s->hooks, NULL, &fs, "alert-activity");
+		notify_winlink("alert-activity", s, wl);
 }
 
 static int
