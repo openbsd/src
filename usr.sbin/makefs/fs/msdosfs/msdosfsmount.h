@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.4 2016/10/16 21:35:27 tedu Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.21 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -58,13 +58,12 @@
 #define	MSDOSFSMNT_SHORTNAME	1	/* Force old DOS short names only */
 #define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
 #define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
-#define	MSDOSFSMNT_GEMDOSFS	8	/* This is a GEMDOS-flavour */
 #define MSDOSFSMNT_VERSIONED	16	/* Struct is versioned */
 
 /* All flags above: */
 #define	MSDOSFSMNT_MNTOPT \
 	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95 \
-	 |MSDOSFSMNT_GEMDOSFS|MSDOSFSMNT_VERSIONED)
+	 |MSDOSFSMNT_VERSIONED)
 
 #define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
 #define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.4 2016/10/16 21:35:27 tedu Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -101,18 +101,15 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
 	b710 = (struct byte_bpb710 *)bsp->bs710.bsBPB;
 
-	if (!(flags & MSDOSFSMNT_GEMDOSFS)) {
-		if (bsp->bs50.bsBootSectSig0 != BOOTSIG0
-		    || bsp->bs50.bsBootSectSig1 != BOOTSIG1) {
-			DPRINTF(("bootsig0 %d bootsig1 %d\n", 
-			    bsp->bs50.bsBootSectSig0,
-			    bsp->bs50.bsBootSectSig1));
-			error = EINVAL;
-			goto error_exit;
-		}
-		bsize = 0;
-	} else
-		bsize = 512;
+	if (bsp->bs50.bsBootSectSig0 != BOOTSIG0
+	    || bsp->bs50.bsBootSectSig1 != BOOTSIG1) {
+		DPRINTF(("bootsig0 %d bootsig1 %d\n", 
+		    bsp->bs50.bsBootSectSig0,
+		    bsp->bs50.bsBootSectSig1));
+		error = EINVAL;
+		goto error_exit;
+	}
+	bsize = 0;
 
 	pmp = ecalloc(1, sizeof *pmp);
 	/*
@@ -142,22 +139,18 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	    __func__, pmp->pm_BytesPerSec, pmp->pm_ResSectors, pmp->pm_FATs,
 	    pmp->pm_RootDirEnts, pmp->pm_Sectors, pmp->pm_FATsecs,
 	    pmp->pm_SecPerTrack, pmp->pm_Heads, pmp->pm_Media));
-	if (!(flags & MSDOSFSMNT_GEMDOSFS)) {
-		/* XXX - We should probably check more values here */
-    		if (!pmp->pm_BytesPerSec || !SecPerClust
-	    		|| pmp->pm_SecPerTrack > 63) {
-			DPRINTF(("bytespersec %d secperclust %d "
-			    "secpertrack %d\n", 
-			    pmp->pm_BytesPerSec, SecPerClust,
-			    pmp->pm_SecPerTrack));
-			error = EINVAL;
-			goto error_exit;
-		}
+	/* XXX - We should probably check more values here */
+    	if (!pmp->pm_BytesPerSec || !SecPerClust
+    		|| pmp->pm_SecPerTrack > 63) {
+		DPRINTF(("bytespersec %d secperclust %d "
+		    "secpertrack %d\n", 
+		    pmp->pm_BytesPerSec, SecPerClust,
+		    pmp->pm_SecPerTrack));
+		error = EINVAL;
+		goto error_exit;
 	}
 
 	pmp->pm_flags = flags & MSDOSFSMNT_MNTOPT;
-	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS)
-		pmp->pm_flags |= MSDOSFSMNT_NOWIN95;
 	if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
 
@@ -195,49 +188,6 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	} else
 		pmp->pm_flags |= MSDOSFS_FATMIRROR;
 
-	if (flags & MSDOSFSMNT_GEMDOSFS) {
-		if (FAT32(pmp)) {
-			DPRINTF(("FAT32 for GEMDOS\n"));
-			/*
-			 * GEMDOS doesn't know FAT32.
-			 */
-			error = EINVAL;
-			goto error_exit;
-		}
-
-		/*
-		 * Check a few values (could do some more):
-		 * - logical sector size: power of 2, >= block size
-		 * - sectors per cluster: power of 2, >= 1
-		 * - number of sectors:   >= 1, <= size of partition
-		 */
-		if ( (SecPerClust == 0)
-		  || (SecPerClust & (SecPerClust - 1))
-		  || (pmp->pm_BytesPerSec < bsize)
-		  || (pmp->pm_BytesPerSec & (pmp->pm_BytesPerSec - 1))
-		  || (pmp->pm_HugeSectors == 0)
-		  || (pmp->pm_HugeSectors * (pmp->pm_BytesPerSec / bsize)
-		      > psize)) {
-			DPRINTF(("consistency checks for GEMDOS\n"));
-			error = EINVAL;
-			goto error_exit;
-		}
-		/*
-		 * XXX - Many parts of the msdosfs driver seem to assume that
-		 * the number of bytes per logical sector (BytesPerSec) will
-		 * always be the same as the number of bytes per disk block
-		 * Let's pretend it is.
-		 */
-		tmp = pmp->pm_BytesPerSec / bsize;
-		pmp->pm_BytesPerSec  = bsize;
-		pmp->pm_HugeSectors *= tmp;
-		pmp->pm_HiddenSects *= tmp;
-		pmp->pm_ResSectors  *= tmp;
-		pmp->pm_Sectors     *= tmp;
-		pmp->pm_FATsecs     *= tmp;
-		SecPerClust         *= tmp;
-	}
-
 	/* Check that fs has nonzero FAT size */
 	if (pmp->pm_FATsecs == 0) {
 		DPRINTF(("FATsecs is 0\n"));
@@ -265,17 +215,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	pmp->pm_maxcluster = pmp->pm_nmbrofclusters + 1;
 	pmp->pm_fatsize = pmp->pm_FATsecs * pmp->pm_BytesPerSec;
 
-	if (flags & MSDOSFSMNT_GEMDOSFS) {
-		if (pmp->pm_nmbrofclusters <= (0xff0 - 2)) {
-			pmp->pm_fatmask = FAT12_MASK;
-			pmp->pm_fatmult = 3;
-			pmp->pm_fatdiv = 2;
-		} else {
-			pmp->pm_fatmask = FAT16_MASK;
-			pmp->pm_fatmult = 2;
-			pmp->pm_fatdiv = 1;
-		}
-	} else if (pmp->pm_fatmask == 0) {
+	if (pmp->pm_fatmask == 0) {
 		if (pmp->pm_maxcluster
 		    <= ((CLUST_RSRVD - CLUST_FIRST) & FAT12_MASK)) {
 			/*

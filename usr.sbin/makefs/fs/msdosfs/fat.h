@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: fat.h,v 1.3 2016/10/16 21:35:27 tedu Exp $	*/
 /*	$NetBSD: fat.h,v 1.9 2014/10/18 08:33:28 snj Exp $	*/
 
 /*-
@@ -74,11 +74,6 @@
  * than 4084 ((CLUST_RSRVD - CLUST_FIRST) & FAT12_MASK) then we've got a
  * 16 bit FAT filesystem. While mounting, the result of this test is stored
  * in pm_fatentrysize.
- * GEMDOS-flavour (atari):
- * If the filesystem is on floppy we've got a 12 bit FAT filesystem, otherwise
- * 16 bit. We check the d_type field in the disklabel struct while mounting
- * and store the result in the pm_fatentrysize. Note that this kind of
- * detection gets flakey when mounting a vnd-device.
  */
 #define	FAT12(pmp)	(pmp->pm_fatmask == FAT12_MASK)
 #define	FAT16(pmp)	(pmp->pm_fatmask == FAT16_MASK)
