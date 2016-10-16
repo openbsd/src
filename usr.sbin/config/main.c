@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.54 2016/10/16 09:19:15 natano Exp $	*/
+/*	$OpenBSD: main.c,v 1.55 2016/10/16 09:36:46 natano Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	pflag = eflag = uflag = fflag = 0;
-	while ((ch = getopt(argc, argv, "egpfb:s:o:u")) != -1) {
+	while ((ch = getopt(argc, argv, "epfb:s:o:u")) != -1) {
 		switch (ch) {
 
 		case 'o':
@@ -124,18 +124,6 @@ main(int argc, char *argv[])
 			if (!isatty(STDIN_FILENO))
 				verbose = 1;
 			break;
-
-		case 'g':
-			/*
-			 * In addition to DEBUG, you probably wanted to
-			 * set "options KGDB" and maybe others.  We could
-			 * do that for you, but you really should just
-			 * put them in the config file.
-			 */
-			(void)fputs(
-			    "-g is obsolete (use makeoptions DEBUG=\"-g\")\n",
-			    stderr);
-			usage();
 
 		case 'p':
 			/*
