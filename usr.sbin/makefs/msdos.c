@@ -30,23 +30,15 @@
  */
 
 #include <sys/param.h>
-#include <sys/mount.h>
 
 #include <assert.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <util.h>
 
 #include <ffs/buf.h>
-#include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/denode.h>
-#include <fs/msdosfs/msdosfsmount.h>
 #include "makefs.h"
 #include "msdos.h"
 #include "mkfs_msdos.h"

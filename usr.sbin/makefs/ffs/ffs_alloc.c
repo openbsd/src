@@ -42,11 +42,8 @@
  */
 
 #include <sys/param.h>
-#include <sys/time.h>
 
 #include <errno.h>
-
-#include "makefs.h"
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>

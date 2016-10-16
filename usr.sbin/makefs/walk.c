@@ -39,14 +39,11 @@
 #include <sys/stat.h>
 
 #include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "makefs.h"
 

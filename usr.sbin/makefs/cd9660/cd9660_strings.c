@@ -32,13 +32,9 @@
  * OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/mount.h>
-
 #include <ctype.h>
 
 #include "makefs.h"
-#include "cd9660.h"
 
 
 void

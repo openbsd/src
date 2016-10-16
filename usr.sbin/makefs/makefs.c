@@ -36,7 +36,6 @@
  */
 
 #include <assert.h>
-#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -47,7 +46,6 @@
 #include <util.h>
 
 #include "makefs.h"
-#include "cd9660.h"
 
 /*
  * list of supported file systems and dispatch functions

@@ -35,8 +35,6 @@
 #include "cd9660.h"
 #include "iso9660_rrip.h"
 
-#include <util.h>
-
 static int cd9660_write_volume_descriptors(iso9660_disk *, FILE *);
 static int cd9660_write_path_table(iso9660_disk *, FILE *, off_t, int);
 static int cd9660_write_path_tables(iso9660_disk *, FILE *);

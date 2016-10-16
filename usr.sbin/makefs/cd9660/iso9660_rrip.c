@@ -40,7 +40,6 @@
 #include "iso9660_rrip.h"
 #include <sys/queue.h>
 #include <stdio.h>
-#include <util.h>
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
 static int cd9660_susp_handle_continuation(iso9660_disk *, cd9660node *);

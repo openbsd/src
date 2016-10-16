@@ -32,12 +32,8 @@
  * OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/mount.h>
-
 #include <inttypes.h>
 
-#include "makefs.h"
 #include "cd9660.h"
 #include "iso9660_rrip.h"
 

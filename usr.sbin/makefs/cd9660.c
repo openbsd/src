@@ -95,13 +95,10 @@
  *
   */
 
-#include <sys/param.h>
-#include <sys/mount.h>
 #include <sys/queue.h>
 
 #include <string.h>
 #include <ctype.h>
-#include <util.h>
 #include <inttypes.h>
 
 #include "makefs.h"

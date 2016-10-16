@@ -66,7 +66,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/mount.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -77,7 +76,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "makefs.h"
 #include "ffs.h"

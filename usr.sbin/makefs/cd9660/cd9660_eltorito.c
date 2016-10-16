@@ -36,7 +36,6 @@
 #include "cd9660.h"
 #include "cd9660_eltorito.h"
 #include <sys/bootblock.h>
-#include <util.h>
 #include <inttypes.h>
 
 #ifdef DEBUG
@@ -44,8 +43,6 @@
 #else
 #define	ELTORITO_DPRINTF(__x)
 #endif
-
-#include <util.h>
 
 static struct boot_catalog_entry *cd9660_init_boot_catalog_entry(void);
 static struct boot_catalog_entry *cd9660_boot_setup_validation_entry(char);
