@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.5 2016/10/16 20:45:07 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.6 2016/10/16 21:59:28 tedu Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -112,24 +112,9 @@ main(int argc, char *argv[])
 		switch (ch) {
 
 		case 'B':
-			if (strcmp(optarg, "be") == 0 ||
-			    strcmp(optarg, "4321") == 0 ||
-			    strcmp(optarg, "big") == 0) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-				fsoptions.needswap = 1;
-#endif
-			} else if (strcmp(optarg, "le") == 0 ||
-			    strcmp(optarg, "1234") == 0 ||
-			    strcmp(optarg, "little") == 0) {
-#if BYTE_ORDER == BIG_ENDIAN
-				fsoptions.needswap = 1;
-#endif
-			} else {
-				warnx("Invalid endian `%s'.", optarg);
-				usage(fstype, &fsoptions);
-			}
+			warnx("Invalid endian `%s'.", optarg);
+			usage(fstype, &fsoptions);
 			break;
-
 		case 'b':
 			len = strlen(optarg) - 1;
 			if (optarg[len] == '%') {

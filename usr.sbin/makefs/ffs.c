@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.5 2016/10/16 21:44:43 tedu Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.6 2016/10/16 21:59:28 tedu Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -123,8 +123,8 @@ typedef struct {
 
 static	int	ffs_create_image(const char *, fsinfo_t *);
 static	void	ffs_dump_fsinfo(fsinfo_t *);
-static	void	ffs_dump_dirbuf(dirbuf_t *, const char *, int);
-static	void	ffs_make_dirbuf(dirbuf_t *, const char *, fsnode *, int);
+static	void	ffs_dump_dirbuf(dirbuf_t *, const char *);
+static	void	ffs_make_dirbuf(dirbuf_t *, const char *, fsnode *);
 static	int	ffs_populate_dir(const char *, fsnode *, fsinfo_t *);
 static	void	ffs_size_dir(fsnode *, fsinfo_t *);
 static	void	ffs_validate(const char *, fsnode *, fsinfo_t *);
@@ -431,7 +431,7 @@ ffs_dump_fsinfo(fsinfo_t *f)
 	    (long long)f->freefiles, f->freefilepc);
 	printf("\tfree blocks %lld, freeblock %% %d\n",
 	    (long long)f->freeblocks, f->freeblockpc);
-	printf("\tneedswap %d, sectorsize %d\n", f->needswap, f->sectorsize);
+	printf("\tsectorsize %d\n", f->sectorsize);
 
 	printf("\tbsize %d, fsize %d, cpg %d, density %d\n",
 	    fs->bsize, fs->fsize, fs->cpg, fs->density);
@@ -562,7 +562,7 @@ ffs_size_dir(fsnode *root, fsinfo_t *fsopts)
 
 #define	ADDDIRENT(e) do {						\
 	tmpdir.d_namlen = strlen((e));					\
-	this = UFS_DIRSIZ(0, &tmpdir, 0);				\
+	this = UFS_DIRSIZ(&tmpdir);				\
 	if (debug & DEBUG_FS_SIZE_DIR_ADD_DIRENT)			\
 		printf("ADDDIRENT: was: %s (%d) this %d cur %d\n",	\
 		    e, tmpdir.d_namlen, this, curdirsize);		\
@@ -656,7 +656,7 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	} else if (S_ISBLK(cur->type) || S_ISCHR(cur->type)) {
 		dinp->di_size = 0;	/* a device */
 		dinp->di_rdev =
-		    ufs_rw32(cur->inode->st.st_rdev, fsopts->needswap);
+		    ufs_rw32(cur->inode->st.st_rdev, 0);
 	} else if (S_ISLNK(cur->type)) {	/* symlink */
 		slen = strlen(cur->symlink);
 		if (slen < UFS1_MAXSYMLINKLEN) {	/* short link */
@@ -706,7 +706,7 @@ ffs_build_dinode2(struct ufs2_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	} else if (S_ISBLK(cur->type) || S_ISCHR(cur->type)) {
 		dinp->di_size = 0;	/* a device */
 		dinp->di_rdev =
-		    ufs_rw64(cur->inode->st.st_rdev, fsopts->needswap);
+		    ufs_rw64(cur->inode->st.st_rdev, 0);
 	} else if (S_ISLNK(cur->type)) {	/* symlink */
 		slen = strlen(cur->symlink);
 		if (slen < UFS2_MAXSYMLINKLEN) {	/* short link */
@@ -751,11 +751,10 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 				fsopts->curinode++;
 			}
 		}
-		ffs_make_dirbuf(&dirbuf, cur->name, cur, fsopts->needswap);
+		ffs_make_dirbuf(&dirbuf, cur->name, cur);
 		if (cur == root) {		/* we're at "."; add ".." */
 			ffs_make_dirbuf(&dirbuf, "..",
-			    cur->parent == NULL ? cur : cur->parent->first,
-			    fsopts->needswap);
+			    cur->parent == NULL ? cur : cur->parent->first);
 			root->inode->nlink++;	/* count my parent's link */
 		} else if (cur->child != NULL)
 			root->inode->nlink++;	/* count my child's link */
@@ -768,7 +767,7 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		 */
 	}
 	if (debug & DEBUG_FS_POPULATE_DIRBUF)
-		ffs_dump_dirbuf(&dirbuf, dir, fsopts->needswap);
+		ffs_dump_dirbuf(&dirbuf, dir);
 
 		/*
 		 * pass 2: write out dirbuf, then non-directories at this level
@@ -953,7 +952,7 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 
 
 static void
-ffs_dump_dirbuf(dirbuf_t *dbuf, const char *dir, int needswap)
+ffs_dump_dirbuf(dirbuf_t *dbuf, const char *dir)
 {
 	doff_t		i;
 	struct direct	*de;
@@ -966,10 +965,10 @@ ffs_dump_dirbuf(dirbuf_t *dbuf, const char *dir, int needswap)
 
 	for (i = 0; i < dbuf->size; ) {
 		de = (struct direct *)(dbuf->buf + i);
-		reclen = ufs_rw16(de->d_reclen, needswap);
+		reclen = ufs_rw16(de->d_reclen, 0);
 		printf(
 	    " inode %4d %7s offset %4d reclen %3d namlen %3d name %s\n",
-		    ufs_rw32(de->d_fileno, needswap),
+		    ufs_rw32(de->d_fileno, 0),
 		    inode_type(DTTOIF(de->d_type)), i, reclen,
 		    de->d_namlen, de->d_name);
 		i += reclen;
@@ -978,7 +977,7 @@ ffs_dump_dirbuf(dirbuf_t *dbuf, const char *dir, int needswap)
 }
 
 static void
-ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
+ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node)
 {
 	struct direct	de, *dp;
 	uint16_t	llen, reclen;
@@ -989,24 +988,24 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 	assert (node != NULL);
 					/* create direct entry */
 	(void)memset(&de, 0, sizeof(de));
-	de.d_fileno = ufs_rw32(node->inode->ino, needswap);
+	de.d_fileno = ufs_rw32(node->inode->ino, 0);
 	de.d_type = IFTODT(node->type);
 	de.d_namlen = (uint8_t)strlen(name);
 	strlcpy(de.d_name, name, sizeof de.d_name);
-	reclen = UFS_DIRSIZ(0, &de, needswap);
-	de.d_reclen = ufs_rw16(reclen, needswap);
+	reclen = UFS_DIRSIZ(&de);
+	de.d_reclen = ufs_rw16(reclen, 0);
 
 	dp = (struct direct *)(dbuf->buf + dbuf->cur);
 	llen = 0;
 	if (dp != NULL)
-		llen = UFS_DIRSIZ(0, dp, needswap);
+		llen = UFS_DIRSIZ(dp);
 
 	if (debug & DEBUG_FS_MAKE_DIRBUF)
 		printf(
 		    "ffs_make_dirbuf: dbuf siz %d cur %d lastlen %d\n"
 		    "  ino %d type %d reclen %d namlen %d name %.30s\n",
 		    dbuf->size, dbuf->cur, llen,
-		    ufs_rw32(de.d_fileno, needswap), de.d_type, reclen,
+		    ufs_rw32(de.d_fileno, 0), de.d_type, reclen,
 		    de.d_namlen, de.d_name);
 
 	if (reclen + dbuf->cur + llen > roundup(dbuf->size, UFS_DIRBLKSIZ)) {
@@ -1019,12 +1018,12 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 		memset(dbuf->buf + dbuf->size - UFS_DIRBLKSIZ, 0, UFS_DIRBLKSIZ);
 		dbuf->cur = dbuf->size - UFS_DIRBLKSIZ;
 	} else if (dp) {			/* shrink end of previous */
-		dp->d_reclen = ufs_rw16(llen,needswap);
+		dp->d_reclen = ufs_rw16(llen,0);
 		dbuf->cur += llen;
 	}
 	dp = (struct direct *)(dbuf->buf + dbuf->cur);
 	memcpy(dp, &de, reclen);
-	dp->d_reclen = ufs_rw16(dbuf->size - dbuf->cur, needswap);
+	dp->d_reclen = ufs_rw16(dbuf->size - dbuf->cur, 0);
 }
 
 /*
@@ -1059,10 +1058,10 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	ffs_rdfs(FFS_FSBTODB(fs, cgtod(fs, cg)), (int)fs->fs_cgsize, &sbbuf,
 	    fsopts);
 	cgp = (struct cg *)sbbuf;
-	if (!cg_chkmagic(cgp, fsopts->needswap))
+	if (!cg_chkmagic(cgp, 0))
 		errx(1, "ffs_write_inode: cg %d: bad magic number", cg);
 
-	assert (isclr(cg_inosused(cgp, fsopts->needswap), cgino));
+	assert (isclr(cg_inosused(cgp, 0), cgino));
 
 	buf = emalloc(fs->fs_bsize);
 	dp1 = (struct ufs1_dinode *)buf;
@@ -1075,12 +1074,12 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 		errx(1,
 		    "ffs_write_inode: cg %d out of inodes for ino %u",
 		    cg, ino);
-	setbit(cg_inosused(cgp, fsopts->needswap), cgino);
-	ufs_add32(cgp->cg_cs.cs_nifree, -1, fsopts->needswap);
+	setbit(cg_inosused(cgp, 0), cgino);
+	ufs_add32(cgp->cg_cs.cs_nifree, -1, 0);
 	fs->fs_cstotal.cs_nifree--;
 	fs->fs_cs(fs, cg).cs_nifree--;
 	if (S_ISDIR(DIP(dp, mode))) {
-		ufs_add32(cgp->cg_cs.cs_ndir, 1, fsopts->needswap);
+		ufs_add32(cgp->cg_cs.cs_ndir, 1, 0);
 		fs->fs_cstotal.cs_ndir++;
 		fs->fs_cs(fs, cg).cs_ndir++; 
 	}
@@ -1088,10 +1087,10 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	/*
 	 * Initialize inode blocks on the fly for UFS2.
 	 */
-	initediblk = ufs_rw32(cgp->cg_initediblk, fsopts->needswap);
+	initediblk = ufs_rw32(cgp->cg_initediblk, 0);
 	if (ffs_opts->version == 2 &&
 	    (uint32_t)(cgino + FFS_INOPB(fs)) > initediblk &&
-	    initediblk < ufs_rw32(cgp->cg_niblk, fsopts->needswap)) {
+	    initediblk < ufs_rw32(cgp->cg_niblk, 0)) {
 		memset(buf, 0, fs->fs_bsize);
 		dip = (struct ufs2_dinode *)buf;
 		for (i = 0; i < FFS_INOPB(fs); i++) {
@@ -1102,7 +1101,7 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 				  cg * fs->fs_ipg + initediblk)),
 		    fs->fs_bsize, buf, fsopts);
 		initediblk += FFS_INOPB(fs);
-		cgp->cg_initediblk = ufs_rw32(initediblk, fsopts->needswap);
+		cgp->cg_initediblk = ufs_rw32(initediblk, 0);
 	}
 
 
@@ -1112,19 +1111,10 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 					/* now write inode */
 	d = FFS_FSBTODB(fs, ino_to_fsba(fs, ino));
 	ffs_rdfs(d, fs->fs_bsize, buf, fsopts);
-	if (fsopts->needswap) {
-		if (ffs_opts->version == 1)
-			ffs_dinode1_swap(&dp->ffs1_din,
-			    &dp1[ino_to_fsbo(fs, ino)]);
-		else
-			ffs_dinode2_swap(&dp->ffs2_din,
-			    &dp2[ino_to_fsbo(fs, ino)]);
-	} else {
-		if (ffs_opts->version == 1)
-			dp1[ino_to_fsbo(fs, ino)] = dp->ffs1_din;
-		else
-			dp2[ino_to_fsbo(fs, ino)] = dp->ffs2_din;
-	}
+	if (ffs_opts->version == 1)
+		dp1[ino_to_fsbo(fs, ino)] = dp->ffs1_din;
+	else
+		dp2[ino_to_fsbo(fs, ino)] = dp->ffs2_din;
 	ffs_wtfs(d, fs->fs_bsize, buf, fsopts);
 	free(buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: dir.h,v 1.3 2016/10/16 21:59:28 tedu Exp $	*/
 /*	$NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp $	*/
 
 /*
@@ -115,62 +115,8 @@ struct	direct {
 #define	UFS_DIRECTSIZ(namlen) \
 	((sizeof(struct direct) - (FFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-#define UFS_DIRSIZ(oldfmt, dp, needswap)	\
-    (((oldfmt) && !(needswap)) ?		\
-    UFS_DIRECTSIZ((dp)->d_type) : UFS_DIRECTSIZ((dp)->d_namlen))
-#else
-#define UFS_DIRSIZ(oldfmt, dp, needswap)	\
-    (((oldfmt) && (needswap)) ?			\
-    UFS_DIRECTSIZ((dp)->d_type) : UFS_DIRECTSIZ((dp)->d_namlen))
-#endif
-
-/*
- * UFS_OLDDIRFMT and UFS_NEWDIRFMT are code numbers for a directory
- * format change that happened in ffs a long time ago. (Back in the
- * 80s, if I'm not mistaken.)
- *
- * These code numbers do not appear on disk. They're generated from
- * runtime logic that is cued by other things, which is why
- * UFS_OLDDIRFMT is confusingly 1 and UFS_NEWDIRFMT is confusingly 0.
- *
- * Relatedly, the FFS_EI byte swapping logic for directories is a
- * horrible mess. For example, to access the namlen field, one
- * currently does the following:
- *
- * #if (BYTE_ORDER == LITTLE_ENDIAN)
- *         swap = (UFS_IPNEEDSWAP(VTOI(vp)) == 0);
- * #else
- *         swap = (UFS_IPNEEDSWAP(VTOI(vp)) != 0);
- * #endif
- *         return ((FSFMT(vp) && swap) ? dp->d_type : dp->d_namlen);
- *
- * UFS_IPNEEDSWAP() returns true if the volume is opposite-endian. This
- * horrible "swap" logic is cutpasted all over everywhere but amounts
- * to the following:
- *
- *    running code      volume          lfs_dobyteswap  "swap"
- *    ----------------------------------------------------------
- *    LITTLE_ENDIAN     LITTLE_ENDIAN   false           true
- *    LITTLE_ENDIAN     BIG_ENDIAN      true            false
- *    BIG_ENDIAN        LITTLE_ENDIAN   true            true
- *    BIG_ENDIAN        BIG_ENDIAN      false           false
- *
- * which you'll note boils down to "volume is little-endian".
- *
- * Meanwhile, FSFMT(vp) yields UFS_OLDDIRFMT or UFS_NEWDIRFMT via
- * perverted logic of its own. Since UFS_OLDDIRFMT is 1 (contrary to
- * what one might expect approaching this cold) what this mess means
- * is: on OLDDIRFMT volumes that are little-endian, we read the
- * namlen value out of the type field. This is because on OLDDIRFMT
- * volumes there is no d_type field, just a 16-bit d_namlen; so if
- * the 16-bit d_namlen is little-endian, the useful part of it is
- * in the first byte, which in the NEWDIRFMT structure is the d_type
- * field.
- */
-
-#define UFS_OLDDIRFMT	1
-#define UFS_NEWDIRFMT	0
+#define UFS_DIRSIZ(dp)	\
+    UFS_DIRECTSIZ((dp)->d_namlen)
 
 /*
  * Template for manipulating directories.  Should use struct direct's,

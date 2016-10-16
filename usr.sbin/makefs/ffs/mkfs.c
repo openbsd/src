@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.3 2016/10/16 21:59:28 tedu Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -495,8 +495,6 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	 * writing out in each cylinder group.
 	 */
 	memcpy(writebuf, &sblock, sbsize);
-	if (fsopts->needswap)
-		ffs_sb_swap(&sblock, (struct fs*)writebuf);
 	memcpy(iobuf, writebuf, SBLOCKSIZE);
 
 	printf("super-block backups (for fsck -b #) at:");
@@ -537,8 +535,6 @@ ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
 	char *wrbuf;
 
         memcpy(writebuf, &sblock, sbsize);
-	if (fsopts->needswap)
-		ffs_sb_swap(fs, (struct fs*)writebuf);
 	ffs_wtfs(fs->fs_sblockloc / sectorsize, sbsize, writebuf, fsopts);
 
 	/* Write out the duplicate super blocks */
@@ -555,11 +551,7 @@ ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
-		if (fsopts->needswap)
-			ffs_csum_swap((struct csum *)space,
-			    (struct csum *)wrbuf, size);
-		else
-			memcpy(wrbuf, space, (u_int)size);
+		memcpy(wrbuf, space, (u_int)size);
 		ffs_wtfs(FFS_FSBTODB(fs, fs->fs_csaddr + i), size, wrbuf, fsopts);
 		space = (char *)space + size;
 	}
@@ -721,8 +713,6 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 	 */
 	start = sblock.fs_bsize > SBLOCKSIZE ? sblock.fs_bsize : SBLOCKSIZE;
 	memcpy(&iobuf[start], &acg, sblock.fs_cgsize);
-	if (fsopts->needswap)
-		ffs_cg_swap(&acg, (struct cg*)&iobuf[start], &sblock);
 	start += sblock.fs_bsize;
 	dp1 = (struct ufs1_dinode *)(&iobuf[start]);
 	dp2 = (struct ufs2_dinode *)(&iobuf[start]);

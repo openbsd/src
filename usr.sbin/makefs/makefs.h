@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.h,v 1.4 2016/10/16 20:45:07 natano Exp $	*/
+/*	$OpenBSD: makefs.h,v 1.5 2016/10/16 21:59:28 tedu Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -156,7 +156,6 @@ typedef struct makefs_fsinfo {
 	off_t	offset;		/* offset from start of file */
 	int	freefilepc;	/* free file % */
 	int	freeblockpc;	/* free block % */
-	int	needswap;	/* non-zero if byte swapping needed */
 	int	sectorsize;	/* sector size */
 
 	void	*fs_specific;	/* File system specific additions. */
