@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bswap.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: ufs_bswap.h,v 1.3 2016/10/16 22:19:10 tedu Exp $	*/
 /*	$NetBSD: ufs_bswap.h,v 1.21 2016/04/29 03:05:04 christos Exp $	*/
 
 /*
@@ -30,11 +30,6 @@
 #define _UFS_UFS_BSWAP_H_
 
 #include <sys/endian.h>
-
-/* Macros to access UFS flags */
-#define	UFS_MPNEEDSWAP(ump)	((void)(ump), 0)
-#define UFS_FSNEEDSWAP(fs)	((void)(fs), 0)
-#define	UFS_IPNEEDSWAP(ip)	((void)(ip), 0)
 
 /* inlines for access to swapped data */
 static inline u_int16_t

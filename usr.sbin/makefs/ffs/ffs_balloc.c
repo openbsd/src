@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.4 2016/10/16 22:19:10 tedu Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.21 2015/03/29 05:52:59 agc Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
@@ -80,7 +80,6 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	int osize, nsize, num, i, error;
 	int32_t *allocblk, allociblk[UFS_NIADDR + 1];
 	int32_t *allocib;
-	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	lbn = ffs_lblkno(fs, offset);
 	size = ffs_blkoff(fs, offset) + bufsize;
@@ -113,7 +112,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 */
 
 	if (lbn < UFS_NDADDR) {
-		nb = ufs_rw32(ip->i_ffs1_db[lbn], needswap);
+		nb = ufs_rw32(ip->i_ffs1_db[lbn], 0);
 		if (nb != 0 && ip->i_ffs1_size >= ffs_lblktosize(fs, lbn + 1)) {
 
 			/*
@@ -186,7 +185,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 				*bpp = bp;
 			}
 		}
-		ip->i_ffs1_db[lbn] = ufs_rw32((int32_t)newb, needswap);
+		ip->i_ffs1_db[lbn] = ufs_rw32((int32_t)newb, 0);
 		return (0);
 	}
 
@@ -208,7 +207,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 */
 
 	--num;
-	nb = ufs_rw32(ip->i_ffs1_ib[indirs[0].in_off], needswap);
+	nb = ufs_rw32(ip->i_ffs1_ib[indirs[0].in_off], 0);
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
@@ -228,7 +227,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		if ((error = bwrite(bp)) != 0)
 			return error;
 		allocib = &ip->i_ffs1_ib[indirs[0].in_off];
-		*allocib = ufs_rw32((int32_t)nb, needswap);
+		*allocib = ufs_rw32((int32_t)nb, 0);
 	}
 
 	/*
@@ -243,7 +242,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			return error;
 		}
 		bap = (int32_t *)bp->b_data;
-		nb = ufs_rw32(bap[indirs[i].in_off], needswap);
+		nb = ufs_rw32(bap[indirs[i].in_off], 0);
 		if (i == num)
 			break;
 		i++;
@@ -272,7 +271,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			brelse(bp, 0);
 			return error;
 		}
-		bap[indirs[i - 1].in_off] = ufs_rw32(nb, needswap);
+		bap[indirs[i - 1].in_off] = ufs_rw32(nb, 0);
 
 		bwrite(bp);
 	}
@@ -296,7 +295,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			clrbuf(nbp);
 			*bpp = nbp;
 		}
-		bap[indirs[num].in_off] = ufs_rw32(nb, needswap);
+		bap[indirs[num].in_off] = ufs_rw32(nb, 0);
 
 		/*
 		 * If required, write synchronously, otherwise use
@@ -330,7 +329,6 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	int osize, nsize, num, i, error;
 	int64_t *allocblk, allociblk[UFS_NIADDR + 1];
 	int64_t *allocib;
-	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	lbn = ffs_lblkno(fs, offset);
 	size = ffs_blkoff(fs, offset) + bufsize;
@@ -363,7 +361,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 */
 
 	if (lbn < UFS_NDADDR) {
-		nb = ufs_rw64(ip->i_ffs2_db[lbn], needswap);
+		nb = ufs_rw64(ip->i_ffs2_db[lbn], 0);
 		if (nb != 0 && ip->i_ffs2_size >= ffs_lblktosize(fs, lbn + 1)) {
 
 			/*
@@ -436,7 +434,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 				*bpp = bp;
 			}
 		}
-		ip->i_ffs2_db[lbn] = ufs_rw64(newb, needswap);
+		ip->i_ffs2_db[lbn] = ufs_rw64(newb, 0);
 		return (0);
 	}
 
@@ -458,7 +456,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 */
 
 	--num;
-	nb = ufs_rw64(ip->i_ffs2_ib[indirs[0].in_off], needswap);
+	nb = ufs_rw64(ip->i_ffs2_ib[indirs[0].in_off], 0);
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
@@ -478,7 +476,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		if ((error = bwrite(bp)) != 0)
 			return error;
 		allocib = &ip->i_ffs2_ib[indirs[0].in_off];
-		*allocib = ufs_rw64(nb, needswap);
+		*allocib = ufs_rw64(nb, 0);
 	}
 
 	/*
@@ -493,7 +491,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			return error;
 		}
 		bap = (int64_t *)bp->b_data;
-		nb = ufs_rw64(bap[indirs[i].in_off], needswap);
+		nb = ufs_rw64(bap[indirs[i].in_off], 0);
 		if (i == num)
 			break;
 		i++;
@@ -522,7 +520,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			brelse(bp, 0);
 			return error;
 		}
-		bap[indirs[i - 1].in_off] = ufs_rw64(nb, needswap);
+		bap[indirs[i - 1].in_off] = ufs_rw64(nb, 0);
 
 		bwrite(bp);
 	}
@@ -546,7 +544,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			clrbuf(nbp);
 			*bpp = nbp;
 		}
-		bap[indirs[num].in_off] = ufs_rw64(nb, needswap);
+		bap[indirs[num].in_off] = ufs_rw64(nb, 0);
 
 		/*
 		 * If required, write synchronously, otherwise use
