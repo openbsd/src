@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bswap.h,v 1.3 2016/10/16 22:19:10 tedu Exp $	*/
+/*	$OpenBSD: ufs_bswap.h,v 1.4 2016/10/16 22:23:08 tedu Exp $	*/
 /*	$NetBSD: ufs_bswap.h,v 1.21 2016/04/29 03:05:04 christos Exp $	*/
 
 /*
@@ -35,23 +35,21 @@
 static inline u_int16_t
 ufs_rw16(uint16_t a, int ns)
 {
-	return ((ns) ? swap16(a) : (a));
+	return a;
 }
 
 static inline u_int32_t
 ufs_rw32(uint32_t a, int ns)
 {
-	return ((ns) ? swap32(a) : (a));
+	return a;
 }
 
 static inline u_int64_t
 ufs_rw64(uint64_t a, int ns)
 {
-	return ((ns) ? swap64(a) : (a));
+	return a;
 }
 
-#define ufs_add16(a, b, ns) \
-	(a) = ufs_rw16(ufs_rw16((a), (ns)) + (b), (ns))
 #define ufs_add32(a, b, ns) \
 	(a) = ufs_rw32(ufs_rw32((a), (ns)) + (b), (ns))
 #define ufs_add64(a, b, ns) \
