@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.23 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.24 2016/10/16 22:06:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -65,7 +65,7 @@ cmd_rename_session_exec(struct cmd *self, struct cmdq_item *item)
 	RB_INSERT(sessions, &sessions, s);
 
 	server_status_session(s);
-	notify_session_renamed(s);
+	notify_session("session-renamed", s);
 
 	return (CMD_RETURN_NORMAL);
 }

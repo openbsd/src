@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.19 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.20 2016/10/16 22:06:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -156,6 +156,6 @@ recalculate_sizes(void)
 		}
 
 		server_redraw_window(w);
-		notify_window_layout_changed(w);
+		notify_window("window-layout-changed", w);
 	}
 }

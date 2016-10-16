@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.37 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.38 2016/10/16 22:06:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -228,7 +228,7 @@ cmd_find_best_winlink_with_window(struct cmd_find_state *fs)
 	struct winlink	 *wl, *wl_loop;
 
 	wl = NULL;
-	if (fs->s->curw->window == fs->w)
+	if (fs->s->curw != NULL && fs->s->curw->window == fs->w)
 		wl = fs->s->curw;
 	else {
 		RB_FOREACH(wl_loop, winlinks, &fs->s->windows) {

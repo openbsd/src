@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.10 2016/08/03 09:07:02 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.11 2016/10/16 22:06:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -175,7 +175,7 @@ layout_parse(struct window *w, const char *layout)
 
 	layout_print_cell(lc, __func__, 0);
 
-	notify_window_layout_changed(w);
+	notify_window("window-layout-changed", w);
 
 	return (0);
 

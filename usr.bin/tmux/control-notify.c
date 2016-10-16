@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.17 2016/10/15 00:12:58 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.18 2016/10/16 22:06:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -158,7 +158,7 @@ control_notify_window_renamed(struct window *w)
 }
 
 void
-control_notify_attached_session_changed(struct client *c)
+control_notify_client_session_changed(struct client *c)
 {
 	struct session	*s;
 

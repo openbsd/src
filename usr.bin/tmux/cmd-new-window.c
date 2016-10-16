@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.64 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.65 2016/10/16 22:06:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -112,7 +112,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 		 * Can't use session_detach as it will destroy session if this
 		 * makes it empty.
 		 */
-		notify_window_unlinked(s, wl->window);
+		notify_session_window("window-unlinked", s, wl->window);
 		wl->flags &= ~WINLINK_ALERTFLAGS;
 		winlink_stack_remove(&s->lastw, wl);
 		winlink_remove(&s->windows, wl);
