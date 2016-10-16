@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.3 2016/10/16 22:33:46 tedu Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.7 2015/03/29 05:52:59 agc Exp $	*/
 
 /*-
@@ -189,7 +189,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
+detrunc(struct denode *dep, u_long length, int flags)
 {
 	int error;
 	int allerror = 0;
@@ -220,7 +220,7 @@ detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
 	}
 
 	if (dep->de_FileSize < length)
-		return (deextend(dep, length, cred));
+		return (deextend(dep, length));
 	lastblock = de_clcount(pmp, length) - 1;
 
 	/*
@@ -312,7 +312,7 @@ detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
  * Extend the file described by dep to length specified by length.
  */
 int
-deextend(struct denode *dep, u_long length, struct kauth_cred *cred)
+deextend(struct denode *dep, u_long length)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	u_long count;
@@ -343,7 +343,7 @@ deextend(struct denode *dep, u_long length, struct kauth_cred *cred)
 		error = extendfile(dep, count, NULL, NULL, DE_CLEAR);
 		if (error) {
 			/* truncate the added clusters away again */
-			(void) detrunc(dep, dep->de_FileSize, 0, cred);
+			(void) detrunc(dep, dep->de_FileSize, 0);
 			return (error);
 		}
 	}

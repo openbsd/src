@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.4 2016/10/16 22:33:46 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.17 2016/01/30 09:59:27 mlelstv Exp $ */
 
 /*-
@@ -426,7 +426,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	nsize = st->st_size;
 	DPRINTF(("%s(nsize=%zu, osize=%zu)\n", __func__, nsize, osize));
 	if (nsize > osize) {
-		if ((error = deextend(dep, nsize, NULL)) != 0) {
+		if ((error = deextend(dep, nsize)) != 0) {
 			errno = error;
 			return -1;
 		}

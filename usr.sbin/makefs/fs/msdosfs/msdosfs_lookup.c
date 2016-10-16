@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.4 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.5 2016/10/16 22:33:46 tedu Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.35 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 		    - ddep->de_FileSize;
 		dirclust = de_clcount(pmp, needlen);
 		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0) {
-			(void)detrunc(ddep, ddep->de_FileSize, 0, NOCRED);
+			(void)detrunc(ddep, ddep->de_FileSize, 0);
 			goto err_norollback;
 		}
 
