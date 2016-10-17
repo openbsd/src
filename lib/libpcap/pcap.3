@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.45 2016/04/06 09:10:28 jmc Exp $
+.\"	$OpenBSD: pcap.3,v 1.46 2016/10/17 02:54:40 lteo Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: April 6 2016 $
+.Dd $Mdocdate: October 17 2016 $
 .Dt PCAP_OPEN_LIVE 3
 .Os
 .Sh NAME
@@ -199,7 +199,7 @@
 .Ft const char *
 .Fn pcap_statustostr "int errnum"
 .Ft int
-.Fn pcap_offline_filter "const struct bpf_program *" "const struct pcap_pkthdr *" "const u_char *"
+.Fn pcap_offline_filter "const struct bpf_program *fp" "const struct pcap_pkthdr *h" "const u_char *pkt"
 .Sh DESCRIPTION
 .Nm
 provides a high level interface to packet capture systems.
