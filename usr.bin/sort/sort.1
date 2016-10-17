@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.55 2016/10/11 13:08:20 schwarze Exp $
+.\"	$OpenBSD: sort.1,v 1.56 2016/10/17 02:58:29 lteo Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 11 2016 $
+.Dd $Mdocdate: October 17 2016 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -114,7 +114,7 @@ Store temporary files in the directory
 The default path is the value of the environment variable
 .Ev TMPDIR
 or
-.Pa /var/tmp
+.Pa /tmp
 if
 .Ev TMPDIR
 is not defined.
@@ -545,7 +545,7 @@ option.
 .El
 .Sh FILES
 .Bl -tag -width Pa -compact
-.It Pa /var/tmp/.bsdsort.PID.*
+.It Pa /tmp/.bsdsort.PID.*
 Temporary files.
 .El
 .Sh EXIT STATUS
