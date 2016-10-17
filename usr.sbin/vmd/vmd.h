@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.30 2016/10/15 14:02:11 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.31 2016/10/17 16:26:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -117,6 +117,7 @@ struct vmd_switch {
 	uint32_t		 sw_id;
 	char			*sw_name;
 	char			 sw_ifname[IF_NAMESIZE];
+	char			*sw_group;
 	unsigned int		 sw_flags;
 	struct viflist		 sw_ifs;
 	TAILQ_ENTRY(vmd_switch)	 sw_entry;

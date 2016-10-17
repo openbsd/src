@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.3 2016/10/15 14:02:11 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.4 2016/10/17 16:26:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -248,18 +248,6 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFDESCR,
 		    &vfr, sizeof(vfr));
 
-		if (vif->vif_group) {
-			if (strlcpy(vfr.vfr_value, vif->vif_group,
-			    sizeof(vfr.vfr_value)) >= sizeof(vfr.vfr_value))
-				return (-1);
-
-			log_debug("%s: interface %s group %s", __func__,
-			    vfr.vfr_name, vfr.vfr_value);
-
-			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFGROUP,
-			    &vfr, sizeof(vfr));
-		}
-
 		/* Add interface to bridge/switch */
 		if ((vsw = switch_getbyname(vif->vif_switch)) != NULL) {
 			if (strlcpy(vfbr.vfr_name, vsw->sw_ifname,
@@ -278,6 +266,33 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 			    &vfbr, sizeof(vfbr));
 		} else if (vif->vif_switch != NULL)
 			log_warnx("switch %s not found", vif->vif_switch);
+
+		/* First group is defined per-interface */
+		if (vif->vif_group) {
+			if (strlcpy(vfr.vfr_value, vif->vif_group,
+			    sizeof(vfr.vfr_value)) >= sizeof(vfr.vfr_value))
+				return (-1);
+
+			log_debug("%s: interface %s group %s", __func__,
+			    vfr.vfr_name, vfr.vfr_value);
+
+			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFGROUP,
+			    &vfr, sizeof(vfr));
+		}
+
+		/* The second group is defined per-switch */
+		if (vsw != NULL && vsw->sw_group != NULL) {
+			if (strlcpy(vfr.vfr_value, vsw->sw_group,
+			    sizeof(vfr.vfr_value)) >= sizeof(vfr.vfr_value))
+				return (-1);
+
+			log_debug("%s: interface %s group %s switch %s",
+			    __func__, vfr.vfr_name, vfr.vfr_value,
+			    vsw->sw_name);
+
+			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFGROUP,
+			    &vfr, sizeof(vfr));
+		}
 
 		/* Set the new interface status to up or down */
 		proc_compose(ps, PROC_PRIV, (vif->vif_flags & IFF_UP) ?

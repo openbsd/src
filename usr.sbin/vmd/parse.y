@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2016/10/15 14:02:11 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2016/10/17 16:26:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -222,6 +222,14 @@ switch_opts	: disable			{
 			vif->vif_name = $2;
 
 			TAILQ_INSERT_TAIL(&vsw->sw_ifs, vif, vif_entry);
+		}
+		| GROUP string			{
+			if (priv_validgroup($2) == -1) {
+				yyerror("invalid group name: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			vsw->sw_group = $2;
 		}
 		| INTERFACE string		{
 			if (priv_getiftype($2, vsw_type, &vsw_unit) == -1 ||

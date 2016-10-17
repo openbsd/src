@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.8 2016/10/15 14:02:11 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.9 2016/10/17 16:26:20 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2016 $
+.Dd $Mdocdate: October 17 2016 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -207,6 +207,15 @@ nor
 is specified.
 .It Cm disable
 Do not configure this switch.
+.It Cm group Ar group-name
+Assign each interface to a specific interface
+.Dq group .
+For example, this can be used to write
+.Xr pf.conf 5
+rules for several VM interfaces in the same group.
+The
+.Ar group-name
+must not end with a digit.
 .It Cm interface Ar name
 Set the
 .Xr switch 4

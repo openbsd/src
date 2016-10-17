@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.35 2016/10/15 14:02:11 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.36 2016/10/17 16:26:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -578,6 +578,7 @@ switch_remove(struct vmd_switch *vsw)
 		free(vif);
 	}
 
+	free(vsw->sw_group);
 	free(vsw->sw_name);
 	free(vsw);
 }
