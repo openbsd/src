@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.7 2016/10/16 22:26:34 tedu Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.8 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -845,9 +845,9 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 	off_t	bufleft, chunk, offset;
 	ssize_t nread;
 	struct inode	in;
-	struct buf *	bp;
+	struct mkfsbuf *	bp;
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
-	struct vnode vp = { fsopts, NULL };
+	struct mkfsvnode vp = { fsopts, NULL };
 
 	assert (din != NULL);
 	assert (buf != NULL);

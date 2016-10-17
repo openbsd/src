@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.3 2016/10/16 22:33:46 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.4 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.7 2015/03/29 05:52:59 agc Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
 	int error;
 	struct direntry *direntptr;
 	struct denode *ldep;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 
 #ifdef MSDOSFS_DEBUG
 	printf("deget(pmp %p, dirclust %lu, diroffset %lx, depp %p)\n",
@@ -100,7 +100,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
 		dirclust = pmp->pm_rootdirblk;
 
 	ldep = ecalloc(1, sizeof(*ldep));
-	ldep->de_vnode = NULL;
+	ldep->de_mkfsvnode = NULL;
 	ldep->de_flag = 0;
 	ldep->de_devvp = 0;
 	ldep->de_lockf = 0;
@@ -112,7 +112,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
 	ldep->de_refcnt = 1;
 	fc_purge(ldep, 0);
 	/*
-	 * Copy the directory entry into the denode area of the vnode.
+	 * Copy the directory entry into the denode area of the mkfsvnode.
 	 */
 	if ((dirclust == MSDOSFSROOT
 	     || (FAT32(pmp) && dirclust == pmp->pm_rootdirblk))
@@ -124,7 +124,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
 		 * exists), and then use the time and date from that entry
 		 * as the time and date for the root denode.
 		 */
-		ldep->de_vnode = (struct vnode *)-1;
+		ldep->de_mkfsvnode = (struct mkfsvnode *)-1;
 
 		ldep->de_Attributes = ATTR_DIRECTORY;
 		if (FAT32(pmp))
@@ -160,7 +160,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
 	}
 
 	/*
-	 * Fill in a few fields of the vnode and finish filling in the
+	 * Fill in a few fields of the mkfsvnode and finish filling in the
 	 * denode.  Then return the address of the found denode.
 	 */
 	if (ldep->de_Attributes & ATTR_DIRECTORY) {
@@ -198,7 +198,7 @@ detrunc(struct denode *dep, u_long length, int flags)
 	daddr_t bn, lastblock;
 	int boff;
 	int isadir = dep->de_Attributes & ATTR_DIRECTORY;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 	struct msdosfsmount *pmp = dep->de_pmp;
 
 #ifdef MSDOSFS_DEBUG
@@ -208,12 +208,12 @@ detrunc(struct denode *dep, u_long length, int flags)
 	/*
 	 * Disallow attempts to truncate the root directory since it is of
 	 * fixed size.  That's just the way dos filesystems are.  We use
-	 * the VROOT bit in the vnode because checking for the directory
+	 * the VROOT bit in the mkfsvnode because checking for the directory
 	 * bit and a startcluster of 0 in the denode is not adequate to
 	 * recognize the root directory at this point in a file or
 	 * directory's life.
 	 */
-	if (dep->de_vnode != NULL && !FAT32(pmp)) {
+	if (dep->de_mkfsvnode != NULL && !FAT32(pmp)) {
 		printf("detrunc(): can't truncate root directory, clust %ld, offset %ld\n",
 		    dep->de_dirclust, dep->de_diroffset);
 		return (EINVAL);
@@ -321,7 +321,7 @@ deextend(struct denode *dep, u_long length)
 	/*
 	 * The root of a DOS filesystem cannot be extended.
 	 */
-	if (dep->de_vnode != NULL && !FAT32(pmp))
+	if (dep->de_mkfsvnode != NULL && !FAT32(pmp))
 		return EINVAL;
 
 	/*

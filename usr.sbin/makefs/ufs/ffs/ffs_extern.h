@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.4 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.83 2016/10/01 13:15:45 jdolecek Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #define FFS_EXTATTR_AUTOCREATE	6	/* size for backing file autocreation */
 #define FFS_MAXID		7	/* number of valid ffs ids */
 
-struct buf;
+struct mkfsbuf;
 struct fid;
 struct fs;
 struct inode;
@@ -60,7 +60,7 @@ struct timeval;
 struct timespec;
 struct ufsmount;
 struct uio;
-struct vnode;
+struct mkfsvnode;
 struct mbuf;
 struct cg;
 

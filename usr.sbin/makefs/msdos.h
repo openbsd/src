@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdos.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: msdos.h,v 1.3 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: msdos.h,v 1.3 2015/10/16 16:40:02 christos Exp $	*/
 
 /*-
@@ -30,11 +30,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct vnode;
+struct mkfsvnode;
 struct denode;
 
-struct msdosfsmount *msdosfs_mount(struct vnode *, int);
-int msdosfs_root(struct msdosfsmount *, struct vnode *);
+struct msdosfsmount *msdosfs_mount(struct mkfsvnode *, int);
+int msdosfs_root(struct msdosfsmount *, struct mkfsvnode *);
 
 struct denode *msdosfs_mkfile(const char *, struct denode *, fsnode *);
 struct denode *msdosfs_mkdire(const char *, struct denode *, fsnode *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.4 2016/10/16 22:19:10 tedu Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.5 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.21 2015/03/29 05:52:59 agc Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
@@ -46,8 +46,8 @@
 #include "ffs/ufs_inode.h"
 #include "ffs/ffs_extern.h"
 
-static int ffs_balloc_ufs1(struct inode *, off_t, int, struct buf **);
-static int ffs_balloc_ufs2(struct inode *, off_t, int, struct buf **);
+static int ffs_balloc_ufs1(struct inode *, off_t, int, struct mkfsbuf **);
+static int ffs_balloc_ufs2(struct inode *, off_t, int, struct mkfsbuf **);
 
 /*
  * Balloc defines the structure of file system storage
@@ -58,7 +58,7 @@ static int ffs_balloc_ufs2(struct inode *, off_t, int, struct buf **);
  */
 
 int
-ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
+ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bpp)
 {
 	if (ip->i_fs->fs_magic == FS_UFS2_MAGIC)
 		return ffs_balloc_ufs2(ip, offset, bufsize, bpp);
@@ -67,12 +67,12 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 }
 
 static int
-ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
+ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bpp)
 {
 	daddr_t lbn, lastlbn;
 	int size;
 	int32_t nb;
-	struct buf *bp, *nbp;
+	struct mkfsbuf *bp, *nbp;
 	struct fs *fs = ip->i_fs;
 	struct indir indirs[UFS_NIADDR + 2];
 	daddr_t newb, pref;
@@ -317,11 +317,11 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 }
 
 static int
-ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
+ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bpp)
 {
 	daddr_t lbn, lastlbn;
 	int size;
-	struct buf *bp, *nbp;
+	struct mkfsbuf *bp, *nbp;
 	struct fs *fs = ip->i_fs;
 	struct indir indirs[UFS_NIADDR + 2];
 	daddr_t newb, pref, nb;

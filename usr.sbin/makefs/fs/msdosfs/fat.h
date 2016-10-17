@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.h,v 1.3 2016/10/16 21:35:27 tedu Exp $	*/
+/*	$OpenBSD: fat.h,v 1.4 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: fat.h,v 1.9 2014/10/18 08:33:28 snj Exp $	*/
 
 /*-
@@ -104,7 +104,7 @@
 int pcbmap(struct denode *, u_long, daddr_t *, u_long *, int *);
 int clusterfree(struct msdosfsmount *, u_long, u_long *);
 int clusteralloc(struct msdosfsmount *, u_long, u_long,u_long *,u_long *);
-int extendfile(struct denode *, u_long, struct buf **, u_long *, int);
+int extendfile(struct denode *, u_long, struct mkfsbuf **, u_long *, int);
 int fatentry(int, struct msdosfsmount *, u_long, u_long *, u_long);
 void fc_purge(struct denode *, u_int);
 void fc_lookup(struct denode *, u_long, u_long *, u_long *);

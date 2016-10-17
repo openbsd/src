@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdos.c,v 1.4 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: msdos.c,v 1.5 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ void
 msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
 	struct msdos_options *msdos_opt = fsopts->fs_specific;
-	struct vnode vp, rootvp;
+	struct mkfsvnode vp, rootvp;
 	struct timeval	start;
 	struct msdosfsmount *pmp;
 

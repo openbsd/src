@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.5 2016/10/16 22:33:46 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.6 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.35 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	u_long fndoffset, havecnt = 0, wcnt = 1, i;
 	struct direntry *ndep;
 	struct msdosfsmount *pmp = ddep->de_pmp;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 	daddr_t bn;
 	int blsize;
 #define async 0
@@ -266,7 +266,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
  * directory entry within the block.
  */
 int
-readep(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct buf **bpp, struct direntry **epp)
+readep(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct mkfsbuf **bpp, struct direntry **epp)
 {
 	int error;
 	daddr_t bn;
@@ -293,7 +293,7 @@ readep(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct buf *
  * entry within the block.
  */
 int
-readde(struct denode *dep, struct buf **bpp, struct direntry **epp)
+readde(struct denode *dep, struct mkfsbuf **bpp, struct direntry **epp)
 {
 	return (readep(dep->de_pmp, dep->de_dirclust, dep->de_diroffset,
 			bpp, epp));
@@ -311,7 +311,7 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 	int blsize;
 	u_long cn;
 	daddr_t bn;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 	int error;
 
 	for (gen = 1;; gen++) {

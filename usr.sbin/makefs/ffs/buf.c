@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: buf.c,v 1.3 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: buf.c,v 1.24 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -49,11 +49,11 @@
 #include "makefs.h"
 #include "buf.h"
 
-TAILQ_HEAD(buftailhead,buf) buftail;
+TAILQ_HEAD(buftailhead,mkfsbuf) buftail;
 
 int
-bread(struct vnode *vp, daddr_t blkno, int size, int u2 __unused,
-	struct buf **bpp)
+bread(struct mkfsvnode *vp, daddr_t blkno, int size, int u2 __unused,
+	struct mkfsbuf **bpp)
 {
 	off_t	offset;
 	ssize_t	rv;
@@ -87,7 +87,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, int u2 __unused,
 }
 
 void
-brelse(struct buf *bp, int u1 __unused)
+brelse(struct mkfsbuf *bp, int u1 __unused)
 {
 
 	assert (bp != NULL);
@@ -117,7 +117,7 @@ brelse(struct buf *bp, int u1 __unused)
 }
 
 int
-bwrite(struct buf *bp)
+bwrite(struct mkfsbuf *bp)
 {
 	off_t	offset;
 	ssize_t	rv;
@@ -148,7 +148,7 @@ bwrite(struct buf *bp)
 void
 bcleanup(void)
 {
-	struct buf *bp;
+	struct mkfsbuf *bp;
 
 	/*
 	 * XXX	this really shouldn't be necessary, but i'm curious to
@@ -168,12 +168,12 @@ bcleanup(void)
 	printf("bcleanup: done\n");
 }
 
-struct buf *
-getblk(struct vnode *vp, daddr_t blkno, int size, int u1 __unused,
+struct mkfsbuf *
+getblk(struct mkfsvnode *vp, daddr_t blkno, int size, int u1 __unused,
     int u2 __unused)
 {
 	static int buftailinitted;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 	void *n;
 
 	if (debug & DEBUG_BUF_GETBLK)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.4 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.6 2003/08/07 11:25:33 agc Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
@@ -56,7 +56,7 @@ daddr_t ffs_blkpref_ufs2(struct inode *, daddr_t, int, int64_t *);
 void ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 
 	/* ffs_balloc.c */
-int ffs_balloc(struct inode *, off_t, int, struct buf **);
+int ffs_balloc(struct inode *, off_t, int, struct mkfsbuf **);
 
 	/* ffs_bswap.c */
 void ffs_sb_swap(struct fs*, struct fs *);

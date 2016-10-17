@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.3 2016/10/16 22:33:46 tedu Exp $	*/
+/*	$OpenBSD: buf.h,v 1.4 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: buf.h,v 1.10 2015/03/29 05:52:59 agc Exp $	*/
 
 /*
@@ -56,14 +56,14 @@ struct componentname {
 };
 
 struct makefs_fsinfo;
-struct vnode {
+struct mkfsvnode {
 	struct makefs_fsinfo *fs;
 	void *v_data;
 };
 
 #define vput(a) ((void)(a))
 
-struct buf {
+struct mkfsbuf {
 	void *		b_data;
 	long		b_bufsize;
 	long		b_bcount;
@@ -71,14 +71,14 @@ struct buf {
 	daddr_t		b_lblkno;
 	struct makefs_fsinfo * b_fs;
 
-	TAILQ_ENTRY(buf)	b_tailq;
+	TAILQ_ENTRY(mkfsbuf)	b_tailq;
 };
 
 void		bcleanup(void);
-int		bread(struct vnode *, daddr_t, int, int, struct buf **);
-void		brelse(struct buf *, int);
-int		bwrite(struct buf *);
-struct buf *	getblk(struct vnode *, daddr_t, int, int, int);
+int		bread(struct mkfsvnode *, daddr_t, int, int, struct mkfsbuf **);
+void		brelse(struct mkfsbuf *, int);
+int		bwrite(struct mkfsbuf *);
+struct mkfsbuf *	getblk(struct mkfsvnode *, daddr_t, int, int, int);
 
 #define	bdwrite(bp)	bwrite(bp)
 #define	clrbuf(bp)	memset((bp)->b_data, 0, (u_int)(bp)->b_bcount)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.3 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@ print_fat_stats(void)
 
 static void fatblock(struct msdosfsmount *, u_long, u_long *, u_long *,
 			  u_long *);
-void updatefats(struct msdosfsmount *, struct buf *, u_long);
+void updatefats(struct msdosfsmount *, struct mkfsbuf *, u_long);
 static inline void usemap_free(struct msdosfsmount *, u_long);
 static inline void usemap_alloc(struct msdosfsmount *, u_long);
 static int fatchain(struct msdosfsmount *, u_long, u_long, u_long);
@@ -174,7 +174,7 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 	u_long byteoffset;
 	u_long bn;
 	u_long bo;
-	struct buf *bp = NULL;
+	struct mkfsbuf *bp = NULL;
 	u_long bp_bn = -1;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	u_long bsize;
@@ -376,10 +376,10 @@ fc_purge(struct denode *dep, u_int frcn)
  * fatbn - block number relative to begin of filesystem of the modified FAT block.
  */
 void
-updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
+updatefats(struct msdosfsmount *pmp, struct mkfsbuf *bp, u_long fatbn)
 {
 	int i, error;
-	struct buf *bpn;
+	struct mkfsbuf *bpn;
 
 	DPRINTF(("%s(pmp %p, bp %p, fatbn %lu)\n", __func__, pmp, bp, fatbn));
 
@@ -550,7 +550,7 @@ fatentry(int function, struct msdosfsmount *pmp, u_long cn, u_long *oldcontents,
 	int error;
 	u_long readcn;
 	u_long bn, bo, bsize, byteoffset;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 
 	DPRINTF(("%s(func %d, pmp %p, clust %lu, oldcon %p, newcon " "%lx)\n",
 	    __func__, function, pmp, cn, oldcontents, newcontents));
@@ -648,7 +648,7 @@ fatchain(struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith)
 {
 	int error;
 	u_long bn, bo, bsize, byteoffset, readcn, newc;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 
 	DPRINTF(("%s(pmp %p, start %lu, count %lu, fillwith %lx)\n", __func__,
 	    pmp, start, count, fillwith));
@@ -873,7 +873,7 @@ int
 freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
 {
 	int error;
-	struct buf *bp = NULL;
+	struct mkfsbuf *bp = NULL;
 	u_long bn, bo, bsize, byteoffset;
 	u_long readcn, lbn = -1;
 
@@ -930,7 +930,7 @@ freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
 int
 fillinusemap(struct msdosfsmount *pmp)
 {
-	struct buf *bp = NULL;
+	struct mkfsbuf *bp = NULL;
 	u_long cn, readcn;
 	int error;
 	u_long bn, bo, bsize, byteoffset;
@@ -995,12 +995,12 @@ fillinusemap(struct msdosfsmount *pmp)
  */
 
 int
-extendfile(struct denode *dep, u_long count, struct buf **bpp, u_long *ncp, int flags)
+extendfile(struct denode *dep, u_long count, struct mkfsbuf **bpp, u_long *ncp, int flags)
 {
 	int error;
 	u_long frcn = 0, cn, got;
 	struct msdosfsmount *pmp = dep->de_pmp;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 
 	/*
 	 * Don't try to extend the root directory

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.4 2016/10/16 22:33:46 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.5 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.17 2016/01/30 09:59:27 mlelstv Exp $ */
 
 /*-
@@ -73,18 +73,18 @@
  * Some general notes:
  *
  * In the ufs filesystem the inodes, superblocks, and indirect blocks are
- * read/written using the vnode for the filesystem. Blocks that represent
- * the contents of a file are read/written using the vnode for the file
+ * read/written using the mkfsvnode for the filesystem. Blocks that represent
+ * the contents of a file are read/written using the mkfsvnode for the file
  * (including directories when they are read/written as files). This
  * presents problems for the dos filesystem because data that should be in
  * an inode (if dos had them) resides in the directory itself.	Since we
- * must update directory entries without the benefit of having the vnode
- * for the directory we must use the vnode for the filesystem.	This means
+ * must update directory entries without the benefit of having the mkfsvnode
+ * for the directory we must use the mkfsvnode for the filesystem.	This means
  * that when a directory is actually read/written (via read, write, or
- * readdir, or seek) we must use the vnode for the filesystem instead of
- * the vnode for the directory as would happen in ufs. This is to insure we
+ * readdir, or seek) we must use the mkfsvnode for the filesystem instead of
+ * the mkfsvnode for the directory as would happen in ufs. This is to insure we
  * retrieve the correct block from the buffer cache since the hash value is
- * based upon the vnode address and the desired block number.
+ * based upon the mkfsvnode address and the desired block number.
  */
 
 static int msdosfs_wfile(const char *, struct denode *, fsnode *);
@@ -127,7 +127,7 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 	u_int diroff;
 	int blsize;
 	struct msdosfsmount *pmp;
-	struct buf *bp = 0;
+	struct mkfsbuf *bp = 0;
 	struct direntry *dep;
 	u_char dosfilename[12];
 	int wincnt = 1;
@@ -383,7 +383,7 @@ bad:
 static int
 msdosfs_updatede(struct denode *dep)
 {
-	struct buf *bp;
+	struct mkfsbuf *bp;
 	struct direntry *dirp;
 	int error;
 
@@ -407,7 +407,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	struct stat *st = &node->inode->st;
 	size_t nsize, offs;
 	struct msdosfsmount *pmp = dep->de_pmp;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 	char *dat;
 	u_long cn = 0;
 
@@ -525,7 +525,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	u_long newcluster, pcl, bn;
 	daddr_t lbn;
 	struct direntry *denp;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 
 	cn.cn_nameptr = node->name;
 	cn.cn_namelen = strlen(node->name);

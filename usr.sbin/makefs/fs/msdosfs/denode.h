@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.5 2016/10/16 22:33:46 tedu Exp $	*/
+/*	$OpenBSD: denode.h,v 1.6 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 2014/07/08 09:21:52 hannken Exp $	*/
 
 /*-
@@ -52,12 +52,12 @@
 
 struct genfs_node {
 };
-struct vnode;
+struct mkfsvnode;
 struct msdosfsmount;
-struct buf;
+struct mkfsbuf;
 
 /*
- * This is the pc filesystem specific portion of the vnode structure.
+ * This is the pc filesystem specific portion of the mkfsvnode structure.
  *
  * To describe a file uniquely the de_dirclust, de_diroffset, and
  * de_StartCluster fields are used.
@@ -148,7 +148,7 @@ struct fatcache {
 
 /*
  * This is the in memory variant of a dos directory entry.  It is usually
- * contained within a vnode.
+ * contained within a mkfsvnode.
  */
 struct denode_key {
 	u_long dk_dirclust;	/* cluster of the directory file containing this entry */
@@ -157,8 +157,8 @@ struct denode_key {
 };
 struct denode {
 	struct genfs_node de_gnode;
-	struct vnode *de_vnode;	/* addr of vnode we are part of */
-	struct vnode *de_devvp;	/* vnode of blk dev we live on */
+	struct mkfsvnode *de_mkfsvnode;	/* addr of mkfsvnode we are part of */
+	struct mkfsvnode *de_devvp;	/* mkfsvnode of blk dev we live on */
 	u_long de_flag;		/* flag bits */
 	dev_t de_dev;		/* device where direntry lives */
 	struct denode_key de_key;
@@ -244,7 +244,7 @@ struct denode {
 
 
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
-#define	DETOV(de)	((de)->de_vnode)
+#define	DETOV(de)	((de)->de_mkfsvnode)
 
 #define	DETIMES(dep, acc, mod, cre, gmtoff) \
 	while ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) \
@@ -263,7 +263,7 @@ struct defid {
 };
 
 /*
- * Prototypes for MSDOSFS vnode operations
+ * Prototypes for MSDOSFS mkfsvnode operations
  */
 int	msdosfs_lookup		(void *);
 int	msdosfs_create		(void *);
@@ -299,7 +299,7 @@ int	msdosfs_pathconf	(void *);
  */
 struct componentname;
 struct direntry;
-int msdosfs_update(struct vnode *, const struct timespec *,
+int msdosfs_update(struct mkfsvnode *, const struct timespec *,
 	    const struct timespec *, int);
 int createde(struct denode *, struct denode *,
 		struct denode **, struct componentname *);
@@ -307,12 +307,12 @@ int deextend(struct denode *, u_long);
 int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
 int detrunc(struct denode *, u_long, int);
 int deupdat(struct denode *, int);
-int readde(struct denode *, struct buf **, struct direntry **);
+int readde(struct denode *, struct mkfsbuf **, struct direntry **);
 int readep(struct msdosfsmount *, u_long, u_long,
-		struct buf **, struct direntry **);
+		struct mkfsbuf **, struct direntry **);
 int uniqdosname(struct denode *, struct componentname *, u_char *);
-int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int);
-void msdosfs_gop_markupdate(struct vnode *, int);
+int msdosfs_gop_alloc(struct mkfsvnode *, off_t, off_t, int);
+void msdosfs_gop_markupdate(struct mkfsvnode *, int);
 void msdosfs_detimes(struct denode *, const struct timespec *,
     const struct timespec *, const struct timespec *, int);
 int msdosfs_fh_enter(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);

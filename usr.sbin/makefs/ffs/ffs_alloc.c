@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.6 2016/10/16 22:26:34 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.7 2016/10/17 01:16:22 tedu Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.29 2016/06/24 19:24:11 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
@@ -58,7 +58,7 @@
 static int scanc(u_int, const u_char *, const u_char *, int);
 
 static daddr_t ffs_alloccg(struct inode *, int, daddr_t, int);
-static daddr_t ffs_alloccgblk(struct inode *, struct buf *, daddr_t);
+static daddr_t ffs_alloccgblk(struct inode *, struct mkfsbuf *, daddr_t);
 static daddr_t ffs_hashalloc(struct inode *, int, daddr_t, int,
 		     daddr_t (*)(struct inode *, int, daddr_t, int));
 static int32_t ffs_mapsearch(struct fs *, struct cg *, daddr_t, int);
@@ -288,7 +288,7 @@ static daddr_t
 ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 {
 	struct cg *cgp;
-	struct buf *bp;
+	struct mkfsbuf *bp;
 	daddr_t bno, blkno;
 	int error, frags, allocsiz, i;
 	struct fs *fs = ip->i_fs;
@@ -369,7 +369,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
  * blocks may be fragmented by the routine that allocates them.
  */
 static daddr_t
-ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref)
+ffs_alloccgblk(struct inode *ip, struct mkfsbuf *bp, daddr_t bpref)
 {
 	struct cg *cgp;
 	daddr_t blkno;
