@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.7 2016/10/17 07:45:32 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.8 2016/10/17 14:25:33 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 	fstype_t	*fstype;
 	fsinfo_t	 fsoptions;
 	fsnode		*root;
-	int	 	 ch, i, len;
+	int	 	 ch, len;
 
 	setprogname(argv[0]);
 
