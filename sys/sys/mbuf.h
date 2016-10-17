@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.220 2016/09/17 00:38:43 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.221 2016/10/17 02:53:47 lteo Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -185,8 +185,8 @@ struct mbuf {
 #define M_VLANTAG	0x0020	/* ether_vtag is valid */
 #define M_LOOP		0x0040	/* for Mbuf statistics */
 #define M_ACAST		0x0080	/* received as IPv6 anycast */
-#define M_BCAST		0x0100	/* send/received as link-level broadcast */
-#define M_MCAST		0x0200	/* send/received as link-level multicast */
+#define M_BCAST		0x0100	/* sent/received as link-level broadcast */
+#define M_MCAST		0x0200	/* sent/received as link-level multicast */
 #define M_CONF		0x0400  /* payload was encrypted (ESP-transport) */
 #define M_AUTH		0x0800  /* payload was authenticated (AH or ESP auth) */
 #define M_TUNNEL	0x1000  /* IP-in-IP added by tunnel mode IPsec */
