@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.4 2016/10/17 00:09:26 deraadt Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -36,8 +36,15 @@
 
 #include "cd9660.h"
 #include "cd9660_eltorito.h"
-#include <sys/bootblock.h>
 #include <inttypes.h>
+
+/*
+ * Partition Status Information from Apple Tech Note 1189
+ */
+#define	APPLE_PS_VALID		0x00000001	/* Entry is valid */
+#define	APPLE_PS_ALLOCATED	0x00000002	/* Entry is allocated */
+#define	APPLE_PS_READABLE	0x00000010	/* Entry is readable */
+#define	APPLE_PS_WRITABLE	0x00000020	/* Entry is writable */
 
 #ifdef DEBUG
 #define	ELTORITO_DPRINTF(__x)	printf __x
@@ -521,14 +528,6 @@ cd9660_write_apm_partition_entry(FILE *fd, int idx, int total_partitions,
 	uint32_t apm32, part_status;
 	uint16_t apm16;
 
-	/* See Apple Tech Note 1189 for the details about the pmPartStatus
-	 * flags.
-	 * Below the flags which are default:
-	 * - IsValid     0x01
-	 * - IsAllocated 0x02
-	 * - IsReadable  0x10
-	 * - IsWritable  0x20
-	 */
 	part_status = APPLE_PS_VALID | APPLE_PS_ALLOCATED | APPLE_PS_READABLE |
 	    APPLE_PS_WRITABLE;
 
