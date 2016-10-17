@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.11 2016/09/03 17:13:48 chl Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.12 2016/10/17 10:49:17 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1051,7 +1051,7 @@ switch_datapathid(const char *arg, int d)
 	char *endptr;
 
 	errno = 0;
-	newdpid = strtoll(arg, &endptr, 0);
+	newdpid = strtoull(arg, &endptr, 0);
 	if (arg[0] == '\0' || endptr[0] != '\0' || errno == ERANGE)
 		errx(1, "invalid arg for datapath-id: %s", arg);
 

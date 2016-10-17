@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.330 2016/09/03 13:46:57 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.331 2016/10/17 10:49:17 rzalamena Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -517,7 +517,7 @@ const struct	cmd {
 	{ "-roaming",	0,		0,		umb_roaming },
 	{ "patch",	NEXTARG,	0,		setpair },
 	{ "-patch",	1,		0,		unsetpair },
-	{ "datapathid",	NEXTARG,	0,		switch_datapathid },
+	{ "datapath",	NEXTARG,	0,		switch_datapathid },
 	{ "portno",	NEXTARG2,	0,		NULL, switch_portno },
 	{ "addlocal",	NEXTARG,	0,		addlocal },
 #else /* SMALL */
