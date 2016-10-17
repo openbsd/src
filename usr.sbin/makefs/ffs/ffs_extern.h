@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.4 2016/10/17 01:16:22 tedu Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.5 2016/10/17 13:45:38 natano Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.6 2003/08/07 11:25:33 agc Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
@@ -50,6 +50,7 @@ void panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));  
 
 	/* ffs_alloc.c */
+struct inode;
 int ffs_alloc(struct inode *, daddr_t, daddr_t, int, daddr_t *);
 daddr_t ffs_blkpref_ufs1(struct inode *, daddr_t, int, int32_t *);
 daddr_t ffs_blkpref_ufs2(struct inode *, daddr_t, int, int64_t *);
@@ -57,13 +58,6 @@ void ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 
 	/* ffs_balloc.c */
 int ffs_balloc(struct inode *, off_t, int, struct mkfsbuf **);
-
-	/* ffs_bswap.c */
-void ffs_sb_swap(struct fs*, struct fs *);
-void ffs_dinode1_swap(struct ufs1_dinode *, struct ufs1_dinode *);
-void ffs_dinode2_swap(struct ufs2_dinode *, struct ufs2_dinode *);
-void ffs_csum_swap(struct csum *, struct csum *, int);
-void ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 	/* ffs_subr.c */
 int ffs_isblock(struct fs *, u_char *, int32_t);

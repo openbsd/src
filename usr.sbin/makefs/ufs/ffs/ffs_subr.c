@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.5 2016/10/16 22:26:34 tedu Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.6 2016/10/17 13:45:38 natano Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.49 2016/05/07 11:59:08 maxv Exp $	*/
 
 /*
@@ -39,10 +39,12 @@ extern const int inside[], around[];
 extern const u_char * const fragtbl[];
 
 #include <ufs/ffs/fs.h>
-#include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
 
 #include <ufs/ufs/dinode.h>
+
+#include "ffs/ffs_extern.h"
+
 void    panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
 
