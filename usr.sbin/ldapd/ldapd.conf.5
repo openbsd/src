@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.19 2014/06/11 18:00:40 jmc Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.20 2016/10/17 13:44:03 jca Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 11 2014 $
+.Dd $Mdocdate: October 17 2016 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -108,7 +108,7 @@ the interface name with a .crt extension, e.g.\&
 .Pa /etc/ldap/certs/fxp0.crt .
 .Pp
 If the certificate name is an absolute path, a .crt and .key extension
-is appended to form the certificate path and key path respectively.
+are appended to form the certificate path and key path respectively.
 .Pp
 Only secured connections accept plain text password authentication.
 Connections using TLS or unix domain sockets are always considered secured.
@@ -125,7 +125,7 @@ This option can be given multiple times, in which case the URLs are
 considered equal.
 Clients may choose to follow any of the referral URLs.
 .Pp
-The URL format has the following format:
+The URL has the following format:
 .Bd -literal -offset indent
 ldap://ldap.example.com
 ldaps://ldap.example.com:3890
@@ -148,7 +148,7 @@ below.
 .Sh NAMESPACES
 A namespace is a subtree of the global X.500 DIT (Directory Information Tree),
 also known as a naming context.
-All entries' distinguished names (DN) has the same suffix, which is used to
+All entries' distinguished names (DN) have the same suffix, which is used to
 identify the namespace.
 The suffix should consist of the domain components, in reverse order, of your
 domain name, as recommended by RFC 2247.
@@ -322,6 +322,8 @@ This would define MyOidAttributes as a symbolic name for the OID
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ldap/ldapd.confXXX" -compact
+.It Pa /etc/ldap/certs/
+The directory where LDAP certificates are kept.
 .It Pa /etc/ldapd.conf
 Default
 .Xr ldapd 8
