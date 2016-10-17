@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.42 2016/10/17 17:44:47 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.43 2016/10/17 17:59:57 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -1169,15 +1169,10 @@ domove(int argcnt, const char *cmd, int sub)
 	switch (*cmd) {
 
 	case 'b':
-		if (!sub && es->cursor == 0)
-			return -1;
-		ncursor = backword(argcnt);
-		break;
-
 	case 'B':
 		if (!sub && es->cursor == 0)
 			return -1;
-		ncursor = Backword(argcnt);
+		ncursor = (*cmd == 'b' ? backword : Backword)(argcnt);
 		break;
 
 	case 'e':
@@ -1233,15 +1228,10 @@ domove(int argcnt, const char *cmd, int sub)
 		break;
 
 	case 'w':
-		if (!sub && es->cursor + 1 >= es->linelen)
-			return -1;
-		ncursor = forwword(argcnt);
-		break;
-
 	case 'W':
 		if (!sub && es->cursor + 1 >= es->linelen)
 			return -1;
-		ncursor = Forwword(argcnt);
+		ncursor = (*cmd == 'w' ? forwword : Forwword)(argcnt);
 		break;
 
 	case '0':
