@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.h,v 1.5 2016/10/16 21:59:28 tedu Exp $	*/
+/*	$OpenBSD: makefs.h,v 1.6 2016/10/17 07:54:17 natano Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -38,12 +38,6 @@
 
 #ifndef	_MAKEFS_H
 #define	_MAKEFS_H
-
-#define HAVE_STRUCT_STAT_ST_FLAGS 1
-#define HAVE_STRUCT_STAT_ST_GEN 1
-#define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
-#define HAVE_STRUCT_STATVFS_F_IOSIZE 0
-#define HAVE_FSTATVFS 1
 
 #include <sys/stat.h>
 #include <err.h>

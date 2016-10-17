@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.8 2016/10/17 01:16:22 tedu Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.9 2016/10/17 07:54:17 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -80,10 +80,6 @@
 
 #include "makefs.h"
 #include "ffs.h"
-
-#if HAVE_STRUCT_STATVFS_F_IOSIZE && HAVE_FSTATVFS
-#include <sys/statvfs.h>
-#endif
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -447,9 +443,6 @@ ffs_dump_fsinfo(fsinfo_t *f)
 static int
 ffs_create_image(const char *image, fsinfo_t *fsopts)
 {
-#if HAVE_STRUCT_STATVFS_F_IOSIZE && HAVE_FSTATVFS
-	struct statvfs	sfs;
-#endif
 	struct fs	*fs;
 	char	*buf;
 	int	i, bufsize;
@@ -469,16 +462,7 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	}
 
 		/* zero image */
-#if HAVE_STRUCT_STATVFS_F_IOSIZE && HAVE_FSTATVFS
-	if (fstatvfs(fsopts->fd, &sfs) == -1) {
-#endif
-		bufsize = 8192;
-#if HAVE_STRUCT_STATVFS_F_IOSIZE && HAVE_FSTATVFS
-		warn("can't fstatvfs `%s', using default %d byte chunk",
-		    image, bufsize);
-	} else
-		bufsize = sfs.f_iosize;
-#endif
+	bufsize = 8192;
 	bufrem = fsopts->size;
 
 	if (fsopts->offset != 0)
@@ -630,23 +614,17 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	dinp->di_mode = cur->inode->st.st_mode;
 	dinp->di_nlink = cur->inode->nlink;
 	dinp->di_size = cur->inode->st.st_size;
-#if HAVE_STRUCT_STAT_ST_FLAGS
 	dinp->di_flags = cur->inode->st.st_flags;
-#endif
-#if HAVE_STRUCT_STAT_ST_GEN
 	dinp->di_gen = cur->inode->st.st_gen;
-#endif
 	dinp->di_uid = cur->inode->st.st_uid;
 	dinp->di_gid = cur->inode->st.st_gid;
 
 	dinp->di_atime = st->st_atime;
 	dinp->di_mtime = st->st_mtime;
 	dinp->di_ctime = st->st_ctime;
-#if HAVE_STRUCT_STAT_ST_MTIMENSEC
 	dinp->di_atimensec = st->st_atimensec;
 	dinp->di_mtimensec = st->st_mtimensec;
 	dinp->di_ctimensec = st->st_ctimensec;
-#endif
 		/* not set: di_db, di_ib, di_blocks, di_spare */
 
 	membuf = NULL;
@@ -680,23 +658,17 @@ ffs_build_dinode2(struct ufs2_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	dinp->di_mode = cur->inode->st.st_mode;
 	dinp->di_nlink = cur->inode->nlink;
 	dinp->di_size = cur->inode->st.st_size;
-#if HAVE_STRUCT_STAT_ST_FLAGS
 	dinp->di_flags = cur->inode->st.st_flags;
-#endif
-#if HAVE_STRUCT_STAT_ST_GEN
 	dinp->di_gen = cur->inode->st.st_gen;
-#endif
 	dinp->di_uid = cur->inode->st.st_uid;
 	dinp->di_gid = cur->inode->st.st_gid;
 
 	dinp->di_atime = st->st_atime;
 	dinp->di_mtime = st->st_mtime;
 	dinp->di_ctime = st->st_ctime;
-#if HAVE_STRUCT_STAT_ST_MTIMENSEC
 	dinp->di_atimensec = st->st_atimensec;
 	dinp->di_mtimensec = st->st_mtimensec;
 	dinp->di_ctimensec = st->st_ctimensec;
-#endif
 		/* not set: di_db, di_ib, di_blocks, di_spare */
 
 	membuf = NULL;
