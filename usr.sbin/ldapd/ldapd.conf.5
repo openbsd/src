@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.20 2016/10/17 13:44:03 jca Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.21 2016/10/17 13:49:03 jca Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -322,14 +322,14 @@ This would define MyOidAttributes as a symbolic name for the OID
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ldap/ldapd.confXXX" -compact
-.It Pa /etc/ldap/certs/
-The directory where LDAP certificates are kept.
 .It Pa /etc/ldapd.conf
 Default
 .Xr ldapd 8
 configuration file.
 .It Pa /etc/ldap/*.schema
 Default schema definition files.
+.It Pa /etc/ldap/certs/
+The directory where LDAP certificates are kept.
 .El
 .Sh SEE ALSO
 .Xr ldapctl 8 ,
