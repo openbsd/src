@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.6 2016/10/16 21:59:28 tedu Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.7 2016/10/17 07:45:32 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 		err(1, "Unable to get system time");
 
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:M:m:O:o:s:S:t:T:")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:f:M:m:O:o:s:S:t:T:")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -127,10 +127,6 @@ main(int argc, char *argv[])
 				    strsuftoll("free blocks",
 					optarg, 0, LLONG_MAX);
 			}
-			break;
-
-		case 'd':
-			debug = strtoll(optarg, NULL, 0);
 			break;
 
 		case 'f':
@@ -380,11 +376,10 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 
 	prog = getprogname();
 	fprintf(stderr,
-"Usage: %s [-B endian] [-b free-blocks] [-d debug-mask]\n"
-"\t[-f free-files] [-M minimum-size] [-m maximum-size]\n"
-"\t[-O offset] [-o fs-options] [-S sector-size]\n"
-"\t[-s image-size] [-T <timestamp/file>] [-t fs-type]"
-" image-file directory\n",
+"Usage: %s [-B endian] [-b free-blocks] [-f free-files]\n"
+"\t[-M minimum-size] [-m maximum-size] [-O offset]\n"
+"\t[-o fs-options] [-S sector-size] [-s image-size]\n"
+"\t[-T <timestamp/file>] [-t fs-type] image-file directory\n",
 	    prog);
 
 	if (fstype) {

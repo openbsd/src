@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makefs.8,v 1.4 2016/10/16 20:45:07 natano Exp $
+.\"	$OpenBSD: makefs.8,v 1.5 2016/10/17 07:45:32 natano Exp $
 .\"	$NetBSD: makefs.8,v 1.55 2015/11/25 16:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -44,7 +44,6 @@
 .Nm
 .Op Fl B Ar endian
 .Op Fl b Ar free-blocks
-.Op Fl d Ar debug-mask
 .Op Fl f Ar free-files
 .Op Fl M Ar minimum-size
 .Op Fl m Ar maximum-size
@@ -92,11 +91,6 @@ An optional
 suffix may be provided to indicate that
 .Ar free-blocks
 indicates a percentage of the calculated image size.
-.It Fl d Ar debug-mask
-Enable various levels of debugging, depending upon which bits are
-set in
-.Ar debug-mask .
-XXX: document these
 .It Fl f Ar free-files
 Ensure that a minimum of
 .Ar free-files
