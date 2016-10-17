@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.220 2016/10/16 22:12:50 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.221 2016/10/17 11:19:55 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -197,8 +197,8 @@ char	*TypeNames[] = {
 SIMPLEQ_HEAD(filed_list, filed) Files;
 struct	filed consfile;
 
-int	nunix = 1;		/* Number of Unix domain sockets requested */
-char	*path_unix[MAXUNIX] = { _PATH_LOG }; /* Paths to Unix domain sockets */
+int	nunix;			/* Number of Unix domain sockets requested */
+char	**path_unix;		/* Paths to Unix domain sockets */
 int	Debug;			/* debug flag */
 int	Foreground;		/* run in foreground, instead of daemonizing */
 int	Startup = 1;		/* startup flag */
@@ -359,7 +359,12 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 	int		 fd_ctlsock, fd_klog, fd_sendsys, fd_bind, fd_listen;
-	int		 fd_unix[MAXUNIX];
+	int		*fd_unix;
+
+	if ((path_unix = malloc(sizeof(*path_unix))) == NULL)
+		err(1, "malloc %s", _PATH_LOG);
+	path_unix[0] = _PATH_LOG;
+	nunix = 1;
 
 	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hK:k:m:nP:p:S:s:T:U:uVZ"))
 	    != -1)
@@ -371,8 +376,9 @@ main(int argc, char *argv[])
 			Family = PF_INET6;
 			break;
 		case 'a':
-			if (nunix >= MAXUNIX)
-				errx(1, "out of descriptors: %s", optarg);
+			if ((path_unix = reallocarray(path_unix, nunix + 1,
+			    sizeof(*path_unix))) == NULL)
+				err(1, "malloc %s", optarg);
 			path_unix[nunix++] = optarg;
 			break;
 		case 'C':		/* file containing CA certificates */
@@ -520,6 +526,8 @@ main(int argc, char *argv[])
 			die(0);
 	}
 
+	if ((fd_unix = reallocarray(NULL, nunix, sizeof(*fd_unix))) == NULL)
+		err(1, "malloc unix");
 	for (i = 0; i < nunix; i++) {
 		fd_unix[i] = unix_socket(path_unix[i], SOCK_DGRAM, 0666);
 		if (fd_unix[i] == -1) {
