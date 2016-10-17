@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.40 2016/10/11 19:52:54 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.41 2016/10/17 17:19:08 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -708,7 +708,8 @@ vi_cmd(int argcnt, const char *cmd)
 	if (is_move(*cmd)) {
 		if ((cur = domove(argcnt, cmd, 0)) >= 0) {
 			if (cur == es->linelen && cur != 0)
-				cur--;
+				while (isu8cont(es->cbuf[--cur]))
+					continue;
 			es->cursor = cur;
 		} else
 			return -1;
@@ -1180,19 +1181,13 @@ domove(int argcnt, const char *cmd, int sub)
 		break;
 
 	case 'e':
-		if (!sub && es->cursor + 1 >= es->linelen)
-			return -1;
-		ncursor = endword(argcnt);
-		if (sub && ncursor < es->linelen)
-			ncursor++;
-		break;
-
 	case 'E':
 		if (!sub && es->cursor + 1 >= es->linelen)
 			return -1;
-		ncursor = Endword(argcnt);
-		if (sub && ncursor < es->linelen)
-			ncursor++;
+		ncursor = (*cmd == 'e' ? endword : Endword)(argcnt);
+		if (!sub)
+			while (isu8cont((unsigned char)es->cbuf[--ncursor]))
+				continue;
 		break;
 
 	case 'f':
@@ -1265,6 +1260,8 @@ domove(int argcnt, const char *cmd, int sub)
 		if (ncursor > es->linelen)
 			ncursor = es->linelen;
 		if (ncursor)
+			ncursor--;
+		while (isu8cont(es->cbuf[ncursor]))
 			ncursor--;
 		break;
 
@@ -1526,80 +1523,100 @@ findch(int ch, int cnt, int forw, int incl)
 	return ncursor;
 }
 
+/* Move right one character, and then to the beginning of the next word. */
 static int
 forwword(int argcnt)
 {
-	int	ncursor;
+	int ncursor, skip_space, want_letnum;
+	unsigned char uc;
 
 	ncursor = es->cursor;
 	while (ncursor < es->linelen && argcnt--) {
-		if (letnum(es->cbuf[ncursor]))
-			while (letnum(es->cbuf[ncursor]) &&
-			    ncursor < es->linelen)
-				ncursor++;
-		else if (!isspace((unsigned char)es->cbuf[ncursor]))
-			while (!letnum(es->cbuf[ncursor]) &&
-			    !isspace((unsigned char)es->cbuf[ncursor]) &&
-			    ncursor < es->linelen)
-				ncursor++;
-		while (isspace((unsigned char)es->cbuf[ncursor]) &&
-		    ncursor < es->linelen)
-			ncursor++;
+		skip_space = 0;
+		want_letnum = -1;
+		ncursor--;
+		while (++ncursor < es->linelen) {
+			uc = es->cbuf[ncursor];
+			if (isspace(uc)) {
+				skip_space = 1;
+				continue;
+			} else if (skip_space)
+				break; 
+			if (uc & 0x80)
+				continue;
+			if (want_letnum == -1)
+				want_letnum = letnum(uc);
+			else if (want_letnum != letnum(uc))
+				break;
+		}
 	}
 	return ncursor;
 }
 
+/* Move left one character, and then to the beginning of the word. */
 static int
 backword(int argcnt)
 {
-	int	ncursor;
+	int ncursor, skip_space, want_letnum;
+	unsigned char uc;
 
 	ncursor = es->cursor;
 	while (ncursor > 0 && argcnt--) {
-		while (--ncursor > 0 && isspace((unsigned char)es->cbuf[ncursor]))
-			;
-		if (ncursor > 0) {
-			if (letnum(es->cbuf[ncursor]))
-				while (--ncursor >= 0 &&
-				    letnum(es->cbuf[ncursor]))
-					;
-			else
-				while (--ncursor >= 0 &&
-				    !letnum(es->cbuf[ncursor]) &&
-				    !isspace((unsigned char)es->cbuf[ncursor]))
-					;
-			ncursor++;
+		skip_space = 1;
+		want_letnum = -1;
+		while (ncursor-- > 0) {
+			uc = es->cbuf[ncursor];
+			if (isspace(uc)) {
+				if (skip_space)
+					continue;
+				else
+					break;
+			}
+			skip_space = 0;
+			if (uc & 0x80)
+				continue;
+			if (want_letnum == -1)
+				want_letnum = letnum(uc);
+			else if (want_letnum != letnum(uc))
+				break;
 		}
+		ncursor++;
 	}
 	return ncursor;
 }
 
+/* Move right one character, and then to the byte after the word. */
 static int
 endword(int argcnt)
 {
-	int	ncursor;
+	int ncursor, skip_space, want_letnum;
+	unsigned char uc;
 
 	ncursor = es->cursor;
 	while (ncursor < es->linelen && argcnt--) {
-		while (++ncursor < es->linelen - 1 &&
-		    isspace((unsigned char)es->cbuf[ncursor]))
-			;
-		if (ncursor < es->linelen - 1) {
-			if (letnum(es->cbuf[ncursor]))
-				while (++ncursor < es->linelen &&
-				    letnum(es->cbuf[ncursor]))
-					;
-			else
-				while (++ncursor < es->linelen &&
-				    !letnum(es->cbuf[ncursor]) &&
-				    !isspace((unsigned char)es->cbuf[ncursor]))
-					;
-			ncursor--;
+		skip_space = 1;
+		want_letnum = -1;
+		while (++ncursor < es->linelen) {
+			uc = es->cbuf[ncursor];
+			if (isspace(uc)) {
+				if (skip_space)
+					continue;
+				else
+					break;
+			}
+			skip_space = 0;
+			if (uc & 0x80)
+				continue;
+			if (want_letnum == -1)
+				want_letnum = letnum(uc);
+			else if (want_letnum != letnum(uc))
+				break;
 		}
 	}
 	return ncursor;
 }
 
+/* Move right one character, and then to the beginning of the next big word. */
 static int
 Forwword(int argcnt)
 {
@@ -1617,6 +1634,7 @@ Forwword(int argcnt)
 	return ncursor;
 }
 
+/* Move left one character, and then to the beginning of the big word. */
 static int
 Backword(int argcnt)
 {
@@ -1635,22 +1653,20 @@ Backword(int argcnt)
 	return ncursor;
 }
 
+/* Move right one character, and then to the byte after the big word. */
 static int
 Endword(int argcnt)
 {
 	int	ncursor;
 
 	ncursor = es->cursor;
-	while (ncursor < es->linelen - 1 && argcnt--) {
-		while (++ncursor < es->linelen - 1 &&
+	while (ncursor < es->linelen && argcnt--) {
+		while (++ncursor < es->linelen &&
 		    isspace((unsigned char)es->cbuf[ncursor]))
 			;
-		if (ncursor < es->linelen - 1) {
-			while (++ncursor < es->linelen &&
-			    !isspace((unsigned char)es->cbuf[ncursor]))
-				;
-			ncursor--;
-		}
+		while (ncursor < es->linelen &&
+		    !isspace((unsigned char)es->cbuf[ncursor]))
+			ncursor++;
 	}
 	return ncursor;
 }
