@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.81 2016/10/11 19:52:54 schwarze Exp $	*/
+/*	$OpenBSD: main.c,v 1.82 2016/10/17 17:44:47 schwarze Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -8,7 +8,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <locale.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -152,8 +151,6 @@ main(int argc, char *argv[])
 	pid_t ppid;
 
 	kshname = argv[0];
-
-	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio rpath wpath cpath fattr flock getpw proc exec tty",
 	    NULL) == -1) {

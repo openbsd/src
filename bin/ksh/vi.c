@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.41 2016/10/17 17:19:08 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.42 2016/10/17 17:44:47 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -2240,6 +2240,6 @@ vi_macro_reset(void)
 static int
 isu8cont(unsigned char c)
 {
-	return MB_CUR_MAX > 1 && !Flag(FVISHOW8) && (c & (0x80 | 0x40)) == 0x80;
+	return !Flag(FVISHOW8) && (c & (0x80 | 0x40)) == 0x80;
 }
 #endif	/* VI */
