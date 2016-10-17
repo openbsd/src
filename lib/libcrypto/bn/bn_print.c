@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_print.c,v 1.29 2016/03/02 06:16:11 doug Exp $ */
+/* $OpenBSD: bn_print.c,v 1.30 2016/10/17 03:30:14 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,7 +109,7 @@ err:
 char *
 BN_bn2dec(const BIGNUM *a)
 {
-	int i = 0, num, ok = 0;
+	int i = 0, num, bn_data_num, ok = 0;
 	char *buf = NULL;
 	char *p;
 	BIGNUM *t = NULL;
@@ -136,7 +136,8 @@ BN_bn2dec(const BIGNUM *a)
 	 */
 	i = BN_num_bits(a) * 3;
 	num = (i / 10 + i / 1000 + 1) + 1;
-	bn_data = reallocarray(NULL, num / BN_DEC_NUM + 1, sizeof(BN_ULONG));
+	bn_data_num = num / BN_DEC_NUM + 1;
+	bn_data = reallocarray(NULL, bn_data_num, sizeof(BN_ULONG));
 	buf = malloc(num + 3);
 	if ((buf == NULL) || (bn_data == NULL)) {
 		BNerr(BN_F_BN_BN2DEC, ERR_R_MALLOC_FAILURE);
@@ -151,9 +152,12 @@ BN_bn2dec(const BIGNUM *a)
 	if (BN_is_negative(t))
 		*p++ = '-';
 
-	i = 0;
 	while (!BN_is_zero(t)) {
+		if (lp - bn_data >= bn_data_num)
+			goto err;
 		*lp = BN_div_word(t, BN_DEC_CONV);
+		if (*lp == (BN_ULONG)-1)
+			goto err;
 		lp++;
 	}
 	lp--;
