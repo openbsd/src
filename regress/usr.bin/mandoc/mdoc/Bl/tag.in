@@ -127,6 +127,16 @@ text
 text
 .El
 .Pp
+Default width:
+.Bl -tag
+.It tag
+text
+.It long tag
+long text
+.It Sy tag Em with markup
+text
+.El
+.Pp
 Indented list:
 .Bl -tag -offset 6n -width xxx
 .It one

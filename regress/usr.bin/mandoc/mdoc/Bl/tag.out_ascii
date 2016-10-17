@@ -109,6 +109,16 @@ DDEESSCCRRIIPPTTIIOONN
      tag
          text
 
+     Default width:
+
+     tag     text
+
+     long tag
+             long text
+
+     ttaagg _w_i_t_h _m_a_r_k_u_p
+             text
+
      Indented list:
 
            one  first text
