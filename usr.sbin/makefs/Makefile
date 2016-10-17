@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2016/10/17 06:16:55 natano Exp $
+#	$OpenBSD: Makefile,v 1.6 2016/10/17 08:13:24 natano Exp $
 #	$NetBSD: Makefile,v 1.36 2013/08/05 14:41:57 reinoud Exp $
 #
 
@@ -13,7 +13,7 @@ SRCS=	cd9660.c ffs.c msdos.c \
 
 # cd9660
 SRCS+=	cd9660_strings.c cd9660_debug.c cd9660_eltorito.c
-SRCS+=	cd9660_write.c cd9660_conversion.c iso9660_rrip.c cd9660_archimedes.c
+SRCS+=	cd9660_write.c cd9660_conversion.c iso9660_rrip.c
 
 # ffs
 SRCS+=	ffs_alloc.c ffs_balloc.c ffs_subr.c ffs_tables.c ufs_bmap.c buf.c mkfs.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.3 2016/10/17 08:13:24 natano Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -275,7 +275,6 @@ typedef struct _iso9660_disk {
 	int rock_ridge_move_count;
 	cd9660node *rr_moved_dir;
 
-	int archimedes_enabled;
 	int chrp_boot;
 
 	/* Spec breaking options */
