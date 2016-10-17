@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: fs.h,v 1.3 2016/10/17 14:06:32 natano Exp $	*/
 /*	$NetBSD: fs.h,v 1.66 2015/02/14 09:06:11 maxv Exp $	*/
 
 /*
@@ -715,30 +715,6 @@ struct ocg {
  * Number of indirects in a file system block.
  */
 #define	FFS_NINDIR(fs)	((fs)->fs_nindir)
-
-/*
- * Apple UFS Label:
- *  We check for this to decide to use APPLEUFS_DIRBLKSIZ
- */
-#define	APPLEUFS_LABEL_MAGIC		0x4c41424c /* LABL */
-#define	APPLEUFS_LABEL_SIZE		1024
-#define	APPLEUFS_LABEL_OFFSET	(BBSIZE - APPLEUFS_LABEL_SIZE) /* located at 7k */
-#define	APPLEUFS_LABEL_VERSION	1
-#define	APPLEUFS_MAX_LABEL_NAME	512
-
-struct appleufslabel {
-	u_int32_t	ul_magic;
-	u_int16_t	ul_checksum;
-	u_int16_t	ul_unused0;
-	u_int32_t	ul_version;
-	u_int32_t	ul_time;
-	u_int16_t	ul_namelen;
-	u_char	ul_name[APPLEUFS_MAX_LABEL_NAME]; /* Warning: may not be null terminated */
-	u_int16_t	ul_unused1;
-	u_int64_t	ul_uuid;	/* Note this is only 4 byte aligned */
-	u_char	ul_reserved[24];
-	u_char	ul_unused[460];
-} __packed;
 
 
 #endif /* !_UFS_FFS_FS_H_ */
