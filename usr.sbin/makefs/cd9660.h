@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.3 2016/10/17 08:13:24 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.4 2016/10/17 08:22:38 natano Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -259,9 +259,7 @@ typedef struct _iso9660_disk {
 
 	int include_padding_areas;
 
-	int follow_sym_links;
 	int verbose_level;
-	int displayHelp;
 	int keep_bad_images;
 
 	/* SUSP options and variables */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.6 2016/10/17 08:13:24 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.7 2016/10/17 08:22:38 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -195,7 +195,6 @@ cd9660_set_defaults(iso9660_disk *diskStructure)
 	/* Set up defaults in our own structure */
 	diskStructure->verbose_level = 0;
 	diskStructure->keep_bad_images = 0;
-	diskStructure->follow_sym_links = 0;
 	diskStructure->isoLevel = 2;
 
 	diskStructure->rock_ridge_enabled = 0;
@@ -266,10 +265,6 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		OPT_NUM('v', "verbose",  verbose_level,
 		    0, 2, "Turns on verbose output"),
 
-		OPT_BOOL('h', "help", displayHelp,
-		    "Show help message"),
-		OPT_BOOL('S', "follow-symlinks", follow_sym_links,
-		    "Resolve symlinks in pathnames"),
 	        OPT_BOOL('R', "rockridge", rock_ridge_enabled,
 		    "Enable Rock-Ridge extensions"),
 	        OPT_BOOL('C', "chrp-boot", chrp_boot,
@@ -487,14 +482,6 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	assert(image != NULL);
 	assert(dir != NULL);
 	assert(root != NULL);
-
-	if (diskStructure->displayHelp) {
-		/*
-		 * Display help here - probably want to put it in
-		 * a separate function
-		 */
-		return;
-	}
 
 	if (diskStructure->verbose_level > 0)
 		printf("%s: image %s directory %s root %p\n", __func__,
