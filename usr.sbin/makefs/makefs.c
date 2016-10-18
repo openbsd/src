@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.10 2016/10/18 18:15:23 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.11 2016/10/18 18:34:45 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -88,8 +88,6 @@ main(int argc, char *argv[])
 	fsinfo_t	 fsoptions;
 	fsnode		*root;
 	int	 	 ch, len;
-
-	setprogname(argv[0]);
 
 	debug = 0;
 	if ((fstype = get_fstype(DEFAULT_FSTYPE)) == NULL)
@@ -357,14 +355,13 @@ strsuftoll(const char *desc, const char *val, long long min, long long max)
 static void
 usage(fstype_t *fstype, fsinfo_t *fsoptions)
 {
-	const char *prog;
+	extern char *__progname;
 
-	prog = getprogname();
 	fprintf(stderr,
 "Usage: %s [-b free-blocks] [-f free-files] [-M minimum-size]\n"
 "\t[-m maximum-size] [-O offset] [-o fs-options] [-S sector-size]\n"
 "\t[-s image-size] [-T timestamp] [-t fs-type] image-file directory\n",
-	    prog);
+	    __progname);
 
 	if (fstype) {
 		size_t i;
