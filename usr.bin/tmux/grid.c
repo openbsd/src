@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.59 2016/10/18 14:56:17 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.60 2016/10/18 19:52:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -90,7 +90,7 @@ grid_clear_cell(struct grid *gd, u_int px, u_int py, u_int bg)
 	struct grid_cell_entry	*gce = &gl->celldata[px];
 	struct grid_cell	*gc;
 
-	memcpy(gce, &grid_default_cell, sizeof *gce);
+	memcpy(gce, &grid_default_entry, sizeof *gce);
 	if (bg & COLOUR_FLAG_RGB) {
 		gc = grid_extended_cell(gl, gce, &grid_default_cell);
 		gc->bg = bg;
