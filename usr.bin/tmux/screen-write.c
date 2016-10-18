@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.99 2016/10/13 20:27:27 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.100 2016/10/18 08:39:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -130,6 +130,7 @@ screen_write_flush(struct screen_write_ctx *ctx)
 		if (dirty == ctx->dirty)
 			break;
 	}
+	ctx->dirty = 0;
 
 	s->cx = cx;
 	s->cy = cy;
