@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.149 2016/10/15 12:35:19 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.150 2016/10/18 19:47:52 benno Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2016 $
+.Dd $Mdocdate: October 18 2016 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -875,9 +875,9 @@ Log received and sent updates for this neighbor.
 .Ic max-prefix Ar number
 .Op Ic restart Ar number
 .Xc
-Terminate the session after
+Terminate the session when the maximum
 .Ar number
-prefixes have been received
+of prefixes received is exceeded
 (no such limit is imposed by default).
 If
 .Ic restart

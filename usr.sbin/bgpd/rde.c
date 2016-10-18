@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.351 2016/10/14 16:05:36 phessler Exp $ */
+/*	$OpenBSD: rde.c,v 1.352 2016/10/18 19:47:52 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1132,7 +1132,7 @@ rde_update_dispatch(struct imsg *imsg)
 
 		/* max prefix checker */
 		if (peer->conf.max_prefix &&
-		    peer->prefix_cnt >= peer->conf.max_prefix) {
+		    peer->prefix_cnt > peer->conf.max_prefix) {
 			log_peer_warnx(&peer->conf, "prefix limit reached"
 			    " (>%u/%u)", peer->prefix_cnt, peer->conf.max_prefix);
 			rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX,
@@ -1214,7 +1214,7 @@ rde_update_dispatch(struct imsg *imsg)
 
 				/* max prefix checker */
 				if (peer->conf.max_prefix &&
-				    peer->prefix_cnt >= peer->conf.max_prefix) {
+				    peer->prefix_cnt > peer->conf.max_prefix) {
 					log_peer_warnx(&peer->conf,
 					    "prefix limit reached"
 					    " (>%u/%u)", peer->prefix_cnt,
@@ -1252,7 +1252,7 @@ rde_update_dispatch(struct imsg *imsg)
 
 				/* max prefix checker */
 				if (peer->conf.max_prefix &&
-				    peer->prefix_cnt >= peer->conf.max_prefix) {
+				    peer->prefix_cnt > peer->conf.max_prefix) {
 					log_peer_warnx(&peer->conf,
 					    "prefix limit reached"
 					    " (>%u/%u)", peer->prefix_cnt,
