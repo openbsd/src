@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.23 2016/10/16 19:07:05 guenther Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.24 2016/10/18 05:33:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1171,7 +1171,7 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 	static const uint8_t zero_mac[6];
 	uint8_t id;
 	uint8_t i;
-	int ret;
+	int ret, rng;
 	off_t sz;
 
 	/* Virtio entropy device */
@@ -1304,11 +1304,27 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 				return;
 			}
 
-			/* User defined MAC */
+			vionet[i].cfg.device_feature = VIRTIO_NET_F_MAC;
+
 			if (memcmp(zero_mac, &vcp->vcp_macs[i], 6) != 0) {
-				vionet[i].cfg.device_feature =
-				    VIRTIO_NET_F_MAC;
+				/* User-defined address */
 				memcpy(&vionet[i].mac, &vcp->vcp_macs[i], 6);
+			} else {
+				/*
+				 * If the address is zero, always randomize
+				 * it in vmd(8) because we cannot rely on 
+				 * the guest OS to do the right thing like
+			 	 * OpenBSD does.  Based on ether_fakeaddr()
+				 * from the kernel, incremented by one to
+				 * differentiate the source.
+				 */
+				rng = arc4random();
+				vionet[i].mac[0] = 0xfe;
+				vionet[i].mac[1] = 0xe1;
+				vionet[i].mac[2] = 0xba + 1;
+				vionet[i].mac[3] = 0xd0 | ((i + 1) & 0xf);
+				vionet[i].mac[4] = rng;
+				vionet[i].mac[5] = rng >> 8;
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.9 2016/10/17 16:26:20 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.10 2016/10/18 05:33:57 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2016 $
+.Dd $Mdocdate: October 18 2016 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -137,11 +137,8 @@ must not end with a digit.
 .It Cm lladdr Ar etheraddr
 Change the link layer address (MAC address) of the interface on the
 VM guest side.
-The
-.Ar etheraddr
-is specified as six colon-separated hex values.
-If not specified, the address will be set to all zeros and eventually
-randomized by the guest OS inside the VM.
+If not specified, a randomized address will be assigned by
+.Xr vmd 8 .
 .It Cm switch Ar name
 Set the virtual switch
 by
