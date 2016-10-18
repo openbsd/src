@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.129 2016/10/06 18:56:17 natano Exp $
+#	$OpenBSD: Makefile,v 1.130 2016/10/18 02:47:07 tb Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -79,8 +79,8 @@ build:
 		false; \
 	fi
 	cd ${.CURDIR}/share/mk && exec ${MAKE} install
-	exec ${MAKE} includes
 	exec ${MAKE} cleandir
+	exec ${MAKE} includes
 	cd ${.CURDIR}/lib && \
 	    su ${BUILDUSER} -c '${MAKE} depend && exec ${MAKE}' && \
 	    NOMAN=1 exec ${MAKE} install
