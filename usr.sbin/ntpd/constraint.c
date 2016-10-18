@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.33 2016/10/18 21:57:19 rzalamena Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.34 2016/10/18 22:05:47 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -217,6 +217,7 @@ priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len, int argc,
 	struct ntp_addr		*h;
 	struct constraint	*cstr;
 	int			 pipes[2];
+	int			 rv;
 
 	if ((cstr = constraint_byid(id)) != NULL) {
 		log_warnx("IMSG_CONSTRAINT_QUERY repeated for id %d", id);
@@ -256,8 +257,11 @@ priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len, int argc,
 	if (imsg_compose(&cstr->ibuf, IMSG_CONSTRAINT_QUERY, id, 0, -1,
 	    data, len) == -1)
 		fatal("%s: imsg_compose", __func__);
-	if (imsg_flush(&cstr->ibuf) == -1)
-		fatal("%s: imsg_flush", __func__);
+	do {
+		rv = imsg_flush(&cstr->ibuf);
+	} while (rv == -1 && errno == EAGAIN);
+	if (rv == -1)
+		fatal("imsg_flush");
 
 	/*
 	 * Fork child handlers and make sure to do any sensitive work in the
@@ -325,7 +329,7 @@ priv_constraint_child(const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
 	struct sigaction	 sa;
 	void			*ctx;
 	struct iovec		 iov[2];
-	int			 i;
+	int			 i, rv;
 
 	log_procinit("constraint");
 
@@ -420,7 +424,9 @@ priv_constraint_child(const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
 	iov[1].iov_len = sizeof(xmttv);
 	imsg_composev(&cstr->ibuf,
 	    IMSG_CONSTRAINT_RESULT, 0, 0, -1, iov, 2);
-	imsg_flush(&cstr->ibuf);
+	do {
+		rv = imsg_flush(&cstr->ibuf);
+	} while (rv == -1 && errno == EAGAIN);
 
 	/* Tear down the TLS connection after sending the result */
 	httpsdate_free(ctx);
