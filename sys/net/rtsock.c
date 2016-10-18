@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.207 2016/09/27 18:41:11 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.208 2016/10/18 11:05:45 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ route_input(struct mbuf *m0, ...)
 	struct routecb *rop;
 	struct rt_msghdr *rtm;
 	struct mbuf *m = m0;
-	int sockets = 0;
+	int s, sockets = 0;
 	struct socket *last = NULL;
 	va_list ap;
 	struct sockproto *proto;
@@ -419,6 +419,7 @@ route_input(struct mbuf *m0, ...)
 		if (last) {
 			struct mbuf *n;
 			if ((n = m_copym(m, 0, M_COPYALL, M_NOWAIT)) != NULL) {
+				s = splsoftnet();
 				if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
 				    sbappendaddr(&last->so_rcv, sosrc,
 				    n, (struct mbuf *)NULL) == 0) {
@@ -435,11 +436,13 @@ route_input(struct mbuf *m0, ...)
 					sorwakeup(last);
 					sockets++;
 				}
+				splx(s);
 			}
 		}
 		last = rp->rcb_socket;
 	}
 	if (last) {
+		s = splsoftnet();
 		if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
 		    sbappendaddr(&last->so_rcv, sosrc,
 		    m, (struct mbuf *)NULL) == 0) {
@@ -452,6 +455,7 @@ route_input(struct mbuf *m0, ...)
 			sorwakeup(last);
 			sockets++;
 		}
+		splx(s);
 	} else
 		m_freem(m);
 }
