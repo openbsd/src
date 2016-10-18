@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.93 2016/10/13 19:36:25 martijn Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.94 2016/10/18 15:16:55 naddy Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -282,7 +282,8 @@ vmm_probe(struct device *parent, void *match, void *aux)
 	if (found_vmx && found_svm)
 		return (0);
 
-	if (found_vmx || found_svm)
+	/* SVM is not implemented yet */
+	if (found_vmx)
 		return 1;
 	if (vm_disabled)
 		printf("vmm disabled by firmware\n");
