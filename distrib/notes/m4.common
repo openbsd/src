@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.121 2016/07/28 17:19:24 zhuk Exp $
+dnl	$OpenBSD: m4.common,v 1.122 2016/10/18 06:14:43 jmc Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -743,10 +743,10 @@ define({:-OpenBSDUnattendedInstallation-:},
 Preparing an unattended installation of OpenBSD:
 ------------------------------------------------
 
-If '(A)utoinstall' is choosen at the install prompt or if the
+If '(A)utoinstall' is chosen at the install prompt or if the
 installation system detects that it booted from the network, and
 isn't interrupted within 5 seconds, it attempts a fully-automatic
-installation. 
+installation.
 
 The installer runs dhclient(8) on the network interface the system
 booted from, or in case of multiple interfaces it will ask which one
@@ -824,7 +824,7 @@ Boot from $1.
 When prompted, select the (U)pgrade option rather than the (I)nstall
 option at the prompt in the install process.
 
-You will be presented with a welcome message, and depending on how you are 
+You will be presented with a welcome message, and depending on how you are
 connected to the system, you will be asked to set the terminal type or to
 choose a keyboard layout.
 
