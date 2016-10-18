@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbm.c,v 1.2 2016/08/30 21:58:59 schwarze Exp $ */
+/*	$OpenBSD: dbm.c,v 1.3 2016/10/18 22:26:20 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -336,41 +336,45 @@ page_byarch(const struct dbm_match *arg_match)
 }
 
 static struct dbm_res
-page_bymacro(int32_t im, const struct dbm_match *match)
+page_bymacro(int32_t arg_im, const struct dbm_match *arg_match)
 {
-	static const int32_t	*pp;
-	struct dbm_res		 res = {-1, 0};
-	const char		*cp;
-	int32_t			 iv;
+	static const struct dbm_match	*match;
+	static const int32_t		*pp;
+	static const char		*cp;
+	static int32_t			 im, iv;
+	struct dbm_res			 res = {-1, 0};
 
 	assert(im >= 0);
 	assert(im < MACRO_MAX);
 
 	/* Initialize for a new iteration. */
 
-	if (match != NULL) {
+	if (arg_match != NULL) {
 		iteration = ITER_MACRO;
+		match = arg_match;
+		im = arg_im;
 		cp = nvals[im] ? dbm_get(macros[im]->value) : NULL;
-		for (iv = 0; iv < nvals[im]; iv++) {
-			if (dbm_match(match, cp))
-				break;
-			cp = strchr(cp, '\0') + 1;
-		}
-		pp = iv == nvals[im] ? NULL : dbm_get(macros[im][iv].pages);
+		pp = NULL;
+		iv = -1;
 		return res;
 	}
 	if (iteration != ITER_MACRO)
 		return res;
 
-	/* No more matches. */
+	/* Find the next matching macro value. */
 
-	if (pp == NULL || *pp == 0) {
-		iteration = ITER_NONE;
-		pp = NULL;
-		return res;
+	while (pp == NULL || *pp == 0) {
+		if (++iv == nvals[im]) {
+			iteration = ITER_NONE;
+			return res;
+		}
+		if (iv)
+			cp = strchr(cp, '\0') + 1;
+		if (dbm_match(match, cp))
+			pp = dbm_get(macros[im][iv].pages);
 	}
 
-	/* Found a match. */
+	/* Found a matching page. */
 
 	res.page = (struct page *)dbm_get(*pp++) - pages;
 	return res;
