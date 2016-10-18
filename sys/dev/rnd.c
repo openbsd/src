@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.189 2016/10/07 15:59:36 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.190 2016/10/18 13:40:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -439,7 +439,6 @@ struct mutex rndlock = MUTEX_INITIALIZER(IPL_HIGH);
 struct timeout arc4_timeout;
 struct task arc4_task = TASK_INITIALIZER(arc4_init, NULL);
 
-static int rs_initialized;
 static chacha_ctx rs;		/* chacha context for random keystream */
 /* keystream blocks (also chacha seed from boot) */
 static u_char rs_buf[RSBUFSZ];
@@ -529,7 +528,12 @@ _rs_stir(int do_lock)
 static inline void
 _rs_stir_if_needed(size_t len)
 {
+	static int rs_initialized;
+
 	if (!rs_initialized) {
+		memcpy(entropy_pool, entropy_pool0, sizeof entropy_pool);
+		memcpy(rs_buf, rs_buf0, sizeof rs_buf);
+		/* seeds cannot be cleaned yet, random_start() will do so */
 		_rs_init(rs_buf, KEYSZ + IVSZ);
 		rs_count = 1024 * 1024 * 1024;	/* until main() runs */
 		rs_initialized = 1;
@@ -578,13 +582,6 @@ _rs_clearseed(const void *p, size_t s)
 static inline void
 _rs_rekey(u_char *dat, size_t datlen)
 {
-	if (!rs_initialized) {
-		memcpy(entropy_pool, entropy_pool0, sizeof entropy_pool);
-		memcpy(rs_buf, rs_buf0, sizeof rs_buf);
-		rs_initialized = 1;
-		/* seeds cannot be cleaned yet, random_start() will do so */
-	}
-
 #ifndef KEYSTREAM_ONLY
 	memset(rs_buf, 0, RSBUFSZ);
 #endif
@@ -736,7 +733,6 @@ random_start(void)
 		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
 		    msgbufp->msg_bufs / sizeof(u_int32_t));
 
-	rs_initialized = 1;
 	dequeue_randomness(NULL);
 	arc4_init(NULL);
 	timeout_set(&arc4_timeout, arc4_reinit, NULL);
