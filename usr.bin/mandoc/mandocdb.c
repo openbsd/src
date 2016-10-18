@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.180 2016/10/18 14:13:46 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.181 2016/10/18 14:20:07 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -445,8 +445,7 @@ mandocdb(int argc, char *argv[])
 	} else {
 		/*
 		 * If we have arguments, use them as our manpaths.
-		 * If we don't, grok from manpath(1) or however else
-		 * manconf_parse() wants to do it.
+		 * If we don't, use man.conf(5).
 		 */
 		if (argc > 0) {
 			conf.manpath.paths = mandoc_reallocarray(NULL,
