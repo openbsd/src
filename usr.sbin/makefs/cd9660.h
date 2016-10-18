@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.4 2016/10/17 08:22:38 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.5 2016/10/18 16:50:55 natano Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -51,8 +51,8 @@
 #include <sys/endian.h>
 
 #include "makefs.h"
-#include "iso.h"
-#include "iso_rrip.h"
+#include "cd9660/iso.h"
+#include "cd9660/iso_rrip.h"
 #include "cd9660/cd9660_eltorito.h"
 
 #ifdef DEBUG

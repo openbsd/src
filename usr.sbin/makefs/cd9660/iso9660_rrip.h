@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso9660_rrip.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: iso9660_rrip.h,v 1.3 2016/10/18 16:50:55 natano Exp $	*/
 /*	$NetBSD: iso9660_rrip.h,v 1.6 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 /* For writing must use ISO_RRIP_EXTREF structure */
 
 #include "makefs.h"
-#include <cd9660_rrip.h>
+#include "cd9660/cd9660_rrip.h"
 #include "cd9660.h"
 #include <sys/queue.h>
 

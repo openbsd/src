@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_rrip.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: iso_rrip.h,v 1.1 2016/10/18 16:50:55 natano Exp $	*/
 /*	$NetBSD: iso_rrip.h,v 1.4 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
