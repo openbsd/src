@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.6 2016/10/17 01:16:22 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.1 2016/10/18 17:05:30 natano Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.35 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -50,13 +50,13 @@
 
 #include <sys/param.h>
 
-#include <ffs/buf.h>
+#include "ffs/buf.h"
 
-#include <fs/msdosfs/bpb.h>
-#include <fs/msdosfs/direntry.h>
-#include <fs/msdosfs/denode.h>
-#include <fs/msdosfs/msdosfsmount.h>
-#include <fs/msdosfs/fat.h>
+#include "msdos/bpb.h"
+#include "msdos/direntry.h"
+#include "msdos/denode.h"
+#include "msdos/msdosfsmount.h"
+#include "msdos/fat.h"
 
 
 

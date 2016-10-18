@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdos.c,v 1.5 2016/10/17 01:16:22 tedu Exp $	*/
+/*	$OpenBSD: msdos.c,v 1.6 2016/10/18 17:05:30 natano Exp $	*/
 /*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -38,11 +38,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ffs/buf.h>
-#include <fs/msdosfs/denode.h>
+#include "ffs/buf.h"
+#include "msdos/denode.h"
 #include "makefs.h"
 #include "msdos.h"
-#include "mkfs_msdos.h"
+#include "msdos/mkfs_msdos.h"
 
 static int msdos_populate_dir(const char *, struct denode *, fsnode *,
     fsnode *, fsinfo_t *);

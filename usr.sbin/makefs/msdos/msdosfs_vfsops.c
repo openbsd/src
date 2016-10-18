@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.7 2016/10/17 14:25:33 natano Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.8 2016/10/18 17:05:30 natano Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -50,14 +50,14 @@
 #include <sys/param.h>
 #include <sys/time.h>
 
-#include <ffs/buf.h>
+#include "ffs/buf.h"
 
-#include <fs/msdosfs/bpb.h>
-#include <fs/msdosfs/bootsect.h>
-#include <fs/msdosfs/direntry.h>
-#include <fs/msdosfs/denode.h>
-#include <fs/msdosfs/msdosfsmount.h>
-#include <fs/msdosfs/fat.h>
+#include "msdos/bpb.h"
+#include "msdos/bootsect.h"
+#include "msdos/direntry.h"
+#include "msdos/denode.h"
+#include "msdos/msdosfsmount.h"
+#include "msdos/fat.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -67,7 +67,7 @@
 
 #include "makefs.h"
 #include "msdos.h"
-#include "mkfs_msdos.h"
+#include "msdos/mkfs_msdos.h"
 
 #ifdef MSDOSFS_DEBUG
 #define DPRINTF(a) printf a
