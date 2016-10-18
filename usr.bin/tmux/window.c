@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.172 2016/10/16 22:06:40 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.173 2016/10/18 07:38:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -970,7 +970,7 @@ window_pane_read_callback(__unused struct bufferevent *bufev, void *data)
 
 	input_parse(wp);
 
-	wp->pipe_off = size;
+	wp->pipe_off = EVBUFFER_LENGTH(evb);
 }
 
 static void
