@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.61 2016/10/16 13:03:40 millert Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.62 2016/10/18 21:06:52 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -543,7 +543,12 @@ merge(size_t m1, size_t m2)
 	d1 = d13;
 	d2 = d23;
 	j = 0;
-	while ((t1 = (d1 < d13 + m1)) | (t2 = (d2 < d23 + m2))) {
+	for (;;) {
+		t1 = (d1 < d13 + m1);
+		t2 = (d2 < d23 + m2);
+		if (!t1 && !t2)
+			break;
+
 		if (debug) {
 			printf("%d,%d=%d,%d %d,%d=%d,%d\n",
 			d1->old.from, d1->old.to,
