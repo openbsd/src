@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.511 2016/10/16 22:06:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.512 2016/10/18 19:25:26 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 16 2016 $
+.Dd $Mdocdate: October 18 2016 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3142,6 +3142,11 @@ see the
 .Ic message-command-style
 option.
 .Pp
+.It Xo Ic wrap-search
+.Op Ic on | off
+.Xc
+If this option is set, searches will wrap around the end of the pane contents.
+The default is on.
 .It Xo Ic xterm-keys
 .Op Ic on | off
 .Xc
@@ -3153,11 +3158,6 @@ function key sequences; these have a number included to indicate modifiers such
 as Shift, Alt or Ctrl.
 The default is off.
 .Pp
-.It Xo Ic wrap-search
-.Op Ic on | off
-.Xc
-If this option is set, searches will wrap around the end of the pane contents.
-The default is on.
 .El
 .It Xo Ic show-options
 .Op Fl gqsvw
