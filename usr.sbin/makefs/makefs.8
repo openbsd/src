@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makefs.8,v 1.6 2016/10/17 08:13:24 natano Exp $
+.\"	$OpenBSD: makefs.8,v 1.7 2016/10/18 17:38:20 natano Exp $
 .\"	$NetBSD: makefs.8,v 1.55 2015/11/25 16:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -42,7 +42,6 @@
 .Nd create a file system image from a directory tree
 .Sh SYNOPSIS
 .Nm
-.Op Fl B Ar endian
 .Op Fl b Ar free-blocks
 .Op Fl f Ar free-files
 .Op Fl M Ar minimum-size
@@ -66,22 +65,6 @@ No special devices or privileges are required to perform this task.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
-.It Fl B Ar endian
-Set the byte order of the image to
-.Ar endian .
-Valid byte orders are
-.Ql 4321 ,
-.Ql big ,
-or
-.Ql be
-for big endian, and
-.Ql 1234 ,
-.Ql little ,
-or
-.Ql le
-for little endian.
-Some file systems may have a fixed byte order; in those cases this
-argument will be ignored.
 .It Fl b Ar free-blocks
 Ensure that a minimum of
 .Ar free-blocks

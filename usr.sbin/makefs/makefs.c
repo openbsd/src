@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.8 2016/10/17 14:25:33 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.9 2016/10/18 17:38:20 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -108,13 +108,8 @@ main(int argc, char *argv[])
 		err(1, "Unable to get system time");
 
 
-	while ((ch = getopt(argc, argv, "B:b:f:M:m:O:o:s:S:t:T:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:f:M:m:O:o:s:S:t:T:")) != -1) {
 		switch (ch) {
-
-		case 'B':
-			warnx("Invalid endian `%s'.", optarg);
-			usage(fstype, &fsoptions);
-			break;
 		case 'b':
 			len = strlen(optarg) - 1;
 			if (optarg[len] == '%') {
@@ -202,7 +197,6 @@ main(int argc, char *argv[])
 		default:
 			usage(fstype, &fsoptions);
 			/* NOTREACHED */
-
 		}
 	}
 	if (debug) {
@@ -376,10 +370,9 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 
 	prog = getprogname();
 	fprintf(stderr,
-"Usage: %s [-B endian] [-b free-blocks] [-f free-files]\n"
-"\t[-M minimum-size] [-m maximum-size] [-O offset]\n"
-"\t[-o fs-options] [-S sector-size] [-s image-size]\n"
-"\t[-T <timestamp/file>] [-t fs-type] image-file directory\n",
+"Usage: %s [-b free-blocks] [-f free-files] [-M minimum-size]\n"
+"\t[-m maximum-size] [-O offset] [-o fs-options] [-S sector-size]\n"
+"\t[-s image-size] [-T <timestamp/file>] [-t fs-type] image-file directory\n",
 	    prog);
 
 	if (fstype) {
