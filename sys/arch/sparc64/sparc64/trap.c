@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.94 2016/10/08 05:49:09 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.95 2016/10/18 00:43:57 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -431,10 +431,7 @@ trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate)
 
 	default:
 		if (type < 0x100) {
-			extern int trap_trace_dis;
 dopanic:
-			trap_trace_dis = 1;
-
 			panic("trap type 0x%x (%s): pc=%lx npc=%lx pstate=%b",
 			    type, type < N_TRAP_TYPES ? trap_type[type] : T,
 			    pc, (long)tf->tf_npc, pstate, PSTATE_BITS);
@@ -851,8 +848,6 @@ data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 kfault:
 			onfault = (long)p->p_addr->u_pcb.pcb_onfault;
 			if (!onfault) {
-				extern int trap_trace_dis;
-				trap_trace_dis = 1; /* Disable traptrace for printf */
 				(void) splhigh();
 				panic("kernel data fault: pc=%lx addr=%lx",
 				    pc, addr);
@@ -934,9 +929,6 @@ data_access_error(struct trapframe64 *tf, unsigned type, vaddr_t afva,
 	if (tstate & TSTATE_PRIV) {
 
 		if (!onfault) {
-			extern int trap_trace_dis;
-
-			trap_trace_dis = 1; /* Disable traptrace for printf */
 			(void) splhigh();
 			panic("data fault: pc=%lx addr=%lx sfsr=%lb",
 				(u_long)pc, (long)sfva, sfsr, SFSR_BITS);
@@ -998,8 +990,6 @@ text_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 
 	access_type = PROT_EXEC;
 	if (tstate & TSTATE_PRIV) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
 		panic("kernel text_access_fault: pc=%lx va=%lx", pc, va);
 		/* NOTREACHED */
@@ -1031,8 +1021,6 @@ text_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 		 * fault, deliver SIGSEGV.
 		 */
 		if (tstate & TSTATE_PRIV) {
-			extern int trap_trace_dis;
-			trap_trace_dis = 1; /* Disable traptrace for printf */
 			(void) splhigh();
 			panic("kernel text fault: pc=%llx", (unsigned long long)pc);
 			/* NOTREACHED */
@@ -1076,13 +1064,9 @@ text_access_error(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	tstate = tf->tf_tstate;
 
 	if ((afsr) != 0) {
-		extern int trap_trace_dis;
-
-		trap_trace_dis++; /* Disable traptrace for printf */
 		printf("text_access_error: memory error...\n");
 		printf("text memory error type %d sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
 		       type, sfsr, pc, afsr, afva, tf);
-		trap_trace_dis--; /* Reenable traptrace for printf */
 
 		if (tstate & TSTATE_PRIV)
 			panic("text_access_error: kernel memory error");
@@ -1101,8 +1085,6 @@ text_access_error(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	/* Now munch on protections... */
 	access_type = PROT_EXEC;
 	if (tstate & TSTATE_PRIV) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
 		panic("kernel text error: pc=%lx sfsr=%lb", pc,
 		    sfsr, SFSR_BITS);
@@ -1136,8 +1118,6 @@ text_access_error(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 		 * fault, deliver SIGSEGV.
 		 */
 		if (tstate & TSTATE_PRIV) {
-			extern int trap_trace_dis;
-			trap_trace_dis = 1; /* Disable traptrace for printf */
 			(void) splhigh();
 			panic("kernel text error: pc=%lx sfsr=%lb", pc,
 			    sfsr, SFSR_BITS);

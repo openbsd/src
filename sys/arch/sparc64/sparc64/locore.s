@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.183 2016/05/23 20:11:49 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.184 2016/10/18 00:43:57 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1344,21 +1344,6 @@ panic_red:
 .macro	CHECK_SP_REDZONE t1, t2
 .endm
 #endif	/* DEBUG_NOTDEF */
-
-#define TRACESIZ	0x01000
-	.globl	_C_LABEL(trap_trace)
-	.globl	_C_LABEL(trap_trace_ptr)
-	.globl	_C_LABEL(trap_trace_end)
-	.globl	_C_LABEL(trap_trace_dis)
-	.data
-_C_LABEL(trap_trace_dis):
-	.word	1, 1		! Starts disabled.  DDB turns it on.
-_C_LABEL(trap_trace_ptr):
-	.word	0, 0, 0, 0
-_C_LABEL(trap_trace):
-	.space	TRACESIZ
-_C_LABEL(trap_trace_end):
-	.space	0x20		! safety margin
 
 /*
  * v9 machines do not have a trap window.

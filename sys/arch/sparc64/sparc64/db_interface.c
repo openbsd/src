@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.45 2016/10/08 05:49:09 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.46 2016/10/18 00:43:57 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -72,17 +72,6 @@ struct cpu_info *db_switch_to_cpu;
 db_regs_t	ddb_regs;	/* register state */
 
 extern void OF_enter(void);
-
-extern struct traptrace {
-	unsigned short tl:3,	/* Trap level */
-		ns:4,		/* PCB nsaved */
-		tt:9;		/* Trap type */
-	unsigned short pid;	/* PID */
-	u_int tstate;		/* tstate */
-	u_int tsp;		/* sp */
-	u_int tpc;		/* pc */
-	u_int tfault;		/* MMU tag access */
-} trap_trace[], trap_trace_end[];
 
 static long nil;
 
@@ -231,14 +220,12 @@ void db_pmap_kernel(db_expr_t, int, db_expr_t, char *);
 void db_pload_cmd(db_expr_t, int, db_expr_t, char *);
 void db_pmap_cmd(db_expr_t, int, db_expr_t, char *);
 void db_lock(db_expr_t, int, db_expr_t, char *);
-void db_traptrace(db_expr_t, int, db_expr_t, char *);
 void db_dump_buf(db_expr_t, int, db_expr_t, char *);
 void db_dump_espcmd(db_expr_t, int, db_expr_t, char *);
 void db_watch(db_expr_t, int, db_expr_t, char *);
 void db_xir(db_expr_t, int, db_expr_t, char *);
 
 static void db_dump_pmap(struct pmap*);
-static void db_print_trace_entry(struct traptrace *, int);
 
 #ifdef MULTIPROCESSOR
 void db_cpuinfo_cmd(db_expr_t, int, db_expr_t, char *);
@@ -272,9 +259,6 @@ db_ktrap(type, tf)
 	struct trapstate *ts = &ddb_regs.ddb_ts[0];
 	extern int savetstate(struct trapstate *ts);
 	extern void restoretstate(int tl, struct trapstate *ts);
-	extern int trap_trace_dis;
-
-	trap_trace_dis++;
 
 #if NTDA > 0
 	tda_full_blast();
@@ -336,7 +320,6 @@ db_ktrap(type, tf)
 	*(struct frame *)tf->tf_out[6] = ddb_regs.ddb_fr;
 #endif
 	*tf = ddb_regs.ddb_tf;
-	trap_trace_dis--;
 
 #ifdef MULTIPROCESSOR
 		if (!db_switch_cpu)
@@ -1098,78 +1081,6 @@ db_setpcb(addr, have_addr, count, modif)
 	db_printf("PID %ld not found.\n", addr);
 }
 
-static void
-db_print_trace_entry(te, i)
-	struct traptrace *te;
-	int i;
-{
-	db_printf("%d:%d p:%d tt:%d:%llx:%llx %llx:%llx ", i,
-		  (int)te->tl, (int)te->pid,
-		  (int)te->tt, (unsigned long long)te->tstate,
-		  (unsigned long long)te->tfault, (unsigned long long)te->tsp,
-		  (unsigned long long)te->tpc);
-	db_printsym((u_long)te->tpc, DB_STGY_PROC, db_printf);
-	db_printf(": ");
-	if ((te->tpc && !(te->tpc&0x3)) &&
-	    curproc &&
-	    (curproc->p_pid == te->pid)) {
-		db_disasm((u_long)te->tpc, 0);
-	} else db_printf("\n");
-}
-
-void
-db_traptrace(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-	int i, start = 0, full = 0, reverse = 0;
-	struct traptrace *end;
-
-	start = 0;
-	end = &trap_trace_end[0];
-
-	{
-		register char c, *cp = modif;
-		if (modif)
-			while ((c = *cp++) != 0) {
-				if (c == 'f')
-					full = 1;
-				if (c == 'r')
-					reverse = 1;
-			}
-	}
-
-	if (have_addr) {
-		start = addr / (sizeof (struct traptrace));
-		if (&trap_trace[start] > &trap_trace_end[0]) {
-			db_printf("Address out of range.\n");
-			return;
-		}
-		if (!full) end =  &trap_trace[start+1];
-	}
-
-	db_printf("#:tl p:pid tt:tt:tstate:tfault sp:pc\n");
-	if (reverse) {
-		if (full && start)
-			for (i=start; --i;) {
-				db_print_trace_entry(&trap_trace[i], i);
-			}
-		i = (end - &trap_trace[0]);
-		while(--i > start) {
-			db_print_trace_entry(&trap_trace[i], i);
-		}
-	} else {
-		for (i=start; &trap_trace[i] < end ; i++) {
-			db_print_trace_entry(&trap_trace[i], i);
-		}
-		if (full && start)
-			for (i=0; i < start ; i++) {
-				db_print_trace_entry(&trap_trace[i], i);
-			}
-	}
-}
 
 /*
  * Use physical or virtual watchpoint registers -- ugh
@@ -1285,7 +1196,6 @@ struct db_command db_machine_command_table[] = {
 	{ "stack",	db_dump_stack,	0,	0 },
 	{ "tf",		db_dump_trap,	0,	0 },
 	{ "ts",		db_dump_ts,	0,	0 },
-	{ "traptrace",	db_traptrace,	0,	0 },
 	{ "watch",	db_watch,	0,	0 },
 	{ "window",	db_dump_window,	0,	0 },
 	{ "xir",	db_xir,		0,	0 },
