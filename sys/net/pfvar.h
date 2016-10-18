@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.440 2016/09/27 04:57:17 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.441 2016/10/18 13:28:01 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1916,6 +1916,17 @@ void			 pf_state_key_unref(struct pf_state_key *);
 int			 pf_state_key_isvalid(struct pf_state_key *);
 void			 pf_pkt_unlink_state_key(struct mbuf *);
 void			 pf_pkt_state_key_ref(struct mbuf *);
+
+struct mbuf *		 pf_build_tcp(const struct pf_rule *, sa_family_t,
+			    const struct pf_addr *, const struct pf_addr *,
+			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
+			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
+			    u_int16_t, u_int);
+void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
+			    const struct pf_addr *, const struct pf_addr *,
+			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
+			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
+			    u_int16_t, u_int);
 
 #endif /* _KERNEL */
 

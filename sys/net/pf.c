@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.991 2016/10/18 11:29:27 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.992 2016/10/18 13:28:01 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -170,11 +170,6 @@ void			 pf_translate_icmp(struct pf_pdesc *, struct pf_addr *,
 			    u_int16_t *, struct pf_addr *, struct pf_addr *,
 			    u_int16_t);
 int			 pf_translate_icmp_af(struct pf_pdesc*, int, void *);
-void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
-			    const struct pf_addr *, const struct pf_addr *,
-			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
-			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
-			    u_int16_t, u_int);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
 			    sa_family_t, struct pf_rule *, u_int);
 void			 pf_detach_state(struct pf_state *);
@@ -2700,8 +2695,8 @@ pf_modulate_sack(struct pf_pdesc *pd, struct pf_state_peer *dst)
 	return (copyback);
 }
 
-void
-pf_send_tcp(const struct pf_rule *r, sa_family_t af,
+struct mbuf *
+pf_build_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
     u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
@@ -2737,7 +2732,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	/* create outgoing mbuf */
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
-		return;
+		return (NULL);
 	if (tag)
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	m->m_pkthdr.pf.tag = rtag;
@@ -2801,6 +2796,22 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		mss = htons(mss);
 		memcpy((opt + 2), &mss, 2);
 	}
+
+	return (m);
+}
+
+void
+pf_send_tcp(const struct pf_rule *r, sa_family_t af,
+    const struct pf_addr *saddr, const struct pf_addr *daddr,
+    u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
+    u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
+    u_int16_t rtag, u_int rdom)
+{
+	struct mbuf     *m;
+
+	if ((m = pf_build_tcp(r, af, saddr, daddr, sport, dport, seq, ack,
+	     flags, win, mss, ttl, tag, rtag, rdom)) == NULL)
+		return;
 
 	switch (af) {
 	case AF_INET:
