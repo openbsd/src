@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.32 2016/09/26 17:17:01 rzalamena Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.33 2016/10/18 21:57:19 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -264,7 +264,7 @@ priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len, int argc,
 	 * the (unprivileged) child.  The parent should not do any parsing,
 	 * certificate loading etc.
 	 */
-	start_child(CONSTRAINT_PROC_NAME, pipes[1], argc, argv);
+	cstr->pid = start_child(CONSTRAINT_PROC_NAME, pipes[1], argc, argv);
 }
 
 void
