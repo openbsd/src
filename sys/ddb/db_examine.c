@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.22 2016/06/07 01:31:54 tedu Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.23 2016/10/18 19:46:00 naddy Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -72,10 +72,11 @@ db_examine_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_examine(db_addr_t addr, char *fmt, int count)
 {
-	int		c;
+	int		i, c;
 	db_expr_t	value;
 	int		size;
 	int		width;
+	int		bytes;
 	char *		fp;
 	db_addr_t	incr;
 	int		dis;
@@ -130,6 +131,42 @@ db_examine(db_addr_t addr, char *fmt, int count)
 			case 'x':	/* unsigned hex */
 				value = db_get_value(addr, size, FALSE);
 				db_printf("%-*lx", width, (long)value);
+				break;
+			case 'm':	/* hex dump */
+				/*
+				 * Print off in chunks of size. Try to print 16
+				 * bytes at a time into 4 columns. This
+				 * loops modify's count extra times in order
+				 * to get the nicely formatted lines.
+				 */
+				incr = 0;
+				bytes = 0;
+				do {
+					for (i = 0; i < size; i++) {
+						value =
+						    db_get_value(addr+bytes, 1,
+							FALSE);
+						db_printf("%02lx",
+						    (long)value);
+						bytes++;
+						if (!(bytes % 4))
+							db_printf(" ");
+					}
+				} while ((bytes != 16) && count--);
+				/* True up the columns before continuing */
+				db_printf("%-*s",
+			            (16-bytes)*2 + (4 - bytes/4) + 1, " ");
+				/* Print chars, use . for non-printables */
+				while (bytes--) {
+					value = db_get_value(addr + incr, 1,
+					    FALSE);
+					incr++;
+					if (value >= ' ' && value <= '~')
+						db_printf("%c", (int)value);
+					else
+						db_printf(".");
+				}
+				db_printf("\n");
 				break;
 			case 'z':	/* signed hex */
 				value = db_get_value(addr, size, TRUE);
