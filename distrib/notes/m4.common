@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.122 2016/10/18 06:14:43 jmc Exp $
+dnl	$OpenBSD: m4.common,v 1.123 2016/10/18 09:22:05 tb Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -288,7 +288,7 @@ define({:-OpenBSDInstallPart3-:},
 	the hardware that was detected and supported by OpenBSD.
 
 dnl dot.profile
-	After the kernel is done initialising, you will be asked whether
+	After the kernel is done initializing, you will be asked whether
 	you wish to do an "(I)nstall", "(U)pgrade" or an "(A)utoinstall".
 	Enter 'I' for a fresh install or 'U' to upgrade an existing
 	installation.  Enter 'A' to start an unattended installation
@@ -460,7 +460,7 @@ dnl install.md md_prep_fdisk
 	partition spanning the whole disk, dedicated to OpenBSD.
 
 	Otherwise, fdisk(8) will be invoked to let you to edit your
-	partitioning.  The current artitions defined will be
+	partitioning.  The current partitions defined will be
 	displayed and you will be allowed to modify them, add new
 	partitions, and change which partition to boot from by default.
 
