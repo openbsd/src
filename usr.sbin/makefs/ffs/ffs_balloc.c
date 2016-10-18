@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.5 2016/10/17 01:16:22 tedu Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.6 2016/10/18 17:23:21 natano Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.21 2015/03/29 05:52:59 agc Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
@@ -38,9 +38,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ufs/ufs/dinode.h>
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ffs/fs.h>
+#include "ffs/dinode.h"
+#include "ffs/ufs_bswap.h"
+#include "ffs/fs.h"
 
 #include "ffs/buf.h"
 #include "ffs/ufs_inode.h"

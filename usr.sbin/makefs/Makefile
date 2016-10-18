@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2016/10/18 17:05:30 natano Exp $
+#	$OpenBSD: Makefile,v 1.9 2016/10/18 17:23:21 natano Exp $
 #	$NetBSD: Makefile,v 1.36 2013/08/05 14:41:57 reinoud Exp $
 #
 
@@ -30,7 +30,6 @@ CPPFLAGS+=	-I${.CURDIR}
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 
-.PATH:	${.CURDIR}/cd9660 ${.CURDIR}/ffs ${.CURDIR}/ufs/ffs \
-	${.CURDIR}/msdos
+.PATH:	${.CURDIR}/cd9660 ${.CURDIR}/ffs ${.CURDIR}/msdos
 
 .include <bsd.prog.mk>

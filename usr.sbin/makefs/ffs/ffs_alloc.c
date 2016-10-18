@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.7 2016/10/17 01:16:22 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.8 2016/10/18 17:23:21 natano Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.29 2016/06/24 19:24:11 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
@@ -46,9 +46,9 @@
 
 #include <errno.h>
 
-#include <ufs/ufs/dinode.h>
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ffs/fs.h>
+#include "ffs/dinode.h"
+#include "ffs/ufs_bswap.h"
+#include "ffs/fs.h"
 
 #include "ffs/buf.h"
 #include "ffs/ufs_inode.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: ffs.h,v 1.3 2016/10/18 17:23:21 natano Exp $	*/
 /*	$NetBSD: ffs.h,v 1.2 2011/10/09 21:33:43 christos Exp $	*/
 
 /*
@@ -39,8 +39,8 @@
 #ifndef _FFS_H
 #define _FFS_H
 
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
+#include "ffs/dinode.h"
+#include "ffs/fs.h"
 
 typedef struct {
 	char	label[MAXVOLLEN];	/* volume name/label */

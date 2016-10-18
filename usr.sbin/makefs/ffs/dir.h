@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.4 2016/10/17 14:06:32 natano Exp $	*/
+/*	$OpenBSD: dir.h,v 1.1 2016/10/18 17:23:21 natano Exp $	*/
 /*	$NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp $	*/
 
 /*

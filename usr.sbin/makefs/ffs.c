@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.9 2016/10/17 07:54:17 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.10 2016/10/18 17:23:21 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -81,10 +81,10 @@
 #include "makefs.h"
 #include "ffs.h"
 
-#include <ufs/ufs/dinode.h>
-#include <ufs/ufs/dir.h>
-#include <ufs/ffs/fs.h>
-#include <ufs/ufs/ufs_bswap.h>
+#include "ffs/dinode.h"
+#include "ffs/dir.h"
+#include "ffs/fs.h"
+#include "ffs/ufs_bswap.h"
 
 #include "ffs/ufs_inode.h"
 #include "ffs/newfs_extern.h"

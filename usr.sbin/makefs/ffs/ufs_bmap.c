@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.3 2016/10/18 17:23:21 natano Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.18 2013/06/19 17:51:27 dholland Exp $	*/
 /* From: NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp */
 
@@ -47,9 +47,9 @@
 
 #include "makefs.h"
 
-#include <ufs/ufs/dinode.h>
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ffs/fs.h>
+#include "ffs/dinode.h"
+#include "ffs/ufs_bswap.h"
+#include "ffs/fs.h"
 
 #include "ffs/ufs_inode.h"
 #include "ffs/ffs_extern.h"
