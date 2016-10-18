@@ -7,7 +7,7 @@ page count    1
 page name # [fh1t]empty 
 page sect # 1 # 8 
 page desc # no title 
-page file src # man8/empty.8 # man1/empty.1 
+page file src # man1/empty.1 # man8/empty.8 
 === END OF PAGES ===
 macros count  36
 === MACROS ===
