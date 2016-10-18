@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makefs.8,v 1.7 2016/10/18 17:38:20 natano Exp $
+.\"	$OpenBSD: makefs.8,v 1.8 2016/10/18 18:15:23 natano Exp $
 .\"	$NetBSD: makefs.8,v 1.55 2015/11/25 16:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -116,13 +116,7 @@ Specify a timestamp to be set for all file system files and directories
 created so that repeatable builds are possible.
 The
 .Ar timestamp
-can be a
-.Pa pathname ,
-where the timestamps are derived from that file, a parseable date
-for
-.Xr parsedate 3
-(this option is not yet available in the tools build), or an integer
-value interpreted as the number of seconds from the Epoch.
+is an integer value interpreted as the number of seconds from the Epoch.
 .It Fl t Ar fs-type
 Create an
 .Ar fs-type

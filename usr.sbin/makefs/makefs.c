@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.9 2016/10/18 17:38:20 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.10 2016/10/18 18:15:23 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -199,12 +199,6 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
-	if (debug) {
-		printf("debug mask: 0x%08x\n", debug);
-		printf("start time: %ld.%ld, %s",
-		    (long)start_time.tv_sec, (long)start_time.tv_nsec,
-		    ctime(&start_time.tv_sec));
-	}
 	argc -= optind;
 	argv += optind;
 
@@ -337,9 +331,6 @@ get_tstamp(const char *b, struct stat *st)
 	time_t when;
 	char *eb;
 
-	if (stat(b, st) != -1)
-		return 0;
-
 	errno = 0;
 	when = strtoll(b, &eb, 0);
 	if (b == eb || *eb || errno)
@@ -372,7 +363,7 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 	fprintf(stderr,
 "Usage: %s [-b free-blocks] [-f free-files] [-M minimum-size]\n"
 "\t[-m maximum-size] [-O offset] [-o fs-options] [-S sector-size]\n"
-"\t[-s image-size] [-T <timestamp/file>] [-t fs-type] image-file directory\n",
+"\t[-s image-size] [-T timestamp] [-t fs-type] image-file directory\n",
 	    prog);
 
 	if (fstype) {
