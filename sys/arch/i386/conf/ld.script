@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.4 2016/09/03 13:13:07 deraadt Exp $	*/
+/*	$OpenBSD: ld.script,v 1.5 2016/10/18 18:44:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -78,7 +78,7 @@ SECTIONS
 	.openbsd.randomdata : AT (__kernel_randomdata_phys)
 	{
 		*(.openbsd.randomdata)
-	} :data :openbsd_randomize
+	} :rodata :openbsd_randomize
 	. = ALIGN(0x1000);
 	PROVIDE (erodata = .);
 	_erodata = .;
