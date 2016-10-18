@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.222 2016/10/09 06:20:25 otto Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.223 2016/10/18 09:31:05 otto Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1837,17 +1837,14 @@ sysctl_malloc(char *string, char **bufpp, int mib[], int flags, int *typep)
 			if (lp.list == NULL)
 				return (-1);
 			lp.size = stor + 2;
-			for (i = 1;
-			    (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL;
-			    i++) {
-				if (lp.list[i].ctl_name[0] == '\0') {
+			for (i = 1; (ptr = strsep(&buf, ",")) != NULL; i++) {
+				if (ptr[0] == '\0') {
 					i--;
 					continue;
 				}
+			    	lp.list[i].ctl_name = ptr;
 				lp.list[i].ctl_type = CTLTYPE_STRUCT;
 			}
-			lp.list[i].ctl_name = buf;
-			lp.list[i].ctl_type = CTLTYPE_STRUCT;
 			listall(string, &lp);
 			free(lp.list);
 			return (-1);
