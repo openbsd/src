@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.76 2016/05/18 19:10:26 jca Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.77 2016/10/18 20:07:35 kettenis Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -601,10 +601,6 @@ hwdump(FILE *ofp)
 	char *cmd, *acpidir;
 	size_t len;
 
-	if (gethostname(buf, sizeof(buf)) == -1)
-		err(1, "gethostname");
-	buf[strcspn(buf, ".")] = '\0';
-
 	if (asprintf(&acpidir, "%s%sp.XXXXXXXXXX", tmpdir,
 	    tmpdir[strlen(tmpdir) - 1] == '/' ? "" : "/") == -1)
 		err(1, "asprintf");
@@ -612,9 +608,9 @@ hwdump(FILE *ofp)
 		err(1, "mkdtemp");
 
 	if (asprintf(&cmd, "echo \"\\npcidump:\"; pcidump -xxv; "
-	    "echo \"\\nacpidump:\"; cd %s && acpidump -o %s; "
+	    "echo \"\\nacpidump:\"; cd %s && cp /var/db/acpi/* .; "
 	    "for i in *; do b64encode $i $i; done; rm -rf %s",
-	    acpidir, buf, acpidir) == -1)
+	    acpidir, acpidir) == -1)
 		err(1, "asprintf");
 
 	if ((ifp = popen(cmd, "r")) != NULL) {
