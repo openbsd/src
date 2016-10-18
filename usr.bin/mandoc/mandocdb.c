@@ -1,7 +1,8 @@
-/*	$OpenBSD: mandocdb.c,v 1.179 2016/09/02 14:03:24 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.180 2016/10/18 14:13:46 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2016 Ed Maste <emaste@freebsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -73,6 +74,7 @@ struct	mpage {
 	char		*arch;    /* architecture from file content */
 	char		*title;   /* title from file content */
 	char		*desc;    /* description from file content */
+	struct mpage	*next;    /* singly linked list */
 	struct mlink	*mlinks;  /* singly linked list */
 	int		 name_head_done;
 	enum form	 form;    /* format from file content */
@@ -107,11 +109,11 @@ static	void	 dbadd_mlink(const struct mlink *mlink);
 static	void	 dbprune(struct dba *);
 static	void	 dbwrite(struct dba *);
 static	void	 filescan(const char *);
+static	int	 fts_compare(const FTSENT **, const FTSENT **);
 static	void	 mlink_add(struct mlink *, const struct stat *);
 static	void	 mlink_check(struct mpage *, struct mlink *);
 static	void	 mlink_free(struct mlink *);
 static	void	 mlinks_undupe(struct mpage *);
-int		 mpages_compare(const void *, const void *);
 static	void	 mpages_free(void);
 static	void	 mpages_merge(struct dba *, struct mparse *);
 static	void	 parse_cat(struct mpage *, int);
@@ -158,6 +160,7 @@ static	int		 write_utf8; /* write UTF-8 output; else ASCII */
 static	int		 exitcode; /* to be returned by main */
 static	enum op		 op; /* operational mode */
 static	char		 basedir[PATH_MAX]; /* current base directory */
+static	struct mpage	*mpage_head; /* list of distinct manual pages */
 static	struct ohash	 mpages; /* table of distinct manual pages */
 static	struct ohash	 mlinks; /* table of directory entries */
 static	struct ohash	 names; /* table of all names */
@@ -517,6 +520,16 @@ usage:
 }
 
 /*
+ * To get a singly linked list in alpha order while inserting entries
+ * at the beginning, process directory entries in reverse alpha order.
+ */
+static int
+fts_compare(const FTSENT **a, const FTSENT **b)
+{
+	return -strcmp((*a)->fts_name, (*b)->fts_name);
+}
+
+/*
  * Scan a directory tree rooted at "basedir" for manpages.
  * We use fts(), scanning directory parts along the way for clues to our
  * section and architecture.
@@ -546,8 +559,8 @@ treescan(void)
 	argv[0] = ".";
 	argv[1] = (char *)NULL;
 
-	f = fts_open((char * const *)argv,
-	    FTS_PHYSICAL | FTS_NOCHDIR, NULL);
+	f = fts_open((char * const *)argv, FTS_PHYSICAL | FTS_NOCHDIR,
+	    fts_compare);
 	if (f == NULL) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say("", "&fts_open");
@@ -905,6 +918,8 @@ mlink_add(struct mlink *mlink, const struct stat *st)
 		mpage->inodev.st_ino = inodev.st_ino;
 		mpage->inodev.st_dev = inodev.st_dev;
 		mpage->form = FORM_NONE;
+		mpage->next = mpage_head;
+		mpage_head = mpage;
 		ohash_insert(&mpages, slot, mpage);
 	} else
 		mlink->next = mpage->mlinks;
@@ -928,20 +943,18 @@ mpages_free(void)
 {
 	struct mpage	*mpage;
 	struct mlink	*mlink;
-	unsigned int	 slot;
 
-	mpage = ohash_first(&mpages, &slot);
-	while (NULL != mpage) {
-		while (NULL != (mlink = mpage->mlinks)) {
+	while ((mpage = mpage_head) != NULL) {
+		while ((mlink = mpage->mlinks) != NULL) {
 			mpage->mlinks = mlink->next;
 			mlink_free(mlink);
 		}
+		mpage_head = mpage->next;
 		free(mpage->sec);
 		free(mpage->arch);
 		free(mpage->title);
 		free(mpage->desc);
 		free(mpage);
-		mpage = ohash_next(&mpages, &slot);
 	}
 }
 
@@ -1055,30 +1068,18 @@ mlink_check(struct mpage *mpage, struct mlink *mlink)
 static void
 mpages_merge(struct dba *dba, struct mparse *mp)
 {
-	struct mpage		**mplist, *mpage, *mpage_dest;
+	struct mpage		*mpage, *mpage_dest;
 	struct mlink		*mlink, *mlink_dest;
 	struct roff_man		*man;
 	char			*sodest;
 	char			*cp;
 	int			 fd;
-	unsigned int		 ip, npages, pslot;
 
-	npages = ohash_entries(&mpages);
-	mplist = mandoc_reallocarray(NULL, npages, sizeof(*mplist));
-	ip = 0;
-	mpage = ohash_first(&mpages, &pslot);
-	while (mpage != NULL) {
+	for (mpage = mpage_head; mpage != NULL; mpage = mpage->next) {
 		mlinks_undupe(mpage);
-		if (mpage->mlinks != NULL)
-			mplist[ip++] = mpage;
-		mpage = ohash_next(&mpages, &pslot);
-	}
-	npages = ip;
-	qsort(mplist, npages, sizeof(*mplist), mpages_compare);
+		if ((mlink = mpage->mlinks) == NULL)
+			continue;
 
-	for (ip = 0; ip < npages; ip++) {
-		mpage = mplist[ip];
-		mlink = mpage->mlinks;
 		name_mask = NAME_MASK;
 		mandoc_ohash_init(&names, 4, offsetof(struct str, key));
 		mandoc_ohash_init(&strings, 6, offsetof(struct str, key));
@@ -1187,17 +1188,6 @@ nextpage:
 		ohash_delete(&strings);
 		ohash_delete(&names);
 	}
-	free(mplist);
-}
-
-int
-mpages_compare(const void *vp1, const void *vp2)
-{
-	const struct mpage	*mp1, *mp2;
-
-	mp1 = *(const struct mpage **)vp1;
-	mp2 = *(const struct mpage **)vp2;
-	return strcmp(mp1->mlinks->file, mp2->mlinks->file);
 }
 
 static void
