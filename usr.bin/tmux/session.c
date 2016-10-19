@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.68 2016/10/16 22:06:40 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.69 2016/10/19 08:17:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -169,7 +169,6 @@ session_create(const char *name, int argc, char **argv, const char *path,
 	}
 
 	log_debug("session %s created", s->name);
-	notify_session("session-created", s);
 
 	return (s);
 }
