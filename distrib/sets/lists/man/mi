@@ -2206,6 +2206,7 @@
 ./usr/share/man/man8/mail.local.8
 ./usr/share/man/man8/mailwrapper.8
 ./usr/share/man/man8/makedbm.8
+./usr/share/man/man8/makefs.8
 ./usr/share/man/man8/makemap.8
 ./usr/share/man/man8/makewhatis.8
 ./usr/share/man/man8/map-mbone.8

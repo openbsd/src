@@ -2343,6 +2343,7 @@
 ./usr/sbin/lpd
 ./usr/sbin/mailwrapper
 ./usr/sbin/makedbm
+./usr/sbin/makefs
 ./usr/sbin/makemap
 ./usr/sbin/makewhatis
 ./usr/sbin/map-mbone
