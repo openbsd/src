@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.25 2016/07/01 22:40:44 schwarze Exp $	*/
+/*	$OpenBSD: cat.c,v 1.26 2016/10/19 18:20:25 schwarze Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,8 +62,6 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-
-	setlocale(LC_ALL, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
@@ -95,8 +92,7 @@ main(int argc, char *argv[])
 		default:
 			(void)fprintf(stderr,
 			    "usage: %s [-benstuv] [file ...]\n", __progname);
-			exit(1);
-			/* NOTREACHED */
+			return 1;
 		}
 	argv += optind;
 
@@ -106,8 +102,7 @@ main(int argc, char *argv[])
 		raw_args(argv);
 	if (fclose(stdout))
 		err(1, "stdout");
-	exit(rval);
-	/* NOTREACHED */
+	return rval;
 }
 
 void

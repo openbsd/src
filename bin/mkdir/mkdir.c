@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.29 2015/10/23 01:00:16 deraadt Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.30 2016/10/19 18:20:25 schwarze Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 
 #include <err.h>
 #include <errno.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,7 +43,7 @@
 extern char *__progname;
 
 int	mkpath(char *, mode_t, mode_t);
-void	usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
@@ -52,8 +51,6 @@ main(int argc, char *argv[])
 	int ch, rv, exitval, pflag;
 	void *set;
 	mode_t mode, dir_mode;
-
-	setlocale(LC_ALL, "");
 
 	/*
 	 * The default file mode is a=rwx (0777) with selected permissions
@@ -117,7 +114,7 @@ main(int argc, char *argv[])
 			exitval = 1;
 		}
 	}
-	exit(exitval);
+	return exitval;
 }
 
 /*
@@ -169,7 +166,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 	return (0);
 }
 
-void
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-p] [-m mode] directory ...\n",

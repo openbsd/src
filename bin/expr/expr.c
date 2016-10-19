@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.25 2016/01/07 21:17:05 tedu Exp $	*/
+/*	$OpenBSD: expr.c,v 1.26 2016/10/19 18:20:25 schwarze Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <locale.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <regex.h>
@@ -174,12 +173,10 @@ to_string(struct val *vp)
 int
 is_zero_or_null(struct val *vp)
 {
-	if (vp->type == integer) {
-		return (vp->u.i == 0);
-	} else {
-		return (*vp->u.s == 0 || (to_integer(vp) && vp->u.i == 0));
-	}
-	/* NOTREACHED */
+	if (vp->type == integer)
+		return vp->u.i == 0;
+	else
+		return *vp->u.s == 0 || (to_integer(vp) && vp->u.i == 0);
 }
 
 void
@@ -226,7 +223,6 @@ __dead void
 error(void)
 {
 	errx(2, "syntax error");
-	/* NOTREACHED */
 }
 
 struct val *
@@ -237,21 +233,15 @@ eval6(void)
 	if (token == OPERAND) {
 		nexttoken(0);
 		return tokval;
-
 	} else if (token == RP) {
 		nexttoken(0);
 		v = eval0();
-
-		if (token != LP) {
+		if (token != LP)
 			error();
-			/* NOTREACHED */
-		}
 		nexttoken(0);
 		return v;
-	} else {
+	} else
 		error();
-	}
-	/* NOTREACHED */
 }
 
 /* Parse and evaluate match (regex) expressions */
@@ -500,8 +490,6 @@ main(int argc, char *argv[])
 {
 	struct val     *vp;
 
-	(void) setlocale(LC_ALL, "");
-
 	if (pledge("stdio", NULL) == -1)
 		err(2, "pledge");
 
@@ -513,15 +501,13 @@ main(int argc, char *argv[])
 	nexttoken(0);
 	vp = eval0();
 
-	if (token != EOI) {
+	if (token != EOI)
 		error();
-		/* NOTREACHED */
-	}
 
 	if (vp->type == integer)
 		printf("%lld\n", vp->u.i);
 	else
 		printf("%s\n", vp->u.s);
 
-	exit(is_zero_or_null(vp));
+	return is_zero_or_null(vp);
 }

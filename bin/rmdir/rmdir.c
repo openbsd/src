@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmdir.c,v 1.12 2016/06/03 23:22:20 tedu Exp $	*/
+/*	$OpenBSD: rmdir.c,v 1.13 2016/10/19 18:20:26 schwarze Exp $	*/
 /*	$NetBSD: rmdir.c,v 1.13 1995/03/21 09:08:31 cgd Exp $	*/
 
 /*-
@@ -35,21 +35,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
 #include <unistd.h>
 
 extern char *__progname;
 
 int rm_path(char *);
-void usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
 {
 	int ch, errors;
 	int pflag;
-
-	setlocale(LC_ALL, "");
 
 	if (pledge("stdio cpath", NULL) == -1)
 		err(1, "pledge");
@@ -108,7 +105,7 @@ rm_path(char *path)
 	return (0);
 }
 
-void
+static void __dead
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-p] directory ...\n", __progname);

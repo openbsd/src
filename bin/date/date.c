@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.49 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.50 2016/10/19 18:20:25 schwarze Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
@@ -53,7 +52,7 @@ int slidetime;
 
 static void setthetime(char *);
 static void badformat(void);
-static void usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
@@ -63,8 +62,6 @@ main(int argc, char *argv[])
 	struct tm *tp;
 	int ch, rflag;
 	char *format, buf[1024], *outzone = NULL;
-
-	setlocale(LC_ALL, "");
 
 	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
@@ -146,7 +143,7 @@ main(int argc, char *argv[])
 		errx(1, "conversion error");
 	(void)strftime(buf, sizeof(buf), format, tp);
 	(void)printf("%s\n", buf);
-	exit(0);
+	return 0;
 }
 
 #define	ATOI2(ar)	((ar) += 2, ((ar)[-2] - '0') * 10 + ((ar)[-1] - '0'))
@@ -262,7 +259,7 @@ badformat(void)
 	usage();
 }
 
-static void
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr,
