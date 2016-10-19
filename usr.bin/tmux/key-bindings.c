@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.62 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.63 2016/10/19 09:24:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -296,7 +296,6 @@ key_bindings_init(void)
 		"bind -Tcopy-mode C-Up send -X scroll-up",
 		"bind -Tcopy-mode C-Down send -X scroll-down",
 
-		"bind -Tcopy-mode-vi C-b send -X page-up",
 		"bind -Tcopy-mode-vi C-c send -X cancel",
 		"bind -Tcopy-mode-vi C-d send -X halfpage-down",
 		"bind -Tcopy-mode-vi C-e send -X scroll-down",
