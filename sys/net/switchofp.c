@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.13 2016/10/12 09:50:55 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.14 2016/10/19 08:34:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -3556,6 +3556,9 @@ swofp_apply_set_field_ipv6(struct mbuf *m, int off,
 	in6_proto_cksum_out(m, NULL);
 
 	M_PREPEND(m, off, M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+
 	m_copyback(m, 0, off, eh_bk, M_DONTWAIT);
 
 	return (m);
@@ -3631,6 +3634,9 @@ swofp_apply_set_field_ipv4(struct mbuf *m, int off,
 	ip->ip_sum = in_cksum(m, hlen);
 
 	M_PREPEND(m, off, M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+
 	m_copyback(m, 0, off, eh_bk, M_DONTWAIT);
 
 	return (m);
