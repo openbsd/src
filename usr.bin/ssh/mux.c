@@ -1,4 +1,4 @@
-/* $OpenBSD: mux.c,v 1.62 2016/09/30 09:19:13 markus Exp $ */
+/* $OpenBSD: mux.c,v 1.63 2016/10/19 23:21:56 dtucker Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -2212,7 +2212,8 @@ muxclient(const char *path)
 		exit(0);
 	case SSHMUX_COMMAND_TERMINATE:
 		mux_client_request_terminate(sock);
-		fprintf(stderr, "Exit request sent.\r\n");
+		if (options.log_level != SYSLOG_LEVEL_QUIET)
+			fprintf(stderr, "Exit request sent.\r\n");
 		exit(0);
 	case SSHMUX_COMMAND_FORWARD:
 		if (mux_client_forwards(sock, 0) != 0)
@@ -2230,7 +2231,8 @@ muxclient(const char *path)
 		exit(0);
 	case SSHMUX_COMMAND_STOP:
 		mux_client_request_stop_listening(sock);
-		fprintf(stderr, "Stop listening request sent.\r\n");
+		if (options.log_level != SYSLOG_LEVEL_QUIET)
+			fprintf(stderr, "Stop listening request sent.\r\n");
 		exit(0);
 	case SSHMUX_COMMAND_CANCEL_FWD:
 		if (mux_client_forwards(sock, 1) != 0)
