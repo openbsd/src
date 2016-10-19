@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.86 2016/04/28 16:39:45 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.87 2016/10/19 16:38:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -257,28 +257,14 @@ static const SSL_CIPHER cipher_aliases[] = {
 		.name = SSL_TXT_DH,
 		.algorithm_mkey = SSL_kDHE,
 	},
-
-	{
-		.name = SSL_TXT_kECDHr,
-		.algorithm_mkey = SSL_kECDHr,
-	},
-	{
-		.name = SSL_TXT_kECDHe,
-		.algorithm_mkey = SSL_kECDHe,
-	},
-	{
-		.name = SSL_TXT_kECDH,
-		.algorithm_mkey = SSL_kECDHr|SSL_kECDHe,
-	},
 	{
 		.name = SSL_TXT_kEECDH,
 		.algorithm_mkey = SSL_kECDHE,
 	},
 	{
 		.name = SSL_TXT_ECDH,
-		.algorithm_mkey = SSL_kECDHr|SSL_kECDHe|SSL_kECDHE,
+		.algorithm_mkey = SSL_kECDHE,
 	},
-
 	{
 		.name = SSL_TXT_kGOST,
 		.algorithm_mkey = SSL_kGOST,
@@ -300,10 +286,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 	{
 		.name = SSL_TXT_aNULL,
 		.algorithm_auth = SSL_aNULL,
-	},
-	{
-		.name = SSL_TXT_aECDH,
-		.algorithm_auth = SSL_aECDH,
 	},
 	{
 		.name = SSL_TXT_aECDSA,
@@ -1455,7 +1437,6 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 
 	/* Move ciphers without forward secrecy to the end */
-	ssl_cipher_apply_rule(0, 0, SSL_aECDH, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 	ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 
 	/* RC4 is sort of broken - move it to the end */
@@ -1597,12 +1578,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kDHE:
 		kx = "DH";
 		break;
-	case SSL_kECDHr:
-		kx = "ECDH/RSA";
-		break;
-	case SSL_kECDHe:
-		kx = "ECDH/ECDSA";
-		break;
 	case SSL_kECDHE:
 		kx = "ECDH";
 		break;
@@ -1619,9 +1594,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_aDSS:
 		au = "DSS";
-		break;
-	case SSL_aECDH:
-		au = "ECDH";
 		break;
 	case SSL_aNULL:
 		au = "None";

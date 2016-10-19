@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.127 2016/09/22 07:17:41 guenther Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.128 2016/10/19 16:38:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1764,9 +1764,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		    s->method->ssl3_enc->generate_master_secret(
 		        s, s->session->master_key, p, i);
 		explicit_bzero(p, i);
-	} else
-
-	if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) {
+	} else if (alg_k & SSL_kECDHE) {
 		int ret = 1;
 		int key_size;
 		const EC_KEY   *tkey;
@@ -1780,17 +1778,11 @@ ssl3_get_client_key_exchange(SSL *s)
 			goto err;
 		}
 
-		/* Let's get server private key and group information. */
-		if (alg_k & (SSL_kECDHr|SSL_kECDHe)) {
-			/* Use the certificate */
-			tkey = s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec;
-		} else {
-			/*
-			 * Use the ephermeral values we saved when
-			 * generating the ServerKeyExchange msg.
-			 */
-			tkey = s->s3->tmp.ecdh;
-		}
+		/*
+		 * Use the ephemeral values we saved when
+		 * generating the ServerKeyExchange message.
+		 */
+		tkey = s->s3->tmp.ecdh;
 
 		group = EC_KEY_get0_group(tkey);
 		priv_key = EC_KEY_get0_private_key(tkey);

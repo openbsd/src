@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.138 2016/03/27 00:55:38 mmcc Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.139 2016/10/19 16:38:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1968,13 +1968,12 @@ err:
 }
 
 static int
-ssl3_send_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
+ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
     int *outlen)
 {
 	EC_KEY *tkey, *clnt_ecdh = NULL;
 	const EC_GROUP *srvr_group = NULL;
 	const EC_POINT *srvr_ecpoint = NULL;
-	EVP_PKEY *srvr_pub_pkey = NULL;
 	BN_CTX *bn_ctx = NULL;
 	unsigned char *encodedPoint = NULL;
 	unsigned char *key = NULL;
@@ -1993,14 +1992,6 @@ ssl3_send_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 		goto err;
 	}
 	tkey = sess_cert->peer_ecdh_tmp;
-
-	if (alg_k & (SSL_kECDHr|SSL_kECDHe)) {
-		/* Get the Server Public Key from certificate. */
-		srvr_pub_pkey = X509_get_pubkey(
-		    sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
-		if (srvr_pub_pkey != NULL && srvr_pub_pkey->type == EVP_PKEY_EC)
-			tkey = srvr_pub_pkey->pkey.ec;
-	}
 
 	if (tkey == NULL) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -2093,7 +2084,6 @@ err:
 	BN_CTX_free(bn_ctx);
 	free(encodedPoint);
 	EC_KEY_free(clnt_ecdh);
-	EVP_PKEY_free(srvr_pub_pkey);
 
 	return (ret);
 }
@@ -2242,8 +2232,9 @@ ssl3_send_client_key_exchange(SSL *s)
 		} else if (alg_k & SSL_kDHE) {
 			if (ssl3_send_client_kex_dhe(s, sess_cert, p, &n) != 1)
 				goto err;
-		} else if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) {
-			if (ssl3_send_client_kex_ecdh(s, sess_cert, p, &n) != 1)
+		} else if (alg_k & SSL_kECDHE) {
+			if (ssl3_send_client_kex_ecdhe(s, sess_cert, p,
+			    &n) != 1)
 				goto err;
 		} else if (alg_k & SSL_kGOST) {
 			if (ssl3_send_client_kex_gost(s, sess_cert, p, &n) != 1)

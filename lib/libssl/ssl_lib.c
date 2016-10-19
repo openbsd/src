@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.118 2016/09/22 12:34:59 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.119 2016/10/19 16:38:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2004,14 +2004,11 @@ SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth)
 void
 ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 {
-	CERT_PKEY	*cpk;
 	int		 rsa_enc, rsa_sign, dh_tmp, dsa_sign;
+	int		 have_ecc_cert, have_ecdh_tmp;
 	unsigned long	 mask_k, mask_a;
-	int		 have_ecc_cert, ecdh_ok, ecdsa_ok;
-	int		 have_ecdh_tmp;
 	X509		*x = NULL;
-	EVP_PKEY	*ecc_pkey = NULL;
-	int		 signature_nid = 0, pk_nid = 0, md_nid = 0;
+	CERT_PKEY	*cpk;
 
 	if (c == NULL)
 		return;
@@ -2021,6 +2018,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 
 	have_ecdh_tmp = (c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL ||
 	    c->ecdh_tmp_auto != 0);
+
 	cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
 	rsa_enc = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	cpk = &(c->pkeys[SSL_PKEY_RSA_SIGN]);
@@ -2058,93 +2056,40 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	 * ECDSA cipher suites depending on the key usage extension.
 	 */
 	if (have_ecc_cert) {
-		/* This call populates extension flags (ex_flags) */
 		x = (c->pkeys[SSL_PKEY_ECC]).x509;
+
+		/* This call populates extension flags (ex_flags). */
 		X509_check_purpose(x, -1, 0);
-		ecdh_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
-		(x->ex_kusage & X509v3_KU_KEY_AGREEMENT) : 1;
-		ecdsa_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
-		(x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) : 1;
-		ecc_pkey = X509_get_pubkey(x);
-		EVP_PKEY_free(ecc_pkey);
-		if ((x->sig_alg) && (x->sig_alg->algorithm)) {
-			signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
-			OBJ_find_sigid_algs(signature_nid, &md_nid, &pk_nid);
-		}
-		if (ecdh_ok) {
-			if (pk_nid == NID_rsaEncryption || pk_nid == NID_rsa) {
-				mask_k|=SSL_kECDHr;
-				mask_a|=SSL_aECDH;
-			}
-			if (pk_nid == NID_X9_62_id_ecPublicKey) {
-				mask_k|=SSL_kECDHe;
-				mask_a|=SSL_aECDH;
-			}
-		}
-		if (ecdsa_ok)
+
+		/* Key usage, if present, must allow signing. */
+		if ((x->ex_flags & EXFLAG_KUSAGE) == 0 ||
+		    (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE))
 			mask_a|=SSL_aECDSA;
 	}
 
-	if (have_ecdh_tmp) {
+	if (have_ecdh_tmp)
 		mask_k|=SSL_kECDHE;
-	}
-
 
 	c->mask_k = mask_k;
 	c->mask_a = mask_a;
 	c->valid = 1;
 }
 
-/* This handy macro borrowed from crypto/x509v3/v3_purp.c */
-#define ku_reject(x, usage) \
-	(((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
-
-
 int
 ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 {
-	unsigned long		 alg_k, alg_a;
-	int			 signature_nid = 0, md_nid = 0, pk_nid = 0;
 	const SSL_CIPHER	*cs = s->s3->tmp.new_cipher;
+	unsigned long		 alg_a;
 
-	alg_k = cs->algorithm_mkey;
 	alg_a = cs->algorithm_auth;
 
-	/* This call populates the ex_flags field correctly */
-	X509_check_purpose(x, -1, 0);
-	if ((x->sig_alg) && (x->sig_alg->algorithm)) {
-		signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
-		OBJ_find_sigid_algs(signature_nid, &md_nid, &pk_nid);
-	}
-	if (alg_k & SSL_kECDHe || alg_k & SSL_kECDHr) {
-		/* key usage, if present, must allow key agreement */
-		if (ku_reject(x, X509v3_KU_KEY_AGREEMENT)) {
-			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
-			    SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
-			return (0);
-		}
-		if ((alg_k & SSL_kECDHe) && TLS1_get_version(s) <
-		    TLS1_2_VERSION) {
-			/* signature alg must be ECDSA */
-			if (pk_nid != NID_X9_62_id_ecPublicKey) {
-				SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
-				    SSL_R_ECC_CERT_SHOULD_HAVE_SHA1_SIGNATURE);
-				return (0);
-			}
-		}
-		if ((alg_k & SSL_kECDHr) && TLS1_get_version(s) <
-		    TLS1_2_VERSION) {
-			/* signature alg must be RSA */
-			if (pk_nid != NID_rsaEncryption && pk_nid != NID_rsa) {
-				SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
-				    SSL_R_ECC_CERT_SHOULD_HAVE_RSA_SIGNATURE);
-				return (0);
-			}
-		}
-	}
 	if (alg_a & SSL_aECDSA) {
-		/* key usage, if present, must allow signing */
-		if (ku_reject(x, X509v3_KU_DIGITAL_SIGNATURE)) {
+		/* This call populates extension flags (ex_flags). */
+		X509_check_purpose(x, -1, 0);
+
+		/* Key usage, if present, must allow signing. */
+		if ((x->ex_flags & EXFLAG_KUSAGE) &&
+		    ((x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) == 0)) {
 			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
 			    SSL_R_ECC_CERT_NOT_FOR_SIGNING);
 			return (0);
@@ -2152,39 +2097,21 @@ ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 	}
 
 	return (1);
-	/* all checks are ok */
 }
 
-
-/* THIS NEEDS CLEANING UP */
 CERT_PKEY *
 ssl_get_server_send_pkey(const SSL *s)
 {
-	unsigned long	 alg_k, alg_a;
+	unsigned long	 alg_a;
 	CERT		*c;
 	int		 i;
 
 	c = s->cert;
 	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
 
-	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
-	if (alg_k & (SSL_kECDHr|SSL_kECDHe)) {
-		/*
-		 * We don't need to look at SSL_kECDHE
-		 * since no certificate is needed for
-		 * anon ECDH and for authenticated
-		 * ECDHE, the check for the auth
-		 * algorithm will set i correctly
-		 * NOTE: For ECDH-RSA, we need an ECC
-		 * not an RSA cert but for EECDH-RSA
-		 * we need an RSA cert. Placing the
-		 * checks for SSL_kECDH before RSA
-		 * checks ensures the correct cert is chosen.
-		 */
-		i = SSL_PKEY_ECC;
-	} else if (alg_a & SSL_aECDSA) {
+	if (alg_a & SSL_aECDSA) {
 		i = SSL_PKEY_ECC;
 	} else if (alg_a & SSL_aDSS) {
 		i = SSL_PKEY_DSA_SIGN;

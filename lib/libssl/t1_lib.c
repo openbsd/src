@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.92 2016/10/02 21:18:08 guenther Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.93 2016/10/19 16:38:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -651,8 +651,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 			alg_k = c->algorithm_mkey;
 			alg_a = c->algorithm_auth;
 
-			if ((alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe) ||
-			    (alg_a & SSL_aECDSA))) {
+			if ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA)) {
 				using_ecc = 1;
 				break;
 			}
@@ -964,8 +963,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-	using_ecc = (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe) ||
-	    alg_a & SSL_aECDSA) &&
+	using_ecc = ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA)) &&
 	    s->session->tlsext_ecpointformatlist != NULL;
 
 	ret += 2;
@@ -1959,7 +1957,7 @@ ssl_check_serverhello_tlsext(SSL *s)
 	    (s->tlsext_ecpointformatlist_length > 0) &&
 	    (s->session->tlsext_ecpointformatlist != NULL) &&
 	    (s->session->tlsext_ecpointformatlist_length > 0) &&
-	    ((alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) || (alg_a & SSL_aECDSA))) {
+	    ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
 		/* we are using an ECC cipher */
 		size_t i;
 		unsigned char *list;

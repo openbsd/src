@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.129 2016/04/28 16:39:45 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.130 2016/10/19 16:38:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -255,8 +255,6 @@
 /* Bits for algorithm_mkey (key exchange algorithm) */
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
 #define SSL_kDHE		0x00000008L /* tmp DH key no DH cert */
-#define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
-#define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
 #define SSL_kECDHE		0x00000080L /* ephemeral ECDH */
 #define SSL_kGOST		0x00000200L /* GOST key exchange */
 
@@ -264,10 +262,8 @@
 #define SSL_aRSA		0x00000001L /* RSA auth */
 #define SSL_aDSS 		0x00000002L /* DSS auth */
 #define SSL_aNULL 		0x00000004L /* no auth (i.e. use ADH or AECDH) */
-#define SSL_aECDH 		0x00000010L /* Fixed ECDH auth (kECDHe or kECDHr) */
 #define SSL_aECDSA              0x00000040L /* ECDSA auth*/
 #define SSL_aGOST01 		0x00000200L /* GOST R 34.10-2001 signature auth */
-
 
 /* Bits for algorithm_enc (symmetric encryption) */
 #define SSL_DES			0x00000001L
