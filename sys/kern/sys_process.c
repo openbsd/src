@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.72 2016/10/19 08:28:19 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.73 2016/10/19 08:31:33 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 
 #include <machine/reg.h>
 
-int	process_auxv_offset(struct proc *, struct proc *, struct uio *);
+int	process_auxv_offset(struct proc *, struct process *, struct uio *);
 
 #ifdef PTRACE
 int	global_ptrace;	/* permit tracing of not children */
@@ -368,7 +368,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_procp = p;
-		error = process_domem(p, t, &uio, write ? PT_WRITE_I :
+		error = process_domem(p, tr, &uio, write ? PT_WRITE_I :
 				PT_READ_I);
 		if (write == 0)
 			*retval = temp;
@@ -411,14 +411,14 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			if (uio.uio_resid > temp - uio.uio_offset)
 				uio.uio_resid = temp - uio.uio_offset;
 			piod.piod_len = iov.iov_len = uio.uio_resid;
-			error = process_auxv_offset(p, t, &uio);
+			error = process_auxv_offset(p, tr, &uio);
 			if (error)
 				return (error);
 			break;
 		default:
 			return (EINVAL);
 		}
-		error = process_domem(p, t, &uio, req);
+		error = process_domem(p, tr, &uio, req);
 		piod.piod_len -= uio.uio_resid;
 		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
 		return (error);
@@ -707,7 +707,7 @@ process_checkioperm(struct proc *p, struct process *tr)
 }
 
 int
-process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
+process_domem(struct proc *curp, struct process *tr, struct uio *uio, int req)
 {
 	struct vmspace *vm;
 	int error;
@@ -716,17 +716,17 @@ process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
 
 	len = uio->uio_resid;
 	if (len == 0)
-		return (0);
+		return 0;
 
-	if ((error = process_checkioperm(curp, p->p_p)) != 0)
-		return (error);
+	if ((error = process_checkioperm(curp, tr)) != 0)
+		return error;
 
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_p->ps_flags & PS_EXITING) || (p->p_vmspace->vm_refcnt < 1))
-		return(EFAULT);
+	vm = tr->ps_vmspace;
+	if ((tr->ps_flags & PS_EXITING) || (vm->vm_refcnt < 1))
+		return EFAULT;
 	addr = uio->uio_offset;
 
-	vm = p->p_vmspace;
 	vm->vm_refcnt++;
 
 	error = uvm_io(&vm->vm_map, uio,
@@ -735,15 +735,15 @@ process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
 	uvmspace_free(vm);
 
 	if (error == 0 && req == PT_WRITE_I)
-		pmap_proc_iflush(p->p_p, addr, len);
+		pmap_proc_iflush(tr, addr, len);
 
-	return (error);
+	return error;
 }
 
 int
-process_auxv_offset(struct proc *curp, struct proc *p, struct uio *uiop)
+process_auxv_offset(struct proc *curp, struct process *tr, struct uio *uiop)
 {
-	struct process *pr = p->p_p;
+	struct vmspace *vm;
 	struct ps_strings pss;
 	struct iovec iov;
 	struct uio uio;
@@ -753,29 +753,37 @@ process_auxv_offset(struct proc *curp, struct proc *p, struct uio *uiop)
 	iov.iov_len = sizeof(pss);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;	
-	uio.uio_offset = (off_t)pr->ps_strings;
+	uio.uio_offset = (off_t)tr->ps_strings;
 	uio.uio_resid = sizeof(pss);
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = curp;
 
-	if ((error = uvm_io(&p->p_vmspace->vm_map, &uio, 0)) != 0)
-		return (error);
+	vm = tr->ps_vmspace;
+	if ((tr->ps_flags & PS_EXITING) || (vm->vm_refcnt < 1))
+		return EFAULT;
+
+	vm->vm_refcnt++;
+	error = uvm_io(&vm->vm_map, &uio, 0);
+	uvmspace_free(vm);
+
+	if (error != 0)
+		return error;
 
 	if (pss.ps_envstr == NULL)
-		return (EIO);
+		return EIO;
 
 	uiop->uio_offset += (off_t)(vaddr_t)(pss.ps_envstr + pss.ps_nenvstr + 1);
 #ifdef MACHINE_STACK_GROWS_UP
-	if (uiop->uio_offset < (off_t)pr->ps_strings)
-		return (EIO);
+	if (uiop->uio_offset < (off_t)tr->ps_strings)
+		return EIO;
 #else
-	if (uiop->uio_offset > (off_t)pr->ps_strings)
-		return (EIO);
-	if ((uiop->uio_offset + uiop->uio_resid) > (off_t)pr->ps_strings)
-		uiop->uio_resid = (off_t)pr->ps_strings - uiop->uio_offset;
+	if (uiop->uio_offset > (off_t)tr->ps_strings)
+		return EIO;
+	if ((uiop->uio_offset + uiop->uio_resid) > (off_t)tr->ps_strings)
+		uiop->uio_resid = (off_t)tr->ps_strings - uiop->uio_offset;
 #endif
 
-	return (0);
+	return 0;
 }
 #endif

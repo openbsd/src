@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.14 2012/04/13 16:37:50 kettenis Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.15 2016/10/19 08:31:33 guenther Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -104,19 +104,20 @@ struct reg;
 struct fpreg;
 #endif
 
-void	proc_reparent(struct process *child, struct process *newparent);
+void	proc_reparent(struct process *_child, struct process *_newparent);
 #ifdef PT_GETFPREGS
-int	process_read_fpregs(struct proc *p, struct fpreg *regs);
+int	process_read_fpregs(struct proc *_t, struct fpreg *);
 #endif
-int	process_read_regs(struct proc *p, struct reg *regs);
-int	process_set_pc(struct proc *p, caddr_t addr);
-int	process_sstep(struct proc *p, int sstep);
+int	process_read_regs(struct proc *_t, struct reg *);
+int	process_set_pc(struct proc *_t, caddr_t _addr);
+int	process_sstep(struct proc *_t, int _sstep);
 #ifdef PT_SETFPREGS
-int	process_write_fpregs(struct proc *p, struct fpreg *regs);
+int	process_write_fpregs(struct proc *_t, struct fpreg *);
 #endif
-int	process_write_regs(struct proc *p, struct reg *regs);
-int	process_checkioperm(struct proc *, struct process *);
-int	process_domem(struct proc *, struct proc *, struct uio *, int);
+int	process_write_regs(struct proc *_t, struct reg *);
+int	process_checkioperm(struct proc *_curp, struct process *_tr);
+int	process_domem(struct proc *_curp, struct process *_tr, struct uio *,
+	    int _req);
 
 #ifndef FIX_SSTEP
 #define FIX_SSTEP(p)
