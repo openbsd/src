@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.12 2014/01/26 17:40:09 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.13 2016/10/19 08:23:37 guenther Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
 
 /*-
@@ -180,8 +180,8 @@ ptrace_read_int(struct proc *p, vaddr_t addr, u_int32_t *v)
 	uio.uio_resid = sizeof(u_int32_t);
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
-	uio.uio_procp = p;
-	return process_domem(curproc, p, &uio, PT_READ_I);
+	uio.uio_procp = curproc;
+	return process_domem(curproc, p->p_p, &uio, PT_READ_I);
 }
 
 int
@@ -198,8 +198,8 @@ ptrace_write_int(struct proc *p, vaddr_t addr, u_int32_t v)
 	uio.uio_resid = sizeof(u_int32_t);
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
-	uio.uio_procp = p;
-	return process_domem(curproc, p, &uio, PT_WRITE_I);
+	uio.uio_procp = curproc;
+	return process_domem(curproc, p->p_p, &uio, PT_WRITE_I);
 }
 
 u_int64_t
