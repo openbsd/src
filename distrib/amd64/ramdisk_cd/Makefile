@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2015/09/06 19:35:19 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.9 2016/10/19 16:49:58 deraadt Exp $
 
 .PATH: ${.CURDIR}/../ramdisk
 RAMDISK=RAMDISK_CD
@@ -8,6 +8,6 @@ XNAME=miniroot
 LBA=1
 TEMPLATE=${.CURDIR}/template
 
-.include "${.CURDIR}/../common/Makefile.inc"
+.include "${.CURDIR}/Makefile.inc"
 
 LISTS+=		${.CURDIR}/list.local

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.29 2016/10/14 18:44:19 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.1 2016/10/19 16:49:58 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -32,9 +32,6 @@ all:	${FS}
 ${FS}:	bsd.gz
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${FLOPPYSIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-.ifdef LBA
-	fdisk -yi -l ${FLOPPYSIZE} -b 960 -f ${DESTDIR}/usr/mdec/mbr ${VND}
-.endif
 .ifdef TEMPLATE
 	disklabel -wAT ${TEMPLATE} ${VND}
 	newfs -t msdos ${VND_IRDEV}
