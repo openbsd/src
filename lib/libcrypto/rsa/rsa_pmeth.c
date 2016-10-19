@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.17 2015/06/20 01:07:25 doug Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.18 2016/10/19 16:49:11 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -69,9 +69,6 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_CMS
-#include <openssl/cms.h>
-#endif
 
 #include "evp_locl.h"
 #include "rsa_locl.h"
@@ -451,26 +448,6 @@ bad_pad:
 	case EVP_PKEY_CTRL_PKCS7_DECRYPT:
 	case EVP_PKEY_CTRL_PKCS7_SIGN:
 		return 1;
-#ifndef OPENSSL_NO_CMS
-	case EVP_PKEY_CTRL_CMS_DECRYPT:
-		{
-			X509_ALGOR *alg = NULL;
-			ASN1_OBJECT *encalg = NULL;
-
-			if (p2)
-				CMS_RecipientInfo_ktri_get0_algs(p2, NULL,
-				    NULL, &alg);
-			if (alg)
-				X509_ALGOR_get0(&encalg, NULL, NULL, alg);
-			if (encalg && OBJ_obj2nid(encalg) == NID_rsaesOaep)
-				rctx->pad_mode = RSA_PKCS1_OAEP_PADDING;
-		}
-		/* FALLTHROUGH */
-
-	case EVP_PKEY_CTRL_CMS_ENCRYPT:
-	case EVP_PKEY_CTRL_CMS_SIGN:
-		return 1;
-#endif
 	case EVP_PKEY_CTRL_PEER_KEY:
 		RSAerr(RSA_F_PKEY_RSA_CTRL,
 		    RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
