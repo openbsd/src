@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.455 2016/10/16 21:45:17 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.456 2016/10/19 02:05:49 yasuoka Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -929,7 +929,7 @@ if_detach(struct ifnet *ifp)
 	ifp->if_watchdog = NULL;
 
 	/* Remove the input task */
-	task_del(systq, ifp->if_inputtask);
+	task_del(softnettq, ifp->if_inputtask);
 	mq_purge(&ifp->if_inputqueue);
 
 	/* Remove the watchdog timeout & task */
