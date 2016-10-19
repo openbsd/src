@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.15 2016/03/27 16:28:56 chl Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.16 2016/10/19 16:09:24 millert Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -138,18 +138,13 @@ __vsyslog_r(int pri, struct syslog_data *data,
 		}
 	}
 
-	/* strerror() is not reentrant */
-
 	for (t = fmt_cpy, fmt_left = FMT_LEN; (ch = *fmt); ++fmt) {
 		if (ch == '%' && fmt[1] == 'm') {
+			char ebuf[NL_TEXTMAX];
+
 			++fmt;
-			if (reentrant) {
-				prlen = snprintf(t, fmt_left, "Error %d",
-				    saved_errno); 
-			} else {
-				prlen = snprintf(t, fmt_left, "%s",
-				    strerror(saved_errno)); 
-			}
+			(void)strerror_r(saved_errno, ebuf, sizeof(ebuf));
+			prlen = snprintf(t, fmt_left, "%s", ebuf);
 			if (prlen < 0)
 				prlen = 0;
 			if (prlen >= fmt_left)
