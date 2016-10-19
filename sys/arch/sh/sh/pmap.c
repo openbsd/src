@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.27 2016/10/19 01:34:47 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -1067,7 +1067,6 @@ int
 __pmap_asid_alloc(void)
 {
 	struct process *pr;
-	struct proc *p;
 	int i, j, k, n, map, asid;
 
 	/* Search free ASID */
@@ -1092,14 +1091,9 @@ __pmap_asid_alloc(void)
 	 * too many processes.
 	 */
 	LIST_FOREACH(pr, &allprocess, ps_list) {
-		/* find a thread that still has the process vmspace attached */
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link)
-			if (p->p_vmspace != NULL)
-				break;
-		if (p == NULL)
-			continue;
-		if ((asid = p->p_vmspace->vm_map.pmap->pm_asid) > 0) {
-			pmap_t pmap = p->p_vmspace->vm_map.pmap;
+		pmap_t pmap = pr->ps_vmspace->vm_map.pmap;
+
+		if ((asid = pmap->pm_asid) > 0) {
 			pmap->pm_asid = -1;
 			__pmap_asid.hint = asid;
 			/* Invalidate all old ASID entry */
