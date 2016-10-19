@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.84 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.85 2016/10/19 08:28:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -1817,9 +1817,9 @@ pmap_clean_page(paddr_t pa)
  * Flushes instruction cache for the range `va'..`va'+`len' in proc `p'.
  */
 void
-pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
+pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
-	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	pmap_t pmap = vm_map_pmap(&pr->ps_vmspace->vm_map);
 	paddr_t pa;
 	vsize_t count;
 	struct cpu_info *ci;

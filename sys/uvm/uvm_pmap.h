@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.26 2016/03/03 12:41:30 naddy Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.27 2016/10/19 08:28:19 guenther Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -149,7 +149,7 @@ boolean_t	 pmap_is_referenced(struct vm_page *);
 void		 pmap_page_protect(struct vm_page *, vm_prot_t);
 
 #if !defined(pmap_proc_iflush)
-void		pmap_proc_iflush(struct proc *, vaddr_t, vsize_t);
+void		pmap_proc_iflush(struct process *, vaddr_t, vsize_t);
 #endif
 void		 pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 #if !defined(pmap_reference)

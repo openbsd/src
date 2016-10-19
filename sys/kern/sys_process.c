@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.71 2016/10/09 22:46:48 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.72 2016/10/19 08:28:19 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -735,7 +735,7 @@ process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
 	uvmspace_free(vm);
 
 	if (error == 0 && req == PT_WRITE_I)
-		pmap_proc_iflush(p, addr, len);
+		pmap_proc_iflush(p->p_p, addr, len);
 
 	return (error);
 }

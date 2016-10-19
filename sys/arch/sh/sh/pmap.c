@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2016/10/19 01:34:47 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 2016/10/19 08:28:20 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -756,7 +756,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 }
 
 void
-pmap_proc_iflush(struct proc *p, vaddr_t va, size_t len)
+pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
 	if (!SH_HAS_UNIFIED_CACHE)
 		sh_icache_sync_range_index(va, len);

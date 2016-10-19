@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.65 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.66 2016/10/19 08:28:19 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2790,10 +2790,10 @@ pmap_collect(pmap_t pm)
  *
  */
 void
-pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
+pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
 	/* We only need to do anything if it is the current process. */
-	if (p == curproc)
+	if (pr == curproc->p_p)
 		cpu_icache_sync_range(va, len);
 }
 

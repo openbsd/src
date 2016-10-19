@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.165 2016/09/15 02:00:17 dlg Exp $ */
+/*	$OpenBSD: pmap.c,v 1.166 2016/10/19 08:28:20 guenther Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -2158,23 +2158,23 @@ pmap_init()
 }
 
 void
-pmap_proc_iflush(struct proc *p, vaddr_t addr, vsize_t len)
+pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
 	paddr_t pa;
 	vsize_t clen;
 
 	while (len > 0) {
 		/* add one to always round up to the next page */
-		clen = round_page(addr + 1) - addr;
+		clen = round_page(va + 1) - va;
 		if (clen > len)
 			clen = len;
 
-		if (pmap_extract(p->p_vmspace->vm_map.pmap, addr, &pa)) {
+		if (pmap_extract(pr->ps_vmspace->vm_map.pmap, va, &pa)) {
 			syncicache((void *)pa, clen);
 		}
 
 		len -= clen;
-		addr += clen;
+		va += clen;
 	}
 }
 

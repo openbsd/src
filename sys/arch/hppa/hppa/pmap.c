@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.171 2016/09/16 02:35:41 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.172 2016/10/19 08:28:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1250,9 +1250,9 @@ pmap_kremove(vaddr_t va, vsize_t size)
 }
 
 void
-pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
+pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
-	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	pmap_t pmap = vm_map_pmap(&pr->ps_vmspace->vm_map);
 
 	fdcache(pmap->pm_space, va, len);
 	sync_caches();

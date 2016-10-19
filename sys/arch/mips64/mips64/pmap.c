@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.93 2016/10/08 05:49:09 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.94 2016/10/19 08:28:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1987,10 +1987,10 @@ pmap_pg_free(struct pool *pp, void *item)
 }
 
 void
-pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
+pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
 #ifdef MULTIPROCESSOR
-	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	struct pmap *pmap = vm_map_pmap(&pr->ps_vmspace->vm_map);
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
