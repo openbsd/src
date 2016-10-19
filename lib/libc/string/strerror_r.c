@@ -1,4 +1,4 @@
-/* $OpenBSD: strerror_r.c,v 1.12 2015/10/25 10:22:09 bluhm Exp $ */
+/* $OpenBSD: strerror_r.c,v 1.13 2016/10/19 16:26:16 bluhm Exp $ */
 /* Public Domain <marc@snafu.org> */
 
 #include <errno.h>
@@ -85,15 +85,13 @@ __num2string(int num, int sign, int setid, char *buf, size_t buflen,
 int
 strerror_r(int errnum, char *strerrbuf, size_t buflen)
 {
-	int save_errno;
 	int ret_errno;
-
-	save_errno = errno;
 
 	ret_errno = __num2string(errnum, 1, 1, strerrbuf, buflen,
 	    sys_errlist, sys_nerr, UPREFIX);
 
-	errno = ret_errno ? ret_errno : save_errno;
+	if (ret_errno)
+		errno = ret_errno;
 	return (ret_errno);
 }
 DEF_WEAK(strerror_r);
