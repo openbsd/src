@@ -41,6 +41,8 @@ fe80::725f:caff:fe21:8d70%tap0		q70
 lladdr fe:e1:ba:d0:d5:6d up
 inet 10.188.70.17 255.255.255.0
 inet6 fdd7:e83e:66bc:70:3e97:eff:fea7:9b2
+!route add -inet 10.188.219.0/24 127.0.0.1 -blackhole
+!route add -inet6 fdd7:e83e:66bc:219::/64 ::1 -blackhole
 
 - My qemu where the kernel under test is running
 
@@ -48,6 +50,8 @@ inet6 fdd7:e83e:66bc:70:3e97:eff:fea7:9b2
 lladdr 70:5f:ca:21:8d:70
 inet 10.188.70.70 255.255.255.0
 inet6 fdd7:e83e:66bc:70:725f:caff:fe21:8d70
+!route add -inet 10.188.219.0/24 10.188.70.17
+!route add -inet6 fdd7:e83e:66bc:219::/64 fdd7:e83e:66bc:70:3e97:eff:fea7:9b2
 
 /etc/inetd.conf
 chargen stream  tcp     nowait  root    internal
@@ -67,10 +71,12 @@ REMOTE_SSH=q70
 
 LOCAL_ADDR=10.188.70.17
 REMOTE_ADDR=10.188.70.70
-FAKE_NET=10.188.188.0/24
-FAKE_NET_ADDR=10.188.188.188
+FAKE_NET=10.188.219.0/24
+FAKE_NET_ADDR=10.188.219.188
 
 LOCAL_ADDR6=fdd7:e83e:66bc:70:3e97:eff:fea7:9b2
 REMOTE_ADDR6=fdd7:e83e:66bc:70:725f:caff:fe21:8d70
-FAKE_NET6=fdd7:e83e:66bc:188::/64
-FAKE_NET_ADDR6=fdd7:e83e:66bc:188::188
+FAKE_NET6=fdd7:e83e:66bc:219::/64
+FAKE_NET_ADDR6=fdd7:e83e:66bc:219::188
+
+- Fix your configuration until make check-setup passes

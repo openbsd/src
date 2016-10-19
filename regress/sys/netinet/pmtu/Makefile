@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2016/09/02 21:30:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/10/19 13:37:18 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -27,6 +27,8 @@ regress:
 # Adapt interface and addresse variables to your local setup.
 #
 LOCAL_IF ?=
+LOCAL_MAC ?=
+REMOTE_MAC ?=
 REMOTE_SSH ?=
 
 LOCAL_ADDR ?=
@@ -40,25 +42,25 @@ FAKE_NET6 ?=
 FAKE_NET_ADDR6 ?=
 
 .if empty (LOCAL_IF) || empty (REMOTE_SSH) || \
+    empty (LOCAL_MAC) || empty (REMOTE_MAC) || \
     empty (LOCAL_ADDR) || empty (LOCAL_ADDR6) || \
     empty (REMOTE_ADDR) || empty (REMOTE_ADDR6) || \
     empty (FAKE_NET) || empty (FAKE_NET6) || \
     empty (FAKE_NET_ADDR) || empty (FAKE_NET_ADDR6)
 regress:
 	@echo This tests needs a remote machine to operate on
-	@echo LOCAL_IF REMOTE_SSH LOCAL_ADDR LOCAL_ADDR6 REMOTE_ADDR
-	@echo REMOTE_ADDR6 FAKE_NET FAKE_NET6 FAKE_NET_ADDR FAKE_NET_ADDR6
+	@echo LOCAL_IF REMOTE_SSH LOCAL_MAC REMOTE_MAC LOCAL_ADDR LOCAL_ADDR6
+	@echo REMOTE_ADDR REMOTE_ADDR6 FAKE_NET FAKE_NET6 FAKE_NET_ADDR
+	@echo FAKE_NET_ADDR6
 	@echo are empty.  Fill out these variables for additional tests.
 	@echo SKIPPED
 .endif
 
-.if ! empty (REMOTE_SSH)
 .if make (regress) || make (all)
 .BEGIN: pf.conf addr.py
 	@echo
 	${SUDO} true
 	ssh -t ${REMOTE_SSH} ${SUDO} true
-.endif
 .endif
 
 depend: addr.py
@@ -90,20 +92,12 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 # Clear local and remote path mtu routes, set fake net route
 reset-route:
 	@echo '\n======== $@ ========'
-	-${SUDO} route -n delete -host ${REMOTE_ADDR}
-	ssh ${REMOTE_SSH} ${SUDO} sh -c "'\
-	    route -n delete -inet -host ${LOCAL_ADDR};\
-	    route -n delete -inet -net ${FAKE_NET};\
-	    route -n delete -inet -host ${FAKE_NET_ADDR};\
-	    route -n add -inet -net ${FAKE_NET} ${LOCAL_ADDR}'"
+	${SUDO} route -n delete -inet -host ${REMOTE_ADDR} || true
+	ssh ${REMOTE_SSH} ${SUDO} route -n delete -inet -host ${FAKE_NET_ADDR} || true
 reset-route6:
 	@echo '\n======== $@ ========'
-	-${SUDO} route -n delete -host ${REMOTE_ADDR6}
-	ssh ${REMOTE_SSH} ${SUDO} sh -c "'\
-	    route -n delete -inet6 -host ${LOCAL_ADDR6};\
-	    route -n delete -inet6 -net ${FAKE_NET6};\
-	    route -n delete -inet6 -host ${FAKE_NET_ADDR6};\
-	    route -n add -inet6 -net ${FAKE_NET6} ${LOCAL_ADDR6}'"
+	${SUDO} route -n delete -inet6 -host ${REMOTE_ADDR6} || true
+	ssh ${REMOTE_SSH} ${SUDO} route -n delete -inet6 -host ${FAKE_NET_ADDR6} || true
 
 # Clear host routes and ping all addresses.  This ensures that
 # the IP addresses are configured and all routing table are set up
@@ -153,5 +147,52 @@ run-regress-gateway6: run-regress-udp6
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
 CLEANFILES +=		addr.py *.pyc *.log *.route
+
+.PHONY: check-setup check-setup-local check-setup-remote
+
+# Check wether the address, route and remote setup is correct
+check-setup: check-setup-local check-setup-remote
+
+check-setup-local:
+	@echo '\n======== $@ ========'
+	ping -n -c 1 ${LOCAL_ADDR}  # LOCAL_ADDR
+	route -n get -inet ${LOCAL_ADDR} | grep -q 'flags: .*LOCAL'  # LOCAL_ADDR
+	arp -na | grep -q '^${LOCAL_ADDR} * ${LOCAL_MAC} * ${LOCAL_IF} permanent'  # LOCAL_ADDR LOCAL_MAC LOCAL_IF
+	ping -n -c 1 ${REMOTE_ADDR}  # REMOTE_ADDR
+	route -n get -inet ${REMOTE_ADDR} | fgrep -q 'interface: ${LOCAL_IF}'  # REMOTE_ADDR LOCAL_IF
+	! ping -n -c 1 -w 1 ${FAKE_NET_ADDR}  # FAKE_NET_ADDR
+	route -n get -inet ${FAKE_NET_ADDR} | grep -q 'flags: .*BLACKHOLE'  # FAKE_NET_ADDR
+	route -n get -inet -net ${FAKE_NET} | grep -q 'flags: .*BLACKHOLE'  # FAKE_NET
+	ping6 -n -c 1 ${LOCAL_ADDR6}  # LOCAL_ADDR6
+	route -n get -inet6 ${LOCAL_ADDR6} | grep -q 'flags: .*LOCAL'  # LOCAL_ADDR6
+	ndp -na | grep -q '^${LOCAL_ADDR6} * ${LOCAL_MAC} * ${LOCAL_IF} permanent'  # LOCAL_ADDR6 LOCAL_MAC LOCAL_IF
+	ping6 -n -c 1 ${REMOTE_ADDR6}  # REMOTE_ADDR6
+	route -n get -inet6 ${REMOTE_ADDR6} | fgrep -q 'interface: ${LOCAL_IF}'  # REMOTE_ADDR6 LOCAL_IF
+	! ping -n -c 1 -w 1 ${FAKE_NET_ADDR6}  # FAKE_NET_ADDR6
+	route -n get -inet6 ${FAKE_NET_ADDR6} | grep -q 'flags: .*BLACKHOLE'  # FAKE_NET_ADDR6
+	route -n get -inet6 -net ${FAKE_NET6} | grep -q 'flags: .*BLACKHOLE'  # FAKE_NET6
+
+check-setup-remote:
+	@echo '\n======== $@ ========'
+	ssh ${REMOTE_SSH} ping -n -c 1 ${REMOTE_ADDR}  # REMOTE_ADDR
+	ssh ${REMOTE_SSH} route -n get -inet ${REMOTE_ADDR} | grep -q 'flags: .*LOCAL'  # REMOTE_ADDR
+	ssh ${REMOTE_SSH} arp -na | grep -q '^${REMOTE_ADDR} * ${REMOTE_MAC} * .* permanent'  # REMOTE_ADDR REMOTE_MAC
+	ssh ${REMOTE_SSH} ping -n -c 1 ${LOCAL_ADDR}  # LOCAL_ADDR
+.for ip in FAKE_NET FAKE_NET_ADDR
+	ssh ${REMOTE_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${LOCAL_ADDR}'  # ${ip} LOCAL_ADDR
+.endfor
+	ssh ${REMOTE_SSH} ping6 -n -c 1 ${REMOTE_ADDR6}  # REMOTE_ADDR6
+	ssh ${REMOTE_SSH} route -n get -inet6 ${REMOTE_ADDR6} | grep -q 'flags: .*LOCAL'  # REMOTE_ADDR6
+	ssh ${REMOTE_SSH} ndp -na | grep -q '^${REMOTE_ADDR6} * ${REMOTE_MAC} * .* permanent'  # REMOTE_ADDR6 REMOTE_MAC
+	ssh ${REMOTE_SSH} ping6 -n -c 1 ${LOCAL_ADDR6}  # LOCAL_ADDR6
+.for ip in FAKE_NET6 FAKE_NET_ADDR6
+	ssh ${REMOTE_SSH} route -n get -inet6 ${${ip}} | fgrep -q 'gateway: ${LOCAL_ADDR6}'  # ${ip} LOCAL_ADDR6
+.endfor
+.for af in inet inet6
+	ssh ${ECO_SSH} netstat -a -f ${af} -p tcp | fgrep ' *.chargen '
+.endfor
+	ssh ${ECO_SSH} netstat -a -f inet6 -p udp | fgrep ' *.echo '
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 
 .include <bsd.regress.mk>
