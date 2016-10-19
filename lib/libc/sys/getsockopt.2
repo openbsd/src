@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.50 2016/06/13 21:24:43 bluhm Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.51 2016/10/19 05:50:54 jmc Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: June 13 2016 $
+.Dd $Mdocdate: October 19 2016 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -179,7 +179,8 @@ enables debugging in the underlying protocol modules.
 .Dv SO_REUSEADDR
 indicates that the rules used in validating addresses supplied in a
 .Xr bind 2
-call should allow reuse of local addresses.
+call should allow reuse of local addresses
+by callers with the same user ID (or the superuser).
 .Dv SO_REUSEPORT
 allows completely duplicate bindings by multiple processes if they all set
 .Dv SO_REUSEPORT
@@ -237,7 +238,7 @@ Some protocols always behave as if this option is set.
 allows the socket to be bound to addresses
 which are not local to the machine, so it
 can be used to make a transparent proxy.
-Note that this option is limited to the super-user.
+Note that this option is limited to the superuser.
 In order to receive packets for these addresses,
 .Dv SO_BINDANY
 needs to be combined with matching outgoing
