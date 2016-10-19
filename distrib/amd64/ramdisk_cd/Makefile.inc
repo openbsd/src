@@ -1,19 +1,15 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2016/10/19 16:49:58 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2016/10/19 17:45:38 natano Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		mr.fs
-CBIN?=		instbin
-CRUNCHCONF?=	${CBIN}.conf
 LISTS?=		${.CURDIR}/../common/list
 UTILS?=		${.CURDIR}/../../miniroot
 
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
-XNAME?=		floppy
-FS?=		${XNAME}${REV}.fs
+FS?=		miniroot${REV}.fs
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
@@ -72,9 +68,9 @@ bsd.gz: bsd.rd
 	strip -R .comment bsd.strip
 	gzip -c9n bsd.strip > bsd.gz
 
-bsd.rd:	${IMAGE} bsd rdsetroot
+bsd.rd:	mr.fs bsd rdsetroot
 	cp bsd bsd.rd
-	${.OBJDIR}/rdsetroot bsd.rd ${IMAGE}
+	${.OBJDIR}/rdsetroot bsd.rd mr.fs
 
 
 bsd:
@@ -82,9 +78,9 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
 	cp -p ${.CURDIR}/../../../sys/arch/amd64/compile/${RAMDISK}/obj/bsd bsd
 
-${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
+mr.fs: instbin rd_setup do_files rd_teardown
 
-rd_setup: ${CBIN}
+rd_setup: instbin
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w ${VND} ${DISKTYPE}
@@ -96,7 +92,7 @@ rd_teardown:
 	@df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-	cp ${REALIMAGE} ${IMAGE}
+	cp ${REALIMAGE} mr.fs
 	rm ${REALIMAGE}
 
 rdsetroot:	${TOP}/../common/elfrdsetroot.c
@@ -108,7 +104,7 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 
-.PRECIOUS:	${IMAGE}
+.PRECIOUS:	mr.fs
 
 .ifdef RELEASEDIR
 install:
@@ -120,29 +116,29 @@ install:
 .endif
 .endif	# RELEASEDIR
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
-	-c ${CBIN}.c -e ${CBIN} -m ${CBIN}.mk ${CRUNCHCONF}
+	-c instbin.c -e instbin -m instbin.mk instbin.conf
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-	strip -R .comment ${CBIN}
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+	strip -R .comment instbin
 
-${CRUNCHCONF}: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CRUNCHCONF}
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=instbin ${LISTS} > instbin.conf
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
-	rm ${MOUNT_POINT}/${CBIN}
+	rm ${MOUNT_POINT}/instbin
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}*.cache \
+	/bin/rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
-	    lib*.a lib*.olist ${CBIN}.map \
-	    rdsetroot boot ${CRUNCHCONF} ${FS}
+	    lib*.a lib*.olist instbin.map \
+	    rdsetroot boot instbin.conf ${FS}
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
