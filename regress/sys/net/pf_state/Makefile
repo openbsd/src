@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2016/10/19 16:39:50 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/10/20 16:31:37 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -87,7 +87,7 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 TARGETS +=	challenge-ack
 run-regress-challenge-ack: stamp-pfctl
 	@echo '\n======== $@ ========'
-	${SUDO} ${PYTHON}challenge_ack.py ${FAKE_NET_ADDR} ${REMOTE_ADDR}
+	${SUDO} ${PYTHON}challenge_ack.py
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
