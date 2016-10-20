@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.98 2016/10/08 12:56:18 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.99 2016/10/20 05:49:59 otto Exp $
 .\"
-.Dd $Mdocdate: October 8 2016 $
+.Dd $Mdocdate: October 20 2016 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -377,11 +377,11 @@ The pointer passed to
 or
 .Fn reallocarray
 has been modified.
-.It Dq chunk canary corrupted 0xhhhhllll
+.It Dq chunk canary corrupted address offset@length
 A byte after the requested size has been overwritten,
 indicating a heap overflow.
-The high word is the requested length of the chunk;
-the low word is the offset at which corruption was detected.
+The offset at which corruption was detected is printed before the @,
+the requested length of the allocation after the @.
 .It Dq recursive call
 An attempt was made to call recursively into these functions, i.e., from a
 signal handler.
