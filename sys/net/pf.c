@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.992 2016/10/18 13:28:01 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.993 2016/10/20 23:18:43 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2825,6 +2825,25 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	}
 }
 
+static void
+pf_send_challenge_ack(struct pf_pdesc *pd, struct pf_state *s,
+    struct pf_state_peer *src, struct pf_state_peer *dst)
+{
+	/*
+	 * We are sending challenge ACK as a response to SYN packet, which
+	 * matches existing state (modulo TCP window check). Therefore packet
+	 * must be sent on behalf of destination.
+	 *
+	 * We expect sender to remain either silent, or send RST packet
+	 * so both, firewall and remote peer, can purge dead state from
+	 * memory.
+	 */
+	pf_send_tcp(s->rule.ptr, pd->af, pd->dst, pd->src,
+	    pd->hdr.tcp->th_dport, pd->hdr.tcp->th_sport, dst->seqlo,
+	    src->seqlo, TH_ACK, 0, 0, s->rule.ptr->return_ttl, 1, 0,
+	    pd->rdomain);
+}
+
 void
 pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
     struct pf_rule *r, u_int rdomain)
@@ -4647,21 +4666,36 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 	case IPPROTO_TCP:
 		if ((action = pf_synproxy(pd, state, reason)) != PF_PASS)
 			return (action); 
-		if (((pd->hdr.tcp->th_flags & (TH_SYN|TH_ACK)) == TH_SYN) &&
-		    dst->state >= TCPS_FIN_WAIT_2 &&
-		    src->state >= TCPS_FIN_WAIT_2) {
-			if (pf_status.debug >= LOG_NOTICE) {
-				log(LOG_NOTICE, "pf: state reuse ");
-				pf_print_state(*state);
-				pf_print_flags(pd->hdr.tcp->th_flags);
-				addlog("\n");
+		if ((pd->hdr.tcp->th_flags & (TH_SYN|TH_ACK)) == TH_SYN) {
+
+		    	if (dst->state >= TCPS_FIN_WAIT_2 &&
+			    src->state >= TCPS_FIN_WAIT_2) {
+				if (pf_status.debug >= LOG_NOTICE) {
+					log(LOG_NOTICE, "pf: state reuse ");
+					pf_print_state(*state);
+					pf_print_flags(pd->hdr.tcp->th_flags);
+					addlog("\n");
+				}
+				/* XXX make sure it's the same direction ?? */
+				(*state)->src.state = TCPS_CLOSED;
+				(*state)->dst.state = TCPS_CLOSED;
+				pf_remove_state(*state);
+				*state = NULL;
+				pd->m->m_pkthdr.pf.inp = inp;
+				return (PF_DROP);
+			} else if (dst->state >= TCPS_ESTABLISHED &&
+			    src->state >= TCPS_ESTABLISHED) {
+                                /*
+                                 * SYN matches existing state???
+				 * Typically happens when sender boots up after
+				 * sudden panic. Certain protocols (NFSv3) are
+				 * always using same port numbers. Challenge
+				 * ACK enables all parties (firewall and peers)
+				 * to get in sync again.
+                                 */
+                                pf_send_challenge_ack(pd, *state, src, dst);
+				return (PF_DROP);
 			}
-			/* XXX make sure it's the same direction ?? */
-			(*state)->src.state = (*state)->dst.state = TCPS_CLOSED;
-			pf_remove_state(*state);
-			*state = NULL;
-			pd->m->m_pkthdr.pf.inp = inp;
-			return (PF_DROP);
 		}
 
 		if ((*state)->state_flags & PFSTATE_SLOPPY) {
