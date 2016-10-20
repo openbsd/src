@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.11 2014/11/23 21:19:47 guenther Exp $	*/
+/*	$OpenBSD: sync.c,v 1.12 2016/10/20 21:09:46 mestre Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -72,7 +72,7 @@ sync_addhost(const char *name, u_short port)
 	struct sync_host *shost;
 	struct sockaddr_in *addr = NULL;
 
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	if (getaddrinfo(name, NULL, &hints, &res0) != 0)
@@ -128,7 +128,7 @@ sync_init(const char *iface, const char *baddr, u_short port)
 	if (iface != NULL)
 		sendmcast++;
 
-	bzero(&ina, sizeof(ina));
+	memset(&ina, 0, sizeof(ina));
 	if (baddr != NULL) {
 		if (inet_pton(AF_INET, baddr, &ina) != 1) {
 			ina.s_addr = htonl(INADDR_ANY);
@@ -161,7 +161,7 @@ sync_init(const char *iface, const char *baddr, u_short port)
 	    sizeof(one)) == -1)
 		goto fail;
 
-	bzero(&sync_out, sizeof(sync_out));
+	memset(&sync_out, 0, sizeof(sync_out));
 	sync_out.sin_family = AF_INET;
 	sync_out.sin_len = sizeof(sync_out);
 	sync_out.sin_addr.s_addr = ina.s_addr;
@@ -189,19 +189,19 @@ sync_init(const char *iface, const char *baddr, u_short port)
 		}
 	}
 
-	bzero(&ifr, sizeof(ifr));
+	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifnam, sizeof(ifr.ifr_name));
 	if (ioctl(syncfd, SIOCGIFADDR, &ifr) == -1)
 		goto fail;
 
-	bzero(&sync_in, sizeof(sync_in));
+	memset(&sync_in, 0, sizeof(sync_in));
 	addr = (struct sockaddr_in *)&ifr.ifr_addr;
 	sync_in.sin_family = AF_INET;
 	sync_in.sin_len = sizeof(sync_in);
 	sync_in.sin_addr.s_addr = addr->sin_addr.s_addr;
 	sync_in.sin_port = htons(port);
 
-	bzero(&mreq, sizeof(mreq));
+	memset(&mreq, 0, sizeof(mreq));
 	sync_out.sin_addr.s_addr = inet_addr(SPAM_SYNC_MCASTADDR);
 	mreq.imr_multiaddr.s_addr = inet_addr(SPAM_SYNC_MCASTADDR);
 	mreq.imr_interface.s_addr = sync_in.sin_addr.s_addr;
@@ -252,8 +252,8 @@ sync_recv(void)
 	u_int hmac_len;
 	u_int32_t expire;
 
-	bzero(&addr, sizeof(addr));
-	bzero(buf, sizeof(buf));
+	memset(&addr, 0, sizeof(addr));
+	memset(buf, 0, sizeof(buf));
 
 	addr_len = sizeof(addr);
 	if ((len = recvfrom(syncfd, buf, sizeof(buf), 0,
@@ -274,8 +274,8 @@ sync_recv(void)
 	len = ntohs(hdr->sh_length);
 
 	/* Compute and validate HMAC */
-	bcopy(hdr->sh_hmac, hmac[0], SPAM_SYNC_HMAC_LEN);
-	bzero(hdr->sh_hmac, SPAM_SYNC_HMAC_LEN);
+	memcpy(hmac[0], hdr->sh_hmac, SPAM_SYNC_HMAC_LEN);
+	explicit_bzero(hdr->sh_hmac, SPAM_SYNC_HMAC_LEN);
 	HMAC(EVP_sha1(), sync_key, strlen(sync_key), buf, len,
 	    hmac[1], &hmac_len);
 	if (bcmp(hmac[0], hmac[1], SPAM_SYNC_HMAC_LEN) != 0)
@@ -392,7 +392,7 @@ sync_send(struct iovec *iov, int iovlen)
 	struct msghdr msg;
 
 	/* setup buffer */
-	bzero(&msg, sizeof(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.msg_iov = iov;
 	msg.msg_iovlen = iovlen;
 
@@ -432,9 +432,9 @@ sync_update(time_t now, char *helo, char *ip, char *from, char *to)
 		    "sync grey update helo %s ip %s from %s to %s\n",
 		    helo, ip, from, to);
 
-	bzero(&hdr, sizeof(hdr));
-	bzero(&sg, sizeof(sg));
-	bzero(&pad, sizeof(pad));
+	memset(&hdr, 0, sizeof(hdr));
+	memset(&sg, 0, sizeof(sg));
+	memset(&pad, 0, sizeof(pad));
 
 	fromlen = strlen(from) + 1;
 	tolen = strlen(to) + 1;
@@ -519,8 +519,8 @@ sync_addr(time_t now, time_t expire, char *ip, u_int16_t type)
 		fprintf(stderr, "sync %s %s\n",
 			type == SPAM_SYNC_WHITE ? "white" : "trapped", ip);
 
-	bzero(&hdr, sizeof(hdr));
-	bzero(&sd, sizeof(sd));
+	memset(&hdr, 0, sizeof(hdr));
+	memset(&sd, 0, sizeof(sd));
 
 	HMAC_CTX_init(&ctx);
 	HMAC_Init(&ctx, sync_key, strlen(sync_key), EVP_sha1());

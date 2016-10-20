@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.63 2016/03/25 16:31:32 mestre Exp $	*/
+/*	$OpenBSD: grey.c,v 1.64 2016/10/20 21:09:46 mestre Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -598,7 +598,6 @@ greyscan(char *dbname)
 	freeaddrlists();
 	free(a);
 	a = NULL;
-	asiz = 0;
 	return(0);
  bad:
 	(void) do_changes(db);
@@ -607,7 +606,6 @@ greyscan(char *dbname)
 	freeaddrlists();
 	free(a);
 	a = NULL;
-	asiz = 0;
 	return(-1);
 }
 
