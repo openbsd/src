@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.29 2016/03/07 19:16:06 tb Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.30 2016/10/20 10:24:40 schwarze Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -25,7 +25,6 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,8 +53,6 @@ main(int argc, char *argv[])
 	int mflag = 0;
 	void *set;
 	int ch;
-
-	setlocale(LC_ALL, "");
 
 	if (pledge("stdio dpath", NULL) == -1)
 		err(1, "pledge");
