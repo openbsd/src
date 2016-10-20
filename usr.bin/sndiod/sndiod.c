@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.31 2016/03/23 06:16:35 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.32 2016/10/20 05:48:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -340,6 +340,64 @@ mkopt(char *path, struct dev *d,
 	return o;
 }
 
+static int
+start_helper(int background)
+{
+	struct passwd *pw;
+	int s[2];
+	pid_t pid;
+
+	if (geteuid() == 0) {
+		if ((pw = getpwnam(SNDIO_PRIV_USER)) == NULL)
+			errx(1, "unknown user %s", SNDIO_PRIV_USER);
+	} else
+		pw = NULL;
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, s) < 0) {
+		perror("socketpair");
+		return 0;
+	}
+	pid = fork();
+	if (pid	== -1) {
+		log_puts("can't fork\n");
+		return 0;
+	}
+	if (pid == 0) {
+		setproctitle("helper");
+		close(s[0]);
+		if (fdpass_new(s[1], &helper_fileops) == NULL)
+			return 0;
+		if (background) {
+			log_flush();
+			log_level = 0;
+			if (daemon(0, 0) < 0)
+				err(1, "daemon");
+		}
+		if (pw != NULL) {
+			if (setgroups(1, &pw->pw_gid) ||
+			    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+			    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+				err(1, "cannot drop privileges");
+		}
+		if (pledge("stdio sendfd rpath wpath", NULL) < 0)
+			err(1, "pledge");
+		while (file_poll())
+			; /* nothing */
+		exit(0);
+	} else {
+		close(s[1]);
+		if (fdpass_new(s[0], &worker_fileops) == NULL)
+			return 0;
+	}
+	return 1;
+}
+
+static void
+stop_helper(void)
+{
+	if (fdpass_peer)
+		fdpass_close(fdpass_peer);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -358,11 +416,6 @@ main(int argc, char **argv)
 		char *host;
 		struct tcpaddr *next;
 	} *tcpaddr_list, *ta;
-	int s[2];
-	pid_t pid;
-	uid_t euid, hpw_uid, wpw_uid;
-	gid_t hpw_gid, wpw_gid;
-	char *wpw_dir;
 
 	atexit(log_flush);
 
@@ -488,128 +541,79 @@ main(int argc, char **argv)
 	setsig();
 	filelist_init();
 
-	euid = geteuid();
-	if (euid == 0) {
-		if ((pw = getpwnam(SNDIO_PRIV_USER)) == NULL)
-			errx(1, "unknown user %s", SNDIO_PRIV_USER);
-		hpw_uid = pw->pw_uid;
-		hpw_gid = pw->pw_gid;
+	if (!start_helper(background))
+		return 1;
+
+	if (geteuid() == 0) {
 		if ((pw = getpwnam(SNDIO_USER)) == NULL)
 			errx(1, "unknown user %s", SNDIO_USER);
-		wpw_uid = pw->pw_uid;
-		wpw_gid = pw->pw_gid;
-		wpw_dir = xstrdup(pw->pw_dir);
-	} else {
-		hpw_uid = wpw_uid = hpw_gid = wpw_gid = 0xdeadbeef;
-		wpw_dir = NULL;
-	}
-
-	/* start subprocesses */
-
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, s) < 0) {
-		perror("socketpair");
+	} else
+		pw = NULL;
+	getbasepath(base);
+	snprintf(path, SOCKPATH_MAX, "%s/" SOCKPATH_FILE "%u", base, unit);
+	if (!listen_new_un(path))
 		return 1;
-	}
-	pid = fork();
-	if (pid	== -1) {
-		log_puts("can't fork\n");
-		return 1;
-	}
-	if (pid == 0) {
-		setproctitle("helper");
-		close(s[0]);
-		if (fdpass_new(s[1], &helper_fileops) == NULL)
+	for (ta = tcpaddr_list; ta != NULL; ta = ta->next) {
+		if (!listen_new_tcp(ta->host, AUCAT_PORT + unit))
 			return 1;
-		if (background) {
-			log_flush();
-			log_level = 0;
-			if (daemon(0, 0) < 0)
-				err(1, "daemon");
-		}
-		if (euid == 0) {
-			if (setgroups(1, &hpw_gid) ||
-			    setresgid(hpw_gid, hpw_gid, hpw_gid) ||
-			    setresuid(hpw_uid, hpw_uid, hpw_uid))
-				err(1, "cannot drop privileges");
-		}
-		if (pledge("stdio sendfd rpath wpath", NULL) < 0)
+	}
+	for (l = listen_list; l != NULL; l = l->next) {
+		if (!listen_init(l))
+			return 1;
+	}
+	midi_init();
+	for (p = port_list; p != NULL; p = p->next) {
+		if (!port_init(p))
+			return 1;
+	}
+	for (d = dev_list; d != NULL; d = d->next) {
+		if (!dev_init(d))
+			return 1;
+	}
+	if (background) {
+		log_flush();
+		log_level = 0;
+		if (daemon(0, 0) < 0)
+			err(1, "daemon");
+	}
+	if (pw != NULL) {
+		if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) < 0)
+			err(1, "setpriority");
+		if (chroot(pw->pw_dir) != 0 || chdir("/") != 0)
+			err(1, "cannot chroot to %s", pw->pw_dir);
+		if (setgroups(1, &pw->pw_gid) ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+			err(1, "cannot drop privileges");
+	}
+	if (tcpaddr_list) {
+		if (pledge("stdio audio recvfd unix inet", NULL) == -1)
 			err(1, "pledge");
-		while (file_poll())
-			; /* nothing */
 	} else {
-		close(s[1]);
-		if (fdpass_new(s[0], &worker_fileops) == NULL)
-			return 1;
-
-		getbasepath(base);
-		snprintf(path,
-		    SOCKPATH_MAX, "%s/" SOCKPATH_FILE "%u",
-		    base, unit);
-		if (!listen_new_un(path))
-			return 1;
-		for (ta = tcpaddr_list; ta != NULL; ta = ta->next) {
-			if (!listen_new_tcp(ta->host, AUCAT_PORT + unit))
-				return 1;
-		}
-		for (l = listen_list; l != NULL; l = l->next) {
-			if (!listen_init(l))
-				return 1;
-		}
-
-		midi_init();
-		for (p = port_list; p != NULL; p = p->next) {
-			if (!port_init(p))
-				return 1;
-		}
-		for (d = dev_list; d != NULL; d = d->next) {
-			if (!dev_init(d))
-				return 1;
-		}
-		if (background) {
-			log_flush();
-			log_level = 0;
-			if (daemon(0, 0) < 0)
-				err(1, "daemon");
-		}
-		if (euid == 0) {
-			if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) < 0)
-				err(1, "setpriority");
-			if (chroot(wpw_dir) != 0 || chdir("/") != 0)
-				err(1, "cannot chroot to %s", wpw_dir);
-			if (setgroups(1, &wpw_gid) ||
-			    setresgid(wpw_gid, wpw_gid, wpw_gid) ||
-			    setresuid(wpw_uid, wpw_uid, wpw_uid))
-				err(1, "cannot drop privileges");
-		}
-		if (tcpaddr_list) {
-			if (pledge("stdio audio recvfd unix inet", NULL) == -1)
-				err(1, "pledge");
-		} else {
-			if (pledge("stdio audio recvfd unix", NULL) == -1)
-				err(1, "pledge");
-		}
-		for (;;) {
-			if (quit_flag)
-				break;
-			if (!fdpass_peer)
-				break;
-			if (!file_poll())
-				break;
-		}
-		if (fdpass_peer)
-			fdpass_close(fdpass_peer);
-		while (listen_list != NULL)
-			listen_close(listen_list);
-		while (sock_list != NULL)
-			sock_close(sock_list);
-		for (d = dev_list; d != NULL; d = d->next)
-			dev_done(d);
-		for (p = port_list; p != NULL; p = p->next)
-			port_done(p);
-		while (file_poll())
-			; /* nothing */
-		midi_done();
+		if (pledge("stdio audio recvfd unix", NULL) == -1)
+			err(1, "pledge");
 	}
+	for (;;) {
+		if (quit_flag)
+			break;
+		if (!fdpass_peer)
+			break;
+		if (!file_poll())
+			break;
+	}
+	stop_helper();
+	while (listen_list != NULL)
+		listen_close(listen_list);
+	while (sock_list != NULL)
+		sock_close(sock_list);
+	for (d = dev_list; d != NULL; d = d->next)
+		dev_done(d);
+	for (p = port_list; p != NULL; p = p->next)
+		port_done(p);
+	while (file_poll())
+		; /* nothing */
+	midi_done();
+
 	while (opt_list != NULL)
 		opt_del(opt_list);
 	while (dev_list)
