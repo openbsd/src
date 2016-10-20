@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.10 2016/10/18 05:33:57 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.11 2016/10/20 19:44:09 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 18 2016 $
+.Dd $Mdocdate: October 20 2016 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ The VMM subsystem is responsible for creating, destroying, and
 executing VMs.
 .Sh SECTIONS
 .Nm
-is divided into two main sections:
+is divided into three main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -162,23 +162,36 @@ is greater than the number of
 statements, additional default interfaces will be added.
 .El
 .Sh SWITCH CONFIGURATION
-Virtual switches can be configured at any point in the configuration file;
-they allow
-.Nm switchd
-to add network interfaces of VMs to the underlying switch interfaces
-automatically.
-It is possible to pre-configure switch interfaces using
+A virtual switch allows VMs to communicate with other network interfaces on the
+host system via either
+.Xr bridge 4
+or
+.Xr switch 4 .
+The network interface for each virtual switch defined in
+.Nm
+is automatically created by
+.Xr vmd 8 ,
+but it is also possible to pre-configure switch interfaces using
 .Xr hostname.if 5
 or
-.Xr ifconfig 8 ,
-see the sections
-.Sx BRIDGE
-or
-.Sx SWITCH
-in
 .Xr ifconfig 8
-accordingly.
+(see the
+.Sx BRIDGE
+and
+.Sx SWITCH
+sections in
+.Xr ifconfig 8
+accordingly).
+When a VM is started, virtual network interfaces which are assigned to a
+virtual switch have their
+.Xr tap 4
+interface automatically added into the corresponding
+.Xr bridge 4
+or
+.Xr switch 4
+interface underlying the virtual switch.
 .Pp
+Virtual switches can be configured at any point in the configuration file.
 Each
 .Ic switch
 section starts with a declaration of the virtual switch:
