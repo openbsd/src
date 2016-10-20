@@ -1,4 +1,4 @@
-.\" $OpenBSD: switchctl.8,v 1.2 2016/10/12 19:07:42 reyk Exp $
+.\" $OpenBSD: switchctl.8,v 1.3 2016/10/20 19:55:30 jmc Exp $
 .\"
 .\" Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2016 $
+.Dd $Mdocdate: October 20 2016 $
 .Dt SWITCHCTL 8
 .Os
 .Sh NAME
@@ -100,7 +100,8 @@ socket used for communication with
 .Xr switchd 8
 .El
 .Sh SEE ALSO
-.Xr bridge 4
+.Xr bridge 4 ,
+.Xr switchd.conf 5 ,
 .Xr switchd 8
 .Sh HISTORY
 The
