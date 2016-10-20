@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.64 2016/10/20 20:00:01 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.65 2016/10/20 20:15:09 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -104,7 +104,7 @@ Set the first TTL or hop limit used in outgoing probe packets.
 The effect is that the first first_ttl \- 1 hosts will be skipped
 in the output of
 .Nm traceroute .
-The default value is 1 (skip no hosts).
+The default is 1 (skip no hosts).
 .It Fl g Ar gateway_addr
 Add
 .Ar gateway_addr
@@ -120,10 +120,11 @@ This is useful for checking for asymmetric routing.
 .It Fl m Ar max_ttl
 Set the maximum TTL or hop limit.
 The default is the value of the system's
-.Cm net.inet.ip.ttl
+.Va net.inet.ip.ttl
 or
-.Cm net.inet6.ip6.hlim
-MIB variable, which defaults to 64.
+.Va net.inet6.ip6.hlim
+.Xr sysctl 8
+variable, which defaults to 64.
 .It Fl n
 Print hop addresses numerically rather than symbolically and numerically
 (saves a nameserver address-to-name lookup for each gateway found on the
@@ -140,12 +141,13 @@ This option is not available for IPv6.
 .It Fl p Ar port
 Set the base UDP
 .Ar port
-number used in probes (default is 33434).
+number used in probes.
+The default is 33434.
 .Nm
 hopes that nothing is listening on UDP ports
-.Em base
+.Ar base
 to
-.Em base+nhops*nqueries-1
+.Ar base Ns + Ns Ar nhops Ns * Ns Ar nqueries Ns -1
 at the destination host (so an ICMP
 .Dv PORT_UNREACHABLE
 message will
@@ -155,8 +157,8 @@ listening on a port in the default range, this option can be used
 to pick an unused port range.
 .It Fl q Ar nqueries
 Set the number of probes per TTL to
-.Ar nqueries
-(default is three probes).
+.Ar nqueries .
+The default is three probes.
 .It Fl S
 Print how many probes were not answered for each hop.
 .It Fl s Ar src_addr
@@ -170,21 +172,20 @@ If the IP address
 is not one of this machine's interface addresses and the user is
 not the superuser, an error is returned and nothing is sent.
 .It Fl t Ar toskeyword
-Set the
-.Em type-of-service
-in probe packets to the following value (default zero).
+Set the type-of-service (TOS) in probe packets.
 The value may be one of
-.Ar critical ,
-.Ar inetcontrol ,
-.Ar lowdelay ,
-.Ar netcontrol ,
-.Ar throughput ,
-.Ar reliability ,
+.Cm critical ,
+.Cm inetcontrol ,
+.Cm lowdelay ,
+.Cm netcontrol ,
+.Cm throughput ,
+.Cm reliability ,
 or one of the DiffServ Code Points:
-.Ar ef ,
-.Ar af11 ... af43 ,
-.Ar cs0 ... cs7 ;
+.Cm ef ,
+.Cm af11 ... af43 ,
+.Cm cs0 ... cs7 ;
 or a number in either hex or decimal.
+The default is zero.
 This option can be used to
 see if different types-of-service result in different paths.
 If this option is used, changes to the type-of-service in the
@@ -192,16 +193,13 @@ returned packets are displayed.
 (If you are not running a
 .Bx 4.3 tahoe
 or later system, this may be academic since the normal network
-services like telnet and ftp don't let you control the
-.Dv TOS ) .
-Not all values of
-.Dv TOS
-are legal or
-meaningful \- see the IP spec for definitions.
+services like telnet and ftp don't let you control the TOS).
+Not all values of TOS are legal or meaningful \-
+see the IP spec for definitions.
 Useful values are probably
-.Ar lowdelay
+.Cm lowdelay
 and
-.Ar throughput .
+.Cm throughput .
 This option is not available for IPv6.
 .It Fl V Ar rtable
 Set the routing table to be used.
@@ -213,7 +211,8 @@ and
 .Dv UNREACHABLE Ns s
 are listed.
 .It Fl w Ar waittime
-Set the time (in seconds) to wait for a response to a probe (default 5).
+Set the time, in seconds, to wait for a response to a probe.
+The default is 5.
 .It Fl x
 Print the ICMP extended headers if available.
 This option is not available for IPv6.
