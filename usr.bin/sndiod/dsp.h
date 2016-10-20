@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.5 2016/01/08 16:17:31 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.6 2016/10/20 05:29:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -116,7 +116,6 @@ struct resamp {
 	adata_t ctx[NCHAN_MAX * RESAMP_NCTX];
 	unsigned int iblksz, oblksz;
 	int diff;
-	int idelta, odelta;		/* remainder of ipos/opos */
 	int nch;
 };
 

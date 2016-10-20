@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.10 2016/01/09 08:53:08 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.11 2016/10/20 05:29:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -304,8 +304,6 @@ resamp_init(struct resamp *p, unsigned int iblksz,
 	p->iblksz = iblksz;
 	p->oblksz = oblksz;
 	p->diff = 0;
-	p->idelta = 0;
-	p->odelta = 0;
 	p->nch = nch;
 	p->ctx_start = 0;
 	for (i = 0; i < NCHAN_MAX * RESAMP_NCTX; i++)
