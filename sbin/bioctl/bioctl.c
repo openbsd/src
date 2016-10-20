@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.139 2016/09/21 17:50:05 jsing Exp $ */
+/* $OpenBSD: bioctl.c,v 1.140 2016/10/20 07:14:44 tb Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -59,7 +59,7 @@ struct timing {
 	int		start;
 };
 
-void			usage(void);
+static void __dead	usage(void);
 const char 		*str2locator(const char *, struct locator *);
 const char 		*str2patrol(const char *, struct timing *);
 void			bio_status(struct bio_status *);
@@ -100,7 +100,6 @@ int
 main(int argc, char *argv[])
 {
 	struct bio_locate	bl;
-	extern char		*optarg;
 	u_int64_t		func = 0;
 	char			*devicename = NULL;
 	char			*realname = NULL, *al_arg = NULL;
@@ -273,7 +272,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-void
+static void __dead
 usage(void)
 {
 	extern char		*__progname;
