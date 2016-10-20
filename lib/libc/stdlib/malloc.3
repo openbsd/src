@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.99 2016/10/20 05:49:59 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.100 2016/10/20 08:03:15 jmc Exp $
 .\"
 .Dd $Mdocdate: October 20 2016 $
 .Dt MALLOC 3
@@ -381,7 +381,7 @@ has been modified.
 A byte after the requested size has been overwritten,
 indicating a heap overflow.
 The offset at which corruption was detected is printed before the @,
-the requested length of the allocation after the @.
+and the requested length of the allocation after the @.
 .It Dq recursive call
 An attempt was made to call recursively into these functions, i.e., from a
 signal handler.
