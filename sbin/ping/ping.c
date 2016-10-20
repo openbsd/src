@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.216 2016/09/28 06:39:12 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.217 2016/10/20 18:34:17 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -276,7 +276,7 @@ main(int argc, char *argv[])
 
 	/* revoke privs */
 	ouid = getuid();
-	if ((pw = getpwnam(PING_USER)) != NULL) {
+	if (ouid == 0 && (pw = getpwnam(PING_USER)) != NULL) {
 		uid = pw->pw_uid;
 		gid = pw->pw_gid;
 	} else {
