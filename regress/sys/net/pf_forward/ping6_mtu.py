@@ -34,6 +34,7 @@ eth=Ether(src=SRC_MAC, dst=PF_MAC)/ip
 sniffer = Sniff1();
 sniffer.filter = "ip6 and dst %s and icmp6" % srcaddr
 sniffer.start()
+time.sleep(1)
 sendp(eth, iface=SRC_IF)
 sniffer.join(timeout=5)
 a = sniffer.packet

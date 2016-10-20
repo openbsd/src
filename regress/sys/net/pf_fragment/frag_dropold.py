@@ -45,6 +45,7 @@ eth.append(Ether(src=SRC_MAC, dst=PF_MAC)/pkt2)
 sniffer = Sniff1();
 sniffer.filter = "ip and src %s and dst %s and icmp" % (dstaddr, SRC_OUT)
 sniffer.start()
+time.sleep(1)
 sendp(eth, iface=SRC_IF)
 sniffer.join(timeout=5)
 a = sniffer.packet
