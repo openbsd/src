@@ -12,8 +12,19 @@
 # trying to overwrite a very small part of the full packet.
 
 import os
+import threading
 from addr import *
 from scapy.all import *
+
+class Sniff1(threading.Thread):
+	filter = None
+	captured = None
+	packet = None
+	def run(self):
+		self.captured = sniff(iface=SRC_IF, filter=self.filter,
+		    count=1, timeout=3)
+		if self.captured:
+			self.packet = self.captured[0]
 
 dstaddr=sys.argv[1]
 pid=os.getpid() & 0xffff
@@ -31,14 +42,13 @@ eth.append(Ether(src=SRC_MAC, dst=PF_MAC)/pkt0)
 eth.append(Ether(src=SRC_MAC, dst=PF_MAC)/pkt1)
 eth.append(Ether(src=SRC_MAC, dst=PF_MAC)/pkt2)
 
-if os.fork() == 0:
-	time.sleep(1)
-	sendp(eth, iface=SRC_IF)
-	os._exit(0)
+sniffer = Sniff1();
+sniffer.filter = "ip and src %s and dst %s and icmp" % (dstaddr, SRC_OUT)
+sniffer.start()
+sendp(eth, iface=SRC_IF)
+sniffer.join(timeout=5)
+a = sniffer.packet
 
-ans=sniff(iface=SRC_IF, timeout=3, filter=
-    "ip and src "+dstaddr+" and dst "+SRC_OUT+" and icmp")
-a=ans[0]
 if a and a.type == ETH_P_IP and \
     a.payload.proto == 1 and \
     a.payload.frag == 0 and a.payload.flags == 0 and \

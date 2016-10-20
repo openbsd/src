@@ -2,8 +2,19 @@
 # send 2 ping6 fragments with hop-by-hop extension header
 
 import os
+import threading
 from addr import *
 from scapy.all import *
+
+class Sniff1(threading.Thread):
+	filter = None
+	captured = None
+	packet = None
+	def run(self):
+		self.captured = sniff(iface=SRC_IF, filter=self.filter,
+		    count=1, timeout=3)
+		if self.captured:
+			self.packet = self.captured[0]
 
 dstaddr=sys.argv[1]
 pid=os.getpid() & 0xffff
@@ -17,14 +28,13 @@ eth=[]
 eth.append(Ether(src=SRC_MAC, dst=PF_MAC)/pkt0)
 eth.append(Ether(src=SRC_MAC, dst=PF_MAC)/pkt1)
 
-if os.fork() == 0:
-	time.sleep(1)
-	sendp(eth, iface=SRC_IF)
-	os._exit(0)
+sniffer = Sniff1();
+sniffer.filter = "ip6 and src %s and dst %s and icmp6" % (dstaddr, SRC_OUT6)
+sniffer.start()
+sendp(eth, iface=SRC_IF)
+sniffer.join(timeout=5)
+a = sniffer.packet
 
-ans=sniff(iface=SRC_IF, timeout=3, filter=
-    "ip6 and src "+dstaddr+" and dst "+SRC_OUT6+" and icmp6")
-a=ans[0]
 if a and a.type == ETH_P_IPV6 and \
     ipv6nh[a.payload.nh] == 'ICMPv6' and \
     icmp6types[a.payload.payload.type] == 'Echo Reply':
