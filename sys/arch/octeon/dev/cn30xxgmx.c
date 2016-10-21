@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.26 2016/08/04 13:10:31 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.27 2016/10/21 15:06:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -331,10 +331,9 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 
 	inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh, GMX0_INF_MODE);
 	if ((inf_mode & INF_MODE_EN) == 0) {
-		printf("port are disable\n");
+		printf("ports are disabled\n");
 		sc->sc_nports = 0;
-		result = 1;
-		return result;
+		return 1;
 	}
 
 	id = octeon_get_chipid();
