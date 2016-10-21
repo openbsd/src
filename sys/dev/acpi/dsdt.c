@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.225 2016/09/27 10:04:19 mlarkin Exp $ */
+/* $OpenBSD: dsdt.c,v 1.226 2016/10/21 21:47:03 joris Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/time.h>
 
 #include <machine/bus.h>
 
@@ -247,6 +248,7 @@ struct aml_opcode aml_table[] = {
 	{ AMLOP_LOADTABLE,	"LoadTable",	"tttttt" },
 	{ AMLOP_STALL,		"Stall",	"i",	},
 	{ AMLOP_SLEEP,		"Sleep",	"i",	},
+	{ AMLOP_TIMER,		"Timer",	"",	},
 	{ AMLOP_LOAD,		"Load",		"nS",	},
 	{ AMLOP_UNLOAD,		"Unload",	"t" },
 	{ AMLOP_STORE,		"Store",	"tS",	},
@@ -3437,6 +3439,7 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	uint8_t *start, *end;
 	const char *ch;
 	int64_t ival;
+	struct timespec ts;
 
 	my_ret = NULL;
 	if (scope == NULL || scope->pos >= scope->end) {
@@ -4037,7 +4040,8 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 		break;
 	case AMLOP_TIMER:
 		/* Timer: => i */
-		ival = 0xDEADBEEF;
+		nanouptime(&ts);
+		ival = ts.tv_sec * 10000000 + ts.tv_nsec / 100;
 		break;
 	case AMLOP_FATAL:
 		/* Fatal: bdi */
