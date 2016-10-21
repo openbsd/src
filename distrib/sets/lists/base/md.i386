@@ -2011,6 +2011,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/pciio.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/percpu.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/pipe.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/pledge.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/poll.ph

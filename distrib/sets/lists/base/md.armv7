@@ -1992,6 +1992,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/pciio.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/percpu.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/pipe.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/pledge.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/poll.ph

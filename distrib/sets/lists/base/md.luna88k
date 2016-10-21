@@ -1886,6 +1886,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/pciio.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/percpu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/pipe.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/pledge.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/poll.ph

@@ -1580,6 +1580,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/pciio.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/percpu.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/pipe.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/pledge.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/poll.ph

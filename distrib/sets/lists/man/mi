@@ -1378,6 +1378,7 @@
 ./usr/share/man/man4/i386/skgpio.4
 ./usr/share/man/man4/i386/tcpcib.4
 ./usr/share/man/man4/i386/uha.4
+./usr/share/man/man4/i386/vmm.4
 ./usr/share/man/man4/i386/wds.4
 ./usr/share/man/man4/i386/wdt.4
 ./usr/share/man/man4/iatp.4

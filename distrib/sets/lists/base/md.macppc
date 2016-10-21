@@ -2021,6 +2021,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/pciio.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/percpu.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/pipe.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/pledge.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/poll.ph

@@ -1339,6 +1339,7 @@
 ./usr/include/sys/namei.h
 ./usr/include/sys/param.h
 ./usr/include/sys/pciio.h
+./usr/include/sys/percpu.h
 ./usr/include/sys/pipe.h
 ./usr/include/sys/pledge.h
 ./usr/include/sys/poll.h
