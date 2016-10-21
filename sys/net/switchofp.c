@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.14 2016/10/19 08:34:53 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.15 2016/10/21 22:12:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1755,7 +1755,7 @@ swofp_ox_cmp_ether_addr(struct ofp_ox_match *target,
     struct ofp_ox_match *key, int strict)
 {
 	uint64_t	 tmth, tmask, kmth, kmask;
-	uint64_t	 eth_mask = 0x0000FFFFFFFFFFFF;
+	uint64_t	 eth_mask = 0x0000FFFFFFFFFFFFULL;
 
 
 	if (OFP_OXM_GET_FIELD(target) != OFP_OXM_GET_FIELD(key))
@@ -2743,7 +2743,7 @@ int
 swofp_ox_match_ether_addr(struct switch_flow_classify *swfcl,
     struct ofp_ox_match *oxm)
 {
-	uint64_t	 eth_mask = 0x0000FFFFFFFFFFFF;
+	uint64_t	 eth_mask = 0x0000FFFFFFFFFFFFULL;
 	uint64_t	 in, mth, mask;
 
 	switch (OFP_OXM_GET_FIELD(oxm)) {
