@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.18 2016/10/21 07:55:48 pirofti Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.19 2016/10/21 12:36:19 pirofti Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -107,9 +107,6 @@ void       *octeon_pcibus_pci_intr_establish(void *, pci_intr_handle_t, int,
                                              int (*)(void *), void *, char *);
 void        octeon_pcibus_pci_intr_disestablish(void *, void *);
 
-pcireg_t    octeon_pcibus_pcie_conf_read(void *, pcitag_t, int);
-void        octeon_pcibus_pcie_conf_write(void *, pcitag_t, int, pcireg_t);
-
 
 struct machine_bus_dma_tag octeon_pcibus_bus_dma_tag = {
 	._cookie = NULL,
@@ -136,59 +133,10 @@ int octeon_pcibus_io_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 int octeon_pcibus_mem_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
     bus_space_handle_t *);
 
-#define _OCTEON_PCIBUS_PCIEIO_BASE	0x10438000
-#define _OCTEON_PCIBUS_PCIEMEM_BASE	0x00638000
-
 #define _OCTEON_PCIBUS_PCIIO_BASE	0x00001000
 #define _OCTEON_PCIBUS_PCIIO_SIZE	0x08000000
 #define _OCTEON_PCIBUS_PCIMEM_BASE	0x80000000
 #define _OCTEON_PCIBUS_PCIMEM_SIZE	0x40000000
-
-struct mips_bus_space octeon_pcibus_pcie_io_space_tag = {
-	.bus_base = PHYS_TO_XKPHYS(_OCTEON_PCIBUS_PCIEIO_BASE, CCA_NC),
-	.bus_private = NULL,
-	._space_read_1 =	generic_space_read_1,
-	._space_write_1 =	generic_space_write_1,
-	._space_read_2 =	generic_space_read_2,
-	._space_write_2 =	generic_space_write_2,
-	._space_read_4 =	generic_space_read_4,
-	._space_write_4 =	generic_space_write_4,
-	._space_read_8 =	generic_space_read_8,
-	._space_write_8 =	generic_space_write_8,
-	._space_read_raw_2 =	generic_space_read_raw_2,
-	._space_write_raw_2 =	generic_space_write_raw_2,
-	._space_read_raw_4 =	generic_space_read_raw_4,
-	._space_write_raw_4 =	generic_space_write_raw_4,
-	._space_read_raw_8 =	generic_space_read_raw_8,
-	._space_write_raw_8 =	generic_space_write_raw_8,
-	._space_map =		octeon_pcibus_io_map,
-	._space_unmap =		generic_space_unmap,
-	._space_subregion =	generic_space_region,
-	._space_vaddr =		generic_space_vaddr
-};
-
-struct mips_bus_space octeon_pcibus_pcie_mem_space_tag = {
-	.bus_base = PHYS_TO_XKPHYS(_OCTEON_PCIBUS_PCIEMEM_BASE, CCA_NC),
-	.bus_private = NULL,
-	._space_read_1 =	generic_space_read_1,
-	._space_write_1 =	generic_space_write_1,
-	._space_read_2 =	generic_space_read_2,
-	._space_write_2 =	generic_space_write_2,
-	._space_read_4 =	generic_space_read_4,
-	._space_write_4 =	generic_space_write_4,
-	._space_read_8 =	generic_space_read_8,
-	._space_write_8 =	generic_space_write_8,
-	._space_read_raw_2 =	generic_space_read_raw_2,
-	._space_write_raw_2 =	generic_space_write_raw_2,
-	._space_read_raw_4 =	generic_space_read_raw_4,
-	._space_write_raw_4 =	generic_space_write_raw_4,
-	._space_read_raw_8 =	generic_space_read_raw_8,
-	._space_write_raw_8 =	generic_space_write_raw_8,
-	._space_map =		octeon_pcibus_mem_map,
-	._space_unmap =		generic_space_unmap,
-	._space_subregion =	generic_space_region,
-	._space_vaddr =		generic_space_vaddr
-};
 
 struct mips_bus_space octeon_pcibus_pci_io_space_tag = {
 	.bus_base = PHYS_TO_XKPHYS(_OCTEON_PCIBUS_PCIIO_BASE, CCA_NC),
@@ -273,13 +221,8 @@ octeon_pcibus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_conf_size = octeon_pcibus_pci_conf_size;
-	if (1) {
-		sc->sc_pc.pc_conf_read = octeon_pcibus_pcie_conf_read;
-		sc->sc_pc.pc_conf_write = octeon_pcibus_pcie_conf_write;
-	} else {
-		sc->sc_pc.pc_conf_read = octeon_pcibus_pci_conf_read;
-		sc->sc_pc.pc_conf_write = octeon_pcibus_pci_conf_write;
-	}
+	sc->sc_pc.pc_conf_read = octeon_pcibus_pci_conf_read;
+	sc->sc_pc.pc_conf_write = octeon_pcibus_pci_conf_write;
 
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = octeon_pcibus_pci_intr_map;
@@ -289,14 +232,8 @@ octeon_pcibus_attach(struct device *parent, struct device *self, void *aux)
 
 	bzero(&pba, sizeof pba);
 	pba.pba_busname = "pci";
-	if (1) {
-		pba.pba_iot = &octeon_pcibus_pcie_io_space_tag;
-		pba.pba_memt = &octeon_pcibus_pcie_mem_space_tag;
-		pba.pba_bus = 1;
-	} else {
-		pba.pba_iot = &octeon_pcibus_pci_io_space_tag;
-		pba.pba_memt = &octeon_pcibus_pci_mem_space_tag;
-	}
+	pba.pba_iot = &octeon_pcibus_pci_io_space_tag;
+	pba.pba_memt = &octeon_pcibus_pci_mem_space_tag;
 	pba.pba_dmat = &octeon_pcibus_bus_dma_tag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
@@ -403,50 +340,6 @@ octeon_pcibus_pci_conf_read(void *v, pcitag_t tag, int offset)
 
 void
 octeon_pcibus_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
-{
-	uint64_t cfgoff;
-
-	if (tag == 0){
-		if (offset & 0x4){
-			cfgoff = OCTEON_PCI_CFG1 + (offset & 0xfff8);
-		} else {
-			cfgoff = OCTEON_PCI_CFG0 + (offset & 0xfff8);
-		}
-	} else {
-		cfgoff = tag + offset;
-		if (offset & 0x4){
-			cfgoff = OCTEON_PCI_CONFIG_BASE1 + (cfgoff & 0xfffffff8);
-		} else {
-			cfgoff = OCTEON_PCI_CONFIG_BASE0 + (cfgoff & 0xfffffff8);
-		}
-	}
-
-	REG_WRITE32(cfgoff, data);
-}
-
-pcireg_t
-octeon_pcibus_pcie_conf_read(void *v, pcitag_t tag, int offset)
-{
-	pcireg_t data;
-	uint64_t cfgoff;
-
-	if (tag == 0){
-		return -1;
-	} else {
-		cfgoff = tag + offset;
-		if (offset & 0x4) {
-			cfgoff = OCTEON_PCI_CONFIG_BASE1 + (cfgoff & 0xfffffff8);
-		} else {
-			cfgoff = OCTEON_PCI_CONFIG_BASE0 + (cfgoff & 0xfffffff8);
-		}
-	}
-
-	data = REG_READ32(cfgoff);
-	return data;
-}
-
-void
-octeon_pcibus_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 {
 	uint64_t cfgoff;
 
