@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.205 2016/10/21 06:55:09 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.206 2016/10/21 15:39:31 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -664,10 +664,10 @@ omalloc_poolinit(struct dir_info **dp)
 	if ((p = MMAP(DIR_INFO_RSZ + (MALLOC_PAGESIZE * 2))) == MAP_FAILED)
 		wrterror(NULL, "malloc init mmap failed");
 	mprotect(p, MALLOC_PAGESIZE, PROT_NONE);
-	mprotect(p + MALLOC_PAGESIZE + DIR_INFO_RSZ,
+	mprotect((char *)p + MALLOC_PAGESIZE + DIR_INFO_RSZ,
 	    MALLOC_PAGESIZE, PROT_NONE);
 	d_avail = (DIR_INFO_RSZ - sizeof(*d)) >> MALLOC_MINSHIFT;
-	d = (struct dir_info *)(p + MALLOC_PAGESIZE +
+	d = (struct dir_info *)((char *)p + MALLOC_PAGESIZE +
 	    (arc4random_uniform(d_avail) << MALLOC_MINSHIFT));
 
 	rbytes_init(d);
@@ -727,7 +727,7 @@ omalloc_grow(struct dir_info *d)
 	}
 	/* avoid pages containing meta info to end up in cache */
 	if (munmap(d->r, d->regions_total * sizeof(struct region_info)))
-		wrterror(d, "munmap %p", d->r);
+		wrterror(d, "munmap %p", (void *)d->r);
 	else
 		STATS_SUB(d->malloc_used,
 		    d->regions_total * sizeof(struct region_info));
