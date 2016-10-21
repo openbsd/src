@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxireg.h,v 1.8 2016/02/02 21:40:47 jsg Exp $	*/
+/*	$OpenBSD: sunxireg.h,v 1.9 2016/10/21 20:03:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -37,9 +37,9 @@
 #define	SXICMS4(sc, reg, mask, bits)					\
 	SXIWRITE4((sc), (reg), (SXIREAD4((sc), (reg)) & ~(mask)) | (bits))
 
-#define	TIMER0_FREQUENCY	(32768)
-#define	TIMER1_FREQUENCY	(32768)
-#define	TIMER2_FREQUENCY	(32768)
+#define	TIMER0_FREQUENCY	(24000000)
+#define	TIMER1_FREQUENCY	(24000000)
+#define	TIMER2_FREQUENCY	(24000000)
 #define	COUNTER_FREQUENCY	(24000000)
 
 /* SRAM Controller / System Control */

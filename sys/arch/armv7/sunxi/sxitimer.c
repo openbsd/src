@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.6 2016/07/18 19:22:45 kettenis Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.7 2016/10/21 20:03:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -52,13 +52,9 @@
 #define	CNT64_CLR_EN		(1 << 0) /* clear enable */
 #define	CNT64_RL_EN		(1 << 1) /* read latch enable */
 
-#define	LOSC_CTRL		0x100
-#define	OSC32K_SRC_SEL		(1 << 0)
-
 #define	TIMER_ENABLE		(1 << 0)
 #define	TIMER_RELOAD		(1 << 1)
 #define	TIMER_CLK_SRC_MASK	(3 << 2)
-#define	TIMER_LSOSC		(0 << 2)
 #define	TIMER_OSC24M		(1 << 2)
 #define	TIMER_PLL6_6		(2 << 2)
 #define	TIMER_PRESC_1		(0 << 4)
@@ -132,7 +128,7 @@ void
 sxitimer_attach(struct device *parent, struct device *self, void *args)
 {
 	struct armv7_attach_args *aa = args;
-	uint32_t freq, ival, now, cr;
+	uint32_t freq, ival, now;
 	int unit = self->dv_unit;
 
 	if (unit != 0)
@@ -151,11 +147,6 @@ sxitimer_attach(struct device *parent, struct device *self, void *args)
 	    & CNT64_CLR_EN)
 		continue;
 
-	/* setup timers */
-	cr = bus_space_read_4(sxitimer_iot, sxitimer_ioh, LOSC_CTRL);
-	cr |= OSC32K_SRC_SEL; /* ext 32.768KHz OSC src */
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh, LOSC_CTRL, cr);
-
 skip_init:
 	/* timers are down-counters, from interval to 0 */
 	now = 0xffffffff; /* known big value */
@@ -163,8 +154,7 @@ skip_init:
 
 	/* stop timer, and set clk src */
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(unit),
-	    freq == 24000000 ? TIMER_OSC24M : TIMER_LSOSC);
+	    TIMER_CTRL(unit), TIMER_OSC24M);
 
 	switch (unit) { /* XXX more XXXXTIMER magic for less lines? */
 	case TICKTIMER:
@@ -217,7 +207,7 @@ skip_init:
 void
 sxitimer_cpu_initclocks(void)
 {
-	uint32_t isr, ier;
+	uint32_t isr, ier, ctrl;
 
 	/* establish interrupts */
 	arm_intr_establish(sxitimer_irq[TICKTIMER], IPL_CLOCK,
@@ -236,17 +226,23 @@ sxitimer_cpu_initclocks(void)
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh, TIMER_IER, ier);
 
 	/* enable timers */
+	ctrl = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(CNTRTIMER));
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(CNTRTIMER),
-	    TIMER_ENABLE | TIMER_RELOAD | TIMER_CONTINOUS);
+	    ctrl | TIMER_ENABLE | TIMER_RELOAD | TIMER_CONTINOUS);
 
+	ctrl = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(STATTIMER));
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(STATTIMER),
-	    TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
+	    ctrl | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 
+	ctrl = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER));
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(TICKTIMER),
-	    TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
+	    ctrl | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 }
 
 /* 
