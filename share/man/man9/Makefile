@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.281 2016/09/15 17:53:38 awolk Exp $
+#	$OpenBSD: Makefile,v 1.282 2016/10/21 07:57:29 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -9,7 +9,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	audio.9 autoconf.9 \
 	bemtoh32.9 bio_register.9 boot.9 bpf_mtap.9 buffercache.9 bufq_init.9 \
 	bus_dma.9 bus_space.9 \
-	copy.9 config_attach.9 config_defer.9 crypto.9 delay.9 \
+	copy.9 config_attach.9 config_defer.9 cpumem_get.9 crypto.9 delay.9 \
 	disk.9 disklabel.9 dma_alloc.9 dohooks.9 \
 	dostartuphooks.9 \
 	evcount.9 extent.9 fb_setup.9 file.9 fork1.9 \
