@@ -2663,6 +2663,8 @@
 ./usr/share/man/man9/config_attach.9
 ./usr/share/man/man9/config_defer.9
 ./usr/share/man/man9/copy.9
+./usr/share/man/man9/counters_alloc.9
+./usr/share/man/man9/cpumem_get.9
 ./usr/share/man/man9/crypto.9
 ./usr/share/man/man9/delay.9
 ./usr/share/man/man9/disk.9

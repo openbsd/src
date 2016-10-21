@@ -1575,6 +1575,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/varargs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/vga_post.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/vm86.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/vmmvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/vmparam.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/icdb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ieeefp.ph
