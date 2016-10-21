@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.55 2016/07/28 21:57:56 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.56 2016/10/21 06:20:58 mlarkin Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include "ipmi.h"
 #include "esm.h"
 #include "amdmsr.h"
+#include "vmm.h"
 #include "pvbus.h"
 
 #include <machine/cpuvar.h>
@@ -269,6 +270,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 		config_found(self, &mba.mba_iba, mainbus_print);
 	}
+
+#if NVMM > 0
+	mba.mba_busname = "vmm";
+	config_found(self, &mba.mba_busname, mainbus_print);
+#endif /* NVMM > 0 */
 }
 
 int

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.97 2016/10/15 13:45:08 deraadt Exp $
+#	$OpenBSD: Makefile.i386,v 1.98 2016/10/21 06:20:58 mlarkin Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -149,7 +149,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
 	rm -f db_structinfo.o
 
 locore.o: ${_machdir}/${_mach}/locore.s assym.h
-in_cksum.o mptramp.o kvm86call.o acpi_wakecode.o: assym.h
+in_cksum.o mptramp.o kvm86call.o acpi_wakecode.o vmm_support.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf

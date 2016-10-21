@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.27 2015/07/19 18:53:49 sf Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.28 2016/10/21 06:20:58 mlarkin Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -37,6 +37,7 @@
  */
 
 #include "npx.h"
+#include "vmm.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,6 +71,11 @@ void i386_ipi_reload_mtrr(struct cpu_info *);
 #define i386_ipi_reload_mtrr 0
 #endif
 
+#if NVMM > 0
+void i386_ipi_start_vmm(struct cpu_info *);
+void i386_ipi_stop_vmm(struct cpu_info *);
+#endif /* NVMM > 0 */
+
 void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
@@ -88,6 +94,13 @@ void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 	NULL,
 #endif
 	i386_setperf_ipi,
+#if NVMM > 0
+	i386_ipi_start_vmm,
+	i386_ipi_stop_vmm,
+#else
+	NULL,
+	NULL,
+#endif /* NVMM > 0 */
 };
 
 void
@@ -208,3 +221,18 @@ i386_ipi_handler(void)
 		}
 	}
 }
+
+#if NVMM > 0
+void
+i386_ipi_start_vmm(struct cpu_info *ci)
+{
+	start_vmm_on_cpu(ci);
+}
+
+void
+i386_ipi_stop_vmm(struct cpu_info *ci)
+{
+	stop_vmm_on_cpu(ci);
+}
+#endif /* NVMM > 0 */
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.79 2016/07/28 21:57:56 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.80 2016/10/21 06:20:58 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -66,6 +66,7 @@
 
 #include "lapic.h"
 #include "ioapic.h"
+#include "vmm.h"
 
 #include <sys/param.h>
 #include <sys/timeout.h>
@@ -113,6 +114,9 @@ int     cpu_activate(struct device *, int);
 void	patinit(struct cpu_info *ci);
 void	cpu_idle_mwait_cycle(void);
 void	cpu_init_mwait(struct device *);
+#if NVMM > 0
+void	cpu_init_vmm(struct cpu_info *ci);
+#endif /* NVMM > 0 */
 
 u_int cpu_mwait_size, cpu_mwait_states;
 
@@ -345,6 +349,10 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		    ci->ci_dev.dv_xname, pcb, pcb->pcb_esp);
 	}
 #endif
+
+#if NVMM > 0
+	cpu_init_vmm(ci);
+#endif /* NVMM > 0 */
 }
 
 /*
@@ -407,6 +415,23 @@ cpu_init(struct cpu_info *ci)
 }
 
 void
+cpu_init_vmm(struct cpu_info *ci)
+{
+	/*
+	 * Allocate a per-cpu VMXON region
+	 */
+	if (ci->ci_vmm_flags & CI_VMM_VMX) {
+		ci->ci_vmxon_region_pa = 0;
+		ci->ci_vmxon_region = (struct vmxon_region *)malloc(PAGE_SIZE,
+		    M_DEVBUF, M_WAITOK|M_ZERO);
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)ci->ci_vmxon_region,
+	    (paddr_t *)&ci->ci_vmxon_region_pa))
+		panic("Can't locate VMXON region in phys mem\n");
+	}
+}
+
+
+void
 patinit(struct cpu_info *ci)
 {
 	extern int	pmap_pg_wc;
@@ -415,13 +440,6 @@ patinit(struct cpu_info *ci)
 	if ((ci->ci_feature_flags & CPUID_PAT) == 0)
 		return;
 
-#define PATENTRY(n, type)	((u_int64_t)type << ((n) * 8))
-#define	PAT_UC		0x0UL
-#define	PAT_WC		0x1UL
-#define	PAT_WT		0x4UL
-#define	PAT_WP		0x5UL
-#define	PAT_WB		0x6UL
-#define	PAT_UCMINUS	0x7UL
 	/* 
 	 * Set up PAT bits.
 	 * The default pat table is the following:

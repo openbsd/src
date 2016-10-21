@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.229 2016/02/28 15:46:18 naddy Exp $
+#	$OpenBSD: files.i386,v 1.230 2016/10/21 06:20:58 mlarkin Exp $
 #
 # new style config file for i386 architecture
 #
@@ -387,6 +387,14 @@ include "dev/sdmmc/files.sdmmc"
 include "dev/acpi/files.acpi"
 file	arch/i386/i386/acpi_machdep.c		acpi
 file	arch/i386/i386/acpi_wakecode.S		acpi & !small_kernel
+
+#
+# VMM
+#
+device vmm {}
+attach vmm at mainbus
+file	arch/i386/i386/vmm.c			vmm needs-flag
+file	arch/i386/i386/vmm_support.S		vmm
 
 #
 # IPMI

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.82 2016/03/15 03:17:51 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.83 2016/10/21 06:20:59 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -88,6 +88,11 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
  * page list, and number of PTPs within the pmap.
  */
 
+#define PMAP_TYPE_NORMAL	1
+#define PMAP_TYPE_EPT		2
+#define PMAP_TYPE_RVI		3
+#define pmap_nested(pm) ((pm)->pm_type != PMAP_TYPE_NORMAL)
+
 struct pmap {
 	uint64_t pm_pdidx[4];		/* PDIEs for PAE mode */
 
@@ -106,6 +111,10 @@ struct pmap {
 	int pm_flags;			/* see below */
 
 	struct segment_descriptor pm_codeseg;	/* cs descriptor for process */
+	int pm_type;			/* Type of pmap this is (PMAP_TYPE_x) */
+	vaddr_t pm_npt_pml4;		/* Nested paging PML4 VA */
+	paddr_t pm_npt_pa;		/* Nested paging PML4 PA */
+	vaddr_t pm_npt_pdpt;		/* Nested paging PDPT */
 };
 
 /*
@@ -246,6 +255,7 @@ void pmap_switch(struct proc *, struct proc *);
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 paddr_t vtophys(vaddr_t va);
 paddr_t vtophys_pae(vaddr_t va);
+int pmap_convert(struct pmap *, int);
 
 extern u_int32_t (*pmap_pte_set_p)(vaddr_t, paddr_t, u_int32_t);
 extern u_int32_t (*pmap_pte_setbits_p)(vaddr_t, u_int32_t, u_int32_t);

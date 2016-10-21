@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.194 2016/09/17 07:37:57 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.195 2016/10/21 06:20:58 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -73,6 +73,8 @@
 #include <dev/isa/isareg.h>
 #include <sys/msgbuf.h>
 #include <stand/boot/bootarg.h>
+
+#include "vmm.h"
 
 /*
  * this file contains the code for the "pmap module."   the module's
@@ -931,6 +933,11 @@ pmap_bootstrap(vaddr_t kva_start)
 	kpm->pm_pdirpa = proc0.p_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		atop(kva_start - VM_MIN_KERNEL_ADDRESS);
+	kpm->pm_type = PMAP_TYPE_NORMAL;
+#if NVMM > 0
+	kpm->pm_npt_pml4 = 0;
+	kpm->pm_npt_pdpt = 0;
+#endif /* NVMM > 0 */
 
 	/*
 	 * the above is just a rough estimate and not critical to the proper
@@ -1289,6 +1296,12 @@ pmap_create(void)
 	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 
+	pmap->pm_type = PMAP_TYPE_NORMAL;
+#if NVMM > 0
+	pmap->pm_npt_pml4 = 0;
+	pmap->pm_npt_pdpt = 0;
+#endif /* NVMM > 0 */
+
 	pmap_pinit_pd(pmap);
 	return (pmap);
 }
@@ -1355,6 +1368,15 @@ pmap_destroy(struct pmap *pmap)
 
 	uvm_km_free(kernel_map, pmap->pm_pdir, pmap->pm_pdirsize);
 	pmap->pm_pdir = 0;
+
+#if NVMM > 0
+	if (pmap->pm_npt_pml4)
+		km_free((void *)pmap->pm_npt_pml4, PAGE_SIZE, &kv_any,
+		    &kp_zero);
+	if (pmap->pm_npt_pdpt)
+		km_free((void *)pmap->pm_npt_pdpt, PAGE_SIZE, &kv_any,
+		    &kp_zero);
+#endif /* NVMM > 0 */
 
 	pool_put(&pmap_pmap_pool, pmap);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.51 2016/09/17 07:37:57 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.52 2016/10/21 06:20:58 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1914,4 +1914,66 @@ pmap_flush_page_pae(paddr_t pa)
 	pmap_flush_cache((vaddr_t)va, PAGE_SIZE);
 	*pte = 0;
 	pmap_update_pg(va);
+}
+
+int
+pmap_convert(struct pmap *pmap, int mode)
+{
+	int ret;
+	pt_entry_t *pte;
+	paddr_t pml4_pa, pdpt_pa;
+
+	pmap->pm_type = mode;
+
+	ret = 0;
+	if (mode == PMAP_TYPE_EPT) {
+		pmap->pm_npt_pml4 = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
+		    &kp_zero, &kd_nowait);
+		if (!pmap->pm_npt_pml4) {
+			ret = ENOMEM;
+			goto error;
+		}
+
+		pmap->pm_npt_pdpt = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
+		    &kp_zero, &kd_nowait);
+		if (!pmap->pm_npt_pdpt) {
+			ret = ENOMEM;
+			goto error;
+		}
+
+		if (!pmap_extract(pmap_kernel(), pmap->pm_npt_pml4,
+		    &pml4_pa)) {
+			ret = ENOMEM;
+			goto error;
+		}
+		pmap->pm_npt_pa = pml4_pa;
+
+		if (!pmap_extract(pmap_kernel(), pmap->pm_npt_pdpt,
+		    &pdpt_pa)) {
+			ret = ENOMEM;
+			goto error;
+		}
+
+		pte = (pt_entry_t *)pmap->pm_npt_pml4;
+		pte[0] = (pdpt_pa & PG_FRAME) | EPT_R | EPT_W | EPT_X;
+		pte = (pt_entry_t *)pmap->pm_npt_pdpt;
+		pte[0] = (pmap->pm_pdidx[0] & PG_FRAME) |
+		    EPT_R | EPT_W | EPT_X;
+		pte[1] = (pmap->pm_pdidx[1] & PG_FRAME) |
+		    EPT_R | EPT_W | EPT_X;
+		pte[2] = (pmap->pm_pdidx[2] & PG_FRAME) |
+		    EPT_R | EPT_W | EPT_X;
+		pte[3] = (pmap->pm_pdidx[3] & PG_FRAME) |
+		    EPT_R | EPT_W | EPT_X;
+	}
+
+	return (ret);
+
+error:
+	if (pmap->pm_npt_pml4)
+		km_free((void *)pmap->pm_npt_pml4, PAGE_SIZE, &kv_any, &kp_zero);
+	if (pmap->pm_npt_pdpt)
+		km_free((void *)pmap->pm_npt_pdpt, PAGE_SIZE, &kv_any, &kp_zero);
+
+	return (ret);
 }
