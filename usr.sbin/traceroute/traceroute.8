@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.65 2016/10/20 20:15:09 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.66 2016/10/21 09:26:36 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 20 2016 $
+.Dd $Mdocdate: October 21 2016 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -190,10 +190,6 @@ This option can be used to
 see if different types-of-service result in different paths.
 If this option is used, changes to the type-of-service in the
 returned packets are displayed.
-(If you are not running a
-.Bx 4.3 tahoe
-or later system, this may be academic since the normal network
-services like telnet and ftp don't let you control the TOS).
 Not all values of TOS are legal or meaningful \-
 see the IP spec for definitions.
 Useful values are probably
@@ -225,36 +221,35 @@ The default is 40 bytes for IPv4 UDP
 and 60 bytes for ICMP, IPv6 UDP and ICMP6.
 .El
 .Pp
-This program attempts to trace the route an IP packet would follow to some
-internet host by launching UDP probe packets with a small TTL
+The program attempts to trace the route an IP packet would follow to a
+host by launching UDP probe packets with a small TTL or hop limit,
 then listening for an ICMP "time exceeded" reply from a gateway.
-We start out probes with a TTL of one and increase by one until we get an
-ICMP "port unreachable"
-(which means we got to "host") or hit a max (which
-defaults to 64 hops and can be changed with the
+It starts using probes with a TTL/hop limit of one
+and increases by one until it gets an ICMP "port unreachable"
+(which means it reached the host) or hits a maximum limit
+(which defaults to 64, but can be changed using the
 .Fl m
-flag).
-Three probes (changed with
+option).
+Three probes (the exact number can be changed using the
 .Fl q
-flag) are sent at each TTL setting and a
-line is printed showing the TTL, address of the gateway and
-round trip time of each probe.
-If the probe answers come from
-different gateways, the address of each responding system will
-be printed.
+option) are sent and a line is printed
+showing the TTL or hop limit, address of the gateway,
+and round trip time of each probe.
+If the probe answers come from different gateways,
+the address of each responding system will be printed.
 If there is no response within a 5 second timeout
-interval (changed with the
+interval (which can be changed using the
 .Fl w
-flag), a "*" is printed for that
+option), a "*" is printed for that
 probe.
 .Pp
 We don't want the destination
 host to process the UDP
 probe packets so the destination port is set to an
 unlikely value (if some clod on the destination is using that
-value, it can be changed with the
+value, it can be changed using the
 .Fl p
-flag).
+option).
 .Pp
 A sample use and output might be:
 .Bd -literal -offset indent
