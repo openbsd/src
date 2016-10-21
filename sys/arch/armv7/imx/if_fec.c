@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.18 2016/09/22 12:43:22 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.19 2016/10/21 22:34:00 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -413,7 +413,6 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_readreg = fec_miibus_readreg;
 	mii->mii_writereg = fec_miibus_writereg;
 	mii->mii_statchg = fec_miibus_statchg;
-	mii->mii_flags = MIIF_AUTOTSLEEP;
 
 	ifmedia_init(&mii->mii_media, 0, fec_ifmedia_upd, fec_ifmedia_sts);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
