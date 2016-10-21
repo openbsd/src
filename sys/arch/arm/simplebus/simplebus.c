@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.10 2016/10/05 07:44:24 patrick Exp $ */
+/* $OpenBSD: simplebus.c,v 1.11 2016/10/21 20:09:49 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -25,27 +25,13 @@
 #include <dev/ofw/fdt.h>
 
 #include <arm/fdt.h>
+#include <arm/simplebus/simplebusvar.h>
 
 int simplebus_match(struct device *, void *, void *);
 void simplebus_attach(struct device *, struct device *, void *);
 
 void simplebus_attach_node(struct device *, int);
 int simplebus_bs_map(void *, uint64_t, bus_size_t, int, bus_space_handle_t *);
-
-struct simplebus_softc {
-	struct device		 sc_dev;
-	int			 sc_node;
-	bus_space_tag_t		 sc_iot;
-	bus_dma_tag_t		 sc_dmat;
-	int			 sc_acells;
-	int			 sc_scells;
-	int			 sc_pacells;
-	int			 sc_pscells;
-	struct bus_space	 sc_bus;
-	int			*sc_ranges;
-	int			 sc_rangeslen;
-	int			 sc_early;
-};
 
 struct cfattach simplebus_ca = {
 	sizeof(struct simplebus_softc), simplebus_match, simplebus_attach, NULL,
