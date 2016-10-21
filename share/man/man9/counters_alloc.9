@@ -1,0 +1,154 @@
+.\"	$OpenBSD: counters_alloc.9,v 1.1 2016/10/21 10:15:40 dlg Exp $
+.\"
+.\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 21 2016 $
+.Dt COUNTERS_ALLOC 9
+.Os
+.Sh NAME
+.Nm counters_alloc ,
+.Nm counters_free ,
+.Nm counters_enter ,
+.Nm counters_leave ,
+.Nm counters_read ,
+.Nm counters_zero ,
+.Nm cpumem_next
+.Nd per CPU counters
+.Sh SYNOPSIS
+.In sys/percpu.h
+.Ft struct cpumem *
+.Fn counters_alloc "unsigned int ncounters" "int type"
+.Ft void
+.Fn counters_free "struct cpumem *cm" "unsigned int ncounters" "int type"
+.Ft uint64_t *
+.Fn counters_enter "struct counters_ref *ref" "struct cpumem *cm"
+.Ft void
+.Fn counters_leave "struct counters_ref *ref" "struct cpumem *cm"
+.Ft void
+.Fo counters_read
+.Fa "struct cpumem *cm"
+.Fa "uint64_t *counters"
+.Fa "unsigned int ncounters"
+.Fc
+.Ft void
+.Fn counters_zero "struct cpumem *cm" "unsigned int ncounters"
+.Sh DESCRIPTION
+The per CPU counter API builds on the per CPU memory API and provides
+access to a series of uint64_t counter values on each CPU.
+.Pp
+The API provides versioning of counter updates without using
+interlocked CPU instructions so they can all be read in a consistent
+state.
+Updates to counters should be limited to addition or subtraction
+of uint64_t values.
+.Pp
+An alternate implemention of the API is provided on uni-processor
+(i.e., when the kernel is not built with
+.Dv MULTIPROCESSOR
+defined)
+systems that provides no overhead compared to direct access to a
+data structure.
+This allows the API to be used without affecting the performance
+uni-processor systems.
+.Pp
+.Fn counters_alloc
+allocates memory for a series of uint64_t values on each CPU.
+.Fa ncounters
+specifies the number of counters to be allocated.
+The
+.Fa type
+argument specifies the type of memory that the counters will be
+allocated as via
+.Xr malloc 9 .
+The counters will be zeroed on allocation.
+.Pp
+.Fn counters_free
+deallocates each CPU's counters.
+The same
+.Fa ncounters
+and
+.Fa type
+arguments type originally provided to
+.Fn counters_alloc
+must be passed to
+.Fn counters_free .
+.Pp
+.Fn counters_enter
+provides access to the current CPU's set of counters referenced by
+.Fa cm .
+The callers reference to the counters is held by
+.Fa ref .
+.Pp
+.Fn counters_leave
+indicates the end of access to the current CPU's set ouf counters referenced by
+.Fa cm .
+The reference held by
+.Fa ref
+is released by this call.
+.Pp
+.Fn counters_read
+iterates over each CPU's set of counters referenced by
+.Fa cm ,
+takes a consistent snapshot of the counters, and then sums them together.
+The sum of the counters is written to the
+.Fa counters
+array.
+The number of counters is specified with
+.Fa ncounters .
+.Pp
+.Fn counters_zero
+iterates over each CPU's set of counters refereced by
+.Fa
+and zeroes them.
+The number of counters is specified with
+.Fa ncounters .
+.Fn counters_zero
+itself does not prevent concurrent updates of the counters, it is
+up to the caller to serialise this call with other actions.
+.Sh CONTEXT
+.Fn counters_alloc ,
+.Fn counters_free ,
+and
+.Fn counters_read
+may be called during autoconf, or from process context.
+.Pp
+.Fn counters_enter ,
+.Fn counters_leave ,
+and
+.Fn counters_zero
+may be called during autoconf, from process context, or from interrupt
+context.
+The per CPU counters API does not provide any locking or serialisation
+of access to each CPU's set of counters beyond isolating each CPU's
+update.
+It is up to the caller to provide appropriate locking or serialisation
+around calls to these functions to prevent concurrent access to the
+relevant data structures.
+.Sh RETURN VALUES
+.Fn counters_get
+will return an opaque cpumem pointer that references each CPU's
+set of counters.
+.Pp
+.Fn counters_enter
+returns a reference to the current CPU's set of counters.
+.Sh SEE ALSO
+.Xr counters_get 9 ,
+.Xr malloc 9
+.Sh HISTORY
+The per CPU counter API first appeared in
+.Ox 6.1 .
+.Sh AUTHORS
+The per CPU counter API was written by
+.An David Gwynne Aq Mt dlg@openbsd.org .
