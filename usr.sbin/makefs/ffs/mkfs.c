@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.5 2016/10/21 09:35:27 natano Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.6 2016/10/21 09:38:31 natano Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ static int     density;	   /* number of bytes per inode */
 static int     maxcontig;	   /* max contiguous blocks to allocate */
 static int     maxbpg;	   /* maximum blocks per file in a cyl group */
 static int     bbsize;	   /* boot block size */
-static int     sbsize;	   /* superblock size */
 static int     avgfilesize;	   /* expected average file size */
 static int     avgfpdir;	   /* expected number of files per directory */
 
@@ -133,7 +132,6 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	avgfilesize =   ffs_opts->avgfilesize;
 	avgfpdir =      ffs_opts->avgfpdir;
 	bbsize =        BBSIZE;
-	sbsize =        SBLOCKSIZE;
 
 	strlcpy((char *)sblock.fs_volname, ffs_opts->label,
 	    sizeof(sblock.fs_volname));
@@ -494,7 +492,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	 * Make a copy of the superblock into the buffer that we will be
 	 * writing out in each cylinder group.
 	 */
-	memcpy(writebuf, &sblock, sbsize);
+	memcpy(writebuf, &sblock, SBLOCKSIZE);
 	memcpy(iobuf, writebuf, SBLOCKSIZE);
 
 	printf("super-block backups (for fsck -b #) at:");
@@ -534,13 +532,13 @@ ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
 	void *space;
 	char *wrbuf;
 
-        memcpy(writebuf, &sblock, sbsize);
-	ffs_wtfs(fs->fs_sblockloc / sectorsize, sbsize, writebuf, fsopts);
+	memcpy(writebuf, &sblock, SBLOCKSIZE);
+	ffs_wtfs(fs->fs_sblockloc / sectorsize, SBLOCKSIZE, writebuf, fsopts);
 
 	/* Write out the duplicate super blocks */
 	for (cylno = 0; cylno < fs->fs_ncg; cylno++)
 		ffs_wtfs(FFS_FSBTODB(fs, cgsblock(fs, cylno)),
-		    sbsize, writebuf, fsopts);
+		    SBLOCKSIZE, writebuf, fsopts);
 
 	/* Write out the cylinder group summaries */
 	size = fs->fs_cssize;
