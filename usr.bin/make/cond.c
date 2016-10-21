@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.50 2013/11/22 15:47:35 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.51 2016/10/21 16:12:38 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ CondDoMake(struct Name *arg)
 	LstNode ln;
 
 	for (ln = Lst_First(create); ln != NULL; ln = Lst_Adv(ln)) {
-		char *s = (char *)Lst_Datum(ln);
+		char *s = Lst_Datum(ln);
 		if (Str_Matchi(s, strchr(s, '\0'), arg->s, arg->e))
 			return true;
 	}

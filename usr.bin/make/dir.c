@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.67 2015/01/23 22:35:57 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.68 2016/10/21 16:12:38 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 	 * If found, we concatenate the directory name and the
 	 * final component and return the resulting string.  */
 	for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
-		p = (struct PathEntry *)Lst_Datum(ln);
+		p = Lst_Datum(ln);
 		if (DEBUG(DIR))
 			printf("%s...", p->name);
 		if (find_file_hashi(p, basename, ename, hv) != NULL) {
@@ -533,7 +533,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 		if (DEBUG(DIR))
 			printf("failed. Trying subdirectories...");
 		for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
-			p = (struct PathEntry *)Lst_Datum(ln);
+			p = Lst_Datum(ln);
 			if (p != dot)
 				file = Str_concati(p->name,
 				    strchr(p->name, '\0'), name, ename, '/');
@@ -677,7 +677,7 @@ Dir_Concat(Lst path1, Lst path2)
 	struct PathEntry *p;
 
 	for (ln = Lst_First(path2); ln != NULL; ln = Lst_Adv(ln)) {
-		p = (struct PathEntry *)Lst_Datum(ln);
+		p = Lst_Datum(ln);
 		if (Lst_AddNew(path1, p))
 			p->refCount++;
 	}

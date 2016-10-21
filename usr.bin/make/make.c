@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.70 2015/08/21 02:19:49 jsg Exp $	*/
+/*	$OpenBSD: make.c,v 1.71 2016/10/21 16:12:38 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ has_unmade_predecessor(GNode *gn)
 
 
 	for (ln = Lst_First(&gn->preds); ln != NULL; ln = Lst_Adv(ln)) {
-		GNode	*pgn = (GNode *)Lst_Datum(ln);
+		GNode	*pgn = Lst_Datum(ln);
 
 		if (pgn->must_make && pgn->built_status == UNKNOWN) {
 			if (DEBUG(MAKE))
@@ -180,7 +180,7 @@ requeue_successors(GNode *gn)
 	 * queue, it means we need to place it in the queue as it restrained
 	 * itself before.	*/
 	for (ln = Lst_First(&gn->successors); ln != NULL; ln = Lst_Adv(ln)) {
-		GNode	*succ = (GNode *)Lst_Datum(ln);
+		GNode	*succ = Lst_Datum(ln);
 
 		if (succ->must_make && succ->unmade == 0 
 		    && succ->built_status == UNKNOWN)
@@ -263,7 +263,7 @@ Make_Update(GNode *cgn)	/* the child node */
 	requeue(cgn);
 	/* SIB: this is where I should mark the build as finished */
 	for (ln = Lst_First(&cgn->parents); ln != NULL; ln = Lst_Adv(ln)) {
-		pgn = (GNode *)Lst_Datum(ln);
+		pgn = Lst_Datum(ln);
 		/* SIB: there should be a siblings loop there */
 		pgn->unmade--;
 		if (pgn->must_make) {

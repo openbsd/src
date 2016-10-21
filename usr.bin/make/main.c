@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.120 2016/10/12 00:31:06 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.121 2016/10/21 16:12:38 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ static char *figure_out_MACHINE_CPU(void);
 
 static char *chdir_verify_path(const char *, struct dirs *);
 static char *figure_out_CURDIR(void);
-static void setup_CURDIR_OBJDIR(struct dirs *, const char *);
+static void setup_CURDIR_OBJDIR(struct dirs *);
 
 static void setup_VPATH(void);
 
@@ -544,7 +544,7 @@ chdir_verify_path(const char *path, struct dirs *d)
 }
 
 static void
-setup_CURDIR_OBJDIR(struct dirs *d, const char *machine)
+setup_CURDIR_OBJDIR(struct dirs *d)
 {
 	char *path;
 
@@ -656,7 +656,7 @@ main(int argc, char **argv)
 	bool read_depend = true;/* false if we don't want to read .depend */
 
 	MainParseChdir(argc, argv);
-	setup_CURDIR_OBJDIR(&d, machine);
+	setup_CURDIR_OBJDIR(&d);
 
 	esetenv("PWD", d.object);
 	unsetenv("CDPATH");
@@ -736,7 +736,7 @@ main(int argc, char **argv)
 		LstNode ln;
 
 		for (ln = Lst_First(create); ln != NULL; ln = Lst_Adv(ln)) {
-			char *name = (char *)Lst_Datum(ln);
+			char *name = Lst_Datum(ln);
 
 			if (strcmp(name, "depend") == 0)
 				read_depend = false;
@@ -782,7 +782,7 @@ main(int argc, char **argv)
 
 		for (ln = Lst_First(&varstoprint); ln != NULL;
 		    ln = Lst_Adv(ln)) {
-			char *value = Var_Value((char *)Lst_Datum(ln));
+			char *value = Var_Value(Lst_Datum(ln));
 
 			printf("%s\n", value ? value : "");
 		}

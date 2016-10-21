@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.86 2015/12/11 21:37:03 mmcc Exp $ */
+/*	$OpenBSD: arch.c,v 1.87 2016/10/21 16:12:38 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ parse_archive(Buffer expand, const char **linePtr, Lst nodeLst, SymTable *ctxt)
 			Lst_Init(&members);
 
 			Dir_Expandi(member, emember, defaultPath, &members);
-			while ((m = (char *)Lst_DeQueue(&members)) != NULL) {
+			while ((m = Lst_DeQueue(&members)) != NULL) {
 				Buf_Addi(expand, lib, elib);
 				Buf_AddChar(expand, '(');
 				Buf_AddString(expand, m);
@@ -875,7 +875,7 @@ Arch_MemMTime(GNode *gn)
 		char *nameStart;
 		char *nameEnd;
 
-		pgn = (GNode *)Lst_Datum(ln);
+		pgn = Lst_Datum(ln);
 
 		if (pgn->type & OP_ARCHV) {
 			/* If the parent is an archive specification and is

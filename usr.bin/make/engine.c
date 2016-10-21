@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.50 2015/01/23 13:18:40 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.51 2016/10/21 16:12:38 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -308,7 +308,7 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 
 	for (ln = Lst_First(&cgn->children); ln != NULL;
 	    ln = Lst_Adv(ln)) {
-		gn = (GNode *)Lst_Datum(ln);
+		gn = Lst_Datum(ln);
 
 		if (Lst_AddNew(&pgn->children, gn)) {
 			Lst_AtEnd(&gn->parents, pgn);
@@ -351,7 +351,7 @@ Make_DoAllVar(GNode *gn)
 	Var(ALLSRC_INDEX, gn) = "";
 
 	for (ln = Lst_First(&gn->children); ln != NULL; ln = Lst_Adv(ln)) {
-		child = (GNode *)Lst_Datum(ln);
+		child = Lst_Datum(ln);
 		if ((child->type & (OP_EXEC|OP_USE|OP_INVISIBLE)) != 0)
 			continue;
 		if (OP_NOP(child->type) ||

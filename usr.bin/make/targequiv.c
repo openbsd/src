@@ -1,4 +1,4 @@
-/*	$OpenBSD: targequiv.c,v 1.7 2015/01/16 15:36:30 deraadt Exp $ */
+/*	$OpenBSD: targequiv.c,v 1.8 2016/10/21 16:12:38 espie Exp $ */
 /*
  * Copyright (c) 2007-2008 Marc Espie.
  *
@@ -165,7 +165,7 @@ kludge_look_harder_for_target(GNode *gn)
 				Lst_Concat(&gn->commands, &extra->commands);
 			for (ln = Lst_First(&extra->children); ln != NULL;
 			    ln = Lst_Adv(ln)) {
-				cgn = (GNode *)Lst_Datum(ln);
+				cgn = Lst_Datum(ln);
 
 				if (Lst_AddNew(&gn->children, cgn)) {
 					Lst_AtEnd(&cgn->parents, gn);

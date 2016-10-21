@@ -1,4 +1,4 @@
-/*	$OpenBSD: direxpand.c,v 1.7 2015/01/23 22:35:57 espie Exp $ */
+/*	$OpenBSD: direxpand.c,v 1.8 2016/10/21 16:12:38 espie Exp $ */
 /*
  * Copyright (c) 1999,2007 Marc Espie.
  *
@@ -95,8 +95,7 @@ PathMatchFilesi(const char *word, const char *eword, Lst path, Lst expansions)
 	LstNode	ln;		/* Current node */
 
 	for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln))
-		Dir_MatchFilesi(word, eword, (struct PathEntry *)Lst_Datum(ln),
-		    expansions);
+		Dir_MatchFilesi(word, eword, Lst_Datum(ln), expansions);
 }
 
 /*-
@@ -200,7 +199,7 @@ DirExpandCurlyi(const char *word, const char *eword, Lst path, Lst expansions)
 	/* Prime queue with copy of initial word */
 	Lst_Init(&curled);
 	Lst_EnQueue(&curled, Str_dupi(word, eword));
-	while ((toexpand = (char *)Lst_DeQueue(&curled)) != NULL) {
+	while ((toexpand = Lst_DeQueue(&curled)) != NULL) {
 		const char *brace;
 		const char *start;
 				/* Start of current chunk of brace clause */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.85 2015/01/23 13:38:16 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.86 2016/10/21 16:12:38 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	 *                          inferiors could not be made due to errors.
 	 */
 	errors = 0;
-	while ((gn = (GNode *)Lst_DeQueue(targs)) != NULL) {
+	while ((gn = Lst_DeQueue(targs)) != NULL) {
 		CompatMake(gn, NULL);
 
 		if (gn->built_status == UPTODATE)

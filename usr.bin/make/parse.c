@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.116 2016/05/13 12:18:11 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.117 2016/10/21 16:12:38 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -148,6 +148,7 @@ static bool handle_for_loop(Buffer, const char *);
 static bool handle_undef(const char *);
 #define ParseReadLoopLine(linebuf) Parse_ReadUnparsedLine(linebuf, "for loop")
 static bool handle_bsd_command(Buffer, Buffer, const char *);
+static bool register_target(GNode *, struct ohash *);
 static char *strip_comments(Buffer, const char *);
 static char *resolve_include_filename(const char *, const char *, bool);
 static void handle_include_file(const char *, const char *, bool, bool);
@@ -326,7 +327,7 @@ ParseDoOp(GNode **gnp, unsigned int op)
 		 * tend to do anything with their local variables, but better
 		 * safe than sorry.  */
 		for (ln = Lst_First(&gn->parents); ln != NULL; ln = Lst_Adv(ln))
-			ParseLinkSrc((GNode *)Lst_Datum(ln), cohort);
+			ParseLinkSrc(Lst_Datum(ln), cohort);
 		cohort->type = OP_DOUBLEDEP|OP_INVISIBLE;
 		Lst_AtEnd(&gn->cohorts, cohort);
 
@@ -455,8 +456,7 @@ ParseDoSrc(
 
 			for (ln=Lst_First(&gn->cohorts); ln != NULL;
 			    ln = Lst_Adv(ln)){
-			    	apply_op(targets, tOp,
-				    (GNode *)Lst_Datum(ln));
+			    	apply_op(targets, tOp, Lst_Datum(ln));
 			}
 		}
 		break;
@@ -544,7 +544,7 @@ add_target_nodes(const char *line, const char *end)
 		Lst_Init(&curTargs);
 		Dir_Expandi(line, end, &emptyPath, &curTargs);
 		Lst_Destroy(&emptyPath, Dir_Destroy);
-		while ((targName = (char *)Lst_DeQueue(&curTargs)) != NULL) {
+		while ((targName = Lst_DeQueue(&curTargs)) != NULL) {
 			add_target_node(targName, targName + strlen(targName));
 		}
 		Lst_Destroy(&curTargs, NOFREE);
@@ -919,7 +919,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 
 			    for (ln = Lst_First(&paths); ln != NULL;
 			    	ln = Lst_Adv(ln))
-				    Dir_AddDiri((Lst)Lst_Datum(ln), line, cp);
+				    Dir_AddDiri(Lst_Datum(ln), line, cp);
 			    break;
 			    }
 		    default:
@@ -967,8 +967,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 					return;
 				}
 
-				while ((gn = (GNode *)Lst_DeQueue(&sources)) !=
-				    NULL)
+				while ((gn = Lst_DeQueue(&sources)) != NULL)
 					ParseDoSrc(&gtargets, &gsources, tOp,
 					    gn->name, NULL);
 				cp = line;
@@ -1405,7 +1404,7 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 }
 
 /* postprocess group of targets prior to linking stuff with them */
-bool 
+static bool 
 register_target(GNode *gn, struct ohash *t)
 {
 	unsigned int slot;

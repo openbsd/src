@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.34 2015/12/05 18:31:17 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.35 2016/10/21 16:12:38 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -223,7 +223,7 @@ Parse_NextFile(void)
 {
 	if (current != NULL)
 		free_input_stream(current);
-	current = (struct input_stream *)Lst_Pop(&input_stack);
+	current = Lst_Pop(&input_stack);
 	return current != NULL;
 }
 

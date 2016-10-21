@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.76 2015/01/23 22:35:58 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.77 2016/10/21 16:12:38 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ Targ_FindList(Lst nodes, Lst names)
 	char *name;
 
 	for (ln = Lst_First(names); ln != NULL; ln = Lst_Adv(ln)) {
-		name = (char *)Lst_Datum(ln);
+		name = Lst_Datum(ln);
 		gn = Targ_FindNode(name, TARG_CREATE);
 		/* Note: Lst_AtEnd must come before the Lst_Concat so the nodes
 		 * are added to the list in the order in which they were

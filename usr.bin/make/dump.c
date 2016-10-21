@@ -1,4 +1,4 @@
-/* $OpenBSD: dump.c,v 1.8 2015/01/23 22:35:57 espie Exp $ */
+/* $OpenBSD: dump.c,v 1.9 2016/10/21 16:12:38 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -156,7 +156,7 @@ TargPrintNode(GNode *gn, bool full)
 		LstNode ln;
 
 		for (ln = Lst_First(&gn->cohorts); ln != NULL; ln = Lst_Adv(ln))
-			TargPrintNode((GNode *)Lst_Datum(ln), full);
+			TargPrintNode(Lst_Datum(ln), full);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.90 2015/01/23 22:35:58 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.91 2016/10/21 16:12:38 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ SuffInsert(Lst l, Suff *s)
 	Suff *s2 = NULL;	/* the suffix descriptor in this element */
 
 	for (ln = Lst_First(l); ln != NULL; ln = Lst_Adv(ln)) {
-		s2 = (Suff *)Lst_Datum(ln);
+		s2 = Lst_Datum(ln);
 		if (s2->order >= s->order)
 			break;
 	}
@@ -754,7 +754,7 @@ SuffRemoveSrc(Lst l)
 
 
 	for (ln = Lst_First(l); ln != NULL; ln = Lst_Adv(ln)) {
-		s = (Src *)Lst_Datum(ln);
+		s = Lst_Datum(ln);
 		if (s->children == 0) {
 			free(s->file);
 			if (!s->parent)
@@ -808,7 +808,7 @@ SuffFindThem(
 
 	rs = NULL;
 
-	while ((s = (Src *)Lst_DeQueue(srcs)) != NULL) {
+	while ((s = Lst_DeQueue(srcs)) != NULL) {
 		if (DEBUG(SUFF))
 			printf("\ttrying %s...", s->file);
 
@@ -869,7 +869,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	prefixLen = strlen(targ->prefix);
 
 	for (ln = Lst_First(&t->children); ln != NULL; ln = Lst_Adv(ln)) {
-		s = (GNode *)Lst_Datum(ln);
+		s = Lst_Datum(ln);
 
 		cp = strrchr(s->name, '/');
 		if (cp == NULL)
@@ -1001,7 +1001,7 @@ SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 	    }
 	}
 	/* Add all elements of the members list to the parent node.  */
-	while ((gn = (GNode *)Lst_DeQueue(&members)) != NULL) {
+	while ((gn = Lst_DeQueue(&members)) != NULL) {
 		if (DEBUG(SUFF))
 			printf("%s...", gn->name);
 		if (Lst_Member(&pgn->children, gn) == NULL) {
@@ -1049,7 +1049,7 @@ SuffExpandWildChildren(LstNode after, GNode *cgn, GNode *pgn)
 	Dir_Expand(cgn->name, path, &exp);
 
 	/* Fetch next expansion off the list and find its GNode.  */
-	while ((cp = (char *)Lst_DeQueue(&exp)) != NULL) {
+	while ((cp = Lst_DeQueue(&exp)) != NULL) {
 		GNode *gn;		/* New source 8) */
 		if (DEBUG(SUFF))
 			printf("%s...", cp);
@@ -1084,7 +1084,7 @@ static void
 SuffExpandChildren(LstNode ln, /* LstNode of child, so we can replace it */
     GNode *pgn)
 {
-	GNode	*cgn = (GNode *)Lst_Datum(ln);
+	GNode	*cgn = Lst_Datum(ln);
 
 	/* First do variable expansion -- this takes precedence over wildcard
 	 * expansion. If the result contains wildcards, they'll be gotten to
@@ -1155,7 +1155,7 @@ SuffApplyTransform(
 		 * only one implied src, as that will be sufficient to get
 		 * the .IMPSRC variable set for tGn.	*/
 		for (ln=Lst_First(&sGn->cohorts); ln != NULL; ln=Lst_Adv(ln)) {
-			gn = (GNode *)Lst_Datum(ln);
+			gn = Lst_Datum(ln);
 
 			if (Lst_AddNew(&tGn->children, gn)) {
 				/* Not already linked, so form the proper links
@@ -1204,7 +1204,7 @@ find_suffix_as_suffix(Lst l, const char *b, const char *e)
 	Suff *s;
 
 	for (ln = Lst_First(l); ln != NULL; ln = Lst_Adv(ln)) {
-		s = (Suff *)Lst_Datum(ln);
+		s = Lst_Datum(ln);
 		if (suffix_is_suffix(s, b, e))
 			return s;
 	}
@@ -1449,7 +1449,7 @@ SuffFindNormalDeps(
 		/* No known transformations -- use the first suffix found for
 		 * setting the local variables.  */
 		if (!Lst_IsEmpty(&targs))
-			targ = (Src *)Lst_Datum(Lst_First(&targs));
+			targ = Lst_Datum(Lst_First(&targs));
 		else
 			targ = NULL;
 	} else {
