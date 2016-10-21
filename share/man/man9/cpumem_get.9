@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpumem_get.9,v 1.1 2016/10/21 07:57:29 dlg Exp $
+.\"	$OpenBSD: cpumem_get.9,v 1.2 2016/10/21 08:29:34 jmc Exp $
 .\"
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -39,7 +39,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: October 21 2016 $
-.Dt cpumem_get 9
+.Dt CPUMEM_GET 9
 .Os
 .Sh NAME
 .Nm cpumem_get ,
@@ -50,7 +50,7 @@
 .Nm cpumem_leave ,
 .Nm cpumem_first ,
 .Nm cpumem_next
-.Nd Per CPU memory allocations
+.Nd per CPU memory allocations
 .Sh SYNOPSIS
 .In sys/percpu.h
 .Ft struct cpumem *
@@ -75,7 +75,7 @@ The per CPU memory API provides wrappers around the allocation of
 and access to per CPU memory.
 .Pp
 An alternate implemention of the API is provided on uni-processor
-(ie, when the kernel is not built with
+(i.e. when the kernel is not built with
 .Dv MULTIPROCESSOR
 defined)
 systems that provides no overhead compared to direct access to a
@@ -83,7 +83,6 @@ data structure.
 This allows the API to be used without affecting the performance
 uni-processor systems.
 .Ss Per CPU Memory Allocation and Deallocation
-.Pp
 .Fn cpumem_get
 allocates memory for each CPU from the
 .Fa pp
@@ -111,10 +110,10 @@ memory for each CPU using
 The memory will be zeroed on allocation by passing
 .Fn M_ZERO
 to
-.Xr malloc 9.
+.Xr malloc 9 .
 .Pp
 .Fn cpumem_free
-returns each CPUs memory allocation referenced by
+returns each CPU's memory allocation referenced by
 .Fa cm
 to the system using
 .Xr free 9 .
@@ -127,16 +126,15 @@ and
 respectively.
 .Ss Per CPU Memory Access
 .Fn cpumem_enter
-provides access to the current CPUs memory allocation referenced by
+provides access to the current CPU's memory allocation referenced by
 .Fa cm .
 .Pp
 .Fn cpumem_leave
-indicates the end of access to the current CPUs memory allocation referenced by
+indicates the end of access to the current CPU's memory allocation referenced by
 .Fa cm .
-.Pp
 .Ss Per CPU Memory Iterators
 .Fn cpumem_first
-provides access to the first CPUs memory allocation referenced by
+provides access to the first CPU's memory allocation referenced by
 .Fa cm .
 The iterator
 .Fa ci
@@ -144,20 +142,20 @@ may be used in subsequent calls to
 .Fn cpumem_next .
 .Pp
 .Fn cpumem_next
-provides access to the next CPUs memory allocation referenced by
+provides access to the next CPU's memory allocation referenced by
 .Fa cm
 and
 .Fa ci .
 .Pp
 The
 .Fn CPUMEM_FOREACH
-macro iterates over each CPUs memory allocation referenced by
+macro iterates over each CPU's memory allocation referenced by
 .Fa cm
 using the iterator
 .Fa ci ,
 setting
 Fa VARNAME
-to each CPUs allocation in turn.
+to each CPU's allocation in turn.
 .Sh CONTEXT
 .Fn cpumem_get ,
 .Fn cpumem_put ,
@@ -175,7 +173,7 @@ and
 may be called during autoconf, from process context, or from interrupt
 context.
 The per CPU memory API does not provide any locking or serialisation
-of access to each CPUs memory allocation.
+of access to each CPU's memory allocation.
 It is up to the caller to provide appropriate locking or serialisation
 around calls to these functions to prevent concurrent access to the
 relevant data structures.
@@ -183,25 +181,25 @@ relevant data structures.
 .Fn cpumem_get
 and
 .Fn cpumem_malloc
-will return an opaque cpumem pointer that references each CPUs
+will return an opaque cpumem pointer that references each CPU's
 memory allocation.
 .Pp
 .Fn cpumem_enter
-returns a reference to the current CPUs memory allocation.
+returns a reference to the current CPU's memory allocation.
 .Pp
 .Fn cpumem_first
-returns a reference to the first CPUs memory allocation.
+returns a reference to the first CPU's memory allocation.
 .Pp
 .Fn cpumem_next
-returns a reference to the next CPUs memory allocation according to the
+returns a reference to the next CPU's memory allocation according to the
 iterator
 .Fa ci ,
 or
 .Dv NULL
 if the iterator has run out of CPUs.
 .Sh SEE ALSO
-.Xr pool_get 9 ,
-.Xr malloc 9
+.Xr malloc 9 ,
+.Xr pool_get 9
 .\" .Xr curcpu()
 .\" .Xr counters_get()
 .Sh HISTORY
