@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.1 2016/10/21 06:27:50 dlg Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.2 2016/10/21 06:41:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -243,7 +243,7 @@ percpu_init(void)
 struct cpumem *
 cpumem_get(struct pool *pp)
 {
-	return (pool_get(pp, PR_WAITOK));
+	return (pool_get(pp, PR_WAITOK | PR_ZERO));
 }
 
 void
@@ -255,7 +255,7 @@ cpumem_put(struct pool *pp, struct cpumem *cm)
 struct cpumem *
 cpumem_malloc(size_t sz, int type)
 {
-	return (malloc(sz, type, M_WAITOK));
+	return (malloc(sz, type, M_WAITOK | M_ZERO));
 }
 
 struct cpumem *
