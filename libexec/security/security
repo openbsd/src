@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.36 2015/07/21 19:07:13 schwarze Exp $
+# $OpenBSD: security,v 1.37 2016/10/22 18:35:12 schwarze Exp $
 #
 # Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -455,6 +455,7 @@ sub check_mailboxes {
 	nag !(opendir my $dh, $dir), "opendir: $dir: $!" and return;
 	foreach my $name (readdir $dh) {
 		next if $name =~ /^\.\.?$/;
+		next if $name =~ /.\.lock$/;
 		my ($mode, $fuid, $fgid) = (stat "$dir/$name")[2,4,5];
 		unless (defined $mode) {
 			nag !$!{ENOENT}, "stat: $dir/$name: $!";
