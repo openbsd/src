@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.316 2016/10/08 21:31:56 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.317 2016/10/22 04:39:18 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1559,6 +1559,7 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 {
 	struct session *s = pr->ps_session;
 	struct tty *tp;
+	struct vmspace *vm = pr->ps_vmspace;
 	struct timespec ut, st;
 	int isthread;
 
@@ -1567,7 +1568,7 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 		p = pr->ps_mainproc;		/* XXX */
 
 	FILL_KPROC(ki, strlcpy, p, pr, pr->ps_ucred, pr->ps_pgrp,
-	    p, pr, s, pr->ps_vmspace, pr->ps_limit, pr->ps_sigacts, isthread,
+	    p, pr, s, vm, pr->ps_limit, pr->ps_sigacts, isthread,
 	    show_pointers);
 
 	/* stuff that's too painful to generalize into the macros */
@@ -1589,8 +1590,8 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 
 	/* fixups that can only be done in the kernel */
 	if ((pr->ps_flags & PS_ZOMBIE) == 0) {
-		if ((pr->ps_flags & PS_EMBRYO) == 0)
-			ki->p_vm_rssize = vm_resident_count(pr->ps_vmspace);
+		if ((pr->ps_flags & PS_EMBRYO) == 0 && vm != NULL)
+			ki->p_vm_rssize = vm_resident_count(vm);
 		calctsru(isthread ? &p->p_tu : &pr->ps_tu, &ut, &st, NULL);
 		ki->p_uutime_sec = ut.tv_sec;
 		ki->p_uutime_usec = ut.tv_nsec/1000;
