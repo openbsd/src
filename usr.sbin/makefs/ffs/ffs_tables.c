@@ -1,5 +1,5 @@
-/*	$OpenBSD: ffs_tables.c,v 1.1 2016/10/18 17:23:21 natano Exp $	*/
-/*	$NetBSD: ffs_tables.c,v 1.9 2005/12/11 12:25:25 christos Exp $	*/
+/*	$OpenBSD: ffs_tables.c,v 1.2 2016/10/22 16:51:52 natano Exp $	*/
+/*	$NetBSD: ffs_tables.c,v 1.2 1994/06/29 06:46:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,8 +33,7 @@
  */
 
 #include <sys/param.h>
-
-#include "ffs/fs.h"
+#include <ufs/ffs/fs.h>
 
 /*
  * Bit patterns for identifying fragments in the block map
@@ -132,6 +131,7 @@ const u_char fragtbl8[256] = {
 /*
  * The actual fragtbl array.
  */
-const u_char * const fragtbl[MAXFRAG + 1] = {
-	0, fragtbl124, fragtbl124, 0, fragtbl124, 0, 0, 0, fragtbl8,
+const u_char *fragtbl[MAXFRAG + 1] = {
+	NULL, fragtbl124, fragtbl124, NULL, fragtbl124, NULL, NULL, NULL,
+	fragtbl8,
 };

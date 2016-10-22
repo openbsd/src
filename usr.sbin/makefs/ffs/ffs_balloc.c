@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.6 2016/10/18 17:23:21 natano Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.7 2016/10/22 16:51:52 natano Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.21 2015/03/29 05:52:59 agc Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
@@ -38,11 +38,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ffs/dinode.h"
-#include "ffs/ufs_bswap.h"
-#include "ffs/fs.h"
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 
 #include "ffs/buf.h"
+#include "ffs/ufs_bswap.h"
 #include "ffs/ufs_inode.h"
 #include "ffs/ffs_extern.h"
 
@@ -74,15 +74,15 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	int32_t nb;
 	struct mkfsbuf *bp, *nbp;
 	struct fs *fs = ip->i_fs;
-	struct indir indirs[UFS_NIADDR + 2];
+	struct indir indirs[NIADDR + 2];
 	daddr_t newb, pref;
 	int32_t *bap;
 	int osize, nsize, num, i, error;
-	int32_t *allocblk, allociblk[UFS_NIADDR + 1];
+	int32_t *allocblk, allociblk[NIADDR + 1];
 	int32_t *allocib;
 
-	lbn = ffs_lblkno(fs, offset);
-	size = ffs_blkoff(fs, offset) + bufsize;
+	lbn = lblkno(fs, offset);
+	size = blkoff(fs, offset) + bufsize;
 	if (bpp != NULL) {
 		*bpp = NULL;
 	}
@@ -97,10 +97,10 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	 * this fragment has to be extended to be a full block.
 	 */
 
-	lastlbn = ffs_lblkno(fs, ip->i_ffs1_size);
-	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
+	lastlbn = lblkno(fs, ip->i_ffs1_size);
+	if (lastlbn < NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
-		osize = ffs_blksize(fs, ip, nb);
+		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			warnx("need to ffs_realloccg; not supported!");
 			abort();
@@ -108,12 +108,12 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	}
 
 	/*
-	 * The first UFS_NDADDR blocks are direct blocks
+	 * The first NDADDR blocks are direct blocks
 	 */
 
-	if (lbn < UFS_NDADDR) {
+	if (lbn < NDADDR) {
 		nb = ufs_rw32(ip->i_ffs1_db[lbn], 0);
-		if (nb != 0 && ip->i_ffs1_size >= ffs_lblktosize(fs, lbn + 1)) {
+		if (nb != 0 && ip->i_ffs1_size >= lblktosize(fs, lbn + 1)) {
 
 			/*
 			 * The block is an already-allocated direct block
@@ -138,8 +138,8 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = ffs_fragroundup(fs, ffs_blkoff(fs, ip->i_ffs1_size));
-			nsize = ffs_fragroundup(fs, size);
+			osize = fragroundup(fs, blkoff(fs, ip->i_ffs1_size));
+			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 
 				/*
@@ -168,8 +168,8 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			 * allocate a new block or fragment.
 			 */
 
-			if (ip->i_ffs1_size < ffs_lblktosize(fs, lbn + 1))
-				nsize = ffs_fragroundup(fs, size);
+			if (ip->i_ffs1_size < lblktosize(fs, lbn + 1))
+				nsize = fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			error = ffs_alloc(ip, lbn,
@@ -180,7 +180,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 				return (error);
 			if (bpp != NULL) {
 				bp = getblk(ip->i_devvp, lbn, nsize, 0, 0);
-				bp->b_blkno = FFS_FSBTODB(fs, newb);
+				bp->b_blkno = fsbtodb(fs, newb);
 				clrbuf(bp);
 				*bpp = bp;
 			}
@@ -218,7 +218,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 		nb = newb;
 		*allocblk++ = nb;
 		bp = getblk(ip->i_devvp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
-		bp->b_blkno = FFS_FSBTODB(fs, nb);
+		bp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(bp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -260,7 +260,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 		nb = newb;
 		*allocblk++ = nb;
 		nbp = getblk(ip->i_devvp, indirs[i].in_lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = FFS_FSBTODB(fs, nb);
+		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -291,7 +291,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 		*allocblk++ = nb;
 		if (bpp != NULL) {
 			nbp = getblk(ip->i_devvp, lbn, fs->fs_bsize, 0, 0);
-			nbp->b_blkno = FFS_FSBTODB(fs, nb);
+			nbp->b_blkno = fsbtodb(fs, nb);
 			clrbuf(nbp);
 			*bpp = nbp;
 		}
@@ -323,15 +323,15 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	int size;
 	struct mkfsbuf *bp, *nbp;
 	struct fs *fs = ip->i_fs;
-	struct indir indirs[UFS_NIADDR + 2];
+	struct indir indirs[NIADDR + 2];
 	daddr_t newb, pref, nb;
 	int64_t *bap;
 	int osize, nsize, num, i, error;
-	int64_t *allocblk, allociblk[UFS_NIADDR + 1];
+	int64_t *allocblk, allociblk[NIADDR + 1];
 	int64_t *allocib;
 
-	lbn = ffs_lblkno(fs, offset);
-	size = ffs_blkoff(fs, offset) + bufsize;
+	lbn = lblkno(fs, offset);
+	size = blkoff(fs, offset) + bufsize;
 	if (bpp != NULL) {
 		*bpp = NULL;
 	}
@@ -346,10 +346,10 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	 * this fragment has to be extended to be a full block.
 	 */
 
-	lastlbn = ffs_lblkno(fs, ip->i_ffs2_size);
-	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
+	lastlbn = lblkno(fs, ip->i_ffs2_size);
+	if (lastlbn < NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
-		osize = ffs_blksize(fs, ip, nb);
+		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			warnx("need to ffs_realloccg; not supported!");
 			abort();
@@ -357,12 +357,12 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	}
 
 	/*
-	 * The first UFS_NDADDR blocks are direct blocks
+	 * The first NDADDR blocks are direct blocks
 	 */
 
-	if (lbn < UFS_NDADDR) {
+	if (lbn < NDADDR) {
 		nb = ufs_rw64(ip->i_ffs2_db[lbn], 0);
-		if (nb != 0 && ip->i_ffs2_size >= ffs_lblktosize(fs, lbn + 1)) {
+		if (nb != 0 && ip->i_ffs2_size >= lblktosize(fs, lbn + 1)) {
 
 			/*
 			 * The block is an already-allocated direct block
@@ -387,8 +387,8 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = ffs_fragroundup(fs, ffs_blkoff(fs, ip->i_ffs2_size));
-			nsize = ffs_fragroundup(fs, size);
+			osize = fragroundup(fs, blkoff(fs, ip->i_ffs2_size));
+			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 
 				/*
@@ -417,8 +417,8 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			 * allocate a new block or fragment.
 			 */
 
-			if (ip->i_ffs2_size < ffs_lblktosize(fs, lbn + 1))
-				nsize = ffs_fragroundup(fs, size);
+			if (ip->i_ffs2_size < lblktosize(fs, lbn + 1))
+				nsize = fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			error = ffs_alloc(ip, lbn,
@@ -429,7 +429,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 				return (error);
 			if (bpp != NULL) {
 				bp = getblk(ip->i_devvp, lbn, nsize, 0, 0);
-				bp->b_blkno = FFS_FSBTODB(fs, newb);
+				bp->b_blkno = fsbtodb(fs, newb);
 				clrbuf(bp);
 				*bpp = bp;
 			}
@@ -467,7 +467,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 		nb = newb;
 		*allocblk++ = nb;
 		bp = getblk(ip->i_devvp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
-		bp->b_blkno = FFS_FSBTODB(fs, nb);
+		bp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(bp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -509,7 +509,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 		nb = newb;
 		*allocblk++ = nb;
 		nbp = getblk(ip->i_devvp, indirs[i].in_lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = FFS_FSBTODB(fs, nb);
+		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -540,7 +540,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 		*allocblk++ = nb;
 		if (bpp != NULL) {
 			nbp = getblk(ip->i_devvp, lbn, fs->fs_bsize, 0, 0);
-			nbp->b_blkno = FFS_FSBTODB(fs, nb);
+			nbp->b_blkno = fsbtodb(fs, nb);
 			clrbuf(nbp);
 			*bpp = nbp;
 		}

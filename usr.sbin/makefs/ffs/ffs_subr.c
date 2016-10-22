@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.1 2016/10/18 17:23:21 natano Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.2 2016/10/22 16:51:52 natano Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.49 2016/05/07 11:59:08 maxv Exp $	*/
 
 /*
@@ -34,14 +34,10 @@
 
 #include <sys/param.h>
 
-/* in ffs_tables.c */
-extern const int inside[], around[];
-extern const u_char * const fragtbl[];
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 
-#include "ffs/fs.h"
 #include "ffs/ufs_bswap.h"
-#include "ffs/dinode.h"
-
 #include "ffs/ffs_extern.h"
 
 void    panic(const char *, ...)
@@ -147,8 +143,8 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 
 	if (fs->fs_contigsumsize <= 0)
 		return;
-	freemapp = cg_clustersfree(cgp, 0);
-	sump = cg_clustersum(cgp, 0);
+	freemapp = cg_clustersfree(cgp);
+	sump = cg_clustersum(cgp);
 	/*
 	 * Allocate or clear the actual block.
 	 */

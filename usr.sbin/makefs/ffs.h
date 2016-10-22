@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.h,v 1.3 2016/10/18 17:23:21 natano Exp $	*/
+/*	$OpenBSD: ffs.h,v 1.4 2016/10/22 16:51:52 natano Exp $	*/
 /*	$NetBSD: ffs.h,v 1.2 2011/10/09 21:33:43 christos Exp $	*/
 
 /*
@@ -39,9 +39,6 @@
 #ifndef _FFS_H
 #define _FFS_H
 
-#include "ffs/dinode.h"
-#include "ffs/fs.h"
-
 typedef struct {
 	char	label[MAXVOLLEN];	/* volume name/label */
 	int	bsize;		/* block size */
@@ -63,7 +60,6 @@ typedef struct {
 	int	version;	/* filesystem version (1 = FFS, 2 = UFS2) */
 	int	maxbsize;	/* maximum extent size */
 	int	maxblkspercg;	/* max # of blocks per cylinder group */
-		/* XXX: support `old' file systems ? */
 } ffs_opt_t;
 
 #endif /* _FFS_H */
