@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.35 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.36 2016/10/22 20:55:04 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -122,6 +122,10 @@ static struct tcp_seq_hash tcp_seq_hash[TSEQ_HASHSIZE];
 #define BGP_PORT        179
 #endif
 #define NETBIOS_SSN_PORT 139
+
+/* OpenFlow TCP ports. */
+#define OLD_OFP_PORT	6633
+#define OFP_PORT	6653
 
 static int tcp_cksum(const struct ip *ip, const struct tcphdr *tp, int len)
 {
@@ -665,6 +669,9 @@ tcp_print(const u_char *bp, u_int length, const u_char *bp2)
 	} else {
 		if (sport == BGP_PORT || dport == BGP_PORT)
 			bgp_print(bp, length);
+		else if (sport == OLD_OFP_PORT || dport == OLD_OFP_PORT ||
+		    sport == OFP_PORT || dport == OFP_PORT)
+			ofp_print(bp);
 #if 0
 		else if (sport == NETBIOS_SSN_PORT || dport == NETBIOS_SSN_PORT)
 			nbt_tcp_print(bp, length);
