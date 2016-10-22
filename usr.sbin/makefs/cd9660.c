@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.8 2016/10/22 18:17:14 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.9 2016/10/22 19:17:47 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -624,7 +624,7 @@ typedef int (*cd9660node_func)(cd9660node *);
 static void
 cd9660_finalize_PVD(iso9660_disk *diskStructure)
 {
-	time_t tstamp = stampst.st_ino ? stampst.st_mtime : time(NULL);
+	time_t tstamp = Tflag ? stampts : time(NULL);
 
 	/* root should be a fixed size of 34 bytes since it has no name */
 	memcpy(diskStructure->primaryDescriptor.root_directory_record,
@@ -784,7 +784,7 @@ cd9660_fill_extended_attribute_record(cd9660node *node)
 static int
 cd9660_translate_node_common(iso9660_disk *diskStructure, cd9660node *newnode)
 {
-	time_t tstamp = stampst.st_ino ? stampst.st_mtime : time(NULL);
+	time_t tstamp = Tflag ? stampts : time(NULL);
 	u_char flag;
 	char temp[ISO_FILENAME_MAXLENGTH_WITH_PADDING];
 
@@ -846,7 +846,7 @@ cd9660_translate_node(iso9660_disk *diskStructure, fsnode *node,
 
 	/* Finally, overwrite some of the values that are set by default */
 	cd9660_time_915(newnode->isoDirRecord->date,
-	    stampst.st_ino ? stampst.st_mtime : node->inode->st.st_mtime);
+	    Tflag ? stampts : node->inode->st.st_mtime);
 
 	return 1;
 }
@@ -1245,7 +1245,7 @@ cd9660_rrip_move_directory(iso9660_disk *diskStructure, cd9660node *dir)
 		if (diskStructure->rr_moved_dir == NULL)
 			return 0;
 		cd9660_time_915(diskStructure->rr_moved_dir->isoDirRecord->date,
-		    stampst.st_ino ? stampst.st_mtime : start_time.tv_sec);
+		    Tflag ? stampts : start_time.tv_sec);
 	}
 
 	/* Create a file with the same ORIGINAL name */

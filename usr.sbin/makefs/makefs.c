@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.12 2016/10/22 18:17:14 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.13 2016/10/22 19:17:47 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -71,11 +71,12 @@ static fstype_t fstypes[] = {
 	{ .type = NULL	},
 };
 
+int Tflag;
+time_t stampts;
 struct timespec	start_time;
-struct stat stampst;
 
 static	fstype_t *get_fstype(const char *);
-static int get_tstamp(const char *, struct stat *);
+static time_t get_tstamp(const char *);
 static long long strsuftoll(const char *, const char *, long long, long long);
 static	void	usage(fstype_t *, fsinfo_t *) __dead;
 
@@ -183,9 +184,8 @@ main(int argc, char *argv[])
 			break;
 
 		case 'T':
-			if (get_tstamp(optarg, &stampst) == -1)
-				errx(1, "Cannot get timestamp from `%s'",
-				    optarg);
+			Tflag = 1;
+			stampts = get_tstamp(optarg);
 			break;
 
 		case '?':
@@ -308,20 +308,19 @@ copy_opts(const option_t *o)
 	return memcpy(ecalloc(i, sizeof(*o)), o, i * sizeof(*o));
 }
 
-static int
-get_tstamp(const char *b, struct stat *st)
+static time_t
+get_tstamp(const char *b)
 {
 	time_t when;
 	char *eb;
 
 	errno = 0;
 	when = strtoll(b, &eb, 0);
-	if (b == eb || *eb || errno)
-		return -1;
-
-	st->st_ino = 1;
-	st->st_mtime = st->st_ctime = st->st_atime = when;
-	return 0;
+	if (b == eb || *eb || errno) {
+		errx(1, "Cannot get timestamp from `%s'",
+		    optarg);
+	}
+	return when;
 }
 
 /* XXX */

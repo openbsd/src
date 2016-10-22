@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.h,v 1.7 2016/10/22 18:17:14 natano Exp $	*/
+/*	$OpenBSD: makefs.h,v 1.8 2016/10/22 19:17:47 natano Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -178,9 +178,9 @@ DECLARE_FUN(ffs);
 DECLARE_FUN(cd9660);
 DECLARE_FUN(msdos);
 
-extern	u_int		debug;
+extern	int Tflag;
+extern	time_t stampts;
 extern	struct timespec	start_time;
-extern	struct stat stampst;
 
 
 #ifndef	DEFAULT_FSTYPE

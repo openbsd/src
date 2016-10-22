@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.14 2016/10/22 18:17:14 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.15 2016/10/22 19:17:47 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -418,9 +418,9 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 		free(buf);
 
 		/* make the file system */
-	if (stampst.st_ino == 1) {
-		tstamp = stampst.st_ctime;
-		srandom_deterministic(tstamp);
+	if (Tflag) {
+		tstamp = stampts;
+		srandom_deterministic(stampts);
 	} else 
 		tstamp = start_time.tv_sec;
 
@@ -501,7 +501,6 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 {
 	size_t slen;
 	void *membuf;
-	struct stat *st = stampst.st_ino == 1 ? &stampst : &cur->inode->st;
 
 	memset(dinp, 0, sizeof(*dinp));
 	dinp->di_mode = cur->inode->st.st_mode;
@@ -512,12 +511,12 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	dinp->di_uid = cur->inode->st.st_uid;
 	dinp->di_gid = cur->inode->st.st_gid;
 
-	dinp->di_atime = st->st_atime;
-	dinp->di_mtime = st->st_mtime;
-	dinp->di_ctime = st->st_ctime;
-	dinp->di_atimensec = st->st_atimensec;
-	dinp->di_mtimensec = st->st_mtimensec;
-	dinp->di_ctimensec = st->st_ctimensec;
+	dinp->di_atime = cur->inode->st.st_atime;
+	dinp->di_mtime = cur->inode->st.st_mtime;
+	dinp->di_ctime = cur->inode->st.st_ctime;
+	dinp->di_atimensec = cur->inode->st.st_atimensec;
+	dinp->di_mtimensec = cur->inode->st.st_mtimensec;
+	dinp->di_ctimensec = cur->inode->st.st_ctimensec;
 		/* not set: di_db, di_ib, di_blocks, di_spare */
 
 	membuf = NULL;
@@ -545,7 +544,6 @@ ffs_build_dinode2(struct ufs2_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 {
 	size_t slen;
 	void *membuf;
-	struct stat *st = stampst.st_ino == 1 ? &stampst : &cur->inode->st;
 
 	memset(dinp, 0, sizeof(*dinp));
 	dinp->di_mode = cur->inode->st.st_mode;
@@ -556,12 +554,12 @@ ffs_build_dinode2(struct ufs2_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	dinp->di_uid = cur->inode->st.st_uid;
 	dinp->di_gid = cur->inode->st.st_gid;
 
-	dinp->di_atime = st->st_atime;
-	dinp->di_mtime = st->st_mtime;
-	dinp->di_ctime = st->st_ctime;
-	dinp->di_atimensec = st->st_atimensec;
-	dinp->di_mtimensec = st->st_mtimensec;
-	dinp->di_ctimensec = st->st_ctimensec;
+	dinp->di_atime = cur->inode->st.st_atime;
+	dinp->di_mtime = cur->inode->st.st_mtime;
+	dinp->di_ctime = cur->inode->st.st_ctime;
+	dinp->di_atimensec = cur->inode->st.st_atimensec;
+	dinp->di_mtimensec = cur->inode->st.st_mtimensec;
+	dinp->di_ctimensec = cur->inode->st.st_ctimensec;
 		/* not set: di_db, di_ib, di_blocks, di_spare */
 
 	membuf = NULL;
