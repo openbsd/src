@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.10 2016/10/18 17:23:21 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.11 2016/10/22 10:13:08 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -494,12 +494,13 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_CREATE_IMAGE)
 		printf("calling mkfs(\"%s\", ...)\n", image);
 
-	if (stampst.st_ino == 1)
+	if (stampst.st_ino == 1) {
 		tstamp = stampst.st_ctime;
-	else
+		srandom_deterministic(tstamp);
+	} else {
 		tstamp = start_time.tv_sec;
-
-	srandom(tstamp);
+		srandom(tstamp);
+	}
 
 	fs = ffs_mkfs(image, fsopts, tstamp);
 	fsopts->superblock = (void *)fs;
