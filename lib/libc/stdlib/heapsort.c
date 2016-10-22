@@ -1,3 +1,4 @@
+/*	$OpenBSD: heapsort.c,v 1.10 2016/10/22 19:19:34 tb Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

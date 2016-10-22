@@ -1,3 +1,4 @@
+/*	$OpenBSD: rand.c,v 1.17 2016/10/22 19:19:34 tb Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
