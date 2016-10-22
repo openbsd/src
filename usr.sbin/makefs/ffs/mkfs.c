@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.7 2016/10/21 09:43:50 natano Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.8 2016/10/22 10:03:52 natano Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -529,10 +529,16 @@ void
 ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
 {
 	int cylno, size, blks, i;
+	struct fs *fsdup;
 	void *space;
 	char *wrbuf;
 
 	memcpy(writebuf, fs, SBLOCKSIZE);
+
+	fsdup = (struct fs *)writebuf;
+	fsdup->fs_csp = NULL;
+	fsdup->fs_maxcluster = NULL;
+
 	ffs_wtfs(fs->fs_sblockloc / sectorsize, SBLOCKSIZE, writebuf, fsopts);
 
 	/* Write out the duplicate super blocks */
