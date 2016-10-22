@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.10 2016/10/22 18:17:14 natano Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.11 2016/10/22 19:43:50 natano Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.29 2016/06/24 19:24:11 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
@@ -50,7 +50,6 @@
 #include <ufs/ffs/fs.h>
 
 #include "ffs/buf.h"
-#include "ffs/ufs_bswap.h"
 #include "ffs/ufs_inode.h"
 #include "ffs/ffs_extern.h"
 
@@ -161,8 +160,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx, int32_t *bap)
 			startcg =
 			    ino_to_cg(fs, ip->i_number) + lbn / fs->fs_maxbpg;
 		else
-			startcg = dtog(fs,
-				ufs_rw32(bap[indx - 1], 0) + 1);
+			startcg = dtog(fs, bap[indx - 1] + 1);
 		startcg %= fs->fs_ncg;
 		avgbfree = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
 		for (cg = startcg; cg < fs->fs_ncg; cg++)
@@ -176,7 +174,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx, int32_t *bap)
 	/*
 	 * We just always try to lay things out contiguously.
 	 */
-	return ufs_rw32(bap[indx - 1], 0) + fs->fs_frag;
+	return bap[indx - 1] + fs->fs_frag;
 }
 
 daddr_t
@@ -200,8 +198,7 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
 			startcg =
 			    ino_to_cg(fs, ip->i_number) + lbn / fs->fs_maxbpg;
 		else
-			startcg = dtog(fs,
-				ufs_rw64(bap[indx - 1], 0) + 1);
+			startcg = dtog(fs, bap[indx - 1] + 1);
 		startcg %= fs->fs_ncg;
 		avgbfree = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
 		for (cg = startcg; cg < fs->fs_ncg; cg++)
@@ -217,7 +214,7 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
 	/*
 	 * We just always try to lay things out contiguously.
 	 */
-	return ufs_rw64(bap[indx - 1], 0) + fs->fs_frag;
+	return bap[indx - 1] + fs->fs_frag;
 }
 
 /*
@@ -375,8 +372,8 @@ ffs_alloccgblk(struct inode *ip, struct mkfsbuf *bp, daddr_t bpref)
 
 	cgp = (struct cg *)bp->b_data;
 	blksfree = cg_blksfree(cgp);
-	if (bpref == 0 || dtog(fs, bpref) != ufs_rw32(cgp->cg_cgx, 0)) {
-		bpref = ufs_rw32(cgp->cg_rotor, 0);
+	if (bpref == 0 || dtog(fs, bpref) != cgp->cg_cgx) {
+		bpref = cgp->cg_rotor;
 	} else {
 		bpref = blknum(fs, bpref);
 		bno = dtogd(fs, bpref);
@@ -392,16 +389,16 @@ ffs_alloccgblk(struct inode *ip, struct mkfsbuf *bp, daddr_t bpref)
 	bno = ffs_mapsearch(fs, cgp, bpref, (int)fs->fs_frag);
 	if (bno < 0)
 		return (0);
-	cgp->cg_rotor = ufs_rw32(bno, 0);
+	cgp->cg_rotor = bno;
 gotit:
 	blkno = fragstoblks(fs, bno);
 	ffs_clrblock(fs, blksfree, (long)blkno);
 	ffs_clusteracct(fs, cgp, blkno, -1);
 	cgp->cg_cs.cs_nbfree -= 1;
 	fs->fs_cstotal.cs_nbfree--;
-	fs->fs_cs(fs, ufs_rw32(cgp->cg_cgx, 0)).cs_nbfree--;
+	fs->fs_cs(fs, cgp->cg_cgx).cs_nbfree--;
 	fs->fs_fmod = 1;
-	blkno = ufs_rw32(cgp->cg_cgx, 0) * fs->fs_fpg + bno;
+	blkno = cgp->cg_cgx * fs->fs_fpg + bno;
 	return (blkno);
 }
 
@@ -436,7 +433,7 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 	if (bpref)
 		start = dtogd(fs, bpref) / NBBY;
 	else
-		start = ufs_rw32(cgp->cg_frotor, 0) / NBBY;
+		start = cgp->cg_frotor / NBBY;
 	len = howmany(fs->fs_fpg, NBBY) - start;
 	ostart = start;
 	olen = len;
@@ -454,12 +451,12 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 		if (loc == 0) {
 			errx(EXIT_FAILURE, "%s: map corrupted: start %d "
 			    "len %d offset %d %ld", __func__, ostart, olen,
-			    ufs_rw32(cgp->cg_freeoff, 0),
+			    cgp->cg_freeoff,
 			    (long)cg_blksfree(cgp) - (long)cgp);
 		}
 	}
 	bno = (start + len - loc) * NBBY;
-	cgp->cg_frotor = ufs_rw32(bno, 0);
+	cgp->cg_frotor = bno;
 	/*
 	 * found the byte in the map
 	 * sift through the bits to find the selected frag

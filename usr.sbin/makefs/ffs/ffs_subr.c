@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.3 2016/10/22 17:15:28 natano Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.4 2016/10/22 19:43:50 natano Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.49 2016/05/07 11:59:08 maxv Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 
 #include <err.h>
 
-#include "ffs/ufs_bswap.h"
 #include "ffs/ffs_extern.h"
 
 
@@ -156,8 +155,8 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 	 */
 	start = blkno + 1;
 	end = start + fs->fs_contigsumsize;
-	if ((uint32_t)end >= ufs_rw32(cgp->cg_nclusterblks, 0))
-		end = ufs_rw32(cgp->cg_nclusterblks, 0);
+	if ((uint32_t)end >= cgp->cg_nclusterblks)
+		end = cgp->cg_nclusterblks;
 	mapp = &freemapp[start / NBBY];
 	map = *mapp++;
 	bit = 1 << (start % NBBY);
@@ -211,6 +210,6 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 	 */
 	lp = &sump[fs->fs_contigsumsize];
 	for (i = fs->fs_contigsumsize; i > 0; i--)
-		if (ufs_rw32(*lp--, 0) > 0)
+		if (*lp-- > 0)
 			break;
 }

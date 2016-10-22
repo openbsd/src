@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.10 2016/10/22 16:51:52 natano Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.11 2016/10/22 19:43:50 natano Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
-#include "ffs/ufs_bswap.h"
 #include "ffs/ufs_inode.h"
 #include "ffs/ffs_extern.h"
 

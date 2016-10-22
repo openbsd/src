@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.15 2016/10/22 19:17:47 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.16 2016/10/22 19:43:50 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -82,7 +82,6 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 
-#include "ffs/ufs_bswap.h"
 #include "ffs/ufs_inode.h"
 #include "ffs/ffs_extern.h"
 
@@ -525,8 +524,7 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 		dinp->di_size = dbufp->size;
 	} else if (S_ISBLK(cur->type) || S_ISCHR(cur->type)) {
 		dinp->di_size = 0;	/* a device */
-		dinp->di_rdev =
-		    ufs_rw32(cur->inode->st.st_rdev, 0);
+		dinp->di_rdev = cur->inode->st.st_rdev;
 	} else if (S_ISLNK(cur->type)) {	/* symlink */
 		slen = strlen(cur->symlink);
 		if (slen < MAXSYMLINKLEN_UFS1) {	/* short link */
@@ -568,8 +566,7 @@ ffs_build_dinode2(struct ufs2_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 		dinp->di_size = dbufp->size;
 	} else if (S_ISBLK(cur->type) || S_ISCHR(cur->type)) {
 		dinp->di_size = 0;	/* a device */
-		dinp->di_rdev =
-		    ufs_rw64(cur->inode->st.st_rdev, 0);
+		dinp->di_rdev = cur->inode->st.st_rdev;
 	} else if (S_ISLNK(cur->type)) {	/* symlink */
 		slen = strlen(cur->symlink);
 		if (slen < MAXSYMLINKLEN_UFS2) {	/* short link */
@@ -782,7 +779,7 @@ static void
 ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node)
 {
 	struct direct	de, *dp;
-	uint16_t	llen, reclen;
+	uint16_t	llen;
 	u_char		*newbuf;
 
 	assert (dbuf != NULL);
@@ -790,31 +787,30 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node)
 	assert (node != NULL);
 					/* create direct entry */
 	(void)memset(&de, 0, sizeof(de));
-	de.d_ino = ufs_rw32(node->inode->ino, 0);
+	de.d_ino = node->inode->ino;
 	de.d_type = IFTODT(node->type);
 	de.d_namlen = (uint8_t)strlen(name);
 	strlcpy(de.d_name, name, sizeof de.d_name);
-	reclen = DIRSIZ(NEWDIRFMT, &de);
-	de.d_reclen = ufs_rw16(reclen, 0);
+	de.d_reclen = DIRSIZ(NEWDIRFMT, &de);
 
 	dp = (struct direct *)(dbuf->buf + dbuf->cur);
 	llen = 0;
 	if (dp != NULL)
 		llen = DIRSIZ(NEWDIRFMT, dp);
 
-	if (reclen + dbuf->cur + llen > roundup(dbuf->size, DIRBLKSIZ)) {
+	if (de.d_reclen + dbuf->cur + llen > roundup(dbuf->size, DIRBLKSIZ)) {
 		newbuf = erealloc(dbuf->buf, dbuf->size + DIRBLKSIZ);
 		dbuf->buf = newbuf;
 		dbuf->size += DIRBLKSIZ;
 		memset(dbuf->buf + dbuf->size - DIRBLKSIZ, 0, DIRBLKSIZ);
 		dbuf->cur = dbuf->size - DIRBLKSIZ;
 	} else if (dp) {			/* shrink end of previous */
-		dp->d_reclen = ufs_rw16(llen,0);
+		dp->d_reclen = llen;
 		dbuf->cur += llen;
 	}
 	dp = (struct direct *)(dbuf->buf + dbuf->cur);
-	memcpy(dp, &de, reclen);
-	dp->d_reclen = ufs_rw16(dbuf->size - dbuf->cur, 0);
+	memcpy(dp, &de, de.d_reclen);
+	dp->d_reclen = dbuf->size - dbuf->cur;
 }
 
 /*
@@ -875,10 +871,10 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	/*
 	 * Initialize inode blocks on the fly for UFS2.
 	 */
-	initediblk = ufs_rw32(cgp->cg_initediblk, 0);
+	initediblk = cgp->cg_initediblk;
 	if (ffs_opts->version == 2 &&
 	    (uint32_t)(cgino + INOPB(fs)) > initediblk &&
-	    initediblk < ufs_rw32(cgp->cg_ffs2_niblk, 0)) {
+	    initediblk < cgp->cg_ffs2_niblk) {
 		memset(buf, 0, fs->fs_bsize);
 		dip = (struct ufs2_dinode *)buf;
 		for (i = 0; i < INOPB(fs); i++) {
@@ -889,7 +885,7 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 				  cg * fs->fs_ipg + initediblk)),
 		    fs->fs_bsize, buf, fsopts);
 		initediblk += INOPB(fs);
-		cgp->cg_initediblk = ufs_rw32(initediblk, 0);
+		cgp->cg_initediblk = initediblk;
 	}
 
 

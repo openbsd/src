@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.7 2016/10/22 16:51:52 natano Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.8 2016/10/22 19:43:50 natano Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.21 2015/03/29 05:52:59 agc Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
@@ -42,7 +42,6 @@
 #include <ufs/ffs/fs.h>
 
 #include "ffs/buf.h"
-#include "ffs/ufs_bswap.h"
 #include "ffs/ufs_inode.h"
 #include "ffs/ffs_extern.h"
 
@@ -112,7 +111,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	 */
 
 	if (lbn < NDADDR) {
-		nb = ufs_rw32(ip->i_ffs1_db[lbn], 0);
+		nb = ip->i_ffs1_db[lbn];
 		if (nb != 0 && ip->i_ffs1_size >= lblktosize(fs, lbn + 1)) {
 
 			/*
@@ -185,7 +184,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 				*bpp = bp;
 			}
 		}
-		ip->i_ffs1_db[lbn] = ufs_rw32((int32_t)newb, 0);
+		ip->i_ffs1_db[lbn] = newb;
 		return (0);
 	}
 
@@ -207,7 +206,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	 */
 
 	--num;
-	nb = ufs_rw32(ip->i_ffs1_ib[indirs[0].in_off], 0);
+	nb = ip->i_ffs1_ib[indirs[0].in_off];
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
@@ -227,7 +226,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 		if ((error = bwrite(bp)) != 0)
 			return error;
 		allocib = &ip->i_ffs1_ib[indirs[0].in_off];
-		*allocib = ufs_rw32((int32_t)nb, 0);
+		*allocib = nb;
 	}
 
 	/*
@@ -242,7 +241,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			return error;
 		}
 		bap = (int32_t *)bp->b_data;
-		nb = ufs_rw32(bap[indirs[i].in_off], 0);
+		nb = bap[indirs[i].in_off];
 		if (i == num)
 			break;
 		i++;
@@ -271,7 +270,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			brelse(bp, 0);
 			return error;
 		}
-		bap[indirs[i - 1].in_off] = ufs_rw32(nb, 0);
+		bap[indirs[i - 1].in_off] = nb;
 
 		bwrite(bp);
 	}
@@ -295,7 +294,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			clrbuf(nbp);
 			*bpp = nbp;
 		}
-		bap[indirs[num].in_off] = ufs_rw32(nb, 0);
+		bap[indirs[num].in_off] = nb;
 
 		/*
 		 * If required, write synchronously, otherwise use
@@ -361,7 +360,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	 */
 
 	if (lbn < NDADDR) {
-		nb = ufs_rw64(ip->i_ffs2_db[lbn], 0);
+		nb = ip->i_ffs2_db[lbn];
 		if (nb != 0 && ip->i_ffs2_size >= lblktosize(fs, lbn + 1)) {
 
 			/*
@@ -434,7 +433,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 				*bpp = bp;
 			}
 		}
-		ip->i_ffs2_db[lbn] = ufs_rw64(newb, 0);
+		ip->i_ffs2_db[lbn] = newb;
 		return (0);
 	}
 
@@ -456,7 +455,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 	 */
 
 	--num;
-	nb = ufs_rw64(ip->i_ffs2_ib[indirs[0].in_off], 0);
+	nb = ip->i_ffs2_ib[indirs[0].in_off];
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
@@ -476,7 +475,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 		if ((error = bwrite(bp)) != 0)
 			return error;
 		allocib = &ip->i_ffs2_ib[indirs[0].in_off];
-		*allocib = ufs_rw64(nb, 0);
+		*allocib = nb;
 	}
 
 	/*
@@ -491,7 +490,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			return error;
 		}
 		bap = (int64_t *)bp->b_data;
-		nb = ufs_rw64(bap[indirs[i].in_off], 0);
+		nb = bap[indirs[i].in_off];
 		if (i == num)
 			break;
 		i++;
@@ -520,7 +519,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			brelse(bp, 0);
 			return error;
 		}
-		bap[indirs[i - 1].in_off] = ufs_rw64(nb, 0);
+		bap[indirs[i - 1].in_off] = nb;
 
 		bwrite(bp);
 	}
@@ -544,7 +543,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct mkfsbuf **bp
 			clrbuf(nbp);
 			*bpp = nbp;
 		}
-		bap[indirs[num].in_off] = ufs_rw64(nb, 0);
+		bap[indirs[num].in_off] = nb;
 
 		/*
 		 * If required, write synchronously, otherwise use
