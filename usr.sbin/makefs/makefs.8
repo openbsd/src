@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makefs.8,v 1.8 2016/10/18 18:15:23 natano Exp $
+.\"	$OpenBSD: makefs.8,v 1.9 2016/10/22 20:27:59 jmc Exp $
 .\"	$NetBSD: makefs.8,v 1.55 2015/11/25 16:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 23, 2015
+.Dd $Mdocdate: October 22 2016 $
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ The options are as follows:
 .It Fl b Ar free-blocks
 Ensure that a minimum of
 .Ar free-blocks
-free blocks exist in the image.
+exist in the image.
 An optional
 .Ql %
 suffix may be provided to indicate that
@@ -77,7 +77,7 @@ indicates a percentage of the calculated image size.
 .It Fl f Ar free-files
 Ensure that a minimum of
 .Ar free-files
-free files (inodes) exist in the image.
+(inodes) exist in the image.
 An optional
 .Ql %
 suffix may be provided to indicate that
@@ -122,38 +122,24 @@ Create an
 .Ar fs-type
 file system image.
 The following file system types are supported:
-.Bl -tag -width cd9660 -offset indent
-.It Sy ffs
-BSD fast file system (default).
+.Pp
+.Bl -tag -width cd9660 -offset indent -compact
 .It Sy cd9660
 ISO 9660 file system.
+.It Sy ffs
+BSD Fast File System (the default).
 .It Sy msdos
 FAT12, FAT16, or FAT32 file system.
 .El
 .El
 .Pp
-Where sizes are specified, a decimal number of bytes is expected.
+Sizes are specified as a decimal number of bytes
+and may use a multiplier, as documented in
+.Xr scan_scaled 3 .
 Two or more numbers may be separated by an
-.Dq x
+.Sq x
 to indicate a product.
-Each number may have one of the following optional suffixes:
-.Bl -tag -width 3n -offset indent -compact
-.It b
-Block; multiply by 512
-.It k
-Kibi; multiply by 1024 (1 KiB)
-.It m
-Mebi; multiply by 1048576 (1 MiB)
-.It g
-Gibi; multiply by 1073741824 (1 GiB)
-.It t
-Tebi; multiply by 1099511627776 (1 TiB)
-.It w
-Word; multiply by the number of bytes in an integer
-.El
-.\"
-.\"
-.Ss FFS-specific options
+.Ss ffs options
 .Sy ffs
 images have ffs-specific optional parameters that may be provided.
 Each of the options consists of a keyword, an equal sign
@@ -170,28 +156,28 @@ Expected number of files per directory.
 Block size.
 .It Sy density
 Bytes per inode.
+.It Sy extent
+Maximum extent size.
 .It Sy fsize
 Fragment size.
 .It Sy label
 Label name of the image.
+.It Sy maxbpcg
+Maximum total number of blocks in a cylinder group.
 .It Sy maxbpg
 Maximum blocks per file in a cylinder group.
 .It Sy minfree
 Minimum % free.
 .It Sy optimization
-Optimization preference; one of
+Optimization preference: one of
 .Ql space
 or
 .Ql time .
-.It Sy extent
-Maximum extent size.
-.It Sy maxbpcg
-Maximum total number of blocks in a cylinder group.
 .It Sy version
 UFS version.
-1 for FFS (default), 2 for UFS2.
+1 for FFS (default) or 2 for UFS2.
 .El
-.Ss CD9660-specific options
+.Ss cd9660 options
 .Sy cd9660
 images have ISO9660-specific optional parameters that may be
 provided.
@@ -210,14 +196,11 @@ the spec.
 .\" Unknown
 .It Sy allow-max-name
 Allow 37 instead of 33 characters for filenames by omitting the
-version id.
+version ID.
 .It Sy allow-multidot
 Allow multiple dots in a filename.
 .It Sy applicationid
 Application ID of the image.
-.It Sy chrp-boot
-Write an MBR partition table to the image to allow older CHRP hardware to
-boot.
 .It Sy boot-load-segment
 Set load segment for the boot image.
 .It Sy bootimage
@@ -231,8 +214,11 @@ is one of
 .Ql macppc ,
 or
 .Ql powerpc .
+.It Sy chrp-boot
+Write an MBR partition table to the image to allow older CHRP hardware to
+boot.
 .It Sy generic-bootimage
-Load a generic boot image into the first 32K of the cd9660 image.
+Load a generic boot image into the first 32K of the CD9660 image.
 .It Sy hard-disk-boot
 Boot image is a hard disk image.
 .It Sy keep-bad-images
@@ -259,10 +245,10 @@ Use RockRidge extensions (for longer filenames, etc.).
 .It Sy volumeid
 Volume set identifier of the image.
 .El
-.Ss msdos-specific options
+.Ss msdos options
 See
 .Xr newfs_msdos 8
-for fs specific options.
+for related options.
 .Sh SEE ALSO
 .Xr scan_scaled 3 ,
 .Xr installboot 8 ,
@@ -273,6 +259,7 @@ The
 utility appeared in
 .Nx 1.6 .
 .Sh AUTHORS
+.An -nosplit
 .An Luke Mewburn
 .Aq lukem@NetBSD.org
 (original program),
@@ -282,11 +269,6 @@ utility appeared in
 .An Alan Perez-Rathke ,
 .An Ram Vedam
 (cd9660 support),
-.An UCHIYAMA Yasushi
-(v7fs support),
-.An Tamas Toth
-(chfs support).
+and
 .An Christos Zoulas
 (msdos support).
-.An Reinoud Zandijk
-(udf support).
