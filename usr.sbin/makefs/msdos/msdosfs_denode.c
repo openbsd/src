@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.5 2016/10/18 17:05:30 natano Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.6 2016/10/22 22:20:24 natano Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.7 2015/03/29 05:52:59 agc Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 
 #include "ffs/buf.h"
 
-#include "msdos/bpb.h"
+#include <msdosfs/bpb.h>
 #include "msdos/msdosfsmount.h"
 #include "msdos/direntry.h"
 #include "msdos/denode.h"

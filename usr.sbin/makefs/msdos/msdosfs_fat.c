@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.2 2016/10/22 18:17:14 natano Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.3 2016/10/22 22:20:24 natano Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@
 /*
  * msdosfs include files.
  */
-#include "msdos/bpb.h"
+#include <msdosfs/bpb.h>
 #include "msdos/msdosfsmount.h"
 #include "msdos/direntry.h"
 #include "msdos/denode.h"

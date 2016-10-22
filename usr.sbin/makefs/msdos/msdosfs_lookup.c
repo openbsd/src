@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.1 2016/10/18 17:05:30 natano Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.2 2016/10/22 22:20:24 natano Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.35 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 
 #include "ffs/buf.h"
 
-#include "msdos/bpb.h"
+#include <msdosfs/bpb.h>
 #include "msdos/direntry.h"
 #include "msdos/denode.h"
 #include "msdos/msdosfsmount.h"
