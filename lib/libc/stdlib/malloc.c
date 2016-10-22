@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.206 2016/10/21 15:39:31 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.207 2016/10/22 14:27:19 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -286,9 +286,12 @@ wrterror(struct dir_info *d, char *msg, ...)
 	writev(STDERR_FILENO, iov, 3);
 
 #ifdef MALLOC_STATS
-	if (mopts.malloc_stats)
+	if (mopts.malloc_stats) {
+		int i;
+
 		for (i = 0; i < _MALLOC_MUTEXES; i++)
 			malloc_dump(STDERR_FILENO, mopts.malloc_pool[i]);
+	}
 #endif /* MALLOC_STATS */
 
 	errno = saved_errno;
@@ -1042,7 +1045,7 @@ validate_canary(struct dir_info *d, u_char *ptr, size_t sz, size_t allocated)
 
 	if (check_sz > CHUNK_CHECK_LENGTH)
 		check_sz = CHUNK_CHECK_LENGTH;
-	p = (u_char *)ptr + sz;
+	p = ptr + sz;
 	q = p + check_sz;
 
 	while (p < q) {
