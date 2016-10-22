@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.182 2016/10/20 16:29:13 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.183 2016/10/22 10:08:31 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -1699,7 +1699,8 @@ putkeys(const struct mpage *mpage, char *cp, size_t sz, uint64_t v)
 			name_mask &= ~NAME_FIRST;
 		if (debug > 1)
 			say(mpage->mlinks->file,
-			    "Adding name %*s, bits=0x%llx", (int)sz, cp, v);
+			    "Adding name %*s, bits=0x%llx", (int)sz, cp,
+			    (unsigned long long)v);
 	} else {
 		htab = &strings;
 		if (debug > 1)
