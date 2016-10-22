@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.7 2016/10/21 20:03:57 kettenis Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.8 2016/10/22 15:16:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -30,11 +30,15 @@
 #include <arm/cpufunc.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 #include <machine/intr.h>
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 /* #include <armv7/sunxi/sxipiovar.h> */
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #define	TIMER_IER 		0x00
 #define	TIMER_ISR 		0x04
@@ -74,6 +78,7 @@
 
 #define TIMER_SYNC		3
 
+int	sxitimer_match(struct device *, void *, void *);
 void	sxitimer_attach(struct device *, struct device *, void *);
 int	sxitimer_tickintr(void *);
 int	sxitimer_statintr(void *);
@@ -116,29 +121,34 @@ struct sxitimer_softc {
 	struct device		sc_dev;
 };
 
-struct cfattach	sxitimer_ca = {
-	sizeof (struct sxitimer_softc), NULL, sxitimer_attach
+struct cfattach sxitimer_ca = {
+	sizeof (struct sxitimer_softc), sxitimer_match, sxitimer_attach
 };
 
 struct cfdriver sxitimer_cd = {
 	NULL, "sxitimer", DV_DULL
 };
 
-void
-sxitimer_attach(struct device *parent, struct device *self, void *args)
+int
+sxitimer_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-timer");
+}
+
+void
+sxitimer_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
 	uint32_t freq, ival, now;
-	int unit = self->dv_unit;
 
-	if (unit != 0)
-		goto skip_init;
+	KASSERT(faa->fa_nreg > 0);
 
-	sxitimer_iot = aa->aa_iot;
-
-	if (bus_space_map(sxitimer_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sxitimer_ioh))
-		panic("sxitimer_attach: bus_space_map failed!");
+	sxitimer_iot = faa->fa_iot;
+	if (bus_space_map(sxitimer_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sxitimer_ioh))
+		panic("%s: bus_space_map failed!", __func__);
 
 	/* clear counter, loop until ready */
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh, CNT64_CTRL,
@@ -147,53 +157,61 @@ sxitimer_attach(struct device *parent, struct device *self, void *args)
 	    & CNT64_CLR_EN)
 		continue;
 
-skip_init:
 	/* timers are down-counters, from interval to 0 */
 	now = 0xffffffff; /* known big value */
-	freq = sxitimer_freq[unit];
+	freq = sxitimer_freq[TICKTIMER];
 
 	/* stop timer, and set clk src */
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(unit), TIMER_OSC24M);
+	    TIMER_CTRL(TICKTIMER), TIMER_OSC24M);
 
-	switch (unit) { /* XXX more XXXXTIMER magic for less lines? */
-	case TICKTIMER:
-		ival = sxitimer_tick_tpi = freq / hz;
-		sxitimer_tick_nextevt = now - ival;
+	ival = sxitimer_tick_tpi = freq / hz;
+	sxitimer_tick_nextevt = now - ival;
 
-		sxitimer_ticks_err_cnt = freq % hz;
-		sxitimer_ticks_err_sum = 0;
-
-		printf(": ticktimer %dhz @ %dKHz", hz, freq / 1000);
-		break;
-	case STATTIMER:
-		/* 100/1000 or 128/1024 ? */
-		stathz = 128;
-		profhz = 1024;
-		sxitimer_setstatclockrate(stathz);
-
-		ival = sxitimer_stat_tpi = freq / stathz;
-		sxitimer_stat_nextevt = now - ival;
-
-		printf(": stattimer %dhz @ %dKHz", stathz, freq / 1000);
-		break;
-	case CNTRTIMER:
-		ival = now;
-
-		sxitimer_timecounter.tc_frequency = freq;
-		tc_init(&sxitimer_timecounter);
-		arm_clock_register(sxitimer_cpu_initclocks, sxitimer_delay,
-		    sxitimer_setstatclockrate, NULL);
-
-		printf(": cntrtimer @ %dKHz", freq / 1000);
-		break;
-	default:
-		panic("sxitimer_attach: unit = %d", unit);
-		break;
-	}
+	sxitimer_ticks_err_cnt = freq % hz;
+	sxitimer_ticks_err_sum = 0;
 
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_INTV(unit), ival);
+	    TIMER_INTV(TICKTIMER), ival);
+
+	/* timers are down-counters, from interval to 0 */
+	now = 0xffffffff; /* known big value */
+	freq = sxitimer_freq[STATTIMER];
+
+	/* stop timer, and set clk src */
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(STATTIMER), TIMER_OSC24M);
+
+	/* 100/1000 or 128/1024 ? */
+	stathz = 128;
+	profhz = 1024;
+	sxitimer_setstatclockrate(stathz);
+
+	ival = sxitimer_stat_tpi = freq / stathz;
+	sxitimer_stat_nextevt = now - ival;
+
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_INTV(STATTIMER), ival);
+
+	/* timers are down-counters, from interval to 0 */
+	now = 0xffffffff; /* known big value */
+	freq = sxitimer_freq[CNTRTIMER];
+
+	/* stop timer, and set clk src */
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(CNTRTIMER), TIMER_OSC24M);
+
+	ival = now;
+
+	sxitimer_timecounter.tc_frequency = freq;
+	tc_init(&sxitimer_timecounter);
+	arm_clock_register(sxitimer_cpu_initclocks, sxitimer_delay,
+	    sxitimer_setstatclockrate, NULL);
+
+	printf(": cntrtimer @ %dKHz", freq / 1000);
+
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_INTV(CNTRTIMER), ival);
 
 	printf("\n");
 }
