@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.24 2016/10/08 05:49:08 guenther Exp $	*/
+/*	$OpenBSD: fault.c,v 1.25 2016/10/22 17:48:41 patrick Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -187,9 +187,6 @@ static const struct data_abort data_aborts[] = {
 	{NULL,		"V7 fault 11111"},
 #endif
 };
-
-/* Determine if a fault came from user mode */
-#define	TRAP_USERMODE(tf)	((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 
 /* Determine if 'ftyp' is a permission fault */
 #define	IS_PERMISSION_FAULT(ftyp)				\

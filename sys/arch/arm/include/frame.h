@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.10 2016/04/25 08:00:43 patrick Exp $	*/
+/*	$OpenBSD: frame.h,v 1.11 2016/10/22 17:48:41 patrick Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
@@ -82,6 +82,9 @@ typedef struct trapframe {
 #define tf_r13 tf_usr_sp
 #define tf_r14 tf_usr_lr
 #define tf_r15 tf_pc
+
+/* Determine if a fault came from user mode */
+#define	TRAP_USERMODE(tf)	((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 
 /*
  * Signal frame.  Pushed onto user stack before calling sigcode.
