@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.1 2016/10/18 17:05:30 natano Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.2 2016/10/22 18:17:14 natano Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $	*/
 
 /*-
@@ -84,31 +84,6 @@ int pm_fatblocksize;
 #define DPRINTF(a) printf a
 #else
 #define DPRINTF(a)
-#endif
-#ifdef MSDOSFS_DEBUG
-void print_fat_stats(void);
-
-void
-print_fat_stats(void)
-{
-	int i;
-
-	printf("fc_fileextends=%d fc_lfcempty=%d fc_bmapcalls=%d "
-	    "fc_largedistance=%d [%d->%d=%d] fc_lastclust=%d pm_fatblocksize=%d\n",
-	    fc_fileextends, fc_lfcempty, fc_bmapcalls, fc_largedistance,
-	    fc_wherefrom, fc_whereto, fc_whereto-fc_wherefrom,
-	    fc_lastclust, pm_fatblocksize);
-	
-	fc_fileextends = fc_lfcempty = fc_bmapcalls = 0;
-	fc_wherefrom = fc_whereto = fc_lastclust = 0;
-    
-	for (i = 0; i < LMMAX; i++) {
-		printf("%d:%d ", i, fc_lmdistance[i]);
-	fc_lmdistance[i] = 0;
-	}
-
-	printf("\n");
-}
 #endif
 
 static void fatblock(struct msdosfsmount *, u_long, u_long *, u_long *,

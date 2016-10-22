@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.3 2016/10/17 01:16:22 tedu Exp $	*/
+/*	$OpenBSD: buf.c,v 1.4 2016/10/22 18:17:14 natano Exp $	*/
 /*	$NetBSD: buf.c,v 1.24 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -61,21 +61,12 @@ bread(struct mkfsvnode *vp, daddr_t blkno, int size, int u2 __unused,
 
 	assert (bpp != NULL);
 
-	if (debug & DEBUG_BUF_BREAD)
-		printf("bread: blkno %lld size %d\n", (long long)blkno, size);
 	*bpp = getblk(vp, blkno, size, 0, 0);
 	offset = (*bpp)->b_blkno * fs->sectorsize + fs->offset;
-	if (debug & DEBUG_BUF_BREAD)
-		printf("bread: blkno %lld offset %lld bcount %ld\n",
-		    (long long)(*bpp)->b_blkno, (long long) offset,
-		    (*bpp)->b_bcount);
 	if (lseek((*bpp)->b_fs->fd, offset, SEEK_SET) == -1)
 		err(EXIT_FAILURE, "%s: lseek %lld (%lld)", __func__,
 		    (long long)(*bpp)->b_blkno, (long long)offset);
 	rv = read((*bpp)->b_fs->fd, (*bpp)->b_data, (size_t)(*bpp)->b_bcount);
-	if (debug & DEBUG_BUF_BREAD)
-		printf("bread: read %ld (%lld) returned %zd\n",
-		    (*bpp)->b_bcount, (long long)offset, rv);
 	if (rv == -1)				/* read error */
 		err(EXIT_FAILURE, "%s: read %ld (%lld) returned %zd", __func__,
 		    (*bpp)->b_bcount, (long long)offset, rv);
@@ -127,15 +118,9 @@ bwrite(struct mkfsbuf *bp)
 	assert (bp != NULL);
 	offset = bp->b_blkno * fs->sectorsize + fs->offset;
 	bytes  = (size_t)bp->b_bcount;
-	if (debug & DEBUG_BUF_BWRITE)
-		printf("bwrite: blkno %lld offset %lld bcount %zu\n",
-		    (long long)bp->b_blkno, (long long) offset, bytes);
 	if (lseek(bp->b_fs->fd, offset, SEEK_SET) == -1)
 		return (errno);
 	rv = write(bp->b_fs->fd, bp->b_data, bytes);
-	if (debug & DEBUG_BUF_BWRITE)
-		printf("bwrite: write %ld (offset %lld) returned %lld\n",
-		    bp->b_bcount, (long long)offset, (long long)rv);
 	brelse(bp, 0);
 	if (rv == (ssize_t)bytes)
 		return (0);
@@ -148,6 +133,7 @@ bwrite(struct mkfsbuf *bp)
 void
 bcleanup(void)
 {
+#if DEBUG_BUFFERS
 	struct mkfsbuf *bp;
 
 	/*
@@ -166,6 +152,7 @@ bcleanup(void)
 		    bp->b_bcount, bp->b_bufsize);
 	}
 	printf("bcleanup: done\n");
+#endif
 }
 
 struct mkfsbuf *
@@ -176,13 +163,8 @@ getblk(struct mkfsvnode *vp, daddr_t blkno, int size, int u1 __unused,
 	struct mkfsbuf *bp;
 	void *n;
 
-	if (debug & DEBUG_BUF_GETBLK)
-		printf("getblk: blkno %lld size %d\n", (long long)blkno, size);
-
 	bp = NULL;
 	if (!buftailinitted) {
-		if (debug & DEBUG_BUF_GETBLK)
-			printf("getblk: initialising tailq\n");
 		TAILQ_INIT(&buftail);
 		buftailinitted = 1;
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.7 2016/10/17 08:22:38 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.8 2016/10/22 18:17:14 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -357,9 +357,6 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 	const char *name, *desc;
 
 	assert(option != NULL);
-
-	if (debug & DEBUG_FS_PARSE_OPTS)
-		printf("%s: got `%s'\n", __func__, option);
 
 	i = set_option(cd9660_options, option, buf, sizeof(buf));
 	if (i == -1)

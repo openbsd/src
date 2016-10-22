@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdos.c,v 1.6 2016/10/18 17:05:30 natano Exp $	*/
+/*	$OpenBSD: msdos.c,v 1.7 2016/10/22 18:17:14 natano Exp $	*/
 /*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -95,9 +95,6 @@ msdos_parse_opts(const char *option, fsinfo_t *fsopts)
 	assert(fsopts != NULL);
 	assert(msdos_opt != NULL);
 
-	if (debug & DEBUG_FS_PARSE_OPTS)
-		printf("msdos_parse_opts: got `%s'\n", option);
-
 	rv = set_option(msdos_options, option, NULL, 0);
 	if (rv == -1)
 		return rv;
@@ -117,7 +114,6 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
 	struct msdos_options *msdos_opt = fsopts->fs_specific;
 	struct mkfsvnode vp, rootvp;
-	struct timeval	start;
 	struct msdosfsmount *pmp;
 
 	assert(image != NULL);
@@ -146,10 +142,8 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 		/* create image */
 	printf("Creating `%s'\n", image);
-	TIMER_START(start);
 	if (mkfs_msdos(image, NULL, msdos_opt) == -1)
 		return;
-	TIMER_RESULTS(start, "mkfs_msdos");
 
 	fsopts->fd = open(image, O_RDWR);
 	vp.fs = fsopts;
@@ -160,23 +154,12 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	if (msdosfs_root(pmp, &rootvp) != 0)
 		err(1, "msdosfs_root");
 
-	if (debug & DEBUG_FS_MAKEFS)
-		printf("msdos_makefs: image %s directory %s root %p\n",
-		    image, dir, root);
-
 		/* populate image */
 	printf("Populating `%s'\n", image);
-	TIMER_START(start);
 	if (msdos_populate_dir(dir, VTODE(&rootvp), root, root, fsopts) == -1)
 		errx(1, "Image file `%s' not created.", image);
-	TIMER_RESULTS(start, "msdos_populate_dir");
 
-	if (debug & DEBUG_FS_MAKEFS)
-		putchar('\n');
-
-		/* ensure no outstanding buffers remain */
-	if (debug & DEBUG_FS_MAKEFS)
-		bcleanup();
+	bcleanup();
 
 	printf("Image `%s' complete\n", image);
 }

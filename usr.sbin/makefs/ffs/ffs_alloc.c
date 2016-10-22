@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.9 2016/10/22 16:51:52 natano Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.10 2016/10/22 18:17:14 natano Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.29 2016/06/24 19:24:11 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
@@ -456,7 +456,6 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 			    "len %d offset %d %ld", __func__, ostart, olen,
 			    ufs_rw32(cgp->cg_freeoff, 0),
 			    (long)cg_blksfree(cgp) - (long)cgp);
-			/* NOTREACHED */
 		}
 	}
 	bno = (start + len - loc) * NBBY;

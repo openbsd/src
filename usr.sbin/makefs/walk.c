@@ -1,4 +1,4 @@
-/*	$OpenBSD: walk.c,v 1.5 2016/10/17 07:54:17 natano Exp $	*/
+/*	$OpenBSD: walk.c,v 1.6 2016/10/22 18:17:14 natano Exp $	*/
 /*	$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -78,8 +78,6 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join)
 	len = snprintf(path, sizeof(path), "%s/%s", root, dir);
 	if (len >= (int)sizeof(path))
 		errx(1, "Pathname too long.");
-	if (debug & DEBUG_WALK_DIR)
-		printf("walk_dir: %s %p\n", path, parent);
 	if ((dirp = opendir(path)) == NULL)
 		err(1, "Can't opendir `%s'", path);
 	rp = path + strlen(root) + 1;
@@ -107,20 +105,13 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join)
 			default:
 				dot = 0;
 			}
-		if (debug & DEBUG_WALK_DIR_NODE)
-			printf("scanning %s/%s/%s\n", root, dir, name);
 		if (snprintf(path + len, sizeof(path) - len, "/%s", name) >=
 		    (int)sizeof(path) - len)
 			errx(1, "Pathname too long.");
 		if (lstat(path, &stbuf) == -1)
 			err(1, "Can't lstat `%s'", path);
-#ifdef S_ISSOCK
-		if (S_ISSOCK(stbuf.st_mode & S_IFMT)) {
-			if (debug & DEBUG_WALK_DIR_NODE)
-				printf("  skipping socket %s\n", path);
+		if (S_ISSOCK(stbuf.st_mode & S_IFMT))
 			continue;
-		}
-#endif
 
 		if (join != NULL) {
 			cur = join->next;
@@ -136,9 +127,6 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join)
 			if (cur != NULL) {
 				if (S_ISDIR(cur->type) &&
 				    S_ISDIR(stbuf.st_mode)) {
-					if (debug & DEBUG_WALK_DIR_NODE)
-						printf("merging %s with %p\n",
-						    path, cur->child);
 					cur->child = walk_dir(root, rp, cur,
 					    cur->child);
 					continue;
@@ -179,10 +167,6 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join)
 				free(cur->inode);
 				cur->inode = curino;
 				cur->inode->nlink++;
-				if (debug & DEBUG_WALK_DIR_LINKCHECK)
-					printf("link_check: found [%llu, %llu]\n",
-					    (unsigned long long)curino->st.st_dev,
-					    (unsigned long long)curino->st.st_ino);
 			}
 		}
 		if (S_ISLNK(cur->type)) {
@@ -295,9 +279,6 @@ dump_fsnodes(fsnode *root)
 		    cur->name) >= (int)sizeof(path))
 			errx(1, "Pathname too long.");
 
-		if (debug & DEBUG_DUMP_FSNODES_VERBOSE)
-			printf("cur=%8p parent=%8p first=%8p ",
-			    cur, cur->parent, cur->first);
 		printf("%7s: %s", inode_type(cur->type), path);
 		if (S_ISLNK(cur->type)) {
 			assert(cur->symlink != NULL);
@@ -344,7 +325,6 @@ inode_type(mode_t mode)
 	default:
 		return ("unknown");
 	}
-	/* NOTREACHED */
 }
 
 

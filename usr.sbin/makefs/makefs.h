@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.h,v 1.6 2016/10/17 07:54:17 natano Exp $	*/
+/*	$OpenBSD: makefs.h,v 1.7 2016/10/22 18:17:14 natano Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -181,49 +181,6 @@ DECLARE_FUN(msdos);
 extern	u_int		debug;
 extern	struct timespec	start_time;
 extern	struct stat stampst;
-
-#define	DEBUG_TIME			0x00000001
-		/* debug bits 1..3 unused at this time */
-#define	DEBUG_WALK_DIR			0x00000010
-#define	DEBUG_WALK_DIR_NODE		0x00000020
-#define	DEBUG_WALK_DIR_LINKCHECK	0x00000040
-#define	DEBUG_DUMP_FSNODES		0x00000080
-#define	DEBUG_DUMP_FSNODES_VERBOSE	0x00000100
-#define	DEBUG_FS_PARSE_OPTS		0x00000200
-#define	DEBUG_FS_MAKEFS			0x00000400
-#define	DEBUG_FS_VALIDATE		0x00000800
-#define	DEBUG_FS_CREATE_IMAGE		0x00001000
-#define	DEBUG_FS_SIZE_DIR		0x00002000
-#define	DEBUG_FS_SIZE_DIR_NODE		0x00004000
-#define	DEBUG_FS_SIZE_DIR_ADD_DIRENT	0x00008000
-#define	DEBUG_FS_POPULATE		0x00010000
-#define	DEBUG_FS_POPULATE_DIRBUF	0x00020000
-#define	DEBUG_FS_POPULATE_NODE		0x00040000
-#define	DEBUG_FS_WRITE_FILE		0x00080000
-#define	DEBUG_FS_WRITE_FILE_BLOCK	0x00100000
-#define	DEBUG_FS_MAKE_DIRBUF		0x00200000
-#define	DEBUG_FS_WRITE_INODE		0x00400000
-#define	DEBUG_BUF_BREAD			0x00800000
-#define	DEBUG_BUF_BWRITE		0x01000000
-#define	DEBUG_BUF_GETBLK		0x02000000
-#define	DEBUG_APPLY_SPECFILE		0x04000000
-#define	DEBUG_APPLY_SPECENTRY		0x08000000
-#define	DEBUG_APPLY_SPECONLY		0x10000000
-
-
-#define	TIMER_START(x)				\
-	if (debug & DEBUG_TIME)			\
-		gettimeofday(&(x), NULL)
-
-#define	TIMER_RESULTS(x,d)				\
-	if (debug & DEBUG_TIME) {			\
-		struct timeval end, td;			\
-		gettimeofday(&end, NULL);		\
-		timersub(&end, &(x), &td);		\
-		printf("%s took %lld.%06ld seconds\n",	\
-		    (d), (long long)td.tv_sec,		\
-		    (long)td.tv_usec);			\
-	}
 
 
 #ifndef	DEFAULT_FSTYPE

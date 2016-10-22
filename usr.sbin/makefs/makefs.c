@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.11 2016/10/18 18:34:45 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.12 2016/10/22 18:17:14 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -71,7 +71,6 @@ static fstype_t fstypes[] = {
 	{ .type = NULL	},
 };
 
-u_int		debug;
 struct timespec	start_time;
 struct stat stampst;
 
@@ -83,13 +82,11 @@ static	void	usage(fstype_t *, fsinfo_t *) __dead;
 int
 main(int argc, char *argv[])
 {
-	struct timeval	 start;
 	fstype_t	*fstype;
 	fsinfo_t	 fsoptions;
 	fsnode		*root;
 	int	 	 ch, len;
 
-	debug = 0;
 	if ((fstype = get_fstype(DEFAULT_FSTYPE)) == NULL)
 		errx(1, "Unknown default fs type `%s'.", DEFAULT_FSTYPE);
 
@@ -194,7 +191,6 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			usage(fstype, &fsoptions);
-			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -204,25 +200,14 @@ main(int argc, char *argv[])
 		usage(fstype, &fsoptions);
 
 				/* walk the tree */
-	TIMER_START(start);
 	root = walk_dir(argv[1], ".", NULL, NULL);
-	TIMER_RESULTS(start, "walk_dir");
-
-	if (debug & DEBUG_DUMP_FSNODES) {
-		printf("\nparent: %s\n", argv[1]);
-		dump_fsnodes(root);
-		putchar('\n');
-	}
 
 				/* build the file system */
-	TIMER_START(start);
 	fstype->make_fs(argv[0], argv[1], root, &fsoptions);
-	TIMER_RESULTS(start, "make_fs");
 
 	free_fsnodes(root);
 
 	exit(0);
-	/* NOTREACHED */
 }
 
 int
