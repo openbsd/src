@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.8 2016/10/22 10:03:52 natano Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.9 2016/10/22 10:43:08 natano Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -136,17 +136,12 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	strlcpy((char *)sblock.fs_volname, ffs_opts->label,
 	    sizeof(sblock.fs_volname));
 
-	if (Oflag == 0) {
-		sblock.fs_old_inodefmt = FS_42INODEFMT;
-		sblock.fs_maxsymlinklen = 0;
-		sblock.fs_old_flags = 0;
-	} else {
-		sblock.fs_old_inodefmt = FS_44INODEFMT;
-		sblock.fs_maxsymlinklen = (Oflag == 1 ? UFS1_MAXSYMLINKLEN :
-		    UFS2_MAXSYMLINKLEN);
-		sblock.fs_old_flags = FS_FLAGS_UPDATED;
-		sblock.fs_flags = 0;
-	}
+	sblock.fs_old_inodefmt = FS_44INODEFMT;
+	sblock.fs_maxsymlinklen = (Oflag == 1 ? UFS1_MAXSYMLINKLEN :
+	    UFS2_MAXSYMLINKLEN);
+	sblock.fs_old_flags = FS_FLAGS_UPDATED;
+	sblock.fs_flags = 0;
+
 	/*
 	 * Validate the given file system size.
 	 * Verify that its last block can actually be accessed.
