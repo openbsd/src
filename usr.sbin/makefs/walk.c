@@ -1,4 +1,4 @@
-/*	$OpenBSD: walk.c,v 1.7 2016/10/22 19:17:47 natano Exp $	*/
+/*	$OpenBSD: walk.c,v 1.8 2016/10/22 19:20:36 natano Exp $	*/
 /*	$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -260,42 +260,6 @@ free_fsnodes(fsnode *node)
 		free(cur->name);
 		free(cur);
 	}
-}
-
-
-/*
- * dump_fsnodes --
- *	dump the fsnodes from `cur'
- */
-void
-dump_fsnodes(fsnode *root)
-{
-	fsnode	*cur;
-	char	path[MAXPATHLEN + 1];
-
-	printf("dump_fsnodes: %s %p\n", root->path, root);
-	for (cur = root; cur != NULL; cur = cur->next) {
-		if (snprintf(path, sizeof(path), "%s/%s", cur->path,
-		    cur->name) >= (int)sizeof(path))
-			errx(1, "Pathname too long.");
-
-		printf("%7s: %s", inode_type(cur->type), path);
-		if (S_ISLNK(cur->type)) {
-			assert(cur->symlink != NULL);
-			printf(" -> %s", cur->symlink);
-		} else {
-			assert (cur->symlink == NULL);
-		}
-		if (cur->inode->nlink > 1)
-			printf(", nlinks=%d", cur->inode->nlink);
-		putchar('\n');
-
-		if (cur->child) {
-			assert (cur->type == S_IFDIR);
-			dump_fsnodes(cur->child);
-		}
-	}
-	printf("dump_fsnodes: finished %s/%s\n", root->path, root->name);
 }
 
 

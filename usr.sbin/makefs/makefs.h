@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.h,v 1.8 2016/10/22 19:17:47 natano Exp $	*/
+/*	$OpenBSD: makefs.h,v 1.9 2016/10/22 19:20:36 natano Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -159,7 +159,6 @@ typedef struct makefs_fsinfo {
 
 
 
-void		dump_fsnodes(fsnode *);
 const char *	inode_type(mode_t);
 int		set_option(const option_t *, const char *, char *, size_t);
 int		set_option_var(const option_t *, const char *, const char *,
