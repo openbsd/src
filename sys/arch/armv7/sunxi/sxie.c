@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.22 2016/09/11 21:44:30 kettenis Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.23 2016/10/22 11:00:02 jsg Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -258,7 +258,6 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_readreg = sxie_miibus_readreg;
 	mii->mii_writereg = sxie_miibus_writereg;
 	mii->mii_statchg = sxie_miibus_statchg;
-	mii->mii_flags = MIIF_AUTOTSLEEP;
 
 	ifmedia_init(&mii->mii_media, 0, sxie_ifm_change, sxie_ifm_status);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
