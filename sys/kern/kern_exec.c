@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.183 2016/09/03 14:28:24 jca Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.184 2016/10/22 02:09:14 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -254,7 +254,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #endif
 	char *stack;
 	struct ps_strings arginfo;
-	struct vmspace *vm = pr->ps_vmspace;
+	struct vmspace *vm;
 	char **tmpfap;
 	extern struct emul emul_native;
 	struct vnode *otvp;
@@ -421,7 +421,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/*
 	 * Prepare vmspace for remapping. Note that uvmspace_exec can replace
-	 * pr_vmspace!
+	 * ps_vmspace!
 	 */
 	uvmspace_exec(p, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 
