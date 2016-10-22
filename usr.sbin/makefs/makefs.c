@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.13 2016/10/22 19:17:47 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.14 2016/10/22 20:50:21 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdbool.h>
 #include <util.h>
 
 #include "makefs.h"
@@ -252,7 +251,7 @@ set_option_var(const option_t *options, const char *var, const char *val,
 			continue;
 		switch (options[i].type) {
 		case OPT_BOOL:
-			*(bool *)options[i].value = 1;
+			*(int *)options[i].value = 1;
 			break;
 		case OPT_STRARRAY:
 			strlcpy((void *)options[i].value, val, (size_t)

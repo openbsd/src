@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.9 2016/10/22 19:17:47 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.10 2016/10/22 20:50:21 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -208,7 +208,6 @@ cd9660_set_defaults(iso9660_disk *diskStructure)
 
 	/* Spec breaking functionality */
 	diskStructure->allow_deep_trees =
-	    diskStructure->allow_start_dot =
 	    diskStructure->allow_max_name =
 	    diskStructure->allow_illegal_chars =
 	    diskStructure->allow_lowercase =

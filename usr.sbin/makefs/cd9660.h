@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.5 2016/10/18 16:50:55 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.6 2016/10/22 20:50:21 natano Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -276,13 +276,12 @@ typedef struct _iso9660_disk {
 	int chrp_boot;
 
 	/* Spec breaking options */
-	u_char allow_deep_trees;
-	u_char allow_start_dot;
-	u_char allow_max_name; /* Allow 37 char filenames*/
-	u_char allow_illegal_chars; /* ~, !, # */
-	u_char allow_lowercase;
-	u_char allow_multidot;
-	u_char omit_trailing_period;
+	int allow_deep_trees;
+	int allow_max_name; /* Allow 37 char filenames*/
+	int allow_illegal_chars; /* ~, !, # */
+	int allow_lowercase;
+	int allow_multidot;
+	int omit_trailing_period;
 
 	/* BOOT INFORMATION HERE */
 	int has_generic_bootimage; /* Default to 0 */
