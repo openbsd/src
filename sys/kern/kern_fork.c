@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.190 2016/10/15 05:09:01 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.191 2016/10/22 02:55:36 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -568,7 +568,7 @@ ispidtaken(pid_t pid)
 	return (0);
 }
 
-/* Find an unused pid satisfying 1 <= lastpid <= PID_MAX */
+/* Find an unused pid */
 pid_t
 allocpid(void)
 {
@@ -579,8 +579,10 @@ allocpid(void)
 		/* only used early on for system processes */
 		pid = ++lastpid;
 	} else {
+		/* Find an unused pid satisfying lastpid < pid <= PID_MAX */
 		do {
-			pid = 1 + arc4random_uniform(PID_MAX);
+			pid = arc4random_uniform(PID_MAX - lastpid) + 1 +
+			    lastpid;
 		} while (ispidtaken(pid));
 	}
 
