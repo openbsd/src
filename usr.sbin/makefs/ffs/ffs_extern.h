@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.5 2016/10/17 13:45:38 natano Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.6 2016/10/22 17:15:28 natano Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.6 2003/08/07 11:25:33 agc Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
@@ -44,10 +44,6 @@ struct indir {
 	int	in_off;			/* Offset in buffer. */
 	int	in_exists;		/* Flag if the block exists. */
 };
-
-	/* ffs.c */
-void panic(const char *, ...)
-    __attribute__((__noreturn__,__format__(__printf__,1,2)));  
 
 	/* ffs_alloc.c */
 struct inode;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.2 2016/10/22 16:51:52 natano Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.3 2016/10/22 17:15:28 natano Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.49 2016/05/07 11:59:08 maxv Exp $	*/
 
 /*
@@ -37,11 +37,10 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
+#include <err.h>
+
 #include "ffs/ufs_bswap.h"
 #include "ffs/ffs_extern.h"
-
-void    panic(const char *, ...)
-    __attribute__((__noreturn__,__format__(__printf__,1,2)));
 
 
 /*
@@ -69,7 +68,7 @@ ffs_isblock(struct fs *fs, u_char *cp, int32_t h)
 		mask = 0x01 << (h & 0x7);
 		return ((cp[h >> 3] & mask) == mask);
 	default:
-		panic("ffs_isblock: unknown fs_fragshift %d",
+		errx(1, "ffs_isblock: unknown fs_fragshift %d",
 		    (int)fs->fs_fragshift);
 	}
 }
@@ -95,7 +94,7 @@ ffs_clrblock(struct fs *fs, u_char *cp, int32_t h)
 		cp[h >> 3] &= ~(0x01 << (h & 0x7));
 		return;
 	default:
-		panic("ffs_clrblock: unknown fs_fragshift %d",
+		errx(1, "ffs_clrblock: unknown fs_fragshift %d",
 		    (int)fs->fs_fragshift);
 	}
 }
@@ -121,7 +120,7 @@ ffs_setblock(struct fs *fs, u_char *cp, int32_t h)
 		cp[h >> 3] |= (0x01 << (h & 0x7));
 		return;
 	default:
-		panic("ffs_setblock: unknown fs_fragshift %d",
+		errx(1, "ffs_setblock: unknown fs_fragshift %d",
 		    (int)fs->fs_fragshift);
 	}
 }

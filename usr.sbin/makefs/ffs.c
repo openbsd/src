@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.12 2016/10/22 16:51:52 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.13 2016/10/22 17:15:28 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -1090,15 +1090,4 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 		dp2[ino_to_fsbo(fs, ino)] = dp->ffs2_din;
 	ffs_wtfs(d, fs->fs_bsize, buf, fsopts);
 	free(buf);
-}
-
-void
-panic(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vwarnx(fmt, ap);
-	va_end(ap);
-	exit(1);
 }
