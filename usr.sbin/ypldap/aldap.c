@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.33 2016/10/22 03:34:32 guenther Exp $ */
-/*	$OpenBSD: aldap.c,v 1.33 2016/10/22 03:34:32 guenther Exp $ */
+/*	$Id: aldap.c,v 1.34 2016/10/22 03:37:13 deraadt Exp $ */
+/*	$OpenBSD: aldap.c,v 1.34 2016/10/22 03:37:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -1198,7 +1198,7 @@ isu8cont(unsigned char c)
 /*
  * Parse a LDAP value
  * notes:
- *	the argument p should be a NULL terminated sequence of ASCII bytes
+ *	the argument p should be a NUL-terminated sequence of ASCII bytes
  */
 char *
 parseval(char *p, size_t len)
