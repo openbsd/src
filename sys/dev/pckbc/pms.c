@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.70 2016/05/22 22:06:11 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.71 2016/10/23 22:59:19 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -235,6 +235,12 @@ static const struct alps_model {
 #endif
 };
 
+static const struct wsmouse_param elantech_v4_cfg[] = {
+    { WSMOUSECFG_DX_SCALE, (4096 / SYNAPTICS_SCALE) },
+    { WSMOUSECFG_DY_SCALE, (4096 / SYNAPTICS_SCALE) },
+};
+#define ELANTECH_V4_NPARAMS 2
+
 int	pmsprobe(struct device *, void *, void *);
 void	pmsattach(struct device *, struct device *, void *);
 int	pmsactivate(struct device *, int);
@@ -315,8 +321,6 @@ int	elantech_set_absolute_mode_v1(struct pms_softc *);
 int	elantech_set_absolute_mode_v2(struct pms_softc *);
 int	elantech_set_absolute_mode_v3(struct pms_softc *);
 int	elantech_set_absolute_mode_v4(struct pms_softc *);
-
-void	elantech_send_mt_input(struct pms_softc *, int);
 
 struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach, NULL,
@@ -2025,11 +2029,11 @@ int
 pms_elantech_v4_configure(struct device *sc_wsmousedev,
     struct elantech_softc *elantech)
 {
-	if (wsmouse_mt_init(sc_wsmousedev, ELANTECH_MAX_FINGERS, 0))
+	if (wsmouse_mt_init(sc_wsmousedev, ELANTECH_MAX_FINGERS, 0)
+	    || wsmouse_set_params(sc_wsmousedev, elantech_v4_cfg,
+	    ELANTECH_V4_NPARAMS))
 		return (-1);
 
-	wsmouse_set_param(sc_wsmousedev, WSMPARAM_DX_DIV, SYNAPTICS_SCALE);
-	wsmouse_set_param(sc_wsmousedev, WSMPARAM_DY_DIV, SYNAPTICS_SCALE);
 	return (0);
 }
 

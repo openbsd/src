@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmousevar.h,v 1.11 2016/06/06 22:32:47 bru Exp $ */
+/* $OpenBSD: wsmousevar.h,v 1.12 2016/10/23 22:59:19 bru Exp $ */
 /* $NetBSD: wsmousevar.h,v 1.4 2000/01/08 02:57:24 takemura Exp $ */
 
 /*
@@ -114,7 +114,6 @@ int	wsmousedevprint(void *, const char *);
 
 
 struct device;
-struct mtpoint;
 
 /*
  * Type codes for wsmouse_set. REL_X/Y, MT_REL_X/Y, and TOUCH_WIDTH
@@ -140,8 +139,12 @@ enum wsmouseval {
 #define WSMOUSE_IS_MT_CODE(code) \
     ((code) >= WSMOUSE_MT_REL_X && (code) <= WSMOUSE_MT_PRESSURE)
 
-
-
+struct mtpoint {
+	int x;
+	int y;
+	int pressure;
+	int slot;		/* An output field, set by wsmouse_mtframe. */
+};
 
 /* Report button state. */
 void wsmouse_buttons(struct device *, u_int);
@@ -175,56 +178,12 @@ void wsmouse_input_sync(struct device *);
 /* Initialize MT structures (num_slots, tracking). */
 int wsmouse_mt_init(struct device *, int, int);
 
-/* Set a filter/transformation value (param type, value). */
-void wsmouse_set_param(struct device *, size_t, int);
+#define WSMOUSE_MT_SLOTS_MAX 10
+#define WSMOUSE_MT_INIT_TRACKING 1
 
 /* Switch between compatibility mode and native mode. */
 int wsmouse_set_mode(struct device *, int);
 
-
-struct mtpoint {
-	int x;
-	int y;
-	int pressure;
-	int slot;		/* An output field, set by wsmouse_mtframe. */
-};
-
-
-struct wsmouseparams {
-	int x_inv;
-	int y_inv;
-
-	int dx_mul;		/* delta scaling */
-	int dx_div;
-	int dy_mul;
-	int dy_div;
-
-	int swapxy;
-
-	int pressure_lo;
-	int pressure_hi;
-
-	int dx_max;		/* (compat mode) */
-	int dy_max;
-
-	int tracking_maxdist;
-};
-
-#define WSMPARAM_X_INV		offsetof(struct wsmouseparams, x_inv)
-#define WSMPARAM_Y_INV		offsetof(struct wsmouseparams, y_inv)
-#define WSMPARAM_DX_MUL		offsetof(struct wsmouseparams, dx_mul)
-#define WSMPARAM_DX_DIV		offsetof(struct wsmouseparams, dx_div)
-#define WSMPARAM_DY_MUL		offsetof(struct wsmouseparams, dy_mul)
-#define WSMPARAM_DY_DIV		offsetof(struct wsmouseparams, dy_div)
-#define WSMPARAM_SWAPXY		offsetof(struct wsmouseparams, swapxy)
-#define WSMPARAM_PRESSURE_LO	offsetof(struct wsmouseparams, pressure_lo)
-#define WSMPARAM_PRESSURE_HI	offsetof(struct wsmouseparams, pressure_hi)
-#define WSMPARAM_DX_MAX		offsetof(struct wsmouseparams, dx_max)
-#define WSMPARAM_DY_MAX		offsetof(struct wsmouseparams, dy_max)
-
-#define WSMPARAM_LASTFIELD	WSMPARAM_DY_MAX
-
-#define IS_WSMFLTR_PARAM(param) \
-    ((param) >= WSMPARAM_DX_MUL && (param) <= WSMPARAM_DY_DIV)
-
-#define WSMOUSE_MT_SLOTS_MAX	10
+/* Read/Set parameter values. */
+int wsmouse_get_params(struct device *, struct wsmouse_param *, u_int);
+int wsmouse_set_params(struct device *, const struct wsmouse_param *, u_int);

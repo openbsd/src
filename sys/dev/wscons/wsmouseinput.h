@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.2 2016/08/18 21:12:35 bru Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.3 2016/10/23 22:59:19 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -96,9 +96,13 @@ struct mt_state {
 
 
 struct axis_filter {
-	/* scale factor in [*.12] fixed-point format */
+	/* A scale factor in [*.12] fixed-point format */
 	int scale;
 	int rmdr;
+	/* Invert coordinates. */
+	int inv;
+	/* Ignore deltas that are greater than this limit. */
+	int dmax;
 };
 
 struct wsmouseinput {
@@ -109,10 +113,14 @@ struct wsmouseinput {
 	struct touch_state touch;
 	struct mt_state mt;
 
-	struct wsmouseparams params;
-	struct {
+	struct { /* Parameters and state of various input filters. */
 		struct axis_filter h;
 		struct axis_filter v;
+
+		int swapxy;
+		int tracking_maxdist;
+		int pressure_lo;
+		int pressure_hi;
 	} fltr;
 
 	struct wseventvar **evar;
@@ -120,9 +128,7 @@ struct wsmouseinput {
 /* wsmouseinput.flags */
 #define TPAD_COMPAT_MODE	(1 << 0)
 #define TPAD_NATIVE_MODE	(1 << 1)
-#define SCALE_DELTAS		(1 << 2)
-#define MT_TRACKING		(1 << 3)
-#define SWAPXY			(1 << 4)
+#define MT_TRACKING		(1 << 2)
 #define RESYNC			(1 << 16)
 
 struct evq_access {
@@ -148,13 +154,13 @@ void wsmouse_input_cleanup(struct wsmouseinput *);
     for ((i) = ffs(v) - 1; (i) != -1; (i) = ffs((v) & (~1 << (i))) - 1)
 
 
-#define DELTA_X_EV(flags) (((flags) & SWAPXY) ? \
+#define DELTA_X_EV(input) ((input)->fltr.swapxy ? \
     WSCONS_EVENT_MOUSE_DELTA_Y : WSCONS_EVENT_MOUSE_DELTA_X)
-#define DELTA_Y_EV(flags) (((flags) & SWAPXY) ? \
+#define DELTA_Y_EV(input) ((input)->fltr.swapxy ? \
     WSCONS_EVENT_MOUSE_DELTA_X : WSCONS_EVENT_MOUSE_DELTA_Y)
-#define ABS_X_EV(flags) (((flags) & SWAPXY) ? \
+#define ABS_X_EV(input) ((input)->fltr.swapxy ? \
     WSCONS_EVENT_MOUSE_ABSOLUTE_Y : WSCONS_EVENT_MOUSE_ABSOLUTE_X)
-#define ABS_Y_EV(flags) (((flags) & SWAPXY) ? \
+#define ABS_Y_EV(input) ((input)->fltr.swapxy ? \
     WSCONS_EVENT_MOUSE_ABSOLUTE_X : WSCONS_EVENT_MOUSE_ABSOLUTE_Y)
 #define DELTA_Z_EV	WSCONS_EVENT_MOUSE_DELTA_Z
 #define DELTA_W_EV	WSCONS_EVENT_MOUSE_DELTA_W
@@ -166,5 +172,16 @@ void wsmouse_input_cleanup(struct wsmouseinput *);
 
 /* buffer size for wsmouse_matching */
 #define MATRIX_SIZE(slots) (((slots) + 7) * (slots) * sizeof(int))
+
+
+#define WSMOUSECFG_MATCH(key, group)		\
+    ((key) < WSMOUSECFG_##group##_MAX &&	\
+    (key) >= (WSMOUSECFG_##group##_MAX & ~0xff))
+
+#define IS_WSMOUSECFG_KEY(key) \
+    WSMOUSECFG_MATCH((key), FLTR)
+
+#define WSMOUSECFG_SIZE \
+    (WSMOUSECFG_FLTR_MAX & 0xff)
 
 #endif /* _WSMOUSEINPUT_H_ */

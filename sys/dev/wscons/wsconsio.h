@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.76 2016/09/30 12:05:46 kettenis Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.77 2016/10/23 22:59:19 bru Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -275,6 +275,60 @@ struct wsmouse_calibcoords {
 #define	WSMOUSEIO_SETMODE	_IOW('W', 38, int)
 #define		WSMOUSE_COMPAT		0
 #define		WSMOUSE_NATIVE		1
+
+/*
+ * Keys of the configuration parameters in WSMOUSEIO_GETPARAMS/
+ * WSMOUSEIO_SETPARAMS calls. Arbitrary subsets can be passed, provided
+ * that all keys are valid and that the number of key/value pairs doesn't
+ * exceed the enum size.
+ *
+ * WSMOUSECFG_DX_SCALE, WSMOUSECFG_DY_SCALE:
+ *	Scale factors in [*.12] fixed-point format.
+ * WSMOUSECFG_PRESSURE_LO, WSMOUSECFG_PRESSURE_HI:
+ *	Pressure limits defining the end and the start of touches.
+ * WSMOUSECFG_TRKMAXDIST:
+ *	When tracking MT contacts, don't pair points with a distance that
+ *	exceeds this limit.
+ * WSMOUSECFG_SWAPXY:
+ *	Swap the X- and Y-axis.
+ * WSMOUSECFG_X_INV, WSMOUSECFG_Y_INV:
+ *	Map an absolute coordinate C to (INV - C), negate relative coordinates.
+ * WSMOUSECFG_DX_MAX, WSMOUSECFG_DY_MAX:
+ *	Ignore deltas that are greater than these limits (for touchpads in
+ *	WSMOUSE_COMPAT mode only).
+ */
+#define wsmousecfg_group(group)	\
+    WSMOUSECFG_##group##_MAX,	\
+    WSMOUSECFG_##group##_ADV = (WSMOUSECFG_##group##_MAX | 0xff)
+
+enum wsmousecfg {
+	WSMOUSECFG_DX_SCALE,
+	WSMOUSECFG_DY_SCALE,
+	WSMOUSECFG_PRESSURE_LO,
+	WSMOUSECFG_PRESSURE_HI,
+	WSMOUSECFG_TRKMAXDIST,
+	WSMOUSECFG_SWAPXY,
+	WSMOUSECFG_X_INV,
+	WSMOUSECFG_Y_INV,
+	WSMOUSECFG_DX_MAX,
+	WSMOUSECFG_DY_MAX,
+
+	wsmousecfg_group(FLTR),
+};
+#undef wsmousecfg_group
+
+struct wsmouse_param {
+	enum wsmousecfg key;
+	int value;
+};
+
+struct wsmouse_parameters {
+	struct wsmouse_param *params;
+	u_int nparams;
+};
+
+#define WSMOUSEIO_GETPARAMS	_IOW('W', 39, struct wsmouse_parameters)
+#define WSMOUSEIO_SETPARAMS	_IOW('W', 40, struct wsmouse_parameters)
 
 /*
  * Display ioctls (64 - 95)
