@@ -1,12 +1,4 @@
-#	$OpenBSD: files.sunxi,v 1.16 2016/10/22 15:16:25 kettenis Exp $
-
-define	sunxi {}
-device	sunxi: sunxi
-attach	sunxi at fdt
-file	arch/armv7/sunxi/sunxi_machdep.c	sunxi	needs-flag
-file	arch/armv7/sunxi/sunxi.c		sunxi
-file	arch/armv7/sunxi/sun4i.c
-file	arch/armv7/sunxi/sun7i.c
+#	$OpenBSD: files.sunxi,v 1.17 2016/10/23 18:50:34 kettenis Exp $
 
 device	sxiccmu
 attach	sxiccmu at fdt

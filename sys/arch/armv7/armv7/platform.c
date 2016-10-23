@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.18 2016/10/09 01:40:43 jsg Exp $	*/
+/*	$OpenBSD: platform.c,v 1.19 2016/10/23 18:50:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -27,7 +27,6 @@
 #include <arm/cortex/smc.h>
 
 #include "omap.h"
-#include "sunxi.h"
 #include "exynos.h"
 
 static struct armv7_platform *platform;
@@ -40,15 +39,11 @@ void	com_fdt_init_cons(void);
 void	pluart_init_cons(void);
 
 struct armv7_platform *omap_platform_match(void);
-struct armv7_platform *sunxi_platform_match(void);
 struct armv7_platform *exynos_platform_match(void);
 
 struct armv7_platform * (*plat_match[])(void) = {
 #if NOMAP > 0
 	omap_platform_match,
-#endif
-#if NSUNXI > 0
-	sunxi_platform_match,
 #endif
 #if NEXYNOS > 0
 	exynos_platform_match,
