@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.15 2016/10/21 22:12:38 jsg Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.16 2016/10/23 11:56:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4633,9 +4633,6 @@ swofp_flow_entry_put_instructions(struct mbuf **m,
 	return (0);
 
  failed:
-	m_freem(*m);
-	(*m) = NULL;
-
 	return (error);
 }
 
