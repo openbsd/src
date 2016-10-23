@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdos.c,v 1.7 2016/10/22 18:17:14 natano Exp $	*/
+/*	$OpenBSD: msdos.c,v 1.8 2016/10/23 10:22:21 natano Exp $	*/
 /*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -52,20 +52,19 @@ msdos_prep_opts(fsinfo_t *fsopts)
 {
 	struct msdos_options *msdos_opt = ecalloc(1, sizeof(*msdos_opt));
 	const option_t msdos_options[] = {
-#define AOPT(_opt, _type, _name, _min, _desc) { 			\
-	.letter = _opt,							\
+#define AOPT(_type, _name, _min, _desc) { 				\
 	.name = # _name,						\
 	.type = _min == -1 ? OPT_STRPTR :				\
 	    (_min == -2 ? OPT_BOOL :					\
 	    (sizeof(_type) == 1 ? OPT_INT8 :				\
 	    (sizeof(_type) == 2 ? OPT_INT16 :				\
 	    (sizeof(_type) == 4 ? OPT_INT32 : OPT_INT64)))),		\
-	.value = &msdos_opt->_name,				\
+	.value = &msdos_opt->_name,					\
 	.minimum = _min,						\
 	.maximum = sizeof(_type) == 1 ? 0xff :				\
 	    (sizeof(_type) == 2 ? 0xffff :				\
 	    (sizeof(_type) == 4 ? 0xffffffff : 0xffffffffffffffffLL)),	\
-	.desc = _desc,						\
+	.desc = _desc,							\
 },
 ALLOPTS
 #undef AOPT	

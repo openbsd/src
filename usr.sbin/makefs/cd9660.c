@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.10 2016/10/22 20:50:21 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.11 2016/10/23 10:22:21 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -245,59 +245,53 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 {
 	iso9660_disk *diskStructure = ecalloc(1, sizeof(*diskStructure));
 
-#define OPT_STR(letter, name, desc)  \
-	{ letter, name, NULL, OPT_STRBUF, 0, 0, desc }
+#define OPT_STR(name, desc)  \
+	{ name, NULL, OPT_STRBUF, 0, 0, desc }
 
-#define OPT_NUM(letter, name, field, min, max, desc) \
-	{ letter, name, &diskStructure->field, \
+#define OPT_NUM(name, field, min, max, desc) \
+	{ name, &diskStructure->field, \
 	  sizeof(diskStructure->field) == 8 ? OPT_INT64 : \
 	  (sizeof(diskStructure->field) == 4 ? OPT_INT32 : \
 	  (sizeof(diskStructure->field) == 2 ? OPT_INT16 : OPT_INT8)), \
 	  min, max, desc }
 
-#define OPT_BOOL(letter, name, field, desc) \
-	OPT_NUM(letter, name, field, 0, 1, desc)
+#define OPT_BOOL(name, field, desc) \
+	OPT_NUM(name, field, 0, 1, desc)
 
 	const option_t cd9660_options[] = {
-		OPT_NUM('l', "isolevel", isoLevel,
-		    1, 3, "ISO Level"),
-		OPT_NUM('v', "verbose",  verbose_level,
-		    0, 2, "Turns on verbose output"),
-
-	        OPT_BOOL('R', "rockridge", rock_ridge_enabled,
-		    "Enable Rock-Ridge extensions"),
-	        OPT_BOOL('C', "chrp-boot", chrp_boot,
-		    "Enable CHRP boot"),
-	        OPT_BOOL('K', "keep-bad-images", keep_bad_images,
-		    "Keep bad images"),
-	        OPT_BOOL('D', "allow-deep-trees", allow_deep_trees,
+	        OPT_BOOL("allow-deep-trees", allow_deep_trees,
 		    "Allow trees more than 8 levels"),
-	        OPT_BOOL('a', "allow-max-name", allow_max_name,
-		    "Allow 37 char filenames (unimplemented)"),
-	        OPT_BOOL('i', "allow-illegal-chars", allow_illegal_chars,
+	        OPT_BOOL("allow-illegal-chars", allow_illegal_chars,
 		    "Allow illegal characters in filenames"),
-	        OPT_BOOL('D', "allow-multidot", allow_multidot,
-		    "Allow multiple periods in filenames"),
-	        OPT_BOOL('o', "omit-trailing-period", omit_trailing_period,
-		    "Omit trailing periods in filenames"),
-	        OPT_BOOL('\0', "allow-lowercase", allow_lowercase,
+	        OPT_BOOL("allow-lowercase", allow_lowercase,
 		    "Allow lowercase characters in filenames"),
-		OPT_BOOL('\0', "no-trailing-padding", include_padding_areas,
+	        OPT_BOOL("allow-max-name", allow_max_name,
+		    "Allow 37 char filenames (unimplemented)"),
+	        OPT_BOOL("allow-multidot", allow_multidot,
+		    "Allow multiple periods in filenames"),
+		OPT_STR("applicationid", "Application Identifier"),
+		OPT_STR("boot-load-segment", "Boot load segment"),
+		OPT_STR("bootimage", "Boot image parameter"),
+		OPT_STR("bootimagedir", "Boot image directory"),
+	        OPT_BOOL("chrp-boot", chrp_boot, "Enable CHRP boot"),
+		OPT_STR("generic-bootimage", "Generic boot image param"),
+		OPT_STR("hard-disk-boot", "Boot from hard disk"),
+		OPT_NUM("isolevel", isoLevel, 1, 3, "ISO Level"),
+	        OPT_BOOL("keep-bad-images", keep_bad_images, "Keep bad images"),
+		OPT_STR("label", "Disk Label"),
+		OPT_STR("no-boot", "No boot support"),
+		OPT_STR("no-emul-boot", "No boot emulation"),
+		OPT_BOOL("no-trailing-padding", include_padding_areas,
 		    "Include padding areas"),
-
-		OPT_STR('A', "applicationid", "Application Identifier"),
-		OPT_STR('P', "publisher", "Publisher Identifier"),
-		OPT_STR('p', "preparer", "Preparer Identifier"),
-		OPT_STR('L', "label", "Disk Label"),
-		OPT_STR('V', "volumeid", "Volume Set Identifier"),
-		OPT_STR('B', "bootimage", "Boot image parameter"),
-		OPT_STR('G', "generic-bootimage", "Generic boot image param"),
-		OPT_STR('\0', "bootimagedir", "Boot image directory"),
-		OPT_STR('\0', "no-emul-boot", "No boot emulation"),
-		OPT_STR('\0', "no-boot", "No boot support"),
-		OPT_STR('\0', "hard-disk-boot", "Boot from hard disk"),
-		OPT_STR('\0', "boot-load-segment", "Boot load segment"),
-
+	        OPT_BOOL("omit-trailing-period", omit_trailing_period,
+		    "Omit trailing periods in filenames"),
+		OPT_STR("preparer", "Preparer Identifier"),
+		OPT_STR("publisher", "Publisher Identifier"),
+	        OPT_BOOL("rockridge", rock_ridge_enabled,
+		    "Enable Rock-Ridge extensions"),
+		OPT_NUM("verbose",  verbose_level,
+		    0, 2, "Turns on verbose output"),
+		OPT_STR("volumeid", "Volume Set Identifier"),
 		{ .name = NULL }
 	};
 
@@ -367,83 +361,70 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 
 	name = cd9660_options[i].name;
 	desc = cd9660_options[i].desc;
-	switch (cd9660_options[i].letter) {
-	case 'h':
-	case 'S':
-		rv = 0;	/* this is not handled yet */
-		break;
-	case 'L':
-		rv = cd9660_arguments_set_string(buf, desc, 32, 'd',
-		    diskStructure->primaryDescriptor.volume_id);
-		break;
-	case 'A':
+
+	if (strcmp(name, "applicationid") == 0) {
 		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
 		    diskStructure->primaryDescriptor.application_id);
-		break;
-	case 'P':
-		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
-		    diskStructure->primaryDescriptor.publisher_id);
-		break;
-	case 'p':
-		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
-		    diskStructure->primaryDescriptor.preparer_id);
-		break;
-	case 'V':
-		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
-		    diskStructure->primaryDescriptor.volume_set_id);
-		break;
-	/* Boot options */
-	case 'B':
+	} else if (strcmp(name, "boot-load-segment") == 0) {
+		if (buf[0] == '\0') {
+			warnx("Option `%s' doesn't contain a value",
+			    name);
+			rv = 0;
+		} else {
+			cd9660_eltorito_add_boot_option(diskStructure,
+			    name, buf);
+			rv = 1;
+		}
+	} else if (strcmp(name, "bootimage") == 0) {
 		if (buf[0] == '\0') {
 			warnx("The Boot Image parameter requires a valid boot"
 			" information string");
 			rv = 0;
 		} else
 			rv = cd9660_add_boot_disk(diskStructure, buf);
-		break;
-	case 'G':
+	} else if (strcmp(name, "bootimagedir") == 0) {
+		/*
+		 * XXXfvdl this is unused.
+		 */
+		if (buf[0] == '\0') {
+			warnx("The Boot Image Directory parameter"
+			 " requires a directory name");
+			rv = 0;
+		} else {
+			diskStructure->boot_image_directory =
+			     emalloc(strlen(buf) + 1);
+			/* BIG TODO: Add the max length function here */
+			rv = cd9660_arguments_set_string(buf, desc, 12,
+			    'd', diskStructure->boot_image_directory);
+		}
+	} else if (strcmp(name, "generic-bootimage") == 0) {
 		if (buf[0] == '\0') {
 			warnx("The Generic Boot Image parameter requires a"
 			    " valid boot information string");
 			rv = 0;
 		} else
 			rv = cd9660_add_generic_bootimage(diskStructure, buf);
-		break;
-	default:
-		if (strcmp(name, "bootimagedir") == 0) {
-			/*
-			 * XXXfvdl this is unused.
-			 */
-			if (buf[0] == '\0') {
-				warnx("The Boot Image Directory parameter"
-				 " requires a directory name");
-				rv = 0;
-			} else {
-				diskStructure->boot_image_directory =
-				     emalloc(strlen(buf) + 1);
-				/* BIG TODO: Add the max length function here */
-				rv = cd9660_arguments_set_string(buf, desc, 12,
-				    'd', diskStructure->boot_image_directory);
-			}
-		} else if (strcmp(name, "no-emul-boot") == 0 ||
-		    strcmp(name, "no-boot") == 0 ||
-		    strcmp(name, "hard-disk-boot") == 0) {
-			/* RRIP */
-			cd9660_eltorito_add_boot_option(diskStructure, name, 0);
-			rv = 1;
-		} else if (strcmp(name, "boot-load-segment") == 0) {
-			if (buf[0] == '\0') {
-				warnx("Option `%s' doesn't contain a value",
-				    name);
-				rv = 0;
-			} else {
-				cd9660_eltorito_add_boot_option(diskStructure,
-				    name, buf);
-				rv = 1;
-			}
-		} else
-			rv = 1;
-	}
+	} else if (strcmp(name, "label") == 0) {
+		rv = cd9660_arguments_set_string(buf, desc, 32, 'd',
+		    diskStructure->primaryDescriptor.volume_id);
+	} else if (strcmp(name, "preparer") == 0) {
+		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		    diskStructure->primaryDescriptor.preparer_id);
+	} else if (strcmp(name, "publisher") == 0) {
+		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		    diskStructure->primaryDescriptor.publisher_id);
+	} else if (strcmp(name, "volumeid") == 0) {
+		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		    diskStructure->primaryDescriptor.volume_set_id);
+	} else if (strcmp(name, "hard-disk-boot") == 0 ||
+	    strcmp(name, "no-boot") == 0 ||
+	    strcmp(name, "no-emul-boot") == 0) {
+		/* RRIP */
+		cd9660_eltorito_add_boot_option(diskStructure, name, 0);
+		rv = 1;
+	} else
+		rv = 1;
+
 	return rv;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.16 2016/10/22 19:43:50 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.17 2016/10/23 10:22:21 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -137,30 +137,27 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	ffs_opt_t *ffs_opts = ecalloc(1, sizeof(*ffs_opts));
 
 	const option_t ffs_options[] = {
-	    { 'b', "bsize", &ffs_opts->bsize, OPT_INT32,
-	      1, INT_MAX, "block size" },
-	    { 'f', "fsize", &ffs_opts->fsize, OPT_INT32,
-	      1, INT_MAX, "fragment size" },
-	    { 'd', "density", &ffs_opts->density, OPT_INT32,
-	      1, INT_MAX, "bytes per inode" },
-	    { 'm', "minfree", &ffs_opts->minfree, OPT_INT32,
-	      0, 99, "minfree" },
-	    { 'M', "maxbpg", &ffs_opts->maxbpg, OPT_INT32,
-	      1, INT_MAX, "max blocks per file in a cg" },
-	    { 'a', "avgfilesize", &ffs_opts->avgfilesize, OPT_INT32,
+	    { "avgfilesize", &ffs_opts->avgfilesize, OPT_INT32,
 	      1, INT_MAX, "expected average file size" },
-	    { 'n', "avgfpdir", &ffs_opts->avgfpdir, OPT_INT32,
+	    { "avgfpdir", &ffs_opts->avgfpdir, OPT_INT32,
 	      1, INT_MAX, "expected # of files per directory" },
-	    { 'x', "extent", &ffs_opts->maxbsize, OPT_INT32,
+	    { "bsize", &ffs_opts->bsize, OPT_INT32, 1, INT_MAX, "block size" },
+	    { "density", &ffs_opts->density, OPT_INT32,
+	      1, INT_MAX, "bytes per inode" },
+	    { "extent", &ffs_opts->maxbsize, OPT_INT32,
 	      1, INT_MAX, "maximum # extent size" },
-	    { 'g', "maxbpcg", &ffs_opts->maxblkspercg, OPT_INT32,
-	      1, INT_MAX, "max # of blocks per group" },
-	    { 'v', "version", &ffs_opts->version, OPT_INT32,
-	      1, 2, "UFS version" },
-	    { 'o', "optimization", NULL, OPT_STRBUF,
-	      0, 0, "Optimization (time|space)" },
-	    { 'l', "label", ffs_opts->label, OPT_STRARRAY,
+	    { "fsize", &ffs_opts->fsize, OPT_INT32,
+	      1, INT_MAX, "fragment size" },
+	    { "label", ffs_opts->label, OPT_STRARRAY,
 	      1, sizeof(ffs_opts->label), "UFS label" },
+	    { "maxbpcg", &ffs_opts->maxblkspercg, OPT_INT32,
+	      1, INT_MAX, "max # of blocks per group" },
+	    { "maxbpg", &ffs_opts->maxbpg, OPT_INT32,
+	      1, INT_MAX, "max blocks per file in a cg" },
+	    { "minfree", &ffs_opts->minfree, OPT_INT32, 0, 99, "minfree" },
+	    { "optimization", NULL, OPT_STRBUF,
+	      0, 0, "Optimization (time|space)" },
+	    { "version", &ffs_opts->version, OPT_INT32, 1, 2, "UFS version" },
 	    { .name = NULL }
 	};
 
@@ -207,8 +204,7 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	if (ffs_options[rv].name == NULL)
 		abort();
 
-	switch (ffs_options[rv].letter) {
-	case 'o':
+	if (strcmp(ffs_options[rv].name, "optimization") == 0) {
 		if (strcmp(buf, "time") == 0) {
 			ffs_opts->optimization = FS_OPTTIME;
 		} else if (strcmp(buf, "space") == 0) {
@@ -217,9 +213,6 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 			warnx("Invalid optimization `%s'", buf);
 			return 0;
 		}
-		break;
-	default:
-		break;
 	}
 	return 1;
 }

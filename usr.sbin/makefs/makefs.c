@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.14 2016/10/22 20:50:21 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.15 2016/10/23 10:22:21 natano Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -244,10 +244,7 @@ set_option_var(const option_t *options, const char *var, const char *val,
 	    options[i].minimum, options[i].maximum); break
 
 	for (i = 0; options[i].name != NULL; i++) {
-		if (var[1] == '\0') {
-			if (options[i].letter != var[0])
-				continue;
-		} else if (strcmp(options[i].name, var) != 0)
+		if (strcmp(options[i].name, var) != 0)
 			continue;
 		switch (options[i].type) {
 		case OPT_BOOL:
@@ -352,9 +349,7 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 
 		fprintf(stderr, "\n%s specific options:\n", fstype->type);
 		for (i = 0; o[i].name != NULL; i++)
-			fprintf(stderr, "\t%c%c%20.20s\t%s\n",
-			    o[i].letter ? o[i].letter : ' ',
-			    o[i].letter ? ',' : ' ',
+			fprintf(stderr, "\t%-20.20s\t%s\n",
 			    o[i].name, o[i].desc);
 	}
 	exit(1);

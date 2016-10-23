@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs_msdos.h,v 1.2 2016/10/22 20:50:21 natano Exp $	*/
+/*	$OpenBSD: mkfs_msdos.h,v 1.3 2016/10/23 10:22:21 natano Exp $	*/
 /*	$NetBSD: mkfs_msdos.h,v 1.3 2015/10/16 17:38:17 christos Exp $	*/
 
 /*-
@@ -33,32 +33,32 @@
 #include <sys/types.h>
 
 #define ALLOPTS \
-AOPT('@', off_t, offset, 0, "Offset in device") \
-AOPT('B', char *, bootstrap, -1, "Bootstrap file") \
-AOPT('C', off_t, create_size, 0, "Create file") \
-AOPT('F', uint8_t,  fat_type, 12, "FAT type (12, 16, or 32)") \
-AOPT('I', uint32_t, volume_id, 0, "Volume ID") \
-AOPT('L', char *, volume_label, -1, "Volume Label") \
-AOPT('N', int, no_create, -2, "Don't create filesystem, print params only") \
-AOPT('O', char *, OEM_string, -1, "OEM string") \
-AOPT('S', uint16_t, bytes_per_sector, 1, "Bytes per sector") \
-AOPT('a', uint32_t, sectors_per_fat, 1, "Sectors per FAT") \
-AOPT('b', uint32_t, block_size, 1, "Block size") \
-AOPT('c', uint8_t, sectors_per_cluster, 1, "Sectors per cluster") \
-AOPT('e', uint16_t, directory_entries, 1, "Directory entries") \
-AOPT('f', char *, floppy, -1, "Standard format floppies (160,180,320,360,640,720,1200,1232,1440,2880)") \
-AOPT('h', uint16_t, drive_heads, 1, "Drive heads") \
-AOPT('i', uint16_t, info_sector, 1, "Info sector") \
-AOPT('k', uint16_t, backup_sector, 1, "Backup sector") \
-AOPT('m', uint8_t, media_descriptor, 0, "Media descriptor") \
-AOPT('n', uint8_t, num_FAT, 1, "Number of FATs") \
-AOPT('o', uint32_t, hidden_sectors, 0, "Hidden sectors") \
-AOPT('r', uint16_t, reserved_sectors, 1, "Reserved sectors") \
-AOPT('s', uint32_t, size, 1, "File System size") \
-AOPT('u', uint16_t, sectors_per_track, 1, "Sectors per track")
+AOPT(uint16_t, backup_sector, 1, "Backup sector") \
+AOPT(uint32_t, block_size, 1, "Block size") \
+AOPT(char *, bootstrap, -1, "Bootstrap file") \
+AOPT(uint16_t, bytes_per_sector, 1, "Bytes per sector") \
+AOPT(off_t, create_size, 0, "Create file") \
+AOPT(uint16_t, directory_entries, 1, "Directory entries") \
+AOPT(uint16_t, drive_heads, 1, "Drive heads") \
+AOPT(uint8_t,  fat_type, 12, "FAT type (12, 16, or 32)") \
+AOPT(char *, floppy, -1, "Standard format floppies (160,180,320,360,640,720,1200,1232,1440,2880)") \
+AOPT(uint32_t, hidden_sectors, 0, "Hidden sectors") \
+AOPT(uint16_t, info_sector, 1, "Info sector") \
+AOPT(uint8_t, media_descriptor, 0, "Media descriptor") \
+AOPT(int, no_create, -2, "Don't create filesystem, print params only") \
+AOPT(uint8_t, num_FAT, 1, "Number of FATs") \
+AOPT(char *, OEM_string, -1, "OEM string") \
+AOPT(off_t, offset, 0, "Offset in device") \
+AOPT(uint16_t, reserved_sectors, 1, "Reserved sectors") \
+AOPT(uint8_t, sectors_per_cluster, 1, "Sectors per cluster") \
+AOPT(uint32_t, sectors_per_fat, 1, "Sectors per FAT") \
+AOPT(uint16_t, sectors_per_track, 1, "Sectors per track") \
+AOPT(uint32_t, size, 1, "File System size") \
+AOPT(uint32_t, volume_id, 0, "Volume ID") \
+AOPT(char *, volume_label, -1, "Volume Label")
 
 struct msdos_options {
-#define AOPT(_opt, _type, _name, _min, _desc) _type _name;
+#define AOPT(_type, _name, _min, _desc) _type _name;
 ALLOPTS
 #undef AOPT	
 	uint32_t volume_id_set:1;

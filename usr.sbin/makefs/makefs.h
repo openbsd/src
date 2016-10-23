@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.h,v 1.9 2016/10/22 19:20:36 natano Exp $	*/
+/*	$OpenBSD: makefs.h,v 1.10 2016/10/23 10:22:21 natano Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ typedef enum {
 } opttype_t;
 
 typedef struct {
-	char		letter;		/* option letter NUL for none */
 	const char	*name;		/* option name */
 	void		*value;		/* where to stuff the value */
 	opttype_t	type;		/* type of entry */
