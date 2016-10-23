@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsevar.c,v 1.15 2013/11/22 15:47:35 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.16 2016/10/23 14:54:14 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -79,6 +79,8 @@ parse_variable_assignment(const char *line, int ctxt)
 #define VAR_APPEND	2
 #define VAR_SHELL	4
 #define VAR_OPT		8
+#define VAR_LAZYSHELL	16
+#define VAR_SUNSHELL	32
 	int type;
 	struct Name name;
 
@@ -90,11 +92,14 @@ parse_variable_assignment(const char *line, int ctxt)
 
 	type = VAR_NORMAL;
 
+	/* double operators (except for :) are forbidden */
+	/* OPT and APPEND don't match */
+	/* APPEND and LAZYSHELL can't really work */
 	while (*arg != '=') {
 		/* Check operator type.  */
 		switch (*arg++) {
 		case '+':
-			if (type & (VAR_OPT|VAR_APPEND))
+			if (type & (VAR_OPT|VAR_LAZYSHELL|VAR_APPEND))
 				type = VAR_INVALID;
 			else
 				type |= VAR_APPEND;
@@ -110,7 +115,7 @@ parse_variable_assignment(const char *line, int ctxt)
 		case ':':
 			if (FEATURES(FEATURE_SUNSHCMD) &&
 			    strncmp(arg, "sh", 2) == 0) {
-				type = VAR_SHELL;
+				type = VAR_SUNSHELL;
 				arg += 2;
 				while (*arg != '=' && *arg != '\0')
 					arg++;
@@ -123,7 +128,12 @@ parse_variable_assignment(const char *line, int ctxt)
 			break;
 
 		case '!':
-			if (type & VAR_SHELL)
+			if (type & VAR_SHELL) {
+				if (type & (VAR_APPEND))
+					type = VAR_INVALID;
+				else
+					type = VAR_LAZYSHELL;
+			} else if (type & (VAR_LAZYSHELL|VAR_SUNSHELL))
 				type = VAR_INVALID;
 			else
 				type |= VAR_SHELL;
@@ -147,7 +157,7 @@ parse_variable_assignment(const char *line, int ctxt)
 		VarName_Free(&name);
 		return true;
 	}
-	if (type & VAR_SHELL) {
+	if (type & (VAR_SHELL|VAR_SUNSHELL)) {
 		char *err;
 
 		if (strchr(arg, '$') != NULL) {
@@ -163,6 +173,13 @@ parse_variable_assignment(const char *line, int ctxt)
 		if (err)
 			Parse_Error(PARSE_WARNING, err, arg);
 		arg = res1;
+	}
+	if (type & VAR_LAZYSHELL) {
+		if (strchr(arg, '$') != NULL) {
+			/* There's a dollar sign in the command, so perform
+			 * variable expansion on the whole thing. */
+			arg = Var_Subst(arg, NULL, true);
+		}
 	}
 	if (type & VAR_SUBST) {
 		/*
@@ -195,6 +212,8 @@ parse_variable_assignment(const char *line, int ctxt)
 		Var_Appendi_with_ctxt(name.s, name.e, arg, ctxt);
 	else
 		Var_Seti_with_ctxt(name.s, name.e, arg, ctxt);
+	if (type & VAR_LAZYSHELL)
+		Var_Mark(name.s, name.e, VAR_EXEC_LATER);
 
 	VarName_Free(&name);
 	free(res2);

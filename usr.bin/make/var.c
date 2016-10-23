@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.100 2016/10/14 09:27:21 natano Exp $	*/
+/*	$OpenBSD: var.c,v 1.101 2016/10/23 14:54:14 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include "config.h"
 #include "defines.h"
 #include "buf.h"
+#include "cmd_exec.h"
 #include "stats.h"
 #include "pathnames.h"
 #include "varmodifiers.h"
@@ -241,7 +242,10 @@ static void fill_from_env(Var *);
 static Var *create_var(const char *, const char *);
 static void var_set_initial_value(Var *, const char *);
 static void var_set_value(Var *, const char *);
-#define var_get_value(v)	Buf_Retrieve(&((v)->val))
+#define var_get_value(v)	((v)->flags & VAR_EXEC_LATER ? \
+	var_exec_cmd(v) : \
+	Buf_Retrieve(&((v)->val)))
+static char *var_exec_cmd(Var *);
 static void var_append_value(Var *, const char *);
 static void poison_check(Var *);
 static void var_set_append(const char *, const char *, const char *, int, bool);
@@ -538,10 +542,10 @@ find_global_var(const char *name, const char *ename, uint32_t k)
 	return v;
 }
 
-/* mark variable as poisoned, in a given setup.
+/* mark variable with special flags, in a given setup.
  */
 void
-Var_MarkPoisoned(const char *name, const char *ename, unsigned int type)
+Var_Mark(const char *name, const char *ename, unsigned int type)
 {
 	Var   *v;
 	uint32_t	k;
@@ -678,6 +682,21 @@ Var_Appendi_with_ctxt(const char *name, const char *ename, const char *val,
     int ctxt)
 {
 	var_set_append(name, ename, val, ctxt, true);
+}
+
+static char *
+var_exec_cmd(Var *v)
+{
+	char *arg = Buf_Retrieve(&(v->val));
+	char *err;
+	char *res1;
+	res1 = Cmd_Exec(arg, &err);
+	if (err)
+		Parse_Error(PARSE_WARNING, err, arg);
+	var_set_value(v, res1);
+	free(res1);
+	v->flags &= ~VAR_EXEC_LATER;
+	return Buf_Retrieve(&(v->val));
 }
 
 /* XXX different semantics for Var_Valuei() and Var_Definedi():

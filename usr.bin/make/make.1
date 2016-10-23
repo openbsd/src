@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.120 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.121 2016/10/23 14:54:14 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: October 23 2016 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -530,11 +530,24 @@ extension
 .Pc .
 Normally, expansion is not done until the variable is referenced.
 .It Ic \&!=
-Expand the value and pass it to the shell for execution and assign
-the result to the variable.
-Any newlines in the result are replaced with spaces
+Perform variable expansion and pass the result to the shell for 
+execution on the spot, assigning the result to the variable.
+Any newlines in the result are also replaced with spaces
 .Po
 .Bx
+extension
+.Pc .
+.It Ic \&!!=
+Perform variable expansion on the spot and pass the result to the shell 
+for execution only when the value is needed, assigning the result to 
+the variable.
+.Pp
+This is almost identical to
+.Ic \&!=
+except that a shell is only run when the variable value is needed.
+Any newlines in the result are also replaced with spaces
+.Po
+.Ox
 extension
 .Pc .
 .El
@@ -557,6 +570,12 @@ and put its output into
 if
 .Va A
 is not yet defined.
+.Pp
+Combinations that do not make sense, such as
+.Bd -literal -offset indent
+A +!!= cmd
+.Ed
+will not work.
 .Pp
 Variables are expanded by surrounding the variable name with either
 curly braces

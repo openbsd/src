@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.117 2016/10/21 16:12:38 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.118 2016/10/23 14:54:14 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1321,7 +1321,7 @@ handle_poison(const char *line)
 		    line);
 		return false;
 	} else {
-		Var_MarkPoisoned(name, ename, type);
+		Var_Mark(name, ename, type);
 		return true;
 	}
 }
