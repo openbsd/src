@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.12 2016/10/06 18:15:44 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.13 2016/10/23 19:06:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -226,8 +226,6 @@ struct board_id {
 };
 
 struct board_id board_id_table[] = {
-	{ "allwinner,sun4i-a10",		4104 },
-	{ "allwinner,sun7i-a20",		4283 },
 	{ "arm,vexpress",			2272 },
 	{ "google,snow",			3774 },
 	{ "google,spring",			3774 },
