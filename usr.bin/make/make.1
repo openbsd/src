@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.121 2016/10/23 14:54:14 espie Exp $
+.\"	$OpenBSD: make.1,v 1.122 2016/10/23 17:27:01 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -530,7 +530,7 @@ extension
 .Pc .
 Normally, expansion is not done until the variable is referenced.
 .It Ic \&!=
-Perform variable expansion and pass the result to the shell for 
+Perform variable expansion and pass the result to the shell for
 execution on the spot, assigning the result to the variable.
 Any newlines in the result are also replaced with spaces
 .Po
@@ -538,8 +538,8 @@ Any newlines in the result are also replaced with spaces
 extension
 .Pc .
 .It Ic \&!!=
-Perform variable expansion on the spot and pass the result to the shell 
-for execution only when the value is needed, assigning the result to 
+Perform variable expansion on the spot and pass the result to the shell
+for execution only when the value is needed, assigning the result to
 the variable.
 .Pp
 This is almost identical to
