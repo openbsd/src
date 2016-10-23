@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.11 2016/10/23 10:22:21 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.12 2016/10/23 10:32:42 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -194,7 +194,6 @@ cd9660_set_defaults(iso9660_disk *diskStructure)
 
 	/* Set up defaults in our own structure */
 	diskStructure->verbose_level = 0;
-	diskStructure->keep_bad_images = 0;
 	diskStructure->isoLevel = 2;
 
 	diskStructure->rock_ridge_enabled = 0;
@@ -277,7 +276,6 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		OPT_STR("generic-bootimage", "Generic boot image param"),
 		OPT_STR("hard-disk-boot", "Boot from hard disk"),
 		OPT_NUM("isolevel", isoLevel, 1, 3, "ISO Level"),
-	        OPT_BOOL("keep-bad-images", keep_bad_images, "Keep bad images"),
 		OPT_STR("label", "Disk Label"),
 		OPT_STR("no-boot", "No boot support"),
 		OPT_STR("no-emul-boot", "No boot emulation"),

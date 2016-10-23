@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_write.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: cd9660_write.c,v 1.4 2016/10/23 10:32:42 natano Exp $	*/
 /*	$NetBSD: cd9660_write.c,v 1.17 2013/10/19 17:16:37 christos Exp $	*/
 
 /*
@@ -128,8 +128,7 @@ cd9660_write_image(iso9660_disk *diskStructure, const char* image)
 
 cleanup_bad_image:
 	fclose(fd);
-	if (!diskStructure->keep_bad_images)
-		unlink(image);
+	unlink(image);
 	if (diskStructure->verbose_level > 0)
 		printf("Bad image cleaned up\n");
 	return 0;
