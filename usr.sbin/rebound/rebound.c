@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.78 2016/10/16 00:08:31 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.79 2016/10/23 00:40:39 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -230,7 +230,7 @@ freerequest(struct request *req)
 		TAILQ_REMOVE(&reqfifo, req, fifo);
 		close(req->s);
 	}
-	if (req->client != -1)
+	if (req->tcp && req->client != -1)
 		close(req->client);
 	if ((ent = req->cacheent) && !ent->resp) {
 		free(ent->req);
@@ -300,7 +300,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	req->ts.tv_sec += 30;
 	req->s = -1;
 
-	req->client = -1;
+	req->client = ud;
 	memcpy(&req->from, &from, fromlen);
 	req->fromlen = fromlen;
 
@@ -396,7 +396,7 @@ minttl(struct dnspacket *resp, u_int rlen)
 }
 
 static void
-sendreply(int ud, struct request *req)
+sendreply(struct request *req)
 {
 	uint8_t buf[65536];
 	struct dnspacket *resp;
@@ -420,7 +420,7 @@ sendreply(int ud, struct request *req)
 			return;
 		strlcpy(resp->qname, req->origname, strlen(resp->qname) + 1);
 	}
-	sendto(ud, buf, r, 0, &req->from.a, req->fromlen);
+	sendto(req->client, buf, r, 0, &req->from.a, req->fromlen);
 	if ((ent = req->cacheent)) {
 		/*
 		 * we do this first, because there's a potential race against
@@ -600,7 +600,7 @@ workerinit(void)
 }
 
 static int
-workerloop(int conffd, int ud, int ld)
+workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 {
 	union sockun remoteaddr;
 	struct kevent ch[2], kev[4];
@@ -627,10 +627,14 @@ workerloop(int conffd, int ud, int ld)
 
 	EV_SET(&kev[0], ud, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[1], ld, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[2], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[3], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev[2], ud6, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev[3], ld6, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	if (kevent(kq, kev, 4, NULL, 0, NULL) == -1)
 		logerr("kevent4: %d", errno);
+	EV_SET(&kev[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev[1], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	if (kevent(kq, kev, 2, NULL, 0, NULL) == -1)
+		logerr("kevent2: %d", errno);
 	logmsg(LOG_INFO, "worker process going to work");
 	while (1) {
 		r = kevent(kq, NULL, 0, kev, 4, timeout);
@@ -673,14 +677,14 @@ workerloop(int conffd, int ud, int ld)
 				}
 			} else if (kev[i].filter != EVFILT_READ) {
 				logerr("don't know what happened");
-			} else if (kev[i].ident == ud) {
-				if ((req = newrequest(ud, &remoteaddr.a))) {
+			} else if (kev[i].ident == ud || kev[i].ident == ud6) {
+				if ((req = newrequest(kev[i].ident, &remoteaddr.a))) {
 					EV_SET(&ch[0], req->s, EVFILT_READ,
 					    EV_ADD, 0, 0, req);
 					kevent(kq, ch, 1, NULL, 0, NULL);
 				}
-			} else if (kev[i].ident == ld) {
-				if ((req = newtcprequest(ld, &remoteaddr.a))) {
+			} else if (kev[i].ident == ld || kev[i].ident == ld6) {
+				if ((req = newtcprequest(kev[i].ident, &remoteaddr.a))) {
 					EV_SET(&ch[0], req->s,
 					    req->tcp == 1 ? EVFILT_WRITE :
 					    EVFILT_READ, EV_ADD, 0, 0, req);
@@ -689,7 +693,7 @@ workerloop(int conffd, int ud, int ld)
 			} else {
 				req = kev[i].udata;
 				if (req->tcp == 0)
-					sendreply(ud, req);
+					sendreply(req);
 				freerequest(req);
 			}
 		}
@@ -759,11 +763,11 @@ openconfig(const char *confname, int kq)
 }
 
 static pid_t
-reexec(int conffd, int ud, int ld)
+reexec(int conffd, int ud, int ld, int ud6, int ld6)
 {
 	pid_t child;
 
-	if (conffd != 6 || ud != 3 || ld != 4)
+	if (conffd != 8 || ud != 3 || ld != 4 || ud6 != 5 || ld6 != 6)
 		logerr("can't re-exec, fds are wrong");
 
 	switch ((child = fork())) {
@@ -780,7 +784,7 @@ reexec(int conffd, int ud, int ld)
 }
 
 static int
-monitorloop(int ud, int ld, const char *confname)
+monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 {
 	pid_t child;
 	struct kevent kev;
@@ -804,7 +808,7 @@ monitorloop(int ud, int ld, const char *confname)
 		if (conffd == -1)
 			conffd = openconfig(confname, kq);
 
-		child = reexec(conffd, ud, ld);
+		child = reexec(conffd, ud, ld, ud6, ld6);
 
 		/* monitor child */
 		EV_SET(&kev, child, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
@@ -881,7 +885,7 @@ main(int argc, char **argv)
 	int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
 	int jackport = 54;
 	union sockun bindaddr;
-	int ld, ud, ch;
+	int ld, ld6, ud, ud6, ch;
 	int one = 1;
 	const char *confname = "/etc/resolv.conf";
 
@@ -902,7 +906,7 @@ main(int argc, char **argv)
 		case 'W':
 			daemonized = 1;
 			/* parent responsible for setting up fds */
-			return workerloop(6, 3, 4);
+			return workerloop(8, 3, 4, 5, 6);
 		default:
 			usage();
 			break;
@@ -938,17 +942,38 @@ main(int argc, char **argv)
 	if (listen(ld, 10) == -1)
 		logerr("listen: %s", strerror(errno));
 
+	memset(&bindaddr, 0, sizeof(bindaddr));
+	bindaddr.i6.sin6_len = sizeof(bindaddr.i6);
+	bindaddr.i6.sin6_family = AF_INET6;
+	bindaddr.i6.sin6_port = htons(jackport);
+	bindaddr.i6.sin6_addr = in6addr_loopback;
+
+	ud6 = socket(AF_INET6, SOCK_DGRAM, 0);
+	if (ud6 == -1)
+		logerr("socket: %s", strerror(errno));
+	if (bind(ud6, &bindaddr.a, bindaddr.a.sa_len) == -1)
+		logerr("bind: %s", strerror(errno));
+
+	ld6 = socket(AF_INET6, SOCK_STREAM, 0);
+	if (ld6 == -1)
+		logerr("socket: %s", strerror(errno));
+	setsockopt(ld6, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+	if (bind(ld6, &bindaddr.a, bindaddr.a.sa_len) == -1)
+		logerr("bind: %s", strerror(errno));
+	if (listen(ld6, 10) == -1)
+		logerr("listen: %s", strerror(errno));
+
 	atexit(resetport);
 	sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
 	
 	if (debug) {
 		int conffd = openconfig(confname, -1);
-		return workerloop(conffd, ud, ld);
+		return workerloop(conffd, ud, ld, ud6, ld6);
 	}
 
 	if (daemon(0, 0) == -1)
 		logerr("daemon: %s", strerror(errno));
 	daemonized = 1;
 
-	return monitorloop(ud, ld, confname);
+	return monitorloop(ud, ld, ud6, ld6, confname);
 }
