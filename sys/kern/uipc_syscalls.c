@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.136 2016/10/23 00:42:49 tedu Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.137 2016/10/23 03:22:37 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -152,6 +152,7 @@ dns_portcheck(struct proc *p, struct socket *so, void *nam, u_int *namelen)
 			*namelen = sizeof(sin);
 		}
 		break;
+#ifdef INET6
 	case AF_INET6:
 		if (*namelen < sizeof(struct sockaddr_in6))
 			break;
@@ -167,6 +168,7 @@ dns_portcheck(struct proc *p, struct socket *so, void *nam, u_int *namelen)
 			memcpy(nam, &sin6, sizeof(sin6));
 			*namelen = sizeof(sin6);
 		}
+#endif
 	}
 	if (error && p->p_p->ps_flags & PS_PLEDGE)
 		return (pledge_fail(p, EPERM, PLEDGE_DNS));
