@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs_msdos.h,v 1.3 2016/10/23 10:22:21 natano Exp $	*/
+/*	$OpenBSD: mkfs_msdos.h,v 1.4 2016/10/23 10:58:45 natano Exp $	*/
 /*	$NetBSD: mkfs_msdos.h,v 1.3 2015/10/16 17:38:17 christos Exp $	*/
 
 /*-
@@ -45,7 +45,6 @@ AOPT(char *, floppy, -1, "Standard format floppies (160,180,320,360,640,720,1200
 AOPT(uint32_t, hidden_sectors, 0, "Hidden sectors") \
 AOPT(uint16_t, info_sector, 1, "Info sector") \
 AOPT(uint8_t, media_descriptor, 0, "Media descriptor") \
-AOPT(int, no_create, -2, "Don't create filesystem, print params only") \
 AOPT(uint8_t, num_FAT, 1, "Number of FATs") \
 AOPT(char *, OEM_string, -1, "OEM string") \
 AOPT(off_t, offset, 0, "Offset in device") \

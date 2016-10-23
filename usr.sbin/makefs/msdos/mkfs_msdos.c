@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs_msdos.c,v 1.1 2016/10/18 17:05:30 natano Exp $	*/
+/*	$OpenBSD: mkfs_msdos.c,v 1.2 2016/10/23 10:58:45 natano Exp $	*/
 /*	$NetBSD: mkfs_msdos.c,v 1.10 2016/04/03 11:00:13 mlelstv Exp $	*/
 
 /*
@@ -251,10 +251,6 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	return -1;
     }
     if (o.create_size) {
-	if (o.no_create) {
-	    warnx("create (-C) is incompatible with -N");
-	    return -1;
-	}
 	if (o.offset == 0)
 		oflags |= O_TRUNC;
 	fd = open(fname, oflags, 0644);
@@ -268,7 +264,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	    return -1;
 	}
 	(void)lseek(fd, 0, SEEK_SET);
-    } else if ((fd = open(fname, o.no_create ? O_RDONLY : O_RDWR)) == -1 ||
+    } else if ((fd = open(fname, O_RDWR)) == -1 ||
 	fstat(fd, &sb)) {
 	warn("%s", fname);
 	return -1;
@@ -592,133 +588,132 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
     if (ch != 0)
 	printf("MBR type: %d\n", ch);
     print_bpb(&bpb);
-    if (!o.no_create) {
-	gettimeofday(&tv, NULL);
-	now = tv.tv_sec;
-	tm = localtime(&now);
-	if (!(img = malloc(bpb.bps)))
-	    err(1, NULL);
-	dir = bpb.res + (bpb.spf ? bpb.spf : bpb.bspf) * bpb.nft;
-	signal(SIGINFO, infohandler);
-	for (lsn = 0; lsn < dir + (o.fat_type == 32 ? bpb.spc : rds); lsn++) {
-	    if (got_siginfo) {
-		fprintf(stderr,"%s: writing sector %u of %u (%u%%)\n",
-		    fname,lsn,(dir + (o.fat_type == 32 ? bpb.spc : rds)),
-		    (lsn*100)/(dir + (o.fat_type == 32 ? bpb.spc : rds)));
-		got_siginfo = 0;
-	    }
-	    x = lsn;
-	    if (o.bootstrap &&
-		o.fat_type == 32 && bpb.bkbs != MAXU16 &&
-		bss <= bpb.bkbs && x >= bpb.bkbs) {
-		x -= bpb.bkbs;
-		if (!x && lseek(fd1, o.offset, SEEK_SET)) {
-		    warn("%s", bname);
-		    return -1;
-		}
-	    }
-	    if (o.bootstrap && x < bss) {
-		if ((n = read(fd1, img, bpb.bps)) == -1) {
-		    warn("%s", bname);
-		    return -1;
-		}
-		if ((size_t)n != bpb.bps) {
-		    warnx("%s: can't read sector %u", bname, x);
-		    return -1;
-		}
-	    } else
-		memset(img, 0, bpb.bps);
-	    if (!lsn ||
-	      (o.fat_type == 32 && bpb.bkbs != MAXU16 && lsn == bpb.bkbs)) {
-		x1 = sizeof(struct bs);
-		bsbpb = (struct bsbpb *)(img + x1);
-		mk2(bsbpb->bps, bpb.bps);
-		mk1(bsbpb->spc, bpb.spc);
-		mk2(bsbpb->res, bpb.res);
-		mk1(bsbpb->nft, bpb.nft);
-		mk2(bsbpb->rde, bpb.rde);
-		mk2(bsbpb->sec, bpb.sec);
-		mk1(bsbpb->mid, bpb.mid);
-		mk2(bsbpb->spf, bpb.spf);
-		mk2(bsbpb->spt, bpb.spt);
-		mk2(bsbpb->hds, bpb.hds);
-		mk4(bsbpb->hid, bpb.hid);
-		mk4(bsbpb->bsec, bpb.bsec);
-		x1 += sizeof(struct bsbpb);
-		if (o.fat_type == 32) {
-		    bsxbpb = (struct bsxbpb *)(img + x1);
-		    mk4(bsxbpb->bspf, bpb.bspf);
-		    mk2(bsxbpb->xflg, 0);
-		    mk2(bsxbpb->vers, 0);
-		    mk4(bsxbpb->rdcl, bpb.rdcl);
-		    mk2(bsxbpb->infs, bpb.infs);
-		    mk2(bsxbpb->bkbs, bpb.bkbs);
-		    x1 += sizeof(struct bsxbpb);
-		}
-		bsx = (struct bsx *)(img + x1);
-		mk1(bsx->sig, 0x29);
-		if (o.volume_id_set)
-		    x = o.volume_id;
-		else
-		    x = (((u_int)(1 + tm->tm_mon) << 8 |
-			  (u_int)tm->tm_mday) +
-			 ((u_int)tm->tm_sec << 8 |
-			  (u_int)(tv.tv_usec / 10))) << 16 |
-			((u_int)(1900 + tm->tm_year) +
-			 ((u_int)tm->tm_hour << 8 |
-			  (u_int)tm->tm_min));
-		mk4(bsx->volid, x);
-		mklabel(bsx->label, o.volume_label ? o.volume_label : "NO NAME");
-		snprintf(buf, sizeof(buf), "FAT%u", o.fat_type);
-		setstr(bsx->type, buf, sizeof(bsx->type));
-		if (!o.bootstrap) {
-		    x1 += sizeof(struct bsx);
-		    bs = (struct bs *)img;
-		    mk1(bs->jmp[0], 0xeb);
-		    mk1(bs->jmp[1], x1 - 2);
-		    mk1(bs->jmp[2], 0x90);
-		    setstr(bs->oem, o.OEM_string ? o.OEM_string : "NetBSD",
-			   sizeof(bs->oem));
-		    memcpy(img + x1, bootcode, sizeof(bootcode));
-		    mk2(img + MINBPS - 2, DOSMAGIC);
-		}
-	    } else if (o.fat_type == 32 && bpb.infs != MAXU16 &&
-		       (lsn == bpb.infs ||
-			(bpb.bkbs != MAXU16 &&
-			 lsn == bpb.bkbs + bpb.infs))) {
-		mk4(img, 0x41615252);
-		mk4(img + MINBPS - 28, 0x61417272);
-		mk4(img + MINBPS - 24, 0xffffffff);
-		mk4(img + MINBPS - 20, 0xffffffff);
-		mk2(img + MINBPS - 2, DOSMAGIC);
-	    } else if (lsn >= bpb.res && lsn < dir &&
-		       !((lsn - bpb.res) %
-			 (bpb.spf ? bpb.spf : bpb.bspf))) {
-		mk1(img[0], bpb.mid);
-		for (x = 1; x < o.fat_type * (o.fat_type == 32 ? 3U : 2U) / 8U; x++)
-		    mk1(img[x], o.fat_type == 32 && x % 4 == 3 ? 0x0f : 0xff);
-	    } else if (lsn == dir && o.volume_label) {
-		de = (struct de *)img;
-		mklabel(de->namext, o.volume_label);
-		mk1(de->attr, 050);
-		x = (u_int)tm->tm_hour << 11 |
-		    (u_int)tm->tm_min << 5 |
-		    (u_int)tm->tm_sec >> 1;
-		mk2(de->time, x);
-		x = (u_int)(tm->tm_year - 80) << 9 |
-		    (u_int)(tm->tm_mon + 1) << 5 |
-		    (u_int)tm->tm_mday;
-		mk2(de->date, x);
-	    }
-	    if ((n = write(fd, img, bpb.bps)) == -1) {
-		warn("%s", fname);
-		return -1;
-	    }
-	    if ((size_t)n != bpb.bps) {
-		warnx("%s: can't write sector %u", fname, lsn);
-		return -1;
-	    }
-	}
+
+    gettimeofday(&tv, NULL);
+    now = tv.tv_sec;
+    tm = localtime(&now);
+    if (!(img = malloc(bpb.bps)))
+        err(1, NULL);
+    dir = bpb.res + (bpb.spf ? bpb.spf : bpb.bspf) * bpb.nft;
+    signal(SIGINFO, infohandler);
+    for (lsn = 0; lsn < dir + (o.fat_type == 32 ? bpb.spc : rds); lsn++) {
+        if (got_siginfo) {
+            fprintf(stderr,"%s: writing sector %u of %u (%u%%)\n",
+                fname,lsn,(dir + (o.fat_type == 32 ? bpb.spc : rds)),
+                (lsn*100)/(dir + (o.fat_type == 32 ? bpb.spc : rds)));
+            got_siginfo = 0;
+        }
+        x = lsn;
+        if (o.bootstrap &&
+            o.fat_type == 32 && bpb.bkbs != MAXU16 &&
+            bss <= bpb.bkbs && x >= bpb.bkbs) {
+            x -= bpb.bkbs;
+            if (!x && lseek(fd1, o.offset, SEEK_SET)) {
+                warn("%s", bname);
+                return -1;
+            }
+        }
+        if (o.bootstrap && x < bss) {
+            if ((n = read(fd1, img, bpb.bps)) == -1) {
+                warn("%s", bname);
+                return -1;
+            }
+            if ((size_t)n != bpb.bps) {
+                warnx("%s: can't read sector %u", bname, x);
+                return -1;
+            }
+        } else
+            memset(img, 0, bpb.bps);
+        if (!lsn ||
+          (o.fat_type == 32 && bpb.bkbs != MAXU16 && lsn == bpb.bkbs)) {
+            x1 = sizeof(struct bs);
+            bsbpb = (struct bsbpb *)(img + x1);
+            mk2(bsbpb->bps, bpb.bps);
+            mk1(bsbpb->spc, bpb.spc);
+            mk2(bsbpb->res, bpb.res);
+            mk1(bsbpb->nft, bpb.nft);
+            mk2(bsbpb->rde, bpb.rde);
+            mk2(bsbpb->sec, bpb.sec);
+            mk1(bsbpb->mid, bpb.mid);
+            mk2(bsbpb->spf, bpb.spf);
+            mk2(bsbpb->spt, bpb.spt);
+            mk2(bsbpb->hds, bpb.hds);
+            mk4(bsbpb->hid, bpb.hid);
+            mk4(bsbpb->bsec, bpb.bsec);
+            x1 += sizeof(struct bsbpb);
+            if (o.fat_type == 32) {
+                bsxbpb = (struct bsxbpb *)(img + x1);
+                mk4(bsxbpb->bspf, bpb.bspf);
+                mk2(bsxbpb->xflg, 0);
+                mk2(bsxbpb->vers, 0);
+                mk4(bsxbpb->rdcl, bpb.rdcl);
+                mk2(bsxbpb->infs, bpb.infs);
+                mk2(bsxbpb->bkbs, bpb.bkbs);
+                x1 += sizeof(struct bsxbpb);
+            }
+            bsx = (struct bsx *)(img + x1);
+            mk1(bsx->sig, 0x29);
+            if (o.volume_id_set)
+                x = o.volume_id;
+            else
+                x = (((u_int)(1 + tm->tm_mon) << 8 |
+                      (u_int)tm->tm_mday) +
+                     ((u_int)tm->tm_sec << 8 |
+                      (u_int)(tv.tv_usec / 10))) << 16 |
+                    ((u_int)(1900 + tm->tm_year) +
+                     ((u_int)tm->tm_hour << 8 |
+                      (u_int)tm->tm_min));
+            mk4(bsx->volid, x);
+            mklabel(bsx->label, o.volume_label ? o.volume_label : "NO NAME");
+            snprintf(buf, sizeof(buf), "FAT%u", o.fat_type);
+            setstr(bsx->type, buf, sizeof(bsx->type));
+            if (!o.bootstrap) {
+                x1 += sizeof(struct bsx);
+                bs = (struct bs *)img;
+                mk1(bs->jmp[0], 0xeb);
+                mk1(bs->jmp[1], x1 - 2);
+                mk1(bs->jmp[2], 0x90);
+                setstr(bs->oem, o.OEM_string ? o.OEM_string : "NetBSD",
+                       sizeof(bs->oem));
+                memcpy(img + x1, bootcode, sizeof(bootcode));
+                mk2(img + MINBPS - 2, DOSMAGIC);
+            }
+        } else if (o.fat_type == 32 && bpb.infs != MAXU16 &&
+                   (lsn == bpb.infs ||
+                    (bpb.bkbs != MAXU16 &&
+                     lsn == bpb.bkbs + bpb.infs))) {
+            mk4(img, 0x41615252);
+            mk4(img + MINBPS - 28, 0x61417272);
+            mk4(img + MINBPS - 24, 0xffffffff);
+            mk4(img + MINBPS - 20, 0xffffffff);
+            mk2(img + MINBPS - 2, DOSMAGIC);
+        } else if (lsn >= bpb.res && lsn < dir &&
+                   !((lsn - bpb.res) %
+                     (bpb.spf ? bpb.spf : bpb.bspf))) {
+            mk1(img[0], bpb.mid);
+            for (x = 1; x < o.fat_type * (o.fat_type == 32 ? 3U : 2U) / 8U; x++)
+                mk1(img[x], o.fat_type == 32 && x % 4 == 3 ? 0x0f : 0xff);
+        } else if (lsn == dir && o.volume_label) {
+            de = (struct de *)img;
+            mklabel(de->namext, o.volume_label);
+            mk1(de->attr, 050);
+            x = (u_int)tm->tm_hour << 11 |
+                (u_int)tm->tm_min << 5 |
+                (u_int)tm->tm_sec >> 1;
+            mk2(de->time, x);
+            x = (u_int)(tm->tm_year - 80) << 9 |
+                (u_int)(tm->tm_mon + 1) << 5 |
+                (u_int)tm->tm_mday;
+            mk2(de->date, x);
+        }
+        if ((n = write(fd, img, bpb.bps)) == -1) {
+            warn("%s", fname);
+            return -1;
+        }
+        if ((size_t)n != bpb.bps) {
+            warnx("%s: can't write sector %u", fname, lsn);
+            return -1;
+        }
     }
     return 0;
 }
