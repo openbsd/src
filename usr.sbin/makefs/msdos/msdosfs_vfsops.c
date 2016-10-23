@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.9 2016/10/22 22:20:24 natano Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.10 2016/10/23 11:09:38 natano Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -87,7 +87,6 @@ msdosfs_mount(struct mkfsvnode *devvp, int flags)
 	uint8_t SecPerClust;
 	int	ronly = 0, error;
 	int	bsize;
-	struct msdos_options *m = devvp->fs->fs_specific;
 	struct timezone tz;
 	unsigned secsize = 512;
 

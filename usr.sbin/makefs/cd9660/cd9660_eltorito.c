@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.4 2016/10/17 00:09:26 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.5 2016/10/23 11:09:38 natano Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -94,10 +94,6 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 
 	*filename++ = '\0';
 
-	if (diskStructure->verbose_level > 0) {
-		printf("Found bootdisk with system %s, and filename %s\n",
-		    sysname, filename);
-	}
 	new_image = ecalloc(1, sizeof(*new_image));
 	new_image->loadSegment = 0;	/* default for now */
 
@@ -146,17 +142,10 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 		break;
 	}
 
-	if (diskStructure->verbose_level > 0)
-		printf("%s\n", mode_msg);
-
 	new_image->size = stbuf.st_size;
 	new_image->num_sectors =
 	    howmany(new_image->size, diskStructure->sectorSize) *
 	    howmany(diskStructure->sectorSize, 512);
-	if (diskStructure->verbose_level > 0) {
-		printf("New image has size %d, uses %d 512-byte sectors\n",
-		    new_image->size, new_image->num_sectors);
-	}
 	new_image->sector = -1;
 	/* Bootable by default */
 	new_image->bootable = ET_BOOTABLE;
@@ -382,12 +371,6 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 	catalog_sectors = howmany(num_entries * 0x20, diskStructure->sectorSize);
 	used_sectors += catalog_sectors;
 
-	if (diskStructure->verbose_level > 0) {
-		printf("%s: there will be %i entries consuming %i sectors. "
-		       "Catalog is %i sectors\n", __func__, num_entries,
-		       used_sectors, catalog_sectors);
-	}
-
 	/* Populate sector numbers */
 	sector = first_sector + catalog_sectors;
 	TAILQ_FOREACH(tmp_disk, &diskStructure->boot_images, image_list) {
@@ -580,30 +563,16 @@ cd9660_write_boot(iso9660_disk *diskStructure, FILE *fd)
 	    diskStructure->sectorSize, SEEK_SET) == -1)
 		err(1, "fseeko");
 
-	if (diskStructure->verbose_level > 0) {
-		printf("Writing boot catalog to sector %" PRId64 "\n",
-		    diskStructure->boot_catalog_sector);
-	}
 	LIST_FOREACH(e, &diskStructure->boot_entries, ll_struct) {
-		if (diskStructure->verbose_level > 0) {
-			printf("Writing catalog entry of type %d\n",
-			    e->entry_type);
-		}
 		/*
 		 * It doesnt matter which one gets written
 		 * since they are the same size
 		 */
 		fwrite(&(e->entry_data.VE), 1, 32, fd);
 	}
-	if (diskStructure->verbose_level > 0)
-		printf("Finished writing boot catalog\n");
 
 	/* copy boot images */
 	TAILQ_FOREACH(t, &diskStructure->boot_images, image_list) {
-		if (diskStructure->verbose_level > 0) {
-			printf("Writing boot image from %s to sectors %d\n",
-			    t->filename, t->sector);
-		}
 		cd9660_copy_file(diskStructure, fd, t->sector, t->filename);
 
 		if (t->system == ET_SYS_MAC) 

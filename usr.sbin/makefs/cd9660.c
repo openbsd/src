@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.12 2016/10/23 10:32:42 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.13 2016/10/23 11:09:38 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -193,7 +193,6 @@ cd9660_set_defaults(iso9660_disk *diskStructure)
 	diskStructure->sectorSize = 2048;
 
 	/* Set up defaults in our own structure */
-	diskStructure->verbose_level = 0;
 	diskStructure->isoLevel = 2;
 
 	diskStructure->rock_ridge_enabled = 0;
@@ -287,8 +286,6 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		OPT_STR("publisher", "Publisher Identifier"),
 	        OPT_BOOL("rockridge", rock_ridge_enabled,
 		    "Enable Rock-Ridge extensions"),
-		OPT_NUM("verbose",  verbose_level,
-		    0, 2, "Turns on verbose output"),
 		OPT_STR("volumeid", "Volume Set Identifier"),
 		{ .name = NULL }
 	};
@@ -447,9 +444,6 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	cd9660node *real_root;
 	iso9660_disk *diskStructure = fsopts->fs_specific;
 
-	if (diskStructure->verbose_level > 0)
-		printf("%s: ISO level is %i\n", __func__,
-		    diskStructure->isoLevel);
 	if (diskStructure->isoLevel < 2 &&
 	    diskStructure->allow_multidot)
 		errx(EXIT_FAILURE, "allow-multidot requires iso level of 2");
@@ -457,10 +451,6 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	assert(image != NULL);
 	assert(dir != NULL);
 	assert(root != NULL);
-
-	if (diskStructure->verbose_level > 0)
-		printf("%s: image %s directory %s root %p\n", __func__,
-		    image, dir, root);
 
 	/* Set up some constants. Later, these will be defined with options */
 
@@ -489,18 +479,12 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 		    "Tree conversion failed", __func__);
 	} else if (error != 0) {
 		errx(EXIT_FAILURE, "%s: tree conversion failed", __func__);
-	} else {
-		if (diskStructure->verbose_level > 0)
-			printf("%s: tree converted\n", __func__);
 	}
 
 	/* Add the dot and dot dot records */
 	cd9660_add_dot_records(diskStructure, real_root);
 
 	cd9660_setup_root_node(diskStructure);
-
-	if (diskStructure->verbose_level > 0)
-		printf("%s: done converting tree\n", __func__);
 
 	/* Rock ridge / SUSP init pass */
 	if (diskStructure->rock_ridge_enabled) {
@@ -533,11 +517,6 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 
 	diskStructure->dataFirstSector =
 	    diskStructure->primaryBigEndianTableSector + pathTableSectors;
-	if (diskStructure->verbose_level > 0)
-		printf("%s: Path table conversion complete. "
-		    "Each table is %i bytes, or %" PRIu64 " sectors.\n",
-		    __func__,
-		    diskStructure->pathTableLength, pathTableSectors);
 
 	startoffset = diskStructure->sectorSize*diskStructure->dataFirstSector;
 
@@ -562,18 +541,6 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	/* Add padding sectors, just for testing purposes right now */
 	/* diskStructure->totalSectors+=150; */
 
-	/* Debugging output */
-	if (diskStructure->verbose_level > 0) {
-		printf("%s: Sectors 0-15 reserved\n", __func__);
-		printf("%s: Primary path tables starts in sector %"
-		    PRId64 "\n", __func__,
-		    diskStructure->primaryLittleEndianTableSector);
-		printf("%s: File data starts in sector %"
-		    PRId64 "\n", __func__, diskStructure->dataFirstSector);
-		printf("%s: Total sectors: %"
-		    PRId64 "\n", __func__, diskStructure->totalSectors);
-	}
-
 	/*
 	 * Add padding sectors at the end
 	 * TODO: Clean this up and separate padding
@@ -583,17 +550,8 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 
 	cd9660_write_image(diskStructure, image);
 
-	if (diskStructure->verbose_level > 1) {
-		debug_print_volume_descriptor_information(diskStructure);
-		debug_print_tree(diskStructure, real_root, 0);
-		debug_print_path_tree(real_root);
-	}
-
 	/* Clean up data structures */
 	cd9660_free_structure(real_root);
-
-	if (diskStructure->verbose_level > 0)
-		printf("%s: done\n", __func__);
 }
 
 /* Generic function pointer - implement later */
@@ -725,8 +683,6 @@ cd9660_setup_volume_descriptors(iso9660_disk *diskStructure)
 		temp->next = t;
 		temp = t;
 		t->sector = 17;
-		if (diskStructure->verbose_level > 0)
-			printf("Setting up boot volume descriptor\n");
 		cd9660_setup_boot_volume_descriptor(diskStructure, t);
 		sector++;
 	}
@@ -806,11 +762,9 @@ static int
 cd9660_translate_node(iso9660_disk *diskStructure, fsnode *node,
     cd9660node *newnode)
 {
-	if (node == NULL) {
-		if (diskStructure->verbose_level > 0)
-			printf("%s: NULL node passed, returning\n", __func__);
+	if (node == NULL)
 		return 0;
-	}
+
 	newnode->isoDirRecord = emalloc(sizeof(*newnode->isoDirRecord));
 	/* Set the node pointer */
 	newnode->node = node;
@@ -1005,9 +959,6 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 	char *naming;
 	int maxlength;
         char *tmp;
-
-	if (diskStructure->verbose_level > 0)
-		printf("Rename_filename called\n");
 
 	/* TODO : A LOT of chanes regarding 8.3 filenames */
 	if (diskStructure->isoLevel == 1)
@@ -2058,12 +2009,6 @@ cd9660_add_generic_bootimage(iso9660_disk *diskStructure, const char *bootimage)
 		return 0;
 	}
 
-	if (diskStructure->verbose_level > 0) {
-		printf("Generic boot image image has size %lld\n",
-		    (long long)stbuf.st_size);
-	}
-
 	diskStructure->has_generic_bootimage = 1;
-
 	return 1;
 }

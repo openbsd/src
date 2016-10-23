@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_write.c,v 1.4 2016/10/23 10:32:42 natano Exp $	*/
+/*	$OpenBSD: cd9660_write.c,v 1.5 2016/10/23 11:09:38 natano Exp $	*/
 /*	$NetBSD: cd9660_write.c,v 1.17 2013/10/19 17:16:37 christos Exp $	*/
 
 /*
@@ -65,9 +65,6 @@ cd9660_write_image(iso9660_disk *diskStructure, const char* image)
 		    image);
 	}
 
-	if (diskStructure->verbose_level > 0)
-		printf("Writing image\n");
-
 	if (diskStructure->has_generic_bootimage) {
 		status = cd9660_copy_file(diskStructure, fd, 0,
 		    diskStructure->generic_bootimage);
@@ -86,9 +83,6 @@ cd9660_write_image(iso9660_disk *diskStructure, const char* image)
 		goto cleanup_bad_image;
 	}
 
-	if (diskStructure->verbose_level > 0)
-		printf("Volume descriptors written\n");
-
 	/*
 	 * Write the path tables: there are actually four, but right
 	 * now we are only concearned with two.
@@ -98,9 +92,6 @@ cd9660_write_image(iso9660_disk *diskStructure, const char* image)
 		warnx("%s: Error writing path tables to image", __func__);
 		goto cleanup_bad_image;
 	}
-
-	if (diskStructure->verbose_level > 0)
-		printf("Path tables written\n");
 
 	/* Write the directories and files */
 	status = cd9660_write_file(diskStructure, fd, diskStructure->rootNode);
@@ -118,19 +109,12 @@ cd9660_write_image(iso9660_disk *diskStructure, const char* image)
 	cd9660_write_filedata(diskStructure, fd,
 	    diskStructure->totalSectors - 1, buf, 1);
 
-	if (diskStructure->verbose_level > 0)
-		printf("Files written\n");
 	fclose(fd);
-
-	if (diskStructure->verbose_level > 0)
-		printf("Image closed\n");
 	return 1;
 
 cleanup_bad_image:
 	fclose(fd);
 	unlink(image);
-	if (diskStructure->verbose_level > 0)
-		printf("Bad image cleaned up\n");
 	return 0;
 }
 
@@ -427,9 +411,6 @@ cd9660_copy_file(iso9660_disk *diskStructure, FILE *fd, off_t start_sector,
 		free(buf);
 		return 0;
 	}
-
-	if (diskStructure->verbose_level > 1)
-		printf("Writing file: %s\n",filename);
 
 	if (fseeko(fd, start_sector * diskStructure->sectorSize, SEEK_SET) == -1)
 		err(1, "fseeko");

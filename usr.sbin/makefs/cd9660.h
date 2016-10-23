@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.7 2016/10/23 10:32:42 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.8 2016/10/23 11:09:38 natano Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -258,8 +258,6 @@ typedef struct _iso9660_disk {
 	int	isoLevel;
 
 	int include_padding_areas;
-
-	int verbose_level;
 
 	/* SUSP options and variables */
 	int64_t susp_continuation_area_start_sector;
