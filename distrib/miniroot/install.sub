@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.925 2016/10/09 10:20:53 rpe Exp $
+#	$OpenBSD: install.sub,v 1.926 2016/10/23 08:42:58 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -428,7 +428,7 @@ configure_disk() {
 	# Make sure there is a '/ mount point.
 	if ! grep -qs ' / ffs ' /tmp/i/fstab.$ROOTDISK; then
 		echo "'/' must be configured!"
-		return 1
+		$AUTO && exit 1 || return 1
 	fi
 
 	if [[ -f $_fstab ]]; then
@@ -455,7 +455,7 @@ configure_disk() {
 			rm /tmp/i/fstab.$_rest
 			set -- $(grep -h " $_mp " /tmp/i/fstab.*[0-9])
 			echo "$_pp and $1 can't both be mounted at $_mp."
-			return 1
+			$AUTO && exit 1 || return 1
 		fi
 
 		# Add ffs filesystems to list after newfs'ing them. Ignore
