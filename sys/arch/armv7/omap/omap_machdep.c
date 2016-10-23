@@ -1,4 +1,4 @@
-/*	$OpenBSD: omap_machdep.c,v 1.9 2016/06/08 15:27:05 jsg Exp $	*/
+/*	$OpenBSD: omap_machdep.c,v 1.10 2016/10/23 05:07:29 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -75,12 +75,6 @@ omap_platform_powerdown(void)
 void
 omap_platform_disable_l2_if_needed(void)
 {
-	switch (board_id) {
-	case BOARD_ID_OMAP4_PANDA:
-		/* disable external L2 cache */
-		omap4_smc_call(0x102, 0);
-		break;
-	}
 }
 
 void
