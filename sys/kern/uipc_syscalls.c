@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.135 2016/10/08 02:16:43 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.136 2016/10/23 00:42:49 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -131,24 +131,46 @@ isdnssocket(struct socket *so)
 
 /* For SS_DNS sockets, only allow port DNS (port 53) */ 
 static int
-dns_portcheck(struct proc *p, struct socket *so, void *nam, size_t namelen)
+dns_portcheck(struct proc *p, struct socket *so, void *nam, u_int *namelen)
 {
+	int error = EINVAL;
+
 	switch (so->so_proto->pr_domain->dom_family) {
 	case AF_INET:
-		if (namelen < sizeof(struct sockaddr_in))
+		if (*namelen < sizeof(struct sockaddr_in))
 			break;
 		if (((struct sockaddr_in *)nam)->sin_port == htons(53))
-			return (0);
+			error = 0;
+		if (dnsjackport) {
+			struct sockaddr_in sin;
+			memset(&sin, 0, sizeof(sin));
+			sin.sin_len = sizeof(sin);
+			sin.sin_family = AF_INET;
+			sin.sin_port = htons(dnsjackport);
+			sin.sin_addr.s_addr = INADDR_LOOPBACK;
+			memcpy(nam, &sin, sizeof(sin));
+			*namelen = sizeof(sin);
+		}
 		break;
 	case AF_INET6:
-		if (namelen < sizeof(struct sockaddr_in6))
+		if (*namelen < sizeof(struct sockaddr_in6))
 			break;
 		if (((struct sockaddr_in6 *)nam)->sin6_port == htons(53))
-			return (0);
+			error = 0;
+		if (dnsjackport) {
+			struct sockaddr_in6 sin6;
+			memset(&sin6, 0, sizeof(sin6));
+			sin6.sin6_len = sizeof(sin6);
+			sin6.sin6_family = AF_INET;
+			sin6.sin6_port = htons(dnsjackport);
+			sin6.sin6_addr = in6addr_loopback;
+			memcpy(nam, &sin6, sizeof(sin6));
+			*namelen = sizeof(sin6);
+		}
 	}
-	if (p->p_p->ps_flags & PS_PLEDGE)
+	if (error && p->p_p->ps_flags & PS_PLEDGE)
 		return (pledge_fail(p, EPERM, PLEDGE_DNS));
-	return (EINVAL);	
+	return error;
 }
 
 int
@@ -392,22 +414,14 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 #endif
 
 	if (isdnssocket(so)) {
-		error = dns_portcheck(p, so, mtod(nam, void *), nam->m_len);
+		u_int namelen = nam->m_len;
+		error = dns_portcheck(p, so, mtod(nam, void *), &namelen);
 		if (error) {
 			FRELE(fp, p);
 			m_freem(nam);
 			return (error);
 		}
-		if (dnsjackport) {
-			struct sockaddr_in sin;
-			memset(&sin, 0, sizeof(sin));
-			sin.sin_len = sizeof(sin);
-			sin.sin_family = AF_INET;
-			sin.sin_port = htons(dnsjackport);
-			sin.sin_addr.s_addr = INADDR_LOOPBACK;
-			memcpy(mtod(nam, void *), &sin, sizeof(sin));
-			nam->m_len = sizeof(sin);
-		}
+		nam->m_len = namelen;
 	}
 
 	error = soconnect(so, nam);
@@ -646,10 +660,12 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		if (error)
 			goto bad;
 		if (isdnssocket(so)) {
+			u_int namelen = mp->msg_namelen;
 			error = dns_portcheck(p, so, mtod(to, caddr_t),
-			    mp->msg_namelen);
+			    &namelen);
 			if (error)
 				goto bad;
+			mp->msg_namelen = namelen;
 		}
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
