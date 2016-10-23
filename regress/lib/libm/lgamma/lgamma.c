@@ -1,11 +1,15 @@
-/*	$OpenBSD: lgamma.c,v 1.2 2011/07/09 03:33:07 martynas Exp $	*/
+/*	$OpenBSD: lgamma.c,v 1.3 2016/10/23 18:46:03 otto Exp $	*/
 
 /*
  * Written by Martynas Venckus.  Public domain
  */
 
+#define __POSIX_VISIBLE 201403
+
 #include <assert.h>
 #include <math.h>
+#include <float.h>
+
 
 int
 main(int argc, char *argv[])
@@ -49,12 +53,11 @@ main(int argc, char *argv[])
 	assert(lgammal(1.0L) == 0.0L && signgam == 1);
 
 	signgam = 0;
-	assert(lgamma(3.0) == M_LN2 && signgam == 1);
+	assert(fabs(lgamma(3.0) - M_LN2) < DBL_EPSILON && signgam == 1);
 	signgam = 0;
-	assert(lgammaf(3.0F) == (float)M_LN2 && signgam == 1);
+	assert(fabsf(lgammaf(3.0F) - (float)M_LN2) < FLT_EPSILON && signgam == 1);
 	signgam = 0;
-	assert(lgammal(3.0L) == 0.6931471805599453094172321214581766L &&
-	    signgam == 1);
+	assert(fabsl(lgammal(3.0L) - M_LN2l) < LDBL_EPSILON && signgam == 1);
 
 	return (0);
 }
