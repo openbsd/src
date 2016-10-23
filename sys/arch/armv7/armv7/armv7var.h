@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7var.h,v 1.14 2016/10/09 01:40:43 jsg Exp $ */
+/* $OpenBSD: armv7var.h,v 1.15 2016/10/23 19:05:09 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -80,8 +80,6 @@ int	armv7_submatch(struct device *, void *, void *);
 #define BOARD_ID_EXYNOS4_NURI 3379
 #define BOARD_ID_AM335X_BEAGLEBONE 3589
 #define BOARD_ID_EXYNOS5_CHROMEBOOK 3774
-#define BOARD_ID_SUN4I_A10 4104
-#define BOARD_ID_SUN7I_A20 4283
 extern uint32_t board_id;
 
 #endif /* __ARMV7VAR_H__ */
