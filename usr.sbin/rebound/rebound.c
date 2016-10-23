@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.79 2016/10/23 00:40:39 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.80 2016/10/23 17:06:41 naddy Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -627,8 +627,8 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 
 	EV_SET(&kev[0], ud, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[1], ld, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[2], ud6, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[3], ld6, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev[2], ud6, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev[3], ld6, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	if (kevent(kq, kev, 4, NULL, 0, NULL) == -1)
 		logerr("kevent4: %d", errno);
 	EV_SET(&kev[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
