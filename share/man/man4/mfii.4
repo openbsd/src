@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mfii.4,v 1.4 2015/01/09 11:25:05 dlg Exp $
+.\"	$OpenBSD: mfii.4,v 1.5 2016/10/24 03:45:48 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2015 $
+.Dd $Mdocdate: October 24 2016 $
 .Dt MFII 4
 .Os
 .Sh NAME
@@ -44,10 +44,14 @@ Although the controllers are actual RAID controllers,
 they appear as SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
 .Sh SEE ALSO
+.Xr bio 4 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr scsi 4 ,
 .Xr sd 4
+.Xr bioctl 8 ,
+.Xr sensorsd 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
