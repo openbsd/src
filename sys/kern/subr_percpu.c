@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.2 2016/10/21 06:41:52 dlg Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.3 2016/10/24 03:15:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -268,6 +268,18 @@ void
 cpumem_free(struct cpumem *cm, int type, size_t sz)
 {
 	free(cm, type, sz);
+}
+
+void *
+cpumem_first(struct cpumem_iter *i, struct cpumem *cm)
+{
+	return (cm);
+}
+
+void *
+cpumem_next(struct cpumem_iter *i, struct cpumem *cm)
+{
+	return (NULL);
 }
 
 struct cpumem *

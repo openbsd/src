@@ -1,4 +1,4 @@
-/*	$OpenBSD: percpu.h,v 1.1 2016/10/21 06:27:50 dlg Exp $ */
+/*	$OpenBSD: percpu.h,v 1.2 2016/10/24 03:15:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -57,11 +57,17 @@ struct cpumem	*cpumem_malloc(size_t, int);
 struct cpumem	*cpumem_realloc(struct cpumem *, size_t, int);
 void		 cpumem_free(struct cpumem *, int, size_t);
 
-#ifdef MULTIPROCESSOR
+void		*cpumem_first(struct cpumem_iter *, struct cpumem *);
+void		*cpumem_next(struct cpumem_iter *, struct cpumem *);
+
 static inline void *
 cpumem_enter(struct cpumem *cm)
 {
+#ifdef MULTIPROCESSOR
 	return (cm[cpu_number()].mem);
+#else
+	return (cm);
+#endif
 }
 
 static inline void
@@ -70,8 +76,7 @@ cpumem_leave(struct cpumem *cm, void *mem)
 	/* KDASSERT? */
 }
 
-void		*cpumem_first(struct cpumem_iter *, struct cpumem *);
-void		*cpumem_next(struct cpumem_iter *, struct cpumem *);
+#ifdef MULTIPROCESSOR
 
 #define CPUMEM_BOOT_MEMORY(_name, _sz)					\
 static struct {								\
@@ -85,34 +90,11 @@ static struct {								\
 	{ &_name##_boot_cpumem.cpumem }
 
 #else /* MULTIPROCESSOR */
-static inline void *
-cpumem_enter(struct cpumem *cm)
-{
-	return (cm);
-}
-
-static inline void
-cpumem_leave(struct cpumem *cm, void *mem)
-{
-	/* KDASSERT? */
-}
-
-static inline void *
-cpumem_first(struct cpumem_iter *i, struct cpumem *cm)
-{
-	return (cm);
-}
-
-static inline void *
-cpumem_next(struct cpumem_iter *i, struct cpumem *cm)
-{
-	return (NULL);
-}
 
 #define CPUMEM_BOOT_MEMORY(_name, _sz)					\
 static struct {								\
 	unsigned char	mem[_sz];					\
-} _name##_boot_cpumem
+} __aligned(sizeof(unsigned long)) _name##_boot_cpumem
 
 #define CPUMEM_BOOT_INITIALIZER(_name)					\
 	{ (struct cpumem *)&_name##_boot_cpumem.mem }
@@ -124,44 +106,42 @@ static struct {								\
 	    (_var) != NULL;						\
 	    (_var) = cpumem_next((_iter), (_cpumem)))
 
+/*
+ * per cpu counters
+ */
+
 struct cpumem	*counters_alloc(unsigned int, int);
 struct cpumem	*counters_realloc(struct cpumem *, unsigned int, int);
 void		 counters_free(struct cpumem *, int, unsigned int);
 void		 counters_read(struct cpumem *, uint64_t *, unsigned int);
 void		 counters_zero(struct cpumem *, unsigned int);
 
-#ifdef MULTIPROCESSOR
 static inline uint64_t *
 counters_enter(struct counters_ref *ref, struct cpumem *cm)
 {
 	ref->c = cpumem_enter(cm);
+#ifdef MULTIPROCESSOR
 	ref->g = ++(*ref->c); /* make the generation number odd */
 	return (ref->c + 1);
+#else
+	return (ref->c);
+#endif
 }
 
 static inline void
 counters_leave(struct counters_ref *ref, struct cpumem *cm)
 {
+#ifdef MULTIPROCESSOR
 	membar_producer();
 	(*ref->c) = ++ref->g; /* make the generation number even again */
+#endif
 	cpumem_leave(cm, ref->c);
 }
+
+#ifdef MULTIPROCESSOR
 #define COUNTERS_BOOT_MEMORY(_name, _n)					\
 	CPUMEM_BOOT_MEMORY(_name, ((_n) + 1) * sizeof(uint64_t))
 #else
-static inline uint64_t *
-counters_enter(struct counters_ref *r, struct cpumem *cm)
-{
-	r->c = cpumem_enter(cm);
-	return (r->c);
-}
-
-static inline void
-counters_leave(struct counters_ref *r, struct cpumem *cm)
-{
-	cpumem_leave(cm, r->c);
-}
-
 #define COUNTERS_BOOT_MEMORY(_name, _n)					\
 	CPUMEM_BOOT_MEMORY(_name, (_n) * sizeof(uint64_t))
 #endif
