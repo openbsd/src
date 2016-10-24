@@ -317,7 +317,7 @@ DEPEND_TMP2=depend1074.tmp
 DEPEND_TARGET=Makefile
 DEPEND_TARGET2=Makefile.in
 depend:
-	(cd $(srcdir) ; $(CC) -MM $(CPPFLAGS) *.c compat/*.c tpkg/cutest/*.c) | \
+	(cd $(srcdir) ; $(CC) -MM $(CPPFLAGS) *.c compat/*.c `if test -d tpkg/cutest; then echo tpkg/cutest/*.c; fi`) | \
 		sed -e 's? *\([^ ]*\.[ch]\)? $$(srcdir)/\1?g' | \
 		sed -e 's?$$(srcdir)/config.h?config.h?g' \
 			-e 's?$$(srcdir)/configlexer.c?configlexer.c?g' \

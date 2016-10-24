@@ -870,6 +870,11 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 			tp->num_skip++;
 			/* fall through to remove zone from tp */
 		case xfrd_packet_transfer:
+			if(zone->zone_options->pattern->multi_master_check) {
+				xfrd_tcp_release(xfrd->tcp_set, zone);
+				xfrd_make_request(zone);
+				break;
+			}
 			xfrd_tcp_release(xfrd->tcp_set, zone);
 			assert(zone->round_num == -1);
 			break;

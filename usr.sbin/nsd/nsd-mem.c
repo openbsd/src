@@ -110,7 +110,7 @@ account_zone(struct namedb* db, struct zone_mem* zmem)
 		zmem->udb_overhead = (size_t)(db->udb->alloc->disk->stat_alloc -
 			db->udb->alloc->disk->stat_data);
 	}
-	zmem->domaincount = db->domains->nametree->count;
+	zmem->domaincount = domain_table_count(db->domains);
 }
 
 static void

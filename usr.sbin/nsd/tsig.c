@@ -192,6 +192,9 @@ tsig_get_algorithm_by_name(const char *name)
 		{
 			return algorithm_entry->algorithm;
 		}
+		if(strncmp("hmac-", algorithm_entry->algorithm->short_name, 5) == 0 && tsig_strlowercmp(name, algorithm_entry->algorithm->short_name+5) == 0) {
+			return algorithm_entry->algorithm;
+		}
 	}
 
 	return NULL;

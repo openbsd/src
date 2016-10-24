@@ -71,6 +71,7 @@ extern config_parser_state_t* cfg_parser;
 %token VAR_ROUND_ROBIN VAR_ZONESTATS VAR_REUSEPORT VAR_VERSION
 %token VAR_MAX_REFRESH_TIME VAR_MIN_REFRESH_TIME
 %token VAR_MAX_RETRY_TIME VAR_MIN_RETRY_TIME
+%token VAR_MULTI_MASTER_CHECK
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -602,7 +603,7 @@ zone_config_item: zone_zonefile | zone_allow_notify | zone_request_xfr |
 	zone_outgoing_interface | zone_allow_axfr_fallback | include_pattern |
 	zone_rrl_whitelist | zone_zonestats | zone_max_refresh_time |
 	zone_min_refresh_time | zone_max_retry_time | zone_min_retry_time |
-	zone_size_limit_xfr;
+       zone_size_limit_xfr | zone_multi_master_check;
 pattern_name: VAR_NAME STRING
 	{ 
 		OUTYY(("P(pattern_name:%s)\n", $2)); 
@@ -871,6 +872,13 @@ zone_min_retry_time: VAR_MIN_RETRY_TIME STRING
 		cfg_parser->current_pattern->min_retry_time_is_default = 0;
 	}
 };
+zone_multi_master_check: VAR_MULTI_MASTER_CHECK STRING
+	{
+		OUTYY(("P(zone_multi_master_check:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->current_pattern->multi_master_check = (strcmp($2, "yes")==0);
+	}
 
 /* key: declaration */
 keystart: VAR_KEY
@@ -883,6 +891,7 @@ keystart: VAR_KEY
 			key_options_insert(cfg_parser->opt, cfg_parser->current_key);
 		}
 		cfg_parser->current_key = key_options_create(cfg_parser->opt->region);
+		cfg_parser->current_key->algorithm = region_strdup(cfg_parser->opt->region, "sha256");
 	}
 	;
 contents_key: contents_key content_key | content_key;
@@ -907,6 +916,8 @@ key_algorithm: VAR_ALGORITHM STRING
 #ifndef NDEBUG
 		assert(cfg_parser->current_key);
 #endif
+		if(cfg_parser->current_key->algorithm)
+			region_recycle(cfg_parser->opt->region, cfg_parser->current_key->algorithm, strlen(cfg_parser->current_key->algorithm)+1);
 		cfg_parser->current_key->algorithm = region_strdup(cfg_parser->opt->region, $2);
 		if(tsig_get_algorithm_by_name($2) == NULL)
 			c_error_msg("Bad tsig algorithm %s", $2);

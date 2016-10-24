@@ -61,7 +61,11 @@ int
 tsig_openssl_init(region_type *region)
 {
 	int count = 0;
+#if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
 	OpenSSL_add_all_digests();
+#else
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+#endif
 
 	count += tsig_openssl_init_algorithm(region,
 	    "md5", "hmac-md5","hmac-md5.sig-alg.reg.int.");
@@ -137,7 +141,9 @@ final(void *context, uint8_t *digest, size_t *size)
 void
 tsig_openssl_finalize()
 {
+#ifdef HAVE_EVP_CLEANUP
 	EVP_cleanup();
+#endif
 }
 
 #endif /* defined(HAVE_SSL) */

@@ -217,6 +217,8 @@ struct xfrd_zone {
 	tsig_record_type tsig; /* tsig state for IXFR/AXFR */
 	uint64_t xfrfilenumber; /* identifier for file to store xfr into,
 				valid if msg_seq_nr nonzero */
+	int multi_master_first_master; /* >0: first check master_num */
+	int multi_master_update_check; /* -1: not update >0: last update master_num */
 };
 
 enum xfrd_packet_result {

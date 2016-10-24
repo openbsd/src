@@ -27,6 +27,8 @@ cmp_hash_tree(const void* x, const void* y)
 {
 	const domain_type* a = (const domain_type*)x;
 	const domain_type* b = (const domain_type*)y;
+	if(!a->nsec3) return (b->nsec3?-1:0);
+	if(!b->nsec3) return 1;
 	return memcmp(a->nsec3->nsec3_hash, b->nsec3->nsec3_hash,
 		NSEC3_HASH_LEN);
 }
@@ -37,6 +39,8 @@ cmp_wchash_tree(const void* x, const void* y)
 {
 	const domain_type* a = (const domain_type*)x;
 	const domain_type* b = (const domain_type*)y;
+	if(!a->nsec3) return (b->nsec3?-1:0);
+	if(!b->nsec3) return 1;
 	return memcmp(a->nsec3->nsec3_wc_hash, b->nsec3->nsec3_wc_hash,
 		NSEC3_HASH_LEN);
 }
@@ -47,6 +51,8 @@ cmp_dshash_tree(const void* x, const void* y)
 {
 	const domain_type* a = (const domain_type*)x;
 	const domain_type* b = (const domain_type*)y;
+	if(!a->nsec3) return (b->nsec3?-1:0);
+	if(!b->nsec3) return 1;
 	return memcmp(a->nsec3->nsec3_ds_parent_hash,
 		b->nsec3->nsec3_ds_parent_hash, NSEC3_HASH_LEN);
 }
@@ -59,9 +65,9 @@ cmp_nsec3_tree(const void* x, const void* y)
 	const domain_type* a = (const domain_type*)x;
 	const domain_type* b = (const domain_type*)y;
 	/* labelcount + 32long label */
-	assert(dname_name(a->dname)[0] == 32);
-	assert(dname_name(b->dname)[0] == 32);
-	return memcmp(dname_name(a->dname), dname_name(b->dname), 33);
+	assert(dname_name(domain_dname_const(a))[0] == 32);
+	assert(dname_name(domain_dname_const(b))[0] == 32);
+	return memcmp(dname_name(domain_dname_const(a)), dname_name(domain_dname_const(b)), 33);
 }
 
 void nsec3_zone_trees_create(struct region* region, zone_type* zone)
@@ -438,7 +444,7 @@ nsec3_tree_zone(namedb_type* db, domain_type* d)
 					rrset_rrtype(rrset) == TYPE_DNSKEY ||
 					rrset_rrtype(rrset) == TYPE_NSEC3PARAM)
 					return rrset->zone;
-			return namedb_find_zone(db, d->dname);
+			return namedb_find_zone(db, domain_dname(d));
 		}
 		d = d->parent;
 	}
@@ -465,7 +471,11 @@ nsec3_find_cover(zone_type* zone, uint8_t* hash, size_t hashlen,
 
 	/* nsec3tree is sorted by b32 encoded domain name of the NSEC3 */
 	b32_ntop(hash, hashlen, (char*)(n+5), sizeof(n)-5);
+#ifdef USE_RADIX_TREE
 	d.dname = (dname_type*)n;
+#else
+	d.node.key = n;
+#endif
 	n[0] = 34; /* name_size */
 	n[1] = 2; /* label_count */
 	n[2] = 0; /* label_offset[0] */

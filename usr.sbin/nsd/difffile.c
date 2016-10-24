@@ -372,14 +372,14 @@ debug_find_rr_num(rrset_type* rrset, uint16_t type, uint16_t klass,
 		if (rrset->rrs[i].type != type) {
 			log_msg(LOG_WARNING, "diff: RR <%s, %s> does not match "
 				"RR num %d type %s",
-				dname_to_string(rrset->rrs[i].owner->dname,0),
+				dname_to_string(domain_dname(rrset->rrs[i].owner),0),
 				rrtype_to_string(type),	i,
 				rrtype_to_string(rrset->rrs[i].type));
 		}
 		if (rrset->rrs[i].klass != klass) {
 			log_msg(LOG_WARNING, "diff: RR <%s, %s> class %d "
 				"does not match RR num %d class %d",
-				dname_to_string(rrset->rrs[i].owner->dname,0),
+				dname_to_string(domain_dname(rrset->rrs[i].owner),0),
 				rrtype_to_string(type),
 				klass, i,
 				rrset->rrs[i].klass);
@@ -387,7 +387,7 @@ debug_find_rr_num(rrset_type* rrset, uint16_t type, uint16_t klass,
 		if (rrset->rrs[i].rdata_count != rdata_num) {
 			log_msg(LOG_WARNING, "diff: RR <%s, %s> rdlen %u "
 				"does not match RR num %d rdlen %d",
-				dname_to_string(rrset->rrs[i].owner->dname,0),
+				dname_to_string(domain_dname(rrset->rrs[i].owner),0),
 				rrtype_to_string(type),
 				(unsigned) rdata_num, i,
 				(unsigned) rrset->rrs[i].rdata_count);
@@ -396,7 +396,7 @@ debug_find_rr_num(rrset_type* rrset, uint16_t type, uint16_t klass,
 			&rd, &reason)) {
 			log_msg(LOG_WARNING, "diff: RR <%s, %s> rdata element "
 				"%d differs from RR num %d rdata (%s)",
-				dname_to_string(rrset->rrs[i].owner->dname,0),
+				dname_to_string(domain_dname(rrset->rrs[i].owner),0),
 				rrtype_to_string(type),
 				rd, i, reason);
 		}
@@ -1299,9 +1299,9 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 	}
 
 	/* has been read in completely */
-	if(strcmp(zone_buf, dname_to_string(zonedb->apex->dname,0)) != 0) {
+	if(strcmp(zone_buf, domain_to_string(zonedb->apex)) != 0) {
 		log_msg(LOG_ERR, "file %s does not match task %s",
-			zone_buf, dname_to_string(zonedb->apex->dname,0));
+			zone_buf, domain_to_string(zonedb->apex));
 		return 0;
 	}
 	if(!committed) {
@@ -1321,7 +1321,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 	if(committed)
 	{
 		int is_axfr=0, delete_mode=0, rr_count=0, softfail=0;
-		const dname_type* apex = zonedb->apex->dname;
+		const dname_type* apex = domain_dname_const(zonedb->apex);
 		udb_ptr z;
 
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "processing xfr: %s", zone_buf));

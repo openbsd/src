@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.1.12,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.13,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -825,7 +825,6 @@ case "$enable_ratelimit_default_is_off" in
 esac
 AC_SUBST(ratelimit_default)
 
-
 # we need SSL for TSIG (and maybe also for NSEC3).
 CHECK_SSL
 if test x$HAVE_SSL = x"yes"; then
@@ -862,7 +861,13 @@ if test x$HAVE_SSL = x"yes"; then
 	AC_CHECK_HEADERS([openssl/ssl.h],,, [AC_INCLUDES_DEFAULT])
 	AC_CHECK_HEADERS([openssl/err.h],,, [AC_INCLUDES_DEFAULT])
 	AC_CHECK_HEADERS([openssl/rand.h],,, [AC_INCLUDES_DEFAULT])
-	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new])
+	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto])
+
+	BAKLIBS="$LIBS"
+	LIBS="-lssl $LIBS"
+	AC_CHECK_FUNCS([OPENSSL_init_ssl])
+	LIBS="$BAKLIBS"
+
 else
 	AC_MSG_WARN([No SSL, therefore remote-control is disabled])
 fi
@@ -902,6 +907,15 @@ case "$enable_mmap" in
 		;;
         no|*)
                 ;;
+esac
+
+AC_ARG_ENABLE(radix-tree, AC_HELP_STRING([--disable-radix-tree], [You can disable the radix tree and use the red-black tree for the main lookups, the red-black tree uses less memory, but uses some more CPU.]))
+case "$enable_radix_tree" in
+        no)
+	;;
+	yes|*)
+	AC_DEFINE_UNQUOTED([USE_RADIX_TREE], [], [Define this to configure to use the radix tree.])
+	;;
 esac
 
 AH_BOTTOM([

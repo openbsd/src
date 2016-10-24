@@ -666,6 +666,11 @@ are logged in the loglines when a subnet is blocked (in verbosity 2).
 The RRL classification types are: nxdomain, error, referral, any, rrsig,
 wildcard, nodata, dnskey, positive, all.
 .\" rrlend
+.TP
+.B multi\-master\-check:\fR <yes or no>
+Default no.  If enabled, checks all masters for the last version.  It uses
+the higher version of all the configured masters.  Useful if you have multiple
+masters that have different version numbers served.
 .SS "Key Declarations"
 The 
 .B key: 
@@ -674,9 +679,15 @@ the following attributes.
 .TP
 .B name:\fR <string>
 The key name. Used to refer to this key in the access control list.
+The key name has to be correct for tsig to work.
+This is because the key name is output on the wire.
 .TP
 .B algorithm:\fR <string>
-Authentication algorithm for this key.
+Authentication algorithm for this key.  Such as hmac\-md5, hmac\-sha1,
+hmac\-sha224, hmac\-sha256, hmac\-sha384 and hmac\-sha512.  Can also be
+abbreviated as 'sha1', 'sha256'.  Default is sha256.
+Algorithms are only available when they were compiled in (available in the
+crypto library).
 .TP
 .B secret:\fR <base64 blob>
 The base64 encoded shared secret. It is possible to put the 
@@ -685,6 +696,9 @@ declaration (and base64 blob) into a different file, and then to
 .B include:
 that file. In this way the key secret and the rest of the configuration
 file, which may have different security policies, can be split apart.
+The content of the secret is the agreed base64 secret content.  To make it
+up, enter a password (its length must be a multiple of 4 characters, A\-Za\-z0\-9), or use
+dev-random output through a base64 encode filter.
 .SH "NSD CONFIGURATION FOR BIND9 HACKERS"
 BIND9 is a name server implementation with its own configuration 
 file format, named.conf(5). BIND9 types zones as 'Master' or 'Slave'. 

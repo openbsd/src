@@ -437,6 +437,8 @@ xfrd_init_slave_zone(xfrd_state_t* xfrd, zone_options_t* zone_opt)
 	xzone->udp_waiting = 0;
 	xzone->is_activated = 0;
 
+	xzone->multi_master_first_master = -1;
+	xzone->multi_master_update_check = -1;
 	tsig_create_record_custom(&xzone->tsig, NULL, 0, 0, 4);
 
 	/* set refreshing anyway, if we have data it may be old */
@@ -703,9 +705,9 @@ xfrd_set_timer_refresh(xfrd_zone_t* zone)
 	}
 	/* refresh or expire timeout, whichever is earlier */
 	set_refresh = ntohl(zone->soa_disk.refresh);
-	if (set_refresh > zone->zone_options->pattern->max_refresh_time)
+	if (set_refresh > (time_t)zone->zone_options->pattern->max_refresh_time)
 		set_refresh = zone->zone_options->pattern->max_refresh_time;
-	else if (set_refresh < zone->zone_options->pattern->min_refresh_time)
+	else if (set_refresh < (time_t)zone->zone_options->pattern->min_refresh_time)
 		set_refresh = zone->zone_options->pattern->min_refresh_time;
 	set_refresh += zone->soa_disk_acquired;
 	set_expire = zone->soa_disk_acquired + ntohl(zone->soa_disk.expire);
@@ -750,9 +752,9 @@ xfrd_set_timer_retry(xfrd_zone_t* zone)
 		zone->soa_disk_acquired + (time_t)ntohl(zone->soa_disk.expire))
 	{
 		set_retry = ntohl(zone->soa_disk.retry);
-		if(set_retry > zone->zone_options->pattern->max_retry_time)
+		if(set_retry > (time_t)zone->zone_options->pattern->max_retry_time)
 			set_retry = zone->zone_options->pattern->max_retry_time;
-		else if(set_retry < zone->zone_options->pattern->min_retry_time)
+		else if(set_retry < (time_t)zone->zone_options->pattern->min_retry_time)
 			set_retry = zone->zone_options->pattern->min_retry_time;
 		if(set_retry < XFRD_LOWERBOUND_RETRY)
 			set_retry =  XFRD_LOWERBOUND_RETRY;
@@ -875,7 +877,30 @@ xfrd_make_request(xfrd_zone_t* zone)
 			DEBUG(DEBUG_XFRD,1, (LOG_INFO,
 				"xfrd zone %s makereq wait_retry, rd %d mr %d nx %d",
 				zone->apex_str, zone->round_num, zone->master_num, zone->next_master));
+                       zone->multi_master_first_master = -1;
+                       return;
+               }
+	}
+
+	/* multi-master-check */
+	if(zone->zone_options->pattern->multi_master_check) {
+		if(zone->multi_master_first_master == zone->master_num &&
+			zone->round_num > 0 &&
+			zone->state != xfrd_zone_expired) {
+			/* tried all servers and update zone */
+			if(zone->multi_master_update_check >= 0) {
+				VERBOSITY(2, (LOG_INFO, "xfrd: multi master "
+					"check: zone %s completed transfers",
+					zone->apex_str));
+			}
+			zone->round_num = -1; /* next try start anew */
+			zone->multi_master_first_master = -1;
+			xfrd_set_timer_refresh(zone);
 			return;
+		}
+		if(zone->multi_master_first_master < 0) {
+			zone->multi_master_first_master = zone->master_num;
+			zone->multi_master_update_check = -1;
 		}
 	}
 
@@ -1267,6 +1292,11 @@ xfrd_udp_read(xfrd_zone_t* zone)
 			xfrd_tcp_obtain(xfrd->tcp_set, zone);
 			break;
 		case xfrd_packet_transfer:
+			if(zone->zone_options->pattern->multi_master_check) {
+				xfrd_udp_release(zone);
+				xfrd_make_request(zone);
+				break;
+			}
 		case xfrd_packet_newlease:
 			/* nothing more to do */
 			assert(zone->round_num == -1);
@@ -1835,6 +1865,10 @@ xfrd_parse_received_xfr_packet(xfrd_zone_t* zone, buffer_type* packet,
 			zone->soa_disk_acquired = xfrd_time();
 			if(zone->soa_nsd.serial == soa->serial)
 				zone->soa_nsd_acquired = xfrd_time();
+			if(zone->zone_options->pattern->multi_master_check) {
+				region_destroy(tempregion);
+				return xfrd_packet_drop;
+			}
 			xfrd_set_zone_state(zone, xfrd_zone_ok);
  			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s is ok",
 				zone->apex_str));
@@ -1992,7 +2026,7 @@ xfrd_handle_received_xfr_packet(xfrd_zone_t* zone, buffer_type* packet)
 	    xfrfile_size > zone->zone_options->pattern->size_limit_xfr ) {
             /*	    xfrd_unlink_xfrfile(xfrd->nsd, zone->xfrfilenumber);
                     xfrd_set_reload_timeout(); */
-            log_msg(LOG_INFO, "xfrd : transfered zone data was too large %llu", (long long unsigned)xfrfile_size);
+            log_msg(LOG_INFO, "xfrd : transferred zone data was too large %llu", (long long unsigned)xfrfile_size);
 	    return xfrd_packet_bad;
 	}
 	if(res == xfrd_packet_more) {
@@ -2048,6 +2082,11 @@ xfrd_handle_received_xfr_packet(xfrd_zone_t* zone, buffer_type* packet)
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO,
 			"xfrd: zone %s is waiting for reload",
 			zone->apex_str));
+		if(zone->zone_options->pattern->multi_master_check) {
+			zone->multi_master_update_check = zone->master_num;
+			xfrd_set_reload_timeout();
+			return xfrd_packet_transfer;
+		}
 		zone->round_num = -1; /* next try start anew */
 		xfrd_set_timer_refresh(zone);
 		xfrd_set_reload_timeout();
@@ -2256,8 +2295,17 @@ xfrd_check_failed_updates()
 						 		 "transfer (notified zone)",
 					zone->apex_str, (unsigned)ntohl(zone->soa_disk.serial));
 				/* revert the soa; it has not been acquired properly */
-				zone->soa_disk_acquired = zone->soa_nsd_acquired;
-				zone->soa_disk = zone->soa_nsd;
+				if(zone->soa_disk_acquired == zone->soa_nsd_acquired) {
+					/* this was the same as served,
+					 * perform force_axfr , re-download
+					 * same serial from master */
+					zone->soa_disk_acquired = 0;
+					zone->soa_nsd_acquired = 0;
+				} else {
+					/* revert soa to the one in server */
+					zone->soa_disk_acquired = zone->soa_nsd_acquired;
+					zone->soa_disk = zone->soa_nsd;
+				}
 				/* pretend we are notified with disk soa.
 				   This will cause a refetch of the data, and reload. */
 				xfrd_handle_incoming_notify(zone, &dumped_soa);

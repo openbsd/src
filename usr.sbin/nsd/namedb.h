@@ -37,7 +37,11 @@ typedef struct namedb namedb_type;
 struct domain_table
 {
 	region_type* region;
+#ifdef USE_RADIX_TREE
 	struct radtree *nametree;
+#else
+	rbtree_t      *names_to_domains;
+#endif
 	domain_type* root;
 	/* ptr to biggest domain.number and last in list.
 	 * the root is the lowest and first in the list. */
@@ -86,8 +90,12 @@ struct nsec3_domain_data {
 
 struct domain
 {
+#ifdef USE_RADIX_TREE
 	struct radnode* rnode;
 	const dname_type* dname;
+#else
+	rbnode_t     node;
+#endif
 	domain_type* parent;
 	domain_type* wildcard_child_closest_match;
 	rrset_type* rrsets;
@@ -190,7 +198,11 @@ int domain_table_search(domain_table_type* table,
 static inline uint32_t
 domain_table_count(domain_table_type* table)
 {
+#ifdef USE_RADIX_TREE
 	return table->nametree->count;
+#else
+	return table->names_to_domains->count;
+#endif
 }
 
 /*
@@ -247,24 +259,48 @@ domain_type *domain_previous_existing_child(domain_type* domain);
 
 int zone_is_secure(zone_type* zone);
 
-static inline const dname_type *
+static inline dname_type *
 domain_dname(domain_type* domain)
 {
+#ifdef USE_RADIX_TREE
+	return (dname_type *) domain->dname;
+#else
+	return (dname_type *) domain->node.key;
+#endif
+}
+
+static inline const dname_type *
+domain_dname_const(const domain_type* domain)
+{
+#ifdef USE_RADIX_TREE
 	return domain->dname;
+#else
+	return (const dname_type *) domain->node.key;
+#endif
 }
 
 static inline domain_type *
 domain_previous(domain_type* domain)
 {
+#ifdef USE_RADIX_TREE
 	struct radnode* prev = radix_prev(domain->rnode);
 	return prev == NULL ? NULL : (domain_type*)prev->elem;
+#else
+	rbnode_t *prev = rbtree_previous((rbnode_t *) domain);
+	return prev == RBTREE_NULL ? NULL : (domain_type *) prev;
+#endif
 }
 
 static inline domain_type *
 domain_next(domain_type* domain)
 {
+#ifdef USE_RADIX_TREE
 	struct radnode* next = radix_next(domain->rnode);
 	return next == NULL ? NULL : (domain_type*)next->elem;
+#else
+	rbnode_t *next = rbtree_next((rbnode_t *) domain);
+	return next == RBTREE_NULL ? NULL : (domain_type *) next;
+#endif
 }
 
 /* easy comparison for subdomain, true if d1 is subdomain of d2. */

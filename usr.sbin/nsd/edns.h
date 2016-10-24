@@ -11,6 +11,8 @@
 #define _EDNS_H_
 
 #include "buffer.h"
+struct nsd;
+struct query;
 
 #define OPT_LEN 9U                      /* Length of the NSD EDNS response record minus 2 */
 #define OPT_RDATA 2                     /* holds the rdata length comes after OPT_LEN */
@@ -42,6 +44,7 @@ struct edns_record
 	edns_status_type status;
 	size_t           position;
 	size_t           maxlen;
+	size_t		 opt_reserved_space;
 	int              dnssec_ok;
 	int              nsid;
 };
@@ -49,7 +52,8 @@ typedef struct edns_record edns_record_type;
 
 void edns_init_data(edns_data_type *data, uint16_t max_length);
 void edns_init_record(edns_record_type *data);
-int edns_parse_record(edns_record_type *data, buffer_type *packet);
+int edns_parse_record(edns_record_type *data, buffer_type *packet,
+	struct query* q, struct nsd* nsd);
 
 /*
  * The amount of space to reserve in the response for the EDNS data

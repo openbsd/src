@@ -191,7 +191,7 @@ query_state_type query_process(query_type *q, nsd_type *nsd);
  * includes the packet header and question section. Space is reserved
  * for the optional EDNS record, if required.
  */
-void query_prepare_response(query_type *q, nsd_type* nsd);
+void query_prepare_response(query_type *q);
 
 /*
  * Add EDNS0 information to the response if required.

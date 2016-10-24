@@ -68,7 +68,7 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 %token <type> T_AXFR T_MAILB T_MAILA T_DS T_DLV T_SSHFP T_RRSIG T_NSEC T_DNSKEY
 %token <type> T_SPF T_NSEC3 T_IPSECKEY T_DHCID T_NSEC3PARAM T_TLSA T_URI
 %token <type> T_NID T_L32 T_L64 T_LP T_EUI48 T_EUI64 T_CAA T_CDS T_CDNSKEY
-%token <type> T_CSYNC
+%token <type> T_OPENPGPKEY T_CSYNC
 
 /* other tokens */
 %token	       DOLLAR_TTL DOLLAR_ORIGIN NL SP
@@ -633,6 +633,8 @@ type_and_rdata:
     |	T_CDS sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_CDNSKEY sp rdata_dnskey
     |	T_CDNSKEY sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
+    |	T_OPENPGPKEY sp rdata_openpgpkey
+    |	T_OPENPGPKEY sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_CSYNC sp rdata_csync
     |	T_CSYNC sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_URI sp rdata_uri
@@ -1050,6 +1052,13 @@ rdata_caa:	STR sp STR sp STR trail
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* Flags */
 	    zadd_rdata_wireformat(zparser_conv_tag(parser->region, $3.str, $3.len)); /* Tag */
 	    zadd_rdata_wireformat(zparser_conv_long_text(parser->region, $5.str, $5.len)); /* Value */
+    }
+    ;
+
+/* RFC7929 */
+rdata_openpgpkey:	str_sp_seq trail
+    {
+	    zadd_rdata_wireformat(zparser_conv_b64(parser->region, $1.str));
     }
     ;
 

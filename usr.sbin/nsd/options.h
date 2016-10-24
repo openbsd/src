@@ -163,6 +163,7 @@ struct pattern_options {
 	uint32_t min_retry_time;
 	uint8_t min_retry_time_is_default;
 	uint64_t size_limit_xfr;
+	uint8_t multi_master_check;
 };
 
 #define PATTERN_IMPLICIT_MARKER "_implicit_"
