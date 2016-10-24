@@ -1,10 +1,11 @@
-/*	$OpenBSD: tgamma.c,v 1.2 2008/09/07 20:36:10 martynas Exp $	*/
+/*	$OpenBSD: tgamma.c,v 1.3 2016/10/24 15:34:59 otto Exp $	*/
 
 /*	Written by Martynas Venckus, 2008,  Public domain.	*/
 
 #include <err.h>
 #include <errno.h>
 #include <math.h>
+#include <float.h>
 
 extern int errno;
 
@@ -76,7 +77,7 @@ main(void)
 		errx(1, "tgamma(-1) = %f", x);
 
 	x = tgamma(-177.8);			/* x ~< -177.79 */
-	if (x != 0)
+	if (fabs(x) > DBL_EPSILON)
 		errx(1, "tgamma(-177.8) = %f", x);
 
 	x = tgamma(171.64);			/* x ~> 171.63 */
