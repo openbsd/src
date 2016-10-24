@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.106 2016/10/21 05:38:53 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.107 2016/10/24 01:50:09 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -869,19 +869,49 @@ mpii_load_xs(struct mpii_ccb *ccb)
 int
 mpii_scsi_probe(struct scsi_link *link)
 {
-	struct mpii_softc	*sc = link->adapter_softc;
-	int			flags;
+	struct mpii_softc *sc = link->adapter_softc;
+	struct mpii_cfg_sas_dev_pg0 pg0;
+	struct mpii_ecfg_hdr ehdr;
+	struct mpii_device *dev;
+	uint32_t address;
+	int flags;
 
 	if ((sc->sc_porttype != MPII_PORTFACTS_PORTTYPE_SAS_PHYSICAL) &&
 	    (sc->sc_porttype != MPII_PORTFACTS_PORTTYPE_SAS_VIRTUAL))
 		return (ENXIO);
 
-	if (sc->sc_devs[link->target] == NULL)
+	dev = sc->sc_devs[link->target];
+	if (dev == NULL)
 		return (1);
 
-	flags = sc->sc_devs[link->target]->flags;
+	flags = dev->flags;
 	if (ISSET(flags, MPII_DF_HIDDEN) || ISSET(flags, MPII_DF_UNUSED))
 		return (1);
+
+	memset(&ehdr, 0, sizeof(ehdr));	
+	ehdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_EXTENDED;
+	ehdr.page_number = 0;
+	ehdr.page_version = 0;
+	ehdr.ext_page_type = MPII_CONFIG_REQ_EXTPAGE_TYPE_SAS_DEVICE;
+	ehdr.ext_page_length = htole16(sizeof(pg0) / 4); /* dwords */
+
+	address = MPII_PGAD_SAS_DEVICE_FORM_HANDLE | (uint32_t)dev->dev_handle;
+	if (mpii_req_cfg_page(sc, address, MPII_PG_EXTENDED,
+	    &ehdr, 1, &pg0, sizeof(pg0)) != 0) {
+		printf("%s: unable to fetch SAS device page 0 for target %u\n",
+		    DEVNAME(sc), link->target);
+
+		return (0); /* the handle should still work */
+	}
+
+	link->port_wwn = letoh64(pg0.sas_addr);
+	link->node_wwn = letoh64(pg0.device_name);
+
+	if (ISSET(lemtoh32(&pg0.device_info),
+	    MPII_CFG_SAS_DEV_0_DEVINFO_ATAPI_DEVICE)) {
+		link->flags |= SDEV_ATAPI;
+		link->quirks |= SDEV_ONLYBIG;
+	}
 
 	return (0);
 }

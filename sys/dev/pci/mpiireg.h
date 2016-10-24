@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpiireg.h,v 1.10 2016/09/14 01:14:54 jmatthew Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.11 2016/10/24 01:50:09 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -1058,6 +1058,13 @@ struct mpii_ecfg_hdr {
 #define MPII_CONFIG_REQ_PAGE_TYPE_DRIVER_MAPPING	(0x17)
 	u_int8_t		reserved2;
 } __packed __aligned(4);
+
+/* config page address formats */
+#define MPII_PGAD_SAS_DEVICE_FORM_MASK			(0xf0000000)
+#define MPII_PGAD_SAS_DEVICE_FORM_GET_NEXT_HANDLE	(0x00000000)
+#define MPII_PGAD_SAS_DEVICE_FORM_HANDLE		(0x20000000)
+
+#define MPII_PGAD_SAS_DEVICE_HANDLE_MASK		(0x0000ffff)
 
 struct mpii_msg_config_request {
 	u_int8_t		action;
