@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.234 2016/10/24 04:38:44 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.235 2016/10/24 23:58:33 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ mbinit(void)
 void
 mbcpuinit()
 {
-	mbstat = counters_realloc(mbstat, MBSTAT_COUNT, M_DEVBUF);
+	mbstat = counters_alloc_ncpus(mbstat, MBSTAT_COUNT, M_DEVBUF);
 }
 
 void

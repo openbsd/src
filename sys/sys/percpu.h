@@ -1,4 +1,4 @@
-/*	$OpenBSD: percpu.h,v 1.2 2016/10/24 03:15:35 deraadt Exp $ */
+/*	$OpenBSD: percpu.h,v 1.3 2016/10/24 23:58:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -54,7 +54,7 @@ struct cpumem	*cpumem_get(struct pool *);
 void		 cpumem_put(struct pool *, struct cpumem *);
 
 struct cpumem	*cpumem_malloc(size_t, int);
-struct cpumem	*cpumem_realloc(struct cpumem *, size_t, int);
+struct cpumem	*cpumem_malloc_ncpus(struct cpumem *, size_t, int);
 void		 cpumem_free(struct cpumem *, int, size_t);
 
 void		*cpumem_first(struct cpumem_iter *, struct cpumem *);
@@ -111,7 +111,7 @@ static struct {								\
  */
 
 struct cpumem	*counters_alloc(unsigned int, int);
-struct cpumem	*counters_realloc(struct cpumem *, unsigned int, int);
+struct cpumem	*counters_alloc_ncpus(struct cpumem *, unsigned int, int);
 void		 counters_free(struct cpumem *, int, unsigned int);
 void		 counters_read(struct cpumem *, uint64_t *, unsigned int);
 void		 counters_zero(struct cpumem *, unsigned int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.3 2016/10/24 03:15:38 deraadt Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.4 2016/10/24 23:58:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -76,7 +76,7 @@ cpumem_malloc(size_t sz, int type)
 }
 
 struct cpumem *
-cpumem_realloc(struct cpumem *bootcm, size_t sz, int type)
+cpumem_malloc_ncpus(struct cpumem *bootcm, size_t sz, int type)
 {
 	struct cpumem *cm;
 	unsigned int cpu;
@@ -146,10 +146,10 @@ counters_alloc(unsigned int n, int type)
 }
 
 struct cpumem *
-counters_realloc(struct cpumem *cm, unsigned int n, int type)
+counters_alloc_ncpus(struct cpumem *cm, unsigned int n, int type)
 {
 	n++; /* the generation number */
-	return (cpumem_realloc(cm, n * sizeof(uint64_t), type));
+	return (cpumem_malloc_ncpus(cm, n * sizeof(uint64_t), type));
 }
 
 void
@@ -259,7 +259,7 @@ cpumem_malloc(size_t sz, int type)
 }
 
 struct cpumem *
-cpumem_realloc(struct cpumem *cm, size_t sz, int type)
+cpumem_malloc_ncpus(struct cpumem *cm, size_t sz, int type)
 {
 	return (cm);
 }
@@ -291,10 +291,10 @@ counters_alloc(unsigned int n, int type)
 }
 
 struct cpumem *
-counters_realloc(struct cpumem *cm, unsigned int n, int type)
+counters_alloc_ncpus(struct cpumem *cm, unsigned int n, int type)
 {
 	/* this is unecessary, but symmetrical */
-	return (cpumem_realloc(cm, n * sizeof(uint64_t), type));
+	return (cpumem_malloc_ncpus(cm, n * sizeof(uint64_t), type));
 }
 
 void
