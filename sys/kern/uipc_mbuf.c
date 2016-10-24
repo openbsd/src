@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.233 2016/10/10 00:41:17 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.234 2016/10/24 04:38:44 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -83,6 +83,7 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/pool.h>
+#include <sys/percpu.h>
 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -99,9 +100,11 @@
 #include <net/pfvar.h>
 #endif	/* NPF > 0 */
 
-struct	mbstat mbstat;		/* mbuf stats */
-struct	mutex mbstatmtx = MUTEX_INITIALIZER(IPL_NET);
-struct	pool mbpool;		/* mbuf pool */
+/* mbuf stats */
+COUNTERS_BOOT_MEMORY(mbstat_boot, MBSTAT_COUNT);
+struct cpumem *mbstat = COUNTERS_BOOT_INITIALIZER(mbstat_boot);
+/* mbuf pools */
+struct	pool mbpool;
 struct	pool mtagpool;
 
 /* mbuf cluster pools */
@@ -173,6 +176,12 @@ mbinit(void)
 }
 
 void
+mbcpuinit()
+{
+	mbstat = counters_realloc(mbstat, MBSTAT_COUNT, M_DEVBUF);
+}
+
+void
 nmbclust_update(void)
 {
 	unsigned int i, n;
@@ -204,14 +213,21 @@ struct mbuf *
 m_get(int nowait, int type)
 {
 	struct mbuf *m;
+	struct counters_ref cr;
+	uint64_t *counters;
+	int s;
+
+	KDASSERT(type < MT_NTYPES);
 
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : PR_NOWAIT);
 	if (m == NULL)
 		return (NULL);
 
-	mtx_enter(&mbstatmtx);
-	mbstat.m_mtypes[type]++;
-	mtx_leave(&mbstatmtx);
+	s = splnet();
+	counters = counters_enter(&cr, mbstat);
+	counters[type]++;
+	counters_leave(&cr, mbstat);
+	splx(s);
 
 	m->m_type = type;
 	m->m_next = NULL;
@@ -230,14 +246,21 @@ struct mbuf *
 m_gethdr(int nowait, int type)
 {
 	struct mbuf *m;
+	struct counters_ref cr;
+	uint64_t *counters;
+	int s;
+
+	KDASSERT(type < MT_NTYPES);
 
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : PR_NOWAIT);
 	if (m == NULL)
 		return (NULL);
 
-	mtx_enter(&mbstatmtx);
-	mbstat.m_mtypes[type]++;
-	mtx_leave(&mbstatmtx);
+	s = splnet();
+	counters = counters_enter(&cr, mbstat);
+	counters[type]++;
+	counters_leave(&cr, mbstat);
+	splx(s);
 
 	m->m_type = type;
 
@@ -349,13 +372,18 @@ struct mbuf *
 m_free(struct mbuf *m)
 {
 	struct mbuf *n;
+	struct counters_ref cr;
+	uint64_t *counters;
+	int s;
 
 	if (m == NULL)
 		return (NULL);
 
-	mtx_enter(&mbstatmtx);
-	mbstat.m_mtypes[m->m_type]--;
-	mtx_leave(&mbstatmtx);
+	s = splnet();
+	counters = counters_enter(&cr, mbstat);
+	counters[m->m_type]--;
+	counters_leave(&cr, mbstat);
+	splx(s);
 
 	n = m->m_next;
 	if (m->m_flags & M_ZEROIZE) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.317 2016/10/22 04:39:18 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.318 2016/10/24 04:38:44 dlg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@
 #include <sys/namei.h>
 #include <sys/exec.h>
 #include <sys/mbuf.h>
+#include <sys/percpu.h>
 #include <sys/sensors.h>
 #include <sys/pipe.h>
 #include <sys/eventvar.h>
@@ -390,9 +391,24 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_FILE:
 		return (sysctl_file(name + 1, namelen - 1, oldp, oldlenp, p));
 #endif
-	case KERN_MBSTAT:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &mbstat,
-		    sizeof(mbstat)));
+	case KERN_MBSTAT: {
+		extern struct cpumem *mbstat;
+		uint64_t counters[MBSTAT_COUNT];
+		struct mbstat mbs;
+		unsigned int i;
+
+		memset(&mbs, 0, sizeof(mbs));
+		counters_read(mbstat, counters, MBSTAT_COUNT);
+		for (i = 0; i < MBSTAT_TYPES; i++)
+			mbs.m_mtypes[i] = counters[i];
+
+		mbs.m_drops = counters[MBSTAT_DROPS];
+		mbs.m_wait = counters[MBSTAT_WAIT];
+		mbs.m_drain = counters[MBSTAT_DRAIN];
+
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
+		    &mbs, sizeof(mbs)));
+	}
 #if defined(GPROF) || defined(DDBPROF)
 	case KERN_PROF:
 		return (sysctl_doprof(name + 1, namelen - 1, oldp, oldlenp,

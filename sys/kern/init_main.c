@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.260 2016/10/21 06:27:50 dlg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.261 2016/10/24 04:38:44 dlg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -414,6 +414,8 @@ main(void *framep)
 	/* Initialize kernel profiling. */
 	prof_init();
 #endif
+
+	mbcpuinit();	/* enable per cpu mbuf data */
 
 	/* init exec and emul */
 	init_exec();
