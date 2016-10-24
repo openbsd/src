@@ -1,5 +1,6 @@
-.\" $OpenBSD: locale.1,v 1.5 2015/08/12 09:38:23 zhuk Exp $
+.\" $OpenBSD: locale.1,v 1.6 2016/10/24 13:27:06 schwarze Exp $
 .\"
+.\" Copyright 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright 2013 Stefan Sperling <stsp@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -14,56 +15,208 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2015 $
+.Dd $Mdocdate: October 24 2016 $
 .Dt LOCALE 1
 .Os
 .Sh NAME
 .Nm locale
-.Nd get locale-specific information
+.Nd character encoding and localization conventions
 .Sh SYNOPSIS
 .Nm locale
 .Op Fl a | Fl m
 .Sh DESCRIPTION
-If
+A locale is a set of environment variables telling programs which
+character encoding, language and cultural conventions the user
+prefers.
+The only non-default setting recommended for
+.Ox
+is:
+.Pp
+.Dl export LC_CTYPE=en_US.UTF-8
+.Pp
+If the
 .Nm
-is invoked without any arguments, the current locale configuration is shown.
+utility is invoked without any arguments, the current locale
+configuration is shown.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Display a list of supported locales.
 .It Fl m
-Display a list of supported character sets.
+Display a list of supported character encodings.
+On
+.Ox ,
+this always returns UTF-8 only.
 .El
+.Pp
+Programs in the
+.Ox
+base system ignore the locale except for the character encoding.
+Programs installed from
+.Xr packages 7
+may or may not change behavior according to the locale.
+Many programs use the X/Open System Interfaces naming scheme
+for the contents of the variables listed below, which is
+.Sm off
+.Ar language
+.Op _ Ar TERRITORY
+.Op \&. Ar encoding
+.Op @ Ar modifier
+.Sm on
+.Pp
+The behavior of some library functions may also depend on the locale,
+and it does on most other operating systems.
+The
+.Ox
+C library tends to avoid locale-dependent behavior except with
+respect to character encoding.
+See the manual pages of individual functions for details.
+.Pp
+The character encoding locale
+.Ev LC_CTYPE
+instructs programs which character encoding to assume for text input
+and to use for text output.
+A character encoding maps each character of a given character set
+to a byte sequence suitable for storing or transmitting the character.
+.Pp
+The
+.Ox
+base system supports two locales: the default of
+.Li LC_CTYPE=C
+selects the US-ASCII character set and encoding, treating the bytes
+0x80 to 0xff as non-printable characters of application-specific
+meaning, whereas
+.Li LC_CTYPE=en_US.UTF-8
+selects the UTF-8 encoding of the Unicode character set.
+.Li LC_CTYPE=POSIX
+is an alias for
+.Li LC_CTYPE=C .
+.Pp
+If the value of
+.Ev LC_CTYPE
+ends in
+.Ql .UTF-8 ,
+programs in the
+.Ox
+base system ignore the beginning of it, treating for example zh_CN.UTF-8
+exactly like en_US.UTF-8.
+Programs from
+.Xr packages 7
+may however make a difference.
+If the value of
+.Ev LC_CTYPE
+is unsupported, programs and libraries in the
+.Ox
+base systems fall back to
+.Li LC_CTYPE=C .
+.Pp
+Some programs, for example
+.Xr write 1 ,
+deliberately ignore the locale and always use US-ASCII only.
+See the manual pages of individual programs for details.
 .Sh ENVIRONMENT
 The locale configuration consists of the following environment variables:
-.Pp
-.Bl -tag -width LC_MONETARYXXX -compact
-.It Dv LC_ALL
-Overrides all other LC_* variables below.
-.It Dv LC_COLLATE
-Locale for string collation routines.
-.It Dv LC_CTYPE
-Locale for character set.
-.It Dv LC_MESSAGES
-Locale for message strings.
-.It Dv LC_MONETARY
-Locale for formatting monetary values.
-.It Dv LC_NUMERIC
-Locale for formatting numbers.
-.It Dv LC_TIME
-Locale for formatting dates and times.
-.It Dv LANG
+.Bl -tag -width LC_MONETARYX
+.It Ev LC_ALL
+Overrides all other
+.Ev LC_*
+variables below.
+.It Ev LC_COLLATE
+Intended to affect collation order.
+It may for example affect alphabetic sorting, regular expressions
+including equivalence classes, and the
+.Xr strcoll 3
+and
+.Xr strxfrm 3
+functions.
+.It Ev LC_CTYPE
+Intended to affect character encoding, character classification,
+and case conversion.
+For example, it is used by
+.Xr mbtowc 3 ,
+.Xr iswctype 3 ,
+.Xr iswalnum 3 ,
+.Xr towlower 3 ,
+.Xr fgetwc 3 ,
+.Xr fputwc 3 ,
+.Xr printf 3 ,
+and
+.Xr scanf 3 .
+.It Ev LC_MESSAGES
+Intended to affect the output of informative and diagnostic messages
+and the interpretation of interactive responses, in particular
+regarding the language.
+It is used by
+.Xr catopen 3 .
+.It Ev LC_MONETARY
+Intended to affect monetary formatting.
+.It Ev LC_NUMERIC
+Intended to affect numeric, non-monetary formatting, for example
+the radix character and thousands separators.
+On other operating systems, it may for example affect
+.Xr printf 3 ,
+.Xr scanf 3 ,
+and
+.Xr strtod 3 .
+.It Ev LC_TIME
+Intended to affect date and time formats.
+It may for example affect
+.Xr strftime 3 .
+.It Ev LANG
 Fallback if any of the above is unset.
+.It Ev NLSPATH
+Used by
+.Xr catopen 3
+to locate message catalogs.
+.El
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa /usr/share/locale/UTF-8/LC_CTYPE
+Character classification, case conversion, and character display
+width database in
+.Xr mklocale 1
+binary output format used by
+.Xr setlocale 3 .
+.It Pa /usr/local/share/locale/
+Localization data for
+.Xr packages 7 ,
+in particular
+.Ev LC_MESSAGES
+catalogs in GNU gettext format.
+.It Pa /usr/local/share/nls/
+Localization data for
+.Xr packages 7 ,
+in particular
+.Ev LC_MESSAGES
+catalogs in
+.Xr catopen 3
+format.
+.It Pa /usr/src/share/locale/ctype/en_US.UTF-8.src
+Character classification, case conversion, and character display
+width database in
+.Xr mklocale 1
+input format.
+.It Pa /usr/libdata/perl5/unicore/
+Complete Unicode data used for generating the above database.
+.It Pa /usr/src/gnu/usr.bin/perl/lib/unicore/UnicodeData.txt
+The most important parts of Unicode data in a compact, more easily
+human-readable format.
 .El
 .Sh EXIT STATUS
 .Ex -std locale
 .Sh SEE ALSO
-.Xr setlocale 3
+.Xr mklocale 1 ,
+.Xr setlocale 3 ,
+.Xr Unicode::UCD 3p
+.Pp
+Related ports: converters/libiconv, devel/gettext, textproc/icu4c
 .Sh STANDARDS
-The
+With respect to locale support, most libraries and programs in the
+.Ox
+base system, including the
 .Nm
-utility implements a subset of the
+utility, implement a subset of the
 .St -p1003.1-2008
 specification.
 .Sh HISTORY
@@ -82,5 +235,15 @@ with contributions from
 .An Philip Guenther Aq Mt guenther@openbsd.org
 and
 .An Jeremie Courreges-Anglas Aq Mt jca@openbsd.org .
+This manual page was written by
+.An Ingo Schwarze Aq Mt schwarze@openbsd.org .
 .Sh BUGS
+The
+.Nm
+concept is inadequate for inter-process communication.
+Two processes exchanging text, for example over a network, using
+sockets, in shared memory, or even using plain text files always
+need a protocol-specific way to negotiate the character encoding
+used.
+.Pp
 The list of supported locales is perpetually incomplete.
