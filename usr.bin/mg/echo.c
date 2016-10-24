@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.65 2015/12/05 02:14:02 jsg Exp $	*/
+/*	$OpenBSD: echo.c,v 1.66 2016/10/24 17:18:42 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -27,7 +27,7 @@ static char	*veread(const char *, char *, size_t, int, va_list)
 static int	 complt(int, int, char *, size_t, int, int *);
 static int	 complt_list(int, char *, int);
 static void	 eformat(const char *, va_list)
-			__attribute__((__format__ (printf, 1, 0)));;
+			__attribute__((__format__ (printf, 1, 0)));
 static void	 eputi(int, int);
 static void	 eputl(long, int);
 static void	 eputs(const char *);
