@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.25 2016/10/15 13:45:08 deraadt Exp $
+#	$OpenBSD: Makefile.octeon,v 1.26 2016/10/24 18:26:17 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -130,7 +130,7 @@ clean::
 	    [Ee]rrs linterrs assym.* ${DB_STRUCTINFO} param.c
 
 cleandir: clean
-	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c version
+	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \

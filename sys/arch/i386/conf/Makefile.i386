@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.98 2016/10/21 06:20:58 mlarkin Exp $
+#	$OpenBSD: Makefile.i386,v 1.99 2016/10/24 18:26:17 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -128,7 +128,7 @@ clean::
 	    [Ee]rrs linterrs assym.* ${DB_STRUCTINFO} param.c
 
 cleandir: clean
-	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c version
+	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
