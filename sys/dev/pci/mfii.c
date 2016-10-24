@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.25 2015/03/14 03:38:48 jsg Exp $ */
+/* $OpenBSD: mfii.c,v 1.26 2016/10/24 03:11:58 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/dkio.h>
 #include <sys/types.h>
 #include <sys/pool.h>
 
@@ -255,6 +256,7 @@ struct mfii_softc {
 int		mfii_match(struct device *, void *, void *);
 void		mfii_attach(struct device *, struct device *, void *);
 int		mfii_detach(struct device *, int);
+int		mfii_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 
 struct cfattach mfii_ca = {
 	sizeof(struct mfii_softc),
@@ -277,7 +279,7 @@ struct scsi_adapter mfii_switch = {
 	scsi_minphys,
 	NULL, /* probe */
 	NULL, /* unprobe */
-	NULL  /* ioctl */
+	mfii_scsi_ioctl
 };
 
 void		mfii_pd_scsi_cmd(struct scsi_xfer *);
@@ -334,6 +336,8 @@ int			mfii_scsi_cmd_cdb(struct mfii_softc *,
 			    struct scsi_xfer *);
 int			mfii_pd_scsi_cmd_cdb(struct mfii_softc *,
 			    struct scsi_xfer *);
+int			mfii_scsi_ioctl_cache(struct scsi_link *, u_int,
+			    struct dk_cache *);
 
 
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
@@ -1796,3 +1800,87 @@ destroy:
 	return (1);
 }
 
+int
+mfii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
+{
+	switch (cmd) {
+	case DIOCGCACHE:
+	case DIOCSCACHE:
+		return mfii_scsi_ioctl_cache(link, cmd,
+		    (struct dk_cache *)addr);
+	default:
+		break;
+	}
+	return (ENOTTY);
+}
+
+int
+mfii_scsi_ioctl_cache(struct scsi_link *link, u_int cmd, struct dk_cache *dc)
+{
+	struct mfii_softc *sc = (struct mfii_softc *)link->adapter_softc;
+	struct mfi_ld_prop ldp;
+	uint8_t mbox[MFI_MBOX_SIZE];
+	struct mfii_ccb *ccb;
+	int rv, wrenable, rdenable;
+
+	memset(mbox, 0, sizeof(mbox));
+	*((uint16_t *)&mbox[0]) = htole16(link->target);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	rv = mfii_mgmt(sc, ccb, MR_DCMD_LD_GET_PROPERTIES, mbox,
+	    &ldp, sizeof(ldp), SCSI_DATA_IN|SCSI_NOSLEEP);
+	scsi_io_put(&sc->sc_iopool, ccb);
+	if (rv != 0)
+		return (rv);
+
+	if (letoh16(sc->sc_info.mci_memory_size) > 0) {
+		wrenable = ISSET(ldp.mlp_cur_cache_policy,
+		    MR_LD_CACHE_ALLOW_WRITE_CACHE)? 1 : 0;
+		rdenable = ISSET(ldp.mlp_cur_cache_policy,
+		    MR_LD_CACHE_ALLOW_READ_CACHE)? 1 : 0;
+	} else {
+		wrenable = ISSET(ldp.mlp_diskcache_policy,
+		    MR_LD_DISK_CACHE_ENABLE)? 1 : 0;
+		rdenable = 0;
+	}
+
+	if (cmd == DIOCGCACHE) {
+		dc->wrcache = wrenable;
+		dc->rdcache = rdenable;
+		return (0);
+	}
+	if (((dc->wrcache) ? 1 : 0) == wrenable &&
+	    ((dc->rdcache) ? 1 : 0) == rdenable)
+		return (0);
+
+	mbox[0] = ldp.mlp_ld.mld_target;
+	mbox[1] = ldp.mlp_ld.mld_res;
+	*(uint16_t *)&mbox[2] = ldp.mlp_ld.mld_seq;
+	if (letoh16(sc->sc_info.mci_memory_size) > 0) {
+		if (dc->rdcache)
+			SET(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_READ_CACHE);
+		else
+			CLR(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_READ_CACHE);
+		if (dc->wrcache)
+			SET(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_WRITE_CACHE);
+		else
+			CLR(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_WRITE_CACHE);
+	} else {
+		if (dc->rdcache)
+			return (EOPNOTSUPP);
+		if (dc->wrcache)
+			ldp.mlp_diskcache_policy = MR_LD_DISK_CACHE_ENABLE;
+		else
+			ldp.mlp_diskcache_policy = MR_LD_DISK_CACHE_DISABLE;
+	}
+
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	rv = mfii_mgmt(sc, ccb, MR_DCMD_LD_SET_PROPERTIES, mbox,
+	    &ldp, sizeof(ldp), SCSI_DATA_OUT|SCSI_NOSLEEP);
+	scsi_io_put(&sc->sc_iopool, ccb);
+
+	return (rv);
+}
