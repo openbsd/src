@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.51 2016/10/12 13:36:39 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.52 2016/10/24 21:05:55 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -341,15 +341,6 @@ dhcprequest(struct packet *packet)
 		    print_hw_addr(packet->raw->htype, packet->raw->hlen,
 		    packet->raw->chaddr));
 		return;
-	}
-
-	/*
-	 * Do not ACK a REQUEST intended for another server.
-	 */
-	if (packet->options[DHO_DHCP_SERVER_IDENTIFIER].len == 4) {
-		if (memcmp(packet->options[DHO_DHCP_SERVER_IDENTIFIER].data,
-		    &packet->interface->primary_address, 4))
-			return;
 	}
 
 	/*
@@ -1102,6 +1093,19 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 			memcpy(state->from.iabuf, state->options[i]->value,
 			    state->from.len);
 		}
+		/*
+		 * Do not ACK a REQUEST intended for another server.
+		 */
+		if (packet->options[i].len == 4) {
+			if (state->options[i]->len != 4 ||
+			    memcmp(packet->options[i].data,
+			    state->options[i]->value, 4) != 0) {
+				free_lease_state(state, "ack_lease: "
+				    "server identifier");
+				return;
+			}
+		}
+
 		/* If we used the vendor class the client specified, we
 		   have to return it. */
 		if (vendor_class) {
