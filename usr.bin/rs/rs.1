@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rs.1,v 1.18 2016/01/04 23:21:28 schwarze Exp $
+.\"	$OpenBSD: rs.1,v 1.19 2016/10/24 13:46:58 schwarze Exp $
 .\"	$FreeBSD: src/usr.bin/rs/rs.1,v 1.4 1999/08/28 01:05:21 peter Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)rs.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: January 4 2016 $
+.Dd $Mdocdate: October 24 2016 $
 .Dt RS 1
 .Os
 .Sh NAME
@@ -170,10 +170,10 @@ number as zero unless otherwise indicated.
 .Sh ENVIRONMENT
 .Bl -tag -width LC_CTYPE
 .It Ev LC_CTYPE
-The character set
+The character encoding
 .Xr locale 1 .
-It is used to calculate required column widths and to adjust entries
-within columns.
+It decides which byte sequences form characters
+and what their display width is.
 If unset or set to
 .Qq C ,
 .Qq POSIX ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cut.1,v 1.26 2015/12/06 06:15:05 schwarze Exp $
+.\"	$OpenBSD: cut.1,v 1.27 2016/10/24 13:46:58 schwarze Exp $
 .\"	$NetBSD: cut.1,v 1.6 1995/10/02 20:19:26 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 6 2015 $
+.Dd $Mdocdate: October 24 2016 $
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -123,9 +123,9 @@ Unless specified, lines with no delimiters are passed through unmodified.
 .Sh ENVIRONMENT
 .Bl -tag -width LC_CTYPE
 .It Ev LC_CTYPE
-The character set
-.Xr locale 1 ,
-defining which byte sequences form characters.
+The character encoding
+.Xr locale 1 .
+It decides which byte sequences form characters.
 If unset or set to
 .Qq C ,
 .Qq POSIX ,
