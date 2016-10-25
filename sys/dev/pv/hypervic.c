@@ -59,8 +59,6 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/i82489var.h>
 
 #include <dev/rndvar.h>
@@ -148,17 +146,17 @@ hv_attach_icdevs(struct hv_softc *sc)
 		 */
 		dv->dv_ch->ch_flags &= ~CHF_BATCHED;
 
-		dv->dv_buf = km_alloc(VMBUS_IC_BUFRINGSIZE, &kv_any,
-		    &kp_zero, (cold ? &kd_nowait : &kd_waitok));
+		dv->dv_buf = malloc(PAGE_SIZE, M_DEVBUF, M_ZERO |
+		    (cold ? M_NOWAIT : M_WAITOK));
 		if (dv->dv_buf == NULL) {
 			printf("%s: failed to allocate ring buffer for %s",
 			    sc->sc_dev.dv_xname, dv->dv_name);
 			continue;
 		}
 
-		if (hv_channel_open(ch, NULL, 0, dv->dv_handler, dv)) {
-			km_free(dv->dv_buf, VMBUS_IC_BUFRINGSIZE,
-			    &kv_any, &kp_zero);
+		if (hv_channel_open(ch, VMBUS_IC_BUFRINGSIZE, NULL, 0,
+		    dv->dv_handler, dv)) {
+			free(dv->dv_buf, M_DEVBUF, PAGE_SIZE);
 			dv->dv_buf = NULL;
 			printf("%s: failed to open channel for %s\n",
 			    sc->sc_dev.dv_xname, dv->dv_name);
@@ -210,8 +208,7 @@ hv_heartbeat(void *arg)
 	uint32_t rlen;
 	int rv;
 
-	rv = hv_channel_recv(ch, dv->dv_buf, VMBUS_IC_BUFRINGSIZE, &rlen,
-	    &rid, 0);
+	rv = hv_channel_recv(ch, dv->dv_buf, PAGE_SIZE, &rlen, &rid, 0);
 	if (rv || rlen == 0) {
 		if (rv != EAGAIN)
 			DPRINTF("%s: heartbeat rv=%d rlen=%u\n",
@@ -277,8 +274,7 @@ hv_shutdown(void *arg)
 	uint32_t rlen;
 	int rv, shutdown = 0;
 
-	rv = hv_channel_recv(ch, dv->dv_buf, VMBUS_IC_BUFRINGSIZE, &rlen,
-	    &rid, 0);
+	rv = hv_channel_recv(ch, dv->dv_buf, PAGE_SIZE, &rlen, &rid, 0);
 	if (rv || rlen == 0) {
 		if (rv != EAGAIN)
 			DPRINTF("%s: shutdown rv=%d rlen=%u\n",
@@ -346,8 +342,7 @@ hv_timesync(void *arg)
 	uint32_t rlen;
 	int rv;
 
-	rv = hv_channel_recv(ch, dv->dv_buf, VMBUS_IC_BUFRINGSIZE, &rlen,
-	    &rid, 0);
+	rv = hv_channel_recv(ch, dv->dv_buf, PAGE_SIZE, &rlen, &rid, 0);
 	if (rv || rlen == 0) {
 		if (rv != EAGAIN)
 			DPRINTF("%s: timesync rv=%d rlen=%u\n",

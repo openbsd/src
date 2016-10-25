@@ -76,14 +76,14 @@
 
 #define HVN_DEBUG			1
 
-#define HVN_NVS_BUFSIZE		  	PAGE_SIZE
 #define HVN_NVS_MSGSIZE			32
+#define HVN_NVS_BUFSIZE			PAGE_SIZE
 
 /*
  * RNDIS control interface
  */
 #define HVN_RNDIS_CTLREQS		4
-#define HVN_RNDIS_CMPBUFSZ		512
+#define HVN_RNDIS_BUFSIZE		512
 
 struct rndis_cmd {
 	uint32_t			 rc_id;
@@ -95,7 +95,7 @@ struct rndis_cmd {
 	uint64_t			 rc_gpa;
 	struct rndis_packet_msg		 rc_cmp;
 	uint32_t			 rc_cmplen;
-	uint8_t				 rc_cmpbuf[HVN_RNDIS_CMPBUFSZ];
+	uint8_t				 rc_cmpbuf[HVN_RNDIS_BUFSIZE];
 	struct mutex			 rc_mtx;
 	TAILQ_ENTRY(rndis_cmd)		 rc_entry;
 };
@@ -141,7 +141,9 @@ struct hvn_softc {
 	int				 sc_link_state;
 	int				 sc_promisc;
 
+
 	/* NVS protocol */
+	int				 sc_ringsize;
 	int				 sc_proto;
 	uint32_t			 sc_nvstid;
 	uint8_t				 sc_nvsrsp[HVN_NVS_MSGSIZE];
@@ -885,19 +887,25 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	uint32_t ndisver;
 	int i;
 
-	/* 4 page sized buffer for channel messages */
-	sc->sc_nvsbuf = km_alloc(HVN_NVS_BUFSIZE, &kv_any, &kp_zero,
-	    (cold ? &kd_nowait : &kd_waitok));
+	sc->sc_nvsbuf = malloc(HVN_NVS_BUFSIZE, M_DEVBUF, M_ZERO |
+	    (cold ? M_NOWAIT : M_WAITOK));
 	if (sc->sc_nvsbuf == NULL) {
 		DPRINTF("%s: failed to allocate channel data buffer\n",
 		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
 
+	/* We need to be able to fit all RNDIS control and data messages */
+	sc->sc_ringsize = HVN_RNDIS_CTLREQS *
+	    (sizeof(struct hvn_nvs_rndis) + sizeof(struct vmbus_gpa)) +
+	    HVN_TX_DESC * (sizeof(struct hvn_nvs_rndis) +
+	    (HVN_TX_FRAGS + 1) * sizeof(struct vmbus_gpa));
+
 	/* Associate our interrupt handler with the channel */
-	if (hv_channel_open(sc->sc_chan, NULL, 0, hvn_nvs_intr, sc)) {
+	if (hv_channel_open(sc->sc_chan, sc->sc_ringsize, NULL, 0,
+	    hvn_nvs_intr, sc)) {
 		DPRINTF("%s: failed to open channel\n", sc->sc_dev.dv_xname);
-		km_free(sc->sc_nvsbuf, HVN_NVS_BUFSIZE, &kv_any, &kp_zero);
+		free(sc->sc_nvsbuf, M_DEVBUF, HVN_NVS_BUFSIZE);
 		return (-1);
 	}
 
@@ -1023,7 +1031,7 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 		    timo ? VMBUS_CHANPKT_FLAG_RC : 0);
 		if (rv == EAGAIN) {
 			if (timo)
-				tsleep(cmd, PRIBIO, "hvnsend", timo / 10);
+				tsleep(cmd, PRIBIO, "nvsout", timo / 10);
 			else
 				delay(100);
 		} else if (rv) {
@@ -1035,7 +1043,7 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 
 	if (timo) {
 		mtx_enter(&sc->sc_nvslck);
-		rv = msleep(&sc->sc_nvsrsp, &sc->sc_nvslck, PRIBIO, "hvnvsp",
+		rv = msleep(&sc->sc_nvsrsp, &sc->sc_nvslck, PRIBIO, "nvscmd",
 		    timo);
 		mtx_leave(&sc->sc_nvslck);
 		if (rv == EWOULDBLOCK)
@@ -1072,7 +1080,7 @@ void
 hvn_nvs_detach(struct hvn_softc *sc)
 {
 	if (hv_channel_close(sc->sc_chan) == 0) {
-		km_free(sc->sc_nvsbuf, HVN_NVS_BUFSIZE, &kv_any, &kp_zero);
+		free(sc->sc_nvsbuf, M_DEVBUF, HVN_NVS_BUFSIZE);
 		sc->sc_nvsbuf = NULL;
 	}
 }
@@ -1085,7 +1093,7 @@ hvn_alloc_cmd(struct hvn_softc *sc)
 	mtx_enter(&sc->sc_cntl_fqlck);
 	while ((rc = TAILQ_FIRST(&sc->sc_cntl_fq)) == NULL)
 		msleep(&sc->sc_cntl_fq, &sc->sc_cntl_fqlck,
-		    PRIBIO, "hvnrr", 1);
+		    PRIBIO, "nvsalloc", 1);
 	TAILQ_REMOVE(&sc->sc_cntl_fq, rc, rc_entry);
 	mtx_leave(&sc->sc_cntl_fqlck);
 	return (rc);
@@ -1316,10 +1324,11 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 		rv = hv_channel_send_sgl(sc->sc_chan, sgl, 1, &rc->rc_msg,
 		    sizeof(*msg), rc->rc_id);
 		if (rv == EAGAIN)
-			tsleep(rc, PRIBIO, "hvnsendbuf", timo / 10);
+			tsleep(rc, PRIBIO, "rndisout", timo / 10);
 		else if (rv) {
 			DPRINTF("%s: RNDIS operation %d send error %d\n",
 			    sc->sc_dev.dv_xname, hdr->rm_type, rv);
+			hvn_rollback_cmd(sc, rc);
 			return (rv);
 		}
 	} while (rv != 0 && --tries > 0);
@@ -1328,7 +1337,7 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 	    BUS_DMASYNC_POSTWRITE);
 
 	mtx_enter(&rc->rc_mtx);
-	rv = msleep(rc, &rc->rc_mtx, PRIBIO | PCATCH, "rndisctl", timo);
+	rv = msleep(rc, &rc->rc_mtx, PRIBIO | PCATCH, "rndiscmd", timo);
 	mtx_leave(&rc->rc_mtx);
 
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
@@ -1520,7 +1529,7 @@ hvn_rndis_complete(struct hvn_softc *sc, caddr_t buf, uint32_t len)
 		else
 			memcpy(&rc->rc_cmp, buf, rc->rc_cmplen);
 		if (len > rc->rc_cmplen &&
-		    len - rc->rc_cmplen > HVN_RNDIS_CMPBUFSZ)
+		    len - rc->rc_cmplen > HVN_RNDIS_BUFSIZE)
 			printf("%s: RNDIS response %u too large: %u\n",
 			    sc->sc_dev.dv_xname, id, len);
 		else if (len > rc->rc_cmplen)

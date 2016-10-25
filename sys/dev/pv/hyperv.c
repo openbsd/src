@@ -101,7 +101,7 @@ int	hv_channel_scan(struct hv_softc *);
 void	hv_process_offer(struct hv_softc *, struct hv_offer *);
 struct hv_channel *
 	hv_channel_lookup(struct hv_softc *, uint32_t);
-int	hv_channel_ring_create(struct hv_channel *, uint32_t, uint32_t);
+int	hv_channel_ring_create(struct hv_channel *, uint32_t);
 void	hv_channel_ring_destroy(struct hv_channel *);
 extern void hv_attach_icdevs(struct hv_softc *);
 int	hv_attach_devices(struct hv_softc *);
@@ -1070,38 +1070,35 @@ hv_channel_lookup(struct hv_softc *sc, uint32_t relid)
 }
 
 int
-hv_channel_ring_create(struct hv_channel *ch, uint32_t sndbuflen,
-    uint32_t rcvbuflen)
+hv_channel_ring_create(struct hv_channel *ch, uint32_t buflen)
 {
 	struct hv_softc *sc = ch->ch_sc;
 
-	sndbuflen = roundup(sndbuflen, PAGE_SIZE);
-	rcvbuflen = roundup(rcvbuflen, PAGE_SIZE);
-	ch->ch_ring = km_alloc(sndbuflen + rcvbuflen, &kv_any, &kp_zero,
-	    cold ? &kd_nowait : &kd_waitok);
+	buflen = roundup(buflen, PAGE_SIZE);
+	ch->ch_ring = km_alloc(2 * buflen, &kv_any, &kp_zero, cold ?
+	    &kd_nowait : &kd_waitok);
 	if (ch->ch_ring == NULL) {
 		printf("%s: failed to allocate channel ring\n",
 		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
-	ch->ch_ring_size = sndbuflen + rcvbuflen;
+	ch->ch_ring_size = 2 * buflen;
 	ch->ch_ring_npg = ch->ch_ring_size >> PAGE_SHIFT;
 
 	memset(&ch->ch_wrd, 0, sizeof(ch->ch_wrd));
 	ch->ch_wrd.rd_ring = (struct vmbus_bufring *)ch->ch_ring;
-	ch->ch_wrd.rd_size = sndbuflen;
-	ch->ch_wrd.rd_data_size = sndbuflen - sizeof(struct vmbus_bufring);
+	ch->ch_wrd.rd_size = buflen;
+	ch->ch_wrd.rd_data_size = buflen - sizeof(struct vmbus_bufring);
 	mtx_init(&ch->ch_wrd.rd_lock, IPL_NET);
 
 	memset(&ch->ch_rrd, 0, sizeof(ch->ch_rrd));
 	ch->ch_rrd.rd_ring = (struct vmbus_bufring *)((uint8_t *)ch->ch_ring +
-	    sndbuflen);
-	ch->ch_rrd.rd_size = rcvbuflen;
-	ch->ch_rrd.rd_data_size = rcvbuflen - sizeof(struct vmbus_bufring);
+	    buflen);
+	ch->ch_rrd.rd_size = buflen;
+	ch->ch_rrd.rd_data_size = buflen - sizeof(struct vmbus_bufring);
 	mtx_init(&ch->ch_rrd.rd_lock, IPL_NET);
 
-	if (hv_handle_alloc(ch, ch->ch_ring, sndbuflen + rcvbuflen,
-	    &ch->ch_ring_gpadl)) {
+	if (hv_handle_alloc(ch, ch->ch_ring, 2 * buflen, &ch->ch_ring_gpadl)) {
 		printf("%s: failed to obtain a PA handle for the ring\n",
 		    sc->sc_dev.dv_xname);
 		hv_channel_ring_destroy(ch);
@@ -1124,8 +1121,8 @@ hv_channel_ring_destroy(struct hv_channel *ch)
 }
 
 int
-hv_channel_open(struct hv_channel *ch, void *udata, size_t udatalen,
-    void (*handler)(void *), void *arg)
+hv_channel_open(struct hv_channel *ch, size_t buflen, void *udata,
+    size_t udatalen, void (*handler)(void *), void *arg)
 {
 	struct hv_softc *sc = ch->ch_sc;
 	struct vmbus_chanmsg_chopen cmd;
@@ -1133,7 +1130,7 @@ hv_channel_open(struct hv_channel *ch, void *udata, size_t udatalen,
 	int rv;
 
 	if (ch->ch_ring == NULL &&
-	    hv_channel_ring_create(ch, PAGE_SIZE * 4, PAGE_SIZE * 4)) {
+	    hv_channel_ring_create(ch, buflen)) {
 		DPRINTF(": failed to create channel ring\n");
 		return (-1);
 	}

@@ -206,8 +206,8 @@ extern const struct hv_guid hv_guid_avma4;
 
 int	hv_handle_alloc(struct hv_channel *, void *, uint32_t, uint32_t *);
 void	hv_handle_free(struct hv_channel *, uint32_t);
-int	hv_channel_open(struct hv_channel *, void *, size_t, void (*)(void *),
-	    void *);
+int	hv_channel_open(struct hv_channel *, size_t, void *, size_t,
+	    void (*)(void *), void *);
 int	hv_channel_close(struct hv_channel *);
 void	hv_evcount_attach(struct hv_channel *, const char *);
 int	hv_channel_send(struct hv_channel *, void *, uint32_t, uint64_t,
