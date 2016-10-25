@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.97 2016/10/25 06:26:03 florian Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.98 2016/10/25 19:40:57 florian Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -649,6 +649,12 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EADDRNOTAVAIL;
 			break;
 		}
+
+		/*
+		 * Make sure to not enter in_pcblookup_local(), local ports
+		 * are non-sensical for raw sockets.
+		 */
+		addr->sin6_port = 0;
 
 		if ((error = in6_pcbaddrisavail(in6p, addr, 0, p)))
 			break;
