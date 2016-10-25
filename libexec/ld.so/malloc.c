@@ -735,6 +735,22 @@ malloc_bytes(struct dir_info *d, size_t argsize)
 	return ((char *)bp->page + k);
 }
 
+static void
+validate_canary(struct dir_info *d, u_char *ptr, size_t sz, size_t allocated)
+{
+	size_t check_sz = allocated - sz;
+	u_char *p, *q;
+
+	if (check_sz > CHUNK_CHECK_LENGTH)
+		check_sz = CHUNK_CHECK_LENGTH;
+	p = ptr + sz;
+	q = p + check_sz;
+
+	while (p < q)
+		if (*p++ != SOME_JUNK)
+			wrterror("chunk canary corrupted");
+}
+
 static uint32_t
 find_chunknum(struct dir_info *d, struct region_info *r, void *ptr, int check)
 {
@@ -748,18 +764,8 @@ find_chunknum(struct dir_info *d, struct region_info *r, void *ptr, int check)
 	/* Find the chunk number on the page */
 	chunknum = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
 	if (check && mopts.chunk_canaries && info->size > 0) {
-		size_t sz = info->bits[info->offset + chunknum];
-		size_t check_sz = info->size - sz;
-		u_char *p, *q;
-
-		if (check_sz > CHUNK_CHECK_LENGTH)
-			check_sz = CHUNK_CHECK_LENGTH;
-		p = (u_char *)ptr + sz;
-		q = p + check_sz;
-
-		while (p < q)
-			if (*p++ != SOME_JUNK)
-				wrterror("chunk canary corrupted");
+		validate_canary(d, ptr, info->bits[info->offset + chunknum],
+		    info->size);
 	}
 
 	if ((uintptr_t)ptr & ((1U << (info->shift)) - 1)) {
@@ -866,6 +872,13 @@ omalloc(size_t sz, int zero_fill)
 				else
 					_dl_memset(p, SOME_JUNK,
 					    psz - mopts.malloc_guard);
+			} else if (mopts.chunk_canaries) {
+				size_t csz = psz - sz;
+
+				if (csz > CHUNK_CHECK_LENGTH)
+					csz = CHUNK_CHECK_LENGTH;
+				_dl_memset((char *)p + sz - mopts.malloc_guard,
+				    SOME_JUNK, csz);
 			}
 		}
 
@@ -951,6 +964,10 @@ ofree(void *p)
 		    MALLOC_LEEWAY) {
 			if (r->p != p)
 				wrterror("bogus pointer");
+			if (mopts.chunk_canaries)
+				validate_canary(g_pool, p,
+				    sz - mopts.malloc_guard,
+				    PAGEROUND(sz - mopts.malloc_guard));
 		} else {
 #if notyetbecause_of_realloc
 			/* shifted towards the end */
