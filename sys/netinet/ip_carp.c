@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.294 2016/10/04 13:54:32 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.295 2016/10/25 07:21:02 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -453,7 +453,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
 	ismulti = IN_MULTICAST(ip->ip_dst.s_addr);
 
 	/* check if received on a valid carp interface */
-	if (!((ifp->if_type == IFT_CARP && ismulti) ||
+	if (!(ifp->if_type == IFT_CARP ||
 	    (ifp->if_type != IFT_CARP && !ismulti && ifp->if_carp != NULL))) {
 		carpstats.carps_badif++;
 		CARP_LOG(LOG_INFO, sc,
