@@ -1,4 +1,4 @@
-.\"	$OpenBSD: counters_alloc.9,v 1.2 2016/10/21 12:39:13 jmc Exp $
+.\"	$OpenBSD: counters_alloc.9,v 1.3 2016/10/25 00:03:40 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,12 +14,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2016 $
+.Dd $Mdocdate: October 25 2016 $
 .Dt COUNTERS_ALLOC 9
 .Os
 .Sh NAME
 .Nm counters_alloc ,
 .Nm counters_free ,
+.Nm COUNTERS_BOOT_MEMORY ,
+.Nm COUNTERS_BOOT_INITIALIZER ,
+.Nm counters_alloc_ncpus ,
 .Nm counters_enter ,
 .Nm counters_leave ,
 .Nm counters_read ,
@@ -31,6 +34,14 @@
 .Fn counters_alloc "unsigned int ncounters" "int type"
 .Ft void
 .Fn counters_free "struct cpumem *cm" "unsigned int ncounters" "int type"
+.Fn COUNTERS_BOOT_MEMORY "NAME" "unsigned int ncounters"
+.Fn COUNTERS_BOOT_INITIALIZER "NAME"
+.Ft struct cpumemt *
+.Fo counters_alloc_ncpus
+.Fa "struct cpumem *cm"
+.Fa "unsigned int ncounters"
+.Fa "int type"
+.Fc
 .Ft uint64_t *
 .Fn counters_enter "struct counters_ref *ref" "struct cpumem *cm"
 .Ft void
@@ -84,6 +95,56 @@ arguments type originally provided to
 must be passed to
 .Fn counters_free .
 .Pp
+.Fn counters_alloc
+may only be used after all the CPUs in the system have been attached.
+If a set of CPU counters needs to be available during early boot,
+a cpumem pointer and counters for the boot CPU may be statically
+allocated.
+.Pp
+.Fn COUNTERS_BOOT_MEMORY
+statically allocates a set of counter for use on the boot CPU
+before the other CPUs in the system have been attached.
+The allocation is identified by
+.Fa NAME
+and provides memory for the number of counters specified by
+.Fa ncounters .
+.Pp
+.Fn COUNTERS_BOOT_INITIALIZER
+is used to initialise a cpumem pointer with the memory that was previously
+allocated using
+.Fn COUNTERS_BOOT_MEMORY
+and identified by
+.Fa NAME .
+.Pp
+.Fn counters_alloc_ncpus
+allocates additional sets of counters for the CPUs that were attached
+during boot.
+The cpumem structure
+.Fa cm
+must have been initialised with
+.Fn COUNTERS_BOOT_INITIALIZER .
+The same number of counters originally passed to
+.Fa COUNTERS_BOOT_MEMORY
+must be specified by
+.Fa ncounters .
+The
+.Fa type
+argument specifies the type of memory that the counters will be
+allocated as via
+.Xr malloc 9 .
+The memory will be zeroed on allocation by passing
+.Fn M_ZERO
+to
+.Xr malloc 9 .
+.Pp
+Counters that have been allocated with
+.Fn COUNTERS_BOOT_MEMORY
+and
+.Fn counters_alloc_ncpus
+cannot be deallocated with
+.Fa counters_free .
+Any attempt to do so will lead to undefined behaviour.
+.Pp
 .Fn counters_enter
 provides access to the current CPU's set of counters referenced by
 .Fa cm .
@@ -119,6 +180,7 @@ up to the caller to serialise this call with other actions.
 .Sh CONTEXT
 .Fn counters_alloc ,
 .Fn counters_free ,
+.Fn counters_alloc_ncpus ,
 and
 .Fn counters_read
 may be called during autoconf, or from process context.
@@ -136,7 +198,9 @@ It is up to the caller to provide appropriate locking or serialisation
 around calls to these functions to prevent concurrent access to the
 relevant data structures.
 .Sh RETURN VALUES
-.Fn counters_get
+.Fn counters_alloc
+and
+.Fn counters_alloc_ncpus
 will return an opaque cpumem pointer that references each CPU's
 set of counters.
 .Pp

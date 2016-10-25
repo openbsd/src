@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpumem_get.9,v 1.5 2016/10/21 15:00:30 bluhm Exp $
+.\"	$OpenBSD: cpumem_get.9,v 1.6 2016/10/25 00:03:40 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,14 +14,17 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2016 $
+.Dd $Mdocdate: October 25 2016 $
 .Dt CPUMEM_GET 9
 .Os
 .Sh NAME
 .Nm cpumem_get ,
 .Nm cpumem_put ,
 .Nm cpumem_malloc ,
+.Nm cpumem_malloc_ncpus ,
 .Nm cpumem_free ,
+.Nm CPUMEM_BOOT_MEMORY ,
+.Nm CPUMEM_BOOT_INITIALIZER ,
 .Nm cpumem_enter ,
 .Nm cpumem_leave ,
 .Nm cpumem_first ,
@@ -37,6 +40,10 @@
 .Fn cpumem_malloc "size_t sz" "int type"
 .Ft void
 .Fn cpumem_free "struct cpumem *cm" "int type" "size_t sz"
+.Fn CPUMEM_BOOT_MEMORY "NAME" "size_t sz"
+.Fn CPUMEM_BOOT_INITIALIZER "NAME"
+.Ft struct cpumem *
+.Fn cpumem_malloc_ncpus "struct cpumem *cm" "size_t sz" "int type"
 .Ft void *
 .Fn cpumem_enter "struct cpumem *cm"
 .Ft void
@@ -100,6 +107,58 @@ must be specified by
 and
 .Fa type
 respectively.
+.Pp
+.Fn cpumem_get
+and
+.Fn cpumem_malloc
+may only be used after all the CPUs in the system have been attached.
+If per CPU memory needs to be available during early boot,
+a cpumem pointer and memory for the boot CPU may be statically
+allocated.
+.Pp
+.Fn CPUMEM_BOOT_MEMORY
+statically allocates memory for use on the boot CPU
+before the other CPUs in the system have been attached.
+The allocation is identified by
+.Fa NAME ,
+and provides the number of bytes specified by the
+.Fa sz
+argument.
+.Pp
+.Fn CPUMEM_BOOT_INITIALIZER
+is used to initialise a cpumem pointer with the memory that was previously
+allocated using
+.Fn CPUMEM_BOOT_MEMORY
+and identified by
+.Fa NAME .
+.Pp
+.Fn cpumem_malloc_ncpus
+allocates additional memory for the CPUs that were attached during boot.
+The cpumem structure
+.Fa cm
+must have been initialised with
+.Fn CPUMEM_BOOT_INITIALIZER .
+The same number of bytes originally passed to
+.Fa COUNTERS_BOOT_MEMORY
+must be specified by
+.Fa sz .
+The
+.Fa type
+argument specifies the type of memory that the counters will be
+allocated as via
+.Xr malloc 9 .
+The memory will be zeroed on allocation by passing
+.Fn M_ZERO
+to
+.Xr malloc 9 .
+.Pp
+Per CPU memory that has been allocated with
+.Fn CPUMEM_BOOT_MEMORY
+and
+.Fn cpumem_malloc_ncpus
+cannot be deallocated with
+.Fa cpumem_free .
+Any attempt to do so will lead to undefined behaviour.
 .Ss Per CPU Memory Access
 .Fn cpumem_enter
 provides access to the current CPU's memory allocation referenced by
@@ -136,8 +195,9 @@ to each CPU's allocation in turn.
 .Fn cpumem_get ,
 .Fn cpumem_put ,
 .Fn cpumem_malloc ,
+.Fn cpumem_free ,
 and
-.Fn cpumem_free
+.Fn cpumem_malloc_ncpus
 may be called during autoconf, or from process context.
 .Pp
 .Fn cpumem_enter ,
@@ -154,9 +214,10 @@ It is up to the caller to provide appropriate locking or serialisation
 around calls to these functions to prevent concurrent access to the
 relevant data structures.
 .Sh RETURN VALUES
-.Fn cpumem_get
+.Fn cpumem_get ,
+.Fn cpumem_malloc ,
 and
-.Fn cpumem_malloc
+.Fn cpumem_malloc_ncpus
 will return an opaque cpumem pointer that references each CPU's
 memory allocation.
 .Pp
