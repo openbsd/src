@@ -1,4 +1,4 @@
-.\"	$OpenBSD: counters_alloc.9,v 1.4 2016/10/25 00:07:29 dlg Exp $
+.\"	$OpenBSD: counters_alloc.9,v 1.5 2016/10/25 00:11:06 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -133,7 +133,8 @@ The
 argument specifies the type of memory that the counters will be
 allocated as via
 .Xr malloc 9 .
-The memory will be zeroed on allocation.
+The counters on the boot CPU will be preserved, while the counters
+for the additional CPU's will be zeroed on allocation.
 .Pp
 Counters that have been allocated with
 .Fn COUNTERS_BOOT_MEMORY

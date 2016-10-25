@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpumem_get.9,v 1.7 2016/10/25 00:07:29 dlg Exp $
+.\"	$OpenBSD: cpumem_get.9,v 1.8 2016/10/25 00:11:06 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -141,7 +141,8 @@ The
 argument specifies the type of memory that the counters will be
 allocated as via
 .Xr malloc 9 .
-The memory will be zeroed on allocation.
+The contents of the memory on the boot CPU will be preserved, while
+the allocations for the additional CPU's will be zeroed on allocation.
 .Pp
 Per CPU memory that has been allocated with
 .Fn CPUMEM_BOOT_MEMORY
