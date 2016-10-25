@@ -1,4 +1,4 @@
-.\"	$OpenBSD: counters_alloc.9,v 1.3 2016/10/25 00:03:40 dlg Exp $
+.\"	$OpenBSD: counters_alloc.9,v 1.4 2016/10/25 00:07:29 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -108,6 +108,7 @@ The allocation is identified by
 .Fa NAME
 and provides memory for the number of counters specified by
 .Fa ncounters .
+The counters will be initialised to zero.
 .Pp
 .Fn COUNTERS_BOOT_INITIALIZER
 is used to initialise a cpumem pointer with the memory that was previously
@@ -132,10 +133,7 @@ The
 argument specifies the type of memory that the counters will be
 allocated as via
 .Xr malloc 9 .
-The memory will be zeroed on allocation by passing
-.Fn M_ZERO
-to
-.Xr malloc 9 .
+The memory will be zeroed on allocation.
 .Pp
 Counters that have been allocated with
 .Fn COUNTERS_BOOT_MEMORY
