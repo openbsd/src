@@ -1,4 +1,4 @@
-.\"	$OpenBSD: counters_alloc.9,v 1.5 2016/10/25 00:11:06 dlg Exp $
+.\"	$OpenBSD: counters_alloc.9,v 1.6 2016/10/25 00:21:05 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -205,6 +205,68 @@ set of counters.
 .Pp
 .Fn counters_enter
 returns a reference to the current CPU's set of counters.
+.Sh EXAMPLES
+The following is an example of providing per CPU counters at boot
+time based on the
+.Xr mbuf 9
+statistics code in
+.Pa sys/kern/uipc_mbuf.c .
+.Bd -literal
+/* mbuf stats */
+COUNTERS_BOOT_MEMORY(mbstat_boot, MBSTAT_COUNT);
+struct cpumem *mbstat = COUNTERS_BOOT_INITIALIZER(mbstat_boot);
+
+/*
+ * this function is called from init_main.c after devices
+ * (including additional CPUs) have been attached
+ */
+void
+mbcpuinit()
+{
+	mbstat = counters_alloc_ncpus(mbstat, MBSTAT_COUNT,
+	    M_DEVBUF);
+}
+
+struct mbuf *
+m_get(int nowait, int type)
+{
+	...
+
+        struct counters_ref cr;
+        uint64_t *counters;
+        int s;
+
+	...
+
+        s = splnet();
+        counters = counters_enter(&cr, mbstat);
+        counters[type]++;
+        counters_leave(&cr, mbstat);
+        splx(s);
+
+	...
+}
+
+struct mbuf *
+m_free(struct mbuf *m)
+{
+	...
+
+        struct counters_ref cr;
+        uint64_t *counters;
+        int s;
+
+	...
+
+        s = splnet();
+        counters = counters_enter(&cr, mbstat);
+        counters[m->m_type]--;
+        counters_leave(&cr, mbstat);
+        splx(s);
+
+	...
+}
+.Ed
 .Sh SEE ALSO
 .Xr cpumem_get 9 ,
 .Xr malloc 9
