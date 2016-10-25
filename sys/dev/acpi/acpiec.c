@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.54 2016/08/23 18:26:21 jcs Exp $ */
+/* $OpenBSD: acpiec.c,v 1.55 2016/10/25 06:55:59 pirofti Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -48,7 +48,7 @@ void		acpiec_write(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
 
 int		acpiec_getcrs(struct acpiec_softc *,
 		    struct acpi_attach_args *);
-int		acpiec_getregister(const u_int8_t *, int, int *, bus_size_t *);
+int		acpiec_parse_resources(int, union acpi_resource *, void *);
 
 void		acpiec_wait(struct acpiec_softc *, u_int8_t, u_int8_t);
 void		acpiec_sci_event(struct acpiec_softc *);
@@ -285,15 +285,16 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	printf("\n");
 	if (acpiec_getcrs(sc, aa)) {
-		printf(": Failed to read resource settings\n");
+		printf("%s: Failed to read resource settings\n", DEVNAME(sc));
 		return;
 	}
 
 	sc->sc_acpi->sc_ec = sc;
 
 	if (acpiec_reg(sc)) {
-		printf(": Failed to register address space\n");
+		printf("%s: Failed to register address space\n", DEVNAME(sc));
 		return;
 	}
 
@@ -305,15 +306,13 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler,
 	    sc, 1);
 #endif
-	
+
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_GLK", 0, NULL, &res))
 		sc->sc_glk = 0;
 	else if (res.type != AML_OBJTYPE_INTEGER)
 		sc->sc_glk = 0;
 	else
 		sc->sc_glk = res.v_integer ? 1 : 0;
-
-	printf("\n");
 }
 
 void
@@ -366,68 +365,72 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 	return (0);
 }
 
-/* parse the resource buffer to get a 'register' value */
 int
-acpiec_getregister(const u_int8_t *buf, int size, int *type, bus_size_t *addr)
+acpiec_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
 {
-	int			len, hlen;
+	struct acpiec_softc *sc = arg;
+	int type = AML_CRSTYPE(crs);
 
-#define RES_TYPE_MASK 0x80
-#define RES_LENGTH_MASK 0x07
-#define RES_TYPE_IOPORT	0x47
-#define RES_TYPE_ENDTAG	0x79
-
-	if (size <= 0)
-		return (0);
-
-	if (*buf & RES_TYPE_MASK) {
-		/* large resource */
-		if (size < 3)
-			return (1);
-		len = (int)buf[1] + 256 * (int)buf[2];
-		hlen = 3;
-	} else {
-		/* small resource */
-		len = buf[0] & RES_LENGTH_MASK;
-		hlen = 1;
+	switch (crsidx) {
+	case 0:
+		if (type != SR_IOPORT) {
+			printf("%s: Unexpected resource #%d type %d\n",
+			    DEVNAME(sc), crsidx, type);
+			break;
+		}
+		sc->sc_data_bt = sc->sc_acpi->sc_iot;
+		sc->sc_ec_data = crs->sr_ioport._max;
+		break;
+	case 1:
+		if (type != SR_IOPORT) {
+			printf("%s: Unexpected resource #%d type %d\n",
+			    DEVNAME(sc), crsidx, type);
+			break;
+		}
+		sc->sc_cmd_bt = sc->sc_acpi->sc_iot;
+		sc->sc_ec_sc = crs->sr_ioport._max;
+		break;
+	case 2:
+		if (!sc->sc_acpi->sc_hw_reduced) {
+			printf("%s: Not running on HW-Reduced ACPI type %d\n",
+			    DEVNAME(sc), type);
+			break;
+		}
+		/* XXX: handle SCI GPIO  */
+		break;
+	default:
+		printf("%s: invalid resource #%d type %d\n",
+		    DEVNAME(sc), crsidx, type);
 	}
 
-	/* XXX todo: decode other types */
-	if (*buf != RES_TYPE_IOPORT)
-		return (0);
-
-	if (size < hlen + len)
-		return (0);
-
-	/* XXX validate? */
-	*type = GAS_SYSTEM_IOSPACE;
-	*addr = (int)buf[2] + 256 * (int)buf[3];
-
-	return (hlen + len);
+	return 0;
 }
 
 int
 acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 {
 	struct aml_value	res;
-	bus_size_t		ec_sc, ec_data;
-	int			dtype, ctype;
-	char			*buf;
-	int			size, ret;
 	int64_t			gpe;
 	struct acpi_ecdt	*ecdt = aa->aaa_table;
 	extern struct aml_node	aml_root;
+	int			rc;
 
 	/* Check if this is ECDT initialization */
 	if (ecdt) {
 		/* Get GPE, Data and Control segments */
 		sc->sc_gpe = ecdt->gpe_bit;
 
-		ctype = ecdt->ec_control.address_space_id;
-		ec_sc = ecdt->ec_control.address;
+		if (ecdt->ec_control.address_space_id == GAS_SYSTEM_IOSPACE)
+			sc->sc_cmd_bt = sc->sc_acpi->sc_iot;
+		else
+			sc->sc_cmd_bt = sc->sc_acpi->sc_memt;
+		sc->sc_ec_sc = ecdt->ec_control.address;
 
-		dtype = ecdt->ec_data.address_space_id;
-		ec_data = ecdt->ec_data.address;
+		if (ecdt->ec_data.address_space_id == GAS_SYSTEM_IOSPACE)
+			sc->sc_data_bt = sc->sc_acpi->sc_iot;
+		else
+			sc->sc_data_bt = sc->sc_acpi->sc_memt;
+		sc->sc_ec_data = ecdt->ec_data.address;
 
 		/* Get devnode from header */
 		sc->sc_devnode = aml_searchname(&aml_root, ecdt->ec_id);
@@ -435,7 +438,9 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 		goto ecdtdone;
 	}
 
-	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_GPE", 0, NULL, &gpe)) {
+	rc = aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
+	    "_GPE", 0, NULL, &gpe);
+	if (rc) {
 		dnprintf(10, "%s: no _GPE\n", DEVNAME(sc));
 		return (1);
 	}
@@ -456,60 +461,26 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 		return (1);
 	}
 
-	size = res.length;
-	buf = res.v_buffer;
-
-	ret = acpiec_getregister(buf, size, &dtype, &ec_data);
-	if (ret <= 0) {
-		dnprintf(10, "%s: failed to read DATA from _CRS\n",
-		    DEVNAME(sc));
-		aml_freevalue(&res);
-		return (1);
-	}
-
-	buf += ret;
-	size -= ret;
-
-	ret = acpiec_getregister(buf, size, &ctype, &ec_sc);
-	if (ret <= 0) {
-		dnprintf(10, "%s: failed to read S/C from _CRS\n",
-		    DEVNAME(sc));
-		aml_freevalue(&res);
-		return (1);
-	}
-
-	buf += ret;
-	size -= ret;
-
-	if (size != 2 || *buf != RES_TYPE_ENDTAG) {
-		dnprintf(10, "%s: no _CRS end tag\n", DEVNAME(sc));
-		aml_freevalue(&res);
-		return (1);
-	}
+	aml_parse_resource(&res, acpiec_parse_resources, sc);
 	aml_freevalue(&res);
+	if (sc->sc_ec_data == 0 || sc->sc_ec_sc == 0) {
+		printf("%s: failed to read from _CRS\n", DEVNAME(sc));
+		return (1);
+	}
 
-	/* XXX: todo - validate _CRS checksum? */
 ecdtdone:
 
 	dnprintf(10, "%s: Data: 0x%lx, S/C: 0x%lx\n",
-	    DEVNAME(sc), ec_data, ec_sc);
+	    DEVNAME(sc), sc->sc_ec_data, sc->sc_ec_sc);
 
-	if (ctype == GAS_SYSTEM_IOSPACE)
-		sc->sc_cmd_bt = aa->aaa_iot;
-	else
-		sc->sc_cmd_bt = aa->aaa_memt;
-
-	if (bus_space_map(sc->sc_cmd_bt, ec_sc, 1, 0, &sc->sc_cmd_bh)) {
+	if (bus_space_map(sc->sc_cmd_bt, sc->sc_ec_sc, 1, 0, &sc->sc_cmd_bh)) {
 		dnprintf(10, "%s: failed to map S/C reg.\n", DEVNAME(sc));
 		return (1);
 	}
 
-	if (dtype == GAS_SYSTEM_IOSPACE)
-		sc->sc_data_bt = aa->aaa_iot;
-	else
-		sc->sc_data_bt = aa->aaa_memt;
-
-	if (bus_space_map(sc->sc_data_bt, ec_data, 1, 0, &sc->sc_data_bh)) {
+	rc = bus_space_map(sc->sc_data_bt, sc->sc_ec_data, 1, 0,
+	    &sc->sc_data_bh);
+	if (rc) {
 		dnprintf(10, "%s: failed to map DATA reg.\n", DEVNAME(sc));
 		bus_space_unmap(sc->sc_cmd_bt, sc->sc_cmd_bh, 1);
 		return (1);

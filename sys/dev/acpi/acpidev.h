@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.38 2015/08/12 05:59:54 mlarkin Exp $ */
+/* $OpenBSD: acpidev.h,v 1.39 2016/10/25 06:55:59 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -323,10 +323,12 @@ struct acpiec_softc {
 	int			sc_ecbusy;
 
 	/* command/status register */
+	bus_size_t		sc_ec_sc;
 	bus_space_tag_t		sc_cmd_bt;
 	bus_space_handle_t	sc_cmd_bh;
 
 	/* data register */
+	bus_size_t		sc_ec_data;
 	bus_space_tag_t		sc_data_bt;
 	bus_space_handle_t	sc_data_bh;
 
