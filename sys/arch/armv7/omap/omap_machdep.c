@@ -1,4 +1,4 @@
-/*	$OpenBSD: omap_machdep.c,v 1.10 2016/10/23 05:07:29 jsg Exp $	*/
+/*	$OpenBSD: omap_machdep.c,v 1.11 2016/10/25 00:04:59 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -73,11 +73,6 @@ omap_platform_powerdown(void)
 }
 
 void
-omap_platform_disable_l2_if_needed(void)
-{
-}
-
-void
 omap_platform_board_init(void)
 {
 	omap_board_init();
@@ -88,7 +83,6 @@ struct armv7_platform omap_platform = {
 	.smc_write = omap_platform_smc_write,
 	.watchdog_reset = omap_platform_watchdog_reset,
 	.powerdown = omap_platform_powerdown,
-	.disable_l2_if_needed = omap_platform_disable_l2_if_needed,
 	.init_mainbus = omap_platform_init_mainbus,
 };
 

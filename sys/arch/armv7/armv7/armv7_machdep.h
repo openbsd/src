@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.h,v 1.11 2016/10/09 00:53:43 jsg Exp $	*/
+/*	$OpenBSD: armv7_machdep.h,v 1.12 2016/10/25 00:04:59 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -25,7 +25,6 @@ void platform_powerdown(void);
 void platform_watchdog_reset(void);
 void platform_init_cons(void);
 void platform_init_mainbus(struct device *);
-void platform_disable_l2_if_needed(void);
 struct board_dev *platform_board_devs();
 void *fdt_find_cons(const char *);
 extern void (*cpuresetfn)(void);
@@ -39,7 +38,6 @@ struct armv7_platform {
 	void (*init_cons)(void);
 	void (*watchdog_reset)(void);
 	void (*powerdown)(void);
-	void (*disable_l2_if_needed)(void);
 	void (*init_mainbus)(struct device *);
 };
 

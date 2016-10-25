@@ -1,4 +1,4 @@
-/*	$OpenBSD: exynos_machdep.c,v 1.9 2016/06/08 15:27:05 jsg Exp $	*/
+/*	$OpenBSD: exynos_machdep.c,v 1.10 2016/10/25 00:04:59 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -60,12 +60,6 @@ exynos_platform_powerdown(void)
 
 }
 
-static void
-exynos_platform_disable_l2_if_needed(void)
-{
-
-}
-
 void
 exynos_platform_board_init(void)
 {
@@ -77,7 +71,6 @@ struct armv7_platform exynos_platform = {
 	.smc_write = exynos_platform_smc_write,
 	.watchdog_reset = exynos_platform_watchdog_reset,
 	.powerdown = exynos_platform_powerdown,
-	.disable_l2_if_needed = exynos_platform_disable_l2_if_needed,
 	.init_mainbus = exynos_platform_init_mainbus,
 };
 

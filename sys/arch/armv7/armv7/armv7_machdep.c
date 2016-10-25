@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.44 2016/10/09 00:53:43 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.45 2016/10/25 00:04:59 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -464,7 +464,6 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	physical_end = MIN(reg.addr + reg.size, (paddr_t)-PAGE_SIZE);
 
 	platform_init();
-	platform_disable_l2_if_needed();
 
 	/* setup a serial console for very early boot */
 	consinit();

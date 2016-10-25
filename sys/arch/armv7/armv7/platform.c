@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.19 2016/10/23 18:50:34 kettenis Exp $	*/
+/*	$OpenBSD: platform.c,v 1.20 2016/10/25 00:04:59 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -120,13 +120,6 @@ platform_powerdown(void)
 {
 	if (platform && platform->powerdown)
 		platform->powerdown();
-}
-
-void
-platform_disable_l2_if_needed(void)
-{
-	if (platform && platform->disable_l2_if_needed)
-		platform->disable_l2_if_needed();
 }
 
 struct board_dev *
