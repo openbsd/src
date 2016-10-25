@@ -1,4 +1,4 @@
-/*	$$	*/
+/*	$OpenBSD: print-ofp.c,v 1.2 2016/10/25 08:43:15 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
