@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpumem_get.9,v 1.8 2016/10/25 00:11:06 dlg Exp $
+.\"	$OpenBSD: cpumem_get.9,v 1.9 2016/10/25 08:09:22 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -28,7 +28,8 @@
 .Nm cpumem_enter ,
 .Nm cpumem_leave ,
 .Nm cpumem_first ,
-.Nm cpumem_next
+.Nm cpumem_next ,
+.Nm CPUMEM_FOREACH
 .Nd per CPU memory allocations
 .Sh SYNOPSIS
 .In sys/percpu.h
@@ -38,12 +39,12 @@
 .Fn cpumem_put "struct pool *pp" "struct cpumem *cm"
 .Ft struct cpumem *
 .Fn cpumem_malloc "size_t sz" "int type"
+.Ft struct cpumem *
+.Fn cpumem_malloc_ncpus "struct cpumem *cm" "size_t sz" "int type"
 .Ft void
 .Fn cpumem_free "struct cpumem *cm" "int type" "size_t sz"
 .Fn CPUMEM_BOOT_MEMORY "NAME" "size_t sz"
 .Fn CPUMEM_BOOT_INITIALIZER "NAME"
-.Ft struct cpumem *
-.Fn cpumem_malloc_ncpus "struct cpumem *cm" "size_t sz" "int type"
 .Ft void *
 .Fn cpumem_enter "struct cpumem *cm"
 .Ft void
