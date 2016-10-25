@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.15 2016/10/23 10:22:21 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.16 2016/10/25 07:59:45 jmc Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ struct timespec	start_time;
 static	fstype_t *get_fstype(const char *);
 static time_t get_tstamp(const char *);
 static long long strsuftoll(const char *, const char *, long long, long long);
-static	void	usage(fstype_t *, fsinfo_t *) __dead;
+static __dead void usage(void);
 
 int
 main(int argc, char *argv[])
@@ -156,7 +156,7 @@ main(int argc, char *argv[])
 				if (*p == '\0')
 					errx(1, "Empty option");
 				if (! fstype->parse_options(p, &fsoptions))
-					usage(fstype, &fsoptions);
+					usage();
 			}
 			break;
 		}
@@ -189,14 +189,14 @@ main(int argc, char *argv[])
 
 		case '?':
 		default:
-			usage(fstype, &fsoptions);
+			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 2)
-		usage(fstype, &fsoptions);
+		usage();
 
 				/* walk the tree */
 	root = walk_dir(argv[1], ".", NULL, NULL);
@@ -333,24 +333,15 @@ strsuftoll(const char *desc, const char *val, long long min, long long max)
 }
 
 static void
-usage(fstype_t *fstype, fsinfo_t *fsoptions)
+usage(void)
 {
 	extern char *__progname;
 
 	fprintf(stderr,
-"Usage: %s [-b free-blocks] [-f free-files] [-M minimum-size]\n"
+"usage: %s [-b free-blocks] [-f free-files] [-M minimum-size]\n"
 "\t[-m maximum-size] [-O offset] [-o fs-options] [-S sector-size]\n"
 "\t[-s image-size] [-T timestamp] [-t fs-type] image-file directory\n",
 	    __progname);
 
-	if (fstype) {
-		size_t i;
-		option_t *o = fsoptions->fs_options;
-
-		fprintf(stderr, "\n%s specific options:\n", fstype->type);
-		for (i = 0; o[i].name != NULL; i++)
-			fprintf(stderr, "\t%-20.20s\t%s\n",
-			    o[i].name, o[i].desc);
-	}
 	exit(1);
 }
