@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.5 2016/05/08 18:18:42 kettenis Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.6 2016/10/25 06:48:58 pirofti Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -143,7 +143,7 @@ const int chv_southeast_pins[] = {
 	8, 12, 6, 8, 10, 11, -1
 };
 
-int	chvgpio_parse_resources(union acpi_resource *, void *);
+int	chvgpio_parse_resources(int, union acpi_resource *, void *);
 int	chvgpio_check_pin(struct chvgpio_softc *, int);
 int	chvgpio_read_pin(void *, int);
 void	chvgpio_write_pin(void *, int, int);
@@ -264,7 +264,7 @@ unmap:
 }
 
 int
-chvgpio_parse_resources(union acpi_resource *crs, void *arg)
+chvgpio_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
 {
 	struct chvgpio_softc *sc = arg;
 	int type = AML_CRSTYPE(crs);

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.226 2016/10/21 21:47:03 joris Exp $ */
+/* $OpenBSD: dsdt.c,v 1.227 2016/10/25 06:48:58 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1623,14 +1623,14 @@ aml_mapresource(union acpi_resource *crs)
 
 int
 aml_parse_resource(struct aml_value *res,
-    int (*crs_enum)(union acpi_resource *, void *), void *arg)
+    int (*crs_enum)(int, union acpi_resource *, void *), void *arg)
 {
-	int off, rlen;
+	int off, rlen, crsidx;
 	union acpi_resource *crs;
 
 	if (res->type != AML_OBJTYPE_BUFFER || res->length < 5)
 		return (-1);
-	for (off = 0; off < res->length; off += rlen) {
+	for (off = 0, crsidx = 0; off < res->length; off += rlen, crsidx++) {
 		crs = (union acpi_resource *)(res->v_buffer+off);
 
 		rlen = AML_CRSLEN(crs);
@@ -1641,7 +1641,7 @@ aml_parse_resource(struct aml_value *res,
 #ifdef ACPI_DEBUG
 		aml_print_resource(crs, NULL);
 #endif
-		crs_enum(crs, arg);
+		crs_enum(crsidx, crs, arg);
 	}
 
 	return (0);
@@ -1748,7 +1748,7 @@ int		aml_compare(struct aml_value *, struct aml_value *, int);
 struct aml_value *aml_concat(struct aml_value *, struct aml_value *);
 struct aml_value *aml_concatres(struct aml_value *, struct aml_value *);
 struct aml_value *aml_mid(struct aml_value *, int, int);
-int		aml_ccrlen(union acpi_resource *, void *);
+int		aml_ccrlen(int, union acpi_resource *, void *);
 
 void		aml_store(struct aml_scope *, struct aml_value *, int64_t,
     struct aml_value *);
@@ -2142,7 +2142,7 @@ aml_concat(struct aml_value *a1, struct aml_value *a2)
 
 /* Calculate length of Resource Template */
 int
-aml_ccrlen(union acpi_resource *rs, void *arg)
+aml_ccrlen(int crsidx, union acpi_resource *rs, void *arg)
 {
 	int *plen = arg;
 

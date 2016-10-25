@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.72 2016/09/02 13:59:51 pirofti Exp $ */
+/* $OpenBSD: dsdt.h,v 1.73 2016/10/25 06:48:58 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -290,7 +290,8 @@ union acpi_resource {
 
 int			aml_print_resource(union acpi_resource *, void *);
 int			aml_parse_resource(struct aml_value *,
-			    int (*)(union acpi_resource *, void *), void *);
+			    int (*)(int, union acpi_resource *, void *),
+			    void *);
 
 #define ACPI_E_NOERROR   0x00
 #define ACPI_E_BADVALUE  0x01

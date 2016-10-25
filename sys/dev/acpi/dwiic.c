@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.21 2016/09/07 15:31:41 jcs Exp $ */
+/* $OpenBSD: dwiic.c,v 1.22 2016/10/25 06:48:58 pirofti Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -176,7 +176,7 @@ void *		dwiic_i2c_intr_establish(void *, void *, int,
 		    int (*)(void *), void *, const char *);
 const char *	dwiic_i2c_intr_string(void *, void *);
 
-int		dwiic_acpi_parse_crs(union acpi_resource *, void *);
+int		dwiic_acpi_parse_crs(int, union acpi_resource *, void *);
 int		dwiic_acpi_found_hid(struct aml_node *, void *);
 int		dwiic_acpi_found_ihidev(struct dwiic_softc *,
 		    struct aml_node *, char *, struct dwiic_crs);
@@ -385,7 +385,7 @@ dwiic_activate(struct device *self, int act)
 }
 
 int
-dwiic_acpi_parse_crs(union acpi_resource *crs, void *arg)
+dwiic_acpi_parse_crs(int crsidx, union acpi_resource *crs, void *arg)
 {
 	struct dwiic_crs *sc_crs = arg;
 	struct aml_node *node;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.1 2016/08/03 17:23:38 jcs Exp $ */
+/* $OpenBSD: tpm.c,v 1.2 2016/10/25 06:48:58 pirofti Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -158,7 +158,7 @@ const struct {
 int	tpm_match(struct device *, void *, void *);
 void	tpm_attach(struct device *, struct device *, void *);
 int	tpm_activate(struct device *, int);
-int	tpm_parse_crs(union acpi_resource *, void *);
+int	tpm_parse_crs(int, union acpi_resource *, void *);
 
 int	tpm_probe(bus_space_tag_t, bus_space_handle_t);
 int	tpm_init(struct tpm_softc *);
@@ -272,7 +272,7 @@ tpm_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-tpm_parse_crs(union acpi_resource *crs, void *arg)
+tpm_parse_crs(int crsidx, union acpi_resource *crs, void *arg)
 {
 	struct tpm_crs *sc_crs = arg;
 

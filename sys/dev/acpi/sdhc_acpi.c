@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.8 2016/04/30 11:32:23 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.9 2016/10/25 06:48:58 pirofti Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -69,7 +69,7 @@ const char *sdhc_hids[] = {
 	NULL
 };
 
-int	sdhc_acpi_parse_resources(union acpi_resource *, void *);
+int	sdhc_acpi_parse_resources(int, union acpi_resource *, void *);
 int	sdhc_acpi_card_detect(struct sdhc_softc *);
 int	sdhc_acpi_card_detect_intr(void *);
 
@@ -141,7 +141,7 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-sdhc_acpi_parse_resources(union acpi_resource *crs, void *arg)
+sdhc_acpi_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
 {
 	struct sdhc_acpi_softc *sc = arg;
 	int type = AML_CRSTYPE(crs);

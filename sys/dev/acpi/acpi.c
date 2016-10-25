@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.316 2016/09/18 23:56:45 guenther Exp $ */
+/* $OpenBSD: acpi.c,v 1.317 2016/10/25 06:48:58 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -513,10 +513,10 @@ TAILQ_HEAD(, acpi_pci) acpi_pcirootdevs =
     TAILQ_HEAD_INITIALIZER(acpi_pcirootdevs);
 
 int acpi_getpci(struct aml_node *node, void *arg);
-int acpi_getminbus(union acpi_resource *crs, void *arg);
+int acpi_getminbus(int crsidx, union acpi_resource *crs, void *arg);
 
 int
-acpi_getminbus(union acpi_resource *crs, void *arg)
+acpi_getminbus(int crsidx, union acpi_resource *crs, void *arg)
 {
 	int *bbn = arg;
 	int typ = AML_CRSTYPE(crs);

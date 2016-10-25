@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.47 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.48 2016/10/25 06:48:58 pirofti Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -60,8 +60,8 @@ SIMPLEQ_HEAD(, acpiprt_map) acpiprt_map_list =
 
 int	acpiprt_match(struct device *, void *, void *);
 void	acpiprt_attach(struct device *, struct device *, void *);
-int	acpiprt_getirq(union acpi_resource *crs, void *arg);
-int	acpiprt_chooseirq(union acpi_resource *, void *);
+int	acpiprt_getirq(int, union acpi_resource *, void *);
+int	acpiprt_chooseirq(int, union acpi_resource *, void *);
 
 struct acpiprt_softc {
 	struct device		sc_dev;
@@ -137,7 +137,7 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-acpiprt_getirq(union acpi_resource *crs, void *arg)
+acpiprt_getirq(int crsidx, union acpi_resource *crs, void *arg)
 {
 	struct acpiprt_irq *irq = arg;
 	int typ, len;
@@ -190,7 +190,7 @@ acpiprt_pri[16] = {
 };
 
 int
-acpiprt_chooseirq(union acpi_resource *crs, void *arg)
+acpiprt_chooseirq(int crsidx, union acpi_resource *crs, void *arg)
 {
 	struct acpiprt_irq *irq = arg;
 	int typ, len, i, pri = -1;

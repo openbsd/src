@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.11 2016/05/08 11:08:01 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.12 2016/10/25 06:48:58 pirofti Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -104,7 +104,7 @@ const int byt_sus_pins[] = {
 	56, 54, 49, 55, 48, 57, 50, 58, 52, 53, 59, 40
 };
 
-int	bytgpio_parse_resources(union acpi_resource *, void *);
+int	bytgpio_parse_resources(int, union acpi_resource *, void *);
 int	bytgpio_read_pin(void *, int);
 void	bytgpio_write_pin(void *, int, int);
 void	bytgpio_intr_establish(void *, int, int, int (*)(), void *);
@@ -238,7 +238,7 @@ free:
 }
 
 int
-bytgpio_parse_resources(union acpi_resource *crs, void *arg)
+bytgpio_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
 {
 	struct bytgpio_softc *sc = arg;
 	int type = AML_CRSTYPE(crs);
