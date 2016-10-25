@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.50 2016/05/20 11:11:05 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.51 2016/10/25 06:20:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1273,6 +1273,19 @@ nvme_intr(void *xsc)
 		rv = 1;
 	if (nvme_q_complete(sc, sc->sc_admin_q))
 		rv = 1;
+
+	return (rv);
+}
+
+int
+nvme_intr_intx(void *xsc)
+{
+	struct nvme_softc *sc = xsc;
+	int rv;
+
+	nvme_write4(sc, NVME_INTMS, 1);
+	rv = nvme_intr(sc);
+	nvme_write4(sc, NVME_INTMC, 1);
 
 	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
+/*	$OpenBSD: nvme_pci.c,v 1.4 2016/10/25 06:20:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -81,6 +81,7 @@ nvme_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pcireg_t maptype;
 	pci_intr_handle_t ih;
+	int msi = 1;
 
 	psc->psc_pc = pa->pa_pc;
 	sc->sc_dmat = pa->pa_dmat;
@@ -92,13 +93,16 @@ nvme_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
-		printf(": unable to map interrupt\n");
-		goto unmap;
+	if (pci_intr_map_msi(pa, &ih) != 0) {
+		if (pci_intr_map(pa, &ih) != 0) {
+			printf(": unable to map interrupt\n");
+			goto unmap;
+		}
+		msi = 0;
 	}
 
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-	    nvme_intr, sc, DEVNAME(sc));
+	    msi ? nvme_intr : nvme_intr_intx, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
 		goto unmap;
