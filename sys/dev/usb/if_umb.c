@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.3 2016/06/20 07:33:34 stsp Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.4 2016/10/25 16:31:08 bluhm Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -717,9 +717,11 @@ umb_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	case 4:
 		inq = &ipintrq;
 		break;
+#ifdef INET6
 	case 6:
 		inq = &ip6intrq;
 		break;
+#endif /* INET6 */
 	default:
 		ifp->if_ierrors++;
 		DPRINTFN(4, "%s: dropping packet with bad IP version (%d)\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.50 2016/10/14 10:25:02 mikeb Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.51 2016/10/25 16:31:08 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -236,20 +236,28 @@ vxlan_multicast_join(struct ifnet *ifp, struct sockaddr *src,
 	struct vxlan_softc	*sc = ifp->if_softc;
 	struct ip_moptions	*imo = &sc->sc_imo;
 	struct sockaddr_in	*src4, *dst4;
+#ifdef INET6
 	struct sockaddr_in6	*dst6;
+#endif /* INET6 */
 	struct ifaddr		*ifa;
 	struct ifnet		*mifp;
 
-	if (dst->sa_family == AF_INET) {
+	switch (dst->sa_family) {
+	case AF_INET:
 		dst4 = satosin(dst);
 		if (!IN_MULTICAST(dst4->sin_addr.s_addr))
 			return (0);
-	} else if (dst->sa_family == AF_INET6) {
+		break;
+#ifdef INET6
+	case AF_INET6:
 		dst6 = satosin6(dst);
 		if (!IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr))
 			return (0);
 
 		/* Multicast mode is currently not supported for IPv6 */
+		return (EAFNOSUPPORT);
+#endif /* INET6 */
+	default:
 		return (EAFNOSUPPORT);
 	}
 
@@ -333,12 +341,18 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		reset = 1;
 	}
 
-	if (af == AF_INET)
+	switch (af) {
+	case AF_INET:
 		slen = sizeof(struct sockaddr_in);
-	else if (af == AF_INET6)
+		break;
+#ifdef INET6
+	case AF_INET6:
 		slen = sizeof(struct sockaddr_in6);
-	else
+		break;
+#endif /* INET6 */
+	default:
 		return (EAFNOSUPPORT);
+	}
 
 	if (src->sa_len != slen || dst->sa_len != slen)
 		return (EINVAL);
@@ -525,7 +539,9 @@ int
 vxlan_sockaddr_cmp(struct sockaddr *srcsa, struct sockaddr *dstsa)
 {
 	struct sockaddr_in	*src4, *dst4;
+#ifdef INET6
 	struct sockaddr_in6	*src6, *dst6;
+#endif /* INET6 */
 
 	if (srcsa->sa_family != dstsa->sa_family)
 		return (1);
@@ -536,11 +552,13 @@ vxlan_sockaddr_cmp(struct sockaddr *srcsa, struct sockaddr *dstsa)
 		dst4 = satosin(dstsa);
 		if (src4->sin_addr.s_addr == dst4->sin_addr.s_addr)
 			return (0);
+#ifdef INET6
 	case AF_INET6:
 		src6 = satosin6(srcsa);
 		dst6 = satosin6(dstsa);
 		if (IN6_ARE_ADDR_EQUAL(&src6->sin6_addr, &dst6->sin6_addr))
 			return (0);
+#endif /* INET6 */
 	}
 
 	return (1);
@@ -550,15 +568,19 @@ uint16_t
 vxlan_sockaddr_port(struct sockaddr *sa)
 {
 	struct sockaddr_in	*sin4;
+#ifdef INET6
 	struct sockaddr_in6	*sin6;
+#endif /* INET6 */
 
 	switch (sa->sa_family) {
 	case AF_INET:
 		sin4 = satosin(sa);
 		return (sin4->sin_port);
+#ifdef INET6
 	case AF_INET6:
 		sin6 = satosin6(sa);
 		return (sin6->sin6_port);
+#endif /* INET6 */
 	default:
 		break;
 	}
@@ -717,6 +739,7 @@ vxlan_encap4(struct ifnet *ifp, struct mbuf *m,
 	return (m);
 }
 
+#ifdef INET6
 struct mbuf *
 vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
     struct sockaddr *src, struct sockaddr *dst)
@@ -764,6 +787,7 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 
 	return (m);
 }
+#endif /* INET6 */
 
 int
 vxlan_output(struct ifnet *ifp, struct mbuf *m)
@@ -838,11 +862,16 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 		vu->vu_v.vxlan_id = htonl(0);
 	}
 
-	if (af == AF_INET)
+	switch (af) {
+	case AF_INET:
 		m = vxlan_encap4(ifp, m, src, dst);
-	else if (af == AF_INET6)
+		break;
+#ifdef INET6
+	case AF_INET6:
 		m = vxlan_encap6(ifp, m, src, dst);
-	else {
+		break;
+#endif /* INET6 */
+	default:
 		m_freem(m);
 		m = NULL;
 	}
@@ -866,11 +895,20 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	pf_pkt_addr_changed(m);
 #endif
 
-	if (af == AF_INET)
+	switch (af) {
+	case AF_INET:
 		error = ip_output(m, NULL, NULL, IP_RAWOUTPUT,
 		    &sc->sc_imo, NULL, 0);
-	else
+		break;
+#ifdef INET6
+	case AF_INET6:
 		error = ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL);
+		break;
+#endif /* INET6 */
+	default:
+		m_freem(m);
+		error = EAFNOSUPPORT;
+	}
 
 	if (error)
 		ifp->if_oerrors++;
