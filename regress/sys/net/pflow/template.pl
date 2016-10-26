@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# $OpenBSD: template.pl,v 1.3 2013/08/13 08:47:10 florian Exp $
+# $OpenBSD: template.pl,v 1.4 2016/10/26 14:06:33 bluhm Exp $
 
 # Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 #
@@ -62,7 +62,6 @@ if (scalar(@ARGV) != 1 || ($ARGV[0] != 9 && $ARGV[0] != 10)) {
 if (`ifconfig pflow0 2>&1` ne "pflow0: no such interface\n") {
 	system('ifconfig', 'pflow0', 'destroy');
 }
-	
 
 my $sock = IO::Socket::INET->new( LocalPort =>$port, Proto => 'udp');
 my $pid = fork();
@@ -71,7 +70,7 @@ if (!defined $pid) {
 } elsif ( $pid == 0) {
 	my ($packet, $header_ref, $template_ref, $flow_ref, $errors_ref);
 	$sock->recv($packet,1548);
-	($header_ref, $template_ref, $flow_ref, $errors_ref) = 
+	($header_ref, $template_ref, $flow_ref, $errors_ref) =
 	    Net::Flow::decode(\$packet, $template_ref);
 	foreach my $template (@$template_ref) {
 		print('Template Id: ', $template->{TemplateId}, "\n");

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2014/03/29 11:49:41 florian Exp $
+# $OpenBSD: Makefile,v 1.5 2016/10/26 14:06:33 bluhm Exp $
 #
 #  template_v10
 #  ----------------
@@ -33,18 +33,18 @@ LDADD=  -levent
 
 template_v10:
 	perl -I ${.CURDIR} ${.CURDIR}/template.pl 10 \
-	    | cmp -s ${.CURDIR}/template.v10 /dev/stdin
+	    | diff -up ${.CURDIR}/template.v10 /dev/stdin
 
 flow_10_4: gen_traffic
 	perl -I ${.CURDIR} ${.CURDIR}/flow.pl 10 4 \
-	    | cmp -s ${.CURDIR}/flow.10_4 /dev/stdin
+	    | diff -up ${.CURDIR}/flow.10_4 /dev/stdin
 flow_10_6: gen_traffic
 	perl -I ${.CURDIR} ${.CURDIR}/flow.pl 10 6 \
-	    | cmp -s ${.CURDIR}/flow.10_6 /dev/stdin
+	    | diff -up ${.CURDIR}/flow.10_6 /dev/stdin
 
 ifconfig:
 	sh ${.CURDIR}/ifconfig.sh 2>&1 \
-	    | cmp -s ${.CURDIR}/ifconfig.ok /dev/stdin
+	    | diff -up ${.CURDIR}/ifconfig.ok /dev/stdin
 
 .PHONY: ${REGRESS_TARGETS}
 

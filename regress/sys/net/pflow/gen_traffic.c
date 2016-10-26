@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_traffic.c,v 1.1 2013/08/23 08:25:58 florian Exp $ */
+/*	$OpenBSD: gen_traffic.c,v 1.2 2016/10/26 14:06:33 bluhm Exp $ */
 /*
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
  *
@@ -126,7 +126,8 @@ main(int argc, char *argv[])
 	sender = calloc(1, sizeof(*sender));
 	if (sender == NULL)
 		errx(1, "calloc");
-	if (connect(s, server_res->ai_addr, server_res->ai_addrlen) == -1)
+	if (connect(s, server_res->ai_addr, server_res->ai_addrlen) == -1 &&
+	    errno != EINPROGRESS)
 		err(1, "%s", "connect");
 	event_set(&sender->ev, s, EV_WRITE | EV_PERSIST, gen_traffic_write,
 	    sender);
@@ -199,13 +200,13 @@ gen_traffic_request(int fd, short events, void *arg)
 {
 	static size_t	 total = 0;
 	struct reader	*r;
-	size_t 		 n;
+	size_t		 n;
 	uint8_t		 buf[4096];
 
 	r = arg;
 
 	n = read(fd, buf, 4096);
-	
+
 	switch (n) {
 	case -1:
 		switch (errno) {

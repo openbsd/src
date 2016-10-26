@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# $OpenBSD: flow.pl,v 1.2 2013/09/11 20:37:09 florian Exp $
+# $OpenBSD: flow.pl,v 1.3 2016/10/26 14:06:33 bluhm Exp $
 
 # Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 #
@@ -19,6 +19,7 @@
 use strict;
 use warnings;
 use 5.010;
+use Config;
 
 use lib '.';
 
@@ -143,7 +144,7 @@ my @v106_elem_names = qw (sourceIPv6Address
 my ($name, $sock, $packet, $header_ref, $template_ref, $flow_ref, $flows_ref,
     $error_ref, @elem_names, $prog, $line);
 
-system('ifconfig', 'lo0', 'inet', 'alias', '10.11.12.13');
+system('ifconfig', 'lo0', 'inet', '10.11.12.13', 'alias');
 system('ifconfig', 'lo0', 'inet6', '2001:db8::13');
 
 open($prog, '|pfctl -f -') or die $!;
@@ -177,7 +178,7 @@ if ($ARGV[0] == 9 && $ARGV[1] == 4) {
 
 $sock = IO::Socket::INET->new(LocalPort =>$port, Proto => 'udp');
 while ($sock->recv($packet,1548)) {
-	($header_ref, $template_ref, $flows_ref, $error_ref) = 
+	($header_ref, $template_ref, $flows_ref, $error_ref) =
 		Net::Flow::decode(\$packet, $template_ref);
 	if (scalar(@$flows_ref) > 0) {
 		say scalar(@$flows_ref),' flows';
@@ -185,6 +186,9 @@ while ($sock->recv($packet,1548)) {
 			say scalar(keys %$flow_ref) - 1, ' elements';
 			say 'SetId: ', $flow_ref->{'SetId'};
 			my ($iif, $eif, $start, $end);
+
+			my $qpack = $Config{longsize} == 8 ? 'Q>' :
+			    $Config{byteorder} == 1234 ? 'L>xxxx' : 'xxxxL>';
 
 			foreach $name (@elem_names) {
 				if ($name eq 'ingressInterface') {
@@ -206,13 +210,13 @@ while ($sock->recv($packet,1548)) {
 					$end = unpack('N',
 					    $flow_ref->{name2id($name)});
 				} elsif ($name eq 'flowStartMilliseconds') {
-					$start = unpack('Q>',
+					$start = unpack($qpack,
 					    $flow_ref->{name2id($name)})/1000;
 				} elsif ($name eq 'flowEndMilliseconds') {
-					$end = unpack('Q>',
+					$end = unpack($qpack,
 					    $flow_ref->{name2id($name)})/1000;
 				} else {
-					say $name,': ', unpack('H*', 
+					say $name,': ', unpack('H*',
 					    $flow_ref->{name2id($name)});
 				}
 			}
@@ -225,6 +229,9 @@ while ($sock->recv($packet,1548)) {
 		last;
 	}
 }
-system('ifconfig', 'pflow0', 'destroy');
-system('ifconfig', 'lo0', 'inet', 'delete', '10.11.12.13');
-system('ifconfig', 'lo0', 'inet6', 'delete', '2001:db8::13');
+
+END {
+	system('ifconfig', 'pflow0', 'destroy');
+	system('ifconfig', 'lo0', 'inet', '10.11.12.13', 'delete');
+	system('ifconfig', 'lo0', 'inet6', '2001:db8::13', 'delete');
+}
