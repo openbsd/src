@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.11 2016/10/22 19:43:50 natano Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.12 2016/10/26 15:31:13 natano Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.29 2016/06/24 19:24:11 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
@@ -91,7 +91,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn __unused, daddr_t bpref, int size,
 	
 	*bnp = 0;
 	if (size > fs->fs_bsize || fragoff(fs, size) != 0) {
-		errx(EXIT_FAILURE, "%s: bad size: bsize %d size %d", __func__,
+		errx(1, "%s: bad size: bsize %d size %d", __func__,
 		    fs->fs_bsize, size);
 	}
 	if (size == fs->fs_bsize && fs->fs_cstotal.cs_nbfree == 0)
@@ -449,7 +449,7 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 			(const u_char *)fragtbl[fs->fs_frag],
 			(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
 		if (loc == 0) {
-			errx(EXIT_FAILURE, "%s: map corrupted: start %d "
+			errx(1, "%s: map corrupted: start %d "
 			    "len %d offset %d %ld", __func__, ostart, olen,
 			    cgp->cg_freeoff,
 			    (long)cg_blksfree(cgp) - (long)cgp);
@@ -473,7 +473,6 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 			subfield <<= 1;
 		}
 	}
-	errx(EXIT_FAILURE, "%s: block not in map: bno %lld", __func__,
-	    (long long)bno);
+	errx(1, "%s: block not in map: bno %lld", __func__, (long long)bno);
 	return (-1);
 }

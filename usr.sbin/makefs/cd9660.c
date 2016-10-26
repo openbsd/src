@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.16 2016/10/26 14:14:16 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.17 2016/10/26 15:31:13 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -411,7 +411,7 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 
 	if (diskStructure->isoLevel < 2 &&
 	    diskStructure->allow_multidot)
-		errx(EXIT_FAILURE, "allow-multidot requires iso level of 2");
+		errx(1, "allow-multidot requires iso level of 2");
 
 	assert(image != NULL);
 	assert(dir != NULL);
@@ -440,10 +440,10 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	    &numDirectories, &error);
 
 	if (TAILQ_EMPTY(&real_root->cn_children)) {
-		errx(EXIT_FAILURE, "%s: converted directory is empty. "
+		errx(1, "%s: converted directory is empty. "
 		    "Tree conversion failed", __func__);
 	} else if (error != 0) {
-		errx(EXIT_FAILURE, "%s: tree conversion failed", __func__);
+		errx(1, "%s: tree conversion failed", __func__);
 	}
 
 	/* Add the dot and dot dot records */
@@ -469,7 +469,7 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 		firstAvailableSector = cd9660_setup_boot(diskStructure,
 		    firstAvailableSector);
 		if (firstAvailableSector < 0)
-			errx(EXIT_FAILURE, "setup_boot failed");
+			errx(1, "setup_boot failed");
 	}
 	/* LE first, then BE */
 	diskStructure->primaryLittleEndianTableSector = firstAvailableSector;
@@ -1462,7 +1462,7 @@ cd9660_compute_full_filename(cd9660node *node, char *buf)
 	len = snprintf(buf, len, "%s/%s/%s", node->node->root,
 	    node->node->path, node->node->name);
 	if (len > CD9660MAXPATH)
-		errx(EXIT_FAILURE, "Pathname too long.");
+		errx(1, "Pathname too long.");
 }
 
 /*
@@ -1966,7 +1966,7 @@ cd9660_add_generic_bootimage(iso9660_disk *diskStructure, const char *bootimage)
 
 	/* Get information about the file */
 	if (lstat(diskStructure->generic_bootimage, &stbuf) == -1)
-		err(EXIT_FAILURE, "%s: lstat(\"%s\")", __func__,
+		err(1, "%s: lstat(\"%s\")", __func__,
 		    diskStructure->generic_bootimage);
 
 	if (stbuf.st_size > 32768) {

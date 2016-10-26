@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.10 2016/10/26 14:14:16 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.11 2016/10/26 15:31:13 natano Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ typedef struct {
 	howmany((__bytes), (__sector_size))
 
 #define CD9660_MEM_ALLOC_ERROR(_F)	\
-    err(EXIT_FAILURE, "%s, %s l. %d", _F, __FILE__, __LINE__)
+    err(1, "%s, %s l. %d", _F, __FILE__, __LINE__)
 
 #define CD9660_TYPE_FILE	0x01
 #define CD9660_TYPE_DIR		0x02

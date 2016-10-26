@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.7 2016/10/26 15:22:40 natano Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.8 2016/10/26 15:31:13 natano Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -119,8 +119,7 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 
 	/* Get information about the file */
 	if (lstat(new_image->filename, &stbuf) == -1)
-		err(EXIT_FAILURE, "%s: lstat(\"%s\")", __func__,
-		    new_image->filename);
+		err(1, "%s: lstat(\"%s\")", __func__, new_image->filename);
 
 	switch (stbuf.st_size) {
 	case 1440 * 1024:
@@ -185,7 +184,7 @@ cd9660_eltorito_add_boot_option(iso9660_disk *diskStructure,
 			break;
 	}
 	if (image == NULL)
-		errx(EXIT_FAILURE, "Attempted to add boot option, "
+		errx(1, "Attempted to add boot option, "
 		    "but no boot images have been specified");
 
 	if (strcmp(option_string, "no-emul-boot") == 0) {

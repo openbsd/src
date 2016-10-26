@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.4 2016/10/22 18:17:14 natano Exp $	*/
+/*	$OpenBSD: buf.c,v 1.5 2016/10/26 15:31:13 natano Exp $	*/
 /*	$NetBSD: buf.c,v 1.24 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -64,14 +64,14 @@ bread(struct mkfsvnode *vp, daddr_t blkno, int size, int u2 __unused,
 	*bpp = getblk(vp, blkno, size, 0, 0);
 	offset = (*bpp)->b_blkno * fs->sectorsize + fs->offset;
 	if (lseek((*bpp)->b_fs->fd, offset, SEEK_SET) == -1)
-		err(EXIT_FAILURE, "%s: lseek %lld (%lld)", __func__,
+		err(1, "%s: lseek %lld (%lld)", __func__,
 		    (long long)(*bpp)->b_blkno, (long long)offset);
 	rv = read((*bpp)->b_fs->fd, (*bpp)->b_data, (size_t)(*bpp)->b_bcount);
 	if (rv == -1)				/* read error */
-		err(EXIT_FAILURE, "%s: read %ld (%lld) returned %zd", __func__,
+		err(1, "%s: read %ld (%lld) returned %zd", __func__,
 		    (*bpp)->b_bcount, (long long)offset, rv);
 	else if (rv != (*bpp)->b_bcount)	/* short read */
-		errx(EXIT_FAILURE, "%s: read %ld (%lld) returned %zd", __func__,
+		errx(1, "%s: read %ld (%lld) returned %zd", __func__,
 		    (*bpp)->b_bcount, (long long)offset, rv);
 	else
 		return (0);

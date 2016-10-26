@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_write.c,v 1.5 2016/10/23 11:09:38 natano Exp $	*/
+/*	$OpenBSD: cd9660_write.c,v 1.6 2016/10/26 15:31:13 natano Exp $	*/
 /*	$NetBSD: cd9660_write.c,v 1.17 2013/10/19 17:16:37 christos Exp $	*/
 
 /*
@@ -60,10 +60,8 @@ cd9660_write_image(iso9660_disk *diskStructure, const char* image)
 	int status;
 	char buf[CD9660_SECTOR_SIZE];
 
-	if ((fd = fopen(image, "w+")) == NULL) {
-		err(EXIT_FAILURE, "%s: Can't open `%s' for writing", __func__,
-		    image);
-	}
+	if ((fd = fopen(image, "w+")) == NULL)
+		err(1, "%s: Can't open `%s' for writing", __func__, image);
 
 	if (diskStructure->has_generic_bootimage) {
 		status = cd9660_copy_file(diskStructure, fd, 0,

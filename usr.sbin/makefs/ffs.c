@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.18 2016/10/26 07:53:47 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.19 2016/10/26 15:31:13 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -714,10 +714,10 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 		if (!isfile)
 			;
 		else if ((nread = read(ffd, fbuf, chunk)) == -1)
-			err(EXIT_FAILURE, "Reading `%s', %lld bytes to go",
-			    (char *)buf, (long long)bufleft);
+			err(1, "Reading `%s', %lld bytes to go", (char *)buf,
+			    (long long)bufleft);
 		else if (nread != chunk)
-			errx(EXIT_FAILURE, "Reading `%s', %lld bytes to go, "
+			errx(1, "Reading `%s', %lld bytes to go, "
 			    "read %zd bytes, expected %ju bytes, does "
 			    "metalog size= attribute mismatch source size?",
 			    (char *)buf, (long long)bufleft, nread,

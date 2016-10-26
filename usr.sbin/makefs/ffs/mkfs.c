@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.11 2016/10/22 19:43:50 natano Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.12 2016/10/26 15:31:13 natano Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -752,15 +752,15 @@ ffs_rdfs(daddr_t bno, int size, void *bf, const fsinfo_t *fsopts)
 
 	offset = bno * fsopts->sectorsize + fsopts->offset;
 	if (lseek(fsopts->fd, offset, SEEK_SET) < 0)
-		err(EXIT_FAILURE, "%s: seek error for sector %lld", __func__,
+		err(1, "%s: seek error for sector %lld", __func__,
 		    (long long)bno);
 	n = read(fsopts->fd, bf, size);
 	if (n == -1) {
-		err(EXIT_FAILURE, "%s: read error bno %lld size %d", __func__,
+		err(1, "%s: read error bno %lld size %d", __func__,
 		    (long long)bno, size);
 	}
 	else if (n != size)
-		errx(EXIT_FAILURE, "%s: short read error for sector %lld", __func__,
+		errx(1, "%s: short read error for sector %lld", __func__,
 		    (long long)bno);
 }
 
@@ -775,15 +775,15 @@ ffs_wtfs(daddr_t bno, int size, void *bf, const fsinfo_t *fsopts)
 
 	offset = bno * fsopts->sectorsize + fsopts->offset;
 	if (lseek(fsopts->fd, offset, SEEK_SET) == -1)
-		err(EXIT_FAILURE, "%s: seek error for sector %lld", __func__,
+		err(1, "%s: seek error for sector %lld", __func__,
 		    (long long)bno);
 	n = write(fsopts->fd, bf, size);
 	if (n == -1)
-		err(EXIT_FAILURE, "%s: write error for sector %lld", __func__,
+		err(1, "%s: write error for sector %lld", __func__,
 		    (long long)bno);
 	else if (n != size)
-		errx(EXIT_FAILURE, "%s: short write error for sector %lld",
-		    __func__, (long long)bno);
+		errx(1, "%s: short write error for sector %lld", __func__,
+		    (long long)bno);
 }
 
 
@@ -806,5 +806,5 @@ ilog2(int val)
 	for (n = 0; n < sizeof(n) * CHAR_BIT; n++)
 		if (1 << n == val)
 			return (n);
-	errx(EXIT_FAILURE, "%s: %d is not a power of 2", __func__, val);
+	errx(1, "%s: %d is not a power of 2", __func__, val);
 }
