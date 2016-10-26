@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.57 2016/09/20 12:32:35 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.58 2016/10/26 14:06:05 florian Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,7 +57,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 20 2016 $
+.Dd $Mdocdate: October 26 2016 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -299,11 +299,12 @@ Thus the amount of data received inside of an IP packet of type ICMP
 will always be 8 bytes more than the requested data space
 (the ICMP header).
 .Pp
-If the data space is at least eight bytes large,
+If the data space is at least twenty four bytes large,
 .Nm
-uses the first eight bytes of this space to include a timestamp which
+uses the first sixteen bytes of this space to include a timestamp which
 it uses in the computation of round trip times.
-If less than eight bytes of pad are specified, no round trip times are
+The following 8 bytes store a message authentication code.
+If less than twenty four bytes of pad are specified, no round trip times are
 given.
 .Sh DUPLICATE AND DAMAGED PACKETS
 .Nm
