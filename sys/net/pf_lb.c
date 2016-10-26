@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.57 2016/09/27 04:57:17 dlg Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.58 2016/10/26 21:07:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,18 +61,24 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/icmp_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
-#include <netinet/udp.h>
-#include <netinet/ip_icmp.h>
 #include <netinet/tcp_timer.h>
+#include <netinet/udp.h>
 #include <netinet/udp_var.h>
-#include <netinet/icmp_var.h>
 #include <netinet/if_ether.h>
-#include <netinet/in_pcb.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
+#endif /* INET6 */
 
 #include <net/pfvar.h>
+#include <net/pfvar_priv.h>
 
 #if NPFLOG > 0
 #include <net/if_pflog.h>
@@ -85,11 +91,6 @@
 #if NPFSYNC > 0
 #include <net/if_pfsync.h>
 #endif /* NPFSYNC > 0 */
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#include <netinet/icmp6.h>
-#endif /* INET6 */
 
 u_int64_t		 pf_hash(struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);

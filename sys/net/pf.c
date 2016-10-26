@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.993 2016/10/20 23:18:43 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.994 2016/10/26 21:07:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -63,20 +63,29 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/icmp_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
-#include <netinet/udp.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/in_pcb.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_fsm.h>
+#include <netinet/udp.h>
 #include <netinet/udp_var.h>
-#include <netinet/icmp_var.h>
 #include <netinet/ip_divert.h>
 
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#include <netinet/icmp6.h>
+#include <netinet6/nd6.h>
+#include <netinet6/ip6_divert.h>
+#endif /* INET6 */
+
 #include <net/pfvar.h>
+#include <net/pfvar_priv.h>
 
 #if NPFLOG > 0
 #include <net/if_pflog.h>
@@ -89,15 +98,6 @@
 #if NPFSYNC > 0
 #include <net/if_pfsync.h>
 #endif /* NPFSYNC > 0 */
-
-#ifdef INET6
-#include <netinet6/in6_var.h>
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#include <netinet/icmp6.h>
-#include <netinet6/nd6.h>
-#include <netinet6/ip6_divert.h>
-#endif /* INET6 */
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -125,22 +125,6 @@ struct pf_anchor_stackframe {
 	struct pf_anchor_node			*parent;
 	struct pf_anchor			*child;
 } pf_anchor_stack[64];
-
-/*
- * Cannot fold into pf_pdesc directly, unknown storage size outside pf.c.
- * Keep in sync with union pf_headers in pflog_bpfcopy() in if_pflog.c.
- */
-union pf_headers {
-	struct tcphdr		tcp;
-	struct udphdr		udp;
-	struct icmp		icmp;
-#ifdef INET6
-	struct icmp6_hdr	icmp6;
-	struct mld_hdr		mld;
-	struct nd_neighbor_solicit nd_ns;
-#endif /* INET6 */
-};
-
 
 struct pool		 pf_src_tree_pl, pf_rule_pl, pf_queue_pl;
 struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl;

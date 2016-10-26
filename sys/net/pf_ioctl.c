@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.302 2016/09/27 04:57:17 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.303 2016/10/26 21:07:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,6 +55,8 @@
 #include <sys/syslog.h>
 #include <uvm/uvm_extern.h>
 
+#include <crypto/md5.h>
+
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/route.h>
@@ -62,21 +64,24 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 
-#include <crypto/md5.h>
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
+#endif /* INET6 */
+
 #include <net/pfvar.h>
+#include <net/pfvar_priv.h>
 
 #if NPFSYNC > 0
 #include <netinet/ip_ipsp.h>
 #include <net/if_pfsync.h>
 #endif /* NPFSYNC > 0 */
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#include <netinet/in_pcb.h>
-#endif /* INET6 */
 
 void			 pfattach(int);
 void			 pf_thread_create(void *);

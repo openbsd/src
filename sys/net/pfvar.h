@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.441 2016/10/18 13:28:01 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.442 2016/10/26 21:07:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1156,63 +1156,6 @@ enum pfi_kif_refs {
 #define PFI_IFLAG_SKIP		0x0100	/* skip filtering on interface */
 #define PFI_IFLAG_ANY		0x0200	/* match any non-loopback interface */
 
-struct pf_pdesc {
-	struct {
-		int	 done;
-		uid_t	 uid;
-		gid_t	 gid;
-		pid_t	 pid;
-	}		 lookup;
-	u_int64_t	 tot_len;	/* Make Mickey money */
-	union {
-		struct tcphdr		*tcp;
-		struct udphdr		*udp;
-		struct icmp		*icmp;
-#ifdef INET6
-		struct icmp6_hdr	*icmp6;
-#endif /* INET6 */
-		void			*any;
-	} hdr;
-
-	struct pf_addr	 nsaddr;	/* src address after NAT */
-	struct pf_addr	 ndaddr;	/* dst address after NAT */
-
-	struct pfi_kif	*kif;		/* incoming interface */
-	struct mbuf	*m;		/* mbuf containing the packet */
-	struct pf_addr	*src;		/* src address */
-	struct pf_addr	*dst;		/* dst address */
-	u_int16_t	*pcksum;	/* proto cksum */
-	u_int16_t	*sport;
-	u_int16_t	*dport;
-	u_int16_t	 osport;
-	u_int16_t	 odport;
-	u_int16_t	 nsport;	/* src port after NAT */
-	u_int16_t	 ndport;	/* dst port after NAT */
-
-	u_int32_t	 off;		/* protocol header offset */
-	u_int32_t	 hdrlen;	/* protocol header length */
-	u_int32_t	 p_len;		/* length of protocol payload */
-	u_int32_t	 extoff;	/* extentsion header offset */
-	u_int32_t	 fragoff;	/* fragment header offset */
-	u_int32_t	 jumbolen;	/* length from v6 jumbo header */
-	u_int32_t	 badopts;	/* v4 options or v6 routing headers */
-
-	u_int16_t	 rdomain;	/* original routing domain */
-	u_int16_t	 virtual_proto;
-#define PF_VPROTO_FRAGMENT	256
-	sa_family_t	 af;
-	sa_family_t	 naf;
-	u_int8_t	 proto;
-	u_int8_t	 tos;
-	u_int8_t	 ttl;
-	u_int8_t	 dir;		/* direction */
-	u_int8_t	 sidx;		/* key index for source */
-	u_int8_t	 didx;		/* key index for destination */
-	u_int8_t	 destchg;	/* flag set when destination changed */
-	u_int8_t	 pflog;		/* flags for packet logging */
-};
-
-
 /* flags for RDR options */
 #define PF_DPORT_RANGE	0x01		/* Dest port uses range */
 #define PF_RPORT_RANGE	0x02		/* RDR'ed port uses range */
@@ -1641,6 +1584,8 @@ struct pfioc_iface {
 #define DIOCGETQSTATS	_IOWR('D', 96, struct pfioc_qstats)
 
 #ifdef _KERNEL
+struct pf_pdesc;
+
 RB_HEAD(pf_src_tree, pf_src_node);
 RB_PROTOTYPE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 extern struct pf_src_tree tree_src_tracking;
@@ -1861,6 +1806,8 @@ extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
 extern struct pf_anchor_global	pf_anchors;
 extern struct pf_anchor		pf_main_anchor;
 #define pf_main_ruleset		pf_main_anchor.ruleset
+
+struct tcphdr;
 
 /* these ruleset functions can be linked into userland programs (pfctl) */
 void			 pf_init_ruleset(struct pf_ruleset *);

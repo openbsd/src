@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.120 2016/09/27 04:57:17 dlg Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.121 2016/10/26 21:07:22 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -38,9 +38,21 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
+#endif /* INET6 */
+
 #include <net/pfvar.h>
+#include <net/pfvar_priv.h>
 
 #define ACCEPT_FLAGS(flags, oklist)		\
 	do {					\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.74 2016/04/29 08:55:03 krw Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.75 2016/10/26 21:07:22 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -52,9 +52,9 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-#include <netinet/ip_icmp.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -62,6 +62,7 @@
 #endif /* INET6 */
 
 #include <net/pfvar.h>
+#include <net/pfvar_priv.h>
 #include <net/if_pflog.h>
 
 #define PFLOGMTU	(32768 + MHLEN + MLEN)
@@ -297,16 +298,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	u_int			 count;
 	u_char			*dst, *mdst;
 	int			 afto, hlen, mlen, off;
-	union pf_headers {
-		struct tcphdr		tcp;
-		struct udphdr		udp;
-		struct icmp		icmp;
-#ifdef INET6
-		struct icmp6_hdr	icmp6;
-		struct mld_hdr		mld;
-		struct nd_neighbor_solicit nd_ns;
-#endif /* INET6 */
-	} pdhdrs;
+	union pf_headers	 pdhdrs;
 
 	struct pf_pdesc		 pd;
 	struct pf_addr		 osaddr, odaddr;

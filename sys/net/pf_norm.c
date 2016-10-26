@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.194 2016/09/27 04:57:17 dlg Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.195 2016/10/26 21:07:22 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -40,28 +40,29 @@
 #include <sys/pool.h>
 #include <sys/syslog.h>
 
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip_var.h>
-#include <netinet/tcp.h>
-#include <netinet/tcp_seq.h>
-#include <netinet/tcp_fsm.h>
-#include <netinet/udp.h>
-#include <netinet/ip_icmp.h>
-
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_pflog.h>
 
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_seq.h>
+#include <netinet/tcp_fsm.h>
+#include <netinet/udp.h>
+
 #ifdef INET6
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/in6_var.h>
-#include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+#include <netinet6/nd6.h>
 #endif /* INET6 */
 
 #include <net/pfvar.h>
+#include <net/pfvar_priv.h>
 
 struct pf_frent {
 	TAILQ_ENTRY(pf_frent) fr_next;
