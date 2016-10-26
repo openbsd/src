@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.48 2016/03/17 05:27:10 bentley Exp $
+.\"	$OpenBSD: sed.1,v 1.49 2016/10/26 00:46:01 schwarze Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: March 17 2016 $
+.Dd $Mdocdate: October 26 2016 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -442,9 +442,13 @@ The value of
 .Ar flags
 in the substitute function is zero or more of the following:
 .Bl -tag -width "XXXXXX" -offset indent
-.It Cm 0 No ... Cm 9
-Make the substitution only for the N'th occurrence of the regular
-expression in the pattern space.
+.It Ar N
+Make the substitution only for the
+.Ar N Ap th
+occurrence of the regular expression in the pattern space, where
+.Ar N
+is a positive integer starting with
+.Cm 1 No ... Cm 9 .
 .It Cm g
 Make the substitution for all non-overlapping matches of the
 regular expression, not just the first one.
