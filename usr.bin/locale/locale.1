@@ -1,4 +1,4 @@
-.\" $OpenBSD: locale.1,v 1.6 2016/10/24 13:27:06 schwarze Exp $
+.\" $OpenBSD: locale.1,v 1.7 2016/10/26 01:00:27 schwarze Exp $
 .\"
 .\" Copyright 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright 2013 Stefan Sperling <stsp@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2016 $
+.Dd $Mdocdate: October 26 2016 $
 .Dt LOCALE 1
 .Os
 .Sh NAME
@@ -25,15 +25,6 @@
 .Nm locale
 .Op Fl a | Fl m
 .Sh DESCRIPTION
-A locale is a set of environment variables telling programs which
-character encoding, language and cultural conventions the user
-prefers.
-The only non-default setting recommended for
-.Ox
-is:
-.Pp
-.Dl export LC_CTYPE=en_US.UTF-8
-.Pp
 If the
 .Nm
 utility is invoked without any arguments, the current locale
@@ -50,9 +41,17 @@ On
 this always returns UTF-8 only.
 .El
 .Pp
+A locale is a set of environment variables telling programs which
+character encoding, language and cultural conventions the user
+prefers.
 Programs in the
 .Ox
-base system ignore the locale except for the character encoding.
+base system ignore the locale except for the character encoding,
+and it is not recommended to use any of these variables except that
+the following non-default setting is supported as an option:
+.Pp
+.Dl export LC_CTYPE=en_US.UTF-8
+.Pp
 Programs installed from
 .Xr packages 7
 may or may not change behavior according to the locale.
@@ -86,12 +85,15 @@ base system supports two locales: the default of
 .Li LC_CTYPE=C
 selects the US-ASCII character set and encoding, treating the bytes
 0x80 to 0xff as non-printable characters of application-specific
-meaning, whereas
-.Li LC_CTYPE=en_US.UTF-8
-selects the UTF-8 encoding of the Unicode character set.
+meaning.
 .Li LC_CTYPE=POSIX
 is an alias for
 .Li LC_CTYPE=C .
+The alternative of
+.Li LC_CTYPE=en_US.UTF-8
+selects the UTF-8 encoding of the Unicode character set, which is
+supported by many parts of the system, but not yet fully supported
+by all parts.
 .Pp
 If the value of
 .Ev LC_CTYPE
