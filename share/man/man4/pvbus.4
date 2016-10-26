@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pvbus.4,v 1.9 2016/09/20 09:42:12 jmc Exp $
+.\"	$OpenBSD: pvbus.4,v 1.10 2016/10/26 16:25:06 mikeb Exp $
 .\"
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Jason McIntyre <jmc@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 20 2016 $
+.Dd $Mdocdate: October 26 2016 $
 .Dt PVBUS 4
 .Os
 .Sh NAME
@@ -125,7 +125,7 @@ and return it in
 Return the type of the attached hypervisor interface as a string in
 .Fa pvr_key ;
 see
-.Sx Supported Hypervisors .
+.Sx Supported hypervisors .
 .It Dv PVBUSIOC_KVWRITE
 Write the new value
 .Fa pvr_value
