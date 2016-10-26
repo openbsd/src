@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.22 2016/10/12 06:56:54 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.23 2016/10/26 05:15:13 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -339,7 +339,7 @@ struct vmcs {
 
 struct vmx_invvpid_descriptor
 {
-	uint64_t	vid_vpid; // : 16;
+	uint64_t	vid_vpid;
 	uint64_t	vid_addr;
 };
 
@@ -351,7 +351,7 @@ struct vmx_invept_descriptor
 
 struct vmx_msr_store
 {
-	uint64_t	vms_index : 32;
+	uint64_t	vms_index;
 	uint64_t	vms_data;
 };
 
