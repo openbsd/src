@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.46 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.47 2016/10/26 11:48:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -73,7 +73,9 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	if (strcmp(path, "-") == 0) {
 		cdata = xcalloc(1, sizeof *cdata);
 		cdata->item = item;
-		cdata->bufname = xstrdup(bufname);
+
+		if (bufname != NULL)
+			cdata->bufname = xstrdup(bufname);
 
 		error = server_set_stdin_callback(c, cmd_load_buffer_callback,
 		    cdata, &cause);
