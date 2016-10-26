@@ -296,8 +296,7 @@ struct vm_rwregs_params {
 #define VMX_FAIL_LAUNCH_INVALID_VMCS 2
 #define VMX_FAIL_LAUNCH_VALID_VMCS 3
 
-#define VMX_NUM_MSR_STORE 0
-// #define VMX_NUM_MSR_STORE 1
+#define VMX_NUM_MSR_STORE 1
 
 /* MSR bitmap manipulation macros */
 #define MSRIDX(m) ((m) / 8)
@@ -331,7 +330,7 @@ struct vmcs {
 
 struct vmx_invvpid_descriptor
 {
-	uint64_t	vid_vpid; // : 16;
+	uint64_t	vid_vpid;
 	uint64_t	vid_addr;
 };
 
@@ -343,7 +342,7 @@ struct vmx_invept_descriptor
 
 struct vmx_msr_store
 {
-	uint64_t	vms_index : 32;
+	uint64_t	vms_index;
 	uint64_t	vms_data;
 };
 

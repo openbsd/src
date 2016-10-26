@@ -435,6 +435,9 @@ pledge_ioctl_vmm(struct proc *p, long com)
 		/* XXX VM processes should only terminate themselves */
 	case VMM_IOC_RUN:
 	case VMM_IOC_RESETCPU:
+	case VMM_IOC_INTR:
+	case VMM_IOC_READREGS:
+	case VMM_IOC_WRITEREGS:
 		return (0);
 	}
 
@@ -1702,19 +1705,12 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	/*
 	 * Entry ctrls
 	 *
-	 * We must be able to set the following:
-	 * IA32_VMX_IA32E_MODE_GUEST (if no unrestricted guest)
 	 * We must be able to clear the following:
 	 * IA32_VMX_ENTRY_TO_SMM - enter to SMM
 	 * IA32_VMX_DEACTIVATE_DUAL_MONITOR_TREATMENT
 	 * IA32_VMX_LOAD_DEBUG_CONTROLS
 	 * IA32_VMX_LOAD_IA32_PERF_GLOBAL_CTRL_ON_ENTRY
 	 */
-	if (ug == 1)
-		want1 = 0;
-	else
-		want1 = IA32_VMX_IA32E_MODE_GUEST;
-
 	want0 = IA32_VMX_ENTRY_TO_SMM |
 	    IA32_VMX_DEACTIVATE_DUAL_MONITOR_TREATMENT |
 	    IA32_VMX_LOAD_DEBUG_CONTROLS |
@@ -1834,11 +1830,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	cr4 = (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0) &
 	    (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1);
 
-	/*
-	 * If we are starting in restricted guest mode, enable PAE
-	 */
-	if (ug == 0)
-		cr4 |= CR4_PAE;
+	if (!ug)
+		cr4 |= CR4_PSE;
 
 	vrs->vrs_crs[VCPU_REGS_CR0] = cr0;
 	vrs->vrs_crs[VCPU_REGS_CR3] = cr3;
@@ -5075,7 +5068,7 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
 
 	for (i = 0; i < VMX_NUM_MSR_STORE; i++) {
-		DPRINTF("  MSR %d @ %p : 0x%08x (%s), "
+		DPRINTF("  MSR %d @ %p : 0x%08llx (%s), "
 		    "value=0x%016llx ",
 		    i, &msr_store[i], msr_store[i].vms_index,
 		    msr_name_decode(msr_store[i].vms_index),
