@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2016/10/19 14:31:19 tb Exp $
+#	$OpenBSD: Makefile,v 1.18 2016/10/26 19:14:28 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -121,8 +121,8 @@ addr.py: Makefile
 .endfor
 	mv $@.tmp $@
 
-# load the pf rules into the kernel of the PF machine
-# XXX pfctl does not replace variables after @
+# Load the pf rules into the kernel of the PF machine.
+# XXX pfctl does not replace variables after @.
 stamp-pfctl: addr.py pf.conf
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
@@ -142,7 +142,7 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 # and all routing table are set up to allow bidirectional packet flow.
 # Note that RDR does not exist physically.  So this traffic is rewritten
 # by PF and handled by ECO.
-TARGETS +=	ping  ping6
+TARGETS +=	ping ping6
 
 run-regress-ping: stamp-pfctl
 	@echo '\n======== $@ ========'
@@ -167,7 +167,7 @@ run-regress-ping6: stamp-pfctl
 # outgoing MTU of PF has to be 1400 octets.  Packet size is 1500.
 # Check that the IP length of the original packet and the ICMP
 # quoted packet are the same.
-# XXX AF_IN is broken with PF MTU
+# XXX AF_IN is broken with PF MTU.
 TARGETS +=	ping-mtu-1400 ping6-mtu-1400
 
 run-regress-ping-mtu-1400: addr.py stamp-pfctl
@@ -220,7 +220,7 @@ run-regress-ping6-mtu-1300: addr.py stamp-pfctl
 
 # Send one UDP echo port 7 packet to all destination addresses with netcat.
 # The response must arrive in 1 second.
-TARGETS +=	udp  udp6
+TARGETS +=	udp udp6
 
 run-regress-udp: stamp-pfctl
 	@echo '\n======== $@ ========'
@@ -245,7 +245,7 @@ run-regress-udp6: stamp-pfctl
 # Count the reflected bytes and compare with the transmitted ones.
 # Delete host route before test to trigger PMTU discovery.
 # XXX AF_IN is broken with PF MTU, make sure that it hits RT MTU 1300.
-TARGETS +=	tcp  tcp6
+TARGETS +=	tcp tcp6
 
 run-regress-tcp: stamp-pfctl
 	@echo '\n======== $@ ========'
@@ -276,6 +276,36 @@ run-regress-tcp6: stamp-pfctl
 	@echo Check tcp RPT_OUT6:
 	${SUDO} route -n delete -host -inet6 ${RPT_OUT6} || true
 	openssl rand 200000 | nc -N -s ${RPT_OUT6} ${ECO_IN6} 7 | wc -c | grep '200000$$'
+
+# Run traceroute with ICMP and UDP to all destination addresses.
+# Expect three hops in output and that every probe has a response.
+# XXX AF_IN and RPT_OUT have issues, do not test them now.
+
+TRACEROUTE_CHECK =	awk \
+    'BEGIN{ x=0 } \
+    { print $$0 } \
+    { n=$$1 } \
+    /\*/{ x++ } \
+    END{ if (n!=3) { print "hopcount is not 3: "n; exit 1 } } \
+    END{ if (x!=0) { print "unanswered probes: "x; exit 1 } }'
+
+.for proto in icmp udp
+TARGETS +=	traceroute-${proto} traceroute-${proto}6
+
+run-regress-traceroute-${proto}: stamp-pfctl
+	@echo '\n======== $@ ========'
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT RTT_IN
+	@echo Check traceroute ${proto} ${ip}:
+	traceroute ${proto:S/icmp/-I/:S/udp//} ${${ip}} | ${TRACEROUTE_CHECK}
+.endfor
+
+run-regress-traceroute-${proto}6: stamp-pfctl
+	@echo '\n======== $@ ========'
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT RTT_IN
+	@echo Check traceroute ${proto}6 ${ip}6:
+	traceroute6 ${proto:S/icmp/-I/:S/udp//} ${${ip}6} | ${TRACEROUTE_CHECK}
+.endfor
+.endfor
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
