@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.60 2016/08/16 13:03:58 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.61 2016/10/26 13:42:54 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -102,6 +102,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
 		ci->ci_flags |= CPUF_PRESENT;
+		ncpus++;
 	}
 #endif
 	ci->ci_self = ci;
