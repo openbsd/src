@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.5 2016/10/23 11:09:38 natano Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.6 2016/10/26 14:14:17 natano Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -582,7 +582,7 @@ cd9660_write_boot(iso9660_disk *diskStructure, FILE *fd)
 	}
 
 	/* some systems need partition tables as well */
-	if (mbr_partitions > 0 || diskStructure->chrp_boot) {
+	if (mbr_partitions > 0) {
 		uint16_t sig;
 
 		fseek(fd, 0x1fe, SEEK_SET);
@@ -590,12 +590,6 @@ cd9660_write_boot(iso9660_disk *diskStructure, FILE *fd)
 		fwrite(&sig, sizeof(sig), 1, fd);
 
 		mbr_partitions = 0;
-
-		/* Write ISO9660 descriptor, enclosing the whole disk */
-		if (diskStructure->chrp_boot)
-			cd9660_write_mbr_partition_entry(fd, mbr_partitions++,
-			    0, diskStructure->totalSectors *
-			    (diskStructure->sectorSize / 512), 0x96);
 
 		/* Write all partition entries */
 		TAILQ_FOREACH(t, &diskStructure->boot_images, image_list) {

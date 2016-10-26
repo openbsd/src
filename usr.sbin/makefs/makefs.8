@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makefs.8,v 1.12 2016/10/26 07:53:47 natano Exp $
+.\"	$OpenBSD: makefs.8,v 1.13 2016/10/26 14:14:16 natano Exp $
 .\"	$NetBSD: makefs.8,v 1.55 2015/11/25 16:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -207,9 +207,6 @@ is one of
 .Ql macppc ,
 or
 .Ql powerpc .
-.It Sy chrp-boot
-Write an MBR partition table to the image to allow older CHRP hardware to
-boot.
 .It Sy generic-bootimage
 Load a generic boot image into the first 32K of the CD9660 image.
 .It Sy hard-disk-boot
