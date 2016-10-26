@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.13 2016/10/23 11:09:38 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.14 2016/10/26 07:53:47 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -206,9 +206,6 @@ cd9660_set_defaults(iso9660_disk *diskStructure)
 
 	/* Spec breaking functionality */
 	diskStructure->allow_deep_trees =
-	    diskStructure->allow_max_name =
-	    diskStructure->allow_illegal_chars =
-	    diskStructure->allow_lowercase =
 	    diskStructure->allow_multidot =
 	    diskStructure->omit_trailing_period = 0;
 
@@ -230,7 +227,6 @@ cd9660_set_defaults(iso9660_disk *diskStructure)
 	diskStructure->has_generic_bootimage = 0;
 	diskStructure->generic_bootimage = NULL;
 
-	diskStructure->boot_image_directory = 0;
 	/*memset(diskStructure->boot_descriptor, 0, 2048);*/
 
 	diskStructure->is_bootable = 0;
@@ -243,50 +239,38 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 {
 	iso9660_disk *diskStructure = ecalloc(1, sizeof(*diskStructure));
 
-#define OPT_STR(name, desc)  \
-	{ name, NULL, OPT_STRBUF, 0, 0, desc }
+#define OPT_STR(name)  \
+	{ name, NULL, OPT_STRBUF, 0, 0 }
 
-#define OPT_NUM(name, field, min, max, desc) \
+#define OPT_NUM(name, field, min, max) \
 	{ name, &diskStructure->field, \
 	  sizeof(diskStructure->field) == 8 ? OPT_INT64 : \
 	  (sizeof(diskStructure->field) == 4 ? OPT_INT32 : \
 	  (sizeof(diskStructure->field) == 2 ? OPT_INT16 : OPT_INT8)), \
-	  min, max, desc }
+	  min, max }
 
-#define OPT_BOOL(name, field, desc) \
-	OPT_NUM(name, field, 0, 1, desc)
+#define OPT_BOOL(name, field) \
+	OPT_NUM(name, field, 0, 1)
 
 	const option_t cd9660_options[] = {
-	        OPT_BOOL("allow-deep-trees", allow_deep_trees,
-		    "Allow trees more than 8 levels"),
-	        OPT_BOOL("allow-illegal-chars", allow_illegal_chars,
-		    "Allow illegal characters in filenames"),
-	        OPT_BOOL("allow-lowercase", allow_lowercase,
-		    "Allow lowercase characters in filenames"),
-	        OPT_BOOL("allow-max-name", allow_max_name,
-		    "Allow 37 char filenames (unimplemented)"),
-	        OPT_BOOL("allow-multidot", allow_multidot,
-		    "Allow multiple periods in filenames"),
-		OPT_STR("applicationid", "Application Identifier"),
-		OPT_STR("boot-load-segment", "Boot load segment"),
-		OPT_STR("bootimage", "Boot image parameter"),
-		OPT_STR("bootimagedir", "Boot image directory"),
-	        OPT_BOOL("chrp-boot", chrp_boot, "Enable CHRP boot"),
-		OPT_STR("generic-bootimage", "Generic boot image param"),
-		OPT_STR("hard-disk-boot", "Boot from hard disk"),
-		OPT_NUM("isolevel", isoLevel, 1, 3, "ISO Level"),
-		OPT_STR("label", "Disk Label"),
-		OPT_STR("no-boot", "No boot support"),
-		OPT_STR("no-emul-boot", "No boot emulation"),
-		OPT_BOOL("no-trailing-padding", include_padding_areas,
-		    "Include padding areas"),
-	        OPT_BOOL("omit-trailing-period", omit_trailing_period,
-		    "Omit trailing periods in filenames"),
-		OPT_STR("preparer", "Preparer Identifier"),
-		OPT_STR("publisher", "Publisher Identifier"),
-	        OPT_BOOL("rockridge", rock_ridge_enabled,
-		    "Enable Rock-Ridge extensions"),
-		OPT_STR("volumeid", "Volume Set Identifier"),
+	        OPT_BOOL("allow-deep-trees", allow_deep_trees),
+	        OPT_BOOL("allow-multidot", allow_multidot),
+		OPT_STR("applicationid"),
+		OPT_STR("boot-load-segment"),
+		OPT_STR("bootimage"),
+	        OPT_BOOL("chrp-boot", chrp_boot),
+		OPT_STR("generic-bootimage"),
+		OPT_STR("hard-disk-boot"),
+		OPT_NUM("isolevel", isoLevel, 1, 3),
+		OPT_STR("label"),
+		OPT_STR("no-boot"),
+		OPT_STR("no-emul-boot"),
+		OPT_BOOL("no-trailing-padding", include_padding_areas),
+	        OPT_BOOL("omit-trailing-period", omit_trailing_period),
+		OPT_STR("preparer"),
+		OPT_STR("publisher"),
+	        OPT_BOOL("rockridge", rock_ridge_enabled),
+		OPT_STR("volumeid"),
 		{ .name = NULL }
 	};
 
@@ -311,7 +295,7 @@ cd9660_arguments_set_string(const char *val, const char *fieldtitle,
 	int test;
 
 	if (val == NULL)
-		warnx("error: The %s requires a string argument", fieldtitle);
+		warnx("error: '%s' requires a string argument", fieldtitle);
 	else if ((len = strlen(val)) <= length) {
 		if (testmode == 'd')
 			test = cd9660_valid_d_chars(val);
@@ -323,10 +307,10 @@ cd9660_arguments_set_string(const char *val, const char *fieldtitle,
 				cd9660_uppercase_characters(dest, len);
 			return 1;
 		} else
-			warnx("error: The %s must be composed of "
-			      "%c-characters", fieldtitle, testmode);
+			warnx("error: '%s' must be composed of %c-characters",
+			    fieldtitle, testmode);
 	} else
-		warnx("error: The %s must be at most 32 characters long",
+		warnx("error: '%s' must be at most 32 characters long",
 		    fieldtitle);
 	return 0;
 }
@@ -342,7 +326,7 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 	iso9660_disk *diskStructure = fsopts->fs_specific;
 	option_t *cd9660_options = fsopts->fs_options;
 	char buf[1024];
-	const char *name, *desc;
+	const char *name;
 
 	assert(option != NULL);
 
@@ -355,10 +339,9 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 
 
 	name = cd9660_options[i].name;
-	desc = cd9660_options[i].desc;
 
 	if (strcmp(name, "applicationid") == 0) {
-		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		rv = cd9660_arguments_set_string(buf, name, 128, 'a',
 		    diskStructure->primaryDescriptor.application_id);
 	} else if (strcmp(name, "boot-load-segment") == 0) {
 		if (buf[0] == '\0') {
@@ -377,21 +360,6 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 			rv = 0;
 		} else
 			rv = cd9660_add_boot_disk(diskStructure, buf);
-	} else if (strcmp(name, "bootimagedir") == 0) {
-		/*
-		 * XXXfvdl this is unused.
-		 */
-		if (buf[0] == '\0') {
-			warnx("The Boot Image Directory parameter"
-			 " requires a directory name");
-			rv = 0;
-		} else {
-			diskStructure->boot_image_directory =
-			     emalloc(strlen(buf) + 1);
-			/* BIG TODO: Add the max length function here */
-			rv = cd9660_arguments_set_string(buf, desc, 12,
-			    'd', diskStructure->boot_image_directory);
-		}
 	} else if (strcmp(name, "generic-bootimage") == 0) {
 		if (buf[0] == '\0') {
 			warnx("The Generic Boot Image parameter requires a"
@@ -400,16 +368,16 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 		} else
 			rv = cd9660_add_generic_bootimage(diskStructure, buf);
 	} else if (strcmp(name, "label") == 0) {
-		rv = cd9660_arguments_set_string(buf, desc, 32, 'd',
+		rv = cd9660_arguments_set_string(buf, name, 32, 'd',
 		    diskStructure->primaryDescriptor.volume_id);
 	} else if (strcmp(name, "preparer") == 0) {
-		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		rv = cd9660_arguments_set_string(buf, name, 128, 'a',
 		    diskStructure->primaryDescriptor.preparer_id);
 	} else if (strcmp(name, "publisher") == 0) {
-		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		rv = cd9660_arguments_set_string(buf, name, 128, 'a',
 		    diskStructure->primaryDescriptor.publisher_id);
 	} else if (strcmp(name, "volumeid") == 0) {
-		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		rv = cd9660_arguments_set_string(buf, name, 128, 'a',
 		    diskStructure->primaryDescriptor.volume_set_id);
 	} else if (strcmp(name, "hard-disk-boot") == 0 ||
 	    strcmp(name, "no-boot") == 0 ||

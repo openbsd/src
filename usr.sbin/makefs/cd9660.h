@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.8 2016/10/23 11:09:38 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.9 2016/10/26 07:53:47 natano Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -274,9 +274,6 @@ typedef struct _iso9660_disk {
 
 	/* Spec breaking options */
 	int allow_deep_trees;
-	int allow_max_name; /* Allow 37 char filenames*/
-	int allow_illegal_chars; /* ~, !, # */
-	int allow_lowercase;
 	int allow_multidot;
 	int omit_trailing_period;
 
@@ -287,7 +284,6 @@ typedef struct _iso9660_disk {
 	int is_bootable;/* Default to 0 */
 	int64_t boot_catalog_sector;
 	boot_volume_descriptor *boot_descriptor;
-	char * boot_image_directory;
 
 	TAILQ_HEAD(boot_image_list,cd9660_boot_image) boot_images;
 	int image_serialno;

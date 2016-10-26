@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makefs.8,v 1.11 2016/10/24 15:06:49 jmc Exp $
+.\"	$OpenBSD: makefs.8,v 1.12 2016/10/26 07:53:47 natano Exp $
 .\"	$NetBSD: makefs.8,v 1.55 2015/11/25 16:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 24 2016 $
+.Dd $Mdocdate: October 26 2016 $
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -190,13 +190,6 @@ The following keywords are supported:
 .It Sy allow-deep-trees
 Allow the directory structure to exceed the maximum specified in
 the spec.
-.\" .It Sy allow-illegal-chars
-.\" Unknown
-.\" .It Sy allow-lowercase
-.\" Unknown
-.It Sy allow-max-name
-Allow 37 instead of 33 characters for filenames by omitting the
-version ID.
 .It Sy allow-multidot
 Allow multiple dots in a filename.
 .It Sy applicationid
@@ -221,6 +214,8 @@ boot.
 Load a generic boot image into the first 32K of the CD9660 image.
 .It Sy hard-disk-boot
 Boot image is a hard disk image.
+.It Sy isolevel
+ISO Level.
 .It Sy label
 Label name of the image.
 .It Sy no-boot

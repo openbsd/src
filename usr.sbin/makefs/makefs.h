@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.h,v 1.10 2016/10/23 10:22:21 natano Exp $	*/
+/*	$OpenBSD: makefs.h,v 1.11 2016/10/26 07:53:47 natano Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ typedef struct {
 	opttype_t	type;		/* type of entry */
 	long long	minimum;	/* minimum for value */
 	long long	maximum;	/* maximum for value */
-	const char	*desc;		/* option description */
 } option_t;
 
 /*

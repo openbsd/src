@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.17 2016/10/23 10:22:21 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.18 2016/10/26 07:53:47 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -137,27 +137,18 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	ffs_opt_t *ffs_opts = ecalloc(1, sizeof(*ffs_opts));
 
 	const option_t ffs_options[] = {
-	    { "avgfilesize", &ffs_opts->avgfilesize, OPT_INT32,
-	      1, INT_MAX, "expected average file size" },
-	    { "avgfpdir", &ffs_opts->avgfpdir, OPT_INT32,
-	      1, INT_MAX, "expected # of files per directory" },
-	    { "bsize", &ffs_opts->bsize, OPT_INT32, 1, INT_MAX, "block size" },
-	    { "density", &ffs_opts->density, OPT_INT32,
-	      1, INT_MAX, "bytes per inode" },
-	    { "extent", &ffs_opts->maxbsize, OPT_INT32,
-	      1, INT_MAX, "maximum # extent size" },
-	    { "fsize", &ffs_opts->fsize, OPT_INT32,
-	      1, INT_MAX, "fragment size" },
-	    { "label", ffs_opts->label, OPT_STRARRAY,
-	      1, sizeof(ffs_opts->label), "UFS label" },
-	    { "maxbpcg", &ffs_opts->maxblkspercg, OPT_INT32,
-	      1, INT_MAX, "max # of blocks per group" },
-	    { "maxbpg", &ffs_opts->maxbpg, OPT_INT32,
-	      1, INT_MAX, "max blocks per file in a cg" },
-	    { "minfree", &ffs_opts->minfree, OPT_INT32, 0, 99, "minfree" },
-	    { "optimization", NULL, OPT_STRBUF,
-	      0, 0, "Optimization (time|space)" },
-	    { "version", &ffs_opts->version, OPT_INT32, 1, 2, "UFS version" },
+	    { "avgfilesize", &ffs_opts->avgfilesize, OPT_INT32, 1, INT_MAX },
+	    { "avgfpdir", &ffs_opts->avgfpdir, OPT_INT32, 1, INT_MAX },
+	    { "bsize", &ffs_opts->bsize, OPT_INT32, 1, INT_MAX },
+	    { "density", &ffs_opts->density, OPT_INT32, 1, INT_MAX },
+	    { "extent", &ffs_opts->maxbsize, OPT_INT32, 1, INT_MAX },
+	    { "fsize", &ffs_opts->fsize, OPT_INT32, 1, INT_MAX },
+	    { "label", ffs_opts->label, OPT_STRARRAY, 1, MAXVOLLEN },
+	    { "maxbpcg", &ffs_opts->maxblkspercg, OPT_INT32, 1, INT_MAX },
+	    { "maxbpg", &ffs_opts->maxbpg, OPT_INT32, 1, INT_MAX },
+	    { "minfree", &ffs_opts->minfree, OPT_INT32, 0, 99 },
+	    { "optimization", NULL, OPT_STRBUF, 0, 0 },
+	    { "version", &ffs_opts->version, OPT_INT32, 1, 2 },
 	    { .name = NULL }
 	};
 
