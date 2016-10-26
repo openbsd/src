@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.6 2016/10/26 14:14:17 natano Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.7 2016/10/26 15:22:40 natano Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -102,12 +102,11 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 		new_image->system = ET_SYS_X86;
 	else if (strcmp(sysname, "powerpc") == 0)
 		new_image->system = ET_SYS_PPC;
-	else if (strcmp(sysname, "macppc") == 0 ||
-	         strcmp(sysname, "mac68k") == 0)
+	else if (strcmp(sysname, "macppc") == 0)
 		new_image->system = ET_SYS_MAC;
 	else {
 		warnx("boot disk system must be "
-		      "i386, powerpc, macppc, or mac68k");
+		      "i386, macppc, or powerpc");
 		free(temp);
 		free(new_image);
 		return 0;
