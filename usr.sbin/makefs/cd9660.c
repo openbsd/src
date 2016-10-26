@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.14 2016/10/26 07:53:47 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.15 2016/10/26 14:06:46 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -250,7 +250,7 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 	  min, max }
 
 #define OPT_BOOL(name, field) \
-	OPT_NUM(name, field, 0, 1)
+	{ name, &diskStructure->field, OPT_BOOL }
 
 	const option_t cd9660_options[] = {
 	        OPT_BOOL("allow-deep-trees", allow_deep_trees),
