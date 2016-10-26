@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.51 2016/10/12 19:10:03 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.52 2016/10/26 05:26:36 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -122,9 +122,15 @@ static struct privsep_proc procs[] = {
  *        features of the CPU in use.
  */
 static const struct vcpu_reg_state vcpu_init_flat32 = {
+#ifdef __i386__
+	.vrs_gprs[VCPU_REGS_EFLAGS] = 0x2,
+	.vrs_gprs[VCPU_REGS_EIP] = 0x0,
+	.vrs_gprs[VCPU_REGS_ESP] = 0x0,
+#else
 	.vrs_gprs[VCPU_REGS_RFLAGS] = 0x2,
 	.vrs_gprs[VCPU_REGS_RIP] = 0x0,
 	.vrs_gprs[VCPU_REGS_RSP] = 0x0,
+#endif
 	.vrs_crs[VCPU_REGS_CR0] = CR0_CD | CR0_NW | CR0_ET | CR0_PE | CR0_PG,
 	.vrs_crs[VCPU_REGS_CR3] = PML4_PAGE,
 	.vrs_sregs[VCPU_REGS_CS] = { 0x8, 0xFFFFFFFF, 0xC09F, 0x0},

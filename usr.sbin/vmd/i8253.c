@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.3 2016/10/03 06:00:17 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.4 2016/10/26 05:26:36 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -55,7 +55,7 @@ i8253_init(uint32_t vm_id)
 	i8253_counter[0].start = 0xFFFF;
 	i8253_counter[0].mode = TIMER_RATEGEN;
 	evtimer_set(&i8253_counter[0].timer, i8253_fire,
-	    (void *)(uint64_t)vm_id);
+	    (void *)(intptr_t)vm_id);
 	i8253_reset(0);
 }
 

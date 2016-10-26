@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.19 2016/09/17 17:39:34 jasper Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.20 2016/10/26 05:26:36 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -110,8 +110,14 @@ union {
 	Elf64_Ehdr elf64;
 } hdr;
 
+#ifdef __i386__
+typedef uint32_t pt_entry_t;
+static void setsegment(struct segment_descriptor *, uint32_t,
+    size_t, int, int, int, int);
+#else
 static void setsegment(struct mem_segment_descriptor *, uint32_t,
     size_t, int, int, int, int);
+#endif
 static int elf32_exec(int, Elf32_Ehdr *, u_long *, int);
 static int elf64_exec(int, Elf64_Ehdr *, u_long *, int);
 static size_t create_bios_memmap(struct vm_create_params *, bios_memmap_t *);
@@ -144,9 +150,15 @@ extern int vm_id;
  *  def32: default 16/32 bit size of the segment
  *  gran: granularity of the segment (byte/page)
  */
+#ifdef __i386__
+static void
+setsegment(struct segment_descriptor *sd, uint32_t base, size_t limit,
+    int type, int dpl, int def32, int gran)
+#else
 static void
 setsegment(struct mem_segment_descriptor *sd, uint32_t base, size_t limit,
     int type, int dpl, int def32, int gran)
+#endif
 {
 	sd->sd_lolimit = (int)limit;
 	sd->sd_lobase = (int)base;
@@ -154,8 +166,12 @@ setsegment(struct mem_segment_descriptor *sd, uint32_t base, size_t limit,
 	sd->sd_dpl = dpl;
 	sd->sd_p = 1;
 	sd->sd_hilimit = (int)limit >> 16;
+#ifdef __i386__
+	sd->sd_xx = 0;
+#else
 	sd->sd_avl = 0;
 	sd->sd_long = 0;
+#endif
 	sd->sd_def32 = def32;
 	sd->sd_gran = gran;
 	sd->sd_hibase = (int)base >> 24;
@@ -173,10 +189,19 @@ static void
 push_gdt(void)
 {
 	uint8_t gdtpage[PAGE_SIZE];
+#ifdef __i386__
+	struct segment_descriptor *sd;
+#else
 	struct mem_segment_descriptor *sd;
+#endif
 
 	memset(&gdtpage, 0, sizeof(gdtpage));
+
+#ifdef __i386__
+	sd = (struct segment_descriptor *)&gdtpage;
+#else
 	sd = (struct mem_segment_descriptor *)&gdtpage;
+#endif
 
 	/*
 	 * Create three segment descriptors:
@@ -204,6 +229,13 @@ push_pt(void)
 	pt_entry_t ptes[NPTE_PG];
 	uint64_t i;
 
+#ifdef __i386__
+	memset(ptes, 0, sizeof(ptes));
+	for (i = 0 ; i < NPTE_PG; i++) {
+		ptes[i] = PG_V | PG_PS | (NBPD * i);
+	}	
+	write_mem(PML4_PAGE, ptes, PAGE_SIZE);
+#else
 	/* PML3 [0] - first 1GB */
 	memset(ptes, 0, sizeof(ptes));
 	ptes[0] = PG_V | PML3_PAGE;
@@ -220,6 +252,7 @@ push_pt(void)
 		ptes[i] = PG_V | PG_RW | PG_u | PG_PS | (NBPD_L2 * i);
 	}
 	write_mem(PML2_PAGE, ptes, PAGE_SIZE);
+#endif
 }
 
 /*
@@ -267,8 +300,13 @@ loadelf_main(int fd, struct vm_create_params *vcp, struct vcpu_reg_state *vrs)
 	bootargsz = push_bootargs(memmap, n);
 	stacksize = push_stack(bootargsz, marks[MARK_END]);
 
+#ifdef __i386__
+	vrs->vrs_gprs[VCPU_REGS_EIP] = (uint32_t)marks[MARK_ENTRY];
+	vrs->vrs_gprs[VCPU_REGS_ESP] = (uint32_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
+#else
 	vrs->vrs_gprs[VCPU_REGS_RIP] = (uint64_t)marks[MARK_ENTRY];
 	vrs->vrs_gprs[VCPU_REGS_RSP] = (uint64_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
+#endif
 	vrs->vrs_gdtr.vsi_base = GDT_PAGE;
 
 	return (0);

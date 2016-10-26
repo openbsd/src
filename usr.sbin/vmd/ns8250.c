@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.5 2016/10/03 06:00:17 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.6 2016/10/26 05:26:36 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -54,7 +54,7 @@ ns8250_init(int fd, uint32_t vmid)
 	com1_dev.rcv_pending = 0;
 
 	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
-	    com_rcv_event, (void *)(uint64_t)vmid);
+	    com_rcv_event, (void *)(intptr_t)vmid);
 	event_add(&com1_dev.event, NULL);
 }
 

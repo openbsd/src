@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.3 2016/10/03 06:00:17 mlarkin Exp $ */
+/* $OpenBSD: mc146818.c,v 1.4 2016/10/26 05:26:36 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -142,7 +142,7 @@ mc146818_init(uint32_t vm_id)
 	evtimer_set(&rtc.sec, rtc_fire1, NULL);
 	evtimer_add(&rtc.sec, &rtc.sec_tv);
 
-	evtimer_set(&rtc.per, rtc_fireper, (void *)(uint64_t)rtc.vm_id);
+	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
 }
 
 /*
