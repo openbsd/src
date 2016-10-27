@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.235 2016/10/24 23:58:33 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.236 2016/10/27 03:00:35 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ struct	pool mtagpool;
 /* mbuf cluster pools */
 u_int	mclsizes[MCLPOOLS] = {
 	MCLBYTES,	/* must be at slot 0 */
+	MCLBYTES + 2,	/* ETHER_ALIGNED 2k mbufs */
 	4 * 1024,
 	8 * 1024,
 	9 * 1024,
@@ -145,6 +146,7 @@ void
 mbinit(void)
 {
 	int i;
+	unsigned int lowbits;
 
 #if DIAGNOSTIC
 	if (mclsizes[0] != MCLBYTES)
@@ -161,9 +163,15 @@ mbinit(void)
 	    IPL_NET, 0, "mtagpl", NULL);
 
 	for (i = 0; i < nitems(mclsizes); i++) {
-		snprintf(mclnames[i], sizeof(mclnames[0]), "mcl%dk",
-		    mclsizes[i] >> 10);
-		pool_init(&mclpools[i], mclsizes[i], 0, IPL_NET, 0,
+		lowbits = mclsizes[i] & ((1 << 10) - 1);
+		if (lowbits) {
+			snprintf(mclnames[i], sizeof(mclnames[0]),
+			    "mcl%dk%u", mclsizes[i] >> 10, lowbits);
+		} else {
+			snprintf(mclnames[i], sizeof(mclnames[0]), "mcl%dk",
+			    mclsizes[i] >> 10);
+		}
+		pool_init(&mclpools[i], mclsizes[i], 64, IPL_NET, 0,
 		    mclnames[i], NULL);
 		pool_set_constraints(&mclpools[i], &kp_dma_contig);
 		pool_setlowat(&mclpools[i], mcllowat);

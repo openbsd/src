@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.179 2016/09/04 15:10:59 reyk Exp $	*/
+/*	$OpenBSD: if.h,v 1.180 2016/10/27 03:00:35 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ struct if_clonereq {
 	char	*ifcr_buffer;		/* buffer for cloner names */
 };
 
-#define MCLPOOLS	7		/* number of cluster pools */
+#define MCLPOOLS	8		/* number of cluster pools */
 
 struct if_rxring {
 	int     rxr_adjusted;
