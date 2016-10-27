@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.21 2015/09/21 14:45:14 guenther Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.22 2016/10/27 14:32:10 tb Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -140,11 +140,6 @@ pdevnam(short devno)
 	cd = get_cfdata(devno);
 
 	cdrv = (struct cfdriver *)adjust((caddr_t)cd->cf_driver);
-
-#if defined(OLDSCSIBUS)
-	if (strlen(adjust((caddr_t)cdrv->cd_name)) == 0)
-		printf("oldscsibus");
-#endif
 	printf("%s", adjust((caddr_t)cdrv->cd_name));
 
 	switch (cd->cf_fstate) {
