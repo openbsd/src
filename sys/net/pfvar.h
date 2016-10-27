@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.442 2016/10/26 21:07:22 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.443 2016/10/27 21:41:20 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1710,10 +1710,10 @@ int	pf_state_key_attach(struct pf_state_key *, struct pf_state *, int);
 int	pf_translate(struct pf_pdesc *, struct pf_addr *, u_int16_t,
 	    struct pf_addr *, u_int16_t, u_int16_t, int);
 int	pf_translate_af(struct pf_pdesc *);
-void	pf_route(struct mbuf **, struct pf_rule *, int,
-	    struct ifnet *, struct pf_state *);
-void	pf_route6(struct mbuf **, struct pf_rule *, int,
-	   struct ifnet *, struct pf_state *);
+void	pf_route(struct mbuf **, struct pf_pdesc *, struct pf_rule *,
+	    struct pf_state *);
+void	pf_route6(struct mbuf **, struct pf_pdesc *, struct pf_rule *,
+	    struct pf_state *);
 
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);

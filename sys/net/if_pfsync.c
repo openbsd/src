@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.235 2016/10/04 13:54:32 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.236 2016/10/27 21:41:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -59,19 +59,19 @@
 #include <net/if_types.h>
 #include <net/bpf.h>
 #include <net/netisr.h>
+
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/ip.h>
+#include <netinet/in_var.h>
+#include <netinet/ip_var.h>
+#include <netinet/ip_ipsp.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/icmp6.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_fsm.h>
-
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/ip_var.h>
-
-#ifdef IPSEC
-#include <netinet/ip_ipsp.h>
-#endif /* IPSEC */
+#include <netinet/udp.h>
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -87,7 +87,7 @@
 
 #define PF_DEBUGNAME	"pfsync: "
 #include <net/pfvar.h>
-#include <netinet/ip_ipsp.h>
+#include <net/pfvar_priv.h>
 #include <net/if_pfsync.h>
 
 #include "bpfilter.h"
@@ -1732,6 +1732,8 @@ void
 pfsync_undefer(struct pfsync_deferral *pd, int drop)
 {
 	struct pfsync_softc *sc = pfsyncif;
+	struct pf_pdesc pdesc;
+	union pf_headers pdhdrs;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -1743,17 +1745,22 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 		m_freem(pd->pd_m);
 	else {
 		if (pd->pd_st->rule.ptr->rt == PF_ROUTETO) {
+			if (pf_setup_pdesc(&pdesc, &pdhdrs,
+			    pd->pd_st->key[PF_SK_WIRE]->af,
+			    pd->pd_st->direction, pd->pd_st->rt_kif,
+			    pd->pd_m, NULL) != PF_PASS) {
+				m_freem(pd->pd_m);
+				goto out;
+			}
 			switch (pd->pd_st->key[PF_SK_WIRE]->af) {
 			case AF_INET:
-				pf_route(&pd->pd_m, pd->pd_st->rule.ptr,
-				    pd->pd_st->direction,
-				    pd->pd_st->rt_kif->pfik_ifp, pd->pd_st);
+				pf_route(&pd->pd_m, &pdesc,
+				    pd->pd_st->rule.ptr, pd->pd_st);
 				break;
 #ifdef INET6
 			case AF_INET6:
-				pf_route6(&pd->pd_m, pd->pd_st->rule.ptr,
-				    pd->pd_st->direction,
-				    pd->pd_st->rt_kif->pfik_ifp, pd->pd_st);
+				pf_route6(&pd->pd_m, &pdesc,
+				    pd->pd_st->rule.ptr, pd->pd_st);
 				break;
 #endif /* INET6 */
 			}
@@ -1772,7 +1779,7 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 			}
 		}
 	}
-
+ out:
 	pool_put(&sc->sc_pool, pd);
 }
 
