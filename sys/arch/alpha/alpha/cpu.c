@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.41 2016/10/27 05:36:35 dlg Exp $ */
+/* $OpenBSD: cpu.c,v 1.42 2016/10/27 09:46:14 dlg Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -294,10 +294,8 @@ recognized:
 #if defined(MULTIPROCESSOR)
 	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
 		ci = &cpu_info_primary;
-	else {
+	else
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
-		ncpus++;
-	}
 
 	cpu_info[ma->ma_slot] = ci;
 #else
@@ -441,6 +439,7 @@ cpu_boot_secondary_processors(void)
 		cpu_info_list->ci_next = ci;
 		atomic_setbits_ulong(&ci->ci_flags, CPUF_RUNNING);
 		atomic_setbits_ulong(&cpus_running, (1UL << i));
+		ncpus++;
 	}
 
 	/*
