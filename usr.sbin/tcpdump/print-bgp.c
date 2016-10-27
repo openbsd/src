@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.19 2016/10/13 08:48:15 phessler Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.20 2016/10/27 08:21:58 phessler Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -134,7 +134,7 @@ struct bgp_attr {
 #define BGPTYPE_EXTD_COMMUNITIES	16	/* RFC4360 */
 #define BGPTYPE_AS4_PATH		17	/* RFC4893 */
 #define BGPTYPE_AGGREGATOR4		18	/* RFC4893 */
-#define BGPTYPE_LARGE_COMMUNITIES	30	/* draft-ietf-idr-large-community */
+#define BGPTYPE_LARGE_COMMUNITIES	32	/* draft-ietf-idr-large-community */
 
 #define BGP_AS_SET             1
 #define BGP_AS_SEQUENCE        2
@@ -267,7 +267,8 @@ static const char *bgpattr_type[] = {
 	"COMMUNITIES", "ORIGINATOR_ID", "CLUSTER_LIST", "DPA",
 	"ADVERTISERS", "RCID_PATH", "MP_REACH_NLRI", "MP_UNREACH_NLRI",
 	"EXTD_COMMUNITIES", "AS4_PATH", "AGGREGATOR4", NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "LARGE_COMMUNITIES",
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	"LARGE_COMMUNITIES",
 };
 #define bgp_attr_type(x) \
 	num_or_str(bgpattr_type, \

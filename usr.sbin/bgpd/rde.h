@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.150 2016/10/14 16:05:36 phessler Exp $ */
+/*	$OpenBSD: rde.h,v 1.151 2016/10/27 08:21:58 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -113,7 +113,7 @@ enum attrtypes {
 	ATTR_EXT_COMMUNITIES=16,
 	ATTR_AS4_PATH=17,
 	ATTR_AS4_AGGREGATOR=18,
-	ATTR_LARGE_COMMUNITIES=30,
+	ATTR_LARGE_COMMUNITIES=32,
 };
 
 /* attribute flags. 4 low order bits reserved */
