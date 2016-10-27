@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.16 2016/10/23 11:56:51 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.17 2016/10/27 09:48:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1496,6 +1496,7 @@ swofp_flow_timeout(struct switch_softc *sc)
 					    "by idle timeout\n", swfe->swfe_id);
 					swofp_flow_entry_delete(sc, swft, swfe,
 					    OFP_FLOWREM_REASON_IDLE_TIMEOUT);
+					continue;
 				}
 			}
 			if (swfe->swfe_hard_timeout) {
