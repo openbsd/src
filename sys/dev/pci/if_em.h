@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.72 2016/02/18 14:24:39 bluhm Exp $ */
+/* $OpenBSD: if_em.h,v 1.73 2016/10/27 03:06:53 dlg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -263,11 +263,7 @@ typedef int	boolean_t;
 #define EM_RXBUFFER_8192	8192
 #define EM_RXBUFFER_16384	16384
 
-#ifdef __STRICT_ALIGNMENT
 #define EM_MCLBYTES		(EM_RXBUFFER_2048 + ETHER_ALIGN)
-#else
-#define EM_MCLBYTES		EM_RXBUFFER_2048
-#endif
 
 #define EM_MAX_SCATTER		64
 #define EM_TSO_SIZE		65535

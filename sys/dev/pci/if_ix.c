@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.132 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.133 2016/10/27 03:06:53 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -616,11 +616,7 @@ ixgbe_init(void *arg)
 	ixgbe_initialize_transmit_units(sc);
 
 	/* Use 2k clusters, even for jumbo frames */
-#ifdef __STRICT_ALIGNMENT
 	sc->rx_mbuf_sz = MCLBYTES + ETHER_ALIGN;
-#else
-	sc->rx_mbuf_sz = MCLBYTES;
-#endif
 
 	/* Prepare receive descriptors and buffers */
 	if (ixgbe_setup_receive_structures(sc)) {
@@ -2458,9 +2454,7 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 		return (ENOBUFS);
 
 	mp->m_len = mp->m_pkthdr.len = sc->rx_mbuf_sz;
-#ifdef __STRICT_ALIGNMENT
 	m_adj(mp, ETHER_ALIGN);
-#endif
 
 	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->map,
 	    mp, BUS_DMA_NOWAIT);
@@ -2667,11 +2661,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	hlreg |= IXGBE_HLREG0_JUMBOEN;
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_HLREG0, hlreg);
 
-#ifdef __STRICT_ALIGNMENT
 	bufsz = (sc->rx_mbuf_sz - ETHER_ALIGN) >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
-#else
-	bufsz = sc->rx_mbuf_sz >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
-#endif
 
 	for (i = 0; i < sc->num_queues; i++, rxr++) {
 		uint64_t rdba = rxr->rxdma.dma_map->dm_segs[0].ds_addr;
