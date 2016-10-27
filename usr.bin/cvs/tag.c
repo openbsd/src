@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.84 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: tag.c,v 1.85 2016/10/27 07:12:02 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -121,7 +121,7 @@ cvs_tag(int argc, char **argv)
 				fatal("Absolute path name is invalid: %s",
 				    argv[i]);
 		}
-        } else if (cvs_cmdop == CVS_OP_TAG && argc == 0)
+	} else if (cvs_cmdop == CVS_OP_TAG && argc == 0)
 		fatal("%s", cvs_cmd_tag.cmd_synopsis);
 
 	tag_name = argv[0];
@@ -182,7 +182,6 @@ cvs_tag(int argc, char **argv)
 		if (cvs_cmdop == CVS_OP_RTAG &&
 		    chdir(current_cvsroot->cr_dir) == -1)
 			fatal("cvs_tag: %s", strerror(errno));
-
 	}
 
 	cr.flags = flags;
