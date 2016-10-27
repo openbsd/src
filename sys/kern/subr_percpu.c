@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.4 2016/10/24 23:58:33 dlg Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.5 2016/10/27 09:40:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -30,8 +30,8 @@ struct pool cpumem_pl;
 void
 percpu_init(void)
 {
-	pool_init(&cpumem_pl, sizeof(struct cpumem) * ncpus, 0, IPL_NONE,
-	    PR_WAITOK, "percpumem", &pool_allocator_single);
+	pool_init(&cpumem_pl, sizeof(struct cpumem) * ncpusfound, 0,
+	    IPL_NONE, PR_WAITOK, "percpumem", &pool_allocator_single);
 }
 
 struct cpumem *
@@ -42,7 +42,7 @@ cpumem_get(struct pool *pp)
 
 	cm = pool_get(&cpumem_pl, PR_WAITOK);
 
-	for (cpu = 0; cpu < ncpus; cpu++)
+	for (cpu = 0; cpu < ncpusfound; cpu++)
 		cm[cpu].mem = pool_get(pp, PR_WAITOK | PR_ZERO);
 
 	return (cm);
@@ -53,7 +53,7 @@ cpumem_put(struct pool *pp, struct cpumem *cm)
 {
 	unsigned int cpu;
 
-	for (cpu = 0; cpu < ncpus; cpu++)
+	for (cpu = 0; cpu < ncpusfound; cpu++)
 		pool_put(pp, cm[cpu].mem);
 
 	pool_put(&cpumem_pl, cm);
@@ -69,7 +69,7 @@ cpumem_malloc(size_t sz, int type)
 
 	cm = pool_get(&cpumem_pl, PR_WAITOK);
 
-	for (cpu = 0; cpu < ncpus; cpu++)
+	for (cpu = 0; cpu < ncpusfound; cpu++)
 		cm[cpu].mem = malloc(sz, type, M_WAITOK | M_ZERO);
 
 	return (cm);
@@ -86,7 +86,7 @@ cpumem_malloc_ncpus(struct cpumem *bootcm, size_t sz, int type)
 	cm = pool_get(&cpumem_pl, PR_WAITOK);
 
 	cm[0].mem = bootcm[0].mem;
-	for (cpu = 1; cpu < ncpus; cpu++)
+	for (cpu = 1; cpu < ncpusfound; cpu++)
 		cm[cpu].mem = malloc(sz, type, M_WAITOK | M_ZERO);
 
 	return (cm);
@@ -99,7 +99,7 @@ cpumem_free(struct cpumem *cm, int type, size_t sz)
 
 	sz = roundup(sz, CACHELINESIZE);
 
-	for (cpu = 0; cpu < ncpus; cpu++)
+	for (cpu = 0; cpu < ncpusfound; cpu++)
 		free(cm[cpu].mem, type, sz);
 
 	pool_put(&cpumem_pl, cm);
@@ -118,7 +118,7 @@ cpumem_next(struct cpumem_iter *i, struct cpumem *cm)
 {
 	unsigned int cpu = ++i->cpu;
 
-	if (cpu >= ncpus)
+	if (cpu >= ncpusfound)
 		return (NULL);
 
 	return (cm[cpu].mem);
