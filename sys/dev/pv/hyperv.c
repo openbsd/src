@@ -1266,8 +1266,6 @@ hv_ring_write(struct hv_ring_data *wrd, struct iovec *iov, int iov_cnt,
 		return (EAGAIN);
 	}
 
-	mtx_enter(&wrd->rd_lock);
-
 	oprod = wrd->rd_prod;
 
 	for (i = 0; i < iov_cnt; i++)
@@ -1278,8 +1276,7 @@ hv_ring_write(struct hv_ring_data *wrd, struct iovec *iov, int iov_cnt,
 
 	membar_sync();
 	wrd->rd_ring->br_windex = wrd->rd_prod;
-
-	mtx_leave(&wrd->rd_lock);
+	membar_sync();
 
 	/* Signal when the ring transitions from being empty to non-empty */
 	if (wrd->rd_ring->br_imask == 0 &&
@@ -1320,7 +1317,9 @@ hv_channel_send(struct hv_channel *ch, void *data, uint32_t datalen,
 	iov[2].iov_base = &zeropad;
 	iov[2].iov_len = pktlen_aligned - pktlen;
 
+	mtx_enter(&ch->ch_wrd.rd_lock);
 	rv = hv_ring_write(&ch->ch_wrd, iov, 3, &needsig);
+	mtx_leave(&ch->ch_wrd.rd_lock);
 	if (rv == 0 && needsig)
 		hv_channel_setevent(sc, ch);
 
@@ -1361,7 +1360,9 @@ hv_channel_send_sgl(struct hv_channel *ch, struct vmbus_gpa *sgl,
 	iov[3].iov_base = &zeropad;
 	iov[3].iov_len = pktlen_aligned - pktlen;
 
+	mtx_enter(&ch->ch_wrd.rd_lock);
 	rv = hv_ring_write(&ch->ch_wrd, iov, 4, &needsig);
+	mtx_leave(&ch->ch_wrd.rd_lock);
 	if (rv == 0 && needsig)
 		hv_channel_setevent(sc, ch);
 
@@ -1379,9 +1380,7 @@ hv_ring_peek(struct hv_ring_data *rrd, void *data, uint32_t datalen)
 	if (avail < datalen)
 		return (EAGAIN);
 
-	mtx_enter(&rrd->rd_lock);
 	hv_ring_get(rrd, (uint8_t *)data, datalen, 1);
-	mtx_leave(&rrd->rd_lock);
 	return (0);
 }
 
@@ -1400,8 +1399,6 @@ hv_ring_read(struct hv_ring_data *rrd, void *data, uint32_t datalen,
 		return (EAGAIN);
 	}
 
-	mtx_enter(&rrd->rd_lock);
-
 	if (offset) {
 		rrd->rd_cons += offset;
 		rrd->rd_cons %= rrd->rd_data_size;
@@ -1412,8 +1409,6 @@ hv_ring_read(struct hv_ring_data *rrd, void *data, uint32_t datalen,
 
 	membar_sync();
 	rrd->rd_ring->br_rindex = rrd->rd_cons;
-
-	mtx_leave(&rrd->rd_lock);
 
 	return (0);
 }
@@ -1428,12 +1423,17 @@ hv_channel_recv(struct hv_channel *ch, void *data, uint32_t datalen,
 
 	*rlen = 0;
 
-	if ((rv = hv_ring_peek(&ch->ch_rrd, &cph, sizeof(cph))) != 0)
+	mtx_enter(&ch->ch_rrd.rd_lock);
+
+	if ((rv = hv_ring_peek(&ch->ch_rrd, &cph, sizeof(cph))) != 0) {
+		mtx_leave(&ch->ch_rrd.rd_lock);
 		return (rv);
+	}
 
 	offset = raw ? 0 : VMBUS_CHANPKT_GETLEN(cph.cph_hlen);
 	pktlen = VMBUS_CHANPKT_GETLEN(cph.cph_tlen) - offset;
 	if (pktlen > datalen) {
+		mtx_leave(&ch->ch_rrd.rd_lock);
 		printf("%s: pktlen %u datalen %u\n", __func__, pktlen, datalen);
 		return (EINVAL);
 	}
@@ -1443,6 +1443,8 @@ hv_channel_recv(struct hv_channel *ch, void *data, uint32_t datalen,
 		*rlen = pktlen;
 		*rid = cph.cph_tid;
 	}
+
+	mtx_leave(&ch->ch_rrd.rd_lock);
 
 	return (rv);
 }
