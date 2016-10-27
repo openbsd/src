@@ -1,4 +1,4 @@
-/*	$OpenBSD: colrm.c,v 1.12 2016/01/18 20:31:36 schwarze Exp $	*/
+/*	$OpenBSD: colrm.c,v 1.13 2016/10/27 12:53:54 schwarze Exp $	*/
 /*	$NetBSD: colrm.c,v 1.4 1995/09/02 05:51:37 jtc Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@ main(int argc, char *argv[])
 	u_long	  column, newcol, start, stop;
 	int	  ch, len, width;
 
-	setlocale(LC_ALL, "");
+	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
