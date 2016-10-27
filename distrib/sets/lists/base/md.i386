@@ -1661,6 +1661,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/ofp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/pfvar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/net/pfvar_priv.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/pipex.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/pipex_local.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/ppp-comp.ph

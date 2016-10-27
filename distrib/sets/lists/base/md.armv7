@@ -1642,6 +1642,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/ofp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/pfvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net/pfvar_priv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/pipex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/pipex_local.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/ppp-comp.ph

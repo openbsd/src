@@ -1538,6 +1538,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/ofp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pfvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/pfvar_priv.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pipex.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pipex_local.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/ppp-comp.ph

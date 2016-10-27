@@ -1567,6 +1567,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/ofp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/pfvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/net/pfvar_priv.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/pipex.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/pipex_local.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/ppp-comp.ph

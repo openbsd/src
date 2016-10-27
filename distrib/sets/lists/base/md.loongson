@@ -1645,6 +1645,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/ofp.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pfvar.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pfvar_priv.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pipex.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pipex_local.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/ppp-comp.ph
