@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.41 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.42 2016/10/27 13:55:21 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -48,6 +48,7 @@ struct rtentry;
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <vis.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -212,10 +213,17 @@ int
 pfsync_print_clr(int flags, const void *bp)
 {
 	const struct pfsync_clr *clr = bp;
+	char ifname[IFNAMSIZ * 4 + 1];
+	char *cp = ifname;
+	int i;
 
 	printf("\n\tcreatorid: %08x", htonl(clr->creatorid));
-	if (clr->ifname[0] != '\0')
-		printf(" interface: %s", clr->ifname);
+	if (clr->ifname[0] != '\0') {
+		/* Treat clr->ifname as untrusted input. */
+		for (i = 0; i < IFNAMSIZ && clr->ifname[i] != '\0'; i++)
+			cp = vis(cp, clr->ifname[i], VIS_WHITE, 0);
+		printf(" interface: %s", ifname);
+	}
 
 	return (0);
 }
