@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.35 2016/10/16 17:50:00 tb Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.36 2016/10/27 14:33:30 tb Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -233,7 +233,6 @@ emitlocnames(FILE *fp)
 	int added, start;
 	int v, j, x;
 
-#if 1
 	addlocnami(-1);
 	for (p = packed; (i = *p) != NULL; p++) {
 		/*printf("child %s\n", i->i_name);*/
@@ -246,7 +245,6 @@ emitlocnames(FILE *fp)
 
 			/* add all the names */
 			a = i->i_atattr;
-			nv = a->a_locs;
 			added = 0;
 			for (nv = a->a_locs, v = 0; nv != NULL;
 			    nv = nv->nv_next, v++) {
@@ -268,23 +266,6 @@ emitlocnames(FILE *fp)
 	for (p = packed; (i = *p) != NULL; p++)
 		if (i->i_pvlen)
 			i->i_locnami = i->i_parents[0]->i_plocnami;
-#else
-	addlocnami(-1);
-	for (p = packed; (i = *p) != NULL; p++) {
-
-		i->i_locnami = nlocnami;
-
-		/* add all the names */
-		a = i->i_atattr;
-		nv = a->a_locs;
-		for (nv = a->a_locs, v = 0; nv != NULL; nv = nv->nv_next, v++)
-			addlocnami(addlocname(nv->nv_name));
-
-		/* terminate list of names */
-		addlocnami(-1);
-
-	}
-#endif
 	if (fprintf(fp, "\nchar *locnames[] = {\n") < 0)
 		return (1);
 	for (j = 0; j < nlocnames; j++)
@@ -359,7 +340,6 @@ struct cfdata cfdata[] = {\n\
 		if (v == 0 && fputs("root", fp) < 0)
 			return (1);
 		a = i->i_atattr;
-		nv = a->a_locs;
 		for (nv = a->a_locs, v = 0; nv != NULL; nv = nv->nv_next, v++)
 			if (fprintf(fp, " %s %s",
 			    nv->nv_name, i->i_locs[v]) < 0)
