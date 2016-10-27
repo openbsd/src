@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.11 2016/10/20 05:29:55 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.12 2016/10/27 04:37:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -467,7 +467,7 @@ enc_init(struct conv *p, struct aparams *par, int nch)
 }
 
 /*
- * decode "todo" frames from from foreign to native encoding
+ * decode "todo" frames from foreign to native encoding
  */
 void
 dec_do(struct conv *p, unsigned char *in, unsigned char *out, int todo)
@@ -606,7 +606,7 @@ cmap_add(struct cmap *p, void *in, void *out, int vol, int todo)
 }
 
 /*
- * overwrite output with "todo" input frames with with the given volume
+ * overwrite output with "todo" input frames with the given volume
  */
 void
 cmap_copy(struct cmap *p, void *in, void *out, int vol, int todo)

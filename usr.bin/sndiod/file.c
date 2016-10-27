@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.22 2016/06/30 21:37:29 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.23 2016/10/27 04:37:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -376,8 +376,8 @@ file_poll(void)
 	}
 
 	/*
-	 * Sleep. Calculate the number off milliseconds poll(2) must
-	 * wait before the timo_update() needs to be called. If there're
+	 * Sleep. Calculate the number of milliseconds poll(2) must
+	 * wait before the timo_update() needs to be called. If there are
 	 * no timeouts scheduled, then call poll(2) with infinite
 	 * timeout (i.e -1).
 	 */

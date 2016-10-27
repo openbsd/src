@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.12 2016/05/25 10:24:24 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.13 2016/10/27 04:37:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -136,7 +136,7 @@ dev_sio_open(struct dev *d)
 
 #ifdef DEBUG
 	/*
-	 * We support any parameters combination exposed by the kernel,
+	 * We support any parameter combination exposed by the kernel,
 	 * and we have no other choice than trusting the kernel for
 	 * returning correct parameters. But let's check parameters
 	 * early and nicely report kernel bugs rather than crashing
