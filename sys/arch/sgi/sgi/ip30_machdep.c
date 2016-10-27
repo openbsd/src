@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.67 2016/10/26 13:42:54 visa Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.68 2016/10/27 13:19:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -573,6 +573,7 @@ hw_cpu_hatch(struct cpu_info *ci)
 
 	(*md_startclock)(ci);
 
+	ncpus++;
 	cpuset_add(&cpus_running, ci);
 
 	mips64_ipi_init();
