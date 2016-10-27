@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.socppc,v 1.47 2016/10/24 18:26:17 deraadt Exp $
+#	$OpenBSD: Makefile.socppc,v 1.48 2016/10/27 20:44:20 natano Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -117,7 +117,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 clean::
-	rm -f eddep *bsd *bsd.gdb tags *.[dio] [a-z]*.s \
+	rm -f *bsd *bsd.gdb tags *.[dio] [a-z]*.s \
 	    [Ee]rrs linterrs assym.* ${DB_STRUCTINFO} param.c
 
 cleandir: clean
