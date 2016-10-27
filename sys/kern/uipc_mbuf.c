@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.236 2016/10/27 03:00:35 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.237 2016/10/27 03:29:55 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -878,64 +878,79 @@ struct mbuf *
 m_pullup(struct mbuf *n, int len)
 {
 	struct mbuf *m;
-	int count;
+	unsigned int adj;
+	caddr_t head, tail;
+	unsigned int space;
 
-	/*
-	 * If first mbuf has no cluster, and has room for len bytes
-	 * without shifting current data, pullup into it,
-	 * otherwise allocate a new mbuf to prepend to the chain.
-	 */
-	if ((n->m_flags & M_EXT) == 0 && n->m_next &&
-	    n->m_data + len < &n->m_dat[MLEN]) {
-		if (n->m_len >= len)
-			return (n);
+	/* if n is already contig then don't do any work */
+	if (len <= n->m_len)
+		return (n);
+
+	adj = (unsigned long)n->m_data & ALIGNBYTES;
+	head = (caddr_t)ALIGN(mtod(n, caddr_t) - M_LEADINGSPACE(n)) + adj;
+	tail = mtod(n, caddr_t) + n->m_len + M_TRAILINGSPACE(n);
+
+	if (head < tail && len <= tail - head) {
+		/* there's enough space in the first mbuf */
+
+		if (len > tail - mtod(n, caddr_t)) {
+			/* need to memmove to make space at the end */
+			memmove(head, mtod(n, caddr_t), n->m_len);
+			m->m_data = head;
+		}
+
+		len -= n->m_len;
 		m = n;
-		n = n->m_next;
-		len -= m->m_len;
-	} else if ((n->m_flags & M_EXT) != 0 && len > MHLEN && n->m_next &&
-	    n->m_data + len < &n->m_ext.ext_buf[n->m_ext.ext_size]) {
-		if (n->m_len >= len)
-			return (n);
-		m = n;
-		n = n->m_next;
-		len -= m->m_len;
+		n = m->m_next;
 	} else {
-		if (len > MAXMCLBYTES)
+		/* the first mbuf is too small so prepend one with space */
+		space = adj + len;
+
+		if (space > MAXMCLBYTES)
 			goto bad;
+
 		MGET(m, M_DONTWAIT, n->m_type);
 		if (m == NULL)
 			goto bad;
-		if (len > MHLEN) {
-			MCLGETI(m, M_DONTWAIT, NULL, len);
+		if (space > MHLEN) {
+			MCLGETI(m, M_DONTWAIT, NULL, space);
 			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
 				goto bad;
 			}
 		}
-		m->m_len = 0;
+
 		if (n->m_flags & M_PKTHDR)
 			M_MOVE_PKTHDR(m, n);
+
+		m->m_len = 0;
+		m->m_data += adj;
 	}
 
+	KASSERT(M_TRAILINGSPACE(m) >= len);
+
 	do {
-		count = min(len, n->m_len);
-		memcpy(mtod(m, caddr_t) + m->m_len, mtod(n, caddr_t),
-		    count);
-		len -= count;
-		m->m_len += count;
-		n->m_len -= count;
-		if (n->m_len)
-			n->m_data += count;
+		if (n == NULL) {
+			(void)m_free(m);
+			goto bad;
+		}
+
+		space = min(len, n->m_len);
+		memcpy(mtod(m, caddr_t) + m->m_len, mtod(n, caddr_t), space);
+		len -= space;
+		m->m_len += space;
+		n->m_len -= space;
+
+		if (n->m_len > 0)
+			n->m_data += space;
 		else
 			n = m_free(n);
-	} while (len > 0 && n);
-	if (len > 0) {
-		(void)m_free(m);
-		goto bad;
-	}
+	} while (len > 0);
+
 	m->m_next = n;
 
 	return (m);
+
 bad:
 	m_freem(n);
 	return (NULL);
