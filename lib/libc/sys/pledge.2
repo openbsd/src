@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.36 2016/09/13 17:02:12 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.37 2016/10/27 10:48:25 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2016 $
+.Dd $Mdocdate: October 27 2016 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -253,15 +253,16 @@ A number of system calls and sub-modes are allowed, which may
 create new files or directories in the filesystem:
 .Pp
 .Xr rename 2 ,
-.Xr rmdir 2 ,
 .Xr renameat 2 ,
 .Xr link 2 ,
 .Xr linkat 2 ,
 .Xr symlink 2 ,
+.Xr symlinkat 2 ,
 .Xr unlink 2 ,
 .Xr unlinkat 2 ,
 .Xr mkdir 2 ,
-.Xr mkdirat 2 .
+.Xr mkdirat 2 ,
+.Xr rmdir 2 .
 .It Va "dpath"
 A number of system calls are allowed to create special files:
 .Pp
