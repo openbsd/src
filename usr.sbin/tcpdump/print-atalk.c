@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.30 2015/11/15 20:35:36 mmcc Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.31 2016/10/28 12:54:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -127,6 +127,11 @@ atalk_print_llap(const u_char *bp, u_int length)
 	const struct atDDP *dp;
 	const struct atShortDDP *sdp;
 	u_short snet;
+
+	if (length < sizeof(*lp)) {
+		(void)printf(" [|llap %d]", length);
+		return;
+	}
 
 	lp = (struct LAP *)bp;
 	bp += sizeof(*lp);
