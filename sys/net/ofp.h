@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.2 2016/09/30 12:40:00 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.3 2016/10/28 15:41:32 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -95,7 +95,7 @@ struct ofp_hello_element_versionbitmap {
 
 /* Ports */
 #define OFP_PORT_MAX		0xffffff00	/* Maximum number of physical ports */
-#define	OFP_PORT_INPUT		0xfffffff8 	/* Send back to input port */
+#define	OFP_PORT_INPUT		0xfffffff8	/* Send back to input port */
 #define OFP_PORT_FLOWTABLE	0xfffffff9	/* Perform actions in flow table */
 #define OFP_PORT_NORMAL		0xfffffffa	/* Let switch decide */
 #define OFP_PORT_FLOOD		0xfffffffb	/* All non-block ports except input */
@@ -179,9 +179,9 @@ struct ofp_switch_features {
 
 /* Switch capabilities */
 #define OFP_SWCAP_FLOW_STATS		0x1	/* Flow statistics */
-#define OFP_SWCAP_TABLE_STATS  		0x2	/* Table statistics */
-#define OFP_SWCAP_PORT_STATS   		0x4	/* Port statistics */
-#define OFP_SWCAP_GROUP_STATS 		0x8	/* Group statistics */
+#define OFP_SWCAP_TABLE_STATS		0x2	/* Table statistics */
+#define OFP_SWCAP_PORT_STATS		0x4	/* Port statistics */
+#define OFP_SWCAP_GROUP_STATS		0x8	/* Group statistics */
 #define OFP_SWCAP_IP_REASM		0x20	/* Can reassemble IP frags */
 #define OFP_SWCAP_QUEUE_STATS		0x40	/* Queue statistics */
 #define OFP_SWCAP_ARP_MATCH_IP		0x80	/* Match IP addresses in ARP pkts */
@@ -314,15 +314,15 @@ struct ofp_action_mpls_ttl {
 struct ofp_action_push {
 	uint16_t	ap_type;
 	uint16_t	ap_len;
-	uint16_t 	ap_ethertype;
-	uint8_t		pad[2];
+	uint16_t	ap_ethertype;
+	uint8_t		ap_pad[2];
 } __packed;
 
 struct ofp_action_pop_mpls {
 	uint16_t	apm_type;
 	uint16_t	apm_len;
 	uint16_t	apm_ethertype;
-	uint8_t		pad[2];
+	uint8_t		apm_pad[2];
 } __packed;
 
 struct ofp_action_group {
@@ -342,6 +342,12 @@ struct ofp_action_set_field {
 	uint16_t	asf_type;
 	uint16_t	asf_len;
 	uint8_t		asf_field[4];
+} __packed;
+
+struct ofp_action_set_queue {
+	uint16_t	asq_type;
+	uint16_t	asq_len;
+	uint32_t	asq_queue_id;
 } __packed;
 
 /* Packet-Out Message */
