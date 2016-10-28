@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.12 2015/01/20 18:26:58 deraadt Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.13 2016/10/28 12:42:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -42,6 +42,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <vis.h>
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
@@ -182,7 +183,9 @@ print_state(struct pfsync_state *s, int opts)
 {
 	struct pfsync_state_peer *src, *dst;
 	struct pfsync_state_key *sk, *nk;
-	int min, sec, sidx, didx;
+	char ifname[IFNAMSIZ * 4 + 1];
+	int min, sec, sidx, didx, i;
+	char *cp = ifname;
 
 	if (s->direction == PF_OUT) {
 		src = &s->src;
@@ -199,7 +202,10 @@ print_state(struct pfsync_state *s, int opts)
 		if (s->proto == IPPROTO_ICMP || s->proto == IPPROTO_ICMPV6) 
 			sk->port[1] = nk->port[1];
 	}
-	printf("%s ", s->ifname);
+	/* Treat s->ifname as untrusted input. */
+	for (i = 0; i < IFNAMSIZ && s->ifname[i] != '\0'; i++)
+		cp = vis(cp, s->ifname[i], VIS_WHITE, 0);
+	printf("%s ", ifname);
 	printf("%s ", ipproto_string(s->proto));
 
 	if (nk->af != sk->af)
