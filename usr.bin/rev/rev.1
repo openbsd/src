@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rev.1,v 1.7 2009/08/16 09:41:08 sobrado Exp $
+.\"	$OpenBSD: rev.1,v 1.8 2016/10/28 07:28:27 schwarze Exp $
 .\"	$NetBSD: rev.1,v 1.3 1995/09/28 08:49:39 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)rev.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: October 28 2016 $
 .Dt REV 1
 .Os
 .Sh NAME
@@ -45,5 +45,15 @@ The
 utility copies the specified files to the standard output, reversing the
 order of characters in every line.
 If no files are specified, the standard input is read.
+.Sh ENVIRONMENT
+.Bl -tag -width LC_CTYPE
+.It Ev LC_CTYPE
+The character encoding
+.Xr locale 1 .
+It decides which byte sequences form characters.
+If unset or set to "C", "POSIX", or an unsupported value,
+the order of individual bytes is reversed.
+.El
 .Sh SEE ALSO
-.Xr cat 1
+.Xr cat 1 ,
+.Xr cut 1
