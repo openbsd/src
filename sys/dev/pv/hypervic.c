@@ -178,22 +178,52 @@ hv_attach_icdevs(struct hv_softc *sc)
 }
 
 static inline void
-hv_ic_negotiate(struct vmbus_icmsg_hdr *hdr)
+hv_ic_negotiate(struct vmbus_icmsg_hdr *hdr, uint32_t *rlen, uint32_t fwver,
+    uint32_t msgver)
 {
 	struct vmbus_icmsg_negotiate *msg;
+	uint16_t propmin, propmaj, chosenmaj, chosenmin;
+	int i;
 
 	msg = (struct vmbus_icmsg_negotiate *)hdr;
-	if (msg->ic_fwver_cnt >= 2 &&
-	    VMBUS_ICVER_MAJOR(msg->ic_ver[1]) == 3) {
-		msg->ic_ver[0] = VMBUS_IC_VERSION(3, 0);
-		msg->ic_ver[1] = VMBUS_IC_VERSION(3, 0);
-	} else {
-		msg->ic_ver[0] = VMBUS_IC_VERSION(1, 0);
-		msg->ic_ver[1] = VMBUS_IC_VERSION(1, 0);
+
+	chosenmaj = chosenmin = 0;
+	printf("\n");
+	for (i = 0; i < msg->ic_fwver_cnt; i++) {
+		propmaj = VMBUS_ICVER_MAJOR(msg->ic_ver[i]);
+		propmin = VMBUS_ICVER_MINOR(msg->ic_ver[i]);
+		if (propmaj > chosenmaj &&
+		    propmaj <= VMBUS_ICVER_MAJOR(fwver) &&
+		    propmin >= chosenmin &&
+		    propmin <= VMBUS_ICVER_MINOR(fwver)) {
+			chosenmaj = propmaj;
+			chosenmin = propmin;
+		}
 	}
+	fwver = VMBUS_IC_VERSION(chosenmaj, chosenmin);
+
+	chosenmaj = chosenmin = 0;
+	for (; i < msg->ic_fwver_cnt + msg->ic_msgver_cnt; i++) {
+		propmaj = VMBUS_ICVER_MAJOR(msg->ic_ver[i]);
+		propmin = VMBUS_ICVER_MINOR(msg->ic_ver[i]);
+		if (propmaj > chosenmaj &&
+		    propmaj <= VMBUS_ICVER_MAJOR(msgver) &&
+		    propmin >= chosenmin &&
+		    propmin <= VMBUS_ICVER_MINOR(msgver)) {
+			chosenmaj = propmaj;
+			chosenmin = propmin;
+		}
+	}
+	msgver = VMBUS_IC_VERSION(chosenmaj, chosenmin);
+
 	msg->ic_fwver_cnt = 1;
+	msg->ic_ver[0] = fwver;
 	msg->ic_msgver_cnt = 1;
-	hdr->ic_dsize = sizeof(*msg) + 2 * sizeof(uint32_t);
+	msg->ic_ver[1] = msgver;
+	hdr->ic_dsize = sizeof(*msg) + 2 * sizeof(uint32_t) -
+	    sizeof(struct vmbus_icmsg_hdr);
+	if (*rlen < sizeof(*msg) + 2 * sizeof(uint32_t))
+		*rlen = sizeof(*msg) + 2 * sizeof(uint32_t);
 }
 
 void
@@ -223,7 +253,8 @@ hv_heartbeat(void *arg)
 	hdr = (struct vmbus_icmsg_hdr *)dv->dv_buf;
 	switch (hdr->ic_type) {
 	case VMBUS_ICMSG_TYPE_NEGOTIATE:
-		hv_ic_negotiate(hdr);
+		hv_ic_negotiate(hdr, &rlen, VMBUS_IC_VERSION(3, 0),
+		    VMBUS_IC_VERSION(3, 0));
 		break;
 	case VMBUS_ICMSG_TYPE_HEARTBEAT:
 		msg = (struct vmbus_icmsg_heartbeat *)hdr;
@@ -289,7 +320,8 @@ hv_shutdown(void *arg)
 	hdr = (struct vmbus_icmsg_hdr *)dv->dv_buf;
 	switch (hdr->ic_type) {
 	case VMBUS_ICMSG_TYPE_NEGOTIATE:
-		hv_ic_negotiate(hdr);
+		hv_ic_negotiate(hdr, &rlen, VMBUS_IC_VERSION(3, 0),
+		    VMBUS_IC_VERSION(3, 0));
 		break;
 	case VMBUS_ICMSG_TYPE_SHUTDOWN:
 		msg = (struct vmbus_icmsg_shutdown *)hdr;
@@ -357,7 +389,8 @@ hv_timesync(void *arg)
 	hdr = (struct vmbus_icmsg_hdr *)dv->dv_buf;
 	switch (hdr->ic_type) {
 	case VMBUS_ICMSG_TYPE_NEGOTIATE:
-		hv_ic_negotiate(hdr);
+		hv_ic_negotiate(hdr, &rlen, VMBUS_IC_VERSION(3, 0),
+		    VMBUS_IC_VERSION(3, 0));
 		break;
 	case VMBUS_ICMSG_TYPE_TIMESYNC:
 		msg = (struct vmbus_icmsg_timesync *)hdr;
