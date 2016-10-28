@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.96 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.97 2016/10/28 10:14:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -29,7 +29,6 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -79,8 +78,6 @@ struct myx_dmamem {
 	caddr_t			 mxm_kva;
 };
 
-struct pool *myx_mcl_pool;
-
 struct myx_slot {
 	bus_dmamap_t		 ms_map;
 	struct mbuf		*ms_m;
@@ -95,7 +92,7 @@ struct myx_rx_ring {
 	u_int			 mrr_running;
 	u_int			 mrr_prod;
 	u_int			 mrr_cons;
-	struct mbuf		*(*mrr_mclget)(void);
+	u_int			 mrr_size;
 };
 
 enum myx_state {
@@ -210,9 +207,7 @@ void	 myx_rxeof(struct myx_softc *);
 void	 myx_txeof(struct myx_softc *, u_int32_t);
 
 int			myx_buf_fill(struct myx_softc *, struct myx_slot *,
-			    struct mbuf *(*)(void));
-struct mbuf *		myx_mcl_small(void);
-struct mbuf *		myx_mcl_big(void);
+			    u_int);
 
 int			myx_rx_init(struct myx_softc *, int, bus_size_t);
 int			myx_rx_fill(struct myx_softc *, struct myx_rx_ring *);
@@ -256,11 +251,11 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	sc->sc_rx_ring[MYX_RXSMALL].mrr_softc = sc;
-	sc->sc_rx_ring[MYX_RXSMALL].mrr_mclget = myx_mcl_small;
+	sc->sc_rx_ring[MYX_RXSMALL].mrr_size = MYX_RXSMALL_SIZE;
 	timeout_set(&sc->sc_rx_ring[MYX_RXSMALL].mrr_refill, myx_refill,
 	    &sc->sc_rx_ring[MYX_RXSMALL]);
 	sc->sc_rx_ring[MYX_RXBIG].mrr_softc = sc;
-	sc->sc_rx_ring[MYX_RXBIG].mrr_mclget = myx_mcl_big;
+	sc->sc_rx_ring[MYX_RXBIG].mrr_size = MYX_RXBIG_SIZE;
 	timeout_set(&sc->sc_rx_ring[MYX_RXBIG].mrr_refill, myx_refill,
 	    &sc->sc_rx_ring[MYX_RXBIG]);
 
@@ -290,22 +285,6 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	    pci_intr_string(pa->pa_pc, sc->sc_ih),
 	    part[0] == '\0' ? "(unknown)" : part,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
-
-	/* this is sort of racy */
-	if (myx_mcl_pool == NULL) {
-		extern struct kmem_pa_mode kp_dma_contig;
-
-		myx_mcl_pool = malloc(sizeof(*myx_mcl_pool), M_DEVBUF,
-		    M_WAITOK);
-		if (myx_mcl_pool == NULL) {
-			printf("%s: unable to allocate mcl pool\n",
-			    DEVNAME(sc));
-			goto unmap;
-		}
-		pool_init(myx_mcl_pool, MYX_RXBIG_SIZE, MYX_BOUNDARY, IPL_NET,
-		    0, "myxmcl", NULL);
-		pool_set_constraints(myx_mcl_pool, &kp_dma_contig);
-	}
 
 	if (myx_pcie_dc(sc, pa) != 0)
 		printf("%s: unable to configure PCI Express\n", DEVNAME(sc));
@@ -1772,7 +1751,7 @@ myx_rx_fill_slots(struct myx_softc *sc, struct myx_rx_ring *mrr, u_int slots)
 	u_int p, first, fills;
 
 	first = p = mrr->mrr_prod;
-	if (myx_buf_fill(sc, &mrr->mrr_slots[first], mrr->mrr_mclget) != 0)
+	if (myx_buf_fill(sc, &mrr->mrr_slots[first], mrr->mrr_size) != 0)
 		return (slots);
 
 	if (++p >= sc->sc_rx_ring_count)
@@ -1781,7 +1760,7 @@ myx_rx_fill_slots(struct myx_softc *sc, struct myx_rx_ring *mrr, u_int slots)
 	for (fills = 1; fills < slots; fills++) {
 		ms = &mrr->mrr_slots[p];
 
-		if (myx_buf_fill(sc, ms, mrr->mrr_mclget) != 0)
+		if (myx_buf_fill(sc, ms, mrr->mrr_size) != 0)
 			break;
 
 		rxd.rx_addr = htobe64(ms->ms_map->dm_segs[0].ds_addr);
@@ -1900,52 +1879,18 @@ myx_rx_free(struct myx_softc *sc, struct myx_rx_ring *mrr)
 	free(mrr->mrr_slots, M_DEVBUF, sizeof(*ms) * sc->sc_rx_ring_count);
 }
 
-struct mbuf *
-myx_mcl_small(void)
-{
-	struct mbuf *m;
-
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MYX_RXSMALL_SIZE);
-	if (m == NULL)
-		return (NULL);
-
-	m->m_len = m->m_pkthdr.len = MYX_RXSMALL_SIZE;
-
-	return (m);
-}
-
-struct mbuf *
-myx_mcl_big(void)
-{
-	struct mbuf *m;
-	void *mcl;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (NULL);
-
-	mcl = pool_get(myx_mcl_pool, PR_NOWAIT);
-	if (mcl == NULL) {
-		m_free(m);
-		return (NULL);
-	}
-
-	MEXTADD(m, mcl, MYX_RXBIG_SIZE, M_EXTWR, MEXTFREE_POOL, myx_mcl_pool);
-	m->m_len = m->m_pkthdr.len = MYX_RXBIG_SIZE;
-
-	return (m);
-}
-
 int
-myx_buf_fill(struct myx_softc *sc, struct myx_slot *ms,
-    struct mbuf *(*mclget)(void))
+myx_buf_fill(struct myx_softc *sc, struct myx_slot *ms, u_int size)
 {
 	struct mbuf *m;
 	int rv;
 
-	m = (*mclget)();
+
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, size);
 	if (m == NULL)
 		return (ENOMEM);
+
+	m->m_pkthdr.len = m->m_len = size;
 
 	rv = bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m, BUS_DMA_NOWAIT);
 	if (rv != 0) {
