@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.19 2016/10/28 16:06:52 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.20 2016/10/28 16:40:13 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1238,9 +1238,10 @@ swofp_flow_table_add(struct switch_softc *sc, uint16_t table_id)
 	if ((swft = swofp_flow_table_lookup(sc, table_id)) != NULL)
 		return (swft);
 
-	new = malloc(sizeof(*new), M_DEVBUF, M_WAITOK|M_ZERO);
-	new->swft_table_id = table_id;
+	if ((new = malloc(sizeof(*new), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
+		return (NULL);
 
+	new->swft_table_id = table_id;
 	TAILQ_FOREACH(swft, &ofs->swofs_table_list, swft_table_next) {
 		if (table_id < swft->swft_table_id)
 			break;
@@ -4662,8 +4663,10 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 		goto ofp_error;
 	}
 
-	if ((swft = swofp_flow_table_lookup(sc, ofm->fm_table_id)) == NULL)
-		swft = swofp_flow_table_add(sc, ofm->fm_table_id);
+	if ((swft = swofp_flow_table_add(sc, ofm->fm_table_id)) == NULL) {
+		error = OFP_ERRFLOWMOD_TABLE_ID;
+		goto ofp_error;
+	}
 
 	if ((old_swfe = swofp_flow_search_by_table(swft, om,
 	    ntohs(ofm->fm_priority)))) {
