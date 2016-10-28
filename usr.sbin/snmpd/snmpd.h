@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.70 2016/10/28 08:01:53 rzalamena Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.71 2016/10/28 09:07:08 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -87,6 +87,7 @@ enum imsg_type {
 	IMSG_CTL_NOTIFY,
 	IMSG_CTL_VERBOSE,
 	IMSG_CTL_RELOAD,
+	IMSG_CTL_PROCFD,
 	IMSG_ALERT
 };
 
@@ -146,7 +147,6 @@ struct privsep {
 	struct passwd		*ps_pw;
 
 	u_int			 ps_instances[PROC_MAX];
-	u_int			 ps_ninstances;
 	u_int			 ps_instance;
 	int			 ps_noaction;
 
@@ -169,14 +169,27 @@ struct privsep_proc {
 	enum privsep_procid	 p_id;
 	int			(*p_cb)(int, struct privsep_proc *,
 				    struct imsg *);
-	pid_t			(*p_init)(struct privsep *,
+	void			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
 	void			(*p_shutdown)(void);
 	const char		*p_chroot;
 	struct privsep		*p_ps;
-	void 			*p_env;
-	u_int			 p_instance;
+	struct passwd		*p_pw;
 };
+
+struct privsep_fd {
+	enum privsep_procid		 pf_procid;
+	unsigned int			 pf_instance;
+};
+
+#define PROC_PARENT_SOCK_FILENO	3
+#define PROC_MAX_INSTANCES	32
+
+#if DEBUG
+#define DPRINTF		log_debug
+#else
+#define DPRINTF(x...)	do {} while(0)
+#endif
 
 /*
  * kroute
@@ -633,7 +646,7 @@ struct kif_arp	*karp_first(u_short);
 struct kif_arp	*karp_getaddr(struct sockaddr *, u_short, int);
 
 /* snmpe.c */
-pid_t		 snmpe(struct privsep *, struct privsep_proc *);
+void		 snmpe(struct privsep *, struct privsep_proc *);
 void		 snmpe_shutdown(void);
 void		 snmpe_dispatchmsg(struct snmp_message *);
 
@@ -730,11 +743,14 @@ void		 usm_finalize_digest(struct snmp_message *, char *, ssize_t);
 void		 usm_make_report(struct snmp_message *);
 
 /* proc.c */
-void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
+enum privsep_procid
+	    proc_getid(struct privsep_proc *, unsigned int, const char *);
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int,
+	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
-void	 proc_listen(struct privsep *, struct privsep_proc *, size_t);
+void	 proc_connect(struct privsep *);
 void	 proc_dispatch(int, short event, void *);
-pid_t	 proc_run(struct privsep *, struct privsep_proc *,
+void	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, u_int,
 	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 imsg_event_add(struct imsgev *);
@@ -757,9 +773,10 @@ struct imsgbuf *
 	 proc_ibuf(struct privsep *, enum privsep_procid, int);
 struct imsgev *
 	 proc_iev(struct privsep *, enum privsep_procid, int);
+int	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
 
 /* traphandler.c */
-pid_t	 traphandler(struct privsep *, struct privsep_proc *);
+void	 traphandler(struct privsep *, struct privsep_proc *);
 void	 traphandler_shutdown(void);
 int	 snmpd_dispatch_traphandler(int, struct privsep_proc *, struct imsg *);
 void	 trapcmd_free(struct trapcmd *);

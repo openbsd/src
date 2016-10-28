@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.43 2016/10/28 08:01:53 rzalamena Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.44 2016/10/28 09:07:08 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -58,7 +58,7 @@ static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	snmpe_dispatch_parent }
 };
 
-pid_t
+void
 snmpe(struct privsep *ps, struct privsep_proc *p)
 {
 	struct snmpd	*env = ps->ps_env;
@@ -78,7 +78,7 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 	if ((env->sc_sock = snmpe_bind(&env->sc_address)) == -1)
 		fatalx("snmpe: failed to bind SNMP UDP socket");
 
-	return (proc_run(ps, p, procs, nitems(procs), snmpe_init, NULL));
+	proc_run(ps, p, procs, nitems(procs), snmpe_init, NULL);
 }
 
 /* ARGSUSED */

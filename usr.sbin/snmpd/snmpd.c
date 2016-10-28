@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.33 2016/08/16 18:41:57 tedu Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.34 2016/10/28 09:07:08 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -144,13 +144,17 @@ main(int argc, char *argv[])
 	int		 noaction = 0;
 	const char	*conffile = CONF_FILE;
 	struct privsep	*ps;
+	int		 proc_id = PROC_PARENT, proc_instance = 0;
+	int		 argc0 = argc;
+	char		**argv0 = argv;
+	const char	*errp, *title = NULL;
 
 	smi_init();
 
 	/* log to stderr until daemonized */
 	log_init(1, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "dD:nNf:v")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nNf:I:P:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -168,6 +172,18 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			conffile = optarg;
+			break;
+		case 'I':
+			proc_instance = strtonum(optarg, 0,
+			    PROC_MAX_INSTANCES, &errp);
+			if (errp)
+				fatalx("invalid process instance");
+			break;
+		case 'P':
+			title = optarg;
+			proc_id = proc_getid(procs, nitems(procs), title);
+			if (proc_id == PROC_MAX)
+				fatalx("invalid process name");
 			break;
 		case 'v':
 			verbose++;
@@ -189,6 +205,9 @@ main(int argc, char *argv[])
 	ps = &env->sc_ps;
 	ps->ps_env = env;
 	snmpd_env = env;
+	ps->ps_instance = proc_instance;
+	if (title)
+		ps->ps_title[proc_id] = title;
 
 	if (noaction) {
 		fprintf(stderr, "configuration ok\n");
@@ -204,17 +223,15 @@ main(int argc, char *argv[])
 	log_init(debug, LOG_DAEMON);
 	log_verbose(verbose);
 
-	if (!debug && daemon(0, 0) == -1)
-		err(1, "failed to daemonize");
-
 	gettimeofday(&env->sc_starttime, NULL);
 	env->sc_engine_boots = 0;
 
 	pf_init();
 	snmpd_generate_engineid(env);
 
-	ps->ps_ninstances = 1;
-	proc_init(ps, procs, nitems(procs));
+	proc_init(ps, procs, nitems(procs), argc0, argv0, proc_id);
+	if (!debug && daemon(0, 0) == -1)
+		err(1, "failed to daemonize");
 
 	log_procinit("parent");
 	log_info("startup");
@@ -235,7 +252,7 @@ main(int argc, char *argv[])
 	signal_add(&ps->ps_evsigpipe, NULL);
 	signal_add(&ps->ps_evsigusr1, NULL);
 
-	proc_listen(ps, procs, nitems(procs));
+	proc_connect(ps);
 
 	event_dispatch();
 

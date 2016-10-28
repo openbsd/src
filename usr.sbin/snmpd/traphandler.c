@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.5 2016/08/16 18:41:57 tedu Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.6 2016/10/28 09:07:08 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -72,7 +72,7 @@ static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	traphandler_dispatch_parent }
 };
 
-pid_t
+void
 traphandler(struct privsep *ps, struct privsep_proc *p)
 {
 	struct snmpd		*env = ps->ps_env;
@@ -81,8 +81,7 @@ traphandler(struct privsep *ps, struct privsep_proc *p)
 	    (trapsock = traphandler_bind(&env->sc_address)) == -1)
 		fatal("could not create trap listener socket");
 
-	return (proc_run(ps, p, procs, nitems(procs), traphandler_init,
-	    NULL));
+	proc_run(ps, p, procs, nitems(procs), traphandler_init, NULL);
 }
 
 void
