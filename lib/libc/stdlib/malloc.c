@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.207 2016/10/22 14:27:19 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.208 2016/10/28 17:03:22 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -176,7 +176,6 @@ struct malloc_readonly {
 	int	malloc_mt;		/* multi-threaded mode? */
 	int	malloc_freenow;		/* Free quickly - disable chunk rnd */
 	int	malloc_freeunmap;	/* mprotect free pages PROT_NONE? */
-	int	malloc_hint;		/* call madvice on free pages?  */
 	int	malloc_junk;		/* junk fill? */
 	int	malloc_move;		/* move allocations to end of page? */
 	int	malloc_realloc;		/* always realloc? */
@@ -374,8 +373,6 @@ unmap(struct dir_info *d, void *p, size_t sz)
 				    MALLOC_MAXCHUNK : sz;
 				memset(p, SOME_FREEJUNK, amt);
 			}
-			if (mopts.malloc_hint)
-				madvise(p, sz, MADV_FREE);
 			if (mopts.malloc_freeunmap)
 				mprotect(p, sz, PROT_NONE);
 			r->p = p;
@@ -447,8 +444,6 @@ map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
 				d->free_regions_size -= psz;
 				if (mopts.malloc_freeunmap)
 					mprotect(p, sz, PROT_READ | PROT_WRITE);
-				if (mopts.malloc_hint)
-					madvise(p, sz, MADV_NORMAL);
 				if (zero_fill)
 					memset(p, 0, sz);
 				else if (mopts.malloc_junk == 2 &&
@@ -465,8 +460,6 @@ map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
 		r->p = (char *)r->p + (psz << MALLOC_PAGESHIFT);
 		if (mopts.malloc_freeunmap)
 			mprotect(p, sz, PROT_READ | PROT_WRITE);
-		if (mopts.malloc_hint)
-			madvise(p, sz, MADV_NORMAL);
 		r->size -= psz;
 		d->free_regions_size -= psz;
 		if (zero_fill)
@@ -531,12 +524,6 @@ omalloc_parseopt(char opt)
 		break;
 	case 'G':
 		mopts.malloc_guard = MALLOC_PAGESIZE;
-		break;
-	case 'h':
-		mopts.malloc_hint = 0;
-		break;
-	case 'H':
-		mopts.malloc_hint = 1;
 		break;
 	case 'j':
 		if (mopts.malloc_junk > 0)
