@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.10 2016/10/28 09:01:49 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.11 2016/10/28 09:04:03 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -85,8 +85,6 @@ int	 switch_stop(struct ifnet *, int);
 struct mbuf
 	*switch_port_ingress(struct switch_softc *, struct ifnet *,
 	    struct mbuf *);
-void	 switch_forward_flooder(struct switch_softc *,
-	    struct switch_flow_classify *, struct mbuf *);
 void	 switch_port_egress(struct switch_softc *, struct switch_fwdp_queue *,
 	    struct mbuf *);
 int	 switch_ifenqueue(struct switch_softc *, struct ifnet *,
@@ -722,25 +720,6 @@ switch_port_ingress(struct switch_softc *sc, struct ifnet *src_if,
 #endif /* NPF */
 
 	return (m);
-}
-
-void
-switch_forward_flooder(struct switch_softc *sc,
-    struct switch_flow_classify *swfcl, struct mbuf *m)
-{
-	struct switch_port		 *swpo;
-	struct switch_fwdp_queue	 fwdp_q;
-	uint32_t			 src_port_no;
-
-	src_port_no = swfcl->swfcl_in_port;
-	TAILQ_INIT(&fwdp_q);
-	TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
-		if (swpo->swpo_port_no == src_port_no)
-			continue;
-		TAILQ_INSERT_HEAD(&fwdp_q, swpo, swpo_fwdp_next);
-	}
-
-	switch_port_egress(sc, &fwdp_q, m);
 }
 
 void
