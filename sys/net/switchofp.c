@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.17 2016/10/27 09:48:01 jsg Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.18 2016/10/28 09:01:49 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -5084,7 +5084,7 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	pout = mtod(m, struct ofp_packet_out *);
 
 	al_start = offsetof(struct ofp_packet_out, pout_actions);
-	if (pout->pout_buffer_id != OFP_CONTROLLER_MAXLEN_NO_BUFFER) {
+	if (pout->pout_buffer_id == OFP_PKTOUT_NO_BUFFER) {
 		/*
 		 * It's not necessary to deep copy at here because it's done
 		 * in m_dup_pkt().
@@ -5102,6 +5102,17 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 		}
 
 		mc = mcn;
+	} else {
+		/* TODO We don't do buffering yet. */
+		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_REQUEST,
+		    OFP_ERRREQ_BUFFER_UNKNOWN);
+		return (0);
+	}
+
+	mc = switch_flow_classifier(mc, pout->pout_in_port, &swfcl);
+	if (mc == NULL) {
+		m_freem(m);
+		return (0);
 	}
 
 	TAILQ_INIT(&swpld.swpld_fwdp_q);

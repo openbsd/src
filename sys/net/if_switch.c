@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.9 2016/10/08 23:36:10 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.10 2016/10/28 09:01:49 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -123,9 +123,6 @@ struct mbuf
 	    struct switch_flow_classify *);
 struct mbuf
 	*switch_flow_classifier_tunnel(struct mbuf *, int *,
-	    struct switch_flow_classify *);
-struct mbuf
-	*switch_flow_classifier(struct mbuf *, uint32_t,
 	    struct switch_flow_classify *);
 void	 switch_flow_classifier_dump(struct switch_softc *,
 	    struct switch_flow_classify *);

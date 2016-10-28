@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.h,v 1.4 2016/10/07 08:18:22 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.h,v 1.5 2016/10/28 09:01:49 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -216,6 +216,9 @@ void	 switch_port_egress(struct switch_softc *, struct switch_fwdp_queue *,
 int	 switch_swfcl_dup(struct switch_flow_classify *,
 	    struct switch_flow_classify *);
 void	 switch_swfcl_free(struct switch_flow_classify *);
+struct mbuf
+	*switch_flow_classifier(struct mbuf *, uint32_t,
+	    struct switch_flow_classify *);
 
 /* switchctl.c */
 void	 switch_dev_destroy(struct switch_softc *);
