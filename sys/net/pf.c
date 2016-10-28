@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.995 2016/10/27 21:41:20 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.996 2016/10/28 07:54:19 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3841,12 +3841,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 #endif	/* NPFSYNC > 0 */
 
 	if (r->rule_flag & PFRULE_ONCE) {
-		if ((a != NULL) && TAILQ_EMPTY(a->ruleset->rules.active.ptr)) {
-			a->rule_flag |= PFRULE_EXPIRED;
-			a->exptime = time_second;
-			SLIST_INSERT_HEAD(&pf_rule_gcl, a, gcle);
-		}
-
 		r->rule_flag |= PFRULE_EXPIRED;
 		r->exptime = time_second;
 		SLIST_INSERT_HEAD(&pf_rule_gcl, r, gcle);
