@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.18 2016/10/28 09:01:49 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.19 2016/10/28 16:06:52 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -388,9 +388,9 @@ for ((curr) = (head); (caddr_t)curr < ((caddr_t)head + (len));		\
 /*
  * Get instruction offset in ofp_flow_mod
  */
-#define OFP_FLOW_MOD_MSG_INSTRUCTION_OFFSET(ofm)				\
-(offsetof(struct ofp_flow_mod, fm_match) + ntohs((ofm)->fm_match.om_length) +	\
-    (((0x8 - (ntohs((ofm)->fm_match.om_length) % 0x8)) & 0x7)))
+#define OFP_FLOW_MOD_MSG_INSTRUCTION_OFFSET(ofm)		\
+	(offsetof(struct ofp_flow_mod, fm_match) +		\
+	    OFP_ALIGN(ntohs((ofm)->fm_match.om_length)))
 
 /*
  * Instructions "FOREACH" in ofp_flow_mod. You can get header using
