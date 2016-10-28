@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2015/12/05 06:42:18 mmcc Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2016/10/28 08:01:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -38,8 +38,6 @@
 
 #include "snmpd.h"
 #include "mib.h"
-
-extern struct snmpd	*env;
 
 void
 trap_init(void)
@@ -158,7 +156,7 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 	char			 ostr[SNMP_MAX_OID_STRLEN];
 	struct oid		 oa, ob;
 
-	if (TAILQ_EMPTY(&env->sc_trapreceivers))
+	if (TAILQ_EMPTY(&snmpd_env->sc_trapreceivers))
 		return (0);
 
 	smi_scalar_oidlen(&uptime);
@@ -187,7 +185,7 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 	bzero(&ber, sizeof(ber));
 	ber.fd = -1;
 
-	TAILQ_FOREACH(tr, &env->sc_trapreceivers, entry) {
+	TAILQ_FOREACH(tr, &snmpd_env->sc_trapreceivers, entry) {
 		if (tr->sa_oid != NULL && tr->sa_oid->bo_n) {
 			/* The trap receiver may want only a specified MIB */
 			bcopy(&tr->sa_oid->bo_id, &ob.o_oid,
@@ -203,7 +201,7 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 		}
 
 		cmn = tr->sa_community != NULL ?
-		    tr->sa_community : env->sc_trcommunity;
+		    tr->sa_community : snmpd_env->sc_trcommunity;
 
 		/* SNMP header */
 		root = ber_add_sequence(NULL);
@@ -219,7 +217,7 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 		if (ber_get_writebuf(&ber, (void *)&ptr) > 0 &&
 		    sendto(s, ptr, len, 0, (struct sockaddr *)&tr->ss,
 		    tr->ss.ss_len) != -1) {
-			env->sc_stats.snmp_outpkts++;
+			snmpd_env->sc_stats.snmp_outpkts++;
 			ret++;
 		}
 

@@ -49,8 +49,6 @@
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
-extern struct snmpd *env;
-
 RB_HEAD(oidtree, oid);
 RB_PROTOTYPE(oidtree, oid, o_element, smi_oid_cmp);
 struct oidtree smi_oidtree;
@@ -66,9 +64,9 @@ smi_getticks(void)
 	u_long		 ticks;
 
 	gettimeofday(&now, NULL);
-	if (timercmp(&now, &env->sc_starttime, <=))
+	if (timercmp(&now, &snmpd_env->sc_starttime, <=))
 		return (0);
-	timersub(&now, &env->sc_starttime, &run);
+	timersub(&now, &snmpd_env->sc_starttime, &run);
 	ticks = run.tv_sec * 100;
 	if (run.tv_usec)
 		ticks += run.tv_usec / 10000;
@@ -108,7 +106,7 @@ smi_oid2string(struct ber_oid *o, char *buf, size_t len, size_t skip)
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
 	key.o_flags |= OID_KEY;		/* do not match wildcards */
 
-	if (env->sc_flags & SNMPD_F_NONAMES)
+	if (snmpd_env->sc_flags & SNMPD_F_NONAMES)
 		lookup = 0;
 
 	for (i = 0; i < o->bo_n; i++) {

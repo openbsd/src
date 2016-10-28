@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.80 2015/11/17 12:30:23 gerhard Exp $	*/
+/*	$OpenBSD: mib.c,v 1.81 2016/10/28 08:01:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -57,8 +57,6 @@
 
 #include "snmpd.h"
 #include "mib.h"
-
-extern struct snmpd	*env;
 
 /*
  * Defined in SNMPv2-MIB.txt (RFC 3418)
@@ -255,7 +253,7 @@ mib_sysor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_getsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	struct snmp_stats	*stats = &env->sc_stats;
+	struct snmp_stats	*stats = &snmpd_env->sc_stats;
 	long long		 i;
 	struct statsmap {
 		u_int8_t	 m_id;
@@ -316,7 +314,7 @@ mib_getsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_setsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	struct snmp_stats	*stats = &env->sc_stats;
+	struct snmp_stats	*stats = &snmpd_env->sc_stats;
 	long long		 i;
 
 	if (ber_get_integer(*elm, &i) == -1)
@@ -354,11 +352,11 @@ mib_engine(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	switch (oid->o_oid[OIDIDX_snmpEngine]) {
 	case 1:
-		*elm = ber_add_nstring(*elm, env->sc_engineid,
-		    env->sc_engineid_len);
+		*elm = ber_add_nstring(*elm, snmpd_env->sc_engineid,
+		    snmpd_env->sc_engineid_len);
 		break;
 	case 2:
-		*elm = ber_add_integer(*elm, env->sc_engine_boots);
+		*elm = ber_add_integer(*elm, snmpd_env->sc_engine_boots);
 		break;
 	case 3:
 		*elm = ber_add_integer(*elm, snmpd_engine_time());
@@ -375,7 +373,7 @@ mib_engine(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_usmstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	struct snmp_stats	*stats = &env->sc_stats;
+	struct snmp_stats	*stats = &snmpd_env->sc_stats;
 	long long		 i;
 	struct statsmap {
 		u_int8_t	 m_id;
@@ -697,7 +695,7 @@ mib_hrdevice(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_hrDeviceEntry];
-	if (idx > (u_int)env->sc_ncpu)
+	if (idx > (u_int)snmpd_env->sc_ncpu)
 		return (1);
 
 	/* Tables need to prepend the OID on their own */
@@ -748,7 +746,7 @@ mib_hrprocessor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_hrDeviceEntry];
-	if (idx > (u_int)env->sc_ncpu)
+	if (idx > (u_int)snmpd_env->sc_ncpu)
 		return (1);
 	else if (idx < 1)
 		idx = 1;
@@ -766,9 +764,9 @@ mib_hrprocessor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		 * The percentage of time that the system was not
 		 * idle during the last minute.
 		 */
-		if (env->sc_cpustates == NULL)
+		if (snmpd_env->sc_cpustates == NULL)
 			return (-1);
-		cptime2 = env->sc_cpustates + (CPUSTATES * (idx - 1));
+		cptime2 = snmpd_env->sc_cpustates + (CPUSTATES * (idx - 1));
 		val = 100 -
 		    (cptime2[CP_IDLE] > 1000 ? 1000 : (cptime2[CP_IDLE] / 10));
 		ber = ber_add_integer(ber, val);

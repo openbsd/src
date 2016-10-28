@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.6 2016/09/26 14:00:05 rzalamena Exp $	*/
+/*	$OpenBSD: timer.c,v 1.7 2016/10/28 08:01:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -42,8 +42,6 @@
 #include "snmpd.h"
 #include "mib.h"
 
-extern struct snmpd	*env;
-
 void	 timer_cpu(int, short, void *);
 int	 percentages(int, int64_t *, int64_t *, int64_t *, int64_t *);
 
@@ -62,9 +60,9 @@ timer_cpu(int fd, short event, void *arg)
 	int64_t		*cptime2;
 
 	len = CPUSTATES * sizeof(int64_t);
-	for (n = 0; n < env->sc_ncpu; n++) {
+	for (n = 0; n < snmpd_env->sc_ncpu; n++) {
 		mib[2] = n;
-		cptime2 = env->sc_cpustates + (CPUSTATES * n);
+		cptime2 = snmpd_env->sc_cpustates + (CPUSTATES * n);
 		if (sysctl(mib, 3, cp_time[n], &len, NULL, 0) == -1)
 			continue;
 		(void)percentages(CPUSTATES, cptime2, cp_time[n],
@@ -85,18 +83,19 @@ timer_init(void)
 	int	 mib[] = { CTL_HW, HW_NCPU }, i;
 	size_t	 len;
 
-	len = sizeof(env->sc_ncpu);
-	if (sysctl(mib, 2, &env->sc_ncpu, &len, NULL, 0) == -1)
+	len = sizeof(snmpd_env->sc_ncpu);
+	if (sysctl(mib, 2, &snmpd_env->sc_ncpu, &len, NULL, 0) == -1)
 		fatal("sysctl");
 
-	env->sc_cpustates = calloc(env->sc_ncpu, CPUSTATES * sizeof(int64_t));
-	cp_time = calloc(env->sc_ncpu, sizeof(int64_t *));
-	cp_old = calloc(env->sc_ncpu, sizeof(int64_t *));
-	cp_diff = calloc(env->sc_ncpu, sizeof(int64_t *));
-	if (env->sc_cpustates == NULL ||
+	snmpd_env->sc_cpustates = calloc(snmpd_env->sc_ncpu,
+	    CPUSTATES * sizeof(int64_t));
+	cp_time = calloc(snmpd_env->sc_ncpu, sizeof(int64_t *));
+	cp_old = calloc(snmpd_env->sc_ncpu, sizeof(int64_t *));
+	cp_diff = calloc(snmpd_env->sc_ncpu, sizeof(int64_t *));
+	if (snmpd_env->sc_cpustates == NULL ||
 	    cp_time == NULL || cp_old == NULL || cp_diff == NULL)
 		fatal("calloc");
-	for (i = 0; i < env->sc_ncpu; i++) {
+	for (i = 0; i < snmpd_env->sc_ncpu; i++) {
 		cp_time[i] = calloc(CPUSTATES, sizeof(int64_t));
 		cp_old[i] = calloc(CPUSTATES, sizeof(int64_t));
 		cp_diff[i] = calloc(CPUSTATES, sizeof(int64_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.10 2016/10/03 12:19:59 dlg Exp $	*/
+/*	$OpenBSD: usm.c,v 1.11 2016/10/28 08:01:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -41,8 +41,6 @@
 
 #include "snmpd.h"
 #include "mib.h"
-
-extern struct snmpd	*env;
 
 SLIST_HEAD(, usmuser)	usmuserlist;
 
@@ -210,7 +208,7 @@ fail:
 struct ber_element *
 usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 {
-	struct snmp_stats	*stats = &env->sc_stats;
+	struct snmp_stats	*stats = &snmpd_env->sc_stats;
 	off_t			 offs, offs2;
 	char			*usmparams;
 	size_t			 len;
@@ -263,8 +261,8 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		goto done;
 	}
 
-	if (enginelen != env->sc_engineid_len ||
-	    memcmp(engineid, env->sc_engineid, enginelen) != 0) {
+	if (enginelen != snmpd_env->sc_engineid_len ||
+	    memcmp(engineid, snmpd_env->sc_engineid, enginelen) != 0) {
 		*errp = "unknown engine id";
 		msg->sm_usmerr = OIDVAL_usmErrEngineId;
 		stats->snmp_usmnosuchengine++;
@@ -273,7 +271,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 
 	if (engine_boots != 0LL && engine_time != 0LL) {
 		now = snmpd_engine_time();
-		if (engine_boots != env->sc_engine_boots ||
+		if (engine_boots != snmpd_env->sc_engine_boots ||
 		    engine_time < (long long)(now - SNMP_MAX_TIMEWINDOW) ||
 		    engine_time > (long long)(now + SNMP_MAX_TIMEWINDOW)) {
 			*errp = "out of time window";
@@ -372,11 +370,12 @@ usm_encode(struct snmp_message *msg, struct ber_element *e)
 	} else
 		saltlen = 0;
 
-	msg->sm_engine_boots = (u_int32_t)env->sc_engine_boots;
+	msg->sm_engine_boots = (u_int32_t)snmpd_env->sc_engine_boots;
 	msg->sm_engine_time = (u_int32_t)snmpd_engine_time();
 	if ((a = ber_printf_elements(usm, "xdds",
-	    env->sc_engineid, env->sc_engineid_len, msg->sm_engine_boots,
-	    msg->sm_engine_time, msg->sm_username)) == NULL)
+	    snmpd_env->sc_engineid, snmpd_env->sc_engineid_len,
+	    msg->sm_engine_boots, msg->sm_engine_time,
+	    msg->sm_username)) == NULL)
 		goto done;
 
 	if ((a = ber_add_nstring(a, digest, digestlen)) == NULL)
@@ -644,14 +643,15 @@ usm_passwd2key(const EVP_MD *md, char *passwd, int *maxlen)
 
 	/* Localize the key */
 #ifdef DEBUG
-	assert(env->sc_engineid_len <= SNMPD_MAXENGINEIDLEN);
+	assert(snmpd_env->sc_engineid_len <= SNMPD_MAXENGINEIDLEN);
 #endif
 	memcpy(pwbuf, keybuf, dlen);
-	memcpy(pwbuf + dlen, env->sc_engineid, env->sc_engineid_len);
-	memcpy(pwbuf + dlen + env->sc_engineid_len, keybuf, dlen);
+	memcpy(pwbuf + dlen, snmpd_env->sc_engineid,
+	    snmpd_env->sc_engineid_len);
+	memcpy(pwbuf + dlen + snmpd_env->sc_engineid_len, keybuf, dlen);
 
 	EVP_DigestInit(&ctx, md);
-	EVP_DigestUpdate(&ctx, pwbuf, 2 * dlen + env->sc_engineid_len);
+	EVP_DigestUpdate(&ctx, pwbuf, 2 * dlen + snmpd_env->sc_engineid_len);
 	EVP_DigestFinal(&ctx, keybuf, &dlen);
 	EVP_MD_CTX_cleanup(&ctx);
 

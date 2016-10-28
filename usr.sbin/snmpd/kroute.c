@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.33 2016/09/03 15:45:02 jca Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.34 2016/10/28 08:01:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -43,8 +43,6 @@
 #include <event.h>
 
 #include "snmpd.h"
-
-extern struct snmpd	*env;
 
 struct ktable		**krt;
 u_int			  krt_size;
@@ -173,8 +171,9 @@ kr_init(void)
 	    &opt, sizeof(opt)) == -1)
 		log_warn("%s: SO_USELOOPBACK", __func__);	/* not fatal */
 
-	if (env->sc_rtfilter && setsockopt(kr_state.ks_fd, PF_ROUTE,
-	    ROUTE_MSGFILTER, &env->sc_rtfilter, sizeof(env->sc_rtfilter)) == -1)
+	if (snmpd_env->sc_rtfilter && setsockopt(kr_state.ks_fd, PF_ROUTE,
+	    ROUTE_MSGFILTER, &snmpd_env->sc_rtfilter,
+	    sizeof(snmpd_env->sc_rtfilter)) == -1)
 		log_warn("%s: ROUTE_MSGFILTER", __func__);
 
 	/* grow receive buffer, don't wanna miss messages */

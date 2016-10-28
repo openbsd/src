@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.42 2016/08/16 18:41:57 tedu Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.43 2016/10/28 08:01:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -52,8 +52,6 @@ void	 snmpe_recvmsg(int fd, short, void *);
 int	 snmpe_encode(struct snmp_message *);
 void	 snmp_msgfree(struct snmp_message *);
 
-struct snmpd	*env = NULL;
-
 struct imsgev	*iev_parent;
 
 static struct privsep_proc procs[] = {
@@ -63,12 +61,11 @@ static struct privsep_proc procs[] = {
 pid_t
 snmpe(struct privsep *ps, struct privsep_proc *p)
 {
+	struct snmpd	*env = ps->ps_env;
 #ifdef DEBUG
 	char		 buf[BUFSIZ];
 	struct oid	*oid;
 #endif
-
-	env = ps->ps_env;
 
 #ifdef DEBUG
 	for (oid = NULL; (oid = smi_foreach(oid, 0)) != NULL;) {
@@ -88,6 +85,8 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 void
 snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
+	struct snmpd	*env = ps->ps_env;
+
 	kr_init();
 	trap_init();
 	timer_init();
@@ -149,6 +148,7 @@ snmpe_bind(struct address *addr)
 int
 snmpe_parse(struct snmp_message *msg)
 {
+	struct snmpd		*env = snmpd_env;
 	struct snmp_stats	*stats = &env->sc_stats;
 	struct ber_element	*a;
 	long long		 ver, req;
@@ -331,7 +331,7 @@ snmpe_parse(struct snmp_message *msg)
 int
 snmpe_parsevarbinds(struct snmp_message *msg)
 {
-	struct snmp_stats	*stats = &env->sc_stats;
+	struct snmp_stats	*stats = &snmpd_env->sc_stats;
 	char			 buf[BUFSIZ];
 	struct ber_oid		 o;
 	int			 ret = 0;
@@ -398,7 +398,7 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 					goto varfail;
 
 				case SNMP_C_SETREQ:
-					if (env->sc_readonly == 0) {
+					if (snmpd_env->sc_readonly == 0) {
 						ret = mps_setreq(msg,
 						    msg->sm_b, &o);
 						if (ret == 0)
@@ -452,6 +452,7 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 void
 snmpe_recvmsg(int fd, short sig, void *arg)
 {
+	struct snmpd		*env = arg;
 	struct snmp_stats	*stats = &env->sc_stats;
 	ssize_t			 len;
 	struct snmp_message	*msg;
@@ -508,13 +509,13 @@ snmpe_dispatchmsg(struct snmp_message *msg)
 
 	/* not dispatched to subagent; respond directly */
 	msg->sm_context = SNMP_C_GETRESP;
-	snmpe_response(env->sc_sock, msg);
+	snmpe_response(snmpd_env->sc_sock, msg);
 }
 
 void
 snmpe_response(int fd, struct snmp_message *msg)
 {
-	struct snmp_stats	*stats = &env->sc_stats;
+	struct snmp_stats	*stats = &snmpd_env->sc_stats;
 	u_int8_t		*ptr = NULL;
 	ssize_t			 len;
 
@@ -596,8 +597,9 @@ snmpe_encode(struct snmp_message *msg)
 
 	pdu = epdu = ber_add_sequence(NULL);
 	if (msg->sm_version == SNMP_V3) {
-		if ((epdu = ber_printf_elements(epdu, "xs{", env->sc_engineid,
-		    env->sc_engineid_len, msg->sm_ctxname)) == NULL) {
+		if ((epdu = ber_printf_elements(epdu, "xs{",
+		    snmpd_env->sc_engineid, snmpd_env->sc_engineid_len,
+		    msg->sm_ctxname)) == NULL) {
 			ber_free_elements(pdu);
 			return -1;
 		}
