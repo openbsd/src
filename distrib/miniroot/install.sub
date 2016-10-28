@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.926 2016/10/23 08:42:58 rpe Exp $
+#	$OpenBSD: install.sub,v 1.927 2016/10/28 17:07:34 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1329,8 +1329,8 @@ unpriv2() {
 # user will know to try again.
 install_files() {
 	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS \
-		_tmpfs _tmpsrc _cfile _fsrc _unver _t _issue _srclocal
-	local _unpriv=unpriv
+		_tmpfs _tmpsrc _cfile=/tmp/SHA256 _fsrc _unver _t _issue
+	local _srclocal=false _unpriv=unpriv
 
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
@@ -1404,8 +1404,9 @@ install_files() {
 			_issue="Cannot determine prefetch area" && break
 		fi
 
-		_cfile=$_tmpsrc/SHA256
-		_srclocal=false
+		# Cleanup from previous runs.
+		rm -f $_cfile $_cfile.sig
+
 		_t=Get/Verify
 		[[ $_src == file://* ]] && _srclocal=true _t='Verifying ' _unpriv=
 
@@ -1419,18 +1420,18 @@ install_files() {
 			_issue="Signature check of SHA256.sig failed" && break
 
 		for _f in $_get_sets; do
-			rm -f "$_tmpsrc/h" "$_tmpsrc/fail"
+			rm -f /tmp/h /tmp/fail
 
 			# Fetch set and create checksum by pipe through sha256.
 			# Create a flag file in case ftp failed. Sets from net
 			# are written to prefetch area, the output of local sets
 			# is discarded.
-			( $_unpriv ftp -D "$_t" -Vmo - "$_src/$_f" || >"$_tmpsrc/fail" ) |
-			( $_srclocal && unpriv2 sha256 >"$_tmpsrc/h" ||
-				unpriv2 -f "$_tmpsrc/h" sha256 -ph "$_tmpsrc/h" >"$_tmpsrc/$_f" )
+			( $_unpriv ftp -D "$_t" -Vmo - "$_src/$_f" || >/tmp/fail ) |
+			( $_srclocal && unpriv2 sha256 >/tmp/h ||
+				unpriv2 -f /tmp/h sha256 -ph /tmp/h >"$_tmpsrc/$_f" )
 
 			# Handle failed transfer.
-			if [[ -f $_tmpsrc/fail ]]; then
+			if [[ -f /tmp/fail ]]; then
 				rm -f "$_tmpsrc/$_f"
 				if ! ask_yn "Fetching of $_f failed. Continue anyway?"; then
 					[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
@@ -1441,7 +1442,7 @@ install_files() {
 			fi
 
 			# Verify sets by comparing its checksum with SHA256.
-			if fgrep -qx "SHA256 ($_f) = $(<$_tmpsrc/h)" "$_cfile"; then
+			if fgrep -qx "SHA256 ($_f) = $(</tmp/h)" "$_cfile"; then
 				_unver=$(rmel $_f $_unver)
 			else
 				if ! ask_yn "Checksum test for $_f failed. Continue anyway?"; then
