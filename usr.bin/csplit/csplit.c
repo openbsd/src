@@ -1,4 +1,4 @@
-/*	$OpenBSD: csplit.c,v 1.8 2015/10/11 17:43:03 semarie Exp $	*/
+/*	$OpenBSD: csplit.c,v 1.9 2016/10/28 07:22:59 schwarze Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
-#include <locale.h>
 #include <regex.h>
 #include <signal.h>
 #include <stdint.h>
@@ -67,7 +66,7 @@ char	*get_line(void);
 void	 handlesig(int);
 FILE	*newfile(void);
 void	 toomuch(FILE *, long);
-void	 usage(void);
+static void __dead usage(void);
 
 /*
  * Command line options
@@ -101,8 +100,6 @@ main(int argc, char *argv[])
 	char *ep, *p;
 	FILE *ofp;
 
-	setlocale(LC_ALL, "");
-
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 
@@ -128,7 +125,6 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			/*NOTREACHED*/
 		}
 	}
 
@@ -212,7 +208,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-void
+static void __dead
 usage(void)
 {
 	extern char *__progname;

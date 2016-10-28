@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.15 2016/08/14 18:34:48 guenther Exp $      */
+/*      $OpenBSD: cmp.c,v 1.16 2016/10/28 07:22:59 schwarze Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -39,13 +39,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <locale.h>
 
 #include "extern.h"
 
 int	lflag, sflag;
 
-static void usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
@@ -54,8 +53,6 @@ main(int argc, char *argv[])
 	off_t skip1, skip2;
 	int ch, fd1, fd2, special;
 	char *file1, *file2;
-
-	setlocale(LC_ALL, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(ERR_EXIT, "pledge");
@@ -68,7 +65,6 @@ main(int argc, char *argv[])
 		case 's':		/* silent run */
 			sflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -90,14 +86,14 @@ main(int argc, char *argv[])
 		file1 = "stdin";
 	} else if ((fd1 = open(file1, O_RDONLY, 0)) < 0) {
 		if (sflag)
-			exit(ERR_EXIT);
+			return ERR_EXIT;
 		else
 			err(ERR_EXIT, "%s", file1);
 	}
 	if (strcmp(file2 = argv[1], "-") == 0) {
 		if (special) {
 			if (sflag)
-				exit(ERR_EXIT);
+				return ERR_EXIT;
 			else
 				errx(ERR_EXIT,
 					"standard input may only be specified once");
@@ -107,7 +103,7 @@ main(int argc, char *argv[])
 		file2 = "stdin";
 	} else if ((fd2 = open(file2, O_RDONLY, 0)) < 0) {
 		if (sflag)
-			exit(ERR_EXIT);
+			return ERR_EXIT;
 		else
 			err(ERR_EXIT, "%s", file2);
 	}
@@ -121,7 +117,7 @@ main(int argc, char *argv[])
 	if (!special) {
 		if (fstat(fd1, &sb1)) {
 			if (sflag)
-				exit(ERR_EXIT);
+				return ERR_EXIT;
 			else
 				err(ERR_EXIT, "%s", file1);
 		}
@@ -130,7 +126,7 @@ main(int argc, char *argv[])
 		else {
 			if (fstat(fd2, &sb2)) {
 				if (sflag)
-					exit(ERR_EXIT);
+					return ERR_EXIT;
 				else
 					err(ERR_EXIT, "%s", file2);
 			}
@@ -147,7 +143,7 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-static void
+static void __dead
 usage(void)
 {
 

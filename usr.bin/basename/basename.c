@@ -1,4 +1,4 @@
-/*	$OpenBSD: basename.c,v 1.13 2015/12/24 17:11:47 mmcc Exp $	*/
+/*	$OpenBSD: basename.c,v 1.14 2016/10/28 07:22:59 schwarze Exp $	*/
 /*	$NetBSD: basename.c,v 1.9 1995/09/02 05:29:46 jtc Exp $	*/
 
 /*-
@@ -32,21 +32,18 @@
 
 #include <err.h>
 #include <libgen.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-void usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
 {
 	int ch;
 	char *p;
-
-	setlocale(LC_ALL, "");
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
@@ -65,7 +62,7 @@ main(int argc, char *argv[])
 
 	if (**argv == '\0') {
 		(void)puts("");
-		exit(0);
+		return 0;
 	}
 	p = basename(*argv);
 	if (p == NULL)
@@ -93,7 +90,8 @@ main(int argc, char *argv[])
 }
 
 extern char *__progname;
-void
+
+static void __dead
 usage(void)
 {
 

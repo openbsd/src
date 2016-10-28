@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.25 2016/01/14 22:02:13 millert Exp $	*/
+/*	$OpenBSD: which.c,v 1.26 2016/10/28 07:22:59 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,13 +21,12 @@
 
 #include <err.h>
 #include <errno.h>
-#include <locale.h>
+#include <limits.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 
 #define PROG_WHICH	1
 #define PROG_WHEREIS	2
@@ -35,7 +34,7 @@
 extern char *__progname;
 
 int findprog(char *, char *, int, int);
-__dead void usage(void);
+static void __dead usage(void);
 
 /*
  * which(1) -- find an executable(s) in the user's path
@@ -53,8 +52,6 @@ main(int argc, char *argv[])
 	char *path;
 	size_t n;
 	int ch, allmatches = 0, notfound = 0, progmode = PROG_WHICH;
-
-	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "a")) != -1)
 		switch (ch) {
@@ -91,7 +88,7 @@ main(int argc, char *argv[])
 		if (findprog(argv[n], path, progmode, allmatches) == 0)
 			notfound++;
 
-	exit((notfound == 0) ? 0 : ((notfound == argc) ? 2 : 1));
+	return ((notfound == 0) ? 0 : ((notfound == argc) ? 2 : 1));
 }
 
 int
@@ -150,7 +147,7 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 	return (rval);
 }
 
-__dead void
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-a] name ...\n", __progname);

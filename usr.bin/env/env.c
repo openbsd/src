@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.16 2015/10/10 21:19:14 deraadt Exp $	*/
+/*	$OpenBSD: env.c,v 1.17 2016/10/28 07:22:59 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -31,13 +31,12 @@
 
 #include <err.h>
 #include <errno.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-__dead void usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
@@ -46,8 +45,6 @@ main(int argc, char *argv[])
 	extern int optind;
 	char **ep, *p;
 	int ch;
-
-	setlocale(LC_ALL, "");
 
 	if (pledge("stdio exec", NULL) == -1)
 		err(1, "pledge");
@@ -86,10 +83,10 @@ main(int argc, char *argv[])
 	for (ep = environ; *ep; ep++)
 		(void)printf("%s\n", *ep);
 
-	exit(0);
+	return 0;
 }
 
-void
+static void __dead
 usage(void)
 {
 	extern char *__progname;

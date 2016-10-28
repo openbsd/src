@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.18 2015/11/17 17:29:27 jca Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.19 2016/10/28 07:22:59 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,16 +40,15 @@
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
 
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <locale.h>
 #include <unistd.h>
-#include <err.h>
-#include <errno.h>
 
-static void usage(void);
+static void __dead usage(void);
 static void list_var(int);
 static int compilation_spec_valid(const char *);
 
@@ -409,8 +408,6 @@ main(int argc, char *argv[])
 	size_t slen;
 	char * sval;
 
-	setlocale(LC_ALL, "");
-
 	while ((ch = getopt(argc, argv, "lLv:")) != -1) {
 		switch (ch) {
 		case 'l':	/* nonstandard: list system variables */
@@ -530,11 +527,11 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	exit(ferror(stdout));
+	return ferror(stdout);
 }
 
 
-static void
+static void __dead
 usage(void)
 {
 	extern char *__progname;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirname.c,v 1.15 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.16 2016/10/28 07:22:59 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -18,20 +18,17 @@
 
 #include <err.h>
 #include <libgen.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-void usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
 {
 	int ch;
 	char *dir;
-
-	setlocale(LC_ALL, "");
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
@@ -51,12 +48,12 @@ main(int argc, char *argv[])
 	if ((dir = dirname(argv[0])) == NULL)
 		err(1, "%s", argv[0]);
 	puts(dir);
-	exit(0);
+	return 0;
 }
 
 extern char *__progname;
 
-void
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s pathname\n", __progname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tee.c,v 1.10 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: tee.c,v 1.11 2016/10/28 07:22:59 schwarze Exp $	*/
 /*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
 
 /*
@@ -32,15 +32,15 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <signal.h>
+
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
-#include <err.h>
+#include <unistd.h>
 
 struct list {
 	struct list *next;
@@ -72,8 +72,6 @@ main(int argc, char *argv[])
 	int append, ch, exitval;
 	char buf[8192];
 
-	setlocale(LC_ALL, "");
-
 	if (pledge("stdio wpath cpath", NULL) == -1)
 		err(1, "pledge");
 
@@ -86,10 +84,9 @@ main(int argc, char *argv[])
 		case 'i':
 			(void)signal(SIGINT, SIG_IGN);
 			break;
-		case '?':
 		default:
 			(void)fprintf(stderr, "usage: tee [-ai] [file ...]\n");
-			exit(1);
+			return 1;
 		}
 	}
 	argv += optind;
@@ -137,5 +134,5 @@ main(int argc, char *argv[])
 		}
 	}
 
-	exit(exitval);
+	return exitval;
 }
