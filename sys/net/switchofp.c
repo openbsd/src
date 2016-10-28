@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.20 2016/10/28 16:40:13 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.21 2016/10/28 17:00:58 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -194,6 +194,8 @@ int	 swofp_validate_buckets(struct switch_softc *, struct mbuf *, uint8_t);
 /*
  * Flow entry
  */
+int	 swofp_flow_entry_put_instructions(struct mbuf *,
+	    struct swofp_flow_entry *);
 void	 swofp_flow_entry_instruction_free(struct swofp_flow_entry *);
 void	 swofp_flow_entry_free(struct swofp_flow_entry **);
 void	 swofp_flow_entry_add(struct switch_softc *, struct swofp_flow_table *,
@@ -4566,7 +4568,7 @@ swofp_send_flow_removed(struct switch_softc *sc, struct swofp_flow_entry *swfe,
  * OpenFlow protocol FLOW MOD message handlers
  */
 int
-swofp_flow_entry_put_instructions(struct mbuf **m,
+swofp_flow_entry_put_instructions(struct mbuf *m,
     struct swofp_flow_entry *swfe)
 {
 	struct ofp_flow_mod	*ofm;
@@ -4574,7 +4576,7 @@ swofp_flow_entry_put_instructions(struct mbuf **m,
 	caddr_t			 inst;
 	int			 start, len, off, error;
 
-	ofm = mtod((*m), struct ofp_flow_mod *);
+	ofm = mtod(m, struct ofp_flow_mod *);
 
 	/*
 	 * Clear instructions from flow entry. It's necessary to only modify
@@ -4586,7 +4588,7 @@ swofp_flow_entry_put_instructions(struct mbuf **m,
 	start = OFP_FLOW_MOD_MSG_INSTRUCTION_OFFSET(ofm);
 	len = ntohs(ofm->fm_oh.oh_length) - start;
 	for (off = start; off < start + len; off += ntohs(oi->i_len)) {
-		oi = (struct ofp_instruction *)(mtod(*m, caddr_t) + off);
+		oi = (struct ofp_instruction *)(mtod(m, caddr_t) + off);
 
 		if ((error = swofp_validate_flow_instruction(oi)))
 			goto failed;
@@ -4708,7 +4710,7 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	if (ntohs(om->om_length) == sizeof(*om) && swfe->swfe_priority == 0)
 		swfe->swfe_tablemiss = 1;
 
-	if ((error = swofp_flow_entry_put_instructions(&m, swfe)))
+	if ((error = swofp_flow_entry_put_instructions(m, swfe)))
 		goto ofp_error_free_flow;
 
 	if (old_swfe) {
@@ -4780,7 +4782,7 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 		    ntohl(ofm->fm_out_group)))
 			continue;
 
-		if ((error = swofp_flow_entry_put_instructions(&m, swfe))) {
+		if ((error = swofp_flow_entry_put_instructions(m, swfe))) {
 			/*
 			 * If error occurs in swofp_flow_entry_put_instructions,
 			 * the flow entry might be half-way modified. So the
