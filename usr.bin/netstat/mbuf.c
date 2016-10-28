@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.37 2016/04/04 16:26:00 sthen Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.38 2016/10/28 05:46:14 dlg Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -52,7 +52,14 @@ struct	mbstat mbstat;
 struct kinfo_pool mbpool, mclpools[MCLPOOLS];
 int	mclp;
 char	*mclnames[] = {
-	"mcl2k", "mcl4k", "mcl8k", "mcl9k", "mcl12k", "mcl16k", "mcl64k"
+	"mcl2k",
+	"mcl2k2",
+	"mcl4k",
+	"mcl8k",
+	"mcl9k",
+	"mcl12k",
+	"mcl16k",
+	"mcl64k"
 };
 char	**mclnamep = mclnames;
 
