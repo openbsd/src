@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.21 2015/12/05 13:14:40 claudio Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.22 2016/10/28 20:49:32 natano Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -68,7 +68,7 @@ struct imsgname imsgunknown = {
 void snmpctl_trap(int, struct parse_result *);
 
 struct imsgbuf	 ibuf;
-struct snmpd	*env;
+struct snmpd	*snmpd_env;
 struct oid	 mib_tree[] = MIB_TREE;
 
 __dead void
@@ -92,14 +92,14 @@ main(int argc, char *argv[])
 	int			 ch;
 	const char		*sock = SNMPD_SOCKET;
 
-	if ((env = calloc(1, sizeof(struct snmpd))) == NULL)
+	if ((snmpd_env = calloc(1, sizeof(struct snmpd))) == NULL)
 		err(1, "calloc");
-	gettimeofday(&env->sc_starttime, NULL);
+	gettimeofday(&snmpd_env->sc_starttime, NULL);
 
 	while ((ch = getopt(argc, argv, "ns:")) != -1) {
 		switch (ch) {
 		case 'n':
-			env->sc_flags |= SNMPD_F_NONAMES;
+			snmpd_env->sc_flags |= SNMPD_F_NONAMES;
 			break;
 		case 's':
 			sock = optarg;
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 		goto connect;
 	}
 
-	free(env);
+	free(snmpd_env);
 	return (0);
 
  connect:
