@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.9 2016/10/17 06:29:08 otto Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.10 2016/10/28 17:03:47 otto Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2016 $
+.Dd $Mdocdate: October 28 2016 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -73,10 +73,6 @@ option for security).
 Enable guard pages.
 Each page size or larger allocation is followed by a guard page that will
 cause a segmentation fault upon any access.
-.It Cm H
-.Dq Hint .
-Pass a hint to the kernel about pages we don't use.
-If the machine is paging a lot this may help a bit.
 .It Cm J
 .Dq More junking .
 Increase the junk level by one if it is smaller than 2.
