@@ -115,6 +115,7 @@ int vm_get_info(struct vm_info_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
 int vm_intr_pending(struct vm_intr_params *);
 int vm_rwregs(struct vm_rwregs_params *, int);
+int vm_find(uint32_t, struct vm **);
 int vcpu_readregs_vmx(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_readregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_writeregs_vmx(struct vcpu *, uint64_t, int, struct vcpu_reg_state *);
@@ -474,20 +475,18 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 {
 	struct vm *vm;
 	struct vcpu *vcpu;
+	int error;
 
 	/* Find the desired VM */
 	rw_enter_read(&vmm_softc->vm_lock);
-	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == vrp->vrp_vm_id)
-			break;
-	}
+	error = vm_find(vrp->vrp_vm_id, &vm);
 	rw_exit_read(&vmm_softc->vm_lock);
 
 	/* Not found? exit. */
-	if (vm == NULL) {
+	if (error != 0) {
 		DPRINTF("vm_resetcpu: vm id %u not found\n",
 		    vrp->vrp_vm_id);
-		return (ENOENT);
+		return (error);
 	}
 
 	rw_enter_read(&vm->vm_vcpu_lock);
@@ -544,18 +543,16 @@ vm_intr_pending(struct vm_intr_params *vip)
 {
 	struct vm *vm;
 	struct vcpu *vcpu;
+	int error;
 	
 	/* Find the desired VM */
 	rw_enter_read(&vmm_softc->vm_lock);
-	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == vip->vip_vm_id)
-			break;
-	}
+	error = vm_find(vip->vip_vm_id, &vm);
 
 	/* Not found? exit. */
-	if (vm == NULL) {
+	if (error != 0) {
 		rw_exit_read(&vmm_softc->vm_lock);
-		return (ENOENT);
+		return (error);
 	}
 
 	rw_enter_read(&vm->vm_vcpu_lock);
@@ -614,18 +611,16 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 	struct vm *vm;
 	struct vcpu *vcpu;
 	struct vcpu_reg_state *vrs = &vrwp->vrwp_regs;
+	int error;
 
 	/* Find the desired VM */
 	rw_enter_read(&vmm_softc->vm_lock);
-	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == vrwp->vrwp_vm_id)
-			break;
-	}
+	error = vm_find(vrwp->vrwp_vm_id, &vm);
 
 	/* Not found? exit. */
-	if (vm == NULL) {
+	if (error != 0) {
 		rw_exit_read(&vmm_softc->vm_lock);
-		return (ENOENT);
+		return (error);
 	}
 
 	rw_enter_read(&vm->vm_vcpu_lock);
@@ -651,6 +646,48 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 		    vcpu_writeregs_svm(vcpu, vrwp->vrwp_mask, vrs);
 	else
 		panic("unknown vmm mode\n");
+}
+
+/*
+ * vm_find
+ *
+ * Function to find an existing VM by its identifier.
+ * Must be called under the global vm_lock.
+ *
+ * Parameters:
+ *  id: The VM identifier.
+ *  *res: A pointer to the VM or NULL if not found
+ *
+ * Return values:
+ *  0: if successful
+ *  ENOENT: if the VM defined by 'id' cannot be found
+ *  EPERM: if the VM cannot be accessed by the current process
+ */
+int
+vm_find(uint32_t id, struct vm **res)
+{
+	struct proc *p = curproc;
+	struct vm *vm;
+
+	*res = NULL;
+	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
+		if (vm->vm_id == id) {
+			/* 
+			 * In the pledged VM process, only allow to find
+			 * the VM that is running in the current process.
+			 * The managing vmm parent process can lookup all
+			 * all VMs and is indicated by PLEDGE_PROC.
+			 */
+			if (((p->p_p->ps_pledge &
+			    (PLEDGE_VMM|PLEDGE_PROC)) == PLEDGE_VMM) &&
+			    (vm->vm_creator_pid != p->p_p->ps_pid))
+				return (pledge_fail(p, EPERM, PLEDGE_VMM));
+			*res = vm;
+			return (0);
+		}
+	}
+
+	return (ENOENT);
 }
 
 /*
@@ -2633,17 +2670,15 @@ vm_terminate(struct vm_terminate_params *vtp)
 	struct vm *vm;
 	struct vcpu *vcpu;
 	u_int old, next;
+	int error;
 
 	/*
 	 * Find desired VM
 	 */
 	rw_enter_read(&vmm_softc->vm_lock);
-	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == vtp->vtp_vm_id)
-			break;
-	}
+	error = vm_find(vtp->vtp_vm_id, &vm);
 
-	if (vm != NULL) {
+	if (error == 0) {
 		rw_enter_read(&vm->vm_vcpu_lock);
 		SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
 			do {
@@ -2661,8 +2696,8 @@ vm_terminate(struct vm_terminate_params *vtp)
 	}
 	rw_exit_read(&vmm_softc->vm_lock);
 
-	if (vm == NULL)
-		return (ENOENT);
+	if (error != 0)
+		return (error);
 
 	/* XXX possible race here two threads terminating the same vm? */
 	rw_enter_write(&vmm_softc->vm_lock);
@@ -2684,25 +2719,21 @@ vm_run(struct vm_run_params *vrp)
 {
 	struct vm *vm;
 	struct vcpu *vcpu;
-	int ret = 0;
+	int ret = 0, error;
 	u_int old, next;
 
 	/*
 	 * Find desired VM
 	 */
 	rw_enter_read(&vmm_softc->vm_lock);
-
-	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == vrp->vrp_vm_id)
-			break;
-	}
+	error = vm_find(vrp->vrp_vm_id, &vm);
 
 	/*
 	 * Attempt to locate the requested VCPU. If found, attempt to
 	 * to transition from VCPU_STATE_STOPPED -> VCPU_STATE_RUNNING.
 	 * Failure to make the transition indicates the VCPU is busy.
 	 */
-	if (vm != NULL) {
+	if (error == 0) {
 		rw_enter_read(&vm->vm_vcpu_lock);
 		SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
 			if (vcpu->vc_id == vrp->vrp_vcpu_id)
@@ -2725,8 +2756,8 @@ vm_run(struct vm_run_params *vrp)
 	}
 	rw_exit_read(&vmm_softc->vm_lock);
 
-	if (vm == NULL)
-		ret = ENOENT;
+	if (error != 0)
+		ret = error;
 
 	/* Bail if errors detected in the previous steps */
 	if (ret)
