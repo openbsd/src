@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.927 2016/10/28 17:07:34 rpe Exp $
+#	$OpenBSD: install.sub,v 1.928 2016/10/29 18:36:12 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1332,6 +1332,9 @@ install_files() {
 		_tmpfs _tmpsrc _cfile=/tmp/SHA256 _fsrc _unver _t _issue
 	local _srclocal=false _unpriv=unpriv
 
+	# Fetch sets from local sources (disk, cdrom, nfs) as root.
+	[[ $_src == file://* ]] && _srclocal=true _unpriv=
+
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
 	#
@@ -1408,7 +1411,7 @@ install_files() {
 		rm -f $_cfile $_cfile.sig
 
 		_t=Get/Verify
-		[[ $_src == file://* ]] && _srclocal=true _t='Verifying ' _unpriv=
+		$_srclocal && _t='Verifying '
 
 		# Fetch signature file.
 		! $_unpriv ftp -D "$_t" -Vmo - "$_src/SHA256.sig" >"$_cfile.sig" &&
@@ -1464,7 +1467,7 @@ install_files() {
 
 	for _f in $_get_sets; do
 		_fsrc="$_src/$_f"
-		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f" _unpriv=
+		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
 		case $_fsrc in
 		*.tgz)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt
 			if [[ $_f == ?(x)base*.tgz && $MODE == install ]]; then
