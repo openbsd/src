@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.31 2016/10/17 16:26:20 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.32 2016/10/29 14:56:05 edd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -120,12 +120,13 @@ struct vmd_switch {
 	char			*sw_group;
 	unsigned int		 sw_flags;
 	struct viflist		 sw_ifs;
+	int			 sw_running;
 	TAILQ_ENTRY(vmd_switch)	 sw_entry;
 };
 TAILQ_HEAD(switchlist, vmd_switch);
 
 struct vmd_vm {
-	struct vm_create_params	 vm_params;
+	struct vmop_create_params vm_params;
 	pid_t			 vm_pid;
 	uint32_t		 vm_vmid;
 	int			 vm_kernel;
@@ -134,6 +135,7 @@ struct vmd_vm {
 	char			*vm_ttyname;
 	int			 vm_tty;
 	uint32_t		 vm_peerid;
+	int			 vm_running;
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
 TAILQ_HEAD(vmlist, vmd_vm);
@@ -189,8 +191,9 @@ int	 config_init(struct vmd *);
 void	 config_purge(struct vmd *, unsigned int);
 int	 config_setreset(struct vmd *, unsigned int);
 int	 config_getreset(struct vmd *, struct imsg *);
-int	 config_getvm(struct privsep *, struct vmop_create_params *,
-	    int, uint32_t);
+int	 config_registervm(struct privsep *, struct vmop_create_params *,
+	    struct vmd_vm **);
+int	 config_getvm(struct privsep *, struct vmd_vm *, int, uint32_t);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
 

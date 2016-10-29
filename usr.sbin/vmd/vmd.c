@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.36 2016/10/17 16:26:20 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.37 2016/10/29 14:56:05 edd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -77,10 +77,17 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		res = config_getvm(ps, &vmc, -1, imsg->hdr.peerid);
+		res = config_registervm(ps, &vmc, &vm);
 		if (res == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		} else {
+			res = config_getvm(ps, vm, -1, imsg->hdr.peerid);
+			if (res == -1) {
+				res = errno;
+				cmd = IMSG_VMDOP_START_VM_RESPONSE;
+				vm_remove(vm);
+			}
 		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
@@ -93,7 +100,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 				break;
 			}
-			id = vm->vm_params.vcp_id;
+			id = vm->vm_params.vmc_params.vcp_id;
 		}
 		memset(&vtp, 0, sizeof(vtp));
 		vtp.vtp_vm_id = id;
@@ -160,7 +167,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL)
 			fatalx("%s: invalid vm response", __func__);
 		vm->vm_pid = vmr.vmr_pid;
-		vcp = &vm->vm_params;
+		vcp = &vm->vm_params.vmc_params;
 		vcp->vcp_id = vmr.vmr_id;
 
 		/*
@@ -419,6 +426,10 @@ main(int argc, char **argv)
 int
 vmd_configure(void)
 {
+	struct vmd_vm		*vm;
+	struct vmd_switch	*vsw;
+	int		 	 res, ret = 0;
+
 	/*
 	 * pledge in the parent process:
 	 * stdio - for malloc and basic I/O including events.
@@ -442,12 +453,38 @@ vmd_configure(void)
 		exit(0);
 	}
 
-	return (0);
+	TAILQ_FOREACH(vsw, env->vmd_switches, sw_entry) {
+		if (vsw->sw_running)
+			continue;
+		if (vm_priv_brconfig(&env->vmd_ps, vsw) == -1) {
+			log_warn("%s: failed to create switch %s",
+			    __func__, vsw->sw_name);
+			switch_remove(vsw);
+		}
+	}
+
+	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+		res = config_getvm(&env->vmd_ps, vm, -1, -1);
+		if (res == -1) {
+			log_warn("%s: failed to create vm %s",
+			    __func__,
+			    vm->vm_params.vmc_params.vcp_name);
+			ret = -1;
+			vm_remove(vm);
+			goto fail;
+		}
+	}
+ fail:
+	return (ret);
 }
 
 void
 vmd_reload(unsigned int reset, const char *filename)
 {
+	struct vmd_vm		*vm;
+	struct vmd_switch	*vsw;
+	int		 	 res;
+
 	/* Switch back to the default config file */
 	if (filename == NULL || *filename == '\0')
 		filename = env->vmd_conffile;
@@ -463,6 +500,32 @@ vmd_reload(unsigned int reset, const char *filename)
 		if (parse_config(filename) == -1) {
 			log_debug("%s: failed to load config file %s",
 			    __func__, filename);
+		}
+
+		TAILQ_FOREACH(vsw, env->vmd_switches, sw_entry) {
+			if (vsw->sw_running)
+				continue;
+			if (vm_priv_brconfig(&env->vmd_ps, vsw) == -1) {
+				log_warn("%s: failed to create switch %s",
+				    __func__, vsw->sw_name);
+				switch_remove(vsw);
+			}
+		}
+
+		TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+			if (vm->vm_running == 0) {
+				res = config_getvm(&env->vmd_ps, vm, -1, -1);
+				if (res == -1) {
+					log_warn("%s: failed to create vm %s",
+					    __func__,
+					    vm->vm_params.vmc_params.vcp_name);
+					vm_remove(vm);
+				}
+			} else {
+				log_debug("%s: not creating vm \"%s\": "
+				    "(running)", __func__,
+				    vm->vm_params.vmc_params.vcp_name);
+			}
 		}
 	}
 }
@@ -496,7 +559,7 @@ vm_getbyid(uint32_t id)
 	struct vmd_vm	*vm;
 
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
-		if (vm->vm_params.vcp_id == id)
+		if (vm->vm_params.vmc_params.vcp_id == id)
 			return (vm);
 	}
 
@@ -511,7 +574,7 @@ vm_getbyname(const char *name)
 	if (name == NULL)
 		return (NULL);
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
-		if (strcmp(vm->vm_params.vcp_name, name) == 0)
+		if (strcmp(vm->vm_params.vmc_params.vcp_name, name) == 0)
 			return (vm);
 	}
 

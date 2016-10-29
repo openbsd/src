@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.16 2016/10/15 14:02:11 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.17 2016/10/29 14:56:05 edd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -120,26 +120,20 @@ config_getreset(struct vmd *env, struct imsg *imsg)
 }
 
 int
-config_getvm(struct privsep *ps, struct vmop_create_params *vmc,
-    int kernel_fd, uint32_t peerid)
+config_registervm(struct privsep *ps, struct vmop_create_params *vmc,
+    struct vmd_vm **ret_vm)
 {
 	struct vmd		*env = ps->ps_env;
 	struct vmd_vm		*vm = NULL;
-	struct vmd_if		*vif;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
 	unsigned int		 i;
-	int			 fd, ttys_fd;
-	int			 kernfd = -1, *diskfds = NULL, *tapfds = NULL;
-	int			 saved_errno = 0;
-	char			 ptyname[VM_TTYNAME_MAX];
-	char			 ifname[IF_NAMESIZE], *s;
-	char			 path[PATH_MAX];
-	unsigned int		 unit;
 
 	errno = 0;
+	*ret_vm = NULL;
 
-	if (vm_getbyname(vcp->vcp_name) != NULL) {
-		saved_errno = errno = EALREADY;
+	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL) {
+		*ret_vm = vm;
+		errno = EALREADY;
 		goto fail;
 	}
 
@@ -159,7 +153,7 @@ config_getvm(struct privsep *ps, struct vmop_create_params *vmc,
 	if ((vm = calloc(1, sizeof(*vm))) == NULL)
 		goto fail;
 
-	memcpy(&vm->vm_params, vcp, sizeof(vm->vm_params));
+	memcpy(&vm->vm_params, vmc, sizeof(vm->vm_params));
 	vm->vm_pid = -1;
 
 	for (i = 0; i < vcp->vcp_ndisks; i++)
@@ -173,6 +167,35 @@ config_getvm(struct privsep *ps, struct vmop_create_params *vmc,
 		fatalx("too many vms");
 
 	TAILQ_INSERT_TAIL(env->vmd_vms, vm, vm_entry);
+	env->vmd_nvm++;
+	*ret_vm = vm;
+	return (0);
+fail:
+	if (errno == 0)
+		errno = EINVAL;
+	return (-1);
+}
+
+int
+config_getvm(struct privsep *ps, struct vmd_vm *vm,
+    int kernel_fd, uint32_t peerid)
+{
+	struct vmd_if		*vif;
+	struct vmop_create_params *vmc = &vm->vm_params;
+	struct vm_create_params	*vcp = &vmc->vmc_params;
+	unsigned int		 i;
+	int			 fd, ttys_fd;
+	int			 kernfd = -1, *diskfds = NULL, *tapfds = NULL;
+	int			 saved_errno = 0;
+	char			 ptyname[VM_TTYNAME_MAX];
+	char			 ifname[IF_NAMESIZE], *s;
+	char			 path[PATH_MAX];
+	unsigned int		 unit;
+
+	errno = 0;
+
+	if (vm->vm_running)
+		goto fail;
 
 	switch (privsep_process) {
 	case PROC_VMM:
@@ -321,7 +344,7 @@ config_getvm(struct privsep *ps, struct vmop_create_params *vmc,
 	free(diskfds);
 	free(tapfds);
 
-	env->vmd_nvm++;
+	vm->vm_running = 1;
 	return (0);
 
  fail:
@@ -360,7 +383,7 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
 
-	if (n >= vm->vm_params.vcp_ndisks ||
+	if (n >= vm->vm_params.vmc_params.vcp_ndisks ||
 	    vm->vm_disks[n] != -1 || imsg->fd == -1) {
 		log_debug("invalid disk id");
 		errno = EINVAL;
@@ -385,7 +408,7 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
-	if (n >= vm->vm_params.vcp_nnics ||
+	if (n >= vm->vm_params.vmc_params.vcp_nnics ||
 	    vm->vm_ifs[n].vif_fd != -1 || imsg->fd == -1) {
 		log_debug("invalid interface id");
 		goto fail;

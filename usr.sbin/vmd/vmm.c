@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.52 2016/10/26 05:26:36 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.53 2016/10/29 14:56:05 edd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -191,10 +191,17 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		res = config_getvm(ps, &vmc, imsg->fd, imsg->hdr.peerid);
+		res = config_registervm(ps, &vmc, &vm);
 		if (res == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		} else {
+			res = config_getvm(ps, vm, imsg->fd, imsg->hdr.peerid);
+			if (res == -1) {
+				res = errno;
+				cmd = IMSG_VMDOP_START_VM_RESPONSE;
+				vm_remove(vm);
+			}
 		}
 		break;
 	case IMSG_VMDOP_START_VM_DISK:
@@ -302,7 +309,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 					continue;
 				}
 
-				vmid = vm->vm_params.vcp_id;
+				vmid = vm->vm_params.vmc_params.vcp_id;
 				vtp.vtp_vm_id = vmid;
 				if (terminate_vm(&vtp) == 0) {
 					memset(&vmr, 0, sizeof(vmr));
@@ -339,7 +346,7 @@ vmm_shutdown(void)
 	struct vmd_vm *vm, *vm_next;
 
 	TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry, vm_next) {
-		vtp.vtp_vm_id = vm->vm_params.vcp_id;
+		vtp.vtp_vm_id = vm->vm_params.vmc_params.vcp_id;
 
 		/* XXX suspend or request graceful shutdown */
 		if (terminate_vm(&vtp) == ENOENT)
@@ -474,7 +481,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		ret = ENOENT;
 		goto err;
 	}
-	vcp = &vm->vm_params;
+	vcp = &vm->vm_params.vmc_params;
 
 	if ((vm->vm_tty = imsg->fd) == -1) {
 		log_warnx("%s: can't get tty", __func__);
@@ -1456,7 +1463,7 @@ write_mem(paddr_t dst, void *buf, size_t len)
 	size_t n, off;
 	struct vm_mem_range *vmr;
 
-	vmr = find_gpa_range(&current_vm->vm_params, dst, len);
+	vmr = find_gpa_range(&current_vm->vm_params.vmc_params, dst, len);
 	if (vmr == NULL) {
 		errno = EINVAL;
 		log_warn("%s: failed - invalid memory range dst = 0x%lx, "
@@ -1504,7 +1511,7 @@ read_mem(paddr_t src, void *buf, size_t len)
 	size_t n, off;
 	struct vm_mem_range *vmr;
 
-	vmr = find_gpa_range(&current_vm->vm_params, src, len);
+	vmr = find_gpa_range(&current_vm->vm_params.vmc_params, src, len);
 	if (vmr == NULL) {
 		errno = EINVAL;
 		log_warn("%s: failed - invalid memory range src = 0x%lx, "

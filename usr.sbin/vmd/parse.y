@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2016/10/17 16:26:20 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2016/10/29 14:56:05 edd Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -87,6 +87,7 @@ static struct vmop_create_params vmc;
 static struct vm_create_params	*vcp;
 static struct vmd_switch	*vsw;
 static struct vmd_if		*vif;
+static struct vmd_vm        *vm;
 static unsigned int		 vsw_unit;
 static char			 vsw_type[IF_NAMESIZE];
 static int			 vcp_disable;
@@ -173,30 +174,15 @@ switch		: SWITCH string			{
 
 			vcp_disable = 0;
 		} '{' optnl switch_opts_l '}'	{
-			TAILQ_INSERT_TAIL(env->vmd_switches, vsw, sw_entry);
-			env->vmd_nswitches++;
-
 			if (vcp_disable) {
 				log_debug("%s:%d: switch \"%s\""
 				    " skipped (disabled)",
 				    file->name, yylval.lineno, vsw->sw_name);
 			} else if (!env->vmd_noaction) {
-				/*
-				 * XXX Configure the switch right away -
-				 * XXX this should be done after parsing
-				 * XXX the configuration.
-				 */
-				if (vm_priv_brconfig(&env->vmd_ps, vsw) == -1) {
-					log_warn("%s:%d: switch \"%s\" failed",
-					    file->name, yylval.lineno,
-					    vsw->sw_name);
-					YYERROR;
-				} else {
-					log_debug("%s:%d: switch \"%s\""
-					    " configured",
-					    file->name, yylval.lineno,
-					    vsw->sw_name);
-				}
+				TAILQ_INSERT_TAIL(env->vmd_switches, vsw, sw_entry);
+				env->vmd_nswitches++;
+				log_debug("%s:%d: switch \"%s\" registered",
+				    file->name, yylval.lineno, vsw->sw_name);
 			}
 		}
 		;
@@ -285,24 +271,20 @@ vm		: VM string			{
 				log_debug("%s:%d: vm \"%s\" skipped (disabled)",
 				    file->name, yylval.lineno, vcp->vcp_name);
 			} else if (!env->vmd_noaction) {
-				/*
-				 * XXX Start the vm right away -
-				 * XXX this should be done after parsing
-				 * XXX the configuration.
-				 */
-				ret = config_getvm(&env->vmd_ps, &vmc, -1, -1);
+				ret = config_registervm(&env->vmd_ps, &vmc, &vm);
 				if (ret == -1 && errno == EALREADY) {
 					log_debug("%s:%d: vm \"%s\""
-					    " skipped (running)",
+					    " skipped (%s)",
 					    file->name, yylval.lineno,
-					    vcp->vcp_name);
+					    vcp->vcp_name, vm->vm_running ?
+					    "running" : "already exists");
 				} else if (ret == -1) {
 					log_warn("%s:%d: vm \"%s\" failed",
 					    file->name, yylval.lineno,
 					    vcp->vcp_name);
 					YYERROR;
 				} else {
-					log_debug("%s:%d: vm \"%s\" enabled",
+					log_debug("%s:%d: vm \"%s\" registered",
 					    file->name, yylval.lineno,
 					    vcp->vcp_name);
 				}

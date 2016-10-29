@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.4 2016/10/17 16:26:20 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.5 2016/10/29 14:56:05 edd Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -222,7 +222,7 @@ priv_validgroup(const char *name)
 int
 vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 {
-	struct vm_create_params	*vcp = &vm->vm_params;
+	struct vm_create_params	*vcp = &vm->vm_params.vmc_params;
 	struct vmd_if		*vif;
 	struct vmd_switch	*vsw;
 	unsigned int		 i;
@@ -343,5 +343,6 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 	    IMSG_VMDOP_PRIV_IFUP : IMSG_VMDOP_PRIV_IFDOWN,
 	    &vfr, sizeof(vfr));
 
+	vsw->sw_running = 1;
 	return (0);
 }
