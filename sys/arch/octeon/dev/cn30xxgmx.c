@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.28 2016/10/21 15:15:08 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.29 2016/10/29 11:00:19 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -196,10 +196,13 @@ cn30xxgmx_port_phy_addr(int port)
 			return port - 16; /* GMX1: eth[0-3] */
 		return -1;
 
-	default:
+	case BOARD_TYPE_CN3010_EVB_HS5:
 		if (port >= nitems(octeon_eth_phy_table))
 			return -1;
 		return octeon_eth_phy_table[port];
+
+	default:
+		return -1;
 	}
 }
 
