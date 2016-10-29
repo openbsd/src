@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.29 2016/10/29 11:00:19 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.30 2016/10/29 11:20:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,6 +32,8 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
+
+#include <dev/ofw/openfirm.h>
 
 #include <machine/bus.h>
 #include <machine/octeon_model.h>
@@ -181,6 +183,22 @@ cn30xxgmx_port_phy_addr(int port)
 		/* portwell cam-0100 */
 		0x02, 0x03, 0x22
 	};
+	char name[64];
+	int phynode = 0;
+	int portnode = -1;
+	uint32_t phy = 0;
+
+	snprintf(name, sizeof(name),
+	    "/soc/pip@11800a0000000/interface@%x/ethernet@%x",
+	    port / 16, port % 16);
+	portnode = OF_finddevice(name);
+	if (portnode != -1) {
+		phy = OF_getpropint(portnode, "phy-handle", 0);
+		if (phy != 0)
+			phynode = OF_getnodebyphandle(phy);
+		if (phynode != 0)
+			return OF_getpropint(phynode, "reg", 0);
+	}
 
 	switch (octeon_boot_info->board_type) {
 	case BOARD_TYPE_UBIQUITI_E100:	/* port 0: 7, port 1: 6 */
@@ -212,8 +230,9 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	struct cn30xxgmx_softc *sc = (void *)self;
 	struct iobus_attach_args *aa = aux;
 	struct cn30xxgmx_attach_args gmx_aa;
-	int status;
 	int i;
+	int phy_addr;
+	int status;
 	struct cn30xxgmx_port_softc *port_sc;
 
 	printf("\n");
@@ -236,6 +255,11 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < sc->sc_nports; i++) {
+		phy_addr = cn30xxgmx_port_phy_addr(
+		    GMX_PORT_NUM(sc->sc_unitno, i));
+		if (phy_addr == -1)
+			continue;
+
 		port_sc = &sc->sc_ports[i];
 		port_sc->sc_port_gmx = sc;
 		port_sc->sc_port_no = GMX_PORT_NUM(sc->sc_unitno, i);
@@ -278,11 +302,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		gmx_aa.ga_port_type = sc->sc_port_types[i];
 		gmx_aa.ga_gmx = sc;
 		gmx_aa.ga_gmx_port = port_sc;
-		gmx_aa.ga_phy_addr = cn30xxgmx_port_phy_addr(
-		    port_sc->sc_port_no);
-		if (gmx_aa.ga_phy_addr == -1)
-			panic(": don't know phy address for port %d",
-			    port_sc->sc_port_no);
+		gmx_aa.ga_phy_addr = phy_addr;
 
 		config_found_sm(self, &gmx_aa,
 		    cn30xxgmx_print, cn30xxgmx_submatch);
