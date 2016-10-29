@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.209 2016/10/11 12:42:21 jca Exp $
+.\"	$OpenBSD: port-modules.5,v 1.210 2016/10/29 18:27:34 danj Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 11 2016 $
+.Dd $Mdocdate: October 29 2016 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1224,6 +1224,7 @@ The subdirectory can be overridden with
 Python 2.x places .pyc files in the same directory as the associated .py file.
 Python 3.x places these in a separate __pycache__ directory and uses an
 additional suffix.
+In some cases, an ABI tag is also used for names of compiled extensions.
 The python module defines variables to allow a single PLIST to be
 used for both versions.
 Generate or update the PLIST using the python3
@@ -1236,8 +1237,8 @@ As python2 and python3 packages should permit being installed together,
 it may be necessary to suffix names of common binaries or directories,
 or split common files into a subpackage.
 If updating the PLIST without using the python3 flavor,
-take care not to remove ${MODPY_PYCACHE} and ${MODPY_PYC_MAGIC_TAG}
-variables from the PLIST.
+take care not to remove ${MODPY_PYCACHE}, ${MODPY_PYC_MAGIC_TAG}, or
+${MODPY_ABI_TAG} variables from the PLIST.
 .It lang/ruby
 See
 .Xr ruby-module 5 .
