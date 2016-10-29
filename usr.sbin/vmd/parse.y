@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2016/10/29 14:56:05 edd Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2016/10/29 14:58:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -394,11 +394,16 @@ vm_opts		: disable			{
 		;
 
 iface_opts_o	: '{' optnl iface_opts_l '}'
+		| iface_opts_c
 		| /* empty */
 		;
 
 iface_opts_l	: iface_opts_l iface_opts optnl
 		| iface_opts optnl
+		;
+
+iface_opts_c	: iface_opts_c iface_opts optcomma
+		| iface_opts
 		;
 
 iface_opts	: SWITCH string			{
@@ -472,6 +477,10 @@ updown		: UP				{ $$ = 1; }
 
 disable		: ENABLE			{ $$ = 0; }
 		| DISABLE			{ $$ = 1; }
+		;
+
+optcomma	: ','
+		|
 		;
 
 optnl		: '\n' optnl
