@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.928 2016/10/29 18:36:12 rpe Exp $
+#	$OpenBSD: install.sub,v 1.929 2016/10/30 13:27:05 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1382,11 +1382,12 @@ install_files() {
 		! isin SHA256.sig $_files &&
 			_issue="Directory does not contain SHA256.sig" && break
 
-		# Find a filesystem to store the prefetched sets. Prefer file-
-		# systems which are not used during extraction. They need to
-		# have 512 MB free space. Otherwise use any other filesystem
-		# having 2 GB free space to prevent overflow during extraction.
-		_tmpfs=$( (
+		# For non-local sources find a filesystem to store the prefetched
+		# sets. Prefer filesystems which are not used during extraction.
+		# They need to have 512 MB free space. Otherwise use any other
+		# filesystem having 2 GB free space to prevent overflow during
+		# extraction.
+		$_srclocal || _tmpfs=$( (
 			for fs in /mnt/{{,var/}tmp,home,usr{/local,}}; do
 				df -k $fs 2>/dev/null | grep " $fs\$"
 			done
@@ -1400,11 +1401,13 @@ install_files() {
 			done
 		) )
 
-		if [[ -d $_tmpfs ]]; then
-			! _tmpsrc=$(tmpdir "$_tmpfs/sets") &&
-			_issue="Cannot create prefetch area" && break
-		else
-			_issue="Cannot determine prefetch area" && break
+		if ! $_srclocal; then
+			if [[ -d $_tmpfs ]]; then
+				! _tmpsrc=$(tmpdir "$_tmpfs/sets") &&
+				_issue="Cannot create prefetch area" && break
+			else
+				_issue="Cannot determine prefetch area" && break
+			fi
 		fi
 
 		# Cleanup from previous runs.
