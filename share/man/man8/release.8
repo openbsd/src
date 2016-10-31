@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.76 2016/10/05 09:12:13 tb Exp $
+.\"	$OpenBSD: release.8,v 1.77 2016/10/31 20:45:14 tb Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: October 5 2016 $
+.Dd $Mdocdate: October 31 2016 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -55,6 +55,13 @@ Commands to be run as a user are preceded by a dollar sign
 .Sq $ .
 Commands that must be run as the superuser are preceded by a hash mark
 .Sq # .
+Privileges will be de-escalated to
+.Ev USER
+or the
+.Va BUILDUSER
+specified in
+.Xr mk.conf 5
+whenever possible.
 .Ss 1. Update sources
 A
 .Nm
@@ -87,13 +94,13 @@ tags, use the commands:
 .Bd -literal -offset indent
 $ cd /usr/src && cvs up -r TAG -Pd
 $ cd XSRCDIR && cvs up -r TAG -Pd
-$ cd PORTSPATH && cvs up -r TAG -Pd
+$ cd PORTSDIR && cvs up -r TAG -Pd
 .Ed
 .Pp
 Here,
 .Va XSRCDIR
 and
-.Va PORTSPATH
+.Va PORTSDIR
 are the path to the X Window System and ports tree sources, typically
 .Pa /usr/xenocara
 and
@@ -112,29 +119,18 @@ building the programs that will use the kernel.
 This ensures that any new system calls, for example, will be present
 when needed.
 .Pp
-Change to the kernel configuration directory
+.Dl # cd /sys/arch/$(machine)/compile/GENERIC.MP
 .Pp
-.Dl $ cd /usr/src/sys/arch/${ARCH}/conf
+Replace
+.Va GENERIC.MP
+with a different kernel configuration if necessary.
 .Pp
-where
-.Va ${ARCH}
-is the architecture of the machine, e.g.\&
-.Li i386 .
-Choose a kernel
-.Xr config 8
-file
-.Va ${NAME}
-or create a new one.
-Build the kernel compilation directory and compile the kernel:
+Create the build directory and configuration file,
+then compile and install the kernel:
 .Bd -literal -offset indent
-$ config ${NAME}
-$ cd ../compile/${NAME}
-$ make clean && make
-.Ed
-.Pp
-Install the new kernel with
-.Bd -literal -offset indent
-# make install
+# make obj
+# make config
+# make && make install
 .Ed
 .Pp
 The current kernel is copied to
@@ -146,13 +142,11 @@ Reboot.
 The build process will place the object files in a tree under
 .Pa /usr/obj ,
 which is assumed to be empty.
-Create the tree of obj directories with
-.Pp
-.Dl $ cd /usr/src && make obj
-.Pp
-and begin the build:
-.Pp
-.Dl # make build
+Create the tree of obj directories and begin the build:
+.Bd -literal -offset indent
+# cd /usr/src
+# make obj && make build
+.Ed
 .Pp
 After the build is completed, update
 .Pa /etc ,
@@ -171,16 +165,24 @@ The system release consists of at least one generic kernel,
 some installation media, the release tarballs,
 installation instructions, and checksum files.
 .Pp
-The release process requires two work areas.
-They are:
-.Bl -tag -width "RELEASEDIR "
-.It Va DESTDIR
-This is the name of a directory which will be the root of a complete
+Create a
+.Va RELEASEDIR
+directory to store the release files.
+.Pp
+To build a release, it is necessary to prepare a filesystem mounted with the
+.Em noperm
+.Xr mount 8
+option.
+The root of this filesystem must have owner
+.Va BUILDUSER
+and mode 700.
+On this filesystem, create a
+.Va DESTDIR
+directory.
+This will be the root of a complete
 .Ox
 installation.
-.It Va RELEASEDIR
-This is the name of a directory where the release output files are stored.
-.It " "
+.Pp
 .Sy Warning :
 .Va DESTDIR
 and
@@ -190,20 +192,13 @@ must not refer to any directory with
 in its path, as
 .Pa /mnt
 is used in the release generation process.
-Additionally the first
+The
 .Xr vnd 4
-device, vnd0,
+device vnd0
 is also used and must not be configured.
-.El
-.Pp
-Ensure
-.Va ${DESTDIR}
-exists as an empty directory and
-.Va ${RELEASEDIR}
-exists.
 .Pp
 Make the release and check that the contents of
-.Va ${DESTDIR}
+.Va DESTDIR
 match the contents of the release tarballs:
 .Bd -literal -offset indent
 # export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
@@ -280,9 +275,8 @@ steps.
 .Bd -literal -offset indent
 # export RELDIR=your-releasedir
 # export RELXDIR=your-xenocara-releasedir
-# cd /usr/src/distrib/${ARCH}/iso && make
+# cd /usr/src/distrib/$(machine)/iso && make
 # make install
-# unset RELDIR RELXDIR
 .Ed
 .Pp
 The two installer images are now stored in the local release
