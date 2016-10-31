@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.77 2015/11/16 16:43:06 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.78 2016/10/31 17:22:07 schwarze Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -41,7 +41,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <locale.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -197,8 +196,6 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	int ch;
 	mode_t cmask;
 	extern char **environ;
-
-	(void)setlocale(LC_TIME, "");
 
 	/*
 	 * Install the signal handler for SIGINT; terminate after removing the
@@ -1025,7 +1022,7 @@ main(int argc, char **argv)
 	case CAT:
 		if ((aflag && argc) || (!aflag && !argc))
 			usage();
-		exit(process_jobs(argc, argv, program));
+		return process_jobs(argc, argv, program);
 		break;
 
 	case AT:
@@ -1034,7 +1031,7 @@ main(int argc, char **argv)
 			if (argc == 0)
 				usage();
 			else if ((timer = parsetime(argc, argv)) == -1)
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 		}
 		writefile(cwd, timer, queue);
 		break;
@@ -1048,7 +1045,7 @@ main(int argc, char **argv)
 		if (argc == 0)
 			timer = time(NULL);
 		else if ((timer = parsetime(argc, argv)) == -1)
-			exit(EXIT_FAILURE);
+			return EXIT_FAILURE;
 
 		writefile(cwd, timer, queue);
 		break;
@@ -1057,5 +1054,5 @@ main(int argc, char **argv)
 		fatalx("internal error");
 		break;
 	}
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
