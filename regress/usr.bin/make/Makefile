@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.41 2015/12/21 11:31:40 espie Exp $
+# $OpenBSD: Makefile,v 1.42 2016/10/31 11:43:20 jasper Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
@@ -55,7 +55,7 @@ t9:
 # verify that systemV extended variables work as expected
 t10:	z.a
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk10 |diff - t10.out
-	
+
 # check for substitution parser in some confusing situations
 t11:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk11 |diff - t11.out
@@ -120,7 +120,7 @@ t27:
 
 t28:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk25 all >/dev/null
-	
+
 t29:
 	rm -f t29dep t29.targ t29.targ2 libt29.a
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk26 all | diff - t29.out
@@ -177,10 +177,10 @@ t43:
 
 t44:
 	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk40 2>/dev/null || test $$? -ge 128; then false; fi
-	
+
 t45:
 	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk41 2>/dev/null || test $$? -ge 128; then false; fi
-	
+
 
 
 t1.out:
