@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.208 2016/10/28 17:03:22 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.209 2016/10/31 10:06:56 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -68,10 +68,9 @@
 #define CHUNK_CHECK_LENGTH	32
 
 /*
- * When the P option is active, we move allocations between half a page
- * and a whole page towards the end, subject to alignment constraints.
- * This is the extra headroom we allow. Set to zero to be the most
- * strict.
+ * We move allocations between half a page and a whole page towards the end,
+ * subject to alignment constraints. This is the extra headroom we allow.
+ * Set to zero to be the most strict.
  */
 #define MALLOC_LEEWAY		0
 
@@ -177,12 +176,11 @@ struct malloc_readonly {
 	int	malloc_freenow;		/* Free quickly - disable chunk rnd */
 	int	malloc_freeunmap;	/* mprotect free pages PROT_NONE? */
 	int	malloc_junk;		/* junk fill? */
-	int	malloc_move;		/* move allocations to end of page? */
 	int	malloc_realloc;		/* always realloc? */
 	int	malloc_xmalloc;		/* xmalloc behaviour? */
 	int	chunk_canaries;		/* use canaries after chunks? */
-	size_t	malloc_guard;		/* use guard pages after allocations? */
 	u_int	malloc_cache;		/* free pages we cache */
+	size_t	malloc_guard;		/* use guard pages after allocations? */
 #ifdef MALLOC_STATS
 	int	malloc_stats;		/* dump statistics at end */
 #endif
@@ -493,10 +491,6 @@ omalloc_parseopt(char opt)
 	case '<':
 		mopts.malloc_cache >>= 1;
 		break;
-	case 'a':
-	case 'A':
-		/* ignored */
-		break;
 	case 'c':
 		mopts.chunk_canaries = 0;
 		break;
@@ -532,15 +526,6 @@ omalloc_parseopt(char opt)
 	case 'J':
 		if (mopts.malloc_junk < 2)
 			mopts.malloc_junk++;
-		break;
-	case 'n':
-	case 'N':
-		break;
-	case 'p':
-		mopts.malloc_move = 0;
-		break;
-	case 'P':
-		mopts.malloc_move = 1;
 		break;
 	case 'r':
 		mopts.malloc_realloc = 0;
@@ -579,7 +564,6 @@ omalloc_init(void)
 	 * Default options
 	 */
 	mopts.malloc_junk = 1;
-	mopts.malloc_move = 1;
 	mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
 
 	for (i = 0; i < 3; i++) {
@@ -1146,9 +1130,7 @@ omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
 			STATS_ADD(pool->malloc_guarded, mopts.malloc_guard);
 		}
 
-		if (mopts.malloc_move &&
-		    sz - mopts.malloc_guard < MALLOC_PAGESIZE -
-		    MALLOC_LEEWAY) {
+		if (sz - mopts.malloc_guard < MALLOC_PAGESIZE - MALLOC_LEEWAY) {
 			/* fill whole allocation */
 			if (mopts.malloc_junk == 2)
 				memset(p, SOME_JUNK, psz - mopts.malloc_guard);
