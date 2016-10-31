@@ -54,10 +54,9 @@
 #define CHUNK_CHECK_LENGTH	32
 
 /*
- * When the P option is active, we move allocations between half a page
- * and a whole page towards the end, subject to alignment constraints.
- * This is the extra headroom we allow. Set to zero to be the most
- * strict.
+ * We move allocations between half a page and a whole page towards the end,
+ * subject to alignment constraints. This is the extra headroom we allow.
+ * Set to zero to be the most strict.
  */
 #define MALLOC_LEEWAY		0
 
@@ -131,7 +130,6 @@ struct malloc_readonly {
 	int	malloc_freenow;		/* Free quickly - disable chunk rnd */
 	int	malloc_freeunmap;	/* mprotect free pages PROT_NONE? */
 	int	malloc_junk;		/* junk fill? */
-	int	malloc_move;		/* move allocations to end of page? */
 	int	chunk_canaries;		/* use canaries after chunks? */
 	size_t	malloc_guard;		/* use guard pages after allocations? */
 	u_int	malloc_cache;		/* free pages we cache */
@@ -356,7 +354,6 @@ omalloc_init(struct dir_info **dp)
 	 * Default options
 	 */
 	mopts.malloc_junk = 1;
-	mopts.malloc_move = 1;
 	mopts.chunk_canaries = 1;
 	mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
 	mopts.malloc_guard = MALLOC_PAGESIZE;
@@ -852,9 +849,7 @@ omalloc(size_t sz, int zero_fill)
 				wrterror("mprotect");
 		}
 
-		if (mopts.malloc_move &&
-		    sz - mopts.malloc_guard < MALLOC_PAGESIZE -
-		    MALLOC_LEEWAY) {
+		if (sz - mopts.malloc_guard < MALLOC_PAGESIZE - MALLOC_LEEWAY) {
 			/* fill whole allocation */
 			if (mopts.malloc_junk == 2)
 				_dl_memset(p, SOME_JUNK, psz - mopts.malloc_guard);
