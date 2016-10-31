@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.22 2016/10/31 07:55:10 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.23 2016/10/31 08:06:27 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4650,6 +4650,7 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	struct swofp_flow_entry		*swfe, *old_swfe;
 	struct swofp_flow_table		*swft;
 	int				 error;
+	uint16_t			 etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
 
 	oh = mtod(m, struct ofp_header *);
 	ofm = mtod(m, struct ofp_flow_mod *);
@@ -4711,8 +4712,10 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	if (ntohs(om->om_length) == sizeof(*om) && swfe->swfe_priority == 0)
 		swfe->swfe_tablemiss = 1;
 
-	if ((error = swofp_flow_entry_put_instructions(m, swfe)))
+	if ((error = swofp_flow_entry_put_instructions(m, swfe))) {
+		etype = OFP_ERRTYPE_BAD_INSTRUCTION;
 		goto ofp_error_free_flow;
+	}
 
 	if (old_swfe) {
 		if (!(ntohs(ofm->fm_flags) & OFP_FLOWFLAG_RESET_COUNTS)) {
@@ -4736,7 +4739,7 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
  ofp_error_free_flow:
 	swofp_flow_entry_free(&swfe);
  ofp_error:
-	swofp_send_error(sc, m, OFP_ERRTYPE_FLOW_MOD_FAILED, error);
+	swofp_send_error(sc, m, etype, error);
 	return (0);
 }
 
@@ -4750,6 +4753,7 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 	struct swofp_flow_entry		*swfe;
 	struct swofp_flow_table		*swft;
 	int				 error;
+	uint16_t			 etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
 
 	oh = mtod(m, struct ofp_header *);
 	ofm = mtod(m, struct ofp_flow_mod *);
@@ -4791,6 +4795,7 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 			 */
 			swofp_flow_entry_delete(sc, swft, swfe,
 			    OFP_FLOWREM_REASON_DELETE);
+			etype = OFP_ERRTYPE_BAD_INSTRUCTION;
 			goto ofp_error;
 		}
 
@@ -4804,7 +4809,7 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 	return (0);
 
  ofp_error:
-	swofp_send_error(sc, m, OFP_ERRTYPE_FLOW_MOD_FAILED, error);
+	swofp_send_error(sc, m, etype, error);
 	return (0);
 }
 
