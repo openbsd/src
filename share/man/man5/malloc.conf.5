@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.10 2016/10/28 17:03:47 otto Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.11 2016/10/31 10:07:18 otto Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2016 $
+.Dd $Mdocdate: October 31 2016 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -89,12 +89,6 @@ the filling pattern is validated and the process is aborted if the pattern
 was modified.
 If the junk level is zero, no junking is performed.
 For junk level 2, junking is done without size restrictions.
-.It Cm P
-.Dq Move allocations within a page.
-Allocations larger than half a page but smaller than a page
-are aligned to the end of a page to catch buffer overruns in more
-cases.
-This is the default.
 .It Cm R
 .Dq realloc .
 Always reallocate when
