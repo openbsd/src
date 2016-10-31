@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.21 2016/10/28 17:00:58 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.22 2016/10/31 07:55:10 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -211,8 +211,8 @@ int	 swofp_flow_cmp_strict(struct swofp_flow_entry *, struct ofp_match *,
 int	 swofp_flow_filter(struct swofp_flow_entry *, uint64_t, uint64_t,
 	    uint32_t, uint32_t);
 void	 swofp_flow_timeout(struct switch_softc *);
-int	 swofp_validate_flow_match(struct ofp_match *);
-int	 swofp_validate_flow_instruction(struct ofp_instruction *);
+int	 swofp_validate_flow_match(struct ofp_match *, int *);
+int	 swofp_validate_flow_instruction(struct ofp_instruction *, int *);
 
 /*
  * OpenFlow protocol compare oxm
@@ -1810,17 +1810,18 @@ swofp_ox_cmp_ether_addr(struct ofp_ox_match *target,
 
 /* TODO: validation for match */
 int
-swofp_validate_flow_match(struct ofp_match *om)
+swofp_validate_flow_match(struct ofp_match *om, int *err)
 {
 	struct ofp_oxm_class *handler;
 	struct ofp_ox_match *oxm;
 
 	OFP_OXM_FOREACH(om, ntohs(om->om_length), oxm) {
 		handler = swofp_lookup_oxm_handler(oxm);
-		if (handler == NULL)
-			return (OFP_ERRMATCH_BAD_FIELD);
-		if (handler->oxm_match == NULL)
-			return (OFP_ERRMATCH_BAD_FIELD);
+		if (handler == NULL ||
+		    handler->oxm_match == NULL) {
+			*err = OFP_ERRMATCH_BAD_FIELD;
+			return (-1);
+		}
 	}
 
 	return (0);
@@ -1845,11 +1846,10 @@ swofp_validate_flow_action_set_field(struct ofp_action_set_field *oasf)
 
 /* TODO: validation for instruction */
 int
-swofp_validate_flow_instruction(struct ofp_instruction *oi)
+swofp_validate_flow_instruction(struct ofp_instruction *oi, int *error)
 {
 	struct ofp_action_header	*oah;
 	struct ofp_instruction_actions	*oia;
-	int				 error = 0;
 
 	switch (ntohs(oi->i_type)) {
 	case OFP_INSTRUCTION_T_GOTO_TABLE:
@@ -1864,18 +1864,19 @@ swofp_validate_flow_instruction(struct ofp_instruction *oi)
 		oia = (struct ofp_instruction_actions *)oi;
 		OFP_I_ACTIONS_FOREACH(oia, oah) {
 			if (ntohs(oah->ah_type) == OFP_ACTION_SET_FIELD) {
-				error = swofp_validate_flow_action_set_field(
+				*error = swofp_validate_flow_action_set_field(
 				    (struct ofp_action_set_field *)oah);
-				if (error)
-					break;
+				if (*error)
+					return (-1);
 			}
 		}
 		break;
 	default:
-		error = EINVAL;
+		*error = OFP_ERRINST_UNKNOWN_INST;
+		return (-1);
 	}
 
-	return (error);
+	return (0);
 }
 
 int
@@ -4590,7 +4591,7 @@ swofp_flow_entry_put_instructions(struct mbuf *m,
 	for (off = start; off < start + len; off += ntohs(oi->i_len)) {
 		oi = (struct ofp_instruction *)(mtod(m, caddr_t) + off);
 
-		if ((error = swofp_validate_flow_instruction(oi)))
+		if (swofp_validate_flow_instruction(oi, &error))
 			goto failed;
 
 		if ((inst = malloc(ntohs(oi->i_len), M_DEVBUF,
@@ -4692,7 +4693,7 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	nanouptime(&swfe->swfe_installed_time);
 	nanouptime(&swfe->swfe_idle_time);
 
-	if ((error = swofp_validate_flow_match(om)))
+	if (swofp_validate_flow_match(om, &error))
 		goto ofp_error;
 
 	if ((swfe->swfe_match = malloc(ntohs(om->om_length), M_DEVBUF,
