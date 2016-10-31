@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.98 2016/10/31 01:23:46 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.99 2016/10/31 01:38:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -159,7 +159,8 @@ struct myx_softc {
 };
 
 #define MYX_RXSMALL_SIZE	MCLBYTES
-#define MYX_RXBIG_SIZE		(9 * 1024)
+#define MYX_RXBIG_SIZE		(MYX_MTU - \
+    (ETHER_ALIGN + ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN))
 
 int	 myx_match(struct device *, void *, void *);
 void	 myx_attach(struct device *, struct device *, void *);
@@ -511,7 +512,7 @@ myx_attachhook(struct device *self)
 	ifp->if_ioctl = myx_ioctl;
 	ifp->if_start = myx_start;
 	ifp->if_watchdog = myx_watchdog;
-	ifp->if_hardmtu = 9000;
+	ifp->if_hardmtu = MYX_RXBIG_SIZE;
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
 
