@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2014/07/16 20:04:21 okan Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/10/31 23:45:09 tb Exp $
 
-TEST_ENV=      "MALLOC_OPTIONS=AFGJPRX"
+TEST_ENV=      "MALLOC_OPTIONS=FGJRX"
 
 PROG=test_sshbuf
 SRCS=tests.c

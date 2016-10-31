@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.91 2016/10/06 09:31:38 natano Exp $
+#	$OpenBSD: Makefile,v 1.92 2016/10/31 23:45:08 tb Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -105,7 +105,7 @@ CLEANFILES+=	*.core actual agent-key.* authorized_keys_${USERNAME} \
 SUDO_CLEAN+=	/var/run/testdata_${USERNAME} /var/run/keycommand_${USERNAME}
 
 # Enable all malloc(3) randomisations and checks
-TEST_ENV=      "MALLOC_OPTIONS=AFGJPRX"
+TEST_ENV=      "MALLOC_OPTIONS=FGJRX"
 
 t1:
 	ssh-keygen -if ${.CURDIR}/rsa_ssh2.prv | diff - ${.CURDIR}/rsa_openssh.prv
