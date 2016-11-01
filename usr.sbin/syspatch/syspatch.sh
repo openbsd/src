@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.16 2016/11/01 10:25:43 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.17 2016/11/01 10:30:01 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -35,6 +35,30 @@ needs_root()
 	[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
 }
 
+apply_patch()
+{
+	local _explodir _file _files _patch="$1"
+	[[ -n ${_patch} ]]
+
+	local _explodir=${_TMP}/${_patch}
+	mkdir -p ${_explodir}
+
+	_files="$(tar xvzphf ${_TMP}/${_patch}.tgz -C ${_explodir})"
+	create_rollback ${_patch} "${_files}"
+
+	for _file in ${_files}; do
+		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
+			if ! install_kernel ${_explodir}/${_file}; then
+				rollback_patch; return 1
+			fi
+		else
+			if ! install_file ${_explodir}/${_file} /${_file}; then
+				rollback_patch; return 1
+			fi
+		fi
+	done
+}
+
 apply_patches()
 {
 	needs_root
@@ -43,7 +67,7 @@ apply_patches()
 	[[ -n ${_patches} ]] || return 0 # nothing to do
 
 	for _patch in ${_patches}; do
-		fetch_and_verify "${_patch}" && install_patch "${_patch}"
+		fetch_and_verify "${_patch}" && apply_patch "${_patch}"
 	done
 
 	# non-fatal: the syspatch tarball should have correct permissions
@@ -131,30 +155,6 @@ install_kernel()
 	if [[ -n ${_bsd} ]]; then
 		install -FS ${_kern} ${_bsd}
 	fi
-}
-
-install_patch()
-{
-	local _explodir _file _files _patch="$1"
-	[[ -n ${_patch} ]]
-
-	local _explodir=${_TMP}/${_patch}
-	mkdir -p ${_explodir}
-
-	_files="$(tar xvzphf ${_TMP}/${_patch}.tgz -C ${_explodir})"
-	create_rollback ${_patch} "${_files}"
-
-	for _file in ${_files}; do
-		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
-			if ! install_kernel ${_explodir}/${_file}; then
-				rollback_patch; return 1
-			fi
-		else
-			if ! install_file ${_explodir}/${_file} /${_file}; then
-				rollback_patch; return 1
-			fi
-		fi
-	done
 }
 
 ls_avail()
