@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.15 2016/09/11 13:10:59 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.16 2016/11/01 10:25:43 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -67,7 +67,7 @@ create_rollback()
 		_rbfiles="${_rbfiles} ${_file}"
 	done
 
-	(cd / &&
+	if ! (cd / &&
 		# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
 		if ${_BSDMP} &&
 			tar -tzf ${_TMP}/${_patch}.tgz bsd >/dev/null 2>&1; then
@@ -78,7 +78,9 @@ create_rollback()
 			tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
 				${_rbfiles}
 		fi
-	)
+	); then
+		rm ${_PDIR}/${_REL}/rollback-${_patch}.tgz; return 1
+	fi
 }
 
 fetch_and_verify()
@@ -213,10 +215,10 @@ rollback_patch()
 		${_PDIR}/${_REL}/${_patch#syspatch-${_RELINT}-}.patch.sig
 }
 
-# we do not run on current
+# only run on release (not -current nor -stable)
 set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
-[[ -z ${_KERNV[1]} ]] || [[ ${_KERNV[1]} == "-stable" ]]
+[[ -z ${_KERNV[1]} ]]
 
 # check args
 [[ $@ == @(|-[[:alpha:]]) ]] || usage
