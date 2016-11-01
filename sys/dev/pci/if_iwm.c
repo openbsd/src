@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.145 2016/10/19 14:15:07 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.146 2016/11/01 13:49:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2820,8 +2820,6 @@ iwm_load_firmware_7000(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	uint32_t dlen;
 	uint32_t offset;
 
-	sc->sc_uc.uc_intr = 0;
-
 	fws = &sc->sc_fw.fw_sects[ucode_type];
 	for (i = 0; i < fws->fw_count; i++) {
 		data = fws->fw_sect[i].fws_data;
@@ -2943,6 +2941,8 @@ iwm_load_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 {
 	int err, w;
 
+	sc->sc_uc.uc_intr = 0;
+
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000)
 		err = iwm_load_firmware_8000(sc, ucode_type);
 	else
@@ -2957,12 +2957,6 @@ iwm_load_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	}
 	if (err || !sc->sc_uc.uc_ok)
 		printf("%s: could not load firmware\n", DEVNAME(sc));
-
-	/*
-	 * Give the firmware some time to initialize.
-	 * Accessing it too early causes errors.
-	 */
-	tsleep(&w, PCATCH, "iwmfwinit", hz);
 
 	return err;
 }
