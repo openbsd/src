@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.24 2016/11/01 20:46:02 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.25 2016/11/01 21:51:44 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -44,7 +44,6 @@ apply_patch()
 	_files="$(tar xvzphf ${_TMP}/${_patch}.tgz -C ${_explodir})"
 	create_rollback ${_patch} "${_files}"
 
-	trap "" 2
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			if ! install_kernel ${_explodir}/${_file}; then
@@ -58,7 +57,6 @@ apply_patch()
 			fi
 		fi
 	done
-	trap - 2
 }
 
 apply_patches()
@@ -68,7 +66,9 @@ apply_patches()
 
 	for _patch in ${_patches}; do
 		fetch_and_verify "${_patch}"
+		trap "" 2
 		apply_patch "${_patch}"
+		trap "rm -rf ${_TMP}; exit 1" 2
 	done
 
 	sp_cleanup
@@ -89,7 +89,6 @@ create_rollback()
 		_rbfiles="${_rbfiles} ${_file}"
 	done
 
-	trap "" 2
 	if ! (cd / &&
 		# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
 		if ${_BSDMP} &&
@@ -105,7 +104,6 @@ create_rollback()
 		rm ${_PDIR}/${_REL}/rollback-${_patch}.tgz
 		sp_err "Failed to create rollback for ${_patch}"
 	fi
-	trap - 2
 }
 
 fetch_and_verify()
@@ -204,7 +202,6 @@ rollback_patch()
 	_files="$(tar xvzphf ${_PDIR}/${_REL}/rollback-${_patch}.tgz -C \
 		${_explodir})"
 
-	trap "" 2
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_explodir}/${_file} ||
@@ -217,7 +214,6 @@ rollback_patch()
 
 	rm ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
 		${_PDIR}/${_REL}/${_patch#syspatch-${_RELINT}-}.patch.sig
-	trap - 2
 
 	sp_cleanup
 }
@@ -271,7 +267,7 @@ _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
 readonly _BSDMP _FETCH _PDIR _REL _RELINT _TMP
 [[ -n ${_REL} && -n ${_RELINT} ]]
 
-trap "rm -rf ${_TMP}; exit 1" 3 9 13 15 ERR
+trap "rm -rf ${_TMP}; exit 1" 2 3 9 13 15 ERR
 
 while getopts clr arg; do
 	case ${arg} in
