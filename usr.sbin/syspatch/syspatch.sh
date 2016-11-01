@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.19 2016/11/01 14:45:46 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.20 2016/11/01 15:51:04 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -62,7 +62,6 @@ apply_patch()
 apply_patches()
 {
 	needs_root
-	# XXX cleanup old rollback patches and sig (installer should as well)
 	local _m _patch _patches="$(ls_missing)"
 	[[ -n ${_patches} ]] || return 0 # nothing to do
 
@@ -145,7 +144,7 @@ install_kernel()
 	local _bsd=/bsd _kern=$1
 	[[ -n ${_kern} ]]
 
-	# we only save the original release kernel once
+	# only save the original release kernel once
 	[[ -f /bsd.rollback${_RELINT} ]] ||
 		install -FSp /bsd /bsd.rollback${_RELINT}
 
@@ -188,6 +187,21 @@ ls_missing()
 			echo ${_a}
 		fi
 	done
+}
+
+sp_cleanup()
+{
+	local _d
+
+	# remove non matching release /var/syspatch/ content
+	cd ${_PDIR} && set -- *
+	for _d; do
+		[[ -e ${_d} ]] || continue
+		[[ ${_d} == ${_REL} ]] || rm -r ${_d}
+	done
+
+	# remove rollback kernel if all kernel syspatches have been reverted
+	cmp -s /bsd /bsd.rollback${_RELINT} && rm /bsd.rollback${_RELINT}
 }
 
 rollback_patch()
@@ -238,6 +252,7 @@ _REL=${_KERNV[0]}
 _RELINT=${_REL%\.*}${_REL#*\.}
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
 readonly _BSDMP _FETCH _PDIR _REL _RELINT _TMP
+[[ -n ${_REL} && -n ${_RELINT} ]]
 
 trap "rm -rf ${_TMP}; exit 1" 2 3 9 13 15 ERR
 
@@ -254,4 +269,5 @@ shift $(( OPTIND -1 ))
 
 [[ ${OPTIND} != 1 ]] || apply_patches
 
+sp_cleanup
 rm -rf ${_TMP}
