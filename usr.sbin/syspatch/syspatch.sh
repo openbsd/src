@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.20 2016/11/01 15:51:04 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.21 2016/11/01 16:05:53 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -191,13 +191,20 @@ ls_missing()
 
 sp_cleanup()
 {
-	local _d
+	local _d _k
 
 	# remove non matching release /var/syspatch/ content
 	cd ${_PDIR} && set -- *
 	for _d; do
 		[[ -e ${_d} ]] || continue
 		[[ ${_d} == ${_REL} ]] || rm -r ${_d}
+	done
+
+	# remove non matching release rollback kernel
+	set -- /bsd.rollback*
+	for _k; do
+		[[ -f ${_k} ]] || continue
+		[[ ${_k} == /bsd.rollback${_RELINT} ]] || rm ${_k}
 	done
 
 	# remove rollback kernel if all kernel syspatches have been reverted
@@ -269,5 +276,4 @@ shift $(( OPTIND -1 ))
 
 [[ ${OPTIND} != 1 ]] || apply_patches
 
-sp_cleanup
 rm -rf ${_TMP}
