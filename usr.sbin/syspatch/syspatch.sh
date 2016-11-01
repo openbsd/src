@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.17 2016/11/01 10:30:01 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.18 2016/11/01 12:41:46 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -17,8 +17,6 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 set -e
-
-trap "rm -rf ${_TMP}; exit 1" 2 3 9 13 15 ERR
 
 sp_err()
 {
@@ -49,11 +47,13 @@ apply_patch()
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			if ! install_kernel ${_explodir}/${_file}; then
-				rollback_patch; return 1
+				rollback_patch
+				sp_err "Failed to apply ${_patch} (/${_file})"
 			fi
 		else
 			if ! install_file ${_explodir}/${_file} /${_file}; then
-				rollback_patch; return 1
+				rollback_patch
+				sp_err "Failed to apply ${_patch} (/${_file})"
 			fi
 		fi
 	done
@@ -103,7 +103,8 @@ create_rollback()
 				${_rbfiles}
 		fi
 	); then
-		rm ${_PDIR}/${_REL}/rollback-${_patch}.tgz; return 1
+		rm ${_PDIR}/${_REL}/rollback-${_patch}.tgz
+		sp_err "Failed to create rollback for ${_patch}"
 	fi
 }
 
@@ -119,7 +120,7 @@ fetch_and_verify()
 
 	for _p in ${_patch}; do
 		_p=${_p}.tgz
-		 ${_FETCH} -mD "Get/Verify" -o "${_TMP}/${_p}" \
+		 ${_FETCH} -mD "Applying" -o "${_TMP}/${_p}" \
 			"${PATCH_PATH}/${_p}"
 		(cd ${_TMP} &&
 			/usr/bin/signify -qC -p ${_key} -x SHA256.sig ${_p})
@@ -205,9 +206,11 @@ rollback_patch()
 
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
-			install_kernel ${_explodir}/${_file}
+			install_kernel ${_explodir}/${_file} ||
+				sp_err "Failed to rollback ${_patch} (/${_file})"
 		else
-			install_file ${_explodir}/${_file} /${_file}
+			install_file ${_explodir}/${_file} /${_file} ||
+				sp_err "Failed to rollback ${_patch} (/${_file})"
 		fi
 	done
 
@@ -234,7 +237,9 @@ _PDIR="/var/syspatch"
 _REL=${_KERNV[0]}
 _RELINT=${_REL%\.*}${_REL#*\.}
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
-readonly _BSDMP _FETCH _PDIR _REL _RELINT_TMP
+readonly _BSDMP _FETCH _PDIR _REL _RELINT _TMP
+
+trap "rm -rf ${_TMP}; exit 1" 2 3 9 13 15 ERR
 
 while getopts clr arg; do
 	case ${arg} in
