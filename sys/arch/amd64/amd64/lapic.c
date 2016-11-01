@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.44 2016/06/22 01:12:38 mikeb Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.45 2016/11/01 01:13:19 yasuoka Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -170,59 +170,57 @@ lapic_map(paddr_t lapic_base)
 	int s;
 	pt_entry_t *pte;
 	vaddr_t va;
+	u_int64_t msr;
 
-	/*
-	 * On real hardware, x2apic must only be enabled if interrupt remapping
-	 * is also enabled. See 10.12.7 of the SDM vol 3.
-	 * On hypervisors, this is not necessary. Hypervisors can implement
-	 * x2apic support even if the host CPU does not support it.
-	 * Until we support interrupt remapping, use x2apic only if the
-	 * hypervisor flag is also set.
-	 */
-	if ((cpu_ecxfeature&CPUIDECX_X2APIC) && (cpu_ecxfeature&CPUIDECX_HV)) {
-		u_int64_t msr;
+	disable_intr();
+	s = lapic_tpr;
 
-		disable_intr();
-		s = lapic_tpr;
+	msr = rdmsr(MSR_APICBASE);
 
-		msr = rdmsr(MSR_APICBASE);
-		msr |= APICBASE_ENABLE_X2APIC;
-		wrmsr(MSR_APICBASE, msr);
-
+	if (ISSET(msr, APICBASE_ENABLE_X2APIC) ||
+	    (ISSET(cpu_ecxfeature, CPUIDECX_HV) &&
+	    ISSET(cpu_ecxfeature, CPUIDECX_X2APIC))) {
+		 /*
+		  * On real hardware, x2apic must only be enabled if interrupt
+		  * remapping is also enabled. See 10.12.7 of the SDM vol 3.
+		  * On hypervisors, this is not necessary. Hypervisors can
+		  * implement x2apic support even if the host CPU does not
+		  * support it.  Until we support interrupt remapping, use
+		  * x2apic only if the hypervisor flag is also set or it is
+		  * enabled by BIOS.
+		  */
+		if (!ISSET(msr, APICBASE_ENABLE_X2APIC)) {
+			msr |= APICBASE_ENABLE_X2APIC;
+			wrmsr(MSR_APICBASE, msr);
+		}
 		lapic_readreg = x2apic_readreg;
 		lapic_writereg = x2apic_writereg;
 #ifdef MULTIPROCESSOR
 		x86_ipi = x2apic_ipi;
 #endif
 		x2apic_enabled = 1;
-
 		codepatch_call(CPTAG_EOI, &x2apic_eoi);
 
 		lapic_writereg(LAPIC_TPRI, s);
-		enable_intr();
+	} else {
+		/*
+		 * Map local apic.  If we have a local apic, it's safe to
+		 * assume we're on a 486 or better and can use invlpg and
+		 * non-cacheable PTE's
+		 *
+		 * Whap the PTE "by hand" rather than calling pmap_kenter_pa
+		 * because the latter will attempt to invoke TLB shootdown
+		 * code just as we might have changed the value of
+		 * cpu_number()..
+		 */
+		va = (vaddr_t)&local_apic;
+		pte = kvtopte(va);
+		*pte = lapic_base | PG_RW | PG_V | PG_N | PG_G | pg_nx;
+		invlpg(va);
 
-		return;
+		lapic_tpr = s;
 	}
 
-	va = (vaddr_t)&local_apic;
-
-	disable_intr();
-	s = lapic_tpr;
-
-	/*
-	 * Map local apic.  If we have a local apic, it's safe to assume
-	 * we're on a 486 or better and can use invlpg and non-cacheable PTE's
-	 *
-	 * Whap the PTE "by hand" rather than calling pmap_kenter_pa because
-	 * the latter will attempt to invoke TLB shootdown code just as we
-	 * might have changed the value of cpu_number()..
-	 */
-
-	pte = kvtopte(va);
-	*pte = lapic_base | PG_RW | PG_V | PG_N | PG_G | pg_nx;
-	invlpg(va);
-
-	lapic_tpr = s;
 	enable_intr();
 }
 
