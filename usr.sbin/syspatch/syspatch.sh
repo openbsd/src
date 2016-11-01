@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.22 2016/11/01 16:21:47 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.23 2016/11/01 18:12:44 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -155,6 +155,7 @@ install_kernel()
 
 ls_avail()
 {
+	# XXX see above + catch missing index.txt
 	${_FETCH} -o - "${PATCH_PATH}/index.txt" |
 		sed 's/^.* //;s/^M//;s/.tgz$//' |
 		grep "^syspatch-${_RELINT}-.*$" | sort -V
