@@ -1,9 +1,12 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2016/09/30 11:55:20 bluhm Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2016/11/01 13:43:27 tb Exp $
 
 REGRESS_FAIL_EARLY?=	yes
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
+
+MALLOC_OPTIONS?=	CFGJRSUX
+TEST_ENV?=		MALLOC_OPTIONS=${MALLOC_OPTIONS}
 
 # XXX detect from ssh binary?
 SSH1?=		no
