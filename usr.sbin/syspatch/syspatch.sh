@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.18 2016/11/01 12:41:46 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.19 2016/11/01 14:45:46 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -35,7 +35,7 @@ needs_root()
 
 apply_patch()
 {
-	local _explodir _file _files _patch="$1"
+	local _explodir _file _files _patch=$1
 	[[ -n ${_patch} ]]
 
 	local _explodir=${_TMP}/${_patch}
@@ -67,7 +67,8 @@ apply_patches()
 	[[ -n ${_patches} ]] || return 0 # nothing to do
 
 	for _patch in ${_patches}; do
-		fetch_and_verify "${_patch}" && apply_patch "${_patch}"
+		fetch_and_verify "${_patch}"
+		apply_patch "${_patch}"
 	done
 
 	# non-fatal: the syspatch tarball should have correct permissions
@@ -111,20 +112,19 @@ create_rollback()
 fetch_and_verify()
 {
 	# XXX privsep ala installer
-	local _patch="$@"
+	local _patch=$1
 	[[ -n ${_patch} ]]
 
 	local _key="/etc/signify/openbsd-${_RELINT}-syspatch.pub" _p
 
+	# XXX handle bogus PATCH_PATH (ftp(1) interactive mode)
 	${_FETCH} -o "${_TMP}/SHA256.sig" "${PATCH_PATH}/SHA256.sig"
 
-	for _p in ${_patch}; do
-		_p=${_p}.tgz
-		 ${_FETCH} -mD "Applying" -o "${_TMP}/${_p}" \
-			"${PATCH_PATH}/${_p}"
-		(cd ${_TMP} &&
-			/usr/bin/signify -qC -p ${_key} -x SHA256.sig ${_p})
-	done
+	# XXX see above
+	${_FETCH} -mD "Applying" -o "${_TMP}/${_patch}.tgz" \
+		"${PATCH_PATH}/${_patch}.tgz"
+	(cd ${_TMP} &&
+		/usr/bin/signify -qC -p ${_key} -x SHA256.sig ${_patch}.tgz)
 }
 
 install_file()
