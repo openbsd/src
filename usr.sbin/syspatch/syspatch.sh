@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.21 2016/11/01 16:05:53 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.22 2016/11/01 16:21:47 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -63,17 +63,13 @@ apply_patches()
 {
 	needs_root
 	local _m _patch _patches="$(ls_missing)"
-	[[ -n ${_patches} ]] || return 0 # nothing to do
 
 	for _patch in ${_patches}; do
 		fetch_and_verify "${_patch}"
 		apply_patch "${_patch}"
 	done
 
-	# non-fatal: the syspatch tarball should have correct permissions
-	for _m in 4.4BSD BSD.x11; do
-		mtree -qdef /etc/mtree/${_m}.dist -p / -U >/dev/null || true
-	done
+	sp_cleanup
 }
 
 create_rollback()
@@ -209,6 +205,11 @@ sp_cleanup()
 
 	# remove rollback kernel if all kernel syspatches have been reverted
 	cmp -s /bsd /bsd.rollback${_RELINT} && rm /bsd.rollback${_RELINT}
+
+	# non-fatal: the syspatch|rollback tarball should have correct perms
+	for _m in 4.4BSD BSD.x11; do
+		mtree -qdef /etc/mtree/${_m}.dist -p / -U >/dev/null || true
+	done
 }
 
 rollback_patch()
@@ -235,6 +236,7 @@ rollback_patch()
 		fi
 	done
 
+	sp_cleanup
 	rm ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
 		${_PDIR}/${_REL}/${_patch#syspatch-${_RELINT}-}.patch.sig
 }
