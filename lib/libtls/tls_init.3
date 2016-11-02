@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.74 2016/11/02 17:32:42 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.75 2016/11/02 18:26:14 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -50,7 +50,6 @@
 .Nm tls_config_verify ,
 .Nm tls_config_verify_client ,
 .Nm tls_config_verify_client_optional ,
-.Nm tls_ocsp_process_response ,
 .Nm tls_peer_cert_provided ,
 .Nm tls_peer_cert_contains_name ,
 .Nm tls_peer_cert_issuer ,
@@ -58,6 +57,7 @@
 .Nm tls_peer_cert_hash ,
 .Nm tls_peer_cert_notbefore ,
 .Nm tls_peer_cert_notafter ,
+.Nm tls_ocsp_process_response ,
 .Nm tls_peer_ocsp_cert_status ,
 .Nm tls_peer_ocsp_crl_reason ,
 .Nm tls_peer_ocsp_next_update ,
@@ -560,27 +560,27 @@ The following functions return information about the peer certificate from
 .Ar ctx
 that was obtained by validating a stapled OCSP response during the handshake,
 or via a previous call to
-.Fn tls_ocsp_process_response
+.Fn tls_ocsp_process_response .
 .Bl -bullet -offset four
 .It
 .Fn tls_peer_ocsp_cert_status
-returns the OCSP certificate status code as per RFC 6960 section 2.2
+returns the OCSP certificate status code as per RFC 6960 section 2.2.
 .It
 .Fn tls_peer_ocsp_crl_reason
 returns the OCSP certificate revocation reason status code as per RFC 5280
-section 5.3.1
+section 5.3.1.
 .It
 .Fn tls_peer_ocsp_next_update
-returns the OCSP next update time
+returns the OCSP next update time.
 .It
 .Fn tls_peer_ocsp_response_status
-returns the OCSP response status as per RFC 6960 section 2.3
+returns the OCSP response status as per RFC 6960 section 2.3.
 .It
 .Fn tls_peer_ocsp_revocation_time
-returns the OCSP revocation time
+returns the OCSP revocation time.
 .It
 .Fn tls_peer_ocsp_this_update
-returns the OCSP this update time
+returns the OCSP this update time.
 .El
 .Pp
 The following are TLS related utility functions:
