@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.25 2016/11/01 21:51:44 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.26 2016/11/02 18:04:50 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -196,6 +196,7 @@ rollback_patch()
 	_patch="$(ls_installed | sort -V | tail -1)"
 	[[ -n ${_patch} ]]
 
+	echo "Reverting ${_patch}"
 	_explodir=${_TMP}/rollback-${_patch}
 	mkdir -p ${_explodir}
 
