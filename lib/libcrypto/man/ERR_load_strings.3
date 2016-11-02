@@ -1,0 +1,66 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt ERR_LOAD_STRINGS 3
+.Os
+.Sh NAME
+.Nm ERR_load_strings ,
+.Nm ERR_PACK ,
+.Nm ERR_get_next_error_library
+.Nd load arbitrary OpenSSL error strings
+.Sh SYNOPSIS
+.In openssl/err.h
+.Ft void
+.Fo ERR_load_strings
+.Fa "int lib"
+.Fa "ERR_STRING_DATA str[]"
+.Fc
+.Ft int
+.Fn ERR_get_next_error_library void
+.Ft unsigned long
+.Fo ERR_PACK
+.Fa "int lib"
+.Fa "int func"
+.Fa "int reason"
+.Fc
+.Sh DESCRIPTION
+.Fn ERR_load_strings
+registers error strings for library number
+.Fa lib .
+.Pp
+.Fa str
+is an array of error string data:
+.Bd -literal -offset indent
+typedef struct ERR_string_data_st
+{
+        unsigned long error;
+        char *string;
+} ERR_STRING_DATA;
+.Ed
+.Pp
+The error code is generated from the library number and a function and
+reason code:
+.Pp
+.Dl error = ERR_PACK(lib, func, reason)
+.Pp
+.Fn ERR_PACK
+is a macro.
+.Pp
+The last entry in the array is
+.Brq 0 , Dv NULL .
+.Pp
+.Fn ERR_get_next_error_library
+can be used to assign library numbers to user libraries at runtime.
+.Sh RETURN VALUE
+.Fn ERR_PACK
+returns the error code.
+.Fn ERR_get_next_error_library
+returns a new library number.
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr ERR_load_strings 3
+.Sh HISTORY
+.Xr ERR_load_error_strings 3
+and
+.Fn ERR_PACK
+are available in all versions of SSLeay and OpenSSL.
+.Fn ERR_get_next_error_library
+was added in SSLeay 0.9.0.

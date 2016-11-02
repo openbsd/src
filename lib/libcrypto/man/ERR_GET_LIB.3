@@ -1,0 +1,63 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt ERR_GET_LIB 3
+.Os
+.Sh NAME
+.Nm ERR_GET_LIB ,
+.Nm ERR_GET_FUNC ,
+.Nm ERR_GET_REASON
+.Nd get library, function and reason codes for OpenSSL errors
+.Sh SYNOPSIS
+.In openssl/err.h
+.Ft int
+.Fo ERR_GET_LIB
+.Fa "unsigned long e"
+.Fc
+.Ft int
+.Fo ERR_GET_FUNC
+.Fa "unsigned long e"
+.Fc
+.Ft int
+.Fo ERR_GET_REASON
+.Fa "unsigned long e"
+.Fc
+.Sh DESCRIPTION
+The error code returned by
+.Xr ERR_get_error 3
+consists of a library number, function code, and reason code.
+.Fn ERR_GET_LIB ,
+.Fn ERR_GET_FUNC ,
+and
+.Fn ERR_GET_REASON
+can be used to extract these.
+.Pp
+The library number and function code describe where the error occurred,
+the reason code is the information about what went wrong.
+.Pp
+Each sub-library of OpenSSL has a unique library number; function and
+reason codes are unique within each sub-library.
+Note that different libraries may use the same value to signal different
+functions and reasons.
+.Pp
+.Dv ERR_R_*
+reason codes such as
+.Dv ERR_R_MALLOC_FAILURE
+are globally unique.
+However, when checking for sub-library specific reason codes, be sure to
+also compare the library number.
+.Pp
+.Fn ERR_GET_LIB ,
+.Fn ERR_GET_FUNC ,
+and
+.Fn ERR_GET_REASON
+are macros.
+.Sh RETURN VALUES
+The library number, function code, and reason code, respectively.
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr ERR_get_error 3
+.Sh HISTORY
+.Fn ERR_GET_LIB ,
+.Fn ERR_GET_FUNC ,
+and
+.Fn ERR_GET_REASON
+are available in all versions of SSLeay and OpenSSL.

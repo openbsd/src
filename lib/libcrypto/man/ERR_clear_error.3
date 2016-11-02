@@ -1,0 +1,22 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt ERR_CLEAR_ERROR 3
+.Os
+.Sh NAME
+.Nm ERR_clear_error
+.Nd clear the OpenSSL error queue
+.Sh SYNOPSIS
+.In openssl/err.h
+.Ft void
+.Fn ERR_clear_error void
+.Sh DESCRIPTION
+.Fn ERR_clear_error
+empties the current thread's error queue.
+.Sh RETURN VALUES
+.Fn ERR_clear_error
+has no return value.
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr ERR_get_error 3
+.Sh HISTORY
+.Fn ERR_clear_error
+is available in all versions of SSLeay and OpenSSL.

@@ -1,0 +1,57 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt ERR_PRINT_ERRORS 3
+.Os
+.Sh NAME
+.Nm ERR_print_errors ,
+.Nm ERR_print_errors_fp
+.Nd print OpenSSL error messages
+.Sh SYNOPSIS
+.In openssl/err.h
+.Ft void
+.Fo ERR_print_errors
+.Fa "BIO *bp"
+.Fc
+.Ft void
+.Fo ERR_print_errors_fp
+.Fa "FILE *fp"
+.Fc
+.Sh DESCRIPTION
+.Fn ERR_print_errors
+is a convenience function that prints the error strings for all errors
+that OpenSSL has recorded to
+.Fa bp ,
+thus emptying the error queue.
+.Pp
+.Fn ERR_print_errors_fp
+is the same, except that the output goes to a
+.Vt FILE .
+.Pp
+The error strings have the following format:
+.Bd -literal
+[pid]:error:[error code]:[library name]:[function name]:[reason string]:
+[file name]:[line]:[optional text message]
+.Ed
+.Pp
+The error code is an 8 digit hexadecimal number.
+The library name, the function name, and the reason string are ASCII
+text, as is the optional text message if one was set for the
+respective error code.
+.Pp
+If there is no text string registered for the given error code, the
+error string will contain the numeric code.
+.Sh RETURN VALUES
+.Fn ERR_print_errors
+and
+.Fn ERR_print_errors_fp
+return no values.
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr ERR_error_string 3 ,
+.Xr ERR_get_error 3 ,
+.Xr ERR_load_crypto_strings 3 ,
+.Xr SSL_load_error_strings 3
+.Sh HISTORY
+.Fn ERR_print_errors
+and
+.Fn ERR_print_errors_fp
+are available in all versions of SSLeay and OpenSSL.

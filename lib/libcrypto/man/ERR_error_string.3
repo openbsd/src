@@ -1,0 +1,114 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt ERR_ERROR_STRING 3
+.Os
+.Sh NAME
+.Nm ERR_error_string ,
+.Nm ERR_error_string_n ,
+.Nm ERR_lib_error_string ,
+.Nm ERR_func_error_string ,
+.Nm ERR_reason_error_string
+.Nd obtain human-readable OpenSSL error messages
+.Sh SYNOPSIS
+.In openssl/err.h
+.Ft char *
+.Fo ERR_error_string
+.Fa "unsigned long e"
+.Fa "char *buf"
+.Fc
+.Ft void
+.Fo ERR_error_string_n
+.Fa "unsigned long e"
+.Fa "char *buf"
+.Fa "size_t len"
+.Fc
+.Ft const char *
+.Fo ERR_lib_error_string
+.Fa "unsigned long e"
+.Fc
+.Ft const char *
+.Fo ERR_func_error_string
+.Fa "unsigned long e"
+.Fc
+.Ft const char *
+.Fo ERR_reason_error_string
+.Fa "unsigned long e"
+.Fc
+.Sh DESCRIPTION
+.Fn ERR_error_string
+generates a human-readable string representing the error code
+.Fa e
+and places it in
+.Fa buf .
+.Fa buf
+must be at least 120 bytes long.
+If
+.Fa buf
+is
+.Dv NULL ,
+the error string is placed in a static buffer.
+.Fn ERR_error_string_n
+is a variant of
+.Fn ERR_error_string
+that writes at most
+.Fa len
+characters (including the terminating NUL) and truncates the string
+if necessary.
+For
+.Fn ERR_error_string_n ,
+.Fa buf
+may not be
+.Dv NULL .
+.Pp
+The string will have the following format:
+.Pp
+.Dl error:[error code]:[library name]:[function name]:[reason string]
+.Pp
+The error code is an 8 digit hexadecimal number.
+The library name, the function name, and the reason string are ASCII
+text.
+.Pp
+.Fn ERR_lib_error_string ,
+.Fn ERR_func_error_string ,
+and
+.Fn ERR_reason_error_string
+return the library name, the function name, and the reason string,
+respectively.
+.Pp
+The OpenSSL error strings should be loaded by calling
+.Xr ERR_load_crypto_strings 3
+or, for SSL applications,
+.Xr SSL_load_error_strings 3
+first.
+If there is no text string registered for the given error code, the
+error string will contain the numeric code.
+.Pp
+.Xr ERR_print_errors 3
+can be used to print all error codes currently in the queue.
+.Sh RETURN VALUES
+.Fn ERR_error_string
+returns a pointer to a static buffer containing the string if
+.Fa buf
+is
+.Dv NULL ,
+or
+.Fa buf
+otherwise.
+.Pp
+.Fn ERR_lib_error_string ,
+.Fn ERR_func_error_string ,
+and
+.Fn ERR_reason_error_string
+return the strings, or
+.Dv NULL
+if none is registered for the error code.
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr ERR_get_error 3 ,
+.Xr ERR_load_crypto_strings 3 ,
+.Xr ERR_print_errors 3 ,
+.Xr SSL_load_error_strings 3
+.Sh HISTORY
+.Fn ERR_error_string
+is available in all versions of SSLeay and OpenSSL.
+.Fn ERR_error_string_n
+was added in OpenSSL 0.9.6.

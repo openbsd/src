@@ -1,0 +1,135 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt ERR_GET_ERROR 3
+.Os
+.Sh NAME
+.Nm ERR_get_error ,
+.Nm ERR_peek_error ,
+.Nm ERR_peek_last_error ,
+.Nm ERR_get_error_line ,
+.Nm ERR_peek_error_line ,
+.Nm ERR_peek_last_error_line ,
+.Nm ERR_get_error_line_data ,
+.Nm ERR_peek_error_line_data ,
+.Nm ERR_peek_last_error_line_data
+.Nd obtain OpenSSL error code and data
+.Sh SYNOPSIS
+.In openssl/err.h
+.Ft unsigned long
+.Fn ERR_get_error void
+.Ft unsigned long
+.Fn ERR_peek_error void
+.Ft unsigned long
+.Fn ERR_peek_last_error void
+.Ft unsigned long
+.Fo ERR_get_error_line
+.Fa "const char **file"
+.Fa "int *line"
+.Fc
+.Ft unsigned long
+.Fo ERR_peek_error_line
+.Fa "const char **file"
+.Fa "int *line"
+.Fc
+.Ft unsigned long
+.Fo ERR_peek_last_error_line
+.Fa "const char **file"
+.Fa "int *line"
+.Fc
+.Ft unsigned long
+.Fo ERR_get_error_line_data
+.Fa "const char **file"
+.Fa "int *line"
+.Fa "const char **data"
+.Fa "int *flags"
+.Fc
+.Ft unsigned long
+.Fo ERR_peek_error_line_data
+.Fa "const char **file"
+.Fa "int *line"
+.Fa "const char **data"
+.Fa "int *flags"
+.Fc
+.Ft unsigned long
+.Fo ERR_peek_last_error_line_data
+.Fa "const char **file"
+.Fa "int *line"
+.Fa "const char **data"
+.Fa "int *flags"
+.Fc
+.Sh DESCRIPTION
+.Fn ERR_get_error
+returns the earliest error code from the thread's error queue and
+removes the entry.
+This function can be called repeatedly until there are no more error
+codes to return.
+.Pp
+.Fn ERR_peek_error
+returns the earliest error code from the thread's error queue without
+modifying it.
+.Pp
+.Fn ERR_peek_last_error
+returns the latest error code from the thread's error queue without
+modifying it.
+.Pp
+See
+.Xr ERR_GET_LIB 3
+for obtaining information about location and reason of the error, and
+.Xr ERR_error_string 3
+for human-readable error messages.
+.Pp
+.Fn ERR_get_error_line ,
+.Fn ERR_peek_error_line ,
+and
+.Fn ERR_peek_last_error_line
+are the same as the above, but they additionally store the file name and
+line number where the error occurred in
+.Pf * Fa file
+and
+.Pf * Fa line ,
+unless these are
+.Dv NULL .
+.Pp
+.Fn ERR_get_error_line_data ,
+.Fn ERR_peek_error_line_data ,
+and
+.Fn ERR_peek_last_error_line_data
+store additional data and flags associated with the error code in
+.Pf * Fa data
+and
+.Pf * Fa flags ,
+unless these are
+.Dv NULL .
+.Pf * Fa data
+contains a string if
+.Pf * Fa flags Ns & Ns Dv ERR_TXT_STRING
+is true.
+.Pp
+An application
+.Sy MUST NOT
+free the
+.Pf * Fa data
+pointer (or any other pointers returned by these functions) with
+.Xr free 3
+as freeing is handled automatically by the error library.
+.Sh RETURN VALUES
+The error code, or 0 if there is no error in the queue.
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr ERR_error_string 3 ,
+.Xr ERR_GET_LIB 3
+.Sh HISTORY
+.Fn ERR_get_error ,
+.Fn ERR_peek_error ,
+.Fn ERR_get_error_line ,
+and
+.Fn ERR_peek_error_line
+are available in all versions of SSLeay and OpenSSL.
+.Fn ERR_get_error_line_data
+and
+.Fn ERR_peek_error_line_data
+were added in SSLeay 0.9.0.
+.Fn ERR_peek_last_error ,
+.Fn ERR_peek_last_error_line ,
+and
+.Fn ERR_peek_last_error_line_data
+were added in OpenSSL 0.9.7.

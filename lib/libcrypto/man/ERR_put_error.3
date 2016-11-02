@@ -1,0 +1,58 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt ERR_PUT_ERROR 3
+.Os
+.Sh NAME
+.Nm ERR_put_error ,
+.Nm ERR_add_error_data
+.Nd record an OpenSSL error
+.Sh SYNOPSIS
+.In openssl/err.h
+.Ft void
+.Fo ERR_put_error
+.Fa "int lib"
+.Fa "int func"
+.Fa "int reason"
+.Fa "const char *file"
+.Fa "int line"
+.Fc
+.Ft void
+.Fo ERR_add_error_data
+.Fa "int num"
+.Fa ...
+.Fc
+.Sh DESCRIPTION
+.Fn ERR_put_error
+adds an error code to the thread's error queue.
+It signals that the error of reason code
+.Fa reason
+occurred in function
+.Fa func
+of library
+.Fa lib ,
+in line number
+.Fa line
+of
+.Fa file .
+This function is usually called by a macro.
+.Pp
+.Fn ERR_add_error_data
+associates the concatenation of its
+.Fa num
+string arguments with the error code added last.
+.Pp
+.Xr ERR_load_strings 3
+can be used to register error strings so that the application can a
+generate human-readable error messages for the error code.
+.Sh RETURN VALUES
+.Fn ERR_put_error
+and
+.Fn ERR_add_error_data
+return no values.
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr ERR_load_strings 3
+.Sh HISTORY
+.Fn ERR_put_error
+is available in all versions of SSLeay and OpenSSL.
+.Fn ERR_add_error_data
+was added in SSLeay 0.9.0.

@@ -1,0 +1,48 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt ERR_LOAD_CRYPTO_STRINGS 3
+.Os
+.Sh NAME
+.Nm ERR_load_crypto_strings ,
+.Nm SSL_load_error_strings ,
+.Nm ERR_free_strings
+.Nd load and free OpenSSL error strings
+.Sh SYNOPSIS
+.In openssl/err.h
+.Ft void
+.Fn ERR_load_crypto_strings void
+.Ft void
+.Fn ERR_free_strings void
+.In openssl/ssl.h
+.Ft void
+.Fn SSL_load_error_strings void
+.Sh DESCRIPTION
+.Fn ERR_load_crypto_strings
+registers the error strings for all
+.Xr crypto 3
+functions.
+.Fn SSL_load_error_strings
+does the same, but also registers the
+.Xr ssl 3
+error strings.
+.Pp
+One of these functions should be called before generating textual error
+messages.
+However, this is not required when memory usage is an issue.
+.Pp
+.Fn ERR_free_strings
+frees all previously loaded error strings.
+.Sh RETURN VALUES
+.Fn ERR_load_crypto_strings ,
+.Fn SSL_load_error_strings ,
+and
+.Fn ERR_free_strings
+return no values.
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr ERR_error_string 3
+.Sh HISTORY
+.Xr ERR_load_error_strings 3 ,
+.Fn SSL_load_error_strings ,
+and
+.Fn ERR_free_strings
+are available in all versions of SSLeay and OpenSSL.

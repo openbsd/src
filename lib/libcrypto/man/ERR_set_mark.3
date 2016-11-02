@@ -1,0 +1,35 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt ERR_SET_MARK 3
+.Os
+.Sh NAME
+.Nm ERR_set_mark ,
+.Nm ERR_pop_to_mark
+.Nd set marks and pop OpenSSL errors until mark
+.Sh SYNOPSIS
+.In openssl/err.h
+.Ft int
+.Fn ERR_set_mark void
+.Ft int
+.Fn ERR_pop_to_mark void
+.Sh DESCRIPTION
+.Fn ERR_set_mark
+sets a mark on the current topmost error record if there is one.
+.Pp
+.Fn ERR_pop_to_mark
+will pop the top of the error stack until a mark is found.
+The mark is then removed.
+If there is no mark, the whole stack is removed.
+.Sh RETURN VALUES
+.Fn ERR_set_mark
+returns 0 if the error stack is empty, otherwise 1.
+.Pp
+.Fn ERR_pop_to_mark
+returns 0 if there was no mark in the error stack, which implies that
+the stack became empty, otherwise 1.
+.Sh SEE ALSO
+.Xr ERR 3
+.Sh HISTORY
+.Fn ERR_set_mark
+and
+.Fn ERR_pop_to_mark
+were added in OpenSSL 0.9.8.
