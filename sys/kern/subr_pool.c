@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.200 2016/11/02 01:58:07 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.201 2016/11/02 03:29:48 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -103,6 +103,15 @@ struct pool_list {
 	unsigned long		 pl_nitems;	/* items in list */
 	TAILQ_ENTRY(pool_list)	 pl_nextl;	/* list of lists */
 };
+
+#define POOL_LIST_NITEMS_MASK		0x7ffffffUL
+#define POOL_LIST_NITEMS_POISON		0x8000000UL
+
+#define POOL_LIST_POISONED(_pl)						\
+    ISSET((_pl)->pl_nitems, POOL_LIST_NITEMS_POISON)
+
+#define POOL_LIST_NITEMS(_pl)						\
+    ((_pl)->pl_nitems & POOL_LIST_NITEMS_MASK)
 
 struct pool_cache {
 	struct pool_list	*pc_actv;
@@ -1678,11 +1687,28 @@ pool_cache_get(struct pool *pp)
 	}
 
 	pc->pc_actv = pl->pl_next;
-	pc->pc_nactv = pl->pl_nitems - 1;
+	pc->pc_nactv = POOL_LIST_NITEMS(pl) - 1;
 	pc->pc_gets++;
 	pc->pc_nout++;
+
 done:
 	pool_cache_leave(pp, pc, s);
+
+#ifdef DIAGNOSTIC
+	if (pool_debug && pl != NULL && POOL_LIST_POISONED(pl)) {
+		size_t pidx;
+		uint32_t pval;
+
+		if (poison_check(pl + 1, pp->pr_size - sizeof(*pl),
+		    &pidx, &pval)) {
+			int *ip = (int *)(pl + 1);
+			panic("%s: %s cpu free list modified: "
+			    "item addr %p; offset 0x%zx=0x%x",
+			    __func__, pp->pr_wchan, pl,
+			    pidx * sizeof(int) + sizeof(*pl), ip[pidx]);
+		}
+	}
+#endif
 
 	return (pl);
 }
@@ -1692,14 +1718,19 @@ pool_cache_put(struct pool *pp, void *v)
 {
 	struct pool_cache *pc;
 	struct pool_list *pl = v;
-	unsigned long cache_items = pp->pr_cache_items;
 	unsigned long nitems;
 	int s;
+#ifdef DIAGNOSTIC
+	int poison = pool_debug && pp->pr_size > sizeof(*pl);
+
+	if (poison)
+		poison_mem(pl + 1, pp->pr_size - sizeof(*pl));
+#endif
 
 	pc = pool_cache_enter(pp, &s);
 
 	nitems = pc->pc_nactv;
-	if (nitems >= cache_items) {
+	if (nitems >= pp->pr_cache_items) {
 		if (pc->pc_prev != NULL)
 			pool_list_free(pp, pc, pc->pc_prev);
 			
@@ -1712,6 +1743,9 @@ pool_cache_put(struct pool *pp, void *v)
 
 	pl->pl_next = pc->pc_actv;
 	pl->pl_nitems = ++nitems;
+#ifdef DIAGNOSTIC
+	pl->pl_nitems |= poison ? POOL_LIST_NITEMS_POISON : 0;
+#endif
 
 	pc->pc_actv = pl;
 	pc->pc_nactv = nitems;
