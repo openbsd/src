@@ -1,0 +1,34 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt DSA_GENERATE_KEY 3
+.Os
+.Sh NAME
+.Nm DSA_generate_key
+.Nd generate DSA key pair
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.Ft int
+.Fo DSA_generate_key
+.Fa "DSA *a"
+.Fc
+.Sh DESCRIPTION
+.Fn DSA_generate_key
+expects
+.Fa a
+to contain DSA parameters.
+It generates a new key pair and stores it in
+.Fa a->pub_key
+and
+.Fa a->priv_key .
+.Sh RETURN VALUE
+.Fn DSA_generate_key
+returns 1 on success or 0 otherwise.
+The error codes can be obtained by
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr dsa 3 ,
+.Xr DSA_generate_parameters 3 ,
+.Xr ERR_get_error 3 ,
+.Xr rand 3
+.Sh HISTORY
+.Fn DSA_generate_key
+is available since SSLeay 0.8.

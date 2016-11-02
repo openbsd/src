@@ -1,0 +1,68 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt DSA_DO_SIGN 3
+.Os
+.Sh NAME
+.Nm DSA_do_sign ,
+.Nm DSA_do_verify
+.Nd raw DSA signature operations
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.Ft DSA_SIG *
+.Fo DSA_do_sign
+.Fa "const unsigned char *dgst"
+.Fa "int dlen"
+.Fa "DSA *dsa"
+.Fc
+.Ft int
+.Fo DSA_do_verify
+.Fa "const unsigned char *dgst"
+.Fa "int dgst_len"
+.Fa "DSA_SIG *sig"
+.Fa "DSA *dsa"
+.Fc
+.Sh DESCRIPTION
+.Fn DSA_do_sign
+computes a digital signature on the
+.Fa dlen
+byte message digest
+.Fa dgst
+using the private key
+.Fa dsa
+and returns it in a newly allocated
+.Vt DSA_SIG
+structure.
+.Pp
+.Xr DSA_sign_setup 3
+may be used to precompute part of the signing operation in case
+signature generation is time-critical.
+.Pp
+.Fn DSA_do_verify
+verifies that the signature
+.Fa sig
+matches a given message digest
+.Fa dgst
+of size
+.Fa dgst_len .
+.Fa dsa
+is the signer's public key.
+.Sh RETURN VALUES
+.Fn DSA_do_sign
+returns the signature or
+.Dv NULL
+on error.
+.Fn DSA_do_verify
+returns 1 for a valid signature, 0 for an incorrect signature,
+and -1 on error.
+The error codes can be obtained by
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr dsa 3 ,
+.Xr DSA_SIG_new 3 ,
+.Xr DSA_sign 3 ,
+.Xr ERR_get_error 3 ,
+.Xr rand 3
+.Sh HISTORY
+.Fn DSA_do_sign
+and
+.Fn DSA_do_verify
+were added in OpenSSL 0.9.3.

@@ -1,0 +1,409 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt EC_POINT_NEW 3
+.Os
+.Sh NAME
+.Nm EC_POINT_new ,
+.Nm EC_POINT_free ,
+.Nm EC_POINT_clear_free ,
+.Nm EC_POINT_copy ,
+.Nm EC_POINT_dup ,
+.Nm EC_POINT_method_of ,
+.Nm EC_POINT_set_to_infinity ,
+.Nm EC_POINT_set_Jprojective_coordinates ,
+.Nm EC_POINT_get_Jprojective_coordinates_GFp ,
+.Nm EC_POINT_set_affine_coordinates_GFp ,
+.Nm EC_POINT_get_affine_coordinates_GFp ,
+.Nm EC_POINT_set_compressed_coordinates_GFp ,
+.Nm EC_POINT_set_affine_coordinates_GF2m ,
+.Nm EC_POINT_get_affine_coordinates_GF2m ,
+.Nm EC_POINT_set_compressed_coordinates_GF2m ,
+.Nm EC_POINT_point2oct ,
+.Nm EC_POINT_oct2point ,
+.Nm EC_POINT_point2bn ,
+.Nm EC_POINT_bn2point ,
+.Nm EC_POINT_point2hex ,
+.Nm EC_POINT_hex2point
+.Nd create, destroy, and manipulate EC_POINT objects
+.Sh SYNOPSIS
+.In openssl/ec.h
+.In openssl/bn.h
+.Ft EC_POINT *
+.Fo EC_POINT_new
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft void
+.Fo EC_POINT_free
+.Fa "EC_POINT *point"
+.Fc
+.Ft void
+.Fo EC_POINT_clear_free
+.Fa "EC_POINT *point"
+.Fc
+.Ft int
+.Fo EC_POINT_copy
+.Fa "EC_POINT *dst"
+.Fa "const EC_POINT *src"
+.Fc
+.Ft EC_POINT *
+.Fo EC_POINT_dup
+.Fa "const EC_POINT *src"
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft const EC_METHOD *
+.Fo EC_POINT_method_of
+.Fa "const EC_POINT *point"
+.Fc
+.Ft int
+.Fo EC_POINT_set_to_infinity
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *point"
+.Fc
+.Ft int
+.Fo EC_POINT_set_Jprojective_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "const BIGNUM *y"
+.Fa "const BIGNUM *z"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_get_Jprojective_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fa "BIGNUM *x"
+.Fa "BIGNUM *y"
+.Fa "BIGNUM *z"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_set_affine_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "const BIGNUM *y"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_get_affine_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fa "BIGNUM *x"
+.Fa "BIGNUM *y"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_set_compressed_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "int y_bit"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_set_affine_coordinates_GF2m
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "const BIGNUM *y"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_get_affine_coordinates_GF2m
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fa "BIGNUM *x"
+.Fa "BIGNUM *y"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_set_compressed_coordinates_GF2m
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "int y_bit"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft size_t
+.Fo EC_POINT_point2oct
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fa "point_conversion_form_t form"
+.Fa "unsigned char *buf"
+.Fa "size_t len"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_oct2point
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const unsigned char *buf"
+.Fa "size_t len"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft BIGNUM *
+.Fo EC_POINT_point2bn
+.Fa "const EC_GROUP *"
+.Fa "const EC_POINT *"
+.Fa "point_conversion_form_t form"
+.Fa "BIGNUM *"
+.Fa "BN_CTX *"
+.Fc
+.Ft EC_POINT *
+.Fo EC_POINT_bn2point
+.Fa "const EC_GROUP *"
+.Fa "const BIGNUM *"
+.Fa "EC_POINT *"
+.Fa "BN_CTX *"
+.Fc
+.Ft char *
+.Fo EC_POINT_point2hex
+.Fa "const EC_GROUP *"
+.Fa "const EC_POINT *"
+.Fa "point_conversion_form_t form"
+.Fa "BN_CTX *"
+.Fc
+.Ft EC_POINT *
+.Fo EC_POINT_hex2point
+.Fa "const EC_GROUP *"
+.Fa "const char *"
+.Fa "EC_POINT *"
+.Fa "BN_CTX *"
+.Fc
+.Sh DESCRIPTION
+An
+.Vt EC_POINT
+represents a point on a curve.
+A new point is constructed by calling the function
+.Fn EC_POINT_new
+and providing the
+.Fa group
+object that the point relates to.
+.Pp
+.Fn EC_POINT_free
+frees the memory associated with the
+.Vt EC_POINT .
+.Pp
+.Fn EC_POINT_clear_free
+destroys any sensitive data held within the
+.Vt EC_POINT
+and then frees its memory.
+.Pp
+.Fn EC_POINT_copy
+copies the point
+.Fa src
+into
+.Fa dst .
+Both
+.Fa src
+and
+.Fa dst
+must use the same
+.Vt EC_METHOD .
+.Pp
+.Fn EC_POINT_dup
+creates a new
+.Vt EC_POINT
+object and copies the content from
+.Fa src
+to the newly created
+.Vt EC_POINT
+object.
+.Pp
+.Fn EC_POINT_method_of
+obtains the
+.Vt EC_METHOD
+associated with
+.Fa point .
+.Pp
+A valid point on a curve is the special point at infinity.
+A point is set to be at infinity by calling
+.Fn EC_POINT_set_to_infinity .
+.Pp
+The affine coordinates for a point describe a point in terms of its
+.Fa x
+and
+.Fa y
+position.
+The functions
+.Fn EC_POINT_set_affine_coordinates_GFp
+and
+.Fn EC_POINT_set_affine_coordinates_GF2m
+set the
+.Fa x
+and
+.Fa y
+coordinates for the point
+.Fa p
+defined over the curve given in
+.Fa group .
+.Pp
+As well as the affine coordinates, a point can alternatively be
+described in terms of its Jacobian projective coordinates (for Fp
+curves only).
+Jacobian projective coordinates are expressed as three values
+.Fa x ,
+.Fa y ,
+and
+.Fa z .
+Working in this coordinate system provides more efficient point
+multiplication operations.
+A mapping exists between Jacobian projective coordinates and affine
+coordinates.
+A Jacobian projective coordinate
+.Pq Fa x , y , z
+can be written as an affine coordinate as
+.Pp
+.Dl (x/(z^2), y/(z^3)) .
+.Pp
+Conversion to Jacobian projective to affine coordinates is simple.
+The coordinate
+.Pq Fa x , y
+is mapped to
+.Pq Fa x , y , No 1 .
+To set or get the projective coordinates use
+.Fn EC_POINT_set_Jprojective_coordinates_GFp
+and
+.Fn EC_POINT_get_Jprojective_coordinates_GFp ,
+respectively.
+.Pp
+Points can also be described in terms of their compressed coordinates.
+For a point
+.Pq Fa x , y ,
+for any given value for
+.Fa x
+such that the point is on the curve, there will only ever be two
+possible values for
+.Fa y .
+Therefore a point can be set using the
+.Fn EC_POINT_set_compressed_coordinates_GFp
+and
+.Fn EC_POINT_set_compressed_coordinates_GF2m
+functions where
+.Fa x
+is the x coordinate and
+.Fa y_bit
+is a value 0 or 1 to identify which of the two possible values for y
+should be used.
+.Pp
+In addition
+.Vt EC_POINT Ns s
+can be converted to and from various external representations.
+Supported representations are octet strings,
+.Vt BIGNUM Ns s ,
+and hexadecimal.
+The format of the external representation is described by the
+point_conversion_form.
+See
+.Xr EC_GROUP_copy 3
+for a description of point_conversion_form.
+Octet strings are stored in a buffer along with an associated buffer
+length.
+A point held in a
+.Vt BIGNUM
+is calculated by converting the point to an octet string and then
+converting that octet string into a
+.Vt BIGNUM
+integer.
+Points in hexadecimal format are stored in a NUL terminated character
+string where each character is one of the printable values 0-9 or A-F
+(or a-f).
+.Pp
+The functions
+.Fn EC_POINT_point2oct ,
+.Fn EC_POINT_oct2point ,
+.Fn EC_POINT_point2bn ,
+.Fn EC_POINT_bn2point ,
+.Fn EC_POINT_point2hex ,
+and
+.Fn EC_POINT_hex2point
+convert from and to
+.Vt EC_POINT Ns s
+for the formats octet string,
+.Vt BIGNUM ,
+and hexadecimal, respectively.
+.Pp
+The function
+.Fn EC_POINT_point2oct
+must be supplied with a
+.Fa buf
+long enough to store the octet string.
+The return value provides the number of octets stored.
+Calling the function with a
+.Dv NULL
+.Fa buf
+will not perform the conversion but will still return the required
+buffer length.
+.Pp
+The function
+.Fn EC_POINT_point2hex
+will allocate sufficient memory to store the hexadecimal string.
+It is the caller's responsibility to free this memory with a subsequent
+call to
+.Xr free 3 .
+.Sh RETURN VALUES
+.Fn EC_POINT_new
+and
+.Fn EC_POINT_dup
+return the newly allocated
+.Vt EC_POINT
+or
+.Dv NULL
+on error.
+.Pp
+The following functions return 1 on success or 0 on error:
+.Fn EC_POINT_copy ,
+.Fn EC_POINT_set_to_infinity ,
+.Fn EC_POINT_set_Jprojective_coordinates_GFp ,
+.Fn EC_POINT_get_Jprojective_coordinates_GFp ,
+.Fn EC_POINT_set_affine_coordinates_GFp ,
+.Fn EC_POINT_get_affine_coordinates_GFp ,
+.Fn EC_POINT_set_compressed_coordinates_GFp ,
+.Fn EC_POINT_set_affine_coordinates_GF2m ,
+.Fn EC_POINT_get_affine_coordinates_GF2m ,
+.Fn EC_POINT_set_compressed_coordinates_GF2m ,
+and
+.Fn EC_POINT_oct2point .
+.Pp
+.Fn EC_POINT_method_of
+returns the
+.Vt EC_METHOD
+associated with the supplied
+.Vt EC_POINT .
+.Pp
+.Fn EC_POINT_point2oct
+returns the length of the required buffer, or 0 on error.
+.Pp
+.Fn EC_POINT_point2bn
+returns the pointer to the
+.Vt BIGNUM
+supplied or
+.Vt NULL
+on error.
+.Pp
+.Fn EC_POINT_bn2point
+returns the pointer to the
+.Vt EC_POINT
+supplied or
+.Dv NULL
+on error.
+.Pp
+.Fn EC_POINT_point2hex
+returns a pointer to the hex string or
+.Dv NULL
+on error.
+.Pp
+.Fn EC_POINT_hex2point
+returns the pointer to the
+.Vt EC_POINT supplied or
+.Dv NULL
+on error.
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr d2i_ECPKParameters 3 ,
+.Xr ec 3 ,
+.Xr EC_GFp_simple_method 3 ,
+.Xr EC_GROUP_copy 3 ,
+.Xr EC_GROUP_new 3 ,
+.Xr EC_KEY_new 3 ,
+.Xr EC_POINT_add 3

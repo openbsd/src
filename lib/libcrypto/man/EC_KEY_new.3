@@ -1,0 +1,411 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt EC_KEY_NEW 3
+.Os
+.Sh NAME
+.Nm EC_KEY_new ,
+.Nm EC_KEY_get_flags ,
+.Nm EC_KEY_set_flags ,
+.Nm EC_KEY_clear_flags ,
+.Nm EC_KEY_new_by_curve_name ,
+.Nm EC_KEY_free ,
+.Nm EC_KEY_copy ,
+.Nm EC_KEY_dup ,
+.Nm EC_KEY_up_ref ,
+.Nm EC_KEY_get0_group ,
+.Nm EC_KEY_set_group ,
+.Nm EC_KEY_get0_private_key ,
+.Nm EC_KEY_set_private_key ,
+.Nm EC_KEY_get0_public_key ,
+.Nm EC_KEY_set_public_key ,
+.Nm EC_KEY_get_enc_flags ,
+.Nm EC_KEY_set_enc_flags ,
+.Nm EC_KEY_get_conv_form ,
+.Nm EC_KEY_set_conv_form ,
+.Nm EC_KEY_get_key_method_data ,
+.Nm EC_KEY_insert_key_method_data ,
+.Nm EC_KEY_set_asn1_flag ,
+.Nm EC_KEY_precompute_mult ,
+.Nm EC_KEY_generate_key ,
+.Nm EC_KEY_check_key ,
+.Nm EC_KEY_set_public_key_affine_coordinates
+.Nd create, destroy and manipulate EC_KEY objects
+.Sh SYNOPSIS
+.In openssl/ec.h
+.In openssl/bn.h
+.Ft EC_KEY *
+.Fn EC_KEY_new void
+.Ft int
+.Fo EC_KEY_get_flags
+.Fa "const EC_KEY *key"
+.Fc
+.Ft void
+.Fo EC_KEY_set_flags
+.Fa "EC_KEY *key"
+.Fa "int flags"
+.Fc
+.Ft void
+.Fo EC_KEY_clear_flags
+.Fa "EC_KEY *key"
+.Fa "int flags"
+.Fc
+.Ft EC_KEY *
+.Fo EC_KEY_new_by_curve_name
+.Fa "int nid"
+.Fc
+.Ft void
+.Fo EC_KEY_free
+.Fa "EC_KEY *key"
+.Fc
+.Ft EC_KEY *
+.Fo EC_KEY_copy
+.Fa "EC_KEY *dst"
+.Fa "const EC_KEY *src"
+.Fc
+.Ft EC_KEY *
+.Fo EC_KEY_dup
+.Fa "const EC_KEY *src"
+.Fc
+.Ft int
+.Fo EC_KEY_up_ref
+.Fa "EC_KEY *key"
+.Fc
+.Ft const EC_GROUP *
+.Fo EC_KEY_get0_group
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_set_group
+.Fa "EC_KEY *key"
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft const BIGNUM *
+.Fo EC_KEY_get0_private_key
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_set_private_key
+.Fa "EC_KEY *key"
+.Fa "const BIGNUM *prv"
+.Fc
+.Ft const EC_POINT *
+.Fo EC_KEY_get0_public_key
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_set_public_key
+.Fa "EC_KEY *key"
+.Fa "const EC_POINT *pub"
+.Fc
+.Ft unsigned int
+.Fo EC_KEY_get_enc_flags
+.Fa "const EC_KEY *key"
+.Fc
+.Ft void
+.Fo EC_KEY_set_enc_flags
+.Fa "EC_KEY *key"
+.Fa "unsigned int flags"
+.Fc
+.Ft point_conversion_form_t
+.Fo EC_KEY_get_conv_form
+.Fa "const EC_KEY *key"
+.Fc
+.Ft void
+.Fo EC_KEY_set_conv_form
+.Fa "EC_KEY *key"
+.Fa "point_conversion_form_t cform"
+.Fc
+.Ft void *
+.Fo EC_KEY_get_key_method_data
+.Fa "EC_KEY *key"
+.Fa "void *(*dup_func)(void *)"
+.Fa "void (*free_func)(void *)"
+.Fa "void (*clear_free_func)(void *)"
+.Fc
+.Ft void
+.Fo EC_KEY_insert_key_method_data
+.Fa "EC_KEY *key"
+.Fa "void *data"
+.Fa "void *(*dup_func)(void *)"
+.Fa "void (*free_func)(void *)"
+.Fa "void (*clear_free_func)(void *)"
+.Fc
+.Ft void
+.Fo EC_KEY_set_asn1_flag
+.Fa "EC_KEY *key"
+.Fa "int asn1_flag"
+.Fc
+.Ft int
+.Fo EC_KEY_precompute_mult
+.Fa "EC_KEY *key"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_KEY_generate_key
+.Fa "EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_check_key
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_set_public_key_affine_coordinates
+.Fa "EC_KEY *key"
+.Fa "BIGNUM *x"
+.Fa "BIGNUM *y"
+.Fc
+.Sh DESCRIPTION
+An
+.Vt EC_KEY
+represents a public key and (optionally) an associated private key.
+A new
+.Vt EC_KEY
+(with no associated curve) can be constructed by calling
+.Fn EC_KEY_new .
+The reference count for the newly created
+.Vt EC_KEY
+is initially set to 1.
+A curve can be associated with the
+.Vt EC_KEY
+by calling
+.Fn EC_KEY_set_group .
+.Pp
+Alternatively a new
+.Vt EC_KEY
+can be constructed by calling
+.Fn EC_KEY_new_by_curve_name
+and supplying the
+.Fa nid
+of the associated curve.
+Refer to
+.Xr EC_GROUP_new 3
+for a description of curve names.
+This function simply wraps calls to
+.Fn EC_KEY_new
+and
+.Fn EC_GROUP_new_by_curve_name .
+.Pp
+Calling
+.Fn EC_KEY_free
+decrements the reference count for the
+.Vt EC_KEY
+object, and if it has dropped to zero, then frees the memory associated
+with it.
+.Pp
+.Fn EC_KEY_copy
+copies the contents of the
+.Vt EC_KEY
+in
+.Fa src
+into
+.Fa dst .
+.Pp
+.Fn EC_KEY_dup
+creates a new
+.Vt EC_KEY
+object and copies
+.Fa src
+into it.
+.Pp
+.Fn EC_KEY_up_ref
+increments the reference count associated with the
+.Vt EC_KEY
+object.
+.Pp
+.Fn EC_KEY_generate_key
+generates a new public and private key for the supplied
+.Fa key
+object.
+.Fa key
+must have an
+.Vt EC_GROUP
+object associated with it before calling this function.
+The private key is a random integer (0 < priv_key < order, where order
+is the order of the
+.Vt EC_GROUP
+object).
+The public key is an
+.Vt EC_POINT
+on the curve calculated by multiplying the generator for the curve
+by the private key.
+.Pp
+.Fn EC_KEY_check_key
+performs various sanity checks on the
+.Vt EC_KEY
+object to confirm that it is valid.
+.Pp
+.Fn EC_KEY_set_public_key_affine_coordinates
+sets the public key for
+.Fa key
+based on its affine coordinates, i.e. it constructs an
+.Vt EC_POINT
+object based on the supplied
+.Fa x
+and
+.Fa y
+values and sets the public key to be this
+.Vt EC_POINT .
+It also performs certain sanity checks on the key to confirm that
+it is valid.
+.Pp
+The functions
+.Fn EC_KEY_get0_group ,
+.Fn EC_KEY_set_group ,
+.Fn EC_KEY_get0_private_key ,
+.Fn EC_KEY_set_private_key ,
+.Fn EC_KEY_get0_public_key ,
+and
+.Fn EC_KEY_set_public_key
+get and set the
+.Vt EC_GROUP
+object, the private key and the
+.Vt EC_POINT
+public key for the
+.Fa key ,
+respectively.
+.Pp
+The functions
+.Fn EC_KEY_get_enc_flags
+and
+.Fn EC_KEY_set_enc_flags
+get and set the value of the encoding flags for the
+.Fa key .
+There are two encoding flags currently defined:
+.Dv EC_PKEY_NO_PARAMETERS
+and
+.Dv EC_PKEY_NO_PUBKEY .
+These flags define the behaviour of how the
+.Fa key
+is converted into ASN1 in a call to
+.Fn i2d_ECPrivateKey .
+If
+.Dv EC_PKEY_NO_PARAMETERS
+is set then the public parameters for the curve
+are not encoded along with the private key.
+If
+.Dv EC_PKEY_NO_PUBKEY
+is set then the public key is not encoded along with the private
+key.
+.Pp
+The functions
+.Fn EC_KEY_get_conv_form
+and
+.Fn EC_KEY_set_conv_form
+get and set the point_conversion_form for the
+.Fa key .
+For a description of point_conversion_forms please refer to
+.Xr EC_POINT_new 3 .
+.Pp
+.Fn EC_KEY_insert_key_method_data
+and
+.Fn EC_KEY_get_key_method_data
+enable the caller to associate arbitrary additional data specific
+to the elliptic curve scheme being used with the
+.Vt EC_KEY
+object.
+This data is treated as a "black box" by the ec library.
+The data to be stored by
+.Fn EC_KEY_insert_key_method_data
+is provided in the
+.Fa data
+parameter, which must have associated functions for duplicating, freeing
+and "clear_freeing" the data item.
+If a subsequent
+.Fn EC_KEY_get_key_method_data
+call is issued, the functions for duplicating, freeing and
+"clear_freeing" the data item must be provided again, and they must
+be the same as they were when the data item was inserted.
+.Pp
+.Fn EC_KEY_set_flags
+sets the flags in the
+.Fa flags
+parameter on the
+.Vt EC_KEY
+object.
+Any flags that are already set are left set.
+The currently defined standard flags are
+.Dv EC_FLAG_NON_FIPS_ALLOW
+and
+.Dv EC_FLAG_FIPS_CHECKED .
+In addition there is the flag
+.Dv EC_FLAG_COFACTOR_ECDH
+which is specific to ECDH and is defined in
+.In openssl/ecdh.h .
+.Fn EC_KEY_get_flags
+returns the current flags that are set for this
+.Vt EC_KEY .
+.Fn EC_KEY_clear_flags
+clears the flags indicated by the
+.Fa flags
+parameter.
+All other flags are left in their existing state.
+.Pp
+.Fn EC_KEY_set_asn1_flag
+sets the asn1_flag on the underlying
+.Vt EC_GROUP
+object (if set).
+Refer to
+.Xr EC_GROUP_copy 3
+for further information on the asn1_flag.
+.Pp
+.Fn EC_KEY_precompute_mult
+stores multiples of the underlying
+.Vt EC_GROUP
+generator for faster point multiplication.
+See also
+.Xr EC_POINT_add 3 .
+.Sh RETURN VALUES
+.Fn EC_KEY_new ,
+.Fn EC_KEY_new_by_curve_name ,
+and
+.Fn EC_KEY_dup
+return a pointer to the newly created
+.Vt EC_KEY object or
+.Dv NULL
+on error.
+.Pp
+.Fn EC_KEY_get_flags
+returns the flags associated with the
+.Vt EC_KEY object.
+.Pp
+.Fn EC_KEY_copy
+returns a pointer to the destination key or
+.Dv NULL
+on error.
+.Pp
+.Fn EC_KEY_up_ref ,
+.Fn EC_KEY_set_group ,
+.Fn EC_KEY_set_private_key ,
+.Fn EC_KEY_set_public_key ,
+.Fn EC_KEY_precompute_mult ,
+.Fn EC_KEY_generate_key ,
+.Fn EC_KEY_check_key ,
+and
+.Fn EC_KEY_set_public_key_affine_coordinates
+return 1 on success or 0 on error.
+.Pp
+.Fn EC_KEY_get0_group
+returns the
+.Vt EC_GROUP
+associated with the
+.Vt EC_KEY .
+.Pp
+.Fn EC_KEY_get0_private_key
+returns the private key associated with the
+.Vt EC_KEY .
+.Pp
+.Fn EC_KEY_get_enc_flags
+returns the value of the current encoding flags for the
+.Vt EC_KEY .
+.Pp
+.Fn EC_KEY_get_conv_form
+returns the point_conversion_form for the
+.Vt EC_KEY .
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr d2i_ECPKParameters 3 ,
+.Xr ec 3 ,
+.Xr EC_GFp_simple_method 3 ,
+.Xr EC_GROUP_copy 3 ,
+.Xr EC_GROUP_new 3 ,
+.Xr EC_POINT_add 3 ,
+.Xr EC_POINT_new 3

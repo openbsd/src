@@ -1,0 +1,171 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt DSA_GENERATE_PARAMETERS 3
+.Os
+.Sh NAME
+.Nm DSA_generate_parameters_ex ,
+.Nm DSA_generate_parameters
+.Nd generate DSA parameters
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.Ft int
+.Fo DSA_generate_parameters_ex
+.Fa "DSA *dsa"
+.Fa "int bits"
+.Fa "const unsigned char *seed"
+.Fa "int seed_len"
+.Fa "int *counter_ret"
+.Fa "unsigned long *h_ret"
+.Fa "BN_GENCB *cb"
+.Fc
+.Pp
+Deprecated:
+.Pp
+.Ft DSA *
+.Fo DSA_generate_parameters
+.Fa "int bits"
+.Fa "unsigned char *seed"
+.Fa "int seed_len"
+.Fa "int *counter_ret"
+.Fa "unsigned long *h_ret"
+.Fa "void (*callback)(int, int, void *)"
+.Fa "void *cb_arg"
+.Fc
+.Sh DESCRIPTION
+.Fn DSA_generate_parameters_ex
+generates primes p and q and a generator g for use in the DSA and stores
+the result in
+.Fa dsa .
+.Pp
+.Fa bits
+is the length of the prime to be generated; the DSS allows a maximum of
+1024 bits.
+.Pp
+If
+.Fa seed
+is
+.Dv NULL
+or
+.Fa seed_len
+< 20, the primes will be generated at random.
+Otherwise, the seed is used to generate them.
+If the given seed does not yield a prime q, a new random seed is chosen
+and placed at
+.Fa seed .
+.Pp
+.Fn DSA_generate_parameters_ex
+places the iteration count in
+.Pf * Fa counter_ret
+and a counter used for finding a generator in
+.Pf * Fa h_ret ,
+unless these are
+.Dv NULL .
+.Pp
+A callback function may be used to provide feedback about the progress
+of the key generation.
+If
+.Fa cb
+is not
+.Dv NULL ,
+it will be called as shown below.
+For information on the
+.Vt BN_GENCB
+structure, refer to
+.Xr BN_GENCB_call 3 .
+.Bl -bullet
+.It
+When a candidate for q is generated,
+.Fn BN_GENCB_call cb 0 m++
+is called
+.Pf ( Fa m
+is 0 for the first candidate).
+.It
+When a candidate for q has passed a test by trial division,
+.Fn BN_GENCB_call cb 1 -1
+is called.
+While a candidate for q is tested by Miller-Rabin primality tests,
+.Fn BN_GENCB_call cb 1 i
+is called in the outer loop (once for each witness that confirms that
+the candidate may be prime);
+.Fa i
+is the loop counter (starting at 0).
+.It
+When a prime q has been found,
+.Fn BN_GENCB_call cb 2 0
+and
+.Fn BN_GENCB_call cb 3 0
+are called.
+.It
+Before a candidate for p (other than the first) is generated and tested,
+.Fn BN_GENCB_call cb 0 counter
+is called.
+.It
+When a candidate for p has passed the test by trial division,
+.Fn BN_GENCB_call cb 1 -1
+is called.
+While it is tested by the Miller-Rabin primality test,
+.Fn BN_GENCB_call cb 1 i
+is called in the outer loop (once for each witness that confirms that
+the candidate may be prime).
+.Fa i
+is the loop counter (starting at 0).
+.It
+When p has been found,
+.Fn BN_GENCB_call cb 2 1
+is called.
+.It
+When the generator has been found,
+.Fn BN_GENCB_call cb 3 1
+is called.
+.El
+.Pp
+.Fn DSA_generate_parameters
+(deprecated) works in much the same way as for
+.Fn DSA_generate_parameters_ex ,
+except that no
+.Fa dsa
+parameter is passed and instead a newly allocated
+.Vt DSA
+structure is returned.
+Additionally "old style" callbacks are used instead of the newer
+.Vt BN_GENCB
+based approach.
+Refer to
+.Xr BN_generate_prime 3
+for further information.
+.Sh RETURN VALUE
+.Fn DSA_generate_parameters_ex
+returns a 1 on success, or 0 otherwise.
+.Pp
+.Fn DSA_generate_parameters
+returns a pointer to the
+.Vt DSA
+structure, or
+.Dv NULL
+if the parameter generation fails.
+.Pp
+The error codes can be obtained by
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr BN_generate_prime 3 ,
+.Xr dsa 3 ,
+.Xr DSA_free 3 ,
+.Xr ERR_get_error 3 ,
+.Xr rand 3
+.Sh HISTORY
+.Fn DSA_generate_parameters
+appeared in SSLeay 0.8.
+The
+.Fa cb_arg
+argument was added in SSLeay 0.9.0.
+In versions up to OpenSSL 0.9.4,
+.Fn callback 1 ...\&
+was called in the inner loop of the Miller-Rabin test whenever it
+reached the squaring step (the parameters to
+.Fn callback
+did not reveal how many witnesses had been tested); since OpenSSL 0.9.5,
+.Fn callback 1 ...\&
+is called as in
+.Xr BN_is_prime 3 ,
+i.e. once for each witness.
+.Sh BUGS
+Seed lengths > 20 are not supported.

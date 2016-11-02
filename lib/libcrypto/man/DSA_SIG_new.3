@@ -1,0 +1,43 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt DSA_SIG_NEW 3
+.Os
+.Sh NAME
+.Nm DSA_SIG_new ,
+.Nm DSA_SIG_free
+.Nd allocate and free DSA signature objects
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.Ft DSA_SIG *
+.Fn DSA_SIG_new void
+.Ft void
+.Fo DSA_SIG_free
+.Fa "DSA_SIG *a"
+.Fc
+.Sh DESCRIPTION
+.Fn DSA_SIG_new
+allocates and initializes a
+.Vt DSA_SIG
+structure.
+.Pp
+.Fn DSA_SIG_free
+frees the
+.Vt DSA_SIG
+structure and its components.
+The values are erased before the memory is returned to the system.
+.Sh RETURN VALUES
+If the allocation fails,
+.Fn DSA_SIG_new
+returns
+.Dv NULL
+and sets an error code that can be obtained by
+.Xr ERR_get_error 3 .
+Otherwise it returns a pointer to the newly allocated structure.
+.Sh SEE ALSO
+.Xr dsa 3 ,
+.Xr DSA_do_sign 3 ,
+.Xr ERR_get_error 3
+.Sh HISTORY
+.Fn DSA_SIG_new
+and
+.Fn DSA_SIG_free
+were added in OpenSSL 0.9.3.

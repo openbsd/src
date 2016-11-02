@@ -1,0 +1,29 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt DSA_SIZE 3
+.Os
+.Sh NAME
+.Nm DSA_size
+.Nd get DSA signature size
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.Ft int
+.Fo DSA_size
+.Fa "const DSA *dsa"
+.Fc
+.Sh DESCRIPTION
+This function returns the size of an ASN.1 encoded DSA signature in
+bytes.
+It can be used to determine how much memory must be allocated for a DSA
+signature.
+.Pp
+.Fa dsa->q
+must not be
+.Dv NULL .
+.Sh RETURN VALUE
+The size in bytes.
+.Sh SEE ALSO
+.Xr dsa 3 ,
+.Xr DSA_sign 3
+.Sh HISTORY
+.Fn DSA_size
+is available in all versions of SSLeay and OpenSSL.

@@ -1,0 +1,434 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt EC_GROUP_COPY 3
+.Os
+.Sh NAME
+.Nm EC_GROUP_copy ,
+.Nm EC_GROUP_dup ,
+.Nm EC_GROUP_method_of ,
+.Nm EC_GROUP_set_generator ,
+.Nm EC_GROUP_get0_generator ,
+.Nm EC_GROUP_get_order ,
+.Nm EC_GROUP_get_cofactor ,
+.Nm EC_GROUP_set_curve_name ,
+.Nm EC_GROUP_get_curve_name ,
+.Nm EC_GROUP_set_asn1_flag ,
+.Nm EC_GROUP_get_asn1_flag ,
+.Nm EC_GROUP_set_point_conversion_form ,
+.Nm EC_GROUP_get_point_conversion_form ,
+.Nm EC_GROUP_get0_seed ,
+.Nm EC_GROUP_get_seed_len ,
+.Nm EC_GROUP_set_seed ,
+.Nm EC_GROUP_get_degree ,
+.Nm EC_GROUP_check ,
+.Nm EC_GROUP_check_discriminant ,
+.Nm EC_GROUP_cmp ,
+.Nm EC_GROUP_get_basis_type ,
+.Nm EC_GROUP_get_trinomial_basis ,
+.Nm EC_GROUP_get_pentanomial_basis
+.Nd manipulate EC_GROUP objects
+.Sh SYNOPSIS
+.In openssl/ec.h
+.In openssl/bn.h
+.Ft int
+.Fo EC_GROUP_copy
+.Fa "EC_GROUP *dst"
+.Fa "const EC_GROUP *src"
+.Fc
+.Ft EC_GROUP *
+.Fo EC_GROUP_dup
+.Fa "const EC_GROUP *src"
+.Fc
+.Ft const EC_METHOD *
+.Fo EC_GROUP_method_of
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft int
+.Fo EC_GROUP_set_generator
+.Fa "EC_GROUP *group"
+.Fa "const EC_POINT *generator"
+.Fa "const BIGNUM *order"
+.Fa "const BIGNUM *cofactor"
+.Fc
+.Ft const EC_POINT *
+.Fo EC_GROUP_get0_generator
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_order
+.Fa "const EC_GROUP *group"
+.Fa "BIGNUM *order"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_cofactor
+.Fa "const EC_GROUP *group"
+.Fa "BIGNUM *cofactor"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft void
+.Fo EC_GROUP_set_curve_name
+.Fa "EC_GROUP *group"
+.Fa "int nid"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_curve_name
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft void
+.Fo EC_GROUP_set_asn1_flag
+.Fa "EC_GROUP *group"
+.Fa "int flag"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_asn1_flag
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft void
+.Fo EC_GROUP_set_point_conversion_form
+.Fa "EC_GROUP *group"
+.Fa "point_conversion_form_t form"
+.Fc
+.Ft point_conversion_form_t
+.Fo EC_GROUP_get_point_conversion_form
+.Fa "const EC_GROUP *"
+.Fc
+.Ft unsigned char *
+.Fo EC_GROUP_get0_seed
+.Fa "const EC_GROUP *x"
+.Fc
+.Ft size_t
+.Fo EC_GROUP_get_seed_len
+.Fa "const EC_GROUP *"
+.Fc
+.Ft size_t
+.Fo EC_GROUP_set_seed
+.Fa "EC_GROUP *"
+.Fa "const unsigned char *"
+.Fa "size_t len"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_degree
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft int
+.Fo EC_GROUP_check
+.Fa "const EC_GROUP *group"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_check_discriminant
+.Fa "const EC_GROUP *group"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_cmp
+.Fa "const EC_GROUP *a"
+.Fa "const EC_GROUP *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_basis_type
+.Fa "const EC_GROUP *"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_trinomial_basis
+.Fa "const EC_GROUP *"
+.Fa "unsigned int *k"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_pentanomial_basis
+.Fa "const EC_GROUP *"
+.Fa "unsigned int *k1"
+.Fa "unsigned int *k2"
+.Fa "unsigned int *k3"
+.Fc
+.Sh DESCRIPTION
+.Fn EC_GROUP_copy
+copies the curve
+.Fa src
+into
+.Fa dst .
+Both
+.Fa src
+and
+.Fa dst
+must use the same
+.Vt EC_METHOD .
+.Pp
+.Fn EC_GROUP_dup
+creates a new
+.Vt EC_GROUP
+object and copies the content from
+.Fa src
+to the newly created
+.Vt EC_GROUP
+object.
+.Pp
+.Fn EC_GROUP_method_of
+obtains the
+.Vt EC_METHOD
+of
+.Fa group .
+.Pp
+.Fn EC_GROUP_set_generator
+sets curve paramaters that must be agreed by all participants using
+the curve.
+These paramaters include the
+.Fa generator ,
+the
+.Fa order
+and the
+.Fa cofactor .
+The
+.Fa generator
+is a well defined point on the curve chosen for cryptographic
+operations.
+Integers used for point multiplications will be between 0 and
+.Fa order No - 1 .
+The
+.Fa order
+multipied by the
+.Fa cofactor
+gives the number of points on the curve.
+.Pp
+.Fn EC_GROUP_get0_generator
+returns the generator for the identified
+.Fa group .
+.Pp
+The functions
+.Fn EC_GROUP_get_order
+and
+.Fn EC_GROUP_get_cofactor
+populate the provided
+.Fa order
+and
+.Fa cofactor
+parameters with the respective order and cofactors for the
+.Fa group .
+.Pp
+The functions
+.Fn EC_GROUP_set_curve_name
+and
+.Fn EC_GROUP_get_curve_name
+set and get the NID for the curve, respectively (see
+.Xr EC_GROUP_new 3 ) .
+If a curve does not have a NID associated with it, then
+.Fn EC_GROUP_get_curve_name
+will return 0.
+.Pp
+The asn1_flag value on a curve is used to determine whether there is a
+specific ASN1 OID to describe the curve or not.
+If the asn1_flag is 1 then this is a named curve with an associated ASN1 OID.
+If not then asn1_flag is 0.
+The functions
+.Fn EC_GROUP_get_asn1_flag
+and
+.Fn EC_GROUP_set_asn1_flag
+get and set the status of the asn1_flag for the curve.
+If set, then the curve_name must also be set.
+.Pp
+The point_conversion_form for a curve controls how
+.Vt EC_POINT
+data is encoded as ASN1 as defined in X9.62 (ECDSA).
+.Vt point_conversion_form_t
+is an enum defined as follows:
+.Bd -literal
+typedef enum {
+	/** the point is encoded as z||x, where the octet z specifies
+	 *   which solution of the quadratic equation y is  */
+	POINT_CONVERSION_COMPRESSED = 2,
+	/** the point is encoded as z||x||y, where z is the octet 0x02  */
+	POINT_CONVERSION_UNCOMPRESSED = 4,
+	/** the point is encoded as z||x||y, where the octet z specifies
+         *  which solution of the quadratic equation y is  */
+	POINT_CONVERSION_HYBRID = 6
+} point_conversion_form_t;
+.Ed
+.Pp
+For
+.Dv POINT_CONVERSION_UNCOMPRESSED
+the point is encoded as an octet signifying the UNCOMPRESSED form
+has been used followed by the octets for x, followed by the octets
+for y.
+.Pp
+For any given x co-ordinate for a point on a curve it is possible to
+derive two possible y values.
+For
+.Dv POINT_CONVERSION_COMPRESSED
+the point is encoded as an octet signifying that the COMPRESSED
+form has been used AND which of the two possible solutions for y
+has been used, followed by the octets for x.
+.Pp
+For
+.Dv POINT_CONVERSION_HYBRID
+the point is encoded as an octet signifying the HYBRID form has
+been used AND which of the two possible solutions for y has been
+used, followed by the octets for x, followed by the octets for y.
+.Pp
+The functions
+.Fn EC_GROUP_set_point_conversion_form
+and
+.Fn EC_GROUP_get_point_conversion_form
+set and get the point_conversion_form for the curve, respectively.
+.Pp
+ANSI X9.62 (ECDSA standard) defines a method of generating the curve
+parameter b from a random number.
+This provides advantages in that a parameter obtained in this way is
+highly unlikely to be susceptible to special purpose attacks, or have
+any trapdoors in it.
+If the seed is present for a curve then the b parameter was generated in
+a verifiable fashion using that seed.
+The OpenSSL EC library does not use this seed value but does enable you
+to inspect it using
+.Fn EC_GROUP_get0_seed .
+This returns a pointer to a memory block containing the seed that was
+used.
+The length of the memory block can be obtained using
+.Fn EC_GROUP_get_seed_len .
+A number of the builtin curves within the library provide seed values
+that can be obtained.
+It is also possible to set a custom seed using
+.Fn EC_GROUP_set_seed
+and passing a pointer to a memory block, along with the length of
+the seed.
+Again, the EC library will not use this seed value, although it will be
+preserved in any ASN1 based communications.
+.Pp
+.Fn EC_GROUP_get_degree
+gets the degree of the field.
+For Fp fields this will be the number of bits in p.
+For F2^m fields this will be the value m.
+.Pp
+The function
+.Fn EC_GROUP_check_discriminant
+calculates the discriminant for the curve and verifies that it is
+valid.
+For a curve defined over Fp the discriminant is given by the formula
+4*a^3 + 27*b^2 whilst for F2^m curves the discriminant is simply b.
+In either case for the curve to be valid the discriminant must be
+non-zero.
+.Pp
+The function
+.Fn EC_GROUP_check
+performs a number of checks on a curve to verify that it is valid.
+Checks performed include verifying that the discriminant is non zero;
+that a generator has been defined; that the generator is on the curve
+and has the correct order.
+.Pp
+.Fn EC_GROUP_cmp
+compares
+.Fa a
+and
+.Fa b
+to determine whether they represent the same curve or not.
+.Pp
+The functions
+.Fn EC_GROUP_get_basis_type ,
+.Fn EC_GROUP_get_trinomial_basis ,
+and
+.Fn EC_GROUP_get_pentanomial_basis
+should only be called for curves defined over an F2^m field.
+Addition and multiplication operations within an F2^m field are
+performed using an irreducible polynomial function f(x).
+This function is either a trinomial of the form:
+.Pp
+.Dl f(x) = x^m + x^k + 1 with m > k >= 1
+.Pp
+or a pentanomial of the form:
+.Pp
+.Dl f(x) = x^m + x^k3 + x^k2 + x^k1 + 1 with m > k3 > k2 > k1 >= 1
+.Pp
+The function
+.Fn EC_GROUP_get_basis_type
+returns a NID identifying whether a trinomial or pentanomial is in
+use for the field.
+The function
+.Fn EC_GROUP_get_trinomial_basis
+must only be called where f(x) is of the trinomial form, and returns
+the value of
+.Fa k .
+Similarly, the function
+.Fn EC_GROUP_get_pentanomial_basis
+must only be called where f(x) is of the pentanomial form, and
+returns the values of
+.Fa k1 ,
+.Fa k2 ,
+and
+.Fa k3 .
+.Sh RETURN VALUES
+The following functions return 1 on success or 0 on error:
+.Fn EC_GROUP_copy ,
+.Fn EC_GROUP_set_generator ,
+.Fn EC_GROUP_check ,
+.Fn EC_GROUP_check_discriminant ,
+.Fn EC_GROUP_get_trinomial_basis ,
+and
+.Fn EC_GROUP_get_pentanomial_basis .
+.Pp
+.Fn EC_GROUP_dup
+returns a pointer to the duplicated curve or
+.Dv NULL
+on error.
+.Pp
+.Fn EC_GROUP_method_of
+returns the
+.Vt EC_METHOD
+implementation in use for the given curve or
+.Dv NULL
+on error.
+.Pp
+.Fn EC_GROUP_get0_generator
+returns the generator for the given curve or
+.Dv NULL
+on error.
+.Pp
+.Fn EC_GROUP_get_order ,
+.Fn EC_GROUP_get_cofactor ,
+.Fn EC_GROUP_get_curve_name ,
+.Fn EC_GROUP_get_asn1_flag ,
+.Fn EC_GROUP_get_point_conversion_form ,
+and
+.Fn EC_GROUP_get_degree
+return the order, cofactor, curve name (NID), ASN1 flag,
+point_conversion_form and degree for the specified curve, respectively.
+If there is no curve name associated with a curve then
+.Fn EC_GROUP_get_curve_name
+returns 0.
+.Pp
+.Fn EC_GROUP_get0_seed
+returns a pointer to the seed that was used to generate the parameter
+b, or
+.Dv NULL
+if the seed is not specified.
+.Fn EC_GROUP_get_seed_len
+returns the length of the seed or 0 if the seed is not specified.
+.Pp
+.Fn EC_GROUP_set_seed
+returns the length of the seed that has been set.
+If the supplied seed is
+.Dv NULL
+or the supplied seed length is 0, the return value will be 1.
+On error 0 is returned.
+.Pp
+.Fn EC_GROUP_cmp
+returns 0 if the curves are equal, 1 if they are not equal,
+or -1 on error.
+.Pp
+.Fn EC_GROUP_get_basis_type
+returns the values
+.Dv NID_X9_62_tpBasis
+or
+.Dv NID_X9_62_ppBasis
+as defined in
+.In openssl/obj_mac.h
+for a trinomial or pentanomial, respectively.
+Alternatively in the event of an error a 0 is returned.
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr d2i_ECPKParameters 3 ,
+.Xr ec 3 ,
+.Xr EC_GFp_simple_method 3 ,
+.Xr EC_GROUP_new 3 ,
+.Xr EC_KEY_new 3 ,
+.Xr EC_POINT_add 3 ,
+.Xr EC_POINT_new 3

@@ -1,0 +1,46 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt DSA_NEW 3
+.Os
+.Sh NAME
+.Nm DSA_new ,
+.Nm DSA_free
+.Nd allocate and free DSA objects
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.Ft DSA*
+.Fn DSA_new void
+.Ft void
+.Fo DSA_free
+.Fa "DSA *dsa"
+.Fc
+.Sh DESCRIPTION
+.Fn DSA_new
+allocates and initializes a
+.Vt DSA
+structure.
+It is equivalent to calling
+.Fn DSA_new_method NULL .
+.Pp
+.Fn DSA_free
+frees the
+.Vt DSA
+structure and its components.
+The values are erased before the memory is returned to the system.
+.Sh RETURN VALUES
+If the allocation fails,
+.Fn DSA_new
+returns
+.Dv NULL
+and sets an error code that can be obtained by
+.Xr ERR_get_error 3 .
+Otherwise it returns a pointer to the newly allocated structure.
+.Sh SEE ALSO
+.Xr dsa 3 ,
+.Xr DSA_generate_key 3 ,
+.Xr DSA_generate_parameters 3 ,
+.Xr ERR_get_error 3
+.Sh HISTORY
+.Fn DSA_new
+and
+.Fn DSA_free
+are available in all versions of SSLeay and OpenSSL.

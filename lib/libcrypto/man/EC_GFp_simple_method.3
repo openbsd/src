@@ -1,0 +1,108 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt EC_GFP_SIMPLE_METHOD 3
+.Os
+.Sh NAME
+.Nm EC_GFp_simple_method ,
+.Nm EC_GFp_mont_method ,
+.Nm EC_GFp_nist_method ,
+.Nm EC_GFp_nistp224_method ,
+.Nm EC_GFp_nistp256_method ,
+.Nm EC_GFp_nistp521_method ,
+.Nm EC_GF2m_simple_method ,
+.Nm EC_METHOD_get_field_type
+.Nd obtain EC_METHOD objects
+.Sh SYNOPSIS
+.In openssl/ec.h
+.Ft const EC_METHOD *
+.Fn EC_GFp_simple_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_mont_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_nist_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_nistp224_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_nistp256_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_nistp521_method void
+.Ft const EC_METHOD *
+.Fn EC_GF2m_simple_method void
+.Ft int
+.Fo EC_METHOD_get_field_type
+.Fa "const EC_METHOD *meth"
+.Fc
+.Sh DESCRIPTION
+The elliptic curve library provides a number of different
+implementations through a single common interface.
+When constructing a curve using
+.Xr EC_GROUP_new 3 ,
+an implementation method must be provided.
+The functions described here all return a const pointer to an
+.Sy EC_METHOD
+structure that can be passed to
+.Xr EC_GROUP_new .
+It is important that the correct implementation type for the form
+of curve selected is used.
+.Pp
+For F2^m curves there is only one implementation choice,
+.Fn EC_GF2_simple_method .
+.Pp
+For Fp curves the lowest common denominator implementation is the
+.Fn EC_GFp_simple_method
+implementation.
+All other implementations are based on this one.
+.Fn EC_GFp_mont_method
+adds the use of montgomery multiplication (see
+.Xr BN_mod_mul_montgomery 3 ) .
+.Fn EC_GFp_nist_method
+offers an implementation optimised for use with NIST recommended
+curves.
+NIST curves are available through
+.Xr EC_GROUP_new_by_curve_name 3 .
+.Pp
+The functions
+.Fn EC_GFp_nistp224_method ,
+.Fn EC_GFp_nistp256_method ,
+and
+.Fn EC_GFp_nistp521_method
+offer 64 bit optimised implementations for the NIST P224, P256 and
+P521 curves respectively.
+Note, however, that these implementations are not available on all
+platforms.
+.Pp
+.Fn EC_METHOD_get_field_type
+identifies what type of field the
+.Vt EC_METHOD
+structure supports, which will be either F2^m or Fp.
+If the field type is Fp, then the value
+.Dv NID_X9_62_prime_field
+is returned.
+If the field type is F2^m, then the value
+.Dv NID_X9_62_characteristic_two_field
+is returned.
+These values are defined in the
+.In openssl/obj_mac.h
+header file.
+.Sh RETURN VALUES
+All
+.Fn EC_GFp*
+functions and
+.Fn EC_GF2m_simple_method
+always return a const pointer to an
+.Vt EC_METHOD
+structure.
+.Pp
+.Fn EC_METHOD_get_field_type
+returns an integer that identifies the type of field the
+.Vt EC_METHOD
+structure supports.
+.Sh SEE ALSO
+.Xr BN_mod_mul_montgomery 3 ,
+.Xr crypto 3 ,
+.Xr d2i_ECPKParameters 3 ,
+.Xr ec 3 ,
+.Xr EC_GROUP_copy 3 ,
+.Xr EC_GROUP_new 3 ,
+.Xr EC_KEY_new 3 ,
+.Xr EC_POINT_add 3 ,
+.Xr EC_POINT_new 3

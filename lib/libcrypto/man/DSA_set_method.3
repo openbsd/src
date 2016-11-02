@@ -1,0 +1,224 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt DSA_SET_METHOD 3
+.Os
+.Sh NAME
+.Nm DSA_set_default_method ,
+.Nm DSA_get_default_method ,
+.Nm DSA_set_method ,
+.Nm DSA_new_method ,
+.Nm DSA_OpenSSL ,
+.Nm DSA_set_default_openssl_method ,
+.Nm DSA_get_default_openssl_method
+.Nd select DSA method
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.In openssl/engine.h
+.Ft void
+.Fo DSA_set_default_method
+.Fa "const DSA_METHOD *meth"
+.Fc
+.Ft const DSA_METHOD *
+.Fn DSA_get_default_method void
+.Ft int
+.Fo DSA_set_method
+.Fa "DSA *dsa"
+.Fa "const DSA_METHOD *meth"
+.Fc
+.Ft DSA *
+.Fo DSA_new_method
+.Fa "ENGINE *engine"
+.Fc
+.Ft DSA_METHOD *
+.Fn DSA_OpenSSL void
+.Sh DESCRIPTION
+A
+.Vt DSA_METHOD
+specifies the functions that OpenSSL uses for DSA operations.
+By modifying the method, alternative implementations such as hardware
+accelerators may be used.
+See the
+.Sx CAVEATS
+section for how these DSA API functions are affected by the use of
+.Xr engine 3
+API calls.
+.Pp
+Initially, the default
+.Vt DSA_METHOD
+is the OpenSSL internal implementation, as returned by
+.Fn DSA_OpenSSL .
+.Pp
+.Fn DSA_set_default_method
+makes
+.Fa meth
+the default method for all
+.Vt DSA
+structures created later.
+.Sy NB :
+This is true only whilst no
+.Vt ENGINE
+has been set as a default for DSA, so this function is no longer
+recommended.
+.Pp
+.Fn DSA_get_default_method
+returns a pointer to the current default
+.Vt DSA_METHOD .
+However, the meaningfulness of this result is dependent on whether the
+.Xr engine 3
+API is being used, so this function is no longer recommended.
+.Pp
+.Fn DSA_set_method
+selects
+.Fa meth
+to perform all operations using the key
+.Fa dsa .
+This will replace the
+.Vt DSA_METHOD
+used by the DSA key and if the previous method was supplied by an
+.Vt ENGINE ,
+the handle to that
+.Vt ENGINE
+will be released during the change.
+It is possible to have DSA keys that only work with certain
+.Vt DSA_METHOD
+implementations (eg. from an
+.Vt ENGINE
+module that supports embedded hardware-protected keys),
+and in such cases attempting to change the
+.Vt DSA_METHOD
+for the key can have unexpected results.
+.Pp
+.Fn DSA_new_method
+allocates and initializes a
+.Vt DSA
+structure so that
+.Fa engine
+will be used for the DSA operations.
+If
+.Fa engine
+is
+.Dv NULL ,
+the default engine for DSA operations is used, and if no
+default
+.Vt ENGINE
+is set, the
+.Vt DSA_METHOD
+controlled by
+.Fn DSA_set_default_method
+is used.
+.Sh THE DSA_METHOD STRUCTURE
+.Bd -literal
+struct
+{
+     /* name of the implementation */
+	const char *name;
+
+     /* sign */
+	DSA_SIG *(*dsa_do_sign)(const unsigned char *dgst, int dlen,
+                                 DSA *dsa);
+
+     /* pre-compute k^-1 and r */
+	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
+                                 BIGNUM **rp);
+
+     /* verify */
+	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
+                                 DSA_SIG *sig, DSA *dsa);
+
+     /* compute rr = a1^p1 * a2^p2 mod m (May be NULL for some
+                                          implementations) */
+	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
+                                 BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
+                                 BN_CTX *ctx, BN_MONT_CTX *in_mont);
+
+     /* compute r = a ^ p mod m (May be NULL for some implementations) */
+        int (*bn_mod_exp)(DSA *dsa, BIGNUM *r, BIGNUM *a,
+                                 const BIGNUM *p, const BIGNUM *m,
+                                 BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+
+     /* called at DSA_new */
+        int (*init)(DSA *DSA);
+
+     /* called at DSA_free */
+        int (*finish)(DSA *DSA);
+
+        int flags;
+
+        char *app_data; /* ?? */
+
+} DSA_METHOD;
+.Ed
+.Sh RETURN VALUES
+.Fn DSA_OpenSSL
+and
+.Fn DSA_get_default_method
+return pointers to the respective
+.Vt DSA_METHOD Ns s.
+.Pp
+.Fn DSA_set_method
+returns non-zero if the provided
+.Fa meth
+was successfully set as the method for
+.Fa dsa
+(including unloading the
+.Vt ENGINE
+handle if the previous method was supplied by an
+.Vt ENGINE ) .
+.Pp
+.Fn DSA_new_method
+returns
+.Dv NULL
+and sets an error code that can be obtained by
+.Xr ERR_get_error 3
+if the allocation fails.
+Otherwise it returns a pointer to the newly allocated structure.
+.Sh SEE ALSO
+.Xr dsa 3 ,
+.Xr DSA_new 3
+.Sh HISTORY
+.Fn DSA_set_default_method ,
+.Fn DSA_get_default_method ,
+.Fn DSA_set_method ,
+.Fn DSA_new_method ,
+and
+.Fn DSA_OpenSSL
+were added in OpenSSL 0.9.4.
+.Pp
+.Fn DSA_set_default_openssl_method
+and
+.Fn DSA_get_default_openssl_method
+replaced
+.Fn DSA_set_default_method
+and
+.Fn DSA_get_default_method
+respectively, and
+.Fn DSA_set_method
+and
+.Fn DSA_new_method
+were altered to use
+.Vt ENGINE Ns s
+rather than
+.Vt DSA_METHOD Ns s
+during development of the engine version of OpenSSL 0.9.6.
+For 0.9.7, the handling of defaults in the
+.Xr engine 3
+API was restructured so that this change was reversed, and behaviour
+of the other functions resembled more closely the previous behaviour.
+The behaviour of defaults in the
+.Xr engine 3
+API now transparently overrides the behaviour of defaults in the
+DSA API without requiring changing these function prototypes.
+.Sh CAVEATS
+As of version 0.9.7, DSA_METHOD implementations are grouped together
+with other algorithmic APIs (eg. RSA_METHOD, EVP_CIPHER, etc) in
+.Vt ENGINE
+modules.
+If a default
+.Vt ENGINE
+is specified for DSA functionality using an
+.Xr engine 3
+API function, that will override any DSA defaults set using the DSA API
+.Pq ie. DSA_set_default_method .
+For this reason, the
+.Xr engine 3
+API is the recommended way to control default implementations for
+use in DSA and other cryptographic algorithms.

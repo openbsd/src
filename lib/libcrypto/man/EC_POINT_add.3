@@ -1,0 +1,220 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt EC_POINT_ADD 3
+.Os
+.Sh NAME
+.Nm EC_POINT_add ,
+.Nm EC_POINT_dbl ,
+.Nm EC_POINT_invert ,
+.Nm EC_POINT_is_at_infinity ,
+.Nm EC_POINT_is_on_curve ,
+.Nm EC_POINT_cmp ,
+.Nm EC_POINT_make_affine ,
+.Nm EC_POINTs_make_affine ,
+.Nm EC_POINTs_mul ,
+.Nm EC_POINT_mul ,
+.Nm EC_GROUP_precompute_mult ,
+.Nm EC_GROUP_have_precompute_mult
+.Nd perform mathematical operations and tests on EC_POINT objects
+.Sh SYNOPSIS
+.In openssl/ec.h
+.In openssl/bn.h
+.Ft int
+.Fo EC_POINT_add
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *r"
+.Fa "const EC_POINT *a"
+.Fa "const EC_POINT *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_dbl
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *r"
+.Fa "const EC_POINT *a"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_invert
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *a"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_is_at_infinity
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fc
+.Ft int
+.Fo EC_POINT_is_on_curve
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *point"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_cmp
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *a"
+.Fa "const EC_POINT *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_make_affine
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *point"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINTs_make_affine
+.Fa "const EC_GROUP *group"
+.Fa "size_t num"
+.Fa "EC_POINT *points[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINTs_mul
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *r"
+.Fa "const BIGNUM *n"
+.Fa "size_t num"
+.Fa "const EC_POINT *p[]"
+.Fa "const BIGNUM *m[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_mul
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *r"
+.Fa "const BIGNUM *n"
+.Fa "const EC_POINT *q"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_precompute_mult
+.Fa "EC_GROUP *group"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_have_precompute_mult
+.Fa "const EC_GROUP *group"
+.Fc
+.Sh DESCRIPTION
+.Fn EC_POINT_add
+adds the two points
+.Fa a
+and
+.Fa b
+and places the result in
+.Fa r .
+Similarly
+.Fn EC_POINT_dbl
+doubles the point
+.Fa a
+and places the result in
+.Fa r .
+In both cases it is valid for
+.Fa r
+to be one of
+.Fa a
+or
+.Fa b .
+.Pp
+.Fn EC_POINT_invert
+calculates the inverse of the supplied point
+.Fa a .
+The result is placed back in
+.Fa a .
+.Pp
+The function
+.Fn EC_POINT_is_at_infinity
+tests whether the supplied point is at infinity or not.
+.Pp
+.Fn EC_POINT_is_on_curve
+tests whether the supplied point is on the curve or not.
+.Pp
+.Fn EC_POINT_cmp
+compares the two supplied points and tests whether or not they are
+equal.
+.Pp
+The functions
+.Fn EC_POINT_make_affine
+and
+.Fn EC_POINTs_make_affine
+force the internal representation of the
+.Vt EC_POINT Ns (s)
+into the affine coordinate system.
+In the case of
+.Fn EC_POINTs_make_affine ,
+the value
+.Fa num
+provides the number of points in the array
+.Fa points
+to be forced.
+.Pp
+.Fn EC_POINT_mul
+calculates the value
+.Pp
+.D1 generator * n + q * m
+.Pp
+and stores the result in
+.Fa r .
+The value
+.Fa n
+may be
+.Dv NULL ,
+in which case the result is just q * m.
+.Pp
+.Fn EC_POINTs_mul
+calculates the value
+.Pp
+.Dl generator * n + q[0] * m[0] + ... + q[num-1] * m[num-1]
+.Pp
+As for
+.Fn EC_POINT_mul ,
+the value
+.Fa n
+may be
+.Dv NULL .
+.Pp
+The function
+.Fn EC_GROUP_precompute_mult
+stores multiples of the generator for faster point multiplication,
+whilst
+.Fn EC_GROUP_have_precompute_mult
+tests whether precomputation has already been done.
+See
+.Xr EC_GROUP_copy 3
+for information about the generator.
+.Sh RETURN VALUES
+The following functions return 1 on success or 0 on error:
+.Fn EC_POINT_add ,
+.Fn EC_POINT_dbl ,
+.Fn EC_POINT_invert ,
+.Fn EC_POINT_make_affine ,
+.Fn EC_POINTs_make_affine ,
+.Fn EC_POINTs_make_affine ,
+.Fn EC_POINT_mul ,
+.Fn EC_POINTs_mul ,
+and
+.Fn EC_GROUP_precompute_mult .
+.Pp
+.Fn EC_POINT_is_at_infinity
+returns 1 if the point is at infinity or 0 otherwise.
+.Pp
+.Fn EC_POINT_is_on_curve
+returns 1 if the point is on the curve, 0 if not, or -1 on error.
+.Pp
+.Fn EC_POINT_cmp
+returns 1 if the points are not equal, 0 if they are, or -1 on error.
+.Pp
+.Fn EC_GROUP_have_precompute_mult
+returns 1 if a precomputation has been done or 0 if not.
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr d2i_ECPKParameters 3 ,
+.Xr ec 3 ,
+.Xr EC_GFp_simple_method 3 ,
+.Xr EC_GROUP_copy 3 ,
+.Xr EC_GROUP_new 3 ,
+.Xr EC_KEY_new 3 ,
+.Xr EC_POINT_new 3

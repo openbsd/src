@@ -1,0 +1,41 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt DSA_DUP_DH 3
+.Os
+.Sh NAME
+.Nm DSA_dup_DH
+.Nd create a DH structure out of DSA structure
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.Ft DH *
+.Fo DSA_dup_DH
+.Fa "const DSA *r"
+.Fc
+.Sh DESCRIPTION
+.Fn DSA_dup_DH
+duplicates
+.Vt DSA
+parameters/keys as
+.Vt DH
+parameters/keys.
+.Fa r->q
+is lost during that conversion, but the resulting
+.Vt DH
+parameters contain its length.
+.Sh RETURN VALUE
+.Fn DSA_dup_DH
+returns the new
+.Vt DH
+structure or
+.Dv NULL
+on error.
+The error codes can be obtained by
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr dh 3 ,
+.Xr dsa 3 ,
+.Xr ERR_get_error 3
+.Sh HISTORY
+.Fn DSA_dup_DH
+was added in OpenSSL 0.9.4.
+.Sh CAVEATS
+Be careful to avoid small subgroup attacks when using this.
