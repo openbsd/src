@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.119 2016/10/19 16:38:40 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.120 2016/11/02 10:45:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1756,10 +1756,22 @@ ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * variable. The reason is that the functions aren't static, they're exposed via
  * ssl.h.
  */
-static
-IMPLEMENT_LHASH_HASH_FN(ssl_session, SSL_SESSION)
-static
-IMPLEMENT_LHASH_COMP_FN(ssl_session, SSL_SESSION)
+static unsigned long
+ssl_session_LHASH_HASH(const void *arg)
+{
+	const SSL_SESSION *a = arg;
+
+	return ssl_session_hash(a);
+}
+
+static int
+ssl_session_LHASH_COMP(const void *arg1, const void *arg2)
+{
+	const SSL_SESSION *a = arg1;
+	const SSL_SESSION *b = arg2;
+
+	return ssl_session_cmp(a, b);
+}
 
 SSL_CTX *
 SSL_CTX_new(const SSL_METHOD *meth)
