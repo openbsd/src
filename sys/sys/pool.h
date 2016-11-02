@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.64 2016/11/02 01:20:50 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.65 2016/11/02 01:58:07 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@ struct pool_allocator {
 TAILQ_HEAD(pool_pagelist, pool_item_header);
 
 struct pool_list;
+TAILQ_HEAD(pool_lists, pool_list);
 struct cpumem;
 
 struct pool {
@@ -129,8 +130,8 @@ struct pool {
 
 	struct cpumem *	pr_cache;
 	struct mutex	pr_cache_mtx;
-	struct pool_list *
-			pr_cache_list;
+	struct pool_lists
+			pr_cache_lists;
 	u_int		pr_cache_nlist;
 	u_int		pr_cache_items;
 	u_int		pr_cache_contention;

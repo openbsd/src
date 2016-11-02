@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.199 2016/11/02 01:20:50 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.200 2016/11/02 01:58:07 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -100,9 +100,8 @@ struct pool_item {
 #ifdef MULTIPROCESSOR
 struct pool_list {
 	struct pool_list	*pl_next;	/* next in list */
-	unsigned long		 pl_cookie;
-	struct pool_list	*pl_nextl;	/* next list */
 	unsigned long		 pl_nitems;	/* items in list */
+	TAILQ_ENTRY(pool_list)	 pl_nextl;	/* list of lists */
 };
 
 struct pool_cache {
@@ -1574,7 +1573,7 @@ pool_cache_init(struct pool *pp)
 	cm = cpumem_get(&pool_caches);
 
 	mtx_init(&pp->pr_cache_mtx, pp->pr_ipl);
-	pp->pr_cache_list = NULL;
+	TAILQ_INIT(&pp->pr_cache_lists);
 	pp->pr_cache_nlist = 0;
 	pp->pr_cache_items = 8;
 	pp->pr_cache_contention = 0;
@@ -1614,9 +1613,9 @@ pool_list_alloc(struct pool *pp, struct pool_cache *pc)
 	struct pool_list *pl;
 
 	pool_list_enter(pp);
-	pl = pp->pr_cache_list;
+	pl = TAILQ_FIRST(&pp->pr_cache_lists);
 	if (pl != NULL) {
-		pp->pr_cache_list = pl->pl_nextl;
+		TAILQ_REMOVE(&pp->pr_cache_lists, pl, pl_nextl);
 		pp->pr_cache_nlist--;
 	}
 
@@ -1631,8 +1630,7 @@ static inline void
 pool_list_free(struct pool *pp, struct pool_cache *pc, struct pool_list *pl)
 {
 	pool_list_enter(pp);
-	pl->pl_nextl = pp->pr_cache_list;
-	pp->pr_cache_list = pl;
+	TAILQ_INSERT_TAIL(&pp->pr_cache_lists, pl, pl_nextl);
 	pp->pr_cache_nlist++;
 
 	pp->pr_cache_nout += pc->pc_nout;
@@ -1732,7 +1730,7 @@ pool_list_put(struct pool *pp, struct pool_list *pl)
 	if (pl == NULL)
 		return (NULL);
 
-	rpl = (struct pool_list *)pl->pl_next;
+	rpl = TAILQ_NEXT(pl, pl_nextl);
 
 	do {
 		npl = pl->pl_next;
@@ -1761,7 +1759,7 @@ pool_cache_destroy(struct pool *pp)
 
 	cpumem_put(&pool_caches, cm);
 
-	pl = pp->pr_cache_list;
+	pl = TAILQ_FIRST(&pp->pr_cache_lists);
 	while (pl != NULL)
 		pl = pool_list_put(pp, pl);
 }
