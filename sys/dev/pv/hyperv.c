@@ -769,7 +769,7 @@ void
 hv_channel_delivered(struct hv_softc *sc, struct vmbus_chanmsg_hdr *hdr)
 {
 	atomic_setbits_int(&sc->sc_flags, HSF_OFFERS_DELIVERED);
-	wakeup(hdr);
+	wakeup(&sc->sc_offers);
 }
 
 int
@@ -943,7 +943,7 @@ int
 hv_channel_scan(struct hv_softc *sc)
 {
 	struct vmbus_chanmsg_hdr hdr;
-	struct vmbus_chanmsg_choffer rsp, *offer;
+	struct vmbus_chanmsg_choffer rsp;
 	struct hv_offer *co;
 
 	SIMPLEQ_INIT(&sc->sc_offers);
@@ -958,7 +958,7 @@ hv_channel_scan(struct hv_softc *sc)
 	}
 
 	while ((sc->sc_flags & HSF_OFFERS_DELIVERED) == 0)
-		tsleep(offer, PRIBIO, "hvoffers", 1);
+		tsleep(&sc->sc_offers, PRIBIO, "hvoffers", 1);
 
 	TAILQ_INIT(&sc->sc_channels);
 	mtx_init(&sc->sc_channelck, IPL_NET);
