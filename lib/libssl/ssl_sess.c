@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.51 2016/09/04 16:12:33 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.52 2016/11/02 09:54:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1099,27 +1099,27 @@ SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
 int
 PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x)
 {
-	return PEM_ASN1_write((i2d_of_void *)i2d_SSL_SESSION, PEM_STRING_SSL_SESSION, fp,
-	    x, NULL, NULL, 0, NULL, NULL);
+	return PEM_ASN1_write((i2d_of_void *)i2d_SSL_SESSION,
+	    PEM_STRING_SSL_SESSION, fp, x, NULL, NULL, 0, NULL, NULL);
 }
 
 SSL_SESSION *
 PEM_read_SSL_SESSION(FILE *fp, SSL_SESSION **x, pem_password_cb *cb, void *u)
 {
-	return PEM_ASN1_read((d2i_of_void *)d2i_SSL_SESSION, PEM_STRING_SSL_SESSION, fp,
-	    (void **)x, cb, u);
+	return PEM_ASN1_read((d2i_of_void *)d2i_SSL_SESSION,
+	    PEM_STRING_SSL_SESSION, fp, (void **)x, cb, u);
 }
 
 SSL_SESSION *
 PEM_read_bio_SSL_SESSION(BIO *bp, SSL_SESSION **x, pem_password_cb *cb, void *u)
 {
-	return PEM_ASN1_read_bio((d2i_of_void *)d2i_SSL_SESSION, PEM_STRING_SSL_SESSION, bp,
-	    (void **)x, cb, u);
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_SSL_SESSION,
+	    PEM_STRING_SSL_SESSION, bp, (void **)x, cb, u);
 }
 
 int
 PEM_write_bio_SSL_SESSION(BIO *bp, SSL_SESSION *x)
 {
-	return PEM_ASN1_write_bio((i2d_of_void *)i2d_SSL_SESSION, PEM_STRING_SSL_SESSION, bp,
-	    x, NULL, NULL, 0, NULL, NULL);
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_SSL_SESSION,
+	    PEM_STRING_SSL_SESSION, bp, x, NULL, NULL, 0, NULL, NULL);
 }
