@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.98 2016/11/02 10:55:48 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.99 2016/11/02 10:59:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -895,7 +895,7 @@ struct ssl_ctx_st {
 #define SSL_SESS_CACHE_NO_INTERNAL \
 	(SSL_SESS_CACHE_NO_INTERNAL_LOOKUP|SSL_SESS_CACHE_NO_INTERNAL_STORE)
 
-LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx);
+struct lhash_st_SSL_SESSION *SSL_CTX_sessions(SSL_CTX *ctx);
 #define SSL_CTX_sess_number(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_NUMBER,0,NULL)
 #define SSL_CTX_sess_connect(ctx) \
