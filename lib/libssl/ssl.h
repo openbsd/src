@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.97 2016/11/02 10:52:30 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.98 2016/11/02 10:55:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -681,7 +681,9 @@ struct ssl_comp_st {
 };
 
 DECLARE_STACK_OF(SSL_COMP)
-DECLARE_LHASH_OF(SSL_SESSION);
+struct lhash_st_SSL_SESSION {
+	int dummy;
+};
 
 struct ssl_ctx_st {
 	const SSL_METHOD *method;
@@ -691,7 +693,7 @@ struct ssl_ctx_st {
 	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
 
 	struct x509_store_st /* X509_STORE */ *cert_store;
-	LHASH_OF(SSL_SESSION) *sessions;
+	struct lhash_st_SSL_SESSION *sessions;
 	/* Most session-ids that will be cached, default is
 	 * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited. */
 	unsigned long session_cache_size;
