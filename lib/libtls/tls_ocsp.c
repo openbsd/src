@@ -56,7 +56,7 @@ tls_ocsp_ctx_free(struct tls_ocsp_ctx *ocsp_ctx)
 }
 
 static int
-tls_ocsp_asn1_parse_time(struct tls *ctx, ASN1_GENERALIZEDTIME *gt, time_t *time)
+tls_ocsp_asn1_parse_time(struct tls *ctx, ASN1_GENERALIZEDTIME *gt, time_t *gt_time)
 {
 	struct tm tm;
 
@@ -66,7 +66,7 @@ tls_ocsp_asn1_parse_time(struct tls *ctx, ASN1_GENERALIZEDTIME *gt, time_t *time
 	if (asn1_time_parse(gt->data, gt->length, &tm,
 		V_ASN1_GENERALIZEDTIME) == -1)
 		return -1;
-	if ((*time = timegm(&tm)) == -1)
+	if ((*gt_time = timegm(&tm)) == -1)
 		return -1;
 	return 0;
 }
