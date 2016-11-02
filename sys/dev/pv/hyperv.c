@@ -1229,9 +1229,6 @@ hv_ring_get(struct hv_ring_data *rrd, uint8_t *data, uint32_t datalen,
 	}
 }
 
-#define	HV_BYTES_AVAIL_TO_WRITE(r, w, z)			\
-	((w) >= (r)) ? ((z) - ((w) - (r))) : ((r) - (w))
-
 static inline void
 hv_ring_avail(struct hv_ring_data *rd, uint32_t *towrite, uint32_t *toread)
 {
@@ -1239,7 +1236,10 @@ hv_ring_avail(struct hv_ring_data *rd, uint32_t *towrite, uint32_t *toread)
 	uint32_t widx = rd->rd_ring->br_windex;
 	uint32_t r, w;
 
-	w =  HV_BYTES_AVAIL_TO_WRITE(ridx, widx, rd->rd_data_size);
+	if (widx >= ridx)
+		w = rd->rd_data_size - (widx - ridx);
+	else
+		w = ridx - widx;
 	r = rd->rd_data_size - w;
 	if (towrite)
 		*towrite = w;
@@ -1499,7 +1499,7 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 	}
 
 	msg->msg_req.hc_dsize = sizeof(struct vmbus_chanmsg_gpadl_conn) +
-	    /* sizeof(struct vmbus_gpa_range) */ + inhdr * sizeof(uint64_t);
+	    inhdr * sizeof(uint64_t);
 	hdr = (struct vmbus_chanmsg_gpadl_conn *)msg->msg_req.hc_data;
 	msg->msg_rsp = &rsp;
 	msg->msg_rsplen = sizeof(rsp);
