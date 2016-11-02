@@ -1,0 +1,44 @@
+.Dd $Mdocdate: November 2 2016 $
+.Dt DH_NEW 3
+.Os
+.Sh NAME
+.Nm DH_new ,
+.Nm DH_free
+.Nd allocate and free DH objects
+.Sh SYNOPSIS
+.In openssl/dh.h
+.Ft DH*
+.Fn DH_new void
+.Ft void
+.Fo DH_free
+.Fa "DH *dh"
+.Fc
+.Sh DESCRIPTION
+.Fn DH_new
+allocates and initializes a
+.Vt DH
+structure.
+.Pp
+.Fn DH_free
+frees the
+.Vt DH
+structure and its components.
+The values are erased before the memory is returned to the system.
+.Sh RETURN VALUES
+If the allocation fails,
+.Fn DH_new
+returns
+.Dv NULL
+and sets an error code that can be obtained by
+.Xr ERR_get_error 3 .
+Otherwise it returns a pointer to the newly allocated structure.
+.Sh SEE ALSO
+.Xr dh 3 ,
+.Xr DH_generate_key 3 ,
+.Xr DH_generate_parameters 3 ,
+.Xr ERR_get_error 3
+.Sh HISTORY
+.Fn DH_new
+and
+.Fn DH_free
+are available in all versions of SSLeay and OpenSSL.
