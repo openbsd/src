@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.13 2016/10/04 15:49:42 jsing Exp $ */
+/*	$Id: http.c,v 1.14 2016/11/02 09:33:46 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -135,14 +135,8 @@ http_init()
 		goto err;
 	}
 
-	tls_config_set_protocols(tlscfg, TLS_PROTOCOLS_ALL);
-
 	if (-1 == tls_config_set_ca_file(tlscfg, DEFAULT_CA_FILE)) {
 		warn("tls_config_set_ca_file: %s", tls_config_error(tlscfg));
-		goto err;
-	}
-	if (-1 == tls_config_set_ciphers(tlscfg, "compat")) {
-		warn("tls_config_set_ciphers: %s", tls_config_error(tlscfg));
 		goto err;
 	}
 
