@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.52 2016/11/02 09:54:47 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.53 2016/11/02 11:21:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -890,7 +890,7 @@ SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 typedef struct timeout_param_st {
 	SSL_CTX *ctx;
 	long time;
-	LHASH_OF(SSL_SESSION) *cache;
+	struct lhash_st_SSL_SESSION *cache;
 } TIMEOUT_PARAM;
 
 static void
@@ -909,8 +909,14 @@ timeout_doall_arg(SSL_SESSION *s, TIMEOUT_PARAM *p)
 	}
 }
 
-static
-IMPLEMENT_LHASH_DOALL_ARG_FN(timeout, SSL_SESSION, TIMEOUT_PARAM)
+static void
+timeout_LHASH_DOALL_ARG(void *arg1, void *arg2)
+{
+	SSL_SESSION *a = arg1;
+	TIMEOUT_PARAM *b = arg2;
+
+	timeout_doall_arg(a, b);
+}
 
 /* XXX 2038 */
 void
@@ -927,7 +933,7 @@ SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 	i = CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load;
 	CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = 0;
-	lh_SSL_SESSION_doall_arg(tp.cache, LHASH_DOALL_ARG_FN(timeout),
+	lh_SSL_SESSION_doall_arg(tp.cache, timeout_LHASH_DOALL_ARG,
 	TIMEOUT_PARAM, &tp);
 	CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = i;
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
