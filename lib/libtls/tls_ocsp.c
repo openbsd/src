@@ -386,6 +386,9 @@ tls_ocsp_process_response(struct tls *ctx, const unsigned char *response,
 	int ret;
 	OCSP_RESPONSE *resp;
 
+	if ((ctx->state & TLS_HANDSHAKE_COMPLETE) == 0)
+		return -1;
+
 	resp = d2i_OCSP_RESPONSE(NULL, &response, size);
 	if (resp == NULL) {
 		tls_ocsp_ctx_free(ctx->ocsp_ctx);
