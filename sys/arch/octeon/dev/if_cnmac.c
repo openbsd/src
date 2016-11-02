@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.58 2016/08/14 08:49:37 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.59 2016/11/02 01:29:43 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1025,6 +1025,7 @@ octeon_eth_init(struct ifnet *ifp)
 	}
 	octeon_eth_mediachange(ifp);
 
+	cn30xxgmx_set_mac_addr(sc->sc_gmx_port, sc->sc_arpcom.ac_enaddr);
 	cn30xxgmx_set_filter(sc->sc_gmx_port);
 
 	timeout_add_sec(&sc->sc_tick_misc_ch, 1);
