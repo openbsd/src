@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.65 2016/11/02 01:58:07 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.66 2016/11/02 06:26:16 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -129,6 +129,7 @@ struct pool {
 			pr_phtree;
 
 	struct cpumem *	pr_cache;
+	unsigned long	pr_cache_magic[2];
 	struct mutex	pr_cache_mtx;
 	struct pool_lists
 			pr_cache_lists;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.201 2016/11/02 03:29:48 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.202 2016/11/02 06:26:16 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1582,6 +1582,7 @@ pool_cache_init(struct pool *pp)
 	cm = cpumem_get(&pool_caches);
 
 	mtx_init(&pp->pr_cache_mtx, pp->pr_ipl);
+	arc4random_buf(pp->pr_cache_magic, sizeof(pp->pr_cache_magic));
 	TAILQ_INIT(&pp->pr_cache_lists);
 	pp->pr_cache_nlist = 0;
 	pp->pr_cache_items = 8;
@@ -1599,6 +1600,39 @@ pool_cache_init(struct pool *pp)
 	}
 
 	pp->pr_cache = cm;
+}
+
+static inline void
+pool_list_magic(struct pool *pp, struct pool_list *pl)
+{
+	unsigned long *entry = (unsigned long *)&pl->pl_nextl;
+
+	entry[0] = pp->pr_cache_magic[0] ^ (u_long)pl;
+	entry[1] = pp->pr_cache_magic[1] ^ (u_long)pl->pl_next;
+}
+
+static inline void
+pool_list_magic_check(struct pool *pp, struct pool_list *pl)
+{
+	unsigned long *entry;
+	unsigned long val;
+
+	entry = (unsigned long *)&pl->pl_nextl;
+	val = pp->pr_cache_magic[0] ^ (u_long)pl;
+	if (*entry != val)
+		goto fail;
+
+	entry++;
+	val = pp->pr_cache_magic[1] ^ (u_long)pl->pl_next;
+	if (*entry != val)
+		goto fail;
+
+	return;
+
+fail:
+	panic("%s: %s cpu free list modified: item addr %p+%zu 0x%lx!=0x%lx",
+	    __func__, pp->pr_wchan, pl, (caddr_t)entry - (caddr_t)pl,
+	    *entry, val);
 }
 
 static inline void
@@ -1626,6 +1660,8 @@ pool_list_alloc(struct pool *pp, struct pool_cache *pc)
 	if (pl != NULL) {
 		TAILQ_REMOVE(&pp->pr_cache_lists, pl, pl_nextl);
 		pp->pr_cache_nlist--;
+
+		pool_list_magic(pp, pl);
 	}
 
 	pp->pr_cache_nout += pc->pc_nout;
@@ -1686,6 +1722,25 @@ pool_cache_get(struct pool *pp)
 		goto done;
 	}
 
+	pool_list_magic_check(pp, pl);
+#ifdef DIAGNOSTIC
+	if (pool_debug && POOL_LIST_POISONED(pl)) {
+		size_t pidx;
+		uint32_t pval;
+
+		if (poison_check(pl + 1, pp->pr_size - sizeof(*pl),
+		    &pidx, &pval)) {
+			int *ip = (int *)(pl + 1);
+			ip += pidx;
+
+			panic("%s: %s cpu free list modified: "
+			    "item addr %p+%zu 0x%x!=0x%x",
+			    __func__, pp->pr_wchan, pl,
+			    (caddr_t)ip - (caddr_t)pl, *ip, pval);
+		}
+	}
+#endif
+
 	pc->pc_actv = pl->pl_next;
 	pc->pc_nactv = POOL_LIST_NITEMS(pl) - 1;
 	pc->pc_gets++;
@@ -1693,22 +1748,6 @@ pool_cache_get(struct pool *pp)
 
 done:
 	pool_cache_leave(pp, pc, s);
-
-#ifdef DIAGNOSTIC
-	if (pool_debug && pl != NULL && POOL_LIST_POISONED(pl)) {
-		size_t pidx;
-		uint32_t pval;
-
-		if (poison_check(pl + 1, pp->pr_size - sizeof(*pl),
-		    &pidx, &pval)) {
-			int *ip = (int *)(pl + 1);
-			panic("%s: %s cpu free list modified: "
-			    "item addr %p; offset 0x%zx=0x%x",
-			    __func__, pp->pr_wchan, pl,
-			    pidx * sizeof(int) + sizeof(*pl), ip[pidx]);
-		}
-	}
-#endif
 
 	return (pl);
 }
@@ -1746,6 +1785,7 @@ pool_cache_put(struct pool *pp, void *v)
 #ifdef DIAGNOSTIC
 	pl->pl_nitems |= poison ? POOL_LIST_NITEMS_POISON : 0;
 #endif
+	pool_list_magic(pp, pl);
 
 	pc->pc_actv = pl;
 	pc->pc_nactv = nitems;
