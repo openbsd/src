@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.96 2015/10/25 16:07:04 doug Exp $ */
+/* $OpenBSD: ssl.h,v 1.97 2016/11/02 10:52:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1318,7 +1318,12 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define d2i_SSL_SESSION_bio(bp,s_id) ASN1_d2i_bio_of(SSL_SESSION,SSL_SESSION_new,d2i_SSL_SESSION,bp,s_id)
 #define i2d_SSL_SESSION_bio(bp,s_id) ASN1_i2d_bio_of(SSL_SESSION,i2d_SSL_SESSION,bp,s_id)
 
-DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
+SSL_SESSION *PEM_read_bio_SSL_SESSION(BIO *bp, SSL_SESSION **x,
+    pem_password_cb *cb, void *u);
+SSL_SESSION *PEM_read_SSL_SESSION(FILE *fp, SSL_SESSION **x,
+    pem_password_cb *cb, void *u);
+int PEM_write_bio_SSL_SESSION(BIO *bp, SSL_SESSION *x);
+int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 
 #define SSL_AD_REASON_OFFSET		1000 /* offset to get SSL_R_... value from SSL_AD_... */
 
