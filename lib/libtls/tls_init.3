@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.72 2016/09/13 13:40:58 tedu Exp $
+.\" $OpenBSD: tls_init.3,v 1.73 2016/11/02 15:18:42 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2016 $
+.Dd $Mdocdate: November 2 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -50,6 +50,7 @@
 .Nm tls_config_verify ,
 .Nm tls_config_verify_client ,
 .Nm tls_config_verify_client_optional ,
+.Nm tls_ocsp_process_response,
 .Nm tls_peer_cert_provided ,
 .Nm tls_peer_cert_contains_name ,
 .Nm tls_peer_cert_issuer ,
@@ -57,6 +58,14 @@
 .Nm tls_peer_cert_hash ,
 .Nm tls_peer_cert_notbefore ,
 .Nm tls_peer_cert_notafter ,
+.Nm tls_peer_ocsp_cert_status,
+.Nm tls_peer_ocsp_crl_reason,
+.Nm tls_peer_ocsp_next_update,
+.Nm tls_peer_ocsp_response_status,
+.Nm tls_peer_ocsp_result_msg,
+.Nm tls_peer_ocsp_revocation_time,
+.Nm tls_peer_ocsp_this_update,
+.Nm tls_peer_ocsp_url,
 .Nm tls_conn_alpn_selected ,
 .Nm tls_conn_cipher ,
 .Nm tls_conn_servername ,
@@ -160,6 +169,24 @@
 .Fn tls_peer_cert_notbefore "struct tls *ctx"
 .Ft "time_t"
 .Fn tls_peer_cert_notafter "struct tls *ctx"
+.Ft "int"
+.Fn tls_ocsp_process_response "struct tls *ctx" "const unsigned char *response" "size_t size"
+.Ft "int"
+.Fn tls_peer_ocsp_cert_status "struct tls *ctx"
+.Ft "int"
+.Fn tls_peer_ocsp_crl_reason "struct tls *ctx"
+.Ft time_t
+.Fn tls_peer_ocsp_next_update "struct tls *ctx"
+.Ft "int"
+.Fn tls_peer_ocsp_response_status "struct tls *ctx"
+.Ft "const char *"
+.Fn tls_peer_ocsp_result_msg "struct tls *ctx"
+.Ft "time_t"
+.Fn tls_peer_ocsp_revocation_time "struct tls *ctx"
+.Ft "time_t"
+.Fn tls_peer_ocsp_this_update" struct tls *ctx"
+.Ft "const char *"
+.Fn tls_peer_ocsp_url "struct tls *ctx"
 .Ft "const char *"
 .Fn tls_conn_alpn_selected "struct tls *ctx"
 .Ft "const char *"
@@ -513,6 +540,53 @@ the peer certificate from
 returns the time corresponding to the end of the validity period of
 the peer certificate from
 .Ar ctx .
+.Ed
+.It
+.Fn tls_ocsp_process_response
+processes a raw ocsp response in 
+.Ar response
+of size
+.Ar size
+to check the revocation status of the peer certificate from
+.Ar ctx .
+A successful return code of 0 indicates that the certificate has not been revoked. 
+.Ed
+.It
+.Fn tls_peer_ocsp_url
+returns the URL for OCSP validation of the peer certificate from
+.Ar ctx
+.El
+.Pp
+The following functions return informaiton about the peer certificate from 
+.Ar ctx
+tha was obtained by validating a stapled OCSP response during the handshake, or
+via a previous call to
+.Xr tls_ocsp_process_response
+.Bl -bullet -offset four
+.It
+.Fn tls_peer_ocsp_cert_status
+returns the OCSP certificate status code as per RFC 6960 section 2.2 
+.Ed
+.It
+.Fn tls_peer_ocsp_crl_reason
+returns the OCSP certificate revocation reason status code as per RFC 5280
+section 5.3.1
+.Ed
+.It
+.Fn tls_peer_ocsp_next_update
+returns the OCSP next update time
+.Ed
+.It
+.Fn tls_peer_ocsp_response_status
+returns the OCSP response status as per RFC 6960 section 2.3
+.Ed
+.It
+.Fn tls_peer_ocsp_revocation_time
+returns the OCSP revocation time
+.Ed
+.It
+.Fn tls_peer_ocsp_this_update
+returns the OCSP this update time
 .El
 .Pp
 The following are TLS related utility functions:
@@ -616,16 +690,57 @@ The
 and
 .Fn tls_peer_cert_contains_name
 functions return 1 if the check succeeds, and 0 if it does not.
+.Pp
 Functions that return a
 .Vt time_t
 will return a time in epoch-seconds on success, and -1 on error.
+.Pp
 Functions that return a
 .Vt ssize_t
 will return a size on success, and -1 on error.
+.Pp
+The 
+.Fn tls_peer_ocsp_response_status
+function returns one of 
+.Ar TLS_OCSP_RESPONSE_SUCCESSFUL ,
+.Ar TLS_OCSP_RESPONSE_MALFORMED ,
+.Ar TLS_OCSP_RESPONSE_INTERNALERROR ,
+.Ar TLS_OCSP_RESPONSE_TRYLATER ,
+.Ar TLS_OCSP_RESPONSE_SIGREQUIRED ,
+or
+.AR TLS_OCSP_RESPONSE_UNAUTHORIZED
+on success, and -1 on error.
+.Pp
+The 
+.Fn tls_peer_ocsp_cert_status
+function returns one of
+.Ar TLS_OCSP_CERT_GOOD ,
+.Ar TLS_OCSP_CERT_REVOKED ,
+or 
+.Ar TLS_OCSP_CERT_UNKNOWN
+on success, and -1 on error.
+.Pp
+The 
+.Fn tls_peer_ocsp_crl_reason
+function returns one of
+.Ar TLS_CRL_REASON_UNSPECIFIED ,
+.Ar TLS_CRL_REASON_KEY_COMPROMISE ,
+.Ar TLS_CRL_REASON_CA_COMPROMISE , 
+.Ar TLS_CRL_REASON_AFFILIATION_CHANGED ,
+.Ar TLS_CRL_REASON_SUPERSEDED ,
+.Ar TLS_CRL_REASON_CESSATION_OF_OPERATION ,
+.Ar TLS_CRL_REASON_CERTIFICATE_HOLD ,
+.Ar TLS_CRL_REASON_REMOVE_FROM_CRL ,
+.Ar TLS_CRL_REASON_PRIVILEGE_WITHDRAWN ,
+or 
+.Ar  TLS_CRL_REASON_AA_COMPROMISE
+on success, and -1 on error.
+.Pp
 All other functions that return
 .Vt int
 will return 0 on success and -1 on error.
-Functions that return a pointer will return NULL on error, which indicates an
+.Pp
+Functions that return a pointer will return NULL on error or an
 out of memory condition.
 .Pp
 The

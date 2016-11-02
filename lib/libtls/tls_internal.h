@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.43 2016/09/04 12:26:43 bcook Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.44 2016/11/02 15:18:42 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -92,6 +92,31 @@ struct tls_conninfo {
 #define TLS_EOF_NO_CLOSE_NOTIFY	(1 << 0)
 #define TLS_HANDSHAKE_COMPLETE	(1 << 1)
 
+struct tls_ocsp_result {
+	const char *result_msg;
+	int response_status;
+	int cert_status;
+	int crl_reason;
+	time_t this_update;
+	time_t next_update;
+	time_t revocation_time;
+};
+
+struct tls_ocsp_ctx {
+	/* responder location */
+	char *ocsp_url;
+
+	/* request blob */
+	uint8_t *request_data;
+	size_t request_size;
+
+	/* cert data, this struct does not own these */
+	X509 *main_cert;
+	STACK_OF(X509) *extra_certs;
+
+	struct tls_ocsp_result *ocsp_result;
+};
+
 struct tls_sni_ctx {
 	struct tls_sni_ctx *next;
 
@@ -117,6 +142,8 @@ struct tls {
 	X509 *ssl_peer_cert;
 
 	struct tls_conninfo *conninfo;
+
+	struct tls_ocsp_ctx *ocsp_ctx;
 
 	tls_read_cb read_cb;
 	tls_write_cb write_cb;
@@ -171,6 +198,10 @@ int tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret,
 
 int tls_conninfo_populate(struct tls *ctx);
 void tls_conninfo_free(struct tls_conninfo *conninfo);
+
+int tls_ocsp_verify_cb(SSL *ssl, void *arg);
+void tls_ocsp_ctx_free(struct tls_ocsp_ctx *ctx);
+struct tls_ocsp_ctx *tls_ocsp_setup_from_peer(struct tls *ctx);
 
 int asn1_time_parse(const char *, size_t, struct tm *, int);
 
