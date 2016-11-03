@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.33 2016/11/03 16:12:23 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.34 2016/11/03 17:14:31 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -212,7 +212,7 @@ rollback_patch()
 
 sp_cleanup()
 {
-	local _d _k
+	local _d _k _m
 
 	# remove non matching release /var/syspatch/ content
 	for _d in ${_PDIR}/*; do
