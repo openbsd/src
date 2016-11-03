@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.27 2016/11/03 12:27:34 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.28 2016/11/03 12:40:08 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -255,8 +255,7 @@ set -A _KERNV -- $(sysctl -n kern.version |
 [[ -n ${PATCH_PATH} ]]
 [[ -d ${PATCH_PATH} ]] && PATCH_PATH="file://$(readlink -f ${PATCH_PATH})"
 
-# XXX hw.ncpufound ?
-[[ $(sysctl -n hw.ncpu) -gt 1 ]] && _BSDMP=true || _BSDMP=false
+[[ $(sysctl -n hw.ncpufound) -gt 1 ]] && _BSDMP=true || _BSDMP=false
 _FETCH="/usr/bin/ftp -MV -k ${FTP_KEEPALIVE-0}"
 _PDIR="/var/syspatch"
 _REL=${_KERNV[0]}
