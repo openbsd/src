@@ -173,6 +173,11 @@ struct hv_kvp_msg_enum {
 	uint8_t			kvm_val[HV_KVP_MAX_VAL_SIZE];
 } __packed;
 
+struct hv_kvp_msg_del {
+	uint32_t		kvm_keylen;
+	uint8_t			kvm_key[HV_KVP_MAX_KEY_SIZE];
+} __packed;
+
 struct hv_kvp_msg_addr {
 	uint16_t		kvm_mac[128];
 	uint8_t			kvm_family;
@@ -189,6 +194,7 @@ struct hv_kvp_msg_addr {
 union hv_kvp_msg {
 	struct hv_kvp_msg_val	kvm_val;
 	struct hv_kvp_msg_enum	kvm_enum;
+	struct hv_kvp_msg_del	kvm_del;
 	struct hv_kvp_msg_addr	kvm_addr;
 };
 

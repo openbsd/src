@@ -535,6 +535,20 @@ copyin_utf16le(void *dst, const void *src, size_t dlen, size_t slen)
 	return (j);
 }
 
+static inline int
+keycmp_utf16le(const uint8_t *key, const uint8_t *ukey, size_t ukeylen)
+{
+	int i, j;
+
+	for (i = j = 0; i < ukeylen; i += 2, j++) {
+		if (key[j] != ukey[i])
+			return (key[j] > ukey[i] ?
+			    key[j] - ukey[i] :
+			    ukey[i] - key[j]);
+	}
+	return (0);
+}
+
 static void
 kvp_pool_init(struct kvp_pool *kvpl)
 {
@@ -547,7 +561,7 @@ static int
 kvp_pool_insert(struct kvp_pool *kvpl, const char *key, const char *val,
     uint32_t vallen, uint32_t valtype)
 {
-	struct kvp_entry *kpe, *nkpe;
+	struct kvp_entry *kpe;
 	int keylen = strlen(key);
 
 	if (keylen > HV_KVP_MAX_KEY_SIZE / 2)
@@ -562,20 +576,20 @@ kvp_pool_insert(struct kvp_pool *kvpl, const char *key, const char *val,
 		}
 	}
 
-	nkpe = pool_get(&kvp_entry_pool, PR_ZERO | PR_NOWAIT);
-	if (nkpe == NULL)
+	kpe = pool_get(&kvp_entry_pool, PR_ZERO | PR_NOWAIT);
+	if (kpe == NULL)
 		return (ENOMEM);
 
-	strlcpy(nkpe->kpe_key, key, HV_KVP_MAX_KEY_SIZE / 2);
+	strlcpy(kpe->kpe_key, key, HV_KVP_MAX_KEY_SIZE / 2);
 
-	if ((nkpe->kpe_valtype = valtype) == HV_KVP_REG_SZ)
-		strlcpy(nkpe->kpe_val, val, HV_KVP_MAX_KEY_SIZE / 2);
+	if ((kpe->kpe_valtype = valtype) == HV_KVP_REG_SZ)
+		strlcpy(kpe->kpe_val, val, HV_KVP_MAX_KEY_SIZE / 2);
 	else
-		memcpy(nkpe->kpe_val, val, vallen);
+		memcpy(kpe->kpe_val, val, vallen);
 
-	nkpe->kpe_index = kvpl->kvp_index++ & MAXPOOLENTS;
+	kpe->kpe_index = kvpl->kvp_index++ & MAXPOOLENTS;
 
-	TAILQ_INSERT_TAIL(&kvpl->kvp_entries, nkpe, kpe_entry);
+	TAILQ_INSERT_TAIL(&kvpl->kvp_entries, kpe, kpe_entry);
 
 	mtx_leave(&kvpl->kvp_lock);
 
@@ -617,34 +631,34 @@ static int
 kvp_pool_import(struct kvp_pool *kvpl, const char *key, uint32_t keylen,
     const char *val, uint32_t vallen, uint32_t valtype)
 {
-	struct kvp_entry *kpe, *nkpe;
+	struct kvp_entry *kpe;
 
 	if (keylen > HV_KVP_MAX_KEY_SIZE ||
 	    vallen > HV_KVP_MAX_VAL_SIZE)
 		return (ERANGE);
 
-	nkpe = pool_get(&kvp_entry_pool, PR_ZERO | PR_NOWAIT);
-	if (nkpe == NULL)
-		return (ENOMEM);
-
-	copyin_utf16le(nkpe->kpe_key, key, HV_KVP_MAX_KEY_SIZE / 2, keylen);
-
 	mtx_enter(&kvpl->kvp_lock);
 
 	TAILQ_FOREACH(kpe, &kvpl->kvp_entries, kpe_entry) {
-		if (strcmp(kpe->kpe_key, nkpe->kpe_key) == 0) {
-			mtx_leave(&kvpl->kvp_lock);
-			pool_put(&kvp_entry_pool, nkpe);
-			return (EEXIST);
-		}
+		if (keycmp_utf16le(kpe->kpe_key, key, keylen) == 0)
+			break;
+	}
+	if (kpe == NULL) {
+		kpe = pool_get(&kvp_entry_pool, PR_ZERO | PR_NOWAIT);
+		if (kpe == NULL)
+			return (ENOMEM);
+
+		copyin_utf16le(kpe->kpe_key, key, HV_KVP_MAX_KEY_SIZE / 2,
+		    keylen);
+
+		kpe->kpe_index = kvpl->kvp_index++ & MAXPOOLENTS;
+
+		TAILQ_INSERT_TAIL(&kvpl->kvp_entries, kpe, kpe_entry);
 	}
 
-	copyin_utf16le(nkpe->kpe_val, val, HV_KVP_MAX_VAL_SIZE / 2, vallen);
-	nkpe->kpe_valtype = valtype;
+	copyin_utf16le(kpe->kpe_val, val, HV_KVP_MAX_VAL_SIZE / 2, vallen);
+	kpe->kpe_valtype = valtype;
 
-	nkpe->kpe_index = kvpl->kvp_index++ & MAXPOOLENTS;
-
-	TAILQ_INSERT_TAIL(&kvpl->kvp_entries, nkpe, kpe_entry);
 	mtx_leave(&kvpl->kvp_lock);
 
 	return (0);
@@ -674,6 +688,31 @@ kvp_pool_export(struct kvp_pool *kvpl, uint32_t index, char *key,
 	*valtype = kpe->kpe_valtype;
 
 	mtx_leave(&kvpl->kvp_lock);
+
+	return (0);
+}
+
+static int
+kvp_pool_remove(struct kvp_pool *kvpl, const char *key, uint32_t keylen)
+{
+	struct kvp_entry *kpe;
+
+	mtx_enter(&kvpl->kvp_lock);
+
+	TAILQ_FOREACH(kpe, &kvpl->kvp_entries, kpe_entry) {
+		if (keycmp_utf16le(kpe->kpe_key, key, keylen) == 0)
+			break;
+	}
+	if (kpe == NULL) {
+		mtx_leave(&kvpl->kvp_lock);
+		return (ENOENT);
+	}
+
+	TAILQ_REMOVE(&kvpl->kvp_entries, kpe, kpe_entry);
+
+	mtx_leave(&kvpl->kvp_lock);
+
+	pool_put(&kvp_entry_pool, kpe);
 
 	return (0);
 }
@@ -766,13 +805,13 @@ hv_kvp_attach(struct hv_ic_dev *dv)
 	for (i = 0; i < NKVPPOOLS; i++)
 		kvp_pool_init(&kvp->kvp_pool[i]);
 
-	/* Initialize GuestIntrinsicExchangeItems (pool 3) */
+	/* Initialize 'Auto' pool */
 	for (i = 0; i < nitems(kvp_pool_auto); i++) {
 		if (kvp_pool_insert(&kvp->kvp_pool[HV_KVP_POOL_AUTO],
 		    kvp_pool_auto[i].keyname, kvp_pool_auto[i].value,
 		    strlen(kvp_pool_auto[i].value), HV_KVP_REG_SZ))
-			printf("%s: failed to insert key '%s'\n",
-			    sc->sc_dev.dv_xname, kvp_pool_auto[i].keyname);
+			DPRINTF("%s: failed to insert into 'Auto' pool\n",
+			    sc->sc_dev.dv_xname);
 	}
 
 	sc->sc_pvbus->hv_kvop = hv_kvop;
@@ -795,17 +834,29 @@ hv_kvp_process(struct hv_kvp *kvp, struct vmbus_icmsg_kvp *msg)
 		    kvm->kvm_val.kvm_key, kvm->kvm_val.kvm_keylen,
 		    kvm->kvm_val.kvm_val, kvm->kvm_val.kvm_vallen,
 		    kvm->kvm_val.kvm_valtype)) {
-			DPRINTF("%s: failed to import the value\n", __func__);
+			DPRINTF("%s: failed to import into 'Guest/Parameters'"
+			    " pool\n", __func__);
 			kvh->kvh_err = HV_KVP_S_CONT;
 		} else if (kvh->kvh_pool == HV_KVP_POOL_EXTERNAL &&
 		    kvp_pool_import(&kvp->kvp_pool[HV_KVP_POOL_EXTERNAL],
 		    kvm->kvm_val.kvm_key, kvm->kvm_val.kvm_keylen,
 		    kvm->kvm_val.kvm_val, kvm->kvm_val.kvm_vallen,
 		    kvm->kvm_val.kvm_valtype)) {
-			DPRINTF("%s: failed to import the value\n", __func__);
+			DPRINTF("%s: failed to import into 'External' pool\n",
+			    __func__);
 			kvh->kvh_err = HV_KVP_S_CONT;
 		} else if (kvh->kvh_pool != HV_KVP_POOL_AUTO_EXTERNAL &&
 		    kvh->kvh_pool != HV_KVP_POOL_EXTERNAL) {
+			kvh->kvh_err = HV_KVP_S_CONT;
+		} else
+			kvh->kvh_err = HV_KVP_S_OK;
+		break;
+	case HV_KVP_OP_DELETE:
+		if (kvh->kvh_pool != HV_KVP_POOL_EXTERNAL ||
+		    kvp_pool_remove(&kvp->kvp_pool[HV_KVP_POOL_EXTERNAL],
+		    kvm->kvm_del.kvm_key, kvm->kvm_del.kvm_keylen)) {
+			DPRINTF("%s: failed to remove from 'External' pool\n",
+			    __func__);
 			kvh->kvh_err = HV_KVP_S_CONT;
 		} else
 			kvh->kvh_err = HV_KVP_S_OK;
