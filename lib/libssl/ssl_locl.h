@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.130 2016/10/19 16:38:40 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.131 2016/11/03 08:15:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -754,7 +754,7 @@ int ssl_init_wbio_buffer(SSL *s, int push);
 void ssl_free_wbio_buffer(SSL *s);
 
 int tls1_init_finished_mac(SSL *s);
-void tls1_finish_mac(SSL *s, const unsigned char *buf, int len);
+int tls1_finish_mac(SSL *s, const unsigned char *buf, int len);
 void tls1_free_digest_list(SSL *s);
 void tls1_cleanup_key_block(SSL *s);
 int tls1_digest_cached_records(SSL *s);
