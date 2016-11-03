@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.58 2016/07/10 23:07:34 tedu Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.59 2016/11/03 16:23:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -839,10 +839,11 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 int
 ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 {
-	int al, i, j, ret;
+	void (*cb)(const SSL *ssl, int type2, int val) = NULL;
+	int al, i, j, ret, rrcount = 0;
 	unsigned int n;
 	SSL3_RECORD *rr;
-	void (*cb)(const SSL *ssl, int type2, int val) = NULL;
+	BIO *bio;
 
 	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_read_buffer(s))
@@ -896,7 +897,27 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			return (-1);
 		}
 	}
+
 start:
+	/*
+	 * Do not process more than three consecutive records, otherwise the
+	 * peer can cause us to loop indefinitely. Instead, return with an
+	 * SSL_ERROR_WANT_READ so the caller can choose when to handle further
+	 * processing. In the future, the total number of non-handshake and
+	 * non-application data records per connection should probably also be
+	 * limited...
+	 */
+	if (rrcount++ >= 3) {
+		if ((bio = SSL_get_rbio(s)) == NULL) {
+			SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
+			return -1;
+		}
+		BIO_clear_retry_flags(bio);
+		BIO_set_retry_read(bio);
+		s->rwstate = SSL_READING;
+		return -1;
+	}
+
 	s->rwstate = SSL_NOTHING;
 
 	/*
@@ -1050,7 +1071,6 @@ start:
 				if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
 					if (s->s3->rbuf.left == 0) {
 						/* no read-ahead left? */
-						BIO *bio;
 			/* In the case where we try to read application data,
 			 * but we trigger an SSL handshake, we return -1 with
 			 * the retry option set.  Otherwise renegotiation may
