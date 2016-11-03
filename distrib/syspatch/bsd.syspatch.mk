@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.3 2016/09/05 11:55:06 robert Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.4 2016/11/03 14:46:48 robert Exp $
 #
 # Copyright (c) 2016 Robert Nagy <robert@openbsd.org>
 #
@@ -39,7 +39,7 @@ BUILD?=		src
 
 # miscellaneous variables
 SYSPATCH_DIR=	${FAKE}/var/syspatch/${OSREV}
-FAKE=		${ERRATA}/fake
+FAKE=		${DESTDIR}/syspatch/${ERRATA}
 SRCDIR=		${BSDSRCDIR}
 SUBDIR?=
 
@@ -65,28 +65,51 @@ clean:
 
 cleandir: clean
 
-${_FAKE_COOKIE}: ${_BUILD_COOKIE}
+testroot:
+	@if [[ `id -u` -ne 0 ]]; then \
+		{ echo "***>   $@ must be called by root"; \
+		exit 1; }; \
+	fi
+
+${_FAKE_COOKIE}: testroot ${_BUILD_COOKIE}
+.ifndef DESTDIR
+	@{ echo "***>   setenv DESTDIR before doing that!"; \
+	exit 1; };
+.else
+	@destmp=`df -P ${DESTDIR} | awk 'END { print $$6 }'`; \
+	if ! mount | grep -q " $${destmp} .*noperm"; then \
+		echo ${DESTDIR} must be on a noperm filesystem >&2; \
+		false; \
+	fi; \
+	if [[ `stat -f '%Su %Lp' $${destmp}` != '${BUILDUSER} 700' ]]; then \
+		echo $${destmp} must have owner BUILDUSER and mode 700 >&2; \
+		false; \
+	fi
+
+	${INSTALL} -d -m 755 ${SYSPATCH_DIR}
+	${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${SHAREGRP} -m ${SHAREMODE} \
+		${ERRATA}/${ERRATA}.patch.sig ${SYSPATCH_DIR}
+
 .for _m in ${MTREE_FILES}
-	@${SUDO} /usr/sbin/mtree ${MTREE_ARGS} -f ${_m} >/dev/null
+	@su ${BUILDUSER} -c '/usr/sbin/mtree ${MTREE_ARGS} -f ${_m}' >/dev/null
 .endfor
-	@touch $@
+	@su ${BUILDUSER} -c 'touch $@'
+.endif
 
 ${ERRATA}/${ERRATA}.patch:
-	@${INSTALL} -d -m 755 ${SYSPATCH_DIR} && \
-	echo ">> Fetch ${MIRROR}/${.TARGET:T}.sig"; \
-	if ${FETCH} -o ${SYSPATCH_DIR}/${.TARGET:T}.sig \
-		${MIRROR}/${.TARGET:T}.sig; then \
-		if /usr/bin/signify -Vep ${SIGNIFY_KEY} -x \
-			${SYSPATCH_DIR}/${.TARGET:T}.sig -m ${.TARGET}; then \
-				exit 0; \
-		fi; \
+	@su ${BUILDUSER} -c '${INSTALL} -d -m 755 ${ERRATA}' && \
+	echo '>> Fetch ${MIRROR}/${.TARGET:T}.sig'; \
+	if su ${BUILDUSER} -c '${FETCH} -o ${ERRATA}/${.TARGET:T}.sig \
+		${MIRROR}/${.TARGET:T}.sig'; then \
+		su ${BUILDUSER} -c '/usr/bin/signify -Vep ${SIGNIFY_KEY} -x \
+			${ERRATA}/${.TARGET:T}.sig -m ${.TARGET}' && exit 0; \
 	fi; exit 1
 
 ${_PATCH_COOKIE}: ${ERRATA}/${ERRATA}.patch
-	@/usr/bin/patch ${PATCH_ARGS} < ${ERRATA}/${ERRATA}.patch || \
+	@su ${BUILDUSER} -c '/usr/bin/patch ${PATCH_ARGS} < ${ERRATA}/${ERRATA}.patch' || \
 		{ echo "***>   ${ERRATA}.patch did not apply cleanly"; \
 		exit 1; };
-	@touch $@
+	@su ${BUILDUSER} -c 'touch $@'
 
 ${_INSTALL_COOKIE}: ${_FAKE_COOKIE}
 .if ${BUILD:L:Msrc} || ${BUILD:L:Mxenocara}
@@ -95,29 +118,34 @@ ${_INSTALL_COOKIE}: ${_FAKE_COOKIE}
 	@if [ -f ${_s}/Makefile.bsd-wrapper ]; then \
 		_mk_spec_="-f Makefile.bsd-wrapper"; \
 	fi; \
-	cd ${_s} && ${SUDO} /usr/bin/make $${_mk_spec_} \
-		DESTDIR=${.OBJDIR}/${FAKE} install
+	cd ${_s} && su ${BUILDUSER} -c "/usr/bin/make $${_mk_spec_} \
+		DESTDIR=${FAKE} install"
 .    endfor
 .  endif
 .elif ${BUILD:L:Mkernel}
 .  for _kern in GENERIC GENERIC.MP
 	@if [ ${_kern} = "GENERIC" ]; then \
-		${SUDO} \
-		cp -p ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${_kern}/bsd \
-		${.OBJDIR}/${FAKE}/bsd || \
+		su ${BUILDUSER} -c '${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${LOCALEGRP} \
+		-m 0644 ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${_kern}/bsd \
+		${FAKE}/bsd' || \
 		{ echo "***>   failed to install ${_kern}"; \
 		exit 1; }; \
 	elif [ ${_kern} = "GENERIC.MP" ]; then \
-		${SUDO} \
-		cp -p ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${_kern}/bsd \
-		${.OBJDIR}/${FAKE}/bsd.mp || \
+		su ${BUILDUSER} -c '${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${LOCALEGRP} \
+		-m 0644 ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${_kern}/bsd \
+		${FAKE}/bsd.mp' || \
 		{ echo "***>   failed to install ${_kern}"; \
 		exit 1; }; \
 	fi; exit 0
 .  endfor
 .endif
-	@touch $@
+	@su ${BUILDUSER} -c 'touch $@'
 
+.ifdef DESTDIR
+${_BUILD_COOKIE}: ${_PATCH_COOKIE}
+	@echo cannot build with DESTDIR set
+	@false
+.else
 ${_BUILD_COOKIE}: ${_PATCH_COOKIE}
 .if ${BUILD:L:Msrc} || ${BUILD:L:Mxenocara}
 .  if defined(SUBDIR) && !empty(SUBDIR)
@@ -126,7 +154,7 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE}
 		_mk_spec_="-f Makefile.bsd-wrapper"; \
 	fi; \
 	for _t in obj depend all; do \
-		cd ${_s} && /usr/bin/make $${_mk_spec_} $${_t}; \
+		su ${BUILDUSER} -c "cd ${_s} && /usr/bin/make $${_mk_spec_} $${_t}"; \
 	done;
 .    endfor
 .  endif
@@ -134,37 +162,37 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE}
 .  for _kern in GENERIC GENERIC.MP
 	@if cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/conf; then \
 		if config ${_kern}; then \
-			if cd ../compile/${_kern} && make clean && make; then \
+			if cd ../compile/${_kern} && make; then \
 				exit 0; \
 			fi; exit 1; \
 		fi; exit 1; \
 	fi; exit 1
 .  endfor
 .endif
-	@touch $@
+	@su ${BUILDUSER} -c 'touch $@'
+.endif
 
 syspatch: ${SYSPATCH}
 
 ${SYSPATCH}: ${ERRATA}/.plist
 .for _m in ${MTREE_FILES}
-	@${SUDO} /usr/sbin/mtree ${MTREE_ARGS} -f ${_m} >/dev/null
-	@${SUDO} chown -R root:wheel ${SYSPATCH_DIR}
+	@su ${BUILDUSER} -c '/usr/sbin/mtree ${MTREE_ARGS} -f ${_m}' >/dev/null
 .endfor
-	@tar -Pczf ${.TARGET} -C ${FAKE} -I ${ERRATA}/.plist || \
+	@su ${BUILDUSER} -c 'tar -Pczf ${.TARGET} -C ${FAKE} -I ${ERRATA}/.plist' || \
 		{ echo "***>   unable to create ${.TARGET}"; \
 		exit 1; };
 	@echo ">> Created ${SYSPATCH}"; \
 
 ${ERRATA}/.fplist: ${_INSTALL_COOKIE}
-	@${SUDO} find ${FAKE} \! -type d > ${.OBJDIR}/${ERRATA}/.fplist || \
+	@su ${BUILDUSER} -c 'find ${FAKE} \! -type d > ${.OBJDIR}/${ERRATA}/.fplist' || \
 		{ echo "***>   unable to create list of files"; \
 		exit 1; };
 
 ${ERRATA}/.plist: ${ERRATA}/.fplist
-	@for _l in $$(cat ${.OBJDIR}/${ERRATA}/.fplist); do \
+	@su ${BUILDUSER} -c 'for _l in $$(cat ${.OBJDIR}/${ERRATA}/.fplist); do \
 		_o=$$(echo $${_l} | sed "s,${FAKE},,g"); \
 		cmp -s $${_l} $${_o} || echo $${_o} | sed 's,^/,,g'; \
-	done > ${.OBJDIR}/${ERRATA}/.plist
+	done > ${.OBJDIR}/${ERRATA}/.plist'
 
 findstatic:
 .if defined(LIB) && !empty(LIB)
