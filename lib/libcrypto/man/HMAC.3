@@ -1,0 +1,206 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt HMAC 3
+.Os
+.Sh NAME
+.Nm HMAC ,
+.Nm HMAC_Init ,
+.Nm HMAC_Update ,
+.Nm HMAC_Final ,
+.Nm HMAC_cleanup
+.Nd HMAC message authentication code
+.Sh SYNOPSIS
+.In openssl/hmac.h
+.Ft unsigned char *
+.Fo HMAC
+.Fa "const EVP_MD *evp_md"
+.Fa "const void *key"
+.Fa "int key_len"
+.Fa "const unsigned char *d"
+.Fa "int n"
+.Fa "unsigned char *md"
+.Fa "unsigned int *md_len"
+.Fc
+.Ft void
+.Fo HMAC_CTX_init
+.Fa "HMAC_CTX *ctx"
+.Fc
+.Ft int
+.Fo HMAC_Init
+.Fa "HMAC_CTX *ctx"
+.Fa "const void *key"
+.Fa "int key_len"
+.Fa "const EVP_MD *md"
+.Fc
+.Ft int
+.Fo HMAC_Init_ex
+.Fa "HMAC_CTX *ctx"
+.Fa "const void *key"
+.Fa "int key_len"
+.Fa "const EVP_MD *md"
+.Fa "ENGINE *impl"
+.Fc
+.Ft int
+.Fo HMAC_Update
+.Fa "HMAC_CTX *ctx"
+.Fa "const unsigned char *data"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo HMAC_Final
+.Fa "HMAC_CTX *ctx"
+.Fa "unsigned char *md"
+.Fa "unsigned int *len"
+.Fc
+.Ft void
+.Fo HMAC_CTX_cleanup
+.Fa "HMAC_CTX *ctx"
+.Fc
+.Ft void
+.Fo HMAC_cleanup
+.Fa "HMAC_CTX *ctx"
+.Fc
+.Sh DESCRIPTION
+HMAC is a MAC (message authentication code), i.e. a keyed hash
+function used for message authentication, which is based on a hash
+function.
+.Pp
+.Fn HMAC
+computes the message authentication code of the
+.Fa n
+bytes at
+.Fa d
+using the hash function
+.Fa evp_md
+and the key
+.Fa key
+which is
+.Fa key_len
+bytes long.
+.Pp
+It places the result in
+.Fa md ,
+which must have space for the output of the hash function, which is no
+more than
+.Dv EVP_MAX_MD_SIZE
+bytes.
+If
+.Fa md
+is
+.Dv NULL ,
+the digest is placed in a static array.
+The size of the output is placed in
+.Fa md_len ,
+unless it is
+.Dv NULL .
+.Pp
+.Fa evp_md
+can be
+.Xr EVP_sha1 3 ,
+.Xr EVP_ripemd160 3 ,
+etc.
+.Pp
+.Fn HMAC_CTX_init
+initialises a
+.Vt HMAC_CTX
+before first use.
+It must be called.
+.Pp
+.Fn HMAC_CTX_cleanup
+erases the key and other data from the
+.Vt HMAC_CTX
+and releases any associated resources.
+It must be called when an
+.Vt HMAC_CTX
+is no longer required.
+.Pp
+.Fn HMAC_cleanup
+is an alias for
+.Fn HMAC_CTX_cleanup
+included for backward compatibility with 0.9.6b.
+It is deprecated.
+.Pp
+The following functions may be used if the message is not completely
+stored in memory:
+.Pp
+.Fn HMAC_Init
+initializes a
+.Vt HMAC_CTX
+structure to use the hash function
+.Fa evp_md
+and the key
+.Fa key
+which is
+.Fa key_len
+bytes long.
+It is deprecated and only included for backward compatibility with
+OpenSSL 0.9.6b.
+.Pp
+.Fn HMAC_Init_ex
+initializes or reuses a
+.Vt HMAC_CTX
+structure to use the function
+.Fa evp_md
+and key
+.Fa key .
+Either can be
+.Dv NULL ,
+in which case the existing one will be reused.
+.Fn HMAC_CTX_init
+must have been called before the first use of an
+.Vt HMAC_CTX
+in this function.
+.Sy N.B.
+.Fn HMAC_Init
+had this undocumented behaviour in previous versions of OpenSSL -
+failure to switch to
+.Fn HMAC_Init_ex
+in programs that expect it will cause them to stop working.
+.Pp
+.Fn HMAC_Update
+can be called repeatedly with chunks of the message to be authenticated
+.Pq Fa len No bytes at Fa data .
+.Pp
+.Fn HMAC_Final
+places the message authentication code in
+.Fa md ,
+which must have space for the hash function output.
+.Sh RETURN VALUES
+.Fn HMAC
+returns a pointer to the message authentication code or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn HMAC_Init_ex ,
+.Fn HMAC_Update ,
+and
+.Fn HMAC_Final
+return 1 for success or 0 if an error occurred.
+.Pp
+.Fn HMAC_CTX_init
+and
+.Fn HMAC_CTX_cleanup
+do not return values.
+.Sh SEE ALSO
+.Xr evp 3
+.Sh STANDARDS
+RFC 2104
+.Sh HISTORY
+.Fn HMAC ,
+.Fn HMAC_Init ,
+.Fn HMAC_Update ,
+.Fn HMAC_Final ,
+and
+.Fn HMAC_cleanup
+are available since SSLeay 0.9.0.
+.Pp
+.Fn HMAC_CTX_init ,
+.Fn HMAC_Init_ex ,
+and
+.Fn HMAC_CTX_cleanup
+are available since OpenSSL 0.9.7.
+.Pp
+.Fn HMAC_Init_ex ,
+.Fn HMAC_Update ,
+and
+.Fn HMAC_Final
+did not return values in versions of OpenSSL before 1.0.0.
