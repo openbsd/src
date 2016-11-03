@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.24 2016/11/03 09:17:47 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.25 2016/11/03 15:01:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -5336,8 +5336,8 @@ swofp_multipart_reply(struct switch_softc *sc, struct swofp_mpmsg *swmp)
 
 		VDPRINTF(sc, "Multipart-Reply type=%s more=%s xid=%x\n",
 		    swofp_mpmtype_str(ntohs(omp->mp_type)),
-		    ((omp->mp_flags & OFP_T_MULTIPART_REQUEST) ? "yes" : "no"),
-		    ntohl(omp->mp_oh.oh_xid));
+		    (ntohs(omp->mp_flags) & OFP_MP_FLAG_REPLY_MORE) ?
+		    "yes" : "no", ntohl(omp->mp_oh.oh_xid));
 
 		(void)swofp_output(sc, hdr);
 	}
