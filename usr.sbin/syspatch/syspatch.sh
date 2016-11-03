@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.31 2016/11/03 15:34:31 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.32 2016/11/03 15:54:10 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -163,6 +163,7 @@ ls_installed()
 
 ls_missing()
 {
+	# XXX match with installed sets (comp, x...)?
 	local _a _installed
 	_installed="$(ls_installed)"
 
