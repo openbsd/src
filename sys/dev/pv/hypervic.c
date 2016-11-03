@@ -86,6 +86,7 @@ TAILQ_HEAD(kvp_list, kvp_entry);
 
 struct kvp_pool {
 	struct kvp_list			kvp_entries;
+	struct mutex			kvp_lock;
 	u_int				kvp_index;
 };
 
@@ -538,7 +539,8 @@ static void
 kvp_pool_init(struct kvp_pool *kvpl)
 {
 	TAILQ_INIT(&kvpl->kvp_entries);
-	kvpl->kvp_index = 0xffffffffU;
+	mtx_init(&kvpl->kvp_lock, IPL_NET);
+	kvpl->kvp_index = 0;
 }
 
 static int
@@ -551,9 +553,13 @@ kvp_pool_insert(struct kvp_pool *kvpl, const char *key, const char *val,
 	if (keylen > HV_KVP_MAX_KEY_SIZE / 2)
 		return (ERANGE);
 
+	mtx_enter(&kvpl->kvp_lock);
+
 	TAILQ_FOREACH(kpe, &kvpl->kvp_entries, kpe_entry) {
-		if (strcmp(kpe->kpe_key, key) == 0)
+		if (strcmp(kpe->kpe_key, key) == 0) {
+			mtx_leave(&kvpl->kvp_lock);
 			return (EEXIST);
+		}
 	}
 
 	nkpe = pool_get(&kvp_entry_pool, PR_ZERO | PR_NOWAIT);
@@ -567,9 +573,11 @@ kvp_pool_insert(struct kvp_pool *kvpl, const char *key, const char *val,
 	else
 		memcpy(nkpe->kpe_val, val, vallen);
 
-	nkpe->kpe_index = atomic_inc_int_nv(&kvpl->kvp_index) & MAXPOOLENTS;
+	nkpe->kpe_index = kvpl->kvp_index++ & MAXPOOLENTS;
 
 	TAILQ_INSERT_TAIL(&kvpl->kvp_entries, nkpe, kpe_entry);
+
+	mtx_leave(&kvpl->kvp_lock);
 
 	return (0);
 }
@@ -584,17 +592,23 @@ kvp_pool_update(struct kvp_pool *kvpl, const char *key, const char *val,
 	if (keylen > HV_KVP_MAX_KEY_SIZE / 2)
 		return (ERANGE);
 
+	mtx_enter(&kvpl->kvp_lock);
+
 	TAILQ_FOREACH(kpe, &kvpl->kvp_entries, kpe_entry) {
 		if (strcmp(kpe->kpe_key, key) == 0)
 			break;
 	}
-	if (kpe == NULL)
+	if (kpe == NULL) {
+		mtx_leave(&kvpl->kvp_lock);
 		return (ENOENT);
+	}
 
 	if ((kpe->kpe_valtype = valtype) == HV_KVP_REG_SZ)
 		strlcpy(kpe->kpe_val, val, HV_KVP_MAX_KEY_SIZE / 2);
 	else
 		memcpy(kpe->kpe_val, val, vallen);
+
+	mtx_leave(&kvpl->kvp_lock);
 
 	return (0);
 }
@@ -615,8 +629,11 @@ kvp_pool_import(struct kvp_pool *kvpl, const char *key, uint32_t keylen,
 
 	copyin_utf16le(nkpe->kpe_key, key, HV_KVP_MAX_KEY_SIZE / 2, keylen);
 
+	mtx_enter(&kvpl->kvp_lock);
+
 	TAILQ_FOREACH(kpe, &kvpl->kvp_entries, kpe_entry) {
 		if (strcmp(kpe->kpe_key, nkpe->kpe_key) == 0) {
+			mtx_leave(&kvpl->kvp_lock);
 			pool_put(&kvp_entry_pool, nkpe);
 			return (EEXIST);
 		}
@@ -625,9 +642,10 @@ kvp_pool_import(struct kvp_pool *kvpl, const char *key, uint32_t keylen,
 	copyin_utf16le(nkpe->kpe_val, val, HV_KVP_MAX_VAL_SIZE / 2, vallen);
 	nkpe->kpe_valtype = valtype;
 
-	nkpe->kpe_index = atomic_inc_int_nv(&kvpl->kvp_index) & MAXPOOLENTS;
+	nkpe->kpe_index = kvpl->kvp_index++ & MAXPOOLENTS;
 
 	TAILQ_INSERT_TAIL(&kvpl->kvp_entries, nkpe, kpe_entry);
+	mtx_leave(&kvpl->kvp_lock);
 
 	return (0);
 }
@@ -638,18 +656,24 @@ kvp_pool_export(struct kvp_pool *kvpl, uint32_t index, char *key,
 {
 	struct kvp_entry *kpe;
 
+	mtx_enter(&kvpl->kvp_lock);
+
 	TAILQ_FOREACH(kpe, &kvpl->kvp_entries, kpe_entry) {
 		if (kpe->kpe_index == index)
 			break;
 	}
-	if (kpe == NULL)
+	if (kpe == NULL) {
+		mtx_leave(&kvpl->kvp_lock);
 		return (ENOENT);
+	}
 
 	*keylen = copyout_utf16le(key, kpe->kpe_key, HV_KVP_MAX_KEY_SIZE,
 	    strlen(kpe->kpe_key) + 1);
 	*vallen = copyout_utf16le(val, kpe->kpe_val, HV_KVP_MAX_VAL_SIZE,
 	    strlen(kpe->kpe_val) + 1);
 	*valtype = kpe->kpe_valtype;
+
+	mtx_leave(&kvpl->kvp_lock);
 
 	return (0);
 }
@@ -663,12 +687,16 @@ kvp_pool_extract(struct kvp_pool *kvpl, const char *key, char *val,
 	if (vallen < HV_KVP_MAX_VAL_SIZE / 2)
 		return (ERANGE);
 
+	mtx_enter(&kvpl->kvp_lock);
+
 	TAILQ_FOREACH(kpe, &kvpl->kvp_entries, kpe_entry) {
 		if (strcmp(kpe->kpe_key, key) == 0)
 			break;
 	}
-	if (kpe == NULL)
+	if (kpe == NULL) {
+		mtx_leave(&kvpl->kvp_lock);
 		return (ENOENT);
+	}
 
 	switch (kpe->kpe_valtype) {
 	case HV_KVP_REG_SZ:
@@ -683,6 +711,8 @@ kvp_pool_extract(struct kvp_pool *kvpl, const char *key, char *val,
 		    *(uint64_t *)kpe->kpe_val);
 		break;
 	}
+
+	mtx_leave(&kvpl->kvp_lock);
 
 	return (0);
 }
