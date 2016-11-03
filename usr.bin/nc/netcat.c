@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.164 2016/11/02 15:18:42 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.165 2016/11/03 15:52:10 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1539,10 +1539,9 @@ report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
 		    tls_peer_cert_hash(tls_ctx));
 	ocsp_url = tls_peer_ocsp_url(tls_ctx);
 	fprintf(stderr, "OCSP URL: %s\n", ocsp_url == NULL ? "" : ocsp_url);
-	fprintf(stderr, "OCSP Stapling:");
 	switch (tls_peer_ocsp_response_status(tls_ctx)) {
 	case TLS_OCSP_RESPONSE_SUCCESSFUL:
-		fprintf(stderr, " %s\n",
+		fprintf(stderr, "OCSP Stapling: %s\n",
 		    tls_peer_ocsp_result(tls_ctx) == NULL ?  "" :
 		    tls_peer_ocsp_result(tls_ctx));
 		fprintf(stderr,
@@ -1561,10 +1560,9 @@ report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
 		    t != -1 ? ctime(&t) : "\n");
 		break;
 	case -1:
-		fprintf(stderr, "\n");
 		break;
 	default:
-		fprintf(stderr, " failure - response_status %d (%s)\n",
+		fprintf(stderr, "OCSP Stapling:  failure - response_status %d (%s)\n",
 		    tls_peer_ocsp_response_status(tls_ctx),
 		    tls_peer_ocsp_result(tls_ctx) == NULL ?  "" :
 		    tls_peer_ocsp_result(tls_ctx));
