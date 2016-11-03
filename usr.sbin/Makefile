@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.196 2016/10/19 16:48:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.197 2016/11/03 16:39:28 ajacoutot Exp $
 
 .include <bsd.own.mk>
 
@@ -17,9 +17,9 @@ SUBDIR=	ac accton acme-client acpidump adduser amd apm apmd arp \
 	rmt route6d rpc.bootparamd rpc.lockd rpc.statd rtadvd \
 	sa sasyncd sensorsd slowcgi smtpd \
 	snmpctl snmpd spamdb switchctl switchd syslogc syslogd sysmerge \
-	tcpdrop tcpdump tftp-proxy tftpd tokenadm tokeninit traceroute trpt \
-	unbound usbdevs user vmd vmctl vipw watchdogd wsconscfg \
-	wsfontload wsmoused zdump zic
+	syspatch tcpdrop tcpdump tftp-proxy tftpd tokenadm tokeninit \
+	traceroute trpt unbound usbdevs user vmd vmctl vipw watchdogd \
+	wsconscfg wsfontload wsmoused zdump zic
 
 .if (${YP:L} == "yes")
 SUBDIR+=ypbind ypldap yppoll ypset ypserv
