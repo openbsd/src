@@ -1,0 +1,32 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt RAND_ADD 3
+.Os
+.Sh NAME
+.Nm RAND_add ,
+.Nm RAND_seed ,
+.Nm RAND_status
+.Nd add entropy to the PRNG (DEPRECATED)
+.Sh SYNOPSIS
+.In openssl/rand.h
+.Ft void
+.Fo RAND_seed
+.Fa "const void *buf"
+.Fa "int num"
+.Fc
+.Ft void
+.Fo RAND_add
+.Fa "const void *buf"
+.Fa "int num"
+.Fa "double entropy"
+.Fc
+.Ft int
+.Fn RAND_status void
+.Sh DESCRIPTION
+These functions used to allow for the state of the random number
+generator to be controlled by external sources.
+.Pp
+They are kept for ABI compatibility but are no longer functional, and
+should not be used in new programs.
+.Sh SEE ALSO
+.Xr RAND_cleanup 3 ,
+.Xr RAND_load_file 3

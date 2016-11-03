@@ -1,0 +1,68 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt RAND_LOAD_FILE 3
+.Os
+.Sh NAME
+.Nm RAND_load_file ,
+.Nm RAND_write_file ,
+.Nm RAND_file_name
+.Nd PRNG seed file
+.Sh SYNOPSIS
+.In openssl/rand.h
+.Ft const char *
+.Fo RAND_file_name
+.Fa "char *buf"
+.Fa "size_t num"
+.Fc
+.Ft int
+.Fo RAND_load_file
+.Fa "const char *filename"
+.Fa "long max_bytes"
+.Fc
+.Ft int
+.Fo RAND_write_file
+.Fa "const char *filename"
+.Fc
+.Sh DESCRIPTION
+.Fn RAND_file_name
+returns a default path for the random seed file.
+.Fa buf
+points to a buffer of size
+.Fa num
+in which to store the filename.
+If
+.Fa num
+is too small for the path name, an error occurs.
+.Pp
+.Fn RAND_load_file
+used to allow for the state of the random number generator to be
+controlled by external sources.
+.Pp
+It is kept for ABI compatibility but is no longer functional, and should
+not used in new programs.
+.Pp
+.Fn RAND_write_file
+writes a number of random bytes (currently 1024) to file
+.Fa filename .
+.Sh RETURN VALUES
+.Fn RAND_load_file
+always returns 0.
+.Pp
+.Fn RAND_write_file
+returns the number of bytes written, and -1 if the bytes written were
+generated without appropriate seed.
+.Pp
+.Fn RAND_file_name
+returns a pointer to
+.Fa buf
+on success, and
+.Dv NULL
+on error.
+.Sh SEE ALSO
+.Xr RAND_add 3 ,
+.Xr RAND_cleanup 3
+.Sh HISTORY
+.Fn RAND_load_file ,
+.Fn RAND_write_file ,
+and
+.Fn RAND_file_name
+are available in all versions of SSLeay and OpenSSL.

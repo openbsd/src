@@ -1,0 +1,16 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt RAND_CLEANUP 3
+.Os
+.Sh NAME
+.Nm RAND_cleanup
+.Nd erase the PRNG state
+.Sh SYNOPSIS
+.In openssl/rand.h
+.Ft void
+.Fn RAND_cleanup void
+.Sh DESCRIPTION
+.Fn RAND_cleanup
+erases the memory used by the PRNG.
+.Sh HISTORY
+.Fn RAND_cleanup
+is available in all versions of SSLeay and OpenSSL.

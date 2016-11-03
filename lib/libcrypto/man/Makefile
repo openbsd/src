@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.43 2016/11/03 15:31:29 schwarze Exp $
+# $OpenBSD: Makefile,v 1.44 2016/11/03 15:48:22 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -132,6 +132,11 @@ MAN=	\
 	PKCS7_sign.3 \
 	PKCS7_sign_add_signer.3 \
 	PKCS7_verify.3 \
+	RAND_add.3 \
+	RAND_bytes.3 \
+	RAND_cleanup.3 \
+	RAND_load_file.3 \
+	RAND_set_rand_method.3 \
 	SMIME_read_PKCS7.3 \
 	SMIME_write_PKCS7.3 \
 	UI_new.3 \
@@ -145,11 +150,6 @@ MAN=	\
 	lh_new.3 \
 
 GENMAN= \
-	RAND_add.3 \
-	RAND_bytes.3 \
-	RAND_cleanup.3 \
-	RAND_load_file.3 \
-	RAND_set_rand_method.3 \
 	RC4.3 \
 	RIPEMD160.3 \
 	RSA_blinding_on.3 \

@@ -1,0 +1,30 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt RAND_SET_RAND_METHOD 3
+.Os
+.Sh NAME
+.Nm RAND_set_rand_method ,
+.Nm RAND_get_rand_method ,
+.Nm RAND_SSLeay
+.Nd select RAND method
+.Sh SYNOPSIS
+.In openssl/rand.h
+.Ft void
+.Fo RAND_set_rand_method
+.Fa "const RAND_METHOD *meth"
+.Fc
+.Ft const RAND_METHOD *
+.Fn RAND_get_rand_method void
+.Ft RAND_METHOD *
+.Fn RAND_SSLeay void
+.Sh DESCRIPTION
+These functions used to allow for the random number generator functions
+to be replaced by arbitrary code.
+.Pp
+They are kept for ABI compatibility but are no longer functional, and
+should not be used in new programs.
+.Sh HISTORY
+.Fn RAND_set_rand_method ,
+.Fn RAND_get_rand_method ,
+and
+.Fn RAND_SSLeay
+are available in all versions of OpenSSL.
