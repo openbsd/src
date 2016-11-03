@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.42 2016/11/03 15:20:36 schwarze Exp $
+# $OpenBSD: Makefile,v 1.43 2016/11/03 15:31:29 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -145,7 +145,6 @@ MAN=	\
 	lh_new.3 \
 
 GENMAN= \
-	RAND.3 \
 	RAND_add.3 \
 	RAND_bytes.3 \
 	RAND_cleanup.3 \
