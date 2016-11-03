@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.32 2016/08/02 16:09:55 jca Exp $
+# $OpenBSD: Link.pm,v 1.33 2016/11/03 10:23:01 ajacoutot Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -138,6 +138,7 @@ sub run
 	    'no-fast-install',
 	    'no-install',
 	    'no-undefined',
+	    '-no-undefined',
 	    'o:!@',
 	    'objectlist:',
 	    'precious-files-regex:',
