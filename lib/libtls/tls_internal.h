@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.44 2016/11/02 15:18:42 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.45 2016/11/03 10:05:32 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -39,6 +39,7 @@ union tls_addr {
 struct tls_error {
 	char *msg;
 	int num;
+	int tls;
 };
 
 struct tls_keypair {
@@ -174,6 +175,7 @@ int tls_host_port(const char *hostport, char **host, char **port);
 int tls_set_cbs(struct tls *ctx,
     tls_read_cb read_cb, tls_write_cb write_cb, void *cb_arg);
 
+void tls_error_clear(struct tls_error *error);
 int tls_error_set(struct tls_error *error, const char *fmt, ...)
     __attribute__((__format__ (printf, 2, 3)))
     __attribute__((__nonnull__ (2)));
@@ -190,6 +192,9 @@ int tls_set_error(struct tls *ctx, const char *fmt, ...)
     __attribute__((__format__ (printf, 2, 3)))
     __attribute__((__nonnull__ (2)));
 int tls_set_errorx(struct tls *ctx, const char *fmt, ...)
+    __attribute__((__format__ (printf, 2, 3)))
+    __attribute__((__nonnull__ (2)));
+int tls_set_ssl_errorx(struct tls *ctx, const char *fmt, ...)
     __attribute__((__format__ (printf, 2, 3)))
     __attribute__((__nonnull__ (2)));
 
