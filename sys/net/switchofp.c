@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.23 2016/10/31 08:06:27 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.24 2016/11/03 09:17:47 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -5699,9 +5699,10 @@ swofp_mp_recv_port_stats(struct switch_softc *sc, struct mbuf *m)
 		postat.pt_duration_sec = htonl((uint32_t)duration.tv_sec);
 		postat.pt_duration_nsec = htonl(duration.tv_nsec);
 
+		if_put(ifs);
+
 		if ((error = swofp_mpmsg_put(&swmp,
 		    (caddr_t)&postat, sizeof(postat)))) {
-			if_put(ifs);
 			splx(s);
 			goto failed;
 		}
