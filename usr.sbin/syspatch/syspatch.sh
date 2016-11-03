@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.32 2016/11/03 15:54:10 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.33 2016/11/03 16:12:23 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -197,10 +197,10 @@ rollback_patch()
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_explodir}/${_file} ||
-				sp_err "Failed to rollback ${_patch} (/${_file})"
+				sp_err "Failed to revert ${_patch} (/${_file})"
 		else
 			install_file ${_explodir}/${_file} /${_file} ||
-				sp_err "Failed to rollback ${_patch} (/${_file})"
+				sp_err "Failed to revert ${_patch} (/${_file})"
 		fi
 	done
 

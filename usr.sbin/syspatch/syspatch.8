@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.5 2016/09/10 16:07:33 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.6 2016/11/03 16:12:23 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2016 $
+.Dd $Mdocdate: November 3 2016 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Op Fl c | l | r
 .Sh DESCRIPTION
 .Nm
-is a utility to fetch, verify, install and rollback
+is a utility to fetch, verify, install and revert
 .Ox
 binary patches.
 .Pp
@@ -36,7 +36,7 @@ List available patches.
 .It Fl l
 List installed patches.
 .It Fl r
-Remove the most recently installed patch (rollback).
+Remove the most recently installed patch (revert).
 .El
 .Sh SEE ALSO
 .Xr signify 1 ,
