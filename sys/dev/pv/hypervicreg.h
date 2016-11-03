@@ -111,4 +111,91 @@ struct vmbus_icmsg_timesync {
 #define VMBUS_ICMSG_TS_FLAG_SYNC	0x01
 #define VMBUS_ICMSG_TS_FLAG_SAMPLE	0x02
 
+/* Registry value types */
+#define HV_KVP_REG_SZ			1
+#define HV_KVP_REG_U32			4
+#define HV_KVP_REG_U64			8
+
+/* Hyper-V status codes */
+#define HV_KVP_S_OK			0x00000000
+#define HV_KVP_E_FAIL			0x80004005
+#define HV_KVP_S_CONT			0x80070103
+
+#define HV_KVP_MAX_VAL_SIZE		2048
+#define HV_KVP_MAX_KEY_SIZE		512
+
+enum hv_kvp_op {
+	HV_KVP_OP_GET = 0,
+	HV_KVP_OP_SET,
+	HV_KVP_OP_DELETE,
+	HV_KVP_OP_ENUMERATE,
+	HV_KVP_OP_GET_IP_INFO,
+	HV_KVP_OP_SET_IP_INFO,
+	HV_KVP_OP_COUNT
+};
+
+enum hv_kvp_pool {
+	HV_KVP_POOL_EXTERNAL = 0,
+	HV_KVP_POOL_GUEST,
+	HV_KVP_POOL_AUTO,
+	HV_KVP_POOL_AUTO_EXTERNAL,
+	HV_KVP_POOL_COUNT
+};
+
+union hv_kvp_hdr {
+	struct {
+		uint8_t		kvu_op;
+		uint8_t		kvu_pool;
+		uint16_t	kvu_pad;
+	} req;
+	struct {
+		uint32_t	kvu_err;
+	} rsp;
+#define kvh_op			req.kvu_op
+#define kvh_pool		req.kvu_pool
+#define kvh_err			rsp.kvu_err
+} __packed;
+
+struct hv_kvp_msg_val {
+	uint32_t		kvm_valtype;
+	uint32_t		kvm_keylen;
+	uint32_t		kvm_vallen;
+	uint8_t			kvm_key[HV_KVP_MAX_KEY_SIZE];
+	uint8_t			kvm_val[HV_KVP_MAX_VAL_SIZE];
+} __packed;
+
+struct hv_kvp_msg_enum {
+	uint32_t		kvm_index;
+	uint32_t		kvm_valtype;
+	uint32_t		kvm_keylen;
+	uint32_t		kvm_vallen;
+	uint8_t			kvm_key[HV_KVP_MAX_KEY_SIZE];
+	uint8_t			kvm_val[HV_KVP_MAX_VAL_SIZE];
+} __packed;
+
+struct hv_kvp_msg_addr {
+	uint16_t		kvm_mac[128];
+	uint8_t			kvm_family;
+#define ADDR_FAMILY_NONE	 0x00
+#define ADDR_FAMILY_IPV4	 0x01
+#define ADDR_FAMILY_IPV6	 0x02
+	uint8_t			kvm_dhcp;
+	uint16_t		kvm_addr[1024];
+	uint16_t		kvm_net[1024];
+	uint16_t		kvm_gw[512];
+	uint16_t		kvm_dns[1024];
+} __packed;
+
+union hv_kvp_msg {
+	struct hv_kvp_msg_val	kvm_val;
+	struct hv_kvp_msg_enum	kvm_enum;
+	struct hv_kvp_msg_addr	kvm_addr;
+};
+
+struct vmbus_icmsg_kvp {
+	struct vmbus_icmsg_hdr	ic_hdr;
+	union hv_kvp_hdr	ic_kvh;
+	union hv_kvp_msg	ic_kvm;
+} __packed;
+
 #endif	/* _DEV_PV_HYPERVIC_H_ */
