@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.155 2016/09/06 12:27:41 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.156 2016/11/03 16:42:47 ajacoutot Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: September 6 2016 $
+.Dd $Mdocdate: November 3 2016 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -598,8 +598,7 @@ for
 .Xr sysmerge 8 .
 .It syspatch/
 Rollback tarballs and patch files for
-.\" Xr syspatch 8 .
-syspatch.
+.Xr syspatch 8 .
 .It tmp -> ../tmp
 A symbolic link to the system
 .Pa /tmp
