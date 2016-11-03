@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.75 2016/11/02 18:26:14 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.76 2016/11/03 12:54:16 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2016 $
+.Dd $Mdocdate: November 3 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -445,7 +445,7 @@ the default.
 clears any secret keys from memory.
 .It
 .Fn tls_config_insecure_noverifycert
-disables certificate verification.
+disables certificate verification and OCSP validation.
 Be extremely careful when using this option.
 .It
 .Fn tls_config_insecure_noverifyname
@@ -453,7 +453,7 @@ disables server name verification (client only).
 Be careful when using this option.
 .It
 .Fn tls_config_insecure_noverifytime
-disables validity checking of certificates.
+disables validity checking of certificates and OCSP validation.
 Be careful when using this option.
 .It
 .Fn tls_config_verify

@@ -309,8 +309,11 @@ tls_ocsp_verify_cb(SSL *ssl, void *arg)
 
 	tls_ocsp_ctx_free(ctx->ocsp_ctx);
 	ctx->ocsp_ctx = tls_ocsp_setup_from_peer(ctx);
-	if (ctx->ocsp_ctx != NULL)
+	if (ctx->ocsp_ctx != NULL) {
+		if (ctx->config->verify_cert == 0 || ctx->config->verify_time == 0)
+			return 1;
 		res = tls_ocsp_process_response_internal(ctx, raw, size);
+	}
 
 	return (res == 0) ? 1 : 0;
 }
