@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.165 2016/11/03 15:52:10 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.166 2016/11/03 15:54:39 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1538,7 +1538,8 @@ report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
 		fprintf(stderr, "Cert Hash: %s\n",
 		    tls_peer_cert_hash(tls_ctx));
 	ocsp_url = tls_peer_ocsp_url(tls_ctx);
-	fprintf(stderr, "OCSP URL: %s\n", ocsp_url == NULL ? "" : ocsp_url);
+	if (ocsp_url != NULL)
+		fprintf(stderr, "OCSP URL: %s\n", ocsp_url);
 	switch (tls_peer_ocsp_response_status(tls_ctx)) {
 	case TLS_OCSP_RESPONSE_SUCCESSFUL:
 		fprintf(stderr, "OCSP Stapling: %s\n",
