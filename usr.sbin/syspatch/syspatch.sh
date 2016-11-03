@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.29 2016/11/03 14:13:15 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.30 2016/11/03 14:36:54 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -114,10 +114,7 @@ fetch_and_verify()
 
 	local _key="/etc/signify/openbsd-${_RELINT}-syspatch.pub" _p
 
-	# XXX handle bogus PATCH_PATH (ftp(1) interactive mode)
 	${_FETCH} -o "${_TMP}/SHA256.sig" "${PATCH_PATH}/SHA256.sig"
-
-	# XXX handle bogus PATCH_PATH (ftp(1) interactive mode)
 	${_FETCH} -mD "Applying" -o "${_TMP}/${_patch}.tgz" \
 		"${PATCH_PATH}/${_patch}.tgz"
 	(cd ${_TMP} &&
@@ -170,7 +167,6 @@ ls_missing()
 	local _a _installed
 	_installed="$(ls_installed)"
 
-	# XXX handle bogus PATCH_PATH (ftp(1) interactive mode)
 	${_FETCH} -o "${_TMP}/index.txt" "${PATCH_PATH}/index.txt"
 
 	for _a in $(sed 's/^.* //;s/^M//;s/.tgz$//' ${_TMP}/index.txt |
@@ -250,6 +246,7 @@ set -A _KERNV -- $(sysctl -n kern.version |
 # XXX to be discussed; check for $ARCH?
 [[ -n ${PATCH_PATH} ]]
 [[ -d ${PATCH_PATH} ]] && PATCH_PATH="file://$(readlink -f ${PATCH_PATH})"
+[[ ${PATCH_PATH:%%://*} == @(file|ftp|http|https) ]]
 
 [[ $(sysctl -n hw.ncpufound) -gt 1 ]] && _BSDMP=true || _BSDMP=false
 _FETCH="/usr/bin/ftp -MVk ${FTP_KEEPALIVE-0}"
