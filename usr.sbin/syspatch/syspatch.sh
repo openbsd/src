@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.28 2016/11/03 12:40:08 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.29 2016/11/03 14:13:15 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -117,7 +117,7 @@ fetch_and_verify()
 	# XXX handle bogus PATCH_PATH (ftp(1) interactive mode)
 	${_FETCH} -o "${_TMP}/SHA256.sig" "${PATCH_PATH}/SHA256.sig"
 
-	# XXX see above
+	# XXX handle bogus PATCH_PATH (ftp(1) interactive mode)
 	${_FETCH} -mD "Applying" -o "${_TMP}/${_patch}.tgz" \
 		"${PATCH_PATH}/${_patch}.tgz"
 	(cd ${_TMP} &&
@@ -155,14 +155,6 @@ install_kernel()
 	fi
 }
 
-ls_avail()
-{
-	# XXX see above + catch missing index.txt
-	${_FETCH} -o - "${PATCH_PATH}/index.txt" |
-		sed 's/^.* //;s/^M//;s/.tgz$//' |
-		grep "^syspatch-${_RELINT}-.*$" | sort -V
-}
-
 ls_installed()
 {
 	local _p
@@ -178,7 +170,11 @@ ls_missing()
 	local _a _installed
 	_installed="$(ls_installed)"
 
-	for _a in $(ls_avail); do
+	# XXX handle bogus PATCH_PATH (ftp(1) interactive mode)
+	${_FETCH} -o "${_TMP}/index.txt" "${PATCH_PATH}/index.txt"
+
+	for _a in $(sed 's/^.* //;s/^M//;s/.tgz$//' ${_TMP}/index.txt |
+		grep "^syspatch-${_RELINT}-.*$" | sort -V); do
 		if [[ -n ${_installed} ]]; then
 			echo ${_a} | grep -qw -- "${_installed}" || echo ${_a}
 		else
@@ -256,7 +252,7 @@ set -A _KERNV -- $(sysctl -n kern.version |
 [[ -d ${PATCH_PATH} ]] && PATCH_PATH="file://$(readlink -f ${PATCH_PATH})"
 
 [[ $(sysctl -n hw.ncpufound) -gt 1 ]] && _BSDMP=true || _BSDMP=false
-_FETCH="/usr/bin/ftp -MV -k ${FTP_KEEPALIVE-0}"
+_FETCH="/usr/bin/ftp -MVk ${FTP_KEEPALIVE-0}"
 _PDIR="/var/syspatch"
 _REL=${_KERNV[0]}
 _RELINT=${_REL%\.*}${_REL#*\.}
