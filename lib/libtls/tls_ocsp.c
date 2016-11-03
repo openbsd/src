@@ -268,6 +268,30 @@ tls_ocsp_verify_response(struct tls *ctx, OCSP_RESPONSE *resp)
 	return ret;
 }
 
+/*
+ * Process a raw OCSP response from an OCSP server request.
+ * OCSP details can then be retrieved with tls_peer_ocsp_* functions.
+ * returns 0 if certificate ok, -1 otherwise.
+ */
+static int
+tls_ocsp_process_response_internal(struct tls *ctx, const unsigned char *response,
+    size_t size)
+{
+	int ret;
+	OCSP_RESPONSE *resp;
+
+	resp = d2i_OCSP_RESPONSE(NULL, &response, size);
+	if (resp == NULL) {
+		tls_ocsp_ctx_free(ctx->ocsp_ctx);
+		ctx->ocsp_ctx = NULL;
+		tls_set_error(ctx, "unable to parse OCSP response");
+		return -1;
+	}
+	ret = tls_ocsp_verify_response(ctx, resp);
+	OCSP_RESPONSE_free(resp);
+	return ret;
+}
+
 /* TLS handshake verification callback for stapled requests */
 int
 tls_ocsp_verify_cb(SSL *ssl, void *arg)
@@ -286,7 +310,7 @@ tls_ocsp_verify_cb(SSL *ssl, void *arg)
 	tls_ocsp_ctx_free(ctx->ocsp_ctx);
 	ctx->ocsp_ctx = tls_ocsp_setup_from_peer(ctx);
 	if (ctx->ocsp_ctx != NULL)
-		res = tls_ocsp_process_response(ctx, raw, size);
+		res = tls_ocsp_process_response_internal(ctx, raw, size);
 
 	return (res == 0) ? 1 : 0;
 }
@@ -374,29 +398,11 @@ tls_peer_ocsp_revocation_time(struct tls *ctx)
 	return ctx->ocsp_ctx->ocsp_result->revocation_time;
 }
 
-/*
- * Process a raw OCSP response from an OCSP server request.
- * OCSP details can then be retrieved with tls_peer_ocsp_* functions.
- * returns 0 if certificate ok, -1 otherwise.
- */
 int
 tls_ocsp_process_response(struct tls *ctx, const unsigned char *response,
     size_t size)
 {
-	int ret;
-	OCSP_RESPONSE *resp;
-
 	if ((ctx->state & TLS_HANDSHAKE_COMPLETE) == 0)
 		return -1;
-
-	resp = d2i_OCSP_RESPONSE(NULL, &response, size);
-	if (resp == NULL) {
-		tls_ocsp_ctx_free(ctx->ocsp_ctx);
-		ctx->ocsp_ctx = NULL;
-		tls_set_error(ctx, "unable to parse OCSP response");
-		return -1;
-	}
-	ret = tls_ocsp_verify_response(ctx, resp);
-	OCSP_RESPONSE_free(resp);
-	return ret;
+	return tls_ocsp_process_response_internal(ctx, response, size);
 }
