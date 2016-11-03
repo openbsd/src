@@ -1,0 +1,106 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt PKCS5_PBKDF2_HMAC 3
+.Os
+.Sh NAME
+.Nm PKCS5_PBKDF2_HMAC ,
+.Nm PKCS5_PBKDF2_HMAC_SHA1
+.Nd password based derivation routines with salt and iteration count
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo PKCS5_PBKDF2_HMAC
+.Fa "const char *pass"
+.Fa "int passlen"
+.Fa "const unsigned char *salt"
+.Fa "int saltlen"
+.Fa "int iter"
+.Fa "const EVP_MD *digest"
+.Fa "int keylen"
+.Fa "unsigned char *out"
+.Fc
+.Ft int
+.Fo PKCS5_PBKDF2_HMAC_SHA1
+.Fa "const char *pass"
+.Fa "int passlen"
+.Fa "const unsigned char *salt"
+.Fa "int saltlen"
+.Fa "int iter"
+.Fa "int keylen"
+.Fa "unsigned char *out"
+.Fc
+.Sh DESCRIPTION
+.Fn PKCS5_PBKDF2_HMAC
+derives a key from a password using a salt and iteration count as
+specified in RFC 2898.
+.Pp
+.Fa pass
+is the password used in the derivation of length
+.Fa passlen .
+.Fa pass
+is an optional parameter and can be
+.Dv NULL .
+If
+.Fa passlen
+is -1, then the function will calculate the length of
+.Fa pass
+using
+.Xr strlen 3 .
+.Pp
+.Fa salt
+is the salt used in the derivation of length
+.Fa saltlen .
+If the
+.Fa salt
+is
+.Dv NULL ,
+then
+.Fa saltlen
+must be 0.
+The function will not attempt to calculate the length of the
+.Fa salt
+because it is not assumed to be NUL terminated.
+.Pp
+.Fa iter
+is the iteration count and its value should be greater than or equal to 1.
+RFC 2898 suggests an iteration count of at least 1000.
+Any
+.Fa iter
+less than 1 is treated as a single iteration.
+.Pp
+.Fa digest
+is the message digest function used in the derivation.
+Values include any of the EVP_* message digests.
+.Fn PKCS5_PBKDF2_HMAC_SHA1
+calls
+.Fn PKCS5_PBKDF2_HMAC
+with
+.Xr EVP_sha1 3 .
+.Pp
+The derived key will be written to
+.Fa out .
+The size of the
+.Fa out
+buffer is specified via
+.Fa keylen .
+.Pp
+A typical application of this function is to derive keying material for
+an encryption algorithm from a password in the
+.Fa pass ,
+a salt in
+.Fa salt ,
+and an iteration count.
+.Pp
+Increasing the
+.Fa iter
+parameter slows down the algorithm which makes it harder for an attacker
+to perform a brute force attack using a large number of candidate
+passwords.
+.Sh RETURN VALUES
+.Fn PKCS5_PBKDF2_HMAC
+and
+.Fn PBKCS5_PBKDF2_HMAC_SHA1
+return 1 on success or 0 on error.
+.Sh SEE ALSO
+.Xr evp 3 ,
+.Xr EVP_BytesToKey 3 ,
+.Xr rand 3

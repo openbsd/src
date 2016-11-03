@@ -1,0 +1,44 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt I2D_PKCS7_BIO_STREAM 3
+.Os
+.Sh NAME
+.Nm i2d_PKCS7_bio_stream
+.Nd output PKCS7 structure in BER format
+.Sh SYNOPSIS
+.In openssl/pkcs7.h
+.Ft int
+.Fo i2d_PKCS7_bio_stream
+.Fa "BIO *out"
+.Fa "PKCS7 *p7"
+.Fa "BIO *data"
+.Fa "int flags"
+.Fc
+.Sh DESCRIPTION
+.Fn i2d_PKCS7_bio_stream
+outputs a
+.Vt PKCS7
+structure in BER format.
+.Pp
+It is otherwise identical to the function
+.Xr SMIME_write_PKCS7 3 .
+.Pp
+This function is effectively a version of
+.Xr d2i_PKCS7_bio 3
+supporting streaming.
+.Sh RETURN VALUES
+.Fn i2d_PKCS7_bio_stream
+returns 1 for success or 0 for failure.
+.Sh SEE ALSO
+.Xr ERR_get_error 3 ,
+.Xr PEM_write_bio_PKCS7_stream 3 ,
+.Xr PKCS7_decrypt 3 ,
+.Xr PKCS7_encrypt 3 ,
+.Xr PKCS7_sign 3 ,
+.Xr PKCS7_verify 3 ,
+.Xr SMIME_write_PKCS7 3
+.Sh HISTORY
+.Fn i2d_PKCS7_bio_stream
+was added to OpenSSL 1.0.0.
+.Sh BUGS
+The prefix "i2d" is arguably wrong because the function outputs BER
+format.

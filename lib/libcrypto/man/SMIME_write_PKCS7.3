@@ -1,0 +1,93 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt SMIME_WRITE_PKCS7 3
+.Os
+.Sh NAME
+.Nm SMIME_write_PKCS7
+.Nd convert PKCS#7 structure to S/MIME format
+.Sh SYNOPSIS
+.In openssl/pkcs7.h
+.Ft int
+.Fo SMIME_write_PKCS7
+.Fa "BIO *out"
+.Fa "PKCS7 *p7"
+.Fa "BIO *data"
+.Fa "int flags"
+.Fc
+.Sh DESCRIPTION
+.Fn SMIME_write_PKCS7
+adds the appropriate MIME headers to a PKCS#7 structure to produce an
+S/MIME message.
+.Pp
+.Fa out
+is the
+.Vt BIO
+to write the data to.
+.Fa p7
+is the appropriate
+.Vt PKCS7
+structure.
+If streaming is enabled, then the content must be supplied in the
+.Fa data
+argument.
+.Fa flags
+is an optional set of flags.
+.Pp
+The following flags can be passed in the
+.Fa flags
+parameter.
+.Pp
+If
+.Dv PKCS7_DETACHED
+is set, then cleartext signing will be used.
+This option only makes sense for signedData where
+.Dv PKCS7_DETACHED
+is also set when
+.Xr PKCS7_sign 3
+is also called.
+.Pp
+If the
+.Dv PKCS7_TEXT
+flag is set, MIME headers for type
+.Sy text/plain
+are added to the content.
+This only makes sense if
+.Dv PKCS7_DETACHED
+is also set.
+.Pp
+If the
+.Dv PKCS7_STREAM
+flag is set, streaming is performed.
+This flag should only be set if
+.Dv PKCS7_STREAM
+was also set in the previous call to
+.Xr PKCS7_sign 3
+or
+.Xr PKCS7_encrypt 3 .
+.Pp
+If cleartext signing is being used and
+.Dv PKCS7_STREAM
+is not set, then the data must be read twice: once to compute the
+signature in
+.Xr PKCS7_sign 3
+and once to output the S/MIME message.
+.Pp
+If streaming is performed, the content is output in BER format using
+indefinite length constructed encoding except in the case of signed
+data with detached content where the content is absent and DER
+format is used.
+.Sh RETURN VALUES
+.Fn SMIME_write_PKCS7
+returns 1 for success or 0 for failure.
+.Sh SEE ALSO
+.Xr ERR_get_error 3 ,
+.Xr PKCS7_decrypt 3 ,
+.Xr PKCS7_encrypt 3 ,
+.Xr PKCS7_sign 3 ,
+.Xr PKCS7_verify 3
+.Sh HISTORY
+.Fn SMIME_write_PKCS7
+was added to OpenSSL 0.9.5.
+.Sh BUGS
+.Fn SMIME_write_PKCS7
+always base64 encodes PKCS#7 structures.
+There should be an option to disable this.

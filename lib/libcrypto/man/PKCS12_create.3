@@ -1,0 +1,122 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt PKCS12_CREATE 3
+.Os
+.Sh NAME
+.Nm PKCS12_create
+.Nd create a PKCS#12 structure
+.Sh SYNOPSIS
+.In openssl/pkcs12.h
+.Ft PKCS12 *
+.Fo PKCS12_create
+.Fa "char *pass"
+.Fa "char *name"
+.Fa "EVP_PKEY *pkey"
+.Fa "X509 *cert"
+.Fa "STACK_OF(X509) *ca"
+.Fa "int nid_key"
+.Fa "int nid_cert"
+.Fa "int iter"
+.Fa "int mac_iter"
+.Fa "int keytype"
+.Fc
+.Sh DESCRIPTION
+.Fn PKCS12_create
+creates a PKCS#12 structure.
+.Pp
+.Fa pass
+is the passphrase to use.
+.Fa name
+is the
+.Sy friendlyName
+to use for the supplied certificate and key.
+.Fa pkey
+is the private key to include in the structure and
+.Fa cert
+its corresponding certificates.
+.Fa ca
+is an optional set of certificates to also include in the structure.
+.Fa pkey ,
+.Fa cert ,
+or both can be
+.Dv NULL
+to indicate that no key or certificate is required.
+.Pp
+.Fa nid_key
+and
+.Fa nid_cert
+are the encryption algorithms that should be used for the key and
+certificate, respectively.
+If either
+.Fa nid_key
+or
+.Fa nid_cert
+is set to -1, no encryption will be used.
+.Pp
+.Fa iter
+is the encryption algorithm iteration count to use and
+.Fa mac_iter
+is the MAC iteration count to use.
+If
+.Fa mac_iter
+is set to -1, the MAC will be omitted entirely.
+.Pp
+.Fa keytype
+is the type of key.
+.Pp
+The parameters
+.Fa nid_key ,
+.Fa nid_cert ,
+.Fa iter ,
+.Fa mac_iter ,
+and
+.Fa keytype
+can all be set to zero and sensible defaults will be used.
+.Pp
+These defaults are: 40 bit RC2 encryption for certificates, triple DES
+encryption for private keys, a key iteration count of
+PKCS12_DEFAULT_ITER (currently 2048) and a MAC iteration count of 1.
+.Pp
+The default MAC iteration count is 1 in order to retain compatibility
+with old software which did not interpret MAC iteration counts.
+If such compatibility is not required then
+.Fa mac_iter
+should be set to PKCS12_DEFAULT_ITER.
+.Pp
+.Fa keytype
+adds a flag to the store private key.
+This is a non standard extension that is only currently interpreted by
+MSIE.
+If set to zero the flag is omitted, if set to
+.Dv KEY_SIG
+the key can be used for signing only, and if set to
+.Dv KEY_EX
+it can be used for signing and encryption.
+This option was useful for old export grade software which could use
+signing only keys of arbitrary size but had restrictions on the
+permissible sizes of keys which could be used for encryption.
+.Pp
+If a certificate contains an
+.Sy alias
+or
+.Sy keyid
+then this will be used for the corresponding
+.Sy friendlyName
+or
+.Sy localKeyID
+in the PKCS12 structure.
+.Sh SEE ALSO
+.Xr d2i_PKCS12 3
+.Sh HISTORY
+PKCS12_create was added in OpenSSL 0.9.3.
+.Pp
+Before OpenSSL 0.9.8, neither
+.Fa pkey
+nor
+.Fa cert
+were allowed to be
+.Dv NULL ,
+and a value of -1 was not allowed for
+.Fa nid_key ,
+.Fa nid_cert ,
+and
+.Fa mac_iter .

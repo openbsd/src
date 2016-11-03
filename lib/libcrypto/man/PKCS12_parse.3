@@ -1,0 +1,90 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt PKCS12_PARSE 3
+.Os
+.Sh NAME
+.Nm PKCS12_parse
+.Nd parse a PKCS#12 structure
+.Sh SYNOPSIS
+.In openssl/pkcs12.h
+.Ft int
+.Fo PKCS12_parse
+.Fa "PKCS12 *p12"
+.Fa "const char *pass"
+.Fa "EVP_PKEY **pkey"
+.Fa "X509 **cert"
+.Fa "STACK_OF(X509) **ca"
+.Fc
+.Sh DESCRIPTION
+.Fn PKCS12_parse
+parses a PKCS12 structure.
+.Pp
+.Fa p12
+is the
+.Vt PKCS12
+structure to parse.
+.Fa pass
+is the passphrase to use.
+If successful, the private key will be written to
+.Pf * Fa pkey ,
+the corresponding certificate to
+.Pf * Fa cert ,
+and any additional certificates to
+.Pf * Fa ca .
+.Pp
+The parameters
+.Fa pkey
+and
+.Fa cert
+cannot be
+.Dv NULL .
+.Fa ca
+can be
+.Dv NULL ,
+in which case additional certificates will be discarded.
+.Pf * Fa ca
+can also be a valid STACK in which case additional certificates are
+appended to
+.Pf * Fa ca .
+If
+.Pf * Fa ca
+is
+.Dv NULL ,
+a new STACK will be allocated.
+.Pp
+The
+.Sy friendlyName
+and
+.Sy localKeyID
+attributes (if present) of each certificate will be stored in the
+.Fa alias
+and
+.Fa keyid
+attributes of the
+.Vt X509
+structure.
+.Sh RETURN VALUES
+.Fn PKCS12_parse
+returns 1 for success and 0 if an error occurred.
+.Pp
+The error can be obtained from
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr d2i_PKCS12 3
+.Sh HISTORY
+PKCS12_parse was added in OpenSSL 0.9.3.
+.Sh BUGS
+Only a single private key and corresponding certificate is returned by
+this function.
+More complex PKCS#12 files with multiple private keys will only return
+the first match.
+.Pp
+Only
+.Sy friendlyName
+and
+.Sy localKeyID
+attributes are currently stored in certificates.
+Other attributes are discarded.
+.Pp
+Attributes currently cannot be stored in the private key
+.Vt EVP_PKEY
+structure.

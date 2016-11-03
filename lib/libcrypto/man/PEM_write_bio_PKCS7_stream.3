@@ -1,0 +1,40 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt PEM_WRITE_BIO_PKCS7_STREAM 3
+.Os
+.Sh NAME
+.Nm PEM_write_bio_PKCS7_stream
+.Nd output PKCS7 structure in PEM format
+.Sh SYNOPSIS
+.In openssl/pkcs7.h
+.In openssl/pem.h
+.Ft int
+.Fo PEM_write_bio_PKCS7_stream
+.Fa "BIO *out"
+.Fa "PKCS7 *p7"
+.Fa "BIO *data"
+.Fa "int flags"
+.Fc
+.Sh DESCRIPTION
+.Fn PEM_write_bio_PKCS7_stream
+outputs a PKCS7 structure in PEM format.
+.Pp
+It is otherwise identical to the function
+.Xr SMIME_write_PKCS7 3 .
+.Pp
+This function is effectively a version of the
+.Xr PEM_write_bio_PKCS7 3
+supporting streaming.
+.Sh RETURN VALUES
+.Fn PEM_write_bio_PKCS7_stream
+returns 1 for success or 0 for failure.
+.Sh SEE ALSO
+.Xr ERR_get_error 3 ,
+.Xr i2d_PKCS7_bio_stream 3 ,
+.Xr PKCS7_decrypt 3 ,
+.Xr PKCS7_encrypt 3 ,
+.Xr PKCS7_sign 3 ,
+.Xr PKCS7_verify 3 ,
+.Xr SMIME_write_PKCS7 3
+.Sh HISTORY
+.Fn PEM_write_bio_PKCS7_stream
+was added to OpenSSL 1.0.0.
