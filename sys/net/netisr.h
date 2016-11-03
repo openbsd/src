@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.47 2016/09/01 10:06:33 goda Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.48 2016/11/03 09:04:06 mpi Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -34,15 +34,6 @@
 
 #ifndef _NET_NETISR_H_
 #define _NET_NETISR_H_
-
-/*
- * The networking code runs off software interrupts.
- *
- * You can switch into the network by doing splsoftnet() and return by splx().
- * The software interrupt level for the network is higher than the software
- * level for the clock (so you can enter the network in routines called
- * at timeout time).
- */
 
 /*
  * Each ``pup-level-1'' input queue has a bit in a ``netisr'' status
