@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.30 2016/11/03 14:36:54 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.31 2016/11/03 15:34:31 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -123,8 +123,7 @@ fetch_and_verify()
 
 install_file()
 {
-	# XXX handle sym/hardlinks?
-	# XXX handle dir becoming file and vice-versa?
+	# XXX handle symlinks, dir->file, file->dir?
 	local _src=$1 _dst=$2
 	[[ -f ${_src} && -f ${_dst} ]]
 
