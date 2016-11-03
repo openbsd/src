@@ -71,43 +71,44 @@
 
 struct hv_ic_dev;
 
+int	hv_heartbeat_attach(struct hv_ic_dev *);
 void	hv_heartbeat(void *);
-void	hv_kvp_attach(struct hv_ic_dev *);
+int	hv_kvp_attach(struct hv_ic_dev *);
 void	hv_kvp(void *);
 int	hv_kvop(void *, int, char *, char *, size_t);
-void	hv_shutdown_attach(struct hv_ic_dev *);
+int	hv_shutdown_attach(struct hv_ic_dev *);
 void	hv_shutdown(void *);
-void	hv_timesync_attach(struct hv_ic_dev *);
+int	hv_timesync_attach(struct hv_ic_dev *);
 void	hv_timesync(void *);
 
 struct hv_ic_dev {
 	const char		 *dv_name;
 	const struct hv_guid	 *dv_type;
-	void			(*dv_attach)(struct hv_ic_dev *);
+	int			(*dv_attach)(struct hv_ic_dev *);
 	void			(*dv_handler)(void *);
 	struct hv_channel	 *dv_ch;
 	uint8_t			 *dv_buf;
 } hv_ic_devs[] = {
 	{
-		"Heartbeat",
+		"heartbeat",
 		&hv_guid_heartbeat,
-		NULL,
+		hv_heartbeat_attach,
 		hv_heartbeat
 	},
 	{
-		"KVP",
+		"kvp",
 		&hv_guid_kvp,
 		hv_kvp_attach,
 		hv_kvp
 	},
 	{
-		"Shutdown",
+		"shutdown",
 		&hv_guid_shutdown,
 		hv_shutdown_attach,
 		hv_shutdown
 	},
 	{
-		"Timesync",
+		"timesync",
 		&hv_guid_timesync,
 		hv_timesync_attach,
 		hv_timesync
@@ -146,26 +147,16 @@ hv_attach_icdevs(struct hv_softc *sc)
 		 */
 		dv->dv_ch->ch_flags &= ~CHF_BATCHED;
 
-		dv->dv_buf = malloc(PAGE_SIZE, M_DEVBUF, M_ZERO |
-		    (cold ? M_NOWAIT : M_WAITOK));
-		if (dv->dv_buf == NULL) {
-			printf("%s: failed to allocate ring buffer for %s",
-			    sc->sc_dev.dv_xname, dv->dv_name);
+		if (dv->dv_attach && dv->dv_attach(dv) != 0)
 			continue;
-		}
 
 		if (hv_channel_open(ch, VMBUS_IC_BUFRINGSIZE, NULL, 0,
 		    dv->dv_handler, dv)) {
-			free(dv->dv_buf, M_DEVBUF, PAGE_SIZE);
-			dv->dv_buf = NULL;
 			printf("%s: failed to open channel for %s\n",
 			    sc->sc_dev.dv_xname, dv->dv_name);
 			continue;
 		}
 		evcount_attach(&ch->ch_evcnt, dv->dv_name, &sc->sc_idtvec);
-
-		if (dv->dv_attach)
-			dv->dv_attach(dv);
 
 		if (!header) {
 			printf("%s: %s", sc->sc_dev.dv_xname, dv->dv_name);
@@ -188,7 +179,6 @@ hv_ic_negotiate(struct vmbus_icmsg_hdr *hdr, uint32_t *rlen, uint32_t fwver,
 	msg = (struct vmbus_icmsg_negotiate *)hdr;
 
 	chosenmaj = chosenmin = 0;
-	printf("\n");
 	for (i = 0; i < msg->ic_fwver_cnt; i++) {
 		propmaj = VMBUS_ICVER_MAJOR(msg->ic_ver[i]);
 		propmin = VMBUS_ICVER_MINOR(msg->ic_ver[i]);
@@ -224,6 +214,22 @@ hv_ic_negotiate(struct vmbus_icmsg_hdr *hdr, uint32_t *rlen, uint32_t fwver,
 	    sizeof(struct vmbus_icmsg_hdr);
 	if (*rlen < sizeof(*msg) + 2 * sizeof(uint32_t))
 		*rlen = sizeof(*msg) + 2 * sizeof(uint32_t);
+}
+
+int
+hv_heartbeat_attach(struct hv_ic_dev *dv)
+{
+	struct hv_channel *ch = dv->dv_ch;
+	struct hv_softc *sc = ch->ch_sc;
+
+	dv->dv_buf = malloc(PAGE_SIZE, M_DEVBUF, M_ZERO |
+	    (cold ? M_NOWAIT : M_WAITOK));
+	if (dv->dv_buf == NULL) {
+		printf("%s: failed to allocate receive buffer\n",
+		    sc->sc_dev.dv_xname);
+		return (-1);
+	}
+	return (0);
 }
 
 void
@@ -284,13 +290,23 @@ hv_shutdown_task(void *arg)
 	prsignal(initprocess, SIGUSR2);
 }
 
-void
+int
 hv_shutdown_attach(struct hv_ic_dev *dv)
 {
 	struct hv_channel *ch = dv->dv_ch;
 	struct hv_softc *sc = ch->ch_sc;
 
+	dv->dv_buf = malloc(PAGE_SIZE, M_DEVBUF, M_ZERO |
+	    (cold ? M_NOWAIT : M_WAITOK));
+	if (dv->dv_buf == NULL) {
+		printf("%s: failed to allocate receive buffer\n",
+		    sc->sc_dev.dv_xname);
+		return (-1);
+	}
+
 	task_set(&sc->sc_sdtask, hv_shutdown_task, sc);
+
+	return (0);
 }
 
 void
@@ -344,11 +360,19 @@ hv_shutdown(void *arg)
 		task_add(systq, &sc->sc_sdtask);
 }
 
-void
+int
 hv_timesync_attach(struct hv_ic_dev *dv)
 {
 	struct hv_channel *ch = dv->dv_ch;
 	struct hv_softc *sc = ch->ch_sc;
+
+	dv->dv_buf = malloc(PAGE_SIZE, M_DEVBUF, M_ZERO |
+	    (cold ? M_NOWAIT : M_WAITOK));
+	if (dv->dv_buf == NULL) {
+		printf("%s: failed to allocate receive buffer\n",
+		    sc->sc_dev.dv_xname);
+		return (-1);
+	}
 
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
@@ -358,6 +382,8 @@ hv_timesync_attach(struct hv_ic_dev *dv)
 
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 	sensordev_install(&sc->sc_sensordev);
+
+	return (0);
 }
 
 void
@@ -417,7 +443,7 @@ hv_timesync(void *arg)
 	hv_channel_send(ch, dv->dv_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
 }
 
-void
+int
 hv_kvp_attach(struct hv_ic_dev *dv)
 {
 	struct hv_channel *ch = dv->dv_ch;
@@ -425,6 +451,8 @@ hv_kvp_attach(struct hv_ic_dev *dv)
 
 	sc->sc_pvbus->hv_kvop = hv_kvop;
 	sc->sc_pvbus->hv_arg = sc;
+
+	return (0);
 }
 
 void
