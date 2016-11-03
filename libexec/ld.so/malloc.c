@@ -760,7 +760,7 @@ find_chunknum(struct dir_info *d, struct region_info *r, void *ptr, int check)
 
 	/* Find the chunk number on the page */
 	chunknum = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
-	if (check && mopts.chunk_canaries && info->size > 0) {
+	if (check && info->size > 0) {
 		validate_canary(d, ptr, info->bits[info->offset + chunknum],
 		    info->size);
 	}
@@ -989,8 +989,10 @@ ofree(void *p)
 		void *tmp;
 		int i;
 
+		/* Delayed free or canaries? Extra check! */
+		if (!mopts.malloc_freenow || mopts.chunk_canaries)
+			find_chunknum(g_pool, r, p, mopts.chunk_canaries);
 		if (!mopts.malloc_freenow) {
-			find_chunknum(g_pool, r, p, 1);
 			if (mopts.malloc_junk && sz > 0)
 				_dl_memset(p, SOME_FREEJUNK, sz);
 			i = getrbyte(g_pool) & MALLOC_DELAYED_CHUNK_MASK;
