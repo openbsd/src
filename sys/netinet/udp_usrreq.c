@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.219 2016/09/03 13:46:57 reyk Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.220 2016/11/03 18:42:35 mikeb Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -390,13 +390,8 @@ udp_input(struct mbuf *m, ...)
 #if NPF > 0
 	    !(m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) &&
 #endif
-	    (error = vxlan_lookup(m, uh, iphlen, &srcsa.sa, &dstsa.sa)) != 0) {
-		if (error == -1) {
-			udpstat.udps_hdrops++;
-			m_freem(m);
-		}
+	    vxlan_lookup(m, uh, iphlen, &srcsa.sa, &dstsa.sa) != 0)
 		return;
-	}
 #endif
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
