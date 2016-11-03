@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.209 2016/10/31 10:06:56 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.210 2016/11/03 18:51:49 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1039,7 +1039,7 @@ find_chunknum(struct dir_info *d, struct region_info *r, void *ptr, int check)
 
 	/* Find the chunk number on the page */
 	chunknum = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
-	if (check && mopts.chunk_canaries && info->size > 0) {
+	if (check && info->size > 0) {
 		validate_canary(d, ptr, info->bits[info->offset + chunknum],
 		    info->size);
 	}
@@ -1343,8 +1343,10 @@ ofree(struct dir_info *argpool, void *p)
 		void *tmp;
 		int i;
 
+		/* Delayed free or canaries? Extra check */
+		if (!mopts.malloc_freenow || mopts.chunk_canaries)
+			find_chunknum(pool, r, p, mopts.chunk_canaries);
 		if (!mopts.malloc_freenow) {
-			find_chunknum(pool, r, p, 1);
 			if (mopts.malloc_junk && sz > 0)
 				memset(p, SOME_FREEJUNK, sz);
 			i = getrbyte(pool) & MALLOC_DELAYED_CHUNK_MASK;
