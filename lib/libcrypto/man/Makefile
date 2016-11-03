@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.40 2016/11/03 10:24:26 schwarze Exp $
+# $OpenBSD: Makefile,v 1.41 2016/11/03 12:21:50 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -118,6 +118,10 @@ MAN=	\
 	HMAC.3 \
 	MD5.3 \
 	OBJ_nid2obj.3 \
+	OPENSSL_VERSION_NUMBER.3 \
+	OPENSSL_config.3 \
+	OPENSSL_load_builtin_modules.3 \
+	OpenSSL_add_all_algorithms.3 \
 	UI_new.3 \
 	bn_dump.3 \
 	crypto.3 \
@@ -128,10 +132,6 @@ MAN=	\
 	lh_new.3 \
 
 GENMAN= \
-	OPENSSL_VERSION_NUMBER.3 \
-	OPENSSL_config.3 \
-	OPENSSL_load_builtin_modules.3 \
-	OpenSSL_add_all_algorithms.3 \
 	PKCS5_PBKDF2_HMAC.3 \
 	PEM_read_bio_PrivateKey.3 \
 	PEM_write_bio_PKCS7_stream.3 \

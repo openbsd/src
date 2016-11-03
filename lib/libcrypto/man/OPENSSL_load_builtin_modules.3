@@ -1,0 +1,53 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt OPENSSL_LOAD_BUILTIN_MODULES 3
+.Os
+.Sh NAME
+.Nm OPENSSL_load_builtin_modules ,
+.Nm ASN1_add_oid_module ,
+.Nm ENGINE_add_conf_module
+.Nd add standard configuration modules
+.Sh SYNOPSIS
+.In openssl/conf.h
+.Ft void
+.Fn OPENSSL_load_builtin_modules void
+.Ft void
+.Fn ASN1_add_oid_module void
+.Ft void
+.Fn ENGINE_add_conf_module void
+.Sh DESCRIPTION
+The function
+.Fn OPENSSL_load_builtin_modules
+adds all the standard OpenSSL configuration modules to the internal
+list.
+They can then be used by the OpenSSL configuration code.
+.Pp
+.Fn ASN1_add_oid_module
+adds just the ASN1 OBJECT module.
+.Pp
+.Fn ENGINE_add_conf_module
+adds just the ENGINE configuration module.
+.Pp
+If the simple configuration function
+.Xr OPENSSL_config 3
+is called then
+.Fn OPENSSL_load_builtin_modules
+is called automatically.
+.Pp
+Applications which use the configuration functions directly will need to
+call
+.Fn OPENSSL_load_builtin_modules
+themselves
+.Em before
+any other configuration code.
+.Pp
+Applications should call
+.Fn OPENSSL_load_builtin_modules
+to load all configuration modules instead of adding modules selectively:
+otherwise functionality may be missing from the application when
+new modules are added.
+.Sh RETURN VALUE
+None of the functions return a value.
+.Sh SEE ALSO
+.Xr OPENSSL_config 3
+.Sh HISTORY
+These functions first appeared in OpenSSL 0.9.7.

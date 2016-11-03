@@ -1,0 +1,96 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt OPENSSL_VERSION_NUMBER 3
+.Os
+.Sh NAME
+.Nm OPENSSL_VERSION_NUMBER ,
+.Nm SSLeay ,
+.Nm SSLeay_version
+.Nd get OpenSSL version number
+.Sh SYNOPSIS
+.In openssl/opensslv.h
+.Fd #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnnL
+.In openssl/crypto.h
+.Ft long
+.Fn SSLeay void
+.Ft const char *
+.Fo SSLeay_version
+.Fa "int t"
+.Fc
+.Sh DESCRIPTION
+.Dv OPENSSL_VERSION_NUMBER
+is a numeric release version identifier.
+The first two digits contain the major release number,
+the third and fourth digits the minor release number,
+the fifth and sixth digits the fix release number,
+the seventh and eight digits the patch release number.
+The final digit is 0 for development, 1 to e for betas 1 to 14, or f
+for release.
+.Pp
+For example:
+.Bd -literal -offset indent
+0x000906000 == 0.9.6 dev
+0x000906023 == 0.9.6b beta 3
+0x00090605f == 0.9.6e release
+.Ed
+.Pp
+Versions prior to 0.9.3 had identifiers < 0x0930.
+For versions between 0.9.3 and 0.9.5,
+the seventh digit was 1 for release and 0 otherwise,
+and the eighth and ninth digits were the patch release number.
+.Pp
+For example:
+.Bd -literal
+0x000904100 == 0.9.4 release
+0x000905000 == 0.9.5 dev
+.Ed
+.Pp
+Version 0.9.5a had an interim interpretation that is like the current
+one, except the patch level got the highest bit set, to keep continuity.
+The number was therefore 0x0090581f.
+.Pp
+For backward compatibility, SSLEAY_VERSION_NUMBER is also defined.
+.Pp
+.Fn SSLeay
+returns this number.
+The return value can be compared to the macro to make sure that the
+correct version of the library has been loaded, especially when using
+DLLs on Windows systems.
+.Pp
+.Fn SSLeay_version
+returns different strings depending on
+.Fa t :
+.Bl -tag -width Ds
+.It Dv SSLEAY_VERSION
+The text variant of the version number and the release date.
+For example, "OpenSSL 0.9.5a 1 Apr 2000".
+.It Dv SSLEAY_CFLAGS
+The compiler flags set for the compilation process in the form
+"compiler: ..." if available or "compiler: information not available"
+otherwise.
+.It Dv SSLEAY_BUILT_ON
+The date of the build process in the form "built on: ..." if available
+or "built on: date not available" otherwise.
+.It Dv SSLEAY_PLATFORM
+The "Configure" target of the library build in the form "platform: ..."
+if available or "platform: information not available" otherwise.
+.It Dv SSLEAY_DIR
+The "OPENSSLDIR" setting of the library build in the form "OPENSSLDIR:
+"..."" if available or "OPENSSLDIR: N/A" otherwise.
+.El
+.Pp
+For an unknown
+.Fa t ,
+the text "not available" is returned.
+.Sh RETURN VALUE
+The version number.
+.Sh SEE ALSO
+.Xr crypto 3
+.Sh HISTORY
+.Fn SSLeay
+and
+.Dv SSLEAY_VERSION_NUMBER
+are available in all versions of SSLeay and OpenSSL.
+.Dv OPENSSL_VERSION_NUMBER
+is available in all versions of OpenSSL.
+.Dv SSLEAY_DIR
+was added in OpenSSL 0.9.7.

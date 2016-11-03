@@ -1,0 +1,115 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt OPENSSL_CONFIG 3
+.Os
+.Sh NAME
+.Nm OPENSSL_config ,
+.Nm OPENSSL_no_config
+.Nd simple OpenSSL configuration functions
+.Sh SYNOPSIS
+.In openssl/conf.h
+.Ft void
+.Fo OPENSSL_config
+.Fa "const char *config_name"
+.Fc
+.Ft void
+.Fn OPENSSL_no_config void
+.Sh DESCRIPTION
+.Fn OPENSSL_config
+configures OpenSSL using the standard
+.Pa openssl.cnf
+configuration file name using
+.Fa config_name .
+If
+.Fa config_name
+is
+.Dv NULL
+then the default name
+.Sy openssl_conf
+will be used.
+Any errors are ignored.
+Further calls to
+.Fn OPENSSL_config
+will have no effect.
+.Pp
+.Fn OPENSSL_no_config
+disables configuration.
+If called before
+.Fn OPENSSL_config ,
+no configuration takes place.
+.Pp
+It is
+.Sy strongly
+recommended that
+.Sy all
+new applications call
+.Fn OPENSSL_config
+or the more sophisticated functions such as
+.Xr CONF_modules_load 3
+during initialization (that is before starting any threads).
+By doing this, an application does not need to keep track of all
+configuration options and some new functionality can be supported
+automatically.
+.Pp
+It is also possible to automatically call
+.Fn OPENSSL_config
+when an application calls
+.Xr OPENSSL_add_all_algorithms 3
+by compiling an application with the preprocessor symbol
+.Dv OPENSSL_LOAD_CONF
+#define'd.
+In this way configuration can be added without source changes.
+.Pp
+The environment variable
+.Ev OPENSSL_CONF
+can be set to specify the location of the configuration file.
+.Pp
+Currently ASN1 OBJECT and ENGINE configuration can be performed.
+.Pp
+There are several reasons why calling the OpenSSL configuration routines
+is advisable.
+For example new ENGINE functionality was added to OpenSSL 0.9.7.
+In OpenSSL 0.9.7 control functions can be supported by ENGINEs, this can be
+used (among other things) to load dynamic ENGINEs from shared libraries
+(DSOs).
+However very few applications currently support the control interface
+and so very few can load and use dynamic ENGINEs.
+Equally in future more sophisticated ENGINEs will require certain
+control operations to customize them.
+If an application calls
+.Fn OPENSSL_config
+it doesn't need to know or care about ENGINE control operations because
+they can be performed by editing a configuration file.
+.Pp
+Applications should free up configuration at application closedown by
+calling
+.Xr CONF_modules_free 3 .
+.Sh RETURN VALUES
+Neither
+.Fn OPENSSL_config
+nor
+.Fn OPENSSL_no_config
+return a value.
+.Sh SEE ALSO
+.Xr CONF_modules_free 3 ,
+.Xr CONF_modules_load 3
+.Sh HISTORY
+.Fn OPENSSL_config
+and
+.Fn OPENSSL_no_config
+first appeared in OpenSSL 0.9.7.
+.Sh CAVEATS
+The
+.Fn OPENSSL_config
+function is designed to be a very simple "call it and forget it"
+function.
+As a result its behaviour is somewhat limited.
+It ignores all errors silently and it can only load from the standard
+configuration file location for example.
+.Pp
+It is however
+.Sy much
+better than nothing.
+Applications which need finer control over their configuration
+functionality should use the configuration functions such as
+.Xr CONF_load_modules 3
+directly.
