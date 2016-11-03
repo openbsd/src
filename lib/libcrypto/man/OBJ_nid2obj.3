@@ -1,0 +1,267 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt OBJ_NID2OBJ 3
+.Os
+.Sh NAME
+.Nm OBJ_nid2obj ,
+.Nm OBJ_nid2ln ,
+.Nm OBJ_nid2sn ,
+.Nm OBJ_obj2nid ,
+.Nm OBJ_txt2nid ,
+.Nm OBJ_ln2nid ,
+.Nm OBJ_sn2nid ,
+.Nm OBJ_cmp ,
+.Nm OBJ_dup ,
+.Nm OBJ_txt2obj ,
+.Nm OBJ_obj2txt ,
+.Nm OBJ_create ,
+.Nm OBJ_cleanup
+.Nd ASN1 object utility functions
+.Sh SYNOPSIS
+.In openssl/objects.h
+.Ft ASN1_OBJECT *
+.Fo OBJ_nid2obj
+.Fa "int n"
+.Fc
+.Ft const char *
+.Fo OBJ_nid2ln
+.Fa "int n"
+.Fc
+.Ft const char *
+.Fo OBJ_nid2sn
+.Fa "int n"
+.Fc
+.Ft int
+.Fo OBJ_obj2nid
+.Fa "const ASN1_OBJECT *o"
+.Fc
+.Ft int
+.Fo OBJ_ln2nid
+.Fa "const char *ln"
+.Fc
+.Ft int
+.Fo OBJ_sn2nid
+.Fa "const char *sn"
+.Fc
+.Ft int
+.Fo OBJ_txt2nid
+.Fa "const char *s"
+.Fc
+.Ft ASN1_OBJECT *
+.Fo OBJ_txt2obj
+.Fa "const char *s"
+.Fa "int no_name"
+.Fc
+.Ft int
+.Fo OBJ_obj2txt
+.Fa "char *buf"
+.Fa "int buf_len"
+.Fa "const ASN1_OBJECT *a"
+.Fa "int no_name"
+.Fc
+.Ft int
+.Fo OBJ_cmp
+.Fa "const ASN1_OBJECT *a"
+.Fa "const ASN1_OBJECT *b"
+.Fc
+.Ft ASN1_OBJECT *
+.Fo OBJ_dup
+.Fa "const ASN1_OBJECT *o"
+.Fc
+.Ft int
+.Fo OBJ_create
+.Fa "const char *oid"
+.Fa "const char *sn"
+.Fa "const char *ln"
+.Fc
+.Ft void
+.Fn OBJ_cleanup void
+.Sh DESCRIPTION
+The ASN1 object utility functions process
+.Vt ASN1_OBJECT
+structures which are a representation of the ASN1 OBJECT IDENTIFIER
+(OID) type.
+.Pp
+.Fn OBJ_nid2obj ,
+.Fn OBJ_nid2ln ,
+and
+.Fn OBJ_nid2sn
+convert the NID
+.Fa n
+to an
+.Vt ASN1_OBJECT
+structure, its long name, and its short name, respectively, or return
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn OBJ_obj2nid ,
+.Fn OBJ_ln2nid ,
+and
+.Fn OBJ_sn2nid
+return the corresponding NID for the object
+.Fa o ,
+the long name
+.Fa ln ,
+or the short name
+.Fa sn ,
+respectively, or
+.Dv NID_undef
+if an error occurred.
+.Pp
+.Fn OBJ_txt2nid
+returns the NID corresponding to text string
+.Fa s .
+.Fa s
+can be a long name, a short name, or the numerical representation
+of an object.
+.Pp
+.Fn OBJ_txt2obj
+converts the text string
+.Fa s
+into an
+.Vt ASN1_OBJECT
+structure.
+If
+.Fa no_name
+is 0 then long names and short names will be interpreted as well as
+numerical forms.
+If
+.Fa no_name
+is 1 only the numerical form is acceptable.
+.Pp
+.Fn OBJ_obj2txt
+converts the
+.Vt ASN1_OBJECT
+.Fa a
+into a textual representation.
+The representation is written as a NUL terminated string to
+.Fa buf .
+At most
+.Fa buf_len
+bytes are written, truncating the result if necessary.
+The total amount of space required is returned.
+If
+.Fa no_name
+is 0 and the object has a long or short name, then that will be used,
+otherwise the numerical form will be used.
+.Pp
+.Fn OBJ_cmp
+compares
+.Fa a
+to
+.Fa b .
+If the two are identical, 0 is returned.
+.Pp
+.Fn OBJ_dup
+returns a copy of
+.Fa o .
+.Pp
+.Fn OBJ_create
+adds a new object to the internal table.
+.Fa oid
+is the numerical form of the object,
+.Fa sn
+the short name and
+.Fa ln
+the long name.
+A new NID is returned for the created object.
+.Pp
+.Fn OBJ_cleanup
+cleans up the internal object table: this should be called before
+an application exits if any new objects were added using
+.Fn OBJ_create .
+.Pp
+Objects can have a short name, a long name, and a numerical
+identifier (NID) associated with them.
+A standard set of objects is represented in an internal table.
+The appropriate values are defined in the header file
+.In openssl/objects.h .
+.Pp
+For example, the OID for commonName has the following definitions:
+.Bd -literal
+#define SN_commonName                   "CN"
+#define LN_commonName                   "commonName"
+#define NID_commonName                  13
+.Ed
+.Pp
+New objects can be added by calling
+.Fn OBJ_create .
+.Pp
+Table objects have certain advantages over other objects: for example
+their NIDs can be used in a C language switch statement.
+They are also static constant structures which are shared: that is there
+is only a single constant structure for each table object.
+.Pp
+Objects which are not in the table have the NID value
+.Dv NID_undef .
+.Pp
+Objects do not need to be in the internal tables to be processed, the
+functions
+.Fn OBJ_txt2obj
+and
+.Fn OBJ_obj2txt
+can process the numerical form of an OID.
+.Sh RETURN VALUES
+.Fn OBJ_nid2obj
+returns an
+.Vt ASN1_OBJECT
+structure or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn OBJ_nid2ln
+and
+.Fn OBJ_nid2sn
+returns a valid string or
+.Dv NULL
+on error.
+.Pp
+.Fn OBJ_obj2nid ,
+.Fn OBJ_ln2nid ,
+.Fn OBJ_sn2nid ,
+and
+.Fn OBJ_txt2nid
+return a NID or
+.Dv NID_undef
+on error.
+.Sh EXAMPLES
+Create an object for
+.Sy commonName :
+.Bd -literal
+ASN1_OBJECT *o;
+o = OBJ_nid2obj(NID_commonName);
+.Ed
+.Pp
+Check if an object is
+.Sy commonName
+.Bd -literal
+if (OBJ_obj2nid(obj) == NID_commonName)
+	/* Do something */
+.Ed
+.Pp
+Create a new NID and initialize an object from it:
+.Bd -literal
+int new_nid;
+ASN1_OBJECT *obj;
+new_nid = OBJ_create("1.2.3.4", "NewOID", "New Object Identifier");
+obj = OBJ_nid2obj(new_nid);
+.Ed
+.Pp
+Create a new object directly:
+.Bd -literal
+obj = OBJ_txt2obj("1.2.3.4", 1);
+.Ed
+.Sh SEE ALSO
+.Xr ERR_get_error 3
+.Sh BUGS
+.Fn OBJ_obj2txt
+is awkward and messy to use: it doesn't follow the convention of other
+OpenSSL functions where the buffer can be set to
+.Dv NULL
+to determine the amount of data that should be written.
+Instead
+.Fa buf
+must point to a valid buffer and
+.Fa buf_len
+should be set to a positive value.
+A buffer length of 80 should be more than enough to handle any OID
+encountered in practice.

@@ -1,0 +1,29 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt D2I_ASN1_OBJECT 3
+.Os
+.Sh NAME
+.Nm d2i_ASN1_OBJECT ,
+.Nm i2d_ASN1_OBJECT
+.Nd ASN1 OBJECT IDENTIFIER functions
+.Sh SYNOPSIS
+.In openssl/objects.h
+.Ft ASN1_OBJECT *
+.Fo d2i_ASN1_OBJECT
+.Fa "ASN1_OBJECT **a"
+.Fa "unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_ASN1_OBJECT
+.Fa "ASN1_OBJECT *a"
+.Fa "unsigned char **pp"
+.Fc
+.Sh DESCRIPTION
+These functions decode and encode an ASN1 OBJECT IDENTIFIER.
+.Pp
+Otherwise these behave in a similar way to
+.Xr d2i_X509 3
+and
+.Xr i2d_X509 3 .
+.Sh SEE ALSO
+.Xr d2i_X509 3
