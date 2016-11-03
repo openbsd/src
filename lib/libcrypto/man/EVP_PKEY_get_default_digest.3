@@ -1,0 +1,39 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_PKEY_GET_DEFAULT_DIGEST 3
+.Os
+.Sh NAME
+.Nm EVP_PKEY_get_default_digest_nid
+.Nd get default signature digest
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo EVP_PKEY_get_default_digest_nid
+.Fa "EVP_PKEY *pkey"
+.Fa "int *pnid"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn EVP_PKEY_get_default_digest_nid
+function sets
+.Fa pnid
+to the default message digest NID for the public key signature
+operations associated with key
+.Fa pkey .
+.Pp
+For all current standard OpenSSL public key algorithms, SHA1 is returned.
+.Sh RETURN VALUES
+The
+.Fn EVP_PKEY_get_default_digest_nid
+function returns 1 if the message digest is advisory (that is other
+digests can be used) and 2 if it is mandatory (other digests cannot be
+used).
+It returns 0 or a negative value for failure.
+In particular, a return value of -2 indicates the operation is not
+supported by the public key algorithm.
+.Sh SEE ALSO
+.Xr EVP_PKEY_CTX_new 3 ,
+.Xr EVP_PKEY_sign 3 ,
+.Xr EVP_PKEY_verify 3 ,
+.Xr EVP_PKEY_verify_recover 3
+.Sh HISTORY
+This function was first added to OpenSSL 1.0.0.

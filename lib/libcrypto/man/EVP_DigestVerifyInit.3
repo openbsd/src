@@ -1,0 +1,132 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_DIGESTVERIFYINIT 3
+.Os
+.Sh NAME
+.Nm EVP_DigestVerifyInit ,
+.Nm EVP_DigestVerifyUpdate ,
+.Nm EVP_DigestVerifyFinal
+.Nd EVP signature verification functions
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo EVP_DigestVerifyInit
+.Fa "EVP_MD_CTX *ctx"
+.Fa "EVP_PKEY_CTX **pctx"
+.Fa "const EVP_MD *type"
+.Fa "ENGINE *e"
+.Fa "EVP_PKEY *pkey"
+.Fc
+.Ft int
+.Fo EVP_DigestVerifyUpdate
+.Fa "EVP_MD_CTX *ctx"
+.Fa "const void *d"
+.Fa "unsigned int cnt"
+.Fc
+.Ft int
+.Fo EVP_DigestVerifyFinal
+.Fa "EVP_MD_CTX *ctx"
+.Fa "unsigned char *sig"
+.Fa "size_t siglen"
+.Fc
+.Sh DESCRIPTION
+The EVP signature routines are a high level interface to digital
+signatures.
+.Pp
+.Fn EVP_DigestVerifyInit
+sets up verification context
+.Fa ctx
+to use digest
+.Fa type
+from
+.Vt ENGINE
+.Fa e
+and public key
+.Fa pkey .
+.Fa ctx
+must be initialized with
+.Xr EVP_MD_CTX_init 3
+before calling this function.
+If
+.Fa pctx
+is not
+.Dv NULL ,
+the
+.Vt EVP_PKEY_CTX
+of the verification operation will be written to
+.Pf * Fa pctx :
+this can be used to set alternative verification options.
+.Pp
+.Fn EVP_DigestVerifyUpdate
+hashes
+.Fa cnt
+bytes of data at
+.Fa d
+into the verification context
+.Fa ctx .
+This function can be called several times on the same
+.Fa ctx
+to include additional data.
+This function is currently implemented using a macro.
+.Pp
+.Fn EVP_DigestVerifyFinal
+verifies the data in
+.Fa ctx
+against the signature in
+.Fa sig
+of length
+.Fa siglen .
+.Pp
+The EVP interface to digital signatures should almost always be
+used in preference to the low level interfaces.
+This is because the code then becomes transparent to the algorithm used
+and much more flexible.
+.Pp
+In previous versions of OpenSSL, there was a link between message digest
+types and public key algorithms.
+This meant that "clone" digests such as
+.Xr EVP_dss1 3
+needed to be used to sign using SHA1 and DSA.
+This is no longer necessary and the use of clone digest is now
+discouraged.
+.Pp
+The call to
+.Fn EVP_DigestVerifyFinal
+internally finalizes a copy of the digest context.
+This means that calls to
+.Xr EVP_VerifyUpdate 3
+and
+.Xr EVP_VerifyFinal 3
+can be called later to digest and verify additional data.
+.Pp
+Since only a copy of the digest context is ever finalized, the context
+must be cleaned up after use by calling
+.Xr EVP_MD_CTX_cleanup 3
+or a memory leak will occur.
+.Sh RETURN VALUES
+.Fn EVP_DigestVerifyInit
+and
+.Fn EVP_DigestVerifyUpdate
+return 1 for success and 0 or a negative value for failure.
+In particular a return value of -2 indicates the operation is not
+supported by the public key algorithm.
+.Pp
+Unlike other functions, the return value 0 from
+.Fn EVP_DigestVerifyFinal
+only indicates that the signature did not verify successfully.
+That is it did not match the original data or the signature was of
+invalid form.
+It is not an indication of a more serious error.
+.Pp
+The error codes can be obtained from
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr evp 3 ,
+.Xr EVP_DigestInit 3 ,
+.Xr EVP_DigestSignInit 3
+.Sh HISTORY
+.Fn EVP_DigestVerifyInit ,
+.Fn EVP_DigestVerifyUpdate ,
+and
+.Fn EVP_DigestVerifyFinal
+were first added to OpenSSL 1.0.0.

@@ -1,0 +1,146 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_VERIFYINIT 3
+.Os
+.Sh NAME
+.Nm EVP_VerifyInit ,
+.Nm EVP_VerifyUpdate ,
+.Nm EVP_VerifyFinal
+.Nd EVP signature verification functions
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo EVP_VerifyInit_ex
+.Fa "EVP_MD_CTX *ctx"
+.Fa "const EVP_MD *type"
+.Fa "ENGINE *impl"
+.Fc
+.Ft int
+.Fo EVP_VerifyUpdate
+.Fa "EVP_MD_CTX *ctx"
+.Fa "const void *d"
+.Fa "unsigned int cnt"
+.Fc
+.Ft int
+.Fo EVP_VerifyFinal
+.Fa "EVP_MD_CTX *ctx"
+.Fa "unsigned char *sigbuf"
+.Fa "unsigned int siglen"
+.Fa "EVP_PKEY *pkey"
+.Fc
+.Ft int
+.Fo EVP_VerifyInit
+.Fa "EVP_MD_CTX *ctx"
+.Fa "const EVP_MD *type"
+.Fc
+.Sh DESCRIPTION
+The EVP signature verification routines are a high level interface to
+digital signatures.
+.Pp
+.Fn EVP_VerifyInit_ex
+sets up a verification context
+.Fa ctx
+to use the digest
+.Fa type
+from
+.Vt ENGINE
+.Fa impl .
+.Fa ctx
+must be initialized by calling
+.Xr EVP_MD_CTX_init 3
+before calling this function.
+.Pp
+.Fn EVP_VerifyUpdate
+hashes
+.Fa cnt
+bytes of data at
+.Fa d
+into the verification context
+.Fa ctx .
+This function can be called several times on the same
+.Fa ctx
+to include additional data.
+.Pp
+.Fn EVP_VerifyFinal
+verifies the data in
+.Fa ctx
+using the public key
+.Fa pkey
+and against the
+.Fa siglen
+bytes at
+.Fa sigbuf .
+.Pp
+.Fn EVP_VerifyInit
+initializes a verification context
+.Fa ctx
+to use the default implementation of digest
+.Fa type .
+.Pp
+The EVP interface to digital signatures should almost always be
+used in preference to the low level interfaces.
+This is because the code then becomes transparent to the algorithm used
+and much more flexible.
+.Pp
+Due to the link between message digests and public key algorithms, the
+correct digest algorithm must be used with the correct public key type.
+A list of algorithms and associated public key algorithms appears in
+.Xr EVP_DigestInit 3 .
+.Pp
+The call to
+.Fn EVP_VerifyFinal
+internally finalizes a copy of the digest context.
+This means that calls to
+.Fn EVP_VerifyUpdate
+and
+.Fn EVP_VerifyFinal
+can be called later to digest and verify additional data.
+.Pp
+Since only a copy of the digest context is ever finalized, the context
+must be cleaned up after use by calling
+.Xr EVP_MD_CTX_cleanup 3 ,
+or a memory leak will occur.
+.Sh RETURN VALUES
+.Fn EVP_VerifyInit_ex
+and
+.Fn EVP_VerifyUpdate
+return 1 for success and 0 for failure.
+.Pp
+.Fn EVP_VerifyFinal
+returns 1 for a correct signature, 0 for failure, and -1 if some other
+error occurred.
+.Pp
+The error codes can be obtained by
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr ERR 3 ,
+.Xr evp 3 ,
+.Xr EVP_DigestInit 3 ,
+.Xr EVP_SignInit 3
+.Sh HISTORY
+.Fn EVP_VerifyInit ,
+.Fn EVP_VerifyUpdate ,
+and
+.Fn EVP_VerifyFinal
+are available in all versions of SSLeay and OpenSSL.
+.Pp
+.Fn EVP_VerifyInit_ex
+was added in OpenSSL 0.9.7.
+.Sh BUGS
+Older versions of this documentation wrongly stated that calls to
+.Fn EVP_VerifyUpdate
+could not be made after calling
+.Fn EVP_VerifyFinal .
+.Pp
+Since the public key is passed in the call to
+.Xr EVP_SignFinal 3 ,
+any error relating to the private key (for example an unsuitable key and
+digest combination) will not be indicated until after potentially large
+amounts of data have been passed through
+.Xr EVP_SignUpdate 3 .
+.Pp
+It is not possible to change the signing parameters using these
+functions.
+.Pp
+The previous two bugs are fixed in the newer functions of the
+.Xr EVP_DigestVerifyInit 3
+family.

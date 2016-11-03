@@ -1,0 +1,92 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_PKEY_CMP 3
+.Os
+.Sh NAME
+.Nm EVP_PKEY_copy_parameters ,
+.Nm EVP_PKEY_missing_parameters ,
+.Nm EVP_PKEY_cmp_parameters ,
+.Nm EVP_PKEY_cmp
+.Nd public key parameter and comparison functions
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo EVP_PKEY_missing_parameters
+.Fa "const EVP_PKEY *pkey"
+.Fc
+.Ft int
+.Fo EVP_PKEY_copy_parameters
+.Fa "EVP_PKEY *to"
+.Fa "const EVP_PKEY *from"
+.Fc
+.Ft int
+.Fo EVP_PKEY_cmp_parameters
+.Fa "const EVP_PKEY *a"
+.Fa "const EVP_PKEY *b"
+.Fc
+.Ft int
+.Fo EVP_PKEY_cmp
+.Fa "const EVP_PKEY *a"
+.Fa "const EVP_PKEY *b"
+.Fc
+.Sh DESCRIPTION
+The function
+.Fn EVP_PKEY_missing_parameters
+returns 1 if the public key parameters of
+.Fa pkey
+are missing and 0 if they are present or the algorithm doesn't use
+parameters.
+.Pp
+The function
+.Fn EVP_PKEY_copy_parameters
+copies the parameters from key
+.Fa from
+to key
+.Fa to .
+.Pp
+The function
+.Fn EVP_PKEY_cmp_parameters
+compares the parameters of keys
+.Fa a
+and
+.Fa b .
+.Pp
+The function
+.Fn EVP_PKEY_cmp
+compares the public key components and parameters (if present) of keys
+.Fa a
+and
+.Fa b .
+.Pp
+The main purpose of the functions
+.Fn EVP_PKEY_missing_parameters
+and
+.Fn EVP_PKEY_copy_parameters
+is to handle public keys in certificates where the parameters are
+sometimes omitted from a public key if they are inherited from the CA
+that signed it.
+.Pp
+Since OpenSSL private keys contain public key components too, the
+function
+.Fn EVP_PKEY_cmp
+can also be used to determine if a private key matches a public key.
+.Sh RETURN VALUES
+The function
+.Fn EVP_PKEY_missing_parameters
+returns 1 if the public key parameters of
+.Fa pkey
+are missing and 0 if they are present or the algorithm doesn't use
+parameters.
+.Pp
+The function
+.Fn EVP_PKEY_copy_parameters
+returns 1 for success and 0 for failure.
+.Pp
+The function
+.Fn EVP_PKEY_cmp_parameters
+and
+.Fn EVP_PKEY_cmp
+return 1 if the keys match, 0 if they don't match, -1 if the key types
+are different and -2 if the operation is not supported.
+.Sh SEE ALSO
+.Xr EVP_PKEY_CTX_new 3 ,
+.Xr EVP_PKEY_keygen 3

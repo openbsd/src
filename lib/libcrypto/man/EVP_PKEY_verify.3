@@ -1,0 +1,109 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_PKEY_VERIFY 3
+.Os
+.Sh NAME
+.Nm EVP_PKEY_verify_init ,
+.Nm EVP_PKEY_verify
+.Nd signature verification using a public key algorithm
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo EVP_PKEY_verify_init
+.Fa "EVP_PKEY_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_PKEY_verify
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "const unsigned char *sig"
+.Fa "size_t siglen"
+.Fa "const unsigned char *tbs"
+.Fa "size_t tbslen"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn EVP_PKEY_verify_init
+function initializes a public key algorithm context using key
+.Fa ctx->pkey
+for a signature verification operation.
+.Pp
+The
+.Fn EVP_PKEY_verify
+function performs a public key verification operation using
+.Fa ctx .
+The signature is specified using the
+.Fa sig
+and
+.Fa siglen
+parameters.
+The verified data (i.e. the data believed originally signed) is
+specified using the
+.Fa tbs
+and
+.Fa tbslen
+parameters.
+.Pp
+After the call to
+.Fn EVP_PKEY_verify_init ,
+algorithm specific control operations can be performed to set any
+appropriate parameters for the operation.
+.Pp
+The function
+.Fn EVP_PKEY_verify
+can be called more than once on the same context if several operations
+are performed using the same parameters.
+.Sh RETURN VALUES
+.Fn EVP_PKEY_verify_init
+and
+.Fn EVP_PKEY_verify
+return 1 if the verification was successful and 0 if it failed.
+Unlike other functions the return value 0 from
+.Fn EVP_PKEY_verify
+only indicates that the signature did not verify successfully.
+That is,
+.Fa tbs
+did not match the original data or the signature was of invalid form.
+It is not an indication of a more serious error.
+.Pp
+A negative value indicates an error other that signature verification
+failure.
+In particular, a return value of -2 indicates the operation is not
+supported by the public key algorithm.
+.Sh EXAMPLES
+Verify signature using PKCS#1 and SHA256 digest:
+.Bd -literal
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+
+EVP_PKEY_CTX *ctx;
+unsigned char *md, *sig;
+size_t mdlen, siglen;
+EVP_PKEY *verify_key;
+/* NB: assumes verify_key, sig, siglen md and mdlen are already set up
+ * and that verify_key is an RSA public key
+ */
+ctx = EVP_PKEY_CTX_new(verify_key);
+if (!ctx)
+	/* Error occurred */
+if (EVP_PKEY_verify_init(ctx) <= 0)
+	/* Error */
+if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
+	/* Error */
+if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
+	/* Error */
+
+/* Perform operation */
+ret = EVP_PKEY_verify(ctx, sig, siglen, md, mdlen);
+
+/* ret == 1 indicates success, 0 verify failure and < 0 for some
+ * other error.
+ */
+.Ed
+.Sh SEE ALSO
+.Xr EVP_PKEY_CTX_new 3 ,
+.Xr EVP_PKEY_decrypt 3 ,
+.Xr EVP_PKEY_derive 3 ,
+.Xr EVP_PKEY_encrypt 3 ,
+.Xr EVP_PKEY_sign 3 ,
+.Xr EVP_PKEY_verify_recover 3
+.Sh HISTORY
+These functions were first added to OpenSSL 1.0.0.

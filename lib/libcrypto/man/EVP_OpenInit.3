@@ -1,0 +1,98 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_OPENINIT 3
+.Os
+.Sh NAME
+.Nm EVP_OpenInit ,
+.Nm EVP_OpenUpdate ,
+.Nm EVP_OpenFinal
+.Nd EVP envelope decryption
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo EVP_OpenInit
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fa "EVP_CIPHER *type"
+.Fa "unsigned char *ek"
+.Fa "int ekl"
+.Fa "unsigned char *iv"
+.Fa "EVP_PKEY *priv"
+.Fc
+.Ft int
+.Fo EVP_OpenUpdate
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fa "unsigned char *out"
+.Fa "int *outl"
+.Fa "unsigned char *in"
+.Fa "int inl"
+.Fc
+.Ft int
+.Fo EVP_OpenFinal
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fa "unsigned char *out"
+.Fa "int *outl"
+.Fc
+.Sh DESCRIPTION
+The EVP envelope routines are a high level interface to envelope
+decryption.
+They decrypt a public key encrypted symmetric key and then decrypt data
+using it.
+.Pp
+.Fn EVP_OpenInit
+initializes a cipher context
+.Fa ctx
+for decryption with cipher
+.Fa type .
+It decrypts the encrypted symmetric key of length
+.Fa ekl
+bytes passed in the
+.Fa ek
+parameter using the private key
+.Fa priv .
+The IV is supplied in the
+.Fa iv
+parameter.
+.Pp
+.Fn EVP_OpenUpdate
+and
+.Fn EVP_OpenFinal
+have exactly the same properties as the
+.Xr EVP_DecryptUpdate 3
+and
+.Xr EVP_DecryptFinal 3
+routines.
+.Pp
+It is possible to call
+.Fn EVP_OpenInit
+twice in the same way as
+.Xr EVP_DecryptInit 3 .
+The first call should have
+.Fa priv
+set to
+.Dv NULL
+and (after setting any cipher parameters) it should be
+called again with
+.Fa type
+set to
+.Dv NULL .
+.Pp
+If the cipher passed in the
+.Fa type
+parameter is a variable length cipher then the key length will be set to
+the value of the recovered key length.
+If the cipher is a fixed length cipher then the recovered key length
+must match the fixed cipher length.
+.Sh RETURN VALUES
+.Fn EVP_OpenInit
+returns 0 on error or a non zero integer (actually the recovered secret
+key size) if successful.
+.Pp
+.Fn EVP_OpenUpdate
+returns 1 for success or 0 for failure.
+.Pp
+.Fn EVP_OpenFinal
+returns 0 if the decrypt failed or 1 for success.
+.Sh SEE ALSO
+.Xr evp 3 ,
+.Xr EVP_EncryptInit 3 ,
+.Xr EVP_SealInit 3 ,
+.Xr rand 3

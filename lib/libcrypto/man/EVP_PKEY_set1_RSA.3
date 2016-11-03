@@ -1,0 +1,171 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_PKEY_SET1_RSA 3
+.Os
+.Sh NAME
+.Nm EVP_PKEY_set1_RSA ,
+.Nm EVP_PKEY_set1_DSA ,
+.Nm EVP_PKEY_set1_DH ,
+.Nm EVP_PKEY_set1_EC_KEY ,
+.Nm EVP_PKEY_get1_RSA ,
+.Nm EVP_PKEY_get1_DSA ,
+.Nm EVP_PKEY_get1_DH ,
+.Nm EVP_PKEY_get1_EC_KEY ,
+.Nm EVP_PKEY_assign_RSA ,
+.Nm EVP_PKEY_assign_DSA ,
+.Nm EVP_PKEY_assign_DH ,
+.Nm EVP_PKEY_assign_EC_KEY ,
+.Nm EVP_PKEY_type
+.Nd EVP_PKEY assignment functions
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo EVP_PKEY_set1_RSA
+.Fa "EVP_PKEY *pkey"
+.Fa "RSA *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_set1_DSA
+.Fa "EVP_PKEY *pkey"
+.Fa "DSA *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_set1_DH
+.Fa "EVP_PKEY *pkey"
+.Fa "DH *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_set1_EC_KEY
+.Fa "EVP_PKEY *pkey"
+.Fa "EC_KEY *key"
+.Fc
+.Ft RSA *
+.Fo EVP_PKEY_get1_RSA
+.Fa "EVP_PKEY *pkey"
+.Fc
+.Ft DSA *
+.Fo EVP_PKEY_get1_DSA
+.Fa "EVP_PKEY *pkey"
+.Fc
+.Ft DH *
+.Fo EVP_PKEY_get1_DH
+.Fa "EVP_PKEY *pkey"
+.Fc
+.Ft EC_KEY *
+.Fo EVP_PKEY_get1_EC_KEY
+.Fa "EVP_PKEY *pkey"
+.Fc
+.Ft int
+.Fo EVP_PKEY_assign_RSA
+.Fa "EVP_PKEY *pkey"
+.Fa "RSA *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_assign_DSA
+.Fa "EVP_PKEY *pkey"
+.Fa "DSA *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_assign_DH
+.Fa "EVP_PKEY *pkey"
+.Fa "DH *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_assign_EC_KEY
+.Fa "EVP_PKEY *pkey"
+.Fa "EC_KEY *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_type
+.Fa "int type"
+.Fc
+.Sh DESCRIPTION
+.Fn EVP_PKEY_set1_RSA ,
+.Fn EVP_PKEY_set1_DSA ,
+.Fn EVP_PKEY_set1_DH ,
+and
+.Fn EVP_PKEY_set1_EC_KEY
+set the key referenced by
+.Fa pkey
+to
+.Fa key .
+.Pp
+.Fn EVP_PKEY_get1_RSA ,
+.Fn EVP_PKEY_get1_DSA ,
+.Fn EVP_PKEY_get1_DH ,
+and
+.Fn EVP_PKEY_get1_EC_KEY
+return the key referenced in
+.Fa pkey
+or
+.Dv NULL
+if the key is not of the correct type.
+.Pp
+.Fn EVP_PKEY_assign_RSA ,
+.Fn EVP_PKEY_assign_DSA ,
+.Fn EVP_PKEY_assign_DH ,
+and
+.Fn EVP_PKEY_assign_EC_KEY
+also set the referenced key to
+.Fa key ;
+however these use the supplied
+.Fa key
+internally and so
+.Fa key
+will be freed when the parent
+.Fa pkey
+is freed.
+.Pp
+.Fn EVP_PKEY_type
+returns the type of key corresponding to the value
+.Fa type .
+The type of a key can be obtained with
+.Fn EVP_PKEY_type pkey->type .
+The return value will be
+.Dv EVP_PKEY_RSA ,
+.Dv EVP_PKEY_DSA ,
+.Dv EVP_PKEY_DH ,
+or
+.Dv EVP_PKEY_EC
+for the corresponding key types or
+.Dv NID_undef
+if the key type is unassigned.
+.Pp
+In accordance with the OpenSSL naming convention, the key obtained from
+or assigned to
+.Fa pkey
+using the
+.Sy 1
+functions must be freed as well as
+.Fa pkey .
+.Pp
+.Fn EVP_PKEY_assign_RSA ,
+.Fn EVP_PKEY_assign_DSA ,
+.Fn EVP_PKEY_assign_DH ,
+and
+.Fn EVP_PKEY_assign_EC_KEY
+are implemented as macros.
+.Sh RETURN VALUES
+.Fn EVP_PKEY_set1_RSA ,
+.Fn EVP_PKEY_set1_DSA ,
+.Fn EVP_PKEY_set1_DH ,
+and
+.Fn EVP_PKEY_set1_EC_KEY
+return 1 for success or 0 for failure.
+.Pp
+.Fn EVP_PKEY_get1_RSA ,
+.Fn EVP_PKEY_get1_DSA ,
+.Fn EVP_PKEY_get1_DH ,
+and
+.Fn EVP_PKEY_get1_EC_KEY
+return the referenced key or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn EVP_PKEY_assign_RSA ,
+.Fn EVP_PKEY_assign_DSA ,
+.Fn EVP_PKEY_assign_DH ,
+and
+.Fn EVP_PKEY_assign_EC_KEY
+return 1 for success and 0 for failure.
+.Sh SEE ALSO
+.Xr EVP_PKEY_new 3

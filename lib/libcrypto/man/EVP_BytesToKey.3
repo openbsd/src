@@ -1,0 +1,82 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_BYTESTOKEY 3
+.Os
+.Sh NAME
+.Nm EVP_BytesToKey
+.Nd password based encryption routine
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo EVP_BytesToKey
+.Fa "const EVP_CIPHER *type"
+.Fa "const EVP_MD *md"
+.Fa "const unsigned char *salt"
+.Fa "const unsigned char *data"
+.Fa "int datal"
+.Fa "int count"
+.Fa "unsigned char *key"
+.Fa "unsigned char *iv"
+.Fc
+.Sh DESCRIPTION
+.Fn EVP_BytesToKey
+derives a key and IV from various parameters.
+.Fa type
+is the cipher to derive the key and IV for.
+.Fa md
+is the message digest to use.
+The
+.Fa salt
+parameter is used as a salt in the derivation: it should point to an 8
+byte buffer or
+.Dv NULL
+if no salt is used.
+.Fa data
+is a buffer containing
+.Fa datal
+bytes which is used to derive the keying data.
+.Fa count
+is the iteration count to use.
+The derived key and IV will be written to
+.Fa key
+and
+.Fa iv ,
+respectively.
+.Pp
+A typical application of this function is to derive keying material for
+an encryption algorithm from a password in the
+.Fa data
+parameter.
+.Pp
+Increasing the
+.Fa count
+parameter slows down the algorithm which makes it harder for an attacker
+to perform a brute force attack using a large number of candidate
+passwords.
+.Pp
+If the total key and IV length is less than the digest length and MD5
+is used, then the derivation algorithm is compatible with PKCS#5 v1.5.
+Otherwise, a non standard extension is used to derive the extra data.
+.Pp
+Newer applications should use more standard algorithms such as PBKDF2 as
+defined in PKCS#5v2.1 for key derivation.
+.Sh KEY DERIVATION ALGORITHM
+The key and IV is derived by concatenating D_1, D_2, etc until enough
+data is available for the key and IV.
+D_i is defined recursively as:
+.Pp
+.Dl D_i = HASH^count(D_(i-1) || data || salt)
+.Pp
+where || denotes concatenation, D_0 is empty, HASH is the digest
+algorithm in use, HASH^1(data) is simply HASH(data), HASH^2(data) is
+HASH(HASH(data)) and so on.
+.Pp
+The initial bytes are used for the key and the subsequent bytes for the
+IV.
+.Sh RETURN VALUES
+.Fn EVP_BytesToKey
+returns the size of the derived key in bytes.
+.Sh SEE ALSO
+.Xr evp 3 ,
+.Xr EVP_EncryptInit 3 ,
+.Xr PKCS5_PBKDF2_HMAC 3 ,
+.Xr rand 3

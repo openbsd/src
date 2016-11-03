@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.37 2016/11/02 15:23:41 schwarze Exp $
+# $OpenBSD: Makefile,v 1.38 2016/11/03 09:35:34 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -92,14 +92,6 @@ MAN=	\
 	ERR_remove_state.3 \
 	ERR_set_mark.3 \
 	EVP_AEAD_CTX_init.3 \
-	UI_new.3 \
-	bn_dump.3 \
-	crypto.3 \
-	d2i_PKCS8PrivateKey_bio.3 \
-	des_read_pw.3 \
-	lh_new.3 \
-
-GENMAN= \
 	EVP_BytesToKey.3 \
 	EVP_DigestInit.3 \
 	EVP_DigestSignInit.3 \
@@ -123,6 +115,15 @@ GENMAN= \
 	EVP_SealInit.3 \
 	EVP_SignInit.3 \
 	EVP_VerifyInit.3 \
+	UI_new.3 \
+	bn_dump.3 \
+	crypto.3 \
+	d2i_PKCS8PrivateKey_bio.3 \
+	des_read_pw.3 \
+	evp.3 \
+	lh_new.3 \
+
+GENMAN= \
 	HMAC.3 \
 	MD5.3 \
 	OBJ_nid2obj.3 \
@@ -192,7 +193,6 @@ GENMAN= \
 	dsa.3 \
 	ec.3 \
 	engine.3 \
-	evp.3 \
 	i2d_PKCS7_bio_stream.3 \
 	lh_stats.3 \
 	rsa.3 \

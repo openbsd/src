@@ -1,0 +1,120 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_PKEY_SIGN 3
+.Os
+.Sh NAME
+.Nm EVP_PKEY_sign_init ,
+.Nm EVP_PKEY_sign
+.Nd sign using a public key algorithm
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft int
+.Fo EVP_PKEY_sign_init
+.Fa "EVP_PKEY_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_PKEY_sign
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char *sig"
+.Fa "size_t *siglen"
+.Fa "const unsigned char *tbs"
+.Fa "size_t tbslen"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn EVP_PKEY_sign_init
+function initializes a public key algorithm context using the key
+.Fa ctx->pkey
+for a signing operation.
+.Pp
+The
+.Fn EVP_PKEY_sign
+function performs a public key signing operation using
+.Fa ctx .
+The data to be signed is specified using the
+.Fa tbs
+and
+.Fa tbslen
+parameters.
+If
+.Fa sig
+is
+.Dv NULL ,
+then the maximum size of the output buffer is written to the
+.Fa siglen
+parameter.
+If
+.Fa sig
+is not
+.Dv NULL ,
+then before the call the
+.Fa siglen
+parameter should contain the length of the
+.Fa sig
+buffer.
+If the call is successful the signature is written to
+.Fa sig
+and the amount of data written to
+.Fa siglen .
+.Pp
+After the call to
+.Fn EVP_PKEY_sign_init ,
+algorithm specific control operations can be performed to set any
+appropriate parameters for the operation.
+.Pp
+The function
+.Fn EVP_PKEY_sign
+can be called more than once on the same context if several operations
+are performed using the same parameters.
+.Sh RETURN VALUES
+.Fn EVP_PKEY_sign_init
+and
+.Fn EVP_PKEY_sign
+return 1 for success and 0 or a negative value for failure.
+In particular, a return value of -2 indicates the operation is not
+supported by the public key algorithm.
+.Sh EXAMPLES
+Sign data using RSA with PKCS#1 padding and SHA256 digest:
+.Bd -literal
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+
+EVP_PKEY_CTX *ctx;
+unsigned char *md, *sig;
+size_t mdlen, siglen;
+EVP_PKEY *signing_key;
+/* NB: assumes signing_key, md and mdlen are already set up
+ * and that signing_key is an RSA private key
+ */
+ctx = EVP_PKEY_CTX_new(signing_key);
+if (!ctx)
+	/* Error occurred */
+if (EVP_PKEY_sign_init(ctx) <= 0)
+	/* Error */
+if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
+	/* Error */
+if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
+	/* Error */
+
+/* Determine buffer length */
+if (EVP_PKEY_sign(ctx, NULL, &siglen, md, mdlen) <= 0)
+	/* Error */
+
+sig = malloc(siglen);
+
+if (!sig)
+	/* malloc failure */
+
+if (EVP_PKEY_sign(ctx, sig, &siglen, md, mdlen) <= 0)
+	/* Error */
+
+/* Signature is siglen bytes written to buffer sig */
+.Ed
+.Sh SEE ALSO
+.Xr EVP_PKEY_CTX_new 3 ,
+.Xr EVP_PKEY_decrypt 3 ,
+.Xr EVP_PKEY_derive 3 ,
+.Xr EVP_PKEY_encrypt 3 ,
+.Xr EVP_PKEY_verify 3 ,
+.Xr EVP_PKEY_verify_recover 3
+.Sh HISTORY
+These functions were first added to OpenSSL 1.0.0.

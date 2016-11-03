@@ -1,0 +1,151 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP 3
+.Os
+.Sh NAME
+.Nm evp
+.Nd high-level cryptographic functions
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Sh DESCRIPTION
+The EVP library provides a high-level interface to cryptographic
+functions.
+.Pp
+.Xr EVP_SealInit 3
+and
+.Xr EVP_OpenInit 3
+provide public key encryption and decryption to implement digital
+"envelopes".
+.Pp
+The
+.Xr EVP_DigestSignInit 3
+and
+.Xr EVP_DigestVerifyInit 3
+functions implement digital signatures and Message Authentication Codes
+(MACs).
+Also see the older
+.Xr EVP_SignInit 3
+and
+.Xr EVP_VerifyInit 3
+functions.
+.Pp
+Symmetric encryption is available with the
+.Xr EVP_EncryptInit 3
+functions.
+The
+.Xr EVP_DigestInit 3
+functions provide message digests.
+.Pp
+Authenticated encryption with additional data (AEAD) is available with
+the
+.Xr EVP_AEAD_CTX_init 3
+functions.
+.Pp
+The
+.Fn EVP_PKEY_*
+functions provide a high level interface to asymmetric algorithms.
+To create a new
+.Vt EVP_PKEY ,
+see
+.Xr EVP_PKEY_new 3 .
+.Vt EVP_PKEY Ns s
+can be associated with a private key of a particular algorithm
+by using the functions described in the
+.Xr EVP_PKEY_set1_RSA 3
+page, or new keys can be generated using
+.Xr EVP_PKEY_keygen 3 .
+.Vt EVP_PKEY Ns s
+can be compared using
+.Xr EVP_PKEY_cmp 3
+or printed using
+.Xr EVP_PKEY_print_private 3 .
+.Pp
+The
+.Fn EVP_PKEY_*
+functions support the full range of asymmetric algorithm operations:
+.Bl -bullet
+.It
+For key agreement, see
+.Xr EVP_PKEY_derive 3 .
+.It
+For signing and verifying, see
+.Xr EVP_PKEY_sign 3 ,
+.Xr EVP_PKEY_verify 3 ,
+and
+.Xr EVP_PKEY_verify_recover 3 .
+However, note that these functions do not perform a digest of the
+data to be signed.
+Therefore normally you would use the
+.Xr EVP_DigestSignInit 3
+functions for this purpose.
+.It
+For encryption and decryption see
+.Xr EVP_PKEY_encrypt 3
+and
+.Xr EVP_PKEY_decrypt 3 ,
+respectively.
+However, note that these functions perform encryption and decryption only.
+As public key encryption is an expensive operation, normally you
+would wrap an encrypted message in a digital envelope using the
+.Xr EVP_SealInit 3
+and
+.Xr EVP_OpenInit 3
+functions.
+.El
+.Pp
+The
+.Xr EVP_BytesToKey 3
+function provides some limited support for password based encryption.
+Careful selection of the parameters will provide a PKCS#5 PBKDF1
+compatible implementation.
+However, new applications should typically not use this (preferring, for
+example, PBKDF2 from PCKS#5).
+.Pp
+Algorithms are loaded with
+.Xr OpenSSL_add_all_algorithms 3 .
+.Pp
+All the symmetric algorithms (ciphers), digests and asymmetric
+algorithms (public key algorithms) can be replaced by
+.Xr engine 3
+modules providing alternative implementations.
+If
+.Vt ENGINE
+implementations of ciphers or digests are registered as defaults,
+then the various EVP functions will automatically use those
+implementations in preference to built in software implementations.
+For more information, consult the
+.Xr engine 3
+manual page.
+.Pp
+Although low level algorithm specific functions exist for many
+algorithms, their use is discouraged.
+They cannot be used with an
+.Vt ENGINE ,
+and
+.Vt ENGINE
+versions of new algorithms cannot be accessed using the low level
+functions.
+Using them also makes code harder to adapt to new algorithms, some
+options are not cleanly supported at the low level, and some
+operations are more efficient using the high level interfaces.
+.Sh SEE ALSO
+.Xr engine 3 ,
+.Xr EVP_AEAD_CTX_init 3 ,
+.Xr EVP_BytesToKey 3 ,
+.Xr EVP_DigestInit 3 ,
+.Xr EVP_DigestSignInit 3 ,
+.Xr EVP_EncryptInit 3 ,
+.Xr EVP_OpenInit 3 ,
+.Xr EVP_PKEY_decrypt 3 ,
+.Xr EVP_PKEY_derive 3 ,
+.Xr EVP_PKEY_encrypt 3 ,
+.Xr EVP_PKEY_keygen 3 ,
+.Xr EVP_PKEY_new 3 ,
+.Xr EVP_PKEY_print_private 3 ,
+.Xr EVP_PKEY_set1_RSA 3 ,
+.Xr EVP_PKEY_sign 3 ,
+.Xr EVP_PKEY_verify 3 ,
+.Xr EVP_PKEY_verify_recover 3 ,
+.Xr EVP_SealInit 3 ,
+.Xr EVP_SignInit 3 ,
+.Xr EVP_VerifyInit 3 ,
+.Xr OpenSSL_add_all_algorithms 3

@@ -1,0 +1,85 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_PKEY_CTX_NEW 3
+.Os
+.Sh NAME
+.Nm EVP_PKEY_CTX_new ,
+.Nm EVP_PKEY_CTX_new_id ,
+.Nm EVP_PKEY_CTX_dup ,
+.Nm EVP_PKEY_CTX_free
+.Nd public key algorithm context functions
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft EVP_PKEY_CTX *
+.Fo EVP_PKEY_CTX_new
+.Fa "EVP_PKEY *pkey"
+.Fa "ENGINE *e"
+.Fc
+.Ft EVP_PKEY_CTX *
+.Fo EVP_PKEY_CTX_new_id
+.Fa "int id"
+.Fa "ENGINE *e"
+.Fc
+.Ft EVP_PKEY_CTX *
+.Fo EVP_PKEY_CTX_dup
+.Fa "EVP_PKEY_CTX *ctx"
+.Fc
+.Ft void
+.Fo EVP_PKEY_CTX_free
+.Fa "EVP_PKEY_CTX *ctx"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn EVP_PKEY_CTX_new
+function allocates a public key algorithm context using the algorithm
+specified in
+.Fa pkey
+and the
+.Vt ENGINE
+.Fa e .
+.Pp
+The
+.Fn EVP_PKEY_CTX_new_id
+function allocates a public key algorithm context using the algorithm
+specified by
+.Fa id
+and
+.Vt ENGINE
+.Fa e .
+It is normally used when no
+.Vt EVP_PKEY
+structure is associated with the operations, for example during
+parameter generation of key generation for some algorithms.
+.Pp
+.Fn EVP_PKEY_CTX_dup
+duplicates the context
+.Fa ctx .
+.Pp
+.Fn EVP_PKEY_CTX_free
+frees up the context
+.Fa ctx .
+.Sh RETURN VALUES
+.Fn EVP_PKEY_CTX_new ,
+.Fn EVP_PKEY_CTX_new_id ,
+.Fn EVP_PKEY_CTX_dup
+returns either the newly allocated
+.Vt EVP_PKEY_CTX
+structure of
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn EVP_PKEY_CTX_free
+does not return a value.
+.Sh SEE ALSO
+.Xr EVP_PKEY_new 3
+.Sh HISTORY
+These functions were first added to OpenSSL 1.0.0.
+.Sh CAVEATS
+The
+.Vt EVP_PKEY_CTX
+structure is an opaque public key algorithm context used by the OpenSSL
+high level public key API.
+Contexts
+.Sy MUST NOT
+be shared between threads.
+It is not permissible to use the same context simultaneously in two
+threads.

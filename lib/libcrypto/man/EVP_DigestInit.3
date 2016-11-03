@@ -1,0 +1,520 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_DIGESTINIT 3
+.Os
+.Sh NAME
+.Nm EVP_MD_CTX_init ,
+.Nm EVP_MD_CTX_create ,
+.Nm EVP_DigestInit_ex ,
+.Nm EVP_DigestUpdate ,
+.Nm EVP_DigestFinal_ex ,
+.Nm EVP_MD_CTX_cleanup ,
+.Nm EVP_MD_CTX_destroy ,
+.Nm EVP_MAX_MD_SIZE ,
+.Nm EVP_MD_CTX_copy_ex ,
+.Nm EVP_MD_CTX_copy ,
+.Nm EVP_MD_type ,
+.Nm EVP_MD_pkey_type ,
+.Nm EVP_MD_size ,
+.Nm EVP_MD_block_size ,
+.Nm EVP_MD_CTX_md ,
+.Nm EVP_MD_CTX_size ,
+.Nm EVP_MD_CTX_block_size ,
+.Nm EVP_MD_CTX_type ,
+.Nm EVP_md_null ,
+.Nm EVP_md2 ,
+.Nm EVP_md5 ,
+.Nm EVP_sha1 ,
+.Nm EVP_sha224 ,
+.Nm EVP_sha256 ,
+.Nm EVP_sha384 ,
+.Nm EVP_sha512 ,
+.Nm EVP_dss ,
+.Nm EVP_dss1 ,
+.Nm EVP_ripemd160 ,
+.Nm EVP_get_digestbyname ,
+.Nm EVP_get_digestbynid ,
+.Nm EVP_get_digestbyobj ,
+.Nm EVP_DigestInit ,
+.Nm EVP_DigestFinal
+.Nd EVP digest routines
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft void
+.Fo EVP_MD_CTX_init
+.Fa "EVP_MD_CTX *ctx"
+.Fc
+.Ft EVP_MD_CTX *
+.Fn EVP_MD_CTX_create void
+.Ft int
+.Fo EVP_DigestInit_ex
+.Fa "EVP_MD_CTX *ctx"
+.Fa "const EVP_MD *type"
+.Fa "ENGINE *impl"
+.Fc
+.Ft int
+.Fo EVP_DigestUpdate
+.Fa "EVP_MD_CTX *ctx"
+.Fa "const void *d"
+.Fa "size_t cnt"
+.Fc
+.Ft int
+.Fo EVP_DigestFinal_ex
+.Fa "EVP_MD_CTX *ctx"
+.Fa "unsigned char *md"
+.Fa "unsigned int *s"
+.Fc
+.Ft int
+.Fo EVP_MD_CTX_cleanup
+.Fa "EVP_MD_CTX *ctx"
+.Fc
+.Ft void
+.Fo EVP_MD_CTX_destroy
+.Fa "EVP_MD_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_MD_CTX_copy_ex
+.Fa "EVP_MD_CTX *out"
+.Fa "const EVP_MD_CTX *in"
+.Fc
+.Ft int
+.Fo EVP_DigestInit
+.Fa "EVP_MD_CTX *ctx"
+.Fa "const EVP_MD *type"
+.Fc
+.Ft int
+.Fo EVP_DigestFinal
+.Fa "EVP_MD_CTX *ctx"
+.Fa "unsigned char *md"
+.Fa "unsigned int *s"
+.Fc
+.Ft int
+.Fo EVP_MD_CTX_copy
+.Fa "EVP_MD_CTX *out"
+.Fa "EVP_MD_CTX *in"
+.Fc
+.Fd #define EVP_MAX_MD_SIZE 64	/* SHA512 */
+.Ft int
+.Fo EVP_MD_type
+.Fa "const EVP_MD *md"
+.Fc
+.Ft int
+.Fo EVP_MD_pkey_type
+.Fa "const EVP_MD *md"
+.Fc
+.Ft int
+.Fo EVP_MD_size
+.Fa "const EVP_MD *md"
+.Fc
+.Ft int
+.Fo EVP_MD_block_size
+.Fa "const EVP_MD *md"
+.Fc
+.Ft const EVP_MD *
+.Fo EVP_MD_CTX_md
+.Fa "const EVP_MD_CTX *ctx"
+.Fc
+.Fd #define EVP_MD_CTX_size(e)		EVP_MD_size(EVP_MD_CTX_md(e))
+.Fd #define EVP_MD_CTX_block_size(e)	EVP_MD_block_size((e)->digest)
+.Fd #define EVP_MD_CTX_type(e)		EVP_MD_type((e)->digest)
+.Ft const EVP_MD *
+.Fn EVP_md_null void
+.Ft const EVP_MD *
+.Fn EVP_md2 void
+.Ft const EVP_MD *
+.Fn EVP_md5 void
+.Ft const EVP_MD *
+.Fn EVP_sha1 void
+.Ft const EVP_MD *
+.Fn EVP_dss void
+.Ft const EVP_MD *
+.Fn EVP_dss1 void
+.Ft const EVP_MD *
+.Fn EVP_ripemd160 void
+.Ft const EVP_MD *
+.Fn EVP_sha224 void
+.Ft const EVP_MD *
+.Fn EVP_sha256 void
+.Ft const EVP_MD *
+.Fn EVP_sha384 void
+.Ft const EVP_MD *
+.Fn EVP_sha512 void
+.Ft const EVP_MD *
+.Fo EVP_get_digestbyname
+.Fa "const char *name"
+.Fc
+.Fd #define EVP_get_digestbynid(a) EVP_get_digestbyname(OBJ_nid2sn(a))
+.Fd #define EVP_get_digestbyobj(a) EVP_get_digestbynid(OBJ_obj2nid(a))
+.Sh DESCRIPTION
+The EVP digest routines are a high level interface to message digests.
+.Pp
+.Fn EVP_MD_CTX_init
+initializes the digest context
+.Fa ctx .
+.Pp
+.Fn EVP_MD_CTX_create
+allocates, initializes, and returns a digest context.
+.Pp
+.Fn EVP_DigestInit_ex
+sets up digest context
+.Fa ctx
+to use a digest
+.Fa type
+from
+.Vt ENGINE
+.Fa impl .
+.Fa ctx
+must be initialized before calling this function.
+.Fa type
+will typically be supplied by a function such as
+.Fn EVP_sha1 .
+If
+.Fa impl
+is
+.Dv NULL ,
+then the default implementation of digest
+.Fa type
+is used.
+.Pp
+.Fn EVP_DigestUpdate
+hashes
+.Fa cnt
+bytes of data at
+.Fa d
+into the digest context
+.Fa ctx .
+This function can be called several times on the same
+.Fa ctx
+to hash additional data.
+.Pp
+.Fn EVP_DigestFinal_ex
+retrieves the digest value from
+.Fa ctx
+and places it in
+.Fa md .
+If the
+.Fa s
+parameter is not
+.Dv NULL ,
+then the number of bytes of data written (i.e. the length of the
+digest) will be written to the integer at
+.Fa s ,
+at most
+.Dv EVP_MAX_MD_SIZE
+bytes will be written.
+After calling
+.Fn EVP_DigestFinal_ex ,
+no additional calls to
+.Fn EVP_DigestUpdate
+can be made, but
+.Fn EVP_DigestInit_ex
+can be called to initialize a new digest operation.
+.Pp
+.Fn EVP_MD_CTX_cleanup
+cleans up the digest context
+.Fa ctx .
+It should be called after a digest context is no longer needed.
+.Pp
+.Fn EVP_MD_CTX_destroy
+cleans up the digest context
+.Fa ctx
+and frees up the space allocated to it.
+It should be called only on a context created using
+.Fn EVP_MD_CTX_create .
+.Pp
+.Fn EVP_MD_CTX_copy_ex
+can be used to copy the message digest state from
+.Fa in
+to
+.Fa out .
+This is useful if large amounts of data are to be hashed which only
+differ in the last few bytes.
+.Fa out
+must be initialized before calling this function.
+.Pp
+.Fn EVP_DigestInit
+behaves in the same way as
+.Fn EVP_DigestInit_ex
+except the passed context
+.Fa ctx
+does not have to be initialized, and it always uses the default digest
+implementation.
+.Pp
+.Fn EVP_DigestFinal
+is similar to
+.Fn EVP_DigestFinal_ex
+except the digest context
+.Fa ctx
+is automatically cleaned up.
+.Pp
+.Fn EVP_MD_CTX_copy
+is similar to
+.Fn EVP_MD_CTX_copy_ex
+except the destination
+.Fa out
+does not have to be initialized.
+.Pp
+.Fn EVP_MD_size
+and
+.Fn EVP_MD_CTX_size
+return the size of the message digest when passed an
+.Vt EVP_MD
+or an
+.Vt EVP_MD_CTX
+structure, i.e. the size of the hash.
+.Pp
+.Fn EVP_MD_block_size
+and
+.Fn EVP_MD_CTX_block_size
+return the block size of the message digest when passed an
+.Vt EVP_MD
+or an
+.Vt EVP_MD_CTX
+structure.
+.Pp
+.Fn EVP_MD_type
+and
+.Fn EVP_MD_CTX_type
+return the NID of the OBJECT IDENTIFIER representing the given message
+digest when passed an
+.Vt EVP_MD
+structure.
+For example
+.Fn EVP_MD_type EVP_sha1()
+returns
+.Dv NID_sha1 .
+This function is normally used when setting ASN1 OIDs.
+.Pp
+.Fn EVP_MD_CTX_md
+returns the
+.Vt EVP_MD
+structure corresponding to the passed
+.Vt EVP_MD_CTX .
+.Pp
+.Fn EVP_MD_pkey_type
+returns the NID of the public key signing algorithm associated with this
+digest.
+For example
+.Fn EVP_sha1
+is associated with RSA so this will return
+.Dv NID_sha1WithRSAEncryption .
+Since digests and signature algorithms are no longer linked this
+function is only retained for compatibility reasons.
+.Pp
+.Fn EVP_md2 ,
+.Fn EVP_md5 ,
+.Fn EVP_sha1 ,
+.Fn EVP_sha224 ,
+.Fn EVP_sha256 ,
+.Fn EVP_sha384 ,
+.Fn EVP_sha512 ,
+and
+.Fn EVP_ripemd160
+return
+.Vt EVP_MD
+structures for the MD2, MD5, SHA1, SHA224, SHA256, SHA384, SHA512 and
+RIPEMD160 digest algorithms respectively.
+.Pp
+.Fn EVP_dss
+and
+.Fn EVP_dss1
+return
+.Vt EVP_MD
+structures for SHA1 digest algorithms but using DSS (DSA) for the
+signature algorithm.
+Note: there is no need to use these pseudo-digests in OpenSSL 1.0.0 and
+later, they are however retained for compatibility.
+.Pp
+.Fn EVP_md_null
+is a "null" message digest that does nothing:
+i.e. the hash it returns is of zero length.
+.Pp
+.Fn EVP_get_digestbyname ,
+.Fn EVP_get_digestbynid ,
+and
+.Fn EVP_get_digestbyobj
+return an
+.Vt EVP_MD
+structure when passed a digest name, a digest NID, or an ASN1_OBJECT
+structure respectively.
+The digest table must be initialized using, for example,
+.Xr OpenSSL_add_all_digests 3
+for these functions to work.
+.Pp
+The EVP interface to message digests should almost always be used
+in preference to the low level interfaces.
+This is because the code then becomes transparent to the digest used and
+much more flexible.
+.Pp
+New applications should use the SHA2 digest algorithms such as SHA256.
+The other digest algorithms are still in common use.
+.Pp
+For most applications the
+.Fa impl
+parameter to
+.Fn EVP_DigestInit_ex
+will be set to NULL to use the default digest implementation.
+.Pp
+The functions
+.Fn EVP_DigestInit ,
+.Fn EVP_DigestFinal ,
+and
+.Fn EVP_MD_CTX_copy
+are obsolete but are retained to maintain compatibility with existing
+code.
+New applications should use
+.Fn EVP_DigestInit_ex ,
+.Fn EVP_DigestFinal_ex ,
+and
+.Fn EVP_MD_CTX_copy_ex
+because they can efficiently reuse a digest context instead of
+initializing and cleaning it up on each call and allow non default
+implementations of digests to be specified.
+.Pp
+In OpenSSL 0.9.7 and later if digest contexts are not cleaned up after
+use memory leaks will occur.
+.Pp
+Stack allocation of
+.Vt EVP_MD_CTX
+structures is common, for example:
+.Bd -literal -offset indent
+EVP_MD_CTX mctx;
+EVP_MD_CTX_init(&mctx);
+.Ed
+.Pp
+This will cause binary compatibility issues if the size of
+.Vt EVP_MD_CTX
+structure changes (this will only happen with a major release of OpenSSL).
+Applications wishing to avoid this should use
+.Fn EVP_MD_CTX_create
+instead:
+.Bd -literal -offset indent
+EVP_MD_CTX *mctx;
+mctx = EVP_MD_CTX_create();
+.Ed
+.Sh RETURN VALUES
+.Fn EVP_DigestInit_ex ,
+.Fn EVP_DigestUpdate ,
+.Fn EVP_DigestFinal_ex ,
+and
+.Fn EVP_MD_CTX_copy_ex
+return 1 for success or 0 for failure.
+.Pp
+.Fn EVP_MD_type ,
+.Fn EVP_MD_pkey_type ,
+and
+.Fn EVP_MD_type
+return the NID of the corresponding OBJECT IDENTIFIER or
+.Dv NID_undef
+if none exists.
+.Pp
+.Fn EVP_MD_size ,
+.Fn EVP_MD_block_size ,
+.Fn EVP_MD_CTX_size ,
+and
+.Fn EVP_MD_CTX_block_size
+return the digest or block size in bytes.
+.Pp
+.Fn EVP_md_null ,
+.Fn EVP_md2 ,
+.Fn EVP_md5 ,
+.Fn EVP_sha1 ,
+.Fn EVP_dss ,
+.Fn EVP_dss1 ,
+and
+.Fn EVP_ripemd160
+return pointers to the corresponding
+.Vt EVP_MD
+structures.
+.Pp
+.Fn EVP_get_digestbyname ,
+.Fn EVP_get_digestbynid ,
+and
+.Fn EVP_get_digestbyobj
+return either an
+.Vt EVP_MD
+structure or
+.Dv NULL
+if an error occurs.
+.Sh EXAMPLES
+This example digests the data "Test Message\en" and "Hello World\en",
+using the digest name passed on the command line.
+.Bd -literal
+#include <stdio.h>
+#include <openssl/evp.h>
+
+int
+main(int argc, char *argv[])
+{
+	EVP_MD_CTX *mdctx;
+	const EVP_MD *md;
+	const char mess1[] = "Test Message\en";
+	const char mess2[] = "Hello World\en";
+	unsigned char md_value[EVP_MAX_MD_SIZE];
+	int md_len, i;
+
+	OpenSSL_add_all_digests();
+
+	if (argc <= 1) {
+		printf("Usage: mdtest digestname\en");
+		exit(1);
+	}
+
+	md = EVP_get_digestbyname(argv[1]);
+	if (md == NULL) {
+		printf("Unknown message digest %s\en", argv[1]);
+		exit(1);
+	}
+
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit_ex(mdctx, md, NULL);
+	EVP_DigestUpdate(mdctx, mess1, strlen(mess1));
+	EVP_DigestUpdate(mdctx, mess2, strlen(mess2));
+	EVP_DigestFinal_ex(mdctx, md_value, &md_len);
+	EVP_MD_CTX_destroy(mdctx);
+
+	printf("Digest is: ");
+	for(i = 0; i < md_len; i++)
+		printf("%02x", md_value[i]);
+	printf("\en");
+}
+.Ed
+.Sh SEE ALSO
+.Xr evp 3
+.Sh HISTORY
+.Fn EVP_DigestInit ,
+.Fn EVP_DigestUpdate ,
+and
+.Fn EVP_DigestFinal
+are available in all versions of SSLeay and OpenSSL.
+.Pp
+.Fn EVP_MD_CTX_init ,
+.Fn EVP_MD_CTX_create ,
+.Fn EVP_MD_CTX_copy_ex ,
+.Fn EVP_MD_CTX_cleanup ,
+.Fn EVP_MD_CTX_destroy ,
+.Fn EVP_DigestInit_ex ,
+and
+.Fn EVP_DigestFinal_ex
+were added in OpenSSL 0.9.7.
+.Pp
+.Fn EVP_md_null ,
+.Fn EVP_md2 ,
+.Fn EVP_md5 ,
+.Fn EVP_sha1 ,
+.Fn EVP_dss ,
+.Fn EVP_dss1 ,
+and
+.Fn EVP_ripemd160
+were changed to return truely const
+.Vt EVP_MD
+pointers in OpenSSL 0.9.7.
+.Pp
+The link between digests and signing algorithms was fixed in OpenSSL 1.0
+and later, so now
+.Fn EVP_sha1
+can be used with RSA and DSA, there is no need to use
+.Fn EVP_dss1
+any more.
+.Pp
+OpenSSL 1.0 and later does not include the MD2 digest algorithm in the
+default configuration due to its security weaknesses.

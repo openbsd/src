@@ -1,0 +1,44 @@
+.Dd $Mdocdate: November 3 2016 $
+.Dt EVP_PKEY_NEW 3
+.Os
+.Sh NAME
+.Nm EVP_PKEY_new ,
+.Nm EVP_PKEY_free
+.Nd private key allocation functions
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft EVP_PKEY *
+.Fn EVP_PKEY_new void
+.Ft void
+.Fo EVP_PKEY_free
+.Fa "EVP_PKEY *key"
+.Fc
+.Sh DESCRIPTION
+The
+.Vt EVP_PKEY
+structure is used by various OpenSSL functions which require a general
+private key without reference to any particular algorithm.
+.Pp
+The
+.Fn EVP_PKEY_new
+function allocates an empty
+.Vt EVP_PKEY
+structure.
+To add a private key to it, use the functions described in
+.Xr EVP_PKEY_set1_RSA 3 .
+.Pp
+.Fn EVP_PKEY_free
+frees up the private key
+.Fa key .
+.Sh RETURN VALUES
+.Fn EVP_PKEY_new
+returns either the newly allocated
+.Vt EVP_PKEY
+structure or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn EVP_PKEY_free
+does not return a value.
+.Sh SEE ALSO
+.Xr EVP_PKEY_set1_RSA 3
