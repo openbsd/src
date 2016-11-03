@@ -80,7 +80,7 @@ struct hv_softc *hv_sc;
 int 	hv_match(struct device *, void *, void *);
 void	hv_attach(struct device *, struct device *, void *);
 void	hv_deferred(void *);
-void	hv_fake_version(struct hv_softc *);
+void	hv_set_version(struct hv_softc *);
 u_int	hv_gettime(struct timecounter *);
 int	hv_init_hypercall(struct hv_softc *);
 uint64_t hv_hypercall(struct hv_softc *, uint64_t, void *, void *);
@@ -281,7 +281,7 @@ hv_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	hv_fake_version(sc);
+	hv_set_version(sc);
 
 	tc_init(&hv_timecounter);
 
@@ -313,13 +313,13 @@ hv_deferred(void *arg)
 }
 
 void
-hv_fake_version(struct hv_softc *sc)
+hv_set_version(struct hv_softc *sc)
 {
 	uint64_t ver;
 
-	/* FreeBSD 10 apparently */
-	ver = 0x8200ULL << 48;
-	ver |= 10 << 16;
+	/* OpenBSD 6.0 */
+	ver = 0x8300ULL << 48;
+	ver |= 6 << 16;
 	wrmsr(MSR_HV_GUEST_OS_ID, ver);
 }
 
