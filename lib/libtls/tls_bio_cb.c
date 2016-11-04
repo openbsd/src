@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.9 2016/11/04 10:54:25 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.10 2016/11/04 15:37:49 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -24,16 +24,16 @@
 #include <tls.h>
 #include "tls_internal.h"
 
-static int bio_cb_write(BIO *b, const char *buf, int num);
-static int bio_cb_read(BIO *b, char *buf, int size);
-static int bio_cb_puts(BIO *b, const char *str);
-static long bio_cb_ctrl(BIO *b, int cmd, long num, void *ptr);
-static int bio_cb_new(BIO *b);
-static int bio_cb_free(BIO *data);
+static int bio_cb_write(BIO *bio, const char *buf, int num);
+static int bio_cb_read(BIO *bio, char *buf, int size);
+static int bio_cb_puts(BIO *bio, const char *str);
+static long bio_cb_ctrl(BIO *bio, int cmd, long num, void *ptr);
+static int bio_cb_new(BIO *bio);
+static int bio_cb_free(BIO *bio);
 
 struct bio_cb_st {
-	int (*write_cb)(BIO *h, const char *buf, int num, void *cb_arg);
-	int (*read_cb)(BIO *h, char *buf, int size, void *cb_arg);
+	int (*write_cb)(BIO *bio, const char *buf, int num, void *cb_arg);
+	int (*read_cb)(BIO *bio, char *buf, int size, void *cb_arg);
 	void *cb_arg;
 };
 
@@ -55,7 +55,7 @@ bio_s_cb(void)
 }
 
 static int
-bio_cb_new(BIO *bi)
+bio_cb_new(BIO *bio)
 {
 	struct bio_cb_st *bcb;
 
@@ -63,24 +63,24 @@ bio_cb_new(BIO *bi)
 	if (bcb == NULL)
 		return (0);
 
-	bi->shutdown = 1;
-	bi->init = 1;
-	bi->num = -1;
-	bi->ptr = (char *)bcb;
+	bio->shutdown = 1;
+	bio->init = 1;
+	bio->num = -1;
+	bio->ptr = (char *)bcb;
 
 	return (1);
 }
 
 static int
-bio_cb_free(BIO *bi)
+bio_cb_free(BIO *bio)
 {
-	if (bi == NULL)
+	if (bio == NULL)
 		return (0);
 
-	if (bi->shutdown) {
-		if ((bi->init) && (bi->ptr != NULL)) {
-			free(bi->ptr);
-			bi->ptr = NULL;
+	if (bio->shutdown) {
+		if ((bio->init) && (bio->ptr != NULL)) {
+			free(bio->ptr);
+			bio->ptr = NULL;
 		}
 	}
 
@@ -88,39 +88,39 @@ bio_cb_free(BIO *bi)
 }
 
 static int
-bio_cb_read(BIO *b, char *buf, int size)
+bio_cb_read(BIO *bio, char *buf, int size)
 {
-	struct bio_cb_st *bcb = b->ptr;
-	return (bcb->read_cb(b, buf, size, bcb->cb_arg));
+	struct bio_cb_st *bcb = bio->ptr;
+	return (bcb->read_cb(bio, buf, size, bcb->cb_arg));
 }
 
 static int
-bio_cb_write(BIO *b, const char *buf, int num)
+bio_cb_write(BIO *bio, const char *buf, int num)
 {
-	struct bio_cb_st *bcb = b->ptr;
-	return (bcb->write_cb(b, buf, num, bcb->cb_arg));
+	struct bio_cb_st *bcb = bio->ptr;
+	return (bcb->write_cb(bio, buf, num, bcb->cb_arg));
 }
 
 static int
-bio_cb_puts(BIO *b, const char *str)
+bio_cb_puts(BIO *bio, const char *str)
 {
 	int n;
 
 	n = strlen(str);
-	return (bio_cb_write(b, str, n));
+	return (bio_cb_write(bio, str, n));
 }
 
 static long
-bio_cb_ctrl(BIO *b, int cmd, long num, void *ptr)
+bio_cb_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
 	long ret = 1;
 
 	switch (cmd) {
 	case BIO_CTRL_GET_CLOSE:
-		ret = (long)b->shutdown;
+		ret = (long)bio->shutdown;
 		break;
 	case BIO_CTRL_SET_CLOSE:
-		b->shutdown = (int)num;
+		bio->shutdown = (int)num;
 		break;
 	case BIO_CTRL_DUP:
 	case BIO_CTRL_FLUSH:
@@ -129,43 +129,43 @@ bio_cb_ctrl(BIO *b, int cmd, long num, void *ptr)
 	case BIO_CTRL_GET:
 	case BIO_CTRL_SET:
 	default:
-		ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+		ret = BIO_ctrl(bio->next_bio, cmd, num, ptr);
 	}
 
 	return (ret);
 }
 
 static int
-tls_bio_write_cb(BIO *h, const char *buf, int num, void *cb_arg)
+tls_bio_write_cb(BIO *bio, const char *buf, int num, void *cb_arg)
 {
 	struct tls *ctx = cb_arg;
 	int rv;
 
-	BIO_clear_retry_flags(h);
+	BIO_clear_retry_flags(bio);
 	rv = (ctx->write_cb)(ctx, buf, num, ctx->cb_arg);
 	if (rv == TLS_WANT_POLLIN) {
-		BIO_set_retry_read(h);
+		BIO_set_retry_read(bio);
 		rv = -1;
 	} else if (rv == TLS_WANT_POLLOUT) {
-		BIO_set_retry_write(h);
+		BIO_set_retry_write(bio);
 		rv = -1;
 	}
 	return (rv);
 }
 
 static int
-tls_bio_read_cb(BIO *h, char *buf, int size, void *cb_arg)
+tls_bio_read_cb(BIO *bio, char *buf, int size, void *cb_arg)
 {
 	struct tls *ctx = cb_arg;
 	int rv;
 
-	BIO_clear_retry_flags(h);
+	BIO_clear_retry_flags(bio);
 	rv = (ctx->read_cb)(ctx, buf, size, ctx->cb_arg);
 	if (rv == TLS_WANT_POLLIN) {
-		BIO_set_retry_read(h);
+		BIO_set_retry_read(bio);
 		rv = -1;
 	} else if (rv == TLS_WANT_POLLOUT) {
-		BIO_set_retry_write(h);
+		BIO_set_retry_write(bio);
 		rv = -1;
 	}
 	return (rv);
@@ -175,22 +175,23 @@ static BIO *
 tls_get_new_cb_bio(struct tls *ctx)
 {
 	struct bio_cb_st *b;
-	BIO *bcb;
+	BIO *bio;
+
 	if (ctx->read_cb == NULL || ctx->write_cb == NULL)
 		tls_set_errorx(ctx, "no callbacks registered");
 
-	bcb = BIO_new(bio_s_cb());
-	if (bcb == NULL) {
+	bio = BIO_new(bio_s_cb());
+	if (bio == NULL) {
 		tls_set_errorx(ctx, "failed to create callback i/o");
 		return (NULL);
 	}
 
-	b = (struct bio_cb_st *)bcb->ptr;
+	b = (struct bio_cb_st *)bio->ptr;
 	b->read_cb = tls_bio_read_cb;
 	b->write_cb = tls_bio_write_cb;
 	b->cb_arg = ctx;
 
-	return (bcb);
+	return (bio);
 }
 
 int
@@ -198,18 +199,19 @@ tls_set_cbs(struct tls *ctx, tls_read_cb read_cb, tls_write_cb write_cb,
     void *cb_arg)
 {
 	int rv = -1;
-	BIO *bcb;
+	BIO *bio;
+
 	ctx->read_cb = read_cb;
 	ctx->write_cb = write_cb;
 	ctx->cb_arg = cb_arg;
 
-	bcb = tls_get_new_cb_bio(ctx);
-	if (bcb == NULL) {
+	bio = tls_get_new_cb_bio(ctx);
+	if (bio == NULL) {
 		tls_set_errorx(ctx, "failed to create callback i/o");
 		goto err;
 	}
 
-	SSL_set_bio(ctx->ssl_conn, bcb, bcb);
+	SSL_set_bio(ctx->ssl_conn, bio, bio);
 
 	rv = 0;
 
