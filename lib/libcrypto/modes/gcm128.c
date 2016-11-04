@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.14 2016/11/04 13:56:05 miod Exp $ */
+/* $OpenBSD: gcm128.c,v 1.15 2016/11/04 17:30:30 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -637,13 +637,19 @@ static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 
 #endif
 
+#if	defined(GHASH_ASM) && \
+	(defined(__i386)	|| defined(__i386__)	|| \
+	 defined(__x86_64)	|| defined(__x86_64__)	|| \
+	 defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64))
+#include "x86_arch.h"
+#endif
+
 #if	TABLE_BITS==4 && defined(GHASH_ASM)
 # if	(defined(__i386)	|| defined(__i386__)	|| \
 	 defined(__x86_64)	|| defined(__x86_64__)	|| \
 	 defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64))
 #  define GHASH_ASM_X86_OR_64
 #  define GCM_FUNCREF_4BIT
-extern unsigned int OPENSSL_ia32cap_P[2];
 
 void gcm_init_clmul(u128 Htable[16],const u64 Xi[2]);
 void gcm_gmult_clmul(u64 Xi[2],const u128 Htable[16]);
@@ -705,8 +711,9 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #elif	TABLE_BITS==4
 # if	defined(GHASH_ASM_X86_OR_64)
 #  if	!defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
-	if (OPENSSL_ia32cap_P[0]&(1<<24) &&	/* check FXSR bit */
-	    OPENSSL_ia32cap_P[1]&(1<<1) ) {	/* check PCLMULQDQ bit */
+	/* check FXSR and PCLMULQDQ bits */
+	if ((OPENSSL_cpu_caps() & (CPUCAP_MASK_FXSR | CPUCAP_MASK_PCLMUL)) ==
+	    (CPUCAP_MASK_FXSR | CPUCAP_MASK_PCLMUL)) {
 		gcm_init_clmul(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_clmul;
 		ctx->ghash = gcm_ghash_clmul;
@@ -716,9 +723,9 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 	gcm_init_4bit(ctx->Htable,ctx->H.u);
 #  if	defined(GHASH_ASM_X86)			/* x86 only */
 #   if	defined(OPENSSL_IA32_SSE2)
-	if (OPENSSL_ia32cap_P[0]&(1<<25)) {	/* check SSE bit */
+	if (OPENSSL_cpu_caps() & CPUCAP_MASK_SSE) {	/* check SSE bit */
 #   else
-	if (OPENSSL_ia32cap_P[0]&(1<<23)) {	/* check MMX bit */
+	if (OPENSSL_cpu_caps() & CPUCAP_MASK_MMX) {	/* check MMX bit */
 #   endif
 		ctx->gmult = gcm_gmult_4bit_mmx;
 		ctx->ghash = gcm_ghash_4bit_mmx;

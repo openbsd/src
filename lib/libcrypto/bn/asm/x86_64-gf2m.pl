@@ -163,12 +163,13 @@ ___
 
 $code.=<<___;
 .extern	OPENSSL_ia32cap_P
+.hidden	OPENSSL_ia32cap_P
 .globl	bn_GF2m_mul_2x2
 .type	bn_GF2m_mul_2x2,\@abi-omnipotent
 .align	16
 bn_GF2m_mul_2x2:
-	mov	OPENSSL_ia32cap_P(%rip),%rax
-	bt	\$33,%rax
+	mov	OPENSSL_ia32cap_P+4(%rip),%eax
+	bt	\$IA32CAP_BIT1_PCLMUL,%eax
 	jnc	.Lvanilla_mul_2x2
 
 	movd		$a1,%xmm0

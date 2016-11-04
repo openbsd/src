@@ -393,7 +393,7 @@ my %globals;
 	}
     }
 }
-{ package expr;		# pick up expressioins
+{ package expr;		# pick up expressions
     sub re {
 	my	$self = shift;	# single instance is enough...
 	local	*line = shift;
@@ -777,6 +777,8 @@ ___
 OPTION	DOTNAME
 ___
 }
+print "#include \"x86_arch.h\"\n";
+
 while($line=<>) {
 
     chomp($line);

@@ -114,7 +114,7 @@ $temp="mm6";
 $mask="mm7";
 
 	&picmeup("eax","OPENSSL_ia32cap_P");
-	&bt	(&DWP(0,"eax"),26);
+	&bt	(&DWP(0,"eax"),"\$IA32CAP_BIT0_SSE2");
 	&jnc	(&label("non_sse2"));
 
 	&mov	("eax",-1);

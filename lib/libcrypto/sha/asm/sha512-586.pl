@@ -284,7 +284,7 @@ sub BODY_00_15_x86 {
 
 if ($sse2) {
 	&picmeup("edx","OPENSSL_ia32cap_P",$K512,&label("K512"));
-	&bt	(&DWP(0,"edx"),26);
+	&bt	(&DWP(0,"edx"),"\$IA32CAP_BIT0_SSE2");
 	&jnc	(&label("loop_x86"));
 
 	# load ctx->h[0-7]

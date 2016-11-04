@@ -20,8 +20,8 @@ print<<___;
 .section	.init
 	call	OPENSSL_cpuid_setup
 
+.extern	OPENSSL_ia32cap_P
 .hidden	OPENSSL_ia32cap_P
-.comm	OPENSSL_ia32cap_P,8,4
 
 .text
 
@@ -80,8 +80,8 @@ OPENSSL_ia32_cpuid:
 	mov	%eax,%r10d
 	mov	\$0x80000001,%eax
 	cpuid
-	or	%ecx,%r9d
-	and	\$0x00000801,%r9d	# isolate AMD XOP bit, 1<<11
+	and	\$IA32CAP_MASK1_AMD_XOP,%r9d	# isolate AMD XOP bit
+	or	\$1,%r9d			# make sure %r9d is not zero
 
 	cmp	\$0x80000008,%r10d
 	jb	.Lintel
@@ -93,12 +93,12 @@ OPENSSL_ia32_cpuid:
 
 	mov	\$1,%eax
 	cpuid
-	bt	\$28,%edx		# test hyper-threading bit
+	bt	\$IA32CAP_BIT0_HT,%edx	# test hyper-threading bit
 	jnc	.Lgeneric
 	shr	\$16,%ebx		# number of logical processors
 	cmp	%r10b,%bl
 	ja	.Lgeneric
-	and	\$0xefffffff,%edx	# ~(1<<28)
+	xor	\$IA32CAP_MASK0_HT,%edx
 	jmp	.Lgeneric
 
 .Lintel:
@@ -116,33 +116,37 @@ OPENSSL_ia32_cpuid:
 .Lnocacheinfo:
 	mov	\$1,%eax
 	cpuid
-	and	\$0xbfefffff,%edx	# force reserved bits to 0
+	# force reserved bits to 0
+	and	\$(~(IA32CAP_MASK0_INTELP4 | IA32CAP_MASK0_INTEL)),%edx
 	cmp	\$0,%r9d
 	jne	.Lnotintel
-	or	\$0x40000000,%edx	# set reserved bit#30 on Intel CPUs
+	# set reserved bit#30 on Intel CPUs
+	or	\$IA32CAP_MASK0_INTEL,%edx
 	and	\$15,%ah
 	cmp	\$15,%ah		# examine Family ID
 	jne	.Lnotintel
-	or	\$0x00100000,%edx	# set reserved bit#20 to engage RC4_CHAR
+	# set reserved bit#20 to engage RC4_CHAR
+	or	\$IA32CAP_MASK0_INTELP4,%edx
 .Lnotintel:
-	bt	\$28,%edx		# test hyper-threading bit
+	bt	\$IA32CAP_BIT0_HT,%edx	# test hyper-threading bit
 	jnc	.Lgeneric
-	and	\$0xefffffff,%edx	# ~(1<<28)
+	xor	\$IA32CAP_MASK0_HT,%edx
 	cmp	\$0,%r10d
 	je	.Lgeneric
 
-	or	\$0x10000000,%edx	# 1<<28
+	or	\$IA32CAP_MASK0_HT,%edx
 	shr	\$16,%ebx
 	cmp	\$1,%bl			# see if cache is shared
 	ja	.Lgeneric
-	and	\$0xefffffff,%edx	# ~(1<<28)
+	xor	\$IA32CAP_MASK0_HT,%edx	# clear hyper-threading bit if not
+
 .Lgeneric:
-	and	\$0x00000800,%r9d	# isolate AMD XOP flag
-	and	\$0xfffff7ff,%ecx
+	and	\$IA32CAP_MASK1_AMD_XOP,%r9d	# isolate AMD XOP flag
+	and	\$(~IA32CAP_MASK1_AMD_XOP),%ecx
 	or	%ecx,%r9d		# merge AMD XOP flag
 
 	mov	%edx,%r10d		# %r9d:%r10d is copy of %ecx:%edx
-	bt	\$27,%r9d		# check OSXSAVE bit
+	bt	\$IA32CAP_BIT1_OSXSAVE,%r9d	# check OSXSAVE bit
 	jnc	.Lclear_avx
 	xor	%ecx,%ecx		# XCR0
 	.byte	0x0f,0x01,0xd0		# xgetbv
@@ -150,7 +154,7 @@ OPENSSL_ia32_cpuid:
 	cmp	\$6,%eax
 	je	.Ldone
 .Lclear_avx:
-	mov	\$0xefffe7ff,%eax	# ~(1<<28|1<<12|1<<11)
+	mov	\$(~(IA32CAP_MASK1_AVX | IA32CAP_MASK1_FMA3 | IA32CAP_MASK1_AMD_XOP)),%eax
 	and	%eax,%r9d		# clear AVX, FMA and AMD XOP bits
 .Ldone:
 	shl	\$32,%r9

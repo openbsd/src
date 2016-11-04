@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.38 2016/11/04 13:56:04 miod Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.39 2016/11/04 17:30:30 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -627,47 +627,30 @@ CRYPTO_get_lock_name(int type)
 	defined(__INTEL__) || \
 	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 
-unsigned int  OPENSSL_ia32cap_P[2];
+uint64_t OPENSSL_ia32cap_P;
 
 uint64_t
 OPENSSL_cpu_caps(void)
 {
-	return *(uint64_t *)OPENSSL_ia32cap_P;
+	return OPENSSL_ia32cap_P;
 }
 
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM)
 #define OPENSSL_CPUID_SETUP
-typedef unsigned long long IA32CAP;
 void
 OPENSSL_cpuid_setup(void)
 {
 	static int trigger = 0;
-	IA32CAP OPENSSL_ia32_cpuid(void);
-	IA32CAP vec;
+	uint64_t OPENSSL_ia32_cpuid(void);
 
 	if (trigger)
 		return;
 	trigger = 1;
-
-	vec = OPENSSL_ia32_cpuid();
-
-	/*
-	 * |(1<<10) sets a reserved bit to signal that variable
-	 * was initialized already... This is to avoid interference
-	 * with cpuid snippets in ELF .init segment.
-	 */
-	OPENSSL_ia32cap_P[0] = (unsigned int)vec | (1 << 10);
-	OPENSSL_ia32cap_P[1] = (unsigned int)(vec >> 32);
+	OPENSSL_ia32cap_P = OPENSSL_ia32_cpuid();
 }
 #endif
 
 #else
-unsigned long *
-OPENSSL_ia32cap_loc(void)
-{
-	return NULL;
-}
-
 uint64_t
 OPENSSL_cpu_caps(void)
 {

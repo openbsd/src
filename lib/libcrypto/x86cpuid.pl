@@ -56,8 +56,10 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&mov	("esi","eax");
 	&mov	("eax",0x80000001);
 	&cpuid	();
-	&or	("ebp","ecx");
-	&and	("ebp",1<<11|1);	# isolate XOP bit
+	&and	("ecx","\$IA32CAP_MASK1_AMD_XOP");	# isolate AMD XOP bit
+	&or	("ecx",1);		# make sure ecx is not zero
+	&mov	("ebp","ecx");
+
 	&cmp	("esi",0x80000008);
 	&jb	(&label("intel"));
 
@@ -69,13 +71,13 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&mov	("eax",1);
 	&xor	("ecx","ecx");
 	&cpuid	();
-	&bt	("edx",28);
+	&bt	("edx","\$IA32CAP_BIT0_HT");
 	&jnc	(&label("generic"));
 	&shr	("ebx",16);
 	&and	("ebx",0xff);
 	&cmp	("ebx","esi");
 	&ja	(&label("generic"));
-	&and	("edx",0xefffffff);	# clear hyper-threading bit
+	&xor	("edx","\$IA32CAP_MASK0_HT");	# clear hyper-threading bit
 	&jmp	(&label("generic"));
 	
 &set_label("intel");
@@ -94,34 +96,38 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&mov	("eax",1);
 	&xor	("ecx","ecx");
 	&cpuid	();
-	&and	("edx",0xbfefffff);	# force reserved bits #20, #30 to 0
+	# force reserved bits to 0.
+	&and	("edx","\$~(IA32CAP_MASK0_INTELP4 | IA32CAP_MASK0_INTEL)");
 	&cmp	("ebp",0);
 	&jne	(&label("notintel"));
-	&or	("edx",1<<30);		# set reserved bit#30 on Intel CPUs
-	&and	(&HB("eax"),15);	# familiy ID
+	# set reserved bit#30 on Intel CPUs
+	&or	("edx","\$IA32CAP_MASK0_INTEL");
+	&and	(&HB("eax"),15);	# family ID
 	&cmp	(&HB("eax"),15);	# P4?
 	&jne	(&label("notintel"));
-	&or	("edx",1<<20);		# set reserved bit#20 to engage RC4_CHAR
+	# set reserved bit#20 to engage RC4_CHAR
+	&or	("edx","\$IA32CAP_MASK0_INTELP4");
 &set_label("notintel");
-	&bt	("edx",28);		# test hyper-threading bit
+	&bt	("edx","\$IA32CAP_BIT0_HT");	# test hyper-threading bit
 	&jnc	(&label("generic"));
-	&and	("edx",0xefffffff);
+	&xor	("edx","\$IA32CAP_MASK0_HT");
 	&cmp	("edi",0);
 	&je	(&label("generic"));
 
-	&or	("edx",0x10000000);
+	&or	("edx","\$IA32CAP_MASK0_HT");
 	&shr	("ebx",16);
-	&cmp	(&LB("ebx"),1);
+	&cmp	(&LB("ebx"),1);		# see if cache is shared
 	&ja	(&label("generic"));
-	&and	("edx",0xefffffff);	# clear hyper-threading bit if not
+	&xor	("edx","\$IA32CAP_MASK0_HT"); # clear hyper-threading bit if not
 
 &set_label("generic");
-	&and	("ebp",1<<11);		# isolate AMD XOP flag
-	&and	("ecx",0xfffff7ff);	# force 11th bit to 0
+	&and	("ebp","\$IA32CAP_MASK1_AMD_XOP");	# isolate AMD XOP flag
+	# force reserved bits to 0.
+	&and	("ecx","\$~IA32CAP_MASK1_AMD_XOP");
 	&mov	("esi","edx");
 	&or	("ebp","ecx");		# merge AMD XOP flag
 
-	&bt	("ecx",27);		# check OSXSAVE bit
+	&bt	("ecx","\$IA32CAP_BIT1_OSXSAVE");	# check OSXSAVE bit
 	&jnc	(&label("clear_avx"));
 	&xor	("ecx","ecx");
 	&data_byte(0x0f,0x01,0xd0);	# xgetbv
@@ -131,10 +137,13 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&cmp	("eax",2);
 	&je	(&label("clear_avx"));
 &set_label("clear_xmm");
-	&and	("ebp",0xfdfffffd);	# clear AESNI and PCLMULQDQ bits
-	&and	("esi",0xfeffffff);	# clear FXSR
+	# clear AESNI and PCLMULQDQ bits.
+	&and	("ebp","\$~(IA32CAP_MASK1_AESNI | IA32CAP_MASK1_PCLMUL)");
+	# clear FXSR.
+	&and	("esi","\$~IA32CAP_MASK0_FXSR");
 &set_label("clear_avx");
-	&and	("ebp",0xefffe7ff);	# clear AVX, FMA and AMD XOP bits
+	# clear AVX, FMA3 and AMD XOP bits.
+	&and	("ebp","\$~(IA32CAP_MASK1_AVX | IA32CAP_MASK1_FMA3 | IA32CAP_MASK1_AMD_XOP)");
 &set_label("done");
 	&mov	("eax","esi");
 	&mov	("edx","ebp");
@@ -143,16 +152,17 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 &external_label("OPENSSL_ia32cap_P");
 
-&function_begin_B("OPENSSL_wipe_cpu","EXTRN\t_OPENSSL_ia32cap_P:DWORD");
+&function_begin_B("OPENSSL_wipe_cpu","");
 	&xor	("eax","eax");
 	&xor	("edx","edx");
 	&picmeup("ecx","OPENSSL_ia32cap_P");
 	&mov	("ecx",&DWP(0,"ecx"));
-	&bt	(&DWP(0,"ecx"),0);
+	&bt	(&DWP(0,"ecx"),"\$IA32CAP_BIT0_FPU");
 	&jnc	(&label("no_x87"));
 	if ($sse2) {
-		&and	("ecx",1<<26|1<<24);	# check SSE2 and FXSR bits
-		&cmp	("ecx",1<<26|1<<24);
+		# Check SSE2 and FXSR bits.
+		&and	("ecx", "\$(IA32CAP_MASK0_FXSR | IA32CAP_MASK0_SSE2)");
+		&cmp	("ecx", "\$(IA32CAP_MASK0_FXSR | IA32CAP_MASK0_SSE2)");
 		&jne	(&label("no_sse2"));
 		&pxor	("xmm0","xmm0");
 		&pxor	("xmm1","xmm1");

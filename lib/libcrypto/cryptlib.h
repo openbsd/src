@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.h,v 1.24 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: cryptlib.h,v 1.25 2016/11/04 17:30:30 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,7 +73,6 @@ extern "C" {
 #define X509_CERT_FILE_EVP       "SSL_CERT_FILE"
 
 void OPENSSL_cpuid_setup(void);
-extern unsigned int OPENSSL_ia32cap_P[];
 
 #ifdef  __cplusplus
 }

@@ -1655,6 +1655,7 @@ $code.=<<___;
 .type	AES_cbc_encrypt,\@function,6
 .align	16
 .extern	OPENSSL_ia32cap_P
+.hidden	OPENSSL_ia32cap_P
 .globl	asm_AES_cbc_encrypt
 .hidden	asm_AES_cbc_encrypt
 asm_AES_cbc_encrypt:
@@ -1684,7 +1685,7 @@ AES_cbc_encrypt:
 	jb	.Lcbc_slow_prologue
 	test	\$15,%rdx
 	jnz	.Lcbc_slow_prologue
-	bt	\$28,%r10d
+	bt	\$IA32CAP_BIT0_HT,%r10d
 	jc	.Lcbc_slow_prologue
 
 	# allocate aligned stack frame...
@@ -1944,7 +1945,7 @@ AES_cbc_encrypt:
 	lea	($key,%rax),%rax
 	mov	%rax,$keyend
 
-	# pick Te4 copy which can't "overlap" with stack frame or key scdedule
+	# pick Te4 copy which can't "overlap" with stack frame or key schedule
 	lea	2048($sbox),$sbox
 	lea	768-8(%rsp),%rax
 	sub	$sbox,%rax
@@ -2814,6 +2815,7 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
+print "#include \"x86_arch.h\"\n";
 print $code;
 
 close STDOUT;

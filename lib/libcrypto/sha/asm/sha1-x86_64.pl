@@ -216,6 +216,7 @@ unshift(@xi,pop(@xi));
 $code.=<<___;
 .text
 .extern	OPENSSL_ia32cap_P
+.hidden	OPENSSL_ia32cap_P
 
 .globl	sha1_block_data_order
 .type	sha1_block_data_order,\@function,3
@@ -223,14 +224,14 @@ $code.=<<___;
 sha1_block_data_order:
 	mov	OPENSSL_ia32cap_P+0(%rip),%r9d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r8d
-	test	\$`1<<9`,%r8d		# check SSSE3 bit
+	test	\$IA32CAP_MASK1_SSSE3,%r8d		# check SSSE3 bit
 	jz	.Lialu
 ___
 $code.=<<___ if ($avx);
-	and	\$`1<<28`,%r8d		# mask AVX bit
-	and	\$`1<<30`,%r9d		# mask "Intel CPU" bit
+	and	\$IA32CAP_MASK1_AVX,%r8d		# mask AVX bit
+	and	\$IA32CAP_MASK0_INTEL,%r9d		# mask "Intel CPU" bit
 	or	%r9d,%r8d
-	cmp	\$`1<<28|1<<30`,%r8d
+	cmp	\$(IA32CAP_MASK0_INTEL | IA32CAP_MASK1_AVX),%r8d
 	je	_avx_shortcut
 ___
 $code.=<<___;

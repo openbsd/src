@@ -1,4 +1,4 @@
-/* $OpenBSD: wp_block.c,v 1.12 2016/09/04 14:06:46 jsing Exp $ */
+/* $OpenBSD: wp_block.c,v 1.13 2016/11/04 17:30:30 miod Exp $ */
 /**
  * The Whirlpool hashing function.
  *
@@ -36,9 +36,11 @@
  *
  */
 
-#include "wp_locl.h"
 #include <string.h>
+#include <openssl/crypto.h>
 #include <machine/endian.h>
+
+#include "wp_locl.h"
 
 typedef unsigned char		u8;
 #if defined(_LP64)
@@ -57,12 +59,15 @@ typedef unsigned long long	u64;
 #      define OPENSSL_SMALL_FOOTPRINT	/* it appears that for elder non-MMX
 					   CPUs this is actually faster! */
 #    endif
-#    define GO_FOR_MMX(ctx,inp,num)	do {			\
-	extern unsigned int OPENSSL_ia32cap_P[];		\
+#include "x86_arch.h"
+#    define GO_FOR_MMX(ctx,inp,num)				\
+do {								\
 	void whirlpool_block_mmx(void *,const void *,size_t);	\
-	if (!(OPENSSL_ia32cap_P[0] & (1<<23)))	break;		\
-        whirlpool_block_mmx(ctx->H.c,inp,num);	return;		\
-					} while (0)
+	if ((OPENSSL_cpu_caps() & CPUCAP_MASK_MMX) == 0)	\
+		break;						\
+        whirlpool_block_mmx(ctx->H.c,inp,num);			\
+	return;							\
+} while (0)
 #  endif
 #elif defined(__arm__)
 #  define SMALL_REGISTER_BANK

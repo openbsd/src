@@ -83,6 +83,7 @@ open OUT,"| \"$^X\" $xlate $flavour $output";
 $code.=<<___;
 .text
 .extern	OPENSSL_ia32cap_P
+.hidden	OPENSSL_ia32cap_P
 
 .globl	aesni_cbc_sha1_enc
 .type	aesni_cbc_sha1_enc,\@abi-omnipotent
@@ -93,10 +94,10 @@ aesni_cbc_sha1_enc:
 	mov	OPENSSL_ia32cap_P+4(%rip),%r11d
 ___
 $code.=<<___ if ($avx);
-	and	\$`1<<28`,%r11d		# mask AVX bit
-	and	\$`1<<30`,%r10d		# mask "Intel CPU" bit
+	and	\$IA32CAP_MASK1_AVX,%r11d	# mask AVX bit
+	and	\$IA32CAP_MASK0_INTEL,%r10d	# mask "Intel CPU" bit
 	or	%r11d,%r10d
-	cmp	\$`1<<28|1<<30`,%r10d
+	cmp	\$(IA32CAP_MASK1_AVX|IA32CAP_MASK0_INTEL),%r10d
 	je	aesni_cbc_sha1_enc_avx
 ___
 $code.=<<___;

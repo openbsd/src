@@ -203,12 +203,12 @@ if (!$x86only) {
 	&picmeup("edx","OPENSSL_ia32cap_P");
 	&mov	("eax",&DWP(0,"edx"));
 	&mov	("edx",&DWP(4,"edx"));
-	&test	("eax",1<<23);		# check MMX bit
+	&test	("eax","\$IA32CAP_MASK0_MMX");	# check MMX bit
 	&jz	(&label("ialu"));
 if ($sse2) {
-	&test	("eax",1<<24);		# check FXSR bit
+	&test	("eax","\$IA32CAP_MASK0_FXSR");	# check FXSR bit
 	&jz	(&label("mmx"));
-	&test	("edx",1<<1);		# check PCLMULQDQ bit
+	&test	("edx","\$IA32CAP_MASK1_PCLMUL");	# check PCLMULQDQ bit
 	&jz	(&label("mmx"));
 
 	&movups		("xmm0",&QWP(8,"esp"));

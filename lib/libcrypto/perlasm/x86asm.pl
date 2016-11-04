@@ -248,6 +248,7 @@ EOF
     $pic=0;
     for (@ARGV) { $pic=1 if (/\-[fK]PIC/i); }
 
+    ::emitraw("#include \"x86_arch.h\"\n");
     ::emitraw("#include <machine/asm.h>\n") if $openbsd;
     $filename =~ s/\.pl$//;
     &file($filename);

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.12 2016/05/04 15:01:33 tedu Exp $ */
+/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.13 2016/11/04 17:30:30 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -87,12 +87,11 @@ typedef struct {
 	defined(_M_AMD64)	|| defined(_M_X64)	|| \
 	defined(__INTEL__)	)
 
+#include "x86_arch.h"
+
 #if defined(__GNUC__) && __GNUC__>=2
 # define BSWAP(x) ({ unsigned int r=(x); asm ("bswapl %0":"=r"(r):"0"(r)); r; })
 #endif
-
-extern unsigned int OPENSSL_ia32cap_P[2];
-#define AESNI_CAPABLE   (1<<(57-32))
 
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits, AES_KEY *key);
 int aesni_set_decrypt_key(const unsigned char *userKey, int bits, AES_KEY *key);
@@ -578,14 +577,14 @@ static EVP_CIPHER aesni_256_cbc_hmac_sha1_cipher = {
 const EVP_CIPHER *
 EVP_aes_128_cbc_hmac_sha1(void)
 {
-	return OPENSSL_ia32cap_P[1] & AESNI_CAPABLE ?
+	return (OPENSSL_cpu_caps() & CPUCAP_MASK_AESNI) ?
 	    &aesni_128_cbc_hmac_sha1_cipher : NULL;
 }
 
 const EVP_CIPHER *
 EVP_aes_256_cbc_hmac_sha1(void)
 {
-	return OPENSSL_ia32cap_P[1] & AESNI_CAPABLE ?
+	return (OPENSSL_cpu_caps() & CPUCAP_MASK_AESNI) ?
 	    &aesni_256_cbc_hmac_sha1_cipher : NULL;
 }
 #else

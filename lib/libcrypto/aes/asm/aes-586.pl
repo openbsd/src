@@ -1187,7 +1187,7 @@ sub enclast()
 	&lea	($tbl,&DWP(2048+128,$tbl,$s1));
 
 					if (!$x86only) {
-	&bt	(&DWP(0,$s0),25);	# check for SSE bit
+	&bt	(&DWP(0,$s0),"\$IA32CAP_BIT0_SSE");	# check for SSE bit
 	&jnc	(&label("x86"));
 
 	&movq	("mm0",&QWP(0,$acc));
@@ -1976,7 +1976,7 @@ sub declast()
 	&lea	($tbl,&DWP(2048+128,$tbl,$s1));
 
 					if (!$x86only) {
-	&bt	(&DWP(0,$s0),25);	# check for SSE bit
+	&bt	(&DWP(0,$s0),"\$IA32CAP_BIT0_SSE");	# check for SSE bit
 	&jnc	(&label("x86"));
 
 	&movq	("mm0",&QWP(0,$acc));
@@ -2054,7 +2054,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 	&test	($s2,15);
 	&jnz	(&label("slow_way"));
 					if (!$x86only) {
-	&bt	(&DWP(0,$s0),28);	# check for hyper-threading bit
+	&bt	(&DWP(0,$s0),"\$IA32CAP_BIT0_HT"); # check for hyper-threading bit
 	&jc	(&label("slow_way"));
 					}
 	# pre-allocate aligned stack frame...
@@ -2364,7 +2364,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 	&jb	(&label("slow_enc_tail"));
 
 					if (!$x86only) {
-	&bt	($_tmp,25);		# check for SSE bit
+	&bt	($_tmp,"\$IA32CAP_BIT0_SSE");	# check for SSE bit
 	&jnc	(&label("slow_enc_x86"));
 
 	&movq	("mm0",&QWP(0,$key));	# load iv
@@ -2479,7 +2479,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 #--------------------------- SLOW DECRYPT ---------------------------#
 &set_label("slow_decrypt",16);
 					if (!$x86only) {
-	&bt	($_tmp,25);		# check for SSE bit
+	&bt	($_tmp,"\$IA32CAP_BIT0_SSE");	# check for SSE bit
 	&jnc	(&label("slow_dec_loop_x86"));
 
 	&set_label("slow_dec_loop_sse",4);

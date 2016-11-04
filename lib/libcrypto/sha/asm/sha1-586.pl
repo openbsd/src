@@ -303,15 +303,15 @@ if ($xmm) {
 
 	&mov	($A,&DWP(0,$T));
 	&mov	($D,&DWP(4,$T));
-	&test	($D,1<<9);		# check SSSE3 bit
+	&test	($D,"\$IA32CAP_MASK1_SSSE3");	# check SSSE3 bit
 	&jz	(&label("x86"));
-	&test	($A,1<<24);		# check FXSR bit
+	&test	($A,"\$IA32CAP_MASK0_FXSR");	# check FXSR bit
 	&jz	(&label("x86"));
 	if ($ymm) {
-		&and	($D,1<<28);		# mask AVX bit
-		&and	($A,1<<30);		# mask "Intel CPU" bit
+		&and	($D,"\$IA32CAP_MASK1_AVX");	# mask AVX bit
+		&and	($A,"\$IA32CAP_MASK0_INTEL");	# mask "Intel CPU" bit
 		&or	($A,$D);
-		&cmp	($A,1<<28|1<<30);
+		&cmp	($A,"\$(IA32CAP_MASK1_AVX | IA32CAP_MASK0_INTEL)");
 		&je	(&label("avx_shortcut"));
 	}
 	&jmp	(&label("ssse3_shortcut"));

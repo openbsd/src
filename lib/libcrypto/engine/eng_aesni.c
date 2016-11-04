@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_aesni.c,v 1.8 2015/02/10 09:46:30 miod Exp $ */
+/* $OpenBSD: eng_aesni.c,v 1.9 2016/11/04 17:30:30 miod Exp $ */
 /*
  * Support for Intel AES-NI intruction set
  *   Author: Huang Ying <ying.huang@intel.com>
@@ -93,10 +93,11 @@
      defined(_M_AMD64) || defined(_M_X64) || \
      defined(OPENSSL_IA32_SSE2)) && !defined(OPENSSL_NO_ASM) && !defined(__i386__)
 #define COMPILE_HW_AESNI
+#include "x86_arch.h"
 #endif
-static ENGINE *ENGINE_aesni (void);
+static ENGINE *ENGINE_aesni(void);
 
-void ENGINE_load_aesni (void)
+void ENGINE_load_aesni(void)
 {
 /* On non-x86 CPUs it just returns. */
 #ifdef COMPILE_HW_AESNI
@@ -302,20 +303,13 @@ aesni_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 }
 /* ===== Engine "management" functions ===== */
 
-typedef unsigned long long IA32CAP;
-
 /* Prepare the ENGINE structure for registration */
 static int
 aesni_bind_helper(ENGINE *e)
 {
 	int engage;
 
-	if (sizeof(OPENSSL_ia32cap_P) > 4) {
-		engage = ((IA32CAP)OPENSSL_ia32cap_P >> 57) & 1;
-	} else {
-		IA32CAP OPENSSL_ia32_cpuid(void);
-		engage = (OPENSSL_ia32_cpuid() >> 57) & 1;
-	}
+	engage = (OPENSSL_cpu_caps() & CPUCAP_MASK_AESNI) != 0;
 
 	/* Register everything or return with an error */
 	if (!ENGINE_set_id(e, aesni_id) ||

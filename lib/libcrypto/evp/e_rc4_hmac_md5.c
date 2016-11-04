@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4_hmac_md5.c,v 1.5 2014/08/11 13:29:43 bcook Exp $ */
+/* $OpenBSD: e_rc4_hmac_md5.c,v 1.6 2016/11/04 17:30:30 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -105,6 +105,7 @@ rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *inkey,
 	defined(__INTEL__)		) && \
 	!(defined(__APPLE__) && defined(__MACH__))
 #define	STITCHED_CALL
+#include "x86_arch.h"
 #endif
 
 #if !defined(STITCHED_CALL)
@@ -122,7 +123,6 @@ rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	md5_off = MD5_CBLOCK - key->md.num,
 	    blocks;
 	unsigned int l;
-	extern unsigned int OPENSSL_ia32cap_P[];
 #endif
 	size_t	plen = key->payload_length;
 
@@ -139,7 +139,7 @@ rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 		if (plen > md5_off &&
 		    (blocks = (plen - md5_off) / MD5_CBLOCK) &&
-		    (OPENSSL_ia32cap_P[0]&(1 << 20)) == 0) {
+		    (OPENSSL_cpu_caps() & CPUCAP_MASK_INTELP4) == 0) {
 			MD5_Update(&key->md, in, md5_off);
 			RC4(&key->ks, rc4_off, in, out);
 
@@ -187,7 +187,7 @@ rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			rc4_off += MD5_CBLOCK;
 
 		if (len > rc4_off && (blocks = (len - rc4_off) / MD5_CBLOCK) &&
-		    (OPENSSL_ia32cap_P[0] & (1 << 20)) == 0) {
+		    (OPENSSL_cpu_caps() & CPUCAP_MASK_INTELP4) == 0) {
 			RC4(&key->ks, rc4_off, in, out);
 			MD5_Update(&key->md, out, md5_off);
 

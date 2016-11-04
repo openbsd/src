@@ -122,6 +122,7 @@ $out="%rcx";	    # arg4
 $code=<<___;
 .text
 .extern	OPENSSL_ia32cap_P
+.hidden	OPENSSL_ia32cap_P
 
 .globl	RC4
 .type	RC4,\@function,4
@@ -164,7 +165,7 @@ $code.=<<___;
 	movl	($dat,$XX[0],4),$TX[0]#d
 	test	\$-16,$len
 	jz	.Lloop1
-	bt	\$30,%r8d	# Intel CPU?
+	bt	\$IA32CAP_BIT0_INTEL,%r8d	# Intel CPU?
 	jc	.Lintel
 	and	\$7,$TX[1]
 	lea	1($XX[0]),$XX[1]
@@ -442,7 +443,7 @@ RC4_set_key:
 	xor	%r11,%r11
 
 	mov	OPENSSL_ia32cap_P(%rip),$idx#d
-	bt	\$20,$idx#d	# RC4_CHAR?
+	bt	\$IA32CAP_BIT0_INTELP4,$idx#d	# RC4_CHAR?
 	jc	.Lc1stloop
 	jmp	.Lw1stloop
 
@@ -506,9 +507,9 @@ RC4_set_key:
 RC4_options:
 	lea	.Lopts(%rip),%rax
 	mov	OPENSSL_ia32cap_P(%rip),%edx
-	bt	\$20,%edx
+	bt	\$IA32CAP_BIT0_INTELP4,%edx
 	jc	.L8xchar
-	bt	\$30,%edx
+	bt	\$IA32CAP_BIT0_INTEL,%edx
 	jnc	.Ldone
 	add	\$25,%rax
 	ret
