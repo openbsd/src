@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.30 2016/11/04 18:59:35 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.31 2016/11/04 19:01:04 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -62,7 +62,7 @@ set_mem(char **dest, size_t *destlen, const void *src, size_t srclen)
 }
 
 static struct tls_keypair *
-tls_keypair_new()
+tls_keypair_new(void)
 {
 	return calloc(1, sizeof(struct tls_keypair));
 }
