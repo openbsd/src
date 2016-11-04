@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.132 2016/11/04 18:00:12 guenther Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.133 2016/11/04 18:28:58 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,6 +159,8 @@
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
 #include <openssl/stack.h>
+
+__BEGIN_HIDDEN_DECLS
 
 #define c2l(c,l)	(l = ((unsigned long)(*((c)++)))     , \
 			 l|=(((unsigned long)(*((c)++)))<< 8), \
@@ -833,5 +835,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
     const unsigned char *data, size_t data_plus_mac_size,
     size_t data_plus_mac_plus_padding_size, const unsigned char *mac_secret,
     unsigned mac_secret_length, char is_sslv3);
+
+__END_HIDDEN_DECLS
 
 #endif

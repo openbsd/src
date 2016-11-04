@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.23 2016/09/19 03:25:22 bcook Exp $
+# $OpenBSD: Makefile,v 1.24 2016/11/04 18:28:58 guenther Exp $
 
 SUBDIR= man
 PC_FILES=openssl.pc libssl.pc
@@ -16,6 +16,9 @@ CFLAGS+= -DLIBRESSL_INTERNAL
 CFLAGS+= -I${.CURDIR}
 
 LDADD+= -L${BSDOBJDIR}/lib/libcrypto -lcrypto
+
+VERSION_SCRIPT=	Symbols.map
+SYMBOL_LIST=	${.CURDIR}/Symbols.list
 
 SRCS=\
 	s3_srvr.c s3_clnt.c s3_lib.c s3_pkt.c s3_both.c \
@@ -45,6 +48,11 @@ includes:
 	    echo $$j; \
 	    eval "$$j"; \
 	done;
+
+${VERSION_SCRIPT}: ${SYMBOL_LIST}
+	{ printf '{\n\tglobal:\n'; \
+	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_LIST}; \
+	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
 
 .include <bsd.lib.mk>
 

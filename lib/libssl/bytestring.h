@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.14 2015/06/19 00:23:36 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.15 2016/11/04 18:28:58 guenther Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -17,14 +17,12 @@
 #ifndef OPENSSL_HEADER_BYTESTRING_H
 #define OPENSSL_HEADER_BYTESTRING_H
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 #include <sys/types.h>
 #include <stdint.h>
 
 #include <openssl/opensslconf.h>
+
+__BEGIN_HIDDEN_DECLS
 
 /*
  * Bytestrings are used for parsing and building TLS and ASN.1 messages.
@@ -504,8 +502,6 @@ int cbs_get_any_asn1_element_internal(CBS *cbs, CBS *out, unsigned int *out_tag,
 int CBS_asn1_indefinite_to_definite(CBS *in, uint8_t **out, size_t *out_len);
 #endif /* LIBRESSL_INTERNAL */
 
-#if defined(__cplusplus)
-}  /* extern C */
-#endif
+__END_HIDDEN_DECLS 
 
 #endif  /* OPENSSL_HEADER_BYTESTRING_H */
