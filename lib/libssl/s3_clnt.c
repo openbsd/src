@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.142 2016/11/04 18:42:26 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.143 2016/11/04 19:11:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -310,7 +310,7 @@ ssl3_connect(SSL *s)
 
 		case SSL3_ST_CR_KEY_EXCH_A:
 		case SSL3_ST_CR_KEY_EXCH_B:
-			ret = ssl3_get_key_exchange(s);
+			ret = ssl3_get_server_key_exchange(s);
 			if (ret <= 0)
 				goto end;
 			s->state = SSL3_ST_CR_CERT_REQ_A;
@@ -1309,7 +1309,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 }
 
 int
-ssl3_get_key_exchange(SSL *s)
+ssl3_get_server_key_exchange(SSL *s)
 {
 	unsigned char	*q, md_buf[EVP_MAX_MD_SIZE*2];
 	EVP_MD_CTX	 md_ctx;

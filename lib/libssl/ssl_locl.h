@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.133 2016/11/04 18:28:58 guenther Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.134 2016/11/04 19:11:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -704,7 +704,7 @@ int ssl3_send_client_verify(SSL *s);
 int ssl3_send_client_certificate(SSL *s);
 int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey);
 int ssl3_send_client_key_exchange(SSL *s);
-int ssl3_get_key_exchange(SSL *s);
+int ssl3_get_server_key_exchange(SSL *s);
 int ssl3_get_server_certificate(SSL *s);
 int ssl3_check_cert_and_algorithm(SSL *s);
 int ssl3_check_finished(SSL *s);
