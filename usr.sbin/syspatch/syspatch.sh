@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.36 2016/11/04 14:18:45 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.37 2016/11/04 14:55:29 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -84,7 +84,7 @@ checkfs()
 	local _d _f
 
 	for _d in $(stat -qf "%Sd" $(for _f in ${_files}; do echo /${_f%/*}
-		done | uniq)); do mount | grep -q "^/dev/${_d} .* read-only" &&
+		done | uniq)); do mount | grep -q "^/dev/${_d} .*read-only" &&
 			sp_err "Remote or read-only filesystem, aborting"
 	done
 }
