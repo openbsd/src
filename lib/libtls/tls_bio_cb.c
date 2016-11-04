@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.12 2016/11/04 15:42:29 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.13 2016/11/04 15:43:46 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -174,7 +174,7 @@ tls_bio_read_cb(BIO *bio, char *buf, int size, void *cb_arg)
 static BIO *
 tls_get_new_cb_bio(struct tls *ctx)
 {
-	struct bio_cb *b;
+	struct bio_cb *bcb;
 	BIO *bio;
 
 	if (ctx->read_cb == NULL || ctx->write_cb == NULL)
@@ -186,10 +186,10 @@ tls_get_new_cb_bio(struct tls *ctx)
 		return (NULL);
 	}
 
-	b = (struct bio_cb *)bio->ptr;
-	b->read_cb = tls_bio_read_cb;
-	b->write_cb = tls_bio_write_cb;
-	b->cb_arg = ctx;
+	bcb = (struct bio_cb *)bio->ptr;
+	bcb->read_cb = tls_bio_read_cb;
+	bcb->write_cb = tls_bio_write_cb;
+	bcb->cb_arg = ctx;
 
 	return (bio);
 }
