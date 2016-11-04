@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2016/11/04 13:57:38 miod Exp $
+# $OpenBSD: Makefile,v 1.10 2016/11/04 18:12:49 jsing Exp $
 
 LIB=	crypto
 
@@ -161,9 +161,6 @@ SRCS+= hmac.c hm_ameth.c hm_pmeth.c
 # idea/
 SRCS+= i_cbc.c i_cfb64.c i_ofb64.c i_ecb.c i_skey.c
 
-# krb5/
-SRCS+= krb5_asn.c
-
 # lhash/
 SRCS+= lhash.c lh_stats.c
 
@@ -277,7 +274,6 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 	${LCRYPTO_SRC}/gost \
 	${LCRYPTO_SRC}/hmac \
 	${LCRYPTO_SRC}/idea \
-	${LCRYPTO_SRC}/krb5 \
 	${LCRYPTO_SRC}/lhash \
 	${LCRYPTO_SRC}/md4 \
 	${LCRYPTO_SRC}/md5 \
@@ -334,7 +330,6 @@ HDRS=\
 	${LCRYPTO_SRC}/gost/gost.h \
 	${LCRYPTO_SRC}/hmac/hmac.h \
 	${LCRYPTO_SRC}/idea/idea.h \
-	${LCRYPTO_SRC}/krb5/krb5_asn.h \
 	${LCRYPTO_SRC}/lhash/lhash.h \
 	${LCRYPTO_SRC}/md4/md4.h \
 	${LCRYPTO_SRC}/md5/md5.h \
