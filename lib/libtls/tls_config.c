@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.29 2016/11/04 05:13:13 beck Exp $ */
+/* $OpenBSD: tls_config.c,v 1.30 2016/11/04 18:59:35 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -128,6 +128,7 @@ tls_config_load_file(struct tls_error *error, const char *filetype,
 {
 	struct stat st;
 	int fd = -1;
+	ssize_t n;
 
 	free(*buf);
 	*buf = NULL;
@@ -143,13 +144,16 @@ tls_config_load_file(struct tls_error *error, const char *filetype,
 		    filetype, filename);
 		goto fail;
 	}
+	if (st.st_size < 0)
+		goto fail;
 	*len = (size_t)st.st_size;
 	if ((*buf = malloc(*len)) == NULL) {
 		tls_error_set(error, "failed to allocate buffer for "
 		    "%s file", filetype);
 		goto fail;
 	}
-	if (read(fd, *buf, *len) != *len) {
+	n = read(fd, *buf, *len);
+	if (n < 0 || (size_t)n != *len) {
 		tls_error_set(error, "failed to read %s file '%s'",
 		    filetype, filename);
 		goto fail;
