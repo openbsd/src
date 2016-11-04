@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.99 2016/11/02 10:59:25 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.100 2016/11/04 17:58:19 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -951,8 +951,7 @@ void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
 void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
     int (*app_verify_cookie_cb)(SSL *ssl, unsigned char *cookie,
     unsigned int cookie_len));
-void
-SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s, int (*cb)(SSL *ssl,
+void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s, int (*cb)(SSL *ssl,
     const unsigned char **out, unsigned int *outlen, void *arg), void *arg);
 void SSL_CTX_set_next_proto_select_cb(SSL_CTX *s, int (*cb)(SSL *ssl,
     unsigned char **out, unsigned char *outlen, const unsigned char *in,
@@ -1598,10 +1597,9 @@ long	SSL_SESSION_set_time(SSL_SESSION *s, long t);
 long	SSL_SESSION_get_timeout(const SSL_SESSION *s);
 long	SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
 void	SSL_copy_session_id(SSL *to, const SSL *from);
-X509 *SSL_SESSION_get0_peer(SSL_SESSION *s);
-int
-SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
-unsigned int sid_ctx_len);
+X509	*SSL_SESSION_get0_peer(SSL_SESSION *s);
+int	SSL_SESSION_set1_id_context(SSL_SESSION *s,
+	    const unsigned char *sid_ctx, unsigned int sid_ctx_len);
 
 SSL_SESSION *SSL_SESSION_new(void);
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
