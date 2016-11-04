@@ -148,7 +148,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&xor	("edx","edx");
 	&picmeup("ecx","OPENSSL_ia32cap_P");
 	&mov	("ecx",&DWP(0,"ecx"));
-	&bt	(&DWP(0,"ecx"),1);
+	&bt	(&DWP(0,"ecx"),0);
 	&jnc	(&label("no_x87"));
 	if ($sse2) {
 		&and	("ecx",1<<26|1<<24);	# check SSE2 and FXSR bits
