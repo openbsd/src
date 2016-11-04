@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.33 2016/02/29 06:48:03 mmcc Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.34 2016/11/04 18:33:11 guenther Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -70,7 +70,7 @@
 #include "pqueue.h"
 #include "ssl_locl.h"
 
-int dtls1_listen(SSL *s, struct sockaddr *client);
+static int dtls1_listen(SSL *s, struct sockaddr *client);
 
 SSL3_ENC_METHOD DTLSv1_enc_data = {
 	.enc = dtls1_enc,

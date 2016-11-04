@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.47 2016/07/16 04:42:35 beck Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.48 2016/11/04 18:33:11 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,7 +117,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-int ssl23_get_client_hello(SSL *s);
+static int ssl23_get_client_hello(SSL *s);
 
 int
 ssl23_accept(SSL *s)
