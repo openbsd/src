@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.141 2016/11/04 15:05:29 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.142 2016/11/04 18:42:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1999,7 +1999,7 @@ static int
 ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
     int *outlen)
 {
-	EC_KEY *tkey, *clnt_ecdh = NULL;
+	EC_KEY *clnt_ecdh = NULL;
 	const EC_GROUP *srvr_group = NULL;
 	const EC_POINT *srvr_ecpoint = NULL;
 	BN_CTX *bn_ctx = NULL;
@@ -2012,23 +2012,15 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
-	/* Ensure that we have an ephemeral key for ECDHE. */
-	if ((alg_k & SSL_kECDHE) && sess_cert->peer_ecdh_tmp == NULL) {
+	if (sess_cert->peer_ecdh_tmp == NULL) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 		    ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	tkey = sess_cert->peer_ecdh_tmp;
 
-	if (tkey == NULL) {
-		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-		    ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-
-	srvr_group = EC_KEY_get0_group(tkey);
-	srvr_ecpoint = EC_KEY_get0_public_key(tkey);
+	srvr_group = EC_KEY_get0_group(sess_cert->peer_ecdh_tmp);
+	srvr_ecpoint = EC_KEY_get0_public_key(sess_cert->peer_ecdh_tmp);
 
 	if (srvr_group == NULL || srvr_ecpoint == NULL) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
