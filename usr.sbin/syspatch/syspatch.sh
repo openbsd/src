@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.38 2016/11/04 15:32:13 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.39 2016/11/04 16:03:45 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -78,7 +78,6 @@ apply_patches()
 
 checkfs()
 {
-	# XXX make sure we have enough space?
 	local _files="${@}"
 	[[ -n ${_files} ]]
 
@@ -261,9 +260,9 @@ set -A _KERNV -- $(sysctl -n kern.version |
 [[ $@ == @(|-[[:alpha:]]) ]] || usage
 
 # XXX to be discussed; check for $ARCH?
-[[ -n ${PATCH_PATH} ]]
 [[ -d ${PATCH_PATH} ]] && PATCH_PATH="file://$(readlink -f ${PATCH_PATH})"
-[[ ${PATCH_PATH:%%://*} == @(file|ftp|http|https) ]]
+[[ ${PATCH_PATH:%%://*} == @(file|ftp|http|https) ]] ||
+	sp_err "No valid PATCH_PATH set"
 
 [[ $(sysctl -n hw.ncpufound) -gt 1 ]] && _BSDMP=true || _BSDMP=false
 _FETCH="/usr/bin/ftp -MVk ${FTP_KEEPALIVE-0}"
