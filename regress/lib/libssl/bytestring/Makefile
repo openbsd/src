@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.4 2016/09/02 17:31:04 beck Exp $
+#	$OpenBSD: Makefile,v 1.5 2016/11/04 17:51:54 guenther Exp $
 
 PROG=	bytestringtest
-LDADD=	-lcrypto -lssl
+LDADD=	${SSL_INT} -lcrypto
 DPADD=	${LIBCRYPTO} ${LIBSSL}
 WARNINGS=	Yes
 CFLAGS+=	-DLIBRESSL_INTERNAL -Wundef -Werror -I$(BSDSRCDIR)/lib/libssl
