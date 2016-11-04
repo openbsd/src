@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.22 2016/11/04 22:27:08 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.23 2016/11/04 22:33:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1113,7 +1113,7 @@ ofp13_multipart_reply_validate(struct switchd *sc,
 	off += sizeof(*mp);
 	remaining -= sizeof(*mp);
 	if (remaining == 0) {
-		log_debug("\tEmpty reply");
+		log_debug("\tempty reply");
 		return (0);
 	}
 
@@ -1310,7 +1310,7 @@ ofp13_multipart_request_validate(struct switchd *sc,
 
 	case OFP_MP_T_TABLE_FEATURES:
 		if (totallen == sizeof(*mp)) {
-			log_debug("\tEmpty table properties request");
+			log_debug("\tempty table properties request");
 			break;
 		}
 		break;
