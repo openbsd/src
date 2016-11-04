@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.35 2016/11/04 11:42:14 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.36 2016/11/04 14:18:45 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -35,7 +35,6 @@ needs_root()
 
 apply_patch()
 {
-	# XXX make sure mount points are not read-only
 	local _explodir _file _files _patch=$1
 	[[ -n ${_patch} ]]
 
@@ -43,6 +42,8 @@ apply_patch()
 	mkdir -p ${_explodir}
 
 	_files="$(tar xvzphf ${_TMP}/${_patch}.tgz -C ${_explodir})"
+	checkfs ${_files}
+
 	create_rollback ${_patch} "${_files}"
 
 	for _file in ${_files}; do
@@ -75,6 +76,19 @@ apply_patches()
 	sp_cleanup
 }
 
+checkfs()
+{
+	local _files="${@}"
+	[[ -n ${_files} ]]
+
+	local _d _f
+
+	for _d in $(stat -qf "%Sd" $(for _f in ${_files}; do echo /${_f%/*}
+		done | uniq)); do mount | grep -q "^/dev/${_d} .* read-only" &&
+			sp_err "Remote or read-only filesystem, aborting"
+	done
+}
+
 create_rollback()
 {
 	local _file _patch=$1 _rbfiles
@@ -102,8 +116,7 @@ create_rollback()
 				${_rbfiles}
 		fi
 	); then
-		# `-f' in case /var is read-only
-		rm -f ${_PDIR}/${_REL}/rollback-${_patch}.tgz
+		rm ${_PDIR}/${_REL}/rollback-${_patch}.tgz
 		sp_err "Failed to create rollback for ${_patch}"
 	fi
 }
@@ -195,6 +208,7 @@ rollback_patch()
 
 	_files="$(tar xvzphf ${_PDIR}/${_REL}/rollback-${_patch}.tgz -C \
 		${_explodir})"
+	checkfs ${_files}
 
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
