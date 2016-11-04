@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2016/11/02 15:18:42 beck Exp $
+#	$OpenBSD: Makefile,v 1.27 2016/11/04 18:23:32 guenther Exp $
 
 CFLAGS+= -Wall -Werror -Wimplicit
 CFLAGS+= -DLIBRESSL_INTERNAL
@@ -9,6 +9,9 @@ DPADD=	${LIBCRYPTO} ${LIBSSL}
 
 LDADD+= -L${BSDOBJDIR}/lib/libcrypto -lcrypto
 LDADD+= -L${BSDOBJDIR}/lib/libssl -lssl
+
+VERSION_SCRIPT=	Symbols.map
+SYMBOL_LIST=	${.CURDIR}/Symbols.list
 
 HDRS=	tls.h
 
@@ -33,5 +36,10 @@ includes:
 	    echo $$j; \
 	    eval "$$j"; \
 	done;
+
+${VERSION_SCRIPT}: ${SYMBOL_LIST}
+	{ printf '{\n\tglobal:\n'; \
+	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_LIST}; \
+	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
 
 .include <bsd.lib.mk>

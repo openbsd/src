@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.47 2016/11/04 18:07:24 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.48 2016/11/04 18:23:32 guenther Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -23,6 +23,8 @@
 #include <netinet/in.h>
 
 #include <openssl/ssl.h>
+
+__BEGIN_HIDDEN_DECLS
 
 #define _PATH_SSL_CA_FILE "/etc/ssl/cert.pem"
 
@@ -208,5 +210,7 @@ void tls_conninfo_free(struct tls_conninfo *conninfo);
 int tls_ocsp_verify_cb(SSL *ssl, void *arg);
 void tls_ocsp_ctx_free(struct tls_ocsp_ctx *ctx);
 struct tls_ocsp_ctx *tls_ocsp_setup_from_peer(struct tls *ctx);
+
+__END_HIDDEN_DECLS
 
 #endif /* HEADER_TLS_INTERNAL_H */
