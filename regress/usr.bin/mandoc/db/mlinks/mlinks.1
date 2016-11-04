@@ -1,0 +1,79 @@
+.\"	$OpenBSD: mlinks.1,v 1.1 2016/11/04 19:57:27 schwarze Exp $
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 4 2016 $
+.Dt MLINKS 1
+.Os
+.Sh NAME
+.Nm mlinks
+.Nd extract desired mlinks from a mandoc.db(5) file
+.Sh SYNOPSIS
+.Nm mlinks
+.Ar file
+.Sh DESCRIPTION
+The
+.Nm
+utility reads a
+.Xr mandoc_db 5
+database from the given
+.Ar file .
+For each manual page name that does not agree with the filename,
+it write one line to standard output, containing:
+.Pp
+.Bl -dash -compact
+.It
+the filename
+.It
+a comma
+.It
+the other name
+.It
+a period
+.It
+the section number
+.El
+.Pp
+This format is useful for portable software intended to run on
+operating systems that require multiple file system entries
+for pages having multiple names.
+.Pp
+For example, it is used to generate MLINKS for portable LibreSSL.
+.Sh FILES
+The header files
+.Qq Pa dbm_map.h
+and
+.Qq Pa dbm.h
+and the object files
+.Pa dbm_map.o
+and
+.Pa dbm.o
+from the
+.Xr mandoc 1
+build are required to compile and link
+.Nm .
+.Sh EXIT STATUS
+.Ex -std
+It fails when no argument or more than one argument is given, when
+.Fn dbm_open
+fails, or when database corruption is detected.
+.Sh AUTHORS
+.An Ingo Schwarze Aq Mt schwarze@openbsd.org
+.Sh CAVEATS
+The
+.Nm
+utility only partially validates the database format.
+For complete validation, use
+.Xr dbm_dump 1 .
