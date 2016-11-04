@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.28 2016/08/22 14:55:59 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.29 2016/11/04 05:13:13 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -618,6 +618,12 @@ tls_config_verify(struct tls_config *config)
 	config->verify_cert = 1;
 	config->verify_name = 1;
 	config->verify_time = 1;
+}
+
+void
+tls_config_ocsp_require_stapling(struct tls_config *config)
+{
+	config->ocsp_require_stapling = 1;
 }
 
 void

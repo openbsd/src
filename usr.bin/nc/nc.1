@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.74 2016/07/02 05:58:00 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.75 2016/11/04 05:13:13 beck Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 2 2016 $
+.Dd $Mdocdate: November 4 2016 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -229,10 +229,12 @@ which allows legacy TLS protocols;
 .Ar noverify ,
 which disables certificate verification;
 .Ar noname ,
-which disables certificate name checking; or
+which disables certificate name checking;
 .Ar clientcert ,
-which requires a client certificate on incoming connections.
-It is illegal to specify TLS options if not using TLS.
+which requires a client certificate on incoming connections; or
+.Ar muststaple ,
+which requires the peer to provide a valid stapled OCSP response 
+with the handshake. It is illegal to specify TLS options if not using TLS.
 .Pp
 For IPv4 TOS value
 .Ar keyword

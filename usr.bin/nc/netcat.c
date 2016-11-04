@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.166 2016/11/03 15:54:39 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.167 2016/11/04 05:13:13 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -71,6 +71,7 @@
 #define TLS_NOVERIFY	(1 << 2)
 #define TLS_NONAME	(1 << 3)
 #define TLS_CCERT	(1 << 4)
+#define TLS_MUSTSTAPLE	(1 << 5)
 
 /* Command Line Options */
 int	dflag;					/* detached, no stdin */
@@ -468,6 +469,8 @@ main(int argc, char *argv[])
 				    "together");
 			tls_config_insecure_noverifycert(tls_cfg);
 		}
+		if (TLSopt & TLS_MUSTSTAPLE)
+			tls_config_ocsp_require_stapling(tls_cfg);
 
 		if (Pflag) {
 			if (pledge("stdio inet dns tty", NULL) == -1)
@@ -1502,6 +1505,7 @@ map_tls(char *s, int *val)
 		{ "noverify",		TLS_NOVERIFY },
 		{ "noname",		TLS_NONAME },
 		{ "clientcert",		TLS_CCERT},
+		{ "muststaple",		TLS_MUSTSTAPLE},
 		{ NULL,			-1 },
 	};
 

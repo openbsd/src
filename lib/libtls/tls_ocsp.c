@@ -304,8 +304,13 @@ tls_ocsp_verify_cb(SSL *ssl, void *arg)
 		return -1;
 
 	size = SSL_get_tlsext_status_ocsp_resp(ssl, &raw);
-	if (size <= 0)
+	if (size <= 0) {
+		if (ctx->config->ocsp_require_stapling) {
+			tls_set_errorx(ctx, "no stapled OCSP response provided");
+			return 0;
+		}
 		return 1;
+	}
 
 	tls_ocsp_ctx_free(ctx->ocsp_ctx);
 	ctx->ocsp_ctx = tls_ocsp_setup_from_peer(ctx);

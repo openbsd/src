@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.76 2016/11/03 12:54:16 beck Exp $
+.\" $OpenBSD: tls_init.3,v 1.77 2016/11/04 05:13:13 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2016 $
+.Dd $Mdocdate: November 4 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Nm tls_config_insecure_noverifycert ,
 .Nm tls_config_insecure_noverifyname ,
 .Nm tls_config_insecure_noverifytime ,
+.Nm tls_config_ocsp_require_stapling ,
 .Nm tls_config_verify ,
 .Nm tls_config_verify_client ,
 .Nm tls_config_verify_client_optional ,
@@ -149,6 +150,8 @@
 .Fn tls_config_insecure_noverifyname "struct tls_config *config"
 .Ft "void"
 .Fn tls_config_insecure_noverifytime "struct tls_config *config"
+.Ft "void"
+.Fn tls_config_ocsp_require_stapling "struct tls_config *config"
 .Ft "void"
 .Fn tls_config_verify "struct tls_config *config"
 .Ft "void"
@@ -455,6 +458,9 @@ Be careful when using this option.
 .Fn tls_config_insecure_noverifytime
 disables validity checking of certificates and OCSP validation.
 Be careful when using this option.
+.It
+.Fn tls_config_ocsp_require_stapling
+requires that a valid stapled OCSP response be provided during the TLS handshake.
 .It
 .Fn tls_config_verify
 reenables server name and certificate verification.

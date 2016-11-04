@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.39 2016/11/02 15:18:42 beck Exp $ */
+/* $OpenBSD: tls.h,v 1.40 2016/11/04 05:13:13 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -117,6 +117,7 @@ void tls_config_insecure_noverifyname(struct tls_config *_config);
 void tls_config_insecure_noverifytime(struct tls_config *_config);
 void tls_config_verify(struct tls_config *_config);
 
+void tls_config_ocsp_require_stapling(struct tls_config *_config);
 void tls_config_verify_client(struct tls_config *_config);
 void tls_config_verify_client_optional(struct tls_config *_config);
 

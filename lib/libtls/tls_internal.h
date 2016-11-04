@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.45 2016/11/03 10:05:32 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.46 2016/11/04 05:13:13 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -64,6 +64,7 @@ struct tls_config {
 	int dheparams;
 	int ecdhecurve;
 	struct tls_keypair *keypair;
+	int ocsp_require_stapling;
 	uint32_t protocols;
 	int verify_cert;
 	int verify_client;
