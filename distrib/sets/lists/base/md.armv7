@@ -1790,7 +1790,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/gost.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/idea.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/openssl/krb5_asn.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/lhash.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/md5.ph

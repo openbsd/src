@@ -1774,7 +1774,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/gost.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/idea.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/krb5_asn.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/lhash.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/md5.ph

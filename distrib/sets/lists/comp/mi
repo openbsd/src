@@ -1122,7 +1122,6 @@
 ./usr/include/openssl/gost.h
 ./usr/include/openssl/hmac.h
 ./usr/include/openssl/idea.h
-./usr/include/openssl/krb5_asn.h
 ./usr/include/openssl/lhash.h
 ./usr/include/openssl/md4.h
 ./usr/include/openssl/md5.h
@@ -1734,6 +1733,7 @@
 ./usr/share/man/man3/ASN1_STRING_new.3
 ./usr/share/man/man3/ASN1_STRING_print_ex.3
 ./usr/share/man/man3/ASN1_generate_nconf.3
+./usr/share/man/man3/ASN1_time_parse.3
 ./usr/share/man/man3/BF_set_key.3
 ./usr/share/man/man3/BIO.3
 ./usr/share/man/man3/BIO_ctrl.3
@@ -1857,7 +1857,6 @@
 ./usr/share/man/man3/PKCS7_sign.3
 ./usr/share/man/man3/PKCS7_sign_add_signer.3
 ./usr/share/man/man3/PKCS7_verify.3
-./usr/share/man/man3/RAND.3
 ./usr/share/man/man3/RAND_add.3
 ./usr/share/man/man3/RAND_bytes.3
 ./usr/share/man/man3/RAND_cleanup.3

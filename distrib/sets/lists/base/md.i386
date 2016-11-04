@@ -1809,7 +1809,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/gost.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/idea.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/openssl/krb5_asn.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/lhash.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/md5.ph

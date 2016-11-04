@@ -2353,6 +2353,7 @@
 ./usr/share/man/man8/syslogc.8
 ./usr/share/man/man8/syslogd.8
 ./usr/share/man/man8/sysmerge.8
+./usr/share/man/man8/syspatch.8
 ./usr/share/man/man8/talkd.8
 ./usr/share/man/man8/tcpdrop.8
 ./usr/share/man/man8/tcpdump.8

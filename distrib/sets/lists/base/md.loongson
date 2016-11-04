@@ -1793,7 +1793,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/gost.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/idea.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/krb5_asn.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/lhash.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/md5.ph
