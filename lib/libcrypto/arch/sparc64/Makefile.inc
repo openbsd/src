@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.2 2014/11/17 20:31:22 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2016/11/04 18:12:14 miod Exp $
 
 # sparc64-specific libcrypto build rules
 
@@ -18,6 +18,10 @@ SRCS+= des_enc-sparc.S
 GENERATED+= des_enc-sparc.S
 des_enc-sparc.S: ${LCRYPTO_SRC}/des/asm/des_enc.m4
 	m4 ${LCRYPTO_SRC}/des/asm/des_enc.m4 > ${.TARGET}
+# # ec
+# CFLAGS+= -DECP_NISTZ256_ASM
+# SRCS+=	ecp_nistz256.c
+# SSLASM+= ec ecp_nistz256-sparcv9
 # modes
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-sparcv9 ghash-sparcv9

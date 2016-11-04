@@ -18,6 +18,10 @@ SSLASM+= bn armv4-gf2m
 SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # des
 SRCS+= des_enc.c fcrypt_b.c
+# # ec
+# CFLAGS+= -DECP_NISTZ256_ASM
+# SRCS+=	ecp_nistz256.c
+# SSLASM+= ec ecp_nistz256-armv4
 # modes
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-armv4
