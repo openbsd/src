@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.4 2016/10/03 04:13:58 bcook Exp $ */
+/* $OpenBSD: tls_util.c,v 1.5 2016/11/04 15:59:16 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -89,13 +89,19 @@ tls_host_port(const char *hostport, char **host, char **port)
 static int
 tls_password_cb(char *buf, int size, int rwflag, void *u)
 {
-	size_t	len;
+	size_t len;
+
+	if (size < 0)
+		return (0);
+
 	if (u == NULL) {
 		memset(buf, 0, size);
 		return (0);
 	}
+
 	if ((len = strlcpy(buf, u, size)) >= (size_t)size)
 		return (0);
+
 	return (len);
 }
 
@@ -110,6 +116,7 @@ tls_load_file(const char *name, size_t *len, char *password)
 	struct stat st;
 	size_t size;
 	int fd = -1;
+	ssize_t n;
 
 	*len = 0;
 
@@ -120,10 +127,13 @@ tls_load_file(const char *name, size_t *len, char *password)
 	if (password == NULL) {
 		if (fstat(fd, &st) != 0)
 			goto fail;
-		size = (size_t)st.st_size;
-		if ((buf = calloc(1, size + 1)) == NULL)
+		if (st.st_size < 0)
 			goto fail;
-		if (read(fd, buf, size) != size)
+		size = (size_t)st.st_size;
+		if ((buf = malloc(size)) == NULL)
+			goto fail;
+		n = read(fd, buf, size);
+		if (n < 0 || (size_t)n != size)
 			goto fail;
 		close(fd);
 		goto done;
