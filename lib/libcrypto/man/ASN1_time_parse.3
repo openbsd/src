@@ -1,6 +1,6 @@
-.\" $OpenBSD: ASN1_time_parse.3,v 1.1 2016/11/04 18:07:23 beck Exp $
+.\" $OpenBSD: ASN1_time_parse.3,v 1.2 2016/11/04 22:53:26 schwarze Exp $
 .\"
-.\" Copyright (c) 2016 Bob Beck <beck@@openbsd.org>
+.\" Copyright (c) 2016 Bob Beck <beck@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -20,75 +20,80 @@
 .Sh NAME
 .Nm ASN1_time_parse,
 .Nm ASN1_time_tm_cmp
-.Nd LibreSSL utilities for asn1 format time.
+.Nd LibreSSL utilities for ASN1 format time
 .Sh SYNOPSIS
-.In asn1.h
-.Ft "int"
-.Fn ASN1_time_parse "const char *bytes" "size_t len" "struct tm *tm" "int mode
-.Ft "int"
-.Fn ASN1_time_tm_cmp "struct tm *tm1" "struct tm *tm2" 
+.In openssl/asn1.h
+.Ft int
+.Fn ASN1_time_parse "const char *bytes" "size_t len" "struct tm *tm" "int mode"
+.Ft int
+.Fn ASN1_time_tm_cmp "struct tm *tm1" "struct tm *tm2"
 .Sh DESCRIPTION
 The
-.Nm ASN1_time_parse
-function parses an asn1 time string of
+.Fn ASN1_time_parse
+function parses an ASN1 time string of
 .Ar len
 bytes starting at
 .Ar bytes .
 The resulting time is stored in
 .Ar tm
-if 
+if
 .Ar tm
-is non NULL. 
+is not
+.Dv NULL .
 .Pp
-The 
+The
 .Ar mode
 parameter must be one of
 .Bl -bullet -offset four
 .It
-.Ar 0
-to parse a time as specified in RFC 5280 for an X509 object,
-which may be either a UTC time or a Generalized time. 
+0 to parse a time as specified in RFC 5280 for an X509 object,
+which may be either a UTC time or a Generalized time.
 .It
-.Ar V_ASN1_UTCTIME
+.Dv V_ASN1_UTCTIME
 to parse an RFC 5280 format UTC time.
 .It
-.Ar V_ASN1_GENERALIZEDTIME 
+.Dv V_ASN1_GENERALIZEDTIME
 to parse an RFC 5280 format Generalized time.
 .El
 .Pp
 The
-.Nm ASN1_time_tm_cmp
+.Fn ASN1_time_tm_cmp
 function compares two times in
 .Ar tm1
 and
-.Ar tm2
+.Ar tm2 .
 .Sh RETURN VALUES
-.Nm ASN1_parse_time 
+.Fn ASN1_parse_time
 returns
 .Bl -bullet -offset four
 .It
-.Ar -1
-if the string was invalid for the
+-1 if the string was invalid for the
 .Ar mode
-specified
+specified.
 .It
-.Ar V_ASN1_UTCTIME 
+.Dv V_ASN1_UTCTIME
 if the string parsed as a valid UTC time.
-.It :
-.Ar V_ASN1_GENERALIZEDTIME 
+.It
+.Dv V_ASN1_GENERALIZEDTIME
 if the string parsed as a valid Generalized time.
 .El
 .Pp
-.Nm ASN1_time_tm_cmp
+.Fn ASN1_time_tm_cmp
 returns
 .Bl -bullet -offset four
 .It
-.Ar -1
-if tm1 is less than tm2.
+-1 if
+.Ar tm1
+is less than
+.Ar tm2 .
 .It
-.Ar 1
-if tm1 is greater than tm2.
+1 if
+.Ar tm1
+is greater than
+.Ar tm2 .
 .It
-.Ar 0
-if tm1 is the same as tm2.
+0 if
+.Ar tm1
+is the same as
+.Ar tm2 .
 .El
