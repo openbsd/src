@@ -1,9 +1,6 @@
 #include <openssl/opensslfeatures.h>
 /* crypto/opensslconf.h.in */
 
-/* Generate 80386 code? */
-#undef I386_ONLY
-
 #if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
 #define OPENSSLDIR "/etc/ssl"
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.37 2015/09/13 16:56:11 miod Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.38 2016/11/04 13:56:04 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -635,7 +635,7 @@ OPENSSL_cpu_caps(void)
 	return *(uint64_t *)OPENSSL_ia32cap_P;
 }
 
-#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
+#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM)
 #define OPENSSL_CPUID_SETUP
 typedef unsigned long long IA32CAP;
 void

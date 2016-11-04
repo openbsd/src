@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.13 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.14 2016/11/04 13:56:05 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -638,8 +638,7 @@ static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 #endif
 
 #if	TABLE_BITS==4 && defined(GHASH_ASM)
-# if	!defined(I386_ONLY) && \
-	(defined(__i386)	|| defined(__i386__)	|| \
+# if	(defined(__i386)	|| defined(__i386__)	|| \
 	 defined(__x86_64)	|| defined(__x86_64__)	|| \
 	 defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64))
 #  define GHASH_ASM_X86_OR_64
