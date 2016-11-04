@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.490 2016/10/07 05:47:24 otto Exp $
+#	$OpenBSD: rc,v 1.491 2016/11/04 22:12:46 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -220,7 +220,9 @@ reorder_libs() {
 # Usage: run_upgrade_script firsttime|sysmerge
 run_upgrade_script() {
 	local _suffix=$1
+
 	[[ -n $_suffix ]] || return 1
+
 	if [[ -f /etc/rc.$_suffix ]]; then
 		mv /etc/rc.$_suffix /etc/rc.$_suffix.run
 		. /etc/rc.$_suffix.run 2>&1 | tee /dev/tty |
