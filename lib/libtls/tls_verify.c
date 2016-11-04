@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.17 2016/09/04 12:26:43 bcook Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.18 2016/11/04 15:32:40 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -127,7 +127,7 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name)
 				data = ASN1_STRING_data(altname->d.dNSName);
 				len = ASN1_STRING_length(altname->d.dNSName);
 
-				if (len < 0 || len != strlen(data)) {
+				if (len < 0 || (size_t)len != strlen(data)) {
 					tls_set_errorx(ctx,
 					    "error verifying name '%s': "
 					    "NUL byte in subjectAltName, "
@@ -220,7 +220,8 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name)
 	    common_name_len + 1);
 
 	/* NUL bytes in CN? */
-	if (common_name_len != strlen(common_name)) {
+	if (common_name_len < 0 ||
+	    (size_t)common_name_len != strlen(common_name)) {
 		tls_set_errorx(ctx, "error verifying name '%s': "
 		    "NUL byte in Common Name field, "
 		    "probably a malicious certificate", name);
