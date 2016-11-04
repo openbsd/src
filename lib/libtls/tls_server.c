@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.28 2016/09/14 11:34:37 bcook Exp $ */
+/* $OpenBSD: tls_server.c,v 1.29 2016/11/04 19:01:29 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -313,9 +313,9 @@ tls_accept_common(struct tls *ctx)
 }
 
 int
-tls_accept_socket(struct tls *ctx, struct tls **cctx, int socket)
+tls_accept_socket(struct tls *ctx, struct tls **cctx, int s)
 {
-	return (tls_accept_fds(ctx, cctx, socket, socket));
+	return (tls_accept_fds(ctx, cctx, s, s));
 }
 
 int
