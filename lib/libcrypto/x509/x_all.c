@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.21 2015/10/13 14:03:26 jsing Exp $ */
+/* $OpenBSD: x_all.c,v 1.22 2016/11/04 10:29:19 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -599,4 +599,11 @@ PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
 {
 	return(ASN1_item_digest(ASN1_ITEM_rptr(PKCS7_ISSUER_AND_SERIAL), type,
 	    (char *)data, md, len));
+}
+
+int
+X509_up_ref(X509 *x)
+{
+	int i = CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+	return i > 1 ? 1 : 0;
 }
