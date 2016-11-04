@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.11 2016/11/04 15:39:16 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.12 2016/11/04 15:42:29 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -31,7 +31,7 @@ static long bio_cb_ctrl(BIO *bio, int cmd, long num, void *ptr);
 static int bio_cb_new(BIO *bio);
 static int bio_cb_free(BIO *bio);
 
-struct bio_cb_st {
+struct bio_cb {
 	int (*write_cb)(BIO *bio, const char *buf, int num, void *cb_arg);
 	int (*read_cb)(BIO *bio, char *buf, int size, void *cb_arg);
 	void *cb_arg;
@@ -57,9 +57,9 @@ bio_s_cb(void)
 static int
 bio_cb_new(BIO *bio)
 {
-	struct bio_cb_st *bcb;
+	struct bio_cb *bcb;
 
-	bcb = calloc(1, sizeof(struct bio_cb_st));
+	bcb = calloc(1, sizeof(struct bio_cb));
 	if (bcb == NULL)
 		return (0);
 
@@ -90,14 +90,14 @@ bio_cb_free(BIO *bio)
 static int
 bio_cb_read(BIO *bio, char *buf, int size)
 {
-	struct bio_cb_st *bcb = bio->ptr;
+	struct bio_cb *bcb = bio->ptr;
 	return (bcb->read_cb(bio, buf, size, bcb->cb_arg));
 }
 
 static int
 bio_cb_write(BIO *bio, const char *buf, int num)
 {
-	struct bio_cb_st *bcb = bio->ptr;
+	struct bio_cb *bcb = bio->ptr;
 	return (bcb->write_cb(bio, buf, num, bcb->cb_arg));
 }
 
@@ -174,7 +174,7 @@ tls_bio_read_cb(BIO *bio, char *buf, int size, void *cb_arg)
 static BIO *
 tls_get_new_cb_bio(struct tls *ctx)
 {
-	struct bio_cb_st *b;
+	struct bio_cb *b;
 	BIO *bio;
 
 	if (ctx->read_cb == NULL || ctx->write_cb == NULL)
@@ -186,7 +186,7 @@ tls_get_new_cb_bio(struct tls *ctx)
 		return (NULL);
 	}
 
-	b = (struct bio_cb_st *)bio->ptr;
+	b = (struct bio_cb *)bio->ptr;
 	b->read_cb = tls_bio_read_cb;
 	b->write_cb = tls_bio_write_cb;
 	b->cb_arg = ctx;
