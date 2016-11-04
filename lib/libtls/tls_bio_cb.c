@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.10 2016/11/04 15:37:49 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.11 2016/11/04 15:39:16 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -66,7 +66,7 @@ bio_cb_new(BIO *bio)
 	bio->shutdown = 1;
 	bio->init = 1;
 	bio->num = -1;
-	bio->ptr = (char *)bcb;
+	bio->ptr = bcb;
 
 	return (1);
 }
