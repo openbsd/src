@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.7 2016/09/02 17:02:53 beck Exp $
+#	$OpenBSD: Makefile,v 1.1 2016/11/04 19:45:12 jsing Exp $
 
 PROG=	pq_test
 SRC=	${.CURDIR}/../../../../lib/libssl
 CFLAGS+=	-I${SRC}
 
-LDADD=	-lssl -lcrypto
+LDADD=	${SSL_INT} -lcrypto
 DPADD=	${LIBSSL} ${LIBCRYPTO}
 WARNINGS=	Yes
 CFLAGS+=	-DLIBRESSL_INTERNAL -Werror
