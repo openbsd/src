@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.38 2016/11/04 15:07:26 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.39 2016/11/04 15:16:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -79,7 +79,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		res = vm_register(ps, &vmc, &vm);
+		res = vm_register(ps, &vmc, &vm, 0);
 		if (res == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
@@ -628,7 +628,7 @@ vm_remove(struct vmd_vm *vm)
 
 int
 vm_register(struct privsep *ps, struct vmop_create_params *vmc,
-    struct vmd_vm **ret_vm)
+    struct vmd_vm **ret_vm, uint32_t id)
 {
 	struct vmd_vm		*vm = NULL;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
@@ -668,8 +668,11 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		vm->vm_ifs[i].vif_fd = -1;
 	vm->vm_kernel = -1;
 
-	if ((vm->vm_vmid = ++env->vmd_nvm) == 0)
+	if (++env->vmd_nvm == 0)
 		fatalx("too many vms");
+
+	/* Assign a new internal Id if not specified */
+	vm->vm_vmid = id == 0 ? env->vmd_nvm : id;
 
 	TAILQ_INSERT_TAIL(env->vmd_vms, vm, vm_entry);
 

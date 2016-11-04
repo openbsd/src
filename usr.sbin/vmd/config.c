@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.18 2016/11/04 15:07:26 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.19 2016/11/04 15:16:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -307,7 +307,7 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 	memcpy(&vmc, imsg->data, sizeof(vmc));
 
 	errno = 0;
-	if (vm_register(ps, &vmc, &vm) == -1)
+	if (vm_register(ps, &vmc, &vm, imsg->hdr.peerid) == -1)
 		return (-1);
 
 	if (imsg->fd == -1) {
@@ -316,7 +316,6 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 	}
 	vm->vm_kernel = imsg->fd;
 	vm->vm_running = 1;
-	vm->vm_vmid = imsg->hdr.peerid;
 
 	return (0);
 
