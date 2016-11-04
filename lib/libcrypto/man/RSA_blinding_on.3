@@ -1,0 +1,46 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_BLINDING_ON 3
+.Os
+.Sh NAME
+.Nm RSA_blinding_on ,
+.Nm RSA_blinding_off
+.Nd protect the RSA operation from timing attacks
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft int
+.Fo RSA_blinding_on
+.Fa "RSA *rsa"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft void
+.Fo RSA_blinding_off
+.Fa "RSA *rsa"
+.Fc
+.Sh DESCRIPTION
+RSA is vulnerable to timing attacks.
+In a setup where attackers can measure the time of RSA decryption or
+signature operations, blinding must be used to protect the RSA operation
+from that attack.
+.Pp
+.Fn RSA_blinding_on
+turns blinding on for key
+.Fa rsa
+and generates a random blinding factor.
+.Fa ctx
+is
+.Dv NULL
+or a pre-allocated and initialized
+.Vt BN_CTX .
+.Pp
+.Fn RSA_blinding_off
+turns blinding off and frees the memory used for the blinding factor.
+.Sh RETURN VALUES
+.Fn RSA_blinding_on
+returns 1 on success, and 0 if an error occurred.
+.Sh SEE ALSO
+.Xr rsa 3
+.Sh HISTORY
+.Fn RSA_blinding_on
+and
+.Fn RSA_blinding_off
+appeared in SSLeay 0.9.0.

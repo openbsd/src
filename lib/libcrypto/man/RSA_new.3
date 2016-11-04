@@ -1,0 +1,46 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_NEW 3
+.Os
+.Sh NAME
+.Nm RSA_new ,
+.Nm RSA_free
+.Nd allocate and free RSA objects
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft RSA *
+.Fn RSA_new void
+.Ft void
+.Fo RSA_free
+.Fa "RSA *rsa"
+.Fc
+.Sh DESCRIPTION
+.Fn RSA_new
+allocates and initializes an
+.Vt RSA
+structure.
+It is equivalent to calling
+.Fn RSA_new_method NULL .
+.Pp
+.Fn RSA_free
+frees the
+.Vt RSA
+structure and its components.
+The key is erased before the memory is returned to the system.
+.Sh RETURN VALUES
+If the allocation fails,
+.Fn RSA_new
+returns
+.Dv NULL
+and sets an error code that can be obtained by
+.Xr ERR_get_error 3 .
+Otherwise it returns a pointer to the newly allocated structure.
+.Sh SEE ALSO
+.Xr ERR_get_error 3 ,
+.Xr rsa 3 ,
+.Xr RSA_generate_key 3 ,
+.Xr RSA_new_method 3
+.Sh HISTORY
+.Fn RSA_new
+and
+.Fn RSA_free
+are available in all versions of SSLeay and OpenSSL.

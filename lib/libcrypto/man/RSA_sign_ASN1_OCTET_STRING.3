@@ -1,0 +1,81 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_SIGN_ASN1_OCTET_STRING 3
+.Os
+.Sh NAME
+.Nm RSA_sign_ASN1_OCTET_STRING ,
+.Nm RSA_verify_ASN1_OCTET_STRING
+.Nd RSA signatures
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft int
+.Fo RSA_sign_ASN1_OCTET_STRING
+.Fa "int dummy"
+.Fa "unsigned char *m"
+.Fa "unsigned int m_len"
+.Fa "unsigned char *sigret"
+.Fa "unsigned int *siglen"
+.Fa "RSA *rsa"
+.Fc
+.Ft int
+.Fo RSA_verify_ASN1_OCTET_STRING
+.Fa "int dummy"
+.Fa "unsigned char *m"
+.Fa "unsigned int m_len"
+.Fa "unsigned char *sigbuf"
+.Fa "unsigned int siglen"
+.Fa "RSA *rsa"
+.Fc
+.Sh DESCRIPTION
+.Fn RSA_sign_ASN1_OCTET_STRING
+signs the octet string
+.Fa m
+of size
+.Fa m_len
+using the private key
+.Fa rsa
+represented in DER using PKCS #1 padding.
+It stores the signature in
+.Fa sigret
+and the signature size in
+.Fa siglen .
+.Fa sigret
+must point to
+.Fn RSA_size rsa
+bytes of memory.
+.Pp
+.Fa dummy
+is ignored.
+.Pp
+.Fn RSA_verify_ASN1_OCTET_STRING
+verifies that the signature
+.Fa sigbuf
+of size
+.Fa siglen
+is the DER representation of a given octet string
+.Fa m
+of size
+.Fa m_len .
+.Fa dummy
+is ignored.
+.Fa rsa
+is the signer's public key.
+.Sh RETURN VALUES
+.Fn RSA_sign_ASN1_OCTET_STRING
+returns 1 on success or 0 otherwise.
+.Fn RSA_verify_ASN1_OCTET_STRING
+returns 1 on successful verification or 0 otherwise.
+.Pp
+The error codes can be obtained by
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr ERR_get_error 3 ,
+.Xr rsa 3 ,
+.Xr RSA_sign 3 ,
+.Xr RSA_verify 3
+.Sh HISTORY
+.Fn RSA_sign_ASN1_OCTET_STRING
+and
+.Fn RSA_verify_ASN1_OCTET_STRING
+were added in SSLeay 0.8.
+.Sh BUGS
+These functions serve no recognizable purpose.

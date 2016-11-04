@@ -1,0 +1,97 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_CHECK_KEY 3
+.Os
+.Sh NAME
+.Nm RSA_check_key
+.Nd validate private RSA keys
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft int
+.Fo RSA_check_key
+.Fa "RSA *rsa"
+.Fc
+.Sh DESCRIPTION
+This function validates RSA keys.
+It checks that
+.Fa rsa->p
+and
+.Fa rsa->q
+are in fact prime, and that
+.Fa rsa->n
+satifies n = p*q.
+.Pp
+It also checks that
+.Fa rsa->d
+and
+.Fa rsa->e
+satisfy d*e = 1 mod ((p-1)*(q-1)),
+and that
+.Fa rsa->dmp1 ,
+.Fa rsa->dmq1 ,
+and
+.Fa resa->iqmp
+are set correctly or are
+.Dv NULL .
+.Pp
+As such, this function cannot be used with any arbitrary
+.Vt RSA
+key object, even if it is otherwise fit for regular RSA operation.
+.Pp
+This function does not work on RSA public keys that have only the
+modulus and public exponent elements populated.
+It performs integrity checks on all the RSA key material, so the
+.Vt RSA
+key structure must contain all the private key data too.
+.Pp
+Unlike most other RSA functions, this function does
+.Sy not
+work transparently with any underlying
+.Vt ENGINE
+implementation because it uses the key data in the
+.Vt RSA
+structure directly.
+An
+.Vt ENGINE
+implementation can override the way key data is stored and handled,
+and can even provide support for HSM keys - in which case the
+.Vt RSA
+structure may contain
+.Sy no
+key data at all!
+If the
+.Vt ENGINE
+in question is only being used for acceleration or analysis purposes,
+then in all likelihood the RSA key data is complete and untouched,
+but this can't be assumed in the general case.
+.Sh RETURN VALUE
+.Fn RSA_check_key
+returns 1 if
+.Fa rsa
+is a valid RSA key, and 0 otherwise.
+-1 is returned if an error occurs while checking the key.
+.Pp
+If the key is invalid or an error occurred, the reason code can be
+obtained using
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr ERR_get_error 3 ,
+.Xr rsa 3
+.Sh HISTORY
+.Fn RSA_check_key
+appeared in OpenSSL 0.9.4.
+.Sh BUGS
+A method of verifying the RSA key using opaque RSA API functions might
+need to be considered.
+Right now
+.Fn RSA_check_key
+simply uses the
+.Vt RSA
+structure elements directly, bypassing the
+.Vt RSA_METHOD
+table altogether (and completely violating encapsulation and
+object-orientation in the process).
+The best fix will probably be to introduce a check_key() handler
+to the
+.Vt RSA_METHOD
+function table so that alternative implementations can also provide
+their own verifiers.

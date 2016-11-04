@@ -1,0 +1,91 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_PRINT 3
+.Os
+.Sh NAME
+.Nm RSA_print ,
+.Nm RSA_print_fp ,
+.Nm DSAparams_print ,
+.Nm DSAparams_print_fp ,
+.Nm DSA_print ,
+.Nm DSA_print_fp ,
+.Nm DHparams_print ,
+.Nm DHparams_print_fp
+.Nd print cryptographic parameters
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft int
+.Fo RSA_print
+.Fa "BIO *bp"
+.Fa "RSA *x"
+.Fa "int offset"
+.Fc
+.Ft int
+.Fo RSA_print_fp
+.Fa "FILE *fp"
+.Fa "RSA *x"
+.Fa "int offset"
+.Fc
+.In openssl/dsa.h
+.Ft int
+.Fo DSAparams_print
+.Fa "BIO *bp"
+.Fa "DSA *x"
+.Fc
+.Ft int
+.Fo DSAparams_print_fp
+.Fa "FILE *fp"
+.Fa "DSA *x"
+.Fc
+.Ft int
+.Fo DSA_print
+.Fa "BIO *bp"
+.Fa "DSA *x"
+.Fa "int offset"
+.Fc
+.Ft int
+.Fo DSA_print_fp
+.Fa "FILE *fp"
+.Fa "DSA *x"
+.Fa "int offset"
+.Fc
+.In openssl/dh.h
+.Ft int
+.Fo DHparams_print
+.Fa "BIO *bp"
+.Fa "DH *x"
+.Fc
+.Ft int
+.Fo DHparams_print_fp
+.Fa "FILE *fp"
+.Fa "DH *x"
+.Fc
+.Sh DESCRIPTION
+A human-readable hexadecimal output of the components of the RSA key,
+DSA parameters or key or DH parameters is printed to
+.Fa bp
+or
+.Fa fp .
+.Pp
+The output lines are indented by
+.Fa offset
+spaces.
+.Sh RETURN VALUES
+These functions return 1 on success or 0 on error.
+.Sh SEE ALSO
+.Xr BN_bn2bin 3 ,
+.Xr dh 3 ,
+.Xr dsa 3 ,
+.Xr rsa 3
+.Sh HISTORY
+.Fn RSA_print ,
+.Fn RSA_print_fp ,
+.Fn DSA_print ,
+.Fn DSA_print_fp ,
+.Fn DHparams_print ,
+and
+.Fn DHparams_print_fp
+are available in all versions of SSLeay and OpenSSL.
+.Fn DSAparams_print
+and
+.Fn DSAparams_print_fp
+were added in SSLeay 0.8.

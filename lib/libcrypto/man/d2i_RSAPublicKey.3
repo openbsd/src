@@ -1,0 +1,101 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt D2I_RSAPUBLICKEY 3
+.Os
+.Sh NAME
+.Nm d2i_RSAPublicKey ,
+.Nm i2d_RSAPublicKey ,
+.Nm d2i_RSAPrivateKey ,
+.Nm i2d_RSAPrivateKey ,
+.Nm d2i_RSA_PUBKEY ,
+.Nm i2d_RSA_PUBKEY ,
+.Nm i2d_Netscape_RSA ,
+.Nm d2i_Netscape_RSA
+.Nd RSA public and private key encoding functions
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.In openssl/x509.h
+.Ft RSA *
+.Fo d2i_RSAPublicKey
+.Fa "RSA **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_RSAPublicKey
+.Fa "RSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft RSA *
+.Fo d2i_RSA_PUBKEY
+.Fa "RSA **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_RSA_PUBKEY
+.Fa "RSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft RSA *
+.Fo d2i_RSAPrivateKey
+.Fa "RSA **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_RSAPrivateKey
+.Fa "RSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft int
+.Fo i2d_Netscape_RSA
+.Fa "RSA *a"
+.Fa "unsigned char **pp"
+.Fa "int (*cb)()"
+.Fc
+.Ft RSA *
+.Fo d2i_Netscape_RSA
+.Fa "RSA **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fa "int (*cb)()"
+.Fc
+.Sh DESCRIPTION
+.Fn d2i_RSAPublicKey
+and
+.Fn i2d_RSAPublicKey
+decode and encode a PKCS#1 RSAPublicKey structure.
+.Pp
+.Fn d2i_RSA_PUBKEY
+and
+.Fn i2d_RSA_PUBKEY
+decode and encode an RSA public key using a SubjectPublicKeyInfo
+(certificate public key) structure.
+.Pp
+.Fn d2i_RSAPrivateKey ,
+.Fn i2d_RSAPrivateKey
+decode and encode a PKCS#1 RSAPrivateKey structure.
+.Pp
+.Fn d2i_Netscape_RSA ,
+.Fn i2d_Netscape_RSA
+decode and encode an RSA private key in NET format.
+.Pp
+The usage of all of these functions is similar to
+.Xr d2i_X509 3
+and
+.Xr i2d_X509 3 .
+.Pp
+The
+.Vt RSA
+structure passed to the private key encoding functions should have all
+the PKCS#1 private key components present.
+.Pp
+The data encoded by the private key functions is unencrypted and
+therefore offers no private key security.
+.Pp
+The NET format functions are present to provide compatibility with
+certain very old software.
+This format has some severe security weaknesses and should be avoided if
+possible.
+.Sh SEE ALSO
+.Xr d2i_X509 3

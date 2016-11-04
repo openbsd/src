@@ -1,0 +1,105 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_GENERATE_KEY 3
+.Os
+.Sh NAME
+.Nm RSA_generate_key_ex ,
+.Nm RSA_generate_key
+.Nd generate RSA key pair
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft int
+.Fo RSA_generate_key_ex
+.Fa "RSA *rsa"
+.Fa "int bits"
+.Fa "BIGNUM *e"
+.Fa "BN_GENCB *cb"
+.Fc
+.Pp
+Deprecated:
+.Pp
+.Ft RSA *
+.Fo RSA_generate_key
+.Fa "int num"
+.Fa "unsigned long e"
+.Fa "void (*callback)(int, int, void *)"
+.Fa "void *cb_arg"
+.Fc
+.Sh DESCRIPTION
+.Fn RSA_generate_key_ex
+generates a key pair and stores it in
+.Fa rsa .
+.Pp
+The modulus size will be of length
+.Fa bits ,
+and the public exponent will be
+.Fa e .
+Key sizes with
+.Fa num
+< 1024 should be considered insecure.
+The exponent is an odd number, typically 3, 17 or 65537.
+.Pp
+A callback function may be used to provide feedback about the progress
+of the key generation.
+If
+.Fa cb
+is not
+.Dv NULL ,
+it will be called as follows using the
+.Xr BN_GENCB_call 3
+function:
+.Bl -bullet
+.It
+While a random prime number is generated, it is called as described in
+.Xr BN_generate_prime 3 .
+.It
+When the
+.Fa n Ns -th
+randomly generated prime is rejected as not suitable for
+the key,
+.Fn BN_GENCB_call cb 2 n
+is called.
+.It
+When a random p has been found with p-1 relatively prime to
+.Fa e ,
+it is called as
+.Fn BN_GENCB_call cb 3 0 .
+.El
+.Pp
+The process is then repeated for prime q with
+.Fn BN_GENCB_call cb 3 1 .
+.Pp
+.Fn RSA_generate_key
+is deprecated.
+New applications should use
+.Fn RSA_generate_key_ex
+instead.
+.Fn RSA_generate_key
+works in the same was as
+.Fn RSA_generate_key_ex
+except it uses "old style" call backs.
+See
+.Xr BN_generate_prime 3
+for further details.
+.Sh RETURN VALUE
+If key generation fails,
+.Fn RSA_generate_key
+returns
+.Dv NULL .
+.Pp
+The error codes can be obtained by
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr BN_generate_prime 3 ,
+.Xr ERR_get_error 3 ,
+.Xr rsa 3 ,
+.Xr RSA_free 3
+.Sh HISTORY
+The
+.Fa cb_arg
+argument was added in SSLeay 0.9.0.
+.Sh BUGS
+.Fn BN_GENCB_call cb 2 x
+is used with two different meanings.
+.Pp
+.Fn RSA_generate_key
+goes into an infinite loop for illegal input values.

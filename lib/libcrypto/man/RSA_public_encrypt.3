@@ -1,0 +1,108 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_PUBLIC_ENCRYPT 3
+.Os
+.Sh NAME
+.Nm RSA_public_encrypt ,
+.Nm RSA_private_decrypt
+.Nd RSA public key cryptography
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft int
+.Fo RSA_public_encrypt
+.Fa "int flen"
+.Fa "unsigned char *from"
+.Fa "unsigned char *to"
+.Fa "RSA *rsa"
+.Fa "int padding"
+.Fc
+.Ft int
+.Fo RSA_private_decrypt
+.Fa "int flen"
+.Fa "unsigned char *from"
+.Fa "unsigned char *to"
+.Fa "RSA *rsa"
+.Fa "int padding"
+.Fc
+.Sh DESCRIPTION
+.Fn RSA_public_encrypt
+encrypts the
+.Fa flen
+bytes at
+.Fa from
+(usually a session key) using the public key
+.Fa rsa
+and stores the ciphertext in
+.Fa to .
+.Fa to
+must point to
+.Fn RSA_size rsa
+bytes of memory.
+.Pp
+.Fa padding
+denotes one of the following modes:
+.Bl -tag -width Ds
+.It Dv RSA_PKCS1_PADDING
+PKCS #1 v1.5 padding.
+This currently is the most widely used mode.
+.It Dv RSA_PKCS1_OAEP_PADDING
+EME-OAEP as defined in PKCS #1 v2.0 with SHA-1, MGF1 and an empty
+encoding parameter.
+This mode is recommended for all new applications.
+.It Dv RSA_SSLV23_PADDING
+PKCS #1 v1.5 padding with an SSL-specific modification that denotes that
+the server is SSL3 capable.
+.It Dv RSA_NO_PADDING
+Raw RSA encryption.
+This mode should only be used to implement cryptographically sound
+padding modes in the application code.
+Encrypting user data directly with RSA is insecure.
+.El
+.Pp
+.Fa flen
+must be less than
+.Fn RSA_size rsa
+- 11 for the PKCS #1 v1.5 based padding modes, less than
+.Fn RSA_size rsa
+- 41 for
+.Dv RSA_PKCS1_OAEP_PADDING
+and exactly
+.Fn RSA_size rsa
+for
+.Dv RSA_NO_PADDING .
+.Pp
+.Fn RSA_private_decrypt
+decrypts the
+.Fa flen
+bytes at
+.Fa from
+using the private key
+.Fa rsa
+and stores the plaintext in
+.Fa to .
+.Fa to
+must point to a memory section large enough to hold the decrypted data
+(which is smaller than
+.Fn RSA_size rsa ) .
+.Fa padding
+is the padding mode that was used to encrypt the data.
+.Sh RETURN VALUES
+.Fn RSA_public_encrypt
+returns the size of the encrypted data (i.e.,
+.Fn RSA_size rsa ) .
+.Fn RSA_private_decrypt
+returns the size of the recovered plaintext.
+.Pp
+On error, -1 is returned; the error codes can be obtained by
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr ERR_get_error 3 ,
+.Xr rsa 3 ,
+.Xr RSA_size 3
+.Sh STANDARDS
+SSL, PKCS #1 v2.0
+.Sh HISTORY
+The
+.Fa padding
+argument was added in SSLeay 0.8.
+.Dv RSA_NO_PADDING is available since SSLeay 0.9.0.
+OAEP was added in OpenSSL 0.9.2b.

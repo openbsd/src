@@ -1,0 +1,339 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_SET_METHOD 3
+.Os
+.Sh NAME
+.Nm RSA_set_default_method ,
+.Nm RSA_get_default_method ,
+.Nm RSA_set_method ,
+.Nm RSA_get_method ,
+.Nm RSA_PKCS1_SSLeay ,
+.Nm RSA_null_method ,
+.Nm RSA_flags ,
+.Nm RSA_new_method ,
+.Nm RSA_get_default_openssl_method ,
+.Nm RSA_set_default_openssl_method
+.Nd select RSA method
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft void
+.Fo RSA_set_default_method
+.Fa "const RSA_METHOD *meth"
+.Fc
+.Ft RSA_METHOD *
+.Fn RSA_get_default_method void
+.Ft int
+.Fo RSA_set_method
+.Fa "RSA *rsa"
+.Fa "const RSA_METHOD *meth"
+.Fc
+.Ft RSA_METHOD *
+.Fo RSA_get_method
+.Fa "const RSA *rsa"
+.Fc
+.Ft RSA_METHOD *
+.Fn RSA_PKCS1_SSLeay void
+.Ft RSA_METHOD *
+.Fn RSA_null_method void
+.Ft int
+.Fo RSA_flags
+.Fa "const RSA *rsa"
+.Fc
+.Ft RSA *
+.Fo RSA_new_method
+.Fa "RSA_METHOD *meth"
+.Fc
+.Sh DESCRIPTION
+An
+.Vt RSA_METHOD
+specifies the functions that OpenSSL uses for RSA operations.
+By modifying the method, alternative implementations such as hardware
+accelerators may be used.
+See the
+.Sx CAVEATS
+section for how these RSA API functions are affected by the use of
+.Xr engine 3
+API calls.
+.Pp
+Initially, the default
+.Vt RSA_METHOD
+is the OpenSSL internal implementation, as returned by
+.Fn RSA_PKCS1_SSLeay .
+.Pp
+.Fn RSA_set_default_method
+makes
+.Fa meth
+the default method for all
+.Vt RSA
+structures created later.
+.Sy NB :
+This is true only whilst no
+.Vt ENGINE
+has been set as a default for RSA, so this function is no longer
+recommended.
+.Pp
+.Fn RSA_get_default_method
+returns a pointer to the current default
+.Vt RSA_METHOD .
+However, the meaningfulness of this result is dependent on whether
+the
+.Xr engine 3
+API is being used, so this function is no longer recommended.
+.Pp
+.Fn RSA_set_method
+selects
+.Fa meth
+to perform all operations using the key
+.Fa rsa .
+This will replace the
+.Vt RSA_METHOD
+used by the RSA key, and if the previous method was supplied by an
+.Vt ENGINE ,
+the handle to that
+.Vt ENGINE
+will be released during the change.
+It is possible to have RSA keys that only work with certain
+.Vt RSA_METHOD
+implementations (eg. from an
+.Vt ENGINE
+module that supports embedded hardware-protected keys),
+and in such cases attempting to change the
+.Vt RSA_METHOD
+for the key can have unexpected results.
+.Pp
+.Fn RSA_get_method
+returns a pointer to the
+.Vt RSA_METHOD
+being used by
+.Fa rsa .
+This method may or may not be supplied by an
+.Vt ENGINE
+implementation, but if it is, the return value can only be guaranteed
+to be valid as long as the RSA key itself is valid and does not
+have its implementation changed by
+.Fn RSA_set_method .
+.Pp
+.Fn RSA_flags
+returns the flags that are set for  the current
+.Vt RSA_METHOD
+of
+.Fa rsa .
+See the
+.Sx BUGS
+section.
+.Pp
+.Fn RSA_new_method
+allocates and initializes an
+.Vt RSA
+structure so that
+.Fa meth
+will be used for the RSA operations.
+If
+.Sy engine
+is NULL, the default ENGINE for RSA operations is used, and if no
+default ENGINE is set, the RSA_METHOD controlled by
+.Fn RSA_set_default_method
+is used.
+.Pp
+.Fn RSA_flags
+returns the
+.Sy flags
+that are set for
+.Fa rsa Ns 's
+current method.
+.Pp
+.Fn RSA_new_method
+allocates and initializes an
+.Vt RSA
+structure so that
+.Fa meth
+will be used for the RSA operations.
+If
+.Fa meth
+is
+.Dv NULL ,
+the default method is used.
+.Sh THE RSA_METHOD STRUCTURE
+.Bd -literal
+typedef struct rsa_meth_st
+{
+     /* name of the implementation */
+	const char *name;
+
+     /* encrypt */
+	int (*rsa_pub_enc)(int flen, unsigned char *from,
+          unsigned char *to, RSA *rsa, int padding);
+
+     /* verify arbitrary data */
+	int (*rsa_pub_dec)(int flen, unsigned char *from,
+          unsigned char *to, RSA *rsa, int padding);
+
+     /* sign arbitrary data */
+	int (*rsa_priv_enc)(int flen, unsigned char *from,
+          unsigned char *to, RSA *rsa, int padding);
+
+     /* decrypt */
+	int (*rsa_priv_dec)(int flen, unsigned char *from,
+          unsigned char *to, RSA *rsa, int padding);
+
+     /* compute r0 = r0 ^ I mod rsa->n (May be NULL for some
+                                        implementations) */
+	int (*rsa_mod_exp)(BIGNUM *r0, BIGNUM *I, RSA *rsa);
+
+     /* compute r = a ^ p mod m (May be NULL for some implementations) */
+	int (*bn_mod_exp)(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+
+     /* called at RSA_new */
+	int (*init)(RSA *rsa);
+
+     /* called at RSA_free */
+	int (*finish)(RSA *rsa);
+
+     /* RSA_FLAG_EXT_PKEY        - rsa_mod_exp is called for private key
+      *                            operations, even if p,q,dmp1,dmq1,iqmp
+      *                            are NULL
+      * RSA_FLAG_SIGN_VER        - enable rsa_sign and rsa_verify
+      * RSA_METHOD_FLAG_NO_CHECK - don't check pub/private match
+      */
+	int flags;
+
+	char *app_data; /* ?? */
+
+     /* sign. For backward compatibility, this is used only
+      * if (flags & RSA_FLAG_SIGN_VER)
+      */
+	int (*rsa_sign)(int type, unsigned char *m, unsigned int m_len,
+           unsigned char *sigret, unsigned int *siglen, RSA *rsa);
+
+     /* verify. For backward compatibility, this is used only
+      * if (flags & RSA_FLAG_SIGN_VER)
+      */
+	int (*rsa_verify)(int type, unsigned char *m, unsigned int m_len,
+           unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
+
+} RSA_METHOD;
+.Ed
+.Sh RETURN VALUES
+.Fn RSA_PKCS1_SSLeay ,
+.Fn RSA_null_method ,
+.Fn RSA_get_default_method
+and
+.Fn RSA_get_method
+return pointers to the respective
+.Vt RSA_METHOD .
+.Pp
+.Fn RSA_set_method
+returns a pointer to the old
+.Vt RSA_METHOD
+implementation that was replaced.
+However, this return value should probably be ignored because if it was
+supplied by an
+.Vt ENGINE ,
+the pointer could be invalidated at any time if the
+.Vt ENGINE
+is unloaded.
+In fact, it could be unloaded as a result of the
+.Fn RSA_set_method
+function releasing its handle to the
+.Vt ENGINE .
+For this reason, the return type may be replaced with a
+.Vt void
+declaration in a future release.
+.Pp
+.Fn RSA_new_method
+returns
+.Dv NULL
+and sets an error code that can be obtained by
+.Xr ERR_get_error 3
+if the allocation fails.
+Otherwise it returns a pointer to the newly allocated structure.
+.Sh SEE ALSO
+.Xr rsa 3 ,
+.Xr RSA_new 3
+.Sh HISTORY
+.Fn RSA_new_method
+and
+.Fn RSA_set_default_method
+appeared in SSLeay 0.8.
+.Fn RSA_get_default_method ,
+.Fn RSA_set_method ,
+and
+.Fn RSA_get_method
+as well as the
+.Fa rsa_sign
+and
+.Fa rsa_verify
+components of
+.Vt RSA_METHOD
+were added in OpenSSL 0.9.4.
+.Pp
+.Fn RSA_set_default_openssl_method
+and
+.Fn RSA_get_default_openssl_method
+replaced
+.Fn RSA_set_default_method
+and
+.Fn RSA_get_default_method
+respectively, and
+.Fn RSA_set_method
+and
+.Fn RSA_new_method
+were altered to use
+.Vt ENGINE Ns s
+rather than
+.Vt RSA_METHOD Ns s
+during development of the
+.Xr engine 3
+version of OpenSSL 0.9.6.
+For 0.9.7, the handling of defaults in the
+.Xr engine 3
+API was restructured so that this change was reversed, and behaviour
+of the other functions resembled more closely the previous behaviour.
+The behaviour of defaults in the
+.Xr engine 3
+API now transparently overrides the behaviour of defaults in the
+RSA API without requiring changing these function prototypes.
+.Sh CAVEATS
+As of version 0.9.7,
+.Vt RSA_METHOD
+implementations are grouped together with other algorithmic APIs (eg.\&
+.Vt DSA_METHOD ,
+.Vt EVP_CIPHER ,
+etc.) into
+.Vt ENGINE
+modules.
+If a default
+.Vt ENGINE
+is specified for RSA functionality using an
+.Xr engine 3
+API function, that will override any RSA defaults set using the RSA
+API, ie.\&
+.Fn RSA_set_default_method .
+For this reason, the
+.Xr engine 3
+API is the recommended way to control default implementations for
+use in RSA and other cryptographic algorithms.
+.Sh BUGS
+The behaviour of
+.Fn RSA_flags
+is a mis-feature that is left as-is for now to avoid creating
+compatibility problems.
+RSA functionality, such as the encryption functions, are controlled by
+the
+.Fa flags
+value in the
+.Vt RSA
+key itself, not by the
+.Fa flags
+value in the
+.Vt RSA_METHOD
+attached to the RSA key (which is what this function returns).
+If the flags element of an
+.Vt RSA
+key is changed, the changes will be honoured by RSA functionality
+but will not be reflected in the return value of the
+.Fn RSA_flags
+function - in effect
+.Fn RSA_flags
+behaves more like a RSA_default_flags() function, which does not
+currently exist.

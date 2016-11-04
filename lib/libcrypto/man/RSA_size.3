@@ -1,0 +1,27 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_SIZE 3
+.Os
+.Sh NAME
+.Nm RSA_size
+.Nd get RSA modulus size
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft int
+.Fo RSA_size
+.Fa "const RSA *rsa"
+.Fc
+.Sh DESCRIPTION
+This function returns the RSA modulus size in bytes.
+It can be used to determine how much memory must be allocated for an RSA
+encrypted value.
+.Pp
+.Fa rsa->n
+must not be
+.Dv NULL .
+.Sh RETURN VALUE
+The size in bytes.
+.Sh SEE ALSO
+.Xr rsa 3
+.Sh HISTORY
+.Fn RSA_size
+is available in all versions of SSLeay and OpenSSL.

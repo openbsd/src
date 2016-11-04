@@ -1,0 +1,227 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_GET_EX_NEW_INDEX 3
+.Os
+.Sh NAME
+.Nm RSA_get_ex_new_index ,
+.Nm RSA_set_ex_data ,
+.Nm RSA_get_ex_data
+.Nd add application specific data to RSA structures
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft int
+.Fo RSA_get_ex_new_index
+.Fa "long argl"
+.Fa "void *argp"
+.Fa "CRYPTO_EX_new *new_func"
+.Fa "CRYPTO_EX_dup *dup_func"
+.Fa "CRYPTO_EX_free *free_func"
+.Fc
+.Ft int
+.Fo RSA_set_ex_data
+.Fa "RSA *r"
+.Fa "int idx"
+.Fa "void *arg"
+.Fc
+.Ft void *
+.Fo RSA_get_ex_data
+.Fa "RSA *r"
+.Fa "int idx"
+.Fc
+.Ft typedef int
+.Fo CRYPTO_EX_new
+.Fa "void *parent"
+.Fa "void *ptr"
+.Fa "CRYPTO_EX_DATA *ad"
+.Fa "int idx"
+.Fa "long argl"
+.Fa "void *argp"
+.Fc
+.Ft typedef void
+.Fo CRYPTO_EX_free
+.Fa "void *parent"
+.Fa "void *ptr"
+.Fa "CRYPTO_EX_DATA *ad"
+.Fa "int idx"
+.Fa "long argl"
+.Fa "void *argp"
+.Fc
+.Ft typedef int
+.Fo CRYPTO_EX_dup
+.Fa "CRYPTO_EX_DATA *to"
+.Fa "CRYPTO_EX_DATA *from"
+.Fa "void *from_d"
+.Fa "int idx"
+.Fa "long argl"
+.Fa "void *argp"
+.Fc
+.Sh DESCRIPTION
+Several OpenSSL structures can have application specific data attached
+to them.
+This has several potential uses, it can be used to cache data associated
+with a structure (for example the hash of some part of the structure) or
+some additional data (for example a handle to the data in an external
+library).
+.Pp
+Since the application data can be anything at all it is passed and
+retrieved as a
+.Vt void *
+type.
+.Pp
+The
+.Fn RSA_get_ex_new_index
+function is initially called to "register" some new application specific
+data.
+It takes three optional function pointers which are called when the
+parent structure (in this case an RSA structure) is initially created,
+when it is copied and when it is freed up.
+If any or all of these function pointer arguments are not used, they
+should be set to
+.Dv NULL .
+The precise manner in which these function pointers are called is
+described in more detail below.
+.Fn RSA_get_ex_new_index
+also takes additional long and pointer parameters which will be passed
+to the supplied functions but which otherwise have no special meaning.
+It returns an index which should be stored (typically in a static
+variable) and passed as the
+.Fa idx
+parameter in the remaining functions.
+Each successful call to
+.Fn RSA_get_ex_new_index
+will return an index greater than any previously returned.
+This is
+important because the optional functions are called in order of
+increasing index value.
+.Pp
+.Fn RSA_set_ex_data
+is used to set application specific data, the data is supplied in the
+.Fa arg
+parameter and its precise meaning is up to the application.
+.Pp
+.Fn RSA_get_ex_data
+is used to retrieve application specific data.
+The data is returned to the application, this will be the same value as
+supplied to a previous
+.Fn RSA_set_ex_data
+call.
+.Pp
+.Fa new_func
+is called when a structure is initially allocated (for example with
+.Xr RSA_new 3 .
+The parent structure members will not have any meaningful values at this
+point.
+This function will typically be used to allocate any application
+specific structure.
+.Pp
+.Fa free_func
+is called when a structure is being freed up.
+The dynamic parent structure members should not be accessed because they
+will be freed up when this function is called.
+.Pp
+.Fa new_func
+and
+.Fa free_func
+take the same parameters.
+.Fa parent
+is a pointer to the parent
+.Vt RSA
+structure.
+.Fa ptr
+is the application specific data (this won't be of much use in
+.Fa new_func ) .
+.Fa ad
+is a pointer to the
+.Vt CRYPTO_EX_DATA
+structure from the parent
+.Vt RSA
+structure: the functions
+.Fn CRYPTO_get_ex_data
+and
+.Fn CRYPTO_set_ex_data
+can be called to manipulate it.
+The
+.Fa idx
+parameter is the index: this will be the same value returned by
+.Fn RSA_get_ex_new_index
+when the functions were initially registered.
+Finally the
+.Fa argl
+and
+.Fa argp
+parameters are the values originally passed to the same corresponding
+parameters when
+.Fn RSA_get_ex_new_index
+was called.
+.Pp
+.Fa dup_func
+is called when a structure is being copied.
+Pointers to the destination and source
+.Vt CRYPTO_EX_DATA
+structures are passed in the
+.Fa to
+and
+.Fa from
+parameters, respectively.
+The
+.Fa from_d
+parameter is passed a pointer to the source application data when the
+function is called.
+When the function returns, the value is copied to the destination:
+the application can thus modify the data pointed to by
+.Fa from_d
+and have different values in the source and destination.
+The
+.Fa idx ,
+.Fa argl ,
+and
+.Fa argp
+parameters are the same as those in
+.Fa new_func
+and
+.Fa free_func .
+.Sh RETURN VALUES
+.Fn RSA_get_ex_new_index
+returns a new index or -1 on failure.
+Note that 0 is a valid index value.
+.Pp
+.Fn RSA_set_ex_data
+returns 1 on success or 0 on failure.
+.Pp
+.Fn RSA_get_ex_data
+returns the application data or
+.Dv NULL
+on failure.
+.Dv NULL
+may also be valid application data, but currently it can only fail if
+given an invalid
+.Fa idx
+parameter.
+.Pp
+.Fa new_func
+and
+.Fa dup_func
+should return 0 for failure and 1 for success.
+.Pp
+On failure an error code can be obtained from
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr CRYPTO_set_ex_data 3 ,
+.Xr rsa 3
+.Sh HISTORY
+.Fn RSA_get_ex_new_index ,
+.Fn RSA_set_ex_data ,
+and
+.Fn RSA_get_ex_data
+are available since SSLeay 0.9.0.
+.Sh BUGS
+.Fa dup_func
+is currently never called.
+.Pp
+The return value of
+.Fa new_func
+is ignored.
+.Pp
+The
+.Fa new_func
+function isn't very useful because no meaningful values are present in
+the parent RSA structure when it is called.

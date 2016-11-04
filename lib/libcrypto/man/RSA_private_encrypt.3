@@ -1,0 +1,97 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt RSA_PRIVATE_ENCRYPT 3
+.Os
+.Sh NAME
+.Nm RSA_private_encrypt ,
+.Nm RSA_public_decrypt
+.Nd low level signature operations
+.Sh SYNOPSIS
+.In openssl/rsa.h
+.Ft int
+.Fo RSA_private_encrypt
+.Fa "int flen"
+.Fa "unsigned char *from"
+.Fa "unsigned char *to"
+.Fa "RSA *rsa"
+.Fa "int padding"
+.Fc
+.Ft int
+.Fo RSA_public_decrypt
+.Fa "int flen"
+.Fa "unsigned char *from"
+.Fa "unsigned char *to"
+.Fa "RSA *rsa"
+.Fa "int padding"
+.Fc
+.Sh DESCRIPTION
+These functions handle RSA signatures at a low level.
+.Pp
+.Fn RSA_private_encrypt
+signs the
+.Fa flen
+bytes at
+.Fa from
+(usually a message digest with an algorithm identifier) using the
+private key
+.Fa rsa
+and stores the signature in
+.Fa to .
+.Fa to
+must point to
+.Fn RSA_size rsa
+bytes of memory.
+.Pp
+.Fa padding
+denotes one of the following modes:
+.Bl -tag -width Ds
+.It Dv RSA_PKCS1_PADDING
+PKCS #1 v1.5 padding.
+This function does not handle the
+.Sy algorithmIdentifier
+specified in PKCS #1.
+When generating or verifying PKCS #1 signatures,
+.Xr RSA_sign 3
+and
+.Xr RSA_verify 3
+should be used.
+.It Dv RSA_NO_PADDING
+Raw RSA signature.
+This mode should only be used to implement cryptographically sound
+padding modes in the application code.
+Signing user data directly with RSA is insecure.
+.El
+.Pp
+.Fn RSA_public_decrypt
+recovers the message digest from the
+.Fa flen
+bytes long signature at
+.Fa from
+using the signer's public key
+.Fa rsa .
+.Fa to
+must point to a memory section large enough to hold the message digest
+(which is smaller than
+.Fn RSA_size rsa
+- 11).
+.Fa padding
+is the padding mode that was used to sign the data.
+.Sh RETURN VALUES
+.Fn RSA_private_encrypt
+returns the size of the signature (i.e.,
+.Fn RSA_size rsa ) .
+.Fn RSA_public_decrypt
+returns the size of the recovered message digest.
+.Pp
+On error, -1 is returned; the error codes can be obtained by
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr ERR_get_error 3 ,
+.Xr rsa 3 ,
+.Xr RSA_sign 3 ,
+.Xr RSA_verify 3
+.Sh HISTORY
+The
+.Fa padding
+argument was added in SSLeay 0.8.
+.Dv RSA_NO_PADDING
+is available since SSLeay 0.9.0.
