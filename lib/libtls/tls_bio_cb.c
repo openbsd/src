@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.6 2016/11/04 08:17:43 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.7 2016/11/04 10:50:32 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -24,12 +24,12 @@
 #include <tls.h>
 #include "tls_internal.h"
 
-static int write_cb(BIO *b, const char *buf, int num);
-static int read_cb(BIO *b, char *buf, int size);
-static int puts_cb(BIO *b, const char *str);
-static long ctrl_cb(BIO *b, int cmd, long num, void *ptr);
-static int new_cb(BIO *b);
-static int free_cb(BIO *data);
+static int bio_cb_write(BIO *b, const char *buf, int num);
+static int bio_cb_read(BIO *b, char *buf, int size);
+static int bio_cb_puts(BIO *b, const char *str);
+static long bio_cb_ctrl(BIO *b, int cmd, long num, void *ptr);
+static int bio_cb_new(BIO *b);
+static int bio_cb_free(BIO *data);
 
 struct bio_cb_st {
 	int (*write_cb)(BIO *h, const char *buf, int num, void *cb_arg);
@@ -37,21 +37,21 @@ struct bio_cb_st {
 	void *cb_arg;
 };
 
-static BIO_METHOD cb_method = {
+static BIO_METHOD bio_cb_method = {
 	.type = BIO_TYPE_MEM,
 	.name = "libtls_callbacks",
-	.bwrite = write_cb,
-	.bread = read_cb,
-	.bputs = puts_cb,
-	.ctrl = ctrl_cb,
-	.create = new_cb,
-	.destroy = free_cb
+	.bwrite = bio_cb_write,
+	.bread = bio_cb_read,
+	.bputs = bio_cb_puts,
+	.ctrl = bio_cb_ctrl,
+	.create = bio_cb_new,
+	.destroy = bio_cb_free,
 };
 
 static BIO_METHOD *
 bio_s_cb(void)
 {
-	return (&cb_method);
+	return (&bio_cb_method);
 }
 
 static int
@@ -84,7 +84,7 @@ bio_set_cb_arg(BIO *bi, void *cb_arg)
 }
 
 static int
-new_cb(BIO *bi)
+bio_cb_new(BIO *bi)
 {
 	struct bio_cb_st *bcb;
 
@@ -101,7 +101,7 @@ new_cb(BIO *bi)
 }
 
 static int
-free_cb(BIO *bi)
+bio_cb_free(BIO *bi)
 {
 	if (bi == NULL)
 		return (0);
@@ -117,30 +117,30 @@ free_cb(BIO *bi)
 }
 
 static int
-read_cb(BIO *b, char *buf, int size)
+bio_cb_read(BIO *b, char *buf, int size)
 {
 	struct bio_cb_st *bcb = b->ptr;
 	return (bcb->read_cb(b, buf, size, bcb->cb_arg));
 }
 
 static int
-write_cb(BIO *b, const char *buf, int num)
+bio_cb_write(BIO *b, const char *buf, int num)
 {
 	struct bio_cb_st *bcb = b->ptr;
 	return (bcb->write_cb(b, buf, num, bcb->cb_arg));
 }
 
 static int
-puts_cb(BIO *b, const char *str)
+bio_cb_puts(BIO *b, const char *str)
 {
 	int n;
 
 	n = strlen(str);
-	return (write_cb(b, str, n));
+	return (bio_cb_write(b, str, n));
 }
 
 static long
-ctrl_cb(BIO *b, int cmd, long num, void *ptr)
+bio_cb_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
 	long ret = 1;
 
