@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.75 2016/11/04 05:13:13 beck Exp $
+.\"     $OpenBSD: nc.1,v 1.76 2016/11/04 07:34:17 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -233,8 +233,9 @@ which disables certificate name checking;
 .Ar clientcert ,
 which requires a client certificate on incoming connections; or
 .Ar muststaple ,
-which requires the peer to provide a valid stapled OCSP response 
-with the handshake. It is illegal to specify TLS options if not using TLS.
+which requires the peer to provide a valid stapled OCSP response
+with the handshake.
+It is illegal to specify TLS options if not using TLS.
 .Pp
 For IPv4 TOS value
 .Ar keyword
