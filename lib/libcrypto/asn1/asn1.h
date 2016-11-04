@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.34 2015/10/13 16:31:08 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.35 2016/11/04 18:07:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1357,6 +1357,9 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_WRONG_TAG				 168
 #define ASN1_R_WRONG_TYPE				 169
 
+
+int ASN1_time_parse(const char *_bytes, size_t _len, struct tm *_tm, int _mode);
+int ASN1_time_tm_cmp(struct tm *_tm1, struct tm *_tm2);
 #ifdef  __cplusplus
 }
 #endif

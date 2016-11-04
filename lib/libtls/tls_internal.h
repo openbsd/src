@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.46 2016/11/04 05:13:13 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.47 2016/11/04 18:07:24 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -208,7 +208,5 @@ void tls_conninfo_free(struct tls_conninfo *conninfo);
 int tls_ocsp_verify_cb(SSL *ssl, void *arg);
 void tls_ocsp_ctx_free(struct tls_ocsp_ctx *ctx);
 struct tls_ocsp_ctx *tls_ocsp_setup_from_peer(struct tls *ctx);
-
-int asn1_time_parse(const char *, size_t, struct tm *, int);
 
 #endif /* HEADER_TLS_INTERNAL_H */

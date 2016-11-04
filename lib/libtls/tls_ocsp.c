@@ -63,7 +63,7 @@ tls_ocsp_asn1_parse_time(struct tls *ctx, ASN1_GENERALIZEDTIME *gt, time_t *gt_t
 	if (gt == NULL)
 		return -1;
 	/* RFC 6960 specifies that all times in OCSP must be GENERALIZEDTIME */
-	if (asn1_time_parse(gt->data, gt->length, &tm,
+	if (ASN1_time_parse(gt->data, gt->length, &tm,
 		V_ASN1_GENERALIZEDTIME) == -1)
 		return -1;
 	if ((*gt_time = timegm(&tm)) == -1)
@@ -258,7 +258,6 @@ tls_ocsp_verify_response(struct tls *ctx, OCSP_RESPONSE *resp)
 			       OCSP_crl_reason_str(crl_reason));
 		goto error;
 	}
-
 	ret = 0;
 
  error:

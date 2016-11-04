@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_cl.c,v 1.11 2016/07/16 16:14:28 beck Exp $ */
+/* $OpenBSD: ocsp_cl.c,v 1.12 2016/11/04 18:07:23 beck Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -70,9 +70,6 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-
-int asn1_time_parse(const char *, size_t, struct tm *, int);
-int asn1_tm_cmp(struct tm *, struct tm *);
 
 /* Utility functions related to sending OCSP requests and extracting
  * relevant information from the response.
@@ -342,7 +339,7 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 	 */
 
 	/* Check thisUpdate is valid and not more than nsec in the future */
-	if (asn1_time_parse(thisupd->data, thisupd->length, &tm_this,
+	if (ASN1_time_parse(thisupd->data, thisupd->length, &tm_this,
 	    V_ASN1_GENERALIZEDTIME) != V_ASN1_GENERALIZEDTIME) {
 		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 		    OCSP_R_ERROR_IN_THISUPDATE_FIELD);
@@ -351,7 +348,7 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 		t_tmp = t_now + nsec;
 		if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
 			return 0;
-		if (asn1_tm_cmp(&tm_this, &tm_tmp) > 0) {
+		if (ASN1_time_tm_cmp(&tm_this, &tm_tmp) > 0) {
 			OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 			    OCSP_R_STATUS_NOT_YET_VALID);
 			return 0;
@@ -365,7 +362,7 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 			t_tmp = t_now - maxsec;
 			if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
 				return 0;
-			if (asn1_tm_cmp(&tm_this, &tm_tmp) < 0) {
+			if (ASN1_time_tm_cmp(&tm_this, &tm_tmp) < 0) {
 				OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 				    OCSP_R_STATUS_TOO_OLD);
 				return 0;
@@ -377,7 +374,7 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 		return 1;
 
 	/* Check nextUpdate is valid and not more than nsec in the past */
-	if (asn1_time_parse(nextupd->data, nextupd->length, &tm_next,
+	if (ASN1_time_parse(nextupd->data, nextupd->length, &tm_next,
 	    V_ASN1_GENERALIZEDTIME) != V_ASN1_GENERALIZEDTIME) {
 		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 		    OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
@@ -386,7 +383,7 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 		t_tmp = t_now - nsec;
 		if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
 			return 0;
-		if (asn1_tm_cmp(&tm_next, &tm_tmp) < 0) {
+		if (ASN1_time_tm_cmp(&tm_next, &tm_tmp) < 0) {
 			OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 			    OCSP_R_STATUS_EXPIRED);
 			return 0;
@@ -394,7 +391,7 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 	}
 
 	/* Also don't allow nextUpdate to precede thisUpdate */
-	if (asn1_tm_cmp(&tm_next, &tm_this) < 0) {
+	if (ASN1_time_tm_cmp(&tm_next, &tm_this) < 0) {
 		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 		    OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
 		return 0;
