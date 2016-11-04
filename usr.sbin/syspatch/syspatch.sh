@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.34 2016/11/03 17:14:31 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.35 2016/11/04 11:42:14 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -35,6 +35,7 @@ needs_root()
 
 apply_patch()
 {
+	# XXX make sure mount points are not read-only
 	local _explodir _file _files _patch=$1
 	[[ -n ${_patch} ]]
 
@@ -101,7 +102,8 @@ create_rollback()
 				${_rbfiles}
 		fi
 	); then
-		rm ${_PDIR}/${_REL}/rollback-${_patch}.tgz
+		# `-f' in case /var is read-only
+		rm -f ${_PDIR}/${_REL}/rollback-${_patch}.tgz
 		sp_err "Failed to create rollback for ${_patch}"
 	fi
 }
