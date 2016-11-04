@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2016/10/29 14:58:54 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2016/11/04 15:07:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -271,7 +271,7 @@ vm		: VM string			{
 				log_debug("%s:%d: vm \"%s\" skipped (disabled)",
 				    file->name, yylval.lineno, vcp->vcp_name);
 			} else if (!env->vmd_noaction) {
-				ret = config_registervm(&env->vmd_ps, &vmc, &vm);
+				ret = vm_register(&env->vmd_ps, &vmc, &vm);
 				if (ret == -1 && errno == EALREADY) {
 					log_debug("%s:%d: vm \"%s\""
 					    " skipped (%s)",

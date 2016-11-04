@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.32 2016/10/29 14:56:05 edd Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.33 2016/11/04 15:07:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -164,6 +164,8 @@ struct vmd_vm *vm_getbyid(uint32_t);
 struct vmd_vm *vm_getbyname(const char *);
 struct vmd_vm *vm_getbypid(pid_t);
 void	 vm_remove(struct vmd_vm *);
+int	 vm_register(struct privsep *, struct vmop_create_params *,
+	    struct vmd_vm **);
 void	 switch_remove(struct vmd_switch *);
 struct vmd_switch *switch_getbyname(const char *);
 char	*get_string(uint8_t *, size_t);
@@ -191,9 +193,8 @@ int	 config_init(struct vmd *);
 void	 config_purge(struct vmd *, unsigned int);
 int	 config_setreset(struct vmd *, unsigned int);
 int	 config_getreset(struct vmd *, struct imsg *);
-int	 config_registervm(struct privsep *, struct vmop_create_params *,
-	    struct vmd_vm **);
-int	 config_getvm(struct privsep *, struct vmd_vm *, int, uint32_t);
+int	 config_setvm(struct privsep *, struct vmd_vm *, uint32_t);
+int	 config_getvm(struct privsep *, struct imsg *);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
 

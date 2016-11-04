@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.37 2016/10/29 14:56:05 edd Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.38 2016/11/04 15:07:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -32,6 +33,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <util.h>
 
 #include "proc.h"
 #include "vmd.h"
@@ -77,12 +79,12 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		res = config_registervm(ps, &vmc, &vm);
+		res = vm_register(ps, &vmc, &vm);
 		if (res == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		} else {
-			res = config_getvm(ps, vm, -1, imsg->hdr.peerid);
+			res = config_setvm(ps, vm, imsg->hdr.peerid);
 			if (res == -1) {
 				res = errno;
 				cmd = IMSG_VMDOP_START_VM_RESPONSE;
@@ -464,7 +466,7 @@ vmd_configure(void)
 	}
 
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
-		res = config_getvm(&env->vmd_ps, vm, -1, -1);
+		res = config_setvm(&env->vmd_ps, vm, -1);
 		if (res == -1) {
 			log_warn("%s: failed to create vm %s",
 			    __func__,
@@ -514,7 +516,7 @@ vmd_reload(unsigned int reset, const char *filename)
 
 		TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 			if (vm->vm_running == 0) {
-				res = config_getvm(&env->vmd_ps, vm, -1, -1);
+				res = config_setvm(&env->vmd_ps, vm, -1);
 				if (res == -1) {
 					log_warn("%s: failed to create vm %s",
 					    __func__,
@@ -622,6 +624,61 @@ vm_remove(struct vmd_vm *vm)
 
 	free(vm->vm_ttyname);
 	free(vm);
+}
+
+int
+vm_register(struct privsep *ps, struct vmop_create_params *vmc,
+    struct vmd_vm **ret_vm)
+{
+	struct vmd_vm		*vm = NULL;
+	struct vm_create_params	*vcp = &vmc->vmc_params;
+	unsigned int		 i;
+
+	errno = 0;
+	*ret_vm = NULL;
+
+	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL) {
+		*ret_vm = vm;
+		errno = EALREADY;
+		goto fail;
+	}
+
+	if (vcp->vcp_ncpus == 0)
+		vcp->vcp_ncpus = 1;
+	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM) {
+		log_debug("invalid number of CPUs");
+		goto fail;
+	} else if (vcp->vcp_ndisks > VMM_MAX_DISKS_PER_VM) {
+		log_debug("invalid number of disks");
+		goto fail;
+	} else if (vcp->vcp_nnics > VMM_MAX_NICS_PER_VM) {
+		log_debug("invalid number of interfaces");
+		goto fail;
+	}
+
+	if ((vm = calloc(1, sizeof(*vm))) == NULL)
+		goto fail;
+
+	memcpy(&vm->vm_params, vmc, sizeof(vm->vm_params));
+	vm->vm_pid = -1;
+
+	for (i = 0; i < vcp->vcp_ndisks; i++)
+		vm->vm_disks[i] = -1;
+	for (i = 0; i < vcp->vcp_nnics; i++)
+		vm->vm_ifs[i].vif_fd = -1;
+	vm->vm_kernel = -1;
+
+	if ((vm->vm_vmid = ++env->vmd_nvm) == 0)
+		fatalx("too many vms");
+
+	TAILQ_INSERT_TAIL(env->vmd_vms, vm, vm_entry);
+
+	*ret_vm = vm;
+	return (0);
+fail:
+	if (errno == 0)
+		errno = EINVAL;
+	return (-1);
 }
 
 void
