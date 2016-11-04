@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.5 2016/09/14 11:30:41 bcook Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.6 2016/11/04 08:17:43 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -108,9 +108,7 @@ free_cb(BIO *bi)
 
 	if (bi->shutdown) {
 		if ((bi->init) && (bi->ptr != NULL)) {
-			struct bio_cb_st *b;
-			b = (struct bio_cb_st *)bi->ptr;
-			free(b);
+			free(bi->ptr);
 			bi->ptr = NULL;
 		}
 	}
