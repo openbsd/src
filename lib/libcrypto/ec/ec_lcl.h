@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.6 2016/11/04 17:33:19 miod Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -422,6 +422,10 @@ int ec_GFp_nistp256_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar
 int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx);
 int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
 int ec_GFp_nistp256_have_precompute_mult(const EC_GROUP *group);
+
+#ifdef ECP_NISTZ256_ASM
+const EC_METHOD *EC_GFp_nistz256_method(void);
+#endif
 
 /* method functions in ecp_nistp521.c */
 int ec_GFp_nistp521_group_init(EC_GROUP *group);

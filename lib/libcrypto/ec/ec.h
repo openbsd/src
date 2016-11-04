@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.11 2015/10/13 15:25:18 jsing Exp $ */
+/* $OpenBSD: ec.h,v 1.12 2016/11/04 17:33:19 miod Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -992,6 +992,12 @@ void ERR_load_EC_strings(void);
 #define EC_F_ECP_NIST_MOD_224				 204
 #define EC_F_ECP_NIST_MOD_256				 205
 #define EC_F_ECP_NIST_MOD_521				 206
+#define EC_F_ECP_NISTZ256_GET_AFFINE			 240
+#define EC_F_ECP_NISTZ256_MULT_PRECOMPUTE		 243
+#define EC_F_ECP_NISTZ256_POINTS_MUL			 241
+#define EC_F_ECP_NISTZ256_PRE_COMP_NEW			 244
+#define EC_F_ECP_NISTZ256_SET_WORDS			 245
+#define EC_F_ECP_NISTZ256_WINDOWED_MUL			 242
 #define EC_F_EC_ASN1_GROUP2CURVE			 153
 #define EC_F_EC_ASN1_GROUP2FIELDID			 154
 #define EC_F_EC_ASN1_GROUP2PARAMETERS			 155
