@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.8 2016/11/04 10:51:35 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.9 2016/11/04 10:54:25 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -52,35 +52,6 @@ static BIO_METHOD *
 bio_s_cb(void)
 {
 	return (&bio_cb_method);
-}
-
-static int
-bio_set_write_cb(BIO *bi,
-    int (*write_cb)(BIO *h, const char *buf, int num, void *cb_arg))
-{
-	struct bio_cb_st *b;
-	b = (struct bio_cb_st *)bi->ptr;
-	b->write_cb = write_cb;
-	return (0);
-}
-
-static int
-bio_set_read_cb(BIO *bi,
-    int (*read_cb)(BIO *h, char *buf, int size, void *cb_arg))
-{
-	struct bio_cb_st *b;
-	b = (struct bio_cb_st *)bi->ptr;
-	b->read_cb = read_cb;
-	return (0);
-}
-
-static int
-bio_set_cb_arg(BIO *bi, void *cb_arg)
-{
-	struct bio_cb_st *b;
-	b = (struct bio_cb_st *)bi->ptr;
-	b->cb_arg = cb_arg;
-	return (0);
 }
 
 static int
@@ -203,6 +174,7 @@ tls_bio_read_cb(BIO *h, char *buf, int size, void *cb_arg)
 static BIO *
 tls_get_new_cb_bio(struct tls *ctx)
 {
+	struct bio_cb_st *b;
 	BIO *bcb;
 	if (ctx->read_cb == NULL || ctx->write_cb == NULL)
 		tls_set_errorx(ctx, "no callbacks registered");
@@ -213,9 +185,10 @@ tls_get_new_cb_bio(struct tls *ctx)
 		return (NULL);
 	}
 
-	bio_set_write_cb(bcb, tls_bio_write_cb);
-	bio_set_read_cb(bcb, tls_bio_read_cb);
-	bio_set_cb_arg(bcb, ctx);
+	b = (struct bio_cb_st *)bcb->ptr;
+	b->read_cb = tls_bio_read_cb;
+	b->write_cb = tls_bio_write_cb;
+	b->cb_arg = ctx;
 
 	return (bcb);
 }
