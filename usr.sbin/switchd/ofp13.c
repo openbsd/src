@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.21 2016/10/13 08:29:14 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.22 2016/11/04 22:27:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -43,12 +43,6 @@
 #include "switchd.h"
 #include "ofp_map.h"
 
-int	 ofp13_validate(struct switchd *,
-	    struct sockaddr_storage *, struct sockaddr_storage *,
-	    struct ofp_header *, struct ibuf *);
-
-int	 ofp13_hello(struct switchd *, struct switch_connection *,
-	    struct ofp_header *, struct ibuf *);
 int	 ofp13_echo_request(struct switchd *, struct switch_connection *,
 	    struct ofp_header *, struct ibuf *);
 int	 ofp13_validate_features_reply(struct switchd *,
@@ -90,11 +84,6 @@ int	 ofp13_multipart_request_validate(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
 
-int	 ofp13_desc(struct switchd *, struct switch_connection *);
-int	 ofp13_flow_stats(struct switchd *, struct switch_connection *,
-	    uint32_t, uint32_t, uint8_t);
-int	 ofp13_table_features(struct switchd *, struct switch_connection *,
-	    uint8_t);
 int	 ofp13_error(struct switchd *, struct switch_connection *,
 	    struct ofp_header *, struct ibuf *, uint16_t, uint16_t);
 
@@ -109,8 +98,6 @@ int	 ofp13_setconfig_validate(struct switchd *,
 	    struct ofp_header *, struct ibuf *);
 int	 ofp13_setconfig(struct switchd *, struct switch_connection *,
 	    uint16_t, uint16_t);
-int	 ofp13_featuresrequest(struct switchd *, struct switch_connection *);
-
 
 struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_HELLO,			ofp13_hello, NULL },

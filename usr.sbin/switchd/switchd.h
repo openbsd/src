@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.16 2016/10/12 19:07:42 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.17 2016/11/04 22:27:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -224,8 +224,6 @@ void		 ofrelay_write(struct switch_connection *, struct ibuf *);
 void		 ofp(struct privsep *, struct privsep_proc *);
 void		 ofp_close(struct switch_connection *);
 int		 ofp_open(struct privsep *, struct switch_connection *);
-int		 ofp_output(struct switch_connection *, struct ofp_header *,
-		    struct ibuf *);
 void		 ofp_accept(int, short, void *);
 int		 ofp_validate_header(struct switchd *,
 		    struct sockaddr_storage *, struct sockaddr_storage *,
@@ -244,8 +242,22 @@ int		 ofp10_input(struct switchd *, struct switch_connection *,
 /* ofp13.c */
 int		 ofp13_input(struct switchd *, struct switch_connection *,
 		    struct ofp_header *, struct ibuf *);
+int		 ofp13_hello(struct switchd *, struct switch_connection *,
+		    struct ofp_header *oh, struct ibuf *);
+int		 ofp13_validate(struct switchd *,
+		    struct sockaddr_storage *, struct sockaddr_storage *,
+		    struct ofp_header *, struct ibuf *);
+int		 ofp13_desc(struct switchd *, struct switch_connection *);
+int		 ofp13_flow_stats(struct switchd *, struct switch_connection *,
+		    uint32_t, uint32_t, uint8_t);
+int		 ofp13_table_features(struct switchd *,
+		    struct switch_connection *, uint8_t);
+int		 ofp13_featuresrequest(struct switchd *,
+		    struct switch_connection *);
 
 /* ofp_common.c */
+int		 ofp_output(struct switch_connection *, struct ofp_header *,
+		    struct ibuf *);
 int		 ofp_multipart_add(struct switch_connection *, uint32_t,
 		    uint8_t);
 void		 ofp_multipart_del(struct switch_connection *, uint32_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.14 2016/10/12 19:07:42 reyk Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.15 2016/11/04 22:27:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -150,30 +150,6 @@ ofp_input(struct switch_connection *con, struct ibuf *ibuf)
 		ofp10_hello(sc, con, oh, ibuf);
 		return (-1);
 	}
-
-	return (0);
-}
-
-int
-ofp_output(struct switch_connection *con, struct ofp_header *oh,
-    struct ibuf *obuf)
-{
-	struct ibuf	*buf;
-
-	if ((buf = ibuf_static()) == NULL)
-		return (-1);
-	if ((oh != NULL) &&
-	    (ibuf_add(buf, oh, sizeof(*oh)) == -1)) {
-		ibuf_release(buf);
-		return (-1);
-	}
-	if ((obuf != NULL) &&
-	    (ibuf_cat(buf, obuf) == -1)) {
-		ibuf_release(buf);
-		return (-1);
-	}
-
-	ofrelay_write(con, buf);
 
 	return (0);
 }

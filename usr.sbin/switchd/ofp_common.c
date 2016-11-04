@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_common.c,v 1.1 2016/10/07 08:49:53 reyk Exp $	*/
+/*	$OpenBSD: ofp_common.c,v 1.2 2016/11/04 22:27:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -42,6 +42,30 @@
 
 #include "switchd.h"
 #include "ofp_map.h"
+
+int
+ofp_output(struct switch_connection *con, struct ofp_header *oh,
+    struct ibuf *obuf)
+{
+	struct ibuf	*buf;
+
+	if ((buf = ibuf_static()) == NULL)
+		return (-1);
+	if ((oh != NULL) &&
+	    (ibuf_add(buf, oh, sizeof(*oh)) == -1)) {
+		ibuf_release(buf);
+		return (-1);
+	}
+	if ((obuf != NULL) &&
+	    (ibuf_cat(buf, obuf) == -1)) {
+		ibuf_release(buf);
+		return (-1);
+	}
+
+	ofrelay_write(con, buf);
+
+	return (0);
+}
 
 /* Appends an action with just the generic header. */
 int
