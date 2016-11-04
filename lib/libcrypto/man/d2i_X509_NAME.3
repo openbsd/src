@@ -1,0 +1,34 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt D2I_X509_NAME 3
+.Os
+.Sh NAME
+.Nm d2i_X509_NAME ,
+.Nm i2d_X509_NAME
+.Nd X509_NAME encoding functions
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft X509_NAME *
+.Fo d2i_X509_NAME
+.Fa "X509_NAME **a"
+.Fa "unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_X509_NAME
+.Fa "X509_NAME *a"
+.Fa "unsigned char **pp"
+.Fc
+.Sh DESCRIPTION
+These functions decode and encode an
+.Vt X509_NAME
+structure which is the same as the
+.Sy Name
+type defined in RFC2459 (and elsewhere) and used for example in
+certificate subject and issuer names.
+.Pp
+Otherwise the functions behave in a way similar to
+.Xr d2i_X509 3
+and
+.Xr i2d_X509 3 .
+.Sh SEE ALSO
+.Xr d2i_X509 3

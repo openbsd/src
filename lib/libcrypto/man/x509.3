@@ -1,0 +1,79 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509 3
+.Os
+.Sh NAME
+.Nm x509
+.Nd X.509 certificate handling
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Sh DESCRIPTION
+A X.509 certificate is a structured grouping of information about an
+individual, a device, or anything one can imagine.
+A X.509 CRL (certificate revocation list) is a tool to help determine if
+a certificate is still valid.
+The exact definition of those can be found in the X.509 document from
+ITU-T, or in RFC3280 from PKIX.
+In OpenSSL, the type
+.Vt X509
+is used to express such a certificate, and the type
+.Vt X509_CRL
+is used to express a CRL.
+.Pp
+A related structure is a certificate request, defined in PKCS#10 from
+RSA Security, Inc., also reflected in RFC2896.
+In OpenSSL, the type
+.Vt X509_REQ
+is used to express such a certificate request.
+.Pp
+To handle some complex parts of a certificate, there are the types
+.Vt X509_NAME
+to express a certificate name,
+.Vt X509_ATTRIBUTE
+to express a certificate attribute,
+.Vt X509_EXTENSION
+to express a certificate extension, and a few more.
+.Pp
+Finally, there's the supertype
+.Vt X509_INFO ,
+which can contain a CRL, a certificate, and a corresponding private key.
+.Pp
+The functions
+.Fa X509_* ,
+.Fa d2i_X509_* ,
+and
+.Fa i2d_X509_*
+handle X.509 certificates, with some exceptions shown below.
+.Pp
+.Fa X509_CRL_* ,
+.Fa d2i_X509_CRL_* ,
+and
+.Fa i2d_X509_CRL_*
+handle X.509 CRLs.
+.Pp
+.Fa X509_REQ_* ,
+.Fa d2i_X509_REQ_* ,
+and
+.Fa i2d_X509_REQ_*
+handle PKCS#10 certificate requests.
+.Pp
+.Fa X509_NAME_*
+handle certificate names.
+.Pp
+.Fa X509_ATTRIBUTE_*
+handle certificate attributes.
+.Pp
+.Fa X509_EXTENSION_*
+handle certificate extensions.
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr d2i_X509 3 ,
+.Xr d2i_X509_ALGOR 3 ,
+.Xr d2i_X509_CRL 3 ,
+.Xr d2i_X509_NAME 3 ,
+.Xr d2i_X509_REQ 3 ,
+.Xr d2i_X509_SIG 3 ,
+.Xr X509_NAME_add_entry_by_NID 3 ,
+.Xr X509_NAME_add_entry_by_txt 3 ,
+.Xr X509_NAME_ENTRY_get_object 3 ,
+.Xr X509_NAME_new 3 ,
+.Xr X509_NAME_print_ex 3

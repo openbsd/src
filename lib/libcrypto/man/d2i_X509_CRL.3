@@ -1,0 +1,54 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt D2I_X509_CRL 3
+.Os
+.Sh NAME
+.Nm d2i_X509_CRL ,
+.Nm i2d_X509_CRL ,
+.Nm d2i_X509_CRL_bio ,
+.Nm d2i_X509_CRL_fp ,
+.Nm i2d_X509_CRL_bio ,
+.Nm i2d_X509_CRL_fp
+.Nd PKCS#10 certificate request functions
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft X509_CRL *
+.Fo d2i_X509_CRL
+.Fa "X509_CRL **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_X509_CRL
+.Fa "X509_CRL *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft X509_CRL *
+.Fo d2i_X509_CRL_bio
+.Fa "BIO *bp"
+.Fa "X509_CRL **x"
+.Fc
+.Ft X509_CRL *
+.Fo d2i_X509_CRL_fp
+.Fa "FILE *fp"
+.Fa "X509_CRL **x"
+.Fc
+.Ft int
+.Fo i2d_X509_CRL_bio
+.Fa "BIO *bp"
+.Fa "X509_CRL *x"
+.Fc
+.Ft int
+.Fo i2d_X509_CRL_fp
+.Fa "FILE *fp"
+.Fa "X509_CRL *x"
+.Fc
+.Sh DESCRIPTION
+These functions decode and encode an X509 CRL (certificate revocation
+list).
+.Pp
+Otherwise the functions behave in a way similar to
+.Xr d2i_X509 3
+and
+.Xr i2d_X509 3 .
+.Sh SEE ALSO
+.Xr d2i_X509 3

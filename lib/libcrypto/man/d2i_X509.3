@@ -1,0 +1,346 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt D2I_X509 3
+.Os
+.Sh NAME
+.Nm d2i_X509 ,
+.Nm i2d_X509 ,
+.Nm d2i_X509_bio ,
+.Nm d2i_X509_fp ,
+.Nm i2d_X509_bio ,
+.Nm i2d_X509_fp
+.Nd X509 encode and decode functions
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft X509 *
+.Fo d2i_X509
+.Fa "X509 **px"
+.Fa "const unsigned char **in"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo i2d_X509
+.Fa "X509 *x"
+.Fa "unsigned char **out"
+.Fc
+.Ft X509 *
+.Fo d2i_X509_bio
+.Fa "BIO *bp"
+.Fa "X509 **x"
+.Fc
+.Ft X509 *
+.Fo d2i_X509_fp
+.Fa "FILE *fp"
+.Fa "X509 **x"
+.Fc
+.Ft int
+.Fo i2d_X509_bio
+.Fa "BIO *bp"
+.Fa "X509 *x"
+.Fc
+.Ft int
+.Fo i2d_X509_fp
+.Fa "FILE *fp"
+.Fa "X509 *x"
+.Fc
+.Sh DESCRIPTION
+The X509 encode and decode routines encode and parse an
+.Vt X509
+structure, which represents an X509 certificate.
+.Pp
+.Fn d2i_X509
+attempts to decode
+.Fa len
+bytes at
+.Pf * Fa in .
+If successful, a pointer to the
+.Vt X509
+structure is returned.
+If an error occurred,
+.Dv NULL
+is returned.
+If
+.Fa px
+is not
+.Dv NULL ,
+the returned structure is written to
+.Pf * Fa px .
+If
+.Pf * Fa px
+is not
+.Dv NULL ,
+then it is assumed that
+.Pf * Fa px
+contains a valid
+.Vt X509
+structure and an attempt is made to reuse it.
+If the call is successful,
+.Pf * Fa in
+is incremented to the byte following the parsed data.
+.Pp
+.Fn i2d_X509
+encodes the structure pointed to by
+.Fa x
+into DER format.
+If
+.Fa out
+is not
+.Dv NULL ,
+it writes the DER encoded data to the buffer at
+.Pf * Fa out
+and increments it to point after the data just written.
+If the return value is negative an error occurred, otherwise it returns
+the length of the encoded data.
+.Pp
+For OpenSSL 0.9.7 and later if
+.Pf * Fa out
+is
+.Dv NULL ,
+memory will be allocated for a buffer and the encoded data written to it.
+In this case
+.Pf * Fa out
+is not incremented and it points to the start of the data just written.
+.Pp
+.Fn d2i_X509_bio
+is similar to
+.Fn d2i_X509
+except it attempts to parse data from
+.Vt BIO
+.Fa bp .
+.Pp
+.Fn d2i_X509_fp
+is similar to
+.Fn d2i_X509
+except it attempts to parse data from the
+.Vt FILE
+pointer
+.Fa fp .
+.Pp
+.Fn i2d_X509_bio
+is similar to
+.Fn i2d_X509
+except it writes the encoding of the structure
+.Fa x
+to
+.Vt BIO
+.Fa bp
+and it returns 1 for success or 0 for failure.
+.Pp
+.Fn i2d_X509_fp
+is similar to
+.Fn i2d_X509
+except it writes the encoding of the structure
+.Fa x
+to
+.Vt BIO
+.Fa bp
+and it returns 1 for success or 0 for failure.
+.Pp
+The letters
+.Sy i
+and
+.Sy d
+in for example
+.Fn i2d_X509
+stand for "internal" (that is an internal C structure) and "DER",
+so that
+.Fn i2d_X509
+converts from internal to DER.
+.Pp
+The functions can also understand BER forms.
+.Pp
+The actual
+.Vt X509
+structure passed to
+.Fn i2d_X509
+must be a valid populated
+.Vt X509
+structure.
+It cannot simply be fed with an empty structure such as that returned by
+.Xr X509_new 3 .
+.Pp
+The encoded data is in binary form and may contain embedded zeroes.
+Therefore any
+.Vt FILE
+pointers or
+.Vt BIO Ns s
+should be opened in binary mode.
+Functions such as
+.Xr strlen 3
+will
+.Sy not
+return the correct length of the encoded structure.
+.Pp
+The ways that
+.Pf * Fa in
+and
+.Pf * Fa out
+are incremented after the operation can trap the unwary.
+See the
+.Sx CAVEATS
+section for some common errors.
+.Pp
+The reason for the auto increment behaviour is to reflect a typical
+usage of ASN1 functions: after one structure is encoded or decoded,
+another will processed after it.
+.Sh RETURN VALUES
+.Fn d2i_X509 ,
+.Fn d2i_X509_bio ,
+and
+.Fn d2i_X509_fp
+return a valid
+.Vt X509
+structure or
+.Dv NULL
+if an error occurs.
+.Pp
+.Fn i2d_X509
+returns the number of bytes successfully encoded or a negative value if
+an error occurs.
+.Pp
+.Fn i2d_X509_bio
+and
+.Fn i2d_X509_fp
+return 1 for success or 0 if an error occurs.
+.Pp
+For all functions, the error code can be obtained by
+.Xr ERR_get_error 3 .
+.Sh EXAMPLES
+Allocate and encode the DER encoding of an X509 structure:
+.Bd -literal -offset indent
+int len;
+unsigned char *buf, *p;
+
+len = i2d_X509(x, NULL);
+buf = malloc(len);
+if (buf == NULL)
+	/* error */
+p = buf;
+i2d_X509(x, &p);
+.Ed
+.Pp
+If you are using OpenSSL 0.9.7 or later then this can be simplified to:
+.Bd -literal -offset indent
+int len;
+unsigned char *buf;
+
+buf = NULL;
+len = i2d_X509(x, &buf);
+if (len < 0)
+	/* error */
+.Ed
+.Pp
+Attempt to decode a buffer:
+.Bd -literal -offset indent
+X509 *x;
+unsigned char *buf, *p;
+int len;
+
+/* Something to setup buf and len */
+p = buf;
+x = d2i_X509(NULL, &p, len);
+if (x == NULL)
+    /* Some error */
+.Ed
+.Pp
+Alternative technique:
+.Bd -literal -offset indent
+X509 *x;
+unsigned char *buf, *p;
+int len;
+
+/* Something to setup buf and len */
+p = buf;
+x = NULL;
+if(!d2i_X509(&x, &p, len))
+    /* Some error */
+.Ed
+.Sh SEE ALSO
+.Xr ERR_get_error 3
+.Sh HISTORY
+.Fn d2i_X509 ,
+.Fn i2d_X509 ,
+.Fn d2i_X509_bio ,
+.Fn d2i_X509_fp ,
+.Fn i2d_X509_bio ,
+and
+.Fn i2d_X509_fp
+are available in all versions of SSLeay and OpenSSL.
+.Sh CAVEATS
+The use of a temporary variable is mandatory.
+A common mistake is to attempt to use a buffer directly as follows:
+.Bd -literal -offset indent
+int len;
+unsigned char *buf;
+
+len = i2d_X509(x, NULL);
+buf = malloc(len);
+if (buf == NULL)
+	/* error */
+i2d_X509(x, &buf);
+/* Other stuff ... */
+free(buf);
+.Ed
+.Pp
+This code will result in
+.Fa buf
+apparently containing garbage because it was incremented after the
+call to point after the data just written.
+Also
+.Fa buf
+will no longer contain the pointer allocated by
+.Xr malloc 3
+and the subsequent call to
+.Xr free 3
+may well crash.
+.Pp
+The auto allocation feature (setting
+.Fa buf
+to
+.Dv NULL
+only works on OpenSSL 0.9.7 and later.
+Attempts to use it on earlier versions will typically cause a
+segmentation violation.
+.Pp
+Another trap to avoid is misuse of the
+.Fa px
+argument to
+.Sy d2i_X509() :
+.Bd -literal -offset indent
+X509 *x;
+
+if (!d2i_X509(&x, &p, len))
+	/* Some error */
+.Ed
+.Pp
+This will probably crash somewhere in
+.Fn d2i_X509 .
+The reason for this is that the variable
+.Fa x
+is uninitialized and an attempt will be made to interpret its (invalid)
+value as an
+.Vt X509
+structure, typically causing a segmentation violation.
+If
+.Fa x
+is set to
+.Dv NULL
+first then this will not happen.
+.Sh BUGS
+In some versions of OpenSSL the "reuse" behaviour of
+.Fn d2i_X509
+when
+.Pf * Fa px
+is valid is broken and some parts of the reused structure may persist
+if they are not present in the new one.
+As a result the use of this "reuse" behaviour is strongly discouraged.
+.Pp
+In many versions of OpenSSL,
+.Fn i2d_X509
+will not return an error if mandatory fields are not initialized
+due to a programming error.
+Then the encoded structure may contain invalid data or omit the
+fields entirely and will not be parsed by
+.Fn d2i_X509 .
+This may be fixed in future so code should not assume that
+.Fn i2d_X509
+will always succeed.

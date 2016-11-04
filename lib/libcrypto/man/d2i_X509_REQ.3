@@ -1,0 +1,53 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt D2I_X509_REQ 3
+.Os
+.Sh NAME
+.Nm d2i_X509_REQ ,
+.Nm i2d_X509_REQ ,
+.Nm d2i_X509_REQ_bio ,
+.Nm d2i_X509_REQ_fp ,
+.Nm i2d_X509_REQ_bio ,
+.Nm i2d_X509_REQ_fp
+.Nd PKCS#10 certificate request functions
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft X509_REQ *
+.Fo d2i_X509_REQ
+.Fa "X509_REQ **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_X509_REQ
+.Fa "X509_REQ *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft X509_REQ *
+.Fo d2i_X509_REQ_bio
+.Fa "BIO *bp"
+.Fa "X509_REQ **x"
+.Fc
+.Ft X509_REQ *
+.Fo d2i_X509_REQ_fp
+.Fa "FILE *fp"
+.Fa "X509_REQ **x"
+.Fc
+.Ft int
+.Fo i2d_X509_REQ_bio
+.Fa "BIO *bp"
+.Fa "X509_REQ *x"
+.Fc
+.Ft int
+.Fo i2d_X509_REQ_fp
+.Fa "FILE *fp"
+.Fa "X509_REQ *x"
+.Fc
+.Sh DESCRIPTION
+These functions decode and encode a PKCS#10 certificate request.
+.Pp
+Otherwise these behave in a way similar to
+.Xr d2i_X509 3
+and
+.Xr i2d_X509 3 .
+.Sh SEE ALSO
+.Xr d2i_X509 3

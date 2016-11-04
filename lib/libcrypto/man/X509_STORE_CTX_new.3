@@ -1,0 +1,229 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509_STORE_CTX_NEW 3
+.Os
+.Sh NAME
+.Nm X509_STORE_CTX_new ,
+.Nm X509_STORE_CTX_cleanup ,
+.Nm X509_STORE_CTX_free ,
+.Nm X509_STORE_CTX_init ,
+.Nm X509_STORE_CTX_trusted_stack ,
+.Nm X509_STORE_CTX_set_cert ,
+.Nm X509_STORE_CTX_set_chain ,
+.Nm X509_STORE_CTX_set0_crls ,
+.Nm X509_STORE_CTX_get0_param ,
+.Nm X509_STORE_CTX_set0_param ,
+.Nm X509_STORE_CTX_set_default
+.Nd X509_STORE_CTX initialisation
+.Sh SYNOPSIS
+.In openssl/x509_vfy.h
+.Ft X509_STORE_CTX *
+.Fn X509_STORE_CTX_new void
+.Ft void
+.Fo X509_STORE_CTX_cleanup
+.Fa "X509_STORE_CTX *ctx"
+.Fc
+.Ft void
+.Fo X509_STORE_CTX_free
+.Fa "X509_STORE_CTX *ctx"
+.Fc
+.Ft int
+.Fo X509_STORE_CTX_init
+.Fa "X509_STORE_CTX *ctx"
+.Fa "X509_STORE *store"
+.Fa "X509 *x509"
+.Fa "STACK_OF(X509) *chain"
+.Fc
+.Ft void
+.Fo X509_STORE_CTX_trusted_stack
+.Fa "X509_STORE_CTX *ctx"
+.Fa "STACK_OF(X509) *sk"
+.Fc
+.Ft void
+.Fo X509_STORE_CTX_set_cert
+.Fa "X509_STORE_CTX *ctx"
+.Fa "X509 *x"
+.Fc
+.Ft void
+.Fo X509_STORE_CTX_set_chain
+.Fa "X509_STORE_CTX *ctx"
+.Fa "STACK_OF(X509) *sk"
+.Fc
+.Ft void
+.Fo X509_STORE_CTX_set0_crls
+.Fa "X509_STORE_CTX *ctx"
+.Fa "STACK_OF(X509_CRL) *sk"
+.Fc
+.Ft X509_VERIFY_PARAM *
+.Fo X509_STORE_CTX_get0_param
+.Fa "X509_STORE_CTX *ctx"
+.Fc
+.Ft void
+.Fo X509_STORE_CTX_set0_param
+.Fa "X509_STORE_CTX *ctx"
+.Fa "X509_VERIFY_PARAM *param"
+.Fc
+.Ft int
+.Fo X509_STORE_CTX_set_default
+.Fa "X509_STORE_CTX *ctx"
+.Fa "const char *name"
+.Fc
+.Sh DESCRIPTION
+These functions initialise an
+.Vt X509_STORE_CTX
+structure for subsequent use by
+.Xr X509_verify_cert 3 .
+.Pp
+.Fn X509_STORE_CTX_new
+returns a newly initialised
+.Vt X509_STORE_CTX
+structure.
+.Pp
+.Fn X509_STORE_CTX_cleanup
+internally cleans up an
+.Vt X509_STORE_CTX
+structure.
+The context can then be reused with an new call to
+.Fn X509_STORE_CTX_init .
+.Pp
+.Fn X509_STORE_CTX_free
+completely frees up
+.Fa ctx .
+After this call
+.Fa ctx
+is no longer valid.
+.Pp
+.Fn X509_STORE_CTX_init
+sets up
+.Fa ctx
+for a subsequent verification operation.
+The trusted certificate store is set to
+.Fa store ,
+the end entity certificate to be verified is set to
+.Fa x509
+and a set of additional certificates (which will be untrusted but may be
+used to build the chain) in
+.Fa chain .
+Any or all of the
+.Fa store ,
+.Fa x509 ,
+and
+.Fa chain
+parameters can be
+.Dv NULL .
+.Pp
+.Fn X509_STORE_CTX_trusted_stack
+sets the set of trusted certificates of
+.Fa ctx
+to
+.Fa sk .
+This is an alternative way of specifying trusted certificates instead of
+using an
+.Vt X509_STORE .
+.Pp
+.Fn X509_STORE_CTX_set_cert
+sets the certificate to be verified in
+.Fa ctx
+to
+.Fa x .
+.Pp
+.Fn X509_STORE_CTX_set_chain
+sets the additional certificate chain used by
+.Fa ctx
+to
+.Fa sk .
+.Pp
+.Fn X509_STORE_CTX_set0_crls
+sets a set of CRLs to use to aid certificate verification to
+.Fa sk .
+These CRLs will only be used if CRL verification is enabled in the
+associated
+.Vt X509_VERIFY_PARAM
+structure.
+This might be used where additional "useful" CRLs are supplied as part
+of a protocol, for example in a PKCS#7 structure.
+.Pp
+X509_VERIFY_PARAM
+.Fn X509_STORE_CTX_get0_param
+retrieves an internal pointer to the verification parameters associated
+with
+.Fa ctx .
+.Pp
+.Fn X509_STORE_CTX_set0_param
+sets the internal verification parameter pointer to
+.Fa param .
+After this call
+.Fa param
+should not be used.
+.Pp
+.Fn X509_STORE_CTX_set_default
+looks up and sets the default verification method to
+.Fa name .
+This uses the function
+.Xr X509_VERIFY_PARAM_lookup 3
+to find an appropriate set of parameters from
+.Fa name .
+.Pp
+The certificates and CRLs in a store are used internally and should
+.Sy not
+be freed up until after the associated
+.Vt X509_STORE_CTX
+is freed.
+Legacy applications might implicitly use an
+.Vt X509_STORE_CTX
+like this:
+.Bd -literal -offset indent
+X509_STORE_CTX ctx;
+X509_STORE_CTX_init(&ctx, store, cert, chain);
+.Ed
+.Pp
+This is
+.Sy not
+recommended in new applications they should instead do:
+.Bd -literal -offset indent
+X509_STORE_CTX *ctx;
+ctx = X509_STORE_CTX_new();
+if (ctx == NULL)
+	/* Bad error */
+X509_STORE_CTX_init(ctx, store, cert, chain);
+.Ed
+.Sh RETURN VALUES
+.Fn X509_STORE_CTX_new
+returns an newly allocates context or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn X509_STORE_CTX_init
+returns 1 for success or 0 if an error occurred.
+.Pp
+.Fn X509_STORE_CTX_get0_param
+returns a pointer to an
+.Vt X509_VERIFY_PARAM
+structure or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn X509_STORE_CTX_cleanup ,
+.Fn X509_STORE_CTX_free ,
+.Fn X509_STORE_CTX_trusted_stack ,
+.Fn X509_STORE_CTX_set_cert ,
+.Fn X509_STORE_CTX_set_chain ,
+.Fn X509_STORE_CTX_set0_crls ,
+and
+.Fn X509_STORE_CTX_set0_param
+do not return values.
+.Pp
+.Fn X509_STORE_CTX_set_default
+returns 1 for success or 0 if an error occurred.
+.Sh SEE ALSO
+.Xr X509_verify_cert 3 ,
+.Xr X509_VERIFY_PARAM_set_flags 3
+.Sh HISTORY
+.Fn X509_STORE_CTX_set0_crls
+was first added to OpenSSL 1.0.0.
+.Sh BUGS
+The certificates and CRLs in a context are used internally and should
+.Sy not
+be freed up until after the associated
+.Vt X509_STORE_CTX
+is freed.
+Copies should be made or reference counts increased instead.

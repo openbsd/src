@@ -1,0 +1,271 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509_VERIFY_PARAM_SET_FLAGS 3
+.Os
+.Sh NAME
+.Nm X509_VERIFY_PARAM_set_flags ,
+.Nm X509_VERIFY_PARAM_clear_flags ,
+.Nm X509_VERIFY_PARAM_get_flags ,
+.Nm X509_VERIFY_PARAM_set_purpose ,
+.Nm X509_VERIFY_PARAM_set_trust ,
+.Nm X509_VERIFY_PARAM_set_depth ,
+.Nm X509_VERIFY_PARAM_get_depth ,
+.Nm X509_VERIFY_PARAM_set_time ,
+.Nm X509_VERIFY_PARAM_add0_policy ,
+.Nm X509_VERIFY_PARAM_set1_policies
+.Nd X509 verification parameters
+.Sh SYNOPSIS
+.In openssl/x509_vfy.h
+.Ft int
+.Fo X509_VERIFY_PARAM_set_flags
+.Fa "X509_VERIFY_PARAM *param"
+.Fa "unsigned long flags"
+.Fc
+.Ft int
+.Fo X509_VERIFY_PARAM_clear_flags
+.Fa "X509_VERIFY_PARAM *param"
+.Fa "unsigned long flags"
+.Fc
+.Ft unsigned long
+.Fo X509_VERIFY_PARAM_get_flags
+.Fa "X509_VERIFY_PARAM *param"
+.Fc
+.Ft int
+.Fo X509_VERIFY_PARAM_set_purpose
+.Fa "X509_VERIFY_PARAM *param"
+.Fa "int purpose"
+.Fc
+.Ft int
+.Fo X509_VERIFY_PARAM_set_trust
+.Fa "X509_VERIFY_PARAM *param"
+.Fa "int trust"
+.Fc
+.Ft void
+.Fo X509_VERIFY_PARAM_set_time
+.Fa "X509_VERIFY_PARAM *param"
+.Fa "time_t t"
+.Fc
+.Ft int
+.Fo X509_VERIFY_PARAM_add0_policy
+.Fa "X509_VERIFY_PARAM *param"
+.Fa "ASN1_OBJECT *policy"
+.Fc
+.Ft int
+.Fo X509_VERIFY_PARAM_set1_policies
+.Fa "X509_VERIFY_PARAM *param"
+.Fa "STACK_OF(ASN1_OBJECT) *policies"
+.Fc
+.Ft void
+.Fo X509_VERIFY_PARAM_set_depth
+.Fa "X509_VERIFY_PARAM *param"
+.Fa "int depth"
+.Fc
+.Ft int
+.Fo X509_VERIFY_PARAM_get_depth
+.Fa "const X509_VERIFY_PARAM *param"
+.Fc
+.Sh DESCRIPTION
+These functions manipulate the
+.Vt X509_VERIFY_PARAM
+structure associated with a certificate verification operation.
+.Pp
+The
+.Fn X509_VERIFY_PARAM_set_flags
+function sets the flags in
+.Fa param
+by OR'ing it with
+.Fa flags .
+See the
+.Sx VERIFICATION FLAGS
+section for a complete description of values the
+.Fa flags
+parameter can take.
+.Pp
+.Fn X509_VERIFY_PARAM_get_flags
+returns the flags in
+.Fa param .
+.Pp
+.Fn X509_VERIFY_PARAM_clear_flags
+clears the flags
+.Fa flags
+in
+.Fa param .
+.Pp
+.Fn X509_VERIFY_PARAM_set_purpose
+sets the verification purpose in
+.Fa param
+to
+.Fa purpose .
+This determines the acceptable purpose of the certificate chain, for
+example SSL client or SSL server.
+.Pp
+.Fn X509_VERIFY_PARAM_set_trust
+sets the trust setting in
+.Fa param
+to
+.Fa trust .
+.Pp
+.Fn X509_VERIFY_PARAM_set_time
+sets the verification time in
+.Fa param
+to
+.Fa t .
+Normally the current time is used.
+.Pp
+.Fn X509_VERIFY_PARAM_add0_policy
+enables policy checking (it is disabled by default) and adds
+.Fa policy
+to the acceptable policy set.
+.Pp
+.Fn X509_VERIFY_PARAM_set1_policies
+enables policy checking (it is disabled by default) and sets the
+acceptable policy set to
+.Fa policies .
+Any existing policy set is cleared.
+The
+.Fa policies
+parameter can be
+.Dv NULL
+to clear an existing policy set.
+.Pp
+.Fn X509_VERIFY_PARAM_set_depth
+sets the maximum verification depth to
+.Fa depth .
+That is the maximum number of untrusted CA certificates that can appear
+in a chain.
+.Pp
+The above functions should be used to manipulate verification parameters
+instead of legacy functions which work in specific structures such as
+.Xr X509_STORE_CTX_set_flags 3 .
+.Sh RETURN VALUES
+.Fn X509_VERIFY_PARAM_set_flags ,
+.Fn X509_VERIFY_PARAM_clear_flags ,
+.Fn X509_VERIFY_PARAM_set_purpose ,
+.Fn X509_VERIFY_PARAM_set_trust ,
+.Fn X509_VERIFY_PARAM_add0_policy ,
+and
+.Fn X509_VERIFY_PARAM_set1_policies
+return 1 for success or 0 for failure.
+.Pp
+.Fn X509_VERIFY_PARAM_get_flags
+returns the current verification flags.
+.Pp
+.Fn X509_VERIFY_PARAM_set_time
+and
+.Fn X509_VERIFY_PARAM_set_depth
+do not return values.
+.Pp
+.Fn X509_VERIFY_PARAM_get_depth
+returns the current verification depth.
+.Sh VERIFICATION FLAGS
+The verification flags consists of zero or more of the following
+flags OR'ed together.
+.Pp
+.Dv X509_V_FLAG_CRL_CHECK
+enables CRL checking for the certificate chain leaf certificate.
+An error occurs if a suitable CRL cannot be found.
+.Pp
+.Dv X509_V_FLAG_CRL_CHECK_ALL
+enables CRL checking for the entire certificate chain.
+.Pp
+.Dv X509_V_FLAG_IGNORE_CRITICAL
+disabled critical extension checking.
+By default any unhandled critical extensions in certificates or (if
+checked) CRLs results in a fatal error.
+If this flag is set unhandled critical extensions are ignored.
+.Sy WARNING :
+setting this option for anything other than debugging purposes can be a
+security risk.
+Finer control over which extensions are supported can be performed in
+the verification callback.
+.Pp
+The
+.Dv X509_V_FLAG_X509_STRICT
+flag disables workarounds for some broken certificates and makes the
+verification strictly apply X509 rules.
+.Pp
+.Dv X509_V_FLAG_ALLOW_PROXY_CERTS
+enables proxy certificate verification.
+.Pp
+.Dv X509_V_FLAG_POLICY_CHECK
+enables certificate policy checking, by default no policy checking is
+performed.
+Additional information is sent to the verification callback relating to
+policy checking.
+.Pp
+.Dv X509_V_FLAG_EXPLICIT_POLICY ,
+.Dv X509_V_FLAG_INHIBIT_ANY ,
+and
+.Dv X509_V_FLAG_INHIBIT_MAP
+set the
+.Dq require explicit policy ,
+.Dq inhibit any policy ,
+and
+.Dq inhibit policy mapping
+flags, respectively, as defined in RFC3280.
+Policy checking is automatically enabled if any of these flags are set.
+.Pp
+If
+.Dv X509_V_FLAG_NOTIFY_POLICY
+is set and the policy checking is successful a special status code is
+set to the verification callback.
+This permits it to examine the valid policy tree and perform additional
+checks or simply log it for debugging purposes.
+.Pp
+By default some additional features such as indirect CRLs and CRLs
+signed by different keys are disabled.
+If
+.Dv X509_V_FLAG_EXTENDED_CRL_SUPPORT
+is set they are enabled.
+.Pp
+If
+.Dv X509_V_FLAG_USE_DELTAS
+is set, delta CRLs (if present) are used to determine certificate
+status.
+If not set, deltas are ignored.
+.Pp
+.Dv X509_V_FLAG_CHECK_SS_SIGNATURE
+enables checking of the root CA self signed certificate signature.
+By default this check is disabled because it doesn't add any additional
+security but in some cases applications might want to check the
+signature anyway.
+A side effect of not checking the root CA signature is that disabled or
+unsupported message digests on the root CA are not treated as fatal
+errors.
+.Pp
+The
+.Dv X509_V_FLAG_CB_ISSUER_CHECK
+flag enables debugging of certificate issuer checks.
+It is
+.Sy not
+needed unless you are logging certificate verification.
+If this flag is set then additional status codes will be sent to the
+verification callback and it
+.Sy must
+be prepared to handle such cases without assuming they are hard errors.
+.Sh EXAMPLES
+Enable CRL checking when performing certificate verification during
+SSL connections associated with an
+.Vt SSL_CTX
+structure
+.Fa ctx :
+.Bd -literal
+X509_VERIFY_PARAM *param;
+param = X509_VERIFY_PARAM_new();
+X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
+SSL_CTX_set1_param(ctx, param);
+X509_VERIFY_PARAM_free(param);
+.Ed
+.Sh SEE ALSO
+.Xr X509_verify_cert 3
+.Sh BUGS
+Delta CRL checking is currently primitive.
+Only a single delta can be used and (partly due to limitations of
+.Vt X509_STORE )
+constructed CRLs are not maintained.
+.Pp
+If CRLs checking is enabled, CRLs are expected to be available in
+the corresponding
+.Vt X509_STORE
+structure.
+No attempt is made to download CRLs from the CRL distribution points
+extension.

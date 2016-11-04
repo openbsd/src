@@ -1,0 +1,212 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509_NAME_ADD_ENTRY_BY_TXT 3
+.Os
+.Sh NAME
+.Nm X509_NAME_add_entry_by_txt ,
+.Nm X509_NAME_add_entry_by_OBJ ,
+.Nm X509_NAME_add_entry_by_NID ,
+.Nm X509_NAME_add_entry ,
+.Nm X509_NAME_delete_entry
+.Nd X509_NAME modification functions
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft int
+.Fo X509_NAME_add_entry_by_txt
+.Fa "X509_NAME *name"
+.Fa "const char *field"
+.Fa "int type"
+.Fa "const unsigned char *bytes"
+.Fa "int len"
+.Fa "int loc"
+.Fa "int set"
+.Fc
+.Ft int
+.Fo X509_NAME_add_entry_by_OBJ
+.Fa "X509_NAME *name"
+.Fa "ASN1_OBJECT *obj"
+.Fa "int type"
+.Fa "unsigned char *bytes"
+.Fa "int len"
+.Fa "int loc"
+.Fa "int set"
+.Fc
+.Ft int
+.Fo X509_NAME_add_entry_by_NID
+.Fa "X509_NAME *name"
+.Fa "int nid"
+.Fa "int type"
+.Fa "unsigned char *bytes"
+.Fa "int len"
+.Fa "int loc"
+.Fa "int set"
+.Fc
+.Ft int
+.Fo X509_NAME_add_entry
+.Fa "X509_NAME *name"
+.Fa "X509_NAME_ENTRY *ne"
+.Fa "int loc"
+.Fa "int set"
+.Fc
+.Ft X509_NAME_ENTRY *
+.Fo X509_NAME_delete_entry
+.Fa "X509_NAME *name"
+.Fa "int loc"
+.Fc
+.Sh DESCRIPTION
+.Fn X509_NAME_add_entry_by_txt ,
+.Fn X509_NAME_add_entry_by_OBJ ,
+and
+.Fn X509_NAME_add_entry_by_NID
+add a field whose name is defined by a string
+.Fa field ,
+an object
+.Fa obj
+or a NID
+.Fa nid ,
+respectively.
+The field value to be added is in
+.Fa bytes
+of length
+.Fa len .
+If
+.Fa len
+is -1 then the field length is calculated internally using
+.Fn strlen bytes .
+.Pp
+The type of field is determined by
+.Fa type
+which can either be a definition of the type of
+.Fa bytes
+(such as
+.Dv MBSTRING_ASC )
+or a standard ASN1 type (such as
+.Dv V_ASN1_IA5STRING ) .
+The new entry is added to a position determined by
+.Fa loc
+and
+.Fa set .
+.Pp
+.Fn X509_NAME_add_entry
+adds a copy of a
+.Vt X509_NAME_ENTRY
+structure
+.Fa ne
+to
+.Fa name .
+The new entry is added to a position determined by
+.Fa loc
+and
+.Fa set .
+Since a copy of
+.Fa ne
+is added,
+.Fa ne
+must be freed up after the call.
+.Pp
+.Fn X509_NAME_delete_entry
+deletes an entry from
+.Fa name
+at position
+.Fa loc .
+The deleted entry is returned and must be freed up.
+.Pp
+The use of string types such as
+.Dv MBSTRING_ASC
+or
+.Dv MBSTRING_UTF8
+is strongly recommended for the
+.Fa type
+parameter.
+This allows the internal code to correctly determine the type of the
+field and to apply length checks according to the relevant standards.
+This is done using
+.Xr ASN1_STRING_set_by_NID 3 .
+.Pp
+If instead an ASN1 type is used, no checks are performed and the supplied
+data in
+.Fa bytes
+is used directly.
+.Pp
+In
+.Fn X509_NAME_add_entry_by_txt
+the
+.Fa field
+string represents the field name using
+.Fn OBJ_txt2obj field 0 .
+.Pp
+The
+.Fa loc
+and
+.Fa set
+parameters determine where a new entry should be added.
+For almost all applications,
+.Fa loc
+can be set to -1 and
+.Fa set
+to 0.
+This adds a new entry to the end of
+.Fa name
+as a single valued RelativeDistinguishedName (RDN).
+.Pp
+.Fa loc
+actually determines the index where the new entry is inserted:
+if it is -1 it is appended.
+.Pp
+.Fa set
+determines how the new type is added.
+If it is zero a new RDN is created.
+.Pp
+If
+.Fa set
+is -1 or 1 it is added to the previous or next RDN structure
+respectively.
+This will then be a multivalued RDN: since multivalues RDNs are very
+seldom used,
+.Fa set
+is almost always set to zero.
+.Sh RETURN VALUES
+.Fn X509_NAME_add_entry_by_txt ,
+.Fn X509_NAME_add_entry_by_OBJ ,
+.Fn X509_NAME_add_entry_by_NID ,
+and
+.Fn X509_NAME_add_entry
+return 1 for success or 0 if an error occurred.
+.Pp
+.Fn X509_NAME_delete_entry
+returns either the deleted
+.Vt X509_NAME_ENTRY
+structure or
+.Dv NULL
+if an error occurred.
+.Sh EXAMPLES
+Create an
+.Vt X509_NAME
+structure:
+.Pp
+.D1 C=UK, O=Disorganized Organization, CN=Joe Bloggs
+.Bd -literal
+X509_NAME *nm;
+nm = X509_NAME_new();
+if (nm == NULL)
+	/* Some error */
+if (!X509_NAME_add_entry_by_txt(nm, MBSTRING_ASC,
+			"C", "UK", -1, -1, 0))
+	/* Error */
+if (!X509_NAME_add_entry_by_txt(nm, MBSTRING_ASC,
+			"O", "Disorganized Organization", -1, -1, 0))
+	/* Error */
+if (!X509_NAME_add_entry_by_txt(nm, MBSTRING_ASC,
+			"CN", "Joe Bloggs", -1, -1, 0))
+	/* Error */
+.Ed
+.Sh SEE ALSO
+.Xr d2i_X509_NAME 3 ,
+.Xr ERR_get_error 3
+.Sh BUGS
+.Fa type
+can still be set to
+.Dv V_ASN1_APP_CHOOSE
+to use a different algorithm to determine field types.
+Since this form does not understand multicharacter types, performs
+no length checks, and can result in invalid field types, its use
+is strongly discouraged.

@@ -1,0 +1,177 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509_NAME_GET_INDEX_BY_NID 3
+.Os
+.Sh NAME
+.Nm X509_NAME_get_index_by_NID ,
+.Nm X509_NAME_get_index_by_OBJ ,
+.Nm X509_NAME_get_entry ,
+.Nm X509_NAME_entry_count ,
+.Nm X509_NAME_get_text_by_NID ,
+.Nm X509_NAME_get_text_by_OBJ
+.Nd X509_NAME lookup and enumeration functions
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft int
+.Fo X509_NAME_get_index_by_NID
+.Fa "X509_NAME *name"
+.Fa "int nid"
+.Fa "int lastpos"
+.Fc
+.Ft int
+.Fo X509_NAME_get_index_by_OBJ
+.Fa "X509_NAME *name"
+.Fa "ASN1_OBJECT *obj"
+.Fa "int lastpos"
+.Fc
+.Ft int
+.Fo X509_NAME_entry_count
+.Fa "X509_NAME *name"
+.Fc
+.Ft X509_NAME_ENTRY *
+.Fo X509_NAME_get_entry
+.Fa "X509_NAME *name"
+.Fa "int loc"
+.Fc
+.Ft int
+.Fo X509_NAME_get_text_by_NID
+.Fa "X509_NAME *name"
+.Fa "int nid"
+.Fa "char *buf"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo X509_NAME_get_text_by_OBJ
+.Fa "X509_NAME *name"
+.Fa "ASN1_OBJECT *obj"
+.Fa "char *buf"
+.Fa "int len"
+.Fc
+.Sh DESCRIPTION
+These functions allow an
+.Vt X509_NAME
+structure to be examined.
+The
+.Vt X509_NAME
+structure is the same as the
+.Sy Name
+type defined in RFC2459 (and elsewhere) and used for example in
+certificate subject and issuer names.
+.Pp
+.Fn X509_NAME_get_index_by_NID
+and
+.Fn X509_NAME_get_index_by_OBJ
+retrieve the next index matching
+.Fa nid
+or
+.Fa obj
+after
+.Fa lastpos .
+.Fa lastpos
+should initially be set to -1.
+If there are no more entries, -1 is returned.
+.Pp
+.Fn X509_NAME_entry_count
+returns the total number of entries in
+.Fa name .
+.Pp
+.Fn X509_NAME_get_entry
+retrieves the
+.Vt X509_NAME_ENTRY
+from
+.Fa name
+corresponding to index
+.Fa loc .
+Acceptable values for
+.Fa loc
+run from 0 to
+.Fn X509_NAME_entry_count name
+- 1.
+The value returned is an internal pointer which must not be freed.
+.Pp
+.Fn X509_NAME_get_text_by_NID
+and
+.Fn X509_NAME_get_text_by_OBJ
+retrieve the "text" from the first entry in
+.Fa name
+which matches
+.Fa nid
+or
+.Fa obj .
+If no such entry exists, -1 is returned.
+At most
+.Fa len
+bytes will be written and the text written to
+.Fa buf
+will be NUL terminated.
+The length of the output string written is returned excluding the
+terminating NUL.
+If
+.Fa buf
+is
+.Dv NULL
+then the amount of space needed in
+.Fa buf
+(excluding the final NUL) is returned.
+.Sh RETURN VALUES
+.Fn X509_NAME_get_index_by_NID
+and
+.Fn X509_NAME_get_index_by_OBJ
+return the index of the next matching entry or -1 if not found.
+.Pp
+.Fn X509_NAME_entry_count
+returns the total number of entries.
+.Pp
+.Fn X509_NAME_get_entry
+returns an
+.Vt X509_NAME
+pointer to the requested entry or
+.Dv NULL
+if the index is invalid.
+.Sh EXAMPLES
+Process all entries:
+.Bd -literal
+int i;
+X509_NAME_ENTRY *e;
+
+for (i = 0; i < X509_NAME_entry_count(nm); i++) {
+	e = X509_NAME_get_entry(nm, i);
+	/* Do something with e */
+}
+.Ed
+.Pp
+Process all commonName entries:
+.Bd -literal
+int loc;
+X509_NAME_ENTRY *e;
+
+loc = -1;
+for (;;) {
+	lastpos = X509_NAME_get_index_by_NID(nm, NID_commonName, lastpos);
+	if (lastpos == -1)
+		break;
+	e = X509_NAME_get_entry(nm, lastpos);
+	/* Do something with e */
+}
+.Ed
+.Sh SEE ALSO
+.Xr d2i_X509_NAME 3 ,
+.Xr ERR_get_error 3
+.Sh CAVEATS
+.Fn X509_NAME_get_text_by_NID
+and
+.Fn X509_NAME_get_text_by_OBJ
+are legacy functions which have various limitations which make them of
+minimal use in practice.
+They can only find the first matching entry and will copy the contents
+of the field verbatim: this can be highly confusing if the target is a
+multicharacter string type like a BMPString or a UTF8String.
+.Pp
+For a more general solution,
+.Fn X509_NAME_get_index_by_NID
+or
+.Fn X509_NAME_get_index_by_OBJ
+should be used, followed by
+.Fn X509_NAME_get_entry
+on any matching indices and then the various
+.Vt X509_NAME_ENTRY
+utility functions on the result.

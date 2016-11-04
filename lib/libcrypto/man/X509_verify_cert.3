@@ -1,0 +1,54 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509_VERIFY_CERT 3
+.Os
+.Sh NAME
+.Nm X509_verify_cert
+.Nd discover and verify X509 certificate chain
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft int
+.Fo X509_verify_cert
+.Fa "X509_STORE_CTX *ctx"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn X509_verify_cert
+function attempts to discover and validate a certificate chain based on
+parameters in
+.Fa ctx .
+.Pp
+Applications rarely call this function directly, but it is used by
+OpenSSL internally for certificate validation, in both the S/MIME and
+SSL/TLS code.
+.Sh RETURN VALUES
+If a complete chain can be built and validated this function returns 1,
+otherwise it return 0.
+.Pp
+In exceptional circumstances, it can also return a negative code,
+but only if no certificate is set in
+.Fa ctx
+due to a programming error or if a retry operation is requested
+during internal lookups, which never happens with standard lookup
+methods.
+It is however recommended that application check for <= 0 return
+value on error.
+.Pp
+If the function fails, additional error information can be obtained
+by examining
+.Fa ctx ,
+for example using
+.Xr X509_STORE_CTX_get_error 3 .
+.Sh SEE ALSO
+.Xr X509_STORE_CTX_get_error 3
+and the
+.Cm verify
+entry in
+.Xr openssl 1
+.Sh HISTORY
+.Fn X509_verify_cert
+is available in all versions of SSLeay and OpenSSL.
+.Sh BUGS
+This function uses the header
+.In openssl/x509.h
+as opposed to most chain verification functions which use
+.In openssl/x509_vfy.h .

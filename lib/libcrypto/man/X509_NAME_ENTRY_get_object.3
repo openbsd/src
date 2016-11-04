@@ -1,0 +1,133 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509_NAME_ENTRY_GET_OBJECT 3
+.Os
+.Sh NAME
+.Nm X509_NAME_ENTRY_get_object ,
+.Nm X509_NAME_ENTRY_get_data ,
+.Nm X509_NAME_ENTRY_set_object ,
+.Nm X509_NAME_ENTRY_set_data ,
+.Nm X509_NAME_ENTRY_create_by_txt ,
+.Nm X509_NAME_ENTRY_create_by_NID ,
+.Nm X509_NAME_ENTRY_create_by_OBJ
+.Nd X509_NAME_ENTRY utility functions
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft ASN1_OBJECT *
+.Fo X509_NAME_ENTRY_get_object
+.Fa "X509_NAME_ENTRY *ne"
+.Fc
+.Ft ASN1_STRING *
+.Fo X509_NAME_ENTRY_get_data
+.Fa "X509_NAME_ENTRY *ne"
+.Fc
+.Ft int
+.Fo X509_NAME_ENTRY_set_object
+.Fa "X509_NAME_ENTRY *ne"
+.Fa "ASN1_OBJECT *obj"
+.Fc
+.Ft int
+.Fo X509_NAME_ENTRY_set_data
+.Fa "X509_NAME_ENTRY *ne"
+.Fa "int type"
+.Fa "const unsigned char *bytes"
+.Fa "int len"
+.Fc
+.Ft X509_NAME_ENTRY *
+.Fo X509_NAME_ENTRY_create_by_txt
+.Fa "X509_NAME_ENTRY **ne"
+.Fa "const char *field"
+.Fa "int type"
+.Fa "const unsigned char *bytes"
+.Fa "int len"
+.Fc
+.Ft X509_NAME_ENTRY *
+.Fo X509_NAME_ENTRY_create_by_NID
+.Fa "X509_NAME_ENTRY **ne"
+.Fa "int nid"
+.Fa "int type"
+.Fa "unsigned char *bytes"
+.Fa "int len"
+.Fc
+.Ft X509_NAME_ENTRY *
+.Fo X509_NAME_ENTRY_create_by_OBJ
+.Fa "X509_NAME_ENTRY **ne"
+.Fa "ASN1_OBJECT *obj"
+.Fa "int type"
+.Fa "const unsigned char *bytes"
+.Fa "int len"
+.Fc
+.Sh DESCRIPTION
+.Fn X509_NAME_ENTRY_get_object
+retrieves the field name of
+.Fa ne
+in an
+.Vt ASN1_OBJECT
+structure.
+.Pp
+.Fn X509_NAME_ENTRY_get_data
+retrieves the field value of
+.Fa ne
+in an
+.Vt ASN1_STRING
+structure.
+.Pp
+.Fn X509_NAME_ENTRY_set_object
+sets the field name of
+.Fa ne
+to
+.Fa obj .
+.Pp
+.Fn X509_NAME_ENTRY_set_data
+sets the field value of
+.Fa ne
+to string type
+.Fa type
+and the value determined by
+.Fa bytes
+and
+.Fa len .
+.Pp
+.Fn X509_NAME_ENTRY_create_by_txt ,
+.Fn X509_NAME_ENTRY_create_by_NID ,
+and
+.Fn X509_NAME_ENTRY_create_by_OBJ
+create and return an
+.Vt X509_NAME_ENTRY
+structure.
+.Pp
+.Fn X509_NAME_ENTRY_get_object
+and
+.Fn X509_NAME_ENTRY_get_data
+can be used to examine an
+.Vt X509_NAME_ENTRY
+function as returned by
+.Xr X509_NAME_get_entry 3
+for example.
+.Pp
+.Fn X509_NAME_ENTRY_create_by_txt ,
+.Fn X509_NAME_ENTRY_create_by_OBJ ,
+.Fn X509_NAME_ENTRY_create_by_NID ,
+and
+.Fn X509_NAME_ENTRY_set_data
+are seldom used in practice because
+.Vt X509_NAME_ENTRY
+structures are almost always part of
+.Vt X509_NAME
+structures and the corresponding X509_NAME functions are typically
+used to create and add new entries in a single operation.
+.Pp
+The arguments of these functions support similar options to the
+similarly named ones of the corresponding X509_NAME functions such as
+.Xr X509_NAME_add_entry_by_txt 3 .
+So for example
+.Fa type
+can be set to
+.Dv MBSTRING_ASC ,
+but in the case of
+.Fn X509_NAME_ENTRY_set_data
+the field name must be set first so the relevant field information
+can be looked up internally.
+.Sh SEE ALSO
+.Xr d2i_X509_NAME 3 ,
+.Xr ERR_get_error 3 ,
+.Xr OBJ_nid2obj 3

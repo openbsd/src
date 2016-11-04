@@ -1,0 +1,185 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509_STORE_CTX_SET_VERIFY_CB 3
+.Os
+.Sh NAME
+.Nm X509_STORE_CTX_set_verify_cb
+.Nd set verification callback
+.Sh SYNOPSIS
+.In openssl/x509_vfy.h
+.Ft void
+.Fo X509_STORE_CTX_set_verify_cb
+.Fa "X509_STORE_CTX *ctx"
+.Fa "int (*verify_cb)(int ok, X509_STORE_CTX *ctx)"
+.Fc
+.Sh DESCRIPTION
+.Fn X509_STORE_CTX_set_verify_cb
+sets the verification callback of
+.Fa ctx
+to
+.Fa verify_cb
+overwriting any existing callback.
+.Pp
+The verification callback can be used to customise the operation of
+certificate verification, either by overriding error conditions or
+logging errors for debugging purposes.
+.Pp
+However a verification callback is
+.Sy not
+essential and the default operation is often sufficient.
+.Pp
+The
+.Fa ok
+parameter to the callback indicates the value the callback should return
+to retain the default behaviour.
+If it is zero then and error condition is indicated.
+If it is 1 then no error occurred.
+If the flag
+.Dv X509_V_FLAG_NOTIFY_POLICY
+is set, then
+.Fa ok
+is set to 2 to indicate the policy checking is complete.
+.Pp
+The
+.Fa ctx
+parameter to the callback is the
+.Vt X509_STORE_CTX
+structure that is performing the verification operation.
+A callback can examine this structure and receive additional information
+about the error, for example by calling
+.Xr X509_STORE_CTX_get_current_cert 3 .
+Additional application data can be passed to the callback via the
+.Sy ex_data
+mechanism.
+.Pp
+The verification callback can be set and inherited from the parent
+structure performing the operation.
+In some cases (such as S/MIME verification) the
+.Vt X509_STORE_CTX
+structure is created and destroyed internally and the only way to set a
+custom verification callback is by inheriting it from the associated
+.Vt X509_STORE .
+.Sh RETURN VALUES
+.Fn X509_STORE_CTX_set_verify_cb
+does not return a value.
+.Sh EXAMPLES
+Default callback operation:
+.Bd -literal
+int
+verify_callback(int ok, X509_STORE_CTX *ctx)
+ {
+	return ok;
+}
+.Ed
+.Pp
+Simple example, suppose a certificate in the chain is expired and we
+wish to continue after this error:
+.Bd -literal
+int
+verify_callback(int ok, X509_STORE_CTX *ctx)
+{
+	/* Tolerate certificate expiration */
+	if (X509_STORE_CTX_get_error(ctx) == X509_V_ERR_CERT_HAS_EXPIRED)
+		return 1;
+	/* Otherwise don't override */
+	return ok;
+}
+.Ed
+.Pp
+More complex example, we don't wish to continue after
+.Sy any
+certificate has expired just one specific case:
+.Bd -literal
+int
+verify_callback(int ok, X509_STORE_CTX *ctx)
+{
+	int err = X509_STORE_CTX_get_error(ctx);
+	X509 *err_cert = X509_STORE_CTX_get_current_cert(ctx);
+
+	if (err == X509_V_ERR_CERT_HAS_EXPIRED) {
+		if (check_is_acceptable_expired_cert(err_cert)
+			return 1;
+	}
+	return ok;
+}
+.Ed
+.Pp
+Full featured logging callback.
+In this case the
+.Fa bio_err
+is assumed to be a global logging
+.Vt BIO ,
+an alternative would to store a
+.Vt BIO
+in
+.Fa ctx
+using
+.Sy ex_data .
+.Bd -literal
+int
+verify_callback(int ok, X509_STORE_CTX *ctx)
+{
+	X509 *err_cert;
+	int err,depth;
+
+	err_cert = X509_STORE_CTX_get_current_cert(ctx);
+	err =	X509_STORE_CTX_get_error(ctx);
+	depth =	X509_STORE_CTX_get_error_depth(ctx);
+
+	BIO_printf(bio_err,"depth=%d ",depth);
+	if (err_cert) {
+		X509_NAME_print_ex(bio_err,
+		    X509_get_subject_name(err_cert), 0,
+		    XN_FLAG_ONELINE);
+		BIO_puts(bio_err, "\en");
+	} else
+		BIO_puts(bio_err, "<no cert>\en");
+	if (!ok)
+		BIO_printf(bio_err, "verify error:num=%d:%s\en",
+		    err, X509_verify_cert_error_string(err));
+	switch (err) {
+	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
+		BIO_puts(bio_err, "issuer= ");
+		X509_NAME_print_ex(bio_err,
+		    X509_get_issuer_name(err_cert), 0,
+		    XN_FLAG_ONELINE);
+		BIO_puts(bio_err, "\en");
+		break;
+	case X509_V_ERR_CERT_NOT_YET_VALID:
+	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
+		BIO_printf(bio_err, "notBefore=");
+		ASN1_TIME_print(bio_err,
+		    X509_get_notBefore(err_cert));
+		BIO_printf(bio_err, "\en");
+		break;
+	case X509_V_ERR_CERT_HAS_EXPIRED:
+	case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
+		BIO_printf(bio_err, "notAfter=");
+		ASN1_TIME_print(bio_err, X509_get_notAfter(err_cert));
+		BIO_printf(bio_err, "\en");
+		break;
+	case X509_V_ERR_NO_EXPLICIT_POLICY:
+		policies_print(bio_err, ctx);
+		break;
+	}
+	if (err == X509_V_OK && ok == 2)
+		/* print out policies */
+
+	BIO_printf(bio_err,"verify return:%d\en",ok);
+	return(ok);
+}
+.Ed
+.Sh SEE ALSO
+.Xr X509_STORE_CTX_get_error 3 ,
+.Xr X509_STORE_CTX_get_ex_new_index 3 ,
+.Xr X509_STORE_set_verify_cb_func 3
+.Sh HISTORY
+.Fn X509_STORE_CTX_set_verify_cb
+is available in all versions of SSLeay and OpenSSL.
+.Sh CAVEATS
+In general a verification callback should
+.Sy NOT
+unconditionally return 1 in all circumstances because this will allow
+verification to succeed no matter what the error.
+This effectively removes all security from the application because
+.Sy any
+certificate (including untrusted generated ones) will be accepted.

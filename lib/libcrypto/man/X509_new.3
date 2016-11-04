@@ -1,0 +1,49 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509_NEW 3
+.Os
+.Sh NAME
+.Nm X509_new ,
+.Nm X509_free
+.Nd X509 certificate ASN1 allocation functions
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft X509 *
+.Fn X509_new void
+.Ft void
+.Fo X509_free
+.Fa "X509 *a"
+.Fc
+.Sh DESCRIPTION
+The X509 ASN1 allocation routines allocate and free an
+.Vt X509
+structure, which represents an X509 certificate.
+.Pp
+.Fn X509_new
+allocates and initializes a X509 structure.
+.Pp
+.Fn X509_free
+frees up the
+.Vt X509
+structure
+.Fa a .
+If
+.Fa a
+is a
+.Dv NULL
+pointer, no action occurs.
+.Sh RETURN VALUES
+If the allocation fails,
+.Fn X509_new
+returns
+.Dv NULL
+and sets an error code that can be obtained by
+.Xr ERR_get_error 3 .
+Otherwise it returns a pointer to the newly allocated structure.
+.Sh SEE ALSO
+.Xr d2i_X509 3 ,
+.Xr ERR_get_error 3
+.Sh HISTORY
+.Fn X509_new
+and
+.Fn X509_free
+are available in all versions of SSLeay and OpenSSL.

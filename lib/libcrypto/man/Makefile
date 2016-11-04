@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.45 2016/11/04 10:17:17 schwarze Exp $
+# $OpenBSD: Makefile,v 1.46 2016/11/04 15:29:03 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -153,21 +153,6 @@ MAN=	\
 	SMIME_read_PKCS7.3 \
 	SMIME_write_PKCS7.3 \
 	UI_new.3 \
-	bn_dump.3 \
-	crypto.3 \
-	d2i_ASN1_OBJECT.3 \
-	d2i_PKCS8PrivateKey_bio.3 \
-	d2i_RSAPublicKey.3 \
-	des_read_pw.3 \
-	evp.3 \
-	i2d_PKCS7_bio_stream.3 \
-	lh_new.3 \
-	rsa.3 \
-
-GENMAN= \
-	RC4.3 \
-	RIPEMD160.3 \
-	SHA1.3 \
 	X509_NAME_ENTRY_get_object.3 \
 	X509_NAME_add_entry_by_txt.3 \
 	X509_NAME_get_index_by_NID.3 \
@@ -180,22 +165,37 @@ GENMAN= \
 	X509_VERIFY_PARAM_set_flags.3 \
 	X509_new.3 \
 	X509_verify_cert.3 \
-	bn.3 \
-	d2i_DHparams.3 \
-	d2i_DSAPublicKey.3 \
-	d2i_ECPKParameters.3 \
+	bn_dump.3 \
+	crypto.3 \
+	d2i_ASN1_OBJECT.3 \
+	d2i_PKCS8PrivateKey_bio.3 \
+	d2i_RSAPublicKey.3 \
 	d2i_X509.3 \
 	d2i_X509_ALGOR.3 \
 	d2i_X509_CRL.3 \
 	d2i_X509_NAME.3 \
 	d2i_X509_REQ.3 \
 	d2i_X509_SIG.3 \
+	des_read_pw.3 \
+	evp.3 \
+	i2d_PKCS7_bio_stream.3 \
+	lh_new.3 \
+	rsa.3 \
+	x509.3
+
+GENMAN= \
+	RC4.3 \
+	RIPEMD160.3 \
+	SHA1.3 \
+	bn.3 \
+	d2i_DHparams.3 \
+	d2i_DSAPublicKey.3 \
+	d2i_ECPKParameters.3 \
 	dh.3 \
 	dsa.3 \
 	ec.3 \
 	engine.3 \
 	lh_stats.3 \
-	x509.3 \
 
 MAN+=	${GENMAN}
 

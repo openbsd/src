@@ -1,0 +1,199 @@
+.Dd $Mdocdate: November 4 2016 $
+.Dt X509_NAME_PRINT_EX 3
+.Os
+.Sh NAME
+.Nm X509_NAME_print_ex ,
+.Nm X509_NAME_print_ex_fp ,
+.Nm X509_NAME_print ,
+.Nm X509_NAME_oneline
+.Nd X509_NAME printing routines
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft int
+.Fo X509_NAME_print_ex
+.Fa "BIO *out"
+.Fa "X509_NAME *nm"
+.Fa "int indent"
+.Fa "unsigned long flags"
+.Fc
+.Ft int
+.Fo X509_NAME_print_ex_fp
+.Fa "FILE *fp"
+.Fa "X509_NAME *nm"
+.Fa "int indent"
+.Fa "unsigned long flags"
+.Fc
+.Ft char *
+.Fo X509_NAME_oneline
+.Fa "X509_NAME *a"
+.Fa "char *buf"
+.Fa "int size"
+.Fc
+.Ft int
+.Fo X509_NAME_print
+.Fa "BIO *bp"
+.Fa "X509_NAME *name"
+.Fa "int obase"
+.Fc
+.Sh DESCRIPTION
+.Fn X509_NAME_print_ex
+prints a human readable version of
+.Fa nm
+to
+.Vt BIO
+.Fa out .
+Each line (for multiline formats) is indented by
+.Fa indent
+spaces.
+The output format can be extensively customised by use of the
+.Fa flags
+parameter.
+.Pp
+.Fn X509_NAME_print_ex_fp
+is identical to
+.Fn X509_NAME_print_ex
+except the output is written to the
+.Vt FILE
+pointer
+.Fa fp .
+.Pp
+.Fn X509_NAME_oneline
+prints an ASCII version of
+.Fa a
+to
+.Fa buf .
+At most
+.Fa size
+bytes will be written.
+If
+.Fa buf
+is
+.Dv NULL ,
+then a buffer is dynamically allocated and returned, otherwise
+.Fa buf
+is returned.
+.Pp
+.Fn X509_NAME_print
+prints out
+.Fa name
+to
+.Fa bp
+indenting each line by
+.Fa obase
+characters.
+Multiple lines are used if the output (including indent) exceeds 80
+characters.
+.Pp
+The functions
+.Fn X509_NAME_oneline
+and
+.Fn X509_NAME_print
+are legacy functions which produce a non standard output form.
+They don't handle multi character fields and have various quirks
+and inconsistencies.
+Their use is strongly discouraged in new applications.
+.Pp
+Although there are a large number of possible flags, for most purposes
+.Dv XN_FLAG_ONELINE ,
+.Dv XN_FLAG_MULTILINE ,
+or
+.Dv XN_FLAG_RFC2253
+will suffice.
+As noted on the
+.Xr ASN1_STRING_print_ex 3
+manual page, for UTF-8 terminals the
+.Dv ASN1_STRFLGS_ESC_MSB
+should be unset: so for example
+.Dv XN_FLAG_ONELINE No & Pf ~ Dv ASN1_STRFLGS_ESC_MSB
+would be used.
+.Pp
+The complete set of the flags supported by
+.Dv X509_NAME_print_ex
+is listed below.
+.Pp
+Several options can be OR'ed together.
+.Pp
+The options
+.Dv XN_FLAG_SEP_COMMA_PLUS ,
+.Dv XN_FLAG_SEP_CPLUS_SPC ,
+.Dv XN_FLAG_SEP_SPLUS_SPC ,
+and
+.Dv XN_FLAG_SEP_MULTILINE
+determine the field separators to use.
+Two distinct separators are used between distinct
+RelativeDistinguishedName components and separate values in the same RDN
+for a multi-valued RDN.
+Multi-valued RDNs are currently very rare so the second separator
+will hardly ever be used.
+.Pp
+.Dv XN_FLAG_SEP_COMMA_PLUS
+uses comma and plus as separators.
+.Dv XN_FLAG_SEP_CPLUS_SPC
+uses comma and plus with spaces:
+this is more readable that plain comma and plus.
+.Dv XN_FLAG_SEP_SPLUS_SPC
+uses spaced semicolon and plus.
+.Dv XN_FLAG_SEP_MULTILINE
+uses spaced newline and plus respectively.
+.Pp
+If
+.Dv XN_FLAG_DN_REV
+is set, the whole DN is printed in reversed order.
+.Pp
+The fields
+.Dv XN_FLAG_FN_SN ,
+.Dv XN_FLAG_FN_LN ,
+.Dv XN_FLAG_FN_OID ,
+and
+.Dv XN_FLAG_FN_NONE
+determine how a field name is displayed.
+It will use the short name (e.g. CN) the long name (e.g. commonName)
+always use OID numerical form (normally OIDs are only used if the
+field name is not recognised) and no field name respectively.
+.Pp
+If
+.Dv XN_FLAG_SPC_EQ
+is set, then spaces will be placed around the
+.Ql =
+character separating field names and values.
+.Pp
+If
+.Dv XN_FLAG_DUMP_UNKNOWN_FIELDS
+is set, then the encoding of unknown fields is printed instead of the
+values.
+.Pp
+If
+.Dv XN_FLAG_FN_ALIGN
+is set, then field names are padded to 20 characters:
+this is only of use for multiline format.
+.Pp
+Additionally, all the options supported by
+.Xr ASN1_STRING_print_ex 3
+can be used to control how each field value is displayed.
+.Pp
+In addition a number options can be set for commonly used formats.
+.Pp
+.Dv XN_FLAG_RFC2253
+sets options which produce an output compatible with RFC2253.
+It is equivalent to
+.Dv ASN1_STRFLGS_RFC2253 | XN_FLAG_SEP_COMMA_PLUS | XN_FLAG_DN_REV |
+.Dv XN_FLAG_FN_SN | XN_FLAG_DUMP_UNKNOWN_FIELDS .
+.Pp
+.Dv XN_FLAG_ONELINE
+is a more readable one line format which is the same as:
+.Dv ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE | XN_FLAG_SEP_CPLUS_SPC |
+.Dv XN_FLAG_SPC_EQ | XN_FLAG_FN_SN .
+.Pp
+.Dv XN_FLAG_MULTILINE
+is a multiline format which is the same as:
+.Dv ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB | XN_FLAG_SEP_MULTILINE |
+.Dv XN_FLAG_SPC_EQ | XN_FLAG_FN_LN | XN_FLAG_FN_ALIGN .
+.Pp
+.Dv XN_FLAG_COMPAT
+uses a format identical to
+.Fn X509_NAME_print :
+in fact it calls
+.Fn X509_NAME_print
+internally.
+.Sh SEE ALSO
+.Xr ASN1_STRING_print_ex 3
