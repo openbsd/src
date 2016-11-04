@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.27 2016/11/04 18:23:32 guenther Exp $
+#	$OpenBSD: Makefile,v 1.28 2016/11/04 19:01:54 jsing Exp $
 
 CFLAGS+= -Wall -Werror -Wimplicit
 CFLAGS+= -DLIBRESSL_INTERNAL
+
+WARNINGS= Yes
 
 LIB=	tls
 
