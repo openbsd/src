@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.101 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.102 2016/11/04 18:56:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -187,6 +187,8 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 	/* Start or stop timers if necessary. */
 	if (strcmp(oe->name, "automatic-rename") == 0) {
 		RB_FOREACH(w, windows, &windows) {
+			if (w->active == NULL)
+				continue;
 			if (options_get_number(w->options, "automatic-rename"))
 				w->active->flags |= PANE_CHANGED;
 		}
