@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.16 2015/02/14 15:06:55 jsing Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.17 2016/11/04 18:35:30 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -281,6 +281,30 @@ int
 i2d_DSAparams(const DSA *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DSAparams_it);
+}
+
+DSA *
+d2i_DSAparams_bio(BIO *bp, DSA **a)
+{
+	return ASN1_item_d2i_bio(&DSAparams_it, bp, a);
+}
+
+int
+i2d_DSAparams_bio(BIO *bp, DSA *a)
+{
+	return ASN1_item_i2d_bio(&DSAparams_it, bp, a);
+}
+
+DSA *
+d2i_DSAparams_fp(FILE *fp, DSA **a)
+{
+	return ASN1_item_d2i_fp(&DSAparams_it, fp, a);
+}
+
+int
+i2d_DSAparams_fp(FILE *fp, DSA *a)
+{
+	return ASN1_item_i2d_fp(&DSAparams_it, fp, a);
 }
 
 /*

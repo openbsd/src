@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_asn.c,v 1.8 2015/07/25 14:52:47 jsing Exp $ */
+/* $OpenBSD: ocsp_asn.c,v 1.9 2016/11/04 18:35:30 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -333,7 +333,6 @@ const ASN1_ITEM OCSP_REQUEST_it = {
 	.sname = "OCSP_REQUEST",
 };
 
-
 OCSP_REQUEST *
 d2i_OCSP_REQUEST(OCSP_REQUEST **a, const unsigned char **in, long len)
 {
@@ -345,6 +344,18 @@ int
 i2d_OCSP_REQUEST(OCSP_REQUEST *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_REQUEST_it);
+}
+
+OCSP_REQUEST *
+d2i_OCSP_REQUEST_bio(BIO *bp, OCSP_REQUEST **a)
+{
+	return ASN1_item_d2i_bio(&OCSP_REQUEST_it, bp, a);
+}
+
+int
+i2d_OCSP_REQUEST_bio(BIO *bp, OCSP_REQUEST *a)
+{
+	return ASN1_item_i2d_bio(&OCSP_REQUEST_it, bp, a);
 }
 
 OCSP_REQUEST *
@@ -453,6 +464,18 @@ int
 i2d_OCSP_RESPONSE(OCSP_RESPONSE *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_RESPONSE_it);
+}
+
+OCSP_RESPONSE *
+d2i_OCSP_RESPONSE_bio(BIO *bp, OCSP_RESPONSE **a)
+{
+	return ASN1_item_d2i_bio(&OCSP_RESPONSE_it, bp, a);
+}
+
+int
+i2d_OCSP_RESPONSE_bio(BIO *bp, OCSP_RESPONSE *a)
+{
+	return ASN1_item_i2d_bio(&OCSP_RESPONSE_it, bp, a);
 }
 
 OCSP_RESPONSE *

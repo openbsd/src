@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.17 2016/06/30 02:02:06 bcook Exp $ */
+/* $OpenBSD: dh.h,v 1.18 2016/11/04 18:35:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,12 +165,10 @@ struct dh_st
    this for backward compatibility: */
 #define DH_CHECK_P_NOT_STRONG_PRIME	DH_CHECK_P_NOT_SAFE_PRIME
 
-#define d2i_DHparams_fp(fp,x) (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
-		(char *(*)())d2i_DHparams,(fp),(unsigned char **)(x))
-#define i2d_DHparams_fp(fp,x) ASN1_i2d_fp(i2d_DHparams,(fp), \
-		(unsigned char *)(x))
-#define d2i_DHparams_bio(bp,x) ASN1_d2i_bio_of(DH,DH_new,d2i_DHparams,bp,x)
-#define i2d_DHparams_bio(bp,x) ASN1_i2d_bio_of_const(DH,i2d_DHparams,bp,x)
+DH *d2i_DHparams_bio(BIO *bp, DH **a);
+int i2d_DHparams_bio(BIO *bp, DH *a);
+DH *d2i_DHparams_fp(FILE *fp, DH **a);
+int i2d_DHparams_fp(FILE *fp, DH *a);
 
 DH *DHparams_dup(DH *);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.21 2016/06/30 02:02:06 bcook Exp $ */
+/* $OpenBSD: dsa.h,v 1.22 2016/11/04 18:35:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,13 +173,10 @@ struct dsa_st
 	ENGINE *engine;
 	};
 
-#define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
-		(char *(*)())d2i_DSAparams,(fp),(unsigned char **)(x))
-#define i2d_DSAparams_fp(fp,x) ASN1_i2d_fp(i2d_DSAparams,(fp), \
-		(unsigned char *)(x))
-#define d2i_DSAparams_bio(bp,x) ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAparams,bp,x)
-#define i2d_DSAparams_bio(bp,x) ASN1_i2d_bio_of_const(DSA,i2d_DSAparams,bp,x)
-
+DSA *d2i_DSAparams_bio(BIO *bp, DSA **a);
+int i2d_DSAparams_bio(BIO *bp, DSA *a);
+DSA *d2i_DSAparams_fp(FILE *fp, DSA **a);
+int i2d_DSAparams_fp(FILE *fp, DSA *a);
 
 DSA *DSAparams_dup(DSA *x);
 DSA_SIG * DSA_SIG_new(void);
