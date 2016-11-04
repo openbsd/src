@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.13 2016/11/04 15:43:46 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.14 2016/11/04 15:45:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -59,8 +59,7 @@ bio_cb_new(BIO *bio)
 {
 	struct bio_cb *bcb;
 
-	bcb = calloc(1, sizeof(struct bio_cb));
-	if (bcb == NULL)
+	if ((bcb = calloc(1, sizeof(struct bio_cb))) == NULL)
 		return (0);
 
 	bio->shutdown = 1;
@@ -180,8 +179,7 @@ tls_get_new_cb_bio(struct tls *ctx)
 	if (ctx->read_cb == NULL || ctx->write_cb == NULL)
 		tls_set_errorx(ctx, "no callbacks registered");
 
-	bio = BIO_new(bio_s_cb());
-	if (bio == NULL) {
+	if ((bio = BIO_new(bio_s_cb())) == NULL) {
 		tls_set_errorx(ctx, "failed to create callback i/o");
 		return (NULL);
 	}
@@ -205,8 +203,7 @@ tls_set_cbs(struct tls *ctx, tls_read_cb read_cb, tls_write_cb write_cb,
 	ctx->write_cb = write_cb;
 	ctx->cb_arg = cb_arg;
 
-	bio = tls_get_new_cb_bio(ctx);
-	if (bio == NULL) {
+	if ((bio = tls_get_new_cb_bio(ctx)) == NULL) {
 		tls_set_errorx(ctx, "failed to create callback i/o");
 		goto err;
 	}
