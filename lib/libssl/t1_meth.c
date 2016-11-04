@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_meth.c,v 1.17 2015/09/11 14:52:17 jsing Exp $ */
+/* $OpenBSD: t1_meth.c,v 1.18 2016/11/04 18:30:21 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,7 @@
 
 static const SSL_METHOD *tls1_get_method(int ver);
 
-const SSL_METHOD TLS_method_data = {
+static const SSL_METHOD TLS_method_data = {
 	.version = TLS1_2_VERSION,
 	.ssl_new = tls1_new,
 	.ssl_clear = tls1_clear,
@@ -96,7 +96,7 @@ const SSL_METHOD TLS_method_data = {
 	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
 };
 
-const SSL_METHOD TLSv1_method_data = {
+static const SSL_METHOD TLSv1_method_data = {
 	.version = TLS1_VERSION,
 	.ssl_new = tls1_new,
 	.ssl_clear = tls1_clear,
@@ -128,7 +128,7 @@ const SSL_METHOD TLSv1_method_data = {
 	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
 };
 
-const SSL_METHOD TLSv1_1_method_data = {
+static const SSL_METHOD TLSv1_1_method_data = {
 	.version = TLS1_1_VERSION,
 	.ssl_new = tls1_new,
 	.ssl_clear = tls1_clear,
@@ -160,7 +160,7 @@ const SSL_METHOD TLSv1_1_method_data = {
 	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
 };
 
-const SSL_METHOD TLSv1_2_method_data = {
+static const SSL_METHOD TLSv1_2_method_data = {
 	.version = TLS1_2_VERSION,
 	.ssl_new = tls1_new,
 	.ssl_clear = tls1_clear,
