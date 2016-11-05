@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlinks.c,v 1.1 2016/11/04 19:57:27 schwarze Exp $ */
+/*	$OpenBSD: mlinks.c,v 1.2 2016/11/05 16:35:31 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -33,7 +33,7 @@ main(int argc, char *argv[])
 	const char	*np;  /* Names of the page. */
 	const char	*fp;  /* Primary filename of the page. */
 	const char	*ep;  /* Filname extension including the dot. */
-	size_t		 nlen;
+	size_t		 flen, nlen;
 	int32_t		 i, npages;
 
 	if (argc != 2)
@@ -67,6 +67,7 @@ main(int argc, char *argv[])
 		ep = strrchr(fp, '/');
 		if (ep != NULL)
 			fp = ep + 1;
+		flen = ep - fp;
 
 		ep = strrchr(fp, '.');
 		if (ep == NULL)
@@ -79,7 +80,7 @@ main(int argc, char *argv[])
 
 			/* Skip the primary filename. */
 			nlen = strlen(np);
-			if (strncmp(fp, np, nlen) == 0) {
+			if (nlen == flen && strncmp(fp, np, nlen) == 0) {
 				np = strchr(np, '\0') + 1;
 				continue;
 			}
