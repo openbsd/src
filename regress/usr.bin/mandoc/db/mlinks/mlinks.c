@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlinks.c,v 1.2 2016/11/05 16:35:31 schwarze Exp $ */
+/*	$OpenBSD: mlinks.c,v 1.3 2016/11/05 16:43:50 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -67,11 +67,11 @@ main(int argc, char *argv[])
 		ep = strrchr(fp, '/');
 		if (ep != NULL)
 			fp = ep + 1;
-		flen = ep - fp;
 
 		ep = strrchr(fp, '.');
 		if (ep == NULL)
 			errx(1, "no filename extension: %s", fp);
+		flen = ep - fp;
 
 		while (*np != '\0') {
 
