@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.11 2014/03/29 23:59:49 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.12 2016/11/05 05:28:39 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -89,6 +89,12 @@ extern enum devclass bootdev_class;
 
 extern bus_space_tag_t early_mem_t;
 extern bus_space_tag_t early_io_t;
+
+#define	REGVAL8(x)	*((volatile uint8_t *)PHYS_TO_XKPHYS((x), CCA_NC))
+#define	REGVAL32(x)	*((volatile uint32_t *)PHYS_TO_XKPHYS((x), CCA_NC))
+#define	REGVAL64(x)	*((volatile uint64_t *)PHYS_TO_XKPHYS((x), CCA_NC))
+
+#define	REGVAL(x)	REGVAL32(x)
 
 #include <mips64/autoconf.h>
 
