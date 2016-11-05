@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_seal.c,v 1.22 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: pem_seal.c,v 1.23 2016/11/05 11:32:45 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,6 +70,14 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
+static void
+PEM_ENCODE_SEAL_CTX_cleanup(PEM_ENCODE_SEAL_CTX *ctx)
+{
+	EVP_CIPHER_CTX_cleanup(&ctx->cipher);
+	EVP_MD_CTX_cleanup(&ctx->md);
+	explicit_bzero(&ctx->encode, sizeof(ctx->encode));
+}
+
 int
 PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
     unsigned char **ek, int *ekl, unsigned char *iv, EVP_PKEY **pubk, int npubk)
@@ -78,6 +86,14 @@ PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 	int ret = -1;
 	int i, j, max = 0;
 	char *s = NULL;
+
+	/*
+	 * Make sure ctx is properly initialized so that we can always pass
+	 * it to PEM_ENCODE_SEAL_CTX_cleanup() in the error path.
+	 */
+	EVP_EncodeInit(&ctx->encode);
+	EVP_MD_CTX_init(&ctx->md);
+	EVP_CIPHER_CTX_init(&ctx->cipher);
 
 	for (i = 0; i < npubk; i++) {
 		if (pubk[i]->type != EVP_PKEY_RSA) {
@@ -94,13 +110,9 @@ PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 		goto err;
 	}
 
-	EVP_EncodeInit(&ctx->encode);
-
-	EVP_MD_CTX_init(&ctx->md);
 	if (!EVP_SignInit(&ctx->md, md_type))
 		goto err;
 
-	EVP_CIPHER_CTX_init(&ctx->cipher);
 	ret = EVP_SealInit(&ctx->cipher, type, ek, ekl, iv, pubk, npubk);
 	if (ret <= 0)
 		goto err;
@@ -115,9 +127,12 @@ PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 
 	ret = npubk;
 
+	if (0) {
 err:
+		PEM_ENCODE_SEAL_CTX_cleanup(ctx);
+	}
 	free(s);
-	explicit_bzero(key, EVP_MAX_KEY_LENGTH);
+	explicit_bzero(key, sizeof(key));
 	return (ret);
 }
 
@@ -182,8 +197,7 @@ PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 	ret = 1;
 
 err:
-	EVP_MD_CTX_cleanup(&ctx->md);
-	EVP_CIPHER_CTX_cleanup(&ctx->cipher);
+	PEM_ENCODE_SEAL_CTX_cleanup(ctx);
 	free(s);
 	return (ret);
 }
