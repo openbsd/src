@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.9 2014/07/12 16:03:36 miod Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.10 2016/11/05 10:47:16 miod Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -125,8 +125,11 @@ BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 		return 0;
 	if (!r->neg)
 		return 1;
-	/* now   -|d| < r < 0,  so we have to set  r := r + |d| */
-	return (d->neg ? BN_sub : BN_add)(r, r, d);
+	/* now -|d| < r < 0,  so we have to set  r := r + |d| */
+	if (d->neg)
+		return BN_sub(r, r, d);
+	else
+		return BN_add(r, r, d);
 }
 
 int
