@@ -50,8 +50,6 @@ tls_ocsp_free(struct tls_ocsp *ocsp)
 	ocsp->ocsp_result = NULL;
 	free(ocsp->ocsp_url);
 	ocsp->ocsp_url = NULL;
-	free(ocsp->request_data);
-	ocsp->request_data = NULL;
 	free(ocsp);
 }
 
@@ -320,6 +318,38 @@ tls_ocsp_verify_cb(SSL *ssl, void *arg)
 	}
 
 	return (res == 0) ? 1 : 0;
+}
+
+
+/* Staple the OCSP information in ctx->ocsp to the server handshake. */
+int
+tls_ocsp_stapling_cb(SSL *ssl, void *arg)
+{
+	struct tls *ctx;
+	unsigned char *ocsp_staple = NULL;
+	int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+
+	if ((ctx = SSL_get_app_data(ssl)) == NULL)
+		goto err;
+
+	if (ctx->config->ocsp_staple == NULL ||
+	    ctx->config->ocsp_staple_len == 0)
+		return SSL_TLSEXT_ERR_NOACK;
+
+	if ((ocsp_staple = malloc(ctx->config->ocsp_staple_len)) == NULL)
+		goto err;
+
+	memcpy(ocsp_staple, ctx->config->ocsp_staple,
+	    ctx->config->ocsp_staple_len);
+	if (SSL_set_tlsext_status_ocsp_resp(ctx->ssl_conn, ocsp_staple,
+		ctx->config->ocsp_staple_len) != 1)
+		goto err;
+
+	ret = SSL_TLSEXT_ERR_OK;
+ err:
+	if (ret != SSL_TLSEXT_ERR_OK)
+		free(ocsp_staple);
+	return ret;
 }
 
 /*

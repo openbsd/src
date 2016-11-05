@@ -29,6 +29,8 @@ tls_config_set_key_file
 tls_config_set_key_mem
 tls_config_set_keypair_file
 tls_config_set_keypair_mem
+tls_config_set_ocsp_staple_mem
+tls_config_set_ocsp_staple_file
 tls_config_set_protocols
 tls_config_set_verify_depth
 tls_config_verify

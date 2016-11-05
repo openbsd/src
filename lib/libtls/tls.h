@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.40 2016/11/04 05:13:13 beck Exp $ */
+/* $OpenBSD: tls.h,v 1.41 2016/11/05 15:13:26 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -106,6 +106,8 @@ int tls_config_set_keypair_file(struct tls_config *_config,
     const char *_cert_file, const char *_key_file);
 int tls_config_set_keypair_mem(struct tls_config *_config, const uint8_t *_cert,
     size_t _cert_len, const uint8_t *_key, size_t _key_len);
+int tls_config_set_ocsp_staple_mem(struct tls_config *_config, char *_staple, size_t _len);
+int tls_config_set_ocsp_staple_file(struct tls_config *_config, const char *_staple_file);
 void tls_config_set_protocols(struct tls_config *_config, uint32_t _protocols);
 void tls_config_set_verify_depth(struct tls_config *_config, int _verify_depth);
 

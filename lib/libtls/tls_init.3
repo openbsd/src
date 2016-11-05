@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.77 2016/11/04 05:13:13 beck Exp $
+.\" $OpenBSD: tls_init.3,v 1.78 2016/11/05 15:13:26 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 4 2016 $
+.Dd $Mdocdate: November 5 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -39,6 +39,8 @@
 .Nm tls_config_set_key_mem ,
 .Nm tls_config_set_keypair_file ,
 .Nm tls_config_set_keypair_mem ,
+.Nm tls_config_set_ocsp_staple_mem ,
+.Nm tls_config_set_ocsp_staple_file ,
 .Nm tls_config_set_protocols ,
 .Nm tls_config_set_verify_depth ,
 .Nm tls_config_prefer_ciphers_client ,
@@ -134,6 +136,10 @@
 .Fn tls_config_set_keypair_file "struct tls_config *config" "const char *cert_file" "const char *key_file"
 .Ft "int"
 .Fn tls_config_set_keypair_mem "struct tls_config *config" "const uint8_t *cert" "size_t cert_len" "const uint8_t *key" "size_t key_len"
+.Ft "int"
+.Fn tls_config_set_ocsp_staple_mem "struct tls_config *config" "const char *staple" "size_t len"
+.Ft "int"
+.Fn tls_config_set_ocsp_staple_file "struct tls_config *config" "const char *staple_file
 .Ft "void"
 .Fn tls_config_set_protocols "struct tls_config *config" "uint32_t protocols"
 .Ft "void"
@@ -364,6 +370,14 @@ used as an alternative certificate for Server Name Indication (server only).
 .Fn tls_config_set_keypair_mem
 adds an additional public certificate and private key from memory,
 used as an alternative certificate for Server Name Indication (server only).
+.It
+.Fn tls_config_set_ocsp_staple_mem
+adds a DER encoded OCSP response to be stapled during the TLS handshake from 
+memory. 
+.It
+.Fn tls_config_set_ocsp_staple_file
+adds a DER encoded OCSP response to be stapled during the TLS handshake from 
+the specified file.  
 .It
 .Fn tls_config_set_alpn
 sets the ALPN protocols that are supported.

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.49 2016/11/05 14:50:05 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.50 2016/11/05 15:13:26 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -67,6 +67,8 @@ struct tls_config {
 	int ecdhecurve;
 	struct tls_keypair *keypair;
 	int ocsp_require_stapling;
+	char *ocsp_staple;
+	size_t ocsp_staple_len;
 	uint32_t protocols;
 	int verify_cert;
 	int verify_client;
@@ -109,10 +111,6 @@ struct tls_ocsp_result {
 struct tls_ocsp {
 	/* responder location */
 	char *ocsp_url;
-
-	/* request blob */
-	uint8_t *request_data;
-	size_t request_size;
 
 	/* cert data, this struct does not own these */
 	X509 *main_cert;
@@ -208,6 +206,7 @@ int tls_conninfo_populate(struct tls *ctx);
 void tls_conninfo_free(struct tls_conninfo *conninfo);
 
 int tls_ocsp_verify_cb(SSL *ssl, void *arg);
+int tls_ocsp_stapling_cb(SSL *ssl, void *arg);
 void tls_ocsp_free(struct tls_ocsp *ctx);
 struct tls_ocsp *tls_ocsp_setup_from_peer(struct tls *ctx);
 

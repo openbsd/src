@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.31 2016/11/04 19:01:04 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.32 2016/11/05 15:13:26 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -227,6 +227,7 @@ tls_config_free(struct tls_config *config)
 	free((char *)config->ca_mem);
 	free((char *)config->ca_path);
 	free((char *)config->ciphers);
+	free(config->ocsp_staple);
 
 	free(config);
 }
@@ -640,4 +641,17 @@ void
 tls_config_verify_client_optional(struct tls_config *config)
 {
 	config->verify_client = 2;
+}
+
+int
+tls_config_set_ocsp_staple_file(struct tls_config *config, const char *staple_file)
+{
+	return tls_config_load_file(&config->error, "OCSP", staple_file,
+	    &config->ocsp_staple, &config->ocsp_staple_len);
+}
+
+int
+tls_config_set_ocsp_staple_mem(struct tls_config *config, char *staple, size_t len)
+{
+	return set_mem(&config->ocsp_staple, &config->ocsp_staple_len, staple, len);
 }

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.76 2016/11/04 07:34:17 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.77 2016/11/05 15:13:26 beck Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 4 2016 $
+.Dd $Mdocdate: November 5 2016 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Op Fl M Ar ttl
 .Op Fl m Ar minttl
 .Op Fl O Ar length
+.Op Fl o Ar staplefile
 .Op Fl P Ar proxy_username
 .Op Fl p Ar source_port
 .Op Fl R Ar CAfile
@@ -187,6 +188,12 @@ Do not do any DNS or service lookups on any specified addresses,
 hostnames or ports.
 .It Fl O Ar length
 Specifies the size of the TCP send buffer.
+.It Fl o Ar staplefile
+Specifies the filename from which to load data to be stapled
+during the TLS handshake.
+The file is expected to contain an OSCP response from an OCSP server in 
+DER format. 
+May only be used with TLS and when a certificate is being used.
 .It Fl P Ar proxy_username
 Specifies a username to present to a proxy server that requires authentication.
 If no username is specified then authentication will not be attempted.
