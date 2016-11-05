@@ -1,0 +1,83 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt LH_STATS 3
+.Os
+.Sh NAME
+.Nm lh_stats ,
+.Nm lh_node_stats ,
+.Nm lh_node_usage_stats ,
+.Nm lh_stats_bio ,
+.Nm lh_node_stats_bio ,
+.Nm lh_node_usage_stats_bio
+.Nd LHASH statistics
+.Sh SYNOPSIS
+.In openssl/lhash.h
+.Ft void
+.Fo lh_stats
+.Fa "LHASH *table"
+.Fa "FILE *out"
+.Fc
+.Ft void
+.Fo lh_node_stats
+.Fa "LHASH *table"
+.Fa "FILE *out"
+.Fc
+.Ft void
+.Fo lh_node_usage_stats
+.Fa "LHASH *table"
+.Fa "FILE *out"
+.Fc
+.Ft void
+.Fo lh_stats_bio
+.Fa "LHASH *table"
+.Fa "BIO *out"
+.Fc
+.Ft void
+.Fo lh_node_stats_bio
+.Fa "LHASH *table"
+.Fa "BIO *out"
+.Fc
+.Ft void
+.Fo lh_node_usage_stats_bio
+.Fa "LHASH *table"
+.Fa "BIO *out"
+.Fc
+.Sh DESCRIPTION
+The
+.Vt LHASH
+structure records statistics about most aspects of accessing the hash
+table.
+.Pp
+.Fn lh_stats
+prints out statistics on the size of the hash table, how many entries
+are in it, and the number and result of calls to the routines in this
+library.
+.Pp
+.Fn lh_node_stats
+prints the number of entries for each 'bucket' in the hash table.
+.Pp
+.Fn lh_node_usage_stats
+prints out a short summary of the state of the hash table.
+It prints the 'load' and the 'actual load'.
+The load is the average number of data items per 'bucket' in the hash
+table.
+The 'actual load' is the average number of items per 'bucket', but only
+for buckets which contain entries.
+So the 'actual load' is the average number of searches that will need to
+find an item in the hash table, while the 'load' is the average number
+that will be done to record a miss.
+.Pp
+.Fn lh_stats_bio ,
+.Fn lh_node_stats_bio ,
+and
+.Fn lh_node_usage_stats_bio
+are the same as the above, except that the output goes to a
+.Vt BIO .
+.Sh RETURN VALUES
+These functions do not return values.
+.Sh SEE ALSO
+.Xr bio 3 ,
+.Xr lh_new 3
+.Sh HISTORY
+These functions are available in all versions of SSLeay and OpenSSL.
+.Sh AUTHORS
+.An Eric Young

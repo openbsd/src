@@ -1,0 +1,102 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt SHA1 3
+.Os
+.Sh NAME
+.Nm SHA1 ,
+.Nm SHA1_Init ,
+.Nm SHA1_Update ,
+.Nm SHA1_Final
+.Nd Secure Hash Algorithm
+.Sh SYNOPSIS
+.In openssl/sha.h
+.Ft unsigned char *
+.Fo SHA1
+.Fa "const unsigned char *d"
+.Fa "unsigned long n"
+.Fa "unsigned char *md"
+.Fc
+.Ft int
+.Fo SHA1_Init
+.Fa "SHA_CTX *c"
+.Fc
+.Ft int
+.Fo SHA1_Update
+.Fa "SHA_CTX *c"
+.Fa "const void *data"
+.Fa "unsigned long len"
+.Fc
+.Ft int
+.Fo SHA1_Final
+.Fa "unsigned char *md"
+.Fa "SHA_CTX *c"
+.Fc
+.Sh DESCRIPTION
+SHA-1 (Secure Hash Algorithm) is a cryptographic hash function with a
+160 bit output.
+.Pp
+.Fn SHA1
+computes the SHA-1 message digest of the
+.Fa n
+bytes at
+.Fa d
+and places it in
+.Fa md ,
+which must have space for
+.Dv SHA_DIGEST_LENGTH
+== 20 bytes of output.
+If
+.Fa md
+is
+.Dv NULL ,
+the digest is placed in a static array.
+.Pp
+The following functions may be used if the message is not completely
+stored in memory:
+.Pp
+.Fn SHA1_Init
+initializes a
+.Vt SHA_CTX
+structure.
+.Pp
+.Fn SHA1_Update
+can be called repeatedly with chunks of the message to be hashed
+.Pq Fa len No bytes at Fa data .
+.Pp
+.Fn SHA1_Final
+places the message digest in
+.Fa md ,
+which must have space for
+.Dv SHA_DIGEST_LENGTH
+== 20 bytes of output, and erases the
+.Vt SHA_CTX .
+.Pp
+Applications should use the higher level functions
+.Xr EVP_DigestInit 3
+etc.  instead of calling the hash functions directly.
+.Pp
+The predecessor of SHA-1, SHA, is also implemented, but it should be
+used only when backward compatibility is required.
+.Sh RETURN VALUES
+.Fn SHA1
+returns a pointer to the hash value.
+.Pp
+.Fn SHA1_Init ,
+.Fn SHA1_Update ,
+and
+.Fn SHA1_Final
+return 1 for success or 0 otherwise.
+.Sh SEE ALSO
+.Xr EVP_DigestInit 3 ,
+.Xr HMAC 3 ,
+.Xr RIPEMD160 3
+.Sh STANDARDS
+SHA: US Federal Information Processing Standard FIPS PUB 180 (Secure
+Hash Standard), SHA-1: US Federal Information Processing Standard FIPS
+PUB 180-1 (Secure Hash Standard), ANSI X9.30
+.Sh HISTORY
+.Fn SHA1 ,
+.Fn SHA1_Init ,
+.Fn SHA1_Update ,
+and
+.Fn SHA1_Final
+are available in all versions of SSLeay and OpenSSL.

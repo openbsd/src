@@ -1,8 +1,6 @@
-# $OpenBSD: Makefile,v 1.47 2016/11/04 18:07:23 beck Exp $
+# $OpenBSD: Makefile,v 1.48 2016/11/05 13:36:33 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
-
-POD2MAN=pod2man --official --release="OpenBSD ${OSREV}" --center=OpenSSL
 
 .ifndef NOMAN
 MAN=	\
@@ -138,6 +136,8 @@ MAN=	\
 	RAND_cleanup.3 \
 	RAND_load_file.3 \
 	RAND_set_rand_method.3 \
+	RC4.3 \
+	RIPEMD160.3 \
 	RSA_blinding_on.3 \
 	RSA_check_key.3 \
 	RSA_generate_key.3 \
@@ -151,6 +151,7 @@ MAN=	\
 	RSA_sign.3 \
 	RSA_sign_ASN1_OCTET_STRING.3 \
 	RSA_size.3 \
+	SHA1.3 \
 	SMIME_read_PKCS7.3 \
 	SMIME_write_PKCS7.3 \
 	UI_new.3 \
@@ -166,9 +167,13 @@ MAN=	\
 	X509_VERIFY_PARAM_set_flags.3 \
 	X509_new.3 \
 	X509_verify_cert.3 \
+	bn.3 \
 	bn_dump.3 \
 	crypto.3 \
 	d2i_ASN1_OBJECT.3 \
+	d2i_DHparams.3 \
+	d2i_DSAPublicKey.3 \
+	d2i_ECPKParameters.3 \
 	d2i_PKCS8PrivateKey_bio.3 \
 	d2i_RSAPublicKey.3 \
 	d2i_X509.3 \
@@ -178,27 +183,16 @@ MAN=	\
 	d2i_X509_REQ.3 \
 	d2i_X509_SIG.3 \
 	des_read_pw.3 \
-	evp.3 \
-	i2d_PKCS7_bio_stream.3 \
-	lh_new.3 \
-	rsa.3 \
-	x509.3
-
-GENMAN= \
-	RC4.3 \
-	RIPEMD160.3 \
-	SHA1.3 \
-	bn.3 \
-	d2i_DHparams.3 \
-	d2i_DSAPublicKey.3 \
-	d2i_ECPKParameters.3 \
 	dh.3 \
 	dsa.3 \
 	ec.3 \
 	engine.3 \
+	evp.3 \
+	i2d_PKCS7_bio_stream.3 \
+	lh_new.3 \
 	lh_stats.3 \
-
-MAN+=	${GENMAN}
+	rsa.3 \
+	x509.3
 
 .include <bsd.man.mk>
 .else
@@ -206,16 +200,7 @@ maninstall:
 
 .endif
 
-.PATH: ${.CURDIR}/../doc
-.SUFFIXES: .pod .1 .3 .7
-.for sect in 1 3 7
-.pod.${sect}:
-	@echo '${POD2MAN} --section=${sect} --name=${*:U} $< > $@'
-	@${POD2MAN} --section=${sect} --name=${*:U} $< > $@.tmp && mv $@.tmp $@
-.endfor
-
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
 
 clean cleandir:
-	rm -f ${GENMAN}

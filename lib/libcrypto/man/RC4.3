@@ -1,0 +1,79 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt RC4 3
+.Os
+.Sh NAME
+.Nm RC4_set_key ,
+.Nm RC4
+.Nd RC4 encryption
+.Sh SYNOPSIS
+.In openssl/rc4.h
+.Ft void
+.Fo RC4_set_key
+.Fa "RC4_KEY *key"
+.Fa "int len"
+.Fa "const unsigned char *data"
+.Fc
+.Ft void
+.Fo RC4
+.Fa "RC4_KEY *key"
+.Fa "unsigned long len"
+.Fa "const unsigned char *indata"
+.Fa "unsigned char *outdata"
+.Fc
+.Sh DESCRIPTION
+This library implements the alleged RC4 cipher, which is described for
+example in
+.%B Applied Cryptography .
+It is believed to be compatible with RC4[TM], a proprietary cipher of
+RSA Security Inc.
+.Pp
+RC4 is a stream cipher with variable key length.
+Typically, 128 bit (16 byte) keys are used for strong encryption, but
+shorter insecure key sizes have been widely used due to export
+restrictions.
+.Pp
+RC4 consists of a key setup phase and the actual encryption or
+decryption phase.
+.Pp
+.Fn RC4_set_key
+sets up the
+.Vt RC4_KEY
+.Fa key
+using the
+.Fa len
+bytes long key at
+.Fa data .
+.Pp
+.Fn RC4
+encrypts or decrypts the
+.Fa len
+bytes of data at
+.Fa indata
+using
+.Fa key
+and places the result at
+.Fa outdata .
+Repeated
+.Fn RC4
+calls with the same
+.Fa key
+yield a continuous key stream.
+.Pp
+Since RC4 is a stream cipher (the input is XOR'ed with a pseudo-random
+key stream to produce the output), decryption uses the same function
+calls as encryption.
+.Sh RETURN VALUES
+.Fn RC4_set_key
+and
+.Fn RC4
+do not return values.
+.Sh SEE ALSO
+.Xr blowfish 3 ,
+.Xr EVP_EncryptInit 3
+.Sh HISTORY
+.Fn RC4_set_key
+and
+.Fn RC4
+are available in all versions of SSLeay and OpenSSL.
+.Sh BUGS
+This cipher is broken and should no longer be used.

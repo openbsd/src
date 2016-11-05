@@ -1,0 +1,710 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt EC 3
+.Os
+.Sh NAME
+.Nm ec
+.Nd Elliptic Curve functions
+.Sh SYNOPSIS
+.In openssl/ec.h
+.In openssl/bn.h
+.Ft const EC_METHOD *
+.Fn EC_GFp_simple_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_mont_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_nist_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_nistp224_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_nistp256_method void
+.Ft const EC_METHOD *
+.Fn EC_GFp_nistp521_method void
+.Ft const EC_METHOD *
+.Fn EC_GF2m_simple_method void
+.Ft EC_GROUP *
+.Fo EC_GROUP_new
+.Fa "const EC_METHOD *meth"
+.Fc
+.Ft void
+.Fo EC_GROUP_free
+.Fa "EC_GROUP *group"
+.Fc
+.Ft void
+.Fo EC_GROUP_clear_free
+.Fa "EC_GROUP *group"
+.Fc
+.Ft int
+.Fo EC_GROUP_copy
+.Fa "EC_GROUP *dst"
+.Fa "const EC_GROUP *src"
+.Fc
+.Ft EC_GROUP *
+.Fo EC_GROUP_dup
+.Fa "const EC_GROUP *src"
+.Fc
+.Ft const EC_METHOD *
+.Fo EC_GROUP_method_of
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft int
+.Fo EC_METHOD_get_field_type
+.Fa "const EC_METHOD *meth"
+.Fc
+.Ft int
+.Fo EC_GROUP_set_generator
+.Fa "EC_GROUP *group"
+.Fa "const EC_POINT *generator"
+.Fa "const BIGNUM *order"
+.Fa "const BIGNUM *cofactor"
+.Fc
+.Ft const EC_POINT *
+.Fo EC_GROUP_get0_generator
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_order
+.Fa "const EC_GROUP *group"
+.Fa "BIGNUM *order"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_cofactor
+.Fa "const EC_GROUP *group"
+.Fa "BIGNUM *cofactor"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft void
+.Fo EC_GROUP_set_curve_name
+.Fa "EC_GROUP *group"
+.Fa "int nid"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_curve_name
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft void
+.Fo EC_GROUP_set_asn1_flag
+.Fa "EC_GROUP *group"
+.Fa "int flag"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_asn1_flag
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft void
+.Fo EC_GROUP_set_point_conversion_form
+.Fa "EC_GROUP *group"
+.Fa "point_conversion_form_t form"
+.Fc
+.Ft point_conversion_form_t
+.Fo EC_GROUP_get_point_conversion_form
+.Fa "const EC_GROUP *"
+.Fc
+.Ft unsigned char *
+.Fo EC_GROUP_get0_seed
+.Fa "const EC_GROUP *x"
+.Fc
+.Ft size_t
+.Fo EC_GROUP_get_seed_len
+.Fa "const EC_GROUP *"
+.Fc
+.Ft size_t
+.Fo EC_GROUP_set_seed
+.Fa "EC_GROUP *"
+.Fa "const unsigned char *"
+.Fa "size_t len"
+.Fc
+.Ft int
+.Fo EC_GROUP_set_curve_GFp
+.Fa "EC_GROUP *group"
+.Fa "const BIGNUM *p"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_curve_GFp
+.Fa "const EC_GROUP *group"
+.Fa "BIGNUM *p"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_set_curve_GF2m
+.Fa "EC_GROUP *group"
+.Fa "const BIGNUM *p"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_curve_GF2m
+.Fa "const EC_GROUP *group"
+.Fa "BIGNUM *p"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_degree
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft int
+.Fo EC_GROUP_check
+.Fa "const EC_GROUP *group"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_check_discriminant
+.Fa "const EC_GROUP *group"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_cmp
+.Fa "const EC_GROUP *a"
+.Fa "const EC_GROUP *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft EC_GROUP *
+.Fo EC_GROUP_new_curve_GFp
+.Fa "const BIGNUM *p"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft EC_GROUP *
+.Fo EC_GROUP_new_curve_GF2m
+.Fa "const BIGNUM *p"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft EC_GROUP *
+.Fo EC_GROUP_new_by_curve_name
+.Fa "int nid"
+.Fc
+.Ft size_t
+.Fo EC_get_builtin_curves
+.Fa "EC_builtin_curve *r"
+.Fa "size_t nitems"
+.Fc
+.Ft EC_POINT *
+.Fo EC_POINT_new
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft void
+.Fo EC_POINT_free
+.Fa "EC_POINT *point"
+.Fc
+.Ft void
+.Fo EC_POINT_clear_free
+.Fa "EC_POINT *point"
+.Fc
+.Ft int
+.Fo EC_POINT_copy
+.Fa "EC_POINT *dst"
+.Fa "const EC_POINT *src"
+.Fc
+.Ft EC_POINT *
+.Fo EC_POINT_dup
+.Fa "const EC_POINT *src"
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft const EC_METHOD *
+.Fo EC_POINT_method_of
+.Fa "const EC_POINT *point"
+.Fc
+.Ft int
+.Fo EC_POINT_set_to_infinity
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *point"
+.Fc
+.Ft int
+.Fo EC_POINT_set_Jprojective_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "const BIGNUM *y"
+.Fa "const BIGNUM *z"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_get_Jprojective_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fa "BIGNUM *x"
+.Fa "BIGNUM *y"
+.Fa "BIGNUM *z"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_set_affine_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "const BIGNUM *y"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_get_affine_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fa "BIGNUM *x"
+.Fa "BIGNUM *y"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_set_compressed_coordinates_GFp
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "int y_bit"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_set_affine_coordinates_GF2m
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "const BIGNUM *y"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_get_affine_coordinates_GF2m
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fa "BIGNUM *x"
+.Fa "BIGNUM *y"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_set_compressed_coordinates_GF2m
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const BIGNUM *x"
+.Fa "int y_bit"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft size_t
+.Fo EC_POINT_point2oct
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fa "point_conversion_form_t form"
+.Fa "unsigned char *buf"
+.Fa "size_t len"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_oct2point
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *p"
+.Fa "const unsigned char *buf"
+.Fa "size_t len"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft BIGNUM *
+.Fo EC_POINT_point2bn
+.Fa "const EC_GROUP *"
+.Fa "const EC_POINT *"
+.Fa "point_conversion_form_t form"
+.Fa "BIGNUM *"
+.Fa "BN_CTX *"
+.Fc
+.Ft EC_POINT *
+.Fo EC_POINT_bn2point
+.Fa "const EC_GROUP *"
+.Fa "const BIGNUM *"
+.Fa "EC_POINT *"
+.Fa "BN_CTX *"
+.Fc
+.Ft char *
+.Fo EC_POINT_point2hex
+.Fa "const EC_GROUP *"
+.Fa "const EC_POINT *"
+.Fa "point_conversion_form_t form"
+.Fa "BN_CTX *"
+.Fc
+.Ft EC_POINT *
+.Fo EC_POINT_hex2point
+.Fa "const EC_GROUP *"
+.Fa "const char *"
+.Fa "EC_POINT *"
+.Fa "BN_CTX *"
+.Fc
+.Ft int
+.Fo EC_POINT_add
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *r"
+.Fa "const EC_POINT *a"
+.Fa "const EC_POINT *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_dbl
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *r"
+.Fa "const EC_POINT *a"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_invert
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *a"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_is_at_infinity
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *p"
+.Fc
+.Ft int
+.Fo EC_POINT_is_on_curve
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *point"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_cmp
+.Fa "const EC_GROUP *group"
+.Fa "const EC_POINT *a"
+.Fa "const EC_POINT *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_make_affine
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *point"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINTs_make_affine
+.Fa "const EC_GROUP *group"
+.Fa "size_t num"
+.Fa "EC_POINT *points[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINTs_mul
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *r"
+.Fa "const BIGNUM *n"
+.Fa "size_t num"
+.Fa "const EC_POINT *p[]"
+.Fa "const BIGNUM *m[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_POINT_mul
+.Fa "const EC_GROUP *group"
+.Fa "EC_POINT *r"
+.Fa "const BIGNUM *n"
+.Fa "const EC_POINT *q"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_precompute_mult
+.Fa "EC_GROUP *group"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_GROUP_have_precompute_mult
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_basis_type
+.Fa "const EC_GROUP *"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_trinomial_basis
+.Fa "const EC_GROUP *"
+.Fa "unsigned int *k"
+.Fc
+.Ft int
+.Fo EC_GROUP_get_pentanomial_basis
+.Fa "const EC_GROUP *"
+.Fa "unsigned int *k1"
+.Fa "unsigned int *k2"
+.Fa "unsigned int *k3"
+.Fc
+.Ft EC_GROUP *
+.Fo d2i_ECPKParameters
+.Fa "EC_GROUP **"
+.Fa "const unsigned char **in"
+.Fa "long len"
+.Fc
+.Ft int
+.Fo i2d_ECPKParameters
+.Fa "const EC_GROUP *"
+.Fa "unsigned char **out"
+.Fc
+.Fd #define d2i_ECPKParameters_bio(bp,x)\
+ ASN1_d2i_bio_of(EC_GROUP,NULL,d2i_ECPKParameters,bp,x)
+.Fd #define i2d_ECPKParameters_bio(bp,x)\
+ ASN1_i2d_bio_of_const(EC_GROUP,i2d_ECPKParameters,bp,x)
+.Fd #define d2i_ECPKParameters_fp(fp,x) (EC_GROUP *)ASN1_d2i_fp(NULL,\
+ (char *(*)())d2i_ECPKParameters,(fp),(unsigned char **)(x))
+.Fd #define i2d_ECPKParameters_fp(fp,x)\
+ ASN1_i2d_fp(i2d_ECPKParameters,(fp), (unsigned char *)(x))
+.Ft int
+.Fo ECPKParameters_print
+.Fa "BIO *bp"
+.Fa "const EC_GROUP *x"
+.Fa "int off"
+.Fc
+.Ft int
+.Fo ECPKParameters_print_fp
+.Fa "FILE *fp"
+.Fa "const EC_GROUP *x"
+.Fa "int off"
+.Fc
+.Ft EC_KEY *
+.Fn EC_KEY_new void
+.Ft int
+.Fo EC_KEY_get_flags
+.Fa "const EC_KEY *key"
+.Fc
+.Ft void
+.Fo EC_KEY_set_flags
+.Fa "EC_KEY *key"
+.Fa "int flags"
+.Fc
+.Ft void
+.Fo EC_KEY_clear_flags
+.Fa "EC_KEY *key"
+.Fa "int flags"
+.Fc
+.Ft EC_KEY *
+.Fo EC_KEY_new_by_curve_name
+.Fa "int nid"
+.Fc
+.Ft void
+.Fo EC_KEY_free
+.Fa "EC_KEY *key"
+.Fc
+.Ft EC_KEY *
+.Fo EC_KEY_copy
+.Fa "EC_KEY *dst"
+.Fa "const EC_KEY *src"
+.Fc
+.Ft EC_KEY *
+.Fo EC_KEY_dup
+.Fa "const EC_KEY *src"
+.Fc
+.Ft int
+.Fo EC_KEY_up_ref
+.Fa "EC_KEY *key"
+.Fc
+.Ft const EC_GROUP *
+.Fo EC_KEY_get0_group
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_set_group
+.Fa "EC_KEY *key"
+.Fa "const EC_GROUP *group"
+.Fc
+.Ft const BIGNUM *
+.Fo EC_KEY_get0_private_key
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_set_private_key
+.Fa "EC_KEY *key"
+.Fa "const BIGNUM *prv"
+.Fc
+.Ft const EC_POINT *
+.Fo EC_KEY_get0_public_key
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_set_public_key
+.Fa "EC_KEY *key"
+.Fa "const EC_POINT *pub"
+.Fc
+.Ft unsigned
+.Fo EC_KEY_get_enc_flags
+.Fa "const EC_KEY *key"
+.Fc
+.Ft void
+.Fo EC_KEY_set_enc_flags
+.Fa "EC_KEY *eckey"
+.Fa "unsigned int flags"
+.Fc
+.Ft point_conversion_form_t
+.Fo EC_KEY_get_conv_form
+.Fa "const EC_KEY *key"
+.Fc
+.Ft void
+.Fo EC_KEY_set_conv_form
+.Fa "EC_KEY *eckey"
+.Fa "point_conversion_form_t cform"
+.Fc
+.Ft void *
+.Fo EC_KEY_get_key_method_data
+.Fa "EC_KEY *key"
+.Fa "void *(*dup_func)(void *)"
+.Fa "void (*free_func)(void *)"
+.Fa "void (*clear_free_func)(void *)"
+.Fc
+.Ft void
+.Fo EC_KEY_insert_key_method_data
+.Fa "EC_KEY *key"
+.Fa "void *data"
+.Fa "void *(*dup_func)(void *)"
+.Fa "void (*free_func)(void *)"
+.Fa "void (*clear_free_func)(void *)"
+.Fc
+.Ft void
+.Fo EC_KEY_set_asn1_flag
+.Fa "EC_KEY *eckey"
+.Fa "int asn1_flag"
+.Fc
+.Ft int
+.Fo EC_KEY_precompute_mult
+.Fa "EC_KEY *key"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo EC_KEY_generate_key
+.Fa "EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_check_key
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_set_public_key_affine_coordinates
+.Fa "EC_KEY *key"
+.Fa "BIGNUM *x"
+.Fa "BIGNUM *y"
+.Fc
+.Ft EC_KEY *
+.Fo d2i_ECPrivateKey
+.Fa "EC_KEY **key"
+.Fa "const unsigned char **in"
+.Fa "long len"
+.Fc
+.Ft int
+.Fo i2d_ECPrivateKey
+.Fa "EC_KEY *key"
+.Fa "unsigned char **out"
+.Fc
+.Ft EC_KEY *
+.Fo d2i_ECParameters
+.Fa "EC_KEY **key"
+.Fa "const unsigned char **in"
+.Fa "long len"
+.Fc
+.Ft int
+.Fo i2d_ECParameters
+.Fa "EC_KEY *key"
+.Fa "unsigned char **out"
+.Fc
+.Ft EC_KEY *
+.Fo o2i_ECPublicKey
+.Fa "EC_KEY **key"
+.Fa "const unsigned char **in"
+.Fa "long len"
+.Fc
+.Ft int
+.Fo i2o_ECPublicKey
+.Fa "EC_KEY *key"
+.Fa "unsigned char **out"
+.Fc
+.Ft int
+.Fo ECParameters_print
+.Fa "BIO *bp"
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_print
+.Fa "BIO *bp"
+.Fa "const EC_KEY *key"
+.Fa "int off"
+.Fc
+.Ft int
+.Fo ECParameters_print_fp
+.Fa "FILE *fp"
+.Fa "const EC_KEY *key"
+.Fc
+.Ft int
+.Fo EC_KEY_print_fp
+.Fa "FILE *fp"
+.Fa "const EC_KEY *key"
+.Fa "int off"
+.Fc
+.Ft EC_KEY *
+.Fo ECParameters_dup
+.Fa "EC_KEY *key"
+.Fc
+.Fd #define EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid)\
+ EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_PARAMGEN,\
+ EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID, nid, NULL)
+.Sh DESCRIPTION
+This library provides an extensive set of functions for performing
+operations on elliptic curves over finite fields.
+In general an elliptic curve is one with an equation of the form:
+.Pp
+.Dl y^2 = x^3 + ax + b
+.Pp
+An
+.Vt EC_GROUP
+structure is used to represent the definition of an elliptic curve.
+Points on a curve are stored using an
+.Vt EC_POINT
+structure.
+An
+.Vt EC_KEY
+is used to hold a private/public key pair, where a private key is simply a
+.Vt BIGNUM
+and a public key is a point on a curve represented by an
+.Vt EC_POINT .
+.Pp
+The library contains a number of alternative implementations of the
+different functions.
+Each implementation is optimised for different scenarios.
+No matter which implementation is being used, the interface remains the
+same.
+The library handles calling the correct implementation when an interface
+function is invoked.
+An implementation is represented by an
+.Vt EC_METHOD
+structure.
+.Pp
+The creation and destruction of
+.Vt EC_GROUP
+objects is described in
+.Xr EC_GROUP_new 3 .
+Functions for manipulating
+.Vt EC_GROUP
+objects are described in
+.Xr EC_GROUP_copy 3 .
+.Pp
+Functions for creating, destroying and manipulating
+.Vt EC_POINT
+objects are explained in
+.Xr EC_POINT_new 3 ,
+whilst functions for performing mathematical operations and tests on
+.Vt EC_POINT Ns s
+are coverd in
+.Xr EC_POINT_add 3 .
+.Pp
+For working with private and public keys refer to
+.Xr EC_KEY_new 3 .
+Implementations are covered in
+.Xr EC_GFp_simple_method 3 .
+.Pp
+For information on encoding and decoding curve parameters to and
+from ASN.1 see
+.Xr d2i_ECPKParameters 3 .
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr d2i_ECPKParameters 3 ,
+.Xr EC_GFp_simple_method 3 ,
+.Xr EC_GROUP_copy 3 ,
+.Xr EC_GROUP_new 3 ,
+.Xr EC_KEY_new 3 ,
+.Xr EC_POINT_add 3 ,
+.Xr EC_POINT_new 3

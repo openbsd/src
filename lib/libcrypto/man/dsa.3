@@ -1,0 +1,244 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt DSA 3
+.Os
+.Sh NAME
+.Nm dsa
+.Nd Digital Signature Algorithm
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.In openssl/engine.h
+.Ft DSA *
+.Fn DSA_new void
+.Ft void
+.Fo DSA_free
+.Fa "DSA *dsa"
+.Fc
+.Ft int
+.Fo DSA_size
+.Fa "const DSA *dsa"
+.Fc
+.Ft DSA *
+.Fo DSA_generate_parameters
+.Fa "int bits"
+.Fa "unsigned char *seed"
+.Fa "int seed_len"
+.Fa "int *counter_ret"
+.Fa "unsigned long *h_ret"
+.Fa "void (*callback)(int, int, void *)"
+.Fa "void *cb_arg"
+.Fc
+.Ft DH *
+.Fo DSA_dup_DH
+.Fa "const DSA *r"
+.Fc
+.Ft int
+.Fo DSA_generate_key
+.Fa "DSA *dsa"
+.Fc
+.Ft int
+.Fo DSA_sign
+.Fa "int dummy"
+.Fa "const unsigned char *dgst"
+.Fa "int len"
+.Fa "unsigned char *sigret"
+.Fa "unsigned int *siglen"
+.Fa "DSA *dsa"
+.Fc
+.Ft int
+.Fo DSA_sign_setup
+.Fa "DSA *dsa"
+.Fa "BN_CTX *ctx"
+.Fa "BIGNUM **kinvp"
+.Fa "BIGNUM **rp"
+.Fc
+.Ft int
+.Fo DSA_verify
+.Fa "int dummy"
+.Fa "const unsigned char *dgst"
+.Fa "int len"
+.Fa "const unsigned char *sigbuf"
+.Fa "int siglen"
+.Fa "DSA *dsa"
+.Fc
+.Ft void
+.Fo DSA_set_default_method
+.Fa "const DSA_METHOD *meth"
+.Fc
+.Ft const DSA_METHOD *
+.Fn DSA_get_default_method void
+.Ft int
+.Fo DSA_set_method
+.Fa "DSA *dsa"
+.Fa "const DSA_METHOD *meth"
+.Fc
+.Ft DSA *
+.Fo DSA_new_method
+.Fa "ENGINE *engine"
+.Fc
+.Ft const DSA_METHOD *
+.Fn DSA_OpenSSL void
+.Ft int
+.Fo DSA_get_ex_new_index
+.Fa "long argl"
+.Fa "char *argp"
+.Fa "int (*new_func)()"
+.Fa "int (*dup_func)()"
+.Fa "void (*free_func)()"
+.Fc
+.Ft int
+.Fo DSA_set_ex_data
+.Fa "DSA *d"
+.Fa "int idx"
+.Fa "char *arg"
+.Fc
+.Ft char *
+.Fo DSA_get_ex_data
+.Fa "DSA *d"
+.Fa "int idx"
+.Fc
+.Ft DSA_SIG *
+.Fn DSA_SIG_new void
+.Ft void
+.Fo DSA_SIG_free
+.Fa "DSA_SIG *a"
+.Fc
+.Ft int
+.Fo i2d_DSA_SIG
+.Fa "const DSA_SIG *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft DSA_SIG *
+.Fo d2i_DSA_SIG
+.Fa "DSA_SIG **v"
+.Fa "unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft DSA_SIG *
+.Fo DSA_do_sign
+.Fa "const unsigned char *dgst"
+.Fa "int dlen"
+.Fa "DSA *dsa"
+.Fc
+.Ft int
+.Fo DSA_do_verify
+.Fa "const unsigned char *dgst"
+.Fa "int dgst_len"
+.Fa "DSA_SIG *sig"
+.Fa "DSA *dsa"
+.Fc
+.Ft DSA *
+.Fo d2i_DSAPublicKey
+.Fa "DSA **a"
+.Fa "unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft DSA *
+.Fo d2i_DSAPrivateKey
+.Fa "DSA **a"
+.Fa "unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft DSA *
+.Fo d2i_DSAparams
+.Fa "DSA **a"
+.Fa "unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_DSAPublicKey
+.Fa "const DSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft int
+.Fo i2d_DSAPrivateKey
+.Fa "const DSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft int
+.Fo i2d_DSAparams
+.Fa "const DSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft int
+.Fo DSAparams_print
+.Fa "BIO *bp"
+.Fa "const DSA *x"
+.Fc
+.Ft int
+.Fo DSAparams_print_fp
+.Fa "FILE *fp"
+.Fa "const DSA *x"
+.Fc
+.Ft int
+.Fo DSA_print
+.Fa "BIO *bp"
+.Fa "const DSA *x"
+.Fa "int off"
+.Fc
+.Ft int
+.Fo DSA_print_fp
+.Fa "FILE *bp"
+.Fa "const DSA *x"
+.Fa "int off"
+.Fc
+.Sh DESCRIPTION
+These functions implement the Digital Signature Algorithm (DSA).
+The generation of shared DSA parameters is described in
+.Xr DSA_generate_parameters 3 ;
+.Xr DSA_generate_key 3
+describes how to generate a signature key.
+Signature generation and verification are described in
+.Xr DSA_sign 3 .
+.Pp
+The
+.Vt DSA
+structure consists of several BIGNUM components.
+.Bd -literal
+typedef struct {
+	BIGNUM *p;		// prime number (public)
+	BIGNUM *q;		// 160-bit subprime, q | p-1 (public)
+	BIGNUM *g;		// generator of subgroup (public)
+	BIGNUM *priv_key;	// private key x
+	BIGNUM *pub_key;	// public key y = g^x
+	// ...
+} DSA;
+.Ed
+.Pp
+In public keys,
+.Fa priv_key
+is
+.Dv NULL .
+.Pp
+Note that DSA keys may use non-standard
+.Vt DSA_METHOD
+implementations, either directly or by the use of
+.Vt ENGINE
+modules.
+In some cases (eg. an
+.Vt ENGINE
+providing support for hardware-embedded keys), these
+.Vt BIGNUM
+values will not be used by the implementation or may be used for
+alternative data storage.
+For this reason, applications should generally avoid using
+.Vt DSA
+structure elements directly and instead use API functions to query
+or modify keys.
+.Sh SEE ALSO
+.Xr bn 3 ,
+.Xr dh 3 ,
+.Xr DSA_dup_DH 3 ,
+.Xr DSA_generate_key 3 ,
+.Xr DSA_generate_parameters 3 ,
+.Xr DSA_get_ex_new_index 3 ,
+.Xr DSA_new 3 ,
+.Xr DSA_set_method 3 ,
+.Xr DSA_sign 3 ,
+.Xr DSA_size 3 ,
+.Xr engine 3 ,
+.Xr err 3 ,
+.Xr rsa 3 ,
+.Xr RSA_print 3
+.Sh STANDARDS
+US Federal Information Processing Standard FIPS 186 (Digital Signature
+Standard, DSS), ANSI X9.30

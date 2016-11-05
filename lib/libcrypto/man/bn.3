@@ -1,0 +1,576 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt BN 3
+.Os
+.Sh NAME
+.Nm bn
+.Nd multiprecision integer arithmetics
+.Sh SYNOPSIS
+.In openssl/bn.h
+.Ft BIGNUM *
+.Fn BN_new void
+.Ft void
+.Fo BN_free
+.Fa "BIGNUM *a"
+.Fc
+.Ft void
+.Fo BN_init
+.Fa "BIGNUM *"
+.Fc
+.Ft void
+.Fo BN_clear
+.Fa "BIGNUM *a"
+.Fc
+.Ft void
+.Fo BN_clear_free
+.Fa "BIGNUM *a"
+.Fc
+.Ft BN_CTX *
+.Fn BN_CTX_new void
+.Ft void
+.Fo BN_CTX_init
+.Fa "BN_CTX *c"
+.Fc
+.Ft void
+.Fo BN_CTX_free
+.Fa "BN_CTX *c"
+.Fc
+.Ft BIGNUM *
+.Fo BN_copy
+.Fa "BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fc
+.Ft BIGNUM *
+.Fo BN_dup
+.Fa "const BIGNUM *a"
+.Fc
+.Ft BIGNUM *
+.Fo BN_swap
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_num_bytes
+.Fa "const BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_num_bits
+.Fa "const BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_num_bits_word
+.Fa "BN_ULONG w"
+.Fc
+.Ft void
+.Fo BN_set_negative
+.Fa "BIGNUM *a"
+.Fa "int n"
+.Fc
+.Ft int
+.Fo BN_is_negative
+.Fa "const BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_add
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_sub
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_mul
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_sqr
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_div
+.Fa "BIGNUM *dv"
+.Fa "BIGNUM *rem"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *d"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_mod
+.Fa "BIGNUM *rem"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_nnmod
+.Fa "BIGNUM *rem"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_mod_add
+.Fa "BIGNUM *ret"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_mod_sub
+.Fa "BIGNUM *ret"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_mod_mul
+.Fa "BIGNUM *ret"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_mod_sqr
+.Fa "BIGNUM *ret"
+.Fa "BIGNUM *a"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_exp
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *p"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_mod_exp
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "const BIGNUM *p"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_gcd
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_add_word
+.Fa "BIGNUM *a"
+.Fa "BN_ULONG w"
+.Fc
+.Ft int
+.Fo BN_sub_word
+.Fa "BIGNUM *a"
+.Fa "BN_ULONG w"
+.Fc
+.Ft int
+.Fo BN_mul_word
+.Fa "BIGNUM *a"
+.Fa "BN_ULONG w"
+.Fc
+.Ft BN_ULONG
+.Fo BN_div_word
+.Fa "BIGNUM *a"
+.Fa "BN_ULONG w"
+.Fc
+.Ft BN_ULONG
+.Fo BN_mod_word
+.Fa "const BIGNUM *a"
+.Fa "BN_ULONG w"
+.Fc
+.Ft int
+.Fo BN_cmp
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_ucmp
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_is_zero
+.Fa "BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_is_one
+.Fa "BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_is_word
+.Fa "BIGNUM *a"
+.Fa "BN_ULONG w"
+.Fc
+.Ft int
+.Fo BN_is_odd
+.Fa "BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_zero
+.Fa "BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_one
+.Fa "BIGNUM *a"
+.Fc
+.Ft const BIGNUM *
+.Fn BN_value_one void
+.Ft int
+.Fo BN_set_word
+.Fa "BIGNUM *a"
+.Fa "unsigned long w"
+.Fc
+.Ft unsigned long
+.Fo BN_get_word
+.Fa "BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_rand
+.Fa "BIGNUM *rnd"
+.Fa "int bits"
+.Fa "int top"
+.Fa "int bottom"
+.Fc
+.Ft int
+.Fo BN_pseudo_rand
+.Fa "BIGNUM *rnd"
+.Fa "int bits"
+.Fa "int top"
+.Fa "int bottom"
+.Fc
+.Ft int
+.Fo BN_rand_range
+.Fa "BIGNUM *rnd"
+.Fa "BIGNUM *range"
+.Fc
+.Ft int
+.Fo BN_pseudo_rand_range
+.Fa "BIGNUM *rnd"
+.Fa "BIGNUM *range"
+.Fc
+.Ft BIGNUM *
+.Fo BN_generate_prime
+.Fa "BIGNUM *ret"
+.Fa "int bits"
+.Fa "int safe"
+.Fa "BIGNUM *add"
+.Fa "BIGNUM *rem"
+.Fa "void (*callback)(int, int, void *)"
+.Fa "void *cb_arg"
+.Fc
+.Ft int
+.Fo BN_is_prime
+.Fa "const BIGNUM *p"
+.Fa "int nchecks"
+.Fa "void (*callback)(int, int, void *)"
+.Fa "BN_CTX *ctx"
+.Fa "void *cb_arg"
+.Fc
+.Ft int
+.Fo BN_set_bit
+.Fa "BIGNUM *a"
+.Fa "int n"
+.Fc
+.Ft int
+.Fo BN_clear_bit
+.Fa "BIGNUM *a"
+.Fa "int n"
+.Fc
+.Ft int
+.Fo BN_is_bit_set
+.Fa "const BIGNUM *a"
+.Fa "int n"
+.Fc
+.Ft int
+.Fo BN_mask_bits
+.Fa "BIGNUM *a"
+.Fa "int n"
+.Fc
+.Ft int
+.Fo BN_lshift
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "int n"
+.Fc
+.Ft int
+.Fo BN_lshift1
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_rshift
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "int n"
+.Fc
+.Ft int
+.Fo BN_rshift1
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_bn2bin
+.Fa "const BIGNUM *a"
+.Fa "unsigned char *to"
+.Fc
+.Ft BIGNUM *
+.Fo BN_bin2bn
+.Fa "const unsigned char *s"
+.Fa "int len"
+.Fa "BIGNUM *ret"
+.Fc
+.Ft char *
+.Fo BN_bn2hex
+.Fa "const BIGNUM *a"
+.Fc
+.Ft char *
+.Fo BN_bn2dec
+.Fa "const BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_hex2bn
+.Fa "BIGNUM **a"
+.Fa "const char *str"
+.Fc
+.Ft int
+.Fo BN_dec2bn
+.Fa "BIGNUM **a"
+.Fa "const char *str"
+.Fc
+.Ft int
+.Fo BN_print
+.Fa "BIO *fp"
+.Fa "const BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_print_fp
+.Fa "FILE *fp"
+.Fa "const BIGNUM *a"
+.Fc
+.Ft int
+.Fo BN_bn2mpi
+.Fa "const BIGNUM *a"
+.Fa "unsigned char *to"
+.Fc
+.Ft BIGNUM *
+.Fo BN_mpi2bn
+.Fa "unsigned char *s"
+.Fa "int len"
+.Fa "BIGNUM *ret"
+.Fc
+.Ft BIGNUM *
+.Fo BN_mod_inverse
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "const BIGNUM *n"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft BN_RECP_CTX *
+.Fn BN_RECP_CTX_new void
+.Ft void
+.Fo BN_RECP_CTX_init
+.Fa "BN_RECP_CTX *recp"
+.Fc
+.Ft void
+.Fo BN_RECP_CTX_free
+.Fa "BN_RECP_CTX *recp"
+.Fc
+.Ft int
+.Fo BN_RECP_CTX_set
+.Fa "BN_RECP_CTX *recp"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_mod_mul_reciprocal
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fa "BN_RECP_CTX *recp"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft BN_MONT_CTX *
+.Fn BN_MONT_CTX_new void
+.Ft void
+.Fo BN_MONT_CTX_init
+.Fa "BN_MONT_CTX *ctx"
+.Fc
+.Ft void
+.Fo BN_MONT_CTX_free
+.Fa "BN_MONT_CTX *mont"
+.Fc
+.Ft int
+.Fo BN_MONT_CTX_set
+.Fa "BN_MONT_CTX *mont"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft BN_MONT_CTX *
+.Fo BN_MONT_CTX_copy
+.Fa "BN_MONT_CTX *to"
+.Fa "BN_MONT_CTX *from"
+.Fc
+.Ft int
+.Fo BN_mod_mul_montgomery
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "BIGNUM *b"
+.Fa "BN_MONT_CTX *mont"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_from_montgomery
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "BN_MONT_CTX *mont"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_to_montgomery
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *a"
+.Fa "BN_MONT_CTX *mont"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft BN_BLINDING *
+.Fo BN_BLINDING_new
+.Fa "const BIGNUM *A"
+.Fa "const BIGNUM *Ai"
+.Fa "BIGNUM *mod"
+.Fc
+.Ft void
+.Fo BN_BLINDING_free
+.Fa "BN_BLINDING *b"
+.Fc
+.Ft int
+.Fo BN_BLINDING_update
+.Fa "BN_BLINDING *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_BLINDING_convert
+.Fa "BIGNUM *n"
+.Fa "BN_BLINDING *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_BLINDING_invert
+.Fa "BIGNUM *n"
+.Fa "BN_BLINDING *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_BLINDING_convert_ex
+.Fa "BIGNUM *n"
+.Fa "BIGNUM *r"
+.Fa "BN_BLINDING *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_BLINDING_invert_ex
+.Fa "BIGNUM *n"
+.Fa "const BIGNUM *r"
+.Fa "BN_BLINDING *b"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft unsigned long
+.Fo BN_BLINDING_get_thread_id
+.Fa "const BN_BLINDING *"
+.Fc
+.Ft void
+.Fo BN_BLINDING_set_thread_id
+.Fa "BN_BLINDING *"
+.Fa "unsigned long"
+.Fc
+.Ft unsigned long
+.Fo BN_BLINDING_get_flags
+.Fa "const BN_BLINDING *"
+.Fc
+.Ft void
+.Fo BN_BLINDING_set_flags
+.Fa "BN_BLINDING *"
+.Fa "unsigned long"
+.Fc
+.Ft BN_BLINDING *
+.Fo BN_BLINDING_create_param
+.Fa "BN_BLINDING *b"
+.Fa "const BIGNUM *e"
+.Fa "BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fa "int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)"
+.Fa "BN_MONT_CTX *m_ctx"
+.Fc
+.Sh DESCRIPTION
+This library performs arithmetic operations on integers of arbitrary size.
+It was written for use in public key cryptography, such as RSA and
+Diffie-Hellman.
+.Pp
+It uses dynamic memory allocation for storing its data structures.
+That means that there is no limit on the size of the numbers manipulated
+by these functions, but return values must always be checked in case a
+memory allocation error has occurred.
+.Pp
+The basic object in this library is a
+.Vt BIGNUM .
+It is used to hold a single large integer.
+This type should be considered opaque and fields should not be modified
+or accessed directly.
+.Pp
+The creation of
+.Vt BIGNUM
+objects is described in
+.Xr BN_new 3 ;
+.Xr BN_add 3
+describes most of the arithmetic operations.
+Comparison is described in
+.Xr BN_cmp 3 ;
+.Xr BN_zero 3
+describes certain assignments,
+.Xr BN_rand 3
+the generation of random numbers,
+.Xr BN_generate_prime 3
+deals with prime numbers and
+.Xr BN_set_bit 3
+with bit operations.
+The conversion of
+.Vt BIGNUM Ns s
+to external formats is described in
+.Xr BN_bn2bin 3 .
+.Sh SEE ALSO
+.Xr BN_add 3 ,
+.Xr BN_add_word 3 ,
+.Xr BN_BLINDING_new 3 ,
+.Xr BN_bn2bin 3 ,
+.Xr BN_cmp 3 ,
+.Xr BN_copy 3 ,
+.Xr BN_CTX_new 3 ,
+.Xr bn_dump 3 ,
+.Xr BN_generate_prime 3 ,
+.Xr BN_mod_inverse 3 ,
+.Xr BN_mod_mul_montgomery 3 ,
+.Xr BN_mod_mul_reciprocal 3 ,
+.Xr BN_new 3 ,
+.Xr BN_num_bytes 3 ,
+.Xr BN_rand 3 ,
+.Xr BN_set_bit 3 ,
+.Xr BN_swap 3 ,
+.Xr BN_zero 3 ,
+.Xr dh 3 ,
+.Xr ERR 3 ,
+.Xr rsa 3

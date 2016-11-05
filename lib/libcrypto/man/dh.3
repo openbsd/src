@@ -1,0 +1,148 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt DH 3
+.Os
+.Sh NAME
+.Nm dh
+.Nd Diffie-Hellman key agreement
+.Sh SYNOPSIS
+.In openssl/dh.h
+.In openssl/engine.h
+.Ft DH *
+.Fn DH_new void
+.Ft void
+.Fo DH_free
+.Fa "DH *dh"
+.Fc
+.Ft int
+.Fo DH_size
+.Fa "const DH *dh"
+.Fc
+.Ft DH *
+.Fo DH_generate_parameters
+.Fa "int prime_len"
+.Fa "int generator"
+.Fa "void (*callback)(int, int, void *)"
+.Fa "void *cb_arg"
+.Fc
+.Ft int
+.Fo DH_check
+.Fa "const DH *dh"
+.Fa "int *codes"
+.Fc
+.Ft int
+.Fo DH_generate_key
+.Fa "DH *dh"
+.Fc
+.Ft int
+.Fo DH_compute_key
+.Fa "unsigned char *key"
+.Fa "BIGNUM *pub_key"
+.Fa "DH *dh"
+.Fc
+.Ft void
+.Fo DH_set_default_method
+.Fa "const DH_METHOD *meth"
+.Fc
+.Ft const DH_METHOD *
+.Fn DH_get_default_method void
+.Ft int
+.Fo DH_set_method
+.Fa "DH *dh"
+.Fa "const DH_METHOD *meth"
+.Fc
+.Ft DH *
+.Fo DH_new_method
+.Fa "ENGINE *engine"
+.Fc
+.Ft const DH_METHOD *
+.Fn DH_OpenSSL void
+.Ft int
+.Fo DH_get_ex_new_index
+.Fa "long argl"
+.Fa "char *argp"
+.Fa "int (*new_func)()"
+.Fa "int (*dup_func)()"
+.Fa "void (*free_func)()"
+.Fc
+.Ft int
+.Fo DH_set_ex_data
+.Fa "DH *d"
+.Fa "int idx"
+.Fa "char *arg"
+.Fc
+.Ft char *
+.Fo DH_get_ex_data
+.Fa "DH *d"
+.Fa "int idx"
+.Fc
+.Ft DH *
+.Fo d2i_DHparams
+.Fa "DH **a"
+.Fa "unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_DHparams
+.Fa "const DH *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft int
+.Fo DHparams_print_fp
+.Fa "FILE *fp"
+.Fa "const DH *x"
+.Fc
+.Ft int
+.Fo DHparams_print
+.Fa "BIO *bp"
+.Fa "const DH *x"
+.Fc
+.Sh DESCRIPTION
+These functions implement the Diffie-Hellman key agreement protocol.
+The generation of shared DH parameters is described in
+.Xr DH_generate_parameters 3 ;
+.Xr DH_generate_key 3
+describes how to perform a key agreement.
+.Pp
+The
+.Vt DH
+structure consists of several
+.Vt BIGNUM
+components.
+.Bd -literal
+typedef struct {
+	BIGNUM *p;		// prime number (shared)
+	BIGNUM *g;		// generator of Z_p (shared)
+	BIGNUM *priv_key;	// private DH value x
+	BIGNUM *pub_key;	// public DH value g^x
+	// ...
+} DH;
+.Ed
+.Pp
+Note that DH keys may use non-standard
+.Vt DH_METHOD
+implementations, either directly or by the use of
+.Vt ENGINE
+modules.
+In some cases (eg. an
+.Vt ENGINE
+providing support for hardware-embedded keys), these
+.Vt BIGNUM
+values will not be used by the implementation or may be used for
+alternative data storage.
+For this reason, applications should generally avoid using
+.Vt DH
+structure elements directly and instead use API functions to query
+or modify keys.
+.Sh SEE ALSO
+.Xr bn 3 ,
+.Xr d2i_DHparams 3 ,
+.Xr DH_compute_key 3 ,
+.Xr DH_generate_parameters 3 ,
+.Xr DH_get_ex_new_index 3 ,
+.Xr DH_new 3 ,
+.Xr DH_set_method 3 ,
+.Xr dsa 3 ,
+.Xr engine 3 ,
+.Xr ERR 3 ,
+.Xr rsa 3 ,
+.Xr RSA_print 3

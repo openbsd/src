@@ -1,0 +1,159 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt D2I_DSAPUBLICKEY 3
+.Os
+.Sh NAME
+.Nm d2i_DSAPublicKey ,
+.Nm i2d_DSAPublicKey ,
+.Nm d2i_DSAPrivateKey ,
+.Nm i2d_DSAPrivateKey ,
+.Nm d2i_DSA_PUBKEY ,
+.Nm i2d_DSA_PUBKEY ,
+.Nm d2i_DSAparams ,
+.Nm i2d_DSAparams ,
+.Nm d2i_DSA_SIG ,
+.Nm i2d_DSA_SIG
+.Nd DSA key encoding and parsing functions
+.Sh SYNOPSIS
+.In openssl/dsa.h
+.In openssl/x509.h
+.Ft DSA *
+.Fo d2i_DSAPublicKey
+.Fa "DSA **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_DSAPublicKey
+.Fa "const DSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft DSA *
+.Fo d2i_DSA_PUBKEY
+.Fa "DSA **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_DSA_PUBKEY
+.Fa "const DSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft DSA *
+.Fo d2i_DSAPrivateKey
+.Fa "DSA **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_DSAPrivateKey
+.Fa "const DSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft DSA *
+.Fo d2i_DSAparams
+.Fa "DSA **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_DSAparams
+.Fa "const DSA *a"
+.Fa "unsigned char **pp"
+.Fc
+.Ft DSA *
+.Fo d2i_DSA_SIG
+.Fa "DSA_SIG **a"
+.Fa "const unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_DSA_SIG
+.Fa "const DSA_SIG *a"
+.Fa "unsigned char **pp"
+.Fc
+.Sh DESCRIPTION
+.Fn d2i_DSAPublicKey
+and
+.Fn i2d_DSAPublicKey
+decode and encode the DSA public key components structure.
+.Pp
+.Fn d2i_DSA_PUBKEY
+and
+.Fn i2d_DSA_PUBKEY
+decode and encode a DSA public key using a SubjectPublicKeyInfo
+(certificate public key) structure.
+.Pp
+.Fn d2i_DSAPrivateKey
+and
+.Fn i2d_DSAPrivateKey
+decode and encode the DSA private key components.
+.Pp
+.Fn d2i_DSAparams
+and
+.Fn i2d_DSAparams
+decode and encode the DSA parameters using a
+.Sy Dss-Parms
+structure as defined in RFC2459.
+.Pp
+.Fn d2i_DSA_SIG
+and
+.Fn i2d_DSA_SIG
+decode and encode a DSA signature using a
+.Sy Dss-Sig-Value
+structure as defined in RFC2459.
+.Pp
+The usage of all of these functions is similar to
+.Xr d2i_X509 3
+and
+.Xr i2d_X509 3 .
+.Pp
+The
+.Vt DSA
+structure passed to the private key encoding functions should have all
+the private key components present.
+.Pp
+The data encoded by the private key functions is unencrypted and
+therefore offers no private key security.
+.Pp
+The
+.Fn *_DSA_PUBKEY
+functions should be used in preference to the
+.Fn *_DSAPublicKey
+functions when encoding public keys because they use a standard format.
+.Pp
+The
+.Fn *_DSAPublicKey
+functions use an non-standard format.
+The actual data encoded depends on the value of
+.Fa a->write_params .
+If
+.Fa a->write_params
+is zero, then only the
+.Fa a->pub_key
+field is encoded as an
+.Sy INTEGER .
+If
+.Fa a->write_params
+is 1, then a
+.Sy SEQUENCE
+consisting of the
+.Fa a->p ,
+.Fa a->q ,
+.Fa a->g ,
+and
+.Fa a->pub_key
+fields is encoded.
+.Pp
+The
+.Fn *_DSAPrivateKey
+functions also use a non-standard structure consisting consisting of a
+SEQUENCE containing the
+.Fa a->p ,
+.Fa a->q ,
+.Fa a->g ,
+.Fa a->pub_key ,
+and
+.Fa a->priv_key
+fields.
+.Sh SEE ALSO
+.Xr d2i_X509 3

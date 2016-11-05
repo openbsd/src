@@ -1,0 +1,188 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt D2I_ECPKPARAMETERS 3
+.Os
+.Sh NAME
+.Nm d2i_ECPKParameters ,
+.Nm i2d_ECPKParameters ,
+.Nm d2i_ECPKParameters_bio ,
+.Nm i2d_ECPKParameters_bio ,
+.Nm d2i_ECPKParameters_fp ,
+.Nm i2d_ECPKParameters_fp ,
+.Nm ECPKParameters_print ,
+.Nm ECPKParameters_print_fp
+.Nd decode and encode ASN.1 representations of elliptic curve entities
+.Sh SYNOPSIS
+.In openssl/ec.h
+.Ft EC_GROUP *
+.Fo d2i_ECPKParameters
+.Fa "EC_GROUP **px"
+.Fa "const unsigned char **in"
+.Fa "long len"
+.Fc
+.Ft int
+.Fo i2d_ECPKParameters
+.Fa "const EC_GROUP *x"
+.Fa "unsigned char **out"
+.Fc
+.Fd #define d2i_ECPKParameters_bio(bp,x)\
+ ASN1_d2i_bio_of(EC_GROUP,NULL,d2i_ECPKParameters,bp,x)
+.Fd #define i2d_ECPKParameters_bio(bp,x)\
+ ASN1_i2d_bio_of_const(EC_GROUP,i2d_ECPKParameters,bp,x)
+.Fd #define d2i_ECPKParameters_fp(fp,x) (EC_GROUP *)ASN1_d2i_fp(NULL,\
+ (char *(*)())d2i_ECPKParameters,(fp),(unsigned char **)(x))
+.Fd #define i2d_ECPKParameters_fp(fp,x)\
+ ASN1_i2d_fp(i2d_ECPKParameters,(fp), (unsigned char *)(x))
+.Ft int
+.Fo ECPKParameters_print
+.Fa "BIO *bp"
+.Fa "const EC_GROUP *x"
+.Fa "int off"
+.Fc
+.Ft int
+.Fo ECPKParameters_print_fp
+.Fa "FILE *fp"
+.Fa "const EC_GROUP *x"
+.Fa "int off"
+.Fc
+.Sh DESCRIPTION
+The ECPKParameters encode and decode routines encode and parse the
+public parameters for an
+.Vt EC_GROUP
+structure, which represents a curve.
+.Pp
+.Fn d2i_ECPKParameters
+attempts to decode
+.Fa len
+bytes at
+.Pf * Fa in .
+If successful, a pointer to the
+.Vt EC_GROUP
+structure is returned.
+If an error occurred, then
+.Dv NULL
+is returned.
+If
+.Fa px
+is not
+.Dv NULL ,
+then the returned structure is written to
+.Pf * Fa px .
+If
+.Pf * Fa px
+is not
+.Dv NULL ,
+then it is assumed that
+.Pf * Fa px
+contains a valid
+.Vt EC_GROUP
+structure and an attempt is made to reuse it.
+If the call is successful,
+.Pf * Fa in
+is incremented to the byte following the parsed data.
+.Pp
+.Fn i2d_ECPKParameters
+encodes the structure pointed to by
+.Fa x
+into DER format.
+If
+.Fa out
+is not
+.Dv NULL ,
+is writes the DER encoded data to the buffer at
+.Pf * Fa out
+and increments it to point after the data just written.
+If the return value is negative, an error occurred, otherwise it returns
+the length of the encoded data.
+.Pp
+If
+.Pf * Fa out
+is
+.Dv NULL ,
+memory will be allocated for a buffer and the encoded data written to it.
+In this case
+.Pf * Fa out
+is not incremented, and it points to the start of the data just written.
+.Pp
+.Fn d2i_ECPKParameters_bio
+is similar to
+.Fn d2i_ECPKParameters
+except it attempts to parse data from
+.Vt BIO
+.Fa bp .
+.Pp
+.Fn d2i_ECPKParameters_fp
+is similar to
+.Fn d2i_ECPKParameters
+except it attempts to parse data from the
+.Vt FILE
+pointer
+.Fa fp .
+.Pp
+.Fn i2d_ECPKParameters_bio
+is similar to
+.Fn i2d_ECPKParameters
+except it writes the encoding of the structure
+.Fa x
+to
+.Vt BIO
+.Fa bp
+and it returns 1 for success or 0 for failure.
+.Pp
+.Fn i2d_ECPKParameters_fp
+is similar to
+.Fn i2d_ECPKParameters
+except it writes the encoding of the structure
+.Fa x
+to
+.Vt BIO
+.Sy bp
+and it returns 1 for success or 0 for failure.
+.Pp
+These functions are very similar to the X.509 functions described in
+.Xr d2i_X509 3 ,
+where further notes and examples are available.
+.Pp
+The
+.Fn ECPKParameters_print
+and
+.Fn ECPKParameters_print_fp
+functions print human-readable output of the public parameters of the
+.Vt EC_GROUP
+to
+.Fa bp
+or
+.Fa fp .
+The output lines are indented by
+.Fa off
+spaces.
+.Sh RETURN VALUES
+.Fn d2i_ECPKParameters ,
+.Fn d2i_ECPKParameters_bio ,
+and
+.Fn d2i_ECPKParameters_fp
+return a valid
+.Vt EC_GROUP
+structure or
+.Dv NULL
+if an error occurs.
+.Pp
+.Fn i2d_ECPKParameters
+returns the number of bytes successfully encoded or a negative value if
+an error occurs.
+.Pp
+.Fn i2d_ECPKParameters_bio ,
+.Fn i2d_ECPKParameters_fp ,
+.Fn ECPKParameters_print ,
+and
+.Fn ECPKParameters_print_fp
+return 1 for success or 0 if an error occurs.
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr d2i_X509 3 ,
+.Xr ec 3 ,
+.Xr EC_GFp_simple_method 3 ,
+.Xr EC_GROUP_copy 3 ,
+.Xr EC_GROUP_new 3 ,
+.Xr EC_KEY_new 3 ,
+.Xr EC_POINT_add 3 ,
+.Xr EC_POINT_new 3

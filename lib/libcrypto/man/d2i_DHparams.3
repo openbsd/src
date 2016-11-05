@@ -1,0 +1,30 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt D2I_DHPARAMS 3
+.Os
+.Sh NAME
+.Nm d2i_DHparams ,
+.Nm i2d_DHparams
+.Nd PKCS#3 DH parameter functions
+.Sh SYNOPSIS
+.In openssl/dh.h
+.Ft DH *
+.Fo d2i_DHparams
+.Fa "DH **a"
+.Fa "unsigned char **pp"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_DHparams
+.Fa "DH *a"
+.Fa "unsigned char **pp"
+.Fc
+.Sh DESCRIPTION
+These functions decode and encode PKCS#3 DH parameters using the
+DHparameter structure described in PKCS#3.
+.Pp
+Otherwise these behave in a way similar to
+.Xr d2i_X509 3
+and
+.Xr i2d_X509 3 .
+.Sh SEE ALSO
+.Xr d2i_X509 3
