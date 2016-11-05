@@ -57,7 +57,8 @@ test()
 
 RDOMAINS=""
 IFACE_NUMS=""
-while getopts 'cvR:I:' ch "$@"; do
+AF=inet
+while getopts 'cvR:I:f:' ch "$@"; do
 	case $ch in
 	c)
 		CLEANUP=1
@@ -70,6 +71,9 @@ while getopts 'cvR:I:' ch "$@"; do
 		;;
 	I)
 		IFACE_NUMS="$IFACE_NUMS $OPTARG"
+		;;
+	f)
+		AF=$OPTARG
 		;;
 	*)
 		echo "usage: $(basename $0) [-cv][-R rodmains][-I iface_nums]"
