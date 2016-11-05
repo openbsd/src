@@ -947,3 +947,9 @@ id_tc26_gost3410_2012_256		946
 id_tc26_gost3410_2012_512		947
 id_tc26_signwithdigest_gost3410_2012_256		948
 id_tc26_signwithdigest_gost3410_2012_512		949
+X25519		950
+X448		951
+Ed25519		952
+Ed448		953
+Ed25519ph	954
+Ed448ph		955
