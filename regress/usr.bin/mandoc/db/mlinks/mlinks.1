@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mlinks.1,v 1.1 2016/11/04 19:57:27 schwarze Exp $
+.\"	$OpenBSD: mlinks.1,v 1.2 2016/11/05 08:45:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 4 2016 $
+.Dd $Mdocdate: November 5 2016 $
 .Dt MLINKS 1
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ utility reads a
 database from the given
 .Ar file .
 For each manual page name that does not agree with the filename,
-it write one line to standard output, containing:
+it writes one line to the standard output, containing:
 .Pp
 .Bl -dash -compact
 .It
@@ -69,11 +69,26 @@ build are required to compile and link
 It fails when no argument or more than one argument is given, when
 .Fn dbm_open
 fails, or when database corruption is detected.
+.Sh EXAMPLES
+Typical usage looks like this:
+.Bd -literal -offset indent
+cd /usr/src/usr.bin/mandoc/
+make obj
+make depend
+make
+cd /usr/src/regress/usr.bin/mandoc/db/mlinks/
+make obj
+make
+makewhatis -a /usr/src/lib/libssl/doc
+\&./obj/mlinks /usr/src/lib/libssl/doc/mandoc.db > ssl.mlinks
+.Ed
 .Sh AUTHORS
 .An Ingo Schwarze Aq Mt schwarze@openbsd.org
 .Sh CAVEATS
 The
 .Nm
 utility only partially validates the database format.
-For complete validation, use
-.Xr dbm_dump 1 .
+For complete validation, use the
+.Xr dbm_dump 1
+utility found in
+.Pa /usr/src/regress/usr.bin/mandoc/db/dbm_dump/ .
