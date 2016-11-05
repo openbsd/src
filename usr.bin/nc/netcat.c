@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.168 2016/11/05 15:13:26 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.169 2016/11/05 16:03:09 jmc Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1640,6 +1640,7 @@ help(void)
 	\t-N		Shutdown the network socket after EOF on stdin\n\
 	\t-n		Suppress name/port resolutions\n\
 	\t-O length	TCP send buffer length\n\
+	\t-o staplefile	Staple file\n\
 	\t-P proxyuser\tUsername for proxy authentication\n\
 	\t-p port\t	Specify local port for remote connects\n\
 	\t-R CAfile	CA bundle\n\
@@ -1667,8 +1668,10 @@ usage(int ret)
 	    "usage: nc [-46cDdFhklNnrStUuvz] [-C certfile] [-e name] "
 	    "[-H hash] [-I length]\n"
 	    "\t  [-i interval] [-K keyfile] [-M ttl] [-m minttl] [-O length]\n"
-	    "\t  [-P proxy_username] [-p source_port] [-R CAfile] [-s source]\n"
-	    "\t  [-T keyword] [-V rtable] [-w timeout] [-X proxy_protocol]\n"
+	    "\t  [-o staplefile] [-P proxy_username] [-p source_port] "
+	    "[-R CAfile]\n"
+	    "\t  [-s source] [-T keyword] [-V rtable] [-w timeout] "
+	    "[-X proxy_protocol]\n"
 	    "\t  [-x proxy_address[:port]] [destination] [port]\n");
 	if (ret)
 		exit(1);
