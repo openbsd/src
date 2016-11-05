@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.16 2015/09/14 16:13:39 jsing Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.17 2016/11/05 20:14:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,6 +147,8 @@ typedef struct x509_lookup_method_st
 			    X509_OBJECT *ret);
 	} X509_LOOKUP_METHOD;
 
+typedef struct X509_VERIFY_PARAM_ID_st X509_VERIFY_PARAM_ID;
+
 /* This structure hold all parameters associated with a verify operation
  * by including an X509_VERIFY_PARAM structure in related structures the
  * parameters used can be customized
@@ -162,7 +164,8 @@ typedef struct X509_VERIFY_PARAM_st
 	int trust;		/* trust setting to check */
 	int depth;		/* Verify depth */
 	STACK_OF(ASN1_OBJECT) *policies;	/* Permissible policies */
-	} X509_VERIFY_PARAM;
+	X509_VERIFY_PARAM_ID *id;	/* opaque ID data */
+} X509_VERIFY_PARAM;
 
 DECLARE_STACK_OF(X509_VERIFY_PARAM)
 
@@ -288,8 +291,7 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 		(long)(type),NULL)
 
 #define		X509_V_OK					0
-/* illegal error (for uninitialized values, to avoid X509_V_OK): 1 */
-
+#define		X509_V_ERR_UNSPECIFIED				1
 #define		X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT		2
 #define		X509_V_ERR_UNABLE_TO_GET_CRL			3
 #define		X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE	4
@@ -351,6 +353,16 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
 
+/* Host, email and IP check errors */
+#define		X509_V_ERR_HOSTNAME_MISMATCH			62
+#define		X509_V_ERR_EMAIL_MISMATCH			63
+#define		X509_V_ERR_IP_ADDRESS_MISMATCH			64
+
+/* Caller error */
+#define		X509_V_ERR_INVALID_CALL				65
+/* Issuer lookup error */
+#define		X509_V_ERR_STORE_LOOKUP				66
+
 /* Certificate verify flags */
 
 /* Send issuer+subject checks to verify_cb */
@@ -383,6 +395,16 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define X509_V_FLAG_USE_DELTAS			0x2000
 /* Check selfsigned CA signature */
 #define X509_V_FLAG_CHECK_SS_SIGNATURE		0x4000
+/* Use trusted store first */
+#define X509_V_FLAG_TRUSTED_FIRST		0x8000
+/* Allow partial chains if at least one certificate is in trusted store */
+#define X509_V_FLAG_PARTIAL_CHAIN		0x80000
+
+/* If the initial chain is not trusted, do not attempt to build an alternative
+ * chain. Alternate chain checking was introduced in 1.0.2b. Setting this flag
+ * will force the behaviour to match that of previous versions. */
+#define X509_V_FLAG_NO_ALT_CHAINS		0x100000
+
 /* Do not check certificate or CRL validity against current time. */
 #define X509_V_FLAG_NO_CHECK_TIME		0x200000
 
@@ -519,6 +541,10 @@ int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
 						ASN1_OBJECT *policy);
 int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param, 
 					STACK_OF(ASN1_OBJECT) *policies);
+int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param, const char *email,
+    size_t emaillen);
+int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param, const unsigned char *ip,
+    size_t iplen);
 int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param);
 
 int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param);
