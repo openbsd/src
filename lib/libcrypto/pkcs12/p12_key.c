@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.23 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: p12_key.c,v 1.24 2016/11/05 13:02:34 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -107,11 +107,12 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 	BIGNUM *Ij, *Bpl1;	/* These hold Ij and B + 1 */
 	EVP_MD_CTX ctx;
 
-	EVP_MD_CTX_init(&ctx);
 	v = EVP_MD_block_size(md_type);
 	u = EVP_MD_size(md_type);
 	if (u < 0)
 		return 0;
+
+	EVP_MD_CTX_init(&ctx);
 	D = malloc(v);
 	Ai = malloc(u);
 	B = malloc(v + 1);
