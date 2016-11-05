@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.59 2016/11/02 01:29:43 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.60 2016/11/05 05:09:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -329,7 +329,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	if (octeon_eth_pow_recv_ih == NULL)
 		octeon_eth_pow_recv_ih = cn30xxpow_intr_establish(
 		    OCTEON_POW_GROUP_PIP, IPL_NET | IPL_MPSAFE,
-		    octeon_eth_recv_intr, NULL, NULL, sc->sc_dev.dv_xname);
+		    octeon_eth_recv_intr, NULL, NULL, cnmac_cd.cd_name);
 }
 
 /* ---- submodules */
