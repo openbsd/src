@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ht.c,v 1.22 2014/10/03 06:02:38 doug Exp $ */
+/* $OpenBSD: ocsp_ht.c,v 1.23 2016/11/05 15:21:20 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -157,7 +157,10 @@ OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req, int maxline)
 	if (rctx == NULL)
 		return NULL;
 	rctx->state = OHS_ERROR;
-	rctx->mem = BIO_new(BIO_s_mem());
+	if ((rctx->mem = BIO_new(BIO_s_mem())) == NULL) {
+		free(rctx);
+		return NULL;
+	}
 	rctx->io = io;
 	rctx->asn1_len = 0;
 	if (maxline > 0)
