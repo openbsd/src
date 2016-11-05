@@ -1774,6 +1774,7 @@
 ./usr/share/man/man3/BN_num_bytes.3
 ./usr/share/man/man3/BN_rand.3
 ./usr/share/man/man3/BN_set_bit.3
+./usr/share/man/man3/BN_set_negative.3
 ./usr/share/man/man3/BN_swap.3
 ./usr/share/man/man3/BN_zero.3
 ./usr/share/man/man3/BUF_MEM_new.3
