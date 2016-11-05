@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.26 2016/11/05 15:01:54 schwarze Exp $
+# $OpenBSD: Makefile,v 1.27 2016/11/05 15:32:19 schwarze Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
-SUBDIR=	doc
+SUBDIR=	man
 .endif
 
 PC_FILES=openssl.pc libssl.pc
