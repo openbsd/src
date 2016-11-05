@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.128 2016/10/19 16:38:40 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.129 2016/11/05 19:03:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1172,6 +1172,9 @@ ssl3_send_server_done(SSL *s)
 int
 ssl3_send_server_key_exchange(SSL *s)
 {
+	CBB cbb, dh_p, dh_g, dh_Ys, ecpoint;
+	unsigned char *data, *params = NULL;
+	size_t params_len;
 	unsigned char *q;
 	int j, num;
 	unsigned char md_buf[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
@@ -1182,7 +1185,6 @@ ssl3_send_server_key_exchange(SSL *s)
 	int encodedlen = 0;
 	int curve_id = 0;
 	BN_CTX *bn_ctx = NULL;
-
 	EVP_PKEY *pkey;
 	const EVP_MD *md = NULL;
 	unsigned char *p, *d;
@@ -1190,10 +1192,11 @@ ssl3_send_server_key_exchange(SSL *s)
 	unsigned long type;
 	int n;
 	CERT *cert;
-	BIGNUM *r[4];
-	int nr[4], kn;
+	int kn;
 	BUF_MEM *buf;
 	EVP_MD_CTX md_ctx;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	EVP_MD_CTX_init(&md_ctx);
 	if (s->state == SSL3_ST_SW_KEY_EXCH_A) {
@@ -1202,7 +1205,9 @@ ssl3_send_server_key_exchange(SSL *s)
 
 		buf = s->init_buf;
 
-		r[0] = r[1] = r[2] = r[3] = NULL;
+		if (!CBB_init(&cbb, 0))
+			goto err;
+
 		n = 0;
 		if (type & SSL_kDHE) {
 			if (s->cert->dh_tmp_auto != 0) {
@@ -1246,9 +1251,28 @@ ssl3_send_server_key_exchange(SSL *s)
 				    ERR_R_DH_LIB);
 				goto err;
 			}
-			r[0] = dh->p;
-			r[1] = dh->g;
-			r[2] = dh->pub_key;
+
+			/*
+			 * Serialize the DH parameters and public key.
+			 */
+			if (!CBB_add_u16_length_prefixed(&cbb, &dh_p))
+				goto err;
+			if (!CBB_add_space(&dh_p, &data, BN_num_bytes(dh->p)))
+				goto err;
+			BN_bn2bin(dh->p, data);
+
+			if (!CBB_add_u16_length_prefixed(&cbb, &dh_g))
+				goto err;
+			if (!CBB_add_space(&dh_g, &data, BN_num_bytes(dh->g)))
+				goto err;
+			BN_bn2bin(dh->g, data);
+
+			if (!CBB_add_u16_length_prefixed(&cbb, &dh_Ys))
+				goto err;
+			if (!CBB_add_space(&dh_Ys, &data, BN_num_bytes(dh->pub_key)))
+				goto err;
+			BN_bn2bin(dh->pub_key, data);
+
 		} else if (type & SSL_kECDHE) {
 			const EC_GROUP *group;
 
@@ -1360,24 +1384,35 @@ ssl3_send_server_key_exchange(SSL *s)
 			n = 4 + encodedlen;
 
 			/*
-			 * We'll generate the serverKeyExchange message
-			 * explicitly so we can set these to NULLs
+			 * XXX: For now, we only support named (not generic)
+			 * curves.
+			 * In this situation, the serverKeyExchange message has:
+			 * [1 byte CurveType], [2 byte CurveName]
+			 * [1 byte length of encoded point], followed by
+			 * the actual encoded point itself
 			 */
-			r[0] = NULL;
-			r[1] = NULL;
-			r[2] = NULL;
-			r[3] = NULL;
-		} else
-		{
+			if (!CBB_add_u8(&cbb, NAMED_CURVE_TYPE))
+				goto err;
+			if (!CBB_add_u16(&cbb, curve_id))
+				goto err;
+			if (!CBB_add_u8_length_prefixed(&cbb, &ecpoint))
+				goto err;
+			if (!CBB_add_space(&ecpoint, &data, encodedlen))
+				goto err;
+			memcpy(data, encodedPoint, encodedlen);
+
+			free(encodedPoint);
+			encodedPoint = NULL;
+
+		} else {
 			al = SSL_AD_HANDSHAKE_FAILURE;
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
 			    SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
 			goto f_err;
 		}
-		for (i = 0; i < 4 && r[i] != NULL; i++) {
-			nr[i] = BN_num_bytes(r[i]);
-			n += 2 + nr[i];
-		}
+
+		if (!CBB_finish(&cbb, &params, &params_len))
+			goto err;
 
 		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)) {
 			if ((pkey = ssl_get_sign_pkey(
@@ -1392,7 +1427,7 @@ ssl3_send_server_key_exchange(SSL *s)
 		}
 
 		if (!BUF_MEM_grow_clean(buf, ssl3_handshake_msg_hdr_len(s) +
-		    n + kn)) {
+		    params_len + kn)) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
 			    ERR_LIB_BUF);
 			goto err;
@@ -1401,36 +1436,12 @@ ssl3_send_server_key_exchange(SSL *s)
 		d = p = ssl3_handshake_msg_start(s,
 		    SSL3_MT_SERVER_KEY_EXCHANGE);
 
-		for (i = 0; i < 4 && r[i] != NULL; i++) {
-			s2n(nr[i], p);
-			BN_bn2bin(r[i], p);
-			p += nr[i];
-		}
+		memcpy(p, params, params_len);
+		free(params);
+		params = NULL;
 
-		if (type & SSL_kECDHE) {
-			/*
-			 * XXX: For now, we only support named (not generic)
-			 * curves.
-			 * In this situation, the serverKeyExchange message has:
-			 * [1 byte CurveType], [2 byte CurveName]
-			 * [1 byte length of encoded point], followed by
-			 * the actual encoded point itself
-			 */
-			*p = NAMED_CURVE_TYPE;
-			p += 1;
-			*p = 0;
-			p += 1;
-			*p = curve_id;
-			p += 1;
-			*p = encodedlen;
-			p += 1;
-			memcpy((unsigned char*)p,
-			    (unsigned char *)encodedPoint, encodedlen);
-			free(encodedPoint);
-			encodedPoint = NULL;
-			p += encodedlen;
-		}
-
+		n = params_len;
+		p += params_len;
 
 		/* not anonymous */
 		if (pkey != NULL) {
@@ -1512,16 +1523,20 @@ ssl3_send_server_key_exchange(SSL *s)
 	}
 
 	s->state = SSL3_ST_SW_KEY_EXCH_B;
+
 	EVP_MD_CTX_cleanup(&md_ctx);
 
 	return (ssl3_handshake_write(s));
 	
-f_err:
+ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-err:
+ err:
+	free(params);
 	free(encodedPoint);
 	BN_CTX_free(bn_ctx);
 	EVP_MD_CTX_cleanup(&md_ctx);
+	CBB_cleanup(&cbb);
+
 	return (-1);
 }
 
