@@ -1,13 +1,16 @@
-# $OpenBSD: Makefile,v 1.25 2016/11/05 08:12:22 jsing Exp $
+# $OpenBSD: Makefile,v 1.26 2016/11/05 15:01:54 schwarze Exp $
 
-SUBDIR= man
+.include <bsd.own.mk>
+.ifndef NOMAN
+SUBDIR=	doc
+.endif
+
 PC_FILES=openssl.pc libssl.pc
 
 CLEANFILES=${PC_FILES} ${VERSION_SCRIPT}
 
 LIB=	ssl
 
-.include <bsd.own.mk>
 CFLAGS+= -Wall -Wundef
 .if ${COMPILER_VERSION:L} != "gcc3"
 CFLAGS+= -Werror

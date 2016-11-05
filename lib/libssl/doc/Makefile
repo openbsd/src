@@ -1,12 +1,8 @@
-# $OpenBSD: Makefile,v 1.34 2016/09/03 12:42:45 beck Exp $
+# $OpenBSD: Makefile,v 1.1 2016/11/05 15:01:54 schwarze Exp $
 
-.include <bsd.own.mk>		# for NOMAN
+.include <bsd.own.mk>
 
-POD2MAN=pod2man --official --release="OpenBSD ${OSREV}" --center=OpenSSL
-
-.ifndef NOMAN
-MAN=	\
-	BIO_f_ssl.3 \
+MAN =	BIO_f_ssl.3 \
 	SSL_CIPHER_get_name.3 \
 	SSL_COMP_add_compression_method.3 \
 	SSL_CTX_add_extra_chain_cert.3 \
@@ -88,24 +84,10 @@ MAN=	\
 	SSL_want.3 \
 	SSL_write.3 \
 	d2i_SSL_SESSION.3 \
-	ssl.3 \
+	ssl.3
+
+all clean cleandir depend includes obj tags:
+
+install: maninstall
 
 .include <bsd.man.mk>
-.else
-maninstall:
-
-.endif
-
-.PATH: ${.CURDIR}/../doc
-.SUFFIXES: .pod .1 .3 .7
-.for sect in 1 3 7
-.pod.${sect}:
-	@echo '${POD2MAN} --section=${sect} --name=${*:U} $< > $@'
-	@${POD2MAN} --section=${sect} --name=${*:U} $< > $@.tmp && mv $@.tmp $@
-.endfor
-
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-
-clean cleandir:
-	rm -f ${MAN}

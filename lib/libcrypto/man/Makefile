@@ -1,8 +1,7 @@
-# $OpenBSD: Makefile,v 1.48 2016/11/05 13:36:33 schwarze Exp $
+# $OpenBSD: Makefile,v 1.49 2016/11/05 15:01:54 schwarze Exp $
 
-.include <bsd.own.mk>		# for NOMAN
+.include <bsd.own.mk>
 
-.ifndef NOMAN
 MAN=	\
 	ASN1_OBJECT_new.3 \
 	ASN1_STRING_length.3 \
@@ -194,13 +193,8 @@ MAN=	\
 	rsa.3 \
 	x509.3
 
+all clean cleandir depend includes obj tags:
+
+install: maninstall
+
 .include <bsd.man.mk>
-.else
-maninstall:
-
-.endif
-
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-
-clean cleandir:
