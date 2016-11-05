@@ -2283,7 +2283,6 @@
 ./usr/local/share/pkgconfig
 ./usr/local/share/skel
 ./usr/mdec
-./usr/obj
 ./usr/sbin
 ./usr/sbin/ac
 ./usr/sbin/accton
@@ -7245,8 +7244,6 @@
 ./usr/share/zoneinfo/right/Zulu
 ./usr/share/zoneinfo/zone.tab
 ./usr/share/zoneinfo/zone1970.tab
-./usr/src
-./usr/xobj
 ./var
 ./var/account
 ./var/audit
