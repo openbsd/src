@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.16 2015/07/19 18:25:59 miod Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.17 2016/11/05 15:19:07 miod Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -244,7 +244,9 @@ TS_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted, X509 *signer,
 		TSerr(TS_F_TS_VERIFY_CERT, ERR_R_X509_LIB);
 		goto err;
 	}
-	X509_STORE_CTX_set_purpose(&cert_ctx, X509_PURPOSE_TIMESTAMP_SIGN);
+	if (X509_STORE_CTX_set_purpose(&cert_ctx,
+	    X509_PURPOSE_TIMESTAMP_SIGN) == 0)
+		goto err;
 	i = X509_verify_cert(&cert_ctx);
 	if (i <= 0) {
 		int j = X509_STORE_CTX_get_error(&cert_ctx);

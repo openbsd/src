@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_smime.c,v 1.20 2015/02/07 14:21:41 doug Exp $ */
+/* $OpenBSD: pk7_smime.c,v 1.21 2016/11/05 15:19:07 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -324,8 +324,11 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 					sk_X509_free(signers);
 					return 0;
 				}
-				X509_STORE_CTX_set_default(&cert_ctx,
-				    "smime_sign");
+				if (X509_STORE_CTX_set_default(&cert_ctx,
+				    "smime_sign") == 0) {
+					sk_X509_free(signers);
+					return 0;
+				}
 			} else if (!X509_STORE_CTX_init(&cert_ctx, store,
 			    signer, NULL)) {
 				PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_X509_LIB);

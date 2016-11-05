@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.38 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.39 2016/11/05 15:19:07 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -811,11 +811,7 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
 			j = OBJ_obj2nid(si->digest_alg->algorithm);
 
-			btmp = bio;
-
-			btmp = PKCS7_find_digest(&mdc, btmp, j);
-
-			if (btmp == NULL)
+			if ((btmp = PKCS7_find_digest(&mdc, bio, j)) == NULL)
 				goto err;
 
 			/* We now have the EVP_MD_CTX, lets do the
@@ -997,7 +993,10 @@ PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 		PKCS7err(PKCS7_F_PKCS7_DATAVERIFY, ERR_R_X509_LIB);
 		goto err;
 	}
-	X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_SMIME_SIGN);
+	if (X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_SMIME_SIGN) == 0) {
+		X509_STORE_CTX_cleanup(ctx);
+		goto err;
+	}
 	i = X509_verify_cert(ctx);
 	if (i <= 0) {
 		PKCS7err(PKCS7_F_PKCS7_DATAVERIFY, ERR_R_X509_LIB);
