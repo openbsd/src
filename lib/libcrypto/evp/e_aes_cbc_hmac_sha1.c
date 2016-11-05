@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.13 2016/11/04 17:30:30 miod Exp $ */
+/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.14 2016/11/05 10:47:57 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -61,12 +61,6 @@
 #include <openssl/sha.h>
 #include "evp_locl.h"
 #include "constant_time_locl.h"
-
-#ifndef EVP_CIPH_FLAG_AEAD_CIPHER
-#define EVP_CIPH_FLAG_AEAD_CIPHER	0x200000
-#define EVP_CTRL_AEAD_TLS1_AAD		0x16
-#define EVP_CTRL_AEAD_SET_MAC_KEY	0x17
-#endif
 
 #define TLS1_1_VERSION 0x0302
 

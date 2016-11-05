@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4_hmac_md5.c,v 1.6 2016/11/04 17:30:30 miod Exp $ */
+/* $OpenBSD: e_rc4_hmac_md5.c,v 1.7 2016/11/05 10:47:57 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -59,12 +59,6 @@
 #include <openssl/objects.h>
 #include <openssl/rc4.h>
 #include <openssl/md5.h>
-
-#ifndef EVP_CIPH_FLAG_AEAD_CIPHER
-#define EVP_CIPH_FLAG_AEAD_CIPHER	0x200000
-#define EVP_CTRL_AEAD_TLS1_AAD		0x16
-#define EVP_CTRL_AEAD_SET_MAC_KEY	0x17
-#endif
 
 /* FIXME: surely this is available elsewhere? */
 #define EVP_RC4_KEY_SIZE		16
