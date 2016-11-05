@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_vfy.c,v 1.13 2016/07/05 00:21:47 beck Exp $ */
+/* $OpenBSD: ocsp_vfy.c,v 1.14 2016/11/05 13:27:53 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -130,7 +130,12 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 			goto end;
 		}
 
-		X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_OCSP_HELPER);
+		if (X509_STORE_CTX_set_purpose(&ctx,
+		    X509_PURPOSE_OCSP_HELPER) == 0) {
+			X509_STORE_CTX_cleanup(&ctx);
+			ret = -1;
+			goto end;
+		}
 		ret = X509_verify_cert(&ctx);
 		chain = X509_STORE_CTX_get1_chain(&ctx);
 		X509_STORE_CTX_cleanup(&ctx);
@@ -423,8 +428,13 @@ OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store,
 			return 0;
 		}
 
-		X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_OCSP_HELPER);
-		X509_STORE_CTX_set_trust(&ctx, X509_TRUST_OCSP_REQUEST);
+		if (X509_STORE_CTX_set_purpose(&ctx,
+		      X509_PURPOSE_OCSP_HELPER) == 0 ||
+		    X509_STORE_CTX_set_trust(&ctx,
+		      X509_TRUST_OCSP_REQUEST) == 0) {
+			X509_STORE_CTX_cleanup(&ctx);
+			return 0;
+		}
 		ret = X509_verify_cert(&ctx);
 		X509_STORE_CTX_cleanup(&ctx);
 		if (ret <= 0) {
