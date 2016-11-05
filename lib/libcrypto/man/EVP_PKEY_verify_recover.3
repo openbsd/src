@@ -1,4 +1,4 @@
-.Dd $Mdocdate: November 3 2016 $
+.Dd $Mdocdate: November 5 2016 $
 .Dt EVP_PKEY_VERIFY_RECOVER 3
 .Os
 .Sh NAME
@@ -122,10 +122,10 @@ if (EVP_PKEY_verify_recover(ctx, rout, &routlen, sig, siglen) <= 0)
 .Ed
 .Sh SEE ALSO
 .Xr EVP_PKEY_CTX_new 3 ,
-.Xr EVP_PKEY_encrypt 3 ,
 .Xr EVP_PKEY_decrypt 3 ,
+.Xr EVP_PKEY_derive 3 ,
+.Xr EVP_PKEY_encrypt 3 ,
 .Xr EVP_PKEY_sign 3 ,
-.Xr EVP_PKEY_verify 3 ,
-.Xr EVP_PKEY_derive 3
+.Xr EVP_PKEY_verify 3
 .Sh HISTORY
 These functions were first added to OpenSSL 1.0.0.
