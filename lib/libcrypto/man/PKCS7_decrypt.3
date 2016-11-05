@@ -1,0 +1,69 @@
+.Dd $Mdocdate: November 5 2016 $
+.Dt PKCS7_DECRYPT 3
+.Os
+.Sh NAME
+.Nm PKCS7_decrypt
+.Nd decrypt content from a PKCS#7 envelopedData structure
+.Sh SYNOPSIS
+.In openssl/pkcs7.h
+.Ft int
+.Fo PKCS7_decrypt
+.Fa "PKCS7 *p7"
+.Fa "EVP_PKEY *pkey"
+.Fa "X509 *cert"
+.Fa "BIO *data"
+.Fa "int flags"
+.Fc
+.Sh DESCRIPTION
+.Fn PKCS7_decrypt
+extracts and decrypts the content from a PKCS#7 envelopedData structure.
+.Fa pkey
+is the private key of the recipient,
+.Fa cert
+is the recipient's certificate,
+.Fa data
+is a
+.Vt BIO
+to write the content to and
+.Fa flags
+is an optional set of flags.
+.Pp
+.Xr OpenSSL_add_all_algorithms 3
+(or equivalent) should be called before using this function or errors
+about unknown algorithms will occur.
+.Pp
+Although the recipient's certificate is not needed to decrypt the data,
+it is needed to locate the appropriate (of possible several) recipients
+in the PKCS#7 structure.
+.Pp
+If the
+.Dv PKCS7_TEXT
+.Fa flag
+is set, MIME headers for type
+.Sy text/plain
+are deleted from the content.
+If the content is not of type
+.Sy text/plain ,
+an error is returned.
+.Sh RETURN VALUES
+.Fn PKCS7_decrypt
+returns 1 for success or 0 for failure.
+The error can be obtained from
+.Xr ERR_get_error 3
+.Sh SEE ALSO
+.Xr ERR_get_error 3 ,
+.Xr PKCS7_encrypt 3
+.Sh HISTORY
+.Fn PKCS7_decrypt
+was added to OpenSSL 0.9.5.
+.Sh BUGS
+.Fn PKCS7_decrypt
+must be passed the correct recipient key and certificate.
+It would be better if it could look up the correct key and certificate
+from a database.
+.Pp
+The lack of single pass processing and need to hold all data in memory
+as mentioned in
+.Xr PKCS7_sign 3
+also applies to
+.Xr PKCS7_decrypt 3 .
