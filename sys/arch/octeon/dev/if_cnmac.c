@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.60 2016/11/05 05:09:49 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.61 2016/11/05 05:14:18 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -50,9 +50,6 @@
 #include <sys/syslog.h>
 #include <sys/endian.h>
 #include <sys/atomic.h>
-#ifdef MBUF_TIMESTAMP
-#include <sys/time.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_media.h>
