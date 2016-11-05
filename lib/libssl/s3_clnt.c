@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.143 2016/11/04 19:11:43 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.144 2016/11/05 08:26:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1175,64 +1175,63 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 static int
 ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 {
+	CBS cbs, ecpoint;
+	uint8_t curve_type;
+	uint16_t curve_id;
 	EC_POINT *srvr_ecpoint = NULL;
 	EC_KEY *ecdh = NULL;
 	BN_CTX *bn_ctx = NULL;
 	const EC_GROUP *group;
 	EC_GROUP *ngroup;
 	SESS_CERT *sc;
-	unsigned char *p;
-	int al, param_len;
-	long alg_a, n;
-	int curve_nid = 0;
-	int encoded_pt_len = 0;
+	int curve_nid;
+	long alg_a;
+	int al;
 
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-	n = *nn;
-	p = *pp;
 	sc = s->session->sess_cert;
+
+	if (*nn < 0)
+		goto err;
+
+	CBS_init(&cbs, *pp, *nn);
+
+	/*
+	 * Extract EC parameters and the server's ephemeral ECDH public key.
+	 */
 
 	if ((ecdh = EC_KEY_new()) == NULL) {
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	/*
-	 * Extract elliptic curve parameters and the server's ephemeral ECDH
-	 * public key. Keep accumulating lengths of various components in
-	 * param_len and make sure it never exceeds n.
-	 */
-
-	/*
-	 * XXX: For now we only support named (not generic) curves
-	 * and the ECParameters in this case is just three bytes.
-	 */
-	param_len = 3;
-	if (param_len > n) {
+	/* Only named curves are supported. */
+	if (!CBS_get_u8(&cbs, &curve_type) ||
+	    curve_type != NAMED_CURVE_TYPE ||
+	    !CBS_get_u16(&cbs, &curve_id)) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
 		goto f_err;
 	}
 
 	/*
-	 * Check curve is one of our preferences, if not server has
-	 * sent an invalid curve.
+	 * Check that the curve is one of our preferences - if it is not,
+	 * the server has sent us an invalid curve.
 	 */
-	if (tls1_check_curve(s, p, param_len) != 1) {
+	if (tls1_check_curve(s, curve_id) != 1) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_WRONG_CURVE);
 		goto f_err;
 	}
 
-	if ((curve_nid = tls1_ec_curve_id2nid(*(p + 2))) == 0) {
+	if ((curve_nid = tls1_ec_curve_id2nid(curve_id)) == 0) {
 		al = SSL_AD_INTERNAL_ERROR;
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 		    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
 		goto f_err;
 	}
 
-	ngroup = EC_GROUP_new_by_curve_name(curve_nid);
-	if (ngroup == NULL) {
+	if ((ngroup = EC_GROUP_new_by_curve_name(curve_nid)) == NULL) {
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EC_LIB);
 		goto err;
 	}
@@ -1244,30 +1243,22 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 
 	group = EC_KEY_get0_group(ecdh);
 
-	p += 3;
-
 	/* Next, get the encoded ECPoint */
-	if (((srvr_ecpoint = EC_POINT_new(group)) == NULL) ||
-	    ((bn_ctx = BN_CTX_new()) == NULL)) {
+	if ((srvr_ecpoint = EC_POINT_new(group)) == NULL ||
+	    (bn_ctx = BN_CTX_new()) == NULL) {
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (param_len + 1 > n)
+	if (!CBS_get_u8_length_prefixed(&cbs, &ecpoint))
 		goto truncated;
-	encoded_pt_len = *p;
-	/* length of encoded point */
-	p += 1;
-	param_len += (1 + encoded_pt_len);
-	if ((param_len > n) || (EC_POINT_oct2point(group, srvr_ecpoint,
-	    p, encoded_pt_len, bn_ctx) == 0)) {
+
+	if (EC_POINT_oct2point(group, srvr_ecpoint, CBS_data(&ecpoint),
+	    CBS_len(&ecpoint), bn_ctx) == 0) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_ECPOINT);
 		goto f_err;
 	}
-
-	n -= param_len;
-	p += encoded_pt_len;
 
 	/*
 	 * The ECC/TLS specification does not mention the use of DSA to sign
@@ -1288,8 +1279,8 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 	BN_CTX_free(bn_ctx);
 	EC_POINT_free(srvr_ecpoint);
 
-	*nn = n;
-	*pp = p;
+	*nn = CBS_len(&cbs);
+	*pp = (unsigned char *)CBS_data(&cbs);
 
 	return (1);
 
