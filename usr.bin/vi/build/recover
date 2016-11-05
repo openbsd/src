@@ -1,12 +1,11 @@
 #!/usr/bin/perl -w
 #
-# $OpenBSD: recover,v 1.10 2016/08/08 15:09:32 sobrado Exp $
+# $OpenBSD: recover,v 1.11 2016/11/05 16:21:56 afresh1 Exp $
 #
 # Script to (safely) recover nvi edit sessions.
 #
 
 use Fcntl;
-require 'sys/syscall.ph';
 
 $recoverdir = $ARGV[0] || "/tmp/vi.recover";
 $sendmail = "/usr/sbin/sendmail";
@@ -24,13 +23,10 @@ if (!sysopen(DIR, $recoverdir, O_RDONLY|O_NOFOLLOW) || !stat(DIR)) {
 
 #
 # Sanity check the vi recovery dir
-# Perl doesn't support fchdir, fchmod, or fchown so we call
-# fchdir(2) via the syscall interface and then just modify ".".
 #
 die "Warning! $recoverdir is not a directory! (ignoring)\n"
     unless -d _;
-die "$0: can't chdir to $recoverdir: $!\n"
-    unless syscall(&SYS_fchdir, fileno(DIR)) == 0;
+die "$0: can't chdir to $recoverdir: $!\n" unless chdir DIR;
 if (! -O _) {
 	warn "Warning! $recoverdir is not owned by root! (fixing)\n";
 	chown(0, 0, ".");
