@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_utl.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: p12_utl.c,v 1.13 2016/11/05 14:24:29 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -56,6 +56,7 @@
  *
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -66,19 +67,29 @@
 unsigned char *
 OPENSSL_asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen)
 {
-	int ulen, i;
+	size_t ulen, i;
 	unsigned char *unitmp;
 
-	if (asclen == -1)
-		asclen = strlen(asc);
-	ulen = asclen * 2 + 2;
-	if (!(unitmp = malloc(ulen)))
+	if (asclen < 0)
+		ulen = strlen(asc);
+	else
+		ulen = (size_t)asclen;
+	ulen++;
+	if (ulen == 0) /* unlikely overflow */
 		return NULL;
+	if ((unitmp = reallocarray(NULL, ulen, 2)) == NULL)
+		return NULL;
+	ulen *= 2;
+	/* XXX This interface ought to use unsigned types */
+	if (ulen > INT_MAX) {
+		free(unitmp);
+		return NULL;
+	}
 	for (i = 0; i < ulen - 2; i += 2) {
 		unitmp[i] = 0;
-		unitmp[i + 1] = asc[i >> 1];
+		unitmp[i + 1] = *asc++;
 	}
-	/* Make result double null terminated */
+	/* Make result double-NUL terminated */
 	unitmp[ulen - 2] = 0;
 	unitmp[ulen - 1] = 0;
 	if (unilen)
@@ -91,19 +102,25 @@ OPENSSL_asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen)
 char *
 OPENSSL_uni2asc(unsigned char *uni, int unilen)
 {
-	int asclen, i;
+	size_t asclen, u16len, i;
 	char *asctmp;
 
-	asclen = unilen / 2;
-	/* If no terminating zero allow for one */
-	if (!unilen || uni[unilen - 1])
-		asclen++;
-	uni++;
-	if (!(asctmp = malloc(asclen)))
+	if (unilen < 0)
 		return NULL;
-	for (i = 0; i < unilen; i += 2)
-		asctmp[i >> 1] = uni[i];
-	asctmp[asclen - 1] = 0;
+
+	asclen = u16len = (size_t)unilen / 2;
+	/* If no terminating NUL, allow for one */
+	if (unilen == 0 || uni[unilen - 1] != '\0')
+		asclen++;
+	if ((asctmp = malloc(asclen)) == NULL)
+		return NULL;
+	/* Skip first zero byte */
+	uni++;
+	for (i = 0; i < u16len; i++) {
+		asctmp[i] = *uni;
+		uni += 2;
+	}
+	asctmp[asclen - 1] = '\0';
 	return asctmp;
 }
 
