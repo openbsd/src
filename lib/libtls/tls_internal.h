@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.48 2016/11/04 18:23:32 guenther Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.49 2016/11/05 14:50:05 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -106,7 +106,7 @@ struct tls_ocsp_result {
 	time_t revocation_time;
 };
 
-struct tls_ocsp_ctx {
+struct tls_ocsp {
 	/* responder location */
 	char *ocsp_url;
 
@@ -147,7 +147,7 @@ struct tls {
 
 	struct tls_conninfo *conninfo;
 
-	struct tls_ocsp_ctx *ocsp_ctx;
+	struct tls_ocsp *ocsp;
 
 	tls_read_cb read_cb;
 	tls_write_cb write_cb;
@@ -208,8 +208,8 @@ int tls_conninfo_populate(struct tls *ctx);
 void tls_conninfo_free(struct tls_conninfo *conninfo);
 
 int tls_ocsp_verify_cb(SSL *ssl, void *arg);
-void tls_ocsp_ctx_free(struct tls_ocsp_ctx *ctx);
-struct tls_ocsp_ctx *tls_ocsp_setup_from_peer(struct tls *ctx);
+void tls_ocsp_free(struct tls_ocsp *ctx);
+struct tls_ocsp *tls_ocsp_setup_from_peer(struct tls *ctx);
 
 __END_HIDDEN_DECLS
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.51 2016/11/03 10:05:32 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.52 2016/11/05 14:50:05 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -446,9 +446,9 @@ tls_reset(struct tls *ctx)
 	tls_conninfo_free(ctx->conninfo);
 	ctx->conninfo = NULL;
 
-	tls_ocsp_ctx_free(ctx->ocsp_ctx);
-	ctx->ocsp_ctx = NULL;
-	
+	tls_ocsp_free(ctx->ocsp);
+	ctx->ocsp = NULL;
+
 	for (sni = ctx->sni_ctx; sni != NULL; sni = nsni) {
 		nsni = sni->next;
 		tls_sni_ctx_free(sni);
@@ -531,8 +531,8 @@ tls_handshake(struct tls *ctx)
 		ctx->ssl_peer_cert =  SSL_get_peer_certificate(ctx->ssl_conn);
 		if (tls_conninfo_populate(ctx) == -1)
 		    rv = -1;
-		if (ctx->ocsp_ctx == NULL)
-			ctx->ocsp_ctx = tls_ocsp_setup_from_peer(ctx);
+		if (ctx->ocsp == NULL)
+			ctx->ocsp = tls_ocsp_setup_from_peer(ctx);
 	}
  out:
 	/* Prevent callers from performing incorrect error handling */
