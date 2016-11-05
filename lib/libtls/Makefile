@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.28 2016/11/04 19:01:54 jsing Exp $
+#	$OpenBSD: Makefile,v 1.29 2016/11/05 08:12:22 jsing Exp $
 
 CFLAGS+= -Wall -Werror -Wimplicit
 CFLAGS+= -DLIBRESSL_INTERNAL
+
+CLEANFILES= ${VERSION_SCRIPT}
 
 WARNINGS= Yes
 
