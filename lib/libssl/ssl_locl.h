@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.135 2016/11/05 08:26:36 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.136 2016/11/06 17:21:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -834,7 +834,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
     size_t *md_out_size, const unsigned char header[13],
     const unsigned char *data, size_t data_plus_mac_size,
     size_t data_plus_mac_plus_padding_size, const unsigned char *mac_secret,
-    unsigned mac_secret_length, char is_sslv3);
+    unsigned mac_secret_length);
 
 __END_HIDDEN_DECLS
 

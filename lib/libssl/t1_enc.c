@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.86 2016/11/03 08:15:22 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.87 2016/11/06 17:21:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1242,8 +1242,7 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 		    md, &md_size, header, rec->input,
 		    rec->length + md_size, orig_len,
 		    ssl->s3->read_mac_secret,
-		    ssl->s3->read_mac_secret_size,
-		    0 /* not SSLv3 */))
+		    ssl->s3->read_mac_secret_size))
 			return -1;
 	} else {
 		EVP_DigestSignUpdate(mac_ctx, header, sizeof(header));
