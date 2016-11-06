@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.27 2016/11/06 14:00:49 bcook Exp $ */
+/* $OpenBSD: a_object.c,v 1.28 2016/11/06 17:04:48 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -350,7 +350,7 @@ c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
 	return (ret);
 
 err:
-	if (ret != *a)
+	if (a == NULL || ret != *a)
 		ASN1_OBJECT_free(ret);
 	return (NULL);
 }
