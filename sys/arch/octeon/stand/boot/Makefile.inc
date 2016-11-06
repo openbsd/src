@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2013/06/05 01:09:09 jasper Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2016/11/06 16:42:00 tb Exp $
 
 NOMAN=
 S=		${.CURDIR}/../../../..
@@ -27,7 +27,7 @@ SRCS+=		boot.c cmd.c vars.c
 SRCS+=		strlcat.c strlcpy.c strlen.c
 SRCS+=		udivdi3.c qdivrem.c
 
-.if !make(obj)
+.if !make(clean) && !make(cleandir) && !make(includes) && !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../include machine)
 	@([ -h mips64 ] || ln -s ${.CURDIR}/../../../mips64/include mips64)

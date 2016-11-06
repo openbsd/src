@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2016/07/30 03:25:49 guenther Exp $
+#	$OpenBSD: Makefile,v 1.18 2016/11/06 16:42:00 tb Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -58,7 +58,7 @@ realinstall:
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${PROG}.elf ${DESTDIR}${BINDIR}/${PROG}.elf
 
-.if !make(obj)
+.if !make(clean) && !make(cleandir) && !make(includes) && !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../../${MACHINE}/include machine)
 	@([ -h powerpc ] || ln -s ${.CURDIR}/../../../powerpc/include powerpc)
