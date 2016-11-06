@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.3 2015/09/16 01:39:05 lteo Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/11/06 11:56:43 inoguchi Exp $
 
 SUBDIR= options
 
 CLEANFILES+= testdsa.key testdsa.pem rsakey.pem rsacert.pem dsa512.pem
+CLEANFILES+= appstest_dir
 
-REGRESS_TARGETS=ssl-enc ssl-dsa ssl-rsa 
+REGRESS_TARGETS=ssl-enc ssl-dsa ssl-rsa appstest
 
 OPENSSL=/usr/bin/openssl
 CLEAR1=p
@@ -56,5 +57,10 @@ ssl-dsa:
 	sh ${.CURDIR}/testdsa.sh ${.OBJDIR} ${.CURDIR}
 ssl-rsa:
 	sh ${.CURDIR}/testrsa.sh ${.OBJDIR} ${.CURDIR}
+appstest:
+	sh ${.CURDIR}/appstest.sh ${.OBJDIR} ${.CURDIR}
+
+clean:
+	rm -rf ${CLEANFILES}
 
 .include <bsd.regress.mk>
