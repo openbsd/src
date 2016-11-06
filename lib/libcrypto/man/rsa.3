@@ -1,4 +1,4 @@
-.Dd $Mdocdate: November 4 2016 $
+.Dd $Mdocdate: November 6 2016 $
 .Dt RSA 3
 .Os
 .Sh NAME
@@ -6,163 +6,6 @@
 .Nd RSA public key cryptosystem
 .Sh SYNOPSIS
 .In openssl/rsa.h
-.In openssl/engine.h
-.Ft RSA *
-.Fn RSA_new void
-.Ft void
-.Fo RSA_free
-.Fa "RSA *rsa"
-.Fc
-.Ft int
-.Fo RSA_public_encrypt
-.Fa "int flen"
-.Fa "unsigned char *from"
-.Fa "unsigned char *to"
-.Fa "RSA *rsa"
-.Fa "int padding"
-.Fc
-.Ft int
-.Fo RSA_private_decrypt
-.Fa "int flen"
-.Fa "unsigned char *from"
-.Fa "unsigned char *to"
-.Fa "RSA *rsa"
-.Fa "int padding"
-.Fc
-.Ft int
-.Fo RSA_private_encrypt
-.Fa "int flen"
-.Fa "unsigned char *from"
-.Fa "unsigned char *to"
-.Fa "RSA *rsa"
-.Fa "int padding"
-.Fc
-.Ft int
-.Fo RSA_public_decrypt
-.Fa "int flen"
-.Fa "unsigned char *from"
-.Fa "unsigned char *to"
-.Fa "RSA *rsa"
-.Fa "int padding"
-.Fc
-.Ft int
-.Fo RSA_sign
-.Fa "int type"
-.Fa "unsigned char *m"
-.Fa "unsigned int m_len"
-.Fa "unsigned char *sigret"
-.Fa "unsigned int *siglen"
-.Fa "RSA *rsa"
-.Fc
-.Ft int
-.Fo RSA_verify
-.Fa "int type"
-.Fa "unsigned char *m"
-.Fa "unsigned int m_len"
-.Fa "unsigned char *sigbuf"
-.Fa "unsigned int siglen"
-.Fa "RSA *rsa"
-.Fc
-.Ft int
-.Fo RSA_size
-.Fa "const RSA *rsa"
-.Fc
-.Ft RSA *
-.Fo RSA_generate_key
-.Fa "int num"
-.Fa "unsigned long e"
-.Fa "void (*callback)(int, int, void *)"
-.Fa "void *cb_arg"
-.Fc
-.Ft int
-.Fo RSA_check_key
-.Fa "RSA *rsa"
-.Fc
-.Ft int
-.Fo RSA_blinding_on
-.Fa "RSA *rsa"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft void
-.Fo RSA_blinding_off
-.Fa "RSA *rsa"
-.Fc
-.Ft void
-.Fo RSA_set_default_method
-.Fa "const RSA_METHOD *meth"
-.Fc
-.Ft const RSA_METHOD *
-.Fn RSA_get_default_method void
-.Ft int
-.Fo RSA_set_method
-.Fa "RSA *rsa"
-.Fa "const RSA_METHOD *meth"
-.Fc
-.Ft const RSA_METHOD *
-.Fo RSA_get_method
-.Fa "const RSA *rsa"
-.Fc
-.Ft RSA_METHOD *
-.Fn RSA_PKCS1_SSLeay void
-.Ft RSA_METHOD *
-.Fn RSA_null_method void
-.Ft int
-.Fo RSA_flags
-.Fa "const RSA *rsa"
-.Fc
-.Ft RSA *
-.Fo RSA_new_method
-.Fa "ENGINE *engine"
-.Fc
-.Ft int
-.Fo RSA_print
-.Fa "BIO *bp"
-.Fa "RSA *x"
-.Fa "int offset"
-.Fc
-.Ft int
-.Fo RSA_print_fp
-.Fa "FILE *fp"
-.Fa "RSA *x"
-.Fa "int offset"
-.Fc
-.Ft int
-.Fo RSA_get_ex_new_index
-.Fa "long argl"
-.Fa "char *argp"
-.Fa "int (*new_func)()"
-.Fa "int (*dup_func)()"
-.Fa "void (*free_func)()"
-.Fc
-.Ft int
-.Fo RSA_set_ex_data
-.Fa "RSA *r"
-.Fa "int idx"
-.Fa "char *arg"
-.Fc
-.Ft char *
-.Fo RSA_get_ex_data
-.Fa "RSA *r"
-.Fa "int idx"
-.Fc
-.Ft int
-.Fo RSA_sign_ASN1_OCTET_STRING
-.Fa "int dummy"
-.Fa "unsigned char *m"
-.Fa "unsigned int m_len"
-.Fa "unsigned char *sigret"
-.Fa "unsigned int *siglen"
-.Fa "RSA *rsa"
-.Fc
-.Ft int
-.Fo RSA_verify_ASN1_OCTET_STRING
-.Fa "int dummy"
-.Fa "unsigned char *m"
-.Fa "unsigned int m_len"
-.Fa "unsigned char *sigbuf"
-.Fa "unsigned int siglen"
-.Fa "RSA *rsa"
-.Fc
 .Sh DESCRIPTION
 These functions implement RSA public key encryption and signatures as
 defined in PKCS #1 v2.0 [RFC 2437].
@@ -216,9 +59,11 @@ structure elements directly and instead use API functions to query
 or modify keys.
 .Sh SEE ALSO
 .Xr bn 3 ,
+.Xr d2i_RSAPublicKey 3 ,
 .Xr dh 3 ,
 .Xr dsa 3 ,
 .Xr engine 3 ,
+.Xr EVP_PKEY_set1_RSA 3 ,
 .Xr RSA_blinding_on 3 ,
 .Xr RSA_check_key 3 ,
 .Xr RSA_generate_key 3 ,
