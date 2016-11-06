@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2016/10/05 11:55:45 visa Exp $
+#	$OpenBSD: Makefile,v 1.18 2016/11/06 16:04:20 tb Exp $
 
 NOMAN=		noman
 
@@ -24,7 +24,8 @@ SRCS+=		memcpy.c strchr.c strcmp.S strlcat.c strlcpy.c strlen.c \
 
 CLEANFILES+=	machine mips64
 
-.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
+.if !make(clean) && !make(cleandir) && !make(includes) && !make(libdep) && \
+    !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../include machine)
 	@([ -h mips64 ] || ln -s ${.CURDIR}/../../../mips64/include mips64)

@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2007/11/26 10:26:02 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2016/11/06 16:04:20 tb Exp $
 
-.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj) && !make(clean) && !make(cleandir)
+.if !make(clean) && !make(cleandir) && !make(includes) && !make(libdep) && \
+    !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
 	@([ X$(S) = X -o -h machine ] || ln -s $(S)/arch/landisk/include machine)
 	@([ X$(S) = X -o -h sh ] || ln -s $(S)/arch/sh/include sh)

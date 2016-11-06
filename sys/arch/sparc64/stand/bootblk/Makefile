@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2014/07/15 22:14:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2016/11/06 16:04:20 tb Exp $
 #	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -18,7 +18,8 @@ BINMODE=644
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM}
 
-.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
+.if !make(clean) && !make(cleandir) && !make(includes) && !make(libdep) && \
+    !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../include machine)
 .endif

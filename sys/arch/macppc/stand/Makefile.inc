@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2013/10/27 04:49:52 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2016/11/06 16:04:20 tb Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1996/09/30 16:34:59 ws Exp $
 
 .if !defined(__stand_makefile_inc)
@@ -8,7 +8,8 @@ KERN_AS=	library
 
 S=$(.CURDIR)/../../../$(R)
 
-.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj) && !defined(NOMACHINE)
+.if !make(clean) && !make(cleandir) && !make(includes) && !make(libdep) && \
+    !make(sadep) && !make(salibdir) && !make(obj) && !defined(NOMACHINE)
 .BEGIN:
 	@([ -h machine ] || ln -s $(S)/arch/$(MACHINE)/include machine)
 .endif

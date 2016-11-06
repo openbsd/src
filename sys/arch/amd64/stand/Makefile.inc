@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.14 2016/07/04 18:01:44 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2016/11/06 16:04:20 tb Exp $
 
 CFLAGS=${DEBUG} ${COPTS} -Os -Wall -Werror
 CFLAGS+=	-fno-stack-protector -DMDRANDOM
@@ -23,7 +23,8 @@ CLEANFILES+=	assym.h machine
 
 SACFLAGS+=-nostdinc -fno-builtin -fpack-struct
 
-.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
+.if !make(clean) && !make(cleandir) && !make(includes) && !make(libdep) && \
+    !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
 	@([ X$(S) = X -o -h machine ] || ln -s $(S)/arch/amd64/include machine)
 
