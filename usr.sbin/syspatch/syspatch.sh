@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.39 2016/11/04 16:03:45 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.40 2016/11/06 19:12:58 halex Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -68,9 +68,9 @@ apply_patches()
 
 	for _patch in ${_patches}; do
 		fetch_and_verify "${_patch}"
-		trap "" 2
+		trap '' INT
 		apply_patch "${_patch}"
-		trap "rm -rf ${_TMP}; exit 1" 2
+		trap exit INT
 	done
 
 	sp_cleanup
@@ -271,9 +271,11 @@ _REL=${_KERNV[0]}
 _RELINT=${_REL%\.*}${_REL#*\.}
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
 readonly _BSDMP _FETCH _PDIR _REL _RELINT _TMP
-[[ -n ${_REL} && -n ${_RELINT} ]]
 
-trap "rm -rf ${_TMP}; exit 1" 2 3 9 13 15 ERR
+trap 'rm -rf "${_TMP}"' EXIT
+trap exit HUP INT TERM ERR
+
+[[ -n ${_REL} && -n ${_RELINT} ]]
 
 while getopts clr arg; do
 	case ${arg} in
@@ -287,5 +289,3 @@ shift $(( OPTIND -1 ))
 [[ $# -ne 0 ]] && usage
 
 [[ ${OPTIND} != 1 ]] || apply_patches
-
-rm -rf ${_TMP}
