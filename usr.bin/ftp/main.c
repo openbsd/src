@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.110 2016/08/13 12:55:21 jsing Exp $	*/
+/*	$OpenBSD: main.c,v 1.111 2016/11/06 13:16:50 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ main(volatile int argc, char *argv[])
 		if (tls_config == NULL)
 			errx(1, "tls config failed");
 		tls_config_set_protocols(tls_config, TLS_PROTOCOLS_ALL);
-		if (tls_config_set_ciphers(tls_config, "all") != 0)
+		if (tls_config_set_ciphers(tls_config, "legacy") != 0)
 			errx(1, "tls set ciphers failed: %s",
 			    tls_config_error(tls_config));
 	}
