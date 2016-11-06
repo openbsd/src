@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.13 2016/11/06 09:28:25 bcook Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.14 2016/11/06 10:17:49 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -575,6 +575,7 @@ static const X509_VERIFY_PARAM default_table[] = {
 	{
 		.name = "default",
 		.depth = 100,
+		.trust = 0,  /* XXX This is not the default trust value */
 		.id = vpm_empty_id
 	},
 	{
