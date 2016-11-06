@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.74 2016/11/06 10:49:38 beck Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.75 2016/11/06 11:27:04 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -538,11 +538,11 @@ Specify an OCSP response to be stapled during TLS handshakes
 with this server.
 The
 .Ar file
-should contain a DER format OCSP response retrieved from an
+should contain a DER-format OCSP response retrieved from an
 OCSP server for the
 .Ar certificate
-in use. 
-The default is to not to use OCSP stapling.
+in use.
+The default is to not use OCSP stapling.
 .It Ic protocols Ar string
 Specify the TLS protocols to enable for this server.
 If not specified, the value
