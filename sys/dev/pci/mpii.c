@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.107 2016/10/24 01:50:09 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.108 2016/11/06 09:58:16 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -887,6 +887,9 @@ mpii_scsi_probe(struct scsi_link *link)
 	flags = dev->flags;
 	if (ISSET(flags, MPII_DF_HIDDEN) || ISSET(flags, MPII_DF_UNUSED))
 		return (1);
+
+	if (ISSET(flags, MPII_DF_VOLUME))
+		return (0);
 
 	memset(&ehdr, 0, sizeof(ehdr));	
 	ehdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_EXTENDED;
