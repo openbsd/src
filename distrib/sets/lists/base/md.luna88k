@@ -1670,6 +1670,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/conf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/crypto.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/curve25519.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/des.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/dsa.ph

@@ -1758,6 +1758,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/conf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/crypto.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/curve25519.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/des.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/dsa.ph

@@ -1760,6 +1760,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/conf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/crypto.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/curve25519.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/des.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/dsa.ph

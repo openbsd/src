@@ -1760,6 +1760,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/conf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/crypto.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/curve25519.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/des.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/dsa.ph
