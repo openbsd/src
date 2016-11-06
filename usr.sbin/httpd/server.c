@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.96 2016/11/06 10:49:38 beck Exp $	*/
+/*	$OpenBSD: server.c,v 1.97 2016/11/06 16:05:02 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -173,13 +173,15 @@ server_tls_load_keypair(struct server *srv)
 	log_debug("%s: using private key %s", __func__,
 	    srv->srv_conf.tls_key_file);
 
-	if ((srv->srv_conf.tls_ocsp_staple = tls_load_file(
-	    srv->srv_conf.tls_ocsp_staple_file,
-	    &srv->srv_conf.tls_ocsp_staple_len,
-	    NULL)) == NULL)
-		return (-1);
-	log_debug("%s: using ocsp staple from %s", __func__,
-	    srv->srv_conf.tls_ocsp_staple_file);
+	if (srv->srv_conf.tls_ocsp_staple_file != NULL) {
+		if ((srv->srv_conf.tls_ocsp_staple = tls_load_file(
+		    srv->srv_conf.tls_ocsp_staple_file,
+		    &srv->srv_conf.tls_ocsp_staple_len,
+		    NULL)) == NULL)
+			return (-1);
+		log_debug("%s: using ocsp staple from %s", __func__,
+		    srv->srv_conf.tls_ocsp_staple_file);
+	}
 
 	return (0);
 }
