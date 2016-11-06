@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.20 2015/02/10 11:22:21 jsing Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.21 2016/11/06 10:31:34 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -116,6 +116,22 @@ X509_check_trust(X509 *x, int id, int flags)
 
 	if (id == -1)
 		return 1;
+	/*
+	 * XXX beck/jsing This enables self signed certs to be trusted for
+	 * an unspecified id/trust flag value (this is NOT the
+	 * X509_TRUST_DEFAULT), which was the longstanding
+	 * openssl behaviour. boringssl does not have this behaviour.
+	 *
+	 * This should be revisited, but changing the default "not default"
+	 * may break things.
+	 */
+	if (id == 0) {
+		int rv;
+		rv = obj_trust(NID_anyExtendedKeyUsage, x, 0);
+		if (rv != X509_TRUST_UNTRUSTED)
+			return rv;
+		return trust_compat(NULL, x, 0);
+	}
 	idx = X509_TRUST_get_by_id(id);
 	if (idx == -1)
 		return default_trust(id, x, flags);
