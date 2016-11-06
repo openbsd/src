@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BF_set_key.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BF_set_key.3,v 1.4 2016/11/06 18:54:34 jmc Exp $
 .\"
 .Dd $Mdocdate: November 6 2016 $
 .Dt BF_SET_KEY 3
@@ -20,6 +20,16 @@
 .Fa "BF_KEY *key"
 .Fa "int len"
 .Fa "const unsigned char *data"
+.Fc
+.Ft void
+.Fo BF_encrypt
+.Fa "BF_LONG *data"
+.Fa "const BF_KEY *key"
+.Fc
+.Ft void
+.Fo BF_decrypt
+.Fa "BF_LONG *data"
+.Fa "const BF_KEY *key"
 .Fc
 .Ft void
 .Fo BF_ecb_encrypt
@@ -60,27 +70,19 @@
 .Fo BF_options
 .Fa void
 .Fc
-.Ft void
-.Fo BF_encrypt
-.Fa "BF_LONG *data"
-.Fa "const BF_KEY *key"
-.Fc
-.Ft void
-.Fo BF_decrypt
-.Fa "BF_LONG *data"
-.Fa "const BF_KEY *key"
-.Fc
 .Sh DESCRIPTION
 This library implements the Blowfish cipher,
-which was invented and described by
+which was invented and defined by
 .An Counterpane .
+Note that applications should use higher level functions such as
+.Xr EVP_EncryptInit 3
+instead of calling the Blowfish functions directly.
 .Pp
-Blowfish is a block cipher that operates on 64 bit (8 byte) blocks of data.
-It uses a variable size key, but typically, 128 bit (16 byte) keys
+Blowfish is a block cipher that operates on 64-bit (8 byte) blocks of data.
+It uses a variable size key, but typically, 128-bit (16 byte) keys
 are considered good for strong encryption.
-Blowfish can be used in the same modes as DES (see
-.Xr des_modes 3 ) .
-Blowfish is currently one of the faster block ciphers.
+Blowfish can be used in the same modes as DES
+and is currently one of the faster block ciphers.
 It is quite a bit faster than DES, and much faster than IDEA or RC2.
 .Pp
 Blowfish consists of a key setup phase
@@ -139,8 +141,8 @@ and
 .Fn BF_ofb64_encrypt
 are used to encrypt an variable number of bytes (the amount
 does not have to be an exact multiple of 8).
-The purpose of the latter two is to simulate stream ciphers,
-and therefore, they need the parameter
+The purpose of the latter two is to simulate stream ciphers and,
+therefore, they need the parameter
 .Fa num ,
 which is a pointer to an integer where the current offset in
 .Fa ivec
@@ -151,7 +153,7 @@ is initialized.
 .Pp
 .Fn BF_cbc_encrypt
 is the Cipher Block Chaining function for Blowfish.
-It encrypts or decrypts the 64 bits chunks of
+It encrypts or decrypts the 64-bit chunks of
 .Fa in
 using the key
 .Fa schedule ,
@@ -164,10 +166,10 @@ or decryption
 .Pq Dv BF_DECRYPT
 shall be performed.
 .Fa ivec
-must point at an 8 byte long initialization vector.
+must point at an 8-byte long initialization vector.
 .Pp
 .Fn BF_cfb64_encrypt
-is the CFB mode for Blowfish with 64 bit feedback.
+is the CFB mode for Blowfish with 64-bit feedback.
 It encrypts or decrypts the bytes in
 .Fa in
 using the key
@@ -182,12 +184,12 @@ or decryption
 shall be performed.
 .Fa ivec
 must point at an
-8 byte long initialization vector.
+8-byte long initialization vector.
 .Fa num
 must point at an integer which must be initially zero.
 .Pp
 .Fn BF_ofb64_encrypt
-is the OFB mode for Blowfish with 64 bit feedback.
+is the OFB mode for Blowfish with 64-bit feedback.
 It uses the same parameters as
 .Fn BF_cfb64_encrypt ,
 which must be initialized the same way.
@@ -200,18 +202,13 @@ They encrypt/decrypt the first 64 bits of the vector pointed by
 .Fa data ,
 using the key
 .Fa key .
-These functions should not be used unless you implement 'modes' of Blowfish.
+These functions should not be used unless implementing `modes' of Blowfish.
 The alternative is to use
 .Fn BF_ecb_encrypt .
-If you still want to use these functions, you should be aware
-that they take each 32-bit chunk in host-byte order,
+Be aware that these functions take each 32-bit chunk in host-byte order,
 which is little-endian on little-endian platforms
 and big-endian on big-endian ones.
 .Sh RETURN VALUES
 None of the functions presented here return any value.
-.Sh NOTE
-Applications should use the higher level functions
-.Xr EVP_EncryptInit 3
-etc. instead of calling the blowfish functions directly.
 .Sh HISTORY
 The Blowfish functions are available in all versions of SSLeay and OpenSSL.
