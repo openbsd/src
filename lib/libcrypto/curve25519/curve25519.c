@@ -4859,6 +4859,7 @@ x25519_scalar_mult_generic(uint8_t out[32], const uint8_t scalar[32],
   fe_tobytes(out, x2);
 }
 
+#ifdef unused
 void
 x25519_public_from_private_generic(uint8_t out_public_value[32],
     const uint8_t private_key[32])
@@ -4882,6 +4883,7 @@ x25519_public_from_private_generic(uint8_t out_public_value[32],
   fe_mul(zplusy, zplusy, zminusy_inv);
   fe_tobytes(out_public_value, zplusy);
 }
+#endif
 
 void
 x25519_public_from_private(uint8_t out_public_value[32],
