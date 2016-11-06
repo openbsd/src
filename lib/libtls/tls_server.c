@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.30 2016/11/05 15:13:26 beck Exp $ */
+/* $OpenBSD: tls_server.c,v 1.31 2016/11/06 16:55:16 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -214,7 +214,7 @@ tls_configure_server_ssl(struct tls *ctx, SSL_CTX **ssl_ctx,
 	if (ctx->config->ciphers_server == 1)
 		SSL_CTX_set_options(*ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
-	if (SSL_CTX_set_tlsext_status_cb(ctx->ssl_ctx, tls_ocsp_stapling_cb) != 1) {
+	if (SSL_CTX_set_tlsext_status_cb(*ssl_ctx, tls_ocsp_stapling_cb) != 1) {
 		tls_set_errorx(ctx, "failed to add OCSP stapling callback");
 		goto err;
 	}
