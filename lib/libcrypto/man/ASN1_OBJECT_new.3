@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_OBJECT_new.3,v 1.4 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: ASN1_OBJECT_new.3,v 1.5 2016/11/06 16:56:46 jmc Exp $
 .\"
 .Dd $Mdocdate: November 6 2016 $
 .Dt ASN1_OBJECT_NEW 3
@@ -6,7 +6,7 @@
 .Sh NAME
 .Nm ASN1_OBJECT_new ,
 .Nm ASN1_OBJECT_free
-.Nd ASN1 object allocation functions
+.Nd ASN.1 object allocation functions
 .Sh SYNOPSIS
 .In openssl/asn1.h
 .Ft ASN1_OBJECT *
@@ -20,7 +20,7 @@
 .Sh DESCRIPTION
 The ASN1_OBJECT allocation routines allocate and free an
 .Vt ASN1_OBJECT
-structure, which represents an ASN1 OBJECT IDENTIFIER.
+structure, which represents an ASN.1 OBJECT IDENTIFIER.
 .Pp
 .Fn ASN1_OBJECT_new
 allocates and initializes an
@@ -32,13 +32,13 @@ frees up the
 .Vt ASN1_OBJECT
 structure
 .Fa a .
-.Sh NOTES
+.Pp
 Although
 .Fn ASN1_OBJECT_new
 allocates a new
 .Vt ASN1_OBJECT
 structure, it is almost never used in applications.
-The ASN1 object utility functions such as
+The ASN.1 object utility functions such as
 .Xr OBJ_nid2obj 3
 are used instead.
 .Sh RETURN VALUES
