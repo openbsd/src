@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.169 2016/11/05 16:03:09 jmc Exp $ */
+/* $OpenBSD: netcat.c,v 1.170 2016/11/06 13:33:30 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -67,7 +67,7 @@
 #define BUFSIZE 16384
 #define DEFAULT_CA_FILE "/etc/ssl/cert.pem"
 
-#define TLS_LEGACY	(1 << 1)
+#define TLS_ALL	(1 << 1)
 #define TLS_NOVERIFY	(1 << 2)
 #define TLS_NONAME	(1 << 3)
 #define TLS_CCERT	(1 << 4)
@@ -463,7 +463,7 @@ main(int argc, char *argv[])
 			errx(1, "%s", tls_config_error(tls_cfg));
 		if (oflag && tls_config_set_ocsp_staple_file(tls_cfg, oflag) == -1)
 			errx(1, "%s", tls_config_error(tls_cfg));
-		if (TLSopt & TLS_LEGACY) {
+		if (TLSopt & TLS_ALL) {
 			tls_config_set_protocols(tls_cfg, TLS_PROTOCOLS_ALL);
 			tls_config_set_ciphers(tls_cfg, "all");
 		}
@@ -1509,7 +1509,7 @@ map_tls(char *s, int *val)
 		const char	*keyword;
 		int		 val;
 	} *t, tlskeywords[] = {
-		{ "tlslegacy",		TLS_LEGACY },
+		{ "tlsall",		TLS_ALL },
 		{ "noverify",		TLS_NOVERIFY },
 		{ "noname",		TLS_NONAME },
 		{ "clientcert",		TLS_CCERT},
