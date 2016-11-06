@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_algs.c,v 1.22 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: ssl_algs.c,v 1.23 2016/11/06 12:08:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,9 +70,6 @@ SSL_library_init(void)
 #ifndef OPENSSL_NO_DES
 	EVP_add_cipher(EVP_des_cbc());
 	EVP_add_cipher(EVP_des_ede3_cbc());
-#endif
-#ifndef OPENSSL_NO_IDEA
-	EVP_add_cipher(EVP_idea_cbc());
 #endif
 #ifndef OPENSSL_NO_RC4
 	EVP_add_cipher(EVP_rc4());
