@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.129 2016/11/05 19:03:39 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.130 2016/11/06 13:35:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1170,21 +1170,230 @@ ssl3_send_server_done(SSL *s)
 }
 
 int
+ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
+{
+	CBB dh_p, dh_g, dh_Ys;
+	DH *dh = NULL, *dhp;
+	unsigned char *data;
+	int al;
+
+	if (s->cert->dh_tmp_auto != 0) {
+		if ((dhp = ssl_get_auto_dh(s)) == NULL) {
+			al = SSL_AD_INTERNAL_ERROR;
+			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+			    ERR_R_INTERNAL_ERROR);
+			goto f_err;
+		}
+	} else
+		dhp = s->cert->dh_tmp;
+
+	if (dhp == NULL && s->cert->dh_tmp_cb != NULL)
+		dhp = s->cert->dh_tmp_cb(s, 0,
+		    SSL_C_PKEYLENGTH(s->s3->tmp.new_cipher));
+
+	if (dhp == NULL) {
+		al = SSL_AD_HANDSHAKE_FAILURE;
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    SSL_R_MISSING_TMP_DH_KEY);
+		goto f_err;
+	}
+
+	if (s->s3->tmp.dh != NULL) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
+	if (s->cert->dh_tmp_auto != 0) {
+		dh = dhp;
+	} else if ((dh = DHparams_dup(dhp)) == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_DH_LIB);
+		goto err;
+	}
+	s->s3->tmp.dh = dh;
+	if (!DH_generate_key(dh)) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_DH_LIB);
+		goto err;
+	}
+
+	/*
+	 * Serialize the DH parameters and public key.
+	 */
+	if (!CBB_add_u16_length_prefixed(cbb, &dh_p))
+		goto err;
+	if (!CBB_add_space(&dh_p, &data, BN_num_bytes(dh->p)))
+		goto err;
+	BN_bn2bin(dh->p, data);
+
+	if (!CBB_add_u16_length_prefixed(cbb, &dh_g))
+		goto err;
+	if (!CBB_add_space(&dh_g, &data, BN_num_bytes(dh->g)))
+		goto err;
+	BN_bn2bin(dh->g, data);
+
+	if (!CBB_add_u16_length_prefixed(cbb, &dh_Ys))
+		goto err;
+	if (!CBB_add_space(&dh_Ys, &data, BN_num_bytes(dh->pub_key)))
+		goto err;
+	BN_bn2bin(dh->pub_key, data);
+
+	if (!CBB_flush(cbb))
+		goto err;
+
+	return (1);
+
+ f_err:
+	ssl3_send_alert(s, SSL3_AL_FATAL, al);
+ err:
+	return (-1);
+}
+
+int
+ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
+{
+	CBB ecpoint;
+	unsigned char *data;
+	EC_KEY *ecdh = NULL, *ecdhp;
+	const EC_GROUP *group;
+	unsigned char *encodedPoint = NULL;
+	int encodedlen = 0;
+	int curve_id = 0;
+	BN_CTX *bn_ctx = NULL;
+	int al;
+
+	ecdhp = s->cert->ecdh_tmp;
+	if (s->cert->ecdh_tmp_auto != 0) {
+		int nid = tls1_get_shared_curve(s);
+		if (nid != NID_undef)
+			ecdhp = EC_KEY_new_by_curve_name(nid);
+	} else if (ecdhp == NULL && s->cert->ecdh_tmp_cb != NULL) {
+		ecdhp = s->cert->ecdh_tmp_cb(s, 0,
+		    SSL_C_PKEYLENGTH(s->s3->tmp.new_cipher));
+	}
+	if (ecdhp == NULL) {
+		al = SSL_AD_HANDSHAKE_FAILURE;
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    SSL_R_MISSING_TMP_ECDH_KEY);
+		goto f_err;
+	}
+
+	if (s->s3->tmp.ecdh != NULL) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
+	/* Duplicate the ECDH structure. */
+	if (s->cert->ecdh_tmp_auto != 0) {
+		ecdh = ecdhp;
+	} else if ((ecdh = EC_KEY_dup(ecdhp)) == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    ERR_R_ECDH_LIB);
+		goto err;
+	}
+	s->s3->tmp.ecdh = ecdh;
+
+	if ((EC_KEY_get0_public_key(ecdh) == NULL) ||
+	    (EC_KEY_get0_private_key(ecdh) == NULL) ||
+	    (s->options & SSL_OP_SINGLE_ECDH_USE)) {
+		if (!EC_KEY_generate_key(ecdh)) {
+			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+			    ERR_R_ECDH_LIB);
+			goto err;
+		}
+	}
+
+	if (((group = EC_KEY_get0_group(ecdh)) == NULL) ||
+	    (EC_KEY_get0_public_key(ecdh)  == NULL) ||
+	    (EC_KEY_get0_private_key(ecdh) == NULL)) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    ERR_R_ECDH_LIB);
+		goto err;
+	}
+
+	/*
+	 * Only named curves are supported in ECDH ephemeral key exchanges.
+	 * For supported named curves, curve_id is non-zero.
+	 */
+	if ((curve_id = tls1_ec_nid2curve_id(
+	    EC_GROUP_get_curve_name(group))) == 0) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
+		goto err;
+	}
+
+	/*
+	 * Encode the public key. First check the size of encoding and
+	 * allocate memory accordingly.
+	 */
+	encodedlen = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ecdh),
+	    POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+
+	encodedPoint = malloc(encodedlen);
+
+	bn_ctx = BN_CTX_new();
+	if ((encodedPoint == NULL) || (bn_ctx == NULL)) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	encodedlen = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ecdh),
+	    POINT_CONVERSION_UNCOMPRESSED, encodedPoint, encodedlen, bn_ctx);
+
+	if (encodedlen == 0) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+		goto err;
+	}
+
+	BN_CTX_free(bn_ctx);
+	bn_ctx = NULL;
+
+	/*
+	 * Only named curves are supported in ECDH ephemeral key exchanges.
+	 * In this case the ServerKeyExchange message has:
+	 * [1 byte CurveType], [2 byte CurveName]
+	 * [1 byte length of encoded point], followed by
+	 * the actual encoded point itself.
+	 */
+	if (!CBB_add_u8(cbb, NAMED_CURVE_TYPE))
+		goto err;
+	if (!CBB_add_u16(cbb, curve_id))
+		goto err;
+	if (!CBB_add_u8_length_prefixed(cbb, &ecpoint))
+		goto err;
+	if (!CBB_add_space(&ecpoint, &data, encodedlen))
+		goto err;
+
+	memcpy(data, encodedPoint, encodedlen);
+
+	free(encodedPoint);
+	encodedPoint = NULL;
+
+	if (!CBB_flush(cbb))
+		goto err;
+
+	return (1);
+	
+ f_err:
+	ssl3_send_alert(s, SSL3_AL_FATAL, al);
+ err:
+	free(encodedPoint);
+	BN_CTX_free(bn_ctx);
+
+	return (-1);
+}
+
+int
 ssl3_send_server_key_exchange(SSL *s)
 {
-	CBB cbb, dh_p, dh_g, dh_Ys, ecpoint;
-	unsigned char *data, *params = NULL;
+	CBB cbb;
+	unsigned char *params = NULL;
 	size_t params_len;
 	unsigned char *q;
 	int j, num;
 	unsigned char md_buf[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
 	unsigned int u;
-	DH *dh = NULL, *dhp;
-	EC_KEY *ecdh = NULL, *ecdhp;
-	unsigned char *encodedPoint = NULL;
-	int encodedlen = 0;
-	int curve_id = 0;
-	BN_CTX *bn_ctx = NULL;
 	EVP_PKEY *pkey;
 	const EVP_MD *md = NULL;
 	unsigned char *p, *d;
@@ -1208,202 +1417,12 @@ ssl3_send_server_key_exchange(SSL *s)
 		if (!CBB_init(&cbb, 0))
 			goto err;
 
-		n = 0;
 		if (type & SSL_kDHE) {
-			if (s->cert->dh_tmp_auto != 0) {
-				if ((dhp = ssl_get_auto_dh(s)) == NULL) {
-					al = SSL_AD_INTERNAL_ERROR;
-					SSLerr(
-					    SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-					    ERR_R_INTERNAL_ERROR);
-					goto f_err;
-				}
-			} else
-				dhp = cert->dh_tmp;
-
-			if (dhp == NULL && s->cert->dh_tmp_cb != NULL)
-				dhp = s->cert->dh_tmp_cb(s, 0,
-				    SSL_C_PKEYLENGTH(s->s3->tmp.new_cipher));
-
-			if (dhp == NULL) {
-				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    SSL_R_MISSING_TMP_DH_KEY);
-				goto f_err;
-			}
-
-			if (s->s3->tmp.dh != NULL) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
+			if (ssl3_send_server_kex_dhe(s, &cbb) != 1)
 				goto err;
-			}
-
-			if (s->cert->dh_tmp_auto != 0) {
-				dh = dhp;
-			} else if ((dh = DHparams_dup(dhp)) == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    ERR_R_DH_LIB);
-				goto err;
-			}
-			s->s3->tmp.dh = dh;
-			if (!DH_generate_key(dh)) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    ERR_R_DH_LIB);
-				goto err;
-			}
-
-			/*
-			 * Serialize the DH parameters and public key.
-			 */
-			if (!CBB_add_u16_length_prefixed(&cbb, &dh_p))
-				goto err;
-			if (!CBB_add_space(&dh_p, &data, BN_num_bytes(dh->p)))
-				goto err;
-			BN_bn2bin(dh->p, data);
-
-			if (!CBB_add_u16_length_prefixed(&cbb, &dh_g))
-				goto err;
-			if (!CBB_add_space(&dh_g, &data, BN_num_bytes(dh->g)))
-				goto err;
-			BN_bn2bin(dh->g, data);
-
-			if (!CBB_add_u16_length_prefixed(&cbb, &dh_Ys))
-				goto err;
-			if (!CBB_add_space(&dh_Ys, &data, BN_num_bytes(dh->pub_key)))
-				goto err;
-			BN_bn2bin(dh->pub_key, data);
-
 		} else if (type & SSL_kECDHE) {
-			const EC_GROUP *group;
-
-			ecdhp = cert->ecdh_tmp;
-			if (s->cert->ecdh_tmp_auto != 0) {
-				int nid = tls1_get_shared_curve(s);
-				if (nid != NID_undef)
-					ecdhp = EC_KEY_new_by_curve_name(nid);
-			} else if (ecdhp == NULL &&
-			    s->cert->ecdh_tmp_cb != NULL) {
-				ecdhp = s->cert->ecdh_tmp_cb(s, 0,
-				    SSL_C_PKEYLENGTH(s->s3->tmp.new_cipher));
-			}
-			if (ecdhp == NULL) {
-				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    SSL_R_MISSING_TMP_ECDH_KEY);
-				goto f_err;
-			}
-
-			if (s->s3->tmp.ecdh != NULL) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
+			if (ssl3_send_server_kex_ecdhe(s, &cbb) != 1)
 				goto err;
-			}
-
-			/* Duplicate the ECDH structure. */
-			if (s->cert->ecdh_tmp_auto != 0) {
-				ecdh = ecdhp;
-			} else if ((ecdh = EC_KEY_dup(ecdhp)) == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
-			s->s3->tmp.ecdh = ecdh;
-
-			if ((EC_KEY_get0_public_key(ecdh) == NULL) ||
-			    (EC_KEY_get0_private_key(ecdh) == NULL) ||
-			    (s->options & SSL_OP_SINGLE_ECDH_USE)) {
-				if (!EC_KEY_generate_key(ecdh)) {
-					SSLerr(
-					    SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-					    ERR_R_ECDH_LIB);
-					goto err;
-				}
-			}
-
-			if (((group = EC_KEY_get0_group(ecdh)) == NULL) ||
-			    (EC_KEY_get0_public_key(ecdh)  == NULL) ||
-			    (EC_KEY_get0_private_key(ecdh) == NULL)) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
-
-			/*
-			 * XXX: For now, we only support ephemeral ECDH
-			 * keys over named (not generic) curves. For
-			 * supported named curves, curve_id is non-zero.
-			 */
-			if ((curve_id = tls1_ec_nid2curve_id(
-			    EC_GROUP_get_curve_name(group))) == 0) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
-				goto err;
-			}
-
-			/*
-			 * Encode the public key.
-			 * First check the size of encoding and
-			 * allocate memory accordingly.
-			 */
-			encodedlen = EC_POINT_point2oct(group,
-			    EC_KEY_get0_public_key(ecdh),
-			    POINT_CONVERSION_UNCOMPRESSED,
-			    NULL, 0, NULL);
-
-			encodedPoint = malloc(encodedlen);
-
-			bn_ctx = BN_CTX_new();
-			if ((encodedPoint == NULL) || (bn_ctx == NULL)) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-
-
-			encodedlen = EC_POINT_point2oct(group,
-			    EC_KEY_get0_public_key(ecdh),
-			    POINT_CONVERSION_UNCOMPRESSED,
-			    encodedPoint, encodedlen, bn_ctx);
-
-			if (encodedlen == 0) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
-
-			BN_CTX_free(bn_ctx);
-			bn_ctx = NULL;
-
-			/*
-			 * XXX: For now, we only support named (not
-			 * generic) curves in ECDH ephemeral key exchanges.
-			 * In this situation, we need four additional bytes
-			 * to encode the entire ServerECDHParams
-			 * structure.
-			 */
-			n = 4 + encodedlen;
-
-			/*
-			 * XXX: For now, we only support named (not generic)
-			 * curves.
-			 * In this situation, the serverKeyExchange message has:
-			 * [1 byte CurveType], [2 byte CurveName]
-			 * [1 byte length of encoded point], followed by
-			 * the actual encoded point itself
-			 */
-			if (!CBB_add_u8(&cbb, NAMED_CURVE_TYPE))
-				goto err;
-			if (!CBB_add_u16(&cbb, curve_id))
-				goto err;
-			if (!CBB_add_u8_length_prefixed(&cbb, &ecpoint))
-				goto err;
-			if (!CBB_add_space(&ecpoint, &data, encodedlen))
-				goto err;
-			memcpy(data, encodedPoint, encodedlen);
-
-			free(encodedPoint);
-			encodedPoint = NULL;
-
 		} else {
 			al = SSL_AD_HANDSHAKE_FAILURE;
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
@@ -1437,6 +1456,7 @@ ssl3_send_server_key_exchange(SSL *s)
 		    SSL3_MT_SERVER_KEY_EXCHANGE);
 
 		memcpy(p, params, params_len);
+
 		free(params);
 		params = NULL;
 
@@ -1532,8 +1552,6 @@ ssl3_send_server_key_exchange(SSL *s)
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
 	free(params);
-	free(encodedPoint);
-	BN_CTX_free(bn_ctx);
 	EVP_MD_CTX_cleanup(&md_ctx);
 	CBB_cleanup(&cbb);
 
