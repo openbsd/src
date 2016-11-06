@@ -1,4 +1,6 @@
-.Dd $Mdocdate: February 16 2015 $
+.\"	$OpenBSD: BIO_read.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"
+.Dd $Mdocdate: November 6 2016 $
 .Dt BIO_READ 3
 .Os
 .Sh NAME
@@ -84,7 +86,7 @@ is to use a system call (such as
 .Xr select 2 ,
 .Xr poll 2
 or equivalent) to determine when data is available and then call
-.Xr read 3
+.Xr read 2
 to read the data.
 The equivalent with BIOs (that is call
 .Xr select 2

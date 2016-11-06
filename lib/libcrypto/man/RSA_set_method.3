@@ -1,4 +1,6 @@
-.Dd $Mdocdate: November 4 2016 $
+.\"	$OpenBSD: RSA_set_method.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"
+.Dd $Mdocdate: November 6 2016 $
 .Dt RSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -93,7 +95,7 @@ the handle to that
 will be released during the change.
 It is possible to have RSA keys that only work with certain
 .Vt RSA_METHOD
-implementations (eg. from an
+implementations (e.g. from an
 .Vt ENGINE
 module that supports embedded hardware-protected keys),
 and in such cases attempting to change the
@@ -296,7 +298,7 @@ RSA API without requiring changing these function prototypes.
 .Sh CAVEATS
 As of version 0.9.7,
 .Vt RSA_METHOD
-implementations are grouped together with other algorithmic APIs (eg.\&
+implementations are grouped together with other algorithmic APIs (e.g.\&
 .Vt DSA_METHOD ,
 .Vt EVP_CIPHER ,
 etc.) into
@@ -307,7 +309,7 @@ If a default
 is specified for RSA functionality using an
 .Xr engine 3
 API function, that will override any RSA defaults set using the RSA
-API, ie.\&
+API, i.e.\&
 .Fn RSA_set_default_method .
 For this reason, the
 .Xr engine 3

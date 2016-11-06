@@ -1,4 +1,6 @@
-.Dd $Mdocdate: November 11 2015 $
+.\"	$OpenBSD: CONF_modules_free.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"
+.Dd $Mdocdate: November 6 2016 $
 .Dt CONF_MODULES_FREE 3
 .Os
 .Sh NAME
@@ -43,7 +45,7 @@ is 1, all modules, including builtin modules, will be unloaded.
 Normally applications will only call
 .Fn CONF_modules_free
 at application to tidy up any configuration performed.
-.Sh RETURN VALUE
+.Sh RETURN VALUES
 None of the functions return a value.
 .Sh SEE ALSO
 .Xr CONF_modules_load_file 3 ,

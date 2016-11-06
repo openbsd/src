@@ -1,4 +1,6 @@
-.Dd $Mdocdate: November 2 2016 $
+.\"	$OpenBSD: DSA_set_method.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"
+.Dd $Mdocdate: November 6 2016 $
 .Dt DSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -80,7 +82,7 @@ the handle to that
 will be released during the change.
 It is possible to have DSA keys that only work with certain
 .Vt DSA_METHOD
-implementations (eg. from an
+implementations (e.g. from an
 .Vt ENGINE
 module that supports embedded hardware-protected keys),
 and in such cases attempting to change the
@@ -209,7 +211,7 @@ API now transparently overrides the behaviour of defaults in the
 DSA API without requiring changing these function prototypes.
 .Sh CAVEATS
 As of version 0.9.7, DSA_METHOD implementations are grouped together
-with other algorithmic APIs (eg. RSA_METHOD, EVP_CIPHER, etc) in
+with other algorithmic APIs (e.g. RSA_METHOD, EVP_CIPHER) in
 .Vt ENGINE
 modules.
 If a default
@@ -217,7 +219,7 @@ If a default
 is specified for DSA functionality using an
 .Xr engine 3
 API function, that will override any DSA defaults set using the DSA API
-.Pq ie. DSA_set_default_method .
+.Pq i.e. DSA_set_default_method .
 For this reason, the
 .Xr engine 3
 API is the recommended way to control default implementations for

@@ -1,4 +1,6 @@
-.Dd $Mdocdate: November 2 2016 $
+.\"	$OpenBSD: DH_set_method.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"
+.Dd $Mdocdate: November 6 2016 $
 .Dt DH_SET_METHOD 3
 .Os
 .Sh NAME
@@ -88,7 +90,7 @@ It is possible to have
 .Vt DH
 keys that only work with certain
 .Vt DH_METHOD
-implementations (eg. from an
+implementations (e.g. from an
 .Vt ENGINE
 module that supports embedded hardware-protected keys),
 and in such cases attempting to change the
@@ -208,7 +210,7 @@ DH API without requiring changing these function prototypes.
 As of version 0.9.7,
 .Vt DH_METHOD
 implementations are grouped together with other algorithmic APIs
-(eg. RSA_METHOD, EVP_CIPHER, etc) in
+(e.g. RSA_METHOD, EVP_CIPHER) in
 .Vt ENGINE
 modules.
 If a default
@@ -216,7 +218,7 @@ If a default
 is specified for DH functionality using an
 .Xr engine 3
 API function, that will override any DH defaults set using the DH API
-.Pq ie. Fn DH_set_default_method .
+.Pq i.e. Fn DH_set_default_method .
 For this reason, the
 .Xr engine 3
 API is the recommended way to control default implementations

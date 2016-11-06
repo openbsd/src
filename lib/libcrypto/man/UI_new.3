@@ -1,4 +1,6 @@
-.Dd $Mdocdate: November 24 2015 $
+.\"	$OpenBSD: UI_new.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"
+.Dd $Mdocdate: November 6 2016 $
 .Dt UI_NEW 3
 .Os
 .Sh NAME
@@ -182,7 +184,7 @@
 UI stands for User Interface, and is general purpose set of routines
 to prompt the user for text-based information.
 Through user-written methods (see
-.Xr ui_create 3 Ns ),
+.Xr ui_create 3 ) ,
 prompting can be done in any way imaginable, be it plain text prompting,
 through dialog boxes or from a cell phone.
 .Pp
@@ -295,7 +297,7 @@ With the builtin method, there's no technical difference between them.
 Other methods may make a difference between them, however.
 .Pp
 The flags currently supported are
-.Dv UI_INPUT_FLAG_ECHO,
+.Dv UI_INPUT_FLAG_ECHO ,
 which is relevant for
 .Fn UI_add_input_string
 and will have the users response be echoed (when prompting for a

@@ -1,4 +1,6 @@
-.Dd $Mdocdate: November 3 2016 $
+.\"	$OpenBSD: EVP_EncryptInit.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"
+.Dd $Mdocdate: November 6 2016 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -489,7 +491,8 @@ and
 return the type of the passed cipher or context.
 This "type" is the actual NID of the cipher OBJECT IDENTIFIER as such it
 ignores the cipher parameters and 40 bit RC2 and 128 bit RC2 have the
-same NID. If the cipher does not have an object identifier or does not
+same NID.
+If the cipher does not have an object identifier or does not
 have ASN1 support this function will return
 .Dv NID_undef .
 .Pp

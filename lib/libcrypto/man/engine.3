@@ -1,4 +1,6 @@
-.Dd $Mdocdate: November 5 2016 $
+.\"	$OpenBSD: engine.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"
+.Dd $Mdocdate: November 6 2016 $
 .Dt ENGINE 3
 .Os
 .Sh NAME
@@ -511,7 +513,7 @@ Due to the modular nature of the
 .Nm engine
 API, pointers to
 .Vt ENGINE Ns s
-need to be treated as handles - ie. not only as pointers, but also
+need to be treated as handles - i.e. not only as pointers, but also
 as references to the underlying
 .Vt ENGINE
 object.
@@ -527,8 +529,8 @@ At the most basic level, each
 pointer is inherently a
 .Sy structural
 reference - a structural reference is required to use the pointer value
-at all, as this kind of reference is a guarantee that the structure can
-not be deallocated until the reference is released.
+at all, as this kind of reference is a guarantee that the structure cannot
+be deallocated until the reference is released.
 .Pp
 However, a structural reference provides no guarantee that the
 .Vt ENGINE
@@ -653,7 +655,7 @@ function.
 This returns zero if the
 .Vt ENGINE
 was not already operational and couldn't be successfully initialised
-(eg. lack of system drivers, no special hardware attached, etc.),
+(e.g. lack of system drivers, no special hardware attached),
 otherwise it will return non-zero to indicate that the
 .Vt ENGINE
 is now operational and will have allocated a new
@@ -665,7 +667,7 @@ All functional references are released by calling
 which removes the implicit structural reference as well.
 .Pp
 The second way to get a functional reference is by asking OpenSSL for a
-default implementation for a given task, eg.
+default implementation for a given task, e.g.
 by
 .Fn ENGINE_get_default_RSA ,
 .Fn ENGINE_get_default_cipher_engine ,
@@ -697,7 +699,7 @@ index.
 .Pp
 When a default
 .Vt ENGINE
-is requested for a given abstraction/algorithm/mode, (eg. when
+is requested for a given abstraction/algorithm/mode, (e.g. when
 calling
 .Fn RSA_new_method NULL ) ,
 a "get_default" call will be made to the
@@ -781,7 +783,7 @@ code at all.
 So the first consideration is whether any/all available
 .Vt ENGINE
 implementations should be made visible to OpenSSL.
-This is controlled by calling the various "load" functions, eg.
+This is controlled by calling the various "load" functions, e.g.
 .Fn ENGINE_load_builtin_engines
 to make all
 .Vt ENGINE
@@ -836,7 +838,7 @@ they want used if any is to be used at all.
 Others may prefer to load all support and have OpenSSL automatically use
 at run-time any
 .Vt ENGINE
-that is able to successfully initialised - ie. to assume that this
+that is able to successfully initialised - i.e. to assume that this
 corresponds to acceleration hardware attached to the machine or
 some such thing.
 There are probably numerous other ways in which applications may prefer
@@ -942,11 +944,11 @@ nothing at all specific to the host system) so that it can be
 initialised for use.
 This could include the path to any driver or config files it needs to
 load, required network addresses, smart-card identifiers, passwords to
-initialise protected devices, logging information, etc etc.
+initialise protected devices, logging information, etc.
 This class of commands typically needs to be passed to an
 .Vt ENGINE
 .Sy before
-attempting to initialise it, ie. before calling
+attempting to initialise it, i.e. before calling
 .Fn ENGINE_init .
 The other class of commands consist of settings or operations that tweak
 certain behaviour or cause certain operations to take place, and these
@@ -1049,7 +1051,7 @@ using a structural reference.
 Note that some control commands are defined by OpenSSL itself and it
 will intercept and handle these control commands on behalf of the
 .Vt ENGINE ,
-ie. the
+i.e. the
 .Vt ENGINE Ap s
 ctrl() handler is not used for the control command.
 .In openssl/engine.h
@@ -1160,7 +1162,7 @@ arbitrary type.
 These commands are supported in the discovery mechanisms simply allow
 applications to determine if an
 .Vt ENGINE
-supports certain specific commands it might want to use (eg.
+supports certain specific commands it might want to use (e.g.
 application "foo" might query various
 .Vt ENGINE Ns s
 to see if they implement "FOO_GET_VENDOR_LOGO_GIF" - and
@@ -1173,7 +1175,8 @@ The
 API and internal architecture is currently being reviewed.
 Slated for possible release in 0.9.8 is support for transparent loading
 of "dynamic"
-.Vt ENGINE Ns s (built as self-contained shared libraries).
+.Vt ENGINE Ns s
+(built as self-contained shared libraries).
 This would allow
 .Vt ENGINE
 implementations to be provided independently of

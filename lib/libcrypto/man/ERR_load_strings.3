@@ -1,4 +1,6 @@
-.Dd $Mdocdate: November 2 2016 $
+.\"	$OpenBSD: ERR_load_strings.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"
+.Dd $Mdocdate: November 6 2016 $
 .Dt ERR_LOAD_STRINGS 3
 .Os
 .Sh NAME
@@ -49,16 +51,15 @@ The last entry in the array is
 .Pp
 .Fn ERR_get_next_error_library
 can be used to assign library numbers to user libraries at runtime.
-.Sh RETURN VALUE
+.Sh RETURN VALUES
 .Fn ERR_PACK
 returns the error code.
 .Fn ERR_get_next_error_library
 returns a new library number.
 .Sh SEE ALSO
-.Xr ERR 3 ,
-.Xr ERR_load_strings 3
+.Xr ERR 3
 .Sh HISTORY
-.Xr ERR_load_error_strings 3
+.Fn ERR_load_error_strings
 and
 .Fn ERR_PACK
 are available in all versions of SSLeay and OpenSSL.
