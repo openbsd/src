@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.34 2015/08/31 07:32:15 mpi Exp $	*/
+/*	$OpenBSD: uow.c,v 1.35 2016/11/06 12:58:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -100,7 +100,7 @@ uow_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != DS2490_USB_CONFIG)
 		return (UMATCH_NONE);
 
 	return ((usb_lookup(uow_devs, uaa->vendor, uaa->product) != NULL) ?
@@ -120,15 +120,6 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 
 	sc->sc_udev = uaa->device;
-
-	/* Set USB configuration */
-	if ((error = usbd_set_config_no(sc->sc_udev,
-	    DS2490_USB_CONFIG, 0)) != 0) {
-		printf("%s: failed to set config %d: %s\n",
-		    sc->sc_dev.dv_xname, DS2490_USB_CONFIG,
-		    usbd_errstr(error));
-		return;
-	}
 
 	/* Get interface handle */
 	if ((error = usbd_device2interface_handle(sc->sc_udev,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usps.c,v 1.7 2014/07/12 21:24:33 mpi Exp $   */
+/*	$OpenBSD: usps.c,v 1.8 2016/11/06 12:58:01 mpi Exp $   */
 
 /*
  * Copyright (c) 2011 Yojiro UO <yuo@nui.org>
@@ -134,7 +134,7 @@ usps_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return UMATCH_NONE;
 
 	if (usps_lookup(uaa->vendor, uaa->product) == NULL)
@@ -157,15 +157,7 @@ usps_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_udev = uaa->device;
 
 #define USPS_USB_IFACE 0
-#define USPS_USB_CONFIG 1
 
-	/* set configuration */
-	if ((err = usbd_set_config_no(sc->sc_udev, USPS_USB_CONFIG, 0)) != 0){
-		printf("%s: failed to set config %d: %s\n",
-		    sc->sc_dev.dv_xname, USPS_USB_CONFIG, usbd_errstr(err));
-		return;
-	}
-		
 	/* get interface handle */
 	if ((err = usbd_device2interface_handle(sc->sc_udev, USPS_USB_IFACE,
 		&sc->sc_iface)) != 0) {

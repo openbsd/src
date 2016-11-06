@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.75 2016/04/13 11:03:37 mpi Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.76 2016/11/06 12:58:01 mpi Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -415,7 +415,7 @@ cue_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg	*uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != CUE_CONFIG_NO)
 		return (UMATCH_NONE);
 
 	return (usb_lookup(cue_devs, uaa->vendor, uaa->product) != NULL ?
@@ -444,14 +444,6 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5,(" : cue_attach: sc=%p, dev=%p", sc, dev));
 
 	sc->cue_udev = dev;
-
-	err = usbd_set_config_no(dev, CUE_CONFIG_NO, 1);
-	if (err) {
-		printf("%s: setting config no failed\n",
-		    sc->cue_dev.dv_xname);
-		return;
-	}
-
 	sc->cue_product = uaa->product;
 	sc->cue_vendor = uaa->vendor;
 

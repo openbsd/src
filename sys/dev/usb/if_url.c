@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.80 2016/04/13 11:03:37 mpi Exp $ */
+/*	$OpenBSD: if_url.c,v 1.81 2016/11/06 12:58:01 mpi Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -163,7 +163,7 @@ url_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != URL_CONFIG_NO)
 		return (UMATCH_NONE);
 
 	return (url_lookup(uaa->vendor, uaa->product) != NULL ?
@@ -187,13 +187,6 @@ url_attach(struct device *parent, struct device *self, void *aux)
 	int i, s;
 
 	sc->sc_udev = dev;
-
-	/* Move the device into the configured state. */
-	err = usbd_set_config_no(dev, URL_CONFIG_NO, 1);
-	if (err) {
-		printf("%s: setting config no failed\n", devname);
-		goto bad;
-	}
 
 	usb_init_task(&sc->sc_tick_task, url_tick_task, sc,
 	    USB_TASK_TYPE_GENERIC);

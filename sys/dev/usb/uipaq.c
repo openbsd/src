@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.25 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.26 2016/11/06 12:58:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ uipaq_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != UIPAQ_CONFIG_NO)
 		return (UMATCH_NONE);
 
 	DPRINTFN(20,("uipaq: vendor=0x%x, product=0x%x\n",
@@ -164,14 +164,6 @@ uipaq_attach(struct device *parent, struct device *self, void *aux)
 	struct ucom_attach_args uca;
 
 	DPRINTFN(10,("\nuipaq_attach: sc=%p\n", sc));
-
-	/* Move the device into the configured state. */
-	err = usbd_set_config_no(dev, UIPAQ_CONFIG_NO, 1);
-	if (err) {
-		printf(": failed to set configuration, err=%s\n",
-		    usbd_errstr(err));
-		goto bad;
-	}
 
 	err = usbd_device2interface_handle(dev, UIPAQ_IFACE_INDEX, &iface);
 	if (err) {

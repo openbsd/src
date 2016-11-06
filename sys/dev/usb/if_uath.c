@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.77 2016/04/13 11:03:37 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.78 2016/11/06 12:58:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -191,7 +191,7 @@ uath_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != UATH_CONFIG_NO)
 		return UMATCH_NONE;
 
 	return (uath_lookup(uaa->vendor, uaa->product) != NULL) ?
@@ -244,12 +244,6 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_port = uaa->port;
 
 	sc->sc_flags = uath_lookup(uaa->vendor, uaa->product)->flags;
-
-	if (usbd_set_config_no(sc->sc_udev, UATH_CONFIG_NO, 0) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	/* get the first interface handle */
 	error = usbd_device2interface_handle(sc->sc_udev, UATH_IFACE_INDEX,

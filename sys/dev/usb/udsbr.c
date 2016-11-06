@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.26 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.27 2016/11/06 12:58:01 mpi Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ udsbr_match(struct device *parent, void *match, void *aux)
 
 	DPRINTFN(50,("udsbr_match\n"));
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != UDSBR_CONFIG_NO)
 		return (UMATCH_NONE);
 
 	if (uaa->vendor != USB_VENDOR_CYPRESS ||
@@ -129,21 +129,8 @@ udsbr_attach(struct device *parent, struct device *self, void *aux)
 	struct udsbr_softc	*sc = (struct udsbr_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
 	struct usbd_device	*dev = uaa->device;
-	usbd_status		err;
-
-	DPRINTFN(10,("udsbr_attach: sc=%p\n", sc));
-
-	err = usbd_set_config_no(dev, UDSBR_CONFIG_NO, 1);
-	if (err) {
-		printf("%s: setting config no failed\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	sc->sc_udev = dev;
-
-	DPRINTFN(10, ("udsbr_attach: %p\n", sc->sc_udev));
-
 	sc->sc_child = radio_attach_mi(&udsbr_hw_if, sc, &sc->sc_dev);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.53 2016/04/13 11:03:37 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.54 2016/11/06 12:58:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -176,7 +176,7 @@ otus_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return UMATCH_NONE;
 
 	return (usb_lookup(otus_devs, uaa->vendor, uaa->product) != NULL) ?
@@ -198,12 +198,6 @@ otus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 10;
-
-	if (usbd_set_config_no(sc->sc_udev, 1, 0) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	/* Get the first interface handle. */
 	error = usbd_device2interface_handle(sc->sc_udev, 0, &sc->sc_iface);

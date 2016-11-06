@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.71 2016/04/13 11:03:37 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.72 2016/11/06 12:58:01 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ upl_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg		*uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != UPL_CONFIG_NO)
 		return (UMATCH_NONE);
 
 	return (usb_lookup(upl_devs, uaa->vendor, uaa->product) != NULL ?
@@ -209,13 +209,6 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	int			i;
 
 	DPRINTFN(5,(" : upl_attach: sc=%p, dev=%p", sc, dev));
-
-	err = usbd_set_config_no(dev, UPL_CONFIG_NO, 1);
-	if (err) {
-		printf("%s: setting config no failed\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	sc->sc_udev = dev;
 

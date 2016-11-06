@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.84 2015/12/11 16:07:02 mpi Exp $ */
+/*	$OpenBSD: udl.c,v 1.85 2016/11/06 12:58:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -258,7 +258,7 @@ udl_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return (UMATCH_NONE);
 
 	if (udl_lookup(uaa->vendor, uaa->product) != NULL)
@@ -303,12 +303,6 @@ udl_attach(struct device *parent, struct device *self, void *aux)
 		if (udl_select_chip(sc))
 			return;
 
-	/*
-	 * Set device configuration descriptor number.
-	 */
-	error = usbd_set_config_no(sc->sc_udev, 1, 0);
-	if (error != USBD_NORMAL_COMPLETION)
-		return;
 
 	/*
 	 * Create device handle to interface descriptor.

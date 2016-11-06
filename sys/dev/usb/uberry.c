@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.23 2014/12/19 22:44:59 guenther Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.24 2016/11/06 12:58:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -74,7 +74,7 @@ uberry_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != UBERRY_CONFIG_NO)
 		return UMATCH_NONE;
 
 	return (usb_lookup(uberry_devices, uaa->vendor, uaa->product) != NULL) ?
@@ -91,17 +91,6 @@ uberry_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_udev = uaa->device;
 
 	dd = usbd_get_device_descriptor(uaa->device);
-
-	/* Enable configuration, to keep it connected... */
-	if (usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1) != 0) {
-		/*
-		 * Really ancient (ie. 7250) devices when off will
-		 * only charge at 100mA when turned off.
-		 */
-		printf("%s: Charging at %dmA\n", sc->sc_dev.dv_xname,
-		    sc->sc_udev->power);
-		return;
-	}
 
 	printf("%s: Charging at %dmA", sc->sc_dev.dv_xname,
 	    sc->sc_udev->power);

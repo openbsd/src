@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.140 2016/07/20 10:24:43 stsp Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.141 2016/11/06 12:58:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -196,7 +196,7 @@ ural_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != RAL_CONFIG_NO)
 		return UMATCH_NONE;
 
 	return (usb_lookup(ural_devs, uaa->vendor, uaa->product) != NULL) ?
@@ -216,12 +216,6 @@ ural_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 
 	sc->sc_udev = uaa->device;
-
-	if (usbd_set_config_no(sc->sc_udev, RAL_CONFIG_NO, 0) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	/* get the first interface handle */
 	error = usbd_device2interface_handle(sc->sc_udev, RAL_IFACE_INDEX,

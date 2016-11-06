@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.119 2016/04/13 11:03:37 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.120 2016/11/06 12:58:01 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1102,7 +1102,7 @@ atu_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg	*uaa = aux;
 	int			i;
 
-	if (!uaa->iface)
+	if (uaa->iface == NULL || uaa->configno != ATU_CONFIG_NO)
 		return(UMATCH_NONE);
 
 	for (i = 0; i < nitems(atu_devs); i++) {
@@ -1252,13 +1252,6 @@ atu_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->atu_unit = self->dv_unit;
 	sc->atu_udev = dev;
-
-	err = usbd_set_config_no(dev, ATU_CONFIG_NO, 1);
-	if (err) {
-		printf("%s: setting config no failed\n",
-		    sc->atu_dev.dv_xname);
-		goto fail;
-	}
 
 	err = usbd_device2interface_handle(dev, ATU_IFACE_IDX, &sc->atu_iface);
 	if (err) {

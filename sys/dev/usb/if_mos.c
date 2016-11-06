@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.36 2016/04/13 11:03:37 mpi Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.37 2016/11/06 12:58:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -607,7 +607,7 @@ mos_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (!uaa->iface)
+	if (uaa->iface == NULL || uaa->configno != MOS_CONFIG_NO)
 		return(UMATCH_NONE);
 
 	return (mos_lookup(uaa->vendor, uaa->product) != NULL ?
@@ -634,13 +634,6 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->mos_udev = dev;
 	sc->mos_unit = self->dv_unit;
-
-	err = usbd_set_config_no(dev, MOS_CONFIG_NO, 1);
-	if (err) {
-		printf("%s: getting interface handle failed\n",
-		    sc->mos_dev.dv_xname);
-		return;
-	}
 
 	usb_init_task(&sc->mos_tick_task, mos_tick_task, sc,
 	    USB_TASK_TYPE_GENERIC);
