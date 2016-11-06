@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_fd.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_s_fd.3,v 1.3 2016/11/06 16:43:53 schwarze Exp $
 .\"
 .Dd $Mdocdate: November 6 2016 $
 .Dt BIO_S_FD 3
@@ -15,8 +15,17 @@
 .Fo BIO_s_fd
 .Fa "void"
 .Fc
-.Fd #define BIO_set_fd(b,fd,c)	BIO_int_ctrl(b,BIO_C_SET_FD,c,fd)
-.Fd #define BIO_get_fd(b,c)		BIO_ctrl(b,BIO_C_GET_FD,0,(char *)c)
+.Ft long
+.Fo BIO_set_fd
+.Fa "BIO *b"
+.Fa "int fd"
+.Fa "long close_flag"
+.Fc
+.Ft long
+.Fo BIO_get_fd
+.Fa "BIO *b"
+.Fa "int *c"
+.Fc
 .Ft BIO *
 .Fo BIO_new_fd
 .Fa "int fd"
@@ -41,7 +50,9 @@ is not.
 .Pp
 If the close flag is set,
 .Xr close 2
-is called on the underlying file descriptor when the BIO is freed.
+is called on the underlying file descriptor when the
+.Vt BIO
+is freed.
 .Pp
 .Xr BIO_reset 3
 attempts to set the file pointer to the start of the file using
@@ -58,25 +69,22 @@ returns the current file position by calling
 .Fn lseek fd 0 1 .
 .Pp
 .Fn BIO_set_fd
-sets the file descriptor of BIO
+sets the file descriptor of
+.Vt BIO
 .Fa b
 to
 .Fa fd
 and the close flag to
-.Fa c .
+.Fa close_flag .
+It is currently implemented as a macro.
 .Pp
 .Fn BIO_get_fd
 places the file descriptor in
 .Fa c
 if it is not
-.Dv NULL ,
-it also returns the file descriptor.
-If
-.Fa c
-is not
-.Dv NULL ,
-it should be of type
-.Vt "int *" .
+.Dv NULL
+and also returns the file descriptor.
+It is currently implemented as a macro.
 .Pp
 .Fn BIO_new_fd
 returns a file descriptor BIO using
@@ -120,10 +128,14 @@ behaviour.
 always returns 1.
 .Pp
 .Fn BIO_get_fd
-returns the file descriptor or -1 if the BIO has not been initialized.
+returns the file descriptor or -1 if the
+.Vt BIO
+has not been initialized.
 .Pp
 .Fn BIO_new_fd
-returns the newly allocated BIO or
+returns the newly allocated
+.Vt BIO
+or
 .Dv NULL
 if an error occurred.
 .Sh EXAMPLES
@@ -136,4 +148,5 @@ BIO_free(out);
 .Ed
 .Sh SEE ALSO
 .Xr BIO_read 3 ,
+.Xr BIO_s_socket 3 ,
 .Xr BIO_seek 3
