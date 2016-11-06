@@ -3657,7 +3657,6 @@ static void slide(signed char *r, const uint8_t *a) {
     }
   }
 }
-#endif
 
 static const ge_precomp Bi[8] = {
     {
@@ -3726,7 +3725,6 @@ static const ge_precomp Bi[8] = {
     },
 };
 
-#ifdef ED25519
 /* r = a * A + b * B
  * where a = a[0]+256*a[1]+...+256^31 a[31].
  * and b = b[0]+256*b[1]+...+256^31 b[31].
