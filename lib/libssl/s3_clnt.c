@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.144 2016/11/05 08:26:36 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.145 2016/11/06 09:44:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1149,7 +1149,7 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 	else if (alg_a & SSL_aDSS)
 		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_DSA_SIGN].x509);
-	else 
+	else
 		/* XXX - Anonymous DH, so no certificate or pkey. */
 		*pkey = NULL;
 
@@ -1322,7 +1322,7 @@ ssl3_get_server_key_exchange(SSL *s)
 	    SSL3_ST_CR_KEY_EXCH_B, -1, s->max_cert_list, &ok);
 	if (!ok)
 		return ((int)n);
-	
+
 	EVP_MD_CTX_init(&md_ctx);
 
 	if (s->s3->tmp.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
@@ -1996,12 +1996,9 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	BN_CTX *bn_ctx = NULL;
 	unsigned char *encodedPoint = NULL;
 	unsigned char *key = NULL;
-	unsigned long alg_k;
 	int encoded_pt_len = 0;
 	int key_size, n;
 	int ret = -1;
-
-	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
 	if (sess_cert->peer_ecdh_tmp == NULL) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
