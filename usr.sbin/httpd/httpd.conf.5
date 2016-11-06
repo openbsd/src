@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.73 2016/05/09 19:36:54 tj Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.74 2016/11/06 10:49:38 beck Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2016 $
+.Dd $Mdocdate: November 6 2016 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -533,6 +533,16 @@ root directory of
 .Nm httpd .
 The default is
 .Pa /etc/ssl/private/server.key .
+.It Ic ocsp Ar file
+Specify an OCSP response to be stapled during TLS handshakes
+with this server.
+The
+.Ar file
+should contain a DER format OCSP response retrieved from an
+OCSP server for the
+.Ar certificate
+in use. 
+The default is to not to use OCSP stapling.
 .It Ic protocols Ar string
 Specify the TLS protocols to enable for this server.
 If not specified, the value

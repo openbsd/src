@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.95 2016/08/30 14:31:53 rzalamena Exp $	*/
+/*	$OpenBSD: server.c,v 1.96 2016/11/06 10:49:38 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -173,6 +173,14 @@ server_tls_load_keypair(struct server *srv)
 	log_debug("%s: using private key %s", __func__,
 	    srv->srv_conf.tls_key_file);
 
+	if ((srv->srv_conf.tls_ocsp_staple = tls_load_file(
+	    srv->srv_conf.tls_ocsp_staple_file,
+	    &srv->srv_conf.tls_ocsp_staple_len,
+	    NULL)) == NULL)
+		return (-1);
+	log_debug("%s: using ocsp staple from %s", __func__,
+	    srv->srv_conf.tls_ocsp_staple_file);
+
 	return (0);
 }
 
@@ -229,6 +237,15 @@ server_tls_init(struct server *srv)
 		return (-1);
 	}
 
+	if (srv->srv_conf.tls_ocsp_staple != NULL) {
+		if (tls_config_set_ocsp_staple_mem(srv->srv_tls_config,
+		    srv->srv_conf.tls_ocsp_staple,
+		    srv->srv_conf.tls_ocsp_staple_len) != 0 ) {
+			log_warnx("%s: failed to add ocsp staple", __func__);
+			return (-1);
+		}
+	}
+
 	TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
 		if (srv_conf->tls_cert == NULL || srv_conf->tls_key == NULL)
 			continue;
@@ -238,6 +255,16 @@ server_tls_init(struct server *srv)
 		    srv_conf->tls_cert, srv_conf->tls_cert_len,
 		    srv_conf->tls_key, srv_conf->tls_key_len) != 0) {
 			log_warnx("%s: failed to add tls keypair", __func__);
+			return (-1);
+		}
+		if (srv_conf->tls_ocsp_staple == NULL)
+			continue;
+		log_debug("%s: adding ocsp staple for server %s", __func__,
+		    srv->srv_conf.name);
+		if (tls_config_set_ocsp_staple_mem(srv->srv_tls_config,
+		    srv_conf->tls_ocsp_staple, srv_conf->tls_ocsp_staple_len)
+		    != 0 ) {
+			log_warnx("%s: failed to add ocsp staple", __func__);
 			return (-1);
 		}
 	}
@@ -354,6 +381,8 @@ serverconfig_free(struct server_config *srv_conf)
 	free(srv_conf->return_uri);
 	free(srv_conf->tls_cert_file);
 	free(srv_conf->tls_key_file);
+	free(srv_conf->tls_ocsp_staple_file);
+	free(srv_conf->tls_ocsp_staple);
 
 	if (srv_conf->tls_cert != NULL) {
 		explicit_bzero(srv_conf->tls_cert, srv_conf->tls_cert_len);
@@ -375,6 +404,8 @@ serverconfig_reset(struct server_config *srv_conf)
 	srv_conf->tls_cert_file = NULL;
 	srv_conf->tls_key = NULL;
 	srv_conf->tls_key_file = NULL;
+	srv_conf->tls_ocsp_staple = NULL;
+	srv_conf->tls_ocsp_staple_file = NULL;
 }
 
 struct server *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.82 2016/09/03 14:44:21 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.83 2016/11/06 10:49:38 beck Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -131,9 +131,9 @@ typedef struct {
 
 %token	ACCESS ALIAS AUTO BACKLOG BODY BUFFER CERTIFICATE CHROOT CIPHERS COMMON
 %token	COMBINED CONNECTION DHE DIRECTORY ECDHE ERR FCGI INDEX IP KEY LISTEN
-%token	LOCATION LOG LOGDIR MATCH MAXIMUM NO NODELAY ON PORT PREFORK PROTOCOLS
-%token	REQUEST REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT
-%token	TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD
+%token	LOCATION LOG LOGDIR MATCH MAXIMUM NO NODELAY OCSP ON PORT PREFORK
+%token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT
+%token	TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -706,6 +706,13 @@ tlsopts		: CERTIFICATE STRING		{
 				fatal("out of memory");
 			free($2);
 		}
+		| OCSP STRING			{
+			free(srv_conf->tls_ocsp_staple_file);
+			if ((srv_conf->tls_ocsp_staple_file = strdup($2))
+			    == NULL)
+				fatal("out of memory");
+			free($2);
+		}
 		| CIPHERS STRING		{
 			if (strlcpy(srv_conf->tls_ciphers, $2,
 			    sizeof(srv_conf->tls_ciphers)) >=
@@ -1206,6 +1213,7 @@ lookup(char *s)
 		{ "max-age",		MAXAGE },
 		{ "no",			NO },
 		{ "nodelay",		NODELAY },
+		{ "ocsp",		OCSP },
 		{ "on",			ON },
 		{ "pass",		PASS },
 		{ "port",		PORT },
@@ -2006,6 +2014,9 @@ server_inherit(struct server *src, struct server_config *alias,
 		fatal("out of memory");
 	if ((dst->srv_conf.tls_key_file =
 	    strdup(src->srv_conf.tls_key_file)) == NULL)
+		fatal("out of memory");
+	if ((dst->srv_conf.tls_ocsp_staple_file =
+	    strdup(src->srv_conf.tls_ocsp_staple_file)) == NULL)
 		fatal("out of memory");
 	dst->srv_conf.tls_cert = NULL;
 	dst->srv_conf.tls_key = NULL;
