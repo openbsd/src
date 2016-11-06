@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.87 2016/10/19 16:38:40 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.88 2016/11/06 11:58:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -711,14 +711,12 @@ ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead)
 		*aead = EVP_aead_aes_256_gcm();
 		return 1;
 #endif
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 	case SSL_CHACHA20POLY1305:
 		*aead = EVP_aead_chacha20_poly1305();
 		return 1;
 	case SSL_CHACHA20POLY1305_OLD:
 		*aead = EVP_aead_chacha20_poly1305_old();
 		return 1;
-#endif
 	default:
 		break;
 	}

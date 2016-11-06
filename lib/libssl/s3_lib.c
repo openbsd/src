@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.109 2016/10/19 16:38:40 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.110 2016/11/06 11:58:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1510,7 +1510,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 	/* Cipher CC13 */
 	{
 		.valid = 1,
@@ -1612,7 +1611,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-#endif
 
 	/* Cipher FF85 FIXME IANA */
 	{
