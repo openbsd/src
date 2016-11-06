@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.19 2016/10/26 15:31:13 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.20 2016/11/06 12:33:30 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -101,12 +101,6 @@
 #define	DFL_BLKSIZE		8192		/* block size */
 #define	DFL_SECSIZE		512		/* sector size */
 #define	DFL_CYLSPERGROUP	65536		/* cylinders per group */
-#define	DFL_FRAGSPERINODE	4		/* fragments per inode */
-#define	DFL_ROTDELAY		0		/* rotational delay */
-#define	DFL_NRPOS		1		/* rotational positions */
-#define	DFL_RPM			3600		/* rpm of disk */
-#define	DFL_NSECTORS		64		/* # of sectors */
-#define	DFL_NTRACKS		16		/* # of tracks */
 
 
 typedef struct {
@@ -277,11 +271,7 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		ffs_opts->bsize = MIN(DFL_BLKSIZE, 8 * ffs_opts->fsize);
 	if (ffs_opts->cpg == -1)
 		ffs_opts->cpg = DFL_CYLSPERGROUP;
-	else
-		ffs_opts->cpgflg = 1;
 				/* fsopts->density is set below */
-	if (ffs_opts->nsectors == -1)
-		ffs_opts->nsectors = DFL_NSECTORS;
 	if (ffs_opts->minfree == -1)
 		ffs_opts->minfree = MINFREE;
 	if (ffs_opts->optimization == -1)

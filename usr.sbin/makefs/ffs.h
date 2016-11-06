@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.h,v 1.4 2016/10/22 16:51:52 natano Exp $	*/
+/*	$OpenBSD: ffs.h,v 1.5 2016/11/06 12:33:30 natano Exp $	*/
 /*	$NetBSD: ffs.h,v 1.2 2011/10/09 21:33:43 christos Exp $	*/
 
 /*
@@ -44,17 +44,11 @@ typedef struct {
 	int	bsize;		/* block size */
 	int	fsize;		/* fragment size */
 	int	cpg;		/* cylinders per group */
-	int	cpgflg;		/* cpg was specified by user */
 	int	density;	/* bytes per inode */
-	int	ntracks;	/* number of tracks */
-	int	nsectors;	/* number of sectors */
-	int	rpm;		/* rpm */
 	int	minfree;	/* free space threshold */
 	int	optimization;	/* optimization (space or time) */
 	int	maxcontig;	/* max contiguous blocks to allocate */
-	int	rotdelay;	/* rotational delay between blocks */
 	int	maxbpg;		/* maximum blocks per file in a cyl group */
-	int	nrpos;		/* # of distinguished rotational positions */
 	int	avgfilesize;	/* expected average file size */
 	int	avgfpdir;	/* expected # of files per directory */
 	int	version;	/* filesystem version (1 = FFS, 2 = UFS2) */
