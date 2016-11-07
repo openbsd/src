@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.18 2015/10/16 22:54:15 deraadt Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.19 2016/11/07 23:04:55 mestre Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -53,7 +53,6 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
-		case '?':
 		default:
 			usage();
 		}
@@ -90,7 +89,8 @@ main(int argc, char *argv[])
 			break;
 		pw_prompt();
 	}
-	exit(0);
+
+	return 0;
 }
 
 void
