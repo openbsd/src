@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_s_accept.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_s_accept.3,v 1.3 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_S_ACCEPT 3
 .Os
 .Sh NAME
@@ -63,7 +63,9 @@
 .Sh DESCRIPTION
 .Fn BIO_s_accept
 returns the accept BIO method.
-This is a wrapper round the platform's TCP/IP socket accept routines.
+This is a wrapper round the platform's TCP/IP socket
+.Xr accept 2
+routines.
 .Pp
 Using accept BIOs, TCP/IP connections can be accepted
 and data transferred using only BIO routines.
@@ -81,12 +83,12 @@ but not
 .Xr BIO_gets 3 .
 .Pp
 If the close flag is set on an accept BIO, then any active
-connection on that chain is shutdown and the socket closed when
+connection on that chain is shut down and the socket closed when
 the BIO is freed.
 .Pp
 Calling
 .Xr BIO_reset 3
-on a accept BIO will close any active connection and reset the BIO
+on an accept BIO will close any active connection and reset the BIO
 into a state where it awaits another incoming connection.
 .Pp
 .Xr BIO_get_fd 3
@@ -108,13 +110,13 @@ is the interface to use and
 .Ar port
 is the port.
 Either or both values can be
-.Qq *
+.Qq * ,
 which is interpreted as meaning any interface or port respectively.
 .Ar port
 has the same syntax as the port specified in
 .Xr BIO_set_conn_port 3
 for connect BIOs.
-It can be a numerical port string or a string to lookup using
+It can be a numerical port string or a string to look up using
 .Xr getservbyname 3
 and a string table.
 .Pp
@@ -130,7 +132,7 @@ It creates a new accept BIO with port
 .Fn BIO_set_nbio_accept
 sets the accept socket to blocking mode (the default) if
 .Fa n
-is 0 or non blocking mode if
+is 0 or non-blocking mode if
 .Fa n
 is 1.
 .Pp
@@ -139,7 +141,7 @@ can be used to set a chain of BIOs which will be duplicated
 and prepended to the chain when an incoming connection is received.
 This is useful if, for example, a buffering or SSL BIO
 is required for each connection.
-The chain of BIOs must not be freed after this call,
+The chain of BIOs must not be freed after this call -
 they will be automatically freed when the accept BIO is freed.
 .Pp
 .Fn BIO_set_bind_mode
@@ -162,11 +164,11 @@ then a second attempt is made using
 .Pp
 .Fn BIO_do_accept
 serves two purposes.
-When it is first called, after the accept BIO has been setup,
+When it is first called, after the accept BIO has been set up,
 it will attempt to create the accept socket and bind an address to it.
 Second and subsequent calls to
 .Fn BIO_do_accept
-will await an incoming connection, or request a retry in non blocking mode.
+will await an incoming connection, or request a retry in non-blocking mode.
 .Sh NOTES
 When an accept BIO is at the end of a chain, it will await an
 incoming connection before processing I/O calls.
@@ -181,8 +183,8 @@ socket will await an incoming connection then perform I/O on it.
 .Pp
 If any additional BIOs have been set using
 .Fn BIO_set_accept_bios ,
-then they are placed between the socket and the accept BIO,
-that is the chain will be accept->otherbios->socket.
+then they are placed between the socket and the accept BIO;
+that is, the chain will be accept->otherbios->socket.
 .Pp
 If a server wishes to process multiple connections (as is normally
 the case), then the accept BIO must be made available for further

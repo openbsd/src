@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_f_base64.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_f_base64.3,v 1.4 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_F_BASE64 3
 .Os
 .Sh NAME
@@ -32,10 +32,10 @@ this is used to flush the final block through the BIO.
 The flag
 .Dv BIO_FLAGS_BASE64_NO_NL
 can be set with
-.Xr BIO_set_flags 3
+.Fn BIO_set_flags
 to encode the data all on one line
 or expect the data to be all on one line.
-.Sh NOTES
+.Pp
 Because of the format of base64 encoding the end of the encoded
 block cannot always be reliably determined.
 .Sh RETURN VALUES
@@ -57,7 +57,7 @@ BIO_flush(b64);
 BIO_free_all(b64);
 .Ed
 .Pp
-Read Base64 encoded data from standard input
+Read Base64-encoded data from standard input
 and write the decoded data to standard output:
 .Bd -literal -offset indent
 BIO *bio, *b64, *bio_out;
@@ -75,8 +75,8 @@ BIO_flush(bio_out);
 BIO_free_all(b64);
 .Ed
 .Sh BUGS
-The ambiguity of EOF in base64 encoded data can cause additional
-data following the base64 encoded block to be misinterpreted.
+The ambiguity of EOF in base64-encoded data can cause additional
+data following the base64-encoded block to be misinterpreted.
 .Pp
 There should be some way of specifying a test that the BIO can perform
 to reliably determine EOF (for example a MIME boundary).

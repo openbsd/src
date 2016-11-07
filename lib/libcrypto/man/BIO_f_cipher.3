@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_f_cipher.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_f_cipher.3,v 1.4 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_F_CIPHER 3
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ with the standard cipher routines to set it up.
 This is useful when
 .Fn BIO_set_cipher
 is not flexible enough for the applications needs.
-.Sh NOTES
+.Pp
 When encrypting,
 .Xr BIO_flush 3
 must be called to flush the final block through the BIO.

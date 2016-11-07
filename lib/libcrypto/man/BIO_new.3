@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_new.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_new.3,v 1.4 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_NEW 3
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ function returns a new BIO using method
 sets the method of an already existing BIO.
 .Pp
 .Fn BIO_free
-frees up a single BIO,
+frees up a single BIO;
 .Fn BIO_vfree
 also frees up a single BIO, but it does not return a value.
 Calling
@@ -59,22 +59,7 @@ descriptions.
 frees up an entire BIO chain.
 It does not halt if an error occurs
 freeing up an individual BIO in the chain.
-.Sh RETURN VALUES
-.Fn BIO_new
-returns a newly created BIO or
-.Dv NULL
-if the call fails.
 .Pp
-.Fn BIO_set
-and
-.Fn BIO_free
-return 1 for success and 0 for failure.
-.Pp
-.Fn BIO_free_all
-and
-.Fn BIO_vfree
-do not return values.
-.Sh NOTES
 Some BIOs (such as memory BIOs) can be used immediately after calling
 .Fn BIO_new .
 Others (such as file BIOs) need some additional initialization, and
@@ -100,6 +85,21 @@ a source/sink BIO is normally called
 .Fn BIO_s_*
 and a filter BIO
 .Fn BIO_f_* .
+.Sh RETURN VALUES
+.Fn BIO_new
+returns a newly created BIO or
+.Dv NULL
+if the call fails.
+.Pp
+.Fn BIO_set
+and
+.Fn BIO_free
+return 1 for success and 0 for failure.
+.Pp
+.Fn BIO_free_all
+and
+.Fn BIO_vfree
+do not return values.
 .Sh EXAMPLES
 Create a memory BIO:
 .Pp

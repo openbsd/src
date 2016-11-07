@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_s_connect.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_s_connect.3,v 1.3 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_S_CONNECT 3
 .Os
 .Sh NAME
@@ -106,8 +106,8 @@ into a state where it can connect to the same host again.
 places the underlying socket in
 .Fa c
 if it is not
-.Dv NULL ,
-it also returns the socket.
+.Dv NULL
+and also returns the socket.
 If
 .Fa c
 is not
@@ -151,7 +151,7 @@ and
 .Fn BIO_set_conn_ip
 sets the IP address to
 .Fa ip
-using binary form, that is four bytes specifying the IP address
+using binary form i.e. four bytes specifying the IP address
 in big-endian form.
 .Pp
 .Fn BIO_set_conn_int_port
@@ -179,19 +179,19 @@ returns the port as an
 .Vt int .
 .Pp
 .Fn BIO_set_nbio
-sets the non blocking I/O flag to
+sets the non-blocking I/O flag to
 .Fa n .
 If
 .Fa n
 is zero then blocking I/O is set.
 If
 .Fa n
-is 1 then non blocking I/O is set.
+is 1 then non-blocking I/O is set.
 Blocking I/O is the default.
 The call to
 .Fn BIO_set_nbio
 should be made before the connection is established
-because non blocking I/O is set during the connect process.
+because non-blocking I/O is set during the connect process.
 .Pp
 .Fn BIO_new_connect
 combines
@@ -209,10 +209,10 @@ A zero or negative value is returned if the connection
 could not be established.
 The call
 .Xr BIO_should_retry 3
-should be used for non blocking connect BIOs
+should be used for non-blocking connect BIOs
 to determine if the call should be retried.
-.Sh NOTES
-If blocking I/O is set then a non positive return value from any
+.Pp
+If blocking I/O is set then a non-positive return value from any
 I/O call is caused by an error condition, although a zero return
 will normally mean that the connection was closed.
 .Pp
@@ -244,7 +244,7 @@ from other I/O processing.
 If non-blocking I/O is set,
 then retries will be requested as appropriate.
 .Pp
-It addition to
+In addition to
 .Xr BIO_should_read 3
 and
 .Xr BIO_should_write 3

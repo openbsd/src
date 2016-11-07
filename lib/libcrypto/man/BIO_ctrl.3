@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_ctrl.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_ctrl.3,v 1.4 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_CTRL 3
 .Os
 .Sh NAME
@@ -122,16 +122,17 @@
 and
 .Fn BIO_int_ctrl
 are BIO "control" operations taking arguments of various types.
-These functions are not normally called directly,
+These functions are not normally called directly -
 various macros are used instead.
-The standard macros are described below, macros specific to a
-particular type of BIO are described in the specific BIO's manual
-page as well as any special features of the standard calls.
+The standard macros are described below.
+Macros specific to a particular type of BIO
+are described in the specific BIO's manual page
+as well as any special features of the standard calls.
 .Pp
 .Fn BIO_reset
-typically resets a BIO to some initial state, in the case
-of file related BIOs for example it rewinds the file pointer
-to the start of the file.
+typically resets a BIO to some initial state.
+In the case of file related BIOs, for example,
+it rewinds the file pointer to the start of the file.
 .Pp
 .Fn BIO_seek
 resets a file related BIO's (that is file descriptor and
@@ -143,12 +144,12 @@ bytes from start of file.
 returns the current file position of a file related BIO.
 .Pp
 .Fn BIO_flush
-normally writes out any internally buffered data, in some cases
-it is used to signal EOF and that no more data will be written.
+normally writes out any internally buffered data.
+In some cases it is used to signal EOF and that no more data will be written.
 .Pp
 .Fn BIO_eof
-returns 1 if the BIO has read EOF, the precise meaning of
-"EOF" varies according to the BIO type.
+returns 1 if the BIO has read EOF.
+The precise meaning of "EOF" varies according to the BIO type.
 .Pp
 .Fn BIO_set_close
 sets the BIO
@@ -180,7 +181,7 @@ and
 .Fn BIO_ctrl_wpending
 return a
 .Vt size_t
-type and are functions,
+type and are functions.
 .Fn BIO_pending
 and
 .Fn BIO_wpending
@@ -189,7 +190,7 @@ are macros which call
 .Sh RETURN VALUES
 .Fn BIO_reset
 normally returns 1 for success and 0 or -1 for failure.
-File BIOs are an exception, they return 0 for success and -1 for failure.
+File BIOs are an exception, returning 0 for success and -1 for failure.
 .Pp
 .Fn BIO_seek
 and
@@ -203,7 +204,7 @@ always return 0 for success and -1 for failure.
 returns 1 for success and 0 or -1 for failure.
 .Pp
 .Fn BIO_eof
-returns 1 if EOF has been reached 0 otherwise.
+returns 1 if EOF has been reached or 0 otherwise.
 .Pp
 .Fn BIO_set_close
 always returns 1.
@@ -228,7 +229,7 @@ in a similar manner to
 .Fn BIO_write .
 The
 .Fn BIO_should_retry
-call should be used and appropriate action taken is the call fails.
+call should be used and appropriate action taken if the call fails.
 .Pp
 The return values of
 .Fn BIO_pending
@@ -238,7 +239,7 @@ may not reliably determine the amount of pending data in all cases.
 For example in the case of a file BIO some data may be available in the
 .Vt FILE
 structure's internal buffers but it is not possible
-to determine this in a portably way.
+to determine this in a portable way.
 For other types of BIO they may not be supported.
 .Pp
 If they do not internally handle a particular
@@ -246,10 +247,10 @@ If they do not internally handle a particular
 operation, filter BIOs usually pass the operation
 to the next BIO in the chain.
 This often means there is no need to locate the required BIO for
-a particular operation, it can be called on a chain and it will
+a particular operation: it can be called on a chain and it will
 be automatically passed to the relevant BIO.
-However this can cause unexpected results:
-for example no current filter BIOs implement
+However this can cause unexpected results.
+For example no current filter BIOs implement
 .Fn BIO_seek ,
 but this may still succeed if the chain ends
 in a FILE or file descriptor BIO.

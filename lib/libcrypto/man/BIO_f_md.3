@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_f_md.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_f_md.3,v 1.4 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_F_MD 3
 .Os
 .Sh NAME
@@ -80,7 +80,7 @@ macro.
 .Fn BIO_get_md_ctx
 returns the digest BIOs context in
 .Fa mdcp .
-.Sh NOTES
+.Pp
 The context returned by
 .Fn BIO_get_md_ctx
 can be used in calls to
@@ -112,10 +112,10 @@ then this can be done by prepending a buffering BIO.
 .Pp
 Before OpenSSL 1.0.0 the call to
 .Fn BIO_get_md_ctx
-would only work if the BIO had been initialized for example by calling
+would only work if the BIO had been initialized, for example by calling
 .Fn BIO_set_md .
 In OpenSSL 1.0.0 and later the context is always returned
-and the BIO is state is set to initialized.
+and the state of the BIO is set to initialized.
 This allows applications to initialize the context externally
 if the standard calls such as
 .Fn BIO_set_md
@@ -130,7 +130,7 @@ and
 .Fn BIO_get_md_ctx
 return 1 for success and 0 for failure.
 .Sh EXAMPLES
-The following example creates a BIO chain containing an SHA1 and MD5
+The following example creates a BIO chain containing an SHA-1 and MD5
 digest BIO and passes the string "Hello World" through it.
 Error checking has been omitted for clarity.
 .Bd -literal -offset 2n
@@ -198,7 +198,7 @@ BIO_free_all(bio);
 .Sh BUGS
 The lack of support for
 .Xr BIO_puts 3
-and the non standard behaviour of
+and the non-standard behaviour of
 .Xr BIO_gets 3
 could be regarded as anomalous.
 It could be argued that

@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_should_retry.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_should_retry.3,v 1.3 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_SHOULD_RETRY 3
 .Os
 .Sh NAME
@@ -9,6 +9,7 @@
 .Nm BIO_should_write ,
 .Nm BIO_should_io_special ,
 .Nm BIO_retry_type ,
+.Nm BIO_should_retry ,
 .Nm BIO_get_retry_BIO ,
 .Nm BIO_get_retry_reason
 .Nd BIO retry functions
@@ -58,8 +59,8 @@ is true if the cause of the condition is that a BIO needs to read data.
 is true if the cause of the condition is that a BIO needs to write data.
 .Pp
 .Fn BIO_should_io_special
-is true if some "special" condition, that is a reason other than
-reading or writing, is the cause of the condition.
+is true if some "special" condition
+(i.e. a reason other than reading or writing) is the cause of the condition.
 .Pp
 .Fn BIO_retry_type
 returns a mask of the cause of a retry condition consisting of the values
@@ -82,7 +83,7 @@ depends on the type of BIO that resulted in this condition.
 returns the reason for a special condition
 if passed the relevant BIO, for example as returned by
 .Fn BIO_get_retry_BIO .
-.Sh NOTES
+.Pp
 If
 .Fn BIO_should_retry
 returns false, then the precise "error condition" depends on
@@ -114,7 +115,7 @@ or avoid this situation by setting
 .Dv SSL_MODE_AUTO_RETRY
 on the underlying SSL structure.
 .Pp
-While an application may retry a failed non blocking call immediately,
+While an application may retry a failed non-blocking call immediately,
 this is likely to be very inefficient because the call will fail
 repeatedly until data can be processed or is available.
 An application will normally wait until the necessary condition
@@ -127,7 +128,7 @@ is true then a call to
 .Xr select 2
 may be made to wait until data is available
 and then retry the BIO operation.
-By combining the retry conditions of several non blocking BIOs in a single
+By combining the retry conditions of several non-blocking BIOs in a single
 .Xr select 2
 call it is possible to service several BIOs in a single thread,
 though the performance may be poor if SSL BIOs are present because
@@ -136,12 +137,12 @@ long delays can occur during the initial handshake process.
 It is possible for a BIO to block indefinitely if the underlying I/O
 structure cannot process or return any data.
 This depends on the behaviour of the platforms I/O functions.
-This is often not desirable: one solution is to use non blocking I/O
+This is often not desirable: one solution is to use non-blocking I/O
 and use a timeout on the
 .Xr select 2
 (or equivalent) call.
 .Sh BUGS
-The OpenSSL ASN1 functions cannot gracefully deal with non blocking I/O:
+The OpenSSL ASN.1 functions cannot gracefully deal with non-blocking I/O:
 they cannot retry after a partial read or write.
-This is usually worked around by only passing the relevant data to ASN1
+This is usually worked around by only passing the relevant data to ASN.1
 functions when the entire structure can be read or written.

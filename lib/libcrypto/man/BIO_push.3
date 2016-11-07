@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_push.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_push.3,v 1.3 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_PUSH 3
 .Os
 .Sh NAME
@@ -35,22 +35,14 @@ from a chain and returns the next BIO in the chain, or
 .Dv NULL
 if there is no next BIO.
 The removed BIO then becomes a single BIO with no association with the
-original chain, it can thus be freed or attached to a different chain.
-.Sh RETURN VALUES
-.Fn BIO_push
-returns the beginning of the chain,
-.Fa b .
+original chain.
+it can thus be freed or attached to a different chain.
 .Pp
-.Fn BIO_pop
-returns the next BIO in the chain, or
-.Dv NULL
-if there is no next BIO.
-.Sh NOTES
 The names of these functions are perhaps a little misleading.
 .Fn BIO_push
 joins two BIO chains whereas
 .Fn BIO_pop
-deletes a single BIO from a chain,
+deletes a single BIO from a chain;
 the deleted BIO does not need to be at the end of a chain.
 .Pp
 The process of calling
@@ -60,6 +52,15 @@ and
 on a BIO may have additional consequences:
 a control call is made to the affected BIOs.
 Any effects will be noted in the descriptions of individual BIOs.
+.Sh RETURN VALUES
+.Fn BIO_push
+returns the beginning of the chain,
+.Fa b .
+.Pp
+.Fn BIO_pop
+returns the next BIO in the chain, or
+.Dv NULL
+if there is no next BIO.
 .Sh EXAMPLES
 For these examples suppose
 .Sy md1
@@ -67,7 +68,7 @@ and
 .Sy md2
 are digest BIOs,
 .Sy b64
-is a base64 BIO and
+is a Base64 BIO and
 .Sy f
 is a file BIO.
 .Pp
@@ -92,17 +93,14 @@ by
 .Sy md1
 and
 .Sy md2 ,
-.Sy base64
-encoded and written to
+Base64-encoded and written to
 .Sy f .
 .Pp
 It should be noted that reading causes data to pass
-in the reverse direction, that is data is read from
+in the reverse direction.
+That is, data is read from
 .Sy f ,
-base64
-.Sy decoded
-and digested
-by
+Base64-decoded and digested by
 .Sy md1
 and
 .Sy md2 .
@@ -113,7 +111,7 @@ If this call is made:
 The call will return
 .Sy b64
 and the new chain will be
-.Sy md1-b64-f Ns ;
+.Sy md1-b64-f ;
 data can be written to
 .Sy md1
 as before.

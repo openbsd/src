@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_s_null.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_s_null.3,v 1.3 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_S_NULL 3
 .Os
 .Sh NAME
@@ -16,12 +16,12 @@
 .Fn BIO_s_null
 returns the null sink BIO method.
 Data written to the null sink is discarded, reads return EOF.
-.Sh NOTES
+.Pp
 A null sink BIO behaves in a similar manner to the
 .Xr null 4
 device.
 .Pp
-A null bio can be placed on the end of a chain to discard any data
+A null BIO can be placed on the end of a chain to discard any data
 passed through it.
 .Pp
 A null sink is useful if, for example, an application wishes

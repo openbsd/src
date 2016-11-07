@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_s_bio.3,v 1.4 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_s_bio.3,v 1.5 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_S_BIO 3
 .Os
 .Sh NAME
@@ -79,7 +79,7 @@ have all the data processed by the chain under application control.
 .Pp
 One typical use of BIO pairs is
 to place TLS/SSL I/O under application control.
-This can be used when the application wishes to use a non standard
+This can be used when the application wishes to use a non-standard
 transport for TLS/SSL or the normal socket routines are inappropriate.
 .Pp
 Calls to
@@ -147,7 +147,7 @@ does not check whether
 .Fa bio1
 or
 .Fa bio2
-do point to some other BIO, the values are overwritten,
+point to some other BIO; the values are overwritten and
 .Xr BIO_free 3
 is not called.
 .Pp
@@ -186,19 +186,7 @@ never returns an amount larger than that returned by
 can also be used to reset the value returned by
 .Fn BIO_get_read_request
 to zero.
-.Sh RETURN VALUES
-.Fn BIO_new_bio_pair
-returns 1 on success, with the new BIOs available in
-.Fa bio1
-and
-.Fa bio2 ,
-or 0 on failure, with NULL pointers stored into the locations for
-.Fa bio1
-and
-.Fa bio2 .
-Check the error stack for more information.
-.\" XXX More return values need to be added here.
-.Sh NOTES
+.Pp
 Both halves of a BIO pair should be freed.
 Even if one half is implicitly freed due to a
 .Xr BIO_free_all 3
@@ -233,12 +221,24 @@ will be true.
 If the application then waits for data to become available
 on the underlying transport before flushing the write buffer,
 it will never succeed because the request was never sent.
+.Sh RETURN VALUES
+.Fn BIO_new_bio_pair
+returns 1 on success, with the new BIOs available in
+.Fa bio1
+and
+.Fa bio2 ,
+or 0 on failure, with NULL pointers stored into the locations for
+.Fa bio1
+and
+.Fa bio2 .
+Check the error stack for more information.
+.\" XXX More return values need to be added here.
 .Sh EXAMPLES
 The BIO pair can be used to have full control
 over the network access of an application.
 The application can call
 .Xr select 2
-on the socket as required without having to go through the SSL-interface.
+on the socket as required without having to go through the SSL interface.
 .Bd -literal -offset 2n
 BIO *internal_bio, *network_bio;
 \&...

@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_set_callback.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_set_callback.3,v 1.3 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_SET_CALLBACK 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Fn BIO_set_callback
 and
 .Fn BIO_get_callback
-set and retrieve the BIO callback, they are both macros.
+set and retrieve the BIO callback; they are both macros.
 The callback is called during most high level BIO operations.
 It can be used for debugging purposes to trace operations on a BIO
 or to modify its operation.
@@ -77,8 +77,8 @@ The meaning of the arguments
 and
 .Fa argl
 depends on the value of
-.Fa oper ,
-that is the operation being performed.
+.Fa oper
+(i.e. the operation being performed).
 .Pp
 .Fa retvalue
 is the return value that would be returned to the application
@@ -127,5 +127,6 @@ after.
 .Sh EXAMPLES
 The
 .Fn BIO_debug_callback
-function is a good example, its source is in the file
+function is a good example.
+Its source is in the file
 .Pa crypto/bio/bio_cb.c .

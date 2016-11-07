@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_f_null.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BIO_f_null.3,v 1.4 2016/11/07 15:52:47 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 7 2016 $
 .Dt BIO_F_NULL 3
 .Os
 .Sh NAME
@@ -16,12 +16,11 @@
 .Fn BIO_f_null
 returns the null filter BIO method.
 This is a filter BIO that does nothing.
+As may be apparent, a null filter BIO is not particularly useful.
 .Pp
 All requests to a null filter BIO are passed through to the next BIO
 in the chain: this means that a BIO chain containing a null filter BIO
 behaves just as though the BIO was not there.
-.Sh NOTES
-As may be apparent, a null filter BIO is not particularly useful.
 .Sh RETURN VALUES
 .Fn BIO_f_null
 returns the null filter BIO method.
