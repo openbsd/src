@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.5 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.6 2016/11/07 03:30:58 guenther Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.1 1995/02/13 23:07:51 cgd Exp $	*/
 
 /*
@@ -43,6 +43,8 @@
 #define PT_SETFPREGS    (PT_FIRSTMACH + 3)
 #define PT_STEP		(PT_FIRSTMACH + 4)
 
-#define FIX_SSTEP(p)	process_sstep(p, 0)
+#ifdef _KERNEL
+# define FIX_SSTEP(p)	process_sstep(p, 0)
+#endif
 
 #endif
