@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.227 2016/11/07 00:26:32 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.228 2016/11/07 02:50:33 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -126,7 +126,7 @@ struct	emul {
 
 /*
  * time usage: accumulated times in ticks
- * One a second, each thread's immediate counts (p_[usi]ticks) are
+ * Once a second, each thread's immediate counts (p_[usi]ticks) are
  * accumulated into these.
  */
 struct tusage {
