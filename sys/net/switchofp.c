@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.26 2016/11/07 13:15:19 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.27 2016/11/07 13:21:55 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -5681,7 +5681,7 @@ swofp_mp_recv_port_stats(struct switch_softc *sc, struct mbuf *m)
 	struct swofp_mpmsg	 swmp;
 	struct ifnet		*ifs;
 	struct ofp_port_stats	 postat;
-	int			 s, error;
+	int			 error;
 	struct timespec		 now, duration;
 
 	if ((error = swofp_mpmsg_reply_create(
@@ -5690,7 +5690,6 @@ swofp_mp_recv_port_stats(struct switch_softc *sc, struct mbuf *m)
 
 	nanouptime(&now);
 
-	s = splnet();
 	TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
 		memset(&postat, 0, sizeof(postat));
 		ifs = if_get(swpo->swpo_ifindex);
@@ -5719,13 +5718,10 @@ swofp_mp_recv_port_stats(struct switch_softc *sc, struct mbuf *m)
 
 		if_put(ifs);
 
-		if ((error = swofp_mpmsg_put(&swmp,
-		    (caddr_t)&postat, sizeof(postat)))) {
-			splx(s);
+		if ((error = swofp_mpmsg_put(&swmp, (caddr_t)&postat,
+		    sizeof(postat))))
 			goto failed;
-		}
 	}
-	splx(s);
 
 	m_freem(m);
 	return swofp_multipart_reply(sc, &swmp);
@@ -6020,7 +6016,7 @@ swofp_mp_recv_port_desc(struct switch_softc *sc, struct mbuf *m)
 	struct switch_port	*swpo;
 	struct swofp_mpmsg	 swmp;
 	struct ifnet		*ifs;
-	int			 s, error;
+	int			 error;
 
 	if ((error = swofp_mpmsg_reply_create(
 	    mtod(m, struct ofp_multipart *), &swmp))) {
@@ -6028,7 +6024,6 @@ swofp_mp_recv_port_desc(struct switch_softc *sc, struct mbuf *m)
 		return (error);
 	}
 
-	s = splnet();
 	TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
 		memset(&swp, 0, sizeof(swp));
 		ifs = if_get(swpo->swpo_ifindex);
@@ -6063,19 +6058,15 @@ swofp_mp_recv_port_desc(struct switch_softc *sc, struct mbuf *m)
 		swp.swp_supported = htonl(swp.swp_supported);
 		swp.swp_peer = htonl(swp.swp_peer);
 
-		if ((error = swofp_mpmsg_put(&swmp,
-		    (caddr_t)&swp, sizeof(swp)))) {
-			swofp_mpmsg_destroy(&swmp);
+		if ((error = swofp_mpmsg_put(&swmp, (caddr_t)&swp,
+		    sizeof(swp))))
 			goto error;
-		}
 	}
-	splx(s);
 
 	m_freem(m);
 	return swofp_multipart_reply(sc, &swmp);
 
  error:
-	splx(s);
 	m_freem(m);
 	swofp_mpmsg_destroy(&swmp);
 	return (error);
