@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.24 2016/11/07 13:18:18 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.25 2016/11/07 13:27:11 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -53,6 +53,12 @@ int	 ofp13_features_reply(struct switchd *, struct switch_connection *,
 int	 ofp13_validate_error(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
+int	 ofp13_validate_action(struct switchd *, struct ofp_header *,
+	    struct ibuf *, off_t *, struct ofp_action_header *);
+int	 ofp13_validate_instruction(struct switchd *, struct ofp_header *,
+	    struct ibuf *, off_t *, struct ofp_instruction *);
+int	 ofp13_validate_flow_mod(struct switchd *, struct sockaddr_storage *,
+	    struct sockaddr_storage *, struct ofp_header *, struct ibuf *);
 int	 ofp13_validate_oxm_basic(struct ibuf *, off_t, int, uint8_t);
 int	 ofp13_validate_oxm(struct switchd *, struct ofp_ox_match *,
 	    struct ofp_header *, struct ibuf *, off_t);
@@ -116,7 +122,7 @@ struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_FLOW_REMOVED,		ofp13_flow_removed, NULL },
 	{ OFP_T_PORT_STATUS,		NULL, NULL },
 	{ OFP_T_PACKET_OUT,		NULL, ofp13_validate_packet_out },
-	{ OFP_T_FLOW_MOD,		NULL, NULL },
+	{ OFP_T_FLOW_MOD,		NULL, ofp13_validate_flow_mod },
 	{ OFP_T_GROUP_MOD,		NULL, NULL },
 	{ OFP_T_PORT_MOD,		NULL, NULL },
 	{ OFP_T_TABLE_MOD,		NULL, NULL },
@@ -634,6 +640,298 @@ ofp13_features_reply(struct switchd *sc, struct switch_connection *con,
 #endif
 	ofp13_setconfig(sc, con, OFP_CONFIG_FRAG_NORMAL,
 	    OFP_CONTROLLER_MAXLEN_NO_BUFFER);
+
+	return (0);
+}
+
+int
+ofp13_validate_action(struct switchd *sc, struct ofp_header *oh,
+    struct ibuf *ibuf, off_t *off, struct ofp_action_header *ah)
+{
+	struct ofp_action_output	*ao;
+	struct ofp_action_mpls_ttl	*amt;
+	struct ofp_action_push		*ap;
+	struct ofp_action_pop_mpls	*apm;
+	struct ofp_action_group		*ag;
+	struct ofp_action_nw_ttl	*ant;
+	struct ofp_action_set_field	*asf;
+	struct ofp_action_set_queue	*asq;
+	struct ofp_ox_match		*oxm;
+	size_t				 len;
+	int				 type;
+	off_t				 moff;
+
+	type = ntohs(ah->ah_type);
+	len = ntohs(ah->ah_len);
+
+	switch (type) {
+	case OFP_ACTION_OUTPUT:
+		if (len != sizeof(*ao))
+			return (-1);
+		if ((ao = ibuf_seek(ibuf, *off, sizeof(*ao))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\t\taction %s len %lu port %s max_len %d",
+		    print_map(type, ofp_action_map), len,
+		    print_map(ntohl(ao->ao_port), ofp_port_map),
+		    ntohs(ao->ao_max_len));
+		break;
+	case OFP_ACTION_SET_MPLS_TTL:
+		if (len != sizeof(*amt))
+			return (-1);
+		if ((amt = ibuf_seek(ibuf, *off, sizeof(*amt))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\t\taction %s len %lu ttl %d",
+		    print_map(type, ofp_action_map), len, amt->amt_ttl);
+		break;
+	case OFP_ACTION_PUSH_VLAN:
+	case OFP_ACTION_PUSH_MPLS:
+	case OFP_ACTION_PUSH_PBB:
+		if (len != sizeof(*ap))
+			return (-1);
+		if ((ap = ibuf_seek(ibuf, *off, sizeof(*ap))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\t\taction %s len %lu ethertype %#04x",
+		    print_map(type, ofp_action_map), len,
+		    ntohs(ap->ap_ethertype));
+		break;
+	case OFP_ACTION_POP_MPLS:
+		if (len != sizeof(*apm))
+			return (-1);
+		if ((apm = ibuf_seek(ibuf, *off, sizeof(*apm))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\t\taction %s len %lu ethertype %#04x",
+		    print_map(type, ofp_action_map), len,
+		    ntohs(apm->apm_ethertype));
+		break;
+	case OFP_ACTION_SET_QUEUE:
+		if (len != sizeof(*asq))
+			return (-1);
+		if ((asq = ibuf_seek(ibuf, *off, sizeof(*asq))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\t\taction %s len %lu queue_id %u",
+		    print_map(type, ofp_action_map), len,
+		    ntohl(asq->asq_queue_id));
+		break;
+	case OFP_ACTION_GROUP:
+		if (len != sizeof(*ag))
+			return (-1);
+		if ((ag = ibuf_seek(ibuf, *off, sizeof(*ag))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\t\taction %s len %lu group_id %u",
+		    print_map(type, ofp_action_map), len,
+		    ntohl(ag->ag_group_id));
+		break;
+	case OFP_ACTION_SET_NW_TTL:
+		if (len != sizeof(*ant))
+			return (-1);
+		if ((ant = ibuf_seek(ibuf, *off, sizeof(*ant))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\t\taction %s len %lu ttl %d",
+		    print_map(type, ofp_action_map), len, ant->ant_ttl);
+		break;
+	case OFP_ACTION_SET_FIELD:
+		if (len < sizeof(*asf))
+			return (-1);
+		if ((asf = ibuf_seek(ibuf, *off, sizeof(*asf))) == NULL)
+			return (-1);
+
+		moff = *off + sizeof(*asf) - sizeof(asf->asf_field);
+		*off += len;
+		log_debug("\t\taction %s len %lu",
+		    print_map(type, ofp_action_map), len);
+
+		len -= sizeof(*asf) - sizeof(asf->asf_field);
+		while (len) {
+			if ((oxm = ibuf_seek(ibuf, moff, sizeof(*oxm)))
+			    == NULL)
+				return (-1);
+			if (ofp13_validate_oxm(sc, oxm, oh, ibuf, moff) == -1)
+				return (-1);
+
+			len -= sizeof(*oxm) - oxm->oxm_length;
+			moff += sizeof(*oxm) - oxm->oxm_length;
+		}
+		break;
+
+	default:
+		if (len < sizeof(*ah))
+			return (-1);
+
+		/* Generic header without information. */
+		*off += len;
+		log_debug("\t\taction %s len %lu",
+		    print_map(type, ofp_action_map), len);
+		break;
+	}
+
+	return (0);
+}
+
+int
+ofp13_validate_instruction(struct switchd *sc, struct ofp_header *oh,
+    struct ibuf *ibuf, off_t *off, struct ofp_instruction *i)
+{
+	struct ofp_instruction_actions		*ia;
+	struct ofp_instruction_goto_table	*igt;
+	struct ofp_instruction_write_metadata	*iwm;
+	struct ofp_instruction_meter		*im;
+	struct ofp_action_header		*ah;
+	int					 type;
+	size_t					 len;
+	off_t					 oldoff, diff;
+
+	type = ntohs(i->i_type);
+	len = ntohs(i->i_len);
+
+	switch (type) {
+	case OFP_INSTRUCTION_T_GOTO_TABLE:
+		if (len != sizeof(*igt))
+			return (-1);
+		if ((igt = ibuf_seek(ibuf, *off, sizeof(*igt))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\tinstruction %s length %lu table_id %d",
+		    print_map(type, ofp_instruction_t_map), len,
+		    igt->igt_table_id);
+		break;
+	case OFP_INSTRUCTION_T_WRITE_META:
+		if (len != sizeof(*iwm))
+			return (-1);
+		if ((iwm = ibuf_seek(ibuf, *off, sizeof(*iwm))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\tinstruction %s length %lu "
+		    "metadata %llu mask %llu",
+		    print_map(type, ofp_instruction_t_map), len,
+		    be64toh(iwm->iwm_metadata),
+		    be64toh(iwm->iwm_metadata_mask));
+		break;
+	case OFP_INSTRUCTION_T_METER:
+		if (len != sizeof(*im))
+			return (-1);
+		if ((im = ibuf_seek(ibuf, *off, sizeof(*im))) == NULL)
+			return (-1);
+
+		*off += len;
+		log_debug("\tinstruction %s length %lu meter_id %d",
+		    print_map(type, ofp_instruction_t_map), len,
+		    im->im_meter_id);
+		break;
+	case OFP_INSTRUCTION_T_WRITE_ACTIONS:
+	case OFP_INSTRUCTION_T_CLEAR_ACTIONS:
+	case OFP_INSTRUCTION_T_APPLY_ACTIONS:
+		if (len < sizeof(*ia))
+			return (-1);
+		if ((ia = ibuf_seek(ibuf, *off, sizeof(*ia))) == NULL)
+			return (-1);
+
+		log_debug("\tinstruction %s length %lu",
+		    print_map(type, ofp_instruction_t_map), len);
+
+		*off += sizeof(*ia);
+		len -= sizeof(*ia);
+		while (len) {
+			oldoff = *off;
+			if ((ah = ibuf_seek(ibuf, *off, sizeof(*ah))) == NULL ||
+			    ofp13_validate_action(sc, oh, ibuf, off, ah) == -1)
+				return (-1);
+
+			diff = *off - oldoff;
+			/* Loop prevention. */
+			if (*off < oldoff || diff == 0)
+				break;
+
+			len -= diff;
+		}
+		break;
+	default:
+		if (len < sizeof(*i))
+			return (-1);
+
+		log_debug("\tinstruction %s length %lu",
+		    print_map(type, ofp_instruction_t_map), len);
+		*off += len;
+		break;
+	}
+
+	return (0);
+}
+
+int
+ofp13_validate_flow_mod(struct switchd *sc,
+    struct sockaddr_storage *src, struct sockaddr_storage *dst,
+    struct ofp_header *oh, struct ibuf *ibuf)
+{
+	struct ofp_flow_mod		*fm;
+	struct ofp_match		*om;
+	struct ofp_instruction		*i;
+	struct ofp_ox_match		*oxm;
+	off_t				 off, moff, offdiff;
+	int				 matchlen, matchtype, left;
+
+	off = 0;
+	if ((fm = ibuf_seek(ibuf, off, sizeof(*fm))) == NULL)
+		return (-1);
+
+	log_debug("\tcommand %s table %d timeout (idle %d hard %d) "
+	    "priority %d buffer_id %u out_port %u out_group %u "
+	    "flags %#04x cookie %llu mask %llu",
+	    print_map(fm->fm_command, ofp_flowcmd_map),
+	    fm->fm_table_id, ntohs(fm->fm_idle_timeout),
+	    ntohs(fm->fm_hard_timeout), ntohs(fm->fm_priority),
+	    ntohl(fm->fm_buffer_id), ntohl(fm->fm_out_port),
+	    ntohl(fm->fm_out_group), ntohs(fm->fm_flags),
+	    be64toh(fm->fm_cookie), be64toh(fm->fm_cookie_mask));
+
+	off += offsetof(struct ofp_flow_mod, fm_match);
+
+	om = &fm->fm_match;
+	matchtype = ntohs(om->om_type);
+	matchlen = ntohs(om->om_length);
+
+	moff = off + sizeof(*om);
+	off += OFP_ALIGN(matchlen);
+
+	matchlen -= sizeof(*om);
+	while (matchlen) {
+		if ((oxm = ibuf_seek(ibuf, moff, sizeof(*oxm))) == NULL ||
+		    ofp13_validate_oxm(sc, oxm, oh, ibuf, moff) == -1)
+			return (-1);
+		moff += sizeof(*oxm) + oxm->oxm_length;
+		matchlen -= sizeof(*oxm) + oxm->oxm_length;
+	}
+
+	left = ntohs(oh->oh_length) - off;
+	moff = off;
+	while (left) {
+		if ((i = ibuf_seek(ibuf, moff, sizeof(*i))) == NULL ||
+		    ofp13_validate_instruction(sc, oh, ibuf, &moff, i) == -1)
+			return (-1);
+
+		offdiff = moff - off;
+		/* Loop prevention. */
+		if (moff < off || offdiff == 0)
+			break;
+
+		left -= offdiff;
+		off = moff;
+	}
 
 	return (0);
 }
