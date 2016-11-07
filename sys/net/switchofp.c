@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.27 2016/11/07 13:21:55 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.28 2016/11/07 17:36:09 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -211,8 +211,11 @@ int	 swofp_flow_cmp_strict(struct swofp_flow_entry *, struct ofp_match *,
 int	 swofp_flow_filter(struct swofp_flow_entry *, uint64_t, uint64_t,
 	    uint32_t, uint32_t);
 void	 swofp_flow_timeout(struct switch_softc *);
+int	 swofp_validate_oxm(struct ofp_ox_match *, int *);
 int	 swofp_validate_flow_match(struct ofp_match *, int *);
-int	 swofp_validate_flow_instruction(struct ofp_instruction *, int *);
+int	 swofp_validate_flow_instruction(struct ofp_instruction *, size_t,
+	    int *);
+int	 swofp_validate_action(struct ofp_action_header *, size_t, int *);
 
 /*
  * OpenFlow protocol compare oxm
@@ -1807,74 +1810,241 @@ swofp_ox_cmp_ether_addr(struct ofp_ox_match *target,
 	}
 }
 
+int
+swofp_validate_oxm(struct ofp_ox_match *oxm, int *err)
+{
+	struct ofp_oxm_class	*handler;
+	int			 length, hasmask;
+	int			 neededlen;
 
-/* TODO: validation for match */
+	handler = swofp_lookup_oxm_handler(oxm);
+	if (handler == NULL || handler->oxm_match == NULL) {
+		*err = OFP_ERRMATCH_BAD_FIELD;
+		return (-1);
+	}
+
+	hasmask = OFP_OXM_GET_HASMASK(oxm);
+	length = oxm->oxm_length;
+
+	neededlen = (hasmask) ?
+	    (handler->oxm_len * 2) : (handler->oxm_len);
+	if (oxm->oxm_length != neededlen) {
+		*err = OFP_ERRMATCH_BAD_LEN;
+		return (-1);
+	}
+
+	return (0);
+}
+
 int
 swofp_validate_flow_match(struct ofp_match *om, int *err)
 {
-	struct ofp_oxm_class *handler;
 	struct ofp_ox_match *oxm;
 
+	/*
+	 * TODO this function is missing checks for:
+	 * - OFP_ERRMATCH_BAD_TAG;
+	 * - OFP_ERRMATCH_BAD_VALUE;
+	 * - OFP_ERRMATCH_BAD_MASK;
+	 * - OFP_ERRMATCH_BAD_PREREQ;
+	 * - OFP_ERRMATCH_DUP_FIELD;
+	 */
 	OFP_OXM_FOREACH(om, ntohs(om->om_length), oxm) {
-		handler = swofp_lookup_oxm_handler(oxm);
-		if (handler == NULL ||
-		    handler->oxm_match == NULL) {
-			*err = OFP_ERRMATCH_BAD_FIELD;
-			return (-1);
-		}
+		if (swofp_validate_oxm(oxm, err))
+			return (*err);
 	}
 
 	return (0);
 }
 
 int
-swofp_validate_flow_action_set_field(struct ofp_action_set_field *oasf)
-{
-	struct ofp_ox_match	*oxm;
-	struct ofp_oxm_class	*handler;
-
-	oxm = (struct ofp_ox_match *)oasf->asf_field;
-
-	handler = swofp_lookup_oxm_handler(oxm);
-	if (handler == NULL)
-		return (OFP_ERRACTION_SET_TYPE);
-	if (handler->oxm_set == NULL)
-		return (OFP_ERRACTION_SET_TYPE);
-
-	return (0);
-}
-
-/* TODO: validation for instruction */
-int
-swofp_validate_flow_instruction(struct ofp_instruction *oi, int *error)
+swofp_validate_flow_instruction(struct ofp_instruction *oi, size_t total,
+    int *err)
 {
 	struct ofp_action_header	*oah;
 	struct ofp_instruction_actions	*oia;
+	int				 ilen;
+
+	ilen = ntohs(oi->i_len);
+	/* Check for bigger than packet or smaller than header. */
+	if (ilen > total || ilen < sizeof(*oi)) {
+		*err = OFP_ERRINST_BAD_LEN;
+		return (-1);
+	}
 
 	switch (ntohs(oi->i_type)) {
 	case OFP_INSTRUCTION_T_GOTO_TABLE:
-	case OFP_INSTRUCTION_T_WRITE_META:
-	case OFP_INSTRUCTION_T_METER:
-	case OFP_INSTRUCTION_T_EXPERIMENTER:
-		break;
-	case OFP_INSTRUCTION_T_WRITE_ACTIONS:
-	case OFP_INSTRUCTION_T_CLEAR_ACTIONS:
-		break;
-	case OFP_INSTRUCTION_T_APPLY_ACTIONS:
-		oia = (struct ofp_instruction_actions *)oi;
-		OFP_I_ACTIONS_FOREACH(oia, oah) {
-			if (ntohs(oah->ah_type) == OFP_ACTION_SET_FIELD) {
-				*error = swofp_validate_flow_action_set_field(
-				    (struct ofp_action_set_field *)oah);
-				if (*error)
-					return (-1);
-			}
+		if (ilen != sizeof(struct ofp_instruction_goto_table)) {
+			*err = OFP_ERRINST_BAD_LEN;
+			return (-1);
 		}
 		break;
+	case OFP_INSTRUCTION_T_WRITE_META:
+		if (ilen != sizeof(struct ofp_instruction_write_metadata)) {
+			*err = OFP_ERRINST_BAD_LEN;
+			return (-1);
+		}
+		break;
+	case OFP_INSTRUCTION_T_METER:
+		if (ilen != sizeof(struct ofp_instruction_meter)) {
+			*err = OFP_ERRINST_BAD_LEN;
+			return (-1);
+		}
+		break;
+
+	case OFP_INSTRUCTION_T_WRITE_ACTIONS:
+	case OFP_INSTRUCTION_T_CLEAR_ACTIONS:
+	case OFP_INSTRUCTION_T_APPLY_ACTIONS:
+		if (ilen < sizeof(*oia)) {
+			*err = OFP_ERRINST_BAD_LEN;
+			return (-1);
+		}
+
+		oia = (struct ofp_instruction_actions *)oi;
+
+		/* Validate actions before iterating over them. */
+		oah = (struct ofp_action_header *)
+		    ((uint8_t *)oia + sizeof(*oia));
+		if (swofp_validate_action(oah, ilen - sizeof(*oia), err))
+			return (-1);
+		break;
+
+	case OFP_INSTRUCTION_T_EXPERIMENTER:
+		/* FALLTHROUGH */
 	default:
-		*error = OFP_ERRINST_UNKNOWN_INST;
+		*err = OFP_ERRINST_UNKNOWN_INST;
 		return (-1);
 	}
+
+	return (0);
+}
+
+int
+swofp_validate_action(struct ofp_action_header *ah, size_t ahtotal, int *err)
+{
+	struct ofp_action_handler	*oah;
+	struct ofp_ox_match		*oxm;
+	uint8_t				*dptr;
+	int				 ahtype, ahlen, oxmlen;
+
+	/* No actions. */
+	if (ahtotal == 0)
+		return (0);
+
+	/* Check if we have at least the first header. */
+	if (ahtotal < sizeof(*ah)) {
+		*err = OFP_ERRACTION_LEN;
+		return (-1);
+	}
+
+ parse_next_action:
+	ahtype = ntohs(ah->ah_type);
+	ahlen = ntohs(ah->ah_len);
+	if (ahlen < sizeof(*ah) || ahlen > ahtotal) {
+		*err = OFP_ERRACTION_LEN;
+		return (-1);
+	}
+
+	switch (ahtype) {
+	case OFP_ACTION_OUTPUT:
+		if (ahlen != sizeof(struct ofp_action_output)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+		break;
+	case OFP_ACTION_GROUP:
+		if (ahlen != sizeof(struct ofp_action_group)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+		break;
+	case OFP_ACTION_SET_QUEUE:
+		if (ahlen != sizeof(struct ofp_action_set_queue)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+		break;
+	case OFP_ACTION_SET_MPLS_TTL:
+		if (ahlen != sizeof(struct ofp_action_mpls_ttl)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+		break;
+	case OFP_ACTION_SET_NW_TTL:
+		if (ahlen != sizeof(struct ofp_action_nw_ttl)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+		break;
+	case OFP_ACTION_COPY_TTL_OUT:
+	case OFP_ACTION_COPY_TTL_IN:
+	case OFP_ACTION_DEC_MPLS_TTL:
+	case OFP_ACTION_POP_VLAN:
+		if (ahlen != sizeof(struct ofp_action_header)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+		break;
+	case OFP_ACTION_PUSH_VLAN:
+	case OFP_ACTION_PUSH_MPLS:
+	case OFP_ACTION_PUSH_PBB:
+		if (ahlen != sizeof(struct ofp_action_push)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+		break;
+	case OFP_ACTION_POP_MPLS:
+		if (ahlen != sizeof(struct ofp_action_pop_mpls)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+		break;
+	case OFP_ACTION_SET_FIELD:
+		if (ahlen < sizeof(struct ofp_action_set_field)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+
+		oxmlen = ahlen - sizeof(struct ofp_action_set_field);
+		if (oxmlen < sizeof(*oxm)) {
+			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+
+		dptr = (uint8_t *)ah;
+		dptr += sizeof(struct ofp_action_set_field);
+		while (oxmlen) {
+			oxm = (struct ofp_ox_match *)dptr;
+			if (swofp_validate_oxm(oxm, err)) {
+				if (*err == OFP_ERRMATCH_BAD_LEN)
+					*err = OFP_ERRACTION_SET_LEN;
+				else
+					*err = OFP_ERRACTION_SET_TYPE;
+
+				return (-1);
+			}
+
+			dptr += sizeof(*oxm) + oxm->oxm_length;
+			oxmlen -= sizeof(*oxm) + oxm->oxm_length;
+		}
+		break;
+
+	default:
+		/* Unknown/unsupported action. */
+		*err = OFP_ERRACTION_TYPE;
+		return (-1);
+	}
+
+	oah = swofp_lookup_action_handler(ahtype);
+	/* Unknown/unsupported action. */
+	if (oah == NULL) {
+		*err = OFP_ERRACTION_TYPE;
+		return (-1);
+	}
+
+	ahtotal -= min(ahlen, ahtotal);
+	if (ahtotal)
+		goto parse_next_action;
 
 	return (0);
 }
@@ -4591,7 +4761,8 @@ swofp_flow_entry_put_instructions(struct mbuf *m,
 	for (off = start; off < start + len; off += ntohs(oi->i_len)) {
 		oi = (struct ofp_instruction *)(mtod(m, caddr_t) + off);
 
-		if (swofp_validate_flow_instruction(oi, error))
+		if (swofp_validate_flow_instruction(oi,
+		    len - (off - start), error))
 			return (-1);
 
 		if ((inst = malloc(ntohs(oi->i_len), M_DEVBUF,
@@ -4667,7 +4838,7 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	struct ofp_match		*om;
 	struct swofp_flow_entry		*swfe, *old_swfe;
 	struct swofp_flow_table		*swft;
-	int				 error;
+	int				 error, omlen;
 	uint16_t			 etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
 
 	oh = mtod(m, struct ofp_header *);
@@ -4682,6 +4853,25 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	if (ofm->fm_cookie == UINT64_MAX) {
 		 /* XXX What is best error code? */
 		error = OFP_ERRFLOWMOD_UNKNOWN;
+		goto ofp_error;
+	}
+
+	omlen = ntohs(om->om_length);
+	/*
+	 * 1) ofp_match header must have at least its own size,
+	 *    otherwise memcpy() will fail later;
+	 * 2) OXM filters can't be bigger than the packet.
+	 */
+	if (omlen < sizeof(*om) ||
+	    omlen >= (m->m_len - sizeof(*ofm))) {
+		etype = OFP_ERRTYPE_BAD_MATCH;
+		error = OFP_ERRMATCH_BAD_LEN;
+		goto ofp_error;
+	}
+
+	/* Validate that the OXM are in-place and correct. */
+	if (swofp_validate_flow_match(om, &error)) {
+		etype = OFP_ERRTYPE_BAD_MATCH;
 		goto ofp_error;
 	}
 
@@ -4712,22 +4902,19 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	nanouptime(&swfe->swfe_installed_time);
 	nanouptime(&swfe->swfe_idle_time);
 
-	if (swofp_validate_flow_match(om, &error))
-		goto ofp_error;
-
-	if ((swfe->swfe_match = malloc(ntohs(om->om_length), M_DEVBUF,
+	if ((swfe->swfe_match = malloc(omlen, M_DEVBUF,
 	    M_DONTWAIT|M_ZERO)) == NULL) {
 		error = OFP_ERRFLOWMOD_UNKNOWN;
 		goto ofp_error_free_flow;
 	}
-	memcpy(swfe->swfe_match, om, ntohs(om->om_length));
+	memcpy(swfe->swfe_match, om, omlen);
 
 	/*
 	 * If the ofp_match structure is empty and priority is zero, then
 	 * this is a special flow type called table-miss which is the last
 	 * flow to match.
 	 */
-	if (ntohs(om->om_length) == sizeof(*om) && swfe->swfe_priority == 0)
+	if (omlen == sizeof(*om) && swfe->swfe_priority == 0)
 		swfe->swfe_tablemiss = 1;
 
 	if (swofp_flow_entry_put_instructions(m, swfe, &error)) {
@@ -4770,7 +4957,7 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 	struct ofp_match		*om;
 	struct swofp_flow_entry		*swfe;
 	struct swofp_flow_table		*swft;
-	int				 error;
+	int				 error, omlen;
 	uint16_t			 etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
 
 	oh = mtod(m, struct ofp_header *);
@@ -4785,6 +4972,25 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 	if (ofm->fm_cookie == UINT64_MAX) {
 		/* XXX What is best error code? */
 		error = OFP_ERRFLOWMOD_UNKNOWN;
+		goto ofp_error;
+	}
+
+	omlen = ntohs(om->om_length);
+	/*
+	 * 1) ofp_match header must have at least its own size,
+	 *    otherwise memcpy() will fail later;
+	 * 2) OXM filters can't be bigger than the packet.
+	 */
+	if (omlen < sizeof(*om) ||
+	    omlen >= (m->m_len - sizeof(*ofm))) {
+		etype = OFP_ERRTYPE_BAD_MATCH;
+		error = OFP_ERRMATCH_BAD_LEN;
+		goto ofp_error;
+	}
+
+	/* Validate that the OXM are in-place and correct. */
+	if (swofp_validate_flow_match(om, &error)) {
+		etype = OFP_ERRTYPE_BAD_MATCH;
 		goto ofp_error;
 	}
 
@@ -4852,9 +5058,30 @@ swofp_flow_mod_cmd_common_delete(struct switch_softc *sc, struct mbuf *m,
 	struct ofp_flow_mod	*ofm;
 	struct ofp_match	*om;
 	struct swofp_flow_table	*swft;
+	int			 error, omlen;
+	uint16_t		 etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
 
 	ofm = (struct ofp_flow_mod *)(mtod(m, caddr_t));
 	om = &ofm->fm_match;
+
+	omlen = ntohs(om->om_length);
+	/*
+	 * 1) ofp_match header must have at least its own size,
+	 *    otherwise memcpy() will fail later;
+	 * 2) OXM filters can't be bigger than the packet.
+	 */
+	if (omlen < sizeof(*om) ||
+	    omlen >= (m->m_len - sizeof(*ofm))) {
+		etype = OFP_ERRTYPE_BAD_MATCH;
+		error = OFP_ERRMATCH_BAD_LEN;
+		goto ofp_error;
+	}
+
+	/* Validate that the OXM are in-place and correct. */
+	if (swofp_validate_flow_match(om, &error)) {
+		etype = OFP_ERRTYPE_BAD_MATCH;
+		goto ofp_error;
+	}
 
 	TAILQ_FOREACH(swft, &ofs->swofs_table_list, swft_table_next) {
 		if ((ofm->fm_table_id != OFP_TABLE_ID_ALL) &&
@@ -4871,6 +5098,10 @@ swofp_flow_mod_cmd_common_delete(struct switch_softc *sc, struct mbuf *m,
 
 	m_freem(m);
 	return (0);
+
+ ofp_error:
+	swofp_send_error(sc, m, etype, error);
+	return (-1);
 }
 
 int
@@ -5096,7 +5327,7 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	struct ofp_packet_out		*pout;
 	struct ofp_action_header	*ah;
 	struct mbuf			*mc = NULL, *mcn;
-	int				 al_start, al_len, off;
+	int				 al_start, al_len, off, error;
 	struct switch_flow_classify	 swfcl = {};
 	struct swofp_pipline_desc	 swpld = { .swpld_swfcl = &swfcl };
 
@@ -5113,6 +5344,15 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	pout = mtod(m, struct ofp_packet_out *);
 
 	al_start = offsetof(struct ofp_packet_out, pout_actions);
+
+       /* Validate actions before anything else. */
+	ah = (struct ofp_action_header *)
+	    ((uint8_t *)pout + sizeof(*pout));
+	if (swofp_validate_action(ah, al_len, &error)) {
+		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_ACTION, error);
+		return (EINVAL);
+	}
+
 	if (pout->pout_buffer_id == OFP_PKTOUT_NO_BUFFER) {
 		/*
 		 * It's not necessary to deep copy at here because it's done
