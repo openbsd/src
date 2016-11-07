@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.23 2016/11/04 22:33:04 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.24 2016/11/07 13:18:18 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -408,6 +408,7 @@ ofp13_validate_packet_in(struct switchd *sc,
 	log_debug("\tmatch type %s length %zu (padded to %zu)",
 	    print_map(ntohs(om->om_type), ofp_match_map),
 	    mlen, OFP_ALIGN(mlen) + ETHER_ALIGN);
+	mlen -= sizeof(*om);
 
 	/* current match offset, aligned offset after all matches */
 	moff = off + sizeof(*om);
