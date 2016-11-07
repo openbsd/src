@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.50 2016/09/24 14:51:37 naddy Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.51 2016/11/07 09:08:06 mpi Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -112,14 +112,12 @@ tcp_delack(void *arg)
 	 * for whatever reason, it will restart the delayed
 	 * ACK callout.
 	 */
-
 	s = splsoftnet();
-	if (tp->t_flags & TF_DEAD) {
-		splx(s);
-		return;
-	}
+	if (tp->t_flags & TF_DEAD)
+		goto out;
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
+ out:
 	splx(s);
 }
 
@@ -194,10 +192,8 @@ tcp_timer_rexmt(void *arg)
 	int s;
 
 	s = splsoftnet();
-	if (tp->t_flags & TF_DEAD) {
-		splx(s);
-		return;
-	}
+	if (tp->t_flags & TF_DEAD)
+		goto out;
 
 	if ((tp->t_flags & TF_PMTUD_PEND) && tp->t_inpcb &&
 	    SEQ_GEQ(tp->t_pmtud_th_seq, tp->snd_una) &&
@@ -224,8 +220,7 @@ tcp_timer_rexmt(void *arg)
 		sin.sin_addr = tp->t_inpcb->inp_faddr;
 		in_pcbnotifyall(&tcbtable, sintosa(&sin),
 		    tp->t_inpcb->inp_rtableid, EMSGSIZE, tcp_mtudisc);
-		splx(s);
-		return;
+		goto out;
 	}
 
 #ifdef TCP_SACK
@@ -389,8 +384,7 @@ tcp_timer_persist(void *arg)
 	s = splsoftnet();
 	if ((tp->t_flags & TF_DEAD) ||
             TCP_TIMER_ISARMED(tp, TCPT_REXMT)) {
-		splx(s);
-		return;
+		goto out;
 	}
 	tcpstat.tcps_persisttimeo++;
 	/*
@@ -425,10 +419,8 @@ tcp_timer_keep(void *arg)
 	int s;
 
 	s = splsoftnet();
-	if (tp->t_flags & TF_DEAD) {
-		splx(s);
-		return;
-	}
+	if (tp->t_flags & TF_DEAD)
+		goto out;
 
 	tcpstat.tcps_keeptimeo++;
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
@@ -457,14 +449,13 @@ tcp_timer_keep(void *arg)
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
-
+ out:
 	splx(s);
 	return;
 
  dropit:
 	tcpstat.tcps_keepdrops++;
 	tp = tcp_drop(tp, ETIMEDOUT);
-
 	splx(s);
 }
 
@@ -475,10 +466,8 @@ tcp_timer_2msl(void *arg)
 	int s;
 
 	s = splsoftnet();
-	if (tp->t_flags & TF_DEAD) {
-		splx(s);
-		return;
-	}
+	if (tp->t_flags & TF_DEAD)
+		goto out;
 
 #ifdef TCP_SACK
 	tcp_timer_freesack(tp);
@@ -490,5 +479,6 @@ tcp_timer_2msl(void *arg)
 	else
 		tp = tcp_close(tp);
 
+ out:
 	splx(s);
 }
