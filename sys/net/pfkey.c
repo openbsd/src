@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.31 2016/09/05 15:12:30 claudio Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.32 2016/11/07 10:04:57 mpi Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -95,9 +95,6 @@ static int pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
     struct mbuf *nam, struct mbuf *control, struct proc *);
 static int pfkey_output(struct mbuf *mbuf, struct socket *socket);
 
-int pfkey_register(struct pfkey_version *version);
-int pfkey_unregister(struct pfkey_version *version);
-int pfkey_sendup(struct socket *socket, struct mbuf *packet, int more);
 void pfkey_init(void);
 int pfkey_buildprotosw(void);
 
