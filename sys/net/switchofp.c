@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.25 2016/11/03 15:01:53 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.26 2016/11/07 13:15:19 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -195,7 +195,7 @@ int	 swofp_validate_buckets(struct switch_softc *, struct mbuf *, uint8_t);
  * Flow entry
  */
 int	 swofp_flow_entry_put_instructions(struct mbuf *,
-	    struct swofp_flow_entry *);
+	    struct swofp_flow_entry *, int *error);
 void	 swofp_flow_entry_instruction_free(struct swofp_flow_entry *);
 void	 swofp_flow_entry_free(struct swofp_flow_entry **);
 void	 swofp_flow_entry_add(struct switch_softc *, struct swofp_flow_table *,
@@ -4570,12 +4570,12 @@ swofp_send_flow_removed(struct switch_softc *sc, struct swofp_flow_entry *swfe,
  */
 int
 swofp_flow_entry_put_instructions(struct mbuf *m,
-    struct swofp_flow_entry *swfe)
+    struct swofp_flow_entry *swfe, int *error)
 {
 	struct ofp_flow_mod	*ofm;
 	struct ofp_instruction	*oi;
 	caddr_t			 inst;
-	int			 start, len, off, error;
+	int			 start, len, off;
 
 	ofm = mtod(m, struct ofp_flow_mod *);
 
@@ -4591,41 +4591,62 @@ swofp_flow_entry_put_instructions(struct mbuf *m,
 	for (off = start; off < start + len; off += ntohs(oi->i_len)) {
 		oi = (struct ofp_instruction *)(mtod(m, caddr_t) + off);
 
-		if (swofp_validate_flow_instruction(oi, &error))
-			goto failed;
+		if (swofp_validate_flow_instruction(oi, error))
+			return (-1);
 
 		if ((inst = malloc(ntohs(oi->i_len), M_DEVBUF,
-			    M_DONTWAIT|M_ZERO)) == NULL) {
-				error = OFP_ERRFLOWMOD_UNKNOWN;
-				goto failed;
+		    M_DONTWAIT|M_ZERO)) == NULL) {
+			*error = OFP_ERRFLOWMOD_UNKNOWN;
+			return (-1);
 		}
 		memcpy(inst, oi, ntohs(oi->i_len));
 
 		switch (ntohs(oi->i_type)) {
 		case OFP_INSTRUCTION_T_GOTO_TABLE:
+			free(swfe->swfe_goto_table, M_DEVBUF,
+			    ntohs(oi->i_len));
+
 			swfe->swfe_goto_table =
 			    (struct ofp_instruction_goto_table *)inst;
 			break;
 		case OFP_INSTRUCTION_T_WRITE_META:
+			free(swfe->swfe_write_metadata, M_DEVBUF,
+			    ntohs(oi->i_len));
+
 			swfe->swfe_write_metadata =
 			    (struct ofp_instruction_write_metadata *)inst;
 			break;
 		case OFP_INSTRUCTION_T_WRITE_ACTIONS:
+			free(swfe->swfe_write_actions, M_DEVBUF,
+			    ntohs(oi->i_len));
+
 			swfe->swfe_write_actions =
 			    (struct ofp_instruction_actions *)inst;
 			break;
 		case OFP_INSTRUCTION_T_APPLY_ACTIONS:
+			free(swfe->swfe_apply_actions, M_DEVBUF,
+			    ntohs(oi->i_len));
+
 			swfe->swfe_apply_actions =
 			    (struct ofp_instruction_actions *)inst;
 			break;
 		case OFP_INSTRUCTION_T_CLEAR_ACTIONS:
+			free(swfe->swfe_clear_actions, M_DEVBUF,
+			    ntohs(oi->i_len));
+
 			swfe->swfe_clear_actions =
 			    (struct ofp_instruction_actions *)inst;
 			break;
 		case OFP_INSTRUCTION_T_METER:
+			free(swfe->swfe_meter, M_DEVBUF,
+			    ntohs(oi->i_len));
+
 			swfe->swfe_meter = (struct ofp_instruction_meter *)inst;
 			break;
 		case OFP_INSTRUCTION_T_EXPERIMENTER:
+			free(swfe->swfe_experimenter, M_DEVBUF,
+			    ntohs(oi->i_len));
+
 			swfe->swfe_experimenter =
 			    (struct ofp_instruction_experimenter *)inst;
 			break;
@@ -4636,9 +4657,6 @@ swofp_flow_entry_put_instructions(struct mbuf *m,
 	}
 
 	return (0);
-
- failed:
-	return (error);
 }
 
 int
@@ -4712,7 +4730,7 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	if (ntohs(om->om_length) == sizeof(*om) && swfe->swfe_priority == 0)
 		swfe->swfe_tablemiss = 1;
 
-	if ((error = swofp_flow_entry_put_instructions(m, swfe))) {
+	if (swofp_flow_entry_put_instructions(m, swfe, &error)) {
 		etype = OFP_ERRTYPE_BAD_INSTRUCTION;
 		goto ofp_error_free_flow;
 	}
@@ -4787,7 +4805,7 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 		    ntohl(ofm->fm_out_group)))
 			continue;
 
-		if ((error = swofp_flow_entry_put_instructions(m, swfe))) {
+		if (swofp_flow_entry_put_instructions(m, swfe, &error)) {
 			/*
 			 * If error occurs in swofp_flow_entry_put_instructions,
 			 * the flow entry might be half-way modified. So the
