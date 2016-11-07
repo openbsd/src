@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.70 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.71 2016/11/07 00:26:32 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -56,6 +56,8 @@ u_long uihash;		/* size of hash table - 1 */
 /*
  * Other process lists
  */
+struct tidhashhead *tidhashtbl;
+u_long tidhash;
 struct pidhashhead *pidhashtbl;
 u_long pidhash;
 struct pgrphashhead *pgrphashtbl;
@@ -87,10 +89,11 @@ procinit(void)
 	LIST_INIT(&allproc);
 
 
-	pidhashtbl = hashinit(maxthread / 4, M_PROC, M_NOWAIT, &pidhash);
+	tidhashtbl = hashinit(maxthread / 4, M_PROC, M_NOWAIT, &tidhash);
+	pidhashtbl = hashinit(maxprocess / 4, M_PROC, M_NOWAIT, &pidhash);
 	pgrphashtbl = hashinit(maxprocess / 4, M_PROC, M_NOWAIT, &pgrphash);
 	uihashtbl = hashinit(maxprocess / 16, M_PROC, M_NOWAIT, &uihash);
-	if (!pidhashtbl || !pgrphashtbl || !uihashtbl)
+	if (!tidhashtbl || !pidhashtbl || !pgrphashtbl || !uihashtbl)
 		panic("procinit: malloc");
 
 	pool_init(&proc_pool, sizeof(struct proc), 0, IPL_NONE,
@@ -166,12 +169,12 @@ inferior(struct process *pr, struct process *parent)
  * Locate a proc (thread) by number
  */
 struct proc *
-pfind(pid_t pid)
+pfind(pid_t tid)
 {
 	struct proc *p;
 
-	LIST_FOREACH(p, PIDHASH(pid), p_hash)
-		if (p->p_pid == pid)
+	LIST_FOREACH(p, TIDHASH(tid), p_hash)
+		if (p->p_tid == tid)
 			return (p);
 	return (NULL);
 }
@@ -182,11 +185,11 @@ pfind(pid_t pid)
 struct process *
 prfind(pid_t pid)
 {
-	struct proc *p;
+	struct process *pr;
 
-	LIST_FOREACH(p, PIDHASH(pid), p_hash)
-		if (p->p_pid == pid)
-			return (p->p_flag & P_THREAD ? NULL : p->p_p);
+	LIST_FOREACH(pr, PIDHASH(pid), ps_hash)
+		if (pr->ps_pid == pid)
+			return (pr);
 	return (NULL);
 }
 
@@ -213,7 +216,7 @@ zombiefind(pid_t pid)
 	struct process *pr;
 
 	LIST_FOREACH(pr, &zombprocess, ps_list)
-		if (pr->ps_mainproc->p_pid == pid)
+		if (pr->ps_pid == pid)
 			return (pr);
 	return (NULL);
 }
@@ -418,7 +421,7 @@ proc_printit(struct proc *p, const char *modif,
 	else
 		pst = pstat[(int)p->p_stat - 1];
 
-	(*pr)("PROC (%s) pid=%d stat=%s\n", p->p_comm, p->p_pid, pst);
+	(*pr)("PROC (%s) tid=%d stat=%s\n", p->p_comm, p->p_tid, pst);
 	(*pr)("    flags process=%b proc=%b\n",
 	    p->p_p->ps_flags, PS_BITS, p->p_flag, P_BITS);
 	(*pr)("    pri=%u, usrpri=%u, nice=%d\n",
@@ -468,7 +471,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'n':
-		db_printf("   TID  %5s  %5s  %5s  S  %10s  %-12s  %-16s\n",
+		db_printf("   PID  %5s  %5s  %5s  S  %10s  %-12s  %-16s\n",
 		    "PPID", "PGRP", "UID", "FLAGS", "WAIT", "COMMAND");
 		break;
 	case 'w':
@@ -495,7 +498,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 						continue;
 				}
 				db_printf("%c%5d  ", p == curproc ? '*' : ' ',
-					p->p_pid);
+				    *mode == 'n' ? pr->ps_pid : p->p_tid);
 
 				switch (*mode) {
 

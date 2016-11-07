@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.88 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.89 2016/11/07 00:26:32 guenther Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ void
 ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 {
 	ktrinitheaderraw(kth, type, p->p_p->ps_pid,
-	    p->p_pid + THREAD_PID_OFFSET);
+	    p->p_tid + THREAD_PID_OFFSET);
 	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
 }
 

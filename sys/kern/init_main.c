@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.261 2016/10/24 04:38:44 dlg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.262 2016/11/07 00:26:32 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -272,6 +272,7 @@ main(void *framep)
 	process_initialize(pr, p);
 
 	LIST_INSERT_HEAD(&allprocess, pr, ps_list);
+	LIST_INSERT_HEAD(PIDHASH(0), pr, ps_hash);
 	atomic_setbits_int(&pr->ps_flags, PS_SYSTEM);
 
 	/* Set the default routing table/domain. */
@@ -279,7 +280,7 @@ main(void *framep)
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	pr->ps_pgrp = &pgrp0;
-	LIST_INSERT_HEAD(PIDHASH(0), p, p_hash);
+	LIST_INSERT_HEAD(TIDHASH(0), p, p_hash);
 	LIST_INSERT_HEAD(PGRPHASH(0), &pgrp0, pg_hash);
 	LIST_INIT(&pgrp0.pg_members);
 	LIST_INSERT_HEAD(&pgrp0.pg_members, pr, ps_pglist);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.50 2016/10/02 23:11:55 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.51 2016/11/07 00:26:33 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -329,6 +329,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 
 		if (process.ps_mainproc == NULL)
 			continue;
+		/* XXX only needed for p_comm now */
 		if (KREAD(kd, (u_long)process.ps_mainproc, &proc)) {
 			_kvm_err(kd, kd->program, "can't read proc at %lx",
 			    (u_long)process.ps_mainproc);
@@ -337,7 +338,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 
 		if (op == KERN_FILE_BYPID) {
 			/* check if this is the pid we are looking for */
-			if (arg > 0 && proc.p_pid != (pid_t)arg)
+			if (arg > 0 && process.ps_pid != (pid_t)arg)
 				continue;
 			matched = 1;
 		}
@@ -393,7 +394,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, process.ps_textvp,
-			    &process, KERN_FILE_TEXT, proc.p_pid) == -1)
+			    &process, KERN_FILE_TEXT, process.ps_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -404,7 +405,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, filed.fd_cdir,
-			    &process, KERN_FILE_CDIR, proc.p_pid) == -1)
+			    &process, KERN_FILE_CDIR, process.ps_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -415,7 +416,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, filed.fd_rdir,
-			    &process, KERN_FILE_RDIR, proc.p_pid) == -1)
+			    &process, KERN_FILE_RDIR, process.ps_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -426,7 +427,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, process.ps_tracevp,
-			    &process, KERN_FILE_TRACE, proc.p_pid) == -1)
+			    &process, KERN_FILE_TRACE, process.ps_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -439,7 +440,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		    filed.fd_freefile > filed.fd_lastfile + 1) {
 			_kvm_err(kd, kd->program,
 			    "filedesc corrupted at %lx for pid %d",
-			    (u_long)process.ps_fd, proc.p_pid);
+			    (u_long)process.ps_fd, process.ps_pid);
 			goto cleanup;
 		}
 
@@ -453,7 +454,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				goto cleanup;
 			}
 			if (fill_file(kd, &kf, &file, (u_long)fp, NULL,
-			    &process, i, proc.p_pid) == -1)
+			    &process, i, process.ps_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.112 2016/07/05 00:35:09 tedu Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.113 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -778,16 +778,16 @@ void
 selrecord(struct proc *selector, struct selinfo *sip)
 {
 	struct proc *p;
-	pid_t mypid;
+	pid_t mytid;
 
-	mypid = selector->p_pid;
-	if (sip->si_selpid == mypid)
+	mytid = selector->p_tid;
+	if (sip->si_seltid == mytid)
 		return;
-	if (sip->si_selpid && (p = pfind(sip->si_selpid)) &&
+	if (sip->si_seltid && (p = pfind(sip->si_seltid)) &&
 	    p->p_wchan == (caddr_t)&selwait)
 		sip->si_flags |= SI_COLL;
 	else
-		sip->si_selpid = mypid;
+		sip->si_seltid = mytid;
 }
 
 /*
@@ -800,15 +800,15 @@ selwakeup(struct selinfo *sip)
 	int s;
 
 	KNOTE(&sip->si_note, 0);
-	if (sip->si_selpid == 0)
+	if (sip->si_seltid == 0)
 		return;
 	if (sip->si_flags & SI_COLL) {
 		nselcoll++;
 		sip->si_flags &= ~SI_COLL;
 		wakeup(&selwait);
 	}
-	p = pfind(sip->si_selpid);
-	sip->si_selpid = 0;
+	p = pfind(sip->si_seltid);
+	sip->si_seltid = 0;
 	if (p != NULL) {
 		SCHED_LOCK(s);
 		if (p->p_wchan == (caddr_t)&selwait) {

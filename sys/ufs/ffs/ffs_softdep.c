@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.134 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.135 2016/11/07 00:26:33 guenther Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -227,13 +227,13 @@ acquire_lock(struct lockit *lk, int line)
 		holder = lk->lkt_held;
 		original_line = lk->lkt_line;
 		FREE_LOCK(lk);
-		if (holder == CURPROC->p_pid)
+		if (holder == CURPROC->p_tid)
 			panic("softdep_lock: locking against myself, acquired at line %d, relocked at line %d", original_line, line);
 		else
 			panic("softdep_lock: lock held by %d, acquired at line %d, relocked at line %d", holder, original_line, line);
 	}
 	lk->lkt_spl = splbio();
-	lk->lkt_held = CURPROC->p_pid;
+	lk->lkt_held = CURPROC->p_tid;
 	lk->lkt_line = line;
 	lockcnt++;
 }
@@ -258,12 +258,12 @@ acquire_lock_interlocked(struct lockit *lk, int s, int line)
 		holder = lk->lkt_held;
 		original_line = lk->lkt_line;
 		FREE_LOCK_INTERLOCKED(lk);
-		if (holder == CURPROC->p_pid)
+		if (holder == CURPROC->p_tid)
 			panic("softdep_lock: locking against myself, acquired at line %d, relocked at line %d", original_line, line);
 		else
 			panic("softdep_lock: lock held by %d, acquired at line %d, relocked at line %d", holder, original_line, line);
 	}
-	lk->lkt_held = CURPROC->p_pid;
+	lk->lkt_held = CURPROC->p_tid;
 	lk->lkt_line = line;
 	lk->lkt_spl = s;
 	lockcnt++;
@@ -321,7 +321,7 @@ sema_get(struct sema *semap, struct lockit *interlock)
 		}
 		return (0);
 	}
-	semap->holder = CURPROC->p_pid;
+	semap->holder = CURPROC->p_tid;
 	if (interlock != NULL)
 		FREE_LOCK(interlock);
 	return (1);
@@ -331,7 +331,7 @@ STATIC void
 sema_release(struct sema *semap)
 {
 
-	if (semap->value <= 0 || semap->holder != CURPROC->p_pid) {
+	if (semap->value <= 0 || semap->holder != CURPROC->p_tid) {
 #ifdef DEBUG
 		if (lk.lkt_held != -1)
 			FREE_LOCK(&lk);

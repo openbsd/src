@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.46 2016/10/18 00:43:57 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.47 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -1062,23 +1062,23 @@ db_setpcb(addr, have_addr, count, modif)
 	struct proc *p;
 
 	if (!have_addr) {
-		db_printf("What PID do you want to map in?\n");
+		db_printf("What TID do you want to map in?\n");
 		return;
 	}
 
 	LIST_FOREACH(p, &allproc, p_list) {
-		if (p->p_stat && p->p_pid == addr) {
+		if (p->p_stat && p->p_tid == addr) {
 			curproc = p;
 			curpcb = (struct pcb*)p->p_addr;
 			if (p->p_vmspace->vm_map.pmap->pm_ctx) {
 				switchtoctx(p->p_vmspace->vm_map.pmap->pm_ctx);
 				return;
 			}
-			db_printf("PID %ld has a null context.\n", addr);
+			db_printf("TID %ld has a null context.\n", addr);
 			return;
 		}
 	}
-	db_printf("PID %ld not found.\n", addr);
+	db_printf("TID %ld not found.\n", addr);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfsnode.h,v 1.14 2013/01/15 11:20:55 jsing Exp $	*/
+/*	$OpenBSD: mfsnode.h,v 1.15 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: mfsnode.h,v 1.3 1996/02/09 22:31:31 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ struct mfsnode {
 	struct bufq mfs_bufq;		/* bufq for MFS I/O */
 	caddr_t	mfs_baseoff;		/* base of file system in memory */
 	long	mfs_size;		/* size of memory file system */
-	pid_t	mfs_pid;		/* supporting process pid */
+	pid_t	mfs_tid;		/* supporting thread's tid */
 	struct	buf *mfs_buflist;	/* list of I/O requests */
 	int	mfs_shutdown;		/* shutdown request */
 };

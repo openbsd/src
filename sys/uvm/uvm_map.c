@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.225 2016/09/16 02:35:42 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.226 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2951,7 +2951,7 @@ uvm_page_printit(pg, full, pr)
 	    pg->uobject, pg->uanon, (long long)pg->offset);
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->pg_flags & PG_BUSY)
-		(*pr)("  owning process = %d, tag=%s",
+		(*pr)("  owning thread = %d, tag=%s",
 		    pg->owner, pg->owner_tag);
 	else
 		(*pr)("  page not busy, no owner");

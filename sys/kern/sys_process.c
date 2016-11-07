@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.73 2016/10/19 08:31:33 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.74 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -109,6 +109,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	switch (req) {
 	case PT_TRACE_ME:
 		t = p;
+		tr = t->p_p;
 		break;
 
 	/* calls that only operate on the PID */
@@ -124,19 +125,21 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	case PT_GET_PROCESS_STATE:
 	case PT_GET_THREAD_FIRST:
 	case PT_GET_THREAD_NEXT:
+	case PT_DETACH:
 	default:
 		/* Find the process we're supposed to be operating on. */
-		if ((t = pfind(SCARG(uap, pid))) == NULL)
+		if ((tr = prfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
-		if (t->p_flag & P_THREAD)
-			return (ESRCH);
+		t = tr->ps_mainproc;	/* XXX */
 		break;
 
 	/* calls that accept a PID or a thread ID */
 	case PT_CONTINUE:
-	case PT_DETACH:
 #ifdef PT_STEP
 	case PT_STEP:
+#endif
+#ifdef PT_WCOOKIE
+	case PT_WCOOKIE:
 #endif
 	case PT_GETREGS:
 	case PT_SETREGS:
@@ -156,15 +159,14 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			t = pfind(SCARG(uap, pid) - THREAD_PID_OFFSET);
 			if (t == NULL)
 				return (ESRCH);
+			tr = t->p_p;
 		} else {
-			if ((t = pfind(SCARG(uap, pid))) == NULL)
+			if ((tr = prfind(SCARG(uap, pid))) == NULL)
 				return (ESRCH);
-			if (t->p_flag & P_THREAD)
-				return (ESRCH);
+			t = tr->ps_mainproc;	/* XXX */
 		}
 		break;
 	}
-	tr = t->p_p;
 
 	if ((tr->ps_flags & PS_INEXEC) != 0)
 		return (EAGAIN);
@@ -327,7 +329,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (t == NULL)
 			pts.pts_tid = -1;
 		else
-			pts.pts_tid = t->p_pid + THREAD_PID_OFFSET;
+			pts.pts_tid = t->p_tid + THREAD_PID_OFFSET;
 		return (copyout(&pts, SCARG(uap, addr), sizeof(pts)));
 
 	default:			/* It was not a legal request. */
@@ -571,7 +573,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 
 		if (tr->ps_single)
 			tr->ps_ptstat->pe_tid =
-			    tr->ps_single->p_pid + THREAD_PID_OFFSET;
+			    tr->ps_single->p_tid + THREAD_PID_OFFSET;
 
 		return (copyout(tr->ps_ptstat, SCARG(uap, addr),
 		    sizeof(*tr->ps_ptstat)));

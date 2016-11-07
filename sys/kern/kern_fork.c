@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.191 2016/10/22 02:55:36 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.192 2016/11/07 00:26:32 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -76,7 +76,9 @@ struct	forkstat forkstat;
 
 void fork_return(void *);
 void tfork_child_return(void *);
-int pidtaken(pid_t);
+pid_t alloctid(void);
+pid_t allocpid(void);
+int ispidtaken(pid_t);
 
 void process_new(struct proc *, struct process *, int);
 
@@ -191,6 +193,7 @@ process_new(struct proc *p, struct process *parent, int flags)
 	    (caddr_t)&pr->ps_endcopy - (caddr_t)&pr->ps_startcopy);
 
 	process_initialize(pr, p);
+	pr->ps_pid = allocpid();
 
 	/* post-copy fixups */
 	pr->ps_pptr = parent;
@@ -428,11 +431,12 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	if (pr->ps_flags & PS_TRACED && flags & FORK_FORK)
 		newptstat = malloc(sizeof(*newptstat), M_SUBPROC, M_WAITOK);
 
-	p->p_pid = allocpid();
+	p->p_tid = alloctid();
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);
-	LIST_INSERT_HEAD(PIDHASH(p->p_pid), p, p_hash);
+	LIST_INSERT_HEAD(TIDHASH(p->p_tid), p, p_hash);
 	if ((flags & FORK_THREAD) == 0) {
+		LIST_INSERT_HEAD(PIDHASH(pr->ps_pid), pr, ps_hash);
 		LIST_INSERT_AFTER(curpr, pr, ps_pglist);
 		LIST_INSERT_HEAD(&curpr->ps_children, pr, ps_sibling);
 
@@ -466,9 +470,9 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	}
 
 	if (tidptr != NULL) {
-		pid_t	pid = p->p_pid + THREAD_PID_OFFSET;
+		pid_t	tid = p->p_tid + THREAD_PID_OFFSET;
 
-		if (copyout(&pid, tidptr, sizeof(pid)))
+		if (copyout(&tid, tidptr, sizeof(tid)))
 			psignal(curp, SIGSEGV);
 	}
 
@@ -500,7 +504,7 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	 * Notify any interested parties about the new process.
 	 */
 	if ((flags & FORK_THREAD) == 0)
-		KNOTE(&curpr->ps_klist, NOTE_FORK | p->p_pid);
+		KNOTE(&curpr->ps_klist, NOTE_FORK | pr->ps_pid);
 
 	/*
 	 * Update stats now that we know the fork was successful.
@@ -539,11 +543,25 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	 * marking us as parent via retval[1].
 	 */
 	if (retval != NULL) {
-		retval[0] = p->p_pid +
-		    (flags & FORK_THREAD ? THREAD_PID_OFFSET : 0);
+		retval[0] = (flags & FORK_THREAD) == 0 ? pr->ps_pid :
+		    (p->p_tid + THREAD_PID_OFFSET);
 		retval[1] = 0;
 	}
 	return (0);
+}
+
+/* Find an unused tid */
+pid_t
+alloctid(void)
+{
+	pid_t tid;
+
+	do {
+		/* (0 .. TID_MASK+1] */
+		tid = 1 + (arc4random() & TID_MASK);
+	} while (pfind(tid) != NULL);
+
+	return (tid);
 }
 
 /*
@@ -559,7 +577,7 @@ ispidtaken(pid_t pid)
 		if (pid == oldpids[i])
 			return (1);
 
-	if (pfind(pid) != NULL)
+	if (prfind(pid) != NULL)
 		return (1);
 	if (pgfind(pid) != NULL)
 		return (1);

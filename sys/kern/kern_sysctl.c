@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.318 2016/10/24 04:38:44 dlg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.319 2016/11/07 00:26:32 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1588,7 +1588,6 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 	    show_pointers);
 
 	/* stuff that's too painful to generalize into the macros */
-	ki->p_pid = pr->ps_pid;
 	if (pr->ps_pptr)
 		ki->p_ppid = pr->ps_pptr->ps_pid;
 	if (s->s_leader)
@@ -1986,7 +1985,7 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 
 	pid = name[0];
-	if (pid == cp->p_pid) {
+	if (pid == cp->p_p->ps_pid) {
 		/* Self process mapping. */
 		findpr = cp->p_p;
 	} else if (pid > 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.145 2016/09/16 02:35:42 dlg Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.146 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1077,7 +1077,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
  *
  * => this is a debugging function that keeps track of who sets PG_BUSY
  *	and where they do it.   it can be used to track down problems
- *	such a process setting "PG_BUSY" and never releasing it.
+ *	such a thread setting "PG_BUSY" and never releasing it.
  * => if "tag" is NULL then we are releasing page ownership
  */
 void
@@ -1087,11 +1087,11 @@ uvm_page_own(struct vm_page *pg, char *tag)
 	if (tag) {
 		if (pg->owner_tag) {
 			printf("uvm_page_own: page %p already owned "
-			    "by proc %d [%s]\n", pg,
+			    "by thread %d [%s]\n", pg,
 			     pg->owner, pg->owner_tag);
 			panic("uvm_page_own");
 		}
-		pg->owner = (curproc) ? curproc->p_pid :  (pid_t) -1;
+		pg->owner = (curproc) ? curproc->p_tid :  (pid_t) -1;
 		pg->owner_tag = tag;
 		return;
 	}

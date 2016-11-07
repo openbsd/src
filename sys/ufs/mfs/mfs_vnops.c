@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.48 2016/09/08 16:44:46 tedu Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.49 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ mfs_strategy(void *v)
 		panic("mfs_strategy: bad dev");
 
 	mfsp = VTOMFS(vp);
-	if (p != NULL && mfsp->mfs_pid == p->p_pid) {
+	if (p != NULL && mfsp->mfs_tid == p->p_tid) {
 		mfs_doio(mfsp, bp);
 	} else {
 		bufq_queue(&mfsp->mfs_bufq, bp);
@@ -252,7 +252,7 @@ mfs_print(void *v)
 	struct vop_print_args *ap = v;
 	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
-	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
+	printf("tag VT_MFS, tid %d, base %p, size %ld\n", mfsp->mfs_tid,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
 	return (0);
 }

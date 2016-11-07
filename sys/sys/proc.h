@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.226 2016/09/03 08:47:24 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.227 2016/11/07 00:26:32 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -168,11 +168,13 @@ struct process {
 	struct	process *ps_pptr; 	/* Pointer to parent process. */
 	LIST_ENTRY(process) ps_sibling;	/* List of sibling processes. */
 	LIST_HEAD(, process) ps_children;/* Pointer to list of children. */
+	LIST_ENTRY(process) ps_hash;    /* Hash chain. */
 
 	struct	sigacts *ps_sigacts;	/* Signal actions, state */
 	struct	vnode *ps_textvp;	/* Vnode of executable. */
 	struct	filedesc *ps_fd;	/* Ptr to open files structure */
 	struct	vmspace *ps_vmspace;	/* Address space */
+	pid_t	ps_pid;			/* Process identifier. */
 
 /* The following fields are all zeroed upon creation in process_new. */
 #define	ps_startzero	ps_klist
@@ -236,7 +238,6 @@ struct process {
 	struct	timeout ps_realit_to;	/* real-time itimer trampoline. */
 };
 
-#define	ps_pid		ps_mainproc->p_pid
 #define	ps_session	ps_pgrp->pg_session
 #define	ps_pgid		ps_pgrp->pg_id
 
@@ -294,7 +295,7 @@ struct proc {
 	char	p_pad1[1];
 	u_char	p_descfd;		/* if not 255, fdesc permits this fd */
 
-	pid_t	p_pid;			/* Process identifier. */
+	pid_t	p_tid;			/* Thread identifier. */
 	LIST_ENTRY(proc) p_hash;	/* Hash chain. */
 
 /* The following fields are all zeroed upon creation in fork. */
@@ -403,7 +404,7 @@ struct proc {
      "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" "\027XX" \
      "\030CONTINUED" "\033THREAD" "\034SUSPSIG" "\035SOFTDEP" "\037CPUPEG")
 
-#define	THREAD_PID_OFFSET	1000000
+#define	THREAD_PID_OFFSET	100000
 
 #ifdef _KERNEL
 
@@ -420,8 +421,15 @@ struct uidinfo *uid_find(uid_t);
  * We use process IDs <= PID_MAX; PID_MAX + 1 must also fit in a pid_t,
  * as it is used to represent "no process group".
  * We set PID_MAX to 99999 to keep it in 5 columns in ps
+ * When exposed to userspace, thread IDs have THREAD_PID_OFFSET
+ * added to keep them from overlapping the PID range.  For them,
+ * we use a * a (0 .. 2^n] range for cheapness, picking 'n' such
+ * that 2^n + THREAD_PID_OFFSET and THREAD_PID_OFFSET have
+ * the same number of columns when printed.
  */
-#define	PID_MAX		99999
+#define	PID_MAX			99999
+#define	TID_MASK		0x7ffff
+
 #define	NO_PID		(PID_MAX+1)
 
 #define SESS_LEADER(pr)	((pr)->ps_session->s_leader == (pr))
@@ -453,8 +461,12 @@ struct uidinfo *uid_find(uid_t);
 #define EXIT_THREAD		0x00000002
 #define EXIT_THREAD_NOCHECK	0x00000003
 
+#define	TIDHASH(tid)	(&tidhashtbl[(tid) & tidhash])
+extern LIST_HEAD(tidhashhead, proc) *tidhashtbl;
+extern u_long tidhash;
+
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
-extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
+extern LIST_HEAD(pidhashhead, process) *pidhashtbl;
 extern u_long pidhash;
 
 #define	PGRPHASH(pgid)	(&pgrphashtbl[(pgid) & pgrphash])
@@ -484,8 +496,6 @@ extern struct pool ucred_pool;		/* memory pool for ucreds */
 extern struct pool session_pool;	/* memory pool for sessions */
 extern struct pool pgrp_pool;		/* memory pool for pgrps */
 
-int	ispidtaken(pid_t);
-pid_t	allocpid(void);
 void	freepid(pid_t);
 
 struct process *prfind(pid_t);	/* Find process by id. */

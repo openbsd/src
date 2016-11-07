@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.52 2016/09/08 16:57:29 tedu Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.53 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	mfsp->mfs_baseoff = args.base;
 	mfsp->mfs_size = args.size;
 	mfsp->mfs_vnode = devvp;
-	mfsp->mfs_pid = p->p_pid;
+	mfsp->mfs_tid = p->p_tid;
 	bufq_init(&mfsp->mfs_bufq, BUFQ_FIFO);
 	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
 		mfsp->mfs_shutdown = 1;

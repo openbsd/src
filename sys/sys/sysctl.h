@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.169 2016/10/07 19:04:44 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.170 2016/11/07 00:26:32 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -494,12 +494,13 @@ struct kinfo_vmentry {
  *	uc - source struct ucreds
  *	pg - source struct pgrp
  *	paddr - kernel address of the source struct proc
+ *	praddr - kernel address of the source struct process
  *	sess - source struct session
  *	vm - source struct vmspace
  *	lim - source struct plimits
  *	sa - source struct sigacts
  * There are some members that are not handled by these macros
- * because they're too painful to generalize: p_pid, p_ppid, p_sid, p_tdev,
+ * because they're too painful to generalize: p_ppid, p_sid, p_tdev,
  * p_tpgid, p_tsess, p_vm_rssize, p_u[us]time_{sec,usec}, p_cpuid
  */
 
@@ -522,6 +523,7 @@ do {									\
 	(kp)->p_stats = 0;						\
 	(kp)->p_exitsig = 0;						\
 	(kp)->p_flag = (p)->p_flag;					\
+	(kp)->p_pid = (pr)->ps_pid;					\
 	(kp)->p_psflags = (pr)->ps_flags;				\
 									\
 	(kp)->p__pgid = (pg)->pg_id;					\
@@ -543,7 +545,7 @@ do {									\
 	if (isthread) {							\
 		(kp)->p_rtime_sec = (p)->p_tu.tu_runtime.tv_sec;	\
 		(kp)->p_rtime_usec = (p)->p_tu.tu_runtime.tv_nsec/1000;	\
-		(kp)->p_tid = (p)->p_pid + THREAD_PID_OFFSET;		\
+		(kp)->p_tid = (p)->p_tid + THREAD_PID_OFFSET;		\
 		(kp)->p_uticks = (p)->p_tu.tu_uticks;			\
 		(kp)->p_sticks = (p)->p_tu.tu_sticks;			\
 		(kp)->p_iticks = (p)->p_tu.tu_iticks;			\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.62 2016/09/16 02:35:42 dlg Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.63 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -112,7 +112,7 @@ struct vm_page {
 
 #if defined(UVM_PAGE_TRKOWN)
 	/* debugging fields to track page ownership */
-	pid_t			owner;		/* proc that set PG_BUSY */
+	pid_t			owner;		/* thread that set PG_BUSY */
 	char			*owner_tag;	/* why it was set busy */
 #endif
 };

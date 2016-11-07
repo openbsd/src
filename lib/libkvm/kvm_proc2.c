@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.26 2015/09/08 15:40:32 dlg Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.27 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,14 +112,14 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 	struct kinfo_proc kp;
 	struct session sess;
 	struct ucred ucred;
-	struct proc proc, proc2, *p;
+	struct proc proc, *p;
 	struct process process, process2;
 	struct pgrp pgrp;
 	struct tty tty;
 	struct sigacts sa, *sap;
 	struct vmspace vm, *vmp;
 	struct plimit limits, *limp;
-	pid_t process_pid, parent_pid, leader_pid;
+	pid_t parent_pid, leader_pid;
 	int cnt = 0;
 	int dothreads = 0;
 
@@ -139,12 +139,6 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 			continue;
 		if (process.ps_flags & PS_EMBRYO)
 			continue;
-		if (KREAD(kd, (u_long)process.ps_mainproc, &proc)) {
-			_kvm_err(kd, kd->program, "can't read proc at %lx",
-			    (u_long)process.ps_mainproc);
-			return (-1);
-		}
-		process_pid = proc.p_pid;
 		if (KREAD(kd, (u_long)process.ps_ucred, &ucred)) {
 			_kvm_err(kd, kd->program, "can't read ucred at %lx",
 			    (u_long)process.ps_ucred);
@@ -173,13 +167,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 				    (u_long)process.ps_pptr);
 				return (-1);
 			}
-			if (KREAD(kd, (u_long)process2.ps_mainproc, &proc2)) {
-				_kvm_err(kd, kd->program,
-				    "can't read proc at %lx",
-				    (u_long)process2.ps_mainproc);
-				return (-1);
-			}
-			parent_pid = proc2.p_pid;
+			parent_pid = process2.ps_pid;
 		}
 		else
 			parent_pid = 0;
@@ -190,13 +178,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 				    (u_long)sess.s_leader);
 				return (-1);
 			}
-			if (KREAD(kd, (u_long)process2.ps_mainproc, &proc2)) {
-				_kvm_err(kd, kd->program,
-				    "can't read proc at %lx",
-				    (u_long)process2.ps_mainproc);
-				return (-1);
-			}
-			leader_pid = proc2.p_pid;
+			leader_pid = process2.ps_pid;
 		}
 		else
 			leader_pid = 0;
@@ -247,7 +229,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 			break;
 
 		case KERN_PROC_ALL:
-			if (proc.p_flag & P_SYSTEM)
+			if (process.ps_flags & PS_SYSTEM)
 				continue;
 			break;
 
@@ -284,11 +266,10 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 
 #define do_copy_str(_d, _s, _l)	kvm_read(kd, (u_long)(_s), (_d), (_l)-1)
 		FILL_KPROC(&kp, do_copy_str, &proc, &process,
-		    &ucred, &pgrp, process.ps_mainproc, proc.p_p, &sess,
+		    &ucred, &pgrp, process.ps_mainproc, pr, &sess,
 		    vmp, limp, sap, 0, 1);
 
 		/* stuff that's too painful to generalize */
-		kp.p_pid = process_pid;
 		kp.p_ppid = parent_pid;
 		kp.p_sid = leader_pid;
 		if ((process.ps_flags & PS_CONTROLT) && sess.s_ttyp != NULL) {
@@ -310,6 +291,12 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 
 		/* update %cpu for all threads */
 		if (dothreads) {
+			if (KREAD(kd, (u_long)process.ps_mainproc, &proc)) {
+				_kvm_err(kd, kd->program,
+				    "can't read proc at %lx",
+				    (u_long)process.ps_mainproc);
+				return (-1);
+			}
 			kp.p_pctcpu = proc.p_pctcpu;
 			kp.p_stat   = proc.p_stat;
 		} else {
@@ -360,11 +347,10 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 				return (-1);
 			}
 			FILL_KPROC(&kp, do_copy_str, &proc, &process,
-			    &ucred, &pgrp, p, proc.p_p, &sess, vmp, limp, sap,
+			    &ucred, &pgrp, p, pr, &sess, vmp, limp, sap,
 			    1, 1);
 
 			/* see above */
-			kp.p_pid = process_pid;
 			kp.p_ppid = parent_pid;
 			kp.p_sid = leader_pid;
 			if ((process.ps_flags & PS_CONTROLT) &&
