@@ -55,6 +55,7 @@
 #include <sys/timetc.h>
 #include <sys/task.h>
 #include <sys/syslog.h>
+#include <sys/socket.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -63,6 +64,11 @@
 #include <machine/i82489var.h>
 
 #include <dev/rndvar.h>
+
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <dev/pv/pvvar.h>
 #include <dev/pv/pvreg.h>
@@ -153,13 +159,6 @@ static const struct {
 	  sizeof("Guest/Parameters") }
 };
 
-/* As specified in SYSTEM_INFO.wProcessorArchitecture */
-#ifdef __amd64__
-static const char			march[] = "9";
-#else
-static const char			march[] = "0";
-#endif
-
 static const struct {
 	int				 keyidx;
 	const char			*keyname;
@@ -174,7 +173,11 @@ static const struct {
 	{ 6, "OSMajorVersion",			"6" }, /* free commit for mike */
 	{ 7, "OSMinorVersion",			&osrelease[2] },
 	{ 8, "OSVersion",			osrelease },
-	{ 9, "ProcessorArchitecture",		march }
+#ifdef __amd64__ /* As specified in SYSTEM_INFO.wProcessorArchitecture */
+	{ 9, "ProcessorArchitecture",		"9" }
+#else
+	{ 9, "ProcessorArchitecture",		"0" }
+#endif
 };
 
 void
@@ -820,6 +823,141 @@ hv_kvp_attach(struct hv_ic_dev *dv)
 	return (0);
 }
 
+static int
+nibble(int ch)
+{
+	if (ch >= '0' && ch <= '9')
+		return (ch - '0');
+	if (ch >= 'A' && ch <= 'F')
+		return (10 + ch - 'A');
+	if (ch >= 'a' && ch <= 'f')
+		return (10 + ch - 'a');
+	return (-1);
+}
+
+static int
+kvp_get_ip_info(struct hv_kvp *kvp, const uint8_t *mac, uint8_t *family,
+    uint8_t *addr, uint8_t *netmask, size_t addrlen)
+{
+	struct ifnet *ifp;
+	struct ifaddr *ifa, *ifa6, *ifa6ll;
+	struct sockaddr_in *sin;
+	struct sockaddr_in6 *sin6, sa6;
+	uint8_t	enaddr[ETHER_ADDR_LEN];
+	uint8_t ipaddr[INET6_ADDRSTRLEN];
+	int i, j, lo, hi, s, af;
+
+	/* Convert from the UTF-16LE string format to binary */
+	for (i = 0, j = 0; j < ETHER_ADDR_LEN; i += 6) {
+		if ((hi = nibble(mac[i])) == -1 ||
+		    (lo = nibble(mac[i+2])) == -1)
+			return (-1);
+		enaddr[j++] = hi << 4 | lo;
+	}
+
+	switch (*family) {
+	case ADDR_FAMILY_NONE:
+		af = AF_UNSPEC;
+		break;
+	case ADDR_FAMILY_IPV4:
+		af = AF_INET;
+		break;
+	case ADDR_FAMILY_IPV6:
+		af = AF_INET6;
+		break;
+	}
+
+	KERNEL_LOCK();
+	s = splnet();
+
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (!memcmp(LLADDR(ifp->if_sadl), enaddr, ETHER_ADDR_LEN))
+			break;
+	}
+	if (ifp == NULL) {
+		splx(s);
+		KERNEL_UNLOCK();
+		return (-1);
+	}
+
+	ifa6 = ifa6ll = NULL;
+
+	/* Try to find a best matching address, preferring IPv4 */
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		/*
+		 * First IPv4 address is always a best match unless
+		 * we were asked for for an IPv6 address.
+		 */
+		if ((af == AF_INET || af == AF_UNSPEC) &&
+		    (ifa->ifa_addr->sa_family == AF_INET)) {
+			af = AF_INET;
+			goto found;
+		}
+		if ((af == AF_INET6 || af == AF_UNSPEC) &&
+		    (ifa->ifa_addr->sa_family == AF_INET6)) {
+			if (!IN6_IS_ADDR_LINKLOCAL(
+			    &satosin6(ifa->ifa_addr)->sin6_addr)) {
+				/* Done if we're looking for an IPv6 address */
+				if (af == AF_INET6)
+					goto found;
+				/* Stick to the first one */
+				if (ifa6 == NULL)
+					ifa6 = ifa;
+			} else	/* Pick the last one */
+				ifa6ll = ifa;
+		}
+	}
+	/* If we haven't found any IPv4 or IPv6 direct matches... */
+	if (ifa == NULL) {
+		/* ... try the last global IPv6 address... */
+		if (ifa6 != NULL)
+			ifa = ifa6;
+		/* ... or the last link-local...  */
+		else if (ifa6ll != NULL)
+			ifa = ifa6ll;
+		else {
+			splx(s);
+			KERNEL_UNLOCK();
+			return (-1);
+		}
+	}
+ found:
+	switch (af) {
+	case AF_INET:
+		sin = satosin(ifa->ifa_addr);
+		inet_ntop(AF_INET, &sin->sin_addr, ipaddr, sizeof(ipaddr));
+		copyout_utf16le(addr, ipaddr, addrlen, INET_ADDRSTRLEN);
+
+		sin = satosin(ifa->ifa_netmask);
+		inet_ntop(AF_INET, &sin->sin_addr, ipaddr, sizeof(ipaddr));
+		copyout_utf16le(netmask, ipaddr, addrlen, INET_ADDRSTRLEN);
+
+		*family = ADDR_FAMILY_IPV4;
+		break;
+	case AF_UNSPEC:
+	case AF_INET6:
+		sin6 = satosin6(ifa->ifa_addr);
+		if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr)) {
+			sa6 = *satosin6(ifa->ifa_addr);
+			sa6.sin6_addr.s6_addr16[1] = 0;
+			sin6 = &sa6;
+		}
+		inet_ntop(AF_INET6, &sin6->sin6_addr, ipaddr, sizeof(ipaddr));
+		copyout_utf16le(addr, ipaddr, addrlen, INET6_ADDRSTRLEN);
+
+		sin6 = satosin6(ifa->ifa_netmask);
+		inet_ntop(AF_INET6, &sin6->sin6_addr, ipaddr, sizeof(ipaddr));
+		copyout_utf16le(netmask, ipaddr, addrlen, INET6_ADDRSTRLEN);
+
+		*family = ADDR_FAMILY_IPV6;
+		break;
+	}
+
+	splx(s);
+	KERNEL_UNLOCK();
+
+	return (0);
+}
 
 static void
 hv_kvp_process(struct hv_kvp *kvp, struct vmbus_icmsg_kvp *msg)
@@ -877,6 +1015,30 @@ hv_kvp_process(struct hv_kvp *kvp, struct vmbus_icmsg_kvp *msg)
 		else
 			kvh->kvh_err = HV_KVP_S_OK;
 		break;
+	case HV_KVP_OP_GET_IP_INFO:
+		if (VMBUS_ICVER_MAJOR(msg->ic_hdr.ic_msgver) <= 4) {
+			struct vmbus_icmsg_kvp_addr *amsg;
+			struct hv_kvp_msg_addr *kva;
+
+			amsg = (struct vmbus_icmsg_kvp_addr *)msg;
+			kva = &amsg->ic_kvm;
+
+			if (kvp_get_ip_info(kvp, kva->kvm_mac,
+			    &kva->kvm_family, kva->kvm_addr,
+			    kva->kvm_netmask, sizeof(kva->kvm_addr)))
+				kvh->kvh_err = HV_KVP_S_CONT;
+			else
+				kvh->kvh_err = HV_KVP_S_OK;
+		} else {
+			DPRINTF("KVP GET_IP_INFO fw %u.%u msg %u.%u dsize=%u\n",
+			    VMBUS_ICVER_MAJOR(msg->ic_hdr.ic_fwver),
+			    VMBUS_ICVER_MINOR(msg->ic_hdr.ic_fwver),
+			    VMBUS_ICVER_MAJOR(msg->ic_hdr.ic_msgver),
+			    VMBUS_ICVER_MINOR(msg->ic_hdr.ic_msgver),
+			    msg->ic_hdr.ic_dsize);
+			kvh->kvh_err = HV_KVP_S_CONT;
+		}
+		break;
 	default:
 		DPRINTF("KVP message op %u pool %u\n", kvh->kvh_op,
 		    kvh->kvh_pool);
@@ -924,7 +1086,7 @@ hv_kvp(void *arg)
 				break;
 			default:
 				fwver = VMBUS_IC_VERSION(3, 0);
-				msgver = VMBUS_IC_VERSION(5, 0);
+				msgver = VMBUS_IC_VERSION(4, 0);
 			}
 			hv_ic_negotiate(hdr, &rlen, fwver, msgver);
 			break;

@@ -178,30 +178,45 @@ struct hv_kvp_msg_del {
 	uint8_t			kvm_key[HV_KVP_MAX_KEY_SIZE];
 } __packed;
 
+#define ADDR_FAMILY_NONE	0x00
+#define ADDR_FAMILY_IPV4	0x01
+#define ADDR_FAMILY_IPV6	0x02
+
+#define MAX_MAC_ADDR_SIZE	256
+#define MAX_IP_ADDR_SIZE	2048
+#define MAX_GATEWAY_SIZE	1024
+
 struct hv_kvp_msg_addr {
-	uint16_t		kvm_mac[128];
+	uint8_t			kvm_mac[MAX_MAC_ADDR_SIZE];
 	uint8_t			kvm_family;
-#define ADDR_FAMILY_NONE	 0x00
-#define ADDR_FAMILY_IPV4	 0x01
-#define ADDR_FAMILY_IPV6	 0x02
 	uint8_t			kvm_dhcp;
-	uint16_t		kvm_addr[1024];
-	uint16_t		kvm_net[1024];
-	uint16_t		kvm_gw[512];
-	uint16_t		kvm_dns[1024];
+	uint8_t			kvm_addr[MAX_IP_ADDR_SIZE];
+	uint8_t			kvm_netmask[MAX_IP_ADDR_SIZE];
+	uint8_t			kvm_gateway[MAX_GATEWAY_SIZE];
+	uint8_t			kvm_dns[MAX_IP_ADDR_SIZE];
 } __packed;
 
 union hv_kvp_msg {
 	struct hv_kvp_msg_val	kvm_val;
 	struct hv_kvp_msg_enum	kvm_enum;
 	struct hv_kvp_msg_del	kvm_del;
-	struct hv_kvp_msg_addr	kvm_addr;
 };
 
 struct vmbus_icmsg_kvp {
 	struct vmbus_icmsg_hdr	ic_hdr;
 	union hv_kvp_hdr	ic_kvh;
 	union hv_kvp_msg	ic_kvm;
+} __packed;
+
+struct vmbus_icmsg_kvp_addr {
+	struct vmbus_icmsg_hdr	ic_hdr;
+	struct {
+		struct {
+			uint8_t	kvu_op;
+			uint8_t	kvu_pool;
+		} req;
+	}			ic_kvh;
+	struct hv_kvp_msg_addr	ic_kvm;
 } __packed;
 
 #endif	/* _DEV_PV_HYPERVIC_H_ */
