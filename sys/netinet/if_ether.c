@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.224 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.225 2016/11/07 09:19:46 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		pool_init(&arp_pool, sizeof(struct llinfo_arp), 0,
 		    IPL_SOFTNET, 0, "arp", NULL);
 
-		timeout_set(&arptimer_to, arptimer, &arptimer_to);
+		timeout_set_proc(&arptimer_to, arptimer, &arptimer_to);
 		timeout_add_sec(&arptimer_to, 1);
 	}
 

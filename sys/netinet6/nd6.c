@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.193 2016/10/03 12:33:21 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.194 2016/11/07 09:19:46 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -989,7 +989,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		nd6_inuse++;
 		nd6_allocated++;
 		ln->ln_rt = rt;
-		timeout_set(&ln->ln_timer_ch, nd6_llinfo_timer, ln);
+		timeout_set_proc(&ln->ln_timer_ch, nd6_llinfo_timer, ln);
 		/* this is required for "ndp" command. - shin */
 		if (req == RTM_ADD) {
 		        /*
