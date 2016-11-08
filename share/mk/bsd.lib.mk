@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.78 2016/10/15 13:00:07 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.79 2016/11/08 19:04:49 natano Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -227,13 +227,7 @@ cleandir: _SUBDIRUSE clean
 
 .if defined(SRCS)
 afterdepend: .depend
-	@TMP=`mktemp .dependXXXXXXXXXX` || exit 1; \
-	if sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.do:/' \
-	      < .depend > $$TMP; then \
-		mv $$TMP .depend; \
-    	else \
-		rm -f $$TMP; \
-	fi
+	@sed -i 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.do:/' .depend
 .endif
 
 .if !target(install)

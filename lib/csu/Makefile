@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2016/10/15 13:00:07 espie Exp $
+#	$OpenBSD: Makefile,v 1.25 2016/11/08 19:04:48 natano Exp $
 
 OBJS=		crt0.o gcrt0.o
 OBJS+=		crtbegin.o crtend.o
@@ -82,12 +82,6 @@ realinstall:
 	    ${DESTDIR}/usr/lib
 
 afterdepend: .depend
-	@TMP=`mktemp .dependXXXXXXXXXX` || exit 1; \
-	if sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o r\1.o:/' \
-	      < .depend > $$TMP; then \
-		mv $$TMP .depend; \
-    	else \
-		rm -f $$TMP; \
-	fi
+	@sed -i 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o r\1.o:/' .depend
 
 .include <bsd.prog.mk>
