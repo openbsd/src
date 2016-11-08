@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqrt.c,v 1.6 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: bn_sqrt.c,v 1.7 2016/11/08 01:40:22 guenther Exp $ */
 /* Written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * and Bodo Moeller for the OpenSSL project. */
 /* ====================================================================
@@ -231,8 +231,13 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 			if (!BN_pseudo_rand(y, BN_num_bits(p), 0, 0))
 				goto end;
 			if (BN_ucmp(y, p) >= 0) {
-				if (!(p->neg ? BN_add : BN_sub)(y, y, p))
-					goto end;
+				if (p->neg) {
+					if (!BN_add(y, y, p))
+						goto end;
+				} else {
+					if (!BN_sub(y, y, p))
+						goto end;
+				}
 			}
 			/* now 0 <= y < |p| */
 			if (BN_is_zero(y))
