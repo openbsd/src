@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.95 2016/10/29 09:24:54 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.96 2016/11/08 07:10:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5107,7 +5107,7 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
 
 	for (i = 0; i < VMX_NUM_MSR_STORE; i++) {
-		DPRINTF("  MSR %d @ %p : 0x%08x (%s), "
+		DPRINTF("  MSR %d @ %p : 0x%08llx (%s), "
 		    "value=0x%016llx ",
 		    i, &msr_store[i], msr_store[i].vms_index,
 		    msr_name_decode(msr_store[i].vms_index),
