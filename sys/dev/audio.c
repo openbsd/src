@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.156 2016/10/09 11:37:23 kettenis Exp $	*/
+/*	$OpenBSD: audio.c,v 1.157 2016/11/08 06:04:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -499,16 +499,7 @@ audio_start_do(struct audio_softc *sc)
 	unsigned char *ptr;
 	size_t count;
 
-	DPRINTFN(1, "%s: start play: "
-	    "start = %zu, used = %zu, "
-	    "len = %zu, blksz = %zu\n",
-	    DEVNAME(sc), sc->play.start, sc->play.used,
-	    sc->play.len, sc->play.blksz);
-	DPRINTFN(1, "%s: start rec: "
-	    "start = %zu, used = %zu, "
-	    "len = %zu, blksz = %zu\n",
-	    DEVNAME(sc), sc->rec.start, sc->rec.used,
-	    sc->rec.len, sc->rec.blksz);
+	DPRINTF("%s: starting\n", DEVNAME(sc));
 
 	error = 0;
 	sc->offs = 0;
@@ -568,6 +559,7 @@ audio_stop_do(struct audio_softc *sc)
 		sc->ops->halt_output(sc->arg);
 	if (sc->mode & AUMODE_RECORD)
 		sc->ops->halt_input(sc->arg);
+	DPRINTF("%s: stopped\n", DEVNAME(sc));
 	return 0;
 }
 
