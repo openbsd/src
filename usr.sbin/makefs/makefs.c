@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.17 2016/10/26 07:53:47 natano Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.18 2016/11/08 09:43:59 mestre Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -197,6 +197,9 @@ main(int argc, char *argv[])
 
 	if (argc != 2)
 		usage();
+
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 				/* walk the tree */
 	root = walk_dir(argv[1], ".", NULL, NULL);
