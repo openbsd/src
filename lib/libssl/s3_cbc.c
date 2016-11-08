@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.13 2016/11/06 17:21:04 jsing Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.14 2016/11/08 21:25:01 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -303,7 +303,6 @@ tls1_sha1_final_raw(void* ctx, unsigned char *md_out)
 	l2n(sha1->h3, md_out);
 	l2n(sha1->h4, md_out);
 }
-#define LARGEST_DIGEST_CTX SHA_CTX
 
 static void
 tls1_sha256_final_raw(void* ctx, unsigned char *md_out)
@@ -315,8 +314,6 @@ tls1_sha256_final_raw(void* ctx, unsigned char *md_out)
 		l2n(sha256->h[i], md_out);
 	}
 }
-#undef  LARGEST_DIGEST_CTX
-#define LARGEST_DIGEST_CTX SHA256_CTX
 
 static void
 tls1_sha512_final_raw(void* ctx, unsigned char *md_out)
@@ -328,8 +325,12 @@ tls1_sha512_final_raw(void* ctx, unsigned char *md_out)
 		l2n8(sha512->h[i], md_out);
 	}
 }
-#undef  LARGEST_DIGEST_CTX
+
+/* Largest hash context ever used by the functions above. */
 #define LARGEST_DIGEST_CTX SHA512_CTX
+
+/* Type giving the alignment needed by the above */
+#define LARGEST_DIGEST_CTX_ALIGNMENT SHA_LONG64
 
 /* ssl3_cbc_record_digest_supported returns 1 iff |ctx| uses a hash function
  * which ssl3_cbc_digest_record supports. */
@@ -366,7 +367,8 @@ ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  * On entry: by virtue of having been through one of the remove_padding
  * functions, above, we know that data_plus_mac_size is large enough to contain
  * a padding byte and MAC. (If the padding was invalid, it might contain the
- * padding too. ) */
+ * padding too. )
+ */
 int
 ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
     size_t* md_out_size, const unsigned char header[13],
@@ -374,7 +376,13 @@ ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
     size_t data_plus_mac_plus_padding_size, const unsigned char *mac_secret,
     unsigned mac_secret_length)
 {
-	union {	double align;
+	union {
+		/*
+		 * Alignment here is to allow this to be cast as SHA512_CTX
+		 * without losing alignment required by the 64-bit SHA_LONG64
+		 * integer it contains.
+		 */
+		LARGEST_DIGEST_CTX_ALIGNMENT align;
 		unsigned char c[sizeof(LARGEST_DIGEST_CTX)];
 	} md_state;
 	void (*md_final_raw)(void *ctx, unsigned char *md_out);
