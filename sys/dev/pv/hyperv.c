@@ -1074,7 +1074,7 @@ hv_channel_ring_create(struct hv_channel *ch, uint32_t buflen)
 {
 	struct hv_softc *sc = ch->ch_sc;
 
-	buflen = roundup(buflen, PAGE_SIZE);
+	buflen = roundup(buflen, PAGE_SIZE) + sizeof(struct vmbus_bufring);
 	ch->ch_ring = km_alloc(2 * buflen, &kv_any, &kp_zero, cold ?
 	    &kd_nowait : &kd_waitok);
 	if (ch->ch_ring == NULL) {
