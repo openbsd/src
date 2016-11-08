@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.231 2016/10/09 18:16:46 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.232 2016/11/08 16:04:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -2233,7 +2233,9 @@ termp_tag_pre(DECL_ARGS)
 
 	if (n->child != NULL &&
 	    n->child->type == ROFFT_TEXT &&
-	    n->prev == NULL &&
+	    (n->prev == NULL ||
+	     (n->prev->type == ROFFT_TEXT &&
+	      strcmp(n->prev->string, "|") == 0)) &&
 	    (n->parent->tok == MDOC_It ||
 	     (n->parent->tok == MDOC_Xo &&
 	      n->parent->parent->prev == NULL &&
