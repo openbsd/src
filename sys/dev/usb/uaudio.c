@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.117 2016/10/27 05:08:23 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.118 2016/11/08 06:09:56 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -2900,7 +2900,7 @@ void
 uaudio_chan_rtransfer(struct chan *ch)
 {
 	struct chanbuf *cb;
-	int i, size, residue, total;
+	int i, size, total;
 
 	if (usbd_is_dying(ch->sc->sc_udev))
 		return;
@@ -2911,7 +2911,6 @@ uaudio_chan_rtransfer(struct chan *ch)
 		ch->curchanbuf = 0;
 
 	/* Compute the size of each frame in the next transfer. */
-	residue = ch->residue;
 	total = 0;
 	for (i = 0; i < ch->nframes; i++) {
 		size = ch->bytes_per_frame;
@@ -2919,7 +2918,6 @@ uaudio_chan_rtransfer(struct chan *ch)
 		cb->offsets[i] = total;
 		total += size;
 	}
-	ch->residue = residue;
 	cb->size = total;
 
 #ifdef UAUDIO_DEBUG
