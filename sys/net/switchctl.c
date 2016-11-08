@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.4 2016/09/04 15:46:39 reyk Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.5 2016/11/08 19:11:57 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -125,7 +125,7 @@ int
 switchread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct switch_softc	*sc;
-	int			 error = 0, s;
+	int			 error = 0, s, truncated;
 	u_int			 len;
 	struct mbuf		*m0, *m;
 
@@ -133,6 +133,13 @@ switchread(dev_t dev, struct uio *uio, int ioflag)
 	if (sc == NULL)
 		return (ENXIO);
 
+	if (sc->sc_swdev->swdev_lastm != NULL) {
+		m0 = sc->sc_swdev->swdev_lastm;
+		sc->sc_swdev->swdev_lastm = NULL;
+		goto skip_dequeue;
+	}
+
+ dequeue_next:
 	s = splnet();
 	while ((m0 = mq_dequeue(&sc->sc_swdev->swdev_outq)) == NULL) {
 		if (ISSET(ioflag, IO_NDELAY)) {
@@ -152,13 +159,31 @@ switchread(dev_t dev, struct uio *uio, int ioflag)
 	}
 	splx(s);
 
+ skip_dequeue:
 	while (m0 != NULL && uio->uio_resid > 0 && error == 0) {
 		len = ulmin(uio->uio_resid, m0->m_len);
-		error = uiomove(mtod(m0, caddr_t), len, uio);
+		truncated = uio->uio_resid < m0->m_len;
+		if ((error = uiomove(mtod(m0, caddr_t), len, uio)) != 0) {
+			/* Save it so user can recover from EFAULT. */
+			sc->sc_swdev->swdev_lastm = m0;
+			return (error);
+		}
+
+		/* If we didn't finish moving, then save it for later. */
+		if (truncated) {
+			m_adj(m0, len);
+			sc->sc_swdev->swdev_lastm = m0;
+			return (0);
+		}
+
 		m = m_free(m0);
 		m0 = m;
 	}
 	m_freem(m0);
+
+	/* Keep reading if the user wants more. */
+	if (uio->uio_resid > 0)
+		goto dequeue_next;
 
 	return (error);
 failed:
@@ -232,6 +257,7 @@ switchclose(dev_t dev, int flags, int mode, struct proc *p)
 	rw_enter_write(&switch_ifs_lk);
 	sc = switch_lookup(minor(dev));
 	if (sc != NULL && sc->sc_swdev != NULL) {
+		m_freem(sc->sc_swdev->swdev_lastm);
 		mq_purge(&sc->sc_swdev->swdev_outq);
 		free(sc->sc_swdev, M_DEVBUF, sizeof(struct switch_dev));
 		sc->sc_swdev = NULL;
@@ -257,6 +283,7 @@ switch_dev_destroy(struct switch_softc *sc)
 		klist_invalidate(&sc->sc_swdev->swdev_wsel.si_note);
 		splx(s);
 
+		m_freem(sc->sc_swdev->swdev_lastm);
 		mq_purge(&sc->sc_swdev->swdev_outq);
 		free(sc->sc_swdev, M_DEVBUF, sizeof(struct switch_dev));
 		sc->sc_swdev = NULL;
@@ -274,8 +301,9 @@ switchpoll(dev_t dev, int events, struct proc *p)
 		return (ENXIO);
 
 	if (events & (POLLIN | POLLRDNORM)) {
-		if (!mq_empty(&sc->sc_swdev->swdev_outq))
-				revents |= events & (POLLIN | POLLRDNORM);
+		if (!mq_empty(&sc->sc_swdev->swdev_outq) ||
+		    sc->sc_swdev->swdev_lastm != NULL)
+			revents |= events & (POLLIN | POLLRDNORM);
 	}
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
@@ -345,8 +373,10 @@ filt_switch_read(struct knote *kn, long hint)
 		return (1);
 	}
 
-	if (!mq_empty(&sc->sc_swdev->swdev_outq)) {
-		kn->kn_data = mq_len(&sc->sc_swdev->swdev_outq);
+	if (!mq_empty(&sc->sc_swdev->swdev_outq) ||
+	    sc->sc_swdev->swdev_lastm != NULL) {
+		kn->kn_data = mq_len(&sc->sc_swdev->swdev_outq) +
+		    (sc->sc_swdev->swdev_lastm != NULL);
 		return (1);
 	}
 

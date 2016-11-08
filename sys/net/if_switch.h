@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.h,v 1.5 2016/10/28 09:01:49 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.h,v 1.6 2016/11/08 19:11:57 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -181,6 +181,7 @@ struct switch_port {
 TAILQ_HEAD(switch_fwdp_queue, switch_port);
 
 struct switch_dev {
+	struct mbuf		*swdev_lastm;
 	struct mbuf_queue	 swdev_outq;
 	struct selinfo		 swdev_rsel;
 	struct mutex		 swdev_rsel_mtx;
