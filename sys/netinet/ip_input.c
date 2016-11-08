@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.282 2016/09/22 10:12:25 jsg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.283 2016/11/08 10:45:08 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1117,37 +1117,20 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 			ipaddr.sin_len = sizeof(ipaddr);
 			memcpy(&ipaddr.sin_addr, cp + off,
 			    sizeof(ipaddr.sin_addr));
-			if (opt == IPOPT_SSRR) {
-				if ((ia = ifatoia(ifa_ifwithdstaddr(
-				    sintosa(&ipaddr),
-				    m->m_pkthdr.ph_rtableid))) == NULL)
-					ia = ifatoia(ifa_ifwithnet(
-					    sintosa(&ipaddr),
-					    m->m_pkthdr.ph_rtableid));
-				if (ia == NULL) {
-					type = ICMP_UNREACH;
-					code = ICMP_UNREACH_SRCFAIL;
-					goto bad;
-				}
-				memcpy(cp + off, &ia->ia_addr.sin_addr,
-				    sizeof(struct in_addr));
-				cp[IPOPT_OFFSET] += sizeof(struct in_addr);
-			} else {
-				/* keep packet in the virtual instance */
-				rt = rtalloc(sintosa(&ipaddr), RT_RESOLVE,
-				    rtableid);
-				if (!rtisvalid(rt)) {
-					type = ICMP_UNREACH;
-					code = ICMP_UNREACH_SRCFAIL;
-					rtfree(rt);
-					goto bad;
-				}
-				ia = ifatoia(rt->rt_ifa);
-				memcpy(cp + off, &ia->ia_addr.sin_addr,
-				    sizeof(struct in_addr));
+			/* keep packet in the virtual instance */
+			rt = rtalloc(sintosa(&ipaddr), RT_RESOLVE, rtableid);
+			if (!rtisvalid(rt) || ((opt == IPOPT_SSRR) &&
+			    ISSET(rt->rt_flags, RTF_GATEWAY))) {
+				type = ICMP_UNREACH;
+				code = ICMP_UNREACH_SRCFAIL;
 				rtfree(rt);
-				cp[IPOPT_OFFSET] += sizeof(struct in_addr);
+				goto bad;
 			}
+			ia = ifatoia(rt->rt_ifa);
+			memcpy(cp + off, &ia->ia_addr.sin_addr,
+			    sizeof(struct in_addr));
+			rtfree(rt);
+			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			ip->ip_dst = ipaddr.sin_addr;
 			/*
 			 * Let ip_intr's mcast routing check handle mcast pkts
