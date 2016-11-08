@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.69 2016/10/03 14:05:21 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.70 2016/11/08 10:31:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2661,9 +2661,6 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 void
 xhci_device_generic_done(struct usbd_xfer *xfer)
 {
-	usb_syncmem(&xfer->dmabuf, 0, xfer->length, usbd_xfer_isread(xfer) ?
-	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
 	/* Only happens with interrupt transfers. */
 	if (xfer->pipe->repeat) {
 		xfer->actlen = 0;
