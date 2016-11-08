@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.234 2016/11/08 16:29:19 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.235 2016/11/08 16:37:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -1460,7 +1460,7 @@ termp_fn_pre(DECL_ARGS)
 	term_word(p, n->string);
 	term_fontpop(p);
 
-	if (n->sec == SEC_DESCRIPTION)
+	if (n->sec == SEC_DESCRIPTION || n->sec == SEC_CUSTOM)
 		tag_put(n->string, ++fn_prio, p->line);
 
 	if (pretty) {
