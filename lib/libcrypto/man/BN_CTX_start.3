@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BN_CTX_start.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BN_CTX_start.3,v 1.3 2016/11/08 22:19:45 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 8 2016 $
 .Dt BN_CTX_START 3
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@ These functions are used to obtain temporary
 .Vt BIGNUM
 variables from a
 .Vt BN_CTX
-(which can been created by using
+(which can be created using
 .Xr BN_CTX_new 3 )
 in order to save the overhead of repeatedly creating and freeing
 .Vt BIGNUM Ns s
@@ -75,7 +75,7 @@ has failed, the subsequent calls will return
 as well, so it is sufficient to check the return value of the last
 .Fn BN_CTX_get
 call.
-In case of an error, an error code is set, which can be obtained by
+In case of an error, an error code is set which can be obtained by
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr BN_CTX_new 3

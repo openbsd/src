@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BN_zero.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BN_zero.3,v 1.4 2016/11/08 22:19:45 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 8 2016 $
 .Dt BN_ZERO 3
 .Os
 .Sh NAME
@@ -100,6 +100,6 @@ Someone might change the constant.
 .Pp
 If a
 .Vt BIGNUM
-is equal to 0xffffffffL it can be represented as an
+is equal to 0xffffffffL; it can be represented as an
 .Vt unsigned long
 but this value is also returned on error.

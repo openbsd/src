@@ -1,12 +1,12 @@
-.\"	$OpenBSD: BN_CTX_new.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BN_CTX_new.3,v 1.3 2016/11/08 22:19:45 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 8 2016 $
 .Dt BN_CTX_NEW 3
 .Os
 .Sh NAME
 .Nm BN_CTX_new ,
-.Nm BN_CTX_init ,
-.Nm BN_CTX_free
+.Nm BN_CTX_free ,
+.Nm BN_CTX_init
 .Nd allocate and free BN_CTX structures
 .Sh SYNOPSIS
 .In openssl/bn.h
@@ -45,8 +45,8 @@ structure.
 .Pp
 .Fn BN_CTX_free
 frees the components of the
-.Vt BN_CTX ,
-and if it was created by
+.Vt BN_CTX
+and, if it was created by
 .Fn BN_CTX_new ,
 also the structure itself.
 If
@@ -88,6 +88,6 @@ return no value.
 .Fn BN_CTX_new
 and
 .Fn BN_CTX_free
-are available in all versions on SSLeay and OpenSSL.
+are available in all versions of SSLeay and OpenSSL.
 .Fn BN_CTX_init
 was added in SSLeay 0.9.1b.

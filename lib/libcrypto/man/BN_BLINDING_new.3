@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BN_BLINDING_new.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BN_BLINDING_new.3,v 1.4 2016/11/08 22:19:45 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 8 2016 $
 .Dt BN_BLINDING_NEW 3
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ parameters by squaring the
 .Fa A
 and
 .Fa \&Ai
-or, after specific number of uses and if the necessary parameters are
+or, after a specific number of uses and if the necessary parameters are
 set, by re-creating the blinding parameters.
 .Pp
 .Fn BN_BLINDING_convert_ex
@@ -135,7 +135,7 @@ a copy of the inverse blinding factor
 .Fa \&Ai
 will be returned in
 .Fa r
-(this is useful if a
+(this is useful if an
 .Vt RSA
 object is shared among several threads).
 .Fn BN_BLINDING_invert_ex
@@ -169,9 +169,9 @@ object within the
 structure.
 This is to help users provide proper locking if needed for
 multi-threaded use.
-The "thread id" object of a newly allocated
+The thread ID object of a newly allocated
 .Vt BN_BLINDING
-structure is initialised to the thread id in which
+structure is initialised to the thread ID in which
 .Fn BN_BLINDING_new
 was called.
 .Pp
@@ -210,7 +210,7 @@ and the modulus
 and
 .Fa m_ctx
 can be used to pass special functions for exponentiation (normally
-.Xr BN_mod_exp_mont 3
+.Xr BN_mod_exp 3
 and
 .Vt BN_MONT_CTX ) .
 .Sh RETURN VALUES
@@ -230,7 +230,7 @@ and
 return 1 on success and 0 if an error occurred.
 .Pp
 .Fn BN_BLINDING_thread_id
-returns a pointer to the thread id object within a
+returns a pointer to the thread ID object within a
 .Vt BN_BLINDING
 object.
 .Pp
