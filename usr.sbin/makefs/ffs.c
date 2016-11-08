@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.20 2016/11/06 12:33:30 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.21 2016/11/08 19:22:29 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/disklabel.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -135,6 +136,7 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	    { "avgfpdir", &ffs_opts->avgfpdir, OPT_INT32, 1, INT_MAX },
 	    { "bsize", &ffs_opts->bsize, OPT_INT32, 1, INT_MAX },
 	    { "density", &ffs_opts->density, OPT_INT32, 1, INT_MAX },
+	    { "disklabel", NULL, OPT_STRBUF, 0, 0 },
 	    { "extent", &ffs_opts->maxbsize, OPT_INT32, 1, INT_MAX },
 	    { "fsize", &ffs_opts->fsize, OPT_INT32, 1, INT_MAX },
 	    { "label", ffs_opts->label, OPT_STRARRAY, 1, MAXVOLLEN },
@@ -157,6 +159,7 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	ffs_opts->avgfilesize= -1;
 	ffs_opts->avgfpdir= -1;
 	ffs_opts->version = 1;
+	ffs_opts->lp = NULL;
 
 	fsopts->fs_specific = ffs_opts;
 	fsopts->fs_options = copy_opts(ffs_options);
@@ -189,7 +192,20 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	if (ffs_options[rv].name == NULL)
 		abort();
 
-	if (strcmp(ffs_options[rv].name, "optimization") == 0) {
+	if (strcmp(ffs_options[rv].name, "disklabel") == 0) {
+		struct disklabel *dp, *lp;
+
+		dp = getdiskbyname(buf);
+		if (dp == NULL)
+			errx(1, "unknown disk type: %s", buf);
+	
+		ffs_opts->lp = emalloc(sizeof(struct disklabel));
+		*ffs_opts->lp = *dp;
+
+#if 0
+		fsopts->sectorsize = dp->d_secsize;
+#endif
+	} else if (strcmp(ffs_options[rv].name, "optimization") == 0) {
 		if (strcmp(buf, "time") == 0) {
 			ffs_opts->optimization = FS_OPTTIME;
 		} else if (strcmp(buf, "space") == 0) {
@@ -207,6 +223,7 @@ void
 ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
 	struct fs	*superblock;
+	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
 
 	assert(image != NULL);
 	assert(dir != NULL);
@@ -242,6 +259,47 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 		/* write out superblock; image is now complete */
 	ffs_write_superblock(fsopts->superblock, fsopts);
+
+	if (ffs_opts->lp != NULL) {
+		struct disklabel *lp = ffs_opts->lp;
+		uint16_t *p, *end, sum = 0;
+		ssize_t n;
+		int i;
+
+		arc4random_buf(lp->d_uid, sizeof(lp->d_uid));
+		DL_SETBSTART(lp, 0);
+		DL_SETBEND(lp, DL_GETDSIZE(lp));
+
+		for (i = 0; i < lp->d_npartitions; i++) {
+			struct partition *pp = &lp->d_partitions[i];
+			if (pp->p_fstype == FS_BSDFFS &&
+			    pp->p_offset == fsopts->offset) {
+				pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(
+				    superblock->fs_fsize, superblock->fs_frag);
+				pp->p_cpg = superblock->fs_fpg /
+				    superblock->fs_frag;
+			}
+
+		}
+
+		lp->d_magic = DISKMAGIC;
+		lp->d_magic2 = DISKMAGIC;
+		lp->d_checksum = 0;
+
+		p = (uint16_t *)lp;
+		end = (uint16_t *)&lp->d_partitions[lp->d_npartitions];
+		while (p < end)
+			sum ^= *p++;
+		lp->d_checksum = sum;
+
+		n = pwrite(fsopts->fd, lp, sizeof(struct disklabel),
+		    DOS_LABELSECTOR * DEV_BSIZE);
+		if (n == -1)
+			err(1, "failed to write disklabel");
+		else if (n < sizeof(struct disklabel))
+			errx(1, "failed to write disklabel: short write");
+	}
+
 	if (close(fsopts->fd) == -1)
 		err(1, "Closing `%s'", image);
 	fsopts->fd = -1;
