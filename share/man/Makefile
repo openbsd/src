@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2016/09/25 20:44:18 tb Exp $
+#	$OpenBSD: Makefile,v 1.12 2016/11/08 19:33:58 tb Exp $
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
 
 SUBDIR=	man1 man3 man4 man5 man6 man7 man8 man9
@@ -10,5 +10,6 @@ afterinstall:
 makedb:
 	/usr/sbin/makewhatis -Qv ${DESTDIR}/usr/share/man
 	chown root:wheel ${DESTDIR}/usr/share/man/mandoc.db
+	chmod 644 ${DESTDIR}/usr/share/man/mandoc.db
 
 .include <bsd.subdir.mk>
