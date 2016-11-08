@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.c,v 1.17 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: lhash.c,v 1.18 2016/11/08 20:20:06 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -431,29 +431,23 @@ unsigned long
 lh_strhash(const char *c)
 {
 	unsigned long ret = 0;
-	long n;
-	unsigned long v;
-	int r;
+	unsigned long n, v;
+	unsigned int r;
 
-	if ((c == NULL) || (*c == '\0'))
-		return (ret);
-/*
-	unsigned char b[16];
-	MD5(c,strlen(c),b);
-	return(b[0]|(b[1]<<8)|(b[2]<<16)|(b[3]<<24));
-*/
+	if (c == NULL || *c == '\0')
+		return ret;
 
 	n = 0x100;
 	while (*c) {
-		v = n | (*c);
+		v = n | *c;
 		n += 0x100;
-		r = (int)((v >> 2) ^ v) & 0x0f;
-		ret = (ret << r)|(ret >> (32 - r));
-		ret &= 0xFFFFFFFFL;
+		if ((r = ((v >> 2) ^ v) & 0x0f) != 0)
+			ret = (ret << r) | (ret >> (32 - r));
+		ret &= 0xFFFFFFFFUL;
 		ret ^= v * v;
 		c++;
 	}
-	return ((ret >> 16) ^ ret);
+	return (ret >> 16) ^ ret;
 }
 
 unsigned long
