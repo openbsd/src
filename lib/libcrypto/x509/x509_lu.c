@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.20 2015/04/25 16:02:55 doug Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.21 2016/11/08 21:22:55 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "x509_lcl.h"
+
+static void X509_OBJECT_dec_ref_count(X509_OBJECT *a);
+/* static void X509_OBJECT_up_ref_count(X509_OBJECT *a); */
 
 X509_LOOKUP *
 X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
@@ -231,16 +234,9 @@ err:
 }
 
 static void
-cleanup(X509_OBJECT *a)
+X509_OBJECT_free(X509_OBJECT *a)
 {
-	if (a->type == X509_LU_X509) {
-		X509_free(a->data.x509);
-	} else if (a->type == X509_LU_CRL) {
-		X509_CRL_free(a->data.crl);
-	} else {
-		/* abort(); */
-	}
-
+	X509_OBJECT_free_contents(a);
 	free(a);
 }
 
@@ -265,7 +261,7 @@ X509_STORE_free(X509_STORE *vfy)
 		X509_LOOKUP_free(lu);
 	}
 	sk_X509_LOOKUP_free(sk);
-	sk_X509_OBJECT_pop_free(vfy->objs, cleanup);
+	sk_X509_OBJECT_pop_free(vfy->objs, X509_OBJECT_free);
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, vfy, &vfy->ex_data);
 	X509_VERIFY_PARAM_free(vfy->param);
@@ -364,15 +360,24 @@ X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 	X509_OBJECT_up_ref_count(obj);
 
 	if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-		X509_OBJECT_free_contents(obj);
-		free(obj);
 		X509err(X509_F_X509_STORE_ADD_CERT,
 		    X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret = 0;
-	} else
-		sk_X509_OBJECT_push(ctx->objs, obj);
+	} else {
+		if (sk_X509_OBJECT_push(ctx->objs, obj) == 0) {
+			X509err(X509_F_X509_STORE_ADD_CERT,
+			    ERR_R_MALLOC_FAILURE);
+			ret = 0;
+		}
+	}
+
+	if (ret == 0)
+		X509_OBJECT_dec_ref_count(obj);
 
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+
+	if (ret == 0)
+		X509_OBJECT_free(obj);
 
 	return ret;
 }
@@ -398,20 +403,42 @@ X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 	X509_OBJECT_up_ref_count(obj);
 
 	if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-		X509_OBJECT_free_contents(obj);
-		free(obj);
 		X509err(X509_F_X509_STORE_ADD_CRL,
 		    X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret = 0;
-	} else
-		sk_X509_OBJECT_push(ctx->objs, obj);
+	} else {
+		if (sk_X509_OBJECT_push(ctx->objs, obj) == 0) {
+			X509err(X509_F_X509_STORE_ADD_CRL,
+			    ERR_R_MALLOC_FAILURE);
+			ret = 0;
+		}
+	}
+
+	if (ret == 0)
+		X509_OBJECT_dec_ref_count(obj);
 
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+
+	if (ret == 0)
+		X509_OBJECT_free(obj);
 
 	return ret;
 }
 
-void
+static void
+X509_OBJECT_dec_ref_count(X509_OBJECT *a)
+{
+	switch (a->type) {
+	case X509_LU_X509:
+		CRYPTO_add(&a->data.x509->references, -1, CRYPTO_LOCK_X509);
+		break;
+	case X509_LU_CRL:
+		CRYPTO_add(&a->data.crl->references, -1, CRYPTO_LOCK_X509_CRL);
+		break;
+	}
+}
+
+/*static*/ void
 X509_OBJECT_up_ref_count(X509_OBJECT *a)
 {
 	switch (a->type) {
