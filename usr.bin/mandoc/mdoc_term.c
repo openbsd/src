@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.233 2016/11/08 16:23:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.234 2016/11/08 16:29:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -2120,6 +2120,7 @@ static int
 termp_li_pre(DECL_ARGS)
 {
 
+	termp_tag_pre(p, pair, meta, n);
 	term_fontpush(p, TERMFONT_NONE);
 	return 1;
 }
