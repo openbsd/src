@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.456 2016/10/19 02:05:49 yasuoka Exp $	*/
+/*	$OpenBSD: if.c,v 1.457 2016/11/08 10:46:04 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1279,47 +1279,6 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 			}
 	}
 	return (NULL);
-}
-
-/*
- * Find an interface on a specific network.  If many, choice
- * is most specific found.
- */
-struct ifaddr *
-ifa_ifwithnet(struct sockaddr *sa, u_int rtableid)
-{
-	struct ifnet *ifp;
-	struct ifaddr *ifa, *ifa_maybe = NULL;
-	char *cplim, *addr_data = sa->sa_data;
-	u_int rdomain;
-
-	KERNEL_ASSERT_LOCKED();
-	rdomain = rtable_l2(rtableid);
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-		if (ifp->if_rdomain != rdomain)
-			continue;
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			char *cp, *cp2, *cp3;
-
-			if (ifa->ifa_addr->sa_family != sa->sa_family ||
-			    ifa->ifa_netmask == 0)
-				next: continue;
-			cp = addr_data;
-			cp2 = ifa->ifa_addr->sa_data;
-			cp3 = ifa->ifa_netmask->sa_data;
-			cplim = (char *)ifa->ifa_netmask +
-				ifa->ifa_netmask->sa_len;
-			while (cp3 < cplim)
-				if ((*cp++ ^ *cp2++) & *cp3++)
-				    /* want to continue for() loop */
-					goto next;
-			if (ifa_maybe == 0 ||
-			    rn_refines((caddr_t)ifa->ifa_netmask,
-			    (caddr_t)ifa_maybe->ifa_netmask))
-				ifa_maybe = ifa;
-		}
-	}
-	return (ifa_maybe);
 }
 
 /*
