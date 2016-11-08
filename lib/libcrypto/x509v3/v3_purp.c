@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_purp.c,v 1.26 2015/02/10 13:28:17 jsing Exp $ */
+/* $OpenBSD: v3_purp.c,v 1.27 2016/11/08 20:01:06 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -450,8 +450,14 @@ x509v3_cache_extensions(X509 *x)
 			x->ex_flags |= EXFLAG_INVALID;
 		}
 		if (pci->pcPathLengthConstraint) {
-			x->ex_pcpathlen =
-			    ASN1_INTEGER_get(pci->pcPathLengthConstraint);
+			if (pci->pcPathLengthConstraint->type ==
+			    V_ASN1_NEG_INTEGER) {
+				x->ex_flags |= EXFLAG_INVALID;
+				x->ex_pcpathlen = 0;
+			} else
+				x->ex_pcpathlen =
+				    ASN1_INTEGER_get(pci->
+				      pcPathLengthConstraint);
 		} else
 			x->ex_pcpathlen = -1;
 		PROXY_CERT_INFO_EXTENSION_free(pci);

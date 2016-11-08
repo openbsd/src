@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt.c,v 1.16 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: p5_crpt.c,v 1.17 2016/11/08 20:01:06 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -106,8 +106,11 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 
 	if (!pbe->iter)
 		iter = 1;
-	else
-		iter = ASN1_INTEGER_get (pbe->iter);
+	else if ((iter = ASN1_INTEGER_get(pbe->iter)) <= 0) {
+		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN,
+		    EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
+		return 0;
+	}
 	salt = pbe->salt->data;
 	saltlen = pbe->salt->length;
 

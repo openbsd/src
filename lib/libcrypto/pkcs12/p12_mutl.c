@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.21 2015/09/30 17:30:15 jsing Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.22 2016/11/08 20:01:06 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -89,8 +89,10 @@ PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 	saltlen = p12->mac->salt->length;
 	if (!p12->mac->iter)
 		iter = 1;
-	else
-		iter = ASN1_INTEGER_get(p12->mac->iter);
+	else if ((iter = ASN1_INTEGER_get(p12->mac->iter)) <= 0) {
+		PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_DECODE_ERROR);
+		return 0;
+	}
 	if (!(md_type = EVP_get_digestbyobj(
 	    p12->mac->dinfo->algor->algorithm))) {
 		PKCS12err(PKCS12_F_PKCS12_GEN_MAC,

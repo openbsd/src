@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt2.c,v 1.21 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: p5_crpt2.c,v 1.22 2016/11/08 20:01:06 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -293,7 +293,11 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	/* it seems that its all OK */
 	salt = kdf->salt->value.octet_string->data;
 	saltlen = kdf->salt->value.octet_string->length;
-	iter = ASN1_INTEGER_get(kdf->iter);
+	if ((iter = ASN1_INTEGER_get(kdf->iter)) <= 0) {
+		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN,
+		    EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
+		goto err;
+	}
 	if (!PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, prfmd,
 	    keylen, key))
 		goto err;
