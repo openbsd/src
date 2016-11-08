@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libobjc/Makefile,v 1.34.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.3 2013/07/01 14:22:08 mpi Exp $
+# $OpenBSD: Makefile,v 1.4 2016/11/08 17:39:12 tb Exp $
 
 OBJCDIR=${.CURDIR}/../../../gcc/libobjc
 GCCDIR=	${.CURDIR}/../../../gcc/gcc
@@ -43,7 +43,7 @@ SRCS+=		${GENHDRS}
 includes: ${INCS}
 	@test -d ${DESTDIR}/usr/include/objc || \
 	    mkdir ${DESTDIR}/usr/include/objc
-	${INSTALL} -C -o ${BINOWN} -g ${LOCALEGRP} -m ${NONBINMODE} ${.ALLSRC} \
+	${INSTALL} -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} \
 		${DESTDIR}/usr/include/objc
 .endif
 

@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/doc/Makefile,v 1.14.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.1.1.1 2009/10/15 20:50:20 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2016/11/08 17:39:12 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -70,7 +70,7 @@ install: ${INFOF}
 	install-info --quiet --section=${INFOSECTION} --entry=${INFOENTRY_${x}} \
 		${x}.info ${DESTDIR}/usr/share/info/dir
 .endfor
-	${INSTALL} -o ${BINOWN} -g ${LOCALEGRP} -m ${NONBINMODE} ${.ALLSRC} \
+	${INSTALL} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} ${.ALLSRC} \
 		${DESTDIR}/usr/share/info
 
 .include <bsd.prog.mk>

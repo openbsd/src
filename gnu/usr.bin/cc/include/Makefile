@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/include/Makefile,v 1.9.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.12 2016/10/16 19:28:44 tb Exp $
+# $OpenBSD: Makefile,v 1.13 2016/11/08 17:39:12 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -52,7 +52,7 @@ prereq: unwind.h
 
 .if !empty(INCS)
 install includes: ${INCS}
-	${INSTALL} -C -o ${BINOWN} -g ${LOCALEGRP} -m ${NONBINMODE} ${.ALLSRC} \
+	${INSTALL} -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} \
 		${DESTDIR}/usr/include
 .else
 install includes:
