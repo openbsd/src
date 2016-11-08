@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.145 2016/11/07 22:18:22 mestre Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.146 2016/11/08 09:31:55 mestre Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1306,7 +1306,7 @@ main(int argc, char *argv[])
 			greyexp *= (60 * 60);
 			break;
 		case 'h':
-			memset(&hostname, 0, sizeof(hostname));
+			memset(hostname, 0, sizeof(hostname));
 			if (strlcpy(hostname, optarg, sizeof(hostname)) >=
 			    sizeof(hostname))
 				errx(1, "-h arg too long");
