@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.22 2016/11/08 19:25:44 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.23 2016/11/08 19:44:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -285,6 +285,11 @@ struct sxiccmu_device sxiccmu_devices[] = {
 		.compat = "allwinner,sun8i-h3-apb0-gates-clk",
 		.get_frequency = sxiccmu_gen_get_frequency,
 		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun9i-a80-mmc-clk",
+		.set_frequency = sxiccmu_mmc_set_frequency,
+		.enable = sxiccmu_mmc_enable
 	},
 };
 
