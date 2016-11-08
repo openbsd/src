@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.21 2016/11/08 19:22:29 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.22 2016/11/08 19:38:57 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		lp->d_checksum = sum;
 
 		n = pwrite(fsopts->fd, lp, sizeof(struct disklabel),
-		    DOS_LABELSECTOR * DEV_BSIZE);
+		    fsopts->offset + DOS_LABELSECTOR * DEV_BSIZE);
 		if (n == -1)
 			err(1, "failed to write disklabel");
 		else if (n < sizeof(struct disklabel))
