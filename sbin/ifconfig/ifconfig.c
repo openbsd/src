@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.331 2016/10/17 10:49:17 rzalamena Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.332 2016/11/08 14:37:20 mestre Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -220,7 +220,6 @@ void	mpe_status(void);
 void	mpw_status(void);
 void	vlan_status(void);
 void	setrdomain(const char *, int);
-int	main(int, char *[]);
 int	prefix(void *val, int);
 void	getifgroups(void);
 void	setifgroup(const char *, int);
@@ -566,7 +565,7 @@ void	printif(char *, int);
 void	printb_status(unsigned short, unsigned char *);
 const char *get_linkstate(int, int);
 void	status(int, struct sockaddr_dl *, int);
-void	usage(int);
+__dead void	usage(void);
 const char *get_string(const char *, const char *, u_int8_t *, int *);
 void	print_string(const u_int8_t *, int);
 char	*sec2str(time_t);
@@ -639,7 +638,7 @@ main(int argc, char *argv[])
 	if (argc < 2) {
 		aflag = 1;
 		printif(NULL, 0);
-		exit(0);
+		return (0);
 	}
 	argc--, argv++;
 	if (*argv[0] == '-') {
@@ -664,14 +663,14 @@ main(int argc, char *argv[])
 				nomore = 1;
 				break;
 			default:
-				usage(1);
+				usage();
 				break;
 			}
 		}
 		if (nomore == 0) {
 			argc--, argv++;
 			if (argc < 1)
-				usage(1);
+				usage();
 			if (strlcpy(name, *argv, sizeof(name)) >= IFNAMSIZ)
 				errx(1, "interface name '%s' too long", *argv);
 		}
@@ -691,16 +690,16 @@ main(int argc, char *argv[])
 	}
 	if (Cflag) {
 		if (argc > 0 || aflag)
-			usage(1);
+			usage();
 		list_cloners();
-		exit(0);
+		return (0);
 	}
 	if (gflag) {
 		if (argc == 0)
 			printgroupattribs(name);
 		else
 			setgroupattribs(name, argc, argv);
-		exit(0);
+		return (0);
 	}
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 
@@ -716,7 +715,7 @@ main(int argc, char *argv[])
 		clone_create(argv[0], 0);
 		argc--, argv++;
 		if (argc == 0)
-			exit(0);
+			return (0);
 	}
 	if (aflag == 0) {
 		create = (argc > 0) && strcmp(argv[0], "destroy") != 0;
@@ -790,7 +789,7 @@ nextarg:
 
 	if (argc == 0 && actions == 0) {
 		printif(ifr.ifr_name, aflag ? ifaliases : 1);
-		exit(0);
+		return (0);
 	}
 
 	/* Process any media commands that may have been issued. */
@@ -825,7 +824,7 @@ nextarg:
 		if (ioctl(s, rafp->af_aifaddr, rafp->af_addreq) < 0)
 			err(1, "SIOCAIFADDR");
 	}
-	exit(0);
+	return (0);
 }
 
 void
@@ -972,7 +971,7 @@ setgroupattribs(char *groupname, int argc, char *argv[])
 	if (!strcmp(p, "carpdemote"))
 		ifgr.ifgr_attrib.ifg_carp_demoted = neg;
 	else
-		usage(1);
+		usage();
 
 	if (ioctl(s, SIOCSIFGATTR, (caddr_t)&ifgr) == -1)
 		err(1, "SIOCSIFGATTR");
@@ -1927,7 +1926,7 @@ setifchan(const char *val, int d)
 
 	if (val == NULL) {
 		if (shownet80211chans || shownet80211nodes)
-			usage(1);
+			usage();
 		shownet80211chans = 1;
 		return;
 	}
@@ -1952,7 +1951,7 @@ void
 setifscan(const char *val, int d)
 {
 	if (shownet80211chans || shownet80211nodes)
-		usage(1);
+		usage();
 	shownet80211nodes = 1;
 }
 
@@ -2454,7 +2453,7 @@ setmedia(const char *val, int d)
 
 	if (val == NULL) {
 		if (showmediaflag)
-			usage(1);
+			usage();
 		showmediaflag = 1;
 		return;
 	}
@@ -5278,7 +5277,7 @@ umb_setclass(const char *val, int d)
 
 	if (val == NULL) {
 		if (showclasses)
-			usage(1);
+			usage();
 		showclasses = 1;
 		return;
 	}
@@ -5572,15 +5571,15 @@ prefix(void *val, int size)
 	return (plen);
 }
 
-/* Print usage, exit(value) if value is non-zero. */
-void
-usage(int value)
+/* Print usage and exit  */
+__dead void
+usage(void)
 {
 	fprintf(stderr,
 	    "usage: ifconfig [-AaC] [interface] [address_family] "
 	    "[address [dest_address]]\n"
 	    "\t\t[parameters]\n");
-	exit(value);
+	exit(1);
 }
 
 void
@@ -5633,7 +5632,7 @@ printifhwfeatures(const char *unused, int show)
 
 	if (!show) {
 		if (showcapsflag)
-			usage(1);
+			usage();
 		showcapsflag = 1;
 		return;
 	}
