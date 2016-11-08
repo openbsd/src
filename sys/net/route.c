@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.333 2016/10/06 19:09:08 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.334 2016/11/08 10:39:32 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -550,11 +550,16 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 	splsoftassert(IPL_SOFTNET);
 
 	/* verify the gateway is directly reachable */
-	if ((ifa = ifa_ifwithnet(gateway, rdomain)) == NULL) {
+	rt = rtalloc(gateway, 0, rdomain);
+	if (!rtisvalid(rt) || ISSET(rt->rt_flags, RTF_GATEWAY)) {
+		rtfree(rt);
 		error = ENETUNREACH;
 		goto out;
 	}
-	ifidx = ifa->ifa_ifp->if_index;
+	ifidx = rt->rt_ifidx;
+	rtfree(rt);
+	rt = NULL;
+
 	rt = rtable_lookup(rdomain, dst, NULL, NULL, RTP_ANY);
 	/*
 	 * If the redirect isn't from our current router for this dst,
