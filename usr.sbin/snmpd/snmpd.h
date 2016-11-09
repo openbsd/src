@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.71 2016/10/28 09:07:08 rzalamena Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.72 2016/11/09 20:31:56 jca Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -405,6 +405,9 @@ struct snmp_message {
 	socklen_t		 sm_slen;
 	char			 sm_host[HOST_NAME_MAX+1];
 
+	struct sockaddr_storage	 sm_local_ss;
+	socklen_t		 sm_local_slen;
+
 	struct ber		 sm_ber;
 	struct ber_element	*sm_req;
 	struct ber_element	*sm_resp;
@@ -511,6 +514,7 @@ struct address {
 	/* For SNMP trap receivers etc. */
 	char			*sa_community;
 	struct ber_oid		*sa_oid;
+	struct address		*sa_srcaddr;
 };
 TAILQ_HEAD(addresslist, address);
 
@@ -787,6 +791,10 @@ struct trapcmd *
 /* util.c */
 int	 varbind_convert(struct agentx_pdu *, struct agentx_varbind_hdr *,
 	    struct ber_element **, struct ber_element **);
+ssize_t	 sendtofrom(int, void *, size_t, int, struct sockaddr *,
+	    socklen_t, struct sockaddr *, socklen_t);
+ssize_t	 recvfromto(int, void *, size_t, int, struct sockaddr *,
+	    socklen_t *, struct sockaddr *, socklen_t *);
 void	 print_debug(const char *, ...);
 void	 print_verbose(const char *, ...);
 const char *log_in6addr(const struct in6_addr *);

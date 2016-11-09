@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2016/06/21 21:35:25 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.40 2016/11/09 20:31:56 jca Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -98,9 +98,10 @@ static int			 nctlsocks = 0;
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
 int		 host_dns(const char *, struct addresslist *,
-		    int, in_port_t, struct ber_oid *, char *);
+		    int, in_port_t, struct ber_oid *, char *,
+		    struct address *);
 int		 host(const char *, struct addresslist *,
-		    int, in_port_t, struct ber_oid *, char *);
+		    int, in_port_t, struct ber_oid *, char *, char *);
 
 typedef struct {
 	union {
@@ -127,10 +128,11 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
-%token	SOCKET RESTRICTED AGENTX HANDLE DEFAULT
+%token	SOCKET RESTRICTED AGENTX HANDLE DEFAULT SRCADDR
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
+%type	<v.string>	srcaddr
 %type	<v.number>	optwrite yesno seclevel socktype
 %type	<v.data>	objtype cmd
 %type	<v.oid>		oid hostoid trapoid
@@ -200,7 +202,8 @@ main		: LISTEN ON STRING		{
 			struct address		*h;
 
 			TAILQ_INIT(&al);
-			if (host($3, &al, 1, SNMPD_PORT, NULL, NULL) <= 0) {
+			if (host($3, &al, 1, SNMPD_PORT, NULL, NULL, NULL)
+			    <= 0) {
 				yyerror("invalid ip address: %s", $3);
 				free($3);
 				YYERROR;
@@ -445,9 +448,13 @@ hostcmn		: /* empty */				{ $$ = NULL; }
 		| COMMUNITY STRING			{ $$ = $2; }
 		;
 
-hostdef		: STRING hostoid hostcmn		{
+srcaddr		: /* empty */				{ $$ = NULL; }
+		| SRCADDR STRING			{ $$ = $2; }
+		;
+
+hostdef		: STRING hostoid hostcmn srcaddr	{
 			if (host($1, hlist, 1,
-			    SNMPD_TRAPPORT, $2, $3) <= 0) {
+			    SNMPD_TRAPPORT, $2, $3, $4) <= 0) {
 				yyerror("invalid host: %s", $1);
 				free($1);
 				YYERROR;
@@ -636,6 +643,7 @@ lookup(char *s)
 		{ "seclevel",		SECLEVEL },
 		{ "services",		SERVICES },
 		{ "socket",		SOCKET },
+		{ "source-address",	SRCADDR },
 		{ "string",		OCTETSTRING },
 		{ "system",		SYSTEM },
 		{ "trap",		TRAP },
@@ -1151,7 +1159,7 @@ host_v6(const char *s)
 
 int
 host_dns(const char *s, struct addresslist *al, int max,
-	 in_port_t port, struct ber_oid *oid, char *cmn)
+	in_port_t port, struct ber_oid *oid, char *cmn, struct address *src)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error, cnt = 0;
@@ -1175,6 +1183,8 @@ host_dns(const char *s, struct addresslist *al, int max,
 	for (res = res0; res && cnt < max; res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
 		    res->ai_family != AF_INET6)
+			continue;
+		if (src != NULL && src->ss.ss_family != res->ai_family)
 			continue;
 		if ((h = calloc(1, sizeof(*h))) == NULL)
 			fatal(__func__);
@@ -1203,6 +1213,8 @@ host_dns(const char *s, struct addresslist *al, int max,
 			    res->ai_addr)->sin6_addr, sizeof(struct in6_addr));
 		}
 
+		h->sa_srcaddr = src;
+
 		TAILQ_INSERT_HEAD(al, h, entry);
 		cnt++;
 	}
@@ -1220,9 +1232,19 @@ host_dns(const char *s, struct addresslist *al, int max,
 
 int
 host(const char *s, struct addresslist *al, int max,
-    in_port_t port, struct ber_oid *oid, char *cmn)
+    in_port_t port, struct ber_oid *oid, char *cmn, char *srcaddr)
 {
-	struct address	*h;
+	struct address	*h, *src = NULL;
+
+	if (srcaddr != NULL) {
+		src = host_v4(srcaddr);
+		if (src == NULL)
+			src = host_v6(srcaddr);
+		if (src == NULL) {
+			log_warnx("invalid source-address %s", srcaddr);
+			return (-1);
+		}
+	}
 
 	h = host_v4(s);
 
@@ -1234,10 +1256,15 @@ host(const char *s, struct addresslist *al, int max,
 		h->port = port;
 		h->sa_oid = oid;
 		h->sa_community = cmn;
+		if (src != NULL && h->ss.ss_family != src->ss.ss_family) {
+			log_warnx("host and source-address family mismatch");
+			return (-1);
+		}
+		h->sa_srcaddr = src;
 
 		TAILQ_INSERT_HEAD(al, h, entry);
 		return (1);
 	}
 
-	return (host_dns(s, al, max, port, oid, cmn));
+	return (host_dns(s, al, max, port, oid, cmn, src));
 }

@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.34 2015/12/24 16:54:37 mmcc Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.35 2016/11/09 20:31:56 jca Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2015 $
+.Dd $Mdocdate: November 9 2016 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -202,6 +202,7 @@ and any variable bindings contained in the trap
 .Ic trap receiver Ar string
 .Op Ic oid Ar oid-string
 .Op Ic community Ar string
+.Op Ic source-address Ar address
 .Xc
 Specify the address or FQDN of a remote trap receiver for outgoing traps
 sent by
@@ -212,6 +213,8 @@ configured trap community.
 The default community is specified by the global
 .Ic trap community
 option.
+The IPv4 or IPv6 source address of the traps can be enforced using
+.Ic source-address .
 .El
 .Sh USER CONFIGURATION
 Users for the SNMP User-based Security Model (USM, RFC 3414) must be

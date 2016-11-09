@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2015/11/21 13:06:22 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 2016/11/09 20:31:56 jca Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -153,6 +153,128 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 		break;
 	}
  done:
+	return (ret);
+}
+
+ssize_t
+sendtofrom(int s, void *buf, size_t len, int flags, struct sockaddr *to,
+    socklen_t tolen, struct sockaddr *from, socklen_t fromlen)
+{
+	struct iovec		 iov;
+	struct msghdr		 msg;
+	struct cmsghdr		*cmsg;
+	struct in6_pktinfo	*pkt6;
+	struct sockaddr_in	*in;
+	struct sockaddr_in6	*in6;
+	union {
+		struct cmsghdr	hdr;
+		char		inbuf[CMSG_SPACE(sizeof(struct in_addr))];
+		char		in6buf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+	} cmsgbuf;
+
+	bzero(&msg, sizeof(msg));
+	bzero(&cmsgbuf, sizeof(cmsgbuf));
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_name = to;
+	msg.msg_namelen = tolen;
+	msg.msg_control = &cmsgbuf;
+	msg.msg_controllen = sizeof(cmsgbuf);
+
+	cmsg = CMSG_FIRSTHDR(&msg);
+	switch (to->sa_family) {
+	case AF_INET:
+		msg.msg_controllen = sizeof(cmsgbuf.inbuf);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_addr));
+		cmsg->cmsg_level = IPPROTO_IP;
+		cmsg->cmsg_type = IP_SENDSRCADDR;
+		in = (struct sockaddr_in *)from;
+		memcpy(CMSG_DATA(cmsg), &in->sin_addr, sizeof(struct in_addr));
+		break;
+	case AF_INET6:
+		msg.msg_controllen = sizeof(cmsgbuf.in6buf);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
+		cmsg->cmsg_level = IPPROTO_IPV6;
+		cmsg->cmsg_type = IPV6_PKTINFO;
+		in6 = (struct sockaddr_in6 *)from;
+		pkt6 = (struct in6_pktinfo *)CMSG_DATA(cmsg);
+		pkt6->ipi6_addr = in6->sin6_addr;
+		break;
+	}
+
+	return sendmsg(s, &msg, flags);
+}
+
+ssize_t
+recvfromto(int s, void *buf, size_t len, int flags, struct sockaddr *from,
+    socklen_t *fromlen, struct sockaddr *to, socklen_t *tolen)
+{
+	struct iovec		 iov;
+	struct msghdr		 msg;
+	struct cmsghdr		*cmsg;
+	struct in6_pktinfo	*pkt6;
+	struct sockaddr_in	*in;
+	struct sockaddr_in6	*in6;
+	ssize_t			 ret;
+	union {
+		struct cmsghdr hdr;
+		char	buf[CMSG_SPACE(sizeof(struct sockaddr_storage))];
+	} cmsgbuf;
+
+	bzero(&msg, sizeof(msg));
+	bzero(&cmsgbuf.buf, sizeof(cmsgbuf.buf));
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_name = from;
+	msg.msg_namelen = *fromlen;
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
+
+	if ((ret = recvmsg(s, &msg, flags)) == -1)
+		return (-1);
+
+	*fromlen = from->sa_len;
+	*tolen = 0;
+
+	if (getsockname(s, to, tolen) != 0)
+		*tolen = 0;
+
+	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
+	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+		switch (from->sa_family) {
+		case AF_INET:
+			if (cmsg->cmsg_level == IPPROTO_IP &&
+			    cmsg->cmsg_type == IP_RECVDSTADDR) {
+				in = (struct sockaddr_in *)to;
+				in->sin_family = AF_INET;
+				in->sin_len = *tolen = sizeof(*in);
+				memcpy(&in->sin_addr, CMSG_DATA(cmsg),
+				    sizeof(struct in_addr));
+			}
+			break;
+		case AF_INET6:
+			if (cmsg->cmsg_level == IPPROTO_IPV6 &&
+			    cmsg->cmsg_type == IPV6_PKTINFO) {
+				in6 = (struct sockaddr_in6 *)to;
+				in6->sin6_family = AF_INET6;
+				in6->sin6_len = *tolen = sizeof(*in6);
+				pkt6 = (struct in6_pktinfo *)CMSG_DATA(cmsg);
+				memcpy(&in6->sin6_addr, &pkt6->ipi6_addr,
+				    sizeof(struct in6_addr));
+				if (IN6_IS_ADDR_LINKLOCAL(&in6->sin6_addr))
+					in6->sin6_scope_id =
+					    pkt6->ipi6_ifindex;
+			}
+			break;
+		}
+	}
+
 	return (ret);
 }
 

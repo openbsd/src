@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.44 2016/10/28 09:07:08 rzalamena Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.45 2016/11/09 20:31:56 jca Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -119,7 +119,7 @@ int
 snmpe_bind(struct address *addr)
 {
 	char	 buf[512];
-	int	 s;
+	int	 val, s;
 
 	if ((s = snmpd_socket_af(&addr->ss, htons(addr->port))) == -1)
 		return (-1);
@@ -129,6 +129,26 @@ snmpe_bind(struct address *addr)
 	 */
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto bad;
+
+	switch (addr->ss.ss_family) {
+	case AF_INET:
+		val = 1;
+		if (setsockopt(s, IPPROTO_IP, IP_RECVDSTADDR,
+		    &val, sizeof(int)) == -1) {
+			log_warn("%s: failed to set IPv4 packet info",
+			    __func__);
+			goto bad;
+		}
+		break;
+	case AF_INET6:
+		val = 1;
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO,
+		    &val, sizeof(int)) == -1) {
+			log_warn("%s: failed to set IPv6 packet info",
+			    __func__);
+			goto bad;
+		}
+	}
 
 	if (bind(s, (struct sockaddr *)&addr->ss, addr->ss.ss_len) == -1)
 		goto bad;
@@ -461,8 +481,9 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 		return;
 
 	msg->sm_slen = sizeof(msg->sm_ss);
-	if ((len = recvfrom(fd, msg->sm_data, sizeof(msg->sm_data), 0,
-	    (struct sockaddr *)&msg->sm_ss, &msg->sm_slen)) < 1) {
+	if ((len = recvfromto(fd, msg->sm_data, sizeof(msg->sm_data), 0,
+	    (struct sockaddr *)&msg->sm_ss, &msg->sm_slen,
+	    (struct sockaddr *)&msg->sm_local_ss, &msg->sm_local_slen)) < 1) {
 		free(msg);
 		return;
 	}
@@ -550,8 +571,9 @@ snmpe_response(int fd, struct snmp_message *msg)
 		goto done;
 
 	usm_finalize_digest(msg, ptr, len);
-	len = sendto(fd, ptr, len, 0, (struct sockaddr *)&msg->sm_ss,
-	    msg->sm_slen);
+	len = sendtofrom(fd, ptr, len, 0,
+	    (struct sockaddr *)&msg->sm_ss, msg->sm_slen,
+	    (struct sockaddr *)&msg->sm_local_ss, msg->sm_local_slen);
 	if (len != -1)
 		stats->snmp_outpkts++;
 
