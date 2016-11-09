@@ -568,6 +568,7 @@
 ./usr/include/mips64/limits.h
 ./usr/include/mips64/lock.h
 ./usr/include/mips64/loongson2.h
+./usr/include/mips64/loongson3.h
 ./usr/include/mips64/memconf.h
 ./usr/include/mips64/mips_cpu.h
 ./usr/include/mips64/mips_opcode.h
