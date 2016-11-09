@@ -1636,7 +1636,6 @@
 ./usr/libdata/perl5/pod/perlxstut.pod
 ./usr/libdata/perl5/pod/perlxstypemap.pod
 ./usr/libdata/perl5/sigtrap.pm
-./usr/libdata/perl5/site_perl
 ./usr/libdata/perl5/sort.pm
 ./usr/libdata/perl5/strict.pm
 ./usr/libdata/perl5/subs.pm
