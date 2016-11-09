@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.5 2016/11/08 19:11:57 rzalamena Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.6 2016/11/09 12:26:55 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -125,23 +125,23 @@ int
 switchread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct switch_softc	*sc;
-	int			 error = 0, s, truncated;
+	struct mbuf		*m;
 	u_int			 len;
-	struct mbuf		*m0, *m;
+	int			 s, error = 0;
 
 	sc = switch_dev2sc(dev);
 	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_swdev->swdev_lastm != NULL) {
-		m0 = sc->sc_swdev->swdev_lastm;
+		m = sc->sc_swdev->swdev_lastm;
 		sc->sc_swdev->swdev_lastm = NULL;
 		goto skip_dequeue;
 	}
 
  dequeue_next:
 	s = splnet();
-	while ((m0 = mq_dequeue(&sc->sc_swdev->swdev_outq)) == NULL) {
+	while ((m = mq_dequeue(&sc->sc_swdev->swdev_outq)) == NULL) {
 		if (ISSET(ioflag, IO_NDELAY)) {
 			error = EWOULDBLOCK;
 			goto failed;
@@ -160,32 +160,34 @@ switchread(dev_t dev, struct uio *uio, int ioflag)
 	splx(s);
 
  skip_dequeue:
-	while (m0 != NULL && uio->uio_resid > 0 && error == 0) {
-		len = ulmin(uio->uio_resid, m0->m_len);
-		truncated = uio->uio_resid < m0->m_len;
-		if ((error = uiomove(mtod(m0, caddr_t), len, uio)) != 0) {
+	while (uio->uio_resid > 0) {
+		len = ulmin(uio->uio_resid, m->m_len);
+		if ((error = uiomove(mtod(m, caddr_t), len, uio)) != 0) {
 			/* Save it so user can recover from EFAULT. */
-			sc->sc_swdev->swdev_lastm = m0;
+			sc->sc_swdev->swdev_lastm = m;
 			return (error);
 		}
 
-		/* If we didn't finish moving, then save it for later. */
-		if (truncated) {
-			m_adj(m0, len);
-			sc->sc_swdev->swdev_lastm = m0;
-			return (0);
+		/* Handle partial reads. */
+		if (uio->uio_resid == 0) {
+			if (len < m->m_len)
+				m_adj(m, len);
+			else
+				m = m_free(m);
+			sc->sc_swdev->swdev_lastm = m;
+			break;
 		}
 
-		m = m_free(m0);
-		m0 = m;
+		/*
+		 * After consuming data from this mbuf test if we
+		 * have to dequeue a new chain.
+		 */
+		m = m_free(m);
+		if (m == NULL)
+			goto dequeue_next;
 	}
-	m_freem(m0);
 
-	/* Keep reading if the user wants more. */
-	if (uio->uio_resid > 0)
-		goto dequeue_next;
-
-	return (error);
+	return (0);
 failed:
 	splx(s);
 	return (error);
