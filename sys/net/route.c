@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.334 2016/11/08 10:39:32 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.335 2016/11/09 09:04:48 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1502,6 +1502,8 @@ void
 rt_timer_queue_destroy(struct rttimer_queue *rtq)
 {
 	struct rttimer	*r;
+
+	splsoftassert(IPL_SOFTNET);
 
 	while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL) {
 		LIST_REMOVE(r, rtt_link);

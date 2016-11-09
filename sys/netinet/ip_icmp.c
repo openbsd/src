@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.152 2016/08/22 15:37:23 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.153 2016/11/09 09:04:48 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1046,7 +1046,8 @@ void
 icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	struct ifnet *ifp;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
@@ -1058,7 +1059,6 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 
 		sin = *satosin(rt_key(rt));
 
-		s = splsoftnet();
 		rtdeletemsg(rt, ifp, r->rtt_tableid);
 
 		/* Notify TCP layer of increased Path MTU estimate */
@@ -1066,7 +1066,6 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		if (ctlfunc)
 			(*ctlfunc)(PRC_MTUINC, sintosa(&sin),
 			    r->rtt_tableid, NULL);
-		splx(s);
 	} else {
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 			rt->rt_rmx.rmx_mtu = 0;
@@ -1097,16 +1096,15 @@ void
 icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	struct ifnet *ifp;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
 		return;
 
 	if ((rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) == (RTF_DYNAMIC|RTF_HOST)) {
-		s = splsoftnet();
 		rtdeletemsg(rt, ifp, r->rtt_tableid);
-		splx(s);
 	}
 
 	if_put(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.190 2016/08/24 09:38:29 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.191 2016/11/09 09:04:48 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1947,16 +1947,15 @@ void
 icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	struct ifnet *ifp;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
 		return;
 
 	if ((rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) == (RTF_DYNAMIC|RTF_HOST)) {
-		s = splsoftnet();
 		rtdeletemsg(rt, ifp, r->rtt_tableid);
-		splx(s);
 	} else {
 		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
 			rt->rt_rmx.rmx_mtu = 0;
@@ -1969,16 +1968,15 @@ void
 icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	struct ifnet *ifp;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
 		return;
 
 	if ((rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) == (RTF_DYNAMIC|RTF_HOST)) {
-		s = splsoftnet();
 		rtdeletemsg(rt, ifp, r->rtt_tableid);
-		splx(s);
 	}
 
 	if_put(ifp);
