@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2016/10/26 19:14:28 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.19 2016/11/09 12:43:36 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -419,12 +419,12 @@ check-setup-eco:
 .endfor
 .for af in inet inet6
 .for proto in udp tcp
-	ssh ${ECO_SSH} netstat -a -f ${af} -p ${proto} | fgrep ' *.echo '
+	ssh ${ECO_SSH} netstat -na -f ${af} -p ${proto} | fgrep ' *.7 '
 .endfor
 .endfor
 .for ip in ECO_IN ECO_OUT RTT_IN
-	ssh ${ECO_SSH} netstat -av -f inet -p udp | fgrep ' ${${ip}}.echo '
-	ssh ${ECO_SSH} netstat -av -f inet6 -p udp | fgrep ' ${${ip}6}.echo '
+	ssh ${ECO_SSH} netstat -nav -f inet -p udp | fgrep ' ${${ip}}.7 '
+	ssh ${ECO_SSH} netstat -nav -f inet6 -p udp | fgrep ' ${${ip}6}.7 '
 .endfor
 
 .include <bsd.regress.mk>

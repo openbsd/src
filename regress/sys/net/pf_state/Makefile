@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2016/10/20 16:31:37 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/11/09 12:43:36 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -21,7 +21,7 @@ regress:
 # This test needs a manual setup of two machines
 # Set up machines: LOCAL REMOTE
 # LOCAL is the machine where this makefile is running.
-# REMOTE is running OpenBSD with echo and chargen server to test PMTU
+# REMOTE is running OpenBSD with echo server to test PMTU
 # FAKE is an non existing machine in a non existing network.
 # REMOTE_SSH is the hostname to log in on the REMOTE machine.
 
@@ -116,7 +116,7 @@ check-setup-remote:
 .for ip in FAKE_NET FAKE_NET_ADDR
 	ssh ${REMOTE_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${LOCAL_ADDR}'  # ${ip} LOCAL_ADDR
 .endfor
-	ssh ${ECO_SSH} netstat -a -f inet -p tcp | fgrep ' *.echo '
+	ssh ${REMOTE_SSH} netstat -na -f inet -p tcp | fgrep ' *.7 '
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 

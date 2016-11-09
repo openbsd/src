@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2016/11/09 01:29:17 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2016/11/09 12:43:36 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -191,9 +191,9 @@ check-setup-remote:
 	ssh ${REMOTE_SSH} route -n get -inet6 ${${ip}} | fgrep -q 'gateway: ${LOCAL_ADDR6}'  # ${ip} LOCAL_ADDR6
 .endfor
 .for af in inet inet6
-	ssh ${REMOTE_SSH} netstat -a -f ${af} -p tcp | fgrep ' *.chargen '
+	ssh ${REMOTE_SSH} netstat -na -f ${af} -p tcp | fgrep ' *.19 '
 .endfor
-	ssh ${REMOTE_SSH} netstat -a -f inet6 -p udp | fgrep ' *.echo '
+	ssh ${REMOTE_SSH} netstat -na -f inet6 -p udp | fgrep ' *.7 '
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 
