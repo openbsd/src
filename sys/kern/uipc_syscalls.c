@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.138 2016/10/23 17:06:40 naddy Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.139 2016/11/09 09:39:43 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -276,16 +276,11 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	if ((error = getsock(p, sock, &fp)) != 0)
 		return (error);
 
-	s = splsoftnet();
 	headfp = fp;
-	head = fp->f_data;
-
-	if (isdnssocket((struct socket *)fp->f_data)) {
-		error = EINVAL;
-		goto bad;
-	}
 redo:
-	if ((head->so_options & SO_ACCEPTCONN) == 0) {
+	s = splsoftnet();
+	head = headfp->f_data;
+	if (isdnssocket(head) || (head->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
 		goto bad;
 	}
@@ -311,7 +306,7 @@ redo:
 		head->so_error = 0;
 		goto bad;
 	}
-	
+
 	/* Figure out whether the new socket should be non-blocking. */
 	nflag = flags & SOCK_NONBLOCK_INHERIT ? (headfp->f_flag & FNONBLOCK)
 	    : (flags & SOCK_NONBLOCK ? FNONBLOCK : 0);
@@ -338,6 +333,7 @@ redo:
 	 * or another thread or process to accept it.  If so, start over.
 	 */
 	if (head->so_qlen == 0) {
+		splx(s);
 		m_freem(nam);
 		fdplock(fdp);
 		fdremove(fdp, tmpfd);
@@ -366,18 +362,21 @@ redo:
 
 	if (error) {
 		/* if an error occurred, free the file descriptor */
+		splx(s);
+		m_freem(nam);
 		fdplock(fdp);
 		fdremove(fdp, tmpfd);
 		closef(fp, p);
 		fdpunlock(fdp);
-	} else {
-		(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&nflag, p);
-		FILE_SET_MATURE(fp, p);
-		*retval = tmpfd;
+		goto out;
 	}
+	(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&nflag, p);
+	FILE_SET_MATURE(fp, p);
+	*retval = tmpfd;
 	m_freem(nam);
 bad:
 	splx(s);
+out:
 	FRELE(headfp, p);
 	return (error);
 }
