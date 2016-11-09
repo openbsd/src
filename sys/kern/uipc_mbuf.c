@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.237 2016/10/27 03:29:55 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.238 2016/11/09 08:55:11 mpi Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -896,7 +896,7 @@ m_pullup(struct mbuf *n, int len)
 		if (len > tail - mtod(n, caddr_t)) {
 			/* need to memmove to make space at the end */
 			memmove(head, mtod(n, caddr_t), n->m_len);
-			m->m_data = head;
+			n->m_data = head;
 		}
 
 		len -= n->m_len;
