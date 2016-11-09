@@ -1,7 +1,7 @@
 #
 # Override default paths when building in the OpenBSD src tree
 #
-# $OpenBSD: config.over,v 1.20 2014/11/17 21:36:21 afresh1 Exp $
+# $OpenBSD: config.over,v 1.21 2016/11/09 17:09:56 millert Exp $
 #
 
 # We use a different architecture name than the default
@@ -27,14 +27,12 @@ installprivlib="/usr/libdata/perl5"
 privlib="${installprivlib}:/usr/local/libdata/perl5"
 privlibexp="${privlib}"
 
-# NOTE: primary dir for sitearch lives in /usr/local
 installsitearch="/usr/local/libdata/perl5/site_perl/${archname}"
-sitearch="${installsitearch}:/usr/libdata/perl5/site_perl/${archname}"
+sitearch="${installsitearch}"
 sitearchexp="${sitearch}"
 
-# NOTE: primary dir for sitelib lives in /usr/local
 installsitelib="/usr/local/libdata/perl5/site_perl"
-sitelib="${installsitelib}:/usr/libdata/perl5/site_perl"
+sitelib="${installsitelib}"
 sitelibexp="${sitelib}"
 
 installstyle="${privlib}"
