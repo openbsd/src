@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2016/11/09 13:08:51 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.21 2016/11/09 14:43:35 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -176,6 +176,12 @@ run-regress-ping-mtu-1400-${inet}-${ip}: stamp-pfctl
 	@echo Check path MTU to ${ip}${inet:S/inet//} is 1400
 .if "RPT_OUT" == ${ip}
 	${SUDO} ${PYTHON}ping${inet:S/inet//}_mtu.py ${${ip}${inet:S/inet//}} ${ECO_IN${inet:S/inet//}} 1500 1400
+.elif "AF_IN" == ${ip}
+.if "inet" == ${inet}
+	${SUDO} ${PYTHON}ping_mtu.py ${SRC_OUT} ${${ip}} 1500 1380
+.else
+	${SUDO} ${PYTHON}ping6_mtu.py ${SRC_OUT6} ${${ip}6} 1500 1420
+.endif
 .else
 	${SUDO} ${PYTHON}ping${inet:S/inet//}_mtu.py ${SRC_OUT${inet:S/inet//}} ${${ip}${inet:S/inet//}} 1500 1400
 .endif
@@ -220,7 +226,6 @@ run-regress-udp-${inet}-${ip}: stamp-pfctl
 # with netcat.  Use enough data to make sure PMTU discovery works.
 # Count the reflected bytes and compare with the transmitted ones.
 # Delete host route before test to trigger PMTU discovery.
-# XXX AF_IN is broken with PF MTU, make sure that it hits RT MTU 1300.
 
 TARGETS +=	tcp-${inet}-${ip}
 run-regress-tcp-${inet}-${ip}: stamp-pfctl
@@ -230,13 +235,6 @@ run-regress-tcp-${inet}-${ip}: stamp-pfctl
 .if "RPT_OUT" == ${ip}
 	openssl rand 200000 | nc -N -s ${${ip}${inet:S/inet//}} ${ECO_IN${inet:S/inet//}} 7 | wc -c | grep '200000$$'
 .else
-.if "AF_IN" == ${ip}
-.if "inet" == ${inet}
-	${SUDO} ${PYTHON}ping_mtu.py ${SRC_OUT} ${${ip}} 1380 1280
-.else
-	${SUDO} ${PYTHON}ping6_mtu.py ${SRC_OUT6} ${${ip}6} 1420 1320
-.endif
-.endif
 	openssl rand 200000 | nc -N ${${ip}${inet:S/inet//}} 7 | wc -c | grep '200000$$'
 .endif
 
