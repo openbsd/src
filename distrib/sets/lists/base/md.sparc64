@@ -474,6 +474,7 @@
 ./usr/libdata/perl5/sparc64-openbsd/5.20.3/threads
 ./usr/libdata/perl5/sparc64-openbsd/5.20.3/threads.pm
 ./usr/libdata/perl5/sparc64-openbsd/5.20.3/threads/shared.pm
+./usr/local/libdata/perl5/site_perl/sparc64-openbsd
 ./usr/mdec/bootblk
 ./usr/mdec/ofwboot
 ./usr/mdec/ofwboot.net

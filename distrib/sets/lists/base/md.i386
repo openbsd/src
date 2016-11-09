@@ -478,6 +478,7 @@
 ./usr/libdata/perl5/i386-openbsd/5.20.3/threads
 ./usr/libdata/perl5/i386-openbsd/5.20.3/threads.pm
 ./usr/libdata/perl5/i386-openbsd/5.20.3/threads/shared.pm
+./usr/local/libdata/perl5/site_perl/i386-openbsd
 ./usr/mdec/biosboot
 ./usr/mdec/boot
 ./usr/mdec/cdboot

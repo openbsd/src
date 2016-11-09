@@ -438,6 +438,7 @@
 ./usr/libdata/perl5/sh-openbsd/5.20.3/threads
 ./usr/libdata/perl5/sh-openbsd/5.20.3/threads.pm
 ./usr/libdata/perl5/sh-openbsd/5.20.3/threads/shared.pm
+./usr/local/libdata/perl5/site_perl/sh-openbsd
 ./usr/mdec/boot
 ./usr/mdec/mbr
 ./usr/mdec/xxboot

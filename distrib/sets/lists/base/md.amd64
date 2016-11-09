@@ -476,6 +476,7 @@
 ./usr/libdata/perl5/amd64-openbsd/5.20.3/threads
 ./usr/libdata/perl5/amd64-openbsd/5.20.3/threads.pm
 ./usr/libdata/perl5/amd64-openbsd/5.20.3/threads/shared.pm
+./usr/local/libdata/perl5/site_perl/amd64-openbsd
 ./usr/mdec/BOOTIA32.EFI
 ./usr/mdec/BOOTX64.EFI
 ./usr/mdec/biosboot

@@ -473,6 +473,7 @@
 ./usr/libdata/perl5/powerpc-openbsd/5.20.3/threads
 ./usr/libdata/perl5/powerpc-openbsd/5.20.3/threads.pm
 ./usr/libdata/perl5/powerpc-openbsd/5.20.3/threads/shared.pm
+./usr/local/libdata/perl5/site_perl/powerpc-openbsd
 ./usr/mdec/boot.mac
 ./usr/mdec/bsd.tbxi
 ./usr/mdec/mbr

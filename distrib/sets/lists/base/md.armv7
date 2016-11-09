@@ -438,6 +438,7 @@
 ./usr/libdata/perl5/arm-openbsd/5.20.3/threads
 ./usr/libdata/perl5/arm-openbsd/5.20.3/threads.pm
 ./usr/libdata/perl5/arm-openbsd/5.20.3/threads/shared.pm
+./usr/local/libdata/perl5/site_perl/arm-openbsd
 ./usr/mdec/BOOTARM.EFI
 ./usr/sbin/eeprom
 ./usr/sbin/gpioctl
