@@ -1347,6 +1347,7 @@ hv_channel_send_sgl(struct hv_channel *ch, struct vmbus_gpa *sgl,
 	VMBUS_CHANPKT_SETLEN(cp.cp_hdr.cph_tlen, pktlen_aligned);
 	cp.cp_hdr.cph_tid = rid;
 	cp.cp_gpa_cnt = nsge;
+	cp.cp_rsvd = 0;
 
 	iov[0].iov_base = &cp;
 	iov[0].iov_len = sizeof(cp);
