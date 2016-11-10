@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.28 2016/11/07 17:36:09 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.29 2016/11/10 14:10:48 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4575,10 +4575,12 @@ swofp_send_error(struct switch_softc *sc, struct mbuf *m,
 	oe->err_type = htons(type);
 	oe->err_code = htons(code);
 	oe->err_oh.oh_length = htons(len + sizeof(struct ofp_error));
-	m->m_len = m->m_pkthdr.len = len + sizeof(struct ofp_error);
+	m->m_len = m->m_pkthdr.len = sizeof(struct ofp_error);
 
-	if (m_copyback(m, sizeof(struct ofp_error), len, data, M_DONTWAIT))
+	if (m_copyback(m, sizeof(struct ofp_error), len, data, M_DONTWAIT)) {
+		m_freem(m);
 		return;
+	}
 
 	(void)swofp_output(sc, m);
 }
