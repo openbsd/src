@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.352 2016/10/18 19:47:52 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.353 2016/11/10 09:18:33 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1537,11 +1537,8 @@ bad_flags:
 		    (rde_as4byte(peer) && attr_len != 8)) {
 			/*
 			 * ignore attribute in case of error as per
-			 * draft-ietf-idr-optional-transitive-00.txt
-			 * but only if partial bit is set
+			 * RFC 7606
 			 */
-			if ((flags & ATTR_PARTIAL) == 0)
-				goto bad_len;
 			log_peer_warnx(&peer->conf, "bad AGGREGATOR, "
 			    "partial attribute ignored");
 			plen += attr_len;
@@ -1564,14 +1561,11 @@ bad_flags:
 		/* 4-byte ready server take the default route */
 		goto optattr;
 	case ATTR_COMMUNITIES:
-		if (attr_len % 4 != 0) {
+		if (attr_len == 0 || attr_len % 4 != 0) {
 			/*
 			 * mark update as bad and withdraw all routes as per
-			 * draft-ietf-idr-optional-transitive-00.txt
-			 * but only if partial bit is set
+			 * RFC 7606
 			 */
-			if ((flags & ATTR_PARTIAL) == 0)
-				goto bad_len;
 			a->flags |= F_ATTR_PARSE_ERR;
 			log_peer_warnx(&peer->conf, "bad COMMUNITIES, "
 			    "path invalidated and prefix withdrawn");
@@ -1581,14 +1575,11 @@ bad_flags:
 			goto bad_flags;
 		goto optattr;
 	case ATTR_LARGE_COMMUNITIES:
-		if (attr_len % 12 != 0) {
+		if (attr_len == 0 || attr_len % 12 != 0) {
 			/*
 			 * mark update as bad and withdraw all routes as per
-			 * draft-ietf-idr-optional-transitive-00.txt
-			 * but only if partial bit is set
+			 * RFC 7606
 			 */
-			if ((flags & ATTR_PARTIAL) == 0)
-				goto bad_len;
 			a->flags |= F_ATTR_PARSE_ERR;
 			log_peer_warnx(&peer->conf, "bad LARGE COMMUNITIES, "
 			    "path invalidated and prefix withdrawn");
@@ -1598,14 +1589,11 @@ bad_flags:
 			goto bad_flags;
 		goto optattr;
 	case ATTR_EXT_COMMUNITIES:
-		if (attr_len % 8 != 0) {
+		if (attr_len == 0 || attr_len % 8 != 0) {
 			/*
 			 * mark update as bad and withdraw all routes as per
-			 * draft-ietf-idr-optional-transitive-00.txt
-			 * but only if partial bit is set
+			 * RFC 7606
 			 */
-			if ((flags & ATTR_PARTIAL) == 0)
-				goto bad_len;
 			a->flags |= F_ATTR_PARSE_ERR;
 			log_peer_warnx(&peer->conf, "bad EXT_COMMUNITIES, "
 			    "path invalidated and prefix withdrawn");
