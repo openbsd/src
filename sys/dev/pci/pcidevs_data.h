@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1805 2016/09/14 00:57:17 jmatthew Exp 
+ *	OpenBSD: pcidevs,v 1.1806 2016/11/10 11:50:40 mpi Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2022,6 +2022,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BCM5701,
 	    "BCM5701",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_NVME,
+	    "NVMe",
 	},
 	{
 	    PCI_VENDOR_ARALION, PCI_PRODUCT_ARALION_ARS106S,
