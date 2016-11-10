@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.216 2016/09/29 22:04:28 benno Exp $	*/
+/*	$OpenBSD: relay.c,v 1.217 2016/11/10 13:21:58 jca Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -562,15 +562,33 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 	 */
 	if (proto->tcpflags & TCPFLAG_IPTTL) {
 		val = (int)proto->tcpipttl;
-		if (setsockopt(s, IPPROTO_IP, IP_TTL,
-		    &val, sizeof(val)) == -1)
-			goto bad;
+		switch (ss->ss_family) {
+		case AF_INET:
+			if (setsockopt(s, IPPROTO_IP, IP_TTL,
+			    &val, sizeof(val)) == -1)
+				goto bad;
+			break;
+		case AF_INET6:
+			if (setsockopt(s, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
+			    &val, sizeof(val)) == -1)
+				goto bad;
+			break;
+		}
 	}
 	if (proto->tcpflags & TCPFLAG_IPMINTTL) {
 		val = (int)proto->tcpipminttl;
-		if (setsockopt(s, IPPROTO_IP, IP_MINTTL,
-		    &val, sizeof(val)) == -1)
-			goto bad;
+		switch (ss->ss_family) {
+		case AF_INET:
+			if (setsockopt(s, IPPROTO_IP, IP_MINTTL,
+			    &val, sizeof(val)) == -1)
+				goto bad;
+			break;
+		case AF_INET6:
+			if (setsockopt(s, IPPROTO_IPV6, IPV6_MINHOPCOUNT,
+			    &val, sizeof(val)) == -1)
+				goto bad;
+			break;
+		}
 	}
 
 	/*
