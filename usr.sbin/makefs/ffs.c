@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.23 2016/11/10 08:26:38 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.24 2016/11/10 08:33:11 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -98,8 +98,8 @@
 /*
  * Various file system defaults (cribbed from newfs(8)).
  */
-#define	DFL_FRAGSIZE		1024		/* fragment size */
-#define	DFL_BLKSIZE		8192		/* block size */
+#define	DFL_FRAGSIZE		2048		/* fragment size */
+#define	DFL_BLKSIZE		16384		/* block size */
 #define	DFL_SECSIZE		512		/* sector size */
 
 
