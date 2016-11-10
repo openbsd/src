@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_TIME_set.3,v 1.1 2016/11/10 14:42:21 schwarze Exp $
+.\"	$OpenBSD: ASN1_TIME_set.3,v 1.2 2016/11/10 15:08:13 jmc Exp $
 .\"	OpenSSL 99d63d46 Mon Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson.
@@ -54,8 +54,8 @@
 .Sh NAME
 .Nm ASN1_TIME_set ,
 .Nm ASN1_TIME_adj ,
-.Nm ASN1_TIME_check ,
 .Nm ASN1_TIME_set_string ,
+.Nm ASN1_TIME_check ,
 .Nm ASN1_TIME_print
 .Nd ASN.1 Time functions
 .Sh SYNOPSIS
@@ -167,9 +167,9 @@ The
 .Vt ASN1_TIME
 structure corresponds to the ASN.1 structure
 .Sy Time
-defined in RFC5280 et al.
-The time setting functions obey the rules outlined in RFC5280: if the
-date can be represented by UTCTime it is used, else GeneralizedTime is
+defined in RFC 5280 et al.
+The time setting functions obey the rules outlined in RFC 5280: if the
+date can be represented by UTCTime it is used, otherwise GeneralizedTime is
 used.
 .Pp
 The
@@ -243,4 +243,4 @@ value.
 .Fn ASN1_TIME_print
 currently does not print out the time zone: it either prints out "GMT"
 or nothing.
-But all certificates complying with RFC5280 et al use GMT anyway.
+But all certificates complying with RFC 5280 et al use GMT anyway.
