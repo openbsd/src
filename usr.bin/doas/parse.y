@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.23 2016/10/05 17:36:53 tedu Exp $ */
+/* $OpenBSD: parse.y,v 1.24 2016/11/10 16:00:40 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -164,7 +164,7 @@ envlist:	/* empty */ {
 				errx(1, "can't allocate envlist");
 			$$.envlist[nenv] = $2.str;
 			$$.envlist[nenv + 1] = NULL;
-		}
+		} ;
 
 
 ident:		TSTRING {
