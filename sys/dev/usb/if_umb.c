@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.4 2016/10/25 16:31:08 bluhm Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.5 2016/11/10 14:45:43 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1734,9 +1734,12 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 	hdr16 = (struct ncm_header16 *)buf;
 	hsig = UGETDW(hdr16->dwSignature);
 	hlen = UGETW(hdr16->wHeaderLength);
+	if (len < hlen)
+		goto toosmall;
 	switch (hsig) {
 	case NCM_HDR16_SIG:
 		blen = UGETW(hdr16->wBlockLength);
+		ptroff = UGETW(hdr16->wNdpIndex);
 		if (hlen != sizeof (*hdr16)) {
 			DPRINTF("%s: bad header len %d for NTH16 (exp %zu)\n",
 			    DEVNAM(sc), hlen, sizeof (*hdr16));
@@ -1746,6 +1749,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 	case NCM_HDR32_SIG:
 		hdr32 = (struct ncm_header32 *)hdr16;
 		blen = UGETDW(hdr32->dwBlockLength);
+		ptroff = UGETDW(hdr32->dwNdpIndex);
 		if (hlen != sizeof (*hdr32)) {
 			DPRINTF("%s: bad header len %d for NTH32 (exp %zu)\n",
 			    DEVNAM(sc), hlen, sizeof (*hdr32));
@@ -1757,15 +1761,12 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 		    DEVNAM(sc), hsig);
 		goto fail;
 	}
-	if (len < hlen)
-		goto toosmall;
 	if (len < blen) {
 		DPRINTF("%s: bad NTB len (%d) for %d bytes of data\n",
 		    DEVNAM(sc), blen, len);
 		goto fail;
 	}
 
-	ptroff = hlen;
 	ptr16 = (struct ncm_pointer16 *)(buf + ptroff);
 	psig = UGETDW(ptr16->dwSignature);
 	ptrlen = UGETW(ptr16->wLength);
