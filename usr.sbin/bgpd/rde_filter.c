@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.78 2016/10/14 16:05:36 phessler Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.79 2016/11/10 09:20:51 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -585,6 +585,21 @@ filterset_cmp(struct filter_set *a, struct filter_set *b)
 	    a->type == ACTION_DEL_EXT_COMMUNITY) {	/* a->type == b->type */
 		return (memcmp(&a->action.ext_community,
 		    &b->action.ext_community, sizeof(a->action.ext_community)));
+	}
+
+	if (a->type == ACTION_SET_LARGE_COMMUNITY ||
+	    a->type == ACTION_DEL_LARGE_COMMUNITY) {	/* a->type == b->type */
+		/* compare community */
+		if (a->action.large_community.as -
+		    b->action.large_community.as != 0)
+			return (a->action.large_community.as -
+			    b->action.large_community.as);
+		if (a->action.large_community.ld1 -
+		    b->action.large_community.ld1 != 0)
+			return (a->action.large_community.ld1 -
+			    b->action.large_community.ld1);
+		return (a->action.large_community.ld2 -
+		    b->action.large_community.ld2);
 	}
 
 	if (a->type == ACTION_SET_NEXTHOP && b->type == ACTION_SET_NEXTHOP) {
