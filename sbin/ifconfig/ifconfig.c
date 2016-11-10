@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.332 2016/11/08 14:37:20 mestre Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.333 2016/11/10 14:36:03 gerhard Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -5153,7 +5153,7 @@ umb_status(void)
 		printf("\t");
 		n = 0;
 		if (pn[0])
-			printf("%sphone# +%s", n++ ? " " : "", pn);
+			printf("%sphone# %s", n++ ? " " : "", pn);
 		if (apn[0])
 			printf("%sAPN %s", n++ ? " " : "", apn);
 		printf("\n");
@@ -5323,7 +5323,7 @@ done:
 		}
 		*out++ = isascii(c) ? (char)c : '?';
 		in++;
-		inlen -= sizeof (*in);
+		inlen--;
 	}
 }
 
