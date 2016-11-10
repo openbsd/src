@@ -1,6 +1,6 @@
-.\"	$OpenBSD: DES_set_key.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: DES_set_key.3,v 1.3 2016/11/10 14:34:18 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 10 2016 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -300,10 +300,10 @@ algorithm.
 There are two phases to the use of DES encryption.
 The first is the generation of a
 .Vt DES_key_schedule
-from a key, the second is the actual encryption.
+from a key, and the second is the actual encryption.
 A DES key is of type
 .Vt DES_cblock .
-This type is consists of 8 bytes with odd parity.
+This type consists of 8 bytes with odd parity.
 The least significant bit in each byte is the parity bit.
 The key schedule is an expanded form of the key; it is used to speed the
 encryption process.
@@ -343,7 +343,7 @@ sets the parity of the passed
 to odd.
 .Pp
 .Fn DES_is_weak_key
-returns 1 is the passed key is a weak key, 0 if it is ok.
+returns 1 if the passed key is a weak key or 0 if it is ok.
 .Pp
 The following routines mostly operate on an input and output stream of
 .Vt DES_cblock Ns s.
@@ -364,7 +364,7 @@ argument is non-zero
 .Pq Dv DES_ENCRYPT ,
 the
 .Fa input
-(cleartext) is encrypted in to the
+(cleartext) is encrypted into the
 .Fa output
 (ciphertext) using the key_schedule specified by the
 .Fa schedule
@@ -435,7 +435,7 @@ It uses
 .Fa inw
 and
 .Fa outw
-to 'whiten' the encryption.
+to "whiten" the encryption.
 .Fa inw
 and
 .Fa outw
@@ -465,7 +465,7 @@ Its parameters are the same as
 .Pp
 .Fn DES_cfb_encrypt
 encrypt/decrypts using cipher feedback mode.
-This method takes an array of characters as input and outputs and array
+This method takes an array of characters as input and outputs an array
 of characters.
 It does not require any padding to 8 character groups.
 Note: the
@@ -484,7 +484,7 @@ Because this routine will allow you to encrypt an arbitrary number of
 bytes, no 8 byte padding.
 Each call to this routine will encrypt the input bytes to output and
 then update ivec and num.
-num contains 'how far' we are though ivec.
+num contains "how far" we are though ivec.
 If this does not make much sense, read more about cfb mode of DES :-).
 .Pp
 .Fn DES_ede3_cfb64_encrypt
@@ -496,7 +496,7 @@ except that Triple-DES is used.
 .Pp
 .Fn DES_ofb_encrypt
 encrypts using output feedback mode.
-This method takes an array of characters as input and outputs and array
+This method takes an array of characters as input and outputs an array
 of characters.
 It does not require any padding to 8 character groups.
 Note: the
@@ -523,7 +523,7 @@ The following functions are included in the DES library for
 compatibility with the MIT Kerberos library.
 .Pp
 .Fn DES_cbc_cksum
-produces an 8 byte checksum based on the input stream (via CBC
+produces an 8-byte checksum based on the input stream (via CBC
 encryption).
 The last 4 bytes of the checksum are returned and the complete 8 bytes
 are placed in
@@ -535,7 +535,7 @@ etc. instead.
 .Pp
 .Fn DES_quad_cksum
 is a Kerberos v4 function.
-It returns a 4 byte checksum from the input bytes.
+It returns a 4-byte checksum from the input bytes.
 The algorithm can be iterated over the input, depending on
 .Fa out_count ,
 1, 2, 3 or 4 times.
@@ -606,12 +606,12 @@ for the key schedule and
 .Fa iv
 for the initial vector.
 .Pp
-.Sy Warning:
+.Sy Warning :
 The data format used by
 .Fn DES_enc_write
 and
 .Fn DES_enc_read
-has a cryptographic weakness: When asked to write more than
+has a cryptographic weakness: when asked to write more than
 .Dv MAXWRITE
 bytes,
 .Fn DES_enc_write
@@ -657,7 +657,7 @@ were added in OpenSSL 0.9.5.
 .Fn des_init_random_number_generator ,
 .Fn des_new_random_key ,
 .Fn des_set_random_generator_seed ,
-.Xr des_set_sequence_number ,
+.Fn des_set_sequence_number ,
 and
 .Fn des_rand_data 3
 are used in newer versions of Kerberos but are not implemented here.
@@ -671,8 +671,7 @@ prior version 0.9.5, as well as in the original MIT library.
 Single-key DES is insecure due to its short key size.
 ECB mode is not suitable for most applications.
 .Sh BUGS
-.Xr DES_cbc_encrypt 3
-does not modify
+DES_cbc_encrypt does not modify
 .Fa ivec ;
 use
 .Fn DES_ncbc_encrypt
@@ -689,7 +688,7 @@ The second 12 bits will have the low 8 bits taken from the 3rd input
 byte and the top 4 bits taken from the 4th input byte.
 The same holds for output.
 This function has been implemented this way because most people will be
-using a multiple of 8 and because once you get into pulling bytes input
+using a multiple of 8 and because once you get into pulling input
 bytes apart things get ugly!
 .Pp
 .Fn DES_string_to_key

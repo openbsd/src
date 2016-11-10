@@ -1,6 +1,6 @@
-.\"	$OpenBSD: CRYPTO_set_ex_data.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: CRYPTO_set_ex_data.3,v 1.3 2016/11/10 14:34:18 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 10 2016 $
 .Dt CRYPTO_SET_EX_DATA 3
 .Os
 .Sh NAME
@@ -33,18 +33,19 @@ structures passed to the
 .Fn free_func ,
 and
 .Fn dup_func
-callbacks: as passed to
-.Xr RSA_get_ex_new_index 3
+callbacks, as passed to
+.Xr RSA_get_ex_new_index 3 ,
 for example.
 .Pp
 .Fn CRYPTO_set_ex_data
-is used to set application specific data, the data is supplied in the
+is used to set application specific data.
+The data is supplied in the
 .Fa arg
 parameter and its precise meaning is up to the application.
 .Pp
 .Fn CRYPTO_get_ex_data
 is used to retrieve application specific data.
-The data is returned to the application, this will be the same value as
+The data is returned to the application; this will be the same value as
 supplied to a previous
 .Fn CRYPTO_set_ex_data
 call.

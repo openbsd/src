@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BUF_MEM_new.3,v 1.4 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: BUF_MEM_new.3,v 1.5 2016/11/10 14:34:18 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 10 2016 $
 .Dt BUF_MEM_NEW 3
 .Os
 .Sh NAME
@@ -46,12 +46,10 @@ typedef struct buf_mem_st
 .Ed
 .Pp
 .Fa length
-is the current size of the buffer in bytes,
+is the current size of the buffer in bytes;
 .Fa max
 is the amount of memory allocated to the buffer.
-There are three functions which handle these and one
-.Dq miscellaneous
-function.
+There are three functions which handle these and one miscellaneous function.
 .Pp
 .Fn BUF_MEM_new
 allocates a new buffer of zero size.
@@ -92,7 +90,7 @@ returns the buffer or
 on error.
 .Pp
 .Fn BUF_MEM_grow
-returns zero on error or the new size (i.e.
+returns zero on error or the new size (i.e.\&
 .Fa len ) .
 .Sh SEE ALSO
 .Xr bio 3
