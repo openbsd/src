@@ -126,7 +126,6 @@ struct hvn_tx_desc {
 	struct mbuf			*txd_buf;
 	bus_dmamap_t			 txd_dmap;
 	struct vmbus_gpa		 txd_gpa;
-	struct hvn_nvs_rndis		 txd_cmd;
 	struct rndis_packet_msg		*txd_req;
 };
 
@@ -160,6 +159,7 @@ struct hvn_softc {
 	struct rndis_queue		 sc_cntl_fq; /* free queue */
 	struct mutex			 sc_cntl_fqlck;
 	struct rndis_cmd		 sc_cntl_msgs[HVN_RNDIS_CTLREQS];
+	struct hvn_nvs_rndis		 sc_data_msg;
 
 	/* Rx ring */
 	void				*sc_rx_ring;
@@ -1256,6 +1256,12 @@ hvn_rndis_attach(struct hvn_softc *sc)
 
 	hvn_free_cmd(sc, rc);
 
+	/* Initialize RNDIS Data command */
+	memset(&sc->sc_data_msg, 0, sizeof(sc->sc_data_msg));
+	sc->sc_data_msg.nvs_type = HVN_NVS_TYPE_RNDIS;
+	sc->sc_data_msg.nvs_rndis_mtype = HVN_NVS_RNDIS_MTYPE_DATA;
+	sc->sc_data_msg.nvs_chim_idx = HVN_NVS_CHIM_IDX_INVALID;
+
 	return (0);
 
 errout:
@@ -1544,15 +1550,11 @@ hvn_rndis_complete(struct hvn_softc *sc, caddr_t buf, uint32_t len)
 int
 hvn_rndis_output(struct hvn_softc *sc, struct hvn_tx_desc *txd)
 {
-	struct hvn_nvs_rndis *cmd = &txd->txd_cmd;
+	uint64_t rid = (uint64_t)txd->txd_id << 32;
 	int rv;
 
-	cmd->nvs_type = HVN_NVS_TYPE_RNDIS;
-	cmd->nvs_rndis_mtype = HVN_NVS_RNDIS_MTYPE_DATA;
-	cmd->nvs_chim_idx = HVN_NVS_CHIM_IDX_INVALID;
-
 	rv = hv_channel_send_sgl(sc->sc_chan, txd->txd_sgl, txd->txd_nsge,
-	    &txd->txd_cmd, sizeof(*cmd), (uint64_t)txd->txd_id << 32);
+	    &sc->sc_data_msg, sizeof(sc->sc_data_msg), rid);
 	if (rv) {
 		DPRINTF("%s: RNDIS data send error %d\n",
 		    sc->sc_dev.dv_xname, rv);
@@ -1565,10 +1567,10 @@ hvn_rndis_output(struct hvn_softc *sc, struct hvn_tx_desc *txd)
 void
 hvn_rndis_status(struct hvn_softc *sc, caddr_t buf, uint32_t len)
 {
-	uint32_t sta;
+	uint32_t status;
 
-	memcpy(&sta, buf + RNDIS_HEADER_OFFSET, sizeof(sta));
-	switch (sta) {
+	memcpy(&status, buf + RNDIS_HEADER_OFFSET, sizeof(status));
+	switch (status) {
 	case RNDIS_STATUS_MEDIA_CONNECT:
 		sc->sc_link_state = LINK_STATE_UP;
 		break;
@@ -1579,7 +1581,8 @@ hvn_rndis_status(struct hvn_softc *sc, caddr_t buf, uint32_t len)
 	case RNDIS_STATUS_OFFLOAD_CURRENT_CONFIG:
 		return;
 	default:
-		DPRINTF("%s: unhandled status %#x\n", sc->sc_dev.dv_xname, sta);
+		DPRINTF("%s: unhandled status %#x\n", sc->sc_dev.dv_xname,
+		    status);
 		return;
 	}
 	KERNEL_LOCK();
