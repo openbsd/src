@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.h,v 1.6 2016/11/08 19:22:29 natano Exp $	*/
+/*	$OpenBSD: ffs.h,v 1.7 2016/11/10 08:26:38 natano Exp $	*/
 /*	$NetBSD: ffs.h,v 1.2 2011/10/09 21:33:43 christos Exp $	*/
 
 /*
@@ -43,7 +43,6 @@ typedef struct {
 	char	label[MAXVOLLEN];	/* volume name/label */
 	int	bsize;		/* block size */
 	int	fsize;		/* fragment size */
-	int	cpg;		/* cylinders per group */
 	int	density;	/* bytes per inode */
 	int	minfree;	/* free space threshold */
 	int	optimization;	/* optimization (space or time) */
