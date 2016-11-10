@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.29 2016/11/10 14:10:48 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.30 2016/11/10 17:32:40 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4465,15 +4465,14 @@ swofp_input(struct switch_softc *sc, struct mbuf *m)
 	struct ofp_header	*oh;
 	ofp_msg_handler		 handler;
 
-	oh = mtod(m, struct ofp_header *);
+	if (m->m_len < sizeof(*oh) &&
+	    (m = m_pullup(m, sizeof(*oh))) == NULL)
+		return (ENOBUFS);
 
-	if (ntohs(oh->oh_length) != m->m_pkthdr.len) {
-		DPRINTF(sc, "message length is wrong.  "
-		    "header length %d, actual length %d\n",
-		    ntohs(oh->oh_length), m->m_pkthdr.len);
-		m_freem(m);
-		return (EMSGSIZE);
-	}
+	oh = mtod(m, struct ofp_header *);
+	if (m->m_len < ntohs(oh->oh_length) &&
+	    (m = m_pullup(m, ntohs(oh->oh_length))) == NULL)
+		return (ENOBUFS);
 
 	VDPRINTF(sc, "received ofp message type=%s xid=%x len=%d\n",
 	    swofp_mtype_str(oh->oh_type), ntohl(oh->oh_xid),

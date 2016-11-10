@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.11 2016/10/28 09:04:03 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.12 2016/11/10 17:32:40 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1526,4 +1526,33 @@ switch_flow_classifier_dump(struct switch_softc *sc,
 	}
 
 	addlog("\n");
+}
+
+int
+ofp_split_mbuf(struct mbuf *m, struct mbuf **mtail)
+{
+	struct ofp_header	*oh;
+	uint16_t		 ohlen;
+
+	*mtail = NULL;
+
+	/* We need more data. */
+	if (m->m_pkthdr.len < sizeof(*oh))
+		return (-1);
+
+	oh = mtod(m, struct ofp_header *);
+	ohlen = ntohs(oh->oh_length);
+
+	/* Nothing to split. */
+	if (m->m_pkthdr.len == ohlen)
+		return (0);
+	else if (m->m_pkthdr.len < ohlen)
+		return (-1);
+
+	*mtail = m_split(m, ohlen, M_NOWAIT);
+	/* No memory, try again later. */
+	if (*mtail == NULL)
+		return (-1);
+
+	return (0);
 }

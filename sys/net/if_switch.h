@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.h,v 1.6 2016/11/08 19:11:57 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.h,v 1.7 2016/11/10 17:32:40 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -182,6 +182,7 @@ TAILQ_HEAD(switch_fwdp_queue, switch_port);
 
 struct switch_dev {
 	struct mbuf		*swdev_lastm;
+	struct mbuf		*swdev_inputm;
 	struct mbuf_queue	 swdev_outq;
 	struct selinfo		 swdev_rsel;
 	struct mutex		 swdev_rsel_mtx;
@@ -220,6 +221,7 @@ void	 switch_swfcl_free(struct switch_flow_classify *);
 struct mbuf
 	*switch_flow_classifier(struct mbuf *, uint32_t,
 	    struct switch_flow_classify *);
+int	 ofp_split_mbuf(struct mbuf *, struct mbuf **);
 
 /* switchctl.c */
 void	 switch_dev_destroy(struct switch_softc *);

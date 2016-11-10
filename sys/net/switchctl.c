@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.6 2016/11/09 12:26:55 rzalamena Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.7 2016/11/10 17:32:40 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -197,39 +197,94 @@ int
 switchwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct switch_softc	*sc = NULL;
-	int			 s, error;
-	u_int			 len;
-	struct mbuf		*m;
+	struct mbuf		*m, *n, *mhead, *mtail = NULL;
+	int			 s, error, trailing;
+	size_t			 len;
 
-	if (uio->uio_resid == 0 || uio->uio_resid > MAXMCLBYTES)
-		return (EMSGSIZE);
+	if (uio->uio_resid == 0)
+		return (0);
+
 	len = uio->uio_resid;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (ENOBUFS);
-	if (len >= MHLEN) {
-		MCLGETI(m, M_DONTWAIT, NULL, len);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_free(m);
-			return (ENOBUFS);
-		}
-	}
-
-	error = uiomove(mtod(m, caddr_t), len, uio);
-	if (error) {
-		m_freem(m);
-		return (error);
-	}
-	m->m_pkthdr.len = m->m_len = len;
 
 	sc = switch_dev2sc(dev);
 	if (sc == NULL)
 		return (ENXIO);
-	s = splnet();
-	error = sc->sc_swdev->swdev_input(sc, m);
-	splx(s);
 
+	if (sc->sc_swdev->swdev_inputm == NULL) {
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL)
+			return (ENOBUFS);
+		if (len >= MHLEN) {
+			MCLGETI(m, M_DONTWAIT, NULL, MIN(MAXMCLBYTES, len));
+			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
+				return (ENOBUFS);
+			}
+		}
+		mhead = m;
+
+		/* M_TRAILINGSPACE() uses this to calculate space. */
+		m->m_len = 0;
+	} else {
+		/* Recover the mbuf from the last write and get its tail. */
+		mhead = sc->sc_swdev->swdev_inputm;
+		for (m = mhead; m->m_next != NULL; m = m->m_next)
+			/* NOTHING */;
+
+		sc->sc_swdev->swdev_inputm = NULL;
+	}
+
+	while (len) {
+		trailing = ulmin(M_TRAILINGSPACE(m), len);
+		if ((error = uiomove(mtod(m, caddr_t), trailing, uio)) != 0)
+			goto save_return;
+
+		len -= trailing;
+		mhead->m_pkthdr.len += trailing;
+		m->m_len += trailing;
+		if (len == 0)
+			break;
+
+		MGET(n, M_DONTWAIT, MT_DATA);
+		if (n == NULL) {
+			error = ENOBUFS;
+			goto save_return;
+		}
+		if (len >= MLEN) {
+			MCLGETI(n, M_DONTWAIT, NULL, MIN(MAXMCLBYTES, len));
+			if ((n->m_flags & M_EXT) == 0) {
+				m_free(n);
+				error = ENOBUFS;
+				goto save_return;
+			}
+		}
+		n->m_len = 0;
+
+		m->m_next = n;
+		m = n;
+	}
+
+	/* Loop until there is no more complete OFP packets. */
+	while (ofp_split_mbuf(mhead, &mtail) == 0) {
+		s = splnet();
+		sc->sc_swdev->swdev_input(sc, mhead);
+		splx(s);
+
+		/* We wrote everything, just quit. */
+		if (mtail == NULL)
+			return (0);
+
+		mhead = mtail;
+	}
+
+	/* Save the head, because ofp_split_mbuf failed. */
+	sc->sc_swdev->swdev_inputm = mhead;
+
+	return (0);
+
+ save_return:
+	/* Save it so user can recover from errors later. */
+	sc->sc_swdev->swdev_inputm = mhead;
 	return (error);
 }
 
@@ -260,6 +315,7 @@ switchclose(dev_t dev, int flags, int mode, struct proc *p)
 	sc = switch_lookup(minor(dev));
 	if (sc != NULL && sc->sc_swdev != NULL) {
 		m_freem(sc->sc_swdev->swdev_lastm);
+		m_freem(sc->sc_swdev->swdev_inputm);
 		mq_purge(&sc->sc_swdev->swdev_outq);
 		free(sc->sc_swdev, M_DEVBUF, sizeof(struct switch_dev));
 		sc->sc_swdev = NULL;
@@ -286,6 +342,7 @@ switch_dev_destroy(struct switch_softc *sc)
 		splx(s);
 
 		m_freem(sc->sc_swdev->swdev_lastm);
+		m_freem(sc->sc_swdev->swdev_inputm);
 		mq_purge(&sc->sc_swdev->swdev_outq);
 		free(sc->sc_swdev, M_DEVBUF, sizeof(struct switch_dev));
 		sc->sc_swdev = NULL;
