@@ -524,7 +524,6 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 	size_t pktlen;
 	int i, rv;
 
-	/* XXX use queues? */
 	txd = &sc->sc_tx_desc[sc->sc_tx_next];
 	while (!txd->txd_ready) {
 		sc->sc_tx_next++;
@@ -614,6 +613,7 @@ hvn_decap(struct hvn_softc *sc, struct hvn_tx_desc *txd)
 	bus_dmamap_unload(sc->sc_dmat, txd->txd_dmap);
 	txd->txd_buf = NULL;
 	txd->txd_nsge = 0;
+	txd->txd_ready = 1;
 }
 
 void
