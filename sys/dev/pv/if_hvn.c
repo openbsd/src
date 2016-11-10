@@ -186,7 +186,7 @@ void	hvn_stop(struct hvn_softc *);
 void	hvn_start(struct ifnet *);
 int	hvn_encap(struct hvn_softc *, struct mbuf *, struct hvn_tx_desc **);
 void	hvn_decap(struct hvn_softc *, struct hvn_tx_desc *);
-void	hvn_txeof(struct hvn_softc *, uint64_t);
+int	hvn_txeof(struct hvn_softc *, uint64_t);
 int	hvn_rx_ring_create(struct hvn_softc *);
 int	hvn_rx_ring_destroy(struct hvn_softc *);
 int	hvn_tx_ring_create(struct hvn_softc *);
@@ -616,16 +616,15 @@ hvn_decap(struct hvn_softc *sc, struct hvn_tx_desc *txd)
 	txd->txd_ready = 1;
 }
 
-void
+int
 hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct hvn_tx_desc *txd;
 	struct mbuf *m;
 	uint32_t id = tid >> 32;
 
-	if ((tid & 0xffffffff) != 0)
-		return;
+	if ((tid & 0xffffffffU) != 0)
+		return (0);
 	if (id > HVN_TX_DESC)
 		panic("tx packet index too large: %u", id);
 
@@ -644,8 +643,7 @@ hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 
 	atomic_inc_int(&sc->sc_tx_avail);
 
-	if (ifq_is_oactive(&ifp->if_snd))
-		ifq_restart(&ifp->if_snd);
+	return (1);
 }
 
 int
@@ -965,11 +963,12 @@ void
 hvn_nvs_intr(void *arg)
 {
 	struct hvn_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct vmbus_chanpkt_hdr *cph;
 	struct hvn_nvs_hdr *nvs;
 	uint64_t rid;
 	uint32_t rlen;
-	int rv;
+	int rv, restart = 0;
 
 	for (;;) {
 		rv = hv_channel_recv(sc->sc_chan, sc->sc_nvsbuf,
@@ -994,7 +993,7 @@ hvn_nvs_intr(void *arg)
 				wakeup_one(&sc->sc_nvsrsp);
 				break;
 			case HVN_NVS_TYPE_RNDIS_ACK:
-				hvn_txeof(sc, cph->cph_tid);
+				restart |= hvn_txeof(sc, cph->cph_tid);
 				break;
 			default:
 				printf("%s: unhandled NVSP packet type %d "
@@ -1015,6 +1014,9 @@ hvn_nvs_intr(void *arg)
 			printf("%s: unknown NVSP packet type %u\n",
 			    sc->sc_dev.dv_xname, cph->cph_type);
 	}
+
+	if (restart && ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 int
