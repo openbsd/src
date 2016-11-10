@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.45 2016/11/10 10:39:09 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.46 2016/11/10 13:56:57 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -78,12 +78,12 @@ apply_patches()
 
 checkfs()
 {
-	local _d _f _files="${@}"
+	local _d _files="${@}"
 	[[ -n ${_files} ]]
 
-	for _d in $(stat -qf "%Sd" $(for _f in ${_files}; do echo /${_f%/*}
-		done | uniq)); do mount | grep -q "^/dev/${_d} .*read-only" &&
-			sp_err "Remote or read-only filesystem, aborting"
+	for _d in $(stat -qf "%Sd" ${_files} | uniq); do
+		mount | grep -v read-only | grep -q "^/dev/${_d} " ||
+		sp_err "Remote or read-only filesystem, aborting"
 	done
 }
 
@@ -254,7 +254,7 @@ sp_cleanup()
 	cmp -s /bsd /bsd.rollback${_RELINT} && rm /bsd.rollback${_RELINT}
 
 	# in case a patch added a new directory (install -D);
-	# non-fatal in case some mount points are read-only
+	# non-fatal in case some mount point is read-only or remote
 	for _m in 4.4BSD BSD.x11; do
 		mtree -qdef /etc/mtree/${_m}.dist -p / -U >/dev/null || true
 	done
