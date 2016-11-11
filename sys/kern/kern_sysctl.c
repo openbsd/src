@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.319 2016/11/07 00:26:32 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.320 2016/11/11 18:59:09 mikeb Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1614,7 +1614,7 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 		ki->p_ustime_usec = st.tv_nsec/1000;
 
 #ifdef MULTIPROCESSOR
-		if (isthread && p->p_cpu != NULL)
+		if (p->p_cpu != NULL)
 			ki->p_cpuid = CPU_INFO_UNIT(p->p_cpu);
 #endif
 	}
