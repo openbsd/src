@@ -120,7 +120,7 @@ TAILQ_HEAD(rndis_queue, rndis_cmd);
 
 struct hvn_tx_desc {
 	uint32_t			 txd_id;
-	int				 txd_ready;
+	volatile int			 txd_ready;
 	struct vmbus_gpa		 txd_sgl[HVN_TX_FRAGS + 1];
 	int				 txd_nsge;
 	struct mbuf			*txd_buf;
@@ -485,9 +485,6 @@ hvn_start(struct ifnet *ifp)
 		}
 
 		sc->sc_tx_next++;
-		sc->sc_tx_next %= HVN_TX_DESC;
-
-		atomic_dec_int(&sc->sc_tx_avail);
 
 		ifp->if_opackets++;
 	}
@@ -524,12 +521,11 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 	size_t pktlen;
 	int i, rv;
 
-	txd = &sc->sc_tx_desc[sc->sc_tx_next];
-	while (!txd->txd_ready) {
+	do {
+		txd = &sc->sc_tx_desc[sc->sc_tx_next % HVN_TX_DESC];
 		sc->sc_tx_next++;
-		sc->sc_tx_next %= HVN_TX_DESC;
-		txd = &sc->sc_tx_desc[sc->sc_tx_next];
-	}
+	} while (!txd->txd_ready);
+	txd->txd_ready = 0;
 
 	pkt = txd->txd_req;
 	memset(pkt, 0, sizeof(*pkt));
@@ -602,6 +598,9 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 	}
 
 	*txd0 = txd;
+
+	atomic_dec_int(&sc->sc_tx_avail);
+
 	return (0);
 }
 
@@ -614,6 +613,7 @@ hvn_decap(struct hvn_softc *sc, struct hvn_tx_desc *txd)
 	txd->txd_buf = NULL;
 	txd->txd_nsge = 0;
 	txd->txd_ready = 1;
+	atomic_inc_int(&sc->sc_tx_avail);
 }
 
 int
