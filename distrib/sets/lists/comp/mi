@@ -1733,6 +1733,8 @@
 ./usr/share/man/man3/ASN1_STRING_length.3
 ./usr/share/man/man3/ASN1_STRING_new.3
 ./usr/share/man/man3/ASN1_STRING_print_ex.3
+./usr/share/man/man3/ASN1_TIME_set.3
+./usr/share/man/man3/ASN1_TYPE_get.3
 ./usr/share/man/man3/ASN1_generate_nconf.3
 ./usr/share/man/man3/ASN1_time_parse.3
 ./usr/share/man/man3/BF_set_key.3
