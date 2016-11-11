@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.7 2016/11/10 17:32:40 rzalamena Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.8 2016/11/11 16:19:09 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -378,7 +378,6 @@ int
 switchkqfilter(dev_t dev, struct knote *kn)
 {
 	struct switch_softc	*sc = switch_dev2sc(dev);
-	struct mutex		*mtx;
 	struct klist		*klist;
 
 	if (sc == NULL)
@@ -386,12 +385,10 @@ switchkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		mtx = &sc->sc_swdev->swdev_rsel_mtx;
 		klist = &sc->sc_swdev->swdev_rsel.si_note;
 		kn->kn_fop = &switch_rd_filtops;
 		break;
 	case EVFILT_WRITE:
-		mtx = &sc->sc_swdev->swdev_wsel_mtx;
 		klist = &sc->sc_swdev->swdev_wsel.si_note;
 		kn->kn_fop = &switch_wr_filtops;
 		break;
@@ -401,9 +398,7 @@ switchkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = (caddr_t)sc;
 
-	mtx_enter(mtx);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	mtx_leave(mtx);
 
 	return (0);
 }
@@ -417,9 +412,7 @@ filt_switch_rdetach(struct knote *kn)
 	if (ISSET(kn->kn_status, KN_DETACHED))
 		return;
 
-	mtx_enter(&sc->sc_swdev->swdev_rsel_mtx);
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
-	mtx_leave(&sc->sc_swdev->swdev_rsel_mtx);
 }
 
 int
@@ -451,9 +444,7 @@ filt_switch_wdetach(struct knote *kn)
 	if (ISSET(kn->kn_status, KN_DETACHED))
 		return;
 
-	mtx_enter(&sc->sc_swdev->swdev_wsel_mtx);
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
-	mtx_leave(&sc->sc_swdev->swdev_wsel_mtx);
 }
 
 int
