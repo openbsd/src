@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.32 2016/11/05 15:13:26 beck Exp $ */
+/* $OpenBSD: tls_config.c,v 1.33 2016/11/11 14:02:24 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -194,8 +194,10 @@ tls_config_new(void)
 	if (tls_config_set_ciphers(config, "secure") != 0)
 		goto err;
 
-	tls_config_set_protocols(config, TLS_PROTOCOLS_DEFAULT);
-	tls_config_set_verify_depth(config, 6);
+	if (tls_config_set_protocols(config, TLS_PROTOCOLS_DEFAULT) != 0)
+		goto err;
+	if (tls_config_set_verify_depth(config, 6) != 0)
+		goto err;
 
 	tls_config_prefer_ciphers_server(config);
 
@@ -575,16 +577,20 @@ tls_config_set_keypair_mem(struct tls_config *config, const uint8_t *cert,
 	return (0);
 }
 
-void
+int
 tls_config_set_protocols(struct tls_config *config, uint32_t protocols)
 {
 	config->protocols = protocols;
+
+	return (0);
 }
 
-void
+int
 tls_config_set_verify_depth(struct tls_config *config, int verify_depth)
 {
 	config->verify_depth = verify_depth;
+
+	return (0);
 }
 
 void

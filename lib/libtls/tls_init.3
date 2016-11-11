@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.80 2016/11/05 18:30:02 bcook Exp $
+.\" $OpenBSD: tls_init.3,v 1.81 2016/11/11 14:02:24 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2016 $
+.Dd $Mdocdate: November 11 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -140,9 +140,9 @@
 .Fn tls_config_set_ocsp_staple_mem "struct tls_config *config" "const char *staple" "size_t len"
 .Ft "int"
 .Fn tls_config_set_ocsp_staple_file "struct tls_config *config" "const char *staple_file"
-.Ft "void"
+.Ft "int"
 .Fn tls_config_set_protocols "struct tls_config *config" "uint32_t protocols"
-.Ft "void"
+.Ft "int"
 .Fn tls_config_set_verify_depth "struct tls_config *config" "int verify_depth"
 .Ft "void"
 .Fn tls_config_prefer_ciphers_client "struct tls_config *config"
