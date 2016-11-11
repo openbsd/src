@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.h,v 1.7 2016/11/10 08:26:38 natano Exp $	*/
+/*	$OpenBSD: ffs.h,v 1.8 2016/11/11 09:54:07 natano Exp $	*/
 /*	$NetBSD: ffs.h,v 1.2 2011/10/09 21:33:43 christos Exp $	*/
 
 /*
@@ -46,7 +46,6 @@ typedef struct {
 	int	density;	/* bytes per inode */
 	int	minfree;	/* free space threshold */
 	int	optimization;	/* optimization (space or time) */
-	int	maxcontig;	/* max contiguous blocks to allocate */
 	int	maxbpg;		/* maximum blocks per file in a cyl group */
 	int	avgfilesize;	/* expected average file size */
 	int	avgfpdir;	/* expected # of files per directory */

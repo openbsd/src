@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.12 2016/10/26 15:31:13 natano Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.13 2016/11/11 09:54:07 natano Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	minfree =       ffs_opts->minfree;
 	opt =           ffs_opts->optimization;
 	density =       ffs_opts->density;
-	maxcontig =     ffs_opts->maxcontig;
+	maxcontig =	MAX(1, MIN(MAXBSIZE, FFS_MAXBSIZE) / bsize);
 	maxbpg =        ffs_opts->maxbpg;
 	avgfilesize =   ffs_opts->avgfilesize;
 	avgfpdir =      ffs_opts->avgfpdir;

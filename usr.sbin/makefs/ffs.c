@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.25 2016/11/11 09:27:31 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.26 2016/11/11 09:54:07 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -147,15 +147,14 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	    { .name = NULL }
 	};
 
-	ffs_opts->bsize= -1;
-	ffs_opts->fsize= -1;
-	ffs_opts->density= -1;
-	ffs_opts->minfree= -1;
+	ffs_opts->bsize = -1;
+	ffs_opts->fsize = -1;
+	ffs_opts->density = -1;
+	ffs_opts->minfree = MINFREE;
 	ffs_opts->optimization = FS_OPTSPACE;
-	ffs_opts->maxcontig= -1;
-	ffs_opts->maxbpg= -1;
-	ffs_opts->avgfilesize= -1;
-	ffs_opts->avgfpdir= -1;
+	ffs_opts->maxbpg = -1;
+	ffs_opts->avgfilesize = AVFILESIZ;
+	ffs_opts->avgfpdir = AFPDIR;
 	ffs_opts->version = 1;
 	ffs_opts->lp = NULL;
 
@@ -326,18 +325,9 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	if (ffs_opts->bsize == -1)
 		ffs_opts->bsize = MIN(DFL_BLKSIZE, 8 * ffs_opts->fsize);
 				/* fsopts->density is set below */
-	if (ffs_opts->minfree == -1)
-		ffs_opts->minfree = MINFREE;
-	if (ffs_opts->maxcontig == -1)
-		ffs_opts->maxcontig =
-		    MAX(1, MIN(MAXBSIZE, FFS_MAXBSIZE) / ffs_opts->bsize);
 	/* XXX ondisk32 */
 	if (ffs_opts->maxbpg == -1)
 		ffs_opts->maxbpg = ffs_opts->bsize / sizeof(int32_t);
-	if (ffs_opts->avgfilesize == -1)
-		ffs_opts->avgfilesize = AVFILESIZ;
-	if (ffs_opts->avgfpdir == -1)
-		ffs_opts->avgfpdir = AFPDIR;
 
 		/* calculate size of tree */
 	ffs_size_dir(root, fsopts);
