@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.17 2016/11/04 22:27:08 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.18 2016/11/11 16:59:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -95,7 +95,6 @@ struct switch_connection {
 
 	struct event		 con_ev;
 	struct ibuf		*con_rbuf;
-	struct ibuf		*con_ibuf;
 	struct msgbuf		 con_wbuf;
 
 	struct switch_control	*con_switch;

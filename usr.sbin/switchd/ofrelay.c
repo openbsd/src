@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrelay.c,v 1.6 2016/10/12 19:07:42 reyk Exp $	*/
+/*	$OpenBSD: ofrelay.c,v 1.7 2016/11/11 16:59:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -41,7 +41,6 @@ void	 ofrelay_event(int, short, void *);
 int	 ofrelay_input(int, short, void *);
 int	 ofrelay_output(int, short, void *);
 void	 ofrelay_accept(int, short, void *);
-ssize_t	 ofrelay_read(struct ibuf *, void *, size_t);
 void	 ofrelay_inflight_dec(struct switch_connection *, const char *);
 
 void	*ofrelay_input_open(struct switch_connection *,
@@ -102,7 +101,6 @@ ofrelay_close(struct switch_connection *con)
 	ofp_multipart_clear(con);
 	switch_remove(con->con_sc, con->con_switch);
 	msgbuf_clear(&con->con_wbuf);
-	ibuf_release(con->con_ibuf);
 	ibuf_release(con->con_rbuf);
 	close(con->con_fd);
 
@@ -122,9 +120,6 @@ void
 ofrelay_event(int fd, short event, void *arg)
 {
 	struct switch_connection	*con = arg;
-	struct ibuf			*rbuf = con->con_rbuf;
-	void				*buf;
-	ssize_t				 len, rlen;
 	const char			*error = NULL;
 
 	event_add(&con->con_ev, NULL);
@@ -139,39 +134,10 @@ ofrelay_event(int fd, short event, void *arg)
 		}
 	}
 	if (event & EV_READ) {
-		/*
-		 * This read was originally done in ofrelay_input() without
-		 * the extra buffer but switch(4) does not support partial
-		 * reads so we have to read the whole input at once.
-		 */
-		if ((buf = ofrelay_input_open(con, rbuf, &len)) == NULL) {
-			error = "open input";
+		if (ofrelay_input(fd, event, arg) == -1) {
+			error = "input";
 			goto fail;
 		}
-
-		if ((rlen = read(fd, buf, len)) == -1) {
-			if (errno == EINTR || errno == EAGAIN)
-				return;
-			error = "read";
-			goto fail;
-		}
-
-		DPRINTF("%s: connection %u.%u read %zd bytes", __func__,
-		    con->con_id, con->con_instance, rlen);
-
-		if ((len = ofrelay_input_close(con, rbuf, rlen)) == -1) {
-			error = "close input";
-			goto fail;
-		} else if (rlen == 0)
-			error = "done";
-
-		do {
-			rlen = ofrelay_input(fd, event, arg);
-			if (rlen == -1) {
-				error = "input";
-				goto fail;
-			}
-		} while (rlen);
 	}
 
  fail:
@@ -185,7 +151,7 @@ int
 ofrelay_input(int fd, short event, void *arg)
 {
 	struct switch_connection	*con = arg;
-	struct ibuf		*ibuf = con->con_ibuf;
+	struct ibuf		*ibuf = con->con_rbuf;
 	ssize_t			 len, rlen;
 	size_t			 hlen;
 	void			*buf;
@@ -202,7 +168,9 @@ ofrelay_input(int fd, short event, void *arg)
 		len = sizeof(*oh) - hlen;
 	}
 
-	if ((rlen = ofrelay_read(con->con_rbuf, buf, len)) == -1) {
+	if ((rlen = read(fd, buf, len)) == -1) {
+		if (errno == EINTR || errno == EAGAIN)
+			return (0);
 		log_warn("%s: fd %d, failed to read", __func__, fd);
 		return (-1);
 	}
@@ -215,9 +183,9 @@ ofrelay_input(int fd, short event, void *arg)
 	if ((len = ofrelay_input_close(con, ibuf, rlen)) == -1)
 		return (-1);
 	else if (rlen == 0) {
-		if (ibuf_left(ibuf))
-			return (0);
-		goto done;
+		/* connection closed */
+		ofrelay_input_done(con, ibuf);
+		return (-1);
 	}
 
 	/* After we verified the openflow header, set the size accordingly */
@@ -248,26 +216,8 @@ ofrelay_input(int fd, short event, void *arg)
 
 	if (len > 0)
 		return (len);
- done:
+
 	return (ofrelay_input_done(con, ibuf));
-}
-
-ssize_t
-ofrelay_read(struct ibuf *rbuf, void *buf, size_t size)
-{
-	void	*p;
-	size_t	 len;
-
-	if ((len = ibuf_dataleft(rbuf)) > size)
-		len = size;
-
-	if ((p = ibuf_getdata(rbuf, len)) == NULL)
-		return (-1);
-
-	/* This could be avoided */
-	memcpy(buf, p, len);
-
-	return ((ssize_t)len);
 }
 
 void
@@ -362,18 +312,8 @@ ofrelay_output(int fd, short event, void *arg)
 {
 	struct switch_connection	*con = arg;
 	struct msgbuf			*wbuf = &con->con_wbuf;
-	ssize_t				 n;
-	struct ibuf			*buf;
-	size_t				 len;
-	void				*base;
 
-	/*
-	 * Only write one packet at a time, this is currently needed
-	 * for switch(4) and other OpenFlow implementations that do
-	 * not handle multiple openflow packets in a single buffer.
-	 */
-	if (!wbuf->queued ||
-	    (buf = TAILQ_FIRST(&wbuf->bufs)) == NULL) {
+	if (!wbuf->queued) {
 		event_del(&con->con_ev);
 		event_set(&con->con_ev, con->con_fd, EV_READ,
 		    ofrelay_event, con);
@@ -381,23 +321,8 @@ ofrelay_output(int fd, short event, void *arg)
 		return (0);
 	}
 
-	base = buf->buf + buf->rpos;
-	len = buf->wpos - buf->rpos;
-
- again:
-	if ((n = write(wbuf->fd, base, len)) == -1) {
-		if (errno == EINTR)
-			goto again;
-		if (errno == ENOBUFS || errno == EAGAIN)
-			return (0);
+	if (ibuf_write(wbuf) <= 0 && errno != EAGAIN)
 		return (-1);
-	}
-
-	/* connection closed */
-	if (n == 0)
-		return (-1);
-
-	msgbuf_drain(wbuf, n);
 
 	return (0);
 }
@@ -496,11 +421,6 @@ ofrelay_attach(struct switch_server *srv, int s, struct sockaddr *sa)
 
 	if ((con->con_rbuf = ibuf_static()) == NULL ||
 	    ofrelay_bufget(con, con->con_rbuf) == -1) {
-		log_warn("rbuf");
-		goto done;
-	}
-	if ((con->con_ibuf = ibuf_static()) == NULL ||
-	    ofrelay_bufget(con, con->con_ibuf) == -1) {
 		log_warn("ibuf");
 		goto done;
 	}
