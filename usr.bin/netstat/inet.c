@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.151 2016/09/02 09:39:32 vgross Exp $	*/
+/*	$OpenBSD: inet.c,v 1.152 2016/11/11 15:01:43 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -99,6 +99,7 @@ void	protosw_dump(u_long, u_long);
 void	domain_dump(u_long, u_long, short);
 void	inpcb_dump(u_long, short, int);
 void	tcpcb_dump(u_long);
+int	kf_comp(const void *, const void *);
 
 int type_map[] = { -1, 2, 3, 1, 4, 5 };
 
@@ -1419,7 +1420,7 @@ void
 inpcb_dump(u_long off, short protocol, int af)
 {
 	struct inpcb inp;
-	char faddr[256], laddr[256];
+	char faddr[256], laddr[256], raddr[256];
 
 	if (off == 0)
 		return;
@@ -1432,10 +1433,14 @@ inpcb_dump(u_long off, short protocol, int af)
 	case AF_INET:
 		inet_ntop(af, &inp.inp_faddr, faddr, sizeof(faddr));
 		inet_ntop(af, &inp.inp_laddr, laddr, sizeof(laddr));
+		inet_ntop(af, &((struct sockaddr_in *)
+		    (&inp.inp_route.ro_dst))->sin_addr, raddr, sizeof(raddr));
 		break;
 	case AF_INET6:
 		inet_ntop(af, &inp.inp_faddr6, faddr, sizeof(faddr));
 		inet_ntop(af, &inp.inp_laddr6, laddr, sizeof(laddr));
+		inet_ntop(af, &inp.inp_route6.ro_dst.sin6_addr,
+		    raddr, sizeof(raddr));
 		break;
 	default:
 		faddr[0] = laddr[0] = '\0';
@@ -1452,6 +1457,8 @@ inpcb_dump(u_long off, short protocol, int af)
 	p("%u", inp_lport, "\n ");
 	pp("%p", inp_socket, ", ");
 	pp("%p", inp_ppcb, "\n ");
+	pp("%p", inp_route.ro_rt, ", ");
+	printf("ro_dst %s\n ", raddr);
 	p("%#.8x", inp_flags, "\n ");
 	p("%d", inp_hops, "\n ");
 	p("%u", inp_seclevel[0], ", ");
