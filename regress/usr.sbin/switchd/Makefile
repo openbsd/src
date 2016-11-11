@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2016/09/02 21:30:34 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2016/11/11 14:05:12 reyk Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Net-Pcap		Perl interface for libpcap
@@ -29,7 +29,7 @@ CLEANFILES +=		*.log  ktrace.out stamp-*
 CLEANFILES +=		*.h *.ph
 
 SRC_PATH =		${.CURDIR}/../../../usr.sbin/switchd
-SYS_PATH =		${.CURDIR}/../../../sys
+SYS_PATH =		${.CURDIR}/../../../sys/net
 OFP_HEADERS =		ofp.h ofp10.h
 OFP_PERLHEADERS =	${OFP_HEADERS:S/.h/.ph/}
 
