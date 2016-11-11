@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.18 2016/11/11 16:59:33 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.19 2016/11/11 22:07:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -224,9 +224,6 @@ void		 ofp(struct privsep *, struct privsep_proc *);
 void		 ofp_close(struct switch_connection *);
 int		 ofp_open(struct privsep *, struct switch_connection *);
 void		 ofp_accept(int, short, void *);
-int		 ofp_validate_header(struct switchd *,
-		    struct sockaddr_storage *, struct sockaddr_storage *,
-		    struct ofp_header *, uint8_t);
 int		 ofp_input(struct switch_connection *, struct ibuf *);
 
 /* ofp10.c */
@@ -255,6 +252,9 @@ int		 ofp13_featuresrequest(struct switchd *,
 		    struct switch_connection *);
 
 /* ofp_common.c */
+int		 ofp_validate_header(struct switchd *,
+		    struct sockaddr_storage *, struct sockaddr_storage *,
+		    struct ofp_header *, uint8_t);
 int		 ofp_output(struct switch_connection *, struct ofp_header *,
 		    struct ibuf *);
 int		 ofp_multipart_add(struct switch_connection *, uint32_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.12 2016/10/05 15:42:28 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.13 2016/11/11 22:07:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -83,40 +83,6 @@ struct ofp_callback ofp10_callbacks[] = {
 	{ OFP10_T_QUEUE_GET_CONFIG_REQUEST, NULL, NULL },
 	{ OFP10_T_QUEUE_GET_CONFIG_REPLY, NULL, NULL }
 };
-
-int
-ofp_validate_header(struct switchd *sc,
-    struct sockaddr_storage *src, struct sockaddr_storage *dst,
-    struct ofp_header *oh, uint8_t version)
-{
-	struct constmap	*tmap;
-
-	/* For debug, don't verify the header if the version is unset */
-	if (version != OFP_V_0 &&
-	    (oh->oh_version != version ||
-	    oh->oh_type >= OFP_T_TYPE_MAX))
-		return (-1);
-
-	switch (version) {
-	case OFP_V_1_0:
-	case OFP_V_1_1:
-		tmap = ofp10_t_map;
-		break;
-	case OFP_V_1_3:
-	default:
-		tmap = ofp_t_map;
-		break;
-	}
-
-	log_debug("%s > %s: version %s type %s length %u xid %u",
-	    print_host(src, NULL, 0),
-	    print_host(dst, NULL, 0),
-	    print_map(oh->oh_version, ofp_v_map),
-	    print_map(oh->oh_type, tmap),
-	    ntohs(oh->oh_length), ntohl(oh->oh_xid));
-
-	return (0);
-}
 
 int
 ofp10_validate(struct switchd *sc,
