@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.24 2016/11/10 08:33:11 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.25 2016/11/11 09:27:31 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	ffs_opts->fsize= -1;
 	ffs_opts->density= -1;
 	ffs_opts->minfree= -1;
-	ffs_opts->optimization= -1;
+	ffs_opts->optimization = FS_OPTSPACE;
 	ffs_opts->maxcontig= -1;
 	ffs_opts->maxbpg= -1;
 	ffs_opts->avgfilesize= -1;
@@ -328,8 +328,6 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 				/* fsopts->density is set below */
 	if (ffs_opts->minfree == -1)
 		ffs_opts->minfree = MINFREE;
-	if (ffs_opts->optimization == -1)
-		ffs_opts->optimization = DEFAULTOPT;
 	if (ffs_opts->maxcontig == -1)
 		ffs_opts->maxcontig =
 		    MAX(1, MIN(MAXBSIZE, FFS_MAXBSIZE) / ffs_opts->bsize);
