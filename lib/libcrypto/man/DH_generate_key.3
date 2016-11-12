@@ -1,6 +1,6 @@
-.\"	$OpenBSD: DH_generate_key.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: DH_generate_key.3,v 1.3 2016/11/12 19:23:16 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 12 2016 $
 .Dt DH_GENERATE_KEY 3
 .Os
 .Sh NAME
@@ -54,10 +54,10 @@ must point to
 bytes of memory.
 .Sh RETURN VALUES
 .Fn DH_generate_key
-returns 1 on success, 0 otherwise.
+returns 1 on success, or 0 otherwise.
 .Pp
 .Fn DH_compute_key
-returns the size of the shared secret on success, -1 on error.
+returns the size of the shared secret on success, or -1 on error.
 .Pp
 The error codes can be obtained by
 .Xr ERR_get_error 3 .

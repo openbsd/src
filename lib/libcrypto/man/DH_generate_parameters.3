@@ -1,12 +1,12 @@
-.\"	$OpenBSD: DH_generate_parameters.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: DH_generate_parameters.3,v 1.3 2016/11/12 19:23:16 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 12 2016 $
 .Dt DH_GENERATE_PARAMETERS 3
 .Os
 .Sh NAME
 .Nm DH_generate_parameters_ex ,
-.Nm DH_generate_parameters ,
-.Nm DH_check
+.Nm DH_check ,
+.Nm DH_generate_parameters
 .Nd generate and check Diffie-Hellman parameters
 .Sh SYNOPSIS
 .In openssl/dh.h
@@ -79,7 +79,7 @@ is set if the generator cannot be checked, i.e. if it does not equal 2 or 5.
 .Fn DH_generate_parameters_ex
 and
 .Fn DH_check
-return 1 if the check could be performed, 0 otherwise.
+return 1 if the check could be performed, or 0 otherwise.
 .Pp
 .Fn DH_generate_parameters
 (deprecated) returns a pointer to the
