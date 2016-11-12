@@ -1,4 +1,4 @@
-/*	$OpenBSD: vndioctl.h,v 1.8 2008/09/03 23:24:25 krw Exp $	*/
+/*	$OpenBSD: vndioctl.h,v 1.9 2016/11/12 10:59:37 jca Exp $	*/
 /*	$NetBSD: vndioctl.h,v 1.5 1995/01/25 04:46:30 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #ifndef _SYS_VNDIOCTL_H_
 #define _SYS_VNDIOCTL_H_
 
-#define VNDNLEN	90
+#define VNDNLEN	1024		/* PATH_MAX */
 
 /*
  * Ioctl definitions for file (vnode) disk pseudo-device.
@@ -67,6 +67,14 @@ struct vnd_user {
 	ino_t	vnu_ino;		/* vnd inode */
 };
 
+/* XXX kill after 6.1 */
+struct vnd_user60 {
+	char	vnu60_file[90];		/* vnd file */
+	int	vnu60_unit;		/* vnd unit */
+	dev_t	vnu60_dev;		/* vnd device */
+	ino_t	vnu60_ino;		/* vnd inode */
+};
+
 /*
  * Before you can use a unit, it must be configured with VNDIOCSET.
  * The configuration persists across opens and closes of the device;
@@ -75,6 +83,8 @@ struct vnd_user {
  */
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
-#define VNDIOCGET	_IOWR('F', 2, struct vnd_user)	/* get disk info */
+/* XXX kill after 6.1 */
+#define VNDIOCGET60	_IOWR('F', 2, struct vnd_user60)	/* get disk info */
+#define VNDIOCGET	_IOWR('F', 3, struct vnd_user)	/* get disk info */
 
 #endif /* !_SYS_VNDIOCTL_H_ */
