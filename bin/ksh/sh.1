@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.136 2016/08/12 06:16:19 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.137 2016/11/12 22:37:41 tb Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2016 $
+.Dd $Mdocdate: November 12 2016 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -739,8 +739,6 @@ no change occurs.
 .It Ic times
 Display accumulated process times for the shell (user and system)
 and all child processes (user and system).
-.It Ic true
-Return a true (zero) value.
 .It Ic trap Op Ar action signal ...
 Perform
 .Ar action
@@ -776,6 +774,8 @@ otherwise
 should be a signal name
 (without the SIG prefix)
 or number.
+.It Ic true
+Return a true (zero) value.
 .It Ic umask Oo Fl S Oc Op Ar mask
 Set the file mode creation mask to
 .Ar mask .
