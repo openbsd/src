@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.46 2016/11/10 13:56:57 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.47 2016/11/12 22:22:25 halex Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -281,8 +281,8 @@ _RELINT=${_REL%\.*}${_REL#*\.}
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
 readonly _BSDMP _FETCH _PDIR _REL _RELINT _TMP
 
-trap 'rm -rf "${_TMP}"' EXIT
-trap exit HUP INT TERM ERR
+trap 'set +e; rm -rf "${_TMP}"' EXIT
+trap exit HUP INT TERM
 
 [[ -n ${_REL} && -n ${_RELINT} ]]
 
