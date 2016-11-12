@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.160 2016/11/12 10:59:37 jca Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.161 2016/11/12 11:16:59 jca Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -305,11 +305,11 @@ vndstrategy(struct buf *bp)
 		bp->b_bcount = ((origbcount + secsize - 1) & ~(secsize - 1));
 #ifdef DIAGNOSTIC
 		if (bp->b_bcount != origbcount) {
-			struct process *curpr = curproc->p_p;
+			struct proc *curp = curproc;
 			printf("%s: sloppy %s from proc %d (%s): "
 			    "blkno %lld bcount %ld\n", sc->sc_dev.dv_xname,
 			    (bp->b_flags & B_READ) ? "read" : "write",
-			    curpr->ps_pid, curpr->ps_comm,
+			    curp->p_p->ps_pid, curp->p_comm,
 			    (long long)bp->b_blkno, origbcount);
 		}
 #endif
