@@ -1264,7 +1264,6 @@
 ./usr/include/sndio.h
 ./usr/include/soundcard.h
 ./usr/include/spawn.h
-./usr/include/ssl
 ./usr/include/stdarg.h
 ./usr/include/stdbool.h
 ./usr/include/stddef.h
