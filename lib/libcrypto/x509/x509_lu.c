@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.21 2016/11/08 21:22:55 miod Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.22 2016/11/13 08:47:54 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -376,8 +376,10 @@ X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 
-	if (ret == 0)
+	if (ret == 0) {
+		obj->data.x509 = NULL; /* owned by the caller */
 		X509_OBJECT_free(obj);
+	}
 
 	return ret;
 }
@@ -419,8 +421,10 @@ X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 
-	if (ret == 0)
+	if (ret == 0) {
+		obj->data.crl = NULL; /* owned by the caller */
 		X509_OBJECT_free(obj);
+	}
 
 	return ret;
 }
