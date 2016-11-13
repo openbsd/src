@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.19 2016/11/13 09:56:05 tb Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.20 2016/11/13 21:56:59 rpe Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -69,9 +69,11 @@ for install answers, or one of
 or
 .Ar hostname Ns - Ns Pa upgrade.conf
 for upgrade answers.
-The URL used to fetch the file is constructed from information provided in
+The URL used to fetch the file is constructed from
 .Xr dhcpd.conf 5
-statements.
+statements extracted from the
+.Xr dhclient 8
+lease file.
 One of the statements
 .Ic server-name ,
 .Ic option tftp-server-name ,
@@ -85,6 +87,12 @@ or
 .Ic option bootfile-name
 (in that order of priority) specify the
 .Ar filename .
+The statement
+.Ic option host-name
+specifies the
+.Ar hostname
+which is also used as the default hostname during installation.
+.Pp
 If
 .Ar filename
 is
@@ -102,10 +110,7 @@ where
 .Ar MAC_address
 is a string of six hex octets separated by colons
 representing the MAC
-address of the interface being used to fetch the files,
-and
-.Ar hostname
-is the hostname assigned to the system by DHCP.
+address of the interface being used to fetch the files.
 .Pp
 If
 .Ar filename
