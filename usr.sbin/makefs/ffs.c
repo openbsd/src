@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.26 2016/11/11 09:54:07 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.27 2016/11/13 10:22:21 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -157,6 +157,7 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	ffs_opts->avgfpdir = AFPDIR;
 	ffs_opts->version = 1;
 	ffs_opts->lp = NULL;
+	ffs_opts->pp = NULL;
 
 	fsopts->fs_specific = ffs_opts;
 	fsopts->fs_options = copy_opts(ffs_options);
@@ -198,10 +199,6 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	
 		ffs_opts->lp = emalloc(sizeof(struct disklabel));
 		*ffs_opts->lp = *dp;
-
-#if 0
-		fsopts->sectorsize = dp->d_secsize;
-#endif
 	} else if (strcmp(ffs_options[rv].name, "optimization") == 0) {
 		if (strcmp(buf, "time") == 0) {
 			ffs_opts->optimization = FS_OPTTIME;
@@ -261,23 +258,17 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		struct disklabel *lp = ffs_opts->lp;
 		uint16_t *p, *end, sum = 0;
 		ssize_t n;
+		uint32_t bpg;
 		int i;
 
 		arc4random_buf(lp->d_uid, sizeof(lp->d_uid));
 		DL_SETBSTART(lp, 0);
 		DL_SETBEND(lp, DL_GETDSIZE(lp));
 
-		for (i = 0; i < lp->d_npartitions; i++) {
-			struct partition *pp = &lp->d_partitions[i];
-			if (pp->p_fstype == FS_BSDFFS &&
-			    pp->p_offset == fsopts->offset) {
-				pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(
-				    superblock->fs_fsize, superblock->fs_frag);
-				pp->p_cpg = superblock->fs_fpg /
-				    superblock->fs_frag;
-			}
-
-		}
+		bpg = superblock->fs_fpg / superblock->fs_frag;
+		while (bpg > UINT16_MAX)
+			bpg >>= 1;
+		ffs_opts->pp->p_cpg = bpg;
 
 		lp->d_magic = DISKMAGIC;
 		lp->d_magic2 = DISKMAGIC;
@@ -309,13 +300,45 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 static void
 ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
+	ffs_opt_t *ffs_opts = fsopts->fs_specific;
+	struct disklabel *lp = ffs_opts->lp;
+	struct partition *pp = NULL;
 	int32_t	ncg = 1;
-	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
+	int i;
 
 	assert(dir != NULL);
 	assert(root != NULL);
 	assert(fsopts != NULL);
 	assert(ffs_opts != NULL);
+
+	if (lp != NULL) {
+		for (i = 0; i < lp->d_npartitions; i++) {
+			pp = &lp->d_partitions[i];
+			if (pp->p_fstype == FS_BSDFFS &&
+			    pp->p_offset * lp->d_secsize == fsopts->offset) {
+				break;
+			}
+		}
+		if (i == lp->d_npartitions)
+			errx(1, "no matching partition found in the disklabel");
+		ffs_opts->pp = pp;
+
+		if (pp->p_fragblock == 0)
+			errx(1, "fragment size missing in disktab");
+		if (fsopts->freeblocks != 0 || fsopts->freeblockpc != 0 ||
+		    fsopts->freefiles != 0 || fsopts->freefilepc != 0 ||
+		    fsopts->minsize != 0 || fsopts->maxsize != 0 ||
+		    fsopts->sectorsize != -1 || fsopts->size != 0)
+			errx(1, "-bfMmSs and disklabel are mutually exclusive");
+		if (ffs_opts->fsize != -1 || ffs_opts->bsize != -1)
+			errx(1, "b/fsize and disklabel are mutually exclusive");
+
+		fsopts->sectorsize = lp->d_secsize;
+		fsopts->minsize = fsopts->maxsize =
+		    DL_GETPSIZE(pp) * lp->d_secsize;
+		ffs_opts->fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
+		ffs_opts->bsize = DISKLABELV1_FFS_BSIZE(pp->p_fragblock);
+	}
 
 		/* set FFS defaults */
 	if (fsopts->sectorsize == -1)
