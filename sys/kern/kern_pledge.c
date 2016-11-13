@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.187 2016/10/27 10:48:25 schwarze Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.188 2016/11/13 00:40:09 tb Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1046,7 +1046,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 	if (miblen == 2 &&		/* hw.ncpu */
 	    mib[0] == CTL_HW && mib[1] == HW_NCPU)
 		return (0);
-	if (miblen == 2 &&		/* kern.loadavg / getloadavg(3) */
+	if (miblen == 2 &&		/* vm.loadavg / getloadavg(3) */
 	    mib[0] == CTL_VM && mib[1] == VM_LOADAVG)
 		return (0);
 
