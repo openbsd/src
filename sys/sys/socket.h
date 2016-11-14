@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.92 2016/09/28 18:50:20 jca Exp $	*/
+/*	$OpenBSD: socket.h,v 1.93 2016/11/14 10:32:46 mpi Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -143,7 +143,9 @@ struct	splice {
 /*
  * Maximum number of alternate routing tables
  */
-#define	RT_TABLEID_MAX	255
+#define	RT_TABLEID_MAX		255
+#define	RT_TABLEID_BITS		8
+#define	RT_TABLEID_MASK		0xff
 
 #endif /* __BSD_VISIBLE */
 

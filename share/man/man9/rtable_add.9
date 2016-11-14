@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rtable_add.9,v 1.7 2015/12/11 16:08:30 mpi Exp $
+.\"     $OpenBSD: rtable_add.9,v 1.8 2016/11/14 10:32:46 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,12 +15,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 11 2015 $
+.Dd $Mdocdate: November 14 2016 $
 .Dt RTABLE_ADD 9
 .Os
 .Sh NAME
 .Nm rtable_add ,
 .Nm rtable_exists ,
+.Nm rtable_loindex ,
 .Nm rtable_l2 ,
 .Nm rtable_l2set
 .Nd routing tables and routing domains interface
@@ -30,6 +31,8 @@
 .Fn rtable_add "unsigned int id"
 .Ft int
 .Fn rtable_exists "unsigned int id"
+.Ft unsigned int
+.Fn rtable_loindex "unsigned int id"
 .Ft unsigned int
 .Fn rtable_l2 "unsigned int id"
 .Ft void
@@ -53,6 +56,11 @@ if routing table with ID
 exists,
 .Fa 0
 otherwise.
+.It Fn rtable_loindex "unsigned int id"
+Return the default
+.Xr lo 4
+interface index for the routing table with ID of
+.Fa id .
 .It Fn rtable_l2 "unsigned int id"
 Get the routing domain of routing table with ID of
 .Fa id .
@@ -65,6 +73,7 @@ under the routing domain with ID of
 .Sh CONTEXT
 .Fn rtable_add ,
 .Fn rtable_exists ,
+.Fn rtable_loindex ,
 .Fn rtable_l2 ,
 and
 .Fn task_l2set
@@ -82,5 +91,6 @@ already exists.
 Memory could not be allocated to extend the list of routing domains.
 .El
 .Sh SEE ALSO
+.Xr lo 4 ,
 .Xr route 4 ,
 .Xr route 8

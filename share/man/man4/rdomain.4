@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.8 2015/07/04 07:51:03 jmc Exp $
+.\"	$OpenBSD: rdomain.4,v 1.9 2016/11/14 10:32:46 mpi Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2015 $
+.Dd $Mdocdate: November 14 2016 $
 .Dt RDOMAIN 4
 .Os
 .Sh NAME
@@ -78,7 +78,10 @@ When an interface is assigned to a non-existent
 it gets created automatically.
 At the same time an
 .Nm rtable
-with the same ID gets created and assigned to the new domain.
+with the same ID and a
+.Xr lo 4
+interface with a unit number equals to ID get created and assigned to the new
+domain.
 .Pp
 The highest ID that can be used for an
 .Nm rdomain
@@ -87,7 +90,6 @@ is 255.
 Set up em0 and lo4 onto rdomain 4:
 .Bd -literal -offset indent
 # ifconfig em0 rdomain 4
-# ifconfig lo4 rdomain 4
 # ifconfig lo4 inet 127.0.0.1/8
 # ifconfig em0 192.0.2.100/24
 .Ed
@@ -114,6 +116,7 @@ match out on rdomain 4 to !$internal_net nat-to (em1) rtable 0
 .Ed
 .Sh SEE ALSO
 .Xr ps 1 ,
+.Xr lo 4 ,
 .Xr route 4 ,
 .Xr pf.conf 5 ,
 .Xr ifconfig 8 ,

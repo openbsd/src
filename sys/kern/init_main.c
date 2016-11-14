@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.262 2016/11/07 00:26:32 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.263 2016/11/14 10:32:46 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -389,6 +389,9 @@ main(void *framep)
 	msginit();
 #endif
 
+	/* Create default routing table before attaching lo0. */
+	rtable_init();
+
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		if (pdev->pdev_count > 0)
@@ -398,8 +401,6 @@ main(void *framep)
 	crypto_init();
 	swcr_init();
 #endif /* CRYPTO */
-
-	rtable_init();
 
 	/*
 	 * Initialize protocols.  Block reception of incoming packets

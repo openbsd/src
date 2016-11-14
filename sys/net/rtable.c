@@ -1,7 +1,7 @@
-/*	$OpenBSD: rtable.c,v 1.53 2016/11/14 08:54:19 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.54 2016/11/14 10:32:46 mpi Exp $ */
 
 /*
- * Copyright (c) 2014-2015 Martin Pieuchot
+ * Copyright (c) 2014-2016 Martin Pieuchot
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,7 +41,7 @@
  *	afmap		    rtmap/dommp
  *   -----------          ---------     -----
  *   |   0     |--------> | 0 | 0 | ... | 0 |	Array mapping rtableid (=index)
- *   -----------          ---------     -----   to rdomain (=value).
+ *   -----------          ---------     -----   to rdomain/loopback (=value).
  *   | AF_INET |.
  *   ----------- `.       .---------.     .---------.
  *       ...	   `----> | rtable0 | ... | rtableN |	Array of pointers for
@@ -59,10 +59,20 @@ struct rtmap {
 	void		 **tbl;
 };
 
-/* Array of rtableid -> rdomain mapping. */
+/*
+ * Array of rtableid -> rdomain mapping.
+ *
+ * Only used for the first index as describbed above.
+ */
 struct dommp {
 	unsigned int	   limit;
-	unsigned int	  *dom;
+	/*
+	 * Array to get the routing domain and loopback interface related to
+	 * a routing table. Format:
+	 *
+	 * 8 unused bits | 16 bits for loopback index | 8 bits for rdomain
+	 */
+	unsigned int	  *value;
 };
 
 unsigned int	   rtmap_limit = 0;
@@ -146,6 +156,8 @@ rtable_init(void)
 	unsigned int	 keylen = 0;
 	int		 i;
 
+	KASSERT(sizeof(struct rtmap) == sizeof(struct dommp));
+
 	/* We use index 0 for the rtable/rdomain map. */
 	af2idx_max = 1;
 	memset(af2idx, 0, sizeof(af2idx));
@@ -173,6 +185,9 @@ rtable_init(void)
 	    M_WAITOK|M_ZERO);
 
 	rtmap_init();
+
+	if (rtable_add(0) != 0)
+		panic("unable to create default routing table");
 }
 
 int
@@ -221,7 +236,7 @@ rtable_add(unsigned int id)
 
 	/* Use main rtable/rdomain by default. */
 	dmm = srp_get_locked(&afmap[0]);
-	dmm->dom[id] = 0;
+	dmm->value[id] = 0;
 
 	return (0);
 }
@@ -272,24 +287,42 @@ rtable_l2(unsigned int rtableid)
 
 	dmm = srp_enter(&sr, &afmap[0]);
 	if (rtableid < dmm->limit)
-		rdomain = dmm->dom[rtableid];
+		rdomain = (dmm->value[rtableid] & RT_TABLEID_MASK);
 	srp_leave(&sr);
 
 	return (rdomain);
 }
 
-void
-rtable_l2set(unsigned int rtableid, unsigned int rdomain)
+unsigned int
+rtable_loindex(unsigned int rtableid)
 {
 	struct dommp	*dmm;
+	unsigned int	 loifidx = 0;
+	struct srp_ref	 sr;
+
+	dmm = srp_enter(&sr, &afmap[0]);
+	if (rtableid < dmm->limit)
+		loifidx = (dmm->value[rtableid] >> RT_TABLEID_BITS);
+	srp_leave(&sr);
+
+	return (loifidx);
+}
+
+void
+rtable_l2set(unsigned int rtableid, unsigned int rdomain, unsigned int loifidx)
+{
+	struct dommp	*dmm;
+	unsigned int	 value;
 
 	KERNEL_ASSERT_LOCKED();
 
 	if (!rtable_exists(rtableid) || !rtable_exists(rdomain))
 		return;
 
+	value = (rdomain & RT_TABLEID_MASK) | (loifidx << RT_TABLEID_BITS);
+
 	dmm = srp_get_locked(&afmap[0]);
-	dmm->dom[rtableid] = rdomain;
+	dmm->value[rtableid] = value;
 }
 
 #ifndef ART

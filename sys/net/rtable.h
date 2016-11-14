@@ -1,7 +1,7 @@
-/*	$OpenBSD: rtable.h,v 1.17 2016/11/14 08:54:19 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.18 2016/11/14 10:32:46 mpi Exp $ */
 
 /*
- * Copyright (c) 2014-2015 Martin Pieuchot
+ * Copyright (c) 2014-2016 Martin Pieuchot
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -51,7 +51,8 @@ void		 rtable_init(void);
 int		 rtable_exists(unsigned int);
 int		 rtable_add(unsigned int);
 unsigned int	 rtable_l2(unsigned int);
-void		 rtable_l2set(unsigned int, unsigned int);
+unsigned int	 rtable_loindex(unsigned int);
+void		 rtable_l2set(unsigned int, unsigned int, unsigned int);
 
 struct rtentry	*rtable_lookup(unsigned int, struct sockaddr *,
 		     struct sockaddr *, struct sockaddr *, uint8_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.168 2016/08/24 09:41:12 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.169 2016/11/14 10:32:46 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -210,10 +210,11 @@ ip6_input(struct mbuf *m)
 			ip6stat.ip6s_mext1++;
 	} else {
 		if (m->m_next) {
-			if (m->m_flags & M_LOOP) {
-				ip6stat.ip6s_m2m[lo0ifidx]++;	/*XXX*/
-			} else if (ifp->if_index < nitems(ip6stat.ip6s_m2m))
-				ip6stat.ip6s_m2m[ifp->if_index]++;
+			int ifidx = m->m_pkthdr.ph_ifidx;
+			if (m->m_flags & M_LOOP)
+				ifidx = rtable_loindex(m->m_pkthdr.ph_rtableid);
+			if (ifidx < nitems(ip6stat.ip6s_m2m))
+				ip6stat.ip6s_m2m[ifidx]++;
 			else
 				ip6stat.ip6s_m2m[0]++;
 		} else

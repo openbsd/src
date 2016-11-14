@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.335 2016/11/09 09:04:48 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.336 2016/11/14 10:32:46 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -197,8 +197,6 @@ route_init(void)
 	while (rt_hashjitter == 0)
 		rt_hashjitter = arc4random();
 
-	if (rtable_add(0) != 0)
-		panic("route_init rtable_add");
 #ifdef BFD
 	bfdinit();
 #endif

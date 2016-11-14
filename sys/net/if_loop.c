@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.76 2016/04/13 11:41:15 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.77 2016/11/14 10:32:46 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -121,6 +121,7 @@
 #include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
+#include <net/rtable.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -182,7 +183,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	if (unit == 0) {
 		if_attachhead(ifp);
 		if_addgroup(ifp, ifc->ifc_name);
-		lo0ifidx = ifp->if_index;
+		rtable_l2set(0, 0, ifp->if_index);
 	} else
 		if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -195,7 +196,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 int
 loop_clone_destroy(struct ifnet *ifp)
 {
-	if (ifp->if_index == lo0ifidx)
+	if (ifp->if_index == rtable_loindex(ifp->if_rdomain))
 		return (EPERM);
 
 	if_detach(ifp);

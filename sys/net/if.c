@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.458 2016/11/08 10:47:10 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.459 2016/11/14 10:32:46 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -258,7 +258,6 @@ struct srp_gc if_ifp_gc = SRP_GC_INITIALIZER(if_ifp_dtor, NULL);
 struct srp_gc if_map_gc = SRP_GC_INITIALIZER(if_map_dtor, NULL);
 
 struct ifnet_head ifnet = TAILQ_HEAD_INITIALIZER(ifnet);
-unsigned int lo0ifidx;
 
 void
 if_idxmap_init(unsigned int limit)
@@ -1350,12 +1349,7 @@ p2p_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 
 		KASSERT(ifa == rt->rt_ifa);
 
-		/*
-		 * XXX Since lo0 is in the default rdomain we should not
-		 * (ab)use it for any route related to an interface of a
-		 * different rdomain.
-		 */
-		lo0ifp = if_get(lo0ifidx);
+		lo0ifp = if_get(rtable_loindex(ifp->if_rdomain));
 		KASSERT(lo0ifp != NULL);
 		TAILQ_FOREACH(lo0ifa, &lo0ifp->if_addrlist, ifa_list) {
 			if (lo0ifa->ifa_addr->sa_family ==
@@ -1438,7 +1432,7 @@ if_up(struct ifnet *ifp)
 
 #ifdef INET6
 	/* Userland expects the kernel to set ::1 on lo0. */
-	if (ifp->if_index == lo0ifidx)
+	if (ifp->if_index == rtable_loindex(0))
 		in6_ifattach(ifp);
 #endif
 
@@ -1605,14 +1599,32 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 	if (rdomain < 0 || rdomain > RT_TABLEID_MAX)
 		return (EINVAL);
 
-	/* make sure that the routing table exists */
+	/*
+	 * Create the routing table if it does not exist, including its
+	 * loopback interface with unit == rdomain.
+	 */
 	if (!rtable_exists(rdomain)) {
+		struct ifnet *loifp;
+		char loifname[IFNAMSIZ];
+		unsigned int unit = rdomain;
+
+		snprintf(loifname, sizeof(loifname), "lo%u", unit);
+		if ((error = if_clone_create(loifname, 0)))
+			return (error);
+
+		if ((loifp = ifunit(loifname)) == NULL)
+			return (ENXIO);
+
 		s = splsoftnet();
 		if ((error = rtable_add(rdomain)) == 0)
-			rtable_l2set(rdomain, rdomain);
+			rtable_l2set(rdomain, rdomain, loifp->if_index);
 		splx(s);
-		if (error)
+		if (error) {
+			if_clone_destroy(loifname);
 			return (error);
+		}
+
+		loifp->if_rdomain = rdomain;
 	}
 
 	/* make sure that the routing table is a real rdomain */
