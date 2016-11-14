@@ -1,4 +1,4 @@
-/*	$OpenBSD: percpu.h,v 1.3 2016/10/24 23:58:33 dlg Exp $ */
+/*	$OpenBSD: percpu.h,v 1.4 2016/11/14 03:26:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -136,6 +136,40 @@ counters_leave(struct counters_ref *ref, struct cpumem *cm)
 	(*ref->c) = ++ref->g; /* make the generation number even again */
 #endif
 	cpumem_leave(cm, ref->c);
+}
+
+static inline void
+counters_inc(struct cpumem *cm, unsigned int c)
+{
+	struct counters_ref ref;
+	uint64_t *counters;
+
+	counters = counters_enter(&ref, cm);
+	counters[c]++;
+	counters_leave(&ref, cm);
+}
+
+static inline void
+counters_add(struct cpumem *cm, unsigned int c, uint64_t v)
+{
+	struct counters_ref ref;
+	uint64_t *counters;
+
+	counters = counters_enter(&ref, cm);
+	counters[c] += v;
+	counters_leave(&ref, cm);
+}
+
+static inline void
+counters_pkt(struct cpumem *cm, unsigned int c, unsigned int b, uint64_t v)
+{
+	struct counters_ref ref;
+	uint64_t *counters;
+
+	counters = counters_enter(&ref, cm);
+	counters[c]++;
+	counters[b] += v;
+	counters_leave(&ref, cm);
 }
 
 #ifdef MULTIPROCESSOR
