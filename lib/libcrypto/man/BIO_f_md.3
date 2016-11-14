@@ -1,6 +1,55 @@
-.\"	$OpenBSD: BIO_f_md.3,v 1.4 2016/11/07 15:52:47 jmc Exp $
+.\"	$OpenBSD: BIO_f_md.3,v 1.5 2016/11/14 18:53:20 schwarze Exp $
+.\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
-.Dd $Mdocdate: November 7 2016 $
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2000, 2006, 2009, 2016 The OpenSSL Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 14 2016 $
 .Dt BIO_F_MD 3
 .Os
 .Sh NAME
@@ -36,10 +85,10 @@
 returns the message digest BIO method.
 This is a filter BIO that digests any data passed through it.
 It is a BIO wrapper for the digest routines
-.Fn EVP_DigestInit ,
-.Fn EVP_DigestUpdate ,
+.Xr EVP_DigestInit 3 ,
+.Xr EVP_DigestUpdate 3 ,
 and
-.Fn EVP_DigestFinal .
+.Xr EVP_DigestFinal 3 .
 .Pp
 Any data written or read through a digest BIO using
 .Xr BIO_read 3
@@ -110,12 +159,11 @@ or
 through a chain containing digest BIOs,
 then this can be done by prepending a buffering BIO.
 .Pp
-Before OpenSSL 1.0.0 the call to
+Calling
 .Fn BIO_get_md_ctx
-would only work if the BIO had been initialized, for example by calling
-.Fn BIO_set_md .
-In OpenSSL 1.0.0 and later the context is always returned
-and the state of the BIO is set to initialized.
+will return the context and initialize the
+.Vt BIO
+state.
 This allows applications to initialize the context externally
 if the standard calls such as
 .Fn BIO_set_md
@@ -195,6 +243,13 @@ do {
 } while(mdtmp);
 BIO_free_all(bio);
 .Ed
+.Sh HISTORY
+Before OpenSSL 1.0.0, the call to
+.Fn BIO_get_md_ctx
+would only work if the
+.Vt BIO
+had been initialized, for example by calling
+.Fn BIO_set_md .
 .Sh BUGS
 The lack of support for
 .Xr BIO_puts 3
