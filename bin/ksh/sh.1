@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.137 2016/11/12 22:37:41 tb Exp $
+.\"	$OpenBSD: sh.1,v 1.138 2016/11/14 09:21:35 tb Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2016 $
+.Dd $Mdocdate: November 14 2016 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1646,7 +1646,7 @@ where commands are executed in the order given.
 The exit status of a sequential list is that of the last command executed.
 The format for a sequential list is:
 .Pp
-.D1 Ar command\ \& ; Op Ar command ...
+.D1 Ar command No \&; Op Ar command ...
 .Pp
 A series of one or more commands separated by
 .Sq &
