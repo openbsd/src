@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.459 2016/11/14 10:32:46 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.460 2016/11/14 10:44:17 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1609,11 +1609,15 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 		unsigned int unit = rdomain;
 
 		snprintf(loifname, sizeof(loifname), "lo%u", unit);
-		if ((error = if_clone_create(loifname, 0)))
-			return (error);
+		error = if_clone_create(loifname, 0);
 
 		if ((loifp = ifunit(loifname)) == NULL)
 			return (ENXIO);
+
+		/* Do not error out if creating the default lo(4) interface */
+		if (error && (ifp != loifp || error != EEXIST))
+			return (error);
+
 
 		s = splsoftnet();
 		if ((error = rtable_add(rdomain)) == 0)
