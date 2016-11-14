@@ -1,6 +1,55 @@
-.\"	$OpenBSD: BIO_f_buffer.3,v 1.4 2016/11/07 15:52:47 jmc Exp $
+.\"	$OpenBSD: BIO_f_buffer.3,v 1.5 2016/11/14 17:56:45 schwarze Exp $
+.\"	OpenSSL 9b86974e Mar 19 12:32:14 2016 -0400
 .\"
-.Dd $Mdocdate: November 7 2016 $
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2000, 2010, 2015, 2016 The OpenSSL Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 14 2016 $
 .Dt BIO_F_BUFFER 3
 .Os
 .Sh NAME
@@ -17,18 +66,30 @@
 .Fo BIO_f_buffer
 .Fa void
 .Fc
-.Bd -literal
-#define	BIO_get_buffer_num_lines(b) \e
-	BIO_ctrl(b,BIO_C_GET_BUFF_NUM_LINES,0,NULL)
-#define	BIO_set_read_buffer_size(b,size) \e
-	BIO_int_ctrl(b,BIO_C_SET_BUFF_SIZE,size,0)
-#define	BIO_set_write_buffer_size(b,size) \e
-	BIO_int_ctrl(b,BIO_C_SET_BUFF_SIZE,size,1)
-#define	BIO_set_buffer_size(b,size) \e
-	BIO_ctrl(b,BIO_C_SET_BUFF_SIZE,size,NULL)
-#define	BIO_set_buffer_read_data(b,buf,num) \e
-	BIO_ctrl(b,BIO_C_SET_BUFF_READ_DATA,num,buf)
-.Ed
+.Ft long
+.Fo BIO_get_buffer_num_lines
+.Fa "BIO *b"
+.Fc
+.Ft long
+.Fo BIO_set_read_buffer_size
+.Fa "BIO *b"
+.Fa "long size"
+.Fc
+.Ft long
+.Fo BIO_set_write_buffer_size
+.Fa "BIO *b"
+.Fa "long size"
+.Fc
+.Ft long
+.Fo BIO_set_buffer_size
+.Fa "BIO *b"
+.Fa "long size"
+.Fc
+.Fo BIO_set_buffer_read_data
+.Fa "BIO *b"
+.Fa "void *buf"
+.Fa "long num"
+.Fc
 .Sh DESCRIPTION
 .Fn BIO_f_buffer
 returns the buffering BIO method.
@@ -72,6 +133,10 @@ bytes of
 If
 .Fa num
 is larger than the current buffer size the buffer is expanded.
+.Pp
+Except
+.Fn BIO_f_buffer ,
+these functions are implemented as macros.
 .Pp
 Buffering BIOs implement
 .Xr BIO_gets 3
