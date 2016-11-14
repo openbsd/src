@@ -1,11 +1,18 @@
-#	$OpenBSD: Makefile,v 1.1 2015/10/26 08:04:10 vgross Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/11/14 10:07:02 mpi Exp $
 
-DIR=	${.CURDIR}/../../net/rdomains
+RDOMAIN?=	5
 
-REGRESS_TARGETS=	run-regress-ifalocal
+REGRESS_TARGETS=	create-default-loopback regress-ifalocal
 REGRESS_ROOT_TARGETS=	$(REGRESS_TARGETS)
 
-run-regress-ifalocal:
-	sh $(DIR)/ifalocal.sh
+# Ensure that one can create the default loopback of a rdomain
+create-default-loopback:
+	${SUDO} ifconfig lo${RDOMAIN} rdomain ${RDOMAIN} up
+	ifconfig lo${RDOMAIN} 2>&1 | head -n1 | sed 's,${RDOMAIN},RDO,g' | \
+		diff -u ${.CURDIR}/lo.ok /dev/stdin
+
+regress-ifalocal:
+	${SUDO} sh ${.CURDIR}/ifalocal.sh
+
 
 .include <bsd.regress.mk>
