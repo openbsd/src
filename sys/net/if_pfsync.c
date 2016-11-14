@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.236 2016/10/27 21:41:20 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.237 2016/11/14 13:25:00 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1754,16 +1754,17 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 			}
 			switch (pd->pd_st->key[PF_SK_WIRE]->af) {
 			case AF_INET:
-				pf_route(&pd->pd_m, &pdesc,
+				pf_route(&pdesc,
 				    pd->pd_st->rule.ptr, pd->pd_st);
 				break;
 #ifdef INET6
 			case AF_INET6:
-				pf_route6(&pd->pd_m, &pdesc,
+				pf_route6(&pdesc,
 				    pd->pd_st->rule.ptr, pd->pd_st);
 				break;
 #endif /* INET6 */
 			}
+			pd->pd_m = pdesc.m;
 		} else {
 			switch (pd->pd_st->key[PF_SK_WIRE]->af) {
 			case AF_INET:

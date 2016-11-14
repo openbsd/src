@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.997 2016/11/14 03:51:53 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.998 2016/11/14 13:25:00 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2196,6 +2196,7 @@ pf_translate_a(struct pf_pdesc *pd, struct pf_addr *a, struct pf_addr *an)
 }
 
 #if INET6
+/* pf_translate_af() may change pd->m, adjust local copies after calling */
 int
 pf_translate_af(struct pf_pdesc *pd)
 {
@@ -5775,9 +5776,9 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 	return (ret);
 }
 
+/* pf_route() may change pd->m, adjust local copies after calling */
 void
-pf_route(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
-    struct pf_state *s)
+pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 {
 	struct mbuf		*m0, *m1;
 	struct sockaddr_in	*dst, sin;
@@ -5789,22 +5790,19 @@ pf_route(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 	int			 error = 0;
 	unsigned int		 rtableid;
 
-	if (m == NULL || *m == NULL || r == NULL)
-		panic("pf_route: invalid parameters");
-
-	if ((*m)->m_pkthdr.pf.routed++ > 3) {
-		m0 = *m;
-		*m = NULL;
-		goto bad;
+	if (pd->m->m_pkthdr.pf.routed++ > 3) {
+		m_freem(pd->m);
+		pd->m = NULL;
+		return;
 	}
 
 	if (r->rt == PF_DUPTO) {
-		if ((m0 = m_dup_pkt(*m, max_linkhdr, M_NOWAIT)) == NULL)
+		if ((m0 = m_dup_pkt(pd->m, max_linkhdr, M_NOWAIT)) == NULL)
 			return;
 	} else {
 		if ((r->rt == PF_REPLYTO) == (r->direction == pd->dir))
 			return;
-		m0 = *m;
+		m0 = pd->m;
 	}
 
 	if (m0->m_len < sizeof(struct ip)) {
@@ -5929,7 +5927,7 @@ pf_route(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 
 done:
 	if (r->rt != PF_DUPTO)
-		*m = NULL;
+		pd->m = NULL;
 	if (!r->rt)
 		if_put(ifp);
 	rtfree(rt);
@@ -5941,9 +5939,9 @@ bad:
 }
 
 #ifdef INET6
+/* pf_route6() may change pd->m, adjust local copies after calling */
 void
-pf_route6(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
-    struct pf_state *s)
+pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 {
 	struct mbuf		*m0;
 	struct sockaddr_in6	*dst, sin6;
@@ -5955,22 +5953,19 @@ pf_route6(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 	struct m_tag		*mtag;
 	unsigned int		 rtableid;
 
-	if (m == NULL || *m == NULL || r == NULL)
-		panic("pf_route6: invalid parameters");
-
-	if ((*m)->m_pkthdr.pf.routed++ > 3) {
-		m0 = *m;
-		*m = NULL;
-		goto bad;
+	if (pd->m->m_pkthdr.pf.routed++ > 3) {
+		m_freem(pd->m);
+		pd->m = NULL;
+		return;
 	}
 
 	if (r->rt == PF_DUPTO) {
-		if ((m0 = m_dup_pkt(*m, max_linkhdr, M_NOWAIT)) == NULL)
+		if ((m0 = m_dup_pkt(pd->m, max_linkhdr, M_NOWAIT)) == NULL)
 			return;
 	} else {
 		if ((r->rt == PF_REPLYTO) == (r->direction == pd->dir))
 			return;
-		m0 = *m;
+		m0 = pd->m;
 	}
 
 	if (m0->m_len < sizeof(struct ip6_hdr)) {
@@ -5990,7 +5985,7 @@ pf_route6(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 	if (!r->rt) {
 		m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 		ip6_output(m0, NULL, NULL, 0, NULL, NULL);
-		return;
+		goto done;
 	}
 
 	if (s == NULL) {
@@ -6051,7 +6046,7 @@ pf_route6(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 
 done:
 	if (r->rt != PF_DUPTO)
-		*m = NULL;
+		pd->m = NULL;
 	return;
 
 bad:
@@ -6659,7 +6654,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 
 	/* if packet has been reassembled, update packet description */
 	if (pf_status.reass && pd.virtual_proto == PF_VPROTO_FRAGMENT) {
-		action = pf_setup_pdesc(&pd, &pdhdrs, af, dir, kif, *m0,
+		action = pf_setup_pdesc(&pd, &pdhdrs, af, dir, kif, pd.m,
 		    &reason);
 		if (action != PF_PASS) {
 #if NPFLOG > 0
@@ -6885,22 +6880,23 @@ done:
 
 	switch (action) {
 	case PF_SYNPROXY_DROP:
-		m_freem(*m0);
+		m_freem(pd.m);
+		/* FALLTHROUGH */
 	case PF_DEFER:
-		*m0 = NULL;
+		pd.m = NULL;
 		action = PF_PASS;
 		break;
 	case PF_DIVERT:
 		switch (pd.af) {
 		case AF_INET:
 			if (!divert_packet(pd.m, pd.dir, r->divert_packet.port))
-				*m0 = NULL;
+				pd.m = NULL;
 			break;
 #ifdef INET6
 		case AF_INET6:
 			if (!divert6_packet(pd.m, pd.dir,
 			    r->divert_packet.port))
-				*m0 = NULL;
+				pd.m = NULL;
 			break;
 #endif /* INET6 */
 		}
@@ -6909,33 +6905,29 @@ done:
 #ifdef INET6
 	case PF_AFRT:
 		if (pf_translate_af(&pd)) {
-			if (!pd.m)
-				*m0 = NULL;
 			action = PF_DROP;
 			break;
 		}
 		if (pd.naf == AF_INET)
-			pf_route(&pd.m, &pd, r, s);
+			pf_route(&pd, r, s);
 		if (pd.naf == AF_INET6)
-			pf_route6(&pd.m, &pd, r, s);
-		*m0 = NULL;
+			pf_route6(&pd, r, s);
 		action = PF_PASS;
 		break;
 #endif /* INET6 */
 	case PF_DROP:
-		m_freem(*m0);
-		*m0 = NULL;
+		m_freem(pd.m);
+		pd.m = NULL;
 		break;
 	default:
-		/* pf_route can free the mbuf causing *m0 to become NULL */
 		if (r->rt) {
 			switch (pd.af) {
 			case AF_INET:
-				pf_route(m0, &pd, r, s);
+				pf_route(&pd, r, s);
 				break;
 #ifdef INET6
 			case AF_INET6:
-				pf_route6(m0, &pd, r, s);
+				pf_route6(&pd, r, s);
 				break;
 #endif /* INET6 */
 			}
@@ -6945,11 +6937,11 @@ done:
 
 #ifdef INET6
 	/* if reassembled packet passed, create new fragments */
-	if (pf_status.reass && action == PF_PASS && *m0 && fwdir == PF_FWD) {
+	if (pf_status.reass && action == PF_PASS && pd.m && fwdir == PF_FWD) {
 		struct m_tag	*mtag;
 
-		if ((mtag = m_tag_find(*m0, PACKET_TAG_PF_REASSEMBLED, NULL)))
-			action = pf_refragment6(m0, mtag, NULL, NULL);
+		if ((mtag = m_tag_find(pd.m, PACKET_TAG_PF_REASSEMBLED, NULL)))
+			action = pf_refragment6(&pd.m, mtag, NULL, NULL);
 	}
 #endif	/* INET6 */
 	if (s && action != PF_DROP) {
@@ -6959,6 +6951,7 @@ done:
 			s->if_index_out = ifp->if_index;
 	}
 
+	*m0 = pd.m;
 	return (action);
 }
 
