@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.996 2016/10/28 07:54:19 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.997 2016/11/14 03:51:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5825,7 +5825,7 @@ pf_route(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 	if (!r->rt) {
 		rt = rtalloc(sintosa(dst), RT_RESOLVE, rtableid);
 		if (rt == NULL) {
-			ipstat.ips_noroute++;
+			ipstat_inc(ips_noroute);
 			goto bad;
 		}
 
@@ -5859,7 +5859,7 @@ pf_route(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 
 		rt = rtalloc(sintosa(dst), RT_RESOLVE, rtableid);
 		if (rt == NULL) {
-			ipstat.ips_noroute++;
+			ipstat_inc(ips_noroute);
 			goto bad;
 		}
 	}
@@ -5887,7 +5887,7 @@ pf_route(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
 			m0->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		else {
-			ipstat.ips_outswcsum++;
+			ipstat_inc(ips_outswcsum);
 			ip->ip_sum = in_cksum(m0, ip->ip_hl << 2);
 		}
 		error = ifp->if_output(ifp, m0, sintosa(dst), rt);
@@ -5899,7 +5899,7 @@ pf_route(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
 	if (ip->ip_off & htons(IP_DF)) {
-		ipstat.ips_cantfrag++;
+		ipstat_inc(ips_cantfrag);
 		if (r->rt != PF_DUPTO) {
 			icmp_error(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG, 0,
 			    ifp->if_mtu);
@@ -5925,7 +5925,7 @@ pf_route(struct mbuf **m, struct pf_pdesc *pd, struct pf_rule *r,
 	}
 
 	if (error == 0)
-		ipstat.ips_fragmented++;
+		ipstat_inc(ips_fragmented);
 
 done:
 	if (r->rt != PF_DUPTO)

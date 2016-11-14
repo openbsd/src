@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.86 2016/03/07 18:44:00 naddy Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.87 2016/11/14 03:51:53 dlg Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -126,6 +126,8 @@ rip_input(struct mbuf *m, ...)
 	struct ip *ip = mtod(m, struct ip *);
 	struct inpcb *inp, *last = NULL;
 	struct mbuf *opts = NULL;
+	struct counters_ref ref;
+	uint64_t *counters;
 
 	ripsrc.sin_addr = ip->ip_src;
 	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
@@ -195,8 +197,11 @@ rip_input(struct mbuf *m, ...)
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL, 0, 0);
 		else
 			m_freem(m);
-		ipstat.ips_noproto++;
-		ipstat.ips_delivered--;
+
+		counters = counters_enter(&ref, ipcounters);
+		counters[ips_noproto]++;
+		counters[ips_delivered]--;
+		counters_leave(&ref, ipcounters);
 	}
 }
 
@@ -267,7 +272,7 @@ rip_output(struct mbuf *m, ...)
 		}
 		/* XXX prevent ip_output from overwriting header fields */
 		flags |= IP_RAWOUTPUT;
-		ipstat.ips_rawout++;
+		ipstat_inc(ips_rawout);
 	}
 #ifdef INET6
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.153 2016/11/09 09:04:48 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.154 2016/11/14 03:51:53 dlg Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -751,7 +751,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		/* keep packet in the original virtual instance */
 		rt = rtalloc(sintosa(&sin), RT_RESOLVE, rtableid);
 		if (rt == NULL) {
-			ipstat.ips_noroute++;
+			ipstat_inc(ips_noroute);
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}

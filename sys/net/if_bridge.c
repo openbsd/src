@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.287 2016/10/03 15:53:09 rzalamena Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.288 2016/11/14 03:51:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1603,25 +1603,25 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		/* Copy minimal header, and drop invalids */
 		if (m->m_len < sizeof(struct ip) &&
 		    (m = m_pullup(m, sizeof(struct ip))) == NULL) {
-			ipstat.ips_toosmall++;
+			ipstat_inc(ips_toosmall);
 			return (NULL);
 		}
 		ip = mtod(m, struct ip *);
 
 		if (ip->ip_v != IPVERSION) {
-			ipstat.ips_badvers++;
+			ipstat_inc(ips_badvers);
 			goto dropit;
 		}
 
 		hlen = ip->ip_hl << 2;	/* get whole header length */
 		if (hlen < sizeof(struct ip)) {
-			ipstat.ips_badhlen++;
+			ipstat_inc(ips_badhlen);
 			goto dropit;
 		}
 
 		if (hlen > m->m_len) {
 			if ((m = m_pullup(m, hlen)) == NULL) {
-				ipstat.ips_badhlen++;
+				ipstat_inc(ips_badhlen);
 				return (NULL);
 			}
 			ip = mtod(m, struct ip *);
@@ -1629,13 +1629,13 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 
 		if ((m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_OK) == 0) {
 			if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_BAD) {
-				ipstat.ips_badsum++;
+				ipstat_inc(ips_badsum);
 				goto dropit;
 			}
 
-			ipstat.ips_inswcsum++;
+			ipstat_inc(ips_inswcsum);
 			if (in_cksum(m, hlen) != 0) {
-				ipstat.ips_badsum++;
+				ipstat_inc(ips_badsum);
 				goto dropit;
 			}
 		}
@@ -1678,7 +1678,7 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		if (0 && (ifp->if_capabilities & IFCAP_CSUM_IPv4))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		else {
-			ipstat.ips_outswcsum++;
+			ipstat_inc(ips_outswcsum);
 			ip->ip_sum = in_cksum(m, hlen);
 		}
 
@@ -1848,7 +1848,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 	}
 
 	if (error == 0)
-		ipstat.ips_fragmented++;
+		ipstat_inc(ips_fragmented);
 
 	return;
  dropit:

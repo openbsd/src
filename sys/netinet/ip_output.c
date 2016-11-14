@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.327 2016/09/04 17:18:56 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.328 2016/11/14 03:51:53 dlg Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		ip->ip_off &= htons(IP_DF);
 		ip->ip_id = htons(ip_randomid());
 		ip->ip_hl = hlen >> 2;
-		ipstat.ips_localout++;
+		ipstat_inc(ips_localout);
 	} else {
 		hlen = ip->ip_hl << 2;
 	}
@@ -204,7 +204,7 @@ reroute:
 			    &ip->ip_src.s_addr, ro->ro_tableid);
 
 		if (ro->ro_rt == NULL) {
-			ipstat.ips_noroute++;
+			ipstat_inc(ips_noroute);
 			error = EHOSTUNREACH;
 			goto bad;
 		}
@@ -284,7 +284,7 @@ reroute:
 		 * output
 		 */
 		if (!ifp) {
-			ipstat.ips_noroute++;
+			ipstat_inc(ips_noroute);
 			error = EHOSTUNREACH;
 			goto bad;
 		}
@@ -298,7 +298,7 @@ reroute:
 		      (ifp->if_flags & IFF_MULTICAST) == 0) ||
 		     ((m->m_flags & M_BCAST) &&
 		      (ifp->if_flags & IFF_BROADCAST) == 0)) && (tdb == NULL)) {
-			ipstat.ips_noroute++;
+			ipstat_inc(ips_noroute);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -464,7 +464,7 @@ sendit:
 		    (ifp->if_bridgeport == NULL))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		else {
-			ipstat.ips_outswcsum++;
+			ipstat_inc(ips_outswcsum);
 			ip->ip_sum = in_cksum(m, hlen);
 		}
 
@@ -495,7 +495,7 @@ sendit:
 		    (ro->ro_rt->rt_rmx.rmx_mtu > ifp->if_mtu)) {
 			ro->ro_rt->rt_rmx.rmx_mtu = ifp->if_mtu;
 		}
-		ipstat.ips_cantfrag++;
+		ipstat_inc(ips_cantfrag);
 		goto bad;
 	}
 
@@ -515,7 +515,7 @@ sendit:
 	}
 
 	if (error == 0)
-		ipstat.ips_fragmented++;
+		ipstat_inc(ips_fragmented);
 
 done:
 	if (ro == &iproute && ro->ro_rt)
@@ -676,7 +676,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	for (off = hlen + len; off < ntohs(ip->ip_len); off += len) {
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL) {
-			ipstat.ips_odropped++;
+			ipstat_inc(ips_odropped);
 			error = ENOBUFS;
 			goto sendorfree;
 		}
@@ -705,7 +705,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		mhip->ip_len = htons((u_int16_t)(len + mhlen));
 		m->m_next = m_copym(m0, off, len, M_NOWAIT);
 		if (m->m_next == 0) {
-			ipstat.ips_odropped++;
+			ipstat_inc(ips_odropped);
 			error = ENOBUFS;
 			goto sendorfree;
 		}
@@ -718,10 +718,10 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		    (ifp->if_bridgeport == NULL))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		else {
-			ipstat.ips_outswcsum++;
+			ipstat_inc(ips_outswcsum);
 			mhip->ip_sum = in_cksum(m, mhlen);
 		}
-		ipstat.ips_ofragments++;
+		ipstat_inc(ips_ofragments);
 		fragments++;
 	}
 	/*
@@ -739,7 +739,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	    (ifp->if_bridgeport == NULL))
 		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 	else {
-		ipstat.ips_outswcsum++;
+		ipstat_inc(ips_outswcsum);
 		ip->ip_sum = in_cksum(m, hlen);
 	}
 sendorfree:

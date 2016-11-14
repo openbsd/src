@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.7 2016/04/13 11:41:15 mpi Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.8 2016/11/14 03:51:53 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -430,7 +430,7 @@ ip_etherip_input(struct mbuf *m, ...)
 
 	if (ip->ip_p != IPPROTO_ETHERIP) {
 		m_freem(m);
-		ipstat.ips_noproto++;
+		ipstat_inc(ips_noproto);
 		return;
 	}
 
