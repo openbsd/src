@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.460 2016/11/14 10:44:17 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.461 2016/11/14 10:52:04 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1431,8 +1431,8 @@ if_up(struct ifnet *ifp)
 	microtime(&ifp->if_lastchange);
 
 #ifdef INET6
-	/* Userland expects the kernel to set ::1 on lo0. */
-	if (ifp->if_index == rtable_loindex(0))
+	/* Userland expects the kernel to set ::1 on default lo(4). */
+	if (ifp->if_index == rtable_loindex(ifp->if_rdomain))
 		in6_ifattach(ifp);
 #endif
 
