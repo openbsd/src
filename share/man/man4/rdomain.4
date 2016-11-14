@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.9 2016/11/14 10:32:46 mpi Exp $
+.\"	$OpenBSD: rdomain.4,v 1.10 2016/11/14 16:17:50 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -80,7 +80,7 @@ At the same time an
 .Nm rtable
 with the same ID and a
 .Xr lo 4
-interface with a unit number equals to ID get created and assigned to the new
+interface with a unit number matching the ID get created and assigned to the new
 domain.
 .Pp
 The highest ID that can be used for an
