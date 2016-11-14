@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.185 2016/10/15 14:36:38 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.186 2016/11/14 06:59:42 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: October 15 2016 $
+.Dd $Mdocdate: November 14 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -124,10 +124,10 @@ option of the built-in command
 can't be used.
 .It
 Redirections that create files can't be used (i.e.\&
-.Ql > ,
-.Ql >| ,
-.Ql >> ,
-.Ql <> ) .
+.Sq Cm > ,
+.Sq Cm >| ,
+.Sq Cm >> ,
+.Sq Cm <> ) .
 .El
 .It Fl s
 The shell reads commands from standard input; all non-option arguments
@@ -219,12 +219,12 @@ Aside from delimiting words, spaces and tabs are ignored, while newlines
 usually delimit commands.
 The meta-characters are used in building the following
 .Em tokens :
-.Ql < ,
-.Ql <& ,
-.Ql << ,
-.Ql > ,
-.Ql >& ,
-.Ql >> ,
+.Sq Cm < ,
+.Sq Cm <& ,
+.Sq Cm << ,
+.Sq Cm > ,
+.Sq Cm >& ,
+.Sq Cm >> ,
 etc. are used to specify redirections (see
 .Sx Input/output redirection
 below);
@@ -497,12 +497,12 @@ Note that
 and
 .Ql }
 are reserved words, not meta-characters.
-.It Xo case Ar word No in
+.It Xo Ic case Ar word Cm in
 .Oo Op \&(
 .Ar pattern
 .Op | Ar pattern
 .No ... )
-.Ar list No ;;\ \& Oc ... esac
+.Ar list No ;;\ \& Oc ... Cm esac
 .Xc
 The
 .Ic case
@@ -527,9 +527,9 @@ Both the word and the
 patterns are subject to parameter, command, and arithmetic substitution, as
 well as tilde substitution.
 For historical reasons, open and close braces may be used instead of
-.Ic in
+.Cm in
 and
-.Ic esac
+.Cm esac
 e.g.\&
 .Ic case $foo { *) echo bar; } .
 The exit status of a
@@ -539,9 +539,9 @@ statement is that of the executed
 if no
 .Ar list
 is executed, the exit status is zero.
-.It Xo for Ar name
-.Oo in Ar word No ... Oc ;
-.No do Ar list ; No done
+.It Xo Ic for Ar name
+.Oo Cm in Ar word No ... Oc ;
+.Cm do Ar list ; Cm done
 .Xc
 For each
 .Ar word
@@ -551,14 +551,14 @@ is set to the word and
 .Ar list
 is executed.
 If
-.Ic in
+.Cm in
 is not used to specify a word list, the positional parameters
 ($1, $2, etc.)\&
 are used instead.
 For historical reasons, open and close braces may be used instead of
-.Ic do
+.Cm do
 and
-.Ic done
+.Cm done
 e.g.\&
 .Ic for i; { echo $i; } .
 The exit status of a
@@ -568,13 +568,12 @@ statement is the last exit status of
 if
 .Ar list
 is never executed, the exit status is zero.
-.It Xo if Ar list ;
-.No then Ar list ;
-.Oo elif Ar list ;
-.No then Ar list ; Oc
-.No ...
-.Oo else Ar list ; Oc
-.No fi
+.It Xo Ic if Ar list ;
+.Cm then Ar list ;
+.Oo Cm elif Ar list ;
+.Cm then Ar list ; Oc ...
+.Oo Cm else Ar list ; Oc
+.Cm fi
 .Xc
 If the exit status of the first
 .Ar list
@@ -583,16 +582,16 @@ is zero, the second
 is executed; otherwise, the
 .Ar list
 following the
-.Ic elif ,
+.Cm elif ,
 if any, is executed with similar consequences.
 If all the lists following the
 .Ic if
 and
-.Ic elif Ns s
+.Cm elif Ns s
 fail (i.e. exit with non-zero status), the
 .Ar list
 following the
-.Ic else
+.Cm else
 is executed.
 The exit status of an
 .Ic if
@@ -601,9 +600,9 @@ statement is that of non-conditional
 that is executed; if no non-conditional
 .Ar list
 is executed, the exit status is zero.
-.It Xo select Ar name
-.Oo in Ar word No ... Oc ;
-.No do Ar list ; No done
+.It Xo Ic select Ar name
+.Oo Cm in Ar word No ... Oc ;
+.Cm do Ar list ; Cm done
 .Xc
 The
 .Ic select
@@ -613,7 +612,8 @@ An enumerated list of the specified
 .Ar word Ns (s)
 is printed on standard error, followed by a prompt
 .Po
-.Ev PS3: normally
+.Ev PS3 :
+normally
 .Sq #?\ \&
 .Pc .
 A number corresponding to one of the enumerated words is then read from
@@ -645,9 +645,9 @@ If
 is omitted, the positional parameters are used
 (i.e. $1, $2, etc.).
 For historical reasons, open and close braces may be used instead of
-.Ic do
+.Cm do
 and
-.Ic done
+.Cm done
 e.g.\&
 .Ic select i; { echo $i; } .
 The exit status of a
@@ -655,18 +655,18 @@ The exit status of a
 statement is zero if a
 .Ic break
 statement is used to exit the loop, non-zero otherwise.
-.It Xo until Ar list ;
-.No do Ar list ;
-.No done
+.It Xo Ic until Ar list ;
+.Cm do Ar list ;
+.Cm done
 .Xc
 This works like
 .Ic while ,
 except that the body is executed only while the exit status of the first
 .Ar list
 is non-zero.
-.It Xo while Ar list ;
-.No do Ar list ;
-.No done
+.It Xo Ic while Ar list ;
+.Cm do Ar list ;
+.Cm done
 .Xc
 A
 .Ic while
@@ -679,7 +679,7 @@ The exit status of a
 statement is the last exit status of the
 .Ar list
 in the body of the loop; if the body is not executed, the exit status is zero.
-.It Xo function Ar name
+.It Xo Ic function Ar name
 .No { Ar list ; No }
 .Xc
 Defines the function
@@ -704,21 +704,21 @@ The
 reserved word is described in the
 .Sx Command execution
 section.
-.It (( Ar expression No ))
+.It Ic (( Ar expression Cm ))
 The arithmetic expression
 .Ar expression
 is evaluated; equivalent to
-.Dq let expression
+.Ic let Ar expression
 (see
 .Sx Arithmetic expressions
 and the
 .Ic let
 command, below).
-.It Bq Bq Ar \ \&expression\ \&
+.It Ic [[ Ar expression Cm ]]
 Similar to the
 .Ic test
 and
-.Ic \&[ ... \&]
+.Ic \&[ No ... Cm \&]
 commands (described later), with the following exceptions:
 .Bl -bullet -offset indent
 .It
@@ -836,19 +836,31 @@ when a quoted word is found, or when an alias word that is currently being
 expanded is found.
 .Pp
 The following command aliases are defined automatically by the shell:
-.Bd -literal -offset indent
-autoload='typeset -fu'
-functions='typeset -f'
-hash='alias -t'
-history='fc -l'
-integer='typeset -i'
-local='typeset'
-login='exec login'
-nohup='nohup '
-r='fc -s'
-stop='kill -STOP'
-type='whence -v'
-.Ed
+.Pp
+.Bl -item -compact -offset indent
+.It
+.Ic autoload Ns ='typeset -fu'
+.It
+.Ic functions Ns ='typeset -f'
+.It
+.Ic hash Ns ='alias -t'
+.It
+.Ic history Ns ='fc -l'
+.It
+.Ic integer Ns ='typeset -i'
+.It
+.Ic local Ns ='typeset'
+.It
+.Ic login Ns ='exec login'
+.It
+.Ic nohup Ns ='nohup '
+.It
+.Ic r Ns ='fc -s'
+.It
+.Ic stop Ns ='kill -STOP'
+.It
+.Ic type Ns ='whence -v'
+.El
 .Pp
 Tracked aliases allow the shell to remember where it found a particular
 command.
@@ -1544,7 +1556,7 @@ The current date, in the format
 .Dq Day Month Date
 for example
 .Dq Wed Nov 03 .
-.It Li \eD{ Ns Ar format Ns Li }
+.It Li \eD Ns Brq Ar format
 The current date, with
 .Ar format
 converted by
@@ -1979,7 +1991,7 @@ input is initially set to be from
 .Pa /dev/null ,
 and commands for which any of the following redirections have been specified:
 .Bl -tag -width Ds
-.It > Ar file
+.It Cm > Ar file
 Standard output is redirected to
 .Ar file .
 If
@@ -1995,30 +2007,30 @@ for reading and then truncate it when it opens it for writing, before
 .Ar cmd
 gets a chance to actually read
 .Ar foo .
-.It >| Ar file
+.It Cm >| Ar file
 Same as
-.Ic > ,
+.Cm > ,
 except the file is truncated, even if the
 .Ic noclobber
 option is set.
-.It >> Ar file
+.It Cm >> Ar file
 Same as
-.Ic > ,
+.Cm > ,
 except if
 .Ar file
 exists it is appended to instead of being truncated.
 Also, the file is opened
 in append mode, so writes always go to the end of the file (see
 .Xr open 2 ) .
-.It < Ar file
+.It Cm < Ar file
 Standard input is redirected from
 .Ar file ,
 which is opened for reading.
-.It <> Ar file
+.It Cm <> Ar file
 Same as
-.Ic < ,
+.Cm < ,
 except the file is opened for reading and writing.
-.It << Ar marker
+.It Cm << Ar marker
 After reading the command line containing this kind of redirection (called a
 .Dq here document ) ,
 the shell copies lines from the command source into a temporary file until a
@@ -2042,11 +2054,11 @@ and
 .Ql \enewline .
 If multiple here documents are used on the same command line, they are saved in
 order.
-.It <<- Ar marker
+.It Cm <<- Ar marker
 Same as
-.Ic << ,
+.Cm << ,
 except leading tabs are stripped from lines in the here document.
-.It <& Ar fd
+.It Cm <& Ar fd
 Standard input is duplicated from file descriptor
 .Ar fd .
 .Ar fd
@@ -2057,9 +2069,9 @@ indicating the file descriptor associated with the output of the current
 co-process; or the character
 .Ql - ,
 indicating standard input is to be closed.
-.It >& Ar fd
+.It Cm >& Ar fd
 Same as
-.Ic <& ,
+.Cm <& ,
 except the operation is done on standard output.
 .El
 .Pp
@@ -2269,19 +2281,19 @@ operator, is an asynchronous process that the shell can both write to (using
 and read from (using
 .Ic read -p ) .
 The input and output of the co-process can also be manipulated using
-.Ic >&p
+.Cm >&p
 and
-.Ic <&p
+.Cm <&p
 redirections, respectively.
 Once a co-process has been started, another can't
 be started until the co-process exits, or until the co-process's input has been
 redirected using an
-.Ic exec Ar n Ns Ic >&p
+.Ic exec Ar n Ns Cm >&p
 redirection.
 If a co-process's input is redirected in this way, the next
 co-process to be started will share the output with the first co-process,
 unless the output of the initial co-process has been redirected using an
-.Ic exec Ar n Ns Ic <&p
+.Ic exec Ar n Ns Cm <&p
 redirection.
 .Pp
 Some notes concerning co-processes:
@@ -3497,8 +3509,12 @@ prompt.
 Only used if job control is enabled
 .Pq Fl m .
 .It Fl C | Ic noclobber
-Prevent > redirection from overwriting existing files.
-Instead, >| must be used to force an overwrite.
+Prevent
+.Cm >
+redirection from overwriting existing files.
+Instead,
+.Cm >|
+must be used to force an overwrite.
 .It Fl e | Ic errexit
 Exit (after executing the
 .Dv ERR
