@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.28 2015/11/04 09:50:21 mpi Exp $	*/
+/*	$OpenBSD: radix.h,v 1.29 2016/11/14 08:56:12 mpi Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -93,7 +93,6 @@ struct radix_node_head {
 	int	rnh_addrsize;		/* permit, but not require fixed keys */
 	int	rnh_pktsize;		/* permit, but not require fixed keys */
 	struct	radix_node rnh_nodes[3];/* empty tree for common case */
-	int	rnh_multipath;		/* multipath? */
 	u_int	rnh_rtableid;
 };
 
