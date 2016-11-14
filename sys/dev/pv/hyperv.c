@@ -1083,19 +1083,18 @@ hv_channel_ring_create(struct hv_channel *ch, uint32_t buflen)
 		return (-1);
 	}
 	ch->ch_ring_size = 2 * buflen;
-	ch->ch_ring_npg = ch->ch_ring_size >> PAGE_SHIFT;
 
 	memset(&ch->ch_wrd, 0, sizeof(ch->ch_wrd));
 	ch->ch_wrd.rd_ring = (struct vmbus_bufring *)ch->ch_ring;
 	ch->ch_wrd.rd_size = buflen;
-	ch->ch_wrd.rd_data_size = buflen - sizeof(struct vmbus_bufring);
+	ch->ch_wrd.rd_dsize = buflen - sizeof(struct vmbus_bufring);
 	mtx_init(&ch->ch_wrd.rd_lock, IPL_NET);
 
 	memset(&ch->ch_rrd, 0, sizeof(ch->ch_rrd));
 	ch->ch_rrd.rd_ring = (struct vmbus_bufring *)((uint8_t *)ch->ch_ring +
 	    buflen);
 	ch->ch_rrd.rd_size = buflen;
-	ch->ch_rrd.rd_data_size = buflen - sizeof(struct vmbus_bufring);
+	ch->ch_rrd.rd_dsize = buflen - sizeof(struct vmbus_bufring);
 	mtx_init(&ch->ch_rrd.rd_lock, IPL_NET);
 
 	if (hv_handle_alloc(ch, ch->ch_ring, 2 * buflen, &ch->ch_ring_gpadl)) {
@@ -1111,8 +1110,7 @@ hv_channel_ring_create(struct hv_channel *ch, uint32_t buflen)
 void
 hv_channel_ring_destroy(struct hv_channel *ch)
 {
-	km_free(ch->ch_ring, ch->ch_wrd.rd_size + ch->ch_rrd.rd_size,
-	    &kv_any, &kp_zero);
+	km_free(ch->ch_ring, ch->ch_ring_size, &kv_any, &kp_zero);
 	ch->ch_ring = NULL;
 	hv_handle_free(ch, ch->ch_ring_gpadl);
 
@@ -1207,25 +1205,25 @@ hv_channel_setevent(struct hv_softc *sc, struct hv_channel *ch)
 static inline void
 hv_ring_put(struct hv_ring_data *wrd, uint8_t *data, uint32_t datalen)
 {
-	int left = MIN(datalen, wrd->rd_data_size - wrd->rd_prod);
+	int left = MIN(datalen, wrd->rd_dsize - wrd->rd_prod);
 
 	memcpy(&wrd->rd_ring->br_data[wrd->rd_prod], data, left);
 	memcpy(&wrd->rd_ring->br_data[0], data + left, datalen - left);
 	wrd->rd_prod += datalen;
-	wrd->rd_prod %= wrd->rd_data_size;
+	wrd->rd_prod %= wrd->rd_dsize;
 }
 
 static inline void
 hv_ring_get(struct hv_ring_data *rrd, uint8_t *data, uint32_t datalen,
     int peek)
 {
-	int left = MIN(datalen, rrd->rd_data_size - rrd->rd_cons);
+	int left = MIN(datalen, rrd->rd_dsize - rrd->rd_cons);
 
 	memcpy(data, &rrd->rd_ring->br_data[rrd->rd_cons], left);
 	memcpy(data + left, &rrd->rd_ring->br_data[0], datalen - left);
 	if (!peek) {
 		rrd->rd_cons += datalen;
-		rrd->rd_cons %= rrd->rd_data_size;
+		rrd->rd_cons %= rrd->rd_dsize;
 	}
 }
 
@@ -1237,10 +1235,10 @@ hv_ring_avail(struct hv_ring_data *rd, uint32_t *towrite, uint32_t *toread)
 	uint32_t r, w;
 
 	if (widx >= ridx)
-		w = rd->rd_data_size - (widx - ridx);
+		w = rd->rd_dsize - (widx - ridx);
 	else
 		w = ridx - widx;
-	r = rd->rd_data_size - w;
+	r = rd->rd_dsize - w;
 	if (towrite)
 		*towrite = w;
 	if (toread)
@@ -1258,7 +1256,7 @@ hv_ring_write(struct hv_ring_data *wrd, struct iovec *iov, int iov_cnt,
 	for (i = 0; i < iov_cnt; i++)
 		datalen += iov[i].iov_len;
 
-	KASSERT(datalen <= wrd->rd_data_size);
+	KASSERT(datalen <= wrd->rd_dsize);
 
 	hv_ring_avail(wrd, &avail, NULL);
 	if (avail < datalen) {
@@ -1375,7 +1373,7 @@ hv_ring_peek(struct hv_ring_data *rrd, void *data, uint32_t datalen)
 {
 	uint32_t avail;
 
-	KASSERT(datalen <= rrd->rd_data_size);
+	KASSERT(datalen <= rrd->rd_dsize);
 
 	hv_ring_avail(rrd, NULL, &avail);
 	if (avail < datalen)
@@ -1392,7 +1390,7 @@ hv_ring_read(struct hv_ring_data *rrd, void *data, uint32_t datalen,
 	uint64_t indices;
 	uint32_t avail;
 
-	KASSERT(datalen <= rrd->rd_data_size);
+	KASSERT(datalen <= rrd->rd_dsize);
 
 	hv_ring_avail(rrd, NULL, &avail);
 	if (avail < datalen) {
@@ -1402,7 +1400,7 @@ hv_ring_read(struct hv_ring_data *rrd, void *data, uint32_t datalen,
 
 	if (offset) {
 		rrd->rd_cons += offset;
-		rrd->rd_cons %= rrd->rd_data_size;
+		rrd->rd_cons %= rrd->rd_dsize;
 	}
 
 	hv_ring_get(rrd, (uint8_t *)data, datalen, 0);

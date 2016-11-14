@@ -51,8 +51,7 @@ struct hv_ring_data {
 	struct mutex			 rd_lock;
 	uint32_t			 rd_prod;
 	uint32_t			 rd_cons;
-	uint32_t			 rd_data_size;
-	uint32_t			 rd_data_offset;
+	uint32_t			 rd_dsize;
 };
 
 struct hv_channel {
@@ -71,7 +70,6 @@ struct hv_channel {
 
 	void				*ch_ring;
 	uint32_t			 ch_ring_gpadl;
-	uint32_t			 ch_ring_npg;
 	u_long				 ch_ring_size;
 
 	struct hv_ring_data		 ch_wrd;
