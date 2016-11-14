@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.54 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: radix.c,v 1.55 2016/11/14 08:54:19 mpi Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -47,16 +47,6 @@
 #endif
 
 #include <net/radix.h>
-
-#if defined(ART) && !defined(SMALL_KERNEL)
-#define SMALL_KERNEL
-#endif
-
-#ifndef SMALL_KERNEL
-#include <sys/socket.h>
-#include <net/route.h>
-#include <net/radix_mpath.h>
-#endif
 
 static unsigned int max_keylen;
 struct radix_node_head *mask_rnhead;
@@ -632,9 +622,6 @@ rn_add_dupedkey(struct radix_node *saved_tt, struct radix_node_head *head,
 {
 	caddr_t netmask = tt->rn_mask;
 	struct radix_node *x = saved_tt, *xp;
-#ifndef SMALL_KERNEL
-	struct radix_node *dupedkey_tt = NULL;
-#endif
 	int before = -1;
 	int b_leaf = 0;
 
@@ -642,46 +629,6 @@ rn_add_dupedkey(struct radix_node *saved_tt, struct radix_node_head *head,
 		b_leaf = tt->rn_b;
 
 	for (xp = x; x; xp = x, x = x->rn_dupedkey) {
-#ifndef SMALL_KERNEL
-		/* permit multipath, if enabled for the family */
-		if (rn_mpath_capable(head) && netmask == x->rn_mask) {
-			int mid;
-			/*
-			 * Try to insert the new node in the middle
-			 * of the list of any preexisting multipaths,
-			 * to reduce the number of path disruptions
-			 * that occur as a result of an insertion,
-			 * per RFC2992.
-			 * Additionally keep the list sorted by route
-			 * priority.
-			 */
-			before = 0;
-
-			dupedkey_tt = x;
-			x = rn_mpath_prio(x, prio);
-			if (((struct rtentry *)x)->rt_priority !=
-			    prio) {
-				/*
-				 * rn_mpath_prio returns the previous
-				 * element if no element with the 
-				 * requested priority exists. It could
-				 * be that the previous element comes
-				 * with a bigger priority.
-				 */
-				if (((struct rtentry *)x)->rt_priority > prio)
-					before = 1;
-				xp = x;
-				break;
-			}
-
-			mid = rn_mpath_active_count(x) / 2;
-			do {
-				xp = x;
-				x = rn_mpath_next(x, RMP_MODE_BYPRIO);
-			} while (x && --mid > 0);
-			break;
-		}
-#endif
 		if (x->rn_mask == netmask)
 			return (-1);
 		if (netmask == NULL ||
@@ -711,14 +658,6 @@ rn_add_dupedkey(struct radix_node *saved_tt, struct radix_node_head *head,
 		before = 0;
 	rn_link_dupedkey(tt, xp, before);
 
-
-#ifndef SMALL_KERNEL
-	/* adjust the flags of the possible multipath chain */
-	if (!dupedkey_tt)
-		dupedkey_tt = tt;
-	if (rn_mpath_capable(head))
-		rn_mpath_adj_mpflag(dupedkey_tt, prio);
-#endif
 	return (0);
 }
 
@@ -853,10 +792,6 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 			return (NULL);
 	} else {
 		rn_fixup_nodes(tt);
-#ifndef SMALL_KERNEL
-		if (rn_mpath_capable(head))
-			rn_mpath_adj_mpflag(tt, prio);
-#endif
 	}
 
 	/* finally insert a radix_mask element if needed */
@@ -1007,12 +942,6 @@ rn_delete(void *v_arg, void *n_arg, struct radix_node_head *head,
 	/* save start of multi path chain for later use */
 	dupedkey_tt = tt;
 
-#ifndef SMALL_KERNEL
-	/* if we got a hint use the hint from now on */
-	if (rn)
-		tt = rn;
-#endif
-
 	KASSERT((tt->rn_flags & RNF_ROOT) == 0);
 
 	/* remove possible radix_mask */
@@ -1049,12 +978,6 @@ rn_delete(void *v_arg, void *n_arg, struct radix_node_head *head,
 		if  (tt[1].rn_flags & RNF_ACTIVE)
 			rn_swap_nodes(&tt[1], &x[1]);
 
-#ifndef SMALL_KERNEL
-		/* adjust the flags of the multipath chain */
-		if (rn_mpath_capable(head))
-			rn_mpath_adj_mpflag(dupedkey_tt,
-			    ((struct rtentry *)tt)->rt_priority);
-#endif
 		/* over and out */
 		goto out;
 	}

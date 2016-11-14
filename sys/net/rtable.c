@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.52 2016/09/07 09:36:49 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.53 2016/11/14 08:54:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -305,9 +305,6 @@ rtable_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 	struct radix_node_head *rnh = NULL;
 
 	if (rn_inithead((void **)&rnh, off)) {
-#ifndef SMALL_KERNEL
-		rnh->rnh_multipath = 1;
-#endif /* SMALL_KERNEL */
 		rnh->rnh_rtableid = rtableid;
 	}
 
@@ -332,14 +329,6 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 
 	rt = ((struct rtentry *)rn);
 
-#ifndef SMALL_KERNEL
-	if (rnh->rnh_multipath) {
-		rt = rt_mpath_matchgate(rt, gateway, prio);
-		if (rt == NULL)
-			return (NULL);
-	}
-#endif /* !SMALL_KERNEL */
-
 	rtref(rt);
 	return (rt);
 }
@@ -350,9 +339,6 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	struct radix_node_head	*rnh;
 	struct radix_node	*rn;
 	struct rtentry		*rt = NULL;
-#ifndef SMALL_KERNEL
-	int			 hash;
-#endif /* SMALL_KERNEL */
 
 	rnh = rtable_get(rtableid, dst->sa_family);
 	if (rnh == NULL)
@@ -365,36 +351,6 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 
 	rt = ((struct rtentry *)rn);
 	rtref(rt);
-
-#ifndef SMALL_KERNEL
-	/* Gateway selection by Hash-Threshold (RFC 2992) */
-	if ((hash = rt_hash(rt, dst, src)) != -1) {
-		struct rtentry		*mrt = rt;
-		int			 threshold, npaths = 1;
-
-		KASSERT(hash <= 0xffff);
-
-		rtref(rt);
-
-		while ((mrt = rtable_iterate(mrt)) != NULL)
-			npaths++;
-
-		threshold = (0xffff / npaths) + 1;
-
-		mrt = rt;
-		while (hash > threshold && mrt != NULL) {
-			/* stay within the multipath routes */
-			mrt = rtable_iterate(mrt);
-			hash -= threshold;
-		}
-
-		/* if gw selection fails, use the first match (default) */
-		if (mrt != NULL) {
-			rtfree(rt);
-			rt = mrt;
-		}
-	}
-#endif /* SMALL_KERNEL */
 out:
 	KERNEL_UNLOCK();
 	return (rt);
@@ -411,16 +367,6 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	rnh = rtable_get(rtableid, dst->sa_family);
 	if (rnh == NULL)
 		return (EAFNOSUPPORT);
-
-#ifndef SMALL_KERNEL
-	if (rnh->rnh_multipath) {
-		/* Do not permit exactly the same dst/mask/gw pair. */
-		if (rt_mpath_conflict(rnh, dst, mask, gateway, prio,
-	    	    ISSET(rt->rt_flags, RTF_MPATH))) {
-			return (EEXIST);
-		}
-	}
-#endif /* SMALL_KERNEL */
 
 	rn = rn_addroute(dst, mask, rnh, rn, prio);
 	if (rn == NULL)
@@ -477,45 +423,21 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 struct rtentry *
 rtable_iterate(struct rtentry *rt0)
 {
-#ifndef SMALL_KERNEL
-	struct radix_node *rn = (struct radix_node *)rt0;
-	struct rtentry *rt;
-
-	rt = (struct rtentry *)rn_mpath_next(rn, RMP_MODE_ACTIVE);
-	if (rt != NULL)
-		rtref(rt);
-	rtfree(rt0);
-
-	return (rt);
-#else
 	rtfree(rt0);
 	return (NULL);
-#endif /* SMALL_KERNEL */
 }
 
 #ifndef SMALL_KERNEL
 int
 rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 {
-	struct radix_node_head	*rnh;
-	int mpath;
-
-	rnh = rtable_get(rtableid, af);
-	if (rnh == NULL)
-		return (0);
-
-	mpath = rnh->rnh_multipath;
-	return (mpath);
+	return (0);
 }
 
 int
 rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
     struct sockaddr *mask, uint8_t prio, struct rtentry *rt)
 {
-	struct radix_node	*rn = (struct radix_node *)rt;
-
-	rn_mpath_reprio(rn, prio);
-
 	return (0);
 }
 #endif /* SMALL_KERNEL */
