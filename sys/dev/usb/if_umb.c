@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.5 2016/11/10 14:45:43 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.6 2016/11/14 12:55:56 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1815,7 +1815,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 		}
 
 		/* Terminating zero entry */
-		if (dlen == 0 && doff == 0)
+		if (dlen == 0 || doff == 0)
 			break;
 		if (len < dlen + doff) {
 			/* Skip giant datagram but continue processing */
