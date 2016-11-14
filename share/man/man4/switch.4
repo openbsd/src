@@ -1,4 +1,4 @@
-.\"	$OpenBSD: switch.4,v 1.5 2016/10/01 18:04:25 jmc Exp $
+.\"	$OpenBSD: switch.4,v 1.6 2016/11/14 19:41:47 rzalamena Exp $
 .\"
 .\" Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 1 2016 $
+.Dd $Mdocdate: November 14 2016 $
 .Dt SWITCH 4
 .Os
 .Sh NAME
@@ -55,14 +55,19 @@ or by opening the character device
 is the OpenFlow channel of the interface
 .Pa switchN .
 It is used for exchanging OpenFlow messages.
-The device guarantees
+The device behaves like a stream, which means that a
 .Xr read 2
-returns a complete OpenFlow message - it never returns a partial message.
-Any programs using
-.Pa /dev/switchN
-must
+may return one or more OpenFlow messages depending on the number of
+bytes requested.
+It may also read the message partially (e.g.\&
+.Xr read 2
+the OpenFlow message header and then the complete message).
+The same applies to
 .Xr write 2
-a complete OpenFlow message.
+calls, so it may send one or more OpenFlow messages with a single write
+or use more than one
+.Xr write 2
+calls to send a single message.
 .Sh IOCTLS
 A
 .Nm
