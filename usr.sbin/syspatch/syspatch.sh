@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.47 2016/11/12 22:22:25 halex Exp $
+# $OpenBSD: syspatch.sh,v 1.48 2016/11/14 09:09:20 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -78,10 +78,11 @@ apply_patches()
 
 checkfs()
 {
+	# XXX check for available space
 	local _d _files="${@}"
 	[[ -n ${_files} ]]
 
-	for _d in $(stat -qf "%Sd" ${_files} | uniq); do
+	for _d in $(stat -qf "%Sd" ${_files} | sort -u); do
 		mount | grep -v read-only | grep -q "^/dev/${_d} " ||
 		sp_err "Remote or read-only filesystem, aborting"
 	done
@@ -260,6 +261,7 @@ sp_cleanup()
 	done
 }
 
+# XXX needs a way to match release <=> syspatch
 # only run on release (not -current nor -stable)
 set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
