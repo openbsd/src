@@ -1,4 +1,4 @@
-.\"	$OpenBSD: counters_alloc.9,v 1.7 2016/10/25 08:09:22 jmc Exp $
+.\"	$OpenBSD: counters_alloc.9,v 1.8 2016/11/14 03:40:09 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2016 $
+.Dd $Mdocdate: November 14 2016 $
 .Dt COUNTERS_ALLOC 9
 .Os
 .Sh NAME
@@ -25,6 +25,9 @@
 .Nm counters_alloc_ncpus ,
 .Nm counters_enter ,
 .Nm counters_leave ,
+.Nm counters_inc ,
+.Nm counters_add ,
+.Nm counters_pkt ,
 .Nm counters_read ,
 .Nm counters_zero
 .Nd per CPU counters
@@ -46,6 +49,17 @@
 .Fn counters_enter "struct counters_ref *ref" "struct cpumem *cm"
 .Ft void
 .Fn counters_leave "struct counters_ref *ref" "struct cpumem *cm"
+.Ft void
+.Fn counters_inc "struct cpumem *cm" "unsigned int counter"
+.Ft void
+.Fn counters_add "struct cpumem *cm" "unsigned int counter" "uint64_t v"
+.Ft void
+.Fo counters_pkt
+.Fa "struct cpumem *cm"
+.Fa "unsigned int pcounter"
+.Fa "unsigned int bcounter"
+.Fa "uint64_t bytes"
+.Fc
 .Ft void
 .Fo counters_read
 .Fa "struct cpumem *cm"
@@ -157,6 +171,30 @@ The reference held by
 .Fa ref
 is released by this call.
 .Pp
+.Fn counters_inc
+increments the counter at the index specified by
+.Fa counter
+in the array of counters referenced by
+.Fa cm .
+.Pp
+.Fn counters_add
+add the value of
+.Fa v
+to the counter at the index specified by
+.Fa counter
+in the array of counters referenced by
+.Fa cm .
+.Pp
+.Fn counters_pkt
+increments the value at the index specified by
+.Fa pcounter
+and adds the value of
+.Fa bytes
+to the counter at the index specified by
+.Fa bcounter
+in the array of counters referenced by
+.Fa cm .
+.Pp
 .Fn counters_read
 iterates over each CPU's set of counters referenced by
 .Fa cm ,
@@ -186,6 +224,9 @@ may be called during autoconf, or from process context.
 .Pp
 .Fn counters_enter ,
 .Fn counters_leave ,
+.Fn counters_inc ,
+.Fn counters_add ,
+.Fn counters_pkt ,
 and
 .Fn counters_zero
 may be called during autoconf, from process context, or from interrupt
