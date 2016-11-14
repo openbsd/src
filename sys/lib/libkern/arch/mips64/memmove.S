@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.4 2013/06/13 15:03:08 deraadt Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.5 2016/11/14 15:02:54 visa Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -78,6 +78,7 @@ ALEAF(bcopy)
 	j	ra
 	nop
 forward:
+#ifdef _STANDALONE
 	bne	t2, zero, smallcpy	# do a small bcopy
 	xor	v1, a0, a1		# compare low two bits of addresses
 	and	v1, v1, 3
@@ -125,6 +126,57 @@ aligned:
 	sw	v1, 0(a1)
 	bne	a0, a3, 2b
 	PTR_ADDU a1, a1, 4
+#else
+	bne	t2, zero, smallcpy	# do a small bcopy
+	xor	v1, a0, a1		# compare low three bits of addresses
+	and	v1, v1, 7
+	PTR_SUBU a3, zero, a1		# compute # bytes to dword align address
+	beq	v1, zero, aligned	# addresses can be dword aligned
+	and	a3, a3, 7
+
+	beq	a3, zero, 1f
+	PTR_SUBU a2, a2, a3		# subtract from remaining count
+	LDHI	v1, 0(a0)		# get next 8 bytes (unaligned)
+	LDLO	v1, 7(a0)
+	PTR_ADDU a0, a0, a3
+	SDHI	v1, 0(a1)		# store 1-7 bytes to align a1
+	PTR_ADDU a1, a1, a3
+1:
+	and	v1, a2, 7		# compute number of dwords left
+	PTR_SUBU a3, a2, v1
+	beq	a3, zero, smallcpy
+	move	a2, v1
+	PTR_ADDU a3, a3, a0		# compute ending address
+2:
+	LDHI	v1, 0(a0)		# copy dwords a0 unaligned, a1 aligned
+	LDLO	v1, 7(a0)
+	PTR_ADDU a0, a0, 8
+	sd	v1, 0(a1)
+	PTR_ADDU a1, a1, 8
+	bne	a0, a3, 2b
+	nop				# We have to do this mmu-bug.
+	b	smallcpy
+	nop
+aligned:
+	beq	a3, zero, 1f
+	PTR_SUBU a2, a2, a3		# subtract from remaining count
+	LDHI	v1, 0(a0)		# copy 1-7 bytes to align
+	PTR_ADDU a0, a0, a3
+	SDHI	v1, 0(a1)
+	PTR_ADDU a1, a1, a3
+1:
+	and	v1, a2, 7		# compute number of whole dwords left
+	PTR_SUBU a3, a2, v1
+	beq	a3, zero, smallcpy
+	move	a2, v1
+	PTR_ADDU a3, a3, a0		# compute ending address
+2:
+	ld	v1, 0(a0)		# copy dwords
+	PTR_ADDU a0, a0, 8
+	sd	v1, 0(a1)
+	bne	a0, a3, 2b
+	PTR_ADDU a1, a1, 8
+#endif
 smallcpy:
 	ble	a2, zero, 2f
 	PTR_ADDU a3, a2, a0		# compute ending address
