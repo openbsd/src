@@ -108,7 +108,7 @@ TAILQ_HEAD(rndis_queue, rndis_cmd);
 /*
  * Tx ring
  */
-#define HVN_TX_DESC			128
+#define HVN_TX_DESC			256
 #define HVN_TX_FRAGS			15		/* 31 is the max */
 #define HVN_TX_FRAG_SIZE		PAGE_SIZE
 #define HVN_TX_PKT_SIZE			16384
@@ -120,7 +120,7 @@ TAILQ_HEAD(rndis_queue, rndis_cmd);
 
 struct hvn_tx_desc {
 	uint32_t			 txd_id;
-	volatile int			 txd_ready;
+	int				 txd_ready;
 	struct vmbus_gpa		 txd_sgl[HVN_TX_FRAGS + 1];
 	int				 txd_nsge;
 	struct mbuf			*txd_buf;
@@ -140,9 +140,7 @@ struct hvn_softc {
 	int				 sc_link_state;
 	int				 sc_promisc;
 
-
 	/* NVS protocol */
-	int				 sc_ringsize;
 	int				 sc_proto;
 	uint32_t			 sc_nvstid;
 	uint8_t				 sc_nvsrsp[HVN_NVS_MSGSIZE];
@@ -546,6 +544,7 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmap, m,
 		    BUS_DMA_READ | BUS_DMA_NOWAIT) == 0)
 			break;
+		/* FALLTHROUGH */
 	default:
 		DPRINTF("%s: failed to load mbuf\n", sc->sc_dev.dv_xname);
 		return (-1);
@@ -625,6 +624,7 @@ hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 
 	if ((tid & 0xffffffffU) != 0)
 		return (0);
+	id -= HVN_NVS_CHIM_SIG;
 	if (id > HVN_TX_DESC)
 		panic("tx packet index too large: %u", id);
 
@@ -788,7 +788,7 @@ hvn_tx_ring_create(struct hvn_softc *sc)
 		txd->txd_gpa.gpa_len = msgsize;
 		txd->txd_req = (void *)((caddr_t)sc->sc_tx_msgs +
 		    (msgsize * i));
-		txd->txd_id = i;
+		txd->txd_id = i + HVN_NVS_CHIM_SIG;
 		txd->txd_ready = 1;
 	}
 	sc->sc_tx_avail = HVN_TX_DESC;
@@ -881,8 +881,8 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	struct hvn_nvs_init_resp *rsp;
 	struct hvn_nvs_ndis_init ncmd;
 	struct hvn_nvs_ndis_conf ccmd;
+	uint32_t ndisver, ringsize;
 	uint64_t tid;
-	uint32_t ndisver;
 	int i;
 
 	sc->sc_nvsbuf = malloc(HVN_NVS_BUFSIZE, M_DEVBUF, M_ZERO |
@@ -894,13 +894,15 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	}
 
 	/* We need to be able to fit all RNDIS control and data messages */
-	sc->sc_ringsize = HVN_RNDIS_CTLREQS *
+	ringsize = HVN_RNDIS_CTLREQS *
 	    (sizeof(struct hvn_nvs_rndis) + sizeof(struct vmbus_gpa)) +
 	    HVN_TX_DESC * (sizeof(struct hvn_nvs_rndis) +
 	    (HVN_TX_FRAGS + 1) * sizeof(struct vmbus_gpa));
+	DPRINTF("%s: ring size %u (%u pages)\n", __func__, ringsize,
+	    roundup(ringsize, PAGE_SIZE) / PAGE_SIZE);
 
 	/* Associate our interrupt handler with the channel */
-	if (hv_channel_open(sc->sc_chan, sc->sc_ringsize, NULL, 0,
+	if (hv_channel_open(sc->sc_chan, ringsize, NULL, 0,
 	    hvn_nvs_intr, sc)) {
 		DPRINTF("%s: failed to open channel\n", sc->sc_dev.dv_xname);
 		free(sc->sc_nvsbuf, M_DEVBUF, HVN_NVS_BUFSIZE);
