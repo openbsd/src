@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rotate-window.c,v 1.21 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-rotate-window.c,v 1.22 2016/11/14 16:27:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -48,6 +48,8 @@ cmd_rotate_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct window_pane	*wp, *wp2;
 	struct layout_cell	*lc;
 	u_int			 sx, sy, xoff, yoff;
+
+	server_unzoom_window(w);
 
 	if (args_has(self->args, 'D')) {
 		wp = TAILQ_LAST(&w->panes, window_panes);
