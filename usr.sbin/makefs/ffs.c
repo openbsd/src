@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.27 2016/11/13 10:22:21 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.28 2016/11/14 09:03:19 natano Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -259,11 +259,6 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		uint16_t *p, *end, sum = 0;
 		ssize_t n;
 		uint32_t bpg;
-		int i;
-
-		arc4random_buf(lp->d_uid, sizeof(lp->d_uid));
-		DL_SETBSTART(lp, 0);
-		DL_SETBEND(lp, DL_GETDSIZE(lp));
 
 		bpg = superblock->fs_fpg / superblock->fs_frag;
 		while (bpg > UINT16_MAX)
@@ -272,6 +267,7 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 		lp->d_magic = DISKMAGIC;
 		lp->d_magic2 = DISKMAGIC;
+		arc4random_buf(lp->d_uid, sizeof(lp->d_uid));
 		lp->d_checksum = 0;
 
 		p = (uint16_t *)lp;
