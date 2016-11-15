@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.13 2015/11/24 13:37:16 mpi Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.14 2016/11/15 13:44:03 mpi Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -60,19 +60,6 @@ int mpls_mapttl_ip6 = 0;
 
 int *mplsctl_vars[MPLSCTL_MAXID] = MPLSCTL_VARS;
 
-int	mpls_control(struct socket *, u_long, caddr_t, struct ifnet *);
-
-/*
- * Generic MPLS control operations (ioctl's).
- * Ifp is 0 if not an interface-specific ioctl.
- */
-/* ARGSUSED */
-int
-mpls_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
-{
-	return (EOPNOTSUPP);
-}
-
 int
 mpls_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
@@ -84,8 +71,7 @@ mpls_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #endif	/* MPLS_DEBUG */
 
 	if (req == PRU_CONTROL)
-		return (mpls_control(so, (u_long)m, (caddr_t)nam,
-		    (struct ifnet *)control));
+		return (EOPNOTSUPP);
 
 	switch (req) {
 	case PRU_ATTACH:
