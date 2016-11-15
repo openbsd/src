@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.212 2016/11/15 14:02:32 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.213 2016/11/15 14:08:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,7 +73,7 @@ static void	tty_default_attributes(struct tty *, const struct window_pane *,
 #define tty_use_acs(tty) \
 	(tty_term_has((tty)->term, TTYC_ACSC) && !((tty)->flags & TTY_UTF8))
 #define tty_use_margin(tty) \
-	((tty)->term_type == TTY_VT420)
+	(0 && (tty)->term_type == TTY_VT420)
 
 #define tty_pane_full_width(tty, ctx) \
 	((ctx)->xoff == 0 && screen_size_x((ctx)->wp->screen) >= (tty)->sx)
