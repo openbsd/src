@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.197 2016/10/19 09:22:07 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.198 2016/11/15 14:02:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1004,6 +1004,7 @@ server_client_reset_state(struct client *c)
 		return;
 
 	tty_region(&c->tty, 0, c->tty.sy - 1);
+	tty_margin(&c->tty, 0, c->tty.sx - 1);
 
 	status = options_get_number(oo, "status");
 	if (!window_pane_visible(wp) || wp->yoff + s->cy >= c->tty.sy - status)
