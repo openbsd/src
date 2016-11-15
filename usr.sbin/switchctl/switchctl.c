@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.4 2016/10/12 19:07:42 reyk Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.5 2016/11/15 08:15:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -30,8 +30,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <event.h>
+#include <pwd.h>
 
 #include "switchd.h"
 #include "parser.h"
@@ -85,6 +87,7 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	struct switch_client	 swc;
 	struct switch_address	*to;
+	struct passwd		*pw;
 	int			 ctl_sock;
 	int			 done = 1;
 	int			 n;
@@ -92,7 +95,6 @@ main(int argc, char *argv[])
 	int			 v = 0;
 	int			 quiet = 0;
 	const char		*sock = SWITCHD_SOCKET;
-	size_t			 len;
 
 	while ((ch = getopt(argc, argv, "qs:")) != -1) {
 		switch (ch) {
@@ -110,15 +112,36 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if ((pw = getpwnam(SWITCHD_USER)) == NULL)
+		fatal("switchctl: getpwnam");
+
+	/*
+	 * pledge in switchctl:
+	 * stdio - for malloc and basic I/O including events.
+	 * dns - for parsehostport() in the device spec.
+	 * inet - for handling tcp connections with OpenFlow peers.
+	 * unix - for opening the control socket.
+	 */
+	if (pledge("stdio dns inet unix", NULL) == -1)
+		err(1, "pledge");
+
 	/* parse options */
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
 	res->quiet = quiet;
 
+	log_init(quiet ? 0 : 2, LOG_USER);
+
 	switch (res->action) {
 	case NONE:
 		usage();
+		break;
+	case DUMP_DESC:
+	case DUMP_FEATURES:
+	case DUMP_FLOWS:
+	case DUMP_TABLES:
+		ofpclient(res, pw);
 		break;
 	default:
 		goto connect;
@@ -144,14 +167,6 @@ main(int argc, char *argv[])
 		}
 		err(1, "connect: %s", sock);
 	}
-
-	/*
-	 * pledge in switchctl:
-	 * stdio - for malloc and basic I/O including events.
-	 * dns - for parsehostport() in the device spec.
-	 */
-	if (pledge("stdio dns", NULL) == -1)
-		err(1, "pledge");
 
 	if (res->ibuf != NULL)
 		ibuf = res->ibuf;
@@ -201,26 +216,8 @@ main(int argc, char *argv[])
 		}
 
 		to = &swc.swc_target;
-		if (res->uri == NULL || res->uri[0] == '\0')
-			to->swa_type = SWITCH_CONN_LOCAL;
-		else {
-			len = 4;
-			if (strncmp(res->uri, "tcp:", len) == 0)
-				to->swa_type = SWITCH_CONN_TCP;
-			else if (strncmp(res->uri, "tls:", len) == 0)
-				to->swa_type = SWITCH_CONN_TLS;
-			else {
-				/* set the default */
-				to->swa_type = SWITCH_CONN_TCP;
-				len = 0;
-			}
+		memcpy(&to, &res->uri, sizeof(to));
 
-			if (parsehostport(res->uri + len,
-			    (struct sockaddr *)&to->swa_addr,
-			    sizeof(to->swa_addr)) != 0)
-				errx(1,
-				    "couldn't parse name-or-address and port");
-		}
 		imsg_compose(ibuf, IMSG_CTL_CONNECT, 0, 0, -1,
 		    &swc, sizeof(swc));
 		break;

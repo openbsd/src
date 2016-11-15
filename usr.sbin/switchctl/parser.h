@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.2 2016/10/12 19:07:42 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.3 2016/11/15 08:15:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -21,6 +21,10 @@
 
 enum actions {
 	NONE,
+	DUMP_DESC,
+	DUMP_FEATURES,
+	DUMP_FLOWS,
+	DUMP_TABLES,
 	SHOW_SUM,
 	SHOW_SWITCHES,
 	SHOW_MACS,
@@ -40,8 +44,7 @@ struct parse_result {
 	char			*path;
 	char			*caname;
 	char			*pass;
-	char			*peer;
-	char			*uri;
+	struct switch_address	 uri;
 	struct sockaddr_storage	 addr;
 	int			 quiet;
 };
@@ -50,5 +53,6 @@ struct parse_result {
 #define HOST_FQDN	2
 
 struct parse_result	*parse(int, char *[]);
+void			 ofpclient(struct parse_result *, struct passwd *);
 
 #endif /* _SWITCHCTL_PARSER_H */
