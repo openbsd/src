@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.513 2016/10/21 13:51:59 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.514 2016/11/15 09:53:23 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2016 $
+.Dd $Mdocdate: November 15 2016 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1032,6 +1032,7 @@ The following commands are supported in copy mode:
 .It Li "copy-end-of-line" Ta "D" Ta "C-k"
 .It Li "copy-line" Ta "" Ta ""
 .It Li "copy-pipe <command>" Ta "" Ta ""
+.It Li "copy-pipe-and-cancel <command>" Ta "" Ta ""
 .It Li "copy-selection" Ta "" Ta ""
 .It Li "copy-selection-and-cancel" Ta "Enter" Ta "M-w"
 .It Li "cursor-down" Ta "j" Ta "Down"
