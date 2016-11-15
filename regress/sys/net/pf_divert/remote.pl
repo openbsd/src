@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.6 2015/07/28 12:31:29 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.7 2016/11/15 16:00:50 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -26,6 +26,7 @@ BEGIN {
 
 use File::Basename;
 use File::Copy;
+use Getopt::Std;
 use Socket;
 use Socket6;
 
@@ -46,6 +47,7 @@ usage:
 	started automatically with ssh on remotessh.
     remote.pl af localaddr fakeaddr remotessh clientport serverport test-args.pl
 	Run test with local client and server and fixed port, needed for reuse.
+    -f	flush regress states
 EOF
 }
 
@@ -57,6 +59,8 @@ if (@ARGV) {
 	do $test
 	    or die "Do test file $test failed: ", $@ || $!;
 }
+my %opts;
+getopts("f", \%opts) or usage();
 my($af, $domain, $protocol);
 if (@ARGV) {
 	$af = shift;
@@ -114,6 +118,7 @@ if ($local eq "server") {
 if ($mode eq "auto") {
 	$r = Remote->new(
 	    %args,
+	    opts		=> \%opts,
 	    logfile		=> "$remote.log",
 	    testfile		=> $test,
 	    af			=> $af,
@@ -169,16 +174,23 @@ if ($mode eq "divert") {
 		my $divertport = $port || "port 1";  # XXX bad pf syntax
 		print $pf "pass in log $af proto $protocol ".
 		    "from $ARGV[1] to $ARGV[0] $port ".
-		    "divert-to $s->{listenaddr} $divertport\n";
+		    "divert-to $s->{listenaddr} $divertport ".
+		    "label regress\n";
 	} else {
 		my $port = $protocol =~ /^(tcp|udp)$/ ?
 		    "port $ARGV[2]" : "";
 		print $pf "pass out log $af proto $protocol ".
-		    "from $c->{bindaddr} to $ARGV[1] $port divert-reply\n";
+		    "from $c->{bindaddr} to $ARGV[1] $port divert-reply ".
+		    "label regress\n";
 	}
 	close($pf) or die $! ?
 	    "Close pipe to pf '@cmd' failed: $!" :
 	    "pf '@cmd' failed: $?";
+	if ($opts{f}) {
+		@cmd = qw(pfctl -k label -k regress);
+		do { local $> = 0; system(@cmd) }
+		    and die "Execute '@cmd' failed: $!";
+	}
 	print STDERR "Diverted\n";
 
 	$l->run;
