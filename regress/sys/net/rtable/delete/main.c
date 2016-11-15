@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 2016/07/19 10:52:56 mpi Exp $ */
+/*	$OpenBSD: main.c,v 1.5 2016/11/15 10:43:41 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -55,8 +55,6 @@ main(int argc, char *argv[])
 	filename = argv[1];
 
 	rtable_init();
-	if (rtable_add(0))
-		errx(1, "can't add rtable\n");
 
 	do_from_file(0, AF_INET6, filename, route_insert);
 
