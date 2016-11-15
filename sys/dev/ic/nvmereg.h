@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.11 2016/11/15 12:01:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -32,11 +32,8 @@
 #define NVME_CAP_LO	0x0000
 #define NVME_CAP_HI	0x0004
 #define NVME_VS		0x0008	/* Version */
-#define  NVME_VS_MJR(_r)	(((_r) >> 16) & 0xffff)
-#define  NVME_VS_MNR(_r)	((_r) & 0xffff)
-#define  NVME_VS_1_0		0x00010000
-#define  NVME_VS_1_1		0x00010100
-#define  NVME_VS_1_2		0x00010200
+#define  NVME_VS_MJR(_r)	(((_r) & 0xffff0000) >> 16)
+#define  NVME_VS_MNR(_r)	(((_r) & 0x0000ff00) >> 8)
 #define NVME_INTMS	0x000c	/* Interrupt Mask Set */
 #define NVME_INTMC	0x0010	/* Interrupt Mask Clear */
 #define NVME_CC		0x0014	/* Controller Configuration */
