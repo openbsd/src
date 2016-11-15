@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.50 2016/11/15 09:49:48 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.51 2016/11/15 14:46:00 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -81,17 +81,21 @@ checkfs()
 	local _d _df _dev _files="${@}" _sz
 	[[ -n ${_files} ]]
 
+	# assume old files are about the same size as new ones
 	eval $(cd / &&
 		stat -qf "_dev=\"\${_dev} %Sd\" %Sd=\"\${%Sd:+\${%Sd}\+}%Uz\"" \
-		${_files})
+		${_files}) || true # ignore nonexistent files
 
 	for _d in $(printf '%s\n' ${_dev} | sort -u); do
+		# make sure the fs is local and RW
 		mount | grep -v read-only | grep -q "^/dev/${_d} " ||
 			sp_err "Remote or read-only filesystem, aborting"
+		# quick-and-dirty size check:
+		# - assume old files are about the same size as new ones
+		# - ignore new (nonexistent) files
+		# - check against all files total size, reduces margin of error
 		_df=$(df -Pk | grep "^/dev/${_d} " | tr -s ' ' | cut -d ' ' -f4)
-		# double the required size to make sure we have enough space for
-		# install(1) safe copy, the rollback tarball and new files
-		_sz=$(($((${_d}))/1024*2))
+		_sz=$(($((${_d}))/1024)) # total size of all files
 		[[ ${_df} -gt ${_sz} ]] ||
 			sp_err "No space left on device ${_d}, aborting"
 	done
@@ -106,7 +110,7 @@ create_rollback()
 	local _files="${@}"
 	[[ -n ${_files} ]]
 
-	[[ -d ${_PDIR}/${_REL} ]] || install -d ${_PDIR}/${_REL}
+	[[ -d ${_PDIR}/${_REL} ]] || install -d -m 0755 ${_PDIR}/${_REL}
 
 	for _file in ${_files}; do
 		[[ -f /${_file} ]] || continue
@@ -178,6 +182,10 @@ ls_installed()
 	local _p
 	### XXX TMP
 	local _r
+	if [[ ! -d ${_PDIR}/${_REL} ]]; then
+		needs_root
+		install -d -m 0755 ${_PDIR}/${_REL}
+	fi
 	( cd ${_PDIR}/${_REL} && for _r in *; do
 		if [[ ${_r} == rollback-syspatch-${_RELINT}-*.tgz ]]; then
 			needs_root
