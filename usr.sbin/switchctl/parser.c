@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.4 2016/11/15 08:15:07 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.5 2016/11/15 08:38:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -58,6 +58,7 @@ static const struct token t_log[];
 static const struct token t_load[];
 static const struct token t_show[];
 static const struct token t_dump[];
+static const struct token t_dumpreq[];
 static const struct token t_connect[];
 static const struct token t_disconnect[];
 static const struct token t_forward_to[];
@@ -92,11 +93,16 @@ static const struct token t_load[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
-static const struct token t_dump[] = {
-	{ KEYWORD,	"desc",		DUMP_DESC,	t_uri },
-	{ KEYWORD,	"features",	DUMP_FEATURES,	t_uri },
-	{ KEYWORD,	"flows",	DUMP_FLOWS,	t_uri },
-	{ KEYWORD,	"tables",	DUMP_TABLES,	t_uri },
+static const struct token  t_dump[] = {
+	{ URI,		"",		NONE,		t_dumpreq },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_dumpreq[] = {
+	{ KEYWORD,	"desc",		DUMP_DESC,	NULL },
+	{ KEYWORD,	"features",	DUMP_FEATURES,	NULL },
+	{ KEYWORD,	"flows",	DUMP_FLOWS,	NULL },
+	{ KEYWORD,	"tables",	DUMP_TABLES,	NULL },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
