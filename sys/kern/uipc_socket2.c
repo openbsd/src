@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.67 2016/10/09 19:33:34 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.68 2016/11/15 11:57:02 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -183,9 +183,6 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
 	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
 
-	rw_init(&so->so_rcv.sb_lock, "sbsndl");
-	rw_init(&so->so_snd.sb_lock, "sbrcvl");
-
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH, NULL, NULL, NULL,
 	    curproc)) {
@@ -282,30 +279,43 @@ sbwait(struct sockbuf *sb)
 	    sb->sb_timeo));
 }
 
-/*
- * Lock a sockbuf already known to be locked;
- * return any error returned from sleep (EINTR).
- */
 int
-sblock(struct sockbuf *sb, int wf)
+sblock(struct sockbuf *sb, int wait)
 {
 	int error;
 
-	error = rw_enter(&sb->sb_lock, RW_WRITE |
-	    (sb->sb_flags & SB_NOINTR ? 0 : RW_INTR) |
-	    (wf == M_WAITOK ? 0 : RW_NOSLEEP));
+	KERNEL_ASSERT_LOCKED();
 
-	if (error == EBUSY)
-		error = EWOULDBLOCK;
-	return (error);
+	if ((sb->sb_flags & SB_LOCK) == 0) {
+		sb->sb_flags |= SB_LOCK;
+		return (0);
+	}
+	if (wait & M_NOWAIT)
+		return (EWOULDBLOCK);
+
+	while (sb->sb_flags & SB_LOCK) {
+		sb->sb_flags |= SB_WANT;
+		error = tsleep(&sb->sb_flags,
+		    (sb->sb_flags & SB_NOINTR) ?
+		    PSOCK : PSOCK|PCATCH, "netlck", 0);
+		if (error)
+			return (error);
+	}
+	sb->sb_flags |= SB_LOCK;
+	return (0);
 }
 
 void
 sbunlock(struct sockbuf *sb)
 {
-	rw_exit(&sb->sb_lock);
-}
+	KERNEL_ASSERT_LOCKED();
 
+	sb->sb_flags &= ~SB_LOCK;
+	if (sb->sb_flags & SB_WANT) {
+		sb->sb_flags &= ~SB_WANT;
+		wakeup(&sb->sb_flags);
+	}
+}
 
 /*
  * Wakeup processes waiting on a socket buffer.
@@ -832,7 +842,7 @@ void
 sbflush(struct sockbuf *sb)
 {
 
-	rw_assert_unlocked(&sb->sb_lock);
+	KASSERT((sb->sb_flags & SB_LOCK) == 0);
 
 	while (sb->sb_mbcnt)
 		sbdrop(sb, (int)sb->sb_cc);

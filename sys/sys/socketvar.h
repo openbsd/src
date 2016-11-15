@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.65 2016/09/04 11:10:19 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.66 2016/11/15 11:57:02 bluhm Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -36,7 +36,6 @@
 #include <sys/queue.h>
 #include <sys/task.h>
 #include <sys/timeout.h>
-#include <sys/rwlock.h>
 
 #ifndef	_SOCKLEN_T_DEFINED_
 #define	_SOCKLEN_T_DEFINED_
@@ -111,12 +110,13 @@ struct socket {
 		struct mbuf *sb_lastrecord;/* first mbuf of last record in
 					      socket buffer */
 		struct	selinfo sb_sel;	/* process selecting read/write */
-		struct	rwlock sb_lock;	/* exclusive access from process */
 		int	sb_flagsintr;	/* flags, changed during interrupt */
 		short	sb_flags;	/* flags, see below */
 		u_short	sb_timeo;	/* timeout for read/write */
 	} so_rcv, so_snd;
 #define	SB_MAX		(2*1024*1024)	/* default for max chars in sockbuf */
+#define	SB_LOCK		0x01		/* lock on data queue */
+#define	SB_WANT		0x02		/* someone is waiting to lock */
 #define	SB_WAIT		0x04		/* someone is waiting for data/space */
 #define	SB_SEL		0x08		/* someone is selecting */
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
@@ -220,10 +220,10 @@ struct socket {
  * Unless SB_NOINTR is set on sockbuf, sleep is interruptible.
  * Returns error without lock if sleep is interrupted.
  */
-int sblock(struct sockbuf *sb, int wf);
+int sblock(struct sockbuf *, int);
 
 /* release lock on sockbuf sb */
-void sbunlock(struct sockbuf *sb);
+void sbunlock(struct sockbuf *);
 
 #define	SB_EMPTY_FIXUP(sb) do {						\
 	if ((sb)->sb_mb == NULL) {					\
