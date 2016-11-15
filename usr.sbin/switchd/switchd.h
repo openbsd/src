@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.19 2016/11/11 22:07:40 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.20 2016/11/15 09:05:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -196,6 +196,7 @@ void		 socket_set_blockmode(int, enum blockmodes);
 int		 accept4_reserve(int, struct sockaddr *, socklen_t *,
 		    int, int, volatile int *);
 in_port_t	 socket_getport(struct sockaddr_storage *);
+int		 socket_setport(struct sockaddr_storage *, in_port_t);
 int		 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);
 struct in6_addr *prefixlen2mask6(uint8_t, uint32_t *);
 uint32_t	 prefixlen2mask(uint8_t);

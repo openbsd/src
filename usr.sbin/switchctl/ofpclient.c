@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofpclient.c,v 1.1 2016/11/15 08:15:07 reyk Exp $	*/
+/*	$OpenBSD: ofpclient.c,v 1.2 2016/11/15 09:05:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -67,6 +67,11 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 		if ((s = socket(res->uri.swa_addr.ss_family, SOCK_STREAM,
 		    IPPROTO_TCP)) == -1)
 			fatal("socket");
+
+		/* Use the default port if no port has been specified */
+		if (socket_getport(&con.con_peer) == 0)
+			(void)socket_setport(&con.con_peer, SWITCHD_CTLR_PORT);
+
 		if (connect(s, (struct sockaddr *)&con.con_peer,
 		    con.con_peer.ss_len) == -1)
 			fatal("connect");
