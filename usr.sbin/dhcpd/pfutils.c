@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.14 2016/02/06 23:50:10 krw Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.15 2016/11/15 10:49:37 mestre Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -76,7 +76,7 @@ pftable_handler()
 			error("pf pipe closed");
 
 		if (nfds > 0 && (pfd[0].revents & POLLIN)) {
-			bzero(&cmd, l);
+			memset(&cmd, 0, l);
 			r = atomicio(read, pfpipe[0], &cmd, l);
 
 			if (r != l)
@@ -141,14 +141,14 @@ pf_change_table(int fd, int op, struct in_addr ip, char *table)
 	if (table == NULL)
 		return;
 
-	bzero(&io, sizeof(io));
+	memset(&io, 0, sizeof(io));
 	strlcpy(io.pfrio_table.pfrt_name, table,
 	    sizeof(io.pfrio_table.pfrt_name));
 	io.pfrio_buffer = &addr;
 	io.pfrio_esize = sizeof(addr);
 	io.pfrio_size = 1;
 
-	bzero(&addr, sizeof(addr));
+	memset(&addr, 0, sizeof(addr));
 	memcpy(&addr.pfra_ip4addr, &ip, 4);
 	addr.pfra_af = AF_INET;
 	addr.pfra_net = 32;
@@ -166,8 +166,8 @@ pf_kill_state(int fd, struct in_addr ip)
 	struct pfioc_state_kill	psk;
 	struct pf_addr target;
 
-	bzero(&psk, sizeof(psk));
-	bzero(&target, sizeof(target));
+	memset(&psk, 0, sizeof(psk));
+	memset(&target, 0, sizeof(target));
 
 	memcpy(&target.v4, &ip.s_addr, 4);
 	psk.psk_af = AF_INET;
@@ -182,7 +182,7 @@ pf_kill_state(int fd, struct in_addr ip)
 	}
 
 	/* Kill all states to target */
-	bzero(&psk.psk_src, sizeof(psk.psk_src));
+	memset(&psk.psk_src, 0, sizeof(psk.psk_src));
 	memcpy(&psk.psk_dst.addr.v.a.addr, &target,
 	    sizeof(psk.psk_dst.addr.v.a.addr));
 	memset(&psk.psk_dst.addr.v.a.mask, 0xff,

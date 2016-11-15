@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.37 2016/08/27 01:26:22 guenther Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.38 2016/11/15 10:49:37 mestre Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -412,7 +412,7 @@ got_one(struct protocol *l)
 	} u;
 	struct interface_info *ip = l->local;
 
-	bzero(&u, sizeof(u));
+	memset(&u, 0, sizeof(u));
 
 	if ((result = receive_packet(ip, u.packbuf, sizeof u,
 	    &from, &hfrom)) == -1) {
@@ -652,7 +652,7 @@ get_rdomain(char *name)
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		error("get_rdomain socket: %m");
 
-	bzero(&ifr, sizeof(ifr));
+	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)&ifr) != -1)
 		rv = ifr.ifr_rdomainid;
