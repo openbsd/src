@@ -1,4 +1,4 @@
-.\" $OpenBSD: switchctl.8,v 1.4 2016/11/15 08:50:39 reyk Exp $
+.\" $OpenBSD: switchctl.8,v 1.5 2016/11/15 09:30:03 jmc Exp $
 .\"
 .\" Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -68,7 +68,7 @@ is specified.
 Close the client connection to a remote switch or a
 .Xr switch 4
 control device.
-.It Cm dump Ar address Ar request
+.It Cm dump Ar address request
 Request information from a remote switch.
 .Nm
 will send an OpenFlow request to the remote switch that is specified by
@@ -87,7 +87,7 @@ Request the tables and flows.
 .It Cm tables
 Request the tables.
 .El
-.It Cm load Ar filename Ar address
+.It Cm load Ar filename address
 Reload the configuration from the specified file.
 .It Cm log brief
 Disable verbose logging.
@@ -97,16 +97,16 @@ Enable verbose logging.
 Monitor internal messages of the
 .Xr switchd 8
 subsystems.
+.It Cm reload
+Reload the configuration from the default configuration file.
+.It Cm reset all
+Reset the running state.
 .It Cm show macs
 Display all known mac addresses.
 .It Cm show summary
 Display a list of all switches and mac addresses.
 .It Cm show switches
 Display all known switches.
-.It Cm reload
-Reload the configuration from the default configuration file.
-.It Cm reset all
-Reset the running state.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/switchd.sockXX" -compact
