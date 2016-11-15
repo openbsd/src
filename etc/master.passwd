@@ -2,6 +2,7 @@ root::0:0:daemon:0:0:Charlie &:/root:/bin/ksh
 daemon:*:1:1::0:0:The devil himself:/root:/sbin/nologin
 operator:*:2:5::0:0:System &:/operator:/sbin/nologin
 bin:*:3:7::0:0:Binaries Commands and Source:/:/sbin/nologin
+build:*:21:21::0:0:base and xenocara build:/var/empty:/bin/ksh
 sshd:*:27:27::0:0:sshd privsep:/var/empty:/sbin/nologin
 _portmap:*:28:28::0:0:portmap:/var/empty:/sbin/nologin
 _identd:*:29:29::0:0:identd:/var/empty:/sbin/nologin
