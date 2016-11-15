@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.111 2016/09/27 01:37:38 dlg Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.112 2016/11/15 13:46:54 mpi Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -654,7 +654,7 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam,
 
 	nfs_ninit(nmp);
 	TAILQ_INIT(&nmp->nm_reqsq);
-	timeout_set(&nmp->nm_rtimeout, nfs_timer, nmp);
+	timeout_set_proc(&nmp->nm_rtimeout, nfs_timer, nmp);
 
 	/* Set up the sockets and per-host congestion */
 	nmp->nm_sotype = argp->sotype;
