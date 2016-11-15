@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.337 2016/11/14 12:45:30 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.338 2016/11/15 10:09:28 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -555,6 +555,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 		goto out;
 	}
 	ifidx = rt->rt_ifidx;
+	ifa = rt->rt_ifa;
 	rtfree(rt);
 	rt = NULL;
 
