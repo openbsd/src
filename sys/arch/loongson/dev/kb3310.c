@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.20 2016/01/08 15:54:13 jcs Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.21 2016/11/15 13:53:35 fcambus Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -76,8 +76,10 @@ static const struct {
 #define YKBEC_CHARGING	7
 	{ "Battery charging",		SENSOR_INDICATOR },
 #define YKBEC_AC	8
-	{ "AC-Power",			SENSOR_INDICATOR }
-#define YKBEC_NSENSORS	9
+	{ "AC-Power",			SENSOR_INDICATOR },
+#define YKBEC_LID	9
+	{ "Lid open",			SENSOR_INDICATOR }
+#define YKBEC_NSENSORS	10
 };
 
 struct ykbec_softc {
@@ -310,6 +312,10 @@ ykbec_read16(struct ykbec_softc *mcsc, u_int reg)
 #define	REG_FAN_ON			1
 #define REG_FAN_OFF			0
 
+#define REG_LID_STATE			0xf4bd
+#define LID_OPEN			1
+#define LID_CLOSED			0
+
 #define YKBEC_SCI_IRQ			0xa
 
 #ifdef DEBUG
@@ -337,7 +343,7 @@ ykbec_refresh(void *arg)
 {
 	struct ykbec_softc *sc = (struct ykbec_softc *)arg;
 	u_int val, bat_charge, bat_status, charge_status, bat_state, power_flag;
-	u_int cap_pct, fullcap;
+	u_int lid_state, cap_pct, fullcap;
 	int current;
 #if NAPM > 0
 	struct apm_power_info old;
@@ -376,11 +382,14 @@ ykbec_refresh(void *arg)
 	charge_status = ykbec_read(sc, REG_CHARGE_STATUS);
 	bat_state = ykbec_read(sc, REG_BAT_STATE);
 	power_flag = ykbec_read(sc, REG_POWER_FLAG);
+	lid_state = ykbec_read(sc, REG_LID_STATE);
 
 	sc->sc_sensor[YKBEC_CHARGING].value = !!ISSET(bat_state,
 	    BAT_STATE_CHARGING);
 	sc->sc_sensor[YKBEC_AC].value = !!ISSET(power_flag,
 	    POWER_FLAG_ADAPTER_IN);
+
+	sc->sc_sensor[YKBEC_LID].value = !!ISSET(lid_state, LID_OPEN);
 
 	sc->sc_sensor[YKBEC_CAP].status = ISSET(bat_status, BAT_STATUS_BAT_LOW) ?
 		SENSOR_S_CRIT : SENSOR_S_OK;
