@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.96 2016/11/08 07:10:55 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.97 2016/11/15 11:25:38 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -268,6 +268,7 @@ vmm_probe(struct device *parent, void *match, void *aux)
 
 	found_vmx = 0;
 	found_svm = 0;
+	vm_disabled = 0;
 
 	/* Check if we have at least one CPU with either VMX or SVM */
 	CPU_INFO_FOREACH(cii, ci) {
