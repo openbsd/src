@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.18 2016/10/27 20:44:20 natano Exp $
+#	$OpenBSD: Makefile.armv7,v 1.19 2016/11/15 09:08:37 natano Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -122,25 +122,13 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-clean::
-	rm -f *bsd *bsd.gdb tags *.[dio] [a-z]*.s \
-	    [Ee]rrs linterrs assym.* ${DB_STRUCTINFO} param.c
+clean:
+	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* ${DB_STRUCTINFO} param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
 
-lint:
-	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${CFILES} ioconf.c param.c | \
-	    grep -v 'static function .* unused'
-
-obj:
-
-depend:
-	@touch $@
-
-tags:
-	@echo "see $S/kern/Makefile for tags"
+depend obj:
 
 db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
 	${CC} ${CFLAGS} ${CPPFLAGS} -MT $@ -gstabs -c $S/ddb/db_structinfo.c
