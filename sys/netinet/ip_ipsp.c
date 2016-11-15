@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.217 2016/09/20 14:01:04 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.218 2016/11/15 09:48:03 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -774,10 +774,10 @@ tdb_alloc(u_int rdomain)
 	tdbp->tdb_rdomain = rdomain;
 
 	/* Initialize timeouts. */
-	timeout_set(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);
-	timeout_set(&tdbp->tdb_first_tmo, tdb_firstuse, tdbp);
-	timeout_set(&tdbp->tdb_stimer_tmo, tdb_soft_timeout, tdbp);
-	timeout_set(&tdbp->tdb_sfirst_tmo, tdb_soft_firstuse, tdbp);
+	timeout_set_proc(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);
+	timeout_set_proc(&tdbp->tdb_first_tmo, tdb_firstuse, tdbp);
+	timeout_set_proc(&tdbp->tdb_stimer_tmo, tdb_soft_timeout, tdbp);
+	timeout_set_proc(&tdbp->tdb_sfirst_tmo, tdb_soft_firstuse, tdbp);
 
 	return tdbp;
 }
