@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.194 2016/11/07 09:19:46 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.195 2016/11/15 13:12:24 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -308,10 +308,6 @@ skip1:
 void
 nd6_llinfo_settimer(struct llinfo_nd6 *ln, int secs)
 {
-	int s;
-
-	s = splsoftnet();
-
 	if (secs < 0) {
 		ln->ln_rt->rt_expire = 0;
 		timeout_del(&ln->ln_timer_ch);
@@ -319,8 +315,6 @@ nd6_llinfo_settimer(struct llinfo_nd6 *ln, int secs)
 		ln->ln_rt->rt_expire = time_uptime + secs;
 		timeout_add_sec(&ln->ln_timer_ch, secs);
 	}
-
-	splx(s);
 }
 
 void
