@@ -25,8 +25,8 @@ iface_exists()
 
 rdomain_is_used()
 {
-	_rdomains=$(ifconfig | sed -n '/^[a-z].* rdomain \([0-9]*\).*/s//\1/p' \
-	    | sort | uniq)
+	_rdomains=$(ifconfig |grep -v ^lo$1 | \
+	     sed -n '/^[a-z].* rdomain \([0-9]*\).*/s//\1/p' | sort | uniq)
 	for _r in $_rdomains; do
 		if [ $_r = $1 ]; then
 			return 1
