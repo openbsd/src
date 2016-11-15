@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.330 2016/11/07 09:08:05 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.331 2016/11/15 14:30:59 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3441,7 +3441,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 		 * entry in our bucket.
 		 */
 		if (sc2 == NULL)
-			panic("syn_cache_insert: bucketoverflow: impossible");
+			panic("%s: bucketoverflow: impossible", __func__);
 #endif
 		syn_cache_rm(sc2);
 		syn_cache_put(sc2);
@@ -3472,8 +3472,8 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 			 * non-empty bucket.
 			 */
 			if (scp2 == scp)
-				panic("syn_cache_insert: cacheoverflow: "
-				    "impossible");
+				panic("%s: cacheoverflow: impossible",
+				    __func__);
 #endif
 		}
 		sc2 = TAILQ_FIRST(&scp2->sch_bucket);
