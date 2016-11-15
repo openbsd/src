@@ -1,4 +1,4 @@
-.\" $OpenBSD: switchctl.8,v 1.3 2016/10/20 19:55:30 jmc Exp $
+.\" $OpenBSD: switchctl.8,v 1.4 2016/11/15 08:50:39 reyk Exp $
 .\"
 .\" Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 20 2016 $
+.Dd $Mdocdate: November 15 2016 $
 .Dt SWITCHCTL 8
 .Os
 .Sh NAME
@@ -68,7 +68,26 @@ is specified.
 Close the client connection to a remote switch or a
 .Xr switch 4
 control device.
-.It Cm load Ar filename
+.It Cm dump Ar address Ar request
+Request information from a remote switch.
+.Nm
+will send an OpenFlow request to the remote switch that is specified by
+.Ar address .
+The
+.Ar request
+can be one of the following:
+.Pp
+.Bl -tag -width features -offset indent -compact
+.It Cm desc
+Request the switch description.
+.It Cm features
+Request the switch features.
+.It Cm flows
+Request the tables and flows.
+.It Cm tables
+Request the tables.
+.El
+.It Cm load Ar filename Ar address
 Reload the configuration from the specified file.
 .It Cm log brief
 Disable verbose logging.
