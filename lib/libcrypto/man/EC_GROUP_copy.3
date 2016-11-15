@@ -1,6 +1,6 @@
-.\"	$OpenBSD: EC_GROUP_copy.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: EC_GROUP_copy.3,v 1.3 2016/11/15 09:25:45 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 15 2016 $
 .Dt EC_GROUP_COPY 3
 .Os
 .Sh NAME
@@ -173,9 +173,9 @@ of
 .Fa group .
 .Pp
 .Fn EC_GROUP_set_generator
-sets curve paramaters that must be agreed by all participants using
+sets curve parameters that must be agreed by all participants using
 the curve.
-These paramaters include the
+These parameters include the
 .Fa generator ,
 the
 .Fa order
@@ -219,8 +219,8 @@ If a curve does not have a NID associated with it, then
 will return 0.
 .Pp
 The asn1_flag value on a curve is used to determine whether there is a
-specific ASN1 OID to describe the curve or not.
-If the asn1_flag is 1 then this is a named curve with an associated ASN1 OID.
+specific ASN.1 OID to describe the curve or not.
+If the asn1_flag is 1 then this is a named curve with an associated ASN.1 OID.
 If not then asn1_flag is 0.
 The functions
 .Fn EC_GROUP_get_asn1_flag
@@ -231,7 +231,7 @@ If set, then the curve_name must also be set.
 .Pp
 The point_conversion_form for a curve controls how
 .Vt EC_POINT
-data is encoded as ASN1 as defined in X9.62 (ECDSA).
+data is encoded as ASN.1 as defined in X9.62 (ECDSA).
 .Vt point_conversion_form_t
 is an enum defined as follows:
 .Bd -literal
@@ -253,7 +253,7 @@ the point is encoded as an octet signifying the UNCOMPRESSED form
 has been used followed by the octets for x, followed by the octets
 for y.
 .Pp
-For any given x co-ordinate for a point on a curve it is possible to
+For any given x coordinate for a point on a curve it is possible to
 derive two possible y values.
 For
 .Dv POINT_CONVERSION_COMPRESSED
@@ -294,7 +294,7 @@ It is also possible to set a custom seed using
 and passing a pointer to a memory block, along with the length of
 the seed.
 Again, the EC library will not use this seed value, although it will be
-preserved in any ASN1 based communications.
+preserved in any ASN.1 based communications.
 .Pp
 .Fn EC_GROUP_get_degree
 gets the degree of the field.
@@ -391,7 +391,7 @@ on error.
 .Fn EC_GROUP_get_point_conversion_form ,
 and
 .Fn EC_GROUP_get_degree
-return the order, cofactor, curve name (NID), ASN1 flag,
+return the order, cofactor, curve name (NID), ASN.1 flag,
 point_conversion_form and degree for the specified curve, respectively.
 If there is no curve name associated with a curve then
 .Fn EC_GROUP_get_curve_name

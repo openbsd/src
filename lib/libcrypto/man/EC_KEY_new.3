@@ -1,6 +1,6 @@
-.\"	$OpenBSD: EC_KEY_new.3,v 1.4 2016/11/06 16:54:58 jmc Exp $
+.\"	$OpenBSD: EC_KEY_new.3,v 1.5 2016/11/15 09:25:45 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 15 2016 $
 .Dt EC_KEY_NEW 3
 .Os
 .Sh NAME
@@ -204,7 +204,7 @@ Calling
 .Fn EC_KEY_free
 decrements the reference count for the
 .Vt EC_KEY
-object, and if it has dropped to zero, then frees the memory associated
+object and, if it has dropped to zero, then frees the memory associated
 with it.
 .Pp
 .Fn EC_KEY_copy
@@ -291,7 +291,7 @@ and
 .Dv EC_PKEY_NO_PUBKEY .
 These flags define the behaviour of how the
 .Fa key
-is converted into ASN1 in a call to
+is converted into ASN.1 in a call to
 .Fn i2d_ECPrivateKey .
 If
 .Dv EC_PKEY_NO_PARAMETERS
@@ -308,8 +308,8 @@ and
 .Fn EC_KEY_set_conv_form
 get and set the point_conversion_form for the
 .Fa key .
-For a description of point_conversion_forms please refer to
-.Xr EC_POINT_new 3 .
+For a description of point_conversion_form please refer to
+.Xr EC_GROUP_copy 3 .
 .Pp
 .Fn EC_KEY_insert_key_method_data
 and
@@ -318,7 +318,7 @@ enable the caller to associate arbitrary additional data specific
 to the elliptic curve scheme being used with the
 .Vt EC_KEY
 object.
-This data is treated as a "black box" by the ec library.
+This data is treated as a "black box" by the EC library.
 The data to be stored by
 .Fn EC_KEY_insert_key_method_data
 is provided in the
@@ -392,7 +392,8 @@ spaces.
 and
 .Fn EC_KEY_dup
 return a pointer to the newly created
-.Vt EC_KEY object or
+.Vt EC_KEY object
+or
 .Dv NULL
 on error.
 .Pp
