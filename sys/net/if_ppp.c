@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.101 2016/10/06 19:09:08 bluhm Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.102 2016/11/16 14:23:10 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -851,7 +851,6 @@ ppp_requeue(struct ppp_softc *sc)
 
 /*
  * Transmitter has finished outputting some stuff;
- * remember to call sc->sc_start later at splsoftnet.
  */
 void
 ppp_restart(struct ppp_softc *sc)
@@ -864,10 +863,7 @@ ppp_restart(struct ppp_softc *sc)
 }
 
 /*
- * Get a packet to send.  This procedure is intended to be called at
- * splsoftnet, since it may involve time-consuming operations such as
- * applying VJ compression, packet compression, address/control and/or
- * protocol field compression to the packet.
+ * Get a packet to send.
  */
 struct mbuf *
 ppp_dequeue(struct ppp_softc *sc)
