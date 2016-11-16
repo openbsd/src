@@ -89,8 +89,11 @@ sub encode {
 	my $class = shift;
 	my $self = shift;
 	my $pkt = '';
+	my $datalen = length($self->{data});
 
-	$self->{length} = 8;
+	if ($self->{length} == 0) {
+		$self->{length} = 8 + $datalen;
+	}
 
 	$pkt = pack("CCnN", $self->{version}, $self->{type},
 	    $self->{length}, $self->{xid});
@@ -98,16 +101,16 @@ sub encode {
 	if ($self->{version} == 1) {
 		# PACKET_IN
 		if ($self->{type} == 10) {
-			$self->{length} += 10 + length($self->{data});
-			$pkt = pack("CCnNNnnCCa*",
+			$self->{length} += 10;
+			$pkt = pack("CCnNNnnxxa*",
 			    $self->{version}, $self->{type},
 			    $self->{length}, $self->{xid}, $self->{buffer_id},
 			    length($self->{data}),
-			    $self->{port}, 0, 0, $self->{data});
+			    $self->{port}, $self->{data});
 		}
 	}
 
-	return ($pkt); 
+	return ($pkt);
 }
 
 #
