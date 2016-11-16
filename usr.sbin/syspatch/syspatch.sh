@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.53 2016/11/16 15:27:52 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.54 2016/11/16 16:11:31 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -76,34 +76,32 @@ apply_patches()
 	sp_cleanup
 }
 
+# quick-and-dirty size check:
+# - assume old files are about the same size as new ones
+# - ignore new (nonexistent) files
+# - compute total size of all files per fs, simpler and less margin for error
+# - if we install a kernel, double /bsd size (duplicate it in the list) when:
+#   - we are on an MP system (/bsd.mp does not exist there)
+#   - /bsd.syspatchXX is not present (create_rollback will copy it from /bsd)
 checkfs()
 {
 	local _d _df _dev _files="${@}" _sz
 	[[ -n ${_files} ]]
 
-	# if we install a new kernel, add /bsd twice (for size checking) when:
-	# - we are on an MP system (/bsd.mp does not exist there)
-	# - /bsd.syspatchXX is not present (create_rollback will add it)
 	if echo "${_files}" | grep -qw bsd; then
 		${_BSDMP} || [[ ! -f /bsd.syspatch${_RELINT} ]] &&
 			_files="bsd ${_files}"
 	fi
 
-	# assume old files are about the same size as new ones
 	eval $(cd / &&
 		stat -qf "_dev=\"\${_dev} %Sd\" %Sd=\"\${%Sd:+\${%Sd}\+}%Uz\"" \
 		${_files}) || true # ignore nonexistent files
 
 	for _d in $(printf '%s\n' ${_dev} | sort -u); do
-		# make sure the fs is local and RW
 		mount | grep -v read-only | grep -q "^/dev/${_d} " ||
 			sp_err "Remote or read-only filesystem, aborting"
-		# quick-and-dirty size check:
-		# - assume old files are about the same size as new ones
-		# - ignore new (nonexistent) files
-		# - check against all files total size, reduces margin of error
 		_df=$(df -Pk | grep "^/dev/${_d} " | tr -s ' ' | cut -d ' ' -f4)
-		_sz=$(($((${_d}))/1024)) # total size of all files
+		_sz=$(($((${_d}))/1024))
 		[[ ${_df} -gt ${_sz} ]] ||
 			sp_err "No space left on device ${_d}, aborting"
 	done
