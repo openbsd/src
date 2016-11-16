@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.44 2016/10/03 21:24:40 natano Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.45 2016/11/16 21:40:21 tb Exp $
 
 INFODIR=	infodir=/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -60,6 +60,7 @@ install:	maninstall
 	sh ${.CURDIR}/util/gen-dir-node ${DESTDIR}/usr/share/info > \
 	    ${DESTDIR}/usr/share/info/dir
 	chown ${MANOWN}:${MANGRP} ${DESTDIR}/usr/share/info/dir
+	chmod ${MANMODE} ${DESTDIR}/usr/share/info/dir
 
 clean cleandir:
 	rm -f ${CLEANFILES}
