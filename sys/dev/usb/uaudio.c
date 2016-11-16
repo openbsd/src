@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.118 2016/11/08 06:09:56 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.119 2016/11/16 07:02:48 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -622,7 +622,7 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 
 	/* Copy old data, if there was any */
 	if (sc->sc_nctls != 0) {
-		bcopy(sc->sc_ctls, nmc, sizeof(*mc) * (sc->sc_nctls));
+		memcpy(nmc, sc->sc_ctls, sizeof(*mc) * (sc->sc_nctls));
 		free(sc->sc_ctls, M_USBDEV, 0);
 	}
 	sc->sc_ctls = nmc;
@@ -1501,7 +1501,7 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 
 	/* Copy old data, if there was any */
 	if (sc->sc_nalts != 0) {
-		bcopy(sc->sc_alts, nai, sizeof(*ai) * (sc->sc_nalts));
+		memcpy(nai, sc->sc_alts, sizeof(*ai) * (sc->sc_nalts));
 		free(sc->sc_alts, M_USBDEV, 0);
 	}
 	sc->sc_alts = nai;
