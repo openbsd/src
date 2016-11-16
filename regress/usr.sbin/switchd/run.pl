@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $OpenBSD: run.pl,v 1.6 2016/11/16 08:09:26 rzalamena Exp $
+# $OpenBSD: run.pl,v 1.7 2016/11/16 11:36:03 rzalamena Exp $
 
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 #
@@ -68,9 +68,20 @@ sub ofp_input {
 
 	# Read the body and decode it.
 	$ofplen = $ofp->{length};
-	if ($ofplen > 8) {
-		$self->{sock}->recv($pktext, ($ofplen - 8));
-		$ofp = NetPacket::OFP->decode($pkt . $pktext) or
+	if (defined($ofplen) && $ofplen > 8) {
+		$ofplen -= 8;
+
+		# Perl recv() only reads 16k at a time, so loop here.
+		while ($ofplen > 0) {
+			$self->{sock}->recv($pktext, $ofplen);
+			if (length($pktext) == 0) {
+				fatal('ofp_input', 'Socket closed');
+			}
+			$ofplen -= length($pktext);
+			$pkt .= $pktext;
+		}
+
+		$ofp = NetPacket::OFP->decode($pkt) or
 		    fatal('ofp_input', 'Failed to decode OFP');
 	}
 	ofp_debug('<', $ofp);
@@ -110,12 +121,18 @@ sub ofp_packet_in {
 	my $pktin = NetPacket::OFP->decode() or fatal($class, "new packet");
 	my $pkt;
 
+	$pkt = pack('NnnCxa*',
+	    OFP_PKTOUT_NO_BUFFER(),			# buffer_id
+	    length($data),				# total_len
+	    $self->{port} || OFP_PORT_NORMAL(),		# port
+	    OFP_PKTIN_REASON_NO_MATCH(),		# reason
+	    $data					# data
+	    );
+
 	$pktin->{version} = $self->{version};
 	$pktin->{type} = OFP_T_PACKET_IN();
 	$pktin->{xid} = $self->{xid}++;
-	$pktin->{data} = $data;
-	$pktin->{buffer_id} = $self->{count} || 1;
-	$pktin->{port} = $self->{port} || OFP_PORT_NORMAL();
+	$pktin->{data} = $pkt;
 	$pkt = NetPacket::OFP->encode($pktin);
 
 	# XXX timeout

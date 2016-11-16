@@ -95,19 +95,12 @@ sub encode {
 		$self->{length} = 8 + $datalen;
 	}
 
-	$pkt = pack("CCnN", $self->{version}, $self->{type},
-	    $self->{length}, $self->{xid});
-
-	if ($self->{version} == 1) {
-		# PACKET_IN
-		if ($self->{type} == 10) {
-			$self->{length} += 10;
-			$pkt = pack("CCnNNnnxxa*",
-			    $self->{version}, $self->{type},
-			    $self->{length}, $self->{xid}, $self->{buffer_id},
-			    length($self->{data}),
-			    $self->{port}, $self->{data});
-		}
+	if ($datalen == 0) {
+		$pkt = pack('CCnN', $self->{version}, $self->{type},
+		    $self->{length}, $self->{xid});
+	} else {
+		$pkt = pack('CCnNa*', $self->{version}, $self->{type},
+		    $self->{length}, $self->{xid}, $self->{data});
 	}
 
 	return ($pkt);

@@ -1,4 +1,4 @@
-# $OpenBSD: args-packet-jumbo.pm,v 1.2 2016/10/05 15:29:26 reyk Exp $
+# $OpenBSD: args-packet-jumbo.pm,v 1.3 2016/11/16 11:36:03 rzalamena Exp $
 
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 #
@@ -63,7 +63,7 @@ my $topology = {
 			"dest_mac" => "ffffffffffff",
 			"src_ip" => "10.0.0.1",
 			"dest_ip" => "10.255.255.255",
-			"length" => 65475,
+			"length" => 65469,
 			"count" => 3,
 			"ofp_response" => main::OFP_T_PACKET_OUT()
 		}
