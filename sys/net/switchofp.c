@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.30 2016/11/10 17:32:40 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.31 2016/11/16 13:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -17,6 +17,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +46,10 @@
 #include <net/if_switch.h>
 #include <net/if_vlan_var.h>
 #include <net/ofp.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 /*
  * per-frame matching logs provide a helpful for isolating a problem or debuging
@@ -977,6 +983,11 @@ swofp_create(struct switch_softc *sc)
 
 	sc->sc_capabilities |= SWITCH_CAP_OFP;
 	sc->switch_process_forward = swofp_forward_ofs;
+
+#if NBPFILTER > 0
+	bpfattach(&sc->sc_ofbpf, &sc->sc_if, DLT_OPENFLOW,
+	    sizeof(struct ofp_header));
+#endif
 
 	DPRINTF(sc, "enable OpenFlow switch capability\n");
 
@@ -4478,6 +4489,11 @@ swofp_input(struct switch_softc *sc, struct mbuf *m)
 	    swofp_mtype_str(oh->oh_type), ntohl(oh->oh_xid),
 	    ntohs(oh->oh_length));
 
+#if NBPFILTER > 0
+	if (sc->sc_ofbpf)
+		switch_mtap(sc->sc_ofbpf, m, BPF_DIRECTION_IN);
+#endif
+
 	handler = swofp_lookup_msg_handler(oh->oh_type);
 	if (handler)
 		(*handler)(sc, m);
@@ -4502,6 +4518,11 @@ swofp_output(struct switch_softc *sc, struct mbuf *m)
 	VDPRINTF(sc, "sending ofp message type=%s xid=%x len=%d\n",
 		 swofp_mtype_str(oh->oh_type), ntohl(oh->oh_xid),
 		 ntohs(oh->oh_length));
+
+#if NBPFILTER > 0
+	if (sc->sc_ofbpf)
+		switch_mtap(sc->sc_ofbpf, m, BPF_DIRECTION_OUT);
+#endif
 
 	if (sc->sc_swdev->swdev_output(sc, m) != 0)
 		return (ENOBUFS);

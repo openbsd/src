@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.78 2015/12/22 21:01:07 mmcc Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.79 2016/11/16 13:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -126,6 +126,7 @@ static struct printer printers[] = {
 	{ ppp_ether_if_print,		DLT_PPP_ETHER },
 	{ ieee802_11_if_print,		DLT_IEEE802_11 },
 	{ ieee802_11_radio_if_print,	DLT_IEEE802_11_RADIO },
+	{ ofp_if_print,			DLT_OPENFLOW },
 	{ NULL,				0 },
 };
 

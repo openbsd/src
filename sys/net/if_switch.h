@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.h,v 1.8 2016/11/11 16:19:09 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.h,v 1.9 2016/11/16 13:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -201,6 +201,7 @@ struct switch_softc {
 	struct switch_dev		*sc_swdev;		/* char device */
 	struct bstp_state		*sc_stp;		/* STP state */
 	struct swofp_ofs		*sc_ofs;		/* OpenFlow */
+	caddr_t				 sc_ofbpf;		/* DLT_OPENFLOW */
 	TAILQ_HEAD(,switch_port)	 sc_swpo_list;		/* port */
 	LIST_ENTRY(switch_softc)	 sc_switch_next;	/* switch link */
 	void				(*switch_process_forward)(
@@ -219,6 +220,7 @@ void	 switch_swfcl_free(struct switch_flow_classify *);
 struct mbuf
 	*switch_flow_classifier(struct mbuf *, uint32_t,
 	    struct switch_flow_classify *);
+int	 switch_mtap(caddr_t, struct mbuf *, int);
 int	 ofp_split_mbuf(struct mbuf *, struct mbuf **);
 
 /* switchctl.c */

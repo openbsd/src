@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.68 2016/10/22 20:55:04 rzalamena Exp $	*/
+/*	$OpenBSD: interface.h,v 1.69 2016/11/16 13:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.68 2016/10/22 20:55:04 rzalamena Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.69 2016/11/16 13:47:27 reyk Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -274,7 +274,8 @@ extern void mpls_print(const u_char *, u_int);
 extern void lldp_print(const u_char *, u_int);
 extern void slow_print(const u_char *, u_int);
 extern void gtp_print(const u_char *, u_int, u_short, u_short);
-extern void ofp_print(const u_char *);
+extern void ofp_print(const u_char *, u_int);
+extern void ofp_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 
 #ifdef INET6
 extern void ip6_print(const u_char *, u_int);

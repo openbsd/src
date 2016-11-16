@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.36 2016/10/22 20:55:04 rzalamena Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.37 2016/11/16 13:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -671,7 +671,7 @@ tcp_print(const u_char *bp, u_int length, const u_char *bp2)
 			bgp_print(bp, length);
 		else if (sport == OLD_OFP_PORT || dport == OLD_OFP_PORT ||
 		    sport == OFP_PORT || dport == OFP_PORT)
-			ofp_print(bp);
+			ofp_print(bp, length);
 #if 0
 		else if (sport == NETBIOS_SSN_PORT || dport == NETBIOS_SSN_PORT)
 			nbt_tcp_print(bp, length);

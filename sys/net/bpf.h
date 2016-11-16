@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.59 2016/10/30 17:46:34 phessler Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.60 2016/11/16 13:47:27 reyk Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -185,7 +185,9 @@ struct bpf_hdr {
 #define DLT_IEEE802_11		105	/* IEEE 802.11 wireless */
 #define DLT_PFLOG		117	/* Packet filter logging, by pcap people */
 #define DLT_IEEE802_11_RADIO	127	/* IEEE 802.11 plus WLAN header */
+#define DLT_USER0		147	/* Reserved for private use */
 #define DLT_MPLS		219	/* MPLS Provider Edge header */
+#define DLT_OPENFLOW		DLT_USER0
 
 /*
  * The instruction encodings.

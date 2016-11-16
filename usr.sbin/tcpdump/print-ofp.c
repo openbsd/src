@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.2 2016/10/25 08:43:15 rzalamena Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.3 2016/11/16 13:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -21,7 +21,9 @@
 #include <endian.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <pcap.h>
 
+#include "extract.h"
 #include "interface.h"
 
 /* Size of action header without the padding. */
@@ -155,7 +157,7 @@ ofp_print_error(const u_char *bp, u_int length)
 	/* If there are still bytes left, print the optional error data. */
 	if (length) {
 		printf(" error data:");
-		ofp_print(bp);
+		ofp_print(bp, length);
 	}
 }
 
@@ -508,21 +510,55 @@ parse_next_instruction:
 }
 
 void
-ofp_print(const u_char *bp)
+ofp_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	struct ofp_header			*oh;
-	unsigned int				 ohlen;
-	u_int					 length;
+	uint32_t	 toswitch;
+	unsigned int	 length;
 
-	length = snapend - bp;
+	ts_print(&h->ts);
+
+	packetp = p;
+	snapend = p + h->caplen;
+	length = snapend - p;
+
+	if (length < 4)
+		goto trunc;
+	toswitch = EXTRACT_32BITS(p);
+
+	if (toswitch)
+		printf("controller -> %s", device);
+	else
+		printf("%s -> controller", device);
+
+	ofp_print(p + 4, length - 4);
+	goto out;
+
+ trunc:
+	printf("[|OpenFlow]");
+
+ out:
+	if (xflag)
+		default_print(p, (u_int)h->len);
+	putchar('\n');
+}
+
+void
+ofp_print(const u_char *bp, u_int length)
+{
+	struct ofp_header	*oh;
+	unsigned int		 ohlen, snaplen;
+
+	/* The captured data might be smaller than indicated */
+	snaplen = snapend - bp;
+	length = min(snaplen, length);
 	if (length < sizeof(*oh)) {
-		printf(" OpenFlow(truncated)");
+		printf("[|OpenFlow]");
 		return;
 	}
 
 	oh = (struct ofp_header *)bp;
 	ohlen = ntohs(oh->oh_length);
-	printf(" OpenFlow(ver %#02x type %d len %d xid %u)",
+	printf(": OpenFlow(ver %#02x type %d len %d xid %u)",
 	    oh->oh_version, oh->oh_type, ohlen, ntohl(oh->oh_xid));
 
 	switch (oh->oh_version) {

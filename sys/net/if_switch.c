@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.12 2016/11/10 17:32:40 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.13 2016/11/16 13:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -187,14 +187,14 @@ switch_clone_create(struct if_clone *ifc, int unit)
 		return (ENOMEM);
 	}
 
-	swofp_create(sc);
-
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
 #endif
+
+	swofp_create(sc);
 
 	LIST_INSERT_HEAD(&switch_list, sc, sc_switch_next);
 
@@ -1526,6 +1526,13 @@ switch_flow_classifier_dump(struct switch_softc *sc,
 	}
 
 	addlog("\n");
+}
+
+int
+switch_mtap(caddr_t arg, struct mbuf *m, int dir)
+{
+	/* prepend 32 bit "controller to switch" field */
+	return bpf_mtap_af(arg, dir == BPF_DIRECTION_IN ? 1 : 0, m, dir);
 }
 
 int
