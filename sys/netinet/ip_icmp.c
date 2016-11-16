@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.154 2016/11/14 03:51:53 dlg Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.155 2016/11/16 12:21:46 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -951,11 +951,14 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 	if ((rt->rt_flags & RTF_HOST) == 0) {
 		struct rtentry *nrt;
 		struct rt_addrinfo info;
+		struct sockaddr_rtlabel sa_rl;
 
 		memset(&info, 0, sizeof(info));
+		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
 		info.rti_info[RTAX_DST] = sintosa(&sin);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
+		info.rti_info[RTAX_LABEL] =
+		    rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 
 		error = rtrequest(RTM_ADD, &info, RTP_DEFAULT, &nrt, rtableid);
 		if (error) {

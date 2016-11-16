@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.191 2016/11/09 09:04:48 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.192 2016/11/16 12:21:46 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1912,14 +1912,17 @@ icmp6_mtudisc_clone(struct sockaddr *dst, u_int rdomain)
 
 	/* If we didn't get a host route, allocate one */
 	if ((rt->rt_flags & RTF_HOST) == 0) {
-		struct rt_addrinfo info;
 		struct rtentry *nrt;
+		struct rt_addrinfo info;
+		struct sockaddr_rtlabel sa_rl;
 		int s;
 
-		bzero(&info, sizeof(info));
+		memset(&info, 0, sizeof(info));
 		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
 		info.rti_info[RTAX_DST] = dst;
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		info.rti_info[RTAX_LABEL] =
+		    rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 
 		s = splsoftnet();
 		error = rtrequest(RTM_ADD, &info, rt->rt_priority, &nrt,
