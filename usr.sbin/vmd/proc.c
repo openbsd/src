@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.10 2016/10/11 07:45:26 rzalamena Exp $	*/
+/*	$OpenBSD: proc.c,v 1.11 2016/11/16 15:32:42 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -434,12 +434,9 @@ proc_open(struct privsep *ps, int src, int dst)
 			 * We have to flush to send the descriptors and close
 			 * them to avoid the fd ramp on startup.
 			 */
-			if (imsg_flush(&ps->ps_ievs[src][i].ibuf) == -1 ||
-			    imsg_flush(&ps->ps_ievs[dst][j].ibuf) == -1)
+			if (proc_flush_imsg(ps, src, i) == -1 ||
+			    proc_flush_imsg(ps, dst, j) == -1)
 				fatal("%s: imsg_flush", __func__);
-
-			imsg_event_add(&ps->ps_ievs[src][i]);
-			imsg_event_add(&ps->ps_ievs[dst][j]);
 		}
 	}
 }
@@ -820,4 +817,26 @@ proc_iev(struct privsep *ps, enum privsep_procid id, int n)
 
 	proc_range(ps, id, &n, &m);
 	return (&ps->ps_ievs[id][n]);
+}
+
+/* This function should only be called with care as it breaks async I/O */
+int
+proc_flush_imsg(struct privsep *ps, enum privsep_procid id, int n)
+{
+	struct imsgbuf	*ibuf;
+	int		 m, ret = 0;
+
+	proc_range(ps, id, &n, &m);
+	for (; n < m; n++) {
+		if ((ibuf = proc_ibuf(ps, id, n)) == NULL)
+			return (-1);
+		do {
+			ret = imsg_flush(ibuf);
+		} while (ret == -1 && errno == EAGAIN);
+		if (ret == -1)
+			break;
+		imsg_event_add(&ps->ps_ievs[id][n]);
+	}
+
+	return (ret);
 }
