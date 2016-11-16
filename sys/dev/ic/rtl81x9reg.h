@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.98 2016/04/20 12:15:24 sthen Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.99 2016/11/16 01:15:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -888,6 +888,7 @@ struct rl_softc {
 	struct mbuf		*rl_tail;
 	u_int32_t		rl_rxlenmask;
 	struct timeout		timer_handle;
+	struct task		rl_start;
 
 	int			rl_txstart;
 	u_int32_t		rl_flags;

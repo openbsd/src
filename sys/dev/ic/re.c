@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.193 2016/08/10 14:27:17 deraadt Exp $	*/
+/*	$OpenBSD: re.c,v 1.194 2016/11/16 01:15:37 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -162,6 +162,7 @@ int	re_rxeof(struct rl_softc *);
 int	re_txeof(struct rl_softc *);
 void	re_tick(void *);
 void	re_start(struct ifnet *);
+void	re_txstart(void *);
 int	re_ioctl(struct ifnet *, u_long, caddr_t);
 void	re_watchdog(struct ifnet *);
 int	re_ifmedia_upd(struct ifnet *);
@@ -1041,6 +1042,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	re_wol(ifp, 0);
 #endif
 	timeout_set(&sc->timer_handle, re_tick, sc);
+	task_set(&sc->rl_start, re_txstart, sc);
 
 	/* Take PHY out of power down mode. */
 	if (sc->rl_flags & RL_FLAG_PHYWAKE_PM) {
@@ -1466,7 +1468,7 @@ re_txeof(struct rl_softc *sc)
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
 	else if (tx_free < sc->rl_ldata.rl_tx_desc_cnt)
-		CSR_WRITE_1(sc, sc->rl_txstart, RL_TXSTART_START);
+		ifq_serialize(&ifp->if_snd, &sc->rl_start);
 	else
 		ifp->if_timer = 0;
 
@@ -1789,6 +1791,14 @@ fail_unload:
 	return (error);
 }
 
+void
+re_txstart(void *xsc)
+{
+	struct rl_softc *sc = xsc;
+
+	CSR_WRITE_1(sc, sc->rl_txstart, RL_TXSTART_START);
+}
+
 /*
  * Main transmit routine for C+ and gigE NICs.
  */
@@ -1852,7 +1862,7 @@ re_start(struct ifnet *ifp)
 
 	sc->rl_ldata.rl_txq_prodidx = idx;
 
-	CSR_WRITE_1(sc, sc->rl_txstart, RL_TXSTART_START);
+	ifq_serialize(&ifp->if_snd, &sc->rl_start);
 }
 
 int
