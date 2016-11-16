@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.83 2016/05/22 16:31:21 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.84 2016/11/16 21:30:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -135,7 +135,7 @@ struct mta_session {
 
 static void mta_session_init(void);
 static void mta_start(int fd, short ev, void *arg);
-static void mta_io(struct io *, int);
+static void mta_io(struct io *, int, void *);
 static void mta_free(struct mta_session *);
 static void mta_on_ptr(void *, void *, void *);
 static void mta_on_timeout(struct runq *, void *);
@@ -363,7 +363,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		mta_io(&s->io, IO_TLSVERIFIED);
+		mta_io(&s->io, IO_TLSVERIFIED, s->io.arg);
 		io_resume(&s->io, IO_PAUSE_IN);
 		io_reload(&s->io);
 		return;
@@ -1134,9 +1134,9 @@ mta_response(struct mta_session *s, char *line)
 }
 
 static void
-mta_io(struct io *io, int evt)
+mta_io(struct io *io, int evt, void *arg)
 {
-	struct mta_session	*s = io->arg;
+	struct mta_session	*s = arg;
 	char			*line, *msg, *p;
 	size_t			 len;
 	const char		*error;

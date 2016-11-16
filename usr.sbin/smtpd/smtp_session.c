@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.289 2016/10/16 17:15:15 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.290 2016/11/16 21:30:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -167,8 +167,8 @@ static void smtp_session_init(void);
 static int smtp_lookup_servername(struct smtp_session *);
 static void smtp_connected(struct smtp_session *);
 static void smtp_send_banner(struct smtp_session *);
-static void smtp_io(struct io *, int);
-static void smtp_data_io(struct io *, int);
+static void smtp_io(struct io *, int, void *);
+static void smtp_data_io(struct io *, int, void *);
 static void smtp_data_io_done(struct smtp_session *);
 static void smtp_enter_state(struct smtp_session *, int);
 static void smtp_reply(struct smtp_session *, char *, ...);
@@ -993,7 +993,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			smtp_free(s, "SSL certificate check failed");
 			return;
 		}
-		smtp_io(&s->io, IO_TLSVERIFIED);
+		smtp_io(&s->io, IO_TLSVERIFIED, s->io.arg);
 		io_resume(&s->io, IO_PAUSE_IN);
 		return;
 	}
@@ -1232,10 +1232,10 @@ smtp_filter_fd(uint64_t id, int fd)
 }
 
 static void
-smtp_io(struct io *io, int evt)
+smtp_io(struct io *io, int evt, void *arg)
 {
 	struct ca_cert_req_msg	req_ca_cert;
-	struct smtp_session    *s = io->arg;
+	struct smtp_session    *s = arg;
 	char		       *line;
 	size_t			len;
 	X509		       *x;
@@ -1476,9 +1476,9 @@ smtp_tx_free(struct smtp_tx *tx)
 }
 
 static void
-smtp_data_io(struct io *io, int evt)
+smtp_data_io(struct io *io, int evt, void *arg)
 {
-	struct smtp_session    *s = io->arg;
+	struct smtp_session    *s = arg;
 
 	log_trace(TRACE_IO, "smtp: %p (data): %s %s", s, io_strevent(evt),
 	    io_strio(io));

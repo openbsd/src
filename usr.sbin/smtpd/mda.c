@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.120 2016/09/01 15:12:45 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.121 2016/11/16 21:30:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -84,7 +84,7 @@ struct mda_session {
 	FILE			*datafp;
 };
 
-static void mda_io(struct io *, int);
+static void mda_io(struct io *, int, void *);
 static int mda_check_loop(FILE *, struct mda_envelope *);
 static int mda_getlastline(int, char *, size_t);
 static void mda_done(struct mda_session *);
@@ -496,9 +496,9 @@ mda_postprivdrop()
 }
 
 static void
-mda_io(struct io *io, int evt)
+mda_io(struct io *io, int evt, void *arg)
 {
-	struct mda_session	*s = io->arg;
+	struct mda_session	*s = arg;
 	char			*ln = NULL;
 	size_t			 sz = 0;
 	ssize_t			 len;

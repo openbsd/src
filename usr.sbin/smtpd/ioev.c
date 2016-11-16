@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.26 2016/05/16 21:43:16 millert Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.27 2016/11/16 21:30:37 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -226,7 +226,7 @@ _io_init()
 
 void
 io_init(struct io *io, int sock, void *arg,
-	void(*cb)(struct io*, int), struct iobuf *iobuf)
+	void(*cb)(struct io*, int, void *), struct iobuf *iobuf)
 {
 	_io_init();
 
@@ -580,7 +580,7 @@ leave:
 void
 io_callback(struct io *io, int evt)
 {
-	io->cb(io, evt);
+	io->cb(io, evt, io->arg);
 }
 
 int

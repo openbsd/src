@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.19 2016/06/29 06:46:06 eric Exp $	*/
+/*	$OpenBSD: filter.c,v 1.20 2016/11/16 21:30:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -114,7 +114,7 @@ static void filter_run_query(struct filter *, struct filter_query *);
 static void filter_end_query(struct filter_query *);
 static void filter_set_sink(struct filter_session *, int);
 static int filter_tx(struct filter_session *, int);
-static void filter_tx_io(struct io *, int);
+static void filter_tx_io(struct io *, int, void *);
 
 static TAILQ_HEAD(, filter_proc)	procs;
 struct dict				chains;
@@ -678,9 +678,9 @@ filter_tx(struct filter_session *s, int sink)
 }
 
 static void
-filter_tx_io(struct io *io, int evt)
+filter_tx_io(struct io *io, int evt, void *arg)
 {
-	struct filter_session	*s = io->arg;
+	struct filter_session	*s = arg;
 	size_t			 len, n;
 	char			*data;
 

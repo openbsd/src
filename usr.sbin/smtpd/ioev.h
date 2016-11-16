@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.6 2016/03/25 15:06:58 krw Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.7 2016/11/16 21:30:37 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -41,7 +41,7 @@ struct iobuf;
 struct io {
 	int		 sock;
 	void		*arg;
-	void		(*cb)(struct io*, int);
+	void		(*cb)(struct io*, int, void *);
 	struct iobuf	*iobuf;
 	size_t		 lowat;
 	int		 timeout;
@@ -55,7 +55,8 @@ struct io {
 void io_set_nonblocking(int);
 void io_set_nolinger(int);
 
-void io_init(struct io*, int, void*, void(*)(struct io*, int), struct iobuf*);
+void io_init(struct io*, int, void*, void(*)(struct io*, int, void *),
+    struct iobuf*);
 void io_clear(struct io*);
 void io_set_read(struct io *);
 void io_set_write(struct io *);
