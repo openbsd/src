@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x540.c,v 1.4 2015/05/20 14:34:27 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_x540.c,v 1.5 2016/11/16 23:19:29 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -95,7 +95,6 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 
 	/* MAC */
 	mac->ops.reset_hw = &ixgbe_reset_hw_X540;
-	mac->ops.enable_relaxed_ordering = &ixgbe_enable_relaxed_ordering_gen2;
 	mac->ops.get_media_type = &ixgbe_get_media_type_X540;
 	mac->ops.get_supported_physical_layer =
 				    &ixgbe_get_supported_physical_layer_X540;

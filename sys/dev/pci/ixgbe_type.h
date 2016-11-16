@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.24 2016/11/16 22:15:20 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.25 2016/11/16 23:19:29 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3394,14 +3394,9 @@ struct ixgbe_mac_operations {
 	int32_t (*reset_hw)(struct ixgbe_hw *);
 	int32_t (*start_hw)(struct ixgbe_hw *);
 	int32_t (*clear_hw_cntrs)(struct ixgbe_hw *);
-	void (*enable_relaxed_ordering)(struct ixgbe_hw *);
 	enum ixgbe_media_type (*get_media_type)(struct ixgbe_hw *);
 	uint32_t (*get_supported_physical_layer)(struct ixgbe_hw *);
 	int32_t (*get_mac_addr)(struct ixgbe_hw *, uint8_t *);
-	int32_t (*get_san_mac_addr)(struct ixgbe_hw *, uint8_t *);
-	int32_t (*set_san_mac_addr)(struct ixgbe_hw *, uint8_t *);
-	int32_t (*get_wwn_prefix)(struct ixgbe_hw *, uint16_t *, uint16_t *);
-	int32_t (*get_fcoe_boot_status)(struct ixgbe_hw *, uint16_t *);
 	int32_t (*stop_adapter)(struct ixgbe_hw *);
 	int32_t (*get_bus_info)(struct ixgbe_hw *);
 	void (*set_lan_id)(struct ixgbe_hw *);
@@ -3436,8 +3431,6 @@ struct ixgbe_mac_operations {
 	int32_t (*set_vmdq)(struct ixgbe_hw *, uint32_t, uint32_t);
 	int32_t (*clear_vmdq)(struct ixgbe_hw *, uint32_t, uint32_t);
 	int32_t (*init_rx_addrs)(struct ixgbe_hw *);
-	int32_t (*update_uc_addr_list)(struct ixgbe_hw *, uint8_t *, uint32_t,
-				   ixgbe_mc_addr_itr);
 	int32_t (*update_mc_addr_list)(struct ixgbe_hw *, uint8_t *, uint32_t,
 				       ixgbe_mc_addr_itr, bool clear);
 	int32_t (*enable_mc)(struct ixgbe_hw *);
@@ -3495,11 +3488,6 @@ struct ixgbe_mac_info {
 	enum ixgbe_mac_type type;
 	uint8_t addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
 	uint8_t perm_addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
-	uint8_t san_addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
-	/* prefix for World Wide Node Name (WWNN) */
-	uint16_t wwnn_prefix;
-	/* prefix for World Wide Port Name (WWPN) */
-	uint16_t wwpn_prefix;
 #define IXGBE_MAX_MTA			128
 	uint32_t mta_shadow[IXGBE_MAX_MTA];
 	int32_t mc_filter_type;

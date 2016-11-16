@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.11 2013/08/05 19:58:06 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.12 2016/11/16 23:19:29 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -139,7 +139,6 @@ int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw)
 
 	/* MAC */
 	mac->ops.start_hw = &ixgbe_start_hw_82598;
-	mac->ops.enable_relaxed_ordering = &ixgbe_enable_relaxed_ordering_82598;
 	mac->ops.reset_hw = &ixgbe_reset_hw_82598;
 	mac->ops.get_media_type = &ixgbe_get_media_type_82598;
 	mac->ops.get_supported_physical_layer =
@@ -1334,34 +1333,4 @@ void ixgbe_set_lan_id_multi_port_pcie_82598(struct ixgbe_hw *hw)
 			bus->func = 0;
 		}
 	}
-}
-
-/**
- *  ixgbe_enable_relaxed_ordering_82598 - enable relaxed ordering
- *  @hw: pointer to hardware structure
- *
- **/
-void ixgbe_enable_relaxed_ordering_82598(struct ixgbe_hw *hw)
-{
-	uint32_t regval;
-	uint32_t i;
-
-	DEBUGFUNC("ixgbe_enable_relaxed_ordering_82598");
-
-	/* Enable relaxed ordering */
-	for (i = 0; ((i < hw->mac.max_tx_queues) &&
-	     (i < IXGBE_DCA_MAX_QUEUES_82598)); i++) {
-		regval = IXGBE_READ_REG(hw, IXGBE_DCA_TXCTRL(i));
-		regval |= IXGBE_DCA_TXCTRL_DESC_WRO_EN;
-		IXGBE_WRITE_REG(hw, IXGBE_DCA_TXCTRL(i), regval);
-	}
-
-	for (i = 0; ((i < hw->mac.max_rx_queues) &&
-	     (i < IXGBE_DCA_MAX_QUEUES_82598)); i++) {
-		regval = IXGBE_READ_REG(hw, IXGBE_DCA_RXCTRL(i));
-		regval |= IXGBE_DCA_RXCTRL_DATA_WRO_EN |
-			  IXGBE_DCA_RXCTRL_HEAD_WRO_EN;
-		IXGBE_WRITE_REG(hw, IXGBE_DCA_RXCTRL(i), regval);
-	}
-
 }

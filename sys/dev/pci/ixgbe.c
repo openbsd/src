@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.14 2014/11/26 17:03:52 kettenis Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.15 2016/11/16 23:19:29 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -138,7 +138,6 @@ int32_t ixgbe_init_ops_generic(struct ixgbe_hw *hw)
 	mac->ops.set_vmdq = NULL;
 	mac->ops.clear_vmdq = NULL;
 	mac->ops.init_rx_addrs = &ixgbe_init_rx_addrs_generic;
-	mac->ops.update_uc_addr_list = &ixgbe_update_uc_addr_list_generic;
 	mac->ops.update_mc_addr_list = &ixgbe_update_mc_addr_list_generic;
 	mac->ops.enable_mc = &ixgbe_enable_mc_generic;
 	mac->ops.disable_mc = &ixgbe_disable_mc_generic;
@@ -1863,76 +1862,6 @@ void ixgbe_add_uc_addr(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq)
 }
 
 /**
- *  ixgbe_update_uc_addr_list_generic - Updates MAC list of secondary addresses
- *  @hw: pointer to hardware structure
- *  @addr_list: the list of new addresses
- *  @addr_count: number of addresses
- *  @next: iterator function to walk the address list
- *
- *  The given list replaces any existing list.  Clears the secondary addrs from
- *  receive address registers.  Uses unused receive address registers for the
- *  first secondary addresses, and falls back to promiscuous mode as needed.
- *
- *  Drivers using secondary unicast addresses must set user_set_promisc when
- *  manually putting the device into promiscuous mode.
- **/
-int32_t ixgbe_update_uc_addr_list_generic(struct ixgbe_hw *hw, uint8_t *addr_list,
-					  uint32_t addr_count, ixgbe_mc_addr_itr next)
-{
-	uint8_t *addr;
-	uint32_t i;
-	uint32_t old_promisc_setting = hw->addr_ctrl.overflow_promisc;
-	uint32_t uc_addr_in_use;
-	uint32_t fctrl;
-	uint32_t vmdq;
-
-	DEBUGFUNC("ixgbe_update_uc_addr_list_generic");
-
-	/*
-	 * Clear accounting of old secondary address list,
-	 * don't count RAR[0]
-	 */
-	uc_addr_in_use = hw->addr_ctrl.rar_used_count - 1;
-	hw->addr_ctrl.rar_used_count -= uc_addr_in_use;
-	hw->addr_ctrl.overflow_promisc = 0;
-
-	/* Zero out the other receive addresses */
-	DEBUGOUT1("Clearing RAR[1-%d]\n", uc_addr_in_use+1);
-	for (i = 0; i < uc_addr_in_use; i++) {
-		IXGBE_WRITE_REG(hw, IXGBE_RAL(1+i), 0);
-		IXGBE_WRITE_REG(hw, IXGBE_RAH(1+i), 0);
-	}
-
-	/* Add the new addresses */
-	for (i = 0; i < addr_count; i++) {
-		DEBUGOUT(" Adding the secondary addresses:\n");
-		addr = next(hw, &addr_list, &vmdq);
-		ixgbe_add_uc_addr(hw, addr, vmdq);
-	}
-
-	if (hw->addr_ctrl.overflow_promisc) {
-		/* enable promisc if not already in overflow or set by user */
-		if (!old_promisc_setting && !hw->addr_ctrl.user_set_promisc) {
-			DEBUGOUT(" Entering address overflow promisc mode\n");
-			fctrl = IXGBE_READ_REG(hw, IXGBE_FCTRL);
-			fctrl |= IXGBE_FCTRL_UPE;
-			IXGBE_WRITE_REG(hw, IXGBE_FCTRL, fctrl);
-		}
-	} else {
-		/* only disable if set by overflow, not by user */
-		if (old_promisc_setting && !hw->addr_ctrl.user_set_promisc) {
-			DEBUGOUT(" Leaving address overflow promisc mode\n");
-			fctrl = IXGBE_READ_REG(hw, IXGBE_FCTRL);
-			fctrl &= ~IXGBE_FCTRL_UPE;
-			IXGBE_WRITE_REG(hw, IXGBE_FCTRL, fctrl);
-		}
-	}
-
-	DEBUGOUT("ixgbe_update_uc_addr_list_generic Complete\n");
-	return IXGBE_SUCCESS;
-}
-
-/**
  *  ixgbe_mta_vector - Determines bit-vector in multicast table to set
  *  @hw: pointer to hardware structure
  *  @mc_addr: the multicast address
@@ -3344,34 +3273,6 @@ int32_t ixgbe_get_device_caps_generic(struct ixgbe_hw *hw, uint16_t *device_caps
 	hw->eeprom.ops.read(hw, IXGBE_DEVICE_CAPS, device_caps);
 
 	return IXGBE_SUCCESS;
-}
-
-/**
- *  ixgbe_enable_relaxed_ordering_gen2 - Enable relaxed ordering
- *  @hw: pointer to hardware structure
- *
- **/
-void ixgbe_enable_relaxed_ordering_gen2(struct ixgbe_hw *hw)
-{
-	uint32_t regval;
-	uint32_t i;
-
-	DEBUGFUNC("ixgbe_enable_relaxed_ordering_gen2");
-
-	/* Enable relaxed ordering */
-	for (i = 0; i < hw->mac.max_tx_queues; i++) {
-		regval = IXGBE_READ_REG(hw, IXGBE_DCA_TXCTRL_82599(i));
-		regval |= IXGBE_DCA_TXCTRL_DESC_WRO_EN;
-		IXGBE_WRITE_REG(hw, IXGBE_DCA_TXCTRL_82599(i), regval);
-	}
-
-	for (i = 0; i < hw->mac.max_rx_queues; i++) {
-		regval = IXGBE_READ_REG(hw, IXGBE_DCA_RXCTRL(i));
-		regval |= IXGBE_DCA_RXCTRL_DATA_WRO_EN |
-			  IXGBE_DCA_RXCTRL_HEAD_WRO_EN;
-		IXGBE_WRITE_REG(hw, IXGBE_DCA_RXCTRL(i), regval);
-	}
-
 }
 
 /**

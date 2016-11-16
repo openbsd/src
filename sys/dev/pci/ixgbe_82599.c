@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82599.c,v 1.12 2015/04/30 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: ixgbe_82599.c,v 1.13 2016/11/16 23:19:29 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -302,7 +302,6 @@ int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 
 	/* MAC */
 	mac->ops.reset_hw = &ixgbe_reset_hw_82599;
-	mac->ops.enable_relaxed_ordering = &ixgbe_enable_relaxed_ordering_gen2;
 	mac->ops.get_media_type = &ixgbe_get_media_type_82599;
 	mac->ops.get_supported_physical_layer =
 				    &ixgbe_get_supported_physical_layer_82599;
