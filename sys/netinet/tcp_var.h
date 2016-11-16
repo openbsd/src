@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.116 2016/10/04 13:54:32 mpi Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.117 2016/11/16 08:50:33 mpi Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -670,24 +670,10 @@ int	tcp_signature(struct tdb *, int, struct mbuf *, struct tcphdr *,
 #endif /* TCP_SIGNATURE */
 void     tcp_set_iss_tsm(struct tcpcb *);
 
-int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
-		struct tcphdr *, unsigned int, struct socket *,
-		struct mbuf *, u_char *, int, struct tcp_opt_info *, tcp_seq *);
 void	 syn_cache_unreach(struct sockaddr *, struct sockaddr *,
 	   struct tcphdr *, u_int);
-struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
-		struct tcphdr *, unsigned int, unsigned int,
-		struct socket *so, struct mbuf *);
 void	 syn_cache_init(void);
-void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
-struct syn_cache *syn_cache_lookup(struct sockaddr *, struct sockaddr *,
-		struct syn_cache_head **, u_int);
-void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
-		struct tcphdr *, u_int);
-int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
-void	 syn_cache_timer(void *);
 void	 syn_cache_cleanup(struct tcpcb *);
-void	 syn_cache_reaper(void *);
 
 #endif /* _KERNEL */
 #endif /* _NETINET_TCP_VAR_H_ */

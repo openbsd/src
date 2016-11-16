@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.331 2016/11/15 14:30:59 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.332 2016/11/16 08:50:32 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -186,8 +186,22 @@ do { \
 	if_put(ifp); \
 } while (0)
 
-void syn_cache_put(struct syn_cache *);
-void syn_cache_rm(struct syn_cache *);
+void	 syn_cache_put(struct syn_cache *);
+void	 syn_cache_rm(struct syn_cache *);
+int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
+void	 syn_cache_timer(void *);
+void	 syn_cache_reaper(void *);
+void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
+void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
+		struct tcphdr *, u_int);
+int	 syn_cache_add(struct sockaddr *, struct sockaddr *, struct tcphdr *,
+		unsigned int, struct socket *, struct mbuf *, u_char *, int,
+		struct tcp_opt_info *, tcp_seq *);
+struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
+		struct tcphdr *, unsigned int, unsigned int, struct socket *,
+		struct mbuf *);
+struct syn_cache *syn_cache_lookup(struct sockaddr *, struct sockaddr *,
+		struct syn_cache_head **, u_int);
 
 /*
  * Insert segment ti into reassembly queue of tcp with
@@ -3382,9 +3396,9 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	struct syn_cache_set *set = &tcp_syn_cache[tcp_syn_cache_active];
 	struct syn_cache_head *scp;
 	struct syn_cache *sc2;
-	int i, s;
+	int i;
 
-	s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
 
 	/*
 	 * If there are no entries in the hash table, reinitialize
@@ -3507,8 +3521,6 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	if (set->scs_use <= 0 &&
 	    tcp_syn_cache[!tcp_syn_cache_active].scs_count == 0)
 		tcp_syn_cache_active = !tcp_syn_cache_active;
-
-	splx(s);
 }
 
 /*
@@ -3576,9 +3588,8 @@ void
 syn_cache_cleanup(struct tcpcb *tp)
 {
 	struct syn_cache *sc, *nsc;
-	int s;
 
-	s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
 
 	LIST_FOREACH_SAFE(sc, &tp->t_sc, sc_tpq, nsc) {
 #ifdef DIAGNOSTIC
@@ -3590,8 +3601,6 @@ syn_cache_cleanup(struct tcpcb *tp)
 	}
 	/* just for safety */
 	LIST_INIT(&tp->t_sc);
-
-	splx(s);
 }
 
 /*
@@ -3662,16 +3671,15 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct inpcb *inp, *oldinp;
 	struct tcpcb *tp = NULL;
 	struct mbuf *am;
-	int s;
 	struct socket *oso;
 #if NPF > 0
 	struct pf_divert *divert = NULL;
 #endif
 
-	s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
+
 	if ((sc = syn_cache_lookup(src, dst, &scp,
 	    sotoinpcb(so)->inp_rtableid)) == NULL) {
-		splx(s);
 		return (NULL);
 	}
 
@@ -3683,13 +3691,11 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	    SEQ_LEQ(th->th_seq, sc->sc_irs) ||
 	    SEQ_GT(th->th_seq, sc->sc_irs + 1 + sc->sc_win)) {
 		(void) syn_cache_respond(sc, m);
-		splx(s);
 		return ((struct socket *)(-1));
 	}
 
 	/* Remove this cache entry */
 	syn_cache_rm(sc);
-	splx(s);
 
 	/*
 	 * Ok, create the full blown connection, and set things up
@@ -3898,19 +3904,16 @@ syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
-	int s = splsoftnet();
 
-	if ((sc = syn_cache_lookup(src, dst, &scp, rtableid)) == NULL) {
-		splx(s);
+	splsoftassert(IPL_SOFTNET);
+
+	if ((sc = syn_cache_lookup(src, dst, &scp, rtableid)) == NULL)
 		return;
-	}
 	if (SEQ_LT(th->th_seq, sc->sc_irs) ||
 	    SEQ_GT(th->th_seq, sc->sc_irs+1)) {
-		splx(s);
 		return;
 	}
 	syn_cache_rm(sc);
-	splx(s);
 	tcpstat.tcps_sc_reset++;
 	syn_cache_put(sc);
 }
@@ -3921,16 +3924,14 @@ syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
-	int s;
 
-	s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
+
 	if ((sc = syn_cache_lookup(src, dst, &scp, rtableid)) == NULL) {
-		splx(s);
 		return;
 	}
 	/* If the sequence number != sc_iss, then it's a bogus ICMP msg */
 	if (ntohl (th->th_seq) != sc->sc_iss) {
-		splx(s);
 		return;
 	}
 
@@ -3944,12 +3945,10 @@ syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 */
 	if ((sc->sc_flags & SCF_UNREACH) == 0 || sc->sc_rxtshift < 3) {
 		sc->sc_flags |= SCF_UNREACH;
-		splx(s);
 		return;
 	}
 
 	syn_cache_rm(sc);
-	splx(s);
 	tcpstat.tcps_sc_unreach++;
 	syn_cache_put(sc);
 }
