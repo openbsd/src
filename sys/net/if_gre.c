@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.80 2016/08/31 15:00:02 reyk Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.81 2016/11/16 14:50:13 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -156,7 +156,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	}
 
 	timeout_set(&sc->sc_ka_hold, gre_keepalive, sc);
-	timeout_set(&sc->sc_ka_snd, gre_send_keepalive, sc);
+	timeout_set_proc(&sc->sc_ka_snd, gre_send_keepalive, sc);
 
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
