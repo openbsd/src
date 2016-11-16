@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.194 2016/11/16 01:15:37 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.195 2016/11/16 01:27:45 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -659,7 +659,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	int		error = 0, i;
 	const struct re_revision *rr;
 	const char	*re_name = NULL;
-	int		ntxsegs;
 
 	sc->sc_hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
 
@@ -877,13 +876,13 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		sc->rl_txstart = RL_TXSTART;
 		sc->rl_ldata.rl_tx_desc_cnt = RL_8139_TX_DESC_CNT;
 		sc->rl_ldata.rl_rx_desc_cnt = RL_8139_RX_DESC_CNT;
-		ntxsegs = RL_8139_NTXSEGS;
+		sc->rl_ldata.rl_tx_ndescs = RL_8139_NTXSEGS;
 	} else {
 		sc->rl_rxlenmask = RL_RDESC_STAT_GFRAGLEN;
 		sc->rl_txstart = RL_GTXSTART;
 		sc->rl_ldata.rl_tx_desc_cnt = RL_8169_TX_DESC_CNT;
 		sc->rl_ldata.rl_rx_desc_cnt = RL_8169_RX_DESC_CNT;
-		ntxsegs = RL_8169_NTXSEGS;
+		sc->rl_ldata.rl_tx_ndescs = RL_8169_NTXSEGS;
 	}
 
 	bcopy(eaddr, (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
@@ -946,8 +945,9 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	/* Create DMA maps for TX buffers */
 	for (i = 0; i < RL_TX_QLEN; i++) {
 		error = bus_dmamap_create(sc->sc_dmat,
-		    RL_JUMBO_FRAMELEN, ntxsegs, RL_JUMBO_FRAMELEN,
-		    0, 0, &sc->rl_ldata.rl_txq[i].txq_dmamap);
+		    RL_JUMBO_FRAMELEN, sc->rl_ldata.rl_tx_ndescs,
+		    RL_JUMBO_FRAMELEN, 0, 0,
+		    &sc->rl_ldata.rl_txq[i].txq_dmamap);
 		if (error) {
 			printf("%s: can't create DMA map for TX\n",
 			    sc->sc_dev.dv_xname);

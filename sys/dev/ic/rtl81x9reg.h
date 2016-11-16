@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.99 2016/11/16 01:15:37 dlg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.100 2016/11/16 01:27:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -833,7 +833,7 @@ struct rl_txq {
 };
 
 struct rl_list_data {
-	struct rl_txq		rl_txq[RL_TX_QLEN];
+	struct rl_txq		rl_txq[RL_TX_DESC_CNT];
 	int			rl_txq_considx;
 	int			rl_txq_prodidx;
 
@@ -842,6 +842,7 @@ struct rl_list_data {
 	int			rl_tx_free;	/* # of free descriptors */
 	int			rl_tx_nextfree; /* next descriptor to use */
 	int			rl_tx_desc_cnt; /* # of descriptors */
+	int			rl_tx_ndescs;	/* descs per tx packet */
 	bus_dma_segment_t	rl_tx_listseg;
 	int			rl_tx_listnseg;
 
