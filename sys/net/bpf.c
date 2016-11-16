@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.150 2016/10/16 18:05:41 jca Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.151 2016/11/16 09:00:01 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ int bpf_maxbufsize = BPF_MAXBUFSIZE;
 struct bpf_if	*bpf_iflist;
 LIST_HEAD(, bpf_d) bpf_d_list;
 
-void	bpf_allocbufs(struct bpf_d *);
+int	bpf_allocbufs(struct bpf_d *);
 void	bpf_ifname(struct ifnet *, struct ifreq *);
 int	_bpf_mtap(caddr_t, const struct mbuf *, u_int,
 	    void (*)(const void *, void *, size_t));
@@ -996,6 +996,7 @@ int
 bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 {
 	struct bpf_if *bp, *candidate = NULL;
+	int error = 0;
 	int s;
 
 	/*
@@ -1012,30 +1013,33 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 			candidate = bp;
 	}
 
-	if (candidate != NULL) {
-		/*
-		 * Allocate the packet buffers if we need to.
-		 * If we're already attached to requested interface,
-		 * just flush the buffer.
-		 */
-		if (d->bd_sbuf == NULL)
-			bpf_allocbufs(d);
-		s = splnet();
-		if (candidate != d->bd_bif) {
-			if (d->bd_bif)
-				/*
-				 * Detach if attached to something else.
-				 */
-				bpf_detachd(d);
-
-			bpf_attachd(d, candidate);
-		}
-		bpf_reset_d(d);
-		splx(s);
-		return (0);
-	}
 	/* Not found. */
-	return (ENXIO);
+	if (candidate == NULL)
+		return (ENXIO);
+
+	/*
+	 * Allocate the packet buffers if we need to.
+	 * If we're already attached to requested interface,
+	 * just flush the buffer.
+	 */
+	s = splnet();
+	if (d->bd_sbuf == NULL) {
+		if ((error = bpf_allocbufs(d)))
+			goto out;
+	}
+	if (candidate != d->bd_bif) {
+		if (d->bd_bif)
+			/*
+			 * Detach if attached to something else.
+			 */
+			bpf_detachd(d);
+
+		bpf_attachd(d, candidate);
+	}
+	bpf_reset_d(d);
+out:
+	splx(s);
+	return (error);
 }
 
 /*
@@ -1434,13 +1438,23 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 /*
  * Initialize all nonzero fields of a descriptor.
  */
-void
+int
 bpf_allocbufs(struct bpf_d *d)
 {
-	d->bd_fbuf = malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
-	d->bd_sbuf = malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
+	d->bd_fbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	if (d->bd_fbuf == NULL)
+		return (ENOMEM);
+
+	d->bd_sbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	if (d->bd_sbuf == NULL) {
+		free(d->bd_fbuf, M_DEVBUF, d->bd_bufsize);
+		return (ENOMEM);
+	}
+
 	d->bd_slen = 0;
 	d->bd_hlen = 0;
+
+	return (0);
 }
 
 void
