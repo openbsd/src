@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.52 2016/11/16 14:54:26 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.53 2016/11/16 15:27:52 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -80,6 +80,14 @@ checkfs()
 {
 	local _d _df _dev _files="${@}" _sz
 	[[ -n ${_files} ]]
+
+	# if we install a new kernel, add /bsd twice (for size checking) when:
+	# - we are on an MP system (/bsd.mp does not exist there)
+	# - /bsd.syspatchXX is not present (create_rollback will add it)
+	if echo "${_files}" | grep -qw bsd; then
+		${_BSDMP} || [[ ! -f /bsd.syspatch${_RELINT} ]] &&
+			_files="bsd ${_files}"
+	fi
 
 	# assume old files are about the same size as new ones
 	eval $(cd / &&
