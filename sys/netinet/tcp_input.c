@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.332 2016/11/16 08:50:32 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.333 2016/11/16 14:11:26 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3678,10 +3678,9 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 	splsoftassert(IPL_SOFTNET);
 
-	if ((sc = syn_cache_lookup(src, dst, &scp,
-	    sotoinpcb(so)->inp_rtableid)) == NULL) {
+	sc = syn_cache_lookup(src, dst, &scp, sotoinpcb(so)->inp_rtableid);
+	if (sc == NULL)
 		return (NULL);
-	}
 
 	/*
 	 * Verify the sequence and ack numbers.  Try getting the correct
@@ -3910,9 +3909,8 @@ syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if ((sc = syn_cache_lookup(src, dst, &scp, rtableid)) == NULL)
 		return;
 	if (SEQ_LT(th->th_seq, sc->sc_irs) ||
-	    SEQ_GT(th->th_seq, sc->sc_irs+1)) {
+	    SEQ_GT(th->th_seq, sc->sc_irs + 1))
 		return;
-	}
 	syn_cache_rm(sc);
 	tcpstat.tcps_sc_reset++;
 	syn_cache_put(sc);
@@ -3927,9 +3925,8 @@ syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 	splsoftassert(IPL_SOFTNET);
 
-	if ((sc = syn_cache_lookup(src, dst, &scp, rtableid)) == NULL) {
+	if ((sc = syn_cache_lookup(src, dst, &scp, rtableid)) == NULL)
 		return;
-	}
 	/* If the sequence number != sc_iss, then it's a bogus ICMP msg */
 	if (ntohl (th->th_seq) != sc->sc_iss) {
 		return;
@@ -4030,8 +4027,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * If we do, resend the SYN,ACK.  We do not count this
 	 * as a retransmission (XXX though maybe we should).
 	 */
-	if ((sc = syn_cache_lookup(src, dst, &scp, sotoinpcb(so)->inp_rtableid))
-	    != NULL) {
+	sc = syn_cache_lookup(src, dst, &scp, sotoinpcb(so)->inp_rtableid);
+	if (sc != NULL) {
 		tcpstat.tcps_sc_dupesyn++;
 		if (ipopts) {
 			/*
