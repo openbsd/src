@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.155 2016/11/16 12:21:46 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.156 2016/11/16 12:48:19 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -960,7 +960,8 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 		info.rti_info[RTAX_LABEL] =
 		    rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 
-		error = rtrequest(RTM_ADD, &info, RTP_DEFAULT, &nrt, rtableid);
+		error = rtrequest(RTM_ADD, &info, rt->rt_priority, &nrt,
+		    rtableid);
 		if (error) {
 			rtfree(rt);
 			return (NULL);
