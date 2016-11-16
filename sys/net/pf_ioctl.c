@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.304 2016/10/28 07:54:19 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.305 2016/11/16 08:46:05 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -769,7 +769,7 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	struct pf_ruleset	*rs;
 	struct pf_rule		*rule, **old_array;
 	struct pf_rulequeue	*old_rules;
-	int			 s, error;
+	int			 error;
 	u_int32_t		 old_rcount;
 
 	/* Make sure any expired rules get removed from active rules first. */
@@ -788,7 +788,6 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	}
 
 	/* Swap rules, keep the old. */
-	s = splsoftnet();
 	old_rules = rs->rules.active.ptr;
 	old_rcount = rs->rules.active.rcount;
 	old_array = rs->rules.active.ptr_array;
@@ -813,7 +812,6 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	rs->rules.inactive.rcount = 0;
 	rs->rules.inactive.open = 0;
 	pf_remove_if_empty_ruleset(rs);
-	splx(s);
 
 	/* queue defs only in the main ruleset */
 	if (anchor[0])
