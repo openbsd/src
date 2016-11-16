@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.51 2016/11/15 14:46:00 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.52 2016/11/16 14:54:26 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -115,8 +115,8 @@ create_rollback()
 	for _file in ${_files}; do
 		[[ -f /${_file} ]] || continue
 		# only save the original release kernel once
-		if [[ ${_file} == bsd && ! -f /bsd.rollback${_RELINT} ]]; then
-			install -FSp /bsd /bsd.rollback${_RELINT}
+		if [[ ${_file} == bsd && ! -f /bsd.syspatch${_RELINT} ]]; then
+			install -FSp /bsd /bsd.syspatch${_RELINT}
 		fi
 		_rbfiles="${_rbfiles} ${_file}"
 	done
@@ -180,11 +180,15 @@ install_kernel()
 ls_installed()
 {
 	local _p
-	### XXX TMP
+	### XXX temporary quirks; remove before 6.1
 	local _r
 	if [[ ! -d ${_PDIR}/${_REL} ]]; then
 		needs_root
 		install -d -m 0755 ${_PDIR}/${_REL}
+	fi
+	if [[ -f /bsd.rollback${_RELINT} ]]; then
+		needs_root
+		mv /bsd.rollback${_RELINT} /bsd.syspatch${_RELINT}
 	fi
 	( cd ${_PDIR}/${_REL} && for _r in *; do
 		if [[ ${_r} == rollback-syspatch-${_RELINT}-*.tgz ]]; then
@@ -193,10 +197,9 @@ ls_installed()
 		fi
 	done )
 	###
-	for _p in ${_PDIR}/${_REL}/*; do
-		_p=${_p:##*/}
-		[[ ${_p} == rollback${_RELINT}-*.tgz ]] &&
-			_p=${_p#rollback} && echo syspatch${_p%.tgz}
+	for _p in ${_PDIR}/${_REL}/rollback${_RELINT}-*.tgz; do
+		[[ -f ${_p} ]] && _p=${_p:##*/} && _p=${_p#rollback} &&
+			echo syspatch${_p%.tgz}
 	done | sort -V
 }
 
@@ -263,13 +266,13 @@ sp_cleanup()
 	done
 
 	# remove non matching release rollback kernel
-	for _k in /bsd.rollback*; do
+	for _k in /bsd.syspatch*; do
 		[[ -f ${_k} ]] || continue
-		[[ ${_k} == /bsd.rollback${_RELINT} ]] || rm ${_k}
+		[[ ${_k} == /bsd.syspatch${_RELINT} ]] || rm ${_k}
 	done
 
 	# remove rollback kernel if all kernel syspatches have been reverted
-	cmp -s /bsd /bsd.rollback${_RELINT} && rm /bsd.rollback${_RELINT}
+	cmp -s /bsd /bsd.syspatch${_RELINT} && rm /bsd.syspatch${_RELINT}
 
 	# in case a patch added a new directory (install -D);
 	# non-fatal in case some mount point is read-only or remote
