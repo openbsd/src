@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.195 2016/11/16 01:27:45 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.196 2016/11/16 01:55:10 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -899,12 +899,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 
 	printf(", %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
-
-	if (sc->rl_ldata.rl_tx_desc_cnt >
-	    PAGE_SIZE / sizeof(struct rl_desc)) {
-		sc->rl_ldata.rl_tx_desc_cnt =
-		    PAGE_SIZE / sizeof(struct rl_desc);
-	}
 
 	/* Allocate DMA'able memory for the TX ring */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, RL_TX_LIST_SZ(sc),
