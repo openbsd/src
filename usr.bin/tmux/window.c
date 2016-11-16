@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.175 2016/11/16 00:24:03 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.176 2016/11/16 09:22:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -769,6 +769,7 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 	wp->event = NULL;
 
 	wp->mode = NULL;
+	wp->modeprefix = 1;
 
 	wp->layout_cell = NULL;
 
