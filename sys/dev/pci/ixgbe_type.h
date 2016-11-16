@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.23 2016/11/16 21:52:54 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.24 2016/11/16 22:15:20 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2704,6 +2704,25 @@ struct ixgbe_hic_hdr {
 	uint8_t checksum;
 };
 
+struct ixgbe_hic_hdr2_req {
+	uint8_t cmd;
+	uint8_t buf_lenh;
+	uint8_t buf_lenl;
+	uint8_t checksum;
+};
+
+struct ixgbe_hic_hdr2_rsp {
+	uint8_t cmd;
+	uint8_t buf_lenl;
+	uint8_t buf_lenh_status; /* 7-5: high bits of buf_len, 4-0: status */
+	uint8_t checksum;
+};
+
+union ixgbe_hic_hdr2 {
+	struct ixgbe_hic_hdr2_req req;
+	struct ixgbe_hic_hdr2_rsp rsp;
+};
+
 struct ixgbe_hic_drv_info {
 	struct ixgbe_hic_hdr hdr;
 	uint8_t port_num;
@@ -2713,6 +2732,47 @@ struct ixgbe_hic_drv_info {
 	uint8_t ver_maj;
 	uint8_t pad; /* end spacing to ensure length is mult. of dword */
 	uint16_t pad2; /* end spacing to ensure length is mult. of dword2 */
+};
+
+/* These need to be dword aligned */
+struct ixgbe_hic_read_shadow_ram {
+	union ixgbe_hic_hdr2 hdr;
+	uint32_t address;
+	uint16_t length;
+	uint16_t pad2;
+	uint16_t data;
+	uint16_t pad3;
+};
+
+struct ixgbe_hic_write_shadow_ram {
+	union ixgbe_hic_hdr2 hdr;
+	uint32_t address;
+	uint16_t length;
+	uint16_t pad2;
+	uint16_t data;
+	uint16_t pad3;
+};
+
+struct ixgbe_hic_disable_rxen {
+	struct ixgbe_hic_hdr hdr;
+	uint8_t  port_number;
+	uint8_t  pad2;
+	uint16_t pad3;
+};
+
+struct ixgbe_hic_internal_phy_req {
+	struct ixgbe_hic_hdr hdr;
+	uint8_t port_number;
+	uint8_t command_type;
+	uint16_t address;
+	uint16_t rsv1;
+	uint32_t write_data;
+	uint16_t pad;
+};
+
+struct ixgbe_hic_internal_phy_resp {
+	struct ixgbe_hic_hdr hdr;
+	uint32_t read_data;
 };
 
 /* Transmit Descriptor - Legacy */
@@ -3000,6 +3060,9 @@ union ixgbe_atr_input {
 	 * flow_type	- 1 byte
 	 * vlan_id	- 2 bytes
 	 * src_ip	- 16 bytes
+	 * inner_mac	- 6 bytes
+	 * cloud_mode	- 2 bytes
+	 * tni_vni	- 4 bytes
 	 * dst_ip	- 16 bytes
 	 * src_port	- 2 bytes
 	 * dst_port	- 2 bytes
@@ -3012,12 +3075,15 @@ union ixgbe_atr_input {
 		__be16 vlan_id;
 		__be32 dst_ip[4];
 		__be32 src_ip[4];
+		uint8_t inner_mac[6];
+		__be16 tunnel_type;
+		__be32 tni_vni;
 		__be16 src_port;
 		__be16 dst_port;
 		__be16 flex_bytes;
 		__be16 bkt_hash;
 	} formatted;
-	__be32 dword_stream[11];
+	__be32 dword_stream[14];
 };
 
 /* Flow Director compressed ATR hash input struct */
@@ -3062,6 +3128,10 @@ enum ixgbe_mac_type {
 	ixgbe_mac_82599_vf,
 	ixgbe_mac_X540,
 	ixgbe_mac_X540_vf,
+	ixgbe_mac_X550,
+	ixgbe_mac_X550EM_x,
+	ixgbe_mac_X550_vf,
+	ixgbe_mac_X550EM_x_vf,
 	ixgbe_num_macs
 };
 
@@ -3070,6 +3140,9 @@ enum ixgbe_phy_type {
 	ixgbe_phy_none,
 	ixgbe_phy_tn,
 	ixgbe_phy_aq,
+	ixgbe_phy_x550em_kr,
+	ixgbe_phy_x550em_kx4,
+	ixgbe_phy_x550em_ext_t,
 	ixgbe_phy_cu_unknown,
 	ixgbe_phy_qt,
 	ixgbe_phy_xaui,
@@ -3082,6 +3155,10 @@ enum ixgbe_phy_type {
 	ixgbe_phy_sfp_ftl_active,
 	ixgbe_phy_sfp_unknown,
 	ixgbe_phy_sfp_intel,
+	ixgbe_phy_qsfp_passive_unknown,
+	ixgbe_phy_qsfp_active_unknown,
+	ixgbe_phy_qsfp_intel,
+	ixgbe_phy_qsfp_unknown,
 	ixgbe_phy_sfp_unsupported, /*Enforce bit set with unsupported module*/
 	ixgbe_phy_generic
 };
@@ -3123,6 +3200,7 @@ enum ixgbe_media_type {
 	ixgbe_media_type_unknown = 0,
 	ixgbe_media_type_fiber,
 	ixgbe_media_type_fiber_fixed,
+	ixgbe_media_type_fiber_qsfp,
 	ixgbe_media_type_copper,
 	ixgbe_media_type_backplane,
 	ixgbe_media_type_cx4,
@@ -3152,6 +3230,7 @@ enum ixgbe_bus_type {
 	ixgbe_bus_type_pci,
 	ixgbe_bus_type_pcix,
 	ixgbe_bus_type_pci_express,
+	ixgbe_bus_type_internal,
 	ixgbe_bus_type_reserved
 };
 
@@ -3407,6 +3486,7 @@ struct ixgbe_eeprom_info {
 	uint16_t word_size;
 	uint16_t address_bits;
 	uint16_t word_page_size;
+	uint16_t ctrl_word_3;
 };
 
 #define IXGBE_FLAGS_DOUBLE_RESET_REQUIRED	0x01
@@ -3439,6 +3519,8 @@ struct ixgbe_mac_info {
 	bool orig_link_settings_stored;
 	bool autotry_restart;
 	uint8_t flags;
+	bool set_lben;
+	uint32_t  max_link_up_time;
 };
 
 struct ixgbe_phy_info {
@@ -3450,12 +3532,16 @@ struct ixgbe_phy_info {
 	bool sfp_setup_needed;
 	uint32_t revision;
 	enum ixgbe_media_type media_type;
+	uint32_t phy_semaphore_mask;
 	bool reset_disable;
 	ixgbe_autoneg_advertised autoneg_advertised;
+	ixgbe_link_speed speeds_supported;
 	enum ixgbe_smart_speed smart_speed;
 	bool smart_speed_active;
 	bool multispeed_fiber;
 	bool reset_if_overtemp;
+	bool qsfp_shared_i2c_bus;
+	uint32_t nw_mng_if_sel;
 };
 
 /* MBX */
