@@ -184,7 +184,7 @@ void	hvn_stop(struct hvn_softc *);
 void	hvn_start(struct ifnet *);
 int	hvn_encap(struct hvn_softc *, struct mbuf *, struct hvn_tx_desc **);
 void	hvn_decap(struct hvn_softc *, struct hvn_tx_desc *);
-int	hvn_txeof(struct hvn_softc *, uint64_t);
+void	hvn_txeof(struct hvn_softc *, uint64_t);
 int	hvn_rx_ring_create(struct hvn_softc *);
 int	hvn_rx_ring_destroy(struct hvn_softc *);
 int	hvn_tx_ring_create(struct hvn_softc *);
@@ -526,7 +526,7 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 	txd->txd_ready = 0;
 
 	pkt = txd->txd_req;
-	memset(pkt, 0, sizeof(*pkt));
+	memset(pkt, 0, HVN_RNDIS_PKT_LEN);
 	pkt->rm_type = REMOTE_NDIS_PACKET_MSG;
 	pkt->rm_len = sizeof(*pkt) + m->m_pkthdr.len;
 	pkt->rm_dataoffset = RNDIS_DATA_OFFSET;
@@ -615,7 +615,7 @@ hvn_decap(struct hvn_softc *sc, struct hvn_tx_desc *txd)
 	atomic_inc_int(&sc->sc_tx_avail);
 }
 
-int
+void
 hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 {
 	struct hvn_tx_desc *txd;
@@ -623,7 +623,7 @@ hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 	uint32_t id = tid >> 32;
 
 	if ((tid & 0xffffffffU) != 0)
-		return (0);
+		return;
 	id -= HVN_NVS_CHIM_SIG;
 	if (id > HVN_TX_DESC)
 		panic("tx packet index too large: %u", id);
@@ -643,7 +643,6 @@ hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 
 	atomic_inc_int(&sc->sc_tx_avail);
 
-	return (1);
 }
 
 int
@@ -898,8 +897,6 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	    (sizeof(struct hvn_nvs_rndis) + sizeof(struct vmbus_gpa)) +
 	    HVN_TX_DESC * (sizeof(struct hvn_nvs_rndis) +
 	    (HVN_TX_FRAGS + 1) * sizeof(struct vmbus_gpa));
-	DPRINTF("%s: ring size %u (%u pages)\n", __func__, ringsize,
-	    roundup(ringsize, PAGE_SIZE) / PAGE_SIZE);
 
 	/* Associate our interrupt handler with the channel */
 	if (hv_channel_open(sc->sc_chan, ringsize, NULL, 0,
@@ -970,7 +967,7 @@ hvn_nvs_intr(void *arg)
 	struct hvn_nvs_hdr *nvs;
 	uint64_t rid;
 	uint32_t rlen;
-	int rv, restart = 0;
+	int rv;
 
 	for (;;) {
 		rv = hv_channel_recv(sc->sc_chan, sc->sc_nvsbuf,
@@ -995,7 +992,7 @@ hvn_nvs_intr(void *arg)
 				wakeup_one(&sc->sc_nvsrsp);
 				break;
 			case HVN_NVS_TYPE_RNDIS_ACK:
-				restart |= hvn_txeof(sc, cph->cph_tid);
+				hvn_txeof(sc, cph->cph_tid);
 				break;
 			default:
 				printf("%s: unhandled NVSP packet type %d "
@@ -1017,7 +1014,7 @@ hvn_nvs_intr(void *arg)
 			    sc->sc_dev.dv_xname, cph->cph_type);
 	}
 
-	if (restart && ifq_is_oactive(&ifp->if_snd))
+	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
 }
 
