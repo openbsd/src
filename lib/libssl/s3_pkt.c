@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.59 2016/11/03 16:23:30 jsing Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.60 2016/11/17 15:06:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1123,8 +1123,7 @@ start:
 			cb(s, SSL_CB_READ_ALERT, j);
 		}
 
-		if (alert_level == 1) {
-			/* warning */
+		if (alert_level == SSL3_AL_WARNING) {
 			s->s3->warn_alert = alert_descr;
 			if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
 				s->shutdown |= SSL_RECEIVED_SHUTDOWN;
@@ -1145,8 +1144,7 @@ start:
 				    SSL_R_NO_RENEGOTIATION);
 				goto f_err;
 			}
-		} else if (alert_level == 2) {
-			/* fatal */
+		} else if (alert_level == SSL3_AL_FATAL) {
 			s->rwstate = SSL_NOTHING;
 			s->s3->fatal_alert = alert_descr;
 			SSLerr(SSL_F_SSL3_READ_BYTES,
