@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.25 2016/11/07 13:27:11 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.26 2016/11/17 09:42:11 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -104,6 +104,8 @@ int	 ofp13_setconfig_validate(struct switchd *,
 	    struct ofp_header *, struct ibuf *);
 int	 ofp13_setconfig(struct switchd *, struct switch_connection *,
 	    uint16_t, uint16_t);
+int	 ofp13_tablemiss_sendctrl(struct switchd *, struct switch_connection *,
+	    uint8_t);
 
 struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_HELLO,			ofp13_hello, NULL },
@@ -640,6 +642,9 @@ ofp13_features_reply(struct switchd *sc, struct switch_connection *con,
 #endif
 	ofp13_setconfig(sc, con, OFP_CONFIG_FRAG_NORMAL,
 	    OFP_CONTROLLER_MAXLEN_NO_BUFFER);
+
+	/* Use table '0' for switch(4) and '100' for HP 3800. */
+	ofp13_tablemiss_sendctrl(sc, con, 0);
 
 	return (0);
 }
@@ -1861,5 +1866,95 @@ ofp13_featuresrequest(struct switchd *sc, struct switch_connection *con)
 
 	rv = ofp_output(con, NULL, ibuf);
 	ibuf_free(ibuf);
+	return (rv);
+}
+
+/*
+ * Flow modification message.
+ *
+ * After the flow-mod header we have N OXM filters to match packets, when
+ * you finish adding them you must update match header:
+ * fm_match.om_length = sizeof(fm_match) + OXM length.
+ *
+ * Then you must add flow instructions and update the OFP header length:
+ * fm_oh.oh_length =
+ *     sizeof(*fm) + (fm_match.om_len - sizeof(fm_match)) + instructionslen.
+ * or
+ * fm_oh.oh_length = ibuf_length(ibuf).
+ *
+ * Note on match payload:
+ * After adding all matches and before starting to insert instructions you
+ * must add the mandatory padding to fm_match. You can calculate the padding
+ * size with this formula:
+ * padsize = OFP_ALIGN(fm_match.om_length) - fm_match.om_length;
+ *
+ * Note on Table-miss:
+ * To make a table miss you need to set priority 0 and don't add any
+ * matches, just instructions.
+ */
+struct ofp_flow_mod *
+ofp13_flowmod(struct switch_connection *con, struct ibuf *ibuf,
+    uint8_t cmd, uint8_t table, uint16_t idleto, uint16_t hardto,
+    uint16_t prio)
+{
+	struct ofp_flow_mod		*fm;
+
+	if ((fm = ibuf_advance(ibuf, sizeof(*fm))) == NULL)
+		return (NULL);
+
+	fm->fm_oh.oh_version = OFP_V_1_3;
+	fm->fm_oh.oh_type = OFP_T_FLOW_MOD;
+	fm->fm_oh.oh_length = htons(sizeof(*fm));
+	fm->fm_oh.oh_xid = htonl(con->con_xidnxt++);
+	fm->fm_match.om_type = htons(OFP_MATCH_OXM);
+	fm->fm_match.om_length = htons(sizeof(fm->fm_match));
+	return (fm);
+}
+
+int
+ofp13_tablemiss_sendctrl(struct switchd *sc, struct switch_connection *con,
+    uint8_t table)
+{
+	struct ofp_flow_mod		*fm;
+	struct ofp_instruction		*oi;
+	struct ibuf			*ibuf;
+	size_t				 istart, iend;
+	int				 padding;
+	int				 rv = -1;
+
+	if ((ibuf = ibuf_static()) == NULL)
+		return (-1);
+
+	fm = ofp13_flowmod(con, ibuf, OFP_FLOWCMD_ADD, table, 0, 0, 0);
+	if (fm == NULL)
+		goto done;
+
+	padding = OFP_ALIGN(sizeof(fm->fm_match)) - sizeof(fm->fm_match);
+	if (padding && ibuf_advance(ibuf, padding) == NULL)
+		goto done;
+
+	istart = ibuf->wpos;
+	oi = (struct ofp_instruction *)ofp_instruction(ibuf,
+	    OFP_INSTRUCTION_T_APPLY_ACTIONS,
+	    sizeof(struct ofp_instruction_actions));
+
+	if (oi == NULL ||
+	    action_output(ibuf, OFP_PORT_CONTROLLER,
+	    OFP_CONTROLLER_MAXLEN_MAX) == -1)
+		goto done;
+	iend = ibuf->wpos;
+
+	/* Set header sizes. */
+	oi->i_len = htons(iend - istart);
+	fm->fm_oh.oh_length = htons(ibuf_length(ibuf));
+
+	if (ofp13_validate(sc, &con->con_local, &con->con_peer, &fm->fm_oh,
+	    ibuf) != 0)
+		goto done;
+
+	rv = ofp_output(con, NULL, ibuf);
+
+ done:
+	ibuf_release(ibuf);
 	return (rv);
 }

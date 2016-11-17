@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_common.c,v 1.3 2016/11/11 22:07:40 reyk Exp $	*/
+/*	$OpenBSD: ofp_common.c,v 1.4 2016/11/17 09:42:11 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -879,6 +879,25 @@ oxm_ipv6exthdr(struct ibuf *ibuf, int hasmask, uint16_t exthdr, uint16_t mask)
 		memcpy(oxm->oxm_value + sizeof(exthdr), &mask, sizeof(mask));
 	}
 	return (0);
+}
+
+/*
+ * Appends a new instruction with hlen size.
+ *
+ * Remember to set the instruction length (i->i_len) if it has more data,
+ * like ofp_instruction_actions, ofp_instruction_goto_table etc...
+ */
+struct ofp_instruction *
+ofp_instruction(struct ibuf *ibuf, uint16_t type, uint16_t hlen)
+{
+	struct ofp_instruction	*oi;
+
+	if ((oi = ibuf_advance(ibuf, hlen)) == NULL)
+		return (NULL);
+
+	oi->i_type = htons(type);
+	oi->i_len = htons(hlen);
+	return (oi);
 }
 
 int

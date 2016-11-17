@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.20 2016/11/15 09:05:14 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.21 2016/11/17 09:42:11 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -251,6 +251,9 @@ int		 ofp13_table_features(struct switchd *,
 		    struct switch_connection *, uint8_t);
 int		 ofp13_featuresrequest(struct switchd *,
 		    struct switch_connection *);
+struct ofp_flow_mod *
+		 ofp13_flowmod(struct switch_connection *, struct ibuf *,
+		     uint8_t, uint8_t, uint16_t, uint16_t, uint16_t);
 
 /* ofp_common.c */
 int		 ofp_validate_header(struct switchd *,
@@ -308,6 +311,9 @@ int		 oxm_mplstc(struct ibuf *, uint8_t);
 int		 oxm_mplsbos(struct ibuf *, uint8_t);
 int		 oxm_tunnelid(struct ibuf *, int, uint64_t, uint64_t);
 int		 oxm_ipv6exthdr(struct ibuf *, int, uint16_t, uint16_t);
+struct ofp_instruction *
+		 ofp_instruction(struct ibuf *, uint16_t, uint16_t);
+
 
 /* ofcconn.c */
 void		 ofcconn(struct privsep *, struct privsep_proc *);
