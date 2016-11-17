@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.8 2013/05/30 16:15:01 deraadt Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.9 2016/11/17 14:41:21 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -68,6 +68,12 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &caa, mainbus_print);
 
 	caa.caa_maa.maa_name = "bonito";
+	config_found(self, &caa.caa_maa, mainbus_print);
+
+	caa.caa_maa.maa_name = "htb";
+	config_found(self, &caa.caa_maa, mainbus_print);
+
+	caa.caa_maa.maa_name = "leioc";
 	config_found(self, &caa.caa_maa, mainbus_print);
 
 	if (md_startclock == NULL) {

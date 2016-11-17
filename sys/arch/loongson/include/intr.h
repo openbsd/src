@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2016/11/06 10:20:33 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.10 2016/11/17 14:41:21 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -57,7 +57,8 @@
 #define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_SCHED	7	/* everything */
 #define	IPL_HIGH	7	/* everything */
-#define	NIPLS		8	/* Number of levels */
+#define	IPL_IPI		8	/* interprocessor interrupt */
+#define	NIPLS		9	/* Number of levels */
 
 #define IPL_MPFLOOR	IPL_TTY
 

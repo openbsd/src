@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2016/10/09 11:25:39 tom Exp $ */
+/*	$OpenBSD: machdep.c,v 1.68 2016/11/17 14:41:21 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -114,6 +114,7 @@ caddr_t	msgbufbase;
 
 int	physmem;		/* Max supported memory, changes to actual. */
 int	ncpu = 1;		/* At least one CPU in the system. */
+int	nnodes = 1;		/* Number of NUMA nodes, only on 3A. */
 struct	user *proc0paddr;
 
 const struct platform *sys_platform;
@@ -141,6 +142,8 @@ void	dumpconf(void);
 extern	void parsepmonbp(void);
 const struct platform *loongson_identify(const char *, int);
 vaddr_t	mips_init(uint64_t, uint64_t, uint64_t, uint64_t, char *);
+
+extern	void htb_early_setup(void);
 
 extern	void loongson2e_setup(u_long, u_long);
 extern	void loongson2f_setup(u_long, u_long);
@@ -173,8 +176,8 @@ extern const struct platform ebenton_platform;
 extern const struct platform fuloong_platform;
 extern const struct platform gdium_platform;
 extern const struct platform generic2e_platform;
-extern const struct platform lemote3a_platform;
 extern const struct platform lynloong_platform;
+extern const struct platform rs780e_platform;
 extern const struct platform yeeloong_platform;
 
 const struct bonito_flavour bonito_flavours[] = {
@@ -198,12 +201,12 @@ const struct bonito_flavour bonito_flavours[] = {
 #endif
 #ifdef CPU_LOONGSON3
 	/* Laptops */
-	{ "A1004",	&lemote3a_platform },	/* 3A */
-	{ "A1201",	&lemote3a_platform },	/* 2Gq */
+	{ "A1004",	&rs780e_platform },	/* 3A */
+	{ "A1201",	&rs780e_platform },	/* 2Gq */
 	/* Lemote Xinghuo 6100 (mini-ITX PC) */
-	{ "A1101",	&lemote3a_platform },	/* 3A */
+	{ "A1101",	&rs780e_platform },	/* 3A */
 	/* All-in-one PC */
-	{ "A1205",	&lemote3a_platform },	/* 2Gq */
+	{ "A1205",	&rs780e_platform },	/* 2Gq */
 #endif
 	{ NULL }
 };
@@ -220,7 +223,23 @@ loongson_identify(const char *version, int envtype)
 	switch (envtype) {
 #ifdef CPU_LOONGSON3
 	case PMON_ENVTYPE_EFI:
-		return &lemote3a_platform;
+		if (loongson_ver == 0x3a || loongson_ver == 0x3b) {
+			pcitag_t tag;
+			pcireg_t id;
+
+			htb_early_setup();
+
+			/* Determine platform by host bridge. */
+			tag = pci_make_tag_early(0, 0, 0);
+			id = pci_conf_read_early(tag, PCI_ID_REG);
+			switch (id) {
+			case PCI_ID_CODE(PCI_VENDOR_AMD,
+			    PCI_PRODUCT_AMD_RS780_HB):
+				return &rs780e_platform;
+			}
+		}
+		pmon_printf("Unable to figure out model!\n");
+		return NULL;
 #endif
 
 	default:
