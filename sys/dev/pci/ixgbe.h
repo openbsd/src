@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.24 2016/11/17 19:26:57 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.25 2016/11/17 20:44:04 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -176,7 +176,7 @@ int32_t ixgbe_read_eerd_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t *
 int32_t ixgbe_write_eewr_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t data);
 int32_t ixgbe_read_eeprom_bit_bang_generic(struct ixgbe_hw *hw, uint16_t offset,
 					   uint16_t *data);
-uint16_t ixgbe_calc_eeprom_checksum_generic(struct ixgbe_hw *hw);
+int32_t ixgbe_calc_eeprom_checksum_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_validate_eeprom_checksum_generic(struct ixgbe_hw *hw,
 					       uint16_t *checksum_val);
 int32_t ixgbe_update_eeprom_checksum_generic(struct ixgbe_hw *hw);
@@ -340,7 +340,6 @@ int32_t ixgbe_check_for_msg(struct ixgbe_hw *, uint16_t);
 int32_t ixgbe_check_for_ack(struct ixgbe_hw *, uint16_t);
 int32_t ixgbe_check_for_rst(struct ixgbe_hw *, uint16_t);
 void ixgbe_init_mbx_ops_generic(struct ixgbe_hw *hw);
-void ixgbe_init_mbx_params_vf(struct ixgbe_hw *);
 void ixgbe_init_mbx_params_pf(struct ixgbe_hw *);
 
 #endif /* _IXGBE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.17 2016/11/17 19:26:57 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.18 2016/11/17 20:44:04 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -895,27 +895,25 @@ int32_t ixgbe_init_eeprom_params_generic(struct ixgbe_hw *hw)
 }
 
 /**
- *  ixgbe_write_eeprom_generic - Writes 16 bit value to EEPROM
+ *  ixgbe_write_eeprom_buffer_bit_bang - Writes 16 bit word(s) to EEPROM
  *  @hw: pointer to hardware structure
  *  @offset: offset within the EEPROM to be written to
- *  @data: 16 bit word to be written to the EEPROM
+ *  @words: number of word(s)
+ *  @data: 16 bit word(s) to be written to the EEPROM
  *
  *  If ixgbe_eeprom_update_checksum is not called after this function, the
  *  EEPROM will most likely contain an invalid checksum.
  **/
-int32_t ixgbe_write_eeprom_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t data)
+static int32_t ixgbe_write_eeprom_buffer_bit_bang(struct ixgbe_hw *hw, uint16_t offset,
+					      uint16_t words, uint16_t *data)
 {
 	int32_t status;
+	uint16_t word;
+	uint16_t page_size;
+	uint16_t i;
 	uint8_t write_opcode = IXGBE_EEPROM_WRITE_OPCODE_SPI;
 
-	DEBUGFUNC("ixgbe_write_eeprom_generic");
-
-	hw->eeprom.ops.init_params(hw);
-
-	if (offset >= hw->eeprom.word_size) {
-		status = IXGBE_ERR_EEPROM;
-		goto out;
-	}
+	DEBUGFUNC("ixgbe_write_eeprom_buffer_bit_bang");
 
 	/* Prepare the EEPROM for writing  */
 	status = ixgbe_acquire_eeprom(hw);
@@ -928,37 +926,140 @@ int32_t ixgbe_write_eeprom_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_
 	}
 
 	if (status == IXGBE_SUCCESS) {
-		ixgbe_standby_eeprom(hw);
+		for (i = 0; i < words; i++) {
+			ixgbe_standby_eeprom(hw);
 
-		/*  Send the WRITE ENABLE command (8 bit opcode )  */
-		ixgbe_shift_out_eeprom_bits(hw, IXGBE_EEPROM_WREN_OPCODE_SPI,
-					    IXGBE_EEPROM_OPCODE_BITS);
+			/*  Send the WRITE ENABLE command (8 bit opcode )  */
+			ixgbe_shift_out_eeprom_bits(hw,
+						   IXGBE_EEPROM_WREN_OPCODE_SPI,
+						   IXGBE_EEPROM_OPCODE_BITS);
 
-		ixgbe_standby_eeprom(hw);
+			ixgbe_standby_eeprom(hw);
 
-		/*
-		 * Some SPI eeproms use the 8th address bit embedded in the
-		 * opcode
-		 */
-		if ((hw->eeprom.address_bits == 8) && (offset >= 128))
-			write_opcode |= IXGBE_EEPROM_A8_OPCODE_SPI;
+			/*
+			 * Some SPI eeproms use the 8th address bit embedded
+			 * in the opcode
+			 */
+			if ((hw->eeprom.address_bits == 8) &&
+			    ((offset + i) >= 128))
+				write_opcode |= IXGBE_EEPROM_A8_OPCODE_SPI;
 
-		/* Send the Write command (8-bit opcode + addr) */
-		ixgbe_shift_out_eeprom_bits(hw, write_opcode,
-					    IXGBE_EEPROM_OPCODE_BITS);
-		ixgbe_shift_out_eeprom_bits(hw, (uint16_t)(offset*2),
-					    hw->eeprom.address_bits);
+			/* Send the Write command (8-bit opcode + addr) */
+			ixgbe_shift_out_eeprom_bits(hw, write_opcode,
+						    IXGBE_EEPROM_OPCODE_BITS);
+			ixgbe_shift_out_eeprom_bits(hw, (uint16_t)((offset + i) * 2),
+						    hw->eeprom.address_bits);
 
-		/* Send the data */
-		data = (data >> 8) | (data << 8);
-		ixgbe_shift_out_eeprom_bits(hw, data, 16);
-		ixgbe_standby_eeprom(hw);
+			page_size = hw->eeprom.word_page_size;
 
+			/* Send the data in burst via SPI*/
+			do {
+				word = data[i];
+				word = (word >> 8) | (word << 8);
+				ixgbe_shift_out_eeprom_bits(hw, word, 16);
+
+				if (page_size == 0)
+					break;
+
+				/* do not wrap around page */
+				if (((offset + i) & (page_size - 1)) ==
+				    (page_size - 1))
+					break;
+			} while (++i < words);
+
+			ixgbe_standby_eeprom(hw);
+			msec_delay(10);
+		}
 		/* Done with writing - release the EEPROM */
 		ixgbe_release_eeprom(hw);
 	}
 
+	return status;
+}
+
+/**
+ *  ixgbe_write_eeprom_generic - Writes 16 bit value to EEPROM
+ *  @hw: pointer to hardware structure
+ *  @offset: offset within the EEPROM to be written to
+ *  @data: 16 bit word to be written to the EEPROM
+ *
+ *  If ixgbe_eeprom_update_checksum is not called after this function, the
+ *  EEPROM will most likely contain an invalid checksum.
+ **/
+int32_t ixgbe_write_eeprom_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t data)
+{
+	int32_t status;
+
+	DEBUGFUNC("ixgbe_write_eeprom_generic");
+
+	hw->eeprom.ops.init_params(hw);
+
+	if (offset >= hw->eeprom.word_size) {
+		status = IXGBE_ERR_EEPROM;
+		goto out;
+	}
+
+	status = ixgbe_write_eeprom_buffer_bit_bang(hw, offset, 1, &data);
+
 out:
+	return status;
+}
+
+/**
+ *  ixgbe_read_eeprom_buffer_bit_bang - Read EEPROM using bit-bang
+ *  @hw: pointer to hardware structure
+ *  @offset: offset within the EEPROM to be read
+ *  @words: number of word(s)
+ *  @data: read 16 bit word(s) from EEPROM
+ *
+ *  Reads 16 bit word(s) from EEPROM through bit-bang method
+ **/
+static int32_t ixgbe_read_eeprom_buffer_bit_bang(struct ixgbe_hw *hw, uint16_t offset,
+					     uint16_t words, uint16_t *data)
+{
+	int32_t status;
+	uint16_t word_in;
+	uint8_t read_opcode = IXGBE_EEPROM_READ_OPCODE_SPI;
+	uint16_t i;
+
+	DEBUGFUNC("ixgbe_read_eeprom_buffer_bit_bang");
+
+	/* Prepare the EEPROM for reading  */
+	status = ixgbe_acquire_eeprom(hw);
+
+	if (status == IXGBE_SUCCESS) {
+		if (ixgbe_ready_eeprom(hw) != IXGBE_SUCCESS) {
+			ixgbe_release_eeprom(hw);
+			status = IXGBE_ERR_EEPROM;
+		}
+	}
+
+	if (status == IXGBE_SUCCESS) {
+		for (i = 0; i < words; i++) {
+			ixgbe_standby_eeprom(hw);
+			/*
+			 * Some SPI eeproms use the 8th address bit embedded
+			 * in the opcode
+			 */
+			if ((hw->eeprom.address_bits == 8) &&
+			    ((offset + i) >= 128))
+				read_opcode |= IXGBE_EEPROM_A8_OPCODE_SPI;
+
+			/* Send the READ command (opcode + addr) */
+			ixgbe_shift_out_eeprom_bits(hw, read_opcode,
+						    IXGBE_EEPROM_OPCODE_BITS);
+			ixgbe_shift_out_eeprom_bits(hw, (uint16_t)((offset + i) * 2),
+						    hw->eeprom.address_bits);
+
+			/* Read the data. */
+			word_in = ixgbe_shift_in_eeprom_bits(hw, 16);
+			data[i] = (word_in >> 8) | (word_in << 8);
+		}
+
+		/* End this read operation */
+		ixgbe_release_eeprom(hw);
+	}
+
 	return status;
 }
 
@@ -974,8 +1075,8 @@ int32_t ixgbe_read_eeprom_bit_bang_generic(struct ixgbe_hw *hw, uint16_t offset,
 				       uint16_t *data)
 {
 	int32_t status;
-	uint16_t word_in;
-	uint8_t read_opcode = IXGBE_EEPROM_READ_OPCODE_SPI;
+
+	DEBUGFUNC("ixgbe_read_eeprom_bit_bang_generic");
 
 	hw->eeprom.ops.init_params(hw);
 
@@ -984,40 +1085,59 @@ int32_t ixgbe_read_eeprom_bit_bang_generic(struct ixgbe_hw *hw, uint16_t offset,
 		goto out;
 	}
 
-	/* Prepare the EEPROM for reading  */
-	status = ixgbe_acquire_eeprom(hw);
+	status = ixgbe_read_eeprom_buffer_bit_bang(hw, offset, 1, data);
 
-	if (status == IXGBE_SUCCESS) {
-		if (ixgbe_ready_eeprom(hw) != IXGBE_SUCCESS) {
-			ixgbe_release_eeprom(hw);
-			status = IXGBE_ERR_EEPROM;
+out:
+	return status;
+}
+
+/**
+ *  ixgbe_read_eerd_buffer_generic - Read EEPROM word(s) using EERD
+ *  @hw: pointer to hardware structure
+ *  @offset: offset of word in the EEPROM to read
+ *  @words: number of word(s)
+ *  @data: 16 bit word(s) from the EEPROM
+ *
+ *  Reads a 16 bit word(s) from the EEPROM using the EERD register.
+ **/
+int32_t ixgbe_read_eerd_buffer_generic(struct ixgbe_hw *hw, uint16_t offset,
+				   uint16_t words, uint16_t *data)
+{
+	uint32_t eerd;
+	int32_t status = IXGBE_SUCCESS;
+	uint32_t i;
+
+	DEBUGFUNC("ixgbe_read_eerd_buffer_generic");
+
+	hw->eeprom.ops.init_params(hw);
+
+	if (words == 0) {
+		status = IXGBE_ERR_INVALID_ARGUMENT;
+		ERROR_REPORT1(IXGBE_ERROR_ARGUMENT, "Invalid EEPROM words");
+		goto out;
+	}
+
+	if (offset >= hw->eeprom.word_size) {
+		status = IXGBE_ERR_EEPROM;
+		ERROR_REPORT1(IXGBE_ERROR_ARGUMENT, "Invalid EEPROM offset");
+		goto out;
+	}
+
+	for (i = 0; i < words; i++) {
+		eerd = ((offset + i) << IXGBE_EEPROM_RW_ADDR_SHIFT) |
+		       IXGBE_EEPROM_RW_REG_START;
+
+		IXGBE_WRITE_REG(hw, IXGBE_EERD, eerd);
+		status = ixgbe_poll_eerd_eewr_done(hw, IXGBE_NVM_POLL_READ);
+
+		if (status == IXGBE_SUCCESS) {
+			data[i] = (IXGBE_READ_REG(hw, IXGBE_EERD) >>
+				   IXGBE_EEPROM_RW_REG_DATA);
+		} else {
+			DEBUGOUT("Eeprom read timed out\n");
+			goto out;
 		}
 	}
-
-	if (status == IXGBE_SUCCESS) {
-		ixgbe_standby_eeprom(hw);
-
-		/*
-		 * Some SPI eeproms use the 8th address bit embedded in the
-		 * opcode
-		 */
-		if ((hw->eeprom.address_bits == 8) && (offset >= 128))
-			read_opcode |= IXGBE_EEPROM_A8_OPCODE_SPI;
-
-		/* Send the READ command (opcode + addr) */
-		ixgbe_shift_out_eeprom_bits(hw, read_opcode,
-					    IXGBE_EEPROM_OPCODE_BITS);
-		ixgbe_shift_out_eeprom_bits(hw, (uint16_t)(offset*2),
-					    hw->eeprom.address_bits);
-
-		/* Read the data. */
-		word_in = ixgbe_shift_in_eeprom_bits(hw, 16);
-		*data = (word_in >> 8) | (word_in << 8);
-
-		/* End this read operation */
-		ixgbe_release_eeprom(hw);
-	}
-
 out:
 	return status;
 }
@@ -1032,27 +1152,60 @@ out:
  **/
 int32_t ixgbe_read_eerd_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t *data)
 {
-	uint32_t eerd;
-	int32_t status;
+	return ixgbe_read_eerd_buffer_generic(hw, offset, 1, data);
+}
+
+/**
+ *  ixgbe_write_eewr_buffer_generic - Write EEPROM word(s) using EEWR
+ *  @hw: pointer to hardware structure
+ *  @offset: offset of  word in the EEPROM to write
+ *  @words: number of word(s)
+ *  @data: word(s) write to the EEPROM
+ *
+ *  Write a 16 bit word(s) to the EEPROM using the EEWR register.
+ **/
+int32_t ixgbe_write_eewr_buffer_generic(struct ixgbe_hw *hw, uint16_t offset,
+				    uint16_t words, uint16_t *data)
+{
+	uint32_t eewr;
+	int32_t status = IXGBE_SUCCESS;
+	uint16_t i;
+
+	DEBUGFUNC("ixgbe_write_eewr_generic");
 
 	hw->eeprom.ops.init_params(hw);
 
-	if (offset >= hw->eeprom.word_size) {
-		status = IXGBE_ERR_EEPROM;
+	if (words == 0) {
+		status = IXGBE_ERR_INVALID_ARGUMENT;
+		ERROR_REPORT1(IXGBE_ERROR_ARGUMENT, "Invalid EEPROM words");
 		goto out;
 	}
 
-	eerd = (offset << IXGBE_EEPROM_RW_ADDR_SHIFT) +
-	       IXGBE_EEPROM_RW_REG_START;
+	if (offset >= hw->eeprom.word_size) {
+		status = IXGBE_ERR_EEPROM;
+		ERROR_REPORT1(IXGBE_ERROR_ARGUMENT, "Invalid EEPROM offset");
+		goto out;
+	}
 
-	IXGBE_WRITE_REG(hw, IXGBE_EERD, eerd);
-	status = ixgbe_poll_eerd_eewr_done(hw, IXGBE_NVM_POLL_READ);
+	for (i = 0; i < words; i++) {
+		eewr = ((offset + i) << IXGBE_EEPROM_RW_ADDR_SHIFT) |
+			(data[i] << IXGBE_EEPROM_RW_REG_DATA) |
+			IXGBE_EEPROM_RW_REG_START;
 
-	if (status == IXGBE_SUCCESS)
-		*data = (IXGBE_READ_REG(hw, IXGBE_EERD) >>
-			 IXGBE_EEPROM_RW_REG_DATA);
-	else
-		DEBUGOUT("Eeprom read timed out\n");
+		status = ixgbe_poll_eerd_eewr_done(hw, IXGBE_NVM_POLL_WRITE);
+		if (status != IXGBE_SUCCESS) {
+			DEBUGOUT("Eeprom write EEWR timed out\n");
+			goto out;
+		}
+
+		IXGBE_WRITE_REG(hw, IXGBE_EEWR, eewr);
+
+		status = ixgbe_poll_eerd_eewr_done(hw, IXGBE_NVM_POLL_WRITE);
+		if (status != IXGBE_SUCCESS) {
+			DEBUGOUT("Eeprom write EEWR timed out\n");
+			goto out;
+		}
+	}
 
 out:
 	return status;
@@ -1068,35 +1221,7 @@ out:
  **/
 int32_t ixgbe_write_eewr_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t data)
 {
-	uint32_t eewr;
-	int32_t status;
-
-	hw->eeprom.ops.init_params(hw);
-
-	if (offset >= hw->eeprom.word_size) {
-		status = IXGBE_ERR_EEPROM;
-		goto out;
-	}
-
-	eewr = (offset << IXGBE_EEPROM_RW_ADDR_SHIFT) |
-	       (data << IXGBE_EEPROM_RW_REG_DATA) | IXGBE_EEPROM_RW_REG_START;
-
-	status = ixgbe_poll_eerd_eewr_done(hw, IXGBE_NVM_POLL_WRITE);
-	if (status != IXGBE_SUCCESS) {
-		DEBUGOUT("Eeprom write EEWR timed out\n");
-		goto out;
-	}
-
-	IXGBE_WRITE_REG(hw, IXGBE_EEWR, eewr);
-
-	status = ixgbe_poll_eerd_eewr_done(hw, IXGBE_NVM_POLL_WRITE);
-	if (status != IXGBE_SUCCESS) {
-		DEBUGOUT("Eeprom write EEWR timed out\n");
-		goto out;
-	}
-
-out:
-	return status;
+	return ixgbe_write_eewr_buffer_generic(hw, offset, 1, &data);
 }
 
 /**
@@ -1372,7 +1497,7 @@ void ixgbe_standby_eeprom(struct ixgbe_hw *hw)
  *  @count: number of bits to shift out
  **/
 void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, uint16_t data,
-					uint16_t count)
+				 uint16_t count)
 {
 	uint32_t eec;
 	uint32_t mask;
@@ -1532,8 +1657,10 @@ void ixgbe_release_eeprom(struct ixgbe_hw *hw)
 /**
  *  ixgbe_calc_eeprom_checksum_generic - Calculates and returns the checksum
  *  @hw: pointer to hardware structure
+ *
+ *  Returns a negative error code on error, or the 16-bit checksum
  **/
-uint16_t ixgbe_calc_eeprom_checksum_generic(struct ixgbe_hw *hw)
+int32_t ixgbe_calc_eeprom_checksum_generic(struct ixgbe_hw *hw)
 {
 	uint16_t i;
 	uint16_t j;
@@ -1546,33 +1673,44 @@ uint16_t ixgbe_calc_eeprom_checksum_generic(struct ixgbe_hw *hw)
 
 	/* Include 0x0-0x3F in the checksum */
 	for (i = 0; i < IXGBE_EEPROM_CHECKSUM; i++) {
-		if (hw->eeprom.ops.read(hw, i, &word) != IXGBE_SUCCESS) {
+		if (hw->eeprom.ops.read(hw, i, &word)) {
 			DEBUGOUT("EEPROM read failed\n");
-			break;
+			return IXGBE_ERR_EEPROM;
 		}
 		checksum += word;
 	}
 
 	/* Include all data from pointers except for the fw pointer */
 	for (i = IXGBE_PCIE_ANALOG_PTR; i < IXGBE_FW_PTR; i++) {
-		hw->eeprom.ops.read(hw, i, &pointer);
+		if (hw->eeprom.ops.read(hw, i, &pointer)) {
+			DEBUGOUT("EEPROM read failed\n");
+			return IXGBE_ERR_EEPROM;
+		}
 
-		/* Make sure the pointer seems valid */
-		if (pointer != 0xFFFF && pointer != 0) {
-			hw->eeprom.ops.read(hw, pointer, &length);
+		/* If the pointer seems invalid */
+		if (pointer == 0xFFFF || pointer == 0)
+			continue;
 
-			if (length != 0xFFFF && length != 0) {
-				for (j = pointer+1; j <= pointer+length; j++) {
-					hw->eeprom.ops.read(hw, j, &word);
-					checksum += word;
-				}
+		if (hw->eeprom.ops.read(hw, pointer, &length)) {
+			DEBUGOUT("EEPROM read failed\n");
+			return IXGBE_ERR_EEPROM;
+		}
+
+		if (length == 0xFFFF || length == 0)
+			continue;
+
+		for (j = pointer + 1; j <= pointer + length; j++) {
+			if (hw->eeprom.ops.read(hw, j, &word)) {
+				DEBUGOUT("EEPROM read failed\n");
+				return IXGBE_ERR_EEPROM;
 			}
+			checksum += word;
 		}
 	}
 
 	checksum = (uint16_t)IXGBE_EEPROM_SUM - checksum;
 
-	return checksum;
+	return (int32_t)checksum;
 }
 
 /**
@@ -1597,25 +1735,32 @@ int32_t ixgbe_validate_eeprom_checksum_generic(struct ixgbe_hw *hw,
 	 * EEPROM read fails
 	 */
 	status = hw->eeprom.ops.read(hw, 0, &checksum);
-
-	if (status == IXGBE_SUCCESS) {
-		checksum = hw->eeprom.ops.calc_checksum(hw);
-
-		hw->eeprom.ops.read(hw, IXGBE_EEPROM_CHECKSUM, &read_checksum);
-
-		/*
-		 * Verify read checksum from EEPROM is the same as
-		 * calculated checksum
-		 */
-		if (read_checksum != checksum)
-			status = IXGBE_ERR_EEPROM_CHECKSUM;
-
-		/* If the user cares, return the calculated checksum */
-		if (checksum_val)
-			*checksum_val = checksum;
-	} else {
+	if (status) {
 		DEBUGOUT("EEPROM read failed\n");
+		return status;
 	}
+
+	status = hw->eeprom.ops.calc_checksum(hw);
+	if (status < 0)
+		return status;
+
+	checksum = (uint16_t)(status & 0xffff);
+
+	status = hw->eeprom.ops.read(hw, IXGBE_EEPROM_CHECKSUM, &read_checksum);
+	if (status) {
+		DEBUGOUT("EEPROM read failed\n");
+		return status;
+	}
+
+	/* Verify read checksum from EEPROM is the same as
+	 * calculated checksum
+	 */
+	if (read_checksum != checksum)
+		status = IXGBE_ERR_EEPROM_CHECKSUM;
+
+	/* If the user cares, return the calculated checksum */
+	if (checksum_val)
+		*checksum_val = checksum;
 
 	return status;
 }
@@ -1636,14 +1781,18 @@ int32_t ixgbe_update_eeprom_checksum_generic(struct ixgbe_hw *hw)
 	 * EEPROM read fails
 	 */
 	status = hw->eeprom.ops.read(hw, 0, &checksum);
-
-	if (status == IXGBE_SUCCESS) {
-		checksum = hw->eeprom.ops.calc_checksum(hw);
-		status = hw->eeprom.ops.write(hw, IXGBE_EEPROM_CHECKSUM,
-					      checksum);
-	} else {
+	if (status) {
 		DEBUGOUT("EEPROM read failed\n");
+		return status;
 	}
+
+	status = hw->eeprom.ops.calc_checksum(hw);
+	if (status < 0)
+		return status;
+
+	checksum = (uint16_t)(status & 0xffff);
+
+	status = hw->eeprom.ops.write(hw, IXGBE_EEPROM_CHECKSUM, checksum);
 
 	return status;
 }

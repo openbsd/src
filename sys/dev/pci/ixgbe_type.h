@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.26 2016/11/17 19:26:57 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.27 2016/11/17 20:44:04 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3386,7 +3386,7 @@ struct ixgbe_eeprom_operations {
 	int32_t (*write)(struct ixgbe_hw *, uint16_t, uint16_t);
 	int32_t (*validate_checksum)(struct ixgbe_hw *, uint16_t *);
 	int32_t (*update_checksum)(struct ixgbe_hw *);
-	uint16_t (*calc_checksum)(struct ixgbe_hw *);
+	int32_t (*calc_checksum)(struct ixgbe_hw *);
 };
 
 struct ixgbe_mac_operations {
@@ -3676,7 +3676,6 @@ struct ixgbe_hw {
 	bool adapter_stopped;
 	int api_version;
 	bool force_full_reset;
-	bool mng_fw_enabled;
 };
 
 /* Error Codes */
