@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.53 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.54 2016/11/17 14:44:34 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -14,6 +14,8 @@ include		"../../../conf/GENERIC"
 maxusers	32
 
 option		CPU_LOONGSON2
+option		CPU_LOONGSON3
+option		CPU_MIPS64R2		# required by CPU_LOONGSON3
 makeoption	LINK_ADDRESS="0xffffffff80200000"
 
 option		USER_PCICONF
@@ -32,9 +34,14 @@ cpu0		at mainbus0
 clock0		at mainbus0
 apm0		at mainbus0
 
-# Main local buses
+# 2E- and 2F- based systems with Bonito or Bonito-like northbridge
 bonito*		at mainbus0
 pci*		at bonito?
+# 3A-based systems with a HyperTransport-PCI northbridge
+htb*		at mainbus0
+pci*		at htb?
+ppb*		at pci?
+pci*		at ppb?
 
 # Lemote Lynloong, Lemote Fuloong 2F and Lemote Yeeloong devices
 glxpcib*	at pci?
@@ -73,6 +80,15 @@ ohci*		at voyager?
 smfb*		at voyager?
 wsdisplay*	at smfb?
 
+# AMD RS780E devices
+azalia*		at pci?
+audio*		at azalia?
+piixpm*		at pci?
+iic*		at piixpm?
+spdmem*		at iic?
+radeonfb*	at pci?
+wsdisplay*	at radeonfb?
+
 # Generic 2E systems (in addition to the Fuloong devices)
 pcib*		at pci?
 isa0		at pcib?
@@ -81,6 +97,11 @@ wsdisplay*	at vga?
 auvia*		at pci?
 audio*		at auvia?
 viapm*		at pci?
+
+# Generic 3A systems
+leioc0		at mainbus0
+com*		at leioc?
+ahci*		at pci?
 
 # USB Controllers
 ohci*		at pci?

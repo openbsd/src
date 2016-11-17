@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.27 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: RAMDISK,v 1.28 2016/11/17 14:44:34 visa Exp $
 
 machine		loongson mips64
 maxusers	4
@@ -25,6 +25,8 @@ option		MSDOSFS
 option		INET6
 
 option		CPU_LOONGSON2
+option		CPU_LOONGSON3
+option		CPU_MIPS64R2		# required by CPU_LOONGSON3
 makeoption	LINK_ADDRESS="0xffffffff80200000"
 
 config		bsd root on rd0a swap on rd0b
@@ -35,6 +37,11 @@ clock0		at mainbus0
 
 bonito*		at mainbus0
 pci*		at bonito?
+
+htb*		at mainbus0
+pci*		at htb?
+ppb*		at pci?
+pci*		at ppb?
 
 glxpcib*	at pci?
 isa0		at glxpcib?
@@ -61,10 +68,20 @@ ohci*		at voyager?
 smfb*		at voyager?
 wsdisplay*	at smfb?
 
+piixpm*		at pci?
+iic*		at piixpm?
+spdmem*		at iic?
+radeonfb*	at pci?
+wsdisplay*	at radeonfb?
+
 pcib*		at pci?
 isa0		at pcib?
 vga*		at pci?
 wsdisplay*	at vga?
+
+leioc0		at mainbus0
+com*		at leioc?
+ahci*		at pci?
 
 ohci*		at pci?
 uhci*		at pci?
