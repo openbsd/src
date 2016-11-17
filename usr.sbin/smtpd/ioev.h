@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.8 2016/11/17 07:33:06 eric Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.9 2016/11/17 17:34:55 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -68,3 +68,17 @@ int io_connect(struct io *, const struct sockaddr *, const struct sockaddr *);
 int io_start_tls(struct io *, void *);
 const char* io_strio(struct io *);
 const char* io_strevent(int);
+
+/* Buffered output functions */
+int io_write(struct io *, const void *, size_t);
+int io_writev(struct io *, const struct iovec *, int);
+int io_print(struct io *, const char *);
+int io_printf(struct io *, const char *, ...);
+int io_vprintf(struct io *, const char *, va_list);
+size_t io_queued(struct io *);
+
+/* Buffered input functions */
+void* io_data(struct io *);
+size_t io_datalen(struct io *);
+char* io_getline(struct io *, size_t *);
+void io_drop(struct io *, size_t);

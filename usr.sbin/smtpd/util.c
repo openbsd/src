@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.128 2016/08/31 10:18:08 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.129 2016/11/17 17:34:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -132,6 +132,33 @@ iobuf_xfqueue(struct iobuf *io, const char *where, const char *fmt, ...)
 		log_warnx("%s: iobuf_xfqueue(%p, %s, ...)", where, io, fmt);
 		fatalx("exiting");
 	}
+}
+
+int
+io_xprintf(struct io *io, const char *fmt, ...)
+{
+	va_list	ap;
+	int len;
+
+	va_start(ap, fmt);
+	len = io_vprintf(io, fmt, ap);
+	va_end(ap);
+	if (len == -1)
+		fatal("io_xprintf(%p, %s, ...)", io, fmt);
+
+	return len;
+}
+
+int
+io_xprint(struct io *io, const char *str)
+{
+	int len;
+
+	len = io_print(io, str);
+	if (len == -1)
+		fatal("io_xprint(%p, %s, ...)", io, str);
+
+	return len;
 }
 #endif
 

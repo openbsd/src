@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.28 2016/11/17 07:33:06 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.29 2016/11/17 17:34:55 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -354,6 +354,92 @@ io_set_write(struct io *io)
 	io_reload(io);
 }
 
+/*
+ * Buffered output functions
+ */
+
+int
+io_write(struct io *io, const void *buf, size_t len)
+{
+	return iobuf_queue(io->iobuf, buf, len);
+}
+
+int
+io_writev(struct io *io, const struct iovec *iov, int iovcount)
+{
+	return iobuf_queuev(io->iobuf, iov, iovcount);
+}
+
+int
+io_print(struct io *io, const char *s)
+{
+	return io_write(io, s, strlen(s));
+}
+
+int
+io_printf(struct io *io, const char *fmt, ...)
+{
+	va_list ap;
+	int r;
+
+	va_start(ap, fmt);
+	r = io_vprintf(io, fmt, ap);
+	va_end(ap);
+
+	return r;
+}
+
+int
+io_vprintf(struct io *io, const char *fmt, va_list ap)
+{
+
+	char *buf;
+	int len;
+
+	len = vasprintf(&buf, fmt, ap);
+	if (len == -1)
+		return -1;
+	len = io_write(io, buf, len);
+	free(buf);
+
+	return len;
+}
+
+size_t
+io_queued(struct io *io)
+{
+	return iobuf_queued(io->iobuf);
+}
+
+/*
+ * Buffered input functions
+ */
+
+void *
+io_data(struct io *io)
+{
+	return iobuf_data(io->iobuf);
+}
+
+size_t
+io_datalen(struct io *io)
+{
+	return iobuf_len(io->iobuf);
+}
+
+char *
+io_getline(struct io *io, size_t *sz)
+{
+	return iobuf_getline(io->iobuf, sz);
+}
+
+void
+io_drop(struct io *io, size_t sz)
+{
+	return iobuf_drop(io->iobuf, sz);
+}
+
+
 #define IO_READING(io) (((io)->flags & IO_RW) != IO_WRITE)
 #define IO_WRITING(io) (((io)->flags & IO_RW) != IO_READ)
 
@@ -428,12 +514,6 @@ size_t
 io_pending(struct io *io)
 {
 	return iobuf_len(io->iobuf);
-}
-
-size_t
-io_queued(struct io *io)
-{
-	return iobuf_queued(io->iobuf);
 }
 
 const char*

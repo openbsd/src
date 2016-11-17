@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.523 2016/09/04 09:33:49 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.524 2016/11/17 17:34:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1494,6 +1494,8 @@ void *xmemdup(const void *, size_t, const char *);
 char *strip(char *);
 void iobuf_xinit(struct iobuf *, size_t, size_t, const char *);
 void iobuf_xfqueue(struct iobuf *, const char *, const char *, ...);
+int io_xprint(struct io *, const char *);
+int io_xprintf(struct io *, const char *, ...);
 void log_envelope(const struct envelope *, const char *, const char *,
     const char *);
 int session_socket_error(int);
