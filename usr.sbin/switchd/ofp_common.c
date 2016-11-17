@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_common.c,v 1.6 2016/11/17 12:40:56 reyk Exp $	*/
+/*	$OpenBSD: ofp_common.c,v 1.7 2016/11/17 13:10:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1096,8 +1096,10 @@ oflowmod_iopen(struct oflowmod_ctx *ctx)
 	struct ibuf		*ibuf = ctx->ctx_ibuf;
 
 	if (ctx->ctx_state < OFMCTX_MOPEN &&
-	    (oflowmod_mopen(ctx) == -1 ||
-	    oflowmod_mclose(ctx) == -1))
+	    (oflowmod_mopen(ctx) == -1))
+		return (oflowmod_err(ctx, __func__, __LINE__));
+	if (ctx->ctx_state < OFMCTX_MCLOSE &&
+	    (oflowmod_mclose(ctx) == -1))
 		return (oflowmod_err(ctx, __func__, __LINE__));
 
 	if (oflowmod_state(ctx, OFMCTX_MCLOSE, OFMCTX_IOPEN) == -1)
@@ -1114,6 +1116,10 @@ oflowmod_instruction(struct oflowmod_ctx *ctx, unsigned int type)
 	struct ibuf		*ibuf = ctx->ctx_ibuf;
 	struct ofp_instruction	*oi;
 	size_t			 len;
+
+	if (ctx->ctx_state < OFMCTX_IOPEN &&
+	    (oflowmod_iopen(ctx) == -1))
+		return (oflowmod_err(ctx, __func__, __LINE__));
 
 	if (oflowmod_state(ctx, OFMCTX_IOPEN, OFMCTX_IOPEN) == -1)
 		return (oflowmod_err(ctx, __func__, __LINE__));
