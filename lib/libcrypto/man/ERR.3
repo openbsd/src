@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ERR.3,v 1.3 2016/11/06 16:12:53 schwarze Exp $
+.\"	$OpenBSD: ERR.3,v 1.4 2016/11/17 21:06:16 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 17 2016 $
 .Dt ERR 3
 .Os
 .Sh NAME
@@ -46,11 +46,11 @@ Each sub-library has a specific macro
 .Fn XXXerr f r
 that is used to report errors.
 Its first argument is a function code
-.Dv XXX_F_* ,
+.Dv XXX_F_* ;
 the second argument is a reason code
 .Dv XXX_R_* .
-Function codes are derived from the function names; reason codes consist
-of textual error descriptions.
+Function codes are derived from the function names
+whereas reason codes consist of textual error descriptions.
 For example, the function
 .Fn ssl23_read
 reports a "handshake failure" as follows:
@@ -60,8 +60,8 @@ reports a "handshake failure" as follows:
 Function and reason codes should consist of upper case characters,
 numbers and underscores only.
 The error file generation script translates function codes into function
-names by looking in the header files for an appropriate function name,
-if none is found it just uses the capitalized form such as "SSL23_READ"
+names by looking in the header files for an appropriate function name.
+If none is found it just uses the capitalized form such as "SSL23_READ"
 in the above example.
 .Pp
 The trailing section of a reason code (after the "_R_") is translated
@@ -76,7 +76,7 @@ will then automatically be added to the sub-library's header file.
 Although a library will normally report errors using its own specific
 .Fn XXXerr
 macro, another library's macro can be used.
-This is normally only done when a library wants to include ASN1 code
+This is normally only done when a library wants to include ASN.1 code
 which must use the
 .Fn ASN1err
 macro.
@@ -137,8 +137,8 @@ extern "C" {
 The
 .Sy BEGIN ERROR CODES
 sequence is used by the error code generation script as the point to
-place new error codes, any text after this point will be overwritten
-when
+place new error codes.
+Any text after this point will be overwritten when
 .Sy make errors
 is run.
 The closing #endif etc. will be automatically added by the script.
@@ -161,12 +161,12 @@ insertion script
 explicitly to add codes to the header file and generate the C error code
 file.
 This will normally be done if the external library needs to generate new
-ASN1 structures but it can also be used to add more general purpose
+ASN.1 structures but it can also be used to add more general purpose
 error code handling.
 .Sh INTERNALS
 The error queues are stored in a hash table with one
 .Vt ERR_STATE
-entry for each pid.
+entry for each PID.
 .Fn ERR_get_state
 returns the current thread's
 .Vt ERR_STATE .
@@ -178,13 +178,12 @@ error codes.
 When more error codes are added, the old ones are overwritten, on the
 assumption that the most recent errors are most important.
 .Pp
-Error strings are also stored in hash table.
+Error strings are also stored in a hash table.
 The hash tables can be obtained by calling
 .Fn ERR_get_err_state_table
 and
 .Fn ERR_get_string_table .
 .Sh SEE ALSO
-.Xr CRYPTO_set_id_callback 3 ,
 .Xr CRYPTO_set_locking_callback 3 ,
 .Xr ERR_clear_error 3 ,
 .Xr ERR_error_string 3 ,

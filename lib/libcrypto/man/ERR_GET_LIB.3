@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ERR_GET_LIB.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: ERR_GET_LIB.3,v 1.3 2016/11/17 21:06:16 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 17 2016 $
 .Dt ERR_GET_LIB 3
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@ and
 can be used to extract these.
 .Pp
 The library number and function code describe where the error occurred,
-the reason code is the information about what went wrong.
+whereas the reason code is the information about what went wrong.
 .Pp
 Each sub-library of OpenSSL has a unique library number; function and
 reason codes are unique within each sub-library.

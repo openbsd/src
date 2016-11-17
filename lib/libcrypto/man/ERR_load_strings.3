@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ERR_load_strings.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: ERR_load_strings.3,v 1.3 2016/11/17 21:06:16 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 17 2016 $
 .Dt ERR_LOAD_STRINGS 3
 .Os
 .Sh NAME
@@ -15,14 +15,14 @@
 .Fa "int lib"
 .Fa "ERR_STRING_DATA str[]"
 .Fc
-.Ft int
-.Fn ERR_get_next_error_library void
 .Ft unsigned long
 .Fo ERR_PACK
 .Fa "int lib"
 .Fa "int func"
 .Fa "int reason"
 .Fc
+.Ft int
+.Fn ERR_get_next_error_library void
 .Sh DESCRIPTION
 .Fn ERR_load_strings
 registers error strings for library number
