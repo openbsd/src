@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.84 2016/11/06 15:50:47 beck Exp $	*/
+/*	$OpenBSD: parse.y,v 1.85 2016/11/17 14:52:48 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -337,6 +337,14 @@ server		: SERVER optmatch STRING	{
 			if (server_tls_load_keypair(srv) == -1) {
 				yyerror("server \"%s\": failed to load "
 				    "public/private keys", srv->srv_conf.name);
+				serverconfig_free(srv_conf);
+				free(srv);
+				YYERROR;
+			}
+
+			if (server_tls_load_ocsp(srv) == -1) {
+				yyerror("server \"%s\": failed to load "
+				    "oscp staple", srv->srv_conf.name);
 				serverconfig_free(srv_conf);
 				free(srv);
 				YYERROR;
@@ -2020,10 +2028,6 @@ server_inherit(struct server *src, struct server_config *alias,
 		    strdup(src->srv_conf.tls_ocsp_staple_file)) == NULL)
 			fatal("out of memory");
 	}
-	dst->srv_conf.tls_cert = NULL;
-	dst->srv_conf.tls_key = NULL;
-	dst->srv_conf.tls_cert_len = 0;
-	dst->srv_conf.tls_key_len = 0;
 
 	if (src->srv_conf.return_uri != NULL &&
 	    (dst->srv_conf.return_uri =
@@ -2057,6 +2061,14 @@ server_inherit(struct server *src, struct server_config *alias,
 
 	if (server_tls_load_keypair(dst) == -1) {
 		yyerror("failed to load public/private keys "
+		    "for server %s", dst->srv_conf.name);
+		serverconfig_free(&dst->srv_conf);
+		free(dst);
+		return (NULL);
+	}
+
+	if (server_tls_load_ocsp(dst) == -1) {
+		yyerror("failed to load oscp staple "
 		    "for server %s", dst->srv_conf.name);
 		serverconfig_free(&dst->srv_conf);
 		free(dst);

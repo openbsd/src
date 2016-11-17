@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.98 2016/11/10 13:21:58 jca Exp $	*/
+/*	$OpenBSD: server.c,v 1.99 2016/11/17 14:52:48 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -158,30 +158,37 @@ server_tls_load_keypair(struct server *srv)
 	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
 		return (0);
 
-	if ((srv->srv_conf.tls_cert = tls_load_file(
-	    srv->srv_conf.tls_cert_file, &srv->srv_conf.tls_cert_len,
-	    NULL)) == NULL)
+	if ((srv->srv_conf.tls_cert = tls_load_file(srv->srv_conf.tls_cert_file,
+	    &srv->srv_conf.tls_cert_len, NULL)) == NULL)
 		return (-1);
 	log_debug("%s: using certificate %s", __func__,
 	    srv->srv_conf.tls_cert_file);
 
 	/* XXX allow to specify password for encrypted key */
-	if ((srv->srv_conf.tls_key = tls_load_file(
-	    srv->srv_conf.tls_key_file, &srv->srv_conf.tls_key_len,
-	    NULL)) == NULL)
+	if ((srv->srv_conf.tls_key = tls_load_file(srv->srv_conf.tls_key_file,
+	    &srv->srv_conf.tls_key_len, NULL)) == NULL)
 		return (-1);
 	log_debug("%s: using private key %s", __func__,
 	    srv->srv_conf.tls_key_file);
 
-	if (srv->srv_conf.tls_ocsp_staple_file != NULL) {
-		if ((srv->srv_conf.tls_ocsp_staple = tls_load_file(
-		    srv->srv_conf.tls_ocsp_staple_file,
-		    &srv->srv_conf.tls_ocsp_staple_len,
-		    NULL)) == NULL)
-			return (-1);
-		log_debug("%s: using ocsp staple from %s", __func__,
-		    srv->srv_conf.tls_ocsp_staple_file);
-	}
+	return (0);
+}
+
+int
+server_tls_load_ocsp(struct server *srv)
+{
+	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
+		return (0);
+
+	if (srv->srv_conf.tls_ocsp_staple_file == NULL)
+		return (0);
+
+	if ((srv->srv_conf.tls_ocsp_staple = tls_load_file(
+	    srv->srv_conf.tls_ocsp_staple_file,
+	    &srv->srv_conf.tls_ocsp_staple_len, NULL)) == NULL)
+		return (-1);
+	log_debug("%s: using ocsp staple from %s", __func__,
+	    srv->srv_conf.tls_ocsp_staple_file);
 
 	return (0);
 }
