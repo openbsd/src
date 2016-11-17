@@ -1,8 +1,8 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.13 2016/11/17 12:21:27 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.14 2016/11/17 13:12:03 mikeb Exp $	*/
 
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation
+  Copyright (c) 2001-2015, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/* FreeBSD: src/sys/dev/ixgbe/ixgbe_82598.c 251964 Jun 18 21:28:19 2013 UTC */
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 292674 2015-12-23 22:45:17Z sbruno $*/
 
 #include <dev/pci/ixgbe.h>
 #include <dev/pci/ixgbe_type.h>
@@ -80,6 +80,7 @@ uint32_t ixgbe_get_supported_physical_layer_82598(struct ixgbe_hw *hw);
 int32_t ixgbe_init_phy_ops_82598(struct ixgbe_hw *hw);
 void ixgbe_set_lan_id_multi_port_pcie_82598(struct ixgbe_hw *hw);
 void ixgbe_set_pcie_completion_timeout(struct ixgbe_hw *hw);
+int32_t ixgbe_enable_rx_dma_82598(struct ixgbe_hw *hw, uint32_t regval);
 
 /**
  *  ixgbe_set_pcie_completion_timeout - set pci-e completion timeout
@@ -153,6 +154,7 @@ int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw)
 	mac->ops.read_analog_reg8 = ixgbe_read_analog_reg8_82598;
 	mac->ops.write_analog_reg8 = ixgbe_write_analog_reg8_82598;
 	mac->ops.set_lan_id = ixgbe_set_lan_id_multi_port_pcie_82598;
+	mac->ops.enable_rx_dma = ixgbe_enable_rx_dma_82598;
 
 	/* RAR, Multicast, VLAN */
 	mac->ops.set_vmdq = ixgbe_set_vmdq_82598;
@@ -167,8 +169,8 @@ int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw)
 	mac->vft_size		= IXGBE_82598_VFT_TBL_SIZE;
 	mac->num_rar_entries	= IXGBE_82598_RAR_ENTRIES;
 	mac->rx_pb_size		= IXGBE_82598_RX_PB_SIZE;
-	mac->max_tx_queues	= IXGBE_82598_MAX_TX_QUEUES;
 	mac->max_rx_queues	= IXGBE_82598_MAX_RX_QUEUES;
+	mac->max_tx_queues	= IXGBE_82598_MAX_TX_QUEUES;
 	mac->max_msix_vectors	= ixgbe_get_pcie_msix_count_generic(hw);
 
 	/* SFP+ Module */
@@ -264,6 +266,8 @@ int32_t ixgbe_start_hw_82598(struct ixgbe_hw *hw)
 	DEBUGFUNC("ixgbe_start_hw_82598");
 
 	ret_val = ixgbe_start_hw_generic(hw);
+	if (ret_val)
+		return ret_val;
 
 	/* Disable relaxed ordering */
 	for (i = 0; ((i < hw->mac.max_tx_queues) &&
@@ -282,8 +286,7 @@ int32_t ixgbe_start_hw_82598(struct ixgbe_hw *hw)
 	}
 
 	/* set the completion timeout for interface */
-	if (ret_val == IXGBE_SUCCESS)
-		ixgbe_set_pcie_completion_timeout(hw);
+	ixgbe_set_pcie_completion_timeout(hw);
 
 	return ret_val;
 }
@@ -1340,4 +1343,20 @@ void ixgbe_set_lan_id_multi_port_pcie_82598(struct ixgbe_hw *hw)
 			bus->func = 0;
 		}
 	}
+}
+
+/**
+ *  ixgbe_enable_rx_dma_82598 - Enable the Rx DMA unit
+ *  @hw: pointer to hardware structure
+ *  @regval: register value to write to RXCTRL
+ *
+ *  Enables the Rx DMA unit
+ **/
+int32_t ixgbe_enable_rx_dma_82598(struct ixgbe_hw *hw, uint32_t regval)
+{
+	DEBUGFUNC("ixgbe_enable_rx_dma_82598");
+
+	IXGBE_WRITE_REG(hw, IXGBE_RXCTRL, regval);
+
+	return IXGBE_SUCCESS;
 }
