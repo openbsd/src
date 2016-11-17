@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.18 2016/11/17 20:44:04 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.19 2016/11/17 21:08:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -65,6 +65,9 @@ int32_t ixgbe_negotiate_fc(struct ixgbe_hw *hw, uint32_t adv_reg,
 			   uint32_t lp_reg, uint32_t adv_sym, uint32_t adv_asm,
 			   uint32_t lp_sym, uint32_t lp_asm);
 
+int32_t prot_autoc_read_generic(struct ixgbe_hw *, bool *, uint32_t *);
+int32_t prot_autoc_write_generic(struct ixgbe_hw *, uint32_t, bool);
+
 int32_t ixgbe_find_vlvf_slot(struct ixgbe_hw *hw, uint32_t vlan);
 
 /* MBX */
@@ -124,6 +127,8 @@ int32_t ixgbe_init_ops_generic(struct ixgbe_hw *hw)
 	mac->ops.set_lan_id = ixgbe_set_lan_id_multi_port_pcie;
 	mac->ops.acquire_swfw_sync = ixgbe_acquire_swfw_sync;
 	mac->ops.release_swfw_sync = ixgbe_release_swfw_sync;
+	mac->ops.prot_autoc_read = prot_autoc_read_generic;
+	mac->ops.prot_autoc_write = prot_autoc_write_generic;
 
 	/* LEDs */
 	mac->ops.led_on = ixgbe_led_on_generic;
@@ -149,6 +154,7 @@ int32_t ixgbe_init_ops_generic(struct ixgbe_hw *hw)
 
 	/* Flow Control */
 	mac->ops.fc_enable = ixgbe_fc_enable_generic;
+	mac->ops.setup_fc = ixgbe_setup_fc_generic;
 
 	/* Link */
 	mac->ops.get_link_capabilities = NULL;
@@ -219,24 +225,21 @@ bool ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 }
 
 /**
- *  ixgbe_setup_fc - Set up flow control
+ *  ixgbe_setup_fc_generic - Set up flow control
  *  @hw: pointer to hardware structure
  *
  *  Called at init time to set up flow control.
  **/
-int32_t ixgbe_setup_fc(struct ixgbe_hw *hw)
+int32_t ixgbe_setup_fc_generic(struct ixgbe_hw *hw)
 {
 	int32_t ret_val = IXGBE_SUCCESS;
 	uint32_t reg = 0, reg_bp = 0;
 	uint16_t reg_cu = 0;
-	bool got_lock = FALSE;
+	bool locked = FALSE;
 
 	DEBUGFUNC("ixgbe_setup_fc");
 
-	/*
-	 * Validate the requested mode.  Strict IEEE mode does not allow
-	 * ixgbe_fc_rx_pause because it will cause us to fail at UNH.
-	 */
+	/* Validate the requested mode */
 	if (hw->fc.strict_ieee && hw->fc.requested_mode == ixgbe_fc_rx_pause) {
 		ERROR_REPORT1(IXGBE_ERROR_UNSUPPORTED,
 			   "ixgbe_fc_rx_pause not valid in strict IEEE mode\n");
@@ -257,12 +260,18 @@ int32_t ixgbe_setup_fc(struct ixgbe_hw *hw)
 	 * we link at 10G, the 1G advertisement is harmless and vice versa.
 	 */
 	switch (hw->phy.media_type) {
+	case ixgbe_media_type_backplane:
+		/* some MAC's need RMW protection on AUTOC */
+		ret_val = hw->mac.ops.prot_autoc_read(hw, &locked, &reg_bp);
+		if (ret_val != IXGBE_SUCCESS)
+			goto out;
+
+		/* only backplane uses autoc so fall though */
 	case ixgbe_media_type_fiber_fixed:
 	case ixgbe_media_type_fiber_qsfp:
 	case ixgbe_media_type_fiber:
-	case ixgbe_media_type_backplane:
 		reg = IXGBE_READ_REG(hw, IXGBE_PCS1GANA);
-		reg_bp = IXGBE_READ_REG(hw, IXGBE_AUTOC);
+
 		break;
 	case ixgbe_media_type_copper:
 		hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_ADVT,
@@ -357,35 +366,16 @@ int32_t ixgbe_setup_fc(struct ixgbe_hw *hw)
 	 */
 	if (hw->phy.media_type == ixgbe_media_type_backplane) {
 		reg_bp |= IXGBE_AUTOC_AN_RESTART;
-		/* Need the SW/FW semaphore around AUTOC writes if 82599 and
-		 * LESM is on, likewise reset_pipeline requries the lock as
-		 * it also writes AUTOC.
-		 */
-		if ((hw->mac.type == ixgbe_mac_82599EB) &&
-		    ixgbe_verify_lesm_fw_enabled(hw)) {
-			ret_val = hw->mac.ops.acquire_swfw_sync(hw,
-							IXGBE_GSSR_MAC_CSR_SM);
-			if (ret_val != IXGBE_SUCCESS) {
-				ret_val = IXGBE_ERR_SWFW_SYNC;
-				goto out;
-			}
-			got_lock = TRUE;
-		}
-
-		IXGBE_WRITE_REG(hw, IXGBE_AUTOC, reg_bp);
-		if (hw->mac.type == ixgbe_mac_82599EB)
-			ixgbe_reset_pipeline(hw);
-
-		if (got_lock)
-			hw->mac.ops.release_swfw_sync(hw,
-						      IXGBE_GSSR_MAC_CSR_SM);
+		ret_val = hw->mac.ops.prot_autoc_write(hw, reg_bp, locked);
+		if (ret_val)
+			goto out;
 	} else if ((hw->phy.media_type == ixgbe_media_type_copper) &&
 		    (ixgbe_device_supports_autoneg_fc(hw))) {
 		hw->phy.ops.write_reg(hw, IXGBE_MDIO_AUTO_NEG_ADVT,
 				      IXGBE_MDIO_AUTO_NEG_DEV_TYPE, reg_cu);
 	}
 
-	DEBUGOUT1("Set up FC; IXGBE_AUTOC = 0x%08X\n", reg);
+	DEBUGOUT1("Set up FC; PCS1GLCTL = 0x%08X\n", reg);
 out:
 	return ret_val;
 }
@@ -401,7 +391,7 @@ out:
  **/
 int32_t ixgbe_start_hw_generic(struct ixgbe_hw *hw)
 {
-	int32_t ret_val;
+	int32_t ret_val = IXGBE_SUCCESS;
 	uint32_t ctrl_ext;
 
 	DEBUGFUNC("ixgbe_start_hw_generic");
@@ -424,9 +414,11 @@ int32_t ixgbe_start_hw_generic(struct ixgbe_hw *hw)
 	IXGBE_WRITE_FLUSH(hw);
 
 	/* Setup flow control */
-	ret_val = ixgbe_setup_fc(hw);
-	if (ret_val != IXGBE_SUCCESS)
-		goto out;
+	if (hw->mac.ops.setup_fc) {
+		ret_val = hw->mac.ops.setup_fc(hw);
+		if (ret_val != IXGBE_SUCCESS)
+			goto out;
+	}
 
 	/* Clear adapter stopped flag */
 	hw->adapter_stopped = FALSE;
@@ -2392,8 +2384,7 @@ int32_t ixgbe_fc_autoneg_fiber(struct ixgbe_hw *hw)
 	linkstat = IXGBE_READ_REG(hw, IXGBE_PCS1GLSTA);
 	if ((!!(linkstat & IXGBE_PCS1GLSTA_AN_COMPLETE) == 0) ||
 	    (!!(linkstat & IXGBE_PCS1GLSTA_AN_TIMED_OUT) == 1)) {
-		ERROR_REPORT1(IXGBE_ERROR_POLLING,
-			     "Auto-Negotiation did not complete or timed out");
+		DEBUGOUT("Auto-Negotiation did not complete or timed out\n");
 		goto out;
 	}
 
@@ -2428,16 +2419,14 @@ int32_t ixgbe_fc_autoneg_backplane(struct ixgbe_hw *hw)
 	 */
 	links = IXGBE_READ_REG(hw, IXGBE_LINKS);
 	if ((links & IXGBE_LINKS_KX_AN_COMP) == 0) {
-		ERROR_REPORT1(IXGBE_ERROR_POLLING,
-			     "Auto-Negotiation did not complete");
+		DEBUGOUT("Auto-Negotiation did not complete\n");
 		goto out;
 	}
 
 	if (hw->mac.type == ixgbe_mac_82599EB) {
 		links2 = IXGBE_READ_REG(hw, IXGBE_LINKS2);
 		if ((links2 & IXGBE_LINKS2_AN_SUPPORTED) == 0) {
-			ERROR_REPORT1(IXGBE_ERROR_UNSUPPORTED,
-				     "Link partner is not AN enabled");
+			DEBUGOUT("Link partner is not AN enabled\n");
 			goto out;
 		}
 	}
@@ -2665,7 +2654,7 @@ out:
  *  Acquires the SWFW semaphore through the GSSR register for the specified
  *  function (CSR, PHY0, PHY1, EEPROM, Flash)
  **/
-int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
+int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint32_t mask)
 {
 	uint32_t gssr = 0;
 	uint32_t swmask = mask;
@@ -2712,7 +2701,7 @@ int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
  *  Releases the SWFW semaphore through the GSSR register for the specified
  *  function (CSR, PHY0, PHY1, EEPROM, Flash)
  **/
-void ixgbe_release_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
+void ixgbe_release_swfw_sync(struct ixgbe_hw *hw, uint32_t mask)
 {
 	uint32_t gssr;
 	uint32_t swmask = mask;
@@ -2766,6 +2755,37 @@ int32_t ixgbe_disable_sec_rx_path_generic(struct ixgbe_hw *hw)
 }
 
 /**
+ *  prot_autoc_read_generic - Hides MAC differences needed for AUTOC read
+ *  @hw: pointer to hardware structure
+ *  @reg_val: Value we read from AUTOC
+ *
+ *  The default case requires no protection so just to the register read.
+ */
+int32_t prot_autoc_read_generic(struct ixgbe_hw *hw, bool *locked,
+				uint32_t *reg_val)
+{
+	*locked = FALSE;
+	*reg_val = IXGBE_READ_REG(hw, IXGBE_AUTOC);
+	return IXGBE_SUCCESS;
+}
+
+/**
+ * prot_autoc_write_generic - Hides MAC differences needed for AUTOC write
+ * @hw: pointer to hardware structure
+ * @reg_val: value to write to AUTOC
+ * @locked: bool to indicate whether the SW/FW lock was already taken by
+ *           previous read.
+ *
+ * The default case requires no protection so just to the register write.
+ */
+int32_t prot_autoc_write_generic(struct ixgbe_hw *hw, uint32_t reg_val,
+				 bool locked)
+{
+	IXGBE_WRITE_REG(hw, IXGBE_AUTOC, reg_val);
+	return IXGBE_SUCCESS;
+}
+
+/**
  *  ixgbe_enable_sec_rx_path_generic - Enables the receive data path
  *  @hw: pointer to hardware structure
  *
@@ -2813,9 +2833,10 @@ int32_t ixgbe_blink_led_start_generic(struct ixgbe_hw *hw, uint32_t index)
 {
 	ixgbe_link_speed speed = 0;
 	bool link_up = 0;
-	uint32_t autoc_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC);
+	uint32_t autoc_reg = 0;
 	uint32_t led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
 	int32_t ret_val = IXGBE_SUCCESS;
+	bool locked = FALSE;
 
 	DEBUGFUNC("ixgbe_blink_led_start_generic");
 
@@ -2826,29 +2847,18 @@ int32_t ixgbe_blink_led_start_generic(struct ixgbe_hw *hw, uint32_t index)
 	hw->mac.ops.check_link(hw, &speed, &link_up, FALSE);
 
 	if (!link_up) {
-		/* Need the SW/FW semaphore around AUTOC writes if 82599 and
-		 * LESM is on.
-		 */
-		bool got_lock = FALSE;
-		if ((hw->mac.type == ixgbe_mac_82599EB) &&
-		    ixgbe_verify_lesm_fw_enabled(hw)) {
-			ret_val = hw->mac.ops.acquire_swfw_sync(hw,
-							IXGBE_GSSR_MAC_CSR_SM);
-			if (ret_val != IXGBE_SUCCESS) {
-				ret_val = IXGBE_ERR_SWFW_SYNC;
-				goto out;
-			}
-			got_lock = TRUE;
-		}
+		ret_val = hw->mac.ops.prot_autoc_read(hw, &locked, &autoc_reg);
+		if (ret_val != IXGBE_SUCCESS)
+			goto out;
 
 		autoc_reg |= IXGBE_AUTOC_AN_RESTART;
 		autoc_reg |= IXGBE_AUTOC_FLU;
-		IXGBE_WRITE_REG(hw, IXGBE_AUTOC, autoc_reg);
-		IXGBE_WRITE_FLUSH(hw);
 
-		if (got_lock)
-			hw->mac.ops.release_swfw_sync(hw,
-						      IXGBE_GSSR_MAC_CSR_SM);
+		ret_val = hw->mac.ops.prot_autoc_write(hw, autoc_reg, locked);
+		if (ret_val != IXGBE_SUCCESS)
+			goto out;
+
+		IXGBE_WRITE_FLUSH(hw);
 		msec_delay(10);
 	}
 
@@ -2868,35 +2878,23 @@ out:
  **/
 int32_t ixgbe_blink_led_stop_generic(struct ixgbe_hw *hw, uint32_t index)
 {
-	uint32_t autoc_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC);
+	uint32_t autoc_reg = 0;
 	uint32_t led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
 	int32_t ret_val = IXGBE_SUCCESS;
-	bool got_lock = FALSE;
+	bool locked = FALSE;
 
 	DEBUGFUNC("ixgbe_blink_led_stop_generic");
-	/* Need the SW/FW semaphore around AUTOC writes if 82599 and
-	 * LESM is on.
-	 */
-	if ((hw->mac.type == ixgbe_mac_82599EB) &&
-	    ixgbe_verify_lesm_fw_enabled(hw)) {
-		ret_val = hw->mac.ops.acquire_swfw_sync(hw,
-						IXGBE_GSSR_MAC_CSR_SM);
-		if (ret_val != IXGBE_SUCCESS) {
-			ret_val = IXGBE_ERR_SWFW_SYNC;
-			goto out;
-		}
-		got_lock = TRUE;
-	}
+
+	ret_val = hw->mac.ops.prot_autoc_read(hw, &locked, &autoc_reg);
+	if (ret_val != IXGBE_SUCCESS)
+		goto out;
 
 	autoc_reg &= ~IXGBE_AUTOC_FLU;
 	autoc_reg |= IXGBE_AUTOC_AN_RESTART;
-	IXGBE_WRITE_REG(hw, IXGBE_AUTOC, autoc_reg);
 
-	if (hw->mac.type == ixgbe_mac_82599EB)
-		ixgbe_reset_pipeline(hw);
-
-	if (got_lock)
-		hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_MAC_CSR_SM);
+	ret_val = hw->mac.ops.prot_autoc_write(hw, autoc_reg, locked);
+	if (ret_val != IXGBE_SUCCESS)
+		goto out;
 
 	led_reg &= ~IXGBE_LED_MODE_MASK(index);
 	led_reg &= ~IXGBE_LED_BLINK(index);
@@ -4172,22 +4170,6 @@ int32_t ixgbe_init_uta_tables(struct ixgbe_hw *hw)
 {
 	if (hw->mac.ops.init_uta_tables)
 		return hw->mac.ops.init_uta_tables(hw);
-	else
-		return IXGBE_NOT_IMPLEMENTED;
-}
-
-bool ixgbe_verify_lesm_fw_enabled(struct ixgbe_hw *hw)
-{
-	if (hw->mac.ops.verify_lesm_fw_enabled)
-		return hw->mac.ops.verify_lesm_fw_enabled(hw);
-	else
-		return IXGBE_NOT_IMPLEMENTED;
-}
-
-int32_t ixgbe_reset_pipeline(struct ixgbe_hw *hw)
-{
-	if (hw->mac.ops.reset_pipeline)
-		return hw->mac.ops.reset_pipeline(hw);
 	else
 		return IXGBE_NOT_IMPLEMENTED;
 }

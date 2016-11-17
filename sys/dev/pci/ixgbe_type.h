@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.27 2016/11/17 20:44:04 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.28 2016/11/17 21:08:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3406,8 +3406,10 @@ struct ixgbe_mac_operations {
 	int32_t (*enable_rx_dma)(struct ixgbe_hw *, uint32_t);
 	int32_t (*disable_sec_rx_path)(struct ixgbe_hw *);
 	int32_t (*enable_sec_rx_path)(struct ixgbe_hw *);
-	int32_t (*acquire_swfw_sync)(struct ixgbe_hw *, uint16_t);
-	void (*release_swfw_sync)(struct ixgbe_hw *, uint16_t);
+	int32_t (*acquire_swfw_sync)(struct ixgbe_hw *, uint32_t);
+	void (*release_swfw_sync)(struct ixgbe_hw *, uint32_t);
+	int32_t (*prot_autoc_read)(struct ixgbe_hw *, bool *, uint32_t *);
+	int32_t (*prot_autoc_write)(struct ixgbe_hw *, uint32_t, bool);
 
 	/* Link */
 	void (*disable_tx_laser)(struct ixgbe_hw *);
@@ -3453,8 +3455,6 @@ struct ixgbe_mac_operations {
 	void (*enable_rx)(struct ixgbe_hw *hw);
 
 	/* Misc */
-	bool (*verify_lesm_fw_enabled)(struct ixgbe_hw *);
-	int32_t (*reset_pipeline)(struct ixgbe_hw *);
 	void (*stop_mac_link_on_d3)(struct ixgbe_hw *);
 };
 
@@ -3508,7 +3508,6 @@ struct ixgbe_mac_info {
 	uint32_t max_tx_queues;
 	uint32_t max_rx_queues;
 	uint32_t orig_autoc;
-	uint32_t cached_autoc;
 	bool get_link_status;
 	uint32_t orig_autoc2;
 	uint32_t max_msix_vectors;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.25 2016/11/17 20:44:04 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.26 2016/11/17 21:08:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -195,14 +195,17 @@ int32_t ixgbe_enable_rx_dma_generic(struct ixgbe_hw *hw, uint32_t regval);
 int32_t ixgbe_disable_sec_rx_path_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_enable_sec_rx_path_generic(struct ixgbe_hw *hw);
 
-int32_t ixgbe_setup_fc(struct ixgbe_hw *hw);
 int32_t ixgbe_fc_enable_generic(struct ixgbe_hw *hw);
 void ixgbe_fc_autoneg(struct ixgbe_hw *hw);
+int32_t ixgbe_setup_fc_generic(struct ixgbe_hw *hw);
 
 int32_t ixgbe_validate_mac_addr(uint8_t *mac_addr);
-int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint16_t mask);
-void    ixgbe_release_swfw_sync(struct ixgbe_hw *hw, uint16_t mask);
+int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint32_t mask);
+void    ixgbe_release_swfw_sync(struct ixgbe_hw *hw, uint32_t mask);
 int32_t ixgbe_disable_pcie_master(struct ixgbe_hw *hw);
+
+int32_t prot_autoc_read_generic(struct ixgbe_hw *hw, bool *, uint32_t *reg_val);
+int32_t prot_autoc_write_generic(struct ixgbe_hw *hw, uint32_t reg_val, bool locked);
 
 int32_t ixgbe_blink_led_start_generic(struct ixgbe_hw *hw, uint32_t index);
 int32_t ixgbe_blink_led_stop_generic(struct ixgbe_hw *hw, uint32_t index);
@@ -267,10 +270,7 @@ int32_t ixgbe_set_rar(struct ixgbe_hw *hw, uint32_t index, uint8_t *addr,
 int32_t ixgbe_set_vmdq(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq);
 int32_t ixgbe_clear_vmdq(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq);
 int32_t ixgbe_init_uta_tables(struct ixgbe_hw *hw);
-bool ixgbe_verify_lesm_fw_enabled(struct ixgbe_hw *hw);
-int32_t ixgbe_reset_pipeline(struct ixgbe_hw *hw);
 
-/* API */
 void ixgbe_add_uc_addr(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq);
 void ixgbe_set_mta(struct ixgbe_hw *hw, uint8_t *mc_addr);
 
@@ -324,8 +324,12 @@ int32_t ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
 int32_t ixgbe_tn_check_overtemp(struct ixgbe_hw *hw);
 int32_t ixgbe_read_i2c_byte_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
 				    uint8_t dev_addr, uint8_t *data);
+int32_t ixgbe_read_i2c_byte_generic_unlocked(struct ixgbe_hw *hw, uint8_t byte_offset,
+					     uint8_t dev_addr, uint8_t *data);
 int32_t ixgbe_write_i2c_byte_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
 				     uint8_t dev_addr, uint8_t data);
+int32_t ixgbe_write_i2c_byte_generic_unlocked(struct ixgbe_hw *hw, uint8_t byte_offset,
+					      uint8_t dev_addr, uint8_t data);
 int32_t ixgbe_read_i2c_eeprom_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
 				      uint8_t *eeprom_data);
 int32_t ixgbe_write_i2c_eeprom_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
