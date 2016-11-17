@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.84 2016/11/16 21:30:37 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.85 2016/11/17 07:33:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -259,6 +259,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*name;
 	void			*ssl;
 	int			 dnserror, status;
+	X509			*x;
 
 	switch (imsg->hdr.type) {
 
@@ -363,7 +364,22 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		mta_io(&s->io, IO_TLSVERIFIED, s->io.arg);
+		x = SSL_get_peer_certificate(s->io.ssl);
+		if (x) {
+			log_info("smtp-out: Server certificate verification %s "
+			    "on session %016"PRIx64,
+			    (s->flags & MTA_VERIFIED) ? "succeeded" : "failed",
+			    s->id);
+			X509_free(x);
+		}
+
+		if (s->use_smtps) {
+			mta_enter_state(s, MTA_BANNER);
+			io_set_read(&s->io);
+		}
+		else
+			mta_enter_state(s, MTA_EHLO);
+
 		io_resume(&s->io, IO_PAUSE_IN);
 		io_reload(&s->io);
 		return;
@@ -1141,7 +1157,6 @@ mta_io(struct io *io, int evt, void *arg)
 	size_t			 len;
 	const char		*error;
 	int			 cont;
-	X509			*x;
 
 	log_trace(TRACE_IO, "mta: %p: %s %s", s, io_strevent(evt),
 	    io_strio(io));
@@ -1170,24 +1185,6 @@ mta_io(struct io *io, int evt, void *arg)
 			io_pause(&s->io, IO_PAUSE_IN);
 			break;
 		}
-
-	case IO_TLSVERIFIED:
-		x = SSL_get_peer_certificate(s->io.ssl);
-		if (x) {
-			log_info("smtp-out: Server certificate verification %s "
-			    "on session %016"PRIx64,
-			    (s->flags & MTA_VERIFIED) ? "succeeded" : "failed",
-			    s->id);
-			X509_free(x);
-		}
-
-		if (s->use_smtps) {
-			mta_enter_state(s, MTA_BANNER);
-			io_set_read(io);
-		}
-		else
-			mta_enter_state(s, MTA_EHLO);
-		break;
 
 	case IO_DATAIN:
 	    nextline:

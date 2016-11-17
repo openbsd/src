@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.290 2016/11/16 21:30:37 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.291 2016/11/17 07:33:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -698,6 +698,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	uint32_t			 msgid;
 	int				 status, success, dnserror;
 	void				*ssl_ctx;
+	X509				*x;
 
 	switch (imsg->hdr.type) {
 	case IMSG_SMTP_DNS_PTR:
@@ -993,7 +994,26 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			smtp_free(s, "SSL certificate check failed");
 			return;
 		}
-		smtp_io(&s->io, IO_TLSVERIFIED, s->io.arg);
+
+		x = SSL_get_peer_certificate(s->io.ssl);
+		if (x) {
+			log_info("%016"PRIx64" smtp "
+			    "event=client-cert-check address=%s host=%s result=\"%s\"",
+			    s->id, ss_to_text(&s->ss), s->hostname,
+			    (s->flags & SF_VERIFIED) ? "success" : "failure");
+			X509_free(x);
+		}
+
+		if (s->listener->flags & F_SMTPS) {
+			stat_increment("smtp.smtps", 1);
+			io_set_write(&s->io);
+			smtp_send_banner(s);
+		}
+		else {
+			stat_increment("smtp.tls", 1);
+			smtp_enter_state(s, STATE_HELO);
+		}
+
 		io_resume(&s->io, IO_PAUSE_IN);
 		return;
 	}
@@ -1238,7 +1258,6 @@ smtp_io(struct io *io, int evt, void *arg)
 	struct smtp_session    *s = arg;
 	char		       *line;
 	size_t			len;
-	X509		       *x;
 
 	log_trace(TRACE_IO, "smtp: %p: %s %s", s, io_strevent(evt),
 	    io_strio(io));
@@ -1266,27 +1285,6 @@ smtp_io(struct io *io, int evt, void *arg)
 		}
 
 		/* No verification required, cascade */
-
-	case IO_TLSVERIFIED:
-		x = SSL_get_peer_certificate(s->io.ssl);
-		if (x) {
-			log_info("%016"PRIx64" smtp "
-			    "event=client-cert-check address=%s host=%s result=\"%s\"",
-			    s->id, ss_to_text(&s->ss), s->hostname,
-			    (s->flags & SF_VERIFIED) ? "success" : "failure");
-			X509_free(x);
-		}
-
-		if (s->listener->flags & F_SMTPS) {
-			stat_increment("smtp.smtps", 1);
-			io_set_write(&s->io);
-			smtp_send_banner(s);
-		}
-		else {
-			stat_increment("smtp.tls", 1);
-			smtp_enter_state(s, STATE_HELO);
-		}
-		break;
 
 	case IO_DATAIN:
 	    nextline:

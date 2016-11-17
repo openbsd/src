@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.27 2016/11/16 21:30:37 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.28 2016/11/17 07:33:06 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -118,7 +118,6 @@ io_strevent(int evt)
 	switch (evt) {
 	CASE(IO_CONNECTED);
 	CASE(IO_TLSREADY);
-	CASE(IO_TLSVERIFIED);
 	CASE(IO_DATAIN);
 	CASE(IO_LOWAT);
 	CASE(IO_DISCONNECTED);

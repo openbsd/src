@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.7 2016/11/16 21:30:37 eric Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.8 2016/11/17 07:33:06 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -20,7 +20,6 @@
 enum {
 	IO_CONNECTED = 0, 	/* connection successful	*/
 	IO_TLSREADY,		/* TLS started successfully	*/
-	IO_TLSVERIFIED,		/* XXX - needs more work	*/
 	IO_TLSERROR,		/* XXX - needs more work	*/
 	IO_DATAIN,		/* new data in input buffer	*/
 	IO_LOWAT,		/* output queue running low	*/
