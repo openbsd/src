@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.26 2016/11/17 09:42:11 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.27 2016/11/17 10:15:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -234,6 +234,15 @@ ofp13_validate_oxm_basic(struct ibuf *ibuf, off_t off, int hasmask,
 			log_debug("\t\t%s mask %s", buf, maskbuf);
 		} else
 			log_debug("\t\t%s", buf);
+		break;
+
+	case OFP_XM_T_ETH_TYPE:
+		if (hasmask)
+			return (-1);
+		len = sizeof(*ui16);
+		if ((ui16 = ibuf_seek(ibuf, off, len)) == NULL)
+			return (-1);
+		log_debug("\t\t0x%04x", ntohs(*ui16));
 		break;
 
 	case OFP_XM_T_ARP_OP:
@@ -1958,3 +1967,4 @@ ofp13_tablemiss_sendctrl(struct switchd *sc, struct switch_connection *con,
 	ibuf_release(ibuf);
 	return (rv);
 }
+
