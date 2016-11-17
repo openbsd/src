@@ -1,4 +1,4 @@
-# $OpenBSD: args-packet-jumbo.pm,v 1.3 2016/11/16 11:36:03 rzalamena Exp $
+# $OpenBSD: args-packet-jumbo.pm,v 1.4 2016/11/17 14:37:55 rzalamena Exp $
 
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 #
@@ -63,7 +63,7 @@ my $topology = {
 			"dest_mac" => "ffffffffffff",
 			"src_ip" => "10.0.0.1",
 			"dest_ip" => "10.255.255.255",
-			"length" => 65469,
+			"length" => 65451,
 			"count" => 3,
 			"ofp_response" => main::OFP_T_PACKET_OUT()
 		}
@@ -74,7 +74,7 @@ sub init {
 	my $class = shift;
 	my $sock = shift;
 	my $self = { "count" => 0,
-	    "sock" => $sock, "version" => main::OFP_V_1_0() };
+	    "sock" => $sock, "version" => main::OFP_V_1_3() };
 
 	bless($self, $class);
 	main::ofp_hello($self);
@@ -90,10 +90,22 @@ sub init {
 			$self->{count}++;
 			$ofp = main::packet_send($self, $packet);
 
-			if (defined($packet->{ofp_response})) {
-				if ($ofp->{type} != $packet->{ofp_response}) {
+			if (not defined($packet->{ofp_response})) {
+				continue;
+			}
+
+			if ($ofp->{type} != $packet->{ofp_response}) {
+				main::fatal($class,
+				    "invalid ofp response type " .
+				    $ofp->{type});
+			}
+
+			# Flow-mod also expects an packet-out.
+			if ($packet->{ofp_response} == main::OFP_T_FLOW_MOD()) {
+				$ofp = main::ofp_input($self);
+				if ($ofp->{type} != main::OFP_T_PACKET_OUT()) {
 					main::fatal($class,
-					    "invalid ofp response type ".
+					    "invalid ofp response type " .
 					    $ofp->{type});
 				}
 			}

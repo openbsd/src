@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $OpenBSD: run.pl,v 1.7 2016/11/16 11:36:03 rzalamena Exp $
+# $OpenBSD: run.pl,v 1.8 2016/11/17 14:37:55 rzalamena Exp $
 
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 #
@@ -98,10 +98,17 @@ sub ofp_output {
 	$self->{sock}->send($pkt);
 }
 
+sub ofp_match_align {
+	my $matchlen = shift;
+
+	return (($matchlen + (8 - 1)) & (~(8 - 1)));
+}
+
 sub ofp_hello {
 	my $class;
 	my $self = shift;
 	my $hello = NetPacket::OFP->decode() or fatal($class, "new packet");
+	my $features;
 	my $pkt;
 
 	$hello->{version} = $self->{version};
@@ -111,7 +118,37 @@ sub ofp_hello {
 
 	# XXX timeout
 	ofp_output($self, $pkt);
-	return (ofp_input($self));
+	$hello = ofp_input($self);
+
+	# OpenFlow >= 1.3 wants features, set-config and flow-mod.
+	if ($self->{version} == OFP_V_1_3()) {
+		$features = ofp_input($self);
+		if ($features->{type} != OFP_T_FEATURES_REQUEST()) {
+			fatal($class, 'Unexpected packet type ' .
+			    $features->{type});
+		}
+
+		$pkt = NetPacket::OFP->decode() or
+		    fatal($class, 'new packet');
+		$pkt->{version} = $self->{version};
+		$pkt->{type} = OFP_T_FEATURES_REPLY();
+		$pkt->{xid} = $features->{xid};
+		$pkt->{data} = pack('QNCCxxNN',
+		    0xFFAABBCCDDEEFF,		# datapath_id
+		    0,				# nbuffers
+		    1,				# ntables
+		    0,				# aux_id
+		    0x00000001,			# capabilities
+		    0x00000001			# actions
+		    );
+		ofp_output($self, NetPacket::OFP->encode($pkt));
+
+		# Just read set-config and flow-mod
+		ofp_input($self);
+		ofp_input($self);
+	}
+
+	return ($hello);
 }
 
 sub ofp_packet_in {
@@ -121,13 +158,40 @@ sub ofp_packet_in {
 	my $pktin = NetPacket::OFP->decode() or fatal($class, "new packet");
 	my $pkt;
 
-	$pkt = pack('NnnCxa*',
-	    OFP_PKTOUT_NO_BUFFER(),			# buffer_id
-	    length($data),				# total_len
-	    $self->{port} || OFP_PORT_NORMAL(),		# port
-	    OFP_PKTIN_REASON_NO_MATCH(),		# reason
-	    $data					# data
-	    );
+	if ($self->{version} == OFP_V_1_0()) {
+		$pkt = pack('NnnCxa*',
+		    OFP_PKTOUT_NO_BUFFER(),			# buffer_id
+		    length($data),				# total_len
+		    $self->{port} || OFP_PORT_NORMAL(),		# port
+		    OFP_PKTIN_REASON_NO_MATCH(),		# reason
+		    $data					# data
+		    );
+	} else {
+		my $match = pack('nCCN',
+		    OFP_OXM_C_OPENFLOW_BASIC(),			# class
+		    OFP_XM_T_IN_PORT(),				# field + mask
+		    4,						# length
+		    $self->{port} || OFP_PORT_NORMAL()		# in_port
+		    );
+		# matchlen is OXMs + ofp_match header.
+		my $matchlen = 4 + length($match);
+		my $padding = ofp_match_align($matchlen) - $matchlen;
+		if ($padding > 0) {
+			$match .= pack("x[$padding]");
+		}
+
+		$pkt = pack('NnCCQnna*xxa*',
+		    OFP_PKTOUT_NO_BUFFER(),			# buffer_id
+		    length($data),				# total_len
+		    OFP_PKTIN_REASON_NO_MATCH(),		# reason
+		    0,						# table_id
+		    0x0000000000000000,				# cookie
+		    OFP_MATCH_OXM(),				# match_type
+		    $matchlen,					# match_len
+		    $match,					# OXM matches
+		    $data					# data
+		    );
+	}
 
 	$pktin->{version} = $self->{version};
 	$pktin->{type} = OFP_T_PACKET_IN();
