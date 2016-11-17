@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.28 2016/11/17 12:40:56 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.29 2016/11/17 16:24:00 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -993,7 +993,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 	ssize_t				 len, mlen;
 	uint32_t			 srcport = 0, dstport;
 	int				 addflow = 0, sendbuffer = 0;
-	off_t			 	 off, moff;
+	off_t				 off, moff;
 	void				*ptr;
 	struct ofp_instruction_actions	*ia;
 
@@ -1562,7 +1562,8 @@ ofp13_multipart_request_validate(struct switchd *sc,
 
 	type = ntohs(mp->mp_type);
 	flags = ntohs(mp->mp_flags);
-	log_debug("\ttype %s flags %#04x", print_map(type, ofp_mp_t_map), flags);
+	log_debug("\ttype %s flags %#04x",
+	    print_map(type, ofp_mp_t_map), flags);
 
 	totallen = ntohs(oh->oh_length);
 	off += sizeof(*mp);
@@ -1582,7 +1583,8 @@ ofp13_multipart_request_validate(struct switchd *sc,
 		matchtype = ntohs(om->om_type);
 		matchlen = ntohs(om->om_length);
 		log_debug("\ttable_id %d out_port %u out_group %u "
-		    "cookie %llu mask %llu match type %s length %d (padded to %d)",
+		    "cookie %llu mask %llu match type %s length %d "
+		    "(padded to %d)",
 		    fsr->fsr_table_id, ntohl(fsr->fsr_out_port),
 		    ntohl(fsr->fsr_out_group), be64toh(fsr->fsr_cookie),
 		    be64toh(fsr->fsr_cookie_mask),

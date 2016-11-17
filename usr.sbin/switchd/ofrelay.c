@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrelay.c,v 1.7 2016/11/11 16:59:33 reyk Exp $	*/
+/*	$OpenBSD: ofrelay.c,v 1.8 2016/11/17 16:24:00 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -304,7 +304,7 @@ void
 ofrelay_bufput(struct switch_connection *con, struct ibuf *buf)
 {
 	/* Just reset the buffer */
-	ofrelay_bufget(con, buf);	
+	ofrelay_bufget(con, buf);
 }
 
 int
