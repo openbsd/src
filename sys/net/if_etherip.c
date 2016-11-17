@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.8 2016/11/14 03:51:53 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.9 2016/11/17 13:37:20 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -215,7 +215,7 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct sockaddr_storage *src, *dst;
 	struct proc *p = curproc;
-	int s, error = 0;
+	int error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -280,11 +280,9 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(p, 0)) != 0)
 			break;
 
-		s = splsoftnet();
 		ifp->if_flags &= ~IFF_RUNNING;
 		memset(&sc->sc_src, 0, sizeof(sc->sc_src));
 		memset(&sc->sc_dst, 0, sizeof(sc->sc_dst));
-		splx(s);
 		break;
 
 	case SIOCGLIFPHYADDR:
@@ -316,12 +314,11 @@ etherip_set_tunnel_addr(struct ifnet *ifp, struct sockaddr_storage *src,
     struct sockaddr_storage *dst)
 {
 	struct etherip_softc *sc, *tsc;
-	int s, error = 0;
+	int error = 0;
 
 	sc  = ifp->if_softc;
 
-	s = splsoftnet();
-	LIST_FOREACH (tsc, &etherip_softc_list, sc_entry) {
+	LIST_FOREACH(tsc, &etherip_softc_list, sc_entry) {
 		if (tsc == sc)
 			continue;
 
@@ -342,8 +339,6 @@ etherip_set_tunnel_addr(struct ifnet *ifp, struct sockaddr_storage *src,
 	memcpy(&sc->sc_src, src, src->ss_len);
 	memcpy(&sc->sc_dst, dst, dst->ss_len);
 out:
-	splx(s);
-
 	return error;
 }
 
