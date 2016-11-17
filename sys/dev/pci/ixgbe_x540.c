@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x540.c,v 1.6 2016/11/17 12:21:27 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_x540.c,v 1.7 2016/11/17 19:26:57 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -99,6 +99,7 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	/* PHY */
 	phy->ops.init = ixgbe_init_phy_ops_generic;
 	phy->ops.reset = NULL;
+	phy->ops.set_phy_power = ixgbe_set_copper_phy_power;
 
 	/* MAC */
 	mac->ops.reset_hw = ixgbe_reset_hw_X540;
@@ -132,8 +133,8 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	mac->vft_size		= IXGBE_X540_VFT_TBL_SIZE;
 	mac->num_rar_entries	= IXGBE_X540_RAR_ENTRIES;
 	mac->rx_pb_size		= IXGBE_X540_RX_PB_SIZE;
-	mac->max_tx_queues	= IXGBE_X540_MAX_TX_QUEUES;
 	mac->max_rx_queues	= IXGBE_X540_MAX_RX_QUEUES;
+	mac->max_tx_queues	= IXGBE_X540_MAX_TX_QUEUES;
 	mac->max_msix_vectors	= 0 /*ixgbe_get_pcie_msix_count_generic(hw)*/;
 
 	hw->mbx.ops.init_params = ixgbe_init_mbx_params_pf;
@@ -465,8 +466,7 @@ int32_t ixgbe_validate_eeprom_checksum_X540(struct ixgbe_hw *hw,
 
 	DEBUGFUNC("ixgbe_validate_eeprom_checksum_X540");
 
-	/*
-	 * Read the first word from the EEPROM. If this times out or fails, do
+	/* Read the first word from the EEPROM. If this times out or fails, do
 	 * not continue or we could be in for a very long wait while every
 	 * EEPROM read fails
 	 */
@@ -562,7 +562,7 @@ int32_t ixgbe_update_eeprom_checksum_X540(struct ixgbe_hw *hw)
 int32_t ixgbe_update_flash_X540(struct ixgbe_hw *hw)
 {
 	uint32_t flup;
-	int32_t status = IXGBE_ERR_EEPROM;
+	int32_t status;
 
 	DEBUGFUNC("ixgbe_update_flash_X540");
 
@@ -620,7 +620,7 @@ int32_t ixgbe_poll_flash_update_done_X540(struct ixgbe_hw *hw)
 			status = IXGBE_SUCCESS;
 			break;
 		}
-		usec_delay(5);
+		msec_delay(5);
 	}
 	return status;
 }

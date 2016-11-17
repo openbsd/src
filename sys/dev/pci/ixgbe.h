@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.23 2016/09/25 14:58:00 fcambus Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.24 2016/11/17 19:26:57 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -151,8 +151,8 @@ extern void ixgbe_write_pci_cfg(struct ixgbe_hw *, uint32_t, uint16_t);
 	bus_space_write_4(((struct ixgbe_osdep *)(a)->back)->os_memt,	\
 	((struct ixgbe_osdep *)(a)->back)->os_memh, (reg + ((offset) << 2)), value)
 
+/* MAC Operations */
 uint16_t ixgbe_get_pcie_msix_count_generic(struct ixgbe_hw *hw);
-
 int32_t ixgbe_init_ops_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_init_hw_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_start_hw_generic(struct ixgbe_hw *hw);
@@ -189,8 +189,6 @@ int32_t ixgbe_init_rx_addrs_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_update_mc_addr_list_generic(struct ixgbe_hw *hw, uint8_t *mc_addr_list,
 					  uint32_t mc_addr_count,
 					  ixgbe_mc_addr_itr func, bool clear);
-int32_t ixgbe_update_uc_addr_list_generic(struct ixgbe_hw *hw, uint8_t *addr_list,
-					  uint32_t addr_count, ixgbe_mc_addr_itr func);
 int32_t ixgbe_enable_mc_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_disable_mc_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_enable_rx_dma_generic(struct ixgbe_hw *hw, uint32_t regval);
@@ -209,9 +207,6 @@ int32_t ixgbe_disable_pcie_master(struct ixgbe_hw *hw);
 int32_t ixgbe_blink_led_start_generic(struct ixgbe_hw *hw, uint32_t index);
 int32_t ixgbe_blink_led_stop_generic(struct ixgbe_hw *hw, uint32_t index);
 
-int32_t ixgbe_get_san_mac_addr_generic(struct ixgbe_hw *hw, uint8_t *san_mac_addr);
-int32_t ixgbe_set_san_mac_addr_generic(struct ixgbe_hw *hw, uint8_t *san_mac_addr);
-
 int32_t ixgbe_set_vmdq_generic(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq);
 int32_t ixgbe_clear_vmdq_generic(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq);
 int32_t ixgbe_insert_mac_addr_generic(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq);
@@ -224,20 +219,49 @@ int32_t ixgbe_clear_vfta_generic(struct ixgbe_hw *hw);
 
 int32_t ixgbe_check_mac_link_generic(struct ixgbe_hw *hw,
 				     ixgbe_link_speed *speed,
-				     bool *link_up, bool link_up_wait_to_complete);
+				     bool *link_up,
+				     bool link_up_wait_to_complete);
 
-int32_t ixgbe_get_device_caps_generic(struct ixgbe_hw *hw, uint16_t *device_caps);
-void ixgbe_enable_relaxed_ordering_gen2(struct ixgbe_hw *hw);
+int32_t ixgbe_get_device_caps_generic(struct ixgbe_hw *hw,
+				      uint16_t *device_caps);
+int32_t ixgbe_host_interface_command(struct ixgbe_hw *hw, uint32_t *buffer,
+				     uint32_t length, uint32_t timeout,
+				     bool return_data);
 void ixgbe_clear_tx_pending(struct ixgbe_hw *hw);
 
-/* MAC Operations */
+bool ixgbe_mng_present(struct ixgbe_hw *hw);
+bool ixgbe_mng_enabled(struct ixgbe_hw *hw);
+
+void ixgbe_disable_rx_generic(struct ixgbe_hw *hw);
+void ixgbe_enable_rx_generic(struct ixgbe_hw *hw);
+int32_t ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
+					      ixgbe_link_speed speed,
+					      bool autoneg_wait_to_complete);
+void ixgbe_set_soft_rate_select_speed(struct ixgbe_hw *hw,
+				      ixgbe_link_speed speed);
+
 int32_t ixgbe_init_shared_code(struct ixgbe_hw *hw);
+
+int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw);
+int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw);
+int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw);
+int32_t ixgbe_init_ops_X550(struct ixgbe_hw *hw);
+int32_t ixgbe_init_ops_X550EM(struct ixgbe_hw *hw);
+
+int32_t ixgbe_set_mac_type(struct ixgbe_hw *hw);
 int32_t ixgbe_init_hw(struct ixgbe_hw *hw);
 enum ixgbe_media_type ixgbe_get_media_type(struct ixgbe_hw *hw);
 int32_t ixgbe_identify_phy(struct ixgbe_hw *hw);
+void ixgbe_flap_tx_laser(struct ixgbe_hw *hw);
+int32_t ixgbe_setup_link(struct ixgbe_hw *hw, ixgbe_link_speed speed,
+			 bool autoneg_wait_to_complete);
+int32_t ixgbe_setup_mac_link(struct ixgbe_hw *hw, ixgbe_link_speed speed,
+			 bool autoneg_wait_to_complete);
 int32_t ixgbe_check_link(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 			 bool *link_up, bool link_up_wait_to_complete);
-void ixgbe_flap_tx_laser(struct ixgbe_hw *hw);
+int32_t ixgbe_get_link_capabilities(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
+				    bool *autoneg);
+
 int32_t ixgbe_set_rar(struct ixgbe_hw *hw, uint32_t index, uint8_t *addr,
 		      uint32_t vmdq, uint32_t enable_addr);
 int32_t ixgbe_set_vmdq(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq);
@@ -250,9 +274,8 @@ int32_t ixgbe_reset_pipeline(struct ixgbe_hw *hw);
 void ixgbe_add_uc_addr(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq);
 void ixgbe_set_mta(struct ixgbe_hw *hw, uint8_t *mc_addr);
 
-int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw);
-int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw);
-int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw);
+void ixgbe_disable_rx(struct ixgbe_hw *hw);
+void ixgbe_enable_rx(struct ixgbe_hw *hw);
 
 /* PHY */
 int32_t ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw);
@@ -276,6 +299,7 @@ int32_t ixgbe_setup_phy_link_speed_generic(struct ixgbe_hw *hw,
 int32_t ixgbe_get_copper_link_capabilities_generic(struct ixgbe_hw *hw,
 						   ixgbe_link_speed *speed,
 						   bool *autoneg);
+int32_t ixgbe_check_reset_blocked(struct ixgbe_hw *hw);
 
 /* PHY specific */
 int32_t ixgbe_check_phy_link_tnx(struct ixgbe_hw *hw,
@@ -288,8 +312,12 @@ int32_t ixgbe_get_phy_firmware_version_generic(struct ixgbe_hw *hw,
 					       uint16_t *firmware_version);
 
 int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw);
+bool ixgbe_is_sfp(struct ixgbe_hw *hw);
+int32_t ixgbe_set_copper_phy_power(struct ixgbe_hw *hw, bool on);
 int32_t ixgbe_identify_module_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw);
+int32_t ixgbe_get_supported_phy_sfp_layer_generic(struct ixgbe_hw *hw);
+int32_t ixgbe_identify_qsfp_module_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
 					    uint16_t *list_offset,
 					    uint16_t *data_offset);

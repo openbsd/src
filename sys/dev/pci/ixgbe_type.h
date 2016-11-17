@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.25 2016/11/16 23:19:29 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.26 2016/11/17 19:26:57 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3414,9 +3414,11 @@ struct ixgbe_mac_operations {
 	void (*enable_tx_laser)(struct ixgbe_hw *);
 	void (*flap_tx_laser)(struct ixgbe_hw *);
 	int32_t (*setup_link)(struct ixgbe_hw *, ixgbe_link_speed, bool);
+	int32_t (*setup_mac_link)(struct ixgbe_hw *, ixgbe_link_speed, bool);
 	int32_t (*check_link)(struct ixgbe_hw *, ixgbe_link_speed *, bool *, bool);
 	int32_t (*get_link_capabilities)(struct ixgbe_hw *, ixgbe_link_speed *,
 					 bool *);
+	void (*set_rate_select_speed)(struct ixgbe_hw *, ixgbe_link_speed);
 
 	/* LED */
 	int32_t (*led_on)(struct ixgbe_hw *, uint32_t);
@@ -3444,6 +3446,11 @@ struct ixgbe_mac_operations {
 
 	/* Flow Control */
 	int32_t (*fc_enable)(struct ixgbe_hw *);
+	int32_t (*setup_fc)(struct ixgbe_hw *);
+
+	/* Manageability interface */
+	void (*disable_rx)(struct ixgbe_hw *hw);
+	void (*enable_rx)(struct ixgbe_hw *hw);
 
 	/* Misc */
 	bool (*verify_lesm_fw_enabled)(struct ixgbe_hw *);
@@ -3461,6 +3468,7 @@ struct ixgbe_phy_operations {
 	int32_t (*read_reg_mdi)(struct ixgbe_hw *, uint32_t, uint32_t, uint16_t *);
 	int32_t (*write_reg_mdi)(struct ixgbe_hw *, uint32_t, uint32_t, uint16_t);
 	int32_t (*setup_link)(struct ixgbe_hw *);
+	int32_t (*setup_internal_link)(struct ixgbe_hw *);
 	int32_t (*setup_link_speed)(struct ixgbe_hw *, ixgbe_link_speed, bool);
 	int32_t (*check_link)(struct ixgbe_hw *, ixgbe_link_speed *, bool *);
 	int32_t (*get_firmware_version)(struct ixgbe_hw *, uint16_t *);
@@ -3470,6 +3478,7 @@ struct ixgbe_phy_operations {
 	int32_t (*write_i2c_eeprom)(struct ixgbe_hw *, uint8_t, uint8_t);
 	void (*i2c_bus_clear)(struct ixgbe_hw *);
 	int32_t (*check_overtemp)(struct ixgbe_hw *);
+	int32_t (*set_phy_power)(struct ixgbe_hw *, bool on);
 };
 
 struct ixgbe_eeprom_info {
