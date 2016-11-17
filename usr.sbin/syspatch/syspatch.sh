@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.55 2016/11/17 14:05:46 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.56 2016/11/17 15:15:49 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -182,13 +182,17 @@ ls_installed()
 	### XXX temporary quirks; remove before 6.1
 	local _r
 	if [[ ! -d ${_PDIR}/${_REL} ]]; then
+		[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
 		install -d -m 0755 ${_PDIR}/${_REL}
 	fi
 	if [[ -f /bsd.rollback${_RELINT} ]]; then
+		[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
 		mv /bsd.rollback${_RELINT} /bsd.syspatch${_RELINT}
 	fi
 	( cd ${_PDIR}/${_REL} && for _r in *; do
 		if [[ ${_r} == rollback-syspatch-${_RELINT}-*.tgz ]]; then
+			[[ $(id -u) -ne 0 ]] && \
+				sp_err "${0##*/}: need root privileges"
 			mv ${_r} rollback${_RELINT}${_r#*-syspatch-${_RELINT}}
 		fi
 	done )
