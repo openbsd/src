@@ -1444,7 +1444,9 @@
 ./usr/share/man/man4/loongson/gdiumiic.4
 ./usr/share/man/man4/loongson/glxclk.4
 ./usr/share/man/man4/loongson/glxpcib.4
+./usr/share/man/man4/loongson/htb.4
 ./usr/share/man/man4/loongson/intro.4
+./usr/share/man/man4/loongson/leioc.4
 ./usr/share/man/man4/loongson/mem.4
 ./usr/share/man/man4/loongson/mfokclock.4
 ./usr/share/man/man4/loongson/sisfb.4
