@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.17 2016/11/17 21:13:27 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.18 2016/11/17 21:18:23 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1207,6 +1207,10 @@ int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw)
 	uint32_t i;
 
 	DEBUGFUNC("ixgbe_reset_phy_nl");
+
+	/* Blocked by MNG FW so bail */
+	if (ixgbe_check_reset_blocked(hw))
+		goto out;
 
 	hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_XS_CONTROL,
 			     IXGBE_MDIO_PHY_XS_DEV_TYPE, &phy_data);
