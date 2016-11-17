@@ -1,5 +1,9 @@
 #!/usr/local/bin/python2.7
-# send 2 ping6 fragments with fragmented destination option
+
+print "ping6 fragments with fragmented destination option"
+
+# |OOOO|
+#      |OOOOOOOOOO--------------|
 
 import os
 from addr import *

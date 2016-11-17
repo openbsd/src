@@ -1,6 +1,6 @@
 #!/usr/local/bin/python2.7
-# send ping6 fragments containig destination option extension header
-# and the same as atomic fragments with missing protocol header
+
+print "fragment with dest option and atomic fragment without protocol header"
 
 # |-IP-|-Frag-|-ExtDest-|-ICMP6-|-pay|
 # |-- atomic fragment --|

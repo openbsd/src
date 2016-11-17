@@ -1,8 +1,8 @@
 #!/usr/local/bin/python2.7
-# send atomic udp fragment
 
-# |--------|
-#          |----|
+print "atomic udp fragment"
+
+# |-------------|
 
 import os
 from addr import *

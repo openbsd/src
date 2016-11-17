@@ -1,5 +1,6 @@
 #!/usr/local/bin/python2.7
-# send ping6 fragment without payload with other proto before first fragment
+
+print "ping6 fragment without payload with other proto before first fragment"
 
 # ||
 # |---------|

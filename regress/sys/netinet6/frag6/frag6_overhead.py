@@ -1,5 +1,6 @@
 #!/usr/local/bin/python2.7
-# send ping6 fragment that overlaps the second fragment with the head
+
+print "ping6 fragment that overlaps the second fragment with the head"
 
 # |----|
 #      |----|

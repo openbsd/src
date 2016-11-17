@@ -1,5 +1,6 @@
 #!/usr/local/bin/python2.7
-# send 2 ping6 fragments with missplaced hop-by-hop extension header
+
+print "ping6 fragments with missplaced hop-by-hop extension header"
 
 # |HHHH----------|
 #                |----|

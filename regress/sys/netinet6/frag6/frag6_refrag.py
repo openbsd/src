@@ -1,5 +1,6 @@
 #!/usr/local/bin/python2.7
-# send fragments of a large packet that has to be refragmented by reflector
+
+print "fragments of a large packet that has to be refragmented by reflector"
 
 # |--------|
 #          |------------------|

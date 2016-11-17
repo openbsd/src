@@ -1,6 +1,6 @@
 #!/usr/local/bin/python2.7
-# send ping6 fragment that will overlap the second fragment
-# send atomic fragment with offset=0 and more=0, it must be processed
+
+print "atomic fragment with offset=0 and more=0, it must be processed"
 
 #      |XXXXXXXX|
 # |-------------|

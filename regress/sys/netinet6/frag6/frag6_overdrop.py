@@ -1,6 +1,6 @@
 #!/usr/local/bin/python2.7
-# send ping6 fragment that overlaps the first fragment with the head
-# send complete packet fragments and check that they generate a reply.
+
+print "ping6 fragment that overlaps the first fragment with the head"
 
 # |---------|
 #      |XXXXXXXXX|

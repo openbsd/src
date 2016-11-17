@@ -1,5 +1,9 @@
 #!/usr/local/bin/python2.7
-# send 2 ping6 fragments with hop-by-hop extension header
+
+print "ping6 fragments with hop-by-hop extension header before fragment header"
+
+# E|---------|
+#           E|----|
 
 import os
 from addr import *

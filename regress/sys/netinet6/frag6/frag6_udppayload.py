@@ -1,5 +1,6 @@
 #!/usr/local/bin/python2.7
-# send 2 udp fragments with splitted payload
+
+print "udp fragments with splitted payload"
 
 # |--------|
 #          |----|

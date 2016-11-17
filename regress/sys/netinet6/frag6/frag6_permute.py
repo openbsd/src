@@ -1,5 +1,6 @@
 #!/usr/local/bin/python2.7
-# send 3 non-overlapping ping6 fragments in all possible orders
+
+print "send 3 non-overlapping ping6 fragments in all possible orders"
 
 # |----|
 #      |----|

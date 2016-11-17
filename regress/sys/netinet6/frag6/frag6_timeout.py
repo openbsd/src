@@ -1,5 +1,6 @@
 #!/usr/local/bin/python2.7
-# send 6 non-overlapping ping6 fragments in 75 seconds, timeout is 60
+
+print "6 non-overlapping ping6 fragments in 75 seconds, timeout is 60"
 
 # |----|
 #      |----|

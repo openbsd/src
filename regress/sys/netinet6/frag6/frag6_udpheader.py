@@ -1,8 +1,9 @@
 #!/usr/local/bin/python2.7
-# send 2 udp fragments splitted after udp header
 
-# |--------|
-#          |----|
+print "udp fragments splitted after udp header"
+
+# |----|
+#      |--------|
 
 import os
 from addr import *
