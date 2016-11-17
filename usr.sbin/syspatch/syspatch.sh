@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.54 2016/11/16 16:11:31 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.55 2016/11/17 14:05:46 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -26,11 +26,6 @@ sp_err()
 usage()
 {
 	sp_err "usage: ${0##*/} [-c | -l | -r]"
-}
-
-needs_root()
-{
-	[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
 }
 
 apply_patch()
@@ -63,7 +58,6 @@ apply_patch()
 
 apply_patches()
 {
-	needs_root
 	local _patch
 
 	for _patch in $(ls_missing); do
@@ -146,14 +140,13 @@ create_rollback()
 
 fetch_and_verify()
 {
-	# XXX privsep ala installer (doas|su)?
-	local _patch=$1
+	local _patch=$1 _sig=${_TMP}/SHA256.sig
 	[[ -n ${_patch} ]]
 
-	${_FETCH} -o "${_TMP}/SHA256.sig" "${PATCH_PATH}/SHA256.sig"
-	${_FETCH} -mD "Applying" -o "${_TMP}/${_patch}.tgz" \
-		"${PATCH_PATH}/${_patch}.tgz"
-	(cd ${_TMP} && /usr/bin/signify -qC -p \
+	unpriv -f "${_sig}" ${_FETCH} -o "${_sig}" "${PATCH_PATH}/SHA256.sig"
+	unpriv -f "${_TMP}/${_patch}.tgz" ${_FETCH} -mD "Applying" -o \
+		"${_TMP}/${_patch}.tgz" "${PATCH_PATH}/${_patch}.tgz"
+	(cd ${_TMP} && unpriv signify -qC -p \
 		/etc/signify/openbsd-${_RELINT}-syspatch.pub -x SHA256.sig \
 		${_patch}.tgz)
 }
@@ -189,16 +182,13 @@ ls_installed()
 	### XXX temporary quirks; remove before 6.1
 	local _r
 	if [[ ! -d ${_PDIR}/${_REL} ]]; then
-		needs_root
 		install -d -m 0755 ${_PDIR}/${_REL}
 	fi
 	if [[ -f /bsd.rollback${_RELINT} ]]; then
-		needs_root
 		mv /bsd.rollback${_RELINT} /bsd.syspatch${_RELINT}
 	fi
 	( cd ${_PDIR}/${_REL} && for _r in *; do
 		if [[ ${_r} == rollback-syspatch-${_RELINT}-*.tgz ]]; then
-			needs_root
 			mv ${_r} rollback${_RELINT}${_r#*-syspatch-${_RELINT}}
 		fi
 	done )
@@ -212,12 +202,12 @@ ls_installed()
 ls_missing()
 {
 	# XXX match with installed sets (comp, x...)?
-	local _a _installed
+	local _a _index=${_TMP}/index.txt _installed
 	_installed="$(ls_installed)"
+	
+	unpriv -f "${_index}" ${_FETCH} -o "${_index}" "${PATCH_PATH}/index.txt"
 
-	${_FETCH} -o "${_TMP}/index.txt" "${PATCH_PATH}/index.txt"
-
-	for _a in $(sed 's/^.* //;s/^M//;s/.tgz$//' ${_TMP}/index.txt |
+	for _a in $(sed 's/^.* //;s/^M//;s/.tgz$//' ${_index} |
 		grep "^syspatch${_RELINT}-.*$" | sort -V); do
 		if [[ -n ${_installed} ]]; then
 			echo ${_a} | grep -qw -- "${_installed}" || echo ${_a}
@@ -229,7 +219,6 @@ ls_missing()
 
 rollback_patch()
 {
-	needs_root
 	local _explodir _file _files _patch _rbpatch
 
 	_patch="$(ls_installed | sort -V | tail -1)"
@@ -287,14 +276,30 @@ sp_cleanup()
 	done
 }
 
+unpriv()
+{
+	# XXX use a dedicated user?
+	local _file=$2 _user=_pkgfetch
+
+	if [[ $1 == -f && -n ${_file} ]]; then
+		>${_file}
+		chown "${_user}" "${_file}"
+		chmod 0711 ${_TMP}
+		shift 2
+	fi
+	(( $# >= 1 ))
+
+	eval su -s /bin/sh ${_user} -c "'$@'"
+}
+
 # XXX needs a way to match release <=> syspatch
 # only run on release (not -current nor -stable)
 set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 [[ -z ${_KERNV[1]} ]]
 
-# check args
-[[ $@ == @(|-[[:alpha:]]) ]] || usage
+[[ $@ == @(|-c|-r) ]] && [[ $(id -u) -ne 0 ]] && \
+	sp_err "${0##*/}: need root privileges"
 
 # XXX to be discussed; check for $ARCH?
 [[ -d ${PATCH_PATH} ]] && PATCH_PATH="file://$(readlink -f ${PATCH_PATH})"
@@ -302,7 +307,7 @@ set -A _KERNV -- $(sysctl -n kern.version |
 	sp_err "No valid PATCH_PATH set"
 
 [[ $(sysctl -n hw.ncpufound) -gt 1 ]] && _BSDMP=true || _BSDMP=false
-_FETCH="/usr/bin/ftp -MVk ${FTP_KEEPALIVE-0}"
+_FETCH="ftp -MVk ${FTP_KEEPALIVE-0}"
 _PDIR="/var/syspatch"
 _REL=${_KERNV[0]}
 _RELINT=${_REL%\.*}${_REL#*\.}
