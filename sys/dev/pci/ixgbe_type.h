@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.28 2016/11/17 21:08:27 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.29 2016/11/17 21:13:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3477,8 +3477,18 @@ struct ixgbe_phy_operations {
 	int32_t (*read_i2c_eeprom)(struct ixgbe_hw *, uint8_t , uint8_t *);
 	int32_t (*write_i2c_eeprom)(struct ixgbe_hw *, uint8_t, uint8_t);
 	void (*i2c_bus_clear)(struct ixgbe_hw *);
+	int32_t (*read_i2c_combined)(struct ixgbe_hw *, uint8_t addr, uint16_t reg, uint16_t *val);
+	int32_t (*write_i2c_combined)(struct ixgbe_hw *, uint8_t addr, uint16_t reg, uint16_t val);
 	int32_t (*check_overtemp)(struct ixgbe_hw *);
 	int32_t (*set_phy_power)(struct ixgbe_hw *, bool on);
+	int32_t (*read_i2c_combined_unlocked)(struct ixgbe_hw *, uint8_t addr, uint16_t reg,
+					      uint16_t *value);
+	int32_t (*write_i2c_combined_unlocked)(struct ixgbe_hw *, uint8_t addr, uint16_t reg,
+					       uint16_t value);
+	int32_t (*read_i2c_byte_unlocked)(struct ixgbe_hw *, uint8_t offset, uint8_t addr,
+					  uint8_t *value);
+	int32_t (*write_i2c_byte_unlocked)(struct ixgbe_hw *, uint8_t offset, uint8_t addr,
+					   uint8_t value);
 };
 
 struct ixgbe_eeprom_info {
