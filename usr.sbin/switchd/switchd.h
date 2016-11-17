@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.22 2016/11/17 10:05:44 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.23 2016/11/17 12:40:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -153,6 +153,22 @@ struct ofp_callback {
 
 #define SWITCHD_OPT_VERBOSE		0x01
 #define SWITCHD_OPT_NOACTION		0x04
+
+struct oflowmod_ctx {
+	uint8_t				 ctx_flags;
+#define OFMCTX_IBUF			 0x01
+	enum oflowmod_state		 ctx_state;
+
+	struct ibuf			*ctx_ibuf;
+	struct ofp_flow_mod		*ctx_fm;
+	size_t				 ctx_start;
+	size_t				 ctx_ostart;
+	size_t				 ctx_oend;
+	size_t				 ctx_istart;
+	size_t				 ctx_iend;
+	size_t				 ctx_oioff;
+	struct ofp_instruction		*ctx_oi;
+};
 
 /* switchd.c */
 int		 switchd_socket(struct sockaddr *, int);
@@ -316,7 +332,20 @@ int		 oxm_tunnelid(struct ibuf *, int, uint64_t, uint64_t);
 int		 oxm_ipv6exthdr(struct ibuf *, int, uint16_t, uint16_t);
 struct ofp_instruction *
 		 ofp_instruction(struct ibuf *, uint16_t, uint16_t);
+struct ibuf *
+		 oflowmod_open(struct oflowmod_ctx *,
+		    struct switch_connection *, struct ibuf *, uint8_t);
+int		 oflowmod_close(struct oflowmod_ctx *);
+int		 oflowmod_mopen(struct oflowmod_ctx *);
+int		 oflowmod_mclose(struct oflowmod_ctx *);
+int		 oflowmod_iopen(struct oflowmod_ctx *);
+int		 oflowmod_iclose(struct oflowmod_ctx *);
+int		 oflowmod_instruction(struct oflowmod_ctx *, unsigned int);
 
+int		 oflowmod_instructionclose(struct oflowmod_ctx *);
+int		 oflowmod_state(struct oflowmod_ctx *,
+		    unsigned int, unsigned int);
+int		 oflowmod_err(struct oflowmod_ctx *, const char *, int);
 
 /* ofcconn.c */
 void		 ofcconn(struct privsep *, struct privsep_proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_common.c,v 1.5 2016/11/17 10:05:44 reyk Exp $	*/
+/*	$OpenBSD: ofp_common.c,v 1.6 2016/11/17 12:40:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -973,4 +973,252 @@ ofp_multipart_clear(struct switch_connection *con)
 		mm = SLIST_FIRST(&con->con_mmlist);
 		ofp_multipart_free(con, mm);
 	}
+}
+
+int
+oflowmod_state(struct oflowmod_ctx *ctx, unsigned int old, unsigned int new)
+{
+	if (ctx->ctx_state != old)
+		return (-1);
+	ctx->ctx_state = new;
+	return (0);
+}
+
+int
+oflowmod_err(struct oflowmod_ctx *ctx, const char *func, int line)
+{
+	log_debug("%s: function %s line %d state %d",
+	    __func__, func, line, ctx->ctx_state);
+
+	if (ctx->ctx_state >= OFMCTX_ERR)
+		return (-1);
+	if (ctx->ctx_flags & OFMCTX_IBUF)
+		ibuf_release(ctx->ctx_ibuf);
+	ctx->ctx_state = OFMCTX_ERR;
+	return (-1);
+}
+
+struct ibuf *
+oflowmod_open(struct oflowmod_ctx *ctx, struct switch_connection *con,
+    struct ibuf *ibuf, uint8_t version)
+{
+	struct ofp_flow_mod	*fm;
+	struct switch_connection conb;
+
+	switch (version) {
+	case OFP_V_0:
+	case OFP_V_1_3:
+		version = OFP_V_1_3;
+		break;
+	default:
+		log_warnx("%s: unsupported version 0x%02x", __func__, version);
+		return (NULL);
+	}
+
+	memset(ctx, 0, sizeof(*ctx));
+
+	if (oflowmod_state(ctx, OFMCTX_INIT, OFMCTX_OPEN) == -1)
+		goto err;
+
+	if (ibuf == NULL) {
+		ctx->ctx_flags |= OFMCTX_IBUF;
+		if ((ibuf = ibuf_static()) == NULL)
+			goto err;
+	}
+
+	ctx->ctx_ibuf = ibuf;
+	ctx->ctx_start = ibuf->wpos;
+
+	/*
+	 * The connection is not strictly required and might not be
+	 * available in other places;  just default to an xid 0.
+	 */
+	if (con == NULL) {
+		con = &conb;
+		memset(con, 0, sizeof(*con));
+	}
+
+	/* uses defaults, can be changed by accessing fm later */
+	if ((fm = ofp13_flowmod(con, ibuf,
+	    OFP_FLOWCMD_ADD, 0, 0, 0, 0)) == NULL)
+		goto err;
+
+	ctx->ctx_fm = fm;
+
+	return (ctx->ctx_ibuf);
+
+ err:
+	(void)oflowmod_err(ctx, __func__, __LINE__);
+	return (NULL);
+}
+
+int
+oflowmod_mopen(struct oflowmod_ctx *ctx)
+{
+	if (oflowmod_state(ctx, OFMCTX_OPEN, OFMCTX_MOPEN) == -1)
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	ctx->ctx_ostart = ctx->ctx_start +
+	    offsetof(struct ofp_flow_mod, fm_match);
+
+	return (0);
+}
+
+int
+oflowmod_mclose(struct oflowmod_ctx *ctx)
+{
+	struct ibuf		*ibuf = ctx->ctx_ibuf;
+	struct ofp_flow_mod	*fm = ctx->ctx_fm;
+	size_t			 omlen, padding;
+
+	if (oflowmod_state(ctx, OFMCTX_MOPEN, OFMCTX_MCLOSE) == -1)
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	ctx->ctx_oend = ibuf->wpos;
+	omlen = ctx->ctx_oend - ctx->ctx_ostart;
+
+	/* Update match length */
+	fm->fm_match.om_length = htons(omlen);
+
+	padding = OFP_ALIGN(omlen) - omlen;
+	if (padding) {
+		ctx->ctx_oend += padding;
+		if (ibuf_advance(ibuf, padding) == NULL)
+			return (oflowmod_err(ctx, __func__, __LINE__));
+	}
+
+	return (0);
+}
+
+int
+oflowmod_iopen(struct oflowmod_ctx *ctx)
+{
+	struct ibuf		*ibuf = ctx->ctx_ibuf;
+
+	if (ctx->ctx_state < OFMCTX_MOPEN &&
+	    (oflowmod_mopen(ctx) == -1 ||
+	    oflowmod_mclose(ctx) == -1))
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	if (oflowmod_state(ctx, OFMCTX_MCLOSE, OFMCTX_IOPEN) == -1)
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	ctx->ctx_istart = ibuf->wpos;
+
+	return (0);
+}
+
+int
+oflowmod_instruction(struct oflowmod_ctx *ctx, unsigned int type)
+{
+	struct ibuf		*ibuf = ctx->ctx_ibuf;
+	struct ofp_instruction	*oi;
+	size_t			 len;
+
+	if (oflowmod_state(ctx, OFMCTX_IOPEN, OFMCTX_IOPEN) == -1)
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	if (ctx->ctx_oi != NULL && oflowmod_instructionclose(ctx) == -1)
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	ctx->ctx_oioff = ibuf->wpos;
+
+	switch (type) {
+	case OFP_INSTRUCTION_T_GOTO_TABLE:
+		len = sizeof(struct ofp_instruction_goto_table);
+		break;
+	case OFP_INSTRUCTION_T_WRITE_META:
+		len = sizeof(struct ofp_instruction_write_metadata);
+		break;
+	case OFP_INSTRUCTION_T_WRITE_ACTIONS:
+	case OFP_INSTRUCTION_T_APPLY_ACTIONS:
+	case OFP_INSTRUCTION_T_CLEAR_ACTIONS:
+		len = sizeof(struct ofp_instruction_actions);
+		break;
+	case OFP_INSTRUCTION_T_METER:
+		len = sizeof(struct ofp_instruction_meter);
+		break;
+	case OFP_INSTRUCTION_T_EXPERIMENTER:
+		len = sizeof(struct ofp_instruction_experimenter);
+		break;
+	default:
+		return (oflowmod_err(ctx, __func__, __LINE__));
+	}
+
+	if ((oi = ofp_instruction(ibuf, type, len)) == NULL)
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	ctx->ctx_oi = oi;
+
+	return (0);
+}
+
+int
+oflowmod_instructionclose(struct oflowmod_ctx *ctx)
+{
+	struct ibuf		*ibuf = ctx->ctx_ibuf;
+	struct ofp_instruction	*oi = ctx->ctx_oi;
+	size_t			 oilen;
+
+	if (ctx->ctx_state < OFMCTX_IOPEN || oi == NULL)
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	oilen = ibuf->wpos - ctx->ctx_oioff;
+
+	if (oilen > UINT16_MAX)
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	oi->i_len = htons(oilen);
+	ctx->ctx_oi = NULL;
+
+	return (0);
+}
+
+int
+oflowmod_iclose(struct oflowmod_ctx *ctx)
+{
+	struct ibuf		*ibuf = ctx->ctx_ibuf;
+
+	if (oflowmod_state(ctx, OFMCTX_IOPEN, OFMCTX_ICLOSE) == -1)
+		return (oflowmod_err(ctx, __func__, __LINE__));
+
+	if (ctx->ctx_oi != NULL && oflowmod_instructionclose(ctx) == -1)
+		return (-1);
+
+	ctx->ctx_iend = ibuf->wpos;
+
+	return (0);
+}
+
+int
+oflowmod_close(struct oflowmod_ctx *ctx)
+{
+	struct ofp_flow_mod	*fm = ctx->ctx_fm;
+	struct ibuf		*ibuf = ctx->ctx_ibuf;
+	size_t			 len;
+
+	/* No matches, calculate default */
+	if (ctx->ctx_state < OFMCTX_MOPEN &&
+	    (oflowmod_mopen(ctx) == -1 ||
+	    oflowmod_mclose(ctx) == -1))
+		goto err;
+
+	/* No instructions, calculate default */
+	if (ctx->ctx_state < OFMCTX_IOPEN &&
+	    (oflowmod_iopen(ctx) == -1 ||
+	    oflowmod_iclose(ctx) == -1))
+		goto err;
+
+	if (oflowmod_state(ctx, OFMCTX_ICLOSE, OFMCTX_CLOSE) == -1)
+		goto err;
+
+	/* Update length */
+	len = ibuf->wpos - ctx->ctx_start;
+	fm->fm_oh.oh_length = htons(len);
+
+	return (0);
+
+ err:
+	return (oflowmod_err(ctx, __func__, __LINE__));
+
 }

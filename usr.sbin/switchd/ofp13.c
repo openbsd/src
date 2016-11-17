@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.27 2016/11/17 10:15:05 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.28 2016/11/17 12:40:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1924,47 +1924,41 @@ int
 ofp13_tablemiss_sendctrl(struct switchd *sc, struct switch_connection *con,
     uint8_t table)
 {
-	struct ofp_flow_mod		*fm;
-	struct ofp_instruction		*oi;
-	struct ibuf			*ibuf;
-	size_t				 istart, iend;
-	int				 padding;
-	int				 rv = -1;
+	struct oflowmod_ctx	 ctx;
+	struct ibuf		*ibuf;
+	int			 ret;
 
-	if ((ibuf = ibuf_static()) == NULL)
-		return (-1);
+	if ((ibuf = oflowmod_open(&ctx, con, NULL, OFP_V_1_3)) == NULL)
+		goto err;
 
-	fm = ofp13_flowmod(con, ibuf, OFP_FLOWCMD_ADD, table, 0, 0, 0);
-	if (fm == NULL)
-		goto done;
+	if (oflowmod_iopen(&ctx) == -1)
+		goto err;
 
-	padding = OFP_ALIGN(sizeof(fm->fm_match)) - sizeof(fm->fm_match);
-	if (padding && ibuf_advance(ibuf, padding) == NULL)
-		goto done;
+	/* Update header */
+	ctx.ctx_fm->fm_table_id = table;
 
-	istart = ibuf->wpos;
-	oi = (struct ofp_instruction *)ofp_instruction(ibuf,
-	    OFP_INSTRUCTION_T_APPLY_ACTIONS,
-	    sizeof(struct ofp_instruction_actions));
-
-	if (oi == NULL ||
-	    action_output(ibuf, OFP_PORT_CONTROLLER,
+	if (oflowmod_instruction(&ctx,
+	    OFP_INSTRUCTION_T_APPLY_ACTIONS) == -1)
+		goto err;
+	if (action_output(ibuf, OFP_PORT_CONTROLLER,
 	    OFP_CONTROLLER_MAXLEN_MAX) == -1)
-		goto done;
-	iend = ibuf->wpos;
+		goto err;
 
-	/* Set header sizes. */
-	oi->i_len = htons(iend - istart);
-	fm->fm_oh.oh_length = htons(ibuf_length(ibuf));
+	if (oflowmod_iclose(&ctx) == -1)
+		goto err;
+	if (oflowmod_close(&ctx) == -1)
+		goto err;
 
-	if (ofp13_validate(sc, &con->con_local, &con->con_peer, &fm->fm_oh,
-	    ibuf) != 0)
-		goto done;
+	if (ofp13_validate(sc, &con->con_local, &con->con_peer,
+	    &ctx.ctx_fm->fm_oh, ibuf) != 0)
+		goto err;
 
-	rv = ofp_output(con, NULL, ibuf);
-
- done:
+	ret = ofp_output(con, NULL, ibuf);
 	ibuf_release(ibuf);
-	return (rv);
-}
 
+	return (ret);
+
+ err:
+	(void)oflowmod_err(&ctx, __func__, __LINE__);
+	return (-1);
+}

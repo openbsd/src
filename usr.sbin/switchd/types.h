@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.7 2016/10/12 19:07:42 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.8 2016/11/17 12:40:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -95,6 +95,17 @@ enum switch_conn_type {
 	SWITCH_CONN_LOCAL,
 	SWITCH_CONN_TCP,
 	SWITCH_CONN_TLS
+};
+
+enum oflowmod_state {
+	OFMCTX_INIT,
+	OFMCTX_OPEN,
+	OFMCTX_MOPEN,
+	OFMCTX_MCLOSE,
+	OFMCTX_IOPEN,
+	OFMCTX_ICLOSE,
+	OFMCTX_CLOSE,
+	OFMCTX_ERR
 };
 
 #ifndef nitems
