@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x540.c,v 1.5 2016/11/16 23:19:29 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_x540.c,v 1.6 2016/11/17 12:21:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -36,6 +36,13 @@
 
 #include <dev/pci/ixgbe.h>
 #include <dev/pci/ixgbe_type.h>
+
+#define IXGBE_X540_MAX_TX_QUEUES	128
+#define IXGBE_X540_MAX_RX_QUEUES	128
+#define IXGBE_X540_RAR_ENTRIES		128
+#define IXGBE_X540_MC_TBL_SIZE		128
+#define IXGBE_X540_VFT_TBL_SIZE		128
+#define IXGBE_X540_RX_PB_SIZE		384
 
 int32_t ixgbe_update_flash_X540(struct ixgbe_hw *hw);
 int32_t ixgbe_poll_flash_update_done_X540(struct ixgbe_hw *hw);
@@ -82,51 +89,51 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	ret_val = ixgbe_init_ops_generic(hw);
 
 	/* EEPROM */
-	eeprom->ops.init_params = &ixgbe_init_eeprom_params_X540;
-	eeprom->ops.read = &ixgbe_read_eerd_X540;
-	eeprom->ops.write = &ixgbe_write_eewr_X540;
-	eeprom->ops.update_checksum = &ixgbe_update_eeprom_checksum_X540;
-	eeprom->ops.validate_checksum = &ixgbe_validate_eeprom_checksum_X540;
-	eeprom->ops.calc_checksum = &ixgbe_calc_eeprom_checksum_X540;
+	eeprom->ops.init_params = ixgbe_init_eeprom_params_X540;
+	eeprom->ops.read = ixgbe_read_eerd_X540;
+	eeprom->ops.write = ixgbe_write_eewr_X540;
+	eeprom->ops.update_checksum = ixgbe_update_eeprom_checksum_X540;
+	eeprom->ops.validate_checksum = ixgbe_validate_eeprom_checksum_X540;
+	eeprom->ops.calc_checksum = ixgbe_calc_eeprom_checksum_X540;
 
 	/* PHY */
-	phy->ops.init = &ixgbe_init_phy_ops_generic;
+	phy->ops.init = ixgbe_init_phy_ops_generic;
 	phy->ops.reset = NULL;
 
 	/* MAC */
-	mac->ops.reset_hw = &ixgbe_reset_hw_X540;
-	mac->ops.get_media_type = &ixgbe_get_media_type_X540;
+	mac->ops.reset_hw = ixgbe_reset_hw_X540;
+	mac->ops.get_media_type = ixgbe_get_media_type_X540;
 	mac->ops.get_supported_physical_layer =
-				    &ixgbe_get_supported_physical_layer_X540;
+				    ixgbe_get_supported_physical_layer_X540;
 	mac->ops.read_analog_reg8 = NULL;
 	mac->ops.write_analog_reg8 = NULL;
-	mac->ops.start_hw = &ixgbe_start_hw_X540;
-	mac->ops.acquire_swfw_sync = &ixgbe_acquire_swfw_sync_X540;
-	mac->ops.release_swfw_sync = &ixgbe_release_swfw_sync_X540;
-	mac->ops.disable_sec_rx_path = &ixgbe_disable_sec_rx_path_generic;
-	mac->ops.enable_sec_rx_path = &ixgbe_enable_sec_rx_path_generic;
+	mac->ops.start_hw = ixgbe_start_hw_X540;
+	mac->ops.acquire_swfw_sync = ixgbe_acquire_swfw_sync_X540;
+	mac->ops.release_swfw_sync = ixgbe_release_swfw_sync_X540;
+	mac->ops.disable_sec_rx_path = ixgbe_disable_sec_rx_path_generic;
+	mac->ops.enable_sec_rx_path = ixgbe_enable_sec_rx_path_generic;
 
 	/* RAR, Multicast, VLAN */
-	mac->ops.set_vmdq = &ixgbe_set_vmdq_generic;
-	mac->ops.clear_vmdq = &ixgbe_clear_vmdq_generic;
-	mac->ops.insert_mac_addr = &ixgbe_insert_mac_addr_generic;
+	mac->ops.set_vmdq = ixgbe_set_vmdq_generic;
+	mac->ops.clear_vmdq = ixgbe_clear_vmdq_generic;
+	mac->ops.insert_mac_addr = ixgbe_insert_mac_addr_generic;
 	mac->rar_highwater = 1;
-	mac->ops.set_vfta = &ixgbe_set_vfta_generic;
-	mac->ops.clear_vfta = &ixgbe_clear_vfta_generic;
-	mac->ops.init_uta_tables = &ixgbe_init_uta_tables_generic;
+	mac->ops.set_vfta = ixgbe_set_vfta_generic;
+	mac->ops.clear_vfta = ixgbe_clear_vfta_generic;
+	mac->ops.init_uta_tables = ixgbe_init_uta_tables_generic;
 
 	/* Link */
 	mac->ops.get_link_capabilities =
-				&ixgbe_get_copper_link_capabilities_generic;
-	mac->ops.setup_link = &ixgbe_setup_mac_link_X540;
-	mac->ops.check_link = &ixgbe_check_mac_link_generic;
+				ixgbe_get_copper_link_capabilities_generic;
+	mac->ops.setup_link = ixgbe_setup_mac_link_X540;
+	mac->ops.check_link = ixgbe_check_mac_link_generic;
 
-	mac->mcft_size		= 128;
-	mac->vft_size		= 128;
-	mac->num_rar_entries	= 128;
-	mac->rx_pb_size		= 384;
-	mac->max_tx_queues	= 128;
-	mac->max_rx_queues	= 128;
+	mac->mcft_size		= IXGBE_X540_MC_TBL_SIZE;
+	mac->vft_size		= IXGBE_X540_VFT_TBL_SIZE;
+	mac->num_rar_entries	= IXGBE_X540_RAR_ENTRIES;
+	mac->rx_pb_size		= IXGBE_X540_RX_PB_SIZE;
+	mac->max_tx_queues	= IXGBE_X540_MAX_TX_QUEUES;
+	mac->max_rx_queues	= IXGBE_X540_MAX_RX_QUEUES;
 	mac->max_msix_vectors	= 0 /*ixgbe_get_pcie_msix_count_generic(hw)*/;
 
 	hw->mbx.ops.init_params = ixgbe_init_mbx_params_pf;
@@ -515,8 +522,7 @@ int32_t ixgbe_update_eeprom_checksum_X540(struct ixgbe_hw *hw)
 
 	DEBUGFUNC("ixgbe_update_eeprom_checksum_X540");
 
-	/*
-	 * Read the first word from the EEPROM. If this times out or fails, do
+	/* Read the first word from the EEPROM. If this times out or fails, do
 	 * not continue or we could be in for a very long wait while every
 	 * EEPROM read fails
 	 */
@@ -647,8 +653,7 @@ int32_t ixgbe_acquire_swfw_sync_X540(struct ixgbe_hw *hw, uint16_t mask)
 		fwmask = 0;
 
 	for (i = 0; i < timeout; i++) {
-		/*
-		 * SW NVM semaphore bit is used for access to all
+		/* SW NVM semaphore bit is used for access to all
 		 * SW_FW_SYNC bits (not just NVM)
 		 */
 		if (ixgbe_get_swfw_sync_semaphore(hw)) {

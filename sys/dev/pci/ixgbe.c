@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.15 2016/11/16 23:19:29 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.16 2016/11/17 12:21:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -98,55 +98,55 @@ int32_t ixgbe_init_ops_generic(struct ixgbe_hw *hw)
 	DEBUGFUNC("ixgbe_init_ops_generic");
 
 	/* EEPROM */
-	eeprom->ops.init_params = &ixgbe_init_eeprom_params_generic;
+	eeprom->ops.init_params = ixgbe_init_eeprom_params_generic;
 	/* If EEPROM is valid (bit 8 = 1), use EERD otherwise use bit bang */
 	if (eec & IXGBE_EEC_PRES)
-		eeprom->ops.read = &ixgbe_read_eerd_generic;
+		eeprom->ops.read = ixgbe_read_eerd_generic;
 	else
-		eeprom->ops.read = &ixgbe_read_eeprom_bit_bang_generic;
-	eeprom->ops.write = &ixgbe_write_eeprom_generic;
+		eeprom->ops.read = ixgbe_read_eeprom_bit_bang_generic;
+	eeprom->ops.write = ixgbe_write_eeprom_generic;
 	eeprom->ops.validate_checksum =
-				      &ixgbe_validate_eeprom_checksum_generic;
-	eeprom->ops.update_checksum = &ixgbe_update_eeprom_checksum_generic;
-	eeprom->ops.calc_checksum = &ixgbe_calc_eeprom_checksum_generic;
+				      ixgbe_validate_eeprom_checksum_generic;
+	eeprom->ops.update_checksum = ixgbe_update_eeprom_checksum_generic;
+	eeprom->ops.calc_checksum = ixgbe_calc_eeprom_checksum_generic;
 
 	/* MAC */
-	mac->ops.init_hw = &ixgbe_init_hw_generic;
+	mac->ops.init_hw = ixgbe_init_hw_generic;
 	mac->ops.reset_hw = NULL;
-	mac->ops.start_hw = &ixgbe_start_hw_generic;
-	mac->ops.clear_hw_cntrs = &ixgbe_clear_hw_cntrs_generic;
+	mac->ops.start_hw = ixgbe_start_hw_generic;
+	mac->ops.clear_hw_cntrs = ixgbe_clear_hw_cntrs_generic;
 	mac->ops.get_media_type = NULL;
 	mac->ops.get_supported_physical_layer = NULL;
-	mac->ops.enable_rx_dma = &ixgbe_enable_rx_dma_generic;
-	mac->ops.get_mac_addr = &ixgbe_get_mac_addr_generic;
-	mac->ops.stop_adapter = &ixgbe_stop_adapter_generic;
-	mac->ops.get_bus_info = &ixgbe_get_bus_info_generic;
-	mac->ops.set_lan_id = &ixgbe_set_lan_id_multi_port_pcie;
-	mac->ops.acquire_swfw_sync = &ixgbe_acquire_swfw_sync;
-	mac->ops.release_swfw_sync = &ixgbe_release_swfw_sync;
+	mac->ops.enable_rx_dma = ixgbe_enable_rx_dma_generic;
+	mac->ops.get_mac_addr = ixgbe_get_mac_addr_generic;
+	mac->ops.stop_adapter = ixgbe_stop_adapter_generic;
+	mac->ops.get_bus_info = ixgbe_get_bus_info_generic;
+	mac->ops.set_lan_id = ixgbe_set_lan_id_multi_port_pcie;
+	mac->ops.acquire_swfw_sync = ixgbe_acquire_swfw_sync;
+	mac->ops.release_swfw_sync = ixgbe_release_swfw_sync;
 
 	/* LEDs */
-	mac->ops.led_on = &ixgbe_led_on_generic;
-	mac->ops.led_off = &ixgbe_led_off_generic;
-	mac->ops.blink_led_start = &ixgbe_blink_led_start_generic;
-	mac->ops.blink_led_stop = &ixgbe_blink_led_stop_generic;
+	mac->ops.led_on = ixgbe_led_on_generic;
+	mac->ops.led_off = ixgbe_led_off_generic;
+	mac->ops.blink_led_start = ixgbe_blink_led_start_generic;
+	mac->ops.blink_led_stop = ixgbe_blink_led_stop_generic;
 
 	/* RAR, Multicast, VLAN */
-	mac->ops.set_rar = &ixgbe_set_rar_generic;
-	mac->ops.clear_rar = &ixgbe_clear_rar_generic;
+	mac->ops.set_rar = ixgbe_set_rar_generic;
+	mac->ops.clear_rar = ixgbe_clear_rar_generic;
 	mac->ops.insert_mac_addr = NULL;
 	mac->ops.set_vmdq = NULL;
 	mac->ops.clear_vmdq = NULL;
-	mac->ops.init_rx_addrs = &ixgbe_init_rx_addrs_generic;
-	mac->ops.update_mc_addr_list = &ixgbe_update_mc_addr_list_generic;
-	mac->ops.enable_mc = &ixgbe_enable_mc_generic;
-	mac->ops.disable_mc = &ixgbe_disable_mc_generic;
+	mac->ops.init_rx_addrs = ixgbe_init_rx_addrs_generic;
+	mac->ops.update_mc_addr_list = ixgbe_update_mc_addr_list_generic;
+	mac->ops.enable_mc = ixgbe_enable_mc_generic;
+	mac->ops.disable_mc = ixgbe_disable_mc_generic;
 	mac->ops.clear_vfta = NULL;
 	mac->ops.set_vfta = NULL;
 	mac->ops.init_uta_tables = NULL;
 
 	/* Flow Control */
-	mac->ops.fc_enable = &ixgbe_fc_enable_generic;
+	mac->ops.fc_enable = ixgbe_fc_enable_generic;
 
 	/* Link */
 	mac->ops.get_link_capabilities = NULL;
@@ -784,7 +784,7 @@ int32_t ixgbe_stop_adapter_generic(struct ixgbe_hw *hw)
 	msec_delay(2);
 
 	/*
-	 * Prevent the PCI-E bus from from hanging by disabling PCI-E master
+	 * Prevent the PCI-E bus from hanging by disabling PCI-E master
 	 * access and verify no pending requests
 	 */
 	return ixgbe_disable_pcie_master(hw);
@@ -1317,7 +1317,7 @@ int32_t ixgbe_ready_eeprom(struct ixgbe_hw *hw)
 
 		usec_delay(5);
 		ixgbe_standby_eeprom(hw);
-	};
+	}
 
 	/*
 	 * On some parts, SPI write time could vary from 0-20mSec on 3.3V
@@ -1403,7 +1403,7 @@ void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, uint16_t data,
 		 * EEPROM
 		 */
 		mask = mask >> 1;
-	};
+	}
 
 	/* We leave the "DI" bit set to "0" when we leave this routine. */
 	eec &= ~IXGBE_EEC_DI;
@@ -1581,8 +1581,7 @@ int32_t ixgbe_validate_eeprom_checksum_generic(struct ixgbe_hw *hw,
 
 	DEBUGFUNC("ixgbe_validate_eeprom_checksum_generic");
 
-	/*
-	 * Read the first word from the EEPROM. If this times out or fails, do
+	/* Read the first word from the EEPROM. If this times out or fails, do
 	 * not continue or we could be in for a very long wait while every
 	 * EEPROM read fails
 	 */
@@ -1621,8 +1620,7 @@ int32_t ixgbe_update_eeprom_checksum_generic(struct ixgbe_hw *hw)
 
 	DEBUGFUNC("ixgbe_update_eeprom_checksum_generic");
 
-	/*
-	 * Read the first word from the EEPROM. If this times out or fails, do
+	/* Read the first word from the EEPROM. If this times out or fails, do
 	 * not continue or we could be in for a very long wait while every
 	 * EEPROM read fails
 	 */
@@ -2790,7 +2788,7 @@ uint16_t ixgbe_get_pcie_msix_count_generic(struct ixgbe_hw *hw)
  *  @vmdq: VMDq pool to assign
  *
  *  Puts an ethernet address into a receive address register, or
- *  finds the rar that it is aleady in; adds to the pool list
+ *  finds the rar that it is already in; adds to the pool list
  **/
 int32_t ixgbe_insert_mac_addr_generic(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq)
 {
@@ -3521,7 +3519,7 @@ int32_t ixgbe_reset_pipeline(struct ixgbe_hw *hw)
  *  @size: Length of buffer
  *  @mbx_id: id of mailbox to read
  *
- *  returns SUCCESS if it successfuly read message from buffer
+ *  returns SUCCESS if it successfully read message from buffer
  **/
 int32_t ixgbe_read_mbx(struct ixgbe_hw *hw, uint32_t *msg, uint16_t size, uint16_t mbx_id)
 {

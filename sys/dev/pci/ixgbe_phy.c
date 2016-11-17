@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.13 2015/04/30 13:24:36 sthen Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.14 2016/11/17 12:21:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -62,24 +62,24 @@ int32_t ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw)
 	DEBUGFUNC("ixgbe_init_phy_ops_generic");
 
 	/* PHY */
-	phy->ops.identify = &ixgbe_identify_phy_generic;
-	phy->ops.reset = &ixgbe_reset_phy_generic;
-	phy->ops.read_reg = &ixgbe_read_phy_reg_generic;
-	phy->ops.write_reg = &ixgbe_write_phy_reg_generic;
-	phy->ops.read_reg_mdi = &ixgbe_read_phy_reg_mdi;
-	phy->ops.write_reg_mdi = &ixgbe_write_phy_reg_mdi;
-	phy->ops.setup_link = &ixgbe_setup_phy_link_generic;
-	phy->ops.setup_link_speed = &ixgbe_setup_phy_link_speed_generic;
+	phy->ops.identify = ixgbe_identify_phy_generic;
+	phy->ops.reset = ixgbe_reset_phy_generic;
+	phy->ops.read_reg = ixgbe_read_phy_reg_generic;
+	phy->ops.write_reg = ixgbe_write_phy_reg_generic;
+	phy->ops.read_reg_mdi = ixgbe_read_phy_reg_mdi;
+	phy->ops.write_reg_mdi = ixgbe_write_phy_reg_mdi;
+	phy->ops.setup_link = ixgbe_setup_phy_link_generic;
+	phy->ops.setup_link_speed = ixgbe_setup_phy_link_speed_generic;
 	phy->ops.check_link = NULL;
 	phy->ops.get_firmware_version = ixgbe_get_phy_firmware_version_generic;
-	phy->ops.read_i2c_byte = &ixgbe_read_i2c_byte_generic;
-	phy->ops.write_i2c_byte = &ixgbe_write_i2c_byte_generic;
-	phy->ops.read_i2c_eeprom = &ixgbe_read_i2c_eeprom_generic;
-	phy->ops.write_i2c_eeprom = &ixgbe_write_i2c_eeprom_generic;
-	phy->ops.i2c_bus_clear = &ixgbe_i2c_bus_clear;
-	phy->ops.identify_sfp = &ixgbe_identify_module_generic;
+	phy->ops.read_i2c_byte = ixgbe_read_i2c_byte_generic;
+	phy->ops.write_i2c_byte = ixgbe_write_i2c_byte_generic;
+	phy->ops.read_i2c_eeprom = ixgbe_read_i2c_eeprom_generic;
+	phy->ops.write_i2c_eeprom = ixgbe_write_i2c_eeprom_generic;
+	phy->ops.i2c_bus_clear = ixgbe_i2c_bus_clear;
+	phy->ops.identify_sfp = ixgbe_identify_module_generic;
 	phy->sfp_type = ixgbe_sfp_type_unknown;
-	phy->ops.check_overtemp = &ixgbe_tn_check_overtemp;
+	phy->ops.check_overtemp = ixgbe_tn_check_overtemp;
 	return IXGBE_SUCCESS;
 }
 
@@ -493,10 +493,10 @@ int32_t ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
 }
 
 /**
- *  ixgbe_setup_phy_link_generic - Set and restart autoneg
+ *  ixgbe_setup_phy_link_generic - Set and restart auto-neg
  *  @hw: pointer to hardware structure
  *
- *  Restart autonegotiation and PHY and waits for completion.
+ *  Restart auto-negotiation and PHY and waits for completion.
  **/
 int32_t ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
 {
@@ -708,10 +708,10 @@ int32_t ixgbe_check_phy_link_tnx(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 }
 
 /**
- *	ixgbe_setup_phy_link_tnx - Set and restart autoneg
+ *	ixgbe_setup_phy_link_tnx - Set and restart auto-neg
  *	@hw: pointer to hardware structure
  *
- *	Restart autonegotiation and PHY and waits for completion.
+ *	Restart auto-negotiation and PHY and waits for completion.
  **/
 int32_t ixgbe_setup_phy_link_tnx(struct ixgbe_hw *hw)
 {

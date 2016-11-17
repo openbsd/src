@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82599.c,v 1.13 2016/11/16 23:19:29 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_82599.c,v 1.14 2016/11/17 12:21:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -36,6 +36,13 @@
 
 #include <dev/pci/ixgbe.h>
 #include <dev/pci/ixgbe_type.h>
+
+#define IXGBE_82599_MAX_TX_QUEUES 128
+#define IXGBE_82599_MAX_RX_QUEUES 128
+#define IXGBE_82599_RAR_ENTRIES   128
+#define IXGBE_82599_MC_TBL_SIZE   128
+#define IXGBE_82599_VFT_TBL_SIZE  128
+#define IXGBE_82599_RX_PB_SIZE	  512
 
 int32_t ixgbe_get_link_capabilities_82599(struct ixgbe_hw *hw,
 					  ixgbe_link_speed *speed,
@@ -113,10 +120,10 @@ void ixgbe_init_mac_link_ops_82599(struct ixgbe_hw *hw)
 	if ((mac->ops.get_media_type(hw) == ixgbe_media_type_fiber) &&
 	    !hw->mng_fw_enabled) {
 		mac->ops.disable_tx_laser =
-				       &ixgbe_disable_tx_laser_multispeed_fiber;
+				       ixgbe_disable_tx_laser_multispeed_fiber;
 		mac->ops.enable_tx_laser =
-					&ixgbe_enable_tx_laser_multispeed_fiber;
-		mac->ops.flap_tx_laser = &ixgbe_flap_tx_laser_multispeed_fiber;
+					ixgbe_enable_tx_laser_multispeed_fiber;
+		mac->ops.flap_tx_laser = ixgbe_flap_tx_laser_multispeed_fiber;
 
 	} else {
 		mac->ops.disable_tx_laser = NULL;
@@ -126,15 +133,15 @@ void ixgbe_init_mac_link_ops_82599(struct ixgbe_hw *hw)
 
 	if (hw->phy.multispeed_fiber) {
 		/* Set up dual speed SFP+ support */
-		mac->ops.setup_link = &ixgbe_setup_mac_link_multispeed_fiber;
+		mac->ops.setup_link = ixgbe_setup_mac_link_multispeed_fiber;
 	} else {
 		if ((ixgbe_get_media_type(hw) == ixgbe_media_type_backplane) &&
 		     (hw->phy.smart_speed == ixgbe_smart_speed_auto ||
 		      hw->phy.smart_speed == ixgbe_smart_speed_on) &&
 		      !ixgbe_verify_lesm_fw_enabled_82599(hw)) {
-			mac->ops.setup_link = &ixgbe_setup_mac_link_smartspeed;
+			mac->ops.setup_link = ixgbe_setup_mac_link_smartspeed;
 		} else {
-			mac->ops.setup_link = &ixgbe_setup_mac_link_82599;
+			mac->ops.setup_link = ixgbe_setup_mac_link_82599;
 		}
 	}
 }
@@ -168,18 +175,18 @@ int32_t ixgbe_init_phy_ops_82599(struct ixgbe_hw *hw)
 
 	/* If copper media, overwrite with copper function pointers */
 	if (mac->ops.get_media_type(hw) == ixgbe_media_type_copper) {
-		mac->ops.setup_link = &ixgbe_setup_copper_link_82599;
+		mac->ops.setup_link = ixgbe_setup_copper_link_82599;
 		mac->ops.get_link_capabilities =
-				  &ixgbe_get_copper_link_capabilities_generic;
+				  ixgbe_get_copper_link_capabilities_generic;
 	}
 
-	/* Set necessary function pointers based on phy type */
+	/* Set necessary function pointers based on PHY type */
 	switch (hw->phy.type) {
 	case ixgbe_phy_tn:
-		phy->ops.setup_link = &ixgbe_setup_phy_link_tnx;
-		phy->ops.check_link = &ixgbe_check_phy_link_tnx;
+		phy->ops.setup_link = ixgbe_setup_phy_link_tnx;
+		phy->ops.check_link = ixgbe_check_phy_link_tnx;
 		phy->ops.get_firmware_version =
-			     &ixgbe_get_phy_firmware_version_tnx;
+			     ixgbe_get_phy_firmware_version_tnx;
 		break;
 	default:
 		break;
@@ -297,53 +304,53 @@ int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	ret_val = ixgbe_init_ops_generic(hw);
 
 	/* PHY */
-	phy->ops.identify = &ixgbe_identify_phy_82599;
-	phy->ops.init = &ixgbe_init_phy_ops_82599;
+	phy->ops.identify = ixgbe_identify_phy_82599;
+	phy->ops.init = ixgbe_init_phy_ops_82599;
 
 	/* MAC */
-	mac->ops.reset_hw = &ixgbe_reset_hw_82599;
-	mac->ops.get_media_type = &ixgbe_get_media_type_82599;
+	mac->ops.reset_hw = ixgbe_reset_hw_82599;
+	mac->ops.get_media_type = ixgbe_get_media_type_82599;
 	mac->ops.get_supported_physical_layer =
-				    &ixgbe_get_supported_physical_layer_82599;
-	mac->ops.disable_sec_rx_path = &ixgbe_disable_sec_rx_path_generic;
-	mac->ops.enable_sec_rx_path = &ixgbe_enable_sec_rx_path_generic;
-	mac->ops.enable_rx_dma = &ixgbe_enable_rx_dma_82599;
-	mac->ops.read_analog_reg8 = &ixgbe_read_analog_reg8_82599;
-	mac->ops.write_analog_reg8 = &ixgbe_write_analog_reg8_82599;
-	mac->ops.start_hw = &ixgbe_start_hw_82599;
+				    ixgbe_get_supported_physical_layer_82599;
+	mac->ops.disable_sec_rx_path = ixgbe_disable_sec_rx_path_generic;
+	mac->ops.enable_sec_rx_path = ixgbe_enable_sec_rx_path_generic;
+	mac->ops.enable_rx_dma = ixgbe_enable_rx_dma_82599;
+	mac->ops.read_analog_reg8 = ixgbe_read_analog_reg8_82599;
+	mac->ops.write_analog_reg8 = ixgbe_write_analog_reg8_82599;
+	mac->ops.start_hw = ixgbe_start_hw_82599;
 
 	/* RAR, Multicast, VLAN */
-	mac->ops.set_vmdq = &ixgbe_set_vmdq_generic;
-	mac->ops.clear_vmdq = &ixgbe_clear_vmdq_generic;
-	mac->ops.insert_mac_addr = &ixgbe_insert_mac_addr_generic;
+	mac->ops.set_vmdq = ixgbe_set_vmdq_generic;
+	mac->ops.clear_vmdq = ixgbe_clear_vmdq_generic;
+	mac->ops.insert_mac_addr = ixgbe_insert_mac_addr_generic;
 	mac->rar_highwater = 1;
-	mac->ops.set_vfta = &ixgbe_set_vfta_generic;
-	mac->ops.set_vlvf = &ixgbe_set_vlvf_generic;
-	mac->ops.clear_vfta = &ixgbe_clear_vfta_generic;
-	mac->ops.init_uta_tables = &ixgbe_init_uta_tables_generic;
-	mac->ops.setup_sfp = &ixgbe_setup_sfp_modules_82599;
+	mac->ops.set_vfta = ixgbe_set_vfta_generic;
+	mac->ops.set_vlvf = ixgbe_set_vlvf_generic;
+	mac->ops.clear_vfta = ixgbe_clear_vfta_generic;
+	mac->ops.init_uta_tables = ixgbe_init_uta_tables_generic;
+	mac->ops.setup_sfp = ixgbe_setup_sfp_modules_82599;
 
-	mac->ops.verify_lesm_fw_enabled = &ixgbe_verify_lesm_fw_enabled_82599;
-	mac->ops.reset_pipeline = &ixgbe_reset_pipeline_82599;
-	mac->ops.stop_mac_link_on_d3 = &ixgbe_stop_mac_link_on_d3_82599;
+	mac->ops.verify_lesm_fw_enabled = ixgbe_verify_lesm_fw_enabled_82599;
+	mac->ops.reset_pipeline = ixgbe_reset_pipeline_82599;
+	mac->ops.stop_mac_link_on_d3 = ixgbe_stop_mac_link_on_d3_82599;
 
 	/* Link */
-	mac->ops.get_link_capabilities = &ixgbe_get_link_capabilities_82599;
-	mac->ops.check_link = &ixgbe_check_mac_link_generic;
+	mac->ops.get_link_capabilities = ixgbe_get_link_capabilities_82599;
+	mac->ops.check_link = ixgbe_check_mac_link_generic;
 	ixgbe_init_mac_link_ops_82599(hw);
 
-	mac->mcft_size		= 128;
-	mac->vft_size		= 128;
-	mac->num_rar_entries	= 128;
-	mac->rx_pb_size		= 512;
-	mac->max_tx_queues	= 128;
-	mac->max_rx_queues	= 128;
+	mac->mcft_size		= IXGBE_82599_MC_TBL_SIZE;
+	mac->vft_size		= IXGBE_82599_VFT_TBL_SIZE;
+	mac->num_rar_entries	= IXGBE_82599_RAR_ENTRIES;
+	mac->rx_pb_size		= IXGBE_82599_RX_PB_SIZE;
+	mac->max_tx_queues	= IXGBE_82599_MAX_TX_QUEUES;
+	mac->max_rx_queues	= IXGBE_82599_MAX_RX_QUEUES;
 	mac->max_msix_vectors	= 0 /*ixgbe_get_pcie_msix_count_generic(hw)*/;
 
 	hw->mbx.ops.init_params = ixgbe_init_mbx_params_pf;
 
 	/* EEPROM */
-	eeprom->ops.read = &ixgbe_read_eeprom_82599;
+	eeprom->ops.read = ixgbe_read_eeprom_82599;
 
 	/* Cache if MNG FW is up */
 	hw->mng_fw_enabled = ixgbe_mng_enabled(hw);
@@ -615,7 +622,7 @@ void ixgbe_disable_tx_laser_multispeed_fiber(struct ixgbe_hw *hw)
 {
 	uint32_t esdp_reg = IXGBE_READ_REG(hw, IXGBE_ESDP);
 
-	/* Disable tx laser; allow 100us to go dark per spec */
+	/* Disable Tx laser; allow 100us to go dark per spec */
 	esdp_reg |= IXGBE_ESDP_SDP3;
 	IXGBE_WRITE_REG(hw, IXGBE_ESDP, esdp_reg);
 	IXGBE_WRITE_FLUSH(hw);
@@ -634,7 +641,7 @@ void ixgbe_enable_tx_laser_multispeed_fiber(struct ixgbe_hw *hw)
 {
 	uint32_t esdp_reg = IXGBE_READ_REG(hw, IXGBE_ESDP);
 
-	/* Enable tx laser; allow 100ms to light up */
+	/* Enable Tx laser; allow 100ms to light up */
 	esdp_reg &= ~IXGBE_ESDP_SDP3;
 	IXGBE_WRITE_REG(hw, IXGBE_ESDP, esdp_reg);
 	IXGBE_WRITE_FLUSH(hw);
@@ -648,7 +655,7 @@ void ixgbe_enable_tx_laser_multispeed_fiber(struct ixgbe_hw *hw)
  *  When the driver changes the link speeds that it can support,
  *  it sets autotry_restart to TRUE to indicate that we need to
  *  initiate a new autotry session with the link partner.  To do
- *  so, we set the speed then disable and re-enable the tx laser, to
+ *  so, we set the speed then disable and re-enable the Tx laser, to
  *  alert the link partner that it also needs to restart autotry on its
  *  end.  This is consistent with TRUE clause 37 autoneg, which also
  *  involves a loss of signal.
@@ -899,8 +906,8 @@ out:
  *  Implements the Intel SmartSpeed algorithm.
  **/
 int32_t ixgbe_setup_mac_link_smartspeed(struct ixgbe_hw *hw,
-				     ixgbe_link_speed speed,
-				     bool autoneg_wait_to_complete)
+					ixgbe_link_speed speed,
+					bool autoneg_wait_to_complete)
 {
 	int32_t status = IXGBE_SUCCESS;
 	ixgbe_link_speed link_speed = IXGBE_LINK_SPEED_UNKNOWN;
@@ -1239,7 +1246,7 @@ mac_reset_top:
 	IXGBE_WRITE_REG(hw, IXGBE_CTRL, ctrl);
 	IXGBE_WRITE_FLUSH(hw);
 
-	/* Poll for reset bit to self-clear indicating reset is complete */
+	/* Poll for reset bit to self-clear meaning reset is complete */
 	for (i = 0; i < 10; i++) {
 		usec_delay(1);
 		ctrl = IXGBE_READ_REG(hw, IXGBE_CTRL);
@@ -1256,8 +1263,8 @@ mac_reset_top:
 
 	/*
 	 * Double resets are required for recovery from certain error
-	 * conditions.  Between resets, it is necessary to stall to allow time
-	 * for any pending HW events to complete.
+	 * conditions.  Between resets, it is necessary to stall to
+	 * allow time for any pending HW events to complete.
 	 */
 	if (hw->mac.flags & IXGBE_FLAGS_DOUBLE_RESET_REQUIRED) {
 		hw->mac.flags &= ~IXGBE_FLAGS_DOUBLE_RESET_REQUIRED;
@@ -1621,7 +1628,7 @@ int32_t ixgbe_enable_rx_dma_82599(struct ixgbe_hw *hw, uint32_t regval)
 }
 
 /**
- *  ixgbe_verify_fw_version_82599 - verify fw version for 82599
+ *  ixgbe_verify_fw_version_82599 - verify FW version for 82599
  *  @hw: pointer to hardware structure
  *
  *  Verifies that installed the firmware version is 0.6 or higher
@@ -1715,7 +1722,7 @@ bool ixgbe_verify_lesm_fw_enabled_82599(struct ixgbe_hw *hw)
 	    (fw_lesm_param_offset == 0) || (fw_lesm_param_offset == 0xFFFF))
 		goto out;
 
-	/* get the lesm state word */
+	/* get the LESM state word */
 	status = hw->eeprom.ops.read(hw, (fw_lesm_param_offset +
 				     IXGBE_FW_LESM_STATE_1),
 				     &fw_lesm_state);
@@ -1765,7 +1772,7 @@ int32_t ixgbe_read_eeprom_82599(struct ixgbe_hw *hw,
  *  @hw: pointer to hardware structure
  *
  * Reset pipeline by asserting Restart_AN together with LMS change to ensure
- * full pipeline reset
+ * full pipeline reset.  This function assumes the SW/FW lock is held.
  **/
 int32_t ixgbe_reset_pipeline_82599(struct ixgbe_hw *hw)
 {

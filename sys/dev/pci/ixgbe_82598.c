@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.12 2016/11/16 23:19:29 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.13 2016/11/17 12:21:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -36,6 +36,13 @@
 
 #include <dev/pci/ixgbe.h>
 #include <dev/pci/ixgbe_type.h>
+
+#define IXGBE_82598_MAX_TX_QUEUES 32
+#define IXGBE_82598_MAX_RX_QUEUES 64
+#define IXGBE_82598_RAR_ENTRIES   16
+#define IXGBE_82598_MC_TBL_SIZE  128
+#define IXGBE_82598_VFT_TBL_SIZE 128
+#define IXGBE_82598_RX_PB_SIZE   512
 
 uint32_t ixgbe_get_pcie_msix_count_82598(struct ixgbe_hw *hw);
 int32_t ixgbe_get_link_capabilities_82598(struct ixgbe_hw *hw,
@@ -135,43 +142,43 @@ int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw)
 	ret_val = ixgbe_init_ops_generic(hw);
 
 	/* PHY */
-	phy->ops.init = &ixgbe_init_phy_ops_82598;
+	phy->ops.init = ixgbe_init_phy_ops_82598;
 
 	/* MAC */
-	mac->ops.start_hw = &ixgbe_start_hw_82598;
-	mac->ops.reset_hw = &ixgbe_reset_hw_82598;
-	mac->ops.get_media_type = &ixgbe_get_media_type_82598;
+	mac->ops.start_hw = ixgbe_start_hw_82598;
+	mac->ops.reset_hw = ixgbe_reset_hw_82598;
+	mac->ops.get_media_type = ixgbe_get_media_type_82598;
 	mac->ops.get_supported_physical_layer =
-				&ixgbe_get_supported_physical_layer_82598;
-	mac->ops.read_analog_reg8 = &ixgbe_read_analog_reg8_82598;
-	mac->ops.write_analog_reg8 = &ixgbe_write_analog_reg8_82598;
-	mac->ops.set_lan_id = &ixgbe_set_lan_id_multi_port_pcie_82598;
+				ixgbe_get_supported_physical_layer_82598;
+	mac->ops.read_analog_reg8 = ixgbe_read_analog_reg8_82598;
+	mac->ops.write_analog_reg8 = ixgbe_write_analog_reg8_82598;
+	mac->ops.set_lan_id = ixgbe_set_lan_id_multi_port_pcie_82598;
 
 	/* RAR, Multicast, VLAN */
-	mac->ops.set_vmdq = &ixgbe_set_vmdq_82598;
-	mac->ops.clear_vmdq = &ixgbe_clear_vmdq_82598;
-	mac->ops.set_vfta = &ixgbe_set_vfta_82598;
-	mac->ops.clear_vfta = &ixgbe_clear_vfta_82598;
+	mac->ops.set_vmdq = ixgbe_set_vmdq_82598;
+	mac->ops.clear_vmdq = ixgbe_clear_vmdq_82598;
+	mac->ops.set_vfta = ixgbe_set_vfta_82598;
+	mac->ops.clear_vfta = ixgbe_clear_vfta_82598;
 
 	/* Flow Control */
-	mac->ops.fc_enable = &ixgbe_fc_enable_82598;
+	mac->ops.fc_enable = ixgbe_fc_enable_82598;
 
-	mac->mcft_size		= 128;
-	mac->vft_size		= 128;
-	mac->num_rar_entries	= 16;
-	mac->rx_pb_size		= 512;
-	mac->max_tx_queues	= 32;
-	mac->max_rx_queues	= 64;
+	mac->mcft_size		= IXGBE_82598_MC_TBL_SIZE;
+	mac->vft_size		= IXGBE_82598_VFT_TBL_SIZE;
+	mac->num_rar_entries	= IXGBE_82598_RAR_ENTRIES;
+	mac->rx_pb_size		= IXGBE_82598_RX_PB_SIZE;
+	mac->max_tx_queues	= IXGBE_82598_MAX_TX_QUEUES;
+	mac->max_rx_queues	= IXGBE_82598_MAX_RX_QUEUES;
 	mac->max_msix_vectors	= ixgbe_get_pcie_msix_count_generic(hw);
 
 	/* SFP+ Module */
-	phy->ops.read_i2c_eeprom = &ixgbe_read_i2c_eeprom_82598;
+	phy->ops.read_i2c_eeprom = ixgbe_read_i2c_eeprom_82598;
 
 	/* Link */
-	mac->ops.check_link = &ixgbe_check_mac_link_82598;
-	mac->ops.setup_link = &ixgbe_setup_mac_link_82598;
+	mac->ops.check_link = ixgbe_check_mac_link_82598;
+	mac->ops.setup_link = ixgbe_setup_mac_link_82598;
 	mac->ops.flap_tx_laser = NULL;
-	mac->ops.get_link_capabilities = &ixgbe_get_link_capabilities_82598;
+	mac->ops.get_link_capabilities = ixgbe_get_link_capabilities_82598;
 
 	return ret_val;
 }
@@ -199,20 +206,20 @@ int32_t ixgbe_init_phy_ops_82598(struct ixgbe_hw *hw)
 
 	/* Overwrite the link function pointers if copper PHY */
 	if (mac->ops.get_media_type(hw) == ixgbe_media_type_copper) {
-		mac->ops.setup_link = &ixgbe_setup_copper_link_82598;
+		mac->ops.setup_link = ixgbe_setup_copper_link_82598;
 		mac->ops.get_link_capabilities =
-				&ixgbe_get_copper_link_capabilities_generic;
+				ixgbe_get_copper_link_capabilities_generic;
 	}
 
 	switch (hw->phy.type) {
 	case ixgbe_phy_tn:
-		phy->ops.setup_link = &ixgbe_setup_phy_link_tnx;
-		phy->ops.check_link = &ixgbe_check_phy_link_tnx;
+		phy->ops.setup_link = ixgbe_setup_phy_link_tnx;
+		phy->ops.check_link = ixgbe_check_phy_link_tnx;
 		phy->ops.get_firmware_version =
-					&ixgbe_get_phy_firmware_version_tnx;
+					ixgbe_get_phy_firmware_version_tnx;
 		break;
 	case ixgbe_phy_nl:
-		phy->ops.reset = &ixgbe_reset_phy_nl;
+		phy->ops.reset = ixgbe_reset_phy_nl;
 
 		/* Call SFP+ identify routine to get the SFP+ module type */
 		ret_val = phy->ops.identify_sfp(hw);
