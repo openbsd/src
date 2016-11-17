@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.40 2016/09/03 14:36:14 jmc Exp $
+.\"	$OpenBSD: com.4,v 1.41 2016/11/17 15:09:47 visa Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: September 3 2016 $
+.Dd $Mdocdate: November 17 2016 $
 .Dt COM 4
 .Os
 .Sh NAME
@@ -70,6 +70,9 @@
 .Cd "com1 at dino? irq 11"
 .Cd "com0 at ssio? irq 4"
 .Cd "com1 at ssio? irq 3"
+.Pp
+.Cd "# loongson"
+.Cd "com* at leioc?"
 .Pp
 .Cd "# macppc"
 .Cd "com* at puc?"
