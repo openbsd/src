@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_common.c,v 1.4 2016/11/17 09:42:11 rzalamena Exp $	*/
+/*	$OpenBSD: ofp_common.c,v 1.5 2016/11/17 10:05:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -75,6 +75,23 @@ ofp_validate_header(struct switchd *sc,
 	    ntohs(oh->oh_length), ntohl(oh->oh_xid));
 
 	return (0);
+}
+
+int
+ofp_validate(struct switchd *sc,
+    struct sockaddr_storage *src, struct sockaddr_storage *dst,
+    struct ofp_header *oh, struct ibuf *ibuf, uint8_t version)
+{
+	switch (version) {
+	case OFP_V_1_0:
+		return (ofp10_validate(sc, src, dst, oh, ibuf));
+	case OFP_V_1_3:
+		return (ofp13_validate(sc, src, dst, oh, ibuf));
+	default:
+		return (-1);
+	}
+
+	/* NOTREACHED */
 }
 
 int
