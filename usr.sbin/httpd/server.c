@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.99 2016/11/17 14:52:48 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.100 2016/11/17 14:58:37 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -216,9 +216,12 @@ server_tls_init(struct server *srv)
 		return (-1);
 	}
 
-	tls_config_set_protocols(srv->srv_tls_config,
-	    srv->srv_conf.tls_protocols);
-
+	if (tls_config_set_protocols(srv->srv_tls_config,
+	    srv->srv_conf.tls_protocols) != 0) {
+		log_warnx("%s: failed to set tls protocols: %s",
+		    __func__, tls_config_error(srv->srv_tls_config));
+		return (-1);
+	}
 	if (tls_config_set_ciphers(srv->srv_tls_config,
 	    srv->srv_conf.tls_ciphers) != 0) {
 		log_warnx("%s: failed to set tls ciphers: %s",
