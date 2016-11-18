@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: genmap.sh,v 1.4 2016/11/18 12:54:14 reyk Exp $
+# $OpenBSD: genmap.sh,v 1.5 2016/11/18 13:36:32 reyk Exp $
 
 # Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
 #
@@ -19,17 +19,21 @@ TOKEN=""
 MAPFILE=""
 INPUT=""
 HEADER=""
+DESCR=0
 
-args=`getopt i:o:h:t:m: $*`
+args=`getopt di:o:h:t:m: $*`
 
 if [ $? -ne 0 ]; then
-	echo "usage: $0 -i input -h header -t token [-m mapfile]"
+	echo "usage: $0 [-d] -i input -h header -t token [-m mapfile]"
 	exit 1
 fi
 
 set -- $args
 while [ $# -ne 0 ]; do
 	case "$1" in
+	-d)
+		DESCR=1; shift;
+		;;
 	-i)
 		INPUT="$2"; shift; shift;
 		;;
@@ -85,9 +89,18 @@ for i in $MAP; do
 	echo "struct constmap ${tok}_${lower}_map[] = {"
 
 	X="${TOK}_${upper}_"
-	grep "$X" $INPUT | grep -v '\\' | sed -Ee \
-	    "s/#define.*${X}([^[:blank:]]+).*\/\* (.+) \*\/$\
+
+	if [ $DESCR = 1 ]; then
+		# with the description field
+		grep "$X" $INPUT | grep -v '\\' | sed -Ee \
+		    "s/#define.*${X}([^[:blank:]]+).*\/\* (.+) \*\/$\
 /	{ ${X}\1, \"\1\", \"\2\" },/" | grep -v '\#define'
+	else
+		# without the description field
+		grep "$X" $INPUT | grep -v '\\' | sed -Ee \
+		    "s/#define.*${X}([^[:blank:]]+).*\/\* .+ \*\/$\
+/	{ ${X}\1, \"\1\" },/" | grep -v '\#define'
+	fi
 
 	echo "	{ 0 }"
 	echo "};"
