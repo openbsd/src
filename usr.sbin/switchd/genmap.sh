@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: genmap.sh,v 1.3 2016/11/18 12:46:56 reyk Exp $
+# $OpenBSD: genmap.sh,v 1.4 2016/11/18 12:54:14 reyk Exp $
 
 # Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
 #
@@ -68,9 +68,13 @@ sed -n '1,/^ \*\//p' $INPUT
 cat <<EOF
 
 #include <sys/types.h>
-
-#include "types.h"
 ${INC}
+
+struct constmap {
+	unsigned int	 cm_type;
+	const char	*cm_name;
+	const char	*cm_descr;
+};
 
 EOF
 
