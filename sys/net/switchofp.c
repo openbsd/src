@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.32 2016/11/18 16:23:13 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.33 2016/11/18 16:56:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -2090,7 +2090,7 @@ swofp_flow_filter(struct swofp_flow_entry *swfe, uint64_t cookie,
 	    ((swfe->swfe_cookie & cookie_mask) != (cookie & cookie_mask)))
 		return (0);
 
-	if ((out_port == OFP_PORT_ANY) && (out_group == OFP_GROUP_ALL))
+	if ((out_port == OFP_PORT_ANY) && (out_group == OFP_GROUP_ID_ALL))
 		return (1);
 
 	if ((out_port != OFP_PORT_ANY) &&
@@ -2098,7 +2098,7 @@ swofp_flow_filter(struct swofp_flow_entry *swfe, uint64_t cookie,
 	    swofp_flow_filter_out_port(swfe->swfe_apply_actions, out_port)))
 	    return (0);
 
-	if (out_port != OFP_GROUP_ALL) {
+	if (out_port != OFP_GROUP_ID_ALL) {
 		/* XXX ignore group */
 	}
 
@@ -5292,7 +5292,7 @@ swofp_group_mod_delete(struct switch_softc *sc, struct mbuf *m)
 	ogm = mtod(m, struct ofp_group_mod *);
 	group_id = ntohl(ogm->gm_group_id);
 
-	if (group_id == OFP_GROUP_ALL)
+	if (group_id == OFP_GROUP_ID_ALL)
 		swofp_group_entry_delete_all(sc);
 	else if ((swge = swofp_group_entry_lookup(sc, group_id)) != NULL)
 		    swofp_group_entry_delete(sc, swge);

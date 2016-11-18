@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.9 2016/11/18 14:54:22 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.10 2016/11/18 16:56:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -638,9 +638,10 @@ struct ofp_error {
 #define OFP_GROUP_T_INDIRECT		2	/* Indirect group */
 #define OFP_GROUP_T_FAST_FAILOVER	3	/* Fast failover group */
 
-#define OFP_GROUP_MAX		0xffffff00	/* Last usable group number */
-#define OFP_GROUP_ALL		0xfffffffc	/* Represents all groups for delete command */
-#define OFP_GROUP_ANY		0xffffffff	/* Special wildcard: no group specified */
+/* Special group identifiers */
+#define OFP_GROUP_ID_MAX	0xffffff00	/* Last usable group number */
+#define OFP_GROUP_ID_ALL	0xfffffffc	/* Represents all groups for delete command */
+#define OFP_GROUP_ID_ANY	0xffffffff	/* Special wildcard: no group specified */
 
 struct ofp_bucket {
 	uint16_t		b_len;
