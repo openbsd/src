@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofpclient.c,v 1.2 2016/11/15 09:05:14 reyk Exp $	*/
+/*	$OpenBSD: ofpclient.c,v 1.3 2016/11/18 22:15:52 tb Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/un.h>
 
 #include <net/if.h>
+#include <net/ofp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -104,7 +105,7 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 		ofp13_featuresrequest(&sc, &con);
 		break;
 	case DUMP_FLOWS:
-		ofp13_flow_stats(&sc, &con, OFP_PORT_ANY, OFP_GROUP_ANY,
+		ofp13_flow_stats(&sc, &con, OFP_PORT_ANY, OFP_GROUP_ID_ANY,
 		    OFP_TABLE_ID_ALL);
 		break;
 	case DUMP_TABLES:
