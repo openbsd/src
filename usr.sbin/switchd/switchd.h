@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.23 2016/11/17 12:40:56 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.24 2016/11/18 16:34:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SWITCHD_H
-#define _SWITCHD_H
+#ifndef SWITCHD_H
+#define SWITCHD_H
 
 #include <sys/queue.h>
 #include <sys/tree.h>
@@ -375,4 +375,4 @@ void		 ibuf_reset(struct ibuf *);
 int		 cmdline_symset(char *);
 int		 parse_config(const char *, struct switchd *);
 
-#endif /* _SWITCHD_H */
+#endif /* SWITCHD_H */

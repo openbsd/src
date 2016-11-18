@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_map.h,v 1.6 2016/11/18 14:54:22 reyk Exp $	*/
+/*	$OpenBSD: ofp_map.h,v 1.7 2016/11/18 16:34:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SWITCHD_OFP_MAP_H
-#define _SWITCHD_OFP_MAP_H
+#ifndef OFP_MAP_H
+#define OFP_MAP_H
 
 /*
  * Each map is generated from lists of #define's in ofp.h, using the format:
@@ -64,4 +64,4 @@ extern struct constmap ofp_errinst_map[];
 extern struct constmap ofp_errreq_map[];
 extern struct constmap ofp_table_featprop_map[];
 
-#endif /* _SWITCHD_OFP_MAP_H */
+#endif /* OFP_MAP_H */
