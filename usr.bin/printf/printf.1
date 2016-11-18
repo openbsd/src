@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.29 2015/02/28 21:51:57 bentley Exp $
+.\"	$OpenBSD: printf.1,v 1.30 2016/11/18 15:59:10 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: November 18 2016 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -196,7 +196,7 @@ for
 .Cm e
 and
 .Cm f
-formats, or the maximum number of characters to be printed
+formats, or the maximum number of bytes to be printed
 from a string; if the digit string is missing, the precision is treated
 as zero.
 .It Format:
@@ -338,7 +338,7 @@ is printed.
 .It Cm s
 Characters from the string
 .Ar argument
-are printed until the end is reached or until the number of characters
+are printed until the end is reached or until the number of bytes
 indicated by the precision specification is reached; however if the
 precision is 0 or missing, all characters in the string are printed.
 .It Cm \&%
@@ -369,7 +369,12 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification.
+specification, but in order to produce predictable output
+it deliberately ignores the
+.Xr locale 1
+and always operates as if
+.Ev LC_ALL Ns =C
+were set.
 .Pp
 The escape sequences \ee and \e' are extensions to that specification.
 .Sh HISTORY
