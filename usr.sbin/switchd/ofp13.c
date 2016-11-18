@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.29 2016/11/17 16:24:00 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.30 2016/11/18 13:05:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1917,8 +1917,14 @@ ofp13_flowmod(struct switch_connection *con, struct ibuf *ibuf,
 	fm->fm_oh.oh_type = OFP_T_FLOW_MOD;
 	fm->fm_oh.oh_length = htons(sizeof(*fm));
 	fm->fm_oh.oh_xid = htonl(con->con_xidnxt++);
+
+	fm->fm_command = cmd;
+	fm->fm_buffer_id = htonl(OFP_PKTOUT_NO_BUFFER);
+	fm->fm_flags = htons(OFP_FLOWFLAG_SEND_FLOW_REMOVED);
+
 	fm->fm_match.om_type = htons(OFP_MATCH_OXM);
 	fm->fm_match.om_length = htons(sizeof(fm->fm_match));
+
 	return (fm);
 }
 
