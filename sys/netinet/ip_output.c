@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.329 2016/11/14 10:32:46 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.330 2016/11/18 02:53:47 dlg Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1811,7 +1811,7 @@ in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
 		    ip->ip_hl != 5 || ifp->if_bridgeport != NULL) {
-			udpstat.udps_outswcsum++;
+			udpstat_inc(udps_outswcsum);
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
 		}

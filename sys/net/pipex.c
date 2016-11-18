@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.89 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.90 2016/11/18 02:53:47 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1986,7 +1986,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		break;
 #endif
 	}
-	udpstat.udps_opackets++;
+	udpstat_inc(udps_opackets);
 
 	if (datalen > 0) {	/* network layer only */
 		/* countup statistics */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.27 2016/06/18 10:36:13 vgross Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.28 2016/11/18 02:53:47 dlg Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -102,6 +102,37 @@ struct	udpstat {
 }
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum udpstat_counters {
+			/* input statistics: */
+	udps_ipackets,		/* total input packets */
+	udps_hdrops,		/* packet shorter than header */
+	udps_badsum,		/* checksum error */
+	udps_nosum,		/* no checksum */
+	udps_badlen,		/* data length larger than packet */
+	udps_noport,		/* no socket on port */
+	udps_noportbcast,	/* of above, arrived as broadcast */
+	udps_nosec,		/* dropped for lack of ipsec */
+	udps_fullsock,		/* not delivered, input socket full */
+	udps_pcbhashmiss,	/* input packets missing pcb hash */
+	udps_inswcsum,		/* input software-csummed packets */
+			/* output statistics: */
+	udps_opackets,		/* total output packets */
+	udps_outswcsum,		/* output software-csummed packets */
+
+	udps_ncounters
+};
+
+extern struct cpumem *udpcounters;
+
+static inline void
+udpstat_inc(enum udpstat_counters c)
+{
+	counters_inc(udpcounters, c);
+}
+
 extern struct	inpcbtable udbtable;
 extern struct	udpstat udpstat;
 

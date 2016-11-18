@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.51 2016/08/04 20:46:24 vgross Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.52 2016/11/18 02:53:47 dlg Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	if (in6p->inp_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
 
-	udpstat.udps_opackets++;
+	udpstat_inc(udps_opackets);
 
 	/* force routing table */
 	m->m_pkthdr.ph_rtableid = in6p->inp_rtableid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.220 2016/11/03 18:42:35 mikeb Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.221 2016/11/18 02:53:47 dlg Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -130,10 +130,11 @@ u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 int *udpctl_vars[UDPCTL_MAXID] = UDPCTL_VARS;
 
 struct	inpcbtable udbtable;
-struct	udpstat udpstat;
+struct	cpumem *udpcounters;
 
 int	udp_output(struct inpcb *, struct mbuf *, struct mbuf *, struct mbuf *);
 void	udp_notify(struct inpcb *, int);
+int	udp_sysctl_udpstat(void *, size_t *, void *);
 
 #ifndef	UDB_INITIAL_HASH_SIZE
 #define	UDB_INITIAL_HASH_SIZE	128
@@ -142,6 +143,7 @@ void	udp_notify(struct inpcb *, int);
 void
 udp_init(void)
 {
+	udpcounters = counters_alloc(udps_ncounters, M_COUNTERS);
 	in_pcbinit(&udbtable, UDB_INITIAL_HASH_SIZE);
 }
 
@@ -189,7 +191,7 @@ udp_input(struct mbuf *m, ...)
 	iphlen = va_arg(ap, int);
 	va_end(ap);
 
-	udpstat.udps_ipackets++;
+	udpstat_inc(udps_ipackets);
 
 	switch (mtod(m, struct ip *)->ip_v) {
 	case 4:
@@ -212,13 +214,13 @@ udp_input(struct mbuf *m, ...)
 
 	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
 	if (!uh) {
-		udpstat.udps_hdrops++;
+		udpstat_inc(udps_hdrops);
 		return;
 	}
 
 	/* Check for illegal destination port 0 */
 	if (uh->uh_dport == 0) {
-		udpstat.udps_noport++;
+		udpstat_inc(udps_noport);
 		goto bad;
 	}
 
@@ -231,7 +233,7 @@ udp_input(struct mbuf *m, ...)
 		if (m->m_pkthdr.len - iphlen != len) {
 			if (len > (m->m_pkthdr.len - iphlen) ||
 			    len < sizeof(struct udphdr)) {
-				udpstat.udps_badlen++;
+				udpstat_inc(udps_badlen);
 				goto bad;
 			}
 			m_adj(m, len - (m->m_pkthdr.len - iphlen));
@@ -243,7 +245,7 @@ udp_input(struct mbuf *m, ...)
 		if (len == 0 && m->m_pkthdr.len - iphlen > 0xffff)
 			len = m->m_pkthdr.len - iphlen;
 		if (len != m->m_pkthdr.len - iphlen) {
-			udpstat.udps_badlen++;
+			udpstat_inc(udps_badlen);
 			goto bad;
 		}
 	}
@@ -276,7 +278,7 @@ udp_input(struct mbuf *m, ...)
 	 */
 	savesum = uh->uh_sum;
 	if (uh->uh_sum == 0) {
-		udpstat.udps_nosum++;
+		udpstat_inc(udps_nosum);
 #ifdef INET6
 		/*
 		 * In IPv6, the UDP checksum is ALWAYS used.
@@ -287,10 +289,10 @@ udp_input(struct mbuf *m, ...)
 	} else {
 		if ((m->m_pkthdr.csum_flags & M_UDP_CSUM_IN_OK) == 0) {
 			if (m->m_pkthdr.csum_flags & M_UDP_CSUM_IN_BAD) {
-				udpstat.udps_badsum++;
+				udpstat_inc(udps_badsum);
 				goto bad;
 			}
-			udpstat.udps_inswcsum++;
+			udpstat_inc(udps_inswcsum);
 
 			if (ip)
 				uh->uh_sum = in4_cksum(m, IPPROTO_UDP,
@@ -301,7 +303,7 @@ udp_input(struct mbuf *m, ...)
 				    iphlen, len);
 #endif /* INET6 */
 			if (uh->uh_sum != 0) {
-				udpstat.udps_badsum++;
+				udpstat_inc(udps_badsum);
 				goto bad;
 			}
 		}
@@ -328,7 +330,7 @@ udp_input(struct mbuf *m, ...)
 		 */
 		if (spi != 0) {
 			if ((m = m_pullup(m, skip)) == NULL) {
-				udpstat.udps_hdrops++;
+				udpstat_inc(udps_hdrops);
 				return;
 			}
 
@@ -497,7 +499,7 @@ udp_input(struct mbuf *m, ...)
 					    &srcsa.sa, n, opts) == 0) {
 						m_freem(n);
 						m_freem(opts);
-						udpstat.udps_fullsock++;
+						udpstat_inc(udps_fullsock);
 					} else
 						sorwakeup(last->inp_socket);
 					opts = NULL;
@@ -523,7 +525,7 @@ udp_input(struct mbuf *m, ...)
 			 * (No need to send an ICMP Port Unreachable
 			 * for a broadcast or multicast datgram.)
 			 */
-			udpstat.udps_noportbcast++;
+			udpstat_inc(udps_noportbcast);
 			goto bad;
 		}
 
@@ -539,7 +541,7 @@ udp_input(struct mbuf *m, ...)
 		m_adj(m, iphlen);
 		if (sbappendaddr(&last->inp_socket->so_rcv,
 		    &srcsa.sa, m, opts) == 0) {
-			udpstat.udps_fullsock++;
+			udpstat_inc(udps_fullsock);
 			goto bad;
 		}
 		sorwakeup(last->inp_socket);
@@ -566,7 +568,7 @@ udp_input(struct mbuf *m, ...)
 		int	inpl_reverse = 0;
 		if (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST)
 			inpl_reverse = 1;
-		++udpstat.udps_pcbhashmiss;
+		udpstat_inc(udps_pcbhashmiss);
 #ifdef INET6
 		if (ip6) {
 			inp = in6_pcblookup_listen(&udbtable,
@@ -578,9 +580,9 @@ udp_input(struct mbuf *m, ...)
 		    ip->ip_dst, uh->uh_dport, inpl_reverse, m,
 		    m->m_pkthdr.ph_rtableid);
 		if (inp == 0) {
-			udpstat.udps_noport++;
+			udpstat_inc(udps_noport);
 			if (m->m_flags & (M_BCAST | M_MCAST)) {
-				udpstat.udps_noportbcast++;
+				udpstat_inc(udps_noportbcast);
 				goto bad;
 			}
 #ifdef INET6
@@ -628,7 +630,7 @@ udp_input(struct mbuf *m, ...)
 	ipsp_spd_lookup(m, srcsa.sa.sa_family, iphlen, &error,
 	    IPSP_DIRECTION_IN, tdb, inp, 0);
 	if (error) {
-		udpstat.udps_nosec++;
+		udpstat_inc(udps_nosec);
 		goto bad;
 	}
 	/* create ipsec options while we know that tdb cannot be modified */
@@ -690,7 +692,7 @@ udp_input(struct mbuf *m, ...)
 	iphlen += sizeof(struct udphdr);
 	m_adj(m, iphlen);
 	if (sbappendaddr(&inp->inp_socket->so_rcv, &srcsa.sa, m, opts) == 0) {
-		udpstat.udps_fullsock++;
+		udpstat_inc(udps_fullsock);
 		goto bad;
 	}
 	sorwakeup(inp->inp_socket);
@@ -1073,7 +1075,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 	if (udpcksum)
 		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 
-	udpstat.udps_opackets++;
+	udpstat_inc(udps_opackets);
 
 	/* force routing table */
 	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
@@ -1341,8 +1343,8 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case UDPCTL_STATS:
 		if (newp != NULL)
 			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &udpstat, sizeof(udpstat)));
+
+		return (udp_sysctl_udpstat(oldp, oldlenp, newp));
 
 	default:
 		if (name[0] < UDPCTL_MAXID)
@@ -1351,4 +1353,23 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */
+}
+
+int
+udp_sysctl_udpstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	uint64_t counters[udps_ncounters];
+	struct udpstat udpstat;
+	u_long *words = (u_long *)&udpstat;
+	int i;
+
+	KASSERT(sizeof(udpstat) == (nitems(counters) * sizeof(u_long)));
+
+	counters_read(udpcounters, counters, nitems(counters));
+
+	for (i = 0; i < nitems(counters); i++)
+		words[i] = (u_long)counters[i];
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &udpstat, sizeof(udpstat)));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.217 2016/11/14 10:32:46 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.218 2016/11/18 02:53:47 dlg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2770,7 +2770,7 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv6) ||
 		    ip6->ip6_nxt != IPPROTO_UDP ||
 		    ifp->if_bridgeport != NULL) {
-			udpstat.udps_outswcsum++;
+			udpstat_inc(udps_outswcsum);
 			in6_delayed_cksum(m, IPPROTO_UDP);
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
 		}
