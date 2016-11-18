@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.31 2016/11/16 13:47:27 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.32 2016/11/18 16:23:13 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4796,49 +4796,56 @@ swofp_flow_entry_put_instructions(struct mbuf *m,
 
 		switch (ntohs(oi->i_type)) {
 		case OFP_INSTRUCTION_T_GOTO_TABLE:
-			free(swfe->swfe_goto_table, M_DEVBUF,
-			    ntohs(oi->i_len));
+			if (swfe->swfe_goto_table)
+				free(swfe->swfe_goto_table, M_DEVBUF,
+				    ntohs(swfe->swfe_goto_table->igt_len));
 
 			swfe->swfe_goto_table =
 			    (struct ofp_instruction_goto_table *)inst;
 			break;
 		case OFP_INSTRUCTION_T_WRITE_META:
-			free(swfe->swfe_write_metadata, M_DEVBUF,
-			    ntohs(oi->i_len));
+			if (swfe->swfe_write_metadata)
+				free(swfe->swfe_write_metadata, M_DEVBUF,
+				    ntohs(swfe->swfe_write_metadata->iwm_len));
 
 			swfe->swfe_write_metadata =
 			    (struct ofp_instruction_write_metadata *)inst;
 			break;
 		case OFP_INSTRUCTION_T_WRITE_ACTIONS:
-			free(swfe->swfe_write_actions, M_DEVBUF,
-			    ntohs(oi->i_len));
+			if (swfe->swfe_write_actions)
+				free(swfe->swfe_write_actions, M_DEVBUF,
+				    ntohs(swfe->swfe_write_actions->ia_len));
 
 			swfe->swfe_write_actions =
 			    (struct ofp_instruction_actions *)inst;
 			break;
 		case OFP_INSTRUCTION_T_APPLY_ACTIONS:
-			free(swfe->swfe_apply_actions, M_DEVBUF,
-			    ntohs(oi->i_len));
+			if (swfe->swfe_apply_actions)
+				free(swfe->swfe_apply_actions, M_DEVBUF,
+				    ntohs(swfe->swfe_apply_actions->ia_len));
 
 			swfe->swfe_apply_actions =
 			    (struct ofp_instruction_actions *)inst;
 			break;
 		case OFP_INSTRUCTION_T_CLEAR_ACTIONS:
-			free(swfe->swfe_clear_actions, M_DEVBUF,
-			    ntohs(oi->i_len));
+			if (swfe->swfe_clear_actions)
+				free(swfe->swfe_clear_actions, M_DEVBUF,
+				    ntohs(swfe->swfe_clear_actions->ia_len));
 
 			swfe->swfe_clear_actions =
 			    (struct ofp_instruction_actions *)inst;
 			break;
 		case OFP_INSTRUCTION_T_METER:
-			free(swfe->swfe_meter, M_DEVBUF,
-			    ntohs(oi->i_len));
+			if (swfe->swfe_meter)
+				free(swfe->swfe_meter, M_DEVBUF,
+				    ntohs(swfe->swfe_meter->im_len));
 
 			swfe->swfe_meter = (struct ofp_instruction_meter *)inst;
 			break;
 		case OFP_INSTRUCTION_T_EXPERIMENTER:
-			free(swfe->swfe_experimenter, M_DEVBUF,
-			    ntohs(oi->i_len));
+			if (swfe->swfe_experimenter)
+				free(swfe->swfe_experimenter, M_DEVBUF,
+				    ntohs(swfe->swfe_experimenter->ie_len));
 
 			swfe->swfe_experimenter =
 			    (struct ofp_instruction_experimenter *)inst;
