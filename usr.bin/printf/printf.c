@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.25 2016/07/27 01:52:03 tedu Exp $	*/
+/*	$OpenBSD: printf.c,v 1.26 2016/11/18 15:53:16 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -30,14 +30,13 @@
  */
 
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <limits.h>
-#include <locale.h>
-#include <errno.h>
-#include <err.h>
+#include <unistd.h>
 
 static int	 print_escape_str(const char *);
 static int	 print_escape(const char *);
@@ -50,7 +49,7 @@ static unsigned long getulong(void);
 static char	*getstr(void);
 static char	*mklong(const char *, int); 
 static void      check_conversion(const char *, const char *);
-static void	 usage(void); 
+static void __dead usage(void);
      
 static int	rval;
 static char  **gargv;
@@ -80,8 +79,6 @@ main(int argc, char *argv[])
 	char convch, nextch;
 	char *format;
 
-	setlocale (LC_ALL, "");
-
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
@@ -91,10 +88,8 @@ main(int argc, char *argv[])
 		argv++;
 	}
 
-	if (argc < 2) {
+	if (argc < 2)
 		usage();
-		return (1);
-	}
 
 	format = *++argv;
 	gargv = ++argv;
@@ -498,8 +493,9 @@ check_conversion(const char *s, const char *ep)
 	}
 }
 
-static void
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr, "usage: printf format [argument ...]\n");
+	exit(1);
 }
