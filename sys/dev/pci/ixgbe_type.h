@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.30 2016/11/18 11:25:11 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.31 2016/11/18 14:16:10 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3481,6 +3481,7 @@ struct ixgbe_phy_operations {
 	int32_t (*write_i2c_combined)(struct ixgbe_hw *, uint8_t addr, uint16_t reg, uint16_t val);
 	int32_t (*check_overtemp)(struct ixgbe_hw *);
 	int32_t (*set_phy_power)(struct ixgbe_hw *, bool on);
+	int32_t (*handle_lasi)(struct ixgbe_hw *hw);
 	int32_t (*read_i2c_combined_unlocked)(struct ixgbe_hw *, uint8_t addr, uint16_t reg,
 					      uint16_t *value);
 	int32_t (*write_i2c_combined_unlocked)(struct ixgbe_hw *, uint8_t addr, uint16_t reg,

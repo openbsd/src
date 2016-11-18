@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.135 2016/11/18 13:45:57 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.136 2016/11/18 14:16:10 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -98,6 +98,7 @@ int	ixgbe_allocate_queues(struct ix_softc *);
 void	ixgbe_free_pci_resources(struct ix_softc *);
 void	ixgbe_local_timer(void *);
 void	ixgbe_setup_interface(struct ix_softc *);
+void	ixgbe_config_gpie(struct ix_softc *);
 void	ixgbe_config_delay_values(struct ix_softc *);
 void	ixgbe_config_link(struct ix_softc *);
 
@@ -147,6 +148,7 @@ void	ixgbe_setup_vlan_hw_support(struct ix_softc *);
 void	ixgbe_setup_optics(struct ix_softc *);
 void	ixgbe_handle_mod(struct ix_softc *);
 void	ixgbe_handle_msf(struct ix_softc *);
+void	ixgbe_handle_phy(struct ix_softc *);
 
 /* Legacy (single vector interrupt handler */
 int	ixgbe_intr(void *);
@@ -586,7 +588,7 @@ ixgbe_init(void *arg)
 	struct ix_softc	*sc = (struct ix_softc *)arg;
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
 	struct rx_ring	*rxr = sc->rx_rings;
-	uint32_t	 k, txdctl, rxdctl, rxctrl, mhadd, gpie, itr;
+	uint32_t	 k, txdctl, rxdctl, rxctrl, mhadd, itr;
 	int		 i, s, err;
 
 	INIT_DEBUGOUT("ixgbe_init: begin");
@@ -631,43 +633,11 @@ ixgbe_init(void *arg)
 	/* Configure RX settings */
 	ixgbe_initialize_receive_units(sc);
 
+	/* Enable SDP & MSIX interrupts based on adapter */
+	ixgbe_config_gpie(sc);
+
 	/* Program promiscuous mode and multicast filters. */
 	ixgbe_iff(sc);
-
-	gpie = IXGBE_READ_REG(&sc->hw, IXGBE_GPIE);
-
-	/* Enable Fan Failure Interrupt */
-	gpie |= IXGBE_SDP1_GPIEN;
-
-	if (sc->hw.mac.type == ixgbe_mac_82599EB) {
-		/* Add for Module detection */
-		gpie |= IXGBE_SDP2_GPIEN;
-
-		/*
-		 * Set LL interval to max to reduce the number of low latency
-		 * interrupts hitting the card when the ring is getting full.
-		 */
-		gpie |= 0xf << IXGBE_GPIE_LLI_DELAY_SHIFT;
-	}
-
-	if (sc->hw.mac.type == ixgbe_mac_X540) {
-		/* Thermal Failure Detection */
-		gpie |= IXGBE_SDP0_GPIEN;
-
-		/*
-		 * Set LL interval to max to reduce the number of low latency
-		 * interrupts hitting the card when the ring is getting full.
-		 */
-		gpie |= 0xf << IXGBE_GPIE_LLI_DELAY_SHIFT;
-	}
-
-	if (sc->msix > 1) {
-		/* Enable Enhanced MSIX mode */
-		gpie |= IXGBE_GPIE_MSIX_MODE;
-		gpie |= IXGBE_GPIE_EIAME | IXGBE_GPIE_PBA_SUPPORT |
-		    IXGBE_GPIE_OCD;
-	}
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_GPIE, gpie);
 
 	/* Set MRU size */
 	mhadd = IXGBE_READ_REG(&sc->hw, IXGBE_MHADD);
@@ -777,6 +747,59 @@ ixgbe_init(void *arg)
 	splx(s);
 }
 
+void
+ixgbe_config_gpie(struct ix_softc *sc)
+{
+	struct ixgbe_hw	*hw = &sc->hw;
+	uint32_t gpie;
+
+	gpie = IXGBE_READ_REG(&sc->hw, IXGBE_GPIE);
+
+	/* Fan Failure Interrupt */
+	if (hw->device_id == IXGBE_DEV_ID_82598AT)
+		gpie |= IXGBE_SDP1_GPIEN;
+
+	if (sc->hw.mac.type == ixgbe_mac_82599EB) {
+		/* Add for Module detection */
+		gpie |= IXGBE_SDP2_GPIEN;
+
+		/* Media ready */
+		if (hw->device_id != IXGBE_DEV_ID_82599_QSFP_SF_QP)
+			gpie |= IXGBE_SDP1_GPIEN;
+
+		/*
+		 * Set LL interval to max to reduce the number of low latency
+		 * interrupts hitting the card when the ring is getting full.
+		 */
+		gpie |= 0xf << IXGBE_GPIE_LLI_DELAY_SHIFT;
+	}
+
+	if (sc->hw.mac.type == ixgbe_mac_X540 ||
+	    hw->device_id == IXGBE_DEV_ID_X550EM_X_SFP ||
+	    hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T) {
+		/*
+		 * Thermal Failure Detection (X540)
+		 * Link Detection (X552 SFP+, X552/X557-AT)
+		 */
+		gpie |= IXGBE_SDP0_GPIEN_X540;
+
+		/*
+		 * Set LL interval to max to reduce the number of low latency
+		 * interrupts hitting the card when the ring is getting full.
+		 */
+		gpie |= 0xf << IXGBE_GPIE_LLI_DELAY_SHIFT;
+	}
+
+	if (sc->msix > 1) {
+		/* Enable Enhanced MSIX mode */
+		gpie |= IXGBE_GPIE_MSIX_MODE;
+		gpie |= IXGBE_GPIE_EIAME | IXGBE_GPIE_PBA_SUPPORT |
+		    IXGBE_GPIE_OCD;
+	}
+
+	IXGBE_WRITE_REG(&sc->hw, IXGBE_GPIE, gpie);
+}
+
 /*
  * Requires sc->max_frame_size to be set.
  */
@@ -876,7 +899,7 @@ ixgbe_intr(void *arg)
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
 	struct tx_ring	*txr = sc->tx_rings;
 	struct ixgbe_hw	*hw = &sc->hw;
-	uint32_t	 reg_eicr;
+	uint32_t	 reg_eicr, mod_mask, msf_mask;
 	int		 i, refill = 0;
 
 	reg_eicr = IXGBE_READ_REG(&sc->hw, IXGBE_EICR);
@@ -908,18 +931,44 @@ ixgbe_intr(void *arg)
 		ifq_start(&ifp->if_snd);
 	}
 
-	/* ... more link status change */
 	if (hw->mac.type != ixgbe_mac_82598EB) {
-		if (reg_eicr & IXGBE_EICR_GPI_SDP2) {
+		if (reg_eicr & IXGBE_EICR_ECC) {
+			printf("%s: CRITICAL: ECC ERROR!! "
+			    "Please Reboot!!\n", sc->dev.dv_xname);
+			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_ECC);
+		}
+		/* Check for over temp condition */
+		if (reg_eicr & IXGBE_EICR_TS) {
+			printf("%s: CRITICAL: OVER TEMP!! "
+			    "PHY IS SHUT DOWN!!\n", ifp->if_xname);
+			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_TS);
+		}
+	}
+
+	/* Pluggable optics-related interrupt */
+	if (ixgbe_is_sfp(hw)) {
+		if (hw->device_id == IXGBE_DEV_ID_X550EM_X_SFP) {
+			mod_mask = IXGBE_EICR_GPI_SDP0_X540;
+			msf_mask = IXGBE_EICR_GPI_SDP1_X540;
+		} else if (hw->mac.type == ixgbe_mac_X540 ||
+		    hw->mac.type == ixgbe_mac_X550 ||
+		    hw->mac.type == ixgbe_mac_X550EM_x) {
+			mod_mask = IXGBE_EICR_GPI_SDP2_X540;
+			msf_mask = IXGBE_EICR_GPI_SDP1_X540;
+		} else {
+			mod_mask = IXGBE_EICR_GPI_SDP2;
+			msf_mask = IXGBE_EICR_GPI_SDP1;
+		}
+		if (reg_eicr & mod_mask) {
 			/* Clear the interrupt */
-			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP2);
+			IXGBE_WRITE_REG(hw, IXGBE_EICR, mod_mask);
 			KERNEL_LOCK();
 			ixgbe_handle_mod(sc);
 			KERNEL_UNLOCK();
 		} else if ((hw->phy.media_type != ixgbe_media_type_copper) &&
-		    (reg_eicr & IXGBE_EICR_GPI_SDP1)) {
+		    (reg_eicr & msf_mask)) {
 			/* Clear the interrupt */
-			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1);
+			IXGBE_WRITE_REG(hw, IXGBE_EICR, msf_mask);
 			KERNEL_LOCK();
 			ixgbe_handle_msf(sc);
 			KERNEL_UNLOCK();
@@ -934,12 +983,14 @@ ixgbe_intr(void *arg)
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1);
 	}
 
-	/* Check for over temp condition */
-	if ((hw->mac.type == ixgbe_mac_X540) &&
-	    (reg_eicr & IXGBE_EICR_TS)) {
-		printf("%s: CRITICAL: OVER TEMP!! "
-		    "PHY IS SHUT DOWN!!\n", ifp->if_xname);
-		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_TS);
+	/* External PHY interrupt */
+	if (hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T &&
+	    (reg_eicr & IXGBE_EICR_GPI_SDP0_X540)) {
+		/* Clear the interrupt */
+		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP0_X540);
+		KERNEL_LOCK();
+		ixgbe_handle_phy(sc);
+		KERNEL_UNLOCK();
 	}
 
 	for (i = 0; i < sc->num_queues; i++, que++)
@@ -2870,7 +2921,9 @@ ixgbe_enable_intr(struct ix_softc *sc)
 	switch (sc->hw.mac.type) {
 	case ixgbe_mac_82599EB:
 		mask |= IXGBE_EIMS_ECC;
+		/* Temperature sensor on some adapters */
 		mask |= IXGBE_EIMS_GPI_SDP0;
+		/* SFP+ (RX_LOS_N & MOD_ABS_N) */
 		mask |= IXGBE_EIMS_GPI_SDP1;
 		mask |= IXGBE_EIMS_GPI_SDP2;
 		break;
@@ -2881,19 +2934,28 @@ ixgbe_enable_intr(struct ix_softc *sc)
 		if (fwsm & IXGBE_FWSM_TS_ENABLED)
 			mask |= IXGBE_EIMS_TS;
 		break;
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
+		mask |= IXGBE_EIMS_ECC;
+		/* MAC thermal sensor is automatically enabled */
+		mask |= IXGBE_EIMS_TS;
+		/* Some devices use SDP0 for important information */
+		if (hw->device_id == IXGBE_DEV_ID_X550EM_X_SFP ||
+		    hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T)
+			mask |= IXGBE_EIMS_GPI_SDP0_X540;
 	default:
 		break;
 	}
 
 	IXGBE_WRITE_REG(hw, IXGBE_EIMS, mask);
 
-	/* With RSS we use auto clear */
+	/* With MSI-X we use auto clear */
 	if (sc->msix > 1) {
 		mask = IXGBE_EIMS_ENABLE_MASK;
 		/* Don't autoclear Link */
 		mask &= ~IXGBE_EIMS_OTHER;
 		mask &= ~IXGBE_EIMS_LSC;
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_EIAC, mask);
+		IXGBE_WRITE_REG(hw, IXGBE_EIAC, mask);
 	}
 
 	/*
@@ -2994,6 +3056,8 @@ ixgbe_set_ivar(struct ix_softc *sc, uint8_t entry, uint8_t vector, int8_t type)
 
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 		if (type == -1) { /* MISC IVAR */
 			index = (entry & 1) * 8;
 			ivar = IXGBE_READ_REG(hw, IXGBE_IVAR_MISC);
@@ -3086,6 +3150,26 @@ ixgbe_handle_msf(struct ix_softc *sc)
 	}
 	if (hw->mac.ops.setup_link)
 		hw->mac.ops.setup_link(hw, autoneg, TRUE);
+}
+
+/*
+ * External PHY interrupts handler
+ */
+void
+ixgbe_handle_phy(struct ix_softc *sc)
+{
+	struct ixgbe_hw *hw = &sc->hw;
+	int error;
+
+	error = hw->phy.ops.handle_lasi(hw);
+	if (error == IXGBE_ERR_OVERTEMP)
+		printf("%s: CRITICAL: EXTERNAL PHY OVER TEMP!! "
+		    " PHY will downshift to lower power state!\n",
+		    sc->dev.dv_xname);
+	else if (error)
+		printf("%s: Error handling LASI interrupt: %d\n",
+		    sc->dev.dv_xname, error);
+
 }
 
 /**********************************************************************
