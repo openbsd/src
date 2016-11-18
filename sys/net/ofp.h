@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.5 2016/11/18 12:21:32 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.6 2016/11/18 13:10:58 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -300,8 +300,8 @@ struct ofp_action_header {
 	uint32_t	ah_pad;
 } __packed;
 
-#define OFP_CONTROLLER_MAXLEN_MAX	0xffe5
-#define OFP_CONTROLLER_MAXLEN_NO_BUFFER	0xffff
+#define OFP_CONTROLLER_MAXLEN_MAX	0xffe5	/* maximum buffer length */
+#define OFP_CONTROLLER_MAXLEN_NO_BUFFER	0xffff	/* don't do any buffering */
 
 /* Output Action */
 struct ofp_action_output {
@@ -369,7 +369,7 @@ struct ofp_packet_out {
 	/* Followed by optional packet data if buffer_id == 0xffffffff */
 } __packed;
 
-#define OFP_PKTOUT_NO_BUFFER		0xffffffff
+#define OFP_PKTOUT_NO_BUFFER		0xffffffff	/* No buffer id */
 
 /* Flow match fields for basic class */
 #define OFP_XM_T_IN_PORT		0	/* Switch input port */
@@ -412,14 +412,14 @@ struct ofp_packet_out {
 #define OFP_XM_T_PBB_ISID		37	/* PBB I-SID */
 #define OFP_XM_T_TUNNEL_ID		38	/* Logical Port Metadata */
 #define OFP_XM_T_IPV6_EXTHDR		39	/* IPv6 Extension Header pseudo-field */
-#define OFP_XM_T_MAX			40	/* ? */
+#define OFP_XM_T_MAX			40
 
 /* Flow match fields for nxm1 class */
-#define OFP_XM_NXMT_TUNNEL_ID		38	/* ? */
-#define OFP_XM_NXMT_TUNNEL_IPV4_SRC	31	/* ? */
-#define OFP_XM_NXMT_TUNNEL_IPV4_DST	32	/* ? */
-#define OFP_XM_NXMT_TUNNEL_IPV6_SRC	109	/* ? */
-#define OFP_XM_NXMT_TUNNEL_IPV6_DST	110	/* ? */
+#define OFP_XM_NXMT_TUNNEL_ID		38	/* Tunnel Logical Port Metadata */
+#define OFP_XM_NXMT_TUNNEL_IPV4_SRC	31	/* Tunnel IPv4 source address */
+#define OFP_XM_NXMT_TUNNEL_IPV4_DST	32	/* Tunnel IPv4 destination address */
+#define OFP_XM_NXMT_TUNNEL_IPV6_SRC	109	/* Tunnel IPv6 source address */
+#define OFP_XM_NXMT_TUNNEL_IPV6_DST	110	/* Tunnel IPv6 destination address */
 
 /* OXM class */
 #define OFP_OXM_C_NXM_0			0x0000	/* NXM 0 */
@@ -431,15 +431,16 @@ struct ofp_packet_out {
 #define OFP_XM_VID_PRESENT		0x1000	/* VLAN ID present */
 #define OFP_XM_VID_NONE			0x0000	/* No VLAN ID */
 
-#define OFP_XM_IPV6_EXTHDR_NONEXT	0x0001
-#define OFP_XM_IPV6_EXTHDR_ESP		0x0002
-#define OFP_XM_IPV6_EXTHDR_AUTH		0x0004
-#define OFP_XM_IPV6_EXTHDR_DEST		0x0008
-#define OFP_XM_IPV6_EXTHDR_FRAG		0x0010
-#define OFP_XM_IPV6_EXTHDR_ROUTER	0x0020
-#define OFP_XM_IPV6_EXTHDR_HOP		0x0040
-#define OFP_XM_IPV6_EXTHDR_UNREP	0x0080
-#define OFP_XM_IPV6_EXTHDR_UNSEQ	0x0100
+/* IPv6 Extension header pseudo-field flags */
+#define OFP_XM_IPV6_EXTHDR_NONEXT	0x0001 /* "No next header" encountered */
+#define OFP_XM_IPV6_EXTHDR_ESP		0x0002 /* Encrypted Sec Payload header present */
+#define OFP_XM_IPV6_EXTHDR_AUTH		0x0004 /* Authentication header present. */
+#define OFP_XM_IPV6_EXTHDR_DEST		0x0008 /* 1 or 2 dest headers present. */
+#define OFP_XM_IPV6_EXTHDR_FRAG		0x0010 /* Fragment header present. */
+#define OFP_XM_IPV6_EXTHDR_ROUTER	0x0020 /* Router header present. */
+#define OFP_XM_IPV6_EXTHDR_HOP		0x0040 /* Hop-by-hop header present. */
+#define OFP_XM_IPV6_EXTHDR_UNREP	0x0080 /* Unexpected repeats encountered. */
+#define OFP_XM_IPV6_EXTHDR_UNSEQ	0x0100 /* Unexpected sequencing encountered. */
 
 struct ofp_ox_match {
 	uint16_t	oxm_class;
@@ -630,14 +631,14 @@ struct ofp_error {
 #define OFP_GROUPCMD_DELETE		2	/* Delete group */
 
 /* Group types */
-#define OFP_GROUP_T_ALL			0
-#define OFP_GROUP_T_SELECT		1
-#define OFP_GROUP_T_INDIRECT		2
-#define OFP_GROUP_T_FAST_FAILOVER	3
+#define OFP_GROUP_T_ALL			0	/* All (multicast/broadcast) group */
+#define OFP_GROUP_T_SELECT		1	/* Select group */
+#define OFP_GROUP_T_INDIRECT		2	/* Indirect group */
+#define OFP_GROUP_T_FAST_FAILOVER	3	/* Fast failover group */
 
-#define OFP_GROUP_MAX		0xffffff00
-#define OFP_GROUP_ALL		0xfffffffc
-#define OFP_GROUP_ANY		0xffffffff
+#define OFP_GROUP_MAX		0xffffff00	/* Last usable group number */
+#define OFP_GROUP_ALL		0xfffffffc	/* Represents all groups for delete command */
+#define OFP_GROUP_ANY		0xffffffff	/* Special wildcard: no group specified */
 
 struct ofp_bucket {
 	uint16_t		b_len;
@@ -664,8 +665,8 @@ struct ofp_multipart {
 	uint8_t			mp_pad[4];
 } __packed;
 
-#define OFP_MP_FLAG_REQ_MORE		1
-#define OFP_MP_FLAG_REPLY_MORE		1
+#define OFP_MP_FLAG_REQ_MORE		1	/* More requests to follow */
+#define OFP_MP_FLAG_REPLY_MORE		1	/* More replies to follow */
 
 /* Multipart types */
 #define OFP_MP_T_DESC			0	/* Description of the switch */
@@ -744,8 +745,8 @@ struct ofp_aggregate_stats {
 	uint8_t		as_pad[4];
 } __packed;
 
-#define OFP_TABLE_ID_MAX				0xfe
-#define OFP_TABLE_ID_ALL				0xff
+#define OFP_TABLE_ID_MAX			0xfe	/* Last usable table */
+#define OFP_TABLE_ID_ALL			0xff	/* Wildcard table */
 
 struct ofp_table_stats {
 	uint8_t		ts_table_id;
