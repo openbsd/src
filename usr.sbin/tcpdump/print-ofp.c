@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.5 2016/11/18 17:39:39 reyk Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.6 2016/11/18 18:35:20 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -206,10 +206,10 @@ ofp_print_featuresreply(const u_char *bp, u_int length)
 
 	swf = (struct ofp_switch_features *)bp;
 	printf(" <datapath_id %#016llx nbuffers %u ntables %d aux_id %d "
-	    "capabilities %#08x actions %#08x>",
+	    "capabilities %#08x>",
 	    be64toh(swf->swf_datapath_id), ntohl(swf->swf_nbuffers),
 	    swf->swf_ntables, swf->swf_aux_id,
-	    ntohl(swf->swf_capabilities), ntohl(swf->swf_actions));
+	    ntohl(swf->swf_capabilities));
 }
 
 void
