@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic3a_machdep.c,v 1.1 2016/11/17 14:41:21 visa Exp $	*/
+/*	$OpenBSD: generic3a_machdep.c,v 1.2 2016/11/18 17:02:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -80,13 +80,11 @@ const struct legacy_io_range rs780e_legacy_ranges[] = {
 	{ IO_DMAPG + 4,	IO_DMAPG + 4 },
 	/* mcclock */
 	{ IO_RTC,	IO_RTC + 1 },
-#ifdef notyet
 	/* pciide */
 	{ 0x170,	0x170 + 7 },
 	{ 0x1f0,	0x1f0 + 7 },
 	{ 0x376,	0x376 },
 	{ 0x3f6,	0x3f6 },
-#endif
 	/* pckbc */
 	{ IO_KBD,	IO_KBD },
 	{ IO_KBD + 4,	IO_KBD + 4 },
@@ -246,7 +244,7 @@ rs780e_eoi(int irq)
 
 	if (irq & 8) {
 		REGVAL8(HTB_IO_BASE + IO_ICU2 + PIC_OCW2) =
-		    OCW2_SELECT | OCW2_EOI | OCW2_SL | OCW2_ILS(irq);
+		    OCW2_SELECT | OCW2_EOI | OCW2_SL | OCW2_ILS(irq & 7);
 		irq = IRQ_CASCADE;
 	}
 	REGVAL8(HTB_IO_BASE + IO_ICU1 + PIC_OCW2) =
