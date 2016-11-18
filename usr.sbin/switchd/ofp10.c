@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.14 2016/11/17 16:24:00 rzalamena Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.15 2016/11/18 20:20:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -343,7 +343,9 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 
 	if (packet_input(sc, con->con_switch,
 	    srcport, &dstport, ibuf, len, &pkt) == -1 ||
-	    dstport > OFP10_PORT_MAX) {
+	    (dstport > OFP10_PORT_MAX &&
+	    dstport != OFP10_PORT_LOCAL &&
+	    dstport != OFP10_PORT_CONTROLLER)) {
 		/* fallback to flooding */
 		dstport = OFP10_PORT_FLOOD;
 	} else if (srcport == dstport) {
@@ -352,10 +354,9 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 		 * (don't use OFP10_PORT_INPUT here)
 		 */
 		dstport = OFP10_PORT_ANY;
-	}
-
-	if (dstport <= OFP10_PORT_MAX)
+	} else {
 		addflow = 1;
+	}
 
 	if ((obuf = ibuf_static()) == NULL)
 		goto done;
