@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.45 2016/11/09 20:31:56 jca Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.46 2016/11/18 16:16:39 jca Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -61,7 +61,9 @@ static struct privsep_proc procs[] = {
 void
 snmpe(struct privsep *ps, struct privsep_proc *p)
 {
-	struct snmpd	*env = ps->ps_env;
+	struct snmpd		*env = ps->ps_env;
+	struct address		*h;
+	struct listen_sock	*so;
 #ifdef DEBUG
 	char		 buf[BUFSIZ];
 	struct oid	*oid;
@@ -74,9 +76,13 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 	}
 #endif
 
-	/* bind SNMP UDP socket */
-	if ((env->sc_sock = snmpe_bind(&env->sc_address)) == -1)
-		fatalx("snmpe: failed to bind SNMP UDP socket");
+	TAILQ_FOREACH(h, &env->sc_addresses, entry) {
+		if ((so = calloc(1, sizeof(*so))) == NULL)
+			fatal("snmpe: %s", __func__);
+		if ((so->s_fd = snmpe_bind(h)) == -1)
+			fatal("snmpe: failed to bind SNMP UDP socket");
+		TAILQ_INSERT_TAIL(&env->sc_sockets, so, entry);
+	}
 
 	proc_run(ps, p, procs, nitems(procs), snmpe_init, NULL);
 }
@@ -85,7 +91,8 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 void
 snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
-	struct snmpd	*env = ps->ps_env;
+	struct snmpd		*env = ps->ps_env;
+	struct listen_sock	*so;
 
 	kr_init();
 	trap_init();
@@ -93,9 +100,11 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 	usm_generate_keys();
 
 	/* listen for incoming SNMP UDP messages */
-	event_set(&env->sc_ev, env->sc_sock, EV_READ|EV_PERSIST,
-	    snmpe_recvmsg, env);
-	event_add(&env->sc_ev, NULL);
+	TAILQ_FOREACH(so, &env->sc_sockets, entry) {
+		event_set(&so->s_ev, so->s_fd, EV_READ|EV_PERSIST,
+		    snmpe_recvmsg, env);
+		event_add(&so->s_ev, NULL);
+	}
 }
 
 void
@@ -156,7 +165,7 @@ snmpe_bind(struct address *addr)
 	if (print_host(&addr->ss, buf, sizeof(buf)) == NULL)
 		goto bad;
 
-	log_info("snmpe_bind: binding to address %s:%d", buf, addr->port);
+	log_info("snmpe: listening on %s:%d", buf, addr->port);
 
 	return (s);
 
@@ -519,18 +528,18 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 		}
 	}
 
-	snmpe_dispatchmsg(msg);
+	snmpe_dispatchmsg(msg, fd);
 }
 
 void
-snmpe_dispatchmsg(struct snmp_message *msg)
+snmpe_dispatchmsg(struct snmp_message *msg, int sock)
 {
 	if (snmpe_parsevarbinds(msg) == 1)
 		return;
 
 	/* not dispatched to subagent; respond directly */
 	msg->sm_context = SNMP_C_GETRESP;
-	snmpe_response(snmpd_env->sc_sock, msg);
+	snmpe_response(sock, msg);
 }
 
 void

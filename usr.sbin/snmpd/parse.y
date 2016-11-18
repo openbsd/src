@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2016/11/09 20:31:56 jca Exp $	*/
+/*	$OpenBSD: parse.y,v 1.41 2016/11/18 16:16:39 jca Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -198,25 +198,13 @@ yesno		:  STRING			{
 		;
 
 main		: LISTEN ON STRING		{
-			struct addresslist	 al;
-			struct address		*h;
-
-			TAILQ_INIT(&al);
-			if (host($3, &al, 1, SNMPD_PORT, NULL, NULL, NULL)
-			    <= 0) {
+			if (host($3, &conf->sc_addresses, 16, SNMPD_PORT, NULL,
+			    NULL, NULL) <= 0) {
 				yyerror("invalid ip address: %s", $3);
 				free($3);
 				YYERROR;
 			}
 			free($3);
-			h = TAILQ_FIRST(&al);
-			bcopy(&h->ss, &conf->sc_address.ss, sizeof(*h));
-			conf->sc_address.port = h->port;
-
-			while ((h = TAILQ_FIRST(&al)) != NULL) {
-				TAILQ_REMOVE(&al, h, entry);
-				free(h);
-			}
 		}
 		| READONLY COMMUNITY STRING	{
 			if (strlcpy(conf->sc_rdcommunity, $3,
@@ -989,8 +977,8 @@ parse_config(const char *filename, u_int flags)
 
 	conf->sc_flags = flags;
 	conf->sc_confpath = filename;
-	conf->sc_address.ss.ss_family = AF_INET;
-	conf->sc_address.port = SNMPD_PORT;
+	TAILQ_INIT(&conf->sc_addresses);
+	TAILQ_INIT(&conf->sc_sockets);
 	conf->sc_ps.ps_csock.cs_name = SNMPD_SOCKET;
 	TAILQ_INIT(&conf->sc_ps.ps_rcsocks);
 	strlcpy(conf->sc_rdcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
@@ -1010,6 +998,20 @@ parse_config(const char *filename, u_int flags)
 	popfile();
 
 	endservent();
+
+	if (TAILQ_EMPTY(&conf->sc_addresses)) {
+		struct address		*h;
+		if ((h = calloc(1, sizeof(*h))) == NULL)
+			fatal("snmpe: %s", __func__);
+		h->ss.ss_family = AF_INET;
+		h->port = SNMPD_PORT;
+		TAILQ_INSERT_TAIL(&conf->sc_addresses, h, entry);
+		if ((h = calloc(1, sizeof(*h))) == NULL)
+			fatal("snmpe: %s", __func__);
+		h->ss.ss_family = AF_INET6;
+		h->port = SNMPD_PORT;
+		TAILQ_INSERT_TAIL(&conf->sc_addresses, h, entry);
+	}
 
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
@@ -1215,7 +1217,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 
 		h->sa_srcaddr = src;
 
-		TAILQ_INSERT_HEAD(al, h, entry);
+		TAILQ_INSERT_TAIL(al, h, entry);
 		cnt++;
 	}
 	if (cnt == max && res) {
@@ -1262,7 +1264,7 @@ host(const char *s, struct addresslist *al, int max,
 		}
 		h->sa_srcaddr = src;
 
-		TAILQ_INSERT_HEAD(al, h, entry);
+		TAILQ_INSERT_TAIL(al, h, entry);
 		return (1);
 	}
 

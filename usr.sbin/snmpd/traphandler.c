@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.6 2016/10/28 09:07:08 rzalamena Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.7 2016/11/18 16:16:39 jca Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -43,8 +43,6 @@
 #include "snmpd.h"
 #include "mib.h"
 
-int	 trapsock;
-struct event trapev;
 char	 trap_path[PATH_MAX];
 
 void	 traphandler_init(struct privsep *, struct privsep_proc *, void *arg);
@@ -76,10 +74,18 @@ void
 traphandler(struct privsep *ps, struct privsep_proc *p)
 {
 	struct snmpd		*env = ps->ps_env;
+	struct address		*h;
+	struct listen_sock	*so;
 
-	if (env->sc_traphandler &&
-	    (trapsock = traphandler_bind(&env->sc_address)) == -1)
-		fatal("could not create trap listener socket");
+	if (env->sc_traphandler) {
+		TAILQ_FOREACH(h, &env->sc_addresses, entry) {
+			if ((so = calloc(1, sizeof(*so))) == NULL)
+				fatal("%s", __func__);
+			if ((so->s_fd = traphandler_bind(h)) == -1)
+				fatal("could not create trap listener socket");
+			TAILQ_INSERT_TAIL(&env->sc_sockets, so, entry);
+		}
+	}
 
 	proc_run(ps, p, procs, nitems(procs), traphandler_init, NULL);
 }
@@ -88,20 +94,24 @@ void
 traphandler_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	struct snmpd		*env = ps->ps_env;
+	struct listen_sock	*so;
 
 	if (!env->sc_traphandler)
 		return;
 
 	/* listen for SNMP trap messages */
-	event_set(&trapev, trapsock, EV_READ|EV_PERSIST, traphandler_recvmsg,
-	    ps);
-	event_add(&trapev, NULL);
+	TAILQ_FOREACH(so, &env->sc_sockets, entry) {
+		event_set(&so->s_ev, so->s_fd, EV_READ|EV_PERSIST,
+		    traphandler_recvmsg, ps);
+		event_add(&so->s_ev, NULL);
+	}
 }
 
 int
 traphandler_bind(struct address *addr)
 {
 	int			 s;
+	char			 buf[512];
 
 	if ((s = snmpd_socket_af(&addr->ss, htons(SNMPD_TRAPPORT))) == -1)
 		return (-1);
@@ -112,6 +122,11 @@ traphandler_bind(struct address *addr)
 	if (bind(s, (struct sockaddr *)&addr->ss, addr->ss.ss_len) == -1)
 		goto bad;
 
+	if (print_host(&addr->ss, buf, sizeof(buf)) == NULL)
+		goto bad;
+
+	log_info("traphandler: listening on %s:%d", buf, SNMPD_TRAPPORT);
+
 	return (s);
  bad:
 	close (s);
@@ -121,8 +136,12 @@ traphandler_bind(struct address *addr)
 void
 traphandler_shutdown(void)
 {
-	event_del(&trapev);
-	close(trapsock);
+	struct listen_sock	*so;
+
+	TAILQ_FOREACH(so, &snmpd_env->sc_sockets, entry) {
+		event_del(&so->s_ev);
+		close(so->s_fd);
+	}
 }
 
 int

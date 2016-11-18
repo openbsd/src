@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.72 2016/11/09 20:31:56 jca Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.73 2016/11/18 16:16:39 jca Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -518,6 +518,13 @@ struct address {
 };
 TAILQ_HEAD(addresslist, address);
 
+struct listen_sock {
+	int				s_fd;
+	struct event			s_ev;
+	TAILQ_ENTRY(listen_sock)	entry;
+};
+TAILQ_HEAD(socklist, listen_sock);
+
 enum usmauth {
 	AUTH_NONE = 0,
 	AUTH_MD5,	/* HMAC-MD5-96, RFC3414 */
@@ -556,9 +563,8 @@ struct snmpd {
 #define SNMPD_F_NONAMES		 0x02
 
 	const char		*sc_confpath;
-	struct address		 sc_address;
-	int			 sc_sock;
-	struct event		 sc_ev;
+	struct addresslist	 sc_addresses;
+	struct socklist		 sc_sockets;
 	struct timeval		 sc_starttime;
 	u_int32_t		 sc_engine_boots;
 
@@ -652,7 +658,7 @@ struct kif_arp	*karp_getaddr(struct sockaddr *, u_short, int);
 /* snmpe.c */
 void		 snmpe(struct privsep *, struct privsep_proc *);
 void		 snmpe_shutdown(void);
-void		 snmpe_dispatchmsg(struct snmp_message *);
+void		 snmpe_dispatchmsg(struct snmp_message *, int);
 
 /* trap.c */
 void		 trap_init(void);
