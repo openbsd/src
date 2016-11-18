@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.6 2016/11/18 18:35:20 rzalamena Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.7 2016/11/18 18:45:27 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -50,6 +50,7 @@ void	 ofp_print_oxm(struct ofp_ox_match *, const u_char *, u_int);
 
 void	 action_print_output(const u_char *, u_int);
 void	 action_print_group(const u_char *, u_int);
+void	 action_print_setqueue(const u_char *, u_int);
 void	 action_print_setmplsttl(const u_char *, u_int);
 void	 action_print_setnwttl(const u_char *, u_int);
 void	 action_print_push(const u_char *, u_int);
@@ -952,6 +953,20 @@ action_print_group(const u_char *bp, u_int length)
 }
 
 void
+action_print_setqueue(const u_char *bp, u_int length)
+{
+	struct ofp_action_set_queue	*asq;
+
+	if (length < (sizeof(*asq) - AH_UNPADDED)) {
+		printf(" [|OpenFlow]");
+		return;
+	}
+
+	asq = (struct ofp_action_set_queue *)(bp - AH_UNPADDED);
+	printf(" queue_id %u", ntohl(asq->asq_queue_id));
+}
+
+void
 action_print_setmplsttl(const u_char *bp, u_int length)
 {
 	struct ofp_action_mpls_ttl	*amt;
@@ -1066,7 +1081,7 @@ ofp_print_action(struct ofp_action_header *ah, const u_char *bp, u_int length)
 		break;
 
 	case OFP_ACTION_SET_QUEUE:
-		/* TODO missing struct in ofp.h header. */
+		action_print_setqueue(bp, length);
 		break;
 
 	case OFP_ACTION_SET_MPLS_TTL:
