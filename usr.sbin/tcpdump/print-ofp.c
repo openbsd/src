@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.4 2016/11/18 17:37:03 reyk Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.5 2016/11/18 17:39:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -223,8 +223,10 @@ ofp_print_setconfig(const u_char *bp, u_int length)
 	}
 
 	cfg = (struct ofp_switch_config *)bp;
-	printf(" <flags %#04x miss_send_len %d>",
-	    ntohs(cfg->cfg_flags), ntohs(cfg->cfg_miss_send_len));
+	printf(" <flags %#04x miss_send_len %s>",
+	    ntohs(cfg->cfg_flags),
+	    print_map(ntohs(cfg->cfg_miss_send_len),
+	    ofp_controller_maxlen_map));
 }
 
 void
