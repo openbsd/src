@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.4 2016/11/18 11:55:02 rzalamena Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.5 2016/11/18 12:21:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -79,6 +79,14 @@ struct ofp_header {
 #define OFP_T_SET_ASYNC			28	/* Set Async */
 #define OFP_T_METER_MOD			29	/* Meter Mod */
 #define OFP_T_TYPE_MAX			30
+
+/* OpenFlow finite state machine */
+enum ofp_state {
+	OFP_STATE_CLOSED,
+	OFP_STATE_HELLO_WAIT,
+	OFP_STATE_FEATURE_WAIT,
+	OFP_STATE_ESTABLISHED
+};
 
 /* OpenFlow Hello Message */
 struct ofp_hello_element_header {
