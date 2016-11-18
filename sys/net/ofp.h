@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.3 2016/10/28 15:41:32 rzalamena Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.4 2016/11/18 11:55:02 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -423,15 +423,15 @@ struct ofp_packet_out {
 #define OFP_XM_VID_PRESENT		0x1000	/* VLAN ID present */
 #define OFP_XM_VID_NONE			0x0000	/* No VLAN ID */
 
-#define OFP_XM_IPV6_EXTHDR_NONEXT	(1 << 0)
-#define OFP_XM_IPV6_EXTHDR_ESP		(1 << 1)
-#define OFP_XM_IPV6_EXTHDR_AUTH		(1 << 2)
-#define OFP_XM_IPV6_EXTHDR_DEST		(1 << 3)
-#define OFP_XM_IPV6_EXTHDR_FRAG		(1 << 4)
-#define OFP_XM_IPV6_EXTHDR_ROUTER	(1 << 5)
-#define OFP_XM_IPV6_EXTHDR_HOP		(1 << 6)
-#define OFP_XM_IPV6_EXTHDR_UNREP	(1 << 7)
-#define OFP_XM_IPV6_EXTHDR_UNSEQ	(1 << 8)
+#define OFP_XM_IPV6_EXTHDR_NONEXT	0x0001
+#define OFP_XM_IPV6_EXTHDR_ESP		0x0002
+#define OFP_XM_IPV6_EXTHDR_AUTH		0x0004
+#define OFP_XM_IPV6_EXTHDR_DEST		0x0008
+#define OFP_XM_IPV6_EXTHDR_FRAG		0x0010
+#define OFP_XM_IPV6_EXTHDR_ROUTER	0x0020
+#define OFP_XM_IPV6_EXTHDR_HOP		0x0040
+#define OFP_XM_IPV6_EXTHDR_UNREP	0x0080
+#define OFP_XM_IPV6_EXTHDR_UNSEQ	0x0100
 
 struct ofp_ox_match {
 	uint16_t	oxm_class;
@@ -453,11 +453,11 @@ struct ofp_ox_match {
 #define OFP_FLOWCMD_DELETE_STRICT	4	/* Delete flow w/o wildcard */
 
 /* Flow modification flags */
-#define OFP_FLOWFLAG_SEND_FLOW_REMOVED	0x01	/* Send flow removed message */
-#define OFP_FLOWFLAG_CHECK_OVERLAP	0x02	/* Check flow overlap first */
-#define OFP_FLOWFLAG_RESET_COUNTS	0x04	/* Reset flow packet and byte counters */
-#define OFP_FLOWFLAG_NO_PACKET_COUNTS	0x08	/* Don't keep track of packet count */
-#define OFP_FLOWFLAG_NO_BYTE_COUNTS	0x10	/* Don't keep track of byte count */
+#define OFP_FLOWFLAG_SEND_FLOW_REMOVED	0x0001	/* Send flow removed message */
+#define OFP_FLOWFLAG_CHECK_OVERLAP	0x0002	/* Check flow overlap first */
+#define OFP_FLOWFLAG_RESET_COUNTS	0x0004	/* Reset flow packet and byte counters */
+#define OFP_FLOWFLAG_NO_PACKET_COUNTS	0x0008	/* Don't keep track of packet count */
+#define OFP_FLOWFLAG_NO_BYTE_COUNTS	0x0010	/* Don't keep track of byte count */
 
 /* Flow modification message */
 struct ofp_flow_mod {
