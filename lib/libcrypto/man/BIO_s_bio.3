@@ -1,6 +1,59 @@
-.\"	$OpenBSD: BIO_s_bio.3,v 1.5 2016/11/07 15:52:47 jmc Exp $
+.\"	$OpenBSD: BIO_s_bio.3,v 1.6 2016/11/18 18:47:44 schwarze Exp $
+.\"	OpenSSL c03726ca Aug 27 12:28:08 2015 -0400
 .\"
-.Dd $Mdocdate: November 7 2016 $
+.\" This file was written by
+.\" Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE>,
+.\" Dr. Stephen Henson <steve@openssl.org>,
+.\" Bodo Moeller <bodo@openssl.org>,
+.\" and Richard Levitte <levitte@openssl.org>.
+.\" Copyright (c) 2000, 2002, 2015, 2016 The OpenSSL Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 18 2016 $
 .Dt BIO_S_BIO 3
 .Os
 .Sh NAME
@@ -23,19 +76,29 @@
 .Fo BIO_s_bio
 .Fa void
 .Fc
-.Bd -unfilled
-#define	BIO_make_bio_pair(b1, b2) \e
-	(int)BIO_ctrl(b1, BIO_C_MAKE_BIO_PAIR, 0, b2)
-#define	BIO_destroy_bio_pair(b) \e
-	(int)BIO_ctrl(b, BIO_C_DESTROY_BIO_PAIR, 0, NULL)
-#define	BIO_shutdown_wr(b) \e
-	(int)BIO_ctrl(b, BIO_C_SHUTDOWN_WR, 0, NULL)
-#define	BIO_set_write_buf_size(b, size) \e
-	(int)BIO_ctrl(b, BIO_C_SET_WRITE_BUF_SIZE, size, NULL)
-#define	BIO_get_write_buf_size(b, size) \e
-	(size_t)BIO_ctrl(b, BIO_C_GET_WRITE_BUF_SIZE, size, NULL)
-.Ed
-.Pp
+.Ft int
+.Fo BIO_make_bio_pair
+.Fa "BIO *b1"
+.Fa "BIO *b2"
+.Fc
+.Ft int
+.Fo BIO_destroy_bio_pair
+.Fa "BIO *b"
+.Fc
+.Ft int
+.Fo BIO_shutdown_wr
+.Fa "BIO *b"
+.Fc
+.Ft int
+.Fo BIO_set_write_buf_size
+.Fa "BIO *b"
+.Fa "long size"
+.Fc
+.Ft size_t
+.Fo BIO_get_write_buf_size
+.Fa "BIO *b"
+.Fa "long size"
+.Fc
 .Ft int
 .Fo BIO_new_bio_pair
 .Fa "BIO **bio1"
@@ -43,20 +106,18 @@
 .Fa "BIO **bio2"
 .Fa "size_t writebuf2"
 .Fc
-.Bd -unfilled
-#define	BIO_get_write_guarantee(b) \e
-	(int)BIO_ctrl(b, BIO_C_GET_WRITE_GUARANTEE, 0, NULL)
-.Ed
-.Pp
+.Ft size_t
+.Fo BIO_get_write_guarantee
+.Fa "BIO *b"
+.Fc
 .Ft size_t
 .Fo BIO_ctrl_get_write_guarantee
 .Fa "BIO *b"
 .Fc
-.Bd -unfilled
-#define	BIO_get_read_request(b) \e
-	(int)BIO_ctrl(b, BIO_C_GET_READ_REQUEST, 0, NULL)
-.Ed
-.Pp
+.Ft int
+.Fo BIO_get_read_request
+.Fa "BIO *b"
+.Fc
 .Ft size_t
 .Fo BIO_ctrl_get_read_request
 .Fa "BIO *b"
@@ -221,6 +282,19 @@ will be true.
 If the application then waits for data to become available
 on the underlying transport before flushing the write buffer,
 it will never succeed because the request was never sent.
+.Pp
+.Xr BIO_eof 3
+is true if no data is in the peer BIO and the peer BIO has been shutdown.
+.Pp
+.Fn BIO_make_bio_pair ,
+.Fn BIO_destroy_bio_pair ,
+.Fn BIO_shutdown_wr ,
+.Fn BIO_set_write_buf_size ,
+.Fn BIO_get_write_buf_size ,
+.Fn BIO_get_write_guarantee ,
+and
+.Fn BIO_get_read_request
+are implemented as macros.
 .Sh RETURN VALUES
 .Fn BIO_new_bio_pair
 returns 1 on success, with the new BIOs available in
@@ -242,9 +316,9 @@ on the socket as required without having to go through the SSL interface.
 .Bd -literal -offset 2n
 BIO *internal_bio, *network_bio;
 \&...
-BIO_new_bio_pair(internal_bio, 0, network_bio, 0);
+BIO_new_bio_pair(&internal_bio, 0, &network_bio, 0);
 SSL_set_bio(ssl, internal_bio, internal_bio);
-SSL_operations();
+SSL_operations();  /* e.g. SSL_read() and SSL_write() */
 \&...
 
 application |   TLS-engine
@@ -253,7 +327,10 @@ application |   TLS-engine
             |     /\e    ||
             |     ||    \e/
             |   BIO-pair (internal_bio)
-   +----------< BIO-pair (network_bio)
+            |   BIO-pair (network_bio)
+            |     ||     /\
+            |     \/     ||
+   +-----------< BIO_operations()
    |        |
  socket     |
 
