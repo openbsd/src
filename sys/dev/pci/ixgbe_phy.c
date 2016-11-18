@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.18 2016/11/17 21:18:23 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.19 2016/11/18 12:36:41 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1004,27 +1004,15 @@ int32_t ixgbe_get_copper_link_capabilities_generic(struct ixgbe_hw *hw,
 						   ixgbe_link_speed *speed,
 						   bool *autoneg)
 {
-	int32_t status = IXGBE_ERR_LINK_SETUP;
-	uint16_t speed_ability;
+	int32_t status = IXGBE_SUCCESS;
 
 	DEBUGFUNC("ixgbe_get_copper_link_capabilities_generic");
 
-	*speed = 0;
 	*autoneg = TRUE;
+	if (!hw->phy.speeds_supported)
+		status = ixgbe_get_copper_speeds_supported(hw);
 
-	status = hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_SPEED_ABILITY,
-				      IXGBE_MDIO_PMA_PMD_DEV_TYPE,
-				      &speed_ability);
-
-	if (status == IXGBE_SUCCESS) {
-		if (speed_ability & IXGBE_MDIO_PHY_SPEED_10G)
-			*speed |= IXGBE_LINK_SPEED_10GB_FULL;
-		if (speed_ability & IXGBE_MDIO_PHY_SPEED_1G)
-			*speed |= IXGBE_LINK_SPEED_1GB_FULL;
-		if (speed_ability & IXGBE_MDIO_PHY_SPEED_100M)
-			*speed |= IXGBE_LINK_SPEED_100_FULL;
-	}
-
+	*speed = hw->phy.speeds_supported;
 	return status;
 }
 
@@ -1446,7 +1434,7 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 				hw->phy.sfp_type = ixgbe_sfp_type_da_cu;
 			else
 				hw->phy.sfp_type = ixgbe_sfp_type_unknown;
-		} else if (hw->mac.type == ixgbe_mac_82599EB) {
+		} else {
 			if (cable_tech & IXGBE_SFF_DA_PASSIVE_CABLE) {
 				if (hw->bus.lan_id == 0)
 					hw->phy.sfp_type =
