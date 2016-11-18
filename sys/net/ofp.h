@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.7 2016/11/18 13:18:01 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.8 2016/11/18 13:23:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -39,13 +39,13 @@ struct ofp_header {
 } __packed;
 
 /* OpenFlow version */
-#define OFP_V_0				0x00	/* 0.0 */
-#define OFP_V_1_0			0x01	/* 1.0 */
-#define OFP_V_1_1			0x02	/* 1.1 */
-#define OFP_V_1_2			0x03	/* 1.2 */
-#define OFP_V_1_3			0x04	/* 1.3 */
-#define OFP_V_1_4			0x05	/* 1.4 */
-#define OFP_V_1_5			0x06	/* 1.5 */
+#define OFP_V_0				0x00	/* OpenFlow 0.0 */
+#define OFP_V_1_0			0x01	/* OpenFlow 1.0 */
+#define OFP_V_1_1			0x02	/* OpenFlow 1.1 */
+#define OFP_V_1_2			0x03	/* OpenFlow 1.2 */
+#define OFP_V_1_3			0x04	/* OpenFlow 1.3 */
+#define OFP_V_1_4			0x05	/* OpenFlow 1.4 */
+#define OFP_V_1_5			0x06	/* OpenFlow 1.5 */
 
 /* OpenFlow message type */
 #define OFP_T_HELLO			0	/* Hello */
