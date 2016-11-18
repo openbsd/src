@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 2013/06/05 01:28:04 pirofti Exp $ */
+/*	$OpenBSD: locore.S,v 1.6 2016/11/18 15:38:14 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -93,3 +93,19 @@ LEAF(hibernate_resume_machdep, 0)					/* { */
 END(hibernate_resume_machdep)					/* } */
 
 #endif /* HIBERNATE */
+
+#ifdef MULTIPROCESSOR
+
+LEAF(hw_getcurcpu, 0)
+	GET_CPU_INFO(v0, v1)
+	jr	ra
+	nop
+END(hw_getcurcpu)
+
+LEAF(hw_setcurcpu, 0)
+	dmtc0	a0, COP_0_ERROR_PC
+	jr	ra
+	nop
+END(hw_setcurcpu)
+
+#endif /* MULTIPROCESSOR */
