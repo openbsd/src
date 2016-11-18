@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.136 2016/11/18 14:16:10 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.137 2016/11/18 19:49:21 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1008,7 +1008,7 @@ ixgbe_intr(void *arg)
  *
  **********************************************************************/
 void
-ixgbe_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
+ixgbe_media_status(struct ifnet * ifp, struct ifmediareq *ifmr)
 {
 	struct ix_softc *sc = ifp->if_softc;
 
@@ -1430,7 +1430,8 @@ ixgbe_setup_optics(struct ix_softc *sc)
 		sc->optics = IFM_1000_T;
 	else if (layer & IXGBE_PHYSICAL_LAYER_100BASE_TX)
 		sc->optics = IFM_100_TX;
-	else if (layer & IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU)
+	else if (layer & (IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU |
+			  IXGBE_PHYSICAL_LAYER_SFP_ACTIVE_DA))
 		sc->optics = IFM_10G_SFP_CU;
 	else if (layer & (IXGBE_PHYSICAL_LAYER_10GBASE_LR |
 			  IXGBE_PHYSICAL_LAYER_10GBASE_LRM))
@@ -1444,8 +1445,8 @@ ixgbe_setup_optics(struct ix_softc *sc)
 		sc->optics = IFM_1000_SX;
 	else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_LX)
 		sc->optics = IFM_1000_LX;
-	/* If we get here just set the default */
-	sc->optics = IFM_ETHER | IFM_AUTO;
+	else
+		sc->optics = IFM_AUTO;
 }
 
 /*********************************************************************
