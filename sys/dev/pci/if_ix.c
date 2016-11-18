@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.134 2016/11/18 13:37:00 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.135 2016/11/18 13:45:57 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2484,6 +2484,7 @@ void
 ixgbe_initialize_receive_units(struct ix_softc *sc)
 {
 	struct	rx_ring	*rxr = sc->rx_rings;
+	struct ixgbe_hw	*hw = &sc->hw;
 	uint32_t	bufsz, rxctrl, fctrl, srrctl, rxcsum;
 	uint32_t	reta, mrqc = 0, hlreg;
 	uint32_t	random[10];
@@ -2498,16 +2499,16 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	    rxctrl & ~IXGBE_RXCTRL_RXEN);
 
 	/* Enable broadcasts */
-	fctrl = IXGBE_READ_REG(&sc->hw, IXGBE_FCTRL);
+	fctrl = IXGBE_READ_REG(hw, IXGBE_FCTRL);
 	fctrl |= IXGBE_FCTRL_BAM;
 	fctrl |= IXGBE_FCTRL_DPF;
 	fctrl |= IXGBE_FCTRL_PMCF;
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_FCTRL, fctrl);
+	IXGBE_WRITE_REG(hw, IXGBE_FCTRL, fctrl);
 
 	/* Always enable jumbo frame reception */
-	hlreg = IXGBE_READ_REG(&sc->hw, IXGBE_HLREG0);
+	hlreg = IXGBE_READ_REG(hw, IXGBE_HLREG0);
 	hlreg |= IXGBE_HLREG0_JUMBOEN;
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_HLREG0, hlreg);
+	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg);
 
 	bufsz = (sc->rx_mbuf_sz - ETHER_ALIGN) >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
 
@@ -2515,19 +2516,19 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		uint64_t rdba = rxr->rxdma.dma_map->dm_segs[0].ds_addr;
 
 		/* Setup the Base and Length of the Rx Descriptor Ring */
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDBAL(i),
+		IXGBE_WRITE_REG(hw, IXGBE_RDBAL(i),
 			       (rdba & 0x00000000ffffffffULL));
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDBAH(i), (rdba >> 32));
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDLEN(i),
+		IXGBE_WRITE_REG(hw, IXGBE_RDBAH(i), (rdba >> 32));
+		IXGBE_WRITE_REG(hw, IXGBE_RDLEN(i),
 		    sc->num_rx_desc * sizeof(union ixgbe_adv_rx_desc));
 
 		/* Set up the SRRCTL register */
 		srrctl = bufsz | IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_SRRCTL(i), srrctl);
+		IXGBE_WRITE_REG(hw, IXGBE_SRRCTL(i), srrctl);
 
 		/* Setup the HW Rx Head and Tail Descriptor Pointers */
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDH(i), 0);
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(i), 0);
+		IXGBE_WRITE_REG(hw, IXGBE_RDH(i), 0);
+		IXGBE_WRITE_REG(hw, IXGBE_RDT(i), 0);
 	}
 
 	if (sc->hw.mac.type != ixgbe_mac_82598EB) {
@@ -2535,10 +2536,10 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 			      IXGBE_PSRTYPE_UDPHDR |
 			      IXGBE_PSRTYPE_IPV4HDR |
 			      IXGBE_PSRTYPE_IPV6HDR;
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_PSRTYPE(0), psrtype);
+		IXGBE_WRITE_REG(hw, IXGBE_PSRTYPE(0), psrtype);
 	}
 
-	rxcsum = IXGBE_READ_REG(&sc->hw, IXGBE_RXCSUM);
+	rxcsum = IXGBE_READ_REG(hw, IXGBE_RXCSUM);
 	rxcsum &= ~IXGBE_RXCSUM_PCSD;
 
 	/* Setup RSS */
@@ -2578,10 +2579,11 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		rxcsum |= IXGBE_RXCSUM_PCSD;
 	}
 
+	/* This is useful for calculating UDP/IP fragment checksums */
 	if (!(rxcsum & IXGBE_RXCSUM_PCSD))
 		rxcsum |= IXGBE_RXCSUM_IPPCSE;
 
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_RXCSUM, rxcsum);
+	IXGBE_WRITE_REG(hw, IXGBE_RXCSUM, rxcsum);
 }
 
 /*********************************************************************
