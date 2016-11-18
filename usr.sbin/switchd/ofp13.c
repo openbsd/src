@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.30 2016/11/18 13:05:12 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.31 2016/11/18 13:15:42 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1071,7 +1071,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 
 		oh = &fm->fm_oh;
 		fm->fm_cookie = 0; /* XXX should we set a cookie? */
-		fm->fm_command = htons(OFP_FLOWCMD_ADD);
+		fm->fm_command = OFP_FLOWCMD_ADD;
 		fm->fm_idle_timeout = htons(sc->sc_cache_timeout);
 		fm->fm_hard_timeout = 0; /* permanent */
 		fm->fm_priority = 0;
@@ -1123,7 +1123,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 	oh->oh_xid = htonl(con->con_xidnxt++);
 
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, obuf) != 0)
-		return (-1);
+		goto done;
 
 	ofp_output(con, NULL, obuf);
 
@@ -1647,21 +1647,24 @@ ofp13_desc(struct switchd *sc, struct switch_connection *con)
 	struct ofp_header		*oh;
 	struct ofp_multipart		*mp;
 	struct ibuf			*ibuf;
+	int				 rv = -1;
 
 	if ((ibuf = ibuf_static()) == NULL)
 		return (-1);
 
 	if ((mp = ofp13_multipart_request(con, ibuf, OFP_MP_T_DESC, 0)) == NULL)
-		return (-1);
+		goto done;
 
 	oh = &mp->mp_oh;
 	oh->oh_length = htons(sizeof(*mp));
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
-		return (-1);
+		goto done;
 
-	ofp_output(con, NULL, ibuf);
-	ibuf_release(ibuf);
-	return (0);
+	rv = ofp_output(con, NULL, ibuf);
+
+ done:
+	ibuf_free(ibuf);
+	return (rv);
 }
 
 int
@@ -1673,15 +1676,15 @@ ofp13_flow_stats(struct switchd *sc, struct switch_connection *con,
 	struct ofp_flow_stats_request	*fsr;
 	struct ofp_match		*om;
 	struct ibuf			*ibuf;
-	int				 padsize;
+	int				 padsize, rv = -1;
 
 	if ((ibuf = ibuf_static()) == NULL)
 		return (-1);
 
 	if ((mp = ofp13_multipart_request(con, ibuf, OFP_MP_T_FLOW, 0)) == NULL)
-		return (-1);
+		goto done;
 	if ((fsr = ibuf_advance(ibuf, sizeof(*fsr))) == NULL)
-		return (-1);
+		goto done;
 
 	oh = &mp->mp_oh;
 	fsr->fsr_table_id = table_id;
@@ -1693,15 +1696,17 @@ ofp13_flow_stats(struct switchd *sc, struct switch_connection *con,
 	om->om_length = htons(sizeof(*om));
 	padsize = OFP_ALIGN(sizeof(*om)) - sizeof(*om);
 	if (padsize && ibuf_advance(ibuf, padsize) == NULL)
-		return (-1);
+		goto done;
 
 	oh->oh_length = htons(ibuf_length(ibuf));
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
-		return (-1);
+		goto done;
 
-	ofp_output(con, NULL, ibuf);
-	ibuf_release(ibuf);
-	return (0);
+	rv = ofp_output(con, NULL, ibuf);
+
+ done:
+	ibuf_free(ibuf);
+	return (rv);
 }
 
 int
@@ -1711,22 +1716,25 @@ ofp13_table_features(struct switchd *sc, struct switch_connection *con,
 	struct ofp_header		*oh;
 	struct ofp_multipart		*mp;
 	struct ibuf			*ibuf;
+	int				 rv = -1;
 
 	if ((ibuf = ibuf_static()) == NULL)
 		return (-1);
 
 	if ((mp = ofp13_multipart_request(con, ibuf,
 	    OFP_MP_T_TABLE_FEATURES, 0)) == NULL)
-		return (-1);
+		goto done;
 
 	oh = &mp->mp_oh;
 	oh->oh_length = htons(sizeof(*mp));
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
-		return (-1);
+		goto done;
 
-	ofp_output(con, NULL, ibuf);
-	ibuf_release(ibuf);
-	return (0);
+	rv = ofp_output(con, NULL, ibuf);
+
+ done:
+	ibuf_free(ibuf);
+	return (rv);
 }
 
 int
@@ -1736,11 +1744,11 @@ ofp13_error(struct switchd *sc, struct switch_connection *con,
 	struct ibuf		*obuf;
 	struct ofp_error	*err;
 	struct ofp_header	*header;
-	int			 rv, dlen;
+	int			 dlen, rv = -1;
 
 	if ((obuf = ibuf_static()) == NULL ||
 	    (err = ibuf_advance(obuf, sizeof(*err))) == NULL)
-		return (-1);
+		goto done;
 
 	header = &err->err_oh;
 	err->err_type = htons(type);
@@ -1751,20 +1759,20 @@ ofp13_error(struct switchd *sc, struct switch_connection *con,
 	if (dlen > OFP_ERRDATA_MAX)
 		dlen = OFP_ERRDATA_MAX;
 	if (ibuf_add(obuf, ibuf_seek(ibuf, 0, dlen), dlen) == -1)
-		return (-1);
+		goto done;
 
 	header->oh_version = OFP_V_1_3;
 	header->oh_type = OFP_T_ERROR;
 	header->oh_length = htons(ibuf_length(obuf));
 	header->oh_xid = oh->oh_xid;
 	if (ofp13_validate(sc, &con->con_peer, &con->con_local, header,
-	    obuf) == -1) {
-		ibuf_release(obuf);
-		return (-1);
-	}
+	    obuf) == -1)
+		goto done;
 
 	rv = ofp_output(con, NULL, obuf);
-	ibuf_release(obuf);
+
+ done:
+	ibuf_free(obuf);
 	return (rv);
 }
 
@@ -1835,11 +1843,11 @@ ofp13_setconfig(struct switchd *sc, struct switch_connection *con,
 	struct ibuf			*ibuf;
 	struct ofp_switch_config	*cfg;
 	struct ofp_header		*oh;
-	int				 rv;
+	int				 rv = -1;
 
 	if ((ibuf = ibuf_static()) == NULL ||
 	    (cfg = ibuf_advance(ibuf, sizeof(*cfg))) == NULL)
-		return (-1);
+		goto done;
 
 	cfg->cfg_flags = htons(flags);
 	cfg->cfg_miss_send_len = htons(misslen);
@@ -1850,9 +1858,11 @@ ofp13_setconfig(struct switchd *sc, struct switch_connection *con,
 	oh->oh_length = htons(ibuf_length(ibuf));
 	oh->oh_xid = htonl(con->con_xidnxt++);
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
-		return (-1);
+		goto done;
 
 	rv = ofp_output(con, NULL, ibuf);
+
+ done:
 	ibuf_free(ibuf);
 	return (rv);
 }
@@ -1862,20 +1872,22 @@ ofp13_featuresrequest(struct switchd *sc, struct switch_connection *con)
 {
 	struct ibuf			*ibuf;
 	struct ofp_header		*oh;
-	int				 rv;
+	int				 rv = -1;
 
 	if ((ibuf = ibuf_static()) == NULL ||
 	    (oh = ibuf_advance(ibuf, sizeof(*oh))) == NULL)
-		return (-1);
+		goto done;
 
 	oh->oh_version = OFP_V_1_3;
 	oh->oh_type = OFP_T_FEATURES_REQUEST;
 	oh->oh_length = htons(ibuf_length(ibuf));
 	oh->oh_xid = htonl(con->con_xidnxt++);
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
-		return (-1);
+		goto done;
 
 	rv = ofp_output(con, NULL, ibuf);
+
+ done:
 	ibuf_free(ibuf);
 	return (rv);
 }
