@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.85 2016/11/17 07:33:06 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.86 2016/11/18 09:35:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -149,6 +149,7 @@ static void mta_response(struct mta_session *, char *);
 static const char * mta_strstate(int);
 static void mta_start_tls(struct mta_session *);
 static int mta_verify_certificate(struct mta_session *);
+static void mta_tls_verified(struct mta_session *);
 static struct mta_session *mta_tree_pop(struct tree *, uint64_t);
 static const char * dsn_strret(enum dsn_ret);
 static const char * dsn_strnotify(uint8_t);
@@ -259,7 +260,6 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*name;
 	void			*ssl;
 	int			 dnserror, status;
-	X509			*x;
 
 	switch (imsg->hdr.type) {
 
@@ -364,22 +364,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		x = SSL_get_peer_certificate(s->io.ssl);
-		if (x) {
-			log_info("smtp-out: Server certificate verification %s "
-			    "on session %016"PRIx64,
-			    (s->flags & MTA_VERIFIED) ? "succeeded" : "failed",
-			    s->id);
-			X509_free(x);
-		}
-
-		if (s->use_smtps) {
-			mta_enter_state(s, MTA_BANNER);
-			io_set_read(&s->io);
-		}
-		else
-			mta_enter_state(s, MTA_EHLO);
-
+		mta_tls_verified(s);
 		io_resume(&s->io, IO_PAUSE_IN);
 		io_reload(&s->io);
 		return;
@@ -1186,6 +1171,9 @@ mta_io(struct io *io, int evt, void *arg)
 			break;
 		}
 
+		mta_tls_verified(s);
+		break;
+
 	case IO_DATAIN:
 	    nextline:
 		line = iobuf_getline(&s->iobuf, &len);
@@ -1669,6 +1657,28 @@ mta_verify_certificate(struct mta_session *s)
 		free(cert_der[i]);
 
 	return res;
+}
+
+static void
+mta_tls_verified(struct mta_session *s)
+{
+	X509 *x;
+
+	x = SSL_get_peer_certificate(s->io.ssl);
+	if (x) {
+		log_info("smtp-out: Server certificate verification %s "
+		    "on session %016"PRIx64,
+		    (s->flags & MTA_VERIFIED) ? "succeeded" : "failed",
+		    s->id);
+		X509_free(x);
+	}
+
+	if (s->use_smtps) {
+		mta_enter_state(s, MTA_BANNER);
+		io_set_read(&s->io);
+	}
+	else
+		mta_enter_state(s, MTA_EHLO);
 }
 
 static const char *

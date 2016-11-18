@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.291 2016/11/17 07:33:06 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.292 2016/11/18 09:35:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -167,6 +167,7 @@ static void smtp_session_init(void);
 static int smtp_lookup_servername(struct smtp_session *);
 static void smtp_connected(struct smtp_session *);
 static void smtp_send_banner(struct smtp_session *);
+static void smtp_tls_verified(struct smtp_session *);
 static void smtp_io(struct io *, int, void *);
 static void smtp_data_io(struct io *, int, void *);
 static void smtp_data_io_done(struct smtp_session *);
@@ -698,7 +699,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	uint32_t			 msgid;
 	int				 status, success, dnserror;
 	void				*ssl_ctx;
-	X509				*x;
 
 	switch (imsg->hdr.type) {
 	case IMSG_SMTP_DNS_PTR:
@@ -994,26 +994,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			smtp_free(s, "SSL certificate check failed");
 			return;
 		}
-
-		x = SSL_get_peer_certificate(s->io.ssl);
-		if (x) {
-			log_info("%016"PRIx64" smtp "
-			    "event=client-cert-check address=%s host=%s result=\"%s\"",
-			    s->id, ss_to_text(&s->ss), s->hostname,
-			    (s->flags & SF_VERIFIED) ? "success" : "failure");
-			X509_free(x);
-		}
-
-		if (s->listener->flags & F_SMTPS) {
-			stat_increment("smtp.smtps", 1);
-			io_set_write(&s->io);
-			smtp_send_banner(s);
-		}
-		else {
-			stat_increment("smtp.tls", 1);
-			smtp_enter_state(s, STATE_HELO);
-		}
-
+		smtp_tls_verified(s);
 		io_resume(&s->io, IO_PAUSE_IN);
 		return;
 	}
@@ -1021,6 +1002,31 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	log_warnx("smtp_session_imsg: unexpected %s imsg",
 	    imsg_to_str(imsg->hdr.type));
 	fatalx(NULL);
+}
+
+static void
+smtp_tls_verified(struct smtp_session *s)
+{
+	X509 *x;
+
+	x = SSL_get_peer_certificate(s->io.ssl);
+	if (x) {
+		log_info("%016"PRIx64" smtp "
+		    "event=client-cert-check address=%s host=%s result=\"%s\"",
+		    s->id, ss_to_text(&s->ss), s->hostname,
+		    (s->flags & SF_VERIFIED) ? "success" : "failure");
+		X509_free(x);
+	}
+
+	if (s->listener->flags & F_SMTPS) {
+		stat_increment("smtp.smtps", 1);
+		io_set_write(&s->io);
+		smtp_send_banner(s);
+	}
+	else {
+		stat_increment("smtp.tls", 1);
+		smtp_enter_state(s, STATE_HELO);
+	}
 }
 
 void
@@ -1284,7 +1290,8 @@ smtp_io(struct io *io, int evt, void *arg)
 			return;
 		}
 
-		/* No verification required, cascade */
+		smtp_tls_verified(s);
+		break;
 
 	case IO_DATAIN:
 	    nextline:
