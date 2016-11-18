@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.137 2016/11/18 19:49:21 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.138 2016/11/18 20:03:30 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2535,9 +2535,9 @@ fail:
 void
 ixgbe_initialize_receive_units(struct ix_softc *sc)
 {
-	struct	rx_ring	*rxr = sc->rx_rings;
+	struct rx_ring	*rxr = sc->rx_rings;
 	struct ixgbe_hw	*hw = &sc->hw;
-	uint32_t	bufsz, rxctrl, fctrl, srrctl, rxcsum;
+	uint32_t	bufsz, fctrl, srrctl, rxcsum;
 	uint32_t	reta, mrqc = 0, hlreg;
 	uint32_t	random[10];
 	int		i;
@@ -2546,15 +2546,15 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	 * Make sure receives are disabled while
 	 * setting up the descriptor ring
 	 */
-	rxctrl = IXGBE_READ_REG(&sc->hw, IXGBE_RXCTRL);
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_RXCTRL,
-	    rxctrl & ~IXGBE_RXCTRL_RXEN);
+	ixgbe_disable_rx(hw);
 
 	/* Enable broadcasts */
 	fctrl = IXGBE_READ_REG(hw, IXGBE_FCTRL);
 	fctrl |= IXGBE_FCTRL_BAM;
-	fctrl |= IXGBE_FCTRL_DPF;
-	fctrl |= IXGBE_FCTRL_PMCF;
+	if (sc->hw.mac.type == ixgbe_mac_82598EB) {
+		fctrl |= IXGBE_FCTRL_DPF;
+		fctrl |= IXGBE_FCTRL_PMCF;
+	}
 	IXGBE_WRITE_REG(hw, IXGBE_FCTRL, fctrl);
 
 	/* Always enable jumbo frame reception */
