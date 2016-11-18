@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.8 2016/11/18 13:23:20 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.9 2016/11/18 14:54:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -300,9 +300,6 @@ struct ofp_action_header {
 	uint32_t	ah_pad;
 } __packed;
 
-#define OFP_CONTROLLER_MAXLEN_MAX	0xffe5	/* maximum buffer length */
-#define OFP_CONTROLLER_MAXLEN_NO_BUFFER	0xffff	/* don't do any buffering */
-
 /* Output Action */
 struct ofp_action_output {
 	uint16_t	ao_type;
@@ -311,6 +308,10 @@ struct ofp_action_output {
 	uint16_t	ao_max_len;
 	uint8_t		ao_pad[6];
 } __packed;
+
+/* Buffer configuration */
+#define OFP_CONTROLLER_MAXLEN_MAX	0xffe5	/* maximum buffer length */
+#define OFP_CONTROLLER_MAXLEN_NO_BUFFER	0xffff	/* don't do any buffering */
 
 struct ofp_action_mpls_ttl {
 	uint16_t	amt_type;
@@ -369,6 +370,7 @@ struct ofp_packet_out {
 	/* Followed by optional packet data if buffer_id == 0xffffffff */
 } __packed;
 
+/* Special buffer id */
 #define OFP_PKTOUT_NO_BUFFER		0xffffffff	/* No buffer id */
 
 /* Flow match fields for basic class */
@@ -745,6 +747,7 @@ struct ofp_aggregate_stats {
 	uint8_t		as_pad[4];
 } __packed;
 
+/* Special table id */
 #define OFP_TABLE_ID_MAX			0xfe	/* Last usable table */
 #define OFP_TABLE_ID_ALL			0xff	/* Wildcard table */
 
