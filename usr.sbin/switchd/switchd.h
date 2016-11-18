@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.24 2016/11/18 16:34:04 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.25 2016/11/18 16:49:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -31,6 +31,7 @@
 #include "ofp10.h"
 #include "types.h"
 #include "proc.h"
+#include "ofp_map.h"
 
 struct switchd;
 

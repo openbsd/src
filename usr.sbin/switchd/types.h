@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.9 2016/11/18 16:34:04 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.10 2016/11/18 16:49:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -48,12 +48,6 @@
 #ifndef ETHER_ADDR_LEN
 #define ETHER_ADDR_LEN		6
 #endif
-
-struct constmap {
-	unsigned int	 cm_type;
-	const char	*cm_name;
-	const char	*cm_descr;
-};
 
 enum imsg_type {
 	IMSG_NONE	= 0,

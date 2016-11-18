@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: genmap.sh,v 1.5 2016/11/18 13:36:32 reyk Exp $
+# $OpenBSD: genmap.sh,v 1.6 2016/11/18 16:49:35 reyk Exp $
 
 # Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
 #
@@ -73,12 +73,7 @@ cat <<EOF
 
 #include <sys/types.h>
 ${INC}
-
-struct constmap {
-	unsigned int	 cm_type;
-	const char	*cm_name;
-	const char	*cm_descr;
-};
+#include "ofp_map.h"
 
 EOF
 

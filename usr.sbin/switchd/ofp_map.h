@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_map.h,v 1.7 2016/11/18 16:34:04 reyk Exp $	*/
+/*	$OpenBSD: ofp_map.h,v 1.8 2016/11/18 16:49:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -18,6 +18,12 @@
 
 #ifndef OFP_MAP_H
 #define OFP_MAP_H
+
+struct constmap {
+	unsigned int	 cm_type;
+	const char	*cm_name;
+	const char	*cm_descr;
+};
 
 /*
  * Each map is generated from lists of #define's in ofp.h, using the format:
