@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.29 2016/11/17 21:13:27 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.30 2016/11/18 11:25:11 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3525,7 +3525,6 @@ struct ixgbe_mac_info {
 	bool orig_link_settings_stored;
 	bool autotry_restart;
 	uint8_t flags;
-	bool set_lben;
 	uint32_t  max_link_up_time;
 };
 

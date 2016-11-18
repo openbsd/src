@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x550.c,v 1.1 2016/11/16 22:31:16 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_x550.c,v 1.2 2016/11/18 11:25:11 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2189,23 +2189,14 @@ int32_t ixgbe_get_bus_info_X550em(struct ixgbe_hw *hw)
  **/
 void ixgbe_disable_rx_x550(struct ixgbe_hw *hw)
 {
-	uint32_t rxctrl, pfdtxgswc;
+	uint32_t rxctrl;
 	int32_t status;
 	struct ixgbe_hic_disable_rxen fw_cmd;
 
-	DEBUGFUNC("ixgbe_enable_rx_dma_x550");
+	DEBUGFUNC("ixgbe_disable_rx_dma_x550");
 
 	rxctrl = IXGBE_READ_REG(hw, IXGBE_RXCTRL);
 	if (rxctrl & IXGBE_RXCTRL_RXEN) {
-		pfdtxgswc = IXGBE_READ_REG(hw, IXGBE_PFDTXGSWC);
-		if (pfdtxgswc & IXGBE_PFDTXGSWC_VT_LBEN) {
-			pfdtxgswc &= ~IXGBE_PFDTXGSWC_VT_LBEN;
-			IXGBE_WRITE_REG(hw, IXGBE_PFDTXGSWC, pfdtxgswc);
-			hw->mac.set_lben = TRUE;
-		} else {
-			hw->mac.set_lben = FALSE;
-		}
-
 		fw_cmd.hdr.cmd = FW_DISABLE_RXEN_CMD;
 		fw_cmd.hdr.buf_len = FW_DISABLE_RXEN_LEN;
 		fw_cmd.hdr.checksum = FW_DEFAULT_CHECKSUM;
