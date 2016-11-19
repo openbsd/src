@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.34 2016/10/08 14:45:11 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.35 2016/11/19 19:35:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -679,8 +679,10 @@ ieee80211_print_elements(uint8_t *frm)
 			if (!vflag)
 				break;
 			for (i = len; i > 0; i--, data++)
-				printf(" %uM",
-				    (data[0] & IEEE80211_RATE_VAL) / 2);
+				printf(" %uM%s",
+				    (data[0] & IEEE80211_RATE_VAL) / 2,
+				    (data[0] & IEEE80211_RATE_BASIC
+				    ? "*" : ""));
 			break;
 		case IEEE80211_ELEMID_FHPARMS:
 			ELEM_CHECK(5);
