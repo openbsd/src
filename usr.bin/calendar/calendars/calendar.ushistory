@@ -1,7 +1,7 @@
 /*
  * USA history
  *
- * $OpenBSD: calendar.ushistory,v 1.5 2015/01/02 08:02:20 jmc Exp $
+ * $OpenBSD: calendar.ushistory,v 1.6 2016/11/19 12:41:22 otto Exp $
  */
 
 #ifndef _calendar_ushistory_
@@ -70,7 +70,7 @@
 05/09	94 degrees F, New York, 1979
 05/15	Asylum for Inebriates founded, Binghamton NY, 1854
 05/17	Six SLA members killed in televised gun fight, 1974
-05/21	US explodes first hydrogen bomb, 1956
+05/20	US explodes first air-delivered hydrogen bomb, 1956
 05/22	US Civil War ends, 1865
 05/26	Congress sets first immigration quotas, 1924
 05/27	Golden Gate Bridge opens, 1937

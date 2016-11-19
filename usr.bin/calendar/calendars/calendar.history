@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.79 2016/09/14 14:10:18 jmc Exp $
+ * $OpenBSD: calendar.history,v 1.80 2016/11/19 12:41:22 otto Exp $
  */
 
 #ifndef _calendar_history_
@@ -420,6 +420,7 @@
 10/29	Leibniz makes the first use of the "long s" for integral, 1675
 10/30	Communist Party of Australia founded in Sydney, 1920
 10/31	Luther nails 95 Theses to door of Castle Church, Wittenberg, 1517
+10/31	First hydrogen bomb blasts Enewetak, 1952
 11/01	Austria-Hungary become two separate nations, 1918
 11/01	Puerto Rican nationalists try to kill Truman at the Blair House, 1950
 11/02	Luftwaffe completes 57 consecutive nights of bombing of London, 1940
@@ -444,7 +445,6 @@
 11/16	Opening of the Suez Canal, 1869
 11/16	Albert Hofmann synthesizes LSD in Switzerland, 1938
 11/17	Elizabeth I of England succeeds Queen Mary I of England, 1558
-11/18	First hydrogen bomb blasts Enewetok, 1952
 11/19	Samuel Goldwyn and Edgar Selwyn establish Goldwyn Company, 1916
 11/20	Nuremberg Trials against 24 Nazi war criminals begin, 1945
 11/21	Birmingham Pub Bombings by the IRA kill 21 people, 1974
