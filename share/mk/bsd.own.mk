@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.180 2016/10/05 18:00:41 natano Exp $
+#	$OpenBSD: bsd.own.mk,v 1.181 2016/11/19 14:20:58 tb Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -128,7 +128,9 @@ DEFAULT_PIE_DEF=-DPIE_DEFAULT=1
 NOPROFILE=
 .endif
 
-BUILDUSER?= ${USER}
+BUILDUSER?= build
+WOBJGROUP?= wobj
+WOBJUMASK?= 007
 
 BSD_OWN_MK=Done
 

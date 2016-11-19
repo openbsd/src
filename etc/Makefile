@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.444 2016/11/05 09:14:37 rpe Exp $
+#	$OpenBSD: Makefile,v 1.445 2016/11/19 14:20:58 tb Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -238,6 +238,9 @@ release:
 .else
 
 release:
+	umask ${WOBJUMASK}; exec ${MAKE} do-release
+
+do-release:
 	@if [[ `id -u` -ne 0 ]]; then \
 		echo $@ must be called by root >&2; \
 		false; \
@@ -273,7 +276,7 @@ sha:
 .endif	# DESTDIR check
 
 distrib:
-	cd ../distrib && \
+	umask 022; cd ../distrib && \
 	    ${MAKE} && exec ${MAKE} install
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
