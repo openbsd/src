@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4896,8 +4896,8 @@ iwm_ack_rates(struct iwm_softc *sc, struct iwm_node *in, int *cck_rates,
 {
 	struct ieee80211_node *ni = &in->in_ni;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
-	int lowest_present_ofdm = 100;
-	int lowest_present_cck = 100;
+	int lowest_present_ofdm = -1;
+	int lowest_present_cck = -1;
 	uint8_t cck = 0;
 	uint8_t ofdm = 0;
 	int i;
@@ -4908,7 +4908,7 @@ iwm_ack_rates(struct iwm_softc *sc, struct iwm_node *in, int *cck_rates,
 			if ((iwm_ridx2rate(rs, i) & IEEE80211_RATE_BASIC) == 0)
 				continue;
 			cck |= (1 << i);
-			if (lowest_present_cck > i)
+			if (lowest_present_cck == -1 || lowest_present_cck > i)
 				lowest_present_cck = i;
 		}
 	}
@@ -4916,7 +4916,7 @@ iwm_ack_rates(struct iwm_softc *sc, struct iwm_node *in, int *cck_rates,
 		if ((iwm_ridx2rate(rs, i) & IEEE80211_RATE_BASIC) == 0)
 			continue;	
 		ofdm |= (1 << (i - IWM_FIRST_OFDM_RATE));
-		if (lowest_present_ofdm > i)
+		if (lowest_present_ofdm == -1 || lowest_present_ofdm > i)
 			lowest_present_ofdm = i;
 	}
 
