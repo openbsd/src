@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.20 2016/11/19 18:53:02 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -4268,7 +4268,7 @@ struct iwm_lq_cmd {
  */
 #define IWM_DEFAULT_TX_RETRY			15
 #define IWM_MGMT_DFAULT_RETRY_LIMIT		3
-#define IWM_RTS_DFAULT_RETRY_LIMIT		60
+#define IWM_RTS_DFAULT_RETRY_LIMIT		3
 #define IWM_BAR_DFAULT_RETRY_LIMIT		60
 #define IWM_LOW_RETRY_LIMIT			7
 
