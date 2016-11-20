@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.54 2016/11/14 10:32:46 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.55 2016/11/20 11:40:58 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -536,7 +536,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	}
 
 #ifdef SMALL_KERNEL
-	rt = SRPL_ENTER(&sr, &an->an_rtlist);
+	rt = SRPL_FIRST(&sr, &an->an_rtlist);
 #else
 	SRPL_FOREACH(rt, &sr, &an->an_rtlist, rt_next) {
 		if (prio != RTP_ANY &&
@@ -583,7 +583,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	if (an == NULL)
 		goto out;
 
-	rt = SRPL_ENTER(&sr, &an->an_rtlist);
+	rt = SRPL_FIRST(&sr, &an->an_rtlist);
 	rtref(rt);
 	SRPL_LEAVE(&sr);
 
@@ -614,11 +614,11 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 		 * the end of the list and then pick the first route.
 		 */
 
-		mrt = SRPL_ENTER(&sr, &an->an_rtlist);
+		mrt = SRPL_FIRST(&sr, &an->an_rtlist);
 		while (hash > threshold && mrt != NULL) {
 			if (mrt->rt_priority == rt->rt_priority)
 				hash -= threshold;
-			mrt = SRPL_NEXT(&sr, mrt, rt_next);
+			mrt = SRPL_FOLLOW(&sr, mrt, rt_next);
 		}
 
 		if (mrt != NULL) {

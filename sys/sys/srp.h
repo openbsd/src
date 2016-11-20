@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.12 2016/10/21 06:27:50 dlg Exp $ */
+/*	$OpenBSD: srp.h,v 1.13 2016/11/20 11:40:58 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -110,15 +110,14 @@ struct {								\
 	struct srp		se_next;				\
 }
 
-#define SRPL_ENTER(_sr, _sl)		srp_enter((_sr), &(_sl)->sl_head)
-
-#define SRPL_NEXT(_sr, _e, _ENTRY)	\
-	srp_follow((_sr), &(_e)->_ENTRY.se_next)
+#define SRPL_FIRST(_sr, _sl)		srp_enter((_sr), &(_sl)->sl_head)
+#define SRPL_NEXT(_sr, _e, _ENTRY)	srp_enter((_sr), &(_e)->_ENTRY.se_next)
+#define SRPL_FOLLOW(_sr, _e, _ENTRY)	srp_follow((_sr), &(_e)->_ENTRY.se_next)
 
 #define SRPL_FOREACH(_c, _sr, _sl, _ENTRY)				\
-	for ((_c) = SRPL_ENTER(_sr, _sl);				\
+	for ((_c) = SRPL_FIRST(_sr, _sl);				\
 	    (_c) != NULL; 						\
-	    (_c) = SRPL_NEXT(_sr, _c, _ENTRY))
+	    (_c) = SRPL_FOLLOW(_sr, _c, _ENTRY))
 
 #define SRPL_LEAVE(_sr)			srp_leave((_sr))
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.10 2016/05/18 03:46:03 dlg Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.11 2016/11/20 11:40:58 mpi Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2016 $
+.Dd $Mdocdate: November 20 2016 $
 .Dt SRPL_RC_INIT 9
 .Os
 .Sh NAME
@@ -22,8 +22,9 @@
 .Nm SRPL_HEAD ,
 .Nm SRPL_ENTRY ,
 .Nm SRPL_INIT ,
-.Nm SRPL_ENTER ,
+.Nm SRPL_FIRST,
 .Nm SRPL_NEXT ,
+.Nm SRPL_FOLLOW ,
 .Nm SRPL_FOREACH ,
 .Nm SRPL_LEAVE ,
 .Nm SRPL_EMPTY_LOCKED ,
@@ -50,9 +51,11 @@
 .Fn SRPL_ENTRY "TYPE"
 .Fn "SRPL_INIT" "SRPL_HEAD *sl"
 .Ft void *
-.Fn "SRPL_ENTER" "struct srp_ref *sr" "SRPL_HEAD *sl"
+.Fn "SRPL_FIRST" "struct srp_ref *sr" "SRPL_HEAD *sl"
 .Ft void *
 .Fn "SRPL_NEXT" "struct srp_ref *sr" "struct TYPE *listelm" "FIELDNAME"
+.Ft void *
+.Fn "SRPL_FOLLOW" "struct srp_ref *sr" "struct TYPE *listelm" "FIELDNAME"
 .Fo "SRPL_FOREACH"
 .Fa "VARNAME"
 .Fa "struct srp_ref *sr"
@@ -135,20 +138,30 @@ initialises the SRP list
 .Fa sl
 to an empty state.
 .Pp
-.Fn SRPL_ENTER
-begins iterating over elements in the SRP list
-.Fa sl .
-The reference to the list item is held via
+.Fn SRPL_FIRST
+accesses the first element in the SRP list
+.Fa sl
+and holds its reference via
 .Fa sr .
-Every call to
-.Fn SRPL_ENTER
-must have a corresponding call to
-.Fn SRPL_LEAVE
-to release references to the list and its elements.
 .Pp
 .Fn SRPL_NEXT
 accesses the element in the SRP list after
-.Fa listelm .
+.Fa listelm
+and holds its reference via
+.Fa sr .
+.\".Pp
+.\"Every call to
+.\".Fn SRPL_FIRST
+.\"must have a corresponding call to
+.\".Fn SRPL_LEAVE
+.\"to release references to the list and its elements.
+.Pp
+.Fn SRPL_FOLLOW
+accesses the element in the SRP list after
+.Fa listelm
+and swap the previous reference held via
+.Fa sr
+for the reference of the newly accessed item.
 .Pp
 .Fn SRPL_FOREACH
 creates a loop for traversing the list.
@@ -161,8 +174,9 @@ to release references to the list and its elements.
 .Fn SRPL_LEAVE
 releases references to the list and its elements held by previous
 calls to
-.Fn SRPL_ENTER ,
+.Fn SRPL_FIRST,
 .Fn SRPL_NEXT ,
+.Fn SRPL_FOLLOW ,
 or
 .Fn SRPL_FOREACH .
 .Pp
@@ -224,8 +238,9 @@ An srpl_rc declaration can be initialised with the
 macro.
 .Sh CONTEXT
 .Fn SRPL_INIT ,
-.Fn SRPL_ENTER ,
+.Fn SRPL_FIRST,
 .Fn SRPL_NEXT ,
+.Fn SRPL_FOLLOW ,
 .Fn SRPL_FOREACH ,
 and
 .Fn SRPL_LEAVE
@@ -245,8 +260,9 @@ may be called during autoconf or from process context.
 An appropriate lock must be held that prevents concurrent modifications
 to the list.
 .Sh RETURN VALUES
-.Fn SRPL_ENTER ,
+.Fn SRPL_FIRST ,
 .Fn SRPL_NEXT ,
+.Fn SRPL_FOLLOW ,
 .Fn SRPL_FIRST_LOCKED ,
 and
 .Fn SRPL_NEXT_LOCKED

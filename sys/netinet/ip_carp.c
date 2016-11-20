@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.295 2016/10/25 07:21:02 yasuoka Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.296 2016/11/20 11:40:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1329,7 +1329,7 @@ carp_iamatch(struct ifnet *ifp)
 	struct srp_ref sr;
 	int match = 0;
 
-	vhe = SRPL_ENTER(&sr, &sc->carp_vhosts); /* head */
+	vhe = SRPL_FIRST(&sr, &sc->carp_vhosts);
 	if (vhe->state == MASTER)
 		match = 1;
 	SRPL_LEAVE(&sr);
@@ -1381,7 +1381,7 @@ carp_vhe_match(struct carp_softc *sc, uint8_t *ena)
 	struct srp_ref sr;
 	int match = 0;
 
-	vhe = SRPL_ENTER(&sr, &sc->carp_vhosts); /* head */
+	vhe = SRPL_FIRST(&sr, &sc->carp_vhosts);
 	match = (vhe->state == MASTER || sc->sc_balancing >= CARP_BAL_IP) &&
 	    !memcmp(ena, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 	SRPL_LEAVE(&sr);
@@ -2312,7 +2312,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	KASSERT(sc->sc_carpdev != NULL);
 
 	if (sc->cur_vhe == NULL) {
-		vhe = SRPL_ENTER(&sr, &sc->carp_vhosts); /* head */
+		vhe = SRPL_FIRST(&sr, &sc->carp_vhosts);
 		ismaster = (vhe->state == MASTER);
 		SRPL_LEAVE(&sr);
 	} else {
