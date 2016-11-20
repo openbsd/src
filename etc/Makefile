@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.445 2016/11/19 14:20:58 tb Exp $
+#	$OpenBSD: Makefile,v 1.446 2016/11/20 11:00:19 tb Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -211,6 +211,7 @@ distribution-etc-root-var: distrib-dirs
 	chown -h root:wheel ${DESTDIR}/var/tmp
 	touch ${DESTDIR}/var/sysmerge/etcsum
 	chown root:wheel ${DESTDIR}/var/sysmerge/etcsum
+	chmod 644 ${DESTDIR}/var/sysmerge/etcsum
 	cd ${DESTDIR}/ && \
 		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
 		xargs sha256 -h ${DESTDIR}/var/sysmerge/etcsum || true
@@ -218,6 +219,7 @@ distribution-etc-root-var: distrib-dirs
 		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
 		pax -w -d | gzip -9 > ${DESTDIR}/var/sysmerge/etc.tgz
 	chown root:wheel ${DESTDIR}/var/sysmerge/etc.tgz
+	chmod 644 ${DESTDIR}/var/sysmerge/etc.tgz
 
 distribution:
 	exec ${MAKE} distribution-etc-root-var
@@ -257,6 +259,7 @@ do-release:
 	${MAKE} release-sets
 	${MAKE} distrib
 	su ${BUILDUSER} -c 'exec ${MAKE} sha'
+	-cd ${RELEASEDIR} && chmod g-w,a+rX *
 
 release-sets:
 	su ${BUILDUSER} -c 'exec ${MAKE} distribution'
