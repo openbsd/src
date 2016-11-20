@@ -1,6 +1,54 @@
-.\"	$OpenBSD: BIO_should_retry.3,v 1.3 2016/11/07 15:52:47 jmc Exp $
+.\"	$OpenBSD: BIO_should_retry.3,v 1.4 2016/11/20 01:39:11 schwarze Exp $
+.\"	OpenSSL 60e24554 Apr 6 14:45:18 2010 +0000
 .\"
-.Dd $Mdocdate: November 7 2016 $
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2000, 2010, 2016 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 20 2016 $
 .Dt BIO_SHOULD_RETRY 3
 .Os
 .Sh NAME
@@ -15,12 +63,26 @@
 .Nd BIO retry functions
 .Sh SYNOPSIS
 .In openssl/bio.h
-.Pp
-.Fd #define BIO_should_read(a)		((a)->flags & BIO_FLAGS_READ)
-.Fd #define BIO_should_write(a)		((a)->flags & BIO_FLAGS_WRITE)
-.Fd #define BIO_should_io_special(a)	((a)->flags & BIO_FLAGS_IO_SPECIAL)
-.Fd #define BIO_retry_type(a)		((a)->flags & BIO_FLAGS_RWS)
-.Fd #define BIO_should_retry(a)		((a)->flags & BIO_FLAGS_SHOULD_RETRY)
+.Ft int
+.Fo BIO_should_read
+.Fa "BIO *b"
+.Fc
+.Ft int
+.Fo BIO_should_write
+.Fa "BIO *b"
+.Fc
+.Ft int
+.Fo BIO_should_io_special
+.Fa "BIO *b"
+.Fc
+.Ft int
+.Fo BIO_retry_type
+.Fa "BIO *b"
+.Fc
+.Ft int
+.Fo BIO_should_retry
+.Fa "BIO *b"
+.Fc
 .Fd #define BIO_FLAGS_READ			0x01
 .Fd #define BIO_FLAGS_WRITE			0x02
 .Fd #define BIO_FLAGS_IO_SPECIAL		0x04
@@ -83,6 +145,14 @@ depends on the type of BIO that resulted in this condition.
 returns the reason for a special condition
 if passed the relevant BIO, for example as returned by
 .Fn BIO_get_retry_BIO .
+.Pp
+.Fn BIO_should_retry ,
+.Fn BIO_should_read ,
+.Fn BIO_should_write ,
+.Fn BIO_should_io_special ,
+and
+.Fn BIO_retry_type
+are implemented as macros.
 .Pp
 If
 .Fn BIO_should_retry
