@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.55 2016/11/20 11:40:58 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.56 2016/11/20 11:46:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -869,21 +869,17 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 struct rtentry *
 rtable_iterate(struct rtentry *rt0)
 {
+	struct rtentry *rt = NULL;
 #ifndef SMALL_KERNEL
-	struct rtentry *rt;
+	struct srp_ref sr;
 
-	KERNEL_ASSERT_LOCKED();
-
-	rt = SRPL_NEXT_LOCKED(rt0, rt_next);
+	rt = SRPL_NEXT(&sr, rt0, rt_next);
 	if (rt != NULL)
 		rtref(rt);
-	rtfree(rt0);
-
-	return (rt);
-#else
-	rtfree(rt0);
-	return (NULL);
+	SRPL_LEAVE(&sr);
 #endif /* SMALL_KERNEL */
+	rtfree(rt0);
+	return (rt);
 }
 
 #ifndef SMALL_KERNEL
