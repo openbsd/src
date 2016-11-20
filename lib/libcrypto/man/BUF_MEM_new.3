@@ -1,12 +1,62 @@
-.\"	$OpenBSD: BUF_MEM_new.3,v 1.5 2016/11/10 14:34:18 jmc Exp $
+.\"	$OpenBSD: BUF_MEM_new.3,v 1.6 2016/11/20 19:08:51 schwarze Exp $
+.\"	OpenSSL 18edda0f Sep 20 03:28:54 2000 +0000
 .\"
-.Dd $Mdocdate: November 10 2016 $
+.\" This file was written by Ralf S. Engelschall <rse@openssl.org>.
+.\" Copyright (c) 1999, 2000, 2016 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 20 2016 $
 .Dt BUF_MEM_NEW 3
 .Os
 .Sh NAME
 .Nm BUF_MEM_new ,
 .Nm BUF_MEM_free ,
 .Nm BUF_MEM_grow ,
+.Nm BUF_MEM_grow_clean ,
+.Nm BUF_reverse ,
 .Nm BUF_strdup
 .Nd simple character arrays structure
 .Sh SYNOPSIS
@@ -22,6 +72,17 @@
 .Ft int
 .Fo BUF_MEM_grow
 .Fa "BUF_MEM *str"
+.Fa "size_t len"
+.Fc
+.Ft size_t
+.Fo BUF_MEM_grow_clean
+.Fa "BUF_MEM *str"
+.Fa "size_t len"
+.Fc
+.Ft void
+.Fo BUF_reverse
+.Fa "unsigned char *out"
+.Fa "const unsigned char *in"
 .Fa "size_t len"
 .Fc
 .Ft char *
@@ -58,11 +119,34 @@ allocates a new buffer of zero size.
 frees up an already existing buffer.
 The data is zeroed before freeing up in case the buffer contains
 sensitive data.
+If
+.Fa a
+is a
+.Dv NULL
+pointer, no action occurs.
 .Pp
 .Fn BUF_MEM_grow
 changes the size of an already existing buffer to
 .Fa len .
 Any data already in the buffer is preserved if it increases in size.
+.Pp
+.Fn BUF_MEM_grow_clean
+is similar to
+.Fn BUF_MEM_grow ,
+but it sets any freed or additionally allocated memory to zero.
+.Pp
+.Fn BUF_reverse
+reverses
+.Fa len
+bytes at
+.Fa in
+into
+.Fa out .
+If
+.Fa out
+is
+.Dv NULL ,
+the array is reversed in place.
 .Pp
 .Fn BUF_strdup
 copies a NUL terminated string into a block of allocated memory and
@@ -90,6 +174,8 @@ returns the buffer or
 on error.
 .Pp
 .Fn BUF_MEM_grow
+and
+.Fn BUF_MEM_grow_clean
 returns zero on error or the new size (i.e.\&
 .Fa len ) .
 .Sh SEE ALSO
