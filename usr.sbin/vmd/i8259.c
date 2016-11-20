@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.3 2016/10/03 06:00:17 mlarkin Exp $ */
+/* $OpenBSD: i8259.c,v 1.4 2016/11/20 22:54:40 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -126,13 +126,7 @@ i8259_ack(void)
 			if (pics[MASTER].irr == 0)
 				pics[MASTER].asserted = 0;
 
-			ret = i;
-
-			/* XXX - intr still needs |= 0xFF00 ?? */
-			if (pics[MASTER].irr || pics[SLAVE].irr)
-				ret |= 0xFF00;
-
-			return ret;
+			return i;
 		}
 
 		i++;
@@ -160,9 +154,6 @@ i8259_ack(void)
 			}
 
 			ret = i + 8;
-			/* XXX - intr still needs |= 0xFF00 ?? */
-			if ((pics[MASTER].irr & ~0x4) || (pics[SLAVE].irr))
-				ret |= 0xFF00;
 
 			return ret;
 		}
