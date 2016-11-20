@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.10 2016/11/18 16:56:09 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.11 2016/11/20 12:45:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -79,14 +79,6 @@ struct ofp_header {
 #define OFP_T_SET_ASYNC			28	/* Set Async */
 #define OFP_T_METER_MOD			29	/* Meter Mod */
 #define OFP_T_TYPE_MAX			30
-
-/* OpenFlow finite state machine */
-enum ofp_state {
-	OFP_STATE_CLOSED,
-	OFP_STATE_HELLO_WAIT,
-	OFP_STATE_FEATURE_WAIT,
-	OFP_STATE_ESTABLISHED
-};
 
 /* OpenFlow Hello Message */
 struct ofp_hello_element_header {
@@ -880,5 +872,26 @@ struct ofp_group_desc {
 	uint32_t		gd_group_id;
 	struct ofp_bucket	gd_buckets[0];
 } __packed;
+
+/*
+ * Implementation-specific definitions that are not part of the spec
+ */
+
+/* OpenFlow finite state machine */
+enum ofp_state {
+	OFP_STATE_CLOSED,
+	OFP_STATE_HELLO_WAIT,
+	OFP_STATE_FEATURE_WAIT,
+	OFP_STATE_ESTABLISHED
+};
+
+/* Used by the bpf for DLT_OPENFLOW */
+struct dlt_openflow_hdr {
+	uint32_t	of_direction;
+	uint64_t	of_datapath_id;
+} __packed;
+
+#define DLT_OPENFLOW_TO_SWITCH		1
+#define DLT_OPENFLOW_TO_CONTROLLER	2
 
 #endif /* _NET_OPF_H_ */

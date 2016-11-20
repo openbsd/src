@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.13 2016/11/16 13:47:27 reyk Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.14 2016/11/20 12:45:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1529,10 +1529,15 @@ switch_flow_classifier_dump(struct switch_softc *sc,
 }
 
 int
-switch_mtap(caddr_t arg, struct mbuf *m, int dir)
+switch_mtap(caddr_t arg, struct mbuf *m, int dir, uint64_t datapath_id)
 {
-	/* prepend 32 bit "controller to switch" field */
-	return bpf_mtap_af(arg, dir == BPF_DIRECTION_IN ? 1 : 0, m, dir);
+	struct dlt_openflow_hdr	 of;
+
+	of.of_datapath_id = htobe64(datapath_id);
+	of.of_direction = htonl(dir == BPF_DIRECTION_IN ?
+	    DLT_OPENFLOW_TO_SWITCH : DLT_OPENFLOW_TO_CONTROLLER);
+
+	return (bpf_mtap_hdr(arg, (caddr_t)&of, sizeof(of), m, dir, NULL));
 }
 
 int

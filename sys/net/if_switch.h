@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.h,v 1.9 2016/11/16 13:47:27 reyk Exp $	*/
+/*	$OpenBSD: if_switch.h,v 1.10 2016/11/20 12:45:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -220,7 +220,7 @@ void	 switch_swfcl_free(struct switch_flow_classify *);
 struct mbuf
 	*switch_flow_classifier(struct mbuf *, uint32_t,
 	    struct switch_flow_classify *);
-int	 switch_mtap(caddr_t, struct mbuf *, int);
+int	 switch_mtap(caddr_t, struct mbuf *, int, uint64_t);
 int	 ofp_split_mbuf(struct mbuf *, struct mbuf **);
 
 /* switchctl.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.33 2016/11/18 16:56:09 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.34 2016/11/20 12:45:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4473,6 +4473,7 @@ swofp_forward_ofs(struct switch_softc *sc, struct switch_flow_classify *swfcl,
 int
 swofp_input(struct switch_softc *sc, struct mbuf *m)
 {
+	struct swofp_ofs	*swofs = sc->sc_ofs;
 	struct ofp_header	*oh;
 	ofp_msg_handler		 handler;
 
@@ -4491,7 +4492,8 @@ swofp_input(struct switch_softc *sc, struct mbuf *m)
 
 #if NBPFILTER > 0
 	if (sc->sc_ofbpf)
-		switch_mtap(sc->sc_ofbpf, m, BPF_DIRECTION_IN);
+		switch_mtap(sc->sc_ofbpf, m, BPF_DIRECTION_IN,
+		    swofs->swofs_datapath_id);
 #endif
 
 	handler = swofp_lookup_msg_handler(oh->oh_type);
@@ -4507,6 +4509,7 @@ swofp_input(struct switch_softc *sc, struct mbuf *m)
 int
 swofp_output(struct switch_softc *sc, struct mbuf *m)
 {
+	struct swofp_ofs	*swofs = sc->sc_ofs;
 	struct ofp_header	*oh;
 
 	if (sc->sc_swdev == NULL) {
@@ -4521,7 +4524,8 @@ swofp_output(struct switch_softc *sc, struct mbuf *m)
 
 #if NBPFILTER > 0
 	if (sc->sc_ofbpf)
-		switch_mtap(sc->sc_ofbpf, m, BPF_DIRECTION_OUT);
+		switch_mtap(sc->sc_ofbpf, m, BPF_DIRECTION_OUT,
+		    swofs->swofs_datapath_id);
 #endif
 
 	if (sc->sc_swdev->swdev_output(sc, m) != 0)

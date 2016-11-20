@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.7 2016/11/18 18:45:27 rzalamena Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.8 2016/11/20 12:45:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -553,8 +553,8 @@ parse_next_instruction:
 void
 ofp_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	uint32_t	 toswitch;
-	unsigned int	 length;
+	struct dlt_openflow_hdr	 of;
+	unsigned int		 length;
 
 	ts_print(&h->ts);
 
@@ -562,16 +562,17 @@ ofp_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	snapend = p + h->caplen;
 	length = snapend - p;
 
-	if (length < 4)
-		goto trunc;
-	toswitch = EXTRACT_32BITS(p);
+	TCHECK2(*p, sizeof(of));
+	memcpy(&of, p, sizeof(of));
 
-	if (toswitch)
+	if (ntohl(of.of_direction) == DLT_OPENFLOW_TO_SWITCH)
 		printf("controller -> %s", device);
 	else
 		printf("%s -> controller", device);
+	if (eflag)
+		printf(", datapath %#016llx", be64toh(of.of_datapath_id));
 
-	ofp_print(p + 4, length - 4);
+	ofp_print(p + sizeof(of), length - sizeof(of));
 	goto out;
 
  trunc:
