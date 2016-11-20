@@ -46,8 +46,9 @@ srp_swap_locked(struct srp *srp, void *nv)
 #define SRPL_HEAD(name, entry)		SLIST_HEAD(name, entry)
 #define SRPL_ENTRY(type)		SLIST_ENTRY(type)
 
-#define SRPL_ENTER(_sr, _sl)		SLIST_FIRST(_sl);
+#define SRPL_FIRST(_sr, _sl)		SLIST_FIRST(_sl);
 #define SRPL_NEXT(_sr, _e, _ENTRY)	SLIST_NEXT(_e, _ENTRY)
+#define SRPL_FOLLOW(_sr, _e, _ENTRY)	SLIST_NEXT(_e, _ENTRY)
 #define SRPL_LEAVE(_sr)			((void)_sr)
 
 #define SRPL_FOREACH(_c, _srp, _sl, _ENTRY)				\
