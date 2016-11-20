@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_intr.c,v 1.13 2016/07/16 10:41:53 visa Exp $	*/
+/*	$OpenBSD: octeon_intr.c,v 1.14 2016/11/20 15:02:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -114,7 +114,7 @@ octeon_intr_establish(int irq, int level,
 	ih->ih_level = level;
 	ih->ih_flags = flags;
 	ih->ih_irq = irq;
-	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq);
+	evcount_attach(&ih->ih_count, ih_what, &ih->ih_irq);
 
 	s = splhigh();
 
@@ -123,9 +123,8 @@ octeon_intr_establish(int irq, int level,
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * generally small.
 	 */
-	for (p = &octeon_intrhand[irq]; (q = *p) != NULL;
-	    p = (struct intrhand **)&q->ih_next)
-		;
+	for (p = &octeon_intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
+		continue;
 	*p = ih;
 
 	octeon_intem[cpuid] |= 1UL << irq;
@@ -174,8 +173,7 @@ octeon_intr_makemasks()
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < OCTEON_NINTS; irq++) {
 		uint levels = 0;
-		for (q = (struct intrhand *)octeon_intrhand[irq]; q != NULL; 
-			q = q->ih_next)
+		for (q = octeon_intrhand[irq]; q != NULL; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
 	}
@@ -274,8 +272,7 @@ octeon_iointr(uint32_t hwpend, struct trapframe *frame)
 					continue;
 
 				rc = 0;
-				for (ih = (struct intrhand *)octeon_intrhand[bitno];
-					ih != NULL;
+				for (ih = octeon_intrhand[bitno]; ih != NULL;
 				    ih = ih->ih_next) {
 #ifdef MULTIPROCESSOR
 					register_t sr;
