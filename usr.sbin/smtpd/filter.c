@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.20 2016/11/16 21:30:37 eric Exp $	*/
+/*	$OpenBSD: filter.c,v 1.21 2016/11/20 08:43:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -315,7 +315,7 @@ filter_connect(uint64_t id, const struct sockaddr *local,
 	if (filter == NULL)
 		filter = "<no-filter>";
 	s->filters = dict_xget(&chains, filter);
-	s->iev.sock = -1;
+	io_init(&s->iev, NULL);
 	tree_xset(&sessions, s->id, s);
 
 	filter_event(id, EVENT_CONNECT);
@@ -671,7 +671,9 @@ filter_tx(struct filter_session *s, int sink)
 	io_set_nonblocking(sp[1]);
 
 	iobuf_init(&s->ibuf, 0, 0);
-	io_init(&s->iev, sp[0], s, filter_tx_io, &s->ibuf);
+	io_init(&s->iev, &s->ibuf);
+	io_set_callback(&s->iev, filter_tx_io, s);
+	io_set_fd(&s->iev, sp[0]);
 	io_set_read(&s->iev);
 
 	return (sp[1]);

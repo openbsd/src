@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.292 2016/11/18 09:35:27 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.293 2016/11/20 08:43:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -650,7 +650,9 @@ smtp_session(struct listener *listener, int sock,
 	s->id = generate_uid();
 	s->listener = listener;
 	memmove(&s->ss, ss, sizeof(*ss));
-	io_init(&s->io, sock, s, smtp_io, &s->iobuf);
+	io_init(&s->io, &s->iobuf);
+	io_set_callback(&s->io, smtp_io, s);
+	io_set_fd(&s->io, sock);
 	io_set_timeout(&s->io, SMTPD_SESSION_TIMEOUT * 1000);
 	io_set_write(&s->io);
 
@@ -1202,7 +1204,9 @@ smtp_filter_fd(uint64_t id, int fd)
 
 	iobuf_init(&s->tx->obuf, 0, 0);
 	io_set_nonblocking(fd);
-	io_init(&s->tx->oev, fd, s, smtp_data_io, &s->tx->obuf);
+	io_init(&s->tx->oev, &s->tx->obuf);
+	io_set_callback(&s->tx->oev, smtp_data_io, s);
+	io_set_fd(&s->tx->oev, fd);
 
 	iobuf_fqueue(&s->tx->obuf, "Received: ");
 	if (!(s->listener->flags & F_MASK_SOURCE)) {
@@ -1421,7 +1425,7 @@ smtp_tx(struct smtp_session *s)
 		return 0;
 
 	TAILQ_INIT(&tx->rcpts);
-	io_init(&tx->oev, -1, s, NULL, NULL); /* initialise 'sock', but not to 0 */
+	io_init(&tx->oev, NULL);
 
 	s->tx = tx;
 	tx->session = s;

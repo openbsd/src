@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.86 2016/11/18 09:35:27 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.87 2016/11/20 08:43:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -195,7 +195,7 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 	s->id = generate_uid();
 	s->relay = relay;
 	s->route = route;
-	s->io.sock = -1;
+	io_init(&s->io, NULL);
 
 	if (relay->flags & RELAY_SSL && relay->flags & RELAY_AUTH)
 		s->flags |= MTA_USE_AUTH;
@@ -560,7 +560,8 @@ mta_connect(struct mta_session *s)
 
 	mta_enter_state(s, MTA_INIT);
 	iobuf_xinit(&s->iobuf, 0, 0, "mta_connect");
-	io_init(&s->io, -1, s, mta_io, &s->iobuf);
+	io_init(&s->io, &s->iobuf);
+	io_set_callback(&s->io, mta_io, s);
 	io_set_timeout(&s->io, 300000);
 	if (io_connect(&s->io, sa, s->route->src->sa) == -1) {
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.29 2016/11/17 17:34:55 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.30 2016/11/20 08:43:36 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -224,21 +224,15 @@ _io_init()
 }
 
 void
-io_init(struct io *io, int sock, void *arg,
-	void(*cb)(struct io*, int, void *), struct iobuf *iobuf)
+io_init(struct io *io, struct iobuf *iobuf)
 {
 	_io_init();
 
 	memset(io, 0, sizeof *io);
 
-	io->sock = sock;
+	io->sock = -1;
 	io->timeout = -1;
-	io->arg = arg;
 	io->iobuf = iobuf;
-	io->cb = cb;
-
-	if (sock != -1)
-		io_reload(io);
 }
 
 void
@@ -286,6 +280,21 @@ io_release(struct io *io)
 	io->flags &= ~IO_HELD;
 	if (!(io->flags & IO_RESET))
 		io_reload(io);
+}
+
+void
+io_set_fd(struct io *io, int fd)
+{
+	io->sock = fd;
+	if (fd != -1)
+		io_reload(io);
+}
+
+void
+io_set_callback(struct io *io, void(*cb)(struct io *, int, void *), void *arg)
+{
+	io->cb = cb;
+	io->arg = arg;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.121 2016/11/16 21:30:37 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.122 2016/11/20 08:43:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -432,7 +432,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			    imsg->fd, s->id, s->evp->id);
 
 			io_set_nonblocking(imsg->fd);
-			io_init(&s->io, imsg->fd, s, mda_io, &s->iobuf);
+			io_set_fd(&s->io, imsg->fd);
 			io_set_write(&s->io);
 			return;
 
@@ -955,9 +955,10 @@ mda_session(struct mda_user * u)
 	s = xcalloc(1, sizeof *s, "mda_session");
 	s->id = generate_uid();
 	s->user = u;
-	s->io.sock = -1;
 	if (iobuf_init(&s->iobuf, 0, 0) == -1)
 		fatal("mda_session");
+	io_init(&s->io, &s->iobuf);
+	io_set_callback(&s->io, mda_io, s);
 
 	tree_xset(&sessions, s->id, s);
 

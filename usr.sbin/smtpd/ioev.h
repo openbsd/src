@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.9 2016/11/17 17:34:55 eric Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.10 2016/11/20 08:43:36 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -54,11 +54,12 @@ struct io {
 void io_set_nonblocking(int);
 void io_set_nolinger(int);
 
-void io_init(struct io*, int, void*, void(*)(struct io*, int, void *),
-    struct iobuf*);
+void io_init(struct io*, struct iobuf*);
 void io_clear(struct io*);
 void io_set_read(struct io *);
 void io_set_write(struct io *);
+void io_set_fd(struct io *, int);
+void io_set_callback(struct io *io, void(*)(struct io *, int, void *), void *);
 void io_set_timeout(struct io *, int);
 void io_set_lowat(struct io *, size_t);
 void io_pause(struct io *, int);

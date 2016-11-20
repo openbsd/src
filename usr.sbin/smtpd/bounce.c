@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.73 2016/11/16 21:30:37 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.74 2016/11/20 08:43:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -230,7 +230,9 @@ bounce_fd(int fd)
 	s->smtpname = xstrdup(msg->smtpname, "bounce_fd");
 	s->state = BOUNCE_EHLO;
 	iobuf_xinit(&s->iobuf, 0, 0, "bounce_run");
-	io_init(&s->io, fd, s, bounce_io, &s->iobuf);
+	io_init(&s->io, &s->iobuf);
+	io_set_callback(&s->io, bounce_io, s);
+	io_set_fd(&s->io, fd);
 	io_set_timeout(&s->io, 30000);
 	io_set_read(&s->io);
 	s->boundary = generate_uid();
