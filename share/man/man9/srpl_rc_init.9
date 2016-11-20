@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.11 2016/11/20 11:40:58 mpi Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.12 2016/11/20 12:05:25 mpi Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -27,14 +27,6 @@
 .Nm SRPL_FOLLOW ,
 .Nm SRPL_FOREACH ,
 .Nm SRPL_LEAVE ,
-.Nm SRPL_EMPTY_LOCKED ,
-.Nm SRPL_FIRST_LOCKED ,
-.Nm SRPL_NEXT_LOCKED ,
-.Nm SRPL_FOREACH_LOCKED ,
-.Nm SRPL_FOREACH_SAFE_LOCKED ,
-.Nm SRPL_INSERT_HEAD_LOCKED ,
-.Nm SRPL_INSERT_AFTER_LOCKED ,
-.Nm SRPL_REMOVE_LOCKED ,
 .Nm SRPL_RC_INITIALIZER
 .Nd singly-linked shared reference pointer list
 .Sh SYNOPSIS
@@ -62,41 +54,13 @@
 .Fa "SRPL_HEAD *sl"
 .Fa "FIELDNAME"
 .Fc
-.Fn "SRPL_LEAVE" "struct srp_ref *sr"
-.Fn "SRPL_EMPTY_LOCKED" "SRPL_HEAD *sl"
-.Ft void *
-.Fn "SRPL_FIRST_LOCKED" "SRPL_HEAD *sl"
-.Ft void *
-.Fn "SRPL_NEXT_LOCKED" "struct TYPE *listelm" "FIELDNAME"
-.Fn "SRPL_FOREACH_LOCKED" "VARNAME" "SRPL_HEAD *sl" "FIELDNAME"
-.Fn "SRPL_FOREACH_SAFE_LOCKED" "VARNAME" "SRPL_HEAD *sl" "FIELDNAME" "TEMP_VARNAME"
-.Fo "SRPL_INSERT_HEAD_LOCKED"
-.Fa "struct srpl_rc *rc"
-.Fa "SRPL_HEAD *sl"
-.Fa "struct TYPE *elm"
-.Fa "FIELDNAME"
-.Fc
-.Fo "SRPL_INSERT_AFTER_LOCKED"
-.Fa "struct srpl_rc *rc"
-.Fa "struct TYPE *listelm"
-.Fa "struct TYPE *elm"
-.Fa "FIELDNAME"
-.Fc
-.Fo "SRPL_REMOVE_LOCKED"
-.Fa "struct srpl_rc *rc"
-.Fa "SRPL_HEAD *sl"
-.Fa "struct TYPE *listelm"
-.Fa "TYPE"
-.Fa "FIELDNAME"
-.Fc
 .Fo "SRPL_RC_INITIALIZER"
 .Fa "void (*ref)(void *, void *)"
 .Fa "void (*unref)(void *, void *)"
 .Fa "void *ctx"
 .Fc
 .Sh DESCRIPTION
-The
-srpl
+The SRPL list
 macros build a linked list on top of shared reference pointers.
 This allows concurrent traversal of a linked list and access to the
 items on the list.
@@ -174,71 +138,17 @@ to release references to the list and its elements.
 .Fn SRPL_LEAVE
 releases references to the list and its elements held by previous
 calls to
-.Fn SRPL_FIRST,
+.Fn SRPL_FIRST ,
 .Fn SRPL_NEXT ,
 .Fn SRPL_FOLLOW ,
 or
 .Fn SRPL_FOREACH .
-.Pp
-.Fn SRPL_EMPTY_LOCKED
-tests whether the SRP list
-.Fa sl
-is empty.
-.Pp
-.Fn SRPL_FIRST_LOCKED
-accesses the first element in the SRP list
-.Fa sl .
-.Pp
-.Fn SRPL_NEXT_LOCKED
-accesses the next element in the SRP list after
-.Fa listelm .
-.Pp
-.Fn SRPL_FOREACH_LOCKED
-creates a loop for traversing the elements in the SRP list
-.Fa sl .
-.Pp
-.Fn SRPL_FOREACH_SAFE_LOCKED
-creates a loop for traversing the elements in the SRP list
-.Fa sl ,
-permitting it to remove
-.Fa VARNAME
-as well as freeing it from within the loop safely without interfering with the
-traversal.
-.Pp
-.Fn SRPL_INSERT_HEAD_LOCKED
-inserts
-.Fa elm
-into the SRP list
-.Fa sl .
-Reference counts are adjusted on the list items using the functions
-specified by
-.Fa rc .
-.Pp
-.Fn SRPL_INSERT_AFTER_LOCKED
-inserts
-.Fa elm
-into an SRP list after the element
-.Fa listelm .
-Reference counts are adjusted on the list items using the functions
-specified by
-.Fa rc .
-.Pp
-.Fn SRPL_REMOVE_LOCKED
-iterates over the SRP list
-.Fa sl
-until it finds
-.Fa listelm
-and then removes it.
-Reference counts are adjusted on the list items using the functions
-specified by
-.Fa rc .
-.Pp
 An srpl_rc declaration can be initialised with the
 .Fn SRPL_RC_INITIALIZER
 macro.
 .Sh CONTEXT
 .Fn SRPL_INIT ,
-.Fn SRPL_FIRST,
+.Fn SRPL_FIRST ,
 .Fn SRPL_NEXT ,
 .Fn SRPL_FOLLOW ,
 .Fn SRPL_FOREACH ,
@@ -248,30 +158,15 @@ may be called during autoconf, from process context, or from interrupt
 context.
 .Pp
 .Fn srpl_rc_init ,
-.Fn SRPL_EMPTY_LOCKED ,
-.Fn SRPL_FIRST_LOCKED ,
-.Fn SRPL_NEXT_LOCKED ,
-.Fn SRPL_FOREACH_LOCKED ,
-.Fn SRPL_INSERT_HEAD_LOCKED ,
-.Fn SRPL_INSERT_AFTER_LOCKED ,
-and
-.Fn SRPL_REMOVE_LOCKED
 may be called during autoconf or from process context.
-An appropriate lock must be held that prevents concurrent modifications
-to the list.
 .Sh RETURN VALUES
 .Fn SRPL_FIRST ,
 .Fn SRPL_NEXT ,
-.Fn SRPL_FOLLOW ,
-.Fn SRPL_FIRST_LOCKED ,
 and
-.Fn SRPL_NEXT_LOCKED
+.Fn SRPL_FOLLOW
 return a pointer to elements in the SRP list, or
 .Dv NULL
 if there are no more elements.
-.Pp
-.Fn SRPL_EMPTY_LOCKED
-returns non-zero when the list is empty, otherwise 0.
 .Sh HISTORY
 The srp API was originally written by
 .An Jonathan Matthew Aq Mt jmatthew@openbsd.org
