@@ -1,4 +1,4 @@
-.\"	$OpenBSD: htb.4,v 1.1 2016/11/17 15:06:16 visa Exp $
+.\"	$OpenBSD: htb.4,v 1.2 2016/11/20 06:25:21 visa Exp $
 .\"
 .\" Copyright (c) 2016 Visa Hankala
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2016 $
+.Dd $Mdocdate: November 20 2016 $
 .Dt HTB 4 loongson
 .Os
 .Sh NAME
@@ -37,3 +37,6 @@ The
 .Nm
 driver first appeared in
 .Ox 6.1 .
+.Sh BUGS
+Add-on cards with a PCI bridge might not be fully functional because
+the system firmware does not provide complete interrupt routing information.
