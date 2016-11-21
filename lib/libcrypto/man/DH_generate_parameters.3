@@ -1,4 +1,52 @@
-.\"	$OpenBSD: DH_generate_parameters.3,v 1.4 2016/11/21 09:56:35 schwarze Exp $
+.\"	$OpenBSD: DH_generate_parameters.3,v 1.5 2016/11/21 11:43:37 schwarze Exp $
+.\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
+.\"
+.\" This file was written by Ulf Moeller <ulf@openssl.org>.
+.\" Copyright (c) 2000, 2016 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: November 21 2016 $
 .Dt DH_GENERATE_PARAMETERS 3
@@ -62,19 +110,28 @@ is called; see
 .Pp
 .Fn DH_check
 validates Diffie-Hellman parameters.
-It checks that
+If no problems are found,
+.Pf * Ar codes
+is set to zero.
+Otherwise, one or more of the following bits are set:
+.Bl -tag -width Ds
+.It Dv DH_CHECK_P_NOT_PRIME
+The parameter
 .Fa dh->p
-is a safe prime, and that
+is not prime.
+.It Dv DH_CHECK_P_NOT_SAFE_PRIME
+The parameter
+.Fa dh->p
+is not a safe prime.
+.It Dv DH_UNABLE_TO_CHECK_GENERATOR
+The generator
 .Fa dh->g
-is a suitable generator.
-In the case of an error, the bit flags
-.Dv DH_CHECK_P_NOT_SAFE_PRIME
-or
-.Dv DH_NOT_SUITABLE_GENERATOR
-are set in
-.Pf * Fa codes .
-.Dv DH_UNABLE_TO_CHECK_GENERATOR
-is set if the generator cannot be checked, i.e. if it does not equal 2 or 5.
+cannot be checked for suitability: it is neither 2 nor 5.
+.It Dv DH_NOT_SUITABLE_GENERATOR
+The generator
+.Fa dh->g
+is not suitable.
+.El
 .Sh RETURN VALUES
 .Fn DH_generate_parameters_ex
 and
@@ -92,7 +149,7 @@ The error codes can be obtained by
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr dh 3 ,
-.Xr DH_free 3 ,
+.Xr DH_new 3 ,
 .Xr ERR_get_error 3 ,
 .Xr RAND_bytes 3
 .Sh HISTORY
