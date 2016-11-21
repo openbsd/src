@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.34 2016/11/20 12:45:26 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.35 2016/11/21 08:28:19 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4589,10 +4589,9 @@ swofp_send_error(struct switch_softc *sc, struct mbuf *m,
 	/* Reuse mbuf from request message */
 	oe = mtod(m, struct ofp_error *);
 
-	len = min((ntohs(oe->err_oh.oh_length) - sizeof(struct ofp_header)),
-	    OFP_ERRDATA_MAX);
-
-	m_copydata(m, sizeof(struct ofp_header), len, data);
+	/* Save data for the response and copy back later. */
+	len = min(ntohs(oe->err_oh.oh_length), OFP_ERRDATA_MAX);
+	m_copydata(m, 0, len, data);
 
 	oe->err_oh.oh_version = OFP_V_1_3;
 	oe->err_oh.oh_type = OFP_T_ERROR;
