@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2016/11/09 12:43:36 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/11/21 22:56:35 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -105,8 +105,9 @@ check-setup-local:
 	ping -n -c 1 ${REMOTE_ADDR}  # REMOTE_ADDR
 	route -n get -inet ${REMOTE_ADDR} | fgrep -q 'interface: ${LOCAL_IF}'  # REMOTE_ADDR LOCAL_IF
 	! ping -n -c 1 -w 1 ${FAKE_NET_ADDR}  # FAKE_NET_ADDR
-	route -n get -inet ${FAKE_NET_ADDR} | grep -q 'flags: .*BLACKHOLE'  # FAKE_NET_ADDR
-	route -n get -inet -net ${FAKE_NET} | grep -q 'flags: .*BLACKHOLE'  # FAKE_NET
+.for ip in FAKE_NET FAKE_NET_ADDR
+	route -n get -inet ${${ip}} | grep -q 'flags: .*BLACKHOLE'  # ${ip}
+.endfor
 
 check-setup-remote:
 	@echo '\n======== $@ ========'
