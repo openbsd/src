@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.6 2016/11/14 12:55:56 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.7 2016/11/21 08:19:36 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -170,6 +170,8 @@ int		 umb_setpin(struct umb_softc *, int, int, void *, int, void *,
 		    int);
 void		 umb_setdataclass(struct umb_softc *);
 void		 umb_radio(struct umb_softc *, int);
+void		 umb_allocate_cid(struct umb_softc *);
+void		 umb_send_fcc_auth(struct umb_softc *);
 void		 umb_packet_service(struct umb_softc *, int);
 void		 umb_connect(struct umb_softc *);
 void		 umb_disconnect(struct umb_softc *);
@@ -177,8 +179,10 @@ void		 umb_send_connect(struct umb_softc *, int);
 
 void		 umb_qry_ipconfig(struct umb_softc *);
 void		 umb_cmd(struct umb_softc *, int, int, void *, int);
+void		 umb_cmd1(struct umb_softc *, int, int, void *, int, uint8_t *);
 void		 umb_command_done(struct umb_softc *, void *, int);
 void		 umb_decode_cid(struct umb_softc *, uint32_t, void *, int);
+void		 umb_decode_qmi(struct umb_softc *, uint8_t *, int);
 
 void		 umb_intr(struct usbd_xfer *, void *, usbd_status);
 
@@ -188,6 +192,7 @@ int		 umb_xfer_tout = USBD_DEFAULT_TIMEOUT;
 
 uint8_t		 umb_uuid_basic_connect[] = MBIM_UUID_BASIC_CONNECT;
 uint8_t		 umb_uuid_context_internet[] = MBIM_UUID_CONTEXT_INTERNET;
+uint8_t		 umb_uuid_qmi_mbim[] = MBIM_UUID_QMI_MBIM;
 uint32_t	 umb_session_id = 0;
 
 struct cfdriver umb_cd = {
@@ -203,6 +208,39 @@ const struct cfattach umb_ca = {
 };
 
 int umb_delay = 4000;
+
+/*
+ * These devices require an "FCC Authentication" command.
+ */
+const struct usb_devno umb_fccauth_devs[] = {
+	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_EM7455 },
+};
+
+uint8_t umb_qmi_alloc_cid[] = {
+	0x01,
+	0x0f, 0x00,		/* len */
+	0x00,			/* QMUX flags */
+	0x00,			/* service "ctl" */
+	0x00,			/* CID */
+	0x00,			/* QMI flags */
+	0x01,			/* transaction */
+	0x22, 0x00,		/* msg "Allocate CID" */
+	0x04, 0x00,		/* TLV len */
+	0x01, 0x01, 0x00, 0x02	/* TLV */
+};
+
+uint8_t umb_qmi_fcc_auth[] = {
+	0x01,
+	0x0c, 0x00,		/* len */
+	0x00,			/* QMUX flags */
+	0x02,			/* service "dms" */
+#define UMB_QMI_CID_OFFS	5
+	0x00,			/* CID (filled in later) */
+	0x00,			/* QMI flags */
+	0x01, 0x00,		/* transaction */
+	0x5f, 0x55,		/* msg "Send FCC Authentication" */
+	0x00, 0x00		/* TLV len */
+};
 
 int
 umb_match(struct device *parent, void *match, void *aux)
@@ -327,6 +365,10 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ver_maj < 0) {
 		printf("%s: missing MBIM descriptor\n", DEVNAM(sc));
 		goto fail;
+	}
+	if (usb_lookup(umb_fccauth_devs, uaa->vendor, uaa->product)) {
+		sc->sc_flags |= UMBFLG_FCC_AUTH_REQUIRED;
+		sc->sc_cid = -1;
 	}
 
 	for (i = 0; i < uaa->nifaces; i++) {
@@ -783,7 +825,14 @@ umb_statechg_timeout(void *arg)
 {
 	struct umb_softc *sc = arg;
 
-	printf("%s: state change timeout\n",DEVNAM(sc));
+	if (sc->sc_info.regstate == MBIM_REGSTATE_ROAMING && !sc->sc_roaming) {
+		/*
+		 * Query the registration state until we're with the home
+		 * network again.
+		 */
+		umb_cmd(sc, MBIM_CID_REGISTER_STATE, MBIM_CMDOP_QRY, NULL, 0);
+	} else
+		printf("%s: state change timeout\n",DEVNAM(sc));
 	usb_add_task(sc->sc_udev, &sc->sc_umb_task);
 }
 
@@ -863,8 +912,23 @@ umb_up(struct umb_softc *sc)
 		umb_open(sc);
 		break;
 	case UMB_S_OPEN:
-		DPRINTF("%s: init: turning radio on ...\n", DEVNAM(sc));
-		umb_radio(sc, 1);
+		if (sc->sc_flags & UMBFLG_FCC_AUTH_REQUIRED) {
+			if (sc->sc_cid == -1) {
+				DPRINTF("%s: init: allocating CID ...\n",
+				    DEVNAM(sc));
+				umb_allocate_cid(sc);
+				break;
+			} else
+				umb_newstate(sc, UMB_S_CID, UMB_NS_DONT_DROP);
+		} else {
+			DPRINTF("%s: init: turning radio on ...\n", DEVNAM(sc));
+			umb_radio(sc, 1);
+			break;
+		}
+		/*FALLTHROUGH*/
+	case UMB_S_CID:
+		DPRINTF("%s: init: sending FCC auth ...\n", DEVNAM(sc));
+		umb_send_fcc_auth(sc);
 		break;
 	case UMB_S_RADIO:
 		DPRINTF("%s: init: checking SIM state ...\n", DEVNAM(sc));
@@ -936,6 +1000,7 @@ umb_down(struct umb_softc *sc, int force)
 		if (!force)
 			break;
 		/*FALLTHROUGH*/
+	case UMB_S_CID:
 	case UMB_S_OPEN:
 	case UMB_S_DOWN:
 		/* Do not close the device */
@@ -1202,7 +1267,7 @@ umb_decode_register_state(struct umb_softc *sc, void *data, int len)
 			log(LOG_INFO,
 			    "%s: disconnecting from roaming network\n",
 			    DEVNAM(sc));
-		umb_newstate(sc, UMB_S_ATTACHED, UMB_NS_DONT_RAISE);
+		umb_disconnect(sc);
 	}
 	return 1;
 }
@@ -2040,6 +2105,29 @@ umb_radio(struct umb_softc *sc, int on)
 }
 
 void
+umb_allocate_cid(struct umb_softc *sc)
+{
+	umb_cmd1(sc, MBIM_CID_DEVICE_CAPS, MBIM_CMDOP_SET,
+	    umb_qmi_alloc_cid, sizeof (umb_qmi_alloc_cid), umb_uuid_qmi_mbim);
+}
+
+void
+umb_send_fcc_auth(struct umb_softc *sc)
+{
+	uint8_t	 fccauth[sizeof (umb_qmi_fcc_auth)];
+
+	if (sc->sc_cid == -1) {
+		DPRINTF("%s: missing CID, cannot send FCC auth\n", DEVNAM(sc));
+		umb_allocate_cid(sc);
+		return;
+	}
+	memcpy(fccauth, umb_qmi_fcc_auth, sizeof (fccauth));
+	fccauth[UMB_QMI_CID_OFFS] = sc->sc_cid;
+	umb_cmd1(sc, MBIM_CID_DEVICE_CAPS, MBIM_CMDOP_SET,
+	    fccauth, sizeof (fccauth), umb_uuid_qmi_mbim);
+}
+
+void
 umb_packet_service(struct umb_softc *sc, int attach)
 {
 	struct mbim_cid_packet_service	s;
@@ -2120,6 +2208,13 @@ umb_qry_ipconfig(struct umb_softc *sc)
 void
 umb_cmd(struct umb_softc *sc, int cid, int op, void *data, int len)
 {
+	umb_cmd1(sc, cid, op, data, len, umb_uuid_basic_connect);
+}
+
+void
+umb_cmd1(struct umb_softc *sc, int cid, int op, void *data, int len,
+    uint8_t *uuid)
+{
 	struct mbim_h2f_cmd *cmd;
 	int	totlen;
 
@@ -2132,7 +2227,7 @@ umb_cmd(struct umb_softc *sc, int cid, int op, void *data, int len)
 	cmd = sc->sc_ctrl_msg;
 	memset(cmd, 0, sizeof (*cmd));
 	cmd->frag.nfrag = htole32(1);
-	memcpy(cmd->devid, umb_uuid_basic_connect, sizeof (cmd->devid));
+	memcpy(cmd->devid, uuid, sizeof (cmd->devid));
 	cmd->cid = htole32(cid);
 	cmd->op = htole32(op);
 	cmd->infolen = htole32(len);
@@ -2152,6 +2247,7 @@ umb_command_done(struct umb_softc *sc, void *data, int len)
 	uint32_t status;
 	uint32_t cid;
 	uint32_t infolen;
+	int	 qmimsg = 0;
 
 	if (len < sizeof (*cmd)) {
 		DPRINTF("%s: discard short %s messsage\n", DEVNAM(sc),
@@ -2160,10 +2256,14 @@ umb_command_done(struct umb_softc *sc, void *data, int len)
 	}
 	cid = letoh32(cmd->cid);
 	if (memcmp(cmd->devid, umb_uuid_basic_connect, sizeof (cmd->devid))) {
-		DPRINTF("%s: discard %s messsage for other UUID '%s'\n",
-		    DEVNAM(sc), umb_request2str(letoh32(cmd->hdr.type)),
-		    umb_uuid2str(cmd->devid));
-		return;
+		if (memcmp(cmd->devid, umb_uuid_qmi_mbim,
+		    sizeof (cmd->devid))) {
+			DPRINTF("%s: discard %s messsage for other UUID '%s'\n",
+			    DEVNAM(sc), umb_request2str(letoh32(cmd->hdr.type)),
+			    umb_uuid2str(cmd->devid));
+			return;
+		} else
+			qmimsg = 1;
 	}
 
 	status = letoh32(cmd->status);
@@ -2192,8 +2292,14 @@ umb_command_done(struct umb_softc *sc, void *data, int len)
 		    (int)sizeof (*cmd) + infolen, len);
 		return;
 	}
-	DPRINTFN(2, "%s: set/qry %s done\n", DEVNAM(sc), umb_cid2str(cid));
-	umb_decode_cid(sc, cid, cmd->info, infolen);
+	if (qmimsg) {
+		if (sc->sc_flags & UMBFLG_FCC_AUTH_REQUIRED)
+			umb_decode_qmi(sc, cmd->info, infolen);
+	} else {
+		DPRINTFN(2, "%s: set/qry %s done\n", DEVNAM(sc),
+		    umb_cid2str(cid));
+		umb_decode_cid(sc, cid, cmd->info, infolen);
+	}
 }
 
 void
@@ -2241,6 +2347,122 @@ umb_decode_cid(struct umb_softc *sc, uint32_t cid, void *data, int len)
 	if (!ok)
 		DPRINTF("%s: discard %s with bad info length %d\n",
 		    DEVNAM(sc), umb_cid2str(cid), len);
+	return;
+}
+
+void
+umb_decode_qmi(struct umb_softc *sc, uint8_t *data, int len)
+{
+	uint8_t	srv;
+	uint16_t msg, tlvlen;
+	uint32_t val;
+
+#define UMB_QMI_QMUXLEN		6
+	if (len < UMB_QMI_QMUXLEN)
+		goto tooshort;
+
+	srv = data[4];
+	data += UMB_QMI_QMUXLEN;
+	len -= UMB_QMI_QMUXLEN;
+
+#define UMB_GET16(p)	((uint16_t)*p | (uint16_t)*(p + 1) << 8)
+#define UMB_GET32(p)	((uint32_t)*p | (uint32_t)*(p + 1) << 8 | \
+			    (uint32_t)*(p + 2) << 16 |(uint32_t)*(p + 3) << 24)
+	switch (srv) {
+	case 0:	/* ctl */
+#define UMB_QMI_CTLLEN		6
+		if (len < UMB_QMI_CTLLEN)
+			goto tooshort;
+		msg = UMB_GET16(&data[2]);
+		tlvlen = UMB_GET16(&data[4]);
+		data += UMB_QMI_CTLLEN;
+		len -= UMB_QMI_CTLLEN;
+		break;
+	case 2:	/* dms  */
+#define UMB_QMI_DMSLEN		7
+		if (len < UMB_QMI_DMSLEN)
+			goto tooshort;
+		msg = UMB_GET16(&data[3]);
+		tlvlen = UMB_GET16(&data[5]);
+		data += UMB_QMI_DMSLEN;
+		len -= UMB_QMI_DMSLEN;
+		break;
+	default:
+		DPRINTF("%s: discard QMI message for unknown service type %d\n",
+		    DEVNAM(sc), srv);
+		return;
+	}
+
+	if (len < tlvlen)
+		goto tooshort;
+
+#define UMB_QMI_TLVLEN		3
+	while (len > 0) {
+		if (len < UMB_QMI_TLVLEN)
+			goto tooshort;
+		tlvlen = UMB_GET16(&data[1]);
+		if (len < UMB_QMI_TLVLEN + tlvlen)
+			goto tooshort;
+		switch (data[0]) {
+		case 1:	/* allocation info */
+			if (msg == 0x0022) {	/* Allocate CID */
+				if (tlvlen != 2 || data[3] != 2) /* dms */
+					break;
+				sc->sc_cid = data[4];
+				DPRINTF("%s: QMI CID %d allocated\n",
+				    DEVNAM(sc), sc->sc_cid);
+				umb_newstate(sc, UMB_S_CID, UMB_NS_DONT_DROP);
+			}
+			break;
+		case 2:	/* response */
+			if (tlvlen != sizeof (val))
+				break;
+			val = UMB_GET32(&data[3]);
+			switch (msg) {
+			case 0x0022:	/* Allocate CID */
+				if (val != 0) {
+					log(LOG_ERR, "%s: allocation of QMI CID"
+					    " failed, error 0x%x\n", DEVNAM(sc),
+					    val);
+					/* XXX how to proceed? */
+					return;
+				}
+				break;
+			case 0x555f:	/* Send FCC Authentication */
+				if (val == 0)
+					log(LOG_INFO, "%s: send FCC "
+					    "Authentication succeeded\n",
+					    DEVNAM(sc));
+				else if (val == 0x001a0001)
+					log(LOG_INFO, "%s: FCC Authentication "
+					    "not required\n", DEVNAM(sc));
+				else
+					log(LOG_INFO, "%s: send FCC "
+					    "Authentication failed, "
+					    "error 0x%x\n", DEVNAM(sc), val);
+
+				/* FCC Auth is needed only once after power-on*/
+				sc->sc_flags &= ~UMBFLG_FCC_AUTH_REQUIRED;
+
+				/* Try to proceed anyway */
+				DPRINTF("%s: init: turning radio on ...\n",
+				    DEVNAM(sc));
+				umb_radio(sc, 1);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		data += UMB_QMI_TLVLEN + tlvlen;
+		len -= UMB_QMI_TLVLEN + tlvlen;
+	}
+	return;
+
+tooshort:
+	DPRINTF("%s: discard short QMI message\n", DEVNAM(sc));
 	return;
 }
 
