@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.57 2016/11/21 14:43:52 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.58 2016/11/21 16:27:36 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -105,7 +105,7 @@ create_rollback()
 {
 	local _file _patch=$1 _rbfiles
 	[[ -n ${_patch} ]]
-	local _rbpatch=rollback${_patch#syspatch}
+	local _rbpatch=${_patch#syspatch${_RELINT}-}.rollback.tgz
 	shift
 	local _files="${@}"
 	[[ -n ${_files} ]]
@@ -125,15 +125,14 @@ create_rollback()
 		# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
 		if ${_BSDMP} &&
 			tar -tzf ${_TMP}/${_patch}.tgz bsd >/dev/null 2>&1; then
-			tar -czf ${_PDIR}/${_REL}/${_rbpatch}.tgz \
+			tar -czf ${_PDIR}/${_REL}/${_rbpatch} \
 				-s '/^bsd.mp$//' -s '/^bsd$/bsd.mp/' \
 				-s '/^bsd.sp$/bsd/' bsd.sp ${_rbfiles}
 		else
-			tar -czf ${_PDIR}/${_REL}/${_rbpatch}.tgz \
-				${_rbfiles}
+			tar -czf ${_PDIR}/${_REL}/${_rbpatch} ${_rbfiles}
 		fi
 	); then
-		rm ${_PDIR}/${_REL}/${_rbpatch}.tgz
+		rm ${_PDIR}/${_REL}/${_rbpatch}
 		sp_err "Failed to create rollback for ${_patch}"
 	fi
 }
@@ -180,7 +179,7 @@ ls_installed()
 {
 	local _p
 	### XXX temporary quirks; remove before 6.1
-	local _r
+	local _r _s _t
 	if [[ ! -d ${_PDIR}/${_REL} ]]; then
 		[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
 		install -d -m 0755 ${_PDIR}/${_REL}
@@ -196,10 +195,19 @@ ls_installed()
 			mv ${_r} rollback${_RELINT}${_r#*-syspatch-${_RELINT}}
 		fi
 	done )
+	( cd ${_PDIR}/${_REL} && for _s in *; do
+		if [[ ${_s} == rollback${_RELINT}-*.tgz ]]; then
+			[[ $(id -u) -ne 0 ]] && \
+				sp_err "${0##*/}: need root privileges"
+			_t=${_s#rollback${_RELINT}-}
+			_t=${_t%.tgz}
+			mv ${_s} ${_t}.rollback.tgz
+		fi
+	done )
 	###
-	for _p in ${_PDIR}/${_REL}/rollback${_RELINT}-*.tgz; do
-		[[ -f ${_p} ]] && _p=${_p:##*/} && _p=${_p#rollback} &&
-			echo syspatch${_p%.tgz}
+	for _p in ${_PDIR}/${_REL}/*.rollback.tgz; do
+		[[ -f ${_p} ]] && _p=${_p##*/} &&
+			echo syspatch${_RELINT}-${_p%%.*}
 	done | sort -V
 }
 
@@ -228,14 +236,13 @@ rollback_patch()
 	_patch="$(ls_installed | sort -V | tail -1)"
 	[[ -n ${_patch} ]]
 
-	_rbpatch=rollback${_patch#syspatch}
+	_rbpatch=${_patch#syspatch${_RELINT}-}.rollback.tgz
 	_explodir=${_TMP}/${_rbpatch}
 
 	echo "Reverting ${_patch}"
 	mkdir -p ${_explodir}
 
-	_files="$(tar xvzphf ${_PDIR}/${_REL}/${_rbpatch}.tgz -C \
-		${_explodir})"
+	_files="$(tar xvzphf ${_PDIR}/${_REL}/${_rbpatch} -C ${_explodir})"
 	checkfs ${_files}
 
 	for _file in ${_files}; do
@@ -248,8 +255,7 @@ rollback_patch()
 		fi
 	done
 
-	rm ${_PDIR}/${_REL}/${_rbpatch}.tgz \
-		${_PDIR}/${_REL}/${_patch#syspatch${_RELINT}-}.patch.sig
+	rm ${_PDIR}/${_REL}/{${_rbpatch},${_rbpatch%rollback.tgz}patch.sig}
 
 	sp_cleanup
 }
