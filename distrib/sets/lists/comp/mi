@@ -2642,6 +2642,7 @@
 ./usr/share/man/man3/xdr.3
 ./usr/share/man/man3/ypclnt.3
 ./usr/share/man/man9/RBT_INIT.9
+./usr/share/man/man9/SRPL_EMPTY_LOCKED.9
 ./usr/share/man/man9/SipHash24.9
 ./usr/share/man/man9/VOP_LOOKUP.9
 ./usr/share/man/man9/aml_evalnode.9
