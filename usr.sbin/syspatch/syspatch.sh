@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.56 2016/11/17 15:15:49 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.57 2016/11/21 14:43:52 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -264,14 +264,14 @@ sp_cleanup()
 		[[ ${_d:##*/} == ${_REL} ]] || rm -r ${_d}
 	done
 
-	# remove non matching release rollback kernel
+	# remove non matching release backup kernel
 	for _k in /bsd.syspatch*; do
 		[[ -f ${_k} ]] || continue
 		[[ ${_k} == /bsd.syspatch${_RELINT} ]] || rm ${_k}
 	done
 
 	# remove rollback kernel if all kernel syspatches have been reverted
-	cmp -s /bsd /bsd.syspatch${_RELINT} && rm /bsd.syspatch${_RELINT}
+	! cmp -s /bsd /bsd.syspatch${_RELINT} || rm /bsd.syspatch${_RELINT}
 
 	# in case a patch added a new directory (install -D);
 	# non-fatal in case some mount point is read-only or remote
