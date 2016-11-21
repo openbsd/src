@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.25 2016/11/10 19:59:22 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.26 2016/11/21 20:22:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -325,6 +325,18 @@ struct sxiccmu_device sxiccmu_devices[] = {
 		.set_frequency = sxiccmu_mmc_set_frequency,
 		.enable = sxiccmu_mmc_enable
 	},
+	{
+		.compat = "allwinner,sun9i-a80-usb-mod-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable,
+		.reset = sxiccmu_reset
+	},
+	{
+		.compat = "allwinner,sun9i-a80-usb-phy-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable,
+		.reset = sxiccmu_reset
+	},
 };
 
 void
@@ -580,10 +592,13 @@ sxiccmu_gate_enable(void *cookie, uint32_t *cells, int on)
 	int reg = cells[0] / 32;
 	int bit = cells[0] % 32;
 
-	if (on)
+	if (on) {
+		clock_enable(sc->sc_node, NULL);
 		SXISET4(sc, reg * 4, (1U << bit));
-	else
+	} else {
 		SXICLR4(sc, reg * 4, (1U << bit));
+		clock_disable(sc->sc_node, NULL);
+	}
 }
 
 void
