@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.94 2016/10/19 08:28:20 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.95 2016/11/21 13:50:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -386,7 +386,7 @@ pmap_bootstrap(void)
 		pmap_asid_info[i].pma_asid = MIN_USER_ASID + 1;
 	}
 
-#ifdef CPU_MIPS64R2
+#if defined(CPU_MIPS64R2) && !defined(CPU_LOONGSON2)
 	if (cp0_get_pagegrain() & PGRAIN_XIE)
 		pg_xi = PG_XI;
 #endif
