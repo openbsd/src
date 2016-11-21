@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.13 2016/11/21 01:58:55 dlg Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.14 2016/11/21 07:11:13 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -41,6 +41,7 @@
 .Fc
 .Fn SRPL_HEAD "HEADNAME" "TYPE"
 .Fn SRPL_ENTRY "TYPE"
+.Ft void
 .Fn "SRPL_INIT" "SRPL_HEAD *sl"
 .Ft void *
 .Fn "SRPL_FIRST" "struct srp_ref *sr" "SRPL_HEAD *sl"
@@ -54,6 +55,8 @@
 .Fa "SRPL_HEAD *sl"
 .Fa "FIELDNAME"
 .Fc
+.Ft void
+.Fn "SRPL_LEAVE" "struct srp_ref *sr"
 .Fo "SRPL_RC_INITIALIZER"
 .Fa "void (*ref)(void *, void *)"
 .Fa "void (*unref)(void *, void *)"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SRPL_EMPTY_LOCKED.9,v 1.2 2016/11/21 01:58:55 dlg Exp $
+.\"	$OpenBSD: SRPL_EMPTY_LOCKED.9,v 1.3 2016/11/21 07:11:13 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -29,6 +29,7 @@
 .Nd serialised singly-linked shared reference pointer list operations
 .Sh SYNOPSIS
 .In sys/srp.h
+.Ft int
 .Fn "SRPL_EMPTY_LOCKED" "SRPL_HEAD *sl"
 .Ft void *
 .Fn "SRPL_FIRST_LOCKED" "SRPL_HEAD *sl"
@@ -41,18 +42,21 @@
 .Fa "FIELDNAME"
 .Fa "TEMP_VARNAME"
 .Fc
+.Ft void
 .Fo "SRPL_INSERT_HEAD_LOCKED"
 .Fa "struct srpl_rc *rc"
 .Fa "SRPL_HEAD *sl"
 .Fa "struct TYPE *elm"
 .Fa "FIELDNAME"
 .Fc
+.Ft void
 .Fo "SRPL_INSERT_AFTER_LOCKED"
 .Fa "struct srpl_rc *rc"
 .Fa "struct TYPE *listelm"
 .Fa "struct TYPE *elm"
 .Fa "FIELDNAME"
 .Fc
+.Ft void
 .Fo "SRPL_REMOVE_LOCKED"
 .Fa "struct srpl_rc *rc"
 .Fa "SRPL_HEAD *sl"
