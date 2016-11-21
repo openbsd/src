@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.38 2016/11/21 19:18:39 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.39 2016/11/21 19:33:12 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -184,6 +184,8 @@ ofp13_validate_oxm_basic(struct ibuf *ibuf, off_t off, int hasmask,
 	case OFP_XM_T_IN_PORT:
 	case OFP_XM_T_IN_PHY_PORT:
 	case OFP_XM_T_MPLS_LABEL:
+		if (hasmask)
+			return (-1);
 		if ((ui32 = ibuf_seek(ibuf, off, sizeof(*ui32))) == NULL)
 			return (-1);
 
@@ -206,12 +208,26 @@ ofp13_validate_oxm_basic(struct ibuf *ibuf, off_t off, int hasmask,
 			log_debug("\t\t%llu", be64toh(*ui64));
 		break;
 
-	case OFP_XM_T_ETH_DST:
-	case OFP_XM_T_ETH_SRC:
 	case OFP_XM_T_ARP_SHA:
 	case OFP_XM_T_ARP_THA:
 	case OFP_XM_T_IPV6_ND_SLL:
 	case OFP_XM_T_IPV6_ND_TLL:
+		if (hasmask)
+			return (-1);
+		if ((ui8 = ibuf_seek(ibuf, off, ETHER_ADDR_LEN)) == NULL)
+			return (-1);
+
+		buf[0] = 0;
+		for (i = 0; i < ETHER_ADDR_LEN; i++) {
+			snprintf(hex, sizeof(hex), "%02x", *(ui8 + i));
+			strlcat(buf, hex, sizeof(buf));
+		}
+
+		log_debug("\t\t%s", buf);
+		break;
+
+	case OFP_XM_T_ETH_DST:
+	case OFP_XM_T_ETH_SRC:
 		len = ETHER_ADDR_LEN;
 		if (hasmask)
 			len *= 2;
@@ -246,15 +262,22 @@ ofp13_validate_oxm_basic(struct ibuf *ibuf, off_t off, int hasmask,
 		log_debug("\t\t0x%04x", ntohs(*ui16));
 		break;
 
-	case OFP_XM_T_ARP_OP:
-	case OFP_XM_T_VLAN_VID:
-	case OFP_XM_T_IP_PROTO:
 	case OFP_XM_T_TCP_SRC:
 	case OFP_XM_T_TCP_DST:
 	case OFP_XM_T_UDP_SRC:
 	case OFP_XM_T_UDP_DST:
 	case OFP_XM_T_SCTP_SRC:
 	case OFP_XM_T_SCTP_DST:
+	case OFP_XM_T_ARP_OP:
+		if (hasmask)
+			return (-1);
+		if ((ui16 = ibuf_seek(ibuf, off, sizeof(*ui16))) == NULL)
+			return (-1);
+
+		log_debug("\t\t%d", ntohs(*ui16));
+		break;
+
+	case OFP_XM_T_VLAN_VID:
 	case OFP_XM_T_IPV6_EXTHDR:
 		len = sizeof(*ui16);
 		if (hasmask)
@@ -284,12 +307,15 @@ ofp13_validate_oxm_basic(struct ibuf *ibuf, off_t off, int hasmask,
 
 	case OFP_XM_T_IP_DSCP:
 	case OFP_XM_T_IP_ECN:
+	case OFP_XM_T_IP_PROTO:
 	case OFP_XM_T_ICMPV4_TYPE:
 	case OFP_XM_T_ICMPV4_CODE:
 	case OFP_XM_T_ICMPV6_TYPE:
 	case OFP_XM_T_ICMPV6_CODE:
 	case OFP_XM_T_MPLS_TC:
 	case OFP_XM_T_MPLS_BOS:
+		if (hasmask)
+			return (-1);
 		if ((ui8 = ibuf_seek(ibuf, off, sizeof(*ui8))) == NULL)
 			return (-1);
 
@@ -315,9 +341,24 @@ ofp13_validate_oxm_basic(struct ibuf *ibuf, off_t off, int hasmask,
 			log_debug("\t\t%#08x", ntohl(*ui32));
 		break;
 
+	case OFP_XM_T_IPV6_ND_TARGET:
+		if (hasmask)
+			return (-1);
+		if ((ui8 = ibuf_seek(ibuf, off,
+		    sizeof(struct in6_addr))) == NULL)
+			return (-1);
+
+		buf[0] = 0;
+		for (i = 0; i < (int)sizeof(struct in6_addr); i++) {
+			snprintf(hex, sizeof(hex), "%02x", *(ui8 + i));
+			strlcat(buf, hex, sizeof(buf));
+		}
+
+		log_debug("\t\t%s", buf);
+		break;
+
 	case OFP_XM_T_IPV6_SRC:
 	case OFP_XM_T_IPV6_DST:
-	case OFP_XM_T_IPV6_ND_TARGET:
 		len = sizeof(struct in6_addr);
 		if (hasmask)
 			len *= 2;
