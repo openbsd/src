@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.19 2016/11/17 21:08:27 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.20 2016/11/21 12:37:35 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2287,10 +2287,11 @@ int32_t ixgbe_fc_enable_generic(struct ixgbe_hw *hw)
 			/*
 			 * In order to prevent Tx hangs when the internal Tx
 			 * switch is enabled we must set the high water mark
-			 * to the maximum FCRTH value.  This allows the Tx
-			 * switch to function even under heavy Rx workloads.
+			 * to the Rx packet buffer size - 24KB.  This allows
+			 * the Tx switch to function even under heavy Rx
+			 * workloads.
 			 */
-			fcrth = IXGBE_READ_REG(hw, IXGBE_RXPBSIZE(i)) - 32;
+			fcrth = IXGBE_READ_REG(hw, IXGBE_RXPBSIZE(i)) - 0x6000;
 		}
 
 		IXGBE_WRITE_REG(hw, IXGBE_FCRTH_82599(i), fcrth);
