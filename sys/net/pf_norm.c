@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.195 2016/10/26 21:07:22 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.196 2016/11/21 17:52:20 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -331,16 +331,16 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 
 	/* Non terminal fragments must have more fragments flag */
 	if (frent->fe_off + frent->fe_len < total && !frent->fe_mff)
-		goto bad_fragment;
+		goto free_ipv6_fragment;
 
 	/* Check if we saw the last fragment already */
 	if (!TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_mff) {
 		if (frent->fe_off + frent->fe_len > total ||
 		    (frent->fe_off + frent->fe_len == total && frent->fe_mff))
-			goto bad_fragment;
+			goto free_ipv6_fragment;
 	} else {
 		if (frent->fe_off + frent->fe_len == total && !frent->fe_mff)
-			goto bad_fragment;
+			goto free_ipv6_fragment;
 	}
 
 	/* Find a fragment after the current one */
@@ -406,7 +406,10 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 
 	return (frag);
 
+free_ipv6_fragment:
 #ifdef INET6
+	if (frag->fr_af == AF_INET)
+		goto bad_fragment;
 free_fragment:
 	/*
 	 * RFC 5722, Errata 3089:  When reassembling an IPv6 datagram, if one
