@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.35 2016/11/21 08:28:19 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.36 2016/11/21 19:29:28 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -5647,6 +5647,7 @@ swofp_put_flow(struct mbuf *m, struct swofp_flow_table *swft,
 	const uint8_t		 pad_data[OFP_ALIGNMENT] = {};
 	struct mbuf		*n;
 	int			 start, off, error, offp, pad = 0;
+	int			 omlen;
 
 	memset(&ofs, 0, sizeof(ofs));
 
@@ -5679,13 +5680,11 @@ swofp_put_flow(struct mbuf *m, struct swofp_flow_table *swft,
 	/*
 	 * Put ofp_match include ofp_ox_matches and pad
 	 */
-	if ((ntohs(swfe->swfe_match->om_length) % OFP_ALIGNMENT))
-		pad = (OFP_ALIGNMENT -
-		    (ntohs(swfe->swfe_match->om_length) % OFP_ALIGNMENT));
-	if ((error = m_copyback(m, off, ntohs(swfe->swfe_match->om_length),
-	    swfe->swfe_match, M_NOWAIT)))
+	omlen = ntohs(swfe->swfe_match->om_length);
+	pad = OFP_ALIGN(omlen) - omlen;
+	if ((error = m_copyback(m, off, omlen, swfe->swfe_match, M_NOWAIT)))
 		goto failed;
-	off += ntohs(swfe->swfe_match->om_length);
+	off += omlen;
 	if ((error = m_copyback(m, off, pad, pad_data, M_NOWAIT)))
 		goto failed;
 	off += pad;
