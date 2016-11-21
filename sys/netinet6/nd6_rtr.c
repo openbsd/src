@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.150 2016/11/21 10:52:08 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.151 2016/11/21 10:56:26 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -871,7 +871,8 @@ defrtrlist_update(struct nd_defrouter *new)
 {
 	struct nd_defrouter *dr, *n;
 	struct in6_ifextra *ext = new->ifp->if_afdata[AF_INET6];
-	int s = splsoftnet();
+
+	splsoftassert(IPL_SOFTNET);
 
 	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp->if_index)) != NULL) {
 		/* entry exists */
@@ -894,7 +895,6 @@ defrtrlist_update(struct nd_defrouter *new)
 			 * to sort the entries.
 			 */
 			if (rtpref(new) == oldpref) {
-				splx(s);
 				return (dr);
 			}
 
@@ -911,7 +911,6 @@ defrtrlist_update(struct nd_defrouter *new)
 			n = dr;
 			goto insert;
 		}
-		splx(s);
 		return (dr);
 	}
 
@@ -920,19 +919,16 @@ defrtrlist_update(struct nd_defrouter *new)
 		/* flush all possible redirects */
 		if (new->ifp->if_xflags & IFXF_AUTOCONF6)
 			rt6_flush(&new->rtaddr, new->ifp);
-		splx(s);
 		return (NULL);
 	}
 
 	if (ip6_maxifdefrouters >= 0 &&
 	    ext->ndefrouters >= ip6_maxifdefrouters) {
-		splx(s);
 		return (NULL);
 	}
 
 	n = malloc(sizeof(*n), M_IP6NDP, M_NOWAIT | M_ZERO);
 	if (n == NULL) {
-		splx(s);
 		return (NULL);
 	}
 	*n = *new;
@@ -957,8 +953,6 @@ insert:
 	defrouter_select();
 
 	ext->ndefrouters++;
-
-	splx(s);
 
 	return (n);
 }
