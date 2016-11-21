@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.148 2016/09/24 19:27:10 phessler Exp $	*/
+/*	$OpenBSD: route.h,v 1.149 2016/11/21 10:30:42 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -403,7 +403,6 @@ int	 rt_ifa_del(struct ifaddr *, int, struct sockaddr *);
 void	 rt_ifa_purge(struct ifaddr *);
 int	 rt_ifa_addlocal(struct ifaddr *);
 int	 rt_ifa_dellocal(struct ifaddr *);
-int	 rtioctl(u_long, caddr_t, struct proc *);
 void	 rtredirect(struct sockaddr *, struct sockaddr *, struct sockaddr *, struct rtentry **, unsigned int);
 int	 rtrequest(int, struct rt_addrinfo *, u_int8_t, struct rtentry **,
 	     u_int);

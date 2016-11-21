@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.338 2016/11/15 10:09:28 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.339 2016/11/21 10:30:42 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -726,12 +726,6 @@ rtflushclone(unsigned int rtableid, struct rtentry *parent)
 		panic("rtflushclone: called with a non-cloning route");
 #endif
 	rtable_walk(rtableid, rt_key(parent)->sa_family, rtflushclone1, parent);
-}
-
-int
-rtioctl(u_long req, caddr_t data, struct proc *p)
-{
-	return (EOPNOTSUPP);
 }
 
 struct ifaddr *
