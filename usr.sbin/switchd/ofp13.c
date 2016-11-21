@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.34 2016/11/18 20:20:19 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.35 2016/11/21 12:13:16 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1398,9 +1398,11 @@ ofp13_multipart_reply_validate(struct switchd *sc,
 	struct ofp_desc			*d;
 	struct ofp_match		*om;
 	struct ofp_ox_match		*oxm;
+	struct ofp_instruction		*oi;
 	int				 mptype, mpflags, hlen;
 	int				 remaining, matchlen, matchtype;
-	off_t				 off, moff;
+	int				 ilen, padsize;
+	off_t				 off, moff, offdiff;
 
 	remaining = ntohs(oh->oh_length);
 
@@ -1455,12 +1457,16 @@ ofp13_multipart_reply_validate(struct switchd *sc,
 
 		om = &fs->fs_match;
 		matchtype = ntohs(om->om_type);
-		matchlen = ntohs(om->om_length) - sizeof(*om);
+		matchlen = ntohs(om->om_length);
+		padsize = OFP_ALIGN(matchlen) - matchlen;
+		ilen = hlen -
+		    ((sizeof(*fs) - sizeof(*om)) + matchlen + padsize);
 
 		/* We don't know how to parse anything else yet. */
 		if (matchtype != OFP_MATCH_OXM)
 			break;
 
+		matchlen -= sizeof(*om);
 		while (matchlen) {
 			if ((oxm = ibuf_seek(ibuf, moff, sizeof(*oxm))) == NULL)
 				return (-1);
@@ -1469,6 +1475,22 @@ ofp13_multipart_reply_validate(struct switchd *sc,
 			moff += sizeof(*oxm) + oxm->oxm_length;
 			matchlen -= sizeof(*oxm) + oxm->oxm_length;
 		}
+
+		moff += padsize;
+
+		while (ilen) {
+			offdiff = moff;
+			if ((oi = ibuf_seek(ibuf, moff, sizeof(*oi))) == NULL ||
+			    ofp13_validate_instruction(sc, oh, ibuf,
+			    &moff, oi) == -1)
+				return (-1);
+			/* Avoid loops. */
+			if ((moff - offdiff) == 0)
+				return (-1);
+
+			ilen -= moff - offdiff;
+		}
+
 		if (remaining)
 			goto read_next_flow;
 		break;
