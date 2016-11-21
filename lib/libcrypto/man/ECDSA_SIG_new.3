@@ -1,6 +1,55 @@
-.\"	$OpenBSD: ECDSA_SIG_new.3,v 1.3 2016/11/14 18:23:30 jmc Exp $
+.\"	$OpenBSD: ECDSA_SIG_new.3,v 1.4 2016/11/21 14:27:38 schwarze Exp $
+.\"	OpenSSL e6390aca Jul 21 10:06:03 2015 -0400
 .\"
-.Dd $Mdocdate: November 14 2016 $
+.\" This file was written by Nils Larsch <nils@openssl.org>.
+.\" Copyright (c) 2004, 2005, 2012, 2013 The OpenSSL Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 21 2016 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -143,6 +192,13 @@
 .Fa "const ECDSA_METHOD *meth"
 .Fc
 .Sh DESCRIPTION
+These functions provide a low level interface to ECDSA.
+Most applications should use the higher level EVP interface such as
+.Xr EVP_DigestSignInit 3
+or
+.Xr EVP_DigestVerifyInit 3
+instead.
+.Pp
 The
 .Vt ECDSA_SIG
 structure consists of two
@@ -164,7 +220,7 @@ allocates a new
 .Vt ECDSA_SIG
 structure (note: this function also allocates the
 .Vt BIGNUM Ns s )
-and initialize it.
+and initializes it.
 .Pp
 .Fn ECDSA_SIG_free
 frees the
@@ -307,10 +363,20 @@ using the public key
 .Fn ECDSA_size
 returns the maximum length signature or 0 on error.
 .Pp
-.Fn ECDSA_sign_setup
+.Fn ECDSA_sign ,
+.Fn ECDSA_sign_ex ,
 and
-.Fn ECDSA_sign
+.Fn ECDSA_sign_setup
 return 1 if successful or 0 on error.
+.Pp
+.Fn ECDSA_do_sign
+and
+.Fn ECDSA_do_sign_ex
+return a pointer to an allocated
+.Vt ECDSA_SIG
+structure or
+.Dv NULL
+on error.
 .Pp
 .Fn ECDSA_verify
 and
@@ -389,6 +455,8 @@ if (ret == -1) {
 .Ed
 .Sh SEE ALSO
 .Xr dsa 3 ,
+.Xr EVP_DigestSignInit 3 ,
+.Xr EVP_DigestVerifyInit 3 ,
 .Xr rsa 3
 .Sh STANDARDS
 ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
