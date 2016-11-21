@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.203 2016/11/07 23:45:27 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.204 2016/11/21 01:44:06 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -170,7 +170,8 @@ void	pool_page_free(struct pool *, void *);
  */
 struct pool_allocator pool_allocator_single = {
 	pool_page_alloc,
-	pool_page_free
+	pool_page_free,
+	POOL_ALLOC_SIZE(PAGE_SIZE, POOL_ALLOC_ALIGNED)
 };
 
 void	*pool_multi_alloc(struct pool *, int, int *);
@@ -178,7 +179,8 @@ void	pool_multi_free(struct pool *, void *);
 
 struct pool_allocator pool_allocator_multi = {
 	pool_multi_alloc,
-	pool_multi_free
+	pool_multi_free,
+	POOL_ALLOC_SIZES(PAGE_SIZE, (1UL << 31), POOL_ALLOC_ALIGNED)
 };
 
 void	*pool_multi_alloc_ni(struct pool *, int, int *);
@@ -186,7 +188,8 @@ void	pool_multi_free_ni(struct pool *, void *);
 
 struct pool_allocator pool_allocator_multi_ni = {
 	pool_multi_alloc_ni,
-	pool_multi_free_ni
+	pool_multi_free_ni,
+	POOL_ALLOC_SIZES(PAGE_SIZE, (1UL << 31), POOL_ALLOC_ALIGNED)
 };
 
 #ifdef DDB
@@ -264,6 +267,7 @@ pool_init(struct pool *pp, size_t size, u_int align, int ipl, int flags,
 {
 	int off = 0, space;
 	unsigned int pgsize = PAGE_SIZE, items;
+	size_t pa_pagesz;
 #ifdef DIAGNOSTIC
 	struct pool *iter;
 #endif
@@ -276,17 +280,38 @@ pool_init(struct pool *pp, size_t size, u_int align, int ipl, int flags,
 
 	size = roundup(size, align);
 
-	if (palloc == NULL) {
-		while (size * 8 > pgsize)
-			pgsize <<= 1;
+	while (size * 8 > pgsize)
+		pgsize <<= 1;
 
+	if (palloc == NULL) {
 		if (pgsize > PAGE_SIZE) {
 			palloc = ISSET(flags, PR_WAITOK) ?
 			    &pool_allocator_multi_ni : &pool_allocator_multi;
 		} else
 			palloc = &pool_allocator_single;
-	} else
-		pgsize = palloc->pa_pagesz ? palloc->pa_pagesz : PAGE_SIZE;
+
+		pa_pagesz = palloc->pa_pagesz;
+	} else {
+		size_t pgsizes;
+
+		pa_pagesz = palloc->pa_pagesz;
+		if (pa_pagesz == 0)
+			pa_pagesz = POOL_ALLOC_DEFAULT;
+
+		pgsizes = pa_pagesz & ~POOL_ALLOC_ALIGNED;
+
+		/* make sure the allocator can fit at least one item */
+		if (size > pgsizes) {
+			panic("%s: pool %s item size 0x%zx > "
+			    "allocator %p sizes 0x%zx", __func__, wchan,
+			    size, palloc, pgsizes);
+		}
+
+		/* shrink pgsize until it fits into the range */
+		while (!ISSET(pgsizes, pgsize))
+			pgsize >>= 1;
+	}
+	KASSERT(ISSET(pa_pagesz, pgsize));
 
 	items = pgsize / size;
 
@@ -296,11 +321,14 @@ pool_init(struct pool *pp, size_t size, u_int align, int ipl, int flags,
 	 * go into an RB tree, so we can match a returned item with
 	 * its header based on the page address.
 	 */
-	if (pgsize - (size * items) > sizeof(struct pool_page_header)) {
-		off = pgsize - sizeof(struct pool_page_header);
-	} else if (sizeof(struct pool_page_header) * 2 >= size) {
-		off = pgsize - sizeof(struct pool_page_header);
-		items = off / size;
+	if (ISSET(pa_pagesz, POOL_ALLOC_ALIGNED)) {
+		if (pgsize - (size * items) >
+		    sizeof(struct pool_page_header)) {
+			off = pgsize - sizeof(struct pool_page_header);
+		} else if (sizeof(struct pool_page_header) * 2 >= size) {
+			off = pgsize - sizeof(struct pool_page_header);
+			items = off / size;
+		}
 	}
 
 	KASSERT(items > 0);

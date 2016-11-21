@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.67 2016/11/07 23:45:27 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.68 2016/11/21 01:44:06 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -77,10 +77,36 @@ struct pool_request;
 TAILQ_HEAD(pool_requests, pool_request);
 
 struct pool_allocator {
-	void *(*pa_alloc)(struct pool *, int, int *);
-	void (*pa_free)(struct pool *, void *);
-	int pa_pagesz;
+	void		*(*pa_alloc)(struct pool *, int, int *);
+	void		 (*pa_free)(struct pool *, void *);
+	size_t		   pa_pagesz;
 };
+
+/*
+ * The pa_pagesz member encodes the sizes of pages that can be
+ * provided by the allocator, and whether the allocations can be
+ * aligned to their size.
+ *
+ * Page sizes can only be powers of two. Each available page size is
+ * represented by its value set as a bit. e.g., to indicate that an
+ * allocator can provide 16k and 32k pages you initialise pa_pagesz
+ * to (32768 | 16384).
+ *
+ * If the allocator can provide aligned pages the low bit in pa_pagesz
+ * is set. The POOL_ALLOC_ALIGNED macro is provided as a convenience.
+ *
+ * If pa_pagesz is unset (i.e. 0), POOL_ALLOC_DEFAULT will be used
+ * instead.
+ */
+
+#define POOL_ALLOC_ALIGNED		1UL
+#define POOL_ALLOC_SIZE(_sz, _a)	((_sz) | (_a))
+#define POOL_ALLOC_SIZES(_min, _max, _a) \
+	((_max) | \
+	(((_max) - 1) & ~((_min) - 1)) | (_a))
+
+#define POOL_ALLOC_DEFAULT \
+	POOL_ALLOC_SIZE(PAGE_SIZE, POOL_ALLOC_ALIGNED)
 
 TAILQ_HEAD(pool_pagelist, pool_page_header);
 
