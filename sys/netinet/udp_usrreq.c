@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.221 2016/11/18 02:53:47 dlg Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.222 2016/11/21 09:09:06 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1107,7 +1107,8 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 {
 	struct inpcb *inp;
 	int error = 0;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (req == PRU_CONTROL) {
 #ifdef INET6
@@ -1120,7 +1121,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 			    (struct ifnet *)control));
 	}
 
-	s = splsoftnet();
 	inp = sotoinpcb(so);
 	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
@@ -1257,7 +1257,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		else
 #endif
 			error = udp_output(inp, m, addr, control);
-		splx(s);
 		return (error);
 
 	case PRU_ABORT:
@@ -1291,7 +1290,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		 * Perhaps Path MTU might be returned for a connected
 		 * UDP socket in this case.
 		 */
-		splx(s);
 		return (0);
 
 	case PRU_SENDOOB:
@@ -1304,7 +1302,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	case PRU_RCVD:
 	case PRU_RCVOOB:
-		splx(s);
 		return (EOPNOTSUPP);	/* do not free mbuf's */
 
 	default:
@@ -1312,7 +1309,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	}
 
 release:
-	splx(s);
 	m_freem(control);
 	m_freem(m);
 	return (error);

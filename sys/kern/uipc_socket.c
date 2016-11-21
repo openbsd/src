@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.164 2016/11/14 08:45:30 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.165 2016/11/21 09:09:06 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -652,8 +652,10 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		flags |= MSG_DONTWAIT;
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
+		s = splsoftnet();
 		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
 		    (struct mbuf *)(long)(flags & MSG_PEEK), NULL, curproc);
+		splx(s);
 		if (error)
 			goto bad;
 		do {

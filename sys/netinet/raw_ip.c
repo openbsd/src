@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.87 2016/11/14 03:51:53 dlg Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.88 2016/11/21 09:09:06 mpi Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -409,7 +409,8 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (req == PRU_CONTROL)
 		return (in_control(so, (u_long)m, (caddr_t)nam,
@@ -433,13 +434,10 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EPROTONOSUPPORT;
 			break;
 		}
-		s = splsoftnet();
 		if ((error = soreserve(so, rip_sendspace, rip_recvspace)) ||
 		    (error = in_pcballoc(so, &rawcbtable))) {
-			splx(s);
 			break;
 		}
-		splx(s);
 		inp = sotoinpcb(so);
 		inp->inp_ip.ip_p = (long)nam;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.25 2016/10/08 03:32:25 claudio Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.26 2016/11/21 09:09:06 mpi Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -137,7 +137,9 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	struct rawcb *rp = sotorawcb(so);
 	int error = 0;
-	int len, s;
+	int len;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
@@ -149,7 +151,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		m_freem(m);
 		return (EINVAL);
 	}
-	s = splsoftnet();
 	switch (req) {
 
 	/*
@@ -230,7 +231,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/*
 		 * stat: don't bother with a blocksize.
 		 */
-		splx(s);
 		return (0);
 
 	/*
@@ -238,7 +238,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_RCVOOB:
 	case PRU_RCVD:
-		splx(s);
 		return (EOPNOTSUPP);
 
 	case PRU_LISTEN:
@@ -270,7 +269,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	default:
 		panic("raw_usrreq");
 	}
-	splx(s);
 	m_freem(m);
 	return (error);
 }

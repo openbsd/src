@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.98 2016/10/25 19:40:57 florian Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.99 2016/11/21 09:09:06 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -568,8 +568,9 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	struct inpcb *in6p = sotoinpcb(so);
 	int error = 0;
-	int s;
 	int priv;
+
+	splsoftassert(IPL_SOFTNET);
 
 	priv = 0;
 	if ((so->so_state & SS_PRIV) != 0)
@@ -591,13 +592,10 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EPROTONOSUPPORT;
 			break;
 		}
-		s = splsoftnet();
 		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
 		    (error = in_pcballoc(so, &rawin6pcbtable))) {
-			splx(s);
 			break;
 		}
-		splx(s);
 		in6p = sotoinpcb(so);
 		in6p->inp_ipv6.ip6_nxt = (long)nam;
 		in6p->inp_cksum6 = -1;

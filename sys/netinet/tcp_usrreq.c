@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.135 2016/09/24 14:51:37 naddy Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.136 2016/11/21 09:09:06 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -130,9 +130,10 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct sockaddr_in *sin;
 	struct inpcb *inp;
 	struct tcpcb *tp = NULL;
-	int s;
 	int error = 0;
 	short ostate;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (req == PRU_CONTROL) {
 #ifdef INET6
@@ -150,7 +151,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		return (EINVAL);
 	}
 
-	s = splsoftnet();
 	inp = sotoinpcb(so);
 	/*
 	 * When a TCP is attached to a socket, then there will be
@@ -161,7 +161,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = so->so_error;
 		if (error == 0)
 			error = EINVAL;
-		splx(s);
 		/*
 		 * The following corrects an mbuf leak under rare
 		 * circumstances
@@ -174,7 +173,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		tp = intotcpcb(inp);
 		/* tp might get 0 when using socket splicing */
 		if (tp == NULL) {
-			splx(s);
 			return (0);
 		}
 #ifdef KPROF
@@ -382,7 +380,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_SENSE:
 		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
-		splx(s);
 		return (0);
 
 	case PRU_RCVOOB:
@@ -447,7 +444,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 	if (tp && (so->so_options & SO_DEBUG))
 		tcp_trace(TA_USER, ostate, tp, (caddr_t)0, req, 0);
-	splx(s);
 	return (error);
 }
 

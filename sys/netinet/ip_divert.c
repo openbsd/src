@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.39 2016/03/07 18:44:00 naddy Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.40 2016/11/21 09:09:06 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -63,7 +63,6 @@ int divbhashsize = DIVERTHASHSIZE;
 
 static struct sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
 
-void	divert_detach(struct inpcb *);
 int	divert_output(struct inpcb *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 void
@@ -248,7 +247,8 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (req == PRU_CONTROL) {
 		return (in_control(so, (u_long)m, (caddr_t)addr,
@@ -269,9 +269,7 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 			error = EACCES;
 			break;
 		}
-		s = splsoftnet();
 		error = in_pcballoc(so, &divbtable);
-		splx(s);
 		if (error)
 			break;
 
@@ -282,13 +280,11 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_DETACH:
-		divert_detach(inp);
+		in_pcbdetach(inp);
 		break;
 
 	case PRU_BIND:
-		s = splsoftnet();
 		error = in_pcbbind(inp, addr, p);
-		splx(s);
 		break;
 
 	case PRU_SHUTDOWN:
@@ -300,7 +296,7 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-		divert_detach(inp);
+		in_pcbdetach(inp);
 		break;
 
 	case PRU_SOCKADDR:
@@ -339,15 +335,6 @@ release:
 	m_freem(control);
 	m_freem(m);
 	return (error);
-}
-
-void
-divert_detach(struct inpcb *inp)
-{
-	int s = splsoftnet();
-
-	in_pcbdetach(inp);
-	splx(s);
 }
 
 /*

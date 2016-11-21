@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.139 2016/11/09 09:39:43 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.140 2016/11/21 09:09:06 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1066,7 +1066,7 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	struct socket *so;
 	struct mbuf *m = NULL;
 	socklen_t len;
-	int error;
+	int error, s;
 
 	if ((error = getsock(p, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
@@ -1078,14 +1078,15 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
+	s = splsoftnet();
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, 0, m, 0, p);
+	splx(s);
 	if (error)
 		goto bad;
 	error = copyaddrout(p, m, SCARG(uap, asa), len, SCARG(uap, alen));
 bad:
 	FRELE(fp, p);
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return (error);
 }
 
@@ -1104,7 +1105,7 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	struct socket *so;
 	struct mbuf *m = NULL;
 	socklen_t len;
-	int error;
+	int error, s;
 
 	if ((error = getsock(p, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
@@ -1120,7 +1121,9 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
+	s = splsoftnet();
 	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, 0, m, 0, p);
+	splx(s);
 	if (error)
 		goto bad;
 	error = copyaddrout(p, m, SCARG(uap, asa), len, SCARG(uap, alen));

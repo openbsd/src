@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.461 2016/11/14 10:52:04 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.462 2016/11/21 09:09:06 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2046,9 +2046,11 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
+		s = splsoftnet();
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			(struct mbuf *) cmd, (struct mbuf *) data,
 			(struct mbuf *) ifp, p));
+		splx(s);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.41 2016/03/29 11:57:51 chl Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.42 2016/11/21 09:09:06 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -64,7 +64,6 @@ int divb6hashsize = DIVERTHASHSIZE;
 
 static struct sockaddr_in6 ip6addr = { sizeof(ip6addr), AF_INET6 };
 
-void	divert6_detach(struct inpcb *);
 int	divert6_output(struct inpcb *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 
@@ -251,7 +250,8 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (req == PRU_CONTROL) {
 		return (in6_control(so, (u_long)m, (caddr_t)addr,
@@ -272,9 +272,7 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 			error = EACCES;
 			break;
 		}
-		s = splsoftnet();
 		error = in_pcballoc(so, &divb6table);
-		splx(s);
 		if (error)
 			break;
 
@@ -285,13 +283,11 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_DETACH:
-		divert6_detach(inp);
+		in_pcbdetach(inp);
 		break;
 
 	case PRU_BIND:
-		s = splsoftnet();
 		error = in_pcbbind(inp, addr, p);
-		splx(s);
 		break;
 
 	case PRU_SHUTDOWN:
@@ -303,7 +299,7 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-		divert6_detach(inp);
+		in_pcbdetach(inp);
 		break;
 
 	case PRU_SOCKADDR:
@@ -342,15 +338,6 @@ release:
 	m_freem(control);
 	m_freem(m);
 	return (error);
-}
-
-void
-divert6_detach(struct inpcb *inp)
-{
-	int s = splsoftnet();
-
-	in_pcbdetach(inp);
-	splx(s);
 }
 
 /*

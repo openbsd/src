@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.208 2016/10/18 11:05:45 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.209 2016/11/21 09:09:06 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -149,10 +149,11 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	struct rawcb	*rp;
 	struct routecb	*rop;
-	int		 s, af;
+	int		 af;
 	int		 error = 0;
 
-	s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
+
 	rp = sotorawcb(so);
 
 	switch (req) {
@@ -178,7 +179,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = raw_attach(so, (int)(long)nam);
 		if (error) {
 			free(rop, M_PCB, sizeof(struct routecb));
-			splx(s);
 			return (error);
 		}
 		rop->rtableid = curproc->p_p->ps_rtableid;
@@ -229,7 +229,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = raw_usrreq(so, req, m, nam, control, p);
 	}
 
-	splx(s);
 	return (error);
 }
 
