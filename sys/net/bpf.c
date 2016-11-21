@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.152 2016/11/16 14:13:00 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.153 2016/11/21 09:12:18 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -99,8 +99,6 @@ int	_bpf_mtap(caddr_t, const struct mbuf *, u_int,
 void	bpf_mcopy(const void *, void *, size_t);
 int	bpf_movein(struct uio *, u_int, struct mbuf **,
 	    struct sockaddr *, struct bpf_insn *);
-void	bpf_attachd(struct bpf_d *, struct bpf_if *);
-void	bpf_detachd(struct bpf_d *);
 int	bpf_setif(struct bpf_d *, struct ifreq *);
 int	bpfpoll(dev_t, int, struct proc *);
 int	bpfkqfilter(dev_t, struct knote *);
@@ -108,7 +106,6 @@ void	bpf_wakeup(struct bpf_d *);
 void	bpf_wakeup_cb(void *);
 void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
 	    void (*)(const void *, void *, size_t), struct timeval *);
-void	bpf_reset_d(struct bpf_d *);
 int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
 int	bpf_setdlt(struct bpf_d *, u_int);
 
@@ -118,6 +115,10 @@ int	filt_bpfread(struct knote *, long);
 int	bpf_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t);
 
 struct bpf_d *bpfilter_lookup(int);
+
+void	bpf_attachd(struct bpf_d *, struct bpf_if *);
+void	bpf_detachd(struct bpf_d *);
+void	bpf_resetd(struct bpf_d *);
 
 /*
  * Reference count access to descriptor buffers
@@ -606,7 +607,7 @@ out:
  * receive and drop counts.  Should be called at splnet.
  */
 void
-bpf_reset_d(struct bpf_d *d)
+bpf_resetd(struct bpf_d *d)
 {
 	if (d->bd_hbuf) {
 		/* Free the hold buffer. */
@@ -736,7 +737,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	 */
 	case BIOCFLUSH:
 		s = splnet();
-		bpf_reset_d(d);
+		bpf_resetd(d);
 		splx(s);
 		break;
 
@@ -959,7 +960,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 			return (EINVAL);
 		srp_update_locked(&bpf_insn_gc, filter, NULL);
 		s = splnet();
-		bpf_reset_d(d);
+		bpf_resetd(d);
 		splx(s);
 		return (0);
 	}
@@ -986,7 +987,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 	srp_update_locked(&bpf_insn_gc, filter, bf);
 
 	s = splnet();
-	bpf_reset_d(d);
+	bpf_resetd(d);
 	splx(s);
 	return (0);
 }
@@ -1040,7 +1041,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 
 		bpf_attachd(d, candidate);
 	}
-	bpf_reset_d(d);
+	bpf_resetd(d);
 out:
 	splx(s);
 	return (error);
@@ -1668,7 +1669,7 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 	s = splnet();
 	bpf_detachd(d);
 	bpf_attachd(d, bp);
-	bpf_reset_d(d);
+	bpf_resetd(d);
 	splx(s);
 	return (0);
 }
