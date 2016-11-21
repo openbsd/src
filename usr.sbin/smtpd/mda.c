@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.122 2016/11/20 08:43:36 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.123 2016/11/21 13:00:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -253,11 +253,10 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			if (e->method == A_MDA || e->method == A_FILENAME) {
 				time(&now);
 				if (e->sender[0])
-					n = iobuf_fqueue(&s->iobuf,
-					    "From %s %s", e->sender,
-					    ctime(&now));
+					n = io_printf(&s->io, "From %s %s",
+					    e->sender, ctime(&now));
 				else
-					n = iobuf_fqueue(&s->iobuf,
+					n = io_printf(&s->io,
 					    "From MAILER-DAEMON@%s %s",
 					    env->sc_hostname, ctime(&now));
 			}
@@ -268,13 +267,13 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 					 * XXX: remove existing Return-Path,
 					 * if any
 					 */
-					n = iobuf_fqueue(&s->iobuf,
+					n = io_printf(&s->io,
 					    "Return-Path: %s\n"
 					    "Delivered-To: %s\n",
 					    e->sender,
 					    e->rcpt ? e->rcpt : e->dest);
 				else
-					n = iobuf_fqueue(&s->iobuf,
+					n = io_printf(&s->io,
 					    "Delivered-To: %s\n",
 					    e->rcpt ? e->rcpt : e->dest);
 			}
@@ -457,7 +456,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			 */
 			error = NULL;
 			if (strcmp(parent_error, "exited okay") == 0) {
-				if (s->datafp || iobuf_queued(&s->iobuf))
+				if (s->datafp || io_queued(&s->io))
 					error = "mda exited prematurely";
 			} else
 				error = out[0] ? out : parent_error;
@@ -519,10 +518,10 @@ mda_io(struct io *io, int evt, void *arg)
 			return;
 		}
 
-		while (iobuf_queued(&s->iobuf) < MDA_HIWAT) {
+		while (io_queued(&s->io) < MDA_HIWAT) {
 			if ((len = getline(&ln, &sz, s->datafp)) == -1)
 				break;
-			if (iobuf_queue(&s->iobuf, ln, len) == -1) {
+			if (io_write(&s->io, ln, len) == -1) {
 				m_create(p_parent, IMSG_MDA_KILL,
 				    0, 0, -1);
 				m_add_id(p_parent, s->id);
@@ -553,7 +552,7 @@ mda_io(struct io *io, int evt, void *arg)
 			    s->id, s->evp->id);
 			fclose(s->datafp);
 			s->datafp = NULL;
-			if (iobuf_queued(&s->iobuf) == 0)
+			if (io_queued(&s->io) == 0)
 				goto done;
 		}
 		return;

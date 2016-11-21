@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.293 2016/11/20 08:43:36 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.294 2016/11/21 13:00:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1208,14 +1208,14 @@ smtp_filter_fd(uint64_t id, int fd)
 	io_set_callback(&s->tx->oev, smtp_data_io, s);
 	io_set_fd(&s->tx->oev, fd);
 
-	iobuf_fqueue(&s->tx->obuf, "Received: ");
+	io_print(&s->tx->oev, "Received: ");
 	if (!(s->listener->flags & F_MASK_SOURCE)) {
-		iobuf_fqueue(&s->tx->obuf, "from %s (%s [%s])",
+		io_printf(&s->tx->oev, "from %s (%s [%s])",
 		    s->helo,
 		    s->hostname,
 		    ss_to_text(&s->ss));
 	}
-	iobuf_fqueue(&s->tx->obuf, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
+	io_printf(&s->tx->oev, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
 	    s->smtpname,
 	    SMTPD_NAME,
 	    s->flags & SF_EHLO ? "E" : "",
@@ -1225,8 +1225,7 @@ smtp_filter_fd(uint64_t id, int fd)
 
 	if (s->flags & SF_SECURE) {
 		x = SSL_get_peer_certificate(s->io.ssl);
-		iobuf_fqueue(&s->tx->obuf,
-		    " (%s:%s:%d:%s)",
+		io_printf(&s->tx->oev, " (%s:%s:%d:%s)",
 		    SSL_get_version(s->io.ssl),
 		    SSL_get_cipher_name(s->io.ssl),
 		    SSL_get_cipher_bits(s->io.ssl, NULL),
@@ -1235,21 +1234,21 @@ smtp_filter_fd(uint64_t id, int fd)
 			X509_free(x);
 
 		if (s->listener->flags & F_RECEIVEDAUTH) {
-			iobuf_fqueue(&s->tx->obuf, " auth=%s", s->username[0] ? "yes" : "no");
+			io_printf(&s->tx->oev, " auth=%s", s->username[0] ? "yes" : "no");
 			if (s->username[0])
-				iobuf_fqueue(&s->tx->obuf, " user=%s", s->username);
+				io_printf(&s->tx->oev, " user=%s", s->username);
 		}
 	}
 
 	if (s->tx->rcptcount == 1) {
-		iobuf_fqueue(&s->tx->obuf, "\n\tfor <%s@%s>",
+		io_printf(&s->tx->oev, "\n\tfor <%s@%s>",
 		    s->tx->evp.rcpt.user,
 		    s->tx->evp.rcpt.domain);
 	}
 
-	iobuf_fqueue(&s->tx->obuf, ";\n\t%s\n", time_to_text(time(NULL)));
+	io_printf(&s->tx->oev, ";\n\t%s\n", time_to_text(time(NULL)));
 
-	s->tx->odatalen = iobuf_queued(&s->tx->obuf);
+	s->tx->odatalen = io_queued(&s->tx->oev);
 
 	io_set_write(&s->tx->oev);
 
@@ -1299,8 +1298,8 @@ smtp_io(struct io *io, int evt, void *arg)
 
 	case IO_DATAIN:
 	    nextline:
-		line = iobuf_getline(&s->iobuf, &len);
-		if ((line == NULL && iobuf_len(&s->iobuf) >= LINE_MAX) ||
+		line = io_getline(&s->io, &len);
+		if ((line == NULL && io_datalen(&s->io) >= LINE_MAX) ||
 		    (line && len >= LINE_MAX)) {
 			s->flags |= SF_BADINPUT;
 			smtp_reply(s, "500 %s: Line too long",
@@ -1323,7 +1322,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		}
 
 		/* Pipelining not supported */
-		if (iobuf_len(&s->iobuf)) {
+		if (io_datalen(&s->io)) {
 			s->flags |= SF_BADINPUT;
 			smtp_reply(s, "500 %s %s: Pipelining not supported",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
@@ -1343,7 +1342,7 @@ smtp_io(struct io *io, int evt, void *arg)
 			io_set_write(io);
 
 			s->tx->dataeom = 1;
-			if (iobuf_queued(&s->tx->obuf) == 0)
+			if (io_queued(&s->tx->oev) == 0)
 				smtp_data_io_done(s);
 			else
 				io_reload(&s->tx->oev);
@@ -1507,7 +1506,7 @@ smtp_data_io(struct io *io, int evt, void *arg)
 		break;
 
 	case IO_LOWAT:
-		if (s->tx->dataeom && iobuf_queued(&s->tx->obuf) == 0) {
+		if (s->tx->dataeom && io_queued(&s->tx->oev) == 0) {
 			smtp_data_io_done(s);
 		} else if (s->io.flags & IO_PAUSE_IN) {
 			log_debug("debug: smtp: %p: filter congestion over: resuming session", s);
@@ -2189,7 +2188,7 @@ smtp_message_printf(struct smtp_session *s, const char *fmt, ...)
 		return -1;
 
 	va_start(ap, fmt);
-	len = iobuf_vfqueue(&s->tx->obuf, fmt, ap);
+	len = io_vprintf(&s->tx->oev, fmt, ap);
 	va_end(ap);
 
 	if (len < 0) {
@@ -2219,7 +2218,7 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 
 	log_trace(TRACE_SMTP, "smtp: %p: >>> %s", s, buf);
 
-	iobuf_xfqueue(&s->iobuf, "smtp_reply", "%s\r\n", buf);
+	io_xprintf(&s->io, "%s\r\n", buf);
 
 	switch (buf[0]) {
 	case '5':
@@ -2663,7 +2662,7 @@ smtp_filter_dataline(struct smtp_session *s, const char *line)
 		return;
 	}
 
-	if (iobuf_queued(&s->tx->obuf) > DATA_HIWAT && !(s->io.flags & IO_PAUSE_IN)) {
+	if (io_queued(&s->tx->oev) > DATA_HIWAT && !(s->io.flags & IO_PAUSE_IN)) {
 		log_debug("debug: smtp: %p: filter congestion over: pausing session", s);
 		io_pause(&s->io, IO_PAUSE_IN);
 	}
