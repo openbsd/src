@@ -1,6 +1,6 @@
-.\"	$OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.3 2016/11/06 16:58:08 schwarze Exp $
+.\"	$OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.4 2016/11/21 22:19:15 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 21 2016 $
 .Dt EVP_PKEY_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -169,8 +169,8 @@ expected to be the algorithm identifier byte.
 The
 .Fn EVP_PKEY_CTX_set_rsa_pss_saltlen
 macro sets the RSA PSS salt length to
-.Fa len
-as its name implies it is only supported for PSS padding.
+.Fa len .
+As its name implies, it is only supported for PSS padding.
 Two special values are supported: -1 sets the salt length to the digest
 length.
 When signing -2 sets the salt length to the maximum permissible value.

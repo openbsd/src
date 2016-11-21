@@ -1,6 +1,6 @@
-.\"	$OpenBSD: EVP_EncryptInit.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: EVP_EncryptInit.3,v 1.3 2016/11/21 22:19:15 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 21 2016 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -14,15 +14,16 @@
 .Nm EVP_CipherInit_ex ,
 .Nm EVP_CipherUpdate ,
 .Nm EVP_CipherFinal_ex ,
-.Nm EVP_CIPHER_CTX_set_key_length ,
-.Nm EVP_CIPHER_CTX_ctrl ,
-.Nm EVP_CIPHER_CTX_cleanup ,
 .Nm EVP_EncryptInit ,
 .Nm EVP_EncryptFinal ,
 .Nm EVP_DecryptInit ,
 .Nm EVP_DecryptFinal ,
 .Nm EVP_CipherInit ,
 .Nm EVP_CipherFinal ,
+.Nm EVP_CIPHER_CTX_set_padding ,
+.Nm EVP_CIPHER_CTX_set_key_length ,
+.Nm EVP_CIPHER_CTX_ctrl ,
+.Nm EVP_CIPHER_CTX_cleanup ,
 .Nm EVP_get_cipherbyname ,
 .Nm EVP_get_cipherbynid ,
 .Nm EVP_get_cipherbyobj ,
@@ -45,7 +46,6 @@
 .Nm EVP_CIPHER_CTX_mode ,
 .Nm EVP_CIPHER_param_to_asn1 ,
 .Nm EVP_CIPHER_asn1_to_param ,
-.Nm EVP_CIPHER_CTX_set_padding ,
 .Nm EVP_enc_null ,
 .Nm EVP_des_cbc ,
 .Nm EVP_des_ecb ,
@@ -291,7 +291,8 @@ then the default implementation is used.
 .Fa key
 is the symmetric key to use and
 .Fa iv
-is the IV to use (if necessary), the actual number of bytes used for the
+is the IV to use (if necessary).
+The actual number of bytes used for the
 key and IV depends on the cipher.
 It is possible to set all parameters to
 .Dv NULL
@@ -375,7 +376,7 @@ being supplied in a previous call).
 .Pp
 .Fn EVP_CIPHER_CTX_cleanup
 clears all information from a cipher context and free up any allocated
-memory associate with it.
+memory associated with it.
 It should be called after all operations using a cipher are complete so
 sensitive information does not remain in memory.
 .Pp
@@ -490,10 +491,10 @@ and
 .Fn EVP_CIPHER_CTX_type
 return the type of the passed cipher or context.
 This "type" is the actual NID of the cipher OBJECT IDENTIFIER as such it
-ignores the cipher parameters and 40 bit RC2 and 128 bit RC2 have the
+ignores the cipher parameters and 40-bit RC2 and 128-bit RC2 have the
 same NID.
 If the cipher does not have an object identifier or does not
-have ASN1 support this function will return
+have ASN.1 support this function will return
 .Dv NID_undef .
 .Pp
 .Fn EVP_CIPHER_CTX_cipher
@@ -521,13 +522,14 @@ sets the AlgorithmIdentifier "parameter" based on the passed cipher.
 This will typically include any parameters and an IV.
 The cipher IV (if any) must be set when this call is made.
 This call should be made before the cipher is actually "used" (before any
-.Fn EVP_EncryptUpdate ,
+.Fn EVP_EncryptUpdate
+or
 .Fn EVP_DecryptUpdate
-calls for example).
-This function may fail if the cipher does not have any ASN1 support.
+calls, for example).
+This function may fail if the cipher does not have any ASN.1 support.
 .Pp
 .Fn EVP_CIPHER_asn1_to_param
-sets the cipher parameters based on an ASN1 AlgorithmIdentifier
+sets the cipher parameters based on an ASN.1 AlgorithmIdentifier
 "parameter".
 The precise effect depends on the cipher.
 In the case of RC2, for example, it will set the IV and effective
@@ -544,7 +546,7 @@ will be called and finally
 again with all parameters except the key set to
 .Dv NULL .
 It is possible for this function to fail if the cipher does not
-have any ASN1 support or the parameters cannot be set (for example
+have any ASN.1 support or the parameters cannot be set (for example
 the RC2 effective key length is not supported).
 .Pp
 .Fn EVP_CIPHER_CTX_ctrl
@@ -720,7 +722,7 @@ DESX algorithm in CBC mode.
 RC4 stream cipher.
 This is a variable key length cipher with default key length 128 bits.
 .It Fn EVP_rc4_40 void
-RC4 stream cipher with 40 bit key length.
+RC4 stream cipher with 40-bit key length.
 This is obsolete and new code should use
 .Fn EVP_rc4
 and the
@@ -785,31 +787,31 @@ By default the key length is set to 128 bits and 12 rounds.
 .El
 .Sh EXAMPLES
 Get the number of rounds used in RC5:
-.Bd -literal
+.Bd -literal -offset indent
 int nrounds;
 EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC5_ROUNDS, 0, &nrounds);
 .Ed
 .Pp
 Get the RC2 effective key length:
-.Bd -literal
+.Bd -literal -offset indent
 int key_bits;
 EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC2_KEY_BITS, 0, &key_bits);
 .Ed
 .Pp
 Set the number of rounds used in RC5:
-.Bd -literal
+.Bd -literal -offset indent
 int nrounds;
 EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC5_ROUNDS, nrounds, NULL);
 .Ed
 .Pp
 Set the effective key length used in RC2:
-.Bd -literal
+.Bd -literal -offset indent
 int key_bits;
 EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC2_KEY_BITS, key_bits, NULL);
 .Ed
 .Pp
 Encrypt a string using blowfish:
-.Bd -literal
+.Bd -literal -offset 3n
 int
 do_crypt(char *outfile)
 {
@@ -858,13 +860,13 @@ do_crypt(char *outfile)
 The ciphertext from the above example can be decrypted using the
 .Xr openssl 1
 utility with the command line:
-.Bd -literal
+.Bd -literal -offset indent
 openssl bf -in cipher.bin -K 000102030405060708090A0B0C0D0E0F \e
            -iv 0102030405060708 -d
 .Ed
 .Pp
 General encryption, decryption function example using FILE I/O and RC2
-with an 80 bit key:
+with an 80-bit key:
 .Bd -literal
 int
 do_crypt(FILE *in, FILE *out, int do_encrypt)
@@ -937,6 +939,6 @@ as a fixed unsigned char array containing
 .Dv EVP_MAX_KEY_LENGTH
 bytes.
 .Pp
-The ASN1 code is incomplete (and sometimes inaccurate) it has only been
-tested for certain common S/MIME ciphers (RC2, DES, triple DES) in CBC
-mode.
+The ASN.1 code is incomplete (and sometimes inaccurate).
+It has only been tested for certain common S/MIME ciphers
+(RC2, DES, triple DES) in CBC mode.

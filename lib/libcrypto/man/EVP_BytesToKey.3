@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_BytesToKey.3,v 1.3 2016/11/21 09:56:35 schwarze Exp $
+.\"	$OpenBSD: EVP_BytesToKey.3,v 1.4 2016/11/21 22:19:15 jmc Exp $
 .\"
 .Dd $Mdocdate: November 21 2016 $
 .Dt EVP_BYTESTOKEY 3
@@ -28,8 +28,8 @@ is the cipher to derive the key and IV for.
 is the message digest to use.
 The
 .Fa salt
-parameter is used as a salt in the derivation: it should point to an 8
-byte buffer or
+parameter is used as a salt in the derivation:
+it should point to an 8-byte buffer or
 .Dv NULL
 if no salt is used.
 .Fa data
@@ -51,18 +51,18 @@ parameter.
 .Pp
 Increasing the
 .Fa count
-parameter slows down the algorithm which makes it harder for an attacker
+parameter slows down the algorithm, which makes it harder for an attacker
 to perform a brute force attack using a large number of candidate
 passwords.
 .Pp
 If the total key and IV length is less than the digest length and MD5
 is used, then the derivation algorithm is compatible with PKCS#5 v1.5.
-Otherwise, a non standard extension is used to derive the extra data.
+Otherwise, a non-standard extension is used to derive the extra data.
 .Pp
 Newer applications should use more standard algorithms such as PBKDF2 as
 defined in PKCS#5v2.1 for key derivation.
 .Sh KEY DERIVATION ALGORITHM
-The key and IV is derived by concatenating D_1, D_2, etc until enough
+The key and IV is derived by concatenating D_1, D_2, etc. until enough
 data is available for the key and IV.
 D_i is defined recursively as:
 .Pp

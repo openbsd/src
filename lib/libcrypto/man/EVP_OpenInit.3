@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_OpenInit.3,v 1.3 2016/11/21 09:56:35 schwarze Exp $
+.\"	$OpenBSD: EVP_OpenInit.3,v 1.4 2016/11/21 22:19:15 jmc Exp $
 .\"
 .Dd $Mdocdate: November 21 2016 $
 .Dt EVP_OPENINIT 3
@@ -85,7 +85,7 @@ If the cipher is a fixed length cipher then the recovered key length
 must match the fixed cipher length.
 .Sh RETURN VALUES
 .Fn EVP_OpenInit
-returns 0 on error or a non zero integer (actually the recovered secret
+returns 0 on error or a non-zero integer (actually the recovered secret
 key size) if successful.
 .Pp
 .Fn EVP_OpenUpdate

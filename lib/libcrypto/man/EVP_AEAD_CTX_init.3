@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.4 2016/11/05 14:41:31 schwarze Exp $
+.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.5 2016/11/21 22:19:15 jmc Exp $
 .\"
 .\" Copyright (c) 2014, Google Inc.
 .\" Parts of the text were written by Adam Langley and David Benjamin.
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2016 $
+.Dd $Mdocdate: November 21 2016 $
 .Dt EVP_AEAD_CTX_INIT 3
 .Os
 .Sh NAME
@@ -184,7 +184,7 @@ bytes are written as output and, in order to ensure success, this value
 should be the
 .Fa in_len
 plus the result of
-.Xr EVP_AEAD_overhead 3 .
+.Fn EVP_AEAD_max_overhead .
 On successful return,
 .Fa out_len
 is set to the actual number of bytes written.
@@ -237,8 +237,8 @@ interface to AEAD ciphers should be used in preference to the older
 .Sy EVP
 variants or to the low level interfaces.
 This is because the code then becomes transparent to the AEAD cipher
-used and much more flexible,
-it is also safer to use as it prevents common mistakes with the native APIs.
+used and much more flexible.
+It is also safer to use as it prevents common mistakes with the native APIs.
 .Sh RETURN VALUES
 .Fn EVP_AEAD_CTX_init ,
 .Fn EVP_AEAD_CTX_open ,
@@ -262,8 +262,7 @@ This is the largest value that can be passed as a tag length to
 returns the length of the per-message nonce.
 .Sh EXAMPLES
 Encrypt a string using ChaCha20-Poly1305:
-.Bd -literal
-.\" XXX
+.Bd -literal -offset indent
 const EVP_AEAD *aead = EVP_aead_chacha20_poly1305();
 static const unsigned char nonce[32] = {0};
 size_t buf_len, nonce_len;
