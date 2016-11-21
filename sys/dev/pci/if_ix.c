@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.138 2016/11/18 20:03:30 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.139 2016/11/21 12:05:28 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -278,6 +278,14 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	error = ixgbe_allocate_legacy(sc);
 	if (error)
 		goto err_late;
+
+	/* Enable the optics for 82599 SFP+ fiber */
+	if (sc->hw.phy.multispeed_fiber && sc->hw.mac.ops.enable_tx_laser)
+		sc->hw.mac.ops.enable_tx_laser(&sc->hw);
+
+	/* Enable power to the phy */
+	if (hw->phy.ops.set_phy_power)
+		hw->phy.ops.set_phy_power(&sc->hw, TRUE);
 
 	/* Setup OS specific network interface */
 	ixgbe_setup_interface(sc);
@@ -727,6 +735,10 @@ ixgbe_init(void *arg)
 	if (sc->hw.mac.type != ixgbe_mac_82598EB)
 		itr |= IXGBE_EITR_LLI_MOD | IXGBE_EITR_CNT_WDIS;
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(0), itr);
+
+	/* Enable power to the phy */
+	if (sc->hw.phy.ops.set_phy_power)
+		sc->hw.phy.ops.set_phy_power(&sc->hw, TRUE);
 
 	/* Config/Enable Link */
 	ixgbe_config_link(sc);
