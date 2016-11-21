@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.148 2016/10/03 12:33:21 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.149 2016/11/21 10:42:00 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1832,9 +1832,11 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 	struct ifaddr *ifa;
 	struct in6_aliasreq ifra;
 	struct in6_ifaddr *ia6;
-	int error, s, plen0;
+	int error, plen0;
 	struct in6_addr mask, rand_ifid;
 	int prefixlen = pr->ndpr_plen;
+
+	splsoftassert(IPL_SOFTNET);
 
 	in6_prefixlen2mask(&mask, prefixlen);
 
@@ -1867,8 +1869,8 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 	/* prefixlen + ifidlen must be equal to 128 */
 	plen0 = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
 	if (prefixlen != plen0) {
-		nd6log((LOG_INFO, "in6_ifadd: wrong prefixlen for %s "
-		    "(prefix=%d ifid=%d)\n",
+		nd6log((LOG_INFO, "%s: wrong prefixlen for %s "
+		    "(prefix=%d ifid=%d)\n", __func__,
 		    ifp->if_xname, prefixlen, 128 - plen0));
 		return NULL;
 	}
@@ -1940,15 +1942,13 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 	/* If this address already exists, update it. */
 	ia6 = in6ifa_ifpwithaddr(ifp, &ifra.ifra_addr.sin6_addr);
 
-	s = splsoftnet();
 	error = in6_update_ifa(ifp, &ifra, ia6);
-	splx(s);
 
 	if (error != 0) {
 		char addr[INET6_ADDRSTRLEN];
 
 		nd6log((LOG_ERR,
-		    "in6_ifadd: failed to make ifaddr %s on %s (errno=%d)\n",
+		    "%s: failed to make ifaddr %s on %s (errno=%d)\n", __func__,
 		    inet_ntop(AF_INET6,	&ifra.ifra_addr.sin6_addr,
 			addr, sizeof(addr)),
 		    ifp->if_xname, error));
