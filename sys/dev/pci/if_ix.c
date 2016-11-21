@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.141 2016/11/21 16:46:29 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.142 2016/11/21 17:21:33 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -100,6 +100,7 @@ void	ixgbe_local_timer(void *);
 void	ixgbe_setup_interface(struct ix_softc *);
 void	ixgbe_config_gpie(struct ix_softc *);
 void	ixgbe_config_delay_values(struct ix_softc *);
+void	ixgbe_add_media_types(struct ix_softc *);
 void	ixgbe_config_link(struct ix_softc *);
 
 int	ixgbe_allocate_transmit_buffers(struct tx_ring *);
@@ -1085,21 +1086,43 @@ int
 ixgbe_media_change(struct ifnet *ifp)
 {
 	struct ix_softc	*sc = ifp->if_softc;
+	struct ixgbe_hw	*hw = &sc->hw;
 	struct ifmedia	*ifm = &sc->media;
+	ixgbe_link_speed speed = 0;
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return (EINVAL);
 
+	if (hw->phy.media_type == ixgbe_media_type_backplane)
+		return (ENODEV);
+
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
-	case IFM_AUTO:
-		sc->hw.phy.autoneg_advertised =
-		    IXGBE_LINK_SPEED_100_FULL |
-		    IXGBE_LINK_SPEED_1GB_FULL |
-		    IXGBE_LINK_SPEED_10GB_FULL;
-		break;
-	default:
-		return (EINVAL);
+		case IFM_AUTO:
+		case IFM_10G_T:
+			speed |= IXGBE_LINK_SPEED_100_FULL;
+		case IFM_10G_SR: /* KR, too */
+		case IFM_10G_LR:
+		case IFM_10G_CX4: /* KX4 */
+			speed |= IXGBE_LINK_SPEED_1GB_FULL;
+		case IFM_10G_SFP_CU:
+			speed |= IXGBE_LINK_SPEED_10GB_FULL;
+			break;
+		case IFM_1000_T:
+			speed |= IXGBE_LINK_SPEED_100_FULL;
+		case IFM_1000_LX:
+		case IFM_1000_SX:
+		case IFM_1000_CX: /* KX */
+			speed |= IXGBE_LINK_SPEED_1GB_FULL;
+			break;
+		case IFM_100_TX:
+			speed |= IXGBE_LINK_SPEED_100_FULL;
+			break;
+		default:
+			return (EINVAL);
 	}
+
+	hw->mac.autotry_restart = TRUE;
+	hw->mac.ops.setup_link(hw, speed, TRUE);
 
 	return (0);
 }
@@ -1443,16 +1466,16 @@ ixgbe_setup_optics(struct ix_softc *sc)
 		sc->optics = IFM_1000_T;
 	else if (layer & IXGBE_PHYSICAL_LAYER_100BASE_TX)
 		sc->optics = IFM_100_TX;
-	else if (layer & (IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU |
-			  IXGBE_PHYSICAL_LAYER_SFP_ACTIVE_DA))
+	else if (layer & IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU ||
+	    layer & IXGBE_PHYSICAL_LAYER_SFP_ACTIVE_DA)
 		sc->optics = IFM_10G_SFP_CU;
-	else if (layer & (IXGBE_PHYSICAL_LAYER_10GBASE_LR |
-			  IXGBE_PHYSICAL_LAYER_10GBASE_LRM))
+	else if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_LR ||
+	    layer & IXGBE_PHYSICAL_LAYER_10GBASE_LRM)
 		sc->optics = IFM_10G_LR;
 	else if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_SR)
 		sc->optics = IFM_10G_SR;
-	else if (layer & (IXGBE_PHYSICAL_LAYER_10GBASE_KX4 |
-			  IXGBE_PHYSICAL_LAYER_10GBASE_CX4))
+	else if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4 ||
+	    layer & IXGBE_PHYSICAL_LAYER_10GBASE_CX4)
 		sc->optics = IFM_10G_CX4;
 	else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_SX)
 		sc->optics = IFM_1000_SX;
@@ -1603,16 +1626,61 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	 */
 	ifmedia_init(&sc->media, IFM_IMASK, ixgbe_media_change,
 	    ixgbe_media_status);
-	if (sc->optics)
-		ifmedia_add(&sc->media, IFM_ETHER | sc->optics |
-		    IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->media, IFM_ETHER | IFM_AUTO, 0, NULL);
+	ixgbe_add_media_types(sc);
 	ifmedia_set(&sc->media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
 	sc->max_frame_size = IXGBE_MAX_FRAME_SIZE;
+}
+
+void
+ixgbe_add_media_types(struct ix_softc *sc)
+{
+	struct ixgbe_hw	*hw = &sc->hw;
+	int		layer;
+
+	layer = hw->mac.ops.get_supported_physical_layer(hw);
+
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_T, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_T)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_100BASE_TX)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_100_TX, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU ||
+	    layer & IXGBE_PHYSICAL_LAYER_SFP_ACTIVE_DA)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_SFP_CU, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_LR) {
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_LR, 0, NULL);
+		if (hw->phy.multispeed_fiber)
+			ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_LX, 0,
+			    NULL);
+	}
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_SR) {
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_SR, 0, NULL);
+		if (hw->phy.multispeed_fiber)
+			ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_SX, 0,
+			    NULL);
+	} else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_SX)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_SX, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_CX4)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_CX4, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_SR, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_CX4, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_KX)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_CX, 0, NULL);
+
+	if (hw->device_id == IXGBE_DEV_ID_82598AT) {
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T | IFM_FDX, 0,
+		    NULL);
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T, 0, NULL);
+	}
+
+	ifmedia_add(&sc->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 }
 
 void
