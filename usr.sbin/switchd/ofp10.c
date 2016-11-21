@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.15 2016/11/18 20:20:19 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.16 2016/11/21 18:19:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -376,7 +376,7 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 		fm->fm_priority = 0;
 		fm->fm_buffer_id = pin->pin_buffer_id;
 		fm->fm_flags = htons(OFP_FLOWFLAG_SEND_FLOW_REMOVED);
-		if (pin->pin_buffer_id == (uint32_t)-1)
+		if (pin->pin_buffer_id == htonl(OFP_PKTOUT_NO_BUFFER))
 			addpacket = 1;
 	} else {
 		if ((pout = ibuf_advance(obuf, sizeof(*pout))) == NULL)
@@ -387,7 +387,7 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 		pout->pout_port = pin->pin_port;
 		pout->pout_actions_len = htons(sizeof(*ao));
 
-		if (pin->pin_buffer_id == (uint32_t)-1)
+		if (pin->pin_buffer_id == htonl(OFP_PKTOUT_NO_BUFFER))
 			addpacket = 1;
 	}
 
@@ -398,8 +398,8 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 	ao->ao_port = htons((uint16_t)dstport);
 	ao->ao_max_len = 0;
 
-	/* Add optional packet payload */
-	if (addpacket &&
+	/* Add optional packet payload to packet-out. */
+	if (addflow == 0 && addpacket &&
 	    imsg_add(obuf, pkt.pkt_buf, pkt.pkt_len) == -1)
 		goto done;
 

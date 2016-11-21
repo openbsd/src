@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.36 2016/11/21 17:58:24 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.37 2016/11/21 18:19:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1082,7 +1082,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 		fm->fm_priority = 0;
 		fm->fm_buffer_id = pin->pin_buffer_id;
 		fm->fm_flags = htons(OFP_FLOWFLAG_SEND_FLOW_REMOVED);
-		if (pin->pin_buffer_id == OFP_PKTOUT_NO_BUFFER)
+		if (pin->pin_buffer_id == htonl(OFP_PKTOUT_NO_BUFFER))
 			sendbuffer = 1;
 
 		/* Write flow matches to create an entry. */
@@ -1116,7 +1116,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 			goto done;
 
 		/* Add optional packet payload */
-		if (pin->pin_buffer_id == OFP_PKTOUT_NO_BUFFER &&
+		if (pin->pin_buffer_id == htonl(OFP_PKTOUT_NO_BUFFER) &&
 		    imsg_add(obuf, pkt.pkt_buf, pkt.pkt_len) == -1)
 			goto done;
 	}
