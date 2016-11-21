@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.35 2016/11/21 12:13:16 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.36 2016/11/21 17:58:24 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -76,6 +76,7 @@ int	 ofp13_parse_oxm(struct ibuf *, struct ofp_ox_match *);
 int	 ofp13_parse_tableproperties(struct ibuf *, struct ofp_table_features *);
 int	 ofp13_multipart_reply(struct switchd *, struct switch_connection *,
 	    struct ofp_header *, struct ibuf *);
+int	 ofp13_validate_tableproperty(struct ibuf *, off_t, int);
 int	 ofp13_multipart_reply_validate(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
@@ -1388,12 +1389,169 @@ ofp13_multipart_reply(struct switchd *sc, struct switch_connection *con,
 }
 
 int
+ofp13_validate_tableproperty(struct ibuf *ibuf, off_t off, int remaining)
+{
+	struct ofp_table_features		*tf;
+	struct ofp_table_feature_property	*tp;
+	struct ofp_instruction			*i;
+	struct ofp_action_header		*ah;
+	struct ofp_ox_match			*oxm;
+	uint8_t					*nexttable;
+	int					 hlen, htype, tplen;
+	int					 type, length, class;
+	int					 padsize;
+
+ next_table:
+	if ((tf = ibuf_seek(ibuf, off, sizeof(*tf))) == NULL)
+		return (-1);
+
+	hlen = ntohs(tf->tf_length);
+	log_debug("\t\ttable features length %d tableid %s "
+	    " name \"%s\" metadata match %#016llx write %#016llx "
+	    "config %u max_entries %u",
+	    hlen, print_map(tf->tf_tableid, ofp_table_id_map), tf->tf_name,
+	    be64toh(tf->tf_metadata_match),
+	    be64toh(tf->tf_metadata_write), ntohl(tf->tf_config),
+	    ntohl(tf->tf_max_entries));
+
+	off += sizeof(*tf);
+	remaining -= sizeof(*tf);
+	hlen -= sizeof(*tf);
+
+ next_property:
+	if ((tp = ibuf_seek(ibuf, off, sizeof(*tp))) == NULL)
+		return (-1);
+
+	off += sizeof(*tp);
+	htype = ntohs(tp->tp_type);
+	tplen = ntohs(tp->tp_length);
+	padsize = OFP_ALIGN(tplen) - tplen;
+	remaining -= tplen;
+	hlen -= tplen;
+
+	/* Don't count the header bytes for payload. */
+	tplen -= sizeof(*tp);
+
+	log_debug("\t\t%s (length %d):",
+	    print_map(htype, ofp_table_featprop_map), tplen);
+	if (tplen <= 0)
+		goto empty_table;
+
+	switch (htype) {
+	case OFP_TABLE_FEATPROP_INSTRUCTION:
+	case OFP_TABLE_FEATPROP_INSTRUCTION_MISS:
+		while (tplen > 0) {
+			if ((i = ibuf_seek(ibuf, off, sizeof(*i))) == NULL)
+				return (-1);
+
+			type = ntohs(i->i_type);
+			length = ntohs(i->i_len);
+			if (type == OFP_INSTRUCTION_T_EXPERIMENTER) {
+				tplen -= length;
+				off += length;
+			} else {
+				tplen -= sizeof(*i);
+				off += sizeof(*i);
+			}
+
+			log_debug("\t\t\ttype %s length %d",
+			    print_map(type, ofp_instruction_t_map), length);
+		}
+		break;
+
+	case OFP_TABLE_FEATPROP_NEXT_TABLES:
+	case OFP_TABLE_FEATPROP_NEXT_TABLES_MISS:
+		while (tplen > 0) {
+			if ((nexttable = ibuf_seek(ibuf, off,
+			    sizeof(*nexttable))) == NULL)
+				return (-1);
+
+			log_debug("\t\t\t%d", *nexttable);
+
+			off += sizeof(*nexttable);
+			tplen -= sizeof(*nexttable);
+		}
+		break;
+
+	case OFP_TABLE_FEATPROP_WRITE_ACTIONS:
+	case OFP_TABLE_FEATPROP_WRITE_ACTIONS_MISS:
+	case OFP_TABLE_FEATPROP_APPLY_ACTIONS:
+	case OFP_TABLE_FEATPROP_APPLY_ACTIONS_MISS:
+		while (tplen > 0) {
+			/* NOTE: we read the action header without the pad. */
+			if ((ah = ibuf_seek(ibuf, off, 4)) == NULL)
+				return (-1);
+
+			type = ntohs(ah->ah_type);
+			length = ntohs(ah->ah_len);
+			log_debug("\t\t\taction %s length %d",
+			    print_map(type, ofp_action_map), length);
+			if (type == OFP_ACTION_EXPERIMENTER) {
+				tplen -= length;
+				off += length;
+			} else {
+				tplen -= 4;
+				off += 4;
+			}
+		}
+		break;
+
+	case OFP_TABLE_FEATPROP_MATCH:
+	case OFP_TABLE_FEATPROP_WILDCARDS:
+	case OFP_TABLE_FEATPROP_WRITE_SETFIELD:
+	case OFP_TABLE_FEATPROP_WRITE_SETFIELD_MISS:
+	case OFP_TABLE_FEATPROP_APPLY_SETFIELD:
+	case OFP_TABLE_FEATPROP_APPLY_SETFIELD_MISS:
+		while (tplen > 0) {
+			if ((oxm = ibuf_seek(ibuf, off, sizeof(*oxm))) == NULL)
+				return (-1);
+
+			class = ntohs(oxm->oxm_class);
+			type = OFP_OXM_GET_FIELD(oxm);
+			length = oxm->oxm_length;
+			if (class == OFP_OXM_C_OPENFLOW_EXPERIMENTER) {
+				off += sizeof(*oxm) + 4;
+				tplen -= sizeof(*oxm) + 4;
+			} else {
+				off += sizeof(*oxm);
+				tplen -= sizeof(*oxm);
+			}
+
+			log_debug("\t\t\tclass %s type %s length %d",
+			    print_map(class, ofp_oxm_c_map),
+			    print_map(type, ofp_xm_t_map), length);
+		}
+		break;
+
+	case OFP_TABLE_FEATPROP_EXPERIMENTER:
+	case OFP_TABLE_FEATPROP_EXPERIMENTER_MISS:
+		off += tplen;
+		break;
+
+	default:
+		return (-1);
+	}
+
+ empty_table:
+	if (padsize) {
+		off += padsize;
+		remaining -= padsize;
+		hlen -= padsize;
+	}
+	if (hlen > 0)
+		goto next_property;
+	if (remaining > 0)
+		goto next_table;
+
+	return (0);
+}
+
+int
 ofp13_multipart_reply_validate(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
 	struct ofp_multipart		*mp;
-	struct ofp_table_features	*tf;
 	struct ofp_flow_stats		*fs;
 	struct ofp_desc			*d;
 	struct ofp_match		*om;
@@ -1508,23 +1666,8 @@ ofp13_multipart_reply_validate(struct switchd *sc,
 		break;
 
 	case OFP_MP_T_TABLE_FEATURES:
- read_next_table:
-		if ((tf = ibuf_seek(ibuf, off, sizeof(*tf))) == NULL)
+		if (ofp13_validate_tableproperty(ibuf, off, remaining))
 			return (-1);
-
-		hlen = ntohs(tf->tf_length);
-		log_debug("\ttable features length %d tableid %s name \"%s\" "
-		    "config %u max_entries %u "
-		    "metadata match %#016llx write %#016llx",
-		    hlen, print_map(tf->tf_tableid, ofp_table_id_map),
-		    tf->tf_name,ntohl(tf->tf_config),
-		    ntohl(tf->tf_max_entries),
-		    be64toh(tf->tf_metadata_match),
-		    be64toh(tf->tf_metadata_write));
-		remaining -= hlen;
-		off += hlen;
-		if (remaining)
-			goto read_next_table;
 		break;
 
 	case OFP_MP_T_PORT_DESC:
