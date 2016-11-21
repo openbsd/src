@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.149 2016/11/21 10:42:00 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.150 2016/11/21 10:52:08 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ void purge_detached(struct ifnet *);
 int nd6_prefix_onlink(struct nd_prefix *);
 int nd6_prefix_offlink(struct nd_prefix *);
 void in6_init_address_ltimes(struct nd_prefix *, struct in6_addrlifetime *);
-
+int prelist_update(struct nd_prefix *, struct nd_defrouter *, struct mbuf *);
 int rt6_deleteroute(struct rtentry *, void *, unsigned int);
 
 void nd6_addr_add(void *);
@@ -1170,13 +1170,13 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 	struct ifaddr *ifa;
 	struct ifnet *ifp = new->ndpr_ifp;
 	struct nd_prefix *pr;
-	int s, error = 0;
+	int error = 0;
 	int tempaddr_preferred = 0, autoconf = 0, statique = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
 	char addr[INET6_ADDRSTRLEN];
 
-	s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
 
 	auth = 0;
 	if (m) {
@@ -1215,11 +1215,9 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 			int e;
 
 			if ((e = nd6_prefix_onlink(pr)) != 0) {
-				nd6log((LOG_ERR,
-				    "prelist_update: failed to make "
-				    "the prefix %s/%d on-link on %s "
-				    "(errno=%d)\n",
-				    inet_ntop(AF_INET6,
+				nd6log((LOG_ERR, "%s: failed to make the prefix"
+				    " %s/%d on-link on %s (errno=%d)\n",
+				    __func__, inet_ntop(AF_INET6,
 					&pr->ndpr_prefix.sin6_addr,
 					addr, sizeof(addr)),
 				    pr->ndpr_plen, pr->ndpr_ifp->if_xname, e));
@@ -1239,9 +1237,8 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 
 		error = nd6_prelist_add(new, dr, &newpr);
 		if (error != 0 || newpr == NULL) {
-			nd6log((LOG_NOTICE, "prelist_update: "
-			    "nd6_prelist_add failed for %s/%d on %s "
-			    "errno=%d, returnpr=%p\n",
+			nd6log((LOG_NOTICE, "%s: nd6_prelist_add failed for"
+			    " %s/%d on %s errno=%d, returnpr=%p\n", __func__,
 			    inet_ntop(AF_INET6, &new->ndpr_prefix.sin6_addr,
 				addr, sizeof(addr)),
 			    new->ndpr_plen, new->ndpr_ifp->if_xname,
@@ -1411,7 +1408,6 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 	}
 
  end:
-	splx(s);
 	return error;
 }
 
