@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.20 2016/11/21 12:37:35 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.21 2016/11/21 17:08:56 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3570,7 +3570,8 @@ int32_t ixgbe_host_interface_command(struct ixgbe_hw *hw, uint32_t *buffer,
  **/
 void ixgbe_clear_tx_pending(struct ixgbe_hw *hw)
 {
-	uint32_t gcr_ext, hlreg0;
+	uint32_t gcr_ext, hlreg0, i, poll;
+	uint16_t value;
 
 	/*
 	 * If double reset is not requested then all transactions should
@@ -3587,6 +3588,23 @@ void ixgbe_clear_tx_pending(struct ixgbe_hw *hw)
 	hlreg0 = IXGBE_READ_REG(hw, IXGBE_HLREG0);
 	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg0 | IXGBE_HLREG0_LPBK);
 
+	/* Wait for a last completion before clearing buffers */
+	IXGBE_WRITE_FLUSH(hw);
+	msec_delay(3);
+
+	/*
+	 * Before proceeding, make sure that the PCIe block does not have
+	 * transactions pending.
+	 */
+	poll = ixgbe_pcie_timeout_poll(hw);
+	for (i = 0; i < poll; i++) {
+		usec_delay(100);
+		value = IXGBE_READ_PCIE_WORD(hw, IXGBE_PCI_DEVICE_STATUS);
+		if (!(value & IXGBE_PCI_DEVICE_STATUS_TRANSACTION_PENDING))
+			goto out;
+	}
+
+out:
 	/* initiate cleaning flow for buffers in the PCIe transaction layer */
 	gcr_ext = IXGBE_READ_REG(hw, IXGBE_GCR_EXT);
 	IXGBE_WRITE_REG(hw, IXGBE_GCR_EXT,
