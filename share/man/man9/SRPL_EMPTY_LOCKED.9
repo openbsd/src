@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SRPL_EMPTY_LOCKED.9,v 1.1 2016/11/20 12:05:25 mpi Exp $
+.\"	$OpenBSD: SRPL_EMPTY_LOCKED.9,v 1.2 2016/11/21 01:58:55 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2016 $
+.Dd $Mdocdate: November 21 2016 $
 .Dt SRPL_EMPTY_LOCKED 9
 .Os
 .Sh NAME
@@ -25,8 +25,8 @@
 .Nm SRPL_FOREACH_SAFE_LOCKED ,
 .Nm SRPL_INSERT_HEAD_LOCKED ,
 .Nm SRPL_INSERT_AFTER_LOCKED ,
-.Nm SRPL_REMOVE_LOCKED ,
-.Nd singly-linked shared reference pointer list
+.Nm SRPL_REMOVE_LOCKED
+.Nd serialised singly-linked shared reference pointer list operations
 .Sh SYNOPSIS
 .In sys/srp.h
 .Fn "SRPL_EMPTY_LOCKED" "SRPL_HEAD *sl"
@@ -35,7 +35,12 @@
 .Ft void *
 .Fn "SRPL_NEXT_LOCKED" "struct TYPE *listelm" "FIELDNAME"
 .Fn "SRPL_FOREACH_LOCKED" "VARNAME" "SRPL_HEAD *sl" "FIELDNAME"
-.Fn "SRPL_FOREACH_SAFE_LOCKED" "VARNAME" "SRPL_HEAD *sl" "FIELDNAME" "TEMP_VARNAME"
+.Fo "SRPL_FOREACH_SAFE_LOCKED"
+.Fa "VARNAME"
+.Fa "SRPL_HEAD *sl"
+.Fa "FIELDNAME"
+.Fa "TEMP_VARNAME"
+.Fc
 .Fo "SRPL_INSERT_HEAD_LOCKED"
 .Fa "struct srpl_rc *rc"
 .Fa "SRPL_HEAD *sl"
@@ -58,8 +63,8 @@
 .Sh DESCRIPTION
 The SRP list
 macros build a linked list on top of shared reference pointers.
-This allows concurrent traversal of a linked list and access to the
-items on the list.
+These macros allow manipulation and traversal of the linked list while
+access to the list is serialised by the caller.
 .Pp
 .Fn SRPL_EMPTY_LOCKED
 tests whether the SRP list
@@ -135,6 +140,8 @@ if there are no more elements.
 .Pp
 .Fn SRPL_EMPTY_LOCKED
 returns non-zero when the list is empty, otherwise 0.
+.Sh SEE ALSO
+.Xr SRPL_FIRST 9
 .Sh HISTORY
 The srp API was originally written by
 .An Jonathan Matthew Aq Mt jmatthew@openbsd.org

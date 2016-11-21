@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.12 2016/11/20 12:05:25 mpi Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.13 2016/11/21 01:58:55 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2016 $
+.Dd $Mdocdate: November 21 2016 $
 .Dt SRPL_RC_INIT 9
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nm SRPL_HEAD ,
 .Nm SRPL_ENTRY ,
 .Nm SRPL_INIT ,
-.Nm SRPL_FIRST,
+.Nm SRPL_FIRST ,
 .Nm SRPL_NEXT ,
 .Nm SRPL_FOLLOW ,
 .Nm SRPL_FOREACH ,
@@ -123,7 +123,7 @@ and holds its reference via
 .Fn SRPL_FOLLOW
 accesses the element in the SRP list after
 .Fa listelm
-and swap the previous reference held via
+and swaps the previous reference held via
 .Fa sr
 for the reference of the newly accessed item.
 .Pp
@@ -143,6 +143,7 @@ calls to
 .Fn SRPL_FOLLOW ,
 or
 .Fn SRPL_FOREACH .
+.Pp
 An srpl_rc declaration can be initialised with the
 .Fn SRPL_RC_INITIALIZER
 macro.
@@ -167,6 +168,8 @@ and
 return a pointer to elements in the SRP list, or
 .Dv NULL
 if there are no more elements.
+.Sh SEE ALSO
+.Xr SRPL_FIRST_LOCKED 9
 .Sh HISTORY
 The srp API was originally written by
 .An Jonathan Matthew Aq Mt jmatthew@openbsd.org
