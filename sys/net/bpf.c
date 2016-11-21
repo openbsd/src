@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.153 2016/11/21 09:12:18 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.154 2016/11/21 09:15:40 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1364,7 +1364,7 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 {
 	struct bpf_hdr *hp;
 	int totlen, curlen;
-	int hdrlen;
+	int hdrlen, do_wakeup = 0;
 
 	if (d->bd_bif == NULL)
 		return;
@@ -1400,7 +1400,7 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 			return;
 		}
 		ROTATE_BUFFERS(d);
-		bpf_wakeup(d);
+		do_wakeup = 1;
 		curlen = 0;
 	}
 
@@ -1423,7 +1423,7 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 		 * Immediate mode is set.  A packet arrived so any
 		 * reads should be woken up.
 		 */
-		bpf_wakeup(d);
+		do_wakeup = 1;
 	}
 
 	if (d->bd_rdStart && (d->bd_rtout + d->bd_rdStart < ticks)) {
@@ -1432,12 +1432,15 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 		 * may have timeouts set.  We got here by getting
 		 * a packet, so wake up the reader.
 		 */
-		if (d->bd_fbuf) {
+		if (d->bd_fbuf != NULL) {
 			d->bd_rdStart = 0;
 			ROTATE_BUFFERS(d);
-			bpf_wakeup(d);
+			do_wakeup = 1;
 		}
 	}
+
+	if (do_wakeup)
+		bpf_wakeup(d);
 }
 
 /*
