@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.140 2016/11/21 12:37:16 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.141 2016/11/21 16:46:29 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -115,6 +115,7 @@ int	ixgbe_setup_receive_ring(struct rx_ring *);
 void	ixgbe_initialize_receive_units(struct ix_softc *);
 void	ixgbe_free_receive_structures(struct ix_softc *);
 void	ixgbe_free_receive_buffers(struct rx_ring *);
+void	ixgbe_initialize_rss_mapping(struct ix_softc *);
 int	ixgbe_rxfill(struct rx_ring *);
 void	ixgbe_rxrefill(void *);
 
@@ -2550,8 +2551,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	struct rx_ring	*rxr = sc->rx_rings;
 	struct ixgbe_hw	*hw = &sc->hw;
 	uint32_t	bufsz, fctrl, srrctl, rxcsum;
-	uint32_t	reta, mrqc = 0, hlreg;
-	uint32_t	random[10];
+	uint32_t	hlreg;
 	int		i;
 
 	/*
@@ -2608,36 +2608,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 
 	/* Setup RSS */
 	if (sc->num_queues > 1) {
-		int j;
-		reta = 0;
-		/* set up random bits */
-		arc4random_buf(&random, sizeof(random));
-
-		/* Set up the redirection table */
-		for (i = 0, j = 0; i < 128; i++, j++) {
-			if (j == sc->num_queues)
-				j = 0;
-			reta = (reta << 8) | (j * 0x11);
-			if ((i & 3) == 3)
-				IXGBE_WRITE_REG(&sc->hw, IXGBE_RETA(i >> 2), reta);
-		}
-
-		/* Now fill our hash function seeds */
-		for (i = 0; i < 10; i++)
-			IXGBE_WRITE_REG(&sc->hw, IXGBE_RSSRK(i), random[i]);
-
-		/* Perform hash on these packet types */
-		mrqc = IXGBE_MRQC_RSSEN
-		    | IXGBE_MRQC_RSS_FIELD_IPV4
-		    | IXGBE_MRQC_RSS_FIELD_IPV4_TCP
-		    | IXGBE_MRQC_RSS_FIELD_IPV4_UDP
-		    | IXGBE_MRQC_RSS_FIELD_IPV6_EX_TCP
-		    | IXGBE_MRQC_RSS_FIELD_IPV6_EX
-		    | IXGBE_MRQC_RSS_FIELD_IPV6
-		    | IXGBE_MRQC_RSS_FIELD_IPV6_TCP
-		    | IXGBE_MRQC_RSS_FIELD_IPV6_UDP
-		    | IXGBE_MRQC_RSS_FIELD_IPV6_EX_UDP;
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_MRQC, mrqc);
+		ixgbe_initialize_rss_mapping(sc);
 
 		/* RSS and RX IPP Checksum are mutually exclusive */
 		rxcsum |= IXGBE_RXCSUM_PCSD;
@@ -2648,6 +2619,71 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		rxcsum |= IXGBE_RXCSUM_IPPCSE;
 
 	IXGBE_WRITE_REG(hw, IXGBE_RXCSUM, rxcsum);
+}
+
+void
+ixgbe_initialize_rss_mapping(struct ix_softc *sc)
+{
+	struct ixgbe_hw	*hw = &sc->hw;
+	uint32_t reta = 0, mrqc, rss_key[10];
+	int i, j, queue_id, table_size, index_mult;
+
+	/* set up random bits */
+	arc4random_buf(&rss_key, sizeof(rss_key));
+
+	/* Set multiplier for RETA setup and table size based on MAC */
+	index_mult = 0x1;
+	table_size = 128;
+	switch (sc->hw.mac.type) {
+	case ixgbe_mac_82598EB:
+		index_mult = 0x11;
+		break;
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
+		table_size = 512;
+		break;
+	default:
+		break;
+	}
+
+	/* Set up the redirection table */
+	for (i = 0, j = 0; i < table_size; i++, j++) {
+		if (j == sc->num_queues) j = 0;
+		queue_id = (j * index_mult);
+		/*
+		 * The low 8 bits are for hash value (n+0);
+		 * The next 8 bits are for hash value (n+1), etc.
+		 */
+		reta = reta >> 8;
+		reta = reta | ( ((uint32_t) queue_id) << 24);
+		if ((i & 3) == 3) {
+			if (i < 128)
+				IXGBE_WRITE_REG(hw, IXGBE_RETA(i >> 2), reta);
+			else
+				IXGBE_WRITE_REG(hw, IXGBE_ERETA((i >> 2) - 32),
+				    reta);
+			reta = 0;
+		}
+	}
+
+	/* Now fill our hash function seeds */
+	for (i = 0; i < 10; i++)
+		IXGBE_WRITE_REG(hw, IXGBE_RSSRK(i), rss_key[i]);
+
+	/*
+	 * Disable UDP - IP fragments aren't currently being handled
+	 * and so we end up with a mix of 2-tuple and 4-tuple
+	 * traffic.
+	 */
+	mrqc = IXGBE_MRQC_RSSEN
+	     | IXGBE_MRQC_RSS_FIELD_IPV4
+	     | IXGBE_MRQC_RSS_FIELD_IPV4_TCP
+	     | IXGBE_MRQC_RSS_FIELD_IPV6_EX_TCP
+	     | IXGBE_MRQC_RSS_FIELD_IPV6_EX
+	     | IXGBE_MRQC_RSS_FIELD_IPV6
+	     | IXGBE_MRQC_RSS_FIELD_IPV6_TCP
+	;
+	IXGBE_WRITE_REG(hw, IXGBE_MRQC, mrqc);
 }
 
 /*********************************************************************
