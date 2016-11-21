@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.37 2016/11/21 18:19:51 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.38 2016/11/21 19:18:39 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -474,10 +474,9 @@ ofp13_validate_packet_out(struct switchd *sc,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
 	struct ofp_packet_out		*pout;
-	size_t				 len;
-	off_t				 off;
+	size_t				 len, plen, diff;
+	off_t				 off, noff;
 	struct ofp_action_header	*ah;
-	struct ofp_action_output	*ao;
 
 	off = 0;
 	if ((pout = ibuf_seek(ibuf, off, sizeof(*pout))) == NULL) {
@@ -486,36 +485,42 @@ ofp13_validate_packet_out(struct switchd *sc,
 		return (-1);
 	}
 
-	log_debug("\tbuffer %s port %s actions length %u",
-	    print_map(ntohl(pout->pout_buffer_id), ofp_pktout_map),
-	    print_map(ntohl(pout->pout_in_port), ofp_port_map),
-	    ntohs(pout->pout_actions_len));
-	len = ntohl(pout->pout_actions_len);
-
 	off += sizeof(*pout);
-	while ((ah = ibuf_seek(ibuf, off, len)) != NULL &&
-	    ntohs(ah->ah_len) >= (uint16_t)sizeof(*ah)) {
-		switch (ntohs(ah->ah_type)) {
-		case OFP_ACTION_OUTPUT:
-			ao = (struct ofp_action_output *)ah;
-			log_debug("\t\taction type %s length %d "
-			    "port %s max length %s",
-			    print_map(ntohs(ao->ao_type), ofp_action_map),
-			    ntohs(ao->ao_len),
-			    print_map(ntohs(ao->ao_port), ofp_port_map),
-			    print_map(ntohs(ao->ao_max_len),
-			    ofp_controller_maxlen_map));
-			break;
-		default:
-			log_debug("\t\taction type %s length %d",
-			    print_map(ntohs(ah->ah_type), ofp_action_map),
-			    ntohs(ah->ah_len));
-			break;
-		}
-		if (pout->pout_buffer_id == (uint32_t)-1)
-			break;
-		off += ntohs(ah->ah_len);
+	len = ntohs(pout->pout_actions_len);
+	log_debug("\tbuffer %s in_port %s actions_len %lu",
+	    print_map(ntohl(pout->pout_buffer_id), ofp_pktout_map),
+	    print_map(ntohl(pout->pout_in_port), ofp_port_map), len);
+
+	while (len > 0) {
+		if ((ah = ibuf_seek(ibuf, off, sizeof(*ah))) == NULL)
+			return (-1);
+
+		noff = off;
+		ofp13_validate_action(sc, oh, ibuf, &off, ah);
+
+		diff = off - noff;
+		/* Loop prevention. */
+		if (off < noff || diff == 0)
+			return (-1);
+
+		len -= diff;
 	}
+
+	/* Check for encapsulated packet truncation. */
+	len = ntohs(oh->oh_length) - off;
+	plen = ibuf_length(ibuf) - off;
+
+	if (plen < len) {
+		log_debug("\ttruncated packet %lu < %lu", plen, len);
+
+		/* Buffered packets can be truncated */
+		if (pout->pout_buffer_id != htonl(OFP_PKTOUT_NO_BUFFER))
+			len = plen;
+		else
+			return (-1);
+	}
+	if (ibuf_seek(ibuf, off, len) == NULL)
+		return (-1);
 
 	return (0);
 }
