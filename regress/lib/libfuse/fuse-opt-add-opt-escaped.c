@@ -31,18 +31,18 @@ main(int ac, char **av)
 		return (1);
 
 	if (fuse_opt_add_opt_escaped(&opt, "-a") != 0)
-		return (1);
+		return (2);
 	if (fuse_opt_add_opt_escaped(&opt, ",a,b,c") != 0)
-		return (1);
+		return (3);
 	if (fuse_opt_add_opt_escaped(&opt, "\\,\\,,,,\\\\,") != 0)
-		return (1);
+		return (4);
 	if (fuse_opt_add_opt_escaped(&opt, "test") != 0)
-		return (1);
+		return (5);
 
 	if (fuse_opt_add_opt_escaped(&opt, NULL) != -1)
-		return (1);
+		return (6);
 	if (fuse_opt_add_opt_escaped(&opt, "") != -1)
-		return (1);
+		return (7);
 
 	return (strcmp(opt, opt2));
 }

@@ -40,20 +40,20 @@ match_opts(const struct fuse_opt *opts, const int *results)
 	if (fuse_opt_match(opts, NULL) != 0)
 		return (1);
 	if (fuse_opt_match(opts, "") != 0)
-		return (1);
+		return (2);
 
 	if (fuse_opt_match(opts, "bar=") != results[0])
-		return (1);
+		return (3);
 	if (fuse_opt_match(opts, "--foo=") != results[1])
-		return (1);
+		return (4);
 	if (fuse_opt_match(opts, "bar=%s") != results[2])
-		return (1);
+		return (5);
 	if (fuse_opt_match(opts, "--foo=%lu") != results[3])
-		return (1);
+		return (6);
 	if (fuse_opt_match(opts, "-x ") != results[4])
-		return (1);
+		return (7);
 	if (fuse_opt_match(opts, "-x %s") != results[5])
-		return (1);
+		return (8);
 
 	return (0);
 }

@@ -42,20 +42,20 @@ main(int ac, char **av)
 	if (!args.allocated)
 		return (1);
 	if (fuse_opt_add_arg(&args, NULL) != -1)
-		return (1);
+		return (2);
 	if (fuse_opt_add_arg(&args, "") != -1)
-		return (1);
+		return (3);
 
 	for (i = 0; i < len; i++)
 		if (strcmp(args.argv[i+1], argstest[i]) != 0)
-			return (1);
+			return (4);
 
 	if (args.argc != len + 1)
-		return (1);
+		return (5);
 
 	fuse_opt_free_args(&args);
 	if (args.allocated)
-		return (1);
+		return (6);
 	return (0);
 }
 

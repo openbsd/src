@@ -31,22 +31,22 @@ main(int ac, char **av)
 		return (1);
 
 	if (fuse_opt_add_opt(&opt, "-a") != 0)
-		return (1);
+		return (2);
 	if (fuse_opt_add_opt(&opt, "--bc") != 0)
-		return (1);
+		return (3);
 	if (fuse_opt_add_opt(&opt, "01234") != 0)
-		return (1);
+		return (4);
 	if (fuse_opt_add_opt(&opt, "-56789") != 0)
-		return (1);
+		return (5);
 	if (fuse_opt_add_opt(&opt, "-o test1") != 0)
-		return (1);
+		return (6);
 	if (fuse_opt_add_opt(&opt, "test") != 0)
-		return (1);
+		return (7);
 
 	if (fuse_opt_add_opt(&opt, NULL) != -1)
-		return (1);
+		return (8);
 	if (fuse_opt_add_opt(&opt, "") != -1)
-		return (1);
+		return (9);
 
 	return (strcmp(opt, opt2));
 }
