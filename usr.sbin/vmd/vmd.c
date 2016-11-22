@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.40 2016/11/22 11:31:38 edd Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.41 2016/11/22 12:55:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -455,7 +455,7 @@ vmd_configure(void)
 {
 	struct vmd_vm		*vm;
 	struct vmd_switch	*vsw;
-	int		 	 res, ret = 0;
+	int			 ret = 0;
 
 	/*
 	 * pledge in the parent process:
@@ -497,16 +497,15 @@ vmd_configure(void)
 			    vm->vm_params.vmc_params.vcp_name);
 			continue;
 		}
-		res = config_setvm(&env->vmd_ps, vm, -1);
-		if (res == -1) {
+		if ((ret = config_setvm(&env->vmd_ps, vm, -1)) == -1) {
 			log_warn("%s: failed to create vm %s",
 			    __func__,
 			    vm->vm_params.vmc_params.vcp_name);
-			ret = -1;
 			vm_remove(vm);
 			goto fail;
 		}
 	}
+
  fail:
 	return (ret);
 }
