@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.15 2016/11/04 22:27:08 reyk Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.16 2016/11/22 17:21:56 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -132,6 +132,13 @@ ofp_input(struct switch_connection *con, struct ibuf *ibuf)
 		return (-1);
 	}
 
+	if (con->con_version != OFP_V_0 &&
+	    oh->oh_version != con->con_version) {
+		log_debug("wrong version %d, expected %d",
+		    oh->oh_version, con->con_version);
+		return (-1);
+	}
+
 	switch (oh->oh_version) {
 	case OFP_V_1_0:
 		if (ofp10_input(sc, con, oh, ibuf) != 0)
@@ -165,6 +172,10 @@ ofp_open(struct privsep *ps, struct switch_connection *con)
 	log_info("%s: new connection %u.%u from switch %u",
 	    __func__, con->con_id, con->con_instance,
 	    sw == NULL ? 0 : sw->sw_id);
+
+	/* Send the hello with the latest version we support. */
+	if (ofp_send_hello(ps->ps_env, con, OFP_V_1_3) == -1)
+		return (-1);
 
 	return (0);
 }

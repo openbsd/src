@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.16 2016/11/21 18:19:51 rzalamena Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.17 2016/11/22 17:21:56 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -60,7 +60,7 @@ int	 ofp10_validate_packet_out(struct switchd *,
 	    struct ofp_header *, struct ibuf *);
 
 struct ofp_callback ofp10_callbacks[] = {
-	{ OFP10_T_HELLO,		ofp10_hello, NULL },
+	{ OFP10_T_HELLO,		ofp10_hello, ofp_validate_hello },
 	{ OFP10_T_ERROR,		NULL, ofp10_validate_error },
 	{ OFP10_T_ECHO_REQUEST,		ofp10_echo_request, NULL },
 	{ OFP10_T_ECHO_REPLY,		NULL, NULL },
@@ -262,13 +262,8 @@ ofp10_hello(struct switchd *sc, struct switch_connection *con,
 		return (-1);
 	}
 
-	/* Echo back the received Hello packet */
-	oh->oh_version = OFP_V_1_0;
-	oh->oh_length = htons(sizeof(*oh));
-	oh->oh_xid = htonl(con->con_xidnxt++);
-	if (ofp10_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
+	if (ofp_recv_hello(sc, con, oh, ibuf) == -1)
 		return (-1);
-	ofp_output(con, oh, NULL);
 
 #if 0
 	(void)write(fd, &oh, sizeof(oh));

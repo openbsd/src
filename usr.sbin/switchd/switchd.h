@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.25 2016/11/18 16:49:35 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.26 2016/11/22 17:21:56 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -93,6 +93,7 @@ struct switch_connection {
 	struct sockaddr_storage	 con_local;
 	in_port_t		 con_port;
 	uint32_t		 con_xidnxt;
+	int			 con_version;
 
 	struct event		 con_ev;
 	struct ibuf		*con_rbuf;
@@ -347,6 +348,13 @@ int		 oflowmod_instructionclose(struct oflowmod_ctx *);
 int		 oflowmod_state(struct oflowmod_ctx *,
 		    unsigned int, unsigned int);
 int		 oflowmod_err(struct oflowmod_ctx *, const char *, int);
+int		 ofp_validate_hello(struct switchd *,
+		    struct sockaddr_storage *, struct sockaddr_storage *,
+		    struct ofp_header *, struct ibuf *);
+int		 ofp_recv_hello(struct switchd *, struct switch_connection *,
+		    struct ofp_header *, struct ibuf *);
+int		 ofp_send_hello(struct switchd *, struct switch_connection *,
+		    int);
 
 /* ofcconn.c */
 void		 ofcconn(struct privsep *, struct privsep_proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_common.c,v 1.7 2016/11/17 13:10:26 reyk Exp $	*/
+/*	$OpenBSD: ofp_common.c,v 1.8 2016/11/22 17:21:56 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -42,6 +42,8 @@
 
 #include "switchd.h"
 #include "ofp_map.h"
+
+int		ofp_setversion(struct switch_connection *, int);
 
 int
 ofp_validate_header(struct switchd *sc,
@@ -114,6 +116,176 @@ ofp_output(struct switch_connection *con, struct ofp_header *oh,
 	}
 
 	ofrelay_write(con, buf);
+
+	return (0);
+}
+
+int
+ofp_send_hello(struct switchd *sc, struct switch_connection *con, int version)
+{
+	struct ofp_hello_element_header	*he;
+	struct ofp_header		*oh;
+	struct ibuf			*ibuf;
+	size_t				 hstart, hend;
+	uint32_t			*bmp;
+	int				 rv = -1;
+
+	if ((ibuf = ibuf_static()) == NULL ||
+	    (oh = ibuf_advance(ibuf, sizeof(*oh))) == NULL ||
+	    (he = ibuf_advance(ibuf, sizeof(*he))) == NULL)
+		goto done;
+
+	/* Write down all versions we support. */
+	hstart = ibuf->wpos;
+	if ((bmp = ibuf_advance(ibuf, sizeof(*bmp))) == NULL)
+		goto done;
+
+	*bmp = htonl((1 << OFP_V_1_0) | (1 << OFP_V_1_3));
+	hend = ibuf->wpos;
+
+	/* Fill the headers. */
+	oh->oh_version = version;
+	oh->oh_type = OFP_T_HELLO;
+	oh->oh_length = htons(ibuf_length(ibuf));
+	oh->oh_xid = htonl(con->con_xidnxt++);
+	he->he_type = htons(OFP_HELLO_T_VERSION_BITMAP);
+	he->he_length = htons(sizeof(*he) + (hend - hstart));
+
+	if (ofp_validate(sc, &con->con_local, &con->con_peer, oh, ibuf,
+	    version) != 0)
+		goto done;
+
+	rv = ofp_output(con, NULL, ibuf);
+
+ done:
+	ibuf_free(ibuf);
+	return (rv);
+}
+
+int
+ofp_validate_hello(struct switchd *sc,
+    struct sockaddr_storage *src, struct sockaddr_storage *dst,
+    struct ofp_header *oh, struct ibuf *ibuf)
+{
+	struct ofp_hello_element_header	*he;
+	uint32_t			*bmp;
+	off_t				 poff;
+	int				 helen, i, ver;
+
+	/* No extra element headers. */
+	if (ntohs(oh->oh_length) == sizeof(*oh))
+		return (0);
+
+	/* Test for supported element headers. */
+	if ((he = ibuf_seek(ibuf, sizeof(*oh), sizeof(*he))) == NULL)
+		return (-1);
+	if (he->he_type != htons(OFP_HELLO_T_VERSION_BITMAP))
+		return (-1);
+
+	log_debug("\tversion bitmap:");
+
+	/* Validate header sizes. */
+	helen = ntohs(he->he_length);
+	if (helen < (int)sizeof(*he))
+		return (-1);
+	else if (helen == sizeof(*he))
+		return (0);
+
+	helen -= sizeof(*he);
+	/* Invalid bitmap size. */
+	if ((helen % sizeof(*bmp)) != 0)
+		return (-1);
+
+	ver = 0;
+	poff = sizeof(*oh) + sizeof(*he);
+	while (helen > 0) {
+		if ((bmp = ibuf_seek(ibuf, poff, sizeof(*bmp))) == NULL)
+			return (-1);
+
+		for (i = 0; i < 32; i++, ver++) {
+			if ((ntohl(*bmp) & (1 << i)) == 0)
+				continue;
+
+			log_debug("\t\tversion %s",
+			    print_map(ver, ofp_v_map));
+		}
+
+		helen -= sizeof(*bmp);
+		poff += sizeof(*bmp);
+	}
+
+	return (0);
+}
+
+int
+ofp_setversion(struct switch_connection *con, int version)
+{
+	switch (version) {
+	case OFP_V_1_0:
+	case OFP_V_1_3:
+		con->con_version = version;
+		return (0);
+
+	default:
+		return (-1);
+	}
+}
+
+int
+ofp_recv_hello(struct switchd *sc, struct switch_connection *con,
+    struct ofp_header *oh, struct ibuf *ibuf)
+{
+	struct ofp_hello_element_header	*he;
+	uint32_t			*bmp;
+	off_t				 poff;
+	int				 helen, i, ver;
+
+	/* No extra element headers, just use the header version. */
+	if (ntohs(oh->oh_length) == sizeof(*oh))
+		return (ofp_setversion(con, oh->oh_version));
+
+	/* Read the element header. */
+	if ((he = ibuf_seek(ibuf, sizeof(*oh), sizeof(*he))) == NULL)
+		return (-1);
+
+	/* We don't support anything else than the version bitmap. */
+	if (he->he_type != htons(OFP_HELLO_T_VERSION_BITMAP))
+		return (-1);
+
+	/* Validate header sizes. */
+	helen = ntohs(he->he_length);
+	if (helen < (int)sizeof(*he))
+		return (-1);
+	else if (helen == sizeof(*he))
+		return (ofp_setversion(con, oh->oh_version));
+
+	helen -= sizeof(*he);
+	/* Invalid bitmap size. */
+	if ((helen % sizeof(*bmp)) != 0)
+		return (-1);
+
+	ver = 0;
+	poff = sizeof(*oh) + sizeof(*he);
+
+	/* Loop through the bitmaps and choose the higher version. */
+	while (helen > 0) {
+		if ((bmp = ibuf_seek(ibuf, poff, sizeof(*bmp))) == NULL)
+			return (-1);
+
+		for (i = 0; i < 32; i++, ver++) {
+			if ((ntohl(*bmp) & (1 << i)) == 0)
+				continue;
+
+			ofp_setversion(con, ver);
+		}
+
+		helen -= sizeof(*bmp);
+		poff += sizeof(*bmp);
+	}
+
+	/* Check if we have set any version, otherwise fallback. */
+	if (con->con_version == OFP_V_0)
+		return (ofp_setversion(con, oh->oh_version));
 
 	return (0);
 }

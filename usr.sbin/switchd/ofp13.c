@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.39 2016/11/21 19:33:12 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.40 2016/11/22 17:21:56 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -109,7 +109,7 @@ int	 ofp13_tablemiss_sendctrl(struct switchd *, struct switch_connection *,
 	    uint8_t);
 
 struct ofp_callback ofp13_callbacks[] = {
-	{ OFP_T_HELLO,			ofp13_hello, NULL },
+	{ OFP_T_HELLO,			ofp13_hello, ofp_validate_hello },
 	{ OFP_T_ERROR,			NULL, ofp13_validate_error },
 	{ OFP_T_ECHO_REQUEST,		ofp13_echo_request, NULL },
 	{ OFP_T_ECHO_REPLY,		NULL, NULL },
@@ -639,13 +639,8 @@ ofp13_hello(struct switchd *sc, struct switch_connection *con,
 		return (-1);
 	}
 
-	/* Echo back the received Hello packet */
-	oh->oh_version = OFP_V_1_3;
-	oh->oh_length = htons(sizeof(*oh));
-	oh->oh_xid = htonl(con->con_xidnxt++);
-	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
+	if (ofp_recv_hello(sc, con, oh, ibuf) == -1)
 		return (-1);
-	ofp_output(con, oh, NULL);
 
 	/* Ask for switch features so we can get more information. */
 	if (ofp13_featuresrequest(sc, con) == -1)
