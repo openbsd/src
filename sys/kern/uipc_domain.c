@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.45 2016/03/03 00:34:10 dlg Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.46 2016/11/22 10:32:31 mpi Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -219,13 +219,15 @@ pfctlinput(int cmd, struct sockaddr *sa)
 {
 	struct domain *dp;
 	struct protosw *pr;
-	int i;
+	int i, s;
 
+	s = splsoftnet();
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_ctlinput)
 				(*pr->pr_ctlinput)(cmd, sa, 0, NULL);
 	}
+	splx(s);
 }
 
 void
@@ -234,13 +236,15 @@ pfslowtimo(void *arg)
 	struct timeout *to = (struct timeout *)arg;
 	struct domain *dp;
 	struct protosw *pr;
-	int i;
+	int i, s;
 
+	s = splsoftnet();
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_slowtimo)
 				(*pr->pr_slowtimo)();
 	}
+	splx(s);
 	timeout_add_msec(to, 500);
 }
 
@@ -250,12 +254,14 @@ pffasttimo(void *arg)
 	struct timeout *to = (struct timeout *)arg;
 	struct domain *dp;
 	struct protosw *pr;
-	int i;
+	int i, s;
 
+	s = splsoftnet();
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_fasttimo)
 				(*pr->pr_fasttimo)();
 	}
+	splx(s);
 	timeout_add_msec(to, 200);
 }
