@@ -263,7 +263,7 @@ hv_match(struct device *parent, void *match, void *aux)
 	struct pv_attach_args *pva = aux;
 	struct pvbus_hv *hv = &pva->pva_hv[PVBUS_HYPERV];
 
-	if (hv->hv_base == 0)
+	if ((hv->hv_major == 0 && hv->hv_minor == 0) || hv->hv_base == 0)
 		return (0);
 
 	return (1);
@@ -279,11 +279,18 @@ hv_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pvbus = hv;
 	sc->sc_dmat = pva->pva_dmat;
 
+	if (!(hv->hv_features & CPUID_HV_MSR_HYPERCALL) ||
+	    !(hv->hv_features & CPUID_HV_MSR_SYNIC)) {
+		printf(": not functional\n");
+		return;
+	}
+
 	printf("\n");
 
 	hv_set_version(sc);
 
-	tc_init(&hv_timecounter);
+	if (hv->hv_features & CPUID_HV_MSR_TIME_REFCNT)
+		tc_init(&hv_timecounter);
 
 	if (hv_init_hypercall(sc))
 		return;
