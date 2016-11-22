@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.39 2016/11/04 15:16:44 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.40 2016/11/22 11:31:38 edd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -235,6 +235,31 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_END_DATA:
+		/*
+		 * PROC_VMM has responded with the *running* VMs, now we
+		 * append the others. These use the special value 0 for their
+		 * kernel id to indicate that they are not running.
+		 */
+		TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+			if (!vm->vm_running) {
+				memset(&vir, 0, sizeof(vir));
+				vir.vir_info.vir_id = 0;
+				strlcpy(vir.vir_info.vir_name,
+				    vm->vm_params.vmc_params.vcp_name,
+				    VMM_MAX_NAME_LEN);
+				vir.vir_info.vir_memory_size =
+				    vm->vm_params.vmc_params.vcp_memranges[0].vmr_size;
+				vir.vir_info.vir_ncpus =
+				    vm->vm_params.vmc_params.vcp_ncpus;
+				if (proc_compose_imsg(ps, PROC_CONTROL, -1,
+				    IMSG_VMDOP_GET_INFO_VM_DATA,
+				    imsg->hdr.peerid, -1, &vir,
+				    sizeof(vir)) == -1) {
+					vm_remove(vm);
+					return (-1);
+				}
+			}
+		}
 		IMSG_SIZE_CHECK(imsg, &res);
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
 		break;
@@ -466,6 +491,12 @@ vmd_configure(void)
 	}
 
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+		if (vm->vm_disabled) {
+			log_debug("%s: not creating vm %s (disabled)",
+			    __func__,
+			    vm->vm_params.vmc_params.vcp_name);
+			continue;
+		}
 		res = config_setvm(&env->vmd_ps, vm, -1);
 		if (res == -1) {
 			log_warn("%s: failed to create vm %s",
@@ -516,6 +547,12 @@ vmd_reload(unsigned int reset, const char *filename)
 
 		TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 			if (vm->vm_running == 0) {
+				if (vm->vm_disabled) {
+					log_debug("%s: not creating vm %s"
+					    " (disabled)", __func__,
+					    vm->vm_params.vmc_params.vcp_name);
+					continue;
+				}
 				res = config_setvm(&env->vmd_ps, vm, -1);
 				if (res == -1) {
 					log_warn("%s: failed to create vm %s",

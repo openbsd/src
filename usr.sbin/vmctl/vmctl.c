@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.16 2016/10/06 16:53:39 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.17 2016/11/22 11:31:38 edd Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -353,11 +353,21 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 	for (i = 0; i < ct; i++) {
 		vir = &list[i].vir_info;
 		if (check_info_id(vir->vir_name, vir->vir_id)) {
-			printf("%5u %5u %5zd %7zdMB %7zdMB %*s %s\n",
-			    vir->vir_id, vir->vir_creator_pid,
-			    vir->vir_ncpus, vir->vir_memory_size,
-			    vir->vir_used_size / 1024 / 1024 , VM_TTYNAME_MAX,
-			    list[i].vir_ttyname, vir->vir_name);
+			if (vir->vir_id != 0) {
+				/* running vm */
+				printf("%5u %5u %5zd %7zdMB %7zdMB %*s %s\n",
+				    vir->vir_id, vir->vir_creator_pid,
+				    vir->vir_ncpus, vir->vir_memory_size,
+				    vir->vir_used_size / 1024 / 1024 , VM_TTYNAME_MAX,
+				    list[i].vir_ttyname, vir->vir_name);
+			} else {
+				/* disabled vm */
+				printf("%5s %5s %5zd %7zdMB %9s %*s %s\n",
+				    "-", "-",
+				    vir->vir_ncpus, vir->vir_memory_size,
+				    "-", VM_TTYNAME_MAX,
+				    "-", vir->vir_name);
+			}
 		}
 		if (check_info_id(vir->vir_name, vir->vir_id) > 0) {
 			for (j = 0; j < vir->vir_ncpus; j++) {

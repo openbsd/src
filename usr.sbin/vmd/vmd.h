@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.34 2016/11/04 15:16:44 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.35 2016/11/22 11:31:38 edd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -128,6 +128,7 @@ TAILQ_HEAD(switchlist, vmd_switch);
 struct vmd_vm {
 	struct vmop_create_params vm_params;
 	pid_t			 vm_pid;
+	/* Userspace ID of VM. The user never sees this */
 	uint32_t		 vm_vmid;
 	int			 vm_kernel;
 	int			 vm_disks[VMM_MAX_DISKS_PER_VM];
@@ -135,7 +136,10 @@ struct vmd_vm {
 	char			*vm_ttyname;
 	int			 vm_tty;
 	uint32_t		 vm_peerid;
+	/* When set, VM is running now (PROC_PARENT only) */
 	int			 vm_running;
+	/* When set, VM is not started by default (PROC_PARENT only) */
+	int			 vm_disabled;
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
 TAILQ_HEAD(vmlist, vmd_vm);
