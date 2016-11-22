@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.14 2016/11/20 12:45:26 reyk Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.15 2016/11/22 23:23:12 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -625,10 +625,11 @@ void
 switch_port_detach(void *arg)
 {
 	struct ifnet		*ifp = (struct ifnet *)arg;
-	struct switch_softc	*sc = ifp->if_softc;
+	struct switch_softc	*sc;
 	struct switch_port	*swpo;
 
 	swpo = (struct switch_port *)ifp->if_switchport;
+	sc = swpo->swpo_switch;
 	if (swpo->swpo_flags & IFBIF_LOCAL)
 		switch_port_unset_local(sc, swpo);
 
