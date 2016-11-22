@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.75 2016/10/26 21:07:22 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.76 2016/11/22 19:29:54 procter Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -298,7 +298,6 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	u_int			 count;
 	u_char			*dst, *mdst;
 	int			 afto, hlen, mlen, off;
-	union pf_headers	 pdhdrs;
 
 	struct pf_pdesc		 pd;
 	struct pf_addr		 osaddr, odaddr;
@@ -404,7 +403,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	 * Rewrite addresses if needed. Reason pointer must be NULL to avoid
 	 * counting the packet here again.
 	 */
-	if (pf_setup_pdesc(&pd, &pdhdrs, pfloghdr->af, pfloghdr->dir, NULL,
+	if (pf_setup_pdesc(&pd, pfloghdr->af, pfloghdr->dir, NULL,
 	    mhdr, NULL) != PF_PASS)
 		goto copy;
 	pd.naf = pfloghdr->naf;
@@ -421,7 +420,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	    pfloghdr->sport, &pfloghdr->daddr, pfloghdr->dport, 0,
 	    pfloghdr->dir))) {
 		m_copyback(pd.m, pd.off, min(pd.m->m_len - pd.off, pd.hdrlen),
-		    pd.hdr.any, M_NOWAIT);
+		    &pd.hdr, M_NOWAIT);
 #ifdef INET6
 		if (afto) {
 			PF_ACPY(&pd.nsaddr, &pfloghdr->saddr, pd.naf);

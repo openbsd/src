@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.196 2016/11/21 17:52:20 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.197 2016/11/22 19:29:54 procter Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -854,7 +854,7 @@ no_fragment:
 int
 pf_normalize_tcp(struct pf_pdesc *pd)
 {
-	struct tcphdr	*th = pd->hdr.tcp;
+	struct tcphdr	*th = &pd->hdr.tcp;
 	u_short		 reason;
 	u_int8_t	 flags;
 	u_int		 rewrite = 0;
@@ -910,7 +910,7 @@ tcp_drop:
 int
 pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 {
-	struct tcphdr	*th = pd->hdr.tcp;
+	struct tcphdr	*th = &pd->hdr.tcp;
 	u_int32_t	 tsval, tsecr;
 	u_int8_t	 hdr[60];
 	u_int8_t	*opt;
@@ -1005,7 +1005,7 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
     struct pf_state *state, struct pf_state_peer *src,
     struct pf_state_peer *dst, int *writeback)
 {
-	struct tcphdr	*th = pd->hdr.tcp;
+	struct tcphdr	*th = &pd->hdr.tcp;
 	struct timeval	 uptime;
 	u_int32_t	 tsval, tsecr;
 	u_int		 tsval_from_last;
@@ -1396,7 +1396,7 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 int
 pf_normalize_mss(struct pf_pdesc *pd, u_int16_t maxmss)
 {
-	struct tcphdr	*th = pd->hdr.tcp;
+	struct tcphdr	*th = &pd->hdr.tcp;
 	u_int16_t	 mss;
 	int		 thoff;
 	int		 opt, cnt, optlen = 0;

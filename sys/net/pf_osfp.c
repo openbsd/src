@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.38 2016/10/26 21:07:22 bluhm Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.39 2016/11/22 19:29:54 procter Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -86,7 +86,7 @@ void				 pf_osfp_insert(struct pf_osfp_list *,
 struct pf_osfp_enlist *
 pf_osfp_fingerprint(struct pf_pdesc *pd)
 {
-	struct tcphdr	*th = pd->hdr.tcp;
+	struct tcphdr	*th = &pd->hdr.tcp;
 	struct ip	*ip = NULL;
 	struct ip6_hdr	*ip6 = NULL;
 	char		 hdr[60];

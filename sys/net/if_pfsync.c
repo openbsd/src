@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.237 2016/11/14 13:25:00 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.238 2016/11/22 19:29:54 procter Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1733,7 +1733,6 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 {
 	struct pfsync_softc *sc = pfsyncif;
 	struct pf_pdesc pdesc;
-	union pf_headers pdhdrs;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -1745,7 +1744,7 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 		m_freem(pd->pd_m);
 	else {
 		if (pd->pd_st->rule.ptr->rt == PF_ROUTETO) {
-			if (pf_setup_pdesc(&pdesc, &pdhdrs,
+			if (pf_setup_pdesc(&pdesc,
 			    pd->pd_st->key[PF_SK_WIRE]->af,
 			    pd->pd_st->direction, pd->pd_st->rt_kif,
 			    pd->pd_m, NULL) != PF_PASS) {
