@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiehci.c,v 1.9 2016/08/27 16:40:31 kettenis Exp $ */
+/*	$OpenBSD: sxiehci.c,v 1.10 2016/11/22 11:03:08 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -74,6 +74,7 @@
 #define AHB_INCRX_ALIGN		(1 << 8)
 #define AHB_INCR4		(1 << 9)
 #define AHB_INCR8		(1 << 10)
+#define AHB_INCR16		(1 << 11)
 
 struct sxiehci_softc {
 	struct ehci_softc	sc;
@@ -91,7 +92,8 @@ struct cfattach sxiehci_ca = {
 	sxiehci_detach, sxiehci_activate
 };
 
-void sxiehci_attach_phy(struct sxiehci_softc *);
+void sxiehci_attach_sun4i_phy(struct sxiehci_softc *);
+void sxiehci_attach_sun9i_phy(struct sxiehci_softc *);
 
 int
 sxiehci_match(struct device *parent, void *match, void *aux)
@@ -105,6 +107,8 @@ sxiehci_match(struct device *parent, void *match, void *aux)
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-ehci"))
 	    return 1;
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun8i-h3-ehci"))
+	    return 1;
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun9i-a80-ehci"))
 	    return 1;
 
 	return 0;
@@ -136,7 +140,11 @@ sxiehci_attach(struct device *parent, struct device *self, void *aux)
 
 	clock_enable_all(sc->sc_node);
 	reset_deassert_all(sc->sc_node);
-	sxiehci_attach_phy(sc);
+
+	if (OF_is_compatible(sc->sc_node, "allwinner,sun9i-a80-ehci"))
+		sxiehci_attach_sun9i_phy(sc);
+	else
+		sxiehci_attach_sun4i_phy(sc);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
@@ -179,7 +187,7 @@ out:
 }
 
 void
-sxiehci_attach_phy(struct sxiehci_softc *sc)
+sxiehci_attach_sun4i_phy(struct sxiehci_softc *sc)
 {
 	uint32_t vbus_supply;
 	uint32_t phys[2];
@@ -224,6 +232,39 @@ sxiehci_attach_phy(struct sxiehci_softc *sc)
 	vbus_supply = OF_getpropint(node, name, 0);
 	if (vbus_supply)
 		regulator_enable(vbus_supply);
+}
+
+void
+sxiehci_attach_sun9i_phy(struct sxiehci_softc *sc)
+{
+	uint32_t phy_supply;
+	uint32_t phys[1];
+	uint32_t val;
+	int node;
+
+	if (OF_getpropintarray(sc->sc_node, "phys", phys,
+	    sizeof(phys)) != sizeof(phys))
+		return;
+
+	node = OF_getnodebyphandle(phys[0]);
+	if (node == -1)
+		return;
+
+	pinctrl_byname(node, "default");
+	clock_enable(node, "phy");
+	reset_deassert(node, "phy");
+
+	val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USB_PMU_IRQ_ENABLE);
+	val |= AHB_INCR16;
+	val |= AHB_INCR8;	/* AHB INCR8 enable */
+	val |= AHB_INCR4;	/* AHB burst type INCR4 enable */
+	val |= AHB_INCRX_ALIGN;	/* AHB INCRX align enable */
+	val |= ULPI_BYPASS;	/* ULPI bypass enable */
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USB_PMU_IRQ_ENABLE, val);
+
+	phy_supply = OF_getpropint(node, "phy-supply", 0);
+	if (phy_supply)
+		regulator_enable(phy_supply);
 }
 
 int
