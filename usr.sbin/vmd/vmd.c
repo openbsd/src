@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.41 2016/11/22 12:55:33 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.42 2016/11/22 21:55:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -79,17 +79,10 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		res = vm_register(ps, &vmc, &vm, 0);
-		if (res == -1) {
+		if (vm_register(ps, &vmc, &vm, 0) == -1 ||
+		    config_setvm(ps, vm, imsg->hdr.peerid) == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
-		} else {
-			res = config_setvm(ps, vm, imsg->hdr.peerid);
-			if (res == -1) {
-				res = errno;
-				cmd = IMSG_VMDOP_START_VM_RESPONSE;
-				vm_remove(vm);
-			}
 		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
@@ -455,7 +448,6 @@ vmd_configure(void)
 {
 	struct vmd_vm		*vm;
 	struct vmd_switch	*vsw;
-	int			 ret = 0;
 
 	/*
 	 * pledge in the parent process:
@@ -487,6 +479,7 @@ vmd_configure(void)
 			log_warn("%s: failed to create switch %s",
 			    __func__, vsw->sw_name);
 			switch_remove(vsw);
+			return (-1);
 		}
 	}
 
@@ -497,17 +490,11 @@ vmd_configure(void)
 			    vm->vm_params.vmc_params.vcp_name);
 			continue;
 		}
-		if ((ret = config_setvm(&env->vmd_ps, vm, -1)) == -1) {
-			log_warn("%s: failed to create vm %s",
-			    __func__,
-			    vm->vm_params.vmc_params.vcp_name);
-			vm_remove(vm);
-			goto fail;
-		}
+		if (config_setvm(&env->vmd_ps, vm, -1) == -1)
+			return (-1);
 	}
 
- fail:
-	return (ret);
+	return (0);
 }
 
 void
@@ -515,7 +502,6 @@ vmd_reload(unsigned int reset, const char *filename)
 {
 	struct vmd_vm		*vm;
 	struct vmd_switch	*vsw;
-	int		 	 res;
 
 	/* Switch back to the default config file */
 	if (filename == NULL || *filename == '\0')
@@ -541,6 +527,7 @@ vmd_reload(unsigned int reset, const char *filename)
 				log_warn("%s: failed to create switch %s",
 				    __func__, vsw->sw_name);
 				switch_remove(vsw);
+				return;
 			}
 		}
 
@@ -552,13 +539,8 @@ vmd_reload(unsigned int reset, const char *filename)
 					    vm->vm_params.vmc_params.vcp_name);
 					continue;
 				}
-				res = config_setvm(&env->vmd_ps, vm, -1);
-				if (res == -1) {
-					log_warn("%s: failed to create vm %s",
-					    __func__,
-					    vm->vm_params.vmc_params.vcp_name);
-					vm_remove(vm);
-				}
+				if (config_setvm(&env->vmd_ps, vm, -1) == -1)
+					return;
 			} else {
 				log_debug("%s: not creating vm \"%s\": "
 				    "(running)", __func__,

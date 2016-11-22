@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.19 2016/11/04 15:16:44 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.20 2016/11/22 21:55:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -136,13 +136,15 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 
 	errno = 0;
 
-	if (vm->vm_running)
+	if (vm->vm_running) {
+		log_warnx("%s: vm is already running", __func__);
+		errno = EALREADY;
 		goto fail;
+	}
 
 	diskfds = reallocarray(NULL, vcp->vcp_ndisks, sizeof(*diskfds));
 	if (diskfds == NULL) {
-		saved_errno = errno;
-		log_warn("%s: cannot allocate disk fds", __func__);
+		log_warn("%s: can't allocate disk fds", __func__);
 		goto fail;
 	}
 	for (i = 0; i < vcp->vcp_ndisks; i++)
@@ -150,8 +152,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 
 	tapfds = reallocarray(NULL, vcp->vcp_nnics, sizeof(*tapfds));
 	if (tapfds == NULL) {
-		saved_errno = errno;
-		log_warn("%s: cannot allocate tap fds", __func__);
+		log_warn("%s: can't allocate tap fds", __func__);
 		goto fail;
 	}
 	for (i = 0; i < vcp->vcp_nnics; i++)
@@ -161,7 +162,6 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 
 	/* Open kernel for child */
 	if ((kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
-		saved_errno = errno;
 		log_warn("%s: can't open kernel %s", __func__,
 		    vcp->vcp_kernel);
 		goto fail;
@@ -171,8 +171,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 	for (i = 0 ; i < vcp->vcp_ndisks; i++) {
 		if ((diskfds[i] =
 		    open(vcp->vcp_disks[i], O_RDWR)) == -1) {
-			saved_errno = errno;
-			log_warn("%s: can't open %s", __func__,
+			log_warn("%s: can't open disk %s", __func__,
 			    vcp->vcp_disks[i]);
 			goto fail;
 		}
@@ -187,9 +186,9 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 		if (*s != '\0' && strcmp("tap", s) != 0) {
 			if (priv_getiftype(s, ifname, &unit) == -1 ||
 			    strcmp(ifname, "tap") != 0) {
-				saved_errno = errno;
-				log_warn("%s: invalid tap name",
-				    __func__);
+				log_warnx("%s: invalid tap name %s",
+				    __func__, s);
+				errno = EINVAL;
 				goto fail;
 			}
 		} else
@@ -207,13 +206,11 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 			s = ifname;
 		}
 		if (tapfds[i] == -1) {
-			saved_errno = errno;
-			log_warn("%s: can't open %s", __func__, s);
+			log_warn("%s: can't open tap %s", __func__, s);
 			goto fail;
 		}
 		if ((vif->vif_name = strdup(s)) == NULL) {
-			saved_errno = errno;
-			log_warn("%s: can't save ifname", __func__);
+			log_warn("%s: can't save tap %s", __func__, s);
 			goto fail;
 		}
 
@@ -221,9 +218,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 		s = vmc->vmc_ifswitch[i];
 		if (*s != '\0') {
 			if ((vif->vif_switch = strdup(s)) == NULL) {
-				saved_errno = errno;
-				log_warn("%s: can't save switch",
-				    __func__);
+				log_warn("%s: can't save switch %s",
+				    __func__, s);
 				goto fail;
 			}
 		}
@@ -232,9 +228,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 		s = vmc->vmc_ifgroup[i];
 		if (*s != '\0') {
 			if ((vif->vif_group = strdup(s)) == NULL) {
-				saved_errno = errno;
-				log_warn("%s: can't save group",
-				    __func__);
+				log_warn("%s: can't save group %s",
+				    __func__, s);
 				goto fail;
 			}
 		}
@@ -246,8 +241,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 	/* Open TTY */
 	if (openpty(&fd, &ttys_fd, ptyname, NULL, NULL) == -1 ||
 	    (vm->vm_ttyname = strdup(ptyname)) == NULL) {
-		saved_errno = errno;
-		log_warn("%s: can't open tty", __func__);
+		log_warn("%s: can't open tty %s", __func__, ptyname);
 		goto fail;
 	}
 	close(ttys_fd);
@@ -277,6 +271,9 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 	return (0);
 
  fail:
+	saved_errno = errno;
+	log_warnx("%s: failed to start vm %s", __func__, vcp->vcp_name);
+
 	if (kernfd != -1)
 		close(kernfd);
 	if (diskfds != NULL) {
