@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.165 2016/11/21 09:09:06 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.166 2016/11/22 10:29:39 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1541,13 +1541,17 @@ sowwakeup(struct socket *so)
 int
 sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 {
-	int error = 0;
+	int s, error = 0;
 	struct mbuf *m = m0;
 
 	if (level != SOL_SOCKET) {
-		if (so->so_proto && so->so_proto->pr_ctloutput)
-			return ((*so->so_proto->pr_ctloutput)
-				  (PRCO_SETOPT, so, level, optname, &m0));
+		if (so->so_proto && so->so_proto->pr_ctloutput) {
+			s = splsoftnet();
+			error = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
+			    level, optname, &m0);
+			splx(s);
+			return (error);
+		}
 		error = ENOPROTOOPT;
 	} else {
 		switch (optname) {
@@ -1689,8 +1693,11 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				struct domain *dom = so->so_proto->pr_domain;
 
 				level = dom->dom_protosw->pr_protocol;
-				return ((*so->so_proto->pr_ctloutput)
-				    (PRCO_SETOPT, so, level, optname, &m0));
+				s = splsoftnet();
+				error = (*so->so_proto->pr_ctloutput)
+				    (PRCO_SETOPT, so, level, optname, &m0);
+				splx(s);
+				return (error);
 			}
 			error = ENOPROTOOPT;
 			break;
@@ -1718,8 +1725,10 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 			break;
 		}
 		if (error == 0 && so->so_proto && so->so_proto->pr_ctloutput) {
-			(void) ((*so->so_proto->pr_ctloutput)
-				  (PRCO_SETOPT, so, level, optname, &m0));
+			s = splsoftnet();
+			(*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
+			    level, optname, &m0);
+			splx(s);
 			m = NULL;	/* freed by protocol */
 		}
 	}
@@ -1732,12 +1741,16 @@ bad:
 int
 sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 {
+	int s, error = 0;
 	struct mbuf *m;
 
 	if (level != SOL_SOCKET) {
 		if (so->so_proto && so->so_proto->pr_ctloutput) {
-			return ((*so->so_proto->pr_ctloutput)
-				  (PRCO_GETOPT, so, level, optname, mp));
+			s = splsoftnet();
+			error = (*so->so_proto->pr_ctloutput)(PRCO_GETOPT, so,
+			    level, optname, mp);
+			splx(s);
+			return (error);
 		} else
 			return (ENOPROTOOPT);
 	} else {
@@ -1817,8 +1830,11 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 				struct domain *dom = so->so_proto->pr_domain;
 
 				level = dom->dom_protosw->pr_protocol;
-				return ((*so->so_proto->pr_ctloutput)
-				    (PRCO_GETOPT, so, level, optname, mp));
+				s = splsoftnet();
+				error = (*so->so_proto->pr_ctloutput)
+				    (PRCO_GETOPT, so, level, optname, mp);
+				splx(s);
+				return (error);
 			}
 			return (ENOPROTOOPT);
 			break;
