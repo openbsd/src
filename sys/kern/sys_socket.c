@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.24 2016/11/21 10:30:42 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.25 2016/11/22 12:11:38 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -119,8 +119,12 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	 * interface and routing ioctls should have a
 	 * different entry since a socket's unnecessary
 	 */
-	if (IOCGROUP(cmd) == 'i')
-		return (ifioctl(so, cmd, data, p));
+	if (IOCGROUP(cmd) == 'i') {
+		s = splsoftnet();
+		error = ifioctl(so, cmd, data, p);
+		splx(s);
+		return (error);
+	}
 	if (IOCGROUP(cmd) == 'r')
 		return (EOPNOTSUPP);
 	s = splsoftnet();
