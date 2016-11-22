@@ -1768,6 +1768,7 @@
 ./usr/share/man/man3/BN_cmp.3
 ./usr/share/man/man3/BN_copy.3
 ./usr/share/man/man3/BN_generate_prime.3
+./usr/share/man/man3/BN_get0_nist_prime_521.3
 ./usr/share/man/man3/BN_mod_inverse.3
 ./usr/share/man/man3/BN_mod_mul_montgomery.3
 ./usr/share/man/man3/BN_mod_mul_reciprocal.3
@@ -1801,6 +1802,7 @@
 ./usr/share/man/man3/DSA_set_method.3
 ./usr/share/man/man3/DSA_sign.3
 ./usr/share/man/man3/DSA_size.3
+./usr/share/man/man3/DTLSv1_listen.3
 ./usr/share/man/man3/ECDSA_SIG_new.3
 ./usr/share/man/man3/EC_GFp_simple_method.3
 ./usr/share/man/man3/EC_GROUP_copy.3
@@ -1832,7 +1834,7 @@
 ./usr/share/man/man3/EVP_PKEY_decrypt.3
 ./usr/share/man/man3/EVP_PKEY_derive.3
 ./usr/share/man/man3/EVP_PKEY_encrypt.3
-./usr/share/man/man3/EVP_PKEY_get_default_digest.3
+./usr/share/man/man3/EVP_PKEY_get_default_digest_nid.3
 ./usr/share/man/man3/EVP_PKEY_keygen.3
 ./usr/share/man/man3/EVP_PKEY_new.3
 ./usr/share/man/man3/EVP_PKEY_print_private.3
