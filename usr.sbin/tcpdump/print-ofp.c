@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.8 2016/11/20 12:45:26 reyk Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.9 2016/11/22 13:01:32 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -129,7 +129,7 @@ ofp_print_hello(const u_char *bp, u_int length, u_int ohlen)
 	helen -= sizeof(*he);
 
 	switch (hetype) {
-	case OPF_HELLO_T_VERSION_BITMAP:
+	case OFP_HELLO_T_VERSION_BITMAP:
 		printf(" version bitmap <");
 		if (helen < sizeof(bmp)) {
 			printf("invalid header>");
@@ -138,7 +138,7 @@ ofp_print_hello(const u_char *bp, u_int length, u_int ohlen)
 
  next_bitmap:
 		if (length < sizeof(bmp)) {
-			printf("truncated>");
+			printf("[|OpenFlow]>");
 			break;
 		}
 

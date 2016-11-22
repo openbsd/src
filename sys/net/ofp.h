@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.11 2016/11/20 12:45:26 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.12 2016/11/22 13:01:32 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -86,7 +86,7 @@ struct ofp_hello_element_header {
 	uint16_t	he_length;
 } __packed;
 
-#define OPF_HELLO_T_VERSION_BITMAP	1	/* Supported version bitmap */
+#define OFP_HELLO_T_VERSION_BITMAP	1	/* Supported version bitmap */
 
 struct ofp_hello_element_versionbitmap {
 	uint16_t	hev_type;
@@ -894,4 +894,4 @@ struct dlt_openflow_hdr {
 #define DLT_OPENFLOW_TO_SWITCH		1
 #define DLT_OPENFLOW_TO_CONTROLLER	2
 
-#endif /* _NET_OPF_H_ */
+#endif /* _NET_OFP_H_ */
