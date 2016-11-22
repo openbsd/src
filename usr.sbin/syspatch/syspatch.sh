@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.59 2016/11/22 10:53:37 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.60 2016/11/22 14:20:39 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -243,7 +243,7 @@ rollback_patch()
 	mkdir -p ${_explodir}
 
 	_files="$(tar xvzphf ${_PDIR}/${_REL}/${_rbpatch} -C ${_explodir})"
-	checkfs ${_files}
+	checkfs ${_files} ${_PDIR}/${_REL} # check for ro /var/syspatch/${OSREV}
 
 	for _file in ${_files}; do
 		[[ ${_ret} == 0 ]] || break
