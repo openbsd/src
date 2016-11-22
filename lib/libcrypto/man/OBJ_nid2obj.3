@@ -1,6 +1,6 @@
-.\"	$OpenBSD: OBJ_nid2obj.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: OBJ_nid2obj.3,v 1.3 2016/11/22 21:38:18 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 22 2016 $
 .Dt OBJ_NID2OBJ 3
 .Os
 .Sh NAME
@@ -8,16 +8,16 @@
 .Nm OBJ_nid2ln ,
 .Nm OBJ_nid2sn ,
 .Nm OBJ_obj2nid ,
-.Nm OBJ_txt2nid ,
 .Nm OBJ_ln2nid ,
 .Nm OBJ_sn2nid ,
-.Nm OBJ_cmp ,
-.Nm OBJ_dup ,
+.Nm OBJ_txt2nid ,
 .Nm OBJ_txt2obj ,
 .Nm OBJ_obj2txt ,
+.Nm OBJ_cmp ,
+.Nm OBJ_dup ,
 .Nm OBJ_create ,
 .Nm OBJ_cleanup
-.Nd ASN1 object utility functions
+.Nd ASN.1 object utility functions
 .Sh SYNOPSIS
 .In openssl/objects.h
 .Ft ASN1_OBJECT *
@@ -78,9 +78,9 @@
 .Ft void
 .Fn OBJ_cleanup void
 .Sh DESCRIPTION
-The ASN1 object utility functions process
+The ASN.1 object utility functions process
 .Vt ASN1_OBJECT
-structures which are a representation of the ASN1 OBJECT IDENTIFIER
+structures which are a representation of the ASN.1 OBJECT IDENTIFIER
 (OID) type.
 .Pp
 .Fn OBJ_nid2obj ,
@@ -196,8 +196,8 @@ is only a single constant structure for each table object.
 Objects which are not in the table have the NID value
 .Dv NID_undef .
 .Pp
-Objects do not need to be in the internal tables to be processed, the
-functions
+Objects do not need to be in the internal tables to be processed:
+the functions
 .Fn OBJ_txt2obj
 and
 .Fn OBJ_obj2txt
@@ -213,7 +213,7 @@ if an error occurred.
 .Fn OBJ_nid2ln
 and
 .Fn OBJ_nid2sn
-returns a valid string or
+return a valid string or
 .Dv NULL
 on error.
 .Pp
@@ -228,20 +228,20 @@ on error.
 .Sh EXAMPLES
 Create an object for
 .Sy commonName :
-.Bd -literal
+.Bd -literal -offset indent
 ASN1_OBJECT *o;
 o = OBJ_nid2obj(NID_commonName);
 .Ed
 .Pp
 Check if an object is
-.Sy commonName
-.Bd -literal
+.Sy commonName :
+.Bd -literal -offset indent
 if (OBJ_obj2nid(obj) == NID_commonName)
 	/* Do something */
 .Ed
 .Pp
 Create a new NID and initialize an object from it:
-.Bd -literal
+.Bd -literal -offset indent
 int new_nid;
 ASN1_OBJECT *obj;
 new_nid = OBJ_create("1.2.3.4", "NewOID", "New Object Identifier");
@@ -249,7 +249,7 @@ obj = OBJ_nid2obj(new_nid);
 .Ed
 .Pp
 Create a new object directly:
-.Bd -literal
+.Bd -literal -offset indent
 obj = OBJ_txt2obj("1.2.3.4", 1);
 .Ed
 .Sh SEE ALSO

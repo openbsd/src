@@ -1,6 +1,6 @@
-.\"	$OpenBSD: OPENSSL_config.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: OPENSSL_config.3,v 1.3 2016/11/22 21:38:18 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 22 2016 $
 .Dt OPENSSL_CONFIG 3
 .Os
 .Sh NAME
@@ -65,12 +65,12 @@ The environment variable
 .Ev OPENSSL_CONF
 can be set to specify the location of the configuration file.
 .Pp
-Currently ASN1 OBJECT and ENGINE configuration can be performed.
+Currently ASN.1 OBJECT and ENGINE configuration can be performed.
 .Pp
 There are several reasons why calling the OpenSSL configuration routines
 is advisable.
 For example new ENGINE functionality was added to OpenSSL 0.9.7.
-In OpenSSL 0.9.7 control functions can be supported by ENGINEs, this can be
+In OpenSSL 0.9.7 control functions can be supported by ENGINEs which can be
 used (among other things) to load dynamic ENGINEs from shared libraries
 (DSOs).
 However very few applications currently support the control interface
@@ -113,5 +113,5 @@ It is however
 better than nothing.
 Applications which need finer control over their configuration
 functionality should use the configuration functions such as
-.Xr CONF_load_modules 3
+.Xr CONF_modules_load 3
 directly.
