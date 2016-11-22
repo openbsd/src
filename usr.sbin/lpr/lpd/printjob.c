@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.57 2016/01/29 21:23:11 tb Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.58 2016/11/22 16:03:57 millert Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -1161,6 +1161,7 @@ sendmail(char *user, int bombed)
 			cp = "NOACCT";
 			break;
 		case FILTERERR:
+			cp = "FILTERERR";
 			if (stat(tempfile, &stb) < 0 || stb.st_size == 0 ||
 			    (fp = fopen(tempfile, "r")) == NULL) {
 				printf("\nhad some errors and may not have printed\n");
@@ -1170,7 +1171,6 @@ sendmail(char *user, int bombed)
 			while ((i = getc(fp)) != EOF)
 				putchar(i);
 			(void)fclose(fp);
-			cp = "FILTERERR";
 			break;
 		case ACCESS:
 			printf("\nwas not printed because it was not linked to the original file\n");
