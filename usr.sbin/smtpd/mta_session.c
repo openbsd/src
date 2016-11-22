@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.88 2016/11/21 13:00:43 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.89 2016/11/22 07:28:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1182,10 +1182,8 @@ mta_io(struct io *io, int evt, void *arg)
 			if (io_datalen(&s->io) >= LINE_MAX) {
 				mta_error(s, "Input too long");
 				mta_free(s);
-				return;
 			}
-			iobuf_normalize(&s->iobuf);
-			break;
+			return;
 		}
 
 		log_trace(TRACE_MTA, "mta: %p: <<< %s", s, line);
@@ -1263,8 +1261,6 @@ mta_io(struct io *io, int evt, void *arg)
 			mta_connect(s);
 			return;
 		}
-
-		iobuf_normalize(&s->iobuf);
 
 		if (io_datalen(&s->io)) {
 			log_debug("debug: mta: remaining data in input buffer");

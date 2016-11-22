@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.22 2016/11/21 13:00:43 eric Exp $	*/
+/*	$OpenBSD: filter.c,v 1.23 2016/11/22 07:28:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -706,7 +706,6 @@ filter_tx_io(struct io *io, int evt, void *arg)
 		}
 		s->idatalen += n;
 		io_drop(&s->iev, n);
-		iobuf_normalize(&s->ibuf);
 		return;
 
 	case IO_DISCONNECTED:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.294 2016/11/21 13:00:43 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.295 2016/11/22 07:28:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1310,10 +1310,8 @@ smtp_io(struct io *io, int evt, void *arg)
 		}
 
 		/* No complete line received */
-		if (line == NULL) {
-			iobuf_normalize(&s->iobuf);
+		if (line == NULL)
 			return;
-		}
 
 		/* Message body */
 		if (s->state == STATE_BODY && strcmp(line, ".")) {
@@ -1338,7 +1336,6 @@ smtp_io(struct io *io, int evt, void *arg)
 
 			rfc2822_parser_flush(&s->tx->rfc2822_parser);
 
-			iobuf_normalize(&s->iobuf);
 			io_set_write(io);
 
 			s->tx->dataeom = 1;
@@ -1353,7 +1350,6 @@ smtp_io(struct io *io, int evt, void *arg)
 		(void)strlcpy(s->cmd, line, sizeof s->cmd);
 		io_set_write(io);
 		smtp_command(s, line);
-		iobuf_normalize(&s->iobuf);
 		break;
 
 	case IO_LOWAT:

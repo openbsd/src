@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.30 2016/11/20 08:43:36 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.31 2016/11/22 07:28:42 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -464,6 +464,9 @@ io_reload(struct io *io)
 	/* io will be reloaded at release time */
 	if (io->flags & IO_HELD)
 		return;
+
+	if (io->iobuf)
+		iobuf_normalize(io->iobuf);
 
 #ifdef IO_SSL
 	if (io->ssl) {
