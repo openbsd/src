@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.54 2016/11/04 15:07:26 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.55 2016/11/22 22:51:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -219,9 +219,9 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		res = terminate_vm(&vtp);
 		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 		if (res == 0) {
-			/* Remove local reference */
-			vm = vm_getbyid(id);
-			vm_remove(vm);
+			/* Remove local reference if it exists */
+			if ((vm = vm_getbyid(id)) != NULL)
+				vm_remove(vm);
 		}
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
@@ -249,8 +249,9 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_VMDOP_START_VM_RESPONSE:
 		if (res != 0) {
-			vm = vm_getbyvmid(imsg->hdr.peerid);
-			vm_remove(vm);
+			/* Remove local reference if it exists */
+			if ((vm = vm_getbyvmid(imsg->hdr.peerid)) != NULL)
+				vm_remove(vm);
 		}
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		memset(&vmr, 0, sizeof(vmr));
