@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.40 2016/10/11 09:30:36 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.41 2016/11/23 16:44:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -140,6 +140,9 @@ key_string_get_modifiers(const char **string)
 		case 's':
 			modifiers |= KEYC_SHIFT;
 			break;
+		default:
+			*string = NULL;
+			return 0;
 		}
 		*string += 2;
 	}
@@ -179,7 +182,7 @@ key_string_lookup_string(const char *string)
 		string++;
 	}
 	modifiers |= key_string_get_modifiers(&string);
-	if (string[0] == '\0')
+	if (string == NULL || string[0] == '\0')
 		return (KEYC_UNKNOWN);
 
 	/* Is this a standard ASCII key? */
