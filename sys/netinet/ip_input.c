@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.285 2016/11/14 04:27:03 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.286 2016/11/23 10:04:31 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -357,6 +357,12 @@ ipv4_input(struct mbuf *m)
 	        goto out;
 	}
 
+	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
+	    ip->ip_dst.s_addr == INADDR_ANY) {
+		ip_ours(m);
+		goto out;
+	}
+
 	if (in_ouraddr(m, ifp, &rt)) {
 		ip_ours(m);
 		goto out;
@@ -421,12 +427,6 @@ ipv4_input(struct mbuf *m)
 				ipstat_inc(ips_cantforward);
 			goto bad;
 		}
-		ip_ours(m);
-		goto out;
-	}
-
-	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
-	    ip->ip_dst.s_addr == INADDR_ANY) {
 		ip_ours(m);
 		goto out;
 	}
