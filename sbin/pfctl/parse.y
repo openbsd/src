@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.655 2016/08/26 06:06:58 guenther Exp $	*/
+/*	$OpenBSD: parse.y,v 1.656 2016/11/23 12:13:23 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1528,6 +1528,11 @@ pfrule		: action dir logquick interface af proto fromto
 				r.rule_flag |= PFRULE_AFTO;
 			if (($8.marker & FOM_AFTO) && r.direction != PF_IN) {
 				yyerror("af-to can only be used with direction in");
+				YYERROR;
+			}
+			if (($8.marker & FOM_AFTO) && $8.route.rt) {
+				yyerror("af-to cannot be used together with "
+				    "route-to, reply-to, dup-to");
 				YYERROR;
 			}
 			r.af = $5;
