@@ -1474,7 +1474,7 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 	struct hv_msg *msg;
 	int i, j, last, left, rv;
 	int bodylen = 0, ncmds = 0, pfn = 0;
-	int waitok = cold ? M_NOWAIT : M_WAITOK;
+	int waitflag = cold ? M_NOWAIT : M_WAITOK;
 	uint64_t *frames;
 	paddr_t pa;
 	caddr_t body;
@@ -1485,12 +1485,12 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 
 	KASSERT((buflen & (PAGE_SIZE - 1)) == 0);
 
-	if ((msg = malloc(sizeof(*msg), M_DEVBUF, M_ZERO | waitok)) == NULL)
+	if ((msg = malloc(sizeof(*msg), M_DEVBUF, M_ZERO | waitflag)) == NULL)
 		return (ENOMEM);
 
 	/* Prepare array of frame addresses */
 	if ((frames = mallocarray(total, sizeof(*frames), M_DEVBUF, M_ZERO |
-	    waitok)) == NULL) {
+	    waitflag)) == NULL) {
 		free(msg, M_DEVBUF, sizeof(*msg));
 		return (ENOMEM);
 	}
@@ -1509,7 +1509,7 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 	hdr = (struct vmbus_chanmsg_gpadl_conn *)msg->msg_req.hc_data;
 	msg->msg_rsp = &rsp;
 	msg->msg_rsplen = sizeof(rsp);
-	if (!waitok)
+	if (waitflag == M_NOWAIT)
 		msg->msg_flags = MSGF_NOSLEEP;
 
 	left = total - inhdr;
@@ -1518,7 +1518,7 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 	if (left > 0) {
 		ncmds = MAX(1, left / HV_NPFNBODY + left % HV_NPFNBODY);
 		bodylen = ncmds * VMBUS_MSG_DSIZE_MAX;
-		body = malloc(bodylen, M_DEVBUF, M_ZERO | waitok);
+		body = malloc(bodylen, M_DEVBUF, M_ZERO | waitflag);
 		if (body == NULL) {
 			free(msg, M_DEVBUF, sizeof(*msg));
 			free(frames, M_DEVBUF, atop(buflen) * sizeof(*frames));
@@ -1568,7 +1568,7 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 			cmdlen += last * sizeof(uint64_t);
 		else
 			cmdlen += HV_NPFNBODY * sizeof(uint64_t);
-		rv = hv_cmd(sc, cmd, cmdlen, NULL, 0, waitok | HCF_NOREPLY);
+		rv = hv_cmd(sc, cmd, cmdlen, NULL, 0, waitflag | HCF_NOREPLY);
 		if (rv != 0) {
 			DPRINTF("%s: GPADL_SUBCONN (iteration %d/%d) failed "
 			    "with %d\n", sc->sc_dev.dv_xname, i, ncmds, rv);
