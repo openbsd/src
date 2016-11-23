@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.166 2016/11/22 10:29:39 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.167 2016/11/23 13:05:53 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1367,8 +1367,16 @@ somove(struct socket *so, int wait)
 			    "m_type %d", so, so->so_type, *mp, (*mp)->m_type);
 #endif
 		if ((*mp)->m_len > size) {
-			if (!maxreached || (*mp = m_copym(
-			    so->so_rcv.sb_mb, 0, size, wait)) == NULL) {
+			/*
+			 * Move only a partial mbuf at maximum splice length or
+			 * if the drain buffer is too small for this large mbuf.
+			 */
+			if (!maxreached && so->so_snd.sb_datacc > 0) {
+				len -= size;
+				break;
+			}
+			*mp = m_copym(so->so_rcv.sb_mb, 0, size, wait);
+			if (*mp == NULL) {
 				len -= size;
 				break;
 			}
