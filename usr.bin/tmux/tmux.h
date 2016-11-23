@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.678 2016/11/16 00:24:03 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.679 2016/11/23 17:01:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1835,7 +1835,7 @@ void	 key_bindings_remove(const char *, key_code);
 void	 key_bindings_remove_table(const char *);
 void	 key_bindings_init(void);
 void	 key_bindings_dispatch(struct key_binding *, struct client *,
-	     struct mouse_event *);
+	     struct mouse_event *, struct cmd_find_state *);
 
 /* key-string.c */
 key_code	 key_string_lookup_string(const char *);
