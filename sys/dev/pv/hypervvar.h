@@ -17,7 +17,7 @@
 #ifndef _DEV_PV_HYPERVVAR_H_
 #define _DEV_PV_HYPERVVAR_H_
 
-#define HYPERV_DEBUG
+/* #define HYPERV_DEBUG */
 
 #ifdef HYPERV_DEBUG
 #define DPRINTF(x...)		printf(x)

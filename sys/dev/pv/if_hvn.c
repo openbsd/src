@@ -74,8 +74,6 @@
 #include <net/bpf.h>
 #endif
 
-#define HVN_DEBUG			1
-
 #define HVN_NVS_MSGSIZE			32
 #define HVN_NVS_BUFSIZE			PAGE_SIZE
 

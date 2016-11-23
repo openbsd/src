@@ -1267,7 +1267,7 @@ hv_ring_write(struct hv_ring_data *wrd, struct iovec *iov, int iov_cnt,
 
 	hv_ring_avail(wrd, &avail, NULL);
 	if (avail < datalen) {
-		printf("%s: avail %u datalen %u\n", __func__, avail, datalen);
+		DPRINTF("%s: avail %u datalen %u\n", __func__, avail, datalen);
 		return (EAGAIN);
 	}
 
@@ -1401,7 +1401,7 @@ hv_ring_read(struct hv_ring_data *rrd, void *data, uint32_t datalen,
 
 	hv_ring_avail(rrd, NULL, &avail);
 	if (avail < datalen) {
-		printf("%s: avail %u datalen %u\n", __func__, avail, datalen);
+		DPRINTF("%s: avail %u datalen %u\n", __func__, avail, datalen);
 		return (EAGAIN);
 	}
 
