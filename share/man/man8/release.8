@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.79 2016/11/19 23:31:28 tb Exp $
+.\"	$OpenBSD: release.8,v 1.80 2016/11/23 20:34:48 tb Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: November 19 2016 $
+.Dd $Mdocdate: November 23 2016 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -74,11 +74,11 @@ is to check them out using the appropriate
 tag.
 There are two families of tags:
 .Bl -tag -width OPENBSD_x_y_BASE
-.It Va OPENBSD_x_y_BASE
+.It OPENBSD_x_y_BASE
 This tag marks the source for the
 .Ox x.y
 release.
-.It Va OPENBSD_x_y
+.It OPENBSD_x_y
 This tag is a moving target.
 It marks the sources that belong to the stable branch and
 contains the patches described in
@@ -113,7 +113,7 @@ when needed.
 .Dl # cd /sys/arch/$(machine)/compile/GENERIC.MP
 .Pp
 Replace
-.Va GENERIC.MP
+.Pa GENERIC.MP
 with a different kernel configuration if necessary.
 .Pp
 Create the build directory and configuration file,
@@ -201,9 +201,8 @@ match the contents of the release tarballs:
 # unset RELEASEDIR DESTDIR
 .Ed
 .Ss 5. Build and install xenocara
-.Va Xenocara
-is based on the X.Org modular build system.
-Xenocara sources are supposed to be in
+Xenocara is based on the X.Org modular build system.
+Its sources are supposed to be in
 .Pa /usr/xenocara .
 The
 .Pa /usr/src
@@ -223,8 +222,7 @@ The following steps will build and install everything for the first time.
 The X Window System is created and installed in
 .Pa /usr/X11R6 .
 .Ss 6. Make and validate the xenocara release
-.Va xenocara
-uses
+Xenocara uses
 .Va DESTDIR
 and
 .Va RELEASEDIR
