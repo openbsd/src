@@ -89,6 +89,8 @@ int	hv_init_synic(struct hv_softc *);
 int	hv_cmd(struct hv_softc *, void *, size_t, void *, size_t, int);
 int	hv_start(struct hv_softc *, struct hv_msg *);
 int	hv_reply(struct hv_softc *, struct hv_msg *);
+void	hv_wait(struct hv_softc *, int (*done)(struct hv_softc *,
+	    struct hv_msg *), struct hv_msg *, void *, const char *);
 uint16_t hv_intr_signal(struct hv_softc *, void *);
 void	hv_intr(void);
 void	hv_event_intr(struct hv_softc *);
@@ -285,7 +287,7 @@ hv_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf("\n");
+	DPRINTF("\n");
 
 	hv_set_version(sc);
 
@@ -301,6 +303,21 @@ hv_attach(struct device *parent, struct device *self, void *aux)
 	if (hv_init_interrupts(sc))
 		return;
 
+	if (hv_vmbus_connect(sc))
+		return;
+
+	DPRINTF("%s", sc->sc_dev.dv_xname);
+	printf(": protocol %d.%d, features %#x\n",
+	    VMBUS_VERSION_MAJOR(sc->sc_proto),
+	    VMBUS_VERSION_MINOR(sc->sc_proto),
+	    hv->hv_features);
+
+	if (hv_channel_scan(sc))
+		return;
+
+	/* Attach heartbeat, KVP and other "internal" services */
+	hv_attach_icdevs(sc);
+
 	startuphook_establish(hv_deferred, sc);
 }
 
@@ -308,12 +325,6 @@ void
 hv_deferred(void *arg)
 {
 	struct hv_softc *sc = arg;
-
-	if (hv_vmbus_connect(sc))
-		return;
-
-	if (hv_channel_scan(sc))
-		return;
 
 	if (hv_attach_devices(sc))
 		return;
@@ -571,47 +582,54 @@ hv_start(struct hv_softc *sc, struct hv_msg *msg)
 	return (0);
 }
 
-int
-hv_reply(struct hv_softc *sc, struct hv_msg *msg)
+static int
+hv_reply_done(struct hv_softc *sc, struct hv_msg *msg)
 {
-	const char *wchan = "hvreply";
-	struct hv_msg *m, *tmp;
-	int i, s;
+	struct hv_msg *m;
 
-	if (msg->msg_flags & MSGF_NOQUEUE)
-		return (0);
-
-	for (i = 0; i < 1000; i++) {
-		mtx_enter(&sc->sc_rsplck);
-		TAILQ_FOREACH_SAFE(m, &sc->sc_rsps, msg_entry, tmp) {
-			if (m == msg) {
-				TAILQ_REMOVE(&sc->sc_rsps, m, msg_entry);
-				break;
-			}
-		}
-		mtx_leave(&sc->sc_rsplck);
-		if (m != NULL)
-			return (0);
-		if (msg->msg_flags & MSGF_NOSLEEP) {
-			delay(100000);
-			s = splnet();
-			hv_intr();
-			splx(s);
-		} else {
-			s = tsleep(&msg, PRIBIO | PCATCH, wchan, 1);
-			if (s != EWOULDBLOCK)
-				return (EINTR);
-		}
-	}
 	mtx_enter(&sc->sc_rsplck);
-	TAILQ_FOREACH_SAFE(m, &sc->sc_reqs, msg_entry, tmp) {
+	TAILQ_FOREACH(m, &sc->sc_rsps, msg_entry) {
 		if (m == msg) {
-			TAILQ_REMOVE(&sc->sc_reqs, m, msg_entry);
-			break;
+			mtx_leave(&sc->sc_rsplck);
+			return (1);
 		}
 	}
 	mtx_leave(&sc->sc_rsplck);
-	return (ETIMEDOUT);
+	return (0);
+}
+
+int
+hv_reply(struct hv_softc *sc, struct hv_msg *msg)
+{
+	if (msg->msg_flags & MSGF_NOQUEUE)
+		return (0);
+
+	hv_wait(sc, hv_reply_done, msg, msg, "hvreply");
+
+	mtx_enter(&sc->sc_rsplck);
+	TAILQ_REMOVE(&sc->sc_rsps, msg, msg_entry);
+	mtx_leave(&sc->sc_rsplck);
+
+	return (0);
+}
+
+void
+hv_wait(struct hv_softc *sc, int (*cond)(struct hv_softc *, struct hv_msg *),
+    struct hv_msg *msg, void *wchan, const char *wmsg)
+{
+	int s;
+
+	KASSERT(cold ? msg->msg_flags & MSGF_NOSLEEP : 1);
+
+	while (!cond(sc, msg)) {
+		if (msg->msg_flags & MSGF_NOSLEEP) {
+			delay(1000);
+			s = splnet();
+			hv_intr();
+			splx(s);
+		} else
+			tsleep(wchan, PRIBIO, wmsg ? wmsg : "hvwait", 1);
+	}
 }
 
 uint16_t
@@ -730,13 +748,13 @@ hv_message_intr(struct hv_softc *sc)
 void
 hv_channel_response(struct hv_softc *sc, struct vmbus_chanmsg_hdr *rsphdr)
 {
-	struct hv_msg *msg, *tmp;
+	struct hv_msg *msg;
 	struct vmbus_chanmsg_hdr *reqhdr;
 	int req;
 
 	req = hv_msg_dispatch[rsphdr->chm_type].hmd_request;
 	mtx_enter(&sc->sc_reqlck);
-	TAILQ_FOREACH_SAFE(msg, &sc->sc_reqs, msg_entry, tmp) {
+	TAILQ_FOREACH(msg, &sc->sc_reqs, msg_entry) {
 		reqhdr = (struct vmbus_chanmsg_hdr *)&msg->msg_req.hc_data;
 		if (reqhdr->chm_type == req) {
 			TAILQ_REMOVE(&sc->sc_reqs, msg, msg_entry);
@@ -844,8 +862,6 @@ hv_vmbus_connect(struct hv_softc *sc)
 			sc->sc_flags |= HSF_CONNECTED;
 			sc->sc_proto = versions[i];
 			sc->sc_handle = VMBUS_GPADL_START;
-			DPRINTF("%s: protocol version %#x\n",
-			    sc->sc_dev.dv_xname, versions[i]);
 			break;
 		}
 	}
@@ -946,6 +962,12 @@ hv_guid_sprint(struct hv_guid *guid, char *str, size_t size)
 #endif
 }
 
+static int
+hv_channel_scan_done(struct hv_softc *sc, struct hv_msg *msg __unused)
+{
+	return (sc->sc_flags & HSF_OFFERS_DELIVERED);
+}
+
 int
 hv_channel_scan(struct hv_softc *sc)
 {
@@ -959,13 +981,14 @@ hv_channel_scan(struct hv_softc *sc)
 	memset(&hdr, 0, sizeof(hdr));
 	hdr.chm_type = VMBUS_CHANMSG_CHREQUEST;
 
-	if (hv_cmd(sc, &hdr, sizeof(hdr), &rsp, sizeof(rsp), HCF_NOREPLY)) {
+	if (hv_cmd(sc, &hdr, sizeof(hdr), &rsp, sizeof(rsp),
+	    HCF_NOSLEEP | HCF_NOREPLY)) {
 		DPRINTF("%s: CHREQUEST failed\n", sc->sc_dev.dv_xname);
 		return (-1);
 	}
 
-	while ((sc->sc_flags & HSF_OFFERS_DELIVERED) == 0)
-		tsleep(&sc->sc_offers, PRIBIO, "hvoffers", 1);
+	hv_wait(sc, hv_channel_scan_done, (struct hv_msg *)&hdr,
+	    &sc->sc_offers, "hvscan");
 
 	TAILQ_INIT(&sc->sc_channels);
 	mtx_init(&sc->sc_channelck, IPL_NET);
@@ -1136,7 +1159,8 @@ hv_channel_open(struct hv_channel *ch, size_t buflen, void *udata,
 
 	if (ch->ch_ring == NULL &&
 	    hv_channel_ring_create(ch, buflen)) {
-		DPRINTF(": failed to create channel ring\n");
+		DPRINTF("%s: failed to create channel ring\n",
+		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
 
@@ -1158,7 +1182,8 @@ hv_channel_open(struct hv_channel *ch, size_t buflen, void *udata,
 
 	ch->ch_state = HV_CHANSTATE_OPENED;
 
-	rv = hv_cmd(sc, &cmd, sizeof(cmd), &rsp, sizeof(rsp), 0);
+	rv = hv_cmd(sc, &cmd, sizeof(cmd), &rsp, sizeof(rsp),
+	    cold ? HCF_NOSLEEP : HCF_SLEEPOK);
 	if (rv) {
 		hv_channel_ring_destroy(ch);
 		DPRINTF("%s: CHOPEN failed with %d\n",
@@ -1631,9 +1656,6 @@ hv_attach_devices(struct hv_softc *sc)
 
 	SLIST_INIT(&sc->sc_devs);
 	mtx_init(&sc->sc_devlck, IPL_NET);
-
-	/* Attach heartbeat, KVP and other "internal" services */
-	hv_attach_icdevs(sc);
 
 	TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
 		if (ch->ch_state != HV_CHANSTATE_OFFERED)
