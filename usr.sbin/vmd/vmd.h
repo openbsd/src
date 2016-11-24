@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.35 2016/11/22 11:31:38 edd Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.36 2016/11/24 07:58:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -25,6 +25,7 @@
 #include <net/if.h>
 
 #include <limits.h>
+#include <stdio.h>
 #include <pthread.h>
 
 #include "proc.h"
@@ -36,6 +37,7 @@
 #define VMD_CONF		"/etc/vm.conf"
 #define SOCKET_NAME		"/var/run/vmd.sock"
 #define VMM_NODE		"/dev/vmm"
+#define VM_DEFAULT_KERNEL	"/bsd"
 #define VM_NAME_MAX		64
 #define VM_TTYNAME_MAX		16
 #define MAX_TAP			256
@@ -201,6 +203,10 @@ int	 config_setvm(struct privsep *, struct vmd_vm *, uint32_t);
 int	 config_getvm(struct privsep *, struct imsg *);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
+
+/* vmboot.c */
+FILE	*vmboot_open(int, int, void **);
+void	 vmboot_close(FILE *, void *);
 
 /* parse.y */
 int	 parse_config(const char *);

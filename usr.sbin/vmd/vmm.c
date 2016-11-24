@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.55 2016/11/22 22:51:45 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.56 2016/11/24 07:58:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -465,7 +465,9 @@ start_vm(struct imsg *imsg, uint32_t *id)
 	size_t			 i;
 	int			 ret = EINVAL;
 	int			 fds[2], nicfds[VMM_MAX_NICS_PER_VM];
-	struct vcpu_reg_state vrs;
+	struct vcpu_reg_state	 vrs;
+	FILE			*kernfp;
+	void			*boot;
 
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
 		log_warnx("%s: can't find vm", __func__);
@@ -566,14 +568,22 @@ start_vm(struct imsg *imsg, uint32_t *id)
 	 	 */
 		memcpy(&vrs, &vcpu_init_flat32, sizeof(struct vcpu_reg_state));
 
+		/* Find and open kernel image */
+		if ((kernfp = vmboot_open(vm->vm_kernel,
+		    vm->vm_disks[0], &boot)) == NULL)
+			fatalx("failed to open kernel - exiting");
+
 		/* Load kernel image */
-		ret = loadelf_main(vm->vm_kernel, vcp, &vrs);
+		ret = loadelf_main(kernfp, vcp, &vrs);
 		if (ret) {
 			errno = ret;
 			fatal("failed to load kernel - exiting");
 		}
 
-		close(vm->vm_kernel);
+		vmboot_close(kernfp, boot);
+
+		if (vm->vm_kernel != -1)
+			close(vm->vm_kernel);
 
 		con_fd = vm->vm_tty;
 		if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1)

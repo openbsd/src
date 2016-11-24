@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.17 2016/11/22 11:31:38 edd Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.18 2016/11/24 07:58:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -70,12 +70,12 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 
 	if (memsize < 1)
 		errx(1, "specified memory size too small");
-	if (kernel == NULL)
-		errx(1, "no kernel specified");
 	if (ndisks > VMM_MAX_DISKS_PER_VM)
 		errx(1, "too many disks");
 	else if (ndisks == 0)
 		warnx("starting without disks");
+	if (kernel == NULL && ndisks == 0)
+		errx(1, "no kernel or disk specified");
 	if (nnics == -1)
 		nnics = 0;
 	if (nnics == 0)
@@ -103,7 +103,8 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 
 	if (name != NULL)
 		strlcpy(vcp->vcp_name, name, VMM_MAX_NAME_LEN);
-	strlcpy(vcp->vcp_kernel, kernel, VMM_MAX_KERNEL_PATH);
+	if (kernel != NULL)
+		strlcpy(vcp->vcp_kernel, kernel, VMM_MAX_KERNEL_PATH);
 	vcp->vcp_nnics = nnics;
 
 	imsg_compose(ibuf, IMSG_VMDOP_START_VM_REQUEST, 0, 0, -1,

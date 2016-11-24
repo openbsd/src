@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.20 2016/10/26 05:26:36 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.21 2016/11/24 07:58:55 reyk Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -118,13 +118,13 @@ static void setsegment(struct segment_descriptor *, uint32_t,
 static void setsegment(struct mem_segment_descriptor *, uint32_t,
     size_t, int, int, int, int);
 #endif
-static int elf32_exec(int, Elf32_Ehdr *, u_long *, int);
-static int elf64_exec(int, Elf64_Ehdr *, u_long *, int);
+static int elf32_exec(FILE *, Elf32_Ehdr *, u_long *, int);
+static int elf64_exec(FILE *, Elf64_Ehdr *, u_long *, int);
 static size_t create_bios_memmap(struct vm_create_params *, bios_memmap_t *);
 static uint32_t push_bootargs(bios_memmap_t *, size_t);
 static size_t push_stack(uint32_t, uint32_t);
 static void push_gdt(void);
-static size_t mread(int, paddr_t, size_t);
+static size_t mread(FILE *, paddr_t, size_t);
 static void marc4random_buf(paddr_t, int);
 static void mbzero(paddr_t, int);
 static void mbcopy(void *, paddr_t, int);
@@ -271,7 +271,7 @@ push_pt(void)
  *  various error codes returned from read(2) or loadelf functions
  */
 int
-loadelf_main(int fd, struct vm_create_params *vcp, struct vcpu_reg_state *vrs)
+loadelf_main(FILE *fp, struct vm_create_params *vcp, struct vcpu_reg_state *vrs)
 {
 	int r;
 	uint32_t bootargsz;
@@ -279,16 +279,16 @@ loadelf_main(int fd, struct vm_create_params *vcp, struct vcpu_reg_state *vrs)
 	u_long marks[MARK_MAX];
 	bios_memmap_t memmap[VMM_MAX_MEM_RANGES + 1];
 
-	if ((r = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr))
+	if ((r = fread(&hdr, 1, sizeof(hdr), fp)) != sizeof(hdr))
 		return 1;
 
 	memset(&marks, 0, sizeof(marks));
 	if (memcmp(hdr.elf32.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf32.e_ident[EI_CLASS] == ELFCLASS32) {
-		r = elf32_exec(fd, &hdr.elf32, marks, LOAD_ALL);
+		r = elf32_exec(fp, &hdr.elf32, marks, LOAD_ALL);
 	} else if (memcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf64.e_ident[EI_CLASS] == ELFCLASS64) {
-		r = elf64_exec(fd, &hdr.elf64, marks, LOAD_ALL);
+		r = elf64_exec(fp, &hdr.elf64, marks, LOAD_ALL);
 	}
 
 	if (r)
@@ -476,9 +476,9 @@ push_stack(uint32_t bootargsz, uint32_t end)
  *  returns 'sz' if successful, or 0 otherwise.
  */
 static size_t
-mread(int fd, paddr_t addr, size_t sz)
+mread(FILE *fp, paddr_t addr, size_t sz)
 {
-	int ct;
+	size_t ct;
 	size_t i, rd, osz;
 	char buf[PAGE_SIZE];
 
@@ -496,7 +496,7 @@ mread(int fd, paddr_t addr, size_t sz)
 		else
 			ct = sz;
 
-		if (read(fd, buf, ct) != ct) {
+		if (fread(buf, 1, ct, fp) != ct) {
 			log_warn("%s: error %d in mread", __progname, errno);
 			return (0);
 		}
@@ -520,7 +520,7 @@ mread(int fd, paddr_t addr, size_t sz)
 		else
 			ct = PAGE_SIZE;
 
-		if (read(fd, buf, ct) != ct) {
+		if (fread(buf, 1, ct, fp) != ct) {
 			log_warn("%s: error %d in mread", __progname, errno);
 			return (0);
 		}
@@ -668,13 +668,13 @@ mbcopy(void *src, paddr_t dst, int sz)
  *  1 if unsuccessful
  */
 static int
-elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
+elf64_exec(FILE *fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 {
 	Elf64_Shdr *shp;
 	Elf64_Phdr *phdr;
 	Elf64_Off off;
 	int i;
-	ssize_t sz;
+	size_t sz;
 	int first;
 	int havesyms, havelines;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
@@ -683,12 +683,12 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 	sz = elf->e_phnum * sizeof(Elf64_Phdr);
 	phdr = malloc(sz);
 
-	if (lseek(fd, (off_t)elf->e_phoff, SEEK_SET) == -1)  {
+	if (fseeko(fp, (off_t)elf->e_phoff, SEEK_SET) == -1)  {
 		free(phdr);
 		return 1;
 	}
 
-	if (read(fd, phdr, sz) != sz) {
+	if (fread(phdr, 1, sz, fp) != sz) {
 		free(phdr);
 		return 1;
 	}
@@ -728,12 +728,12 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 		    (IS_DATA(phdr[i]) && (flags & LOAD_DATA))) {
 
 			/* Read in segment. */
-			if (lseek(fd, (off_t)phdr[i].p_offset,
+			if (fseeko(fp, (off_t)phdr[i].p_offset,
 			    SEEK_SET) == -1) {
 				free(phdr);
 				return 1;
 			}
-			if (mread(fd, phdr[i].p_paddr, phdr[i].p_filesz) !=
+			if (mread(fp, phdr[i].p_paddr, phdr[i].p_filesz) !=
 			    phdr[i].p_filesz) {
 				free(phdr);
 				return 1;
@@ -773,14 +773,14 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 		maxp += sizeof(Elf64_Ehdr);
 
 	if (flags & (LOAD_SYM | COUNT_SYM)) {
-		if (lseek(fd, (off_t)elf->e_shoff, SEEK_SET) == -1)  {
+		if (fseeko(fp, (off_t)elf->e_shoff, SEEK_SET) == -1)  {
 			WARN(("lseek section headers"));
 			return 1;
 		}
 		sz = elf->e_shnum * sizeof(Elf64_Shdr);
 		shp = malloc(sz);
 
-		if (read(fd, shp, sz) != sz) {
+		if (fread(shp, 1, sz, fp) != sz) {
 			free(shp);
 			return 1;
 		}
@@ -788,15 +788,15 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 		shpp = maxp;
 		maxp += roundup(sz, sizeof(Elf64_Addr));
 
-		ssize_t shstrsz = shp[elf->e_shstrndx].sh_size;
+		size_t shstrsz = shp[elf->e_shstrndx].sh_size;
 		char *shstr = malloc(shstrsz);
-		if (lseek(fd, (off_t)shp[elf->e_shstrndx].sh_offset,
+		if (fseeko(fp, (off_t)shp[elf->e_shstrndx].sh_offset,
 		    SEEK_SET) == -1) {
 			free(shstr);
 			free(shp);
 			return 1;
 		}
-		if (read(fd, shstr, shstrsz) != shstrsz) {
+		if (fread(shstr, 1, shstrsz, fp) != shstrsz) {
 			free(shstr);
 			free(shp);
 			return 1;
@@ -819,13 +819,13 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 			    !strcmp(shstr + shp[i].sh_name, ".debug_line") ||
 			    !strcmp(shstr + shp[i].sh_name, ELF_CTF)) {
 				if (havesyms && (flags & LOAD_SYM)) {
-					if (lseek(fd, (off_t)shp[i].sh_offset,
+					if (fseeko(fp, (off_t)shp[i].sh_offset,
 					    SEEK_SET) == -1) {
 						free(shstr);
 						free(shp);
 						return 1;
 					}
-					if (mread(fd, maxp,
+					if (mread(fp, maxp,
 					    shp[i].sh_size) != shp[i].sh_size) {
 						free(shstr);
 						free(shp);
@@ -890,13 +890,13 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
  *  1 if unsuccessful
  */
 static int
-elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
+elf32_exec(FILE *fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 {
 	Elf32_Shdr *shp;
 	Elf32_Phdr *phdr;
 	Elf32_Off off;
 	int i;
-	ssize_t sz;
+	size_t sz;
 	int first;
 	int havesyms, havelines;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
@@ -905,12 +905,12 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 	sz = elf->e_phnum * sizeof(Elf32_Phdr);
 	phdr = malloc(sz);
 
-	if (lseek(fd, (off_t)elf->e_phoff, SEEK_SET) == -1)  {
+	if (fseeko(fp, (off_t)elf->e_phoff, SEEK_SET) == -1)  {
 		free(phdr);
 		return 1;
 	}
 
-	if (read(fd, phdr, sz) != sz) {
+	if (fread(phdr, 1, sz, fp) != sz) {
 		free(phdr);
 		return 1;
 	}
@@ -950,12 +950,12 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 		    (IS_DATA(phdr[i]) && (flags & LOAD_DATA))) {
 
 			/* Read in segment. */
-			if (lseek(fd, (off_t)phdr[i].p_offset,
+			if (fseeko(fp, (off_t)phdr[i].p_offset,
 			    SEEK_SET) == -1) {
 				free(phdr);
 				return 1;
 			}
-			if (mread(fd, phdr[i].p_paddr, phdr[i].p_filesz) !=
+			if (mread(fp, phdr[i].p_paddr, phdr[i].p_filesz) !=
 			    phdr[i].p_filesz) {
 				free(phdr);
 				return 1;
@@ -995,14 +995,14 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 		maxp += sizeof(Elf32_Ehdr);
 
 	if (flags & (LOAD_SYM | COUNT_SYM)) {
-		if (lseek(fd, (off_t)elf->e_shoff, SEEK_SET) == -1)  {
+		if (fseeko(fp, (off_t)elf->e_shoff, SEEK_SET) == -1)  {
 			WARN(("lseek section headers"));
 			return 1;
 		}
 		sz = elf->e_shnum * sizeof(Elf32_Shdr);
 		shp = malloc(sz);
 
-		if (read(fd, shp, sz) != sz) {
+		if (fread(shp, 1, sz, fp) != sz) {
 			free(shp);
 			return 1;
 		}
@@ -1010,15 +1010,15 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 		shpp = maxp;
 		maxp += roundup(sz, sizeof(Elf32_Addr));
 
-		ssize_t shstrsz = shp[elf->e_shstrndx].sh_size;
+		size_t shstrsz = shp[elf->e_shstrndx].sh_size;
 		char *shstr = malloc(shstrsz);
-		if (lseek(fd, (off_t)shp[elf->e_shstrndx].sh_offset,
+		if (fseeko(fp, (off_t)shp[elf->e_shstrndx].sh_offset,
 		    SEEK_SET) == -1) {
 			free(shstr);
 			free(shp);
 			return 1;
 		}
-		if (read(fd, shstr, shstrsz) != shstrsz) {
+		if (fread(shstr, 1, shstrsz, fp) != shstrsz) {
 			free(shstr);
 			free(shp);
 			return 1;
@@ -1040,13 +1040,13 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 			    shp[i].sh_type == SHT_STRTAB ||
 			    !strcmp(shstr + shp[i].sh_name, ".debug_line")) {
 				if (havesyms && (flags & LOAD_SYM)) {
-					if (lseek(fd, (off_t)shp[i].sh_offset,
+					if (fseeko(fp, (off_t)shp[i].sh_offset,
 					    SEEK_SET) == -1) {
 						free(shstr);
 						free(shp);
 						return 1;
 					}
-					if (mread(fd, maxp,
+					if (mread(fp, maxp,
 					    shp[i].sh_size) != shp[i].sh_size) {
 						free(shstr);
 						free(shp);

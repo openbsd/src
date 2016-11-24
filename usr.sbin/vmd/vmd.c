@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.42 2016/11/22 21:55:54 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.43 2016/11/24 07:58:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -199,8 +199,11 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 
-		log_info("%s: started vm %d successfully, tty %s",
-		    vcp->vcp_name, vcp->vcp_id, vm->vm_ttyname);
+		log_info("%s: started vm %d successfully, "
+		    "kernel %s, tty %s", vcp->vcp_name, vcp->vcp_id,
+		    strlen(vcp->vcp_kernel) ?
+		    vcp->vcp_kernel : "hd0a:" VM_DEFAULT_KERNEL,
+		    vm->vm_ttyname);
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
@@ -664,13 +667,16 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	if (vcp->vcp_ncpus == 0)
 		vcp->vcp_ncpus = 1;
 	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM) {
-		log_debug("invalid number of CPUs");
+		log_warnx("invalid number of CPUs");
 		goto fail;
 	} else if (vcp->vcp_ndisks > VMM_MAX_DISKS_PER_VM) {
-		log_debug("invalid number of disks");
+		log_warnx("invalid number of disks");
 		goto fail;
 	} else if (vcp->vcp_nnics > VMM_MAX_NICS_PER_VM) {
-		log_debug("invalid number of interfaces");
+		log_warnx("invalid number of interfaces");
+		goto fail;
+	} else if (strlen(vcp->vcp_kernel) == 0 && vcp->vcp_ndisks == 0) {
+		log_warnx("no kernel or disk specified");
 		goto fail;
 	}
 

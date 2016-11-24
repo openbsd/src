@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.20 2016/11/22 21:55:54 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.21 2016/11/24 07:58:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -160,8 +160,9 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid)
 
 	vm->vm_peerid = peerid;
 
-	/* Open kernel for child */
-	if ((kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
+	/* Open external kernel for child */
+	if (strlen(vcp->vcp_kernel) &&
+	    (kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
 		log_warn("%s: can't open kernel %s", __func__,
 		    vcp->vcp_kernel);
 		goto fail;
@@ -305,12 +306,9 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 
 	errno = 0;
 	if (vm_register(ps, &vmc, &vm, imsg->hdr.peerid) == -1)
-		return (-1);
-
-	if (imsg->fd == -1) {
-		log_debug("invalid kernel fd");
 		goto fail;
-	}
+
+	/* If the fd is -1, the kernel will be searched on the disk */
 	vm->vm_kernel = imsg->fd;
 	vm->vm_running = 1;
 
