@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.21 2016/11/21 17:08:56 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.22 2016/11/24 17:39:49 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3953,6 +3953,12 @@ int32_t ixgbe_init_shared_code(struct ixgbe_hw *hw)
 		break;
 	case ixgbe_mac_X540:
 		status = ixgbe_init_ops_X540(hw);
+		break;
+	case ixgbe_mac_X550:
+		status = ixgbe_init_ops_X550(hw);
+		break;
+	case ixgbe_mac_X550EM_x:
+		status = ixgbe_init_ops_X550EM(hw);
 		break;
 	default:
 		status = IXGBE_ERR_DEVICE_NOT_SUPPORTED;
