@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.162 2016/09/28 12:16:44 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.163 2016/11/24 21:01:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -213,11 +213,6 @@ main(int argc, char *argv[])
 	ps->ps_instance = proc_instance;
 	if (title != NULL)
 		ps->ps_title[proc_id] = title;
-
-	if (proc_id == PROC_PARENT) {
-		/* XXX the parent opens too many fds in proc_open() */
-		socket_rlimit(-1);
-	}
 
 	/* only the parent returns */
 	proc_init(ps, procs, nitems(procs), argc0, argv, proc_id);

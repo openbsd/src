@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.30 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.31 2016/11/24 21:01:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -827,11 +827,30 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 			for (n = 0; n < m; n++) {
 				if ((fd = dup(rlay->rl_s)) == -1)
 					return (-1);
-				proc_composev_imsg(ps, id, n,
-				    IMSG_CFG_RELAY, -1, fd, iov, c);
+				if (proc_composev_imsg(ps, id, n,
+				    IMSG_CFG_RELAY, -1, fd, iov, c) != 0) {
+					log_warn("%s: failed to compose "
+					    "IMSG_CFG_RELAY imsg for `%s'",
+					    __func__, rlay->rl_conf.name);
+					return (-1);
+				}
+
+				/* Prevent fd exhaustion in the parent. */
+				if (proc_flush_imsg(ps, id, n) == -1) {
+					log_warn("%s: failed to flush "
+					    "IMSG_CFG_RELAY imsg for `%s'",
+					    __func__, rlay->rl_conf.name);
+					return (-1);
+				}
 			}
 		} else {
-			proc_composev(ps, id, IMSG_CFG_RELAY, iov, c);
+			if (proc_composev(ps, id,
+			    IMSG_CFG_RELAY, iov, c) != 0) {
+				log_warn("%s: failed to compose "
+				    "IMSG_CFG_RELAY imsg for `%s'",
+				    __func__, rlay->rl_conf.name);
+				return (-1);
+			}
 		}
 
 		if ((what & CONFIG_TABLES) == 0)
@@ -852,8 +871,11 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 		}
 	}
 
-	close(rlay->rl_s);
-	rlay->rl_s = -1;
+	/* Close server socket early to prevent fd exhaustion in the parent. */
+	if (rlay->rl_s != -1) {
+		close(rlay->rl_s);
+		rlay->rl_s = -1;
+	}
 
 	return (0);
 }
