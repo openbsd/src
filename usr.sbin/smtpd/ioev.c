@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.33 2016/11/24 12:58:27 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.34 2016/11/24 20:44:04 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -367,6 +367,12 @@ const char *
 io_error(struct io *io)
 {
 	return io->error;
+}
+
+void *
+io_ssl(struct io *io)
+{
+	return io->ssl;
 }
 
 /*

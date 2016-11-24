@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.91 2016/11/24 12:58:27 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.92 2016/11/24 20:44:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1160,7 +1160,7 @@ mta_io(struct io *io, int evt, void *arg)
 
 	case IO_TLSREADY:
 		log_info("%016"PRIx64" mta event=starttls ciphers=%s",
-		    s->id, ssl_to_text(s->io.ssl));
+		    s->id, ssl_to_text(io_ssl(&s->io)));
 		s->flags |= MTA_TLS;
 
 		if (mta_verify_certificate(s)) {
@@ -1559,10 +1559,10 @@ mta_verify_certificate(struct mta_session *s)
 	    >= sizeof req_ca_vrfy.name)
 		return 0;
 
-	x = SSL_get_peer_certificate(s->io.ssl);
+	x = SSL_get_peer_certificate(io_ssl(&s->io));
 	if (x == NULL)
 		return 0;
-	xchain = SSL_get_peer_cert_chain(s->io.ssl);
+	xchain = SSL_get_peer_cert_chain(io_ssl(&s->io));
 
 	/*
 	 * Client provided a certificate and possibly a certificate chain.
@@ -1656,7 +1656,7 @@ mta_tls_verified(struct mta_session *s)
 {
 	X509 *x;
 
-	x = SSL_get_peer_certificate(s->io.ssl);
+	x = SSL_get_peer_certificate(io_ssl(&s->io));
 	if (x) {
 		log_info("smtp-out: Server certificate verification %s "
 		    "on session %016"PRIx64,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.11 2016/11/24 12:58:27 eric Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.12 2016/11/24 20:44:04 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -70,6 +70,7 @@ int io_start_tls(struct io *, void *);
 const char* io_strio(struct io *);
 const char* io_strevent(int);
 const char* io_error(struct io *);
+void* io_ssl(struct io *);
 
 /* Buffered output functions */
 int io_write(struct io *, const void *, size_t);

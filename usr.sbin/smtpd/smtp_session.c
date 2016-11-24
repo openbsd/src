@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.297 2016/11/24 12:58:27 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.298 2016/11/24 20:44:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1002,7 +1002,7 @@ smtp_tls_verified(struct smtp_session *s)
 {
 	X509 *x;
 
-	x = SSL_get_peer_certificate(s->io.ssl);
+	x = SSL_get_peer_certificate(io_ssl(&s->io));
 	if (x) {
 		log_info("%016"PRIx64" smtp "
 		    "event=client-cert-check address=%s host=%s result=\"%s\"",
@@ -1207,11 +1207,11 @@ smtp_filter_fd(uint64_t id, int fd)
 	    s->tx->msgid);
 
 	if (s->flags & SF_SECURE) {
-		x = SSL_get_peer_certificate(s->io.ssl);
+		x = SSL_get_peer_certificate(io_ssl(&s->io));
 		io_printf(&s->tx->oev, " (%s:%s:%d:%s)",
-		    SSL_get_version(s->io.ssl),
-		    SSL_get_cipher_name(s->io.ssl),
-		    SSL_get_cipher_bits(s->io.ssl, NULL),
+		    SSL_get_version(io_ssl(&s->io)),
+		    SSL_get_cipher_name(io_ssl(&s->io)),
+		    SSL_get_cipher_bits(io_ssl(&s->io), NULL),
 		    (s->flags & SF_VERIFIED) ? "YES" : (x ? "FAIL" : "NO"));
 		if (x)
 			X509_free(x);
@@ -1257,7 +1257,7 @@ smtp_io(struct io *io, int evt, void *arg)
 
 	case IO_TLSREADY:
 		log_info("%016"PRIx64" smtp event=starttls address=%s host=%s ciphers=\"%s\"",
-		    s->id, ss_to_text(&s->ss), s->hostname, ssl_to_text(s->io.ssl));
+		    s->id, ss_to_text(&s->ss), s->hostname, ssl_to_text(io_ssl(&s->io)));
 
 		s->flags |= SF_SECURE;
 		s->helo[0] = '\0';
@@ -2346,10 +2346,10 @@ smtp_verify_certificate(struct smtp_session *s)
 	    >= sizeof req_ca_vrfy.name)
 		return 0;
 
-	x = SSL_get_peer_certificate(s->io.ssl);
+	x = SSL_get_peer_certificate(io_ssl(&s->io));
 	if (x == NULL)
 		return 0;
-	xchain = SSL_get_peer_cert_chain(s->io.ssl);
+	xchain = SSL_get_peer_cert_chain(io_ssl(&s->io));
 
 	/*
 	 * Client provided a certificate and possibly a certificate chain.
