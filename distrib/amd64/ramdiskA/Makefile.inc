@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2016/10/19 17:21:14 natano Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2016/11/24 16:32:33 natano Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -54,10 +54,13 @@ ${FS}:	bsd.gz
 	cp ${REALIMAGE} ${FS}
 	rm ${REALIMAGE}
 
-DISKTYPE?=       rdroot
-NBLKS?=          4480
-# minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -m 0 -o space -i 4096
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND}
+
+
+DISKTYPE=	rdroot
+MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 
 bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
@@ -75,33 +78,20 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
 	cp -p ${.CURDIR}/../../../sys/arch/amd64/compile/${RAMDISK}/obj/bsd bsd
 
-mr.fs: instbin rd_setup do_files rd_teardown
-
-rd_setup: instbin
-	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	fsck ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-
-rd_teardown:
-	@df -i ${MOUNT_POINT}
-	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	cp ${REALIMAGE} mr.fs
-	rm ${REALIMAGE}
+mr.fs: instbin
+	rm -rf $@.d
+	install -d -o root -g wheel $@.d
+	mtree -def ${MTREE} -p $@.d -u
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
+	    sh ${UTILS}/runlist.sh ${LISTS}
+	rm $@.d/instbin
+	makefs ${MAKEFSARGS_RD} $@ $@.d
 
 rdsetroot:	${TOP}/../common/elfrdsetroot.c
 	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
 	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
 	    ${TOP}/../common/elf64.c
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-
-.PRECIOUS:	mr.fs
 
 .ifdef RELEASEDIR
 install:
@@ -124,18 +114,12 @@ instbin: instbin.mk instbin.cache instbin.c
 instbin.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=instbin ${LISTS} > instbin.conf
 
-do_files:
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
-	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
-	rm ${MOUNT_POINT}/instbin
-
 clean cleandir:
 	/bin/rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
 	    lib*.a lib*.olist instbin.map \
 	    rdsetroot boot instbin.conf ${FS}
+	/bin/rm -rf mr.fs.d
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
