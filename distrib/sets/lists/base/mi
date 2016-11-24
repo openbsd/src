@@ -5699,9 +5699,6 @@
 ./usr/share/zoneinfo/Asia/Qyzylorda
 ./usr/share/zoneinfo/Asia/Rangoon
 ./usr/share/zoneinfo/Asia/Riyadh
-./usr/share/zoneinfo/Asia/Riyadh87
-./usr/share/zoneinfo/Asia/Riyadh88
-./usr/share/zoneinfo/Asia/Riyadh89
 ./usr/share/zoneinfo/Asia/Saigon
 ./usr/share/zoneinfo/Asia/Sakhalin
 ./usr/share/zoneinfo/Asia/Samarkand
@@ -5928,10 +5925,6 @@
 ./usr/share/zoneinfo/Mexico/BajaNorte
 ./usr/share/zoneinfo/Mexico/BajaSur
 ./usr/share/zoneinfo/Mexico/General
-./usr/share/zoneinfo/Mideast
-./usr/share/zoneinfo/Mideast/Riyadh87
-./usr/share/zoneinfo/Mideast/Riyadh88
-./usr/share/zoneinfo/Mideast/Riyadh89
 ./usr/share/zoneinfo/NZ
 ./usr/share/zoneinfo/NZ-CHAT
 ./usr/share/zoneinfo/Navajo
@@ -6320,9 +6313,6 @@
 ./usr/share/zoneinfo/posix/Asia/Qyzylorda
 ./usr/share/zoneinfo/posix/Asia/Rangoon
 ./usr/share/zoneinfo/posix/Asia/Riyadh
-./usr/share/zoneinfo/posix/Asia/Riyadh87
-./usr/share/zoneinfo/posix/Asia/Riyadh88
-./usr/share/zoneinfo/posix/Asia/Riyadh89
 ./usr/share/zoneinfo/posix/Asia/Saigon
 ./usr/share/zoneinfo/posix/Asia/Sakhalin
 ./usr/share/zoneinfo/posix/Asia/Samarkand
@@ -6549,10 +6539,6 @@
 ./usr/share/zoneinfo/posix/Mexico/BajaNorte
 ./usr/share/zoneinfo/posix/Mexico/BajaSur
 ./usr/share/zoneinfo/posix/Mexico/General
-./usr/share/zoneinfo/posix/Mideast
-./usr/share/zoneinfo/posix/Mideast/Riyadh87
-./usr/share/zoneinfo/posix/Mideast/Riyadh88
-./usr/share/zoneinfo/posix/Mideast/Riyadh89
 ./usr/share/zoneinfo/posix/NZ
 ./usr/share/zoneinfo/posix/NZ-CHAT
 ./usr/share/zoneinfo/posix/Navajo
@@ -6942,9 +6928,6 @@
 ./usr/share/zoneinfo/right/Asia/Qyzylorda
 ./usr/share/zoneinfo/right/Asia/Rangoon
 ./usr/share/zoneinfo/right/Asia/Riyadh
-./usr/share/zoneinfo/right/Asia/Riyadh87
-./usr/share/zoneinfo/right/Asia/Riyadh88
-./usr/share/zoneinfo/right/Asia/Riyadh89
 ./usr/share/zoneinfo/right/Asia/Saigon
 ./usr/share/zoneinfo/right/Asia/Sakhalin
 ./usr/share/zoneinfo/right/Asia/Samarkand
@@ -7171,11 +7154,7 @@
 ./usr/share/zoneinfo/right/Mexico/BajaNorte
 ./usr/share/zoneinfo/right/Mexico/BajaSur
 ./usr/share/zoneinfo/right/Mexico/General
-./usr/share/zoneinfo/right/Mideast
-./usr/share/zoneinfo/right/Mideast/Riyadh87
-./usr/share/zoneinfo/right/Mideast/Riyadh88
-./usr/share/zoneinfo/right/Mideast/Riyadh89
-./usr/share/zoneinfo/right/NZ
+c./usr/share/zoneinfo/right/NZ
 ./usr/share/zoneinfo/right/NZ-CHAT
 ./usr/share/zoneinfo/right/Navajo
 ./usr/share/zoneinfo/right/PRC
