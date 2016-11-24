@@ -1,6 +1,6 @@
-.\"	$OpenBSD: PKCS12_create.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: PKCS12_create.3,v 1.3 2016/11/24 19:45:16 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 24 2016 $
 .Dt PKCS12_CREATE 3
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ and
 .Fa keytype
 can all be set to zero and sensible defaults will be used.
 .Pp
-These defaults are: 40 bit RC2 encryption for certificates, triple DES
+These defaults are: 40-bit RC2 encryption for certificates, triple DES
 encryption for private keys, a key iteration count of
 PKCS12_DEFAULT_ITER (currently 2048) and a MAC iteration count of 1.
 .Pp
@@ -86,11 +86,11 @@ should be set to PKCS12_DEFAULT_ITER.
 .Pp
 .Fa keytype
 adds a flag to the store private key.
-This is a non standard extension that is only currently interpreted by
+This is a non-standard extension that is only currently interpreted by
 MSIE.
-If set to zero the flag is omitted, if set to
+If set to zero the flag is omitted; if set to
 .Dv KEY_SIG
-the key can be used for signing only, and if set to
+the key can be used for signing only; and if set to
 .Dv KEY_EX
 it can be used for signing and encryption.
 This option was useful for old export grade software which could use

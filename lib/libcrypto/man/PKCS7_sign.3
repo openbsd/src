@@ -1,6 +1,6 @@
-.\"	$OpenBSD: PKCS7_sign.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: PKCS7_sign.3,v 1.3 2016/11/24 19:45:16 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 24 2016 $
 .Dt PKCS7_SIGN 3
 .Os
 .Sh NAME
@@ -49,17 +49,17 @@ are prepended to the data.
 If
 .Dv PKCS7_NOCERTS
 is set, the signer's certificate will not be included in the PKCS7
-structure, the signer's certificate must still be supplied in the
+structure, though the signer's certificate must still be supplied in the
 .Fa signcert
-parameter though.
-This can reduce the size of the signature if the signers certificate can
+parameter.
+This can reduce the size of the signature if the signer's certificate can
 be obtained by other means: for example a previously signed message.
 .Pp
 The data being signed is included in the
 .Vt PKCS7
 structure, unless
 .Dv PKCS7_DETACHED
-is set in which case it is omitted.
+is set, in which case it is omitted.
 This is used for PKCS7 detached signatures which are used in S/MIME
 plaintext signed messages for example.
 .Pp
@@ -82,8 +82,8 @@ If
 is set, then just the SMIMECapabilities are omitted.
 .Pp
 If present, the SMIMECapabilities attribute indicates support for the
-following algorithms: triple DES, 128 bit RC2, 64 bit RC2, DES and 40
-bit RC2.
+following algorithms: triple DES, 128-bit RC2, 64-bit RC2, DES
+and 40-bit RC2.
 If any of these algorithms is disabled then it will not be included.
 .Pp
 If the flags
@@ -117,13 +117,14 @@ properly finalize the
 .Vt PKCS7
 structure will give unpredictable results.
 .Pp
-Several functions including
+Several functions, including
 .Xr SMIME_write_PKCS7 3 ,
 .Xr i2d_PKCS7_bio_stream 3 ,
-.Xr PEM_write_bio_PKCS7_stream 3
+and
+.Xr PEM_write_bio_PKCS7_stream 3 ,
 finalize the structure.
 Alternatively finalization can be performed by obtaining the streaming
-ASN1
+ASN.1
 .Vt BIO
 directly using
 .Xr BIO_new_PKCS7 3 .
@@ -157,7 +158,7 @@ and
 .Fa pkey
 are
 .Dv NULL ,
-then a certificates only PKCS#7 structure is output.
+then a certificate-only PKCS#7 structure is output.
 .Pp
 In versions of OpenSSL before 1.0.0 the
 .Fa signcert

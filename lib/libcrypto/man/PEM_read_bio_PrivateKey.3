@@ -1,10 +1,9 @@
-.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.3 2016/11/24 19:45:16 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 24 2016 $
 .Dt PEM_READ_BIO_PRIVATEKEY 3
 .Os
 .Sh NAME
-.Nm PEM ,
 .Nm PEM_read_bio_PrivateKey ,
 .Nm PEM_read_PrivateKey ,
 .Nm PEM_write_bio_PrivateKey ,
@@ -516,7 +515,7 @@
 .Fc
 .Sh DESCRIPTION
 The PEM functions read or write structures in PEM format.
-In this sense PEM format is simply base64 encoded data surrounded by
+In this sense PEM format is simply base64-encoded data surrounded by
 header lines.
 .Pp
 For more details about the meaning of arguments see the
@@ -542,7 +541,7 @@ structure.
 The write routines use "traditional" private key format and can handle
 both RSA and DSA private keys.
 The read functions can additionally transparently handle PKCS#8 format
-encrypted and unencrypted keys, too.
+encrypted and unencrypted keys too.
 .Pp
 .Fn PEM_write_bio_PKCS8PrivateKey
 and
@@ -570,8 +569,7 @@ also write out a private key as a PKCS#8 EncryptedPrivateKeyInfo.
 However they use PKCS#5 v1.5 or PKCS#12 encryption algorithms instead.
 The algorithm to use is specified in the
 .Fa nid
-parameter and should be the NID of the corresponding OBJECT IDENTIFIER
-(see NOTES section).
+parameter and should be the NID of the corresponding OBJECT IDENTIFIER.
 .Pp
 The
 .Sy PUBKEY
@@ -754,7 +752,7 @@ if an error occurred.
 .Pp
 The PEM functions which write private keys take an
 .Fa enc
-parameter which specifies the encryption algorithm to use.
+parameter, which specifies the encryption algorithm to use.
 Encryption is done at the PEM level.
 If this parameter is set to
 .Dv NULL ,
@@ -779,7 +777,7 @@ is ignored.
 .Pp
 If the
 .Fa cb
-parameters is set to
+parameter is set to
 .Dv NULL
 and the
 .Fa u
@@ -795,7 +793,7 @@ and
 .Fa u
 are
 .Dv NULL ,
-then the default callback routine is used which will typically
+then the default callback routine is used, which will typically
 prompt for the passphrase on the current terminal with echoing
 turned off.
 .Pp
@@ -835,7 +833,7 @@ or 0 if an error occurred.
 .Ss PEM encryption format
 This old
 .Sy PrivateKey
-routines use a non standard technique for encryption.
+routines use a non-standard technique for encryption.
 .Pp
 The private key (or other data) takes the following form:
 .Bd -literal -offset indent
@@ -852,9 +850,9 @@ The line beginning with
 contains two comma separated pieces of information:
 the encryption algorithm name as used by
 .Xr EVP_get_cipherbyname 3
-and an 8 byte salt encoded as a set of hexadecimal digits.
+and an 8-byte salt encoded as a set of hexadecimal digits.
 .Pp
-After this is the base64 encoded encrypted data.
+After this is the base64-encoded encrypted data.
 .Pp
 The encryption key is determined using
 .Xr EVP_BytesToKey 3 ,
@@ -874,7 +872,7 @@ applications most of them are set to 0 or
 .Pp
 Read a certificate in PEM format from a
 .Vt BIO :
-.Bd -literal
+.Bd -literal -offset indent
 X509 *x;
 x = PEM_read_bio_X509(bp, NULL, 0, NULL);
 if (x == NULL) {
@@ -883,7 +881,7 @@ if (x == NULL) {
 .Ed
 .Pp
 Alternative method:
-.Bd -literal
+.Bd -literal -offset indent
 X509 *x = NULL;
 if (!PEM_read_bio_X509(bp, &x, 0, NULL)) {
 	/* Error */
@@ -892,7 +890,7 @@ if (!PEM_read_bio_X509(bp, &x, 0, NULL)) {
 .Pp
 Write a certificate to a
 .Vt BIO :
-.Bd -literal
+.Bd -literal -offset indent
 if (!PEM_write_bio_X509(bp, x)) {
 	/* Error */
 }
@@ -900,7 +898,7 @@ if (!PEM_write_bio_X509(bp, x)) {
 .Pp
 Write an unencrypted private key to a
 .Vt FILE :
-.Bd -literal
+.Bd -literal -offset indent
 if (!PEM_write_PrivateKey(fp, key, NULL, NULL, 0, 0, NULL)) {
 	/* Error */
 }
@@ -908,8 +906,8 @@ if (!PEM_write_PrivateKey(fp, key, NULL, NULL, 0, 0, NULL)) {
 .Pp
 Write a private key (using traditional format) to a
 .Vt BIO
-using triple DES encryption, the pass phrase is prompted for:
-.Bd -literal
+using triple DES encryption; the pass phrase is prompted for:
+.Bd -literal -offset indent
 if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(),
     NULL, 0, 0, NULL)) {
 	/* Error */
@@ -919,7 +917,7 @@ if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(),
 Write a private key (using PKCS#8 format) to a
 .Vt BIO
 using triple DES encryption, using the pass phrase "hello":
-.Bd -literal
+.Bd -literal -offset indent
 if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(),
     NULL, 0, 0, "hello")) {
 	/* Error */
@@ -929,7 +927,7 @@ if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(),
 Read a private key from a
 .Vt BIO
 using the pass phrase "hello":
-.Bd -literal
+.Bd -literal -offset indent
 key = PEM_read_bio_PrivateKey(bp, NULL, 0, "hello");
 if (key == NULL) {
 	/* Error */
@@ -939,7 +937,7 @@ if (key == NULL) {
 Read a private key from a
 .Vt BIO
 using a pass phrase callback:
-.Bd -literal
+.Bd -literal -offset indent
 key = PEM_read_bio_PrivateKey(bp, NULL, pass_cb, "My Private Key");
 if (key == NULL) {
 	/* Error */
@@ -947,7 +945,7 @@ if (key == NULL) {
 .Ed
 .Pp
 Skeleton pass phrase callback:
-.Bd -literal
+.Bd -literal -offset indent
 int
 pass_cb(char *buf, int size, int rwflag, void *u)
 {
@@ -973,13 +971,13 @@ pass_cb(char *buf, int size, int rwflag, void *u)
 .Sh CAVEATS
 A frequent cause of problems is attempting to use the PEM routines like
 this:
-.Bd -literal
+.Bd -literal -offset indent
 X509 *x;
 PEM_read_bio_X509(bp, &x, 0, NULL);
 .Ed
 .Pp
 This is a bug because an attempt will be made to reuse the data at
-.Fa x
+.Fa x ,
 which is an uninitialised pointer.
 .Sh BUGS
 The PEM read routines in some versions of OpenSSL will not correctly

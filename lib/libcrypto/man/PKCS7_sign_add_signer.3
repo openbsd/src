@@ -1,6 +1,6 @@
-.\"	$OpenBSD: PKCS7_sign_add_signer.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: PKCS7_sign_add_signer.3,v 1.3 2016/11/24 19:45:16 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 24 2016 $
 .Dt PKCS7_SIGN_ADD_SIGNER 3
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@ structure should be obtained from an initial call to
 .Xr PKCS7_sign 3
 with the flag
 .Dv PKCS7_PARTIAL
-set, or in the case or re-signing, a valid
+set or, in the case or re-signing, a valid
 .Vt PKCS7
 signed data structure.
 .Pp
@@ -88,9 +88,9 @@ If
 .Dv PKCS7_NOCERTS
 is set, the signer's certificate will not be included in the
 .Vt PKCS7
-structure, the signer's certificate must still be supplied in the
+structure, though the signer's certificate must still be supplied in the
 .Fa signcert
-parameter though.
+parameter.
 This can reduce the size of the signature if the signers certificate can
 be obtained by other means: for example a previously signed message.
 .Pp
@@ -105,14 +105,14 @@ If
 is set, then just the SMIMECapabilities are omitted.
 .Pp
 If present, the SMIMECapabilities attribute indicates support for the
-following algorithms: triple DES, 128 bit RC2, 64 bit RC2, DES and 40
-bit RC2.
+following algorithms: triple DES, 128-bit RC2, 64-bit RC2, DES
+and 40-bit RC2.
 If any of these algorithms is disabled, then it will not be included.
 .Pp
 .Fn PKCS7_sign_add_signer
 returns an internal pointer to the
 .Vt PKCS7_SIGNER_INFO
-structure just added, this can be used to set additional attributes
+structure just added, which can be used to set additional attributes
 before it is finalized.
 .Sh RETURN VALUES
 .Fn PKCS7_sign_add_signer
