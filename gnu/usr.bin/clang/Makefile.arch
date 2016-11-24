@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.arch,v 1.1 2016/09/05 10:56:48 pascal Exp $
+# $OpenBSD: Makefile.arch,v 1.2 2016/11/24 22:32:29 patrick Exp $
 
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 LLVM_ARCH=	X86
@@ -6,13 +6,15 @@ LLVM_ARCH=	X86
 LLVM_ARCH=	PowerPC
 .elif ${MACHINE_ARCH} == "sparc64"
 LLVM_ARCH=	Sparc
+.elif ${MACHINE_ARCH} == "aarch64"
+LLVM_ARCH=	AArch64
 .elif ${MACHINE_ARCH} == "arm"
 LLVM_ARCH=	ARM
 .elif ${MACHINE_ARCH} == "mips64" || ${MACHINE_ARCH} == "mips64el"
 LLVM_ARCH=	Mips
 .endif
 
-.if !(${LLVM_ARCH} == "X86")
+.if !(${LLVM_ARCH} == "X86" || ${LLVM_ARCH} == "AArch64")
 BACKEND_UTILS=
 .endif
 
