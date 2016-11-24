@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2016/11/08 22:31:45 tb Exp $
+#	$OpenBSD: Makefile,v 1.11 2016/11/24 14:38:30 millert Exp $
 #	$NetBSD: Makefile,v 1.14 1995/04/22 12:10:17 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
@@ -46,10 +46,9 @@ YDATA=		africa antarctica asia australasia \
 		europe northamerica southamerica pacificnew etcetera factory \
 		backward
 NDATA=		systemv
-SDATA=		solar87 solar88 solar89
-TDATA=		$(YDATA) $(NDATA) $(SDATA)
+TDATA=		$(YDATA) $(NDATA)
 TABDATA=	iso3166.tab zone.tab zone1970.tab
-DATA=		$(YDATA) $(NDATA) $(SDATA) $(TABDATA) leapseconds # yearistype.sh
+DATA=		$(YDATA) $(NDATA) $(TABDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989 usno1989a usno1995 usno1997
 
 ZIC=zic
