@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.142 2016/11/21 17:21:33 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.143 2016/11/24 11:50:58 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1041,12 +1041,14 @@ ixgbe_media_status(struct ifnet * ifp, struct ifmediareq *ifmr)
 			break;
 		case IXGBE_LINK_SPEED_1GB_FULL:
 			switch (sc->optics) {
-			case IFM_1000_SX:
-			case IFM_1000_LX:
-				ifmr->ifm_active |= sc->optics | IFM_FDX;
+			case IFM_10G_SR: /* multi-speed fiber */
+				ifmr->ifm_active |= IFM_1000_SX | IFM_FDX;
+				break;
+			case IFM_10G_LR: /* multi-speed fiber */
+				ifmr->ifm_active |= IFM_1000_LX | IFM_FDX;
 				break;
 			default:
-				ifmr->ifm_active |= IFM_1000_T | IFM_FDX;
+				ifmr->ifm_active |= sc->optics | IFM_FDX;
 				break;
 			}
 			break;
