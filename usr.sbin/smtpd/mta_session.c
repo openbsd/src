@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.89 2016/11/22 07:28:42 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.90 2016/11/24 07:57:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -280,7 +280,6 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			mta_flush_task(s, IMSG_MTA_DELIVERY_TEMPFAIL,
 			    "Could not get message fd", 0, 0);
 			mta_enter_state(s, MTA_READY);
-			io_reload(&s->io);
 			return;
 		}
 
@@ -289,7 +288,6 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			fatal("mta: fdopen");
 
 		mta_enter_state(s, MTA_MAIL);
-		io_reload(&s->io);
 		return;
 
 	case IMSG_MTA_DNS_PTR:
@@ -366,7 +364,6 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		mta_tls_verified(s);
 		io_resume(&s->io, IO_PAUSE_IN);
-		io_reload(&s->io);
 		return;
 
 	case IMSG_MTA_LOOKUP_HELO:
@@ -456,7 +453,6 @@ mta_on_timeout(struct runq *runq, void *arg)
 	s->hangon++;
 
 	mta_enter_state(s, MTA_READY);
-	io_reload(&s->io);
 }
 
 static void

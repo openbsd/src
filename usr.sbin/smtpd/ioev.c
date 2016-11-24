@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.31 2016/11/22 07:28:42 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.32 2016/11/24 07:57:48 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -370,13 +370,25 @@ io_set_write(struct io *io)
 int
 io_write(struct io *io, const void *buf, size_t len)
 {
-	return iobuf_queue(io->iobuf, buf, len);
+	int r;
+
+	r = iobuf_queue(io->iobuf, buf, len);
+
+	io_reload(io);
+
+	return r;
 }
 
 int
 io_writev(struct io *io, const struct iovec *iov, int iovcount)
 {
-	return iobuf_queuev(io->iobuf, iov, iovcount);
+	int r;
+
+	r = iobuf_queuev(io->iobuf, iov, iovcount);
+
+	io_reload(io);
+
+	return r;
 }
 
 int
