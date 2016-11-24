@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofpclient.c,v 1.3 2016/11/18 22:15:52 tb Exp $	*/
+/*	$OpenBSD: ofpclient.c,v 1.4 2016/11/24 09:23:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <errno.h>
@@ -45,16 +46,30 @@
 #include "switchd.h"
 #include "parser.h"
 
+void	 ofpclient_read(struct switch_connection *, int);
+int	 flowmod(struct switchd *, struct switch_connection *,
+	    struct parse_result *);
+int	 flowmod_test(struct switchd *, struct switch_connection *);
+
 void
 ofpclient(struct parse_result *res, struct passwd *pw)
 {
 	struct switch_connection con;
 	struct switchd		 sc;
 	struct ofp_header	 oh;
-	int			 s;
+	int			 s, timeout;
 
 	memset(&sc, 0, sizeof(sc));
 	sc.sc_tap = -1;
+
+	/* If no uri has been specified, try to connect to localhost */
+	if (res->uri.swa_addr.ss_family == AF_UNSPEC) {	
+		res->uri.swa_type = SWITCH_CONN_TCP;
+		if (parsehostport("127.0.0.1",
+		    (struct sockaddr *)&res->uri.swa_addr,
+		    sizeof(res->uri.swa_addr)) != 0)
+			fatal("could not parse address");
+	}
 
 	memset(&con, 0, sizeof(con));
 	memcpy(&con.con_peer, &res->uri.swa_addr, sizeof(res->uri.swa_addr));
@@ -87,15 +102,23 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	log_verbose(0);
+	/* Set a default read timeout */
+	timeout = 3 * 1000;
+
+	log_verbose(res->verbose);
 
 	oh.oh_version = OFP_V_1_3;
 	oh.oh_type = OFP_T_HELLO;
-	oh.oh_length = 0;
-	oh.oh_xid = 0;
-	ofp13_hello(&sc, &con, &oh, NULL);
+	oh.oh_length = htons(sizeof(oh));
+	oh.oh_xid = htonl(1);
+	if (ofp_validate(&sc, &con.con_local, &con.con_peer, &oh,
+	    NULL, oh.oh_version) != 0)
+		fatal("ofp_validate");
+	ofp_output(&con, &oh, NULL);
 
-	log_verbose(res->quiet ? 0 : 2);
+	ofpclient_read(&con, timeout);
+
+	log_verbose(res->quiet ? res->verbose : 2);
 
 	switch (res->action) {
 	case DUMP_DESC:
@@ -106,24 +129,58 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 		break;
 	case DUMP_FLOWS:
 		ofp13_flow_stats(&sc, &con, OFP_PORT_ANY, OFP_GROUP_ID_ANY,
-		    OFP_TABLE_ID_ALL);
+		    res->table);
 		break;
 	case DUMP_TABLES:
-		ofp13_table_features(&sc, &con, 0);
+		ofp13_table_features(&sc, &con, res->table);
+		break;
+	case FLOW_ADD:
+	case FLOW_DELETE:
+	case FLOW_MODIFY:
+		timeout = 0;
+		flowmod(&sc, &con, res);
 		break;
 	default:
-		break;
-	}	
+		fatalx("unsupported action");
+	}
+
+	/* XXX */
+	ofpclient_read(&con, timeout);
 }
 
-/*
- * stubs for ofp*.c
- */
+int
+flowmod(struct switchd *sc, struct switch_connection *con,
+    struct parse_result *res)
+{
+	struct ofp_header	*oh;
+	struct ofp_flow_mod	*fm;
+
+	if (oflowmod_iclose(&res->fctx) == -1)
+		goto err;
+	if (oflowmod_close(&res->fctx) == -1)
+		goto err;
+
+	fm = res->fctx.ctx_fm;
+	fm->fm_table_id = res->table;
+	oh = &fm->fm_oh;
+
+	if (ofp_validate(sc, &con->con_local, &con->con_peer,
+	    oh, res->fbuf, oh->oh_version) != 0)
+		goto err;
+
+	ofrelay_write(con, res->fbuf);
+
+	return (0);
+
+ err:
+	(void)oflowmod_err(&res->fctx, __func__, __LINE__);
+	log_warnx("invalid flow");
+	return (-1);
+}
 
 void
-ofrelay_write(struct switch_connection *con, struct ibuf *buf)
+ofpclient_read(struct switch_connection *con, int timeout)
 {
-	struct msgbuf		msgbuf;
 	uint8_t			rbuf[0xffff];
 	ssize_t			rlen;
 	struct ofp_header	*oh;
@@ -131,20 +188,17 @@ ofrelay_write(struct switch_connection *con, struct ibuf *buf)
 	struct pollfd		 pfd[1];
 	int			 nfds;
 
-	msgbuf_init(&msgbuf);
-	msgbuf.fd = con->con_fd;
-
-	ibuf_close(&msgbuf, buf);
-	ibuf_write(&msgbuf);
-
 	/* Wait for response */
 	pfd[0].fd = con->con_fd;
 	pfd[0].events = POLLIN;
-	nfds = poll(pfd, 1, 3 * 1000);
+	nfds = poll(pfd, 1, timeout);
 	if (nfds == -1 || (pfd[0].revents & (POLLERR|POLLHUP|POLLNVAL)))
 		fatal("poll error");
-	if (nfds == 0)
-		fatal("time out");
+	if (nfds == 0) {
+		if (timeout)
+			fatal("time out");
+		return;
+	}
 
 	if ((rlen = read(con->con_fd, rbuf, sizeof(rbuf))) == -1)
 		fatal("read");
@@ -157,11 +211,27 @@ ofrelay_write(struct switch_connection *con, struct ibuf *buf)
 	if ((oh = ibuf_seek(ibuf, 0, sizeof(*oh))) == NULL)
 		fatal("short header");
 
-	if (ofp13_validate(con->con_sc,
-	    &con->con_peer, &con->con_local, oh, ibuf) != 0)
-		fatal("ofp13_validate");
+	if (ofp_validate(con->con_sc,
+	    &con->con_peer, &con->con_local, oh, ibuf, oh->oh_version) != 0)
+		fatal("ofp_validate");
 
 	ibuf_free(ibuf);
+}
+
+/*
+ * stubs for ofp*.c
+ */
+
+void
+ofrelay_write(struct switch_connection *con, struct ibuf *buf)
+{
+	struct msgbuf		msgbuf;
+
+	msgbuf_init(&msgbuf);
+	msgbuf.fd = con->con_fd;
+
+	ibuf_close(&msgbuf, buf);
+	ibuf_write(&msgbuf);
 }
 
 struct switch_control *

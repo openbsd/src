@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.5 2016/11/15 08:15:07 reyk Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.6 2016/11/24 09:23:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -94,15 +94,19 @@ main(int argc, char *argv[])
 	int			 ch;
 	int			 v = 0;
 	int			 quiet = 0;
+	int			 verbose = 0;
 	const char		*sock = SWITCHD_SOCKET;
 
-	while ((ch = getopt(argc, argv, "qs:")) != -1) {
+	while ((ch = getopt(argc, argv, "qs:v")) != -1) {
 		switch (ch) {
 		case 'q':
 			quiet = 1;
 			break;
 		case 's':
 			sock = optarg;
+			break;
+		case 'v':
+			verbose = 2;
 			break;
 		default:
 			usage();
@@ -125,13 +129,17 @@ main(int argc, char *argv[])
 	if (pledge("stdio dns inet unix", NULL) == -1)
 		err(1, "pledge");
 
+	log_init(quiet ? 0 : 2, LOG_USER);
+
 	/* parse options */
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
 	res->quiet = quiet;
+	res->verbose = verbose;
 
-	log_init(quiet ? 0 : 2, LOG_USER);
+	if (res->quiet && res->verbose)
+		fatal("conflicting -v and -q options");
 
 	switch (res->action) {
 	case NONE:
@@ -141,6 +149,9 @@ main(int argc, char *argv[])
 	case DUMP_FEATURES:
 	case DUMP_FLOWS:
 	case DUMP_TABLES:
+	case FLOW_ADD:
+	case FLOW_DELETE:
+	case FLOW_MODIFY:
 		ofpclient(res, pw);
 		break;
 	default:

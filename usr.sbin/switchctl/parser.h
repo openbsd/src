@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.3 2016/11/15 08:15:07 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.4 2016/11/24 09:23:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -21,6 +21,9 @@
 
 enum actions {
 	NONE,
+	FLOW_ADD,
+	FLOW_DELETE,
+	FLOW_MODIFY,
 	DUMP_DESC,
 	DUMP_FEATURES,
 	DUMP_FLOWS,
@@ -42,11 +45,13 @@ struct parse_result {
 	enum actions		 action;
 	struct imsgbuf		*ibuf;
 	char			*path;
-	char			*caname;
-	char			*pass;
 	struct switch_address	 uri;
 	struct sockaddr_storage	 addr;
+	struct oflowmod_ctx	 fctx;
+	struct ibuf		*fbuf;
+	int			 table;
 	int			 quiet;
+	int			 verbose;
 };
 
 #define HOST_IPADDR	1
