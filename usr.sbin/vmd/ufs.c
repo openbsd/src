@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.2 2016/11/24 08:03:37 reyk Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.3 2016/11/24 08:09:27 reyk Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -577,7 +577,7 @@ ufs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 	int rc = 0;
 
 	while (size != 0) {
-		if (fp->f_seekp >= (int32_t)fp->f_di.di_size)
+		if ((size_t)fp->f_seekp >= fp->f_di.di_size)
 			break;
 
 		rc = buf_read_file(f, &buf, &buf_size);
