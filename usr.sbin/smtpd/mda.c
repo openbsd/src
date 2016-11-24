@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.123 2016/11/21 13:00:43 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.124 2016/11/24 12:58:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -564,7 +564,7 @@ mda_io(struct io *io, int evt, void *arg)
 
 	case IO_ERROR:
 		log_debug("debug: mda: io error on session %016"PRIx64": %s",
-		    s->id, io->error);
+		    s->id, io_error(io));
 		io_pause(io, IO_PAUSE_OUT);
 		return;
 

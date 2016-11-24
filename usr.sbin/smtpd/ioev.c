@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.32 2016/11/24 07:57:48 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.33 2016/11/24 12:58:27 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -361,6 +361,12 @@ io_set_write(struct io *io)
 	io->flags &= ~IO_RW;
 	io->flags |= IO_WRITE;
 	io_reload(io);
+}
+
+const char *
+io_error(struct io *io)
+{
+	return io->error;
 }
 
 /*

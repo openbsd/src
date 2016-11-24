@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.90 2016/11/24 07:57:48 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.91 2016/11/24 12:58:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -564,11 +564,11 @@ mta_connect(struct mta_session *s)
 		 * This error is most likely a "no route",
 		 * so there is no need to try again.
 		 */
-		log_debug("debug: mta: io_connect failed: %s", s->io.error);
+		log_debug("debug: mta: io_connect failed: %s", io_error(&s->io));
 		if (errno == EADDRNOTAVAIL)
-			mta_source_error(s->relay, s->route, s->io.error);
+			mta_source_error(s->relay, s->route, io_error(&s->io));
 		else
-			mta_error(s, "Connection failed: %s", s->io.error);
+			mta_error(s, "Connection failed: %s", io_error(&s->io));
 		mta_free(s);
 	}
 }
@@ -1291,9 +1291,9 @@ mta_io(struct io *io, int evt, void *arg)
 		break;
 
 	case IO_ERROR:
-		log_debug("debug: mta: %p: IO error: %s", s, io->error);
+		log_debug("debug: mta: %p: IO error: %s", s, io_error(io));
 		if (!s->ready) {
-			mta_error(s, "IO Error: %s", io->error);
+			mta_error(s, "IO Error: %s", io_error(io));
 			mta_connect(s);
 			break;
 		}
@@ -1309,12 +1309,12 @@ mta_io(struct io *io, int evt, void *arg)
 				break;
 			}
 		}
-		mta_error(s, "IO Error: %s", io->error);
+		mta_error(s, "IO Error: %s", io_error(io));
 		mta_free(s);
 		break;
 
 	case IO_TLSERROR:
-		log_debug("debug: mta: %p: TLS IO error: %s", s, io->error);
+		log_debug("debug: mta: %p: TLS IO error: %s", s, io_error(io));
 		if (!(s->flags & (MTA_FORCE_TLS|MTA_FORCE_ANYSSL))) {
 			/* error in non-strict SSL negotiation, downgrade to plain */
 			log_info("smtp-out: TLS Error on session %016"PRIx64
@@ -1325,7 +1325,7 @@ mta_io(struct io *io, int evt, void *arg)
 			mta_connect(s);
 			break;
 		}
-		mta_error(s, "IO Error: %s", io->error);
+		mta_error(s, "IO Error: %s", io_error(io));
 		mta_free(s);
 		break;
 
