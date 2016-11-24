@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.931 2016/11/14 21:34:39 rpe Exp $
+#	$OpenBSD: install.sub,v 1.932 2016/11/24 14:35:43 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2052,7 +2052,6 @@ ifstart () {
 				if [ "$bcaddr" -a X"$bcaddr" != "XNONE" ]; then
 					cmd="$cmd broadcast $bcaddr"
 				fi
-				[ "$alias" ] && rtcmd=";route -qn add -host $name 127.0.0.1"
 				;;
 			inet6)
 				if [ ! -n "$name" ]; then
@@ -2065,7 +2064,7 @@ ifstart () {
 			*)	cmd="$cmd $mask $bcaddr"
 				;;
 			esac
-			cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
+			cmd="$cmd $ext1 $ext2"
 			;;
 		esac
 		eval "$cmd"
