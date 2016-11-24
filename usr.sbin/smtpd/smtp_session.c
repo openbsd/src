@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.298 2016/11/24 20:44:04 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.299 2016/11/24 20:52:13 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2075,7 +2075,7 @@ smtp_lookup_servername(struct smtp_session *s)
 	if (s->listener->hostnametable[0]) {
 		sa_len = sizeof(ss);
 		sa = (struct sockaddr *)&ss;
-		if (getsockname(s->io.sock, sa, &sa_len) == -1) {
+		if (getsockname(io_fileno(&s->io), sa, &sa_len) == -1) {
 			log_warn("warn: getsockname()");
 		}
 		else {
@@ -2103,7 +2103,7 @@ smtp_connected(struct smtp_session *s)
 	    s->id, ss_to_text(&s->ss), s->hostname);
 
 	sl = sizeof(ss);
-	if (getsockname(s->io.sock, (struct sockaddr*)&ss, &sl) == -1) {
+	if (getsockname(io_fileno(&s->io), (struct sockaddr*)&ss, &sl) == -1) {
 		smtp_free(s, strerror(errno));
 		return;
 	}
