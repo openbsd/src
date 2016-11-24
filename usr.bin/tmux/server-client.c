@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.203 2016/11/24 14:38:55 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.204 2016/11/24 18:45:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -474,10 +474,9 @@ have_event:
 	case NOTYPE:
 		break;
 	case DRAG:
-		if (c->tty.mouse_drag_update != NULL) {
-			c->tty.mouse_drag_update(c, m);
-			key = KEYC_MOUSE;
-		} else {
+		if (c->tty.mouse_drag_update != NULL)
+			key = KEYC_DRAGGING;
+		else {
 			switch (MOUSE_BUTTONS(b)) {
 			case 0:
 				if (where == PANE)
@@ -730,6 +729,7 @@ server_client_handle_key(struct client *c, key_code key)
 	}
 
 	/* Check for mouse keys. */
+	m->valid = 0;
 	if (key == KEYC_MOUSE) {
 		if (c->flags & CLIENT_READONLY)
 			return;
@@ -741,11 +741,13 @@ server_client_handle_key(struct client *c, key_code key)
 		m->key = key;
 
 		/*
-		 * A mouse event that continues to be valid but that we do not
-		 * want to pass through.
+		 * Mouse drag is in progress, so fire the callback (now that
+		 * the mouse event is valid).
 		 */
-		if (key == KEYC_MOUSE)
+		if (key == KEYC_DRAGGING) {
+			c->tty.mouse_drag_update(c, m);
 			return;
+		}
 	} else
 		m->valid = 0;
 
