@@ -1,4 +1,4 @@
-# $OpenBSD: iso3166.tab,v 1.26 2016/03/15 19:51:30 millert Exp $
+# $OpenBSD: iso3166.tab,v 1.27 2016/11/24 02:43:54 millert Exp $
 # ISO 3166 alpha-2 country codes
 #
 # This file is in the public domain, so clarified as of
@@ -76,7 +76,7 @@ CO	Colombia
 CR	Costa Rica
 CU	Cuba
 CV	Cape Verde
-CW	Curacao
+CW	Curaçao
 CX	Christmas Island
 CY	Cyprus
 CZ	Czech Republic

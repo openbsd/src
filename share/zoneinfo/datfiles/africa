@@ -1,4 +1,4 @@
-# $OpenBSD: africa,v 1.49 2016/09/28 21:12:14 millert Exp $
+# $OpenBSD: africa,v 1.50 2016/11/24 02:43:54 millert Exp $
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -120,7 +120,7 @@ Zone	Africa/Algiers	0:12:12 -	LMT	1891 Mar 15  0:01
 # Cameroon
 # See Africa/Lagos.
 
-# Cape Verde
+# Cape Verde / Cabo Verde
 #
 # Shanks gives 1907 for the transition to CVT.
 # Perhaps the 1911-05-26 Portuguese decree
