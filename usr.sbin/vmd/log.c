@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2016/11/22 21:54:01 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.6 2016/11/24 21:39:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -90,6 +90,7 @@ void
 vlog(int pri, const char *fmt, va_list ap)
 {
 	char	*nfmt;
+	int	 saved_errno = errno;
 
 	if (debug) {
 		/* best effort in out of mem situations */
@@ -103,8 +104,9 @@ vlog(int pri, const char *fmt, va_list ap)
 		fflush(stderr);
 	} else
 		vsyslog(pri, fmt, ap);
-}
 
+	errno = saved_errno;
+}
 
 void
 log_warn(const char *emsg, ...)
