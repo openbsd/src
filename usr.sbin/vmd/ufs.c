@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.1 2016/11/24 07:58:55 reyk Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.2 2016/11/24 08:03:37 reyk Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@
 #define alloc		malloc
 #define free(_p, _n)	free(_p)
 #define twiddle()	do { } while(0)
+#define NO_READDIR	1
 
 /*
  * In-core open file.
@@ -269,7 +270,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 
 	off = blkoff(fs, fp->f_seekp);
 	file_block = lblkno(fs, fp->f_seekp);
-	block_size = dblksize(fs, &fp->f_di, file_block);
+	block_size = dblksize(fs, &fp->f_di, (size_t)file_block);
 
 	if (file_block != fp->f_buf_blkno) {
 		rc = block_map(f, file_block, &disk_block);
@@ -327,7 +328,7 @@ search_directory(char *name, struct open_file *f, ufsino_t *inumber_p)
 	length = strlen(name);
 
 	fp->f_seekp = 0;
-	while (fp->f_seekp < fp->f_di.di_size) {
+	while ((size_t)fp->f_seekp < fp->f_di.di_size) {
 		rc = buf_read_file(f, &buf, &buf_size);
 		if (rc)
 			return (rc);
@@ -385,7 +386,8 @@ ufs_open(char *path, struct open_file *f)
 		goto out;
 
 	if (buf_size != SBSIZE || fs->fs_magic != FS_MAGIC ||
-	    fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
+	    (size_t)fs->fs_bsize > MAXBSIZE ||
+	    (size_t)fs->fs_bsize < sizeof(struct fs)) {
 		rc = EINVAL;
 		goto out;
 	}
@@ -481,15 +483,14 @@ ufs_open(char *path, struct open_file *f)
 
 			bcopy(cp, &namebuf[link_len], len + 1);
 
-			if (link_len < fs->fs_maxsymlinklen) {
+			if (link_len < (size_t)fs->fs_maxsymlinklen) {
 				bcopy(fp->f_di.di_shortlink, namebuf, link_len);
 			} else {
 				/*
 				 * Read file for symbolic link
 				 */
-				size_t buf_size;
 				daddr32_t disk_block;
-				struct fs *fs = fp->f_fs;
+				fs = fp->f_fs;
 
 				if (!buf)
 					buf = alloc(fs->fs_bsize);
@@ -576,7 +577,7 @@ ufs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 	int rc = 0;
 
 	while (size != 0) {
-		if (fp->f_seekp >= fp->f_di.di_size)
+		if (fp->f_seekp >= (int32_t)fp->f_di.di_size)
 			break;
 
 		rc = buf_read_file(f, &buf, &buf_size);
@@ -656,7 +657,7 @@ ufs_readdir(struct open_file *f, char *name)
 		fp->f_seekp = 0;
 	else {
 			/* end of dir */
-		if (fp->f_seekp >= fp->f_di.di_size) {
+		if ((size_t)fp->f_seekp >= fp->f_di.di_size) {
 			*name = '\0';
 			return -1;
 		}
