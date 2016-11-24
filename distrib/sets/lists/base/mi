@@ -5636,6 +5636,7 @@
 ./usr/share/zoneinfo/Asia/Aqtobe
 ./usr/share/zoneinfo/Asia/Ashgabat
 ./usr/share/zoneinfo/Asia/Ashkhabad
+./usr/share/zoneinfo/Asia/Atyrau
 ./usr/share/zoneinfo/Asia/Baghdad
 ./usr/share/zoneinfo/Asia/Bahrain
 ./usr/share/zoneinfo/Asia/Baku
@@ -5656,6 +5657,7 @@
 ./usr/share/zoneinfo/Asia/Dili
 ./usr/share/zoneinfo/Asia/Dubai
 ./usr/share/zoneinfo/Asia/Dushanbe
+./usr/share/zoneinfo/Asia/Famagusta
 ./usr/share/zoneinfo/Asia/Gaza
 ./usr/share/zoneinfo/Asia/Harbin
 ./usr/share/zoneinfo/Asia/Hebron
@@ -5871,6 +5873,7 @@
 ./usr/share/zoneinfo/Europe/Samara
 ./usr/share/zoneinfo/Europe/San_Marino
 ./usr/share/zoneinfo/Europe/Sarajevo
+./usr/share/zoneinfo/Europe/Saratov
 ./usr/share/zoneinfo/Europe/Simferopol
 ./usr/share/zoneinfo/Europe/Skopje
 ./usr/share/zoneinfo/Europe/Sofia
@@ -6254,6 +6257,7 @@
 ./usr/share/zoneinfo/posix/Asia/Aqtobe
 ./usr/share/zoneinfo/posix/Asia/Ashgabat
 ./usr/share/zoneinfo/posix/Asia/Ashkhabad
+./usr/share/zoneinfo/posix/Asia/Atyrau
 ./usr/share/zoneinfo/posix/Asia/Baghdad
 ./usr/share/zoneinfo/posix/Asia/Bahrain
 ./usr/share/zoneinfo/posix/Asia/Baku
@@ -6274,6 +6278,7 @@
 ./usr/share/zoneinfo/posix/Asia/Dili
 ./usr/share/zoneinfo/posix/Asia/Dubai
 ./usr/share/zoneinfo/posix/Asia/Dushanbe
+./usr/share/zoneinfo/posix/Asia/Famagusta
 ./usr/share/zoneinfo/posix/Asia/Gaza
 ./usr/share/zoneinfo/posix/Asia/Harbin
 ./usr/share/zoneinfo/posix/Asia/Hebron
@@ -6489,6 +6494,7 @@
 ./usr/share/zoneinfo/posix/Europe/Samara
 ./usr/share/zoneinfo/posix/Europe/San_Marino
 ./usr/share/zoneinfo/posix/Europe/Sarajevo
+./usr/share/zoneinfo/posix/Europe/Saratov
 ./usr/share/zoneinfo/posix/Europe/Simferopol
 ./usr/share/zoneinfo/posix/Europe/Skopje
 ./usr/share/zoneinfo/posix/Europe/Sofia
@@ -6873,6 +6879,7 @@
 ./usr/share/zoneinfo/right/Asia/Aqtobe
 ./usr/share/zoneinfo/right/Asia/Ashgabat
 ./usr/share/zoneinfo/right/Asia/Ashkhabad
+./usr/share/zoneinfo/right/Asia/Atyrau
 ./usr/share/zoneinfo/right/Asia/Baghdad
 ./usr/share/zoneinfo/right/Asia/Bahrain
 ./usr/share/zoneinfo/right/Asia/Baku
@@ -6893,6 +6900,7 @@
 ./usr/share/zoneinfo/right/Asia/Dili
 ./usr/share/zoneinfo/right/Asia/Dubai
 ./usr/share/zoneinfo/right/Asia/Dushanbe
+./usr/share/zoneinfo/right/Asia/Famagusta
 ./usr/share/zoneinfo/right/Asia/Gaza
 ./usr/share/zoneinfo/right/Asia/Harbin
 ./usr/share/zoneinfo/right/Asia/Hebron
@@ -7108,6 +7116,7 @@
 ./usr/share/zoneinfo/right/Europe/Samara
 ./usr/share/zoneinfo/right/Europe/San_Marino
 ./usr/share/zoneinfo/right/Europe/Sarajevo
+./usr/share/zoneinfo/right/Europe/Saratov
 ./usr/share/zoneinfo/right/Europe/Simferopol
 ./usr/share/zoneinfo/right/Europe/Skopje
 ./usr/share/zoneinfo/right/Europe/Sofia
