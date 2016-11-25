@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmboot.c,v 1.1 2016/11/24 07:58:55 reyk Exp $	*/
+/*	$OpenBSD: vmboot.c,v 1.2 2016/11/25 22:28:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -162,7 +162,7 @@ vmboot_loadfile(struct open_file *f, char *file, size_t *size)
 
 	if ((ret = ufs_open(file, f)) != 0) {
 		log_debug("%s: failed to open hd0a:%s", __func__, file);
-		goto done;
+		return (NULL);
 	}
 
 	if ((ret = ufs_stat(f, &st)) != 0) {
