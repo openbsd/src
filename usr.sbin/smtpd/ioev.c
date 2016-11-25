@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.36 2016/11/24 21:25:21 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.37 2016/11/25 16:17:41 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -685,6 +685,7 @@ io_dispatch(int fd, short ev, void *humppa)
     read:
 
 	if (ev & EV_READ) {
+		iobuf_normalize(io->iobuf);
 		if ((n = iobuf_read(io->iobuf, io->sock)) < 0) {
 			if (n == IOBUF_CLOSED)
 				io_callback(io, IO_DISCONNECTED);
@@ -914,6 +915,7 @@ io_dispatch_read_ssl(int fd, short event, void *humppa)
 	}
 
 again:
+	iobuf_normalize(io->iobuf);
 	switch ((n = iobuf_read_ssl(io->iobuf, (SSL*)io->ssl))) {
 	case IOBUF_WANT_READ:
 		io_reset(io, EV_READ, io_dispatch_read_ssl);
