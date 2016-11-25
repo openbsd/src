@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.55 2016/11/25 02:49:18 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.56 2016/11/25 02:56:49 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -387,7 +387,7 @@ if test "$REGRESS_INTEROP_PUTTY" = "yes" ; then
 	echo "Hostname=127.0.0.1" >> ${OBJ}/.putty/sessions/localhost_proxy
 	echo "PortNumber=$PORT" >> ${OBJ}/.putty/sessions/localhost_proxy
 	echo "ProxyMethod=5" >> ${OBJ}/.putty/sessions/localhost_proxy
-	echo "ProxyTelnetCommand=sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSHD_LOGFILE} -i -f $OBJ/sshd_proxy" >> ${OBJ}/.putty/sessions/localhost_proxy
+	echo "ProxyTelnetCommand=sh ${SRC}/sshd-log-wrapper.sh ${TEST_SSHD_LOGFILE} ${SSHD} -i -f $OBJ/sshd_proxy" >> ${OBJ}/.putty/sessions/localhost_proxy
 
 	REGRESS_INTEROP_PUTTY=yes
 fi
@@ -395,7 +395,7 @@ fi
 # create a proxy version of the client config
 (
 	cat $OBJ/ssh_config
-	echo proxycommand ${SUDO} sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSHD_LOGFILE} -i -f $OBJ/sshd_proxy
+	echo proxycommand ${SUDO} sh ${SRC}/sshd-log-wrapper.sh ${TEST_SSHD_LOGFILE} ${SSHD} -i -f $OBJ/sshd_proxy
 ) > $OBJ/ssh_proxy
 
 # check proxy config
