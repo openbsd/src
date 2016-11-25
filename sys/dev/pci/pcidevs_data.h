@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1806 2016/11/10 11:50:40 mpi Exp 
+ *	OpenBSD: pcidevs,v 1.1807 2016/11/25 18:28:28 mikeb Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10945,7 +10945,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550T,
-	    "X550",
+	    "X550T",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DSL5520,
@@ -11016,12 +11016,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I218-V",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X552_SFP,
-	    "X552",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_KX4,
+	    "X557 Backplane",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X557_AT2,
-	    "X557-AT2",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_KR,
+	    "X557 Backplane",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_SFP,
+	    "X557 SFP+",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_10G_T,
+	    "X557 10GbaseT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_1G_T,
+	    "X557 1GbaseT",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM2,
@@ -11032,28 +11044,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I219-V2",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_KX4,
-	    "X550EM Backplane",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_KR,
+	    "X552 Backplane",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_KR,
-	    "X550EM Backplane",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_KR_L,
+	    "X552 Backplane",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_SFP,
-	    "X550EM SFP+",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_SFP_N,
+	    "X552 SFP+",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_10G_T,
-	    "X550EM 10GbaseT",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_SGMII,
+	    "X552 SGMII",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_1G_T,
-	    "X550EM 1GbaseT",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_SGMII_L,
+	    "X552 SGMII",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_10G_T,
+	    "X552 10GBaseT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_SFP,
+	    "X552 SFP+",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550T1,
-	    "X550",
+	    "X550T",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_H_PCIE_X16,
