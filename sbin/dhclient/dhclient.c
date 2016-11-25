@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.392 2016/10/06 16:29:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.393 2016/11/25 14:46:57 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2501,6 +2501,25 @@ apply_defaults(struct client_lease *lease)
 		default:
 			break;
 		}
+	}
+
+
+	/*
+	 * RFC 3442 says client *MUST* ignore both DHO_ROUTERS and
+	 * DHO_STATIC_ROUTES when DHO_CLASSLESS_[MS_]_ROUTES present.
+	 *
+	 * Remove them from 'newlease' so that -L will not show them
+	 * as part of the effective lease.
+	 */
+	if ((newlease->options[DHO_CLASSLESS_MS_STATIC_ROUTES].len != 0) ||
+	    (newlease->options[DHO_CLASSLESS_STATIC_ROUTES].len != 0)) {
+		free(newlease->options[DHO_ROUTERS].data);
+		newlease->options[DHO_ROUTERS].data = NULL;
+		newlease->options[DHO_ROUTERS].len = 0;
+
+		free(newlease->options[DHO_STATIC_ROUTES].data);
+		newlease->options[DHO_STATIC_ROUTES].data = NULL;
+		newlease->options[DHO_STATIC_ROUTES].len = 0;
 	}
 
 	return (newlease);
