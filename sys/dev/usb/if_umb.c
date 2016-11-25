@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.7 2016/11/21 08:19:36 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.8 2016/11/25 12:43:26 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -120,6 +120,7 @@ const struct umb_valdescr umb_istate[] = UMB_INTERNAL_STATE_DESCRIPTIONS;
 int		 umb_match(struct device *, void *, void *);
 void		 umb_attach(struct device *, struct device *, void *);
 int		 umb_detach(struct device *, int);
+void		 umb_ncm_setup(struct umb_softc *);
 int		 umb_alloc_xfers(struct umb_softc *);
 void		 umb_free_xfers(struct umb_softc *);
 int		 umb_alloc_bulkpipes(struct umb_softc *);
@@ -295,7 +296,6 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	int	 altnum;
 	int	 s;
 	struct ifnet *ifp;
-	int	 hard_mtu;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_ctrl_ifaceno = uaa->ifaceno;
@@ -307,7 +307,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	 * number.
 	 */
 	sc->sc_ver_maj = sc->sc_ver_min = -1;
-	hard_mtu = MBIM_MAXSEGSZ_MINVAL;
+	sc->sc_maxpktlen = MBIM_MAXSEGSZ_MINVAL;
 	usbd_desc_iter_init(sc->sc_udev, &iter);
 	while ((desc = usbd_desc_iter_next(&iter))) {
 		if (desc->bDescriptorType == UDESC_IFACE_ASSOC) {
@@ -347,13 +347,6 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 				/* cont. anyway */
 			}
 			sc->sc_maxpktlen = UGETW(md->wMaxSegmentSize);
-			if (sc->sc_maxpktlen < MBIM_MAXSEGSZ_MINVAL) {
-				DPRINTF("%s: ignoring invalid segment "
-				    "size %d\n", DEVNAM(sc), sc->sc_maxpktlen);
-				/* cont. anyway */
-				sc->sc_maxpktlen = 8 * 1024;
-			}
-			hard_mtu = sc->sc_maxpktlen;
 			DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, cap=0x%x\n",
 			    DEVNAM(sc), sc->sc_ctrl_len, sc->sc_maxpktlen,
 			    md->bmNetworkCapabilities);
@@ -492,6 +485,10 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_info.rssi = UMB_VALUE_UNKNOWN;
 	sc->sc_info.ber = UMB_VALUE_UNKNOWN;
 
+	umb_ncm_setup(sc);
+	DPRINTFN(2, "%s: rx/tx size %d/%d\n", DEVNAM(sc),
+	    sc->sc_rx_bufsz, sc->sc_tx_bufsz);
+
 	s = splnet();
 	ifp = GET_IFP(sc);
 	ifp->if_flags = IFF_SIMPLEX | IFF_MULTICAST | IFF_POINTOPOINT;
@@ -508,7 +505,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_hdrlen = sizeof (struct ncm_header16) +
 	    sizeof (struct ncm_pointer16);
 	ifp->if_mtu = 1500;		/* use a common default */
-	ifp->if_hardmtu = hard_mtu;
+	ifp->if_hardmtu = sc->sc_maxpktlen;
 	ifp->if_output = umb_output;
 	if_attach(ifp);
 	if_ih_insert(ifp, umb_input, NULL);
@@ -570,18 +567,38 @@ umb_detach(struct device *self, int flags)
 	return 0;
 }
 
+void
+umb_ncm_setup(struct umb_softc *sc)
+{
+	usb_device_request_t req;
+	struct ncm_ntb_parameters np;
+
+	/* Query NTB tranfers sizes */
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
+	req.bRequest = NCM_GET_NTB_PARAMETERS;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_ctrl_ifaceno);
+	USETW(req.wLength, sizeof (np));
+	if (usbd_do_request(sc->sc_udev, &req, &np) == USBD_NORMAL_COMPLETION &&
+	    UGETW(np.wLength) == sizeof (np)) {
+		sc->sc_rx_bufsz = UGETDW(np.dwNtbInMaxSize);
+		sc->sc_tx_bufsz = UGETDW(np.dwNtbOutMaxSize);
+	} else
+		sc->sc_rx_bufsz = sc->sc_tx_bufsz = 8 * 1024;
+}
+
 int
 umb_alloc_xfers(struct umb_softc *sc)
 {
 	if (!sc->sc_rx_xfer) {
 		if ((sc->sc_rx_xfer = usbd_alloc_xfer(sc->sc_udev)) != NULL)
 			sc->sc_rx_buf = usbd_alloc_buffer(sc->sc_rx_xfer,
-			    sc->sc_maxpktlen + MBIM_HDR32_LEN);
+			    sc->sc_rx_bufsz + MBIM_HDR32_LEN);
 	}
 	if (!sc->sc_tx_xfer) {
 		if ((sc->sc_tx_xfer = usbd_alloc_xfer(sc->sc_udev)) != NULL)
 			sc->sc_tx_buf = usbd_alloc_buffer(sc->sc_tx_xfer,
-			    sc->sc_maxpktlen + MBIM_HDR16_LEN);
+			    sc->sc_tx_bufsz + MBIM_HDR16_LEN);
 	}
 	return (sc->sc_rx_buf && sc->sc_tx_buf) ? 1 : 0;
 }
@@ -1654,7 +1671,7 @@ void
 umb_rx(struct umb_softc *sc)
 {
 	usbd_setup_xfer(sc->sc_rx_xfer, sc->sc_rx_pipe, sc, sc->sc_rx_buf,
-	    sc->sc_maxpktlen, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    sc->sc_rx_bufsz, USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, umb_rxeof);
 	usbd_transfer(sc->sc_rx_xfer);
 }
@@ -1791,16 +1808,16 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 	s = splnet();
 	if (len < sizeof (*hdr16))
 		goto toosmall;
-	if (len > sc->sc_maxpktlen) {
-		DPRINTF("%s: packet too large (%d)\n", DEVNAM(sc), len);
-		goto fail;
-	}
 
 	hdr16 = (struct ncm_header16 *)buf;
 	hsig = UGETDW(hdr16->dwSignature);
 	hlen = UGETW(hdr16->wHeaderLength);
 	if (len < hlen)
 		goto toosmall;
+	if (len > sc->sc_rx_bufsz) {
+		DPRINTF("%s: packet too large (%d)\n", DEVNAM(sc), len);
+		goto fail;
+	}
 	switch (hsig) {
 	case NCM_HDR16_SIG:
 		blen = UGETW(hdr16->wBlockLength);

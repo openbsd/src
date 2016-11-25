@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.h,v 1.2 2016/11/21 08:19:36 gerhard Exp $ */
+/*	$OpenBSD: if_umb.h,v 1.3 2016/11/25 12:43:26 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -359,12 +359,14 @@ struct umb_softc {
 	int			 sc_rx_ep;
 	struct usbd_xfer	*sc_rx_xfer;
 	void			*sc_rx_buf;
+	int			 sc_rx_bufsz;
 	struct usbd_pipe	*sc_rx_pipe;
 	unsigned		 sc_rx_nerr;
 
 	int			 sc_tx_ep;
 	struct usbd_xfer	*sc_tx_xfer;
 	void			*sc_tx_buf;
+	int			 sc_tx_bufsz;
 	struct usbd_pipe	*sc_tx_pipe;
 	struct mbuf		*sc_tx_m;
 	uint32_t		 sc_tx_seq;
