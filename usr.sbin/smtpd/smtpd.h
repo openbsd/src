@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.524 2016/11/17 17:34:55 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.525 2016/11/25 09:21:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -376,6 +376,7 @@ enum decision {
 };
 
 struct rule {
+	uint64_t			r_id;
 	TAILQ_ENTRY(rule)		r_entry;
 	enum decision			r_decision;
 	uint8_t				r_nottag;

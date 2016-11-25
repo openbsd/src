@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.190 2016/09/12 07:33:00 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.191 2016/11/25 09:21:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -93,6 +93,7 @@ char		*symget(const char *);
 
 struct smtpd		*conf = NULL;
 static int		 errors = 0;
+static uint64_t		 ruleid = 0;
 
 struct filter_conf	*filter = NULL;
 struct table		*table = NULL;
@@ -1409,6 +1410,7 @@ accept_params	: opt_accept accept_params
 
 rule		: ACCEPT {
 			rule = xcalloc(1, sizeof(*rule), "parse rule: ACCEPT");
+			rule->r_id = ++ruleid;
 			rule->r_action = A_NONE;
 			rule->r_decision = R_ACCEPT;
 			rule->r_desttype = DEST_DOM;
@@ -1441,6 +1443,7 @@ rule		: ACCEPT {
 		}
 		| REJECT {
 			rule = xcalloc(1, sizeof(*rule), "parse rule: REJECT");
+			rule->r_id = ++ruleid;
 			rule->r_decision = R_REJECT;
 			rule->r_desttype = DEST_DOM;
 		} decision {
