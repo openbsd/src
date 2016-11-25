@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.932 2016/11/24 14:35:43 krw Exp $
+#	$OpenBSD: install.sub,v 1.933 2016/11/25 21:13:58 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2422,13 +2422,15 @@ finish_up() {
 	rm -f /mnt/var/run/ld.so.hints
 
 	# Conditionally create /usr/{src,obj,xobj} directories and set
-	# proper ownership (root:wsrc) and permissions during install.
+	# proper ownership and permissions during install.
 	if [[ $MODE == install ]]; then
-		for _d in /mnt/usr/{obj,src,xobj}; do
-			mkdir -p $_d
-			chmod 775 $_d
-			chown root:wsrc $_d
-		done
+		mkdir -p /mnt/usr/{src,{,x}obj} && (
+			cd /mnt/usr
+			chmod 770 {,x}obj
+			chown build:wobj {,x}obj
+			chmod 775 src
+			chown root:wsrc src
+		)
 	fi
 
 	[[ -x /mnt/$MODE.site ]] && chroot /mnt /$MODE.site
