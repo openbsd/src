@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.60 2016/11/22 14:20:39 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.61 2016/11/25 09:56:45 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -311,8 +311,8 @@ set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 [[ -z ${_KERNV[1]} ]]
 
-[[ $@ == @(|-c|-r) ]] && [[ $(id -u) -ne 0 ]] && \
-	sp_err "${0##*/}: need root privileges"
+[[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|r)) ]] &&
+	[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
 
 # XXX to be discussed; check for $ARCH?
 [[ -d ${PATCH_PATH} ]] && PATCH_PATH="file://$(readlink -f ${PATCH_PATH})"
