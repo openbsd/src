@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.93 2016/11/24 20:52:13 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.94 2016/11/25 11:43:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -114,6 +114,7 @@ struct mta_session {
 	int			 use_smtp_tls;
 	int			 ready;
 
+	struct event		 ev;
 	struct iobuf		 iobuf;
 	struct io		 io;
 	int			 ext;
@@ -236,8 +237,8 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 		 */
 		tv.tv_sec = 0;
 		tv.tv_usec = 0;
-		evtimer_set(&s->io.ev, mta_start, s);
-		evtimer_add(&s->io.ev, &tv);
+		evtimer_set(&s->ev, mta_start, s);
+		evtimer_add(&s->ev, &tv);
 	} else if (waitq_wait(&route->dst->ptrname, mta_on_ptr, s)) {
 		m_create(p_lka,  IMSG_MTA_DNS_PTR, 0, 0, -1);
 		m_add_id(p_lka, s->id);
