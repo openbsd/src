@@ -1,6 +1,6 @@
-.\"	$OpenBSD: RC4.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: RC4.3,v 1.3 2016/11/25 16:34:08 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: November 25 2016 $
 .Dt RC4 3
 .Os
 .Sh NAME
@@ -25,12 +25,12 @@
 .Sh DESCRIPTION
 This library implements the alleged RC4 cipher, which is described for
 example in
-.%B Applied Cryptography .
+.Qq Applied Cryptography .
 It is believed to be compatible with RC4[TM], a proprietary cipher of
 RSA Security Inc.
 .Pp
 RC4 is a stream cipher with variable key length.
-Typically, 128 bit (16 byte) keys are used for strong encryption, but
+Typically, 128-bit (16-byte) keys are used for strong encryption, but
 shorter insecure key sizes have been widely used due to export
 restrictions.
 .Pp
