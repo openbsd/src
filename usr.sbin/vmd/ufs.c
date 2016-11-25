@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.3 2016/11/24 08:09:27 reyk Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.4 2016/11/25 17:03:59 reyk Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 
 	off = blkoff(fs, fp->f_seekp);
 	file_block = lblkno(fs, fp->f_seekp);
-	block_size = dblksize(fs, &fp->f_di, (size_t)file_block);
+	block_size = dblksize(fs, &fp->f_di, (u_int64_t)file_block);
 
 	if (file_block != fp->f_buf_blkno) {
 		rc = block_map(f, file_block, &disk_block);
@@ -328,7 +328,7 @@ search_directory(char *name, struct open_file *f, ufsino_t *inumber_p)
 	length = strlen(name);
 
 	fp->f_seekp = 0;
-	while ((size_t)fp->f_seekp < fp->f_di.di_size) {
+	while ((u_int64_t)fp->f_seekp < fp->f_di.di_size) {
 		rc = buf_read_file(f, &buf, &buf_size);
 		if (rc)
 			return (rc);
@@ -483,7 +483,7 @@ ufs_open(char *path, struct open_file *f)
 
 			bcopy(cp, &namebuf[link_len], len + 1);
 
-			if (link_len < (size_t)fs->fs_maxsymlinklen) {
+			if (link_len < (u_int64_t)fs->fs_maxsymlinklen) {
 				bcopy(fp->f_di.di_shortlink, namebuf, link_len);
 			} else {
 				/*
@@ -577,7 +577,7 @@ ufs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 	int rc = 0;
 
 	while (size != 0) {
-		if ((size_t)fp->f_seekp >= fp->f_di.di_size)
+		if ((u_int64_t)fp->f_seekp >= fp->f_di.di_size)
 			break;
 
 		rc = buf_read_file(f, &buf, &buf_size);
@@ -657,7 +657,7 @@ ufs_readdir(struct open_file *f, char *name)
 		fp->f_seekp = 0;
 	else {
 			/* end of dir */
-		if ((size_t)fp->f_seekp >= fp->f_di.di_size) {
+		if ((u_int64_t)fp->f_seekp >= fp->f_di.di_size) {
 			*name = '\0';
 			return -1;
 		}
