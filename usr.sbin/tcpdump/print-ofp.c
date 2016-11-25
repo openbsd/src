@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.9 2016/11/22 13:01:32 rzalamena Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.10 2016/11/25 09:37:21 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -668,7 +668,7 @@ oxm_print_byte(const u_char *bp, u_int length, int hasmask, int hex)
 		bp += sizeof(*b);
 		length -= sizeof(*b);
 		printf(" mask ");
-		oxm_print_word(bp, length, 0, 1);
+		oxm_print_byte(bp, length, 0, 1);
 	}
 }
 
@@ -692,7 +692,7 @@ oxm_print_halfword(const u_char *bp, u_int length, int hasmask, int hex)
 		bp += sizeof(*h);
 		length -= sizeof(*h);
 		printf(" mask ");
-		oxm_print_word(bp, length, 0, 1);
+		oxm_print_halfword(bp, length, 0, 1);
 	}
 }
 
@@ -747,23 +747,17 @@ oxm_print_quad(const u_char *bp, u_int length, int hasmask, int hex)
 void
 oxm_print_ether(const u_char *bp, u_int length, int hasmask)
 {
-	uint8_t		*ptr;
-	int		 i;
-	char		 hex[8];
+	char		*mac;
 
 	if (length < ETHER_HDR_LEN) {
 		printf("[|OpenFlow]");
 		return;
 	}
 
-	ptr = (uint8_t *)bp;
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		if (i)
-			printf(":");
-
-		snprintf(hex, sizeof(hex), "%02x", ptr[i]);
-		printf("%s", hex);
-	}
+	if ((mac = ether_ntoa((void *)bp)) == NULL)
+		printf("invalid");
+	else
+		printf("%s", mac);
 
 	if (hasmask) {
 		bp += ETHER_ADDR_LEN;
