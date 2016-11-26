@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.17 2016/10/13 19:43:44 martijn Exp $
+.\"	$OpenBSD: vmctl.8,v 1.18 2016/11/26 18:37:32 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 13 2016 $
+.Dd $Mdocdate: November 26 2016 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -87,6 +87,14 @@ Kernel to load when booting the VM.
 Memory
 .Ar size
 of the VM, rounded to megabytes.
+.It Fl n Ar switch
+Add a network interface that is attached to the specified virtual
+.Ar switch .
+See
+.Sx SWITCH CONFIGURATION
+in
+.Xr vm.conf 5
+for more information.
 .El
 .It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.18 2016/11/24 07:58:55 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.19 2016/11/26 18:37:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -52,6 +52,7 @@ int info_console;
  *  name: optional name of the VM
  *  memsize: memory size (MB) of the VM to create
  *  nnics: number of vionet network interfaces to create
+ *  nics: switch names of the network interfaces to create
  *  ndisks: number of disk images
  *  disks: disk image file names
  *  kernel: kernel image to load
@@ -61,8 +62,8 @@ int info_console;
  *  ENOMEM if a memory allocation failure occurred.
  */
 int
-start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
-    char *kernel)
+start_vm(const char *name, int memsize, int nnics, char **nics,
+    int ndisks, char **disks, char *kernel)
 {
 	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
@@ -78,6 +79,8 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 		errx(1, "no kernel or disk specified");
 	if (nnics == -1)
 		nnics = 0;
+	if (nnics > VMM_MAX_NICS_PER_VM)
+		errx(1, "too many network interfaces");
 	if (nnics == 0)
 		warnx("starting without network interfaces");
 
@@ -97,15 +100,16 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 
 	vcp->vcp_ncpus = 1;
 	vcp->vcp_ndisks = ndisks;
+	vcp->vcp_nnics = nnics;
 
 	for (i = 0 ; i < ndisks; i++)
 		strlcpy(vcp->vcp_disks[i], disks[i], VMM_MAX_PATH_DISK);
-
+	for (i = 0 ; i < nnics; i++)
+		strlcpy(vmc->vmc_ifswitch[i], nics[i], IF_NAMESIZE);
 	if (name != NULL)
 		strlcpy(vcp->vcp_name, name, VMM_MAX_NAME_LEN);
 	if (kernel != NULL)
 		strlcpy(vcp->vcp_kernel, kernel, VMM_MAX_KERNEL_PATH);
-	vcp->vcp_nnics = nnics;
 
 	imsg_compose(ibuf, IMSG_VMDOP_START_VM_REQUEST, 0, 0, -1,
 	    vmc, sizeof(struct vmop_create_params));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.9 2016/10/12 19:10:03 reyk Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.10 2016/11/26 18:37:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -42,6 +42,8 @@ struct parse_result {
 	char			*path;
 	long long		 size;
 	int			 nifs;
+	char			**nets;
+	int			 nnets;
 	size_t			 ndisks;
 	char			**disks;
 	int			 disable;
@@ -62,6 +64,7 @@ struct imsgbuf	*ibuf;
 /* main.c */
 int	 vmmaction(struct parse_result *);
 int	 parse_ifs(struct parse_result *, char *, int);
+int	 parse_network(struct parse_result *, char *);
 int	 parse_size(struct parse_result *, char *, long long);
 int	 parse_disk(struct parse_result *, char *);
 int	 parse_vmid(struct parse_result *, char *);
@@ -72,7 +75,7 @@ __dead void
 
 /* vmctl.c */
 int	 create_imagefile(const char *, long);
-int	 start_vm(const char *, int, int, int, char **, char *);
+int	 start_vm(const char *, int, int, char **, int, char **, char *);
 int	 start_vm_complete(struct imsg *, int *, int);
 void	 terminate_vm(uint32_t, const char *);
 int	 terminate_vm_complete(struct imsg *, int *);

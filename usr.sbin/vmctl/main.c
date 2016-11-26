@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2016/10/12 19:10:03 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2016/11/26 18:37:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -63,7 +63,8 @@ struct ctl_command ctl_commands[] = {
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
 	{ "reset",	CMD_RESET,	ctl_reset,	"[all|vms|switches]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
-	    " [-c] -k kernel -m size [-i count] [-d disk]*" },
+	    " [-c] [-k kernel] [-m size]\n"
+	    "\t\t[-n switch] [-i count] [-d disk]*" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"id" },
 	{ NULL }
@@ -191,7 +192,7 @@ vmmaction(struct parse_result *res)
 
 	switch (res->action) {
 	case CMD_START:
-		ret = start_vm(res->name, res->size, res->nifs,
+		ret = start_vm(res->name, res->size, res->nifs, res->nets,
 		    res->ndisks, res->disks, res->path);
 		if (ret) {
 			errno = ret;
@@ -308,6 +309,29 @@ parse_ifs(struct parse_result *res, char *word, int val)
 		}
 	}
 	res->nifs = val;
+
+	return (0);
+}
+
+int
+parse_network(struct parse_result *res, char *word)
+{
+	char		**nets;
+	char		*s;
+
+	if ((nets = reallocarray(res->nets, res->nnets + 1,
+	    sizeof(char *))) == NULL) {
+		warn("reallocarray");
+		return (-1);
+	}
+	if ((s = strdup(word)) == NULL) {
+		warn("strdup");
+		return (-1);
+	}
+	nets[res->nnets] = s;
+	res->nets = nets;
+	res->nnets++;
+
 	return (0);
 }
 
@@ -480,7 +504,7 @@ ctl_reset(struct parse_result *res, int argc, char *argv[])
 int
 ctl_start(struct parse_result *res, int argc, char *argv[])
 {
-	int		 ch;
+	int		 ch, i;
 	char		 path[PATH_MAX];
 
 	if (argc < 2)
@@ -491,7 +515,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "ck:m:d:i:")) != -1) {
+	while ((ch = getopt(argc, argv, "ck:m:n:d:i:")) != -1) {
 		switch (ch) {
 		case 'c':
 			tty_autoconnect = 1;
@@ -510,6 +534,10 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 			if (parse_size(res, optarg, 0) != 0)
 				errx(1, "invalid memory size: %s", optarg);
 			break;
+		case 'n':
+			if (parse_network(res, optarg) != 0)
+				errx(1, "invalid network: %s", optarg);
+			break;
 		case 'd':
 			if (realpath(optarg, path) == NULL)
 				err(1, "invalid disk path");
@@ -527,6 +555,14 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+
+	for (i = res->nnets; i < res->nifs; i++) {
+		/* Add interface that is not attached to a switch */
+		if (parse_network(res, "") == -1)
+			return (-1);
+	}
+	if (res->nnets > res->nifs)
+		res->nifs = res->nnets;
 
 	return (vmmaction(res));
 }
