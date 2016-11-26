@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.30 2016/10/29 11:20:27 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.31 2016/11/26 15:36:10 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -88,7 +88,6 @@ struct cn30xxgmx_port_ops {
 int	cn30xxgmx_match(struct device *, void *, void *);
 void	cn30xxgmx_attach(struct device *, struct device *, void *);
 int	cn30xxgmx_print(void *, const char *);
-int	cn30xxgmx_submatch(struct device *, void *, void *);
 int	cn30xxgmx_port_phy_addr(int);
 int	cn30xxgmx_init(struct cn30xxgmx_softc *);
 int	cn30xxgmx_rx_frm_ctl_xable(struct cn30xxgmx_port_softc *,
@@ -304,8 +303,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		gmx_aa.ga_gmx_port = port_sc;
 		gmx_aa.ga_phy_addr = phy_addr;
 
-		config_found_sm(self, &gmx_aa,
-		    cn30xxgmx_print, cn30xxgmx_submatch);
+		config_found(self, &gmx_aa, cn30xxgmx_print);
 
 #ifdef OCTEON_ETH_DEBUG
 		__cn30xxgmx_port_softc[port_sc->sc_port_no] = port_sc;
@@ -339,14 +337,6 @@ cn30xxgmx_print(void *aux, const char *pnp)
 	printf(": %s", types[ga->ga_port_type]);
 
 	return UNCONF;
-}
-
-int
-cn30xxgmx_submatch(struct device *parent, void *vcf, void *aux)
-{
-	struct cfdata *cf = vcf;
-
-	return (*cf->cf_attach->ca_match)(parent, vcf, aux);
 }
 
 int
