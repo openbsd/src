@@ -1,5 +1,5 @@
-/*	$OpenBSD: cd9660.c,v 1.17 2016/10/26 15:31:13 natano Exp $	*/
-/*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.18 2016/11/26 18:57:25 natano Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.53 2016/11/25 23:02:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -935,7 +935,7 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 
 	tmp = emalloc(ISO_FILENAME_MAXLENGTH_WITH_PADDING);
 
-	while (i < num) {
+	while (i < num && iter) {
 		powers = 1;
 		count = 0;
 		digits = 1;
