@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.56 2016/11/24 07:58:55 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.57 2016/11/26 15:29:33 martijn Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -64,7 +64,6 @@
 io_fn_t ioports_map[MAX_PORTS];
 
 void vmm_sighdlr(int, short, void *);
-int start_client_vmd(void);
 int opentap(char *);
 int start_vm(struct imsg *, uint32_t *);
 int terminate_vm(struct vm_terminate_params *);
@@ -485,7 +484,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		fatal("socketpair");
 
 	/* Start child vmd for this VM (fork, chroot, drop privs) */
-	ret = start_client_vmd();
+	ret = fork();
 
 	/* Start child failed? - cleanup and leave */
 	if (ret == -1) {
@@ -685,38 +684,6 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 	}
 	free(info);
 	return (0);
-}
-
-
-/*
- * start_client_vmd
- *
- * forks a copy of the parent vmd, chroots to VMD_USER's home, drops
- * privileges (changes to user VMD_USER), and returns.
- * Should the fork operation succeed, but later chroot/privsep
- * fail, the child exits.
- *
- * Return values (returns to both child and parent on success):
- *  -1 : failure
- *  0: return to child vmd returns 0
- *  !0 : return to parent vmd returns the child's pid
- */
-int
-start_client_vmd(void)
-{
-	int child_pid;
-
-	child_pid = fork();
-	if (child_pid < 0)
-		return (-1);
-
-	if (!child_pid) {
-		/* child, already running without privileges */
-		return (0);
-	}
-
-	/* Parent */
-	return (child_pid);
 }
 
 /*
