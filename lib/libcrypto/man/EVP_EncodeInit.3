@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_EncodeInit.3,v 1.1 2016/11/26 18:09:35 schwarze Exp $
+.\"	$OpenBSD: EVP_EncodeInit.3,v 1.2 2016/11/26 19:16:58 jmc Exp $
 .\"	OpenSSL f430ba31 Jun 19 19:39:01 2016 +0200
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -116,14 +116,14 @@ The EVP encode routines provide a high level interface to base64
 encoding and decoding.
 Base64 encoding converts binary data into a printable form that uses
 the characters A-Z, a-z, 0-9, "+" and "/" to represent the data.
-For every 3 bytes of binary data provided, 4 bytes of base64 encoded
+For every 3 bytes of binary data provided, 4 bytes of base64-encoded
 data will be produced, plus some occasional newlines.
 If the input data length is not a multiple of 3, then the output data
 will be padded at the end using the "=" character.
 .Pp
 Encoding of binary data is performed in blocks of 48 input bytes (or
 less for the final block).
-For each 48 byte input block encoded, 64 bytes of base64 data is output,
+For each 48-byte input block encoded, 64 bytes of base64 data is output,
 plus an additional newline character, i.e. 65 bytes in total.
 The final block, which may be less than 48 bytes, will output 4 bytes
 for every 3 bytes of input.
@@ -228,7 +228,7 @@ and the number of bytes output is stored in
 It is the caller's responsibility to ensure that the buffer at
 .Fa out
 is sufficiently large to accommodate the output data.
-This function will attempt to decode as much data as possible in 4 byte
+This function will attempt to decode as much data as possible in 4-byte
 chunks.
 Any whitespace, newline or carriage return characters are ignored.
 Any partial chunk of unprocessed data (1, 2 or 3 bytes) that remains at
