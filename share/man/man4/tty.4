@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.46 2016/09/02 21:00:28 tedu Exp $
+.\"	$OpenBSD: tty.4,v 1.47 2016/11/26 11:18:43 mpi Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 2 2016 $
+.Dd $Mdocdate: November 26 2016 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -204,14 +204,8 @@ The available line disciplines currently available are:
 .Bl -tag -width TIOCGWINSZ -compact
 .It TTYDISC
 Termios interactive line discipline.
-.It TABLDISC
-Tablet line discipline.
-.It SLIPDISC
-Serial IP line discipline.
 .It PPPDISC
 Point-to-Point Protocol line discipline.
-.It STRIPDISC
-Starmode Radio IP line discipline.
 .It NMEADISC
 NMEA 0183 line discipline.
 .It MSTSDISC

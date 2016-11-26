@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.14 2016/03/23 14:52:42 mmcc Exp $	*/
+/*	$OpenBSD: print.c,v 1.15 2016/11/26 11:18:43 mpi Exp $	*/
 /*	$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $	*/
 
 /*-
@@ -58,17 +58,8 @@ print(struct termios *tp, struct winsize *wp, int ldisc, enum FMT fmt)
 	/* Line discipline. */
 	if (ldisc != TTYDISC) {
 		switch(ldisc) {
-		case TABLDISC:
-			cnt += printf("tablet disc; ");
-			break;
-		case SLIPDISC:
-			cnt += printf("slip disc; ");
-			break;
 		case PPPDISC:
 			cnt += printf("ppp disc; ");
-			break;
-		case STRIPDISC:
-			cnt += printf("strip disc; ");
 			break;
 		case NMEADISC:
 			cnt += printf("nmea disc; ");
