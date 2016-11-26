@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.18 2016/11/26 18:37:32 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.19 2016/11/26 19:23:27 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -72,6 +72,7 @@ Reset and terminate all VMs.
 .Fl m Ar size
 .Op Fl d Ar path
 .Op Fl i Ar count
+.Op Fl n Ar switch
 .Xc
 Starts a VM defined by the specified name and parameters:
 .Bl -tag -width "-i count"
