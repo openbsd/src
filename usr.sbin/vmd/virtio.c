@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.24 2016/10/18 05:33:57 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.25 2016/11/26 16:05:11 sf Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -703,6 +703,13 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_DEVICE_STATUS:
 			dev->cfg.device_status = *data;
+			if (*data == 0) {
+				dev->vq[0].last_avail = 0;
+				dev->vq[0].notified_avail = 0;
+				dev->vq[1].last_avail = 0;
+				dev->vq[1].notified_avail = 0;
+				/* XXX do proper reset */
+			}
 			break;
 		default:
 			break;
@@ -795,6 +802,9 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	struct vring_used_elem *ue;
 
 	ret = 0;
+
+	if (!(dev->cfg.device_status & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK))
+		return ret;
 
 	vr_sz = vring_size(VIONET_QUEUE_SIZE);
 	q_gpa = dev->vq[0].qa;
