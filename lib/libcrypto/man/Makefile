@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.54 2016/11/22 07:06:03 jmc Exp $
+# $OpenBSD: Makefile,v 1.55 2016/11/26 18:09:35 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -99,6 +99,7 @@ MAN=	\
 	EVP_DigestInit.3 \
 	EVP_DigestSignInit.3 \
 	EVP_DigestVerifyInit.3 \
+	EVP_EncodeInit.3 \
 	EVP_EncryptInit.3 \
 	EVP_OpenInit.3 \
 	EVP_PKEY_CTX_ctrl.3 \
