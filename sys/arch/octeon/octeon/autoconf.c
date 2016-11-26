@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2016/05/18 01:21:40 visa Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2016/11/26 16:31:32 martijn Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -89,7 +89,9 @@ parse_uboot_root(void)
          */
         p = strrchr(uboot_rootdev, '/');
         if (p == NULL)
-                return;
+                p = strchr(uboot_rootdev, '=');
+		if (p == NULL)
+			return;
 	p++;
 
 	len = strlen(p);
