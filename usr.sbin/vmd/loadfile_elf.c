@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.21 2016/11/24 07:58:55 reyk Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.22 2016/11/26 20:03:42 reyk Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ static int elf32_exec(FILE *, Elf32_Ehdr *, u_long *, int);
 static int elf64_exec(FILE *, Elf64_Ehdr *, u_long *, int);
 static size_t create_bios_memmap(struct vm_create_params *, bios_memmap_t *);
 static uint32_t push_bootargs(bios_memmap_t *, size_t);
-static size_t push_stack(uint32_t, uint32_t);
+static size_t push_stack(uint32_t, uint32_t, uint32_t, uint32_t);
 static void push_gdt(void);
 static size_t mread(FILE *, paddr_t, size_t);
 static void marc4random_buf(paddr_t, int);
@@ -265,13 +265,16 @@ push_pt(void)
  *  fd: file descriptor of a kernel file to load
  *  vcp: the VM create parameters, holding the exact memory map
  *  (out) vrs: register state to set on init for this kernel
+ *  bootdev: the optional non-default boot device
+ *  howto: optionel boot flags for the kernel
  *
  * Return values:
  *  0 if successful
  *  various error codes returned from read(2) or loadelf functions
  */
 int
-loadelf_main(FILE *fp, struct vm_create_params *vcp, struct vcpu_reg_state *vrs)
+loadelf_main(FILE *fp, struct vm_create_params *vcp,
+    struct vcpu_reg_state *vrs, uint32_t bootdev, uint32_t howto)
 {
 	int r;
 	uint32_t bootargsz;
@@ -298,7 +301,7 @@ loadelf_main(FILE *fp, struct vm_create_params *vcp, struct vcpu_reg_state *vrs)
 	push_pt();
 	n = create_bios_memmap(vcp, memmap);
 	bootargsz = push_bootargs(memmap, n);
-	stacksize = push_stack(bootargsz, marks[MARK_END]);
+	stacksize = push_stack(bootargsz, marks[MARK_END], bootdev, howto);
 
 #ifdef __i386__
 	vrs->vrs_gprs[VCPU_REGS_EIP] = (uint32_t)marks[MARK_ENTRY];
@@ -434,12 +437,14 @@ push_bootargs(bios_memmap_t *memmap, size_t n)
  * Parameters:
  *  bootargsz: size of boot arguments
  *  end: kernel 'end' symbol value
+ *  bootdev: the optional non-default boot device
+ *  howto: optionel boot flags for the kernel
  *
  * Return values:
  *  size of the stack
  */
 static size_t
-push_stack(uint32_t bootargsz, uint32_t end)
+push_stack(uint32_t bootargsz, uint32_t end, uint32_t bootdev, uint32_t howto)
 {
 	uint32_t stack[1024];
 	uint16_t loc;
@@ -447,14 +452,17 @@ push_stack(uint32_t bootargsz, uint32_t end)
 	memset(&stack, 0, sizeof(stack));
 	loc = 1024;
 
+	if (bootdev == 0)
+		bootdev = MAKEBOOTDEV(0x4, 0, 0, 0, 0); /* bootdev: sd0a */
+
 	stack[--loc] = BOOTARGS_PAGE;
 	stack[--loc] = bootargsz;
 	stack[--loc] = 0; /* biosbasemem */
 	stack[--loc] = 0; /* biosextmem */
 	stack[--loc] = end;
 	stack[--loc] = 0x0e;
-	stack[--loc] = MAKEBOOTDEV(0x4, 0, 0, 0, 0); /* bootdev: sd0a */
-	stack[--loc] = 0x0;
+	stack[--loc] = bootdev;
+	stack[--loc] = howto;
 
 	write_mem(STACK_PAGE, &stack, PAGE_SIZE);
 

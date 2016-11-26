@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.44 2016/11/26 19:49:11 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.45 2016/11/26 20:03:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -199,11 +199,8 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 
-		log_info("%s: started vm %d successfully, "
-		    "kernel %s, tty %s", vcp->vcp_name, vcp->vcp_id,
-		    strlen(vcp->vcp_kernel) ?
-		    vcp->vcp_kernel : "hd0a:" VM_DEFAULT_KERNEL,
-		    vm->vm_ttyname);
+		log_info("%s: started vm %d successfully, tty %s",
+		    vcp->vcp_name, vcp->vcp_id, vm->vm_ttyname);
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:

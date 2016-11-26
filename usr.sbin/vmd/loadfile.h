@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.6 2016/11/24 07:58:55 reyk Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.7 2016/11/26 20:03:42 reyk Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,6 @@
 #define NPTE_PG (PAGE_SIZE / sizeof(pt_entry_t))
 
 int loadelf_main(FILE *, struct vm_create_params *,
-    struct vcpu_reg_state *);
+    struct vcpu_reg_state *, uint32_t, uint32_t);
 
 #include <machine/loadfile_machdep.h>

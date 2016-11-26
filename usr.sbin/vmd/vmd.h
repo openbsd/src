@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.37 2016/11/26 19:49:11 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.38 2016/11/26 20:03:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -38,6 +38,8 @@
 #define SOCKET_NAME		"/var/run/vmd.sock"
 #define VMM_NODE		"/dev/vmm"
 #define VM_DEFAULT_KERNEL	"/bsd"
+#define VM_DEFAULT_DEVICE	"hd0a"
+#define VM_BOOT_CONF		"/etc/boot.conf"
 #define VM_NAME_MAX		64
 #define VM_TTYNAME_MAX		16
 #define MAX_TAP			256
@@ -104,6 +106,16 @@ struct vmop_create_params {
 	char			 vmc_ifnames[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
+};
+
+struct vmboot_params {
+	int			 vbp_fd;
+	off_t			 vbp_partoff;
+	char			 vbp_device[NAME_MAX];
+	char			 vbp_image[PATH_MAX];
+	uint32_t		 vbp_bootdev;
+	uint32_t		 vbp_howto;
+	char			*vbp_arg;
 };
 
 struct vmd_if {
@@ -206,8 +218,8 @@ int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
 
 /* vmboot.c */
-FILE	*vmboot_open(int, int, void **);
-void	 vmboot_close(FILE *, void *);
+FILE	*vmboot_open(int, int, struct vmboot_params *);
+void	 vmboot_close(FILE *, struct vmboot_params *);
 
 /* parse.y */
 int	 parse_config(const char *);

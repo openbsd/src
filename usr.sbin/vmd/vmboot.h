@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmboot.h,v 1.1 2016/11/24 07:58:55 reyk Exp $	*/
+/*	$OpenBSD: vmboot.h,v 1.2 2016/11/26 20:03:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -58,6 +58,11 @@ struct open_file {
 	void		*f_fsdata;
 	off_t		f_offset;
 };
+
+struct disklabel;
+
+u_int	 dkcksum(struct disklabel *);
+char	*getdisklabel(char *, struct disklabel *);
 
 int	ufs_open(char *, struct open_file *);
 int	ufs_close(struct open_file *);
