@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.78 2016/10/27 13:19:27 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.79 2016/11/26 15:42:03 martijn Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -630,12 +630,10 @@ process_bootargs(void)
 	extern struct boot_desc *octeon_boot_desc;
 
 	/*
-	 * The kernel is booted via a bootoctlinux command. Thus we need to skip
-	 * argv[0] when we start to decode the boot arguments (${bootargs}).
-	 * Note that U-Boot doesn't pass us anything by default, we need to
-	 * explicitly pass the rootdevice.
+	 * U-Boot doesn't pass us anything by default, we need to explicitly
+	 * pass the rootdevice.
 	 */
-	for (i = 1; i < octeon_boot_desc->argc; i++ ) {
+	for (i = 0; i < octeon_boot_desc->argc; i++ ) {
 		const char *arg = (const char*)
 		    PHYS_TO_XKPHYS(octeon_boot_desc->argv[i], CCA_CACHED);
 
@@ -648,7 +646,7 @@ process_bootargs(void)
 
 		/*
 		 * XXX: We currently only expect one other argument,
-		 * argv[1], rootdev=ROOTDEV.
+		 * rootdev=ROOTDEV.
 		 */
 		if (strncmp(arg, "rootdev=", 8) == 0) {
 			if (*uboot_rootdev == '\0') {
