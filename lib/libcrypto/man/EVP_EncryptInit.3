@@ -1,10 +1,61 @@
-.\"	$OpenBSD: EVP_EncryptInit.3,v 1.3 2016/11/21 22:19:15 jmc Exp $
+.\"	$OpenBSD: EVP_EncryptInit.3,v 1.4 2016/11/26 20:26:25 schwarze Exp $
+.\"	OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"
-.Dd $Mdocdate: November 21 2016 $
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2000-2002, 2005, 2012-2016 The OpenSSL Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 26 2016 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
+.Nm EVP_CIPHER_CTX_new ,
 .Nm EVP_CIPHER_CTX_init ,
+.Nm EVP_CIPHER_CTX_free ,
 .Nm EVP_EncryptInit_ex ,
 .Nm EVP_EncryptUpdate ,
 .Nm EVP_EncryptFinal_ex ,
@@ -66,7 +117,6 @@
 .Nm EVP_idea_ecb ,
 .Nm EVP_idea_cfb ,
 .Nm EVP_idea_ofb ,
-.Nm EVP_idea_cbc ,
 .Nm EVP_rc2_cbc ,
 .Nm EVP_rc2_ecb ,
 .Nm EVP_rc2_cfb ,
@@ -81,6 +131,18 @@
 .Nm EVP_cast5_ecb ,
 .Nm EVP_cast5_cfb ,
 .Nm EVP_cast5_ofb ,
+.Nm EVP_aes_128_cbc ,
+.Nm EVP_aes_128_ecb ,
+.Nm EVP_aes_128_cfb ,
+.Nm EVP_aes_128_ofb ,
+.Nm EVP_aes_192_cbc ,
+.Nm EVP_aes_192_ecb ,
+.Nm EVP_aes_192_cfb ,
+.Nm EVP_aes_192_ofb ,
+.Nm EVP_aes_256_cbc ,
+.Nm EVP_aes_256_ecb ,
+.Nm EVP_aes_256_cfb ,
+.Nm EVP_aes_256_ofb ,
 .Nm EVP_aes_128_gcm ,
 .Nm EVP_aes_192_gcm ,
 .Nm EVP_aes_256_gcm ,
@@ -90,12 +152,19 @@
 .Nm EVP_rc5_32_12_16_cbc ,
 .Nm EVP_rc5_32_12_16_cfb ,
 .Nm EVP_rc5_32_12_16_ecb ,
-.Nm EVP_rc5_32_12_16_ofb
+.Nm EVP_rc5_32_12_16_ofb ,
+.Nm EVP_chacha20
 .Nd EVP cipher routines
 .Sh SYNOPSIS
 .In openssl/evp.h
+.Ft EVP_CIPHER_CTX *
+.Fn EVP_CIPHER_CTX_new void
 .Ft void
 .Fo EVP_CIPHER_CTX_init
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft void
+.Fo EVP_CIPHER_CTX_free
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fc
 .Ft int
@@ -230,28 +299,83 @@
 .Fo EVP_get_cipherbyname
 .Fa "const char *name"
 .Fc
-.Fd #define EVP_get_cipherbynid(a) EVP_get_cipherbyname(OBJ_nid2sn(a))
-.Fd #define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
-.Fd #define EVP_CIPHER_nid(e)		((e)->nid)
-.Fd #define EVP_CIPHER_block_size(e)	((e)->block_size)
-.Fd #define EVP_CIPHER_key_length(e)	((e)->key_len)
-.Fd #define EVP_CIPHER_iv_length(e)		((e)->iv_len)
-.Fd #define EVP_CIPHER_flags(e)		((e)->flags)
-.Fd #define EVP_CIPHER_mode(e)		((e)->flags) & EVP_CIPH_MODE)
+.Ft const EVP_CIPHER *
+.Fo EVP_get_cipherbynid
+.Fa "int nid"
+.Fc
+.Ft const EVP_CIPHER *
+.Fo EVP_get_cipherbyobj
+.Fa "const ASN1_OBJECT *a"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_nid
+.Fa "const EVP_CIPHER *e"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_block_size
+.Fa "const EVP_CIPHER *e"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_key_length
+.Fa "const EVP_CIPHER *e"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_iv_length
+.Fa "const EVP_CIPHER *e"
+.Fc
+.Ft unsigned long
+.Fo EVP_CIPHER_flags
+.Fa "const EVP_CIPHER *e"
+.Fc
+.Ft unsigned long
+.Fo EVP_CIPHER_mode
+.Fa "const EVP_CIPHER *e"
+.Fc
 .Ft int
 .Fo EVP_CIPHER_type
 .Fa "const EVP_CIPHER *ctx"
 .Fc
-.Fd #define EVP_CIPHER_CTX_cipher(e)	((e)->cipher)
-.Fd #define EVP_CIPHER_CTX_nid(e)		((e)->cipher->nid)
-.Fd #define EVP_CIPHER_CTX_block_size(e)	((e)->cipher->block_size)
-.Fd #define EVP_CIPHER_CTX_key_length(e)	((e)->key_len)
-.Fd #define EVP_CIPHER_CTX_iv_length(e)	((e)->cipher->iv_len)
-.Fd #define EVP_CIPHER_CTX_get_app_data(e)	((e)->app_data)
-.Fd #define EVP_CIPHER_CTX_set_app_data(e,d) ((e)->app_data=(char *)(d))
-.Fd #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
-.Fd #define EVP_CIPHER_CTX_flags(e)		((e)->cipher->flags)
-.Fd #define EVP_CIPHER_CTX_mode(e)		((e)->cipher->flags & EVP_CIPH_MODE)
+.Ft const EVP_CIPHER *
+.Fo EVP_CIPHER_CTX_cipher
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_CTX_nid
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_CTX_block_size
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_CTX_key_length
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_CTX_iv_length
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft void *
+.Fo EVP_CIPHER_CTX_get_app_data
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft void
+.Fo EVP_CIPHER_CTX_set_app_data
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fa "void *data"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_CTX_type
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft unsigned long
+.Fo EVP_CIPHER_CTX_flags
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft unsigned long
+.Fo EVP_CIPHER_CTX_mode
+.Fa "const EVP_CIPHER_CTX *ctx"
+.Fc
 .Ft int
 .Fo EVP_CIPHER_param_to_asn1
 .Fa "EVP_CIPHER_CTX *c"
@@ -266,9 +390,25 @@
 The EVP cipher routines are a high level interface to certain symmetric
 ciphers.
 .Pp
+.Fn EVP_CIPHER_CTX_new
+creates a cipher context.
+.Pp
 .Fn EVP_CIPHER_CTX_init
 initializes the cipher context
 .Fa ctx .
+.Pp
+.Fn EVP_CIPHER_CTX_free
+clears all information from a cipher context and frees up any
+allocated memory associate with it, including
+.Fa ctx
+itself.
+This function should be called after all operations using a cipher
+are complete, so sensitive information does not remain in memory.
+If
+.Fa ctx
+is a
+.Dv NULL
+pointer, no action occurs.
 .Pp
 .Fn EVP_EncryptInit_ex
 sets up the cipher context
@@ -317,7 +457,7 @@ of data.
 The amount of data written depends on the block alignment of the
 encrypted data: as a result the amount of data written may be anything
 from zero bytes to (inl + cipher_block_size - 1) so
-.Fa outl
+.Fa out
 should contain sufficient room.
 The actual number of bytes written is placed in
 .Fa outl .
@@ -432,10 +572,16 @@ corresponding OBJECT IDENTIFIER.
 .Pp
 .Fn EVP_CIPHER_CTX_set_padding
 enables or disables padding.
+This function should be called after the context is set up for
+encryption or decryption with
+.Fn EVP_EncryptInit_ex ,
+.Fn EVP_DecryptInit_ex ,
+or
+EVP_CipherInit_ex .
 By default encryption operations are padded using standard block padding
 and the padding is checked and removed when decrypting.
 If the
-.Sy padding
+.Fa padding
 parameter is zero, then no padding is performed, the total amount of data
 encrypted or decrypted must then be a multiple of the block size or an
 error will occur.
@@ -483,7 +629,7 @@ or
 .Vt EVP_CIPHER_CTX
 structure.
 The constant
-.Dv EVP_MAX_IV_LENGTH
+.Dv EVP_MAX_BLOCK_LENGTH
 is also the maximum block length for all ciphers.
 .Pp
 .Fn EVP_CIPHER_type
@@ -553,7 +699,62 @@ the RC2 effective key length is not supported).
 allows various cipher specific parameters to be determined and set.
 Currently only the RC2 effective key length and the number of rounds of
 RC5 can be set.
+.Pp
+Where possible the EVP interface to symmetric ciphers should be
+used in preference to the low level interfaces.
+This is because the code then becomes transparent to the cipher used and
+much more flexible.
+.Pp
+PKCS padding works by adding n padding bytes of value n to make the
+total length of the encrypted data a multiple of the block size.
+Padding is always added so if the data is already a multiple of the
+block size n will equal the block size.
+For example if the block size is 8 and 11 bytes are to be encrypted then
+5 padding bytes of value 5 will be added.
+.Pp
+When decrypting the final block is checked to see if it has the correct
+form.
+.Pp
+Although the decryption operation can produce an error if padding is
+enabled, it is not a strong test that the input data or key is correct.
+A random block has better than 1 in 256 chance of being of the correct
+format and problems with the input data earlier on will not produce a
+final decrypt error.
+.Pp
+If padding is disabled then the decryption operation will always succeed
+if the total amount of data decrypted is a multiple of the block size.
+.Pp
+The functions
+.Fn EVP_EncryptInit ,
+.Fn EVP_EncryptFinal ,
+.Fn EVP_DecryptInit ,
+.Fn EVP_CipherInit ,
+and
+.Fn EVP_CipherFinal
+are obsolete but are retained for compatibility with existing code.
+New code should use
+.Fn EVP_EncryptInit_ex ,
+.Fn EVP_EncryptFinal_ex ,
+.Fn EVP_DecryptInit_ex ,
+.Fn EVP_DecryptFinal_ex ,
+.Fn EVP_CipherInit_ex ,
+and
+.Fn EVP_CipherFinal_ex
+because they can reuse an existing context without allocating and
+freeing it up on each call.
+.Pp
+.Fn EVP_get_cipherbynid
+and
+.Fn EVP_get_cipherbyobj
+are implemented as macros.
 .Sh RETURN VALUES
+.Fn EVP_CIPHER_CTX_new
+returns a pointer to a newly created
+.Vt EVP_CIPHER_CTX
+for success or
+.Dv NULL
+for failure.
+.Pp
 .Fn EVP_EncryptInit_ex ,
 .Fn EVP_EncryptUpdate ,
 and
@@ -625,103 +826,61 @@ structure.
 .Fn EVP_CIPHER_param_to_asn1
 and
 .Fn EVP_CIPHER_asn1_to_param
-return 1 for success or 0 for failure.
-.Pp
-Where possible the EVP interface to symmetric ciphers should be
-used in preference to the low level interfaces.
-This is because the code then becomes transparent to the cipher used and
-much more flexible.
-.Pp
-PKCS padding works by adding n padding bytes of value n to make the
-total length of the encrypted data a multiple of the block size.
-Padding is always added so if the data is already a multiple of the
-block size n will equal the block size.
-For example if the block size is 8 and 11 bytes are to be encrypted then
-5 padding bytes of value 5 will be added.
-.Pp
-When decrypting the final block is checked to see if it has the correct
-form.
-.Pp
-Although the decryption operation can produce an error if padding is
-enabled, it is not a strong test that the input data or key is correct.
-A random block has better than 1 in 256 chance of being of the correct
-format and problems with the input data earlier on will not produce a
-final decrypt error.
-.Pp
-If padding is disabled then the decryption operation will always succeed
-if the total amount of data decrypted is a multiple of the block size.
-.Pp
-The functions
-.Fn EVP_EncryptInit ,
-.Fn EVP_EncryptFinal ,
-.Fn EVP_DecryptInit ,
-.Fn EVP_CipherInit ,
-and
-.Fn EVP_CipherFinal
-are obsolete but are retained for compatibility with existing code.
-New code should use
-.Fn EVP_EncryptInit_ex ,
-.Fn EVP_EncryptFinal_ex ,
-.Fn EVP_DecryptInit_ex ,
-.Fn EVP_DecryptFinal_ex ,
-.Fn EVP_CipherInit_ex ,
-and
-.Fn EVP_CipherFinal_ex
-because they can reuse an existing context without allocating and
-freeing it up on each call.
+return greater than zero for success and zero or a negative number
+for failure.
 .Sh CIPHER LISTING
 All algorithms have a fixed key length unless otherwise stated.
 .Bl -tag -width Ds
-.It Fn EVP_enc_null void
+.It Fn EVP_enc_null
 Null cipher: does nothing.
 .It Xo
-.Fn EVP_aes_128_cbc void ,
-.Fn EVP_aes_128_ecb void ,
-.Fn EVP_aes_128_cfb void ,
-.Fn EVP_aes_128_ofb void
+.Fn EVP_aes_128_cbc ,
+.Fn EVP_aes_128_ecb ,
+.Fn EVP_aes_128_cfb ,
+.Fn EVP_aes_128_ofb
 .Xc
-128-bit AES in CBC, ECB, CFB and OFB modes respectively.
+AES with a 128-bit key in CBC, ECB, CFB and OFB modes respectively.
 .It Xo
-.Fn EVP_aes_192_cbc void ,
-.Fn EVP_aes_192_ecb void ,
-.Fn EVP_aes_192_cfb void ,
-.Fn EVP_aes_192_ofb void
+.Fn EVP_aes_192_cbc ,
+.Fn EVP_aes_192_ecb ,
+.Fn EVP_aes_192_cfb ,
+.Fn EVP_aes_192_ofb
 .Xc
-192-bit AES in CBC, ECB, CFB and OFB modes respectively.
+AES with a 192-bit key in CBC, ECB, CFB and OFB modes respectively.
 .It Xo
-.Fn EVP_aes_256_cbc void ,
-.Fn EVP_aes_256_ecb void ,
-.Fn EVP_aes_256_cfb void ,
-.Fn EVP_aes_256_ofb void
+.Fn EVP_aes_256_cbc ,
+.Fn EVP_aes_256_ecb ,
+.Fn EVP_aes_256_cfb ,
+.Fn EVP_aes_256_ofb
 .Xc
-256-bit AES in CBC, ECB, CFB and OFB modes respectively.
+AES with a 256-bit key in CBC, ECB, CFB and OFB modes respectively.
 .It Xo
-.Fn EVP_des_cbc void ,
-.Fn EVP_des_ecb void ,
-.Fn EVP_des_cfb void ,
-.Fn EVP_des_ofb void
+.Fn EVP_des_cbc ,
+.Fn EVP_des_ecb ,
+.Fn EVP_des_cfb ,
+.Fn EVP_des_ofb
 .Xc
 DES in CBC, ECB, CFB and OFB modes respectively.
 .It Xo
-.Fn EVP_des_ede_cbc void ,
-.Fn EVP_des_ede void ,
-.Fn EVP_des_ede_ofb void ,
-.Fn EVP_des_ede_cfb void
+.Fn EVP_des_ede_cbc ,
+.Fn EVP_des_ede ,
+.Fn EVP_des_ede_ofb ,
+.Fn EVP_des_ede_cfb
 .Xc
 Two key triple DES in CBC, ECB, CFB and OFB modes respectively.
 .It Xo
-.Fn EVP_des_ede3_cbc void ,
-.Fn EVP_des_ede3 void ,
-.Fn EVP_des_ede3_ofb void ,
-.Fn EVP_des_ede3_cfb void
+.Fn EVP_des_ede3_cbc ,
+.Fn EVP_des_ede3 ,
+.Fn EVP_des_ede3_ofb ,
+.Fn EVP_des_ede3_cfb
 .Xc
 Three key triple DES in CBC, ECB, CFB and OFB modes respectively.
-.It Fn EVP_desx_cbc void
+.It Fn EVP_desx_cbc
 DESX algorithm in CBC mode.
-.It Fn EVP_rc4 void
+.It Fn EVP_rc4
 RC4 stream cipher.
 This is a variable key length cipher with default key length 128 bits.
-.It Fn EVP_rc4_40 void
+.It Fn EVP_rc4_40
 RC4 stream cipher with 40-bit key length.
 This is obsolete and new code should use
 .Fn EVP_rc4
@@ -729,25 +888,25 @@ and the
 .Fn EVP_CIPHER_CTX_set_key_length
 function.
 .It Xo
-.Fn EVP_idea_cbc void ,
-.Fn EVP_idea_ecb void ,
-.Fn EVP_idea_cfb void ,
-.Fn EVP_idea_ofb void
+.Fn EVP_idea_cbc ,
+.Fn EVP_idea_ecb ,
+.Fn EVP_idea_cfb ,
+.Fn EVP_idea_ofb
 .Xc
 IDEA encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 .It Xo
-.Fn EVP_rc2_cbc void ,
-.Fn EVP_rc2_ecb void ,
-.Fn EVP_rc2_cfb void ,
-.Fn EVP_rc2_ofb void
+.Fn EVP_rc2_cbc ,
+.Fn EVP_rc2_ecb ,
+.Fn EVP_rc2_cfb ,
+.Fn EVP_rc2_ofb
 .Xc
 RC2 encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 This is a variable key length cipher with an additional parameter called
 "effective key bits" or "effective key length".
 By default both are set to 128 bits.
 .It Xo
-.Fn EVP_rc2_40_cbc void ,
-.Fn EVP_rc2_64_cbc void
+.Fn EVP_rc2_40_cbc ,
+.Fn EVP_rc2_64_cbc
 .Xc
 RC2 algorithm in CBC mode with a default key length and effective key
 length of 40 and 64 bits.
@@ -758,58 +917,146 @@ and
 .Fn EVP_CIPHER_CTX_ctrl
 to set the key length and effective key length.
 .It Xo
-.Fn EVP_bf_cbc void ,
-.Fn EVP_bf_ecb void ,
-.Fn EVP_bf_cfb void ,
-.Fn EVP_bf_ofb void
+.Fn EVP_bf_cbc ,
+.Fn EVP_bf_ecb ,
+.Fn EVP_bf_cfb ,
+.Fn EVP_bf_ofb
 .Xc
 Blowfish encryption algorithm in CBC, ECB, CFB and OFB modes
 respectively.
 This is a variable key length cipher.
 .It Xo
-.Fn EVP_cast5_cbc void ,
-.Fn EVP_cast5_ecb void ,
-.Fn EVP_cast5_cfb void ,
-.Fn EVP_cast5_ofb void
+.Fn EVP_cast5_cbc ,
+.Fn EVP_cast5_ecb ,
+.Fn EVP_cast5_cfb ,
+.Fn EVP_cast5_ofb
 .Xc
 CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 This is a variable key length cipher.
 .It Xo
-.Fn EVP_rc5_32_12_16_cbc void ,
-.Fn EVP_rc5_32_12_16_ecb void ,
-.Fn EVP_rc5_32_12_16_cfb void ,
-.Fn EVP_rc5_32_12_16_ofb void
+.Fn EVP_rc5_32_12_16_cbc ,
+.Fn EVP_rc5_32_12_16_ecb ,
+.Fn EVP_rc5_32_12_16_cfb ,
+.Fn EVP_rc5_32_12_16_ofb
 .Xc
 RC5 encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 This is a variable key length cipher with an additional "number of
 rounds" parameter.
 By default the key length is set to 128 bits and 12 rounds.
+.It Xo
+.Fn EVP_aes_128_gcm ,
+.Fn EVP_aes_192_gcm ,
+.Fn EVP_aes_256_gcm
+.Xc
+AES Galois Counter Mode (GCM) for 128, 192 and 256 bit keys respectively.
+These ciphers require additional control operations to function
+correctly: see the GCM mode section below for details.
+.It Xo
+.Fn EVP_aes_128_ccm ,
+.Fn EVP_aes_192_ccm ,
+.Fn EVP_aes_256_ccm
+.Xc
+AES Counter with CBC-MAC Mode (CCM) for 128, 192 and 256 bit keys
+respectively.
+These ciphers require additional control operations to function
+correctly: see CCM mode section below for details.
+.It Fn EVP_chacha20
+The ChaCha20 stream cipher.
+The key length is 256 bits, the IV is 96 bits long.
+.El
+.Ss GCM mode
+For GCM mode ciphers, the behaviour of the EVP interface
+is subtly altered and several additional ctrl operations are
+supported.
+.Pp
+To specify any additional authenticated data (AAD), a call to
+.Fn EVP_CipherUpdate ,
+.Fn EVP_EncryptUpdate ,
+or
+.Fn EVP_DecryptUpdate
+should be made with the output parameter out set to
+.Dv NULL .
+.Pp
+When decrypting, the return value of
+.Fn EVP_DecryptFinal
+or
+.Fn EVP_CipherFinal
+indicates if the operation was successful.
+If it does not indicate success, the authentication operation has
+failed and any output data MUST NOT be used as it is corrupted.
+.Pp
+The following ctrls are supported in GCM mode:
+.Bl -tag -width Ds
+.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_GCM_SET_IVLEN ivlen NULL
+Sets the IV length: this call can only be made before specifying an IV.
+If not called, a default IV length is used.
+For GCM AES the default is 12, i.e. 96 bits.
+.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_GCM_GET_TAG taglen tag
+Writes
+.Fa taglen
+bytes of the tag value to the buffer indicated by
+.Fa tag .
+This call can only be made when encrypting data and after all data has
+been processed, e.g. after an
+.Fn EVP_EncryptFinal
+call.
+.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_GCM_SET_TAG taglen tag
+Sets the expected tag to
+.Fa taglen
+bytes from
+.Fa tag .
+This call is only legal when decrypting data and must be made before
+any data is processed, e.g. before any
+.Fa EVP_DecryptUpdate
+call.
+.El
+.Ss CCM mode
+The behaviour of CCM mode ciphers is similar to GCM mode, but with
+a few additional requirements and different ctrl values.
+.Pp
+Like GCM mode any additional authenticated data (AAD) is passed
+by calling
+.Fn EVP_CipherUpdate ,
+.Fn EVP_EncryptUpdate ,
+or
+.Fn EVP_DecryptUpdate
+with the output parameter out set to
+.Dv NULL .
+Additionally, the total
+plaintext or ciphertext length MUST be passed to
+.Fn EVP_CipherUpdate ,
+.Fn EVP_EncryptUpdate ,
+or
+.Fn EVP_DecryptUpdate
+with the output and input
+parameters
+.Pq Fa in No and Fa out
+set to
+.Dv NULL
+and the length passed in the
+.Fa inl
+parameter.
+.Pp
+The following ctrls are supported in CCM mode:
+.Bl -tag -width Ds
+.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_CCM_SET_TAG taglen tag
+This call is made to set the expected CCM tag value when decrypting or
+the length of the tag (with the
+.Fa tag
+parameter set to
+.Dv NULL )
+when encrypting.
+The tag length is often referred to as M.
+If not set, a default value is used (12 for AES).
+.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_CCM_SET_L ivlen NULL
+Sets the CCM L value.
+If not set, a default is used (8 for AES).
+.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_CCM_SET_IVLEN ivlen NULL
+Sets the CCM nonce (IV) length: this call can only be made before
+specifying an nonce value.
+The nonce length is given by 15 - L so it is 7 by default for AES.
 .El
 .Sh EXAMPLES
-Get the number of rounds used in RC5:
-.Bd -literal -offset indent
-int nrounds;
-EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC5_ROUNDS, 0, &nrounds);
-.Ed
-.Pp
-Get the RC2 effective key length:
-.Bd -literal -offset indent
-int key_bits;
-EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC2_KEY_BITS, 0, &key_bits);
-.Ed
-.Pp
-Set the number of rounds used in RC5:
-.Bd -literal -offset indent
-int nrounds;
-EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC5_ROUNDS, nrounds, NULL);
-.Ed
-.Pp
-Set the effective key length used in RC2:
-.Bd -literal -offset indent
-int key_bits;
-EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC2_KEY_BITS, key_bits, NULL);
-.Ed
-.Pp
 Encrypt a string using blowfish:
 .Bd -literal -offset 3n
 int
