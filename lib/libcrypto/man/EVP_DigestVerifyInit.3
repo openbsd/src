@@ -1,6 +1,55 @@
-.\"	$OpenBSD: EVP_DigestVerifyInit.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: EVP_DigestVerifyInit.3,v 1.3 2016/11/26 17:40:58 schwarze Exp $
+.\"	OpenSSL fb552ac6 Sep 30 23:43:01 2009 +0000
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2006, 2009, 2014, 2015, 2016 The OpenSSL Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 26 2016 $
 .Dt EVP_DIGESTVERIFYINIT 3
 .Os
 .Sh NAME
@@ -22,7 +71,7 @@
 .Fo EVP_DigestVerifyUpdate
 .Fa "EVP_MD_CTX *ctx"
 .Fa "const void *d"
-.Fa "unsigned int cnt"
+.Fa "size_t cnt"
 .Fc
 .Ft int
 .Fo EVP_DigestVerifyFinal
@@ -94,7 +143,7 @@ discouraged.
 The call to
 .Fn EVP_DigestVerifyFinal
 internally finalizes a copy of the digest context.
-This means that calls to
+This means that
 .Xr EVP_VerifyUpdate 3
 and
 .Xr EVP_VerifyFinal 3
@@ -112,12 +161,13 @@ return 1 for success and 0 or a negative value for failure.
 In particular a return value of -2 indicates the operation is not
 supported by the public key algorithm.
 .Pp
-Unlike other functions, the return value 0 from
 .Fn EVP_DigestVerifyFinal
-only indicates that the signature did not verify successfully.
-That is it did not match the original data or the signature was of
-invalid form.
-It is not an indication of a more serious error.
+returns 1 for success; any other value indicates failure.
+A return value of 0 indicates that the signature did not verify
+successfully (that is, the signature did not match the original
+data or the signature had an invalid form), while other values
+indicate a more serious error (and sometimes also indicate an invalid
+signature form).
 .Pp
 The error codes can be obtained from
 .Xr ERR_get_error 3 .
