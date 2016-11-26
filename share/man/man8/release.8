@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.80 2016/11/23 20:34:48 tb Exp $
+.\"	$OpenBSD: release.8,v 1.81 2016/11/26 18:07:44 tb Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: November 23 2016 $
+.Dd $Mdocdate: November 26 2016 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -211,7 +211,7 @@ The object directory
 .Pa /usr/xobj
 should be empty and owned by build:wobj with permissions 770.
 .Pp
-The following steps will build and install everything for the first time.
+The following steps will build and install xenocara.
 .Bd -literal -offset indent
 # cd /usr/xenocara
 # make bootstrap
@@ -227,16 +227,18 @@ Xenocara uses
 and
 .Va RELEASEDIR
 as described above.
-While they may be set to the values used to build the rest of the
-system, be aware that the existing contents of
+Use a different
 .Va DESTDIR
-will be removed as part of the xenocara build (this is necessary for
-release checklist processing).
+for the xenocara release than for the base release,
+as the contents of
+.Va DESTDIR
+will be removed.
 .Pp
-The steps to build the release are:
+The steps to build and validate the xenocara release are:
 .Bd -literal -offset indent
 # export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
 # make release
+# make checkdist
 # unset RELEASEDIR DESTDIR
 .Ed
 .Pp
