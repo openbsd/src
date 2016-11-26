@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.43 2016/11/24 07:58:55 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.44 2016/11/26 19:49:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -666,6 +666,8 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 
 	if (vcp->vcp_ncpus == 0)
 		vcp->vcp_ncpus = 1;
+	if (vcp->vcp_memranges[0].vmr_size == 0)
+		vcp->vcp_memranges[0].vmr_size = VM_DEFAULT_MEMORY;
 	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM) {
 		log_warnx("invalid number of CPUs");
 		goto fail;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.19 2016/11/26 18:37:32 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.20 2016/11/26 19:49:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -70,7 +70,7 @@ start_vm(const char *name, int memsize, int nnics, char **nics,
 	int i;
 
 	if (memsize < 1)
-		errx(1, "specified memory size too small");
+		memsize = VM_DEFAULT_MEMORY;
 	if (ndisks > VMM_MAX_DISKS_PER_VM)
 		errx(1, "too many disks");
 	else if (ndisks == 0)

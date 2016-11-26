@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.19 2016/11/26 19:23:27 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.20 2016/11/26 19:49:11 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -88,6 +88,7 @@ Kernel to load when booting the VM.
 Memory
 .Ar size
 of the VM, rounded to megabytes.
+The default is 512M.
 .It Fl n Ar switch
 Add a network interface that is attached to the specified virtual
 .Ar switch .
@@ -147,10 +148,10 @@ Create a 4.5 Gigabyte disk image, disk.img:
 $ vmctl create disk.img -s 4.5G
 .Ed
 .Pp
-Create a new VM with 512MB memory, one network interface, one disk image
+Create a new VM with 1GB memory, one network interface, one disk image
 ('disk.img') and boot from kernel '/bsd':
 .Bd -literal -offset indent
-# vmctl start "myvm" -m 512M -i 1 -d disk.img -k /bsd
+# vmctl start "myvm" -m 1G -i 1 -d disk.img -k /bsd
 .Ed
 .Pp
 .Xr vmd 8
