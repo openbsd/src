@@ -1,6 +1,54 @@
-.\"	$OpenBSD: EVP_PKEY_set1_RSA.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: EVP_PKEY_set1_RSA.3,v 1.3 2016/11/27 15:25:23 schwarze Exp $
+.\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2002, 2014, 2016 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 27 2016 $
 .Dt EVP_PKEY_SET1_RSA 3
 .Os
 .Sh NAME
@@ -16,6 +64,8 @@
 .Nm EVP_PKEY_assign_DSA ,
 .Nm EVP_PKEY_assign_DH ,
 .Nm EVP_PKEY_assign_EC_KEY ,
+.Nm EVP_PKEY_id ,
+.Nm EVP_PKEY_base_id ,
 .Nm EVP_PKEY_type
 .Nd EVP_PKEY assignment functions
 .Sh SYNOPSIS
@@ -77,6 +127,14 @@
 .Fa "EC_KEY *key"
 .Fc
 .Ft int
+.Fo EVP_PKEY_id
+.Fa "EVP_PKEY *pkey"
+.Fc
+.Ft int
+.Fo EVP_PKEY_base_id
+.Fa "EVP_PKEY *pkey"
+.Fc
+.Ft int
 .Fo EVP_PKEY_type
 .Fa "int type"
 .Fc
@@ -117,20 +175,40 @@ will be freed when the parent
 .Fa pkey
 is freed.
 .Pp
-.Fn EVP_PKEY_type
-returns the type of key corresponding to the value
-.Fa type .
-The type of a key can be obtained with
-.Fn EVP_PKEY_type pkey->type .
-The return value will be
-.Dv EVP_PKEY_RSA ,
-.Dv EVP_PKEY_DSA ,
-.Dv EVP_PKEY_DH ,
+.Fn EVP_PKEY_base_id
+returns the type of
+.Fa pkey .
+For example, an RSA key will return
+.Dv EVP_PKEY_RSA .
+.Pp
+.Fn EVP_PKEY_id
+returns the actual OID associated with
+.Fa pkey .
+Historically keys using the same algorithm could use different OIDs.
+For example, an RSA key could use the OIDs corresponding to the NIDs
+.Dv NID_rsaEncryption
+(equivalent to
+.Dv EVP_PKEY_RSA )
 or
-.Dv EVP_PKEY_EC
-for the corresponding key types or
-.Dv NID_undef
-if the key type is unassigned.
+.Dv NID_rsa
+(equivalent to
+.Dv EVP_PKEY_RSA2 ) .
+The use of alternative non-standard OIDs is now rare, so
+.Dv EVP_PKEY_RSA2
+et al. are not often seen in practice.
+.Pp
+.Fn EVP_PKEY_type
+returns the underlying type of the NID
+.Fa type .
+For example,
+.Fn EVP_PKEY_type EVP_PKEY_RSA2
+will return
+.Dv EVP_PKEY_RSA .
+.Pp
+Most applications wishing to know a key type will simply call
+.Fn EVP_PKEY_base_id
+and will not care about the actual type:
+which will be identical in almost all cases.
 .Pp
 In accordance with the OpenSSL naming convention, the key obtained from
 or assigned to
@@ -169,5 +247,15 @@ if an error occurred.
 and
 .Fn EVP_PKEY_assign_EC_KEY
 return 1 for success and 0 for failure.
+.Pp
+.Fn EVP_PKEY_base_id ,
+.Fn EVP_PKEY_id ,
+and
+.Fn EVP_PKEY_type
+return a key type or
+.Dv NID_undef
+(equivalently
+.Dv EVP_PKEY_NONE )
+on error.
 .Sh SEE ALSO
 .Xr EVP_PKEY_new 3
