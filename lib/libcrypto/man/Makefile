@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.55 2016/11/26 18:09:35 schwarze Exp $
+# $OpenBSD: Makefile,v 1.56 2016/11/27 20:40:07 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -122,6 +122,12 @@ MAN=	\
 	HMAC.3 \
 	MD5.3 \
 	OBJ_nid2obj.3 \
+	OCSP_REQUEST_new.3 \
+	OCSP_cert_to_id.3 \
+	OCSP_request_add1_nonce.3 \
+	OCSP_resp_find_status.3 \
+	OCSP_response_status.3 \
+	OCSP_sendreq_new.3 \
 	OPENSSL_VERSION_NUMBER.3 \
 	OPENSSL_config.3 \
 	OPENSSL_load_builtin_modules.3 \

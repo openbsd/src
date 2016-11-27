@@ -1,0 +1,241 @@
+.\"	$OpenBSD: OCSP_REQUEST_new.3,v 1.1 2016/11/27 20:40:07 schwarze Exp $
+.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\"
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2014, 2016 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 27 2016 $
+.Dt OCSP_REQUEST_NEW 3
+.Os
+.Sh NAME
+.Nm OCSP_REQUEST_new ,
+.Nm OCSP_REQUEST_free ,
+.Nm OCSP_request_add0_id ,
+.Nm OCSP_request_sign ,
+.Nm OCSP_request_add1_cert ,
+.Nm OCSP_request_onereq_count ,
+.Nm OCSP_request_onereq_get0 ,
+.Nd OCSP request functions
+.Sh SYNOPSIS
+.In openssl/ocsp.h
+.Ft OCSP_REQUEST *
+.Fn OCSP_REQUEST_new void
+.Ft void
+.Fo OCSP_REQUEST_free
+.Fa "OCSP_REQUEST *req"
+.Fc
+.Ft OCSP_ONEREQ *
+.Fo OCSP_request_add0_id
+.Fa "OCSP_REQUEST *req"
+.Fa "OCSP_CERTID *cid"
+.Fc
+.Ft int
+.Fo OCSP_request_sign
+.Fa "OCSP_REQUEST *req"
+.Fa "X509 *signer"
+.Fa "EVP_PKEY *key"
+.Fa "const EVP_MD *dgst"
+.Fa "STACK_OF(X509) *certs"
+.Fa "unsigned long flags"
+.Fc
+.Ft int
+.Fo OCSP_request_add1_cert
+.Fa "OCSP_REQUEST *req"
+.Fa "X509 *cert"
+.Fc
+.Ft int
+.Fo OCSP_request_onereq_count
+.Fa "OCSP_REQUEST *req"
+.Fc
+.Ft OCSP_ONEREQ *
+.Fo OCSP_request_onereq_get0
+.Fa "OCSP_REQUEST *req"
+.Fa "int i"
+.Fc
+.Sh DESCRIPTION
+.Fn OCSP_REQUEST_new
+allocates and returns an empty
+.Vt OCSP_REQUEST
+structure.
+.Pp
+.Fn OCSP_REQUEST_free
+frees up the request structure
+.Fa req .
+.Pp
+.Fn OCSP_request_add0_id
+adds certificate ID
+.Fa cid
+to
+.Fa req .
+It returns the
+.Vt OCSP_ONEREQ
+structure added so an application can add additional extensions to the
+request.
+The
+.Fa cid
+parameter must not be freed up after the operation.
+.Pp
+.Fn OCSP_request_sign
+signs OCSP request
+.Fa req
+using certificate
+.Fa signer ,
+private key
+.Fa key ,
+digest
+.Fa dgst ,
+and additional certificates
+.Fa certs .
+If the
+.Fa flags
+option
+.Dv OCSP_NOCERTS
+is set, then no certificates will be included in the request.
+.Pp
+.Fn OCSP_request_add1_cert
+adds certificate
+.Fa cert
+to request
+.Fa req .
+The application is responsible for freeing up
+.Fa cert
+after use.
+.Pp
+.Fn OCSP_request_onereq_count
+returns the total number of
+.Vt OCSP_ONEREQ
+structures in
+.Fa req .
+.Pp
+.Fn OCSP_request_onereq_get0
+returns an internal pointer to the
+.Vt OCSP_ONEREQ
+contained in
+.Fa req
+of index
+.Fa i .
+The index value
+.Fa i
+runs from 0 to
+.Fn OCSP_request_onereq_count req No - 1 .
+.Pp
+An
+.Vt OCSP_REQUEST
+structure contains one or more
+.Vt OCSP_ONEREQ
+structures corresponding to each certificate.
+.Pp
+.Fn OCSP_request_onereq_count
+and
+.Fn OCSP_request_onereq_get0
+are mainly used by OCSP responders.
+.Sh RETURN VALUES
+.Fn OCSP_REQUEST_new
+returns an empty
+.Vt OCSP_REQUEST
+structure or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn OCSP_request_add0_id
+returns the
+.Vt OCSP_ONEREQ
+structure containing
+.Fa cid
+or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn OCSP_request_sign
+and
+.Fn OCSP_request_add1_cert
+return 1 for success or 0 for failure.
+.Pp
+.Fn OCSP_request_onereq_count
+returns the total number of
+.Vt OCSP_ONEREQ
+structures in
+.Fa req .
+.Pp
+.Fn OCSP_request_onereq_get0
+returns a pointer to an
+.Vt OCSP_ONEREQ
+structure or
+.Dv NULL
+if the index value is out or range.
+.Sh EXAMPLE
+Create an
+.Vt OCSP_REQUEST
+structure for certificate
+.Fa cert
+with issuer
+.Fa issuer :
+.Bd -literal -offset indent
+OCSP_REQUEST *req;
+OCSP_ID *cid;
+
+req = OCSP_REQUEST_new();
+if (req == NULL)
+	/* error */
+cid = OCSP_cert_to_id(EVP_sha1(), cert, issuer);
+if (cid == NULL)
+	/* error */
+
+if (OCSP_REQUEST_add0_id(req, cid) == NULL)
+	/* error */
+
+ /* Do something with req, e.g. query responder */
+
+OCSP_REQUEST_free(req);
+.Ed
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr OCSP_cert_to_id 3 ,
+.Xr OCSP_request_add1_nonce 3 ,
+.Xr OCSP_resp_find_status 3 ,
+.Xr OCSP_response_status 3 ,
+.Xr OCSP_sendreq_new 3

@@ -1,0 +1,285 @@
+.\"	$OpenBSD: OCSP_resp_find_status.3,v 1.1 2016/11/27 20:40:07 schwarze Exp $
+.\"	OpenSSL c952780c Jun 21 07:03:34 2016 -0400
+.\"
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 27 2016 $
+.Dt OCSP_RESP_FIND_STATUS 3
+.Os
+.Sh NAME
+.Nm OCSP_resp_find_status ,
+.Nm OCSP_resp_count ,
+.Nm OCSP_resp_get0 ,
+.Nm OCSP_resp_find ,
+.Nm OCSP_single_get0_status ,
+.Nm OCSP_check_validity
+.Nd OCSP response utility functions
+.Sh SYNOPSIS
+.In openssl/ocsp.h
+.Ft int
+.Fo OCSP_resp_find_status
+.Fa "OCSP_BASICRESP *bs"
+.Fa "OCSP_CERTID *id"
+.Fa "int *status"
+.Fa "int *reason"
+.Fa "ASN1_GENERALIZEDTIME **revtime"
+.Fa "ASN1_GENERALIZEDTIME **thisupd"
+.Fa "ASN1_GENERALIZEDTIME **nextupd"
+.Fc
+.Ft int
+.Fo OCSP_resp_count
+.Fa "OCSP_BASICRESP *bs"
+.Fc
+.Ft OCSP_SINGLERESP *
+.Fo OCSP_resp_get0
+.Fa "OCSP_BASICRESP *bs"
+.Fa "int idx"
+.Fc
+.Ft int
+.Fo OCSP_resp_find
+.Fa "OCSP_BASICRESP *bs"
+.Fa "OCSP_CERTID *id"
+.Fa "int last"
+.Fc
+.Ft int
+.Fo OCSP_single_get0_status
+.Fa "OCSP_SINGLERESP *single"
+.Fa "int *reason"
+.Fa "ASN1_GENERALIZEDTIME **revtime"
+.Fa "ASN1_GENERALIZEDTIME **thisupd"
+.Fa "ASN1_GENERALIZEDTIME **nextupd"
+.Fc
+.Ft int
+.Fo OCSP_check_validity
+.Fa "ASN1_GENERALIZEDTIME *thisupd"
+.Fa "ASN1_GENERALIZEDTIME *nextupd"
+.Fa "long sec"
+.Fa "long maxsec"
+.Fc
+.Sh DESCRIPTION
+.Fn OCSP_resp_find_status
+searches
+.Fa bs
+for an OCSP response for
+.Fa id .
+If it is successful, the fields of the response are returned in
+.Pf * Fa status ,
+.Pf * Fa reason ,
+.Pf * Fa revtime ,
+.Pf * Fa thisupd
+and
+.Pf * Fa nextupd .
+The
+.Pf * Fa status
+value will be one of
+.Dv V_OCSP_CERTSTATUS_GOOD ,
+.Dv V_OCSP_CERTSTATUS_REVOKED ,
+or
+.Dv V_OCSP_CERTSTATUS_UNKNOWN .
+The
+.Pf * Fa reason
+and
+.Pf * Fa revtime
+fields are only set if the status is
+.Dv V_OCSP_CERTSTATUS_REVOKED .
+If set, the
+.Pf * Fa reason
+field will be set to the revocation reason which will be one of
+.Dv OCSP_REVOKED_STATUS_NOSTATUS ,
+.Dv OCSP_REVOKED_STATUS_UNSPECIFIED ,
+.Dv OCSP_REVOKED_STATUS_KEYCOMPROMISE ,
+.Dv OCSP_REVOKED_STATUS_CACOMPROMISE ,
+.Dv OCSP_REVOKED_STATUS_AFFILIATIONCHANGED ,
+.Dv OCSP_REVOKED_STATUS_SUPERSEDED ,
+.Dv OCSP_REVOKED_STATUS_CESSATIONOFOPERATION ,
+.Dv OCSP_REVOKED_STATUS_CERTIFICATEHOLD
+or
+.Dv OCSP_REVOKED_STATUS_REMOVEFROMCRL .
+.Pp
+.Fn OCSP_resp_count
+returns the number of
+.Vt OCSP_SINGLERESP
+structures in
+.Fa bs .
+.Pp
+.Fn OCSP_resp_get0
+returns the
+.Vt OCSP_SINGLERESP
+structure in
+.Fa bs
+corresponding to index
+.Fa idx ,
+where
+.Fa idx
+runs from 0 to
+.Fn OCSP_resp_count bs No - 1 .
+.Pp
+.Fn OCSP_resp_find
+searches
+.Fa bs
+for
+.Fa id
+and returns the index of the first matching entry after
+.Fa last
+or starting from the beginning if
+.Fa last
+is -1.
+.Pp
+.Fn OCSP_single_get0_status
+extracts the fields of
+.Fa single
+in
+.Pf * Fa reason ,
+.Pf * Fa revtime ,
+.Pf * Fa thisupd ,
+and
+.Pf * Fa nextupd .
+.Pp
+.Fn OCSP_check_validity
+checks the validity of
+.Fa thisupd
+and
+.Fa nextupd
+values which will be typically obtained from
+.Fn OCSP_resp_find_status
+or
+.Fn OCSP_single_get0_status .
+If
+.Fa sec
+is non-zero it indicates how many seconds leeway should be allowed in
+the check.
+If
+.Fa maxsec
+is positive it indicates the maximum age of
+.Fa thisupd
+in seconds.
+.Pp
+Applications will typically call
+.Fn OCSP_resp_find_status
+using the certificate ID of interest and then check its validity using
+.Fn OCSP_check_validity .
+They can then take appropriate action based on the status of the
+certificate.
+.Pp
+An OCSP response for a certificate contains
+.Sy thisUpdate
+and
+.Sy nextUpdate
+fields.
+Normally the current time should be between these two values.
+To account for clock skew, the
+.Fa maxsec
+field can be set to non-zero in
+.Fn OCSP_check_validity .
+Some responders do not set the
+.Sy nextUpdate
+field.
+This would otherwise mean an ancient response would be considered
+valid: the
+.Fa maxsec
+parameter to
+.Fn OCSP_check_validity
+can be used to limit the permitted age of responses.
+.Pp
+The values written to
+.Pf * Fa revtime ,
+.Pf * Fa thisupd ,
+and
+.Pf * Fa nextupd
+by
+.Fn OCSP_resp_find_status
+and
+.Fn OCSP_single_get0_status
+are internal pointers which must not be freed up by the calling
+application.
+Any or all of these parameters can be set to
+.Dv NULL
+if their value is not required.
+.Sh RETURN VALUES
+.Fn OCSP_resp_find_status
+returns 1 if
+.Fa id
+is found in
+.Fa bs
+or 0 otherwise.
+.Pp
+.Fn OCSP_resp_count
+returns the total number of
+.Vt OCSP_SINGLERESP
+fields in
+.Fa bs .
+.Pp
+.Fn OCSP_resp_get0
+returns a pointer to an
+.Vt OCSP_SINGLERESP
+structure or
+.Dv NULL
+if
+.Fa idx
+is out of range.
+.Pp
+.Fn OCSP_resp_find
+returns the index of
+.Fa id
+in
+.Fa bs
+(which may be 0) or -1 if
+.Fa id
+was not found.
+.Pp
+.Fn OCSP_single_get0_status
+returns the status of
+.Fa single
+or -1 if an error occurred.
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr OCSP_cert_to_id 3 ,
+.Xr OCSP_request_add1_nonce 3 ,
+.Xr OCSP_REQUEST_new 3 ,
+.Xr OCSP_response_status 3 ,
+.Xr OCSP_sendreq_new 3
