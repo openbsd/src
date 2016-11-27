@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.62 2016/11/27 08:55:48 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.63 2016/11/27 11:38:50 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -35,7 +35,7 @@ apply_patch()
 	[[ -n ${_patch} ]]
 
 	_explodir=${_TMP}/${_patch}
-	mkdir -p ${_explodir}
+	install -d ${_explodir}
 
 	_files="$(tar xvzphf ${_TMP}/${_patch}.tgz -C ${_explodir})"
 	checkfs ${_files}
@@ -241,7 +241,7 @@ rollback_patch()
 	_explodir=${_TMP}/${_rbpatch%.tgz}
 
 	echo "Reverting ${_patch}"
-	mkdir -p ${_explodir}
+	install -d ${_explodir}
 
 	_files="$(tar xvzphf ${_PDIR}/${_REL}/${_rbpatch} -C ${_explodir})"
 	checkfs ${_files} ${_PDIR}/${_REL} # check for ro /var/syspatch/${OSREV}
@@ -250,6 +250,10 @@ rollback_patch()
 		[[ ${_ret} == 0 ]] || break
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_explodir}/${_file} || _ret=$?
+			# remove the backup kernel if all kernel syspatches have
+			# been reverted; non-fatal (`-f')
+			cmp -s /bsd /bsd.syspatch${_RELINT} &&
+				rm -f /bsd.syspatch${_RELINT}
 		else
 			install_file ${_explodir}/${_file} /${_file} || _ret=$?
 		fi
@@ -260,8 +264,6 @@ rollback_patch()
 
 	rm ${_PDIR}/${_REL}/${_rbpatch} && [[ ${_ret} == 0 ]] ||
 		sp_err "Failed to revert ${_patch}" ${_ret}
-
-	sp_cleanup
 }
 
 sp_cleanup()
@@ -279,9 +281,6 @@ sp_cleanup()
 		[[ -f ${_k} ]] || continue
 		[[ ${_k} == /bsd.syspatch${_RELINT} ]] || rm ${_k}
 	done
-
-	# remove rollback kernel if all kernel syspatches have been reverted
-	! cmp -s /bsd /bsd.syspatch${_RELINT} || rm /bsd.syspatch${_RELINT}
 
 	# in case a patch added a new directory (install -D);
 	# non-fatal in case some mount point is read-only or remote
