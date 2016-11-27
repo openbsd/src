@@ -1,11 +1,60 @@
-.\"	$OpenBSD: HMAC.3,v 1.3 2016/11/22 21:38:18 jmc Exp $
+.\"	$OpenBSD: HMAC.3,v 1.4 2016/11/27 15:58:47 schwarze Exp $
+.\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
-.Dd $Mdocdate: November 22 2016 $
+.\" This file was written by Ulf Moeller <ulf@openssl.org>.
+.\" Copyright (c) 2000-2002, 2006, 2008, 2009, 2013, 2016 The OpenSSL Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 27 2016 $
 .Dt HMAC 3
 .Os
 .Sh NAME
 .Nm HMAC ,
-.Nm HMAC_CTX_Init ,
+.Nm HMAC_CTX_init ,
 .Nm HMAC_Init ,
 .Nm HMAC_Init_ex ,
 .Nm HMAC_Update ,
@@ -63,6 +112,20 @@
 .Ft void
 .Fo HMAC_cleanup
 .Fa "HMAC_CTX *ctx"
+.Fc
+.Ft int
+.Fo HMAC_CTX_copy
+.Fa "HMAC_CTX *dctx"
+.Fa "HMAC_CTX *sctx"
+.Fc
+.Ft void
+.Fo HMAC_CTX_set_flags
+.Fa "HMAC_CTX *ctx"
+.Fa "unsigned long flags"
+.Fc
+.Ft size_t
+.Fo HMAC_size
+.Fa "const HMAC_CTX *e"
 .Fc
 .Sh DESCRIPTION
 HMAC is a MAC (message authentication code), i.e. a keyed hash
@@ -122,7 +185,7 @@ is no longer required.
 is an alias for
 .Fn HMAC_CTX_cleanup
 included for backward compatibility with 0.9.6b.
-It is deprecated.
+It is deprecated and implemented as a macro.
 .Pp
 The following functions may be used if the message is not completely
 stored in memory:
@@ -169,6 +232,22 @@ can be called repeatedly with chunks of the message to be authenticated
 places the message authentication code in
 .Fa md ,
 which must have space for the hash function output.
+.Pp
+.Fn HMAC_CTX_copy
+copies all of the internal state from
+.Fa sctx
+into
+.Fa dctx .
+.Pp
+.Fn HMAC_CTX_set_flags
+applies the specified flags to the internal
+.Vt EVP_MD_CTX Ns s.
+These flags have the same meaning as for
+.Xr EVP_MD_CTX_set_flags 3 .
+.Pp
+.Fn HMAC_size
+returns the length in bytes of the underlying hash function output.
+It is implemented as a macro.
 .Sh RETURN VALUES
 .Fn HMAC
 returns a pointer to the message authentication code or
@@ -177,14 +256,14 @@ if an error occurred.
 .Pp
 .Fn HMAC_Init_ex ,
 .Fn HMAC_Update ,
+.Fn HMAC_Final ,
 and
-.Fn HMAC_Final
+.Fn HMAC_CTX_copy
 return 1 for success or 0 if an error occurred.
 .Pp
-.Fn HMAC_CTX_init
-and
-.Fn HMAC_CTX_cleanup
-do not return values.
+.Fn HMAC_size
+returns the length in bytes of the underlying hash function output
+or 0 on error.
 .Sh SEE ALSO
 .Xr evp 3
 .Sh STANDARDS
