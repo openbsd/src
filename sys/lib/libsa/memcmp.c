@@ -1,3 +1,5 @@
+/*	$OpenBSD: memcmp.c,v 1.8 2016/11/27 13:57:32 reyk Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
