@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.10 2016/09/11 10:46:26 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.11 2016/11/27 02:25:58 jsg Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -292,6 +292,8 @@ sximmc_match(struct device *parent, void *match, void *aux)
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-mmc"))
 		return 1;
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun5i-a13-mmc"))
+		return 1;
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-mmc"))
 		return 1;
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun9i-a80-mmc"))
 		return 1;
