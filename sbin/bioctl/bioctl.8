@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.102 2016/09/21 17:57:33 jsing Exp $
+.\"	$OpenBSD: bioctl.8,v 1.103 2016/11/27 18:04:18 stsp Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 21 2016 $
+.Dd $Mdocdate: November 27 2016 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -231,7 +231,7 @@ be provided via
 RAID 5 requires at least three devices
 and the CRYPTO discipline requires exactly one.
 .It Fl d
-Delete volume specified by device.
+Detach volume specified by device.
 .It Fl k Ar keydisk
 Use special device
 .Ar keydisk
@@ -308,7 +308,7 @@ This can be done with the following command (assuming the new disk is sd3):
 # dd if=/dev/zero of=/dev/rsd3c bs=1m count=1
 .Ed
 .Pp
-Deleting a softraid volume requires the exact volume name.
+Detaching a softraid volume requires the exact volume name.
 For example:
 .Bd -literal -offset 3n
 # bioctl -d sd2
