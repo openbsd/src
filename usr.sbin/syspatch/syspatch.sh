@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.61 2016/11/25 09:56:45 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.62 2016/11/27 08:55:48 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -17,6 +17,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 set -e
+umask 0022
 
 sp_err()
 {
