@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1002 2016/11/23 12:13:23 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1003 2016/11/28 23:15:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6881,10 +6881,16 @@ done:
 		pd.m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 		switch (pd.naf) {
 		case AF_INET:
-			ip_output(pd.m, NULL, NULL, 0, NULL, NULL, 0);
+			if (pd.dir == PF_IN)
+				ip_forward(pd.m, ifp, NULL, 1);
+			else
+				ip_output(pd.m, NULL, NULL, 0, NULL, NULL, 0);
 			break;
 		case AF_INET6:
-			ip6_output(pd.m, NULL, NULL, 0, NULL, NULL);
+			if (pd.dir == PF_IN)
+				ip6_forward(pd.m, NULL, 1);
+			else
+				ip6_output(pd.m, NULL, NULL, 0, NULL, NULL);
 			break;
 		}
 		pd.m = NULL;
