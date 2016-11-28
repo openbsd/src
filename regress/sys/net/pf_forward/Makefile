@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2016/11/09 14:43:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.22 2016/11/28 23:19:18 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -165,11 +165,6 @@ run-regress-ping-${inet}-${ip}: stamp-pfctl
 # Check that the IP length of the original packet and the ICMP
 # quoted packet are the same.
 
-run-regress-ping-mtu-1400-${inet}-AF_IN:
-	@echo '\n======== $@ ========'
-	@echo 'AF_IN is broken with PF MTU.'
-	@echo DISABLED
-
 TARGETS +=	ping-mtu-1400-${inet}-${ip}
 run-regress-ping-mtu-1400-${inet}-${ip}: stamp-pfctl
 	@echo '\n======== $@ ========'
@@ -242,7 +237,6 @@ run-regress-tcp-${inet}-${ip}: stamp-pfctl
 
 # Run traceroute with ICMP and UDP to all destination addresses.
 # Expect three hops in output and that every probe has a response.
-# XXX AF_IN and RPT_OUT have issues, do not test them now.
 
 TRACEROUTE_CHECK =	awk \
     'BEGIN{ x=0 } \
@@ -254,9 +248,9 @@ TRACEROUTE_CHECK =	awk \
 
 .for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN RTT_IN RPT_OUT
 .for proto in icmp udp
-run-regress-traceroute-${proto}-${inet}-AF_IN run-regress-traceroute-${proto}-${inet}-RPT_OUT:
+run-regress-traceroute-${proto}-${inet}-RPT_OUT:
 	@echo '\n======== $@ ========'
-	@echo 'AF_IN is broken with PF MTU.'
+	@echo 'RPT_OUT is broken with PF ttl.'
 	@echo DISABLED
 
 TARGETS +=	traceroute-${proto}-${inet}-${ip}
