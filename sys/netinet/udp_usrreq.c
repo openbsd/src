@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.222 2016/11/21 09:09:06 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.223 2016/11/28 10:49:35 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -184,8 +184,10 @@ udp_input(struct mbuf *m, ...)
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
 	int error;
-	u_int32_t ipsecflowinfo = 0;
 #endif /* IPSEC */
+#if defined(IPSEC) || defined(PIPEX)
+	u_int32_t ipsecflowinfo = 0;
+#endif /* define(IPSEC) || defined(PIPEX) */
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
