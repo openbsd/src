@@ -7551,6 +7551,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new LinuxTargetInfo<AArch64leTargetInfo>(Triple);
     case llvm::Triple::NetBSD:
       return new NetBSDTargetInfo<AArch64leTargetInfo>(Triple);
+    case llvm::Triple::OpenBSD:
+      return new OpenBSDTargetInfo<AArch64leTargetInfo>(Triple);
     default:
       return new AArch64leTargetInfo(Triple);
     }
