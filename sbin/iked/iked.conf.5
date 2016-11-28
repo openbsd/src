@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.44 2015/12/09 21:41:49 naddy Exp $
+.\" $OpenBSD: iked.conf.5,v 1.45 2016/11/28 16:27:32 mikeb Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2015 $
+.Dd $Mdocdate: November 28 2016 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -443,6 +443,10 @@ parameter defines the IKE SA expiration timeout by the
 SA was created.
 A zero value disables active IKE SA rekeying.
 This is the default.
+.Pp
+The accepted format of the
+.Ar time
+specification is described below.
 .It Ic lifetime Ar time Op Ic bytes Ar bytes
 The optional
 .Ic lifetime
@@ -468,7 +472,7 @@ and
 for kilo-, mega- and gigabytes accordingly.
 .Pp
 Please note that rekeying must happen at least several times a day as
-IPsec security heavily depends on the frequent key renewals.
+IPsec security heavily depends on frequent key renewals.
 .It Op Ar ikeauth
 Specify the mode to mutually authenticate the peers.
 Non-psk modes will require to set up certificates and RSA public keys;
