@@ -1858,6 +1858,7 @@
 ./usr/share/man/man3/OPENSSL_VERSION_NUMBER.3
 ./usr/share/man/man3/OPENSSL_config.3
 ./usr/share/man/man3/OPENSSL_load_builtin_modules.3
+./usr/share/man/man3/OPENSSL_malloc.3
 ./usr/share/man/man3/OpenSSL_add_all_algorithms.3
 ./usr/share/man/man3/PEM_read_bio_PrivateKey.3
 ./usr/share/man/man3/PEM_write_bio_PKCS7_stream.3
