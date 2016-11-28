@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.10 2016/11/25 09:37:21 rzalamena Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.11 2016/11/28 17:47:15 jca Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <pcap.h>
 
+#include "addrtoname.h"
 #include "extract.h"
 #include "interface.h"
 #include "ofp_map.h"
@@ -747,17 +748,12 @@ oxm_print_quad(const u_char *bp, u_int length, int hasmask, int hex)
 void
 oxm_print_ether(const u_char *bp, u_int length, int hasmask)
 {
-	char		*mac;
-
 	if (length < ETHER_HDR_LEN) {
 		printf("[|OpenFlow]");
 		return;
 	}
 
-	if ((mac = ether_ntoa((void *)bp)) == NULL)
-		printf("invalid");
-	else
-		printf("%s", mac);
+	printf("%s", etheraddr_string(bp));
 
 	if (hasmask) {
 		bp += ETHER_ADDR_LEN;

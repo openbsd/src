@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-lldp.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-lldp.c,v 1.9 2016/11/28 17:47:15 jca Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -135,8 +135,7 @@ lldp_print_id(int type, u_int8_t *ptr, int len)
 			printf("port");
 			break;
 		case LLDP_CHASSISID_SUBTYPE_LLADDR:
-			printf("lladdr %s",
-			    ether_ntoa((struct ether_addr *)data));
+			printf("lladdr %s", etheraddr_string(data));
 			break;
 		case LLDP_CHASSISID_SUBTYPE_ADDR:
 			printf("addr");
@@ -163,8 +162,7 @@ lldp_print_id(int type, u_int8_t *ptr, int len)
 			printf("port");
 			break;
 		case LLDP_PORTID_SUBTYPE_LLADDR:
-			printf("lladdr %s",
-			    ether_ntoa((struct ether_addr *)data));
+			printf("lladdr %s", etheraddr_string(data));
 			break;
 		case LLDP_PORTID_SUBTYPE_ADDR:
 			printf("addr");
