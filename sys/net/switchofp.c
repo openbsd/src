@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.37 2016/11/28 10:12:50 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.38 2016/11/28 18:04:00 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -195,7 +195,8 @@ int	 swofp_group_entry_add(struct switch_softc *,
 int	 swofp_group_entry_delete(struct switch_softc *,
 	    struct swofp_group_entry *);
 int	 swofp_group_entry_delete_all(struct switch_softc *);
-int	 swofp_validate_buckets(struct switch_softc *, struct mbuf *, uint8_t);
+int	 swofp_validate_buckets(struct switch_softc *, struct mbuf *, uint8_t,
+	    int *);
 
 /*
  * Flow entry
@@ -1382,20 +1383,28 @@ swofp_group_entry_delete_all(struct switch_softc *sc)
 }
 
 int
-swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type)
+swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
+    int *error)
 {
 	struct ofp_group_mod	*ogm;
 	struct ofp_bucket	*bucket;
+	struct ofp_action_header *ah;
 	uint16_t		weight;
 	int			start, len, off, num;
+	size_t			blen;
 
 	ogm = mtod(m, struct ofp_group_mod *);
 	start = offsetof(struct ofp_group_mod, gm_buckets);
 	len = ntohs(ogm->gm_oh.oh_length) - start;
 
-	for (off = start, num = 0; off < start + len;
-	     off += ntohs(bucket->b_len), num++) {
+	for (off = start, num = 0; off < start + len; off += blen, num++) {
 		bucket = (struct ofp_bucket *)(mtod(m, caddr_t) + off);
+
+		blen = ntohs(bucket->b_len);
+		if (blen < sizeof(*bucket)) {
+			*error = OFP_ERRGROUPMOD_BAD_BUCKET;
+			return (-1);
+		}
 
 		/*
 		 * Validate weight
@@ -1404,24 +1413,37 @@ swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type)
 		case OFP_GROUP_T_ALL:
 		case OFP_GROUP_T_INDIRECT:
 		case OFP_GROUP_T_FAST_FAILOVER:
-			if (ntohs(bucket->b_weight) != 0)
-				return (OFP_ERRGROUPMOD_BAD_BUCKET);
+			if (ntohs(bucket->b_weight) != 0) {
+				*error = OFP_ERRGROUPMOD_BAD_BUCKET;
+				return (-1);
+			}
 			break;
 		case OFP_GROUP_T_SELECT:
-			if (num > 1 && weight != ntohs(bucket->b_weight))
-				return (OFP_ERRGROUPMOD_WEIGHT_UNSUPP);
+			if (num > 1 && weight != ntohs(bucket->b_weight)) {
+				*error = OFP_ERRGROUPMOD_WEIGHT_UNSUPP;
+				return (-1);
+			}
 			break;
 		}
 
 		/*
 		 * INDIRECT type has only one bucket
 		 */
-		if (type == OFP_GROUP_T_INDIRECT && num > 1)
-			return (OFP_ERRGROUPMOD_BAD_BUCKET);
+		if (type == OFP_GROUP_T_INDIRECT && num > 1) {
+			*error = OFP_ERRGROUPMOD_BAD_BUCKET;
+			return (-1);
+		}
 
 		weight = ntohs(bucket->b_weight);
 
-		/* XXX validate actions */
+		/* Skip if there are no actions to validate. */
+		if (blen == sizeof(*bucket))
+			continue;
+
+		ah = (struct ofp_action_header *)
+		    (mtod(m, caddr_t) + off + sizeof(*bucket));
+		if (swofp_validate_action(ah, blen - sizeof(*bucket), error))
+			return (-1);
 	}
 
 	return (0);
@@ -5198,6 +5220,11 @@ swofp_group_mod_add(struct switch_softc *sc, struct mbuf *m)
 
 	ogm = mtod(m, struct ofp_group_mod *);
 
+	if (ntohl(ogm->gm_group_id) > OFP_GROUP_ID_MAX) {
+		error = OFP_ERRGROUPMOD_INVALID_GROUP;
+		goto failed;
+	}
+
 	if ((swge = swofp_group_entry_lookup(sc,
 	    ntohl(ogm->gm_group_id)))) {
 		error = OFP_ERRGROUPMOD_GROUP_EXISTS;
@@ -5210,7 +5237,7 @@ swofp_group_mod_add(struct switch_softc *sc, struct mbuf *m)
 		goto failed;
 	}
 
-	if ((error = swofp_validate_buckets(sc, m, ogm->gm_type)))
+	if (swofp_validate_buckets(sc, m, ogm->gm_type, &error))
 		goto failed;
 
 	if ((swge = malloc(sizeof(*swge), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
@@ -5253,13 +5280,19 @@ swofp_group_mod_modify(struct switch_softc *sc, struct mbuf *m)
 
 	ogm = mtod(m, struct ofp_group_mod *);
 
+	if (ogm->gm_type != OFP_GROUP_T_ALL) {
+		/* support ALL group only now */
+		error = OFP_ERRGROUPMOD_BAD_TYPE;
+		goto failed;
+	}
+
 	if ((swge = swofp_group_entry_lookup(sc,
 	    ntohl(ogm->gm_group_id))) == NULL) {
 		error = OFP_ERRGROUPMOD_UNKNOWN_GROUP;
 		goto failed;
 	}
 
-	if ((error = swofp_validate_buckets(sc, m, ogm->gm_type)))
+	if (swofp_validate_buckets(sc, m, ogm->gm_type, &error))
 		goto failed;
 
 	swge->swge_type = ogm->gm_type;
@@ -5298,7 +5331,7 @@ swofp_group_mod_delete(struct switch_softc *sc, struct mbuf *m)
 	if (group_id == OFP_GROUP_ID_ALL)
 		swofp_group_entry_delete_all(sc);
 	else if ((swge = swofp_group_entry_lookup(sc, group_id)) != NULL)
-		    swofp_group_entry_delete(sc, swge);
+		swofp_group_entry_delete(sc, swge);
 	else {
 		swofp_send_error(sc, m, OFP_ERRTYPE_GROUP_MOD_FAILED,
 		    OFP_ERRGROUPMOD_UNKNOWN_GROUP);
