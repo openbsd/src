@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.20 2016/10/12 23:02:25 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.21 2016/11/28 20:57:41 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -23,6 +23,8 @@ use parent 'Proc';
 use Carp;
 use Cwd;
 use File::Basename;
+use File::Copy;
+use File::Temp qw(tempfile tempdir);
 use Sys::Hostname;
 use Time::HiRes qw(time alarm sleep);
 
@@ -41,7 +43,14 @@ sub new {
 	$args{func} = sub { Carp::confess "$class func may not be called" };
 	$args{conffile} ||= "syslogd.conf";
 	$args{outfile} ||= "file.log";
-	$args{outpipe} ||= "pipe.log";
+	unless ($args{outpipe}) {
+		my $dir = tempdir("syslogd-regress-XXXXXXXXXX",
+		    CLEANUP => 1, TMPDIR => 1);
+		chmod(0755, $dir)
+		    or die "$class chmod directory $dir failed: $!";
+		$args{tempdir} = $dir;
+		$args{outpipe} = "$dir/pipe.log";
+	}
 	$args{outconsole} ||= "console.log";
 	$args{outuser} ||= "user.log";
 	if ($args{memory}) {
@@ -97,9 +106,12 @@ sub create_out {
 
 	open($fh, '>', $self->{outpipe})
 	    or die ref($self), " create pipe file $self->{outpipe} failed: $!";
-	close $fh;
-	chmod(0666, $self->{outpipe})
+	chmod(0644, $self->{outpipe})
 	    or die ref($self), " chmod pipe file $self->{outpipe} failed: $!";
+	my @cmd = (@sudo, "chown", "_syslogd", $self->{outpipe});
+	system(@cmd)
+	    and die ref($self), " chown pipe file $self->{outpipe} failed: $!";
+	close $fh;
 
 	foreach my $dev (qw(console user)) {
 		my $file = $self->{"out$dev"};
@@ -214,6 +226,12 @@ sub up {
 
 sub down {
 	my $self = Proc::up(shift, @_);
+
+	if (my $dir = $self->{tempdir}) {
+		# keep all logs in single directory for easy debugging
+		copy($_, ".") foreach glob("$dir/*");
+	}
+
 	return $self unless $self->{daemon};
 
 	my $timeout = shift || 10;
