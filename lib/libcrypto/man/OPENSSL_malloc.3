@@ -1,0 +1,172 @@
+.\"	$OpenBSD: OPENSSL_malloc.3,v 1.1 2016/11/28 16:33:48 schwarze Exp $
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 28 2016 $
+.Dt OPENSSL_MALLOC 3
+.Os
+.Sh NAME
+.Nm OPENSSL_malloc ,
+.Nm OPENSSL_realloc ,
+.Nm OPENSSL_free ,
+.Nm OPENSSL_strdup ,
+.Nm OPENSSL_cleanse ,
+.Nm CRYPTO_malloc ,
+.Nm CRYPTO_realloc ,
+.Nm CRYPTO_free ,
+.Nm CRYPTO_strdup ,
+.Nm CRYPTO_get_mem_functions ,
+.Nm CRYPTO_set_mem_functions ,
+.Nm CRYPTO_mem_ctrl ,
+.Nm CRYPTO_mem_leaks ,
+.Nm CRYPTO_mem_leaks_fp
+.Nd legacy OpenSSL memory allocation wrappers
+.Sh SYNOPSIS
+.In openssl/crypto.h
+.Ft void *
+.Fo OPENSSL_malloc
+.Fa "size_t num"
+.Fc
+.Ft void *
+.Fo OPENSSL_realloc
+.Fa "void *addr"
+.Fa "size_t num"
+.Fc
+.Ft void
+.Fo OPENSSL_free
+.Fa "void *addr"
+.Fc
+.Ft char *
+.Fo OPENSSL_strdup
+.Fa "const char *str"
+.Fc
+.Ft void
+.Fo OPENSSL_cleanse
+.Fa "void *ptr"
+.Fa "size_t len"
+.Fc
+.Ft void *
+.Fo CRYPTO_malloc
+.Fa "size_t num"
+.Fa "const char *file"
+.Fa "int line"
+.Fc
+.Ft void *
+.Fo CRYPTO_realloc
+.Fa "void *p"
+.Fa "size_t num"
+.Fa "const char *file"
+.Fa "int line"
+.Fc
+.Ft void
+.Fo CRYPTO_free
+.Fa "void *str"
+.Fa "const char *"
+.Fa int
+.Fc
+.Ft char *
+.Fo CRYPTO_strdup
+.Fa "const char *p"
+.Fa "const char *file"
+.Fa "int line"
+.Fc
+.Ft void
+.Fo CRYPTO_get_mem_functions
+.Fa "void *(**m)(size_t)"
+.Fa "void *(**r)(void *, size_t)"
+.Fa "void (**f)(void *)"
+.Fc
+.Ft int
+.Fo CRYPTO_set_mem_functions
+.Fa "void *(*m)(size_t)"
+.Fa "void *(*r)(void *, size_t)"
+.Fa "void (*f)(void *)"
+.Fc
+.Ft int
+.Fo CRYPTO_mem_ctrl
+.Fa "int mode"
+.Fc
+.Ft void
+.Fo CRYPTO_mem_leaks
+.Fa "BIO *b"
+.Fc
+.Ft void
+.Fo CRYPTO_mem_leaks_fp
+.Fa "FILE *fp"
+.Fc
+.Sh DESCRIPTION
+Do not use any of the interfaces documented here.
+They are provided purely for compatibility with legacy application code.
+.Pp
+.Fn OPENSSL_malloc ,
+.Fn OPENSSL_realloc ,
+.Fn OPENSSL_free ,
+and
+.Fn OPENSSL_strdup
+have the same semantics as
+.Xr malloc 3 ,
+.Xr realloc 3 ,
+.Xr free 3 ,
+and
+.Xr strdup 3 .
+They are wrapper macros around
+.Fn CRYPTO_malloc ,
+.Fn CRYPTO_realloc ,
+.Fn CRYPTO_free ,
+and
+.Fn CRYPTO_strdup ,
+which in turn are wrapper functions around
+.Xr malloc 3 ,
+.Xr realloc 3 ,
+.Xr free 3 ,
+and
+.Xr strdup 3 .
+.Pp
+.Fn OPENSSL_cleanse
+has the same semantics as and is a wrapper around
+.Xr explicit_bzero 3 .
+.Pp
+.Fn CRYPTO_get_mem_functions
+assigns pointers to the C library functions
+.Xr malloc 3 ,
+.Xr realloc 3 ,
+and
+.Xr free 3
+to those of its arguments that are not
+.Dv NULL.
+.Pp
+.Fn CRYPTO_set_mem_functions ,
+.Fn CRYPTO_mem_ctrl ,
+.Fn CRYPTO_mem_leaks ,
+and
+.Fn CRYPTO_mem_leaks_fp
+have no effect.
+.Sh RETURN VALUES
+.Fn OPENSSL_malloc ,
+.Fn OPENSSL_realloc ,
+.Fn CRYPTO_malloc ,
+.Fn CRYPTO_realloc ,
+and
+.Fn OPENSSL_strdup
+return a pointer to allocated memory or
+.Dv NULL
+on error.
+.Pp
+.Fn CRYPTO_set_mem_functions
+always returns 0.
+.Pp
+.Fn CRYPTO_mem_ctrl
+always returns
+.Dv CRYPTO_MEM_CHECK_OFF .
