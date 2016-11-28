@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.64 2016/09/17 17:39:34 jasper Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.65 2016/11/28 21:50:12 patrick Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -194,6 +194,7 @@ typedef struct {
 #define EM_IA_64	50		/* Intel IA-64 Processor */
 #define EM_AMD64	62		/* AMD64 architecture */
 #define EM_VAX		75		/* DEC VAX */
+#define EM_AARCH64	183		/* ARM 64-bit architecture (AArch64) */
 
 /* Non-standard */
 #define EM_ALPHA_EXP	0x9026		/* DEC ALPHA */
