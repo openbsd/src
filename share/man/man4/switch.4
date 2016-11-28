@@ -1,4 +1,4 @@
-.\"	$OpenBSD: switch.4,v 1.6 2016/11/14 19:41:47 rzalamena Exp $
+.\"	$OpenBSD: switch.4,v 1.7 2016/11/28 11:46:26 jmc Exp $
 .\"
 .\" Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 14 2016 $
+.Dd $Mdocdate: November 28 2016 $
 .Dt SWITCH 4
 .Os
 .Sh NAME
@@ -123,14 +123,14 @@ Set the datapath_id in the OpenFlow protocol of the switch named in
 to the value in the
 .Va ifbrpu_datapath
 field.
-.It Dv SIOCSWGFLOWMAX Fa "struct ifbrparam"
+.It Dv SIOCSWGMAXFLOW Fa "struct ifbrparam"
 Retrieve the maximum number of flows in the OpenFlow protocol
 of the switch named in
 .Va ifbrp_name
 into the
 .Va ifbrp_maxflow
 field.
-.It Dv SIOCSWSFLOWMAX Fa "struct ifbrparam"
+.It Dv SIOCSWSMAXFLOW Fa "struct ifbrparam"
 Set the maximum number of flows in the OpenFlow protocol of the switch named in
 .Va ifbrp_name
 to the value in the
