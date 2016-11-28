@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.140 2016/11/21 09:09:06 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.141 2016/11/28 13:55:43 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -721,8 +721,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 #endif
 bad:
 	FRELE(fp, p);
-	if (to)
-		m_freem(to);
+	m_freem(to);
 	return (error);
 }
 
@@ -930,10 +929,8 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	}
 out:
 	FRELE(fp, p);
-	if (from)
-		m_freem(from);
-	if (control)
-		m_freem(control);
+	m_freem(from);
+	m_freem(control);
 	return (error);
 }
 
@@ -1001,8 +998,7 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 	error = sosetopt(fp->f_data, SCARG(uap, level), SCARG(uap, name), m);
 	m = NULL;
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	FRELE(fp, p);
 	return (error);
 }
@@ -1046,8 +1042,7 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 	}
 out:
 	FRELE(fp, p);
-	if (m != NULL)
-		(void)m_free(m);
+	m_free(m);
 	return (error);
 }
 
