@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.154 2016/11/21 09:15:40 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.155 2016/11/28 10:16:08 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -288,6 +288,23 @@ bpf_detachd(struct bpf_d *d)
 	struct bpf_if *bp;
 
 	bp = d->bd_bif;
+	/* Not attached. */
+	if (bp == NULL)
+		return;
+
+	/* Remove ``d'' from the interface's descriptor list. */
+	KERNEL_ASSERT_LOCKED();
+	SRPL_REMOVE_LOCKED(&bpf_d_rc, &bp->bif_dlist, d, bpf_d, bd_next);
+
+	if (SRPL_EMPTY_LOCKED(&bp->bif_dlist)) {
+		/*
+		 * Let the driver know that there are no more listeners.
+		 */
+		*bp->bif_driverp = NULL;
+	}
+
+	d->bd_bif = NULL;
+
 	/*
 	 * Check if this descriptor had requested promiscuous mode.
 	 * If so, turn it off.
@@ -305,19 +322,6 @@ bpf_detachd(struct bpf_d *d)
 			 */
 			panic("bpf: ifpromisc failed");
 	}
-
-	/* Remove d from the interface's descriptor list. */
-	KERNEL_ASSERT_LOCKED();
-	SRPL_REMOVE_LOCKED(&bpf_d_rc, &bp->bif_dlist, d, bpf_d, bd_next);
-
-	if (SRPL_EMPTY_LOCKED(&bp->bif_dlist)) {
-		/*
-		 * Let the driver know that there are no more listeners.
-		 */
-		*d->bd_bif->bif_driverp = 0;
-	}
-
-	d->bd_bif = NULL;
 }
 
 void
@@ -372,8 +376,7 @@ bpfclose(dev_t dev, int flag, int mode, struct proc *p)
 
 	d = bpfilter_lookup(minor(dev));
 	s = splnet();
-	if (d->bd_bif)
-		bpf_detachd(d);
+	bpf_detachd(d);
 	bpf_wakeup(d);
 	LIST_REMOVE(d, bd_list);
 	bpf_put(d);
@@ -1033,12 +1036,10 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 			goto out;
 	}
 	if (candidate != d->bd_bif) {
-		if (d->bd_bif)
-			/*
-			 * Detach if attached to something else.
-			 */
-			bpf_detachd(d);
-
+		/*
+		 * Detach if attached to something else.
+		 */
+		bpf_detachd(d);
 		bpf_attachd(d, candidate);
 	}
 	bpf_resetd(d);
