@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.51 2016/11/07 09:08:06 mpi Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.52 2016/11/28 11:12:45 mpi Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -129,13 +129,11 @@ tcp_delack(void *arg)
 void
 tcp_slowtimo(void)
 {
-	int s;
+	splsoftassert(IPL_SOFTNET);
 
-	s = splsoftnet();
 	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
 	tcp_iss += TCP_ISSINCR2/PR_SLOWHZ;		/* increment iss */
 	tcp_now++;					/* for timestamps */
-	splx(s);
 }
 
 /*

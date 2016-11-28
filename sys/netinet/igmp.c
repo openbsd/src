@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.54 2015/11/11 10:01:46 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.55 2016/11/28 11:12:45 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -554,7 +554,8 @@ void
 igmp_fasttimo(void)
 {
 	struct ifnet *ifp;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	/*
 	 * Quick check to see if any work needs to be done, in order
@@ -563,11 +564,9 @@ igmp_fasttimo(void)
 	if (!igmp_timers_are_running)
 		return;
 
-	s = splsoftnet();
 	igmp_timers_are_running = 0;
 	TAILQ_FOREACH(ifp, &ifnet, if_list)
 		igmp_checktimer(ifp);
-	splx(s);
 }
 
 
@@ -605,16 +604,15 @@ void
 igmp_slowtimo(void)
 {
 	struct router_info *rti;
-	int s;
 
-	s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
+
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_type == IGMP_v1_ROUTER &&
 		    ++rti->rti_age >= IGMP_AGE_THRESHOLD) {
 			rti->rti_type = IGMP_v2_ROUTER;
 		}
 	}
-	splx(s);
 }
 
 void

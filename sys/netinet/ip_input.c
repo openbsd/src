@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.286 2016/11/23 10:04:31 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.287 2016/11/28 11:12:45 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -978,7 +978,8 @@ void
 ip_slowtimo(void)
 {
 	struct ipq *fp, *nfp;
-	int s = splsoftnet();
+
+	splsoftassert(IPL_SOFTNET);
 
 	for (fp = LIST_FIRST(&ipq); fp != NULL; fp = nfp) {
 		nfp = LIST_NEXT(fp, ipq_q);
@@ -987,7 +988,6 @@ ip_slowtimo(void)
 			ip_freef(fp);
 		}
 	}
-	splx(s);
 }
 
 /*
