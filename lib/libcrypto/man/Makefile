@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.58 2016/11/28 17:55:26 schwarze Exp $
+# $OpenBSD: Makefile,v 1.59 2016/11/28 23:02:16 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -137,6 +137,7 @@ MAN=	\
 	PEM_read_bio_PrivateKey.3 \
 	PEM_write_bio_PKCS7_stream.3 \
 	PKCS12_create.3 \
+	PKCS12_newpass.3 \
 	PKCS12_parse.3 \
 	PKCS5_PBKDF2_HMAC.3 \
 	PKCS7_decrypt.3 \
