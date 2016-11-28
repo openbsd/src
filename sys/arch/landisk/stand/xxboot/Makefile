@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2016/07/30 03:25:48 guenther Exp $
+#	$OpenBSD: Makefile,v 1.11 2016/11/28 16:42:45 deraadt Exp $
 
 MAN=	xxboot.8
 
@@ -28,7 +28,7 @@ LDADD+= $(SALIB)
 
 .PATH:	${S}/lib/libkern/arch/sh ${S}/lib/libkern
 SRCS+=	strlen.c
-SRCS+=	ashrdi3.c sdivsi3.S udivsi3.S
+SRCS+=	ashldi3.c ashrdi3.c sdivsi3.S udivsi3.S
 
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} -o ${PROG}.sym ${LDFLAGS} \
