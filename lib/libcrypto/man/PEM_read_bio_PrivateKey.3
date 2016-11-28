@@ -1,6 +1,55 @@
-.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.3 2016/11/24 19:45:16 jmc Exp $
+.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.4 2016/11/28 21:50:44 schwarze Exp $
+.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
-.Dd $Mdocdate: November 24 2016 $
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2001-2004, 2009, 2013-2016 The OpenSSL Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 28 2016 $
 .Dt PEM_READ_BIO_PRIVATEKEY 3
 .Os
 .Sh NAME
@@ -12,6 +61,14 @@
 .Nm PEM_write_PKCS8PrivateKey ,
 .Nm PEM_write_bio_PKCS8PrivateKey_nid ,
 .Nm PEM_write_PKCS8PrivateKey_nid ,
+.Nm PEM_read_bio_PKCS8 ,
+.Nm PEM_read_PKCS8 ,
+.Nm PEM_write_bio_PKCS8 ,
+.Nm PEM_write_PKCS8 ,
+.Nm PEM_read_bio_PKCS8_PRIV_KEY_INFO ,
+.Nm PEM_read_PKCS8_PRIV_KEY_INFO ,
+.Nm PEM_write_bio_PKCS8_PRIV_KEY_INFO ,
+.Nm PEM_write_PKCS8_PRIV_KEY_INFO ,
 .Nm PEM_read_bio_PUBKEY ,
 .Nm PEM_read_PUBKEY ,
 .Nm PEM_write_bio_PUBKEY ,
@@ -44,6 +101,18 @@
 .Nm PEM_read_DHparams ,
 .Nm PEM_write_bio_DHparams ,
 .Nm PEM_write_DHparams ,
+.Nm PEM_read_bio_ECPKParameters ,
+.Nm PEM_read_ECPKParameters ,
+.Nm PEM_write_bio_ECPKParameters ,
+.Nm PEM_write_ECPKParameters ,
+.Nm PEM_read_bio_ECPrivateKey ,
+.Nm PEM_read_ECPrivateKey ,
+.Nm PEM_write_bio_ECPrivateKey ,
+.Nm PEM_write_ECPrivateKey ,
+.Nm PEM_read_bio_EC_PUBKEY ,
+.Nm PEM_read_EC_PUBKEY ,
+.Nm PEM_write_bio_EC_PUBKEY ,
+.Nm PEM_write_EC_PUBKEY ,
 .Nm PEM_read_bio_X509 ,
 .Nm PEM_read_X509 ,
 .Nm PEM_write_bio_X509 ,
@@ -146,6 +215,54 @@
 .Fa "int klen"
 .Fa "pem_password_cb *cb"
 .Fa "void *u"
+.Fc
+.Ft X509_SIG *
+.Fo PEM_read_bio_PKCS8
+.Fa "BIO *bp"
+.Fa "X509_SIG **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft X509_SIG *
+.Fo PEM_read_PKCS8
+.Fa "FILE *fp"
+.Fa "X509_SIG **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft int
+.Fo PEM_write_bio_PKCS8
+.Fa "BIO *bp"
+.Fa "X509_SIG *x"
+.Fc
+.Ft int
+.Fo PEM_write_PKCS8
+.Fa "FILE *fp"
+.Fa "X509_SIG *x"
+.Fc
+.Ft PKCS8_PRIV_KEY_INFO *
+.Fo PEM_read_bio_PKCS8_PRIV_KEY_INFO
+.Fa "BIO *bp"
+.Fa "PKCS8_PRIV_KEY_INFO **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft PKCS8_PRIV_KEY_INFO *
+.Fo PEM_read_PKCS8_PRIV_KEY_INFO
+.Fa "FILE *fp"
+.Fa "PKCS8_PRIV_KEY_INFO **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft int
+.Fo PEM_write_bio_PKCS8_PRIV_KEY_INFO
+.Fa "BIO *bp"
+.Fa "PKCS8_PRIV_KEY_INFO *x"
+.Fc
+.Ft int
+.Fo PEM_write_PKCS8_PRIV_KEY_INFO
+.Fa "FILE *fp"
+.Fa "PKCS8_PRIV_KEY_INFO *x"
 .Fc
 .Ft EVP_PKEY *
 .Fo PEM_read_bio_PUBKEY
@@ -358,6 +475,88 @@
 .Fo PEM_write_DHparams
 .Fa "FILE *fp"
 .Fa "DH *x"
+.Fc
+.Ft EC_GROUP *
+.Fo PEM_read_bio_ECPKParameters
+.Fa "BIO *bp"
+.Fa "EC_GROUP **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft EC_GROUP *
+.Fo PEM_read_ECPKParameters
+.Fa "FILE *fp"
+.Fa "EC_GROUP **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft int
+.Fo PEM_write_bio_ECPKParameters
+.Fa "BIO *bp"
+.Fa "const EC_GROUP *x"
+.Fc
+.Ft int
+.Fo PEM_write_ECPKParameters
+.Fa "FILE *fp"
+.Fa "const EC_GROUP *x"
+.Fc
+.Ft EC_KEY *
+.Fo PEM_read_bio_ECPrivateKey
+.Fa "BIO *bp"
+.Fa "EC_KEY **key"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft EC_KEY *
+.Fo PEM_read_ECPrivateKey
+.Fa "FILE *fp"
+.Fa "EC_KEY **eckey"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft int
+.Fo PEM_write_bio_ECPrivateKey
+.Fa "BIO *bp"
+.Fa "EC_KEY *x"
+.Fa "const EVP_CIPHER *enc"
+.Fa "unsigned char *kstr"
+.Fa "int klen"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft int
+.Fo PEM_write_ECPrivateKey
+.Fa "FILE *fp"
+.Fa "EC_KEY *x"
+.Fa "const EVP_CIPHER *enc"
+.Fa "unsigned char *kstr"
+.Fa "int klen"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft EC_KEY *
+.Fo PEM_read_bio_EC_PUBKEY
+.Fa "BIO *bp"
+.Fa "EC_KEY **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft EC_KEY *
+.Fo PEM_read_EC_PUBKEY
+.Fa "FILE *fp"
+.Fa "EC_KEY **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft int
+.Fo PEM_write_bio_EC_PUBKEY
+.Fa "BIO *bp"
+.Fa "EC_KEY *x"
+.Fc
+.Ft int
+.Fo PEM_write_EC_PUBKEY
+.Fa "FILE *fp"
+.Fa "EC_KEY *x"
 .Fc
 .Ft X509 *
 .Fo PEM_read_bio_X509
@@ -572,6 +771,20 @@ The algorithm to use is specified in the
 parameter and should be the NID of the corresponding OBJECT IDENTIFIER.
 .Pp
 The
+.Sy PKCS8
+functions process an encrypted private key using an
+.Vt X509_SIG
+structure and the
+.Xr d2i_X509_SIG 3
+function.
+.Pp
+The
+.Sy PKCS8_PRIV_KEY_INFO
+functions process a private key using a
+.Vt PKCS8_PRIV_KEY_INFO
+structure.
+.Pp
+The
 .Sy PUBKEY
 functions process a public key using an
 .Vt EVP_PKEY
@@ -632,6 +845,26 @@ functions process DH parameters using a
 .Vt DH
 structure.
 The parameters are encoded using a PKCS#3 DHparameter structure.
+.Pp
+The
+.Sy ECPKParameters
+functions process EC parameters using an
+.Vt EC_GROUP
+structure and the
+.Xr d2i_ECPKParameters
+function.
+.Pp
+The
+.Sy ECPrivateKey
+functions process an EC private key using an
+.Vt EC_KEY
+structure.
+.Pp
+The
+.Sy EC_PUBKEY
+functions process an EC public key using an
+.Vt EC_KEY
+structure.
 .Pp
 The
 .Sy X509
