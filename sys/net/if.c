@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.462 2016/11/21 09:09:06 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.463 2016/11/28 11:18:02 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1725,20 +1725,15 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		switch (ifar->ifar_af) {
 		case AF_INET:
 			/* attach is a noop for AF_INET */
-			if (cmd == SIOCIFAFDETACH) {
-				s = splsoftnet();
+			if (cmd == SIOCIFAFDETACH)
 				in_ifdetach(ifp);
-				splx(s);
-			}
 			return (0);
 #ifdef INET6
 		case AF_INET6:
-			s = splsoftnet();
 			if (cmd == SIOCIFAFATTACH)
 				error = in6_ifattach(ifp);
 			else
 				in6_ifdetach(ifp);
-			splx(s);
 			return (error);
 #endif /* INET6 */
 		default:
@@ -1804,9 +1799,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 #ifdef INET6
 		if (ISSET(ifr->ifr_flags, IFXF_AUTOCONF6)) {
-			s = splsoftnet();
 			error = in6_ifattach(ifp);
-			splx(s);
 			if (error != 0)
 				return (error);
 		}
@@ -1869,9 +1862,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 		ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
 			(ifr->ifr_flags & ~IFXF_CANTCHANGE);
-		s = splsoftnet();
 		rt_ifmsg(ifp);
-		splx(s);
 		break;
 
 	case SIOCSIFMETRIC:
@@ -2046,11 +2037,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
-		s = splsoftnet();
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			(struct mbuf *) cmd, (struct mbuf *) data,
 			(struct mbuf *) ifp, p));
-		splx(s);
 		break;
 	}
 
