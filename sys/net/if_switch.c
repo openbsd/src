@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.15 2016/11/22 23:23:12 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.16 2016/11/28 10:12:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -490,7 +490,7 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		break;
 	case SIOCSWGDPID:
 	case SIOCSWSDPID:
-	case SIOCSWGFLOWMAX:
+	case SIOCSWGMAXFLOW:
 	case SIOCSWGMAXGROUP:
 	case SIOCSWSPORTNO:
 		error = swofp_ioctl(ifp, cmd, data);

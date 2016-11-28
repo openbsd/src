@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.36 2016/11/21 19:29:28 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.37 2016/11/28 10:12:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1074,7 +1074,7 @@ swofp_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		memcpy(&swofs->swofs_datapath_id, &bparam->ifbrp_datapath,
 		    sizeof(uint64_t));
 		break;
-	case SIOCSWGFLOWMAX:
+	case SIOCSWGMAXFLOW:
 		bparam->ifbrp_maxflow = swofs->swofs_flow_max_entry;
 		break;
 	case SIOCSWGMAXGROUP:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.13 2016/11/18 20:43:39 reyk Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.14 2016/11/28 10:12:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1011,10 +1011,10 @@ switch_cfg(char *delim)
 	printf("%sdatapath %#016llx", delim, bp.ifbrp_datapath);
 
 	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
-	if (ioctl(s, SIOCSWGFLOWMAX, (caddr_t)&bp) < 0)
+	if (ioctl(s, SIOCSWGMAXFLOW, (caddr_t)&bp) < 0)
 		err(1, "%s", name);
 
-	printf(" flowmax %d", bp.ifbrp_maxflow);
+	printf(" maxflow %d", bp.ifbrp_maxflow);
 
 	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
 	if (ioctl(s, SIOCSWGMAXGROUP, (caddr_t)&bp) < 0)
