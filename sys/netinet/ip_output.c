@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.330 2016/11/18 02:53:47 dlg Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.331 2016/11/28 10:14:00 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -249,11 +249,6 @@ reroute:
 			 * computation now.
 			 */
 			in_proto_cksum_out(m, NULL);
-
-			/* If it's not a multicast packet, try to fast-path */
-			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
-				goto sendit;
-			}
 		}
 	}
 #endif /* IPSEC */
