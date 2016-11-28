@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.169 2016/11/14 10:32:46 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.170 2016/11/28 10:10:53 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -387,7 +387,6 @@ ip6_input(struct mbuf *m)
 	 * Multicast check
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-
 		/*
 		 * Make sure M_MCAST is set.  It should theoretically
 		 * already be there, but let's play safe because upper
@@ -401,12 +400,36 @@ ip6_input(struct mbuf *m)
 		 */
 		if (in6_hasmulti(&ip6->ip6_dst, ifp))
 			ours = 1;
+
 #ifdef MROUTING
-		else if (!ip6_mforwarding || !ip6_mrouter)
-#else
-		else
+		if (ip6_mforwarding && ip6_mrouter) {
+			if (ip6_hbhchcheck(m, &off, &nxt, &ours)) {
+				rtfree(rt);
+				if_put(ifp);
+				return;	/* m have already been freed */
+			}
+
+			ip6 = mtod(m, struct ip6_hdr *);
+
+			/*
+			 * If we are acting as a multicast router, all
+			 * incoming multicast packets are passed to the
+			 * kernel-level multicast forwarding function.
+			 * The packet is returned (relatively) intact; if
+			 * ip6_mforward() returns a non-zero value, the packet
+			 * must be discarded, else it may be accepted below.
+			 */
+		    	if (ip6_mforward(ip6, ifp, m)) {
+				ip6stat.ip6s_cantforward++;
+				goto bad;
+			}
+
+			if (!ours)
+				goto bad;
+			goto ours;
+		}
 #endif
-		{
+		if (!ours) {
 			ip6stat.ip6s_notmember++;
 			if (!IN6_IS_ADDR_MC_LINKLOCAL(&ip6->ip6_dst))
 				ip6stat.ip6s_cantforward++;
@@ -485,30 +508,14 @@ ip6_input(struct mbuf *m)
 	/*
 	 * Forward if desirable.
 	 */
-	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-		/*
-		 * If we are acting as a multicast router, all
-		 * incoming multicast packets are passed to the
-		 * kernel-level multicast forwarding function.
-		 * The packet is returned (relatively) intact; if
-		 * ip6_mforward() returns a non-zero value, the packet
-		 * must be discarded, else it may be accepted below.
-		 */
-#ifdef MROUTING
-		if (ip6_mforwarding && ip6_mrouter &&
-		    ip6_mforward(ip6, ifp, m)) {
-			ip6stat.ip6s_cantforward++;
-			goto bad;
-		}
-#endif
-		if (!ours)
-			goto bad;
-	} else if (!ours) {
+	if (!ours) {
 		ip6_forward(m, rt, srcrt);
 		if_put(ifp);
 		return;
 	}
-
+#ifdef MROUTING
+  ours:
+#endif
 	/* pf might have changed things */
 	in6_proto_cksum_out(m, NULL);
 
