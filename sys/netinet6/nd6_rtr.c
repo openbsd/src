@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.151 2016/11/21 10:56:26 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.152 2016/11/28 13:59:51 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -70,6 +70,9 @@ int nd6_prefix_onlink(struct nd_prefix *);
 int nd6_prefix_offlink(struct nd_prefix *);
 void in6_init_address_ltimes(struct nd_prefix *, struct in6_addrlifetime *);
 int prelist_update(struct nd_prefix *, struct nd_defrouter *, struct mbuf *);
+int nd6_prelist_add(struct nd_prefix *, struct nd_defrouter *,
+	struct nd_prefix **);
+void defrouter_addreq(struct nd_defrouter *);
 int rt6_deleteroute(struct rtentry *, void *, unsigned int);
 
 void nd6_addr_add(void *);
@@ -578,7 +581,6 @@ defrouter_addreq(struct nd_defrouter *new)
 	struct rt_addrinfo info;
 	struct sockaddr_in6 def, mask, gate;
 	struct rtentry *rt;
-	int s;
 	int error;
 
 	memset(&def, 0, sizeof(def));
@@ -597,7 +599,6 @@ defrouter_addreq(struct nd_defrouter *new)
 	info.rti_info[RTAX_GATEWAY] = sin6tosa(&gate);
 	info.rti_info[RTAX_NETMASK] = sin6tosa(&mask);
 
-	s = splsoftnet();
 	error = rtrequest(RTM_ADD, &info, RTP_DEFAULT, &rt,
 	    new->ifp->if_rdomain);
 	if (error == 0) {
@@ -605,8 +606,6 @@ defrouter_addreq(struct nd_defrouter *new)
 		rtfree(rt);
 		new->installed = 1;
 	}
-	splx(s);
-	return;
 }
 
 struct nd_defrouter *
@@ -663,7 +662,7 @@ defrtrlist_del(struct nd_defrouter *dr)
 
 	ext->ndefrouters--;
 	if (ext->ndefrouters < 0) {
-		log(LOG_WARNING, "defrtrlist_del: negative count on %s\n",
+		log(LOG_WARNING, "%s: negative count on %s\n", __func__,
 		    dr->ifp->if_xname);
 	}
 
@@ -758,14 +757,12 @@ defrouter_select(void)
 	struct nd_defrouter *dr, *selected_dr = NULL, *installed_dr = NULL;
 	struct rtentry *rt = NULL;
 	struct llinfo_nd6 *ln = NULL;
-	int s = splsoftnet();
 
 	/*
 	 * Let's handle easy case (3) first:
 	 * If default router list is empty, there's nothing to be done.
 	 */
 	if (TAILQ_EMPTY(&nd_defrouter)) {
-		splx(s);
 		return;
 	}
 
@@ -830,9 +827,6 @@ defrouter_select(void)
 			defrouter_delreq(installed_dr);
 		defrouter_addreq(selected_dr);
 	}
-
-	splx(s);
-	return;
 }
 
 /*
@@ -1049,14 +1043,14 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
     struct nd_prefix **newp)
 {
 	struct nd_prefix *new = NULL;
-	int i, s;
 	struct in6_ifextra *ext = pr->ndpr_ifp->if_afdata[AF_INET6];
+	int i;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (ip6_maxifprefixes >= 0) {
 		if (ext->nprefixes >= ip6_maxifprefixes / 2) {
-			s = splsoftnet();
 			purge_detached(pr->ndpr_ifp);
-			splx(s);
 		}
 		if (ext->nprefixes >= ip6_maxifprefixes)
 			return(ENOMEM);
@@ -1079,7 +1073,6 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
 
 	task_set(&new->ndpr_task, nd6_addr_add, new);
 
-	s = splsoftnet();
 	/* link ndpr_entry to nd_prefix list */
 	LIST_INSERT_HEAD(&nd_prefix, new, ndpr_entry);
 
@@ -1089,8 +1082,8 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
 		int e;
 
 		if ((e = nd6_prefix_onlink(new)) != 0) {
-			nd6log((LOG_ERR, "nd6_prelist_add: failed to make "
-			    "the prefix %s/%d on-link on %s (errno=%d)\n",
+			nd6log((LOG_ERR, "%s: failed to make the prefix %s/%d"
+			    " on-link on %s (errno=%d)\n", __func__,
 			    inet_ntop(AF_INET6, &pr->ndpr_prefix.sin6_addr,
 				addr, sizeof(addr)),
 			    pr->ndpr_plen, pr->ndpr_ifp->if_xname, e));
@@ -1100,7 +1093,6 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
 
 	if (dr)
 		pfxrtr_add(new, dr);
-	splx(s);
 
 	ext->nprefixes++;
 

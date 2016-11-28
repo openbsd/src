@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.110 2016/08/23 11:03:10 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.111 2016/11/28 13:59:51 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1101,7 +1101,8 @@ nd6_dad_start(struct ifaddr *ifa)
 	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (!dad_init) {
 		TAILQ_INIT(&dadq);
@@ -1126,16 +1127,14 @@ nd6_dad_start(struct ifaddr *ifa)
 
 	dp = malloc(sizeof(*dp), M_IP6NDP, M_NOWAIT | M_ZERO);
 	if (dp == NULL) {
-		log(LOG_ERR, "nd6_dad_start: memory allocation failed for "
-			"%s(%s)\n",
-			inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
+		log(LOG_ERR, "%s: memory allocation failed for %s(%s)\n",
+			__func__, inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
 			    addr, sizeof(addr)),
 			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		return;
 	}
 	bzero(&dp->dad_timer_ch, sizeof(dp->dad_timer_ch));
 
-	s = splsoftnet();
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 	ip6_dad_pending++;
 
@@ -1156,7 +1155,6 @@ nd6_dad_start(struct ifaddr *ifa)
 	nd6_dad_ns_output(dp, ifa);
 	nd6_dad_starttimer(dp,
 	    (long)ND_IFINFO(ifa->ifa_ifp)->retrans * hz / 1000);
-	splx(s);
 }
 
 /*
