@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.196 2016/11/28 13:59:51 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.197 2016/11/28 14:14:39 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -583,6 +583,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 	if (rt == NULL) {
 		if (create && ifp) {
 			struct rt_addrinfo info;
+			struct ifaddr *ifa;
 			int error;
 
 			/*
@@ -592,8 +593,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			 * This hack is necessary for a neighbor which can't
 			 * be covered by our own prefix.
 			 */
-			struct ifaddr *ifa =
-			    ifaof_ifpforaddr(sin6tosa(&sin6), ifp);
+			ifa = ifaof_ifpforaddr(sin6tosa(&sin6), ifp);
 			if (ifa == NULL)
 				return (NULL);
 
@@ -604,6 +604,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			 * called in rtrequest.
 			 */
 			bzero(&info, sizeof(info));
+			info.rti_ifa = ifa;
 			info.rti_flags = RTF_HOST | RTF_LLINFO;
 			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
 			info.rti_info[RTAX_GATEWAY] = sdltosa(ifp->if_sadl);

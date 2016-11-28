@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.152 2016/11/28 13:59:51 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.153 2016/11/28 14:14:39 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -594,6 +594,7 @@ defrouter_addreq(struct nd_defrouter *new)
 	gate.sin6_addr = new->rtaddr;
 	gate.sin6_scope_id = 0;	/* XXX */
 
+	info.rti_ifa = NULL;
 	info.rti_flags = RTF_GATEWAY;
 	info.rti_info[RTAX_DST] = sin6tosa(&def);
 	info.rti_info[RTAX_GATEWAY] = sin6tosa(&gate);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.194 2016/10/04 14:04:19 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.195 2016/11/28 14:14:39 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -746,9 +746,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 */
 		rt = rtalloc(sin6tosa(&mltaddr), 0, ifp->if_rdomain);
 		if (rt) {
-			/*
-			 * 32bit came from "mltmask"
-			 */
+			/* 32bit came from "mltmask" */
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satosin6(rt_key(rt))->sin6_addr,
 			    32 / 8)) {
@@ -760,6 +758,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			struct rt_addrinfo info;
 
 			bzero(&info, sizeof(info));
+			info.rti_ifa = &ia6->ia_ifa;
 			info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
 			info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia6->ia_addr);
 			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
@@ -816,6 +815,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			struct rt_addrinfo info;
 
 			bzero(&info, sizeof(info));
+			info.rti_ifa = &ia6->ia_ifa;
 			info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
 			info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia6->ia_addr);
 			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
