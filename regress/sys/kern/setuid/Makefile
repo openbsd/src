@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.3 2016/10/05 16:53:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/11/28 22:27:10 bluhm Exp $
 
-MOUNT_NOSUID != mount | grep ^$$(df -P . | tail -1 | awk '{ print $$1 }') | \
+MOUNT_NOSUID != mount | grep ^$$(df -P /tmp | tail -1 | awk '{ print $$1 }') |\
     grep nosuid || true
 
 .if ! empty (MOUNT_NOSUID)
 regress:
 	echo '${MOUNT_NOSUID}'
-	echo object directory is mounted nosuid, test needs set user id
+	echo temporary directory is mounted nosuid, test needs set user id
 	echo SKIPPED
 .endif
 
@@ -37,94 +37,100 @@ REGRESS_TARGETS+=	run-regress-sgidexec-real-exec-inherit
 REGRESS_TARGETS+=	run-regress-sgidexec-effective-exec-inherit
 REGRESS_TARGETS+=	run-regress-sgidexec-saved-exec-inherit
 
-CLEANFILES+=	*.o
-CLEANFILES+=	setuid_none
-CLEANFILES+=	setgid_none
-CLEANFILES+=	setuid
-CLEANFILES+=	setgid
-CLEANFILES+=	seteuid
-CLEANFILES+=	setegid
-CLEANFILES+=	setuid_child
-CLEANFILES+=	setgid_child
-CLEANFILES+=	setresuid
-CLEANFILES+=	setresgid
-CLEANFILES+=	setresuid_real_exec
-CLEANFILES+=	setresuid_effective_exec
-CLEANFILES+=	setresuid_saved_exec
-CLEANFILES+=	suidexec_none
-CLEANFILES+=	suidexec
-CLEANFILES+=	sgidexec
-CLEANFILES+=	setresgid_real_exec
-CLEANFILES+=	setresgid_effective_exec
-CLEANFILES+=	setresgid_saved_exec
-CLEANFILES+=	sgidexec_none
-CLEANFILES+=	suidexec_inherit
-CLEANFILES+=	sgidexec_inherit
-CLEANFILES+=	setuid_exec_inherit
-CLEANFILES+=	setgid_exec_inherit
+BINFILES+=	setuid_none
+BINFILES+=	setgid_none
+BINFILES+=	setuid
+BINFILES+=	setgid
+BINFILES+=	seteuid
+BINFILES+=	setegid
+BINFILES+=	setuid_child
+BINFILES+=	setgid_child
+BINFILES+=	setresuid
+BINFILES+=	setresgid
+BINFILES+=	setresuid_real_exec
+BINFILES+=	setresuid_effective_exec
+BINFILES+=	setresuid_saved_exec
+BINFILES+=	suidexec_none
+BINFILES+=	suidexec
+BINFILES+=	sgidexec
+BINFILES+=	setresgid_real_exec
+BINFILES+=	setresgid_effective_exec
+BINFILES+=	setresgid_saved_exec
+BINFILES+=	sgidexec_none
+BINFILES+=	suidexec_inherit
+BINFILES+=	sgidexec_inherit
+BINFILES+=	setuid_exec_inherit
+BINFILES+=	setgid_exec_inherit
 
-run-regress-setuid_none: setuid_none
-	./setuid_none
-run-regress-setgid_none: setgid_none
-	./setgid_none
-run-regress-setuid: setuid
-	${SUDO} ./setuid
-run-regress-setgid: setgid
-	${SUDO} ./setgid
-run-regress-seteuid: seteuid
-	${SUDO} ./seteuid
-run-regress-setegid: setegid
-	${SUDO} ./setegid
-run-regress-setuid_child: setuid_child
-	${SUDO} ./setuid_child
-run-regress-setgid_child: setgid_child
-	${SUDO} ./setgid_child
-run-regress-setresuid: setresuid
-	${SUDO} ./setresuid
-run-regress-setresgid: setresgid
-	${SUDO} ./setresgid
+CLEANFILES+=	*.o ${BINFILES}
 
-run-regress-suidexec-on-inherit-on: suidexec-install
-	${SUDO} ./suidexec ./suidexec_inherit ./suidexec
-run-regress-suidexec-off-on-inherit: suidexec-install
-	${SUDO} ./suidexec_none ./suidexec ./suidexec_inherit
-run-regress-suidexec-on-inherit-inherit: suidexec-install
-	${SUDO} ./suidexec ./suidexec_inherit ./suidexec_inherit
-run-regress-suidexec-off-off-on: suidexec-install
-	${SUDO} ./suidexec_none ./suidexec_none ./suidexec
-run-regress-suidexec-real-exec-inherit: suidexec-install
-	${SUDO} ./setresuid_real_exec ./setuid_exec_inherit
-run-regress-suidexec-effective-exec-inherit: suidexec-install
-	${SUDO} ./setresuid_effective_exec ./setuid_exec_inherit
-run-regress-suidexec-saved-exec-inherit: suidexec-install
-	${SUDO} ./setresuid_saved_exec ./setuid_exec_inherit
+.ifmake !clean && !cleandir && !depend && !obj
+DIR !!=		mktemp -d -t setuid-regress-XXXXXXXXXX
+.BEGIN:
+	@chmod 755 ${DIR}
+.END:
+	@rm -rf -- ${DIR}
+.endif
 
-run-regress-sgidexec-on-inherit-on: sgidexec-install
-	${SUDO} ./sgidexec ./sgidexec_inherit ./sgidexec
-run-regress-sgidexec-off-on-inherit: sgidexec-install
-	${SUDO} ./sgidexec_none ./sgidexec ./sgidexec_inherit
-run-regress-sgidexec-on-inherit-inherit: sgidexec-install
-	${SUDO} ./sgidexec ./sgidexec_inherit ./sgidexec_inherit
-run-regress-sgidexec-off-off-on: sgidexec-install
-	${SUDO} ./sgidexec_none ./sgidexec_none ./sgidexec
-run-regress-sgidexec-real-exec-inherit: sgidexec-install
-	${SUDO} ./setresgid_real_exec ./setgid_exec_inherit
-run-regress-sgidexec-effective-exec-inherit: sgidexec-install
-	${SUDO} ./setresgid_effective_exec ./setgid_exec_inherit
-run-regress-sgidexec-saved-exec-inherit: sgidexec-install
-	${SUDO} ./setresgid_saved_exec ./setgid_exec_inherit
+run-regress-setuid_none: install-setuid_none
+	cd ${DIR} && ./setuid_none
+run-regress-setgid_none: install-setgid_none
+	cd ${DIR} && ./setgid_none
+run-regress-setuid: install-setuid
+	cd ${DIR} && ${SUDO} ./setuid
+run-regress-setgid: install-setgid
+	cd ${DIR} && ${SUDO} ./setgid
+run-regress-seteuid: install-seteuid
+	cd ${DIR} && ${SUDO} ./seteuid
+run-regress-setegid: install-setegid
+	cd ${DIR} && ${SUDO} ./setegid
+run-regress-setuid_child: install-setuid_child
+	cd ${DIR} && ${SUDO} ./setuid_child
+run-regress-setgid_child: install-setgid_child
+	cd ${DIR} && ${SUDO} ./setgid_child
+run-regress-setresuid: install-setresuid
+	cd ${DIR} && ${SUDO} ./setresuid
+run-regress-setresgid: install-setresgid
+	cd ${DIR} && ${SUDO} ./setresgid
 
-suidexec-install: suidexec suidexec_none suidexec_inherit setresuid_real_exec setresuid_effective_exec setresuid_saved_exec setuid_exec_inherit
-	${SUDO} chown nobody:nobody ./suidexec
-	${SUDO} chmod 4555 ./suidexec
+run-regress-suidexec-on-inherit-on: install
+	cd ${DIR} && ${SUDO} ./suidexec ./suidexec_inherit ./suidexec
+run-regress-suidexec-off-on-inherit: install
+	cd ${DIR} && ${SUDO} ./suidexec_none ./suidexec ./suidexec_inherit
+run-regress-suidexec-on-inherit-inherit: install
+	cd ${DIR} && ${SUDO} ./suidexec ./suidexec_inherit ./suidexec_inherit
+run-regress-suidexec-off-off-on: install
+	cd ${DIR} && ${SUDO} ./suidexec_none ./suidexec_none ./suidexec
+run-regress-suidexec-real-exec-inherit: install
+	cd ${DIR} && ${SUDO} ./setresuid_real_exec ./setuid_exec_inherit
+run-regress-suidexec-effective-exec-inherit: install
+	cd ${DIR} && ${SUDO} ./setresuid_effective_exec ./setuid_exec_inherit
+run-regress-suidexec-saved-exec-inherit: install
+	cd ${DIR} && ${SUDO} ./setresuid_saved_exec ./setuid_exec_inherit
 
-sgidexec-install: sgidexec sgidexec_none sgidexec_inherit setresgid_real_exec setresgid_effective_exec setresgid_saved_exec setgid_exec_inherit
-	${SUDO} chown nobody:nobody ./sgidexec
-	${SUDO} chmod 2555 ./sgidexec
+run-regress-sgidexec-on-inherit-on: install
+	cd ${DIR} && ${SUDO} ./sgidexec ./sgidexec_inherit ./sgidexec
+run-regress-sgidexec-off-on-inherit: install
+	cd ${DIR} && ${SUDO} ./sgidexec_none ./sgidexec ./sgidexec_inherit
+run-regress-sgidexec-on-inherit-inherit: install
+	cd ${DIR} && ${SUDO} ./sgidexec ./sgidexec_inherit ./sgidexec_inherit
+run-regress-sgidexec-off-off-on: install
+	cd ${DIR} && ${SUDO} ./sgidexec_none ./sgidexec_none ./sgidexec
+run-regress-sgidexec-real-exec-inherit: install
+	cd ${DIR} && ${SUDO} ./setresgid_real_exec ./setgid_exec_inherit
+run-regress-sgidexec-effective-exec-inherit: install
+	cd ${DIR} && ${SUDO} ./setresgid_effective_exec ./setgid_exec_inherit
+run-regress-sgidexec-saved-exec-inherit: install
+	cd ${DIR} && ${SUDO} ./setresgid_saved_exec ./setgid_exec_inherit
+
+install-suidexec: suidexec
+	@${INSTALL} -o nobody -m 4555 suidexec ${DIR}
+install-sgidexec: sgidexec
+	@${INSTALL} -g nobody -m 2555 sgidexec ${DIR}
+.for f in ${BINFILES}
+install: install-${f}
+install-${f}: ${f}
+	@${INSTALL} $f ${DIR}
+.endfor
 
 .include <bsd.regress.mk>
-
-.ifmake all || regress
-.END:
-	${SUDO} chmod 0555 ./suidexec ./sgidexec
-.endif
