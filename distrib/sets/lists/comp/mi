@@ -1783,6 +1783,7 @@
 ./usr/share/man/man3/CMSG_DATA.3
 ./usr/share/man/man3/CONF_modules_free.3
 ./usr/share/man/man3/CONF_modules_load_file.3
+./usr/share/man/man3/CRYPTO_get_mem_functions.3
 ./usr/share/man/man3/CRYPTO_set_ex_data.3
 ./usr/share/man/man3/CRYPTO_set_locking_callback.3
 ./usr/share/man/man3/DES_set_key.3
@@ -1856,6 +1857,7 @@
 ./usr/share/man/man3/OCSP_response_status.3
 ./usr/share/man/man3/OCSP_sendreq_new.3
 ./usr/share/man/man3/OPENSSL_VERSION_NUMBER.3
+./usr/share/man/man3/OPENSSL_cleanse.3
 ./usr/share/man/man3/OPENSSL_config.3
 ./usr/share/man/man3/OPENSSL_load_builtin_modules.3
 ./usr/share/man/man3/OPENSSL_malloc.3
