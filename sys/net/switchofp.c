@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.38 2016/11/28 18:04:00 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.39 2016/11/29 10:19:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -52,23 +52,19 @@
 #endif
 
 /*
- * per-frame matching logs provide a helpful for isolating a problem or debuging
- * on runtime but it has potentiality which degrade performance and overflow
- * other log message, so using VDPRINTF() to output verbose debug log.
+ * Per-frame debugging can be done at any time using the BPF
+ * hook of DLT_OPENFLOW (eg. tcpdump -y openflow -i switch0)
  */
+#ifdef DEBUG
 #define DPRINTF(__sc, ...)				\
 do {							\
 	struct switch_softc *_sc = __sc;		\
 	log(LOG_DEBUG, "%s: ", _sc->sc_if.if_xname);	\
 	addlog(__VA_ARGS__);				\
 } while(/*CONSTCOND*/0)
-#define VDPRINTF(__sc, ...)				\
-do {							\
-	struct switch_softc *_sc = __sc;		\
-	if (_sc->sc_if.if_flags & IFF_DEBUG)		\
-		DPRINTF(sc, __VA_ARGS__);		\
-} while(/*CONSTCOND*/0)
-
+#else
+#define DPRINTF(__sc, ...)	do {} while(0)
+#endif
 
 struct swofp_flow_entry {
 	uint64_t				 swfe_cookie;
@@ -429,40 +425,40 @@ for ((curr) = (head); (caddr_t)curr < ((caddr_t)head + (end));			\
  * OpenFlow protocol message handlers
  */
 struct ofp_msg_class {
-	const char	*msg_str;
+	uint8_t		msg_type;
 	ofp_msg_handler msg_handler;
 };
 struct ofp_msg_class ofp_msg_table[] = {
-	{ "Hello",			swofp_recv_hello },
-	{ "Error",			NULL /* unsupported */ },
-	{ "Echo-Request",		swofp_recv_echo },
-	{ "Echo-Reply",			NULL /* from switch */ },
-	{ "Experimenter",		NULL /* unsupported */ },
-	{ "Features-Request",		swofp_recv_features_req },
-	{ "Features-Reply",		NULL /* from switch */ },
-	{ "Get-Config-Request",		swofp_recv_config_req },
-	{ "Get-Config-Reply",		NULL /* from switch */ },
-	{ "Set-Config",			swofp_recv_set_config },
-	{ "Packet-In",			NULL /* from switch */ },
-	{ "Flow-Removed",		NULL /* from switch */ },
-	{ "Port-Status",		NULL /* from switch */ },
-	{ "Packet-Out",			swofp_recv_packet_out },
-	{ "Flow-Mod",			swofp_flow_mod },
-	{ "Group-Mod",			swofp_group_mod },
-	{ "Port-Mod",			NULL /* unsupported */ },
-	{ "Table-Mod",			NULL /* unsupported */ },
-	{ "Multipart-Request",		swofp_multipart_req },
-	{ "Multipart-Reply",		NULL /* from switch */ },
-	{ "Barrier-Request",		swofp_barrier_req },
-	{ "Barrier-Reply",		NULL /* from switch */ },
-	{ "Queue-Get-Config-Request",	NULL /* unsupported */ },
-	{ "Queue-Get-Config-Reply",	NULL /* from switch */ },
-	{ "Role-Request",		NULL /* unsupported */ },
-	{ "Role-Reply",			NULL /* from switch */ },
-	{ "Get-Async-Request",		NULL /* unsupported */ },
-	{ "Get-Async-Reply",		NULL /* from switch */ },
-	{ "Set-Async",			NULL /* unsupported */ },
-	{ "Meter-Mod",			NULL /* unsupported */ }
+	{ OFP_T_HELLO,				swofp_recv_hello },
+	{ OFP_T_ERROR,				NULL /* unsupported */ },
+	{ OFP_T_ECHO_REQUEST,			swofp_recv_echo },
+	{ OFP_T_ECHO_REPLY,			NULL /* from switch */ },
+	{ OFP_T_EXPERIMENTER,			NULL /* unsupported */ },
+	{ OFP_T_FEATURES_REQUEST,		swofp_recv_features_req },
+	{ OFP_T_FEATURES_REPLY,			NULL /* from switch */ },
+	{ OFP_T_GET_CONFIG_REQUEST,		swofp_recv_config_req },
+	{ OFP_T_GET_CONFIG_REPLY,		NULL /* from switch */ },
+	{ OFP_T_SET_CONFIG,			swofp_recv_set_config },
+	{ OFP_T_PACKET_IN,			NULL /* from switch */ },
+	{ OFP_T_FLOW_REMOVED,			NULL /* from switch */ },
+	{ OFP_T_PORT_STATUS,			NULL /* from switch */ },
+	{ OFP_T_PACKET_OUT,			swofp_recv_packet_out },
+	{ OFP_T_FLOW_MOD,			swofp_flow_mod },
+	{ OFP_T_GROUP_MOD,			swofp_group_mod },
+	{ OFP_T_PORT_MOD,			NULL /* unsupported */ },
+	{ OFP_T_TABLE_MOD,			NULL /* unsupported */ },
+	{ OFP_T_MULTIPART_REQUEST,		swofp_multipart_req },
+	{ OFP_T_MULTIPART_REPLY,		NULL /* from switch */ },
+	{ OFP_T_BARRIER_REQUEST,		swofp_barrier_req },
+	{ OFP_T_BARRIER_REPLY,			NULL /* from switch */ },
+	{ OFP_T_QUEUE_GET_CONFIG_REQUEST,	NULL /* unsupported */ },
+	{ OFP_T_QUEUE_GET_CONFIG_REPLY,		NULL /* from switch */ },
+	{ OFP_T_ROLE_REQUEST,			NULL /* unsupported */ },
+	{ OFP_T_ROLE_REPLY,			NULL /* from switch */ },
+	{ OFP_T_GET_ASYNC_REQUEST,		NULL /* unsupported */ },
+	{ OFP_T_GET_ASYNC_REPLY,		NULL /* from switch */ },
+	{ OFP_T_SET_ASYNC,			NULL /* unsupported */ },
+	{ OFP_T_METER_MOD,			NULL /* unsupported */ }
 };
 
 
@@ -470,39 +466,39 @@ struct ofp_msg_class ofp_msg_table[] = {
 * OpenFlow protocol modification flow message command handlers
 */
 struct ofp_flow_mod_class {
-	const char	*ofm_cmd_str;
+	uint8_t		 ofm_cmd_type;
 	ofp_msg_handler	 ofm_cmd_handler;
 };
 struct ofp_flow_mod_class ofp_flow_mod_table[] = {
-	{ "Add",		swofp_flow_mod_cmd_add },
-	{ "Modify",		swofp_flow_mod_cmd_modify },
-	{ "Modify-Strict",	swofp_flow_mod_cmd_modify_strict },
-	{ "Delete",		swofp_flow_mod_cmd_delete },
-	{ "Delete-Strict",	swofp_flow_mod_cmd_delete_strict },
+	{ OFP_FLOWCMD_ADD,		swofp_flow_mod_cmd_add },
+	{ OFP_FLOWCMD_MODIFY,		swofp_flow_mod_cmd_modify },
+	{ OFP_FLOWCMD_MODIFY_STRICT,	swofp_flow_mod_cmd_modify_strict },
+	{ OFP_FLOWCMD_DELETE,		swofp_flow_mod_cmd_delete },
+	{ OFP_FLOWCMD_DELETE_STRICT,	swofp_flow_mod_cmd_delete_strict },
 };
 
 /*
  * OpenFlow protocol multipart handlers
  */
 struct ofp_mpmsg_class {
-	const char	*mpmsg_str;
+	uint8_t		 msgsg_type;
 	ofp_msg_handler	 mpmsg_handler;
 };
 struct ofp_mpmsg_class ofp_mpmsg_table[] = {
-	{ "Description",	swofp_mp_recv_desc },
-	{ "Flow",		swofp_mp_recv_flow },
-	{ "Aggregate-Flow",	swofp_mp_recv_aggregate_flow_stat },
-	{ "Table",		swofp_mp_recv_table_stats },
-	{ "Port-Stats",		swofp_mp_recv_port_stats },
-	{ "Queue",		NULL },
-	{ "Group",		NULL },
-	{ "Group-Desc",		swofp_mp_recv_group_desc },
-	{ "Group-Features",	NULL },
-	{ "Meter",		NULL },
-	{ "Meter-Config",	NULL },
-	{ "Meter-Features",	NULL },
-	{ "Table-Features",	swofp_mp_recv_table_features },
-	{ "Port-Desc",		swofp_mp_recv_port_desc }
+	{ OFP_MP_T_DESC,		swofp_mp_recv_desc },
+	{ OFP_MP_T_FLOW,		swofp_mp_recv_flow },
+	{ OFP_MP_T_AGGREGATE,		swofp_mp_recv_aggregate_flow_stat },
+	{ OFP_MP_T_TABLE,		swofp_mp_recv_table_stats },
+	{ OFP_MP_T_PORT_STATS,		swofp_mp_recv_port_stats },
+	{ OFP_MP_T_QUEUE,		NULL },
+	{ OFP_MP_T_GROUP,		NULL },
+	{ OFP_MP_T_GROUP_DESC,		swofp_mp_recv_group_desc },
+	{ OFP_MP_T_GROUP_FEATURES,	NULL },
+	{ OFP_MP_T_METER,		NULL },
+	{ OFP_MP_T_METER_CONFIG,	NULL },
+	{ OFP_MP_T_METER_FEATURES,	NULL },
+	{ OFP_MP_T_TABLE_FEATURES,	swofp_mp_recv_table_features },
+	{ OFP_MP_T_PORT_DESC,		swofp_mp_recv_port_desc }
 };
 
 /*
@@ -513,7 +509,6 @@ struct ofp_mpmsg_class ofp_mpmsg_table[] = {
 
 struct ofp_oxm_class {
 	uint8_t	 oxm_field;
-	char	*oxm_str;
 	uint8_t	 oxm_len; /* This length defined by speficication */
 	uint8_t	 oxm_flags;
 	int	(*oxm_match)(struct switch_flow_classify *,
@@ -529,280 +524,280 @@ struct ofp_oxm_class {
  */
 struct ofp_oxm_class ofp_oxm_handlers[] = {
 	{
-		OFP_XM_T_IN_PORT,		"in_port",
+		OFP_XM_T_IN_PORT,
 		sizeof(uint32_t),
 		0,
 		swofp_ox_match_uint32,		NULL,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_IN_PHY_PORT,		"in_phy_port",
+		OFP_XM_T_IN_PHY_PORT,
 		sizeof(uint32_t),
 		0,
 		NULL,				NULL,
 		NULL
 	},
 	{
-		OFP_XM_T_META,			"metadata",
+		OFP_XM_T_META,
 		sizeof(uint64_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint64,	NULL,
 		NULL
 	},
 	{
-		OFP_XM_T_ETH_DST,		"eth_dst",
+		OFP_XM_T_ETH_DST,
 		ETHER_ADDR_LEN,
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ether_addr,	swofp_ox_set_ether_addr,
 		swofp_ox_cmp_ether_addr
 	},
 	{
-		OFP_XM_T_ETH_SRC,		"eth_src",
+		OFP_XM_T_ETH_SRC,
 		ETHER_ADDR_LEN,
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ether_addr,	swofp_ox_set_ether_addr,
 		swofp_ox_cmp_ether_addr
 	},
 	{
-		OFP_XM_T_ETH_TYPE,		"eth_type",
+		OFP_XM_T_ETH_TYPE,
 		sizeof(uint16_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint16,		swofp_ox_set_uint16,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_VLAN_VID,		"vlan_vid",
+		OFP_XM_T_VLAN_VID,
 		sizeof(uint16_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_vlan_vid,	swofp_ox_set_vlan_vid,
 		swofp_ox_cmp_vlan_vid
 	},
 	{
-		OFP_XM_T_VLAN_PCP,		"vlan_pcp",
+		OFP_XM_T_VLAN_PCP,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint8,		swofp_ox_set_uint16,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_IP_DSCP,		"ip_dscp",
+		OFP_XM_T_IP_DSCP,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint8,		swofp_ox_set_uint8,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_IP_ECN,		"ip_ecn",
+		OFP_XM_T_IP_ECN,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint8,		swofp_ox_set_uint8,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_IP_PROTO,		"ip_proto",
+		OFP_XM_T_IP_PROTO,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint8,		swofp_ox_set_uint8,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_IPV4_SRC,		"ip_src",
+		OFP_XM_T_IPV4_SRC,
 		sizeof(uint32_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv4_addr,	swofp_ox_set_ipv4_addr,
 		swofp_ox_cmp_ipv4_addr
 	},
 	{
-		OFP_XM_T_IPV4_DST,		"ip_dst",
+		OFP_XM_T_IPV4_DST,
 		sizeof(uint32_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv4_addr,	swofp_ox_set_ipv4_addr,
 		swofp_ox_cmp_ipv4_addr
 	},
 	{
-		OFP_XM_T_TCP_SRC,		"tcp_src",
+		OFP_XM_T_TCP_SRC,
 		sizeof(uint16_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint16,		swofp_ox_set_uint16,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_TCP_DST,		"tcp_dst",
+		OFP_XM_T_TCP_DST,
 		sizeof(uint16_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint16,		swofp_ox_set_uint16,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_UDP_SRC,		"udp_src",
+		OFP_XM_T_UDP_SRC,
 		sizeof(uint16_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint16,		swofp_ox_set_uint16,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_UDP_DST,		"udp_dst",
+		OFP_XM_T_UDP_DST,
 		sizeof(uint16_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint16,		swofp_ox_set_uint16,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_SCTP_SRC,		"sctp_src",
+		OFP_XM_T_SCTP_SRC,
 		sizeof(uint16_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint16,		swofp_ox_set_uint16,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_SCTP_DST,		"sctp_dst",
+		OFP_XM_T_SCTP_DST,
 		sizeof(uint16_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint16,		swofp_ox_set_uint16,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_ICMPV4_TYPE,		"icmp_type",
+		OFP_XM_T_ICMPV4_TYPE,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint8,		swofp_ox_set_uint8,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_ICMPV4_CODE,		"icmp_code",
+		OFP_XM_T_ICMPV4_CODE,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint8,		swofp_ox_set_uint8,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_ARP_OP,		"arp_op",
+		OFP_XM_T_ARP_OP,
 		sizeof(uint16_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint16,		swofp_ox_set_uint16,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_ARP_SPA,		"arp_spa",
+		OFP_XM_T_ARP_SPA,
 		sizeof(uint32_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv4_addr,	swofp_ox_set_ipv4_addr,
 		swofp_ox_cmp_ipv4_addr
 	},
 	{
-		OFP_XM_T_ARP_TPA,		"arp_tpa",
+		OFP_XM_T_ARP_TPA,
 		sizeof(uint32_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv4_addr,	swofp_ox_set_ipv4_addr,
 		swofp_ox_cmp_ipv4_addr
 	},
 	{
-		OFP_XM_T_ARP_SHA,		"arp_sha",
+		OFP_XM_T_ARP_SHA,
 		ETHER_ADDR_LEN,
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ether_addr,	swofp_ox_set_ether_addr,
 		swofp_ox_cmp_ether_addr
 	},
 	{
-		OFP_XM_T_ARP_THA,		"arp_tha",
+		OFP_XM_T_ARP_THA,
 		ETHER_ADDR_LEN,
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ether_addr,	swofp_ox_set_ether_addr,
 		swofp_ox_cmp_ether_addr
 	},
 	{
-		OFP_XM_T_IPV6_SRC,		"ip6_src",
+		OFP_XM_T_IPV6_SRC,
 		sizeof(struct in6_addr),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv6_addr,	swofp_ox_set_ipv6_addr,
 		swofp_ox_cmp_ipv6_addr
 	},
 	{
-		OFP_XM_T_IPV6_DST,		"ip6_dst",
+		OFP_XM_T_IPV6_DST,
 		sizeof(struct in6_addr),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv6_addr,	swofp_ox_set_ipv6_addr,
 		swofp_ox_cmp_ipv6_addr
 	},
 	{
-		OFP_XM_T_IPV6_FLABEL,		"ip6_flabel",
+		OFP_XM_T_IPV6_FLABEL,
 		sizeof(uint32_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint32,		swofp_ox_set_uint32,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_ICMPV6_TYPE,		"icmp6_type",
+		OFP_XM_T_ICMPV6_TYPE,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint8,		swofp_ox_set_uint8,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_ICMPV6_CODE,		"icmp6_code",
+		OFP_XM_T_ICMPV6_CODE,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint8,		swofp_ox_set_uint8,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_IPV6_ND_TARGET,	"nd_target",
+		OFP_XM_T_IPV6_ND_TARGET,
 		sizeof(struct in6_addr),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv6_addr,	swofp_ox_set_ipv6_addr,
 		swofp_ox_cmp_ipv6_addr
 	},
 	{
-		OFP_XM_T_IPV6_ND_SLL,		"nd_sll",
+		OFP_XM_T_IPV6_ND_SLL,
 		ETHER_ADDR_LEN,
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ether_addr,	swofp_ox_set_ether_addr,
 		swofp_ox_cmp_ether_addr
 	},
 	{
-		OFP_XM_T_IPV6_ND_TLL,		"nd_tll",
+		OFP_XM_T_IPV6_ND_TLL,
 		ETHER_ADDR_LEN,
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ether_addr,	swofp_ox_set_ether_addr,
 		swofp_ox_cmp_ether_addr
 	},
 	{
-		OFP_XM_T_MPLS_LABEL,		"mpls_label",
+		OFP_XM_T_MPLS_LABEL,
 		sizeof(uint32_t),
 		SWOFP_MATCH_WILDCARD,
 		NULL,				NULL,
 		NULL
 	},
 	{
-		OFP_XM_T_MPLS_TC,		"mpls_tc",
+		OFP_XM_T_MPLS_TC,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		NULL,				NULL,
 		NULL
 	},
 	{
-		OFP_XM_T_MPLS_BOS,		"mpls_bos",
+		OFP_XM_T_MPLS_BOS,
 		sizeof(uint8_t),
 		SWOFP_MATCH_WILDCARD,
 		NULL,				NULL,
 		NULL
 	},
 	{
-		OFP_XM_T_PBB_ISID,		"pbb_isid",
+		OFP_XM_T_PBB_ISID,
 		3,
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		NULL,				NULL,
 		NULL
 	},
 	{
-		OFP_XM_T_TUNNEL_ID,		"tun_id",
+		OFP_XM_T_TUNNEL_ID,
 		sizeof(uint64_t),
 		SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint64,		swofp_ox_set_uint64,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_T_IPV6_EXTHDR,		"ipv6_exthdr",
+		OFP_XM_T_IPV6_EXTHDR,
 		sizeof(uint16_t),
 		SWOFP_MATCH_WILDCARD,
 		NULL,				NULL,
@@ -815,35 +810,35 @@ struct ofp_oxm_class ofp_oxm_handlers[] = {
  */
 struct ofp_oxm_class ofp_oxm_nxm_handlers[] = {
 	{
-		OFP_XM_NXMT_TUNNEL_ID,		"tun_id",
+		OFP_XM_NXMT_TUNNEL_ID,
 		sizeof(uint64_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_uint64,		swofp_ox_set_uint64,
 		swofp_ox_cmp_data
 	},
 	{
-		OFP_XM_NXMT_TUNNEL_IPV4_SRC,	"tun_ipv4_src",
+		OFP_XM_NXMT_TUNNEL_IPV4_SRC,
 		sizeof(uint32_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv4_addr,	swofp_ox_set_ipv4_addr,
 		swofp_ox_cmp_ipv4_addr
 	},
 	{
-		OFP_XM_NXMT_TUNNEL_IPV4_DST,	"tun_ipv4_dst",
+		OFP_XM_NXMT_TUNNEL_IPV4_DST,
 		sizeof(uint32_t),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv4_addr,	swofp_ox_set_ipv4_addr,
 		swofp_ox_cmp_ipv4_addr
 	},
 	{
-		OFP_XM_NXMT_TUNNEL_IPV6_SRC,	"tun_ipv6_src",
+		OFP_XM_NXMT_TUNNEL_IPV6_SRC,
 		sizeof(struct in6_addr),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv6_addr,	swofp_ox_set_ipv6_addr,
 		swofp_ox_cmp_ipv6_addr
 	},
 	{
-		OFP_XM_NXMT_TUNNEL_IPV6_DST,	"tun_ipv6_dst",
+		OFP_XM_NXMT_TUNNEL_IPV6_DST,
 		sizeof(struct in6_addr),
 		SWOFP_MATCH_MASK|SWOFP_MATCH_WILDCARD,
 		swofp_ox_match_ipv6_addr,	swofp_ox_set_ipv6_addr,
@@ -856,7 +851,6 @@ struct ofp_oxm_class ofp_oxm_nxm_handlers[] = {
  */
 struct ofp_action_handler {
 	uint16_t	 action_type;
-	const char	*action_str;
 	struct mbuf *	(*action)(struct switch_softc *,  struct mbuf *,
 	    struct swofp_pipline_desc *, struct ofp_action_header *);
 };
@@ -866,71 +860,71 @@ struct ofp_action_handler ofp_action_handlers[] = {
 	 * OpenFlow Switch Specification (ver. 1.3.5)
 	 */
 	{
-		OFP_ACTION_COPY_TTL_IN,		"copy_ttl_in",
+		OFP_ACTION_COPY_TTL_IN,
 		NULL
 	},
 	{
-		OFP_ACTION_POP_MPLS,		"pop_mpls",
+		OFP_ACTION_POP_MPLS,
 		NULL
 	},
 	{
-		OFP_ACTION_POP_PBB,		"pop_pbb",
+		OFP_ACTION_POP_PBB,
 		NULL
 	},
 	{
-		OFP_ACTION_POP_VLAN,		"pop_vlan",
+		OFP_ACTION_POP_VLAN,
 		swofp_action_pop_vlan
 	},
 	{
-		OFP_ACTION_PUSH_MPLS,		"push_mpls",
+		OFP_ACTION_PUSH_MPLS,
 		NULL
 	},
 	{
-		OFP_ACTION_PUSH_PBB,		"push_pbb",
+		OFP_ACTION_PUSH_PBB,
 		NULL
 	},
 	{
-		OFP_ACTION_PUSH_VLAN,		"push_vlan",
+		OFP_ACTION_PUSH_VLAN,
 		swofp_action_push_vlan
 	},
 	{
-		OFP_ACTION_COPY_TTL_OUT,	"copy_ttl_out",
+		OFP_ACTION_COPY_TTL_OUT,
 		NULL
 	},
 	{
-		OFP_ACTION_DEC_NW_TTL,		"dec_nw_ttl",
+		OFP_ACTION_DEC_NW_TTL,
 		NULL
 	},
 	{
-		OFP_ACTION_DEC_MPLS_TTL,	"dec_mpls_ttl",
+		OFP_ACTION_DEC_MPLS_TTL,
 		NULL
 	},
 	{
-		OFP_ACTION_SET_MPLS_TTL,	"set_mpls_ttl",
+		OFP_ACTION_SET_MPLS_TTL,
 		NULL
 	},
 	{
-		OFP_ACTION_SET_NW_TTL,		"set_nw_ttl",
+		OFP_ACTION_SET_NW_TTL,
 		NULL
 	},
 	{
-		OFP_ACTION_SET_FIELD,		"set_field",
+		OFP_ACTION_SET_FIELD,
 		swofp_action_set_field
 	},
 	{
-		OFP_ACTION_SET_QUEUE,		"set_queue",
+		OFP_ACTION_SET_QUEUE,
 		NULL
 	},
 	{
-		OFP_ACTION_GROUP,		"group",
+		OFP_ACTION_GROUP,
 		swofp_action_group
 	},
 	{
-		OFP_ACTION_OUTPUT,		"output",
+		OFP_ACTION_OUTPUT,
 		swofp_action_output
 	},
 	{
-		OFP_ACTION_EXPERIMENTER,	"experimenter",
+		OFP_ACTION_EXPERIMENTER,
 		NULL
 	}, /* XXX Where is best position? */
 };
@@ -1151,15 +1145,6 @@ swofp_lookup_msg_handler(uint8_t type)
 		return (ofp_msg_table[type].msg_handler);
 }
 
-const char *
-swofp_mtype_str(uint8_t type)
-{
-	if (type > OFP_T_TYPE_MAX)
-		return ("unknown");
-	else
-		return (ofp_msg_table[type].msg_str);
-}
-
 ofp_msg_handler
 swofp_lookup_mpmsg_handler(uint16_t type)
 {
@@ -1167,17 +1152,6 @@ swofp_lookup_mpmsg_handler(uint16_t type)
 		return (NULL);
 	else
 		return (ofp_mpmsg_table[type].mpmsg_handler);
-}
-
-const char *
-swofp_mpmtype_str(uint16_t type)
-{
-	if (type == OFP_MP_T_EXPERIMENTER)
-		return ("Experimenter");
-	else if (type > nitems(ofp_mpmsg_table))
-		return ("Unknown");
-	else
-		return (ofp_mpmsg_table[type].mpmsg_str);
 }
 
 struct ofp_action_handler *
@@ -1269,7 +1243,7 @@ swofp_flow_table_add(struct switch_softc *sc, uint16_t table_id)
 	else
 		TAILQ_INSERT_TAIL(&ofs->swofs_table_list, new, swft_table_next);
 
-	VDPRINTF(sc, "add openflow flow table (id:%d)\n", table_id);
+	DPRINTF(sc, "add openflow flow table (id:%d)\n", table_id);
 
 	return (new);
 }
@@ -1297,7 +1271,7 @@ swofp_flow_table_delete(struct switch_softc *sc, uint16_t table_id)
 	TAILQ_REMOVE(&ofs->swofs_table_list, swft, swft_table_next);
 	free(swft, M_DEVBUF, sizeof(*swft));
 
-	VDPRINTF(sc, "delete flow table (id:%d)\n", table_id);
+	DPRINTF(sc, "delete flow table (id:%d)\n", table_id);
 
 	return 0;
 }
@@ -1339,7 +1313,7 @@ swofp_group_entry_add(struct switch_softc *sc, struct swofp_group_entry *swge)
 	LIST_INSERT_HEAD(&ofs->swofs_group_table, swge, swge_next);
 	ofs->swofs_group_table_num++;
 
-	VDPRINTF(sc, "add group %d in group table (total %d)\n",
+	DPRINTF(sc, "add group %d in group table (total %d)\n",
 	    swge->swge_group_id, ofs->swofs_group_table_num);
 
 	return (0);
@@ -1352,7 +1326,7 @@ swofp_group_entry_delete(struct switch_softc *sc,
 	struct swofp_ofs	*ofs = sc->sc_ofs;
 	struct swofp_flow_table *swft;
 
-	VDPRINTF(sc, "delete group %d in group table (total %d)\n",
+	DPRINTF(sc, "delete group %d in group table (total %d)\n",
 	    swge->swge_group_id, ofs->swofs_group_table_num);
 
 	LIST_REMOVE(swge, swge_next);
@@ -1496,7 +1470,7 @@ swofp_flow_entry_add(struct switch_softc *sc, struct swofp_flow_table *swft,
 	LIST_INSERT_HEAD(&swft->swft_flow_list, swfe, swfe_next);
 	swft->swft_flow_num++;
 
-	VDPRINTF(sc, "add flow in table %d (total %d)\n",
+	DPRINTF(sc, "add flow in table %d (total %d)\n",
 	    swft->swft_table_id, swft->swft_flow_num);
 }
 
@@ -1511,7 +1485,7 @@ swofp_flow_entry_delete(struct switch_softc *sc, struct swofp_flow_table *swft,
 	swofp_flow_entry_free(&swfe);
 	swft->swft_flow_num--;
 
-	VDPRINTF(sc, "delete flow from table %d (total %d)\n",
+	DPRINTF(sc, "delete flow from table %d (total %d)\n",
 	    swft->swft_table_id, swft->swft_flow_num);
 }
 
@@ -1531,7 +1505,7 @@ swofp_flow_timeout(struct switch_softc *sc)
 			if (swfe->swfe_idle_timeout) {
 				timespecsub(&now, &swfe->swfe_idle_time, &idle);
 				if (swfe->swfe_idle_timeout < idle.tv_sec) {
-					VDPRINTF(sc, "flow(id:%d) expired "
+					DPRINTF(sc, "flow(id:%d) expired "
 					    "by idle timeout\n", swfe->swfe_id);
 					swofp_flow_entry_delete(sc, swft, swfe,
 					    OFP_FLOWREM_REASON_IDLE_TIMEOUT);
@@ -1542,7 +1516,7 @@ swofp_flow_timeout(struct switch_softc *sc)
 				timespecsub(&now, &swfe->swfe_installed_time,
 				    &duration);
 				if (swfe->swfe_hard_timeout < duration.tv_sec) {
-					VDPRINTF(sc, "flow(id:%d) expired "
+					DPRINTF(sc, "flow(id:%d) expired "
 					    "by hard timeout\n", swfe->swfe_id);
 					swofp_flow_entry_delete(sc, swft, swfe,
 					    OFP_FLOWREM_REASON_HARD_TIMEOUT);
@@ -4226,14 +4200,13 @@ swofp_execute_action(struct switch_softc *sc, struct mbuf *m,
 
 	handler = swofp_lookup_action_handler(ntohs(oah->ah_type));
 	if ((handler == NULL) || (handler->action == NULL)) {
-		VDPRINTF(sc, "unknown action (type %d)\n",
+		DPRINTF(sc, "unknown action (type %d)\n",
 		    ntohs(oah->ah_type));
 		m_freem(m);
 		return (NULL);
 	}
 
-	VDPRINTF(sc, "execute action %s(type %d)\n",
-	    handler->action_str, handler->action_type);
+	DPRINTF(sc, "execute action type %u\n", handler->action_type);
 
 	m = handler->action(sc, m, swpld, oah);
 	if (m == NULL)
@@ -4508,10 +4481,6 @@ swofp_input(struct switch_softc *sc, struct mbuf *m)
 	    (m = m_pullup(m, ntohs(oh->oh_length))) == NULL)
 		return (ENOBUFS);
 
-	VDPRINTF(sc, "received ofp message type=%s xid=%x len=%d\n",
-	    swofp_mtype_str(oh->oh_type), ntohl(oh->oh_xid),
-	    ntohs(oh->oh_length));
-
 #if NBPFILTER > 0
 	if (sc->sc_ofbpf)
 		switch_mtap(sc->sc_ofbpf, m, BPF_DIRECTION_IN,
@@ -4532,17 +4501,11 @@ int
 swofp_output(struct switch_softc *sc, struct mbuf *m)
 {
 	struct swofp_ofs	*swofs = sc->sc_ofs;
-	struct ofp_header	*oh;
 
 	if (sc->sc_swdev == NULL) {
 		m_freem(m);
 		return (ENXIO);
 	}
-
-	oh = mtod(m, struct ofp_header *);
-	VDPRINTF(sc, "sending ofp message type=%s xid=%x len=%d\n",
-		 swofp_mtype_str(oh->oh_type), ntohl(oh->oh_xid),
-		 ntohs(oh->oh_length));
 
 #if NBPFILTER > 0
 	if (sc->sc_ofbpf)
@@ -5179,15 +5142,6 @@ swofp_flow_mod_lookup_handler(uint8_t cmd)
 		return (&ofp_flow_mod_table[cmd].ofm_cmd_handler);
 }
 
-const char *
-swofp_flow_mod_cmd_str(uint8_t cmd)
-{
-	if (cmd > nitems(ofp_flow_mod_table))
-		return ("Unkown");
-	else
-		return (ofp_flow_mod_table[cmd].ofm_cmd_str);
-}
-
 int
 swofp_flow_mod(struct switch_softc *sc, struct mbuf *m)
 {
@@ -5195,10 +5149,6 @@ swofp_flow_mod(struct switch_softc *sc, struct mbuf *m)
 	ofp_msg_handler		*handler;
 
 	ofm = mtod(m, struct ofp_flow_mod *);
-
-	VDPRINTF(sc, "Flow-Mod command=%s(%d) xid=%x\n",
-		 swofp_flow_mod_cmd_str(ofm->fm_command), ofm->fm_command,
-		 ntohl(ofm->fm_oh.oh_xid));
 
 	handler = swofp_flow_mod_lookup_handler(ofm->fm_command);
 	if (handler) {
@@ -5361,9 +5311,6 @@ swofp_group_mod(struct switch_softc *sc, struct mbuf *m)
 
 	ogm = mtod(m, struct ofp_group_mod *);
 	cmd = ntohs(ogm->gm_command);
-
-	VDPRINTF(sc, "Group-Mod command=%s(%u) xid=%x\n",
-	    swofp_group_mod_cmd_str(cmd), cmd, ntohl(ogm->gm_oh.oh_xid));
 
 	switch (cmd) {
 	case OFP_GROUPCMD_ADD:
@@ -5603,11 +5550,6 @@ swofp_multipart_req(struct switch_softc *sc, struct mbuf *m)
 
 	omp = mtod(m, struct ofp_multipart *);
 
-	VDPRINTF(sc, "Multipart-Request type=%s(%d) more=%s xid=%x\n",
-	    swofp_mpmtype_str(ntohs(omp->mp_type)), ntohs(omp->mp_type),
-	    ((omp->mp_flags & OFP_T_MULTIPART_REQUEST) ? "yes" : "no"),
-	    ntohl(omp->mp_oh.oh_xid));
-
 	if (omp->mp_flags & OFP_T_MULTIPART_REQUEST) {
 		/* multipart message re-assembly iss not supported yet */
 		m_freem(m);
@@ -5656,11 +5598,6 @@ swofp_multipart_reply(struct switch_softc *sc, struct swofp_mpmsg *swmp)
 			hdr->m_pkthdr.len = len;
 		} else
 			m_freem(body);
-
-		VDPRINTF(sc, "Multipart-Reply type=%s more=%s xid=%x\n",
-		    swofp_mpmtype_str(ntohs(omp->mp_type)),
-		    (ntohs(omp->mp_flags) & OFP_MP_FLAG_REPLY_MORE) ?
-		    "yes" : "no", ntohl(omp->mp_oh.oh_xid));
 
 		(void)swofp_output(sc, hdr);
 	}
