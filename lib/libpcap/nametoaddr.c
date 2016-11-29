@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.19 2015/11/17 21:39:23 mmcc Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.20 2016/11/29 18:37:02 jca Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -193,7 +193,7 @@ struct eproto {
 };
 
 /* Static data base of ether protocol types. */
-struct eproto eproto_db[] = {
+static const struct eproto _eproto_db[] = {
 	{ "pup", ETHERTYPE_PUP },
 	{ "xns", ETHERTYPE_NS },
 	{ "ip", ETHERTYPE_IP },
@@ -218,11 +218,13 @@ struct eproto eproto_db[] = {
 	{ "decdns", ETHERTYPE_DECDNS },
 	{ (char *)0, 0 }
 };
+/* Accessor for tcpdump */
+const struct eproto * const eproto_db = _eproto_db;
 
 int
 pcap_nametoeproto(const char *s)
 {
-	struct eproto *p = eproto_db;
+	const struct eproto *p = _eproto_db;
 
 	while (p->s != 0) {
 		if (strcmp(p->s, s) == 0)
@@ -235,7 +237,7 @@ pcap_nametoeproto(const char *s)
 #include "llc.h"
 
 /* Static data base of LLC values. */
-static struct eproto llc_db[] = {
+static const struct eproto llc_db[] = {
 	{ "stp", LLCSAP_8021D },
 	{ (char *)0, 0 }
 };
@@ -243,7 +245,7 @@ static struct eproto llc_db[] = {
 int
 pcap_nametollc(const char *s)
 {
-	struct eproto *p = llc_db;
+	const struct eproto *p = llc_db;
 
 	while (p->s != 0) {
 		if (strcmp(p->s, s) == 0)
