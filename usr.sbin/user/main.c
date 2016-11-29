@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.10 2016/03/29 13:32:54 mestre Exp $ */
+/* $OpenBSD: main.c,v 1.11 2016/11/29 03:59:31 jsg Exp $ */
 /* $NetBSD: main.c,v 1.3 2002/07/09 10:34:16 tron Exp $ */
 
 /*
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Alistair G. Crooks.
- * 4. The name of the author may not be used to endorse or promote
+ * 3. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
  *
