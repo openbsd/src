@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.10 2016/11/16 14:54:26 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.11 2016/11/29 09:00:05 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 16 2016 $
+.Dd $Mdocdate: November 29 2016 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -67,3 +67,7 @@ first appeared in
 .Nm
 was written by
 .An Antoine Jacoutot Aq Mt ajacoutot@openbsd.org .
+.Sh CAVEATS
+.Nm
+only works on official releases and will always sync and apply all patches
+regardless of the installed sets.
