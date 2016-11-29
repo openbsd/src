@@ -1,10 +1,25 @@
-.\"	$OpenBSD: RAND_add.3,v 1.3 2016/11/25 16:34:08 jmc Exp $
+.\"	$OpenBSD: RAND_add.3,v 1.4 2016/11/29 00:07:45 schwarze Exp $
 .\"
-.Dd $Mdocdate: November 25 2016 $
+.\" Copyright (c) 2014 Miod Vallat <miod@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 29 2016 $
 .Dt RAND_ADD 3
 .Os
 .Sh NAME
 .Nm RAND_add ,
+.Nm RAND_cleanup ,
 .Nm RAND_seed ,
 .Nm RAND_status
 .Nd add entropy to the PRNG (DEPRECATED)
@@ -16,6 +31,8 @@
 .Fa "int num"
 .Fa "double entropy"
 .Fc
+.Ft void
+.Fn RAND_cleanup void
 .Ft void
 .Fo RAND_seed
 .Fa "const void *buf"
@@ -29,6 +46,6 @@ generator to be controlled by external sources.
 .Pp
 They are kept for ABI compatibility but are no longer functional, and
 should not be used in new programs.
-.Sh SEE ALSO
-.Xr RAND_cleanup 3 ,
-.Xr RAND_load_file 3
+.Sh RETURN VALUES
+.Fn RAND_status
+always returns 1.
