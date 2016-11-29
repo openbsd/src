@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.64 2016/10/06 17:00:25 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.65 2016/11/29 13:55:33 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -202,7 +202,7 @@ xen_control(void *arg)
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
-	xst.xst_sc = sc->sc_xs;
+	xst.xst_cookie = sc->sc_xs;
 
 	error = xs_getprop(sc, "control", "shutdown", action, sizeof(action));
 	if (error) {
@@ -1280,7 +1280,7 @@ xen_probe_devices(struct xen_softc *sc)
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
-	xst.xst_sc = sc->sc_xs;
+	xst.xst_cookie = sc->sc_xs;
 	xst.xst_flags |= XST_POLL;
 
 	if ((error = xs_cmd(&xst, XS_LIST, "device", &iovp1, &iov1_cnt)) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.39 2016/10/06 17:00:25 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.40 2016/11/29 13:55:33 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -140,7 +140,7 @@ struct xs_transaction {
 	uint32_t		 xst_id;
 	uint32_t		 xst_flags;
 #define XST_POLL		0x0001
-	struct xs_softc		*xst_sc;
+	void			*xst_cookie;
 };
 
 static __inline void

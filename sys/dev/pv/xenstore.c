@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.30 2016/11/29 12:12:29 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.31 2016/11/29 13:55:33 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -326,7 +326,7 @@ xs_ring_avail(struct xs_ring *xsr, int req)
 int
 xs_output(struct xs_transaction *xst, uint8_t *bp, int len)
 {
-	struct xs_softc *xs = xst->xst_sc;
+	struct xs_softc *xs = xst->xst_cookie;
 	int chunk, s;
 
 	while (len > 0) {
@@ -367,7 +367,7 @@ int
 xs_start(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec *iov,
     int iov_cnt)
 {
-	struct xs_softc *xs = xst->xst_sc;
+	struct xs_softc *xs = xst->xst_cookie;
 	int i;
 
 	rw_enter_write(&xs->xs_rnglck);
@@ -404,7 +404,7 @@ xs_start(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec *iov,
 struct xs_msg *
 xs_reply(struct xs_transaction *xst, uint rid)
 {
-	struct xs_softc *xs = xst->xst_sc;
+	struct xs_softc *xs = xst->xst_cookie;
 	struct xs_msg *xsm;
 	int s;
 
@@ -703,7 +703,7 @@ int
 xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
     struct iovec **iov, int *iov_cnt)
 {
-	struct xs_softc *xs = xst->xst_sc;
+	struct xs_softc *xs = xst->xst_cookie;
 	struct xs_msg *xsm;
 	struct iovec ov[10];	/* output vector */
 	int datalen = XS_ERR_PAYLOAD;
@@ -811,7 +811,7 @@ xs_watch(struct xen_softc *sc, const char *path, const char *property,
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
-	xst.xst_sc = sc->sc_xs;
+	xst.xst_cookie = sc->sc_xs;
 	if (cold)
 		xst.xst_flags = XST_POLL;
 
@@ -869,7 +869,7 @@ xs_getprop(struct xen_softc *sc, const char *path, const char *property,
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
-	xst.xst_sc = sc->sc_xs;
+	xst.xst_cookie = sc->sc_xs;
 	if (cold)
 		xst.xst_flags = XST_POLL;
 
@@ -905,7 +905,7 @@ xs_setprop(struct xen_softc *sc, const char *path, const char *property,
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
-	xst.xst_sc = sc->sc_xs;
+	xst.xst_cookie = sc->sc_xs;
 	if (cold)
 		xst.xst_flags = XST_POLL;
 
@@ -952,7 +952,7 @@ xs_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
-	xst.xst_sc = sc->sc_xs;
+	xst.xst_cookie = sc->sc_xs;
 
 	if ((error = xs_cmd(&xst, cmd, key, &iovp, &iov_cnt)) != 0)
 		return (error);
