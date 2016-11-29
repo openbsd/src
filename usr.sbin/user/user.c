@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.113 2016/11/29 03:59:31 jsg Exp $ */
+/* $OpenBSD: user.c,v 1.114 2016/11/29 09:42:38 jsg Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1350,7 +1350,8 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		errx(EXIT_FAILURE, "No such user `%s'", login_name);
 	}
 	if (up != NULL) {
-		if ((*pwp->pw_passwd != '\0') && (up->u_flags &~ F_PASSWORD)) {
+		if ((*pwp->pw_passwd != '\0') &&
+		    (up->u_flags & F_PASSWORD) == 0) {
 			up->u_flags |= F_PASSWORD;
 			memsave(&up->u_password, pwp->pw_passwd,
 			    strlen(pwp->pw_passwd));
