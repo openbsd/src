@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CRYPTO_get_mem_functions.3,v 1.1 2016/11/29 18:16:09 deraadt Exp $
+.\"	$OpenBSD: CRYPTO_get_mem_functions.3,v 1.2 2016/11/29 21:29:19 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: November 29 2016 $
-.Dt CRYPTO_get_mem_functions 3
+.Dt CRYPTO_GET_MEM_FUNCTIONS 3
 .Os
 .Sh NAME
 .Nm CRYPTO_get_mem_functions ,
@@ -61,7 +61,7 @@ assigns pointers to the C library functions
 and
 .Xr free 3
 to those of its arguments that are not
-.Dv NULL.
+.Dv NULL .
 .Pp
 .Fn CRYPTO_set_mem_functions ,
 .Fn CRYPTO_mem_ctrl ,
@@ -70,7 +70,6 @@ and
 .Fn CRYPTO_mem_leaks_fp
 have no effect.
 .Sh RETURN VALUES
-.Pp
 .Fn CRYPTO_set_mem_functions
 always returns 0.
 .Pp

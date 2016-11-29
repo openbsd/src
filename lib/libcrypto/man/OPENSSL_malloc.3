@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OPENSSL_malloc.3,v 1.3 2016/11/29 18:16:09 deraadt Exp $
+.\"	$OpenBSD: OPENSSL_malloc.3,v 1.4 2016/11/29 21:29:19 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -25,7 +25,7 @@
 .Nm CRYPTO_malloc ,
 .Nm CRYPTO_realloc ,
 .Nm CRYPTO_free ,
-.Nm CRYPTO_strdup ,
+.Nm CRYPTO_strdup
 .Nd legacy OpenSSL memory allocation wrappers
 .Sh SYNOPSIS
 .In openssl/crypto.h
@@ -81,8 +81,8 @@ standard
 .Xr realloc 3 ,
 .Xr free 3 ,
 and
-.Xr strdup 3 
+.Xr strdup 3
 functions.
 .Sh RETURN VALUES
-These functions return same type and value as the corresponding
+These functions return the same type and value as the corresponding
 standard functions.
