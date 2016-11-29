@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.60 2016/11/29 00:07:45 schwarze Exp $
+# $OpenBSD: Makefile,v 1.61 2016/11/29 18:16:09 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -57,6 +57,7 @@ MAN=	\
 	BUF_MEM_new.3 \
 	CONF_modules_free.3 \
 	CONF_modules_load_file.3 \
+	CRYPTO_get_mem_functions.3 \
 	CRYPTO_set_ex_data.3 \
 	CRYPTO_set_locking_callback.3 \
 	DES_set_key.3 \
@@ -76,13 +77,13 @@ MAN=	\
 	DSA_set_method.3 \
 	DSA_sign.3 \
 	DSA_size.3 \
+	ECDSA_SIG_new.3 \
 	EC_GFp_simple_method.3 \
 	EC_GROUP_copy.3 \
 	EC_GROUP_new.3 \
 	EC_KEY_new.3 \
 	EC_POINT_add.3 \
 	EC_POINT_new.3 \
-	ECDSA_SIG_new.3 \
 	ERR.3 \
 	ERR_GET_LIB.3 \
 	ERR_clear_error.3 \
@@ -129,6 +130,7 @@ MAN=	\
 	OCSP_response_status.3 \
 	OCSP_sendreq_new.3 \
 	OPENSSL_VERSION_NUMBER.3 \
+	OPENSSL_cleanse.3 \
 	OPENSSL_config.3 \
 	OPENSSL_load_builtin_modules.3 \
 	OPENSSL_malloc.3 \

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OPENSSL_malloc.3,v 1.2 2016/11/29 07:29:52 jmc Exp $
+.\"	$OpenBSD: OPENSSL_malloc.3,v 1.3 2016/11/29 18:16:09 deraadt Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -22,16 +22,10 @@
 .Nm OPENSSL_realloc ,
 .Nm OPENSSL_free ,
 .Nm OPENSSL_strdup ,
-.Nm OPENSSL_cleanse ,
 .Nm CRYPTO_malloc ,
 .Nm CRYPTO_realloc ,
 .Nm CRYPTO_free ,
 .Nm CRYPTO_strdup ,
-.Nm CRYPTO_get_mem_functions ,
-.Nm CRYPTO_set_mem_functions ,
-.Nm CRYPTO_mem_ctrl ,
-.Nm CRYPTO_mem_leaks ,
-.Nm CRYPTO_mem_leaks_fp
 .Nd legacy OpenSSL memory allocation wrappers
 .Sh SYNOPSIS
 .In openssl/crypto.h
@@ -51,11 +45,6 @@
 .Ft char *
 .Fo OPENSSL_strdup
 .Fa "const char *str"
-.Fc
-.Ft void
-.Fo OPENSSL_cleanse
-.Fa "void *ptr"
-.Fa "size_t len"
 .Fc
 .Ft void *
 .Fo CRYPTO_malloc
@@ -82,91 +71,18 @@
 .Fa "const char *file"
 .Fa "int line"
 .Fc
-.Ft void
-.Fo CRYPTO_get_mem_functions
-.Fa "void *(**m)(size_t)"
-.Fa "void *(**r)(void *, size_t)"
-.Fa "void (**f)(void *)"
-.Fc
-.Ft int
-.Fo CRYPTO_set_mem_functions
-.Fa "void *(*m)(size_t)"
-.Fa "void *(*r)(void *, size_t)"
-.Fa "void (*f)(void *)"
-.Fc
-.Ft int
-.Fo CRYPTO_mem_ctrl
-.Fa "int mode"
-.Fc
-.Ft void
-.Fo CRYPTO_mem_leaks
-.Fa "BIO *b"
-.Fc
-.Ft void
-.Fo CRYPTO_mem_leaks_fp
-.Fa "FILE *fp"
-.Fc
 .Sh DESCRIPTION
-Do not use any of the interfaces documented here.
+Do not use any of the interfaces documented here in new code.
 They are provided purely for compatibility with legacy application code.
 .Pp
-.Fn OPENSSL_malloc ,
-.Fn OPENSSL_realloc ,
-.Fn OPENSSL_free ,
-and
-.Fn OPENSSL_strdup
-have the same semantics as
+All 8 of these functions are wrappers around the corresponding
+standard
 .Xr malloc 3 ,
 .Xr realloc 3 ,
 .Xr free 3 ,
 and
-.Xr strdup 3 .
-They are wrapper macros around
-.Fn CRYPTO_malloc ,
-.Fn CRYPTO_realloc ,
-.Fn CRYPTO_free ,
-and
-.Fn CRYPTO_strdup ,
-which in turn are wrapper functions around
-.Xr malloc 3 ,
-.Xr realloc 3 ,
-.Xr free 3 ,
-and
-.Xr strdup 3 .
-.Pp
-.Fn OPENSSL_cleanse
-has the same semantics as and is a wrapper around
-.Xr explicit_bzero 3 .
-.Pp
-.Fn CRYPTO_get_mem_functions
-assigns pointers to the C library functions
-.Xr malloc 3 ,
-.Xr realloc 3 ,
-and
-.Xr free 3
-to those of its arguments that are not
-.Dv NULL .
-.Pp
-.Fn CRYPTO_set_mem_functions ,
-.Fn CRYPTO_mem_ctrl ,
-.Fn CRYPTO_mem_leaks ,
-and
-.Fn CRYPTO_mem_leaks_fp
-have no effect.
+.Xr strdup 3 
+functions.
 .Sh RETURN VALUES
-.Fn OPENSSL_malloc ,
-.Fn OPENSSL_realloc ,
-.Fn CRYPTO_malloc ,
-.Fn CRYPTO_realloc ,
-and
-.Fn OPENSSL_strdup
-return a pointer to allocated memory or
-.Dv NULL
-on error.
-.Pp
-.Fn CRYPTO_set_mem_functions
-always returns 0.
-.Pp
-.Fn CRYPTO_mem_ctrl
-always returns
-.Dv CRYPTO_MEM_CHECK_OFF .
+These functions return same type and value as the corresponding
+standard functions.
