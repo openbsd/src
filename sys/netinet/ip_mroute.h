@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.19 2015/02/09 12:18:19 claudio Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.20 2016/11/29 15:52:12 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -250,7 +250,6 @@ struct vif {
 	u_long	  v_pkt_out;		/* # pkts out on interface */
 	u_long	  v_bytes_in;		/* # bytes in on interface */
 	u_long	  v_bytes_out;		/* # bytes out on interface */
-	struct	  route v_route;	/* cached route if this is a tunnel */
 	struct	  timeout v_repq_ch;	/* for tbf_reprocess_q() */
 };
 
