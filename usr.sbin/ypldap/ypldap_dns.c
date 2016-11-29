@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.11 2016/04/10 09:59:21 jmatthew Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.12 2016/11/29 17:15:27 mestre Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -213,7 +213,7 @@ host_dns(const char *s, struct ypldap_addr_list *hn)
 	struct sockaddr_in6	*sa_in6;
 	struct ypldap_addr	*h;
 
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
 	error = getaddrinfo(s, NULL, &hints, &res0);

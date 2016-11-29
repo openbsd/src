@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.19 2016/04/28 22:28:36 schwarze Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.20 2016/11/29 17:15:27 mestre Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -610,7 +610,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio inet", NULL) == -1)
 		fatal("pledge");
 
-	bzero(&tv, sizeof(tv));
+	memset(&tv, 0, sizeof(tv));
 	evtimer_set(&ev_timer, main_init_timer, &env);
 	evtimer_add(&ev_timer, &tv);
 
