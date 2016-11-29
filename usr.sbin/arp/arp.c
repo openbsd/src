@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.76 2016/08/27 04:15:52 guenther Exp $ */
+/*	$OpenBSD: arp.c,v 1.77 2016/11/29 08:55:06 mpi Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -366,7 +366,7 @@ overwrite:
 
 #define W_ADDR	36
 #define W_LL	17
-#define W_IF	6
+#define W_IF	7
 
 /*
  * Display an individual arp entry
@@ -381,7 +381,7 @@ get(const char *host)
 	if (getinetaddr(host, &sin->sin_addr) == -1)
 		exit(1);
 
-	printf("%-*.*s %-*.*s %*.*s %-10.10s %5s\n",
+	printf("%-*.*s %-*.*s %*.*s %-9.9s %5s\n",
 	    W_ADDR, W_ADDR, "Host", W_LL, W_LL, "Ethernet Address",
 	    W_IF, W_IF, "Netif", "Expire", "Flags");
 
@@ -509,7 +509,7 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 void
 dump(void)
 {
-	printf("%-*.*s %-*.*s %*.*s %-10.10s %5s\n",
+	printf("%-*.*s %-*.*s %*.*s %-9.9s %5s\n",
 	    W_ADDR, W_ADDR, "Host", W_LL, W_LL, "Ethernet Address",
 	    W_IF, W_IF, "Netif", "Expire", "Flags");
 
@@ -555,14 +555,14 @@ print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 	    llwidth, llwidth, ether_str(sdl), ifwidth, ifwidth, ifname);
 
 	if (rtm->rtm_flags & (RTF_PERMANENT_ARP|RTF_LOCAL))
-		printf(" %-10.10s", "permanent");
+		printf(" %-9.9s", "permanent");
 	else if (rtm->rtm_rmx.rmx_expire == 0)
-		printf(" %-10.10s", "static");
+		printf(" %-9.9s", "static");
 	else if (rtm->rtm_rmx.rmx_expire > now.tv_sec)
-		printf(" %-10.10s",
+		printf(" %-9.9s",
 		    sec2str(rtm->rtm_rmx.rmx_expire - now.tv_sec));
 	else
-		printf(" %-10.10s", "expired");
+		printf(" %-9.9s", "expired");
 
 	printf(" %s%s\n",
 	    (rtm->rtm_flags & RTF_LOCAL) ? "l" : "",

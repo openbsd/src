@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.78 2016/08/15 08:52:03 mpi Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.79 2016/11/29 08:55:06 mpi Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -550,7 +550,7 @@ delete:
 
 #define W_ADDR	36
 #define W_LL	17
-#define W_IF	6
+#define W_IF	7
 
 /*
  * Dump the entire neighbor cache
