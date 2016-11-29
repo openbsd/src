@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.72 2016/06/28 17:18:24 chris Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.73 2016/11/29 10:09:57 reyk Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -58,6 +58,11 @@
  * past the 14-byte Ethernet header.
  */
 #define ETHER_ALIGN	2	/* driver adjust for IP hdr alignment */
+
+/*
+ * The maximum supported Ethernet length and some space for encapsulation.
+ */
+#define ETHER_MAX_HARDMTU_LEN	65435
 
 /*
  * Ethernet address - 6 octets
