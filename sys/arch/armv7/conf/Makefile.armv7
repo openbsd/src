@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.19 2016/11/15 09:08:37 natano Exp $
+#	$OpenBSD: Makefile.armv7,v 1.20 2016/11/29 09:08:34 mpi Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -35,6 +35,7 @@ CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 CMACHFLAGS+=	-fno-stack-protector
 .endif
 
+DEBUG?=		-g
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
@@ -80,7 +81,6 @@ SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
 SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
-DEBUG?=
 .if ${DEBUG} == "-g"
 STRIPFLAGS=	-S
 SYSTEM_LD_TAIL+=; \

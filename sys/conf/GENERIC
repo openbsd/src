@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.235 2016/09/18 14:28:05 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.236 2016/11/29 09:08:34 mpi Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -7,7 +7,7 @@ option		DDB		# in-kernel debugger
 #option		DDBPROF		# ddb(4) based profiling
 #option		DDBCTF		# DDB support for CTF
 #option		DDB_SAFE_CONSOLE # allow break into ddb during boot
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG=""	# do not compile full symbol table
 #makeoptions	PROF="-pg"	# build profiled kernel
 #option		GPROF		# kernel profiling, kgmon(8)
 option		DIAGNOSTIC	# internal consistency checks
