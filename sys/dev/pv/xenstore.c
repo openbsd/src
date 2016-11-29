@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.29 2016/07/29 21:05:26 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.30 2016/11/29 12:12:29 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -23,6 +23,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <sys/ioctl.h>
 #include <sys/task.h>
 
@@ -166,7 +167,7 @@ struct xs_softc {
 	struct mutex		 xs_watchlck;
 	struct xs_msg		 xs_emsg;
 
-	uint			 xs_rngsem;
+	struct rwlock		 xs_rnglck;
 };
 
 struct xs_msg *
@@ -243,6 +244,8 @@ xs_attach(struct xen_softc *sc)
 	mtx_init(&xs->xs_rsplck, IPL_NET);
 	mtx_init(&xs->xs_frqlck, IPL_NET);
 
+	rw_init(&xs->xs_rnglck, "xsrnglck");
+
 	mtx_init(&xs->xs_watchlck, IPL_NET);
 	TAILQ_INIT(&xs->xs_watches);
 
@@ -263,25 +266,6 @@ xs_attach(struct xen_softc *sc)
 	free(xs, sizeof(*xs), M_DEVBUF);
 	sc->sc_xs = NULL;
 	return (-1);
-}
-
-static inline int
-xs_sem_get(uint *semaphore)
-{
-	if (atomic_inc_int_nv(semaphore) != 1) {
-		/* we're out of luck */
-		if (atomic_dec_int_nv(semaphore) == 0)
-			wakeup(semaphore);
-		return (0);
-	}
-	return (1);
-}
-
-static inline void
-xs_sem_put(uint *semaphore)
-{
-	if (atomic_dec_int_nv(semaphore) == 0)
-		wakeup(semaphore);
 }
 
 struct xs_msg *
@@ -386,19 +370,13 @@ xs_start(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec *iov,
 	struct xs_softc *xs = xst->xst_sc;
 	int i;
 
-	while (!xs_sem_get(&xs->xs_rngsem)) {
-		if (xst->xst_flags & XST_POLL)
-			delay(XST_DELAY * 1000 >> 2);
-		else
-			tsleep(&xs->xs_rngsem, PRIBIO, "xsaccess",
-			    XST_DELAY * hz >> 2);
-	}
+	rw_enter_write(&xs->xs_rnglck);
 
 	/* Header */
 	if (xs_output(xst, (uint8_t *)&xsm->xsm_hdr,
 	    sizeof(xsm->xsm_hdr)) == -1) {
 		printf("%s: failed to write the header\n", __func__);
-		xs_sem_put(&xs->xs_rngsem);
+		rw_exit_write(&xs->xs_rnglck);
 		return (-1);
 	}
 
@@ -407,7 +385,7 @@ xs_start(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec *iov,
 		if (xs_output(xst, iov[i].iov_base, iov[i].iov_len) == -1) {
 			printf("%s: failed on iovec #%d len %ld\n", __func__,
 			    i, iov[i].iov_len);
-			xs_sem_put(&xs->xs_rngsem);
+			rw_exit_write(&xs->xs_rnglck);
 			return (-1);
 		}
 	}
@@ -418,7 +396,7 @@ xs_start(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec *iov,
 
 	xen_intr_signal(xs->xs_ih);
 
-	xs_sem_put(&xs->xs_rngsem);
+	rw_exit_write(&xs->xs_rnglck);
 
 	return (0);
 }
