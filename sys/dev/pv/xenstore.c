@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.31 2016/11/29 13:55:33 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.32 2016/11/29 14:55:04 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -799,9 +799,10 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 }
 
 int
-xs_watch(struct xen_softc *sc, const char *path, const char *property,
-    struct task *task, void (*cb)(void *), void *arg)
+xs_watch(void *xsc, const char *path, const char *property, struct task *task,
+    void (*cb)(void *), void *arg)
 {
+	struct xen_softc *sc = xsc;
 	struct xs_softc *xs = sc->sc_xs;
 	struct xs_transaction xst;
 	struct xs_watch *xsw;
@@ -856,9 +857,10 @@ xs_watch(struct xen_softc *sc, const char *path, const char *property,
 }
 
 int
-xs_getprop(struct xen_softc *sc, const char *path, const char *property,
-    char *value, int size)
+xs_getprop(void *xsc, const char *path, const char *property, char *value,
+    int size)
 {
+	struct xen_softc *sc = xsc;
 	struct xs_transaction xst;
 	struct iovec *iovp = NULL;
 	char key[256];
@@ -892,9 +894,10 @@ xs_getprop(struct xen_softc *sc, const char *path, const char *property,
 }
 
 int
-xs_setprop(struct xen_softc *sc, const char *path, const char *property,
-    char *value, int size)
+xs_setprop(void *xsc, const char *path, const char *property, char *value,
+    int size)
 {
+	struct xen_softc *sc = xsc;
 	struct xs_transaction xst;
 	struct iovec iov, *iovp = &iov;
 	char key[256];
@@ -926,9 +929,9 @@ xs_setprop(struct xen_softc *sc, const char *path, const char *property,
 }
 
 int
-xs_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
+xs_kvop(void *xsc, int op, char *key, char *value, size_t valuelen)
 {
-	struct xen_softc *sc = arg;
+	struct xen_softc *sc = xsc;
 	struct xs_transaction xst;
 	struct iovec iov, *iovp = &iov;
 	int error = 0, iov_cnt = 0, cmd, i;
@@ -971,7 +974,7 @@ xs_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 			 * returns an empty string (single nul byte),
 			 * so try to get the directory list in this case.
 			 */
-			return (xs_kvop(arg, PVBUS_KVLS, key, value, valuelen));
+			return (xs_kvop(xsc, PVBUS_KVLS, key, value, valuelen));
 		}
 		/* FALLTHROUGH */
 	case XS_LIST:

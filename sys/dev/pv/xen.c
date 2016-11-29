@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.65 2016/11/29 13:55:33 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.66 2016/11/29 14:55:04 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1297,7 +1297,6 @@ xen_probe_devices(struct xen_softc *sc)
 			return (error);
 		}
 		for (j = 0; j < iov2_cnt; j++) {
-			xa.xa_parent = sc;
 			xa.xa_dmat = &xen_bus_dma_tag;
 			strlcpy(xa.xa_name, (char *)iovp1[i].iov_base,
 			    sizeof(xa.xa_name));
@@ -1344,13 +1343,21 @@ xen_disable_emulated_devices(struct xen_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	if (sc->sc_flags & XSF_UNPLUG_IDE)
+	if (sc->sc_unplug & XEN_UNPLUG_IDE)
 		unplug |= XMI_UNPLUG_IDE;
-	if (sc->sc_flags & XSF_UNPLUG_IDESEC)
+	if (sc->sc_unplug & XEN_UNPLUG_IDESEC)
 		unplug |= XMI_UNPLUG_IDESEC;
-	if (sc->sc_flags & XSF_UNPLUG_NIC)
+	if (sc->sc_unplug & XEN_UNPLUG_NIC)
 		unplug |= XMI_UNPLUG_NIC;
 	if (unplug)
 		outw(XMI_PORT, unplug);
 #endif	/* __i386__ || __amd64__ */
+}
+
+void
+xen_unplug_emulated(void *xsc, int what)
+{
+	struct xen_softc *sc = xsc;
+
+	sc->sc_unplug |= what;
 }
