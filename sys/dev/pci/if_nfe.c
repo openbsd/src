@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.117 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.118 2016/11/29 10:22:30 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -1318,8 +1318,7 @@ nfe_free_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
 		}
-		if (data->m != NULL)
-			m_freem(data->m);
+		m_freem(data->m);
 	}
 }
 

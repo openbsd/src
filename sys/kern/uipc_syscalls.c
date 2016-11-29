@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.141 2016/11/28 13:55:43 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.142 2016/11/29 10:22:30 jsg Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -451,8 +451,7 @@ bad:
 	if (!interrupted)
 		so->so_state &= ~SS_ISCONNECTING;
 	FRELE(fp, p);
-	if (nam)
-		m_freem(nam);
+	m_freem(nam);
 	if (error == ERESTART)
 		error = EINTR;
 	return (error);

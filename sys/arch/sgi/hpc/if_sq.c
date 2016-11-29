@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.26 2016/04/13 11:34:00 mpi Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.27 2016/11/29 10:22:30 jsg Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -747,8 +747,7 @@ sq_start(struct ifnet *ifp)
 			 */
 			ifq_set_oactive(&ifp->if_snd);
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			break;
 		}
 

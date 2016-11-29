@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.73 2016/05/16 04:34:25 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.74 2016/11/29 10:22:30 jsg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -1360,8 +1360,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 	    ((m[3]->m_flags & M_EXT) == 0) || ((m[4]->m_flags & M_EXT) == 0)) {
 		/* Out of something */
 		for (i = 0; i < 5; i++)
-			if (m[i] != NULL)
-				m_free(m[i]);
+			m_free(m[i]);
 		return (ENOBUFS);
 	}
 	/* Link'em together */

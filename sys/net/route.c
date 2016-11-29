@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.339 2016/11/21 10:30:42 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.340 2016/11/29 10:22:30 jsg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1279,8 +1279,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 			rt_sendaddrmsg(rt, RTM_DELADDR, ifa);
 		rtfree(rt);
 	}
-	if (m != NULL)
-		m_free(m);
+	m_free(m);
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.40 2016/10/08 14:35:56 stsp Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.41 2016/11/29 10:22:30 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -785,8 +785,7 @@ ar9003_rx_free(struct athn_softc *sc, int qid)
 
 		if (bf->bf_map != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, bf->bf_map);
-		if (bf->bf_m != NULL)
-			m_freem(bf->bf_m);
+		m_freem(bf->bf_m);
 	}
 	free(rxq->bf, M_DEVBUF, 0);
 }

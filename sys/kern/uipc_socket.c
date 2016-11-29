@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.167 2016/11/23 13:05:53 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.168 2016/11/29 10:22:30 jsg Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -500,10 +500,8 @@ release:
 	so->so_state &= ~SS_ISSENDING;
 	sbunlock(&so->so_snd);
 out:
-	if (top)
-		m_freem(top);
-	if (control)
-		m_freem(control);
+	m_freem(top);
+	m_freem(control);
 	return (error);
 }
 
@@ -664,8 +662,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			m = m_free(m);
 		} while (uio->uio_resid && error == 0 && m);
 bad:
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		return (error);
 	}
 	if (mp)

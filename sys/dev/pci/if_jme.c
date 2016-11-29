@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.47 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.48 2016/11/29 10:22:30 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -258,8 +258,7 @@ jme_miibus_statchg(struct device *dev)
 	jme_stop_tx(sc);
 
 	jme_rxeof(sc);
-	if (sc->jme_cdata.jme_rxhead != NULL)
-		m_freem(sc->jme_cdata.jme_rxhead);
+	m_freem(sc->jme_cdata.jme_rxhead);
 	JME_RXCHAIN_RESET(sc);
 
 	jme_txeof(sc);
@@ -2042,8 +2041,7 @@ jme_stop(struct jme_softc *sc)
 #ifdef foo
 	 /* Reclaim Rx/Tx buffers that have been completed. */
 	jme_rxeof(sc);
-	if (sc->jme_cdata.jme_rxhead != NULL)
-		m_freem(sc->jme_cdata.jme_rxhead);
+	m_freem(sc->jme_cdata.jme_rxhead);
 	JME_RXCHAIN_RESET(sc);
 	jme_txeof(sc);
 #endif
@@ -2051,8 +2049,7 @@ jme_stop(struct jme_softc *sc)
 	/*
 	 * Free partial finished RX segments
 	 */
-	if (sc->jme_cdata.jme_rxhead != NULL)
-		m_freem(sc->jme_cdata.jme_rxhead);
+	m_freem(sc->jme_cdata.jme_rxhead);
 	JME_RXCHAIN_RESET(sc);
 
 	/*

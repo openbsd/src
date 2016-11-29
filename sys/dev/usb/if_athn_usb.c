@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.42 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.43 2016/11/29 10:22:30 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -2397,8 +2397,7 @@ athn_usb_stop(struct ifnet *ifp)
 	splx(s);
 
 	/* Flush Rx stream. */
-	if (usc->rx_stream.m != NULL)
-		m_freem(usc->rx_stream.m);
+	m_freem(usc->rx_stream.m);
 	usc->rx_stream.m = NULL;
 	usc->rx_stream.left = 0;
 }

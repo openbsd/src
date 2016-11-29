@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.39 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.40 2016/11/29 10:22:30 jsg Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1912,8 +1912,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 		if (alc_newbuf(sc, rxd) != 0) {
 			ifp->if_iqdrops++;
 			/* Reuse Rx buffers. */
-			if (sc->alc_cdata.alc_rxhead != NULL)
-				m_freem(sc->alc_cdata.alc_rxhead);
+			m_freem(sc->alc_cdata.alc_rxhead);
 			break;
 		}
 
@@ -2377,8 +2376,7 @@ alc_stop(struct alc_softc *sc)
 	CSR_WRITE_4(sc, ALC_INTR_STATUS, 0xFFFFFFFF);
 
 	/* Reclaim Rx buffers that have been processed. */
-	if (sc->alc_cdata.alc_rxhead != NULL)
-		m_freem(sc->alc_cdata.alc_rxhead);
+	m_freem(sc->alc_cdata.alc_rxhead);
 	ALC_RXCHAIN_RESET(sc);
 	/*
 	 * Free Tx/Rx mbufs still in the queues.

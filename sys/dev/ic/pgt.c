@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.87 2016/04/13 10:49:26 mpi Exp $  */
+/*	$OpenBSD: pgt.c,v 1.88 2016/11/29 10:22:30 jsg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1538,8 +1538,7 @@ fail:
 	pgt_reinit_rx_desc_frag(sc, pd);
 
 	ifp->if_ierrors++;
-	if (top)
-		m_freem(top);
+	m_freem(top);
 	return (NULL);
 }
 
@@ -2224,8 +2223,7 @@ pgt_start(struct ifnet *ifp)
 				}
 			}
 #endif
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 		}
 	}
 }

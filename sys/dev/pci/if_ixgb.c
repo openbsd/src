@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.69 2016/04/13 10:34:32 mpi Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.70 2016/11/29 10:22:30 jsg Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1786,8 +1786,7 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 			sc->rx_buffer_area[i].m_head = NULL;
 		} else {
 			sc->dropped_pkts++;
-			if (sc->fmp != NULL)
-				m_freem(sc->fmp);
+			m_freem(sc->fmp);
 			sc->fmp = NULL;
 			sc->lmp = NULL;
 		}

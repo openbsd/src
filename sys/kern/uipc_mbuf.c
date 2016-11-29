@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.238 2016/11/09 08:55:11 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.239 2016/11/29 10:22:30 jsg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -361,8 +361,7 @@ m_clget(struct mbuf *m, int how, u_int pktlen)
 	}
 	buf = pool_get(pp, how == M_WAIT ? PR_WAITOK : PR_NOWAIT);
 	if (buf == NULL) {
-		if (m0)
-			m_freem(m0);
+		m_freem(m0);
 		return (NULL);
 	}
 

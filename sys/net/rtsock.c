@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.209 2016/11/21 09:09:06 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.210 2016/11/29 10:22:30 jsg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -272,8 +272,7 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (m)
-			m_free(m);
+		m_free(m);
 		break;
 	case PRCO_GETOPT:
 		switch (optname) {

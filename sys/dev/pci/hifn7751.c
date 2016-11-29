@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.174 2015/12/10 21:00:51 naddy Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.175 2016/11/29 10:22:30 jsg Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -2676,8 +2676,7 @@ out:
 			bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
 		bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
 	}
-	if (cmd->dstu.dst_m != NULL)
-		m_freem(cmd->dstu.dst_m);
+	m_freem(cmd->dstu.dst_m);
 	explicit_bzero(cmd, sizeof(*cmd));
 	free(cmd, M_DEVBUF, sizeof *cmd);
 	crp->crp_etype = err;
