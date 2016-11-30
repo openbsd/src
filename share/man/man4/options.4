@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.245 2016/11/29 13:57:34 mpi Exp $
+.\"	$OpenBSD: options.4,v 1.246 2016/11/30 15:08:37 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 29 2016 $
+.Dd $Mdocdate: November 30 2016 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -55,22 +55,19 @@ flags to the C compiler.
 .Sh DEBUGGING OPTIONS
 .Bl -ohang
 .It Cd makeoptions DEBUG=""
-By default
-the
-.Fl g
-flag causes
+Do not build the debug kernel
+.Pa bsd.gdb .
+Normally,
 .Pa bsd.gdb
-to be built in addition to
-.Pa bsd .
+is built
+(in addition to the regular
+.Pa bsd
+kernel)
+and is used for debugging kernels and their crash dumps with
+.Xr gdb 1 .
+A crash dump can be debugged by starting gdb with
 .Pa bsd.gdb
-is useful for debugging kernels and their crash dumps with gdb.
-A crash dump can be debugged by starting
-.Xr gdb 1
-with the kernel name
-.Pf ( Pa bsd.gdb )
-as an argument (no core file) and then use the
-.Xr gdb 1
-command
+as an argument (no core file) and then using the gdb command
 .Dq target kvm COREFILE .
 .It Cd makeoptions PROF="-pg"
 The
