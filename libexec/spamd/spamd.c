@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.146 2016/11/08 09:31:55 mestre Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.147 2016/11/30 07:54:36 mestre Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -455,7 +455,8 @@ spamd_tls_init()
 	if ((tlsctx = tls_server()) == NULL)
 		errx(1, "failed to get tls server");
 
-	tls_config_set_protocols(tlscfg, TLS_PROTOCOLS_ALL);
+	if (tls_config_set_protocols(tlscfg, TLS_PROTOCOLS_ALL) != 0)
+		errx(1, "failed to set tls protocols");
 
 	/* might need user-specified ciphers, tls_config_set_ciphers */
 	if (tls_config_set_ciphers(tlscfg, "all") != 0)
