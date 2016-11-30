@@ -993,6 +993,7 @@
 ./usr/include/net80211/ieee80211_amrr.h
 ./usr/include/net80211/ieee80211_crypto.h
 ./usr/include/net80211/ieee80211_ioctl.h
+./usr/include/net80211/ieee80211_mira.h
 ./usr/include/net80211/ieee80211_node.h
 ./usr/include/net80211/ieee80211_priv.h
 ./usr/include/net80211/ieee80211_proto.h
@@ -1967,6 +1968,7 @@
 ./usr/share/man/man3/SSL_read.3
 ./usr/share/man/man3/SSL_rstate_string.3
 ./usr/share/man/man3/SSL_session_reused.3
+./usr/share/man/man3/SSL_set1_param.3
 ./usr/share/man/man3/SSL_set_bio.3
 ./usr/share/man/man3/SSL_set_connect_state.3
 ./usr/share/man/man3/SSL_set_fd.3
