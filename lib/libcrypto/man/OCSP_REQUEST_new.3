@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_REQUEST_new.3,v 1.1 2016/11/27 20:40:07 schwarze Exp $
+.\"	$OpenBSD: OCSP_REQUEST_new.3,v 1.2 2016/11/30 20:54:25 jmc Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 27 2016 $
+.Dd $Mdocdate: November 30 2016 $
 .Dt OCSP_REQUEST_NEW 3
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@
 .Nm OCSP_request_sign ,
 .Nm OCSP_request_add1_cert ,
 .Nm OCSP_request_onereq_count ,
-.Nm OCSP_request_onereq_get0 ,
+.Nm OCSP_request_onereq_get0
 .Nd OCSP request functions
 .Sh SYNOPSIS
 .In openssl/ocsp.h
@@ -206,8 +206,8 @@ returns a pointer to an
 .Vt OCSP_ONEREQ
 structure or
 .Dv NULL
-if the index value is out or range.
-.Sh EXAMPLE
+if the index value is out of range.
+.Sh EXAMPLES
 Create an
 .Vt OCSP_REQUEST
 structure for certificate

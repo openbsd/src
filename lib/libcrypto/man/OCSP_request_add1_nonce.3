@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_request_add1_nonce.3,v 1.1 2016/11/27 20:40:07 schwarze Exp $
+.\"	$OpenBSD: OCSP_request_add1_nonce.3,v 1.2 2016/11/30 20:54:25 jmc Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 27 2016 $
+.Dd $Mdocdate: November 30 2016 $
 .Dt OCSP_REQUEST_ADD1_NONCE 3
 .Os
 .Sh NAME
@@ -72,14 +72,14 @@
 .Fa "int len"
 .Fc
 .Ft int
-.Fo OCSP_copy_nonce
-.Fa "OCSP_BASICRESP *resp"
-.Fa "OCSP_REQUEST *req"
-.Fc
-.Ft int
 .Fo OCSP_check_nonce
 .Fa "OCSP_REQUEST *req"
 .Fa "OCSP_BASICRESP *resp"
+.Fc
+.Ft int
+.Fo OCSP_copy_nonce
+.Fa "OCSP_BASICRESP *resp"
+.Fa "OCSP_REQUEST *req"
 .Fc
 .Sh DESCRIPTION
 An OCSP nonce is typically added to an OCSP request to thwart replay
