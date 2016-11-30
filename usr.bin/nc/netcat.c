@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.170 2016/11/06 13:33:30 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.171 2016/11/30 07:56:23 mestre Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -464,8 +464,11 @@ main(int argc, char *argv[])
 		if (oflag && tls_config_set_ocsp_staple_file(tls_cfg, oflag) == -1)
 			errx(1, "%s", tls_config_error(tls_cfg));
 		if (TLSopt & TLS_ALL) {
-			tls_config_set_protocols(tls_cfg, TLS_PROTOCOLS_ALL);
-			tls_config_set_ciphers(tls_cfg, "all");
+			if (tls_config_set_protocols(tls_cfg,
+			    TLS_PROTOCOLS_ALL) != 0)
+				errx(1, "%s", tls_config_error(tls_cfg));
+			if (tls_config_set_ciphers(tls_cfg, "all") != 0)
+				errx(1, "%s", tls_config_error(tls_cfg));
 		}
 		if (!lflag && (TLSopt & TLS_CCERT))
 			errx(1, "clientcert is only valid with -l");
