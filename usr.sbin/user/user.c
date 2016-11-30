@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.117 2016/11/30 22:44:19 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.118 2016/11/30 23:58:07 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1507,12 +1507,12 @@ moduser(char *login_name, char *newlogin, user_t *up)
 					    "in use", pwp->pw_uid);
 				}
 				pwp->pw_gid = pwp->pw_uid;
-				if (!creategid(newlogin, pwp->pw_uid, "")) {
+				if (!creategid(newlogin, pwp->pw_gid, "")) {
 					close(ptmpfd);
 					pw_abort();
 					errx(EXIT_FAILURE, "could not create "
-					    "group %s with uid %u", newlogin,
-					    pwp->pw_uid);
+					    "group %s with gid %u", newlogin,
+					    pwp->pw_gid);
 				}
 			} else {
 				if ((grp = find_group_info(up->u_primgrp)) == NULL) {
