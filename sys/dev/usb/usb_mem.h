@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.h,v 1.14 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: usb_mem.h,v 1.15 2016/11/30 10:19:18 mpi Exp $ */
 /*	$NetBSD: usb_mem.h,v 1.20 2003/05/03 18:11:42 wiz Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -32,6 +32,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct usb_frag_dma;
+
 struct usb_dma_block {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
@@ -40,7 +42,7 @@ struct usb_dma_block {
         int nsegs;
         size_t size;
         size_t align;
-	int fullblock;
+	struct usb_frag_dma *frags;
 	LIST_ENTRY(usb_dma_block) next;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.27 2014/10/31 15:20:01 mpi Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.28 2016/11/30 10:19:18 mpi Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ extern int usbdebug;
 #define USB_MEM_CHUNKS 64
 #define USB_MEM_BLOCK (USB_MEM_SMALL * USB_MEM_CHUNKS)
 
-/* This struct is overlayed on free fragments. */
 struct usb_frag_dma {
 	struct usb_dma_block *block;
 	u_int offs;
@@ -210,7 +209,7 @@ usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, struct usb_dma *p)
 		size = (size + USB_MEM_BLOCK - 1) & ~(USB_MEM_BLOCK - 1);
 		err = usb_block_allocmem(tag, size, align, &p->block);
 		if (!err) {
-			p->block->fullblock = 1;
+			p->block->frags = NULL;
 			p->offs = 0;
 		}
 		return (err);
@@ -228,11 +227,17 @@ usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, struct usb_dma *p)
 			splx(s);
 			return (err);
 		}
-		b->fullblock = 0;
-		for (i = 0; i < USB_MEM_BLOCK; i += USB_MEM_SMALL) {
-			f = (struct usb_frag_dma *)(b->kaddr + i);
+		b->frags = mallocarray(USB_MEM_CHUNKS, sizeof(*f), M_USB,
+		    M_NOWAIT);
+		if (b->frags == NULL) {
+			splx(s);
+			usb_block_freemem(b);
+			return (USBD_NOMEM);
+		}
+		for (i = 0; i < USB_MEM_CHUNKS; i++) {
+			f = &b->frags[i];
 			f->block = b;
-			f->offs = i;
+			f->offs = USB_MEM_SMALL * i;
 			LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
 		}
 		f = LIST_FIRST(&usb_frag_freelist);
@@ -251,15 +256,13 @@ usb_freemem(struct usbd_bus *bus, struct usb_dma *p)
 	struct usb_frag_dma *f;
 	int s;
 
-	if (p->block->fullblock) {
+	if (p->block->frags == NULL) {
 		DPRINTFN(1, ("usb_freemem: large free\n"));
 		usb_block_freemem(p->block);
 		return;
 	}
-	f = KERNADDR(p, 0);
-	f->block = p->block;
-	f->offs = p->offs;
 	s = splusb();
+	f = &p->block->frags[p->offs / USB_MEM_SMALL];
 	LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
 	splx(s);
 	DPRINTFN(5, ("usb_freemem: frag=%p block=%p\n", f, f->block));
