@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.39 2016/11/29 10:19:38 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.40 2016/11/30 19:58:29 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1370,6 +1370,18 @@ swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
 	ogm = mtod(m, struct ofp_group_mod *);
 	start = offsetof(struct ofp_group_mod, gm_buckets);
 	len = ntohs(ogm->gm_oh.oh_length) - start;
+
+	/* Invalid packet size. */
+	if (len < 0) {
+		*error = OFP_ERRGROUPMOD_INVALID_GROUP;
+		return (-1);
+	}
+
+	/* Indirect group type must always have one bucket. */
+	if (len < sizeof(*bucket) && type == OFP_GROUP_T_INDIRECT) {
+		*error = OFP_ERRGROUPMOD_INVALID_GROUP;
+		return (-1);
+	}
 
 	for (off = start, num = 0; off < start + len; off += blen, num++) {
 		bucket = (struct ofp_bucket *)(mtod(m, caddr_t) + off);
@@ -3408,6 +3420,10 @@ swofp_action_group_all(struct switch_softc *sc, struct mbuf *m,
 	struct switch_flow_classify	 swfcl;
 	struct mbuf			*n;
 
+	/* Don't do anything if we don't have buckets. */
+	if (swge->swge_buckets == NULL)
+		return (m);
+
 	OFP_BUCKETS_FOREACH(swge->swge_buckets,
 	    swge->swge_buckets_len, bucket) {
 		if (switch_swfcl_dup(swpld->swpld_swfcl, &swfcl) != 0)
@@ -3464,7 +3480,7 @@ swofp_action_group(struct switch_softc *sc, struct mbuf *m,
 
 	switch (swge->swge_type) {
 	case OFP_GROUP_T_ALL:
-		return swofp_action_group_all(sc, m, swpld,  swge);
+		return swofp_action_group_all(sc, m, swpld, swge);
 	case OFP_GROUP_T_INDIRECT:
 	case OFP_GROUP_T_FAST_FAILOVER:
 	case OFP_GROUP_T_SELECT:
@@ -5201,15 +5217,17 @@ swofp_group_mod_add(struct switch_softc *sc, struct mbuf *m)
 	swge->swge_buckets_len = (ntohs(ogm->gm_oh.oh_length) -
 	    offsetof(struct ofp_group_mod, gm_buckets));
 
-	if ((swge->swge_buckets = malloc(swge->swge_buckets_len,
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
-		free(swge, M_DEVBUF, sizeof(*swge));
-		error = OFP_ERRGROUPMOD_UNKNOWN_GROUP;
-		goto failed;
-	}
+	if (swge->swge_buckets_len > 0) {
+		if ((swge->swge_buckets = malloc(swge->swge_buckets_len,
+		    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
+			free(swge, M_DEVBUF, sizeof(*swge));
+			error = OFP_ERRGROUPMOD_UNKNOWN_GROUP;
+			goto failed;
+		}
 
-	m_copydata(m, offsetof(struct ofp_group_mod, gm_buckets),
-	    swge->swge_buckets_len, (caddr_t)swge->swge_buckets);
+		m_copydata(m, offsetof(struct ofp_group_mod, gm_buckets),
+		    swge->swge_buckets_len, (caddr_t)swge->swge_buckets);
+	}
 
 	swofp_group_entry_add(sc, swge);
 
@@ -5227,6 +5245,7 @@ swofp_group_mod_modify(struct switch_softc *sc, struct mbuf *m)
 	struct ofp_group_mod		*ogm;
 	struct swofp_group_entry	*swge;
 	int				 error;
+	uint32_t			 obucketlen;
 
 	ogm = mtod(m, struct ofp_group_mod *);
 
@@ -5247,19 +5266,26 @@ swofp_group_mod_modify(struct switch_softc *sc, struct mbuf *m)
 
 	swge->swge_type = ogm->gm_type;
 
+	obucketlen = swge->swge_buckets_len;
 	swge->swge_buckets_len = (ntohs(ogm->gm_oh.oh_length) -
 	    offsetof(struct ofp_group_mod, gm_buckets));
 
-	free(swge->swge_buckets, M_DEVBUF, swge->swge_buckets_len);
-	if ((swge->swge_buckets = malloc(swge->swge_buckets_len,
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
-		free(swge, M_DEVBUF, sizeof(*swge));
-		error = OFP_ERRGROUPMOD_UNKNOWN_GROUP;
-		goto failed;
+	if (obucketlen != swge->swge_buckets_len) {
+		free(swge->swge_buckets, M_DEVBUF, obucketlen);
+		swge->swge_buckets = NULL;
+
+		if (swge->swge_buckets_len > 0 &&
+		    (swge->swge_buckets = malloc(swge->swge_buckets_len,
+		    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
+			free(swge, M_DEVBUF, sizeof(*swge));
+			error = OFP_ERRGROUPMOD_UNKNOWN_GROUP;
+			goto failed;
+		}
 	}
 
-	m_copydata(m, offsetof(struct ofp_group_mod, gm_buckets),
-	    swge->swge_buckets_len, (caddr_t)swge->swge_buckets);
+	if (swge->swge_buckets != NULL)
+		m_copydata(m, offsetof(struct ofp_group_mod, gm_buckets),
+		    swge->swge_buckets_len, (caddr_t)swge->swge_buckets);
 
 	m_freem(m);
 	return (0);
@@ -6344,7 +6370,8 @@ swofp_mp_recv_group_desc(struct switch_softc *sc, struct mbuf *m)
 		/*
 		 * Copy back buckets on GROUP DESC
 		 */
-		if ((error = swofp_mpmsg_put(&swmp, (caddr_t)swge->swge_buckets,
+		if (swge->swge_buckets != NULL &&
+		    (error = swofp_mpmsg_put(&swmp, (caddr_t)swge->swge_buckets,
 		    swge->swge_buckets_len)))
 			goto failed;
 	}
