@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.216 2016/11/28 17:50:00 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.217 2016/11/30 13:20:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1153,7 +1153,7 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 				tty_cursor_pane(tty, ctx, 0, ctx->ocy + 1);
 			else
 				tty_cursor_pane(tty, ctx, 0, ctx->ocy);
-		} else if (tty->cx < tty->sx) {
+		} else if (tty->cx != tty->sx - 1) {
 			/*
 			 * The cursor isn't in the last position already, so
 			 * move as far right as possible and redraw the last
