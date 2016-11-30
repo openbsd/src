@@ -1,7 +1,7 @@
 .\"
-.\"	$OpenBSD: ssl.3,v 1.1 2016/11/05 15:32:20 schwarze Exp $
+.\"	$OpenBSD: ssl.3,v 1.2 2016/11/30 16:21:53 schwarze Exp $
 .\"
-.Dd $Mdocdate: November 5 2016 $
+.Dd $Mdocdate: November 30 2016 $
 .Dt SSL 3
 .Os
 .Sh NAME
@@ -10,8 +10,7 @@
 .Sh DESCRIPTION
 The OpenSSL
 .Nm ssl
-library implements the Secure Sockets Layer (SSL v2/v3) and
-Transport Layer Security (TLS v1) protocols.
+library implements the Transport Layer Security (TLS v1) protocols.
 It provides a rich API which is documented here.
 .Pp
 At first the library must be initialized; see
@@ -55,8 +54,7 @@ library functions deals with the following data structures:
 .It Vt SSL_METHOD No (SSL Method)
 That's a dispatch structure describing the internal
 .Nm ssl
-library methods/functions which implement the various protocol versions
-(SSLv1, SSLv2 and TLSv1).
+library methods/functions which implement the various protocol versions.
 It's needed to create an
 .Vt SSL_CTX .
 .It Vt SSL_CIPHER No (SSL Cipher)
@@ -140,65 +138,23 @@ structures.
 .Bl -tag -width Ds
 .It Xo
 .Ft const SSL_METHOD *
-.Fn SSLv2_client_method void
+.Fn TLS_client_method void
 .Xc
-Constructor for the SSLv2
+Constructor for the
 .Vt SSL_METHOD
 structure for a dedicated client.
 .It Xo
 .Ft const SSL_METHOD *
-.Fn SSLv2_server_method void
+.Fn TLS_server_method void
 .Xc
-Constructor for the SSLv2
+Constructor for the
 .Vt SSL_METHOD
 structure for a dedicated server.
 .It Xo
 .Ft const SSL_METHOD *
-.Fn SSLv2_method void
+.Fn TLS_method void
 .Xc
-Constructor for the SSLv2
-.Vt SSL_METHOD
-structure for combined client and server.
-.It Xo
-.Ft const SSL_METHOD *
-.Fn SSLv3_client_method void
-.Xc
-Constructor for the SSLv3
-.Vt SSL_METHOD
-structure for a dedicated client.
-.It Xo
-.Ft const SSL_METHOD *
-.Fn SSLv3_server_method void
-.Xc
-Constructor for the SSLv3
-.Vt SSL_METHOD
-structure for a dedicated server.
-.It Xo
-.Ft const SSL_METHOD *
-.Fn SSLv3_method void
-.Xc
-Constructor for the SSLv3
-.Vt SSL_METHOD
-structure for combined client and server.
-.It Xo
-.Ft const SSL_METHOD *
-.Fn TLSv1_client_method void
-.Xc
-Constructor for the TLSv1
-.Vt SSL_METHOD
-structure for a dedicated client.
-.It Xo
-.Ft const SSL_METHOD *
-.Fn TLSv1_server_method void
-.Xc
-Constructor for the TLSv1
-.Vt SSL_METHOD
-structure for a dedicated server.
-.It Xo
-.Ft const SSL_METHOD *
-.Fn TLSv1_method void
-.Xc
-Constructor for the TLSv1
+Constructor for the
 .Vt SSL_METHOD
 structure for combined client and server.
 .El
@@ -248,9 +204,7 @@ definitions in the header files.
 .Fn SSL_CIPHER_get_version "SSL_CIPHER *cipher"
 .Xc
 Returns a string like
-Qq TLSv1/SSLv3
-or
-Qq SSLv2
+Qq TLSv1
 which indicates the SSL/TLS protocol version to which
 .Fa cipher
 belongs (i.e., where it was defined in the specification the first time).
