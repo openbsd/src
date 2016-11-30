@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.65 2016/11/30 13:53:14 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.66 2016/11/30 15:19:16 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -35,17 +35,20 @@ apply_patch()
 	[[ -n ${_patch} ]]
 
 	_explodir=${_TMP}/${_patch}
-	install -d ${_explodir}
+
+	echo "Applying patch ${_patch##${_OSrev}-}"
+	fetch_and_verify "syspatch${_patch}.tgz"
+
+	trap '' INT
+	install -d ${_explodir} ${_PDIR}/${_patch}
 
 	_files="$(tar xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_explodir})"
 	checkfs ${_files}
 
-	install -d -m 0755 ${_PDIR}/${_patch}
-
 	create_rollback ${_patch} "${_files}"
 
 	for _file in ${_files}; do
-		[[ ${_ret} == 0 ]] || break
+		((${_ret} == 0)) || break
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_explodir}/${_file} || _ret=$?
 		else
@@ -53,25 +56,11 @@ apply_patch()
 		fi
 	done
 
-	if [[ ${_ret} != 0 ]]; then
+	if ((${_ret} != 0)); then
 		sp_err "Failed to apply patch ${_patch##${_OSrev}-}" 0
 		rollback_patch; return ${_ret}
 	fi
-}
-
-apply_patches()
-{
-	local _patch
-
-	for _patch in $(ls_missing); do
-		echo "Applying patch ${_patch}"
-		fetch_and_verify "syspatch${_OSrev}-${_patch}.tgz"
-		trap '' INT
-		apply_patch "${_OSrev}-${_patch}"
-		trap exit INT
-	done
-
-	sp_cleanup
+	trap exit INT
 }
 
 # quick-and-dirty size check:
@@ -260,7 +249,7 @@ rollback_patch()
 	checkfs ${_files} ${_PDIR} # check for read-only /var/syspatch
 
 	for _file in ${_files}; do
-		[[ ${_ret} == 0 ]] || break
+		((${_ret} == 0)) || break
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_explodir}/${_file} || _ret=$?
 			# remove the backup kernel if all kernel syspatches have
@@ -272,7 +261,7 @@ rollback_patch()
 		fi
 	done
 
-	rm -r ${_PDIR}/${_patch} && [[ ${_ret} == 0 ]] ||
+	rm -r ${_PDIR}/${_patch} && ((${_ret} == 0)) ||
 		sp_err "Failed to revert patch ${_patch##${_OSrev}-}" ${_ret}
 }
 
@@ -310,7 +299,7 @@ unpriv()
 		chmod 0711 ${_TMP}
 		shift 2
 	fi
-	(( $# >= 1 ))
+	(($# >= 1))
 
 	eval su -s /bin/sh ${_user} -c "'$@'"
 }
@@ -322,7 +311,7 @@ set -A _KERNV -- $(sysctl -n kern.version |
 [[ -z ${_KERNV[1]} ]]
 
 [[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|r)) ]] &&
-	[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
+	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
 
 [[ $(sysctl -n hw.ncpufound) -gt 1 ]] && _BSDMP=true || _BSDMP=false
 _FETCH="ftp -MVk ${FTP_KEEPALIVE-0}"
@@ -346,7 +335,12 @@ while getopts clr arg; do
 		*) usage;;
 	esac
 done
-shift $(( OPTIND -1 ))
+shift $((OPTIND -1))
 [[ $# -ne 0 ]] && usage
 
-[[ ${OPTIND} != 1 ]] || apply_patches
+if ((${OPTIND} == 1)); then
+	for _PATCH in $(ls_missing); do
+		apply_patch ${_OSrev}-${_PATCH}
+	done
+	sp_cleanup
+fi
