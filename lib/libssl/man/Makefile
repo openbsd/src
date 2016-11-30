@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.38 2016/11/28 21:05:21 schwarze Exp $
+# $OpenBSD: Makefile,v 1.39 2016/11/30 13:39:38 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -75,6 +75,7 @@ MAN =	BIO_f_ssl.3 \
 	SSL_read.3 \
 	SSL_rstate_string.3 \
 	SSL_session_reused.3 \
+	SSL_set1_param.3 \
 	SSL_set_bio.3 \
 	SSL_set_connect_state.3 \
 	SSL_set_fd.3 \
