@@ -1,7 +1,54 @@
+.\"	$OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.2 2016/11/30 18:05:18 schwarze Exp $
+.\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
-.\"	$OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.1 2016/11/05 15:32:19 schwarze Exp $
+.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
+.\" Copyright (c) 2000, 2001 The OpenSSL Project.  All rights reserved.
 .\"
-.Dd $Mdocdate: November 5 2016 $
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 30 2016 $
 .Dt SSL_CTX_SET_DEFAULT_PASSWD_CB 3
 .Os
 .Sh NAME
@@ -14,8 +61,9 @@
 .Fn SSL_CTX_set_default_passwd_cb "SSL_CTX *ctx" "pem_password_cb *cb"
 .Ft void
 .Fn SSL_CTX_set_default_passwd_cb_userdata "SSL_CTX *ctx" "void *u"
-.Ft int
-.Fn pem_passwd_cb "char *buf" "int size" "int rwflag" "void *userdata"
+.In openssl/pem.h
+.Ft typedef int
+.Fn pem_password_cb "char *buf" "int size" "int rwflag" "void *userdata"
 .Sh DESCRIPTION
 .Fn SSL_CTX_set_default_passwd_cb
 sets the default password callback called when loading/storing a PEM
@@ -27,13 +75,14 @@ sets a pointer to userdata
 which will be provided to the password callback on invocation.
 .Pp
 The
-.Fn pem_passwd_cb ,
+password callback
+.Fa cb ,
 which must be provided by the application,
 hands back the password to be used during decryption.
 On invocation a pointer to
 .Fa userdata
 is provided.
-The pem_passwd_cb must write the password into the provided buffer
+The password callback must write the password into the provided buffer
 .Fa buf
 which is of size
 .Fa size .
@@ -43,24 +92,19 @@ indicates whether the callback is used for reading/decryption
 .Pq Fa rwflag No = 0
 or writing/encryption
 .Pq Fa rwflag No = 1 .
-.Sh NOTES
+.Pp
 When loading or storing private keys, a password might be supplied to protect
 the private key.
 The way this password can be supplied may depend on the application.
-If only one private key is handled, it can be practical to have
-.Fn pem_passwd_cb
-handle the password dialog interactively.
+If only one private key is handled, it can be practical to have the
+callback handle the password dialog interactively.
 If several keys have to be handled, it can be practical to ask for the password
 once, then keep it in memory and use it several times.
 In the last case, the password could be stored into the
 .Fa userdata
-storage and the
-.Fn pem_passwd_cb
-only returns the password already stored.
+storage and the callback only returns the password already stored.
 .Pp
-When asking for the password interactively,
-.Fn pem_passwd_cb
-can use
+When asking for the password interactively, the callback can use
 .Fa rwflag
 to check whether an item shall be encrypted
 .Pq Fa rwflag No = 1 .
@@ -69,11 +113,6 @@ comparison in order to catch typos which would make decryption impossible.
 .Pp
 Other items in PEM formatting (certificates) can also be encrypted; it is
 however atypical, as certificate information is considered public.
-.Sh RETURN VALUES
-.Fn SSL_CTX_set_default_passwd_cb
-and
-.Fn SSL_CTX_set_default_passwd_cb_userdata
-do not provide diagnostic information.
 .Sh EXAMPLES
 The following example returns the password provided as
 .Fa userdata
