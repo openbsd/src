@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.58 2016/11/26 20:03:42 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.59 2016/11/30 19:27:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -217,11 +217,9 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		id = vtp.vtp_vm_id;
 		res = terminate_vm(&vtp);
 		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
-		if (res == 0) {
-			/* Remove local reference if it exists */
-			if ((vm = vm_getbyid(id)) != NULL)
-				vm_remove(vm);
-		}
+		/* Remove local reference if it exists */
+		if ((vm = vm_getbyid(id)) != NULL)
+			vm_remove(vm);
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		res = get_info_vm(ps, imsg, 0);
@@ -305,7 +303,6 @@ vmm_sighdlr(int sig, short event, void *arg)
 					memset(&vmr, 0, sizeof(vmr));
 					vmr.vmr_result = 0;
 					vmr.vmr_id = vmid;
-					vm_remove(vm);
 					if (proc_compose_imsg(ps, PROC_PARENT,
 					    -1, IMSG_VMDOP_TERMINATE_VM_EVENT,
 					    0, -1, &vmr, sizeof(vmr)) == -1)
@@ -315,6 +312,8 @@ vmm_sighdlr(int sig, short event, void *arg)
 				} else
 					log_warnx("could not terminate VM %u",
 					    vmid);
+
+				vm_remove(vm);
 			} else
 				fatalx("unexpected cause of SIGCHLD");
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
@@ -339,8 +338,8 @@ vmm_shutdown(void)
 		vtp.vtp_vm_id = vm->vm_params.vmc_params.vcp_id;
 
 		/* XXX suspend or request graceful shutdown */
-		if (terminate_vm(&vtp) == ENOENT)
-			vm_remove(vm);
+		(void)terminate_vm(&vtp);
+		vm_remove(vm);
 	}
 }
 
