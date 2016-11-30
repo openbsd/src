@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.175 2016/10/28 10:11:22 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.176 2016/11/30 10:52:10 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4504,13 +4504,18 @@ iwn_config(struct iwn_softc *sc)
 	sc->rxon.ht_triple_mask = 0xff;
 	rxchain =
 	    IWN_RXCHAIN_VALID(sc->rxchainmask) |
-	    IWN_RXCHAIN_MIMO_COUNT(2) |
-	    IWN_RXCHAIN_IDLE_COUNT(2);
+	    IWN_RXCHAIN_MIMO_COUNT(sc->nrxchains) |
+	    IWN_RXCHAIN_IDLE_COUNT(sc->nrxchains);
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		rxchain |= IWN_RXCHAIN_FORCE_SEL(sc->rxchainmask);
+		rxchain |= IWN_RXCHAIN_FORCE_MIMO_SEL(sc->rxchainmask);
+	    	rxchain |= (IWN_RXCHAIN_DRIVER_FORCE | IWN_RXCHAIN_MIMO_FORCE);
+	}
 	sc->rxon.rxchain = htole16(rxchain);
 	DPRINTF(("setting configuration\n"));
-	DPRINTF(("%s: rxon chan %d flags %x cck %x ofdm %x\n", __func__,
-	    sc->rxon.chan, le32toh(sc->rxon.flags), sc->rxon.cck_mask,
-	    sc->rxon.ofdm_mask));
+	DPRINTF(("%s: rxon chan %d flags %x cck %x ofdm %x rxchain %x\n",
+	    __func__, sc->rxon.chan, le32toh(sc->rxon.flags), sc->rxon.cck_mask,
+	    sc->rxon.ofdm_mask, sc->rxon.rxchain));
 	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 0);
 	if (error != 0) {
 		printf("%s: RXON command failed\n", sc->sc_dev.dv_xname);
