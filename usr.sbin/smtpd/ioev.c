@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.38 2016/11/30 11:52:48 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.39 2016/11/30 17:43:32 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -46,6 +46,14 @@ enum {
 
 	IO_STATE_MAX,
 };
+
+#define IO_PAUSE_IN 		IO_IN
+#define IO_PAUSE_OUT		IO_OUT
+#define IO_READ			0x04
+#define IO_WRITE		0x08
+#define IO_RW			(IO_READ | IO_WRITE)
+#define IO_RESET		0x10  /* internal */
+#define IO_HELD			0x20  /* internal */
 
 struct io {
 	int		 sock;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.301 2016/11/30 11:52:48 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.302 2016/11/30 17:43:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -981,7 +981,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 		smtp_tls_verified(s);
-		io_resume(s->io, IO_PAUSE_IN);
+		io_resume(s->io, IO_IN);
 		return;
 	}
 
@@ -1255,7 +1255,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		s->helo[0] = '\0';
 
 		if (smtp_verify_certificate(s)) {
-			io_pause(s->io, IO_PAUSE_IN);
+			io_pause(s->io, IO_IN);
 			break;
 		}
 
@@ -1469,18 +1469,18 @@ smtp_data_io(struct io *io, int evt, void *arg)
 		io_free(s->tx->oev);
 		s->tx->oev = NULL;
 		s->tx->msgflags |= MF_ERROR_IO;
-		if (io_paused(s->io, IO_PAUSE_IN)) {
+		if (io_paused(s->io, IO_IN)) {
 			log_debug("debug: smtp: %p: resuming session after mfa error", s);
-			io_resume(s->io, IO_PAUSE_IN);
+			io_resume(s->io, IO_IN);
 		}
 		break;
 
 	case IO_LOWAT:
 		if (s->tx->dataeom && io_queued(s->tx->oev) == 0) {
 			smtp_data_io_done(s);
-		} else if (io_paused(s->io, IO_PAUSE_IN)) {
+		} else if (io_paused(s->io, IO_IN)) {
 			log_debug("debug: smtp: %p: filter congestion over: resuming session", s);
-			io_resume(s->io, IO_PAUSE_IN);
+			io_resume(s->io, IO_IN);
 		}
 		break;
 
@@ -2628,9 +2628,9 @@ smtp_filter_dataline(struct smtp_session *s, const char *line)
 		return;
 	}
 
-	if (io_queued(s->tx->oev) > DATA_HIWAT && !io_paused(s->io, IO_PAUSE_IN)) {
+	if (io_queued(s->tx->oev) > DATA_HIWAT && !io_paused(s->io, IO_IN)) {
 		log_debug("debug: smtp: %p: filter congestion: pausing session", s);
-		io_pause(s->io, IO_PAUSE_IN);
+		io_pause(s->io, IO_IN);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.15 2016/11/30 11:52:48 eric Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.16 2016/11/30 17:43:32 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -26,13 +26,8 @@ enum {
 	IO_ERROR,		/* details?			*/
 };
 
-#define IO_READ			0x01
-#define IO_WRITE		0x02
-#define IO_RW			(IO_READ | IO_WRITE)
-#define IO_PAUSE_IN		0x04
-#define IO_PAUSE_OUT		0x08
-#define IO_RESET		0x10  /* internal */
-#define IO_HELD			0x20  /* internal */
+#define IO_IN		0x01
+#define IO_OUT		0x02
 
 struct io;
 

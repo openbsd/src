@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.125 2016/11/30 11:52:48 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.126 2016/11/30 17:43:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -527,7 +527,7 @@ mda_io(struct io *io, int evt, void *arg)
 				m_add_id(p_parent, s->id);
 				m_add_string(p_parent, "Out of memory");
 				m_close(p_parent);
-				io_pause(io, IO_PAUSE_OUT);
+				io_pause(io, IO_OUT);
 				free(ln);
 				return;
 			}
@@ -542,7 +542,7 @@ mda_io(struct io *io, int evt, void *arg)
 			m_add_id(p_parent, s->id);
 			m_add_string(p_parent, "Error reading body");
 			m_close(p_parent);
-			io_pause(io, IO_PAUSE_OUT);
+			io_pause(io, IO_OUT);
 			return;
 		}
 
@@ -559,25 +559,25 @@ mda_io(struct io *io, int evt, void *arg)
 
 	case IO_TIMEOUT:
 		log_debug("debug: mda: timeout on session %016"PRIx64, s->id);
-		io_pause(io, IO_PAUSE_OUT);
+		io_pause(io, IO_OUT);
 		return;
 
 	case IO_ERROR:
 		log_debug("debug: mda: io error on session %016"PRIx64": %s",
 		    s->id, io_error(io));
-		io_pause(io, IO_PAUSE_OUT);
+		io_pause(io, IO_OUT);
 		return;
 
 	case IO_DISCONNECTED:
 		log_debug("debug: mda: io disconnected on session %016"PRIx64,
 		    s->id);
-		io_pause(io, IO_PAUSE_OUT);
+		io_pause(io, IO_OUT);
 		return;
 
 	default:
 		log_debug("debug: mda: unexpected event on session %016"PRIx64,
 		    s->id);
-		io_pause(io, IO_PAUSE_OUT);
+		io_pause(io, IO_OUT);
 		return;
 	}
 }

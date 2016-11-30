@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.95 2016/11/30 11:52:48 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.96 2016/11/30 17:43:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -362,7 +362,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		}
 
 		mta_tls_verified(s);
-		io_resume(s->io, IO_PAUSE_IN);
+		io_resume(s->io, IO_IN);
 		return;
 
 	case IMSG_MTA_LOOKUP_HELO:
@@ -1164,7 +1164,7 @@ mta_io(struct io *io, int evt, void *arg)
 		s->flags |= MTA_TLS;
 
 		if (mta_verify_certificate(s)) {
-			io_pause(s->io, IO_PAUSE_IN);
+			io_pause(s->io, IO_IN);
 			break;
 		}
 
