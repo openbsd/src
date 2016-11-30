@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.14 2016/11/24 21:25:21 eric Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.15 2016/11/30 11:52:48 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <event.h>
 
 enum {
 	IO_CONNECTED = 0, 	/* connection successful	*/
@@ -36,26 +34,13 @@ enum {
 #define IO_RESET		0x10  /* internal */
 #define IO_HELD			0x20  /* internal */
 
-struct iobuf;
-struct io {
-	int		 sock;
-	void		*arg;
-	void		(*cb)(struct io*, int, void *);
-	struct iobuf	*iobuf;
-	size_t		 lowat;
-	int		 timeout;
-	int		 flags;
-	int		 state;
-	struct event	 ev;
-	void		*ssl;
-	const char	*error; /* only valid immediately on callback */
-};
+struct io;
 
 void io_set_nonblocking(int);
 void io_set_nolinger(int);
 
-void io_init(struct io*, struct iobuf*);
-void io_clear(struct io*);
+struct io *io_new(void);
+void io_free(struct io *);
 void io_set_read(struct io *);
 void io_set_write(struct io *);
 void io_set_fd(struct io *, int);

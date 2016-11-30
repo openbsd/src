@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.37 2016/11/25 16:17:41 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.38 2016/11/30 11:52:48 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -21,6 +21,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <event.h>
 #include <fcntl.h>
 #include <inttypes.h>
 #include <stdlib.h>
@@ -44,6 +45,20 @@ enum {
 	IO_STATE_UP,
 
 	IO_STATE_MAX,
+};
+
+struct io {
+	int		 sock;
+	void		*arg;
+	void		(*cb)(struct io*, int, void *);
+	struct iobuf	*iobuf;
+	size_t		 lowat;
+	int		 timeout;
+	int		 flags;
+	int		 state;
+	struct event	 ev;
+	void		*ssl;
+	const char	*error; /* only valid immediately on callback */
 };
 
 const char* io_strflags(int);
@@ -223,20 +238,36 @@ _io_init()
 	_io_debug = getenv("IO_DEBUG") != NULL;
 }
 
-void
-io_init(struct io *io, struct iobuf *iobuf)
+struct io *
+io_new(void)
 {
+	struct io *io;
+
 	_io_init();
 
-	memset(io, 0, sizeof *io);
+	if ((io = calloc(1, sizeof(*io))) == NULL)
+		return NULL;
 
 	io->sock = -1;
 	io->timeout = -1;
-	io->iobuf = iobuf;
+	io->iobuf = calloc(1, sizeof(*io->iobuf));
+
+	if (io->iobuf == NULL) {
+		free(io);
+		return NULL;
+	}
+
+	if (iobuf_init(io->iobuf, 0, 0) == -1) {
+		free(io->iobuf);
+		free(io);
+		return NULL;
+	}
+
+	return io;
 }
 
 void
-io_clear(struct io *io)
+io_free(struct io *io)
 {
 	io_debug("io_clear(%p)\n", io);
 
@@ -257,6 +288,10 @@ io_clear(struct io *io)
 		close(io->sock);
 		io->sock = -1;
 	}
+
+	iobuf_clear(io->iobuf);
+	free(io->iobuf);
+	free(io);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.525 2016/11/25 09:21:21 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.526 2016/11/30 11:52:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -21,6 +21,8 @@
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
+
+#include <event.h>
 
 #include "smtpd-defines.h"
 #include "smtpd-api.h"

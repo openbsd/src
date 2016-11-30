@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.94 2016/11/25 11:43:55 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.95 2016/11/30 11:52:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -115,8 +115,7 @@ struct mta_session {
 	int			 ready;
 
 	struct event		 ev;
-	struct iobuf		 iobuf;
-	struct io		 io;
+	struct io		*io;
 	int			 ext;
 
 	size_t			 msgtried;
@@ -196,7 +195,6 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 	s->id = generate_uid();
 	s->relay = relay;
 	s->route = route;
-	io_init(&s->io, NULL);
 
 	if (relay->flags & RELAY_SSL && relay->flags & RELAY_AUTH)
 		s->flags |= MTA_USE_AUTH;
@@ -329,7 +327,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 				ssl = ssl_mta_init(NULL, NULL, 0, env->sc_tls_ciphers);
 				if (ssl == NULL)
 					fatal("mta: ssl_mta_init");
-				io_start_tls(&s->io, ssl);
+				io_start_tls(s->io, ssl);
 				return;
 			}
 		}
@@ -341,7 +339,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		    resp_ca_cert->cert, resp_ca_cert->cert_len, env->sc_tls_ciphers);
 		if (ssl == NULL)
 			fatal("mta: ssl_mta_init");
-		io_start_tls(&s->io, ssl);
+		io_start_tls(s->io, ssl);
 
 		explicit_bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
 		free(resp_ca_cert->cert);
@@ -364,7 +362,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		}
 
 		mta_tls_verified(s);
-		io_resume(&s->io, IO_PAUSE_IN);
+		io_resume(s->io, IO_PAUSE_IN);
 		return;
 
 	case IMSG_MTA_LOOKUP_HELO:
@@ -427,8 +425,8 @@ mta_free(struct mta_session *s)
 		runq_cancel(hangon, NULL, s);
 	}
 
-	io_clear(&s->io);
-	iobuf_clear(&s->iobuf);
+	if (s->io)
+		io_free(s->io);
 
 	if (s->task)
 		fatalx("current task should have been deleted already");
@@ -497,8 +495,10 @@ mta_connect(struct mta_session *s)
 			s->helo = xstrdup(env->sc_hostname, "mta_connect");
 	}
 
-	io_clear(&s->io);
-	iobuf_clear(&s->iobuf);
+	if (s->io) {
+		io_free(s->io);
+		s->io = NULL;
+	}
 
 	s->use_smtps = s->use_starttls = s->use_smtp_tls = 0;
 
@@ -556,20 +556,19 @@ mta_connect(struct mta_session *s)
 	    portno, s->route->dst->ptrname);
 
 	mta_enter_state(s, MTA_INIT);
-	iobuf_xinit(&s->iobuf, 0, 0, "mta_connect");
-	io_init(&s->io, &s->iobuf);
-	io_set_callback(&s->io, mta_io, s);
-	io_set_timeout(&s->io, 300000);
-	if (io_connect(&s->io, sa, s->route->src->sa) == -1) {
+	s->io = io_new();
+	io_set_callback(s->io, mta_io, s);
+	io_set_timeout(s->io, 300000);
+	if (io_connect(s->io, sa, s->route->src->sa) == -1) {
 		/*
 		 * This error is most likely a "no route",
 		 * so there is no need to try again.
 		 */
-		log_debug("debug: mta: io_connect failed: %s", io_error(&s->io));
+		log_debug("debug: mta: io_connect failed: %s", io_error(s->io));
 		if (errno == EADDRNOTAVAIL)
-			mta_source_error(s->relay, s->route, io_error(&s->io));
+			mta_source_error(s->relay, s->route, io_error(s->io));
 		else
-			mta_error(s, "Connection failed: %s", io_error(&s->io));
+			mta_error(s, "Connection failed: %s", io_error(s->io));
 		mta_free(s);
 	}
 }
@@ -842,7 +841,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 
 	case MTA_LMTP_EOM:
 		/* LMTP reports status of each delivery, so enable read */
-		io_set_read(&s->io);
+		io_set_read(s->io);
 		break;
 
 	case MTA_RSET:
@@ -1033,7 +1032,7 @@ mta_response(struct mta_session *s, char *line)
 			 */
 			sa_len = sizeof(ss);
 			sa = (struct sockaddr *)&ss;
-			if (getsockname(io_fileno(&s->io), sa, &sa_len) < 0)
+			if (getsockname(io_fileno(s->io), sa, &sa_len) < 0)
 				mta_delivery_log(e, NULL, buf, delivery, line);
 			else
 				mta_delivery_log(e, sa_to_text(sa),
@@ -1161,11 +1160,11 @@ mta_io(struct io *io, int evt, void *arg)
 
 	case IO_TLSREADY:
 		log_info("%016"PRIx64" mta event=starttls ciphers=%s",
-		    s->id, ssl_to_text(io_ssl(&s->io)));
+		    s->id, ssl_to_text(io_ssl(s->io)));
 		s->flags |= MTA_TLS;
 
 		if (mta_verify_certificate(s)) {
-			io_pause(&s->io, IO_PAUSE_IN);
+			io_pause(s->io, IO_PAUSE_IN);
 			break;
 		}
 
@@ -1174,9 +1173,9 @@ mta_io(struct io *io, int evt, void *arg)
 
 	case IO_DATAIN:
 	    nextline:
-		line = io_getline(&s->io, &len);
+		line = io_getline(s->io, &len);
 		if (line == NULL) {
-			if (io_datalen(&s->io) >= LINE_MAX) {
+			if (io_datalen(s->io) >= LINE_MAX) {
 				mta_error(s, "Input too long");
 				mta_free(s);
 			}
@@ -1259,7 +1258,7 @@ mta_io(struct io *io, int evt, void *arg)
 			return;
 		}
 
-		if (io_datalen(&s->io)) {
+		if (io_datalen(s->io)) {
 			log_debug("debug: mta: remaining data in input buffer");
 			mta_error(s, "Remote host sent too much data");
 			if (s->flags & MTA_WAIT)
@@ -1278,7 +1277,7 @@ mta_io(struct io *io, int evt, void *arg)
 			}
 		}
 
-		if (io_queued(&s->io) == 0)
+		if (io_queued(s->io) == 0)
 			io_set_read(io);
 		break;
 
@@ -1359,7 +1358,7 @@ mta_send(struct mta_session *s, char *fmt, ...)
 
 	log_trace(TRACE_MTA, "mta: %p: >>> %s", s, p);
 
-	io_xprintf(&s->io, "%s\r\n", p);
+	io_xprintf(s->io, "%s\r\n", p);
 
 	free(p);
 }
@@ -1374,14 +1373,14 @@ mta_queue_data(struct mta_session *s)
 	size_t	 sz = 0, q;
 	ssize_t	 len;
 
-	q = io_queued(&s->io);
+	q = io_queued(s->io);
 
-	while (io_queued(&s->io) < MTA_HIWAT) {
+	while (io_queued(s->io) < MTA_HIWAT) {
 		if ((len = getline(&ln, &sz, s->datafp)) == -1)
 			break;
 		if (ln[len - 1] == '\n')
 			ln[len - 1] = '\0';
-		io_xprintf(&s->io, "%s%s\r\n", *ln == '.' ? "." : "", ln);
+		io_xprintf(s->io, "%s%s\r\n", *ln == '.' ? "." : "", ln);
 	}
 
 	free(ln);
@@ -1396,7 +1395,7 @@ mta_queue_data(struct mta_session *s)
 		s->datafp = NULL;
 	}
 
-	return (io_queued(&s->io) - q);
+	return (io_queued(s->io) - q);
 }
 
 static void
@@ -1433,7 +1432,7 @@ mta_flush_task(struct mta_session *s, int delivery, const char *error, size_t co
 		 */
 		sa = (struct sockaddr *)&ss;
 		sa_len = sizeof(ss);
-		if (getsockname(io_fileno(&s->io), sa, &sa_len) < 0)
+		if (getsockname(io_fileno(s->io), sa, &sa_len) < 0)
 			mta_delivery_log(e, NULL, relay, delivery, error);
 		else
 			mta_delivery_log(e, sa_to_text(sa),
@@ -1560,10 +1559,10 @@ mta_verify_certificate(struct mta_session *s)
 	    >= sizeof req_ca_vrfy.name)
 		return 0;
 
-	x = SSL_get_peer_certificate(io_ssl(&s->io));
+	x = SSL_get_peer_certificate(io_ssl(s->io));
 	if (x == NULL)
 		return 0;
-	xchain = SSL_get_peer_cert_chain(io_ssl(&s->io));
+	xchain = SSL_get_peer_cert_chain(io_ssl(s->io));
 
 	/*
 	 * Client provided a certificate and possibly a certificate chain.
@@ -1657,7 +1656,7 @@ mta_tls_verified(struct mta_session *s)
 {
 	X509 *x;
 
-	x = SSL_get_peer_certificate(io_ssl(&s->io));
+	x = SSL_get_peer_certificate(io_ssl(s->io));
 	if (x) {
 		log_info("smtp-out: Server certificate verification %s "
 		    "on session %016"PRIx64,
@@ -1668,7 +1667,7 @@ mta_tls_verified(struct mta_session *s)
 
 	if (s->use_smtps) {
 		mta_enter_state(s, MTA_BANNER);
-		io_set_read(&s->io);
+		io_set_read(s->io);
 	}
 	else
 		mta_enter_state(s, MTA_EHLO);

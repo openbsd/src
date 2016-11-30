@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.300 2016/11/24 21:25:21 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.301 2016/11/30 11:52:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -116,8 +116,7 @@ struct smtp_tx {
 
 	size_t			 datain;
 	size_t			 odatalen;
-	struct iobuf		 obuf;
-	struct io		 oev;
+	struct io		*oev;
 	int			 hdrdone;
 	int			 rcvcount;
 	int			 dataeom;
@@ -131,8 +130,7 @@ struct smtp_tx {
 
 struct smtp_session {
 	uint64_t		 id;
-	struct iobuf		 iobuf;
-	struct io		 io;
+	struct io		*io;
 	struct listener		*listener;
 	void			*ssl_ctx;
 	struct sockaddr_storage	 ss;
@@ -642,19 +640,14 @@ smtp_session(struct listener *listener, int sock,
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		return (-1);
 
-	if (iobuf_init(&s->iobuf, LINE_MAX, LINE_MAX) == -1) {
-		free(s);
-		return (-1);
-	}
-
 	s->id = generate_uid();
 	s->listener = listener;
 	memmove(&s->ss, ss, sizeof(*ss));
-	io_init(&s->io, &s->iobuf);
-	io_set_callback(&s->io, smtp_io, s);
-	io_set_fd(&s->io, sock);
-	io_set_timeout(&s->io, SMTPD_SESSION_TIMEOUT * 1000);
-	io_set_write(&s->io);
+	s->io = io_new();
+	io_set_callback(s->io, smtp_io, s);
+	io_set_fd(s->io, sock);
+	io_set_timeout(s->io, SMTPD_SESSION_TIMEOUT * 1000);
+	io_set_write(s->io);
 
 	s->state = STATE_NEW;
 
@@ -966,8 +959,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		    sizeof *resp_ca_cert, "smtp:ca_cert");
 		ssl_ctx = dict_get(env->sc_ssl_dict, resp_ca_cert->name);
 		ssl = ssl_smtp_init(ssl_ctx, s->listener->flags & F_TLS_VERIFY);
-		io_set_read(&s->io);
-		io_start_tls(&s->io, ssl);
+		io_set_read(s->io);
+		io_start_tls(s->io, ssl);
 
 		explicit_bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
 		free(resp_ca_cert->cert);
@@ -988,7 +981,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 		smtp_tls_verified(s);
-		io_resume(&s->io, IO_PAUSE_IN);
+		io_resume(s->io, IO_PAUSE_IN);
 		return;
 	}
 
@@ -1002,7 +995,7 @@ smtp_tls_verified(struct smtp_session *s)
 {
 	X509 *x;
 
-	x = SSL_get_peer_certificate(io_ssl(&s->io));
+	x = SSL_get_peer_certificate(io_ssl(s->io));
 	if (x) {
 		log_info("%016"PRIx64" smtp "
 		    "event=client-cert-check address=%s host=%s result=\"%s\"",
@@ -1013,7 +1006,7 @@ smtp_tls_verified(struct smtp_session *s)
 
 	if (s->listener->flags & F_SMTPS) {
 		stat_increment("smtp.smtps", 1);
-		io_set_write(&s->io);
+		io_set_write(s->io);
 		smtp_send_banner(s);
 	}
 	else {
@@ -1185,20 +1178,19 @@ smtp_filter_fd(uint64_t id, int fd)
 		return;
 	}
 
-	iobuf_init(&s->tx->obuf, 0, 0);
 	io_set_nonblocking(fd);
-	io_init(&s->tx->oev, &s->tx->obuf);
-	io_set_callback(&s->tx->oev, smtp_data_io, s);
-	io_set_fd(&s->tx->oev, fd);
+	s->tx->oev = io_new();
+	io_set_callback(s->tx->oev, smtp_data_io, s);
+	io_set_fd(s->tx->oev, fd);
 
-	io_print(&s->tx->oev, "Received: ");
+	io_print(s->tx->oev, "Received: ");
 	if (!(s->listener->flags & F_MASK_SOURCE)) {
-		io_printf(&s->tx->oev, "from %s (%s [%s])",
+		io_printf(s->tx->oev, "from %s (%s [%s])",
 		    s->helo,
 		    s->hostname,
 		    ss_to_text(&s->ss));
 	}
-	io_printf(&s->tx->oev, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
+	io_printf(s->tx->oev, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
 	    s->smtpname,
 	    SMTPD_NAME,
 	    s->flags & SF_EHLO ? "E" : "",
@@ -1207,33 +1199,33 @@ smtp_filter_fd(uint64_t id, int fd)
 	    s->tx->msgid);
 
 	if (s->flags & SF_SECURE) {
-		x = SSL_get_peer_certificate(io_ssl(&s->io));
-		io_printf(&s->tx->oev, " (%s:%s:%d:%s)",
-		    SSL_get_version(io_ssl(&s->io)),
-		    SSL_get_cipher_name(io_ssl(&s->io)),
-		    SSL_get_cipher_bits(io_ssl(&s->io), NULL),
+		x = SSL_get_peer_certificate(io_ssl(s->io));
+		io_printf(s->tx->oev, " (%s:%s:%d:%s)",
+		    SSL_get_version(io_ssl(s->io)),
+		    SSL_get_cipher_name(io_ssl(s->io)),
+		    SSL_get_cipher_bits(io_ssl(s->io), NULL),
 		    (s->flags & SF_VERIFIED) ? "YES" : (x ? "FAIL" : "NO"));
 		if (x)
 			X509_free(x);
 
 		if (s->listener->flags & F_RECEIVEDAUTH) {
-			io_printf(&s->tx->oev, " auth=%s", s->username[0] ? "yes" : "no");
+			io_printf(s->tx->oev, " auth=%s", s->username[0] ? "yes" : "no");
 			if (s->username[0])
-				io_printf(&s->tx->oev, " user=%s", s->username);
+				io_printf(s->tx->oev, " user=%s", s->username);
 		}
 	}
 
 	if (s->tx->rcptcount == 1) {
-		io_printf(&s->tx->oev, "\n\tfor <%s@%s>",
+		io_printf(s->tx->oev, "\n\tfor <%s@%s>",
 		    s->tx->evp.rcpt.user,
 		    s->tx->evp.rcpt.domain);
 	}
 
-	io_printf(&s->tx->oev, ";\n\t%s\n", time_to_text(time(NULL)));
+	io_printf(s->tx->oev, ";\n\t%s\n", time_to_text(time(NULL)));
 
-	s->tx->odatalen = io_queued(&s->tx->oev);
+	s->tx->odatalen = io_queued(s->tx->oev);
 
-	io_set_write(&s->tx->oev);
+	io_set_write(s->tx->oev);
 
 	smtp_enter_state(s, STATE_BODY);
 	smtp_reply(s, "354 Enter mail, end with \".\""
@@ -1257,13 +1249,13 @@ smtp_io(struct io *io, int evt, void *arg)
 
 	case IO_TLSREADY:
 		log_info("%016"PRIx64" smtp event=starttls address=%s host=%s ciphers=\"%s\"",
-		    s->id, ss_to_text(&s->ss), s->hostname, ssl_to_text(io_ssl(&s->io)));
+		    s->id, ss_to_text(&s->ss), s->hostname, ssl_to_text(io_ssl(s->io)));
 
 		s->flags |= SF_SECURE;
 		s->helo[0] = '\0';
 
 		if (smtp_verify_certificate(s)) {
-			io_pause(&s->io, IO_PAUSE_IN);
+			io_pause(s->io, IO_PAUSE_IN);
 			break;
 		}
 
@@ -1280,8 +1272,8 @@ smtp_io(struct io *io, int evt, void *arg)
 
 	case IO_DATAIN:
 	    nextline:
-		line = io_getline(&s->io, &len);
-		if ((line == NULL && io_datalen(&s->io) >= LINE_MAX) ||
+		line = io_getline(s->io, &len);
+		if ((line == NULL && io_datalen(s->io) >= LINE_MAX) ||
 		    (line && len >= LINE_MAX)) {
 			s->flags |= SF_BADINPUT;
 			smtp_reply(s, "500 %s: Line too long",
@@ -1302,7 +1294,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		}
 
 		/* Pipelining not supported */
-		if (io_datalen(&s->io)) {
+		if (io_datalen(s->io)) {
 			s->flags |= SF_BADINPUT;
 			smtp_reply(s, "500 %s %s: Pipelining not supported",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
@@ -1321,7 +1313,7 @@ smtp_io(struct io *io, int evt, void *arg)
 			io_set_write(io);
 
 			s->tx->dataeom = 1;
-			if (io_queued(&s->tx->oev) == 0)
+			if (io_queued(s->tx->oev) == 0)
 				smtp_data_io_done(s);
 			return;
 		}
@@ -1400,7 +1392,6 @@ smtp_tx(struct smtp_session *s)
 		return 0;
 
 	TAILQ_INIT(&tx->rcpts);
-	io_init(&tx->oev, NULL);
 
 	s->tx = tx;
 	tx->session = s;
@@ -1454,6 +1445,9 @@ smtp_tx_free(struct smtp_tx *tx)
 		free(rcpt);
 	}
 
+	if (tx->oev)
+		io_free(tx->oev);
+
 	tx->session->tx = NULL;
 
 	free(tx);
@@ -1472,21 +1466,21 @@ smtp_data_io(struct io *io, int evt, void *arg)
 	case IO_DISCONNECTED:
 	case IO_ERROR:
 		log_debug("debug: smtp: %p: io error on mfa", s);
-		io_clear(&s->tx->oev);
-		iobuf_clear(&s->tx->obuf);
+		io_free(s->tx->oev);
+		s->tx->oev = NULL;
 		s->tx->msgflags |= MF_ERROR_IO;
-		if (io_paused(&s->io, IO_PAUSE_IN)) {
+		if (io_paused(s->io, IO_PAUSE_IN)) {
 			log_debug("debug: smtp: %p: resuming session after mfa error", s);
-			io_resume(&s->io, IO_PAUSE_IN);
+			io_resume(s->io, IO_PAUSE_IN);
 		}
 		break;
 
 	case IO_LOWAT:
-		if (s->tx->dataeom && io_queued(&s->tx->oev) == 0) {
+		if (s->tx->dataeom && io_queued(s->tx->oev) == 0) {
 			smtp_data_io_done(s);
-		} else if (io_paused(&s->io, IO_PAUSE_IN)) {
+		} else if (io_paused(s->io, IO_PAUSE_IN)) {
 			log_debug("debug: smtp: %p: filter congestion over: resuming session", s);
-			io_resume(&s->io, IO_PAUSE_IN);
+			io_resume(s->io, IO_PAUSE_IN);
 		}
 		break;
 
@@ -1499,8 +1493,11 @@ static void
 smtp_data_io_done(struct smtp_session *s)
 {
 	log_debug("debug: smtp: %p: data io done (%zu bytes)", s, s->tx->odatalen);
-	io_clear(&s->tx->oev);
-	iobuf_clear(&s->tx->obuf);
+
+	if (s->tx->oev) {
+		io_free(s->tx->oev);
+		s->tx->oev = NULL;
+	}
 
 	if (s->tx->msgflags & MF_ERROR) {
 
@@ -2075,7 +2072,7 @@ smtp_lookup_servername(struct smtp_session *s)
 	if (s->listener->hostnametable[0]) {
 		sa_len = sizeof(ss);
 		sa = (struct sockaddr *)&ss;
-		if (getsockname(io_fileno(&s->io), sa, &sa_len) == -1) {
+		if (getsockname(io_fileno(s->io), sa, &sa_len) == -1) {
 			log_warn("warn: getsockname()");
 		}
 		else {
@@ -2103,7 +2100,7 @@ smtp_connected(struct smtp_session *s)
 	    s->id, ss_to_text(&s->ss), s->hostname);
 
 	sl = sizeof(ss);
-	if (getsockname(io_fileno(&s->io), (struct sockaddr*)&ss, &sl) == -1) {
+	if (getsockname(io_fileno(s->io), (struct sockaddr*)&ss, &sl) == -1) {
 		smtp_free(s, strerror(errno));
 		return;
 	}
@@ -2162,7 +2159,7 @@ smtp_message_printf(struct smtp_session *s, const char *fmt, ...)
 		return -1;
 
 	va_start(ap, fmt);
-	len = io_vprintf(&s->tx->oev, fmt, ap);
+	len = io_vprintf(s->tx->oev, fmt, ap);
 	va_end(ap);
 
 	if (len < 0) {
@@ -2192,7 +2189,7 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 
 	log_trace(TRACE_SMTP, "smtp: %p: >>> %s", s, buf);
 
-	io_xprintf(&s->io, "%s\r\n", buf);
+	io_xprintf(s->io, "%s\r\n", buf);
 
 	switch (buf[0]) {
 	case '5':
@@ -2239,11 +2236,8 @@ smtp_free(struct smtp_session *s, const char * reason)
 	tree_pop(&wait_filter_data, s->id);
 
 	if (s->tx) {
-		if (s->tx->msgid) {
+		if (s->tx->msgid)
 			smtp_queue_rollback(s);
-			io_clear(&s->tx->oev);
-			iobuf_clear(&s->tx->obuf);
-		}
 		smtp_filter_tx_rollback(s);
 		smtp_tx_free(s->tx);
 	}
@@ -2256,8 +2250,7 @@ smtp_free(struct smtp_session *s, const char * reason)
 	if (s->flags & SF_SECURE && s->listener->flags & F_STARTTLS)
 		stat_decrement("smtp.tls", 1);
 
-	io_clear(&s->io);
-	iobuf_clear(&s->iobuf);
+	io_free(s->io);
 	free(s);
 
 	smtp_collect();
@@ -2346,10 +2339,10 @@ smtp_verify_certificate(struct smtp_session *s)
 	    >= sizeof req_ca_vrfy.name)
 		return 0;
 
-	x = SSL_get_peer_certificate(io_ssl(&s->io));
+	x = SSL_get_peer_certificate(io_ssl(s->io));
 	if (x == NULL)
 		return 0;
-	xchain = SSL_get_peer_cert_chain(io_ssl(&s->io));
+	xchain = SSL_get_peer_cert_chain(io_ssl(s->io));
 
 	/*
 	 * Client provided a certificate and possibly a certificate chain.
@@ -2635,9 +2628,9 @@ smtp_filter_dataline(struct smtp_session *s, const char *line)
 		return;
 	}
 
-	if (io_queued(&s->tx->oev) > DATA_HIWAT && !io_paused(&s->io, IO_PAUSE_IN)) {
+	if (io_queued(s->tx->oev) > DATA_HIWAT && !io_paused(s->io, IO_PAUSE_IN)) {
 		log_debug("debug: smtp: %p: filter congestion: pausing session", s);
-		io_pause(&s->io, IO_PAUSE_IN);
+		io_pause(s->io, IO_PAUSE_IN);
 	}
 }
 
