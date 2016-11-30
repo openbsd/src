@@ -1,0 +1,264 @@
+.\"	$OpenBSD: SSL_CTX_set_alpn_select_cb.3,v 1.1 2016/11/30 16:46:56 schwarze Exp $
+.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\"
+.\" This file was written by Todd Short <tshort@akamai.com>.
+.\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 30 2016 $
+.Dt SSL_CTX_SET_ALPN_SELECT_CB 3
+.Os
+.Sh NAME
+.Nm SSL_CTX_set_alpn_protos ,
+.Nm SSL_set_alpn_protos ,
+.Nm SSL_CTX_set_alpn_select_cb ,
+.Nm SSL_select_next_proto ,
+.Nm SSL_get0_alpn_selected
+.Nd handle application layer protocol negotiation (ALPN)
+.Sh SYNOPSIS
+.In openssl/ssl.h
+.Ft int
+.Fo SSL_CTX_set_alpn_protos
+.Fa "SSL_CTX *ctx"
+.Fa "const unsigned char *protos"
+.Fa "unsigned int protos_len"
+.Fc
+.Ft int
+.Fo SSL_set_alpn_protos
+.Fa "SSL *ssl"
+.Fa "const unsigned char *protos"
+.Fa "unsigned int protos_len"
+.Fc
+.Ft void
+.Fo SSL_CTX_set_alpn_select_cb
+.Fa "SSL_CTX *ctx"
+.Fa "int (*cb) (SSL *ssl"
+.Fa "const unsigned char **out"
+.Fa "unsigned char *outlen"
+.Fa "const unsigned char *in"
+.Fa "unsigned int inlen"
+.Fa "void *arg)"
+.Fa "void *arg"
+.Fc
+.Ft int
+.Fo SSL_select_next_proto
+.Fa "unsigned char **out"
+.Fa "unsigned char *outlen"
+.Fa "const unsigned char *server"
+.Fa "unsigned int server_len"
+.Fa "const unsigned char *client"
+.Fa "unsigned int client_len"
+.Fc
+.Ft void
+.Fo SSL_get0_alpn_selected
+.Fa "const SSL *ssl"
+.Fa "const unsigned char **data"
+.Fa "unsigned int *len"
+.Fc
+.Sh DESCRIPTION
+.Fn SSL_CTX_set_alpn_protos
+and
+.Fn SSL_set_alpn_protos
+are used by the client to set the list of protocols available to be
+negotiated.
+The
+.Fa protos
+must be in protocol-list format, described below.
+The length of
+.Fa protos
+is specified in
+.Fa protos_len .
+.Pp
+.Fn SSL_CTX_set_alpn_select_cb
+sets the application callback
+.Fa cb
+used by a server to select which protocol to use for the incoming
+connection.
+When
+.Fa cb
+is
+.Dv NULL ,
+ALPN is not used.
+The
+.Fa arg
+value is a pointer which is passed to the application callback.
+.Pp
+.Fa cb
+is the application defined callback.
+The
+.Fa in ,
+.Fa inlen
+parameters are a vector in protocol-list format.
+The value of the
+.Fa out ,
+.Fa outlen
+vector should be set to the value of a single protocol selected from the
+.Fa in ,
+.Fa inlen
+vector.
+The
+.Fa out
+buffer may point directly into
+.Fa in ,
+or to a buffer that outlives the handshake.
+The
+.Fa arg
+parameter is the pointer set via
+.Fn SSL_CTX_set_alpn_select_cb .
+.Pp
+.Fn SSL_select_next_proto
+is a helper function used to select protocols.
+It implements the standard protocol selection.
+It is expected that this function is called from the application
+callback
+.Fa cb .
+The protocol data in
+.Fa server ,
+.Fa server_len
+and
+.Fa client ,
+.Fa client_len
+must be in the protocol-list format described below.
+The first item in the
+.Fa server ,
+.Fa server_len
+list that matches an item in the
+.Fa client ,
+.Fa client_len
+list is selected, and returned in
+.Fa out ,
+.Fa outlen .
+The
+.Fa out
+value will point into either
+.Fa server
+or
+.Fa client ,
+so it should be copied immediately.
+If no match is found, the first item in
+.Fa client ,
+.Fa client_len
+is returned in
+.Fa out ,
+.Fa outlen .
+This function can also be used in the NPN callback.
+.Pp
+.Fn SSL_get0_alpn_selected
+returns a pointer to the selected protocol in
+.Fa data
+with length
+.Fa len .
+It is not NUL-terminated.
+.Fa data
+is set to
+.Dv NULL
+and
+.Fa len
+is set to 0 if no protocol has been selected.
+.Fa data
+must not be freed.
+.Pp
+The protocol-lists must be in wire-format, which is defined as a vector
+of non-empty, 8-bit length-prefixed byte strings.
+The length-prefix byte is not included in the length.
+Each string is limited to 255 bytes.
+A byte-string length of 0 is invalid.
+A truncated byte-string is invalid.
+The length of the vector is not in the vector itself, but in a separate
+variable.
+.Pp
+For example:
+.Bd -literal
+unsigned char vector[] = {
+	6, 's', 'p', 'd', 'y', '/', '1',
+	8, 'h', 't', 't', 'p', '/', '1', '.', '1'
+};
+unsigned int length = sizeof(vector);
+.Ed
+.Pp
+The ALPN callback is executed after the servername callback; as that
+servername callback may update the SSL_CTX, and subsequently, the ALPN
+callback.
+.Pp
+If there is no ALPN proposed in the ClientHello, the ALPN callback is
+not invoked.
+.Sh RETURN VALUES
+.Fn SSL_CTX_set_alpn_protos
+and
+.Fn SSL_set_alpn_protos
+return 0 on success or non-zero on failure.
+WARNING: these functions reverse the return value convention.
+.Pp
+.Fn SSL_select_next_proto
+returns one of the following:
+.Bl -tag -width Ds
+.It OPENSSL_NPN_NEGOTIATED
+A match was found and is returned in
+.Fa out ,
+.Fa outlen .
+.It OPENSSL_NPN_NO_OVERLAP
+No match was found.
+The first item in
+.Fa client ,
+.Fa client_len
+is returned in
+.Fa out ,
+.Fa outlen .
+.El
+.Pp
+The ALPN select callback
+.Fa cb
+must return one of the following:
+.Bl -tag -width Ds
+.It SSL_TLSEXT_ERR_OK
+ALPN protocol selected.
+.It SSL_TLSEXT_ERR_NOACK
+ALPN protocol not selected.
+.El
+.Sh SEE ALSO
+.Xr ssl 3 ,
+.Xr SSL_CTX_set_tlsext_servername_arg 3 ,
+.Xr SSL_CTX_set_tlsext_servername_callback 3
