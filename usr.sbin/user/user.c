@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.116 2016/11/30 10:42:38 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.117 2016/11/30 22:44:19 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -436,6 +436,9 @@ modify_gid(char *group, char *newent)
 					if (cc >= sizeof(buf)) {
 						warnx("group `%s' entry too long",
 						    newent);
+						fclose(from);
+						fclose(to);
+						unlink(f);
 						return (0);
 					}
 				}
@@ -1173,6 +1176,7 @@ adduser(char *login_name, user_t *up)
 		pw_abort();
 		errx(EXIT_FAILURE, "can't append `%s' to new groups", login_name);
 	}
+	fclose(fp);
 	close(ptmpfd);
 	if (pw_mkdb(yp ? NULL : login_name, 0) < 0) {
 		pw_abort();
@@ -1634,6 +1638,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		    }
 		}
 	}
+	fclose(master);
 	close(ptmpfd);
 	free(pw_tmp);
 	free(shell_tmp);
