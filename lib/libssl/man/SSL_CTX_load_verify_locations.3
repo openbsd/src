@@ -1,17 +1,70 @@
+.\"	$OpenBSD: SSL_CTX_load_verify_locations.3,v 1.2 2016/11/30 14:16:38 schwarze Exp $
+.\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
-.\"	$OpenBSD: SSL_CTX_load_verify_locations.3,v 1.1 2016/11/05 15:32:19 schwarze Exp $
+.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
+.\" Copyright (c) 2000, 2001, 2015, 2016 The OpenSSL Project.
+.\" All rights reserved.
 .\"
-.Dd $Mdocdate: November 5 2016 $
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: November 30 2016 $
 .Dt SSL_CTX_LOAD_VERIFY_LOCATIONS 3
 .Os
 .Sh NAME
-.Nm SSL_CTX_load_verify_locations
+.Nm SSL_CTX_load_verify_locations ,
+.Nm SSL_CTX_set_default_verify_paths
 .Nd set default locations for trusted CA certificates
 .Sh SYNOPSIS
 .In openssl/ssl.h
 .Ft int
 .Fo SSL_CTX_load_verify_locations
 .Fa "SSL_CTX *ctx" "const char *CAfile" "const char *CApath"
+.Fc
+.Ft int
+.Fo SSL_CTX_set_default_verify_paths
+.Fa "SSL_CTX *ctx"
 .Fc
 .Sh DESCRIPTION
 .Fn SSL_CTX_load_verify_locations
@@ -23,7 +76,18 @@ The certificates available via
 and
 .Fa CApath
 are trusted.
-.Sh NOTES
+.Pp
+.Fn SSL_CTX_set_default_verify_paths
+specifies that the default locations from which CA certificates are
+loaded should be used.
+There is one default directory and one default file.
+The default CA certificates directory is called
+.Pa certs
+in the default OpenSSL directory.
+The default CA certificates file is called
+.Pa cert.pem
+in the default OpenSSL directory.
+.Pp
 If
 .Fa CAfile
 is not
@@ -35,6 +99,7 @@ The file can contain several CA certificates identified by sequences of:
  ... (CA certificate in base64 encoding) ...
  -----END CERTIFICATE-----
 .Ed
+.Pp
 Before, between, and after the certificates arbitrary text is allowed which can
 be used, e.g., for descriptions of the certificates.
 .Pp
@@ -94,17 +159,10 @@ certificate chain was not explicitly specified (see
 .Xr SSL_CTX_add_extra_chain_cert 3
 and
 .Xr SSL_CTX_use_certificate 3 ) .
-.Sh WARNINGS
-If several CA certificates matching the name, key identifier, and serial
-number condition are available, only the first one will be examined.
-This may lead to unexpected results if the same CA certificate is available
-with different expiration dates.
-If a
-.Dq certificate expired
-verification error occurs, no other certificate will be searched.
-Make sure to not have expired certificates mixed with valid ones.
 .Sh RETURN VALUES
-The following return values can occur:
+For
+.Fn SSL_CTX_load_verify_locations ,
+the following return values can occur:
 .Bl -tag -width Ds
 .It 0
 The operation failed because
@@ -118,6 +176,10 @@ Check the error stack to find out the reason.
 .It 1
 The operation succeeded.
 .El
+.Pp
+.Fn SSL_CTX_set_default_verify_paths
+returns 1 on success or 0 on failure.
+A missing default location is still treated as a success.
 .Sh EXAMPLES
 Generate a CA certificate file with descriptive text from the CA certificates
 .Pa ca1.pem
@@ -159,3 +221,12 @@ $ for c in *.pem; do
 .Xr SSL_CTX_set_client_CA_list 3 ,
 .Xr SSL_CTX_use_certificate 3 ,
 .Xr SSL_get_client_CA_list 3
+.Sh CAVEATS
+If several CA certificates matching the name, key identifier, and serial
+number condition are available, only the first one will be examined.
+This may lead to unexpected results if the same CA certificate is available
+with different expiration dates.
+If a
+.Dq certificate expired
+verification error occurs, no other certificate will be searched.
+Make sure to not have expired certificates mixed with valid ones.
