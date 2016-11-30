@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.526 2016/11/30 11:52:48 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.527 2016/11/30 18:38:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -27,7 +27,6 @@
 #include "smtpd-defines.h"
 #include "smtpd-api.h"
 #include "ioev.h"
-#include "iobuf.h"
 
 #include "rfc2822.h"
 
@@ -1495,8 +1494,6 @@ void *xcalloc(size_t, size_t, const char *);
 char *xstrdup(const char *, const char *);
 void *xmemdup(const void *, size_t, const char *);
 char *strip(char *);
-void iobuf_xinit(struct iobuf *, size_t, size_t, const char *);
-void iobuf_xfqueue(struct iobuf *, const char *, const char *, ...);
 int io_xprint(struct io *, const char *);
 int io_xprintf(struct io *, const char *, ...);
 void log_envelope(const struct envelope *, const char *, const char *,
