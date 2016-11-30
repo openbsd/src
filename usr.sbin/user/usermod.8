@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.34 2016/11/29 03:59:31 jsg Exp $
+.\" $OpenBSD: usermod.8,v 1.35 2016/11/30 20:26:37 jmc Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -28,7 +28,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 29 2016 $
+.Dd $Mdocdate: November 30 2016 $
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -104,19 +104,16 @@ file.
 and
 .Fl S
 are mutually exclusive.
-.It Xo
-.Fl g Ar gid | name | Cm =uid
-.Xc
+.It Fl g Ar gid | name | Cm =uid
 Gives the group name or identifier to be used for the user's primary group.
 If this is the special string
 .Cm =uid ,
-then a UID and GID will be picked which are both unique
-and the same, and a line added to
-.Pa /etc/group
-to describe the new group.
-This value can be preset for all users
-by using the
-.Ar gid
+.Nm
+creates a group with the same ID as the UID;
+if such a group already exists a warning is given
+and no group is created.
+Groups can be preset for all users by using the
+.Ar group
 field in the
 .Pa /etc/usermgmt.conf
 file.
@@ -133,6 +130,7 @@ This value can be preset for all users by using the
 field in the
 .Pa /etc/usermgmt.conf
 file.
+See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl l Ar new-login
