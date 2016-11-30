@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.149 2016/11/30 14:31:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -140,6 +140,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
+#include <net80211/ieee80211_mira.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
@@ -3363,21 +3364,41 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
     struct iwm_node *in)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = &in->in_ni;
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwm_tx_resp *tx_resp = (void *)pkt->data;
 	int status = le16toh(tx_resp->status.status) & IWM_TX_STATUS_MSK;
-	int failack = tx_resp->failure_frame;
-
+	int txfail;
+	
 	KASSERT(tx_resp->frame_count == 1);
 
+	txfail = (status != IWM_TX_STATUS_SUCCESS &&
+	    status != IWM_TX_STATUS_DIRECT_DONE);
+
 	/* Update rate control statistics. */
-	in->in_amn.amn_txcnt++;
-	if (failack > 0) {
-		in->in_amn.amn_retrycnt++;
+	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0) {
+		in->in_amn.amn_txcnt++;
+		if (tx_resp->failure_frame > 0)
+			in->in_amn.amn_retrycnt++;
+	} else if (ic->ic_fixed_mcs == -1) {
+		int omcs = ni->ni_txmcs;
+		in->in_mn.frames += tx_resp->frame_count;
+		in->in_mn.ampdu_size = le16toh(tx_resp->byte_cnt);
+		in->in_mn.agglen = tx_resp->frame_count;
+		if (txfail) {
+			in->in_mn.retries += tx_resp->failure_frame;
+			in->in_mn.txfail += tx_resp->frame_count;
+		}
+		ieee80211_mira_choose(&in->in_mn, ic, &in->in_ni);
+		/* 
+		 * If MiRA has chosen a new TX rate we must update
+		 * the firwmare's LQ rate table from process context.
+		 */
+		if (omcs != ni->ni_txmcs)
+			task_add(systq, &sc->setrates_task);
 	}
 
-	if (status != IWM_TX_STATUS_SUCCESS &&
-	    status != IWM_TX_STATUS_DIRECT_DONE)
+	if (txfail)
 		ifp->if_oerrors++;
 	else
 		ifp->if_opackets++;
@@ -5245,21 +5266,15 @@ iwm_calib_timeout(void *arg)
 
 	s = splnet();
 	if ((ic->ic_fixed_rate == -1 || ic->ic_fixed_mcs == -1) &&
+	    ((ni->ni_flags & IEEE80211_NODE_HT) == 0) &&
 	    ic->ic_opmode == IEEE80211_M_STA && ic->ic_bss) {
-		if (ni->ni_flags & IEEE80211_NODE_HT)
-			otxrate = ni->ni_txmcs;
-		else
-			otxrate = ni->ni_txrate;
+		otxrate = ni->ni_txrate;
 		ieee80211_amrr_choose(&sc->sc_amrr, &in->in_ni, &in->in_amn);
-
 		/* 
 		 * If AMRR has chosen a new TX rate we must update
 		 * the firwmare's LQ rate table from process context.
 		 */
-		if ((ni->ni_flags & IEEE80211_NODE_HT) &&
-		    otxrate != ni->ni_txmcs)
-			task_add(systq, &sc->setrates_task);
-		else if (otxrate != ni->ni_txrate)
+		if (otxrate != ni->ni_txrate)
 			task_add(systq, &sc->setrates_task);
 	}
 	splx(s);
@@ -5409,7 +5424,7 @@ iwm_newstate_task(void *psc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state nstate = sc->ns_nstate;
 	enum ieee80211_state ostate = ic->ic_state;
-	struct iwm_node *in;
+	struct iwm_node *in = (struct iwm_node *)ic->ic_bss;
 	int arg = sc->ns_arg;
 	int err;
 
@@ -5420,8 +5435,10 @@ iwm_newstate_task(void *psc)
 	if (ostate == IEEE80211_S_SCAN && nstate != ostate)
 		iwm_led_blink_stop(sc);
 
-	if (ostate == IEEE80211_S_RUN && nstate != ostate)
+	if (ostate == IEEE80211_S_RUN && nstate != ostate) {
 		iwm_disable_beacon_filter(sc);
+		ieee80211_mira_node_destroy(&in->in_mn);
+	}
 
 	/* Reset the device if moving out of AUTH, ASSOC, or RUN. */
 	/* XXX Is there a way to switch states without a full reset? */
@@ -5478,8 +5495,6 @@ iwm_newstate_task(void *psc)
 		break;
 
 	case IEEE80211_S_RUN:
-		in = (struct iwm_node *)ic->ic_bss;
-
 		/* We have now been assigned an associd by the AP. */
 		err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 1);
 		if (err) {
@@ -5521,6 +5536,7 @@ iwm_newstate_task(void *psc)
 		}
 
 		ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
+		ieee80211_mira_node_init(&in->in_mn);
 
 		/* Start at lowest available bit-rate, AMRR will raise. */
 		in->in_ni.ni_txrate = 0;

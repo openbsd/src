@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.25 2016/11/30 14:31:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -504,6 +504,7 @@ struct iwm_node {
 
 	struct iwm_lq_cmd in_lq;
 	struct ieee80211_amrr_node in_amn;
+	struct ieee80211_mira_node in_mn;
 };
 #define IWM_STATION_ID 0
 #define IWM_AUX_STA_ID 1
