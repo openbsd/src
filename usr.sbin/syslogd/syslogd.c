@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.222 2016/11/21 16:36:10 mestre Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.223 2016/11/30 07:59:04 mestre Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -616,8 +616,8 @@ main(int argc, char *argv[])
 		} else if (ClientCertfile || ClientKeyfile) {
 			logerrorx("options -c and -k must be used together");
 		}
-		if (tls_config_set_protocols(client_config, TLS_PROTOCOLS_ALL)
-		    != 0)
+		if (tls_config_set_protocols(client_config,
+		    TLS_PROTOCOLS_ALL) != 0)
 			logerrortlsconf("Set client TLS protocols failed",
 			    client_config);
 		if (tls_config_set_ciphers(client_config, "all") != 0)
@@ -666,8 +666,8 @@ main(int argc, char *argv[])
 				logdebug("Server CAfile %s\n", ServerCAfile);
 			tls_config_verify_client(server_config);
 		}
-		if (tls_config_set_protocols(server_config, TLS_PROTOCOLS_ALL)
-		    != 0)
+		if (tls_config_set_protocols(server_config,
+		    TLS_PROTOCOLS_ALL) != 0)
 			logerrortlsconf("Set server TLS protocols failed",
 			    server_config);
 		if (tls_config_set_ciphers(server_config, "compat") != 0)
