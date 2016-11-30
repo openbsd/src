@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2016/11/05 15:59:11 vgross Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/11/30 22:21:20 vgross Exp $
 
 REGRESS_TARGETS=	vxlan_1 vxlan_2.inet vxlan_2.dyn
 REGRESS_ROOT_TARGETS=	vxlan_1 vxlan_2.inet vxlan_2.dyn
@@ -15,7 +15,7 @@ vxlan_2.inet:
 vxlan_2.dyn:
 	env SUDO=${SUDO} DYNAMIC=1 ksh ${.CURDIR}/${@:R}.sh -R "40 41 42 43 44" -f inet
 
-vxlan_2.inet:
+vxlan_2.inet6:
 	${SUDO} ksh ${.CURDIR}/${@:R}.sh -R "40 41 42 43 44" -f inet6
 
 vxlan_2.dyn6:

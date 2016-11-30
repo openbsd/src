@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$Id: vxlan_2.sh,v 1.1 2016/11/05 15:59:11 vgross Exp $
+#	$Id: vxlan_2.sh,v 1.2 2016/11/30 22:21:20 vgross Exp $
 
 
 CAPFILE=$(mktemp -t regress_vxlan.XXXXXXX)
@@ -110,7 +110,7 @@ for rdom in $RDOMAINS; do
 done
 
 rdomain_is_used $VNETID || abort_test "rdomain $rdom already in use"
-iface_exists "bridge$VNETID" && abort_test "interface pair${id}1 already exists"
+iface_exists "bridge$VNETID" && abort_test "interface bridge${VNETID} already exists"
 $SUDO ifconfig "bridge$VNETID" rdomain "$VNETID" $IFCONFIG_OPTS up
 
 case $AF in
