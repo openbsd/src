@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.64 2016/11/30 12:58:28 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.65 2016/11/30 13:53:14 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -146,10 +146,10 @@ fetch_and_verify()
 	[[ -n ${_tgz} ]]
 
 	[[ -f ${_sig} ]] || \
-		unpriv -f "${_sig}" ${_FETCH} -o "${_sig}" "${PATCH_PATH}/SHA256.sig"
+		unpriv -f "${_sig}" ${_FETCH} -o "${_sig}" "${_URL}/SHA256.sig"
 
 	unpriv -f "${_TMP}/${_tgz}" ${_FETCH} -mD "Get/Verify" -o \
-		"${_TMP}/${_tgz}" "${PATCH_PATH}/${_tgz}"
+		"${_TMP}/${_tgz}" "${_URL}/${_tgz}"
 
 	(cd ${_TMP} && unpriv signify -qC -p \
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub -x SHA256.sig \
@@ -231,7 +231,7 @@ ls_missing()
 	local _index=${_TMP}/index.txt _installed _p
 	_installed="$(ls_installed)"
 
-	unpriv -f "${_index}" ${_FETCH} -o "${_index}" "${PATCH_PATH}/index.txt"
+	unpriv -f "${_index}" ${_FETCH} -o "${_index}" "${_URL}/index.txt"
 
 	for _p in $(grep -o "syspatch${_OSrev}-[0-9][0-9][0-9]_.*" ${_index} |
 		sed "s/^syspatch${_OSrev}-//;s/.tgz$//"| sort -V); do
@@ -324,17 +324,14 @@ set -A _KERNV -- $(sysctl -n kern.version |
 [[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|r)) ]] &&
 	[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
 
-# XXX to be discussed; check for $ARCH?
-[[ -d ${PATCH_PATH} ]] && PATCH_PATH="file://$(readlink -f ${PATCH_PATH})"
-[[ ${PATCH_PATH%%://*} == @(file|ftp|http|https) ]] ||
-	sp_err "No valid PATCH_PATH set"
-
 [[ $(sysctl -n hw.ncpufound) -gt 1 ]] && _BSDMP=true || _BSDMP=false
 _FETCH="ftp -MVk ${FTP_KEEPALIVE-0}"
 _OSrev=${_KERNV[0]%\.*}${_KERNV[0]#*\.}
 _PDIR="/var/syspatch"
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
-readonly _BSDMP _FETCH _OSrev _PDIR _REL _TMP
+# XXX to be discussed
+_URL=http://syspatch.openbsd.org/pub/OpenBSD/${_KERNV[0]}/syspatch/$(machine)
+readonly _BSDMP _FETCH _OSrev _PDIR _REL _TMP _URL
 
 trap 'set +e; rm -rf "${_TMP}"' EXIT
 trap exit HUP INT TERM
