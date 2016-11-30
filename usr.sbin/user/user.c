@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.115 2016/11/29 16:11:44 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.116 2016/11/30 10:42:38 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1496,12 +1496,20 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		if (up->u_flags & F_GROUP) {
 			/* if -g=uid was specified, check gid is unused */
 			if (strcmp(up->u_primgrp, "=uid") == 0) {
-				if (getgrgid((gid_t)(up->u_uid)) != NULL) {
+				if (getgrgid((gid_t)(pwp->pw_uid)) != NULL) {
 					close(ptmpfd);
 					pw_abort();
-					errx(EXIT_FAILURE, "gid %u is already in use", up->u_uid);
+					errx(EXIT_FAILURE, "gid %u is already "
+					    "in use", pwp->pw_uid);
 				}
-				pwp->pw_gid = up->u_uid;
+				pwp->pw_gid = pwp->pw_uid;
+				if (!creategid(newlogin, pwp->pw_uid, "")) {
+					close(ptmpfd);
+					pw_abort();
+					errx(EXIT_FAILURE, "could not create "
+					    "group %s with uid %u", newlogin,
+					    pwp->pw_uid);
+				}
 			} else {
 				if ((grp = find_group_info(up->u_primgrp)) == NULL) {
 					close(ptmpfd);
