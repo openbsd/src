@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.66 2016/11/30 15:19:16 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.67 2016/12/01 10:58:54 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -158,16 +158,14 @@ install_file()
 
 install_kernel()
 {
-	local _bsd=/bsd _kern=$1
+	local _bsd _kern=$1
 	[[ -n ${_kern} ]]
 
 	if ${_BSDMP}; then
-		[[ ${_kern##*/} == bsd ]] && _bsd=/bsd.sp
+		[[ ${_kern##*/} == bsd ]] && _bsd=bsd.sp
+		[[ ${_kern##*/} == bsd.mp ]] && _bsd=bsd
 	fi
-
-	if [[ -n ${_bsd} ]]; then
-		install -FS ${_kern} ${_bsd}
-	fi
+	install -FS ${_kern} /${_bsd:-${_kern##*/}}
 }
 
 ls_installed()
