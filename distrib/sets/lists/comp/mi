@@ -1927,6 +1927,7 @@
 ./usr/share/man/man3/SSL_CTX_set_msg_callback.3
 ./usr/share/man/man3/SSL_CTX_set_options.3
 ./usr/share/man/man3/SSL_CTX_set_quiet_shutdown.3
+./usr/share/man/man3/SSL_CTX_set_read_ahead.3
 ./usr/share/man/man3/SSL_CTX_set_session_cache_mode.3
 ./usr/share/man/man3/SSL_CTX_set_session_id_context.3
 ./usr/share/man/man3/SSL_CTX_set_ssl_version.3
