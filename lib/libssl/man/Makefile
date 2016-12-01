@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.41 2016/12/01 16:02:14 schwarze Exp $
+# $OpenBSD: Makefile,v 1.42 2016/12/01 16:48:36 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,7 @@ MAN =	BIO_f_ssl.3 \
 	SSL_CTX_set_msg_callback.3 \
 	SSL_CTX_set_options.3 \
 	SSL_CTX_set_quiet_shutdown.3 \
+	SSL_CTX_set_read_ahead.3 \
 	SSL_CTX_set_session_cache_mode.3 \
 	SSL_CTX_set_session_id_context.3 \
 	SSL_CTX_set_ssl_version.3 \
