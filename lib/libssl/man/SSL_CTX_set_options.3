@@ -1,7 +1,57 @@
+.\"	$OpenBSD: SSL_CTX_set_options.3,v 1.2 2016/12/01 15:40:14 schwarze Exp $
+.\"	OpenSSL 361a1191 Dec 6 17:56:41 2015 +0100
 .\"
-.\"	$OpenBSD: SSL_CTX_set_options.3,v 1.1 2016/11/05 15:32:19 schwarze Exp $
+.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>,
+.\" Bodo Moeller <bodo@openssl.org>, and
+.\" Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2001-2003, 2005, 2007, 2009, 2010, 2013-2015
+.\" The OpenSSL Project.  All rights reserved.
 .\"
-.Dd $Mdocdate: November 5 2016 $
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: December 1 2016 $
 .Dt SSL_CTX_SET_OPTIONS 3
 .Os
 .Sh NAME
@@ -30,8 +80,6 @@
 .Ft long
 .Fn SSL_get_secure_renegotiation_support "SSL *ssl"
 .Sh DESCRIPTION
-Note: all these functions are implemented using macros.
-.Pp
 .Fn SSL_CTX_set_options
 adds the options set via bitmask in
 .Fa options
@@ -68,7 +116,9 @@ returns the options set for
 .Pp
 .Fn SSL_get_secure_renegotiation_support
 indicates whether the peer supports secure renegotiation.
-.Sh NOTES
+.Pp
+All these functions are implemented using macros.
+.Pp
 The behaviour of the SSL library can be changed by setting several options.
 The options are coded as bitmasks and can be combined by a bitwise OR
 operation (|).
@@ -99,42 +149,8 @@ The following
 .Em bug workaround
 options are available:
 .Bl -tag -width Ds
-.It Dv SSL_OP_MICROSOFT_SESS_ID_BUG
-As of
-.Ox 5.8 ,
-this option has no effect.
-.It Dv SSL_OP_NETSCAPE_CHALLENGE_BUG
-As of
-.Ox 5.8 ,
-this option has no effect.
-.It Dv SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
-As of OpenSSL 0.9.8q and 1.0.0c, this option has no effect.
-.It Dv SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
-As of
-.Ox 5.8 ,
-this option has no effect.
-.It Dv SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
-As of
-.Ox 5.8 ,
-this option has no effect.
-.It Dv SSL_OP_SAFARI_ECDHE_ECDSA_BUG
-As of
-.Ox 5.8 ,
-this option has no effect.
-.It Dv SSL_OP_SSLEAY_080_CLIENT_DH_BUG
-As of
-.Ox 5.8 ,
-this option has no effect.
-.It Dv SSL_OP_TLS_D5_BUG
-As of
-.Ox 5.8 ,
-this option has no effect.
-.It Dv SSL_OP_TLS_BLOCK_PADDING_BUG
-As of
-.Ox 5.8 ,
-this option has no effect.
 .It Dv SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
-Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol vulnerability
+Disables a countermeasure against a TLS 1.0 protocol vulnerability
 affecting CBC ciphers, which cannot be handled by some broken SSL
 implementations.
 This option has no effect for connections using other ciphers.
@@ -166,53 +182,11 @@ the server only understands up to SSLv3.
 In this case the client must still use the same SSLv3.1=TLSv1 announcement.
 Some clients step down to SSLv3 with respect to the server's answer and violate
 the version rollback protection.)
-.It Dv SSL_OP_SINGLE_DH_USE
-Always create a new key when using temporary/ephemeral DH parameters
-(see
-.Xr SSL_CTX_set_tmp_dh_callback 3 ) .
-This option must be used to prevent small subgroup attacks, when the DH
-parameters were not generated using
-.Dq strong
-primes (e.g., when using DSA-parameters, see
-.Xr openssl 1 ) .
-If
-.Dq strong
-primes were used, it is not strictly necessary to generate a new DH key during
-each handshake but it is also recommended.
-.Dv SSL_OP_SINGLE_DH_USE
-should therefore be enabled whenever temporary/ephemeral DH parameters are used.
-.It SSL_OP_EPHEMERAL_RSA
-Always use ephemeral (temporary) RSA key when doing RSA operations (see
-.Xr SSL_CTX_set_tmp_rsa_callback 3 ) .
-According to the specifications, this is only done when a RSA key can only be
-used for signature operations (namely under export ciphers with restricted RSA
-keylength).
-By setting this option, ephemeral RSA keys are always used.
-This option breaks compatibility with the SSL/TLS specifications and may lead
-to interoperability problems with clients and should therefore never be used.
-Ciphers with EDH (ephemeral Diffie-Hellman) key exchange should be used instead.
 .It Dv SSL_OP_CIPHER_SERVER_PREFERENCE
 When choosing a cipher, use the server's preferences instead of the client
 preferences.
-When not set, the SSL server will always follow the client's preferences.
-When set, the SSLv3/TLSv1 server will choose following its own preferences.
-Because of the different protocol, for SSLv2 the server will send its list of
-preferences to the client and the client chooses.
-.It Dv SSL_OP_NETSCAPE_CA_DN_BUG
-As of
-.Ox 5.8 ,
-this option has no effect.
-.It Dv SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
-As of
-.Ox 5.8 ,
-this option has no effect.
-.It Dv SSL_OP_NO_SSLv2
-As of
-.Ox 5.6 ,
-this option has no effect as SSLv2 support has been removed.
-In previous versions it disabled use of the SSLv2 protocol.
-.It Dv SSL_OP_NO_SSLv3
-Do not use the SSLv3 protocol.
+When not set, the server will always follow the client's preferences.
+When set, the server will choose following its own preferences.
 .It Dv SSL_OP_NO_TLSv1
 Do not use the TLSv1.0 protocol.
 .It Dv SSL_OP_NO_TLSv1_1
@@ -229,15 +203,6 @@ RFC4507bis tickets for stateless session resumption.
 .Pp
 If this option is set this functionality is disabled and tickets will not be
 used by clients or servers.
-.It Dv SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
-As of
-.Ox 5.6 ,
-this option has no effect.
-In previous versions it allowed legacy insecure renegotiation between OpenSSL
-and unpatched clients or servers.
-See the
-.Sx SECURE RENEGOTIATION
-section for more details.
 .It Dv SSL_OP_LEGACY_SERVER_CONNECT
 Allow legacy insecure renegotiation between OpenSSL and unpatched servers
 .Em only :
@@ -246,15 +211,31 @@ See the
 .Sx SECURE RENEGOTIATION
 section for more details.
 .El
+.Pp
+The following options used to be supported at some point in the past
+and no longer have any effect:
+.Dv SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION ,
+.Dv SSL_OP_EPHEMERAL_RSA ,
+.Dv SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER ,
+.Dv SSL_OP_MICROSOFT_SESS_ID_BUG ,
+.Dv SSL_OP_NETSCAPE_CA_DN_BUG ,
+.Dv SSL_OP_NETSCAPE_CHALLENGE_BUG ,
+.Dv SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG ,
+.Dv SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG ,
+.Dv SSL_OP_NO_SSLv2 ,
+.Dv SSL_OP_NO_SSLv3 ,
+.Dv SSL_OP_PKCS1_CHECK_1 ,
+.Dv SSL_OP_PKCS1_CHECK_2 ,
+.Dv SSL_OP_SAFARI_ECDHE_ECDSA_BUG ,
+.Dv SSL_OP_SINGLE_DH_USE ,
+.Dv SSL_OP_SSLEAY_080_CLIENT_DH_BUG ,
+.Dv SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG ,
+.Dv SSL_OP_TLS_BLOCK_PADDING_BUG ,
+.Dv SSL_OP_TLS_D5_BUG .
 .Sh SECURE RENEGOTIATION
 OpenSSL 0.9.8m and later always attempts to use secure renegotiation as
 described in RFC5746.
 This counters the prefix attack described in CVE-2009-3555 and elsewhere.
-.Pp
-The deprecated and highly broken SSLv2 protocol does not support renegotiation
-at all; its use is
-.Em strongly
-discouraged.
 .Pp
 This attack has far-reaching consequences which application writers should be
 aware of.
@@ -273,9 +254,7 @@ Connections and renegotiation are always permitted by OpenSSL implementations.
 The initial connection succeeds but client renegotiation is denied by the
 server with a
 .Em no_renegotiation
-warning alert if TLS v1.0 is used or a fatal
-.Em handshake_failure
-alert in SSL v3.0.
+warning alert.
 .Pp
 If the patched OpenSSL server attempts to renegotiate a fatal
 .Em handshake_failure
@@ -320,7 +299,7 @@ be set by default in a future version of OpenSSL.
 OpenSSL client applications wishing to ensure they can connect to unpatched
 servers should always
 .Em set
-.Dv SSL_OP_LEGACY_SERVER_CONNECT
+.Dv SSL_OP_LEGACY_SERVER_CONNECT .
 .Pp
 OpenSSL client applications that want to ensure they can
 .Em not
@@ -355,41 +334,9 @@ returns 1 is the peer supports secure renegotiation and 0 if it does not.
 .Xr openssl 1 ,
 .Xr ssl 3 ,
 .Xr SSL_clear 3 ,
-.Xr SSL_CTX_set_tmp_dh_callback 3 ,
-.Xr SSL_CTX_set_tmp_rsa_callback 3 ,
 .Xr SSL_new 3
 .Sh HISTORY
-.Dv SSL_OP_CIPHER_SERVER_PREFERENCE
-and
-.Dv SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
-have been added in
-OpenSSL 0.9.7.
-.Pp
-.Dv SSL_OP_TLS_ROLLBACK_BUG
-has been added in OpenSSL 0.9.6 and was automatically enabled with
-.Dv SSL_OP_ALL .
-As of 0.9.7, it is no longer included in
-.Dv SSL_OP_ALL
-and must be explicitly set.
-.Pp
-.Dv SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
-has been added in OpenSSL 0.9.6e.
-Versions up to OpenSSL 0.9.6c do not include the countermeasure that can be
-disabled with this option (in OpenSSL 0.9.6d, it was always enabled).
-.Pp
 .Fn SSL_CTX_clear_options
 and
 .Fn SSL_clear_options
 were first added in OpenSSL 0.9.8m.
-.Pp
-.Dv SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION ,
-.Dv SSL_OP_LEGACY_SERVER_CONNECT
-and the function
-.Fn SSL_get_secure_renegotiation_support
-were first added in OpenSSL 0.9.8m.
-.Pp
-.Dv SSL_OP_NO_SSLv2
-and
-.Dv SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
-were changed to have no effect in
-.Ox 5.6 .
