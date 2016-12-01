@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.150 2016/11/25 23:33:39 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.151 2016/12/01 01:37:17 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -130,7 +130,13 @@ static struct drm_ioctl_desc drm_ioctls[] = {
 #ifdef __linux__
 	DRM_IOCTL_DEF(DRM_IOCTL_SET_MASTER, drm_setmaster_ioctl, DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_DROP_MASTER, drm_dropmaster_ioctl, DRM_ROOT_ONLY),
+#else
+	/* On OpenBSD xorg privdrop has already occurred before this point */
+	DRM_IOCTL_DEF(DRM_IOCTL_SET_MASTER, drm_noop, DRM_UNLOCKED|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF(DRM_IOCTL_DROP_MASTER, drm_noop, DRM_UNLOCKED|DRM_RENDER_ALLOW),
+#endif
 
+#ifdef __linux__
 	DRM_IOCTL_DEF(DRM_IOCTL_ADD_CTX, drm_addctx, DRM_AUTH|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_RM_CTX, drm_rmctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 #endif

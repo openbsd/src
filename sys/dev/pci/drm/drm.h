@@ -1,4 +1,4 @@
-/* $OpenBSD: drm.h,v 1.21 2016/11/25 23:33:39 jsg Exp $ */
+/* $OpenBSD: drm.h,v 1.22 2016/12/01 01:37:17 jsg Exp $ */
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager
@@ -763,6 +763,9 @@ struct drm_pciinfo {
 
 #define DRM_IOCTL_SET_SAREA_CTX		DRM_IOW( 0x1c, struct drm_ctx_priv_map)
 #define DRM_IOCTL_GET_SAREA_CTX		DRM_IOWR(0x1d, struct drm_ctx_priv_map)
+
+#define DRM_IOCTL_SET_MASTER		DRM_IO(0x1e)
+#define DRM_IOCTL_DROP_MASTER		DRM_IO(0x1f)
 
 #define DRM_IOCTL_ADD_CTX		DRM_IOWR(0x20, struct drm_ctx)
 #define DRM_IOCTL_RM_CTX		DRM_IOWR(0x21, struct drm_ctx)
