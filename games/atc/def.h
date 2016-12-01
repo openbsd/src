@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.5 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: def.h,v 1.6 2016/12/01 20:08:59 fcambus Exp $	*/
 /*	$NetBSD: def.h,v 1.3 1995/03/21 15:03:47 cgd Exp $	*/
 
 /*-
@@ -45,10 +45,6 @@
  */
 
 #define AUTHOR_STR		"ATC - by Ed James"
-
-#ifndef M_PI
-#define M_PI			3.14159265358979323846
-#endif
 
 #define LOWFUEL			15
 
