@@ -1,7 +1,7 @@
 .\"
-.\"	$OpenBSD: ssl.3,v 1.2 2016/11/30 16:21:53 schwarze Exp $
+.\"	$OpenBSD: ssl.3,v 1.3 2016/12/01 16:02:14 schwarze Exp $
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: December 1 2016 $
 .Dt SSL 3
 .Os
 .Sh NAME
@@ -594,26 +594,6 @@ session instead of a context.
 .Ft int
 .Fn SSL_CTX_use_certificate_file "SSL_CTX *ctx" "char *file" "int type"
 .Xc
-.It Xo
-.Ft void
-.Fo SSL_CTX_set_psk_client_callback
-.Fa "SSL_CTX *ctx"
-.Fa "unsigned int (*callback)(SSL *ssl, const char *hint, char *identity, \
-unsigned int max_identity_len, unsigned char *psk, unsigned int max_psk_len)"
-.Fc
-.Xc
-.It Xo
-.Ft int
-.Fn SSL_CTX_use_psk_identity_hint "SSL_CTX *ctx" "const char *hint"
-.Xc
-.It Xo
-.Ft void
-.Fo SSL_CTX_set_psk_server_callback
-.Fa "SSL_CTX *ctx"
-.Fa "unsigned int (*callback)(SSL *ssl, const char *identity, \
-unsigned char *psk, int max_psk_len)"
-.Fc
-.Xc
 .El
 .Ss DEALING WITH SESSIONS
 Here we document the various API functions which deal with the SSL/TLS sessions
@@ -1159,34 +1139,6 @@ size_t len, SSL *ssl, void *arg)"
 .Ft int
 .Fn SSL_write "SSL *ssl" "const void *buf" "int num"
 .Xc
-.It Xo
-.Ft void
-.Fo SSL_set_psk_client_callback
-.Fa "SSL *ssl"
-.Fa "unsigned int (*callback)(SSL *ssl, const char *hint, char *identity, \
-unsigned int max_identity_len, unsigned char *psk, unsigned int max_psk_len)"
-.Fc
-.Xc
-.It Xo
-.Ft int
-.Fn SSL_use_psk_identity_hint "SSL *ssl" "const char *hint"
-.Xc
-.It Xo
-.Ft void
-.Fo SSL_set_psk_server_callback
-.Fa "SSL *ssl"
-.Fa "unsigned int (*callback)(SSL *ssl, const char *identity, \
-unsigned char *psk, int max_psk_len)"
-.Fc
-.Xc
-.It Xo
-.Ft const char *
-.Fn SSL_get_psk_identity_hint "SSL *ssl"
-.Xc
-.It Xo
-.Ft const char *
-.Fn SSL_get_psk_identity "SSL *ssl"
-.Xc
 .El
 .Sh SEE ALSO
 .Xr openssl 1 ,
@@ -1222,7 +1174,6 @@ unsigned char *psk, int max_psk_len)"
 .Xr SSL_CTX_set_mode 3 ,
 .Xr SSL_CTX_set_msg_callback 3 ,
 .Xr SSL_CTX_set_options 3 ,
-.Xr SSL_CTX_set_psk_client_callback 3 ,
 .Xr SSL_CTX_set_quiet_shutdown 3 ,
 .Xr SSL_CTX_set_session_cache_mode 3 ,
 .Xr SSL_CTX_set_session_id_context 3 ,
@@ -1232,7 +1183,6 @@ unsigned char *psk, int max_psk_len)"
 .Xr SSL_CTX_set_tmp_rsa_callback 3 ,
 .Xr SSL_CTX_set_verify 3 ,
 .Xr SSL_CTX_use_certificate 3 ,
-.Xr SSL_CTX_use_psk_identity_hint 3 ,
 .Xr SSL_do_handshake 3 ,
 .Xr SSL_get_ciphers 3 ,
 .Xr SSL_get_client_CA_list 3 ,
@@ -1242,7 +1192,6 @@ unsigned char *psk, int max_psk_len)"
 .Xr SSL_get_ex_new_index 3 ,
 .Xr SSL_get_fd 3 ,
 .Xr SSL_get_peer_cert_chain 3 ,
-.Xr SSL_get_psk_identity 3 ,
 .Xr SSL_get_rbio 3 ,
 .Xr SSL_get_session 3 ,
 .Xr SSL_get_SSL_CTX 3 ,
