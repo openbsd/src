@@ -1926,7 +1926,6 @@
 ./usr/share/man/man3/SSL_CTX_set_mode.3
 ./usr/share/man/man3/SSL_CTX_set_msg_callback.3
 ./usr/share/man/man3/SSL_CTX_set_options.3
-./usr/share/man/man3/SSL_CTX_set_psk_client_callback.3
 ./usr/share/man/man3/SSL_CTX_set_quiet_shutdown.3
 ./usr/share/man/man3/SSL_CTX_set_session_cache_mode.3
 ./usr/share/man/man3/SSL_CTX_set_session_id_context.3
@@ -1936,7 +1935,6 @@
 ./usr/share/man/man3/SSL_CTX_set_tmp_rsa_callback.3
 ./usr/share/man/man3/SSL_CTX_set_verify.3
 ./usr/share/man/man3/SSL_CTX_use_certificate.3
-./usr/share/man/man3/SSL_CTX_use_psk_identity_hint.3
 ./usr/share/man/man3/SSL_SESSION_free.3
 ./usr/share/man/man3/SSL_SESSION_get_ex_new_index.3
 ./usr/share/man/man3/SSL_SESSION_get_time.3
@@ -1957,7 +1955,6 @@
 ./usr/share/man/man3/SSL_get_fd.3
 ./usr/share/man/man3/SSL_get_peer_cert_chain.3
 ./usr/share/man/man3/SSL_get_peer_certificate.3
-./usr/share/man/man3/SSL_get_psk_identity.3
 ./usr/share/man/man3/SSL_get_rbio.3
 ./usr/share/man/man3/SSL_get_session.3
 ./usr/share/man/man3/SSL_get_verify_result.3
