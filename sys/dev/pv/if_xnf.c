@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.42 2016/11/29 14:55:04 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.43 2016/12/02 15:12:41 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -834,27 +834,27 @@ xnf_rx_ring_create(struct xnf_softc *sc)
 
 	/* Allocate a page of memory for the ring */
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
-	    &sc->sc_rx_seg, 1, &rsegs, BUS_DMA_ZERO | BUS_DMA_WAITOK)) {
+	    &sc->sc_rx_seg, 1, &rsegs, BUS_DMA_ZERO | BUS_DMA_NOWAIT)) {
 		printf("%s: failed to allocate memory for the rx ring\n",
 		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
 	/* Map in the allocated memory into the ring structure */
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_rx_seg, 1, PAGE_SIZE,
-	    (caddr_t *)(&sc->sc_rx_ring), BUS_DMA_WAITOK)) {
+	    (caddr_t *)(&sc->sc_rx_ring), BUS_DMA_NOWAIT)) {
 		printf("%s: failed to map memory for the rx ring\n",
 		    sc->sc_dev.dv_xname);
 		goto errout;
 	}
 	/* Create a map to load the ring memory into */
 	if (bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
-	    BUS_DMA_WAITOK, &sc->sc_rx_rmap)) {
+	    BUS_DMA_NOWAIT, &sc->sc_rx_rmap)) {
 		printf("%s: failed to create a memory map for the rx ring\n",
 		    sc->sc_dev.dv_xname);
 		goto errout;
 	}
 	/* Load the ring into the ring map to extract the PA */
-	flags = (sc->sc_domid << 16) | BUS_DMA_WAITOK;
+	flags = (sc->sc_domid << 16) | BUS_DMA_NOWAIT;
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_rx_rmap, sc->sc_rx_ring,
 	    PAGE_SIZE, NULL, flags)) {
 		printf("%s: failed to load the rx ring map\n",
@@ -867,7 +867,7 @@ xnf_rx_ring_create(struct xnf_softc *sc)
 
 	for (i = 0; i < XNF_RX_DESC; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XNF_MCLEN, 1, XNF_MCLEN,
-		    PAGE_SIZE, BUS_DMA_WAITOK, &sc->sc_rx_dmap[i])) {
+		    PAGE_SIZE, BUS_DMA_NOWAIT, &sc->sc_rx_dmap[i])) {
 			printf("%s: failed to create a memory map for the"
 			    " rx slot %d\n", sc->sc_dev.dv_xname, i);
 			goto errout;
@@ -942,27 +942,27 @@ xnf_tx_ring_create(struct xnf_softc *sc)
 
 	/* Allocate a page of memory for the ring */
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
-	    &sc->sc_tx_seg, 1, &rsegs, BUS_DMA_ZERO | BUS_DMA_WAITOK)) {
+	    &sc->sc_tx_seg, 1, &rsegs, BUS_DMA_ZERO | BUS_DMA_NOWAIT)) {
 		printf("%s: failed to allocate memory for the tx ring\n",
 		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
 	/* Map in the allocated memory into the ring structure */
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_tx_seg, 1, PAGE_SIZE,
-	    (caddr_t *)&sc->sc_tx_ring, BUS_DMA_WAITOK)) {
+	    (caddr_t *)&sc->sc_tx_ring, BUS_DMA_NOWAIT)) {
 		printf("%s: failed to map memory for the tx ring\n",
 		    sc->sc_dev.dv_xname);
 		goto errout;
 	}
 	/* Create a map to load the ring memory into */
 	if (bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
-	    BUS_DMA_WAITOK, &sc->sc_tx_rmap)) {
+	    BUS_DMA_NOWAIT, &sc->sc_tx_rmap)) {
 		printf("%s: failed to create a memory map for the tx ring\n",
 		    sc->sc_dev.dv_xname);
 		goto errout;
 	}
 	/* Load the ring into the ring map to extract the PA */
-	flags = (sc->sc_domid << 16) | BUS_DMA_WAITOK;
+	flags = (sc->sc_domid << 16) | BUS_DMA_NOWAIT;
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_tx_rmap, sc->sc_tx_ring,
 	    PAGE_SIZE, NULL, flags)) {
 		printf("%s: failed to load the tx ring map\n",
@@ -982,7 +982,7 @@ xnf_tx_ring_create(struct xnf_softc *sc)
 	}
 	for (i = 0; i < XNF_TX_DESC; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, segsz, nsegs, XNF_MCLEN,
-		    PAGE_SIZE, BUS_DMA_WAITOK, &sc->sc_tx_dmap[i])) {
+		    PAGE_SIZE, BUS_DMA_NOWAIT, &sc->sc_tx_dmap[i])) {
 			printf("%s: failed to create a memory map for the"
 			    " tx slot %d\n", sc->sc_dev.dv_xname, i);
 			goto errout;
