@@ -1,5 +1,5 @@
 /* Automatically generated from ofp.h, do not edit */
-/*	$OpenBSD: ofp_map.c,v 1.1 2016/11/18 17:37:03 reyk Exp $	*/
+/*	$OpenBSD: ofp_map.c,v 1.2 2016/12/02 17:10:20 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -307,7 +307,7 @@ struct constmap ofp_errtype_map[] = {
 };
 struct constmap ofp_errflowmod_map[] = {
 	{ OFP_ERRFLOWMOD_UNKNOWN, "UNKNOWN" },
-	{ OFP_ERRFLOWMOD_ALL_TABLES_FULL, "ALL_TABLES_FULL" },
+	{ OFP_ERRFLOWMOD_TABLE_FULL, "TABLE_FULL" },
 	{ OFP_ERRFLOWMOD_TABLE_ID, "TABLE_ID" },
 	{ OFP_ERRFLOWMOD_OVERLAP, "OVERLAP" },
 	{ OFP_ERRFLOWMOD_EPERM, "EPERM" },
@@ -350,7 +350,7 @@ struct constmap ofp_errreq_map[] = {
 	{ OFP_ERRREQ_EXPERIMENTER, "EXPERIMENTER" },
 	{ OFP_ERRREQ_EXP_TYPE, "EXP_TYPE" },
 	{ OFP_ERRREQ_EPERM, "EPERM" },
-	{ OFP_ERRREQ_LEN, "LEN" },
+	{ OFP_ERRREQ_BAD_LEN, "BAD_LEN" },
 	{ OFP_ERRREQ_BUFFER_EMPTY, "BUFFER_EMPTY" },
 	{ OFP_ERRREQ_BUFFER_UNKNOWN, "BUFFER_UNKNOWN" },
 	{ OFP_ERRREQ_TABLE_ID, "TABLE_ID" },

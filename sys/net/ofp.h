@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.12 2016/11/22 13:01:32 rzalamena Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.13 2016/12/02 17:10:20 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -540,7 +540,7 @@ struct ofp_error {
 #define OFP_ERRREQ_EXPERIMENTER		3	/* Experimenter id not supported */
 #define OFP_ERRREQ_EXP_TYPE		4	/* Experimenter type not supported  */
 #define OFP_ERRREQ_EPERM		5	/* Permission error */
-#define OFP_ERRREQ_LEN			6	/* Wrong request length for type */
+#define OFP_ERRREQ_BAD_LEN		6	/* Wrong request length for type */
 #define OFP_ERRREQ_BUFFER_EMPTY		7	/* Specified buffer has already been used */
 #define OFP_ERRREQ_BUFFER_UNKNOWN	8	/* Specified buffer does not exist */
 #define OFP_ERRREQ_TABLE_ID		9	/* Specified table-id invalid or does not exit */
@@ -559,8 +559,8 @@ struct ofp_error {
 #define OFP_ERRACTION_EPERM		6	/* Permission error */
 #define OFP_ERRACTION_TOO_MANY		7	/* Can't handle this many actions */
 #define OFP_ERRACTION_BAD_QUEUE		8	/* Problem validating output queue */
-#define OFP_ERRACTION_BAD_OUT_GROPU	9	/* Invalid group id in forward action */
-#define OFP_ERRACTION_MATCH_INCONSIST	10	/* Action can't apply or Set-Field failed */
+#define OFP_ERRACTION_BAD_OUT_GROUP	9	/* Invalid group id in forward action */
+#define OFP_ERRACTION_MATCH_INCONSISTENT 10	/* Action can't apply or Set-Field failed */
 #define OFP_ERRACTION_UNSUPPORTED_ORDER	11	/* Action order is unsupported for Apply-Actions */
 #define OFP_ERRACTION_TAG		12	/* Actions uses an unsupported tag/encap */
 #define OFP_ERRACTION_SET_TYPE		13	/* Unsupported type in SET_FIELD action */
@@ -594,7 +594,7 @@ struct ofp_error {
 
 /* FLOW MOD error codes */
 #define OFP_ERRFLOWMOD_UNKNOWN		0	/* Unknown */
-#define OFP_ERRFLOWMOD_ALL_TABLES_FULL	1	/* Not added, full tables */
+#define OFP_ERRFLOWMOD_TABLE_FULL	1	/* Table is full */
 #define OFP_ERRFLOWMOD_TABLE_ID		2	/* Invalid table id */
 #define OFP_ERRFLOWMOD_OVERLAP		3	/* Overlapping flow */
 #define OFP_ERRFLOWMOD_EPERM		4	/* Permissions error */
