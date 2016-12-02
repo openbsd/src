@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.42 2016/12/02 17:06:13 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.43 2016/12/02 17:25:34 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4866,6 +4866,7 @@ swofp_flow_entry_put_instructions(struct mbuf *m,
 int
 swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 {
+	struct swofp_ofs		*ofs = sc->sc_ofs;
 	struct ofp_header		*oh;
 	struct ofp_flow_mod		*ofm;
 	struct ofp_match		*om;
@@ -4902,14 +4903,19 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 		goto ofp_error;
 	}
 
-	/* Validate that the OXM are in-place and correct. */
-	if (swofp_validate_flow_match(om, &error)) {
-		etype = OFP_ERRTYPE_BAD_MATCH;
+	if ((swft = swofp_flow_table_add(sc, ofm->fm_table_id)) == NULL) {
+		error = OFP_ERRFLOWMOD_TABLE_ID;
 		goto ofp_error;
 	}
 
-	if ((swft = swofp_flow_table_add(sc, ofm->fm_table_id)) == NULL) {
-		error = OFP_ERRFLOWMOD_TABLE_ID;
+	if (swft->swft_flow_num >= ofs->swofs_flow_max_entry) {
+		error = OFP_ERRFLOWMOD_TABLE_FULL;
+		goto ofp_error;
+	}
+
+	/* Validate that the OXM are in-place and correct. */
+	if (swofp_validate_flow_match(om, &error)) {
+		etype = OFP_ERRTYPE_BAD_MATCH;
 		goto ofp_error;
 	}
 
