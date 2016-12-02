@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_intr.c,v 1.14 2016/11/20 15:02:25 visa Exp $	*/
+/*	$OpenBSD: octeon_intr.c,v 1.15 2016/12/02 15:01:07 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -211,6 +211,26 @@ octeon_intr_makemasks()
 	octeon_imask[cpuid][IPL_NONE] = 0;
 }
 
+static inline int
+octeon_next_irq(uint64_t *isr)
+{
+	uint64_t irq, tmp = *isr;
+
+	if (tmp == 0)
+		return -1;
+
+	asm volatile (
+	"	.set push\n"
+	"	.set mips64\n"
+	"	dclz	%0, %0\n"
+	"	.set pop\n"
+	: "=r" (tmp) : "0" (tmp));
+
+	irq = 63u - tmp;
+	*isr &= ~(1u << irq);
+	return irq;
+}
+
 /*
  * Interrupt dispatcher.
  */
@@ -218,18 +238,18 @@ uint32_t
 octeon_iointr(uint32_t hwpend, struct trapframe *frame)
 {
 	struct cpu_info *ci = curcpu();
-	int cpuid = cpu_number();
-	uint64_t imr, isr, mask;
-	int ipl;
-	int bit;
 	struct intrhand *ih;
-	int rc;
-	uint64_t sum0 = CIU_IP2_SUM0(cpuid);
-	uint64_t en0 = CIU_IP2_EN0(cpuid);
+	uint64_t imr, isr, mask;
+	uint64_t en0 = CIU_IP2_EN0(ci->ci_cpuid);
+	uint64_t sum0 = CIU_IP2_SUM0(ci->ci_cpuid);
+	int handled, ipl, irq;
+#ifdef MULTIPROCESSOR
+	register_t sr;
+	int need_lock;
+#endif
 
 	isr = bus_space_read_8(&iobus_tag, iobus_h, sum0);
 	imr = bus_space_read_8(&iobus_tag, iobus_h, en0);
-	bit = 63;
 
 	isr &= imr;
 	if (isr == 0)
@@ -244,84 +264,63 @@ octeon_iointr(uint32_t hwpend, struct trapframe *frame)
 	 * If interrupts are spl-masked, mask them and wait for splx()
 	 * to reenable them when necessary.
 	 */
-	if ((mask = isr & octeon_imask[cpuid][frame->ipl]) != 0) {
+	if ((mask = isr & octeon_imask[ci->ci_cpuid][frame->ipl]) != 0) {
 		isr &= ~mask;
 		imr &= ~mask;
 	}
+	if (isr == 0)
+		return hwpend;
 
 	/*
 	 * Now process allowed interrupts.
 	 */
-	if (isr != 0) {
-		int lvl, bitno;
-		uint64_t tmpisr;
 
-		__asm__ (".set noreorder\n");
-		ipl = ci->ci_ipl;
-		mips_sync();
-		__asm__ (".set reorder\n");
+	__asm__ (".set noreorder\n");
+	ipl = ci->ci_ipl;
+	mips_sync();
+	__asm__ (".set reorder\n");
 
-		/* Service higher level interrupts first */
-		for (lvl = NIPLS - 1; lvl != IPL_NONE; lvl--) {
-			tmpisr = isr & (octeon_imask[cpuid][lvl] ^ octeon_imask[cpuid][lvl - 1]);
-			if (tmpisr == 0)
-				continue;
-			for (bitno = bit, mask = 1UL << bitno; mask != 0;
-			    bitno--, mask >>= 1) {
-				if ((tmpisr & mask) == 0)
-					continue;
-
-				rc = 0;
-				for (ih = octeon_intrhand[bitno]; ih != NULL;
-				    ih = ih->ih_next) {
+	while ((irq = octeon_next_irq(&isr)) >= 0) {
+		handled = 0;
+		for (ih = octeon_intrhand[irq]; ih != NULL; ih = ih->ih_next) {
+			splraise(ih->ih_level);
 #ifdef MULTIPROCESSOR
-					register_t sr;
-					int need_lock;
-#endif
-					splraise(ih->ih_level);
-#ifdef MULTIPROCESSOR
-					if (ih->ih_level < IPL_IPI) {
-						sr = getsr();
-						ENABLEIPI();
-					}
-					if (ih->ih_flags & IH_MPSAFE)
-						need_lock = 0;
-					else
-						need_lock =
-						    ih->ih_level < IPL_CLOCK;
-					if (need_lock)
-						__mp_lock(&kernel_lock);
-#endif
-					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
-						rc = 1;
-						atomic_inc_long((unsigned long *)
-						    &ih->ih_count.ec_count);
-					}
-#ifdef MULTIPROCESSOR
-					if (need_lock)
-						__mp_unlock(&kernel_lock);
-					if (ih->ih_level < IPL_IPI)
-						setsr(sr);
-#endif
-					__asm__ (".set noreorder\n");
-					ci->ci_ipl = ipl;
-					mips_sync();
-					__asm__ (".set reorder\n");
-				}
-				if (rc == 0)
-					printf("spurious interrupt %d\n", bitno);
-
-				isr ^= mask;
-				if ((tmpisr ^= mask) == 0)
-					break;
+			if (ih->ih_level < IPL_IPI) {
+				sr = getsr();
+				ENABLEIPI();
 			}
+			if (ih->ih_flags & IH_MPSAFE)
+				need_lock = 0;
+			else
+				need_lock = ih->ih_level < IPL_CLOCK;
+			if (need_lock)
+				__mp_lock(&kernel_lock);
+#endif
+			if ((*ih->ih_fun)(ih->ih_arg) != 0) {
+				handled = 1;
+				atomic_inc_long(
+				    (unsigned long *)&ih->ih_count.ec_count);
+			}
+#ifdef MULTIPROCESSOR
+			if (need_lock)
+				__mp_unlock(&kernel_lock);
+			if (ih->ih_level < IPL_IPI)
+				setsr(sr);
+#endif
 		}
-
-		/*
-		 * Reenable interrupts which have been serviced.
-		 */
-		bus_space_write_8(&iobus_tag, iobus_h, en0, imr);
+		if (!handled)
+			printf("spurious interrupt %d\n", irq);
 	}
+
+	__asm__ (".set noreorder\n");
+	ci->ci_ipl = ipl;
+	mips_sync();
+	__asm__ (".set reorder\n");
+
+	/*
+	 * Reenable interrupts which have been serviced.
+	 */
+	bus_space_write_8(&iobus_tag, iobus_h, en0, imr);
 
 	return hwpend;
 }
