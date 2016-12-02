@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_intr.c,v 1.15 2016/12/02 15:01:07 visa Exp $	*/
+/*	$OpenBSD: octeon_intr.c,v 1.16 2016/12/02 15:05:05 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -54,8 +54,6 @@ extern bus_space_handle_t iobus_h;
 void	 octeon_intr_makemasks(void);
 void	 octeon_splx(int);
 uint32_t octeon_iointr(uint32_t, struct trapframe *);
-uint32_t octeon_aux(uint32_t, struct trapframe *);
-int	 octeon_iointr_skip(struct intrhand *, uint64_t, uint64_t);
 void	 octeon_setintrmask(int);
 
 struct intrhand *octeon_intrhand[OCTEON_NINTS];
@@ -82,10 +80,6 @@ octeon_intr_init(void)
  * Establish an interrupt handler called from the dispatcher.
  * The interrupt function established should return zero if there was nothing
  * to serve (no int) and non-zero when an interrupt was serviced.
- *
- * Interrupts are numbered from 1 and up where 1 maps to HW int 0.
- * XXX There is no reason to keep this... except for hardcoded interrupts
- * XXX in kernel configuration files...
  */
 void *
 octeon_intr_establish(int irq, int level,
