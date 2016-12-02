@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.41 2016/12/02 10:07:47 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.42 2016/12/02 17:06:13 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -973,7 +973,7 @@ swofp_create(struct switch_softc *sc)
 	timeout_add_sec(&swofs->swofs_flow_timeout, 10);
 
 	/* TODO: Configured from ifconfig  */
-	swofs->swofs_group_table_num = 1000;
+	swofs->swofs_group_max_table = 1000;
 	swofs->swofs_flow_max_entry = 10000;
 
 	sc->sc_capabilities |= SWITCH_CAP_OFP;
@@ -1073,7 +1073,7 @@ swofp_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		bparam->ifbrp_maxflow = swofs->swofs_flow_max_entry;
 		break;
 	case SIOCSWGMAXGROUP:
-		bparam->ifbrp_maxgroup = swofs->swofs_group_table_num;
+		bparam->ifbrp_maxgroup = swofs->swofs_group_max_table;
 		break;
 	case SIOCSWSPORTNO:
 		if ((error = suser(curproc, 0)) != 0)
@@ -5180,11 +5180,17 @@ swofp_flow_mod(struct switch_softc *sc, struct mbuf *m)
 int
 swofp_group_mod_add(struct switch_softc *sc, struct mbuf *m)
 {
+	struct swofp_ofs		*ofs = sc->sc_ofs;
 	struct ofp_group_mod		*ogm;
 	struct swofp_group_entry	*swge;
 	int				 error;
 
 	ogm = mtod(m, struct ofp_group_mod *);
+
+	if (ofs->swofs_group_table_num >= ofs->swofs_group_max_table) {
+		error = OFP_ERRGROUPMOD_OUT_OF_GROUPS;
+		goto failed;
+	}
 
 	if (ntohl(ogm->gm_group_id) > OFP_GROUP_ID_MAX) {
 		error = OFP_ERRGROUPMOD_INVALID_GROUP;
