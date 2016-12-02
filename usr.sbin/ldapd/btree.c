@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.36 2016/03/20 00:01:22 krw Exp $ */
+/*	$OpenBSD: btree.c,v 1.37 2016/12/02 05:52:01 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -1176,6 +1176,8 @@ btree_close(struct btree *bt)
 		DPRINTF("ref is zero, closing btree %p", bt);
 		close(bt->fd);
 		mpage_flush(bt);
+		free(bt->lru_queue);
+		free(bt->path);
 		free(bt->page_cache);
 		free(bt);
 	} else
