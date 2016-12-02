@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1807 2016/11/25 18:28:28 mikeb Exp 
+ *	OpenBSD: pcidevs,v 1.1809 2016/12/02 16:43:45 mikeb Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3350,7 +3350,7 @@
 #define	PCI_PRODUCT_INTEL_I217_V	0x153b		/* I217-V */
 #define	PCI_PRODUCT_INTEL_DSL3510	0x1547		/* DSL3510 Thunderbolt */
 #define	PCI_PRODUCT_INTEL_DSL3510_PCIE	0x1549		/* DSL3510 Thunderbolt */
-#define	PCI_PRODUCT_INTEL_82599_SFP_SF_QP	0x154a		/* 82599 QSFP+ */
+#define	PCI_PRODUCT_INTEL_82599_SFP_SF_QP	0x154a		/* 82599 */
 #define	PCI_PRODUCT_INTEL_XL710_VF	0x154c		/* XL710/X710 VF */
 #define	PCI_PRODUCT_INTEL_82599_SFP_SF2	0x154d		/* 82599 */
 #define	PCI_PRODUCT_INTEL_82599EN_SFP	0x1557		/* 82599EN */
