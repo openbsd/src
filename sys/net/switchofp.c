@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.40 2016/11/30 19:58:29 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.41 2016/12/02 10:07:47 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4733,7 +4733,7 @@ swofp_send_flow_removed(struct switch_softc *sc, struct swofp_flow_entry *swfe,
 
 	ofr->fr_oh.oh_version = OFP_V_1_3;
 	ofr->fr_oh.oh_type = OFP_T_FLOW_REMOVED;
-	ofr->fr_oh.oh_xid = htons(sc->sc_ofs->swofs_xidnxt++);
+	ofr->fr_oh.oh_xid = htonl(sc->sc_ofs->swofs_xidnxt++);
 
 	ofr->fr_cookie = htobe64(swfe->swfe_cookie);
 	ofr->fr_priority = htons(swfe->swfe_priority);
