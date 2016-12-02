@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_common.c,v 1.8 2016/11/22 17:21:56 rzalamena Exp $	*/
+/*	$OpenBSD: ofp_common.c,v 1.9 2016/12/02 14:39:46 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -288,6 +288,32 @@ ofp_recv_hello(struct switchd *sc, struct switch_connection *con,
 		return (ofp_setversion(con, oh->oh_version));
 
 	return (0);
+}
+
+int
+ofp_send_featuresrequest(struct switchd *sc, struct switch_connection *con)
+{
+	struct ofp_header	*oh;
+	struct ibuf		*ibuf;
+	int			 rv = -1;
+
+	if ((ibuf = ibuf_static()) == NULL ||
+	    (oh = ibuf_advance(ibuf, sizeof(*oh))) == NULL)
+		return (-1);
+
+	oh->oh_version = con->con_version;
+	oh->oh_type = OFP_T_FEATURES_REQUEST;
+	oh->oh_length = htons(ibuf_length(ibuf));
+	oh->oh_xid = htonl(con->con_xidnxt++);
+	if (ofp_validate(sc, &con->con_local, &con->con_peer, oh, ibuf,
+	    con->con_version) != 0)
+		goto done;
+
+	rv = ofp_output(con, NULL, ibuf);
+
+ done:
+	ibuf_free(ibuf);
+	return (rv);
 }
 
 /* Appends an action with just the generic header. */

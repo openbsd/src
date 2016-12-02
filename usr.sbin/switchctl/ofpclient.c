@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofpclient.c,v 1.4 2016/11/24 09:23:11 reyk Exp $	*/
+/*	$OpenBSD: ofpclient.c,v 1.5 2016/12/02 14:39:46 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,6 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 {
 	struct switch_connection con;
 	struct switchd		 sc;
-	struct ofp_header	 oh;
 	int			 s, timeout;
 
 	memset(&sc, 0, sizeof(sc));
@@ -107,15 +106,7 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 
 	log_verbose(res->verbose);
 
-	oh.oh_version = OFP_V_1_3;
-	oh.oh_type = OFP_T_HELLO;
-	oh.oh_length = htons(sizeof(oh));
-	oh.oh_xid = htonl(1);
-	if (ofp_validate(&sc, &con.con_local, &con.con_peer, &oh,
-	    NULL, oh.oh_version) != 0)
-		fatal("ofp_validate");
-	ofp_output(&con, &oh, NULL);
-
+	ofp_send_hello(&sc, &con, OFP_V_1_3);
 	ofpclient_read(&con, timeout);
 
 	log_verbose(res->quiet ? res->verbose : 2);
@@ -125,7 +116,7 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 		ofp13_desc(&sc, &con);
 		break;
 	case DUMP_FEATURES:
-		ofp13_featuresrequest(&sc, &con);
+		ofp_send_featuresrequest(&sc, &con);
 		break;
 	case DUMP_FLOWS:
 		ofp13_flow_stats(&sc, &con, OFP_PORT_ANY, OFP_GROUP_ID_ANY,
@@ -253,4 +244,43 @@ struct macaddr *
 switch_cached(struct switch_control *sw, uint8_t *ea)
 {
 	return (NULL);
+}
+
+int
+ofp_nextstate(struct switchd *sc, struct switch_connection *con,
+    enum ofp_state state)
+{
+	int		rv = 0;
+
+	switch (con->con_state) {
+	case OFP_STATE_CLOSED:
+		if (state != OFP_STATE_HELLO_WAIT)
+			return (-1);
+		break;
+
+	case OFP_STATE_HELLO_WAIT:
+		if (state != OFP_STATE_FEATURE_WAIT)
+			return (-1);
+
+		rv = ofp_send_featuresrequest(sc, con);
+		break;
+
+	case OFP_STATE_FEATURE_WAIT:
+		if (state != OFP_STATE_ESTABLISHED)
+			return (-1);
+		break;
+
+	case OFP_STATE_ESTABLISHED:
+		if (state != OFP_STATE_CLOSED)
+			return (-1);
+		break;
+
+	default:
+		return (-1);
+	}
+
+	/* Set the next state. */
+	con->con_state = state;
+
+	return (rv);
 }

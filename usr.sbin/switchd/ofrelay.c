@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrelay.c,v 1.8 2016/11/17 16:24:00 rzalamena Exp $	*/
+/*	$OpenBSD: ofrelay.c,v 1.9 2016/12/02 14:39:46 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -403,6 +403,7 @@ ofrelay_attach(struct switch_server *srv, int s, struct sockaddr *sa)
 	con->con_id = ++ofrelay_conid;
 	con->con_instance = ps->ps_instance + 1;
 	con->con_srv = srv;
+	con->con_state = OFP_STATE_CLOSED;
 	SLIST_INIT(&con->con_mmlist);
 
 	memcpy(&con->con_peer, sa, sa->sa_len);

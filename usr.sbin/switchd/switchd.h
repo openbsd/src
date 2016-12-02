@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.26 2016/11/22 17:21:56 rzalamena Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.27 2016/12/02 14:39:46 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -94,6 +94,7 @@ struct switch_connection {
 	in_port_t		 con_port;
 	uint32_t		 con_xidnxt;
 	int			 con_version;
+	enum ofp_state		 con_state;
 
 	struct event		 con_ev;
 	struct ibuf		*con_rbuf;
@@ -244,6 +245,8 @@ void		 ofp_close(struct switch_connection *);
 int		 ofp_open(struct privsep *, struct switch_connection *);
 void		 ofp_accept(int, short, void *);
 int		 ofp_input(struct switch_connection *, struct ibuf *);
+int		 ofp_nextstate(struct switchd *, struct switch_connection *,
+		    enum ofp_state);
 
 /* ofp10.c */
 int		 ofp10_hello(struct switchd *, struct switch_connection *,
@@ -271,7 +274,11 @@ int		 ofp13_featuresrequest(struct switchd *,
 		    struct switch_connection *);
 struct ofp_flow_mod *
 		 ofp13_flowmod(struct switch_connection *, struct ibuf *,
-		     uint8_t, uint8_t, uint16_t, uint16_t, uint16_t);
+		    uint8_t, uint8_t, uint16_t, uint16_t, uint16_t);
+int		 ofp13_setconfig(struct switchd *, struct switch_connection *,
+		    uint16_t, uint16_t);
+int		 ofp13_tablemiss_sendctrl(struct switchd *,
+		    struct switch_connection *, uint8_t);
 
 /* ofp_common.c */
 int		 ofp_validate_header(struct switchd *,
@@ -355,6 +362,8 @@ int		 ofp_recv_hello(struct switchd *, struct switch_connection *,
 		    struct ofp_header *, struct ibuf *);
 int		 ofp_send_hello(struct switchd *, struct switch_connection *,
 		    int);
+int		 ofp_send_featuresrequest(struct switchd *,
+		    struct switch_connection *);
 
 /* ofcconn.c */
 void		 ofcconn(struct privsep *, struct privsep_proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.16 2016/11/22 17:21:56 rzalamena Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.17 2016/12/02 14:39:46 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -132,10 +132,21 @@ ofp_input(struct switch_connection *con, struct ibuf *ibuf)
 		return (-1);
 	}
 
-	if (con->con_version != OFP_V_0 &&
+	/* Check for message version match. */
+	if (con->con_state > OFP_STATE_HELLO_WAIT &&
+	    con->con_version != OFP_V_0 &&
 	    oh->oh_version != con->con_version) {
-		log_debug("wrong version %d, expected %d",
-		    oh->oh_version, con->con_version);
+		log_debug("wrong version %s, expected %s",
+		    print_map(oh->oh_version, ofp_v_map),
+		    print_map(con->con_version, ofp_v_map));
+		return (-1);
+	}
+
+	/* Check the state machine to decide whether or not to allow. */
+	if (con->con_state <= OFP_STATE_HELLO_WAIT &&
+	    oh->oh_type > OFP_T_ERROR) {
+		log_debug("expected hello, got %s",
+		    print_map(oh->oh_type, ofp_t_map));
 		return (-1);
 	}
 
@@ -177,6 +188,9 @@ ofp_open(struct privsep *ps, struct switch_connection *con)
 	if (ofp_send_hello(ps->ps_env, con, OFP_V_1_3) == -1)
 		return (-1);
 
+	if (ofp_nextstate(ps->ps_env, con, OFP_STATE_HELLO_WAIT) == -1)
+		return (-1);
+
 	return (0);
 }
 
@@ -184,4 +198,62 @@ void
 ofp_close(struct switch_connection *con)
 {
 	ofrelay_close(con);
+}
+
+int
+ofp_nextstate(struct switchd *sc, struct switch_connection *con,
+    enum ofp_state state)
+{
+	int		rv = 0;
+
+	switch (con->con_state) {
+	case OFP_STATE_CLOSED:
+		if (state != OFP_STATE_HELLO_WAIT)
+			return (-1);
+
+		break;
+
+	case OFP_STATE_HELLO_WAIT:
+		if (state != OFP_STATE_FEATURE_WAIT)
+			return (-1);
+
+		rv = ofp_send_featuresrequest(sc, con);
+		break;
+
+	case OFP_STATE_FEATURE_WAIT:
+		if (state != OFP_STATE_ESTABLISHED)
+			return (-1);
+
+		if (con->con_version != OFP_V_1_3)
+			break;
+
+#if 0
+		/* Let's not ask this while we don't use it. */
+		ofp13_flow_stats(sc, con, OFP_PORT_ANY, OFP_GROUP_ID_ANY,
+		    OFP_TABLE_ID_ALL);
+		ofp13_table_features(sc, con, 0);
+		ofp13_desc(sc, con);
+#endif
+		rv |= ofp13_setconfig(sc, con, OFP_CONFIG_FRAG_NORMAL,
+		    OFP_CONTROLLER_MAXLEN_NO_BUFFER);
+
+		/* Use table '0' for switch(4) and '100' for HP 3800. */
+		rv |= ofp13_tablemiss_sendctrl(sc, con, 0);
+		break;
+
+
+	case OFP_STATE_ESTABLISHED:
+		if (state != OFP_STATE_CLOSED)
+			return (-1);
+
+		break;
+
+	default:
+		return (-1);
+	}
+
+	/* Set the next state. */
+	con->con_state = state;
+
+	return (rv);
 }

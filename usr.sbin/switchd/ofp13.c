@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.40 2016/11/22 17:21:56 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.41 2016/12/02 14:39:46 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -103,10 +103,6 @@ struct ofp_bucket *
 int	 ofp13_setconfig_validate(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
-int	 ofp13_setconfig(struct switchd *, struct switch_connection *,
-	    uint16_t, uint16_t);
-int	 ofp13_tablemiss_sendctrl(struct switchd *, struct switch_connection *,
-	    uint8_t);
 
 struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_HELLO,			ofp13_hello, ofp_validate_hello },
@@ -642,11 +638,7 @@ ofp13_hello(struct switchd *sc, struct switch_connection *con,
 	if (ofp_recv_hello(sc, con, oh, ibuf) == -1)
 		return (-1);
 
-	/* Ask for switch features so we can get more information. */
-	if (ofp13_featuresrequest(sc, con) == -1)
-		return (-1);
-
-	return (0);
+	return (ofp_nextstate(sc, con, OFP_STATE_FEATURE_WAIT));
 }
 
 int
@@ -683,20 +675,7 @@ int
 ofp13_features_reply(struct switchd *sc, struct switch_connection *con,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
-#if 0
-	/* Let's not ask this while we don't use it. */
-	ofp13_flow_stats(sc, con, OFP_PORT_ANY, OFP_GROUP_ID_ANY,
-	    OFP_TABLE_ID_ALL);
-	ofp13_table_features(sc, con, 0);
-	ofp13_desc(sc, con);
-#endif
-	ofp13_setconfig(sc, con, OFP_CONFIG_FRAG_NORMAL,
-	    OFP_CONTROLLER_MAXLEN_NO_BUFFER);
-
-	/* Use table '0' for switch(4) and '100' for HP 3800. */
-	ofp13_tablemiss_sendctrl(sc, con, 0);
-
-	return (0);
+	return (ofp_nextstate(sc, con, OFP_STATE_ESTABLISHED));
 }
 
 int
@@ -2056,31 +2035,6 @@ ofp13_setconfig(struct switchd *sc, struct switch_connection *con,
 	oh = &cfg->cfg_oh;
 	oh->oh_version = OFP_V_1_3;
 	oh->oh_type = OFP_T_SET_CONFIG;
-	oh->oh_length = htons(ibuf_length(ibuf));
-	oh->oh_xid = htonl(con->con_xidnxt++);
-	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)
-		goto done;
-
-	rv = ofp_output(con, NULL, ibuf);
-
- done:
-	ibuf_free(ibuf);
-	return (rv);
-}
-
-int
-ofp13_featuresrequest(struct switchd *sc, struct switch_connection *con)
-{
-	struct ibuf			*ibuf;
-	struct ofp_header		*oh;
-	int				 rv = -1;
-
-	if ((ibuf = ibuf_static()) == NULL ||
-	    (oh = ibuf_advance(ibuf, sizeof(*oh))) == NULL)
-		goto done;
-
-	oh->oh_version = OFP_V_1_3;
-	oh->oh_type = OFP_T_FEATURES_REQUEST;
 	oh->oh_length = htons(ibuf_length(ibuf));
 	oh->oh_xid = htonl(con->con_xidnxt++);
 	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, ibuf) != 0)

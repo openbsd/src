@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.18 2016/11/22 22:05:20 rzalamena Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.19 2016/12/02 14:39:46 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -262,8 +262,7 @@ int
 ofp10_hello(struct switchd *sc, struct switch_connection *con,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
-	if (oh->oh_version == OFP_V_1_0 &&
-	    switch_add(con) == NULL) {
+	if (switch_add(con) == NULL) {
 		log_debug("%s: failed to add switch", __func__);
 		return (-1);
 	}
@@ -271,21 +270,14 @@ ofp10_hello(struct switchd *sc, struct switch_connection *con,
 	if (ofp_recv_hello(sc, con, oh, ibuf) == -1)
 		return (-1);
 
-	oh->oh_type = OFP10_T_FEATURES_REQUEST;
-	oh->oh_length = htons(sizeof(*oh));
-	oh->oh_xid = htonl(con->con_xidnxt++);
-	if (ofp10_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
-		return (-1);
-
-	return (ofp_output(con, oh, NULL));
+	return (ofp_nextstate(sc, con, OFP_STATE_FEATURE_WAIT));
 }
 
 int
 ofp10_features_reply(struct switchd *sc, struct switch_connection *con,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
-	/* Nothing yet. */
-	return (0);
+	return (ofp_nextstate(sc, con, OFP_STATE_ESTABLISHED));
 }
 
 int
