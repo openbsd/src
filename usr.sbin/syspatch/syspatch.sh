@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.67 2016/12/01 10:58:54 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.68 2016/12/02 08:34:28 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -48,7 +48,7 @@ apply_patch()
 	create_rollback ${_patch} "${_files}"
 
 	for _file in ${_files}; do
-		((${_ret} == 0)) || break
+		((_ret == 0)) || break
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_explodir}/${_file} || _ret=$?
 		else
@@ -56,7 +56,7 @@ apply_patch()
 		fi
 	done
 
-	if ((${_ret} != 0)); then
+	if ((_ret != 0)); then
 		sp_err "Failed to apply patch ${_patch##${_OSrev}-}" 0
 		rollback_patch; return ${_ret}
 	fi
@@ -88,9 +88,8 @@ checkfs()
 		mount | grep -v read-only | grep -q "^/dev/${_d} " ||
 			sp_err "Remote or read-only filesystem, aborting"
 		_df=$(df -Pk | grep "^/dev/${_d} " | tr -s ' ' | cut -d ' ' -f4)
-		_sz=$(($((${_d}))/1024))
-		[[ ${_df} -gt ${_sz} ]] ||
-			sp_err "No space left on device ${_d}, aborting"
+		_sz=$(($((_d))/1024))
+		((_df > _sz)) || sp_err "No space left on ${_d}, aborting"
 	done
 }
 
@@ -247,7 +246,7 @@ rollback_patch()
 	checkfs ${_files} ${_PDIR} # check for read-only /var/syspatch
 
 	for _file in ${_files}; do
-		((${_ret} == 0)) || break
+		((_ret == 0)) || break
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_explodir}/${_file} || _ret=$?
 			# remove the backup kernel if all kernel syspatches have
@@ -259,7 +258,7 @@ rollback_patch()
 		fi
 	done
 
-	rm -r ${_PDIR}/${_patch} && ((${_ret} == 0)) ||
+	((_ret == 0)) && rm -r ${_PDIR}/${_patch} ||
 		sp_err "Failed to revert patch ${_patch##${_OSrev}-}" ${_ret}
 }
 
@@ -311,7 +310,7 @@ set -A _KERNV -- $(sysctl -n kern.version |
 [[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|r)) ]] &&
 	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
 
-[[ $(sysctl -n hw.ncpufound) -gt 1 ]] && _BSDMP=true || _BSDMP=false
+(($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
 _FETCH="ftp -MVk ${FTP_KEEPALIVE-0}"
 _OSrev=${_KERNV[0]%\.*}${_KERNV[0]#*\.}
 _PDIR="/var/syspatch"
@@ -336,7 +335,7 @@ done
 shift $((OPTIND -1))
 [[ $# -ne 0 ]] && usage
 
-if ((${OPTIND} == 1)); then
+if ((OPTIND == 1)); then
 	for _PATCH in $(ls_missing); do
 		apply_patch ${_OSrev}-${_PATCH}
 	done
