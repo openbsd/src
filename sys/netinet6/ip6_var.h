@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.64 2016/08/24 09:41:12 mpi Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.65 2016/12/02 11:16:04 mpi Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ int	none_input(struct mbuf **, int *, int);
 int	in6_pcbselsrc(struct in6_addr **, struct sockaddr_in6 *,
 	    struct inpcb *, struct ip6_pktopts *);
 int	in6_selectsrc(struct in6_addr **, struct sockaddr_in6 *,
-	    struct ip6_moptions *, struct route_in6 *, u_int);
+	    struct ip6_moptions *, unsigned int);
 struct rtentry *in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 	    struct route_in6 *, unsigned int rtableid);
 

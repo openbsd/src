@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.52 2016/11/29 10:09:57 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.53 2016/12/02 11:16:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -768,7 +768,7 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 		ip6->ip6_hlim = ip6_defhlim;
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&satosin6(src)->sin6_addr)) {
-		error = in6_selectsrc(&in6a, satosin6(dst), NULL, NULL,
+		error = in6_selectsrc(&in6a, satosin6(dst), NULL,
 		    sc->sc_rdomain);
 		if (error != 0) {
 			m_freem(m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.80 2016/09/02 13:53:44 vgross Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.81 2016/12/02 11:16:04 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -99,7 +99,6 @@ in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	struct route_in6 *ro = &inp->inp_route6;
 	struct in6_addr *laddr = &inp->inp_laddr6;
 	u_int rtableid = inp->inp_rtableid;
-
 	struct ifnet *ifp = NULL;
 	struct in6_addr *dst;
 	struct in6_ifaddr *ia6 = NULL;
@@ -172,7 +171,55 @@ in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 		return (0);
 	}
 
-	return in6_selectsrc(in6src, dstsock, mopts, ro, rtableid);
+	error = in6_selectsrc(in6src, dstsock, mopts, rtableid);
+	if (error != EADDRNOTAVAIL)
+		return (error);
+
+	/*
+	 * If route is known or can be allocated now,
+	 * our src addr is taken from the i/f, else punt.
+	 */
+	if (!rtisvalid(ro->ro_rt) || (ro->ro_tableid != rtableid) ||
+	    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst)) {
+		rtfree(ro->ro_rt);
+		ro->ro_rt = NULL;
+	}
+	if (ro->ro_rt == NULL) {
+		struct sockaddr_in6 *sa6;
+
+		/* No route yet, so try to acquire one */
+		bzero(&ro->ro_dst, sizeof(struct sockaddr_in6));
+		ro->ro_tableid = rtableid;
+		sa6 = &ro->ro_dst;
+		sa6->sin6_family = AF_INET6;
+		sa6->sin6_len = sizeof(struct sockaddr_in6);
+		sa6->sin6_addr = *dst;
+		sa6->sin6_scope_id = dstsock->sin6_scope_id;
+		ro->ro_rt = rtalloc(sin6tosa(&ro->ro_dst),
+		    RT_RESOLVE, ro->ro_tableid);
+	}
+
+	/*
+	 * in_pcbconnect() checks out IFF_LOOPBACK to skip using
+	 * the address. But we don't know why it does so.
+	 * It is necessary to ensure the scope even for lo0
+	 * so doesn't check out IFF_LOOPBACK.
+	 */
+
+	if (ro->ro_rt) {
+		ifp = if_get(ro->ro_rt->rt_ifidx);
+		if (ifp != NULL) {
+			ia6 = in6_ifawithscope(ifp, dst, rtableid);
+			if_put(ifp);
+		}
+		if (ia6 == NULL) /* xxx scope error ?*/
+			ia6 = ifatoia6(ro->ro_rt->rt_ifa);
+	}
+	if (ia6 == NULL)
+		return (EHOSTUNREACH);	/* no route */
+
+	*in6src = &ia6->ia_addr.sin6_addr;
+	return (0);
 }
 
 /*
@@ -183,7 +230,7 @@ in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
  */
 int
 in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
-    struct ip6_moptions *mopts, struct route_in6 *ro, u_int rtableid)
+    struct ip6_moptions *mopts, unsigned int rtableid)
 {
 	struct ifnet *ifp = NULL;
 	struct in6_addr *dst;
@@ -239,54 +286,6 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 			*in6src = &ia6->ia_addr.sin6_addr;
 			return (0);
 		}
-	}
-
-	/*
-	 * If route is known or can be allocated now,
-	 * our src addr is taken from the i/f, else punt.
-	 */
-	if (ro) {
-		if (!rtisvalid(ro->ro_rt) || (ro->ro_tableid != rtableid) ||
-		    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst)) {
-			rtfree(ro->ro_rt);
-			ro->ro_rt = NULL;
-		}
-		if (ro->ro_rt == NULL) {
-			struct sockaddr_in6 *sa6;
-
-			/* No route yet, so try to acquire one */
-			bzero(&ro->ro_dst, sizeof(struct sockaddr_in6));
-			ro->ro_tableid = rtableid;
-			sa6 = &ro->ro_dst;
-			sa6->sin6_family = AF_INET6;
-			sa6->sin6_len = sizeof(struct sockaddr_in6);
-			sa6->sin6_addr = *dst;
-			sa6->sin6_scope_id = dstsock->sin6_scope_id;
-			ro->ro_rt = rtalloc(sin6tosa(&ro->ro_dst),
-			    RT_RESOLVE, ro->ro_tableid);
-		}
-
-		/*
-		 * in_pcbconnect() checks out IFF_LOOPBACK to skip using
-		 * the address. But we don't know why it does so.
-		 * It is necessary to ensure the scope even for lo0
-		 * so doesn't check out IFF_LOOPBACK.
-		 */
-
-		if (ro->ro_rt) {
-			ifp = if_get(ro->ro_rt->rt_ifidx);
-			if (ifp != NULL) {
-				ia6 = in6_ifawithscope(ifp, dst, rtableid);
-				if_put(ifp);
-			}
-			if (ia6 == NULL) /* xxx scope error ?*/
-				ia6 = ifatoia6(ro->ro_rt->rt_ifa);
-		}
-		if (ia6 == NULL)
-			return (EHOSTUNREACH);	/* no route */
-
-		*in6src = &ia6->ia_addr.sin6_addr;
-		return (0);
 	}
 
 	return (EADDRNOTAVAIL);
