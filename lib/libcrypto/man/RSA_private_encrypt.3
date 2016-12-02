@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_private_encrypt.3,v 1.3 2016/11/29 16:46:41 schwarze Exp $
+.\"	$OpenBSD: RSA_private_encrypt.3,v 1.4 2016/12/02 19:28:41 jmc Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 29 2016 $
+.Dd $Mdocdate: December 2 2016 $
 .Dt RSA_PRIVATE_ENCRYPT 3
 .Os
 .Sh NAME
@@ -127,7 +127,7 @@ must point to a memory section large enough to hold the message digest
 is the padding mode that was used to sign the data.
 .Sh RETURN VALUES
 .Fn RSA_private_encrypt
-returns the size of the signature (i.e.,
+returns the size of the signature (i.e.\&
 .Fn RSA_size rsa ) .
 .Fn RSA_public_decrypt
 returns the size of the recovered message digest.

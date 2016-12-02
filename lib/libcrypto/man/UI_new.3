@@ -1,6 +1,6 @@
-.\"	$OpenBSD: UI_new.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: UI_new.3,v 1.3 2016/12/02 19:28:41 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: December 2 2016 $
 .Dt UI_NEW 3
 .Os
 .Sh NAME
@@ -27,8 +27,7 @@
 .Nm UI_get_default_method ,
 .Nm UI_get_method ,
 .Nm UI_set_method ,
-.Nm UI_OpenSSL ,
-.Nm ERR_load_UI_strings
+.Nm UI_OpenSSL
 .Nd New User Interface
 .Sh SYNOPSIS
 .In openssl/ui.h
@@ -181,7 +180,7 @@
 .Fa void
 .Fc
 .Sh DESCRIPTION
-UI stands for User Interface, and is general purpose set of routines
+UI stands for User Interface, and is a general purpose set of routines
 to prompt the user for text-based information.
 Through user-written methods (see
 .Xr ui_create 3 ) ,
@@ -269,7 +268,7 @@ The given information is used to prompt for information, for example
 a password, and to verify a password (i.e. having the user enter
 it twice and check that the same string was entered twice).
 .Fn UI_add_verify_string
-takes and extra argument that should be a pointer to the result buffer
+takes an extra argument that should be a pointer to the result buffer
 of the input string that it's supposed to verify, or verification will
 fail.
 .Pp
@@ -318,7 +317,7 @@ counterparts, except that they make their own copies of all strings.
 .Pp
 .Fn UI_construct_prompt
 is a helper function that can be used to create a prompt from two pieces
-of information: an description and a name.
+of information: a description and a name.
 The default constructor (if there is none provided by the method used)
 creates a string "Enter
 .Em description
@@ -332,8 +331,8 @@ other method functions.
 .Fn UI_add_user_data
 adds a piece of memory for the method to use at any time.
 The builtin UI method doesn't care about this info.
-Note that several calls to this function doesn't add data, it replaces
-the previous blob with the one given as argument.
+Note that several calls to this function doesn't add data -
+the previous blob is replaced with the one given as argument.
 .Pp
 .Fn UI_get0_user_data
 retrieves the data that has last been given to the

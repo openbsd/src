@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_get_ex_new_index.3,v 1.3 2016/11/29 16:46:41 schwarze Exp $
+.\"	$OpenBSD: RSA_get_ex_new_index.3,v 1.4 2016/12/02 19:28:41 jmc Exp $
 .\"	OpenSSL 35cb565a Nov 19 15:49:30 2015 -0500
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 29 2016 $
+.Dd $Mdocdate: December 2 2016 $
 .Dt RSA_GET_EX_NEW_INDEX 3
 .Os
 .Sh NAME
@@ -108,7 +108,7 @@
 .Sh DESCRIPTION
 Several OpenSSL structures can have application specific data attached
 to them.
-This has several potential uses, it can be used to cache data associated
+This has several potential uses: it can be used to cache data associated
 with a structure (for example the hash of some part of the structure) or
 some additional data (for example a handle to the data in an external
 library).
@@ -145,13 +145,14 @@ important because the optional functions are called in order of
 increasing index value.
 .Pp
 .Fn RSA_set_ex_data
-is used to set application specific data, the data is supplied in the
+is used to set application specific data.
+The data is supplied in the
 .Fa arg
 parameter and its precise meaning is up to the application.
 .Pp
 .Fn RSA_get_ex_data
 is used to retrieve application specific data.
-The data is returned to the application, this will be the same value as
+The data is returned to the application, which will be the same value as
 supplied to a previous
 .Fn RSA_set_ex_data
 call.

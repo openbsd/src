@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_set_method.3,v 1.3 2016/11/29 16:46:41 schwarze Exp $
+.\"	$OpenBSD: RSA_set_method.3,v 1.4 2016/12/02 19:28:41 jmc Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 29 2016 $
+.Dd $Mdocdate: December 2 2016 $
 .Dt RSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -159,13 +159,13 @@ being used by
 .Fa rsa .
 This method may or may not be supplied by an
 .Vt ENGINE
-implementation, but if it is, the return value can only be guaranteed
+implementation but if it is, the return value can only be guaranteed
 to be valid as long as the RSA key itself is valid and does not
 have its implementation changed by
 .Fn RSA_set_method .
 .Pp
 .Fn RSA_flags
-returns the flags that are set for  the current
+returns the flags that are set for the current
 .Vt RSA_METHOD
 of
 .Fa rsa .
@@ -181,7 +181,7 @@ structure so that
 will be used for the RSA operations.
 If
 .Sy engine
-is NULL, the default ENGINE for RSA operations is used, and if no
+is NULL, the default ENGINE for RSA operations is used and, if no
 default ENGINE is set, the RSA_METHOD controlled by
 .Fn RSA_set_default_method
 is used.
@@ -349,9 +349,10 @@ RSA API without requiring changing these function prototypes.
 As of version 0.9.7,
 .Vt RSA_METHOD
 implementations are grouped together with other algorithmic APIs (e.g.\&
-.Vt DSA_METHOD ,
-.Vt EVP_CIPHER ,
-etc.) into
+.Vt DSA_METHOD
+or
+.Vt EVP_CIPHER )
+into
 .Vt ENGINE
 modules.
 If a default
@@ -368,7 +369,7 @@ use in RSA and other cryptographic algorithms.
 .Sh BUGS
 The behaviour of
 .Fn RSA_flags
-is a mis-feature that is left as-is for now to avoid creating
+is a misfeature that is left as-is for now to avoid creating
 compatibility problems.
 RSA functionality, such as the encryption functions, are controlled by
 the
