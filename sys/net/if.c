@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.463 2016/11/28 11:18:02 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.464 2016/12/02 18:32:38 vgross Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1688,7 +1688,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	size_t bytesdone;
 	short oif_flags;
 	const char *label;
-	short up = 0;
 
 	switch (cmd) {
 
@@ -2046,12 +2045,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0)
 		microtime(&ifp->if_lastchange);
 
-	/* If we took down the IF, bring it back */
-	if (up) {
-		s = splnet();
-		if_up(ifp);
-		splx(s);
-	}
 	return (error);
 }
 
