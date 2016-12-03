@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_intr.c,v 1.16 2016/12/02 15:05:05 visa Exp $	*/
+/*	$OpenBSD: octeon_intr.c,v 1.17 2016/12/03 05:39:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -130,10 +130,38 @@ octeon_intr_establish(int irq, int level,
 }
 
 void
-octeon_intr_disestablish(void *ih)
+octeon_intr_disestablish(void *_ih)
 {
-	/* XXX */
-	panic("%s not implemented", __func__);
+	struct intrhand *ih = _ih;
+	struct intrhand *p;
+	unsigned int irq = ih->ih_irq;
+	int cpuid = cpu_number();
+	int s;
+
+	KASSERT(irq < OCTEON_NINTS);
+
+	s = splhigh();
+
+	if (ih == octeon_intrhand[irq]) {
+		octeon_intrhand[irq] = ih->ih_next;
+
+		if (octeon_intrhand[irq] == NULL)
+			octeon_intem[cpuid] &= ~(1ull << irq);
+	} else {
+		for (p = octeon_intrhand[irq]; p != NULL; p = p->ih_next) {
+			if (p->ih_next == ih) {
+				p->ih_next = ih->ih_next;
+				break;
+			}
+		}
+		if (p == NULL)
+			panic("%s: intrhand %p has not been registered",
+			    __func__, ih);
+	}
+	free(ih, M_DEVBUF, sizeof(*ih));
+
+	octeon_intr_makemasks();
+	splx(s);	/* causes hw mask update */
 }
 
 void
