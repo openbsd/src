@@ -1,6 +1,6 @@
-.\"	$OpenBSD: crypto.3,v 1.5 2016/11/21 09:56:35 schwarze Exp $
+.\"	$OpenBSD: crypto.3,v 1.6 2016/12/03 13:36:03 jmc Exp $
 .\"
-.Dd $Mdocdate: November 21 2016 $
+.Dd $Mdocdate: December 3 2016 $
 .Dt CRYPTO 3
 .Os
 .Sh NAME
@@ -12,7 +12,7 @@ algorithms used in various Internet standards.
 The services provided by this library are used by the OpenSSL
 implementations of SSL, TLS and S/MIME, and they have also been used to
 implement SSH, OpenPGP, and other cryptographic standards.
-.Sh OVERVIEW
+.Pp
 .Sy libcrypto
 consists of a number of sub-libraries that implement the individual
 algorithms.
@@ -20,7 +20,7 @@ algorithms.
 The functionality includes symmetric encryption, public key cryptography
 and key agreement, certificate handling, cryptographic hash functions
 and a cryptographic pseudo-random number generator.
-.Bl -tag -width Ds
+.Bl -tag -width Ds -offset indent
 .It SYMMETRIC CIPHERS
 .Xr blowfish 3 ,
 CAST, DES, IDEA, RC2,
@@ -51,7 +51,7 @@ x509v3
 asn1,
 .Xr BIO 3 ,
 .Xr evp 3 ,
-.Xr PEM 3 ,
+PEM,
 pkcs7,
 pkcs12
 .It INTERNAL FUNCTIONS
@@ -63,7 +63,7 @@ objects,
 stack,
 txt_db
 .El
-.Sh NOTES
+.Pp
 Some of the newer functions follow a naming convention using the numbers
 .Sq 0
 and

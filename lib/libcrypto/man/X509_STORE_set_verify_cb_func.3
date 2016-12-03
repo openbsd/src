@@ -1,11 +1,11 @@
-.\"	$OpenBSD: X509_STORE_set_verify_cb_func.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: X509_STORE_set_verify_cb_func.3,v 1.3 2016/12/03 13:36:03 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: December 3 2016 $
 .Dt X509_STORE_SET_VERIFY_CB_FUNC 3
 .Os
 .Sh NAME
-.Nm X509_STORE_set_verify_cb_func ,
-.Nm X509_STORE_set_verify_cb
+.Nm X509_STORE_set_verify_cb ,
+.Nm X509_STORE_set_verify_cb_func
 .Nd set verification callback
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
@@ -24,7 +24,7 @@
 sets the verification callback of
 .Sy ctx
 to
-.Sy verify_cb
+.Sy verify_cb ,
 overwriting any existing callback.
 .Pp
 .Fn X509_STORE_set_verify_cb_func

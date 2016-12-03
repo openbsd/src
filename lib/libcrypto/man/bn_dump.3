@@ -1,6 +1,6 @@
-.\"	$OpenBSD: bn_dump.3,v 1.3 2016/11/21 22:19:15 jmc Exp $
+.\"	$OpenBSD: bn_dump.3,v 1.4 2016/12/03 13:36:03 jmc Exp $
 .\"
-.Dd $Mdocdate: November 21 2016 $
+.Dd $Mdocdate: December 3 2016 $
 .Dt BN_DUMP 3
 .Os
 .Sh NAME
@@ -324,7 +324,7 @@ calls, the
 .Vt BN_CTX
 structure is used.
 This structure contains BN_CTX_NUM
-.Vt BIGNUM Ns s,
+.Vt BIGNUM Ns s ;
 see
 .Xr BN_CTX_start 3 .
 .Ss Low level arithmetic operations
@@ -427,7 +427,7 @@ operates on the 4 word arrays
 .Fa a
 and
 .Fa b
-and the 8 word array
+and the 8-word array
 .Fa r .
 It computes
 .Fa a Ns * Ns Fa b
@@ -435,11 +435,11 @@ and places the result in
 .Fa r .
 .Pp
 .Fn bn_mul_comba8 r a b
-operates on the 8 word arrays
+operates on the 8-word arrays
 .Fa a
 and
 .Fa b
-and the 16 word array
+and the 16-word array
 .Fa r .
 It computes
 .Fa a Ns * Ns Fa b
@@ -447,15 +447,15 @@ and places the result in
 .Fa r .
 .Pp
 .Fn bn_sqr_comba4 r a b
-operates on the 4 word arrays
+operates on the 4-word arrays
 .Fa a
 and
 .Fa b
-and the 8 word array
+and the 8-word array
 .Fa r .
 .Pp
 .Fn bn_sqr_comba8 r a b
-operates on the 8 word arrays
+operates on the 8-word arrays
 .Fa a
 and
 .Fa b
@@ -681,7 +681,7 @@ prints
 .Fa n
 words at
 .Fa d
-(in reverse order, i.e.
+(in reverse order, i.e.\&
 most significant word first) to
 .Dv stderr .
 .Pp

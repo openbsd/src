@@ -1,13 +1,13 @@
-.\"	$OpenBSD: X509_NAME_print_ex.3,v 1.2 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: X509_NAME_print_ex.3,v 1.3 2016/12/03 13:36:03 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: December 3 2016 $
 .Dt X509_NAME_PRINT_EX 3
 .Os
 .Sh NAME
 .Nm X509_NAME_print_ex ,
 .Nm X509_NAME_print_ex_fp ,
-.Nm X509_NAME_print ,
-.Nm X509_NAME_oneline
+.Nm X509_NAME_oneline ,
+.Nm X509_NAME_print
 .Nd X509_NAME printing routines
 .Sh SYNOPSIS
 .In openssl/x509.h
@@ -90,8 +90,8 @@ The functions
 .Fn X509_NAME_oneline
 and
 .Fn X509_NAME_print
-are legacy functions which produce a non standard output form.
-They don't handle multi character fields and have various quirks
+are legacy functions which produce a non-standard output form.
+They don't handle multi-character fields and have various quirks
 and inconsistencies.
 Their use is strongly discouraged in new applications.
 .Pp
@@ -149,9 +149,9 @@ The fields
 and
 .Dv XN_FLAG_FN_NONE
 determine how a field name is displayed.
-It will use the short name (e.g. CN) the long name (e.g. commonName)
+It will use the short name (e.g. CN), the long name (e.g. commonName),
 always use OID numerical form (normally OIDs are only used if the
-field name is not recognised) and no field name respectively.
+field name is not recognised) and no field name, respectively.
 .Pp
 If
 .Dv XN_FLAG_SPC_EQ
@@ -173,10 +173,10 @@ Additionally, all the options supported by
 .Xr ASN1_STRING_print_ex 3
 can be used to control how each field value is displayed.
 .Pp
-In addition a number options can be set for commonly used formats.
+In addition a number of options can be set for commonly used formats.
 .Pp
 .Dv XN_FLAG_RFC2253
-sets options which produce an output compatible with RFC2253.
+sets options which produce an output compatible with RFC 2253.
 It is equivalent to
 .Dv ASN1_STRFLGS_RFC2253 | XN_FLAG_SEP_COMMA_PLUS | XN_FLAG_DN_REV |
 .Dv XN_FLAG_FN_SN | XN_FLAG_DUMP_UNKNOWN_FIELDS .
