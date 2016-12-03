@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson3_intr.c,v 1.1 2016/11/06 10:20:33 visa Exp $	*/
+/*	$OpenBSD: loongson3_intr.c,v 1.2 2016/12/03 05:52:58 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -282,7 +282,10 @@ loongson3_intr_disestablish(void *ihp)
 
 	sr = disableintr();
 	s = splhigh();
+
 	loongson3_intr_remove(&loongson3_intrhand[ih->ih_irq], ih);
+	free(ih, M_DEVBUF, sizeof(*ih));
+
 	loongson3_update_imask();
 	splx(s);
 	setsr(sr);
@@ -342,6 +345,7 @@ loongson3_ht_intr_disestablish(void *ihp)
 	s = splhigh();
 
 	loongson3_intr_remove(&loongson3_ht_intrhand[irq], ih);
+	free(ih, M_DEVBUF, sizeof(*ih));
 
 	if (loongson3_ht_intrhand[irq] == NULL) {
 		loongson3_ht_pic->pic_mask(irq);
