@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.133 2016/11/17 15:22:41 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.134 2016/12/03 12:34:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1632,7 +1632,7 @@ err:
 static int
 ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 {
-	char fakekey[SSL_MAX_MASTER_KEY_LENGTH];
+	unsigned char fakekey[SSL_MAX_MASTER_KEY_LENGTH];
 	unsigned char *d;
 	RSA *rsa = NULL;
 	EVP_PKEY *pkey = NULL;

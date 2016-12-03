@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.145 2016/11/06 09:44:51 bcook Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.146 2016/12/03 12:34:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1574,7 +1574,7 @@ ssl3_get_certificate_request(SSL *s)
 	if (ctype_num > SSL3_CT_NUMBER)
 		ctype_num = SSL3_CT_NUMBER;
 	if (!CBS_get_bytes(&cert_request, &ctypes, ctype_num) ||
-	    !CBS_write_bytes(&ctypes, s->s3->tmp.ctype,
+	    !CBS_write_bytes(&ctypes, (uint8_t *)s->s3->tmp.ctype,
 	    sizeof(s->s3->tmp.ctype), NULL)) {
 		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
 		    SSL_R_DATA_LENGTH_TOO_LONG);

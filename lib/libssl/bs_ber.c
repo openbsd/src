@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_ber.c,v 1.8 2015/06/21 16:10:45 doug Exp $	*/
+/*	$OpenBSD: bs_ber.c,v 1.9 2016/12/03 12:34:35 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -103,7 +103,9 @@ is_primitive_type(unsigned int tag)
 static char
 is_eoc(size_t header_len, CBS *contents)
 {
-	return header_len == 2 && CBS_mem_equal(contents, "\x00\x00", 2);
+	const unsigned char eoc[] = {0x0, 0x0};
+
+	return header_len == 2 && CBS_mem_equal(contents, eoc, 2);
 }
 
 /*
