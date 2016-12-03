@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.146 2016/12/03 12:34:35 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.147 2016/12/03 12:38:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1182,7 +1182,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 	EC_KEY *ecdh = NULL;
 	BN_CTX *bn_ctx = NULL;
 	const EC_GROUP *group;
-	EC_GROUP *ngroup;
+	EC_GROUP *ngroup = NULL;
 	SESS_CERT *sc;
 	int curve_nid;
 	long alg_a;
@@ -1239,7 +1239,6 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EC_LIB);
 		goto err;
 	}
-	EC_GROUP_free(ngroup);
 
 	group = EC_KEY_get0_group(ecdh);
 
@@ -1277,6 +1276,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 	sc->peer_ecdh_tmp = ecdh;
 
 	BN_CTX_free(bn_ctx);
+	EC_GROUP_free(ngroup);
 	EC_POINT_free(srvr_ecpoint);
 
 	*nn = CBS_len(&cbs);
@@ -1293,6 +1293,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 
  err:
 	BN_CTX_free(bn_ctx);
+	EC_GROUP_free(ngroup);
 	EC_POINT_free(srvr_ecpoint);
 	EC_KEY_free(ecdh);
 
