@@ -1,7 +1,54 @@
+.\"	$OpenBSD: SSL_write.3,v 1.2 2016/12/04 12:27:43 schwarze Exp $
+.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
-.\"	$OpenBSD: SSL_write.3,v 1.1 2016/11/05 15:32:20 schwarze Exp $
+.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
+.\" Copyright (c) 2000, 2001, 2002 The OpenSSL Project.  All rights reserved.
 .\"
-.Dd $Mdocdate: November 5 2016 $
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: December 4 2016 $
 .Dt SSL_WRITE 3
 .Os
 .Sh NAME
@@ -20,7 +67,7 @@ bytes from the buffer
 into the specified
 .Fa ssl
 connection.
-.Sh NOTES
+.Pp
 If necessary,
 .Fn SSL_write
 will negotiate a TLS/SSL session, if not already explicitly performed by
@@ -101,7 +148,7 @@ pair, data must be written into or retrieved out of the BIO before being able
 to continue.
 .Pp
 .Fn SSL_write
-will only return with success, when the complete contents of
+will only return with success when the complete contents of
 .Fa buf
 of length
 .Fa num
@@ -121,12 +168,14 @@ The bytes are sent and a new
 .Fn SSL_write
 operation with a new buffer (with the already sent bytes removed) must be
 started.
-A partial write is performed with the size of a message block, which is 16kB
-for SSLv3/TLSv1.
-.Sh WARNING
+A partial write is performed with the size of a message block,
+which is 16kB.
+.Pp
 When an
 .Fn SSL_write
-operation has to be repeated because of
+operation has to be repeated because
+.Xr SSL_get_error 3
+returned
 .Dv SSL_ERROR_WANT_READ
 or
 .Dv SSL_ERROR_WANT_WRITE ,
@@ -135,8 +184,8 @@ it must be repeated with the same arguments.
 When calling
 .Fn SSL_write
 with
-.Fa num Ns
-=0 bytes to be sent the behaviour is undefined.
+.Fa num Ns =0
+bytes to be sent, the behaviour is undefined.
 .Sh RETURN VALUES
 The following return values can occur:
 .Bl -tag -width Ds
@@ -152,10 +201,6 @@ Call
 with the return value to find out whether an error occurred or the connection
 was shut down cleanly
 .Pq Dv SSL_ERROR_ZERO_RETURN .
-.Pp
-SSLv2 (deprecated) does not support a shutdown alert protocol, so it can only
-be detected whether the underlying connection was closed.
-It cannot be checked why the closure happened.
 .It <0
 The write operation was not successful, because either an error occurred or
 action must be taken by the calling process.
