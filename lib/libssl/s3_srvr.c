@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.134 2016/12/03 12:34:35 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.135 2016/12/04 14:20:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1090,17 +1090,25 @@ ssl3_send_server_hello(SSL *s)
 {
 	unsigned char *bufend;
 	unsigned char *p, *d;
+	CBB cbb, session_id;
+	size_t outlen;
 	int sl;
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	bufend = (unsigned char *)s->init_buf->data + SSL3_RT_MAX_PLAIN_LENGTH;
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A) {
 		d = p = ssl3_handshake_msg_start(s, SSL3_MT_SERVER_HELLO);
 
-		*(p++) = s->version >> 8;
-		*(p++) = s->version & 0xff;
+		if (!CBB_init_fixed(&cbb, p, bufend - p))
+			goto err;
 
-		/* Random stuff */
-		memcpy(p, s->s3->server_random, SSL3_RANDOM_SIZE);
-		p += SSL3_RANDOM_SIZE;
+		if (!CBB_add_u16(&cbb, s->version))
+			goto err;
+		if (!CBB_add_bytes(&cbb, s->s3->server_random,
+		    sizeof(s->s3->server_random)))
+			goto err;
 
 		/*
 		 * There are several cases for the session ID to send
@@ -1128,24 +1136,31 @@ ssl3_send_server_hello(SSL *s)
 		if (sl > (int)sizeof(s->session->session_id)) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,
 			    ERR_R_INTERNAL_ERROR);
-			return (-1);
+			goto err;
 		}
-		*(p++) = sl;
-		memcpy(p, s->session->session_id, sl);
-		p += sl;
 
-		/* put the cipher */
-		s2n(ssl3_cipher_get_value(s->s3->tmp.new_cipher), p);
+		if (!CBB_add_u8_length_prefixed(&cbb, &session_id))
+			goto err;
+		if (!CBB_add_bytes(&session_id, s->session->session_id, sl))
+			goto err;
 
-		/* put the compression method */
-		*(p++) = 0;
+		/* Cipher suite. */
+		if (!CBB_add_u16(&cbb,
+		    ssl3_cipher_get_value(s->s3->tmp.new_cipher)))
+			goto err;
 
-		bufend = (unsigned char *)s->init_buf->data +
-		    SSL3_RT_MAX_PLAIN_LENGTH;
-		if ((p = ssl_add_serverhello_tlsext(s, p, bufend)) == NULL) {
+		/* Compression method. */
+		if (!CBB_add_u8(&cbb, 0))
+			goto err;
+
+		if (!CBB_finish(&cbb, NULL, &outlen))
+			goto err;
+
+		if ((p = ssl_add_serverhello_tlsext(s, p + outlen,
+		    bufend)) == NULL) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,
 			    ERR_R_INTERNAL_ERROR);
-			return (-1);
+			goto err;
 		}
 
 		ssl3_handshake_msg_finish(s, p - d);
@@ -1153,6 +1168,11 @@ ssl3_send_server_hello(SSL *s)
 
 	/* SSL3_ST_SW_SRVR_HELLO_B */
 	return (ssl3_handshake_write(s));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (-1);
 }
 
 int
