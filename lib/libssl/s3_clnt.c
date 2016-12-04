@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.148 2016/12/04 14:25:44 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.149 2016/12/04 14:32:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -588,7 +588,10 @@ int
 ssl3_client_hello(SSL *s)
 {
 	unsigned char	*bufend, *p, *d;
+	size_t		 outlen;
 	int		 i;
+
+	bufend = (unsigned char *)s->init_buf->data + SSL3_RT_MAX_PLAIN_LENGTH;
 
 	if (s->state == SSL3_ST_CW_CLNT_HELLO_A) {
 		SSL_SESSION *sess = s->session;
@@ -678,22 +681,22 @@ ssl3_client_hello(SSL *s)
 		}
 
 		/* Ciphers supported */
-		i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &p[2]);
-		if (i == 0) {
+		if (!ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &p[2],
+		    bufend - &p[2], &outlen))
+			goto err;
+		if (outlen == 0) {
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,
 			    SSL_R_NO_CIPHERS_AVAILABLE);
 			goto err;
 		}
-		s2n(i, p);
-		p += i;
+		s2n(outlen, p);
+		p += outlen;
 
 		/* add in (no) COMPRESSION */
 		*(p++) = 1;
 		*(p++) = 0; /* Add the NULL method */
 
 		/* TLS extensions*/
-		bufend = (unsigned char *)s->init_buf->data +
-		    SSL3_RT_MAX_PLAIN_LENGTH;
 		if ((p = ssl_add_clienthello_tlsext(s, p, bufend)) == NULL) {
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,
 			    ERR_R_INTERNAL_ERROR);

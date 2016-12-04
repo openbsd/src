@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.46 2015/09/11 18:08:21 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.47 2016/12/04 14:32:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,11 +230,11 @@ ssl23_client_hello(SSL *s)
 {
 	unsigned char *buf;
 	unsigned char *p, *d;
-	int i;
 	unsigned long l;
 	int version = 0, version_major, version_minor;
 	int ret;
 	unsigned long mask, options = s->options;
+	size_t outlen;
 
 	/*
 	 * SSL_OP_NO_X disables all protocols above X *if* there are
@@ -294,14 +294,16 @@ ssl23_client_hello(SSL *s)
 		*(p++) = 0;
 
 		/* Ciphers supported (using SSL 3.0/TLS 1.0 format) */
-		i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &p[2]);
-		if (i == 0) {
-			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
+		if (!ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &p[2],
+		    buf - &p[2] + SSL3_RT_MAX_PLAIN_LENGTH, &outlen))
+			return -1;
+		if (outlen == 0) {
+			SSLerr(SSL_F_SSL3_CLIENT_HELLO,
 			    SSL_R_NO_CIPHERS_AVAILABLE);
 			return -1;
 		}
-		s2n(i, p);
-		p += i;
+		s2n(outlen, p);
+		p += outlen;
 
 		/* add in (no) COMPRESSION */
 		*(p++) = 1;

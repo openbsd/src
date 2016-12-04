@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.136 2016/11/06 17:21:04 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.137 2016/12/04 14:32:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -569,7 +569,7 @@ int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
 STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p,
     int num);
 int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
-    unsigned char *p);
+    unsigned char *p, size_t maxlen, size_t *outlen);
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
     STACK_OF(SSL_CIPHER) **pref, STACK_OF(SSL_CIPHER) **sorted,
     const char *rule_str);
