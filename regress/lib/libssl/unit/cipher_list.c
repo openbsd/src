@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.3 2015/07/01 07:21:10 bcook Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.4 2016/12/04 14:33:04 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -64,7 +64,7 @@ static uint16_t cipher_values[] = {
 extern STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
     const unsigned char *p, int num);
 extern int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
-    unsigned char *p);
+    unsigned char *p, size_t len, size_t *outlen);
 
 static int
 ssl_bytes_to_list_alloc(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
@@ -91,8 +91,7 @@ static int
 ssl_list_to_bytes_scsv(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 {
 	unsigned char *buf = NULL;
-	size_t buflen;
-	int len;
+	size_t buflen, outlen;
 	int ret = 0;
 
 	/* Space for cipher bytes, plus reneg SCSV and two spare bytes. */
@@ -100,8 +99,9 @@ ssl_list_to_bytes_scsv(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 	buflen = sizeof(cipher_bytes) + 2 + 2;
 	CHECK((buf = calloc(1, buflen)) != NULL);
 
-	len = ssl_cipher_list_to_bytes(s, *ciphers, buf);
-	CHECK_GOTO(len > 0 && (size_t)len == buflen - 2);
+	CHECK(ssl_cipher_list_to_bytes(s, *ciphers, buf, buflen, &outlen));
+
+	CHECK_GOTO(outlen > 0 && outlen == buflen - 2);
 	CHECK_GOTO(memcmp(buf, cipher_bytes, sizeof(cipher_bytes)) == 0);
 	CHECK_GOTO(buf[buflen - 4] == 0x00 && buf[buflen - 3] == 0xff);
 	CHECK_GOTO(buf[buflen - 2] == 0x00 && buf[buflen - 1] == 0x00);
@@ -117,8 +117,7 @@ static int
 ssl_list_to_bytes_no_scsv(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 {
 	unsigned char *buf = NULL;
-	size_t buflen;
-	int len;
+	size_t buflen, outlen;
 	int ret = 0;
 
 	/* Space for cipher bytes and two spare bytes */
@@ -131,8 +130,9 @@ ssl_list_to_bytes_no_scsv(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 	/* Set renegotiate so it doesn't add SCSV */
 	s->renegotiate = 1;
 
-	len = ssl_cipher_list_to_bytes(s, *ciphers, buf);
-	CHECK_GOTO(len > 0 && (size_t)len == buflen - 2);
+	CHECK(ssl_cipher_list_to_bytes(s, *ciphers, buf, buflen, &outlen));
+
+	CHECK_GOTO(outlen > 0 && outlen == buflen - 2);
 	CHECK_GOTO(memcmp(buf, cipher_bytes, sizeof(cipher_bytes)) == 0);
 	CHECK_GOTO(buf[buflen - 2] == 0xfe && buf[buflen - 1] == 0xab);
 
@@ -203,5 +203,6 @@ err:
 
 	if (!rv)
 		printf("PASS %s\n", __FILE__);
+	
 	return rv;
 }
