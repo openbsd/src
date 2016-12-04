@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.147 2016/12/03 12:38:10 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.148 2016/12/04 14:25:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1877,11 +1877,15 @@ static int
 ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
     int *outlen)
 {
-	unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
+	unsigned char pms[SSL_MAX_MASTER_KEY_LENGTH];
 	EVP_PKEY *pkey = NULL;
 	unsigned char *q;
 	int ret = -1;
 	int n;
+
+	/*
+	 * RSA-Encrypted Premaster Secret Message - RFC 5246 section 7.4.7.1.
+	 */
 
 	pkey = X509_get_pubkey(sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 	if (pkey == NULL || pkey->type != EVP_PKEY_RSA ||
@@ -1891,16 +1895,14 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 		goto err;
 	}
 
-	tmp_buf[0] = s->client_version >> 8;
-	tmp_buf[1] = s->client_version & 0xff;
-	arc4random_buf(&tmp_buf[2], sizeof(tmp_buf) - 2);
-
-	s->session->master_key_length = sizeof(tmp_buf);
+	pms[0] = s->client_version >> 8;
+	pms[1] = s->client_version & 0xff;
+	arc4random_buf(&pms[2], sizeof(pms) - 2);
 
 	q = p;
 	p += 2;
 
-	n = RSA_public_encrypt(sizeof(tmp_buf), tmp_buf, p, pkey->pkey.rsa,
+	n = RSA_public_encrypt(sizeof(pms), pms, p, pkey->pkey.rsa,
 	    RSA_PKCS1_PADDING);
 	if (n <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -1913,13 +1915,13 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 
 	s->session->master_key_length =
 	    s->method->ssl3_enc->generate_master_secret(s,
-		s->session->master_key, tmp_buf, sizeof(tmp_buf));
+		s->session->master_key, pms, sizeof(pms));
 
 	*outlen = n;
 	ret = 1;
 
 err:
-	explicit_bzero(tmp_buf, sizeof(tmp_buf));
+	explicit_bzero(pms, sizeof(pms));
 	EVP_PKEY_free(pkey);
 
 	return (ret);
