@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.61 2016/11/29 18:16:09 deraadt Exp $
+# $OpenBSD: Makefile,v 1.62 2016/12/04 20:51:47 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -170,6 +170,11 @@ MAN=	\
 	SMIME_read_PKCS7.3 \
 	SMIME_write_PKCS7.3 \
 	UI_new.3 \
+	X509V3_get_d2i.3 \
+	X509_ALGOR_dup.3 \
+	X509_CRL_get0_by_serial.3 \
+	X509_EXTENSION_set_object.3 \
+	X509_LOOKUP_hash_dir.3 \
 	X509_NAME_ENTRY_get_object.3 \
 	X509_NAME_add_entry_by_txt.3 \
 	X509_NAME_get_index_by_NID.3 \
