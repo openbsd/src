@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.63 2015/12/03 11:42:14 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.64 2016/12/05 22:39:25 jca Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -434,8 +434,9 @@ show_interface_detail_msg(struct imsg *imsg)
 		    inet_ntoa(iface->addr),
 		    mask2prefixlen(iface->mask.s_addr));
 		printf("Area %s\n", inet_ntoa(iface->area));
-		printf("  Linkstate %s\n",
+		printf("  Linkstate %s,",
 		    get_linkstate(iface->if_type, iface->linkstate));
+		printf(" mtu %d\n", iface->mtu);
 		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
 		    if_type_name(iface->type), iface->metric);
