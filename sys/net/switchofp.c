@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.45 2016/12/05 09:46:31 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.46 2016/12/05 12:16:55 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -193,13 +193,13 @@ int	 swofp_group_entry_delete(struct switch_softc *,
 	    struct swofp_group_entry *);
 int	 swofp_group_entry_delete_all(struct switch_softc *);
 int	 swofp_validate_buckets(struct switch_softc *, struct mbuf *, uint8_t,
-	    int *);
+	    uint16_t *, uint16_t *);
 
 /*
  * Flow entry
  */
 int	 swofp_flow_entry_put_instructions(struct mbuf *,
-	    struct swofp_flow_entry *, int *error);
+	    struct swofp_flow_entry *, uint16_t *, uint16_t *);
 void	 swofp_flow_entry_instruction_free(struct swofp_flow_entry *);
 void	 swofp_flow_entry_free(struct swofp_flow_entry **);
 void	 swofp_flow_entry_add(struct switch_softc *, struct swofp_flow_table *,
@@ -217,11 +217,11 @@ int	 swofp_flow_filter_out_port(struct ofp_instruction_actions *,
 int	 swofp_flow_filter(struct swofp_flow_entry *, uint64_t, uint64_t,
 	    uint32_t, uint32_t);
 void	 swofp_flow_timeout(struct switch_softc *);
-int	 swofp_validate_oxm(struct ofp_ox_match *, int *);
-int	 swofp_validate_flow_match(struct ofp_match *, int *);
+int	 swofp_validate_oxm(struct ofp_ox_match *, uint16_t *);
+int	 swofp_validate_flow_match(struct ofp_match *, uint16_t *);
 int	 swofp_validate_flow_instruction(struct ofp_instruction *, size_t,
-	    int *);
-int	 swofp_validate_action(struct ofp_action_header *, size_t, int *);
+	    uint16_t *, uint16_t *);
+int	 swofp_validate_action(struct ofp_action_header *, size_t, uint16_t *);
 
 /*
  * OpenFlow protocol compare oxm
@@ -1411,7 +1411,7 @@ swofp_group_entry_delete_all(struct switch_softc *sc)
 
 int
 swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
-    int *error)
+    uint16_t *etype, uint16_t *error)
 {
 	struct ofp_group_mod	*ogm;
 	struct ofp_bucket	*bucket;
@@ -1419,6 +1419,8 @@ swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
 	uint16_t		weight;
 	int			start, len, off, num;
 	size_t			blen;
+
+	*etype = OFP_ERRTYPE_GROUP_MOD_FAILED;
 
 	ogm = mtod(m, struct ofp_group_mod *);
 	start = offsetof(struct ofp_group_mod, gm_buckets);
@@ -1481,8 +1483,10 @@ swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
 
 		ah = (struct ofp_action_header *)
 		    (mtod(m, caddr_t) + off + sizeof(*bucket));
-		if (swofp_validate_action(ah, blen - sizeof(*bucket), error))
+		if (swofp_validate_action(ah, blen - sizeof(*bucket), error)) {
+			*etype = OFP_ERRTYPE_BAD_ACTION;
 			return (-1);
+		}
 	}
 
 	return (0);
@@ -1882,7 +1886,7 @@ swofp_ox_cmp_ether_addr(struct ofp_ox_match *target,
 }
 
 int
-swofp_validate_oxm(struct ofp_ox_match *oxm, int *err)
+swofp_validate_oxm(struct ofp_ox_match *oxm, uint16_t *err)
 {
 	struct ofp_oxm_class	*handler;
 	int			 length, hasmask;
@@ -1908,7 +1912,7 @@ swofp_validate_oxm(struct ofp_ox_match *oxm, int *err)
 }
 
 int
-swofp_validate_flow_match(struct ofp_match *om, int *err)
+swofp_validate_flow_match(struct ofp_match *om, uint16_t *err)
 {
 	struct ofp_ox_match *oxm;
 
@@ -1930,11 +1934,13 @@ swofp_validate_flow_match(struct ofp_match *om, int *err)
 
 int
 swofp_validate_flow_instruction(struct ofp_instruction *oi, size_t total,
-    int *err)
+    uint16_t *etype, uint16_t *err)
 {
 	struct ofp_action_header	*oah;
 	struct ofp_instruction_actions	*oia;
 	int				 ilen;
+
+	*etype = OFP_ERRTYPE_BAD_INSTRUCTION;
 
 	ilen = ntohs(oi->i_len);
 	/* Check for bigger than packet or smaller than header. */
@@ -1976,8 +1982,10 @@ swofp_validate_flow_instruction(struct ofp_instruction *oi, size_t total,
 		/* Validate actions before iterating over them. */
 		oah = (struct ofp_action_header *)
 		    ((uint8_t *)oia + sizeof(*oia));
-		if (swofp_validate_action(oah, ilen - sizeof(*oia), err))
+		if (swofp_validate_action(oah, ilen - sizeof(*oia), err)) {
+			*etype = OFP_ERRTYPE_BAD_ACTION;
 			return (-1);
+		}
 		break;
 
 	case OFP_INSTRUCTION_T_EXPERIMENTER:
@@ -1991,7 +1999,8 @@ swofp_validate_flow_instruction(struct ofp_instruction *oi, size_t total,
 }
 
 int
-swofp_validate_action(struct ofp_action_header *ah, size_t ahtotal, int *err)
+swofp_validate_action(struct ofp_action_header *ah, size_t ahtotal,
+    uint16_t *err)
 {
 	struct ofp_action_handler	*oah;
 	struct ofp_ox_match		*oxm;
@@ -4818,12 +4827,14 @@ swofp_send_flow_removed(struct switch_softc *sc, struct swofp_flow_entry *swfe,
  */
 int
 swofp_flow_entry_put_instructions(struct mbuf *m,
-    struct swofp_flow_entry *swfe, int *error)
+    struct swofp_flow_entry *swfe, uint16_t *etype, uint16_t *error)
 {
 	struct ofp_flow_mod	*ofm;
 	struct ofp_instruction	*oi;
 	caddr_t			 inst;
 	int			 start, len, off;
+
+	*etype = OFP_ERRTYPE_BAD_INSTRUCTION;
 
 	ofm = mtod(m, struct ofp_flow_mod *);
 
@@ -4840,7 +4851,7 @@ swofp_flow_entry_put_instructions(struct mbuf *m,
 		oi = (struct ofp_instruction *)(mtod(m, caddr_t) + off);
 
 		if (swofp_validate_flow_instruction(oi,
-		    len - (off - start), error))
+		    len - (off - start), etype, error))
 			return (-1);
 
 		if ((inst = malloc(ntohs(oi->i_len), M_DEVBUF,
@@ -4924,9 +4935,10 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	struct ofp_match		*om;
 	struct swofp_flow_entry		*swfe, *old_swfe;
 	struct swofp_flow_table		*swft;
-	int				 error, omlen;
-	uint16_t			 etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
+	int				 omlen;
+	uint16_t			 error, etype;
 
+	etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
 	oh = mtod(m, struct ofp_header *);
 	ofm = mtod(m, struct ofp_flow_mod *);
 	om = &ofm->fm_match;
@@ -5008,10 +5020,8 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	if (omlen == sizeof(*om) && swfe->swfe_priority == 0)
 		swfe->swfe_tablemiss = 1;
 
-	if (swofp_flow_entry_put_instructions(m, swfe, &error)) {
-		etype = OFP_ERRTYPE_BAD_INSTRUCTION;
+	if (swofp_flow_entry_put_instructions(m, swfe, &etype, &error))
 		goto ofp_error_free_flow;
-	}
 
 	if (old_swfe) {
 		if (!(ntohs(ofm->fm_flags) & OFP_FLOWFLAG_RESET_COUNTS)) {
@@ -5048,8 +5058,10 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 	struct ofp_match		*om;
 	struct swofp_flow_entry		*swfe;
 	struct swofp_flow_table		*swft;
-	int				 error, omlen;
-	uint16_t			 etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
+	int				 omlen;
+	uint16_t			 error, etype;
+
+	etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
 
 	oh = mtod(m, struct ofp_header *);
 	ofm = mtod(m, struct ofp_flow_mod *);
@@ -5102,7 +5114,8 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 		    ntohl(ofm->fm_out_group)))
 			continue;
 
-		if (swofp_flow_entry_put_instructions(m, swfe, &error)) {
+		if (swofp_flow_entry_put_instructions(m, swfe, &etype,
+		    &error)) {
 			/*
 			 * If error occurs in swofp_flow_entry_put_instructions,
 			 * the flow entry might be half-way modified. So the
@@ -5149,8 +5162,8 @@ swofp_flow_mod_cmd_common_delete(struct switch_softc *sc, struct mbuf *m,
 	struct ofp_flow_mod	*ofm;
 	struct ofp_match	*om;
 	struct swofp_flow_table	*swft;
-	int			 error, omlen;
-	uint16_t		 etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
+	int			 omlen;
+	uint16_t		 error, etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
 
 	ofm = (struct ofp_flow_mod *)(mtod(m, caddr_t));
 	om = &ofm->fm_match;
@@ -5241,8 +5254,9 @@ swofp_group_mod_add(struct switch_softc *sc, struct mbuf *m)
 	struct swofp_ofs		*ofs = sc->sc_ofs;
 	struct ofp_group_mod		*ogm;
 	struct swofp_group_entry	*swge;
-	int				 error;
+	uint16_t			 error, etype;
 
+	etype = OFP_ERRTYPE_GROUP_MOD_FAILED;
 	ogm = mtod(m, struct ofp_group_mod *);
 
 	if (ofs->swofs_group_table_num >= ofs->swofs_group_max_table) {
@@ -5267,7 +5281,7 @@ swofp_group_mod_add(struct switch_softc *sc, struct mbuf *m)
 		goto failed;
 	}
 
-	if (swofp_validate_buckets(sc, m, ogm->gm_type, &error))
+	if (swofp_validate_buckets(sc, m, ogm->gm_type, &etype, &error))
 		goto failed;
 
 	if ((swge = malloc(sizeof(*swge), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
@@ -5299,7 +5313,7 @@ swofp_group_mod_add(struct switch_softc *sc, struct mbuf *m)
 	return (0);
 
  failed:
-	swofp_send_error(sc, m, OFP_ERRTYPE_GROUP_MOD_FAILED, error);
+	swofp_send_error(sc, m, etype, error);
 	return (0);
 }
 
@@ -5308,9 +5322,10 @@ swofp_group_mod_modify(struct switch_softc *sc, struct mbuf *m)
 {
 	struct ofp_group_mod		*ogm;
 	struct swofp_group_entry	*swge;
-	int				 error;
+	uint16_t			 error, etype;
 	uint32_t			 obucketlen;
 
+	etype = OFP_ERRTYPE_GROUP_MOD_FAILED;
 	ogm = mtod(m, struct ofp_group_mod *);
 
 	if (ogm->gm_type != OFP_GROUP_T_ALL) {
@@ -5325,7 +5340,7 @@ swofp_group_mod_modify(struct switch_softc *sc, struct mbuf *m)
 		goto failed;
 	}
 
-	if (swofp_validate_buckets(sc, m, ogm->gm_type, &error))
+	if (swofp_validate_buckets(sc, m, ogm->gm_type, &etype, &error))
 		goto failed;
 
 	swge->swge_type = ogm->gm_type;
@@ -5354,7 +5369,7 @@ swofp_group_mod_modify(struct switch_softc *sc, struct mbuf *m)
 	m_freem(m);
 	return (0);
 failed:
-	swofp_send_error(sc, m, OFP_ERRTYPE_GROUP_MOD_FAILED, error);
+	swofp_send_error(sc, m, etype, error);
 	return (0);
 }
 
@@ -5429,7 +5444,8 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	struct ofp_packet_out		*pout;
 	struct ofp_action_header	*ah;
 	struct mbuf			*mc = NULL, *mcn;
-	int				 al_start, al_len, off, error;
+	int				 al_start, al_len, off;
+	uint16_t			 error;
 	struct switch_flow_classify	 swfcl = {};
 	struct swofp_pipline_desc	 swpld = { .swpld_swfcl = &swfcl };
 
