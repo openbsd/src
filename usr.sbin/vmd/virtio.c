@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.25 2016/11/26 16:05:11 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.26 2016/12/05 09:28:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -17,12 +17,17 @@
  */
 
 #include <sys/param.h>	/* PAGE_SIZE */
+#include <sys/socket.h>
 
 #include <machine/vmmvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/vioblkreg.h>
+
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <errno.h>
 #include <event.h>
@@ -1336,6 +1341,10 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 				vionet[i].mac[4] = rng;
 				vionet[i].mac[5] = rng >> 8;
 			}
+
+			log_debug("%s: vm \"%s\" vio%u lladdr %s",
+			    __func__, vcp->vcp_name, i,
+			    ether_ntoa((void *)vionet[i].mac));
 		}
 	}
 }
