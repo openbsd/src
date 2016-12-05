@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.30 2016/09/02 18:12:30 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.31 2016/12/05 10:58:07 schwarze Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: September 2 2016 $
+.Dd $Mdocdate: December 5 2016 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@ The rules have the following format:
 .Op Ar options
 .Ar identity
 .Op Ic as Ar target
-.Op Ic cmd Ar command Op Ic args ...
+.Op Ic cmd Ar command Op Ic args No ...
 .Ed
 .Pp
 Rules consist of the following parts:
@@ -90,7 +90,7 @@ Be advised that it is best to specify absolute paths.
 If a relative path is specified, only a restricted
 .Ev PATH
 will be searched.
-.It Ic args ...
+.It Ic args Op Ar argument ...
 Arguments to command.
 The command arguments provided by the user need to match those specified.
 The keyword
