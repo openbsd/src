@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.119 2016/11/16 07:02:48 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.120 2016/12/05 07:07:43 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1489,7 +1489,6 @@ uaudio_identify(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc)
 void
 uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 {
-	size_t len;
 	struct as_info *nai;
 
 	nai = mallocarray(sc->sc_nalts + 1, sizeof(*ai), M_USBDEV, M_NOWAIT);
@@ -1497,7 +1496,6 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 		printf("%s: no memory\n", __func__);
 		return;
 	}
-	len = sizeof(*ai) * (sc->sc_nalts + 1);
 
 	/* Copy old data, if there was any */
 	if (sc->sc_nalts != 0) {
