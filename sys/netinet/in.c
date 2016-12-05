@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.129 2016/09/04 10:32:01 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.130 2016/12/05 15:31:43 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -212,6 +212,8 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	int newifaddr;
 	int s;
 
+	splsoftassert(IPL_SOFTNET);
+
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			ia = ifatoia(ifa);
@@ -329,12 +331,10 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 
 	case SIOCSIFADDR:
-		s = splsoftnet();
 		in_ifscrub(ifp, ia);
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), newifaddr);
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
-		splx(s);
 		return (error);
 
 	case SIOCSIFNETMASK:
@@ -347,7 +347,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 
 		error = 0;
 
-		s = splsoftnet();
 		if (ia->ia_addr.sin_family == AF_INET) {
 			if (ifra->ifra_addr.sin_len == 0)
 				ifra->ifra_addr = ia->ia_addr;
@@ -380,7 +379,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		}
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
-		splx(s);
 		return (error);
 		}
 	case SIOCDIFADDR:
@@ -390,10 +388,8 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		 * should happen to a packet that was routed after
 		 * the scrub but before the other steps? 
 		 */
-		s = splsoftnet();
 		in_purgeaddr(&ia->ia_ifa);
 		dohooks(ifp->if_addrhooks, 0);
-		splx(s);
 		break;
 
 	default:
@@ -798,7 +794,8 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 {
 	struct in_multi *inm;
 	struct ifreq ifr;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	/*
 	 * See if address already in list.
@@ -839,10 +836,8 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 			return (NULL);
 		}
 
-		s = splsoftnet();
 		TAILQ_INSERT_HEAD(&ifp->if_maddrlist, &inm->inm_ifma,
 		    ifma_list);
-		splx(s);
 
 		/*
 		 * Let IGMP know that we have joined a new IP multicast group.
@@ -861,7 +856,8 @@ in_delmulti(struct in_multi *inm)
 {
 	struct ifreq ifr;
 	struct ifnet *ifp;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (--inm->inm_refcnt == 0) {
 		/*
@@ -883,10 +879,8 @@ in_delmulti(struct in_multi *inm)
 			satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
 			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
 
-			s = splsoftnet();
 			TAILQ_REMOVE(&ifp->if_maddrlist, &inm->inm_ifma,
 			    ifma_list);
-			splx(s);
 		}
 		if_put(ifp);
 

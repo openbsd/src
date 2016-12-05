@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.55 2016/11/28 11:12:45 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.56 2016/12/05 15:31:43 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -498,10 +498,9 @@ void
 igmp_joingroup(struct in_multi *inm)
 {
 	struct ifnet* ifp;
-	int i, s;
+	int i;
 
 	ifp = if_get(inm->inm_ifidx);
-	s = splsoftnet();
 
 	inm->inm_state = IGMP_IDLE_MEMBER;
 
@@ -519,7 +518,6 @@ igmp_joingroup(struct in_multi *inm)
 		inm->inm_timer = 0;
 
 out:
-	splx(s);
 	if_put(ifp);
 }
 
@@ -527,10 +525,8 @@ void
 igmp_leavegroup(struct in_multi *inm)
 {
 	struct ifnet* ifp;
-	int s;
 
 	ifp = if_get(inm->inm_ifidx);
-	s = splsoftnet();
 
 	switch (inm->inm_state) {
 	case IGMP_DELAYING_MEMBER:
@@ -546,7 +542,6 @@ igmp_leavegroup(struct in_multi *inm)
 	case IGMP_SLEEPING_MEMBER:
 		break;
 	}
-	splx(s);
 	if_put(ifp);
 }
 
