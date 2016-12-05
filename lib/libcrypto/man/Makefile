@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.62 2016/12/04 20:51:47 schwarze Exp $
+# $OpenBSD: Makefile,v 1.63 2016/12/05 12:50:07 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -179,6 +179,7 @@ MAN=	\
 	X509_NAME_add_entry_by_txt.3 \
 	X509_NAME_get_index_by_NID.3 \
 	X509_NAME_print_ex.3 \
+	X509_PUBKEY_new.3 \
 	X509_STORE_CTX_get_error.3 \
 	X509_STORE_CTX_get_ex_new_index.3 \
 	X509_STORE_CTX_new.3 \
