@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.70 2016/12/05 13:17:31 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.71 2016/12/05 15:34:21 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -95,7 +95,7 @@ checkfs()
 
 create_rollback()
 {
-	local _file _patch=$1 _rbfiles
+	local _file _patch=$1 _rbfiles _ret=0
 	[[ -n ${_patch} ]]
 	shift
 	local _files="${@}"
@@ -110,21 +110,23 @@ create_rollback()
 		_rbfiles="${_rbfiles} ${_file}"
 	done
 
-	if ! (cd / &&
-		# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
-		if ${_BSDMP} &&
-			tar -tzf ${_TMP}/syspatch${_patch}.tgz bsd >/dev/null \
-				2>&1; then
-			tar -czf ${_PDIR}/${_patch}/rollback.tgz \
-				-s '/^bsd.mp$//' -s '/^bsd$/bsd.mp/' \
-				-s '/^bsd.sp$/bsd/' bsd.sp ${_rbfiles}
-		else
-			tar -czf ${_PDIR}/${_patch}/rollback.tgz \
-				${_rbfiles}
-		fi
-	); then
-		rm -r ${_PDIR}/${_patch}
-		sp_err "Failed to create rollback patch ${_patch##${_OSrev}-}"
+	# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
+	if ${_BSDMP} &&
+		tar -tzf ${_TMP}/syspatch${_patch}.tgz bsd >/dev/null 2>&1; then
+		tar -C / -czf ${_PDIR}/${_patch}/rollback.tgz -s '/^bsd.mp$//' \
+			-s '/^bsd$/bsd.mp/' -s '/^bsd.sp$/bsd/' bsd.sp \
+			${_rbfiles} || _ret=$?
+	else
+		tar -C / -czf ${_PDIR}/${_patch}/rollback.tgz ${_rbfiles} ||
+			_ret=$?
+	fi
+
+	# XXX missing archive (empty _rbfiles list) probably means a missing set
+	[[ -f ${_PDIR}/${_patch}/rollback.tgz ]] || _ret=$?
+
+	if ((_ret != 0)); then
+		sp_err "Failed to create rollback patch ${_patch##${_OSrev}-}" 0
+		rm -r ${_PDIR}/${_patch}; return ${_ret}
 	fi
 }
 
