@@ -1,4 +1,4 @@
-/*	$OpenBSD: stsec.c,v 1.4 2010/03/08 20:56:20 miod Exp $	*/
+/*	$OpenBSD: stsec.c,v 1.5 2016/12/05 15:04:15 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -323,13 +323,12 @@ stsec_sensors_update(void *vsc)
 	} else {
 		if (ISSET(control, STC_CHARGE_ENABLE))
 			stsec_apmdata.battery_state = APM_BATT_CHARGING;
-		/* XXX arbitrary */
-		else if (cap_pct < 10)
-			stsec_apmdata.battery_state = APM_BATT_CRITICAL;
-		else if (cap_pct > 60)
+		else if (cap_pct > 50)
 			stsec_apmdata.battery_state = APM_BATT_HIGH;
-		else
+		else if (cap_pct > 25)
 			stsec_apmdata.battery_state = APM_BATT_LOW;
+		else
+			stsec_apmdata.battery_state = APM_BATT_CRITICAL;
 
 		stsec_apmdata.minutes_left = -1; /* unknown */
 	}
