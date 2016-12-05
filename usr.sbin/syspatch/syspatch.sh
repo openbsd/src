@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.69 2016/12/02 10:59:27 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.70 2016/12/05 13:17:31 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -170,42 +170,6 @@ install_kernel()
 ls_installed()
 {
 	local _p
-	### XXX temporary quirks; remove before 6.1 ############################
-	local _r _s _t _u _v
-	if [[ -f /bsd.rollback${_OSrev} ]]; then
-		[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
-		mv /bsd.rollback${_OSrev} /bsd.syspatch${_OSrev}
-	fi
-	if [[ -d ${_PDIR}/${_KERNV[0]} ]]; then
-		( cd ${_PDIR}/${_KERNV[0]} && for _r in *; do
-			if [[ ${_r} == rollback-syspatch-${_OSrev}-*.tgz ]]; then
-				[[ $(id -u) -ne 0 ]] &&
-					sp_err "${0##*/}: need root privileges"
-				mv ${_r} rollback${_OSrev}${_r#*-syspatch-${_OSrev}}
-			fi
-		done )
-		( cd ${_PDIR}/${_KERNV[0]} && for _s in *; do
-			if [[ ${_s} == rollback${_OSrev}-*.tgz ]]; then
-				[[ $(id -u) -ne 0 ]] &&
-					sp_err "${0##*/}: need root privileges"
-				_t=${_s#rollback${_OSrev}-}
-				_t=${_t%.tgz}
-				mv ${_s} ${_t}.rollback.tgz
-			fi
-		done )
-		( cd ${_PDIR}/${_KERNV[0]} && for _u in *; do
-			if [[ ${_u} == *.rollback.tgz ]]; then
-				[[ $(id -u) -ne 0 ]] &&
-					sp_err "${0##*/}: need root privileges"
-				_v=${_u%.rollback.tgz}
-				install -d ${_PDIR}/${_OSrev}-${_v}
-				mv ${_u} ${_PDIR}/${_OSrev}-${_v}/rollback.tgz
-				mv ${_v}.patch.sig ${_PDIR}/${_OSrev}-${_v}/
-			fi
-		done )
-		rmdir ${_PDIR}/${_KERNV[0]}
-	fi
-	########################################################################
 	for _p in ${_PDIR}/*; do
 		[[ -f ${_p}/rollback.tgz ]] && echo ${_p##*/${_OSrev}-}
 	done | sort -V
