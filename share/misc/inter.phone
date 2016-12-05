@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.42 2016/07/09 23:32:51 schwarze Exp $
+#	$OpenBSD: inter.phone,v 1.43 2016/12/05 14:22:34 fcambus Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -1711,10 +1711,55 @@
 47:2:Oslo:Norway
 47:5:Bergen:Norway
 47:7:Trondheim:Norway
-48:12:Crakow:Poland
+48:12:Krakow:Poland
+48:13:Krosno:Poland
+48:14:Tarnow:Poland
+48:15:Tarnobrzeg:Poland
+48:16:Przemysl:Poland
+48:17:Rzeszow:Poland
+48:18:Nowy Sacz:Poland
 48:22:Warsaw:Poland
+48:23:Ciechanow:Poland
+48:24:Plock:Poland
+48:25:Siedlce:Poland
+48:29:Ostroleka:Poland
+48:32:Katowice:Poland
+48:33:Bielsko-Biala:Poland
+48:34:Czestochowa:Poland
+48:41:Kielce:Poland
 48:42:Lodz:Poland
+48:43:Sieradz:Poland
+48:44:Piotrkow Trybunalski:Poland
+48:46:Skierniewice:Poland
+48:48:Radom:Poland
+48:52:Bydgoszcz:Poland
+48:54:Wloclawek:Poland
+48:55:Elblag:Poland
+48:56:Torun:Poland
 48:58:Gdansk:Poland
+48:59:Slupsk:Poland
+48:61:Poznan:Poland
+48:62:Kalisz:Poland
+48:63:Konin:Poland
+48:65:Leszno:Poland
+48:67:Pila:Poland
+48:68:Zielona Gora:Poland
+48:71:Wroclaw:Poland
+48:74:Walbrzych:Poland
+48:75:Jelenia Gora:Poland
+48:76:Legnica:Poland
+48:77:Opole:Poland
+48:81:Lublin:Poland
+48:82:Chelm:Poland
+48:83:Biala Podlaska:Poland
+48:84:Zamosc:Poland
+48:85:Bialystok:Poland
+48:86:Lomza:Poland
+48:87:Suwalki:Poland
+48:89:Olsztyn:Poland
+48:91:Szczecin:Poland
+48:94:Koszalin:Poland
+48:95:Gorzow Wielkopolski:Poland
 49:201:Essen:Germany
 49:202:Wuppertal:Germany
 49:203:Duisburg:Germany
