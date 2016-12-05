@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.71 2016/12/05 15:34:21 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.72 2016/12/05 16:11:17 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -271,7 +271,7 @@ unpriv()
 # only run on release (not -current nor -stable)
 set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
-[[ -z ${_KERNV[1]} ]]
+((${#_KERNV[*]} > 1)) && sp_err "Unsupported release ${_KERNV[*]}"
 
 [[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|r)) ]] &&
 	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
