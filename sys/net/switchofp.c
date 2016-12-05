@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.43 2016/12/02 17:25:34 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.44 2016/12/05 09:41:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -164,10 +164,12 @@ struct ofp_oxm_class
 	*swofp_lookup_oxm_handler(struct ofp_ox_match *);
 ofp_msg_handler
 	swofp_lookup_msg_handler(uint8_t);
-struct ofp_mp_msg_handler
-	*swofp_lookup_multipart_handler(uint16_t);
+ofp_msg_handler
+	swofp_lookup_mpmsg_handler(uint16_t);
 struct ofp_action_handler
 	*swofp_lookup_action_handler(uint16_t);
+ofp_msg_handler
+	*swofp_flow_mod_lookup_handler(uint8_t);
 
 /*
  * Flow table
@@ -211,6 +213,8 @@ int	 swofp_flow_cmp_non_strict(struct swofp_flow_entry *,
 	    struct ofp_match *);
 int	 swofp_flow_cmp_strict(struct swofp_flow_entry *, struct ofp_match *,
 	    uint32_t);
+int	 swofp_flow_filter_out_port(struct ofp_instruction_actions *,
+	    uint32_t);
 int	 swofp_flow_filter(struct swofp_flow_entry *, uint64_t, uint64_t,
 	    uint32_t, uint32_t);
 void	 swofp_flow_timeout(struct switch_softc *);
@@ -249,9 +253,15 @@ int	 swofp_ox_match_uint8(struct switch_flow_classify *,
 int	 swofp_ox_match_uint16(struct switch_flow_classify *,
 	    struct ofp_ox_match *);
 int	 swofp_ox_match_uint32(struct switch_flow_classify *,
-	struct ofp_ox_match *);
+	    struct ofp_ox_match *);
 int	 swofp_ox_match_uint64(struct switch_flow_classify *,
 	    struct ofp_ox_match *);
+
+void	 swofp_ox_match_put_start(struct ofp_match *);
+int	 swofp_ox_match_put_end(struct ofp_match *);
+int	 swofp_ox_match_put_uint32(struct ofp_match *, uint8_t, uint32_t);
+int	 swofp_ox_match_put_uint64(struct ofp_match *, uint8_t, uint64_t);
+int	 swofp_nx_match_put(struct ofp_match *, uint8_t, int, caddr_t);
 
 /*
  * OpenFlow protocol push/pop tag action handlers
@@ -273,7 +283,16 @@ struct mbuf
 	*swofp_apply_set_field_tcp(struct mbuf *, int,
 	    struct switch_flow_classify *, struct switch_flow_classify *);
 struct mbuf
+	*swofp_apply_set_field_nd6(struct mbuf *, int,
+	    struct switch_flow_classify *, struct switch_flow_classify *);
+struct mbuf
+	*swofp_apply_set_field_icmpv6(struct mbuf *m, int,
+	    struct switch_flow_classify *, struct switch_flow_classify *);
+struct mbuf
 	*swofp_apply_set_field_icmpv4(struct mbuf *, int,
+	    struct switch_flow_classify *, struct switch_flow_classify *);
+struct mbuf
+	*swofp_apply_set_field_ipv6(struct mbuf *, int,
 	    struct switch_flow_classify *, struct switch_flow_classify *);
 struct mbuf
 	*swofp_apply_set_field_ipv4(struct mbuf *, int,
@@ -296,7 +315,7 @@ int	 swofp_ox_set_uint8(struct switch_flow_classify *,
 int	 swofp_ox_set_uint16(struct switch_flow_classify *,
 	    struct ofp_ox_match *);
 int	 swofp_ox_set_uint32(struct switch_flow_classify *,
-	struct ofp_ox_match *);
+	    struct ofp_ox_match *);
 int	 swofp_ox_set_uint64(struct switch_flow_classify *,
 	    struct ofp_ox_match *);
 int	 swofp_ox_set_ether_addr(struct switch_flow_classify *,
@@ -326,6 +345,27 @@ struct mbuf
 struct mbuf
 	*swofp_execute_action(struct switch_softc *, struct mbuf *,
 	    struct swofp_pipline_desc *, struct ofp_action_header *);
+struct mbuf
+	*swofp_execute_action_set_field(struct switch_softc *, struct mbuf *,
+	    struct swofp_pipline_desc *, struct ofp_action_header *);
+struct mbuf
+	*swofp_execute_action_set(struct switch_softc *, struct mbuf *,
+	    struct swofp_pipline_desc *);
+struct mbuf
+	*swofp_apply_actions(struct switch_softc *, struct mbuf *,
+	    struct swofp_pipline_desc *, struct ofp_instruction_actions *);
+struct swofp_action_set
+	*swofp_lookup_action_set(struct swofp_pipline_desc *, uint16_t);
+void	 swofp_write_actions_set_field(struct swofp_action_set *,
+	    struct ofp_action_header *);
+int	 swofp_write_actions(struct ofp_instruction_actions *,
+	    struct swofp_pipline_desc *);
+void	 swofp_clear_actions_set_field(struct swofp_action_set *,
+	    struct ofp_action_header *);
+int	 swofp_clear_actions(struct ofp_instruction_actions *,
+	    struct swofp_pipline_desc *);
+void	 swofp_write_metadata(struct ofp_instruction_write_metadata *,
+	    struct swofp_pipline_desc *);
 
 /*
  * OpenFlow protocol message handlers
@@ -363,6 +403,22 @@ void	 swofp_barrier_reply(struct switch_softc *, struct mbuf *);
 /*
  * OpenFlow protocol multipart message handlers
  */
+int	swofp_mpmsg_reply_create(struct ofp_multipart *, struct swofp_mpmsg *);
+int	swofp_mpmsg_put(struct swofp_mpmsg *, caddr_t, size_t);
+int	swofp_mpmsg_m_put(struct swofp_mpmsg *, struct mbuf *);
+void	swofp_mpmsg_destroy(struct swofp_mpmsg *);
+int	swofp_multipart_reply(struct switch_softc *, struct swofp_mpmsg *);
+
+int	swofp_put_flow(struct mbuf *, struct swofp_flow_table *,
+	    struct swofp_flow_entry *);
+int	swofp_put_flows_from_table(struct swofp_mpmsg *,
+	    struct swofp_flow_table *, struct ofp_flow_stats_request *);
+void	swofp_aggregate_stat_from_table(struct ofp_aggregate_stats *,
+	    struct swofp_flow_table *, struct ofp_aggregate_stats_request *);
+int	swofp_table_features_put_oxm(struct mbuf *, int *, uint16_t);
+int	swofp_table_features_put_actions(struct mbuf *, int *, uint16_t);
+int	swofp_table_features_put_instruction(struct mbuf *, int *, uint16_t);
+
 int	swofp_mp_recv_desc(struct switch_softc *, struct mbuf *);
 int	swofp_mp_recv_flow(struct switch_softc *, struct mbuf *);
 int	swofp_mp_recv_aggregate_flow_stat(struct switch_softc *, struct mbuf *);
