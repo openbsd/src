@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509V3_get_d2i.3,v 1.1 2016/12/04 20:51:47 schwarze Exp $
+.\"	$OpenBSD: X509V3_get_d2i.3,v 1.2 2016/12/05 16:38:24 jmc Exp $
 .\"	OpenSSL 047dd81e Jul 4 23:03:17 2014 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 4 2016 $
+.Dd $Mdocdate: December 5 2016 $
 .Dt X509V3_GET_D2I 3
 .Os
 .Sh NAME
@@ -201,7 +201,7 @@ and
 .Fn X509_add1_ext_i2d
 operate on the extensions of certificate
 .Fa x ,
-they are otherwise identical to
+and are otherwise identical to
 .Fn X509V3_get_d2i
 and
 .Fn X509V3_add1_i2d 3 .
@@ -211,7 +211,7 @@ and
 .Fn X509_CRL_add1_ext_i2d
 operate on the extensions of CRL
 .Fa crl ,
-they are otherwise identical to
+and are otherwise identical to
 .Fn X509V3_get_d2i
 and
 .Fn X509V3_add1_i2d 3 .
@@ -223,7 +223,7 @@ operate on the extensions of the
 .Vt X509_REVOKED
 structure
 .Fa r
-(i.e. for CRL entry extensions), they are otherwise identical to
+(i.e. for CRL entry extensions), and are otherwise identical to
 .Fn X509V3_get_d2i
 and
 .Fn X509V3_add1_i2d 3 .
@@ -265,7 +265,7 @@ No new extension is added.
 .Pp
 If
 .Dv X509V3_ADD_SILENT
-is ored with
+is OR'd with
 .Fa flags ,
 any error returned will not be added to the error queue.
 .Pp
@@ -282,7 +282,7 @@ The following sections contain a list of all supported extensions
 including their name and NID.
 .Ss PKIX Certificate Extensions
 The following certificate extensions are defined in PKIX standards such
-as RFC5280.
+as RFC 5280.
 .Bl -column 30n 30n
 .It Basic Constraints             Ta Dv NID_basic_constraints
 .It Key Usage                     Ta Dv NID_key_usage
@@ -318,7 +318,7 @@ The following are (largely obsolete) Netscape certificate extensions.
 .It Proxy Certificate Information Ta Dv NID_proxyCertInfo
 .El
 .Ss PKIX CRL Extensions
-The following are CRL extensions from PKIX standards such as RFC5280.
+The following are CRL extensions from PKIX standards such as RFC 5280.
 .Bl -column 30n 30n
 .It CRL Number                    Ta Dv NID_crl_number
 .It CRL Distribution Points       Ta Dv NID_crl_distribution_points
@@ -329,7 +329,7 @@ The following are CRL extensions from PKIX standards such as RFC5280.
 .El
 .Pp
 The following are CRL entry extensions from PKIX standards such as
-RFC5280.
+RFC 5280.
 .Bl -column 30n 30n
 .It CRL Reason Code               Ta Dv NID_crl_reason
 .It Certificate Issuer            Ta Dv NID_certificate_issuer
@@ -345,7 +345,7 @@ RFC5280.
 .It Hold Instruction Code         Ta Dv NID_hold_instruction_code
 .El
 .Ss Certificate Transparency Extensions
-The following extensions are used by certificate transparency, RFC6962
+The following extensions are used by certificate transparency, RFC 6962
 .Bl -column 30n 30n
 .It CT Precertificate SCTs        Ta Dv NID_ct_precert_scts
 .It CT Certificate SCTs           Ta Dv NID_ct_cert_scts

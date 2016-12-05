@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_check_host.3,v 1.1 2016/12/05 15:56:46 schwarze Exp $
+.\"	$OpenBSD: X509_check_host.3,v 1.2 2016/12/05 16:38:24 jmc Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Florian Weimer <fweimer@redhat.com> and
@@ -99,7 +99,7 @@ checks if the certificate Subject Alternative Name (SAN) or Subject
 CommonName (CN) matches the specified host name, which must be encoded
 in the preferred name syntax described in section 3.5 of RFC 1034.
 By default, wildcards are supported and they match only in the
-left-most label; but they may match part of that label with an
+left-most label; they may match part of that label with an
 explicit prefix or suffix.
 For example, by default, the host
 .Fa name
@@ -124,7 +124,8 @@ When
 starts with a dot (e.g.\&
 .Qq .example.com ) ,
 it will be matched by a certificate valid for any sub-domain of
-.Fa name ; see also
+.Fa name ;
+see also
 .Fa X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS
 below.
 .Pp
@@ -142,11 +143,12 @@ when it is no longer needed.
 .Fn X509_check_email
 checks if the certificate matches the specified email
 .Fa address .
-Only the mailbox syntax of RFC 822 is supported, comments are not
-allowed, and no attempt is made to normalize quoted characters.
+Only the mailbox syntax of RFC 822 is supported.
+Comments are not allowed,
+and no attempt is made to normalize quoted characters.
 The
 .Fa addresslen
-argument must be the number of characters in the address string or zero
+argument must be the number of characters in the address string or zero,
 in which case the length is calculated with
 .Fn strlen address .
 .Pp

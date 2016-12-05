@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_LOOKUP_hash_dir.3,v 1.1 2016/12/04 20:51:47 schwarze Exp $
+.\"	$OpenBSD: X509_LOOKUP_hash_dir.3,v 1.2 2016/12/05 16:38:24 jmc Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Victor B. Wagner <vitus@cryptocom.ru>
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 4 2016 $
+.Dd $Mdocdate: December 5 2016 $
 .Dt X509_LOOKUP_HASH_DIR 3
 .Os
 .Sh NAME
@@ -89,7 +89,7 @@ and
 .Fn X509_LOOKUP_file
 are two certificate lookup methods to use with
 .Vt X509_STORE ,
-provided by OpenSSL library.
+provided by the OpenSSL library.
 .Pp
 Users of the library typically do not need to create instances of these
 methods manually.
@@ -99,7 +99,7 @@ or
 .Xr SSL_CTX_load_verify_locations 3
 functions.
 .Pp
-Internally loading of certificates and CRLs is implemented via functions
+Internally, loading of certificates and CRLs is implemented via the functions
 .Fn X509_load_cert_crl_file ,
 .Fn X509_load_cert_file
 and
@@ -137,7 +137,7 @@ The constant
 .Dv FILETYPE_DEFAULT
 with
 .Dv NULL
-filename causes these functions to load default certificate
+filename causes these functions to load the default certificate
 store file (see
 .Xr X509_STORE_set_default_paths 3 ) .
 .Pp
@@ -162,7 +162,7 @@ This method should be used by applications which work with a small set
 of CAs.
 .Ss Hashed Directory Method
 .Fa X509_LOOKUP_hash_dir
-is a more advanced method, which loads certificates and CRLs on demand,
+is a more advanced method which loads certificates and CRLs on demand,
 and caches them in memory once they are loaded.
 As of OpenSSL 1.0.0, it also checks for newer CRLs upon each lookup, so
 that newer CRLs are used as soon as they appear in the directory.
@@ -182,7 +182,7 @@ name for CRLs.
 The hash can also be obtained via the
 .Fl hash
 option of the
-.Xr openssl
+.Xr openssl 1
 .Cm x509
 or
 .Cm crl
