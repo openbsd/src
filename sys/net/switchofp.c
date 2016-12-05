@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.44 2016/12/05 09:41:51 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.45 2016/12/05 09:46:31 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -86,7 +86,6 @@ struct swofp_flow_entry {
 	uint16_t				 swfe_idle_timeout;
 	uint16_t				 swfe_hard_timeout;
 	uint16_t				 swfe_flags;
-	uint32_t				 swfe_id; /* internal used */
 	int					 swfe_tablemiss;
 };
 
@@ -988,8 +987,6 @@ struct ofp_action_handler ofp_action_handlers[] = {
 extern struct pool swfcl_pool;
 struct pool swpld_pool;
 
-int swofp_flow_id = 0;
-
 void
 swofp_attach(void)
 {
@@ -1533,7 +1530,6 @@ void
 swofp_flow_entry_add(struct switch_softc *sc, struct swofp_flow_table *swft,
     struct swofp_flow_entry *swfe)
 {
-	swfe->swfe_id = swofp_flow_id++;
 	swfe->swfe_table_id = swft->swft_table_id;
 	LIST_INSERT_HEAD(&swft->swft_flow_list, swfe, swfe_next);
 	swft->swft_flow_num++;
