@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_new.3,v 1.4 2016/12/05 18:26:16 schwarze Exp $
+.\"	$OpenBSD: X509_new.3,v 1.5 2016/12/05 19:41:46 jmc Exp $
 .\"	OpenSSL 3a59ad98 Dec 11 00:36:06 2015 +0000
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -53,7 +53,8 @@
 .Os
 .Sh NAME
 .Nm X509_new ,
-.Nm X509_free
+.Nm X509_free ,
+.Nm X509_up_ref
 .Nd X509 certificate ASN.1 allocation functions
 .Sh SYNOPSIS
 .In openssl/x509.h

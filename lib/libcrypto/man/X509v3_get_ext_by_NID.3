@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509v3_get_ext_by_NID.3,v 1.1 2016/12/05 18:24:08 schwarze Exp $
+.\"	$OpenBSD: X509v3_get_ext_by_NID.3,v 1.2 2016/12/05 19:41:46 jmc Exp $
 .\"	OpenSSL c952780c Jun 21 07:03:34 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -287,7 +287,7 @@ from
 The deleted extension is returned and must be freed by the caller.
 If
 .Fa loc
-is in invalid index value,
+is an invalid index value,
 .Dv NULL
 is returned.
 .Pp
@@ -377,7 +377,7 @@ if an error occurs.
 .Fn X509v3_get_ext_by_OBJ ,
 and
 .Fn X509v3_get_ext_by_critical
-return the an extension index or -1 if an error occurs.
+return the extension index or -1 if an error occurs.
 .Pp
 .Xr X509v3_add_ext 3
 returns a stack of extensions or
