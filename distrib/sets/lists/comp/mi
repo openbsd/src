@@ -1992,12 +1992,17 @@
 ./usr/share/man/man3/X509_NAME_add_entry_by_txt.3
 ./usr/share/man/man3/X509_NAME_get_index_by_NID.3
 ./usr/share/man/man3/X509_NAME_print_ex.3
+./usr/share/man/man3/X509_PUBKEY_new.3
 ./usr/share/man/man3/X509_STORE_CTX_get_error.3
 ./usr/share/man/man3/X509_STORE_CTX_get_ex_new_index.3
 ./usr/share/man/man3/X509_STORE_CTX_new.3
 ./usr/share/man/man3/X509_STORE_CTX_set_verify_cb.3
+./usr/share/man/man3/X509_STORE_set1_param.3
 ./usr/share/man/man3/X509_STORE_set_verify_cb_func.3
 ./usr/share/man/man3/X509_VERIFY_PARAM_set_flags.3
+./usr/share/man/man3/X509_check_ca.3
+./usr/share/man/man3/X509_check_host.3
+./usr/share/man/man3/X509_check_issued.3
 ./usr/share/man/man3/X509_new.3
 ./usr/share/man/man3/X509_verify_cert.3
 ./usr/share/man/man3/__tfork_thread.3
