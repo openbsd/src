@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.171 2016/09/27 09:19:11 rzalamena Exp $
+#	$OpenBSD: netstart,v 1.172 2016/12/06 14:01:43 mpi Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -167,6 +167,21 @@ ifv6autoconf() {
 	done
 }
 
+# Parse /etc/mygate and add default routes for IPv4 and IPv6
+# Usage: defaultroute
+defaultroute() {
+	[[ -z $dhcpif ]] && stripcom /etc/mygate | while read gw; do
+			[[ $gw == @(*:*) ]] && continue
+			route -qn delete default >/dev/null 2>&1
+			route -qn add -host default $gw && break
+	done
+	[[ -z $rtsolif ]] && stripcom /etc/mygate | while read gw; do
+			[[ $gw == !(*:*) ]] && continue
+			route -qn delete -inet6 default >/dev/null 2>&1
+			route -qn add -host -inet6 default $gw && break
+	done
+}
+
 # Make sure the invoking user has the right privileges.
 if (($(id -u) != 0)); then
 	echo "${0##*/}: need root privileges"
@@ -178,10 +193,11 @@ FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 _rc_parse_conf
 
 # If we were invoked with a list of interface names, just reconfigure these
-# interfaces (or bridges) and return.
+# interfaces (or bridges), add default routes and return.
 if (($# > 0)); then
 	for _if; do ifstart $_if; done
 	ifv6autoconf
+	defaultroute
 	return
 fi
 
@@ -262,16 +278,7 @@ ifmstart "trunk svlan vlan carp"
 ifv6autoconf
 
 # Look for default routes in /etc/mygate.
-[[ -z $dhcpif ]] && stripcom /etc/mygate | while read gw; do
-		[[ $gw == @(*:*) ]] && continue
-		route -qn delete default >/dev/null 2>&1
-		route -qn add -host default $gw && break
-done
-[[ -z $rtsolif ]] && stripcom /etc/mygate | while read gw; do
-		[[ $gw == !(*:*) ]] && continue
-		route -qn delete -inet6 default >/dev/null 2>&1
-		route -qn add -host -inet6 default $gw && break
-done
+defaultroute
 
 # Multicast routing.
 if [[ $multicast != YES ]]; then
