@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.14 2016/10/27 16:17:43 reyk Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.15 2016/12/06 10:38:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -324,7 +324,7 @@ pvbus_minor(struct pvbus_softc *sc, dev_t dev)
 
 	for (hvid = 0, cnt = 0; hvid < PVBUS_MAX; hvid++) {
 		hv = &sc->pvbus_hv[hvid];
-		if (hv->hv_base == 0 || hv->hv_kvop == NULL)
+		if (hv->hv_base == 0)
 			continue;
 		if (minor(dev) == cnt++)
 			return (hvid);
