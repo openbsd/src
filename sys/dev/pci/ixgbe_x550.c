@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x550.c,v 1.2 2016/11/18 11:25:11 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_x550.c,v 1.3 2016/12/06 16:09:40 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -367,6 +367,8 @@ void ixgbe_setup_mux_ctl(struct ixgbe_hw *hw)
  */
 int32_t ixgbe_identify_phy_x550em(struct ixgbe_hw *hw)
 {
+	int32_t ret_val;
+
 	switch (hw->device_id) {
 	case IXGBE_DEV_ID_X550EM_X_SFP:
 		/* set up for CS4227 usage */
@@ -374,7 +376,13 @@ int32_t ixgbe_identify_phy_x550em(struct ixgbe_hw *hw)
 		ixgbe_setup_mux_ctl(hw);
 		ixgbe_check_cs4227(hw);
 
-		return ixgbe_identify_module_generic(hw);
+		ret_val = ixgbe_identify_module_generic(hw);
+
+		/* Set PHY type none if no SFP detected */
+		if (ret_val == IXGBE_ERR_SFP_NOT_PRESENT) {
+			hw->phy.type = ixgbe_phy_none;
+			return IXGBE_SUCCESS;
+		}
 		break;
 	case IXGBE_DEV_ID_X550EM_X_KX4:
 		hw->phy.type = ixgbe_phy_x550em_kx4;
