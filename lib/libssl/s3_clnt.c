@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.150 2016/12/06 13:17:52 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.151 2016/12/06 13:42:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1877,14 +1877,14 @@ ssl3_get_server_done(SSL *s)
 }
 
 static int
-ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
-    int *outlen)
+ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 {
 	unsigned char pms[SSL_MAX_MASTER_KEY_LENGTH];
+	unsigned char *enc_pms = NULL;
 	EVP_PKEY *pkey = NULL;
-	unsigned char *q;
 	int ret = -1;
-	int n;
+	int enc_len;
+	CBB epms;
 
 	/*
 	 * RSA-Encrypted Premaster Secret Message - RFC 5246 section 7.4.7.1.
@@ -1902,30 +1902,37 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	pms[1] = s->client_version & 0xff;
 	arc4random_buf(&pms[2], sizeof(pms) - 2);
 
-	q = p;
-	p += 2;
+	if ((enc_pms = malloc(RSA_size(pkey->pkey.rsa))) == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
-	n = RSA_public_encrypt(sizeof(pms), pms, p, pkey->pkey.rsa,
+	enc_len = RSA_public_encrypt(sizeof(pms), pms, enc_pms, pkey->pkey.rsa,
 	    RSA_PKCS1_PADDING);
-	if (n <= 0) {
+	if (enc_len <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 		    SSL_R_BAD_RSA_ENCRYPT);
 		goto err;
 	}
 
-	s2n(n, q);
-	n += 2;
+	if (!CBB_add_u16_length_prefixed(cbb, &epms))
+		goto err;
+	if (!CBB_add_bytes(&epms, enc_pms, enc_len))
+		goto err;
+	if (!CBB_flush(cbb))
+		goto err;
 
 	s->session->master_key_length =
 	    s->method->ssl3_enc->generate_master_secret(s,
 		s->session->master_key, pms, sizeof(pms));
 
-	*outlen = n;
 	ret = 1;
 
 err:
 	explicit_bzero(pms, sizeof(pms));
 	EVP_PKEY_free(pkey);
+	free(enc_pms);
 
 	return (ret);
 }
@@ -2224,8 +2231,14 @@ ssl3_send_client_key_exchange(SSL *s)
 {
 	SESS_CERT *sess_cert;
 	unsigned long alg_k;
-	unsigned char *p;
+	unsigned char *bufend, *p;
+	size_t outlen;
 	int n = 0;
+	CBB cbb;
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	bufend = (unsigned char *)s->init_buf->data + s->init_buf->max;
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A) {
 		p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_KEY_EXCHANGE);
@@ -2241,8 +2254,15 @@ ssl3_send_client_key_exchange(SSL *s)
 		}
 
 		if (alg_k & SSL_kRSA) {
-			if (ssl3_send_client_kex_rsa(s, sess_cert, p, &n) != 1)
+			if (!CBB_init_fixed(&cbb, p, bufend - p))
 				goto err;
+			if (ssl3_send_client_kex_rsa(s, sess_cert, &cbb) != 1)
+				goto err;
+			if (!CBB_finish(&cbb, NULL, &outlen))
+				goto err;
+			if (outlen > INT_MAX)
+				goto err;
+			n = (int)outlen;
 		} else if (alg_k & SSL_kDHE) {
 			if (ssl3_send_client_kex_dhe(s, sess_cert, p, &n) != 1)
 				goto err;
@@ -2270,6 +2290,8 @@ ssl3_send_client_key_exchange(SSL *s)
 	return (ssl3_handshake_write(s));
 
 err:
+	CBB_cleanup(&cbb);
+
 	return (-1);
 }
 
