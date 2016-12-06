@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.149 2016/11/30 14:31:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.150 2016/12/06 12:57:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3389,7 +3389,8 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 			in->in_mn.retries += tx_resp->failure_frame;
 			in->in_mn.txfail += tx_resp->frame_count;
 		}
-		ieee80211_mira_choose(&in->in_mn, ic, &in->in_ni);
+		if (ic->ic_state == IEEE80211_S_RUN)
+			ieee80211_mira_choose(&in->in_mn, ic, &in->in_ni);
 		/* 
 		 * If MiRA has chosen a new TX rate we must update
 		 * the firwmare's LQ rate table from process context.
