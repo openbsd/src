@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.1 2016/11/30 11:38:25 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.2 2016/12/06 02:41:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -801,7 +801,7 @@ int
 ieee80211_mira_check_probe_timers(struct ieee80211_mira_node *mn,
     struct ieee80211_node *ni)
 {
-	int ret, expired_timer = IEEE80211_MIRA_PROBE_TO_INVALID;
+	int ret = 0, expired_timer = IEEE80211_MIRA_PROBE_TO_INVALID;
 	int mcs;
 
 	if (mn->probe_timer_expired[IEEE80211_MIRA_PROBE_TO_UP] &&
