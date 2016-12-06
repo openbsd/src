@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x550.c,v 1.3 2016/12/06 16:09:40 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_x550.c,v 1.4 2016/12/06 16:21:20 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -383,6 +383,7 @@ int32_t ixgbe_identify_phy_x550em(struct ixgbe_hw *hw)
 			hw->phy.type = ixgbe_phy_none;
 			return IXGBE_SUCCESS;
 		}
+		return ret_val;
 		break;
 	case IXGBE_DEV_ID_X550EM_X_KX4:
 		hw->phy.type = ixgbe_phy_x550em_kx4;
