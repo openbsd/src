@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509V3_get_d2i.3,v 1.2 2016/12/05 16:38:24 jmc Exp $
+.\"	$OpenBSD: X509V3_get_d2i.3,v 1.3 2016/12/06 15:04:25 schwarze Exp $
 .\"	OpenSSL 047dd81e Jul 4 23:03:17 2014 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2016 $
+.Dd $Mdocdate: December 6 2016 $
 .Dt X509V3_GET_D2I 3
 .Os
 .Sh NAME
@@ -343,12 +343,6 @@ RFC 5280.
 .It OCSP Archive Cutoff           Ta Dv NID_id_pkix_OCSP_archiveCutoff
 .It OCSP Service Locator          Ta Dv NID_id_pkix_OCSP_serviceLocator
 .It Hold Instruction Code         Ta Dv NID_hold_instruction_code
-.El
-.Ss Certificate Transparency Extensions
-The following extensions are used by certificate transparency, RFC 6962
-.Bl -column 30n 30n
-.It CT Precertificate SCTs        Ta Dv NID_ct_precert_scts
-.It CT Certificate SCTs           Ta Dv NID_ct_cert_scts
 .El
 .Sh RETURN VALUES
 .Fn X509V3_get_d2i
