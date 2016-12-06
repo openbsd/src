@@ -1737,7 +1737,6 @@
 ./usr/share/man/man3/ASN1_generate_nconf.3
 ./usr/share/man/man3/ASN1_time_parse.3
 ./usr/share/man/man3/BF_set_key.3
-./usr/share/man/man3/BIO.3
 ./usr/share/man/man3/BIO_ctrl.3
 ./usr/share/man/man3/BIO_f_base64.3
 ./usr/share/man/man3/BIO_f_buffer.3
