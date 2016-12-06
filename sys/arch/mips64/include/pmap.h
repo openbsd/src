@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.44 2016/05/11 15:50:29 visa Exp $ */
+/*      $OpenBSD: pmap.h,v 1.45 2016/12/06 16:27:33 visa Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -84,11 +84,7 @@
  * Segment sizes
  */
 
-#ifdef MIPS_PTE64
-#define	SEGSHIFT		(PAGE_SHIFT + PMAP_L2SHIFT - 3)
-#else
-#define	SEGSHIFT		(PAGE_SHIFT + PMAP_L2SHIFT - 2)
-#endif
+#define	SEGSHIFT		(PAGE_SHIFT + PMAP_L2SHIFT - PTE_LOG)
 #define	NBSEG			(1UL << SEGSHIFT)
 #define	SEGOFSET		(NBSEG - 1)
 
