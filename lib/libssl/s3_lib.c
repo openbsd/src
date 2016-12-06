@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.112 2016/11/06 13:11:40 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.113 2016/12/06 13:17:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -148,6 +148,7 @@
  * OTHERWISE.
  */
 
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/dh.h>
@@ -1722,6 +1723,76 @@ ssl3_handshake_msg_finish(SSL *s, unsigned int len)
 		dtls1_set_message_header(s, d, msg_type, len, 0, len);
 		dtls1_buffer_message(s, 0);
 	}
+}
+
+int
+ssl3_handshake_msg_start_cbb(SSL *s, CBB *handshake, CBB *body,
+    uint8_t msg_type)
+{
+	int ret = 0;
+
+	if (!CBB_init(handshake, SSL3_RT_MAX_PLAIN_LENGTH))
+		goto err;
+	if (!CBB_add_u8(handshake, msg_type))
+		goto err;
+	if (SSL_IS_DTLS(s)) {
+		unsigned char *data;
+
+		if (!CBB_add_space(handshake, &data, DTLS1_HM_HEADER_LENGTH -
+		    SSL3_HM_HEADER_LENGTH))
+			goto err;
+	}
+	if (!CBB_add_u24_length_prefixed(handshake, body))
+		goto err;
+
+	ret = 1;
+
+ err:
+	return (ret);
+}
+
+int
+ssl3_handshake_msg_finish_cbb(SSL *s, CBB *handshake)
+{
+	unsigned char *data = NULL;
+	size_t outlen;
+	int ret = 0;
+
+	if (!CBB_finish(handshake, &data, &outlen))
+		goto err;
+
+	if (outlen > INT_MAX)
+		goto err;
+
+	if (!BUF_MEM_grow_clean(s->init_buf, outlen))
+		goto err;
+
+	memcpy(s->init_buf->data, data, outlen);
+
+	s->init_num = (int)outlen;
+	s->init_off = 0;
+
+	if (SSL_IS_DTLS(s)) {
+		unsigned long len;
+		uint8_t msg_type;
+		CBS cbs;
+
+		CBS_init(&cbs, data, outlen);
+		if (!CBS_get_u8(&cbs, &msg_type))
+			goto err;
+
+		len = outlen - ssl3_handshake_msg_hdr_len(s);
+
+		dtls1_set_message_header(s, data, msg_type, len, 0, len);
+		dtls1_buffer_message(s, 0);
+	}
+
+	ret = 1;
+
+ err:
+	free(data);
+
+	return (ret);
 }
 
 int

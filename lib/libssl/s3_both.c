@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.48 2015/09/12 15:03:39 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.49 2016/12/06 13:17:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -316,49 +316,50 @@ ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 }
 
 static int
-ssl3_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
+ssl3_add_cert(CBB *cbb, X509 *x)
 {
-	int n;
-	unsigned char *p;
+	unsigned char *data;
+	int cert_len;
+	int ret = 0;
+	CBB cert;
 
-	n = i2d_X509(x, NULL);
-	if (!BUF_MEM_grow_clean(buf, n + (*l) + 3)) {
-		SSLerr(SSL_F_SSL3_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
-		return (-1);
-	}
-	/* XXX */
-	p = (unsigned char *)&(buf->data[*l]);
-	l2n3(n, p);
-	i2d_X509(x, &p);
-	*l += n + 3;
+	if ((cert_len = i2d_X509(x, NULL)) < 0)
+		goto err;
 
-	return (0);
+	if (!CBB_add_u24_length_prefixed(cbb, &cert))
+		goto err;
+	if (!CBB_add_space(&cert, &data, cert_len))
+		goto err;
+	if (i2d_X509(x, &data) < 0)
+		goto err;
+	if (!CBB_flush(cbb))
+		goto err;
+
+	ret = 1;
+
+ err:
+	return (ret);
 }
 
-unsigned long
-ssl3_output_cert_chain(SSL *s, X509 *x)
+int
+ssl3_output_cert_chain(SSL *s, CBB *cbb, X509 *x)
 {
-	unsigned char *p;
-	unsigned long l = ssl3_handshake_msg_hdr_len(s) + 3;
-	BUF_MEM *buf;
-	int no_chain;
+	int no_chain = 0;
+	CBB cert_list;
+	int ret = 0;
 	int i;
+
+	if (!CBB_add_u24_length_prefixed(cbb, &cert_list))
+		goto err;
 
 	if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || s->ctx->extra_certs)
 		no_chain = 1;
-	else
-		no_chain = 0;
 
-	/* TLSv1 sends a chain with nothing in it, instead of an alert */
-	buf = s->init_buf;
-	if (!BUF_MEM_grow_clean(buf, ssl3_handshake_msg_hdr_len(s) + 6)) {
-		SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_BUF_LIB);
-		return (0);
-	}
+	/* TLSv1 sends a chain with nothing in it, instead of an alert. */
 	if (x != NULL) {
 		if (no_chain) {
-			if (ssl3_add_cert_to_buf(buf, &l, x))
-				return (0);
+			if (!ssl3_add_cert(&cert_list, x))
+				goto err;
 		} else {
 			X509_STORE_CTX xs_ctx;
 
@@ -366,7 +367,7 @@ ssl3_output_cert_chain(SSL *s, X509 *x)
 			    x, NULL)) {
 				SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,
 				    ERR_R_X509_LIB);
-				return (0);
+				goto err;
 			}
 			X509_verify_cert(&xs_ctx);
 
@@ -374,30 +375,29 @@ ssl3_output_cert_chain(SSL *s, X509 *x)
 			ERR_clear_error();
 			for (i = 0; i < sk_X509_num(xs_ctx.chain); i++) {
 				x = sk_X509_value(xs_ctx.chain, i);
-				if (ssl3_add_cert_to_buf(buf, &l, x)) {
+				if (!ssl3_add_cert(&cert_list, x)) {
 					X509_STORE_CTX_cleanup(&xs_ctx);
-					return 0;
+					goto err;
 				}
 			}
 			X509_STORE_CTX_cleanup(&xs_ctx);
 		}
 	}
+
 	/* Thawte special :-) */
 	for (i = 0; i < sk_X509_num(s->ctx->extra_certs); i++) {
 		x = sk_X509_value(s->ctx->extra_certs, i);
-		if (ssl3_add_cert_to_buf(buf, &l, x))
-			return (0);
+		if (!ssl3_add_cert(&cert_list, x))
+			goto err;
 	}
 
-	l -= ssl3_handshake_msg_hdr_len(s) + 3;
-	p = (unsigned char *)&(buf->data[4]);
-	l2n3(l, p);
-	l += 3;
-	p = (unsigned char *)&(buf->data[0]);
-	*(p++) = SSL3_MT_CERTIFICATE;
-	l2n3(l, p);
-	l += 4; /* XXX */
-	return (l);
+	if (!CBB_flush(cbb))
+		goto err;
+
+	ret = 1;
+
+ err:
+	return (ret);
 }
 
 /*

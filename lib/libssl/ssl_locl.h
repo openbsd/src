@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.137 2016/12/04 14:32:30 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.138 2016/12/06 13:17:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,6 +159,8 @@
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
 #include <openssl/stack.h>
+
+#include "bytestring.h"
 
 __BEGIN_HIDDEN_DECLS
 
@@ -617,7 +619,7 @@ int ssl3_renegotiate_check(SSL *ssl);
 int ssl3_dispatch_alert(SSL *s);
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
-unsigned long ssl3_output_cert_chain(SSL *s, X509 *x);
+int ssl3_output_cert_chain(SSL *s, CBB *cbb, X509 *x);
 SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr);
 int	ssl3_setup_buffers(SSL *s);
@@ -644,6 +646,9 @@ int	ssl3_pending(const SSL *s);
 int ssl3_handshake_msg_hdr_len(SSL *s);
 unsigned char *ssl3_handshake_msg_start(SSL *s, uint8_t htype);
 void ssl3_handshake_msg_finish(SSL *s, unsigned int len);
+int ssl3_handshake_msg_start_cbb(SSL *s, CBB *handshake, CBB *body,
+    uint8_t msg_type);
+int ssl3_handshake_msg_finish_cbb(SSL *s, CBB *handshake);
 int ssl3_handshake_write(SSL *s);
 
 void tls1_record_sequence_increment(unsigned char *seq);

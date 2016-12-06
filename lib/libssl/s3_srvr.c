@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.135 2016/12/04 14:20:13 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.136 2016/12/06 13:17:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2524,25 +2524,40 @@ err:
 int
 ssl3_send_server_certificate(SSL *s)
 {
-	unsigned long l;
+	CBB cbb, server_cert;
 	X509 *x;
 
+	/*
+	 * Server Certificate - RFC 5246, section 7.4.2.
+	 */
+
+	memset(&cbb, 0, sizeof(cbb));
+
 	if (s->state == SSL3_ST_SW_CERT_A) {
-		x = ssl_get_server_send_cert(s);
-		if (x == NULL) {
+		if ((x = ssl_get_server_send_cert(s)) == NULL) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_CERTIFICATE,
 			    ERR_R_INTERNAL_ERROR);
 			return (0);
 		}
 
-		l = ssl3_output_cert_chain(s, x);
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &server_cert,
+		    SSL3_MT_CERTIFICATE))
+			goto err;
+		if (!ssl3_output_cert_chain(s, &server_cert, x))
+			goto err;
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
+
 		s->state = SSL3_ST_SW_CERT_B;
-		s->init_num = (int)l;
-		s->init_off = 0;
 	}
 
 	/* SSL3_ST_SW_CERT_B */
 	return (ssl3_handshake_write(s));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (0);
 }
 
 /* send a new session ticket (not necessarily for a new session) */

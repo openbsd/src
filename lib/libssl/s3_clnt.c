@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.149 2016/12/04 14:32:30 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.150 2016/12/06 13:17:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2433,10 +2433,12 @@ err:
 int
 ssl3_send_client_certificate(SSL *s)
 {
-	X509		*x509 = NULL;
-	EVP_PKEY	*pkey = NULL;
-	int		 i;
-	unsigned long	 l;
+	EVP_PKEY *pkey = NULL;
+	X509 *x509 = NULL;
+	CBB cbb, client_cert;
+	int i;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (s->state ==	SSL3_ST_CW_CERT_A) {
 		if ((s->cert == NULL) || (s->cert->key->x509 == NULL) ||
@@ -2480,14 +2482,25 @@ ssl3_send_client_certificate(SSL *s)
 	}
 
 	if (s->state == SSL3_ST_CW_CERT_C) {
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &client_cert,
+		    SSL3_MT_CERTIFICATE))
+			goto err;
+		if (!ssl3_output_cert_chain(s, &client_cert,
+		    (s->s3->tmp.cert_req == 2) ? NULL : s->cert->key->x509))
+			goto err;
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
+
 		s->state = SSL3_ST_CW_CERT_D;
-		l = ssl3_output_cert_chain(s,
-		    (s->s3->tmp.cert_req == 2) ? NULL : s->cert->key->x509);
-		s->init_num = (int)l;
-		s->init_off = 0;
 	}
+
 	/* SSL3_ST_CW_CERT_D */
 	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (0);
 }
 
 #define has_bits(i,m)	(((i)&(m)) == (m))
