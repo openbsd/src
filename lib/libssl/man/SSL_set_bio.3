@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_set_bio.3,v 1.2 2016/12/04 12:20:54 schwarze Exp $
+.\"	$OpenBSD: SSL_set_bio.3,v 1.3 2016/12/06 12:24:33 schwarze Exp $
 .\"	OpenSSL acb5b343 Sep 16 16:00:38 2000 +0000
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 4 2016 $
+.Dd $Mdocdate: December 6 2016 $
 .Dt SSL_SET_BIO 3
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ will be called (for both the reading and writing side, if different).
 .Fn SSL_set_bio
 cannot fail.
 .Sh SEE ALSO
-.Xr bio 3 ,
+.Xr BIO_new 3 ,
 .Xr ssl 3 ,
 .Xr SSL_accept 3 ,
 .Xr SSL_connect 3 ,

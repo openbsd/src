@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_f_buffer.3,v 1.5 2016/11/14 17:56:45 schwarze Exp $
+.\"	$OpenBSD: BIO_f_buffer.3,v 1.6 2016/12/06 12:24:33 schwarze Exp $
 .\"	OpenSSL 9b86974e Mar 19 12:32:14 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 14 2016 $
+.Dd $Mdocdate: December 6 2016 $
 .Dt BIO_F_BUFFER 3
 .Os
 .Sh NAME
@@ -175,8 +175,8 @@ return 1 if the buffer was successfully resized or 0 for failure.
 .Fn BIO_set_buffer_read_data
 returns 1 if the data was set correctly or 0 if there was an error.
 .Sh SEE ALSO
-.Xr BIO 3 ,
 .Xr BIO_ctrl 3 ,
 .Xr BIO_flush 3 ,
+.Xr BIO_new 3 ,
 .Xr BIO_pop 3 ,
 .Xr BIO_reset 3
