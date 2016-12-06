@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.72 2016/12/05 16:11:17 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.73 2016/12/06 10:29:04 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -95,6 +95,7 @@ checkfs()
 
 create_rollback()
 {
+	# XXX annotate new files so we can remove them if we rollback?
 	local _file _patch=$1 _rbfiles _ret=0
 	[[ -n ${_patch} ]]
 	shift
@@ -121,7 +122,7 @@ create_rollback()
 			_ret=$?
 	fi
 
-	# XXX missing archive (empty _rbfiles list) probably means a missing set
+	# missing archive (empty _rbfiles list)
 	[[ -f ${_PDIR}/${_patch}/rollback.tgz ]] || _ret=$?
 
 	if ((_ret != 0)); then
