@@ -1,5 +1,6 @@
-.\"	$OpenBSD: BIO_new.3,v 1.5 2016/11/18 18:43:05 schwarze Exp $
-.\"	OpenSSL ca3a82c3 Mar 25 11:31:18 2015 -0400
+.\"	$OpenBSD: BIO_new.3,v 1.6 2016/12/06 12:54:19 schwarze Exp $
+.\"	OpenSSL doc/man3/BIO_new.pod ca3a82c3 Mar 25 11:31:18 2015 -0400
+.\"	OpenSSL doc/man7/bio.pod a9c85cea Nov 11 09:33:55 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2015, 2016 The OpenSSL Project.  All rights reserved.
@@ -48,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 18 2016 $
+.Dd $Mdocdate: December 6 2016 $
 .Dt BIO_NEW 3
 .Os
 .Sh NAME
@@ -57,7 +58,7 @@
 .Nm BIO_free ,
 .Nm BIO_vfree ,
 .Nm BIO_free_all
-.Nd BIO allocation and freeing functions
+.Nd construct and destruct I/O abstraction objects
 .Sh SYNOPSIS
 .In openssl/bio.h
 .Ft BIO *
@@ -82,78 +83,124 @@
 .Fa "BIO *a"
 .Fc
 .Sh DESCRIPTION
+A
+.Vt BIO
+is an I/O abstraction object, hiding many of the underlying I/O
+details from an application.
+If an application uses BIOs for its I/O, it can transparently handle
+SSL connections, unencrypted network connections, and file I/O.
+.Pp
 The
 .Fn BIO_new
-function returns a new BIO using method
+function constructs a new
+.Vt BIO
+using the method
 .Fa type .
+There are two groups of BIO types, source/sink BIOs and a filter BIOs.
+.Pp 
+Source/sink BIOs provide input or consume output.
+Examples include socket BIOs and file BIOs.
 .Pp
-.Fn BIO_set
-sets the method of an already existing BIO.
-.Pp
-.Fn BIO_free
-frees up a single BIO;
-.Fn BIO_vfree
-also frees up a single BIO, but it does not return a value.
-If
-.Fa a
-is a
-.Dv NULL
-pointer, no action occurs.
-Calling
-.Fn BIO_free
-may also have some effect on the underlying I/O structure,
-for example it may close the file being
-referred to under certain circumstances.
-For more details see the individual
-.Vt BIO_METHOD
-descriptions.
-.Pp
-.Fn BIO_free_all
-frees up an entire BIO chain.
-It does not halt if an error occurs
-freeing up an individual BIO in the chain.
-If
-.Fa a
-is a
-.Dv NULL
-pointer, no action occurs.
+Filter BIOs take data from one BIO and pass it through to another,
+or to the application, forming a chain of BIOs.
+The data may be left unmodified (for example by a message digest BIO)
+or translated (for example by an encryption BIO).
+The effect of a filter BIO may change according to the I/O operation
+it is performing: for example an encryption BIO will encrypt data
+if it is written to and decrypt data if it is read from.
 .Pp
 Some BIOs (such as memory BIOs) can be used immediately after calling
 .Fn BIO_new .
 Others (such as file BIOs) need some additional initialization, and
-frequently a utility function exists to create and initialize such BIOs.
-.Pp
-If
-.Fn BIO_free
-is called on a BIO chain, it will only free one BIO,
-resulting in a memory leak.
-.Pp
-Calling
-.Fn BIO_free_all
-on a single BIO has the same effect as calling
-.Fn BIO_free
-on it other than the discarded return value.
+utility functions exists to construct and initialize such BIOs.
 .Pp
 Normally the
 .Fa type
 argument is supplied by a function which returns a pointer to a
 .Vt BIO_METHOD .
 There is a naming convention for such functions:
-a source/sink BIO is normally called
+the methods for source/sink BIOs are called
 .Fn BIO_s_*
-and a filter BIO
+and those for filter BIOs
 .Fn BIO_f_* .
+.Pp
+.Fn BIO_set
+sets the method of an already existing BIO.
+.Pp
+.Fn BIO_free
+and
+.Fn BIO_vfree
+destruct a single BIO, which may also have some effect on the
+underlying I/O structure, for example it may close the file being
+referred to under certain circumstances.
+If
+.Fa a
+is a
+.Dv NULL
+pointer, no action occurs.
+If
+.Fn BIO_free
+is called on a BIO chain, it will only destruct one BIO,
+resulting in a memory leak.
+.Pp
+.Fn BIO_free_all
+destructs an entire BIO chain.
+It does not halt if an error occurs
+destructing an individual BIO in the chain.
+If
+.Fa a
+is a
+.Dv NULL
+pointer, no action occurs.
+Calling
+.Fn BIO_free_all
+on a single BIO has the same effect as
+.Fn BIO_vfree .
+.Pp
+Common I/O functions are documented in
+.Xr BIO_read 3 .
+Forming chains is explained in
+.Xr BIO_push 3 ,
+inspecting them in
+.Xr BIO_find_type 3 .
+For more details about the different kinds of BIOs, see the individual
+.Vt BIO_METHOD
+manual pages.
 .Sh RETURN VALUES
 .Fn BIO_new
-returns a newly created BIO or
+returns a newly constructed
+.Vt BIO
+object or
 .Dv NULL
-if the call fails.
+on failure.
 .Pp
 .Fn BIO_set
 and
 .Fn BIO_free
-return 1 for success and 0 for failure.
+return 1 for success or 0 for failure.
 .Sh EXAMPLES
 Create a memory BIO:
 .Pp
 .Dl BIO *mem = BIO_new(BIO_s_mem());
+.Sh SEE ALSO
+.Xr BIO_ctrl 3 ,
+.Xr BIO_f_base64 3 ,
+.Xr BIO_f_buffer 3 ,
+.Xr BIO_f_cipher 3 ,
+.Xr BIO_f_md 3 ,
+.Xr BIO_f_null 3 ,
+.Xr BIO_f_ssl 3 ,
+.Xr BIO_get_ex_new_index.3 ,
+.Xr BIO_find_type 3 ,
+.Xr BIO_push 3 ,
+.Xr BIO_read 3 ,
+.Xr BIO_s_accept 3 ,
+.Xr BIO_s_bio 3 ,
+.Xr BIO_s_connect 3 ,
+.Xr BIO_s_fd 3 ,
+.Xr BIO_s_file 3 ,
+.Xr BIO_s_mem 3 ,
+.Xr BIO_s_null 3 ,
+.Xr BIO_s_socket 3 ,
+.Xr BIO_set_callback 3 ,
+.Xr BIO_should_retry 3
