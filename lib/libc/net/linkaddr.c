@@ -1,4 +1,4 @@
-/*	$OpenBSD: linkaddr.c,v 1.6 2015/09/10 08:55:03 mpi Exp $ */
+/*	$OpenBSD: linkaddr.c,v 1.7 2016/12/06 22:32:58 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,40 +30,56 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <net/if.h>
 #include <net/if_dl.h>
 #include <string.h>
 
-static char hexlist[] = "0123456789abcdef";
+static const char hexlist[] = "0123456789abcdef";
 
 char *
 link_ntoa(const struct sockaddr_dl *sdl)
 {
 	static char obuf[64];
-	char *out = obuf; 
-	int i;
-	u_char *in = (u_char *)LLADDR(sdl);
-	u_char *inlim = in + sdl->sdl_alen;
-	int firsttime = 1;
+	char *out;
+	const char *in, *inlim;
+	int namelen, i, rem;
 
-	if (sdl->sdl_nlen) {
-		bcopy(sdl->sdl_data, obuf, sdl->sdl_nlen);
-		out += sdl->sdl_nlen;
-		if (sdl->sdl_alen)
+	namelen = (sdl->sdl_nlen <= IFNAMSIZ) ? sdl->sdl_nlen : IFNAMSIZ;
+
+	out = obuf;
+	rem = sizeof(obuf);
+	if (namelen > 0) {
+		memcpy(out, sdl->sdl_data, namelen);
+		out += namelen;
+		rem -= namelen;
+		if (sdl->sdl_alen > 0) {
 			*out++ = ':';
+			rem--;
+		}
 	}
-	while (in < inlim) {
-		if (firsttime)
-			firsttime = 0;
-		else
+
+	in = (const char *)sdl->sdl_data + sdl->sdl_nlen;
+	inlim = in + sdl->sdl_alen;
+
+	while (in < inlim && rem > 1) {
+		if (in != (const char *)sdl->sdl_data + sdl->sdl_nlen) {
 			*out++ = '.';
+			rem--;
+		}
 		i = *in++;
 		if (i > 0xf) {
-			out[1] = hexlist[i & 0xf];
+			if (rem < 3)
+				break;
+			*out++ = hexlist[i & 0xf];
 			i >>= 4;
-			out[0] = hexlist[i];
-			out += 2;
-		} else
 			*out++ = hexlist[i];
+			rem -= 2;
+		} else {
+			if (rem < 2)
+				break;
+			*out++ = hexlist[i];
+			rem++;
+		}
 	}
 	*out = 0;
 	return (obuf);
