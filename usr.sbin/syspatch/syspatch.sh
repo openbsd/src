@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.74 2016/12/06 11:10:00 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.75 2016/12/06 16:01:02 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -173,34 +173,29 @@ install_kernel()
 ls_installed()
 {
 	local _p
-	for _p in ${_PDIR}/*; do
+	for _p in ${_PDIR}/${_OSrev}-+([[:digit:]])_+([[:alnum:]_]); do
 		[[ -f ${_p}/rollback.tgz ]] && echo ${_p##*/${_OSrev}-}
 	done | sort -V
 }
 
 ls_missing()
 {
-	# XXX match with installed sets (comp, x...)?
-	local _index=${_TMP}/index.txt _installed _p
-	_installed="$(ls_installed)"
+	# XXX match with installed sets
+	local _c _idx=${_TMP}/idx.txt _l="$(ls_installed)"
 
-	unpriv -f "${_index}" ${_FETCH} -o "${_index}" "${_URL}/index.txt"
+	unpriv -f "${_idx}" ${_FETCH} -o "${_idx}" "${_URL}/index.txt"
 
-	for _p in $(grep -o "syspatch${_OSrev}-[0-9][0-9][0-9]_.*" ${_index} |
-		sed "s/^syspatch${_OSrev}-//;s/.tgz$//"| sort -V); do
-		if [[ -n ${_installed} ]]; then
-			echo ${_p} | grep -qw -- "${_installed}" || echo ${_p}
-		else
-			echo ${_p}
-		fi
-	done
+	grep -Eo "syspatch${_OSrev}-[[:digit:]]{3}_[[:alnum:]_]+" ${_idx} |
+		while read _c; do _c=${_c##syspatch${_OSrev}-} &&
+		[[ -n ${_l} ]] && echo ${_c} | grep -qw -- "${_l}" || echo ${_c}
+	done | sort -V
 }
 
 rollback_patch()
 {
 	local _explodir _file _files _patch _ret=0
 
-	_patch="$(ls_installed | sort -V | tail -1)"
+	_patch="$(ls_installed | tail -1)"
 	[[ -n ${_patch} ]]
 
 	_explodir=${_TMP}/${_patch}-rollback
@@ -235,8 +230,8 @@ sp_cleanup()
 
 	# remove non matching release /var/syspatch/ content
 	for _d in ${_PDIR}/*; do
-		[[ -e ${_d} ]] || continue
-		[[ ${_d##*/} == ${_OSrev}-@([0-9][0-9][0-9])_* ]] || rm -r ${_d}
+		[[ ${_d##*/} == ${_OSrev}-+([[:digit:]])_+([[:alnum:]]|_) ]] &&
+			[[ -d ${_d} ]] || rm -r ${_d}
 	done
 
 	# remove non matching release backup kernel
