@@ -1940,6 +1940,7 @@
 ./usr/share/man/man3/SSL_SESSION_free.3
 ./usr/share/man/man3/SSL_SESSION_get_ex_new_index.3
 ./usr/share/man/man3/SSL_SESSION_get_time.3
+./usr/share/man/man3/SSL_SESSION_new.3
 ./usr/share/man/man3/SSL_accept.3
 ./usr/share/man/man3/SSL_alert_type_string.3
 ./usr/share/man/man3/SSL_clear.3
