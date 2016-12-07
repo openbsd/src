@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.45 2016/12/07 16:41:17 reyk Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.46 2016/12/07 19:51:48 patrick Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -283,12 +283,20 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		to.sin_family = AF_INET;
 		to.sin_len = sizeof to;
 
-		/* Set up the hardware destination address. */
-		hto.hlen = packet->hlen;
-		if (hto.hlen > sizeof hto.haddr)
-			hto.hlen = sizeof hto.haddr;
-		memcpy(hto.haddr, packet->chaddr, hto.hlen);
-		hto.htype = packet->htype;
+		/*
+		 * Set up the hardware destination address.  If it's a reply
+		 * with the BROADCAST flag set, we should send an L2 broad-
+		 * cast as well.
+		 */
+		if (!(packet->flags & htons(BOOTP_BROADCAST))) {
+			hto.hlen = packet->hlen;
+			if (hto.hlen > sizeof hto.haddr)
+				hto.hlen = sizeof hto.haddr;
+			memcpy(hto.haddr, packet->chaddr, hto.hlen);
+			hto.htype = packet->htype;
+		} else {
+			bzero(&hto, sizeof(hto));
+		}
 
 		if ((length = relay_agentinfo(interfaces,
 		    packet, length, NULL, &to.sin_addr)) == -1) {
