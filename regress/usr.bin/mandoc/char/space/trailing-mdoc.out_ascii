@@ -1,0 +1,9 @@
+SPACE-TRAILING-MDOC(1)      General Commands Manual     SPACE-TRAILING-MDOC(1)
+
+NNAAMMEE
+     ssppaaccee--ttrraaiilliinngg--mmddoocc - trailing spaces on input lines
+
+DDEESSCCRRIIPPTTIIOONN
+     on a text line, on a _m_a_c_r_o line, after a comment
+
+OpenBSD                        December 8, 2016                        OpenBSD

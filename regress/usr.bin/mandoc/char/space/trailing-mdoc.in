@@ -1,0 +1,11 @@
+.Dd December 8, 2016
+.Dt SPACE-TRAILING-MDOC 1
+.Os OpenBSD
+.Sh NAME
+.Nm space-trailing-mdoc
+.Nd trailing spaces on input lines
+.Sh DESCRIPTION
+on a text line,  
+on a
+.Em macro  
+line, after a comment  \"  
