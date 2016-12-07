@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.126 2016/11/10 12:47:05 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.127 2016/12/07 22:57:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -310,6 +310,7 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 	const char	*save_file;
 	char		*cp;
 	size_t		 pos; /* byte number in the ln buffer */
+	size_t		 j;  /* auxiliary byte number in the blk buffer */
 	enum rofferr	 rr;
 	int		 of;
 	int		 lnn; /* line number in the real file */
@@ -415,6 +416,7 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 			}
 
 			if ('"' == blk.buf[i + 1] || '#' == blk.buf[i + 1]) {
+				j = i;
 				i += 2;
 				/* Comment, skip to end of line */
 				for (; i < blk.sz; ++i) {
@@ -425,7 +427,7 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 						mandoc_msg(
 						    MANDOCERR_SPACE_EOL,
 						    curp, curp->line,
-						    pos, NULL);
+						    pos + i-1 - j, NULL);
 					++i;
 					++lnn;
 					break;
