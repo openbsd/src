@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.151 2016/12/06 13:42:32 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.152 2016/12/07 13:40:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1938,13 +1938,14 @@ err:
 }
 
 static int
-ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
-    int *outlen)
+ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 {
 	DH *dh_srvr = NULL, *dh_clnt = NULL;
 	unsigned char *key = NULL;
-	int key_size, n;
+	int key_size, key_len;
+	unsigned char *data;
 	int ret = -1;
+	CBB dh_Yc;
 
 	/* Ensure that we have an ephemeral key for DHE. */
 	if (sess_cert->peer_dh_tmp == NULL) {
@@ -1970,8 +1971,8 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 		    ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	n = DH_compute_key(key, dh_srvr->pub_key, dh_clnt);
-	if (n <= 0) {
+	key_len = DH_compute_key(key, dh_srvr->pub_key, dh_clnt);
+	if (key_len <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
 		goto err;
 	}
@@ -1979,15 +1980,16 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	/* Generate master key from the result. */
 	s->session->master_key_length =
 	    s->method->ssl3_enc->generate_master_secret(s,
-		s->session->master_key, key, n);
+		s->session->master_key, key, key_len);
 
-	/* Send off the data. */
-	n = BN_num_bytes(dh_clnt->pub_key);
-	s2n(n, p);
-	BN_bn2bin(dh_clnt->pub_key, p);
-	n += 2;
+	if (!CBB_add_u16_length_prefixed(cbb, &dh_Yc))
+		goto err;
+	if (!CBB_add_space(&dh_Yc, &data, BN_num_bytes(dh_clnt->pub_key)))
+		goto err;
+	BN_bn2bin(dh_clnt->pub_key, data);
+	if (!CBB_flush(cbb))
+		goto err;
 
-	*outlen = n;
 	ret = 1;
 
 err:
@@ -2264,8 +2266,15 @@ ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 			n = (int)outlen;
 		} else if (alg_k & SSL_kDHE) {
-			if (ssl3_send_client_kex_dhe(s, sess_cert, p, &n) != 1)
+			if (!CBB_init_fixed(&cbb, p, bufend - p))
 				goto err;
+			if (ssl3_send_client_kex_dhe(s, sess_cert, &cbb) != 1)
+				goto err;
+			if (!CBB_finish(&cbb, NULL, &outlen))
+				goto err;
+			if (outlen > INT_MAX)
+				goto err;
+			n = (int)outlen;
 		} else if (alg_k & SSL_kECDHE) {
 			if (ssl3_send_client_kex_ecdhe(s, sess_cert, p,
 			    &n) != 1)
