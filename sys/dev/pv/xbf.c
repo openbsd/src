@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.1 2016/12/07 15:26:43 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.2 2016/12/07 18:33:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -348,7 +348,7 @@ void
 xbf_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct xbf_softc *sc = xs->sc_link->adapter_softc;
-	int desc, s;
+	int desc;
 
 	switch (xs->cmd->opcode) {
 	case READ_BIG:
@@ -394,26 +394,19 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	s = splbio();
 	desc = xbf_submit_cmd(xs);
 	if (desc < 0) {
-		splx(s);
 		xbf_scsi_done(xs, XS_DRIVER_STUFFUP);
 		return;
 	}
-
-	if (!ISSET(xs->flags, SCSI_POLL)) {
-		splx(s);
+	if (!ISSET(xs->flags, SCSI_POLL))
 		return;
-	}
 
 	if (xbf_poll_cmd(xs, desc, 1000)) {
-		splx(s);
-		printf("%s: desc %u timed out\n", sc->sc_dev.dv_xname, desc);
+		DPRINTF("%s: desc %u timed out\n", sc->sc_dev.dv_xname, desc);
 		xbf_scsi_done(xs, XS_TIMEOUT);
 		return;
 	}
-	splx(s);
 }
 
 int
