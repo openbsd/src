@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.66 2016/11/29 14:55:04 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.67 2016/12/07 15:11:41 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -917,7 +917,6 @@ xen_grant_table_grow(struct xen_softc *sc)
 	ge = &sc->sc_gnt[sc->sc_gntcnt];
 	ge->ge_table = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_nowait);
 	if (ge->ge_table == NULL) {
-		free(ge, M_DEVBUF, sizeof(*ge));
 		mtx_leave(&sc->sc_gntmtx);
 		return (NULL);
 	}
@@ -925,7 +924,6 @@ xen_grant_table_grow(struct xen_softc *sc)
 		printf("%s: grant table page PA extraction failed\n",
 		    sc->sc_dev.dv_xname);
 		km_free(ge->ge_table, PAGE_SIZE, &kv_any, &kp_zero);
-		free(ge, M_DEVBUF, sizeof(*ge));
 		mtx_leave(&sc->sc_gntmtx);
 		return (NULL);
 	}
@@ -937,7 +935,6 @@ xen_grant_table_grow(struct xen_softc *sc)
 		printf("%s: failed to add a grant table page\n",
 		    sc->sc_dev.dv_xname);
 		km_free(ge->ge_table, PAGE_SIZE, &kv_any, &kp_zero);
-		free(ge, M_DEVBUF, sizeof(*ge));
 		mtx_leave(&sc->sc_gntmtx);
 		return (NULL);
 	}
