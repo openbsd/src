@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.4 2016/12/07 21:06:55 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.5 2016/12/07 21:08:55 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -98,7 +98,11 @@ struct xbf_ireq {
 struct xbf_rsp {
 	uint64_t		 rsp_id;
 	uint8_t			 rsp_op;
+	uint8_t			 rsp_pad1;
 	int16_t			 rsp_status;
+#ifdef __amd64__
+	uint32_t		 rsp_pad2;
+#endif
 } __packed;
 
 union xbf_ring_desc {
