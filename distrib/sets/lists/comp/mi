@@ -1947,6 +1947,7 @@
 ./usr/share/man/man3/SSL_clear.3
 ./usr/share/man/man3/SSL_connect.3
 ./usr/share/man/man3/SSL_do_handshake.3
+./usr/share/man/man3/SSL_dup.3
 ./usr/share/man/man3/SSL_dup_CA_list.3
 ./usr/share/man/man3/SSL_free.3
 ./usr/share/man/man3/SSL_get_SSL_CTX.3
