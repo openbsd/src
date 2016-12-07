@@ -90,25 +90,38 @@ triple eol blank:
 .IB "one one" "two two"   
 text
 .br
-.\"trailing blanks in arguments:
-.\"IB "one " "two "
-.\"text
-.\"br
+.\" Disabled for now because mandoc man(7) seems to
+.\" mishandle trailing blanks in arguments,
+.\" but that really isn't urgent to fix.
+.ig
+trailing blanks in arguments:
+.IB "one " "two "
+text
+.br
+..
 unterminated quotes:
 .IB "one
+text
+.br
 .IB one "two
 text
 .br
-.\"single trailing blank in unterminated quotes:
-.\"IB "one 
-.\"IB one "two 
-.\"text
-.\"br
-.\"double trailing blank in unterminated quotes:
-.\"IB "one  
-.\"IB one "two  
-.\"text
-.\"br
+.ig
+single trailing blank in unterminated quotes:
+.IB "one 
+text
+.br
+.IB one "two 
+text
+.br
+double trailing blank in unterminated quotes:
+.IB "one  
+text
+.br
+.IB one "two  
+text
+.br
+..
 tab after macro:
 .IB     one two
 text

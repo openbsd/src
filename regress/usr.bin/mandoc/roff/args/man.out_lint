@@ -4,6 +4,6 @@ mandoc: man.in:42:15: WARNING: whitespace at end of input line
 mandoc: man.in:82:25: WARNING: whitespace at end of input line
 mandoc: man.in:86:26: WARNING: whitespace at end of input line
 mandoc: man.in:90:27: WARNING: whitespace at end of input line
-mandoc: man.in:98:5: WARNING: unterminated quoted argument
-mandoc: man.in:99:9: WARNING: unterminated quoted argument
-mandoc: man.in:117:1: ERROR: escaped character not allowed in a name: IB\(
+mandoc: man.in:103:5: WARNING: unterminated quoted argument
+mandoc: man.in:106:9: WARNING: unterminated quoted argument
+mandoc: man.in:130:1: ERROR: escaped character not allowed in a name: IB\(
