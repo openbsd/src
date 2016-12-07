@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.66 2016/11/24 13:46:50 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.67 2016/12/07 09:16:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -238,6 +238,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode C-c send -X cancel",
 		"bind -Tcopy-mode C-e send -X end-of-line",
 		"bind -Tcopy-mode C-f send -X cursor-right",
+		"bind -Tcopy-mode C-b send -X cursor-left",
 		"bind -Tcopy-mode C-g send -X clear-selection",
 		"bind -Tcopy-mode C-k send -X copy-end-of-line",
 		"bind -Tcopy-mode C-n send -X cursor-down",
@@ -300,6 +301,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi C-c send -X cancel",
 		"bind -Tcopy-mode-vi C-d send -X halfpage-down",
 		"bind -Tcopy-mode-vi C-e send -X scroll-down",
+		"bind -Tcopy-mode-vi C-b send -X page-up",
 		"bind -Tcopy-mode-vi C-f send -X page-down",
 		"bind -Tcopy-mode-vi C-h send -X cursor-left",
 		"bind -Tcopy-mode-vi C-j send -X copy-selection-and-cancel",
