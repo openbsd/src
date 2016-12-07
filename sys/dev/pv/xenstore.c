@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.33 2016/12/07 15:13:23 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.34 2016/12/07 15:18:02 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -176,6 +176,7 @@ void	xs_put_msg(struct xs_softc *, struct xs_msg *);
 int	xs_ring_get(struct xs_softc *, void *, size_t);
 int	xs_ring_put(struct xs_softc *, void *, size_t);
 void	xs_intr(void *);
+void	xs_poll(struct xs_softc *, int);
 int	xs_output(struct xs_transaction *, uint8_t *, int);
 int	xs_start(struct xs_transaction *, struct xs_msg *, struct iovec *, int);
 struct xs_msg *
@@ -323,11 +324,26 @@ xs_ring_avail(struct xs_ring *xsr, int req)
 	return (req ? XS_RING_SIZE - (prod - cons) : prod - cons);
 }
 
+void
+xs_poll(struct xs_softc *xs, int nowait)
+{
+	int s;
+
+	if (nowait) {
+		delay(XST_DELAY * 1000 >> 2);
+		s = splnet();
+		xs_intr(xs);
+		splx(s);
+	} else
+		tsleep(xs->xs_wchan, PRIBIO, xs->xs_wchan, XST_DELAY * hz >> 2);
+	virtio_membar_sync();
+}
+
 int
 xs_output(struct xs_transaction *xst, uint8_t *bp, int len)
 {
 	struct xs_softc *xs = xst->xst_cookie;
-	int chunk, s;
+	int chunk;
 
 	while (len > 0) {
 		chunk = xs_ring_put(xs, bp, MIN(len, XS_RING_SIZE));
@@ -348,17 +364,8 @@ xs_output(struct xs_transaction *xst, uint8_t *bp, int len)
 		 * Alternatively we have managed to fill the ring
 		 * and must wait for HV to collect the data.
 		 */
-		while (xs->xs_ring->xsr_req_prod != xs->xs_ring->xsr_req_cons) {
-			if (xst->xst_flags & XST_POLL) {
-				delay(XST_DELAY * 1000 >> 2);
-				s = splnet();
-				xs_intr(xs);
-				splx(s);
-			} else
-				tsleep(xs->xs_wchan, PRIBIO, xs->xs_wchan,
-				    XST_DELAY * hz >> 2);
-			virtio_membar_sync();
-		}
+		while (xs->xs_ring->xsr_req_prod != xs->xs_ring->xsr_req_cons)
+			xs_poll(xs, xst->xst_flags & XST_POLL);
 	}
 	return (0);
 }
