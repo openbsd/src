@@ -59,13 +59,13 @@ triple eol blank:
 trailing blanks in arguments:
 .test "one " "two "
 unterminated quotes:
-.\"test "one
+.test "one
 .test one "two
 single trailing blank in unterminated quotes:
-.\"test "one 
+.test "one 
 .test one "two 
 double trailing blank in unterminated quotes:
-.\"test "one  
+.test "one  
 .test one "two  
 backslash at eol:
 .test one two\
