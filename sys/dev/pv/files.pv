@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.8 2016/10/11 11:46:49 mikeb Exp $
+#	$OpenBSD: files.pv,v 1.9 2016/12/07 15:30:04 mikeb Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -19,9 +19,15 @@ attach	xen at pvbus
 file	dev/pv/xen.c			xen	needs-flag
 file	dev/pv/xenstore.c		xen
 
+# Xen Netfront
 device	xnf: ether, ifnet, ifmedia
 attach	xnf at xen
 file	dev/pv/if_xnf.c			xnf
+
+# Xen Blkfront
+device	xbf: scsi
+attach	xbf at xen
+file	dev/pv/xbf.c			xbf
 
 # Hyper-V
 device	hyperv {}
@@ -29,6 +35,7 @@ attach	hyperv at pvbus
 file	dev/pv/hyperv.c			hyperv	needs-flag
 file	dev/pv/hypervic.c		hyperv
 
+# Hyper-V NetVSC
 device	hvn: ether, ifnet, ifmedia
 attach	hvn at hyperv
 file	dev/pv/if_hvn.c			hvn
