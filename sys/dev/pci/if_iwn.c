@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.176 2016/11/30 10:52:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.177 2016/12/07 15:48:44 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -55,6 +55,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
+#include <net80211/ieee80211_mira.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/pci/if_iwnreg.h>
@@ -164,8 +165,8 @@ void		iwn4965_tx_done(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *);
 void		iwn5000_tx_done(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *);
-void		iwn_tx_done(struct iwn_softc *, struct iwn_rx_desc *, int,
-		    uint8_t);
+void		iwn_tx_done(struct iwn_softc *, struct iwn_rx_desc *,
+		    uint8_t, uint8_t, uint8_t, uint16_t);
 void		iwn_cmd_done(struct iwn_softc *, struct iwn_rx_desc *);
 void		iwn_notif_intr(struct iwn_softc *);
 void		iwn_wakeup_intr(struct iwn_softc *);
@@ -1694,8 +1695,10 @@ iwn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	uint8_t rate;
 	int ridx, i;
 
-	ieee80211_amrr_node_init(&sc->amrr, &wn->amn);
-	/* Start at lowest available bit-rate, AMRR will raise. */
+	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0)
+		ieee80211_amrr_node_init(&sc->amrr, &wn->amn);
+
+	/* Start at lowest available bit-rate, AMRR/MiRA will raise. */
 	ni->ni_txrate = 0;
 	ni->ni_txmcs = 0;
 
@@ -1749,9 +1752,15 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct iwn_softc *sc = ifp->if_softc;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct iwn_node *wn = (void *)ni;
 	int error;
 
 	timeout_del(&sc->calib_to);
+
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    (ni->ni_flags & IEEE80211_NODE_HT))
+		ieee80211_mira_node_destroy(&wn->mn);
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
@@ -1803,9 +1812,10 @@ void
 iwn_iter_func(void *arg, struct ieee80211_node *ni)
 {
 	struct iwn_softc *sc = arg;
-	struct iwn_node *wn = (struct iwn_node *)ni;
+	struct iwn_node *wn = (void *)ni;
 
-	ieee80211_amrr_choose(&sc->amrr, ni, &wn->amn);
+	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0)
+		ieee80211_amrr_choose(&sc->amrr, ni, &wn->amn);
 }
 
 void
@@ -2319,10 +2329,15 @@ iwn4965_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
     struct iwn_rx_data *data)
 {
 	struct iwn4965_tx_stat *stat = (struct iwn4965_tx_stat *)(desc + 1);
+	struct iwn_tx_ring *ring = &sc->txq[desc->qid & 0xf];
+	struct iwn_tx_data *txdata = &ring->data[desc->idx];
+	/* XXX 4965 does not report byte count */
+	uint16_t len = txdata->totlen + IEEE80211_CRC_LEN;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (*desc),
 	    sizeof (*stat), BUS_DMASYNC_POSTREAD);
-	iwn_tx_done(sc, desc, stat->ackfailcnt, letoh32(stat->status) & 0xff);
+	iwn_tx_done(sc, desc, stat->nframes, stat->ackfailcnt,
+	    letoh32(stat->status) & 0xff, len);
 }
 
 void
@@ -2338,28 +2353,43 @@ iwn5000_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (*desc),
 	    sizeof (*stat), BUS_DMASYNC_POSTREAD);
-	iwn_tx_done(sc, desc, stat->ackfailcnt, letoh16(stat->status) & 0xff);
+	iwn_tx_done(sc, desc, stat->nframes, stat->ackfailcnt,
+	    letoh16(stat->status) & 0xff, letoh16(stat->len));
 }
 
 /*
  * Adapter-independent backend for TX_DONE firmware notifications.
  */
 void
-iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
-    uint8_t status)
+iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, uint8_t nframes,
+    uint8_t ackfailcnt, uint8_t status, uint16_t len)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct iwn_tx_ring *ring = &sc->txq[desc->qid & 0xf];
 	struct iwn_tx_data *data = &ring->data[desc->idx];
-	struct iwn_node *wn = (struct iwn_node *)data->ni;
+	struct iwn_node *wn = (void *)data->ni;
+	int txfail = (status != 1 && status != 2);
+
+	KASSERT(nframes == 1); /* We don't support aggregation yet. */
 
 	/* Update rate control statistics. */
-	wn->amn.amn_txcnt++;
-	if (ackfailcnt > 0)
-		wn->amn.amn_retrycnt++;
-
-	if (status != 1 && status != 2) {
+	if (data->ni->ni_flags & IEEE80211_NODE_HT) {
+		wn->mn.frames += nframes;
+		wn->mn.ampdu_size = len;
+		wn->mn.agglen = nframes; 
+		if (txfail) {
+			wn->mn.retries += ackfailcnt;
+			wn->mn.txfail += nframes;
+		}
+		if (ic->ic_state == IEEE80211_S_RUN)
+			ieee80211_mira_choose(&wn->mn, ic, data->ni);
+	} else {
+		wn->amn.amn_txcnt++;
+		if (ackfailcnt > 0)
+			wn->amn.amn_retrycnt++;
+	}
+	if (txfail) {
 		DPRINTF(("%s: status=0x%x\n", __func__, status));
 		ifp->if_oerrors++;
 	} else
@@ -2920,6 +2950,8 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		} else	/* HW appends CCMP MIC. */
 			totlen += IEEE80211_CCMP_HDRLEN;
 	}
+
+	data->totlen = totlen;
 
 	/* Prepare TX firmware command. */
 	cmd = &ring->cmd[ring->cur];
@@ -4980,6 +5012,11 @@ iwn_run(struct iwn_softc *sc)
 	sc->calib.state = IWN_CALIB_STATE_ASSOC;
 	sc->calib_cnt = 0;
 	timeout_add_msec(&sc->calib_to, 500);
+
+	if (ni->ni_flags & IEEE80211_NODE_HT) {
+		struct iwn_node *wn = (void *)ni;
+		ieee80211_mira_node_init(&wn->mn);
+	}
 
 	/* Link LED always on while associated. */
 	iwn_set_led(sc, IWN_LED_LINK, 0, 1);

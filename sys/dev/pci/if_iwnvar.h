@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.31 2016/09/05 08:18:18 tedu Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.32 2016/12/07 15:48:44 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -66,6 +66,7 @@ struct iwn_tx_data {
 	bus_addr_t		scratch_paddr;
 	struct mbuf		*m;
 	struct ieee80211_node	*ni;
+	int totlen;
 };
 
 struct iwn_tx_ring {
@@ -98,6 +99,7 @@ struct iwn_rx_ring {
 struct iwn_node {
 	struct	ieee80211_node		ni;	/* must be the first */
 	struct	ieee80211_amrr_node	amn;
+	struct	ieee80211_mira_node	mn;
 	uint16_t			disable_tid;
 	uint8_t				id;
 	uint8_t				ridx[IEEE80211_RATE_MAXSIZE];
