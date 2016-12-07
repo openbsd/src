@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.3 2016/12/07 19:17:52 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.4 2016/12/07 21:06:55 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -556,7 +556,7 @@ xbf_complete_cmd(struct scsi_xfer *xs, int desc)
 	union xbf_ring_desc *xrd;
 	bus_dmamap_t map;
 	uint64_t id;
-	uint16_t status;
+	int16_t status;
 	uint8_t op;
 	int error;
 
@@ -581,7 +581,7 @@ xbf_complete_cmd(struct scsi_xfer *xs, int desc)
 	memset(xrd, 0, sizeof(*xrd));
 	xrd->xrd_req.req_id = id;
 
-	DPRINTF("%s: completing desc %u(%llu) op %u with error %u\n",
+	DPRINTF("%s: completing desc %u(%llu) op %u with error %d\n",
 	    sc->sc_dev.dv_xname, desc, id, op, status);
 
 	xs->resid = 0;
