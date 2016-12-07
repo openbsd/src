@@ -30,9 +30,12 @@ DDEESSCCRRIIPPTTIIOONN
        double eol blank: (one one) (two two)
        triple eol blank: (one one) (two two)
        trailing blanks in arguments: (one ) (two )
-       unterminated quotes: (one) (two)
-       single trailing blank in unterminated quotes: (one) (two )
-       double trailing blank in unterminated quotes: (one) (two  )
+       unterminated quotes: (one) ()
+       (one) (two)
+       single trailing blank in unterminated quotes: (one ) ()
+       (one) (two )
+       double trailing blank in unterminated quotes: (one  ) ()
+       (one) (two  )
        backslash at eol: (one) (two)
 
 

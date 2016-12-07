@@ -4,8 +4,13 @@ mandoc: roff.in:34:17: WARNING: whitespace at end of input line
 mandoc: roff.in:54:27: WARNING: whitespace at end of input line
 mandoc: roff.in:56:28: WARNING: whitespace at end of input line
 mandoc: roff.in:58:29: WARNING: whitespace at end of input line
+mandoc: roff.in:62:7: WARNING: unterminated quoted argument
 mandoc: roff.in:63:11: WARNING: unterminated quoted argument
+mandoc: roff.in:65:7: WARNING: unterminated quoted argument
+mandoc: roff.in:65:12: WARNING: whitespace at end of input line
 mandoc: roff.in:66:11: WARNING: unterminated quoted argument
 mandoc: roff.in:66:16: WARNING: whitespace at end of input line
+mandoc: roff.in:68:7: WARNING: unterminated quoted argument
+mandoc: roff.in:68:13: WARNING: whitespace at end of input line
 mandoc: roff.in:69:11: WARNING: unterminated quoted argument
 mandoc: roff.in:69:17: WARNING: whitespace at end of input line
