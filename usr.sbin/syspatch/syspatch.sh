@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.76 2016/12/06 16:16:12 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.77 2016/12/07 15:36:50 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -231,7 +231,7 @@ sp_cleanup()
 	# remove non matching release /var/syspatch/ content
 	for _d in ${_PDIR}/*; do
 		[[ ${_d##*/} == ${_OSrev}-+([[:digit:]])_+([[:alnum:]]|_) ]] &&
-			[[ -d ${_d} ]] || rm -r ${_d}
+			[[ -f ${_d}/rollback.tgz ]] || rm -r ${_d}
 	done
 
 	# remove non matching release backup kernel
