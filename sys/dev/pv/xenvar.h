@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.41 2016/11/29 14:55:04 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.42 2016/12/07 15:21:04 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -26,6 +26,24 @@
 #else
 #define DPRINTF(x...)
 #endif
+
+static inline void
+clear_bit(u_int b, volatile void *p)
+{
+	atomic_clearbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
+}
+
+static inline void
+set_bit(u_int b, volatile void *p)
+{
+	atomic_setbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
+}
+
+static inline int
+test_bit(u_int b, volatile void *p)
+{
+	return !!(((volatile u_int *)p)[b >> 5] & (1 << (b & 0x1f)));
+}
 
 struct xen_intsrc {
 	SLIST_ENTRY(xen_intsrc)	 xi_entry;
@@ -153,24 +171,6 @@ struct xs_transaction {
 	void			*xst_cookie;
 };
 
-static __inline void
-clear_bit(u_int b, volatile void *p)
-{
-	atomic_clearbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
-}
-
-static __inline void
-set_bit(u_int b, volatile void *p)
-{
-	atomic_setbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
-}
-
-static __inline int
-test_bit(u_int b, volatile void *p)
-{
-	return !!(((volatile u_int *)p)[b >> 5] & (1 << (b & 0x1f)));
-}
-
 int	xs_cmd(struct xs_transaction *, int, const char *, struct iovec **,
 	    int *);
 void	xs_resfree(struct xs_transaction *, struct iovec *, int);
@@ -179,5 +179,18 @@ int	xs_watch(void *, const char *, const char *, struct task *,
 int	xs_getprop(void *, const char *, const char *, char *, int);
 int	xs_setprop(void *, const char *, const char *, char *, int);
 int	xs_kvop(void *, int, char *, char *, size_t);
+
+#define XEN_STATE_UNKNOWN	"0"
+#define XEN_STATE_INITIALIZING	"1"
+#define XEN_STATE_INITWAIT	"2"
+#define XEN_STATE_INITIALIZED	"3"
+#define XEN_STATE_CONNECTED	"4"
+#define XEN_STATE_CLOSING	"5"
+#define XEN_STATE_CLOSED	"6"
+#define XEN_STATE_RECONFIGURING	"7"
+#define XEN_STATE_RECONFIGURED	"8"
+
+int	xs_await_transition(void *, const char *, const char *,
+	    const char *, int);
 
 #endif	/* _DEV_PV_XENVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.34 2016/12/07 15:18:02 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.35 2016/12/07 15:21:04 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -933,6 +933,62 @@ xs_setprop(void *xsc, const char *path, const char *property, char *value,
 	error = xs_cmd(&xst, XS_WRITE, key, &iovp, &iov_cnt);
 
 	return (error);
+}
+
+int
+xs_cmpprop(void *xsc, const char *path, const char *property, const char *value,
+    int *result)
+{
+	struct xen_softc *sc = xsc;
+	struct xs_transaction xst;
+	struct iovec *iovp = NULL;
+	char key[256];
+	int error, ret, iov_cnt = 0;
+
+	if (!property)
+		return (EINVAL);
+
+	memset(&xst, 0, sizeof(xst));
+	xst.xst_id = 0;
+	xst.xst_cookie = sc->sc_xs;
+	if (cold)
+		xst.xst_flags = XST_POLL;
+
+	if (path)
+		ret = snprintf(key, sizeof(key), "%s/%s", path, property);
+	else
+		ret = snprintf(key, sizeof(key), "%s", property);
+	if (ret == -1 || ret >= sizeof(key))
+		return (EINVAL);
+
+	if ((error = xs_cmd(&xst, XS_READ, key, &iovp, &iov_cnt)) != 0)
+		return (error);
+
+	if (*result)
+		*result = strcmp(value, (char *)iovp->iov_base);
+
+	xs_resfree(&xst, iovp, iov_cnt);
+
+	return (0);
+}
+
+int
+xs_await_transition(void *xsc, const char *path, const char *property,
+    const char *value, int timo)
+{
+	struct xen_softc *sc = xsc;
+	int error, res;
+
+	do {
+		error = xs_cmpprop(xsc, path, property, value, &res);
+		if (error)
+			return (error);
+		if (timo && --timo == 0)
+			return (ETIMEDOUT);
+		xs_poll(sc->sc_xs, cold);
+	} while (res != 0);
+
+	return (0);
 }
 
 int
