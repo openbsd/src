@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.46 2016/12/07 19:51:48 patrick Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.47 2016/12/07 20:03:22 patrick Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -329,18 +329,21 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		return;
 	}
 
-	/* If giaddr is set on a BOOTREQUEST, ignore it - it's already
-	   been gatewayed. */
-	if (packet->giaddr.s_addr) {
-		note("ignoring BOOTREQUEST with giaddr of %s",
-		    inet_ntoa(packet->giaddr));
+	if (packet->hops > 16) {
+		note("ignoring BOOTREQUEST with hop count of %d",
+		    packet->hops);
 		return;
 	}
+	packet->hops++;
 
-	/* Set the giaddr so the server can figure out what net it's
-	   from and so that we can later forward the response to the
-	   correct net. */
-	packet->giaddr = ip->primary_address;
+	/*
+	 * Set the giaddr so the server can figure out what net it's
+	 * from and so that we can later forward the response to the
+	 * correct net.  The RFC specifies that we have to keep the
+	 * initial giaddr (in case we relay over multiple hops).
+	 */
+	if (!packet->giaddr.s_addr)
+		packet->giaddr = ip->primary_address;
 
 	if ((length = relay_agentinfo(ip, packet, length,
 	    (struct in_addr *)from.iabuf, NULL)) == -1) {
