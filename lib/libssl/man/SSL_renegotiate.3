@@ -1,0 +1,56 @@
+.\"	$OpenBSD: SSL_renegotiate.3,v 1.1 2016/12/07 20:11:55 schwarze Exp $
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 7 2016 $
+.Dt SSL_RENEGOTIATE 3
+.Os
+.Sh NAME
+.Nm SSL_renegotiate
+.Nd request a new session
+.Sh SYNOPSIS
+.In openssl/ssl.h
+.Ft int
+.Fo SSL_renegotiate
+.Fa "SSL *ssl"
+.Fc
+.Sh DESCRIPTION
+.Fn SSL_renegotiate
+manually instructs
+.Fa ssl
+to renegotiate and generate a new session.
+.Pp
+This function is automatically called by
+.Xr SSL_read 3
+and
+.Xr SSL_write 3
+whenever the renegotiation byte count set by
+.Xr BIO_set_ssl_renegotiate_bytes 3
+or the timeout set by 
+.Xr BIO_set_ssl_renegotiate_timeout 3
+are exceeded.
+.Sh RETURN VALUES
+.Fn SSL_renegotiate
+always returns 1 unless the protocol-specific flag
+.Dv SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS
+is set, in which case it may return 0.
+The API provides no function to set that flag;
+it can only be set by manipulating internal data structures.
+.Sh SEE ALSO
+.Xr SSL_read 3 ,
+.Xr SSL_write 3
+.Sh HISTORY
+.Fn SSL_renegotiate
+is available in all versions of OpenSSL.
