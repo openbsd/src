@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.2 2016/12/07 18:33:45 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.3 2016/12/07 19:17:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -767,8 +767,9 @@ xbf_init(struct xbf_softc *sc)
 		if (error == 0)
 			sc->sc_xr_size = res;
 	}
+	/* Fallback to the known minimum */
 	if (error)
-		goto errout;
+		sc->sc_xr_size = XBF_MIN_RING_SIZE;
 
 	if (sc->sc_xr_size < XBF_MIN_RING_SIZE)
 		sc->sc_xr_size = XBF_MIN_RING_SIZE;
