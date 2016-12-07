@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.136 2016/12/06 13:17:52 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.137 2016/12/07 13:18:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2564,18 +2564,19 @@ ssl3_send_server_certificate(SSL *s)
 int
 ssl3_send_newsession_ticket(SSL *s)
 {
-	if (s->state == SSL3_ST_SW_SESSION_TICKET_A) {
-		unsigned char *d, *p, *senc, *macstart;
-		const unsigned char *const_p;
-		int len, slen_full, slen;
-		SSL_SESSION *sess;
-		unsigned int hlen;
-		EVP_CIPHER_CTX ctx;
-		HMAC_CTX hctx;
-		SSL_CTX *tctx = s->initial_ctx;
-		unsigned char iv[EVP_MAX_IV_LENGTH];
-		unsigned char key_name[16];
+	unsigned char *d, *p, *macstart;
+	unsigned char *senc = NULL;
+	const unsigned char *const_p;
+	int len, slen_full, slen;
+	SSL_SESSION *sess;
+	unsigned int hlen;
+	EVP_CIPHER_CTX ctx;
+	HMAC_CTX hctx;
+	SSL_CTX *tctx = s->initial_ctx;
+	unsigned char iv[EVP_MAX_IV_LENGTH];
+	unsigned char key_name[16];
 
+	if (s->state == SSL3_ST_SW_SESSION_TICKET_A) {
 		/* get session encoding length */
 		slen_full = i2d_SSL_SESSION(s->session, NULL);
 		/*
@@ -2583,10 +2584,10 @@ ssl3_send_newsession_ticket(SSL *s)
  		 * too long
  		 */
 		if (slen_full > 0xFF00)
-			return (-1);
+			goto err;
 		senc = malloc(slen_full);
 		if (!senc)
-			return (-1);
+			goto err;
 		p = senc;
 		i2d_SSL_SESSION(s->session, &p);
 
@@ -2596,10 +2597,8 @@ ssl3_send_newsession_ticket(SSL *s)
 		 */
 		const_p = senc;
 		sess = d2i_SSL_SESSION(NULL, &const_p, slen_full);
-		if (sess == NULL) {
-			free(senc);
-			return (-1);
-		}
+		if (sess == NULL)
+			goto err;
 
 		/* ID is irrelevant for the ticket */
 		sess->session_id_length = 0;
@@ -2607,8 +2606,7 @@ ssl3_send_newsession_ticket(SSL *s)
 		slen = i2d_SSL_SESSION(sess, NULL);
 		if (slen > slen_full) {
 			/* shouldn't ever happen */
-			free(senc);
-			return (-1);
+			goto err;
 		}
 		p = senc;
 		i2d_SSL_SESSION(sess, &p);
@@ -2624,10 +2622,8 @@ ssl3_send_newsession_ticket(SSL *s)
  		 */
 		if (!BUF_MEM_grow(s->init_buf, ssl3_handshake_msg_hdr_len(s) +
 		    22 + EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
-		    EVP_MAX_MD_SIZE + slen)) {
-			free(senc);
-			return (-1);
-		}
+		    EVP_MAX_MD_SIZE + slen))
+			goto err;
 
 		d = p = ssl3_handshake_msg_start(s, SSL3_MT_NEWSESSION_TICKET);
 
@@ -2642,9 +2638,8 @@ ssl3_send_newsession_ticket(SSL *s)
 		if (tctx->tlsext_ticket_key_cb) {
 			if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
 			    &hctx, 1) < 0) {
-				free(senc);
 				EVP_CIPHER_CTX_cleanup(&ctx);
-				return (-1);
+				goto err;
 			}
 		} else {
 			arc4random_buf(iv, 16);
@@ -2696,11 +2691,19 @@ ssl3_send_newsession_ticket(SSL *s)
 
 		s->state = SSL3_ST_SW_SESSION_TICKET_B;
 
+		explicit_bzero(senc, slen_full);
 		free(senc);
 	}
 
 	/* SSL3_ST_SW_SESSION_TICKET_B */
 	return (ssl3_handshake_write(s));
+
+ err:
+	if (senc != NULL)
+		explicit_bzero(senc, slen_full);
+	free(senc);
+
+	return (-1);
 }
 
 int
