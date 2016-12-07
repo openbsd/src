@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.43 2016/09/26 17:15:19 jca Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.44 2016/12/07 13:19:18 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -113,17 +113,14 @@ main(int argc, char *argv[])
 		case 'i':
 			if (interfaces != NULL)
 				usage();
-			if ((interfaces = calloc(1,
-			    sizeof(struct interface_info))) == NULL)
-				error("calloc");
-			strlcpy(interfaces->name, optarg,
-			    sizeof(interfaces->name));
+
+			interfaces = get_interface(optarg, got_one);
 			break;
 		case 'o':
 			/* add the relay agent information option */
 			oflag++;
 			break;
-			
+
 		default:
 			usage();
 			/* not reached */
@@ -176,8 +173,6 @@ main(int argc, char *argv[])
 	/* We need at least one server. */
 	if (!sp)
 		usage();
-
-	discover_interfaces(interfaces);
 
 	rdomain = get_rdomain(interfaces->name);
 

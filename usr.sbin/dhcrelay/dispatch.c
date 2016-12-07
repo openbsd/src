@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.11 2016/08/27 01:26:22 guenther Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.12 2016/12/07 13:19:18 rzalamena Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -74,18 +74,20 @@ void (*bootp_packet_handler)(struct interface_info *,
 
 static int interface_status(struct interface_info *ifinfo);
 
-/*
- * Use getifaddrs() to get a list of all the attached interfaces.  For
- * each interface that's of type INET and not the loopback interface,
- * register that interface with the network I/O software, figure out
- * what subnet it's on, and add it to the list of interfaces.
- */
-void
-discover_interfaces(struct interface_info *iface)
+struct interface_info *
+get_interface(const char *ifname, void (*handler)(struct protocol *))
 {
-	struct sockaddr_in foo;
-	struct ifaddrs *ifap, *ifa;
-	struct ifreq *tif;
+	struct interface_info		*iface;
+	struct ifaddrs			*ifap, *ifa;
+	struct ifreq			*tif;
+	struct sockaddr_in		 foo;
+
+	if ((iface = calloc(1, sizeof(*iface))) == NULL)
+		error("failed to allocate memory");
+
+	if (strlcpy(iface->name, ifname, sizeof(iface->name)) >=
+	    sizeof(iface->name))
+		error("interface name too long");
 
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
@@ -96,7 +98,7 @@ discover_interfaces(struct interface_info *iface)
 		    (!(ifa->ifa_flags & IFF_UP)))
 			continue;
 
-		if (strcmp(iface->name, ifa->ifa_name))
+		if (strcmp(ifname, ifa->ifa_name))
 			continue;
 
 		/*
@@ -139,14 +141,17 @@ discover_interfaces(struct interface_info *iface)
 		}
 	}
 
+	freeifaddrs(ifap);
+
 	if (!iface->ifp)
 		error("%s: not found", iface->name);
 
 	/* Register the interface... */
 	if_register_receive(iface);
 	if_register_send(iface);
-	add_protocol(iface->name, iface->rfdesc, got_one, iface);
-	freeifaddrs(ifap);
+	add_protocol(iface->name, iface->rfdesc, handler, iface);
+
+	return (iface);
 }
 
 /*
