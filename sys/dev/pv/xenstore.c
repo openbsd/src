@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.32 2016/11/29 14:55:04 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.33 2016/12/07 15:13:23 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -867,7 +867,7 @@ xs_getprop(void *xsc, const char *path, const char *property, char *value,
 	int error, ret, iov_cnt = 0;
 
 	if (!property)
-		return (-1);
+		return (EINVAL);
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
@@ -904,7 +904,7 @@ xs_setprop(void *xsc, const char *path, const char *property, char *value,
 	int error, ret, iov_cnt = 0;
 
 	if (!property)
-		return (-1);
+		return (EINVAL);
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
