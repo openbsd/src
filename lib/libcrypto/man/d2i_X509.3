@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_X509.3,v 1.3 2016/12/05 20:39:08 schwarze Exp $
+.\"	$OpenBSD: d2i_X509.3,v 1.4 2016/12/08 20:22:08 jmc Exp $
 .\"	OpenSSL 94480b57 Sep 12 23:34:41 2009 +0000
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,12 +49,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2016 $
+.Dd $Mdocdate: December 8 2016 $
 .Dt D2I_X509 3
 .Os
 .Sh NAME
 .Nm d2i_X509 ,
+.Nm d2i_X509_AUX ,
 .Nm i2d_X509 ,
+.Nm i2d_X509_AUX ,
 .Nm d2i_X509_bio ,
 .Nm d2i_X509_fp ,
 .Nm i2d_X509_bio ,
@@ -136,7 +138,7 @@ contains a valid
 .Vt X509
 structure and an attempt is made to reuse it.
 This "reuse" capability is present for historical compatibility,
-but its use is strongly discouraged, see the
+but its use is strongly discouraged; see the
 .Sx BUGS
 and
 .Sx RETURN VALUES
@@ -223,7 +225,7 @@ The letters
 .Sy i
 and
 .Sy d
-in for example
+in, for example,
 .Fn i2d_X509
 stand for "internal" (that is an internal C structure) and "DER",
 so that
@@ -264,8 +266,8 @@ See the
 section for some common errors.
 .Pp
 The reason for the auto increment behaviour is to reflect a typical
-usage of ASN1 functions: after one structure is encoded or decoded,
-another will processed after it.
+usage of ASN.1 functions: after one structure is encoded or decoded,
+another will be processed after it.
 .Sh RETURN VALUES
 .Fn d2i_X509 ,
 .Fn d2i_X509_bio ,
@@ -308,7 +310,7 @@ p = buf;
 i2d_X509(x, &p);
 .Ed
 .Pp
-If you are using OpenSSL 0.9.7 or later then this can be simplified to:
+Using OpenSSL 0.9.7 or later this can be simplified to:
 .Bd -literal -offset indent
 int len;
 unsigned char *buf;
@@ -386,7 +388,7 @@ may well crash.
 The auto allocation feature (setting
 .Fa buf
 to
-.Dv NULL
+.Dv NULL )
 only works on OpenSSL 0.9.7 and later.
 Attempts to use it on earlier versions will typically cause a
 segmentation violation.
