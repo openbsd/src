@@ -1946,6 +1946,7 @@
 ./usr/share/man/man3/SSL_alert_type_string.3
 ./usr/share/man/man3/SSL_clear.3
 ./usr/share/man/man3/SSL_connect.3
+./usr/share/man/man3/SSL_copy_session_id.3
 ./usr/share/man/man3/SSL_do_handshake.3
 ./usr/share/man/man3/SSL_dup.3
 ./usr/share/man/man3/SSL_dup_CA_list.3
@@ -1970,6 +1971,7 @@
 ./usr/share/man/man3/SSL_new.3
 ./usr/share/man/man3/SSL_pending.3
 ./usr/share/man/man3/SSL_read.3
+./usr/share/man/man3/SSL_renegotiate.3
 ./usr/share/man/man3/SSL_rstate_string.3
 ./usr/share/man/man3/SSL_session_reused.3
 ./usr/share/man/man3/SSL_set1_param.3
