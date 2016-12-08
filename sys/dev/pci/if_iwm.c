@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.150 2016/12/06 12:57:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.151 2016/12/08 17:24:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3321,7 +3321,8 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		if (phy_info->phy_flags &
 		    htole16(IWM_RX_RES_PHY_FLAGS_OFDM_HT)) {
 			uint8_t mcs = (phy_info->rate_n_flags &
-			    htole32(IWM_RATE_HT_MCS_RATE_CODE_MSK));
+			    htole32(IWM_RATE_HT_MCS_RATE_CODE_MSK |
+			        IWM_RATE_HT_MCS_NSS_MSK));
 			tap->wr_rate = (0x80 | mcs);
 		} else {
 			uint8_t rate = (phy_info->rate_n_flags &
