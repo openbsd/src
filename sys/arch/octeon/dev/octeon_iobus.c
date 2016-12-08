@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.16 2016/06/22 13:09:35 visa Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.17 2016/12/08 16:24:51 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -40,7 +40,11 @@
 #include <sys/proc.h>
 #include <sys/atomic.h>
 
+#include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
+
 #include <machine/autoconf.h>
+#include <machine/fdt.h>
 #include <machine/intr.h>
 #include <machine/octeonvar.h>
 #include <machine/octeonreg.h>
@@ -204,9 +208,10 @@ void
 iobusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct iobus_attach_args aa;
+	struct fdt_attach_args fa;
 	struct octeon_config oc;
 	struct device *sc = self;
-	int chipid, i, ngmx;
+	int chipid, i, ngmx, soc;
 
 	/*
 	 * Map and setup CIU control registers.
@@ -255,6 +260,15 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 		aa.aa_irq = -1;
 		aa.aa_unitno = i;
 		config_found_sm(self, &aa, iobusprint, iobussubmatch);
+	}
+
+	if ((soc = OF_finddevice("/soc")) != -1) {
+		memset(&fa, 0, sizeof(fa));
+		fa.fa_name = "";
+		fa.fa_node = soc;
+		fa.fa_iot = &iobus_tag;
+		fa.fa_dmat = &iobus_bus_dma_tag;
+		config_found(self, &fa, NULL);
 	}
 }
 

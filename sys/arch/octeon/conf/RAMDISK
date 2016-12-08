@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.26 2016/07/05 12:53:40 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.27 2016/12/08 16:24:51 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -40,6 +40,9 @@ amdcf0		at iobus0
 uartbus0	at mainbus0
 com0		at uartbus0
 com1		at uartbus0
+
+simplebus*	at fdt?
+simplebus*	at iobus?
 
 octrtc0		at mainbus0
 

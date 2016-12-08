@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2016/07/05 12:53:40 visa Exp $
+#	$OpenBSD: GENERIC,v 1.29 2016/12/08 16:24:51 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -32,6 +32,9 @@ cpu0		at mainbus0
 clock0		at mainbus0
 iobus0		at mainbus0
 uartbus0	at mainbus0
+
+simplebus*	at fdt?
+simplebus*	at iobus?
 
 octrtc0		at mainbus0
 
