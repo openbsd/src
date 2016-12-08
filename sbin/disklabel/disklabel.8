@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.120 2016/12/03 07:34:39 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.121 2016/12/08 23:56:47 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 3 2016 $
+.Dd $Mdocdate: December 8 2016 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -157,11 +157,6 @@ Print partition sizes in
 instead of sectors.
 Valid units are b(ytes), c(ylinders), k(ilobytes), m(egabytes), g(igabytes)
 and t(erabytes).
-For operations other than displaying a partition the
-.Ql %
-(percent of total) and
-.Ql &
-(percent of free) units are also accepted.
 .It Fl R
 Restore a disk label that was formatted in a prior operation and
 saved in an
@@ -270,9 +265,17 @@ and
 for terabytes.
 If no unit is given, the default is to use sectors
 (usually 512 bytes).
-Quantities will be rounded to the nearest
+.Pp
+Quantities are rounded to the nearest
 cylinder when units are specified for sizes
 .Pq or offsets .
+At prompts that request a size,
+.Ql *
+may be entered to indicate the rest of the available space,
+.Sq %
+for percentage of total, and
+.Sq &
+for percentage free.
 Commands may be aborted by entering
 .Ql ^D
 .Pq Control-D .
@@ -281,9 +284,7 @@ Entering
 at the main
 .Ql >
 prompt will exit the editor.
-At prompts that request a size,
-.Ql *
-may be entered to indicate the rest of the available space.
+.Pp
 The editor commands are as follows:
 .Bl -tag -width "p [unit] "
 .It Cm \&? | h
