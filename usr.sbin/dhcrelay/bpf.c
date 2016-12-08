@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.12 2016/12/08 09:29:50 rzalamena Exp $ */
+/*	$OpenBSD: bpf.c,v 1.13 2016/12/08 19:18:15 rzalamena Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -258,24 +258,23 @@ if_register_receive(struct interface_info *info)
 
 ssize_t
 send_packet(struct interface_info *interface,
-    struct dhcp_packet *raw, size_t len, struct in_addr from,
-    struct sockaddr_in *to, struct hardware *hto)
+    struct dhcp_packet *raw, size_t len, struct packet_ctx *pc)
 {
 	unsigned char buf[256];
 	struct iovec iov[2];
 	int result, bufp = 0;
 
 	if (interface->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
-		socklen_t slen = sizeof(*to);
+		socklen_t slen = pc->pc_dst.ss_len;
 		result = sendto(server_fd, raw, len, 0,
-		    (struct sockaddr *)to, slen);
+		    (struct sockaddr *)&pc->pc_dst, slen);
 		goto done;
 	}
 
 	/* Assemble the headers... */
-	assemble_hw_header(interface, buf, &bufp, hto);
-	assemble_udp_ip_header(interface, buf, &bufp, from.s_addr,
-	    to->sin_addr.s_addr, to->sin_port, (unsigned char *)raw, len);
+	assemble_hw_header(interface, buf, &bufp, pc);
+	assemble_udp_ip_header(interface, buf, &bufp, pc,
+	    (unsigned char *)raw, len);
 
 	/* Fire it off */
 	iov[0].iov_base = (char *)buf;
@@ -292,7 +291,7 @@ send_packet(struct interface_info *interface,
 
 ssize_t
 receive_packet(struct interface_info *interface, unsigned char *buf,
-    size_t len, struct sockaddr_in *from, struct hardware *hfrom)
+    size_t len, struct packet_ctx *pc)
 {
 	int length = 0, offset = 0;
 	struct bpf_hdr hdr;
@@ -358,7 +357,7 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 
 		/* Decode the physical header... */
 		offset = decode_hw_header(interface,
-		    interface->rbuf, interface->rbuf_offset, hfrom);
+		    interface->rbuf, interface->rbuf_offset, pc);
 
 		/*
 		 * If a physical layer checksum failed (dunno of any
@@ -374,7 +373,7 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 
 		/* Decode the IP and UDP headers... */
 		offset = decode_udp_ip_header(interface, interface->rbuf,
-		    interface->rbuf_offset, from, hdr.bh_caplen);
+		    interface->rbuf_offset, pc, hdr.bh_caplen);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {

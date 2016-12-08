@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.13 2016/12/08 09:29:50 rzalamena Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.14 2016/12/08 19:18:15 rzalamena Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -69,8 +69,7 @@ static struct timeout *free_timeouts;
 static int interfaces_invalidated;
 
 void (*bootp_packet_handler)(struct interface_info *,
-    struct dhcp_packet *, int, unsigned int,
-    struct iaddr, struct hardware *);
+    struct dhcp_packet *, int, struct packet_ctx *);
 
 static int interface_status(struct interface_info *ifinfo);
 
@@ -260,9 +259,7 @@ another:
 void
 got_one(struct protocol *l)
 {
-	struct sockaddr_in from;
-	struct hardware hfrom;
-	struct iaddr ifrom;
+	struct packet_ctx pc;
 	size_t result;
 	union {
 		/*
@@ -274,8 +271,9 @@ got_one(struct protocol *l)
 	} u;
 	struct interface_info *ip = l->local;
 
-	if ((result = receive_packet(ip, u.packbuf, sizeof(u), &from,
-	    &hfrom)) == -1) {
+	memset(&pc, 0, sizeof(pc));
+
+	if ((result = receive_packet(ip, u.packbuf, sizeof(u), &pc)) == -1) {
 		warning("receive_packet failed on %s: %s", ip->name,
 		    strerror(errno));
 		ip->errors++;
@@ -295,13 +293,8 @@ got_one(struct protocol *l)
 	if (result == 0)
 		return;
 
-	if (bootp_packet_handler) {
-		ifrom.len = 4;
-		memcpy(ifrom.iabuf, &from.sin_addr, ifrom.len);
-
-		(*bootp_packet_handler)(ip, &u.packet, result,
-		    from.sin_port, ifrom, &hfrom);
-	}
+	if (bootp_packet_handler)
+		(*bootp_packet_handler)(ip, &u.packet, result, &pc);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.48 2016/12/08 09:29:50 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.49 2016/12/08 19:18:15 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -65,7 +65,7 @@
 void	 usage(void);
 int	 rdaemon(int);
 void	 relay(struct interface_info *, struct dhcp_packet *, int,
-	    unsigned int, struct iaddr, struct hardware *);
+	    struct packet_ctx *);
 char	*print_hw_addr(int, int, unsigned char *);
 void	 got_response(struct protocol *);
 int	 get_rdomain(char *);
@@ -264,11 +264,10 @@ main(int argc, char *argv[])
 
 void
 relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
-    unsigned int from_port, struct iaddr from, struct hardware *hfrom)
+    struct packet_ctx *pc)
 {
 	struct server_list	*sp;
 	struct sockaddr_in	 to;
-	struct hardware		 hto;
 
 	if (packet->hlen > sizeof packet->chaddr) {
 		note("Discarding packet with invalid hlen.");
@@ -287,6 +286,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		}
 		to.sin_family = AF_INET;
 		to.sin_len = sizeof to;
+		*ss2sin(&pc->pc_dst) = to;
 
 		/*
 		 * Set up the hardware destination address.  If it's a reply
@@ -294,13 +294,13 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		 * cast as well.
 		 */
 		if (!(packet->flags & htons(BOOTP_BROADCAST))) {
-			hto.hlen = packet->hlen;
-			if (hto.hlen > sizeof hto.haddr)
-				hto.hlen = sizeof hto.haddr;
-			memcpy(hto.haddr, packet->chaddr, hto.hlen);
-			hto.htype = packet->htype;
+			pc->pc_hlen = packet->hlen;
+			if (pc->pc_hlen > CHADDR_SIZE)
+				pc->pc_hlen = CHADDR_SIZE;
+			memcpy(pc->pc_dmac, packet->chaddr, pc->pc_hlen);
+			pc->pc_htype = packet->htype;
 		} else {
-			bzero(&hto, sizeof(hto));
+			memset(pc->pc_dmac, 0xff, sizeof(pc->pc_dmac));
 		}
 
 		if ((length = relay_agentinfo(interfaces,
@@ -321,8 +321,8 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		 */
 		packet->giaddr.s_addr = 0x0;
 
-		if (send_packet(interfaces, packet, length,
-		    interfaces->primary_address, &to, &hto) != -1)
+		ss2sin(&pc->pc_src)->sin_addr = interfaces->primary_address;
+		if (send_packet(interfaces, packet, length, pc) != -1)
 			debug("forwarded BOOTREPLY for %s to %s",
 			    print_hw_addr(packet->htype, packet->hlen,
 			    packet->chaddr), inet_ntoa(to.sin_addr));
@@ -351,7 +351,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		packet->giaddr = ip->primary_address;
 
 	if ((length = relay_agentinfo(ip, packet, length,
-	    (struct in_addr *)from.iabuf, NULL)) == -1) {
+	    &ss2sin(&pc->pc_src)->sin_addr, NULL)) == -1) {
 		note("ignoring BOOTREQUEST with invalid "
 		    "relay agent information");
 		return;
@@ -439,8 +439,8 @@ bad:
 void
 got_response(struct protocol *l)
 {
+	struct packet_ctx pc;
 	ssize_t result;
-	struct iaddr ifrom;
 	union {
 		/*
 		 * Packet input buffer.  Must be as large as largest
@@ -473,13 +473,19 @@ got_response(struct protocol *l)
 		return;
 	}
 
-	if (bootp_packet_handler) {
-		ifrom.len = 4;
-		memcpy(ifrom.iabuf, &sp->to.sin_addr, ifrom.len);
+	memset(&pc, 0, sizeof(pc));
+	pc.pc_src.ss_family = AF_INET;
+	pc.pc_src.ss_len = sizeof(struct sockaddr_in);
+	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &sp->to.sin_addr,
+	    sizeof(ss2sin(&pc.pc_src)->sin_addr));
+	ss2sin(&pc.pc_src)->sin_port = server_port;
 
-		(*bootp_packet_handler)(NULL, &u.packet, result,
-		    sp->to.sin_port, ifrom, NULL);
-	}
+	pc.pc_dst.ss_family = AF_INET;
+	pc.pc_dst.ss_len = sizeof(struct sockaddr_in);
+	ss2sin(&pc.pc_dst)->sin_port = client_port;
+
+	if (bootp_packet_handler)
+		(*bootp_packet_handler)(NULL, &u.packet, result, &pc);
 }
 
 ssize_t

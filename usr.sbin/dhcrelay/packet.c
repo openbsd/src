@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.11 2016/02/07 00:49:28 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.12 2016/12/08 19:18:15 rzalamena Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -97,17 +97,13 @@ wrapsum(u_int32_t sum)
 
 void
 assemble_hw_header(struct interface_info *interface, unsigned char *buf,
-    int *bufix, struct hardware *to)
+    int *bufix, struct packet_ctx *pc)
 {
 	struct ether_header eh;
 
-	if (to != NULL && to->hlen == 6) /* XXX */
-		memcpy(eh.ether_dhost, to->haddr, sizeof(eh.ether_dhost));
-	else
-		memset(eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
-
-	/* source address is filled in by the kernel */
-	memset(eh.ether_shost, 0x00, sizeof(eh.ether_shost));
+	/* Use the supplied address or let the kernel fill it. */
+	memcpy(eh.ether_shost, pc->pc_smac, ETHER_ADDR_LEN);
+	memcpy(eh.ether_dhost, pc->pc_dmac, ETHER_ADDR_LEN);
 
 	eh.ether_type = htons(ETHERTYPE_IP);
 
@@ -117,8 +113,7 @@ assemble_hw_header(struct interface_info *interface, unsigned char *buf,
 
 void
 assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
-    int *bufix, u_int32_t from, u_int32_t to, unsigned int port,
-    unsigned char *data, int len)
+    int *bufix, struct packet_ctx *pc, unsigned char *data, int len)
 {
 	struct ip ip;
 	struct udphdr udp;
@@ -132,15 +127,15 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 	ip.ip_ttl = 16;
 	ip.ip_p = IPPROTO_UDP;
 	ip.ip_sum = 0;
-	ip.ip_src.s_addr = from;
-	ip.ip_dst.s_addr = to;
+	ip.ip_src.s_addr = ss2sin(&pc->pc_src)->sin_addr.s_addr;
+	ip.ip_dst.s_addr = ss2sin(&pc->pc_dst)->sin_addr.s_addr;
 
 	ip.ip_sum = wrapsum(checksum((unsigned char *)&ip, sizeof(ip), 0));
 	memcpy(&buf[*bufix], &ip, sizeof(ip));
 	*bufix += sizeof(ip);
 
-	udp.uh_sport = server_port;	/* XXX */
-	udp.uh_dport = port;			/* XXX */
+	udp.uh_sport = ss2sin(&pc->pc_src)->sin_port;
+	udp.uh_dport = ss2sin(&pc->pc_dst)->sin_port;
 	udp.uh_ulen = htons(sizeof(udp) + len);
 	memset(&udp.uh_sum, 0, sizeof(udp.uh_sum));
 
@@ -155,9 +150,8 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 
 ssize_t
 decode_hw_header(struct interface_info *interface, unsigned char *buf,
-    int bufix, struct hardware *from)
+    int bufix, struct packet_ctx *pc)
 {
-	struct ether_header eh;
 	size_t offset = 0;
 
 	if (interface->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
@@ -172,23 +166,24 @@ decode_hw_header(struct interface_info *interface, unsigned char *buf,
 		if (ip->ip_p != IPPROTO_IPIP)
 			return (-1);
 
-		bzero(&eh, sizeof(eh));
+		memset(pc->pc_dmac, 0xff, ETHER_ADDR_LEN);
 		offset = ENC_HDRLEN + ip_len;
-	} else {	
-		memcpy(&eh, buf + bufix, ETHER_HDR_LEN);
-		offset = sizeof(eh);
+	} else {
+		memcpy(pc->pc_dmac, buf + bufix, ETHER_ADDR_LEN);
+		memcpy(pc->pc_smac, buf + bufix + ETHER_ADDR_LEN,
+		    ETHER_ADDR_LEN);
+		offset = sizeof(struct ether_header);
 	}
 
-	memcpy(from->haddr, eh.ether_shost, sizeof(eh.ether_shost));
-	from->htype = ARPHRD_ETHER;
-	from->hlen = sizeof(eh.ether_shost);
+	pc->pc_htype = ARPHRD_ETHER;
+	pc->pc_hlen = ETHER_ADDR_LEN;
 
 	return (offset);
 }
 
 ssize_t
 decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
-    int bufix, struct sockaddr_in *from, int buflen)
+    int bufix, struct packet_ctx *pc, int buflen)
 {
 	struct ip *ip;
 	struct udphdr *udp;
@@ -224,7 +219,15 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		return (-1);
 	}
 
-	memcpy(&from->sin_addr, &ip->ip_src, sizeof(from->sin_addr));
+	pc->pc_src.ss_len = sizeof(struct sockaddr_in);
+	pc->pc_src.ss_family = AF_INET;
+	memcpy(&ss2sin(&pc->pc_src)->sin_addr, &ip->ip_src,
+	    sizeof(ss2sin(&pc->pc_src)->sin_addr));
+
+	pc->pc_dst.ss_len = sizeof(struct sockaddr_in);
+	pc->pc_dst.ss_family = AF_INET;
+	memcpy(&ss2sin(&pc->pc_dst)->sin_addr, &ip->ip_dst,
+	    sizeof(ss2sin(&pc->pc_dst)->sin_addr));
 
 #ifdef DEBUG
 	if (ntohs(ip->ip_len) != buflen)
@@ -291,7 +294,8 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		return (-1);
 	}
 
-	memcpy(&from->sin_port, &udp->uh_sport, sizeof(udp->uh_sport));
+	ss2sin(&pc->pc_src)->sin_port = udp->uh_sport;
+	ss2sin(&pc->pc_dst)->sin_port = udp->uh_dport;
 
 	return (ip_len + sizeof(*udp));
 }

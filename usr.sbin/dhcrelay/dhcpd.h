@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.16 2016/12/08 09:29:50 rzalamena Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.17 2016/12/08 19:18:15 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -42,15 +42,28 @@
 #define	SERVER_PORT	67
 #define	CLIENT_PORT	68
 
+/* Maximum size of client hardware address. */
+#define CHADDR_SIZE	16
+
+struct packet_ctx {
+	uint8_t				 pc_htype;
+	uint8_t				 pc_hlen;
+	uint8_t				 pc_smac[CHADDR_SIZE];
+	uint8_t				 pc_dmac[CHADDR_SIZE];
+
+	struct sockaddr_storage		 pc_src;
+	struct sockaddr_storage		 pc_dst;
+};
+
 struct iaddr {
 	int len;
-	unsigned char iabuf[16];
+	unsigned char iabuf[CHADDR_SIZE];
 };
 
 struct hardware {
 	u_int8_t htype;
 	u_int8_t hlen;
-	u_int8_t haddr[16];
+	u_int8_t haddr[CHADDR_SIZE];
 };
 
 /* Possible states in which the client can be. */
@@ -112,15 +125,13 @@ int if_register_bpf(struct interface_info *);
 void if_register_send(struct interface_info *);
 void if_register_receive(struct interface_info *);
 ssize_t send_packet(struct interface_info *,
-    struct dhcp_packet *, size_t, struct in_addr,
-    struct sockaddr_in *, struct hardware *);
+    struct dhcp_packet *, size_t, struct packet_ctx *);
 ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
-    struct sockaddr_in *, struct hardware *);
+    struct packet_ctx *);
 
 /* dispatch.c */
 extern void (*bootp_packet_handler)(struct interface_info *,
-    struct dhcp_packet *, int, unsigned int, struct iaddr,
-    struct hardware *);
+    struct dhcp_packet *, int, struct packet_ctx *);
 struct interface_info *get_interface(const char *,
     void (*)(struct protocol *));
 void dispatch(void);
@@ -130,13 +141,13 @@ void remove_protocol(struct protocol *);
 
 /* packet.c */
 void assemble_hw_header(struct interface_info *, unsigned char *,
-    int *, struct hardware *);
+    int *, struct packet_ctx *);
 void assemble_udp_ip_header(struct interface_info *, unsigned char *,
-    int *, u_int32_t, u_int32_t, unsigned int, unsigned char *, int);
+    int *, struct packet_ctx *pc, unsigned char *, int);
 ssize_t decode_hw_header(struct interface_info *, unsigned char *,
-    int, struct hardware *);
+    int, struct packet_ctx *);
 ssize_t decode_udp_ip_header(struct interface_info *, unsigned char *,
-    int, struct sockaddr_in *, int);
+    int, struct packet_ctx *, int);
 
 /* dhcrelay.c */
 extern u_int16_t server_port;
@@ -147,3 +158,9 @@ extern int server_fd;
 extern time_t cur_time;
 extern int log_priority;
 extern int log_perror;
+
+static inline struct sockaddr_in *
+ss2sin(struct sockaddr_storage *ss)
+{
+	return ((struct sockaddr_in *)ss);
+}
