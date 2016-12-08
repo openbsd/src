@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.149 2016/08/20 20:18:42 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.150 2016/12/08 19:31:17 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -470,6 +470,11 @@ noslash:
 	portnum = strrchr(hosttail, ':');		/* find portnum */
 	if (portnum != NULL)
 		*portnum++ = '\0';
+#ifndef SMALL
+	port = portnum ? portnum : (ishttpsurl ? httpsport : httpport);
+#else /* !SMALL */
+	port = portnum ? portnum : httpport;
+#endif /* !SMALL */
 
 #ifndef SMALL
 	if (full_host == NULL)
@@ -477,18 +482,13 @@ noslash:
 			errx(1, "Cannot allocate memory for hostname");
 	if (debug)
 		fprintf(ttyout, "host %s, port %s, path %s, "
-		    "save as %s, auth %s.\n",
-		    host, portnum, path, savefile, credentials);
+		    "save as %s, auth %s.\n", host, port, path,
+		    savefile, credentials ? credentials : "none");
 #endif /* !SMALL */
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
-#ifndef SMALL
-	port = portnum ? portnum : (ishttpsurl ? httpsport : httpport);
-#else /* !SMALL */
-	port = portnum ? portnum : httpport;
-#endif /* !SMALL */
 	error = getaddrinfo(host, port, &hints, &res0);
 	/*
 	 * If the services file is corrupt/missing, fall back
