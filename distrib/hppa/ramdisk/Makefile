@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2016/10/14 18:44:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.30 2016/12/08 10:44:01 natano Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -10,16 +10,7 @@ SRCDIR=		${.CURDIR}/../../..
 .include "${ARCHDIR}/Makefile.inc"
 .endif
 
-MOUNT_POINT?=	/mnt
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-DISKTYPE=	rdroot
-PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
-IMAGESIZE?=	4608 # 2.25MB in 512 byte blocks
-NEWFS_WILL_FAIL?=false
 CRUNCHGENOPTS?=-E
 KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../../miniroot
@@ -37,9 +28,8 @@ STRIP?=		strip
 GZIPCMD?=	gzip
 GZIPFLAGS?=	-9n
 
-# old format, minfree, opt, b/i  trks, sects, cpg
-NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192
-NEWFSOPTS_RD?=	${NEWFSOPTS} -i 4096 -s ${IMAGESIZE}
+DISKTYPE=	rdroot
+MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 
 all:	bsd.rd ${LIF} ${CDROM}
 
@@ -78,23 +68,14 @@ rdsetroot: ${.CURDIR}/../../common/elfrdsetroot.c \
 	    ${.CURDIR}/../../common/elf32.c ${.CURDIR}/../../common/elf64.c
 
 ${IMAGE}: ${CBIN}
-	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${DISKTYPE}
-	newfs ${NEWFSOPTS_RD} ${VND_RDEV} || ${NEWFS_WILL_FAIL}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    ARCHDIR=${ARCHDIR} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
-	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
-	rm ${MOUNT_POINT}/${CBIN}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_DEV}
-	cp ${REALIMAGE} ${IMAGE}
-	rm ${REALIMAGE}
+	rm -rf $@.d
+	install -d -o root -g wheel $@.d
+	mtree -def ${MTREE} -p $@.d -u
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} ARCHDIR=${ARCHDIR} \
+	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
+	    sh ${UTILS}/runlist.sh ${LISTS}
+	rm $@.d/${CBIN}
+	makefs ${MAKEFSARGS_RD} $@ $@.d
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
@@ -110,16 +91,12 @@ clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	    lib*.a lib*.olist ${CBIN}.map \
 	    ${CBIN}.conf *.o *.lo *.c obsd bsd bsd.* ${LIF} ${CDROM}
+	/bin/rm -rf ${IMAGE}.d
 
 .ifdef RELEASEDIR
 beforeinstall:
 	cp bsd.rd ${LIF} ${CDROM} ${RELEASEDIR}
 .endif
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${REALIMAGE}
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
