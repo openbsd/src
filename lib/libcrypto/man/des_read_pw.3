@@ -1,6 +1,6 @@
-.\"	$OpenBSD: des_read_pw.3,v 1.3 2016/11/06 15:52:50 jmc Exp $
+.\"	$OpenBSD: des_read_pw.3,v 1.4 2016/12/08 21:48:50 jmc Exp $
 .\"
-.Dd $Mdocdate: November 6 2016 $
+.Dd $Mdocdate: December 8 2016 $
 .Dt DES_READ_PW 3
 .Os
 .Sh NAME
@@ -8,7 +8,7 @@
 .Nm des_read_2passwords ,
 .Nm des_read_pw_string ,
 .Nm des_read_pw
-.Nd Compatibility user interface functions
+.Nd compatibility user interface functions
 .Sh SYNOPSIS
 .In openssl/des_old.h
 .Ft int
@@ -47,7 +47,7 @@ part of the UI compatibility library.
 .Fn des_read_pw
 writes the string specified by
 .Fa prompt
-to standard output turns echo off and reads an input string from the
+to standard output, turns echo off, and reads an input string from the
 terminal.
 The string is returned in
 .Fa buf ,
@@ -72,9 +72,12 @@ to do the work.
 .Fn des_read_pw_string
 is a variant of
 .Fn des_read_pw
-that provides a buffer for you if
+that provides a buffer if
 .Fa verify
 is set.
+It is available in the MIT Kerberos library as well,
+and is also available under the name
+.Xr EVP_read_pw_string 3 .
 .Pp
 .Fn des_read_password
 calls
@@ -87,11 +90,6 @@ operates in the same way as
 except that it generates two keys by using the
 .Xr DES_string_to_2key 3
 function.
-.Sh NOTES
-.Fn des_read_pw_string
-is available in the MIT Kerberos library as well, and is also available
-under the name
-.Xr EVP_read_pw_string 3 .
 .Sh SEE ALSO
 .Xr UI_new 3
 .Sh AUTHORS

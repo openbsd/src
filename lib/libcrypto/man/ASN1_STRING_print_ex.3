@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_STRING_print_ex.3,v 1.5 2016/11/10 13:06:24 schwarze Exp $
+.\"	$OpenBSD: ASN1_STRING_print_ex.3,v 1.6 2016/12/08 21:48:50 jmc Exp $
 .\"	OpenSSL bb9ad09e Mon Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2016 $
+.Dd $Mdocdate: December 8 2016 $
 .Dt ASN1_STRING_PRINT_EX 3
 .Os
 .Sh NAME
@@ -189,7 +189,7 @@ is set, then the complete encoding is dumped
 instead (including tag and length octets).
 .Pp
 .Dv ASN1_STRFLGS_RFC2253
-includes all the flags required by RFC2253.
+includes all the flags required by RFC 2253.
 It is equivalent to
 .Dv ASN1_STRFLGS_ESC_2253 |
 .Dv ASN1_STRFLGS_ESC_CTRL |
