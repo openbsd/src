@@ -1,4 +1,4 @@
-/*	$OpenBSD: linkaddr.c,v 1.8 2016/12/07 01:05:47 millert Exp $ */
+/*	$OpenBSD: linkaddr.c,v 1.9 2016/12/08 03:20:50 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ link_ntoa(const struct sockaddr_dl *sdl)
 {
 	static char obuf[64];
 	char *out;
-	const char *in, *inlim;
+	const u_char *in, *inlim;
 	int namelen, i, rem;
 
 	namelen = (sdl->sdl_nlen <= IFNAMSIZ) ? sdl->sdl_nlen : IFNAMSIZ;
@@ -58,11 +58,11 @@ link_ntoa(const struct sockaddr_dl *sdl)
 		}
 	}
 
-	in = (const char *)sdl->sdl_data + sdl->sdl_nlen;
+	in = (const u_char *)sdl->sdl_data + sdl->sdl_nlen;
 	inlim = in + sdl->sdl_alen;
 
 	while (in < inlim && rem > 1) {
-		if (in != (const char *)sdl->sdl_data + sdl->sdl_nlen) {
+		if (in != (const u_char *)sdl->sdl_data + sdl->sdl_nlen) {
 			*out++ = '.';
 			rem--;
 		}
@@ -70,9 +70,8 @@ link_ntoa(const struct sockaddr_dl *sdl)
 		if (i > 0xf) {
 			if (rem < 3)
 				break;
+			*out++ = hexlist[i >> 4];
 			*out++ = hexlist[i & 0xf];
-			i >>= 4;
-			*out++ = hexlist[i];
 			rem -= 2;
 		} else {
 			if (rem < 2)
