@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.150 2016/12/08 19:31:17 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.151 2016/12/08 19:59:51 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -624,9 +624,6 @@ noslash:
 	fin = fdopen(s, "r+");
 #endif /* !SMALL */
 
-	if (verbose)
-		fprintf(ttyout, "Requesting %s", origline);
-
 	/*
 	 * Construct and send the request. Proxy requests don't want leading /.
 	 */
@@ -636,8 +633,10 @@ noslash:
 
 	epath = url_encode(path);
 	if (proxyurl) {
-		if (verbose)
-			fprintf(ttyout, " (via %s)\n", proxyurl);
+		if (verbose) {
+			fprintf(ttyout, "Requesting %s (via %s)\n",
+			    origline, proxyurl);
+		}
 		/*
 		 * Host: directive must use the destination host address for
 		 * the original URI (path).
@@ -653,6 +652,8 @@ noslash:
 			    "Host: %s\r\n%s%s\r\n\r\n",
 			    epath, proxyhost, buf ? buf : "", httpuseragent);
 	} else {
+		if (verbose)
+			fprintf(ttyout, "Requesting %s\n", origline);
 #ifndef SMALL
 		if (resume) {
 			struct stat stbuf;
@@ -712,8 +713,6 @@ noslash:
 #endif /* !SMALL */
 		ftp_printf(fin, tls, "\r\n%s%s\r\n\r\n",
 		    buf ? buf : "", httpuseragent);
-		if (verbose)
-			fprintf(ttyout, "\n");
 	}
 	free(epath);
 
