@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.5 2016/12/07 21:08:55 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.6 2016/12/08 19:30:44 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -403,10 +403,8 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 		xbf_scsi_done(xs, XS_DRIVER_STUFFUP);
 		return;
 	}
-	if (!ISSET(xs->flags, SCSI_POLL))
-		return;
 
-	if (xbf_poll_cmd(xs, desc, 1000)) {
+	if (ISSET(xs->flags, SCSI_POLL) && xbf_poll_cmd(xs, desc, 1000)) {
 		DPRINTF("%s: desc %u timed out\n", sc->sc_dev.dv_xname, desc);
 		xbf_scsi_done(xs, XS_TIMEOUT);
 		return;
@@ -424,9 +422,8 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	struct scsi_rw_big *rwb;
 	struct scsi_rw_12 *rw12;
 	struct scsi_rw_16 *rw16;
-	u_int64_t lba;
-	u_int32_t nblk;
-	uint8_t operation;
+	u_int64_t lba = 0;
+	uint8_t operation = 0;
 	int mapflags;
 	int i, desc, error;
 
@@ -460,19 +457,15 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	if (xs->cmdlen == 6) {
 		rw = (struct scsi_rw *)xs->cmd;
 		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
-		nblk = rw->length ? rw->length : 0x100;
 	} else if (xs->cmdlen == 10) {
 		rwb = (struct scsi_rw_big *)xs->cmd;
 		lba = _4btol(rwb->addr);
-		nblk = _2btol(rwb->length);
 	} else if (xs->cmdlen == 12) {
 		rw12 = (struct scsi_rw_12 *)xs->cmd;
 		lba = _4btol(rw12->addr);
-		nblk = _4btol(rw12->length);
 	} else if (xs->cmdlen == 16) {
 		rw16 = (struct scsi_rw_16 *)xs->cmd;
 		lba = _8btol(rw16->addr);
-		nblk = _4btol(rw16->length);
 	}
 
 	desc = sc->sc_xr_prod & (sc->sc_xr_ndesc - 1);
@@ -560,8 +553,6 @@ xbf_complete_cmd(struct scsi_xfer *xs, int desc)
 	union xbf_ring_desc *xrd;
 	bus_dmamap_t map;
 	uint64_t id;
-	int16_t status;
-	uint8_t op;
 	int error;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_xr_dma.dma_map, 0,
@@ -579,14 +570,13 @@ xbf_complete_cmd(struct scsi_xfer *xs, int desc)
 
 	sc->sc_xs[desc] = NULL;
 
+	DPRINTF("%s: completing desc %u(%llu) op %u with error %d\n",
+	    sc->sc_dev.dv_xname, desc, xrd->xrd_rsp.rsp_id,
+	    xrd->xrd_rsp.rsp_op, xrd->xrd_rsp.rsp_status);
+
 	id = xrd->xrd_rsp.rsp_id;
-	op = xrd->xrd_rsp.rsp_op; /* TEMP */
-	status = xrd->xrd_rsp.rsp_status; /* TEMP */
 	memset(xrd, 0, sizeof(*xrd));
 	xrd->xrd_req.req_id = id;
-
-	DPRINTF("%s: completing desc %u(%llu) op %u with error %d\n",
-	    sc->sc_dev.dv_xname, desc, id, op, status);
 
 	xs->resid = 0;
 	xbf_scsi_done(xs, error);
@@ -758,8 +748,6 @@ xbf_init(struct xbf_softc *sc)
 	char pbuf[sizeof("ring-refXX")];
 	char val[32];
 	int i, error;
-
-	action = "read";
 
 	prop = "max-ring-page-order";
 	error = xbf_get_numval(sc, 1, prop, &res);
