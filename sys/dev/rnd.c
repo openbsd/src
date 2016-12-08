@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.190 2016/10/18 13:40:59 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.191 2016/12/08 05:32:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -186,7 +186,7 @@
  * distance from evenly spaced; except for the last tap, which is 1 to
  * get the twisting happening as fast as possible.
  *
- * The reultant polynomial is:
+ * The resultant polynomial is:
  *   2^POOLWORDS + 2^POOL_TAP1 + 2^POOL_TAP2 + 2^POOL_TAP3 + 2^POOL_TAP4 + 1
  */
 #define POOLWORDS	2048
@@ -363,7 +363,7 @@ add_entropy_words(const u_int32_t *buf, u_int n)
 }
 
 /*
- * Pulls entropy out of the queue and throws merges it into the pool
+ * Pulls entropy out of the queue and merges it into the pool
  * with the CRC.
  */
 /* ARGSUSED */
@@ -631,7 +631,6 @@ _rs_random_u32(u_int32_t *val)
 	memcpy(val, rs_buf + RSBUFSZ - rs_have, sizeof(*val));
 	memset(rs_buf + RSBUFSZ - rs_have, 0, sizeof(*val));
 	rs_have -= sizeof(*val);
-	return;
 }
 
 /* Return one word of randomness from a ChaCha20 generator */
