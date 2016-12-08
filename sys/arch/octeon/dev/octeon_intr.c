@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_intr.c,v 1.18 2016/12/04 11:52:51 visa Exp $	*/
+/*	$OpenBSD: octeon_intr.c,v 1.19 2016/12/08 16:27:46 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -38,6 +38,8 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/atomic.h>
+
+#include <dev/ofw/openfirm.h>
 
 #include <mips64/mips_cpu.h>
 
@@ -147,6 +149,35 @@ octeon_intr_establish(int irq, int level,
 	splx(s);	/* causes hw mask update */
 
 	return (ih);
+}
+
+void *
+octeon_intr_establish_fdt_idx(int node, int idx, int level,
+    int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
+{
+	uint32_t *cells;
+	int irq, len;
+
+	/*
+	 * Assume the interrupt controller is compatible with
+	 * cavium,octeon-3860-ciu.
+	 */
+
+	len = OF_getproplen(node, "interrupts");
+	if (len / (sizeof(uint32_t) * 2) <= idx ||
+	    len % (sizeof(uint32_t) * 2) != 0)
+		return NULL;
+
+	cells = malloc(len, M_TEMP, M_NOWAIT);
+	if (cells == NULL)
+		return NULL;
+
+	OF_getpropintarray(node, "interrupts", cells, len);
+	irq = cells[idx * 2] * BANK_SIZE + cells[idx * 2 + 1];
+
+	free(cells, M_TEMP, len);
+
+	return octeon_intr_establish(irq, level, ih_fun, ih_arg, ih_what);
 }
 
 void
