@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.47 2016/12/07 20:03:22 patrick Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.48 2016/12/08 09:29:50 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -115,6 +115,8 @@ main(int argc, char *argv[])
 				usage();
 
 			interfaces = get_interface(optarg, got_one);
+			if (interfaces == NULL)
+				error("interface '%s' not found", optarg);
 			break;
 		case 'o':
 			/* add the relay agent information option */
@@ -165,6 +167,9 @@ main(int argc, char *argv[])
 
 	if (interfaces == NULL)
 		error("no interface given");
+	if (interfaces->primary_address.s_addr == 0)
+		error("interface '%s' does not have an address",
+		    interfaces->name);
 
 	/* Default DHCP/BOOTP ports. */
 	server_port = htons(SERVER_PORT);
