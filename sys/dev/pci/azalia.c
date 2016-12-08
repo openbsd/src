@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.229 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.230 2016/12/08 17:23:33 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/fcntl.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
@@ -3842,6 +3843,10 @@ azalia_open(void *v, int flags)
 	DPRINTFN(1, ("%s: flags=0x%x\n", __func__, flags));
 	az = v;
 	codec = &az->codecs[az->codecno];
+	if ((flags & FWRITE) && codec->dacs.ngroups == 0)
+		return ENODEV;
+	if ((flags & FREAD) && codec->adcs.ngroups == 0)
+		return ENODEV;
 	codec->running++;
 	return 0;
 }
