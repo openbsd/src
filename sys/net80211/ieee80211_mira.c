@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.2 2016/12/06 02:41:28 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.3 2016/12/08 17:25:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -518,8 +518,8 @@ ieee80211_mira_next_lower_intra_rate(struct ieee80211_mira_node *mn,
 	for (i = rs->nrates - 1; i >= 0; i--) {
 		if ((mn->valid_rates & (1 << (i + rs->min_mcs))) == 0)
 			continue;
-		if (i < ni->ni_txmcs) {
-			next = i;
+		if (i + rs->min_mcs < ni->ni_txmcs) {
+			next = i + rs->min_mcs;
 			break;
 		}
 	}
@@ -542,8 +542,8 @@ ieee80211_mira_next_intra_rate(struct ieee80211_mira_node *mn,
 	for (i = 0; i < rs->nrates; i++) {
 		if ((mn->valid_rates & (1 << (i + rs->min_mcs))) == 0)
 			continue;
-		if (i > ni->ni_txmcs) {
-			next = i;
+		if (i + rs->min_mcs > ni->ni_txmcs) {
+			next = i + rs->min_mcs;
 			break;
 		}
 	}
