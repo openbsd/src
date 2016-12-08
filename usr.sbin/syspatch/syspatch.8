@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.12 2016/11/30 12:58:28 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.13 2016/12/08 09:47:37 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: December 8 2016 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -31,9 +31,11 @@ binary patches.
 .Pp
 When run without any options,
 .Nm syspatch
-will apply all missing patches by saving the original release kernel if needed,
-creating a rollback tarball containing the files it is about to replace,
-then extracting and installing all files contained in the syspatch tarball.
+will apply
+.Pa all
+missing patches by saving the original release kernel if needed, creating a
+rollback tarball containing the files it is about to replace, then extracting
+and installing all files contained in the syspatch tarball.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -69,5 +71,6 @@ was written by
 .An Antoine Jacoutot Aq Mt ajacoutot@openbsd.org .
 .Sh CAVEATS
 .Nm
-only works on official releases and will always sync and apply all patches
-regardless of the installed sets.
+is designed to work solely on official
+.Ox
+releases.

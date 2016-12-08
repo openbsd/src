@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.77 2016/12/07 15:36:50 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.78 2016/12/08 09:47:37 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -46,6 +46,12 @@ apply_patch()
 	checkfs ${_files}
 
 	create_rollback ${_patch} "${_files}"
+
+	# create_rollback(): tar(1) was fed with an empty list of files; that is
+	# not an error but no tarball is created; this happens if no earlier
+	# version of the files contained in the syspatch exists on the system
+	[[ ! -f ${_PDIR}/${_patch}/rollback.tgz ]] && unset _files &&
+		echo "Missing set, skipping patch ${_patch##${_OSrev}-}"
 
 	for _file in ${_files}; do
 		((_ret == 0)) || break
@@ -122,9 +128,6 @@ create_rollback()
 			_ret=$?
 	fi
 
-	# missing archive (empty _rbfiles list)
-	[[ -f ${_PDIR}/${_patch}/rollback.tgz ]] || _ret=$?
-
 	if ((_ret != 0)); then
 		sp_err "Failed to create rollback patch ${_patch##${_OSrev}-}" 0
 		rm -r ${_PDIR}/${_patch}; return ${_ret}
@@ -180,7 +183,6 @@ ls_installed()
 
 ls_missing()
 {
-	# XXX match with installed sets
 	local _c _idx=${_TMP}/idx.txt _l="$(ls_installed)"
 
 	unpriv -f "${_idx}" ${_FETCH} -o "${_idx}" "${_URL}/index.txt"
