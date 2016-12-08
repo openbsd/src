@@ -1,4 +1,4 @@
-.\"	$OpenBSD: engine.3,v 1.5 2016/11/22 12:32:07 schwarze Exp $
+.\"	$OpenBSD: engine.3,v 1.6 2016/12/08 22:13:59 jmc Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Geoff Thorpe <geoff@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 22 2016 $
+.Dd $Mdocdate: December 8 2016 $
 .Dt ENGINE 3
 .Os
 .Sh NAME
@@ -608,9 +608,9 @@ reference.
 .Em Structural references
 .Pp
 This basic type of reference is used for instantiating new
-.Vt ENGINE Ns s,
+.Vt ENGINE Ns s ,
 iterating across OpenSSL's internal linked-list of loaded
-.Vt ENGINE Ns s,
+.Vt ENGINE Ns s ,
 reading information about an
 .Vt ENGINE ,
 etc.
@@ -967,7 +967,7 @@ This mechanism is entirely based on the use of name-value pairs
 and assumes ASCII input (no unicode or UTF for now!), so it is ideal if
 applications want to provide a transparent way for users to provide
 arbitrary configuration "directives" directly to such
-.Vt ENGINE Ns s.
+.Vt ENGINE Ns s .
 It is also possible for the application to dynamically interrogate the
 loaded
 .Vt ENGINE
@@ -1018,7 +1018,7 @@ Note that the string-pairs used for control commands consist of a
 command "name" followed by the command "parameter" - the parameter
 could be
 .Dv NULL
-in some cases but the name can not.
+in some cases but the name cannot.
 This function should initialise the
 .Vt ENGINE
 (issuing the "pre" commands beforehand and the "post" commands

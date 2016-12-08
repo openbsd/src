@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DES_set_key.3,v 1.5 2016/11/21 09:56:35 schwarze Exp $
+.\"	$OpenBSD: DES_set_key.3,v 1.6 2016/12/08 22:13:59 jmc Exp $
 .\"	OpenSSL c7497f34 Aug 14 10:50:26 2014 -0400
 .\"
 .\" --------------------------------------------------------------------------
@@ -114,7 +114,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: November 21 2016 $
+.Dd $Mdocdate: December 8 2016 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -460,7 +460,7 @@ to odd.
 returns 1 if the passed key is a weak key or 0 if it is ok.
 .Pp
 The following routines mostly operate on an input and output stream of
-.Vt DES_cblock Ns s.
+.Vt DES_cblock Ns s .
 .Pp
 .Fn DES_ecb_encrypt
 is the basic DES encryption routine that encrypts or decrypts a single
