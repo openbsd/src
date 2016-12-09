@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.35 2016/12/07 15:21:04 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.36 2016/12/09 17:24:55 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -861,6 +861,74 @@ xs_watch(void *xsc, const char *path, const char *property, struct task *task,
 	}
 
 	return (0);
+}
+
+static unsigned long long
+atoull(const char *cp, int *error)
+{
+	unsigned long long res, cutoff;
+	int ch;
+	int cutlim;
+
+	res = 0;
+	cutoff = ULLONG_MAX / (unsigned long long)10;
+	cutlim = ULLONG_MAX % (unsigned long long)10;
+
+	do {
+		if (*cp < '0' || *cp > '9') {
+			*error = EINVAL;
+			return (res);
+		}
+		ch = *cp - '0';
+		if (res > cutoff || (res == cutoff && ch > cutlim)) {
+			*error = ERANGE;
+			return (res);
+		}
+		res *= 10;
+		res += ch;
+	} while (*(++cp) != '\0');
+
+	*error = 0;
+	return (res);
+}
+
+int
+xs_getnum(void *xsc, const char *path, const char *property,
+    unsigned long long *val)
+{
+	char *buf;
+	int error = 0;
+
+	buf = malloc(XS_MAX_PAYLOAD, M_DEVBUF, M_ZERO |
+	    (cold ? M_NOWAIT : M_WAITOK));
+	if (buf == NULL)
+		return (ENOMEM);
+
+	error = xs_getprop(xsc, path, property, buf, XS_MAX_PAYLOAD);
+	if (error)
+		goto out;
+
+	*val = atoull(buf, &error);
+	if (error)
+		goto out;
+
+ out:
+	free(buf, M_DEVBUF, XS_MAX_PAYLOAD);
+	return (error);
+}
+
+int
+xs_setnum(void *xsc, const char *path, const char *property,
+    unsigned long long val)
+{
+	char buf[32];
+	int ret;
+
+	ret = snprintf(buf, sizeof(buf), "%llu", val);
+	if (ret == -1 || ret >= sizeof(buf))
+		return (ERANGE);
+
+	return (xs_setprop(xsc, path, property, buf, strlen(buf)));
 }
 
 int
