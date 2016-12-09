@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.67 2016/12/07 15:11:41 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.68 2016/12/09 17:29:48 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1242,19 +1242,6 @@ xen_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 }
 
 static int
-atoi(char *cp, int *res)
-{
-	*res = 0;
-	do {
-		if (*cp < '0' || *cp > '9')
-			return (-1);
-		*res *= 10;
-		*res += *cp - '0';
-	} while (*(++cp) != '\0');
-	return (0);
-}
-
-static int
 xen_attach_print(void *aux, const char *name)
 {
 	struct xen_attach_args *xa = aux;
@@ -1271,8 +1258,8 @@ xen_probe_devices(struct xen_softc *sc)
 	struct xen_attach_args xa;
 	struct xs_transaction xst;
 	struct iovec *iovp1 = NULL, *iovp2 = NULL;
-	int i, j, error = 0, iov1_cnt = 0, iov2_cnt = 0;
-	char domid[16];
+	int i, j, error, iov1_cnt = 0, iov2_cnt = 0;
+	unsigned long long res;
 	char path[256];
 
 	memset(&xst, 0, sizeof(xst));
@@ -1300,25 +1287,25 @@ xen_probe_devices(struct xen_softc *sc)
 			snprintf(xa.xa_node, sizeof(xa.xa_node), "device/%s/%s",
 			    (char *)iovp1[i].iov_base,
 			    (char *)iovp2[j].iov_base);
-			if (xs_getprop(sc, xa.xa_node, "backend-id", domid,
-			    sizeof(domid)) ||
-			    xs_getprop(sc, xa.xa_node, "backend", xa.xa_backend,
+			if (xs_getprop(sc, xa.xa_node, "backend", xa.xa_backend,
 			    sizeof(xa.xa_backend))) {
-				printf("%s: failed to identify \"backend\" "
-				    "for \"%s\"\n", sc->sc_dev.dv_xname,
-				    xa.xa_node);
-			} else if (atoi(domid, &xa.xa_domid)) {
-				printf("%s: non-numeric backend domain id "
-				    "\"%s\" for \"%s\"\n", sc->sc_dev.dv_xname,
-				    domid, xa.xa_node);
+				printf("%s: failed to identify \"backend\" for "
+				    "\"%s\"\n", sc->sc_dev.dv_xname, xa.xa_node);
+				return (ENODEV);
 			}
-			config_found((struct device *)sc, &xa,
-			    xen_attach_print);
+			if (xs_getnum(sc, xa.xa_node, "backend-id", &res) ||
+			    res > 0xffffULL) {
+				printf("%s: invalid \"backend-id\" for \"%s\"\n",
+				    sc->sc_dev.dv_xname, xa.xa_node);
+				return (ENODEV);
+			}
+			xa.xa_domid = (uint16_t)res;
+			config_found((struct device *)sc, &xa, xen_attach_print);
 		}
 		xs_resfree(&xst, iovp2, iov2_cnt);
 	}
 
-	return (error);
+	return (0);
 }
 
 #include <machine/pio.h>
