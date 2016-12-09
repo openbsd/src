@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.100 2016/10/18 08:39:18 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.101 2016/12/09 21:39:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -516,7 +516,7 @@ screen_write_cursordown(struct screen_write_ctx *ctx, u_int ny)
 	s->cy += ny;
 }
 
-/* Cursor right by nx.  */
+/* Cursor right by nx. */
 void
 screen_write_cursorright(struct screen_write_ctx *ctx, u_int nx)
 {
@@ -839,7 +839,7 @@ screen_write_clearstartofline(struct screen_write_ctx *ctx, u_int bg)
 	tty_write(tty_cmd_clearstartofline, &ttyctx);
 }
 
-/* Move cursor to px,py.  */
+/* Move cursor to px,py. */
 void
 screen_write_cursormove(struct screen_write_ctx *ctx, u_int px, u_int py)
 {
@@ -854,7 +854,7 @@ screen_write_cursormove(struct screen_write_ctx *ctx, u_int px, u_int py)
 	s->cy = py;
 }
 
-/* Reverse index (up with scroll).  */
+/* Reverse index (up with scroll). */
 void
 screen_write_reverseindex(struct screen_write_ctx *ctx)
 {

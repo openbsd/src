@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.105 2016/10/13 20:27:27 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.106 2016/12/09 21:39:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -780,7 +780,7 @@ input_free(struct window_pane *wp)
 	free(ictx->input_buf);
 	evbuffer_free(ictx->since_ground);
 
-	free (ictx);
+	free(ictx);
 	wp->ictx = NULL;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.46 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.47 2016/12/09 21:39:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -400,7 +400,7 @@ tty_term_find(char *name, int fd, char **cause)
 	term->name = xstrdup(name);
 	term->references = 1;
 	term->flags = 0;
-	term->codes = xcalloc (tty_term_ncodes(), sizeof *term->codes);
+	term->codes = xcalloc(tty_term_ncodes(), sizeof *term->codes);
 	LIST_INSERT_HEAD(&tty_terms, term, entry);
 
 	/* Set up curses terminal. */
