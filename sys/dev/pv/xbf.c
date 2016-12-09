@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.6 2016/12/08 19:30:44 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.7 2016/12/09 17:35:13 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -216,13 +216,6 @@ int	xbf_init(struct xbf_softc *);
 int	xbf_ring_create(struct xbf_softc *);
 void	xbf_ring_destroy(struct xbf_softc *);
 int	xbf_capabilities(struct xbf_softc *);
-
-static int
-	xbf_get_numval(struct xbf_softc *, int, const char *,
-	    unsigned long long *);
-
-static unsigned long long
-	strtoull(const char *, int *);
 
 int
 xbf_match(struct device *parent, void *match, void *aux)
@@ -720,7 +713,7 @@ xbf_get_type(struct xbf_softc *sc)
 	snprintf(sc->sc_prod, sizeof(sc->sc_prod), "%s %s", sc->sc_prod, val);
 
 	prop = "virtual-device";
-	if ((error = xbf_get_numval(sc, 0, prop, &res)) != 0)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_node, prop, &res)) != 0)
 		goto errout;
 	sc->sc_unit = (uint32_t)res;
 	snprintf(sc->sc_prod, sizeof(sc->sc_prod), "%s %llu", sc->sc_prod, res);
@@ -746,16 +739,15 @@ xbf_init(struct xbf_softc *sc)
 	unsigned long long res;
 	const char *action, *prop;
 	char pbuf[sizeof("ring-refXX")];
-	char val[32];
 	int i, error;
 
 	prop = "max-ring-page-order";
-	error = xbf_get_numval(sc, 1, prop, &res);
+	error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res);
 	if (error == 0)
 		sc->sc_xr_size = 1 << res;
 	if (error == ENOENT) {
 		prop = "max-ring-pages";
-		error = xbf_get_numval(sc, 1, prop, &res);
+		error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res);
 		if (error == 0)
 			sc->sc_xr_size = res;
 	}
@@ -791,38 +783,36 @@ xbf_init(struct xbf_softc *sc)
 		else
 			snprintf(pbuf, sizeof(pbuf), "ring-ref%u", i);
 		prop = pbuf;
-		snprintf(val, sizeof(val), "%u", sc->sc_xr_ref[i]);
-		if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val,
-		    strlen(val)))
+		if (xs_setnum(sc->sc_parent, sc->sc_node, prop,
+		    sc->sc_xr_ref[i]))
 			goto errout;
 	}
 
 	if (sc->sc_xr_size > 1) {
 		prop = "num-ring-pages";
-		snprintf(val, sizeof(val), "%u", sc->sc_xr_size);
-		if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val,
-		    strlen(val)))
+		if (xs_setnum(sc->sc_parent, sc->sc_node, prop,
+		    sc->sc_xr_size))
 			goto errout;
 		prop = "ring-page-order";
-		snprintf(val, sizeof(val), "%u", fls(sc->sc_xr_size) - 1);
-		if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val,
-		    strlen(val)))
+		if (xs_setnum(sc->sc_parent, sc->sc_node, prop,
+		    fls(sc->sc_xr_size) - 1))
 			goto errout;
 	}
 
 	prop = "event-channel";
-	snprintf(val, sizeof(val), "%u", sc->sc_xih);
-	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val, strlen(val)))
+	if (xs_setnum(sc->sc_parent, sc->sc_node, prop, sc->sc_xih))
 		goto errout;
 
 	prop = "protocol";
 #ifdef __amd64__
-	snprintf(val, sizeof(val), "%s", "x86_64-abi");
-#else
-	snprintf(val, sizeof(val), "%s", "x86_32-abi");
-#endif
-	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val, strlen(val)))
+	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, "x86_64-abi",
+	    strlen("x86_64-abi")))
 		goto errout;
+#else
+	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, "x86_32-abi",
+	    strlen("x86_32-abi")))
+		goto errout;
+#endif
 
 	if (xs_setprop(sc->sc_parent, sc->sc_node, "state",
 	    XEN_STATE_INITIALIZED, strlen(XEN_STATE_INITIALIZED))) {
@@ -843,23 +833,23 @@ xbf_init(struct xbf_softc *sc)
 	action = "read";
 
 	prop = "sectors";
-	if ((error = xbf_get_numval(sc, 1, prop, &res)) != 0)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0)
 		goto errout;
 	sc->sc_disk_size = res;
 
 	prop = "sector-size";
-	if ((error = xbf_get_numval(sc, 1, prop, &res)) != 0)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0)
 		goto errout;
 	sc->sc_block_size = res;
 
 	prop = "feature-barrier";
-	if ((error = xbf_get_numval(sc, 1, prop, &res)) != 0)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0)
 		goto errout;
 	if (res == 1)
 		sc->sc_caps |= XBF_CAP_BARRIER;
 
 	prop = "feature-flush-cache";
-	if ((error = xbf_get_numval(sc, 1, prop, &res)) != 0)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0)
 		goto errout;
 	if (res == 1)
 		sc->sc_caps |= XBF_CAP_FLUSH;
@@ -1046,57 +1036,4 @@ xbf_ring_destroy(struct xbf_softc *sc)
 	xbf_dma_free(sc, &sc->sc_xr_dma);
 
 	sc->sc_xr = NULL;
-}
-
-static int
-xbf_get_numval(struct xbf_softc *sc, int backend, const char *prop,
-    unsigned long long *value)
-{
-	unsigned long long res;
-	char buf[32];
-	int error;
-
-	error = xs_getprop(sc->sc_parent, backend ? sc->sc_backend :
-	    sc->sc_node, prop, buf, sizeof(buf));
-	if (error)
-		return (error);
-
-	res = strtoull(buf, &error);
-	if (error)
-		return (error);
-	*value = res;
-	return (0);
-}
-
-static unsigned long long
-strtoull(const char *nptr, int *error)
-{
-	unsigned long long mul, ores, res;
-	size_t len = 0;
-	char *cp;
-	int ch;
-
-	res = 0;
-	mul = 1;
-	for (cp = (char *)nptr; *cp != 0; cp++)
-		len++;
-	for (cp--; len > 0; len--, cp--) {
-		ch = *cp;
-		if (ch < '0' || ch > '9') {
-			if (error)
-				*error = EINVAL; /* invalid char */
-			return (res);
-		}
-		ores = res;
-		res += (ch - '0') * mul;
-		if (res < ores) {
-			if (error)
-				*error = ERANGE; /* overflow */
-			return (res);
-		}
-		mul *= 10;
-	}
-	if (error)
-		*error = 0;
-	return (res);
 }
