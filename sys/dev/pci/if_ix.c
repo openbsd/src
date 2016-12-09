@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.147 2016/12/06 16:13:01 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.148 2016/12/09 17:41:39 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3255,10 +3255,6 @@ ixgbe_handle_mod(struct ix_softc *sc)
 	/* Set the optics type so system reports correctly */
 	ixgbe_setup_optics(sc);
 
-	ifmedia_delete_instance(&sc->media, IFM_INST_ANY);
-	ixgbe_add_media_types(sc);
-	ifmedia_set(&sc->media, IFM_ETHER | IFM_AUTO);
-
 	ixgbe_handle_msf(sc);
 }
 
@@ -3280,6 +3276,10 @@ ixgbe_handle_msf(struct ix_softc *sc)
 	}
 	if (hw->mac.ops.setup_link)
 		hw->mac.ops.setup_link(hw, autoneg, TRUE);
+
+	ifmedia_delete_instance(&sc->media, IFM_INST_ANY);
+	ixgbe_add_media_types(sc);
+	ifmedia_set(&sc->media, IFM_ETHER | IFM_AUTO);
 }
 
 /*
