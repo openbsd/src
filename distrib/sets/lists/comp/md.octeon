@@ -610,6 +610,7 @@
 ./usr/include/octeon/disklabel.h
 ./usr/include/octeon/endian.h
 ./usr/include/octeon/exec.h
+./usr/include/octeon/fdt.h
 ./usr/include/octeon/fenv.h
 ./usr/include/octeon/fpu.h
 ./usr/include/octeon/frame.h
