@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.223 2016/11/28 10:49:35 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.224 2016/12/10 13:22:57 patrick Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ udp_input(struct mbuf *m, ...)
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
-	int error;
+	int error, protoff;
 #endif /* IPSEC */
 #if defined(IPSEC) || defined(PIPEX)
 	u_int32_t ipsecflowinfo = 0;
@@ -202,12 +202,18 @@ udp_input(struct mbuf *m, ...)
 		ip6 = NULL;
 #endif /* INET6 */
 		srcsa.sa.sa_family = AF_INET;
+#ifdef IPSEC
+		protoff = offsetof(struct ip, ip_p);
+#endif /* IPSEC */
 		break;
 #ifdef INET6
 	case 6:
 		ip = NULL;
 		ip6 = mtod(m, struct ip6_hdr *);
 		srcsa.sa.sa_family = AF_INET6;
+#ifdef IPSEC
+		protoff = offsetof(struct ip6_hdr, ip6_nxt);
+#endif /* IPSEC */
 		break;
 #endif /* INET6 */
 	default:
@@ -343,7 +349,7 @@ udp_input(struct mbuf *m, ...)
 			skip -= sizeof(struct udphdr);
 
 			espstat.esps_udpencin++;
-			ipsec_common_input(m, skip, offsetof(struct ip, ip_p),
+			ipsec_common_input(m, skip, protoff,
 			    srcsa.sa.sa_family, IPPROTO_ESP, 1);
 			return;
 		}
