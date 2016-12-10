@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_get_version.3,v 1.2 2016/12/03 09:14:28 schwarze Exp $
+.\"	$OpenBSD: SSL_get_version.3,v 1.3 2016/12/10 13:12:08 schwarze Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,31 +48,44 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 3 2016 $
+.Dd $Mdocdate: December 10 2016 $
 .Dt SSL_GET_VERSION 3
 .Os
 .Sh NAME
-.Nm SSL_get_version
+.Nm SSL_get_version ,
+.Nm SSL_version
 .Nd get the protocol version of a connection
 .Sh SYNOPSIS
 .In openssl/ssl.h
 .Ft const char *
 .Fn SSL_get_version "const SSL *ssl"
+.Ft int
+.Fn SSL_version "const SSL *ssl"
 .Sh DESCRIPTION
 .Fn SSL_get_version
 returns the name of the protocol used for the connection
 .Fa ssl .
+.Pp
+.Fn SSL_version
+returns an integer constant representing that protocol.
 .Sh RETURN VALUES
-The following strings can be returned:
+The following strings or integers can be returned:
 .Bl -tag -width Ds
-.It Qq TLSv1
+.It Qo TLSv1 Qc No or Dv TLS1_VERSION
 The connection uses the TLSv1.0 protocol.
-.It Qq TLSv1.1
+.It Qo TLSv1.1 Qc No or Dv TLS1_1_VERSION
 The connection uses the TLSv1.1 protocol.
-.It Qq TLSv1.2
+.It Qo TLSv1.2 Qc No or Dv TLS1_2_VERSION
 The connection uses the TLSv1.2 protocol.
+.It Qo DTLSv1 Qc No or Dv DTLS1_VERSION
+The connection uses the Datagram Transport Layer Security 1.0 protocol.
 .It Qq unknown
 This indicates that no version has been set (no connection established).
 .El
 .Sh SEE ALSO
 .Xr ssl 3
+.Sh HISTORY
+.Fn SSL_get_version
+and
+.Fn SSL_version
+are available in all versions of OpenSSL.
