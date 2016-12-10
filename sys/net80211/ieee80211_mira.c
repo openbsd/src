@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.3 2016/12/08 17:25:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.4 2016/12/10 14:46:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -37,7 +37,6 @@
 const struct ieee80211_mira_rateset *	ieee80211_mira_get_rateset(int);
 void	ieee80211_mira_probe_timeout_up(void *);
 void	ieee80211_mira_probe_timeout_down(void *);
-void	ieee80211_mira_probe_timeout_inter(void *);
 uint64_t ieee80211_mira_get_txrate(int);
 uint16_t ieee80211_mira_legacy_txtime(uint32_t, int, struct ieee80211com *);
 uint32_t ieee80211_mira_ht_txtime(uint32_t, int, int);
@@ -55,14 +54,20 @@ int	ieee80211_mira_next_intra_rate(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
 const struct ieee80211_mira_rateset * ieee80211_mira_next_rateset(
 		    struct ieee80211_mira_node *, int);
-int	ieee80211_mira_next_inter_rate(struct ieee80211_mira_node *,
-	    struct ieee80211_node *);
+int	ieee80211_mira_best_mcs_in_rateset(struct ieee80211_mira_node *,
+	    const struct ieee80211_mira_rateset *);
+void	ieee80211_mira_probe_next_rateset(struct ieee80211_mira_node *,
+	    struct ieee80211_node *, const struct ieee80211_mira_rateset *);
 int	ieee80211_mira_next_mcs(struct ieee80211_mira_node *,
+	    struct ieee80211_node *);
+int	ieee80211_mira_prev_mcs(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
 int	ieee80211_mira_probe_valid(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
 int	ieee80211_mira_intra_mode_ra_finished(
 	    struct ieee80211_mira_node *, struct ieee80211_node *);
+void	ieee80211_mira_trigger_next_rateset(struct ieee80211_mira_node *mn,
+	    struct ieee80211_node *);
 int	ieee80211_mira_inter_mode_ra_finished(
 	    struct ieee80211_mira_node *, struct ieee80211_node *);
 int	ieee80211_mira_best_rate(struct ieee80211_mira_node *,
@@ -223,18 +228,6 @@ ieee80211_mira_probe_timeout_down(void *arg)
 	splx(s);
 }
 
-void
-ieee80211_mira_probe_timeout_inter(void *arg)
-{
-	struct ieee80211_mira_node *mn = arg;
-	int s;
-
-	s = splnet();
-	mn->probe_timer_expired[IEEE80211_MIRA_PROBE_TO_INTER] = 1;
-	DPRINTFN(3, ("probe inter timeout fired\n"));
-	splx(s);
-}
-
 /*
  * Update goodput statistics.
  */
@@ -364,11 +357,23 @@ ieee80211_mira_toverhead(struct ieee80211_mira_node *mn,
 #define MIRA_CTSLEN (sizeof(struct ieee80211_frame_cts) + IEEE80211_CRC_LEN)
 	uint32_t overhead;
 	uint64_t toverhead;
-	int rate;
+	int rate, rts;
+	enum ieee80211_htprot htprot;
 
 	overhead = ieee80211_mira_ht_txtime(0, ni->ni_txmcs,
 	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan));
-	if (mn->ampdu_size > ic->ic_rtsthreshold) {
+
+	htprot = (ic->ic_bss->ni_htop1 & IEEE80211_HTOP1_PROT_MASK);
+	if (htprot == IEEE80211_HTPROT_NONMEMBER ||
+	    htprot == IEEE80211_HTPROT_NONHT_MIXED)
+		rts = 1;
+	else if (htprot == IEEE80211_HTPROT_20MHZ &&
+		(ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40))
+		rts = 1;
+	else
+		rts = (mn->ampdu_size > ic->ic_rtsthreshold);
+
+	if (rts) {
 		/* Assume RTS/CTS were sent at a basic rate. */
 		rate = ieee80211_mira_best_basic_rate(ni);
 		overhead += ieee80211_mira_legacy_txtime(MIRA_RTSLEN, rate, ic);
@@ -555,54 +560,109 @@ const struct ieee80211_mira_rateset *
 ieee80211_mira_next_rateset(struct ieee80211_mira_node *mn, int mcs)
 {
 	const struct ieee80211_mira_rateset *rs, *rsnext;
+	int next;
 
-	/* Cycle through all supported ratesets. */
 	rs = ieee80211_mira_get_rateset(mcs);
-	if (rs->max_mcs == 7)		/* MCS 0-7 */
-		rsnext = &ieee80211_mira_ratesets[IEEE80211_MIRA_RATESET_MIMO2];
-	else if (rs->max_mcs == 15)	/* MCS 8-15 */
-		rsnext = &ieee80211_mira_ratesets[IEEE80211_MIRA_RATESET_MIMO3];
-	else if (rs->max_mcs == 23)	/* MCS 16-23 */
-		rsnext = &ieee80211_mira_ratesets[IEEE80211_MIRA_RATESET_MIMO4];
-	else				/* MCS 24-31 */
-		rsnext = &ieee80211_mira_ratesets[IEEE80211_MIRA_RATESET_SISO];
+	if (mn->probing & IEEE80211_MIRA_PROBING_UP) {
+		if (rs->max_mcs == 7)	/* MCS 0-7 */
+			next = IEEE80211_MIRA_RATESET_MIMO2;
+		else if (rs->max_mcs == 15)	/* MCS 8-15 */
+			next = IEEE80211_MIRA_RATESET_MIMO3;
+		else if (rs->max_mcs == 23)	/* MCS 16-23 */
+			next = IEEE80211_MIRA_RATESET_MIMO4;
+		else				/* MCS 24-31 */
+			return NULL;
+	} else if (mn->probing & IEEE80211_MIRA_PROBING_DOWN) {
+		if (rs->min_mcs == 24)	/* MCS 24-31 */
+			next = IEEE80211_MIRA_RATESET_MIMO3;
+		else if (rs->min_mcs == 16)	/* MCS 16-23 */
+			next = IEEE80211_MIRA_RATESET_MIMO2;
+		else if (rs->min_mcs == 8)	/* MCS 8-15 */
+			next = IEEE80211_MIRA_RATESET_SISO;
+		else				/* MCS 0-7 */
+			return NULL;
+	} else
+		panic("invalid probing mode %d", mn->probing);
 
+	rsnext = &ieee80211_mira_ratesets[next];
 	if ((rsnext->mcs_mask & mn->valid_rates) == 0)
-		rsnext = &ieee80211_mira_ratesets[IEEE80211_MIRA_RATESET_SISO];
+		return NULL;
 
 	return rsnext;
 }
 
 int
-ieee80211_mira_next_inter_rate(struct ieee80211_mira_node *mn,
-    struct ieee80211_node *ni)
+ieee80211_mira_best_mcs_in_rateset(struct ieee80211_mira_node *mn,
+    const struct ieee80211_mira_rateset *rs)
 {
-	const struct ieee80211_mira_rateset *rs, *rsnext;
-	struct ieee80211_mira_goodput_stats *g;
-	int i, next = ni->ni_txmcs;
+	uint64_t gmax = 0;
+	int i, best_mcs = rs->min_mcs;
 
+	for (i = 0; i < rs->nrates; i++) {
+		int mcs = rs->min_mcs + i;
+		struct ieee80211_mira_goodput_stats *g = &mn->g[mcs];
+		if (((1 << mcs) & mn->valid_rates) == 0)
+			continue;
+		if (g->measured > gmax + IEEE80211_MIRA_RATE_THRESHOLD) {
+			gmax = g->measured;
+			best_mcs = mcs;
+		}
+	}
+
+	return best_mcs;
+}
+    
+void
+ieee80211_mira_probe_next_rateset(struct ieee80211_mira_node *mn,
+    struct ieee80211_node *ni, const struct ieee80211_mira_rateset *rsnext)
+{
+	const struct ieee80211_mira_rateset *rs;
+	struct ieee80211_mira_goodput_stats *g;
+	int best_mcs, i;
+
+	/* Find most recently measured best MCS from the current rateset. */
 	rs = ieee80211_mira_get_rateset(ni->ni_txmcs);
-	rsnext = ieee80211_mira_next_rateset(mn, ni->ni_txmcs);
-	if (rs->min_mcs == rsnext->min_mcs)
-		return ni->ni_txmcs;
+	best_mcs = ieee80211_mira_best_mcs_in_rateset(mn, rs);
+
+	/* Switch to the next rateset. */
+	ni->ni_txmcs = rsnext->min_mcs;
+	if ((mn->valid_rates & (1 << rsnext->min_mcs)) == 0)
+		ni->ni_txmcs = ieee80211_mira_next_intra_rate(mn, ni);
 
 	/* Select the lowest rate from the next rateset with loss-free
 	 * goodput close to the current best measurement. */
-	g = &mn->g[mn->best_mcs];
+	g = &mn->g[best_mcs];
 	for (i = 0; i < rsnext->nrates; i++) {
+		int mcs = rsnext->min_mcs + i;
 		uint64_t txrate = rsnext->rates[i];
+
+		if ((mn->valid_rates & (1 << mcs)) == 0)
+			continue;
 
 		txrate = txrate * 500; /* convert to kbit/s */
 		txrate <<= MIRA_FP_SHIFT; /* convert to fixed-point */
 		txrate /= 1000; /* convert to mbit/s */
 
 		if (txrate > g->measured + IEEE80211_MIRA_RATE_THRESHOLD) {
-			next = rsnext->min_mcs + i;
+			ni->ni_txmcs = mcs;
 			break;
 		}
 	}
 
-	return next;
+	/* Add rates from the next rateset as candidates. */
+	mn->candidate_rates |= (1 << ni->ni_txmcs);
+	if (mn->probing & IEEE80211_MIRA_PROBING_UP) {
+		mn->candidate_rates |=
+		  (1 << ieee80211_mira_next_intra_rate(mn, ni));
+	} else if (mn->probing & IEEE80211_MIRA_PROBING_DOWN) {
+#ifdef MIRA_AGGRESSIVE_DOWNWARDS_PROBING
+		mn->candidate_rates |= ieee80211_mira_mcs_below(ni->ni_txmcs);
+#else
+		mn->candidate_rates |=
+		    (1 << ieee80211_mira_next_lower_intra_rate(mn, ni));
+#endif
+	} else
+		panic("invalid probing mode %d", mn->probing);
 }
 
 int
@@ -611,12 +671,26 @@ ieee80211_mira_next_mcs(struct ieee80211_mira_node *mn,
 {
 	int next;
 
-	if (mn->probing == IEEE80211_MIRA_PROBING_DOWN)
-	    next = ieee80211_mira_next_lower_intra_rate(mn, ni);
-	else if (mn->probing == IEEE80211_MIRA_PROBING_UP)
-	    next = ieee80211_mira_next_intra_rate(mn, ni);
-	else if (mn->probing == IEEE80211_MIRA_PROBING_INTER)
-	    next = ieee80211_mira_next_inter_rate(mn, ni);
+	if (mn->probing & IEEE80211_MIRA_PROBING_DOWN)
+		next = ieee80211_mira_next_lower_intra_rate(mn, ni);
+	else if (mn->probing & IEEE80211_MIRA_PROBING_UP)
+		next = ieee80211_mira_next_intra_rate(mn, ni);
+	else
+		panic("invalid probing mode %d", mn->probing);
+
+	return next;
+}
+
+int
+ieee80211_mira_prev_mcs(struct ieee80211_mira_node *mn,
+    struct ieee80211_node *ni)
+{
+	int next;
+
+	if (mn->probing & IEEE80211_MIRA_PROBING_DOWN)
+		next = ieee80211_mira_next_intra_rate(mn, ni);
+	else if (mn->probing & IEEE80211_MIRA_PROBING_UP)
+		next = ieee80211_mira_next_lower_intra_rate(mn, ni);
 	else
 		panic("invalid probing mode %d", mn->probing);
 
@@ -639,31 +713,28 @@ ieee80211_mira_intra_mode_ra_finished(struct ieee80211_mira_node *mn,
 {
 	const struct ieee80211_mira_rateset *rs;
 	struct ieee80211_mira_goodput_stats *g = &mn->g[ni->ni_txmcs];
-	int next_mcs, probed_rates;
+	int next_mcs, best_mcs, probed_rates;
 	uint64_t next_rate;
-
-	if (mn->probing != IEEE80211_MIRA_PROBING_UP &&
-	    mn->probing != IEEE80211_MIRA_PROBING_DOWN)
-		return 1;
 
 	if (!ieee80211_mira_probe_valid(mn, ni))
 		return 0;
 
-	/* Check if all rates in the set of candidate rates have been probed. */
 	probed_rates = (mn->probed_rates | (1 << ni->ni_txmcs));
-	if ((mn->candidate_rates & probed_rates) == mn->candidate_rates)
-		return 1;
 
 	/* Check if the min/max MCS in this rateset has been probed. */
 	rs = ieee80211_mira_get_rateset(ni->ni_txmcs);
-	if (mn->probing == IEEE80211_MIRA_PROBING_DOWN) {
+	if (mn->probing & IEEE80211_MIRA_PROBING_DOWN) {
 		if (ni->ni_txmcs == rs->min_mcs ||
-		    probed_rates & (1 << rs->min_mcs))
+		    probed_rates & (1 << rs->min_mcs)) {
+			ieee80211_mira_trigger_next_rateset(mn, ni);
 			return 1;
-	} else {
+		}
+	} else if (mn->probing & IEEE80211_MIRA_PROBING_UP) {
 		if (ni->ni_txmcs == rs->max_mcs ||
-		    probed_rates & (1 << rs->max_mcs))
+		    probed_rates & (1 << rs->max_mcs)) {
+			ieee80211_mira_trigger_next_rateset(mn, ni);
 			return 1;
+		}
 	}
 
 	/*
@@ -671,47 +742,68 @@ ieee80211_mira_intra_mode_ra_finished(struct ieee80211_mira_node *mn,
 	 * loss-free goodput of the candidate rate.
 	 */
 	next_mcs = ieee80211_mira_next_mcs(mn, ni);
-	if (next_mcs == ni->ni_txmcs)
+	if (next_mcs == ni->ni_txmcs) {
+		ieee80211_mira_trigger_next_rateset(mn, ni);
 		return 1;
+	}
 	next_rate = ieee80211_mira_get_txrate(next_mcs);
-	if (g->measured >= next_rate + IEEE80211_MIRA_RATE_THRESHOLD)
+	if (g->measured >= next_rate + IEEE80211_MIRA_RATE_THRESHOLD) {
+		ieee80211_mira_trigger_next_rateset(mn, ni);
 		return 1;
+	}
 
-	return 0;
-}
+	/* Check if we had a better measurement at a previously probed MCS. */
+	best_mcs = ieee80211_mira_best_mcs_in_rateset(mn, rs);
+	if ((mn->probed_rates & (1 << best_mcs))) {
+		if ((mn->probing & IEEE80211_MIRA_PROBING_UP) &&
+		    best_mcs < ni->ni_txmcs) {
+			ieee80211_mira_trigger_next_rateset(mn, ni);
+			return 1;
+		}
+		if ((mn->probing & IEEE80211_MIRA_PROBING_DOWN) &&
+		    best_mcs > ni->ni_txmcs) {
+			ieee80211_mira_trigger_next_rateset(mn, ni);
+			return 1;
+		}
+	}
 
-int
-ieee80211_mira_inter_mode_ra_finished(struct ieee80211_mira_node *mn,
-    struct ieee80211_node *ni)
-{
-	const struct ieee80211_mira_rateset *rsnext;
-
-	if (mn->probing != IEEE80211_MIRA_PROBING_INTER)
-		return 1;
-
-	if (!ieee80211_mira_probe_valid(mn, ni))
-		return 0;
-
-	rsnext = ieee80211_mira_next_rateset(mn, ni->ni_txmcs);
-	if (rsnext == mn->rs_inter) {
-		mn->rs_inter = NULL;
-		DPRINTFN(3, ("inter-rateset probe finished\n"));
+	/* Check if all rates in the set of candidate rates have been probed. */
+	if ((mn->candidate_rates & probed_rates) == mn->candidate_rates) {
+		/* Remain in the current rateset until above checks trigger. */
 		return 1;
 	}
 
 	return 0;
 }
 
+void
+ieee80211_mira_trigger_next_rateset(struct ieee80211_mira_node *mn,
+    struct ieee80211_node *ni)
+{
+	const struct ieee80211_mira_rateset *rsnext;
+
+	rsnext = ieee80211_mira_next_rateset(mn, ni->ni_txmcs);
+	if (rsnext) {
+		ieee80211_mira_probe_next_rateset(mn, ni, rsnext);
+		mn->probing |= IEEE80211_MIRA_PROBING_INTER;
+	} else
+		mn->probing &= ~IEEE80211_MIRA_PROBING_INTER;
+}
+
+int
+ieee80211_mira_inter_mode_ra_finished(struct ieee80211_mira_node *mn,
+    struct ieee80211_node *ni)
+{
+	return ((mn->probing & IEEE80211_MIRA_PROBING_INTER) == 0);
+}
+
 int
 ieee80211_mira_best_rate(struct ieee80211_mira_node *mn,
     struct ieee80211_node *ni)
 {
-	const struct ieee80211_mira_rateset *rs;
-	int i, best;
+	int i, best = 0;
 	uint64_t gmax = 0;
 
-	rs = ieee80211_mira_get_rateset(mn->best_mcs);
-	best = rs->min_mcs;
 	for (i = 0; i < nitems(mn->g); i++) {
 		struct ieee80211_mira_goodput_stats *g = &mn->g[i];
 		if (((1 << i) & mn->valid_rates) == 0)
@@ -724,13 +816,14 @@ ieee80211_mira_best_rate(struct ieee80211_mira_node *mn,
 
 #ifdef MIRA_DEBUG
 	if (mn->best_mcs != best) {
-		DPRINTF(("MCS rate estimates (MCS %d is best): ", best));
+		DPRINTF(("MCS %d is best; MCS{Mbps|probe interval}:", best));
 		for (i = 0; i < IEEE80211_MIRA_NUM_MCS; i++) {
 			struct ieee80211_mira_goodput_stats *g = &mn->g[i];
 			if ((mn->valid_rates & (1 << i)) == 0)
 				continue;
-			DPRINTF((" %d%s->%s", i, (i == best ? "*" : ""),
-			    mira_fp_sprintf(g->measured)));
+			DPRINTF((" %d{%s|%dms}", i,
+			    mira_fp_sprintf(g->measured),
+			    g->probe_interval));
 		}
 		DPRINTF(("\n"));
 	}
@@ -785,16 +878,6 @@ ieee80211_mira_schedule_probe_timers(struct ieee80211_mira_node *mn,
 		DPRINTFN(3, ("start probing down at MCS %d in at "
 		    "least %d msec\n", mcs, g->probe_interval));
 	}
-
-	mcs = ieee80211_mira_next_inter_rate(mn, ni);
-	to = &mn->probe_to[IEEE80211_MIRA_PROBE_TO_INTER];
-	g = &mn->g[mcs];
-	if (mcs != ni->ni_txmcs && !timeout_pending(to) &&
-	    !mn->probe_timer_expired[IEEE80211_MIRA_PROBE_TO_INTER]) {
-		timeout_add_msec(to, g->probe_interval);
-		DPRINTFN(3, ("start inter-rateset probing at MCS %d in at "
-		    "least %d msec\n", mcs, g->probe_interval));
-	}
 }
 
 int
@@ -814,8 +897,6 @@ ieee80211_mira_check_probe_timers(struct ieee80211_mira_node *mn,
 		expired_timer = IEEE80211_MIRA_PROBE_TO_DOWN;
 	else if (mn->probe_timer_expired[IEEE80211_MIRA_PROBE_TO_UP])
 		expired_timer = IEEE80211_MIRA_PROBE_TO_UP;
-	else if (mn->probe_timer_expired[IEEE80211_MIRA_PROBE_TO_INTER])
-		expired_timer = IEEE80211_MIRA_PROBE_TO_INTER;
 
 	if (expired_timer != IEEE80211_MIRA_PROBE_TO_INVALID)
 		mn->probe_timer_expired[expired_timer] = 0;
@@ -823,38 +904,19 @@ ieee80211_mira_check_probe_timers(struct ieee80211_mira_node *mn,
 	switch (expired_timer) {
 	case IEEE80211_MIRA_PROBE_TO_UP:
 		/* Do time-based upwards probing on next frame. */
+		DPRINTFN(2, ("probe timer expired: probe upwards\n"));
+		mn->probing = IEEE80211_MIRA_PROBING_UP;
 		mcs = ieee80211_mira_next_intra_rate(mn, ni);
-		if (mcs != ni->ni_txmcs) {
-			DPRINTFN(2, ("probe timer expired: probe upwards\n"));
-			mn->probing = IEEE80211_MIRA_PROBING_UP;
-			mn->candidate_rates = (1 << mcs);
-			ret = 1;
-		}
+		mn->candidate_rates = (1 << mcs);
+		ret = 1;
 		break;
 	case IEEE80211_MIRA_PROBE_TO_DOWN:
 		/* Do time-based downwards probing on next frame. */
+		DPRINTFN(2, ("probe timer expired: probe downwards\n"));
+		mn->probing = IEEE80211_MIRA_PROBING_DOWN;
 		mcs = ieee80211_mira_next_lower_intra_rate(mn, ni);
-		if (mcs != ni->ni_txmcs) {
-			DPRINTFN(2, ("probe timer expired: probe downwards\n"));
-			mn->probing = IEEE80211_MIRA_PROBING_DOWN;
-			mn->candidate_rates = (1 << mcs);
-			ret = 1;
-		}
-		break;
-	case IEEE80211_MIRA_PROBE_TO_INTER:
-		/* Do time-based inter-rateset probing on next frame. */
-		mcs = ieee80211_mira_next_inter_rate(mn, ni);
-		if (mcs != ni->ni_txmcs) {
-			DPRINTFN(2, ("probe timer expired: probe ratesets\n"));
-			mn->probing = IEEE80211_MIRA_PROBING_INTER;
-			mn->rs_inter = ieee80211_mira_get_rateset(ni->ni_txmcs);
-			/*
-			 * This probe loops through all ratesets and
-			 * dynamically selects one rate out of each.
-			 */
-			mn->candidate_rates = mn->valid_rates;
-			ret = 1;
-		}
+		mn->candidate_rates = (1 << mcs);
+		ret = 1;
 		break;
 	case IEEE80211_MIRA_PROBE_TO_INVALID:
 	default:
@@ -865,25 +927,24 @@ ieee80211_mira_check_probe_timers(struct ieee80211_mira_node *mn,
 	return ret;
 }
 
-/* Select the next rate to probe. */
 void
 ieee80211_mira_probe_next_rate(struct ieee80211_mira_node *mn,
     struct ieee80211_node *ni)
 {
 	struct ieee80211_mira_goodput_stats *gprev, *g;
-	int next_mcs;
+	int prev_mcs;
 
+	prev_mcs = ieee80211_mira_prev_mcs(mn, ni);
+	gprev = &mn->g[prev_mcs];
+	g = &mn->g[ni->ni_txmcs];
+	/* If the previous rate was worse, increase its probing interval. */
+	if (prev_mcs != ni->ni_txmcs &&
+	    gprev->measured + IEEE80211_MIRA_RATE_THRESHOLD < g->measured)
+		ieee80211_mira_update_probe_interval(mn, gprev);
+
+	/* Select the next rate to probe. */
 	mn->probed_rates |= (1 << ni->ni_txmcs);
-	gprev = &mn->g[ni->ni_txmcs];
-
-	next_mcs = ieee80211_mira_next_mcs(mn, ni);
-	if (next_mcs != ni->ni_txmcs) {
-		ni->ni_txmcs = next_mcs;
-		g = &mn->g[ni->ni_txmcs];
-		if (g->measured + IEEE80211_MIRA_RATE_THRESHOLD
-		    < gprev->measured)
-			ieee80211_mira_update_probe_interval(mn, g);
-	}
+	ni->ni_txmcs = ieee80211_mira_next_mcs(mn, ni);
 }
 
 uint32_t
@@ -945,13 +1006,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 				ieee80211_mira_reset_driver_stats(mn);
 			}
 			DPRINTFN(4, ("probing MCS %d\n", ni->ni_txmcs));
-		} else if (!ieee80211_mira_inter_mode_ra_finished(mn, ni)) {
-			if (ieee80211_mira_probe_valid(mn, ni)) {
-				ieee80211_mira_probe_next_rate(mn, ni);
-				ieee80211_mira_reset_driver_stats(mn);
-			}
-			DPRINTFN(4, ("probing MCS %d\n", ni->ni_txmcs));
-		} else {
+		} else if (ieee80211_mira_inter_mode_ra_finished(mn, ni)) {
 			int best = ieee80211_mira_best_rate(mn, ni);
 			mn->probing = IEEE80211_MIRA_NOT_PROBING;
 			mn->probed_rates = 0;
@@ -1035,8 +1090,6 @@ ieee80211_mira_node_init(struct ieee80211_mira_node *mn)
 	    ieee80211_mira_probe_timeout_up, mn);
 	timeout_set(&mn->probe_to[IEEE80211_MIRA_PROBE_TO_DOWN],
 	    ieee80211_mira_probe_timeout_down, mn);
-	timeout_set(&mn->probe_to[IEEE80211_MIRA_PROBE_TO_INTER],
-	    ieee80211_mira_probe_timeout_inter, mn);
 }
 
 void

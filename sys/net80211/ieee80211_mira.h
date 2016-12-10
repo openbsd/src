@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.h,v 1.1 2016/11/30 11:38:25 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.h,v 1.2 2016/12/10 14:46:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -71,25 +71,21 @@ struct ieee80211_mira_node {
 	uint32_t probed_rates;
 
 	/* Timeouts which trigger time-driven probing. */
-	struct timeout probe_to[3];
+	struct timeout probe_to[2];
 #define IEEE80211_MIRA_PROBE_TO_INVALID	-1
 #define IEEE80211_MIRA_PROBE_TO_UP	0
 #define IEEE80211_MIRA_PROBE_TO_DOWN	1
-#define IEEE80211_MIRA_PROBE_TO_INTER	2
-	int probe_timer_expired[3];
+	int probe_timer_expired[2];
 
 	/* Probing state. */
 	int probing;
-#define IEEE80211_MIRA_PROBING_DOWN	(-1)
-#define IEEE80211_MIRA_NOT_PROBING	(0)
-#define IEEE80211_MIRA_PROBING_UP	(1)
-#define IEEE80211_MIRA_PROBING_INTER	(2)
+#define IEEE80211_MIRA_NOT_PROBING	0x0
+#define IEEE80211_MIRA_PROBING_DOWN	0x1
+#define IEEE80211_MIRA_PROBING_UP	0x2
+#define IEEE80211_MIRA_PROBING_INTER	0x4 /* combined with UP or DOWN */
 
 	/* The current best MCS found by probing. */
 	int best_mcs;
-
-	/* The first rateset we probed during inter-rateset probing. */
-	const struct ieee80211_mira_rateset *rs_inter;
 
 	/* Goodput statistics for each MCS. */
 	struct ieee80211_mira_goodput_stats g[IEEE80211_MIRA_NUM_RATES];
