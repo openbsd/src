@@ -1,5 +1,6 @@
-.\"	$OpenBSD: BN_new.3,v 1.4 2016/11/20 17:47:18 schwarze Exp $
-.\"	OpenSSL 2457c19d Mar 6 08:43:36 2004 +0000
+.\"	$OpenBSD: BN_new.3,v 1.5 2016/12/10 21:17:09 schwarze Exp $
+.\"	OpenSSL doc/man3/BN_new.pod 2457c19d Mar 6 08:43:36 2004 +0000
+.\"	OpenSSL doc/man7/bn.pod 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000, 2004 The OpenSSL Project.  All rights reserved.
@@ -48,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 20 2016 $
+.Dd $Mdocdate: December 10 2016 $
 .Dt BN_NEW 3
 .Os
 .Sh NAME
@@ -81,6 +82,22 @@
 .Fa "BIGNUM *a"
 .Fc
 .Sh DESCRIPTION
+The BN library performs arithmetic operations on integers of arbitrary
+size.
+It was written for use in public key cryptography, such as RSA and
+Diffie-Hellman.
+.Pp
+It uses dynamic memory allocation for storing its data structures.
+That means that there is no limit on the size of the numbers manipulated
+by these functions, but return values must always be checked in case a
+memory allocation error has occurred.
+.Pp
+The basic object in this library is a
+.Vt BIGNUM .
+It is used to hold a single large integer.
+This type should be considered opaque and fields should not be modified
+or accessed directly.
+.Pp
 .Fn BN_new
 allocates and initializes a
 .Vt BIGNUM
@@ -119,7 +136,26 @@ If the allocation fails, it returns
 and sets an error code that can be obtained by
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
-.Xr bn 3 ,
+.Xr BN_add 3 ,
+.Xr BN_add_word 3 ,
+.Xr BN_BLINDING_new 3 ,
+.Xr BN_bn2bin 3 ,
+.Xr BN_cmp 3 ,
+.Xr BN_copy 3 ,
+.Xr BN_CTX_new 3 ,
+.Xr BN_CTX_start 3 ,
+.Xr bn_dump 3 ,
+.Xr BN_generate_prime 3 ,
+.Xr BN_get0_nist_prime_521 3 ,
+.Xr BN_mod_inverse 3 ,
+.Xr BN_mod_mul_montgomery 3 ,
+.Xr BN_mod_mul_reciprocal 3 ,
+.Xr BN_num_bytes 3 ,
+.Xr BN_rand 3 ,
+.Xr BN_set_bit 3 ,
+.Xr BN_set_negative 3 ,
+.Xr BN_swap 3 ,
+.Xr BN_zero 3 ,
 .Xr ERR_get_error 3
 .Sh HISTORY
 .Fn BN_new ,
