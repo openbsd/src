@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.18 2016/05/28 18:31:14 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.19 2016/12/10 19:07:54 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 28 2016 $
+.Dd $Mdocdate: December 10 2016 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -140,12 +140,11 @@ The
 device driver first appeared in
 .Ox 5.7 .
 .Sh CAVEATS
-802.11n operation is currently limited to data rates MCS 0 to MCS 7.
-.Pp
 The
 .Nm
 driver does not support any of the 802.11ac capabilities offered by
 the adapters.
+Support for 802.11n 40MHz channels and Tx aggregation is not yet implemented.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
