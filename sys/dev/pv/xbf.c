@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.8 2016/12/10 19:38:50 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.9 2016/12/10 19:41:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -415,7 +415,8 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	struct scsi_rw_big *rwb;
 	struct scsi_rw_12 *rw12;
 	struct scsi_rw_16 *rw16;
-	u_int64_t lba = 0;
+	uint64_t lba = 0;
+	uint32_t nblk = 0;
 	uint8_t operation = 0;
 	int mapflags;
 	int i, desc, error;
@@ -450,15 +451,19 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	if (xs->cmdlen == 6) {
 		rw = (struct scsi_rw *)xs->cmd;
 		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
+		nblk = rw->length ? rw->length : 0x100;
 	} else if (xs->cmdlen == 10) {
 		rwb = (struct scsi_rw_big *)xs->cmd;
 		lba = _4btol(rwb->addr);
+		nblk = _2btol(rwb->length);
 	} else if (xs->cmdlen == 12) {
 		rw12 = (struct scsi_rw_12 *)xs->cmd;
 		lba = _4btol(rw12->addr);
+		nblk = _4btol(rw12->length);
 	} else if (xs->cmdlen == 16) {
 		rw16 = (struct scsi_rw_16 *)xs->cmd;
 		lba = _8btol(rw16->addr);
+		nblk = _4btol(rw16->length);
 	}
 
 	desc = sc->sc_xr_prod & (sc->sc_xr_ndesc - 1);
