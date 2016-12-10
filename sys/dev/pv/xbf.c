@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.7 2016/12/09 17:35:13 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.8 2016/12/10 19:38:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -843,15 +843,17 @@ xbf_init(struct xbf_softc *sc)
 	sc->sc_block_size = res;
 
 	prop = "feature-barrier";
-	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
+	    && error != ENOENT)
 		goto errout;
-	if (res == 1)
+	if (error == 0 && res == 1)
 		sc->sc_caps |= XBF_CAP_BARRIER;
 
 	prop = "feature-flush-cache";
-	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
+	    && error != ENOENT)
 		goto errout;
-	if (res == 1)
+	if (error == 0 && res == 1)
 		sc->sc_caps |= XBF_CAP_FLUSH;
 
 #ifdef XEN_DEBUG
