@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.177 2016/12/07 15:48:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.178 2016/12/10 13:22:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2378,10 +2378,10 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, uint8_t nframes,
 		wn->mn.frames += nframes;
 		wn->mn.ampdu_size = len;
 		wn->mn.agglen = nframes; 
-		if (txfail) {
-			wn->mn.retries += ackfailcnt;
+		if (ackfailcnt > 0)
+			wn->mn.retries++;
+		if (txfail)
 			wn->mn.txfail += nframes;
-		}
 		if (ic->ic_state == IEEE80211_S_RUN)
 			ieee80211_mira_choose(&wn->mn, ic, data->ni);
 	} else {

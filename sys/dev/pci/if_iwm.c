@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.151 2016/12/08 17:24:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.152 2016/12/10 13:22:07 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3386,10 +3386,10 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		in->in_mn.frames += tx_resp->frame_count;
 		in->in_mn.ampdu_size = le16toh(tx_resp->byte_cnt);
 		in->in_mn.agglen = tx_resp->frame_count;
-		if (txfail) {
-			in->in_mn.retries += tx_resp->failure_frame;
+		if (tx_resp->failure_frame > 0)
+			in->in_mn.retries++;
+		if (txfail)
 			in->in_mn.txfail += tx_resp->frame_count;
-		}
 		if (ic->ic_state == IEEE80211_S_RUN)
 			ieee80211_mira_choose(&in->in_mn, ic, &in->in_ni);
 		/* 
