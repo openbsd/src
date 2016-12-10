@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.152 2016/12/10 13:22:07 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.153 2016/12/10 13:56:38 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5053,10 +5053,14 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 		case IEEE80211_HTPROT_NONHT_MIXED:
 			cmd->protection_flags |=
 			    htole32(IWM_MAC_PROT_FLG_HT_PROT);
+			break;
 		case IEEE80211_HTPROT_20MHZ:
-			cmd->protection_flags |=
-			    htole32(IWM_MAC_PROT_FLG_HT_PROT |
-			    IWM_MAC_PROT_FLG_FAT_PROT);
+			if (ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40) {
+				/* XXX ... and if our channel is 40 MHz ... */
+				cmd->protection_flags |=
+				    htole32(IWM_MAC_PROT_FLG_HT_PROT |
+				    IWM_MAC_PROT_FLG_FAT_PROT);
+			}
 			break;
 		default:
 			break;
