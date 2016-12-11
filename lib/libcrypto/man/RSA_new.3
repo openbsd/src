@@ -1,8 +1,9 @@
-.\"	$OpenBSD: RSA_new.3,v 1.3 2016/11/29 16:41:44 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\"	$OpenBSD: RSA_new.3,v 1.4 2016/12/11 12:52:28 schwarze Exp $
+.\"	OpenSSL doc/man3/RSA_new.pod 99d63d46 Oct 26 13:56:48 2016 -0400
+.\"	OpenSSL doc/crypto/rsa.pod 35d2e327 Jun 3 16:19:49 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
-.\" Copyright (c) 2000, 2002 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2000, 2002, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 29 2016 $
+.Dd $Mdocdate: December 11 2016 $
 .Dt RSA_NEW 3
 .Os
 .Sh NAME
@@ -64,6 +65,9 @@
 .Fa "RSA *rsa"
 .Fc
 .Sh DESCRIPTION
+The RSA functions implement RSA public key encryption and signatures
+as defined in PKCS #1 v2.0 (RFC 2437).
+.Pp
 .Fn RSA_new
 allocates and initializes an
 .Vt RSA
@@ -81,6 +85,62 @@ If
 is a
 .Dv NULL
 pointer, no action occurs.
+.Pp
+The
+.Vt RSA
+structure consists of several
+.Vt BIGNUM
+components.
+It can contain public as well as private RSA keys:
+.Bd -literal
+typdef struct {
+	BIGNUM *n;		// public modulus
+	BIGNUM *e;		// public exponent
+	BIGNUM *d;		// private exponent
+	BIGNUM *p;		// secret prime factor
+	BIGNUM *q;		// secret prime factor
+	BIGNUM *dmp1;		// d mod (p-1)
+	BIGNUM *dmq1;		// d mod (q-1)
+	BIGNUM *iqmp;		// q^-1 mod p
+	// ...
+} RSA;
+.Ed
+.Pp
+In public keys, the private exponent
+.Fa d
+and the related secret values
+.Fa p , q , dmp1 , dmp2 ,
+and
+.Fa iqmp
+are
+.Dv NULL .
+.Pp
+.Fa p ,
+.Fa q ,
+.Fa dmp1 ,
+.Fa dmq1 ,
+and
+.Fa iqmp
+may be
+.Dv NULL
+in private keys, but the RSA operations are much faster when these
+values are available.
+.Pp
+Note that RSA keys may use non-standard
+.Vt RSA_METHOD
+implementations, either directly or by the use of
+.Vt ENGINE
+modules.
+In some cases (e.g. an
+.Vt ENGINE
+providing support for hardware-embedded keys), these
+.Vt BIGNUM
+values will not be used by the implementation or may be used for
+alternative data storage.
+For this reason, applications should generally avoid using
+.Vt RSA
+structure elements directly and instead use API functions to query
+or modify keys.
 .Sh RETURN VALUES
 If the allocation fails,
 .Fn RSA_new
@@ -90,10 +150,29 @@ and sets an error code that can be obtained by
 .Xr ERR_get_error 3 .
 Otherwise it returns a pointer to the newly allocated structure.
 .Sh SEE ALSO
+.Xr BN_new 3 ,
+.Xr d2i_RSAPublicKey 3 ,
+.Xr DH_new 3 ,
+.Xr DSA_new 3 ,
+.Xr engine 3 ,
 .Xr ERR_get_error 3 ,
-.Xr rsa 3 ,
+.Xr EVP_PKEY_set1_RSA 3 ,
+.Xr RSA_blinding_on 3 ,
+.Xr RSA_check_key 3 ,
 .Xr RSA_generate_key 3 ,
-.Xr RSA_new_method 3
+.Xr RSA_get_ex_new_index 3 ,
+.Xr RSA_padding_add_PKCS1_type_1 3 ,
+.Xr RSA_print 3 ,
+.Xr RSA_private_encrypt 3 ,
+.Xr RSA_public_encrypt 3 ,
+.Xr RSA_set_method 3 ,
+.Xr RSA_sign 3 ,
+.Xr RSA_sign_ASN1_OCTET_STRING 3 ,
+.Xr RSA_size 3
+.Sh STANDARDS
+SSL, PKCS #1 v2.0
+.Pp
+RSA was covered by a US patent which expired in September 2000.
 .Sh HISTORY
 .Fn RSA_new
 and
