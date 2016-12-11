@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.35 2016/12/08 22:15:37 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.36 2016/12/11 22:55:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,6 +77,8 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 			free(cause);
 			return (CMD_RETURN_ERROR);
 		}
+		if (args_has(args, 'X') || args->argc == 0)
+			wp->modeprefix = np;
 	}
 
 	if (args_has(args, 'X')) {
@@ -84,7 +86,6 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "not in a mode");
 			return (CMD_RETURN_ERROR);
 		}
-		wp->modeprefix = np;
 		if (!m->valid)
 			wp->mode->command(wp, c, s, args, NULL);
 		else
