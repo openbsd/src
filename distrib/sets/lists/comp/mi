@@ -1952,6 +1952,7 @@
 ./usr/share/man/man3/SSL_dup_CA_list.3
 ./usr/share/man/man3/SSL_free.3
 ./usr/share/man/man3/SSL_get_SSL_CTX.3
+./usr/share/man/man3/SSL_get_certificate.3
 ./usr/share/man/man3/SSL_get_ciphers.3
 ./usr/share/man/man3/SSL_get_client_CA_list.3
 ./usr/share/man/man3/SSL_get_current_cipher.3
@@ -1964,11 +1965,14 @@
 ./usr/share/man/man3/SSL_get_peer_certificate.3
 ./usr/share/man/man3/SSL_get_rbio.3
 ./usr/share/man/man3/SSL_get_session.3
+./usr/share/man/man3/SSL_get_shared_ciphers.3
+./usr/share/man/man3/SSL_get_state.3
 ./usr/share/man/man3/SSL_get_verify_result.3
 ./usr/share/man/man3/SSL_get_version.3
 ./usr/share/man/man3/SSL_library_init.3
 ./usr/share/man/man3/SSL_load_client_CA_file.3
 ./usr/share/man/man3/SSL_new.3
+./usr/share/man/man3/SSL_num_renegotiations.3
 ./usr/share/man/man3/SSL_pending.3
 ./usr/share/man/man3/SSL_read.3
 ./usr/share/man/man3/SSL_renegotiate.3
@@ -2047,7 +2051,6 @@
 ./usr/share/man/man3/bindresvport.3
 ./usr/share/man/man3/bitstring.3
 ./usr/share/man/man3/blowfish.3
-./usr/share/man/man3/bn.3
 ./usr/share/man/man3/bn_dump.3
 ./usr/share/man/man3/bsearch.3
 ./usr/share/man/man3/btowc.3
