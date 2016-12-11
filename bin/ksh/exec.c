@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.66 2016/12/11 17:37:38 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.67 2016/12/11 17:44:48 millert Exp $	*/
 
 /*
  * execute command tree
@@ -40,9 +40,12 @@ static void	dbteste_error(Test_env *, int, const char *);
  */
 int
 execute(struct op *volatile t,
-    volatile int flags, volatile int *xerrok)		/* if XEXEC don't fork */
+    volatile int flags,		/* if XEXEC don't fork */
+    volatile int *xerrok)	/* inform recursive callers in -e mode that
+				 * short-circuit && or || shouldn't be treated
+				 * as an error */
 {
-	int i, dummy = 0;
+	int i, dummy = 0, save_xerrok = 0;
 	volatile int rv = 0;
 	int pv[2];
 	char ** volatile ap;
@@ -287,10 +290,15 @@ execute(struct op *volatile t,
 		}
 		rv = 0; /* in case of a continue */
 		if (t->type == TFOR) {
+			save_xerrok = *xerrok;
 			while (*ap != NULL) {
 				setstr(global(t->str), *ap++, KSH_UNWIND_ERROR);
+				/* undo xerrok in all iterations except the
+				 * last */
+				*xerrok = save_xerrok;
 				rv = execute(t->left, flags & XERROK, xerrok);
 			}
+			/* ripple xerrok set at final iteration */
 		} else { /* TSELECT */
 			for (;;) {
 				if (!(cp = do_selectargs(ap, is_first))) {
