@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211_radiotap.9,v 1.13 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: ieee80211_radiotap.9,v 1.14 2016/12/11 21:45:06 stsp Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -27,9 +27,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_radiotap.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_radiotap.9,v 1.13 2014/01/21 03:15:46 schwarze Exp $
+.\" $Id: ieee80211_radiotap.9,v 1.14 2016/12/11 21:45:06 stsp Exp $
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: December 11 2016 $
 .Dt IEEE80211_RADIOTAP 9
 .Os
 .Sh NAME
@@ -129,6 +129,8 @@ of flags specifying properties of the frame being transmitted or received.
 .It Dv IEEE80211_RADIOTAP_RATE
 This field contains a single unsigned 8-bit value, which is the data rate in
 use in units of 500Kbps.
+If the most significant bit is set, the remaining bits contain an MCS index
+instead of a data rate.
 .It Dv IEEE80211_RADIOTAP_CHANNEL
 This field contains two unsigned 16-bit values.
 The first value is the frequency upon which this PDU was transmitted
