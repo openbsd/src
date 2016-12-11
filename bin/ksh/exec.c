@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.67 2016/12/11 17:44:48 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.68 2016/12/11 17:49:19 millert Exp $	*/
 
 /*
  * execute command tree
@@ -347,9 +347,9 @@ execute(struct op *volatile t,
 		cp = evalstr(t->str, DOTILDE);
 		for (t = t->left; t != NULL && t->type == TPAT; t = t->right) {
 			for (ap = t->vars; *ap; ap++) {
-			    if ((s = evalstr(*ap, DOTILDE|DOPAT)) &&
-				gmatch(cp, s, false))
-				    goto Found;
+				if ((s = evalstr(*ap, DOTILDE|DOPAT)) &&
+				    gmatch(cp, s, false))
+					goto Found;
 			}
 		}
 		break;
