@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_POINT_add.3,v 1.5 2016/12/06 14:54:55 schwarze Exp $
+.\"	$OpenBSD: EC_POINT_add.3,v 1.6 2016/12/11 14:22:43 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: December 11 2016 $
 .Dt EC_POINT_ADD 3
 .Os
 .Sh NAME
@@ -149,6 +149,11 @@
 .Fa "const EC_GROUP *group"
 .Fc
 .Sh DESCRIPTION
+These functions operate on
+.Vt EC_POINT
+objects created by
+.Xr EC_POINT_new 3 .
+.Pp
 .Fn EC_POINT_add
 adds the two points
 .Fa a
@@ -261,7 +266,6 @@ returns 1 if the points are not equal, 0 if they are, or -1 on error.
 returns 1 if a precomputation has been done or 0 if not.
 .Sh SEE ALSO
 .Xr d2i_ECPKParameters 3 ,
-.Xr ec 3 ,
 .Xr EC_GFp_simple_method 3 ,
 .Xr EC_GROUP_copy 3 ,
 .Xr EC_GROUP_new 3 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ECDSA_SIG_new.3,v 1.6 2016/12/11 12:21:48 schwarze Exp $
+.\"	$OpenBSD: ECDSA_SIG_new.3,v 1.7 2016/12/11 14:22:43 schwarze Exp $
 .\"	OpenSSL e6390aca Jul 21 10:06:03 2015 -0400
 .\"
 .\" This file was written by Nils Larsch <nils@openssl.org>.
@@ -198,6 +198,10 @@ Most applications should use the higher level EVP interface such as
 or
 .Xr EVP_DigestVerifyInit 3
 instead.
+Creation of the required
+.Vt EC_KEY
+objects is described in
+.Xr EC_KEY_new 3 .
 .Pp
 The
 .Vt ECDSA_SIG
@@ -454,7 +458,10 @@ if (ret == -1) {
 }
 .Ed
 .Sh SEE ALSO
+.Xr d2i_ECPKParameters 3 ,
 .Xr DSA_new 3 ,
+.Xr EC_GROUP_new 3 ,
+.Xr EC_KEY_new 3 ,
 .Xr EVP_DigestSignInit 3 ,
 .Xr EVP_DigestVerifyInit 3 ,
 .Xr RSA_new 3

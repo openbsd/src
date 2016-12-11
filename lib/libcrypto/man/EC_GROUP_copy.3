@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_GROUP_copy.3,v 1.6 2016/12/06 14:54:55 schwarze Exp $
+.\"	$OpenBSD: EC_GROUP_copy.3,v 1.7 2016/12/11 14:22:43 schwarze Exp $
 .\"	OpenSSL aafbe1cc Jun 12 23:42:08 2013 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: December 11 2016 $
 .Dt EC_GROUP_COPY 3
 .Os
 .Sh NAME
@@ -193,6 +193,11 @@
 .Fa "unsigned int *k3"
 .Fc
 .Sh DESCRIPTION
+These functions operate on
+.Vt EC_GROUP
+objects created by the functions described in
+.Xr EC_GROUP_new 3 .
+.Pp
 .Fn EC_GROUP_copy
 copies the curve
 .Fa src
@@ -475,7 +480,6 @@ for a trinomial or pentanomial, respectively.
 Alternatively in the event of an error a 0 is returned.
 .Sh SEE ALSO
 .Xr d2i_ECPKParameters 3 ,
-.Xr ec 3 ,
 .Xr EC_GFp_simple_method 3 ,
 .Xr EC_GROUP_new 3 ,
 .Xr EC_KEY_new 3 ,

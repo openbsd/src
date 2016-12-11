@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.72 2016/12/11 12:52:28 schwarze Exp $
+# $OpenBSD: Makefile,v 1.73 2016/12/11 14:22:43 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -213,7 +213,6 @@ MAN=	\
 	d2i_X509_REQ.3 \
 	d2i_X509_SIG.3 \
 	des_read_pw.3 \
-	ec.3 \
 	engine.3 \
 	evp.3 \
 	i2d_PKCS7_bio_stream.3 \
