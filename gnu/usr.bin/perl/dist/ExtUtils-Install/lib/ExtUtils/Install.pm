@@ -100,6 +100,7 @@ my $Is_MacPerl = $^O eq 'MacOS';
 my $Is_Win32   = $^O eq 'MSWin32';
 my $Is_cygwin  = $^O eq 'cygwin';
 my $CanMoveAtBoot = ($Is_Win32 || $Is_cygwin);
+my $Perm_Dir = $ENV{PERL_CORE} ? 0770 : 0755;
 
 # *note* CanMoveAtBoot is only incidentally the same condition as below
 # this needs not hold true in the future.
@@ -782,7 +783,7 @@ sub install { #XXX OS-SPECIFIC
         _chdir($cwd);
     }
     foreach my $targetdir (sort keys %check_dirs) {
-        _mkpath( $targetdir, 0, 0755, $verbose, $dry_run );
+        _mkpath( $targetdir, 0, $Perm_Dir, $verbose, $dry_run );
     }
     foreach my $found (@found_files) {
         my ($diff, $ffd, $origfile, $mode, $size, $atime, $mtime,
@@ -796,7 +797,7 @@ sub install { #XXX OS-SPECIFIC
                     $targetfile= _unlink_or_rename( $targetfile, 'tryhard', 'install' )
                         unless $dry_run;
                 } elsif ( ! -d $targetdir ) {
-                    _mkpath( $targetdir, 0, 0755, $verbose, $dry_run );
+                    _mkpath( $targetdir, 0, $Perm_Dir, $verbose, $dry_run );
                 }
                 print "Installing $targetfile\n";
 
@@ -836,7 +837,7 @@ sub install { #XXX OS-SPECIFIC
 
     if ($pack{'write'}) {
         $dir = install_rooted_dir(dirname($pack{'write'}));
-        _mkpath( $dir, 0, 0755, $verbose, $dry_run );
+        _mkpath( $dir, 0, $Perm_Dir, $verbose, $dry_run );
         print "Writing $pack{'write'}\n" if $verbose;
         $packlist->write(install_rooted_file($pack{'write'})) unless $dry_run;
     }
@@ -1176,7 +1177,7 @@ be prepended as a directory to each installed file (and directory).
 sub pm_to_blib {
     my($fromto,$autodir,$pm_filter) = @_;
 
-    _mkpath($autodir,0,0755);
+    _mkpath($autodir,0,$Perm_Dir);
     while(my($from, $to) = each %$fromto) {
         if( -f $to && -s $from == -s $to && -M $to < -M $from ) {
             print "Skip $to (unchanged)\n";
@@ -1199,7 +1200,7 @@ sub pm_to_blib {
             # we wont try hard here. its too likely to mess things up.
             forceunlink($to);
         } else {
-            _mkpath(dirname($to),0,0755);
+            _mkpath(dirname($to),0,$Perm_Dir);
         }
         if ($need_filtering) {
             run_filter($pm_filter, $from, $to);
