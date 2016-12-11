@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_blinding_on.3,v 1.3 2016/11/29 16:46:41 schwarze Exp $
+.\"	$OpenBSD: RSA_blinding_on.3,v 1.4 2016/12/11 12:21:48 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 29 2016 $
+.Dd $Mdocdate: December 11 2016 $
 .Dt RSA_BLINDING_ON 3
 .Os
 .Sh NAME
@@ -88,7 +88,7 @@ turns blinding off and frees the memory used for the blinding factor.
 .Fn RSA_blinding_on
 returns 1 on success, and 0 if an error occurred.
 .Sh SEE ALSO
-.Xr rsa 3
+.Xr RSA_new 3
 .Sh HISTORY
 .Fn RSA_blinding_on
 and
