@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.64 2015/12/30 09:07:00 tedu Exp $	*/
+/*	$OpenBSD: exec.c,v 1.65 2016/12/11 17:31:58 millert Exp $	*/
 
 /*
  * execute command tree
@@ -339,11 +339,13 @@ execute(struct op *volatile t,
 
 	case TCASE:
 		cp = evalstr(t->str, DOTILDE);
-		for (t = t->left; t != NULL && t->type == TPAT; t = t->right)
-		    for (ap = t->vars; *ap; ap++)
-			if ((s = evalstr(*ap, DOTILDE|DOPAT)) &&
-			    gmatch(cp, s, false))
-				goto Found;
+		for (t = t->left; t != NULL && t->type == TPAT; t = t->right) {
+			for (ap = t->vars; *ap; ap++) {
+			    if ((s = evalstr(*ap, DOTILDE|DOPAT)) &&
+				gmatch(cp, s, false))
+				    goto Found;
+			}
+		}
 		break;
 	  Found:
 		rv = execute(t->left, flags & XERROK, xerrok);
