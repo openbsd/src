@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.3 2016/03/21 13:35:00 tb Exp $
+#	$OpenBSD: obsd-regress.t,v 1.4 2016/12/11 18:11:59 millert Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -173,8 +173,8 @@ stdin:
 
 name: seterror-1
 description:
-	The -e flag should be ignored when executing a compound list
-	followed by an if statement.
+	The -e flag should be ignored on unsuccessful commands before && inside an
+	if statement.
 stdin:
 	if true; then false && false; fi
 	true
@@ -184,8 +184,8 @@ expected-exit: e == 0
 
 name: seterror-2
 description:
-	The -e flag should be ignored when executing a compound list
-	followed by an if statement.
+	The -e flag should be ignored on unsuccessful commands before && inside a
+	nested if statement.
 stdin:
 	if true; then if true; then false && false; fi; fi
 	true
@@ -205,8 +205,8 @@ expected-exit: e == 0
 
 name: seterror-4
 description:
-	The -e flag should be ignored when executing a pipeline
-	beginning with '!'
+	Inside a for statement, the -e flag should be ignored on successful commands
+	before ||, or unsuccessful commands before &&.
 stdin:
 	for i in 1 2 3
 	do
@@ -254,6 +254,110 @@ stdin:
 arguments: !-e!
 expected-stdout:
 	
+---
+
+name: seterror-8
+description:
+	The -e flag within an if statement should terminate && chains on
+	failure in rightmost command.
+stdin:
+	if true; then true && false; fi
+	true
+arguments: !-e!
+expected-exit: e != 0
+---
+
+name: seterror-9
+description:
+	The -e flag within a for statement should terminate && or || chains on
+	failure in rightmost command.
+stdin:
+	for f in 0; do true && false; done
+	true
+arguments: !-e!
+expected-exit: e != 0
+---
+
+name: seterror-10
+description:
+	The -e flag within a while statement should terminate && or || chains on
+	failure in rightmost command.
+stdin:
+	while true; do true && false; done
+	true
+arguments: !-e!
+expected-exit: e != 0
+---
+
+name: seterror-11
+description:
+	Putting it all together for -e mode, test an && chain behaving in different
+	ways in different iterations of a for loop.
+# file x is absent; xx is present
+file-setup: file 644 "xx"
+# file y is absent
+arguments: !-e!
+# first iteration of for loop errors at first branch of &&
+#   execution should continue in spite of -e mode
+# second iteration of for loop errors at second branch of &&
+#   -e mode should trigger exit
+stdin:
+	for f in x xx
+	do
+		test -f $f && test -f y  # final statement in loop
+	done
+	echo "should not print"
+expected-exit: e != 0
+---
+
+name: seterror-12
+description:
+	Putting it all together for -e mode, test an && chain behaving in different
+	ways in different iterations of a while loop.
+# file x is absent; xx is present
+file-setup: file 644 "x"
+# file y is absent
+arguments: !-e!
+# first iteration of for loop errors at first branch of &&
+#   execution should continue in spite of -e mode
+# second iteration of for loop errors at second branch of &&
+#   -e mode should trigger exit
+stdin:
+	x=''
+	y=''
+	while [ "$x" != xxx ]
+	do
+		x=x$x
+		y=y$y
+		test -f $x && test -f y  # final statement in loop
+	done
+	echo "should not print"
+expected-exit: e != 0
+---
+
+name: seterror-13
+description:
+	Putting it all together for -e mode, test an && chain behaving in different
+	ways in different iterations of a until loop.
+# file x is absent; xx is present
+file-setup: file 644 "x"
+# files y and yy are both absent
+arguments: !-e!
+# first iteration of for loop errors at first branch of &&
+#   execution should continue in spite of -e mode
+# second iteration of for loop errors at second branch of &&
+#   -e mode should trigger exit
+stdin:
+	x=''
+	y=''
+	until [ "$x" == xxx ]
+	do
+		x=x$x
+		y=y$y
+		test -f $x && test -f $y  # final statement in loop
+	done
+	echo "should not print"
+expected-exit: e != 0
 ---
 
 name: input-comsub
@@ -364,4 +468,25 @@ stdin:
 expected-exit: e == 1
 expected-stderr-pattern:
 	/: 1: parameter not set$/
+---
+
+name: and-list-error-3
+description:
+	Test combination of && and for loop in -e mode
+# file foo0 is absent; foo1 is present
+file-setup: file 644 "foo1"
+# file bar0 is present; bar1 is absent
+file-setup: file 644 "bar0"
+arguments: !-e!
+stdin:
+	for f in 0 1; do
+		ls foo$f && ls bar$f
+	done
+	echo "should not print"
+expected-exit: e != 0
+expected-stdout:
+	foo1
+expected-stderr:
+	ls: foo0: No such file or directory
+	ls: bar1: No such file or directory
 ---
