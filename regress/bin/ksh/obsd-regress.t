@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.4 2016/12/11 18:11:59 millert Exp $
+#	$OpenBSD: obsd-regress.t,v 1.5 2016/12/11 20:04:24 millert Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -468,25 +468,4 @@ stdin:
 expected-exit: e == 1
 expected-stderr-pattern:
 	/: 1: parameter not set$/
----
-
-name: and-list-error-3
-description:
-	Test combination of && and for loop in -e mode
-# file foo0 is absent; foo1 is present
-file-setup: file 644 "foo1"
-# file bar0 is present; bar1 is absent
-file-setup: file 644 "bar0"
-arguments: !-e!
-stdin:
-	for f in 0 1; do
-		ls foo$f && ls bar$f
-	done
-	echo "should not print"
-expected-exit: e != 0
-expected-stdout:
-	foo1
-expected-stderr:
-	ls: foo0: No such file or directory
-	ls: bar1: No such file or directory
 ---
