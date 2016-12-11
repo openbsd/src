@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.65 2016/12/11 17:31:58 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.66 2016/12/11 17:37:38 millert Exp $	*/
 
 /*
  * execute command tree
@@ -240,16 +240,14 @@ execute(struct op *volatile t,
 			rv = execute(t->right, flags & XERROK, xerrok);
 		else {
 			flags |= XERROK;
-			if (xerrok)
-				*xerrok = 1;
+			*xerrok = 1;
 		}
 		break;
 
 	case TBANG:
 		rv = !execute(t->right, XERROK, xerrok);
 		flags |= XERROK;
-		if (xerrok)
-			*xerrok = 1;
+		*xerrok = 1;
 		break;
 
 	case TDBRACKET:
@@ -383,8 +381,7 @@ execute(struct op *volatile t,
 	quitenv(NULL);		/* restores IO */
 	if ((flags&XEXEC))
 		unwind(LEXIT);	/* exit child */
-	if (rv != 0 && !(flags & XERROK) &&
-	    (xerrok == NULL || !*xerrok)) {
+	if (rv != 0 && !(flags & XERROK) && !*xerrok) {
 		trapsig(SIGERR_);
 		if (Flag(FERREXIT))
 			unwind(LERROR);
