@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CONF_modules_load_file.3,v 1.4 2016/11/20 19:47:59 schwarze Exp $
+.\"	$OpenBSD: CONF_modules_load_file.3,v 1.5 2016/12/11 18:06:09 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 20 2016 $
+.Dd $Mdocdate: December 11 2016 $
 .Dt CONF_MODULES_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -72,15 +72,19 @@
 .Sh DESCRIPTION
 The function
 .Fn CONF_modules_load_file
-configures OpenSSL using file
+configures OpenSSL using the file
 .Fa filename
-and application name
+in
+.Xr openssl.cnf 5
+format and the application name
 .Fa appname .
 If
 .Fa filename
 is
 .Dv NULL ,
-the standard OpenSSL configuration file is used.
+the standard OpenSSL configuration file
+.Pa /etc/ssl/openssl.cnf
+is used.
 If
 .Fa appname
 is
@@ -149,6 +153,11 @@ These functions return 1 for success and zero or a negative value for
 failure.
 If module errors are not ignored, the return code will reflect the return
 value of the failing module (this will always be zero or negative).
+.Sh FILES
+.Bl -tag -width /etc/ssl/openssl.cnf -compact
+.It Pa /etc/ssl/openssl.cnf
+standard configuration file
+.El
 .Sh EXAMPLES
 Load a configuration file and print out any errors and exit (missing
 file considered fatal):
