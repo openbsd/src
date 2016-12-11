@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2016/11/17 14:41:21 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.69 2016/12/11 07:57:14 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -119,6 +119,7 @@ struct	user *proc0paddr;
 
 const struct platform *sys_platform;
 struct cpu_hwinfo bootcpu_hwinfo;
+uint loongson_cpumask = 1;
 uint loongson_ver;
 
 /* Pointers to the start and end of the symbol table. */
@@ -343,12 +344,35 @@ loongson_identify(const char *version, int envtype)
 int
 loongson_efi_setup(void)
 {
+	const struct pmon_env_cpu *cpuenv;
 	const struct pmon_env_mem *mem;
 	const struct pmon_env_mem_entry *entry;
 	paddr_t fp, lp;
-	uint32_t i, seg = 0;
+	uint32_t i, ncpus, seg = 0;
 
-	bootcpu_hwinfo.clock = pmon_get_env_cpu()->speed;
+	cpuenv = pmon_get_env_cpu();
+	bootcpu_hwinfo.clock = cpuenv->speed;
+
+	/*
+	 * Get available CPUs.
+	 */
+
+	ncpus = cpuenv->ncpus;
+	if (ncpus > LOONGSON_MAXCPUS)
+		ncpus = LOONGSON_MAXCPUS;
+
+	loongson_cpumask = (1u << ncpus) - 1;
+	loongson_cpumask &= ~(uint)cpuenv->reserved_cores;
+
+	ncpusfound = 0;
+	for (i = 0; i < ncpus; i++) {
+		if (ISSET(loongson_cpumask, 1u << i))
+			ncpusfound++;
+	}
+
+	/*
+	 * Get free memory segments.
+	 */
 
 	mem = pmon_get_env_mem();
 	physmem = 0;
@@ -395,6 +419,23 @@ loongson_envp_setup(void)
 	if (cpuspeed < 100 * 1000000)
 		cpuspeed = 797000000;  /* Reasonable default */
 	bootcpu_hwinfo.clock = cpuspeed;
+
+	/*
+	 * Guess the available CPUs.
+	 */
+
+	switch (loongson_ver) {
+#ifdef CPU_LOONGSON3
+	case 0x3a:
+		loongson_cpumask = 0x0f;
+		ncpusfound = 4;
+		break;
+	case 0x3b:
+		loongson_cpumask = 0xff;
+		ncpusfound = 8;
+		break;
+#endif
+	}
 
 	/*
 	 * Figure out memory information.

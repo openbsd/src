@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson3_intr.c,v 1.2 2016/12/03 05:52:58 visa Exp $	*/
+/*	$OpenBSD: loongson3_intr.c,v 1.3 2016/12/11 07:57:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -34,8 +34,6 @@
 uint32_t loongson3_ht_intr(uint32_t, struct trapframe *);
 uint32_t loongson3_intr(uint32_t, struct trapframe *);
 void	 loongson3_splx(int);
-
-extern int nnodes;
 
 const struct pic	*loongson3_ht_pic;
 paddr_t			 loongson3_ht_cfg_base;

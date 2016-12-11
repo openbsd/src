@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic3a_machdep.c,v 1.2 2016/11/18 17:02:14 visa Exp $	*/
+/*	$OpenBSD: generic3a_machdep.c,v 1.3 2016/12/11 07:57:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -135,6 +135,15 @@ void
 generic3a_setup(void)
 {
 	const struct pmon_env_reset *resetenv = pmon_get_env_reset();
+	uint32_t boot_cpuid = loongson3_get_cpuid();
+
+	/* Override the mask if it misses the boot CPU. */
+	if (!ISSET(loongson_cpumask, 1u << boot_cpuid)) {
+		loongson_cpumask = 1u << boot_cpuid;
+		ncpusfound = 1;
+	}
+
+	nnodes = LS3_NODEID(fls(loongson_cpumask) - 1) + 1;
 
 	if (resetenv != NULL) {
 		generic3a_reboot_entry = resetenv->warm_boot;

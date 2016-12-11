@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.12 2016/11/05 05:28:39 visa Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.13 2016/12/11 07:57:14 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -76,8 +76,12 @@ struct platform {
 	int				(*resume)(void);
 };
 
+#define LOONGSON_MAXCPUS	16
+
 extern const struct platform *sys_platform;
+extern uint loongson_cpumask;
 extern uint loongson_ver;
+extern int nnodes;
 
 struct mainbus_attach_args {
 	const char	*maa_name;
