@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.671 2016/11/16 08:11:31 gerhard Exp $
+$OpenBSD: usbdevs,v 1.672 2016/12/12 04:23:25 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4380,10 +4380,11 @@ product OPTION GT3GQUADPLUS	0x6600	GlobeTrotter 3G QUAD PLUS
 product OPTION GTMAX36		0x6701	GlobeTrotter MAX 3.6/7.2
 product OPTION GT3GPLUS		0x6721	GlobeTrotter 3G PLUS
 product OPTION SCORPION		0x6901	GlobeTrotter HSDPA Modem
-product OPTION GSICON72		0x6911	GlobeSurfer Icon 7.2
-product OPTION GTHSDPA225	0x6971	GlobeTrotter HSDPA Icon 225
+product OPTION GSICON72		0x6911	GlobeSurfer iCON 7.2
+product OPTION ICON225		0x6971	iCON 225
 product OPTION GTHSUPA380E	0x7211	GlobeTrotter HSUPA 380E
-product OPTION GTICON322	0xd033	GlobeTrotter Icon322 storage
+product OPTION ICON322		0xd033	iCON 322
+product OPTION ICON505		0xd055	iCON 505
 
 /* Vaisala Products */
 product VAISALA USBINSTCABLE	0x0200	USB instrument cable
