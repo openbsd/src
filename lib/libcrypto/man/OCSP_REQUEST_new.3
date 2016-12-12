@@ -1,7 +1,24 @@
-.\"	$OpenBSD: OCSP_REQUEST_new.3,v 1.3 2016/12/06 14:54:55 schwarze Exp $
+.\"	$OpenBSD: OCSP_REQUEST_new.3,v 1.4 2016/12/12 17:46:23 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2014, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,12 +65,18 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: December 12 2016 $
 .Dt OCSP_REQUEST_NEW 3
 .Os
 .Sh NAME
 .Nm OCSP_REQUEST_new ,
 .Nm OCSP_REQUEST_free ,
+.Nm OCSP_SIGNATURE_new ,
+.Nm OCSP_SIGNATURE_free ,
+.Nm OCSP_REQINFO_new ,
+.Nm OCSP_REQINFO_free ,
+.Nm OCSP_ONEREQ_new ,
+.Nm OCSP_ONEREQ_free ,
 .Nm OCSP_request_add0_id ,
 .Nm OCSP_request_sign ,
 .Nm OCSP_request_add1_cert ,
@@ -65,9 +88,19 @@
 .Ft OCSP_REQUEST *
 .Fn OCSP_REQUEST_new void
 .Ft void
-.Fo OCSP_REQUEST_free
-.Fa "OCSP_REQUEST *req"
-.Fc
+.Fn OCSP_REQUEST_free "OCSP_REQUEST *req"
+.Ft OCSP_SIGNATURE *
+.Fn OCSP_SIGNATURE_new void
+.Ft void
+.Fn OCSP_SIGNATURE_free "OCSP_SIGNATURE *signature"
+.Ft OCSP_REQINFO *
+.Fn OCSP_REQINFO_new void
+.Ft void
+.Fn OCSP_REQINFO_free "OCSP_REQINFO *reqinfo"
+.Ft OCSP_ONEREQ *
+.Fn OCSP_ONEREQ_new void
+.Ft void
+.Fn OCSP_ONEREQ_free "OCSP_ONEREQ *onereq"
 .Ft OCSP_ONEREQ *
 .Fo OCSP_request_add0_id
 .Fa "OCSP_REQUEST *req"
@@ -98,13 +131,44 @@
 .Fc
 .Sh DESCRIPTION
 .Fn OCSP_REQUEST_new
-allocates and returns an empty
+allocates and initializes an empty
 .Vt OCSP_REQUEST
-structure.
-.Pp
+object, representing an ASN.1 OCSPRequest structure defined in RFC 6960.
 .Fn OCSP_REQUEST_free
-frees up the request structure
+frees
 .Fa req .
+.Pp
+.Fn OCSP_SIGNATURE_new
+allocates and initializes an empty
+.Vt OCSP_SIGNATURE
+object, representing an ASN.1 Signature structure defined in RFC 6960.
+Such an object is used inside
+.Vt OCSP_REQUEST .
+.Fn OCSP_SIGNATURE_free
+frees
+.Fa signature .
+.Pp
+.Fn OCSP_REQINFO_new
+allocates and initializes an empty
+.Vt OCSP_REQINFO
+object, representing an ASN.1 TBSRequest structure defined in RFC 6960.
+Such an object is used inside
+.Vt OCSP_REQUEST .
+It asks about the validity of one or more certificates.
+.Fn OCSP_REQINFO_free
+frees
+.Fa reqinfo .
+.Pp
+.Fn OCSP_ONEREQ_new
+allocates and initializes an empty
+.Vt OCSP_ONEREQ
+object, representing an ASN.1 Request structure defined in RFC 6960.
+Such objects are used inside
+.Vt OCSP_REQINFO .
+Each one asks about the validity of one certificiate.
+.Fn OCSP_ONEREQ_free
+frees
+.Fa onereq .
 .Pp
 .Fn OCSP_request_add0_id
 adds certificate ID
@@ -113,7 +177,7 @@ to
 .Fa req .
 It returns the
 .Vt OCSP_ONEREQ
-structure added so an application can add additional extensions to the
+object added so an application can add additional extensions to the
 request.
 The
 .Fa cid
@@ -148,7 +212,7 @@ after use.
 .Fn OCSP_request_onereq_count
 returns the total number of
 .Vt OCSP_ONEREQ
-structures in
+objects in
 .Fa req .
 .Pp
 .Fn OCSP_request_onereq_get0
@@ -163,28 +227,30 @@ The index value
 runs from 0 to
 .Fn OCSP_request_onereq_count req No - 1 .
 .Pp
-An
-.Vt OCSP_REQUEST
-structure contains one or more
-.Vt OCSP_ONEREQ
-structures corresponding to each certificate.
-.Pp
 .Fn OCSP_request_onereq_count
 and
 .Fn OCSP_request_onereq_get0
 are mainly used by OCSP responders.
 .Sh RETURN VALUES
-.Fn OCSP_REQUEST_new
-returns an empty
-.Vt OCSP_REQUEST
-structure or
+.Fn OCSP_REQUEST_new ,
+.Fn OCSP_SIGNATURE_new ,
+.Fn OCSP_REQINFO_new ,
+and
+.Fn OCSP_ONEREQ_new
+return an empty
+.Vt OCSP_REQUEST ,
+.Vt OCSP_SIGNATURE ,
+.Vt OCSP_REQINFO ,
+or
+.Vt OCSP_ONEREQ
+object, respectively, or
 .Dv NULL
 if an error occurred.
 .Pp
 .Fn OCSP_request_add0_id
 returns the
 .Vt OCSP_ONEREQ
-structure containing
+object containing
 .Fa cid
 or
 .Dv NULL
@@ -198,19 +264,19 @@ return 1 for success or 0 for failure.
 .Fn OCSP_request_onereq_count
 returns the total number of
 .Vt OCSP_ONEREQ
-structures in
+objects in
 .Fa req .
 .Pp
 .Fn OCSP_request_onereq_get0
 returns a pointer to an
 .Vt OCSP_ONEREQ
-structure or
+object or
 .Dv NULL
 if the index value is out of range.
 .Sh EXAMPLES
 Create an
 .Vt OCSP_REQUEST
-structure for certificate
+object for certificate
 .Fa cert
 with issuer
 .Fa issuer :
@@ -238,3 +304,6 @@ OCSP_REQUEST_free(req);
 .Xr OCSP_resp_find_status 3 ,
 .Xr OCSP_response_status 3 ,
 .Xr OCSP_sendreq_new 3
+.Sh STANDARDS
+RFC 6960: X.509 Internet Public Key Infrastructure Online Certificate
+Status Protocol, section 4.1: Request Syntax
