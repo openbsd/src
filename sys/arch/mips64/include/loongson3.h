@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson3.h,v 1.1 2016/11/06 10:20:33 visa Exp $	*/
+/*	$OpenBSD: loongson3.h,v 1.2 2016/12/12 16:25:47 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -26,14 +26,15 @@
 #define LS3_CFG_BASE(node)		(0x100000004000ull*(node) + 0x3ff00000)
 #define LS3_MEM_BASE(node)		(0x100000000000ull*(node))
 
-#define LS3_IPI_ISR_OFFSET(core)	(0x100 * (core))
-#define LS3_IPI_IMR_OFFSET(core)	(0x100 * (core) + 0x04)
-#define LS3_IPI_SET_OFFSET(core)	(0x100 * (core) + 0x08)
-#define LS3_IPI_CLEAR_OFFSET(core)	(0x100 * (core) + 0x0c)
-#define LS3_IPI_MBOX0_OFFSET(core)	(0x100 * (core) + 0x20)
-#define LS3_IPI_MBOX1_OFFSET(core)	(0x100 * (core) + 0x28)
-#define LS3_IPI_MBOX2_OFFSET(core)	(0x100 * (core) + 0x30)
-#define LS3_IPI_MBOX3_OFFSET(core)	(0x100 * (core) + 0x38)
+#define LS3_IPI_BASE(n, c)		(LS3_CFG_BASE(n) + 0x1000 + 0x100*(c))
+#define LS3_IPI_ISR			0x00
+#define LS3_IPI_IMR			0x04
+#define LS3_IPI_SET			0x08
+#define LS3_IPI_CLEAR			0x0c
+#define LS3_IPI_MBOX0			0x20
+#define LS3_IPI_MBOX1			0x28
+#define LS3_IPI_MBOX2			0x30
+#define LS3_IPI_MBOX3			0x38
 
 static inline uint32_t
 loongson3_get_cpuid(void)

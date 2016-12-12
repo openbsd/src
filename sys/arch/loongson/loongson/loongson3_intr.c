@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson3_intr.c,v 1.3 2016/12/11 07:57:14 visa Exp $	*/
+/*	$OpenBSD: loongson3_intr.c,v 1.4 2016/12/12 16:25:47 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -109,7 +109,7 @@ loongson3_intr_init(void)
 
 		/* Disable IPIs on every core. */
 		for (core = 0; core < 4; core++)
-			REGVAL(LS3_CFG_BASE(node)+LS3_IPI_IMR_OFFSET(core)) = 0;
+			REGVAL32(LS3_IPI_BASE(node, core) + LS3_IPI_IMR) = 0u;
 	}
 
 	/*
