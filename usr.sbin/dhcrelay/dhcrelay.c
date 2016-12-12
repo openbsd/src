@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.49 2016/12/08 19:18:15 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.50 2016/12/12 15:41:05 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -66,12 +66,19 @@ void	 usage(void);
 int	 rdaemon(int);
 void	 relay(struct interface_info *, struct dhcp_packet *, int,
 	    struct packet_ctx *);
+void	 l2relay(struct interface_info *, struct dhcp_packet *, int,
+	    struct packet_ctx *);
 char	*print_hw_addr(int, int, unsigned char *);
 void	 got_response(struct protocol *);
 int	 get_rdomain(char *);
 
-ssize_t	 relay_agentinfo(struct interface_info *, struct dhcp_packet *,
-	    size_t, struct in_addr *, struct in_addr *);
+void	 relay_agentinfo(struct packet_ctx *, struct interface_info *);
+
+int	 relay_agentinfo_cmp(struct packet_ctx *pc, uint8_t *, int);
+ssize_t	 relay_agentinfo_append(struct packet_ctx *, struct dhcp_packet *,
+	    size_t);
+ssize_t	 relay_agentinfo_remove(struct packet_ctx *, struct dhcp_packet *,
+	    size_t);
 
 time_t cur_time;
 
@@ -84,7 +91,12 @@ struct interface_info *interfaces = NULL;
 int server_fd;
 int oflag;
 
+enum dhcp_relay_mode	 drm = DRM_UNKNOWN;
+const char		*rai_circuit = NULL;
+const char		*rai_remote = NULL;
+
 struct server_list {
+	struct interface_info *intf;
 	struct server_list *next;
 	struct sockaddr_in to;
 	int fd;
@@ -98,6 +110,7 @@ main(int argc, char *argv[])
 	struct server_list	*sp = NULL;
 	struct passwd		*pw;
 	struct sockaddr_in	 laddr;
+	int			 optslen;
 
 	daemonize = 1;
 
@@ -105,8 +118,11 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "adi:o")) != -1) {
+	while ((ch = getopt(argc, argv, "aC:di:oR:")) != -1) {
 		switch (ch) {
+		case 'C':
+			rai_circuit = optarg;
+			break;
 		case 'd':
 			daemonize = 0;
 			break;
@@ -114,13 +130,16 @@ main(int argc, char *argv[])
 			if (interfaces != NULL)
 				usage();
 
-			interfaces = get_interface(optarg, got_one);
+			interfaces = get_interface(optarg, got_one, 0);
 			if (interfaces == NULL)
 				error("interface '%s' not found", optarg);
 			break;
 		case 'o':
 			/* add the relay agent information option */
 			oflag++;
+			break;
+		case 'R':
+			rai_remote = optarg;
 			break;
 
 		default:
@@ -135,9 +154,41 @@ main(int argc, char *argv[])
 	if (argc < 1)
 		usage();
 
+	if (rai_remote != NULL && rai_circuit == NULL)
+		error("you must specify a circuit-id with a remote-id");
+
+	/* Validate that we have space for all suboptions. */
+	if (rai_circuit != NULL) {
+		optslen = 2 + strlen(rai_circuit);
+		if (rai_remote != NULL)
+			optslen += 2 + strlen(rai_remote);
+
+		if (optslen > DHCP_OPTION_MAXLEN)
+			error("relay agent information is too long");
+	}
+
 	while (argc > 0) {
 		struct hostent		*he;
 		struct in_addr		 ia, *iap = NULL;
+
+		if ((sp = calloc(1, sizeof(*sp))) == NULL)
+			error("calloc");
+
+		if ((sp->intf = get_interface(argv[0], got_one, 1)) != NULL) {
+			if (drm == DRM_LAYER3)
+				error("don't mix interfaces with hosts");
+
+			if (sp->intf->hw_address.htype == HTYPE_IPSEC_TUNNEL)
+				error("can't use IPSec with layer 2");
+
+			sp->next = servers;
+			servers = sp;
+
+			drm = DRM_LAYER2;
+			argc--;
+			argv++;
+			continue;
+		}
 
 		if (inet_aton(argv[0], &ia))
 			iap = &ia;
@@ -149,12 +200,16 @@ main(int argc, char *argv[])
 				iap = ((struct in_addr *)he->h_addr_list[0]);
 		}
 		if (iap) {
-			if ((sp = calloc(1, sizeof *sp)) == NULL)
-				error("calloc");
+			if (drm == DRM_LAYER2)
+				error("don't mix interfaces with hosts");
+
+			drm = DRM_LAYER3;
 			sp->next = servers;
 			servers = sp;
 			memcpy(&sp->to.sin_addr, iap, sizeof *iap);
-		}
+		} else
+			free(sp);
+
 		argc--;
 		argv++;
 	}
@@ -167,7 +222,9 @@ main(int argc, char *argv[])
 
 	if (interfaces == NULL)
 		error("no interface given");
-	if (interfaces->primary_address.s_addr == 0)
+	/* We need an address for running layer 3 mode. */
+	if (drm == DRM_LAYER3 &&
+	    interfaces->primary_address.s_addr == 0)
 		error("interface '%s' does not have an address",
 		    interfaces->name);
 
@@ -192,6 +249,9 @@ main(int argc, char *argv[])
 	laddr.sin_addr.s_addr = interfaces->primary_address.s_addr;
 	/* Set up the server sockaddrs. */
 	for (sp = servers; sp; sp = sp->next) {
+		if (sp->intf != NULL)
+			break;
+
 		sp->to.sin_port = server_port;
 		sp->to.sin_family = AF_INET;
 		sp->to.sin_len = sizeof sp->to;
@@ -234,7 +294,10 @@ main(int argc, char *argv[])
 	tzset();
 
 	time(&cur_time);
-	bootp_packet_handler = relay;
+	if (drm == DRM_LAYER3)
+		bootp_packet_handler = relay;
+	else
+		bootp_packet_handler = l2relay;
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("user \"_dhcp\" not found");
@@ -274,6 +337,8 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		return;
 	}
 
+	relay_agentinfo(pc, ip);
+
 	/* If it's a bootreply, forward it to the client. */
 	if (packet->op == BOOTREPLY) {
 		bzero(&to, sizeof(to));
@@ -303,8 +368,8 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 			memset(pc->pc_dmac, 0xff, sizeof(pc->pc_dmac));
 		}
 
-		if ((length = relay_agentinfo(interfaces,
-		    packet, length, NULL, &to.sin_addr)) == -1) {
+		if ((length = relay_agentinfo_remove(pc, packet,
+		    length)) == -1) {
 			note("ignoring BOOTREPLY with invalid "
 			    "relay agent information");
 			return;
@@ -350,8 +415,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 	if (!packet->giaddr.s_addr)
 		packet->giaddr = ip->primary_address;
 
-	if ((length = relay_agentinfo(ip, packet, length,
-	    &ss2sin(&pc->pc_src)->sin_addr, NULL)) == -1) {
+	if ((length = relay_agentinfo_append(pc, packet, length)) == -1) {
 		note("ignoring BOOTREQUEST with invalid "
 		    "relay agent information");
 		return;
@@ -374,7 +438,8 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-do] -i interface server1 [... serverN]\n",
+	fprintf(stderr, "usage: %s [-do] [-C circuit-id] [-R remote-id] "
+	    "-i interface\n\tdestination1 [... destinationN]\n",
 	    __progname);
 	exit(1);
 }
@@ -488,98 +553,283 @@ got_response(struct protocol *l)
 		(*bootp_packet_handler)(NULL, &u.packet, result, &pc);
 }
 
-ssize_t
-relay_agentinfo(struct interface_info *info, struct dhcp_packet *packet,
-    size_t length, struct in_addr *from, struct in_addr *to)
+void
+relay_agentinfo(struct packet_ctx *pc, struct interface_info *intf)
 {
-	u_int8_t	*p;
-	u_int		 i, j, railen;
-	ssize_t		 optlen, maxlen, grow;
+	static u_int8_t		buf[8];
 
-	if (!oflag)
-		return (length);
+	if (oflag == 0)
+		return;
 
-	/* Buffer length vs. received packet length */
+	if (rai_remote != NULL) {
+		pc->pc_remote = (u_int8_t *)rai_remote;
+		pc->pc_remotelen = strlen(rai_remote);
+	} else
+		pc->pc_remotelen = 0;
+
+	if (rai_circuit == NULL) {
+		buf[0] = (uint8_t)(intf->index << 8);
+		buf[1] = intf->index & 0xff;
+		pc->pc_circuit = buf;
+		pc->pc_circuitlen = 2;
+
+		if (rai_remote == NULL) {
+			pc->pc_remote =
+			    (uint8_t *)&ss2sin(&pc->pc_dst)->sin_addr;
+			pc->pc_remotelen =
+			    sizeof(ss2sin(&pc->pc_dst)->sin_addr);
+		}
+	} else {
+		pc->pc_circuit = (u_int8_t *)rai_circuit;
+		pc->pc_circuitlen = strlen(rai_circuit);
+	}
+}
+
+int
+relay_agentinfo_cmp(struct packet_ctx *pc, uint8_t *p, int plen)
+{
+	int		 len;
+	char		 buf[256];
+
+	if (oflag == 0)
+		return (-1);
+
+	len = *(p + 1);
+	if (len > plen)
+		return (-1);
+
+	switch (*p) {
+	case RAI_CIRCUIT_ID:
+		if (pc->pc_circuit == NULL)
+			return (-1);
+		if (pc->pc_circuitlen != len)
+			return (-1);
+
+		memcpy(buf, p + DHCP_OPTION_HDR_LEN, len);
+		return (memcmp(pc->pc_circuit, buf, len));
+
+	case RAI_REMOTE_ID:
+		if (pc->pc_remote == NULL)
+			return (-1);
+		if (pc->pc_remotelen != len)
+			return (-1);
+
+		memcpy(buf, p + DHCP_OPTION_HDR_LEN, len);
+		return (memcmp(pc->pc_remote, buf, len));
+
+	default:
+		/* Unmatched type */
+		note("unmatched relay info %d", *p);
+		return (0);
+	}
+}
+
+ssize_t
+relay_agentinfo_append(struct packet_ctx *pc, struct dhcp_packet *dp,
+    size_t dplen)
+{
+	uint8_t		*p, *startp;
+	ssize_t		 newtotal = dplen;
+	int		 opttotal, optlen, i, hasinfo = 0;
+	int		 maxlen, neededlen;
+
+	/* Only append when enabled. */
+	if (oflag == 0)
+		return (dplen);
+
+	startp = (uint8_t *)dp;
+	p = (uint8_t *)&dp->options;
+	if (memcmp(p, DHCP_OPTIONS_COOKIE, DHCP_OPTIONS_COOKIE_LEN)) {
+		note("invalid dhcp options cookie");
+		return (-1);
+	}
+
+	p += DHCP_OPTIONS_COOKIE_LEN;
+	opttotal = dplen - DHCP_FIXED_NON_UDP - DHCP_OPTIONS_COOKIE_LEN;
 	maxlen = DHCP_MTU_MAX - DHCP_FIXED_LEN - DHCP_OPTIONS_COOKIE_LEN - 1;
-	optlen = length - DHCP_FIXED_NON_UDP - DHCP_OPTIONS_COOKIE_LEN;
-	if (maxlen < 1 || optlen < 1)
-		return (length);
+	if (maxlen < 1 || opttotal < 1)
+		return (dplen);
 
-	if (memcmp(packet->options, DHCP_OPTIONS_COOKIE,
-	    DHCP_OPTIONS_COOKIE_LEN) != 0)
-		return (length);
-	p = packet->options + DHCP_OPTIONS_COOKIE_LEN;
-
-	for (i = 0; i < (u_int)optlen && *p != DHO_END;) {
+	for (i = 0; i < opttotal && *p != DHO_END;) {
 		if (*p == DHO_PAD)
-			j = 1;
+			optlen = 1;
 		else
-			j = p[1] + 2;
+			optlen = p[1] + DHCP_OPTION_HDR_LEN;
 
-		if ((i + j) > (u_int)optlen) {
-			warning("truncated dhcp options");
-			break;
+		if ((i + optlen) > opttotal) {
+			note("truncated dhcp options");
+			return (-1);
 		}
 
-		/* Revert any other relay agent information */
 		if (*p == DHO_RELAY_AGENT_INFORMATION) {
-			if (to != NULL) {
-				/* Check the relay agent information */
-				railen = 8 + sizeof(struct in_addr);
-				if (j >= railen &&
-				    p[1] == (railen - 2) &&
-				    p[2] == RAI_CIRCUIT_ID &&
-				    p[3] == 2 &&
-				    p[4] == (u_int8_t)(info->index << 8) &&
-				    p[5] == (info->index & 0xff) &&
-				    p[6] == RAI_REMOTE_ID &&
-				    p[7] == sizeof(*to))
-					memcpy(to, p + 8, sizeof(*to));
-
-				/* It should be the last option */
-				memset(p, 0, j);
-				*p = DHO_END;
-			} else {
-				/* Discard invalid option from a client */
-				if (!packet->giaddr.s_addr)
-					return (-1);
-			}
-			return (length);
+			hasinfo = 1;
+			continue;
 		}
 
-		p += j;
-		i += j;
+		p += optlen;
+		i += optlen;
 
-		if (from != NULL && (*p == DHO_END || (i >= optlen))) {
-			j = 8 + sizeof(*from);
-			if ((i + j) > (u_int)maxlen) {
-				warning("skipping agent information");
-				break;
+		/* We reached the end, append the relay agent info. */
+		if (i < opttotal && *p == DHO_END) {
+			/* We already have the Relay Agent Info, skip it. */
+			if (hasinfo)
+				continue;
+
+			/* Calculate needed length to append new data. */
+			neededlen = newtotal + DHCP_OPTION_HDR_LEN;
+			if (pc->pc_circuitlen > 0)
+				neededlen += DHCP_OPTION_HDR_LEN +
+				    pc->pc_circuitlen;
+			if (pc->pc_remotelen > 0)
+				neededlen += DHCP_OPTION_HDR_LEN +
+				    pc->pc_remotelen;
+
+			/* Save one byte for DHO_END. */
+			neededlen += 1;
+
+			/* Check if we have enough space for the new options. */
+			if (neededlen > maxlen) {
+				warning("no space for relay agent info");
+				return (newtotal);
 			}
 
-			/* Append the relay agent information if it fits */
-			p[0] = DHO_RELAY_AGENT_INFORMATION;
-			p[1] = j - 2;
-			p[2] = RAI_CIRCUIT_ID;
-			p[3] = 2;
-			p[4] = info->index << 8;
-			p[5] = info->index & 0xff;
-			p[6] = RAI_REMOTE_ID;
-			p[7] = sizeof(*from);
-			memcpy(p + 8, from, sizeof(*from));
+			/* New option header: 2 bytes. */
+			newtotal += DHCP_OPTION_HDR_LEN;
 
-			/* Do we need to increase the packet length? */
-			grow = j + 1 - (optlen - i);
-			if (grow > 0)
-				length += grow;
-			p += j;
+			*p++ = DHO_RELAY_AGENT_INFORMATION;
+			*p = 0;
+			if (pc->pc_circuitlen > 0) {
+				newtotal += DHCP_OPTION_HDR_LEN +
+				    pc->pc_circuitlen;
+				*p = (*p) + DHCP_OPTION_HDR_LEN +
+				    pc->pc_circuitlen;
+			}
+
+			if (pc->pc_remotelen > 0) {
+				newtotal += DHCP_OPTION_HDR_LEN +
+				    pc->pc_remotelen;
+				*p = (*p) + DHCP_OPTION_HDR_LEN +
+				    pc->pc_remotelen;
+			}
+
+			p++;
+
+			/* Sub-option circuit-id header plus value. */
+			if (pc->pc_circuitlen > 0) {
+				*p++ = RAI_CIRCUIT_ID;
+				*p++ = pc->pc_circuitlen;
+				memcpy(p, pc->pc_circuit, pc->pc_circuitlen);
+
+				p += pc->pc_circuitlen;
+			}
+
+			/* Sub-option remote-id header plus value. */
+			if (pc->pc_remotelen > 0) {
+				*p++ = RAI_REMOTE_ID;
+				*p++ = pc->pc_remotelen;
+				memcpy(p, pc->pc_remote, pc->pc_remotelen);
+
+				p += pc->pc_remotelen;
+			}
 
 			*p = DHO_END;
-			break;
 		}
 	}
 
-	return (length);
+	/* Zero the padding so we don't leak anything. */
+	p++;
+	if (p < (startp + maxlen))
+		memset(p, 0, (startp + maxlen) - p);
+
+	return (newtotal);
+}
+
+ssize_t
+relay_agentinfo_remove(struct packet_ctx *pc, struct dhcp_packet *dp,
+    size_t dplen)
+{
+	uint8_t		*p, *np, *startp, *endp;
+	int		 opttotal, optleft;
+	int		 suboptlen, optlen, i;
+	int		 maxlen, remaining, matched = 0;
+
+	startp = (uint8_t *)dp;
+	p = (uint8_t *)&dp->options;
+	if (memcmp(p, DHCP_OPTIONS_COOKIE, DHCP_OPTIONS_COOKIE_LEN)) {
+		note("invalid dhcp options cookie");
+		return (-1);
+	}
+
+	maxlen = DHCP_MTU_MAX - DHCP_FIXED_LEN - DHCP_OPTIONS_COOKIE_LEN - 1;
+	opttotal = dplen - DHCP_FIXED_NON_UDP - DHCP_OPTIONS_COOKIE_LEN;
+	optleft = opttotal;
+
+	p += DHCP_OPTIONS_COOKIE_LEN;
+	endp = p + opttotal;
+
+	for (i = 0; i < opttotal && *p != DHO_END;) {
+		if (*p == DHO_PAD)
+			optlen = 1;
+		else
+			optlen = p[1] + DHCP_OPTION_HDR_LEN;
+
+		if ((i + optlen) > opttotal) {
+			note("truncated dhcp options");
+			return (-1);
+		}
+
+		if (*p == DHO_RELAY_AGENT_INFORMATION) {
+			/* Fast case: there is no next option. */
+			np = p + optlen;
+			if (*np == DHO_END) {
+				*p = *np;
+				endp = p + 1;
+				/* Zero the padding so we don't leak data. */
+				if (endp < (startp + maxlen))
+					memset(endp, 0,
+					    (startp + maxlen) - endp);
+
+				return (dplen);
+			}
+
+			remaining = optlen;
+			while (remaining > 0) {
+				suboptlen = *(p + 1);
+				remaining -= DHCP_OPTION_HDR_LEN + suboptlen;
+
+				matched = 1;
+				if (relay_agentinfo_cmp(pc, p, suboptlen) == 0)
+					continue;
+
+				matched = 0;
+				break;
+			}
+			/* It is not ours Relay Agent Info, don't remove it. */
+			if (matched == 0)
+				break;
+
+			/* Move the other options on top of this one. */
+			optleft -= optlen;
+			endp -= optlen;
+
+			/* Replace the old agent relay info. */
+			memmove(p, dp, optleft);
+
+			endp++;
+			/* Zero the padding so we don't leak data. */
+			if (endp < (startp + maxlen))
+				memset(endp, 0,
+				    (startp + maxlen) - endp);
+
+			return (endp - startp);
+		}
+
+		p += optlen;
+		i += optlen;
+		optleft -= optlen;
+	}
+
+	return (endp - startp);
 }
 
 int
@@ -598,4 +848,66 @@ get_rdomain(char *name)
 
 	close(s);
 	return rv;
+}
+
+void
+l2relay(struct interface_info *ip, struct dhcp_packet *dp, int length,
+    struct packet_ctx *pc)
+{
+	struct server_list	*sp;
+	ssize_t			 dplen;
+
+	if (dp->hlen > sizeof(dp->chaddr)) {
+		note("Discarding packet with invalid hlen.");
+		return;
+	}
+
+	relay_agentinfo(pc, ip);
+
+	switch (dp->op) {
+	case BOOTREQUEST:
+		/* Add the relay agent info asked by the user. */
+		if ((dplen = relay_agentinfo_append(pc, dp, length)) == -1)
+			return;
+
+		/*
+		 * Re-send the packet to every interface except the one
+		 * it came in.
+		 */
+		for (sp = servers; sp != NULL; sp = sp->next) {
+			if (sp->intf == ip)
+				continue;
+
+			debug("forwarded BOOTREQUEST for %s to %s",
+			    print_hw_addr(pc->pc_htype, pc->pc_hlen,
+			    pc->pc_smac), sp->intf->name);
+
+			send_packet(sp->intf, dp, dplen, pc);
+		}
+		if (ip != interfaces) {
+			debug("forwarded BOOTREQUEST for %s to %s",
+			    print_hw_addr(pc->pc_htype, pc->pc_hlen,
+			    pc->pc_smac), interfaces->name);
+
+			send_packet(interfaces, dp, dplen, pc);
+		}
+		break;
+
+	case BOOTREPLY:
+		/* Remove relay agent info on offer. */
+		if ((dplen = relay_agentinfo_remove(pc, dp, length)) == -1)
+			return;
+
+		if (ip != interfaces) {
+			debug("forwarded BOOTREPLY for %s to %s",
+			    print_hw_addr(pc->pc_htype, pc->pc_hlen,
+			    pc->pc_dmac), interfaces->name);
+			send_packet(interfaces, dp, dplen, pc);
+		}
+		break;
+
+	default:
+		debug("invalid operation type '%d'", dp->op);
+		return;
+	}
 }

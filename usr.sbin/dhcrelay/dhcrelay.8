@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay.8,v 1.12 2013/07/16 11:13:33 schwarze Exp $
+.\"	$OpenBSD: dhcrelay.8,v 1.13 2016/12/12 15:41:05 rzalamena Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: December 12 2016 $
 .Dt DHCRELAY 8
 .Os
 .Sh NAME
@@ -45,8 +45,10 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl do
+.Op Fl C Ar circuit-id
+.Op Fl R Ar remote-id
 .Fl i Ar interface
-.Ar server1 Op Ar ... serverN
+.Ar destination1 Op Ar ... destinationN
 .Sh DESCRIPTION
 The
 .Nm
@@ -58,9 +60,14 @@ other subnets.
 listens for DHCP requests on a given interface.
 When a query is received,
 .Nm
-forwards it to the list of DHCP servers specified on the command line.
+forwards it to the list of DHCP destinations specified on the command line.
 When a reply is received, it is broadcast or unicast on the network from
 whence the original request came.
+.Pp
+The server might be a name, address or interface.
+.Nm
+will operate in layer 2 mode when the specified servers are interfaces,
+otherwise it will operate in layer 3 mode.
 .Pp
 The name of at least one DHCP server to which DHCP and BOOTP requests
 should be relayed,
@@ -73,12 +80,19 @@ must be specified on the command line.
 supports relaying of DHCP traffic to configure IPsec tunnel mode
 clients when listening on the
 .Xr enc 4
-interface.
+interface using layer 3 mode only.
 The DHCP server has to support RFC 3046 to echo back the relay agent
 information to allow stateless DHCP reply to IPsec tunnel mapping.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl C Ar circuit-id
+The
+.Ar circuit-id
+relay agent information sub-option value that
+.Nm
+should append on relayed packets.
+If this option is not specified it will use the interface number by default.
 .It Fl d
 .Nm
 normally runs in the foreground until it has configured
@@ -90,12 +104,20 @@ to always run as a foreground process.
 The name of the network interface that
 .Nm
 should attempt to configure.
-At least one IPv4 address has to be configured on this interface.
+For layer 3 mode at least one IPv4 address has to be configured on this
+interface.
 .It Fl o
 Add the relay agent information option.
 By default, this is only enabled for the
 .Xr enc 4
 interface.
+.It Fl R Ar remote-id
+The
+.Ar remote-id
+relay agent information sub-option value that
+.Nm
+should append on relayed packets.
+If this option is not specified it will use the destination address by default.
 .El
 .Sh SEE ALSO
 .Xr dhclient 8 ,

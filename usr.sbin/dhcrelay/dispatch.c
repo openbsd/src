@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.14 2016/12/08 19:18:15 rzalamena Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.15 2016/12/12 15:41:05 rzalamena Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -74,7 +74,8 @@ void (*bootp_packet_handler)(struct interface_info *,
 static int interface_status(struct interface_info *ifinfo);
 
 struct interface_info *
-get_interface(const char *ifname, void (*handler)(struct protocol *))
+get_interface(const char *ifname, void (*handler)(struct protocol *),
+    int isserver)
 {
 	struct interface_info		*iface;
 	struct ifaddrs			*ifap, *ifa;
@@ -145,7 +146,7 @@ get_interface(const char *ifname, void (*handler)(struct protocol *))
 		error("interface name '%s' too long", ifname);
 
 	/* Register the interface... */
-	if_register_receive(iface);
+	if_register_receive(iface, isserver);
 	if_register_send(iface);
 	add_protocol(iface->name, iface->rfdesc, handler, iface);
 

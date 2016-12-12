@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.13 2016/12/08 19:18:15 rzalamena Exp $ */
+/*	$OpenBSD: bpf.c,v 1.14 2016/12/12 15:41:05 rzalamena Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -93,6 +93,38 @@ if_register_send(struct interface_info *info)
 }
 
 /*
+ * Packet filter program: 'ip and udp and dst port CLIENT_PORT'
+ */
+struct bpf_insn dhcp_bpf_sfilter[] = {
+	/* Make sure this is an IP packet... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
+
+	/* Make sure it's a UDP packet... */
+	BPF_STMT(BPF_LD + BPF_B + BPF_ABS, 23),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+
+	/* Make sure this isn't a fragment... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20),
+	BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+
+	/* Get the IP header length... */
+	BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, 14),
+
+	/* Make sure it's to the right port... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 16),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, CLIENT_PORT, 0, 1),
+
+	/* If we passed all the tests, ask for the whole packet. */
+	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+
+	/* Otherwise, drop it. */
+	BPF_STMT(BPF_RET+BPF_K, 0),
+};
+
+int dhcp_bpf_sfilter_len = sizeof(dhcp_bpf_sfilter) / sizeof(struct bpf_insn);
+
+/*
  * Packet filter program: 'ip and udp and dst port SERVER_PORT'
  */
 struct bpf_insn dhcp_bpf_filter[] = {
@@ -161,6 +193,38 @@ struct bpf_insn dhcp_bpf_efilter[] = {
 int dhcp_bpf_efilter_len = sizeof(dhcp_bpf_efilter) / sizeof(struct bpf_insn);
 
 /*
+ * Packet write filter program: 'ip and udp and src port CLIENT_PORT'
+ */
+struct bpf_insn dhcp_bpf_swfilter[] = {
+	/* Make sure this is an IP packet... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
+
+	/* Make sure it's a UDP packet... */
+	BPF_STMT(BPF_LD + BPF_B + BPF_ABS, 23),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+
+	/* Make sure this isn't a fragment... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20),
+	BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+
+	/* Get the IP header length... */
+	BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, 14),
+
+	/* Make sure it's from the right port... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 14),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, CLIENT_PORT, 0, 1),
+
+	/* If we passed all the tests, ask for the whole packet. */
+	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+
+	/* Otherwise, drop it. */
+	BPF_STMT(BPF_RET+BPF_K, 0),
+};
+
+int dhcp_bpf_swfilter_len = sizeof(dhcp_bpf_swfilter) / sizeof(struct bpf_insn);
+
+/*
  * Packet write filter program: 'ip and udp and src port SERVER_PORT'
  */
 struct bpf_insn dhcp_bpf_wfilter[] = {
@@ -193,7 +257,7 @@ struct bpf_insn dhcp_bpf_wfilter[] = {
 int dhcp_bpf_wfilter_len = sizeof(dhcp_bpf_wfilter) / sizeof(struct bpf_insn);
 
 void
-if_register_receive(struct interface_info *info)
+if_register_receive(struct interface_info *info, int isserver)
 {
 	struct bpf_version v;
 	struct bpf_program p;
@@ -234,7 +298,10 @@ if_register_receive(struct interface_info *info)
 	info->rbuf_len = 0;
 
 	/* Set up the bpf filter program structure. */
-	if (info->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
+	if (isserver) {
+		p.bf_len = dhcp_bpf_sfilter_len;
+		p.bf_insns = dhcp_bpf_sfilter;
+	} else if (info->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
 		p.bf_len = dhcp_bpf_efilter_len;
 		p.bf_insns = dhcp_bpf_efilter;
 	} else {
@@ -245,8 +312,13 @@ if_register_receive(struct interface_info *info)
 		error("Can't install packet filter program: %m");
 
 	/* Set up the bpf write filter program structure. */
-	p.bf_len = dhcp_bpf_wfilter_len;
-	p.bf_insns = dhcp_bpf_wfilter;
+	if (isserver) {
+		p.bf_len = dhcp_bpf_swfilter_len;
+		p.bf_insns = dhcp_bpf_swfilter;
+	} else {
+		p.bf_len = dhcp_bpf_wfilter_len;
+		p.bf_insns = dhcp_bpf_wfilter;
+	}
 
 	if (ioctl(info->rfdesc, BIOCSETWF, &p) == -1)
 		error("Can't install write filter program: %m");

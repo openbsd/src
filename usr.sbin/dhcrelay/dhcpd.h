@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.17 2016/12/08 19:18:15 rzalamena Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.18 2016/12/12 15:41:05 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,11 @@ struct packet_ctx {
 
 	struct sockaddr_storage		 pc_src;
 	struct sockaddr_storage		 pc_dst;
+
+	u_int8_t			*pc_circuit;
+	int				 pc_circuitlen;
+	u_int8_t			*pc_remote;
+	int				 pc_remotelen;
 };
 
 struct iaddr {
@@ -77,6 +82,12 @@ enum dhcp_state {
 	S_REBINDING
 };
 
+/* DHCP relaying modes. */
+enum dhcp_relay_mode {
+	DRM_UNKNOWN,
+	DRM_LAYER2,
+	DRM_LAYER3,
+};
 
 struct interface_info {
 	struct interface_info	*next;
@@ -123,7 +134,7 @@ int debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
 void if_register_send(struct interface_info *);
-void if_register_receive(struct interface_info *);
+void if_register_receive(struct interface_info *, int);
 ssize_t send_packet(struct interface_info *,
     struct dhcp_packet *, size_t, struct packet_ctx *);
 ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
@@ -133,7 +144,7 @@ ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
 extern void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, struct packet_ctx *);
 struct interface_info *get_interface(const char *,
-    void (*)(struct protocol *));
+    void (*)(struct protocol *), int isserver);
 void dispatch(void);
 void got_one(struct protocol *);
 void add_protocol(char *, int, void (*)(struct protocol *), void *);

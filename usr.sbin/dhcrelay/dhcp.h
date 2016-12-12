@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.5 2009/09/03 11:56:49 reyk Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.6 2016/12/12 15:41:05 rzalamena Exp $	*/
 
 /* Protocol structures... */
 
@@ -49,6 +49,10 @@
 						/* Everything but options. */
 #define DHCP_MTU_MAX		1500
 #define DHCP_OPTION_LEN		(DHCP_MTU_MAX - DHCP_FIXED_LEN)
+/* The option/sub-option maximum length. */
+#define DHCP_OPTION_MAXLEN	255
+/* The option/sub-option header length. */
+#define DHCP_OPTION_HDR_LEN	2
 
 #define BOOTP_MIN_LEN		300
 
