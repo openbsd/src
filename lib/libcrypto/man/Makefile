@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.74 2016/12/11 18:06:09 schwarze Exp $
+# $OpenBSD: Makefile,v 1.75 2016/12/12 22:48:02 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -122,7 +122,9 @@ MAN=	\
 	HMAC.3 \
 	MD5.3 \
 	OBJ_nid2obj.3 \
+	OCSP_CRLID_new.3 \
 	OCSP_REQUEST_new.3 \
+	OCSP_SERVICELOC_new.3 \
 	OCSP_cert_to_id.3 \
 	OCSP_request_add1_nonce.3 \
 	OCSP_resp_find_status.3 \
