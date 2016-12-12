@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.157 2016/11/08 06:04:25 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.158 2016/12/12 06:23:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1401,13 +1401,9 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		    &audio_lock, PWAIT | PCATCH, "au_rd", 0);
 		if (!(sc->dev.dv_flags & DVF_ACTIVE))
 			error = EIO;
-#ifdef AUDIO_DEBUG
 		if (error) {
 			DPRINTF("%s: read woke up error = %d\n",
 			    DEVNAME(sc), error);
-		}
-#endif
-		if (error) {
 			mtx_leave(&audio_lock);
 			return error;
 		}
@@ -1418,6 +1414,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		ptr = audio_buf_rgetblk(&sc->rec, &count);
 		if (count > uio->uio_resid)
 			count = uio->uio_resid;
+		audio_buf_rdiscard(&sc->rec, count);
 		mtx_leave(&audio_lock);
 		DPRINTFN(1, "%s: read: start = %zu, count = %zu\n",
 		    DEVNAME(sc), ptr - sc->rec.data, count);
@@ -1427,7 +1424,6 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		if (error)
 			return error;
 		mtx_enter(&audio_lock);
-		audio_buf_rdiscard(&sc->rec, count);
 	}
 	mtx_leave(&audio_lock);
 	return 0;
@@ -1478,19 +1474,16 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			    &audio_lock, PWAIT | PCATCH, "au_wr", 0);
 			if (!(sc->dev.dv_flags & DVF_ACTIVE))
 				error = EIO;
-#ifdef AUDIO_DEBUG
 			if (error) {
 				DPRINTF("%s: write woke up error = %d\n",
 				    DEVNAME(sc), error);
-			}
-#endif
-			if (error) {
 				mtx_leave(&audio_lock);
 				return error;
 			}
 		}
 		if (count > uio->uio_resid)
 			count = uio->uio_resid;
+		audio_buf_wcommit(&sc->play, count);
 		mtx_leave(&audio_lock);
 		error = uiomove(ptr, count, uio);
 		if (error)
@@ -1500,17 +1493,14 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			DPRINTFN(1, "audio_write: converted count = %zu\n",
 			    count);
 		}
-		mtx_enter(&audio_lock);
-		audio_buf_wcommit(&sc->play, count);
 
 		/* start automatically if audio_ioc_start() was never called */
 		if (audio_canstart(sc)) {
-			mtx_leave(&audio_lock);
 			error = audio_start(sc);
 			if (error)
 				return error;
-			mtx_enter(&audio_lock);
 		}
+		mtx_enter(&audio_lock);
 	}
 	mtx_leave(&audio_lock);
 	return 0;
