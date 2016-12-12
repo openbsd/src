@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.120 2016/12/05 07:07:43 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.121 2016/12/12 06:51:09 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1254,10 +1254,8 @@ uaudio_add_processing(struct uaudio_softc *sc, const struct io_terminal *iot, in
 	case CHORUS_PROCESS:
 	case DYN_RANGE_COMP_PROCESS:
 	default:
-#ifdef UAUDIO_DEBUG
-		printf("%s: unit %d, type=%d not impl.\n",
-		       __func__, d->bUnitId, ptype);
-#endif
+		DPRINTF(("%s: unit %d, type=%d not impl.\n",
+		       __func__, d->bUnitId, ptype));
 		break;
 	}
 }
