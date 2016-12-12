@@ -12,7 +12,7 @@ arp=ARP(op='who-has', hwsrc="33:33:33:33:33:33", psrc=LOCAL_ADDR,
     hwdst="ff:ff:ff:ff:ff:ff", pdst=REMOTE_ADDR)
 eth=Ether(src=LOCAL_MAC, dst="ff:ff:ff:ff:ff:ff")/arp
 
-e=srp1(eth, iface=LOCAL_IF, timeout=2)
+e=srp1(eth, iface=LOCAL_IF, promisc=1, timeout=2)
 
 if e and e.type == ETH_P_ARP:
 	a=e.payload
