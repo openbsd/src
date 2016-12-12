@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.169 2016/09/04 15:46:39 reyk Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.170 2016/12/12 09:51:30 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -312,14 +312,17 @@ int
 tunopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tun_softc *tp;
-	int error;
+	unsigned int rdomain = rtable_l2(p->p_p->ps_rtableid);
 
 	if ((tp = tun_lookup(minor(dev))) == NULL) {	/* create on demand */
 		char	xname[IFNAMSIZ];
+		int	s, error;
 
 		snprintf(xname, sizeof(xname), "%s%d", "tun", minor(dev));
-		if ((error = if_clone_create(xname,
-		    rtable_l2(p->p_p->ps_rtableid))) != 0)
+		s = splsoftnet();
+		error = if_clone_create(xname, rdomain);
+		splx(s);
+		if (error != 0)
 			return (error);
 
 		if ((tp = tun_lookup(minor(dev))) == NULL)
@@ -334,14 +337,17 @@ int
 tapopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tun_softc *tp;
-	int error;
+	unsigned int rdomain = rtable_l2(p->p_p->ps_rtableid);
 
 	if ((tp = tap_lookup(minor(dev))) == NULL) {	/* create on demand */
 		char	xname[IFNAMSIZ];
+		int	s, error;
 
 		snprintf(xname, sizeof(xname), "%s%d", "tap", minor(dev));
-		if ((error = if_clone_create(xname,
-		    rtable_l2(p->p_p->ps_rtableid))) != 0)
+		s = splsoftnet();
+		error = if_clone_create(xname, rdomain);
+		splx(s);
+		if (error != 0)
 			return (error);
 
 		if ((tp = tap_lookup(minor(dev))) == NULL)
@@ -403,7 +409,7 @@ tapclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
 {
-	int			 s;
+	int			 s, error = 0;
 	struct ifnet		*ifp;
 
 	ifp = &tp->tun_if;
@@ -420,14 +426,16 @@ tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
 
 	TUNDEBUG(("%s: closed\n", ifp->if_xname));
 
-	if (!(tp->tun_flags & TUN_STAYUP))
-		return (if_clone_destroy(ifp->if_xname));
-	else {
+	if (!(tp->tun_flags & TUN_STAYUP)) {
+		s = splsoftnet();
+		error = if_clone_destroy(ifp->if_xname);
+		splx(s);
+	} else {
 		tp->tun_pgid = 0;
 		selwakeup(&tp->tun_rsel);
 	}
 
-	return (0);
+	return (error);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.180 2016/10/27 03:00:35 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.181 2016/12/12 09:51:30 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -467,7 +467,6 @@ void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_downall(void);
 void	if_link_state_change(struct ifnet *);
-void	if_slowtimo(void *);
 void	if_up(struct ifnet *);
 int	ifconf(u_long, caddr_t);
 void	ifinit(void);
@@ -485,7 +484,6 @@ void	if_congestion(void);
 int	if_congested(void);
 __dead void	unhandled_af(int);
 int	if_setlladdr(struct ifnet *, const uint8_t *);
-int	if_setrdomain(struct ifnet *, int);
 
 #endif /* _KERNEL */
 

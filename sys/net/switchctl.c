@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.8 2016/11/11 16:19:09 rzalamena Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.9 2016/12/12 09:51:30 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -84,11 +84,14 @@ switchopen(dev_t dev, int flags, int mode, struct proc *p)
 	struct switch_softc	*sc;
 	char			 name[IFNAMSIZ];
 	int			 rv, s, error = 0;
+	unsigned int		 rdomain = rtable_l2(p->p_p->ps_rtableid);
 
 	if ((sc = switch_dev2sc(dev)) == NULL) {
 		snprintf(name, sizeof(name), "switch%d", minor(dev));
-		if ((rv = if_clone_create(name,
-		    rtable_l2(p->p_p->ps_rtableid))) != 0)
+		s = splsoftnet();
+		rv = if_clone_create(name, rdomain);
+		splx(s);
+		if (rv != 0)
 			return (rv);
 		if ((sc = switch_dev2sc(dev)) == NULL)
 			return (ENXIO);

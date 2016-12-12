@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.464 2016/12/02 18:32:38 vgross Exp $	*/
+/*	$OpenBSD: if.c,v 1.465 2016/12/12 09:51:30 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -133,6 +133,8 @@
 void	if_attachsetup(struct ifnet *);
 void	if_attachdomain(struct ifnet *);
 void	if_attach_common(struct ifnet *);
+int	if_setrdomain(struct ifnet *, int);
+void	if_slowtimo(void *);
 
 void	if_detached_start(struct ifnet *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
@@ -402,6 +404,8 @@ if_attachsetup(struct ifnet *ifp)
 {
 	unsigned long ifidx;
 
+	splsoftassert(IPL_SOFTNET);
+
 	TAILQ_INIT(&ifp->if_groups);
 
 	if_addgroup(ifp, IFG_ALL);
@@ -501,17 +505,25 @@ if_attachdomain(struct ifnet *ifp)
 void
 if_attachhead(struct ifnet *ifp)
 {
+	int s;
+
+	s = splsoftnet();
 	if_attach_common(ifp);
 	TAILQ_INSERT_HEAD(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
+	splx(s);
 }
 
 void
 if_attach(struct ifnet *ifp)
 {
+	int s;
+
+	s = splsoftnet();
 	if_attach_common(ifp);
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
+	splx(s);
 }
 
 void
@@ -1036,7 +1048,9 @@ if_clone_create(const char *name, int rdomain)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
-	int unit, ret, s;
+	int unit, ret;
+
+	splsoftassert(IPL_SOFTNET);
 
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
@@ -1045,9 +1059,7 @@ if_clone_create(const char *name, int rdomain)
 	if (ifunit(name) != NULL)
 		return (EEXIST);
 
-	s = splsoftnet();
 	ret = (*ifc->ifc_create)(ifc, unit);
-	splx(s);
 
 	if (ret != 0 || (ifp = ifunit(name)) == NULL)
 		return (ret);
@@ -1067,7 +1079,8 @@ if_clone_destroy(const char *name)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
-	int error, s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
@@ -1081,15 +1094,13 @@ if_clone_destroy(const char *name)
 		return (EOPNOTSUPP);
 
 	if (ifp->if_flags & IFF_UP) {
+		int s;
 		s = splnet();
 		if_down(ifp);
 		splx(s);
 	}
 
-	s = splsoftnet();
-	error = (*ifc->ifc_destroy)(ifp);
-	splx(s);
-	return (error);
+	return ((*ifc->ifc_destroy)(ifp));
 }
 
 /*
@@ -1594,7 +1605,7 @@ int
 if_setrdomain(struct ifnet *ifp, int rdomain)
 {
 	struct ifreq ifr;
-	int s, error;
+	int error;
 
 	if (rdomain < 0 || rdomain > RT_TABLEID_MAX)
 		return (EINVAL);
@@ -1618,11 +1629,8 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 		if (error && (ifp != loifp || error != EEXIST))
 			return (error);
 
-
-		s = splsoftnet();
 		if ((error = rtable_add(rdomain)) == 0)
 			rtable_l2set(rdomain, rdomain, loifp->if_index);
-		splx(s);
 		if (error) {
 			if_clone_destroy(loifname);
 			return (error);
@@ -1638,6 +1646,8 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 	/* remove all routing entries when switching domains */
 	/* XXX this is a bit ugly */
 	if (rdomain != ifp->if_rdomain) {
+		int s;
+
 		s = splnet();
 		/*
 		 * We are tearing down the world.
