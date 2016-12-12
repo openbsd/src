@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_STRING_new.3,v 1.5 2016/11/10 11:50:32 schwarze Exp $
+.\"	$OpenBSD: ASN1_STRING_new.3,v 1.6 2016/12/12 12:52:12 schwarze Exp $
 .\"	OpenSSL 99d63d46 Tue Mar 24 07:52:24 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson.
@@ -48,13 +48,17 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2016 $
+.Dd $Mdocdate: December 12 2016 $
 .Dt ASN1_STRING_NEW 3
 .Os
 .Sh NAME
 .Nm ASN1_STRING_new ,
 .Nm ASN1_STRING_type_new ,
 .Nm ASN1_STRING_free
+.Nm DIRECTORYSTRING_new ,
+.Nm DIRECTORYSTRING_free ,
+.Nm DISPLAYTEXT_new ,
+.Nm DISPLAYTEXT_free
 .Nd ASN1_STRING allocation functions
 .Sh SYNOPSIS
 .In openssl/asn1.h
@@ -70,9 +74,28 @@
 .Fo ASN1_STRING_free
 .Fa "ASN1_STRING *a"
 .Fc
+.Ft ASN1_STRING *
+.Fo DIRECTORYSTRING_new
+.Fa void
+.Fc
+.Ft void
+.Fo DIRECTORYSTRING_free
+.Fa "ASN1_STRING *a"
+.Fc
+.Ft ASN1_STRING *
+.Fo DISPLAYTEXT_new
+.Fa void
+.Fc
+.Ft void
+.Fo DISPLAYTEXT_free
+.Fa "ASN1_STRING *a"
+.Fc
 .Sh DESCRIPTION
-.Fn ASN1_STRING_new
-returns an allocated
+.Fn ASN1_STRING_new ,
+.Fn DIRECTORYSTRING_new ,
+and
+.Fn DISPLAYTEXT_new
+return an allocated
 .Vt ASN1_STRING
 structure.
 Its type is undefined.
@@ -83,8 +106,11 @@ returns an allocated
 structure of type
 .Fa type .
 .Pp
-.Fn ASN1_STRING_free
-frees up
+.Fn ASN1_STRING_free ,
+.Fn DIRECTORYSTRING_free ,
+and
+.Fn DISPLAYTEXT_free
+free up
 .Fa a .
 If
 .Fa a
