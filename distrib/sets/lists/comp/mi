@@ -2170,14 +2170,11 @@
 ./usr/share/man/man3/define_key.3
 ./usr/share/man/man3/des_read_pw.3
 ./usr/share/man/man3/devname.3
-./usr/share/man/man3/dh.3
 ./usr/share/man/man3/directory.3
 ./usr/share/man/man3/dirname.3
 ./usr/share/man/man3/div.3
 ./usr/share/man/man3/dl_iterate_phdr.3
 ./usr/share/man/man3/dlfcn.3
-./usr/share/man/man3/dsa.3
-./usr/share/man/man3/ec.3
 ./usr/share/man/man3/ecvt.3
 ./usr/share/man/man3/editline.3
 ./usr/share/man/man3/end.3
@@ -2533,7 +2530,6 @@
 ./usr/share/man/man3/rmd160.3
 ./usr/share/man/man3/round.3
 ./usr/share/man/man3/rpc.3
-./usr/share/man/man3/rsa.3
 ./usr/share/man/man3/scalbn.3
 ./usr/share/man/man3/scandir.3
 ./usr/share/man/man3/scanf.3

@@ -1980,6 +1980,7 @@
 ./usr/share/man/man5/npppd.conf.5
 ./usr/share/man/man5/nsd.conf.5
 ./usr/share/man/man5/ntpd.conf.5
+./usr/share/man/man5/openssl.cnf.5
 ./usr/share/man/man5/ospf6d.conf.5
 ./usr/share/man/man5/ospfd.conf.5
 ./usr/share/man/man5/package.5
@@ -2026,6 +2027,7 @@
 ./usr/share/man/man5/uuencode.5
 ./usr/share/man/man5/vm.conf.5
 ./usr/share/man/man5/wsconsctl.conf.5
+./usr/share/man/man5/x509v3.cnf.5
 ./usr/share/man/man5/ypldap.conf.5
 ./usr/share/man/man5/ypserv.acl.5
 ./usr/share/man/man7/ascii.7
