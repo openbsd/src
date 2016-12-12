@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.87 2016/11/16 08:46:05 mpi Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.88 2016/12/12 13:30:05 mpi Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -223,10 +223,8 @@ void
 pfi_attach_ifnet(struct ifnet *ifp)
 {
 	struct pfi_kif		*kif;
-	int			 s;
 
 	pfi_initialize();
-	s = splsoftnet();
 	pfi_update++;
 	if ((kif = pfi_kif_get(ifp->if_xname)) == NULL)
 		panic("pfi_kif_get failed");
@@ -240,20 +238,16 @@ pfi_attach_ifnet(struct ifnet *ifp)
 		    ifp->if_xname);
 
 	pfi_kif_update(kif);
-
-	splx(s);
 }
 
 void
 pfi_detach_ifnet(struct ifnet *ifp)
 {
-	int			 s;
 	struct pfi_kif		*kif;
 
 	if ((kif = (struct pfi_kif *)ifp->if_pf_kif) == NULL)
 		return;
 
-	s = splsoftnet();
 	pfi_update++;
 	hook_disestablish(ifp->if_addrhooks, kif->pfik_ah_cookie);
 	pfi_kif_update(kif);
@@ -261,60 +255,47 @@ pfi_detach_ifnet(struct ifnet *ifp)
 	kif->pfik_ifp = NULL;
 	ifp->if_pf_kif = NULL;
 	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
-
-	splx(s);
 }
 
 void
 pfi_attach_ifgroup(struct ifg_group *ifg)
 {
 	struct pfi_kif	*kif;
-	int		 s;
 
 	pfi_initialize();
-	s = splsoftnet();
 	pfi_update++;
 	if ((kif = pfi_kif_get(ifg->ifg_group)) == NULL)
 		panic("pfi_kif_get failed");
 
 	kif->pfik_group = ifg;
 	ifg->ifg_pf_kif = (caddr_t)kif;
-
-	splx(s);
 }
 
 void
 pfi_detach_ifgroup(struct ifg_group *ifg)
 {
-	int		 s;
 	struct pfi_kif	*kif;
 
 	if ((kif = (struct pfi_kif *)ifg->ifg_pf_kif) == NULL)
 		return;
 
-	s = splsoftnet();
 	pfi_update++;
 
 	kif->pfik_group = NULL;
 	ifg->ifg_pf_kif = NULL;
 	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
-	splx(s);
 }
 
 void
 pfi_group_change(const char *group)
 {
 	struct pfi_kif		*kif;
-	int			 s;
 
-	s = splsoftnet();
 	pfi_update++;
 	if ((kif = pfi_kif_get(group)) == NULL)
 		panic("pfi_kif_get failed");
 
 	pfi_kif_update(kif);
-
-	splx(s);
 }
 
 int
@@ -611,13 +592,12 @@ pfi_dynaddr_copyout(struct pf_addr_wrap *aw)
 void
 pfi_kifaddr_update(void *v)
 {
-	int			 s;
 	struct pfi_kif		*kif = (struct pfi_kif *)v;
 
-	s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
+
 	pfi_update++;
 	pfi_kif_update(kif);
-	splx(s);
 }
 
 int
