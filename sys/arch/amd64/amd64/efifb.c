@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.9 2016/06/21 15:24:55 jcs Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.10 2016/12/12 13:13:15 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -103,6 +103,9 @@ int	 efifb_list_font(void *, struct wsdisplay_font *);
 int	 efifb_load_font(void *, void *, struct wsdisplay_font *);
 
 struct cb_framebuffer *cb_find_fb(paddr_t);
+
+extern int	(*ws_get_param)(struct wsdisplay_param *);
+extern int	(*ws_set_param)(struct wsdisplay_param *);
 
 const struct cfattach efifb_ca = {
 	sizeof(struct efifb_softc), efifb_match, efifb_attach, NULL
@@ -235,6 +238,16 @@ efifb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct wsdisplay_fbinfo	*wdf;
 
 	switch (cmd) {
+	case WSDISPLAYIO_GETPARAM:
+		if (ws_get_param != NULL)
+			return (*ws_get_param)((struct wsdisplay_param *)data);
+		else
+			return (-1);
+	case WSDISPLAYIO_SETPARAM:
+		if (ws_set_param != NULL)
+			return (*ws_set_param)((struct wsdisplay_param *)data);
+		else
+			return (-1);
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_EFIFB;
 		break;
