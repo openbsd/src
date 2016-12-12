@@ -1850,7 +1850,9 @@
 ./usr/share/man/man3/HMAC.3
 ./usr/share/man/man3/MD5.3
 ./usr/share/man/man3/OBJ_nid2obj.3
+./usr/share/man/man3/OCSP_CRLID_new.3
 ./usr/share/man/man3/OCSP_REQUEST_new.3
+./usr/share/man/man3/OCSP_SERVICELOC_new.3
 ./usr/share/man/man3/OCSP_cert_to_id.3
 ./usr/share/man/man3/OCSP_request_add1_nonce.3
 ./usr/share/man/man3/OCSP_resp_find_status.3
