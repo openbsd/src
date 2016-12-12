@@ -1,7 +1,24 @@
-.\"	$OpenBSD: OCSP_cert_to_id.3,v 1.3 2016/12/06 14:54:55 schwarze Exp $
+.\"	$OpenBSD: OCSP_cert_to_id.3,v 1.4 2016/12/12 20:41:48 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2014, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,19 +65,24 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: December 12 2016 $
 .Dt OCSP_CERT_TO_ID 3
 .Os
 .Sh NAME
+.Nm OCSP_CERTID_new ,
+.Nm OCSP_CERTID_free ,
 .Nm OCSP_cert_to_id ,
 .Nm OCSP_cert_id_new ,
-.Nm OCSP_CERTID_free ,
 .Nm OCSP_id_issuer_cmp ,
 .Nm OCSP_id_cmp ,
 .Nm OCSP_id_get0_info
 .Nd OCSP certificate ID utility functions
 .Sh SYNOPSIS
 .In openssl/ocsp.h
+.Ft OCSP_CERTID *
+.Fn OCSP_CERTID_new void
+.Ft void
+.Fn OCSP_CERTID_free "OCSP_CERTID *id"
 .Ft OCSP_CERTID *
 .Fo OCSP_cert_to_id
 .Fa "const EVP_MD *dgst"
@@ -73,10 +95,6 @@
 .Fa "X509_NAME *issuerName"
 .Fa "ASN1_BIT_STRING *issuerKey"
 .Fa "ASN1_INTEGER *serialNumber"
-.Fc
-.Ft void
-.Fo OCSP_CERTID_free
-.Fa "OCSP_CERTID *id"
 .Fc
 .Ft int
 .Fo OCSP_id_issuer_cmp
@@ -97,10 +115,28 @@
 .Fa "OCSP_CERTID *cid"
 .Fc
 .Sh DESCRIPTION
+.Fn OCSP_CERTID_new
+allocates and initializes an empty
+.Vt OCSP_CERTID
+object, representing an ASN.1 CertID structure defined in RFC 6960.
+It can store hashes of an issuer's distinguished name and public
+key together with a serial number of a certificate.
+It is used by the
+.Vt OCSP_ONEREQ
+object described in
+.Xr OCSP_ONEREQ_new 3
+and by the
+.Vt OCSP_SINGLERESP
+object described in
+.Xr OCSP_SINGLERESP_new 3 .
+.Fn OCSP_CERTID_free
+frees
+.Fa id .
+.Pp
 .Fn OCSP_cert_to_id
 creates and returns a new
 .Vt OCSP_CERTID
-structure using message digest
+object using message digest
 .Fa dgst
 for certificate
 .Fa subject
@@ -123,10 +159,6 @@ issuer key hash
 .Fa issuerKey
 and serial number
 .Fa serialNumber .
-.Pp
-.Fn OCSP_CERTID_free
-frees up
-.Fa id .
 .Pp
 .Fn OCSP_id_cmp
 compares
@@ -154,7 +186,7 @@ The values returned by
 are internal pointers and must not be freed up by an application:
 they will be freed when the corresponding
 .Vt OCSP_CERTID
-structure is freed.
+object is freed.
 .Pp
 OCSP clients will typically only use
 .Fn OCSP_cert_to_id
@@ -162,12 +194,13 @@ or
 .Fn OCSP_cert_id_new :
 the other functions are used by responder applications.
 .Sh RETURN VALUES
-.Fn OCSP_cert_to_id
+.Fn OCSP_CERTID_new ,
+.Fn OCSP_cert_to_id ,
 and
 .Fn OCSP_cert_id_new
 return either a pointer to a valid
 .Vt OCSP_CERTID
-structure or
+object or
 .Dv NULL
 if an error occurred.
 .Pp
@@ -184,3 +217,6 @@ returns 1 for success or 0 for failure.
 .Xr OCSP_resp_find_status 3 ,
 .Xr OCSP_response_status 3 ,
 .Xr OCSP_sendreq_new 3
+.Sh STANDARDS
+RFC 6960: X.509 Internet Public Key Infrastructure Online Certificate
+Status Protocol, section 4: Details of the Protocol
