@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.31 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: esa.c,v 1.32 2016/12/12 06:47:22 ratchov Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -209,7 +209,6 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 	       struct audio_params *rec)
 {
 	struct esa_voice *vc = hdl;
-	//struct esa_softc *sc = (struct esa_softc *)vc->parent;
 	struct esa_channel *ch;
 	struct audio_params *p;
 	int mode;
@@ -614,9 +613,6 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 #undef LO
 #undef HI
 
-	/* XXX */
-	//esa_commit_settings(vc);
-
 	sc->sc_ntimers++;
 
 	if (sc->sc_ntimers == 1) {
@@ -746,9 +742,6 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 		     vc->index + ESA_NUM_VOICES);
 #undef LO
 #undef HI
-
-	/* XXX */
-	//esa_commit_settings(vc);
 
 	sc->sc_ntimers++;
 	if (sc->sc_ntimers == 1) {
