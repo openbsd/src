@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.51 2016/12/13 06:55:32 jmc Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.52 2016/12/13 09:29:05 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -341,6 +341,11 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 
 	/* If it's a bootreply, forward it to the client. */
 	if (packet->op == BOOTREPLY) {
+		/* Filter packet that were not meant for us. */
+		if (packet->giaddr.s_addr !=
+		    interfaces->primary_address.s_addr)
+			return;
+
 		bzero(&to, sizeof(to));
 		if (!(packet->flags & htons(BOOTP_BROADCAST))) {
 			to.sin_addr = packet->yiaddr;
