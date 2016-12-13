@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.11 2015/11/05 11:55:21 jca Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.12 2016/12/13 06:40:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -39,6 +39,8 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 
+#include <net/ethertypes.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -55,12 +57,14 @@
 #define	GRE_AP		0x0080		/* acknowledgment# present */
 #define	GRE_VERS	0x0007		/* protocol version */
 
-#define	GREPROTO_IP	0x0800		/* IP */
-#define	GREPROTO_PPP	0x880b		/* PPTP */
-
 /* source route entry types */
 #define	GRESRE_IP	0x0800		/* IP */
 #define	GRESRE_ASN	0xfffe		/* ASN */
+
+#define NVGRE_VSID_MASK		0xffffff00U
+#define NVGRE_VSID_SHIFT	8
+#define NVGRE_FLOWID_MASK	0x000000ffU
+#define NVGRE_FLOWID_SHIFT	0
 
 void gre_print_0(const u_char *, u_int);
 void gre_print_1(const u_char *, u_int);
@@ -82,14 +86,17 @@ gre_print(const u_char *bp, u_int length)
 	}
 	vers = EXTRACT_16BITS(bp) & GRE_VERS;
 
-	if (vers == 0)
+	switch (vers) {
+	case 0:
 		gre_print_0(bp, len);
-	else if (vers == 1)
+		break;
+	case 1:
 		gre_print_1(bp, len);
-	else
+		break;
+	default:
 		printf("gre-unknown-version=%u", vers);
-	return;
-
+		break;
+	}
 }
 
 void
@@ -114,6 +121,8 @@ gre_print_0(const u_char *bp, u_int length)
 	if (len < 2)
 		goto trunc;
 	prot = EXTRACT_16BITS(bp);
+	printf("%s", etherproto_string(prot));
+
 	len -= 2;
 	bp += 2;
 
@@ -121,21 +130,32 @@ gre_print_0(const u_char *bp, u_int length)
 		if (len < 2)
 			goto trunc;
 		if (vflag)
-			printf("sum 0x%x ", EXTRACT_16BITS(bp));
+			printf(" sum 0x%x", EXTRACT_16BITS(bp));
 		bp += 2;
 		len -= 2;
 
 		if (len < 2)
 			goto trunc;
-		printf("off 0x%x ", EXTRACT_16BITS(bp));
+		printf(" off 0x%x", EXTRACT_16BITS(bp));
 		bp += 2;
 		len -= 2;
 	}
 
 	if (flags & GRE_KP) {
+		uint32_t key, vsid;
+
 		if (len < 4)
 			goto trunc;
-		printf("key=0x%x ", EXTRACT_32BITS(bp));
+		key = EXTRACT_32BITS(bp);
+
+		/* maybe NVGRE? */
+		if (flags == (GRE_KP | 0) && prot == ETHERTYPE_TRANSETHER) {
+			vsid = (key & NVGRE_VSID_MASK) >> NVGRE_VSID_SHIFT;
+			printf(" NVGRE vsid=%u (0x%x)+flowid=0x%02x /",
+			    vsid, vsid,
+			    (key & NVGRE_FLOWID_MASK) >> NVGRE_FLOWID_SHIFT);
+		}
+		printf(" key=%u (0x%x)", key, key);
 		bp += 4;
 		len -= 4;
 	}
@@ -143,7 +163,7 @@ gre_print_0(const u_char *bp, u_int length)
 	if (flags & GRE_SP) {
 		if (len < 4)
 			goto trunc;
-		printf("seq %u ", EXTRACT_32BITS(bp));
+		printf(" seq %u", EXTRACT_32BITS(bp));
 		bp += 4;
 		len -= 4;
 	}
@@ -174,9 +194,20 @@ gre_print_0(const u_char *bp, u_int length)
 		}
 	}
 
+	printf(": ");
+
 	switch (prot) {
-	case GREPROTO_IP:
+	case ETHERTYPE_IP:
 		ip_print(bp, len);
+		break;
+	case ETHERTYPE_IPV6:
+		ip6_print(bp, len);
+		break;
+	case ETHERTYPE_MPLS:
+		mpls_print(bp, len);
+		break;
+	case ETHERTYPE_TRANSETHER:
+		ether_print(bp, len);
 		break;
 	default:
 		printf("gre-proto-0x%x", prot);
@@ -198,7 +229,7 @@ gre_print_1(const u_char *bp, u_int length)
 	bp += 2;
 
 	if (vflag) {
-		printf("[%s%s%s%s%s%s] ",
+		printf("[%s%s%s%s%s%s]",
 		    (flags & GRE_CP) ? "C" : "",
 		    (flags & GRE_RP) ? "R" : "",
 		    (flags & GRE_KP) ? "K" : "",
@@ -214,19 +245,19 @@ gre_print_1(const u_char *bp, u_int length)
 	bp += 2;
 
 	if (flags & GRE_CP) {
-		printf("cpset!");
+		printf(" cpset!");
 		return;
 	}
 	if (flags & GRE_RP) {
-		printf("rpset!");
+		printf(" rpset!");
 		return;
 	}
 	if ((flags & GRE_KP) == 0) {
-		printf("kpunset!");
+		printf(" kpunset!");
 		return;
 	}
 	if (flags & GRE_sP) {
-		printf("spset!");
+		printf(" spset!");
 		return;
 	}
 
@@ -236,7 +267,7 @@ gre_print_1(const u_char *bp, u_int length)
 		if (len < 4)
 			goto trunc;
 		k = EXTRACT_32BITS(bp);
-		printf("call %d ", k & 0xffff);
+		printf(" call %d", k & 0xffff);
 		len -= 4;
 		bp += 4;
 	}
@@ -244,7 +275,7 @@ gre_print_1(const u_char *bp, u_int length)
 	if (flags & GRE_SP) {
 		if (len < 4)
 			goto trunc;
-		printf("seq %u ", EXTRACT_32BITS(bp));
+		printf(" seq %u", EXTRACT_32BITS(bp));
 		bp += 4;
 		len -= 4;
 	}
@@ -252,18 +283,20 @@ gre_print_1(const u_char *bp, u_int length)
 	if (flags & GRE_AP) {
 		if (len < 4)
 			goto trunc;
-		printf("ack %u ", EXTRACT_32BITS(bp));
+		printf(" ack %u", EXTRACT_32BITS(bp));
 		bp += 4;
 		len -= 4;
 	}
 
 	if ((flags & GRE_SP) == 0) {
-		printf("no-payload");
+		printf(" no-payload");
 		return;
 	}
 
+	printf(": ");
+
 	switch (prot) {
-	case GREPROTO_PPP:
+	case ETHERTYPE_PPP:
 		printf("gre-ppp-payload");
 		break;
 	default:
@@ -282,17 +315,17 @@ gre_sre_print(u_int16_t af, u_int8_t sreoff, u_int8_t srelen,
 {
 	switch (af) {
 	case GRESRE_IP:
-		printf("(rtaf=ip");
+		printf(" (rtaf=ip");
 		gre_sre_ip_print(sreoff, srelen, bp, len);
-		printf(") ");
+		printf(")");
 		break;
 	case GRESRE_ASN:
-		printf("(rtaf=asn");
+		printf(" (rtaf=asn");
 		gre_sre_asn_print(sreoff, srelen, bp, len);
-		printf(") ");
+		printf(")");
 		break;
 	default:
-		printf("(rtaf=0x%x) ", af);
+		printf(" (rtaf=0x%x)", af);
 	}
 }
 void
