@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.9 2016/11/17 13:37:20 mpi Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.10 2016/12/13 06:51:11 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -509,18 +509,19 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	struct sockaddr_in6 *src, *dst;
 	struct etherip_header *eip;
 	struct ip6_hdr *ip6;
+	int error;
 
 	src = (struct sockaddr_in6 *)&sc->sc_src;
 	dst = (struct sockaddr_in6 *)&sc->sc_dst;
 
 	if (src == NULL || dst == NULL ||
 	    src->sin6_family != AF_INET6 || dst->sin6_family != AF_INET6) {
-		m_freem(m);
-		return EAFNOSUPPORT;
+		error = EAFNOSUPPORT;
+		goto drop;
 	}
 	if (IN6_IS_ADDR_UNSPECIFIED(&dst->sin6_addr)) {
-		m_freem(m);
-		return ENETUNREACH;
+		error = ENETUNREACH;
+		goto drop;
 	}
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
@@ -547,8 +548,12 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	ip6->ip6_nxt  = IPPROTO_ETHERIP;
 	ip6->ip6_hlim = ip6_defhlim;
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
-	ip6->ip6_src  = src->sin6_addr;
-	ip6->ip6_dst = dst->sin6_addr;
+	error = in6_embedscope(&ip6->ip6_src, src, NULL);
+	if (error != 0)
+		goto drop;
+	error = in6_embedscope(&ip6->ip6_dst, dst, NULL);
+	if (error != 0)
+		goto drop;
 
 	m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
 
@@ -560,6 +565,10 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	    (sizeof(struct ip6_hdr) + sizeof(struct etherip_header)));
 
 	return ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL);
+
+drop:
+	m_freem(m);
+	return (error);
 }
 
 int
@@ -571,6 +580,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 	struct etherip_softc *sc;
 	const struct ip6_hdr *ip6;
 	struct etherip_header *eip;
+	struct sockaddr_in6 ipsrc, ipdst;
 	struct sockaddr_in6 *src6, *dst6;
 	struct ifnet *ifp = NULL;
 
@@ -582,6 +592,8 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	ip6 = mtod(m, const struct ip6_hdr *);
+	in6_recoverscope(&ipsrc, &ip6->ip6_src);
+	in6_recoverscope(&ipdst, &ip6->ip6_dst);
 
 	LIST_FOREACH(sc, &etherip_softc_list, sc_entry) {
 		if (sc->sc_src.ss_family != AF_INET6 ||
@@ -591,12 +603,13 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 		src6 = (struct sockaddr_in6 *)&sc->sc_src;
 		dst6 = (struct sockaddr_in6 *)&sc->sc_dst;
 
-		if (!IN6_ARE_ADDR_EQUAL(&src6->sin6_addr, &ip6->ip6_dst) ||
-		    !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_src))
-			continue;
-
-		ifp = &sc->sc_ac.ac_if;
-		break;
+		if (IN6_ARE_ADDR_EQUAL(&src6->sin6_addr, &ipdst.sin6_addr) &&
+		    src6->sin6_scope_id == ipdst.sin6_scope_id &&
+		    IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ipsrc.sin6_addr) &&
+		    dst6->sin6_scope_id == ipsrc.sin6_scope_id) {
+			ifp = &sc->sc_ac.ac_if;
+			break;
+		}
 	}
 
 	if (ifp == NULL) {

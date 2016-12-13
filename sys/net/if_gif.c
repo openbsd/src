@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.86 2016/09/13 07:48:45 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.87 2016/12/13 06:51:11 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -796,9 +796,11 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	tdb.tdb_src.sin6.sin6_family = AF_INET6;
 	tdb.tdb_src.sin6.sin6_len = sizeof(struct sockaddr_in6);
 	tdb.tdb_src.sin6.sin6_addr = sin6_src->sin6_addr;
+	tdb.tdb_src.sin6.sin6_scope_id = sin6_src->sin6_scope_id;
 	tdb.tdb_dst.sin6.sin6_family = AF_INET6;
 	tdb.tdb_dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
 	tdb.tdb_dst.sin6.sin6_addr = sin6_dst->sin6_addr;
+	tdb.tdb_src.sin6.sin6_scope_id = sin6_dst->sin6_scope_id;
 	tdb.tdb_xform = &xfs;
 	xfs.xf_type = -1;	/* not XF_IP4 */
 
@@ -849,12 +851,16 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 	struct gif_softc *sc;
 	struct ifnet *gifp = NULL;
 	struct ip6_hdr *ip6;
+	struct sockaddr_in6 src, dst;
+	struct sockaddr_in6 *psrc, *pdst;
 
 	/* XXX What if we run transport-mode IPsec to protect gif tunnel ? */
 	if (m->m_flags & (M_AUTH | M_CONF))
 	        goto inject;
 
 	ip6 = mtod(m, struct ip6_hdr *);
+	in6_recoverscope(&src, &ip6->ip6_src);
+	in6_recoverscope(&dst, &ip6->ip6_dst);
 
 #define satoin6(sa)	(satosin6(sa)->sin6_addr)
 	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
@@ -867,8 +873,13 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 		if ((sc->gif_if.if_flags & IFF_UP) == 0)
 			continue;
 
-		if (IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_psrc), &ip6->ip6_dst) &&
-		    IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_pdst), &ip6->ip6_src)) {
+		psrc = satosin6(sc->gif_psrc);
+		pdst = satosin6(sc->gif_pdst);
+
+		if (IN6_ARE_ADDR_EQUAL(&psrc->sin6_addr, &dst.sin6_addr) &&
+		    psrc->sin6_scope_id == dst.sin6_scope_id &&
+		    IN6_ARE_ADDR_EQUAL(&pdst->sin6_addr, &src.sin6_addr) &&
+		    pdst->sin6_scope_id == src.sin6_scope_id) {
 			gifp = &sc->gif_if;
 			break;
 		}

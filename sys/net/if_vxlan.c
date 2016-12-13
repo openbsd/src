@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.53 2016/12/02 11:16:04 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.54 2016/12/13 06:51:11 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -556,7 +556,8 @@ vxlan_sockaddr_cmp(struct sockaddr *srcsa, struct sockaddr *dstsa)
 	case AF_INET6:
 		src6 = satosin6(srcsa);
 		dst6 = satosin6(dstsa);
-		if (IN6_ARE_ADDR_EQUAL(&src6->sin6_addr, &dst6->sin6_addr))
+		if (IN6_ARE_ADDR_EQUAL(&src6->sin6_addr, &dst6->sin6_addr) &&
+		    src6->sin6_scope_id == dst6->sin6_scope_id)
 			return (0);
 #endif /* INET6 */
 	}
@@ -747,7 +748,6 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ip6_hdr		*ip6;
 	struct in6_addr		*in6a;
-	int			 error;
 
 	M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 	if (m == NULL)
@@ -759,8 +759,10 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt = IPPROTO_UDP;
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
-	ip6->ip6_src  = satosin6(src)->sin6_addr;
-	ip6->ip6_dst = satosin6(dst)->sin6_addr;
+	if (in6_embedscope(&ip6->ip6_src, satosin6(src), NULL) != 0)
+		goto drop;
+	if (in6_embedscope(&ip6->ip6_dst, satosin6(dst), NULL) != 0)
+		goto drop;
 
 	if (sc->sc_ttl > 0)
 		ip6->ip6_hlim = sc->sc_ttl;
@@ -768,12 +770,10 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 		ip6->ip6_hlim = ip6_defhlim;
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&satosin6(src)->sin6_addr)) {
-		error = in6_selectsrc(&in6a, satosin6(dst), NULL,
-		    sc->sc_rdomain);
-		if (error != 0) {
-			m_freem(m);
-			return (NULL);
-		}
+		if (in6_selectsrc(&in6a, satosin6(dst), NULL,
+		    sc->sc_rdomain) != 0)
+			goto drop;
+
 		ip6->ip6_src = *in6a;
 	}
 
@@ -786,6 +786,10 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 	m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 
 	return (m);
+
+drop:
+	m_freem(m);
+	return (NULL);
 }
 #endif /* INET6 */
 
