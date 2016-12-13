@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.93 2016/11/29 15:52:12 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.94 2016/12/13 09:22:18 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ int get_vif_cnt(struct sioc_vif_req *);
 int get_vif_ctl(struct vifctl *);
 int ip_mrouter_init(struct socket *, struct mbuf *);
 int get_version(struct mbuf *);
-int add_vif(struct mbuf *);
+int add_vif(struct socket *, struct mbuf *);
 int del_vif(struct mbuf *);
 void update_mfc_params(struct mfc *, struct mfcctl2 *);
 void init_mfc_params(struct mfc *, struct mfcctl2 *);
@@ -293,7 +293,7 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
 			error = ip_mrouter_done();
 			break;
 		case MRT_ADD_VIF:
-			error = add_vif(*mp);
+			error = add_vif(so, *mp);
 			break;
 		case MRT_DEL_VIF:
 			error = del_vif(*mp);
@@ -773,8 +773,9 @@ static struct sockaddr_in sin = { sizeof(sin), AF_INET };
  * Add a vif to the vif table
  */
 int
-add_vif(struct mbuf *m)
+add_vif(struct socket *so, struct mbuf *m)
 {
+	struct inpcb *inp;
 	struct vifctl *vifcp;
 	struct vif *vifp;
 	struct ifaddr *ifa;
@@ -809,8 +810,9 @@ add_vif(struct mbuf *m)
 	} else
 #endif
 	{
+		inp = sotoinpcb(so);
 		sin.sin_addr = vifcp->vifc_lcl_addr;
-		ifa = ifa_ifwithaddr(sintosa(&sin), /* XXX */ 0);
+		ifa = ifa_ifwithaddr(sintosa(&sin), inp->inp_rtableid);
 		if (ifa == NULL)
 			return (EADDRNOTAVAIL);
 	}
