@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.17 2016/12/13 01:53:34 millert Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.18 2016/12/13 13:47:36 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -57,7 +57,7 @@ all:\e
 
 nixspam:\e
 	:black:\e
-	:msg="Your address %A is in the nixspam list\n\e
+	:msg="Your address %A is in the nixspam list\en\e
 	See http://www.heise.de/ix/nixspam/dnsbl_en/ for details":\e
 	:method=http:\e
 	:file=www.openbsd.org/spamd/nixspam.gz
