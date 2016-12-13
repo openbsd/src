@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.36 2016/01/12 09:28:09 stsp Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.37 2016/12/13 21:06:28 mikeb Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -168,6 +168,34 @@ uint64_t	ifmedia_baudrate(uint64_t);
 #define	IFM_2500_SX	21		/* 2500baseSX - multi-mode fiber */
 #define	IFM_10G_T	22		/* 10GbaseT cat 6 */
 #define	IFM_10G_SFP_CU	23		/* 10G SFP+ direct attached cable */
+#define	IFM_10G_LRM	24		/* 10GBase-LRM 850nm Multi-mode */
+#define	IFM_40G_CR4	25		/* 40GBase-CR4 */
+#define	IFM_40G_SR4	26		/* 40GBase-SR4 */
+#define	IFM_40G_LR4	27		/* 40GBase-LR4 */
+#define	IFM_1000_KX	28		/* 1000Base-KX backplane */
+#define	IFM_10G_KX4	29		/* 10GBase-KX4 backplane */
+#define	IFM_10G_KR	30		/* 10GBase-KR backplane */
+#define	IFM_10G_CR1	31		/* 10GBase-CR1 Twinax splitter */
+#define	IFM_20G_KR2	32		/* 20GBase-KR2 backplane */
+#define	IFM_2500_KX	33		/* 2500Base-KX backplane */
+#define	IFM_2500_T	34		/* 2500Base-T - RJ45 (NBaseT) */
+#define	IFM_5000_T	35		/* 5000Base-T - RJ45 (NBaseT) */
+#define	IFM_1000_SGMII	36		/* 1G media interface */
+#define	IFM_10G_SFI	37		/* 10G media interface */
+#define	IFM_40G_XLPPI	38		/* 40G media interface */
+#define	IFM_1000_CX_SGMII 39		/* 1000Base-CX-SGMII */
+#define	IFM_40G_KR4	40		/* 40GBase-KR4 */
+#define	IFM_10G_ER	41		/* 10GBase-ER */
+#define	IFM_100G_CR4	42		/* 100GBase-CR4 */
+#define	IFM_100G_SR4	43		/* 100GBase-SR4 */
+#define	IFM_100G_KR4	44		/* 100GBase-KR4 */
+#define	IFM_100G_LR4	45		/* 100GBase-LR4 */
+#define	IFM_56G_R4	46		/* 56GBase-R4 */
+#define	IFM_25G_CR	47		/* 25GBase-CR */
+#define	IFM_25G_KR	48		/* 25GBase-KR */
+#define	IFM_25G_SR	49		/* 25GBase-SR */
+#define	IFM_50G_CR2	50		/* 50GBase-CR2 */
+#define	IFM_50G_KR2	51		/* 50GBase-KR2 */
 
 #define	IFM_ETH_MASTER	0x0000000000010000ULL	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x0000000000020000ULL	/* receive PAUSE frames */
@@ -497,6 +525,62 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_10G_T,		"10GBASE-T" },			\
 	{ IFM_ETHER|IFM_10G_SFP_CU,	"10GSFP+Cu" },			\
 	{ IFM_ETHER|IFM_10G_SFP_CU,	"10GCu" },			\
+	{ IFM_ETHER|IFM_10G_LRM,	"10GbaseLRM" },			\
+	{ IFM_ETHER|IFM_10G_LRM,	"10GBASE-LRM" },		\
+	{ IFM_ETHER|IFM_40G_CR4,	"40GbaseCR4" },			\
+	{ IFM_ETHER|IFM_40G_CR4,	"40GBASE-CR4" },		\
+	{ IFM_ETHER|IFM_40G_SR4,	"40GbaseSR4" },			\
+	{ IFM_ETHER|IFM_40G_SR4,	"40GBASE-SR4" },		\
+	{ IFM_ETHER|IFM_40G_LR4,	"40GbaseLR4" },			\
+	{ IFM_ETHER|IFM_40G_LR4,	"40GBASE-LR4" },		\
+	{ IFM_ETHER|IFM_1000_KX,	"1000bas-KX" },			\
+	{ IFM_ETHER|IFM_1000_KX,	"1000BASE-KX" },		\
+	{ IFM_ETHER|IFM_10G_KX4,	"10GbaseKX4" },			\
+	{ IFM_ETHER|IFM_10G_KX4,	"10GBASE-KX4" },		\
+	{ IFM_ETHER|IFM_10G_KR,		"10GbaseKR" },			\
+	{ IFM_ETHER|IFM_10G_KR,		"10GBASE-KR" },			\
+	{ IFM_ETHER|IFM_10G_CR1,	"10GbaseCR1" },			\
+	{ IFM_ETHER|IFM_10G_CR1,	"10GBASE-CR1" },		\
+	{ IFM_ETHER|IFM_20G_KR2,	"20GbaseKR2" },			\
+	{ IFM_ETHER|IFM_20G_KR2,	"20GBASE-KR2" },		\
+	{ IFM_ETHER|IFM_2500_KX,	"2500baseKX" },			\
+	{ IFM_ETHER|IFM_2500_KX,	"2500BASE-KX" },		\
+	{ IFM_ETHER|IFM_2500_T,		"2500baseT" },			\
+	{ IFM_ETHER|IFM_2500_T,		"2500BASE-T" },			\
+	{ IFM_ETHER|IFM_5000_T,		"5000baseT" },			\
+	{ IFM_ETHER|IFM_5000_T,		"5000BASE-T" },			\
+	{ IFM_ETHER|IFM_1000_SGMII,	"1000base-SGMII" },		\
+	{ IFM_ETHER|IFM_1000_SGMII,	"1000BASE-SGMII" },		\
+	{ IFM_ETHER|IFM_10G_SFI,	"10GbaseSFI" },			\
+	{ IFM_ETHER|IFM_10G_SFI,	"10GBASE-SFI" },		\
+	{ IFM_ETHER|IFM_40G_XLPPI,	"40GbaseXLPPI" },		\
+	{ IFM_ETHER|IFM_40G_XLPPI,	"40GBASE-XLPPI" },		\
+	{ IFM_ETHER|IFM_1000_CX_SGMII,	"1000baseCX-SGMII" },		\
+	{ IFM_ETHER|IFM_1000_CX_SGMII,	"1000BASE-CX-SGMII" },		\
+	{ IFM_ETHER|IFM_40G_KR4,	"40GbaseKR4" },			\
+	{ IFM_ETHER|IFM_40G_KR4,	"40GBASE-KR4" },		\
+	{ IFM_ETHER|IFM_10G_ER,		"10GbaseER" },			\
+	{ IFM_ETHER|IFM_10G_ER,		"10GBASE-ER" },			\
+	{ IFM_ETHER|IFM_100G_CR4,	"100GbaseCR4" },		\
+	{ IFM_ETHER|IFM_100G_CR4,	"100GBASE-CR4" },		\
+	{ IFM_ETHER|IFM_100G_SR4,	"100GbaseSR4" },		\
+	{ IFM_ETHER|IFM_100G_SR4,	"100GBASE-SR4" },		\
+	{ IFM_ETHER|IFM_100G_KR4,	"100GbaseKR4" },		\
+	{ IFM_ETHER|IFM_100G_KR4,	"100GBASE-KR4" },		\
+	{ IFM_ETHER|IFM_100G_LR4,	"100GbaseLR4" },		\
+	{ IFM_ETHER|IFM_100G_LR4,	"100GBASE-LR4" },		\
+	{ IFM_ETHER|IFM_56G_R4,		"56GbaseR4" },			\
+	{ IFM_ETHER|IFM_56G_R4,		"56GBASE-R4" },			\
+	{ IFM_ETHER|IFM_25G_CR,		"25GbaseCR" },			\
+	{ IFM_ETHER|IFM_25G_CR,		"25GBASE-CR" },			\
+	{ IFM_ETHER|IFM_25G_KR,		"25GbaseKR" },			\
+	{ IFM_ETHER|IFM_25G_KR,		"25GBASE-KR" },			\
+	{ IFM_ETHER|IFM_25G_SR,		"25GbaseSR" },			\
+	{ IFM_ETHER|IFM_25G_SR,		"25GBASE-SR" },			\
+	{ IFM_ETHER|IFM_50G_CR2,	"50GbaseCR2" },			\
+	{ IFM_ETHER|IFM_50G_CR2,	"50GBASE-CR2" },		\
+	{ IFM_ETHER|IFM_50G_KR2,	"50GbaseKR2" },			\
+	{ IFM_ETHER|IFM_50G_KR2,	"50GBASE-KR2" },		\
 									\
 	{ IFM_FDDI|IFM_FDDI_SMF,	"Single-mode" },		\
 	{ IFM_FDDI|IFM_FDDI_SMF,	"SMF" },			\
