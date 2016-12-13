@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.43 2016/12/02 15:12:41 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.44 2016/12/13 21:01:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -261,7 +261,7 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	}
 	xen_intr_mask(sc->sc_xih);
 
-	printf(": backend %d, event channel %u, address %s\n", sc->sc_domid,
+	printf(" backend %d chan %u: address %s\n", sc->sc_domid,
 	    sc->sc_xih, ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	if (xnf_capabilities(sc)) {
@@ -1042,63 +1042,61 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 int
 xnf_capabilities(struct xnf_softc *sc)
 {
+	unsigned long long res;
 	const char *prop;
 	char val[32];
 	int error;
 
 	/* Query scatter-gather capability */
 	prop = "feature-sg";
-	if ((error = xs_getprop(sc->sc_parent, sc->sc_backend, prop, val,
-	    sizeof(val))) == 0) {
-		if (val[0] == '1')
-			sc->sc_caps |= XNF_CAP_SG;
-	} else if (error != ENOENT)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
+	    && error != ENOENT)
 		goto errout;
+	if (error == 0 && res == 1)
+		sc->sc_caps |= XNF_CAP_SG;
 
 	/* Query IPv4 checksum offloading capability, enabled by default */
 	sc->sc_caps |= XNF_CAP_CSUM4;
 	prop = "feature-no-csum-offload";
-	if ((error = xs_getprop(sc->sc_parent, sc->sc_backend, prop, val,
-	    sizeof(val))) == 0) {
-		if (val[0] == '1')
-			sc->sc_caps &= ~XNF_CAP_CSUM4;
-	} else if (error != ENOENT)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
+	    && error != ENOENT)
 		goto errout;
+	if (error == 0 && res == 1)
+		sc->sc_caps &= ~XNF_CAP_CSUM4;
 
 	/* Query IPv6 checksum offloading capability */
 	prop = "feature-ipv6-csum-offload";
-	if ((error = xs_getprop(sc->sc_parent, sc->sc_backend, prop, val,
-	    sizeof(val))) == 0) {
-		if (val[0] == '1')
-			sc->sc_caps |= XNF_CAP_CSUM6;
-	} else if (error != ENOENT)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
+	    && error != ENOENT)
 		goto errout;
+	if (error == 0 && res == 1)
+		sc->sc_caps |= XNF_CAP_CSUM6;
 
 	/* Query multicast traffic contol capability */
 	prop = "feature-multicast-control";
-	if ((error = xs_getprop(sc->sc_parent, sc->sc_backend, prop, val,
-	    sizeof(val))) == 0) {
-		if (val[0] == '1')
-			sc->sc_caps |= XNF_CAP_MCAST;
-	} else if (error != ENOENT)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
+	    && error != ENOENT)
 		goto errout;
+	if (error == 0 && res == 1)
+		sc->sc_caps |= XNF_CAP_MCAST;
 
 	/* Query split Rx/Tx event channel capability */
 	prop = "feature-split-event-channels";
-	if ((error = xs_getprop(sc->sc_parent, sc->sc_backend, prop, val,
-	    sizeof(val))) == 0) {
-		if (val[0] == '1')
-			sc->sc_caps |= XNF_CAP_SPLIT;
-	} else if (error != ENOENT)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
+	    && error != ENOENT)
 		goto errout;
+	if (error == 0 && res == 1)
+		sc->sc_caps |= XNF_CAP_SPLIT;
 
 	/* Query multiqueue capability */
 	prop = "multi-queue-max-queues";
 	if ((error = xs_getprop(sc->sc_parent, sc->sc_backend, prop, val,
 	    sizeof(val))) == 0)
-		sc->sc_caps |= XNF_CAP_MULTIQ;
-	else if (error != ENOENT)
+	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
+	    && error != ENOENT)
 		goto errout;
+	if (error == 0)
+		sc->sc_caps |= XNF_CAP_MULTIQ;
 
 	DPRINTF("%s: capabilities %b\n", sc->sc_dev.dv_xname, sc->sc_caps,
 	    "\20\006MULTIQ\005SPLIT\004MCAST\003CSUM6\002CSUM4\001SG");
@@ -1114,63 +1112,52 @@ int
 xnf_init_backend(struct xnf_softc *sc)
 {
 	const char *prop;
-	char val[32];
 
 	/* Plumb the Rx ring */
 	prop = "rx-ring-ref";
-	snprintf(val, sizeof(val), "%u", sc->sc_rx_ref);
-	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val, strlen(val)))
+	if (xs_setnum(sc->sc_parent, sc->sc_node, prop, sc->sc_rx_ref))
 		goto errout;
 	/* Enable "copy" mode */
 	prop = "request-rx-copy";
-	snprintf(val, sizeof(val), "%u", 1);
-	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val, strlen(val)))
+	if (xs_setnum(sc->sc_parent, sc->sc_node, prop, 1))
 		goto errout;
 	/* Enable notify mode */
 	prop = "feature-rx-notify";
-	snprintf(val, sizeof(val), "%u", 1);
-	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val, strlen(val)))
+	if (xs_setnum(sc->sc_parent, sc->sc_node, prop, 1))
 		goto errout;
 
 	/* Plumb the Tx ring */
 	prop = "tx-ring-ref";
-	snprintf(val, sizeof(val), "%u", sc->sc_tx_ref);
-	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val, strlen(val)))
+	if (xs_setnum(sc->sc_parent, sc->sc_node, prop, sc->sc_tx_ref))
 		goto errout;
 	/* Enable scatter-gather mode */
 	if (sc->sc_tx_frags > 1) {
 		prop = "feature-sg";
-		snprintf(val, sizeof(val), "%u", 1);
-		if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val,
-		    strlen(val)))
+		if (xs_setnum(sc->sc_parent, sc->sc_node, prop, 1))
 			goto errout;
 	}
 
 	/* Enable IPv6 checksum offloading */
 	if (sc->sc_caps & XNF_CAP_CSUM6) {
 		prop = "feature-ipv6-csum-offload";
-		snprintf(val, sizeof(val), "%u", 1);
-		if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val,
-		    strlen(val)))
+		if (xs_setnum(sc->sc_parent, sc->sc_node, prop, 1))
 			goto errout;
 	}
 
 	/* Plumb the event channel port */
 	prop = "event-channel";
-	snprintf(val, sizeof(val), "%u", sc->sc_xih);
-	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val, strlen(val)))
+	if (xs_setnum(sc->sc_parent, sc->sc_node, prop, sc->sc_xih))
 		goto errout;
 
 	/* Connect the device */
 	prop = "state";
-	snprintf(val, sizeof(val), "%u", 4);
-	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, val, strlen(val)))
+	if (xs_setprop(sc->sc_parent, sc->sc_node, prop, XEN_STATE_CONNECTED,
+	    strlen(XEN_STATE_CONNECTED)))
 		goto errout;
 
 	return (0);
 
  errout:
-	printf("%s: failed to set \"%s\" property to \"%s\"\n",
-	    sc->sc_dev.dv_xname, prop, val);
+	printf("%s: failed to set \"%s\" property\n", sc->sc_dev.dv_xname, prop);
 	return (-1);
 }
