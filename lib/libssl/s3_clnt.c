@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.154 2016/12/13 16:07:00 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.155 2016/12/13 16:10:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2223,18 +2223,11 @@ ssl3_send_client_key_exchange(SSL *s)
 {
 	SESS_CERT *sess_cert;
 	unsigned long alg_k;
-	unsigned char *bufend, *p;
-	size_t outlen;
-	int n = 0;
-	CBB cbb;
+	CBB cbb, kex;
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	bufend = (unsigned char *)s->init_buf->data + s->init_buf->max;
-
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A) {
-		p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_KEY_EXCHANGE);
-
 		alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
 		if ((sess_cert = s->session->sess_cert) == NULL) {
@@ -2245,46 +2238,22 @@ ssl3_send_client_key_exchange(SSL *s)
 			goto err;
 		}
 
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &kex,
+		    SSL3_MT_CLIENT_KEY_EXCHANGE))
+			goto err;
+
 		if (alg_k & SSL_kRSA) {
-			if (!CBB_init_fixed(&cbb, p, bufend - p))
+			if (ssl3_send_client_kex_rsa(s, sess_cert, &kex) != 1)
 				goto err;
-			if (ssl3_send_client_kex_rsa(s, sess_cert, &cbb) != 1)
-				goto err;
-			if (!CBB_finish(&cbb, NULL, &outlen))
-				goto err;
-			if (outlen > INT_MAX)
-				goto err;
-			n = (int)outlen;
 		} else if (alg_k & SSL_kDHE) {
-			if (!CBB_init_fixed(&cbb, p, bufend - p))
+			if (ssl3_send_client_kex_dhe(s, sess_cert, &kex) != 1)
 				goto err;
-			if (ssl3_send_client_kex_dhe(s, sess_cert, &cbb) != 1)
-				goto err;
-			if (!CBB_finish(&cbb, NULL, &outlen))
-				goto err;
-			if (outlen > INT_MAX)
-				goto err;
-			n = (int)outlen;
 		} else if (alg_k & SSL_kECDHE) {
-			if (!CBB_init_fixed(&cbb, p, bufend - p))
+			if (ssl3_send_client_kex_ecdhe(s, sess_cert, &kex) != 1)
 				goto err;
-			if (ssl3_send_client_kex_ecdhe(s, sess_cert, &cbb) != 1)
-				goto err;
-			if (!CBB_finish(&cbb, NULL, &outlen))
-				goto err;
-			if (outlen > INT_MAX)
-				goto err;
-			n = (int)outlen;
 		} else if (alg_k & SSL_kGOST) {
-			if (!CBB_init_fixed(&cbb, p, bufend - p))
+			if (ssl3_send_client_kex_gost(s, sess_cert, &kex) != 1)
 				goto err;
-			if (ssl3_send_client_kex_gost(s, sess_cert, &cbb) != 1)
-				goto err;
-			if (!CBB_finish(&cbb, NULL, &outlen))
-				goto err;
-			if (outlen > INT_MAX)
-				goto err;
-			n = (int)outlen;
 		} else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_HANDSHAKE_FAILURE);
@@ -2293,7 +2262,8 @@ ssl3_send_client_key_exchange(SSL *s)
 			goto err;
 		}
 
-		ssl3_handshake_msg_finish(s, n);
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		s->state = SSL3_ST_CW_KEY_EXCH_B;
 	}
