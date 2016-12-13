@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.107 2016/09/05 14:23:38 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.108 2016/12/13 08:40:54 mpi Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ int	 WID_DST(int);
 void	 pr_rthdr(int);
 void	 p_rtentry(struct rt_msghdr *);
 void	 pr_family(int);
-void	 p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 void	 p_sockaddr_mpls(struct sockaddr *, struct sockaddr *, int, int);
 void	 p_flags(int, char *);
 char	*routename4(in_addr_t);
@@ -224,7 +223,7 @@ pr_rthdr(int af)
 	}
 }
 
-static void
+void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 {
 	int	i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.192 2016/09/24 19:36:49 phessler Exp $	*/
+/*	$OpenBSD: route.c,v 1.193 2016/12/13 08:40:54 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -385,13 +385,17 @@ flushroutes(int argc, char **argv)
 		if (verbose)
 			print_rtmsg(rtm, rlen);
 		else {
+			struct sockaddr	*mask, *rti_info[RTAX_MAX];
+
 			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-			printf("%-20.20s ", rtm->rtm_flags & RTF_HOST ?
-			    routename(sa) : netname(sa, NULL)); /* XXX extract
-								   netmask */
-			sa = (struct sockaddr *)
-			    (ROUNDUP(sa->sa_len) + (char *)sa);
-			printf("%-20.20s ", routename(sa));
+
+			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
+			sa = rti_info[RTAX_DST];
+			mask = rti_info[RTAX_NETMASK];
+
+			p_sockaddr(sa, mask, rtm->rtm_flags, 20);
+			p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST, 20);
 			printf("done\n");
 		}
 	}
