@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.152 2016/12/07 13:40:17 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.153 2016/12/13 13:56:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2002,18 +2002,18 @@ err:
 }
 
 static int
-ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
-    int *outlen)
+ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 {
 	EC_KEY *clnt_ecdh = NULL;
 	const EC_GROUP *srvr_group = NULL;
 	const EC_POINT *srvr_ecpoint = NULL;
 	BN_CTX *bn_ctx = NULL;
-	unsigned char *encodedPoint = NULL;
 	unsigned char *key = NULL;
-	int encoded_pt_len = 0;
-	int key_size, n;
+	unsigned char *data;
+	size_t encoded_len;
+	int key_size, key_len;
 	int ret = -1;
+	CBB ecpoint;
 
 	if (sess_cert->peer_ecdh_tmp == NULL) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
@@ -2056,8 +2056,8 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 		    ERR_R_MALLOC_FAILURE);
 	}
-	n = ECDH_compute_key(key, key_size, srvr_ecpoint, clnt_ecdh, NULL);
-	if (n <= 0) {
+	key_len = ECDH_compute_key(key, key_size, srvr_ecpoint, clnt_ecdh, NULL);
+	if (key_len <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
 		goto err;
 	}
@@ -2065,47 +2065,42 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	/* Generate master key from the result. */
 	s->session->master_key_length =
 	    s->method->ssl3_enc->generate_master_secret(s,
-		s->session->master_key, key, n);
+		s->session->master_key, key, key_len);
 
-	/*
-	 * First check the size of encoding and allocate memory accordingly.
-	 */
-	encoded_pt_len = EC_POINT_point2oct(srvr_group,
+	encoded_len = EC_POINT_point2oct(srvr_group,
 	    EC_KEY_get0_public_key(clnt_ecdh),
 	    POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+	if (encoded_len == 0) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+		goto err;
+	}
 
-	bn_ctx = BN_CTX_new();
-	encodedPoint = malloc(encoded_pt_len);
-	if (encodedPoint == NULL || bn_ctx == NULL) {
+	if ((bn_ctx = BN_CTX_new()) == NULL) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 		    ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	/* Encode the public key */
-	n = EC_POINT_point2oct(srvr_group, EC_KEY_get0_public_key(clnt_ecdh),
-	    POINT_CONVERSION_UNCOMPRESSED, encodedPoint, encoded_pt_len,
-	    bn_ctx);
+	/* Encode the public key. */
+	if (!CBB_add_u8_length_prefixed(cbb, &ecpoint))
+		goto err;
+	if (!CBB_add_space(&ecpoint, &data, encoded_len))
+		goto err;
+	if (EC_POINT_point2oct(srvr_group, EC_KEY_get0_public_key(clnt_ecdh),
+	    POINT_CONVERSION_UNCOMPRESSED, data, encoded_len,
+	    bn_ctx) == 0)
+		goto err;
+	if (!CBB_flush(cbb))
+		goto err;
 
-	*p = n; /* length of encoded point */
-	/* Encoded point will be copied here */
-	p += 1;
-
-	/* copy the point */
-	memcpy((unsigned char *)p, encodedPoint, n);
-	/* increment n to account for length field */
-	n += 1;
-
-	*outlen = n;
 	ret = 1;
 
-err:
+ err:
 	if (key != NULL)
 		explicit_bzero(key, key_size);
 	free(key);
 
 	BN_CTX_free(bn_ctx);
-	free(encodedPoint);
 	EC_KEY_free(clnt_ecdh);
 
 	return (ret);
@@ -2276,9 +2271,15 @@ ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 			n = (int)outlen;
 		} else if (alg_k & SSL_kECDHE) {
-			if (ssl3_send_client_kex_ecdhe(s, sess_cert, p,
-			    &n) != 1)
+			if (!CBB_init_fixed(&cbb, p, bufend - p))
 				goto err;
+			if (ssl3_send_client_kex_ecdhe(s, sess_cert, &cbb) != 1)
+				goto err;
+			if (!CBB_finish(&cbb, NULL, &outlen))
+				goto err;
+			if (outlen > INT_MAX)
+				goto err;
+			n = (int)outlen;
 		} else if (alg_k & SSL_kGOST) {
 			if (ssl3_send_client_kex_gost(s, sess_cert, p, &n) != 1)
 				goto err;
