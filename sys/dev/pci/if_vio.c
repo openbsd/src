@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.42 2016/07/14 12:42:00 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.43 2016/12/13 19:54:29 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -283,7 +283,7 @@ void	vio_iff(struct vio_softc *);
 int	vio_media_change(struct ifnet *);
 void	vio_media_status(struct ifnet *, struct ifmediareq *);
 int	vio_ctrleof(struct virtqueue *);
-void	vio_wait_ctrl(struct vio_softc *sc);
+int	vio_wait_ctrl(struct vio_softc *sc);
 int	vio_wait_ctrl_done(struct vio_softc *sc);
 void	vio_ctrl_wakeup(struct vio_softc *, enum vio_ctrl_state);
 int	vio_alloc_mem(struct vio_softc *);
@@ -1217,11 +1217,10 @@ vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
 	struct virtqueue *vq = &sc->sc_vq[VQCTL];
 	int r, slot;
 
-	if (vsc->sc_nvqs < 3)
-		return ENOTSUP;
-
 	splassert(IPL_NET);
-	vio_wait_ctrl(sc);
+
+	if ((r = vio_wait_ctrl(sc)) != 0)
+		return r;
 
 	sc->sc_ctrl_cmd->class = VIRTIO_NET_CTRL_RX;
 	sc->sc_ctrl_cmd->command = cmd;
@@ -1248,10 +1247,8 @@ vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
 	    sizeof(*sc->sc_ctrl_status), 0);
 	virtio_enqueue_commit(vsc, vq, slot, 1);
 
-	if (vio_wait_ctrl_done(sc)) {
-		r = EIO;
+	if ((r = vio_wait_ctrl_done(sc)) != 0)
 		goto out;
-	}
 
 	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
 	    sizeof(*sc->sc_ctrl_cmd), BUS_DMASYNC_POSTWRITE);
@@ -1273,24 +1270,34 @@ out:
 	return r;
 }
 
-void
+int
 vio_wait_ctrl(struct vio_softc *sc)
 {
-	while (sc->sc_ctrl_inuse != FREE)
-		tsleep(&sc->sc_ctrl_inuse, IPL_NET, "vio_wait", 0);
+	int r = 0;
+
+	while (sc->sc_ctrl_inuse != FREE) {
+		r = tsleep(&sc->sc_ctrl_inuse, PRIBIO|PCATCH, "viowait", 0);
+		if (r == EINTR)
+			return r;
+	}
 	sc->sc_ctrl_inuse = INUSE;
+
+	return r;
 }
 
 int
 vio_wait_ctrl_done(struct vio_softc *sc)
 {
 	int r = 0;
+
 	while (sc->sc_ctrl_inuse != DONE && sc->sc_ctrl_inuse != RESET) {
 		if (sc->sc_ctrl_inuse == RESET) {
 			r = 1;
 			break;
 		}
-		tsleep(&sc->sc_ctrl_inuse, IPL_NET, "vio_wait", 0);
+		r = tsleep(&sc->sc_ctrl_inuse, PRIBIO|PCATCH, "viodone", 0);
+		if (r == EINTR)
+			break;
 	}
 	return r;
 }
@@ -1333,10 +1340,8 @@ vio_set_rx_filter(struct vio_softc *sc)
 
 	splassert(IPL_NET);
 
-	if (vsc->sc_nvqs < 3)
-		return ENOTSUP;
-
-	vio_wait_ctrl(sc);
+	if ((r = vio_wait_ctrl(sc)) != 0)
+		return r;
 
 	sc->sc_ctrl_cmd->class = VIRTIO_NET_CTRL_MAC;
 	sc->sc_ctrl_cmd->command = VIRTIO_NET_CTRL_MAC_TABLE_SET;
@@ -1366,10 +1371,8 @@ vio_set_rx_filter(struct vio_softc *sc)
 	    sizeof(*sc->sc_ctrl_status), 0);
 	virtio_enqueue_commit(vsc, vq, slot, 1);
 
-	if (vio_wait_ctrl_done(sc)) {
-		r = EIO;
+	if ((r = vio_wait_ctrl_done(sc)) != 0)
 		goto out;
-	}
 
 	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
 	    sizeof(*sc->sc_ctrl_cmd), BUS_DMASYNC_POSTWRITE);
@@ -1381,6 +1384,7 @@ vio_set_rx_filter(struct vio_softc *sc)
 	if (sc->sc_ctrl_status->ack == VIRTIO_NET_OK) {
 		r = 0;
 	} else {
+		/* The host's filter table is not large enough */
 		printf("%s: failed setting rx filter\n", sc->sc_dev.dv_xname);
 		r = EIO;
 	}
@@ -1438,27 +1442,22 @@ vio_iff(struct vio_softc *sc)
 	memcpy(sc->sc_ctrl_mac_tbl_uc->macs[0], ac->ac_enaddr, ETHER_ADDR_LEN);
 	sc->sc_ctrl_mac_tbl_uc->nentries = 1;
 
-	if (rxfilter) {
-		sc->sc_ctrl_mac_tbl_mc->nentries = nentries;
-		r = vio_set_rx_filter(sc);
-		if (r != 0) {
-			rxfilter = 0;
-			allmulti = 1; /* fallback */
-		}
-	} else {
-		sc->sc_ctrl_mac_tbl_mc->nentries = 0;
-		vio_set_rx_filter(sc);
-	}
+	sc->sc_ctrl_mac_tbl_mc->nentries = rxfilter ? nentries : 0;
 
-	if (allmulti) {
-		r = vio_ctrl_rx(sc, VIRTIO_NET_CTRL_RX_ALLMULTI, 1);
-		if (r != 0) {
-			allmulti = 0;
-			promisc = 1; /* fallback */
-		}
-	} else {
-		vio_ctrl_rx(sc, VIRTIO_NET_CTRL_RX_ALLMULTI, 0);
-	}
+	if (vsc->sc_nvqs < 3)
+		return;
+
+	r = vio_set_rx_filter(sc);
+	if (r == EIO)
+		allmulti = 1; /* fallback */
+	else if (r != 0)
+		return;
+
+	r = vio_ctrl_rx(sc, VIRTIO_NET_CTRL_RX_ALLMULTI, allmulti);
+	if (r == EIO)
+		promisc = 1; /* fallback */
+	else if (r != 0)
+		return;
 
 	vio_ctrl_rx(sc, VIRTIO_NET_CTRL_RX_PROMISC, promisc);
 }
