@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.76 2016/12/13 14:31:55 schwarze Exp $
+# $OpenBSD: Makefile,v 1.77 2016/12/13 20:41:35 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -155,6 +155,7 @@ MAN=	\
 	RAND_set_rand_method.3 \
 	RC4.3 \
 	RIPEMD160.3 \
+	RSA_PSS_PARAMS_new.3 \
 	RSA_blinding_on.3 \
 	RSA_check_key.3 \
 	RSA_generate_key.3 \
