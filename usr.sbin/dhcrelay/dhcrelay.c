@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.50 2016/12/12 15:41:05 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.51 2016/12/13 06:55:32 jmc Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -439,7 +439,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s [-do] [-C circuit-id] [-R remote-id] "
-	    "-i interface\n\tdestination1 [... destinationN]\n",
+	    "-i interface\n\tdestination ...\n",
 	    __progname);
 	exit(1);
 }
