@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.53 2016/12/13 15:28:19 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.54 2016/12/13 17:40:41 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -224,7 +224,8 @@ main(int argc, char *argv[])
 		error("no interface given");
 	/* We need an address for running layer 3 mode. */
 	if (drm == DRM_LAYER3 &&
-	    interfaces->primary_address.s_addr == 0)
+	    (interfaces->hw_address.htype != HTYPE_IPSEC_TUNNEL &&
+	    interfaces->primary_address.s_addr == 0))
 		error("interface '%s' does not have an address",
 		    interfaces->name);
 
