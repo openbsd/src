@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.52 2016/12/13 09:29:05 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.53 2016/12/13 15:28:19 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -72,7 +72,7 @@ char	*print_hw_addr(int, int, unsigned char *);
 void	 got_response(struct protocol *);
 int	 get_rdomain(char *);
 
-void	 relay_agentinfo(struct packet_ctx *, struct interface_info *);
+void	 relay_agentinfo(struct packet_ctx *, struct interface_info *, int);
 
 int	 relay_agentinfo_cmp(struct packet_ctx *pc, uint8_t *, int);
 ssize_t	 relay_agentinfo_append(struct packet_ctx *, struct dhcp_packet *,
@@ -337,8 +337,6 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		return;
 	}
 
-	relay_agentinfo(pc, ip);
-
 	/* If it's a bootreply, forward it to the client. */
 	if (packet->op == BOOTREPLY) {
 		/* Filter packet that were not meant for us. */
@@ -373,6 +371,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 			memset(pc->pc_dmac, 0xff, sizeof(pc->pc_dmac));
 		}
 
+		relay_agentinfo(pc, interfaces, packet->op);
 		if ((length = relay_agentinfo_remove(pc, packet,
 		    length)) == -1) {
 			note("ignoring BOOTREPLY with invalid "
@@ -420,6 +419,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 	if (!packet->giaddr.s_addr)
 		packet->giaddr = ip->primary_address;
 
+	relay_agentinfo(pc, interfaces, packet->op);
 	if ((length = relay_agentinfo_append(pc, packet, length)) == -1) {
 		note("ignoring BOOTREQUEST with invalid "
 		    "relay agent information");
@@ -559,9 +559,11 @@ got_response(struct protocol *l)
 }
 
 void
-relay_agentinfo(struct packet_ctx *pc, struct interface_info *intf)
+relay_agentinfo(struct packet_ctx *pc, struct interface_info *intf,
+    int bootop)
 {
-	static u_int8_t		buf[8];
+	static u_int8_t		 buf[8];
+	struct sockaddr_in	*sin;
 
 	if (oflag == 0)
 		return;
@@ -579,10 +581,15 @@ relay_agentinfo(struct packet_ctx *pc, struct interface_info *intf)
 		pc->pc_circuitlen = 2;
 
 		if (rai_remote == NULL) {
+			if (bootop == BOOTREPLY)
+				sin = ss2sin(&pc->pc_dst);
+			else
+				sin = ss2sin(&pc->pc_src);
+
 			pc->pc_remote =
-			    (uint8_t *)&ss2sin(&pc->pc_dst)->sin_addr;
+			    (uint8_t *)&sin->sin_addr;
 			pc->pc_remotelen =
-			    sizeof(ss2sin(&pc->pc_dst)->sin_addr);
+			    sizeof(sin->sin_addr);
 		}
 	} else {
 		pc->pc_circuit = (u_int8_t *)rai_circuit;
@@ -867,7 +874,7 @@ l2relay(struct interface_info *ip, struct dhcp_packet *dp, int length,
 		return;
 	}
 
-	relay_agentinfo(pc, ip);
+	relay_agentinfo(pc, ip, dp->op);
 
 	switch (dp->op) {
 	case BOOTREQUEST:
