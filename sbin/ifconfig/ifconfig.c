@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.333 2016/11/10 14:36:03 gerhard Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.334 2016/12/13 01:36:21 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2873,8 +2873,6 @@ phys_status(int force)
 	(void) strlcpy(req.iflr_name, name, sizeof(req.iflr_name));
 	if (ioctl(s, SIOCGLIFPHYADDR, (caddr_t)&req) < 0)
 		return;
-	if (req.addr.ss_family == AF_INET6)
-		in6_fillscopeid((struct sockaddr_in6 *)&req.addr);
 	if (getnameinfo((struct sockaddr *)&req.addr, req.addr.ss_len,
 	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag) != 0)
 		strlcpy(psrcaddr, "<error>", sizeof(psrcaddr));
@@ -2883,10 +2881,8 @@ phys_status(int force)
 
 	if (req.dstaddr.ss_family == AF_INET)
 		dstport = ((struct sockaddr_in *)&req.dstaddr)->sin_port;
-	else if (req.dstaddr.ss_family == AF_INET6) {
-		in6_fillscopeid((struct sockaddr_in6 *)&req.dstaddr);
+	else if (req.dstaddr.ss_family == AF_INET6)
 		dstport = ((struct sockaddr_in6 *)&req.dstaddr)->sin6_port;
-	}
 	if (getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
 	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag) != 0)
 		strlcpy(pdstaddr, "<error>", sizeof(pdstaddr));
