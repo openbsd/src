@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.153 2016/12/13 13:56:15 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.154 2016/12/13 16:07:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2107,8 +2107,7 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 }
 
 static int
-ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
-    int *outlen)
+ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 {
 	unsigned char premaster_secret[32], shared_ukm[32], tmp[256];
 	EVP_PKEY *pub_key = NULL;
@@ -2119,7 +2118,7 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	EVP_MD_CTX *ukm_hash;
 	int ret = -1;
 	int nid;
-	int n;
+	CBB gostblob;
 
 	/* Get server sertificate PKEY and create ctx from it */
 	peer_cert = sess_cert->peer_pkeys[SSL_PKEY_GOST01].x509;
@@ -2185,22 +2184,19 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	/*
 	 * Make GOST keytransport blob message, encapsulate it into sequence.
 	 */
-	*(p++) = V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED;
 	msglen = 255;
 	if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen, premaster_secret,
 	    32) < 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, SSL_R_LIBRARY_BUG);
 		goto err;
 	}
-	if (msglen >= 0x80) {
-		*(p++) = 0x81;
-		*(p++) = msglen & 0xff;
-		n = msglen + 3;
-	} else {
-		*(p++) = msglen & 0xff;
-		n = msglen + 2;
-	}
-	memcpy(p, tmp, msglen);
+
+	if (!CBB_add_asn1(cbb, &gostblob, CBS_ASN1_SEQUENCE))
+		goto err;
+	if (!CBB_add_bytes(&gostblob, tmp, msglen))
+		goto err;
+	if (!CBB_flush(cbb))
+		goto err;
 
 	/* Check if pubkey from client certificate was used. */
 	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2,
@@ -2213,10 +2209,9 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	    s->method->ssl3_enc->generate_master_secret(s,
 		s->session->master_key, premaster_secret, 32);
 
-	*outlen = n;
 	ret = 1;
 
-err:
+ err:
 	explicit_bzero(premaster_secret, sizeof(premaster_secret));
 	EVP_PKEY_free(pub_key);
 
@@ -2281,8 +2276,15 @@ ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 			n = (int)outlen;
 		} else if (alg_k & SSL_kGOST) {
-			if (ssl3_send_client_kex_gost(s, sess_cert, p, &n) != 1)
+			if (!CBB_init_fixed(&cbb, p, bufend - p))
 				goto err;
+			if (ssl3_send_client_kex_gost(s, sess_cert, &cbb) != 1)
+				goto err;
+			if (!CBB_finish(&cbb, NULL, &outlen))
+				goto err;
+			if (outlen > INT_MAX)
+				goto err;
+			n = (int)outlen;
 		} else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_HANDSHAKE_FAILURE);
