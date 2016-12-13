@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.9 2016/12/10 19:41:31 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.10 2016/12/13 18:27:24 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -307,8 +307,8 @@ xbf_intr(void *xsc)
 	for (cons = sc->sc_xr_cons; cons != xr->xr_cons; cons++) {
 		desc = cons & (sc->sc_xr_ndesc - 1);
 		xs = sc->sc_xs[desc];
-		KASSERT(xs != NULL);
-		xbf_complete_cmd(xs, desc);
+		if (xs != NULL)
+			xbf_complete_cmd(xs, desc);
 	}
 
 	sc->sc_xr_cons = cons;
@@ -399,6 +399,7 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 
 	if (ISSET(xs->flags, SCSI_POLL) && xbf_poll_cmd(xs, desc, 1000)) {
 		DPRINTF("%s: desc %u timed out\n", sc->sc_dev.dv_xname, desc);
+		sc->sc_xs[desc] = NULL;
 		xbf_scsi_done(xs, XS_TIMEOUT);
 		return;
 	}
@@ -533,12 +534,13 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 int
 xbf_poll_cmd(struct scsi_xfer *xs, int desc, int timo)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
-
 	do {
-		if (sc->sc_xs[desc] == NULL)
+		if (ISSET(xs->flags, ITSDONE))
 			break;
-		delay(1000);
+		if (ISSET(xs->flags, SCSI_NOSLEEP))
+			delay(10);
+		else
+			tsleep(xs, PRIBIO, "xbfpoll", 1);
 	} while(--timo > 0);
 
 	return (0);
