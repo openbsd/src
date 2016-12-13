@@ -16,6 +16,10 @@ data=''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase +
 udp=UDP(sport=port, dport='echo')/data
 echo=srp1(e/ip6/udp, iface=LOCAL_IF, timeout=5)
 
+if echo is None:
+	print "ERROR: no UDP answer from echo server received"
+	exit(1)
+
 print "Send ICMP6 packet too big packet with MTU 1300."
 icmp6=ICMPv6PacketTooBig(mtu=1300)/echo.payload
 sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
