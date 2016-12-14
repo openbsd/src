@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.77 2016/12/13 20:41:35 schwarze Exp $
+# $OpenBSD: Makefile,v 1.78 2016/12/14 02:03:50 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -94,6 +94,7 @@ MAN=	\
 	ERR_put_error.3 \
 	ERR_remove_state.3 \
 	ERR_set_mark.3 \
+	ESS_SIGNING_CERT_new.3 \
 	EVP_AEAD_CTX_init.3 \
 	EVP_BytesToKey.3 \
 	EVP_DigestInit.3 \
@@ -172,6 +173,7 @@ MAN=	\
 	SHA1.3 \
 	SMIME_read_PKCS7.3 \
 	SMIME_write_PKCS7.3 \
+	TS_REQ_new.3 \
 	UI_new.3 \
 	X509V3_get_d2i.3 \
 	X509_ALGOR_dup.3 \
