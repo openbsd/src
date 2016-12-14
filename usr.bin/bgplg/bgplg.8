@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bgplg.8,v 1.15 2015/09/10 15:16:44 schwarze Exp $
+.\"	$OpenBSD: bgplg.8,v 1.16 2016/12/14 14:38:42 reyk Exp $
 .\"
 .\" Copyright (c) 2005, 2006, 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: December 14 2016 $
 .Dt BGPLG 8
 .Os
 .Sh NAME
@@ -153,6 +153,11 @@ To enable the corresponding functionality, use the
 .Xr chmod 1
 utility to manually set the file permission mode to 0555 or anything
 appropriate.
+Some of these executables need the set-user-ID bit,
+so they should be mounted on a filesystem
+without the
+.Ic nosuid
+option.
 .Pp
 .Bl -tag -width "/var/www/bin/traceroute6XX" -compact
 .It Pa /var/www/cgi-bin/bgplg
