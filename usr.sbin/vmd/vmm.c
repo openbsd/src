@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.59 2016/11/30 19:27:21 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.60 2016/12/14 17:56:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -272,7 +272,7 @@ void
 vmm_sighdlr(int sig, short event, void *arg)
 {
 	struct privsep *ps = arg;
-	int status;
+	int status, ret = 0;
 	uint32_t vmid;
 	pid_t pid;
 	struct vmop_result vmr;
@@ -297,11 +297,14 @@ vmm_sighdlr(int sig, short event, void *arg)
 					continue;
 				}
 
+				if (WIFEXITED(status))
+					ret = WEXITSTATUS(status);
+
 				vmid = vm->vm_params.vmc_params.vcp_id;
 				vtp.vtp_vm_id = vmid;
 				if (terminate_vm(&vtp) == 0) {
 					memset(&vmr, 0, sizeof(vmr));
-					vmr.vmr_result = 0;
+					vmr.vmr_result = ret;
 					vmr.vmr_id = vmid;
 					if (proc_compose_imsg(ps, PROC_PARENT,
 					    -1, IMSG_VMDOP_TERMINATE_VM_EVENT,
@@ -594,7 +597,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		/* Execute the vcpu run loop(s) for this VM */
 		ret = run_vm(vm->vm_disks, nicfds, vcp, &vrs);
 
-		_exit(ret != 0);
+		_exit(ret);
 	}
 
 	return (0);
@@ -1051,12 +1054,7 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 				return (EIO);
 			}
 
-			if (exit_status != NULL) {
-				log_warnx("%s: vm %d vcpu run thread %zd "
-				    "exited abnormally", __progname,
-				    vcp->vcp_id, i);
-				return (EIO);
-			}
+			ret = (long long)exit_status;
 		}
 
 		/* Did the event thread exit? => return with an error */
@@ -1072,19 +1070,18 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 			return (EIO);
 		}
 
-		/* Did all VCPU threads exit successfully? => return 0 */
+		/* Did all VCPU threads exit successfully? => return */
 		for (i = 0; i < vcp->vcp_ncpus; i++) {
 			if (vcpu_done[i] == 0)
 				break;
 		}
 		if (i == vcp->vcp_ncpus)
-			return (0);
+			return (ret);
 
 		/* Some more threads to wait for, start over */
-
 	}
 
-	return (0);
+	return (ret);
 }
 
 void *
@@ -1193,10 +1190,9 @@ vcpu_run_loop(void *arg)
 			 * vmm(4) needs help handling an exit, handle in
 			 * vcpu_exit.
 			 */
-			if (vcpu_exit(vrp)) {
-				ret = EIO;
+			ret = vcpu_exit(vrp);
+			if (ret)
 				break;
-			}
 		}
 	}
 
@@ -1321,21 +1317,21 @@ vcpu_exit(struct vm_run_params *vrp)
 		if (ret) {
 			log_warnx("%s: can't lock vcpu mutex (%d)",
 			    __func__, ret);
-			return (1);
+			return (ret);
 		}
 		vcpu_hlt[vrp->vrp_vcpu_id] = 1;
 		ret = pthread_mutex_unlock(&vcpu_run_mtx[vrp->vrp_vcpu_id]);
 		if (ret) {
 			log_warnx("%s: can't unlock vcpu mutex (%d)",
 			    __func__, ret);
-			return (1);
+			return (ret);
 		}
 		break;
 	case VMX_EXIT_INT_WINDOW:
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
-		log_warnx("%s: triple fault", __progname);
-		return (1);
+		/* XXX reset VM since we do not support reboot yet */
+		return (EAGAIN);
 	default:
 		log_debug("%s: unknown exit reason %d",
 		    __progname, vrp->vrp_exit_reason);
