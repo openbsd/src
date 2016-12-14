@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.4 2016/12/14 16:07:05 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.5 2016/12/14 21:22:06 jmc Exp $
 .\"	OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -135,8 +135,8 @@
 .Fc
 .Sh DESCRIPTION
 An X.501 RelativeDistinguishedName is a set of field type and
-value pairs.  It is the building block for constructing X.501 Name
-objects.
+value pairs.
+It is the building block for constructing X.501 Name objects.
 This implementation only supports sets with one element, so an
 .Vt X509_NAME_ENTRY
 object contains only one field type and one value.
