@@ -1822,6 +1822,7 @@
 ./usr/share/man/man3/ERR_put_error.3
 ./usr/share/man/man3/ERR_remove_state.3
 ./usr/share/man/man3/ERR_set_mark.3
+./usr/share/man/man3/ESS_SIGNING_CERT_new.3
 ./usr/share/man/man3/EVP_AEAD_CTX_init.3
 ./usr/share/man/man3/EVP_BytesToKey.3
 ./usr/share/man/man3/EVP_DigestInit.3
@@ -1884,6 +1885,7 @@
 ./usr/share/man/man3/RAND_set_rand_method.3
 ./usr/share/man/man3/RC4.3
 ./usr/share/man/man3/RIPEMD160.3
+./usr/share/man/man3/RSA_PSS_PARAMS_new.3
 ./usr/share/man/man3/RSA_blinding_on.3
 ./usr/share/man/man3/RSA_check_key.3
 ./usr/share/man/man3/RSA_generate_key.3
@@ -1994,6 +1996,7 @@
 ./usr/share/man/man3/SSL_want.3
 ./usr/share/man/man3/SSL_write.3
 ./usr/share/man/man3/SipHash24.3
+./usr/share/man/man3/TS_REQ_new.3
 ./usr/share/man/man3/UI_new.3
 ./usr/share/man/man3/X509V3_get_d2i.3
 ./usr/share/man/man3/X509_ALGOR_dup.3
@@ -2003,6 +2006,7 @@
 ./usr/share/man/man3/X509_NAME_ENTRY_get_object.3
 ./usr/share/man/man3/X509_NAME_add_entry_by_txt.3
 ./usr/share/man/man3/X509_NAME_get_index_by_NID.3
+./usr/share/man/man3/X509_NAME_new.3
 ./usr/share/man/man3/X509_NAME_print_ex.3
 ./usr/share/man/man3/X509_PUBKEY_new.3
 ./usr/share/man/man3/X509_STORE_CTX_get_error.3
