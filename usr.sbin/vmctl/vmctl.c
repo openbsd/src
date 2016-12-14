@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.20 2016/11/26 19:49:11 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.21 2016/12/14 21:17:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -67,26 +67,39 @@ start_vm(const char *name, int memsize, int nnics, char **nics,
 {
 	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
+	unsigned int flags = 0;
 	int i;
 
-	if (memsize < 1)
-		memsize = VM_DEFAULT_MEMORY;
-	if (ndisks > VMM_MAX_DISKS_PER_VM)
-		errx(1, "too many disks");
-	else if (ndisks == 0)
-		warnx("starting without disks");
-	if (kernel == NULL && ndisks == 0)
-		errx(1, "no kernel or disk specified");
-	if (nnics == -1)
-		nnics = 0;
-	if (nnics > VMM_MAX_NICS_PER_VM)
-		errx(1, "too many network interfaces");
-	if (nnics == 0)
-		warnx("starting without network interfaces");
+	if (memsize)
+		flags |= VMOP_CREATE_MEMORY;
+	if (nnics)
+		flags |= VMOP_CREATE_NETWORK;
+	if (ndisks)
+		flags |= VMOP_CREATE_DISK;
+	if (kernel)
+		flags |= VMOP_CREATE_KERNEL;
+	if (flags != 0) {
+		if (memsize < 1)
+			memsize = VM_DEFAULT_MEMORY;
+		if (ndisks > VMM_MAX_DISKS_PER_VM)
+			errx(1, "too many disks");
+		else if (ndisks == 0)
+			warnx("starting without disks");
+		if (kernel == NULL && ndisks == 0)
+			errx(1, "no kernel or disk specified");
+		if (nnics == -1)
+			nnics = 0;
+		if (nnics > VMM_MAX_NICS_PER_VM)
+			errx(1, "too many network interfaces");
+		if (nnics == 0)
+			warnx("starting without network interfaces");
+	}
 
 	vmc = calloc(1, sizeof(struct vmop_create_params));
 	if (vmc == NULL)
 		return (ENOMEM);
+
+	vmc->vmc_flags = flags;
 
 	/* vcp includes configuration that is shared with the kernel */
 	vcp = &vmc->vmc_params;

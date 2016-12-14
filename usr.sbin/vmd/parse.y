@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2016/11/22 11:31:38 edd Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2016/12/14 21:17:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -306,6 +306,7 @@ vm_opts		: disable			{
 				YYERROR;
 			}
 			free($2);
+			vmc.vmc_flags |= VMOP_CREATE_DISK;
 		}
 		| INTERFACE optstring iface_opts_o {
 			unsigned int	i;
@@ -337,6 +338,7 @@ vm_opts		: disable			{
 				}
 			}
 			free($2);
+			vmc.vmc_flags |= VMOP_CREATE_NETWORK;
 		}
 		| KERNEL string			{
 			if (vcp->vcp_kernel[0] != '\0') {
@@ -353,6 +355,7 @@ vm_opts		: disable			{
 				YYERROR;
 			}
 			free($2);
+			vmc.vmc_flags |= VMOP_CREATE_KERNEL;
 		}
 		| NIFS NUMBER			{
 			if (vcp->vcp_nnics != 0) {
@@ -364,6 +367,7 @@ vm_opts		: disable			{
 				YYERROR;
 			}
 			vcp->vcp_nnics = (size_t)$2;
+			vmc.vmc_flags |= VMOP_CREATE_NETWORK;
 		}
 		| MEMORY NUMBER			{
 			ssize_t	 res;
@@ -376,6 +380,7 @@ vm_opts		: disable			{
 				YYERROR;
 			}
 			vcp->vcp_memranges[0].vmr_size = (size_t)res;
+			vmc.vmc_flags |= VMOP_CREATE_MEMORY;
 		}
 		| MEMORY STRING			{
 			ssize_t	 res;
@@ -390,6 +395,7 @@ vm_opts		: disable			{
 				YYERROR;
 			}
 			vcp->vcp_memranges[0].vmr_size = (size_t)res;
+			vmc.vmc_flags |= VMOP_CREATE_MEMORY;
 		}
 		;
 

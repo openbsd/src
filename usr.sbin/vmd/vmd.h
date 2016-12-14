@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.39 2016/12/14 06:59:12 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.40 2016/12/14 21:17:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -100,6 +100,11 @@ struct vmop_ifreq {
 
 struct vmop_create_params {
 	struct vm_create_params	 vmc_params;
+	unsigned int		 vmc_flags;
+#define VMOP_CREATE_KERNEL	0x01
+#define VMOP_CREATE_MEMORY	0x02
+#define VMOP_CREATE_NETWORK	0x04
+#define VMOP_CREATE_DISK	0x08
 
 	/* userland-only part of the create params */
 	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];

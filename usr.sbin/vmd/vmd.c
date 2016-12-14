@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.46 2016/12/14 06:59:12 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.47 2016/12/14 21:17:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,7 @@ int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep			*ps = p->p_ps;
-	int				 res = 0, cmd = 0;
+	int				 res = 0, ret = 0, cmd = 0;
 	unsigned int			 v = 0;
 	struct vmop_create_params	 vmc;
 	struct vmop_id			 vid;
@@ -79,7 +79,18 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		if (vm_register(ps, &vmc, &vm, 0) == -1 ||
+		ret = vm_register(ps, &vmc, &vm, 0);
+		if (vmc.vmc_flags == 0) {
+			/* start an existing VM with pre-configured options */
+			if (!(ret == -1 && errno == EALREADY)) {
+				res = errno;
+				cmd = IMSG_VMDOP_START_VM_RESPONSE;
+			}
+		} else if (ret != 0) {
+			res = errno;
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		}
+		if (res == 0 &&
 		    config_setvm(ps, vm, imsg->hdr.peerid) == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
@@ -698,6 +709,10 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		goto fail;
 	}
 
+	if (vmc->vmc_flags == 0) {
+		errno = ENOENT;
+		goto fail;
+	}
 	if (vcp->vcp_ncpus == 0)
 		vcp->vcp_ncpus = 1;
 	if (vcp->vcp_memranges[0].vmr_size == 0)
