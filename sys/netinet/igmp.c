@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.56 2016/12/05 15:31:43 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.57 2016/12/14 17:15:56 rzalamena Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -613,14 +613,21 @@ igmp_slowtimo(void)
 void
 igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
 {
+	struct ifnet *ifp;
 	struct mbuf *m;
 	struct igmp *igmp;
 	struct ip *ip;
 	struct ip_moptions imo;
 
-	MGETHDR(m, M_DONTWAIT, MT_HEADER);
-	if (m == NULL)
+	if ((ifp = if_get(inm->inm_ifidx)) == NULL)
 		return;
+
+	MGETHDR(m, M_DONTWAIT, MT_HEADER);
+	if (m == NULL) {
+		if_put(ifp);
+		return;
+	}
+
 	/*
 	 * Assume max_linkhdr + sizeof(struct ip) + IGMP_MINLEN
 	 * is smaller than mbuf size returned by MGETHDR.
@@ -652,6 +659,7 @@ igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
 
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	imo.imo_ifidx = inm->inm_ifidx;
 	imo.imo_ttl = 1;
 
@@ -666,6 +674,7 @@ igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
 #endif /* MROUTING */
 
 	ip_output(m, router_alert, NULL, IP_MULTICASTOPTS, &imo, NULL, 0);
+	if_put(ifp);
 
 	++igmpstat.igps_snd_reports;
 }
