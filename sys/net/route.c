@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.342 2016/12/04 09:46:39 stsp Exp $	*/
+/*	$OpenBSD: route.c,v 1.343 2016/12/14 20:35:20 stsp Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
 	 */
 	if (ISSET(nhrt->rt_flags, RTF_CLONING|RTF_GATEWAY)) {
 		rtfree(nhrt);
-		return (ELOOP);
+		return (ENETUNREACH);
 	}
 
 	/* Next hop is valid so remove possible old cache. */
