@@ -1,4 +1,4 @@
-/*	$OpenBSD: vndioctl.h,v 1.9 2016/11/12 10:59:37 jca Exp $	*/
+/*	$OpenBSD: vndioctl.h,v 1.10 2016/12/14 18:59:12 jca Exp $	*/
 /*	$NetBSD: vndioctl.h,v 1.5 1995/01/25 04:46:30 cgd Exp $	*/
 
 /*
@@ -67,14 +67,6 @@ struct vnd_user {
 	ino_t	vnu_ino;		/* vnd inode */
 };
 
-/* XXX kill after 6.1 */
-struct vnd_user60 {
-	char	vnu60_file[90];		/* vnd file */
-	int	vnu60_unit;		/* vnd unit */
-	dev_t	vnu60_dev;		/* vnd device */
-	ino_t	vnu60_ino;		/* vnd inode */
-};
-
 /*
  * Before you can use a unit, it must be configured with VNDIOCSET.
  * The configuration persists across opens and closes of the device;
@@ -84,7 +76,7 @@ struct vnd_user60 {
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
 /* XXX kill after 6.1 */
-#define VNDIOCGET60	_IOWR('F', 2, struct vnd_user60)	/* get disk info */
+/* #define VNDIOCGET60	_IOWR('F', 2, struct vnd_user60) */
 #define VNDIOCGET	_IOWR('F', 3, struct vnd_user)	/* get disk info */
 
 #endif /* !_SYS_VNDIOCTL_H_ */

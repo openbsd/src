@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.161 2016/11/12 11:16:59 jca Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.162 2016/12/14 18:59:12 jca Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -396,7 +396,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct vnd_softc *sc;
 	struct vnd_ioctl *vio;
 	struct vnd_user *vnu;
-	struct vnd_user60 *vnu60;
 	struct vattr vattr;
 	struct nameidata nd;
 	int error, part, pmask;
@@ -543,35 +542,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		/* Detach the disk. */
 		disk_detach(&sc->sc_dk);
 		disk_unlock(&sc->sc_dk);
-		break;
-
-	/* XXX kill after 6.1 */
-	case VNDIOCGET60:
-		vnu60 = (struct vnd_user60 *)addr;
-
-		if (vnu60->vnu60_unit == -1)
-			vnu60->vnu60_unit = unit;
-		if (vnu60->vnu60_unit >= numvnd)
-			return (ENXIO);
-		if (vnu60->vnu60_unit < 0)
-			return (EINVAL);
-
-		sc = &vnd_softc[vnu60->vnu60_unit];
-
-		if (sc->sc_flags & VNF_INITED) {
-			error = VOP_GETATTR(sc->sc_vp, &vattr, p->p_ucred, p);
-			if (error)
-				return (error);
-
-			strlcpy(vnu60->vnu60_file, sc->sc_file,
-			    sizeof(vnu60->vnu60_file));
-			vnu60->vnu60_dev = vattr.va_fsid;
-			vnu60->vnu60_ino = vattr.va_fileid;
-		} else {
-			vnu60->vnu60_dev = 0;
-			vnu60->vnu60_ino = 0;
-		}
-
 		break;
 
 	case VNDIOCGET:
