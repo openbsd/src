@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.11 2016/12/13 19:02:39 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.12 2016/12/14 11:39:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -56,7 +56,7 @@
 
 #define XBF_OK			0
 #define XBF_EIO			-1 /* generic failure */
-#define XBF_EOPNOTSUPP		-2 /* only for XBF_OP_WRBAR */
+#define XBF_EOPNOTSUPP		-2 /* only for XBF_OP_BARRIER */
 
 struct xbf_sge {
 	uint32_t		 sge_ref;
@@ -328,8 +328,6 @@ xbf_io_get(void *xsc)
 
 	if (sc->sc_state != XBF_CONNECTED)
 		rv = NULL;
-	else
-		KASSERT(atomic_dec_int_nv(&sc->sc_xs_avail) >= 0);
 
 	return (rv);
 }
@@ -341,10 +339,8 @@ xbf_io_put(void *xsc, void *io)
 
 #ifdef DIAGNOSTIC
 	if (sc != io)
-		panic("vsdk_io_put: unexpected io");
+		panic("xbf_io_put: unexpected io");
 #endif
-
-	KASSERT(atomic_inc_int_nv(&sc->sc_xs_avail) <= sc->sc_xr_ndesc);
 }
 
 void
@@ -670,7 +666,7 @@ xbf_complete_cmd(struct scsi_xfer *xs, int desc)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_xr_dma.dma_map, 0,
 	    sc->sc_xr_dma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD |
-	    BUS_DMASYNC_POSTREAD);
+	    BUS_DMASYNC_POSTWRITE);
 
 	xrd = &sc->sc_xr->xr_desc[desc];
 	error = xrd->xrd_rsp.rsp_status == XBF_OK ? XS_NOERROR :
