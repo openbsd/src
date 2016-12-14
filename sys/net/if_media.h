@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.37 2016/12/13 21:06:28 mikeb Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.38 2016/12/14 08:16:56 sthen Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -533,7 +533,7 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_40G_SR4,	"40GBASE-SR4" },		\
 	{ IFM_ETHER|IFM_40G_LR4,	"40GbaseLR4" },			\
 	{ IFM_ETHER|IFM_40G_LR4,	"40GBASE-LR4" },		\
-	{ IFM_ETHER|IFM_1000_KX,	"1000bas-KX" },			\
+	{ IFM_ETHER|IFM_1000_KX,	"1000base-KX" },		\
 	{ IFM_ETHER|IFM_1000_KX,	"1000BASE-KX" },		\
 	{ IFM_ETHER|IFM_10G_KX4,	"10GbaseKX4" },			\
 	{ IFM_ETHER|IFM_10G_KX4,	"10GBASE-KX4" },		\
