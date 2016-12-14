@@ -1,4 +1,4 @@
-.\"	$OpenBSD: TS_REQ_new.3,v 1.1 2016/12/14 02:03:50 schwarze Exp $
+.\"	$OpenBSD: TS_REQ_new.3,v 1.2 2016/12/14 07:00:35 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -29,7 +29,7 @@
 .Nm TS_ACCURACY_new ,
 .Nm TS_ACCURACY_free ,
 .Nm TS_MSG_IMPRINT_new ,
-.Nm TS_MSG_IMPRINT_free ,
+.Nm TS_MSG_IMPRINT_free
 .Nd X.509 time-stamp protocol
 .Sh SYNOPSIS
 .In openssl/ts.h
@@ -58,10 +58,11 @@
 .Ft void
 .Fn TS_MSG_IMPRINT_free "TS_MSG_IMPRINT *imprint"
 .Sh DESCRIPTION
-A time-stamping authority is a trusted third party allowing its
+A time-stamping authority is a trusted third party which allows its
 clients to prove that specific data existed at a particular point
-in time.  Clients send time-stamping requests to the time-stamping
-server, which returns time-stamp tokens to the clients.
+in time.
+Clients send time-stamping requests to the time-stamping server,
+which returns time-stamp tokens to the clients.
 .Pp
 .Fn TS_REQ_new
 allocates and initializes an empty
