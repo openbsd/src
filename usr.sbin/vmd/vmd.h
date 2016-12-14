@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.38 2016/11/26 20:03:42 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.39 2016/12/14 06:59:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -182,6 +182,7 @@ struct vmd_vm *vm_getbyvmid(uint32_t);
 struct vmd_vm *vm_getbyid(uint32_t);
 struct vmd_vm *vm_getbyname(const char *);
 struct vmd_vm *vm_getbypid(pid_t);
+void	 vm_stop(struct vmd_vm *, int);
 void	 vm_remove(struct vmd_vm *);
 int	 vm_register(struct privsep *, struct vmop_create_params *,
 	    struct vmd_vm **, uint32_t);
