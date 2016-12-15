@@ -1,7 +1,24 @@
-.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.2 2016/12/05 16:38:24 jmc Exp $
+.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.3 2016/12/15 22:08:23 schwarze Exp $
 .\"	OpenSSL 4692340e Jun 7 15:49:08 2016 -0400
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2002, 2015 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,18 +65,24 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2016 $
+.Dd $Mdocdate: December 15 2016 $
 .Dt X509_ALGOR_DUP 3
 .Os
 .Sh NAME
+.Nm X509_ALGOR_new ,
+.Nm X509_ALGOR_free ,
 .Nm X509_ALGOR_dup ,
 .Nm X509_ALGOR_set0 ,
 .Nm X509_ALGOR_get0 ,
 .Nm X509_ALGOR_set_md ,
 .Nm X509_ALGOR_cmp
-.Nd AlgorithmIdentifier functions
+.Nd create, change, and inspect algorithm identifiers
 .Sh SYNOPSIS
 .In openssl/x509.h
+.Ft X509_ALGOR *
+.Fn X509_ALGOR_new void
+.Ft void
+.Fn X509_ALGOR_free "X509_ALGOR *alg"
 .Ft X509_ALGOR *
 .Fo X509_ALGOR_dup
 .Fa "X509_ALGOR *alg"
@@ -89,9 +112,27 @@
 .Fa "const X509_ALGOR *b"
 .Fc
 .Sh DESCRIPTION
+.Fn X509_ALGOR_new
+allocates and initializes an empty
+.Vt X509_ALGOR
+object, representing an ASN.1 AlgorithmIdentifier structure
+defined in RFC 5280 section 4.1.1.2.
+Such objects can specify a cryptographic algorithm together
+with algorithm-specific parameters.
+They are used by many other objects, for example certificates,
+certificate revocation lists, and certificate requests.
+.Pp
+.Fn X509_ALGOR_free
+frees
+.Fa alg.
+.Pp
 .Fn X509_ALGOR_dup
-returns a copy of
-.Fa alg .
+copies
+.Fa alg
+by calling
+.Xr i2d_X509_ALGOR 3
+and
+.Xr d2i_X509_ALGOR 3 .
 .Pp
 .Fn X509_ALGOR_set0
 sets the algorithm OID of
@@ -105,15 +146,15 @@ with value
 If
 .Fa ptype
 is
-.Sy V_ASN1_UNDEF
+.Dv V_ASN1_UNDEF
 the parameter is omitted, otherwise
 .Fa ptype
 and
 .Fa pval
 have the same meaning as the
-.Sy type
+.Fa type
 and
-.Sy value
+.Fa value
 parameters to
 .Xr ASN1_TYPE_set 3 .
 All the supplied parameters are used internally so must
@@ -124,18 +165,16 @@ be freed after this call.
 is the inverse of
 .Fn X509_ALGOR_set0 :
 it returns the algorithm OID in
-.Sy *paobj
+.Pf * Fa paobj
 and the associated parameter in
-.Sy *pptype
+.Pf * Fa pptype
 and
-.Sy *ppval
-from the
-.Sy AlgorithmIdentifier
+.Pf * Fa ppval
+from
 .Fa alg .
 .Pp
 .Fn X509_ALGOR_set_md
-sets the
-.Sy AlgorithmIdentifier
+sets
 .Fa alg
 to appropriate values for the message digest
 .Fa md .
@@ -144,5 +183,30 @@ to appropriate values for the message digest
 compares
 .Fa a
 and
+.Fa b .
+.Sh RETURN VALUES
+.Fn X509_ALGOR_new
+and
+.Fn X509_ALGOR_dup
+return a new
+.Vt X509_ALGOR
+object or
+.Dv NULL
+if an error occurs.
+.Pp
+.Fn X509_ALGOR_set0
+returns 1 for success or 0 for failure.
+.Pp
+.Fn X509_ALGOR_cmp
+returns 0 if
+.Fa a
+and
 .Fa b
-and returns 0 if they have identical encodings and non-zero otherwise.
+have identical encodings or non-zero otherwise.
+.Sh SEE ALSO
+.Xr ASN1_TYPE_set 3 ,
+.Xr d2i_X509_ALGOR 3 ,
+.Xr X509_PUBKEY_get0_param 3
+.Sh STANDARDS
+RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
+Certificate Revocation List (CRL) Profile
