@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.12 2016/12/14 11:39:30 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.13 2016/12/15 03:41:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -335,9 +335,9 @@ xbf_io_get(void *xsc)
 void
 xbf_io_put(void *xsc, void *io)
 {
+#ifdef DIAGNOSTIC
 	struct xbf_softc *sc = xsc;
 
-#ifdef DIAGNOSTIC
 	if (sc != io)
 		panic("xbf_io_put: unexpected io");
 #endif
