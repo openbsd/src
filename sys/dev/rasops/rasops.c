@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.43 2016/09/26 20:41:08 fcambus Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.44 2016/12/15 19:18:41 fcambus Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -427,11 +427,6 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 		rasops1_init(ri);
 		break;
 #endif
-#if NRASOPS2 > 0
-	case 2:
-		rasops2_init(ri);
-		break;
-#endif
 #if NRASOPS4 > 0
 	case 4:
 		rasops4_init(ri);
@@ -802,16 +797,6 @@ rasops_init_devcmap(struct rasops_info *ri)
 	}
 
 	switch (ri->ri_depth) {
-#if NRASOPS2 > 0
-	case 2:
-		for (i = 1; i < 15; i++)
-			ri->ri_devcmap[i] = 0xaaaaaaaa;
-
-		ri->ri_devcmap[0] = 0;
-		ri->ri_devcmap[8] = 0x55555555;
-		ri->ri_devcmap[15] = 0xffffffff;
-		return;
-#endif
 #if NRASOPS4 > 0
 	case 4:
 		for (i = 0; i < 16; i++) {

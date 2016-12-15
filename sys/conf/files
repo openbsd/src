@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.635 2016/11/30 14:26:12 stsp Exp $
+#	$OpenBSD: files,v 1.636 2016/12/15 19:18:41 fcambus Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -41,7 +41,6 @@ attach	midi at midibus
 
 # raster operations attributes
 define	rasops1
-define	rasops2
 define	rasops4
 define	rasops8
 define	rasops15

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.17 2015/09/07 18:00:58 kettenis Exp $ */
+/*	$OpenBSD: rasops.h,v 1.18 2016/12/15 19:18:41 fcambus Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -158,7 +158,6 @@ struct rasops_info {
  * the rasops code.
  */
 void	rasops1_init(struct rasops_info *);
-void	rasops2_init(struct rasops_info *);
 void	rasops4_init(struct rasops_info *);
 void	rasops8_init(struct rasops_info *);
 void	rasops15_init(struct rasops_info *);
