@@ -1,4 +1,4 @@
-.\"	$OpenBSD: x509.3,v 1.6 2016/12/14 16:53:32 schwarze Exp $
+.\"	$OpenBSD: x509.3,v 1.7 2016/12/15 15:22:17 schwarze Exp $
 .\"	OpenSSL a9c85cea Nov 11 09:33:55 2016 +0100
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 14 2016 $
+.Dd $Mdocdate: December 15 2016 $
 .Dt X509 3
 .Os
 .Sh NAME
@@ -75,14 +75,6 @@ In OpenSSL, the type
 .Vt X509_REQ
 is used to express such a certificate request.
 .Pp
-To handle some complex parts of a certificate, there are the types
-.Vt X509_NAME
-to express a certificate or issuer name,
-.Vt X509_ATTRIBUTE
-to express a certificate attribute,
-.Vt X509_EXTENSION
-to express a certificate extension, and a few more.
-.Pp
 Finally, there's the supertype
 .Vt X509_INFO ,
 which can contain a CRL, a certificate, and a corresponding private key.
@@ -106,7 +98,9 @@ and
 .Fa i2d_X509_REQ_*
 handle PKCS#10 certificate requests.
 .Pp
-The functions documented in
+The object type
+.Vt X509_NAME
+and the functions documented in
 .Xr X509_NAME_new 3
 and in the manual pages referenced from there handle certificate
 and issuer names.
@@ -114,8 +108,12 @@ and issuer names.
 .Fa X509_ATTRIBUTE_*
 handle certificate attributes.
 .Pp
-.Fa X509_EXTENSION_*
-handle certificate extensions.
+The object type
+.Vt X509_EXTENSION
+and the functions documented in
+.Xr X509_EXTENSION_new 3
+and in the manual pages referenced from there handle certificate
+extensions and certificate revocation list extensions.
 .Sh SEE ALSO
 .Xr crypto 3 ,
 .Xr d2i_X509 3 ,
@@ -123,4 +121,5 @@ handle certificate extensions.
 .Xr d2i_X509_CRL 3 ,
 .Xr d2i_X509_REQ 3 ,
 .Xr d2i_X509_SIG 3 ,
+.Xr X509_EXTENSION_new 3 ,
 .Xr X509_NAME_new 3
