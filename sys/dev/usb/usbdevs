@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.672 2016/12/12 04:23:25 jsg Exp $
+$OpenBSD: usbdevs,v 1.673 2016/12/15 15:42:05 pirofti Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2301,6 +2301,8 @@ product INTEL2 RMH_4		0x8008	Rate Matching Hub
 product INTEL2 RMH_6		0x8009	Rate Matching Hub
 product INTEL2 RMH_8		0x800a	Rate Matching Hub
 product INTEL TESTBOARD		0x9890	82930 test board
+product INTEL2 BLUETOOTH	0x0a2a	Bluetooth
+product INTEL2 BLUETOOTH2	0x0a2b	Bluetooth
 
 /* InterBiometrics products */
 product INTERBIO IOBOARD	0x1002	IO Board
