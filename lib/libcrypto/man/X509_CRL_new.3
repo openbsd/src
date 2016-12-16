@@ -1,0 +1,90 @@
+.\"	$OpenBSD: X509_CRL_new.3,v 1.1 2016/12/16 09:56:33 schwarze Exp $
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 16 2016 $
+.Dt X509_CRL_NEW 3
+.Os
+.Sh NAME
+.Nm X509_CRL_new ,
+.Nm X509_CRL_free ,
+.Nm X509_CRL_INFO_new ,
+.Nm X509_CRL_INFO_free
+.Nd X.509 certificate revocation lists
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft X509_CRL *
+.Fn X509_CRL_new void
+.Ft void
+.Fn X509_CRL_free "X509_CRL *crl"
+.Ft X509_CRL_INFO *
+.Fn X509_CRL_INFO_new void
+.Ft void
+.Fn X509_CRL_INFO_free "X509_CRL_INFO *crl_info"
+.Sh DESCRIPTION
+.Fn X509_CRL_new
+allocates and initializes an empty
+.Vt X509_CRL
+object, representing an ASN.1 CertificateList structure
+defined in RFC 5280 section 5.1.
+It can hold a pointer to an
+.Vt X509_CRL_INFO
+object discussed below together with a cryptographic signature
+and information about the signature algorithm used.
+.Fn X509_CRL_free
+frees
+.Fa crl .
+.Pp
+.Fn X509_CRL_INFO_new
+allocates and initializes an empty
+.Vt X509_CRL_INFO
+object, representing an ASN.1 TBSCertList structure
+defined in RFC 5280 section 5.1.
+It is used inside the
+.Vt X509_CRL
+object and can hold a list of revoked certificates, an issuer name,
+the time the list was issued, the time when the next update of the
+list is due, and optional extensions.
+.Fn X509_CRL_INFO_free
+frees
+.Fa crl_info .
+.Sh RETURN VALUES
+.Fn X509_CRL_new
+and
+.Fn X509_CRL_INFO_new
+return the new
+.Vt X509_CRL
+or
+.Vt X509_CRL_INFO
+object, respectively, or
+.Dv NULL
+if an error occurs.
+.Sh SEE ALSO
+.Xr d2i_X509_CRL 3 ,
+.Xr PEM_read_X509_CRL 3 ,
+.Xr X509_CRL_get0_by_serial 3 ,
+.Xr X509_CRL_get_ext 3 ,
+.Xr X509_CRL_get_ext_d2i 3 ,
+.Xr X509_CRL_get_issuer 3 ,
+.Xr X509_CRL_get_version 3 ,
+.Xr X509_CRL_sign 3 ,
+.Xr X509_load_crl_file 3 ,
+.Xr X509_new 3 ,
+.Xr X509_REVOKED_new 3 ,
+.Xr X509_STORE_CTX_set0_crls 3
+.Sh STANDARDS
+RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
+Certificate Revocation List (CRL) Profile, section 5: CRL and CRL
+Extensions Profile
