@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.26 2015/01/16 06:40:01 deraadt Exp $	*/
+/*	$OpenBSD: umount.c,v 1.27 2016/12/16 17:44:59 krw Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -145,11 +145,13 @@ int
 umountfs(char *oname)
 {
 	struct hostent *hp;
+#ifndef NO_NFS
 	struct sockaddr_in saddr;
-	struct stat sb;
 	struct timeval pertry, try;
 	CLIENT *clp;
 	int so;
+#endif
+	struct stat sb;
 	char *delimp, *hostp, *mntpt;
 	char *name, *newname, rname[PATH_MAX], type[MFSNAMELEN];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nameindex.c,v 1.12 2016/12/15 20:50:36 krw Exp $	*/
+/*	$OpenBSD: if_nameindex.c,v 1.13 2016/12/16 17:44:59 krw Exp $	*/
 /*	$KAME: if_nameindex.c,v 1.7 2000/11/24 08:17:20 itojun Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ if_nameindex(void)
 	struct if_nameindex_msg *ifnm = NULL;
 	struct if_nameindex *ifni = NULL, *ifni2;
 	char *cp;
-	size_t nbytes, needed;
+	size_t needed;
 	unsigned int ni, i;
 	int mib[6];
 

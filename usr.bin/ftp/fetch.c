@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.151 2016/12/08 19:59:51 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.152 2016/12/16 17:44:59 krw Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
 	char *epath, *redirurl, *loctail, *h, *p;
 	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
-	struct addrinfo hints, *res0, *res, *ares = NULL;
+	struct addrinfo hints, *res0, *res;
 	const char * volatile savefile;
 	char * volatile proxyurl = NULL;
 	char *credentials = NULL;
@@ -193,6 +193,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	char *locbase, *full_host = NULL;
 	const char *scheme;
 	int ishttpurl = 0, ishttpsurl = 0;
+	struct addrinfo *ares = NULL;
 #endif /* !SMALL */
 	struct tls *tls = NULL;
 	int status;
@@ -1456,7 +1457,9 @@ ftp_readline(FILE *fp, struct tls *tls, size_t *lenp)
 size_t
 ftp_read(FILE *fp, struct tls *tls, char *buf, size_t len)
 {
+#ifndef SMALL
 	ssize_t tls_ret;
+#endif
 	size_t ret = 0;
 
 	if (fp != NULL)

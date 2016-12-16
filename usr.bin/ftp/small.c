@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.6 2016/05/25 15:36:01 krw Exp $	*/
+/*	$OpenBSD: small.c,v 1.7 2016/12/16 17:44:59 krw Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -326,13 +326,13 @@ mget(int argc, char *argv[])
 {
 	extern int optind, optreset;
 	sig_t oldintr;
-	int ch, xargc = 2;
+	int xargc = 2;
 	char *cp, localcwd[PATH_MAX], *xargv[] = { argv[0], NULL, NULL };
 	static int restartit = 0;
 #ifndef SMALL
 	extern char *optarg;
 	const char *errstr;
-	int i = 1;
+	int ch, i = 1;
 	char type = 0, *dummyargv[] = { argv[0], ".", NULL };
 	FILE *ftemp = NULL;
 	static int depth = 0, max_depth = 0;

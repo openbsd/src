@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.47 2015/12/10 17:26:59 mmcc Exp $	*/
+/*	$OpenBSD: inode.c,v 1.48 2016/12/16 17:44:59 krw Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -526,7 +526,9 @@ pinode(ino_t ino)
 {
 	union dinode *dp;
 	char *p;
+#ifndef SMALL
 	struct passwd *pw;
+#endif
 	time_t t;
 
 	printf(" I=%llu ", (unsigned long long)ino);

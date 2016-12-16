@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.87 2016/09/03 17:01:01 tedu Exp $	*/
+/*	$OpenBSD: md5.c,v 1.88 2016/12/16 17:44:59 krw Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -209,7 +209,10 @@ main(int argc, char **argv)
 	size_t len;
 	char *cp, *input_string, *selective_checklist;
 	const char *optstr;
-	int fl, error, base64, i;
+	int fl, error, base64;
+#if !defined(SHA2_ONLY)
+	int i;
+#endif
 	int bflag, cflag, pflag, rflag, tflag, xflag;
 
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)

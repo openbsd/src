@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.112 2016/11/30 07:55:24 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.113 2016/12/16 17:44:59 krw Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -160,7 +160,10 @@ int pipeout;
 int
 main(volatile int argc, char *argv[])
 {
-	int ch, top, rval;
+	int ch, rval;
+#ifndef SMALL
+	int top;
+#endif
 	struct passwd *pw = NULL;
 	char *cp, homedir[PATH_MAX];
 	char *outfile = NULL;
