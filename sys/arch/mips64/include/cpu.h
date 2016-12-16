@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.111 2016/08/14 08:23:52 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.112 2016/12/16 12:01:19 fcambus Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -361,12 +361,14 @@ void	cp0_calibrate(struct cpu_info *);
  */
 #define	CPU_ALLOWAPERTURE	1	/* allow mmap of /dev/xf86 */
 		/*		2	   formerly: keyboard reset */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
+#define	CPU_LIDSUSPEND		3	/* lid close causes a suspend */
+#define	CPU_MAXID		4	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES {			\
 	{ 0, 0 },				\
 	{ "allowaperture", CTLTYPE_INT },	\
 	{ 0, 0 },				\
+	{ "lidsuspend", CTLTYPE_INT },		\
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2016/12/11 07:57:14 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.70 2016/12/16 12:01:19 fcambus Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -116,6 +116,7 @@ int	physmem;		/* Max supported memory, changes to actual. */
 int	ncpu = 1;		/* At least one CPU in the system. */
 int	nnodes = 1;		/* Number of NUMA nodes, only on 3A. */
 struct	user *proc0paddr;
+int	lid_suspend = 1;
 
 const struct platform *sys_platform;
 struct cpu_hwinfo bootcpu_hwinfo;
@@ -1016,6 +1017,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return ENOTDIR;		/* Overloaded */
 
 	switch (name[0]) {
+	case CPU_LIDSUSPEND:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &lid_suspend);
 	default:
 		return EOPNOTSUPP;
 	}
