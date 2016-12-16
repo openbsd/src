@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_tlsext_ticket_key_cb.3,v 1.1 2016/12/01 21:12:49 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_tlsext_ticket_key_cb.3,v 1.2 2016/12/16 15:39:08 jmc Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Rich Salz <rsalz@akamai.com>
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 1 2016 $
+.Dd $Mdocdate: December 16 2016 $
 .Dt SSL_CTX_SET_TLSEXT_TICKET_KEY_CB 3
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ that per session state is unnecessary and a small set of cryptographic
 variables needs to be maintained by the callback function
 implementation.
 .Pp
-In order to reuse a session, a TLS client must send the a session ticket
+In order to reuse a session, a TLS client must send a session ticket
 extension to the server.
 The client can only send exactly one session ticket.
 The server, through the callback function, either agrees to reuse the

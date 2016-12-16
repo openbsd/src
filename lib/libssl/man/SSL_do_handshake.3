@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_do_handshake.3,v 1.3 2016/12/06 12:24:33 schwarze Exp $
+.\"	$OpenBSD: SSL_do_handshake.3,v 1.4 2016/12/16 15:39:08 jmc Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Martin Sjoegren <martin@strakt.com>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: December 16 2016 $
 .Dt SSL_DO_HANDSHAKE 3
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@ at the protocol level or a connection failure occurred.
 The shutdown was not clean.
 It can also occur if action is needed to continue the operation for
 non-blocking
-.Vt BIO Ns s.
+.Vt BIO Ns s .
 Call
 .Xr SSL_get_error 3
 with the return value
