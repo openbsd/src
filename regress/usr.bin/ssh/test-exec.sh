@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.57 2016/11/25 03:02:01 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.58 2016/12/16 01:06:27 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -158,16 +158,8 @@ increase_datafile_size()
 export SSH SSHD SSHAGENT SSHADD SSHKEYGEN SSHKEYSCAN SFTP SFTPSERVER SCP
 #echo $SSH $SSHD $SSHAGENT $SSHADD $SSHKEYGEN $SSHKEYSCAN $SFTP $SFTPSERVER $SCP
 
-# helper
-cleanup ()
+stop_sshd ()
 {
-	if [ "x$SSH_PID" != "x" ]; then
-		if [ $SSH_PID -lt 2 ]; then
-			echo bad pid for ssh: $SSH_PID
-		else
-			kill $SSH_PID
-		fi
-	fi
 	if [ -f $PIDFILE ]; then
 		pid=`$SUDO cat $PIDFILE`
 		if [ "X$pid" = "X" ]; then
@@ -188,6 +180,19 @@ cleanup ()
 			fi
 		fi
 	fi
+}
+
+# helper
+cleanup ()
+{
+	if [ "x$SSH_PID" != "x" ]; then
+		if [ $SSH_PID -lt 2 ]; then
+			echo bad pid for ssh: $SSH_PID
+		else
+			kill $SSH_PID
+		fi
+	fi
+	stop_sshd
 }
 
 start_debug_log ()
