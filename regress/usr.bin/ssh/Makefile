@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.93 2016/11/01 13:43:27 tb Exp $
+#	$OpenBSD: Makefile,v 1.94 2016/12/16 03:51:19 dtucker Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -71,7 +71,8 @@ LTESTS= 	connect \
 		hostkey-rotate \
 		principals-command \
 		cert-file \
-		cfginclude
+		cfginclude \
+		allow-deny-users
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
