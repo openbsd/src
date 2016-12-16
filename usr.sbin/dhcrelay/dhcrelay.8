@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay.8,v 1.14 2016/12/13 06:55:32 jmc Exp $
+.\"	$OpenBSD: dhcrelay.8,v 1.15 2016/12/16 18:38:39 rzalamena Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: December 13 2016 $
+.Dd $Mdocdate: December 16 2016 $
 .Dt DHCRELAY 8
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Nd Dynamic Host Configuration Protocol relay agent
 .Sh SYNOPSIS
 .Nm
-.Op Fl do
+.Op Fl dor
 .Op Fl C Ar circuit-id
 .Op Fl R Ar remote-id
 .Fl i Ar interface
@@ -118,6 +118,8 @@ relay agent information sub-option value that
 .Nm
 should append on relayed packets.
 If this option is not specified it will use the destination address by default.
+.It Fl r
+Replace incoming Relay Agent Information with the one configured.
 .El
 .Sh SEE ALSO
 .Xr dhclient 8 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.54 2016/12/13 17:40:41 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.55 2016/12/16 18:38:39 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -94,6 +94,7 @@ int oflag;
 enum dhcp_relay_mode	 drm = DRM_UNKNOWN;
 const char		*rai_circuit = NULL;
 const char		*rai_remote = NULL;
+int			 rai_replace = 0;
 
 struct server_list {
 	struct interface_info *intf;
@@ -118,7 +119,7 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "aC:di:oR:")) != -1) {
+	while ((ch = getopt(argc, argv, "aC:di:oR:r")) != -1) {
 		switch (ch) {
 		case 'C':
 			rai_circuit = optarg;
@@ -140,6 +141,9 @@ main(int argc, char *argv[])
 			break;
 		case 'R':
 			rai_remote = optarg;
+			break;
+		case 'r':
+			rai_replace = 1;
 			break;
 
 		default:
@@ -444,7 +448,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-do] [-C circuit-id] [-R remote-id] "
+	fprintf(stderr, "usage: %s [-dor] [-C circuit-id] [-R remote-id] "
 	    "-i interface\n\tdestination ...\n",
 	    __progname);
 	exit(1);
@@ -675,8 +679,12 @@ relay_agentinfo_append(struct packet_ctx *pc, struct dhcp_packet *dp,
 		}
 
 		if (*p == DHO_RELAY_AGENT_INFORMATION) {
-			hasinfo = 1;
-			continue;
+			if (rai_replace) {
+				memmove(p, p + optlen, opttotal - i);
+				opttotal -= optlen;
+				optlen = 0;
+			} else
+				hasinfo = 1;
 		}
 
 		p += optlen;
