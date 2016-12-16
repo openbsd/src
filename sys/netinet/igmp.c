@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.57 2016/12/14 17:15:56 rzalamena Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.58 2016/12/16 12:24:43 rzalamena Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ static struct mbuf *router_alert;
 struct igmpstat igmpstat;
 
 void igmp_checktimer(struct ifnet *);
-void igmp_sendpkt(struct in_multi *, int, in_addr_t);
+void igmp_sendpkt(struct ifnet *, struct in_multi *, int, in_addr_t);
 int rti_fill(struct in_multi *);
 struct router_info * rti_find(struct ifnet *);
 void igmp_input_if(struct ifnet *, struct mbuf *, int);
@@ -509,7 +509,7 @@ igmp_joingroup(struct in_multi *inm)
 		if ((i = rti_fill(inm)) == -1)
 			goto out;
 
-		igmp_sendpkt(inm, i, 0);
+		igmp_sendpkt(ifp, inm, i, 0);
 		inm->inm_state = IGMP_DELAYING_MEMBER;
 		inm->inm_timer = IGMP_RANDOM_DELAY(
 		    IGMP_MAX_HOST_REPORT_DELAY * PR_FASTHZ);
@@ -534,7 +534,8 @@ igmp_leavegroup(struct in_multi *inm)
 		if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 		    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0)
 			if (inm->inm_rti->rti_type != IGMP_v1_ROUTER)
-				igmp_sendpkt(inm, IGMP_HOST_LEAVE_MESSAGE,
+				igmp_sendpkt(ifp, inm,
+				    IGMP_HOST_LEAVE_MESSAGE,
 				    INADDR_ALLROUTERS_GROUP);
 		break;
 	case IGMP_LAZY_MEMBER:
@@ -582,10 +583,10 @@ igmp_checktimer(struct ifnet *ifp)
 		} else if (--inm->inm_timer == 0) {
 			if (inm->inm_state == IGMP_DELAYING_MEMBER) {
 				if (inm->inm_rti->rti_type == IGMP_v1_ROUTER)
-					igmp_sendpkt(inm,
+					igmp_sendpkt(ifp, inm,
 					    IGMP_v1_HOST_MEMBERSHIP_REPORT, 0);
 				else
-					igmp_sendpkt(inm,
+					igmp_sendpkt(ifp, inm,
 					    IGMP_v2_HOST_MEMBERSHIP_REPORT, 0);
 				inm->inm_state = IGMP_IDLE_MEMBER;
 			}
@@ -611,22 +612,17 @@ igmp_slowtimo(void)
 }
 
 void
-igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
+igmp_sendpkt(struct ifnet *ifp, struct in_multi *inm, int type,
+    in_addr_t addr)
 {
-	struct ifnet *ifp;
 	struct mbuf *m;
 	struct igmp *igmp;
 	struct ip *ip;
 	struct ip_moptions imo;
 
-	if ((ifp = if_get(inm->inm_ifidx)) == NULL)
-		return;
-
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
-	if (m == NULL) {
-		if_put(ifp);
+	if (m == NULL)
 		return;
-	}
 
 	/*
 	 * Assume max_linkhdr + sizeof(struct ip) + IGMP_MINLEN
@@ -674,7 +670,6 @@ igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
 #endif /* MROUTING */
 
 	ip_output(m, router_alert, NULL, IP_MULTICASTOPTS, &imo, NULL, 0);
-	if_put(ifp);
 
 	++igmpstat.igps_snd_reports;
 }
