@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.88 2016/12/16 17:44:59 krw Exp $	*/
+/*	$OpenBSD: md5.c,v 1.89 2016/12/16 17:55:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -210,9 +210,6 @@ main(int argc, char **argv)
 	char *cp, *input_string, *selective_checklist;
 	const char *optstr;
 	int fl, error, base64;
-#if !defined(SHA2_ONLY)
-	int i;
-#endif
 	int bflag, cflag, pflag, rflag, tflag, xflag;
 
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
@@ -369,6 +366,8 @@ main(int argc, char **argv)
 	else if (input_string)
 		digest_string(input_string, &hl);
 	else if (selective_checklist) {
+		int i;
+
 		error = digest_filelist(selective_checklist, TAILQ_FIRST(&hl),
 		    argc, argv);
 		for (i = 0; i < argc; i++) {
