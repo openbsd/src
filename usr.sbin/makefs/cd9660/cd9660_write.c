@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_write.c,v 1.6 2016/10/26 15:31:13 natano Exp $	*/
+/*	$OpenBSD: cd9660_write.c,v 1.7 2016/12/17 16:22:04 krw Exp $	*/
 /*	$NetBSD: cd9660_write.c,v 1.17 2013/10/19 17:16:37 christos Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 		/*
 		 * Now loop over children, writing out their directory
 		 * records - beware of sector boundaries
-	 	 */
+		 */
 		TAILQ_FOREACH(temp, &writenode->cn_children, cn_next_child) {
 			/*
 			 * Copy the temporary record and adjust its size

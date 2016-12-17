@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.h,v 1.2 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.h,v 1.3 2016/12/17 16:22:04 krw Exp $	*/
 /*	$NetBSD: cd9660_eltorito.h,v 1.5 2009/07/04 14:31:38 ahoka Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ struct boot_catalog_entry {
 	char entry_type;
 	union {
 		boot_catalog_validation_entry		VE;
-		boot_catalog_initial_entry 		IE;
+		boot_catalog_initial_entry		IE;
 		boot_catalog_section_header		SH;
 		boot_catalog_section_entry		SE;
 		boot_catalog_section_entry_extension	EX;
@@ -140,7 +140,7 @@ struct boot_catalog_entry {
 struct cd9660_boot_image {
 	char *filename;
 	int size;
-	int sector; 			/* copied to LoadRBA */
+	int sector;			/* copied to LoadRBA */
 	int num_sectors;
 	unsigned int loadSegment;
 	u_char targetMode;

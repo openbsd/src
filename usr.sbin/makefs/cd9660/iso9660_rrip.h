@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso9660_rrip.h,v 1.3 2016/10/18 16:50:55 natano Exp $	*/
+/*	$OpenBSD: iso9660_rrip.h,v 1.4 2016/12/17 16:22:04 krw Exp $	*/
 /*	$NetBSD: iso9660_rrip.h,v 1.6 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ struct ISO_SUSP_ATTRIBUTES {
 	char type_of[2];
 	char last_in_suf;	/* last entry in the System Use Field? */
 	/* Dan's addons - will merge later. This allows use of a switch */
-	char susp_type; 	/* SUSP or RRIP */
+	char susp_type;		/* SUSP or RRIP */
 	char entry_type;	/* Record type */
 	char write_location;
 	TAILQ_ENTRY(ISO_SUSP_ATTRIBUTES) rr_ll;
