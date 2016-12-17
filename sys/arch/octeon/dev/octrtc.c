@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrtc.c,v 1.4 2014/10/26 15:13:04 jasper Exp $	*/
+/*	$OpenBSD: octrtc.c,v 1.5 2016/12/17 13:13:57 visa Exp $	*/
 
 /*
  * Copyright (c) 2013, 2014 Paul Irofti.
@@ -85,7 +85,8 @@ octrtc_match(struct device *parent, void *match, void *aux)
 		return 0;
 	/* No RTC on Ubiquiti */
 	if ((octeon_boot_info->board_type == BOARD_TYPE_UBIQUITI_E100) ||
-	    (octeon_boot_info->board_type == BOARD_TYPE_UBIQUITI_E200))
+	    (octeon_boot_info->board_type == BOARD_TYPE_UBIQUITI_E200) ||
+	    (octeon_boot_info->board_type == BOARD_TYPE_RHINOLABS_SHASTA))
 		return 0;
 	return 1;
 }
