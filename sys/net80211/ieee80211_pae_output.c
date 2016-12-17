@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.27 2016/04/12 14:33:27 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.28 2016/12/17 18:36:22 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -621,6 +621,9 @@ ieee80211_send_eapol_key_req(struct ieee80211com *ic,
 	/* use our separate key replay counter for key requests */
 	BE_WRITE_8(key->replaycnt, ni->ni_reqreplaycnt);
 	ni->ni_reqreplaycnt++;
+
+	/* empty key data field */
+	m->m_pkthdr.len = m->m_len = sizeof(*key);
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: sending EAPOL-Key request to %s\n",
