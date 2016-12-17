@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdos.c,v 1.9 2016/10/26 07:53:47 natano Exp $	*/
+/*	$OpenBSD: msdos.c,v 1.10 2016/12/17 16:12:15 krw Exp $	*/
 /*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ msdos_prep_opts(fsinfo_t *fsopts)
 {
 	struct msdos_options *msdos_opt = ecalloc(1, sizeof(*msdos_opt));
 	const option_t msdos_options[] = {
-#define AOPT(_type, _name, _min) { 					\
+#define AOPT(_type, _name, _min) {					\
 	.name = # _name,						\
 	.type = _min == -1 ? OPT_STRPTR :				\
 	    (_min == -2 ? OPT_BOOL :					\
@@ -66,7 +66,7 @@ msdos_prep_opts(fsinfo_t *fsopts)
 	    (sizeof(_type) == 4 ? 0xffffffff : 0xffffffffffffffffLL)),	\
 },
 ALLOPTS
-#undef AOPT	
+#undef AOPT
 		{ .name = NULL }
 	};
 
@@ -134,7 +134,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		fsopts->sectorsize = msdos_opt->bytes_per_sector;
 	} else if (fsopts->sectorsize != msdos_opt->bytes_per_sector) {
 		err(1, "inconsistent sectorsize -S %u"
-		    "!= -o bytes_per_sector %u", 
+		    "!= -o bytes_per_sector %u",
 		    fsopts->sectorsize, msdos_opt->bytes_per_sector);
 	}
 
@@ -171,8 +171,8 @@ msdos_populate_dir(const char *path, struct denode *dir, fsnode *root,
 
 	assert(dir != NULL);
 	assert(root != NULL);
-	assert(fsopts != NULL);	
-	
+	assert(fsopts != NULL);
+
 	for (cur = root->next; cur != NULL; cur = cur->next) {
 		if ((size_t)snprintf(pbuf, sizeof(pbuf), "%s/%s", path,
 		    cur->name) >= sizeof(pbuf)) {

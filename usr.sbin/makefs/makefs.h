@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.h,v 1.11 2016/10/26 07:53:47 natano Exp $	*/
+/*	$OpenBSD: makefs.h,v 1.12 2016/12/17 16:12:15 krw Exp $	*/
 /*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  *	a component of the tree; contains a filename, a pointer to
  *	fsinode, optional symlink name, and tree pointers
  *
- * fsinode - 
+ * fsinode -
  *	equivalent to an inode, containing target file system inode number,
  *	refcount (nlink), and stat buffer
  *
@@ -55,7 +55,7 @@
  *
  *	name	"."		"bin"		"netbsd"
  *	type	S_IFDIR		S_IFDIR		S_IFREG
- *	next 	  >		  >		NULL
+ *	next	  >		  >		NULL
  *	parent	NULL		NULL		NULL
  *	child	NULL		  v
  *

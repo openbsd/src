@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.18 2016/11/08 09:43:59 mestre Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.19 2016/12/17 16:12:15 krw Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 	fstype_t	*fstype;
 	fsinfo_t	 fsoptions;
 	fsnode		*root;
-	int	 	 ch, len;
+	int		 ch, len;
 
 	if ((fstype = get_fstype(DEFAULT_FSTYPE)) == NULL)
 		errx(1, "Unknown default fs type `%s'.", DEFAULT_FSTYPE);
@@ -144,10 +144,10 @@ main(int argc, char *argv[])
 			break;
 
 		case 'O':
-			fsoptions.offset = 
+			fsoptions.offset =
 			    strsuftoll("offset", optarg, 0LL, LLONG_MAX);
 			break;
-			
+
 		case 'o':
 		{
 			char *p;
@@ -290,7 +290,7 @@ static fstype_t *
 get_fstype(const char *type)
 {
 	int i;
-	
+
 	for (i = 0; fstypes[i].type != NULL; i++)
 		if (strcmp(fstypes[i].type, type) == 0)
 			return (&fstypes[i]);

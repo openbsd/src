@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.11 2016/10/26 15:31:13 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.12 2016/12/17 16:12:15 krw Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -299,8 +299,8 @@ void			cd9660_721(uint16_t, unsigned char *);
 void			cd9660_731(uint32_t, unsigned char *);
 void			cd9660_722(uint16_t, unsigned char *);
 void			cd9660_732(uint32_t, unsigned char *);
-void 			cd9660_bothendian_dword(uint32_t dw, unsigned char *);
-void 			cd9660_bothendian_word(uint16_t dw, unsigned char *);
+void			cd9660_bothendian_dword(uint32_t dw, unsigned char *);
+void			cd9660_bothendian_word(uint16_t dw, unsigned char *);
 void			cd9660_set_date(char *, time_t);
 void			cd9660_time_8426(unsigned char *, time_t);
 void			cd9660_time_915(unsigned char *, time_t);
