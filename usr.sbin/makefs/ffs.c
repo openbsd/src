@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.29 2016/12/17 15:20:10 krw Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.30 2016/12/17 16:14:18 krw Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -455,7 +455,7 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	if (Tflag) {
 		tstamp = stampts;
 		srandom_deterministic(stampts);
-	} else 
+	} else
 		tstamp = start_time.tv_sec;
 
 	fs = ffs_mkfs(image, fsopts, tstamp);
