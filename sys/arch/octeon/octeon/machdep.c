@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 2016/11/26 15:42:03 martijn Exp $ */
+/*	$OpenBSD: machdep.c,v 1.80 2016/12/17 11:17:56 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -195,6 +195,10 @@ octeon_memory_init(struct boot_info *boot_info)
 		if (lp > atop(pfn_to_pad(PG_FRAME)) + 1)
 			lp = atop(pfn_to_pad(PG_FRAME)) + 1;
 		if (fp >= lp)
+			continue;
+
+		/* Skip small fragments. */
+		if (lp - fp < atop(1u << 20))
 			continue;
 
 		mem_layout[i].mem_first_page = fp;
