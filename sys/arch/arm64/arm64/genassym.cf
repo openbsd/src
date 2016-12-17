@@ -1,0 +1,93 @@
+#	$OpenBSD: genassym.cf,v 1.1 2016/12/17 23:38:33 patrick Exp $
+#	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
+
+# Copyright (c) 1982, 1990 The Regents of the University of California.
+# All rights reserved.
+#
+# This code is derived from software contributed to Berkeley by
+# William Jolitz.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+include <sys/param.h>
+include <sys/proc.h>
+include <sys/systm.h>
+include <sys/mbuf.h>
+include <sys/resourcevar.h>
+include <sys/device.h>
+include <sys/user.h>
+include <sys/signal.h>
+include <sys/mbuf.h>
+include <sys/socketvar.h>
+include <netinet/in.h>
+include <netinet/ip.h>
+
+include <machine/cpu.h>
+include <machine/intr.h>
+include <uvm/uvm_extern.h>
+
+include <machine/frame.h>
+struct sigframe
+member SF_SC sf_sc
+
+struct cpu_info
+member CI_CURPROC ci_curproc
+
+struct proc
+member P_STAT p_stat
+
+struct pcb
+member PCB_ONFAULT pcb_onfault
+member PCB_FLAGS pcb_flags
+member PCB_SP pcb_sp
+member PCB_PAGEDIR pcb_pagedir
+member PCB_TCB pcb_tcb
+
+struct trapframe
+member TF_X tf_x
+member TF_SP tf_sp
+member TF_ELR tf_elr
+define TF_SIZE sizeof(struct trapframe)
+
+define PCB_FPU PCB_FPU
+define SONPROC SONPROC
+
+struct cpu_info
+member CI_CURPCB ci_curpcb
+member CI_WANT_RESCHED ci_want_resched
+
+struct proc
+member P_ADDR p_addr
+
+struct switchframe
+member SF_X19	sf_x19
+member SF_X21	sf_x21
+member SF_X23	sf_x23
+member SF_X25	sf_x25
+member SF_X27	sf_x27
+member SF_X29	sf_x29
+define SWITCHFRAME_SZ sizeof(struct switchframe)
+
+define IPL_NONE IPL_NONE

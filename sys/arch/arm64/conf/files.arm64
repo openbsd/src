@@ -1,0 +1,106 @@
+# $OpenBSD: files.arm64,v 1.1 2016/12/17 23:38:33 patrick Exp $
+
+maxpartitions	16
+maxusers	2 8 64
+
+major	{wd = 16}
+major	{sd = 24}
+major	{cd = 26}
+
+file	arch/arm64/arm64/autoconf.c
+file	arch/arm64/arm64/copy.S
+file	arch/arm64/arm64/copystr.S
+file	arch/arm64/arm64/cpuswitch.S
+file	arch/arm64/arm64/conf.c
+file	arch/arm64/arm64/disksubr.c
+file	arch/arm64/arm64/machdep.c
+file	arch/arm64/arm64/mem.c
+file	arch/arm64/arm64/pmap.c
+file	arch/arm64/arm64/vm_machdep.c
+file	arch/arm64/arm64/process_machdep.c
+file	arch/arm64/arm64/sig_machdep.c
+file	arch/arm64/arm64/syscall.c
+file	arch/arm64/arm64/sys_machdep.c
+
+file	arch/arm64/arm64/intr.c
+file	arch/arm64/arm64/softintr.c
+file	arch/arm64/arm64/vfp.c
+file	arch/arm64/arm64/exception.S
+file	arch/arm64/arm64/trap.c
+file	arch/arm64/arm64/ast.c
+file	arch/arm64/arm64/arm64_mutex.c
+
+
+file	arch/arm64/arm64/support.S
+file	arch/arm64/arm64/bus_dma.c
+file	arch/arm64/arm64/arm64_iobus.c
+
+file	arch/arm64/dev/arm64_bus_space.c
+
+file	arch/arm64/arm64/db_disasm.c		ddb
+file	arch/arm64/arm64/db_interface.c		ddb
+file	arch/arm64/arm64/db_trace.c		ddb
+
+define	fdt {[early = 0]}
+
+# mainbus files
+device	mainbus: fdt
+attach	mainbus at root
+file	arch/arm64/dev/mainbus.c		mainbus
+
+device	simplebus: fdt
+attach	simplebus at fdt
+file	arch/arm64/dev/simplebus.c		simplebus
+
+# FDT support
+file	dev/ofw/fdt.c
+file	dev/ofw/ofw_clock.c
+file	dev/ofw/ofw_gpio.c
+file	dev/ofw/ofw_pinctrl.c
+file	dev/ofw/ofw_regulator.c
+
+# Machine-independent SCSI drivers
+include "scsi/files.scsi"
+include "dev/atapiscsi/files.atapiscsi"
+
+# Machine-independent ATA drivers
+include "dev/ata/files.ata"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+#
+# Machine-independent HID support
+#
+include	"dev/hid/files.hid"
+
+# Include USB stuff
+include "dev/usb/files.usb"
+
+file	netinet/in_cksum.c
+file	netinet/in4_cksum.c
+
+include "dev/mii/files.mii"
+include "dev/pci/files.pci"
+
+# Console related stuff
+attach	com at fdt with com_fdt
+file	arch/arm64/dev/com_fdt.c		com_fdt
+
+# ARM PrimeCell PL011 UART
+device	pluart
+attach	pluart at fdt
+file	arch/arm64/dev/pluart.c			pluart
+
+device	ampintc
+attach	ampintc at fdt
+file	arch/arm64/dev/ampintc.c		ampintc
+
+device	agtimer
+attach	agtimer at fdt
+file	arch/arm64/dev/agtimer.c		agtimer
+
+attach	virtio at fdt with virtio_mmio
+file	arch/arm64/dev/virtio_mmio.c		virtio_mmio

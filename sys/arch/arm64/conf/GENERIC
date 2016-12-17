@@ -1,0 +1,58 @@
+# $OpenBSD: GENERIC,v 1.1 2016/12/17 23:38:33 patrick Exp $
+#
+# GENERIC machine description file
+#
+# This machine description file is used to generate the default OpenBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine	arm64
+include	"../../../conf/GENERIC"
+maxusers	32
+
+options	TIMEZONE=0	# time zone to adjust RTC time by
+options	DST=0		# daylight saving time used by RTC
+#options	NFSCLIENT	# NFS
+options	SYSCALL_DEBUG
+
+makeoptions	KERNEL_BASE_PHYS="0x00200000"
+makeoptions	KERNEL_BASE_VIRT="0xffffff8000200000"
+
+config		bsd	swap generic
+
+# The main bus device
+mainbus0	at root
+simplebus*	at fdt?
+
+scsibus*	at scsi?
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+ch*		at scsibus?
+uk*		at scsibus?
+
+ampintc*	at fdt?
+agtimer*	at fdt?
+
+# NS16550 compatible serial ports
+com*		at fdt?
+
+# Virt on-chip devices
+pluart*		at fdt?		# onboard uarts
+virtio*		at fdt?
+vio*		at virtio?
+vioblk*		at virtio?
+viomb*		at virtio?
+viornd*		at virtio?
