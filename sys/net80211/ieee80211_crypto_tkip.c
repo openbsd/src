@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.25 2015/11/24 13:45:06 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.26 2016/12/17 18:35:54 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -490,6 +490,15 @@ ieee80211_tkip_deauth(void *arg, struct ieee80211_node *ni)
 		ieee80211_node_leave(ic, ni);
 	}
 }
+
+void
+ieee80211_michael_mic_failure_timeout(void *arg)
+{
+	struct ieee80211com *ic = arg;
+
+	/* Disable TKIP countermeasures. */
+	ic->ic_flags &= ~IEEE80211_F_COUNTERM;
+}
 #endif	/* IEEE80211_STA_ONLY */
 
 /*
@@ -500,6 +509,9 @@ void
 ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 {
 	extern int ticks;
+#ifndef IEEE80211_STA_ONLY
+	int sec;
+#endif
 
 	if (ic->ic_flags & IEEE80211_F_COUNTERM)
 		return;	/* countermeasures already active */
@@ -514,8 +526,8 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 	 */
 
 	/*
-	 * Activate TKIP countermeasures (see 8.3.2.4) if less than 60
-	 * seconds have passed since the most recent previous MIC failure.
+	 * Activate TKIP countermeasures (see 802.11-2012 11.4.2.4) if less than
+	 * 60 seconds have passed since the most recent previous MIC failure.
 	 */
 	if (ic->ic_tkip_micfail == 0 ||
 	    ticks - (ic->ic_tkip_micfail + 60 * hz) >= 0) {
@@ -527,11 +539,19 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 	switch (ic->ic_opmode) {
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
-		/* refuse new TKIP associations for the next 60 seconds */
+		/* refuse new TKIP associations for at least 60 seconds */
 		ic->ic_flags |= IEEE80211_F_COUNTERM;
+		sec = 60 + arc4random_uniform(60);
+		log(LOG_WARNING, "%s: HostAP will be disabled for %d seconds "
+		    "as a countermeasure against TKIP key cracking attempts\n",
+		    ic->ic_if.if_xname, sec);
+		timeout_add_sec(&ic->ic_tkip_micfail_timeout, sec);
 
 		/* deauthenticate all currently associated STAs using TKIP */
 		ieee80211_iterate_nodes(ic, ieee80211_tkip_deauth, ic);
+
+		/* schedule a GTK change */
+		timeout_add_sec(&ic->ic_rsn_timeout, 1);
 		break;
 #endif
 	case IEEE80211_M_STA:

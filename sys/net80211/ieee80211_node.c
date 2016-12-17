@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.105 2016/09/15 03:32:48 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.106 2016/12/17 18:35:54 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -208,6 +208,7 @@ ieee80211_node_detach(struct ifnet *ifp)
 		free(ic->ic_tim_bitmap, M_DEVBUF, 0);
 	timeout_del(&ic->ic_inact_timeout);
 	timeout_del(&ic->ic_node_cache_timeout);
+	timeout_del(&ic->ic_tkip_micfail_timeout);
 #endif
 	timeout_del(&ic->ic_rsn_timeout);
 }
@@ -371,6 +372,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		}
 
 		ic->ic_def_txkey = 1;
+		ic->ic_flags &= ~IEEE80211_F_COUNTERM;
 		k = &ic->ic_nw_keys[ic->ic_def_txkey];
 		memset(k, 0, sizeof(*k));
 		k->k_id = ic->ic_def_txkey;

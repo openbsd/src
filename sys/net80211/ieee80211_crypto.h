@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.23 2015/12/05 16:26:53 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.24 2016/12/17 18:35:54 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -163,6 +163,9 @@ struct	mbuf *ieee80211_tkip_decrypt(struct ieee80211com *,
 void	ieee80211_tkip_mic(struct mbuf *, int, const u_int8_t *,
 	    u_int8_t[IEEE80211_TKIP_MICLEN]);
 void	ieee80211_michael_mic_failure(struct ieee80211com *, u_int64_t);
+#ifndef IEEE80211_STA_ONLY
+void	ieee80211_michael_mic_failure_timeout(void *);
+#endif
 
 int	ieee80211_ccmp_set_key(struct ieee80211com *, struct ieee80211_key *);
 void	ieee80211_ccmp_delete_key(struct ieee80211com *,
