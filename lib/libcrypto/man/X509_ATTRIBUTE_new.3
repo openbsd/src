@@ -1,0 +1,99 @@
+.\"	$OpenBSD: X509_ATTRIBUTE_new.3,v 1.1 2016/12/17 14:51:09 schwarze Exp $
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 17 2016 $
+.Dt X509_ATTRIBUTE_NEW 3
+.Os
+.Sh NAME
+.Nm X509_ATTRIBUTE_new ,
+.Nm X509_ATTRIBUTE_free
+.\" In the following line, "X.501" and "Attribute" are not typos.
+.\" The "Attribute" type is defined in X.501, not in X.509.
+.\" The type in called "Attribute" with capital "A", not "attribute".
+.Nd generic X.501 Attribute
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft X509_ATTRIBUTE *
+.Fn X509_ATTRIBUTE_new void
+.Ft void
+.Fn X509_ATTRIBUTE_free "X509_ATTRIBUTE *attr"
+.Sh DESCRIPTION
+In the X.501 standard, an Attribute is the fundamental ASN.1 data type
+used to represent any kind of property of any kind of directory entry.
+In OpenSSL, very few objects use it directly, most notably the
+.Vt X509_REQ_INFO
+object used for PKCS#10 certification requests described in
+.Xr X509_REQ_new 3
+and the
+.Vt PKCS8_PRIV_KEY_INFO
+object used for PKCS#8 private key information described in
+.Xr PKCS8_PRIV_KEY_INFO_new 3 .
+.Pp
+.Fn X509_ATTRIBUTE_new
+allocates and initializes an empty
+.Vt X509_ATTRIBUTE
+object.
+.Fn X509_ATTRIBUTE_free
+frees
+.Fa attr .
+.Sh RETURN VALUES
+.Fn X509_ATTRIBUTE_new
+returns the new
+.Vt X509_ATTRIBUTE
+object or
+.Dv NULL
+if an error occurs.
+.Sh SEE ALSO
+.Xr PKCS8_PRIV_KEY_INFO_new 3 ,
+.Xr X509_EXTENSION_new 3 ,
+.Xr X509_REQ_new 3
+.Sh STANDARDS
+.Bl -ohang
+.It For the general definition of the Attribute data type:
+ITU-T Recommendation X.501, also known as ISO/IEC 9594-2:
+Information Technology \(en Open Systems Interconnection \(en
+The Directory: Models, section 8.2: Overall structure
+.It For the specific definition in the context of certification requests:
+RFC 2986: PKCS #10: Certification Request Syntax Specification,
+section 4.1: CertificationRequestInfo
+.It For the specific use in the context of private key information:
+RFC 5208: Public-Key Cryptography Standards (PKCS) #8:
+Private-Key Information Syntax Specification
+.El
+.Sh BUGS
+A data type designed to hold arbitrary data is an oxymoron.
+.Pp
+While it may occasionally be useful for abstract syntax specification
+or for generic container objects, using it for the representation
+of specific data in a specific data structure feels like dubious
+design.
+.Pp
+Having two distinct data types to hold arbitrary data \(en
+in this case,
+.Vt X509_ATTRIBUTE
+on the X.501 language level and
+.Vt X509_EXTENSION
+as described in
+.Xr X509_EXTENSION_new 3
+on the X.509 language level \(en feels even more questionable,
+in particular considering that Attributes in certification requests
+can be used to ask for Extensions in certificates.
+.Pp
+At the very least, the direct use of the low-level generic
+.Vt X509_ATTRIBUTE
+type in specific data types like certification requests or private
+key information looks like a layering violation and appears to put
+type safety into jeopardy.

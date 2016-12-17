@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.83 2016/12/17 01:08:14 schwarze Exp $
+# $OpenBSD: Makefile,v 1.84 2016/12/17 14:51:09 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -177,6 +177,7 @@ MAN=	\
 	UI_new.3 \
 	X509V3_get_d2i.3 \
 	X509_ALGOR_dup.3 \
+	X509_ATTRIBUTE_new.3 \
 	X509_CINF_new.3 \
 	X509_CRL_get0_by_serial.3 \
 	X509_CRL_new.3 \
