@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.10 2016/10/23 11:09:38 natano Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.11 2016/12/17 16:43:30 krw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -101,7 +101,7 @@ msdosfs_mount(struct mkfsvnode *devvp, int flags)
 
 	if (bsp->bs50.bsBootSectSig0 != BOOTSIG0
 	    || bsp->bs50.bsBootSectSig1 != BOOTSIG1) {
-		DPRINTF(("bootsig0 %d bootsig1 %d\n", 
+		DPRINTF(("bootsig0 %d bootsig1 %d\n",
 		    bsp->bs50.bsBootSectSig0,
 		    bsp->bs50.bsBootSectSig1));
 		error = EINVAL;
@@ -138,10 +138,10 @@ msdosfs_mount(struct mkfsvnode *devvp, int flags)
 	    pmp->pm_RootDirEnts, pmp->pm_Sectors, pmp->pm_FATsecs,
 	    pmp->pm_SecPerTrack, pmp->pm_Heads, pmp->pm_Media));
 	/* XXX - We should probably check more values here */
-    	if (!pmp->pm_BytesPerSec || !SecPerClust
-    		|| pmp->pm_SecPerTrack > 63) {
+	if (!pmp->pm_BytesPerSec || !SecPerClust
+		|| pmp->pm_SecPerTrack > 63) {
 		DPRINTF(("bytespersec %d secperclust %d "
-		    "secpertrack %d\n", 
+		    "secpertrack %d\n",
 		    pmp->pm_BytesPerSec, SecPerClust,
 		    pmp->pm_SecPerTrack));
 		error = EINVAL;
@@ -257,7 +257,7 @@ msdosfs_mount(struct mkfsvnode *devvp, int flags)
 	 * must be a power of 2
 	 */
 	if (pmp->pm_bpcluster ^ (1 << pmp->pm_cnshift)) {
-		DPRINTF(("bpcluster %lu cnshift %lu\n", 
+		DPRINTF(("bpcluster %lu cnshift %lu\n",
 		    pmp->pm_bpcluster, pmp->pm_cnshift));
 		error = EINVAL;
 		goto error_exit;

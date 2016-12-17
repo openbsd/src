@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs_msdos.c,v 1.2 2016/10/23 10:58:45 natano Exp $	*/
+/*	$OpenBSD: mkfs_msdos.c,v 1.3 2016/12/17 16:43:30 krw Exp $	*/
 /*	$NetBSD: mkfs_msdos.c,v 1.10 2016/04/03 11:00:13 mlelstv Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 #define MINCLS12  1		/* minimum FAT12 clusters */
 #define MINCLS16  0xff5		/* minimum FAT16 clusters */
 #define MINCLS32  0xfff5	/* minimum FAT32 clusters */
-#define MAXCLS12  0xff4 	/* maximum FAT12 clusters */
+#define MAXCLS12  0xff4		/* maximum FAT12 clusters */
 #define MAXCLS16  0xfff4	/* maximum FAT16 clusters */
 #define MAXCLS32  0xffffff4	/* maximum FAT32 clusters */
 
@@ -125,7 +125,7 @@ struct bsx {
     u_int8_t rsvd;		/* reserved */
     u_int8_t sig;		/* extended boot signature */
     u_int8_t volid[4];		/* volume ID number */
-    u_int8_t label[11]; 	/* volume label */
+    u_int8_t label[11];		/* volume label */
     u_int8_t type[8];		/* file system type */
 };
 
@@ -151,11 +151,11 @@ struct bpb {
     u_int spt;			/* sectors per track */
     u_int hds;			/* drive heads */
     u_int hid;			/* hidden sectors */
-    u_int bsec; 		/* big total sectors */
-    u_int bspf; 		/* big sectors per FAT */
-    u_int rdcl; 		/* root directory start cluster */
-    u_int infs; 		/* file system info sector */
-    u_int bkbs; 		/* backup boot sector */
+    u_int bsec;			/* big total sectors */
+    u_int bspf;			/* big sectors per FAT */
+    u_int rdcl;			/* root directory start cluster */
+    u_int infs;			/* file system info sector */
+    u_int bkbs;			/* backup boot sector */
 };
 
 #define INIT(a, b, c, d, e, f, g, h, i, j) \
@@ -169,35 +169,35 @@ static struct {
     {"180",  INIT(512, 1, 1, 2,  64,  360, 0xfc, 2,  9, 1)},
     {"320",  INIT(512, 2, 1, 2, 112,  640, 0xff, 1,  8, 2)},
     {"360",  INIT(512, 2, 1, 2, 112,  720, 0xfd, 2,  9, 2)},
-    {"640",  INIT(512, 2, 1, 2, 112, 1280, 0xfb, 2,  8, 2)},    
+    {"640",  INIT(512, 2, 1, 2, 112, 1280, 0xfb, 2,  8, 2)},
     {"720",  INIT(512, 2, 1, 2, 112, 1440, 0xf9, 3,  9, 2)},
     {"1200", INIT(512, 1, 1, 2, 224, 2400, 0xf9, 7, 15, 2)},
-    {"1232", INIT(1024,1, 1, 2, 192, 1232, 0xfe, 2,  8, 2)},    
+    {"1232", INIT(1024,1, 1, 2, 192, 1232, 0xfe, 2,  8, 2)},
     {"1440", INIT(512, 1, 1, 2, 224, 2880, 0xf0, 9, 18, 2)},
     {"2880", INIT(512, 2, 1, 2, 240, 5760, 0xf0, 9, 36, 2)}
 };
 
 static u_int8_t bootcode[] = {
     0xfa,			/* cli		    */
-    0x31, 0xc0, 		/* xor	   ax,ax    */
-    0x8e, 0xd0, 		/* mov	   ss,ax    */
+    0x31, 0xc0,			/* xor	   ax,ax    */
+    0x8e, 0xd0,			/* mov	   ss,ax    */
     0xbc, 0x00, 0x7c,		/* mov	   sp,7c00h */
     0xfb,			/* sti		    */
-    0x8e, 0xd8, 		/* mov	   ds,ax    */
+    0x8e, 0xd8,			/* mov	   ds,ax    */
     0xe8, 0x00, 0x00,		/* call    $ + 3    */
     0x5e,			/* pop	   si	    */
     0x83, 0xc6, 0x19,		/* add	   si,+19h  */
     0xbb, 0x07, 0x00,		/* mov	   bx,0007h */
     0xfc,			/* cld		    */
     0xac,			/* lodsb	    */
-    0x84, 0xc0, 		/* test    al,al    */
-    0x74, 0x06, 		/* jz	   $ + 8    */
-    0xb4, 0x0e, 		/* mov	   ah,0eh   */
-    0xcd, 0x10, 		/* int	   10h	    */
-    0xeb, 0xf5, 		/* jmp	   $ - 9    */
-    0x30, 0xe4, 		/* xor	   ah,ah    */
-    0xcd, 0x16, 		/* int	   16h	    */
-    0xcd, 0x19, 		/* int	   19h	    */
+    0x84, 0xc0,			/* test    al,al    */
+    0x74, 0x06,			/* jz	   $ + 8    */
+    0xb4, 0x0e,			/* mov	   ah,0eh   */
+    0xcd, 0x10,			/* int	   10h	    */
+    0xeb, 0xf5,			/* jmp	   $ - 9    */
+    0x30, 0xe4,			/* xor	   ah,ah    */
+    0xcd, 0x16,			/* int	   16h	    */
+    0xcd, 0x19,			/* int	   19h	    */
     0x0d, 0x0a,
     'N', 'o', 'n', '-', 's', 'y', 's', 't',
     'e', 'm', ' ', 'd', 'i', 's', 'k',

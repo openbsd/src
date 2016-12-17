@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs_msdos.h,v 1.5 2016/10/26 07:53:47 natano Exp $	*/
+/*	$OpenBSD: mkfs_msdos.h,v 1.6 2016/12/17 16:43:30 krw Exp $	*/
 /*	$NetBSD: mkfs_msdos.h,v 1.3 2015/10/16 17:38:17 christos Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ AOPT(char *, volume_label, -1)
 struct msdos_options {
 #define AOPT(_type, _name, _min) _type _name;
 ALLOPTS
-#undef AOPT	
+#undef AOPT
 	uint32_t volume_id_set:1;
 	uint32_t media_descriptor_set:1;
 	uint32_t hidden_sectors_set:1;

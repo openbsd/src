@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.1 2016/10/18 17:05:30 natano Exp $	*/
+/*	$OpenBSD: denode.h,v 1.2 2016/12/17 16:43:30 krw Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 2014/07/08 09:21:52 hannken Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ struct fatcache {
 		(dep)->de_fc[FC_NEXTTOLASTFC].fc_frcn = (dep)->de_fc[FC_LASTFC].fc_frcn; \
 		(dep)->de_fc[FC_NEXTTOLASTFC].fc_fsrcn = (dep)->de_fc[FC_LASTFC].fc_fsrcn; \
 	} while (0)
-	 
+
 
 /*
  * This is the in memory variant of a dos directory entry.  It is usually
