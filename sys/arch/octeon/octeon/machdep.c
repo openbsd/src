@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.80 2016/12/17 11:17:56 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.81 2016/12/17 14:14:09 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -583,8 +583,8 @@ int
 octeon_ioclock_speed(void)
 {
 	extern struct boot_info *octeon_boot_info;
+	u_int64_t mio_rst_boot, rst_boot;
 	int chipid;
-	u_int64_t mio_rst_boot;
 
 	chipid = octeon_get_chipid();
 	switch (octeon_model_family(chipid)) {
@@ -592,7 +592,10 @@ octeon_ioclock_speed(void)
 		mio_rst_boot = octeon_xkphys_read_8(MIO_RST_BOOT);
 		return OCTEON_IO_REF_CLOCK * ((mio_rst_boot >>
 		    MIO_RST_BOOT_PNR_MUL_SHIFT) & MIO_RST_BOOT_PNR_MUL_MASK);
-		break;
+	case OCTEON_MODEL_FAMILY_CN71XX:
+		rst_boot = octeon_xkphys_read_8(RST_BOOT);
+		return OCTEON_IO_REF_CLOCK * ((rst_boot >>
+		    RST_BOOT_PNR_MUL_SHIFT) & RST_BOOT_PNR_MUL_MASK);
 	default:
 		return octeon_boot_info->eclock;
 	}
@@ -690,6 +693,8 @@ int	waittime = -1;
 __dead void
 boot(int howto)
 {
+	int chipid;
+
 	if (curproc)
 		savectx(curproc->p_addr, 0);
 
@@ -733,7 +738,17 @@ haltsys:
 		(void)disableintr();
 		tlb_set_wired(0);
 		tlb_flush(bootcpu_hwinfo.tlbsize);
-		octeon_xkphys_write_8(OCTEON_CIU_BASE + CIU_SOFT_RST, 1);
+
+		chipid = octeon_get_chipid();
+		switch (octeon_model_family(chipid)) {
+		case OCTEON_MODEL_FAMILY_CN71XX:
+			octeon_xkphys_write_8(RST_SOFT_RST, 1);
+			break;
+		default:
+			octeon_xkphys_write_8(OCTEON_CIU_BASE +
+			    CIU_SOFT_RST, 1);
+			break;
+		}
 	}
 
 	for (;;)
