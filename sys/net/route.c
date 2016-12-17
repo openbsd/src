@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.343 2016/12/14 20:35:20 stsp Exp $	*/
+/*	$OpenBSD: route.c,v 1.344 2016/12/17 14:26:53 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -252,8 +252,15 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 			info.rti_info[RTAX_DST] = dst;
 
 			KERNEL_LOCK();
-			error = rtrequest(RTM_RESOLVE, &info, RTP_DEFAULT,
-			    &rt, tableid);
+			/*
+			 * The priority of cloned route should be different
+			 * to avoid conflict with /32 cloning routes.
+			 *
+			 * It should also be higher to let the ARP layer find
+			 * cloned routes instead of the cloning one.
+			 */
+			error = rtrequest(RTM_RESOLVE, &info,
+			    rt->rt_priority - 1, &rt, tableid);
 			if (error) {
 				rt_missmsg(RTM_MISS, &info, 0, RTP_NONE, 0,
 				    error, tableid);
@@ -1046,15 +1053,14 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		ifa->ifa_refcnt++;
 		rt->rt_ifa = ifa;
 		rt->rt_ifidx = ifp->if_index;
-		if (rt->rt_flags & RTF_CLONED) {
-			/*
-			 * Copy both metrics and a back pointer to the cloned
-			 * route's parent.
-			 */
-			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
-			rt->rt_priority = (*ret_nrt)->rt_priority;
-			rt->rt_parent = *ret_nrt;	 /* Back ptr. to parent. */
-			rtref(rt->rt_parent);
+		/*
+		 * Copy metrics and a back pointer from the cloned
+		 * route's parent.
+		 */
+		if (ISSET(rt->rt_flags, RTF_CLONED)) {
+			rtref(*ret_nrt);
+			rt->rt_parent = *ret_nrt;
+			rt->rt_rmx = (*ret_nrt)->rt_rmx;
 		}
 
 		/*
