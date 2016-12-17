@@ -39,11 +39,14 @@ extern "C" {
  * See http://cr.yp.to/ecdh.html and https://tools.ietf.org/html/rfc7748.
  */
 
+#define X25519_KEY_LENGTH 32
+
 /*
  * X25519_keypair sets |out_public_value| and |out_private_key| to a freshly
  * generated, public/private key pair.
  */
-void X25519_keypair(uint8_t out_public_value[32], uint8_t out_private_key[32]);
+void X25519_keypair(uint8_t out_public_value[X25519_KEY_LENGTH],
+    uint8_t out_private_key[X25519_KEY_LENGTH]);
 
 /*
  * X25519 writes a shared key to |out_shared_key| that is calculated from the
@@ -53,8 +56,9 @@ void X25519_keypair(uint8_t out_public_value[32], uint8_t out_private_key[32]);
  * Don't use the shared key directly, rather use a KDF and also include the two
  * public values as inputs.
  */
-int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
-    const uint8_t peers_public_value[32]);
+int X25519(uint8_t out_shared_key[X25519_KEY_LENGTH],
+    const uint8_t private_key[X25519_KEY_LENGTH],
+    const uint8_t peers_public_value[X25519_KEY_LENGTH]);
 
 #if defined(__cplusplus)
 }  /* extern C */

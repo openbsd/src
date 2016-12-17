@@ -4895,7 +4895,8 @@ x25519_public_from_private(uint8_t out_public_value[32],
 }
 
 void
-X25519_keypair(uint8_t out_public_value[32], uint8_t out_private_key[32])
+X25519_keypair(uint8_t out_public_value[X25519_KEY_LENGTH],
+    uint8_t out_private_key[X25519_KEY_LENGTH])
 {
   /* All X25519 implementations should decode scalars correctly (see
    * https://tools.ietf.org/html/rfc7748#section-5). However, if an
@@ -4920,8 +4921,9 @@ X25519_keypair(uint8_t out_public_value[32], uint8_t out_private_key[32])
 }
 
 int
-X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
-    const uint8_t peer_public_value[32])
+X25519(uint8_t out_shared_key[X25519_KEY_LENGTH],
+    const uint8_t private_key[X25519_KEY_LENGTH],
+    const uint8_t peer_public_value[X25519_KEY_LENGTH])
 {
   static const uint8_t kZeros[32] = {0};
 
