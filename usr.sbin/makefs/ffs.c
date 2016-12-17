@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.28 2016/11/14 09:03:19 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.29 2016/12/17 15:20:10 krw Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -191,12 +191,12 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 		abort();
 
 	if (strcmp(ffs_options[rv].name, "disklabel") == 0) {
-		struct disklabel *dp, *lp;
+		struct disklabel *dp;
 
 		dp = getdiskbyname(buf);
 		if (dp == NULL)
 			errx(1, "unknown disk type: %s", buf);
-	
+
 		ffs_opts->lp = emalloc(sizeof(struct disklabel));
 		*ffs_opts->lp = *dp;
 	} else if (strcmp(ffs_options[rv].name, "optimization") == 0) {
@@ -372,11 +372,11 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		/* add space needed to store inodes, x3 for blockmaps, etc */
 	if (ffs_opts->version == 1)
 		fsopts->size += ncg * sizeof(struct ufs1_dinode) *
-		    roundup(fsopts->inodes / ncg, 
+		    roundup(fsopts->inodes / ncg,
 			ffs_opts->bsize / sizeof(struct ufs1_dinode));
 	else
 		fsopts->size += ncg * sizeof(struct ufs2_dinode) *
-		    roundup(fsopts->inodes / ncg, 
+		    roundup(fsopts->inodes / ncg,
 			ffs_opts->bsize / sizeof(struct ufs2_dinode));
 
 		/* add minfree */
@@ -715,7 +715,7 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 static void
 ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 {
-	int 	isfile, ffd;
+	int	isfile, ffd;
 	char	*fbuf, *p;
 	off_t	bufleft, chunk, offset;
 	ssize_t nread;
@@ -798,7 +798,7 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 		if (!isfile)
 			p += chunk;
 	}
-  
+
  write_inode_and_leave:
 	ffs_write_inode(&in.i_din, in.i_number, fsopts);
 
@@ -854,7 +854,7 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node)
 static void
 ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 {
-	char 		*buf;
+	char		*buf;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2, *dip;
 	struct cg	*cgp;
@@ -900,7 +900,7 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	if (S_ISDIR(DIP(dp, mode))) {
 		cgp->cg_cs.cs_ndir += 1;
 		fs->fs_cstotal.cs_ndir++;
-		fs->fs_cs(fs, cg).cs_ndir++; 
+		fs->fs_cs(fs, cg).cs_ndir++;
 	}
 
 	/*
