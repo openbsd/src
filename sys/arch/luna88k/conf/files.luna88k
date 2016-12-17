@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.27 2015/05/11 06:46:21 ratchov Exp $
+#	$OpenBSD: files.luna88k,v 1.28 2016/12/17 05:22:34 aoyama Exp $
 #
 maxpartitions 16
 
@@ -24,6 +24,10 @@ file	arch/luna88k/dev/sio.c				sio
 device siotty: tty
 attach siotty at sio
 file	arch/luna88k/dev/siotty.c			siotty needs-flag
+
+device xp
+attach xp at mainbus
+file	arch/luna88k/dev/xp.c				xp needs-flag
 
 device ws: wskbddev,wsmousedev
 attach ws at sio

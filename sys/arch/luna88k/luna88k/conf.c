@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 2016/09/04 10:51:23 naddy Exp $	*/
+/*	$OpenBSD: conf.c,v 1.31 2016/12/17 05:22:34 aoyama Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -60,6 +60,7 @@
 #include "lcd.h"
 #include "pcex.h"
 #include "siotty.h"
+#include "xp.h"
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -109,7 +110,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
 	cdev_lcd_init(NLCD,lcd),	/* 10: /dev/lcd */
-	cdev_notdef(),			/* 11 */
+	cdev_xp_init(NXP,xp),		/* 11: HD647180XP */
 	cdev_tty_init(NSIOTTY,sio),	/* 12: on-board UART (ttya) */
 	cdev_wsdisplay_init(NWSDISPLAY,	/* 13: frame buffers, etc. */
 		wsdisplay),

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2016/09/03 16:18:21 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.22 2016/12/17 05:22:34 aoyama Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -46,6 +46,9 @@ spc1		at mainbus0
 wsdisplay*	at fb?
 wskbd*		at ws? mux 1
 wsmouse*	at ws? mux 0
+
+# HD647180X I/O processor
+xp0		at mainbus0
 
 # PC-9801 extension board slot
 cbus0		at mainbus0

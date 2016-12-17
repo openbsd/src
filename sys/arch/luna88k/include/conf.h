@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.4 2015/03/03 23:50:37 aoyama Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 2016/12/17 05:22:34 aoyama Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * All rights reserved.
@@ -39,6 +39,8 @@ cdev_decl(lcd);
 
 cdev_decl(pcex);
 
+cdev_decl(xp);
+
 /* devices on PCMCIA */
 /* block devices */
 bdev_decl(wd);
@@ -55,6 +57,13 @@ cdev_decl(wd);
 
 /* open, close, ioctl, mmap */
 #define cdev_pcex_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, selfalse, \
+	dev_init(c,n,mmap) }
+
+/* open, close, ioctl, mmap */
+#define cdev_xp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, selfalse, \
