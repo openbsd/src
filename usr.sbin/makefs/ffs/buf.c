@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.5 2016/10/26 15:31:13 natano Exp $	*/
+/*	$OpenBSD: buf.c,v 1.6 2016/12/17 16:26:46 krw Exp $	*/
 /*	$NetBSD: buf.c,v 1.24 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ brelse(struct mkfsbuf *bp, int u1 __unused)
 		bp->b_bcount = 0;
 		return;
 	}
-		
+
 	TAILQ_REMOVE(&buftail, bp, b_tailq);
 	free(bp->b_data);
 	free(bp);
@@ -141,7 +141,7 @@ bcleanup(void)
 	 *	know why there's still some buffers lying around that
 	 *	aren't brelse()d
 	 */
-	
+
 	if (TAILQ_EMPTY(&buftail))
 		return;
 

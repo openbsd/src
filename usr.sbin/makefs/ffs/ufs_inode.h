@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.h,v 1.3 2016/10/17 01:16:22 tedu Exp $	*/
+/*	$OpenBSD: ufs_inode.h,v 1.4 2016/12/17 16:26:46 krw Exp $	*/
 /*	$NetBSD: ufs_inode.h,v 1.5 2013/01/30 19:19:19 christos Exp $	*/
 /* From:  NetBSD: inode.h,v 1.27 2001/12/18 10:57:23 fvdl Exp $ */
 
@@ -44,7 +44,7 @@ union dinode {
 };
 
 struct inode {
-	ino_t	  	i_number;	/* The identity of the inode. */
+	ino_t		i_number;	/* The identity of the inode. */
 	struct mkfsvnode	*i_devvp;	/* device mkfsvnode for block I/O */
 	struct fs	*i_fs;		/* File system */
 	union dinode	i_din;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.5 2016/10/22 19:43:50 natano Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.6 2016/12/17 16:26:46 krw Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.18 2013/06/19 17:51:27 dholland Exp $	*/
 /* From: NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp */
 
@@ -81,7 +81,7 @@ ufs_getlbns(struct inode *ip, daddr_t bn, struct indir *ap, int *nump)
 
 	assert (bn >= NDADDR);
 
-	/* 
+	/*
 	 * Determine the number of levels of indirection.  After this loop
 	 * is done, blockcnt indicates the number of data blocks possible
 	 * at the given level of indirection, and NIADDR - i is the number
@@ -103,7 +103,7 @@ ufs_getlbns(struct inode *ip, daddr_t bn, struct indir *ap, int *nump)
 	/* Calculate the address of the first meta-block. */
 	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + NIADDR - i);
 
-	/* 
+	/*
 	 * At each iteration, off is the offset into the bap array which is
 	 * an array of disk addresses at the current level of indirection.
 	 * The logical block number and the offset in that block are stored
