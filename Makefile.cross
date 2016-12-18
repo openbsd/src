@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.88 2016/09/23 09:18:05 sthen Exp $
+# $OpenBSD: Makefile.cross,v 1.89 2016/12/18 17:03:08 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -6,7 +6,9 @@ cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
 
 # Have to compute TARGET_ARCH directly in the Makefile, for .if tests involving
 # this variable to work.
-.if	(${TARGET} == "armv7")
+.if	(${TARGET} == "arm64")
+TARGET_ARCH=	aarch64
+.elif	(${TARGET} == "armv7")
 TARGET_ARCH=	arm
 .elif	(${TARGET} == "luna88k")
 TARGET_ARCH=	m88k
@@ -26,7 +28,7 @@ TARGET_CPU?=	${TARGET_ARCH}
 
 # List of LP64 archs
 # XXX move to bsd.*.mk?
-LP64_ARCH = amd64 alpha mips64 sparc64
+LP64_ARCH = aarch64 amd64 alpha mips64 sparc64
 
 TARGET_IS_LP64 =
 MACHINE_IS_LP64 =
@@ -77,7 +79,9 @@ CROSSGCC=	${CROSSDIR}/.gcc_done
 .include <bsd.own.mk>
 
 .for _arch in ${TARGET_ARCH}
-.if !empty(GCC3_ARCH:M${_arch})
+.if !empty(CLANG_ARCH:M${_arch})
+COMPILER_VERSION=clang
+.elif !empty(GCC3_ARCH:M${_arch})
 COMPILER_VERSION=gcc3
 .else
 COMPILER_VERSION=gcc4
@@ -174,6 +178,7 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 	@touch ${CROSSINCLUDES}
 
 ${CROSSBINUTILS}:	${CROSSINCLUDES}
+.if ${TARGET_ARCH} != "aarch64"
 	(cd ${.CURDIR}/${BINUTILS_DIR}; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    PIE_DEFAULT=${PIE_DEFAULT} \
@@ -208,11 +213,36 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 		${CROSSDIR}/usr/bin/${TARGET_CANON}-$$cmd ;\
 	 fi ;\
 	done
+.endif
 	@touch ${CROSSBINUTILS}
 
 
 ${CROSSGCC}:		${CROSSBINUTILS}
-.if ${COMPILER_VERSION:L} == "gcc3"
+.if ${COMPILER_VERSION:L} == "clang"
+	(cd ${.CURDIR}/gnu/usr.bin/clang; \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} \
+	    ${MAKE} obj)
+	(cd ${.CURDIR}/gnu/usr.bin/clang; \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} \
+	    ${MAKE} depend)
+	(cd ${.CURDIR}/gnu/usr.bin/clang; \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} \
+	    ${MAKE} all)
+	(cd ${.CURDIR}/gnu/usr.bin/clang; \
+	    DESTDIR=${CROSSDIR} \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} \
+	    ${MAKE} install)
+	mv ${CROSSDIR}/usr/bin/clang ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang
+	mv ${CROSSDIR}/usr/bin/clang++ ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang++
+	cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cc
+	cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-c++
+	ln -sf ${TARGET_CANON}-cc ${CROSSDIR}/usr/${TARGET_CANON}/bin/cc
+	ln -sf ${TARGET_CANON}-c++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/c++
+.elif ${COMPILER_VERSION:L} == "gcc3"
 	(cd ${.CURDIR}/gnu/usr.bin/gcc; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
