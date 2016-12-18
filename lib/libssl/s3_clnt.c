@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.155 2016/12/13 16:10:21 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.156 2016/12/18 13:52:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -718,20 +718,27 @@ err:
 int
 ssl3_get_server_hello(SSL *s)
 {
-	STACK_OF(SSL_CIPHER)	*sk;
-	const SSL_CIPHER	*c;
-	unsigned char		*p, *q, *d;
-	int			 i, al, ok;
-	unsigned int		 j;
-	uint16_t		 cipher_value;
-	long			 n;
-	unsigned long		 alg_k;
+	CBS cbs, server_random, session_id;
+	uint16_t server_version, cipher_suite;
+	uint8_t compression_method;
+	STACK_OF(SSL_CIPHER) *sk;
+	const SSL_CIPHER *cipher;
+	unsigned char *p;
+	unsigned long alg_k;
+	size_t outlen;
+	int i, al, ok;
+	long n;
 
 	n = s->method->ssl_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
 	    SSL3_ST_CR_SRVR_HELLO_B, -1, 20000, /* ?? */ &ok);
 
 	if (!ok)
 		return ((int)n);
+
+	if (n < 0)
+		goto truncated;
+
+	CBS_init(&cbs, s->init_msg, n);
 
 	if (SSL_IS_DTLS(s)) {
 		if (s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
@@ -755,48 +762,42 @@ ssl3_get_server_hello(SSL *s)
 		goto f_err;
 	}
 
-	d = p = (unsigned char *)s->init_msg;
-
-	if (2 > n)
+	if (!CBS_get_u16(&cbs, &server_version))
 		goto truncated;
-	if ((p[0] != (s->version >> 8)) || (p[1] != (s->version & 0xff))) {
+
+	if (s->version != server_version) {
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
-		s->version = (s->version&0xff00) | p[1];
+		s->version = (s->version & 0xff00) | (server_version & 0xff);
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto f_err;
 	}
-	p += 2;
 
-	/* load the server hello data */
+	/* Server random. */
+	if (!CBS_get_bytes(&cbs, &server_random, SSL3_RANDOM_SIZE))
+		goto truncated;
+	if (!CBS_write_bytes(&server_random, s->s3->server_random,
+	    sizeof(s->s3->server_random), NULL))
+		goto err;
 
-	if (p + SSL3_RANDOM_SIZE + 1 - d > n)
+	/* Session ID. */
+	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
 		goto truncated;
 
-	/* load the server random */
-	memcpy(s->s3->server_random, p, SSL3_RANDOM_SIZE);
-	p += SSL3_RANDOM_SIZE;
-
-	/* get the session-id */
-	j = *(p++);
-
-	if ((j > sizeof s->session->session_id) ||
-	    (j > SSL3_SESSION_ID_SIZE)) {
+	if ((CBS_len(&session_id) > sizeof(s->session->session_id)) ||
+	    (CBS_len(&session_id) > SSL3_SESSION_ID_SIZE)) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
 		    SSL_R_SSL3_SESSION_ID_TOO_LONG);
 		goto f_err;
 	}
 
-	if (p + j + 2 - d > n)
+	/* Cipher suite. */
+	if (!CBS_get_u16(&cbs, &cipher_suite))
 		goto truncated;
-
-	/* Get the cipher value. */
-	q = p + j;
-	n2s(q, cipher_value);
 
 	/*
 	 * Check if we want to resume the session based on external
-	 * pre-shared secret
+	 * pre-shared secret.
 	 */
 	if (s->tls_session_secret_cb) {
 		SSL_CIPHER *pref_cipher = NULL;
@@ -805,13 +806,14 @@ ssl3_get_server_hello(SSL *s)
 		    &s->session->master_key_length, NULL, &pref_cipher,
 		    s->tls_session_secret_cb_arg)) {
 			s->session->cipher = pref_cipher ? pref_cipher :
-			    ssl3_get_cipher_by_value(cipher_value);
+			    ssl3_get_cipher_by_value(cipher_suite);
 			s->s3->flags |= SSL3_FLAGS_CCS_OK;
 		}
 	}
 
-	if (j != 0 && j == s->session->session_id_length &&
-	    timingsafe_memcmp(p, s->session->session_id, j) == 0) {
+	if (s->session->session_id_length != 0 &&
+	    CBS_mem_equal(&session_id, s->session->session_id,
+		s->session->session_id_length)) {
 		if (s->sid_ctx_length != s->session->sid_ctx_length ||
 		    timingsafe_memcmp(s->session->sid_ctx,
 		    s->sid_ctx, s->sid_ctx_length) != 0) {
@@ -835,31 +837,34 @@ ssl3_get_server_hello(SSL *s)
 				goto f_err;
 			}
 		}
-		s->session->session_id_length = j;
-		memcpy(s->session->session_id, p, j); /* j could be 0 */
+		/*
+		 * XXX - improve the handling for the case where there is a
+		 * zero length session identifier.
+		 */
+		if (!CBS_write_bytes(&session_id, s->session->session_id,
+		    sizeof(s->session->session_id), &outlen))
+			goto err;
+		s->session->session_id_length = outlen;
 	}
-	p += j;
 
-	if ((c = ssl3_get_cipher_by_value(cipher_value)) == NULL) {
-		/* unknown cipher */
+	if ((cipher = ssl3_get_cipher_by_value(cipher_suite)) == NULL) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
 		    SSL_R_UNKNOWN_CIPHER_RETURNED);
 		goto f_err;
 	}
 
-	/* TLS v1.2 only ciphersuites require v1.2 or later */
-	if ((c->algorithm_ssl & SSL_TLSV1_2) &&
+	/* TLS v1.2 only ciphersuites require v1.2 or later. */
+	if ((cipher->algorithm_ssl & SSL_TLSV1_2) &&
 	    (TLS1_get_version(s) < TLS1_2_VERSION)) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
 		    SSL_R_WRONG_CIPHER_RETURNED);
 		goto f_err;
 	}
-	p += SSL3_CIPHER_VALUE_SIZE;
 
 	sk = ssl_get_ciphers_by_id(s);
-	i = sk_SSL_CIPHER_find(sk, c);
+	i = sk_SSL_CIPHER_find(sk, cipher);
 	if (i < 0) {
 		/* we did not say we would use this cipher */
 		al = SSL_AD_ILLEGAL_PARAMETER;
@@ -875,13 +880,14 @@ ssl3_get_server_hello(SSL *s)
 	 */
 	if (s->session->cipher)
 		s->session->cipher_id = s->session->cipher->id;
-	if (s->hit && (s->session->cipher_id != c->id)) {
+	if (s->hit && (s->session->cipher_id != cipher->id)) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
 		    SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
 		goto f_err;
 	}
-	s->s3->tmp.new_cipher = c;
+	s->s3->tmp.new_cipher = cipher;
+
 	/*
 	 * Don't digest cached records if no sigalgs: we may need them for
 	 * client authentication.
@@ -892,19 +898,20 @@ ssl3_get_server_hello(SSL *s)
 		al = SSL_AD_INTERNAL_ERROR;
 		goto f_err;
 	}
-	/* lets get the compression algorithm */
-	/* COMPRESSION */
-	if (p + 1 - d > n)
+
+	if (!CBS_get_u8(&cbs, &compression_method))
 		goto truncated;
-	if (*(p++) != 0) {
+
+	if (compression_method != 0) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
 		    SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
 		goto f_err;
 	}
 
-	/* TLS extensions*/
-	if (!ssl_parse_serverhello_tlsext(s, &p, d, n, &al)) {
+	/* TLS extensions. */
+	p = (unsigned char *)CBS_data(&cbs);
+	if (!ssl_parse_serverhello_tlsext(s, &p, CBS_len(&cbs), &al)) {
 		/* 'al' set by ssl_parse_serverhello_tlsext */
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_PARSE_TLSEXT);
 		goto f_err;
@@ -914,7 +921,8 @@ ssl3_get_server_hello(SSL *s)
 		goto err;
 	}
 
-	if (p != d + n)
+	/* See if any data remains... */
+	if (p - CBS_data(&cbs) != CBS_len(&cbs))
 		goto truncated;
 
 	return (1);

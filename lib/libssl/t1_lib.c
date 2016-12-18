@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.94 2016/11/05 08:26:37 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.95 2016/12/18 13:52:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1607,14 +1607,13 @@ ssl_next_proto_validate(const unsigned char *d, unsigned int len)
 }
 
 int
-ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
-    int n, int *al)
+ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 {
 	unsigned short type;
 	unsigned short size;
 	unsigned short len;
 	unsigned char *data = *p;
-	unsigned char *end = d + n;
+	unsigned char *end = *p + n;
 	int tlsext_servername = 0;
 	int renegotiate_seen = 0;
 
@@ -1790,7 +1789,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 
 	}
 
-	if (data != d + n) {
+	if (data != end) {
 		*al = SSL_AD_DECODE_ERROR;
 		return 0;
 	}
