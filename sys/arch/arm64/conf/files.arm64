@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.1 2016/12/17 23:38:33 patrick Exp $
+# $OpenBSD: files.arm64,v 1.2 2016/12/18 22:19:36 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -33,7 +33,6 @@ file	arch/arm64/arm64/arm64_mutex.c
 
 file	arch/arm64/arm64/support.S
 file	arch/arm64/arm64/bus_dma.c
-file	arch/arm64/arm64/arm64_iobus.c
 
 file	arch/arm64/dev/arm64_bus_space.c
 
