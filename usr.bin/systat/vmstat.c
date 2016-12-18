@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.81 2016/08/24 03:13:45 guenther Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.82 2016/12/18 23:36:32 krw Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -294,9 +294,9 @@ labelkre(void)
 	}
 }
 
-#define X(fld)	{s.fld[i]; s.fld[i]-=s1.fld[i];}
-#define Y(fld)	{s.fld; s.fld -= s1.fld;}
-#define Z(fld)	{s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld;}
+#define X(fld)	{s.fld[i]-=s1.fld[i];}
+#define Y(fld)	{s.fld -= s1.fld;}
+#define Z(fld)	{s.nchstats.fld -= s1.nchstats.fld;}
 #define PUTRATE(fld, l, c, w) \
 	do { \
 		Y(fld); \
