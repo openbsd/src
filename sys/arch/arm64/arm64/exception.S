@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: exception.S,v 1.2 2016/12/18 17:46:52 patrick Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -27,6 +27,9 @@
  */
 
 #include <machine/asm.h>
+#if 0
+__FBSDID("$FreeBSD: head/sys/arm64/arm64/exception.S 297028 2016-03-18 16:18:29Z andrew $");
+#endif
 
 #include "assym.h"
 

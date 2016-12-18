@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: trap.c,v 1.2 2016/12/18 17:46:52 patrick Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -27,6 +27,9 @@
  */
 
 #include <sys/cdefs.h>
+#if 0
+__FBSDID("$FreeBSD: head/sys/arm64/arm64/trap.c 281654 2015-04-17 12:58:09Z andrew $");
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
