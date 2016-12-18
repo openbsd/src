@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.56 2016/01/12 09:28:09 stsp Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.57 2016/12/18 14:34:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1373,9 +1373,9 @@ typedef HAL_BOOL (ar5k_rfgain_t)
 	bus_space_read_4(hal->ah_st, hal->ah_sh, (_reg))
 
 #define AR5K_REG_SM(_val, _flags)					\
-	(((_val) << _flags##_S) & (_flags))
+	(((uint32_t)(_val) << _flags##_S) & (_flags))
 #define AR5K_REG_MS(_val, _flags)					\
-	(((_val) & (_flags)) >> _flags##_S)
+	(((uint32_t)(_val) & (_flags)) >> _flags##_S)
 #define AR5K_REG_WRITE_BITS(_reg, _flags, _val)				\
 	AR5K_REG_WRITE(_reg, (AR5K_REG_READ(_reg) &~ (_flags)) |	\
 	    (((_val) << _flags##_S) & (_flags)))

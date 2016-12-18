@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.18 2012/06/10 21:23:36 kettenis Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.19 2016/12/18 14:34:20 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1472,11 +1472,11 @@
  */
 /* Mask and Shift (getter). */
 #define MS(val, field)							\
-	(((val) & field##_M) >> field##_S)
+	(((uint32_t)(val) & field##_M) >> field##_S)
 
 /* Shift and Mask (setter). */
 #define SM(field, val)							\
-	(((val) << field##_S) & field##_M)
+	(((uint32_t)(val) << field##_S) & field##_M)
 
 /* Rewrite. */
 #define RW(var, field, val)						\
