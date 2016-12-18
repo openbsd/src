@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_page.c,v 1.22 2014/09/15 06:12:19 guenther Exp $	*/
+/*	$OpenBSD: hash_page.c,v 1.23 2016/12/18 17:07:58 krw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -664,7 +664,7 @@ overflow_page(HTAB *hashp)
 			in_use_bits = free_bit;
 		else
 			in_use_bits = (hashp->BSIZE << BYTE_SHIFT) - 1;
-		
+
 		if (i == first_page) {
 			bit = hashp->LAST_FREED &
 			    ((hashp->BSIZE << BYTE_SHIFT) - 1);
