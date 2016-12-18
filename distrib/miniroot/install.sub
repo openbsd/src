@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.933 2016/11/25 21:13:58 rpe Exp $
+#	$OpenBSD: install.sub,v 1.934 2016/12/18 18:15:14 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1462,7 +1462,7 @@ install_files() {
 
 	[[ -n $_unver ]] && : ${_issue:="Unverified sets:" ${_unver% }}
 	if [[ -n $_issue ]] &&
-		! ask_yn "$_issue. Continue without verification?"; then
+		! ask_yn "$_issue.\nContinue without verification?"; then
 		[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
 		$AUTO && exit 1
 		return
