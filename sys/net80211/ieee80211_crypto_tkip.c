@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.26 2016/12/17 18:35:54 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.27 2016/12/18 08:00:20 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -541,7 +541,7 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 	case IEEE80211_M_HOSTAP:
 		/* refuse new TKIP associations for at least 60 seconds */
 		ic->ic_flags |= IEEE80211_F_COUNTERM;
-		sec = 60 + arc4random_uniform(60);
+		sec = 60 + arc4random_uniform(30);
 		log(LOG_WARNING, "%s: HostAP will be disabled for %d seconds "
 		    "as a countermeasure against TKIP key cracking attempts\n",
 		    ic->ic_if.if_xname, sec);
