@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.181 2016/11/19 14:20:58 tb Exp $
+#	$OpenBSD: bsd.own.mk,v 1.182 2016/12/18 17:02:21 patrick Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -15,6 +15,7 @@ SKEY?=		yes
 # Set `YP' to `yes' to build with support for NIS/YP.
 YP?=		yes
 
+CLANG_ARCH=aarch64
 GCC3_ARCH=m88k
 
 # m88k: ?
@@ -22,7 +23,9 @@ PIE_ARCH=alpha amd64 arm hppa i386 mips64 mips64el powerpc sh sparc64
 STATICPIE_ARCH=alpha amd64 arm hppa i386 mips64 mips64el powerpc sh sparc64
 
 .for _arch in ${MACHINE_ARCH}
-.if !empty(GCC3_ARCH:M${_arch})
+.if !empty(CLANG_ARCH:M${_arch})
+COMPILER_VERSION?=clang
+.elif !empty(GCC3_ARCH:M${_arch})
 COMPILER_VERSION?=gcc3
 .else
 COMPILER_VERSION?=gcc4
