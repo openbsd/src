@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.26 2016/07/07 09:26:26 semarie Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.27 2016/12/18 06:11:23 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -77,7 +77,6 @@ static TKLIST const m1_tklist[] = {	/* Input mappings (set or delete). */
 int
 cl_term_init(SCR *sp)
 {
-	KEYLIST *kp;
 	SEQ *qp;
 	TKLIST const *tkp;
 	char *t;

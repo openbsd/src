@@ -1,4 +1,4 @@
-/* $OpenBSD: filter.c,v 1.6 2015/11/19 23:28:03 tedu Exp $ */
+/* $OpenBSD: filter.c,v 1.7 2016/12/18 06:11:23 krw Exp $ */
 
 /* filter - postprocessing of flex output through filters */
 
@@ -131,10 +131,6 @@ bool
 filter_apply_chain(struct filter * chain)
 {
 	int pid, pipes[2];
-	int r;
-	const int readsz = 512;
-	char *buf;
-
 
 	/*
 	 * Tricky recursion, since we want to begin the chain at the END.
