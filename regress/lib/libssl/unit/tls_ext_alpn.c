@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ext_alpn.c,v 1.1 2015/07/09 07:47:02 doug Exp $	*/
+/*	$OpenBSD: tls_ext_alpn.c,v 1.2 2016/12/18 13:54:15 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  *
@@ -26,7 +26,7 @@
 extern int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p,
     unsigned char *d, int n, int *al);
 extern int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p,
-    unsigned char *d, int n, int *al);
+    int n, int *al);
 
 /*
  * In the ProtocolNameList, ProtocolNames must not include empty strings and
@@ -325,7 +325,7 @@ static uint8_t proto_invalid_missing9[] = {
 		    proto, sizeof(proto), &al));			\
 		p = proto;						\
 		CHECK(s_val == ssl_parse_serverhello_tlsext(s, &p,	\
-		    proto, sizeof(proto), &al));			\
+		    sizeof(proto), &al));				\
 	}								\
 } while (0)
 
