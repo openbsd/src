@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.7 2014/07/12 19:01:49 tedu Exp $	*/
+/*	$OpenBSD: build.c,v 1.8 2016/12/18 18:28:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -149,7 +149,7 @@ write_firmware(char *filename, void *header, size_t hlen,
 			printf("\n");
 			errx(1, "%s: short write", filename);
 		}
-		printf("+%d", rlen);
+		printf("+%zd", rlen);
 		fflush(stdout);
 		total += rlen;
 	}

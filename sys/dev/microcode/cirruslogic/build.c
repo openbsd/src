@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.2 2005/05/17 18:48:52 jason Exp $	*/
+/*	$OpenBSD: build.c,v 1.3 2016/12/18 18:28:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -30,7 +30,7 @@ main(int argc, char *argv[])
 	ssize_t rlen;
 	int fd;
 
-	printf("creating %s length %d\n", FILENAME, sizeof BA1Struct);
+	printf("creating %s length %zu\n", FILENAME, sizeof BA1Struct);
 	fd = open(FILENAME, O_WRONLY|O_CREAT|O_TRUNC, 0644);
 	if (fd == -1)
 		err(1, "%s", FILENAME);

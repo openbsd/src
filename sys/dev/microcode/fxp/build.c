@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 2005/05/17 18:48:52 jason Exp $	*/
+/*	$OpenBSD: build.c,v 1.4 2016/12/18 18:28:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -44,7 +44,7 @@ output(const char *name, const u_int32_t *ucode, const int ucode_len)
 	int fd, i;
 	u_int32_t dword;
 
-	printf("creating %s length %d (microcode: %d DWORDS)\n",
+	printf("creating %s length %d (microcode: %zu DWORDS)\n",
 	    name, ucode_len, ucode_len / sizeof(u_int32_t));
 	fd = open(name, O_WRONLY|O_CREAT|O_TRUNC, 0644);
 	if (fd == -1)

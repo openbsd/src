@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.6 2014/07/12 19:01:50 tedu Exp $	*/
+/*	$OpenBSD: build.c,v 1.7 2016/12/18 18:28:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 	    sizeof(yds_ds1_ctrl_mcode)],
 	    sizeof(yds_ds1e_ctrl_mcode));
 
-	printf("creating %s length %d [%d+%d+%d]\n",
+	printf("creating %s length %d [%zu+%zu+%zu]\n",
 	    FILENAME, len, sizeof(yds_dsp_mcode),
 	    sizeof(yds_ds1_ctrl_mcode), sizeof(yds_ds1e_ctrl_mcode));
 	fd = open(FILENAME, O_WRONLY|O_CREAT|O_TRUNC, 0644);

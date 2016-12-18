@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.26 2016/01/06 22:29:38 millert Exp $	*/
+/*	$OpenBSD: msg.c,v 1.27 2016/12/18 18:28:39 krw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -438,12 +438,13 @@ msgq_status(SCR *sp, recno_t lno, u_int flags)
 			memcpy(p, "empty file", len);
 			p += len;
 		} else {
-			(void)snprintf(p, ep - p, "line %lu of %lu [%ld%%]",
-			    lno, last, (lno * 100) / last);
+			(void)snprintf(p, ep - p, "line %lu of %lu [%lu%%]",
+			    (unsigned long)lno, (unsigned long)last,
+			    (unsigned long)(lno * 100) / last);
 			p += strlen(p);
 		}
 	} else {
-		(void)snprintf(p, ep - p, "line %lu", lno);
+		(void)snprintf(p, ep - p, "line %lu", (unsigned long)lno);
 		p += strlen(p);
 	}
 #ifdef DEBUG

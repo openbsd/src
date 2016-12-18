@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.6 2014/07/12 19:01:49 tedu Exp $	*/
+/*	$OpenBSD: build.c,v 1.7 2016/12/18 18:28:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -53,7 +53,7 @@ main(int argc, char *argv[])
 	    &kf->data[sizeof(kue_code_seg) + sizeof(kue_fix_seg)],
 	    sizeof(kue_trig_seg));
 
-	printf("creating %s length %d [%d+%d+%d]\n",
+	printf("creating %s length %d [%zu+%zu+%zu]\n",
 	    FILENAME, len, sizeof(kue_code_seg), sizeof(kue_fix_seg),
 	    sizeof(kue_trig_seg));
 	fd = open(FILENAME, O_WRONLY|O_CREAT|O_TRUNC, 0644);
