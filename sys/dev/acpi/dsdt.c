@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.227 2016/10/25 06:48:58 pirofti Exp $ */
+/* $OpenBSD: dsdt.c,v 1.228 2016/12/18 15:59:22 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -587,7 +587,7 @@ aml_notify_dev(const char *pnpid, int notify_value)
 		return;
 
 	SLIST_FOREACH(pdata, &aml_notify_list, link)
-		if (pdata->pnpid && !strcmp(pdata->pnpid, pnpid))
+		if (strcmp(pdata->pnpid, pnpid) == 0)
 			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
 }
 
