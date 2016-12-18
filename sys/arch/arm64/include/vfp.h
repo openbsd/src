@@ -1,8 +1,10 @@
-/* $OpenBSD: vfp.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
-/*
- * Copyright (c) 2012 Mark Tinguely
- *
+/* $OpenBSD: vfp.h,v 1.2 2016/12/18 14:40:25 patrick Exp $ */
+/*-
+ * Copyright (c) 2015 The FreeBSD Foundation
  * All rights reserved.
+ *
+ * This software was developed by Andrew Turner under
+ * sponsorship from the FreeBSD Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,24 +26,26 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * $FreeBSD$
+ *
+ * $FreeBSD: head/sys/arm64/include/vfp.h 281494 2015-04-13 14:43:10Z andrew $
  */
 
-
-#ifndef _MACHINE__VFP_H_
-#define _MACHINE__VFP_H_
+#ifndef _MACHINE_VFP_H_
+#define	_MACHINE_VFP_H_
 
 #ifdef _KERNEL
-/* Only kernel defines exist here */
 
-#define VFP_KFPEN	(1 << 20)
-#define VFP_UFPEN	(3 << 20)
+#define	VFP_KFPEN	(1 << 20)
+#define	VFP_UFPEN	(3 << 20)
 
-void		vfp_init(void);
-void		vfp_discard(struct proc *p);
-void		vfp_save(void);
-void		vfp_enable(void);
-int vfp_fault(vaddr_t pc, uint32_t insn, trapframe_t *tf, int fault_code);
+#ifndef LOCORE
+void	vfp_init(void);
+void	vfp_discard(struct proc *);
+void	vfp_save(void);
+void	vfp_enable(void);
+int	vfp_fault(vaddr_t, uint32_t, trapframe_t *, int);
+#endif
 
-#endif /* _KERNEL */
-#endif /* _MACHINE__VFP_H_ */
+#endif
+
+#endif /* !_MACHINE_VFP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootconfig.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: bootconfig.h,v 1.2 2016/12/18 14:40:25 patrick Exp $	*/
 /*	$NetBSD: bootconfig.h,v 1.2 2001/06/21 22:08:28 chris Exp $	*/
 
 /*-
@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: head/sys/arm64/include/machdep.h 281494 2015-04-13 14:43:10Z andrew $
  */
 
 #ifndef _MACHINE_BOOTCONFIG_H_

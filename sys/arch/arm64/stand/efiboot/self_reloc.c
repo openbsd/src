@@ -1,4 +1,4 @@
-/* $OpenBSD: self_reloc.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: self_reloc.c,v 1.2 2016/12/18 14:40:25 patrick Exp $ */
 /*-
  * Copyright (c) 2008-2010 Rui Paulo <rpaulo@FreeBSD.org>
  * All rights reserved.
@@ -24,6 +24,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#if 0
+__FBSDID("$FreeBSD: head/sys/boot/common/self_reloc.c 309360 2016-12-01 14:28:37Z emaste $");
+#endif
 
 #include <sys/param.h>
 #include <sys/exec_elf.h>
