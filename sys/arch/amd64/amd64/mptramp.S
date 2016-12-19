@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.13 2016/05/16 01:54:15 mlarkin Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.14 2016/12/19 20:03:15 kettenis Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -84,6 +84,10 @@
 #include <machine/mpbiosvar.h>
 #include <machine/i82489reg.h>
 
+#ifdef __clang__
+#define addr32
+#endif
+
 #define _RELOC(x)       ((x) - KERNBASE)
 #define RELOC(x)        _RELOC(_C_LABEL(x))
 
@@ -114,7 +118,7 @@ _C_LABEL(cpu_spinup_trampoline):
 	movw	%cs, %ax
 	movw    %ax, %es
 	movw    %ax, %ss
-	data32 addr32 lgdt (mptramp_gdt32_desc)   # load flat descriptor table
+	addr32 lgdtl (mptramp_gdt32_desc)   # load flat descriptor table
 	movl    %cr0, %eax       # get cr0
 	orl     $0x1, %eax      # enable protected mode
 	movl    %eax, %cr0      # doit
