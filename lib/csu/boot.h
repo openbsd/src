@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.23 2016/09/01 09:33:30 tedu Exp $ */
+/*	$OpenBSD: boot.h,v 1.24 2016/12/19 18:30:50 krw Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -174,13 +174,12 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 
 	rp = dynld.dt_jmprel;
 	for (i = 0; i < dynld.dt_pltrelsz; i += sizeof *rp) {
-		Elf_Addr *ra;
 		const Elf_Sym *sp;
 
 		sp = dynld.dt_symtab + ELF_R_SYM(rp->r_info);
 		if (!ELF_R_SYM(rp->r_info) || sp->st_value != 0) {
 #ifdef HAVE_JMPREL
-			ra = (Elf_Addr *)(rp->r_offset + loff);
+			Elf_Addr *ra = (Elf_Addr *)(rp->r_offset + loff);
 			RELOC_JMPREL(rp, sp, ra, loff, dynld.dt_pltgot);
 #else
 			_dl_exit(6);

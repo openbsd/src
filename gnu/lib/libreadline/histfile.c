@@ -375,7 +375,9 @@ history_do_write (filename, nelements, overwrite)
   register int i;
   char *output;
   int file, mode, rv;
+#ifdef HAVE_MMAP
   size_t cursize;
+#endif
 
 #ifdef HAVE_MMAP
   mode = overwrite ? O_RDWR|O_CREAT|O_TRUNC|O_BINARY : O_RDWR|O_APPEND|O_BINARY;
