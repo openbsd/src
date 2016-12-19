@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.44 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.45 2016/12/19 15:57:30 mpi Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -483,7 +483,7 @@ pppfcs(u_int16_t fcs, u_char *cp, int len)
 
 /*
  * This gets called from pppoutput when a new packet is
- * put on a queue, at splsoftnet.
+ * put on a queue.
  */
 void
 pppasyncstart(struct ppp_softc *sc)
@@ -666,7 +666,7 @@ pppasyncstart(struct ppp_softc *sc)
 
 /*
  * This gets called when a received packet is placed on
- * the inq, at splsoftnet.
+ * the inq.
  */
 void
 pppasyncctlp(struct ppp_softc *sc)
@@ -685,7 +685,7 @@ pppasyncctlp(struct ppp_softc *sc)
 /*
  * Start output on async tty interface.  If the transmit queue
  * has drained sufficiently, arrange for pppasyncstart to be
- * called later at splsoftnet.
+ * called later.
  */
 int
 pppstart_internal(struct tty *tp, int force)
