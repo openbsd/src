@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.2 2016/12/19 07:36:49 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -240,21 +240,18 @@ STATIC __inline int
 VP_IDX1(vaddr_t va)
 {
 	return (va >> VP_IDX1_POS) & VP_IDX1_MASK;
-	return 0;
 }
 
 STATIC __inline int
 VP_IDX2(vaddr_t va)
 {
 	return (va >> VP_IDX2_POS) & VP_IDX2_MASK;
-	return 0;
 }
 
 STATIC __inline int
 VP_IDX3(vaddr_t va)
 {
 	return (va >> VP_IDX3_POS) & VP_IDX3_MASK;
-	return 0;
 }
 
 #if 0
@@ -2243,7 +2240,6 @@ pmap_map_stolen(vaddr_t kernel_start)
 	}
 	printf("last mapping  v %16llx p %16llx\n", va, pa);
 	return va + PAGE_SIZE;
-	return 0;
 }
 
 void
