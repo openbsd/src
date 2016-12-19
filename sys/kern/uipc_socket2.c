@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.68 2016/11/15 11:57:02 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.69 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -52,6 +52,8 @@ u_long	sb_max = SB_MAX;		/* patchable */
 
 extern struct pool mclpools[];
 extern struct pool mbpool;
+
+int sbsleep(struct sockbuf *, struct rwlock *);
 
 /*
  * Procedures to manipulate state flags of socket
@@ -145,7 +147,7 @@ sonewconn(struct socket *head, int connstatus)
 	struct socket *so;
 	int soqueue = connstatus ? 1 : 0;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (mclpools[0].pr_nout > mclpools[0].pr_hardlimit * 95 / 100)
 		return (NULL);
@@ -271,16 +273,29 @@ socantrcvmore(struct socket *so)
 int
 sbwait(struct sockbuf *sb)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	sb->sb_flagsintr |= SB_WAIT;
-	return (tsleep(&sb->sb_cc,
+	return (rwsleep(&sb->sb_cc, &netlock,
 	    (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH, "netio",
 	    sb->sb_timeo));
 }
 
 int
-sblock(struct sockbuf *sb, int wait)
+sbsleep(struct sockbuf *sb, struct rwlock *lock)
+{
+	int error, prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
+
+	if (lock != NULL)
+		error = rwsleep(&sb->sb_flags, lock, prio, "netlck", 0);
+	else
+		error = tsleep(&sb->sb_flags, prio, "netlck", 0);
+
+	return (error);
+}
+
+int
+sblock(struct sockbuf *sb, int wait, struct rwlock *lock)
 {
 	int error;
 
@@ -295,9 +310,7 @@ sblock(struct sockbuf *sb, int wait)
 
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
-		error = tsleep(&sb->sb_flags,
-		    (sb->sb_flags & SB_NOINTR) ?
-		    PSOCK : PSOCK|PCATCH, "netlck", 0);
+		error = sbsleep(sb, lock);
 		if (error)
 			return (error);
 	}
@@ -325,7 +338,7 @@ sbunlock(struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	selwakeup(&sb->sb_sel);
 	sb->sb_flagsintr &= ~SB_SEL;

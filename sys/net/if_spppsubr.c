@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.156 2016/11/16 14:25:19 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.157 2016/12/19 08:36:49 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4193,7 +4193,7 @@ sppp_set_ip_addrs(void *arg1)
 	struct sockaddr_in *si;
 	struct sockaddr_in *dest;
 	int s;
-	
+
 	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, NULL);
 	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) &&
 	    (sp->ipcp.flags & IPCP_MYADDR_SEEN))
@@ -4202,8 +4202,8 @@ sppp_set_ip_addrs(void *arg1)
 	    (sp->ipcp.flags & IPCP_HISADDR_SEEN))
 		hisaddr = sp->ipcp.req_hisaddr;
 
-	s = splsoftnet();
 
+	NET_LOCK(s);
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
@@ -4242,12 +4242,12 @@ sppp_set_ip_addrs(void *arg1)
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addrs: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
-			splx(s);
+			NET_UNLOCK(s);
 			return;
 		}
 		sppp_update_gw(ifp);
 	}
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 /*
@@ -4266,7 +4266,7 @@ sppp_clear_ip_addrs(void *arg1)
 	u_int32_t remote;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	if (sp->ipcp.flags & IPCP_HISADDR_DYN)
 		remote = sp->ipcp.saved_hisaddr;
@@ -4303,12 +4303,12 @@ sppp_clear_ip_addrs(void *arg1)
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_clear_ip_addrs: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
-			splx(s);
+			NET_UNLOCK(s);
 			return;
 		}
 		sppp_update_gw(ifp);
 	}
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 

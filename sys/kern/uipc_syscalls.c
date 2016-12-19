@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.142 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.143 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 
 	headfp = fp;
 redo:
-	s = splsoftnet();
+	NET_LOCK(s);
 	head = headfp->f_data;
 	if (isdnssocket(head) || (head->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
@@ -296,7 +296,8 @@ redo:
 			head->so_error = ECONNABORTED;
 			break;
 		}
-		error = tsleep(&head->so_timeo, PSOCK | PCATCH, "netcon", 0);
+		error = rwsleep(&head->so_timeo, &netlock, PSOCK | PCATCH,
+		    "netcon", 0);
 		if (error) {
 			goto bad;
 		}
@@ -333,7 +334,7 @@ redo:
 	 * or another thread or process to accept it.  If so, start over.
 	 */
 	if (head->so_qlen == 0) {
-		splx(s);
+		NET_UNLOCK(s);
 		m_freem(nam);
 		fdplock(fdp);
 		fdremove(fdp, tmpfd);
@@ -362,7 +363,7 @@ redo:
 
 	if (error) {
 		/* if an error occurred, free the file descriptor */
-		splx(s);
+		NET_UNLOCK(s);
 		m_freem(nam);
 		fdplock(fdp);
 		fdremove(fdp, tmpfd);
@@ -375,7 +376,7 @@ redo:
 	*retval = tmpfd;
 	m_freem(nam);
 bad:
-	splx(s);
+	NET_UNLOCK(s);
 out:
 	FRELE(headfp, p);
 	return (error);
@@ -433,9 +434,10 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 		m_freem(nam);
 		return (EINPROGRESS);
 	}
-	s = splsoftnet();
+	NET_LOCK(s);
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		error = tsleep(&so->so_timeo, PSOCK | PCATCH, "netcon2", 0);
+		error = rwsleep(&so->so_timeo, &netlock, PSOCK | PCATCH,
+		    "netcon2", 0);
 		if (error) {
 			if (error == EINTR || error == ERESTART)
 				interrupted = 1;
@@ -446,7 +448,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 		error = so->so_error;
 		so->so_error = 0;
 	}
-	splx(s);
+	NET_UNLOCK(s);
 bad:
 	if (!interrupted)
 		so->so_state &= ~SS_ISCONNECTING;
@@ -1072,9 +1074,9 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
-	s = splsoftnet();
+	NET_LOCK(s);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, 0, m, 0, p);
-	splx(s);
+	NET_UNLOCK(s);
 	if (error)
 		goto bad;
 	error = copyaddrout(p, m, SCARG(uap, asa), len, SCARG(uap, alen));
@@ -1115,9 +1117,9 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
-	s = splsoftnet();
+	NET_LOCK(s);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, 0, m, 0, p);
-	splx(s);
+	NET_UNLOCK(s);
 	if (error)
 		goto bad;
 	error = copyaddrout(p, m, SCARG(uap, asa), len, SCARG(uap, alen));

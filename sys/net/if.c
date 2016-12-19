@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.465 2016/12/12 09:51:30 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.466 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ void	if_netisr(void *);
 void	ifa_print_all(void);
 #endif
 
-void	if_start_locked(struct ifnet *ifp);
+void	if_start_locked(struct ifnet *);
 
 /*
  * interface index map
@@ -229,6 +229,12 @@ struct taskq	*softnettq;
 
 struct task if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
 
+
+/*
+ * Serialize socket operations to ensure no new sleeping points
+ * are introduced in IP output paths.
+ */
+struct rwlock netlock = RWLOCK_INITIALIZER("netlock");
 /*
  * Network interface utility routines.
  */
@@ -845,10 +851,15 @@ if_netisr(void *unused)
 	int s;
 
 	KERNEL_LOCK();
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	while ((n = netisr) != 0) {
-		sched_pause();
+		/* Like sched_pause() but with a rwlock dance. */
+		if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD) {
+			NET_UNLOCK(s);
+			yield();
+			NET_LOCK(s);
+		}
 
 		atomic_clearbits_int(&netisr, n);
 
@@ -886,7 +897,7 @@ if_netisr(void *unused)
 		pfsyncintr();
 #endif
 
-	splx(s);
+	NET_UNLOCK(s);
 	KERNEL_UNLOCK();
 }
 
@@ -1392,7 +1403,7 @@ if_downall(void)
 	struct ifnet *ifp;
 	int s;
 
-	s = splnet();
+	NET_LOCK(s);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if ((ifp->if_flags & IFF_UP) == 0)
 			continue;
@@ -1405,7 +1416,7 @@ if_downall(void)
 			    (caddr_t)&ifrq);
 		}
 	}
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 /*
@@ -1465,9 +1476,9 @@ if_linkstate_task(void *xifidx)
 	if (ifp == NULL)
 		return;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if_linkstate(ifp);
-	splx(s);
+	NET_UNLOCK(s);
 
 	if_put(ifp);
 }
@@ -1475,7 +1486,7 @@ if_linkstate_task(void *xifidx)
 void
 if_linkstate(struct ifnet *ifp)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	rt_ifmsg(ifp);
 #ifndef SMALL_KERNEL

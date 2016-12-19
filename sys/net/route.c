@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.344 2016/12/17 14:26:53 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.345 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 	int 			 flags = RTF_GATEWAY|RTF_HOST;
 	uint8_t			 prio = RTP_NONE;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* verify the gateway is directly reachable */
 	rt = rtalloc(gateway, 0, rdomain);
@@ -1501,7 +1501,7 @@ rt_timer_queue_destroy(struct rttimer_queue *rtq)
 {
 	struct rttimer	*r;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
@@ -1595,7 +1595,7 @@ rt_timer_timer(void *arg)
 
 	current_time = time_uptime;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL;
 	     rtq = LIST_NEXT(rtq, rtq_link)) {
 		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
@@ -1610,7 +1610,7 @@ rt_timer_timer(void *arg)
 				printf("rt_timer_timer: rtq_count reached 0\n");
 		}
 	}
-	splx(s);
+	NET_UNLOCK(s);
 
 	timeout_add_sec(to, 1);
 }

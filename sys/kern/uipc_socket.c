@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.168 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.169 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
-	s = splsoftnet();
+	NET_LOCK(s);
 	so = pool_get(&socket_pool, PR_WAITOK | PR_ZERO);
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
@@ -141,10 +141,10 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		sofree(so);
-		splx(s);
+		NET_UNLOCK(s);
 		return (error);
 	}
-	splx(s);
+	NET_UNLOCK(s);
 	*aso = so;
 	return (0);
 }
@@ -154,9 +154,9 @@ sobind(struct socket *so, struct mbuf *nam, struct proc *p)
 {
 	int s, error;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_BIND, NULL, nam, NULL, p);
-	splx(s);
+	NET_UNLOCK(s);
 	return (error);
 }
 
@@ -171,11 +171,11 @@ solisten(struct socket *so, int backlog)
 	if (isspliced(so) || issplicedback(so))
 		return (EOPNOTSUPP);
 #endif /* SOCKET_SPLICE */
-	s = splsoftnet();
+	NET_LOCK(s);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, NULL, NULL, NULL,
 	    curproc);
 	if (error) {
-		splx(s);
+		NET_UNLOCK(s);
 		return (error);
 	}
 	if (TAILQ_FIRST(&so->so_q) == NULL)
@@ -185,14 +185,14 @@ solisten(struct socket *so, int backlog)
 	if (backlog < sominconn)
 		backlog = sominconn;
 	so->so_qlimit = backlog;
-	splx(s);
+	NET_UNLOCK(s);
 	return (0);
 }
 
 void
 sofree(struct socket *so)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
 		return;
@@ -232,7 +232,7 @@ soclose(struct socket *so)
 	struct socket *so2;
 	int s, error = 0;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if (so->so_options & SO_ACCEPTCONN) {
 		while ((so2 = TAILQ_FIRST(&so->so_q0)) != NULL) {
 			(void) soqremque(so2, 0);
@@ -256,7 +256,7 @@ soclose(struct socket *so)
 			    (so->so_state & SS_NBIO))
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
-				error = tsleep(&so->so_timeo,
+				error = rwsleep(&so->so_timeo, &netlock,
 				    PSOCK | PCATCH, "netcls",
 				    so->so_linger * hz);
 				if (error)
@@ -276,14 +276,14 @@ discard:
 		panic("soclose NOFDREF: so %p, so_type %d", so, so->so_type);
 	so->so_state |= SS_NOFDREF;
 	sofree(so);
-	splx(s);
+	NET_UNLOCK(s);
 	return (error);
 }
 
 int
 soabort(struct socket *so)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	return (*so->so_proto->pr_usrreq)(so, PRU_ABORT, NULL, NULL, NULL,
 	   curproc);
@@ -294,7 +294,7 @@ soaccept(struct socket *so, struct mbuf *nam)
 {
 	int error = 0;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if ((so->so_state & SS_NOFDREF) == 0)
 		panic("soaccept !NOFDREF: so %p, so_type %d", so, so->so_type);
@@ -315,7 +315,7 @@ soconnect(struct socket *so, struct mbuf *nam)
 
 	if (so->so_options & SO_ACCEPTCONN)
 		return (EOPNOTSUPP);
-	s = splsoftnet();
+	NET_LOCK(s);
 	/*
 	 * If protocol is connection-based, can only connect once.
 	 * Otherwise, if connected, try to disconnect first.
@@ -329,7 +329,7 @@ soconnect(struct socket *so, struct mbuf *nam)
 	else
 		error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
 		    NULL, nam, NULL, curproc);
-	splx(s);
+	NET_UNLOCK(s);
 	return (error);
 }
 
@@ -338,10 +338,10 @@ soconnect2(struct socket *so1, struct socket *so2)
 {
 	int s, error;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2, NULL,
 	    (struct mbuf *)so2, NULL, curproc);
-	splx(s);
+	NET_UNLOCK(s);
 	return (error);
 }
 
@@ -350,7 +350,7 @@ sodisconnect(struct socket *so)
 {
 	int error;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if ((so->so_state & SS_ISCONNECTED) == 0)
 		return (ENOTCONN);
@@ -418,21 +418,20 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 			    (sizeof(struct file *) / sizeof(int)));
 	}
 
-#define	snderr(errno)	{ error = errno; splx(s); goto release; }
+#define	snderr(errno)	{ error = errno; NET_UNLOCK(s); goto release; }
 
 restart:
-	if ((error = sblock(&so->so_snd, SBLOCKWAIT(flags))) != 0)
+	if ((error = sblock(&so->so_snd, SBLOCKWAIT(flags), NULL)) != 0)
 		goto out;
 	so->so_state |= SS_ISSENDING;
 	do {
-		s = splsoftnet();
+		NET_LOCK(s);
 		if (so->so_state & SS_CANTSENDMORE)
 			snderr(EPIPE);
 		if (so->so_error) {
 			error = so->so_error;
 			so->so_error = 0;
-			splx(s);
-			goto release;
+			snderr(error);
 		}
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
@@ -456,12 +455,12 @@ restart:
 			sbunlock(&so->so_snd);
 			error = sbwait(&so->so_snd);
 			so->so_state &= ~SS_ISSENDING;
-			splx(s);
+			NET_UNLOCK(s);
 			if (error)
 				goto out;
 			goto restart;
 		}
-		splx(s);
+		NET_UNLOCK(s);
 		space -= clen;
 		do {
 			if (uio == NULL) {
@@ -481,13 +480,13 @@ restart:
 				if (flags & MSG_EOR)
 					top->m_flags |= M_EOR;
 			}
-			s = splsoftnet();		/* XXX */
+			NET_LOCK(s);
 			if (resid == 0)
 				so->so_state &= ~SS_ISSENDING;
 			error = (*so->so_proto->pr_usrreq)(so,
 			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
 			    top, addr, control, curproc);
-			splx(s);
+			NET_UNLOCK(s);
 			clen = 0;
 			control = NULL;
 			top = NULL;
@@ -615,8 +614,8 @@ sbsync(struct sockbuf *sb, struct mbuf *nextrecord)
  * must begin with an address if the protocol so specifies,
  * followed by an optional mbuf or mbufs containing ancillary data,
  * and then zero or more mbufs of data.
- * In order to avoid blocking network interrupts for the entire time here,
- * we splx() while doing the actual copy to user space.
+ * In order to avoid blocking network for the entire time here, we splx()
+ * and release ``netlock'' while doing the actual copy to user space.
  * Although the sockbuf is locked, new data may still be appended,
  * and thus we must maintain consistency of the sockbuf during that time.
  *
@@ -650,10 +649,10 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		flags |= MSG_DONTWAIT;
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
-		s = splsoftnet();
+		NET_LOCK(s);
 		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
 		    (struct mbuf *)(long)(flags & MSG_PEEK), NULL, curproc);
-		splx(s);
+		NET_UNLOCK(s);
 		if (error)
 			goto bad;
 		do {
@@ -669,9 +668,9 @@ bad:
 		*mp = NULL;
 
 restart:
-	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0)
+	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags), NULL)) != 0)
 		return (error);
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	m = so->so_rcv.sb_mb;
 #ifdef SOCKET_SPLICE
@@ -736,7 +735,7 @@ restart:
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 		sbunlock(&so->so_rcv);
 		error = sbwait(&so->so_rcv);
-		splx(s);
+		NET_UNLOCK(s);
 		if (error)
 			return (error);
 		goto restart;
@@ -870,9 +869,9 @@ dontblock:
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive uiomove");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			resid = uio->uio_resid;
-			splx(s);
+			NET_UNLOCK(s);
 			uio_error = uiomove(mtod(m, caddr_t) + moff, len, uio);
-			s = splsoftnet();
+			NET_LOCK(s);
 			if (uio_error)
 				uio->uio_resid = resid - len;
 		} else
@@ -954,7 +953,7 @@ dontblock:
 			error = sbwait(&so->so_rcv);
 			if (error) {
 				sbunlock(&so->so_rcv);
-				splx(s);
+				NET_UNLOCK(s);
 				return (0);
 			}
 			if ((m = so->so_rcv.sb_mb) != NULL)
@@ -990,7 +989,7 @@ dontblock:
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
 		sbunlock(&so->so_rcv);
-		splx(s);
+		NET_UNLOCK(s);
 		goto restart;
 	}
 
@@ -1001,7 +1000,7 @@ dontblock:
 		*flagsp |= flags;
 release:
 	sbunlock(&so->so_rcv);
-	splx(s);
+	NET_UNLOCK(s);
 	return (error);
 }
 
@@ -1011,7 +1010,7 @@ soshutdown(struct socket *so, int how)
 	struct protosw *pr = so->so_proto;
 	int s, error = 0;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	switch (how) {
 	case SHUT_RD:
 	case SHUT_RDWR:
@@ -1027,7 +1026,8 @@ soshutdown(struct socket *so, int how)
 		error = EINVAL;
 		break;
 	}
-	splx(s);
+	NET_UNLOCK(s);
+
 	return (error);
 }
 
@@ -1039,7 +1039,7 @@ sorflush(struct socket *so)
 	struct sockbuf asb;
 
 	sb->sb_flags |= SB_NOINTR;
-	(void) sblock(sb, M_WAITOK);
+	(void) sblock(sb, M_WAITOK, &netlock);
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;
@@ -1089,12 +1089,12 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if (fd < 0) {
 		/* Lock receive buffer. */
 		if ((error = sblock(&so->so_rcv,
-		    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0)
+		    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK, NULL)) != 0)
 			return (error);
-		s = splsoftnet();
+		NET_LOCK(s);
 		if (so->so_sp->ssp_socket)
 			sounsplice(so, so->so_sp->ssp_socket, 1);
-		splx(s);
+		NET_UNLOCK(s);
 		sbunlock(&so->so_rcv);
 		return (0);
 	}
@@ -1114,16 +1114,16 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 
 	/* Lock both receive and send buffer. */
 	if ((error = sblock(&so->so_rcv,
-	    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
+	    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK, NULL)) != 0) {
 		FRELE(fp, curproc);
 		return (error);
 	}
-	if ((error = sblock(&sosp->so_snd, M_WAITOK)) != 0) {
+	if ((error = sblock(&sosp->so_snd, M_WAITOK, NULL)) != 0) {
 		sbunlock(&so->so_rcv);
 		FRELE(fp, curproc);
 		return (error);
 	}
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
 		error = EBUSY;
@@ -1164,7 +1164,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	}
 
  release:
-	splx(s);
+	NET_UNLOCK(s);
 	sbunlock(&sosp->so_snd);
 	sbunlock(&so->so_rcv);
 	FRELE(fp, curproc);
@@ -1174,7 +1174,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 void
 sounsplice(struct socket *so, struct socket *sosp, int wakeup)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	task_del(sosplice_taskq, &so->so_splicetask);
 	timeout_del(&so->so_idleto);
@@ -1191,12 +1191,12 @@ soidle(void *arg)
 	struct socket *so = arg;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if (so->so_rcv.sb_flagsintr & SB_SPLICE) {
 		so->so_error = ETIMEDOUT;
 		sounsplice(so, so->so_sp->ssp_socket, 1);
 	}
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -1205,7 +1205,7 @@ sotask(void *arg)
 	struct socket *so = arg;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if (so->so_rcv.sb_flagsintr & SB_SPLICE) {
 		/*
 		 * We may not sleep here as sofree() and unsplice() may be
@@ -1214,7 +1214,7 @@ sotask(void *arg)
 		 */
 		somove(so, M_DONTWAIT);
 	}
-	splx(s);
+	NET_UNLOCK(s);
 
 	/* Avoid user land starvation. */
 	yield();
@@ -1236,7 +1236,7 @@ somove(struct socket *so, int wait)
 	int		 error = 0, maxreached = 0;
 	short		 state;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
  nextpkt:
 	if (so->so_error) {
@@ -1506,7 +1506,7 @@ somove(struct socket *so, int wait)
 void
 sorwakeup(struct socket *so)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 #ifdef SOCKET_SPLICE
 	if (so->so_rcv.sb_flagsintr & SB_SPLICE) {
@@ -1527,14 +1527,18 @@ sorwakeup(struct socket *so)
 		return;
 #endif
 	sowakeup(so, &so->so_rcv);
-	if (so->so_upcall)
+	if (so->so_upcall) {
+		/* XXXSMP breaks atomicity */
+		rw_exit_write(&netlock);
 		(*(so->so_upcall))(so, so->so_upcallarg, M_DONTWAIT);
+		rw_enter_write(&netlock);
+	}
 }
 
 void
 sowwakeup(struct socket *so)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 #ifdef SOCKET_SPLICE
 	if (so->so_snd.sb_flagsintr & SB_SPLICE)

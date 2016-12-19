@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.52 2016/11/28 11:12:45 mpi Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.53 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -112,13 +112,13 @@ tcp_delack(void *arg)
 	 * for whatever reason, it will restart the delayed
 	 * ACK callout.
 	 */
-	s = splsoftnet();
+	NET_LOCK(s);
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
  out:
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 /*
@@ -189,7 +189,7 @@ tcp_timer_rexmt(void *arg)
 	uint32_t rto;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 
@@ -369,7 +369,7 @@ tcp_timer_rexmt(void *arg)
 	(void) tcp_output(tp);
 
  out:
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -379,7 +379,7 @@ tcp_timer_persist(void *arg)
 	uint32_t rto;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if ((tp->t_flags & TF_DEAD) ||
             TCP_TIMER_ISARMED(tp, TCPT_REXMT)) {
 		goto out;
@@ -407,7 +407,7 @@ tcp_timer_persist(void *arg)
 	(void) tcp_output(tp);
 	tp->t_force = 0;
  out:
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -416,7 +416,7 @@ tcp_timer_keep(void *arg)
 	struct tcpcb *tp = arg;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 
@@ -448,13 +448,13 @@ tcp_timer_keep(void *arg)
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
  out:
-	splx(s);
+	NET_UNLOCK(s);
 	return;
 
  dropit:
 	tcpstat.tcps_keepdrops++;
 	tp = tcp_drop(tp, ETIMEDOUT);
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -463,7 +463,7 @@ tcp_timer_2msl(void *arg)
 	struct tcpcb *tp = arg;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 
@@ -478,5 +478,5 @@ tcp_timer_2msl(void *arg)
 		tp = tcp_close(tp);
 
  out:
-	splx(s);
+	NET_UNLOCK(s);
 }

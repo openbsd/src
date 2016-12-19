@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.333 2016/11/16 14:11:26 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.334 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3398,7 +3398,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	struct syn_cache *sc2;
 	int i;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * If there are no entries in the hash table, reinitialize
@@ -3534,7 +3534,7 @@ syn_cache_timer(void *arg)
 	struct syn_cache *sc = arg;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if (sc->sc_flags & SCF_DEAD)
 		goto out;
 
@@ -3560,14 +3560,14 @@ syn_cache_timer(void *arg)
 	SYN_CACHE_TIMER_ARM(sc);
 
  out:
-	splx(s);
+	NET_UNLOCK(s);
 	return;
 
  dropit:
 	tcpstat.tcps_sc_timed_out++;
 	syn_cache_rm(sc);
 	syn_cache_put(sc);
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -3589,7 +3589,7 @@ syn_cache_cleanup(struct tcpcb *tp)
 {
 	struct syn_cache *sc, *nsc;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	LIST_FOREACH_SAFE(sc, &tp->t_sc, sc_tpq, nsc) {
 #ifdef DIAGNOSTIC
@@ -3616,7 +3616,7 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
 	u_int32_t hash;
 	int i;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* Check the active cache first, the passive cache is likely emtpy. */
 	sets[0] = &tcp_syn_cache[tcp_syn_cache_active];
@@ -3676,7 +3676,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct pf_divert *divert = NULL;
 #endif
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	sc = syn_cache_lookup(src, dst, &scp, sotoinpcb(so)->inp_rtableid);
 	if (sc == NULL)
@@ -3904,7 +3904,7 @@ syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if ((sc = syn_cache_lookup(src, dst, &scp, rtableid)) == NULL)
 		return;
@@ -3923,7 +3923,7 @@ syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if ((sc = syn_cache_lookup(src, dst, &scp, rtableid)) == NULL)
 		return;

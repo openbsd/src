@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.331 2016/11/28 10:14:00 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.332 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -108,6 +108,8 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 #if defined(MROUTING)
 	int rv;
 #endif
+
+	NET_ASSERT_LOCKED();
 
 #ifdef IPSEC
 	if (inp && (inp->inp_flags & INP_IPV6) != 0)

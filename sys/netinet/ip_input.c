@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.288 2016/11/28 23:15:31 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.289 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1587,20 +1587,20 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			ip_mtudisc_timeout_q =
 			    rt_timer_queue_create(ip_mtudisc_timeout);
 		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
-			s = splsoftnet();
+			NET_LOCK(s);
 			rt_timer_queue_destroy(ip_mtudisc_timeout_q);
 			ip_mtudisc_timeout_q = NULL;
-			splx(s);
+			NET_UNLOCK(s);
 		}
 		return error;
 	case IPCTL_MTUDISCTIMEOUT:
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_mtudisc_timeout);
 		if (ip_mtudisc_timeout_q != NULL) {
-			s = splsoftnet();
+			NET_LOCK(s);
 			rt_timer_queue_change(ip_mtudisc_timeout_q,
 					      ip_mtudisc_timeout);
-			splx(s);
+			NET_UNLOCK(s);
 		}
 		return (error);
 	case IPCTL_IPSEC_ENC_ALGORITHM:
@@ -1758,12 +1758,15 @@ ip_send_dispatch(void *xmq)
 	int s;
 
 	mq_delist(mq, &ml);
+	if (ml_empty(&ml))
+		return;
+
 	KERNEL_LOCK();
-	s = splsoftnet();
+	NET_LOCK(s);
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		ip_output(m, NULL, NULL, 0, NULL, NULL, 0);
 	}
-	splx(s);
+	NET_UNLOCK(s);
 	KERNEL_UNLOCK();
 }
 

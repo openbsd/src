@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.66 2016/11/15 11:57:02 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.67 2016/12/19 08:36:50 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -215,12 +215,14 @@ struct socket {
 		(sb)->sb_mbcnt -= (m)->m_ext.ext_size;			\
 } while (/* CONSTCOND */ 0)
 
+struct rwlock;
+
 /*
  * Set lock on sockbuf sb; sleep if lock is already held.
  * Unless SB_NOINTR is set on sockbuf, sleep is interruptible.
  * Returns error without lock if sleep is interrupted.
  */
-int sblock(struct sockbuf *, int);
+int sblock(struct sockbuf *, int, struct rwlock *);
 
 /* release lock on sockbuf sb */
 void sbunlock(struct sockbuf *);

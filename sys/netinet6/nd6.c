@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.197 2016/11/28 14:14:39 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.198 2016/12/19 08:36:50 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -327,14 +327,14 @@ nd6_llinfo_timer(void *arg)
 	struct ifnet *ifp;
 	struct nd_ifinfo *ndi = NULL;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	ln = (struct llinfo_nd6 *)arg;
 
 	if ((rt = ln->ln_rt) == NULL)
 		panic("ln->ln_rt == NULL");
 	if ((ifp = if_get(rt->rt_ifidx)) == NULL) {
-		splx(s);
+		NET_UNLOCK(s);
 		return;
 	}
 	ndi = ND_IFINFO(ifp);
@@ -421,7 +421,7 @@ nd6_llinfo_timer(void *arg)
 	}
 
 	if_put(ifp);
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 /*

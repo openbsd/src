@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.25 2016/11/22 12:11:38 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.26 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -120,17 +120,17 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	 * different entry since a socket's unnecessary
 	 */
 	if (IOCGROUP(cmd) == 'i') {
-		s = splsoftnet();
+		NET_LOCK(s);
 		error = ifioctl(so, cmd, data, p);
-		splx(s);
+		NET_UNLOCK(s);
 		return (error);
 	}
 	if (IOCGROUP(cmd) == 'r')
 		return (EOPNOTSUPP);
-	s = splsoftnet();
+	NET_LOCK(s);
 	error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL, 
 	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)NULL, p));
-	splx(s);
+	NET_UNLOCK(s);
 
 	return (error);
 }
@@ -142,7 +142,7 @@ soo_poll(struct file *fp, int events, struct proc *p)
 	int revents = 0;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (soreadable(so))
 			revents |= events & (POLLIN | POLLRDNORM);
@@ -168,7 +168,7 @@ soo_poll(struct file *fp, int events, struct proc *p)
 			so->so_snd.sb_flagsintr |= SB_SEL;
 		}
 	}
-	splx(s);
+	NET_UNLOCK(s);
 	return (revents);
 }
 
@@ -187,10 +187,10 @@ soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 		ub->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
 	ub->st_uid = so->so_euid;
 	ub->st_gid = so->so_egid;
-	s = splsoftnet();
+	NET_LOCK(s);
 	(void) ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
 	    (struct mbuf *)ub, NULL, NULL, p));
-	splx(s);
+	NET_UNLOCK(s);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.210 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.211 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int		 af;
 	int		 error = 0;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	rp = sotorawcb(so);
 

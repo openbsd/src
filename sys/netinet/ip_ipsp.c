@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.218 2016/11/15 09:48:03 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.219 2016/12/19 08:36:49 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -509,12 +509,12 @@ tdb_timeout(void *v)
 	if (!(tdb->tdb_flags & TDBF_TIMER))
 		return;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	/* If it's an "invalid" TDB do a silent expiration. */
 	if (!(tdb->tdb_flags & TDBF_INVALID))
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	tdb_delete(tdb);
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -526,12 +526,12 @@ tdb_firstuse(void *v)
 	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
 		return;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	/* If the TDB hasn't been used, don't renew it. */
 	if (tdb->tdb_first_use != 0)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	tdb_delete(tdb);
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -543,11 +543,11 @@ tdb_soft_timeout(void *v)
 	if (!(tdb->tdb_flags & TDBF_SOFT_TIMER))
 		return;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	/* Soft expirations. */
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -559,12 +559,12 @@ tdb_soft_firstuse(void *v)
 	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
 		return;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	/* If the TDB hasn't been used, don't renew it. */
 	if (tdb->tdb_first_use != 0)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 /*

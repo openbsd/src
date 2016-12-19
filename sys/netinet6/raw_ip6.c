@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.99 2016/11/21 09:09:06 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.100 2016/12/19 08:36:50 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int error = 0;
 	int priv;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	priv = 0;
 	if ((so->so_state & SS_PRIV) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.296 2016/11/20 11:40:58 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.297 2016/12/19 08:36:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1045,7 +1045,7 @@ carp_send_ad(void *v)
 		return;
 	}
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	/* bow out if we've gone to backup (the carp interface is going down) */
 	if (sc->sc_bow_out) {
@@ -1246,7 +1246,7 @@ carp_send_ad(void *v)
 
 retry_later:
 	sc->cur_vhe = NULL;
-	splx(s);
+	NET_UNLOCK(s);
 	if (advbase != 255 || advskew != 255)
 		timeout_add(&vhe->ad_tmo, tvtohz(&tv));
 }

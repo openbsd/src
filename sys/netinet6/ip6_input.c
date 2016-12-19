@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.170 2016/11/28 10:10:53 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.171 2016/12/19 08:36:50 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1437,12 +1437,15 @@ ip6_send_dispatch(void *xmq)
 	int s;
 
 	mq_delist(mq, &ml);
+	if (ml_empty(&ml))
+		return;
+
 	KERNEL_LOCK();
-	s = splsoftnet();
+	NET_LOCK(s);
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
 	}
-	splx(s);
+	NET_UNLOCK(s);
 	KERNEL_UNLOCK();
 }
 

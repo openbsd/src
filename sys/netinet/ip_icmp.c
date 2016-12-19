@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.157 2016/11/28 14:14:39 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.158 2016/12/19 08:36:49 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -884,7 +884,7 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	if (namelen != 1)
 		return (ENOTDIR);
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	switch (name[0]) {
 	case ICMPCTL_REDIRTIMEOUT:
 
@@ -921,7 +921,7 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		error = ENOPROTOOPT;
 		break;
 	}
-	splx(s);
+	NET_UNLOCK(s);
 
 	return (error);
 }
@@ -1052,7 +1052,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	struct ifnet *ifp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
@@ -1102,7 +1102,7 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	struct ifnet *ifp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
