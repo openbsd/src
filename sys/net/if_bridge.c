@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.289 2016/11/21 08:27:59 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.290 2016/12/19 15:49:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1393,7 +1393,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 	struct tdb *tdb;
 	u_int32_t spi;
 	u_int16_t cpi;
-	int error, off, s;
+	int error, off;
 	u_int8_t proto = 0;
 	struct ip *ip;
 #ifdef INET6
@@ -1478,7 +1478,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 		if (proto == 0)
 			goto skiplookup;
 
-		s = splsoftnet();
+		splsoftassert(IPL_SOFTNET);
 
 		tdb = gettdb(ifp->if_rdomain, spi, &dst, proto);
 		if (tdb != NULL && (tdb->tdb_flags & TDBF_INVALID) == 0 &&
@@ -1494,10 +1494,8 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 			}
 
 			(*(tdb->tdb_xform->xf_input))(m, tdb, hlen, off);
-			splx(s);
 			return (1);
 		} else {
-			splx(s);
  skiplookup:
 			/* XXX do an input policy lookup */
 			return (0);
