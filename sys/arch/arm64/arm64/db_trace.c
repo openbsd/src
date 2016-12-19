@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.2 2016/12/19 07:28:58 patrick Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -59,19 +59,15 @@ db_regs_t ddb_regs;
 #endif /* !__clang__ */
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-	int		(*pr) (const char *, ...);
+db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif, int (*pr)(const char *, ...))
 {
 	u_int32_t	frame, lastframe;
-	char c, *cp = modif;
+	char		c, *cp = modif;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 	//db_addr_t	scp = 0;
-	int	scp_offset;
+	int		scp_offset;
 
 	while ((c = *cp++) != 0) {
 		if (c == 'u')
