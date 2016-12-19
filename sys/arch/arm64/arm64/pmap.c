@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.2 2016/12/19 07:36:49 jsg Exp $ */
+/* $OpenBSD: pmap.c,v 1.3 2016/12/19 09:29:27 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2294,9 +2294,9 @@ pmap_show_mapping(uint64_t va)
 	__asm volatile ("mrs     %x0, ttbr0_el1" : "=r"(ttbr0));
 	__asm volatile ("mrs     %x0, tcr_el1" : "=r"(tcr));
 
-	printf("  ttbr0 %llx %llx %llx tcr %llx\n", ttbr0, pm->pm_pt0pa);
-	printf("  vp1 = %llx \n", vp1, VP_IDX1(va) * 8);
-
+	printf("  ttbr0 %llx %llx %llx tcr %llx\n", ttbr0, pm->pm_pt0pa,
+	    curproc->p_addr->u_pcb.pcb_pagedir, tcr);
+	printf("  vp1 = %llx\n", vp1);
 
 	vp2 = vp1->vp[VP_IDX1(va)];
 	printf("  vp2 = %llx lp2 = %llx idx1 off %x\n",
