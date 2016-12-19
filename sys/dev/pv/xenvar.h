@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.43 2016/12/09 17:24:55 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.44 2016/12/19 21:07:10 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -45,6 +45,9 @@ test_bit(u_int b, volatile void *p)
 	return !!(((volatile u_int *)p)[b >> 5] & (1 << (b & 0x1f)));
 }
 
+#define XEN_MAX_NODE_LEN	64
+#define XEN_MAX_BACKEND_LEN	128
+
 struct xen_intsrc {
 	SLIST_ENTRY(xen_intsrc)	 xi_entry;
 	struct evcount		 xi_evcnt;
@@ -68,6 +71,22 @@ struct xen_gntmap {
 	grant_ref_t		 gm_ref;
 	paddr_t			 gm_paddr;
 };
+
+struct xen_device {
+	struct device		*dv_dev;
+	char			 dv_unit[16];
+	LIST_ENTRY(xen_device)	 dv_entry;
+};
+LIST_HEAD(xen_devices, xen_device);
+
+struct xen_devlist {
+	struct xen_softc	*dl_xen;
+	char			 dl_node[XEN_MAX_NODE_LEN];
+	struct task		 dl_task;
+	struct xen_devices	 dl_devs;
+	SLIST_ENTRY(xen_devlist) dl_entry;
+};
+SLIST_HEAD(xen_devlists, xen_devlist);
 
 struct xen_softc {
 	struct device		 sc_dev;
@@ -97,12 +116,12 @@ struct xen_softc {
 	struct xs_softc		*sc_xs;		/* xenstore softc */
 
 	struct task		 sc_ctltsk;	/* control task */
+
+	struct xen_devlists	 sc_devlists;	/* device lists heads */
+	struct rwlock		 sc_devlck;
 };
 
 extern struct xen_softc *xen_sc;
-
-#define XEN_MAX_NODE_LEN	64
-#define XEN_MAX_BACKEND_LEN	128
 
 struct xen_attach_args {
 	char			 xa_name[16];

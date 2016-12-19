@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.68 2016/12/09 17:29:48 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.69 2016/12/19 21:07:10 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -35,6 +35,7 @@
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/stdint.h>
 #include <sys/device.h>
 #include <sys/task.h>
 #include <sys/syslog.h>
@@ -75,8 +76,11 @@ int 	xen_match(struct device *, void *, void *);
 void	xen_attach(struct device *, struct device *, void *);
 void	xen_deferred(struct device *);
 void	xen_control(void *);
+void	xen_hotplug(void *);
 void	xen_resume(struct device *);
 int	xen_activate(struct device *, int);
+int	xen_attach_device(struct xen_softc *, struct xen_devlist *,
+	    const char *, const char *);
 int	xen_probe_devices(struct xen_softc *);
 
 int	xen_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
@@ -1253,19 +1257,61 @@ xen_attach_print(void *aux, const char *name)
 }
 
 int
-xen_probe_devices(struct xen_softc *sc)
+xen_attach_device(struct xen_softc *sc, struct xen_devlist *xdl,
+    const char *name, const char *unit)
 {
 	struct xen_attach_args xa;
+	struct xen_device *xdv;
+	unsigned long long res;
+
+	xa.xa_dmat = &xen_bus_dma_tag;
+
+	strlcpy(xa.xa_name, name, sizeof(xa.xa_name));
+	snprintf(xa.xa_node, sizeof(xa.xa_node), "device/%s/%s", name, unit);
+
+	if (xs_getprop(sc, xa.xa_node, "backend", xa.xa_backend,
+	    sizeof(xa.xa_backend))) {
+		DPRINTF("%s: failed to identify \"backend\" for "
+		    "\"%s\"\n", sc->sc_dev.dv_xname, xa.xa_node);
+		return (EIO);
+	}
+
+	if (xs_getnum(sc, xa.xa_node, "backend-id", &res) || res > UINT16_MAX) {
+		DPRINTF("%s: invalid \"backend-id\" for \"%s\"\n",
+		    sc->sc_dev.dv_xname, xa.xa_node);
+		return (EIO);
+	}
+	xa.xa_domid = (uint16_t)res;
+
+	xdv = malloc(sizeof(struct xen_device), M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (xdv == NULL)
+		return (ENOMEM);
+
+	strlcpy(xdv->dv_unit, unit, sizeof(xdv->dv_unit));
+	LIST_INSERT_HEAD(&xdl->dl_devs, xdv, dv_entry);
+
+	xdv->dv_dev = config_found((struct device *)sc, &xa, xen_attach_print);
+
+	return (0);
+}
+
+int
+xen_probe_devices(struct xen_softc *sc)
+{
+	struct xen_devlist *xdl;
 	struct xs_transaction xst;
 	struct iovec *iovp1 = NULL, *iovp2 = NULL;
 	int i, j, error, iov1_cnt = 0, iov2_cnt = 0;
-	unsigned long long res;
 	char path[256];
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
 	xst.xst_cookie = sc->sc_xs;
 	xst.xst_flags |= XST_POLL;
+
+	rw_init(&sc->sc_devlck, "xenprobe");
+
+	rw_enter_write(&sc->sc_devlck);
 
 	if ((error = xs_cmd(&xst, XS_LIST, "device", &iovp1, &iov1_cnt)) != 0)
 		return (error);
@@ -1276,36 +1322,112 @@ xen_probe_devices(struct xen_softc *sc)
 		snprintf(path, sizeof(path), "device/%s",
 		    (char *)iovp1[i].iov_base);
 		if ((error = xs_cmd(&xst, XS_LIST, path, &iovp2,
-		    &iov2_cnt)) != 0) {
-			xs_resfree(&xst, iovp1, iov1_cnt);
-			return (error);
+		    &iov2_cnt)) != 0)
+			goto out;
+		if ((xdl = malloc(sizeof(struct xen_devlist), M_DEVBUF,
+		    M_ZERO | M_NOWAIT)) == NULL) {
+			error = ENOMEM;
+			goto out;
 		}
+		xdl->dl_xen = sc;
+		strlcpy(xdl->dl_node, (const char *)iovp1[i].iov_base,
+		    XEN_MAX_NODE_LEN);
 		for (j = 0; j < iov2_cnt; j++) {
-			xa.xa_dmat = &xen_bus_dma_tag;
-			strlcpy(xa.xa_name, (char *)iovp1[i].iov_base,
-			    sizeof(xa.xa_name));
-			snprintf(xa.xa_node, sizeof(xa.xa_node), "device/%s/%s",
-			    (char *)iovp1[i].iov_base,
-			    (char *)iovp2[j].iov_base);
-			if (xs_getprop(sc, xa.xa_node, "backend", xa.xa_backend,
-			    sizeof(xa.xa_backend))) {
-				printf("%s: failed to identify \"backend\" for "
-				    "\"%s\"\n", sc->sc_dev.dv_xname, xa.xa_node);
-				return (ENODEV);
+			error = xen_attach_device(sc, xdl,
+			    (const char *)iovp1[i].iov_base,
+			    (const char *)iovp2[j].iov_base);
+			if (error) {
+				printf("%s: failed to attach \"%s/%s\"\n",
+				    sc->sc_dev.dv_xname, path,
+				    (const char *)iovp2[j].iov_base);
+				goto out;
 			}
-			if (xs_getnum(sc, xa.xa_node, "backend-id", &res) ||
-			    res > 0xffffULL) {
-				printf("%s: invalid \"backend-id\" for \"%s\"\n",
-				    sc->sc_dev.dv_xname, xa.xa_node);
-				return (ENODEV);
-			}
-			xa.xa_domid = (uint16_t)res;
-			config_found((struct device *)sc, &xa, xen_attach_print);
 		}
+		/* Setup a watch for every device subtree */
+		if (xs_watch(sc, "device", (char *)iovp1[i].iov_base,
+		    &xdl->dl_task, xen_hotplug, xdl))
+			printf("%s: failed to setup hotplug watch for \"%s\"\n",
+			    sc->sc_dev.dv_xname, (char *)iovp1[i].iov_base);
+		SLIST_INSERT_HEAD(&sc->sc_devlists, xdl, dl_entry);
 		xs_resfree(&xst, iovp2, iov2_cnt);
+		iovp2 = NULL;
+		iov2_cnt = 0;
 	}
 
-	return (0);
+ out:
+	rw_exit_write(&sc->sc_devlck);
+
+	if (iovp2)
+		xs_resfree(&xst, iovp2, iov2_cnt);
+	xs_resfree(&xst, iovp1, iov1_cnt);
+	return (error);
+}
+
+void
+xen_hotplug(void *arg)
+{
+	struct xen_devlist *xdl = arg;
+	struct xen_softc *sc = xdl->dl_xen;
+	struct xen_device *xdv, *xvdn;
+	struct xs_transaction xst;
+	struct iovec *iovp = NULL;
+	int error, i, keep, iov_cnt = 0;
+	char path[256];
+	int8_t *seen;
+
+	memset(&xst, 0, sizeof(xst));
+	xst.xst_id = 0;
+	xst.xst_cookie = sc->sc_xs;
+
+	rw_enter_write(&sc->sc_devlck);
+
+	snprintf(path, sizeof(path), "device/%s", xdl->dl_node);
+	if ((error = xs_cmd(&xst, XS_LIST, path, &iovp, &iov_cnt)) != 0)
+		return;
+
+	seen = malloc(iov_cnt, M_TEMP, M_ZERO | M_WAITOK);
+
+	/* Detect all removed and kept devices */
+	LIST_FOREACH_SAFE(xdv, &xdl->dl_devs, dv_entry, xvdn) {
+		for (i = 0, keep = 0; i < iov_cnt; i++) {
+			if (seen[i])
+				continue;
+			if (!strcmp(xdv->dv_unit, (char *)iovp[i].iov_base)) {
+				seen[i]++;
+				keep++;
+				break;
+			}
+		}
+		if (!keep) {
+			DPRINTF("%s: removing \"%s/%s\"\n", sc->sc_dev.dv_xname,
+			    xdl->dl_node, xdv->dv_unit);
+			LIST_REMOVE(xdv, dv_entry);
+			config_detach(xdv->dv_dev, 0);
+			free(xdv, M_DEVBUF, sizeof(struct xen_device));
+		}
+	}
+
+	/* Attach all new devices */
+	for (i = 0; i < iov_cnt; i++) {
+		if (seen[i])
+			continue;
+		DPRINTF("%s: attaching \"%s/%s\"\n", sc->sc_dev.dv_xname,
+			    xdl->dl_node, (const char *)iovp[i].iov_base);
+		error = xen_attach_device(sc, xdl, xdl->dl_node,
+		    (const char *)iovp[i].iov_base);
+		if (error) {
+			printf("%s: failed to attach \"%s/%s\"\n",
+			    sc->sc_dev.dv_xname, path,
+			    (const char *)iovp[i].iov_base);
+			continue;
+		}
+	}
+
+	rw_exit_write(&sc->sc_devlck);
+
+	free(seen, M_TEMP, iov_cnt);
+
+	xs_resfree(&xst, iovp, iov_cnt);
 }
 
 #include <machine/pio.h>
