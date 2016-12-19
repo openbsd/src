@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.44 2016/12/13 21:01:46 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.45 2016/12/19 21:08:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -191,6 +191,7 @@ struct xnf_softc {
 
 int	xnf_match(struct device *, void *, void *);
 void	xnf_attach(struct device *, struct device *, void *);
+int	xnf_detach(struct device *, int);
 int	xnf_lladdr(struct xnf_softc *);
 int	xnf_ioctl(struct ifnet *, u_long, caddr_t);
 int	xnf_media_change(struct ifnet *);
@@ -219,7 +220,7 @@ struct cfdriver xnf_cd = {
 };
 
 const struct cfattach xnf_ca = {
-	sizeof(struct xnf_softc), xnf_match, xnf_attach
+	sizeof(struct xnf_softc), xnf_match, xnf_attach, xnf_detach
 };
 
 int
@@ -313,6 +314,27 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Kick out emulated em's and re's */
 	xen_unplug_emulated(parent, XEN_UNPLUG_NIC);
+}
+
+int
+xnf_detach(struct device *self, int flags)
+{
+	struct xnf_softc *sc = (struct xnf_softc *)self;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	xnf_stop(sc);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	xen_intr_disestablish(sc->sc_xih);
+
+	if (sc->sc_tx_ring)
+		xnf_tx_ring_destroy(sc);
+	if (sc->sc_rx_ring)
+		xnf_rx_ring_destroy(sc);
+
+	return (0);
 }
 
 static int
