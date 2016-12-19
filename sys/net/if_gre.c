@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.81 2016/11/16 14:50:13 mpi Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.82 2016/12/19 15:50:18 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -662,10 +662,10 @@ gre_send_keepalive(void *arg)
 	bzero(&dst, sizeof(dst));
 	dst.sa_family = AF_INET;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	/* should we care about the error? */
 	gre_output(&sc->sc_if, m, &dst, NULL);
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
