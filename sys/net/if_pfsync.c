@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.238 2016/11/22 19:29:54 procter Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.239 2016/12/19 15:46:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1788,9 +1788,9 @@ pfsync_defer_tmo(void *arg)
 {
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	pfsync_undefer(arg, 0);
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -2206,8 +2206,7 @@ pfsync_bulk_update(void *arg)
 	int i = 0;
 	int s;
 
-	s = splsoftnet();
-
+	NET_LOCK(s);
 	st = sc->sc_bulk_next;
 
 	for (;;) {
@@ -2238,8 +2237,7 @@ pfsync_bulk_update(void *arg)
 			break;
 		}
 	}
-
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -2271,7 +2269,7 @@ pfsync_bulk_fail(void *arg)
 	struct pfsync_softc *sc = arg;
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	if (sc->sc_bulk_tries++ < PFSYNC_MAX_BULKTRIES) {
 		/* Try again */
@@ -2297,8 +2295,7 @@ pfsync_bulk_fail(void *arg)
 		sc->sc_link_demoted = 0;
 		DPFPRINTF(LOG_ERR, "failed to receive bulk update");
 	}
-
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -2347,9 +2344,9 @@ pfsync_timeout(void *arg)
 {
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	pfsync_sendout();
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 /* this is a softnet/netisr handler */
