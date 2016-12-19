@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.58 2016/12/16 12:24:43 rzalamena Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.59 2016/12/19 09:22:24 rzalamena Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -664,7 +664,7 @@ igmp_sendpkt(struct ifnet *ifp, struct in_multi *inm, int type,
 	 * router, so that the process-level routing daemon can hear it.
 	 */
 #ifdef MROUTING
-	imo.imo_loop = (ip_mrouter != NULL);
+	imo.imo_loop = (ip_mrouter[ifp->if_rdomain] != NULL);
 #else
 	imo.imo_loop = 0;
 #endif /* MROUTING */

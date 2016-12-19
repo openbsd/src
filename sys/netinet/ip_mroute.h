@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.20 2016/11/29 15:52:12 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.21 2016/12/19 09:22:24 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -309,7 +309,7 @@ int	ip_mrouter_get(struct socket *, int, struct mbuf **);
 int	mrt_ioctl(struct socket *, u_long, caddr_t);
 int	mrt_sysctl_vif(void *, size_t *);
 int	mrt_sysctl_mfc(void *, size_t *);
-int	ip_mrouter_done(void);
+int	ip_mrouter_done(struct socket *);
 void	ip_mrouter_detach(struct ifnet *);
 void	reset_vif(struct vif *);
 void	vif_delete(struct ifnet *);

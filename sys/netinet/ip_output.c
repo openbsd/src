@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.332 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.333 2016/12/19 09:22:24 rzalamena Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ reroute:
 			 * above, will be forwarded by the ip_input() routine,
 			 * if necessary.
 			 */
-			if (ipmforwarding && ip_mrouter &&
+			if (ipmforwarding && ip_mrouter[ifp->if_rdomain] &&
 			    (flags & IP_FORWARDING) == 0) {
 				KERNEL_LOCK();
 				rv = ip_mforward(m, ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.94 2016/12/13 09:22:18 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.95 2016/12/19 09:22:24 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -102,20 +102,20 @@
  * Globals.  All but ip_mrouter and ip_mrtproto could be static,
  * except for netstat or debugging purposes.
  */
-struct socket  *ip_mrouter  = NULL;
+struct socket	*ip_mrouter[RT_TABLEID_MAX];
 int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
 
 #define NO_RTE_FOUND	0x1
 #define RTE_FOUND	0x2
 
-u_int32_t _mfchash(struct in_addr, struct in_addr);
+u_int32_t _mfchash(unsigned int, struct in_addr, struct in_addr);
 
-#define	MFCHASH(a, g) _mfchash((a), (g))
-LIST_HEAD(mfchashhdr, mfc) *mfchashtbl;
-u_long	mfchash;
-SIPHASH_KEY mfchashkey;
+#define	MFCHASH(r, a, g) _mfchash((r), (a), (g))
+LIST_HEAD(mfchashhdr, mfc) *mfchashtbl[RT_TABLEID_MAX];
+u_long	mfchash[RT_TABLEID_MAX];
+SIPHASH_KEY mfchashkey[RT_TABLEID_MAX];
 
-u_char		nexpire[MFCTBLSIZ];
+u_char		nexpire[RT_TABLEID_MAX][MFCTBLSIZ];
 struct vif	viftable[MAXVIFS];
 struct mrtstat	mrtstat;
 
@@ -125,7 +125,7 @@ struct mrtstat	mrtstat;
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
 struct timeout	expire_upcalls_ch;
 
-int get_sg_cnt(struct sioc_sg_req *);
+int get_sg_cnt(unsigned int, struct sioc_sg_req *);
 int get_vif_cnt(struct sioc_vif_req *);
 int get_vif_ctl(struct vifctl *);
 int ip_mrouter_init(struct socket *, struct mbuf *);
@@ -135,9 +135,9 @@ int del_vif(struct mbuf *);
 void update_mfc_params(struct mfc *, struct mfcctl2 *);
 void init_mfc_params(struct mfc *, struct mfcctl2 *);
 void expire_mfc(struct mfc *);
-int add_mfc(struct mbuf *);
-int del_mfc(struct mbuf *);
-int set_api_config(struct mbuf *); /* chose API capabilities */
+int add_mfc(struct socket *, struct mbuf *);
+int del_mfc(struct socket *, struct mbuf *);
+int set_api_config(struct socket *, struct mbuf *); /* chose API capabilities */
 int get_api_support(struct mbuf *);
 int get_api_config(struct mbuf *);
 int socket_send(struct socket *, struct mbuf *,
@@ -235,13 +235,16 @@ static u_int32_t mrt_api_config = 0;
  * (mrtstat.mrts_mfc_lookups and mrtstat.mrts_mfc_misses)
  */
 static struct mfc *
-mfc_find(struct in_addr *o, struct in_addr *g)
+mfc_find(unsigned int rtableid, struct in_addr *o, struct in_addr *g)
 {
 	struct mfc *rt;
 	u_int32_t hash;
 
-	hash = MFCHASH(*o, *g);
-	LIST_FOREACH(rt, &mfchashtbl[hash], mfc_hash) {
+	if (mfchashtbl[rtableid] == NULL)
+		return (NULL);
+
+	hash = MFCHASH(rtableid, *o, *g);
+	LIST_FOREACH(rt, &mfchashtbl[rtableid][hash], mfc_hash) {
 		if (in_hosteq(rt->mfc_origin, *o) &&
 		    in_hosteq(rt->mfc_mcastgrp, *g) &&
 		    (rt->mfc_stall == NULL))
@@ -280,9 +283,11 @@ mfc_find(struct in_addr *o, struct in_addr *g)
 int
 ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
 {
+	struct inpcb *inp = sotoinpcb(so);
 	int error;
 
-	if (optname != MRT_INIT && so != ip_mrouter)
+	if (optname != MRT_INIT &&
+	    so != ip_mrouter[inp->inp_rtableid])
 		error = ENOPROTOOPT;
 	else
 		switch (optname) {
@@ -290,7 +295,7 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
 			error = ip_mrouter_init(so, *mp);
 			break;
 		case MRT_DONE:
-			error = ip_mrouter_done();
+			error = ip_mrouter_done(so);
 			break;
 		case MRT_ADD_VIF:
 			error = add_vif(so, *mp);
@@ -299,10 +304,10 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
 			error = del_vif(*mp);
 			break;
 		case MRT_ADD_MFC:
-			error = add_mfc(*mp);
+			error = add_mfc(so, *mp);
 			break;
 		case MRT_DEL_MFC:
-			error = del_mfc(*mp);
+			error = del_mfc(so, *mp);
 			break;
 #ifdef PIM
 		case MRT_ASSERT:
@@ -310,7 +315,7 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
 			break;
 #endif
 		case MRT_API_CONFIG:
-			error = set_api_config(*mp);
+			error = set_api_config(so, *mp);
 			break;
 		default:
 			error = ENOPROTOOPT;
@@ -327,9 +332,10 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
 int
 ip_mrouter_get(struct socket *so, int optname, struct mbuf **mp)
 {
+	struct inpcb *inp = sotoinpcb(so);
 	int error;
 
-	if (so != ip_mrouter)
+	if (so != ip_mrouter[inp->inp_rtableid])
 		error = ENOPROTOOPT;
 	else {
 		*mp = m_get(M_WAIT, MT_SOOPTS);
@@ -367,9 +373,10 @@ ip_mrouter_get(struct socket *so, int optname, struct mbuf **mp)
 int
 mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
 {
+	struct inpcb *inp = sotoinpcb(so);
 	int error;
 
-	if (so != ip_mrouter)
+	if (so != ip_mrouter[inp->inp_rtableid])
 		error = EINVAL;
 	else
 		switch (cmd) {
@@ -377,7 +384,8 @@ mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
 			error = get_vif_cnt((struct sioc_vif_req *)data);
 			break;
 		case SIOCGETSGCNT:
-			error = get_sg_cnt((struct sioc_sg_req *)data);
+			error = get_sg_cnt(inp->inp_rtableid,
+			    (struct sioc_sg_req *)data);
 			break;
 		default:
 			error = ENOTTY;
@@ -391,13 +399,13 @@ mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
  * returns the packet, byte, rpf-failure count for the source group provided
  */
 int
-get_sg_cnt(struct sioc_sg_req *req)
+get_sg_cnt(unsigned int rtableid, struct sioc_sg_req *req)
 {
 	int s;
 	struct mfc *rt;
 
 	s = splsoftnet();
-	rt = mfc_find(&req->src, &req->grp);
+	rt = mfc_find(rtableid, &req->src, &req->grp);
 	if (rt == NULL) {
 		splx(s);
 		req->pktcnt = req->bytecnt = req->wrong_if = 0xffffffff;
@@ -482,28 +490,35 @@ mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
 	caddr_t where = oldp;
 	size_t needed, given;
 	u_long i;
+	unsigned int rtableid;
 	struct mfc *m;
 	struct mfcinfo minfo;
 
 	given = *oldlenp;
 	needed = 0;
-	for (i = 0; mfchashtbl && i < MFCTBLSIZ; ++i) {
-		LIST_FOREACH(m, &mfchashtbl[i], mfc_hash) {
-			minfo.mfc_origin = m->mfc_origin;
-			minfo.mfc_mcastgrp = m->mfc_mcastgrp;
-			minfo.mfc_parent = m->mfc_parent;
-			minfo.mfc_pkt_cnt = m->mfc_pkt_cnt;
-			minfo.mfc_byte_cnt = m->mfc_byte_cnt;
-			memcpy(minfo.mfc_ttls, m->mfc_ttls, MAXVIFS);
+	for (rtableid = 0; rtableid < RT_TABLEID_MAX; rtableid++) {
+		if (mfchashtbl[rtableid] == NULL)
+			continue;
 
-			needed += sizeof(minfo);
-			if (where && needed <= given) { 
-				int error;
+		for (i = 0; i < MFCTBLSIZ; ++i) {
+			LIST_FOREACH(m, &mfchashtbl[rtableid][i], mfc_hash) {
+				minfo.mfc_origin = m->mfc_origin;
+				minfo.mfc_mcastgrp = m->mfc_mcastgrp;
+				minfo.mfc_parent = m->mfc_parent;
+				minfo.mfc_pkt_cnt = m->mfc_pkt_cnt;
+				minfo.mfc_byte_cnt = m->mfc_byte_cnt;
+				memcpy(minfo.mfc_ttls, m->mfc_ttls, MAXVIFS);
 
-				error = copyout(&minfo, where, sizeof(minfo));
-				if (error)
-					return (error);
-				where += sizeof(minfo);
+				needed += sizeof(minfo);
+				if (where && needed <= given) {
+					int error;
+
+					error = copyout(&minfo, where,
+					    sizeof(minfo));
+					if (error)
+						return (error);
+					where += sizeof(minfo);
+				}
 			}
 		}
 	}
@@ -523,6 +538,8 @@ mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
 int
 ip_mrouter_init(struct socket *so, struct mbuf *m)
 {
+	struct inpcb *inp = sotoinpcb(so);
+	unsigned int rtableid = inp->inp_rtableid;
 	int *v;
 
 	if (so->so_type != SOCK_RAW ||
@@ -536,14 +553,15 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	if (*v != 1)
 		return (EINVAL);
 
-	if (ip_mrouter != NULL)
+	if (ip_mrouter[rtableid] != NULL)
 		return (EADDRINUSE);
 
-	ip_mrouter = so;
+	ip_mrouter[rtableid] = so;
 
-	mfchashtbl = hashinit(MFCTBLSIZ, M_MRTABLE, M_WAITOK, &mfchash);
-	arc4random_buf(&mfchashkey, sizeof(mfchashkey));
-	memset(nexpire, 0, sizeof(nexpire));
+	mfchashtbl[rtableid] =
+	    hashinit(MFCTBLSIZ, M_MRTABLE, M_WAITOK, &mfchash[rtableid]);
+	arc4random_buf(&mfchashkey[rtableid], sizeof(mfchashkey[rtableid]));
+	memset(nexpire[rtableid], 0, sizeof(nexpire[rtableid]));
 
 #ifdef PIM
 	pim_assert = 0;
@@ -556,27 +574,29 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 }
 
 u_int32_t
-_mfchash(struct in_addr o, struct in_addr g)
+_mfchash(unsigned int rtableid, struct in_addr o, struct in_addr g)
 {
 	SIPHASH_CTX ctx;
 
-	SipHash24_Init(&ctx, &mfchashkey);
+	SipHash24_Init(&ctx, &mfchashkey[rtableid]);
 	SipHash24_Update(&ctx, &o.s_addr, sizeof(o.s_addr));
 	SipHash24_Update(&ctx, &g.s_addr, sizeof(g.s_addr));
 
-	return (SipHash24_End(&ctx) & mfchash);
+	return (SipHash24_End(&ctx) & mfchash[rtableid]);
 }
 
 /*
  * Disable multicast routing
  */
 int
-ip_mrouter_done(void)
+ip_mrouter_done(struct socket *so)
 {
+	struct inpcb *inp = sotoinpcb(so);
 	vifi_t vifi;
 	struct vif *vifp;
 	int i;
 	int s;
+	unsigned int rtableid = inp->inp_rtableid;
 
 	s = splsoftnet();
 
@@ -602,18 +622,18 @@ ip_mrouter_done(void)
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		struct mfc *rt, *nrt;
 
-		for (rt = LIST_FIRST(&mfchashtbl[i]); rt; rt = nrt) {
+		for (rt = LIST_FIRST(&mfchashtbl[rtableid][i]); rt; rt = nrt) {
 			nrt = LIST_NEXT(rt, mfc_hash);
 
 			expire_mfc(rt);
 		}
 	}
 
-	memset(nexpire, 0, sizeof(nexpire));
-	hashfree(mfchashtbl, MFCTBLSIZ, M_MRTABLE);
-	mfchashtbl = NULL;
+	memset(nexpire[rtableid], 0, sizeof(nexpire[rtableid]));
+	hashfree(mfchashtbl[rtableid], MFCTBLSIZ, M_MRTABLE);
+	mfchashtbl[rtableid] = NULL;
 
-	ip_mrouter = NULL;
+	ip_mrouter[rtableid] = NULL;
 
 	splx(s);
 
@@ -637,7 +657,7 @@ ip_mrouter_detach(struct ifnet *ifp)
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		if (nexpire[i] == 0)
 			continue;
-		LIST_FOREACH(rt, &mfchashtbl[i], mfc_hash) {
+		LIST_FOREACH(rt, &mfchashtbl[ifp->if_rdomain][i], mfc_hash) {
 			for (rte = rt->mfc_stall; rte; rte = rte->next) {
 				if (rte->ifp == ifp)
 					rte->ifp = NULL;
@@ -691,10 +711,12 @@ get_assert(struct mbuf *m)
  * Configure API capabilities
  */
 int
-set_api_config(struct mbuf *m)
+set_api_config(struct socket *so, struct mbuf *m)
 {
+	struct inpcb *inp = sotoinpcb(so);
 	int i;
 	u_int32_t *apival;
+	unsigned int rtableid = inp->inp_rtableid;
 
 	if (m == NULL || m->m_len < sizeof(u_int32_t))
 		return (EINVAL);
@@ -719,7 +741,10 @@ set_api_config(struct mbuf *m)
 	}
 #endif
 	for (i = 0; i < MFCTBLSIZ; i++) {
-		if (LIST_FIRST(&mfchashtbl[i]) != NULL) {
+		if (mfchashtbl[rtableid] == NULL)
+			break;
+
+		if (LIST_FIRST(&mfchashtbl[rtableid][i]) != NULL) {
 			*apival = 0;
 			return (EPERM);
 		}
@@ -937,6 +962,7 @@ vif_delete(struct ifnet *ifp)
 	struct vif *vifp;
 	struct mfc *rt;
 	struct rtdetq *rte;
+	unsigned int rtableid = ifp->if_rdomain;
 
 	for (i = 0; i < numvifs; i++) {
 		vifp = &viftable[i];
@@ -949,10 +975,14 @@ vif_delete(struct ifnet *ifp)
 			break;
 	numvifs = i;
 
+	if (ip_mrouter[rtableid] == NULL)
+		return;
+
 	for (i = 0; i < MFCTBLSIZ; i++) {
-		if (nexpire[i] == 0)
+		if (nexpire[rtableid][i] == 0)
 			continue;
-		LIST_FOREACH(rt, &mfchashtbl[i], mfc_hash) {
+
+		LIST_FOREACH(rt, &mfchashtbl[rtableid][i], mfc_hash) {
 			for (rte = rt->mfc_stall; rte; rte = rte->next) {
 				if (rte->ifp == ifp)
 					rte->ifp = NULL;
@@ -1019,8 +1049,9 @@ expire_mfc(struct mfc *rt)
  * Add an mfc entry
  */
 int
-add_mfc(struct mbuf *m)
+add_mfc(struct socket *so, struct mbuf *m)
 {
+	struct inpcb *inp = sotoinpcb(so);
 	struct mfcctl2 mfcctl2;
 	struct mfcctl2 *mfccp;
 	struct mfc *rt;
@@ -1029,6 +1060,7 @@ add_mfc(struct mbuf *m)
 	u_short nstl;
 	int s;
 	int mfcctl_size = sizeof(struct mfcctl);
+	unsigned int rtableid = inp->inp_rtableid;
 
 	if (mrt_api_config & MRT_API_FLAGS_ALL)
 		mfcctl_size = sizeof(struct mfcctl2);
@@ -1051,7 +1083,13 @@ add_mfc(struct mbuf *m)
 	mfccp = &mfcctl2;
 
 	s = splsoftnet();
-	rt = mfc_find(&mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
+	/* No hash table allocated for this. */
+	if (mfchashtbl[rtableid] == NULL) {
+		splx(s);
+		return (0);
+	}
+
+	rt = mfc_find(rtableid, &mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
 
 	/* If an entry already exists, just update the fields */
 	if (rt) {
@@ -1064,8 +1102,8 @@ add_mfc(struct mbuf *m)
 	 * Find the entry for which the upcall was made and update
 	 */
 	nstl = 0;
-	hash = MFCHASH(mfccp->mfcc_origin, mfccp->mfcc_mcastgrp);
-	LIST_FOREACH(rt, &mfchashtbl[hash], mfc_hash) {
+	hash = MFCHASH(rtableid, mfccp->mfcc_origin, mfccp->mfcc_mcastgrp);
+	LIST_FOREACH(rt, &mfchashtbl[rtableid][hash], mfc_hash) {
 		if (in_hosteq(rt->mfc_origin, mfccp->mfcc_origin) &&
 		    in_hosteq(rt->mfc_mcastgrp, mfccp->mfcc_mcastgrp) &&
 		    rt->mfc_stall != NULL) {
@@ -1083,7 +1121,7 @@ add_mfc(struct mbuf *m)
 			rt->mfc_stall = NULL;
 
 			rt->mfc_expire = 0; /* Don't clean this guy up */
-			nexpire[hash]--;
+			nexpire[rtableid][hash]--;
 
 			/* free packets Qed at the end of this entry */
 			for (; rte != NULL; rte = nrte) {
@@ -1104,12 +1142,12 @@ add_mfc(struct mbuf *m)
 		/*
 		 * No mfc; make a new one
 		 */
-		LIST_FOREACH(rt, &mfchashtbl[hash], mfc_hash) {
+		LIST_FOREACH(rt, &mfchashtbl[rtableid][hash], mfc_hash) {
 			if (in_hosteq(rt->mfc_origin, mfccp->mfcc_origin) &&
 			    in_hosteq(rt->mfc_mcastgrp, mfccp->mfcc_mcastgrp)) {
 				init_mfc_params(rt, mfccp);
 				if (rt->mfc_expire)
-					nexpire[hash]--;
+					nexpire[rtableid][hash]--;
 				rt->mfc_expire = 0;
 				break; /* XXX */
 			}
@@ -1126,7 +1164,7 @@ add_mfc(struct mbuf *m)
 			rt->mfc_stall	= NULL;
 
 			/* insert new entry at head of hash chain */
-			LIST_INSERT_HEAD(&mfchashtbl[hash], rt, mfc_hash);
+			LIST_INSERT_HEAD(&mfchashtbl[rtableid][hash], rt, mfc_hash);
 		}
 	}
 
@@ -1138,14 +1176,16 @@ add_mfc(struct mbuf *m)
  * Delete an mfc entry
  */
 int
-del_mfc(struct mbuf *m)
+del_mfc(struct socket *so, struct mbuf *m)
 {
+	struct inpcb *inp = sotoinpcb(so);
 	struct mfcctl2 mfcctl2;
 	struct mfcctl2 *mfccp;
 	struct mfc *rt;
 	int s;
 	int mfcctl_size = sizeof(struct mfcctl);
 	struct mfcctl *mp = mtod(m, struct mfcctl *);
+	unsigned int rtableid = inp->inp_rtableid;
 
 	/*
 	 * XXX: for deleting MFC entries the information in entries
@@ -1163,7 +1203,7 @@ del_mfc(struct mbuf *m)
 
 	s = splsoftnet();
 
-	rt = mfc_find(&mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
+	rt = mfc_find(rtableid, &mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
 	if (rt == NULL) {
 		splx(s);
 		return (EADDRNOTAVAIL);
@@ -1212,6 +1252,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	struct mbuf *mm;
 	int s;
 	vifi_t vifi;
+	unsigned int rtableid = ifp->if_rdomain;
 
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
 	    ((u_char *)(ip + 1))[1] != IPOPT_LSRR) {
@@ -1243,7 +1284,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	 */
 	s = splsoftnet();
 	++mrtstat.mrts_mfc_lookups;
-	rt = mfc_find(&ip->ip_src, &ip->ip_dst);
+	rt = mfc_find(rtableid, &ip->ip_src, &ip->ip_dst);
 
 	/* Entry exists, so forward if necessary */
 	if (rt != NULL) {
@@ -1282,8 +1323,8 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		}
 
 		/* is there an upcall waiting for this flow? */
-		hash = MFCHASH(ip->ip_src, ip->ip_dst);
-		LIST_FOREACH(rt, &mfchashtbl[hash], mfc_hash) {
+		hash = MFCHASH(rtableid, ip->ip_src, ip->ip_dst);
+		LIST_FOREACH(rt, &mfchashtbl[rtableid][hash], mfc_hash) {
 			if (in_hosteq(ip->ip_src, rt->mfc_origin) &&
 			    in_hosteq(ip->ip_dst, rt->mfc_mcastgrp) &&
 			    rt->mfc_stall != NULL)
@@ -1331,7 +1372,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			mrtstat.mrts_upcalls++;
 
 			sin.sin_addr = ip->ip_src;
-			if (socket_send(ip_mrouter, mm, &sin) < 0) {
+			if (socket_send(ip_mrouter[rtableid], mm, &sin) < 0) {
 				log(LOG_WARNING, "ip_mforward: ip_mrouter "
 				    "socket queue full\n");
 				++mrtstat.mrts_upq_sockfull;
@@ -1351,7 +1392,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			rt->mfc_byte_cnt = 0;
 			rt->mfc_wrong_if = 0;
 			rt->mfc_expire = UPCALL_EXPIRE;
-			nexpire[hash]++;
+			nexpire[rtableid][hash]++;
 			for (i = 0; i < numvifs; i++) {
 				rt->mfc_ttls[i] = 0;
 				rt->mfc_flags[i] = 0;
@@ -1362,7 +1403,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			rt->mfc_rp = zeroin_addr;
 
 			/* link into table */
-			LIST_INSERT_HEAD(&mfchashtbl[hash], rt, mfc_hash);
+			LIST_INSERT_HEAD(&mfchashtbl[rtableid][hash], rt, mfc_hash);
 			/* Add this entry to the end of the queue */
 			rt->mfc_stall = rte;
 		} else {
@@ -1406,24 +1447,31 @@ expire_upcalls(void *v)
 {
 	int i;
 	int s;
+	unsigned int rtableid;
 
 	s = splsoftnet();
 
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		struct mfc *rt, *nrt;
 
-		if (nexpire[i] == 0)
+		if (nexpire[rtableid][i] == 0)
 			continue;
 
-		for (rt = LIST_FIRST(&mfchashtbl[i]); rt; rt = nrt) {
-			nrt = LIST_NEXT(rt, mfc_hash);
-
-			if (rt->mfc_expire == 0 || --rt->mfc_expire > 0)
+		for (rtableid = 0; rtableid < RT_TABLEID_MAX; rtableid++) {
+			if (mfchashtbl[rtableid] == NULL)
 				continue;
-			nexpire[i]--;
 
-			++mrtstat.mrts_cache_cleanups;
-			expire_mfc(rt);
+			for (rt = LIST_FIRST(&mfchashtbl[rtableid][i]); rt;
+			     rt = nrt) {
+				nrt = LIST_NEXT(rt, mfc_hash);
+
+				if (rt->mfc_expire == 0 || --rt->mfc_expire > 0)
+					continue;
+				nexpire[rtableid][i]--;
+
+				++mrtstat.mrts_cache_cleanups;
+				expire_mfc(rt);
+			}
 		}
 	}
 
@@ -1505,7 +1553,8 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 				mrtstat.mrts_upcalls++;
 
 				sin.sin_addr = im->im_src;
-				if (socket_send(ip_mrouter, mm, &sin) < 0) {
+				if (socket_send(ip_mrouter[rtableid], mm,
+				    &sin) < 0) {
 					log(LOG_WARNING, "ip_mforward: "
 					    "ip_mrouter socket queue full\n");
 					++mrtstat.mrts_upq_sockfull;
@@ -1704,7 +1753,7 @@ pim_register_send_upcall(struct ip *ip, struct vif *vifp,
 
 	mrtstat.mrts_upcalls++;
 
-	if (socket_send(ip_mrouter, mb_first, &k_igmpsrc) < 0) {
+	if (socket_send(ip_mrouter[rtableid], mb_first, &k_igmpsrc) < 0) {
 		++mrtstat.mrts_upq_sockfull;
 		return (ENOBUFS);
 	}

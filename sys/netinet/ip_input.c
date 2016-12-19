@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.289 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.290 2016/12/19 09:22:24 rzalamena Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -376,7 +376,7 @@ ipv4_input(struct mbuf *m)
 		m->m_flags |= M_MCAST;
 
 #ifdef MROUTING
-		if (ipmforwarding && ip_mrouter) {
+		if (ipmforwarding && ip_mrouter[ifp->if_rdomain]) {
 			if (m->m_flags & M_EXT) {
 				if ((m = m_pullup(m, hlen)) == NULL) {
 					ipstat_inc(ips_toosmall);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.89 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.90 2016/12/19 09:22:24 rzalamena Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -455,8 +455,8 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		if (inp == NULL)
 			panic("rip_detach");
 #ifdef MROUTING
-		if (so == ip_mrouter)
-			ip_mrouter_done();
+		if (so == ip_mrouter[inp->inp_rtableid])
+			ip_mrouter_done(so);
 #endif
 		in_pcbdetach(inp);
 		break;
