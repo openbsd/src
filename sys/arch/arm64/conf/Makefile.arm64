@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.1 2016/12/17 23:38:33 patrick Exp $
+#	$OpenBSD: Makefile.arm64,v 1.2 2016/12/19 09:53:21 patrick Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -21,28 +21,27 @@ S!=	cd ../../../..; pwd
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
-INCLUDES=	-nostdinc -I$S -I. -I$S/arch
+INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
-#CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes \
-		-Wno-main -Wno-uninitialized -Wno-format -Wno-pointer-sign \
-		-Wno-conditional-uninitialized
-#		-Wstack-larger-than-2047
+CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
+		-Wno-main -Wno-uninitialized -Wno-pointer-sign \
+		-Wframe-larger-than=2047
 
 CMACHFLAGS=	-ffreestanding -mcpu=cortex-a57+nofp+nosimd \
 		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer \
 		-ffixed-x18
-#CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
-#		-fno-builtin-vsnprintf -fno-builtin-log \
-#		-fno-builtin-log2 -fno-builtin-malloc ${NOPIE_FLAGS}
+CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
+		-fno-builtin-vsnprintf -fno-builtin-log \
+		-fno-builtin-log2 -fno-builtin-malloc ${NOPIE_FLAGS}
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
 
+DEBUG?=		-g
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LINKFLAGS=	-T ldscript --warn-common -nopie
+LINKFLAGS=	-T ldscript -X --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -83,16 +82,14 @@ SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
 SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
-DEBUG?=
 .if ${DEBUG} == "-g"
-LINKFLAGS+=	-X
-STRIPFLAGS=	-g -x
+STRIPFLAGS=	-S
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
@@ -126,20 +123,13 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-clean::
-	rm -f eddep *bsd *bsd.gdb tags *.[dio] [a-z]*.s \
-	    [Ee]rrs linterrs assym.h ${DB_STRUCTINFO}
+clean:
+	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* ${DB_STRUCTINFO} param.c
 
-lint:
-	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${CFILES} ioconf.c param.c | \
-	    grep -v 'static function .* unused'
+cleandir: clean
+	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
 
-depend:
-	@touch $@
-
-tags:
-	@echo "see $S/kern/Makefile for tags"
+depend obj:
 
 db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
 	${CC} ${CFLAGS} ${CPPFLAGS} -MT $@ -gstabs -c $S/ddb/db_structinfo.c
@@ -156,8 +146,7 @@ MACHINE_NAME!=  uname -n
 install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
-	rm -f /obsd
-	ln /bsd /obsd
+	cmp -s bsd /bsd || ln -f /bsd /obsd
 	cp bsd /nbsd
 	mv /nbsd /bsd
 .endif
