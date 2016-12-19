@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.355 2016/12/18 17:15:07 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.356 2016/12/19 07:19:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1796,6 +1796,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 int
 session_process_msg(struct peer *p)
 {
+	struct mrt	*mrt;
 	ssize_t		rpos, av, left;
 	int		processed = 0;
 	u_int16_t	msglen;
@@ -1819,6 +1820,17 @@ session_process_msg(struct peer *p)
 		if (rpos + msglen > av)
 			break;
 		p->rbuf->rptr = p->rbuf->buf + rpos;
+
+		/* dump to MRT as soon as we have a full packet */
+		LIST_FOREACH(mrt, &mrthead, entry) {
+			if (!(mrt->type == MRT_ALL_IN || (msgtype == UPDATE &&
+			    mrt->type == MRT_UPDATE_IN)))
+				continue;
+			if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+			    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
+			    mrt->group_id == p->conf.groupid))
+				mrt_dump_bgp_msg(mrt, p->rbuf->rptr, msglen, p);
+		}
 
 		switch (msgtype) {
 		case OPEN:
@@ -1868,7 +1880,6 @@ session_process_msg(struct peer *p)
 int
 parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 {
-	struct mrt		*mrt;
 	u_char			*p;
 	u_int16_t		 olen;
 	static const u_int8_t	 marker[MSGSIZE_HEADER_MARKER] = { 0xff, 0xff,
@@ -1958,15 +1969,6 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		    type, 1);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 		return (-1);
-	}
-	LIST_FOREACH(mrt, &mrthead, entry) {
-		if (!(mrt->type == MRT_ALL_IN || (*type == UPDATE &&
-		    mrt->type == MRT_UPDATE_IN)))
-			continue;
-		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
-		    mrt->peer_id == peer->conf.id || (mrt->group_id != 0 &&
-		    mrt->group_id == peer->conf.groupid))
-			mrt_dump_bgp_msg(mrt, data, *len, peer);
 	}
 	return (0);
 }
