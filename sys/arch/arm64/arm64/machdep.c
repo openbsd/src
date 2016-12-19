@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: machdep.c,v 1.2 2016/12/19 07:44:54 jsg Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -499,7 +499,7 @@ cpu_dump(void)
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
-	caddr_t va;
+	// caddr_t va;
 	// int i;
 
 	dump = bdevsw[major(dumpdev)].d_dump;
@@ -544,8 +544,9 @@ cpu_dump(void)
 	} else {
 		va = (caddr_t)buf;
 	}
-#endif
 	return (dump(dumpdev, dumplo, va, dbtob(1)));
+#endif
+	return ENOSYS;
 }
 
 
@@ -771,7 +772,7 @@ initarm(struct arm64_bootparams *abp)
 	paddr_t memstart;
 	psize_t memsize;
 	void *config = abp->arg2;
-	void *fdt;
+	void *fdt = NULL;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 

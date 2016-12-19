@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.2 2016/12/19 07:28:58 patrick Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.3 2016/12/19 07:44:54 jsg Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -78,8 +78,10 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 	if (!have_addr) {
 		// Implement
+		frame = 0;
 	} else {
 		// Implement
+		frame = 0;
 	}
 	lastframe = 0;
 	//scp_offset = -get_pc_str_offset();
