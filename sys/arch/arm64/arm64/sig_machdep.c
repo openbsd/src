@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/*	$OpenBSD: sig_machdep.c,v 1.2 2016/12/19 01:25:53 jsg Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -127,7 +127,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	ksf.sf_signum = sig;
 	sip = NULL;
 
-	for (i=0; i <= 30; i++) {
+	for (i=0; i < 30; i++) {
 		ksf.sf_sc.sc_x[i] = tf->tf_x[i];
 	}
 	ksf.sf_sc.sc_sp = tf->tf_sp;
@@ -200,7 +200,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 
 	/* Restore register context. */
 	tf = process_frame(p);
-	for (i=0; i <= 30; i++) {
+	for (i=0; i < 30; i++) {
 		tf->tf_x[i] = ksc.sc_x[i];
 	}
 	tf->tf_sp = ksc.sc_sp;
