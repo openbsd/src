@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.95 2016/12/19 09:22:24 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.96 2016/12/19 12:52:41 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -638,32 +638,6 @@ ip_mrouter_done(struct socket *so)
 	splx(s);
 
 	return (0);
-}
-
-void
-ip_mrouter_detach(struct ifnet *ifp)
-{
-	int vifi, i;
-	struct vif *vifp;
-	struct mfc *rt;
-	struct rtdetq *rte;
-
-	/* XXX not sure about side effect to userland routing daemon */
-	for (vifi = 0; vifi < numvifs; vifi++) {
-		vifp = &viftable[vifi];
-		if (vifp->v_ifp == ifp)
-			reset_vif(vifp);
-	}
-	for (i = 0; i < MFCTBLSIZ; i++) {
-		if (nexpire[i] == 0)
-			continue;
-		LIST_FOREACH(rt, &mfchashtbl[ifp->if_rdomain][i], mfc_hash) {
-			for (rte = rt->mfc_stall; rte; rte = rte->next) {
-				if (rte->ifp == ifp)
-					rte->ifp = NULL;
-			}
-		}
-	}
 }
 
 int
