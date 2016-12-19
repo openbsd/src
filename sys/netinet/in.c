@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.131 2016/12/19 10:35:12 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.132 2016/12/19 11:30:26 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -210,7 +210,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	struct sockaddr_in oldaddr;
 	int error;
 	int newifaddr;
-	int s;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -310,18 +309,15 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCSIFDSTADDR:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
-		s = splsoftnet();
 		oldaddr = ia->ia_dstaddr;
 		ia->ia_dstaddr = *satosin(&ifr->ifr_dstaddr);
 		if (ifp->if_ioctl && (error = (*ifp->if_ioctl)
 					(ifp, SIOCSIFDSTADDR, (caddr_t)ia))) {
 			ia->ia_dstaddr = oldaddr;
-			splx(s);
 			return (error);
 		}
 		in_scrubhost(ia, &oldaddr);
 		in_addhost(ia, &ia->ia_dstaddr);
-		splx(s);
 		break;
 
 	case SIOCSIFBRDADDR:
