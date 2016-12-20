@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.140 2016/10/20 07:14:44 tb Exp $ */
+/* $OpenBSD: bioctl.c,v 1.141 2016/12/20 15:38:46 patrick Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -231,12 +231,11 @@ main(int argc, char *argv[])
 		if (devh == -1)
 			err(1, "Can't open %s", "/dev/bio");
 
+		memset(&bl, 0, sizeof(bl));
 		bl.bl_name = devicename;
 		if (ioctl(devh, BIOCLOCATE, &bl))
 			errx(1, "Can't locate %s device via %s",
 			    bl.bl_name, "/dev/bio");
-
-		bio_status(&bl.bl_bio.bio_status);
 
 		bio_cookie = bl.bl_bio.bio_cookie;
 		biodev = 1;
@@ -805,8 +804,6 @@ bio_blink(char *enclosure, int target, int blinktype)
 	bl.bl_name = enclosure;
 	if (ioctl(bioh, BIOCLOCATE, &bl))
 		errx(1, "Can't locate %s device via %s", enclosure, "/dev/bio");
- 
-	bio_status(&bl.bl_bio.bio_status);
 
 	memset(&blink, 0, sizeof(blink));
 	blink.bb_bio.bio_cookie = bio_cookie;
