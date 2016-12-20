@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.334 2016/12/13 01:36:21 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.335 2016/12/20 13:26:24 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1723,8 +1723,7 @@ setifwpa(const char *val, int d)
 
 	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
-	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
-		err(1, "SIOCG80211WPAPARMS");
+	/* Don't read current values. The kernel will set defaults. */
 	wpa.i_enabled = d;
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
@@ -1757,6 +1756,9 @@ setifwpaprotos(const char *val, int d)
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
 	wpa.i_protos = rval;
+	/* Let the kernel set up the appropriate default ciphers. */
+	wpa.i_ciphers = 0;
+	wpa.i_groupcipher = 0;
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
 }
