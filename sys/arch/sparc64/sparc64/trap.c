@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.95 2016/10/18 00:43:57 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.96 2016/12/20 13:47:38 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -904,6 +904,8 @@ data_access_error(struct trapframe64 *tf, unsigned type, vaddr_t afva,
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 
+	tstate = tf->tf_tstate;
+
 	/*
 	 * Catch PCI config space reads.
 	 */
@@ -913,7 +915,6 @@ data_access_error(struct trapframe64 *tf, unsigned type, vaddr_t afva,
 	}
 
 	pc = tf->tf_pc;
-	tstate = tf->tf_tstate;
 
 	sv.sival_ptr = (void *)pc;
 
@@ -1149,7 +1150,7 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
 	int i, nsys, nap;
 	int64_t *ap;
 	const struct sysent *callp;
-	struct proc *p;
+	struct proc *p = curproc;
 	int error, new;
 	register_t args[8];
 	register_t rval[2];
@@ -1158,7 +1159,6 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
 		sigexit(p, SIGILL);
 
 	uvmexp.syscalls++;
-	p = curproc;
 #ifdef DIAGNOSTIC
 	if (tf->tf_tstate & TSTATE_PRIV)
 		panic("syscall from kernel");
