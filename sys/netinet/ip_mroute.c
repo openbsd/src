@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.96 2016/12/19 12:52:41 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.97 2016/12/20 09:33:13 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -858,8 +858,6 @@ add_vif(struct socket *so, struct mbuf *m)
 	vifp->v_pkt_out = 0;
 	vifp->v_bytes_in = 0;
 	vifp->v_bytes_out = 0;
-
-	timeout_del(&vifp->v_repq_ch);
 
 	splx(s);
 
