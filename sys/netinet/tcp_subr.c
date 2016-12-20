@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.156 2016/09/24 14:51:37 naddy Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.157 2016/12/20 09:57:10 mpi Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -550,11 +550,8 @@ void
 tcp_reaper(void *arg)
 {
 	struct tcpcb *tp = arg;
-	int s;
 
-	s = splsoftnet();
 	pool_put(&tcpcb_pool, tp);
-	splx(s);
 	tcpstat.tcps_closed++;
 }
 
