@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sa.8,v 1.19 2013/07/16 11:13:34 schwarze Exp $
+.\"	$OpenBSD: sa.8,v 1.20 2016/12/20 21:47:30 zhuk Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: December 20 2016 $
 .Dt SA 8
 .Os
 .Sh NAME
@@ -205,6 +205,12 @@ flag is specified, only the
 and
 .Fl s
 flags are honored.
+.Pp
+Children which have not yet called
+.Xr execve 2
+will have
+.Sq *
+appended to their command names.
 .Sh FILES
 .Bl -tag -width /var/account/usracct -compact
 .It Pa /var/account/acct
