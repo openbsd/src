@@ -1,9 +1,15 @@
-# $OpenBSD: Makefile.inc,v 1.2 2016/09/18 22:26:03 kettenis Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2016/12/20 07:32:18 patrick Exp $
 
 LLVM_SRCS?=	${.CURDIR}/../../../llvm
 
+BOOTSTRAP_CLANG?=no
+.if ${BOOTSTRAP_CLANG} == "yes"
 CC=		egcc
 CXX=		eg++
+.else
+CC=		clang
+CXX=		clang++
+.endif
 
 DEBUG=
 NOPIE=
