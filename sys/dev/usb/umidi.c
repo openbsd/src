@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.41 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.42 2016/12/20 15:32:07 ratchov Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,8 +88,7 @@ static usbd_status open_out_jack(struct umidi_jack *, void *,
 				 void (*)(void *));
 static usbd_status open_in_jack(struct umidi_jack *, void *,
 				void (*)(void *, int));
-static void close_out_jack(struct umidi_jack *);
-static void close_in_jack(struct umidi_jack *);
+static void close_jack(struct umidi_jack *);
 
 static usbd_status attach_mididev(struct umidi_softc *,
 				  struct umidi_mididev *);
@@ -298,9 +297,9 @@ umidi_close(void *addr)
 
 	s = splusb();
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
-		close_out_jack(mididev->out_jack);
+		close_jack(mididev->out_jack);
 	if ((mididev->flags & FREAD) && mididev->in_jack)
-		close_in_jack(mididev->in_jack);
+		close_jack(mididev->in_jack);
 	mididev->opened = 0;
 	splx(s);
 }
@@ -820,9 +819,9 @@ static void
 unbind_jacks_from_mididev(struct umidi_mididev *mididev)
 {
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
-		close_out_jack(mididev->out_jack);
+		close_jack(mididev->out_jack);
 	if ((mididev->flags & FREAD) && mididev->in_jack)
-		close_in_jack(mididev->in_jack);
+		close_jack(mididev->in_jack);
 
 	if (mididev->out_jack)
 		mididev->out_jack->binded = 0;
@@ -898,20 +897,11 @@ open_in_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *, int))
 }
 
 static void
-close_out_jack(struct umidi_jack *jack)
+close_jack(struct umidi_jack *jack)
 {
 	if (jack->opened) {
 		jack->opened = 0;
 		jack->endpoint->num_open--;
-	}
-}
-
-static void
-close_in_jack(struct umidi_jack *jack)
-{
-	if (jack->opened) {
-		jack->opened = 0;
-		jack->endpoint->num_open--;	
 	}
 }
 
