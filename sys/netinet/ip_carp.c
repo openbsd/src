@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.297 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.298 2016/12/20 14:30:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -221,9 +221,11 @@ int	carp_prepare_ad(struct mbuf *, struct carp_vhost_entry *,
 	    struct carp_header *);
 void	carp_send_ad_all(void);
 void	carp_vhe_send_ad_all(struct carp_softc *);
-void	carp_send_ad(void *);
+void	carp_timer_ad(void *);
+void	carp_send_ad(struct carp_vhost_entry *);
 void	carp_send_arp(struct carp_softc *);
-void	carp_master_down(void *);
+void	carp_timer_down(void *);
+void	carp_master_down(struct carp_vhost_entry *);
 int	carp_ioctl(struct ifnet *, u_long, caddr_t);
 int	carp_vhids_ioctl(struct carp_softc *, struct carpreq *);
 int	carp_check_dup_vhids(struct carp_softc *, struct carp_if *,
@@ -831,9 +833,9 @@ carp_new_vhost(struct carp_softc *sc, int vhid, int advskew)
 	vhe->vhid = vhid;
 	vhe->advskew = advskew;
 	vhe->state = INIT;
-	timeout_set_proc(&vhe->ad_tmo, carp_send_ad, vhe);
-	timeout_set_proc(&vhe->md_tmo, carp_master_down, vhe);
-	timeout_set_proc(&vhe->md6_tmo, carp_master_down, vhe);
+	timeout_set_proc(&vhe->ad_tmo, carp_timer_ad, vhe);
+	timeout_set_proc(&vhe->md_tmo, carp_timer_down, vhe);
+	timeout_set_proc(&vhe->md6_tmo, carp_timer_down, vhe);
 
 	KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
 
@@ -1027,25 +1029,33 @@ carp_vhe_send_ad_all(struct carp_softc *sc)
 }
 
 void
-carp_send_ad(void *v)
+carp_timer_ad(void *v)
+{
+	int s;
+
+	NET_LOCK(s);
+	carp_send_ad(v);
+	NET_UNLOCK(s);
+}
+
+void
+carp_send_ad(struct carp_vhost_entry *vhe)
 {
 	struct carp_header ch;
 	struct timeval tv;
-	struct carp_vhost_entry *vhe = v;
 	struct carp_softc *sc = vhe->parent_sc;
 	struct carp_header *ch_ptr;
-
 	struct mbuf *m;
-	int error, len, advbase, advskew, s;
+	int error, len, advbase, advskew;
 	struct ifaddr *ifa;
 	struct sockaddr sa;
+
+	NET_ASSERT_LOCKED();
 
 	if (sc->sc_carpdev == NULL) {
 		sc->sc_if.if_oerrors++;
 		return;
 	}
-
-	NET_LOCK(s);
 
 	/* bow out if we've gone to backup (the carp interface is going down) */
 	if (sc->sc_bow_out) {
@@ -1246,7 +1256,6 @@ carp_send_ad(void *v)
 
 retry_later:
 	sc->cur_vhe = NULL;
-	NET_UNLOCK(s);
 	if (advbase != 255 || advskew != 255)
 		timeout_add(&vhe->ad_tmo, tvtohz(&tv));
 }
@@ -1261,7 +1270,6 @@ carp_send_arp(struct carp_softc *sc)
 {
 	struct ifaddr *ifa;
 	in_addr_t in;
-	int s = splsoftnet();
 
 	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
 
@@ -1272,7 +1280,6 @@ carp_send_arp(struct carp_softc *sc)
 		arprequest(&sc->sc_if, &in, &in, sc->sc_ac.ac_enaddr);
 		DELAY(1000);	/* XXX */
 	}
-	splx(s);
 }
 
 #ifdef INET6
@@ -1282,7 +1289,6 @@ carp_send_na(struct carp_softc *sc)
 	struct ifaddr *ifa;
 	struct in6_addr *in6;
 	static struct in6_addr mcast = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
-	int s = splsoftnet();
 
 	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
 
@@ -1295,7 +1301,6 @@ carp_send_na(struct carp_softc *sc)
 		    (ip6_forwarding ? ND_NA_FLAG_ROUTER : 0), 1, NULL);
 		DELAY(1000);	/* XXX */
 	}
-	splx(s);
 }
 #endif /* INET6 */
 
@@ -1504,10 +1509,21 @@ done:
 }
 
 void
-carp_master_down(void *v)
+carp_timer_down(void *v)
 {
-	struct carp_vhost_entry *vhe = v;
+	int s;
+
+	NET_LOCK(s);
+	carp_master_down(v);
+	NET_UNLOCK(s);
+}
+
+void
+carp_master_down(struct carp_vhost_entry *vhe)
+{
 	struct carp_softc *sc = vhe->parent_sc;
+
+	NET_ASSERT_LOCKED();
 
 	switch (vhe->state) {
 	case INIT:
