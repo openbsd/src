@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_prot.c,v 1.13 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: rpc_prot.c,v 1.14 2016/12/20 22:19:08 krw Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -263,6 +263,9 @@ _seterr_reply(struct rpc_msg *msg, struct rpc_err *error)
 	case RPC_PROGVERSMISMATCH:
 		error->re_vers.low = msg->acpted_rply.ar_vers.low;
 		error->re_vers.high = msg->acpted_rply.ar_vers.high;
+		break;
+
+	default:
 		break;
 	}
 }

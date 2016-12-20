@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.26 2016/12/20 21:10:29 krw Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.27 2016/12/20 22:19:08 krw Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 
 /*
@@ -98,6 +98,8 @@ emit(def)
 		break;
 	case DEF_TYPEDEF:
 		emit_typedef(def);
+		break;
+	default:
 		break;
 	}
 	print_trailer();
@@ -678,6 +680,9 @@ emit_inline(decl, flag)
 		    decl->name, decl->array_max);
 		emit_single_in_line(decl, flag, REL_VECTOR);
 		fprintf(fout, "\t\t\t\t}\n\t\t\t}\n");
+		break;
+	default:
+		break;
 
 	}
 }

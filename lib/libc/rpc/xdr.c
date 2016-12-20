@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.c,v 1.14 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: xdr.c,v 1.15 2016/12/20 22:19:08 krw Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -626,6 +626,8 @@ xdr_string(XDR *xdrs, char **cpp, u_int maxsize)
 		/* fall through... */
 	case XDR_ENCODE:
 		size = strlen(sp);
+		break;
+	default:
 		break;
 	}
 	if (! xdr_u_int(xdrs, &size)) {

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.19 2015/12/11 04:26:01 mmcc Exp $
+ *	$Id: amq.c,v 1.20 2016/12/20 22:19:08 krw Exp $
  */
 
 /*
@@ -131,6 +131,9 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid,
 		    mt->mt_mountinfo, mt->mt_mountpoint);
 		break;
 	    }
+
+	default:
+		break;
 	}
 }
 
@@ -191,6 +194,8 @@ show_mi(amq_mount_info_list *ml, enum show_opt e, int *mwid,
 		}
 		break;
 	    }
+	default:
+		break;
 	}
 }
 

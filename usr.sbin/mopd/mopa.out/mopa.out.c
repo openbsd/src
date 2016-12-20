@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopa.out.c,v 1.14 2014/12/13 14:44:59 miod Exp $ */
+/*	$OpenBSD: mopa.out.c,v 1.15 2016/12/20 22:19:08 krw Exp $ */
 
 /*
  * mopa.out - Convert a Unix format kernel into something that
@@ -225,6 +225,8 @@ main (int argc, char **argv)
 		fprintf(stderr, "copying %u+%u+%u->0x%x\n", dl.a_text,
 		    dl.a_data, dl.a_bss, dl.xferaddr);
 #endif
+		break;
+	default:
 		break;
 	}
 	

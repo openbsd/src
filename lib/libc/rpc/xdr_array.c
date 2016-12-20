@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_array.c,v 1.12 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: xdr_array.c,v 1.13 2016/12/20 22:19:08 krw Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -92,6 +92,8 @@ xdr_array(XDR *xdrs,
 			break;
 		case XDR_FREE:
 			return (TRUE);
+		default:
+			break;
 		}
 	}
 	

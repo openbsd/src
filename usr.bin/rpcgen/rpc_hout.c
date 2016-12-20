@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_hout.c,v 1.21 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc_hout.c,v 1.22 2016/12/20 22:19:08 krw Exp $	*/
 /*	$NetBSD: rpc_hout.c,v 1.4 1995/06/11 21:49:55 pk Exp $	*/
 
 /*
@@ -89,6 +89,8 @@ print_datadef(def)
 	case DEF_CONST:
 		pconstdef(def);
 		break;
+	default:
+		break;
 	}
 	if (def->def_kind != DEF_PROGRAM && def->def_kind != DEF_CONST) {
 		pxdrfuncdecl(def->def_name,
@@ -106,6 +108,8 @@ print_funcdef(def)
 	case DEF_PROGRAM:
 		fprintf(fout, "\n");
 		pprogramdef(def);
+		break;
+	default:
 		break;
 	}
 }
