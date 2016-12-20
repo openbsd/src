@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.15 2016/09/19 06:46:44 ratchov Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.16 2016/12/20 15:45:29 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -918,16 +918,8 @@ int
 auglx_activate(struct device *self, int act)
 {
 	struct auglx_softc *sc = (struct auglx_softc *)self;
-	int rv = 0;
 
-	switch (act) {
-	case DVACT_RESUME:
+	if (act == DVACT_RESUME)
 		ac97_resume(&sc->host_if, sc->codec_if);
-		rv = config_activate_children(self, act);
-		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
-	}
-	return (rv);
+	return (config_activate_children(self, act));
 }

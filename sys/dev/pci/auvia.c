@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.57 2016/09/19 06:46:44 ratchov Exp $ */
+/*	$OpenBSD: auvia.c,v 1.58 2016/12/20 15:45:29 ratchov Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -229,20 +229,11 @@ int
 auvia_activate(struct device *self, int act)
 {
 	struct auvia_softc *sc = (struct auvia_softc *)self;
-	int rv = 0;
 
-	switch (act) {
-	case DVACT_RESUME:
+	if (act == DVACT_RESUME)
 		auvia_resume(sc);
-		rv = config_activate_children(self, act);
-		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
-	}
-	return (rv);
+	return (config_activate_children(self, act));
 }
-
 
 void
 auvia_attach(struct device *parent, struct device *self, void *aux)
