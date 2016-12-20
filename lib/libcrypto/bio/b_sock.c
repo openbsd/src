@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.61 2014/12/03 22:14:38 bcook Exp $ */
+/* $OpenBSD: b_sock.c,v 1.62 2016/12/20 23:14:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,57 +120,20 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 		.ai_socktype = SOCK_STREAM,
 		.ai_flags = AI_PASSIVE,
 	};
-	long port;
-	char *ep;
+	int error;
 
 	if (str == NULL) {
 		BIOerr(BIO_F_BIO_GET_PORT, BIO_R_NO_PORT_SPECIFIED);
 		return (0);
 	}
 
-	errno = 0;
-	port = strtol(str, &ep, 10);
-	if (str[0] != '\0' && *ep == '\0') {
-		if (errno == ERANGE && (port == LONG_MAX || port == LONG_MIN)) {
-			BIOerr(BIO_F_BIO_GET_PORT, BIO_R_INVALID_PORT_NUMBER);
-			return (0);
-		}
-		if (port < 0 || port > 65535) {
-			BIOerr(BIO_F_BIO_GET_PORT, BIO_R_INVALID_PORT_NUMBER);
-			return (0);
-		}
-		goto done;
-	}
-
-	if (getaddrinfo(NULL, str, &hints, &res) == 0) {
-		port = ntohs(((struct sockaddr_in *)(res->ai_addr))->sin_port);
-		goto done;
-	}
-
-	if (strcmp(str, "http") == 0)
-		port = 80;
-	else if (strcmp(str, "telnet") == 0)
-		port = 23;
-	else if (strcmp(str, "socks") == 0)
-		port = 1080;
-	else if (strcmp(str, "https") == 0)
-		port = 443;
-	else if (strcmp(str, "ssl") == 0)
-		port = 443;
-	else if (strcmp(str, "ftp") == 0)
-		port = 21;
-	else if (strcmp(str, "gopher") == 0)
-		port = 70;
-	else {
-		SYSerr(SYS_F_GETSERVBYNAME, errno);
-		ERR_asprintf_error_data("service='%s'", str);
+	if ((error = getaddrinfo(NULL, str, &hints, &res)) != 0) {
+		ERR_asprintf_error_data("getaddrinfo: service='%s' : %s'", str,
+		    gai_strerror(error));
 		return (0);
 	}
-
-done:
-	if (res)
-		freeaddrinfo(res);
-	*port_ptr = (unsigned short)port;
+	*port_ptr = ntohs(((struct sockaddr_in *)(res->ai_addr))->sin_port);
+	freeaddrinfo(res);
 	return (1);
 }
 
