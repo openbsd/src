@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.158 2016/12/12 06:23:03 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.159 2016/12/20 15:59:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -219,7 +219,7 @@ audio_buf_rgetblk(struct audio_buf *buf, size_t *rsize)
 }
 
 /*
- * discard "count" bytes at the start postion.
+ * discard "count" bytes at the start position.
  */
 void
 audio_buf_rdiscard(struct audio_buf *buf, size_t count)
@@ -362,7 +362,7 @@ audio_pintr(void *addr)
 		return;
 	}
 	if (sc->quiesce) {
-		DPRINTF("%s: quesced, skipping play intr\n", DEVNAME(sc));
+		DPRINTF("%s: quiesced, skipping play intr\n", DEVNAME(sc));
 		return;
 	}
 
@@ -433,7 +433,7 @@ audio_rintr(void *addr)
 		return;
 	}
 	if (sc->quiesce) {
-		DPRINTF("%s: quesced, skipping rec intr\n", DEVNAME(sc));
+		DPRINTF("%s: quiesced, skipping rec intr\n", DEVNAME(sc));
 		return;
 	}
 
@@ -792,7 +792,7 @@ audio_setpar(struct audio_softc *sc)
 	    DEVNAME(sc), mult);
 
 	/*
-	 * get minumum and maximum frames per block
+	 * get minimum and maximum frames per block
 	 */
 	if (sc->ops->round_blocksize)
 		blk_max = sc->ops->round_blocksize(sc->arg, AUDIO_BUFSZ);
@@ -1103,7 +1103,7 @@ audio_activate(struct device *self, int act)
 		 */
 		if (sc->mode != 0 && sc->active)
 			audio_stop_do(sc);
-		DPRINTF("%s: quesce: active = %d\n", DEVNAME(sc), sc->active);
+		DPRINTF("%s: quiesce: active = %d\n", DEVNAME(sc), sc->active);
 		break;
 	case DVACT_WAKEUP:
 		DPRINTF("%s: wakeup: active = %d\n", DEVNAME(sc), sc->active);
@@ -1118,7 +1118,7 @@ audio_activate(struct device *self, int act)
 		sc->quiesce = 0;
 		wakeup(&sc->quiesce);
 
-		if(sc->mode != 0) {
+		if (sc->mode != 0) {
 			if (audio_setpar(sc) != 0)
 				break;
 			if (sc->mode & AUMODE_PLAY) {
@@ -1444,7 +1444,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 
 	/*
 	 * if IO_NDELAY flag is set then check if there is enough room
-	 * in the buffer to store at least one byte. If not then dont
+	 * in the buffer to store at least one byte. If not then don't
 	 * start the write process.
 	 */
 	mtx_enter(&audio_lock);
