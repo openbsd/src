@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.137 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.138 2016/12/20 14:10:00 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -451,16 +451,14 @@ int
 tcp_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf **mp)
 {
-	int error = 0, s;
+	int error = 0;
 	struct inpcb *inp;
 	struct tcpcb *tp;
 	struct mbuf *m;
 	int i;
 
-	s = splsoftnet();
 	inp = sotoinpcb(so);
 	if (inp == NULL) {
-		splx(s);
 		if (op == PRCO_SETOPT)
 			(void) m_free(*mp);
 		return (ECONNRESET);
@@ -479,7 +477,6 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			error = EAFNOSUPPORT;	/*?*/
 			break;
 		}
-		splx(s);
 		return (error);
 	}
 	tp = intotcpcb(inp);
@@ -606,7 +603,6 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 		}
 		break;
 	}
-	splx(s);
 	return (error);
 }
 
