@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.97 2016/12/20 09:33:13 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.98 2016/12/20 10:54:52 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ struct mrtstat	mrtstat;
 
 #define		EXPIRE_TIMEOUT	250		/* 4x / second */
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
-struct timeout	expire_upcalls_ch;
+struct timeout	expire_upcalls_ch[RT_TABLEID_MAX];
 
 int get_sg_cnt(unsigned int, struct sioc_sg_req *);
 int get_vif_cnt(struct sioc_vif_req *);
@@ -567,8 +567,9 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	pim_assert = 0;
 #endif
 
-	timeout_set(&expire_upcalls_ch, expire_upcalls, NULL);
-	timeout_add_msec(&expire_upcalls_ch, EXPIRE_TIMEOUT);
+	timeout_set(&expire_upcalls_ch[rtableid], expire_upcalls,
+	    &inp->inp_rtableid);
+	timeout_add_msec(&expire_upcalls_ch[rtableid], EXPIRE_TIMEOUT);
 
 	return (0);
 }
@@ -614,7 +615,7 @@ ip_mrouter_done(struct socket *so)
 	pim_assert = 0;
 #endif
 
-	timeout_del(&expire_upcalls_ch);
+	timeout_del(&expire_upcalls_ch[rtableid]);
 
 	/*
 	 * Free all multicast forwarding cache entries.
@@ -1419,7 +1420,7 @@ expire_upcalls(void *v)
 {
 	int i;
 	int s;
-	unsigned int rtableid;
+	unsigned int rtableid = *(unsigned int *)v;
 
 	s = splsoftnet();
 
@@ -1429,26 +1430,20 @@ expire_upcalls(void *v)
 		if (nexpire[rtableid][i] == 0)
 			continue;
 
-		for (rtableid = 0; rtableid < RT_TABLEID_MAX; rtableid++) {
-			if (mfchashtbl[rtableid] == NULL)
+		for (rt = LIST_FIRST(&mfchashtbl[rtableid][i]); rt; rt = nrt) {
+			nrt = LIST_NEXT(rt, mfc_hash);
+
+			if (rt->mfc_expire == 0 || --rt->mfc_expire > 0)
 				continue;
+			nexpire[rtableid][i]--;
 
-			for (rt = LIST_FIRST(&mfchashtbl[rtableid][i]); rt;
-			     rt = nrt) {
-				nrt = LIST_NEXT(rt, mfc_hash);
-
-				if (rt->mfc_expire == 0 || --rt->mfc_expire > 0)
-					continue;
-				nexpire[rtableid][i]--;
-
-				++mrtstat.mrts_cache_cleanups;
-				expire_mfc(rt);
-			}
+			++mrtstat.mrts_cache_cleanups;
+			expire_mfc(rt);
 		}
 	}
 
 	splx(s);
-	timeout_add_msec(&expire_upcalls_ch, EXPIRE_TIMEOUT);
+	timeout_add_msec(&expire_upcalls_ch[rtableid], EXPIRE_TIMEOUT);
 }
 
 /*
