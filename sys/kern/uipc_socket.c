@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.169 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.170 2016/12/20 21:15:36 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1555,10 +1555,10 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 
 	if (level != SOL_SOCKET) {
 		if (so->so_proto && so->so_proto->pr_ctloutput) {
-			s = splsoftnet();
+			NET_LOCK(s);
 			error = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
 			    level, optname, &m0);
-			splx(s);
+			NET_UNLOCK(s);
 			return (error);
 		}
 		error = ENOPROTOOPT;
@@ -1702,10 +1702,10 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				struct domain *dom = so->so_proto->pr_domain;
 
 				level = dom->dom_protosw->pr_protocol;
-				s = splsoftnet();
+				NET_LOCK(s);
 				error = (*so->so_proto->pr_ctloutput)
 				    (PRCO_SETOPT, so, level, optname, &m0);
-				splx(s);
+				NET_UNLOCK(s);
 				return (error);
 			}
 			error = ENOPROTOOPT;
@@ -1734,10 +1734,10 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 			break;
 		}
 		if (error == 0 && so->so_proto && so->so_proto->pr_ctloutput) {
-			s = splsoftnet();
+			NET_LOCK(s);
 			(*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
 			    level, optname, &m0);
-			splx(s);
+			NET_UNLOCK(s);
 			m = NULL;	/* freed by protocol */
 		}
 	}
@@ -1755,10 +1755,10 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 
 	if (level != SOL_SOCKET) {
 		if (so->so_proto && so->so_proto->pr_ctloutput) {
-			s = splsoftnet();
+			NET_LOCK(s);
 			error = (*so->so_proto->pr_ctloutput)(PRCO_GETOPT, so,
 			    level, optname, mp);
-			splx(s);
+			NET_UNLOCK(s);
 			return (error);
 		} else
 			return (ENOPROTOOPT);
@@ -1839,10 +1839,10 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 				struct domain *dom = so->so_proto->pr_domain;
 
 				level = dom->dom_protosw->pr_protocol;
-				s = splsoftnet();
+				NET_LOCK(s);
 				error = (*so->so_proto->pr_ctloutput)
 				    (PRCO_GETOPT, so, level, optname, mp);
-				splx(s);
+				NET_UNLOCK(s);
 				return (error);
 			}
 			return (ENOPROTOOPT);

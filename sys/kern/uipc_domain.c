@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.47 2016/12/20 18:33:43 bluhm Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.48 2016/12/20 21:15:36 mpi Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -99,8 +99,8 @@ domaininit(void)
 		max_linkhdr = 64;
 
 	max_hdr = max_linkhdr + max_protohdr;
-	timeout_set(&pffast_timeout, pffasttimo, &pffast_timeout);
-	timeout_set(&pfslow_timeout, pfslowtimo, &pfslow_timeout);
+	timeout_set_proc(&pffast_timeout, pffasttimo, &pffast_timeout);
+	timeout_set_proc(&pfslow_timeout, pfslowtimo, &pfslow_timeout);
 	timeout_add(&pffast_timeout, 1);
 	timeout_add(&pfslow_timeout, 1);
 }
@@ -246,13 +246,13 @@ pfslowtimo(void *arg)
 	struct protosw *pr;
 	int i, s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_slowtimo)
 				(*pr->pr_slowtimo)();
 	}
-	splx(s);
+	NET_UNLOCK(s);
 	timeout_add_msec(to, 500);
 }
 
@@ -264,12 +264,12 @@ pffasttimo(void *arg)
 	struct protosw *pr;
 	int i, s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_fasttimo)
 				(*pr->pr_fasttimo)();
 	}
-	splx(s);
+	NET_UNLOCK(s);
 	timeout_add_msec(to, 200);
 }
