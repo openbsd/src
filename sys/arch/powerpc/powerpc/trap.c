@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.105 2015/07/29 18:52:44 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.106 2016/12/20 12:08:01 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -593,6 +593,7 @@ for (i = 0; i < errnum; i++) {
 #endif
 
 	case EXC_VECAST|EXC_USER:
+		sv.sival_int = frame->srr0;
 		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, 0, FPE_FLTRES, sv);
 		KERNEL_UNLOCK();
