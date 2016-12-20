@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.276 2016/11/28 10:12:50 reyk Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.277 2016/12/20 13:28:51 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 28 2016 $
+.Dd $Mdocdate: December 20 2016 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1057,7 +1057,7 @@ and
 specifies that no pairwise ciphers are supported and that only group keys
 should be used.
 The default value is
-.Dq tkip,ccmp .
+.Dq ccmp .
 If multiple pairwise ciphers are specified, the pairwise cipher will
 be negotiated between the station and the access point at association
 time.
@@ -1080,12 +1080,14 @@ The supported values are
 and
 .Dq ccmp .
 The default value is
-.Dq tkip .
+.Dq ccmp .
 The use of
+.Ar tkip
+or
 .Ar wep40
 or
 .Ar wep104
-as the group cipher is discouraged due to weaknesses in WEP.
+as the group cipher is discouraged due to weaknesses in TKIP and WEP.
 The
 .Cm wpagroupcipher
 option is available in Host AP mode only.
@@ -1115,7 +1117,7 @@ is based on draft 3 of the IEEE 802.11i standard whereas
 .Ar wpa2
 is based on the ratified standard.
 The default value is
-.Dq wpa1,wpa2 .
+.Dq wpa2 .
 If
 .Dq wpa1,wpa2
 is specified, a station will always use the
