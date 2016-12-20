@@ -1,4 +1,4 @@
-/*	$OpenBSD: rv515.c,v 1.5 2015/04/06 03:49:47 jsg Exp $	*/
+/*	$OpenBSD: rv515.c,v 1.6 2016/12/20 21:07:02 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1142,14 +1142,10 @@ void rv515_bandwidth_avivo_update(struct radeon_device *rdev)
 		}
 		if (wm0.priority_mark.full > priority_mark02.full)
 			priority_mark02.full = wm0.priority_mark.full;
-		if (dfixed_trunc(priority_mark02) < 0)
-			priority_mark02.full = 0;
 		if (wm0.priority_mark_max.full > priority_mark02.full)
 			priority_mark02.full = wm0.priority_mark_max.full;
 		if (wm1.priority_mark.full > priority_mark12.full)
 			priority_mark12.full = wm1.priority_mark.full;
-		if (dfixed_trunc(priority_mark12) < 0)
-			priority_mark12.full = 0;
 		if (wm1.priority_mark_max.full > priority_mark12.full)
 			priority_mark12.full = wm1.priority_mark_max.full;
 		d1mode_priority_a_cnt = dfixed_trunc(priority_mark02);
@@ -1180,8 +1176,6 @@ void rv515_bandwidth_avivo_update(struct radeon_device *rdev)
 		}
 		if (wm0.priority_mark.full > priority_mark02.full)
 			priority_mark02.full = wm0.priority_mark.full;
-		if (dfixed_trunc(priority_mark02) < 0)
-			priority_mark02.full = 0;
 		if (wm0.priority_mark_max.full > priority_mark02.full)
 			priority_mark02.full = wm0.priority_mark_max.full;
 		d1mode_priority_a_cnt = dfixed_trunc(priority_mark02);
@@ -1209,8 +1203,6 @@ void rv515_bandwidth_avivo_update(struct radeon_device *rdev)
 		}
 		if (wm1.priority_mark.full > priority_mark12.full)
 			priority_mark12.full = wm1.priority_mark.full;
-		if (dfixed_trunc(priority_mark12) < 0)
-			priority_mark12.full = 0;
 		if (wm1.priority_mark_max.full > priority_mark12.full)
 			priority_mark12.full = wm1.priority_mark_max.full;
 		d2mode_priority_a_cnt = dfixed_trunc(priority_mark12);
