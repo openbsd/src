@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkuboot.c,v 1.6 2015/10/12 06:24:28 deraadt Exp $	*/
+/*	$OpenBSD: mkuboot.c,v 1.7 2016/12/20 11:27:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -43,6 +43,7 @@
 #define IH_ARCH_SPARC           10      /* Sparc        */
 #define IH_ARCH_SPARC64         11      /* Sparc 64 Bit */
 #define IH_ARCH_M68K            12      /* M68K         */
+#define IH_ARCH_ARM64           22      /* AARCH64      */
 
 #define IH_TYPE_STANDALONE	1 /* Standalone */
 #define IH_TYPE_KERNEL		2 /* OS Kernel Image */
@@ -94,6 +95,7 @@ struct arch_map {
 };
 
 static const struct arch_map archmap[] = {
+    { IH_ARCH_ARM64,	"aarch64" },
     { IH_ARCH_ALPHA,	"alpha" },
     { IH_ARCH_IA64,	"amd64" },
     { IH_ARCH_ARM,	"arm" },
