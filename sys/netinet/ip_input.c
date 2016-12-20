@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.290 2016/12/19 09:22:24 rzalamena Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.291 2016/12/20 18:33:43 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1557,11 +1557,13 @@ int
 ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen) 
 {
-	int s, error;
+	int error;
 #ifdef MROUTING
 	extern int ip_mrtproto;
 	extern struct mrtstat mrtstat;
 #endif
+
+	NET_ASSERT_LOCKED();
 
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPCTL_IFQUEUE)
@@ -1587,21 +1589,16 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			ip_mtudisc_timeout_q =
 			    rt_timer_queue_create(ip_mtudisc_timeout);
 		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
-			NET_LOCK(s);
 			rt_timer_queue_destroy(ip_mtudisc_timeout_q);
 			ip_mtudisc_timeout_q = NULL;
-			NET_UNLOCK(s);
 		}
 		return error;
 	case IPCTL_MTUDISCTIMEOUT:
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_mtudisc_timeout);
-		if (ip_mtudisc_timeout_q != NULL) {
-			NET_LOCK(s);
+		if (ip_mtudisc_timeout_q != NULL)
 			rt_timer_queue_change(ip_mtudisc_timeout_q,
 					      ip_mtudisc_timeout);
-			NET_UNLOCK(s);
-		}
 		return (error);
 	case IPCTL_IPSEC_ENC_ALGORITHM:
 	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,

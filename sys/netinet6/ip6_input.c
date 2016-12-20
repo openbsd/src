@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.171 2016/12/19 08:36:50 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.172 2016/12/20 18:33:43 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1369,7 +1369,9 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	extern int ip6_mrtproto;
 	extern struct mrt6stat mrt6stat;
 #endif
-	int error, s;
+	int error;
+
+	NET_ASSERT_LOCKED();
 
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPV6CTL_IFQUEUE)
@@ -1409,12 +1411,9 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IPV6CTL_MTUDISCTIMEOUT:
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip6_mtudisc_timeout);
-		if (icmp6_mtudisc_timeout_q != NULL) {
-			s = splsoftnet();
+		if (icmp6_mtudisc_timeout_q != NULL)
 			rt_timer_queue_change(icmp6_mtudisc_timeout_q,
 					      ip6_mtudisc_timeout);
-			splx(s);
-		}
 		return (error);
 	case IPV6CTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,

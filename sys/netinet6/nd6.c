@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.198 2016/12/19 08:36:50 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.199 2016/12/20 18:33:43 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1639,6 +1639,8 @@ nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	size_t ol;
 	int error;
 
+	NET_ASSERT_LOCKED();
+
 	error = 0;
 
 	if (newp)
@@ -1678,13 +1680,11 @@ nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 int
 fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 {
-	int error = 0, s;
+	int error = 0;
 	struct in6_defrouter *d = NULL, *de = NULL;
 	struct nd_defrouter *dr;
 	time_t expire;
 	size_t l;
-
-	s = splsoftnet();
 
 	if (oldp) {
 		d = (struct in6_defrouter *)oldp;
@@ -1721,21 +1721,17 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 	} else
 		*oldlenp = l;
 
-	splx(s);
-
 	return (error);
 }
 
 int
 fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 {
-	int error = 0, s;
+	int error = 0;
 	struct nd_prefix *pr;
 	char *p = NULL, *ps = NULL;
 	char *pe = NULL;
 	size_t l;
-
-	s = splsoftnet();
 
 	if (oldp) {
 		ps = p = (char *)oldp;
@@ -1816,8 +1812,6 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 			error = ENOMEM;
 	} else
 		*oldlenp = l;
-
-	splx(s);
 
 	return (error);
 }

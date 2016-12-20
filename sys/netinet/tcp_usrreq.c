@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.138 2016/12/20 14:10:00 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.139 2016/12/20 18:33:43 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -845,6 +845,8 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
 	int error, nval;
+
+	NET_ASSERT_LOCKED();
 
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)

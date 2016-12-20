@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.211 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.212 2016/12/20 18:33:43 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1563,11 +1563,13 @@ int
 sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
     size_t newlen)
 {
-	int			 i, s, error = EINVAL;
+	int			 i, error = EINVAL;
 	u_char  		 af;
 	struct walkarg		 w;
 	struct rt_tableinfo	 tableinfo;
 	u_int			 tableid = 0;
+
+	NET_ASSERT_LOCKED();
 
 	if (new)
 		return (EPERM);
@@ -1588,7 +1590,6 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	} else
 		tableid = curproc->p_p->ps_rtableid;
 
-	s = splsoftnet();
 	switch (w.w_op) {
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
@@ -1611,25 +1612,20 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	case NET_RT_STATS:
 		error = sysctl_rdstruct(where, given, new,
 		    &rtstat, sizeof(rtstat));
-		splx(s);
 		return (error);
 	case NET_RT_TABLE:
 		tableid = w.w_arg;
-		if (!rtable_exists(tableid)) {
-			splx(s);
+		if (!rtable_exists(tableid))
 			return (ENOENT);
-		}
 		tableinfo.rti_tableid = tableid;
 		tableinfo.rti_domainid = rtable_l2(tableid);
 		error = sysctl_rdstruct(where, given, new,
 		    &tableinfo, sizeof(tableinfo));
-		splx(s);
 		return (error);
 	case NET_RT_IFNAMES:
 		error = sysctl_ifnames(&w);
 		break;
 	}
-	splx(s);
 	free(w.w_tmem, M_RTABLE, 0);
 	w.w_needed += w.w_given;
 	if (where) {

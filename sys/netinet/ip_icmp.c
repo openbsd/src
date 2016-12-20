@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.158 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.159 2016/12/20 18:33:43 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -878,13 +878,14 @@ int
 icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int s, error;
+	int error;
+
+	NET_ASSERT_LOCKED();
 
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
-	NET_LOCK(s);
 	switch (name[0]) {
 	case ICMPCTL_REDIRTIMEOUT:
 
@@ -921,7 +922,6 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		error = ENOPROTOOPT;
 		break;
 	}
-	NET_UNLOCK(s);
 
 	return (error);
 }
