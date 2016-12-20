@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.466 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.467 2016/12/20 19:34:56 mikeb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -525,11 +525,11 @@ if_attach(struct ifnet *ifp)
 {
 	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	if_attach_common(ifp);
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -941,6 +941,7 @@ if_detach(struct ifnet *ifp)
 
 	ifq_clr_oactive(&ifp->if_snd);
 
+	NET_LOCK(s);
 	s = splnet();
 	/* Other CPUs must not have a reference before we start destroying. */
 	if_idxmap_remove(ifp);
@@ -1017,6 +1018,7 @@ if_detach(struct ifnet *ifp)
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 	splx(s);
+	NET_UNLOCK(s);
 
 	ifq_destroy(&ifp->if_snd);
 }
@@ -1070,7 +1072,10 @@ if_clone_create(const char *name, int rdomain)
 	if (ifunit(name) != NULL)
 		return (EEXIST);
 
+	/* XXXSMP breaks atomicity */
+	rw_exit_write(&netlock);
 	ret = (*ifc->ifc_create)(ifc, unit);
+	rw_enter_write(&netlock);
 
 	if (ret != 0 || (ifp = ifunit(name)) == NULL)
 		return (ret);
@@ -1090,6 +1095,7 @@ if_clone_destroy(const char *name)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
+	int ret;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -1111,7 +1117,12 @@ if_clone_destroy(const char *name)
 		splx(s);
 	}
 
-	return ((*ifc->ifc_destroy)(ifp));
+	/* XXXSMP breaks atomicity */
+	rw_exit_write(&netlock);
+	ret = (*ifc->ifc_destroy)(ifp);
+	rw_enter_write(&netlock);
+
+	return (ret);
 }
 
 /*
