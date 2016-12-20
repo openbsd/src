@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.67 2016/12/17 18:35:54 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.68 2016/12/20 13:27:58 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -60,11 +60,10 @@ ieee80211_crypto_attach(struct ifnet *ifp)
 
 	TAILQ_INIT(&ic->ic_pmksa);
 	if (ic->ic_caps & IEEE80211_C_RSN) {
-		ic->ic_rsnprotos = IEEE80211_PROTO_WPA | IEEE80211_PROTO_RSN;
+		ic->ic_rsnprotos = IEEE80211_PROTO_RSN;
 		ic->ic_rsnakms = IEEE80211_AKM_PSK;
-		ic->ic_rsnciphers = IEEE80211_CIPHER_TKIP |
-		    IEEE80211_CIPHER_CCMP;
-		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
+		ic->ic_rsnciphers = IEEE80211_CIPHER_CCMP;
+		ic->ic_rsngroupcipher = IEEE80211_CIPHER_CCMP;
 		ic->ic_rsngroupmgmtcipher = IEEE80211_CIPHER_BIP;
 	}
 	ic->ic_set_key = ieee80211_set_key;

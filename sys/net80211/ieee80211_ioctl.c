@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.45 2016/12/18 10:37:42 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.46 2016/12/20 13:27:58 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -264,8 +264,8 @@ ieee80211_ioctl_setwpaparms(struct ieee80211com *ic,
 		ic->ic_rsnprotos |= IEEE80211_PROTO_WPA;
 	if (wpa->i_protos & IEEE80211_WPA_PROTO_WPA2)
 		ic->ic_rsnprotos |= IEEE80211_PROTO_RSN;
-	if (ic->ic_rsnprotos == 0)	/* set to default (WPA+RSN) */
-		ic->ic_rsnprotos = IEEE80211_PROTO_WPA | IEEE80211_PROTO_RSN;
+	if (ic->ic_rsnprotos == 0)	/* set to default (RSN) */
+		ic->ic_rsnprotos = IEEE80211_PROTO_RSN;
 
 	ic->ic_rsnakms = 0;
 	if (wpa->i_akms & IEEE80211_WPA_AKM_PSK)
@@ -301,9 +301,8 @@ ieee80211_ioctl_setwpaparms(struct ieee80211com *ic,
 		ic->ic_rsnciphers |= IEEE80211_CIPHER_CCMP;
 	if (wpa->i_ciphers & IEEE80211_WPA_CIPHER_USEGROUP)
 		ic->ic_rsnciphers = IEEE80211_CIPHER_USEGROUP;
-	if (ic->ic_rsnciphers == 0)	/* set to default (TKIP+CCMP) */
-		ic->ic_rsnciphers = IEEE80211_CIPHER_TKIP |
-		    IEEE80211_CIPHER_CCMP;
+	if (ic->ic_rsnciphers == 0)	/* set to default (CCMP) */
+		ic->ic_rsnciphers = IEEE80211_CIPHER_CCMP;
 
 	ic->ic_flags |= IEEE80211_F_RSNON;
 
