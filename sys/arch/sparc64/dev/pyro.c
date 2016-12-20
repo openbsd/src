@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.29 2016/08/23 03:28:01 guenther Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.30 2016/12/20 13:40:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -622,10 +622,7 @@ pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		if (ih == NULL)
 			return (NULL);
 
-		if (ih->ih_name)
-			evcount_attach(&ih->ih_count, ih->ih_name, NULL);
-		else
-			evcount_attach(&ih->ih_count, "unknown", NULL);
+		evcount_attach(&ih->ih_count, ih->ih_name, NULL);
 
 		ih->ih_ack = pyro_msi_ack;
 

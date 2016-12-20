@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.20 2016/05/19 09:18:42 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.21 2016/12/20 13:40:50 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -519,10 +519,7 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		pcitag_t tag = ihandle & ~PCI_INTR_MSI;
 		int msinum = pbm->vp_msinum++;
 
-		if (ih->ih_name)
-			evcount_attach(&ih->ih_count, ih->ih_name, NULL);
-		else
-			evcount_attach(&ih->ih_count, "unknown", NULL);
+		evcount_attach(&ih->ih_count, ih->ih_name, NULL);
 
 		ih->ih_ack = vpci_msi_ack;
 

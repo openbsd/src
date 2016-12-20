@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.15 2015/09/27 11:29:20 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.16 2016/12/20 13:40:50 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -181,10 +181,7 @@ cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
 		ih->ih_mpsafe = 1;
 
-	if (ih->ih_name)
-		evcount_attach(&ih->ih_count, ih->ih_name, NULL);
-	else
-		evcount_attach(&ih->ih_count, "unknown", NULL);
+	evcount_attach(&ih->ih_count, ih->ih_name, NULL);
 
 	ih->ih_ack = cbus_intr_ack;
 	ih->ih_cpu = cpus;
