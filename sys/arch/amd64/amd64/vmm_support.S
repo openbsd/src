@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.4 2016/05/16 01:51:23 deraadt Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.5 2016/12/20 07:05:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -46,11 +46,11 @@ _C_LABEL(vmm_dispatch_intr):
 	movq	%rsp, %r11	/* r11 = temporary register */
 	andq    $0xFFFFFFFFFFFFFFF0, %rsp
 	movw	%ss, %ax
-	pushq   %ax
+	pushq   %rax
 	pushq	%r11
 	pushfq
 	movw	%cs, %ax
-	pushq   %ax
+	pushq   %rax
 	cli
 	callq	*%rdi
 	ret
