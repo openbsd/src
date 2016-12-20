@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.62 2016/10/04 13:54:32 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.63 2016/12/20 15:07:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -267,7 +267,10 @@ pflow_clone_destroy(struct ifnet *ifp)
 	pflow_flush(sc);
 	m_freem(sc->send_nam);
 	if (sc->so != NULL) {
+		/* XXXSMP breaks atomicity */
+		rw_exit_write(&netlock);
 		error = soclose(sc->so);
+		rw_enter_write(&netlock);
 		sc->so = NULL;
 	}
 	if (sc->sc_flowdst != NULL)
@@ -375,6 +378,8 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 		}
 
+		/* XXXSMP breaks atomicity */
+		rw_exit_write(&netlock);
 		s = splnet();
 		pflow_flush(sc);
 
@@ -398,6 +403,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    sizeof(struct sockaddr_in),
 					    M_DEVBUF,  M_NOWAIT)) == NULL) {
 						splx(s);
+						rw_enter_write(&netlock);
 						return (ENOMEM);
 					}
 					memcpy(sc->sc_flowdst, &pflowr.flowdst,
@@ -410,6 +416,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    sizeof(struct sockaddr_in6),
 					    M_DEVBUF, M_NOWAIT)) == NULL) {
 						splx(s);
+						rw_enter_write(&netlock);
 						return (ENOMEM);
 					}
 					memcpy(sc->sc_flowdst, &pflowr.flowdst,
@@ -449,6 +456,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    sizeof(struct sockaddr_in),
 					    M_DEVBUF, M_NOWAIT)) == NULL) {
 						splx(s);
+						rw_enter_write(&netlock);
 						return (ENOMEM);
 					}
 					memcpy(sc->sc_flowsrc, &pflowr.flowsrc,
@@ -461,6 +469,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    sizeof(struct sockaddr_in6),
 					    M_DEVBUF, M_NOWAIT)) == NULL) {
 						splx(s);
+						rw_enter_write(&netlock);
 						return (ENOMEM);
 					}
 					memcpy(sc->sc_flowsrc, &pflowr.flowsrc,
@@ -484,6 +493,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				    &so, SOCK_DGRAM, 0);
 				if (error) {
 					splx(s);
+					rw_enter_write(&netlock);
 					return (error);
 				}
 				if (pflowvalidsockaddr(sc->sc_flowsrc, 1)) {
@@ -498,6 +508,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					if (error) {
 						soclose(so);
 						splx(s);
+						rw_enter_write(&netlock);
 						return (error);
 					}
 				}
@@ -530,6 +541,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 
+		rw_enter_write(&netlock);
 		break;
 
 	default:
