@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.21 2016/03/08 10:48:39 mestre Exp $	*/
+/*	$OpenBSD: io.c,v 1.22 2016/12/21 18:28:19 krw Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -376,7 +376,7 @@ rtrav(void)				/* read travel table		*/
 			entries = 0;
 			oldloc = locc;
 		}
-		for (s = buf; ; *s++)	/* get the newloc number /ASCII */
+		for (s = buf; ; s++)	/* get the newloc number /ASCII */
 			if ((*s = next()) == TAB || *s == LF)
 				break;
 		*s = 0;
