@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.111 2016/11/28 13:59:51 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.112 2016/12/21 12:30:19 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ struct dadq {
 struct dadq *nd6_dad_find(struct ifaddr *);
 void nd6_dad_starttimer(struct dadq *, int);
 void nd6_dad_stoptimer(struct dadq *);
-void nd6_dad_timer(struct ifaddr *);
+void nd6_dad_timer(void *);
 void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
 void nd6_dad_ns_input(struct ifaddr *);
 void nd6_dad_duplicated(struct dadq *);
@@ -1080,8 +1080,7 @@ void
 nd6_dad_starttimer(struct dadq *dp, int ticks)
 {
 
-	timeout_set(&dp->dad_timer_ch, (void (*)(void *))nd6_dad_timer,
-	    (void *)dp->dad_ifa);
+	timeout_set(&dp->dad_timer_ch, nd6_dad_timer, dp->dad_ifa);
 	timeout_add(&dp->dad_timer_ch, ticks);
 }
 
@@ -1183,39 +1182,38 @@ nd6_dad_stop(struct ifaddr *ifa)
 }
 
 void
-nd6_dad_timer(struct ifaddr *ifa)
+nd6_dad_timer(void *xifa)
 {
-	int s;
+	struct ifaddr *ifa = xifa;
 	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
+	int s;
 
 	s = splsoftnet();		/* XXX */
 
 	/* Sanity check */
 	if (ia6 == NULL) {
-		log(LOG_ERR, "nd6_dad_timer: called with null parameter\n");
+		log(LOG_ERR, "%s: called with null parameter\n", __func__);
 		goto done;
 	}
 	dp = nd6_dad_find(ifa);
 	if (dp == NULL) {
-		log(LOG_ERR, "nd6_dad_timer: DAD structure not found\n");
+		log(LOG_ERR, "%s: DAD structure not found\n", __func__);
 		goto done;
 	}
 	if (ia6->ia6_flags & IN6_IFF_DUPLICATED) {
-		log(LOG_ERR, "nd6_dad_timer: called with duplicated address "
-			"%s(%s)\n",
-			inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
-			    addr, sizeof(addr)),
-			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
+		log(LOG_ERR, "%s: called with duplicated address %s(%s)\n",
+		    __func__, inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
+			addr, sizeof(addr)),
+		    ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		goto done;
 	}
 	if ((ia6->ia6_flags & IN6_IFF_TENTATIVE) == 0) {
-		log(LOG_ERR, "nd6_dad_timer: called with non-tentative address "
-			"%s(%s)\n",
-			inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
-			    addr, sizeof(addr)),
-			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
+		log(LOG_ERR, "%s: called with non-tentative address %s(%s)\n",
+		    __func__, inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
+			addr, sizeof(addr)),
+		    ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		goto done;
 	}
 
