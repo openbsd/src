@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.157 2016/12/21 16:44:31 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.158 2016/12/21 18:13:07 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1996,7 +1996,7 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 {
 	DH *dh_srvr = NULL, *dh_clnt = NULL;
 	unsigned char *key = NULL;
-	int key_size, key_len;
+	int key_size = 0, key_len;
 	unsigned char *data;
 	int ret = -1;
 	CBB dh_Yc;
@@ -2065,7 +2065,7 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 	unsigned char *key = NULL;
 	unsigned char *data;
 	size_t encoded_len;
-	int key_size, key_len;
+	int key_size = 0, key_len;
 	int ret = -1;
 	CBB ecpoint;
 
