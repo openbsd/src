@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.99 2016/12/21 09:52:29 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.100 2016/12/21 12:05:01 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1456,7 +1456,6 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	vifi_t vifi;
 	struct vif *vifp;
 	int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
-	unsigned int rtableid = ifp->if_rdomain;
 
 	/*
 	 * Don't forward if it didn't arrive from the parent vif for its origin.
@@ -1503,6 +1502,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			TV_DELTA(rt->mfc_last_assert, now, delta);
 
 			if (delta > ASSERT_MSG_TIME) {
+				unsigned int rtableid = ifp->if_rdomain;
 				struct igmpmsg *im;
 				int hlen = ip->ip_hl << 2;
 				struct mbuf *mm = m_copym(m, 0, hlen, M_NOWAIT);
