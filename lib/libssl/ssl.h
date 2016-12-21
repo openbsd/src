@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.100 2016/11/04 17:58:19 guenther Exp $ */
+/* $OpenBSD: ssl.h,v 1.101 2016/12/21 16:51:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -397,6 +397,8 @@ struct ssl_cipher_st {
 /* Used to hold functions for SSLv3/TLSv1 functions */
 struct ssl_method_st {
 	int version;
+	uint16_t min_version;
+	uint16_t max_version;
 	int (*ssl_new)(SSL *s);
 	void (*ssl_clear)(SSL *s);
 	void (*ssl_free)(SSL *s);
@@ -687,6 +689,9 @@ struct lhash_st_SSL_SESSION {
 
 struct ssl_ctx_st {
 	const SSL_METHOD *method;
+
+	uint16_t min_version;
+	uint16_t max_version;
 
 	STACK_OF(SSL_CIPHER) *cipher_list;
 	/* same as above but sorted for lookup */
@@ -998,6 +1003,10 @@ struct ssl_st {
 	 * (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION, DTLS1_VERSION)
 	 */
 	int version;
+
+	uint16_t min_version;
+	uint16_t max_version;
+
 	int type; /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
 
 	const SSL_METHOD *method; /* SSLv3 */
