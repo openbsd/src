@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.48 2016/07/05 10:17:14 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.49 2016/12/21 12:12:13 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -117,8 +117,6 @@ mld6_init(void)
 void
 mld6_start_listening(struct in6_multi *in6m)
 {
-	int s = splsoftnet();
-
 	/*
 	 * RFC2710 page 10:
 	 * The node never sends a Report or Done for the link-scope all-nodes
@@ -139,14 +137,11 @@ mld6_start_listening(struct in6_multi *in6m)
 		in6m->in6m_state = MLD_IREPORTEDLAST;
 		mld_timers_are_running = 1;
 	}
-	splx(s);
 }
 
 void
 mld6_stop_listening(struct in6_multi *in6m)
 {
-	int s = splsoftnet();
-
 	mld_all_nodes_linklocal.s6_addr16[1] = htons(in6m->in6m_ifidx);/* XXX */
 	mld_all_routers_linklocal.s6_addr16[1] =
 	    htons(in6m->in6m_ifidx); /* XXX: necessary when mrouting */
@@ -156,7 +151,6 @@ mld6_stop_listening(struct in6_multi *in6m)
 	    __IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) > __IPV6_ADDR_SCOPE_INTFACELOCAL)
 		mld6_sendpkt(in6m, MLD_LISTENER_DONE,
 		    &mld_all_routers_linklocal);
-	splx(s);
 }
 
 void
@@ -331,7 +325,6 @@ void
 mld6_fasttimeo(void)
 {
 	struct ifnet *ifp;
-	int s;
 
 	/*
 	 * Quick check to see if any work needs to be done, in order
@@ -340,11 +333,9 @@ mld6_fasttimeo(void)
 	if (!mld_timers_are_running)
 		return;
 
-	s = splsoftnet();
 	mld_timers_are_running = 0;
 	TAILQ_FOREACH(ifp, &ifnet, if_list)
 		mld6_checktimer(ifp);
-	splx(s);
 }
 
 void
