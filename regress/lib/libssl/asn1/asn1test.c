@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.3 2014/12/07 20:00:13 bcook Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.4 2016/12/21 15:13:29 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -165,6 +165,28 @@ struct ssl_asn1_test ssl_asn1_tests[] = {
 		},
 		348,
 	},
+	{
+		{
+			.cipher_id = 0x03000000L | 1,
+			.ssl_version = TLS1_2_VERSION,
+			.timeout = -1,
+		},
+		{
+			0x0,
+		},
+		-1,
+	},
+	{
+		{
+			.cipher_id = 0x03000000L | 1,
+			.ssl_version = TLS1_2_VERSION,
+			.time = -1,
+		},
+		{
+			0x0,
+		},
+		-1,
+	},
 };
 
 #define N_SSL_ASN1_TESTS \
@@ -295,6 +317,10 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 		goto failed;
 	}
 
+	/* See if the test is expected to fail... */
+	if (sat->asn1_len == -1)
+		return (0);
+		
 	if ((asn1 = malloc(len)) == NULL)
 		errx(1, "failed to allocate memory");
 
