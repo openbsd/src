@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.18 2015/02/10 05:25:45 jsing Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.19 2016/12/21 18:13:59 beck Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -182,98 +182,54 @@ OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
 int
 OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
 {
-	char *p, *buf;
-	char *host, *port;
+	char *host, *path, *port, *tmp;
 
-	*phost = NULL;
-	*pport = NULL;
-	*ppath = NULL;
+	*phost = *pport = *ppath = NULL;
+	*pssl = 0;
 
-	/* dup the buffer since we are going to mess with it */
-	buf = url ? strdup(url) : NULL;
-	if (!buf)
-		goto mem_err;
-
-	/* Check for initial colon */
-	p = strchr(buf, ':');
-	if (!p)
-		goto parse_err;
-
-	*(p++) = '\0';
-
-	if (!strcmp(buf, "http")) {
-		*pssl = 0;
-		port = "80";
-	} else if (!strcmp(buf, "https")) {
+	if (strncmp(url, "https://", 8) == 0) {
 		*pssl = 1;
-		port = "443";
-	} else
-		goto parse_err;
-
-	/* Check for double slash */
-	if ((p[0] != '/') || (p[1] != '/'))
-		goto parse_err;
-
-	p += 2;
-
-	host = p;
-
-	/* Check for trailing part of path */
-	p = strchr(p, '/');
-	if (!p)
-		*ppath = strdup("/");
+		host = strdup(url + 8);
+	} else if (strncmp(url, "http://", 7) == 0)
+		host = strdup(url + 7);
 	else {
-		*ppath = strdup(p);
-		/* Set start of path to 0 so hostname is valid */
-		*p = '\0';
+		OCSPerr(OCSP_F_OCSP_PARSE_URL, OCSP_R_ERROR_PARSING_URL);
+		return 0;
+	}
+	if (host == NULL) {
+		OCSPerr(OCSP_F_OCSP_PARSE_URL, ERR_R_MALLOC_FAILURE);
+		return 0;
 	}
 
-	if (!*ppath)
-		goto mem_err;
+	if ((tmp = strchr(host, '/')) != NULL) {
+		path = strdup(tmp);
+		*tmp = '\0';
+	} else
+		path = strdup("/");
 
-	/* Look for optional ':' for port number */
-	if ((p = strchr(host, ':'))) {
-		*p = 0;
-		port = p + 1;
+	if ((tmp = strchr(host, ':')) != NULL ) {
+		port = strdup(tmp + 1);
+		*tmp = '\0';
 	} else {
-		/* Not found: set default port */
 		if (*pssl)
-			port = "443";
+			port = strdup("443");
 		else
-			port = "80";
+			port = strdup("80");
 	}
 
-	*pport = strdup(port);
-	if (!*pport)
-		goto mem_err;
+	if (path == NULL || port == NULL) {
+		free(host);
+		free(path);
+		free(port);
+		OCSPerr(OCSP_F_OCSP_PARSE_URL, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
 
-	*phost = strdup(host);
-
-	if (!*phost)
-		goto mem_err;
-
-	free(buf);
-
+	*phost = host;
+	*ppath = path;
+	*pport = port;
 	return 1;
-
-mem_err:
-	OCSPerr(OCSP_F_OCSP_PARSE_URL, ERR_R_MALLOC_FAILURE);
-	goto err;
-
-parse_err:
-	OCSPerr(OCSP_F_OCSP_PARSE_URL, OCSP_R_ERROR_PARSING_URL);
-
-err:
-	free(buf);
-	free(*ppath);
-	free(*pport);
-	free(*phost);
-	*phost = NULL;
-	*pport = NULL;
-	*ppath = NULL;
-	return 0;
 }
-
 
 OCSP_CERTID *
 OCSP_CERTID_dup(OCSP_CERTID *x)
