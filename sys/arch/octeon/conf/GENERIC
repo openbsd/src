@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2016/12/08 16:24:51 visa Exp $
+#	$OpenBSD: GENERIC,v 1.30 2016/12/21 13:59:57 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -50,6 +50,9 @@ pci*		at pcibus?
 
 ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
+
+octmmc*		at fdt?		# MMC host controller
+sdmmc*		at octmmc?	# SD/MMC bus
 
 cn30xxgmx*	at iobus? irq 48
 cnmac*		at cn30xxgmx?

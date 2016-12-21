@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_octeon.c,v 1.10 2016/01/05 05:27:54 visa Exp $	*/
+/*	$OpenBSD: cache_octeon.c,v 1.11 2016/12/21 13:59:57 visa Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -191,5 +191,46 @@ Octeon_IOSyncDCache(struct cpu_info *ci, vaddr_t va, size_t len, int how)
 	case CACHE_SYNC_X: /* writeback and invalidate */
 		mips_sync();
 		break;
+	}
+}
+
+void
+Octeon_lock_secondary_cache(struct cpu_info *ci, paddr_t _pa, size_t _sz)
+{
+	size_t linesize = ci->ci_l2.linesize;
+	size_t sz;
+	paddr_t pa;
+	vaddr_t end, va;
+
+	pa = _pa & ~(linesize - 1);
+	sz = ((_pa + _sz + linesize - 1) & ~(linesize - 1)) - pa;
+
+	va = PHYS_TO_XKPHYS(pa, 0ul);
+	end = va + sz;
+	while (va < end) {
+		asm volatile ("cache 31, (%0)" : : "r" (va));
+		va += linesize;
+	}
+
+	/* Wait for the lock operations to finish. */
+	mips_sync();
+}
+
+void
+Octeon_unlock_secondary_cache(struct cpu_info *ci, paddr_t _pa, size_t _sz)
+{
+	size_t linesize = ci->ci_l2.linesize;
+	size_t sz;
+	paddr_t pa;
+	vaddr_t end, va;
+
+	pa = _pa & ~(linesize - 1);
+	sz = ((_pa + _sz + linesize - 1) & ~(linesize - 1)) - pa;
+
+	va = PHYS_TO_XKPHYS(pa, 0ul);
+	end = va + sz;
+	while (va < end) {
+		asm volatile ("cache 23, (%0)" : : "r" (va));
+		va += linesize;
 	}
 }

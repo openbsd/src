@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.8 2016/01/05 05:27:54 visa Exp $	*/
+/*	$OpenBSD: cache.h,v 1.9 2016/12/21 13:59:57 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -55,6 +55,9 @@ void	chip##_IOSyncDCache(struct cpu_info *, vaddr_t, size_t, int);
  * Cavium Octeon.
  */
 CACHE_PROTOS(Octeon)
+
+void	Octeon_lock_secondary_cache(struct cpu_info *, paddr_t, size_t);
+void	Octeon_unlock_secondary_cache(struct cpu_info *, paddr_t, size_t);
 
 /*
  * STC Loongson 2E and 2F.

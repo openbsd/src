@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.27 2016/12/08 16:24:51 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.28 2016/12/21 13:59:57 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -50,6 +50,9 @@ pcibus*		at iobus0
 pci*		at pcibus?
 ppb*		at pci?
 pci*		at ppb?
+
+octmmc*		at fdt?		# MMC host controller
+sdmmc*		at octmmc?	# SD/MMC bus
 
 cn30xxgmx*	at iobus? irq 48
 cnmac*		at cn30xxgmx?
