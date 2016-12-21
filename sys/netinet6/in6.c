@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.195 2016/11/28 14:14:39 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.196 2016/12/21 12:11:12 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -190,7 +190,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	struct	in6_ifaddr *ia6 = NULL;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct sockaddr_in6 *sa6;
-	int s;
 
 	if (ifp == NULL)
 		return (EOPNOTSUPP);
@@ -423,14 +422,10 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		 * and link it to the list. try to enable inet6 if there
 		 * is no link-local yet.
 		 */
-		s = splsoftnet();
 		error = in6_ifattach(ifp);
-		if (error != 0) {
-			splx(s);
+		if (error != 0)
 			return (error);
-		}
 		error = in6_update_ifa(ifp, ifra, ia6);
-		splx(s);
 		if (error != 0)
 			return (error);
 
@@ -458,24 +453,19 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			break;	/* No need to install a connected route. */
 		}
 
-		s = splsoftnet();
 		error = rt_ifa_add(&ia6->ia_ifa, RTF_CLONING | RTF_CONNECTED,
 		    ia6->ia_ifa.ifa_addr);
 		if (error) {
 			in6_purgeaddr(&ia6->ia_ifa);
-			splx(s);
 			return (error);
 		}
 		dohooks(ifp->if_addrhooks, 0);
-		splx(s);
 		break;
 	}
 
 	case SIOCDIFADDR_IN6:
-		s = splsoftnet();
 		in6_purgeaddr(&ia6->ia_ifa);
 		dohooks(ifp->if_addrhooks, 0);
-		splx(s);
 		break;
 
 	default:
@@ -1231,7 +1221,8 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 {
 	struct	in6_ifreq ifr;
 	struct	in6_multi *in6m;
-	int	s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	*errorp = 0;
 	/*
@@ -1277,10 +1268,8 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 			return (NULL);
 		}
 
-		s = splsoftnet();
 		TAILQ_INSERT_HEAD(&ifp->if_maddrlist, &in6m->in6m_ifma,
 		    ifma_list);
-		splx(s);
 
 		/*
 		 * Let MLD6 know that we have joined a new IP6 multicast
@@ -1300,7 +1289,8 @@ in6_delmulti(struct in6_multi *in6m)
 {
 	struct	in6_ifreq ifr;
 	struct	ifnet *ifp;
-	int	s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (--in6m->in6m_refcnt == 0) {
 		/*
@@ -1321,10 +1311,8 @@ in6_delmulti(struct in6_multi *in6m)
 			ifr.ifr_addr.sin6_addr = in6m->in6m_addr;
 			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
 
-			s = splsoftnet();
 			TAILQ_REMOVE(&ifp->if_maddrlist, &in6m->in6m_ifma,
 			    ifma_list);
-			splx(s);
 		}
 		if_put(ifp);
 
