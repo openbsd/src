@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.97 2016/12/21 10:28:48 jca Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.98 2016/12/21 10:30:11 jca Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -315,10 +315,17 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 					if (kif->ifindex == iface->ifindex &&
 					    iface->type !=
 					    IF_TYPE_VIRTUALLINK) {
+						int prev_link_state =
+						    (iface->flags & IFF_UP) &&
+						    LINK_STATE_IS_UP(iface->linkstate);
+
 						iface->flags = kif->flags;
 						iface->linkstate =
 						    kif->link_state;
 						iface->mtu = kif->mtu;
+
+						if (link_ok == prev_link_state)
+							break;
 
 						if (link_ok) {
 							if_fsm(iface,
