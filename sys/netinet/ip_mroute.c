@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.98 2016/12/20 10:54:52 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.99 2016/12/21 09:52:29 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -149,11 +149,11 @@ void send_packet(struct vif *, struct mbuf *);
 
 #ifdef PIM
 int pim_register_send(struct ip *, struct vif *,
-		struct mbuf *, struct mfc *);
+    struct mbuf *, struct mfc *, unsigned int);
 int pim_register_send_rp(struct ip *, struct vif *,
-		struct mbuf *, struct mfc *);
+    struct mbuf *, struct mfc *, unsigned int);
 int pim_register_send_upcall(struct ip *, struct vif *,
-		struct mbuf *, struct mfc *);
+    struct mbuf *, struct mfc *, unsigned int);
 struct mbuf *pim_register_prepare(struct ip *, struct mbuf *);
 int set_assert(struct mbuf *);
 int get_assert(struct mbuf *);
@@ -1456,6 +1456,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	vifi_t vifi;
 	struct vif *vifp;
 	int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
+	unsigned int rtableid = ifp->if_rdomain;
 
 	/*
 	 * Don't forward if it didn't arrive from the parent vif for its origin.
@@ -1557,7 +1558,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			vifp->v_bytes_out += plen;
 #ifdef PIM
 			if (vifp->v_flags & VIFF_REGISTER)
-				pim_register_send(ip, vifp, m, rt);
+				pim_register_send(ip, vifp, m, rt, rtableid);
 			else
 #endif
 			phyint_send(ip, vifp, m);
@@ -1610,7 +1611,7 @@ send_packet(struct vif *vifp, struct mbuf *m)
  */
 int
 pim_register_send(struct ip *ip, struct vif *vifp,
-	struct mbuf *m, struct mfc *rt)
+    struct mbuf *m, struct mfc *rt, unsigned int rtableid)
 {
 	struct mbuf *mb_copy, *mm;
 
@@ -1630,9 +1631,11 @@ pim_register_send(struct ip *ip, struct vif *vifp,
 			ip = mtod(mm, struct ip *);
 			if ((mrt_api_config & MRT_MFC_RP) &&
 			    !in_nullhost(rt->mfc_rp)) {
-				pim_register_send_rp(ip, vifp, mm, rt);
+				pim_register_send_rp(ip, vifp, mm, rt,
+				    rtableid);
 			} else {
-				pim_register_send_upcall(ip, vifp, mm, rt);
+				pim_register_send_upcall(ip, vifp, mm, rt,
+				    rtableid);
 			}
 		}
 	}
@@ -1690,7 +1693,7 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
  */
 int
 pim_register_send_upcall(struct ip *ip, struct vif *vifp,
-	struct mbuf *mb_copy, struct mfc *rt)
+    struct mbuf *mb_copy, struct mfc *rt, unsigned int rtableid)
 {
 	struct mbuf *mb_first;
 	int len = ntohs(ip->ip_len);
@@ -1737,7 +1740,7 @@ pim_register_send_upcall(struct ip *ip, struct vif *vifp,
  */
 int
 pim_register_send_rp(struct ip *ip, struct vif *vifp,
-	struct mbuf *mb_copy, struct mfc *rt)
+    struct mbuf *mb_copy, struct mfc *rt, unsigned int rtableid)
 {
 	struct mbuf *mb_first;
 	struct ip *ip_outer;
