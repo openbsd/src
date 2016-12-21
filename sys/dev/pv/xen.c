@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.69 2016/12/19 21:07:10 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.70 2016/12/21 12:17:15 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1309,10 +1309,6 @@ xen_probe_devices(struct xen_softc *sc)
 	xst.xst_cookie = sc->sc_xs;
 	xst.xst_flags |= XST_POLL;
 
-	rw_init(&sc->sc_devlck, "xenprobe");
-
-	rw_enter_write(&sc->sc_devlck);
-
 	if ((error = xs_cmd(&xst, XS_LIST, "device", &iovp1, &iov1_cnt)) != 0)
 		return (error);
 
@@ -1355,8 +1351,6 @@ xen_probe_devices(struct xen_softc *sc)
 	}
 
  out:
-	rw_exit_write(&sc->sc_devlck);
-
 	if (iovp2)
 		xs_resfree(&xst, iovp2, iov2_cnt);
 	xs_resfree(&xst, iovp1, iov1_cnt);
@@ -1378,8 +1372,6 @@ xen_hotplug(void *arg)
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
 	xst.xst_cookie = sc->sc_xs;
-
-	rw_enter_write(&sc->sc_devlck);
 
 	snprintf(path, sizeof(path), "device/%s", xdl->dl_node);
 	if ((error = xs_cmd(&xst, XS_LIST, path, &iovp, &iov_cnt)) != 0)
@@ -1422,8 +1414,6 @@ xen_hotplug(void *arg)
 			continue;
 		}
 	}
-
-	rw_exit_write(&sc->sc_devlck);
 
 	free(seen, M_TEMP, iov_cnt);
 
