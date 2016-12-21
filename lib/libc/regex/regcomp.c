@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.29 2016/09/21 04:38:56 guenther Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.30 2016/12/21 15:13:50 krw Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -124,7 +124,7 @@ static char nuls[10];		/* place to point scanner in event of error */
 #define	NEXTn(n)	(p->next += (n))
 #define	GETNEXT()	(*p->next++)
 #define	SETERROR(e)	seterr(p, (e))
-#define	REQUIRE(co, e)	((co) || SETERROR(e))
+#define	REQUIRE(co, e)	(void) ((co) || SETERROR(e))
 #define	MUSTSEE(c, e)	(REQUIRE(MORE() && PEEK() == (c), e))
 #define	MUSTEAT(c, e)	(REQUIRE(MORE() && GETNEXT() == (c), e))
 #define	MUSTNOTSEE(c, e)	(REQUIRE(!MORE() || PEEK() != (c), e))
