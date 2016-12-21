@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.63 2016/12/20 15:07:32 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.64 2016/12/21 12:28:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -267,10 +267,7 @@ pflow_clone_destroy(struct ifnet *ifp)
 	pflow_flush(sc);
 	m_freem(sc->send_nam);
 	if (sc->so != NULL) {
-		/* XXXSMP breaks atomicity */
-		rw_exit_write(&netlock);
 		error = soclose(sc->so);
-		rw_enter_write(&netlock);
 		sc->so = NULL;
 	}
 	if (sc->sc_flowdst != NULL)
