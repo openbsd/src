@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.467 2016/12/20 19:34:56 mikeb Exp $	*/
+/*	$OpenBSD: if.c,v 1.468 2016/12/21 10:22:14 jca Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1908,6 +1908,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if (ifp->if_ioctl == NULL)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
+		if (!error)
+			rt_ifmsg(ifp);
 		break;
 
 	case SIOCSIFPHYADDR:
