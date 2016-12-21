@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.95 2016/12/18 13:52:53 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.96 2016/12/21 16:44:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -241,7 +241,8 @@ static int nid_list[] = {
 	NID_secp521r1,		/* secp521r1 (25) */
 	NID_brainpoolP256r1,	/* brainpoolP256r1 (26) */
 	NID_brainpoolP384r1,	/* brainpoolP384r1 (27) */
-	NID_brainpoolP512r1	/* brainpoolP512r1 (28) */
+	NID_brainpoolP512r1,	/* brainpoolP512r1 (28) */
+	NID_X25519,		/* X25519 (29) */
 };
 
 static const uint8_t ecformats_default[] = {
@@ -251,6 +252,7 @@ static const uint8_t ecformats_default[] = {
 };
 
 static const uint16_t eccurves_default[] = {
+	29,			/* X25519 (29) */
 	14,			/* sect571r1 (14) */
 	13,			/* sect571k1 (13) */
 	25,			/* secp521r1 (25) */
@@ -352,6 +354,8 @@ tls1_ec_nid2curve_id(int nid)
 		return 27;
 	case NID_brainpoolP512r1: /* brainpoolP512r1 (28) */
 		return 28;
+	case NID_X25519:		/* X25519 (29) */
+		return 29;
 	default:
 		return 0;
 	}

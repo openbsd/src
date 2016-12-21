@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.156 2016/12/18 13:52:53 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.157 2016/12/21 16:44:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,6 +156,7 @@
 
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
+#include <openssl/curve25519.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -1184,19 +1185,99 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 }
 
 static int
-ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
+ssl3_get_server_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, int nid, CBS *public)
 {
-	CBS cbs, ecpoint;
-	uint8_t curve_type;
-	uint16_t curve_id;
-	EC_POINT *srvr_ecpoint = NULL;
-	EC_KEY *ecdh = NULL;
-	BN_CTX *bn_ctx = NULL;
 	const EC_GROUP *group;
 	EC_GROUP *ngroup = NULL;
+	EC_POINT *point = NULL;
+	BN_CTX *bn_ctx = NULL;
+	EC_KEY *ecdh = NULL;
+	int ret = -1;
+
+	/*
+	 * Extract the server's ephemeral ECDH public key.
+	 */
+
+	if ((ecdh = EC_KEY_new()) == NULL) {
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	if ((ngroup = EC_GROUP_new_by_curve_name(nid)) == NULL) {
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EC_LIB);
+		goto err;
+	}
+	if (EC_KEY_set_group(ecdh, ngroup) == 0) {
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EC_LIB);
+		goto err;
+	}
+
+	group = EC_KEY_get0_group(ecdh);
+
+	if ((point = EC_POINT_new(group)) == NULL ||
+	    (bn_ctx = BN_CTX_new()) == NULL) {
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	if (EC_POINT_oct2point(group, point, CBS_data(public),
+	    CBS_len(public), bn_ctx) == 0) {
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_ECPOINT);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		goto err;
+	}
+
+	EC_KEY_set_public_key(ecdh, point);
+	sc->peer_ecdh_tmp = ecdh;
+	ecdh = NULL;
+
+	ret = 1;
+
+ err:
+	BN_CTX_free(bn_ctx);
+	EC_GROUP_free(ngroup);
+	EC_POINT_free(point);
+	EC_KEY_free(ecdh);
+
+	return (ret);
+}
+
+static int
+ssl3_get_server_kex_ecdhe_ecx(SSL *s, SESS_CERT *sc, int nid, CBS *public)
+{
+	size_t outlen;
+
+	if (nid != NID_X25519) {
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
+	if (CBS_len(public) != X25519_KEY_LENGTH) {
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_ECPOINT);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		goto err;
+	}
+
+	if (!CBS_stow(public, &sc->peer_x25519_tmp, &outlen)) {
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	return (1);
+
+ err:
+	return (-1);
+}
+
+static int
+ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
+{
+	CBS cbs, public;
+	uint8_t curve_type;
+	uint16_t curve_id;
 	SESS_CERT *sc;
-	int curve_nid;
 	long alg_a;
+	int nid;
 	int al;
 
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
@@ -1206,15 +1287,6 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 		goto err;
 
 	CBS_init(&cbs, *pp, *nn);
-
-	/*
-	 * Extract EC parameters and the server's ephemeral ECDH public key.
-	 */
-
-	if ((ecdh = EC_KEY_new()) == NULL) {
-		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
 
 	/* Only named curves are supported. */
 	if (!CBS_get_u8(&cbs, &curve_type) ||
@@ -1235,39 +1307,22 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 		goto f_err;
 	}
 
-	if ((curve_nid = tls1_ec_curve_id2nid(curve_id)) == 0) {
+	if ((nid = tls1_ec_curve_id2nid(curve_id)) == 0) {
 		al = SSL_AD_INTERNAL_ERROR;
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 		    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
 		goto f_err;
 	}
 
-	if ((ngroup = EC_GROUP_new_by_curve_name(curve_nid)) == NULL) {
-		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EC_LIB);
-		goto err;
-	}
-	if (EC_KEY_set_group(ecdh, ngroup) == 0) {
-		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EC_LIB);
-		goto err;
-	}
-
-	group = EC_KEY_get0_group(ecdh);
-
-	/* Next, get the encoded ECPoint */
-	if ((srvr_ecpoint = EC_POINT_new(group)) == NULL ||
-	    (bn_ctx = BN_CTX_new()) == NULL) {
-		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
-	if (!CBS_get_u8_length_prefixed(&cbs, &ecpoint))
+	if (!CBS_get_u8_length_prefixed(&cbs, &public))
 		goto truncated;
 
-	if (EC_POINT_oct2point(group, srvr_ecpoint, CBS_data(&ecpoint),
-	    CBS_len(&ecpoint), bn_ctx) == 0) {
-		al = SSL_AD_DECODE_ERROR;
-		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_ECPOINT);
-		goto f_err;
+	if (nid == NID_X25519) {
+		if (ssl3_get_server_kex_ecdhe_ecx(s, sc, nid, &public) != 1)
+			goto err;
+	} else {
+		if (ssl3_get_server_kex_ecdhe_ecp(s, sc, nid, &public) != 1)
+			goto err;
 	}
 
 	/*
@@ -1283,13 +1338,6 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 		/* XXX - Anonymous ECDH, so no certificate or pkey. */
 		*pkey = NULL;
 
-	EC_KEY_set_public_key(ecdh, srvr_ecpoint);
-	sc->peer_ecdh_tmp = ecdh;
-
-	BN_CTX_free(bn_ctx);
-	EC_GROUP_free(ngroup);
-	EC_POINT_free(srvr_ecpoint);
-
 	*nn = CBS_len(&cbs);
 	*pp = (unsigned char *)CBS_data(&cbs);
 
@@ -1303,11 +1351,6 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 
  err:
-	BN_CTX_free(bn_ctx);
-	EC_GROUP_free(ngroup);
-	EC_POINT_free(srvr_ecpoint);
-	EC_KEY_free(ecdh);
-
 	return (-1);
 }
 
@@ -1360,6 +1403,9 @@ ssl3_get_server_key_exchange(SSL *s)
 
 		EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
 		s->session->sess_cert->peer_ecdh_tmp = NULL;
+
+		free(s->session->sess_cert->peer_x25519_tmp);
+		s->session->sess_cert->peer_x25519_tmp = NULL;
 	} else {
 		s->session->sess_cert = ssl_sess_cert_new();
 		if (s->session->sess_cert == NULL)
@@ -2010,11 +2056,11 @@ err:
 }
 
 static int
-ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
+ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 {
-	EC_KEY *clnt_ecdh = NULL;
-	const EC_GROUP *srvr_group = NULL;
-	const EC_POINT *srvr_ecpoint = NULL;
+	const EC_GROUP *group = NULL;
+	const EC_POINT *point = NULL;
+	EC_KEY *ecdh = NULL;
 	BN_CTX *bn_ctx = NULL;
 	unsigned char *key = NULL;
 	unsigned char *data;
@@ -2023,40 +2069,30 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	int ret = -1;
 	CBB ecpoint;
 
-	if (sess_cert->peer_ecdh_tmp == NULL) {
-		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+	if ((group = EC_KEY_get0_group(sc->peer_ecdh_tmp)) == NULL ||
+	    (point = EC_KEY_get0_public_key(sc->peer_ecdh_tmp)) == NULL) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 		    ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
 
-	srvr_group = EC_KEY_get0_group(sess_cert->peer_ecdh_tmp);
-	srvr_ecpoint = EC_KEY_get0_public_key(sess_cert->peer_ecdh_tmp);
-
-	if (srvr_group == NULL || srvr_ecpoint == NULL) {
-		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-		    ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-
-	if ((clnt_ecdh = EC_KEY_new()) == NULL) {
+	if ((ecdh = EC_KEY_new()) == NULL) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 		    ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!EC_KEY_set_group(clnt_ecdh, srvr_group)) {
+	if (!EC_KEY_set_group(ecdh, group)) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
 		goto err;
 	}
 
 	/* Generate a new ECDH key pair. */
-	if (!(EC_KEY_generate_key(clnt_ecdh))) {
+	if (!(EC_KEY_generate_key(ecdh))) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
 		goto err;
 	}
-	key_size = ECDH_size(clnt_ecdh);
-	if (key_size <= 0) {
+	if ((key_size = ECDH_size(ecdh)) <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
 		goto err;
 	}
@@ -2064,7 +2100,7 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 		    ERR_R_MALLOC_FAILURE);
 	}
-	key_len = ECDH_compute_key(key, key_size, srvr_ecpoint, clnt_ecdh, NULL);
+	key_len = ECDH_compute_key(key, key_size, point, ecdh, NULL);
 	if (key_len <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
 		goto err;
@@ -2075,8 +2111,7 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	    s->method->ssl3_enc->generate_master_secret(s,
 		s->session->master_key, key, key_len);
 
-	encoded_len = EC_POINT_point2oct(srvr_group,
-	    EC_KEY_get0_public_key(clnt_ecdh),
+	encoded_len = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ecdh),
 	    POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
 	if (encoded_len == 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
@@ -2094,7 +2129,7 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		goto err;
 	if (!CBB_add_space(&ecpoint, &data, encoded_len))
 		goto err;
-	if (EC_POINT_point2oct(srvr_group, EC_KEY_get0_public_key(clnt_ecdh),
+	if (EC_POINT_point2oct(group, EC_KEY_get0_public_key(ecdh),
 	    POINT_CONVERSION_UNCOMPRESSED, data, encoded_len,
 	    bn_ctx) == 0)
 		goto err;
@@ -2108,10 +2143,75 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		explicit_bzero(key, key_size);
 	free(key);
 
-	BN_CTX_free(bn_ctx);
-	EC_KEY_free(clnt_ecdh);
+	return (ret);
+}
+
+static int
+ssl3_send_client_kex_ecdhe_ecx(SSL *s, SESS_CERT *sc, CBB *cbb)
+{
+	uint8_t *public_key = NULL, *private_key = NULL, *shared_key = NULL;
+	int ret = -1;
+	CBB ecpoint;
+
+	/* Generate X25519 key pair and derive shared key. */
+	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	if ((private_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	if ((shared_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	X25519_keypair(public_key, private_key);
+	if (!X25519(shared_key, private_key, sc->peer_x25519_tmp))
+		goto err;
+
+	/* Serialize the public key. */
+	if (!CBB_add_u8_length_prefixed(cbb, &ecpoint))
+		goto err;
+	if (!CBB_add_bytes(&ecpoint, public_key, X25519_KEY_LENGTH))
+		goto err;
+	if (!CBB_flush(cbb))
+		goto err;
+
+	/* Generate master key from the result. */
+	s->session->master_key_length =
+	    s->method->ssl3_enc->generate_master_secret(s,
+		s->session->master_key, shared_key, X25519_KEY_LENGTH);
+
+	ret = 1;
+
+ err:
+	if (private_key != NULL)
+		explicit_bzero(private_key, X25519_KEY_LENGTH);
+	if (shared_key != NULL)
+		explicit_bzero(shared_key, X25519_KEY_LENGTH);
+
+	free(public_key);
+	free(private_key);
+	free(shared_key);
 
 	return (ret);
+}
+
+static int
+ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sc, CBB *cbb)
+{
+	if (sc->peer_x25519_tmp != NULL) {
+		if (ssl3_send_client_kex_ecdhe_ecx(s, sc, cbb) != 1)
+			goto err;
+	} else if (sc->peer_ecdh_tmp != NULL) {
+		if (ssl3_send_client_kex_ecdhe_ecp(s, sc, cbb) != 1)
+			goto err;
+	} else {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
+	return (1);
+
+ err:
+	return (-1);
 }
 
 static int

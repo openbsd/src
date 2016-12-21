@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.113 2016/12/06 13:17:52 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.114 2016/12/21 16:44:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,6 +151,7 @@
 #include <limits.h>
 #include <stdio.h>
 
+#include <openssl/curve25519.h>
 #include <openssl/dh.h>
 #include <openssl/md5.h>
 #include <openssl/objects.h>
@@ -1835,6 +1836,10 @@ ssl3_free(SSL *s)
 	DH_free(s->s3->tmp.dh);
 	EC_KEY_free(s->s3->tmp.ecdh);
 
+	if (s->s3->tmp.x25519 != NULL)
+		explicit_bzero(s->s3->tmp.x25519, X25519_KEY_LENGTH);
+	free(s->s3->tmp.x25519);
+
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
 	BIO_free(s->s3->handshake_buffer);
@@ -1860,6 +1865,11 @@ ssl3_clear(SSL *s)
 	s->s3->tmp.dh = NULL;
 	EC_KEY_free(s->s3->tmp.ecdh);
 	s->s3->tmp.ecdh = NULL;
+
+	if (s->s3->tmp.x25519 != NULL)
+		explicit_bzero(s->s3->tmp.x25519, X25519_KEY_LENGTH);
+	free(s->s3->tmp.x25519);
+	s->s3->tmp.x25519 = NULL;
 
 	rp = s->s3->rbuf.buf;
 	wp = s->s3->wbuf.buf;

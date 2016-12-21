@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.137 2016/12/07 13:18:38 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.138 2016/12/21 16:44:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,6 +154,7 @@
 
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
+#include <openssl/curve25519.h>
 #include <openssl/evp.h>
 #include <openssl/dh.h>
 #ifndef OPENSSL_NO_GOST
@@ -1268,8 +1269,8 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 	return (-1);
 }
 
-int
-ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
+static int
+ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 {
 	CBB ecpoint;
 	unsigned char *data;
@@ -1283,7 +1284,6 @@ ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
 
 	ecdhp = s->cert->ecdh_tmp;
 	if (s->cert->ecdh_tmp_auto != 0) {
-		int nid = tls1_get_shared_curve(s);
 		if (nid != NID_undef)
 			ecdhp = EC_KEY_new_by_curve_name(nid);
 	} else if (ecdhp == NULL && s->cert->ecdh_tmp_cb != NULL) {
@@ -1402,6 +1402,65 @@ ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
 	BN_CTX_free(bn_ctx);
 
 	return (-1);
+}
+
+static int
+ssl3_send_server_kex_ecdhe_ecx(SSL *s, int nid, CBB *cbb)
+{
+	uint8_t *public_key = NULL;
+	int curve_id;
+	CBB ecpoint;
+	int ret = -1;
+
+	/* Generate an X25519 key pair. */
+	if (s->s3->tmp.x25519 != NULL) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+	if ((s->s3->tmp.x25519 = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	X25519_keypair(public_key, s->s3->tmp.x25519);
+
+	/* Serialize public key. */
+	if ((curve_id = tls1_ec_nid2curve_id(nid)) == 0) {
+		SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+		    SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
+		goto err;
+	}
+
+	if (!CBB_add_u8(cbb, NAMED_CURVE_TYPE))
+		goto err;
+	if (!CBB_add_u16(cbb, curve_id))
+		goto err;
+	if (!CBB_add_u8_length_prefixed(cbb, &ecpoint))
+		goto err;
+	if (!CBB_add_bytes(&ecpoint, public_key, X25519_KEY_LENGTH))
+		goto err;
+	if (!CBB_flush(cbb))
+		goto err;
+
+	ret = 1;
+
+ err:
+	free(public_key);
+
+	return (ret);
+}
+
+static int
+ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
+{
+	int nid;
+
+	nid = tls1_get_shared_curve(s);
+
+	if (s->cert->ecdh_tmp_auto != 0 && nid == NID_X25519)
+		return ssl3_send_server_kex_ecdhe_ecx(s, nid, cbb);
+
+	return ssl3_send_server_kex_ecdhe_ecp(s, nid, cbb);
 }
 
 int
@@ -1822,7 +1881,7 @@ ssl3_get_client_kex_dhe(SSL *s, unsigned char *p, long n)
 }
 
 static int
-ssl3_get_client_kex_ecdhe(SSL *s, unsigned char *p, long n)
+ssl3_get_client_kex_ecdhe_ecp(SSL *s, unsigned char *p, long n)
 {
 	EC_KEY *srvr_ecdh = NULL;
 	EVP_PKEY *clnt_pub_pkey = NULL;
@@ -1968,6 +2027,54 @@ ssl3_get_client_kex_ecdhe(SSL *s, unsigned char *p, long n)
 	EC_KEY_free(srvr_ecdh);
 	BN_CTX_free(bn_ctx);
 	return (-1);
+}
+
+static int
+ssl3_get_client_kex_ecdhe_ecx(SSL *s, unsigned char *p, long n)
+{
+	uint8_t *shared_key = NULL;
+	CBS cbs, ecpoint;
+	int ret = -1;
+
+	if (n < 0)
+		goto err;
+
+	CBS_init(&cbs, p, n);
+	if (!CBS_get_u8_length_prefixed(&cbs, &ecpoint))
+		goto err;
+	if (CBS_len(&ecpoint) != X25519_KEY_LENGTH)
+		goto err;
+
+	if ((shared_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	if (!X25519(shared_key, s->s3->tmp.x25519, CBS_data(&ecpoint)))
+		goto err;
+
+	explicit_bzero(s->s3->tmp.x25519, X25519_KEY_LENGTH);
+	free(s->s3->tmp.x25519);
+	s->s3->tmp.x25519 = NULL;
+
+	s->session->master_key_length =
+	    s->method->ssl3_enc->generate_master_secret(
+		s, s->session->master_key, shared_key, X25519_KEY_LENGTH);
+
+	ret = 1;
+
+ err:
+	if (shared_key != NULL)
+		explicit_bzero(shared_key, X25519_KEY_LENGTH);
+	free(shared_key);
+
+	return (ret);
+}
+
+static int
+ssl3_get_client_kex_ecdhe(SSL *s, unsigned char *p, long n)
+{
+        if (s->s3->tmp.x25519 != NULL)
+		return ssl3_get_client_kex_ecdhe_ecx(s, p, n);
+
+	return ssl3_get_client_kex_ecdhe_ecp(s, p, n);
 }
 
 static int

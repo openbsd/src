@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.41 2015/07/19 06:23:51 doug Exp $ */
+/* $OpenBSD: ssl3.h,v 1.42 2016/12/21 16:44:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -439,6 +439,8 @@ typedef struct ssl3_state_st {
 		DH *dh;
 
 		EC_KEY *ecdh; /* holds short lived ECDH key */
+
+		uint8_t *x25519;
 
 		/* used when SSL_ST_FLUSH_DATA is entered */
 		int next_state;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.140 2016/12/18 13:52:53 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.141 2016/12/21 16:44:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -468,6 +468,7 @@ typedef struct sess_cert_st {
 
 	DH *peer_dh_tmp;
 	EC_KEY *peer_ecdh_tmp;
+	uint8_t *peer_x25519_tmp;
 
 	int references; /* actually always 1 at the moment */
 } SESS_CERT;
