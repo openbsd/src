@@ -84,6 +84,8 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
+int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
+
 const int num0 = 100; /* number of tests */
 const int num1 = 50;  /* additional tests for some functions */
 const int num2 = 5;   /* number of tests for slow functions */
