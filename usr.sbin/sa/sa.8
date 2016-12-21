@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sa.8,v 1.20 2016/12/20 21:47:30 zhuk Exp $
+.\"	$OpenBSD: sa.8,v 1.21 2016/12/21 07:02:05 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 20 2016 $
+.Dd $Mdocdate: December 21 2016 $
 .Dt SA 8
 .Os
 .Sh NAME
@@ -139,7 +139,19 @@ If printing user statistics, print the CPU time average memory usage.
 .It Fl l
 Separate system and user time; normally they are combined.
 .It Fl m
-Print per-user statistics rather than per-command statistics.
+Print per-user statistics rather than per-command statistics, including
+the user name, the number of commands invoked, total CPU time used
+(in minutes), total number of I/O operations, and CPU storage integral
+for each user.
+If this option is specified, only the
+.Fl b ,
+.Fl d ,
+.Fl i ,
+.Fl k ,
+.Fl q ,
+and
+.Fl s
+flags are honored.
 .It Fl n
 Sort by number of calls.
 .It Fl q
@@ -156,10 +168,12 @@ If the CPU time is too small to report,
 .Dq *ignore*
 appears in this field.
 .It Fl u
-Superseding all other flags, for each entry
-in the accounting file, print the user ID, total seconds of CPU usage,
-total memory usage, number of I/O operations performed, and
-command name.
+Superseding all other flags (except
+.Fl q ) ,
+for each entry in the accounting file print the user ID,
+total seconds of CPU usage,
+total memory usage, number of I/O operations performed,
+and command name.
 .It Fl v Ar cutoff
 For each command used
 .Ar cutoff
@@ -172,43 +186,13 @@ add the command to the category
 This flag is used to strip garbage from the report.
 .El
 .Pp
-By default, per-command statistics will be printed.
-The number of
-calls, the total elapsed time in minutes, total CPU and user time
-in minutes, average number of I/O operations, and CPU time
-averaged core usage will be printed.
-If the
-.Fl m
-option is specified, per-user statistics will be printed, including
-the user name, the number of commands invoked, total CPU time used
-(in minutes), total number of I/O operations, and CPU storage integral
-for each user.
-If the
-.Fl u
-option is specified, the UID, user and system time (in seconds),
-CPU storage integral, I/O usage, and command name will be printed
-for each entry in the accounting data file.
-.Pp
-If the
-.Fl u
-flag is specified, all flags other than
-.Fl q
-are ignored.
-If the
-.Fl m
-flag is specified, only the
-.Fl b ,
-.Fl d ,
-.Fl i ,
-.Fl k ,
-.Fl q ,
-and
-.Fl s
-flags are honored.
-.Pp
+By default, per-command statistics are printed and show
+the number of calls, the total elapsed time in minutes,
+total CPU and user time in minutes, average number of I/O operations,
+and CPU time averaged core usage.
 Children which have not yet called
 .Xr execve 2
-will have
+have
 .Sq *
 appended to their command names.
 .Sh FILES
