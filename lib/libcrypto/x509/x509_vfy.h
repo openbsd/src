@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.17 2016/11/05 20:14:59 beck Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.18 2016/12/21 15:15:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -541,10 +541,6 @@ int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
 						ASN1_OBJECT *policy);
 int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param, 
 					STACK_OF(ASN1_OBJECT) *policies);
-int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param, const char *email,
-    size_t emaillen);
-int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param, const unsigned char *ip,
-    size_t iplen);
 int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param);
 
 int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param);

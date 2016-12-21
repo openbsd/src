@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.14 2016/11/06 10:17:49 beck Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.15 2016/12/21 15:15:45 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -69,6 +69,11 @@
 #include "vpm_int.h"
 
 /* X509_VERIFY_PARAM functions */
+
+int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param, const char *email,
+    size_t emaillen);
+int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param, const unsigned char *ip,
+    size_t iplen);
 
 #define SET_HOST 0
 #define ADD_HOST 1
