@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_int.h,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: eng_int.h,v 1.9 2016/12/21 15:49:29 jsing Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -67,9 +67,7 @@
 /* Take public definitions from engine.h */
 #include <openssl/engine.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+__BEGIN_HIDDEN_DECLS
 
 /* If we compile with this symbol defined, then both reference counts in the
  * ENGINE structure will be monitored with a line of output on stderr for each
@@ -199,8 +197,6 @@ struct engine_st {
 	struct engine_st *next;
 };
 
-#ifdef  __cplusplus
-}
-#endif
+__END_HIDDEN_DECLS
 
 #endif /* HEADER_ENGINE_INT_H */

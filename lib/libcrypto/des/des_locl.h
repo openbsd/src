@@ -1,4 +1,4 @@
-/* $OpenBSD: des_locl.h,v 1.18 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: des_locl.h,v 1.19 2016/12/21 15:49:29 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,6 +69,8 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/des.h>
+
+__BEGIN_HIDDEN_DECLS
 
 #define ITERATIONS 16
 #define HALF_ITERATIONS 8
@@ -389,4 +391,7 @@ void fcrypt_body(DES_LONG *out,DES_key_schedule *ks,
 #ifdef OPENSSL_SMALL_FOOTPRINT
 #undef DES_UNROLL
 #endif
+
+__END_HIDDEN_DECLS
+
 #endif

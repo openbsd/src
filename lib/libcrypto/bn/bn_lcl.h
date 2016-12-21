@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.22 2015/11/06 21:42:32 miod Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.23 2016/12/21 15:49:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,10 +116,7 @@
 
 #include <openssl/bn.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
+__BEGIN_HIDDEN_DECLS
 
 /*
  * BN_window_bits_for_exponent_size -- macro for sliding window mod_exp functions
@@ -452,7 +449,7 @@ extern "C" {
 	}
 #endif /* !BN_LLONG */
 
-	void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb);
+void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb);
 void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b);
 void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b);
 void bn_sqr_normal(BN_ULONG *r, const BN_ULONG *a, int n, BN_ULONG *tmp);
@@ -477,8 +474,116 @@ BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     int cl, int dl);
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np, const BN_ULONG *n0, int num);
 
-#ifdef  __cplusplus
-}
+#define bn_wexpand(a,words) (((words) <= (a)->dmax)?(a):bn_expand2((a),(words)))
+BIGNUM *bn_expand2(BIGNUM *a, int words);
+BIGNUM *bn_expand(BIGNUM *a, int bits);
+
+BIGNUM *bn_dup_expand(const BIGNUM *a, int words); /* unused */
+
+/* Bignum consistency macros
+ * There is one "API" macro, bn_fix_top(), for stripping leading zeroes from
+ * bignum data after direct manipulations on the data. There is also an
+ * "internal" macro, bn_check_top(), for verifying that there are no leading
+ * zeroes. Unfortunately, some auditing is required due to the fact that
+ * bn_fix_top() has become an overabused duct-tape because bignum data is
+ * occasionally passed around in an inconsistent state. So the following
+ * changes have been made to sort this out;
+ * - bn_fix_top()s implementation has been moved to bn_correct_top()
+ * - if BN_DEBUG isn't defined, bn_fix_top() maps to bn_correct_top(), and
+ *   bn_check_top() is as before.
+ * - if BN_DEBUG *is* defined;
+ *   - bn_check_top() tries to pollute unused words even if the bignum 'top' is
+ *     consistent. (ed: only if BN_DEBUG_RAND is defined)
+ *   - bn_fix_top() maps to bn_check_top() rather than "fixing" anything.
+ * The idea is to have debug builds flag up inconsistent bignums when they
+ * occur. If that occurs in a bn_fix_top(), we examine the code in question; if
+ * the use of bn_fix_top() was appropriate (ie. it follows directly after code
+ * that manipulates the bignum) it is converted to bn_correct_top(), and if it
+ * was not appropriate, we convert it permanently to bn_check_top() and track
+ * down the cause of the bug. Eventually, no internal code should be using the
+ * bn_fix_top() macro. External applications and libraries should try this with
+ * their own code too, both in terms of building against the openssl headers
+ * with BN_DEBUG defined *and* linking with a version of OpenSSL built with it
+ * defined. This not only improves external code, it provides more test
+ * coverage for openssl's own code.
+ */
+
+#ifdef BN_DEBUG
+
+/* We only need assert() when debugging */
+#include <assert.h>
+
+#ifdef BN_DEBUG_RAND
+#define bn_pollute(a) \
+	do { \
+		const BIGNUM *_bnum1 = (a); \
+		if(_bnum1->top < _bnum1->dmax) { \
+			unsigned char _tmp_char; \
+			/* We cast away const without the compiler knowing, any \
+			 * *genuinely* constant variables that aren't mutable \
+			 * wouldn't be constructed with top!=dmax. */ \
+			BN_ULONG *_not_const; \
+			memcpy(&_not_const, &_bnum1->d, sizeof(BN_ULONG*)); \
+			arc4random_buf(&_tmp_char, 1); \
+			memset((unsigned char *)(_not_const + _bnum1->top), _tmp_char, \
+				(_bnum1->dmax - _bnum1->top) * sizeof(BN_ULONG)); \
+		} \
+	} while(0)
+#else
+#define bn_pollute(a)
 #endif
+
+#define bn_check_top(a) \
+	do { \
+		const BIGNUM *_bnum2 = (a); \
+		if (_bnum2 != NULL) { \
+			assert((_bnum2->top == 0) || \
+				(_bnum2->d[_bnum2->top - 1] != 0)); \
+			bn_pollute(_bnum2); \
+		} \
+	} while(0)
+
+#define bn_fix_top(a)		bn_check_top(a)
+
+#define bn_check_size(bn, bits) bn_wcheck_size(bn, ((bits+BN_BITS2-1))/BN_BITS2)
+#define bn_wcheck_size(bn, words) \
+	do { \
+		const BIGNUM *_bnum2 = (bn); \
+		assert(words <= (_bnum2)->dmax && words >= (_bnum2)->top); \
+	} while(0)
+
+#else /* !BN_DEBUG */
+
+#define bn_pollute(a)
+#define bn_check_top(a)
+#define bn_fix_top(a)		bn_correct_top(a)
+#define bn_check_size(bn, bits)
+#define bn_wcheck_size(bn, words)
+
+#endif
+
+#define bn_correct_top(a) \
+        { \
+        BN_ULONG *ftl; \
+	int tmp_top = (a)->top; \
+	if (tmp_top > 0) \
+		{ \
+		for (ftl= &((a)->d[tmp_top-1]); tmp_top > 0; tmp_top--) \
+			if (*(ftl--)) break; \
+		(a)->top = tmp_top; \
+		} \
+	bn_pollute(a); \
+	}
+
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
+BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
+void     bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);
+BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
+BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, int num);
+BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, int num);
+
+int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
+
+__END_HIDDEN_DECLS
 
 #endif

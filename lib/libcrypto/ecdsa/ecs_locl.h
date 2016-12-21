@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_locl.h,v 1.4 2015/02/08 13:35:07 jsing Exp $ */
+/* $OpenBSD: ecs_locl.h,v 1.5 2016/12/21 15:49:29 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -61,9 +61,7 @@
 
 #include <openssl/ecdsa.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+__BEGIN_HIDDEN_DECLS
 
 typedef struct ecdsa_data_st {
 	/* EC_KEY_METH_DATA part */
@@ -83,8 +81,6 @@ typedef struct ecdsa_data_st {
  */
 ECDSA_DATA *ecdsa_check(EC_KEY *eckey);
 
-#ifdef  __cplusplus
-}
-#endif
+__END_HIDDEN_DECLS
 
 #endif /* HEADER_ECS_LOCL_H */

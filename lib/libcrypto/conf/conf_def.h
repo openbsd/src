@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.h,v 1.5 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: conf_def.h,v 1.6 2016/12/21 15:49:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,6 +58,8 @@
 
 /* THIS FILE WAS AUTOMAGICALLY GENERATED!
    Please modify and use keysets.pl to regenerate it. */
+
+__BEGIN_HIDDEN_DECLS
 
 #define CONF_NUMBER		1
 #define CONF_UPPER		2
@@ -160,3 +162,5 @@ static unsigned short CONF_type_win32[256] = {
 	0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000,
 	0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000,
 };
+
+__END_HIDDEN_DECLS

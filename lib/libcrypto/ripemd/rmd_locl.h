@@ -1,4 +1,4 @@
-/* $OpenBSD: rmd_locl.h,v 1.12 2014/10/20 13:06:54 bcook Exp $ */
+/* $OpenBSD: rmd_locl.h,v 1.13 2016/12/21 15:49:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,7 +72,11 @@
 # endif
 #endif
 
+__BEGIN_HIDDEN_DECLS
+
 void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p,size_t num);
+
+__END_HIDDEN_DECLS
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
 
@@ -143,4 +147,3 @@ void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p,size_t num);
 	a+=F5(b,c,d)+X(w)+K; \
         a=ROTATE(a,s)+e; \
         c=ROTATE(c,10); }
-

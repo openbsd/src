@@ -47,9 +47,7 @@
 #ifndef HEADER_CONSTANT_TIME_LOCL_H
 # define HEADER_CONSTANT_TIME_LOCL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_HIDDEN_DECLS
 
 /*-
  * The boolean methods return a bitmask of all ones (0xff...f) for true
@@ -202,8 +200,6 @@ static inline int constant_time_select_int(unsigned int mask, int a, int b)
     return (int)(constant_time_select(mask, (unsigned)(a), (unsigned)(b)));
 }
 
-#ifdef __cplusplus
-}
-#endif
+__END_HIDDEN_DECLS
 
 #endif                          /* HEADER_CONSTANT_TIME_LOCL_H */

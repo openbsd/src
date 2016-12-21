@@ -1,4 +1,4 @@
-/* $OpenBSD: rmdconst.h,v 1.2 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rmdconst.h,v 1.3 2016/12/21 15:49:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,6 +55,9 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
+__BEGIN_HIDDEN_DECLS
+
 #define KL0 0x00000000L
 #define KL1 0x5A827999L
 #define KL2 0x6ED9EBA1L
@@ -397,3 +400,4 @@
 #define WR79 11
 #define SR79 11
 
+__END_HIDDEN_DECLS

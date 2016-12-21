@@ -1,4 +1,4 @@
-/* $OpenBSD: md5_locl.h,v 1.13 2014/10/20 13:06:54 bcook Exp $ */
+/* $OpenBSD: md5_locl.h,v 1.14 2016/12/21 15:49:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,7 +72,11 @@
 # endif
 #endif
 
+__BEGIN_HIDDEN_DECLS
+
 void md5_block_data_order (MD5_CTX *c, const void *p,size_t num);
+
+__END_HIDDEN_DECLS
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
 

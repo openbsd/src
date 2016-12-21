@@ -1,4 +1,4 @@
-/* $OpenBSD: gost_asn1.h,v 1.2 2016/09/04 17:02:31 jsing Exp $ */
+/* $OpenBSD: gost_asn1.h,v 1.3 2016/12/21 15:49:29 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -54,6 +54,8 @@
 
 #include <openssl/asn1.h>
 
+__BEGIN_HIDDEN_DECLS
+
 typedef struct {
 	ASN1_OCTET_STRING *encrypted_key;
 	ASN1_OCTET_STRING *imit;
@@ -99,5 +101,7 @@ void GOST_KEY_PARAMS_free(GOST_KEY_PARAMS *a);
 GOST_KEY_PARAMS *d2i_GOST_KEY_PARAMS(GOST_KEY_PARAMS **a, const unsigned char **in, long len);
 int i2d_GOST_KEY_PARAMS(GOST_KEY_PARAMS *a, unsigned char **out);
 extern const ASN1_ITEM GOST_KEY_PARAMS_it;
+
+__END_HIDDEN_DECLS
 
 #endif

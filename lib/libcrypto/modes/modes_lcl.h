@@ -1,4 +1,4 @@
-/* $OpenBSD: modes_lcl.h,v 1.9 2016/11/04 13:56:05 miod Exp $ */
+/* $OpenBSD: modes_lcl.h,v 1.10 2016/12/21 15:49:29 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -11,6 +11,8 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/modes.h>
+
+__BEGIN_HIDDEN_DECLS
 
 #if defined(_LP64)
 typedef long i64;
@@ -106,3 +108,4 @@ struct ccm128_context {
 	void *key;
 };
 
+__END_HIDDEN_DECLS

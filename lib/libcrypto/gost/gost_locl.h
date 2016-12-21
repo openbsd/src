@@ -1,4 +1,4 @@
-/* $OpenBSD: gost_locl.h,v 1.3 2014/11/13 20:29:55 miod Exp $ */
+/* $OpenBSD: gost_locl.h,v 1.4 2016/12/21 15:49:29 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -55,6 +55,8 @@
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 
+__BEGIN_HIDDEN_DECLS
+
 /* Internal representation of GOST substitution blocks */
 typedef struct {
 	unsigned char k8[16];
@@ -109,5 +111,7 @@ extern int GostR3410_get_md_digest(int nid);
 extern int GostR3410_get_pk_digest(int nid);
 extern int GostR3410_256_param_id(const char *value);
 extern int GostR3410_512_param_id(const char *value);
+
+__END_HIDDEN_DECLS
 
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: cast_s.h,v 1.5 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: cast_s.h,v 1.6 2016/12/21 15:49:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,6 +55,9 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
+__BEGIN_HIDDEN_DECLS
+
 const CAST_LONG CAST_S_table0[256]={
 	0x30fb40d4,0x9fa0ff0b,0x6beccd2f,0x3f258c7a,
 	0x1e213f2f,0x9c004dd3,0x6003e540,0xcf9fc949,
@@ -583,3 +586,5 @@ const CAST_LONG CAST_S_table7[256]={
 	0x04f19130,0xba6e4ec0,0x99265164,0x1ee7230d,
 	0x50b2ad80,0xeaee6801,0x8db2a283,0xea8bf59e,
 	};
+
+__END_HIDDEN_DECLS

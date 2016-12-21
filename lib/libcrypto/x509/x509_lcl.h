@@ -56,4 +56,8 @@
  *
  */
 
+__BEGIN_HIDDEN_DECLS
+
 int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
+
+__END_HIDDEN_DECLS

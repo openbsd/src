@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.13 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.14 2016/12/21 15:49:29 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -55,6 +55,8 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+__BEGIN_HIDDEN_DECLS
 
 /* Macros to code block cipher wrappers */
 
@@ -364,3 +366,5 @@ struct evp_aead_st {
 	    size_t nonce_len, const unsigned char *in, size_t in_len,
 	    const unsigned char *ad, size_t ad_len);
 };
+
+__END_HIDDEN_DECLS

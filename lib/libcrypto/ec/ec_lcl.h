@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.6 2016/11/04 17:33:19 miod Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.7 2016/12/21 15:49:29 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -69,18 +69,22 @@
  *
  */
 
-
 #include <stdlib.h>
 
 #include <openssl/obj_mac.h>
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 
+__BEGIN_HIDDEN_DECLS
+
 #if defined(__SUNPRO_C)
 # if __SUNPRO_C >= 0x520
 # pragma error_messages (off,E_ARRAY_OF_INCOMPLETE_NONAME,E_ARRAY_OF_INCOMPLETE)
 # endif
 #endif
+
+#define bn_wexpand(a,words) (((words) <= (a)->dmax)?(a):bn_expand2((a),(words)))
+BIGNUM *bn_expand2(BIGNUM *a, int words);
 
 /* Use default functions for poin2oct, oct2point and compressed coordinates */
 #define EC_FLAGS_DEFAULT_OCT	0x1
@@ -447,4 +451,7 @@ void ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array,
 	void (*felem_inv)(void *out, const void *in),
 	void (*felem_contract)(void *out, const void *in));
 void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign, unsigned char *digit, unsigned char in);
+
 #endif
+
+__END_HIDDEN_DECLS

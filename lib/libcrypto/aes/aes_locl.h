@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_locl.h,v 1.10 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: aes_locl.h,v 1.11 2016/12/21 15:49:29 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -62,6 +62,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+__BEGIN_HIDDEN_DECLS
+
 #define GETU32(pt) (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^ ((u32)(pt)[2] <<  8) ^ ((u32)(pt)[3]))
 #define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
 
@@ -75,5 +77,7 @@ typedef unsigned char u8;
 
 /* This controls loop-unrolling in aes_core.c */
 #undef FULL_UNROLL
+
+__END_HIDDEN_DECLS
 
 #endif /* !HEADER_AES_LOCL_H */

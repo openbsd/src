@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_locl.h,v 1.4 2015/09/13 10:46:20 jsing Exp $ */
+/* $OpenBSD: ech_locl.h,v 1.5 2016/12/21 15:49:29 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -58,9 +58,7 @@
 
 #include <openssl/ecdh.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+__BEGIN_HIDDEN_DECLS
 
 struct ecdh_method {
 	const char *name;
@@ -90,8 +88,6 @@ typedef struct ecdh_data_st {
 
 ECDH_DATA *ecdh_check(EC_KEY *);
 
-#ifdef  __cplusplus
-}
-#endif
+__END_HIDDEN_DECLS
 
 #endif /* HEADER_ECH_LOCL_H */

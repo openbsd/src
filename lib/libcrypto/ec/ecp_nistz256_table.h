@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_nistz256_table.h,v 1.1 2016/11/04 17:33:19 miod Exp $	*/
+/*	$OpenBSD: ecp_nistz256_table.h,v 1.2 2016/12/21 15:49:29 jsing Exp $	*/
 /* Copyright (c) 2015, Intel Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,6 +24,8 @@
  * negation of the affine point when required. We would like to align it to 2MB
  * in order to increase the chances of using a large page but that appears to
  * lead to invalid ELF files being produced. */
+
+__BEGIN_HIDDEN_DECLS
 
 #if defined(__GNUC__)
 __attribute((aligned(4096)))
@@ -9551,3 +9553,5 @@ ecp_nistz256_precomputed
          TOBN(0xd6baef61, 0x3f714aa1), TOBN(0xf51865ad, 0xeb78795e),
          TOBN(0xd3e21fce, 0xe6a9d694), TOBN(0x82ceb1dd, 0x8a37b527)}
 };
+
+__END_HIDDEN_DECLS

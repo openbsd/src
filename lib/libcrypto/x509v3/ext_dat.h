@@ -1,4 +1,4 @@
-/* $OpenBSD: ext_dat.h,v 1.12 2015/02/10 13:28:17 jsing Exp $ */
+/* $OpenBSD: ext_dat.h,v 1.13 2016/12/21 15:49:29 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,6 +57,8 @@
  */
 
 #include <openssl/opensslconf.h>
+
+__BEGIN_HIDDEN_DECLS
 
 /* This file contains a table of "standard" extensions */
 
@@ -127,3 +129,5 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 
 /* Number of standard extensions */
 #define STANDARD_EXTENSION_COUNT (sizeof(standard_exts)/sizeof(X509V3_EXT_METHOD *))
+
+__END_HIDDEN_DECLS

@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_locl.h,v 1.6 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ui_locl.h,v 1.7 2016/12/21 15:49:29 jsing Exp $ */
 
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
@@ -62,6 +62,8 @@
 
 #include <openssl/ui.h>
 #include <openssl/crypto.h>
+
+__BEGIN_HIDDEN_DECLS
 
 #ifdef _
 #undef _
@@ -144,5 +146,7 @@ struct ui_st {
 #define UI_FLAG_PRINT_ERRORS	0x0100
 	int flags;
 };
+
+__END_HIDDEN_DECLS
 
 #endif

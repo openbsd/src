@@ -1,4 +1,4 @@
-/* $OpenBSD: cmll_locl.h,v 1.5 2014/11/13 20:01:58 miod Exp $ */
+/* $OpenBSD: cmll_locl.h,v 1.6 2016/12/21 15:49:29 jsing Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.
@@ -68,6 +68,8 @@
 #ifndef HEADER_CAMELLIA_LOCL_H
 #define HEADER_CAMELLIA_LOCL_H
 
+__BEGIN_HIDDEN_DECLS
+
 typedef unsigned int  u32;
 typedef unsigned char u8;
 
@@ -81,5 +83,7 @@ void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[],
 	    const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
 void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[],
 	    const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
+
+__END_HIDDEN_DECLS
 
 #endif /* #ifndef HEADER_CAMELLIA_LOCL_H */
