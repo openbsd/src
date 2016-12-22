@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.86 2016/12/22 12:21:19 schwarze Exp $
+# $OpenBSD: Makefile,v 1.87 2016/12/22 13:05:59 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -230,7 +230,6 @@ MAN=	\
 	i2d_PKCS7_bio_stream.3 \
 	lh_new.3 \
 	lh_stats.3 \
-	x509.3 \
 	openssl.cnf.5 \
 	x509v3.cnf.5
 
