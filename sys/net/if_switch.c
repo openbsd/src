@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.16 2016/11/28 10:12:50 reyk Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.17 2016/12/22 15:14:05 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1549,12 +1549,19 @@ ofp_split_mbuf(struct mbuf *m, struct mbuf **mtail)
 
 	*mtail = NULL;
 
+ again:
 	/* We need more data. */
 	if (m->m_pkthdr.len < sizeof(*oh))
 		return (-1);
 
 	oh = mtod(m, struct ofp_header *);
 	ohlen = ntohs(oh->oh_length);
+
+	/* We got an invalid packet header, skip it. */
+	if (ohlen < sizeof(*oh)) {
+		m_adj(m, sizeof(*oh));
+		goto again;
+	}
 
 	/* Nothing to split. */
 	if (m->m_pkthdr.len == ohlen)

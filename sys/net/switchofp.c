@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.46 2016/12/05 12:16:55 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.47 2016/12/22 15:14:05 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1416,7 +1416,7 @@ swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
 	struct ofp_group_mod	*ogm;
 	struct ofp_bucket	*bucket;
 	struct ofp_action_header *ah;
-	uint16_t		weight;
+	uint16_t		weight, remaining;
 	int			start, len, off, num;
 	size_t			blen;
 
@@ -1424,7 +1424,7 @@ swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
 
 	ogm = mtod(m, struct ofp_group_mod *);
 	start = offsetof(struct ofp_group_mod, gm_buckets);
-	len = ntohs(ogm->gm_oh.oh_length) - start;
+	remaining = len = ntohs(ogm->gm_oh.oh_length) - start;
 
 	/* Invalid packet size. */
 	if (len < 0) {
@@ -1446,6 +1446,14 @@ swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
 			*error = OFP_ERRGROUPMOD_BAD_BUCKET;
 			return (-1);
 		}
+
+		/* Validate that the bucket is smaller than the payload. */
+		if (blen > remaining) {
+			*etype = OFP_ERRTYPE_BAD_REQUEST;
+			*error = OFP_ERRREQ_BAD_LEN;
+			return (-1);
+		}
+		remaining -= blen;
 
 		/*
 		 * Validate weight
@@ -4548,14 +4556,23 @@ swofp_input(struct switch_softc *sc, struct mbuf *m)
 	struct swofp_ofs	*swofs = sc->sc_ofs;
 	struct ofp_header	*oh;
 	ofp_msg_handler		 handler;
+	uint16_t		 ohlen;
 
 	if (m->m_len < sizeof(*oh) &&
 	    (m = m_pullup(m, sizeof(*oh))) == NULL)
 		return (ENOBUFS);
 
 	oh = mtod(m, struct ofp_header *);
-	if (m->m_len < ntohs(oh->oh_length) &&
-	    (m = m_pullup(m, ntohs(oh->oh_length))) == NULL)
+
+	ohlen = ntohs(oh->oh_length);
+	/* Validate that we have a sane header. */
+	if (ohlen < sizeof(*oh)) {
+		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_REQUEST,
+		    OFP_ERRREQ_BAD_LEN);
+		return (0);
+	}
+
+	if (m->m_len < ohlen && (m = m_pullup(m, ohlen)) == NULL)
 		return (ENOBUFS);
 
 #if NBPFILTER > 0
@@ -4754,6 +4771,11 @@ swofp_recv_set_config(struct switch_softc *sc, struct mbuf *m)
 	struct ofp_switch_config	*swc;
 
 	swc = mtod(m, struct ofp_switch_config *);
+	if (ntohs(swc->cfg_oh.oh_length) < sizeof(*swc)) {
+		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_REQUEST,
+		    OFP_ERRREQ_BAD_LEN);
+		return (-1);
+	}
 
 	/*
 	 * Support only "normal" fragment handle
@@ -5234,8 +5256,16 @@ swofp_flow_mod(struct switch_softc *sc, struct mbuf *m)
 {
 	struct ofp_flow_mod	*ofm;
 	ofp_msg_handler		*handler;
+	uint16_t		 ohlen;
 
 	ofm = mtod(m, struct ofp_flow_mod *);
+	ohlen = ntohs(ofm->fm_oh.oh_length);
+	if (ohlen < sizeof(*ofm) ||
+	    ohlen < (sizeof(*ofm) + ntohs(ofm->fm_match.om_length))) {
+		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_REQUEST,
+		    OFP_ERRREQ_BAD_LEN);
+		return (-1);
+	}
 
 	handler = swofp_flow_mod_lookup_handler(ofm->fm_command);
 	if (handler) {
@@ -5415,6 +5445,12 @@ swofp_group_mod(struct switch_softc *sc, struct mbuf *m)
 	uint16_t		 cmd;
 
 	ogm = mtod(m, struct ofp_group_mod *);
+	if (ntohs(ogm->gm_oh.oh_length) < sizeof(*ogm)) {
+		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_REQUEST,
+		    OFP_ERRREQ_BAD_LEN);
+		return (-1);
+	}
+
 	cmd = ntohs(ogm->gm_command);
 
 	switch (cmd) {
@@ -5445,7 +5481,7 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	struct ofp_action_header	*ah;
 	struct mbuf			*mc = NULL, *mcn;
 	int				 al_start, al_len, off;
-	uint16_t			 error;
+	uint16_t			 ohlen, error;
 	struct switch_flow_classify	 swfcl = {};
 	struct swofp_pipline_desc	 swpld = { .swpld_swfcl = &swfcl };
 
@@ -5455,6 +5491,14 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	if ((m = m_pullup(m, sizeof(*pout))) == NULL)
 		return (ENOBUFS);
 	pout = mtod(m, struct ofp_packet_out *);
+	ohlen = ntohs(pout->pout_oh.oh_length);
+	if (ohlen < sizeof(*pout) ||
+	    ohlen < (sizeof(*pout) + ntohs(pout->pout_actions_len))) {
+		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_REQUEST,
+		    OFP_ERRREQ_BAD_LEN);
+		return (-1);
+	}
+
 	al_len = ntohs(pout->pout_actions_len);
 
 	if ((m = m_pullup(m, (sizeof(*pout) + al_len))) == NULL)
@@ -5655,6 +5699,11 @@ swofp_multipart_req(struct switch_softc *sc, struct mbuf *m)
 	ofp_msg_handler		 handler;
 
 	omp = mtod(m, struct ofp_multipart *);
+	if (ntohs(omp->mp_oh.oh_length) < sizeof(*omp)) {
+		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_REQUEST,
+		    OFP_ERRREQ_BAD_LEN);
+		return (-1);
+	}
 
 	if (omp->mp_flags & OFP_T_MULTIPART_REQUEST) {
 		/* multipart message re-assembly iss not supported yet */
