@@ -1,10 +1,12 @@
-/*	$OpenBSD: s_copysign.S,v 1.5 2016/09/12 19:47:01 guenther Exp $ */
+/*	$OpenBSD: s_copysign.S,v 1.6 2016/12/22 16:11:26 naddy Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
+
+#include "abi.h"
 
 .Lpos:
 	.quad	0x8000000000000000
@@ -18,4 +20,4 @@ ENTRY(copysign)
 	pand	%xmm3,%xmm0
 	por	%xmm1,%xmm0
 	ret
-END(copysign)
+END_STD(copysign)
