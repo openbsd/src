@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.43 2015/12/05 13:12:40 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.44 2016/12/22 23:03:55 jca Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -409,9 +409,10 @@ show_interface_detail_msg(struct imsg *imsg)
 		    iface->name, print_link(iface->flags));
 		printf("  Internet address %s Area %s\n",
 		    log_in6addr(&iface->addr), inet_ntoa(iface->area));
-		printf("  Link type %s, state %s",
+		printf("  Link type %s, state %s, mtu %d",
 		    get_media_descr(get_ifms_type(iface->if_type)),
-		    get_linkstate(iface->if_type, iface->linkstate));
+		    get_linkstate(iface->if_type, iface->linkstate),
+		    iface->mtu);
 		if (iface->linkstate != LINK_STATE_DOWN &&
 		    iface->baudrate > 0) {
 		    printf(", ");
