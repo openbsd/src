@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.20 2015/11/10 04:14:03 guenther Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.21 2016/12/22 09:32:04 kettenis Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -84,9 +84,9 @@ __asm(".hidden  __dso_handle");
 long __guard_local __dso_hidden __attribute__((section(".openbsd.randomdata")));
 
 
-static const init_f __CTOR_LIST__[1]
+static init_f __CTOR_LIST__[1]
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-static const init_f __DTOR_LIST__[1]
+static init_f __DTOR_LIST__[1]
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
 static void	__dtors(void) __used;
