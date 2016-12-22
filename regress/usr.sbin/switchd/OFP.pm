@@ -38,6 +38,16 @@ BEGIN {
 }
 
 #
+# Get aligned packet size
+#
+
+sub ofp_align {
+	my $matchlen = shift;
+
+	return (($matchlen + (8 - 1)) & (~(8 - 1)));
+}
+
+#
 # Decode the packet
 #
 
@@ -104,6 +114,179 @@ sub encode {
 	}
 
 	return ($pkt);
+}
+
+#
+# Table property Multipart reply
+#
+
+sub ofp_table_property {
+	my $tp_type = shift;
+	my $tp_payload = shift;
+	my $tp_header;
+	my ($datalen, $pad);
+
+	# len = header + payload
+	$datalen = 4 + length($tp_payload);
+
+	$tp_header = pack('nna*',
+	    $tp_type,			# type
+	    $datalen,			# length
+	    $tp_payload			# payload
+	    );
+
+	$pad = ofp_align($datalen) - $datalen;
+	if ($pad > 0) {
+		$tp_header .= pack("x[$pad]");
+	}
+
+	return ($tp_header);
+}
+
+sub ofp_table_features_reply {
+	my $class = shift;
+	my $self = shift;
+	my $pkt = NetPacket::OFP->decode() or fatal($class, "new packet");
+	my ($tf_header, $tf_payload);
+	my ($tp_header, $tp_payload);
+	my $mp_header;
+
+	$tf_payload = '';
+
+	#
+	# instructions
+	#
+	$tp_payload = '';
+	for (my $inst = main::OFP_INSTRUCTION_T_GOTO_TABLE();
+	    $inst <= main::OFP_INSTRUCTION_T_METER(); $inst++) {
+		$tp_payload .= pack('nn',
+		    $inst,			# type
+		    4				# length
+		    );
+	}
+
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_INSTRUCTION(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_INSTRUCTION_MISS(),
+		$tp_payload);
+
+	#
+	# Next tables
+	#
+	$tp_payload = '';
+
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_NEXT_TABLES(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_NEXT_TABLES_MISS(),
+		$tp_payload);
+
+	#
+	# Write / Apply actions
+	#
+	$tp_payload = pack('nn',
+	    main::OFP_ACTION_OUTPUT(),		# type
+	    4,					# length
+	    );
+	$tp_payload .= pack('nn',
+	    main::OFP_ACTION_PUSH_VLAN(),	# type
+	    4,					# length
+	    );
+	$tp_payload .= pack('nn',
+	    main::OFP_ACTION_POP_VLAN(),	# type
+	    4,					# length
+	    );
+
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_WRITE_ACTIONS(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_WRITE_ACTIONS_MISS(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_APPLY_ACTIONS(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_APPLY_ACTIONS_MISS(),
+		$tp_payload);
+
+	#
+	# Match/Wildcards/Write set-field/Apply set-field
+	#
+	$tp_payload = pack('nCC',
+	    main::OFP_OXM_C_OPENFLOW_BASIC(),	# class
+	    main::OFP_XM_T_IN_PORT() << 1,	# type
+	    4,					# length
+	    );
+	$tp_payload .= pack('nCC',
+	    main::OFP_OXM_C_OPENFLOW_BASIC(),	# class
+	    main::OFP_XM_T_ETH_TYPE() << 1,	# type
+	    4,					# length
+	    );
+	$tp_payload .= pack('nCC',
+	    main::OFP_OXM_C_OPENFLOW_BASIC(),	# class
+	    main::OFP_XM_T_ETH_SRC() << 1,	# type
+	    4,					# length
+	    );
+	$tp_payload .= pack('nCC',
+	    main::OFP_OXM_C_OPENFLOW_BASIC(),	# class
+	    main::OFP_XM_T_ETH_DST() << 1,	# type
+	    4,					# length
+	    );
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_MATCH(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_WILDCARDS(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_WRITE_SETFIELD(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_WRITE_SETFIELD_MISS(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_APPLY_SETFIELD(),
+		$tp_payload);
+	$tf_payload .=
+	    ofp_table_property(main::OFP_TABLE_FEATPROP_APPLY_SETFIELD_MISS(),
+		$tp_payload);
+
+	#
+	# Finish
+	#
+	$tf_header = pack('nCx[5]a[32]QQNN',
+	    64 + length($tf_payload),	# length
+	    0,				# tableid
+	    'start',			# name
+	    0x0000000000000000,		# metadata_match
+	    0x0000000000000000,		# metadata_write
+	    0x00000000,			# config
+	    10000			# max_entries
+	    );
+	$tf_header .= $tf_payload;
+	# XXX everything fits a single multipart reply, for now.
+
+	$mp_header = pack('nnx[4]',
+	    main::OFP_MP_T_TABLE_FEATURES(),	# multipart type
+	    0					# multipart flags
+	    );
+
+	$mp_header .= $tf_header;
+
+	$pkt->{version} = $self->{version};
+	$pkt->{type} = main::OFP_T_MULTIPART_REPLY();
+	$pkt->{xid} = $self->{xid}++;
+	$pkt->{data} = $mp_header;
+	$pkt = NetPacket::OFP->encode($pkt);
+
+	main::ofp_output($self, $pkt);
+
+	# Wait for new flow-mod
+	main::ofp_input($self);
 }
 
 #

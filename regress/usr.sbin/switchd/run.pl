@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $OpenBSD: run.pl,v 1.8 2016/11/17 14:37:55 rzalamena Exp $
+# $OpenBSD: run.pl,v 1.9 2016/12/22 15:40:07 rzalamena Exp $
 
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 #
@@ -120,7 +120,7 @@ sub ofp_hello {
 	ofp_output($self, $pkt);
 	$hello = ofp_input($self);
 
-	# OpenFlow >= 1.3 wants features, set-config and flow-mod.
+	# OpenFlow >= 1.3 wants features, set-config and table features.
 	if ($self->{version} == OFP_V_1_3()) {
 		$features = ofp_input($self);
 		if ($features->{type} != OFP_T_FEATURES_REQUEST()) {
@@ -143,9 +143,12 @@ sub ofp_hello {
 		    );
 		ofp_output($self, NetPacket::OFP->encode($pkt));
 
-		# Just read set-config and flow-mod
+		# Just read set-config and table features request
 		ofp_input($self);
 		ofp_input($self);
+
+		# Answer the table features so switchd(8) install table-miss
+		NetPacket::OFP->ofp_table_features_reply($self);
 	}
 
 	return ($hello);
