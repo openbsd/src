@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.41 2016/12/02 14:39:46 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.42 2016/12/22 15:31:43 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -70,10 +70,8 @@ int	 ofp13_packet_in(struct switchd *, struct switch_connection *,
 	    struct ofp_header *, struct ibuf *);
 int	 ofp13_flow_removed(struct switchd *, struct switch_connection *,
 	    struct ofp_header *, struct ibuf *);
-int	 ofp13_parse_instruction(struct ibuf *, struct ofp_instruction *);
-int	 ofp13_parse_action(struct ibuf *, struct ofp_action_header *);
-int	 ofp13_parse_oxm(struct ibuf *, struct ofp_ox_match *);
-int	 ofp13_parse_tableproperties(struct ibuf *, struct ofp_table_features *);
+int	 ofp13_tableproperties(struct switch_connection *, struct ibuf *,
+	    off_t, size_t, int);
 int	 ofp13_multipart_reply(struct switchd *, struct switch_connection *,
 	    struct ofp_header *, struct ibuf *);
 int	 ofp13_validate_tableproperty(struct ibuf *, off_t, int);
@@ -103,6 +101,9 @@ struct ofp_bucket *
 int	 ofp13_setconfig_validate(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
+
+int	 ofp13_switchconfigure(struct switchd *, struct switch_connection *);
+int	 ofp13_getflowtable(struct switch_connection *);
 
 struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_HELLO,			ofp13_hello, ofp_validate_hello },
@@ -1013,7 +1014,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 	struct ofp_ox_match		*oxm;
 	struct packet			 pkt;
 	struct ibuf			*obuf = NULL;
-	int				 ret = -1;
+	int				 table, ret = -1;
 	ssize_t				 len, mlen;
 	uint32_t			 srcport = 0, dstport;
 	int				 addflow = 0, sendbuffer = 0;
@@ -1091,6 +1092,13 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 
  again:
 	if (addflow) {
+		table = ofp13_getflowtable(con);
+		if (table > OFP_TABLE_ID_MAX || table < 0) {
+			/* This switch doesn't support installing flows. */
+			addflow = 0;
+			goto again;
+		}
+
 		if ((fm = ibuf_advance(obuf, sizeof(*fm))) == NULL)
 			goto done;
 
@@ -1101,6 +1109,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 		fm->fm_hard_timeout = 0; /* permanent */
 		fm->fm_priority = 0;
 		fm->fm_buffer_id = pin->pin_buffer_id;
+		fm->fm_table_id = table;
 		fm->fm_flags = htons(OFP_FLOWFLAG_SEND_FLOW_REMOVED);
 		if (pin->pin_buffer_id == htonl(OFP_PKTOUT_NO_BUFFER))
 			sendbuffer = 1;
@@ -1191,83 +1200,50 @@ ofp13_flow_removed(struct switchd *sc, struct switch_connection *con,
 }
 
 int
-ofp13_parse_instruction(struct ibuf *ibuf, struct ofp_instruction *i)
+ofp13_tableproperties(struct switch_connection *con, struct ibuf *ibuf,
+    off_t off, size_t total, int new)
 {
-	int			 type;
-	int			 len;
-
-	type = ntohs(i->i_type);
-	len = ntohs(i->i_len);
-
-	log_debug("\t\t%s", print_map(type, ofp_instruction_t_map));
-
-	return (len);
-}
-
-int
-ofp13_parse_action(struct ibuf *ibuf, struct ofp_action_header *ah)
-{
-	int				 len, type;
-
-	len = htons(ah->ah_len);
-	type = htons(ah->ah_type);
-
-	log_debug("\t\t%s", print_map(type, ofp_action_map));
-
-	return (len);
-}
-
-int
-ofp13_parse_oxm(struct ibuf *ibuf, struct ofp_ox_match *oxm)
-{
-	int			length, type, class, hasmask;
-
-	class = ntohs(oxm->oxm_class);
-	type = OFP_OXM_GET_FIELD(oxm);
-	hasmask = OFP_OXM_GET_HASMASK(oxm);
-	/*
-	 * XXX the OpenFlow 1.3.5 specification says this field is only
-	 * 4 bytes long, however the experimental type is 8 bytes.
-	 */
-	length = sizeof(*oxm);
-
-	log_debug("\t\t%s hasmask %s type %s",
-	    print_map(class, ofp_oxm_c_map), hasmask ? "yes" : "no",
-	    print_map(type, ofp_xm_t_map));
-
-	if (class == OFP_OXM_C_OPENFLOW_EXPERIMENTER) {
-		/* Get the last bytes. */
-		if (ibuf_getdata(ibuf, 4) == NULL)
-			return (-1);
-
-		return (8);
-	}
-
-	return (length);
-}
-
-int
-ofp13_parse_tableproperties(struct ibuf *ibuf, struct ofp_table_features *tf)
-{
+	struct ofp_table_features		*tf;
 	struct ofp_table_feature_property	*tp;
 	struct ofp_instruction			*i;
 	struct ofp_action_header		*ah;
 	struct ofp_ox_match			*oxm;
+	struct switch_table			*st;
 	uint8_t					*next_table;
 	int					 remaining, type, length;
-	int					 totallen, padsize, rv;
+	int					 hlen, padsize;
+	int					 class, dtype, dlen;
 
-	log_debug("Table %s (%d) max_entries %u config %u "
-	    "metadata match %#016llx write %#016llx",
-	    tf->tf_name, tf->tf_tableid, ntohl(tf->tf_max_entries),
-	    ntohl(tf->tf_config), be64toh(tf->tf_metadata_match),
-	    be64toh(tf->tf_metadata_write));
-	totallen = htons(tf->tf_length);
-	remaining = totallen - sizeof(*tf);
+	/*
+	 * This is a new table features reply, free our previous tables
+	 * to get the updated ones.
+	 */
+	if (new)
+		switch_freetables(con);
+
+ next_table:
+	if ((tf = ibuf_seek(ibuf, off, sizeof(*tf))) == NULL)
+		return (-1);
+
+	hlen = htons(tf->tf_length);
+	total -= hlen;
+	remaining = hlen - sizeof(*tf);
+	off += sizeof(*tf);
+
+	st = switch_tablelookup(con, tf->tf_tableid);
+	if (st == NULL) {
+		st = switch_newtable(con, tf->tf_tableid);
+		if (st == NULL)
+			return (-1);
+	}
+
+	st->st_maxentries = ntohl(tf->tf_max_entries);
 
  next_table_property:
-	if ((tp = ibuf_getdata(ibuf, sizeof(*tp))) == NULL)
+	if ((tp = ibuf_seek(ibuf, off, sizeof(*tp))) == NULL) {
+		switch_deltable(con, st);
 		return (-1);
+	}
 
 	type = ntohs(tp->tp_type);
 	length = ntohs(tp->tp_length);
@@ -1276,32 +1252,63 @@ ofp13_parse_tableproperties(struct ibuf *ibuf, struct ofp_table_features *tf)
 	padsize = OFP_ALIGN(length) - length;
 	remaining -= OFP_ALIGN(length);
 	length -= sizeof(*tp);
-
-	log_debug("\t%s:", print_map(type, ofp_table_featprop_map));
-	if (length == 0)
-		log_debug("\t\tNONE");
+	off += sizeof(*tp);
 
 	switch (type) {
 	case OFP_TABLE_FEATPROP_INSTRUCTION:
 	case OFP_TABLE_FEATPROP_INSTRUCTION_MISS:
+		if (type == OFP_TABLE_FEATPROP_INSTRUCTION)
+			st->st_instructions = 0;
+		else
+			st->st_instructionsmiss = 0;
+
 		while (length) {
-			if ((i = ibuf_getdata(ibuf, sizeof(*i))) == NULL)
+			if ((i = ibuf_seek(ibuf, off, sizeof(*i))) == NULL) {
+				switch_deltable(con, st);
 				return (-1);
-			if ((rv = ofp13_parse_instruction(ibuf, i)) == -1)
-				return (-1);
-			length -= rv;
+			}
+
+			dtype = ntohs(i->i_type);
+			dlen = ntohs(i->i_len);
+			if (type == OFP_TABLE_FEATPROP_INSTRUCTION)
+				st->st_instructions |= 1ULL << dtype;
+			else
+				st->st_instructionsmiss |= 1ULL << dtype;
+
+			if (dtype == OFP_INSTRUCTION_T_EXPERIMENTER) {
+				length -= dlen;
+				off += dlen;
+			} else {
+				length -= sizeof(*i);
+				off += sizeof(*i);
+			}
 		}
 		break;
 
 	case OFP_TABLE_FEATPROP_NEXT_TABLES:
 	case OFP_TABLE_FEATPROP_NEXT_TABLES_MISS:
-		while (length) {
-			if ((next_table = ibuf_getdata(ibuf,
-			    sizeof(*next_table))) == NULL)
-				return (-1);
+		if (type == OFP_TABLE_FEATPROP_NEXT_TABLES)
+			memset(st->st_nexttable, 0, sizeof(st->st_nexttable));
+		else
+			memset(st->st_nexttablemiss, 0,
+			    sizeof(st->st_nexttablemiss));
 
-			log_debug("\t\t%d", *next_table);
+		while (length) {
+			if ((next_table = ibuf_seek(ibuf, off,
+			    sizeof(*next_table))) == NULL) {
+				switch_deltable(con, st);
+				return (-1);
+			}
+
+			if (type == OFP_TABLE_FEATPROP_NEXT_TABLES)
+				st->st_nexttable[(*next_table) / 64] |=
+				    1ULL << ((*next_table) % 64);
+			else
+				st->st_nexttablemiss[(*next_table) / 64] |=
+				    1ULL << ((*next_table) % 64);
+
 			length -= sizeof(*next_table);
+			off += sizeof(*next_table);
 		}
 		break;
 
@@ -1309,16 +1316,37 @@ ofp13_parse_tableproperties(struct ibuf *ibuf, struct ofp_table_features *tf)
 	case OFP_TABLE_FEATPROP_WRITE_ACTIONS_MISS:
 	case OFP_TABLE_FEATPROP_APPLY_ACTIONS:
 	case OFP_TABLE_FEATPROP_APPLY_ACTIONS_MISS:
+		if (type == OFP_TABLE_FEATPROP_WRITE_ACTIONS ||
+		    type == OFP_TABLE_FEATPROP_APPLY_ACTIONS)
+			st->st_actions = 0;
+		else
+			st->st_actionsmiss = 0;
+
 		while (length) {
 			/*
-			 * XXX the OpenFlow 1.3.5 specs says that we only
-			 * get 4 bytes here instead of the full OXM.
+			 * NOTE the OpenFlow 1.3.5 specs says that we only
+			 * get 4 bytes here instead of the full action header.
 			 */
-			if ((ah = ibuf_getdata(ibuf, 4)) == NULL)
+			if ((ah = ibuf_seek(ibuf, off, 4)) == NULL) {
+				switch_deltable(con, st);
 				return (-1);
-			if ((rv = ofp13_parse_action(ibuf, ah)) == -1)
-				return (-1);
-			length -= rv;
+			}
+
+			dtype = ntohs(ah->ah_type);
+			dlen = ntohs(ah->ah_len);
+			if (type == OFP_TABLE_FEATPROP_WRITE_ACTIONS ||
+			    type == OFP_TABLE_FEATPROP_APPLY_ACTIONS)
+				st->st_actions |= 1ULL << dtype;
+			else
+				st->st_actionsmiss |= 1ULL << dtype;
+
+			if (dtype == OFP_ACTION_EXPERIMENTER) {
+				length -= dlen;
+				off += dlen;
+			} else {
+				length -= 4;
+				off += 4;
+			}
 		}
 		break;
 
@@ -1328,32 +1356,72 @@ ofp13_parse_tableproperties(struct ibuf *ibuf, struct ofp_table_features *tf)
 	case OFP_TABLE_FEATPROP_WRITE_SETFIELD_MISS:
 	case OFP_TABLE_FEATPROP_APPLY_SETFIELD:
 	case OFP_TABLE_FEATPROP_APPLY_SETFIELD_MISS:
+		if (type == OFP_TABLE_FEATPROP_WRITE_SETFIELD ||
+		    type == OFP_TABLE_FEATPROP_APPLY_SETFIELD)
+			st->st_setfield = 0;
+		else if (type == OFP_TABLE_FEATPROP_WRITE_SETFIELD_MISS ||
+			type == OFP_TABLE_FEATPROP_APPLY_SETFIELD_MISS)
+			st->st_setfieldmiss = 0;
+		else if (type == OFP_TABLE_FEATPROP_MATCH)
+			st->st_match = 0;
+		else
+			st->st_wildcard = 0;
+
 		while (length) {
-			if ((oxm = ibuf_getdata(ibuf, sizeof(*oxm))) == NULL)
+			if ((oxm = ibuf_seek(ibuf, off,
+			    sizeof(*oxm))) == NULL) {
+				switch_deltable(con, st);
 				return (-1);
-			if ((rv = ofp13_parse_oxm(ibuf, oxm)) == -1)
-				return (-1);
-			length -= rv;
+			}
+
+			class = ntohs(oxm->oxm_class);
+			if (class != OFP_OXM_C_OPENFLOW_BASIC) {
+				if (class == OFP_OXM_C_OPENFLOW_EXPERIMENTER) {
+					length -= sizeof(*oxm) + 4;
+					off += sizeof(*oxm) + 4;
+				} else {
+					length -= sizeof(*oxm);
+					off += sizeof(*oxm);
+				}
+				continue;
+			}
+
+			dtype = OFP_OXM_GET_FIELD(oxm);
+			if (type == OFP_TABLE_FEATPROP_WRITE_SETFIELD ||
+			    type == OFP_TABLE_FEATPROP_APPLY_SETFIELD)
+				st->st_setfield |= 1ULL << dtype;
+			else if
+			    (type == OFP_TABLE_FEATPROP_WRITE_SETFIELD_MISS ||
+			    type == OFP_TABLE_FEATPROP_APPLY_SETFIELD_MISS)
+				st->st_setfieldmiss |= 1ULL << dtype;
+			else if (type == OFP_TABLE_FEATPROP_MATCH)
+				st->st_match |= 1ULL << dtype;
+			else
+				st->st_wildcard |= 1ULL << dtype;
+
+			length -= sizeof(*oxm);
+			off += sizeof(*oxm);
 		}
 		break;
 
-	default:
-		log_debug("%s: unsupported property type: %d", __func__, type);
-
-		/* Skip this field and try to continue otherwise fail. */
-		if (ibuf_getdata(ibuf, length) == NULL)
-			return (-1);
-
+	case OFP_TABLE_FEATPROP_EXPERIMENTER:
+	case OFP_TABLE_FEATPROP_EXPERIMENTER_MISS:
+		off += length;
 		break;
+
+	default:
+		log_debug("Unsupported table property %d", type);
+		return (-1);
 	}
 
-	/* Skip the padding and read the next property if any. */
-	if (padsize && ibuf_getdata(ibuf, padsize) == NULL)
-		return (-1);
-	if (remaining)
+	if (padsize)
+		off += padsize;
+	if (remaining > 0)
 		goto next_table_property;
+	if (total > 0)
+		goto next_table;
 
-	return (totallen);
+	return (0);
 }
 
 int
@@ -1361,18 +1429,25 @@ ofp13_multipart_reply(struct switchd *sc, struct switch_connection *con,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
 	struct ofp_multipart		*mp;
-	struct ofp_table_features	*tf;
-	int				 readlen, type, flags;
+	int				 type, flags, more, new = 0;
 	int				 remaining;
+	off_t				 off;
 
-	if ((mp = ibuf_getdata(ibuf, sizeof(*mp))) == NULL)
+	off = 0;
+	if ((mp = ibuf_seek(ibuf, 0, sizeof(*mp))) == NULL)
 		return (-1);
 
 	type = ntohs(mp->mp_type);
 	flags = ntohs(mp->mp_flags);
 	remaining = ntohs(oh->oh_length) - sizeof(*mp);
+	off += sizeof(*mp);
 
-	if (flags & OFP_MP_FLAG_REPLY_MORE) {
+	more = (flags & OFP_MP_FLAG_REPLY_MORE) == OFP_MP_FLAG_REPLY_MORE;
+	/* Signalize new requests. */
+	if (ofp_multipart_lookup(con, oh->oh_xid) == NULL)
+		new = 1;
+
+	if (more) {
 		if (ofp_multipart_add(con, oh->oh_xid, type) == -1) {
 			ofp13_error(sc, con, oh, ibuf,
 			    OFP_ERRTYPE_BAD_REQUEST,
@@ -1393,15 +1468,12 @@ ofp13_multipart_reply(struct switchd *sc, struct switch_connection *con,
 
 	switch (type) {
 	case OFP_MP_T_TABLE_FEATURES:
- read_next_table:
-		if ((tf = ibuf_getdata(ibuf, sizeof(*tf))) == NULL)
-			return (-1);
-		if ((readlen = ofp13_parse_tableproperties(ibuf, tf)) == -1)
+		if (ofp13_tableproperties(con, ibuf, off, remaining, new))
 			return (-1);
 
-		remaining -= readlen;
-		if (remaining)
-			goto read_next_table;
+		/* We finished receiving tables, configure the switch. */
+		if (more == 0)
+			return (ofp13_switchconfigure(sc, con));
 		break;
 	}
 
@@ -2136,4 +2208,49 @@ ofp13_tablemiss_sendctrl(struct switchd *sc, struct switch_connection *con,
  err:
 	(void)oflowmod_err(&ctx, __func__, __LINE__);
 	return (-1);
+}
+
+int
+ofp13_switchconfigure(struct switchd *sc, struct switch_connection *con)
+{
+	struct switch_table		*st;
+
+	/* Look for a table with 'apply' and 'output' support for miss. */
+	TAILQ_FOREACH(st, &con->con_stlist, st_entry) {
+		if ((st->st_instructionsmiss &
+		    (1ULL << OFP_INSTRUCTION_T_APPLY_ACTIONS)) == 0)
+			continue;
+		if ((st->st_actionsmiss & (1ULL << OFP_ACTION_OUTPUT)) == 0)
+			continue;
+
+		break;
+	}
+	if (st == NULL) {
+		log_warn("No apply output for this switch");
+		return (-1);
+	}
+
+	/* Install the flow to receive packets from the switch. */
+	return (ofp13_tablemiss_sendctrl(sc, con, st->st_table));
+}
+
+int
+ofp13_getflowtable(struct switch_connection *con)
+{
+	struct switch_table		*st;
+
+	/* Look for a table with 'apply' and 'output' support. */
+	TAILQ_FOREACH(st, &con->con_stlist, st_entry) {
+		if ((st->st_instructions &
+		    (1ULL << OFP_INSTRUCTION_T_APPLY_ACTIONS)) == 0)
+			continue;
+		if ((st->st_actions & (1ULL << OFP_ACTION_OUTPUT)) == 0)
+			continue;
+
+		break;
+	}
+	if (st == NULL)
+		return (-1);
+
+	return (st->st_table);
 }

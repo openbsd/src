@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.27 2016/12/02 14:39:46 rzalamena Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.28 2016/12/22 15:31:43 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -68,6 +68,30 @@ struct switch_control {
 };
 RB_HEAD(switch_head, switch_control);
 
+struct switch_table {
+	TAILQ_ENTRY(switch_table)	 st_entry;
+
+	int				 st_table;
+	unsigned int			 st_entries;
+	unsigned int			 st_maxentries;
+
+	uint32_t			 st_actions;
+	uint32_t			 st_actionsmiss;
+
+	uint32_t			 st_instructions;
+	uint32_t			 st_instructionsmiss;
+
+	uint64_t			 st_setfield;
+	uint64_t			 st_setfieldmiss;
+	uint64_t			 st_match;
+	uint64_t			 st_wildcard;
+
+	/* Maximum of 256 tables (64 * 4). */
+	uint64_t			 st_nexttable[4];
+	uint64_t			 st_nexttablemiss[4];
+};
+TAILQ_HEAD(switch_table_list, switch_table);
+
 struct multipart_message {
 	SLIST_ENTRY(multipart_message)
 				 mm_entry;
@@ -105,6 +129,8 @@ struct switch_connection {
 	struct switch_server	*con_srv;
 
 	struct multipart_list	 con_mmlist;
+	struct switch_table_list
+				 con_stlist;
 
 	TAILQ_ENTRY(switch_connection)
 				 con_entry;
@@ -247,6 +273,13 @@ void		 ofp_accept(int, short, void *);
 int		 ofp_input(struct switch_connection *, struct ibuf *);
 int		 ofp_nextstate(struct switchd *, struct switch_connection *,
 		    enum ofp_state);
+struct switch_table *
+		 switch_tablelookup(struct switch_connection *, int);
+struct switch_table *
+		 switch_newtable(struct switch_connection *, int);
+void		 switch_deltable(struct switch_connection *,
+		    struct switch_table *);
+void		 switch_freetables(struct switch_connection *);
 
 /* ofp10.c */
 int		 ofp10_hello(struct switchd *, struct switch_connection *,
@@ -289,6 +322,8 @@ int		 ofp_validate(struct switchd *,
 		    struct ofp_header *, struct ibuf *, uint8_t);
 int		 ofp_output(struct switch_connection *, struct ofp_header *,
 		    struct ibuf *);
+struct multipart_message *
+		    ofp_multipart_lookup(struct switch_connection *, uint32_t);
 int		 ofp_multipart_add(struct switch_connection *, uint32_t,
 		    uint8_t);
 void		 ofp_multipart_del(struct switch_connection *, uint32_t);
@@ -364,7 +399,6 @@ int		 ofp_send_hello(struct switchd *, struct switch_connection *,
 		    int);
 int		 ofp_send_featuresrequest(struct switchd *,
 		    struct switch_connection *);
-
 /* ofcconn.c */
 void		 ofcconn(struct privsep *, struct privsep_proc *);
 void		 ofcconn_shutdown(void);

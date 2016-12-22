@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_common.c,v 1.9 2016/12/02 14:39:46 rzalamena Exp $	*/
+/*	$OpenBSD: ofp_common.c,v 1.10 2016/12/22 15:31:43 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1115,15 +1115,31 @@ ofp_instruction(struct ibuf *ibuf, uint16_t type, uint16_t hlen)
 	return (oi);
 }
 
+struct multipart_message *
+ofp_multipart_lookup(struct switch_connection *con, uint32_t xid)
+{
+	struct multipart_message	*mm;
+
+	SLIST_FOREACH(mm, &con->con_mmlist, mm_entry) {
+		if (mm->mm_xid != xid)
+			continue;
+
+		return (mm);
+	}
+
+	return (NULL);
+}
+
 int
 ofp_multipart_add(struct switch_connection *con, uint32_t xid, uint8_t type)
 {
 	struct multipart_message	*mm;
 
-	/* A multipart reply have the same xid and type in all parts. */
-	SLIST_FOREACH(mm, &con->con_mmlist, mm_entry) {
-		if (mm->mm_xid != xid)
-			continue;
+	if ((mm = ofp_multipart_lookup(con, xid)) != NULL) {
+		/*
+		 * A multipart reply has the same xid and type, otherwise
+		 * something went wrong.
+		 */
 		if (mm->mm_type != type)
 			return (-1);
 
@@ -1170,6 +1186,51 @@ ofp_multipart_clear(struct switch_connection *con)
 	while (!SLIST_EMPTY(&con->con_mmlist)) {
 		mm = SLIST_FIRST(&con->con_mmlist);
 		ofp_multipart_free(con, mm);
+	}
+}
+
+struct switch_table *
+switch_tablelookup(struct switch_connection *con, int table)
+{
+	struct switch_table		*st;
+
+	TAILQ_FOREACH(st, &con->con_stlist, st_entry) {
+		if (st->st_table == table)
+			return (st);
+	}
+
+	return (NULL);
+}
+
+struct switch_table *
+switch_newtable(struct switch_connection *con, int table)
+{
+	struct switch_table		*st;
+
+	if ((st = calloc(1, sizeof(*st))) == NULL)
+		return (NULL);
+
+	st->st_table = table;
+	TAILQ_INSERT_TAIL(&con->con_stlist, st, st_entry);
+
+	return (st);
+}
+
+void
+switch_deltable(struct switch_connection *con, struct switch_table *st)
+{
+	TAILQ_REMOVE(&con->con_stlist, st, st_entry);
+	free(st);
+}
+
+void
+switch_freetables(struct switch_connection *con)
+{
+	struct switch_table		*st;
+
+	while (!TAILQ_EMPTY(&con->con_stlist)) {
+		st = TAILQ_FIRST(&con->con_stlist);
+		switch_deltable(con, st);
 	}
 }
 

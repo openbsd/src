@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.17 2016/12/02 14:39:46 rzalamena Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.18 2016/12/22 15:31:43 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -231,14 +231,11 @@ ofp_nextstate(struct switchd *sc, struct switch_connection *con,
 		/* Let's not ask this while we don't use it. */
 		ofp13_flow_stats(sc, con, OFP_PORT_ANY, OFP_GROUP_ID_ANY,
 		    OFP_TABLE_ID_ALL);
-		ofp13_table_features(sc, con, 0);
 		ofp13_desc(sc, con);
 #endif
+		rv |= ofp13_table_features(sc, con, 0);
 		rv |= ofp13_setconfig(sc, con, OFP_CONFIG_FRAG_NORMAL,
 		    OFP_CONTROLLER_MAXLEN_NO_BUFFER);
-
-		/* Use table '0' for switch(4) and '100' for HP 3800. */
-		rv |= ofp13_tablemiss_sendctrl(sc, con, 0);
 		break;
 
 

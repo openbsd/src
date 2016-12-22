@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrelay.c,v 1.9 2016/12/02 14:39:46 rzalamena Exp $	*/
+/*	$OpenBSD: ofrelay.c,v 1.10 2016/12/22 15:31:43 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -98,6 +98,7 @@ ofrelay_close(struct switch_connection *con)
 	TAILQ_REMOVE(&sc->sc_conns, con, con_entry);
 	ofrelay_sessions--;
 
+	switch_freetables(con);
 	ofp_multipart_clear(con);
 	switch_remove(con->con_sc, con->con_switch);
 	msgbuf_clear(&con->con_wbuf);
@@ -405,6 +406,7 @@ ofrelay_attach(struct switch_server *srv, int s, struct sockaddr *sa)
 	con->con_srv = srv;
 	con->con_state = OFP_STATE_CLOSED;
 	SLIST_INIT(&con->con_mmlist);
+	TAILQ_INIT(&con->con_stlist);
 
 	memcpy(&con->con_peer, sa, sa->sa_len);
 	con->con_port = htons(socket_getport(&con->con_peer));
