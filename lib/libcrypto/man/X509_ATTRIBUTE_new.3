@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_ATTRIBUTE_new.3,v 1.1 2016/12/17 14:51:09 schwarze Exp $
+.\"	$OpenBSD: X509_ATTRIBUTE_new.3,v 1.2 2016/12/22 16:05:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2016 $
+.Dd $Mdocdate: December 22 2016 $
 .Dt X509_ATTRIBUTE_NEW 3
 .Os
 .Sh NAME
@@ -36,11 +36,15 @@ used to represent any kind of property of any kind of directory entry.
 In OpenSSL, very few objects use it directly, most notably the
 .Vt X509_REQ_INFO
 object used for PKCS#10 certification requests described in
-.Xr X509_REQ_new 3
-and the
+.Xr X509_REQ_new 3 ,
+the
 .Vt PKCS8_PRIV_KEY_INFO
 object used for PKCS#8 private key information described in
-.Xr PKCS8_PRIV_KEY_INFO_new 3 .
+.Xr PKCS8_PRIV_KEY_INFO_new 3 ,
+and the
+.Vt PKCS12_SAFEBAG
+container object described in
+.Xr PKCS12_SAFEBAG_new 3 .
 .Pp
 .Fn X509_ATTRIBUTE_new
 allocates and initializes an empty
@@ -57,6 +61,7 @@ object or
 .Dv NULL
 if an error occurs.
 .Sh SEE ALSO
+.Xr PKCS12_SAFEBAG_new 3 ,
 .Xr PKCS8_PRIV_KEY_INFO_new 3 ,
 .Xr X509_EXTENSION_new 3 ,
 .Xr X509_REQ_new 3
@@ -72,6 +77,9 @@ section 4.1: CertificationRequestInfo
 .It For the specific use in the context of private key information:
 RFC 5208: Public-Key Cryptography Standards (PKCS) #8:
 Private-Key Information Syntax Specification
+.It For the specific definition in the context of PFX:
+RFC 7292: PKCS #12: Personal Information Exchange Syntax,
+section 4.2: The SafeBag Type
 .El
 .Sh BUGS
 A data type designed to hold arbitrary data is an oxymoron.
