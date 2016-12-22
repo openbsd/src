@@ -1865,7 +1865,9 @@
 ./usr/share/man/man3/PEM_read_SSL_SESSION.3
 ./usr/share/man/man3/PEM_read_bio_PrivateKey.3
 ./usr/share/man/man3/PEM_write_bio_PKCS7_stream.3
+./usr/share/man/man3/PKCS12_SAFEBAG_new.3
 ./usr/share/man/man3/PKCS12_create.3
+./usr/share/man/man3/PKCS12_new.3
 ./usr/share/man/man3/PKCS12_newpass.3
 ./usr/share/man/man3/PKCS12_parse.3
 ./usr/share/man/man3/PKCS5_PBKDF2_HMAC.3
@@ -1875,6 +1877,7 @@
 ./usr/share/man/man3/PKCS7_sign.3
 ./usr/share/man/man3/PKCS7_sign_add_signer.3
 ./usr/share/man/man3/PKCS7_verify.3
+./usr/share/man/man3/PKCS8_PRIV_KEY_INFO_new.3
 ./usr/share/man/man3/RAND_add.3
 ./usr/share/man/man3/RAND_bytes.3
 ./usr/share/man/man3/RAND_load_file.3
@@ -2010,6 +2013,7 @@
 ./usr/share/man/man3/X509_PUBKEY_new.3
 ./usr/share/man/man3/X509_REQ_new.3
 ./usr/share/man/man3/X509_REVOKED_new.3
+./usr/share/man/man3/X509_SIG_new.3
 ./usr/share/man/man3/X509_STORE_CTX_get_error.3
 ./usr/share/man/man3/X509_STORE_CTX_get_ex_new_index.3
 ./usr/share/man/man3/X509_STORE_CTX_new.3
@@ -2059,7 +2063,6 @@
 ./usr/share/man/man3/bindresvport.3
 ./usr/share/man/man3/bitstring.3
 ./usr/share/man/man3/blowfish.3
-./usr/share/man/man3/bn_dump.3
 ./usr/share/man/man3/bsearch.3
 ./usr/share/man/man3/btowc.3
 ./usr/share/man/man3/btree.3
@@ -2685,7 +2688,6 @@
 ./usr/share/man/man3/wprintf.3
 ./usr/share/man/man3/wresize.3
 ./usr/share/man/man3/wscanf.3
-./usr/share/man/man3/x509.3
 ./usr/share/man/man3/xdr.3
 ./usr/share/man/man3/ypclnt.3
 ./usr/share/man/man4/octeon/octmmc.4
