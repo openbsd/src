@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception_tfp.S,v 1.5 2016/09/06 13:41:29 visa Exp $	*/
+/*	$OpenBSD: exception_tfp.S,v 1.6 2016/12/22 15:33:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -95,6 +95,13 @@ utlb_miss:
 	DMFC0	k1, COP_0_UBASE		# PCB_SEGTAB(CI_CURPROCPADDR(curcpu))
 	MFC0_HAZARD
 	PTR_SLL	k0, LOGREGSZ
+	PTR_ADDU k1, k0
+	PTR_L	k1, 0(k1)		# get pointer to page directory
+	DMFC0	k0, COP_0_WORK0		# saved COP_0_VADDR
+	MFC0_HAZARD
+	PTR_SRL	k0, (DIRSHIFT - LOGREGSZ)
+	beqz	k1, _inv_seg
+	 andi	k0, (NPDEPG - 1) << LOGREGSZ
 	PTR_ADDU k1, k0
 	PTR_L	k1, 0(k1)		# get pointer to page table
 	DMFC0	k0, COP_0_WORK0		# saved COP_0_VADDR

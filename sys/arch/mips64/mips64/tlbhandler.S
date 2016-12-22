@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.46 2016/09/06 13:41:29 visa Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.47 2016/12/22 15:33:36 visa Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -134,6 +134,12 @@ xtlb_miss:
 	PTR_SRL	k0, k0, SEGSHIFT
 	PTR_SLL	k0, k0, LOGREGSZ
 	PTR_L	k1, PCB_SEGTAB(k1)
+	PTR_ADDU k1, k1, k0
+	PTR_L	k1, 0(k1)		# get pointer to page directory
+	dmfc0	k0, COP_0_BAD_VADDR
+	PTR_SRL	k0, k0, (DIRSHIFT - LOGREGSZ)
+	beqz	k1, _inv_seg
+	andi	k0, k0, (NPDEPG - 1) << LOGREGSZ
 	PTR_ADDU k1, k1, k0
 	PTR_L	k1, 0(k1)		# get pointer to page table
 	dmfc0	k0, COP_0_BAD_VADDR

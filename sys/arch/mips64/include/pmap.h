@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.45 2016/12/06 16:27:33 visa Exp $ */
+/*      $OpenBSD: pmap.h,v 1.46 2016/12/22 15:33:36 visa Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -45,20 +45,22 @@
 #include <machine/pte.h>
 
 /*
- * The user address space is currently limited to 2Gb (0x0 - 0x80000000).
+ * The user address space is currently limited to 1TB (0x0 - 0x10000000000).
  *
  * The user address space is mapped using a two level structure where
  * the virtual addresses bits are split in three groups:
- *   segment:page:offset
+ *   segment:directory:page:offset
  * where:
  * - offset are the in-page offsets (PAGE_SHIFT bits)
- * - page are the second level page table index
- *   (PMAP_L2SHIFT - Log2(pt_entry_t) bits)
+ * - page are the third level page table index
+ *   (PMAP_PGSHIFT - Log2(pt_entry_t) bits)
+ * - directory are the second level page table (directory) index
+ *   (PMAP_PGSHIFT - Log2(void *) bits)
  * - segment are the first level page table (segment) index
- *   (PMAP_L2SHIFT - Log2(void *) bits)
+ *   (PMAP_PGSHIFT - Log2(void *) bits)
  *
- * This scheme allows Segment and page tables have the same size
- * (1 << PMAP_L2SHIFT bytes, regardless of the pt_entry_t size) to be able to
+ * This scheme allows Segment, directory and page tables have the same size
+ * (1 << PMAP_PGSHIFT bytes, regardless of the pt_entry_t size) to be able to
  * share the same allocator.
  *
  * Note: The kernel doesn't use the same data structures as user programs.
@@ -66,37 +68,43 @@
  * dynamically allocated at boot time.
  */
 
+#if defined(MIPS_PTE64) && PAGE_SHIFT == 12
+#error "Cannot use MIPS_PTE64 with 4KB pages."
+#endif
+
 /*
- * Size of second level page structs (page tables, and segment table) used
- * by this pmap.
+ * Size of page table structs (page tables, page directories,
+ * and segment table) used by this pmap.
  */
 
-#ifdef MIPS_PTE64
-#define	PMAP_L2SHIFT		14
-#else
-#define	PMAP_L2SHIFT		12
-#endif
-#define	PMAP_L2SIZE		(1UL << PMAP_L2SHIFT)
+#define	PMAP_PGSHIFT		12
+#define	PMAP_PGSIZE		(1UL << PMAP_PGSHIFT)
 
-#define	NPTEPG			(PMAP_L2SIZE / sizeof(pt_entry_t))
+#define	NPDEPG			(PMAP_PGSIZE / sizeof(void *))
+#define	NPTEPG			(PMAP_PGSIZE / sizeof(pt_entry_t))
 
 /*
  * Segment sizes
  */
 
-#define	SEGSHIFT		(PAGE_SHIFT + PMAP_L2SHIFT - PTE_LOG)
+#define	SEGSHIFT		(PAGE_SHIFT+PMAP_PGSHIFT*2-PTE_LOG-3)
+#define	DIRSHIFT		(PAGE_SHIFT+PMAP_PGSHIFT-PTE_LOG)
 #define	NBSEG			(1UL << SEGSHIFT)
+#define	NBDIR			(1UL << DIRSHIFT)
 #define	SEGOFSET		(NBSEG - 1)
+#define	DIROFSET		(NBDIR - 1)
 
 #define	mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
+#define	mips_trunc_dir(x)	((vaddr_t)(x) & ~DIROFSET)
 #define	mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
+#define	mips_round_dir(x)	(((vaddr_t)(x) + DIROFSET) & ~DIROFSET)
 #define	pmap_segmap(m, v)	((m)->pm_segtab->seg_tab[((v) >> SEGSHIFT)])
 
 /* number of segments entries */
-#define	PMAP_SEGTABSIZE		(PMAP_L2SIZE / sizeof(void *))
+#define	PMAP_SEGTABSIZE		(PMAP_PGSIZE / sizeof(void *))
 
 struct segtab {
-	pt_entry_t	*seg_tab[PMAP_SEGTABSIZE];
+	pt_entry_t	**seg_tab[PMAP_SEGTABSIZE];
 };
 
 struct pmap_asid_info {
@@ -122,7 +130,6 @@ typedef struct pmap {
 #define	PMAP_SIZEOF(x)							\
 	(ALIGN(sizeof(struct pmap) +					\
 	       (sizeof(struct pmap_asid_info) * ((x) - 1))))
-
 
 /* machine-dependent pg_flags */
 #define	PGF_UNCACHED	PG_PMAP0	/* Page is explicitely uncached */
@@ -157,7 +164,6 @@ vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
 int	pmap_emulate_modify(pmap_t, vaddr_t);
 void	pmap_page_cache(vm_page_t, u_int);
 
-#define	pmap_collect(x)			do { /* nothing */ } while (0)
 #define	pmap_unuse_final(p)		do { /* nothing yet */ } while (0)
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 
@@ -188,6 +194,19 @@ vm_page_t pmap_unmap_direct(vaddr_t);
 	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT))
 /* User virtual address to pte page entry */
 #define	uvtopte(va)	(((va) >> PAGE_SHIFT) & (NPTEPG -1))
+#define	uvtopde(va)	(((va) >> DIRSHIFT) & (NPDEPG - 1))
+
+static inline pt_entry_t *
+pmap_pte_lookup(struct pmap *pmap, vaddr_t va)
+{
+	pt_entry_t **pde, *pte;
+
+	if ((pde = pmap_segmap(pmap, va)) == NULL)
+		return NULL;
+	if ((pte = pde[uvtopde(va)]) == NULL)
+		return NULL;
+	return pte + uvtopte(va);
+}
 
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
 extern	u_int Sysmapsize;		/* number of pte's in Sysmap */

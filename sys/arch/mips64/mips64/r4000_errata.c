@@ -1,4 +1,4 @@
-/*	$OpenBSD: r4000_errata.c,v 1.6 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: r4000_errata.c,v 1.7 2016/12/22 15:33:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -171,11 +171,9 @@ eop_tlb_miss_handler(struct trapframe *trapframe, struct cpu_info *ci,
 	faultva = trunc_page((vaddr_t)trapframe->badvaddr);
 	pmap = map->pmap;
 
-	pte = pmap_segmap(pmap, faultva);
+	pte = pmap_pte_lookup(pmap, faultva);
 	if (pte == NULL)
 		return 0;
-
-	pte += uvtopte(faultva);
 	entry = *pte;
 	if ((entry & PG_SP) == 0)
 		return 0;
@@ -207,10 +205,7 @@ eop_tlb_miss_handler(struct trapframe *trapframe, struct cpu_info *ci,
 	 */
 
 	va = faultva + PAGE_SIZE;
-	pte = pmap_segmap(pmap, va);
-	if (pte != NULL)
-		pte += uvtopte(va);
-
+	pte = pmap_pte_lookup(pmap, va);
 	if (pte == NULL || (*pte & PG_V) == 0) {
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = 0;
@@ -238,15 +233,13 @@ eop_tlb_miss_handler(struct trapframe *trapframe, struct cpu_info *ci,
 	tlb_set_wired((UPAGES / 2) + npairs);
 	for (i = 0, va = faultva & PG_HVPN; i != npairs;
 	    i++, va += 2 * PAGE_SIZE) {
-		pte = pmap_segmap(pmap, va);
+		pte = pmap_pte_lookup(pmap, va);
 		if (pte == NULL)
 			tlb_update_indexed(va | asid,
 			    PG_NV, PG_NV, (UPAGES / 2) + i);
-		else {
-			pte += uvtopte(va);
+		else
 			tlb_update_indexed(va | asid,
 			    pte[0], pte[1], (UPAGES / 2) + i);
-		}
 	}
 
 	/*

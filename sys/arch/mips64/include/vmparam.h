@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.27 2014/01/30 18:16:41 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.28 2016/12/22 15:33:36 visa Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 #define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(1*1024*1024*1024)	/* max data size */
+#define	MAXDSIZ		(16UL*1024*1024*1024)	/* max data size */
 #endif
 #ifndef BRKSIZ
 #define	BRKSIZ		MAXDSIZ			/* heap gap size */
@@ -97,14 +97,14 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0x0000000000004000L)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0x0000000080000000L)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)0x0000010000000000L)
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc000000000000000L)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xc000000040000000L)
 
-/* map PIE below 256MB (non-pie link address) to avoid mmap pressure */
+/* map PIE below 256GB (non-pie link address) to avoid mmap pressure */
 #define VM_PIE_MIN_ADDR		PAGE_SIZE
-#define VM_PIE_MAX_ADDR		(0x10000000UL)
+#define VM_PIE_MAX_ADDR		(0x4000000000UL)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.13 2016/08/16 13:03:58 visa Exp $
+#	$OpenBSD: genassym.cf,v 1.14 2016/12/22 15:33:36 visa Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -68,9 +68,11 @@ member	VMSPACE_PMAP	vm_map.pmap
 
 struct	pmap
 member	PM_ASID pm_asid[0].pma_asid
+export	NPDEPG
 export	NPTEPG
 export	PMAP_SEGTABSIZE
 export	SEGSHIFT
+export	DIRSHIFT
 
 export	CCA_CACHED
 export	CCA_COHERENT_EXCLWRITE
