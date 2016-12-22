@@ -1,4 +1,4 @@
-/*	$OpenBSD: printgprof.c,v 1.14 2015/12/06 23:22:51 guenther Exp $	*/
+/*	$OpenBSD: printgprof.c,v 1.15 2016/12/22 16:36:18 krw Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -394,9 +394,8 @@ sortchildren(nltype *parentp)
 	 *	    *prevp	arc before the arc you are comparing.
 	 */
     sorted.arc_childlist = 0;
-    for ((arcp = parentp -> children) && (detachedp = arcp -> arc_childlist);
-	    arcp ;
-	   (arcp = detachedp) && (detachedp = detachedp -> arc_childlist)) {
+    for (arcp = parentp -> children; arcp; arcp = detachedp) {
+	detachedp = arcp -> arc_childlist;
 	    /*
 	     *	consider *arcp as disconnected
 	     *	insert it into sorted
@@ -434,8 +433,8 @@ sortparents(nltype *childp)
 	 *	    *prevp	arc before the arc you are comparing.
 	 */
     sorted.arc_parentlist = 0;
-    for ((arcp = childp->parents) && (detachedp = arcp->arc_parentlist);
-	 arcp; (arcp = detachedp) && (detachedp = detachedp->arc_parentlist)) {
+    for (arcp = childp->parents; arcp; arcp = detachedp) {
+	detachedp = arcp->arc_parentlist;
 	    /*
 	     *	consider *arcp as disconnected
 	     *	insert it into sorted
@@ -511,8 +510,8 @@ sortmembers(nltype *cyclep)
 	 */
     todo = cyclep -> cnext;
     cyclep -> cnext = 0;
-    for ((doing = todo) && (todo = doing -> cnext);
-	 doing; (doing = todo) && (todo = doing -> cnext)) {
+    for (doing = todo; doing; doing = todo) {
+	todo = doing -> cnext;
 	for (prev = cyclep; prev -> cnext; prev = prev -> cnext)
 	    if (membercmp(doing, prev->cnext ) == GREATERTHAN)
 		break;
