@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.85 2016/12/22 12:10:06 schwarze Exp $
+# $OpenBSD: Makefile,v 1.86 2016/12/22 12:21:19 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -210,7 +210,6 @@ MAN=	\
 	X509_sign.3 \
 	X509_verify_cert.3 \
 	X509v3_get_ext_by_NID.3 \
-	bn_dump.3 \
 	crypto.3 \
 	d2i_ASN1_OBJECT.3 \
 	d2i_DHparams.3 \
