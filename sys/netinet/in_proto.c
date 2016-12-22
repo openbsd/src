@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.70 2015/12/03 21:57:59 mpi Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.71 2016/12/22 11:04:44 rzalamena Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -119,9 +119,6 @@
 #endif
 
 #include <netinet/igmp_var.h>
-#ifdef PIM
-#include <netinet/pim_var.h>
-#endif
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
@@ -247,13 +244,6 @@ struct protosw inetsw[] = {
   rip_usrreq,
   igmp_init,	igmp_fasttimo,	igmp_slowtimo,	0,		igmp_sysctl
 },
-#ifdef PIM
-{ SOCK_RAW,	&inetdomain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
-  pim_input,	rip_output,	0,		rip_ctloutput,
-  rip_usrreq,
-  0,		0,		0,		0,		pim_sysctl
-},
-#endif /* PIM */
 #ifdef IPSEC
 { SOCK_RAW,   &inetdomain,    IPPROTO_AH,     PR_ATOMIC|PR_ADDR,
   ah4_input,   rip_output,    ah4_ctlinput,   rip_ctloutput,

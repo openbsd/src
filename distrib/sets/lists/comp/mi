@@ -1028,8 +1028,6 @@
 ./usr/include/netinet/ip_ipsp.h
 ./usr/include/netinet/ip_mroute.h
 ./usr/include/netinet/ip_var.h
-./usr/include/netinet/pim.h
-./usr/include/netinet/pim_var.h
 ./usr/include/netinet/tcp.h
 ./usr/include/netinet/tcp_debug.h
 ./usr/include/netinet/tcp_fsm.h
@@ -1050,8 +1048,6 @@
 ./usr/include/netinet6/mld6.h
 ./usr/include/netinet6/mld6_var.h
 ./usr/include/netinet6/nd6.h
-./usr/include/netinet6/pim6.h
-./usr/include/netinet6/pim6_var.h
 ./usr/include/netinet6/raw_ip6.h
 ./usr/include/netinet6/tcpipv6.h
 ./usr/include/netmpls

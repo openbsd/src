@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.119 2016/09/04 17:05:24 claudio Exp $	*/
+/*	$OpenBSD: in.h,v 1.120 2016/12/22 11:04:44 rzalamena Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -487,7 +487,7 @@ struct ip_mreq {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "pim", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \

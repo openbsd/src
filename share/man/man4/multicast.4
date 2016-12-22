@@ -24,10 +24,10 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/multicast.4,v 1.4 2004/07/09 09:22:36 ru Exp $
-.\" $OpenBSD: multicast.4,v 1.10 2015/02/16 16:38:54 naddy Exp $
+.\" $OpenBSD: multicast.4,v 1.11 2016/12/22 11:04:44 rzalamena Exp $
 .\" $NetBSD: multicast.4,v 1.3 2004/09/12 13:12:26 wiz Exp $
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: December 22 2016 $
 .Dt MULTICAST 4
 .Os
 .\"
@@ -65,10 +65,8 @@ All multicast-capable routers must run a common multicast routing
 protocol.
 The Distance Vector Multicast Routing Protocol (DVMRP)
 was the first developed multicast routing protocol.
-Later, other protocols such as Multicast Extensions to OSPF (MOSPF),
-Core Based Trees (CBT),
-Protocol Independent Multicast \- Sparse Mode (PIM-SM),
-and Protocol Independent Multicast \- Dense Mode (PIM-DM)
+Later, other protocols such as Multicast Extensions to OSPF (MOSPF) and
+Core Based Trees (CBT)
 were developed as well.
 .Pp
 To start multicast routing,
@@ -149,12 +147,6 @@ ICMP6_FILTER_SETBLOCKALL(&filter);
 setsockopt(mrouter_s6, IPPROTO_ICMPV6, ICMP6_FILTER, (void *)&filter,
            sizeof(filter));
 .Ed
-.Pp
-After multicast forwarding is enabled, the multicast routing socket
-can be used to enable PIM processing in the kernel if either PIM-SM or
-PIM-DM are being used
-(see
-.Xr pim 4 ) .
 .Pp
 For each network interface (e.g., physical or a virtual tunnel)
 that would be used for multicast forwarding, a corresponding
@@ -582,9 +574,6 @@ flag is used to explicitly disable the
 .Dv IGMPMSG_WRONGVIF
 kernel signal at the (S,G) granularity if a multicast data packet
 arrives on the wrong interface.
-Usually this signal is used to
-complete the shortest-path switch for PIM-SM multicast routing,
-or to trigger a PIM assert message.
 However, it should not be delivered for interfaces that are not set in
 the outgoing interface, and that are not expecting to
 become an incoming interface.
@@ -595,88 +584,8 @@ interfaces, then a data packet that arrives on that interface for
 that MFC entry will NOT trigger a WRONGVIF signal.
 If that flag is not set, then a signal is triggered (the default action).
 .Pp
-The
-.Dv MRT_MFC_FLAGS_BORDER_VIF
-flag is used to specify whether the Border-bit in PIM
-Register messages should be set (when the Register encapsulation
-is performed inside the kernel).
-If it is set for the special PIM Register kernel virtual interface
-(see
-.Xr pim 4 ) ,
-the Border-bit in the Register messages sent to the RP will be set.
-.Pp
-The remaining six bits are reserved for future usage.
-.Pp
-The
-.Va mfcc_rp
-field is used to specify the RP address (for PIM-SM multicast routing)
-for a multicast
-group G if we want to perform kernel-level PIM Register encapsulation.
-The
-.Va mfcc_rp
-field is used only if the
-.Dv MRT_MFC_RP
-advanced API flag/capability has been successfully set by
-.Fn setsockopt MRT_API_CONFIG .
-.Pp
-.\"
-.\" 3. Kernel-level PIM Register encapsulation
-.\"
-If the
-.Dv MRT_MFC_RP
-flag was successfully set by
-.Fn setsockopt MRT_API_CONFIG ,
-then the kernel will attempt to perform
-the PIM Register encapsulation itself instead of sending the
-multicast data packets to user level (inside
-.Dv IGMPMSG_WHOLEPKT
-upcalls) for user-level encapsulation.
-The RP address would be taken from the
-.Va mfcc_rp
-field
-inside the new
-.Vt "struct mfcctl2" .
-However, even if the
-.Dv MRT_MFC_RP
-flag was successfully set, if the
-.Va mfcc_rp
-field was set to
-.Dv INADDR_ANY ,
-then the
-kernel will still deliver an
-.Dv IGMPMSG_WHOLEPKT
-upcall with the
-multicast data packet to the user-level process.
-.Pp
-In addition, if the multicast data packet is too large to fit within
-a single IP packet after the PIM Register encapsulation (e.g., if
-its size was on the order of 65500 bytes), the data packet will be
-fragmented, and then each of the fragments will be encapsulated
-separately.
-Note that typically a multicast data packet can be that
-large only if it was originated locally from the same hosts that
-performs the encapsulation; otherwise the transmission of the
-multicast data packet over Ethernet for example would have
-fragmented it into much smaller pieces.
-.\"
-.\" Note that if this code is ported to IPv6, we may need the kernel to
-.\" perform MTU discovery to the RP, and keep those discoveries inside
-.\" the kernel so the encapsulating router may send back ICMP
-.\" Fragmentation Required if the size of the multicast data packet is
-.\" too large (see "Encapsulating data packets in the Register Tunnel"
-.\" in Section 4.4.1 in the PIM-SM spec
-.\" draft-ietf-pim-sm-v2-new-05.{txt,ps}).
-.\" For IPv4 we may be able to get away without it, but for IPv6 we need
-.\" that.
-.\"
-.\" 4. Mechanism for "multicast bandwidth monitoring and upcalls".
-.\"
-.Pp
 Typically, a multicast routing user-level process would need to know the
 forwarding bandwidth for some data flow.
-For example, the multicast routing process may want to time out idle MFC
-entries, or for PIM-SM it can initiate (S,G) shortest-path switch if
-the bandwidth rate is above a threshold for example.
 .Pp
 The original solution for measuring the bandwidth of a dataflow was
 that a user-level process would periodically
@@ -947,7 +856,6 @@ after the previous upcall.
 .Xr intro 4 ,
 .Xr ip 4 ,
 .Xr ip6 4 ,
-.Xr pim 4 ,
 .Xr mrouted 8 ,
 .Xr sysctl 8
 .\"

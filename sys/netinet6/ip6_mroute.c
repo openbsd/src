@@ -77,7 +77,7 @@
  * Modified by Ajit Thyagarajan, PARC, August 1993
  * Modified by Bill Fenner, PARC, April 1994
  *
- * MROUTING Revision: 3.5.1.2 + PIM-SMv2 (pimd) Support
+ * MROUTING Revision: 3.5.1.2
  */
 
 #include <sys/param.h>
@@ -105,16 +105,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_mroute.h>
 
-#ifdef PIM
-#include <netinet/pim.h>
-#include <netinet6/pim6_var.h>
-
-int set_pim6(int *);
-int get_pim6(struct mbuf *);
-int socket6_send(struct socket *, struct mbuf *, struct sockaddr_in6 *);
-int register_send(struct ip6_hdr *, struct mif6 *, struct mbuf *);
-#endif
-
 int ip6_mdq(struct mbuf *, struct ifnet *, struct mf6c *);
 void phyint_send6(struct ip6_hdr *, struct mif6 *, struct mbuf *);
 
@@ -124,7 +114,7 @@ void phyint_send6(struct ip6_hdr *, struct mif6 *, struct mbuf *);
  */
 struct socket  *ip6_mrouter = NULL;
 int		ip6_mrouter_ver = 0;
-int		ip6_mrtproto = IPPROTO_PIM;    /* for netstat only */
+int		ip6_mrtproto;    /* for netstat only */
 struct mrt6stat	mrt6stat;
 
 #define NO_RTE_FOUND	0x1
@@ -150,11 +140,6 @@ void expire_upcalls6(void *);
 static mifi_t nummifs = 0;
 static mifi_t reg_mif_num = (mifi_t)-1;
 unsigned int reg_mif_idx;
-
-#ifdef PIM
-struct pim6stat pim6stat;
-static int pim6;
-#endif
 
 /*
  * Hash function for a source, group entry
@@ -251,12 +236,6 @@ ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
 		if (m == NULL || m->m_len < sizeof(struct mf6cctl))
 			return (EINVAL);
 		return (del_m6fc(mtod(m,  struct mf6cctl *)));
-#ifdef PIM
-	case MRT6_PIM:
-		if (m == NULL || m->m_len < sizeof(int))
-			return (EINVAL);
-		return (set_pim6(mtod(m, int *)));
-#endif
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -274,10 +253,6 @@ ip6_mrouter_get(int cmd, struct socket *so, struct mbuf **mp)
 	*mp = m_get(M_WAIT, MT_SOOPTS);
 
 	switch (cmd) {
-#ifdef PIM
-	case MRT6_PIM:
-		return get_pim6(*mp);
-#endif
 	default:
 		return EOPNOTSUPP;
 	}
@@ -439,34 +414,6 @@ mrt6_sysctl_mfc(void *oldp, size_t *oldlenp)
 	return (0);
 }
 
-#ifdef PIM
-/*
- * Get PIM processiong global
- */
-int
-get_pim6(struct mbuf *m)
-{
-	int *i;
-
-	i = mtod(m, int *);
-
-	*i = pim6;
-
-	return 0;
-}
-
-int
-set_pim6(int *i)
-{
-	if ((*i != 1) && (*i != 0))
-		return EINVAL;
-
-	pim6 = *i;
-
-	return 0;
-}
-#endif
-
 /*
  * Enable multicast routing
  */
@@ -489,10 +436,6 @@ ip6_mrouter_init(struct socket *so, int v, int cmd)
 	bzero((caddr_t)mf6ctable, sizeof(mf6ctable));
 	arc4random_buf(&mf6chashkey, sizeof(mf6chashkey));
 	bzero((caddr_t)n6expire, sizeof(n6expire));
-
-#ifdef PIM
-	pim6 = 0;/* used for stubbing out/in pim stuff */
-#endif
 
 	timeout_set(&expire_upcalls6_ch, expire_upcalls6, NULL);
 	timeout_add(&expire_upcalls6_ch, EXPIRE_TIMEOUT);
@@ -543,10 +486,6 @@ ip6_mrouter_done(void)
 	}
 	bzero((caddr_t)mif6table, sizeof(mif6table));
 	nummifs = 0;
-
-#ifdef PIM
-	pim6 = 0; /* used to stub out/in pim specific code */
-#endif
 
 	timeout_del(&expire_upcalls6_ch);
 
@@ -629,27 +568,6 @@ add_m6if(struct mif6ctl *mifcp)
 	if (mifp->m6_ifp)
 		return EADDRINUSE; /* XXX: is it appropriate? */
 
-#ifdef PIM
-	if (mifcp->mif6c_flags & MIFF_REGISTER) {
-		if (reg_mif_num == (mifi_t)-1) {
-			ifp = malloc(sizeof(*ifp), M_DEVBUF, M_NOWAIT|M_ZERO);
-			if (ifp == NULL)
-				return (ENOMEM);
-			snprintf(ifp->if_xname, sizeof(ifp->if_xname),
-			    "register_mif");
-			ifp->if_flags |= IFF_LOOPBACK;
-			if_attach(ifp);
-			if_alloc_sadl(ifp);
-
-			reg_mif_num = mifcp->mif6c_mifi;
-			reg_mif_idx = ifp->if_index;
-			mifcp->mif6c_pifi = ifp->if_index;
-		}
-
-		ifp = if_get(reg_mif_idx);
-		KASSERT(ifp != NULL);
-	} else
-#endif
 	{
 		ifp = if_get(mifcp->mif6c_pifi);
 		if (ifp == NULL)
@@ -1241,73 +1159,6 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 		/* came in the wrong interface */
 		mrt6stat.mrt6s_wrong_if++;
 		rt->mf6c_wrong_if++;
-#ifdef PIM
-		/*
-		 * If we are doing PIM processing, and we are forwarding
-		 * packets on this interface, send a message to the
-		 * routing daemon.
-		 */
-		/* have to make sure this is a valid mif */
-		if (mifi < nummifs && mif6table[mifi].m6_ifp) {
-			mifi_t iif;
-
-			if (pim6 && (m->m_flags & M_LOOP) == 0) {
-				/*
-				 * Check the M_LOOP flag to avoid an
-				 * unnecessary PIM assert.
-				 * XXX: M_LOOP is an ad-hoc hack...
-				 */
-				struct sockaddr_in6 sin6;
-
-				struct mbuf *mm;
-				struct mrt6msg *im;
-
-				mm = m_copym(m, 0, sizeof(struct ip6_hdr),
-				    M_NOWAIT);
-				if (mm &&
-				    (M_READONLY(mm) ||
-				     mm->m_len < sizeof(struct ip6_hdr)))
-					mm = m_pullup(mm, sizeof(struct ip6_hdr));
-				if (mm == NULL)
-					return ENOBUFS;
-
-				im = NULL;
-				switch (ip6_mrouter_ver) {
-				case MRT6_INIT:
-					im = mtod(mm, struct mrt6msg *);
-					im->im6_msgtype = MRT6MSG_WRONGMIF;
-					im->im6_mbz = 0;
-					break;
-				default:
-					m_freem(mm);
-					return EINVAL;
-				}
-
-				for (mifp = mif6table, iif = 0;
-				     iif < nummifs && mifp &&
-					     mifp->m6_ifp != ifp;
-				     mifp++, iif++)
-					;
-
-				(void)memset(&sin6, 0, sizeof(sin6));
-				sin6.sin6_len = sizeof(sin6);
-				sin6.sin6_family = AF_INET6;
-				switch (ip6_mrouter_ver) {
-				case MRT6_INIT:
-					im->im6_mif = iif;
-					sin6.sin6_addr = im->im6_src;
-					break;
-				}
-
-				mrt6stat.mrt6s_upcalls++;
-
-				if (socket6_send(ip6_mrouter, mm, &sin6) < 0) {
-					++mrt6stat.mrt6s_upq_sockfull;
-					return ENOBUFS;
-				}
-			}
-		}
-#endif /* PIM */
 		return 0;
 	}			/* if wrong iif */
 
@@ -1335,8 +1186,6 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 			/*
 			 * check if the outgoing packet is going to break
 			 * a scope boundary.
-			 * XXX For packets through PIM register tunnel
-			 * interface, we believe a routing daemon.
 			 */
 			if ((mif6table[rt->mf6c_parent].m6_flags &
 			     MIFF_REGISTER) == 0 &&
@@ -1353,11 +1202,6 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 
 			mifp->m6_pkt_out++;
 			mifp->m6_bytes_out += plen;
-#ifdef PIM
-			if (mifp->m6_flags & MIFF_REGISTER)
-			    register_send(ip6, mifp, m);
-			else
-#endif
 			    phyint_send6(ip6, mifp, m);
 		}
 	}
@@ -1442,246 +1286,6 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 
 	splx(s);
 }
-
-#ifdef PIM
-int
-register_send(struct ip6_hdr *ip6, struct mif6 *mif, struct mbuf *m)
-{
-	struct mbuf *mm;
-	int i, len = m->m_pkthdr.len;
-	struct sockaddr_in6 sin6;
-	struct mrt6msg *im6;
-
-	++pim6stat.pim6s_snd_registers;
-
-	/* Make a copy of the packet to send to the user level process */
-	MGETHDR(mm, M_DONTWAIT, MT_HEADER);
-	if (mm == NULL)
-		return ENOBUFS;
-	mm->m_data += max_linkhdr;
-	mm->m_len = sizeof(struct ip6_hdr);
-
-	if ((mm->m_next = m_copym(m, 0, M_COPYALL, M_NOWAIT)) == NULL) {
-		m_freem(mm);
-		return ENOBUFS;
-	}
-	i = MHLEN - M_LEADINGSPACE(mm);
-	if (i > len)
-		i = len;
-	mm = m_pullup(mm, i);
-	if (mm == NULL)
-		return ENOBUFS;
-/* TODO: check it! */
-	mm->m_pkthdr.len = len + sizeof(struct ip6_hdr);
-
-	/*
-	 * Send message to routing daemon
-	 */
-	(void)memset(&sin6, 0, sizeof(sin6));
-	sin6.sin6_len = sizeof(sin6);
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_addr = ip6->ip6_src;
-
-	im6 = mtod(mm, struct mrt6msg *);
-	im6->im6_msgtype      = MRT6MSG_WHOLEPKT;
-	im6->im6_mbz          = 0;
-
-	im6->im6_mif = mif - mif6table;
-
-	/* iif info is not given for reg. encap.n */
-	mrt6stat.mrt6s_upcalls++;
-
-	if (socket6_send(ip6_mrouter, mm, &sin6) < 0) {
-		++mrt6stat.mrt6s_upq_sockfull;
-		return ENOBUFS;
-	}
-	return 0;
-}
-
-/*
- * PIM sparse mode hook
- * Receives the pim control messages, and passes them up to the listening
- * socket, using rip6_input.
- * The only message processed is the REGISTER pim message; the pim header
- * is stripped off, and the inner packet is passed to register_mforward.
- */
-int
-pim6_input(struct mbuf **mp, int *offp, int proto)
-{
-	struct pim *pim; /* pointer to a pim struct */
-	struct ip6_hdr *ip6;
-	int pimlen;
-	struct mbuf *m = *mp;
-	int minlen;
-	int off = *offp;
-
-	++pim6stat.pim6s_rcv_total;
-
-	ip6 = mtod(m, struct ip6_hdr *);
-	pimlen = m->m_pkthdr.len - *offp;
-
-	/*
-	 * Validate lengths
-	 */
-	if (pimlen < PIM_MINLEN) {
-		++pim6stat.pim6s_rcv_tooshort;
-		m_freem(m);
-		return (IPPROTO_DONE);
-	}
-
-	/*
-	 * if the packet is at least as big as a REGISTER, go ahead
-	 * and grab the PIM REGISTER header size, to avoid another
-	 * possible m_pullup() later.
-	 *
-	 * PIM_MINLEN       == pimhdr + u_int32 == 8
-	 * PIM6_REG_MINLEN   == pimhdr + reghdr + eip6hdr == 4 + 4 + 40
-	 */
-	minlen = (pimlen >= PIM6_REG_MINLEN) ? PIM6_REG_MINLEN : PIM_MINLEN;
-
-	/*
-	 * Make sure that the IP6 and PIM headers in contiguous memory, and
-	 * possibly the PIM REGISTER header
-	 */
-	IP6_EXTHDR_GET(pim, struct pim *, m, off, minlen);
-	if (pim == NULL) {
-		pim6stat.pim6s_rcv_tooshort++;
-		return IPPROTO_DONE;
-	}
-
-	/* PIM version check */
-	if (pim->pim_ver != PIM_VERSION) {
-		++pim6stat.pim6s_rcv_badversion;
-		m_freem(m);
-		return (IPPROTO_DONE);
-	}
-
-#define PIM6_CHECKSUM
-#ifdef PIM6_CHECKSUM
-	{
-		int cksumlen;
-
-		/*
-		 * Validate checksum.
-		 * If PIM REGISTER, exclude the data packet
-		 */
-		if (pim->pim_type == PIM_REGISTER)
-			cksumlen = PIM_MINLEN;
-		else
-			cksumlen = pimlen;
-
-		if (in6_cksum(m, IPPROTO_PIM, off, cksumlen)) {
-			++pim6stat.pim6s_rcv_badsum;
-			m_freem(m);
-			return (IPPROTO_DONE);
-		}
-	}
-#endif /* PIM_CHECKSUM */
-
-	if (pim->pim_type == PIM_REGISTER) {
-		/*
-		 * since this is a REGISTER, we'll make a copy of the register
-		 * headers ip6+pim+u_int32_t+encap_ip6, to be passed up to the
-		 * routing daemon.
-		 */
-		static struct sockaddr_in6 dst = { sizeof(dst), AF_INET6 };
-
-		struct mbuf *mcp;
-		struct ip6_hdr *eip6;
-		u_int32_t *reghdr;
-
-		++pim6stat.pim6s_rcv_registers;
-
-		if ((reg_mif_num >= nummifs) || (reg_mif_num == (mifi_t) -1)) {
-			m_freem(m);
-			return (IPPROTO_DONE);
-		}
-
-		reghdr = (u_int32_t *)(pim + 1);
-
-		if ((ntohl(*reghdr) & PIM_NULL_REGISTER))
-			goto pim6_input_to_daemon;
-
-		/*
-		 * Validate length
-		 */
-		if (pimlen < PIM6_REG_MINLEN) {
-			++pim6stat.pim6s_rcv_tooshort;
-			++pim6stat.pim6s_rcv_badregisters;
-			m_freem(m);
-			return (IPPROTO_DONE);
-		}
-
-		eip6 = (struct ip6_hdr *) (reghdr + 1);
-		/* verify the version number of the inner packet */
-		if ((eip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
-			++pim6stat.pim6s_rcv_badregisters;
-			m_freem(m);
-			return (IPPROTO_NONE);
-		}
-
-		/* verify the inner packet is destined to a mcast group */
-		if (!IN6_IS_ADDR_MULTICAST(&eip6->ip6_dst)) {
-			++pim6stat.pim6s_rcv_badregisters;
-			m_freem(m);
-			return (IPPROTO_DONE);
-		}
-
-		/*
-		 * make a copy of the whole header to pass to the daemon later.
-		 */
-		mcp = m_copym(m, 0, off + PIM6_REG_MINLEN, M_NOWAIT);
-		if (mcp == NULL) {
-			m_freem(m);
-			return (IPPROTO_DONE);
-		}
-
-		/*
-		 * forward the inner ip6 packet; point m_data at the inner ip6.
-		 */
-		m_adj(m, off + PIM_MINLEN);
-		if_input_local(mif6table[reg_mif_num].m6_ifp, m,
-		    dst.sin6_family);
-
-		/* prepare the register head to send to the mrouting daemon */
-		m = mcp;
-	}
-
-	/*
-	 * Pass the PIM message up to the daemon; if it is a register message
-	 * pass the 'head' only up to the daemon. This includes the
-	 * encapsulator ip6 header, pim header, register header and the
-	 * encapsulated ip6 header.
-	 */
-  pim6_input_to_daemon:
-	rip6_input(&m, offp, proto);
-	return (IPPROTO_DONE);
-}
-
-/*
- * Sysctl for pim6 variables.
- */
-int
-pim6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
-{
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case PIM6CTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &pim6stat, sizeof(pim6stat)));
-
-	default:
-		return (ENOPROTOOPT);
-	}
-	/* NOTREACHED */
-}
-#endif /* PIM */
 
 u_int32_t
 _mf6chash(const struct in6_addr *a, const struct in6_addr *g)

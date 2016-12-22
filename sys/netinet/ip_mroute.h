@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.23 2016/12/20 09:33:13 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.24 2016/12/22 11:04:44 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -15,8 +15,7 @@
  * Modified by Pavlin Radoslavov, ICSI, October 2002.
  *
  * MROUTING Revision: 1.2
- * and PIM-SMv2 and PIM-DM support, advanced API support,
- * bandwidth metering and signaling.
+ * advanced API support, bandwidth metering and signaling.
  */
 
 #include <sys/queue.h>
@@ -33,7 +32,6 @@
 #define	MRT_DEL_MFC		105	/* delete forwarding cache entry */
 #define	MRT_VERSION		106	/* get kernel version number */
 #define	MRT_ASSERT		107	/* enable assert processing */
-#define	MRT_PIM			MRT_ASSERT /* enable PIM processing */
 #define	MRT_API_SUPPORT		109	/* supported MRT API */
 #define	MRT_API_CONFIG		110	/* config MRT API */
 
@@ -55,7 +53,6 @@ typedef u_int16_t vifi_t;		/* type of a vif index */
 
 #define	VIFF_TUNNEL	0x1		/* vif represents a tunnel end-point */
 #define	VIFF_SRCRT	0x2		/* tunnel uses IP src routing */
-#define	VIFF_REGISTER	0x4		/* used for PIM Register encap/decap */
 
 /*
  * Argument structure for MRT_ADD_VIF.
@@ -103,11 +100,9 @@ struct mfcctl2 {
  * for the mfcc_flags field.
  */
 #define	MRT_MFC_FLAGS_DISABLE_WRONGVIF	(1 << 0) /* disable WRONGVIF signals */
-#define	MRT_MFC_FLAGS_BORDER_VIF	(1 << 1) /* border vif		     */
 #define	MRT_MFC_RP			(1 << 8) /* enable RP address	     */
 #define	MRT_MFC_BW_UPCALL		(1 << 9) /* enable bw upcalls	     */
-#define	MRT_MFC_FLAGS_ALL		(MRT_MFC_FLAGS_DISABLE_WRONGVIF |    \
-					 MRT_MFC_FLAGS_BORDER_VIF)
+#define	MRT_MFC_FLAGS_ALL		(MRT_MFC_FLAGS_DISABLE_WRONGVIF)
 #define	MRT_API_FLAGS_ALL		(MRT_MFC_FLAGS_ALL |		     \
 					 MRT_MFC_RP |			     \
 					 MRT_MFC_BW_UPCALL)
@@ -283,7 +278,6 @@ struct igmpmsg {
 	u_int8_t  im_msgtype;		/* what type of message */
 #define	IGMPMSG_NOCACHE		1	/* no MFC in the kernel		    */
 #define	IGMPMSG_WRONGVIF	2	/* packet came from wrong interface */
-#define	IGMPMSG_WHOLEPKT	3	/* PIM pkt for user level encap.    */
 #define	IGMPMSG_BW_UPCALL	4	/* BW monitoring upcall		    */
 	u_int8_t  im_mbz;		/* must be zero */
 	u_int8_t  im_vif;		/* vif rec'd on */

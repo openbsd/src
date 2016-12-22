@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.223 2016/10/18 09:31:05 otto Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.224 2016/12/22 11:04:44 rzalamena Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/pim6_var.h>
 #include <netinet6/ip6_divert.h>
 
 #include <netmpls/mpls.h>
@@ -565,8 +564,7 @@ parse(char *string, int flags)
 			if (len < 0)
 				return;
 
-			if ((mib[2] == IPPROTO_PIM && mib[3] == PIM6CTL_STATS) ||
-			    (mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMFC) ||
+			if ((mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMFC) ||
 			    (mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMIF) ||
 			    (mib[2] == IPPROTO_DIVERT && mib[3] == DIVERT6CTL_STATS)) {
 				if (flags == 0)
@@ -1989,7 +1987,6 @@ sysctl_inet(char *string, char **bufpp, int mib[], int flags, int *typep)
 struct ctlname inet6name[] = CTL_IPV6PROTO_NAMES;
 struct ctlname ip6name[] = IPV6CTL_NAMES;
 struct ctlname icmp6name[] = ICMPV6CTL_NAMES;
-struct ctlname pim6name[] = PIM6CTL_NAMES;
 struct ctlname divert6name[] = DIVERT6CTL_NAMES;
 struct list inet6list = { inet6name, IPV6PROTO_MAXID };
 struct list inet6vars[] = {
@@ -2028,7 +2025,7 @@ struct list inet6vars[] = {
 /*100*/	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ pim6name, PIM6CTL_MAXID },	/* pim6 */
+	{ 0, 0 },	/* pim6 */
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },

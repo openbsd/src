@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.86 2016/06/01 11:11:44 jca Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.87 2016/12/22 11:04:44 rzalamena Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -90,10 +90,6 @@
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ipip.h>
-
-#ifdef PIM
-#include <netinet6/pim6_var.h>
-#endif
 
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
@@ -218,13 +214,6 @@ struct ip6protosw inet6sw[] = {
   0,		0,		0,		0,
 },
 #endif /* GIF */
-#ifdef PIM
-{ SOCK_RAW,	&inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
-  pim6_input,	rip6_output,	0,		rip6_ctloutput,
-  rip6_usrreq,
-  0,		0,		0,		0,		pim6_sysctl
-},
-#endif /* PIM */
 #if NCARP > 0
 { SOCK_RAW,	&inet6domain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
   carp6_proto_input,	rip6_output,	0,	rip6_ctloutput,

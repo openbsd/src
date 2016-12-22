@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.50 2016/03/28 07:30:28 jca Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.51 2016/12/22 11:04:44 rzalamena Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -45,7 +45,6 @@
 #include <netinet/ip_var.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/pim6_var.h>
 #include <netinet6/raw_ip6.h>
 #include <netinet6/ip6_divert.h>
 
@@ -168,7 +167,7 @@ static	char *ip6nh[] = {
 	"#100",
 	"#101",
 	"#102",
-	"PIM",
+	"#103",
 	"#104",
 	"#105",
 	"#106",
@@ -823,37 +822,6 @@ icmp6_stats(char *name)
 	p(icp6s_pmtuchg, "\t%llu path MTU change%s\n");
 #undef p
 #undef p_5
-}
-
-/*
- * Dump PIM statistics structure.
- */
-void
-pim6_stats(char *name)
-{
-	struct pim6stat pim6stat;
-	int mib[] = { CTL_NET, PF_INET6, IPPROTO_PIM, PIM6CTL_STATS };
-	size_t len = sizeof(pim6stat);
-
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    &pim6stat, &len, NULL, 0) == -1) {
-		if (errno != ENOPROTOOPT)
-			warn("%s", name);
-		return;
-	}
-
-	printf("%s:\n", name);
-#define	p(f, m) if (pim6stat.f || sflag <= 1) \
-	printf(m, (unsigned long long)pim6stat.f, plural(pim6stat.f))
-
-	p(pim6s_rcv_total, "\t%llu message%s received\n");
-	p(pim6s_rcv_tooshort, "\t%llu message%s received with too few bytes\n");
-	p(pim6s_rcv_badsum, "\t%llu message%s received with bad checksum\n");
-	p(pim6s_rcv_badversion, "\t%llu message%s received with bad version\n");
-	p(pim6s_rcv_registers, "\t%llu register%s received\n");
-	p(pim6s_rcv_badregisters, "\t%llu bad register%s received\n");
-	p(pim6s_snd_registers, "\t%llu register%s sent\n");
-#undef p
 }
 
 /*

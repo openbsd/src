@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.91 2016/10/03 12:33:21 mpi Exp $	*/
+/*	$OpenBSD: in6.h,v 1.92 2016/12/22 11:04:44 rzalamena Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -511,7 +511,7 @@ ifatoia6(struct ifaddr *ifa)
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "pim6", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \

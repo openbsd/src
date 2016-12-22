@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.100 2016/12/21 12:05:01 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.101 2016/12/22 11:04:44 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -53,13 +53,8 @@
  * Modified by Pavlin Radoslavov, ICSI, October 2002
  *
  * MROUTING Revision: 1.2
- * and PIM-SMv2 and PIM-DM support, advanced API support,
- * bandwidth metering and signaling
+ * advanced API support, bandwidth metering and signaling
  */
-
-#ifdef PIM
-#define _PIM_VT 1
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,11 +81,6 @@
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
-
-#ifdef PIM
-#include <netinet/pim.h>
-#include <netinet/pim_var.h>
-#endif
 
 #define	M_PULLUP(m, len)						 \
 	do {								 \
@@ -147,70 +137,6 @@ int ip_mdq(struct mbuf *, struct ifnet *, struct mfc *);
 void phyint_send(struct ip *, struct vif *, struct mbuf *);
 void send_packet(struct vif *, struct mbuf *);
 
-#ifdef PIM
-int pim_register_send(struct ip *, struct vif *,
-    struct mbuf *, struct mfc *, unsigned int);
-int pim_register_send_rp(struct ip *, struct vif *,
-    struct mbuf *, struct mfc *, unsigned int);
-int pim_register_send_upcall(struct ip *, struct vif *,
-    struct mbuf *, struct mfc *, unsigned int);
-struct mbuf *pim_register_prepare(struct ip *, struct mbuf *);
-int set_assert(struct mbuf *);
-int get_assert(struct mbuf *);
-
-struct pimstat pimstat;
-
-/*
- * Note: the PIM Register encapsulation adds the following in front of a
- * data packet:
- *
- * struct pim_encap_hdr {
- *    struct ip ip;
- *    struct pim_encap_pimhdr  pim;
- * }
- *
- */
-struct pim_encap_pimhdr {
-	struct pim pim;
-	uint32_t   flags;
-};
-#define	PIM_ENCAP_TTL	64
-
-static struct ip pim_encap_iphdr = {
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sizeof(struct ip) >> 2,
-	IPVERSION,
-#else
-	IPVERSION,
-	sizeof(struct ip) >> 2,
-#endif
-	0,			/* tos */
-	sizeof(struct ip),	/* total length */
-	0,			/* id */
-	0,			/* frag offset */ 
-	PIM_ENCAP_TTL,
-	IPPROTO_PIM,
-	0,			/* checksum */
-};
-
-static struct pim_encap_pimhdr pim_encap_pimhdr = {
-    {
-	PIM_MAKE_VT(PIM_VERSION, PIM_REGISTER), /* PIM vers and message type */
-	0,			/* reserved */
-	0,			/* checksum */
-    },
-    0				/* flags */
-};
-
-static struct ifnet multicast_register_if;
-static vifi_t reg_vif_num = VIFI_INVALID;
-
-/*
- * whether or not special PIM assert processing is enabled.
- */
-static int pim_assert;
-#endif /* PIM */
-
 static vifi_t	   numvifs = 0;
 
 /*
@@ -224,7 +150,6 @@ static vifi_t	   numvifs = 0;
  * recorded in `mrt_api_support'.
  */
 static const u_int32_t mrt_api_support = (MRT_MFC_FLAGS_DISABLE_WRONGVIF |
-					  MRT_MFC_FLAGS_BORDER_VIF |
 					  MRT_MFC_RP);
 static u_int32_t mrt_api_config = 0;
 
@@ -309,11 +234,6 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
 		case MRT_DEL_MFC:
 			error = del_mfc(so, *mp);
 			break;
-#ifdef PIM
-		case MRT_ASSERT:
-			error = set_assert(*mp);
-			break;
-#endif
 		case MRT_API_CONFIG:
 			error = set_api_config(so, *mp);
 			break;
@@ -344,11 +264,6 @@ ip_mrouter_get(struct socket *so, int optname, struct mbuf **mp)
 		case MRT_VERSION:
 			error = get_version(*mp);
 			break;
-#ifdef PIM
-		case MRT_ASSERT:
-			error = get_assert(*mp);
-			break;
-#endif
 		case MRT_API_SUPPORT:
 			error = get_api_support(*mp);
 			break;
@@ -651,37 +566,6 @@ get_version(struct mbuf *m)
 	return (0);
 }
 
-#ifdef PIM
-/*
- * Set PIM assert processing global
- */
-int
-set_assert(struct mbuf *m)
-{
-	int *i;
-
-	if (m == NULL || m->m_len < sizeof(int))
-		return (EINVAL);
-
-	i = mtod(m, int *);
-	pim_assert = !!*i;
-	return (0);
-}
-
-/*
- * Get PIM assert processing global
- */
-int
-get_assert(struct mbuf *m)
-{
-	int *i = mtod(m, int *);
-
-	*i = pim_assert;
-	m->m_len = sizeof(int);
-	return (0);
-}
-#endif
-
 /*
  * Configure API capabilities
  */
@@ -702,19 +586,12 @@ set_api_config(struct socket *so, struct mbuf *m)
 	 * We can set the API capabilities only if it is the first operation
 	 * after MRT_INIT. I.e.:
 	 *  - there are no vifs installed
-	 *  - pim_assert is not enabled
 	 *  - the MFC table is empty
 	 */
 	if (numvifs > 0) {
 		*apival = 0;
 		return (EPERM);
 	}
-#ifdef PIM
-	if (pim_assert) {
-		*apival = 0;
-		return (EPERM);
-	}
-#endif
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		if (mfchashtbl[rtableid] == NULL)
 			break;
@@ -799,16 +676,6 @@ add_vif(struct socket *so, struct mbuf *m)
 	/* Tunnels are no longer supported use gif(4) instead. */
 	if (vifcp->vifc_flags & VIFF_TUNNEL)
 		return (EOPNOTSUPP);
-
-#ifdef PIM
-	if (vifcp->vifc_flags & VIFF_REGISTER) {
-		/*
-		 * XXX: Because VIFF_REGISTER does not really need a valid
-		 * local interface (e.g. it could be 127.0.0.2), we don't
-		 * check its address.
-		 */
-	} else
-#endif
 	{
 		inp = sotoinpcb(so);
 		sin.sin_addr = vifcp->vifc_lcl_addr;
@@ -817,18 +684,6 @@ add_vif(struct socket *so, struct mbuf *m)
 			return (EADDRNOTAVAIL);
 	}
 
-#ifdef PIM
-	if (vifcp->vifc_flags & VIFF_REGISTER) {
-		ifp = &multicast_register_if;
-		if (reg_vif_num == VIFI_INVALID) {
-			memset(ifp, 0, sizeof(*ifp));
-			snprintf(ifp->if_xname, sizeof ifp->if_xname,
-				 "register_vif");
-			ifp->if_flags = IFF_LOOPBACK;
-			reg_vif_num = vifcp->vifc_vifi;
-		}
-	} else
-#endif
 	 {
 		/* Use the physical interface associated with the address. */
 		ifp = ifa->ifa_ifp;
@@ -875,11 +730,6 @@ reset_vif(struct vif *vifp)
 	struct ifnet *ifp;
 	struct ifreq ifr;
 
-#ifdef PIM
-	if (vifp->v_flags & VIFF_REGISTER) {
-		reg_vif_num = VIFI_INVALID;
-	} else
-#endif
 	{
 		memset(&ifr, 0, sizeof(ifr));
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
@@ -1465,72 +1315,6 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 		/* came in the wrong interface */
 		++mrtstat.mrts_wrong_if;
 		++rt->mfc_wrong_if;
-#ifdef PIM
-		/*
-		 * If we are doing PIM assert processing, send a message
-		 * to the routing daemon.
-		 *
-		 * XXX: A PIM-SM router needs the WRONGVIF detection so it
-		 * can complete the SPT switch, regardless of the type
-		 * of interface (broadcast media, GRE tunnel, etc).
-		 */
-		if (pim_assert && (vifi < numvifs) && viftable[vifi].v_ifp) {
-			struct timeval now;
-			u_int32_t delta;
-
-			if (ifp == &multicast_register_if)
-				pimstat.pims_rcv_registers_wrongiif++;
-
-			/* Get vifi for the incoming packet */
-			for (vifi = 0;
-			     vifi < numvifs && viftable[vifi].v_ifp != ifp;
-			     vifi++)
-			    ;
-			if (vifi >= numvifs) {
-				/* The iif is not found: ignore the packet. */
-				return (0);
-			}
-
-			if (rt->mfc_flags[vifi] &
-			    MRT_MFC_FLAGS_DISABLE_WRONGVIF) {
-				/* WRONGVIF disabled: ignore the packet */
-				return (0);
-			}
-
-			microtime(&now);
-
-			TV_DELTA(rt->mfc_last_assert, now, delta);
-
-			if (delta > ASSERT_MSG_TIME) {
-				unsigned int rtableid = ifp->if_rdomain;
-				struct igmpmsg *im;
-				int hlen = ip->ip_hl << 2;
-				struct mbuf *mm = m_copym(m, 0, hlen, M_NOWAIT);
-
-				M_PULLUP(mm, hlen);
-				if (mm == NULL)
-					return (ENOBUFS);
-
-				rt->mfc_last_assert = now;
-
-				im = mtod(mm, struct igmpmsg *);
-				im->im_msgtype	= IGMPMSG_WRONGVIF;
-				im->im_mbz	= 0;
-				im->im_vif	= vifi;
-
-				mrtstat.mrts_upcalls++;
-
-				sin.sin_addr = im->im_src;
-				if (socket_send(ip_mrouter[rtableid], mm,
-				    &sin) < 0) {
-					log(LOG_WARNING, "ip_mforward: "
-					    "ip_mrouter socket queue full\n");
-					++mrtstat.mrts_upq_sockfull;
-					return (ENOBUFS);
-				}
-			}
-		}
-#endif
 		return (0);
 	}
 
@@ -1556,11 +1340,6 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			(ip->ip_ttl > rt->mfc_ttls[vifi])) {
 			vifp->v_pkt_out++;
 			vifp->v_bytes_out += plen;
-#ifdef PIM
-			if (vifp->v_flags & VIFF_REGISTER)
-				pim_register_send(ip, vifp, m, rt, rtableid);
-			else
-#endif
 			phyint_send(ip, vifp, m);
 		}
 
@@ -1604,441 +1383,3 @@ send_packet(struct vif *vifp, struct mbuf *m)
 	ip_output(m, NULL, NULL, IP_FORWARDING, &imo, NULL, 0);
 	splx(s);
 }
-
-#ifdef PIM
-/*
- * Send the packet up to the user daemon, or eventually do kernel encapsulation
- */
-int
-pim_register_send(struct ip *ip, struct vif *vifp,
-    struct mbuf *m, struct mfc *rt, unsigned int rtableid)
-{
-	struct mbuf *mb_copy, *mm;
-
-	mb_copy = pim_register_prepare(ip, m);
-	if (mb_copy == NULL)
-		return (ENOBUFS);
-
-	/*
-	 * Send all the fragments. Note that the mbuf for each fragment
-	 * is freed by the sending machinery.
-	 */
-	for (mm = mb_copy; mm; mm = mb_copy) {
-		mb_copy = mm->m_nextpkt;
-		mm->m_nextpkt = NULL;
-		mm = m_pullup(mm, sizeof(struct ip));
-		if (mm != NULL) {
-			ip = mtod(mm, struct ip *);
-			if ((mrt_api_config & MRT_MFC_RP) &&
-			    !in_nullhost(rt->mfc_rp)) {
-				pim_register_send_rp(ip, vifp, mm, rt,
-				    rtableid);
-			} else {
-				pim_register_send_upcall(ip, vifp, mm, rt,
-				    rtableid);
-			}
-		}
-	}
-
-	return (0);
-}
-
-/*
- * Return a copy of the data packet that is ready for PIM Register
- * encapsulation.
- * XXX: Note that in the returned copy the IP header is a valid one.
- */
-struct mbuf *
-pim_register_prepare(struct ip *ip, struct mbuf *m)
-{
-	struct mbuf *mb_copy = NULL;
-	int mtu;
-
-	in_proto_cksum_out(m, NULL);
-
-	/*
-	 * Copy the old packet & pullup its IP header into the
-	 * new mbuf so we can modify it.
-	 */
-	mb_copy = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-	if (mb_copy == NULL)
-		return (NULL);
-	mb_copy = m_pullup(mb_copy, ip->ip_hl << 2);
-	if (mb_copy == NULL)
-		return (NULL);
-
-	/* take care of the TTL */
-	ip = mtod(mb_copy, struct ip *);
-	--ip->ip_ttl;
-
-	/* Compute the MTU after the PIM Register encapsulation */
-	mtu = 0xffff - sizeof(pim_encap_iphdr) - sizeof(pim_encap_pimhdr);
-
-	if (ntohs(ip->ip_len) <= mtu) {
-		/* Turn the IP header into a valid one */
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(mb_copy, ip->ip_hl << 2);
-	} else {
-		/* Fragment the packet */
-		if (ip_fragment(mb_copy, NULL, mtu) != 0) {
-			/* XXX: mb_copy was freed by ip_fragment() */
-			return (NULL);
-		}
-	}
-	return (mb_copy);
-}
-
-/*
- * Send an upcall with the data packet to the user-level process.
- */
-int
-pim_register_send_upcall(struct ip *ip, struct vif *vifp,
-    struct mbuf *mb_copy, struct mfc *rt, unsigned int rtableid)
-{
-	struct mbuf *mb_first;
-	int len = ntohs(ip->ip_len);
-	struct igmpmsg *im;
-	struct sockaddr_in k_igmpsrc = { sizeof k_igmpsrc, AF_INET };
-
-	/* Add a new mbuf with an upcall header */
-	MGETHDR(mb_first, M_DONTWAIT, MT_HEADER);
-	if (mb_first == NULL) {
-		m_freem(mb_copy);
-		return (ENOBUFS);
-	}
-	mb_first->m_data += max_linkhdr;
-	mb_first->m_pkthdr.len = len + sizeof(struct igmpmsg);
-	mb_first->m_len = sizeof(struct igmpmsg);
-	mb_first->m_next = mb_copy;
-
-	/* Send message to routing daemon */
-	im = mtod(mb_first, struct igmpmsg *);
-	im->im_msgtype = IGMPMSG_WHOLEPKT;
-	im->im_mbz = 0;
-	im->im_vif = vifp - viftable;
-	im->im_src = ip->ip_src;
-	im->im_dst = ip->ip_dst;
-
-	k_igmpsrc.sin_addr = ip->ip_src;
-
-	mrtstat.mrts_upcalls++;
-
-	if (socket_send(ip_mrouter[rtableid], mb_first, &k_igmpsrc) < 0) {
-		++mrtstat.mrts_upq_sockfull;
-		return (ENOBUFS);
-	}
-
-	/* Keep statistics */
-	pimstat.pims_snd_registers_msgs++;
-	pimstat.pims_snd_registers_bytes += len;
-
-	return (0);
-}
-
-/*
- * Encapsulate the data packet in PIM Register message and send it to the RP.
- */
-int
-pim_register_send_rp(struct ip *ip, struct vif *vifp,
-    struct mbuf *mb_copy, struct mfc *rt, unsigned int rtableid)
-{
-	struct mbuf *mb_first;
-	struct ip *ip_outer;
-	struct pim_encap_pimhdr *pimhdr;
-	int len = ntohs(ip->ip_len);
-	vifi_t vifi = rt->mfc_parent;
-
-	if ((vifi >= numvifs) || in_nullhost(viftable[vifi].v_lcl_addr)) {
-		m_freem(mb_copy);
-		return (EADDRNOTAVAIL);		/* The iif vif is invalid */
-	}
-
-	/* Add a new mbuf with the encapsulating header */
-	MGETHDR(mb_first, M_DONTWAIT, MT_HEADER);
-	if (mb_first == NULL) {
-		m_freem(mb_copy);
-		return (ENOBUFS);
-	}
-	mb_first->m_data += max_linkhdr;
-	mb_first->m_len = sizeof(pim_encap_iphdr) + sizeof(pim_encap_pimhdr);
-	mb_first->m_next = mb_copy;
-
-	mb_first->m_pkthdr.len = len + mb_first->m_len;
-
-	/* Fill in the encapsulating IP and PIM header */
-	ip_outer = mtod(mb_first, struct ip *);
-	*ip_outer = pim_encap_iphdr;
-	ip_outer->ip_id = htons(ip_randomid());
-	ip_outer->ip_len = htons(len + sizeof(pim_encap_iphdr) +
-	    sizeof(pim_encap_pimhdr));
-	ip_outer->ip_src = viftable[vifi].v_lcl_addr;
-	ip_outer->ip_dst = rt->mfc_rp;
-	/*
-	 * Copy the inner header TOS to the outer header, and take care of the
-	 * IP_DF bit.
-	 */
-	ip_outer->ip_tos = ip->ip_tos;
-	if (ntohs(ip->ip_off) & IP_DF)
-		ip_outer->ip_off |= htons(IP_DF);
-	pimhdr = (struct pim_encap_pimhdr *)((caddr_t)ip_outer
-	    + sizeof(pim_encap_iphdr));
-	*pimhdr = pim_encap_pimhdr;
-	/* If the iif crosses a border, set the Border-bit */
-	if (rt->mfc_flags[vifi] & MRT_MFC_FLAGS_BORDER_VIF & mrt_api_config)
-		pimhdr->flags |= htonl(PIM_BORDER_REGISTER);
-
-	mb_first->m_data += sizeof(pim_encap_iphdr);
-	pimhdr->pim.pim_cksum = in_cksum(mb_first, sizeof(pim_encap_pimhdr));
-	mb_first->m_data -= sizeof(pim_encap_iphdr);
-
-	send_packet(vifp, mb_first);
-
-	/* Keep statistics */
-	pimstat.pims_snd_registers_msgs++;
-	pimstat.pims_snd_registers_bytes += len;
-
-	return (0);
-}
-
-/*
- * PIM-SMv2 and PIM-DM messages processing.
- * Receives and verifies the PIM control messages, and passes them
- * up to the listening socket, using rip_input().
- * The only message with special processing is the PIM_REGISTER message
- * (used by PIM-SM): the PIM header is stripped off, and the inner packet
- * is passed to if_simloop().
- */
-void
-pim_input(struct mbuf *m, ...)
-{
-	struct ip *ip = mtod(m, struct ip *);
-	struct pim *pim;
-	int minlen;
-	int datalen;
-	int ip_tos;
-	int iphlen;
-	va_list ap;
-
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	va_end(ap);
-
-	datalen = ntohs(ip->ip_len) - iphlen;
-
-	/* Keep statistics */
-	pimstat.pims_rcv_total_msgs++;
-	pimstat.pims_rcv_total_bytes += datalen;
-
-	/* Validate lengths */
-	if (datalen < PIM_MINLEN) {
-		pimstat.pims_rcv_tooshort++;
-		log(LOG_ERR, "pim_input: packet size too small %d from %lx\n",
-		    datalen, (u_long)ip->ip_src.s_addr);
-		m_freem(m);
-		return;
-	}
-
-	/*
-	 * If the packet is at least as big as a REGISTER, go agead
-	 * and grab the PIM REGISTER header size, to avoid another
-	 * possible m_pullup() later.
-	 * 
-	 * PIM_MINLEN       == pimhdr + u_int32_t == 4 + 4 = 8
-	 * PIM_REG_MINLEN   == pimhdr + reghdr + encap_iphdr == 4 + 4 + 20 = 28
-	 */
-	minlen = iphlen + (datalen >= PIM_REG_MINLEN ?
-	    PIM_REG_MINLEN : PIM_MINLEN);
-	/*
-	 * Get the IP and PIM headers in contiguous memory, and
-	 * possibly the PIM REGISTER header.
-	 */
-	if ((m->m_flags & M_EXT || m->m_len < minlen) &&
-	    (m = m_pullup(m, minlen)) == NULL) {
-		log(LOG_ERR, "pim_input: m_pullup failure\n");
-		return;
-	}
-	/* m_pullup() may have given us a new mbuf so reset ip. */
-	ip = mtod(m, struct ip *);
-	ip_tos = ip->ip_tos;
-
-	/* adjust mbuf to point to the PIM header */
-	m->m_data += iphlen;
-	m->m_len  -= iphlen;
-	pim = mtod(m, struct pim *);
-
-	/*
-	 * Validate checksum. If PIM REGISTER, exclude the data packet.
-	 *
-	 * XXX: some older PIMv2 implementations don't make this distinction,
-	 * so for compatibility reason perform the checksum over part of the
-	 * message, and if error, then over the whole message.
-	 */
-	if (PIM_VT_T(pim->pim_vt) == PIM_REGISTER &&
-	    in_cksum(m, PIM_MINLEN) == 0) {
-		/* do nothing, checksum okay */
-	} else if (in_cksum(m, datalen)) {
-		pimstat.pims_rcv_badsum++;
-		m_freem(m);
-		return;
-	}
-
-	/* PIM version check */
-	if (PIM_VT_V(pim->pim_vt) < PIM_VERSION) {
-		pimstat.pims_rcv_badversion++;
-		log(LOG_ERR, "pim_input: incorrect version %d, expecting %d\n",
-		    PIM_VT_V(pim->pim_vt), PIM_VERSION);
-		m_freem(m);
-		return;
-	}
-
-	/* restore mbuf back to the outer IP */
-	m->m_data -= iphlen;
-	m->m_len  += iphlen;
-
-	if (PIM_VT_T(pim->pim_vt) == PIM_REGISTER) {
-		/*
-		 * Since this is a REGISTER, we'll make a copy of the register
-		 * headers ip + pim + u_int32 + encap_ip, to be passed up to the
-		 * routing daemon.
-		 */
-		int s;
-		struct sockaddr_in dst = { sizeof(dst), AF_INET };
-		struct mbuf *mcp;
-		struct ip *encap_ip;
-		u_int32_t *reghdr;
-		struct ifnet *vifp;
-
-		s = splsoftnet();
-		if ((reg_vif_num >= numvifs) || (reg_vif_num == VIFI_INVALID)) {
-			splx(s);
-			m_freem(m);
-			return;
-		}
-		/* XXX need refcnt? */
-		vifp = viftable[reg_vif_num].v_ifp;
-		splx(s);
-
-		/* Validate length */
-		if (datalen < PIM_REG_MINLEN) {
-			pimstat.pims_rcv_tooshort++;
-			pimstat.pims_rcv_badregisters++;
-			log(LOG_ERR, "pim_input: register packet size "
-			    "too small %d from %lx\n",
-			    datalen, (u_long)ip->ip_src.s_addr);
-			m_freem(m);
-			return;
-		}
-
-		reghdr = (u_int32_t *)(pim + 1);
-		encap_ip = (struct ip *)(reghdr + 1);
-
-		/* verify the version number of the inner packet */
-		if (encap_ip->ip_v != IPVERSION) {
-			pimstat.pims_rcv_badregisters++;
-			m_freem(m);
-			return;
-		}
-
-		/* verify the inner packet is destined to a mcast group */
-		if (!IN_MULTICAST(encap_ip->ip_dst.s_addr)) {
-			pimstat.pims_rcv_badregisters++;
-			m_freem(m);
-			return;
-		}
-
-		/* If a NULL_REGISTER, pass it to the daemon */
-		if ((ntohl(*reghdr) & PIM_NULL_REGISTER))
-			goto pim_input_to_daemon;
-
-		/*
-		 * Copy the TOS from the outer IP header to the inner
-		 * IP header.
-		 */
-		if (encap_ip->ip_tos != ip_tos) {
-			/* Outer TOS -> inner TOS */
-			encap_ip->ip_tos = ip_tos;
-			/* Recompute the inner header checksum. Sigh... */
-
-			/* adjust mbuf to point to the inner IP header */
-			m->m_data += (iphlen + PIM_MINLEN);
-			m->m_len  -= (iphlen + PIM_MINLEN);
-
-			encap_ip->ip_sum = 0;
-			encap_ip->ip_sum = in_cksum(m, encap_ip->ip_hl << 2);
-
-			/* restore mbuf to point back to the outer IP header */
-			m->m_data -= (iphlen + PIM_MINLEN);
-			m->m_len  += (iphlen + PIM_MINLEN);
-		}
-
-		/*
-		 * Decapsulate the inner IP packet and loopback to forward it
-		 * as a normal multicast packet. Also, make a copy of the 
-		 *     outer_iphdr + pimhdr + reghdr + encap_iphdr
-		 * to pass to the daemon later, so it can take the appropriate
-		 * actions (e.g., send back PIM_REGISTER_STOP).
-		 * XXX: here m->m_data points to the outer IP header.
-		 */
-		mcp = m_copym(m, 0, iphlen + PIM_REG_MINLEN, M_NOWAIT);
-		if (mcp == NULL) {
-			log(LOG_ERR, "pim_input: pim register: could not "
-			    "copy register head\n");
-			m_freem(m);
-			return;
-		}
-
-		/* Keep statistics */
-		/* XXX: registers_bytes include only the encap. mcast pkt */
-		pimstat.pims_rcv_registers_msgs++;
-		pimstat.pims_rcv_registers_bytes += ntohs(encap_ip->ip_len);
-
-		/* forward the inner ip packet; point m_data at the inner ip. */
-		m_adj(m, iphlen + PIM_MINLEN);
-
-		/* NB: vifp was collected above; can it change on us? */
-		if_input_local(vifp, m, dst.sin_family);
-
-		/* prepare the register head to send to the mrouting daemon */
-		m = mcp;
-	}
-
-pim_input_to_daemon:
-	/*
-	 * Pass the PIM message up to the daemon; if it is a Register message,
-	 * pass the 'head' only up to the daemon. This includes the
-	 * outer IP header, PIM header, PIM-Register header and the
-	 * inner IP header.
-	 * XXX: the outer IP header pkt size of a Register is not adjust to
-	 * reflect the fact that the inner multicast data is truncated.
-	 */
-	rip_input(m);
-
-	return;
-}
-
-/*
- * Sysctl for pim variables.
- */
-int
-pim_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
-{
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case PIMCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &pimstat, sizeof(pimstat)));
-
-	default:
-		return (ENOPROTOOPT);
-	}
-	/* NOTREACHED */
-}
-
-
-#endif /* PIM */
