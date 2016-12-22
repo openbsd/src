@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.112 2016/12/21 12:30:19 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.113 2016/12/22 13:39:32 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -572,6 +572,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 	char addr[INET6_ADDRSTRLEN], addr0[INET6_ADDRSTRLEN];
 
+	splsoftassert(IPL_SOFTNET);
+
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL)
 		goto freeit;
@@ -825,7 +827,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 */
 			struct nd_defrouter *dr;
 			struct in6_addr *in6;
-			int s;
 
 			in6 = &satosin6(rt_key(rt))->sin6_addr;
 
@@ -835,7 +836,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * is only called under the network software interrupt
 			 * context.  However, we keep it just for safety.
 			 */
-			s = splsoftnet();
 			dr = defrouter_lookup(in6, rt->rt_ifidx);
 			if (dr)
 				defrtrlist_del(dr);
@@ -849,7 +849,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 				 */
 				rt6_flush(&ip6->ip6_src, ifp);
 			}
-			splx(s);
 		}
 		ln->ln_router = is_router;
 	}
@@ -1080,7 +1079,7 @@ void
 nd6_dad_starttimer(struct dadq *dp, int ticks)
 {
 
-	timeout_set(&dp->dad_timer_ch, nd6_dad_timer, dp->dad_ifa);
+	timeout_set_proc(&dp->dad_timer_ch, nd6_dad_timer, dp->dad_ifa);
 	timeout_add(&dp->dad_timer_ch, ticks);
 }
 
@@ -1190,7 +1189,7 @@ nd6_dad_timer(void *xifa)
 	char addr[INET6_ADDRSTRLEN];
 	int s;
 
-	s = splsoftnet();		/* XXX */
+	NET_LOCK(s);
 
 	/* Sanity check */
 	if (ia6 == NULL) {
@@ -1281,7 +1280,7 @@ nd6_dad_timer(void *xifa)
 	}
 
 done:
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void

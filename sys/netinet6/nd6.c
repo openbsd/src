@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.199 2016/12/20 18:33:43 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.200 2016/12/22 13:39:32 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ nd6_init(void)
 	nd6_init_done = 1;
 
 	/* start timer */
-	timeout_set(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
+	timeout_set_proc(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
 
 	nd6_rs_init();
@@ -430,12 +430,13 @@ nd6_llinfo_timer(void *arg)
 void
 nd6_timer_work(void *null)
 {
-	int s;
 	struct nd_defrouter *dr, *ndr;
 	struct nd_prefix *pr, *npr;
 	struct in6_ifaddr *ia6, *nia6;
+	int s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
+
 	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
 	timeout_add_sec(&nd6_timer_ch, nd6_prune);
 
@@ -482,7 +483,7 @@ nd6_timer_work(void *null)
 			prelist_remove(pr);
 		}
 	}
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 void
@@ -1120,7 +1121,8 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 	struct in6_nbrinfo *nbi = (struct in6_nbrinfo *)data;
 	struct rtentry *rt;
 	int error = 0;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	switch (cmd) {
 	case SIOCGIFINFO_IN6:
@@ -1142,7 +1144,6 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		/* flush all the prefix advertised by routers */
 		struct nd_prefix *pr, *npr;
 
-		s = splsoftnet();
 		/* First purge the addresses referenced by a prefix. */
 		LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
 			struct in6_ifaddr *ia6, *ia6_next;
@@ -1170,7 +1171,6 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 
 			prelist_remove(pr);
 		}
-		splx(s);
 		break;
 	}
 	case SIOCSRTRFLUSH_IN6:
@@ -1178,12 +1178,10 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		/* flush all the default routers */
 		struct nd_defrouter *dr, *ndr;
 
-		s = splsoftnet();
 		defrouter_reset();
 		TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr)
 			defrtrlist_del(dr);
 		defrouter_select();
-		splx(s);
 		break;
 	}
 	case SIOCGNBRINFO_IN6:
@@ -1204,13 +1202,11 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 				*idp = htons(ifp->if_index);
 		}
 
-		s = splsoftnet();
 		rt = nd6_lookup(&nb_addr, 0, ifp, ifp->if_rdomain);
 		if (rt == NULL ||
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) {
 			error = EINVAL;
 			rtfree(rt);
-			splx(s);
 			break;
 		}
 		expire = ln->ln_rt->rt_expire;
@@ -1224,7 +1220,6 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		nbi->isrouter = ln->ln_router;
 		nbi->expire = expire;
 		rtfree(rt);
-		splx(s);
 
 		break;
 	}
@@ -1478,12 +1473,15 @@ fail:
 void
 nd6_slowtimo(void *ignored_arg)
 {
-	int s = splsoftnet();
 	struct nd_ifinfo *nd6if;
 	struct ifnet *ifp;
+	int s;
+
+	NET_LOCK(s);
 
 	timeout_set(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
+
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		nd6if = ND_IFINFO(ifp);
 		if (nd6if->basereachable && /* already initialized */
@@ -1498,7 +1496,7 @@ nd6_slowtimo(void *ignored_arg)
 			nd6if->reachable = ND_COMPUTE_RTIME(nd6if->basereachable);
 		}
 	}
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 int

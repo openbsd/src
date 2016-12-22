@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.153 2016/11/28 14:14:39 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.154 2016/12/22 13:39:32 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ int		nd6_rs_timeout_count = 0;
 void
 nd6_rs_init(void)
 {
-	timeout_set(&nd6_rs_output_timer, nd6_rs_output_timo, NULL);
+	timeout_set_proc(&nd6_rs_output_timer, nd6_rs_output_timo, NULL);
 }
 
 
@@ -202,7 +202,9 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 	struct nd_router_solicit *rs;
 	struct ip6_moptions im6o;
 	caddr_t mac;
-	int icmp6len, maxlen, s;
+	int icmp6len, maxlen;
+
+	splsoftassert(IPL_SOFTNET);
 
 	KASSERT(ia6 != NULL);
 	KASSERT(ifp->if_flags & IFF_RUNNING);
@@ -272,9 +274,7 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 
 	ip6->ip6_plen = htons((u_short)icmp6len);
 
-	s = splsoftnet();
 	ip6_output(m, NULL, NULL, 0, &im6o, NULL);
-	splx(s);
 
 	icmp6stat.icp6s_outhist[ND_ROUTER_SOLICIT]++;
 }
@@ -291,6 +291,7 @@ nd6_rs_output_timo(void *ignored_arg)
 {
 	struct ifnet *ifp;
 	struct in6_ifaddr *ia6;
+	int s;
 
 	if (nd6_rs_timeout_count == 0)
 		return;
@@ -301,6 +302,7 @@ nd6_rs_output_timo(void *ignored_arg)
 	if (nd6_rs_output_timeout > ND6_RS_OUTPUT_INTERVAL)
 		nd6_rs_output_timeout = ND6_RS_OUTPUT_INTERVAL;
 
+	NET_LOCK(s);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ISSET(ifp->if_flags, IFF_RUNNING) &&
 		    ISSET(ifp->if_xflags, IFXF_AUTOCONF6)) {
@@ -309,6 +311,7 @@ nd6_rs_output_timo(void *ignored_arg)
 				nd6_rs_output(ifp, ia6);
 		}
 	}
+	NET_UNLOCK(s);
 	nd6_rs_output_set_timo(nd6_rs_output_timeout);
 }
 
@@ -1104,8 +1107,10 @@ void
 prelist_remove(struct nd_prefix *pr)
 {
 	struct nd_pfxrouter *pfr, *next;
-	int e, s;
 	struct in6_ifextra *ext = pr->ndpr_ifp->if_afdata[AF_INET6];
+	int e;
+
+	splsoftassert(IPL_SOFTNET);
 
 	/* make sure to invalidate the prefix until it is really freed. */
 	pr->ndpr_vltime = 0;
@@ -1114,8 +1119,8 @@ prelist_remove(struct nd_prefix *pr)
 	if ((pr->ndpr_stateflags & NDPRF_ONLINK) != 0 &&
 	    (e = nd6_prefix_offlink(pr)) != 0) {
 		char addr[INET6_ADDRSTRLEN];
-		nd6log((LOG_ERR, "prelist_remove: failed to make %s/%d offlink "
-		    "on %s, errno=%d\n",
+		nd6log((LOG_ERR, "%s: failed to make %s/%d offlink "
+		    "on %s, errno=%d\n", __func__,
 		    inet_ntop(AF_INET6, &pr->ndpr_prefix.sin6_addr,
 			addr, sizeof(addr)),
 		    pr->ndpr_plen, pr->ndpr_ifp->if_xname, e));
@@ -1124,8 +1129,6 @@ prelist_remove(struct nd_prefix *pr)
 
 	if (pr->ndpr_refcnt > 0)
 		return;		/* notice here? */
-
-	s = splsoftnet();
 
 	/* unlink ndpr_entry from nd_prefix list */
 	LIST_REMOVE(pr, ndpr_entry);
@@ -1136,14 +1139,13 @@ prelist_remove(struct nd_prefix *pr)
 
 	ext->nprefixes--;
 	if (ext->nprefixes < 0) {
-		log(LOG_WARNING, "prelist_remove: negative count on %s\n",
+		log(LOG_WARNING, "%s: negative count on %s\n", __func__,
 		    pr->ndpr_ifp->if_xname);
 	}
 
 	free(pr, M_IP6NDP, sizeof(*pr));
 
 	pfxlist_onlink_check();
-	splx(s);
 }
 
 /*
@@ -1406,7 +1408,7 @@ nd6_addr_add(void *prptr)
 	struct ifaddr *ifa;
 	int ifa_plen, autoconf, privacy, s;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	autoconf = 1;
 	privacy = (pr->ndpr_ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0;
@@ -1472,7 +1474,7 @@ nd6_addr_add(void *prptr)
 	if (--pr->ndpr_refcnt == 0)
 		prelist_remove(pr);
 
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 /*
@@ -1592,9 +1594,8 @@ pfxlist_onlink_check(void)
 		if ((pr->ndpr_stateflags & NDPRF_DETACHED) != 0 &&
 		    (pr->ndpr_stateflags & NDPRF_ONLINK) != 0) {
 			if ((e = nd6_prefix_offlink(pr)) != 0) {
-				nd6log((LOG_ERR,
-				    "pfxlist_onlink_check: failed to "
-				    "make %s/%d offlink, errno=%d\n",
+				nd6log((LOG_ERR, "%s: failed to make %s/%d "
+				    "offlink, errno=%d\n", __func__,
 				    inet_ntop(AF_INET6,
 					&pr->ndpr_prefix.sin6_addr,
 					addr, sizeof(addr)),
@@ -1605,9 +1606,8 @@ pfxlist_onlink_check(void)
 		    (pr->ndpr_stateflags & NDPRF_ONLINK) == 0 &&
 		    pr->ndpr_raf_onlink) {
 			if ((e = nd6_prefix_onlink(pr)) != 0) {
-				nd6log((LOG_ERR,
-				    "pfxlist_onlink_check: failed to "
-				    "make %s/%d offlink, errno=%d\n",
+				nd6log((LOG_ERR, "%s: failed to make %s/%d "
+				    "offlink, errno=%d\n", __func__,
 				    inet_ntop(AF_INET6,
 					&pr->ndpr_prefix.sin6_addr,
 					addr, sizeof(addr)),
@@ -2000,7 +2000,7 @@ in6_init_address_ltimes(struct nd_prefix *new, struct in6_addrlifetime *lt6)
 void
 rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 {
-	int s;
+	splsoftassert(IPL_SOFTNET);
 
 	/* We'll care only link-local addresses */
 	if (!IN6_IS_ADDR_LINKLOCAL(gateway))
@@ -2009,9 +2009,7 @@ rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 	/* XXX: hack for KAME's link-local address kludge */
 	gateway->s6_addr16[1] = htons(ifp->if_index);
 
-	s = splsoftnet();
 	rtable_walk(ifp->if_rdomain, AF_INET6, rt6_deleteroute, gateway);
-	splx(s);
 }
 
 int
