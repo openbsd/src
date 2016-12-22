@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.6 2016/11/24 09:23:11 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.7 2016/12/22 15:45:37 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -343,10 +343,10 @@ match_token(char *word, const struct token table[], int level)
 					/* Update header */
 					if (table[i].type == FLOWDELETE)
 						res.fctx.ctx_fm->fm_command =
-						    htons(OFP_FLOWCMD_DELETE);
+						    OFP_FLOWCMD_DELETE;
 					else if (table[i].type == FLOWMODIFY)
 						res.fctx.ctx_fm->fm_command =
-						    htons(OFP_FLOWCMD_MODIFY);
+						    OFP_FLOWCMD_MODIFY;
 					break;
 				case FLOWAPPLY:
 					val = OFP_INSTRUCTION_T_APPLY_ACTIONS;
