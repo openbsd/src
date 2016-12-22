@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.102 2016/07/28 21:37:45 tedu Exp $
+.\"	$OpenBSD: ftp.1,v 1.103 2016/12/22 16:30:03 beck Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: July 28 2016 $
+.Dd $Mdocdate: December 22 2016 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -248,6 +248,8 @@ validation.
 Perform server certificate validation.
 .It Cm dont
 Don't perform server certificate validation.
+.It Cm muststaple
+Require the server to present a valid OCSP stapling in the TLS handshake
 .El
 .Pp
 By default, server certificate validation is performed, and if it fails

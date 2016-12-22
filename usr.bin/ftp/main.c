@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.113 2016/12/16 17:44:59 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.114 2016/12/22 16:30:03 beck Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -94,6 +94,8 @@ char * const ssl_verify_opts[] = {
 	"do",
 #define SSL_VERIFYDEPTH	5
 	"depth",
+#define SSL_MUSTSTAPLE	6
+	"muststaple",
 	NULL
 };
 
@@ -144,6 +146,9 @@ process_ssl_options(char *cp)
 				errx(1, "certificate validation depth is %s",
 				    errstr);
 			tls_config_set_verify_depth(tls_config, (int)depth);
+			break;
+		case SSL_MUSTSTAPLE:
+			tls_config_ocsp_require_stapling(tls_config);
 			break;
 		default:
 			errx(1, "unknown -S suboption `%s'",
