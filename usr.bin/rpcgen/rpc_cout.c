@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.27 2016/12/20 22:19:08 krw Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.28 2016/12/22 16:42:55 krw Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 
 /*
@@ -425,7 +425,8 @@ emit_struct(def)
 		return;
 	}
 	for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
-		if (dl->decl.rel == REL_VECTOR) {
+		if (dl->decl.rel == REL_VECTOR &&
+		    strcmp(dl->decl.type, "opaque") != 0) {
 			fprintf(fout, "\tint i;\n");
 			break;
 		}
