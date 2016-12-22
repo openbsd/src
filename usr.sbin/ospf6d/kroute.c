@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.48 2015/07/17 20:12:38 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.49 2016/12/22 23:01:58 jca Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -729,12 +729,6 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 		return;
 	}
 
-	isvalid = (iface->flags & IFF_UP) &&
-	    LINK_STATE_IS_UP(iface->linkstate);
-
-	if (wasvalid == isvalid)
-		return;		/* nothing changed wrt validity */
-
 	/* inform engine and rde about state change if interface is used */
 	if (iface->cflags & F_IFACE_CONFIGURED) {
 		main_imsg_compose_ospfe(IMSG_IFINFO, 0, iface,
@@ -742,6 +736,12 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 		main_imsg_compose_rde(IMSG_IFINFO, 0, iface,
 		    sizeof(struct iface));
 	}
+
+	isvalid = (iface->flags & IFF_UP) &&
+	    LINK_STATE_IS_UP(iface->linkstate);
+
+	if (wasvalid == isvalid)
+		return;		/* nothing changed wrt validity */
 
 	/* update redistribute list */
 	RB_FOREACH(kr, kroute_tree, &krt) {
