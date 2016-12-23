@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.94 2016/12/23 17:41:29 schwarze Exp $
+# $OpenBSD: Makefile,v 1.95 2016/12/23 18:50:23 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -158,6 +158,7 @@ MAN=	\
 	PKCS7_sign_add_signer.3 \
 	PKCS7_verify.3 \
 	PKCS8_PRIV_KEY_INFO_new.3 \
+	POLICYINFO_new.3 \
 	RAND_add.3 \
 	RAND_bytes.3 \
 	RAND_load_file.3 \
