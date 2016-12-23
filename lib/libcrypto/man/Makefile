@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.96 2016/12/23 20:43:02 schwarze Exp $
+# $OpenBSD: Makefile,v 1.97 2016/12/23 22:21:40 schwarze Exp $
 
 .include <bsd.own.mk>
 
 MAN=	\
+	ACCESS_DESCRIPTION_new.3 \
 	ASN1_OBJECT_new.3 \
 	ASN1_STRING_length.3 \
 	ASN1_STRING_new.3 \
