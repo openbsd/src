@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.96 2016/12/22 15:33:36 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.97 2016/12/23 12:38:16 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -613,8 +613,10 @@ pmap_collect(pmap_t pmap)
 			m++;
 			n = 0;
 			for (k = 0; k < NPTEPG; k++) {
-				if (pte[k] & PG_V)
+				if (pte[k] & PG_V) {
 					n++;
+					break;
+				}
 			}
 			if (n == 0) {
 				pmpg = pde[j];
