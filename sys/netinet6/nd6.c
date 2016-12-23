@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.200 2016/12/22 13:39:32 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.201 2016/12/23 15:08:54 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1479,7 +1479,6 @@ nd6_slowtimo(void *ignored_arg)
 
 	NET_LOCK(s);
 
-	timeout_set(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
