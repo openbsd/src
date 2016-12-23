@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1004 2016/12/06 00:01:55 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1005 2016/12/23 19:46:13 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1751,12 +1751,12 @@ pf_cksum_fixup(u_int16_t *cksum, u_int16_t was, u_int16_t now,
 	x = (x + (x >> 16)) & 0xffff;
 
 	/* optimise: eliminate a branch when not udp */
- 	if (udp && *cksum == 0x0000)
+	if (udp && *cksum == 0x0000)
 		return;
 	if (udp && x == 0x0000)
 		x = 0xffff;
 
-        *cksum = (u_int16_t)(x);
+	*cksum = (u_int16_t)(x);
 }
 
 /* pre: coverage(cksum) is superset of coverage(covered_cksum) */
@@ -1846,7 +1846,7 @@ pf_cksum_fixup_a(u_int16_t *cksum, const struct pf_addr *a,
 			     o[2] + NEG(n[2]) + o[3] + NEG(n[3]) +\
 			     o[4] + NEG(n[4]) + o[5] + NEG(n[5]) +\
 			     o[6] + NEG(n[6]) + o[7] + NEG(n[7]);
-	        break;
+		break;
 #endif /* INET6 */
 	default:
 		unhandled_af(af);
@@ -2227,7 +2227,7 @@ pf_translate_af(struct pf_pdesc *pd)
 	case IPPROTO_TCP:
 		pf_cksum_fixup_a(pc, pd->src, &zero, pd->af, af_proto);
 		pf_cksum_fixup_a(pc, pd->dst, &zero, pd->af, af_proto);
-                copyback = 1;
+		copyback = 1;
 		break;
 	default:
 		break;	/* assume no pseudo-header */
@@ -3628,8 +3628,8 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		PF_TEST_ATTRIB((r->rcv_kif && pf_match_rcvif(pd->m, r) ==
 		    r->rcvifnot),
 			TAILQ_NEXT(r, entries));
-		PF_TEST_ATTRIB((r->prio &&
-		    (r->prio == PF_PRIO_ZERO ? 0 : r->prio) != pd->m->m_pkthdr.pf.prio),
+		PF_TEST_ATTRIB((r->prio && (r->prio == PF_PRIO_ZERO ?
+		    0 : r->prio) != pd->m->m_pkthdr.pf.prio),
 			TAILQ_NEXT(r, entries));
 
 		/* FALLTHROUGH */
@@ -3652,7 +3652,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 					REASON_SET(reason, PFRES_TRANSLATE);
 					goto cleanup;
 				}
-#if NPFLOG > 0 
+#if NPFLOG > 0
 				if (r->log) {
 					REASON_SET(reason, PFRES_MATCH);
 					PFLOG_PACKET(pd, *reason, r, a, ruleset,
@@ -4635,10 +4635,10 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 	switch (pd->virtual_proto) {
 	case IPPROTO_TCP:
 		if ((action = pf_synproxy(pd, state, reason)) != PF_PASS)
-			return (action); 
+			return (action);
 		if ((pd->hdr.tcp.th_flags & (TH_SYN|TH_ACK)) == TH_SYN) {
 
-		    	if (dst->state >= TCPS_FIN_WAIT_2 &&
+			if (dst->state >= TCPS_FIN_WAIT_2 &&
 			    src->state >= TCPS_FIN_WAIT_2) {
 				if (pf_status.debug >= LOG_NOTICE) {
 					log(LOG_NOTICE, "pf: state reuse ");
@@ -4655,15 +4655,15 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 				return (PF_DROP);
 			} else if (dst->state >= TCPS_ESTABLISHED &&
 			    src->state >= TCPS_ESTABLISHED) {
-                                /*
-                                 * SYN matches existing state???
+				/*
+				 * SYN matches existing state???
 				 * Typically happens when sender boots up after
 				 * sudden panic. Certain protocols (NFSv3) are
 				 * always using same port numbers. Challenge
 				 * ACK enables all parties (firewall and peers)
 				 * to get in sync again.
-                                 */
-                                pf_send_challenge_ack(pd, *state, src, dst);
+				 */
+				pf_send_challenge_ack(pd, *state, src, dst);
 				return (PF_DROP);
 			}
 		}
@@ -6045,7 +6045,7 @@ pf_check_tcp_cksum(struct mbuf *m, int off, int len, sa_family_t af)
 
 	/* need to do it in software */
 	tcpstat.tcps_inswcsum++;
-	
+
 	switch (af) {
 	case AF_INET:
 		if (m->m_len < sizeof(struct ip))
