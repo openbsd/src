@@ -1844,6 +1844,7 @@
 ./usr/share/man/man3/EVP_SealInit.3
 ./usr/share/man/man3/EVP_SignInit.3
 ./usr/share/man/man3/EVP_VerifyInit.3
+./usr/share/man/man3/GENERAL_NAME_new.3
 ./usr/share/man/man3/HMAC.3
 ./usr/share/man/man3/MD5.3
 ./usr/share/man/man3/OBJ_nid2obj.3
