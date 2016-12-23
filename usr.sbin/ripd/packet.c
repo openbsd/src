@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.12 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: packet.c,v 1.13 2016/12/23 14:53:16 jca Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -232,15 +232,17 @@ find_iface(struct ripd_conf *xconf, unsigned int ifindex, struct in_addr src)
 
 	/* returned interface needs to be active */
 	LIST_FOREACH(iface, &xconf->iface_list, entry) {
-		if (ifindex != 0 && ifindex == iface->ifindex &&
-		    !iface->passive && (iface->addr.s_addr &
-		    iface->mask.s_addr) == (src.s_addr & iface->mask.s_addr))
-			/*
-			 * XXX may fail on P2P links because src and dst don't
-			 * have to share a common subnet on the otherhand
-			 * checking something like this will help to support
-			 * multiple networks configured on one interface.
-			 */
+		if (ifindex == 0 || ifindex != iface->ifindex)
+			continue;
+
+		if (iface->passive)
+			continue;
+
+		if ((iface->addr.s_addr & iface->mask.s_addr) ==
+		    (src.s_addr & iface->mask.s_addr))
+			return (iface);
+
+		if (iface->dst.s_addr && iface->dst.s_addr == src.s_addr)
 			return (iface);
 	}
 
