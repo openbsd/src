@@ -1732,6 +1732,7 @@
 ./usr/share/man/man3/ASN1_TYPE_get.3
 ./usr/share/man/man3/ASN1_generate_nconf.3
 ./usr/share/man/man3/ASN1_time_parse.3
+./usr/share/man/man3/AUTHORITY_KEYID_new.3
 ./usr/share/man/man3/BF_set_key.3
 ./usr/share/man/man3/BIO_ctrl.3
 ./usr/share/man/man3/BIO_f_base64.3
@@ -1789,6 +1790,7 @@
 ./usr/share/man/man3/DH_new.3
 ./usr/share/man/man3/DH_set_method.3
 ./usr/share/man/man3/DH_size.3
+./usr/share/man/man3/DIST_POINT_new.3
 ./usr/share/man/man3/DSA_SIG_new.3
 ./usr/share/man/man3/DSA_do_sign.3
 ./usr/share/man/man3/DSA_dup_DH.3
