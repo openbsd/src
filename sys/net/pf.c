@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1005 2016/12/23 19:46:13 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1006 2016/12/23 20:49:41 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3001,7 +3001,7 @@ pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 
 	if (kif == NULL) {
 		DPFPRINTF(LOG_ERR,
-		    "pf_test_via: kif == NULL, @%d via %s",
+		    "%s: kif == NULL, @%d via %s", __func__,
 		    r->nr, r->rcv_ifname);
 		return (0);
 	}
@@ -3026,7 +3026,7 @@ pf_step_into_anchor(int *depth, struct pf_ruleset **rs,
 
 	if (*depth >= sizeof(pf_anchor_stack) /
 	    sizeof(pf_anchor_stack[0])) {
-		log(LOG_ERR, "pf_step_into_anchor: stack overflow\n");
+		log(LOG_ERR, "pf: anchor stack overflow\n");
 		*r = TAILQ_NEXT(*r, entries);
 		return;
 	} else if (a != NULL)
@@ -3959,7 +3959,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		    rewrite)) {
 			/* This really shouldn't happen!!! */
 			DPFPRINTF(LOG_ERR,
-			    "pf_normalize_tcp_stateful failed on first pkt");
+			    "%s: tcp normalize failed on first pkt", __func__);
 			goto csfailed;
 		}
 	}
@@ -5796,7 +5796,7 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 
 	if (m0->m_len < sizeof(struct ip)) {
 		DPFPRINTF(LOG_ERR,
-		    "pf_route: m0->m_len < sizeof(struct ip)");
+		    "%s: m0->m_len < sizeof(struct ip)", __func__);
 		goto bad;
 	}
 
@@ -5815,7 +5815,7 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		    (struct pf_addr *)&ip->ip_src,
 		    &naddr, NULL, sns, &r->route, PF_SN_ROUTE)) {
 			DPFPRINTF(LOG_ERR,
-			    "pf_route: pf_map_addr() failed.");
+			    "%s: pf_map_addr() failed", __func__);
 			goto bad;
 		}
 
@@ -5845,7 +5845,7 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 			goto done;
 		if (m0->m_len < sizeof(struct ip)) {
 			DPFPRINTF(LOG_ERR,
-			    "pf_route: m0->m_len < sizeof(struct ip)");
+			    "%s: m0->m_len < sizeof(struct ip)", __func__);
 			goto bad;
 		}
 		ip = mtod(m0, struct ip *);
@@ -5941,7 +5941,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 
 	if (m0->m_len < sizeof(struct ip6_hdr)) {
 		DPFPRINTF(LOG_ERR,
-		    "pf_route6: m0->m_len < sizeof(struct ip6_hdr)");
+		    "%s: m0->m_len < sizeof(struct ip6_hdr)", __func__);
 		goto bad;
 	}
 	ip6 = mtod(m0, struct ip6_hdr *);
@@ -5958,7 +5958,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		if (pf_map_addr(AF_INET6, r, (struct pf_addr *)&ip6->ip6_src,
 		    &naddr, NULL, sns, &r->route, PF_SN_ROUTE)) {
 			DPFPRINTF(LOG_ERR,
-			    "pf_route6: pf_map_addr() failed.");
+			    "%s: pf_map_addr() failed", __func__);
 			goto bad;
 		}
 		if (!PF_AZERO(&naddr, AF_INET6))
@@ -5981,7 +5981,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 			goto done;
 		if (m0->m_len < sizeof(struct ip6_hdr)) {
 			DPFPRINTF(LOG_ERR,
-			    "pf_route6: m0->m_len < sizeof(struct ip6_hdr)");
+			    "%s: m0->m_len < sizeof(struct ip6_hdr)", __func__);
 			goto bad;
 		}
 	}
@@ -6571,7 +6571,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 
 	if (kif == NULL) {
 		DPFPRINTF(LOG_ERR,
-		    "pf_test: kif == NULL, if_xname %s", ifp->if_xname);
+		    "%s: kif == NULL, if_xname %s", __func__, ifp->if_xname);
 		return (PF_DROP);
 	}
 	if (kif->pfik_flags & PFI_IFLAG_SKIP)
