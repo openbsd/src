@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.91 2016/12/23 14:37:08 schwarze Exp $
+# $OpenBSD: Makefile,v 1.92 2016/12/23 15:25:19 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -67,6 +67,7 @@ MAN=	\
 	DH_new.3 \
 	DH_set_method.3 \
 	DH_size.3 \
+	DIST_POINT_new.3 \
 	DSA_SIG_new.3 \
 	DSA_do_sign.3 \
 	DSA_dup_DH.3 \
