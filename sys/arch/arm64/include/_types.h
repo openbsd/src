@@ -1,4 +1,4 @@
-/* $OpenBSD: _types.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: _types.h,v 1.2 2016/12/23 11:28:25 patrick Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -131,13 +131,13 @@ typedef	char *			__va_list;
 /* Wide character support types */
 #ifndef __cplusplus
 #ifdef __WCHAR_UNSIGNED__
-typedef	unsigned int		___wchar_t;
+typedef	unsigned int		__wchar_t;
 #else
-typedef	int			___wchar_t;
+typedef	int			__wchar_t;
 #endif
-#else
-typedef	wchar_t			___wchar_t;
 #endif
+typedef	int			__wint_t;
+typedef	int			__rune_t;
 typedef	void *			__wctrans_t;
 typedef	void *			__wctype_t;
 
