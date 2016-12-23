@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.22 2016/12/23 05:57:26 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.23 2016/12/23 07:35:01 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -460,7 +460,8 @@ efi_getdisklabel(efi_diskinfo_t ed, struct disklabel *label)
 		printf("loading disklabel @ %u\n", start + DOS_LABELSECTOR);
 #endif
 	/* read disklabel */
-	error = efid_io(F_READ, ed, start + DOS_LABELSECTOR, 1, buf);
+	error = efid_io(F_READ, ed, EFI_SECTOBLK(ed, start) + DOS_LABELSECTOR,
+	    1, buf);
 
 	if (error)
 		return "failed to read disklabel";
