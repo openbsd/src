@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.89 2016/12/22 16:05:22 schwarze Exp $
+# $OpenBSD: Makefile,v 1.90 2016/12/23 00:40:16 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -120,6 +120,7 @@ MAN=	\
 	EVP_SealInit.3 \
 	EVP_SignInit.3 \
 	EVP_VerifyInit.3 \
+	GENERAL_NAME_new.3 \
 	HMAC.3 \
 	MD5.3 \
 	OBJ_nid2obj.3 \
