@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.179 2016/12/18 10:37:42 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.180 2016/12/23 18:44:51 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -879,6 +879,8 @@ iwn_mem_write_2(struct iwn_softc *sc, uint32_t addr, uint16_t data)
 	iwn_mem_write(sc, addr & ~3, tmp);
 }
 
+#ifdef IWN_DEBUG
+ 
 static __inline void
 iwn_mem_read_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t *data,
     int count)
@@ -886,6 +888,8 @@ iwn_mem_read_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t *data,
 	for (; count > 0; count--, addr += 4)
 		*data++ = iwn_mem_read(sc, addr);
 }
+
+#endif
 
 static __inline void
 iwn_mem_set_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t val,
