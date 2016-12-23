@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.57 2016/12/18 14:34:20 kettenis Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.58 2016/12/23 21:58:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -100,12 +100,12 @@ typedef enum {
 	HAL_ANT_MAX = 3,
 } HAL_ANT_SETTING;
 
-typedef enum {
-	HAL_M_STA = 1,
-	HAL_M_IBSS = 0,
-	HAL_M_HOSTAP = 6,
-	HAL_M_MONITOR = 8,
-} HAL_OPMODE;
+typedef enum ieee80211_opmode HAL_OPMODE;
+
+#define	HAL_M_STA	IEEE80211_M_STA
+#define HAL_M_IBSS	IEEE80211_M_IBSS
+#define HAL_M_HOSTAP	IEEE80211_M_HOSTAP
+#define HAL_M_MONITOR	IEEE80211_M_MONITOR
 
 typedef int HAL_STATUS;
 
