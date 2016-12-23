@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.13 2016/12/15 03:41:15 jsg Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.14 2016/12/23 12:52:12 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -146,6 +146,7 @@ struct xbf_softc {
 
 	int			 sc_state;
 #define  XBF_CONNECTED		  4
+#define  XBF_CLOSING		  5
 
 	int			 sc_caps;
 #define  XBF_CAP_BARRIER	  0x0001
@@ -176,18 +177,19 @@ struct xbf_softc {
 	struct scsi_iopool	 sc_iopool;
 	struct scsi_adapter	 sc_switch;
 	struct scsi_link         sc_link;
-	struct scsibus_softc	*sc_scsibus;
+	struct device		*sc_scsibus;
 };
 
 int	xbf_match(struct device *, void *, void *);
 void	xbf_attach(struct device *, struct device *, void *);
+int	xbf_detach(struct device *, int);
 
 struct cfdriver xbf_cd = {
 	NULL, "xbf", DV_DULL
 };
 
 const struct cfattach xbf_ca = {
-	sizeof(struct xbf_softc), xbf_match, xbf_attach
+	sizeof(struct xbf_softc), xbf_match, xbf_attach, xbf_detach
 };
 
 void	xbf_intr(void *);
@@ -204,7 +206,6 @@ int	xbf_submit_cmd(struct scsi_xfer *);
 int	xbf_poll_cmd(struct scsi_xfer *, int, int);
 void	xbf_complete_cmd(struct scsi_xfer *, int);
 int	xbf_dev_probe(struct scsi_link *);
-void	xbf_dev_free(struct scsi_link *);
 
 void	xbf_scsi_minphys(struct buf *, struct scsi_link *);
 void	xbf_scsi_inq(struct scsi_xfer *);
@@ -221,7 +222,7 @@ int	xbf_get_type(struct xbf_softc *);
 int	xbf_init(struct xbf_softc *);
 int	xbf_ring_create(struct xbf_softc *);
 void	xbf_ring_destroy(struct xbf_softc *);
-int	xbf_capabilities(struct xbf_softc *);
+void	xbf_stop(struct xbf_softc *);
 
 int
 xbf_match(struct device *parent, void *match, void *aux)
@@ -275,7 +276,6 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_switch.scsi_cmd = xbf_scsi_cmd;
 	sc->sc_switch.scsi_minphys = xbf_scsi_minphys;
 	sc->sc_switch.dev_probe = xbf_dev_probe;
-	sc->sc_switch.dev_free = xbf_dev_free;
 
 	sc->sc_link.adapter = &sc->sc_switch;
 	sc->sc_link.adapter_softc = self;
@@ -287,7 +287,7 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
-	config_found(self, &saa, scsiprint);
+	sc->sc_scsibus = config_found(self, &saa, scsiprint);
 
 	xen_unplug_emulated(parent, XEN_UNPLUG_IDE | XEN_UNPLUG_IDESEC);
 
@@ -295,6 +295,19 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 
  error:
 	xen_intr_disestablish(sc->sc_xih);
+}
+
+int
+xbf_detach(struct device *self, int flags)
+{
+	struct xbf_softc *sc = (struct xbf_softc *)self;
+
+	xen_intr_mask(sc->sc_xih);
+	xen_intr_disestablish(sc->sc_xih);
+
+	xbf_stop(sc);
+
+	return (config_detach(sc->sc_scsibus, flags | DETACH_FORCE));
 }
 
 void
@@ -326,7 +339,8 @@ xbf_io_get(void *xsc)
 	struct xbf_softc *sc = xsc;
 	void *rv = sc; /* just has to be !NULL */
 
-	if (sc->sc_state != XBF_CONNECTED)
+	if (sc->sc_state != XBF_CONNECTED &&
+	    sc->sc_state != XBF_CLOSING)
 		rv = NULL;
 
 	return (rv);
@@ -358,15 +372,17 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 	case WRITE_COMMAND:
 	case WRITE_12:
 	case WRITE_16:
+		if (sc->sc_state != XBF_CONNECTED) {
+			xbf_scsi_done(xs, XS_RESET);
+			return;
+		}
 		break;
-
 	case SYNCHRONIZE_CACHE:
 		if (!(sc->sc_caps & (XBF_CAP_BARRIER|XBF_CAP_FLUSH))) {
 			xbf_scsi_done(xs, XS_NOERROR);
 			return;
 		}
 		break;
-
 	case INQUIRY:
 		xbf_scsi_inq(xs);
 		return;
@@ -376,13 +392,11 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 	case READ_CAPACITY_16:
 		xbf_scsi_capacity16(xs);
 		return;
-
 	case TEST_UNIT_READY:
 	case START_STOP:
 	case PREVENT_ALLOW:
 		xbf_scsi_done(xs, XS_NOERROR);
 		return;
-
 	default:
 		printf("%s cmd 0x%02x\n", __func__, xs->cmd->opcode);
 	case MODE_SENSE:
@@ -807,12 +821,6 @@ xbf_dev_probe(struct scsi_link *link)
 	return (ENODEV);
 }
 
-void
-xbf_dev_free(struct scsi_link *link)
-{
-	printf("%s\n", __func__);
-}
-
 int
 xbf_get_type(struct xbf_softc *sc)
 {
@@ -1181,4 +1189,44 @@ xbf_ring_destroy(struct xbf_softc *sc)
 	xbf_dma_free(sc, &sc->sc_xr_dma);
 
 	sc->sc_xr = NULL;
+}
+
+void
+xbf_stop(struct xbf_softc *sc)
+{
+	union xbf_ring_desc *xrd;
+	struct scsi_xfer *xs;
+	bus_dmamap_t map;
+	int desc;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_xr_dma.dma_map, 0,
+	    sc->sc_xr_dma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD |
+	    BUS_DMASYNC_POSTWRITE);
+
+	for (desc = 0; desc < sc->sc_xr_ndesc; desc++) {
+		xs = sc->sc_xs[desc];
+		if (xs == NULL)
+			continue;
+		xrd = &sc->sc_xr->xr_desc[desc];
+		DPRINTF("%s: aborting desc %u(%llu) op %u\n",
+		    sc->sc_dev.dv_xname, desc, xrd->xrd_rsp.rsp_id,
+		    xrd->xrd_rsp.rsp_op);
+		if (sc->sc_xs_bb[desc].dma_size > 0)
+			map = sc->sc_xs_bb[desc].dma_map;
+		else
+			map = sc->sc_xs_map[desc];
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, map);
+		xbf_reclaim_xs(xs, desc);
+		xbf_scsi_done(xs, XS_RESET);
+		sc->sc_xs[desc] = NULL;
+	}
+
+	sc->sc_state = XBF_CLOSING;
+
+	/* Give other processes a chance to run */
+	yield();
+
+	xbf_ring_destroy(sc);
 }
