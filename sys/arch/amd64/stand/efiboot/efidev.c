@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.21 2016/09/11 17:51:21 jsing Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.22 2016/12/23 05:57:26 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -94,14 +94,15 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 	if (blks == 0)
 		/* block size < 512.  HP Stream 13 actually has such a disk. */
 		return (EFI_UNSUPPORTED);
-	lba = off / blks;
 
 	/* leading and trailing unaligned blocks in intrisic block */
 	i_lblks = ((off % blks) == 0)? 0 : blks - (off % blks);
-	i_tblks = (off + nsect) % blks;
+	i_tblks = (nsect > i_lblks)? (off + nsect) % blks : 0;
 
 	/* aligned blocks in intrisic block */
-	i_nblks = nsect - (i_lblks + i_tblks);
+	i_nblks = (nsect > i_lblks + i_tblks)? nsect - (i_lblks + i_tblks) : 0;
+
+	lba = (off + i_lblks) / blks;
 
 	switch (rw) {
 	case F_READ:
@@ -122,8 +123,8 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 			    ed->blkio->Media->BlockSize, iblk);
 			if (EFI_ERROR(status))
 				goto on_eio;
-			memcpy(buf, iblk + (blks - i_lblks),
-			    i_lblks * DEV_BSIZE);
+			memcpy(buf, iblk + (blks - i_lblks) * DEV_BSIZE,
+			    min(nsect, i_lblks) * DEV_BSIZE);
 		}
 		if (i_nblks > 0) {
 			status = EFI_CALL(ed->blkio->ReadBlocks,
