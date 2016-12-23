@@ -1,0 +1,87 @@
+.\"	$OpenBSD: NAME_CONSTRAINTS_new.3,v 1.1 2016/12/23 17:41:29 schwarze Exp $
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 23 2016 $
+.Dt NAME_CONSTRAINTS_NEW 3
+.Os
+.Sh NAME
+.Nm NAME_CONSTRAINTS_new ,
+.Nm NAME_CONSTRAINTS_free ,
+.Nm GENERAL_SUBTREE_new ,
+.Nm GENERAL_SUBTREE_free
+.Nd X.509 CA name constraints extension
+.Sh SYNOPSIS
+.In openssl/x509v3.h
+.Ft NAME_CONSTRAINTS *
+.Fn NAME_CONSTRAINTS_new void
+.Ft void
+.Fn NAME_CONSTRAINTS_free "NAME_CONSTRAINTS *names"
+.Ft GENERAL_SUBTREE *
+.Fn GENERAL_SUBTREE_new void
+.Ft void
+.Fn GENERAL_SUBTREE_free "GENERAL_SUBTREE *name"
+.Sh DESCRIPTION
+X.509 CA certificates can use the name constraints extension
+to restrict the subject names of subsequent certificates in a
+certification path.
+.Pp
+.Fn NAME_CONSTRAINTS_new
+allocates and initializes an empty
+.Vt NAME_CONSTRAINTS
+object, representing an ASN.1 NameConstraints structure
+defined in RFC 5280 section 4.2.1.10.
+It consists of two
+.Vt STACK_OF(GENERAL_SUBTREE)
+objects, one specifying permitted names, the other excluded names.
+.Fn NAME_CONSTRAINTS_free
+frees
+.Fa names .
+.Pp
+.Fn GENERAL_SUBTREE_new
+allocates and initializes an empty
+.Vt GENERAL_SUBTREE
+object, representing an ASN.1 GeneralSubtree structure
+defined in RFC 5280 section 4.2.1.10.
+It is a trivial wrapper around the
+.Vt GENERAL_NAME
+object documented in
+.Xr GENERAL_NAME_new 3 .
+The standard requires the other fields of
+.Vt GENERAL_SUBTREE
+to be ignored.
+.Fn GENERAL_SUBTREE_free
+frees
+.Fa name .
+.Sh RETURN VALUES
+.Fn NAME_CONSTRAINTS_new
+and
+.Fn GENERAL_SUBTREE_new
+return the new
+.Vt NAME_CONSTRAINTS
+or
+.Vt GENERAL_SUBTREE
+object, respectively, or
+.Dv NULL
+if an error occurs.
+.Sh SEE ALSO
+.Xr BASIC_CONSTRAINTS_new 3 ,
+.Xr GENERAL_NAMES_new 3 ,
+.Xr X509_EXTENSION_new 3 ,
+.Xr X509_new 3
+.Sh STANDARDS
+RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
+Certificate Revocation List (CRL) Profile,
+section 4.2.1.10: Name Constraints
