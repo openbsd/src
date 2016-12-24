@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_amd64.c,v 1.2 2016/09/11 17:51:21 jsing Exp $	*/
+/*	$OpenBSD: softraid_amd64.c,v 1.3 2016/12/24 22:49:38 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -210,6 +210,7 @@ srprobe(void)
 				bv->sbv_chunk_no = md->ssdi.ssd_chunk_no;
 				bv->sbv_flags = md->ssdi.ssd_vol_flags;
 				bv->sbv_size = md->ssdi.ssd_size;
+				bv->sbv_secsize = md->ssdi.ssd_secsize;
 				bv->sbv_data_blkno = md->ssd_data_blkno;
 				bcopy(&md->ssdi.ssd_uuid, &bv->sbv_uuid,
 				    sizeof(md->ssdi.ssd_uuid));
@@ -326,7 +327,8 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 
 	/* Partition offset within softraid volume. */
 	sr_dip = (struct diskinfo *)bv->sbv_diskinfo;
-	blk += sr_dip->disklabel.d_partitions[bv->sbv_part - 'a'].p_offset;
+	blk += DL_SECTOBLK(&sr_dip->disklabel,
+	    sr_dip->disklabel.d_partitions[bv->sbv_part - 'a'].p_offset);
 
 	if (bv->sbv_level == 0) {
 		return ENOTSUP;
@@ -433,7 +435,7 @@ findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 	const char		 openbsd_uuid_code[] = GPT_UUID_OPENBSD;
 	struct gpt_partition	 gp;
 	static struct uuid	*openbsd_uuid = NULL, openbsd_uuid_space;
-	static u_char		 buf[DEV_BSIZE];
+	static u_char		 buf[4096];
 
 	/* Prepare OpenBSD UUID */
 	if (openbsd_uuid == NULL) {
@@ -450,9 +452,15 @@ findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 		openbsd_uuid = &openbsd_uuid_space;
 	}
 
+	if (bv->sbv_secsize > 4096) {
+		*err = "disk sector > 4096 bytes\n";
+		return (-1);
+	}
+
 	/* LBA1: GPT Header */
 	lba = 1;
-	sr_strategy(bv, F_READ, lba, DEV_BSIZE, buf, NULL);
+	sr_strategy(bv, F_READ, lba * (bv->sbv_secsize / DEV_BSIZE), DEV_BSIZE,
+	    buf, NULL);
 	memcpy(&gh, buf, sizeof(gh));
 
 	/* Check signature */
@@ -484,13 +492,14 @@ findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 
 	lba = letoh64(gh.gh_part_lba);
 	ghpartsize = letoh32(gh.gh_part_size);
-	ghpartspersec = DEV_BSIZE / ghpartsize;
+	ghpartspersec = bv->sbv_secsize / ghpartsize;
 	ghpartnum = letoh32(gh.gh_part_num);
 	gpsectors = (ghpartnum + ghpartspersec - 1) / ghpartspersec;
 	new_csum = crc32(0L, Z_NULL, 0);
 	found = 0;
 	for (i = 0; i < gpsectors; i++, lba++) {
-		sr_strategy(bv, F_READ, lba, DEV_BSIZE, buf, NULL);
+		sr_strategy(bv, F_READ, lba * (bv->sbv_secsize / DEV_BSIZE),
+		    bv->sbv_secsize, buf, NULL);
 		for (part = 0; part < ghpartspersec; part++) {
 			if (ghpartnum == 0)
 				break;
@@ -528,7 +537,8 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	/* Check for MBR to determine partition offset. */
 	bzero(&mbr, sizeof(mbr));
 	sr_strategy(bv, F_READ, DOSBBSECTOR, sizeof(mbr), &mbr, NULL);
-	if (gpt_chk_mbr(mbr.dmbr_parts, bv->sbv_size) == 0) {
+	if (gpt_chk_mbr(mbr.dmbr_parts, bv->sbv_size /
+		    (bv->sbv_secsize / DEV_BSIZE)) == 0) {
 		start = findopenbsd_gpt(bv, &err);
 		if (start == (u_int)-1) {
 			if (err != NULL)
@@ -550,7 +560,8 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	}
 
 	/* Read the disklabel. */
-	sr_strategy(bv, F_READ, start + DOS_LABELSECTOR,
+	sr_strategy(bv, F_READ,
+	    start * (bv->sbv_secsize / DEV_BSIZE) + DOS_LABELSECTOR,
 	    sizeof(struct disklabel), buf, NULL);
 
 #ifdef BIOS_DEBUG

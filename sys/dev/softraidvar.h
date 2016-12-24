@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.165 2016/09/10 17:06:11 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.166 2016/12/24 22:49:38 yasuoka Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -271,6 +271,7 @@ struct sr_boot_volume {
 	u_int32_t	sbv_flags;		/* Volume specific flags. */
 	u_int32_t	sbv_state;		/* Volume state. */
 	int64_t		sbv_size;		/* Virtual disk size. */
+	u_int32_t	sbv_secsize;		/* Sector size */
 	u_int32_t	sbv_data_blkno;		/* Data offset. */
 	u_int64_t	sbv_ondisk;		/* Ondisk version. */
 
