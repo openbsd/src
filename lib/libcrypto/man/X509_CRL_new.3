@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_CRL_new.3,v 1.1 2016/12/16 09:56:33 schwarze Exp $
+.\"	$OpenBSD: X509_CRL_new.3,v 1.2 2016/12/24 01:29:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2016 $
+.Dd $Mdocdate: December 24 2016 $
 .Dt X509_CRL_NEW 3
 .Os
 .Sh NAME
@@ -72,7 +72,10 @@ object, respectively, or
 .Dv NULL
 if an error occurs.
 .Sh SEE ALSO
+.Xr ACCESS_DESCRIPTION_new 3 ,
+.Xr AUTHORITY_KEYID_new 3 ,
 .Xr d2i_X509_CRL 3 ,
+.Xr DIST_POINT_new 3 ,
 .Xr PEM_read_X509_CRL 3 ,
 .Xr X509_CRL_get0_by_serial 3 ,
 .Xr X509_CRL_get_ext 3 ,
@@ -80,6 +83,7 @@ if an error occurs.
 .Xr X509_CRL_get_issuer 3 ,
 .Xr X509_CRL_get_version 3 ,
 .Xr X509_CRL_sign 3 ,
+.Xr X509_EXTENSION_new 3 ,
 .Xr X509_load_crl_file 3 ,
 .Xr X509_new 3 ,
 .Xr X509_REVOKED_new 3 ,

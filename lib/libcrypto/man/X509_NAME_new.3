@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_new.3,v 1.1 2016/12/14 15:04:13 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_new.3,v 1.2 2016/12/24 01:29:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 14 2016 $
+.Dd $Mdocdate: December 24 2016 $
 .Dt X509_NAME_NEW 3
 .Os
 .Sh NAME
@@ -66,6 +66,8 @@ object or
 if an error occurred.
 .Sh SEE ALSO
 .Xr d2i_X509_NAME 3 ,
+.Xr GENERAL_NAME_new 3 ,
+.Xr NAME_CONSTRAINTS_new 3 ,
 .Xr SSL_load_client_CA_file 3 ,
 .Xr X509_get_subject_name 3 ,
 .Xr X509_NAME_add_entry_by_txt 3 ,
