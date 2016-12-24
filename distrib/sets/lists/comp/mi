@@ -1724,6 +1724,7 @@
 ./usr/share/man/man2/vfork.2
 ./usr/share/man/man2/wait.2
 ./usr/share/man/man2/write.2
+./usr/share/man/man3/ACCESS_DESCRIPTION_new.3
 ./usr/share/man/man3/ASN1_OBJECT_new.3
 ./usr/share/man/man3/ASN1_STRING_length.3
 ./usr/share/man/man3/ASN1_STRING_new.3
@@ -1733,6 +1734,7 @@
 ./usr/share/man/man3/ASN1_generate_nconf.3
 ./usr/share/man/man3/ASN1_time_parse.3
 ./usr/share/man/man3/AUTHORITY_KEYID_new.3
+./usr/share/man/man3/BASIC_CONSTRAINTS_new.3
 ./usr/share/man/man3/BF_set_key.3
 ./usr/share/man/man3/BIO_ctrl.3
 ./usr/share/man/man3/BIO_f_base64.3
@@ -1846,9 +1848,11 @@
 ./usr/share/man/man3/EVP_SealInit.3
 ./usr/share/man/man3/EVP_SignInit.3
 ./usr/share/man/man3/EVP_VerifyInit.3
+./usr/share/man/man3/EXTENDED_KEY_USAGE_new.3
 ./usr/share/man/man3/GENERAL_NAME_new.3
 ./usr/share/man/man3/HMAC.3
 ./usr/share/man/man3/MD5.3
+./usr/share/man/man3/NAME_CONSTRAINTS_new.3
 ./usr/share/man/man3/OBJ_nid2obj.3
 ./usr/share/man/man3/OCSP_CRLID_new.3
 ./usr/share/man/man3/OCSP_REQUEST_new.3
@@ -1881,6 +1885,9 @@
 ./usr/share/man/man3/PKCS7_sign_add_signer.3
 ./usr/share/man/man3/PKCS7_verify.3
 ./usr/share/man/man3/PKCS8_PRIV_KEY_INFO_new.3
+./usr/share/man/man3/PKEY_USAGE_PERIOD_new.3
+./usr/share/man/man3/POLICYINFO_new.3
+./usr/share/man/man3/PROXY_POLICY_new.3
 ./usr/share/man/man3/RAND_add.3
 ./usr/share/man/man3/RAND_bytes.3
 ./usr/share/man/man3/RAND_load_file.3
@@ -1997,6 +2004,7 @@
 ./usr/share/man/man3/SSL_state_string.3
 ./usr/share/man/man3/SSL_want.3
 ./usr/share/man/man3/SSL_write.3
+./usr/share/man/man3/SXNET_new.3
 ./usr/share/man/man3/SipHash24.3
 ./usr/share/man/man3/TS_REQ_new.3
 ./usr/share/man/man3/UI_new.3
