@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.99 2016/12/23 23:50:04 schwarze Exp $
+# $OpenBSD: Makefile,v 1.100 2016/12/24 01:00:48 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -186,6 +186,7 @@ MAN=	\
 	SHA1.3 \
 	SMIME_read_PKCS7.3 \
 	SMIME_write_PKCS7.3 \
+	SXNET_new.3 \
 	TS_REQ_new.3 \
 	UI_new.3 \
 	X509V3_get_d2i.3 \
