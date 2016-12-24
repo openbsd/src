@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_lvds.c,v 1.15 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: intel_lvds.c,v 1.16 2016/12/24 21:52:24 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -382,6 +382,7 @@ static int intel_lvds_get_modes(struct drm_connector *connector)
 	return 1;
 }
 
+#ifdef notyet
 static int intel_no_modeset_on_lid_dmi_callback(const struct dmi_system_id *id)
 {
 	DRM_INFO("Skipping forced modeset for %s\n", id->ident);
@@ -402,7 +403,6 @@ static const struct dmi_system_id intel_no_modeset_on_lid[] = {
 	{ }	/* terminating entry */
 };
 
-#ifdef notyet
 /*
  * Lid events. Note the use of 'modeset':
  *  - we set it to MODESET_ON_LID_OPEN on lid close,
