@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.4 2010/08/22 21:15:25 bluhm Exp $ */
+/*	$OpenBSD: printconf.c,v 1.5 2016/12/24 14:58:55 jca Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -72,24 +72,27 @@ print_redistribute(struct ospfd_conf *conf)
 	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_STATIC:
-			printf("%sredistribute static\n", print_no(r->type));
+			printf("%sredistribute static ", print_no(r->type));
 			break;
 		case REDIST_CONNECTED:
-			printf("%sredistribute connected\n", print_no(r->type));
+			printf("%sredistribute connected ", print_no(r->type));
 			break;
 		case REDIST_LABEL:
-			printf("%sredistribute rtlabel %s\n",
+			printf("%sredistribute rtlabel %s ",
 			    print_no(r->type), rtlabel_id2name(r->label));
 			break;
 		case REDIST_ADDR:
-			printf("%sredistribute %s/%d\n",
+			printf("%sredistribute %s/%d ",
 			    print_no(r->type), log_in6addr(&r->addr),
 			    r->prefixlen);
 			break;
 		case REDIST_DEFAULT:
-			printf("%sredistribute default\n", print_no(r->type));
+			printf("%sredistribute default ", print_no(r->type));
 			break;
 		}
+		printf("set { metric %d type %d }\n",
+		    (r->metric & LSA_METRIC_MASK),
+		    ((r->metric & LSA_ASEXT_E_FLAG) == 0 ? 1 : 2));
 	}
 }
 
