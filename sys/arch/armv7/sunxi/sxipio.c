@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.15 2016/11/08 19:36:41 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.16 2016/12/24 22:42:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -29,6 +29,7 @@
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
@@ -140,6 +141,10 @@ struct sxipio_pins sxipio_pins[] = {
 		sun8i_h3_pins, nitems(sun8i_h3_pins)
 	},
 	{
+		"allwinner,sun8i-h3-r-pinctrl",
+		sun8i_h3_r_pins, nitems(sun8i_h3_r_pins)
+	},
+	{
 		"allwinner,sun9i-a80-pinctrl",
 		sun9i_a80_pins, nitems(sun9i_a80_pins)
 	}
@@ -172,6 +177,9 @@ sxipio_attach(struct device *parent, struct device *self, void *aux)
 		panic("%s: bus_space_map failed!", __func__);
 
 	sxipio_sc = sc;
+
+	clock_enable_all(faa->fa_node);
+	reset_deassert_all(faa->fa_node);
 
 	for (i = 0; i < nitems(sxipio_pins); i++) {
 		if (OF_is_compatible(faa->fa_node, sxipio_pins[i].compat)) {

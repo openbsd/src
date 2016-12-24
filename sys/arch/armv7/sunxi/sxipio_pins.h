@@ -4070,6 +4070,79 @@ struct sxipio_pin sun8i_h3_pins[] = {
 	} },
 };
 
+struct sxipio_pin sun8i_h3_r_pins[] = {
+	{ SXIPIO_PIN(L, 0), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_twi", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 1), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_twi", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 2), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_uart", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 3), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_uart", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 4), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_jtag", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 5), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_jtag", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 6), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_jtag", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 7), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_jtag", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 8), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 9), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 10), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_pwm", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 11), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_cir_rx", 2 },
+		{ "irq", 6 },
+	} },
+};
+
 struct sxipio_pin sun9i_a80_pins[] = {
 	{ SXIPIO_PIN(A, 0), {
 		{ "gpio_in", 0 },
