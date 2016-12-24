@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.23 2016/12/23 07:35:01 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.24 2016/12/24 08:41:13 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -726,7 +726,8 @@ efistrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 		return sr_strategy(dip->sr_vol, rw, blk, size, buf, rsize);
 #endif
 	nsect = (size + DEV_BSIZE - 1) / DEV_BSIZE;
-	blk += dip->disklabel.d_partitions[B_PARTITION(dip->bsddev)].p_offset;
+	blk += DL_SECTOBLK(&dip->disklabel,
+	    dip->disklabel.d_partitions[B_PARTITION(dip->bsddev)].p_offset);
 
 	if (blk < 0)
 		error = EINVAL;
