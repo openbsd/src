@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.141 2016/09/19 18:09:22 tedu Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.142 2016/12/24 11:17:35 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1064,7 +1064,7 @@ esp_output_cb(struct cryptop *crp)
 	}
 
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -1081,7 +1081,7 @@ esp_output_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			splx(s);
+			NET_UNLOCK(s);
 			return crypto_dispatch(crp);
 		}
 		free(tc, M_XDATA, 0);
@@ -1098,11 +1098,11 @@ esp_output_cb(struct cryptop *crp)
 
 	/* Call the IPsec input callback. */
 	error = ipsp_process_done(m, tdb);
-	splx(s);
+	NET_UNLOCK(s);
 	return error;
 
  baddone:
-	splx(s);
+	NET_UNLOCK(s);
 
 	m_freem(m);
 

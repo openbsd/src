@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.123 2016/09/19 18:09:22 tedu Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.124 2016/12/24 11:17:35 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1219,7 +1219,7 @@ ah_output_cb(struct cryptop *crp)
 		return (EINVAL);
 	}
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -1236,7 +1236,7 @@ ah_output_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			splx(s);
+			NET_UNLOCK(s);
 			return crypto_dispatch(crp);
 		}
 		free(tc, M_XDATA, 0);
@@ -1258,11 +1258,11 @@ ah_output_cb(struct cryptop *crp)
 	crypto_freereq(crp);
 
 	err =  ipsp_process_done(m, tdb);
-	splx(s);
+	NET_UNLOCK(s);
 	return err;
 
  baddone:
-	splx(s);
+	NET_UNLOCK(s);
 
 	m_freem(m);
 

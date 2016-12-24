@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.48 2016/09/24 14:51:37 naddy Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.49 2016/12/24 11:17:35 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -554,7 +554,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		return (EINVAL);
 	}
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -571,7 +571,7 @@ ipcomp_output_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			splx(s);
+			NET_UNLOCK(s);
 			return crypto_dispatch(crp);
 		}
 		free(tc, M_XDATA, 0);
@@ -588,7 +588,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		/* Compression was useless, we have lost time. */
 		crypto_freereq(crp);
 		error = ipsp_process_done(m, tdb);
-		splx(s);
+		NET_UNLOCK(s);
 		return error;
 	}
 
@@ -638,11 +638,11 @@ ipcomp_output_cb(struct cryptop *crp)
 	crypto_freereq(crp);
 
 	error = ipsp_process_done(m, tdb);
-	splx(s);
+	NET_UNLOCK(s);
 	return error;
 
 baddone:
-	splx(s);
+	NET_UNLOCK(s);
 
 	m_freem(m);
 
