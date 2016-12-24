@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PKEY_USAGE_PERIOD_new.3,v 1.1 2016/12/23 23:50:04 schwarze Exp $
+.\"	$OpenBSD: PKEY_USAGE_PERIOD_new.3,v 1.2 2016/12/24 08:19:04 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2016 $
+.Dd $Mdocdate: December 24 2016 $
 .Dt PKEY_USAGE_PERIOD_NEW 3
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@ object, representing an ASN.1 PrivateKeyUsagePeriod structure
 defined in RFC 3280 section 4.2.1.4.
 It could be used in
 .Vt X509
-certificates to specifiy a validity period for the private key
+certificates to specify a validity period for the private key
 that differed from the validity period of the certificate.
 .Pp
 .Fn PKEY_USAGE_PERIOD_free
@@ -60,6 +60,6 @@ section 4.2.1.4: Private Key Usage Period
 .Pp
 RFC 3280 was obsoleted by RFC 5280, which says: "Section 4.2.1.4
 in RFC 3280, which specified the PrivateKeyUsagePeriod certificate
-extension but deprecated its use, was removed.  Use of this ISO
-standard extension is neither deprecated nor recommended for use
-in the Internet PKI."
+extension but deprecated its use, was removed.
+Use of this ISO standard extension is neither deprecated
+nor recommended for use in the Internet PKI."
