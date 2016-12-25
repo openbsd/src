@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.33 2016/11/03 10:23:01 ajacoutot Exp $
+# $OpenBSD: Link.pm,v 1.34 2016/12/25 13:46:18 zhuk Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -822,6 +822,21 @@ sub common1
 	my $staticlibs = [];
 	my $args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs,
 	    $libs);
+
+	my $tiedlibs = tied(@$orderedlibs);
+	my $ie = $tiedlibs->indexof("estdc++");
+	my $is = $tiedlibs->indexof("stdc++");
+	if (defined($ie) and defined($is)) {
+		tsay {"stripping stdc++ from orderedlibs due to having estdc++ already; ie=$ie, is=$is"};
+		# check what library comes later
+		if ($ie < $is) {
+			splice(@$orderedlibs, $ie, 1);
+			splice(@$orderedlibs, $is, 1, "estdc++");
+			$ie = $is;
+		} else {
+			splice(@$orderedlibs, $is, 1);
+		}
+	}
 	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
 	tsay {"orderedlibs = @$orderedlibs"};
 	return ($staticlibs, $orderedlibs, $args);

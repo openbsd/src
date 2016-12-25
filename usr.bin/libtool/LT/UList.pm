@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UList.pm,v 1.2 2014/04/20 17:34:26 zhuk Exp $
+# $OpenBSD: UList.pm,v 1.3 2016/12/25 13:46:18 zhuk Exp $
 #
 # Copyright (c) 2013 Vadim Zhukov <zhuk@openbsd.org>
 #
@@ -62,6 +62,8 @@ sub TIEARRAY {
 # presence of particular item, call the method below on the reference
 # returned by tie() or tied() instead.
 sub exists { return exists $_[0]->[0]->{$_[1]}; }
+
+sub indexof { return exists($_[0]->[0]->{$_[1]}) ? ($_[0]->[0]->{$_[1]} - 1) : undef; }
 
 sub FETCHSIZE { return scalar(@{$_[0]}) - 1; }
 
@@ -144,8 +146,30 @@ sub SPLICE
 		$length = $maxrm;
 	}
 
-	# do not ever dream of adding items here
-	my @ret = splice(@$self, $offset, $length);
+	my $i = @$self;
+
+	# make sure no duplicates get added
+	@_ = grep { !exists $self->[0] or
+		    $self->[0]->{$_} >= $offset &&
+	            $self->[0]->{$_} < $offset + $length } @_;
+
+	for (@_) {
+		# set up index
+		$self->[0]->{$_} = $i++;
+	}
+
+	#
+	# Renumber (in advance) trailing items, in case something gets added
+	# and number of added and removed items differs.
+	#
+	my $delta = scalar(@_) - $length;
+	if (scalar(@_) and $delta) {
+		for $i ($offset + $length .. scalar(@$self)) {
+			$self->[0]->{$self->[$i]} += $delta;
+		}
+	}
+
+	my @ret = splice(@$self, $offset, $length, @_);
 
 	for (@ret) {
 		delete $self->[0]->{$_};
