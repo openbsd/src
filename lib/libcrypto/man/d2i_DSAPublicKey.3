@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_DSAPublicKey.3,v 1.7 2016/12/24 23:22:52 schwarze Exp $
+.\"	$OpenBSD: d2i_DSAPublicKey.3,v 1.8 2016/12/25 14:38:55 schwarze Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 24 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt D2I_DSAPUBLICKEY 3
 .Os
 .Sh NAME
@@ -194,13 +194,10 @@ If
 .Fa val_in->write_params
 is zero, only the
 .Fa val_in->pub_key
-field is encoded as an
-.Sy INTEGER .
+field is encoded as an ASN.1 INTEGER.
 If
 .Fa val_in->write_params
-is 1, then a
-.Sy SEQUENCE
-consisting of the
+is 1, then a SEQUENCE consisting of the
 .Fa val_in->p ,
 .Fa val_in->q ,
 .Fa val_in->g ,
@@ -211,8 +208,11 @@ fields is encoded.
 .Fn d2i_DSA_PUBKEY
 and
 .Fn i2d_DSA_PUBKEY
-decode and encode a DSA public key using a SubjectPublicKeyInfo
-(certificate public key) structure.
+decode and encode a DSA public key using an ASN.1
+.Vt SubjectPublicKeyInfo
+structure defined in RFC 5280 section 4.1
+and documented in
+.Xr X509_PUBKEY_new 3 .
 .Fn d2i_DSA_PUBKEY_bio ,
 .Fn d2i_DSA_PUBKEY_fp ,
 .Fn i2d_DSA_PUBKEY_bio ,
@@ -261,23 +261,35 @@ pointer.
 .Fn d2i_DSAparams
 and
 .Fn i2d_DSAparams
-decode and encode the DSA parameters using a
-.Sy Dss-Parms
-structure as defined in RFC 2459.
+decode and encode the DSA parameters using an ASN.1
+.Vt Dss-Parms
+structure defined in RFC 3279 section 2.3.2
+and used for the parameters field of the ASN.1
+.Vt AlgorithmIdentifier
+structure defined in RFC 5280 section 4.1.1.2.
+.Pp
 .Fn DSAparams_dup
-copies
-.Fa dsa
-by calling
+allocates and initializes an empty
+.Vt DSA
+object and copies the DSA parameters from
+.Fa val_in
+to it by calling
 .Fn i2d_DSAparams
 and
 .Fn d2i_DSAparams .
+If a private or public key are present in
+.Fa val_in ,
+they are not copied.
 .Pp
 .Fn d2i_DSA_SIG
 and
 .Fn i2d_DSA_SIG
-decode and encode a DSA signature using a
-.Sy Dss-Sig-Value
-structure as defined in RFC 2459.
+decode and encode a DSA signature using an ASN.1
+.Vt Dss-Sig-Value
+structure as defined in RFC 3279 section 2.2.2
+and used for the signatureValue field of the ASN.1
+.Vt Certificate
+structure described in RFC 5280 sections 4.1.1.3 and 5.1.1.3.
 .Sh RETURN VALUES
 .Fn d2i_DSAPublicKey ,
 .Fn d2i_DSA_PUBKEY ,
@@ -305,4 +317,20 @@ if an error occurs.
 .Xr ASN1_item_d2i 3 ,
 .Xr DSA_new 3 ,
 .Xr DSA_SIG_new 3 ,
-.Xr PEM_write_DSAPrivateKey 3
+.Xr EVP_PKEY_set1_DSA 3 ,
+.Xr PEM_write_DSAPrivateKey 3 ,
+.Xr X509_PUBKEY_new 3
+.Sh STANDARDS
+RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
+Certificate Revocation List (CRL) Profile,
+section 4.1: Basic Certificate Fields
+.Pp
+RFC 3279: Algorithms and Identifiers for the Internet X.509 Public
+Key Infrastructure Certificate and Certificate Revocation List (CRL)
+Profile:
+.Bl -dash -compact
+.It
+section 2.2.2: DSA Signature Algorithm
+.It
+section 2.3.2: DSA Signature Keys
+.El
