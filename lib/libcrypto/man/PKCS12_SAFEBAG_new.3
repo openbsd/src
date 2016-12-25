@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PKCS12_SAFEBAG_new.3,v 1.1 2016/12/22 16:05:22 schwarze Exp $
+.\"	$OpenBSD: PKCS12_SAFEBAG_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt PKCS12_SAFEBAG_NEW 3
 .Os
 .Sh NAME
@@ -37,8 +37,9 @@
 .Fn PKCS12_SAFEBAG_new
 allocates and initializes an empty
 .Vt PKCS12_SAFEBAG
-object, representing an ASN.1 SafeBag structure
-defined in RFC 7292 section 4.2.
+object, representing an ASN.1
+.Vt SafeBag
+structure defined in RFC 7292 section 4.2.
 It can hold a pointer to a
 .Vt PKCS12_BAGS
 object together with a type identifier and optional attributes.
@@ -49,7 +50,9 @@ frees
 .Fn PKCS12_BAGS_new
 allocates and initializes an empty
 .Vt PKCS12_BAGS
-object, representing the bagValue field of an ASN.1 SafeBag structure.
+object, representing the bagValue field of an ASN.1
+.Vt SafeBag
+structure.
 It is used in
 .Vt PKCS12_SAFEBAG
 and can hold a DER-encoded X.509 certificate,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: AUTHORITY_KEYID_new.3,v 1.1 2016/12/23 14:37:08 schwarze Exp $
+.\"	$OpenBSD: AUTHORITY_KEYID_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt AUTHORITY_KEYID_NEW 3
 .Os
 .Sh NAME
@@ -35,8 +35,9 @@ for signing it.
 .Fn AUTHORITY_KEYID_new
 allocates and initializes an empty
 .Vt AUTHORITY_KEYID
-object, representing an ASN.1 AuthorityKeyIdentifier structure
-defined in RFC 5280 section 4.2.1.1.
+object, representing an ASN.1
+.Vt AuthorityKeyIdentifier
+structure defined in RFC 5280 section 4.2.1.1.
 It can hold an issuer name, a serial number, and a key identifier.
 .Pp
 .Fn AUTHORITY_KEYID_free

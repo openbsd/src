@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_REQ_new.3,v 1.1 2016/12/17 01:08:14 schwarze Exp $
+.\"	$OpenBSD: X509_REQ_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt X509_REQ_NEW 3
 .Os
 .Sh NAME
@@ -37,8 +37,9 @@
 .Fn X509_REQ_new
 allocates and initializes an empty
 .Vt X509_REQ
-object, representing an ASN.1 CertificationRequest structure
-defined in RFC 2986 section 4.2.
+object, representing an ASN.1
+.Vt CertificationRequest
+structure defined in RFC 2986 section 4.2.
 It can hold a pointer to an
 .Vt X509_REQ_INFO
 object discussed below together with a cryptographic signature and
@@ -50,8 +51,9 @@ frees
 .Fn X509_REQ_INFO_new
 allocates and initializes an empty
 .Vt X509_REQ_INFO
-object, representing an ASN.1 CertificationRequestInfo structure
-defined in RFC 2986 section 4.1.
+object, representing an ASN.1
+.Vt CertificationRequestInfo
+structure defined in RFC 2986 section 4.1.
 It is used inside the
 .Vt X509_REQ
 object and can hold the subject and the public key of the requested

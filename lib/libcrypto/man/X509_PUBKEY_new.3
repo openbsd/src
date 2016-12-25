@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_PUBKEY_new.3,v 1.3 2016/12/15 22:24:45 schwarze Exp $
+.\"	$OpenBSD: X509_PUBKEY_new.3,v 1.4 2016/12/25 22:15:10 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 15 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt X509_PUBKEY_NEW 3
 .Os
 .Sh NAME
@@ -133,9 +133,10 @@
 .Sh DESCRIPTION
 The
 .Vt X509_PUBKEY
-structure represents the ASN.1 SubjectPublicKeyInfo structure defined
-in RFC 5280 section 4.1 and used in certificates and certificate
-requests.
+structure represents the ASN.1
+.Vt SubjectPublicKeyInfo
+structure defined in RFC 5280 section 4.1 and used in certificates
+and certificate requests.
 .Pp
 .Fn X509_PUBKEY_new
 allocates and initializes an
@@ -179,7 +180,9 @@ and
 .Fn i2d_PUBKEY
 decode and encode an
 .Vt EVP_PKEY
-structure using SubjectPublicKeyInfo format.
+structure using
+.Vt SubjectPublicKeyInfo
+format.
 They otherwise follow the conventions of other ASN.1 functions such as
 .Xr d2i_X509 3 .
 .Pp
@@ -225,7 +228,9 @@ bytes at
 .Pf * Fa pk ,
 and
 .Pf * Fa pa
-is set to the associated AlgorithmIdentifier for the public key.
+is set to the associated
+.Vt AlgorithmIdentifier
+for the public key.
 If the value of any of these parameters is not required,
 it can be set to
 .Dv NULL .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_CINF_new.3,v 1.1 2016/12/16 09:17:59 schwarze Exp $
+.\"	$OpenBSD: X509_CINF_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt X509_CINF_NEW 3
 .Os
 .Sh NAME
@@ -43,8 +43,9 @@
 .Fn X509_CINF_new
 allocates and initializes an empty
 .Vt X509_CINF
-object, representing an ASN.1 TBSCertificate structure
-defined in RFC 5280 section 4.1.
+object, representing an ASN.1
+.Vt TBSCertificate
+structure defined in RFC 5280 section 4.1.
 It is used inside the
 .Vt X509
 object and holds the main information contained in the X.509
@@ -57,8 +58,9 @@ frees
 .Fn X509_VAL_new
 allocates and initializes an empty
 .Vt X509_VAL
-object, representing an ASN.1 Validity structure
-defined in RFC 5280 section 4.1.
+object, representing an ASN.1
+.Vt Validity
+structure defined in RFC 5280 section 4.1.
 It is used inside the
 .Vt X509_CINF
 object and holds the validity period of the certificate.

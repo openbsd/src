@@ -1,4 +1,4 @@
-.\"	$OpenBSD: TS_REQ_new.3,v 1.3 2016/12/24 01:29:40 schwarze Exp $
+.\"	$OpenBSD: TS_REQ_new.3,v 1.4 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt TS_REQ_NEW 3
 .Os
 .Sh NAME
@@ -67,8 +67,9 @@ which returns time-stamp tokens to the clients.
 .Fn TS_REQ_new
 allocates and initializes an empty
 .Vt TS_REQ
-object, representing an ASN.1 TimeStampReq structure
-defined in RFC 3161 section 2.4.1.
+object, representing an ASN.1
+.Vt TimeStampReq
+structure defined in RFC 3161 section 2.4.1.
 It can hold a hash of the datum to be time-stamped and some
 auxiliary, optional information.
 .Fn TS_REQ_free
@@ -78,8 +79,9 @@ frees
 .Fn TS_RESP_new
 allocates and initializes an empty
 .Vt TS_RESP
-object, representing an ASN.1 TimeStampResp structure
-defined in RFC 3161 section 2.4.2.
+object, representing an ASN.1
+.Vt TimeStampResp
+structure defined in RFC 3161 section 2.4.2.
 It can hold status information and a time-stamp token.
 .Fn TS_RESP_free
 frees
@@ -88,8 +90,9 @@ frees
 .Fn TS_STATUS_INFO_new
 allocates and initializes an empty
 .Vt TS_STATUS_INFO
-object, representing an ASN.1 PKIStatusInfo structure
-defined in RFC 3161 section 2.4.2.
+object, representing an ASN.1
+.Vt PKIStatusInfo
+structure defined in RFC 3161 section 2.4.2.
 It is used inside
 .Vt TS_RESP
 and describes the outcome of one time-stamp request.
@@ -100,8 +103,9 @@ frees
 .Fn TS_TST_INFO_new
 allocates and initializes an empty
 .Vt TS_TST_INFO
-object, representing an ASN.1 TSTInfo structure
-defined in RFC 3161 section 2.4.2.
+object, representing an ASN.1
+.Vt TSTInfo
+structure defined in RFC 3161 section 2.4.2.
 It is the time-stamp token included in a
 .Vt TS_RESP
 object in case of success, and it can hold the hash of the datum
@@ -114,8 +118,9 @@ frees
 .Fn TS_ACCURACY_new
 allocates and initializes an empty
 .Vt TS_ACCURACY
-object, representing an ASN.1 Accuracy structure
-defined in RFC 3161 section 2.4.2.
+object, representing an ASN.1
+.Vt Accuracy
+structure defined in RFC 3161 section 2.4.2.
 It can be used inside a
 .Vt TS_TST_INFO
 object and indicates the maximum error of the time stated in the token.
@@ -126,8 +131,9 @@ frees
 .Fn TS_MSG_IMPRINT_new
 allocates and initializes an empty
 .Vt TS_MSG_IMPRINT
-object, representing an ASN.1 MessageImprint structure
-defined in RFC 3161 section 2.4.1.
+object, representing an ASN.1
+.Vt MessageImprint
+structure defined in RFC 3161 section 2.4.1.
 It is used inside
 .Vt TS_REQ
 and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ACCESS_DESCRIPTION_new.3,v 1.1 2016/12/23 22:21:40 schwarze Exp $
+.\"	$OpenBSD: ACCESS_DESCRIPTION_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt ACCESS_DESCRIPTION_NEW 3
 .Os
 .Sh NAME
@@ -42,8 +42,9 @@ policy data.
 .Fn ACCESS_DESCRIPTION_new
 allocates and initializes an empty
 .Vt ACCESS_DESCRIPTION
-object, representing an ASN.1 AccessDescription structure
-defined in RFC 5280 section 4.2.2.1.
+object, representing an ASN.1
+.Vt AccessDescription
+structure defined in RFC 5280 section 4.2.2.1.
 It can hold a pointer to a
 .Vt GENERAL_NAME
 object documented in
@@ -90,8 +91,9 @@ allocates and initializes an empty
 .Vt AUTHORITY_INFO_ACCESS
 object, which is a
 .Vt STACK_OF(ACCESS_DESCRIPTION)
-and represents an ASN.1 AuthorityInfoAccessSyntax structure
-defined in RFC 5280 section 4.2.2.1.
+and represents an ASN.1
+.Vt AuthorityInfoAccessSyntax
+structure defined in RFC 5280 section 4.2.2.1.
 If can be used for the authority information access extension of
 certificates and certificate revocation lists and for the subject
 information access extension of certificates.

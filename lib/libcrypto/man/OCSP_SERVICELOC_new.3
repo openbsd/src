@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_SERVICELOC_new.3,v 1.4 2016/12/15 15:22:17 schwarze Exp $
+.\"	$OpenBSD: OCSP_SERVICELOC_new.3,v 1.5 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt OCSP_SERVICELOC_NEW 3
 .Os
 .Sh NAME
@@ -38,10 +38,14 @@ Due to restrictions of network routing, a client may be unable to
 directly contact the authoritative OCSP server for a certificate
 that needs to be checked.
 In that case, the request can be sent via a proxy server.
-An ASN.1 ServiceLocator structure is included in the
-singleRequestExtensions field of the Request structure to indicate
-where to forward the request.
-The ServiceLocator is represented by a
+An ASN.1
+.Vt ServiceLocator
+structure is included in the singleRequestExtensions field of the
+.Vt Request
+structure to indicate where to forward the request.
+The
+.Vt ServiceLocator
+is represented by a
 .Vt OCSP_SERVICELOC
 object, which will be stored inside the
 .Vt OCSP_ONEREQ
@@ -65,9 +69,12 @@ If
 .Fa urls
 or its first element is
 .Dv NULL ,
-the locator field is omitted from the ServiceLocator structure
-and only the issuer is included.
-The resulting ServiceLocator structure is encoded in ASN.1 using
+the locator field is omitted from the
+.Vt ServiceLocator
+structure and only the issuer is included.
+The resulting
+.Vt ServiceLocator
+structure is encoded in ASN.1 using
 .Xr X509V3_EXT_i2d 3
 with criticality 0.
 .Sh RETURN VALUES

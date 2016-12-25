@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_new.3,v 1.9 2016/12/24 01:29:40 schwarze Exp $
+.\"	$OpenBSD: X509_new.3,v 1.10 2016/12/25 22:15:10 schwarze Exp $
 .\"	OpenSSL 3a59ad98 Dec 11 00:36:06 2015 +0000
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 24 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt X509_NEW 3
 .Os
 .Sh NAME
@@ -73,8 +73,9 @@
 allocates and initializes an empty
 .Vt X509
 object with reference count 1.
-It represents an ASN.1 Certificate structure
-defined in RFC 5280 section 4.1.
+It represents an ASN.1
+.Vt Certificate
+structure defined in RFC 5280 section 4.1.
 It can hold a public key together with information about the person,
 organization, device, or function the associated private key belongs to.
 .Pp

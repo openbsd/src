@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.5 2016/12/14 21:22:06 jmc Exp $
+.\"	$OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.6 2016/12/25 22:15:10 schwarze Exp $
 .\"	OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 14 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt X509_NAME_ENTRY_GET_OBJECT 3
 .Os
 .Sh NAME
@@ -134,9 +134,12 @@
 .Fa "int len"
 .Fc
 .Sh DESCRIPTION
-An X.501 RelativeDistinguishedName is a set of field type and
-value pairs.
-It is the building block for constructing X.501 Name objects.
+An X.501
+.Vt RelativeDistinguishedName
+is a set of field type and value pairs.
+It is the building block for constructing X.501
+.Vt Name
+objects.
 This implementation only supports sets with one element, so an
 .Vt X509_NAME_ENTRY
 object contains only one field type and one value.
@@ -144,8 +147,9 @@ object contains only one field type and one value.
 .Fn X509_NAME_ENTRY_new
 allocates and initializes an empty
 .Vt X509_NAME_ENTRY
-object, representing an ASN.1 RelativeDistinguishedName structure
-defined in RFC 5280 section 4.1.2.4.
+object, representing an ASN.1
+.Vt RelativeDistinguishedName
+structure defined in RFC 5280 section 4.1.2.4.
 .Pp
 .Fn X509_NAME_ENTRY_free
 frees

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_CRLID_new.3,v 1.2 2016/12/15 15:22:17 schwarze Exp $
+.\"	$OpenBSD: OCSP_CRLID_new.3,v 1.3 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt OCSP_CRLID_NEW 3
 .Os
 .Sh NAME
@@ -38,9 +38,14 @@
 If a client asks about the validity of a certificate and it turns
 out to be invalid, the responder may optionally communicate which
 certificate revocation list the certificate was found on.
-The required data is stored as an ASN.1 CrlID structure in the
-singleExtensions field of the SingleResponse structure.
-The CrlID is represented by an
+The required data is stored as an ASN.1
+.Vt CrlID
+structure in the singleExtensions field of the
+.Vt SingleResponse
+structure.
+The
+.Vt CrlID
+is represented by an
 .Vt OCSP_CRLID
 object, which will be stored inside the
 .Vt OCSP_SINGLERESP
@@ -66,7 +71,9 @@ at which the CRL was created.
 Each argument can be
 .Dv NULL ,
 in which case the respective field is omitted.
-The resulting CrlID structure is encoded in ASN.1 using
+The resulting
+.Vt CrlID
+structure is encoded in ASN.1 using
 .Xr X509V3_EXT_i2d 3
 with criticality 0.
 .Sh RETURN VALUES

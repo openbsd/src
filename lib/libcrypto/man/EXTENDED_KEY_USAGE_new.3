@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EXTENDED_KEY_USAGE_new.3,v 1.1 2016/12/23 20:43:02 schwarze Exp $
+.\"	$OpenBSD: EXTENDED_KEY_USAGE_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt EXTENDED_KEY_USAGE_NEW 3
 .Os
 .Sh NAME
@@ -41,8 +41,9 @@ allocates and initializes an empty
 .Vt EXTENDED_KEY_USAGE
 object, which is a
 .Vt STACK_OF(ASN1_OBJECT)
-and represents an ASN.1 ExtKeyUsageSyntax structure
-defined in RFC 5280 section 4.2.1.12.
+and represents an ASN.1
+.Vt ExtKeyUsageSyntax
+structure defined in RFC 5280 section 4.2.1.12.
 It can hold key purpose identifiers.
 .Pp
 .Fn EXTENDED_KEY_USAGE_free

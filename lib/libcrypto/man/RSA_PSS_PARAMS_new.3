@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_PSS_PARAMS_new.3,v 1.1 2016/12/13 20:41:35 schwarze Exp $
+.\"	$OpenBSD: RSA_PSS_PARAMS_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 13 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt RSA_PSS_PARAMS_NEW 3
 .Os
 .Sh NAME
@@ -31,8 +31,9 @@
 .Fn RSA_PSS_PARAMS_new
 allocates and initializes an empty
 .Vt RSA_PSS_PARAMS
-object, representing an ASN.1 RSASSA-PSS-params structure
-defined in RFC 8017 appendix A.2.3.
+object, representing an ASN.1
+.Vt RSASSA-PSS-params
+structure defined in RFC 8017 appendix A.2.3.
 It references the hash function and the mask generation function
 and stores the length of the salt and the trailer field number.
 .Fn RSA_PSS_PARAMS_free

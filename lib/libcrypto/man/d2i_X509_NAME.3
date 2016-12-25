@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_X509_NAME.3,v 1.6 2016/12/14 17:26:35 schwarze Exp $
+.\"	$OpenBSD: d2i_X509_NAME.3,v 1.7 2016/12/25 22:15:10 schwarze Exp $
 .\"	OpenSSL d900a015 Oct 8 14:40:42 2015 +0200
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 14 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt D2I_X509_NAME 3
 .Os
 .Sh NAME
@@ -67,7 +67,9 @@ decodes
 .Fa length
 bytes of the DER-encoded string
 .Pf * Fa in
-and stores the resulting Name object in
+and stores the resulting
+.Vt Name
+object in
 .Pf * Fa name .
 .Pp
 .Fn i2d_X509_NAME
@@ -89,7 +91,9 @@ decodes
 .Fa length
 bytes of the DER-encoded string
 .Pf * Fa in
-and stores the resulting RelativeDistinguishedName object in
+and stores the resulting
+.Vt RelativeDistinguishedName
+object in
 .Pf * Fa ne .
 .Pp
 .Fn i2d_X509_NAME_ENTRY

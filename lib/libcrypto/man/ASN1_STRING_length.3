@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_STRING_length.3,v 1.5 2016/11/10 11:44:52 schwarze Exp $
+.\"	$OpenBSD: ASN1_STRING_length.3,v 1.6 2016/12/25 22:15:10 schwarze Exp $
 .\"	OpenSSL 99d63d46 Tue Jun 21 07:03:34 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt ASN1_STRING_LENGTH 3
 .Os
 .Sh NAME
@@ -182,12 +182,11 @@ and the functions call the
 .Vt ASN1_STRING
 equivalents.
 .Vt ASN1_STRING
-is also used for some
-.Sy CHOICE
-types which consist entirely of primitive string types such as
-.Sy DirectoryString
+is also used for some CHOICE types which consist entirely of primitive
+string types such as
+.Vt DirectoryString
 and
-.Sy Time .
+.Vt Time .
 .Pp
 These functions should
 .Em not
@@ -195,19 +194,20 @@ be used to examine or modify
 .Vt ASN1_INTEGER
 or
 .Vt ASN1_ENUMERATED
-types: the relevant
-.Sy INTEGER
-or
-.Sy ENUMERATED
-utility functions should be used instead.
+types: the relevant INTEGER or ENUMERATED utility functions should
+be used instead.
 .Pp
 In general it cannot be assumed that the data returned by
 .Fn ASN1_STRING_data
 is NUL terminated, and it may contain embedded NUL characters.
 The actual format of the data will depend on the actual string type itself:
-for example for an IA5String the data will be ASCII,
-for a BMPString two bytes per character in big endian format,
-UTF8String will be in UTF8 format.
+for example for an
+.Vt IA5String
+the data will be ASCII, for a
+.Vt BMPString
+two bytes per character in big endian format, and a
+.Vt UTF8String
+will be in UTF8 format.
 .Pp
 Similar care should be take to ensure the data is in the correct format
 when calling

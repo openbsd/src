@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DIST_POINT_new.3,v 1.1 2016/12/23 15:25:19 schwarze Exp $
+.\"	$OpenBSD: DIST_POINT_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt DIST_POINT_NEW 3
 .Os
 .Sh NAME
@@ -52,8 +52,9 @@ where to obtain certificate revocation lists that might later revoke it.
 .Fn DIST_POINT_new
 allocates and initializes an empty
 .Vt DIST_POINT
-object, representing an ASN.1 DistributionPoint structure
-defined in RFC 5280 section 4.2.1.13.
+object, representing an ASN.1
+.Vt DistributionPoint
+structure defined in RFC 5280 section 4.2.1.13.
 It can hold issuer names, distribution point names, and reason flags.
 .Fn DIST_POINT_free
 frees
@@ -64,8 +65,9 @@ allocates and initializes an empty
 .Vt CRL_DIST_POINTS
 object, which is a
 .Vt STACK_OF(DIST_POINT)
-and represents the ASN.1 CRLDistributionPoints structure
-defined in RFC 5280 section 4.2.1.13.
+and represents the ASN.1
+.Vt CRLDistributionPoints
+structure defined in RFC 5280 section 4.2.1.13.
 It can be used as an extension in
 .Vt X509
 and in
@@ -78,8 +80,9 @@ frees
 .Fn DIST_POINT_NAME_new
 allocates and initializes an empty
 .Vt DIST_POINT_NAME
-object, representing an ASN.1 DistributionPointName structure
-defined in RFC 5280 section 4.2.1.13.
+object, representing an ASN.1
+.Vt DistributionPointName
+structure defined in RFC 5280 section 4.2.1.13.
 It is used by the
 .Vt DIST_POINT
 and
@@ -93,8 +96,9 @@ frees
 .Fn ISSUING_DIST_POINT_new
 allocates and initializes an empty
 .Vt ISSUING_DIST_POINT
-object, representing an ASN.1 IssuingDistributionPoint structure
-defined in RFC 5280 section 5.2.5.
+object, representing an ASN.1
+.Vt IssuingDistributionPoint
+structure defined in RFC 5280 section 5.2.5.
 Using this extension, a CRL can specify which distribution point
 it was issued from and which kinds of certificates and revocation
 reasons it covers.

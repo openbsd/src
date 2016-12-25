@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.5 2016/11/27 15:27:19 schwarze Exp $
+.\"	$OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.6 2016/12/25 22:15:10 schwarze Exp $
 .\"	OpenSSL e03af178 Dec 11 17:05:57 2014 -0500
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 27 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt EVP_PKEY_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -205,9 +205,10 @@ Two RSA padding modes behave differently if
 .Fn EVP_PKEY_CTX_set_signature_md
 is used.
 If this macro is called for PKCS#1 padding, the plaintext buffer is an
-actual digest value and is encapsulated in a DigestInfo structure
-according to PKCS#1 when signing and this structure is expected (and
-stripped off) when verifying.
+actual digest value and is encapsulated in a
+.Vt DigestInfo
+structure according to PKCS#1 when signing and this structure is
+expected (and stripped off) when verifying.
 If this control is not used with RSA and PKCS#1 padding then the
 supplied data is used directly and not encapsulated.
 In the case of X9.31 padding for RSA the algorithm identifier byte is

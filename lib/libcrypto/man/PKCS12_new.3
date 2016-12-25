@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PKCS12_new.3,v 1.1 2016/12/22 16:05:22 schwarze Exp $
+.\"	$OpenBSD: PKCS12_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt PKCS12_NEW 3
 .Os
 .Sh NAME
@@ -37,7 +37,9 @@
 .Fn PKCS12_new
 allocates and initializes an empty
 .Vt PKCS12
-object, representing an ASN.1 PFX (personal information exchange)
+object, representing an ASN.1
+.Vt PFX
+.Pq personal information exchange
 structure defined in RFC 7292 section 4.
 It can hold a pointer to a
 .Vt PKCS7
@@ -53,8 +55,9 @@ frees
 .Fn PKCS12_MAC_DATA_new
 allocates and initializes an empty
 .Vt PKCS12_MAC_DATA
-object, representing an ASN.1 MacData structure
-defined in RFC 7292 section 4.
+object, representing an ASN.1
+.Vt MacData
+structure defined in RFC 7292 section 4.
 It is used inside
 .Vt PKCS12
 and can hold a pointer to an

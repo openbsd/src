@@ -1,4 +1,4 @@
-.\"	$OpenBSD: POLICYINFO_new.3,v 1.1 2016/12/23 18:50:23 schwarze Exp $
+.\"	$OpenBSD: POLICYINFO_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt POLICYINFO_NEW 3
 .Os
 .Sh NAME
@@ -70,8 +70,9 @@ restrictions on their intended use.
 .Fn POLICYINFO_new
 allocates and initializes an empty
 .Vt POLICYINFO
-object, representing an ASN.1 PolicyInformation structure
-defined in RFC 5280 section 4.2.1.4.
+object, representing an ASN.1
+.Vt PolicyInformation
+structure defined in RFC 5280 section 4.2.1.4.
 It can hold a policy identifier and optional advisory qualifiers.
 .Fn POLICYINFO_free
 frees
@@ -94,8 +95,9 @@ frees
 .Fn POLICYQUALINFO_new
 allocates and initializes an empty
 .Vt POLICYQUALINFO
-object, representing an ASN.1 PolicyQualifierInfo structure
-defined in RFC 5280 section 4.2.1.4.
+object, representing an ASN.1
+.Vt PolicyQualifierInfo
+structure defined in RFC 5280 section 4.2.1.4.
 It can be used in
 .Vt POLICYINFO
 and it can hold either a uniform resource identifier of a certification
@@ -109,8 +111,9 @@ frees
 .Fn USERNOTICE_new
 allocates and initializes an empty
 .Vt USERNOTICE
-object, representing an ASN.1 UserNotice structure
-defined in RFC 5280 section 4.2.1.4.
+object, representing an ASN.1
+.Vt UserNotice
+structure defined in RFC 5280 section 4.2.1.4.
 It can be used in
 .Vt POLICYQUALINFO
 and it can hold either an
@@ -125,8 +128,9 @@ frees
 .Fn NOTICEREF_new
 allocates and initializes an empty
 .Vt NOTICEREF
-object, representing an ASN.1 NoticeReference structure
-defined in RFC 5280 section 4.2.1.4.
+object, representing an ASN.1
+.Vt NoticeReference
+structure defined in RFC 5280 section 4.2.1.4.
 It can be used in
 .Vt USERNOTICE
 and can hold an organization name and a stack of notice numbers.
@@ -137,8 +141,9 @@ frees
 .Fn POLICY_MAPPING_new
 allocates and initializes an empty
 .Vt POLICY_MAPPING
-object, representing an ASN.1 PolicyMappings structure
-defined in RFC 5280 section 4.2.1.5.
+object, representing an ASN.1
+.Vt PolicyMappings
+structure defined in RFC 5280 section 4.2.1.5.
 It can be used in
 .Vt X509
 CA certificates and can hold a list of pairs of policy identifiers,
@@ -151,8 +156,9 @@ frees
 .Fn POLICY_CONSTRAINTS_new
 allocates and initializes an empty
 .Vt POLICY_CONSTRAINTS
-object, representing an ASN.1 PolicyConstraints structure
-defined in RFC 5280 section 4.2.1.11.
+object, representing an ASN.1
+.Vt PolicyConstraints
+structure defined in RFC 5280 section 4.2.1.11.
 It can be used in
 .Vt X509
 CA certificates to restrict policy mapping and/or to require explicit

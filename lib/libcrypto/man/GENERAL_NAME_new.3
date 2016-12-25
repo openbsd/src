@@ -1,4 +1,4 @@
-.\"	$OpenBSD: GENERAL_NAME_new.3,v 1.1 2016/12/23 00:40:16 schwarze Exp $
+.\"	$OpenBSD: GENERAL_NAME_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt GENERAL_NAME_NEW 3
 .Os
 .Sh NAME
@@ -46,21 +46,26 @@
 .Ft void
 .Fn OTHERNAME_free "OTHERNAME *name"
 .Sh DESCRIPTION
-Even though the X.501 Name documented in
+Even though the X.501
+.Vt Name
+documented in
 .Xr X509_NAME_new 3
 is a complicated multi-layered structure, it is very rigid and not
 flexible enough to represent various entities that many people want
 to use as names in certificates.
-For that reason, X.509 extensions use the X.509 GeneralName
-wrapper structure rather than using the X.501 Name structure
-directly, at the expense of adding one or two additional layers
-of indirection.
+For that reason, X.509 extensions use the X.509
+.Vt GeneralName
+wrapper structure rather than using the X.501
+.Vt Name
+structure directly, at the expense of adding one or two additional
+layers of indirection.
 .Pp
 .Fn GENERAL_NAME_new
 allocates and initializes an empty
 .Vt GENERAL_NAME
-object, representing the ASN.1 GeneralName structure
-defined in RFC 5280 section 4.2.1.6.
+object, representing the ASN.1
+.Vt GeneralName
+structure defined in RFC 5280 section 4.2.1.6.
 It can for example hold an
 .Vt X509_name
 object, an IP address, a DNS host name, a uniform resource identifier,
@@ -78,8 +83,9 @@ allocates and initializes an empty
 .Vt GENERAL_NAMES
 object, which is a
 .Vt STACK_OF(GENERAL_NAME)
-and represents the ASN.1 GeneralNames structure
-defined in RFC 5280 section 4.2.1.6.
+and represents the ASN.1
+.Vt GeneralNames
+structure defined in RFC 5280 section 4.2.1.6.
 It is used by extension structures that can contain multiple names,
 for example key identifier, alternative name, and distribution point
 extensions.
@@ -90,8 +96,9 @@ frees
 .Fn EDIPARTYNAME_new
 allocates and initializes an empty
 .Vt EDIPARTYNAME
-object, representing the ASN.1 EDIPartyName structure
-defined in RFC 5280 section 4.2.1.6, where
+object, representing the ASN.1
+.Vt EDIPartyName
+structure defined in RFC 5280 section 4.2.1.6, where
 .Dq EDI
 stands for
 .Dq electronic data identifier .
@@ -104,8 +111,9 @@ frees
 .Fn OTHERNAME_new
 allocates and initializes an empty
 .Vt OTHERNAME
-object, representing the ASN.1 OtherName structure
-defined in RFC 5280 section 4.2.1.6.
+object, representing the ASN.1
+.Vt OtherName
+structure defined in RFC 5280 section 4.2.1.6.
 It can hold data of any
 .Vt ASN1_TYPE
 together with a type identifier.

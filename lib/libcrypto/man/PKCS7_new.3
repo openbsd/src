@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PKCS7_new.3,v 1.1 2016/12/13 14:31:55 schwarze Exp $
+.\"	$OpenBSD: PKCS7_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 13 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt PKCS7_NEW 3
 .Os
 .Sh NAME
@@ -88,8 +88,9 @@ cryptography applied to it, in particular signed and encrypted data.
 .Fn PKCS7_new
 allocates and initializes an empty
 .Vt PKCS7
-object, representing an ASN.1 ContentInfo structure
-defined in RFC 2315 section 7.
+object, representing an ASN.1
+.Vt ContentInfo
+structure defined in RFC 2315 section 7.
 It is the top-level data structure able to hold any kind of content
 that can be transmitted using PKCS#7.
 It can be used recursively in
@@ -104,8 +105,9 @@ frees
 .Fn PKCS7_SIGNED_new
 allocates and initializes an empty
 .Vt PKCS7_SIGNED
-object, representing an ASN.1 SignedData structure
-defined in RFC 2315 section 9.
+object, representing an ASN.1
+.Vt SignedData
+structure defined in RFC 2315 section 9.
 It can be used inside
 .Vt PKCS7
 objects and holds any kind of content together with signatures by
@@ -118,8 +120,9 @@ frees
 .Fn PKCS7_ENVELOPE_new
 allocates and initializes an empty
 .Vt PKCS7_ENVELOPE
-object, representing an ASN.1 EnvelopedData structure
-defined in RFC 2315 section 10.
+object, representing an ASN.1
+.Vt EnvelopedData
+structure defined in RFC 2315 section 10.
 It can be used inside
 .Vt PKCS7
 objects and holds any kind of encrypted content together with
@@ -131,8 +134,9 @@ frees
 .Fn PKCS7_SIGN_ENVELOPE_new
 allocates and initializes an empty
 .Vt PKCS7_SIGN_ENVELOPE
-object, representing an ASN.1 SignedAndEnvelopedData structure
-defined in RFC 2315 section 11.
+object, representing an ASN.1
+.Vt SignedAndEnvelopedData
+structure defined in RFC 2315 section 11.
 It can be used inside
 .Vt PKCS7
 objects and holds any kind of encrypted content together with
@@ -146,8 +150,9 @@ frees
 .Fn PKCS7_DIGEST_new
 allocates and initializes an empty
 .Vt PKCS7_DIGEST
-object, representing an ASN.1 DigestedData structure
-defined in RFC 2315 section 12.
+object, representing an ASN.1
+.Vt DigestedData
+structure defined in RFC 2315 section 12.
 It can be used inside
 .Vt PKCS7
 objects and holds any kind of content together with a message digest
@@ -159,8 +164,9 @@ frees
 .Fn PKCS7_ENCRYPT_new
 allocates and initializes an empty
 .Vt PKCS7_ENCRYPT
-object, representing an ASN.1 EncryptedData structure
-defined in RFC 2315 section 13.
+object, representing an ASN.1
+.Vt EncryptedData
+structure defined in RFC 2315 section 13.
 It can be used inside
 .Vt PKCS7
 objects and holds any kind of encrypted content.
@@ -172,8 +178,9 @@ frees
 .Fn PKCS7_ENC_CONTENT_new
 allocates and initializes an empty
 .Vt PKCS7_ENC_CONTENT
-object, representing an ASN.1 EncryptedContentInfo structure
-defined in RFC 2315 section 10.1.
+object, representing an ASN.1
+.Vt EncryptedContentInfo
+structure defined in RFC 2315 section 10.1.
 It can be used inside
 .Vt PKCS7_ENVELOPE ,
 .Vt PKCS7_SIGN_ENVELOPE ,
@@ -188,8 +195,9 @@ frees
 .Fn PKCS7_SIGNER_INFO_new
 allocates and initializes an empty
 .Vt PKCS7_SIGNER_INFO
-object, representing an ASN.1 SignerInfo structure
-defined in RFC 2315 section 9.2.
+object, representing an ASN.1
+.Vt SignerInfo
+structure defined in RFC 2315 section 9.2.
 It can be used inside
 .Vt PKCS7_SIGNED
 and
@@ -203,8 +211,9 @@ frees
 .Fn PKCS7_RECIP_INFO_new
 allocates and initializes an empty
 .Vt PKCS7_RECIP_INFO
-object, representing an ASN.1 RecipientInfo structure
-defined in RFC 2315 section 10.2.
+object, representing an ASN.1
+.Vt RecipientInfo
+structure defined in RFC 2315 section 10.2.
 It can be used inside
 .Vt PKCS7_ENVELOPE
 and
@@ -218,8 +227,9 @@ frees
 .Fn PKCS7_ISSUER_AND_SERIAL_new
 allocates and initializes an empty
 .Vt PKCS7_ISSUER_AND_SERIAL
-object, representing an ASN.1 IssuerAndSerialNumber structure
-defined in RFC 2315 section 6.7.
+object, representing an ASN.1
+.Vt IssuerAndSerialNumber
+structure defined in RFC 2315 section 6.7.
 It can be used inside
 .Vt PKCS7_SIGNER_INFO
 and

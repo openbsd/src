@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_SIG_new.3,v 1.1 2016/12/22 14:06:51 schwarze Exp $
+.\"	$OpenBSD: X509_SIG_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt X509_SIG_NEW 3
 .Os
 .Sh NAME
@@ -31,8 +31,10 @@
 .Fn X509_SIG_new
 allocates and initializes an empty
 .Vt X509_SIG
-object, representing an ASN.1 DigestInfo structure defined
-in RFC 2315 section 9.4 and equivalently in RFC 8017 section 9.2.
+object, representing an ASN.1
+.Vt DigestInfo
+structure defined in RFC 2315 section 9.4
+and equivalently in RFC 8017 section 9.2.
 It can hold a message digest together with information about
 the algorithm used.
 .Pp

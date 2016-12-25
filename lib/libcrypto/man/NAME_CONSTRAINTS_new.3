@@ -1,4 +1,4 @@
-.\"	$OpenBSD: NAME_CONSTRAINTS_new.3,v 1.1 2016/12/23 17:41:29 schwarze Exp $
+.\"	$OpenBSD: NAME_CONSTRAINTS_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt NAME_CONSTRAINTS_NEW 3
 .Os
 .Sh NAME
@@ -41,8 +41,9 @@ certification path.
 .Fn NAME_CONSTRAINTS_new
 allocates and initializes an empty
 .Vt NAME_CONSTRAINTS
-object, representing an ASN.1 NameConstraints structure
-defined in RFC 5280 section 4.2.1.10.
+object, representing an ASN.1
+.Vt NameConstraints
+structure defined in RFC 5280 section 4.2.1.10.
 It consists of two
 .Vt STACK_OF(GENERAL_SUBTREE)
 objects, one specifying permitted names, the other excluded names.
@@ -53,8 +54,9 @@ frees
 .Fn GENERAL_SUBTREE_new
 allocates and initializes an empty
 .Vt GENERAL_SUBTREE
-object, representing an ASN.1 GeneralSubtree structure
-defined in RFC 5280 section 4.2.1.10.
+object, representing an ASN.1
+.Vt GeneralSubtree
+structure defined in RFC 5280 section 4.2.1.10.
 It is a trivial wrapper around the
 .Vt GENERAL_NAME
 object documented in

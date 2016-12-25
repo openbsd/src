@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.6 2016/12/06 14:45:08 schwarze Exp $
+.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.7 2016/12/25 22:15:10 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt PEM_READ_BIO_PRIVATEKEY 3
 .Os
 .Sh NAME
@@ -747,8 +747,9 @@ and
 .Fn PEM_write_PKCS8PrivateKey
 write a private key in an
 .Vt EVP_PKEY
-structure in PKCS#8 EncryptedPrivateKeyInfo format using PKCS#5
-v2.0 password based encryption algorithms.
+structure in PKCS#8
+.Vt EncryptedPrivateKeyInfo
+format using PKCS#5 v2.0 password based encryption algorithms.
 The
 .Fa enc
 argument specifies the encryption algorithm to use: unlike all other PEM
@@ -758,13 +759,15 @@ If
 .Fa enc
 is
 .Dv NULL ,
-then no encryption is used and a PKCS#8 PrivateKeyInfo structure
-is used instead.
+then no encryption is used and a PKCS#8
+.Vt PrivateKeyInfo
+structure is used instead.
 .Pp
 .Fn PEM_write_bio_PKCS8PrivateKey_nid
 and
 .Fn PEM_write_PKCS8PrivateKey_nid
-also write out a private key as a PKCS#8 EncryptedPrivateKeyInfo.
+also write out a private key as a PKCS#8
+.Vt EncryptedPrivateKeyInfo .
 However they use PKCS#5 v1.5 or PKCS#12 encryption algorithms instead.
 The algorithm to use is specified in the
 .Fa nid
@@ -789,7 +792,9 @@ The
 functions process a public key using an
 .Vt EVP_PKEY
 structure.
-The public key is encoded as a SubjectPublicKeyInfo structure.
+The public key is encoded as an ASN.1
+.Vt SubjectPublicKeyInfo
+structure.
 .Pp
 The
 .Sy RSAPrivateKey
@@ -805,15 +810,18 @@ The
 functions process an RSA public key using an
 .Vt RSA
 structure.
-The public key is encoded using a PKCS#1 RSAPublicKey structure.
+The public key is encoded using a PKCS#1
+.Vt RSAPublicKey
+structure.
 .Pp
 The
 .Sy RSA_PUBKEY
 functions also process an RSA public key using an
 .Vt RSA
 structure.
-However the public key is encoded using a SubjectPublicKeyInfo structure
-and an error occurs if the public key is not RSA.
+However the public key is encoded using an ASN.1
+.Vt SubjectPublicKeyInfo
+structure and an error occurs if the public key is not RSA.
 .Pp
 The
 .Sy DSAPrivateKey
@@ -829,8 +837,9 @@ The
 functions process a DSA public key using a
 .Vt DSA
 structure.
-The public key is encoded using a SubjectPublicKeyInfo structure and an
-error occurs if the public key is not DSA.
+The public key is encoded using an ASN.1
+.Vt SubjectPublicKeyInfo
+structure and an error occurs if the public key is not DSA.
 .Pp
 The
 .Sy DSAparams
@@ -906,7 +915,9 @@ structure.
 .Pp
 The
 .Sy PKCS7
-functions process a PKCS#7 ContentInfo using a
+functions process a PKCS#7
+.Vt ContentInfo
+using a
 .Vt PKCS7
 structure.
 .Pp

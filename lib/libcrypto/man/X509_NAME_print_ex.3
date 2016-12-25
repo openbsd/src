@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_print_ex.3,v 1.5 2016/12/14 16:20:28 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_print_ex.3,v 1.6 2016/12/25 22:15:10 schwarze Exp $
 .\"	OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 14 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt X509_NAME_PRINT_EX 3
 .Os
 .Sh NAME
@@ -174,8 +174,8 @@ and
 .Dv XN_FLAG_SEP_MULTILINE
 determine the field separators to use.
 Two distinct separators are used between distinct
-RelativeDistinguishedName components and separate values in the same RDN
-for a multi-valued RDN.
+.Vt RelativeDistinguishedName
+components and separate values in the same RDN for a multi-valued RDN.
 Multi-valued RDNs are currently very rare so the second separator
 will hardly ever be used.
 .Pp

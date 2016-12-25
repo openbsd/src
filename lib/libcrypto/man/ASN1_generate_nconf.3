@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_generate_nconf.3,v 1.8 2016/12/11 18:06:09 schwarze Exp $
+.\"	$OpenBSD: ASN1_generate_nconf.3,v 1.9 2016/12/25 22:15:10 schwarze Exp $
 .\"	OpenSSL 05ea606a Fri May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt ASN1_GENERATE_NCONF 3
 .Os
 .Sh NAME
@@ -285,15 +285,20 @@ if an error occurred.
 The error codes can be obtained by
 .Xr ERR_get_error 3 .
 .Sh EXAMPLES
-A simple IA5String:
+A simple
+.Vt IA5String :
 .Pp
 .Dl IA5STRING:Hello World
 .Pp
-An IA5String explicitly tagged:
+An
+.Vt IA5String
+explicitly tagged:
 .Pp
 .Dl EXPLICIT:0,IA5STRING:Hello World
 .Pp
-An IA5String explicitly tagged using APPLICATION tagging:
+An
+.Vt IA5String
+explicitly tagged using APPLICATION tagging:
 .Pp
 .Dl EXPLICIT:0A,IA5STRING:Hello World
 .Pp
@@ -302,7 +307,8 @@ A BITSTRING with bits 1 and 5 set and all others zero:
 .Dl FORMAT:BITLIST,BITSTRING:1,5
 .Pp
 A more complex example using a config file to produce a
-SEQUENCE consisting of a BOOL an OID and a UTF8String:
+SEQUENCE consisting of a BOOL an OID and a
+.Vt UTF8String :
 .Bd -literal -offset indent
 asn1 = SEQUENCE:seq_section
 
@@ -313,7 +319,9 @@ field2 = OID:commonName
 field3 = UTF8:Third field
 .Ed
 .Pp
-This example produces an RSAPrivateKey structure.
+This example produces an
+.Vt RSAPrivateKey
+structure.
 This is the key contained in the file
 .Pa client.pem
 in all OpenSSL distributions.
@@ -349,7 +357,8 @@ coeff=INTEGER:0x30B9E4F2AFA5AC679F920FC83F1F2DF1BAF1779CF989447FABC2F5\e
 628657053A
 .Ed
 .Pp
-This example is the corresponding public key in a SubjectPublicKeyInfo
+This example is the corresponding public key in an ASN.1
+.Vt SubjectPublicKeyInfo
 structure:
 .Bd -literal -offset 2n
 # Start with a SEQUENCE

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PROXY_POLICY_new.3,v 1.1 2016/12/23 23:19:57 schwarze Exp $
+.\"	$OpenBSD: PROXY_POLICY_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt PROXY_POLICY_NEW 3
 .Os
 .Sh NAME
@@ -43,8 +43,9 @@ privileges on behalf of the subject of the original certificate.
 .Fn PROXY_POLICY_new
 allocates and initializes an empty
 .Vt PROXY_POLICY
-object, representing an ASN.1 ProxyPolicy structure
-defined in RFC 3820 section 3.8.
+object, representing an ASN.1
+.Vt ProxyPolicy
+structure defined in RFC 3820 section 3.8.
 It defines which privileges are to be delegated.
 .Fn PROXY_POLICY_free
 frees
@@ -53,8 +54,9 @@ frees
 .Fn PROXY_CERT_INFO_EXTENSION_new
 allocates and initializes an empty
 .Vt PROXY_CERT_INFO_EXTENSION
-object, representing an ASN.1 ProxyCertInfo structure
-defined in RFC 3820 section 3.8.
+object, representing an ASN.1
+.Vt ProxyCertInfo
+structure defined in RFC 3820 section 3.8.
 It can contain a
 .Vt PROXY_POLICY
 object, and it can additionally restrict the maximum depth of the
