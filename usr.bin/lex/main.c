@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2015/12/11 00:08:43 mmcc Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2016/12/25 16:40:06 krw Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -1550,11 +1550,12 @@ readin()
 		//outn("\n#define YY_USES_REJECT");
 	}
 	if (!do_yywrap) {
-		if (!C_plus_plus)
+		if (!C_plus_plus) {
 			if (reentrant)
 				outn("\n#define yywrap(yyscanner) 1");
 			else
 				outn("\n#define yywrap() 1");
+		}
 		outn("#define YY_SKIP_YYWRAP");
 	}
 	if (ddebug)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl.c,v 1.8 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: dl.c,v 1.9 2016/12/25 16:40:06 krw Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -96,7 +96,7 @@ mopDumpDL(FILE *fd, u_char *pkt, int trans)
 
 		if (moplen > 6) {
 			for (i = 0; i < (moplen - 6); i++) {
-				if ((i % 16) == 0)
+				if ((i % 16) == 0) {
 					if ((i / 16) == 0)
 						fprintf(fd,
 						    "Image Data   : %04x ",
@@ -104,6 +104,7 @@ mopDumpDL(FILE *fd, u_char *pkt, int trans)
 					else
 						fprintf(fd,
 						    "                    ");
+				}
 
 				fprintf(fd, "%02x ", mopGetChar(pkt, &idx));
 				if ((i % 16) == 15)
