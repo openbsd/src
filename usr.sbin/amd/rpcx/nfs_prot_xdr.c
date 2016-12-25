@@ -8,7 +8,6 @@
 bool_t
 xdr_nfs_fh(XDR *xdrs, nfs_fh *objp)
 {
-	int i;
 
 
 	if (!xdr_opaque(xdrs, objp->data, NFS_FHSIZE))
@@ -113,6 +112,8 @@ xdr_attrstat(XDR *xdrs, attrstat *objp)
 		if (!xdr_fattr(xdrs, &objp->attrstat_u.attributes))
 			return (FALSE);
 		break;
+	default:
+		break;
 	}
 	return (TRUE);
 }
@@ -164,6 +165,8 @@ xdr_diropres(XDR *xdrs, diropres *objp)
 		if (!xdr_diropokres(xdrs, &objp->diropres_u.diropres))
 			return (FALSE);
 		break;
+	default:
+		break;
 	}
 	return (TRUE);
 }
@@ -178,6 +181,8 @@ xdr_readlinkres(XDR *xdrs, readlinkres *objp)
 	case NFS_OK:
 		if (!xdr_nfspath(xdrs, &objp->readlinkres_u.data))
 			return (FALSE);
+		break;
+	default:
 		break;
 	}
 	return (TRUE);
@@ -223,6 +228,8 @@ xdr_readres(XDR *xdrs, readres *objp)
 	case NFS_OK:
 		if (!xdr_readokres(xdrs, &objp->readres_u.reply))
 			return (FALSE);
+		break;
+	default:
 		break;
 	}
 	return (TRUE);
@@ -360,6 +367,8 @@ xdr_readdirres(XDR *xdrs, readdirres *objp)
 		if (!xdr_dirlist(xdrs, &objp->readdirres_u.reply))
 			return (FALSE);
 		break;
+	default:
+		break;
 	}
 	return (TRUE);
 }
@@ -392,6 +401,8 @@ xdr_statfsres(XDR *xdrs, statfsres *objp)
 	case NFS_OK:
 		if (!xdr_statfsokres(xdrs, &objp->statfsres_u.reply))
 			return (FALSE);
+		break;
+	default:
 		break;
 	}
 	return (TRUE);
