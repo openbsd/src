@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ECPKParameters.3,v 1.7 2016/12/11 14:22:43 schwarze Exp $
+.\"	$OpenBSD: d2i_ECPKParameters.3,v 1.8 2016/12/25 17:05:59 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: December 25 2016 $
 .Dt D2I_ECPKPARAMETERS 3
 .Os
 .Sh NAME
@@ -63,190 +63,186 @@
 .Nm ECParameters_dup ,
 .Nm d2i_ECPrivateKey ,
 .Nm i2d_ECPrivateKey ,
+.Nm d2i_ECPrivateKey_bio ,
+.Nm i2d_ECPrivateKey_bio ,
+.Nm d2i_ECPrivateKey_fp ,
+.Nm i2d_ECPrivateKey_fp ,
 .Nm o2i_ECPublicKey ,
 .Nm i2o_ECPublicKey ,
 .Nm ECPKParameters_print ,
 .Nm ECPKParameters_print_fp ,
 .Nm ECParameters_print ,
-.Nm ECParameters_print_fp
+.Nm ECParameters_print_fp ,
+.Nm d2i_EC_PUBKEY ,
+.Nm i2d_EC_PUBKEY ,
+.Nm d2i_EC_PUBKEY_bio ,
+.Nm i2d_EC_PUBKEY_bio ,
+.Nm d2i_EC_PUBKEY_fp ,
+.Nm i2d_EC_PUBKEY_fp
 .Nd decode and encode ASN.1 representations of elliptic curve entities
 .Sh SYNOPSIS
 .In openssl/ec.h
 .Ft EC_GROUP *
 .Fo d2i_ECPKParameters
-.Fa "EC_GROUP **px"
-.Fa "const unsigned char **in"
-.Fa "long len"
+.Fa "EC_GROUP **val_out"
+.Fa "const unsigned char **des_in"
+.Fa "long length"
 .Fc
 .Ft int
 .Fo i2d_ECPKParameters
-.Fa "const EC_GROUP *x"
-.Fa "unsigned char **out"
+.Fa "const EC_GROUP *val_in"
+.Fa "unsigned char **des_out"
 .Fc
 .Ft EC_GROUP *
 .Fo d2i_ECPKParameters_bio
-.Fa "BIO *bp"
-.Fa "EC_GROUP **px"
+.Fa "BIO *in_bio"
+.Fa "EC_GROUP **val_out"
 .Fc
 .Ft int
 .Fo i2d_ECPKParameters_bio
-.Fa "BIO *bp"
-.Fa "EC_GROUP **px"
+.Fa "BIO *out_bio"
+.Fa "EC_GROUP *val_in"
 .Fc
 .Ft EC_GROUP *
 .Fo d2i_ECPKParameters_fp
-.Fa "FILE *fp"
-.Fa "EC_GROUP **px"
+.Fa "FILE *in_fp"
+.Fa "EC_GROUP **val_out"
 .Fc
 .Ft int
 .Fo i2d_ECPKParameters_fp
-.Fa "FILE *fp"
-.Fa "EC_GROUP **px"
+.Fa "FILE *out_fp"
+.Fa "EC_GROUP *val_in"
 .Fc
 .Ft EC_KEY *
 .Fo d2i_ECParameters
-.Fa "EC_KEY **key"
-.Fa "const unsigned char **in"
-.Fa "long len"
+.Fa "EC_KEY **val_out"
+.Fa "const unsigned char **des_in"
+.Fa "long length"
 .Fc
 .Ft int
 .Fo i2d_ECParameters
-.Fa "EC_KEY *key"
-.Fa "unsigned char **out"
+.Fa "EC_KEY *val_in"
+.Fa "unsigned char **des_out"
 .Fc
 .Ft EC_KEY *
 .Fo ECParameters_dup
-.Fa "EC_KEY *key"
+.Fa "EC_KEY *val_in"
 .Fc
 .Ft EC_KEY *
 .Fo d2i_ECPrivateKey
-.Fa "EC_KEY **key"
-.Fa "const unsigned char **in"
-.Fa "long len"
+.Fa "EC_KEY **val_out"
+.Fa "const unsigned char **des_in"
+.Fa "long length"
 .Fc
 .Ft int
 .Fo i2d_ECPrivateKey
-.Fa "EC_KEY *key"
-.Fa "unsigned char **out"
+.Fa "EC_KEY *val_in"
+.Fa "unsigned char **des_out"
+.Fc
+.Ft EC_KEY *
+.Fo d2i_ECPrivateKey_bio
+.Fa "BIO *in_bio"
+.Fa "EC_KEY **val_out"
+.Fc
+.Ft int
+.Fo i2d_ECPrivateKey_bio
+.Fa "BIO *out_bio"
+.Fa "EC_KEY *val_in"
+.Fc
+.Ft EC_KEY *
+.Fo d2i_ECPrivateKey_fp
+.Fa "FILE *in_fp"
+.Fa "EC_KEY **val_out"
+.Fc
+.Ft int
+.Fo i2d_ECPKPrivateKey_fp
+.Fa "FILE *out_fp"
+.Fa "EC_KEY *val_in"
 .Fc
 .Ft EC_KEY *
 .Fo o2i_ECPublicKey
-.Fa "EC_KEY **key"
-.Fa "const unsigned char **in"
-.Fa "long len"
+.Fa "EC_KEY **val_out"
+.Fa "const unsigned char **des_in"
+.Fa "long length"
 .Fc
 .Ft int
 .Fo i2o_ECPublicKey
-.Fa "EC_KEY *key"
-.Fa "unsigned char **out"
+.Fa "EC_KEY *val_in"
+.Fa "unsigned char **des_out"
 .Fc
 .Ft int
 .Fo ECPKParameters_print
-.Fa "BIO *bp"
-.Fa "const EC_GROUP *x"
-.Fa "int off"
+.Fa "BIO *out_bio"
+.Fa "const EC_GROUP *val_in"
+.Fa "int indent"
 .Fc
 .Ft int
 .Fo ECPKParameters_print_fp
-.Fa "FILE *fp"
-.Fa "const EC_GROUP *x"
-.Fa "int off"
+.Fa "FILE *out_fp"
+.Fa "const EC_GROUP *val_in"
+.Fa "int indent"
 .Fc
 .Ft int
 .Fo ECParameters_print
-.Fa "BIO *bp"
-.Fa "const EC_KEY *key"
+.Fa "BIO *out_bio"
+.Fa "const EC_KEY *val_in"
 .Fc
 .Ft int
 .Fo ECParameters_print_fp
-.Fa "FILE *fp"
-.Fa "const EC_KEY *key"
+.Fa "FILE *out_fp"
+.Fa "const EC_KEY *val_in"
+.Fc
+.In openssl/x509.h
+.Ft EC_KEY *
+.Fo d2i_EC_PUBKEY
+.Fa "EC_KEY **val_out"
+.Fa "const unsigned char **des_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_EC_PUBKEY
+.Fa "EC_KEY *val_in"
+.Fa "unsigned char **des_out"
+.Fc
+.Ft EC_KEY *
+.Fo d2i_EC_PUBKEY_bio
+.Fa "BIO *in_bio"
+.Fa "EC_KEY **val_out"
+.Fc
+.Ft int
+.Fo i2d_EC_PUBKEY_bio
+.Fa "BIO *out_bio"
+.Fa "EC_KEY *val_in"
+.Fc
+.Ft EC_KEY *
+.Fo d2i_EC_PUBKEY_fp
+.Fa "FILE *in_fp"
+.Fa "EC_KEY **val_out"
+.Fc
+.Ft int
+.Fo i2d_ECPK_PUBKEY_fp
+.Fa "FILE *out_fp"
+.Fa "EC_KEY *val_in"
 .Fc
 .Sh DESCRIPTION
-.Fn d2i_ECPKParameters
-attempts to decode
-.Fa len
-bytes at
-.Pf * Fa in .
-If successful, a pointer to the
-.Vt EC_GROUP
-structure is returned.
-If an error occurred, then
-.Dv NULL
-is returned.
-If
-.Fa px
-is not
-.Dv NULL ,
-then the returned structure is written to
-.Pf * Fa px .
-If
-.Pf * Fa px
-is not
-.Dv NULL ,
-then it is assumed that
-.Pf * Fa px
-contains a valid
-.Vt EC_GROUP
-structure and an attempt is made to reuse it.
-If the call is successful,
-.Pf * Fa in
-is incremented to the byte following the parsed data.
+These functions decode and encode elliptic curve keys and parameters.
+For details about the semantics, examples, caveats, and bugs, see
+.Xr ASN1_item_d2i 3 .
 .Pp
+.Fn d2i_ECPKParameters
+and
 .Fn i2d_ECPKParameters
-encodes the structure pointed to by
-.Fa x
-into DER format.
-If
-.Fa out
-is not
-.Dv NULL ,
-is writes the DER encoded data to the buffer at
-.Pf * Fa out
-and increments it to point after the data just written.
-If the return value is negative, an error occurred, otherwise it returns
-the length of the encoded data.
-.Pp
-If
-.Pf * Fa out
-is
-.Dv NULL ,
-memory will be allocated for a buffer and the encoded data written to it.
-In this case
-.Pf * Fa out
-is not incremented, and it points to the start of the data just written.
-.Pp
-.Fn d2i_ECPKParameters_bio
-is similar to
-.Fn d2i_ECPKParameters
-except it attempts to parse data from
-.Vt BIO
-.Fa bp .
-.Fn d2i_ECPKParameters_fp
-is similar to
-.Fn d2i_ECPKParameters
-except it attempts to parse data from the
-.Vt FILE
-pointer
-.Fa fp .
-.Fn i2d_ECPKParameters_bio
-is similar to
-.Fn i2d_ECPKParameters
-except it writes the encoding of the structure
-.Fa x
-to
-.Vt BIO
-.Fa bp
-and it returns 1 for success or 0 for failure.
+decode and encode the parameters of an elliptic curve.
+.Fn d2i_ECPKParameters_bio ,
+.Fn i2d_ECPKParameters_bio ,
+.Fn d2i_ECPKParameters_fp ,
+and
 .Fn i2d_ECPKParameters_fp
-is similar to
-.Fn i2d_ECPKParameters
-except it writes the encoding of the structure
-.Fa x
-to
+are similar except that they decode or encode using a
 .Vt BIO
-.Sy bp
-and it returns 1 for success or 0 for failure.
+or
+.Vt FILE
+pointer.
 These four functions are currently implemented as macros.
 .Pp
 .Fn d2i_ECParameters
@@ -262,82 +258,77 @@ structure.
 produces the same output as
 .Fn i2d_ECPKParameters
 but uses
-.Fa key->group
+.Fa val_in->group
 for input instead of
-.Fa px .
+.Fa val_in .
 .Pp
 .Fn ECParameters_dup
 copies
-.Fa key
+.Fa val_in
 by calling
 .Fn i2d_ECParameters
 and
 .Fn d2i_ECParameters .
 .Pp
 .Fn d2i_ECPrivateKey
-interprets
-.Fa len
-bytes at
-.Fa in
-as a DER-encoded private key, decodes it, stores the result in
-.Fa key
-as described above, and returns a pointer to it.
-.Pp
+and
 .Fn i2d_ECPrivateKey
-encodes the private key
-.Fa a
-into DER format and writes it to
-.Fa out
-as described above.
+decode and encode an EC private key.
+.Fn d2i_ECPrivateKey_bio ,
+.Fn i2d_ECPrivateKey_bio ,
+.Fn d2i_ECPrivateKey_fp ,
+and
+.Fn i2d_ECPrivateKey_fp
+are similar except that they decode or encode using a
+.Vt BIO
+or
+.Vt FILE
+pointer.
 .Pp
 .Fn o2i_ECPublicKey
-takes a string of
-.Fa len
-octets from
-.Fa in ,
-decodes them, and stores the resulting EC public key in the existing
-.Pf * Fa key .
-.Pp
+and
 .Fn i2o_ECPublicKey
-encodes the public
-.Fa key
-into the octet string buffer
-.Pf * Fa out .
-If
-.Pf * Fa out
-is
-.Dv NULL ,
-a new buffer of the required size is allocated;
-otherwise, the pointer is advanced to point to the octet
-after the last one written.
+decode and encode an EC public key.
+.Fn o2i_ECPublicKey
+can store a key into an existing object.
 .Pp
-These functions are very similar to the X.509 functions described in
-.Xr d2i_X509 3 ,
-where further notes and examples are available.
-.Pp
-The
 .Fn ECPKParameters_print
 and
 .Fn ECPKParameters_print_fp
-functions print human-readable output of the public parameters of the
+print human-readable output of the public parameters of the
 .Vt EC_GROUP
 to
-.Fa bp
+.Fa out_bio
 or
-.Fa fp .
+.Fa out_fp .
 The output lines are indented by
-.Fa off
+.Fa indent
 spaces.
 .Pp
 .Fn ECParameters_print
 and
 .Fn ECParameters_print_fp
 print the parameter components of
-.Fa key
+.Fa val_in
 to
-.Fa bp
+.Fa out_bio
 or
-.Fa fp .
+.Fa out_fp .
+.Pp
+.Fn d2i_EC_PUBKEY
+and
+.Fn i2d_EC_PUBKEY
+decode and encode an EC public key.
+.Fn d2i_EC_PUBKEY_bio ,
+.Fn i2d_EC_PUBKEY_bio ,
+.Fn d2i_EC_PUBKEY_fp ,
+and
+.Fn i2d_EC_PUBKEY_fp
+are similar except that they decode or encode using a
+.Vt BIO
+or
+.Vt FILE
+pointer.
 .Sh RETURN VALUES
 .Fn d2i_ECPKParameters ,
 .Fn d2i_ECPKParameters_bio ,
@@ -352,8 +343,13 @@ if an error occurs.
 .Fn d2i_ECParameters ,
 .Fn ECParameters_dup ,
 .Fn d2i_ECPrivateKey ,
+.Fn d2i_ECPrivateKey_bio ,
+.Fn d2i_ECPrivateKey_fp ,
+.Fn o2i_ECPublicKey ,
+.Fn d2i_EC_PUBKEY ,
+.Fn d2i_EC_PUBKEY_bio ,
 and
-.Fn o2i_ECPublicKey
+.Fn d2i_EC_PUBKEY_fp
 return a valid
 .Vt EC_KEY
 structure or
@@ -363,21 +359,26 @@ if an error occurs.
 .Fn i2d_ECPKParameters ,
 .Fn i2d_ECParameters ,
 .Fn i2d_ECPrivateKey ,
+.Fn i2o_ECPublicKey ,
 and
-.Fn i2o_ECPublicKey
+.Fn i2d_EC_PUBKEY
 return the number of bytes successfully encoded or a negative value if
 an error occurs.
 .Pp
 .Fn i2d_ECPKParameters_bio ,
 .Fn i2d_ECPKParameters_fp ,
+.Fn i2d_ECPrivateKey_bio ,
+.Fn i2d_ECPKPrivateKey_fp ,
 .Fn ECPKParameters_print ,
 .Fn ECPKParameters_print_fp ,
 .Fn ECParameters_print ,
+.Fn ECParameters_print_fp ,
+.Fn i2d_EC_PUBKEY_bio ,
 and
-.Fn ECParameters_print_fp
+.Fn i2d_ECPK_PUBKEY_fp
 return 1 for success or 0 if an error occurs.
 .Sh SEE ALSO
-.Xr d2i_X509 3 ,
+.Xr ASN1_item_d2i 3 ,
 .Xr EC_GFp_simple_method 3 ,
 .Xr EC_GROUP_copy 3 ,
 .Xr EC_GROUP_new 3 ,
