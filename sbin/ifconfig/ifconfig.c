@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.335 2016/12/20 13:26:24 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.336 2016/12/25 20:30:41 krw Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -5315,7 +5315,6 @@ utf16_to_char(uint16_t *in, int inlen, char *out, size_t outlen)
 		c = inlen > 0 ? letoh16(*in) : 0;
 		if (c == 0 || --outlen == 0) {
 			/* always NUL terminate result */
-done:
 			*out = '\0';
 			break;
 		}

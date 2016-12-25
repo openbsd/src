@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2016/03/08 10:48:39 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2016/12/25 20:30:41 krw Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ l2000:		if (loc == 0)
 			}
 			kk = &rtext[16];
 		}
-l2001:		if (toting(bear))
+		if (toting(bear))
 			rspeak(141);	/* 2001			*/
 		speak(kk);
 		k = 1;
@@ -275,7 +275,7 @@ l4000:		verb = k;
 			obj = wd2[0];
 		if (obj != 0)
 			goto l4090;
-l4080:
+
 		switch (verb) {
 		case 1:			/* take = 8010		*/
 			if (atloc[loc] == 0 || linkx[atloc[loc]] != 0)
@@ -433,7 +433,7 @@ l9020:		case 2:			/* drop = 9020		*/
 			case 2012: goto l2012;
 			default: bug(105);
 			}
-l9030:		case 3:
+		case 3:
 			switch (trsay()) {
 			case 2012: goto l2012;
 			case 2630: goto l2630;
@@ -599,7 +599,7 @@ l9270:		case 27:			/* read			*/
 				|| !closed) goto l2011;
 			hinted[2] = yes(192, 193, 54);
 			goto l2012;
-l9280:		case 28:			/* break		*/
+		case 28:			/* break		*/
 			if (obj == mirror)
 				spk = 148;
 			if (obj == vase && prop[vase] == 0) {
@@ -614,7 +614,7 @@ l9280:		case 28:			/* break		*/
 				goto l2011;
 			rspeak(197);
 			done(3);
-l9290:		case 29:			/* wake			*/
+		case 29:			/* wake			*/
 			if (obj != dwarf||!closed)
 				goto l2011;
 			rspeak(199);
