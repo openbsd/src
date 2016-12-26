@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.6 2016/09/18 18:16:00 kettenis Exp $ */
+/* $OpenBSD: imxccm.c,v 1.7 2016/12/26 14:01:21 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -244,9 +244,9 @@ imxccm_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "fsl,imx6q-ccm") ||
-	    OF_is_compatible(faa->fa_node, "fsl,imx6sl-cmm") ||
-	    OF_is_compatible(faa->fa_node, "fsl,imx6sx-cmm") ||
-	    OF_is_compatible(faa->fa_node, "fsl,imx6ul-cmm"));
+	    OF_is_compatible(faa->fa_node, "fsl,imx6sl-ccm") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6sx-ccm") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6ul-ccm"));
 }
 
 void
