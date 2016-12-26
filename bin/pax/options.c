@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.100 2016/08/26 04:40:27 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.101 2016/12/26 23:43:52 krw Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -141,8 +141,10 @@ static void pax_options(int, char **);
 static void pax_usage(void);
 static void tar_options(int, char **);
 static void tar_usage(void);
+#ifndef NOCPIO
 static void cpio_options(int, char **);
 static void cpio_usage(void);
+#endif
 
 static int compress_id(char *_blk, int _size);
 static int gzip_id(char *_blk, int _size);

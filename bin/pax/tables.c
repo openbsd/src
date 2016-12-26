@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.49 2016/08/26 04:23:44 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.50 2016/12/26 23:43:52 krw Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -194,7 +194,9 @@ typedef struct dirdata {
 static HRDLNK **ltab = NULL;	/* hard link table for detecting hard links */
 static FTM **ftab = NULL;	/* file time table for updating arch */
 static NAMT **ntab = NULL;	/* interactive rename storage table */
+#ifndef NOCPIO
 static DEVT **dtab = NULL;	/* device/inode mapping tables */
+#endif
 static ATDIR **atab = NULL;	/* file tree directory time reset table */
 static DIRDATA *dirp = NULL;	/* storage for setting created dir time/mode */
 static size_t dirsize;		/* size of dirp table */

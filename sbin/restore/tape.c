@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.47 2015/12/10 17:27:00 mmcc Exp $	*/
+/*	$OpenBSD: tape.c,v 1.48 2016/12/26 23:43:52 krw Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -69,7 +69,9 @@ static long	tpblksread = 0;		/* TP_BSIZE blocks read */
 static long	tapesread;
 static jmp_buf	restart;
 static int	gettingfile = 0;	/* restart has a valid frame */
+#ifdef RRESTORE
 static char	*host = NULL;
+#endif
 
 static int	ofile;
 static char	*map;
