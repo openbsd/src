@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.46 2016/12/26 15:28:42 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.47 2016/12/26 15:34:01 jsing Exp $ */
 
 /*
  * Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
@@ -122,13 +122,11 @@ i2d_SSL_SESSION(SSL_SESSION *s, unsigned char **pp)
 
 	/* Peer certificate [3]. */
 	if (s->peer != NULL) {
-		if (!CBB_add_asn1(&session, &peer_cert, SSLASN1_PEER_CERT_TAG))
-			goto err;
-		if (!CBB_add_asn1(&peer_cert, &value, CBS_ASN1_OCTETSTRING))
-			goto err;
 		if ((len = i2d_X509(s->peer, &peer_cert_bytes)) <= 0)
 			goto err;
-		if (!CBB_add_bytes(&value, peer_cert_bytes, len))
+		if (!CBB_add_asn1(&session, &peer_cert, SSLASN1_PEER_CERT_TAG))
+			goto err;
+		if (!CBB_add_bytes(&peer_cert, peer_cert_bytes, len))
 			goto err;
 	}
 
@@ -312,7 +310,7 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	/* Peer certificate [3]. */
 	X509_free(s->peer);
 	s->peer = NULL;
-	if (!CBS_get_optional_asn1_octet_string(&session, &peer_cert, &present,
+	if (!CBS_get_optional_asn1(&session, &peer_cert, &present,
 	    SSLASN1_PEER_CERT_TAG))
 		goto err;
 	if (present) {
