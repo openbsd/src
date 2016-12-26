@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_RSAPublicKey.3,v 1.7 2016/12/26 16:36:34 schwarze Exp $
+.\"	$OpenBSD: d2i_RSAPublicKey.3,v 1.8 2016/12/26 16:52:25 schwarze Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -60,6 +60,14 @@
 .Nm i2d_RSAPrivateKey ,
 .Nm d2i_Netscape_RSA ,
 .Nm i2d_Netscape_RSA ,
+.Nm d2i_RSAPublicKey_bio ,
+.Nm d2i_RSAPublicKey_fp ,
+.Nm i2d_RSAPublicKey_bio ,
+.Nm i2d_RSAPublicKey_fp ,
+.Nm d2i_RSAPrivateKey_bio ,
+.Nm d2i_RSAPrivateKey_fp ,
+.Nm i2d_RSAPrivateKey_bio ,
+.Nm i2d_RSAPrivateKey_fp ,
 .Nm d2i_RSA_PUBKEY ,
 .Nm i2d_RSA_PUBKEY ,
 .Nm d2i_RSA_PUBKEY_bio ,
@@ -106,6 +114,46 @@
 .Fc
 .In openssl/x509.h
 .Ft RSA *
+.Fo d2i_RSAPublicKey_bio
+.Fa "BIO *in_bio"
+.Fa "RSA **val_out"
+.Fc
+.Ft RSA *
+.Fo d2i_RSAPublicKey_fp
+.Fa "FILE *in_fp"
+.Fa "RSA **val_out"
+.Fc
+.Ft int
+.Fo i2d_RSAPublicKey_bio
+.Fa "BIO *out_bio"
+.Fa "RSA *val_in"
+.Fc
+.Ft int
+.Fo i2d_RSAPublicKey_fp
+.Fa "FILE *out_fp"
+.Fa "RSA *val_in"
+.Fc
+.Ft RSA *
+.Fo d2i_RSAPrivateKey_bio
+.Fa "BIO *in_bio"
+.Fa "RSA **val_out"
+.Fc
+.Ft RSA *
+.Fo d2i_RSAPrivateKey_fp
+.Fa "FILE *in_fp"
+.Fa "RSA **val_out"
+.Fc
+.Ft int
+.Fo i2d_RSAPrivateKey_bio
+.Fa "BIO *out_bio"
+.Fa "RSA *val_in"
+.Fc
+.Ft int
+.Fo i2d_RSAPrivateKey_fp
+.Fa "FILE *out_fp"
+.Fa "RSA *val_in"
+.Fc
+.Ft RSA *
 .Fo d2i_RSA_PUBKEY
 .Fa "RSA **val_out"
 .Fa "const unsigned char **der_in"
@@ -147,6 +195,16 @@ and
 decode and encode a PKCS#1
 .Vt RSAPublicKey
 structure.
+.Fn d2i_RSAPublicKey_bio ,
+.Fn d2i_RSAPublicKey_fp ,
+.Fn i2d_RSAPublicKey_bio ,
+and
+.Fn i2d_RSAPublicKey_fp
+are similar except that they decode or encode using a
+.Vt BIO
+or
+.Vt FILE
+pointer.
 .Pp
 .Fn d2i_RSAPrivateKey
 and
@@ -160,6 +218,16 @@ structure passed to the private key encoding functions should have
 all the PKCS#1 private key components present.
 The data encoded by the private key functions is unencrypted and
 therefore offers no private key security.
+.Fn d2i_RSAPrivateKey_bio ,
+.Fn d2i_RSAPrivateKey_fp ,
+.Fn i2d_RSAPrivateKey_bio ,
+and
+.Fn i2d_RSAPrivateKey_fp
+are similar except that they decode or encode using a
+.Vt BIO
+or
+.Vt FILE
+pointer.
 .Pp
 .Fn d2i_Netscape_RSA
 and
@@ -188,7 +256,11 @@ or
 pointer.
 .Sh RETURN VALUES
 .Fn d2i_RSAPublicKey ,
+.Fn d2i_RSAPublicKey_bio ,
+.Fn d2i_RSAPublicKey_fp ,
 .Fn d2i_RSAPrivateKey ,
+.Fn d2i_RSAPrivateKey_bio ,
+.Fn d2i_RSAPrivateKey_fp ,
 .Fn d2i_Netscape_RSA ,
 .Fn d2i_RSA_PUBKEY ,
 .Fn d2i_RSA_PUBKEY_bio ,
@@ -208,7 +280,11 @@ and
 return the number of bytes successfully encoded or a negative value
 if an error occurs.
 .Pp
-.Fn i2d_RSA_PUBKEY_bio
+.Fn i2d_RSAPublicKey_bio ,
+.Fn i2d_RSAPublicKey_fp ,
+.Fn i2d_RSAPrivateKey_bio ,
+.Fn i2d_RSAPrivateKey_fp ,
+.Fn i2d_RSA_PUBKEY_bio ,
 and
 .Fn i2d_RSA_PUBKEY_fp
 return 1 for success or 0 if an error occurs.
