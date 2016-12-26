@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.45 2016/12/07 13:17:33 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.46 2016/12/26 15:28:42 jsing Exp $ */
 
 /*
  * Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
@@ -200,6 +200,7 @@ i2d_SSL_SESSION(SSL_SESSION *s, unsigned char **pp)
 			data = NULL;
 		} else {
 			memcpy(*pp, data, data_len);
+			*pp += data_len;
 		}
 	}
 
