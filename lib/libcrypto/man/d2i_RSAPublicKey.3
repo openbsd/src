@@ -1,7 +1,24 @@
-.\"	$OpenBSD: d2i_RSAPublicKey.3,v 1.8 2016/12/26 16:52:25 schwarze Exp $
+.\"	$OpenBSD: d2i_RSAPublicKey.3,v 1.9 2016/12/26 17:19:23 schwarze Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
-.\" This file was written by Ulf Moeller <ulf@openssl.org> and
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Ulf Moeller <ulf@openssl.org> and
 .\" Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2002, 2003, 2009, 2016 The OpenSSL Project.
 .\" All rights reserved.
@@ -60,6 +77,8 @@
 .Nm i2d_RSAPrivateKey ,
 .Nm d2i_Netscape_RSA ,
 .Nm i2d_Netscape_RSA ,
+.Nm d2i_RSA_PSS_PARAMS ,
+.Nm i2d_RSA_PSS_PARAMS ,
 .Nm d2i_RSAPublicKey_bio ,
 .Nm d2i_RSAPublicKey_fp ,
 .Nm i2d_RSAPublicKey_bio ,
@@ -74,7 +93,7 @@
 .Nm d2i_RSA_PUBKEY_fp ,
 .Nm i2d_RSA_PUBKEY_bio ,
 .Nm i2d_RSA_PUBKEY_fp
-.Nd decode and encode RSA keys
+.Nd decode and encode RSA keys and parameters
 .Sh SYNOPSIS
 .In openssl/rsa.h
 .Ft RSA *
@@ -111,6 +130,17 @@
 .Fa "RSA *val_in"
 .Fa "unsigned char **der_out"
 .Fa "int (*cb)()"
+.Fc
+.Ft RSA_PSS_PARAMS *
+.Fo d2i_RSA_PSS_PARAMS
+.Fa "RSA_PSS_PARAMS **val_out"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_RSA_PSS_PARAMS
+.Fa "RSA_PSS_PARAMS *val_in"
+.Fa "unsigned char **der_out"
 .Fc
 .In openssl/x509.h
 .Ft RSA *
@@ -194,7 +224,7 @@ and
 .Fn i2d_RSAPublicKey
 decode and encode a PKCS#1
 .Vt RSAPublicKey
-structure.
+structure defined in RFC 8017 appendix A.1.1.
 .Fn d2i_RSAPublicKey_bio ,
 .Fn d2i_RSAPublicKey_fp ,
 .Fn i2d_RSAPublicKey_bio ,
@@ -211,7 +241,7 @@ and
 .Fn i2d_RSAPrivateKey
 decode and encode a PKCS#1
 .Vt RSAPrivateKey
-structure.
+structure defined in RFC 8017 appendix A.1.2.
 The
 .Vt RSA
 structure passed to the private key encoding functions should have
@@ -238,12 +268,21 @@ certain very old software.
 The NET format has some severe security weaknesses and should be
 avoided if possible.
 .Pp
+.Fn d2i_RSA_PSS_PARAMS
+and
+.Fn i2d_RSA_PSS_PARAMS
+decode and encode a PKCS#1
+.Vt RSASSA-PSS-params
+structure defined in RFC 8017 appendix A.2.3 and documented in
+.Xr RSA_PSS_PARAMS_new 3 .
+.Pp
 .Fn d2i_RSA_PUBKEY
 and
 .Fn i2d_RSA_PUBKEY
 decode and encode an RSA public key using an ASN.1
 .Vt SubjectPublicKeyInfo
-structure.
+structure defined in RFC 5280 section 4.1 and documented in
+.Xr X509_PUBKEY_new 3 .
 .Fn d2i_RSA_PUBKEY_bio ,
 .Fn d2i_RSA_PUBKEY_fp ,
 .Fn i2d_RSA_PUBKEY_bio ,
@@ -272,9 +311,17 @@ object or
 .Dv NULL
 if an error occurs.
 .Pp
+.Fn d2i_RSA_PSS_PARAMS
+returns a valid
+.Vt RSA_PSS_PARAMS
+object or
+.Dv NULL
+if an error occurs.
+.Pp
 .Fn i2d_RSAPublicKey ,
 .Fn i2d_RSAPrivateKey ,
 .Fn i2d_Netscape_RSA ,
+.Fn i2d_RSA_PSS_PARAMS ,
 and
 .Fn i2d_RSA_PUBKEY
 return the number of bytes successfully encoded or a negative value
@@ -293,4 +340,11 @@ return 1 for success or 0 if an error occurs.
 .Xr EVP_PKEY_set1_RSA 3 ,
 .Xr PEM_write_RSAPrivateKey 3 ,
 .Xr RSA_new 3 ,
+.Xr RSA_PSS_PARAMS_new 3 ,
 .Xr X509_PUBKEY_new 3
+.Sh STANDARDS
+RFC 8017: PKCS #1: RSA Cryptography Specifications
+.Pp
+RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
+Certificate Revocation List (CRL) Profile,
+section 4.1: Basic Certificate Fields
