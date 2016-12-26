@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.4 2016/12/21 15:13:29 jsing Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.5 2016/12/26 15:24:03 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -205,7 +205,7 @@ session_strcmp(const unsigned char *o1, const unsigned char *o2, size_t len)
 static int
 session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 {
-	/* Compare two sessions, from the perspective of ASN1. */
+	/* Compare the ASN.1 encoded values from two sessions. */
 	if (s1->ssl_version != s2->ssl_version) {
 		fprintf(stderr, "ssl_version differs: %i != %i\n",
 		    s1->ssl_version, s2->ssl_version);
@@ -320,17 +320,12 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 	/* See if the test is expected to fail... */
 	if (sat->asn1_len == -1)
 		return (0);
-		
+
 	if ((asn1 = malloc(len)) == NULL)
 		errx(1, "failed to allocate memory");
 
 	ap = asn1;
 	len = i2d_SSL_SESSION(&sat->session, &ap);
-	if ((ap - asn1) > len) {
-		fprintf(stderr, "FAIL: test %i overflowed ticket buffer "
-		    "(%i > %i)\n", test_no, (int)(ap - asn1), len);
-		goto failed;
-	}
 
 	/*
 	 * Length *should* be the same, but check it again since the code
@@ -339,6 +334,12 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 	if (len != sat->asn1_len) {
 		fprintf(stderr, "FAIL: test %i returned ASN1 length %i, "
 		    "want %i\n", test_no, len, sat->asn1_len);
+		goto failed;
+	}
+	/* ap should now point at the end of the buffer. */
+	if (ap - asn1 != len) {
+		fprintf(stderr, "FAIL: test %i pointer increment does not "
+		    "match length (%i != %i)\n", test_no, (int)(ap - asn1), len);
 		goto failed;
 	}
 
