@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.69 2016/09/15 03:32:48 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.70 2016/12/26 23:25:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -555,8 +555,12 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if ((ic->ic_flags & IEEE80211_F_HTON) == 0)
 		return;
 
-	/* Check if the peer supports HT. MCS 0-7 are mandatory. */
-	if (ni->ni_rxmcs[0] != 0xff) {
+	/* 
+	 * Check if the peer supports HT.
+	 * Require at least one of the mandatory MCS.
+	 * MCS 0-7 are mandatory but some APs have particular MCS disabled.
+	 */
+	if ((ni->ni_rxmcs[0] & 0xff) == 0) {
 		ic->ic_stats.is_ht_nego_no_mandatory_mcs++;
 		return;
 	}
