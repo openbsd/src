@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.172 2016/12/20 18:33:43 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.173 2016/12/26 21:30:10 jca Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -664,7 +664,7 @@ ip6_check_rh0hdr(struct mbuf *m, int *offp)
 		case IPPROTO_ROUTING:
 			*offp = off;
 			if (rh_cnt++) {
-				/* more then one rh header present */
+				/* more than one rh header present */
 				return (1);
 			}
 

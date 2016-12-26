@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.5 2016/09/28 12:40:35 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.6 2016/12/26 21:30:10 jca Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014-2015 Florian Riehm <mail@friehm.de>
@@ -353,7 +353,7 @@ sub child {
 
     $handle = AnyEvent::Handle->new(
 	fh => $tap,
-	read_size => 70000,  # little more then max ip size
+	read_size => 70000,  # little more than max ip size
 	on_error => sub {
 	    $cv->croak("error on tap device $tap_number: $!");
 	    $handle->destroy();
