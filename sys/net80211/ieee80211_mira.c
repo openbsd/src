@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.4 2016/12/10 14:46:04 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.5 2016/12/26 23:23:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -82,7 +82,7 @@ void	ieee80211_mira_probe_next_rate(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
 uint32_t ieee80211_mira_valid_rates(struct ieee80211com *,
 	    struct ieee80211_node *);
-uint32_t ieee80211_mira_mcs_below(int);
+uint32_t ieee80211_mira_mcs_below(struct ieee80211_mira_node *, int);
 
 /* We use fixed point arithmetic with 64 bit integers. */
 #define MIRA_FP_SHIFT	21
@@ -656,7 +656,8 @@ ieee80211_mira_probe_next_rateset(struct ieee80211_mira_node *mn,
 		  (1 << ieee80211_mira_next_intra_rate(mn, ni));
 	} else if (mn->probing & IEEE80211_MIRA_PROBING_DOWN) {
 #ifdef MIRA_AGGRESSIVE_DOWNWARDS_PROBING
-		mn->candidate_rates |= ieee80211_mira_mcs_below(ni->ni_txmcs);
+		mn->candidate_rates |= ieee80211_mira_mcs_below(mn,
+		    ni->ni_txmcs);
 #else
 		mn->candidate_rates |=
 		    (1 << ieee80211_mira_next_lower_intra_rate(mn, ni));
@@ -963,7 +964,7 @@ ieee80211_mira_valid_rates(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 uint32_t
-ieee80211_mira_mcs_below(int mcs)
+ieee80211_mira_mcs_below(struct ieee80211_mira_node *mn, int mcs)
 {
 	const struct ieee80211_mira_rateset *rs;
 	uint32_t mcs_mask;
@@ -971,8 +972,11 @@ ieee80211_mira_mcs_below(int mcs)
 
 	rs = ieee80211_mira_get_rateset(mcs);
 	mcs_mask = (1 << rs->min_mcs);
-	for (i = rs->min_mcs + 1; i < mcs; i++)
+	for (i = rs->min_mcs + 1; i < mcs; i++) {
+		if ((mn->valid_rates & (1 << i)) == 0)
+			continue;
 		mcs_mask |= (1 << i);
+	}
 
 	return mcs_mask;
 }
@@ -1050,7 +1054,8 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 		mn->probed_rates = 0;
 #ifdef MIRA_AGGRESSIVE_DOWNWARDS_PROBING
 		/* Allow for probing all the way down within this rateset. */
-		mn->candidate_rates = ieee80211_mira_mcs_below(ni->ni_txmcs);
+		mn->candidate_rates = ieee80211_mira_mcs_below(mn,
+		    ni->ni_txmcs);
 #else
 		/* Probe the lower candidate rate to see if it's any better. */
 		mn->candidate_rates =
