@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.8 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.9 2016/12/26 17:38:14 jca Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -2139,7 +2139,7 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb *acb, u_char csr,
 
 	default:
 	abort:
-		/* Something unexpected happend -- deal with it. */
+		/* Something unexpected happened -- deal with it. */
 		printf("%s: next: aborting asr 0x%02x csr 0x%02x\n",
 		    sc->sc_dev.dv_xname, asr, csr);
 

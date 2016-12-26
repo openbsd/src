@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.50 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.51 2016/12/26 17:38:14 jca Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -703,7 +703,7 @@ cs4280_intr(void *p)
 		/*
 		 * XXX
 		 * I think this audio data conversion should be
-		 * happend in upper layer, but I put this here
+		 * happened in upper layer, but I put this here
 		 * since there is no conversion function available.
 		 */
 		switch(sc->sc_rparam) {

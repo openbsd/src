@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.27 2016/03/15 18:16:07 deraadt Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.28 2016/12/26 17:38:14 jca Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -428,7 +428,7 @@ pm_intr()
 	s = splhigh();
 
 	PM_VIA_CLR_INTR();			/* clear VIA1 interrupt */
-						/* ask PM what happend */
+						/* ask PM what happened */
 	pmdata.command = 0x78;
 	pmdata.num_data = 0;
 	pmdata.s_buf = &pmdata.data[2];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.44 2015/01/28 22:03:17 bluhm Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.45 2016/12/26 17:38:14 jca Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -492,7 +492,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 		if (add_ls_update(buf, nbr->iface, le->le_ref->data,
 		    le->le_ref->len, d) == 0) {
 			if (nlsa == 0) {
-				/* something bad happend retry later */
+				/* something bad happened retry later */
 				log_warnx("ls_retrans_timer: sending LS update "
 				    "to neighbor ID %s failed",
 				    inet_ntoa(nbr->id));
