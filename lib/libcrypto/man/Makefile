@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.101 2016/12/24 21:42:30 schwarze Exp $
+# $OpenBSD: Makefile,v 1.102 2016/12/26 18:04:45 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -231,6 +231,7 @@ MAN=	\
 	d2i_DHparams.3 \
 	d2i_DSAPublicKey.3 \
 	d2i_ECPKParameters.3 \
+	d2i_PKCS12.3 \
 	d2i_PKCS8PrivateKey_bio.3 \
 	d2i_PrivateKey.3 \
 	d2i_RSAPublicKey.3 \
