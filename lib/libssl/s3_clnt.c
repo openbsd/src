@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.158 2016/12/21 18:13:07 deraadt Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.159 2016/12/26 16:33:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2142,6 +2142,9 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 	if (key != NULL)
 		explicit_bzero(key, key_size);
 	free(key);
+
+	BN_CTX_free(bn_ctx);
+	EC_KEY_free(ecdh);
 
 	return (ret);
 }
