@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ASN1_item_d2i.3,v 1.1 2016/12/24 21:42:29 schwarze Exp $
+.\"     $OpenBSD: ASN1_item_d2i.3,v 1.2 2016/12/26 15:36:18 schwarze Exp $
 .\"     OpenSSL doc/man3/d2i_X509.pod b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 24 2016 $
+.Dd $Mdocdate: December 26 2016 $
 .Dt ASN1_ITEM_D2I 3
 .Os
 .Sh NAME
@@ -151,6 +151,8 @@ If successful,
 is advanced to the byte following the parsed data.
 .Pp
 If decoding succeeds and
+.Fa val_out
+or
 .Pf * Fa val_out
 is
 .Dv NULL ,
@@ -189,13 +191,18 @@ respectively.
 encodes the object pointed to by
 .Fa val_in
 into DER format.
+.Pp
 If
-.Fa der_out
+.Pf * Fa der_out
 is not
 .Dv NULL ,
 it writes the DER-encoded data to the buffer at
 .Pf * Fa der_out
 and increments it to point after the data just written.
+In this case, it is the responsibility of the user to make sure
+that the buffer pointed to by
+.Pf * Fa der_out
+is long enough, such that no buffer owerflow can occur.
 .Pp
 If
 .Pf * Fa der_out
@@ -204,6 +211,22 @@ is
 memory is allocated for a buffer, and
 .Pf * Fa der_out
 is not incremented, but points to the start of the data just written.
+.Pp
+If
+.Fa der_out
+is
+.Dv NULL ,
+the encoded bytes are not written anywhere but discarded.
+For
+.Fa val_in
+objects of variable encoding size, this is sometimes used to first
+find the number of bytes that will be written.
+Then, a sufficient amount of memory is allocated before calling
+.Fn ASN1_item_i2d
+again.
+This explicit double-call technique is often not needed because the
+auto-allocation technique described in the previous paragraph can
+be used.
 .Pp
 .Fn ASN1_item_i2d_bio
 and
