@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.52 2016/11/05 14:50:05 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.53 2016/12/26 16:20:58 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -365,12 +365,37 @@ tls_configure_ssl(struct tls *ctx, SSL_CTX *ssl_ctx)
 	return (-1);
 }
 
+static int
+tls_ssl_cert_verify_cb(X509_STORE_CTX *x509_ctx, void *arg)
+{
+	struct tls *ctx = arg;
+	int x509_err;
+
+	if (ctx->config->verify_cert == 0)
+		return (1);
+
+	if ((X509_verify_cert(x509_ctx)) < 0) {
+		tls_set_errorx(ctx, "X509 verify cert failed");
+		return (0);
+	}
+
+	x509_err = X509_STORE_CTX_get_error(x509_ctx);
+	if (x509_err == X509_V_OK)
+		return (1);
+
+	tls_set_errorx(ctx, "certificate verification failed: %s",
+	    X509_verify_cert_error_string(x509_err));
+
+	return (0);
+}
+
 int
 tls_configure_ssl_verify(struct tls *ctx, SSL_CTX *ssl_ctx, int verify)
 {
 	size_t ca_len = ctx->config->ca_len;
 	char *ca_mem = ctx->config->ca_mem;
 	char *ca_free = NULL;
+	int rv = -1;
 
 	SSL_CTX_set_verify(ssl_ctx, verify, NULL);
 
@@ -399,14 +424,14 @@ tls_configure_ssl_verify(struct tls *ctx, SSL_CTX *ssl_ctx, int verify)
 	if (ctx->config->verify_depth >= 0)
 		SSL_CTX_set_verify_depth(ssl_ctx, ctx->config->verify_depth);
 
-	free(ca_free);
+	SSL_CTX_set_cert_verify_callback(ssl_ctx, tls_ssl_cert_verify_cb, ctx);
 
-	return (0);
+	rv = 0;
 
  err:
 	free(ca_free);
 
-	return (-1);
+	return (rv);
 }
 
 void

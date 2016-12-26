@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.37 2016/11/02 15:18:42 beck Exp $ */
+/* $OpenBSD: tls_client.c,v 1.38 2016/12/26 16:20:58 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -195,9 +195,7 @@ tls_connect_common(struct tls *ctx, const char *servername)
 		}
 	}
 
-	if (ctx->config->verify_cert &&
-	    (tls_configure_ssl_verify(ctx, ctx->ssl_ctx,
-	     SSL_VERIFY_PEER) == -1))
+	if (tls_configure_ssl_verify(ctx, ctx->ssl_ctx, SSL_VERIFY_PEER) == -1)
 		goto err;
 
 	if (SSL_CTX_set_tlsext_status_cb(ctx->ssl_ctx, tls_ocsp_verify_cb) != 1) {
