@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcireg.h,v 1.15 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: uhcireg.h,v 1.16 2016/12/27 14:41:45 kettenis Exp $ */
 /*	$NetBSD: uhcireg.h,v 1.16 2002/07/11 21:14:29 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
@@ -163,7 +163,7 @@ struct uhci_td {
 #define UHCI_TD_GET_ENDPT(s)	(((s) >> 15) & 0xf)
 #define UHCI_TD_SET_DT(t)	((t) << 19)
 #define UHCI_TD_GET_DT(s)	(((s) >> 19) & 1)
-#define UHCI_TD_SET_MAXLEN(l)	(((l)-1) << 21)
+#define UHCI_TD_SET_MAXLEN(l)	(((uint32_t)(l)-1) << 21)
 #define UHCI_TD_GET_MAXLEN(s)	((((s) >> 21) + 1) & 0x7ff)
 #define UHCI_TD_MAXLEN_MASK	0xffe00000
 	u_int32_t td_buffer;
