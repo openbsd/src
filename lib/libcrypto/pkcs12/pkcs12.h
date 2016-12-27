@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.15 2016/12/27 15:31:16 jsing Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.16 2016/12/27 16:05:57 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -121,7 +121,6 @@ typedef struct {
 } PKCS12_SAFEBAG;
 
 DECLARE_STACK_OF(PKCS12_SAFEBAG)
-DECLARE_ASN1_SET_OF(PKCS12_SAFEBAG)
 DECLARE_PKCS12_STACK_OF(PKCS12_SAFEBAG)
 
 typedef struct pkcs12_bag_st {

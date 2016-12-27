@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.h,v 1.9 2016/11/04 18:35:30 jsing Exp $ */
+/* $OpenBSD: ocsp.h,v 1.10 2016/12/27 16:05:56 jsing Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -115,7 +115,6 @@ typedef struct ocsp_one_request_st {
 } OCSP_ONEREQ;
 
 DECLARE_STACK_OF(OCSP_ONEREQ)
-DECLARE_ASN1_SET_OF(OCSP_ONEREQ)
 
 
 /*   TBSRequest      ::=     SEQUENCE {
@@ -253,7 +252,6 @@ typedef struct ocsp_single_response_st {
 } OCSP_SINGLERESP;
 
 DECLARE_STACK_OF(OCSP_SINGLERESP)
-DECLARE_ASN1_SET_OF(OCSP_SINGLERESP)
 
 /*   ResponseData ::= SEQUENCE {
  *      version              [0] EXPLICIT Version DEFAULT v1,

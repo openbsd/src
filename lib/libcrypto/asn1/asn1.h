@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.37 2016/12/27 15:12:51 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.38 2016/12/27 16:05:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -482,7 +482,6 @@ typedef const ASN1_ITEM ASN1_ITEM_EXP;
 				ASN1_STRFLGS_DUMP_DER)
 
 DECLARE_STACK_OF(ASN1_INTEGER)
-DECLARE_ASN1_SET_OF(ASN1_INTEGER)
 
 DECLARE_STACK_OF(ASN1_GENERALSTRING)
 
@@ -516,7 +515,6 @@ typedef struct asn1_type_st {
 } ASN1_TYPE;
 
 DECLARE_STACK_OF(ASN1_TYPE)
-DECLARE_ASN1_SET_OF(ASN1_TYPE)
 
 typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
 
@@ -762,7 +760,6 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 extern const ASN1_ITEM ASN1_OBJECT_it;
 
 DECLARE_STACK_OF(ASN1_OBJECT)
-DECLARE_ASN1_SET_OF(ASN1_OBJECT)
 
 ASN1_STRING *ASN1_STRING_new(void);
 void ASN1_STRING_free(ASN1_STRING *a);

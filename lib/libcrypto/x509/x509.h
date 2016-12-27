@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.25 2016/11/04 10:29:19 beck Exp $ */
+/* $OpenBSD: x509.h,v 1.26 2016/12/27 16:05:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,7 +140,6 @@ struct X509_algor_st
 	ASN1_TYPE *parameter;
 	} /* X509_ALGOR */;
 
-DECLARE_ASN1_SET_OF(X509_ALGOR)
 
 typedef STACK_OF(X509_ALGOR) X509_ALGORS;
 
@@ -172,7 +171,6 @@ typedef struct X509_name_entry_st
 	} X509_NAME_ENTRY;
 
 DECLARE_STACK_OF(X509_NAME_ENTRY)
-DECLARE_ASN1_SET_OF(X509_NAME_ENTRY)
 
 /* we always keep X509_NAMEs in 2 forms. */
 struct X509_name_st
@@ -203,7 +201,6 @@ typedef struct X509_extension_st
 typedef STACK_OF(X509_EXTENSION) X509_EXTENSIONS;
 
 DECLARE_STACK_OF(X509_EXTENSION)
-DECLARE_ASN1_SET_OF(X509_EXTENSION)
 
 /* a sequence of these are used */
 typedef struct x509_attributes_st
@@ -218,7 +215,6 @@ typedef struct x509_attributes_st
 	} X509_ATTRIBUTE;
 
 DECLARE_STACK_OF(X509_ATTRIBUTE)
-DECLARE_ASN1_SET_OF(X509_ATTRIBUTE)
 
 
 typedef struct X509_req_info_st
@@ -298,7 +294,6 @@ struct x509_st
 	} /* X509 */;
 
 DECLARE_STACK_OF(X509)
-DECLARE_ASN1_SET_OF(X509)
 
 /* This is used for a table of trust checking functions */
 
@@ -433,7 +428,6 @@ struct x509_revoked_st
 	};
 
 DECLARE_STACK_OF(X509_REVOKED)
-DECLARE_ASN1_SET_OF(X509_REVOKED)
 
 typedef struct X509_crl_info_st
 	{
@@ -473,7 +467,6 @@ struct X509_crl_st
 	} /* X509_CRL */;
 
 DECLARE_STACK_OF(X509_CRL)
-DECLARE_ASN1_SET_OF(X509_CRL)
 
 typedef struct private_key_st
 	{
