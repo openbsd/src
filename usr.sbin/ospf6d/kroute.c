@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.49 2016/12/22 23:01:58 jca Exp $ */
+/*	$OpenBSD: kroute.c,v 1.50 2016/12/27 17:18:56 jca Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -51,12 +51,12 @@ struct {
 
 struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;
-	struct kroute		 r;
 	struct kroute_node	*next;
+	struct kroute		 r;
 };
 
 void	kr_redist_remove(struct kroute_node *, struct kroute_node *);
-int	kr_redist_eval(struct kroute *, struct rroute *);
+int	kr_redist_eval(struct kroute *, struct kroute *);
 void	kr_redistribute(struct kroute_node *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
 
@@ -344,7 +344,7 @@ kr_show_route(struct imsg *imsg)
 void
 kr_redist_remove(struct kroute_node *kh, struct kroute_node *kn)
 {
-	struct rroute	 rr;
+	struct kroute	 *kr;
 
 	/* was the route redistributed? */
 	if ((kn->r.flags & F_REDISTRIBUTED) == 0)
@@ -352,8 +352,7 @@ kr_redist_remove(struct kroute_node *kh, struct kroute_node *kn)
 
 	/* remove redistributed flag */
 	kn->r.flags &= ~F_REDISTRIBUTED;
-	rr.kr = kn->r;
-	rr.metric = DEFAULT_REDIST_METRIC;	/* some dummy value */
+	kr = &kn->r;
 
 	/* probably inform the RDE (check if no other path is redistributed) */
 	for (kn = kh; kn; kn = kn->next)
@@ -361,12 +360,12 @@ kr_redist_remove(struct kroute_node *kh, struct kroute_node *kn)
 			break;
 
 	if (kn == NULL)
-		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &rr,
-		    sizeof(struct rroute));
+		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, kr,
+		    sizeof(struct kroute));
 }
 
 int
-kr_redist_eval(struct kroute *kr, struct rroute *rr)
+kr_redist_eval(struct kroute *kr, struct kroute *new_kr)
 {
 	u_int32_t	 metric = 0;
 
@@ -411,9 +410,9 @@ kr_redist_eval(struct kroute *kr, struct rroute *rr)
 	 * only one of all multipath routes can be redistributed so
 	 * redistribute the best one.
 	 */
-	if (rr->metric > metric) {
-		rr->kr = *kr;
-		rr->metric = metric;
+	if (new_kr->metric > metric) {
+		*new_kr = *kr;
+		new_kr->metric = metric;
 	}
 
 	return (1);
@@ -431,26 +430,25 @@ void
 kr_redistribute(struct kroute_node *kh)
 {
 	struct kroute_node	*kn;
-	struct rroute		 rr;
+	struct kroute		 kr;
 	int			 redistribute = 0;
 
-	bzero(&rr, sizeof(rr));
-	rr.metric = UINT_MAX;
+	bzero(&kr, sizeof(kr));
+	kr.metric = UINT_MAX;
 	for (kn = kh; kn; kn = kn->next)
-		if (kr_redist_eval(&kn->r, &rr))
+		if (kr_redist_eval(&kn->r, &kr))
 			redistribute = 1;
 
 	if (!redistribute)
 		return;
 
-	if (rr.kr.flags & F_REDISTRIBUTED) {
-		main_imsg_compose_rde(IMSG_NETWORK_ADD, 0, &rr,
-		    sizeof(struct rroute));
+	if (kr.flags & F_REDISTRIBUTED) {
+		main_imsg_compose_rde(IMSG_NETWORK_ADD, 0, &kr,
+		    sizeof(struct kroute));
 	} else {
-		rr.metric = DEFAULT_REDIST_METRIC;	/* some dummy value */
-		rr.kr = kh->r;
-		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &rr,
-		    sizeof(struct rroute));
+		kr = kh->r;
+		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &kr,
+		    sizeof(struct kroute));
 	}
 }
 
