@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.14 2016/09/04 17:19:33 jsing Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.15 2016/12/27 15:31:16 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -255,8 +255,8 @@ PKCS12_BAGS *d2i_PKCS12_BAGS(PKCS12_BAGS **a, const unsigned char **in, long len
 int i2d_PKCS12_BAGS(PKCS12_BAGS *a, unsigned char **out);
 extern const ASN1_ITEM PKCS12_BAGS_it;
 
-DECLARE_ASN1_ITEM(PKCS12_SAFEBAGS)
-DECLARE_ASN1_ITEM(PKCS12_AUTHSAFES)
+extern const ASN1_ITEM PKCS12_SAFEBAGS_it;
+extern const ASN1_ITEM PKCS12_AUTHSAFES_it;
 
 void PKCS12_PBE_add(void);
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
