@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.14 2015/07/19 18:29:31 miod Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.15 2016/12/27 16:01:19 jsing Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -313,50 +313,6 @@ OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, X509_EXTENSION *ex, int loc)
 {
 	return X509v3_add_ext(&(x->singleExtensions), ex, loc) != NULL;
 }
-
-/* also CRL Entry Extensions */
-#if 0
-ASN1_STRING *
-ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d, void *data,
-    STACK_OF(ASN1_OBJECT) *sk)
-{
-	int i;
-	unsigned char *p, *b = NULL;
-
-	if (data) {
-		if ((i = i2d(data, NULL)) <= 0)
-			goto err;
-		if (!(b = p = malloc(i)))
-			goto err;
-		if (i2d(data, &p) <= 0)
-			goto err;
-	} else if (sk) {
-		if ((i = i2d_ASN1_SET_OF_ASN1_OBJECT(sk, NULL,
-		    (I2D_OF(ASN1_OBJECT))i2d, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL,
-		    IS_SEQUENCE)) <= 0)
-			goto err;
-		if (!(b = p = malloc(i)))
-			goto err;
-		if (i2d_ASN1_SET_OF_ASN1_OBJECT(sk, &p,
-		    (I2D_OF(ASN1_OBJECT))i2d, V_ASN1_SEQUENCE,
-		    V_ASN1_UNIVERSAL, IS_SEQUENCE) <= 0)
-			goto err;
-	} else {
-		OCSPerr(OCSP_F_ASN1_STRING_ENCODE, OCSP_R_BAD_DATA);
-		goto err;
-	}
-	if (!s && !(s = ASN1_STRING_new()))
-		goto err;
-	if (!(ASN1_STRING_set(s, b, i)))
-		goto err;
-	free(b);
-	return s;
-
-err:
-	free(b);
-	return NULL;
-}
-#endif
 
 /* Nonce handling functions */
 
