@@ -4955,3 +4955,151 @@ struct sxipio_pin sun9i_a80_pins[] = {
 		{ "hdmi", 2 },
 	} },
 };
+
+struct sxipio_pin sun9i_a80_r_pins[] = {
+	{ SXIPIO_PIN(L, 0), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_uart", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 1), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_uart", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 2), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_jtag", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 3), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_jtag", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 4), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_jtag", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 5), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_jtag", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 6), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_cir_rx", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 7), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "1wire", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 8), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_ps2", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(L, 9), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_ps2", 2 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(M, 0), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(M, 1), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(M, 2), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(M, 3), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(M, 4), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2s1", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(M, 8), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2c1", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(M, 9), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2c1", 3 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(M, 10), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2s0", 2 },
+		{ "s_i2s1", 3 },
+	} },
+	{ SXIPIO_PIN(M, 11), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2s0", 2 },
+		{ "s_i2s1", 3 },
+	} },
+	{ SXIPIO_PIN(M, 12), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2s0", 2 },
+		{ "s_i2s1", 3 },
+	} },
+	{ SXIPIO_PIN(M, 13), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2s0", 2 },
+		{ "s_i2s1", 3 },
+	} },
+	{ SXIPIO_PIN(M, 14), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2s0", 2 },
+		{ "s_i2s1", 3 },
+	} },
+	{ SXIPIO_PIN(M, 15), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "irq", 6 },
+	} },
+	{ SXIPIO_PIN(N, 0), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2c0", 2 },
+		{ "s_rsb", 3 },
+	} },
+	{ SXIPIO_PIN(N, 1), {
+		{ "gpio_in", 0 },
+		{ "gpio_out", 1 },
+		{ "s_i2c0", 2 },
+		{ "s_rsb", 3 },
+	} },
+};

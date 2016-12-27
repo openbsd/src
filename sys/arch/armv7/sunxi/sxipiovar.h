@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipiovar.h,v 1.5 2016/12/24 22:42:26 kettenis Exp $	*/
+/*	$OpenBSD: sxipiovar.h,v 1.6 2016/12/27 14:37:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -38,6 +38,8 @@ struct sxipio_pin {
 #define SXIPIO_PORT_H	7
 #define SXIPIO_PORT_I	8
 #define SXIPIO_PORT_L	0
+#define SXIPIO_PORT_M	1
+#define SXIPIO_PORT_N	2
 
 #define SXIPIO_PIN(port, pin) \
 	"P" #port #pin,  SXIPIO_PORT_ ## port, pin
