@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.105 2016/09/28 14:39:52 krw Exp $ */
+/*	$OpenBSD: rde.c,v 1.106 2016/12/27 09:15:16 jca Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1174,30 +1174,30 @@ rde_asext_lookup(u_int32_t prefix, int plen)
 }
 
 void
-rde_asext_get(struct kroute *rr)
+rde_asext_get(struct kroute *kr)
 {
 	struct asext_node	*an, *oan;
 	struct vertex		*v;
 	struct lsa		*lsa;
 	u_int32_t		 mask;
 
-	if (rde_asext_lookup(rr->prefix.s_addr, rr->prefixlen)) {
+	if (rde_asext_lookup(kr->prefix.s_addr, kr->prefixlen)) {
 		/* already announced as (stub) net LSA */
 		log_debug("rde_asext_get: %s/%d is net LSA",
-		    inet_ntoa(rr->prefix), rr->prefixlen);
+		    inet_ntoa(kr->prefix), kr->prefixlen);
 		return;
 	}
 
-	an = asext_find(rr->prefix.s_addr, rr->prefixlen);
+	an = asext_find(kr->prefix.s_addr, kr->prefixlen);
 	if (an == NULL) {
 		if ((an = calloc(1, sizeof(*an))) == NULL)
 			fatal("rde_asext_get");
-		bcopy(rr, &an->r, sizeof(*rr));
-		an->ls_id = rr->prefix.s_addr;
+		bcopy(kr, &an->r, sizeof(*kr));
+		an->ls_id = kr->prefix.s_addr;
 		RB_INSERT(asext_tree, &ast, an);
 	} else {
 		/* the bcopy does not change the lookup key so it is save */
-		bcopy(rr, &an->r, sizeof(*rr));
+		bcopy(kr, &an->r, sizeof(*kr));
 	}
 
 	/*
@@ -1231,7 +1231,7 @@ rde_asext_get(struct kroute *rr)
 			if (oan->ls_id == oan->r.prefix.s_addr) {
 				log_warnx("prefix %s/%d can not be "
 				    "redistributed, no unique ls_id found.",
-				    inet_ntoa(rr->prefix), rr->prefixlen);
+				    inet_ntoa(kr->prefix), kr->prefixlen);
 				RB_REMOVE(asext_tree, &ast, an);
 				free(an);
 				return;
@@ -1244,7 +1244,7 @@ rde_asext_get(struct kroute *rr)
 
 	v = lsa_find(NULL, LSA_TYPE_EXTERNAL, an->ls_id,
 	    rdeconf->rtr_id.s_addr);
-	lsa = orig_asext_lsa(rr, an->ls_id, DEFAULT_AGE);
+	lsa = orig_asext_lsa(kr, an->ls_id, DEFAULT_AGE);
 	lsa_merge(nbrself, lsa, v);
 
 	if (oan != an) {
@@ -1256,7 +1256,7 @@ rde_asext_get(struct kroute *rr)
 }
 
 void
-rde_asext_put(struct kroute *rr)
+rde_asext_put(struct kroute *kr)
 {
 	struct asext_node	*an;
 	struct vertex		*v;
@@ -1266,10 +1266,10 @@ rde_asext_put(struct kroute *rr)
 	 * just try to remove the LSA. If the prefix is announced as
 	 * stub net LSA asext_find() will fail and nothing will happen.
 	 */
-	an = asext_find(rr->prefix.s_addr, rr->prefixlen);
+	an = asext_find(kr->prefix.s_addr, kr->prefixlen);
 	if (an == NULL) {
 		log_debug("rde_asext_put: NO SUCH LSA %s/%d",
-		    inet_ntoa(rr->prefix), rr->prefixlen);
+		    inet_ntoa(kr->prefix), kr->prefixlen);
 		return;
 	}
 
@@ -1280,12 +1280,12 @@ rde_asext_put(struct kroute *rr)
 	v = lsa_find(NULL, LSA_TYPE_EXTERNAL, an->ls_id,
 	    rdeconf->rtr_id.s_addr);
 	if (v != NULL) {
-		rr->metric = ntohl(v->lsa->data.asext.metric);
-		rr->ext_tag = ntohl(v->lsa->data.asext.ext_tag);
+		kr->metric = ntohl(v->lsa->data.asext.metric);
+		kr->ext_tag = ntohl(v->lsa->data.asext.ext_tag);
 	}
 
 	/* remove by reflooding with MAX_AGE */
-	lsa = orig_asext_lsa(rr, an->ls_id, MAX_AGE);
+	lsa = orig_asext_lsa(kr, an->ls_id, MAX_AGE);
 	lsa_merge(nbrself, lsa, v);
 
 	RB_REMOVE(asext_tree, &ast, an);
@@ -1305,7 +1305,7 @@ rde_asext_free(void)
 }
 
 struct lsa *
-orig_asext_lsa(struct kroute *rr, u_int32_t ls_id, u_int16_t age)
+orig_asext_lsa(struct kroute *kr, u_int32_t ls_id, u_int16_t age)
 {
 	struct lsa	*lsa;
 	struct iface	*iface;
@@ -1316,7 +1316,7 @@ orig_asext_lsa(struct kroute *rr, u_int32_t ls_id, u_int16_t age)
 		fatal("orig_asext_lsa");
 
 	log_debug("orig_asext_lsa: %s/%d age %d",
-	    inet_ntoa(rr->prefix), rr->prefixlen, age);
+	    inet_ntoa(kr->prefix), kr->prefixlen, age);
 
 	/* LSA header */
 	lsa->hdr.age = htons(age);
@@ -1329,7 +1329,7 @@ orig_asext_lsa(struct kroute *rr, u_int32_t ls_id, u_int16_t age)
 
 	/* prefix and mask */
 	lsa->hdr.ls_id = ls_id;
-	lsa->data.asext.mask = prefixlen2mask(rr->prefixlen);
+	lsa->data.asext.mask = prefixlen2mask(kr->prefixlen);
 
 	/*
 	 * nexthop -- on connected routes we are the nexthop,
@@ -1341,19 +1341,19 @@ orig_asext_lsa(struct kroute *rr, u_int32_t ls_id, u_int16_t age)
 	 * Some implementations actually check that there are multiple
 	 * neighbors on the particular segment, we skip that check.
 	 */
-	iface = rde_asext_lookup(rr->nexthop.s_addr, -1);
-	if (rr->flags & F_FORCED_NEXTHOP)
-		lsa->data.asext.fw_addr = rr->nexthop.s_addr;
-	else if (rr->flags & F_CONNECTED)
+	iface = rde_asext_lookup(kr->nexthop.s_addr, -1);
+	if (kr->flags & F_FORCED_NEXTHOP)
+		lsa->data.asext.fw_addr = kr->nexthop.s_addr;
+	else if (kr->flags & F_CONNECTED)
 		lsa->data.asext.fw_addr = 0;
 	else if (iface && (iface->type == IF_TYPE_BROADCAST ||
 	    iface->type == IF_TYPE_NBMA))
-		lsa->data.asext.fw_addr = rr->nexthop.s_addr;
+		lsa->data.asext.fw_addr = kr->nexthop.s_addr;
 	else
 		lsa->data.asext.fw_addr = 0;
 
-	lsa->data.asext.metric = htonl(rr->metric);
-	lsa->data.asext.ext_tag = htonl(rr->ext_tag);
+	lsa->data.asext.metric = htonl(kr->metric);
+	lsa->data.asext.ext_tag = htonl(kr->ext_tag);
 
 	lsa->hdr.ls_chksum = 0;
 	lsa->hdr.ls_chksum = htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));

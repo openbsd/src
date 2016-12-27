@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.106 2015/12/05 12:20:13 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.107 2016/12/27 09:15:16 jca Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -490,7 +490,7 @@ kr_ifinfo(char *ifname, pid_t pid)
 void
 kr_redist_remove(struct kroute_node *kh, struct kroute_node *kn)
 {
-	struct kroute	*rr;
+	struct kroute	*kr;
 
 	/* was the route redistributed? */
 	if ((kn->r.flags & F_REDISTRIBUTED) == 0)
@@ -498,7 +498,7 @@ kr_redist_remove(struct kroute_node *kh, struct kroute_node *kn)
 
 	/* remove redistributed flag */
 	kn->r.flags &= ~F_REDISTRIBUTED;
-	rr = &kn->r;
+	kr = &kn->r;
 
 	/* probably inform the RDE (check if no other path is redistributed) */
 	for (kn = kh; kn; kn = kn->next)
@@ -506,12 +506,12 @@ kr_redist_remove(struct kroute_node *kh, struct kroute_node *kn)
 			break;
 
 	if (kn == NULL)
-		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, rr,
+		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, kr,
 		    sizeof(struct kroute));
 }
 
 int
-kr_redist_eval(struct kroute *kr, struct kroute *rr)
+kr_redist_eval(struct kroute *kr, struct kroute *new_kr)
 {
 	u_int32_t	 a, metric = 0;
 
@@ -553,9 +553,9 @@ kr_redist_eval(struct kroute *kr, struct kroute *rr)
 	 * only one of all multipath routes can be redistributed so
 	 * redistribute the best one.
 	 */
-	if (rr->metric > metric) {
-		*rr = *kr;
-		rr->metric = metric;
+	if (new_kr->metric > metric) {
+		*new_kr = *kr;
+		new_kr->metric = metric;
 	}
 
 	return (1);
@@ -573,28 +573,28 @@ void
 kr_redistribute(struct kroute_node *kh)
 {
 	struct kroute_node	*kn;
-	struct kroute		 rr;
+	struct kroute		 kr;
 	int			 redistribute = 0;
 
 	/* only the highest prio route can be redistributed */
 	if (kroute_find(kh->r.prefix.s_addr, kh->r.prefixlen, RTP_ANY) != kh)
 		return;
 
-	bzero(&rr, sizeof(rr));
-	rr.metric = UINT_MAX;
+	bzero(&kr, sizeof(kr));
+	kr.metric = UINT_MAX;
 	for (kn = kh; kn; kn = kn->next)
-		if (kr_redist_eval(&kn->r, &rr))
+		if (kr_redist_eval(&kn->r, &kr))
 			redistribute = 1;
 
 	if (!redistribute)
 		return;
 
-	if (rr.flags & F_REDISTRIBUTED) {
-		main_imsg_compose_rde(IMSG_NETWORK_ADD, 0, &rr,
+	if (kr.flags & F_REDISTRIBUTED) {
+		main_imsg_compose_rde(IMSG_NETWORK_ADD, 0, &kr,
 		    sizeof(struct kroute));
 	} else {
-		rr = kh->r;
-		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &rr,
+		kr = kh->r;
+		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &kr,
 		    sizeof(struct kroute));
 	}
 }
