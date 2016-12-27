@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.13 2015/07/25 17:20:02 jsing Exp $ */
+/* $OpenBSD: asn1t.h,v 1.14 2016/12/27 15:12:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -831,14 +831,14 @@ typedef struct ASN1_STREAM_ARG_st {
 
 /* external definitions for primitive types */
 
-DECLARE_ASN1_ITEM(ASN1_BOOLEAN)
-DECLARE_ASN1_ITEM(ASN1_TBOOLEAN)
-DECLARE_ASN1_ITEM(ASN1_FBOOLEAN)
-DECLARE_ASN1_ITEM(ASN1_SEQUENCE)
-DECLARE_ASN1_ITEM(CBIGNUM)
-DECLARE_ASN1_ITEM(BIGNUM)
-DECLARE_ASN1_ITEM(LONG)
-DECLARE_ASN1_ITEM(ZLONG)
+extern const ASN1_ITEM ASN1_BOOLEAN_it;
+extern const ASN1_ITEM ASN1_TBOOLEAN_it;
+extern const ASN1_ITEM ASN1_FBOOLEAN_it;
+extern const ASN1_ITEM ASN1_SEQUENCE_it;
+extern const ASN1_ITEM CBIGNUM_it;
+extern const ASN1_ITEM BIGNUM_it;
+extern const ASN1_ITEM LONG_it;
+extern const ASN1_ITEM ZLONG_it;
 
 DECLARE_STACK_OF(ASN1_VALUE)
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.36 2016/12/27 09:12:19 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.37 2016/12/27 15:12:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -759,7 +759,7 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     long length);
 
-DECLARE_ASN1_ITEM(ASN1_OBJECT)
+extern const ASN1_ITEM ASN1_OBJECT_it;
 
 DECLARE_STACK_OF(ASN1_OBJECT)
 DECLARE_ASN1_SET_OF(ASN1_OBJECT)
@@ -915,7 +915,7 @@ ASN1_TIME *d2i_ASN1_TIME(ASN1_TIME **a, const unsigned char **in, long len);
 int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **out);
 extern const ASN1_ITEM ASN1_TIME_it;
 
-DECLARE_ASN1_ITEM(ASN1_OCTET_STRING_NDEF)
+extern const ASN1_ITEM ASN1_OCTET_STRING_NDEF_it;
 
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t);
 ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t, int offset_day,
