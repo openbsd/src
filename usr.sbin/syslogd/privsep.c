@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.64 2016/10/16 22:12:50 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.65 2016/12/27 19:16:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -97,7 +97,7 @@ priv_init(int lockfd, int nullfd, int argc, char *argv[])
 {
 	int i, socks[2];
 	struct passwd *pw;
-	char childnum[11], **privargv;
+	char *execpath, childnum[11], **privargv;
 
 	/* Create sockets */
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
@@ -114,9 +114,9 @@ priv_init(int lockfd, int nullfd, int argc, char *argv[])
 	if (!child_pid) {
 		/* Child - drop privileges and return */
 		if (chroot(pw->pw_dir) != 0)
-			err(1, "unable to chroot");
+			err(1, "chroot %s", pw->pw_dir);
 		if (chdir("/") != 0)
-			err(1, "unable to chdir");
+			err(1, "chdir %s", pw->pw_dir);
 
 		if (setgroups(1, &pw->pw_gid) == -1)
 			err(1, "setgroups() failed");
@@ -129,6 +129,13 @@ priv_init(int lockfd, int nullfd, int argc, char *argv[])
 		return;
 	}
 	close(socks[1]);
+
+	if (strchr(argv[0], '/') == NULL)
+		execpath = argv[0];
+	else if ((execpath = realpath(argv[0], NULL)) == NULL)
+		err(1, "realpath %s", argv[0]);
+	if (chdir("/") != 0)
+		err(1, "chdir /");
 
 	if (!Debug) {
 		close(lockfd);
@@ -147,7 +154,8 @@ priv_init(int lockfd, int nullfd, int argc, char *argv[])
 	snprintf(childnum, sizeof(childnum), "%d", child_pid);
 	if ((privargv = reallocarray(NULL, argc + 3, sizeof(char *))) == NULL)
 		err(1, "alloc priv argv failed");
-	for (i = 0; i < argc; i++)
+	privargv[0] = execpath;
+	for (i = 1; i < argc; i++)
 		privargv[i] = argv[i];
 	privargv[i++] = "-P";
 	privargv[i++] = childnum;
