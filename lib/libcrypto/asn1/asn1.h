@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.40 2016/12/27 16:46:45 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.41 2016/12/27 16:51:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -287,6 +287,8 @@ typedef struct ASN1_TLC_st ASN1_TLC;
 /* This is just an opaque pointer */
 typedef struct ASN1_VALUE_st ASN1_VALUE;
 
+#ifndef LIBRESSL_INTERNAL
+
 /* Declare ASN1 functions: the implement macro in in asn1t.h */
 
 #define DECLARE_ASN1_FUNCTIONS(type) DECLARE_ASN1_FUNCTIONS_name(type, type)
@@ -329,6 +331,8 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 #define DECLARE_ASN1_PRINT_FUNCTION_fname(stname, fname) \
 	int fname##_print_ctx(BIO *out, stname *x, int indent, \
 					 const ASN1_PCTX *pctx);
+
+#endif /* !LIBRESSL_INTERNAL */
 
 #define D2I_OF(type) type *(*)(type **,const unsigned char **,long)
 #define I2D_OF(type) int (*)(type *,unsigned char **)
@@ -707,7 +711,7 @@ typedef struct BIT_STRING_BITNAME_st {
 		(ASN1_UTF8STRING *)d2i_ASN1_type_bytes\
 		((ASN1_STRING **)a,pp,l,B_ASN1_UTF8STRING)
 
-#endif
+#endif /* !LIBRESSL_INTERNAL */
 
 #define B_ASN1_TIME \
 			B_ASN1_UTCTIME | \
@@ -829,9 +833,11 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t);
 ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
     int offset_day, long offset_sec);
 int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str);
+
 #ifndef LIBRESSL_INTERNAL
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t);
-#endif
+#endif /* !LIBRESSL_INTERNAL */
+
 int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *a);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
     time_t t);
@@ -1018,7 +1024,7 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x);
 #define M_ASN1_free_of(x, type) \
 		ASN1_item_free(CHECKED_PTR_OF(type, x), ASN1_ITEM_rptr(type))
 
-#endif
+#endif /* !LIBRESSL_INTERNAL */
 
 void *ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x);
 
