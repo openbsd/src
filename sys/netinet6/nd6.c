@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.201 2016/12/23 15:08:54 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.202 2016/12/27 18:45:01 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -93,6 +93,8 @@ struct nd_prhead nd_prefix = { 0 };
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
 void nd6_slowtimo(void *);
+void nd6_timer_work(void *);
+void nd6_timer(void *);
 void nd6_invalidate(struct rtentry *);
 struct llinfo_nd6 *nd6_free(struct rtentry *, int);
 void nd6_llinfo_timer(void *);
@@ -100,7 +102,6 @@ void nd6_llinfo_timer(void *);
 struct timeout nd6_slowtimo_ch;
 struct timeout nd6_timer_ch;
 struct task nd6_timer_task;
-void nd6_timer_work(void *);
 
 int fill_drlist(void *, size_t *, size_t);
 int fill_prlist(void *, size_t *, size_t);
@@ -129,6 +130,8 @@ nd6_init(void)
 	/* start timer */
 	timeout_set_proc(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
+	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
+	timeout_add_sec(&nd6_timer_ch, nd6_prune);
 
 	nd6_rs_init();
 }
@@ -437,7 +440,6 @@ nd6_timer_work(void *null)
 
 	NET_LOCK(s);
 
-	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
 	timeout_add_sec(&nd6_timer_ch, nd6_prune);
 
 	/* expire default router list */

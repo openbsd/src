@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.173 2016/12/26 21:30:10 jca Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.174 2016/12/27 18:45:01 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -119,7 +119,6 @@ struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_IPV6);
 
 struct ip6stat ip6stat;
 
-void ip6_init2(void *);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 
 int ip6_hbhchcheck(struct mbuf *, int *, int *, int *);
@@ -157,19 +156,8 @@ ip6_init(void)
 	ip6_randomid_init();
 	nd6_init();
 	frag6_init();
-	ip6_init2(NULL);
 
 	mq_init(&ip6send_mq, 64, IPL_SOFTNET);
-}
-
-void
-ip6_init2(void *dummy)
-{
-
-	/* nd6_timer_init */
-	bzero(&nd6_timer_ch, sizeof(nd6_timer_ch));
-	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
-	timeout_add_sec(&nd6_timer_ch, 1);
 }
 
 /*
