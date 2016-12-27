@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.14 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: safestack.h,v 1.15 2016/12/27 16:02:40 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -179,6 +179,7 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define SKM_sk_is_sorted(type, st) \
 	sk_is_sorted(CHECKED_STACK_OF(type, st))
 
+#ifndef LIBRESSL_INTERNAL
 #define	SKM_ASN1_SET_OF_d2i(type, st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
   (STACK_OF(type) *)d2i_ASN1_SET( \
 				(STACK_OF(OPENSSL_BLOCK) **)CHECKED_PTR_OF(STACK_OF(type)*, st), \
@@ -204,6 +205,7 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 				CHECKED_D2I_OF(type, d2i_func), \
 				CHECKED_SK_FREE_FUNC(type, free_func), \
 				pass, passlen, oct, seq)
+#endif
 
 /* This block of defines is updated by util/mkstack.pl, please do not touch! */
 #define sk_ACCESS_DESCRIPTION_new(cmp) SKM_sk_new(ACCESS_DESCRIPTION, (cmp))
@@ -2194,7 +2196,7 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_OPENSSL_PSTRING_sort(st) SKM_sk_sort(OPENSSL_PSTRING, (st))
 #define sk_OPENSSL_PSTRING_is_sorted(st) SKM_sk_is_sorted(OPENSSL_PSTRING, (st))
 
-
+#ifndef LIBRESSL_INTERNAL
 #define d2i_ASN1_SET_OF_ACCESS_DESCRIPTION(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
 	SKM_ASN1_SET_OF_d2i(ACCESS_DESCRIPTION, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
 #define i2d_ASN1_SET_OF_ACCESS_DESCRIPTION(st, pp, i2d_func, ex_tag, ex_class, is_set) \
@@ -2425,6 +2427,7 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 
 #define PKCS12_decrypt_d2i_PKCS7(algor, d2i_func, free_func, pass, passlen, oct, seq) \
 	SKM_PKCS12_decrypt_d2i(PKCS7, (algor), (d2i_func), (free_func), (pass), (passlen), (oct), (seq))
+#endif /* !LIBRESSL_INTERNAL */
 
 #define lh_ADDED_OBJ_new() LHM_lh_new(ADDED_OBJ,added_obj)
 #define lh_ADDED_OBJ_insert(lh,inst) LHM_lh_insert(ADDED_OBJ,lh,inst)
