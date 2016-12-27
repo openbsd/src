@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.h,v 1.17 2016/12/27 16:05:57 jsing Exp $ */
+/* $OpenBSD: pkcs7.h,v 1.18 2016/12/27 16:12:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -321,8 +321,8 @@ extern const ASN1_ITEM PKCS7_it;
 extern const ASN1_ITEM PKCS7_ATTR_SIGN_it;
 extern const ASN1_ITEM PKCS7_ATTR_VERIFY_it;
 
-DECLARE_ASN1_NDEF_FUNCTION(PKCS7)
-DECLARE_ASN1_PRINT_FUNCTION(PKCS7)
+int i2d_PKCS7_NDEF(PKCS7 *a, unsigned char **out);
+int PKCS7_print_ctx(BIO *out, PKCS7 *x, int indent, const ASN1_PCTX *pctx);
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);
 
