@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.121 2016/09/26 06:51:23 ajacoutot Exp $
+#	$OpenBSD: special,v 1.122 2016/12/27 09:17:52 jca Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -114,8 +114,6 @@ ttys		type=file mode=0644 uname=root gname=wheel
 weekly		type=file mode=0644 uname=root gname=wheel
 weekly.local	type=file mode=0644 uname=root gname=wheel optional
 ypldap.conf	type=file mode=0600 uname=root gname=wheel optional
-uucp		type=dir mode=0755 uname=root gname=wheel optional ignore
-..	#uucp
 ..	#etc
 
 root		type=dir mode=0700 uname=root gname=wheel
@@ -209,8 +207,4 @@ pub		type=dir mode=0555 uname=root gname=wheel optional ignore
 ..	#var/spool/ftp
 output		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/spool/output
-uucp		type=dir mode=0755 uname=uucp gname=daemon ignore
-..	#var/spool/uucp
-uucppublic	type=dir mode=0755 uname=uucp gname=daemon ignore
-..	#var/spool/uucppublic
 ..	#var/spool

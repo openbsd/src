@@ -5,7 +5,6 @@ sys:*:3:root
 tty:*:4:root
 operator:*:5:root
 bin:*:7:
-news:*:8:
 wsrc:*:9:
 users:*:10:
 auth:*:11:

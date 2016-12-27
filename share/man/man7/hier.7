@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.156 2016/11/03 16:42:47 ajacoutot Exp $
+.\"	$OpenBSD: hier.7,v 1.157 2016/12/27 09:17:52 jca Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: November 3 2016 $
+.Dd $Mdocdate: December 27 2016 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -575,7 +575,7 @@ Database of current users (see
 .It spool/
 Miscellaneous printer and mail system spooling directories.
 .Pp
-.Bl -tag -width "uucppublic/" -compact
+.Bl -tag -width "output/" -compact
 .It ftp/
 Commonly ~ftp; the anonymous ftp root directory.
 .It lock/
@@ -586,10 +586,6 @@ Line printer spooling directories.
 .It smtpd/
 Mail spool for
 .Xr smtpd 8 .
-.It uucp/
-uucp spool directory.
-.It uucppublic/
-Commonly ~uucp; public uucp temporary directory.
 .El
 .Pp
 .It sysmerge/

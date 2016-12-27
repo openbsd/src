@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.491 2016/11/04 22:12:46 rpe Exp $
+#	$OpenBSD: rc,v 1.492 2016/12/27 09:17:52 jca Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -414,7 +414,7 @@ random_seed
 reorder_libs
 
 # Clean up left-over files.
-rm -f /etc/nologin /var/spool/lock/LCK.* /var/spool/uucp/STST/*
+rm -f /etc/nologin /var/spool/lock/LCK.*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 (cd /var/authpf && rm -rf -- *)
 
