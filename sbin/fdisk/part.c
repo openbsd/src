@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.75 2015/11/26 08:15:07 tim Exp $	*/
+/*	$OpenBSD: part.c,v 1.76 2016/12/27 15:01:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -252,10 +252,7 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 		    ((partn->ecyl & 0x300) >> 2);
 		prt->dp_ecyl = partn->ecyl & 0xFF;
 	} else {
-		/* should this really keep flag, id and set others to 0xff? */
 		memset(prt, 0xFF, sizeof(*prt));
-		printf("Warning CHS values out of bounds only saving "
-		    "LBA values\n");
 	}
 
 	prt->dp_flag = partn->flag & 0xFF;
