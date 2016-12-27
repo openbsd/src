@@ -1732,6 +1732,8 @@
 ./usr/share/man/man3/ASN1_TIME_set.3
 ./usr/share/man/man3/ASN1_TYPE_get.3
 ./usr/share/man/man3/ASN1_generate_nconf.3
+./usr/share/man/man3/ASN1_item_d2i.3
+./usr/share/man/man3/ASN1_item_new.3
 ./usr/share/man/man3/ASN1_time_parse.3
 ./usr/share/man/man3/AUTHORITY_KEYID_new.3
 ./usr/share/man/man3/BASIC_CONSTRAINTS_new.3
@@ -2176,6 +2178,8 @@
 ./usr/share/man/man3/d2i_DHparams.3
 ./usr/share/man/man3/d2i_DSAPublicKey.3
 ./usr/share/man/man3/d2i_ECPKParameters.3
+./usr/share/man/man3/d2i_PKCS12.3
+./usr/share/man/man3/d2i_PKCS7.3
 ./usr/share/man/man3/d2i_PKCS8PrivateKey_bio.3
 ./usr/share/man/man3/d2i_PrivateKey.3
 ./usr/share/man/man3/d2i_RSAPublicKey.3
