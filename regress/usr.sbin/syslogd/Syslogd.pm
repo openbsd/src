@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.21 2016/11/28 20:57:41 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.22 2016/12/27 19:43:07 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -41,6 +41,7 @@ sub new {
 	$args{foreground} && $args{daemon}
 	    and croak "$class cannot run in foreground and as daemon";
 	$args{func} = sub { Carp::confess "$class func may not be called" };
+	$args{execfile} ||= $ENV{SYSLOGD} ? $ENV{SYSLOGD} : "syslogd";
 	$args{conffile} ||= "syslogd.conf";
 	$args{outfile} ||= "file.log";
 	unless ($args{outpipe}) {
@@ -63,6 +64,7 @@ sub new {
 	    or croak "$class connect addr not given";
 
 	_make_abspath(\$self->{$_}) foreach (qw(conffile outfile outpipe));
+	_make_abspath(\$self->{ktracefile}) if $self->{chdir};
 
 	# substitute variables in config file
 	my $curdir = dirname($0) || ".";
@@ -164,6 +166,10 @@ sub child {
 	}
 	print STDERR "syslogd not running\n";
 
+	chdir $self->{chdir}
+	    or die ref($self), " chdir '$self->{chdir}' failed: $!"
+	    if $self->{chdir};
+
 	my @libevent;
 	foreach (qw(EVENT_NOKQUEUE EVENT_NOPOLL EVENT_NOSELECT)) {
 		push @libevent, "$_=1" if delete $ENV{$_};
@@ -172,8 +178,7 @@ sub child {
 	my @ktrace = $ENV{KTRACE} || ();
 	@ktrace = "ktrace" if $self->{ktrace} && !@ktrace;
 	push @ktrace, "-i", "-f", $self->{ktracefile} if @ktrace;
-	my $syslogd = $ENV{SYSLOGD} ? $ENV{SYSLOGD} : "syslogd";
-	my @cmd = (@sudo, @libevent, @ktrace, $syslogd,
+	my @cmd = (@sudo, @libevent, @ktrace, $self->{execfile},
 	    "-f", $self->{conffile});
 	push @cmd, "-d" if !$self->{foreground} && !$self->{daemon};
 	push @cmd, "-F" if $self->{foreground};
