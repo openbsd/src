@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.39 2016/12/27 16:23:05 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.40 2016/12/27 16:46:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -745,7 +745,7 @@ typedef struct BIT_STRING_BITNAME_st {
 ASN1_TYPE *ASN1_TYPE_new(void);
 void ASN1_TYPE_free(ASN1_TYPE *a);
 ASN1_TYPE *d2i_ASN1_TYPE(ASN1_TYPE **a, const unsigned char **in, long len);
-int i2d_ASN1_TYPE(const ASN1_TYPE *a, unsigned char **out);
+int i2d_ASN1_TYPE(ASN1_TYPE *a, unsigned char **out);
 extern const ASN1_ITEM ASN1_ANY_it;
 
 int ASN1_TYPE_get(ASN1_TYPE *a);
@@ -879,18 +879,18 @@ extern const ASN1_ITEM ASN1_BMPSTRING_it;
 ASN1_STRING *ASN1_PRINTABLE_new(void);
 void ASN1_PRINTABLE_free(ASN1_STRING *a);
 ASN1_STRING *d2i_ASN1_PRINTABLE(ASN1_STRING **a, const unsigned char **in, long len);
-int i2d_ASN1_PRINTABLE(const ASN1_STRING *a, unsigned char **out);
+int i2d_ASN1_PRINTABLE(ASN1_STRING *a, unsigned char **out);
 extern const ASN1_ITEM ASN1_PRINTABLE_it;
 
 ASN1_STRING *DIRECTORYSTRING_new(void);
 void DIRECTORYSTRING_free(ASN1_STRING *a);
 ASN1_STRING *d2i_DIRECTORYSTRING(ASN1_STRING **a, const unsigned char **in, long len);
-int i2d_DIRECTORYSTRING(const ASN1_STRING *a, unsigned char **out);
+int i2d_DIRECTORYSTRING(ASN1_STRING *a, unsigned char **out);
 extern const ASN1_ITEM DIRECTORYSTRING_it;
 ASN1_STRING *DISPLAYTEXT_new(void);
 void DISPLAYTEXT_free(ASN1_STRING *a);
 ASN1_STRING *d2i_DISPLAYTEXT(ASN1_STRING **a, const unsigned char **in, long len);
-int i2d_DISPLAYTEXT(const ASN1_STRING *a, unsigned char **out);
+int i2d_DISPLAYTEXT(ASN1_STRING *a, unsigned char **out);
 extern const ASN1_ITEM DISPLAYTEXT_it;
 ASN1_PRINTABLESTRING *ASN1_PRINTABLESTRING_new(void);
 void ASN1_PRINTABLESTRING_free(ASN1_PRINTABLESTRING *a);
