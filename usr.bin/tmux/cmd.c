@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.128 2016/11/02 13:35:36 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.129 2016/12/28 10:34:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -410,7 +410,7 @@ cmd_prepare_state_flag(char c, const char *target, enum cmd_entry_flag flag,
 		if (target != NULL && target[strcspn(target, ":.")] != '\0')
 			flag = CMD_PANE;
 		else
-			flag = CMD_SESSION;
+			flag = CMD_SESSION_PREFERUNATTACHED;
 	}
 
 	targetflags = 0;
@@ -418,6 +418,7 @@ cmd_prepare_state_flag(char c, const char *target, enum cmd_entry_flag flag,
 	case CMD_SESSION:
 	case CMD_SESSION_CANFAIL:
 	case CMD_SESSION_PREFERUNATTACHED:
+	case CMD_SESSION_WITHPANE:
 		if (flag == CMD_SESSION_CANFAIL)
 			targetflags |= CMD_FIND_QUIET;
 		if (flag == CMD_SESSION_PREFERUNATTACHED)

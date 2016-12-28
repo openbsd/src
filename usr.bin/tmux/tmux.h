@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.681 2016/11/24 18:45:45 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.682 2016/12/28 10:34:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1305,7 +1305,7 @@ enum cmd_entry_flag {
 	CMD_SESSION,
 	CMD_SESSION_CANFAIL,
 	CMD_SESSION_PREFERUNATTACHED,
-	CMD_SESSION_WITHPANE,
+	CMD_SESSION_WITHPANE, /* implies PREFERUNATTACHED */
 
 	CMD_WINDOW,
 	CMD_WINDOW_CANFAIL,
