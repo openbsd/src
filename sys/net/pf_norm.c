@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.197 2016/11/22 19:29:54 procter Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.198 2016/12/28 23:58:20 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -880,14 +880,14 @@ pf_normalize_tcp(struct pf_pdesc *pd)
 	}
 
 	/* If flags changed, or reserved data set, then adjust */
- 	if (flags != th->th_flags || th->th_x2 != 0) {
- 		/* hack: set 4-bit th_x2 = 0 */
+	if (flags != th->th_flags || th->th_x2 != 0) {
+		/* hack: set 4-bit th_x2 = 0 */
 		u_int8_t *th_off = (u_int8_t*)(&th->th_ack+1);
- 		pf_patch_8(pd, th_off, th->th_off << 4, PF_HI);
+		pf_patch_8(pd, th_off, th->th_off << 4, PF_HI);
 
- 		pf_patch_8(pd, &th->th_flags, flags, PF_LO);
- 		rewrite = 1;
- 	}
+		pf_patch_8(pd, &th->th_flags, flags, PF_LO);
+		rewrite = 1;
+	}
 
 	/* Remove urgent pointer, if TH_URG is not set */
 	if (!(flags & TH_URG) && th->th_urp) {
@@ -1089,11 +1089,11 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 					if (tsval && src->scrub &&
 					    (src->scrub->pfss_flags &
 					    PFSS_TIMESTAMP)) {
-						/* note: tsval used further on */
+						/* tsval used further on */
 						tsval = ntohl(tsval);
 						pf_patch_32_unaligned(pd, ts,
 						    htonl(tsval +
-							src->scrub->pfss_ts_mod),
+						    src->scrub->pfss_ts_mod),
 						    PF_ALGNMNT(ts - opts));
 						copyback = 1;
 					}
@@ -1102,7 +1102,7 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 					if (tsecr && dst->scrub &&
 					    (dst->scrub->pfss_flags &
 					    PFSS_TIMESTAMP)) {
-						/* note: tsecr used further on */
+						/* tsecr used further on */
 						tsecr = ntohl(tsecr)
 						    - dst->scrub->pfss_ts_mod;
 						pf_patch_32_unaligned(pd, tsr,
