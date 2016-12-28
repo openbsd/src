@@ -1,7 +1,24 @@
-.\"	$OpenBSD: d2i_X509.3,v 1.5 2016/12/28 03:35:32 schwarze Exp $
+.\"	$OpenBSD: d2i_X509.3,v 1.6 2016/12/28 03:56:35 schwarze Exp $
 .\"	OpenSSL 94480b57 Sep 12 23:34:41 2009 +0000
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2002, 2003, 2005, 2009, 2016 The OpenSSL Project.
 .\" All rights reserved.
 .\"
@@ -60,7 +77,13 @@
 .Nm i2d_X509_bio ,
 .Nm i2d_X509_fp ,
 .Nm d2i_X509_AUX ,
-.Nm i2d_X509_AUX
+.Nm i2d_X509_AUX ,
+.Nm d2i_X509_CERT_AUX ,
+.Nm i2d_X509_CERT_AUX ,
+.Nm d2i_X509_CINF ,
+.Nm i2d_X509_CINF ,
+.Nm d2i_X509_VAL ,
+.Nm i2d_X509_VAL
 .Nd decode and encode X.509 certificates
 .Sh SYNOPSIS
 .In openssl/x509.h
@@ -106,6 +129,39 @@
 .Fa "X509 *val_in"
 .Fa "unsigned char **der_out"
 .Fc
+.Ft X509_CERT_AUX *
+.Fo d2i_X509_CERT_AUX
+.Fa "X509_CERT_AUX **val_out"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_X509_CERT_AUX
+.Fa "X509_CERT_AUX *val_in"
+.Fa "unsigned char **der_out"
+.Fc
+.Ft X509_CINF *
+.Fo d2i_X509_CINF
+.Fa "X509_CINF **val_out"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_X509_CINF
+.Fa "X509_CINF *val_in"
+.Fa "unsigned char **der_out"
+.Fc
+.Ft X509_VAL *
+.Fo d2i_X509_VAL
+.Fa "X509_VAL **val_out"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_X509_VAL
+.Fa "X509_VAL *val_in"
+.Fa "unsigned char **der_out"
+.Fc
 .Sh DESCRIPTION
 These functions decode and encode X.509 certificates
 and some of their substructures.
@@ -145,6 +201,26 @@ but the encoded output contains both the certificate and any auxiliary
 trust information.
 This is used by the PEM routines to write TRUSTED CERTIFICATE objects.
 Note that this is a non-standard OpenSSL-specific data format.
+.Pp
+.Fn d2i_X509_CERT_AUX
+and
+.Fn i2d_X509_CERT_AUX
+decode and encode optional non-standard auxiliary data appended to
+a certificate, for example friendly alias names and trust data.
+.Pp
+.Fn d2i_X509_CINF
+and
+.Fn i2d_X509_CINF
+decode and encode an ASN.1
+.Vt TBSCertificate
+structure defined in RFC 5280 section 4.1.
+.Pp
+.Fn d2i_X509_VAL
+and
+.Fn i2d_X509_VAL
+decode and encode an ASN.1
+.Vt Validity
+structure defined in RFC 5280 section 4.1.
 .Sh RETURN VALUES
 .Fn d2i_X509 ,
 .Fn d2i_X509_bio ,
@@ -157,9 +233,25 @@ structure or
 .Dv NULL
 if an error occurs.
 .Pp
-.Fn i2d_X509
+.Fn d2i_X509_CERT_AUX ,
+.Fn d2i_X509_CINF ,
 and
-.Fn i2d_X509_AUX
+.Fn d2i_X509_VAL
+return an
+.Vt X509_CERT_AUX ,
+.Vt X509_CINF ,
+or
+.Vt X509_VAL
+object, respectively, or
+.Dv NULL
+if an error occurs.
+.Pp
+.Fn i2d_X509 ,
+.Fn i2d_X509_AUX ,
+.Fn i2d_X509_CERT_AUX ,
+.Fn i2d_X509_CINF ,
+and
+.Fn i2d_X509_VAL
 return the number of bytes successfully encoded or a negative value
 if an error occurs.
 .Pp
@@ -172,6 +264,7 @@ For all functions, the error code can be obtained by
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr ASN1_item_d2i 3 ,
+.Xr X509_CINF_new 3 ,
 .Xr X509_new 3
 .Sh STANDARDS
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
