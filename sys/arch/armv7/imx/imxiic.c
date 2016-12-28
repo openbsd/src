@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.11 2016/08/06 17:18:38 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.12 2016/12/28 22:45:24 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -18,17 +18,15 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
+
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <armv7/armv7/armv7var.h>
-#include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxiicvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
@@ -170,7 +168,7 @@ imxiic_setspeed(struct imxiic_softc *sc, u_int speed)
 		uint32_t div;
 		int i;
 
-		i2c_clk_rate = imxccm_get_ipg_perclk();
+		i2c_clk_rate = clock_get_frequency(sc->sc_node, NULL);
 		div = (i2c_clk_rate + speed - 1) / speed;
 		if (div < imxiic_clk_div[0][0])
 			i = 0;
@@ -324,7 +322,7 @@ imxiic_i2c_acquire_bus(void *cookie, int flags)
 	rw_enter(&sc->sc_buslock, RW_WRITE);
 
 	/* clock gating */
-	imxccm_enable_i2c(sc->unit);
+	clock_enable(sc->sc_node, NULL);
 
 	/* set speed to 100kHz */
 	imxiic_setspeed(sc, 100);

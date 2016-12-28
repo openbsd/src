@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.12 2016/08/06 17:18:38 kettenis Exp $ */
+/* $OpenBSD: imxuart.c,v 1.13 2016/12/28 22:45:24 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -29,23 +29,22 @@
 #include <sys/select.h>
 #include <sys/kernel.h>
 
+#include <machine/bus.h>
+#include <machine/fdt.h>
+
 #include <dev/cons.h>
 
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/fdt.h>
 #include <arm/armv7/armv7var.h>
+#include <armv7/armv7/armv7_machdep.h>
 #include <armv7/imx/imxuartreg.h>
 #include <armv7/imx/imxuartvar.h>
-#include <armv7/armv7/armv7var.h>
-#include <armv7/armv7/armv7_machdep.h>
-#include <armv7/imx/imxccmvar.h>
-#include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
@@ -56,6 +55,7 @@ struct imxuart_softc {
 	struct device	sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	int		sc_node;
 	struct soft_intrhand *sc_si;
 	void *sc_irq;
 	struct tty	*sc_tty;
@@ -172,6 +172,7 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY,
 	    imxuart_intr, sc, sc->sc_dev.dv_xname);
 
+	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
@@ -550,7 +551,7 @@ imxuartopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		/* formula: clk / (rfdiv * 1600) */
 		bus_space_write_2(iot, ioh, IMXUART_UBMR,
-		    (imxccm_get_uartclk() * 1000) / 1600);
+		    (clock_get_frequency(sc->sc_node, "per") * 1000) / 1600);
 
 		SET(sc->sc_ucr1, IMXUART_CR1_EN|IMXUART_CR1_RRDYEN);
 		SET(sc->sc_ucr2, IMXUART_CR2_TXEN|IMXUART_CR2_RXEN);

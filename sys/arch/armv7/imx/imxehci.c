@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.18 2016/10/02 06:36:39 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.19 2016/12/28 22:45:24 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -35,6 +35,7 @@
 #include <armv7/imx/imxccmvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/ofw_regulator.h>
@@ -170,8 +171,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	pinctrl_byname(faa->fa_node, "default");
-
-	imxccm_enable_usboh3();
+	clock_enable(faa->fa_node, NULL);
 	delay(1000);
 
 	/* enable usb bus power */
