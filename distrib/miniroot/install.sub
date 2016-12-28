@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.937 2016/12/27 09:17:52 jca Exp $
+#	$OpenBSD: install.sub,v 1.938 2016/12/28 11:11:13 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1563,7 +1563,8 @@ install_http() {
 	# Get list of files from the server.
 	# Assumes index file is "index.txt" for http (or proxy).
 	# We can't use index.html since the format is server-dependent.
-	_file_list=$(unpriv ftp -Vo - "$_url_base/index.txt" | sed 's/^.* //;s///')
+	_file_list=$(unpriv ftp -Vo - "$_url_base/index.txt" |
+		sed "s/^.* //;s/$(echo '\r')//")
 
 	install_files "$_url_base" "$_file_list"
 
@@ -2956,7 +2957,8 @@ elif [[ -z $RESPFILE ]]; then
 	fi
 	rm -f /tmp/ai/ai.done
 	echo "Performing non-interactive $AI_MODE..."
-	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null | sed 's/^.*//;w/tmp/ai/ai.log'
+	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null |
+		sed "s/^.*$(echo '\r')//;w/tmp/ai/ai.log"
 	if [[ -f /tmp/ai/ai.done ]]; then
 		# Email /tmp/ai/ai.log to root on next boot.
 		prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
