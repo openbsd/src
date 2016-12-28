@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1006 2016/12/23 20:49:41 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1007 2016/12/28 15:19:02 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5832,12 +5832,6 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	if (ifp == NULL)
 		goto bad;
 
-	rt = rtalloc(sintosa(dst), RT_RESOLVE, rtableid);
-	if (rt == NULL) {
-		ipstat_inc(ips_noroute);
-		goto bad;
-	}
-
 	if (pd->kif->pfik_ifp != ifp) {
 		if (pf_test(AF_INET, PF_OUT, ifp, &m0) != PF_PASS)
 			goto bad;
@@ -5852,6 +5846,12 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	}
 
 	in_proto_cksum_out(m0, ifp);
+
+	rt = rtalloc(sintosa(dst), RT_RESOLVE, rtableid);
+	if (!rtisvalid(rt)) {
+		ipstat_inc(ips_noroute);
+		goto bad;
+	}
 
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
 		ip->ip_sum = 0;
@@ -5991,6 +5991,12 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	if (IN6_IS_SCOPE_EMBED(&dst->sin6_addr))
 		dst->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 
+	rt = rtalloc(sin6tosa(dst), RT_RESOLVE, rtableid);
+	if (!rtisvalid(rt)) {
+		ip6stat.ip6s_noroute++;
+		goto bad;
+	}
+
 	/*
 	 * If packet has been reassembled by PF earlier, we have to
 	 * use pf_refragment6() here to turn it back to fragments.
@@ -5998,13 +6004,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	if ((mtag = m_tag_find(m0, PACKET_TAG_PF_REASSEMBLED, NULL))) {
 		(void) pf_refragment6(&m0, mtag, dst, ifp);
 	} else if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
-		rt = rtalloc(sin6tosa(dst), RT_RESOLVE, rtableid);
-		if (rt == NULL) {
-			ip6stat.ip6s_noroute++;
-			goto bad;
-		}
 		ifp->if_output(ifp, m0, sin6tosa(dst), rt);
-		rtfree(rt);
 	} else {
 		icmp6_error(m0, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
 	}
@@ -6012,6 +6012,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 done:
 	if (r->rt != PF_DUPTO)
 		pd->m = NULL;
+	rtfree(rt);
 	return;
 
 bad:
