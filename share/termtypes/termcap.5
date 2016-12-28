@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.29 2016/01/08 20:26:54 zhuk Exp $
+.\"	$OpenBSD: termcap.5,v 1.30 2016/12/28 22:47:11 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
 .\"
-.Dd $Mdocdate: January 8 2016 $
+.Dd $Mdocdate: December 28 2016 $
 .Dt TERMCAP 5
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@ The
 .Nm
 file
 is a database describing terminals, used, for example, by
-.Xr \&vi 1
+.Xr vi 1
 and
 .Xr curses 3 .
 Terminals are described in
@@ -260,7 +260,7 @@ section below).
 .It lm Ta num Ta "" Ta "Lines of memory if >" Sy \&li
 (0 means varies).
 .It ma Ta str Ta (o) Ta "Arrow key map (used by"
-.Xr \&vi 1
+.Xr vi 1
 version 2 only).
 .It mb Ta str Ta "" Ta "Turn on blinking attribute."
 .It md Ta str Ta "" Ta "Turn on bold (extra bright) attribute."
@@ -541,14 +541,14 @@ the description of a similar terminal in
 .Nm
 and to build up a description gradually, using partial descriptions
 with
-.Xr \&vi 1
+.Xr vi 1
 to check that they are correct.
 Be aware that a very unusual terminal may expose deficiencies in
 the ability of the
 .Nm
 file to describe it
 or bugs in
-.Xr \&vi 1 .
+.Xr vi 1 .
 To easily test a new terminal description you are working on
 you can put it in your home directory in a file called
 .Pa .termcap
@@ -571,7 +571,7 @@ to avoid reading files when starting up a program.
 To get the padding for insert-line right
 (if the terminal manufacturer did not document it),
 a severe test is to use
-.Xr \&vi 1
+.Xr vi 1
 to edit
 .Pa /etc/passwd
 at 9600 baud, delete roughly 16 lines from the middle of the screen,
@@ -1386,7 +1386,7 @@ and
 .Sy \&st ;
 and finally
 .Sy \&if .
-.Pf ( Xr Terminfo
+.Pf ( Xr terminfo 5
 uses
 .Sy \&i\&1-i2
 instead of
@@ -1404,7 +1404,7 @@ and
 These strings are output by the
 .Xr reset 1
 program, which is used when the terminal gets into a wedged state.
-.Pf ( Xr Terminfo
+.Pf ( Xr terminfo 5
 uses
 .Sy "\&r1-r3"
 instead of
@@ -1793,10 +1793,10 @@ Hash database file containing terminal descriptions (see
 .El
 .Sh SEE ALSO
 .Xr cap_mkdb 1 ,
-.Xr \&ex 1 ,
+.Xr ex 1 ,
 .Xr more 1 ,
 .Xr tset 1 ,
-.Xr \&ul 1 ,
+.Xr ul 1 ,
 .Xr vi 1 ,
 .Xr curses 3 ,
 .Xr printf 3 ,
@@ -1827,7 +1827,7 @@ entry.
 Most programs now use the kernel information primarily; the information
 in this file is used only if the kernel does not have any information.
 .Pp
-.Xr \&vi 1
+.Xr vi 1
 allows only 256 characters for string capabilities, and the routines
 in
 .Xr termcap 3

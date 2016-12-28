@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.22 2015/08/24 19:25:09 jca Exp $
+.\"	$OpenBSD: tput.1,v 1.23 2016/12/28 22:47:11 schwarze Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tput.1	8.2 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 24 2015 $
+.Dd $Mdocdate: December 28 2016 $
 .Dt TPUT 1
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ The options are as follows:
 The attributes are read from stdin instead of the command line.
 .It Fl T
 The terminal name as found in the
-.Xr terminfo
+.Xr terminfo 5
 database; for example,
 .Dq vt100
 or
@@ -97,7 +97,7 @@ If the
 .Ar attribute
 is of type string and takes arguments (e.g., cursor movement,
 the
-.Xr terminfo
+.Xr terminfo 5
 .Dq cup
 sequence) the arguments are taken from the command line immediately
 following the attribute.
@@ -106,18 +106,18 @@ The following special attributes are available:
 .Bl -tag -width Ar
 .It clear
 Clear the screen (the
-.Xr terminfo
+.Xr terminfo 5
 .Dq clear
 sequence).
 .It init
 Print the
-.Xr terminfo
+.Xr terminfo 5
 initialization strings for the specified terminal.
 .It longname
 Print the descriptive name of the user's terminal type.
 .It reset
 Reset the terminal (using the
-.Xr terminfo
+.Xr terminfo 5
 reset sequences).
 .El
 .Sh ENVIRONMENT
