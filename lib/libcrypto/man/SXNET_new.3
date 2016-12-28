@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SXNET_new.3,v 1.1 2016/12/24 01:00:48 schwarze Exp $
+.\"	$OpenBSD: SXNET_new.3,v 1.2 2016/12/28 20:36:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,14 +14,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2016 $
+.Dd $Mdocdate: December 28 2016 $
 .Dt SXNET_NEW 3
 .Os
 .Sh NAME
 .Nm SXNET_new ,
 .Nm SXNET_free ,
 .Nm SXNETID_new ,
-.Nm SXNETID_free
+.Nm SXNETID_free ,
+.Nm d2i_SXNET ,
+.Nm i2d_SXNET ,
+.Nm d2i_SXNETID ,
+.Nm i2d_SXNETID
 .Nd Thawte strong extranet X.509 extension
 .Sh SYNOPSIS
 .In openssl/x509v3.h
@@ -33,6 +37,28 @@
 .Fn SXNETID_new void
 .Ft void
 .Fn SXNETID_free "SXNETID *sxnetid"
+.Ft SXNET *
+.Fo d2i_SXNET
+.Fa "SXNET **val_out"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_SXNET
+.Fa "SXNET *val_in"
+.Fa "unsigned char **der_out"
+.Fc
+.Ft SXNETID *
+.Fo d2i_SXNETID
+.Fa "SXNETID **val_out"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_SXNETID
+.Fa "SXNETID *val_in"
+.Fa "unsigned char **der_out"
+.Fc
 .Sh DESCRIPTION
 .Fn SXNET_new
 allocates and initializes an empty
@@ -52,16 +78,34 @@ It is used inside
 .Fn SXNETID_free
 frees
 .Fa sxnetid .
+.Pp
+The remaining functions decode and encode these objects
+using DER format.
+For details about the semantics, examples, caveats, and bugs, see
+.Xr ASN1_item_d2i 3 .
 .Sh RETURN VALUES
 .Fn SXNET_new
 and
-.Fn SXNETID_new
-return the new
+.Fn d2i_SXNET
+return an
 .Vt SXNET
-or
-.Vt SXNETID
-object, respectively, or
+object or
 .Dv NULL
+if an error occurs.
+.Pp
+.Fn SXNETID_new
+and
+.Fn d2i_SXNETID
+return an
+.Vt SXNETID
+object or
+.Dv NULL
+if an error occurs.
+.Pp
+.Fn i2d_SXNET
+and
+.Fn i2d_SXNETID
+return the number of bytes successfully encoded or a negative value
 if an error occurs.
 .Sh SEE ALSO
 .Xr X509_EXTENSION_new 3 ,

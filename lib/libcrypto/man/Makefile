@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.107 2016/12/28 13:45:30 schwarze Exp $
+# $OpenBSD: Makefile,v 1.108 2016/12/28 20:36:33 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -228,16 +228,23 @@ MAN=	\
 	X509v3_get_ext_by_NID.3 \
 	crypto.3 \
 	d2i_ASN1_OBJECT.3 \
+	d2i_AUTHORITY_KEYID.3 \
+	d2i_BASIC_CONSTRAINTS.3 \
 	d2i_DHparams.3 \
+	d2i_DIST_POINT.3 \
 	d2i_DSAPublicKey.3 \
 	d2i_ECPKParameters.3 \
 	d2i_ESS_SIGNING_CERT.3 \
+	d2i_GENERAL_NAME.3 \
 	d2i_OCSP_REQUEST.3 \
 	d2i_OCSP_RESPONSE.3 \
 	d2i_PKCS12.3 \
 	d2i_PKCS7.3 \
 	d2i_PKCS8_PRIV_KEY_INFO.3 \
 	d2i_PKCS8PrivateKey_bio.3 \
+	d2i_PKEY_USAGE_PERIOD.3 \
+	d2i_POLICYINFO.3 \
+	d2i_PROXY_POLICY.3 \
 	d2i_PrivateKey.3 \
 	d2i_RSAPublicKey.3 \
 	d2i_TS_REQ.3 \
