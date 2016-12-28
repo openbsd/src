@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.38 2015/02/09 08:24:21 tedu Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.39 2016/12/28 17:48:04 deraadt Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -156,10 +156,11 @@ History  *hist;			/* editline(3) history structure */
 char	 *cursor_pos;		/* cursor position we're looking for */
 size_t	  cursor_argc;		/* location of cursor in margv */
 size_t	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
-char	 *cookiefile;		/* cookie jar to use */
 int	  resume;		/* continue transfer */
 char	 *srcaddr;		/* source address to bind to */
 #endif /* !SMALL */
+
+char	 *cookiefile;		/* cookie jar to use */
 
 off_t	bytes;			/* current # of bytes read */
 off_t	filesize;		/* size of file being transferred */
@@ -171,7 +172,7 @@ int	unix_proxy;		/* proxy is unix, can use binary for ascii */
 
 char *ftpport;			/* port number to use for ftp connections */
 char *httpport;			/* port number to use for http connections */
-#ifndef SMALL
+#ifndef NOSSL
 char *httpsport;		/* port number to use for https connections */
 #endif /* !SMALL */
 char *httpuseragent;		/* user agent for http(s) connections */
@@ -224,6 +225,6 @@ FILE	*ttyout;		/* stdout or stderr, depending on interactive */
 
 extern struct cmd cmdtab[];
 
-#ifndef SMALL
+#ifndef NOSSL
 extern struct tls_config *tls_config;
-#endif /* !SMALL */
+#endif /* !NOSSL */

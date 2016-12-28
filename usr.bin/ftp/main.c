@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.114 2016/12/22 16:30:03 beck Exp $	*/
+/*	$OpenBSD: main.c,v 1.115 2016/12/28 17:48:04 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
 #include "cmds.h"
 #include "ftp_var.h"
 
-#ifndef SMALL
+#ifndef NOSSL
 char * const ssl_verify_opts[] = {
 #define SSL_CAFILE	0
 	"cafile",
@@ -157,7 +157,7 @@ process_ssl_options(char *cp)
 		}
 	}
 }
-#endif /* !SMALL */
+#endif /* !NOSSL */
 
 int family = PF_UNSPEC;
 int pipeout;
@@ -177,9 +177,9 @@ main(volatile int argc, char *argv[])
 
 	ftpport = "ftp";
 	httpport = "http";
-#ifndef SMALL
+#ifndef NOSSL
 	httpsport = "https";
-#endif /* !SMALL */
+#endif /* !NOSSL */
 	gateport = getenv("FTPSERVERPORT");
 	if (gateport == NULL || *gateport == '\0')
 		gateport = "ftpgate";
@@ -192,11 +192,13 @@ main(volatile int argc, char *argv[])
 	verbose = 0;
 	progress = 0;
 	gatemode = 0;
+#ifndef NOSSL
+	cookiefile = NULL;
+#endif /* NOSSL */
 #ifndef SMALL
 	editing = 0;
 	el = NULL;
 	hist = NULL;
-	cookiefile = NULL;
 	resume = 0;
 	srcaddr = NULL;
 	marg_sl = sl_init();
@@ -251,7 +253,7 @@ main(volatile int argc, char *argv[])
 	if (isatty(fileno(ttyout)) && !dumb_terminal && foregroundproc())
 		progress = 1;		/* progress bar on if tty is usable */
 
-#ifndef SMALL
+#ifndef NOSSL
 	cookiefile = getenv("http_cookies");
 	if (tls_init() != 0)
 		errx(1, "tls init failed");
@@ -380,9 +382,9 @@ main(volatile int argc, char *argv[])
 			break;
 
 		case 'S':
-#ifndef SMALL
+#ifndef NOSSL
 			process_ssl_options(optarg);
-#endif /* !SMALL */
+#endif /* !NOSSL */
 			break;
 
 		case 's':
@@ -422,9 +424,9 @@ main(volatile int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-#ifndef SMALL
+#ifndef NOSSL
 	cookie_load();
-#endif /* !SMALL */
+#endif /* !NOSSL */
 	if (httpuseragent == NULL)
 		httpuseragent = HTTP_USER_AGENT;
 
@@ -910,23 +912,28 @@ usage(void)
 {
 	fprintf(stderr, "usage: "
 #ifndef SMALL
-	    "%1$s [-46AadEegiMmnptVv] [-D title] [-k seconds] [-P port] "
+	    "ftp [-46AadEegiMmnptVv] [-D title] [-k seconds] [-P port] "
 	    "[-r seconds]\n"
 	    "           [-s srcaddr] [host [port]]\n"
-	    "       %1$s [-C] [-o output] [-s srcaddr]\n"
+	    "       ftp [-C] [-o output] [-s srcaddr]\n"
 	    "           ftp://[user:password@]host[:port]/file[/] ...\n"
-	    "       %1$s [-C] [-c cookie] [-o output] [-S ssl_options] "
+	    "       ftp [-C] [-c cookie] [-o output] [-S ssl_options] "
 	    "[-s srcaddr]\n"
 	    "           [-U useragent] "
 	    "http[s]://[user:password@]host[:port]/file ...\n"
-	    "       %1$s [-C] [-o output] [-s srcaddr] file:file ...\n"
-	    "       %1$s [-C] [-o output] [-s srcaddr] host:/file[/] ...\n",
+	    "       ftp [-C] [-o output] [-s srcaddr] file:file ...\n"
+	    "       ftp [-C] [-o output] [-s srcaddr] host:/file[/] ...\n"
 #else /* !SMALL */
-	    "%1$s [-o output] ftp://[user:password@]host[:port]/file[/] ...\n"
-	    "       %1$s [-o output] http://host[:port]/file ...\n"
-	    "       %1$s [-o output] file:file ...\n"
-	    "       %1$s [-o output] host:/file[/] ...\n",
+	    "ftp [-o output] ftp://[user:password@]host[:port]/file[/] ...\n"
+#ifndef NOSSL
+	    "       ftp [-o output] [-S ssl_options] "
+	    "http[s]://[user:password@]host[:port]/file ...\n"
+#else
+	    "       ftp [-o output] http://host[:port]/file ...\n"
+#endif /* NOSSL */
+	    "       ftp [-o output] file:file ...\n"
+	    "       ftp [-o output] host:/file[/] ...\n"
 #endif /* !SMALL */
-	    __progname);
+	    );
 	exit(1);
 }

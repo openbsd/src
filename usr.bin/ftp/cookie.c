@@ -1,4 +1,4 @@
-/*	$OpenBSD: cookie.c,v 1.5 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.6 2016/12/28 17:48:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef SMALL
+#ifndef NOSSL
 
 #include <sys/types.h>
 #include <sys/queue.h>

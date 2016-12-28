@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.45 2016/09/27 12:32:26 fcambus Exp $	*/
+/*	$OpenBSD: extern.h,v 1.46 2016/12/28 17:48:04 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -111,12 +111,13 @@ void	setttywidth(int);
 char   *slurpstring(void);
 void	usage(void);
 
+void	cookie_get(const char *, const char *, int, char **);
+void	cookie_load(void);
+
 #ifndef SMALL
 void	abortsend(int);
 unsigned char complete(EditLine *, int);
 void	controlediting(void);
-void	cookie_get(const char *, const char *, int, char **);
-void	cookie_load(void);
 void	domacro(int, char **);
 void	list_vertical(StringList *);
 void	parse_list(char **, char *);
