@@ -2191,7 +2191,9 @@
 ./usr/share/man/man3/d2i_TS_REQ.3
 ./usr/share/man/man3/d2i_X509.3
 ./usr/share/man/man3/d2i_X509_ALGOR.3
+./usr/share/man/man3/d2i_X509_ATTRIBUTE.3
 ./usr/share/man/man3/d2i_X509_CRL.3
+./usr/share/man/man3/d2i_X509_EXTENSION.3
 ./usr/share/man/man3/d2i_X509_NAME.3
 ./usr/share/man/man3/d2i_X509_REQ.3
 ./usr/share/man/man3/d2i_X509_SIG.3
