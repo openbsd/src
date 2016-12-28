@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.88 2015/11/05 17:47:53 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.89 2016/12/28 17:21:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2015 $
+.Dd $Mdocdate: December 28 2016 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1147,6 +1147,13 @@ macro is immediately followed by an
 .Ic \&Re
 macro on the next input line.
 Such an empty block does not produce any output.
+.It Sy "missing section argument"
+.Pq mdoc
+An
+.Ic \&Xr
+macro lacks its second, section number argument.
+The first argument, i.e. the name, is printed, but without subsequent
+parantheses.
 .It Sy "missing -std argument, adding it"
 .Pq mdoc
 An

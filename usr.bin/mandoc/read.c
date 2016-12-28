@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.127 2016/12/07 22:57:35 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.128 2016/12/28 17:21:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -145,6 +145,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unknown font type, using \\fR",
 	"nothing follows prefix",
 	"empty reference block",
+	"missing section argument",
 	"missing -std argument, adding it",
 	"missing option string, using \"\"",
 	"missing resource identifier, using \"\"",

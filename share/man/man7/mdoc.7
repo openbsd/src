@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.145 2016/10/11 17:30:28 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.146 2016/12/28 17:21:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2016 $
+.Dd $Mdocdate: December 28 2016 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2726,14 +2726,13 @@ Link to another manual
 .Pq Qq cross-reference .
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Xr Ar name Op section
+.D1 Pf \. Sx \&Xr Ar name section
 .Pp
 Cross reference the
 .Ar name
 and
 .Ar section
-number of another man page;
-omitting the section number is rarely useful.
+number of another man page.
 .Pp
 Examples:
 .Dl \&.Xr mandoc 1
@@ -3045,7 +3044,7 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&Ux  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Va  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Vt  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Xr  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Xr  Ta    Yes      Ta    Yes      Ta    2
 .It Sx \&br  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&sp  Ta    \&No     Ta    \&No     Ta    1
 .El

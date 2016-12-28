@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.152 2016/10/09 18:16:46 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.153 2016/12/28 17:21:17 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -107,6 +107,7 @@ enum	mandocerr {
 	MANDOCERR_BF_BADFONT, /* unknown font type, using \fR: Bf font */
 	MANDOCERR_PF_SKIP, /* nothing follows prefix: Pf arg */
 	MANDOCERR_RS_EMPTY, /* empty reference block: Rs */
+	MANDOCERR_XR_NOSEC, /* missing section argument: Xr arg */
 	MANDOCERR_ARG_STD, /* missing -std argument, adding it: macro */
 	MANDOCERR_OP_EMPTY, /* missing option string, using "": OP */
 	MANDOCERR_UR_NOHEAD, /* missing resource identifier, using "": UR */

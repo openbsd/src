@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.225 2016/10/09 18:16:46 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.226 2016/12/28 17:21:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -101,6 +101,7 @@ static	void	 post_sh_authors(POST_ARGS);
 static	void	 post_sm(POST_ARGS);
 static	void	 post_st(POST_ARGS);
 static	void	 post_std(POST_ARGS);
+static	void	 post_xr(POST_ARGS);
 
 static	v_post mdoc_valids[MDOC_MAX] = {
 	NULL,		/* Ap */
@@ -143,7 +144,7 @@ static	v_post mdoc_valids[MDOC_MAX] = {
 	post_st,	/* St */
 	NULL,		/* Va */
 	NULL,		/* Vt */
-	NULL,		/* Xr */
+	post_xr,	/* Xr */
 	NULL,		/* %A */
 	post_hyph,	/* %B */ /* FIXME: can be used outside Rs/Re. */
 	NULL,		/* %D */
@@ -1798,6 +1799,21 @@ post_sh_head(POST_ARGS)
 }
 
 static void
+post_xr(POST_ARGS)
+{
+	struct roff_node *n, *nch;
+
+	n = mdoc->last;
+	nch = n->child;
+	if (nch->next == NULL) {
+		mandoc_vmsg(MANDOCERR_XR_NOSEC, mdoc->parse,
+		    n->line, n->pos, "Xr %s", nch->string);
+		return;
+	}
+	assert(nch->next == n->last);
+}
+
+static void
 post_ignpar(POST_ARGS)
 {
 	struct roff_node *np;
@@ -1993,7 +2009,7 @@ post_dt(POST_ARGS)
 			}
 	}
 
-	/* Mandatory second argument: section. */
+	/* Mandatory second argument: section. */
 
 	if (nn != NULL)
 		nn = nn->next;
