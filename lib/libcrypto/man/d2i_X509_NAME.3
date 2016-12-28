@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_X509_NAME.3,v 1.7 2016/12/25 22:15:10 schwarze Exp $
+.\"	$OpenBSD: d2i_X509_NAME.3,v 1.8 2016/12/28 14:33:34 schwarze Exp $
 .\"	OpenSSL d900a015 Oct 8 14:40:42 2015 +0200
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: December 28 2016 $
 .Dt D2I_X509_NAME 3
 .Os
 .Sh NAME
@@ -33,94 +33,70 @@
 .In openssl/x509.h
 .Ft X509_NAME *
 .Fo d2i_X509_NAME
-.Fa "X509_NAME **name"
-.Fa "unsigned char **in"
+.Fa "X509_NAME **val_out"
+.Fa "unsigned char **der_in"
 .Fa "long length"
 .Fc
 .Ft int
 .Fo i2d_X509_NAME
-.Fa "X509_NAME *name"
-.Fa "unsigned char **out"
+.Fa "X509_NAME *val_in"
+.Fa "unsigned char **der_out"
 .Fc
 .Ft X509_NAME *
 .Fo X509_NAME_dup
-.Fa "X509_NAME *name"
+.Fa "X509_NAME *val_in"
 .Fc
 .Ft X509_NAME_ENTRY *
 .Fo d2i_X509_NAME_ENTRY
-.Fa "X509_NAME_ENTRY **ne"
-.Fa "unsigned char **in"
+.Fa "X509_NAME_ENTRY **val_out"
+.Fa "unsigned char **der_in"
 .Fa "long length"
 .Fc
 .Ft int
 .Fo i2d_X509_NAME_ENTRY
-.Fa "X509_NAME_ENTRY *ne"
-.Fa "unsigned char **out"
+.Fa "X509_NAME_ENTRY *val_in"
+.Fa "unsigned char **der_out"
 .Fc
 .Ft X509_NAME_ENTRY *
 .Fo X509_NAME_ENTRY_dup
-.Fa "X509_NAME_ENTRY *ne"
+.Fa "X509_NAME_ENTRY *val_in"
 .Fc
 .Sh DESCRIPTION
-.Fn d2i_X509_NAME
-decodes
-.Fa length
-bytes of the DER-encoded string
-.Pf * Fa in
-and stores the resulting
+These functions decode and encode X.501
 .Vt Name
-object in
-.Pf * Fa name .
+objects using DER format.
+For details about the semantics, examples, caveats, and bugs, see
+.Xr ASN1_item_d2i 3 .
 .Pp
+.Fn d2i_X509_NAME
+and
 .Fn i2d_X509_NAME
-encodes
-.Fa name
-into DER format and stores the result to
-.Pf * Fa out .
+decode and encode an ASN.1
+.Vt Name
+structure defined in RFC 5280 section 4.1.2.4.
 .Pp
 .Fn X509_NAME_dup
 copies
-.Fa name
+.Fa val_in
 by calling
 .Fn i2d_X509_NAME
 and
 .Fn d2i_X509_NAME .
 .Pp
 .Fn d2i_X509_NAME_ENTRY
-decodes
-.Fa length
-bytes of the DER-encoded string
-.Pf * Fa in
-and stores the resulting
-.Vt RelativeDistinguishedName
-object in
-.Pf * Fa ne .
-.Pp
+and
 .Fn i2d_X509_NAME_ENTRY
-encodes
-.Fa ne
-into DER format and stores the result to
-.Pf * Fa out .
+decode and encode an ASN.1
+.Vt RelativeDistinguishedName
+structure defined in RFC 5280 section 4.1.2.4.
 .Pp
 .Fn X509_NAME_ENTRY_dup
 copies
-.Fa ne
+.Fa val_in
 by calling
 .Fn i2d_X509_NAME_ENTRY
 and
 .Fn d2i_X509_NAME_ENTRY .
-.Pp
-For details of the behaviour, see
-.Xr d2i_X509 3 .
-.Pp
-Regarding
-.Vt X509_NAME
-objects, see
-.Xr X509_NAME_new 3 .
-Regarding
-.Vt X509_NAME_ENTRY
-objects, see
-.Xr X509_NAME_ENTRY_new 3 .
 .Sh RETURN VALUES
 .Fn d2i_X509_NAME
 and
@@ -143,14 +119,17 @@ if an error occurs.
 .Fn i2d_X509_NAME
 and
 .Fn i2d_X509_NAME_ENTRY
-returns the number of bytes successfully encoded or a negative value
+return the number of bytes successfully encoded or a negative value
 if an error occurs.
 .Sh SEE ALSO
-.Xr d2i_X509 3 ,
+.Xr ASN1_item_d2i 3 ,
 .Xr X509_NAME_ENTRY_new 3 ,
 .Xr X509_NAME_new 3 ,
 .Xr X509_NAME_print_ex 3
 .Sh STANDARDS
+RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
+Certificate Revocation List (CRL) Profile
+.Pp
 ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
 Information technology - ASN.1 encoding rules:
 Specification of Basic Encoding Rules (BER), Canonical Encoding
