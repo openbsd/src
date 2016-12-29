@@ -1,5 +1,5 @@
-.\"	$OpenBSD: SSL_CTX_set_session_cache_mode.3,v 1.2 2016/12/01 19:50:12 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\"	$OpenBSD: SSL_CTX_set_session_cache_mode.3,v 1.3 2016/12/29 14:03:55 schwarze Exp $
+.\"	OpenSSL 67adf0a7 Dec 25 19:58:38 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org> and
 .\" Geoff Thorpe <geoff@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 1 2016 $
+.Dd $Mdocdate: December 29 2016 $
 .Dt SSL_CTX_SET_SESSION_CACHE_MODE 3
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ It can only send exactly one id.
 The server then either agrees to reuse the session or it starts a full
 handshake (to create a new session).
 .Pp
-A server will lookup up the session in its internal session storage.
+A server will look up the session in its internal session storage.
 If the session is not found in internal storage or lookups for the internal
 storage have been deactivated
 .Pq Dv SSL_SESS_CACHE_NO_INTERNAL_LOOKUP ,
