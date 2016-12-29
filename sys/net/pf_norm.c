@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.199 2016/12/29 00:26:48 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.200 2016/12/29 13:01:48 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -687,11 +687,10 @@ fail:
 
 int
 pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
-    struct ifnet *ifp)
+    struct ifnet *ifp, struct rtentry *rt)
 {
 	struct mbuf		*m = *m0, *t;
 	struct pf_fragment_tag	*ftag = (struct pf_fragment_tag *)(mtag + 1);
-	struct rtentry		*rt = NULL;
 	u_int32_t		 mtu;
 	u_int16_t		 hdrlen, extoff, maxlen;
 	u_int8_t		 proto;
@@ -748,15 +747,6 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 		action = PF_DROP;
 	}
 
-	if (ifp != NULL) {
-		rt = rtalloc(sin6tosa(dst), RT_RESOLVE,
-		    m->m_pkthdr.ph_rtableid);
-		if (rt == NULL) {
-			ip6stat.ip6s_noroute++;
-			error = -1;
-		}
-	}
-
 	for (t = m; m; m = t) {
 		t = m->m_nextpkt;
 		m->m_nextpkt = NULL;
@@ -774,7 +764,6 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 			m_freem(m);
 		}
 	}
-	rtfree(rt);
 
 	return (action);
 }

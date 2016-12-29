@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1008 2016/12/28 15:36:15 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1009 2016/12/29 13:01:48 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6003,7 +6003,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	 * use pf_refragment6() here to turn it back to fragments.
 	 */
 	if ((mtag = m_tag_find(m0, PACKET_TAG_PF_REASSEMBLED, NULL))) {
-		(void) pf_refragment6(&m0, mtag, dst, ifp);
+		(void) pf_refragment6(&m0, mtag, dst, ifp, rt);
 	} else if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
 		ifp->if_output(ifp, m0, sin6tosa(dst), rt);
 	} else {
@@ -6925,7 +6925,7 @@ done:
 		struct m_tag	*mtag;
 
 		if ((mtag = m_tag_find(pd.m, PACKET_TAG_PF_REASSEMBLED, NULL)))
-			action = pf_refragment6(&pd.m, mtag, NULL, NULL);
+			action = pf_refragment6(&pd.m, mtag, NULL, NULL, NULL);
 	}
 #endif	/* INET6 */
 	if (s && action != PF_DROP) {
