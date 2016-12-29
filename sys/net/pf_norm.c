@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.198 2016/12/28 23:58:20 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.199 2016/12/29 00:26:48 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -631,7 +631,7 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 	/* Take protocol from first fragment header */
 	if ((m = m_getptr(m, hdrlen + offsetof(struct ip6_frag, ip6f_nxt),
 	    &off)) == NULL)
-		panic("pf_reassemble6: short mbuf chain");
+		panic("%s: short frag mbuf chain", __func__);
 	proto = *(mtod(m, caddr_t) + off);
 	m = *m0;
 
@@ -662,7 +662,7 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 		/* Write protocol into next field of last extension header */
 		if ((m = m_getptr(m, extoff + offsetof(struct ip6_ext,
 		    ip6e_nxt), &off)) == NULL)
-			panic("pf_reassemble6: short mbuf chain");
+			panic("%s: short ext mbuf chain", __func__);
 		*(mtod(m, caddr_t) + off) = proto;
 		m = *m0;
 	} else
@@ -713,7 +713,7 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 		/* Use protocol from next field of last extension header */
 		if ((m = m_getptr(m, extoff + offsetof(struct ip6_ext,
 		    ip6e_nxt), &off)) == NULL)
-			panic("pf_refragment6: short mbuf chain");
+			panic("%s: short ext mbuf chain", __func__);
 		proto = *(mtod(m, caddr_t) + off);
 		*(mtod(m, caddr_t) + off) = IPPROTO_FRAGMENT;
 		m = *m0;
