@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.143 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.144 2016/12/29 12:12:43 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ redo:
 			head->so_error = ECONNABORTED;
 			break;
 		}
-		error = rwsleep(&head->so_timeo, &netlock, PSOCK | PCATCH,
+		error = tsleep(&head->so_timeo, PSOCK | PCATCH,
 		    "netcon", 0);
 		if (error) {
 			goto bad;
@@ -436,7 +436,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	}
 	NET_LOCK(s);
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		error = rwsleep(&so->so_timeo, &netlock, PSOCK | PCATCH,
+		error = tsleep(&so->so_timeo, PSOCK | PCATCH,
 		    "netcon2", 0);
 		if (error) {
 			if (error == EINTR || error == ERESTART)

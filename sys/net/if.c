@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.468 2016/12/21 10:22:14 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.469 2016/12/29 12:12:43 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -229,12 +229,6 @@ struct taskq	*softnettq;
 
 struct task if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
 
-
-/*
- * Serialize socket operations to ensure no new sleeping points
- * are introduced in IP output paths.
- */
-struct rwlock netlock = RWLOCK_INITIALIZER("netlock");
 /*
  * Network interface utility routines.
  */
@@ -1072,10 +1066,7 @@ if_clone_create(const char *name, int rdomain)
 	if (ifunit(name) != NULL)
 		return (EEXIST);
 
-	/* XXXSMP breaks atomicity */
-	rw_exit_write(&netlock);
 	ret = (*ifc->ifc_create)(ifc, unit);
-	rw_enter_write(&netlock);
 
 	if (ret != 0 || (ifp = ifunit(name)) == NULL)
 		return (ret);
@@ -1117,10 +1108,7 @@ if_clone_destroy(const char *name)
 		splx(s);
 	}
 
-	/* XXXSMP breaks atomicity */
-	rw_exit_write(&netlock);
 	ret = (*ifc->ifc_destroy)(ifp);
-	rw_enter_write(&netlock);
 
 	return (ret);
 }

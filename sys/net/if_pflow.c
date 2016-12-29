@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.64 2016/12/21 12:28:49 mikeb Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.65 2016/12/29 12:12:43 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -375,8 +375,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 		}
 
-		/* XXXSMP breaks atomicity */
-		rw_exit_write(&netlock);
 		s = splnet();
 		pflow_flush(sc);
 
@@ -400,7 +398,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    sizeof(struct sockaddr_in),
 					    M_DEVBUF,  M_NOWAIT)) == NULL) {
 						splx(s);
-						rw_enter_write(&netlock);
 						return (ENOMEM);
 					}
 					memcpy(sc->sc_flowdst, &pflowr.flowdst,
@@ -413,7 +410,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    sizeof(struct sockaddr_in6),
 					    M_DEVBUF, M_NOWAIT)) == NULL) {
 						splx(s);
-						rw_enter_write(&netlock);
 						return (ENOMEM);
 					}
 					memcpy(sc->sc_flowdst, &pflowr.flowdst,
@@ -453,7 +449,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    sizeof(struct sockaddr_in),
 					    M_DEVBUF, M_NOWAIT)) == NULL) {
 						splx(s);
-						rw_enter_write(&netlock);
 						return (ENOMEM);
 					}
 					memcpy(sc->sc_flowsrc, &pflowr.flowsrc,
@@ -466,7 +461,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    sizeof(struct sockaddr_in6),
 					    M_DEVBUF, M_NOWAIT)) == NULL) {
 						splx(s);
-						rw_enter_write(&netlock);
 						return (ENOMEM);
 					}
 					memcpy(sc->sc_flowsrc, &pflowr.flowsrc,
@@ -490,7 +484,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				    &so, SOCK_DGRAM, 0);
 				if (error) {
 					splx(s);
-					rw_enter_write(&netlock);
 					return (error);
 				}
 				if (pflowvalidsockaddr(sc->sc_flowsrc, 1)) {
@@ -505,7 +498,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					if (error) {
 						soclose(so);
 						splx(s);
-						rw_enter_write(&netlock);
 						return (error);
 					}
 				}
@@ -538,7 +530,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 
-		rw_enter_write(&netlock);
 		break;
 
 	default:

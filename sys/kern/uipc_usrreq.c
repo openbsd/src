@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.108 2016/12/29 07:35:09 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.109 2016/12/29 12:12:43 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -131,10 +131,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
-		/* XXXSMP breaks atomicity */
-		rw_exit_write(&netlock);
 		error = unp_bind(unp, nam, p);
-		rw_enter_write(&netlock);
 		break;
 
 	case PRU_LISTEN:
@@ -143,10 +140,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
-		/* XXXSMP breaks atomicity */
-		rw_exit_write(&netlock);
 		error = unp_connect(so, nam, p);
-		rw_enter_write(&netlock);
 		break;
 
 	case PRU_CONNECT2:
@@ -214,10 +208,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					error = EISCONN;
 					break;
 				}
-				/* XXXSMP breaks atomicity */
-				rw_exit_write(&netlock);
 				error = unp_connect(so, nam, p);
-				rw_enter_write(&netlock);
 				if (error)
 					break;
 			} else {
@@ -493,8 +484,6 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	struct unpcb *unp, *unp2, *unp3;
 	struct nameidata nd;
 	int error, s;
-
-	rw_assert_unlocked(&netlock);
 
 	if (soun->sun_family != AF_UNIX)
 		return (EAFNOSUPPORT);
