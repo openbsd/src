@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.16 2016/10/19 16:49:11 jsing Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.17 2016/12/30 15:47:07 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -588,7 +588,7 @@ rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 			/* need to embed algorithm ID inside another */
 			mgf1alg = X509_ALGOR_new();
 			X509_ALGOR_set_md(mgf1alg, mgf1md);
-			if (!ASN1_item_pack(mgf1alg, ASN1_ITEM_rptr(X509_ALGOR),
+			if (!ASN1_item_pack(mgf1alg, &X509_ALGOR_it,
 			    &stmp))
 				goto err;
 			pss->maskGenAlgorithm = X509_ALGOR_new();
@@ -598,7 +598,7 @@ rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 			    OBJ_nid2obj(NID_mgf1), V_ASN1_SEQUENCE, stmp);
 		}
 		/* Finally create string with pss parameter encoding. */
-		if (!ASN1_item_pack(pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), &os1))
+		if (!ASN1_item_pack(pss, &RSA_PSS_PARAMS_it, &os1))
 			goto err;
 		if (alg2) {
 			os2 = ASN1_STRING_dup(os1);
