@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.17 2016/11/04 18:35:30 jsing Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.18 2016/12/30 15:28:42 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -407,7 +407,7 @@ i2d_DSAPublicKey(const DSA *a, unsigned char **out)
 DSA *
 DSAparams_dup(DSA *dsa)
 {
-	return ASN1_item_dup(ASN1_ITEM_rptr(DSAparams), dsa);
+	return ASN1_item_dup(&DSAparams_it, dsa);
 }
 
 int
