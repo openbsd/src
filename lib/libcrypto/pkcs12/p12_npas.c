@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.10 2015/02/14 14:18:58 miod Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.11 2016/12/30 15:08:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -211,7 +211,7 @@ newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
 	X509_SIG *p8new;
 	int p8_nid, p8_saltlen, p8_iter;
 
-	if (M_PKCS12_bag_type(bag) != NID_pkcs8ShroudedKeyBag)
+	if (OBJ_obj2nid(bag->type) != NID_pkcs8ShroudedKeyBag)
 		return 1;
 
 	if (!(p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1)))

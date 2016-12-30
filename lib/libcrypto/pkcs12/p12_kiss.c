@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_kiss.c,v 1.17 2016/03/11 07:08:44 mmcc Exp $ */
+/* $OpenBSD: p12_kiss.c,v 1.18 2016/12/30 15:08:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -235,7 +235,7 @@ parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen, EVP_PKEY **pkey,
 	if ((attrib = PKCS12_get_attr (bag, NID_localKeyID)))
 		lkid = attrib->value.octet_string;
 
-	switch (M_PKCS12_bag_type(bag)) {
+	switch (OBJ_obj2nid(bag->type)) {
 	case NID_keyBag:
 		if (!pkey || *pkey)
 			return 1;
@@ -255,7 +255,7 @@ parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen, EVP_PKEY **pkey,
 		break;
 
 	case NID_certBag:
-		if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate )
+		if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Certificate )
 			return 1;
 		if (!(x509 = PKCS12_certbag2x509(bag)))
 			return 0;

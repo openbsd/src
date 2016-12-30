@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_utl.c,v 1.13 2016/11/05 14:24:29 miod Exp $ */
+/* $OpenBSD: p12_utl.c,v 1.14 2016/12/30 15:08:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -165,9 +165,9 @@ PKCS12_x509crl2certbag(X509_CRL *crl)
 X509 *
 PKCS12_certbag2x509(PKCS12_SAFEBAG *bag)
 {
-	if (M_PKCS12_bag_type(bag) != NID_certBag)
+	if (OBJ_obj2nid(bag->type) != NID_certBag)
 		return NULL;
-	if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate)
+	if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Certificate)
 		return NULL;
 	return ASN1_item_unpack(bag->value.bag->value.octet,
 	    ASN1_ITEM_rptr(X509));
@@ -176,9 +176,9 @@ PKCS12_certbag2x509(PKCS12_SAFEBAG *bag)
 X509_CRL *
 PKCS12_certbag2x509crl(PKCS12_SAFEBAG *bag)
 {
-	if (M_PKCS12_bag_type(bag) != NID_crlBag)
+	if (OBJ_obj2nid(bag->type) != NID_crlBag)
 		return NULL;
-	if (M_PKCS12_cert_bag_type(bag) != NID_x509Crl)
+	if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Crl)
 		return NULL;
 	return ASN1_item_unpack(bag->value.bag->value.octet,
 	    ASN1_ITEM_rptr(X509_CRL));
