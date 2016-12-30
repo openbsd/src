@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_fre.c,v 1.14 2015/02/14 15:23:57 miod Exp $ */
+/* $OpenBSD: tasn_fre.c,v 1.15 2016/12/30 16:04:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -176,13 +176,13 @@ ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 		for (i = 0; i < sk_ASN1_VALUE_num(sk); i++) {
 			ASN1_VALUE *vtmp;
 			vtmp = sk_ASN1_VALUE_value(sk, i);
-			asn1_item_combine_free(&vtmp, ASN1_ITEM_ptr(tt->item),
+			asn1_item_combine_free(&vtmp, tt->item,
 			    0);
 		}
 		sk_ASN1_VALUE_free(sk);
 		*pval = NULL;
 	} else
-		asn1_item_combine_free(pval, ASN1_ITEM_ptr(tt->item),
+		asn1_item_combine_free(pval, tt->item,
 		    tt->flags & ASN1_TFLG_COMBINE);
 }
 

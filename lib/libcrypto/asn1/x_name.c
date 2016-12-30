@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.31 2015/07/24 15:09:52 jsing Exp $ */
+/* $OpenBSD: x_name.c,v 1.32 2016/12/30 16:04:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -302,7 +302,7 @@ x509_name_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 
 	/* Get internal representation of Name */
 	ret = ASN1_item_ex_d2i(&intname.a, &p, len,
-	    ASN1_ITEM_rptr(X509_NAME_INTERNAL), tag, aclass, opt, ctx);
+	    &X509_NAME_INTERNAL_it, tag, aclass, opt, ctx);
 
 	if (ret <= 0)
 		return ret;
@@ -410,11 +410,11 @@ x509_name_encode(X509_NAME *a)
 			goto memerr;
 	}
 	len = ASN1_item_ex_i2d(&intname.a, NULL,
-	    ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
+	    &X509_NAME_INTERNAL_it, -1, -1);
 	if (!BUF_MEM_grow(a->bytes, len))
 		goto memerr;
 	p = (unsigned char *)a->bytes->data;
-	ASN1_item_ex_i2d(&intname.a, &p, ASN1_ITEM_rptr(X509_NAME_INTERNAL),
+	ASN1_item_ex_i2d(&intname.a, &p, &X509_NAME_INTERNAL_it,
 	    -1, -1);
 	sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
 	    local_sk_X509_NAME_ENTRY_free);
@@ -615,7 +615,7 @@ i2d_name_canon(STACK_OF(STACK_OF_X509_NAME_ENTRY) *_intname, unsigned char **in)
 	for (i = 0; i < sk_ASN1_VALUE_num(intname); i++) {
 		v = sk_ASN1_VALUE_value(intname, i);
 		ltmp = ASN1_item_ex_i2d(&v, in,
-		    ASN1_ITEM_rptr(X509_NAME_ENTRIES), -1, -1);
+		    &X509_NAME_ENTRIES_it, -1, -1);
 		if (ltmp < 0)
 			return ltmp;
 		len += ltmp;

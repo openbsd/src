@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.23 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.24 2016/12/30 16:04:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -265,7 +265,7 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 
 	/* Encode PBE2PARAM into parameter */
 
-	if (!ASN1_item_pack(pbe2, ASN1_ITEM_rptr(PBE2PARAM),
+	if (!ASN1_item_pack(pbe2, &PBE2PARAM_it,
 		&ret->parameter->value.sequence)) goto merr;
 	ret->parameter->type = V_ASN1_SEQUENCE;
 
@@ -358,7 +358,7 @@ PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen, int prf_nid,
 	if (!(keyfunc->parameter = ASN1_TYPE_new()))
 		goto merr;
 
-	if (!ASN1_item_pack(kdf, ASN1_ITEM_rptr(PBKDF2PARAM),
+	if (!ASN1_item_pack(kdf, &PBKDF2PARAM_it,
 		&keyfunc->parameter->value.sequence))
 		goto merr;
 	keyfunc->parameter->type = V_ASN1_SEQUENCE;

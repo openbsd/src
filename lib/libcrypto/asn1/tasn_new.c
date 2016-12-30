@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.15 2015/07/20 15:43:23 miod Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.16 2016/12/30 16:04:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -244,7 +244,7 @@ asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 int
 ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
-	const ASN1_ITEM *it = ASN1_ITEM_ptr(tt->item);
+	const ASN1_ITEM *it = tt->item;
 	int ret;
 
 	if (tt->flags & ASN1_TFLG_OPTIONAL) {
@@ -291,7 +291,7 @@ asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 	if (tt->flags & (ASN1_TFLG_ADB_MASK|ASN1_TFLG_SK_MASK))
 		*pval = NULL;
 	else
-		asn1_item_clear(pval, ASN1_ITEM_ptr(tt->item));
+		asn1_item_clear(pval, tt->item);
 }
 
 

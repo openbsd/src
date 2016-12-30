@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbe.c,v 1.20 2015/02/11 04:00:39 jsing Exp $ */
+/* $OpenBSD: p5_pbe.c,v 1.21 2016/12/30 16:04:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -148,7 +148,7 @@ PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 	else
 		arc4random_buf(sstr, saltlen);
 
-	if (!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str)) {
+	if (!ASN1_item_pack(pbe, &PBEPARAM_it, &pbe_str)) {
 		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}

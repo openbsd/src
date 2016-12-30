@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.25 2015/07/20 15:29:13 miod Exp $ */
+/* $OpenBSD: x_crl.c,v 1.26 2016/12/30 16:04:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -571,7 +571,7 @@ X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 static int
 def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
 {
-	return(ASN1_item_verify(ASN1_ITEM_rptr(X509_CRL_INFO),
+	return(ASN1_item_verify(&X509_CRL_INFO_it,
 	    crl->sig_alg, crl->signature, crl->crl, r));
 }
 

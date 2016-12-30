@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.32 2016/05/04 15:00:24 tedu Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.33 2016/12/30 16:04:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -589,7 +589,7 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 			while (sk_ASN1_VALUE_num(sktmp) > 0) {
 				vtmp = sk_ASN1_VALUE_pop(sktmp);
 				ASN1_item_ex_free(&vtmp,
-				    ASN1_ITEM_ptr(tt->item));
+				    tt->item);
 			}
 		}
 
@@ -616,7 +616,7 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 			}
 			skfield = NULL;
 			if (!ASN1_item_ex_d2i(&skfield, &p, len,
-			    ASN1_ITEM_ptr(tt->item), -1, 0, 0, ctx)) {
+			    tt->item, -1, 0, 0, ctx)) {
 				ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 				    ERR_R_NESTED_ASN1_ERROR);
 				goto err;
@@ -637,7 +637,7 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 	} else if (flags & ASN1_TFLG_IMPTAG) {
 		/* IMPLICIT tagging */
 		ret = ASN1_item_ex_d2i(val, &p, len,
-		    ASN1_ITEM_ptr(tt->item), tt->tag, aclass, opt, ctx);
+		    tt->item, tt->tag, aclass, opt, ctx);
 		if (!ret) {
 			ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 			    ERR_R_NESTED_ASN1_ERROR);
@@ -646,7 +646,7 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 			return -1;
 	} else {
 		/* Nothing special */
-		ret = ASN1_item_ex_d2i(val, &p, len, ASN1_ITEM_ptr(tt->item),
+		ret = ASN1_item_ex_d2i(val, &p, len, tt->item,
 		    -1, tt->flags & ASN1_TFLG_COMBINE, opt, ctx);
 		if (!ret) {
 			ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
