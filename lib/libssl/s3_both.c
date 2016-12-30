@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.49 2016/12/06 13:17:52 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.50 2016/12/30 15:12:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -478,7 +478,6 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			goto f_err;
 		}
 
-		/* XXX remove call to n2l3 */
 		CBS_init(&cbs, p, 4);
 		if (!CBS_get_u8(&cbs, &u8) ||
 		    !CBS_get_u24(&cbs, &l)) {

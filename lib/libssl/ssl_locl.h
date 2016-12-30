@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.141 2016/12/21 16:44:31 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.142 2016/12/30 15:12:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -164,37 +164,6 @@
 
 __BEGIN_HIDDEN_DECLS
 
-#define c2l(c,l)	(l = ((unsigned long)(*((c)++)))     , \
-			 l|=(((unsigned long)(*((c)++)))<< 8), \
-			 l|=(((unsigned long)(*((c)++)))<<16), \
-			 l|=(((unsigned long)(*((c)++)))<<24))
-
-/* NOTE - c is not incremented as per c2l */
-#define c2ln(c,l1,l2,n)	{ \
-			c+=n; \
-			l1=l2=0; \
-			switch (n) { \
-			case 8: l2 =((unsigned long)(*(--(c))))<<24; \
-			case 7: l2|=((unsigned long)(*(--(c))))<<16; \
-			case 6: l2|=((unsigned long)(*(--(c))))<< 8; \
-			case 5: l2|=((unsigned long)(*(--(c))));     \
-			case 4: l1 =((unsigned long)(*(--(c))))<<24; \
-			case 3: l1|=((unsigned long)(*(--(c))))<<16; \
-			case 2: l1|=((unsigned long)(*(--(c))))<< 8; \
-			case 1: l1|=((unsigned long)(*(--(c))));     \
-				} \
-			}
-
-#define l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
-
-#define n2l(c,l)	(l =((unsigned long)(*((c)++)))<<24, \
-			 l|=((unsigned long)(*((c)++)))<<16, \
-			 l|=((unsigned long)(*((c)++)))<< 8, \
-			 l|=((unsigned long)(*((c)++))))
-
 #define l2n(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff), \
 			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
 			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
@@ -209,29 +178,10 @@ __BEGIN_HIDDEN_DECLS
 			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
 			 *((c)++)=(unsigned char)(((l)    )&0xff))
 
-/* NOTE - c is not incremented as per l2c */
-#define l2cn(l1,l2,c,n)	{ \
-			c+=n; \
-			switch (n) { \
-			case 8: *(--(c))=(unsigned char)(((l2)>>24)&0xff); \
-			case 7: *(--(c))=(unsigned char)(((l2)>>16)&0xff); \
-			case 6: *(--(c))=(unsigned char)(((l2)>> 8)&0xff); \
-			case 5: *(--(c))=(unsigned char)(((l2)    )&0xff); \
-			case 4: *(--(c))=(unsigned char)(((l1)>>24)&0xff); \
-			case 3: *(--(c))=(unsigned char)(((l1)>>16)&0xff); \
-			case 2: *(--(c))=(unsigned char)(((l1)>> 8)&0xff); \
-			case 1: *(--(c))=(unsigned char)(((l1)    )&0xff); \
-				} \
-			}
-
 #define n2s(c,s)	((s=(((unsigned int)(c[0]))<< 8)| \
 			    (((unsigned int)(c[1]))    )),c+=2)
 #define s2n(s,c)	((c[0]=(unsigned char)(((s)>> 8)&0xff), \
 			  c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
-
-#define n2l3(c,l)	((l =(((unsigned long)(c[0]))<<16)| \
-			     (((unsigned long)(c[1]))<< 8)| \
-			     (((unsigned long)(c[2]))    )),c+=3)
 
 #define l2n3(l,c)	((c[0]=(unsigned char)(((l)>>16)&0xff), \
 			  c[1]=(unsigned char)(((l)>> 8)&0xff), \
