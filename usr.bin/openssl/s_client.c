@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.28 2016/06/21 03:56:43 bcook Exp $ */
+/* $OpenBSD: s_client.c,v 1.29 2016/12/30 17:25:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1365,6 +1365,9 @@ print_stuff(BIO * bio, SSL * s, int full)
 			}
 			BIO_write(bio, "\n", 1);
 		}
+
+		ssl_print_tmp_key(bio, s);
+
 		BIO_printf(bio, "---\nSSL handshake has read %ld bytes and written %ld bytes\n",
 		    BIO_number_read(SSL_get_rbio(s)),
 		    BIO_number_written(SSL_get_wbio(s)));

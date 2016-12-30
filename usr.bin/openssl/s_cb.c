@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.6 2015/09/10 19:08:46 jsing Exp $ */
+/* $OpenBSD: s_cb.c,v 1.7 2016/12/30 17:25:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -282,6 +282,43 @@ set_cert_key_stuff(SSL_CTX * ctx, X509 * cert, EVP_PKEY * key)
 		    "Private key does not match the certificate public key\n");
 		return 0;
 	}
+	return 1;
+}
+
+int
+ssl_print_tmp_key(BIO *out, SSL *s)
+{
+	const char *cname;
+	EVP_PKEY *pkey;
+	EC_KEY *ec;
+	int nid;
+
+	if (!SSL_get_server_tmp_key(s, &pkey))
+		return 0;
+
+	BIO_puts(out, "Server Temp Key: ");
+	switch (EVP_PKEY_id(pkey)) {
+	case EVP_PKEY_DH:
+		BIO_printf(out, "DH, %d bits\n", EVP_PKEY_bits(pkey));
+		break;
+
+	case EVP_PKEY_EC:
+		ec = EVP_PKEY_get1_EC_KEY(pkey);
+		nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+		EC_KEY_free(ec);
+
+		if ((cname = EC_curve_nid2nist(nid)) == NULL)
+			cname = OBJ_nid2sn(nid);
+
+		BIO_printf(out, "ECDH, %s, %d bits\n", cname, EVP_PKEY_bits(pkey));
+		break;
+
+	default:
+		BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(pkey)),
+		    EVP_PKEY_bits(pkey));
+	}
+
+	EVP_PKEY_free(pkey);
 	return 1;
 }
 
