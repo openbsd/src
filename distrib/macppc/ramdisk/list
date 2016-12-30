@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.65 2016/09/17 15:03:39 florian Exp $
+#	$OpenBSD: list,v 1.66 2016/12/30 22:34:20 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -53,7 +53,6 @@ LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/doas
 LINK	instbin					usr/bin/encrypt
-LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/more usr/bin/less
@@ -61,6 +60,10 @@ LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
 LINK	instbin					usr/sbin/chroot
 LINK	instbin					usr/sbin/pwd_mkdb
+
+COPY	${DESTDIR}/etc/ssl/cert.pem		etc/ssl/cert.pem
+LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
+SPECIAL	rm usr/bin/ftp-ssl
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
