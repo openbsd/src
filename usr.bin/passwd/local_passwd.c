@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.52 2016/09/02 18:06:43 tedu Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.53 2016/12/30 23:32:14 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -203,9 +203,12 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 			continue;
 		p = readpassphrase("Retype new password:", repeat, sizeof(repeat),
 		    RPP_ECHO_OFF);
-		if (p != NULL && strcmp(newpass, p) == 0)
+		if (p != NULL && strcmp(newpass, p) == 0) {
+			explicit_bzero(repeat, sizeof(repeat));
 			break;
+		}
 		(void)printf("Mismatch; try again, EOF to quit.\n");
+		explicit_bzero(repeat, sizeof(repeat));
 		explicit_bzero(newpass, sizeof(newpass));
 	}
 
