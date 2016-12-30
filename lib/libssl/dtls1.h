@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls1.h,v 1.18 2015/09/10 17:57:50 jsing Exp $ */
+/* $OpenBSD: dtls1.h,v 1.19 2016/12/30 15:10:57 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -66,6 +66,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/opensslconf.h>
 #include <openssl/buffer.h>
 
 #ifdef  __cplusplus

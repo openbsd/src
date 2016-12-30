@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.42 2016/12/21 16:44:31 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.43 2016/12/30 15:10:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,6 +117,7 @@
 #ifndef HEADER_SSL3_H
 #define HEADER_SSL3_H
 
+#include <openssl/opensslconf.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
