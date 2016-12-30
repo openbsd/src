@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.65 2016/12/27 19:16:24 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.66 2016/12/30 23:21:26 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -175,6 +175,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 	struct stat cf_info, cf_stat;
 	struct addrinfo hints, *res0;
 	struct sigaction sa;
+	sigset_t sigmask;
 
 	if (pledge("stdio rpath wpath cpath dns getpw sendfd id proc exec",
 	    NULL) == -1)
@@ -208,6 +209,10 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 
 	setproctitle("[priv]");
 	logdebug("[priv]: fork+exec done\n");
+
+	sigemptyset(&sigmask);
+	if (sigprocmask(SIG_SETMASK, &sigmask, NULL) == -1)
+		err(1, "sigprocmask priv");
 
 	if (stat(conf, &cf_info) < 0)
 		err(1, "stat config file failed");
@@ -409,6 +414,10 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 		int status;
 
 		waitpid(child_pid, &status, 0);
+		sigemptyset(&sigmask);
+		sigaddset(&sigmask, SIGHUP);
+		if (sigprocmask(SIG_SETMASK, &sigmask, NULL) == -1)
+			err(1, "sigprocmask exec");
 		execvp(argv[0], argv);
 		err(1, "exec restart '%s' failed", argv[0]);
 	}

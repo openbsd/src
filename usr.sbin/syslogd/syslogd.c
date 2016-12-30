@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.225 2016/12/27 19:16:24 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.226 2016/12/30 23:21:26 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -354,12 +354,19 @@ main(int argc, char *argv[])
 	struct event	*ev_klog, *ev_sendsys, *ev_udp, *ev_udp6,
 			*ev_bind, *ev_listen, *ev_tls, *ev_unix,
 			*ev_hup, *ev_int, *ev_quit, *ev_term, *ev_mark;
+	sigset_t	 sigmask;
 	const char	*errstr;
 	char		*p;
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 	int		 fd_ctlsock, fd_klog, fd_sendsys, fd_bind, fd_listen;
 	int		*fd_unix;
+
+	/* block signal until handler is set up */
+	sigemptyset(&sigmask);
+	sigaddset(&sigmask, SIGHUP);
+	if (sigprocmask(SIG_SETMASK, &sigmask, NULL) == -1)
+		err(1, "sigprocmask block");
 
 	if ((path_unix = malloc(sizeof(*path_unix))) == NULL)
 		err(1, "malloc %s", _PATH_LOG);
@@ -839,6 +846,10 @@ main(int argc, char *argv[])
 
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: start", LocalHostName, ADDDATE);
 	logdebug("syslogd: started\n");
+
+	sigemptyset(&sigmask);
+	if (sigprocmask(SIG_SETMASK, &sigmask, NULL) == -1)
+		err(1, "sigprocmask unblock");
 
 	event_dispatch();
 	/* NOTREACHED */
