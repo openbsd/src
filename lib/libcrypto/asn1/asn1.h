@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.41 2016/12/27 16:51:52 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.42 2016/12/30 16:29:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -390,9 +390,10 @@ TYPEDEF_D2I2D_OF(void);
  *
  */
 
-
 /* ASN1_ITEM pointer exported type */
 typedef const ASN1_ITEM ASN1_ITEM_EXP;
+
+#ifndef LIBRESSL_INTERNAL
 
 /* Macro to obtain ASN1_ITEM pointer from exported type */
 #define ASN1_ITEM_ptr(iptr) (iptr)
@@ -405,6 +406,7 @@ typedef const ASN1_ITEM ASN1_ITEM_EXP;
 #define DECLARE_ASN1_ITEM(name) \
 	extern const ASN1_ITEM name##_it;
 
+#endif /* !LIBRESSL_INTERNAL */
 
 /* Parameters used by ASN1_STRING_print_ex() */
 
