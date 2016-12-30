@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.6 2016/11/04 17:51:54 guenther Exp $
+#	$OpenBSD: Makefile,v 1.7 2016/12/30 16:58:12 jsing Exp $
 
 TEST_CASES+= cipher_list
+TEST_CASES+= ssl_versions
 TEST_CASES+= tls_ext_alpn
 
 REGRESS_TARGETS= all_tests
