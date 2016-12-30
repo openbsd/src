@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.938 2016/12/28 11:11:13 rpe Exp $
+#	$OpenBSD: install.sub,v 1.939 2016/12/30 22:59:12 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2142,12 +2142,13 @@ startcgiinfo() {
 	# If no networks are configured, we do not need the httplist file.
 	((NIFS < 1)) && return
 
+	# Ensure proper name resolution in case there's no dns yet.
+	addhostent 129.128.5.191 ftp.openbsd.org
+
 	# Make sure the ftp subshell gets its own process group.
 	set -m
 	(
-		# ftp.openbsd.org == 129.128.5.191 and will remain at
-		# that address for the foreseeable future.
-		unpriv2 ftp -Vao - "http://129.128.5.191/cgi-bin/ftplist.cgi?path=$HTTP_SETDIR" \
+		unpriv2 ftp -Vao - "http://ftp.openbsd.org/cgi-bin/ftplist.cgi?path=$HTTP_SETDIR" \
 			2>/dev/null >$CGI_INFO
 
 		# Remember finish time for adjusting the received timestamp.
@@ -2644,7 +2645,7 @@ do_install(){
 		_i=$_i${INSTALL_METHOD:+method=$INSTALL_METHOD}
 		_i=${_i%&}
 		[[ -n $_i ]] && unpriv2 ftp -Vao - \
-			"http://129.128.5.191/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
+			"http://ftp.openbsd.org/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
 	fi
 
 	# Ensure an enabled console has the correct speed in /etc/ttys.
@@ -2666,6 +2667,9 @@ do_install(){
 	# to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched lines containing
 	# domain information or aliases. These are lines the user added/changed
 	# manually.
+
+	# Remove entry for ftp.openbsd.org before final hosts file is created.
+	sed -i '/129.128.5.191/d' /tmp/i/hosts
 
 	# Add common entries.
 	echo "127.0.0.1\tlocalhost" >/mnt/etc/hosts
