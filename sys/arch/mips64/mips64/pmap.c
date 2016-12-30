@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.98 2016/12/30 12:42:27 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.99 2016/12/30 12:50:38 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1437,12 +1437,8 @@ pmap_prefer(paddr_t foff, vaddr_t va)
  *	This routine is only advisory and need not do anything.
  */
 void
-pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
-	pmap_t dst_pmap;
-	pmap_t src_pmap;
-	vaddr_t dst_addr;
-	vsize_t len;
-	vaddr_t src_addr;
+pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
+    vaddr_t src_addr)
 {
 
 	DPRINTF(PDB_FOLLOW,("pmap_copy(%p, %p, %p, 0x%lx, %p)\n",
