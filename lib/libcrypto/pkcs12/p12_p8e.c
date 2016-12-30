@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_p8e.c,v 1.6 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: p12_p8e.c,v 1.7 2016/12/30 15:34:35 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -86,7 +86,7 @@ PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher, const char *pass,
 	p8->algor = pbe;
 	ASN1_OCTET_STRING_free(p8->digest);
 	p8->digest = PKCS12_item_i2d_encrypt(pbe,
-	    ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), pass, passlen, p8inf, 1);
+	    &PKCS8_PRIV_KEY_INFO_it, pass, passlen, p8inf, 1);
 	if (!p8->digest) {
 		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, PKCS12_R_ENCRYPT_ERROR);
 		goto err;

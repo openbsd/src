@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_add.c,v 1.13 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: p12_add.c,v 1.14 2016/12/30 15:34:35 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -156,7 +156,7 @@ PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
 		goto err;
 	}
 
-	if (!ASN1_item_pack(sk, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), &p7->d.data)) {
+	if (!ASN1_item_pack(sk, &PKCS12_SAFEBAGS_it, &p7->d.data)) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA,
 		    PKCS12_R_CANT_PACK_STRUCTURE);
 		goto err;
@@ -177,7 +177,7 @@ PKCS12_unpack_p7data(PKCS7 *p7)
 		    PKCS12_R_CONTENT_TYPE_NOT_DATA);
 		return NULL;
 	}
-	return ASN1_item_unpack(p7->d.data, ASN1_ITEM_rptr(PKCS12_SAFEBAGS));
+	return ASN1_item_unpack(p7->d.data, &PKCS12_SAFEBAGS_it);
 }
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 encrypted data ContentInfo */
@@ -215,7 +215,7 @@ PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
 	p7->d.encrypted->enc_data->algorithm = pbe;
 	ASN1_OCTET_STRING_free(p7->d.encrypted->enc_data->enc_data);
 	if (!(p7->d.encrypted->enc_data->enc_data = PKCS12_item_i2d_encrypt(
-	    pbe, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), pass, passlen, bags, 1))) {
+	    pbe, &PKCS12_SAFEBAGS_it, pass, passlen, bags, 1))) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA,
 		    PKCS12_R_ENCRYPT_ERROR);
 		goto err;
@@ -234,7 +234,7 @@ PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass, int passlen)
 	if (!PKCS7_type_is_encrypted(p7))
 		return NULL;
 	return PKCS12_item_decrypt_d2i(p7->d.encrypted->enc_data->algorithm,
-	    ASN1_ITEM_rptr(PKCS12_SAFEBAGS), pass, passlen,
+	    &PKCS12_SAFEBAGS_it, pass, passlen,
 	    p7->d.encrypted->enc_data->enc_data, 1);
 }
 
@@ -247,7 +247,7 @@ PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag, const char *pass, int passlen)
 int
 PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
 {
-	if (ASN1_item_pack(safes, ASN1_ITEM_rptr(PKCS12_AUTHSAFES),
+	if (ASN1_item_pack(safes, &PKCS12_AUTHSAFES_it,
 	    &p12->authsafes->d.data))
 		return 1;
 	return 0;
@@ -262,5 +262,5 @@ PKCS12_unpack_authsafes(PKCS12 *p12)
 		return NULL;
 	}
 	return ASN1_item_unpack(p12->authsafes->d.data,
-	    ASN1_ITEM_rptr(PKCS12_AUTHSAFES));
+	    &PKCS12_AUTHSAFES_it);
 }
