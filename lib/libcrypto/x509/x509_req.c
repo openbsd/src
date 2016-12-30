@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.18 2015/09/30 17:30:16 jsing Exp $ */
+/* $OpenBSD: x509_req.c,v 1.19 2016/12/30 15:24:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,7 +224,7 @@ X509_REQ_get_extensions(X509_REQ *req)
 		return NULL;
 	p = ext->value.sequence->data;
 	return (STACK_OF(X509_EXTENSION) *)ASN1_item_d2i(NULL, &p,
-	    ext->value.sequence->length, ASN1_ITEM_rptr(X509_EXTENSIONS));
+	    ext->value.sequence->length, &X509_EXTENSIONS_it);
 }
 
 /* Add a STACK_OF extensions to a certificate request: allow alternative OIDs
@@ -245,7 +245,7 @@ X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 	at->type = V_ASN1_SEQUENCE;
 	/* Generate encoding of extensions */
 	at->value.sequence->length = ASN1_item_i2d((ASN1_VALUE *)exts,
-	    &at->value.sequence->data, ASN1_ITEM_rptr(X509_EXTENSIONS));
+	    &at->value.sequence->data, &X509_EXTENSIONS_it);
 	if (!(attr = X509_ATTRIBUTE_new()))
 		goto err;
 	if (!(attr->value.set = sk_ASN1_TYPE_new_null()))
