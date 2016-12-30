@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.97 2016/12/23 12:38:16 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.98 2016/12/30 12:42:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1059,6 +1059,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	if (pg != NULL) {
 		mtx_enter(&pg->mdpage.pv_mtx);
+
+		/* Set page referenced/modified status based on flags */
+		if (flags & PROT_WRITE)
+			atomic_setbits_int(&pg->pg_flags,
+			    PGF_ATTR_MOD | PGF_ATTR_REF);
+		else if (flags & PROT_MASK)
+			atomic_setbits_int(&pg->pg_flags, PGF_ATTR_REF);
+
 		if (!(prot & PROT_WRITE)) {
 			npte = PG_ROPAGE;
 		} else {
@@ -1080,13 +1088,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			npte &= ~PG_CACHED;
 			npte |= PG_UNCACHED;
 		}
-
-		/* Set page referenced/modified status based on flags */
-		if (flags & PROT_WRITE)
-			atomic_setbits_int(&pg->pg_flags,
-			    PGF_ATTR_MOD | PGF_ATTR_REF);
-		else if (flags & PROT_MASK)
-			atomic_setbits_int(&pg->pg_flags, PGF_ATTR_REF);
 
 		stat_count(enter_stats.managed);
 	} else {
