@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_sxnet.c,v 1.17 2015/09/30 17:30:16 jsing Exp $ */
+/* $OpenBSD: v3_sxnet.c,v 1.18 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -79,7 +79,7 @@ static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 const X509V3_EXT_METHOD v3_sxnet = {
 	.ext_nid = NID_sxnet,
 	.ext_flags = X509V3_EXT_MULTILINE,
-	.it = ASN1_ITEM_ref(SXNET),
+	.it = &SXNET_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

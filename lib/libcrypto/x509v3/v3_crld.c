@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_crld.c,v 1.19 2015/07/29 16:13:48 jsing Exp $ */
+/* $OpenBSD: v3_crld.c,v 1.20 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -73,7 +73,7 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
 const X509V3_EXT_METHOD v3_crld = {
 	.ext_nid = NID_crl_distribution_points,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(CRL_DIST_POINTS),
+	.it = &CRL_DIST_POINTS_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,
@@ -90,7 +90,7 @@ const X509V3_EXT_METHOD v3_crld = {
 const X509V3_EXT_METHOD v3_freshest_crl = {
 	.ext_nid = NID_freshest_crl,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(CRL_DIST_POINTS),
+	.it = &CRL_DIST_POINTS_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,
@@ -642,7 +642,7 @@ static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 const X509V3_EXT_METHOD v3_idp = {
 	NID_issuing_distribution_point, X509V3_EXT_MULTILINE,
-	ASN1_ITEM_ref(ISSUING_DIST_POINT),
+	&ISSUING_DIST_POINT_it,
 	0, 0, 0, 0,
 	0, 0,
 	0,

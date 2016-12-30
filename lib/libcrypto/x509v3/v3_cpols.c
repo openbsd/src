@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_cpols.c,v 1.23 2015/09/30 18:21:50 jsing Exp $ */
+/* $OpenBSD: v3_cpols.c,v 1.24 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -85,7 +85,7 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos);
 const X509V3_EXT_METHOD v3_cpols = {
 	.ext_nid = NID_certificate_policies,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(CERTIFICATEPOLICIES),
+	.it = &CERTIFICATEPOLICIES_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

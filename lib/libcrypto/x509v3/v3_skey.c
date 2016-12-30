@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_skey.c,v 1.13 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: v3_skey.c,v 1.14 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,7 +68,7 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
 const X509V3_EXT_METHOD v3_skey_id = {
 	.ext_nid = NID_subject_key_identifier,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(ASN1_OCTET_STRING),
+	.it = &ASN1_OCTET_STRING_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

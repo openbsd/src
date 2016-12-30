@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pci.c,v 1.10 2015/07/29 16:13:49 jsing Exp $ */
+/* $OpenBSD: v3_pci.c,v 1.11 2016/12/30 15:54:49 jsing Exp $ */
 /* Contributed to the OpenSSL Project 2004
  * by Richard Levitte (richard@levitte.org)
  */
@@ -49,7 +49,7 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
 const X509V3_EXT_METHOD v3_pci = {
 	.ext_nid = NID_proxyCertInfo,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(PROXY_CERT_INFO_EXTENSION),
+	.it = &PROXY_CERT_INFO_EXTENSION_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

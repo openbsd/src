@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akey.c,v 1.17 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: v3_akey.c,v 1.18 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -73,7 +73,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 const X509V3_EXT_METHOD v3_akey_id = {
 	.ext_nid = NID_authority_key_identifier,
 	.ext_flags = X509V3_EXT_MULTILINE,
-	.it = ASN1_ITEM_ref(AUTHORITY_KEYID),
+	.it = &AUTHORITY_KEYID_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_bcons.c,v 1.13 2015/07/29 16:13:48 jsing Exp $ */
+/* $OpenBSD: v3_bcons.c,v 1.14 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -73,7 +73,7 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
 const X509V3_EXT_METHOD v3_bcons = {
 	.ext_nid = NID_basic_constraints,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(BASIC_CONSTRAINTS),
+	.it = &BASIC_CONSTRAINTS_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pcons.c,v 1.9 2015/07/29 16:13:49 jsing Exp $ */
+/* $OpenBSD: v3_pcons.c,v 1.10 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -74,7 +74,7 @@ static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
 const X509V3_EXT_METHOD v3_policy_constraints = {
 	.ext_nid = NID_policy_constraints,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(POLICY_CONSTRAINTS),
+	.it = &POLICY_CONSTRAINTS_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

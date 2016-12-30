@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_alt.c,v 1.25 2015/09/30 18:21:50 jsing Exp $ */
+/* $OpenBSD: v3_alt.c,v 1.26 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -76,7 +76,7 @@ const X509V3_EXT_METHOD v3_alt[] = {
 	{
 		.ext_nid = NID_subject_alt_name,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(GENERAL_NAMES),
+		.it = &GENERAL_NAMES_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,
@@ -92,7 +92,7 @@ const X509V3_EXT_METHOD v3_alt[] = {
 	{
 		.ext_nid = NID_issuer_alt_name,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(GENERAL_NAMES),
+		.it = &GENERAL_NAMES_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,
@@ -108,7 +108,7 @@ const X509V3_EXT_METHOD v3_alt[] = {
 	{
 		.ext_nid = NID_certificate_issuer,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(GENERAL_NAMES),
+		.it = &GENERAL_NAMES_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,

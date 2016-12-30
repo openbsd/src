@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_info.c,v 1.23 2015/07/29 16:13:48 jsing Exp $ */
+/* $OpenBSD: v3_info.c,v 1.24 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -74,7 +74,7 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(
 const X509V3_EXT_METHOD v3_info = {
 	.ext_nid = NID_info_access,
 	.ext_flags = X509V3_EXT_MULTILINE,
-	.it = ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
+	.it = &AUTHORITY_INFO_ACCESS_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,
@@ -91,7 +91,7 @@ const X509V3_EXT_METHOD v3_info = {
 const X509V3_EXT_METHOD v3_sinfo = {
 	.ext_nid = NID_sinfo_access,
 	.ext_flags = X509V3_EXT_MULTILINE,
-	.it = ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
+	.it = &AUTHORITY_INFO_ACCESS_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

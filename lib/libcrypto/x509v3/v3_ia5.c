@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ia5.c,v 1.15 2015/09/30 18:21:50 jsing Exp $ */
+/* $OpenBSD: v3_ia5.c,v 1.16 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -72,7 +72,7 @@ const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
 	{
 		.ext_nid = NID_netscape_base_url,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(ASN1_IA5STRING),
+		.it = &ASN1_IA5STRING_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,
@@ -88,7 +88,7 @@ const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
 	{
 		.ext_nid = NID_netscape_revocation_url,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(ASN1_IA5STRING),
+		.it = &ASN1_IA5STRING_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,
@@ -104,7 +104,7 @@ const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
 	{
 		.ext_nid = NID_netscape_ca_revocation_url,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(ASN1_IA5STRING),
+		.it = &ASN1_IA5STRING_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,
@@ -120,7 +120,7 @@ const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
 	{
 		.ext_nid = NID_netscape_renewal_url,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(ASN1_IA5STRING),
+		.it = &ASN1_IA5STRING_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,
@@ -136,7 +136,7 @@ const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
 	{
 		.ext_nid = NID_netscape_ca_policy_url,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(ASN1_IA5STRING),
+		.it = &ASN1_IA5STRING_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,
@@ -152,7 +152,7 @@ const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
 	{
 		.ext_nid = NID_netscape_ssl_server_name,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(ASN1_IA5STRING),
+		.it = &ASN1_IA5STRING_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,
@@ -168,7 +168,7 @@ const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
 	{
 		.ext_nid = NID_netscape_comment,
 		.ext_flags = 0,
-		.it = ASN1_ITEM_ref(ASN1_IA5STRING),
+		.it = &ASN1_IA5STRING_it,
 		.ext_new = NULL,
 		.ext_free = NULL,
 		.d2i = NULL,

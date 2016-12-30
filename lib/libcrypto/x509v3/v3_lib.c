@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_lib.c,v 1.14 2015/02/10 11:22:22 jsing Exp $ */
+/* $OpenBSD: v3_lib.c,v 1.15 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -194,7 +194,7 @@ X509V3_EXT_d2i(X509_EXTENSION *ext)
 	p = ext->value->data;
 	if (method->it)
 		return ASN1_item_d2i(NULL, &p, ext->value->length,
-		    ASN1_ITEM_ptr(method->it));
+		    method->it);
 	return method->d2i(NULL, &p, ext->value->length);
 }
 

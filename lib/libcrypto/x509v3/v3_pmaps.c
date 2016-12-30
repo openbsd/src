@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pmaps.c,v 1.9 2015/07/29 16:13:49 jsing Exp $ */
+/* $OpenBSD: v3_pmaps.c,v 1.10 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -72,7 +72,7 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(
 const X509V3_EXT_METHOD v3_policy_mappings = {
 	.ext_nid = NID_policy_mappings,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(POLICY_MAPPINGS),
+	.it = &POLICY_MAPPINGS_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

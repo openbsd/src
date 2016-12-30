@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_conf.c,v 1.19 2015/12/14 03:39:14 beck Exp $ */
+/* $OpenBSD: v3_conf.c,v 1.20 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -173,7 +173,7 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value)
 
 	ext = do_ext_i2d(method, ext_nid, crit, ext_struc);
 	if (method->it)
-		ASN1_item_free(ext_struc, ASN1_ITEM_ptr(method->it));
+		ASN1_item_free(ext_struc, method->it);
 	else
 		method->ext_free(ext_struc);
 	return ext;
@@ -192,7 +192,7 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 	if (method->it) {
 		ext_der = NULL;
 		ext_len = ASN1_item_i2d(ext_struc, &ext_der,
-		    ASN1_ITEM_ptr(method->it));
+		    method->it);
 		if (ext_len < 0)
 			goto merr;
 	} else {

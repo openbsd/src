@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_prn.c,v 1.18 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: v3_prn.c,v 1.19 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -115,7 +115,7 @@ X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent)
 	p = ext->value->data;
 	if (method->it)
 		ext_str = ASN1_item_d2i(NULL, &p, ext->value->length,
-		    ASN1_ITEM_ptr(method->it));
+		    method->it);
 	else
 		ext_str = method->d2i(NULL, &p, ext->value->length);
 
@@ -145,7 +145,7 @@ err:
 	sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
 	free(value);
 	if (method->it)
-		ASN1_item_free(ext_str, ASN1_ITEM_ptr(method->it));
+		ASN1_item_free(ext_str, method->it);
 	else
 		method->ext_free(ext_str);
 	return ok;

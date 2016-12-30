@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ncons.c,v 1.9 2015/07/29 16:13:48 jsing Exp $ */
+/* $OpenBSD: v3_ncons.c,v 1.10 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -82,7 +82,7 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 const X509V3_EXT_METHOD v3_name_constraints = {
 	.ext_nid = NID_name_constraints,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(NAME_CONSTRAINTS),
+	.it = &NAME_CONSTRAINTS_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,

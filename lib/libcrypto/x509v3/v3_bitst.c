@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_bitst.c,v 1.12 2015/09/29 13:54:40 jsing Exp $ */
+/* $OpenBSD: v3_bitst.c,v 1.13 2016/12/30 15:54:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -91,7 +91,7 @@ static BIT_STRING_BITNAME key_usage_type_table[] = {
 const X509V3_EXT_METHOD v3_nscert = {
 	.ext_nid = NID_netscape_cert_type,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(ASN1_BIT_STRING),
+	.it = &ASN1_BIT_STRING_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,
@@ -108,7 +108,7 @@ const X509V3_EXT_METHOD v3_nscert = {
 const X509V3_EXT_METHOD v3_key_usage = {
 	.ext_nid = NID_key_usage,
 	.ext_flags = 0,
-	.it = ASN1_ITEM_ref(ASN1_BIT_STRING),
+	.it = &ASN1_BIT_STRING_it,
 	.ext_new = NULL,
 	.ext_free = NULL,
 	.d2i = NULL,
