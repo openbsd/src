@@ -2174,6 +2174,7 @@
 ./usr/share/man/man3/curs_util.3
 ./usr/share/man/man3/curs_window.3
 ./usr/share/man/man3/curses.3
+./usr/share/man/man3/d2i_ASN1_NULL.3
 ./usr/share/man/man3/d2i_ASN1_OBJECT.3
 ./usr/share/man/man3/d2i_AUTHORITY_KEYID.3
 ./usr/share/man/man3/d2i_BASIC_CONSTRAINTS.3
