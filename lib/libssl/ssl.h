@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.101 2016/12/21 16:51:10 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.102 2016/12/30 17:20:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1469,7 +1469,9 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 #define SSL_CTRL_GET_EXTRA_CHAIN_CERTS		82
 #define SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS	83
 
-#define SSL_CTRL_SET_ECDH_AUTO				94
+#define SSL_CTRL_SET_ECDH_AUTO			94
+
+#define SSL_CTRL_GET_SERVER_TMP_KEY		109
 
 #define SSL_CTRL_SET_DH_AUTO			118
 
@@ -1521,6 +1523,9 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_EXTRA_CHAIN_CERTS,0,px509)
 #define SSL_CTX_clear_extra_chain_certs(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS,0,NULL)
+
+#define SSL_get_server_tmp_key(s, pk) \
+	SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);

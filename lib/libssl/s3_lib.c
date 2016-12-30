@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.114 2016/12/21 16:44:31 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.115 2016/12/30 17:20:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,6 +151,7 @@
 #include <limits.h>
 #include <stdio.h>
 
+#include <openssl/bn.h>
 #include <openssl/curve25519.h>
 #include <openssl/dh.h>
 #include <openssl/md5.h>
@@ -1904,6 +1905,67 @@ ssl3_clear(SSL *s)
 	s->next_proto_negotiated_len = 0;
 }
 
+static long
+ssl_ctrl_get_server_tmp_key(SSL *s, EVP_PKEY **pkey_tmp)
+{
+	EVP_PKEY *pkey = NULL;
+	EC_GROUP *group = NULL;
+	EC_POINT *point = NULL;
+	EC_KEY *ec_key = NULL;
+	BIGNUM *order = NULL;
+	SESS_CERT *sc;
+	int ret = 0;
+
+	*pkey_tmp = NULL;
+
+	if (s->server != 0)
+		return 0;
+	if (s->session == NULL || s->session->sess_cert == NULL)
+		return 0;
+
+	sc = s->session->sess_cert;
+
+	if ((pkey = EVP_PKEY_new()) == NULL)
+		return 0;
+
+	if (sc->peer_dh_tmp != NULL) {
+		ret = EVP_PKEY_set1_DH(pkey, sc->peer_dh_tmp);
+	} else if (sc->peer_ecdh_tmp) {
+		ret = EVP_PKEY_set1_EC_KEY(pkey, sc->peer_ecdh_tmp);
+	} else if (sc->peer_x25519_tmp != NULL) {
+		/* Fudge up an EC_KEY that looks like X25519... */
+		if ((group = EC_GROUP_new(EC_GFp_mont_method())) == NULL)
+			goto err;
+		if ((point = EC_POINT_new(group)) == NULL)
+			goto err;
+		if ((order = BN_new()) == NULL)
+			goto err;
+		if (!BN_set_bit(order, 252))
+			goto err;
+		if (!EC_GROUP_set_generator(group, point, order, NULL))
+			goto err;
+		EC_GROUP_set_curve_name(group, NID_X25519);
+		if ((ec_key = EC_KEY_new()) == NULL)
+			goto err;
+		if (!EC_KEY_set_group(ec_key, group))
+			goto err;
+		ret = EVP_PKEY_set1_EC_KEY(pkey, ec_key);
+	}
+
+	if (ret == 1) {
+		*pkey_tmp = pkey;
+		pkey = NULL;
+	}
+
+  err:
+	EVP_PKEY_free(pkey);
+	EC_GROUP_free(group);
+	EC_POINT_free(point);
+	EC_KEY_free(ec_key);
+	BN_free(order);
+
+	return (ret);
+}
 
 long
 ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
@@ -2075,6 +2137,10 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_SET_ECDH_AUTO:
 		s->cert->ecdh_tmp_auto = larg;
 		ret = 1;
+		break;
+
+	case SSL_CTRL_GET_SERVER_TMP_KEY:
+		ret = ssl_ctrl_get_server_tmp_key(s, parg);
 		break;
 
 	default:
