@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.10 2014/10/28 05:46:56 miod Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.11 2016/12/30 15:38:13 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -76,7 +76,7 @@ PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
 		return 0;
 	}
 	seq->length = ASN1_item_i2d((ASN1_VALUE *)cap, &seq->data,
-	    ASN1_ITEM_rptr(X509_ALGORS));
+	    &X509_ALGORS_it);
 	return PKCS7_add_signed_attribute(si, NID_SMIMECapabilities,
 	    V_ASN1_SEQUENCE, seq);
 }
@@ -93,7 +93,7 @@ PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
 	p = cap->value.sequence->data;
 	return (STACK_OF(X509_ALGOR) *)
 	ASN1_item_d2i(NULL, &p, cap->value.sequence->length,
-	    ASN1_ITEM_rptr(X509_ALGORS));
+	    &X509_ALGORS_it);
 }
 
 /* Basic smime-capabilities OID and optional integer arg */

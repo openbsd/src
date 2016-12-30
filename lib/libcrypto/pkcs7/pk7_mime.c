@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_mime.c,v 1.12 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: pk7_mime.c,v 1.13 2016/12/30 15:38:13 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -64,14 +64,14 @@ int
 i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
 {
 	return i2d_ASN1_bio_stream(out, (ASN1_VALUE *)p7, in, flags,
-	    ASN1_ITEM_rptr(PKCS7));
+	    &PKCS7_it);
 }
 
 int
 PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
 {
 	return PEM_write_bio_ASN1_stream(out, (ASN1_VALUE *) p7, in, flags,
-	    "PKCS7", ASN1_ITEM_rptr(PKCS7));
+	    "PKCS7", &PKCS7_it);
 }
 
 int
@@ -88,11 +88,11 @@ SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 
 
 	return SMIME_write_ASN1(bio, (ASN1_VALUE *)p7, data, flags,
-	    ctype_nid, NID_undef, mdalgs, ASN1_ITEM_rptr(PKCS7));
+	    ctype_nid, NID_undef, mdalgs, &PKCS7_it);
 }
 
 PKCS7 *
 SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 {
-	return (PKCS7 *)SMIME_read_ASN1(bio, bcont, ASN1_ITEM_rptr(PKCS7));
+	return (PKCS7 *)SMIME_read_ASN1(bio, bcont, &PKCS7_it);
 }

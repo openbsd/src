@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_pk7.c,v 1.4 2014/06/29 17:05:36 jsing Exp $ */
+/* $OpenBSD: bio_pk7.c,v 1.5 2016/12/30 15:38:13 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -62,5 +62,5 @@
 BIO *
 BIO_new_PKCS7(BIO *out, PKCS7 *p7)
 {
-	return BIO_new_NDEF(out, (ASN1_VALUE *)p7, ASN1_ITEM_rptr(PKCS7));
+	return BIO_new_NDEF(out, (ASN1_VALUE *)p7, &PKCS7_it);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.39 2016/11/05 15:19:07 miod Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.40 2016/12/30 15:38:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -915,7 +915,7 @@ PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 	}
 
 	alen = ASN1_item_i2d((ASN1_VALUE *)si->auth_attr, &abuf,
-	    ASN1_ITEM_rptr(PKCS7_ATTR_SIGN));
+	    &PKCS7_ATTR_SIGN_it);
 	if (!abuf)
 		goto err;
 	if (EVP_DigestSignUpdate(&mctx, abuf, alen) <= 0)
@@ -1090,7 +1090,7 @@ PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si, X509 *x509)
 			goto err;
 
 		alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
-		    ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY));
+		    &PKCS7_ATTR_VERIFY_it);
 		if (alen <= 0) {
 			PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY, ERR_R_ASN1_LIB);
 			ret = -1;
