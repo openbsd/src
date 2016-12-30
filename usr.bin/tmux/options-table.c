@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.75 2016/10/13 21:37:03 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.76 2016/12/30 13:49:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -896,7 +896,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "xterm-keys",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_num = 0
+	  .default_num = 1
 	},
 
 	{ .name = NULL }
