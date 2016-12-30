@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_asn1.c,v 1.9 2016/11/04 18:35:30 jsing Exp $ */
+/* $OpenBSD: dh_asn1.c,v 1.10 2016/12/30 15:26:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -163,5 +163,5 @@ i2d_DHparams_fp(FILE *fp, DH *a)
 DH *
 DHparams_dup(DH *dh)
 {
-	return ASN1_item_dup(ASN1_ITEM_rptr(DHparams), dh);
+	return ASN1_item_dup(&DHparams_it, dh);
 }
