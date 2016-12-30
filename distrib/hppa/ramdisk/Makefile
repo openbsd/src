@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2016/12/08 10:44:01 natano Exp $
+#	$OpenBSD: Makefile,v 1.31 2016/12/30 22:32:25 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -76,6 +76,9 @@ ${IMAGE}: ${CBIN}
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/${CBIN}
 	makefs ${MAKEFSARGS_RD} $@ $@.d
+	vnconfig -v -c vnd0 $@
+	df -i /dev/vnd0a
+	vnconfig -u vnd0
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf

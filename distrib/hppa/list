@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.39 2016/09/17 15:03:39 florian Exp $
+#	$OpenBSD: list,v 1.40 2016/12/30 22:32:25 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -47,7 +47,6 @@ LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/doas
 LINK	instbin					usr/bin/encrypt
-LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/more usr/bin/less
@@ -56,6 +55,10 @@ LINK	instbin					usr/bin/signify
 LINK	instbin					usr/sbin/chroot
 LINK	instbin					usr/sbin/pwd_mkdb
 LINK	instbin					usr/sbin/installboot
+
+COPY	${DESTDIR}/etc/ssl/cert.pem		etc/ssl/cert.pem
+LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
+SPECIAL	rm usr/bin/ftp-ssl
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../miniroot/group		etc/group

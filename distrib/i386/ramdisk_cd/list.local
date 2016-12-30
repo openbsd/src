@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.36 2016/09/17 15:03:39 florian Exp $
+# $OpenBSD: list.local,v 1.37 2016/12/30 22:32:25 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/mount_ext2fs
@@ -6,6 +6,10 @@ LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/mount_udf
 LINK	instbin					sbin/restore
 LINK	instbin					sbin/bioctl
+
+COPY	${DESTDIR}/etc/ssl/cert.pem		etc/ssl/cert.pem
+LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
+SPECIAL	rm usr/bin/ftp-ssl
 
 # firmware we might need
 #COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1

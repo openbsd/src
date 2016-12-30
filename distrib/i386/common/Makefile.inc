@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.40 2016/11/24 16:32:33 natano Exp $
+#	$OpenBSD: Makefile.inc,v 1.41 2016/12/30 22:32:25 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -54,7 +54,7 @@ unconfig:
 	-vnconfig -u ${VND}
 
 
-DISKTYPE=	rdroot
+DISKTYPE?=	rdroot
 MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 
 COPTS= -Os -mtune=i486
@@ -84,6 +84,9 @@ ${IMAGE}: ${CBIN}
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/${CBIN}
 	makefs ${MAKEFSARGS_RD} $@ $@.d
+	vnconfig -v -c ${VND} mr.fs
+	df -i /dev/${VND}a
+	vnconfig -u ${VND}
 
 rdsetroot:	${TOP}/../common/elfrdsetroot.c
 	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
