@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.47 2016/12/04 14:32:30 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.48 2016/12/30 16:57:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -231,43 +231,15 @@ ssl23_client_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p, *d;
 	unsigned long l;
-	int version = 0, version_major, version_minor;
-	int ret;
-	unsigned long mask, options = s->options;
+	uint16_t version;
 	size_t outlen;
-
-	/*
-	 * SSL_OP_NO_X disables all protocols above X *if* there are
-	 * some protocols below X enabled. This is required in order
-	 * to maintain "version capability" vector contiguous. So
-	 * that if application wants to disable TLS1.0 in favour of
-	 * TLS1>=1, it would be insufficient to pass SSL_NO_TLSv1, the
-	 * answer is SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3|SSL_OP_NO_SSLv2.
-	 */
-	mask = SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1;
-	version = TLS1_2_VERSION;
-
-	if ((options & SSL_OP_NO_TLSv1_2) && (options & mask) != mask)
-		version = TLS1_1_VERSION;
-	mask &= ~SSL_OP_NO_TLSv1_1;
-	if ((options & SSL_OP_NO_TLSv1_1) && (options & mask) != mask)
-		version = TLS1_VERSION;
-	mask &= ~SSL_OP_NO_TLSv1;
+	int ret;
 
 	buf = (unsigned char *)s->init_buf->data;
 	if (s->state == SSL23_ST_CW_CLNT_HELLO_A) {
 		arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
-		if (version == TLS1_2_VERSION) {
-			version_major = TLS1_2_VERSION_MAJOR;
-			version_minor = TLS1_2_VERSION_MINOR;
-		} else if (version == TLS1_1_VERSION) {
-			version_major = TLS1_1_VERSION_MAJOR;
-			version_minor = TLS1_1_VERSION_MINOR;
-		} else if (version == TLS1_VERSION) {
-			version_major = TLS1_VERSION_MAJOR;
-			version_minor = TLS1_VERSION_MINOR;
-		} else {
+		if (ssl_enabled_version_range(s, NULL, &version) == -1) {
 			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
 			    SSL_R_NO_PROTOCOLS_AVAILABLE);
 			return (-1);
@@ -283,8 +255,8 @@ ssl23_client_hello(SSL *s)
 		 */
 		d = p = &(buf[SSL3_RT_HEADER_LENGTH + SSL3_HM_HEADER_LENGTH]);
 
-		*(p++) = version_major;
-		*(p++) = version_minor;
+		*(p++) = version >> 8;
+		*(p++) = version & 0xff;
 
 		/* Random stuff */
 		memcpy(p, s->s3->client_random, SSL3_RANDOM_SIZE);
@@ -334,7 +306,7 @@ ssl23_client_hello(SSL *s)
 		/* fill in 5-byte record header */
 		d = buf;
 		*(d++) = SSL3_RT_HANDSHAKE;
-		*(d++) = version_major;
+		*(d++) = version >> 8;
 
 		/*
 		 * Some servers hang if we use long client hellos
@@ -343,7 +315,7 @@ ssl23_client_hello(SSL *s)
 		if (TLS1_get_client_version(s) > TLS1_VERSION)
 			*(d++) = 1;
 		else
-			*(d++) = version_minor;
+			*(d++) = version & 0xff;
 		s2n((int)l, d);
 
 		/* number of bytes to write */
@@ -362,8 +334,7 @@ ssl23_client_hello(SSL *s)
 
 	if ((ret >= 2) && s->msg_callback) {
 		/* Client Hello has been sent; tell msg_callback */
-
-		s->msg_callback(1, version, SSL3_RT_HANDSHAKE,
+		s->msg_callback(1, s->client_version, SSL3_RT_HANDSHAKE,
 		    s->init_buf->data + 5, ret - 5, s, s->msg_callback_arg);
 	}
 

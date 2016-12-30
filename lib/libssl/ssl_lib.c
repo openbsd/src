@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.122 2016/12/04 14:32:30 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.123 2016/12/30 16:57:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2482,6 +2482,48 @@ const char *
 SSL_get_version(const SSL *s)
 {
 	return ssl_version_string(s->version);
+}
+
+int
+ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
+{
+	uint16_t min_version, max_version;
+
+	/*
+	 * The enabled versions have to be a contiguous range, which means we
+	 * cannot enable and disable single versions at our whim, even though
+	 * this is what the OpenSSL flags allow. The historical way this has
+	 * been handled is by making a flag mean that all higher versions
+	 * are disabled, if any version lower than the flag is enabled.
+	 */
+
+	min_version = 0;
+	max_version = TLS1_2_VERSION;
+
+	if ((s->options & SSL_OP_NO_TLSv1) == 0)
+		min_version = TLS1_VERSION;
+	else if ((s->options & SSL_OP_NO_TLSv1_1) == 0)
+		min_version = TLS1_1_VERSION;
+	else if ((s->options & SSL_OP_NO_TLSv1_2) == 0)
+		min_version = TLS1_2_VERSION;
+
+	if ((s->options & SSL_OP_NO_TLSv1_2) && min_version < TLS1_2_VERSION)
+		max_version = TLS1_1_VERSION;
+	if ((s->options & SSL_OP_NO_TLSv1_1) && min_version < TLS1_1_VERSION)
+		max_version = TLS1_VERSION;
+	if ((s->options & SSL_OP_NO_TLSv1) && min_version < TLS1_VERSION)
+		max_version = 0;
+
+	/* Everything has been disabled... */
+	if (min_version == 0 || max_version == 0)
+		return -1;
+
+	if (min_ver != NULL)
+		*min_ver = min_version;
+	if (max_ver != NULL)
+		*max_ver = max_version;
+
+	return 0;
 }
 
 uint16_t
