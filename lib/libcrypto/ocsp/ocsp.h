@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.h,v 1.10 2016/12/27 16:05:56 jsing Exp $ */
+/* $OpenBSD: ocsp.h,v 1.11 2016/12/30 16:19:04 jsing Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -358,25 +358,25 @@ typedef struct ocsp_service_locator_st {
 	bp,(char *)o, NULL,NULL,0,NULL,NULL)
 
 #define OCSP_REQUEST_sign(o,pkey,md) \
-    ASN1_item_sign(ASN1_ITEM_rptr(OCSP_REQINFO), \
+    ASN1_item_sign(&OCSP_REQINFO_it, \
 	o->optionalSignature->signatureAlgorithm,NULL, \
 	o->optionalSignature->signature,o->tbsRequest,pkey,md)
 
 #define OCSP_BASICRESP_sign(o,pkey,md,d) \
-    ASN1_item_sign(ASN1_ITEM_rptr(OCSP_RESPDATA),o->signatureAlgorithm,NULL, \
+    ASN1_item_sign(&OCSP_RESPDATA_it,o->signatureAlgorithm,NULL, \
 	o->signature,o->tbsResponseData,pkey,md)
 
 #define OCSP_REQUEST_verify(a,r) \
-    ASN1_item_verify(ASN1_ITEM_rptr(OCSP_REQINFO), \
+    ASN1_item_verify(&OCSP_REQINFO_it, \
 	a->optionalSignature->signatureAlgorithm, \
 	a->optionalSignature->signature,a->tbsRequest,r)
 
 #define OCSP_BASICRESP_verify(a,r,d) \
-    ASN1_item_verify(ASN1_ITEM_rptr(OCSP_RESPDATA), \
+    ASN1_item_verify(&OCSP_RESPDATA_it, \
 	a->signatureAlgorithm,a->signature,a->tbsResponseData,r)
 
 #define ASN1_BIT_STRING_digest(data,type,md,len) \
-    ASN1_item_digest(ASN1_ITEM_rptr(ASN1_BIT_STRING),type,data,md,len)
+    ASN1_item_digest(&ASN1_BIT_STRING_it,type,data,md,len)
 
 #define OCSP_CERTSTATUS_dup(cs) \
 	ASN1_item_dup(&OCSP_CERTSTATUS_it, cs)
