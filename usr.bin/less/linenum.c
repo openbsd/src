@@ -202,7 +202,7 @@ static time_t startime;
 static void
 longish(void)
 {
-	if (++loopcount > 100) {
+	if (loopcount >= 0 && ++loopcount > 100) {
 		loopcount = 0;
 		if (time(NULL) >= startime + LONGTIME) {
 			ierror("Calculating line numbers", NULL);
