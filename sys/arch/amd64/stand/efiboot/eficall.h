@@ -1,4 +1,4 @@
-/*	$OpenBSD: eficall.h,v 1.1 2015/09/02 01:52:25 yasuoka Exp $	*/
+/*	$OpenBSD: eficall.h,v 1.2 2016/12/30 08:26:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -49,5 +49,5 @@ extern uint64_t efi_call(int, void *, ...);
 
 #define	EFI_CALL(...)	\
     _efi_call_fn(__VA_ARGS__, _call_9, _call_8, _call_7, _call_6, _call_5, \
-	    _call_4, _call_3, _call_2, _call_1, _call_1)(__VA_ARGS__)
+	    _call_4, _call_3, _call_2, _call_1, _call_0)(__VA_ARGS__)
 #endif
