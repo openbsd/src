@@ -209,6 +209,16 @@ extern enum processor_type m88k_cpu;
 
 /* A bit-field declared as `int' forces `int' alignment for the struct.  */
 #define PCC_BITFIELD_TYPE_MATTERS 1
+
+/* Define this macro if it is advisable to hold scalars in registers
+   in a wider mode than that declared by the program.  In such cases,
+   the value is constrained to be within the bounds of the declared
+   type, but kept valid in the wider mode.  The signedness of the
+   extension may differ from that of the type.  */
+#define PROMOTE_MODE(MODE, UNSIGNEDP, TYPE)	\
+  if (GET_MODE_CLASS (MODE) == MODE_INT		\
+      && GET_MODE_SIZE (MODE) < UNITS_PER_WORD)	\
+    (MODE) = SImode;
 
 /*** Register Usage ***/
 

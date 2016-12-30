@@ -115,6 +115,12 @@ static void m88k_output_file_start (void);
 #undef TARGET_PROMOTE_PROTOTYPES
 #define TARGET_PROMOTE_PROTOTYPES hook_bool_tree_true
 
+#undef TARGET_PROMOTE_FUNCTION_ARGS
+#define TARGET_PROMOTE_FUNCTION_ARGS hook_bool_tree_true
+
+#undef TARGET_PROMOTE_FUNCTION_RETURN
+#define TARGET_PROMOTE_FUNCTION_RETURN hook_bool_tree_true
+
 #undef TARGET_SETUP_INCOMING_VARARGS
 #define TARGET_SETUP_INCOMING_VARARGS m88k_setup_incoming_varargs
 
@@ -1394,14 +1400,25 @@ void
 m88k_expand_epilogue (void)
 {
   if (frame_pointer_needed)
-    emit_add (stack_pointer_rtx, frame_pointer_rtx, -m88k_fp_offset);
+    {
+      emit_insn (gen_blockage ());
+      emit_add (stack_pointer_rtx, frame_pointer_rtx, -m88k_fp_offset);
+    }
 
   if (nregs || nxregs)
     preserve_registers (m88k_fp_offset + 4, 0);
 
   if (m88k_stack_size)
-    emit_add (stack_pointer_rtx, stack_pointer_rtx, m88k_stack_size);
+    {
+      emit_insn (gen_blockage ());
+      emit_add (stack_pointer_rtx, stack_pointer_rtx, m88k_stack_size);
+    }
 
+  /* This should not be necessary, but when there are several epilogues
+     in the function after the optimizer shuffles things around, the
+     extra epilogues will lack this extremely important instruction if
+     it is not explicitly generated. */
+  emit_insn (gen_blockage ());
   emit_insn (gen_indirect_jump (INCOMING_RETURN_ADDR_RTX));
 }
 
