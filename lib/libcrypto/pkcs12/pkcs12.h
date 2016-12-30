@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.16 2016/12/27 16:05:57 jsing Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.17 2016/12/30 15:08:58 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -137,6 +137,8 @@ typedef struct pkcs12_bag_st {
 #define PKCS12_ERROR	0
 #define PKCS12_OK	1
 
+#ifndef LIBRESSL_INTERNAL
+
 /* Compatibility macros */
 
 #define M_PKCS12_x5092certbag PKCS12_x5092certbag
@@ -156,6 +158,8 @@ typedef struct pkcs12_bag_st {
 #define M_PKCS12_bag_type(bg) OBJ_obj2nid((bg)->type)
 #define M_PKCS12_cert_bag_type(bg) OBJ_obj2nid((bg)->value.bag->type)
 #define M_PKCS12_crl_bag_type M_PKCS12_cert_bag_type
+
+#endif /* !LIBRESSL_INTERNAL */
 
 #define PKCS12_get_attr(bag, attr_nid) \
 			 PKCS12_get_attr_gen(bag->attrib, attr_nid)
