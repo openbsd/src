@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_srv.c,v 1.8 2016/06/25 16:10:26 beck Exp $ */
+/* $OpenBSD: ocsp_srv.c,v 1.9 2016/12/30 15:31:58 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -127,7 +127,7 @@ OCSP_response_create(int status, OCSP_BASICRESP *bs)
 	if (!(rsp->responseBytes = OCSP_RESPBYTES_new()))
 		goto err;
 	rsp->responseBytes->responseType = OBJ_nid2obj(NID_id_pkix_OCSP_basic);
-	if (!ASN1_item_pack(bs, ASN1_ITEM_rptr(OCSP_BASICRESP),
+	if (!ASN1_item_pack(bs, &OCSP_BASICRESP_it,
 	    &rsp->responseBytes->response))
 		goto err;
 	return rsp;
