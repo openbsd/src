@@ -16,7 +16,8 @@ our %args = (
 	    qr/CAfile fake-ca.crt/ => 1,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
 	    qr/syslogd: loghost .* connection error: /.
-		qr/handshake failed: error:.*RSA_/ => 2,
+		qr/certificate verification failed: /.
+		qr/certificate signature failure/ => 2,
 	    get_testgrep() => 1,
 	},
 	cacrt => "fake-ca.crt",
