@@ -25,7 +25,6 @@
 ./usr/include/arm/frame.h
 ./usr/include/arm/ieee.h
 ./usr/include/arm/ieeefp.h
-./usr/include/arm/isa_machdep.h
 ./usr/include/arm/kcore.h
 ./usr/include/arm/limits.h
 ./usr/include/arm/lock.h
@@ -35,7 +34,6 @@
 ./usr/include/arm/param.h
 ./usr/include/arm/pcb.h
 ./usr/include/arm/pci_machdep.h
-./usr/include/arm/pio.h
 ./usr/include/arm/pmap.h
 ./usr/include/arm/proc.h
 ./usr/include/arm/profile.h
@@ -78,7 +76,6 @@
 ./usr/include/armv7/ieee.h
 ./usr/include/armv7/ieeefp.h
 ./usr/include/armv7/intr.h
-./usr/include/armv7/isa_machdep.h
 ./usr/include/armv7/limits.h
 ./usr/include/armv7/loadfile_machdep.h
 ./usr/include/armv7/lock.h
@@ -88,7 +85,6 @@
 ./usr/include/armv7/openpromio.h
 ./usr/include/armv7/param.h
 ./usr/include/armv7/pcb.h
-./usr/include/armv7/pio.h
 ./usr/include/armv7/pmap.h
 ./usr/include/armv7/proc.h
 ./usr/include/armv7/profile.h
