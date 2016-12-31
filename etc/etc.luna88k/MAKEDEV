@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.30 2016/09/04 15:38:59 naddy Exp 
-#	OpenBSD: MAKEDEV.common,v 1.93 2016/09/11 03:06:31 deraadt Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.31 2016/09/11 19:59:53 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.94 2016/09/11 19:59:51 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -69,6 +69,7 @@
 #	uk*	Unknown SCSI devices
 #	vscsi*	Virtual SCSI controller
 #	switch*	Switch driver
+#	xp	HD647180 I/O processor
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -209,6 +210,10 @@ std)
 	M klog		c 6 0 600
 	;;
 
+
+xp)
+		M xp c 11 0 600 
+	;;
 
 switch*)
 	M switch$U c 57 $U 600
@@ -399,12 +404,12 @@ ramdisk)
 	;;
 
 all)
-	R pcex audio0 lcd ttya switch0 switch1 switch2 switch3 vnd0
-	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tap0 tap1
-	R tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 diskmap vscsi0 ch0
-	R bpf fuse pppx ptm local wscons uk0 random tty00 tty01 tty02
-	R tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b pf wd0
-	R wd1 wd2 wd3 std st0 st1 fd
+	R xp pcex audio0 lcd ttya switch0 switch1 switch2 switch3
+	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tap0
+	R tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 diskmap vscsi0
+	R ch0 bpf fuse pppx ptm local wscons uk0 random tty00 tty01
+	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
+	R pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)
