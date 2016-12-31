@@ -1,3 +1,4 @@
+/*	$OpenBSD: imxtemp.c,v 1.3 2016/12/31 15:29:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
