@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.46 2016/12/20 13:27:58 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.47 2016/12/31 17:51:44 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -256,6 +256,10 @@ ieee80211_ioctl_setwpaparms(struct ieee80211com *ic,
 		if (!(ic->ic_flags & IEEE80211_F_RSNON))
 			return 0;
 		ic->ic_flags &= ~IEEE80211_F_RSNON;
+		ic->ic_rsnprotos = 0;
+		ic->ic_rsnakms = 0;
+		ic->ic_rsngroupcipher = 0;
+		ic->ic_rsnciphers = 0;
 		return ENETRESET;
 	}
 
