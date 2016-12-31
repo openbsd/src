@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.78 2016/12/08 09:47:37 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.79 2016/12/31 15:52:36 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -279,7 +279,7 @@ _OSrev=${_KERNV[0]%\.*}${_KERNV[0]#*\.}
 _PDIR="/var/syspatch"
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
 # XXX to be discussed
-_URL=http://syspatch.openbsd.org/pub/OpenBSD/${_KERNV[0]}/syspatch/$(machine)
+_URL=https://syspatch.openbsd.org/pub/OpenBSD/${_KERNV[0]}/syspatch/$(machine)
 readonly _BSDMP _FETCH _OSrev _PDIR _REL _TMP _URL
 
 trap 'set +e; rm -rf "${_TMP}"' EXIT
