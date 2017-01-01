@@ -38,8 +38,8 @@ Boston, MA 02111-1307, USA.  */
 
 #undef MULTILIB_DEFAULTS
 
-/* armv5te default cpu.  */
-#define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm9e
+/* armv6k default cpu.  */
+#define SUBTARGET_CPU_DEFAULT TARGET_CPU_mpcore
 
 /* We default to a soft-float ABI so that binaries can run on all
    target hardware.  */
