@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.123 2016/12/28 22:47:11 schwarze Exp $
+.\"	$OpenBSD: make.1,v 1.124 2017/01/01 01:08:11 tb Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: January 1 2017 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -111,7 +111,7 @@ Print a dump of the target rules and variables on stdout.
 Do not build anything.
 .It Fl q
 Do not execute any commands, but exit with status 0 if the specified targets
-are up-to-date, and 1 otherwise.
+are up to date, and 1 otherwise.
 .It Fl r
 Do not use the built-in rules specified in the system makefile,
 .Pa <sys.mk> .
@@ -128,7 +128,7 @@ Equivalent to specifying
 before each command line in the makefile.
 .It Fl t
 Rather than re-building a target as specified in the makefile, create it
-or update its modification time to make it appear up-to-date, a bit like
+or update its modification time to make it appear up to date, a bit like
 .Xr touch 1 .
 .It Ar NAME Ns = Ns Ar value
 Set the value of the variable
@@ -286,10 +286,10 @@ It is an error to use different dependency operators for the same target.
 The operators are as follows:
 .Bl -tag -width flag
 .It Ic \&:
-A target is considered out-of-date if any of its prerequisites has
+A target is considered out of date if any of its prerequisites has
 been modified more recently than the target (that is, its modification time
 is less than that of any of its prerequisites).
-Thus, targets with no prerequisites are always out-of-date.
+Thus, targets with no prerequisites are always out of date.
 .Pp
 .Nm
 will then execute the list of shell commands associated with that target.
@@ -305,7 +305,7 @@ is interrupted.
 first examines all prerequisites and re-creates them as necessary.
 .Pp
 It will then always execute the list of shell commands associated with
-that target (as if the target always was out-of-date).
+that target (as if the target always was out of date).
 .Pp
 Like
 .Ic \&: ,
@@ -315,7 +315,7 @@ and the target is still removed if
 is interrupted.
 .It Ic \&::
 Each dependency line for a target is considered independently.
-A target is considered out-of-date for this target rule if any of its
+A target is considered out of date for this target rule if any of its
 prerequisites in this dependency has been modified more recently than
 the target.
 .Pp
@@ -617,7 +617,7 @@ The name of the archive member (only valid for library rules).
 .It Va \&!
 The name of the archive file (only valid for library rules).
 .It Va \&?
-The list of prerequisites for this target that were deemed out-of-date.
+The list of prerequisites for this target that were deemed out of date.
 .It Va \&<
 The name of the prerequisite from which this target is to be built, if a valid
 inference rule (suffix rule) is in scope.
@@ -1322,7 +1322,7 @@ as if they were all preceded by a dash
 A phony target is a target that does not correspond to any object in the
 file system (more like a placeholder for a list of commands).
 .Pp
-Phony targets are always out-of-date at the start of a run, but
+Phony targets are always out of date at the start of a run, but
 .Nm
 still keeps track of when they are built (that is, when the associated
 command list finishes running).
@@ -1395,7 +1395,7 @@ Command lines attached to this target are executed if
 .Nm
 is interrupted by a SIGINT.
 .It Ic .MADE
-Mark its prerequisites as being up-to-date.
+Mark its prerequisites as being up to date.
 .It Ic .MAKE
 Mark its prerequisites as
 .Dq Always build .
@@ -1532,7 +1532,7 @@ utility exits with one of the following values:
 .It 0
 Normal behavior.
 .It 1
-The target was not up-to date.
+The target was not up to date.
 .It >1
 An error occurred.
 .El
