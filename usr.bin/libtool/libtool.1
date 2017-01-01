@@ -1,4 +1,4 @@
-.\"	$OpenBSD: libtool.1,v 1.1 2012/06/19 09:30:44 espie Exp $
+.\"	$OpenBSD: libtool.1,v 1.2 2017/01/01 18:51:40 zhuk Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 19 2012 $
+.Dd $Mdocdate: January 1 2017 $
 .Dt LIBTOOL 1
 .Os
 .Sh NAME
@@ -23,3 +23,28 @@
 .Sh DESCRIPTION
 .Nm
 is supposed to be a drop-in replacement for the eponymous GNU project.
+The following differences in behaviour with GNU Libtool are intentional:
+.Bl -bullet
+.It
+Relative
+.Ar -L
+paths are put before absolute ones.
+This allows to fix many (but not all, unfortunately) issues when software
+links to libraries already installed instead of those just built, because,
+e.g.,
+.Ar -L/usr/local/lib
+comes before
+.Ar -L../libfoo .
+.It
+Extra (duplicate)
+.Ar -L
+and
+.Ar -l
+items are stripped from link command line.
+.It
+When both
+.Ar -lstdc++
+and
+.Ar -lestdc++
+are encountered in link command line, only the latter is kept.
+.El
