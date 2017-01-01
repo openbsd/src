@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.102 2016/11/16 14:23:10 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.103 2017/01/01 15:39:01 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -306,9 +306,9 @@ void
 pppdealloc(struct ppp_softc *sc)
 {
 	struct ppp_pkt *pkt;
+	int s;
 
-	splsoftassert(IPL_SOFTNET);
-
+	NET_LOCK(s);
 	if_down(&sc->sc_if);
 	sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
 	sc->sc_devp = NULL;
@@ -343,6 +343,7 @@ pppdealloc(struct ppp_softc *sc)
 		sc->sc_comp = 0;
 	}
 #endif
+	NET_UNLOCK(s);
 }
 
 /*
