@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.48 2016/08/25 08:17:57 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.49 2017/01/02 00:51:18 jsg Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -137,66 +137,6 @@ struct cpu_functions armv7_cpufuncs = {
 };
 #endif /* CPU_ARMv7 */
 
-#if defined(CPU_XSCALE_PXA2X0)
-struct cpu_functions xscale_cpufuncs = {
-	/* CPU functions */
-
-	cpufunc_id,			/* id			*/
-	xscale_cpwait,			/* cpwait		*/
-
-	/* MMU functions */
-
-	xscale_control,			/* control		*/
-	cpufunc_auxcontrol,		/* aux control		*/
-	cpufunc_domains,		/* domain		*/
-	xscale_setttb,			/* setttb		*/
-	cpufunc_dfsr,			/* dfsr			*/
-	cpufunc_dfar,			/* dfar			*/
-	cpufunc_ifsr,			/* ifsr			*/
-	cpufunc_ifar,			/* ifar			*/
-
-	/* TLB functions */
-
-	armv4_tlb_flushID,		/* tlb_flushID		*/
-	xscale_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	armv4_tlb_flushI,		/* tlb_flushI		*/
-	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
-	armv4_tlb_flushD,		/* tlb_flushD		*/
-	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
-
-	/* Cache operations */
-
-	xscale_cache_syncI,		/* icache_sync_all	*/
-	xscale_cache_syncI_rng,		/* icache_sync_range	*/
-
-	xscale_cache_purgeD,		/* dcache_wbinv_all	*/
-	xscale_cache_purgeD_rng,	/* dcache_wbinv_range	*/
-	xscale_cache_flushD_rng,	/* dcache_inv_range	*/
-	xscale_cache_cleanD_rng,	/* dcache_wb_range	*/
-
-	xscale_cache_purgeID,		/* idcache_wbinv_all	*/
-	xscale_cache_purgeID_rng,	/* idcache_wbinv_range	*/
-
-	cpufunc_nullop,			/* sdcache_wbinv_all	*/
-	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
-	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
-	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
-	(void *)cpufunc_nullop,		/* sdcache_drain_writebuf */
-
-	/* Other functions */
-
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
-	armv4_drain_writebuf,		/* drain_writebuf	*/
-
-	xscale_cpu_sleep,		/* sleep		*/
-
-	/* Soft functions */
-	xscale_context_switch,		/* context_switch	*/
-	xscale_setup			/* cpu setup		*/
-};
-#endif
-/* CPU_XSCALE_PXA2X0 */
-
 /*
  * Global constants also used by locore.s
  */
@@ -208,85 +148,6 @@ u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 int	arm_icache_min_line_size = 32;
 int	arm_dcache_min_line_size = 32;
 int	arm_idcache_min_line_size = 32;
-
-#if defined(CPU_XSCALE_PXA2X0)
-static void get_cachetype_cp15 (void);
-
-/* Additional cache information local to this file.  Log2 of some of the
-   above numbers.  */
-static int	arm_dcache_l2_nsets;
-static int	arm_dcache_l2_assoc;
-static int	arm_dcache_l2_linesize;
-
-static void
-get_cachetype_cp15()
-{
-	u_int ctype, isize, dsize;
-	u_int multiplier;
-
-	__asm volatile("mrc p15, 0, %0, c0, c0, 1"
-		: "=r" (ctype));
-
-	/*
-	 * ...and thus spake the ARM ARM:
-	 *
-	 * If an <opcode2> value corresponding to an unimplemented or
-	 * reserved ID register is encountered, the System Control
-	 * processor returns the value of the main ID register.
-	 */
-	if (ctype == cpufunc_id())
-		goto out;
-
-	if ((ctype & CPU_CT_S) == 0)
-		arm_pcache_unified = 1;
-
-	/*
-	 * If you want to know how this code works, go read the ARM ARM.
-	 */
-
-	arm_pcache_type = CPU_CT_CTYPE(ctype);
-
-	if (arm_pcache_unified == 0) {
-		isize = CPU_CT_ISIZE(ctype);
-		multiplier = (isize & CPU_CT_xSIZE_M) ? 3 : 2;
-		arm_picache_line_size = 1U << (CPU_CT_xSIZE_LEN(isize) + 3);
-		if (CPU_CT_xSIZE_ASSOC(isize) == 0) {
-			if (isize & CPU_CT_xSIZE_M)
-				arm_picache_line_size = 0; /* not present */
-			else
-				arm_picache_ways = 1;
-		} else {
-			arm_picache_ways = multiplier <<
-			    (CPU_CT_xSIZE_ASSOC(isize) - 1);
-		}
-		arm_picache_size = multiplier << (CPU_CT_xSIZE_SIZE(isize) + 8);
-	}
-
-	dsize = CPU_CT_DSIZE(ctype);
-	multiplier = (dsize & CPU_CT_xSIZE_M) ? 3 : 2;
-	arm_pdcache_line_size = 1U << (CPU_CT_xSIZE_LEN(dsize) + 3);
-	if (CPU_CT_xSIZE_ASSOC(dsize) == 0) {
-		if (dsize & CPU_CT_xSIZE_M)
-			arm_pdcache_line_size = 0; /* not present */
-		else
-			arm_pdcache_ways = 1;
-	} else {
-		arm_pdcache_ways = multiplier <<
-		    (CPU_CT_xSIZE_ASSOC(dsize) - 1);
-	}
-	arm_pdcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
-
-	arm_dcache_align = arm_pdcache_line_size;
-
-	arm_dcache_l2_assoc = CPU_CT_xSIZE_ASSOC(dsize) + multiplier - 2;
-	arm_dcache_l2_linesize = CPU_CT_xSIZE_LEN(dsize) + 3;
-	arm_dcache_l2_nsets = 6 + CPU_CT_xSIZE_SIZE(dsize) -
-	    CPU_CT_xSIZE_ASSOC(dsize) - CPU_CT_xSIZE_LEN(dsize);
-
- out:
-	arm_dcache_align_mask = arm_dcache_align - 1;
-}
-#endif /* XSCALE */
 
 #ifdef CPU_ARMv7
 void arm_get_cachetype_cp15v7 (void);
@@ -491,27 +352,6 @@ set_cpufuncs()
 		}
 	}
 #endif /* CPU_ARMv7 */
-#ifdef CPU_XSCALE_PXA2X0
-	/* ignore core revision to test PXA2xx CPUs */
-	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA250 ||
-	    (cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X ||
-	    (cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA210) {
-
-		cpufuncs = xscale_cpufuncs;
-#if defined(PERFCTRS)
-		xscale_pmu_init();
-#endif
-
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
-		get_cachetype_cp15();
-		pmap_pte_init_xscale();
-
-		/* Use powersave on this CPU. */
-		cpu_do_powersave = 1;
-
-		return 0;
-	}
-#endif /* CPU_XSCALE_PXA2X0 */
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
@@ -598,56 +438,3 @@ armv7_setup()
 	cpu_idcache_wbinv_all();
 }
 #endif	/* CPU_ARMv7 */
-
-#if defined(CPU_XSCALE_PXA2X0)
-void
-xscale_setup()
-{
-	uint32_t auxctl;
-	uint32_t cpuctrl, cpuctrlmask;
-
-	/*
-	 * The XScale Write Buffer is always enabled.  Our option
-	 * is to enable/disable coalescing.  Note that bits 6:3
-	 * must always be enabled.
-	 */
-
-	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
-		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
-		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE
-		 | CPU_CONTROL_BPRD_ENABLE | CPU_CONTROL_AFLT_ENABLE;
-	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
-		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
-		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
-		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
-		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
-		 | CPU_CONTROL_CPCLK | CPU_CONTROL_VECRELOC;
-
-	if (vector_page == ARM_VECTORS_HIGH)
-		cpuctrl |= CPU_CONTROL_VECRELOC;
-
-	/* Clear out the cache */
-	cpu_idcache_wbinv_all();
-
-	/*
-	 * Set the control register.  Note that bits 6:3 must always
-	 * be set to 1.
-	 */
-	curcpu()->ci_ctrl = cpuctrl;
-/*	cpu_control(cpuctrlmask, cpuctrl);*/
-	cpu_control(0xffffffff, cpuctrl);
-
-	/* Make sure write coalescing is turned on */
-	__asm volatile("mrc p15, 0, %0, c1, c0, 1"
-		: "=r" (auxctl));
-#ifdef XSCALE_NO_COALESCE_WRITES
-	auxctl |= XSCALE_AUXCTL_K;
-#else
-	auxctl &= ~XSCALE_AUXCTL_K;
-#endif
-	__asm volatile("mcr p15, 0, %0, c1, c0, 1"
-		: : "r" (auxctl));
-}
-#endif	/* CPU_XSCALE_PXA2X0 */
