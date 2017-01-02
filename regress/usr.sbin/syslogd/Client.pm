@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.8 2016/09/23 14:35:15 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.9 2017/01/02 16:58:28 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -104,7 +104,9 @@ sub child {
 			}
 		}
 
+		IO::Handle::flush(\*STDOUT);
 		*STDIN = *STDOUT = $self->{cs} = $cs;
+		select(STDOUT);
 	}
 
 	if ($self->{logsock}) {

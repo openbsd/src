@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2016/11/15 12:56:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.19 2017/01/02 16:58:28 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -105,6 +105,7 @@ sys/syscall.ph: /usr/include/sys/syscall.h
 	cd /usr/include && h2ph -h -d ${.OBJDIR} ${@:R:S/$/.h/}
 
 ${REGRESS_TARGETS:M*tls*}: client.crt server.crt 127.0.0.1.crt
+${REGRESS_TARGETS:M*multilisten*}: 127.0.0.1.crt
 ${REGRESS_TARGETS:M*empty*}: empty
 ${REGRESS_TARGETS:M*toobig*}: toobig
 ${REGRESS_TARGETS:M*fake*}: fake-ca.crt
