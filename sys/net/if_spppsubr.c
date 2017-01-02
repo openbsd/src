@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.157 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.158 2017/01/02 08:41:21 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4242,11 +4242,11 @@ sppp_set_ip_addrs(void *arg1)
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addrs: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
-			NET_UNLOCK(s);
-			return;
+			goto out;
 		}
 		sppp_update_gw(ifp);
 	}
+out:
 	NET_UNLOCK(s);
 }
 
@@ -4303,11 +4303,11 @@ sppp_clear_ip_addrs(void *arg1)
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_clear_ip_addrs: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
-			NET_UNLOCK(s);
-			return;
+			goto out;
 		}
 		sppp_update_gw(ifp);
 	}
+out:
 	NET_UNLOCK(s);
 }
 
@@ -4361,13 +4361,12 @@ sppp_update_ip6_addr(void *arg)
 	struct in6_ifaddr *ia6;
 	int s, error;
 
-	s = splnet();
+	NET_LOCK(s);
 
 	ia6 = in6ifa_ifpforlinklocal(ifp, 0);
 	if (ia6 == NULL) {
 		/* IPv6 disabled? */
-		splx(s);
-		return;
+		goto out;
 	}
 
 	/* 
@@ -4381,8 +4380,7 @@ sppp_update_ip6_addr(void *arg)
 			log(LOG_ERR, SPP_FMT
 			    "could not update IPv6 address (error %d)\n",
 			    SPP_ARGS(ifp), error);
-		splx(s);
-		return;
+		goto out;
 	}
 
 	/* 
@@ -4403,7 +4401,8 @@ sppp_update_ip6_addr(void *arg)
 		    "could not update IPv6 address (error %d)\n",
 		    SPP_ARGS(ifp), error);
 	}
-	splx(s);
+out:
+	NET_UNLOCK(s);
 }
 
 /*
