@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.57 2016/06/14 20:44:43 sthen Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.58 2017/01/02 08:42:52 mpi Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -223,7 +223,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 	
 	/* init timer for interface watchdog */
-	timeout_set(&sc->sc_timeout, pppoe_timeout, sc);
+	timeout_set_proc(&sc->sc_timeout, pppoe_timeout, sc);
 	
 	if_attach(&sc->sc_sppp.pp_if);
 	if_alloc_sadl(&sc->sc_sppp.pp_if);
@@ -1056,9 +1056,11 @@ static void
 pppoe_timeout(void *arg)
 {
 	struct pppoe_softc *sc = (struct pppoe_softc *)arg;
-	int x, retry_wait, err;
+	int s, x, retry_wait, err;
 
 	PPPOEDEBUG(("%s: timeout\n", sc->sc_sppp.pp_if.if_xname));
+
+	NET_LOCK(s);
 
 	switch (sc->sc_state) {
 	case PPPOE_STATE_PADI_SENT:
@@ -1084,7 +1086,7 @@ pppoe_timeout(void *arg)
 			} else {
 				pppoe_abort_connect(sc);
 				splx(x);
-				return;
+				break;
 			}
 		}
 		if ((err = pppoe_send_padi(sc)) != 0) {
@@ -1111,7 +1113,7 @@ pppoe_timeout(void *arg)
 			timeout_add(&sc->sc_timeout,
 			    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried));
 			splx(x);
-			return;
+			break;
 		}
 		if ((err = pppoe_send_padr(sc)) != 0) {
 			sc->sc_padr_retried--;
@@ -1127,8 +1129,10 @@ pppoe_timeout(void *arg)
 		pppoe_disconnect(sc);
 		break;
 	default:
-		return;	/* all done, work in peace */
+		break;	/* all done, work in peace */
 	}
+
+	NET_UNLOCK(s);
 }
 
 /* Start a connection (i.e. initiate discovery phase). */
