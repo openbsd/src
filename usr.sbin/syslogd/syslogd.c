@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.226 2016/12/30 23:21:26 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.227 2017/01/02 15:58:02 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -214,13 +214,6 @@ int	NoDNS = 0;		/* when true, refrain from doing DNS lookups */
 int	ZuluTime = 0;		/* display date and time in UTC ISO format */
 int	IncludeHostname = 0;	/* include RFC 3164 hostnames when forwarding */
 int	Family = PF_UNSPEC;	/* protocol family, may disable IPv4 or IPv6 */
-char	*bind_host = NULL;	/* bind UDP receive socket */
-char	*bind_port = NULL;
-char	*listen_host = NULL;	/* listen on TCP receive socket */
-char	*listen_port = NULL;
-char	*tls_hostport = NULL;	/* listen on TLS receive socket */
-char	*tls_host = NULL;
-char	*tls_port = NULL;
 char	*path_ctlsock = NULL;	/* Path to control socket */
 
 struct	tls *server_ctx;
@@ -340,6 +333,7 @@ void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
 int	loghost_parse(char *, char **, char **, char **);
 int	getmsgbufsize(void);
+void	address_alloc(const char *, const char *, char ***, char ***, int *);
 int	socket_bind(const char *, const char *, const char *, int,
     int *, int *);
 int	unix_socket(char *, int, mode_t);
@@ -359,8 +353,10 @@ main(int argc, char *argv[])
 	char		*p;
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
-	int		 fd_ctlsock, fd_klog, fd_sendsys, fd_bind, fd_listen;
-	int		*fd_unix;
+	int		 fd_ctlsock, fd_klog, fd_sendsys, *fd_bind, *fd_listen;
+	int		*fd_unix, nbind, nlisten;
+	char		**bind_host, **bind_port, **listen_host, **listen_port;
+	char		*tls_hostport, *tls_host, *tls_port;
 
 	/* block signal until handler is set up */
 	sigemptyset(&sigmask);
@@ -372,6 +368,10 @@ main(int argc, char *argv[])
 		err(1, "malloc %s", _PATH_LOG);
 	path_unix[0] = _PATH_LOG;
 	nunix = 1;
+
+	bind_host = bind_port = listen_host = listen_port = NULL;
+	tls_hostport = tls_host = NULL;
+	nbind = nlisten = 0;
 
 	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hK:k:m:nP:p:S:s:T:U:uVZ"))
 	    != -1)
@@ -385,7 +385,7 @@ main(int argc, char *argv[])
 		case 'a':
 			if ((path_unix = reallocarray(path_unix, nunix + 1,
 			    sizeof(*path_unix))) == NULL)
-				err(1, "malloc %s", optarg);
+				err(1, "unix path %s", optarg);
 			path_unix[nunix++] = optarg;
 			break;
 		case 'C':		/* file containing CA certificates */
@@ -440,18 +440,12 @@ main(int argc, char *argv[])
 			path_ctlsock = optarg;
 			break;
 		case 'T':		/* allow tcp and listen on address */
-			if ((p = strdup(optarg)) == NULL)
-				err(1, "strdup listen address");
-			if (loghost_parse(p, NULL, &listen_host, &listen_port)
-			    == -1)
-				errx(1, "bad listen address: %s", optarg);
+			address_alloc("listen", optarg, &listen_host,
+			    &listen_port, &nlisten);
 			break;
 		case 'U':		/* allow udp only from address */
-			if ((p = strdup(optarg)) == NULL)
-				err(1, "strdup bind address");
-			if (loghost_parse(p, NULL, &bind_host, &bind_port)
-			    == -1)
-				errx(1, "bad bind address: %s", optarg);
+			address_alloc("bind", optarg, &bind_host, &bind_port,
+			    &nbind);
 			break;
 		case 'u':		/* allow udp input port */
 			SecureMode = 0;
@@ -512,19 +506,26 @@ main(int argc, char *argv[])
 		if (!Debug)
 			die(0);
 	}
-	fd_bind = -1;
-	if (bind_host && socket_bind("udp", bind_host, bind_port, 0,
-	    &fd_bind, &fd_bind) == -1) {
-		logerrorx("socket bind udp");
-		if (!Debug)
-			die(0);
+	if ((fd_bind = reallocarray(NULL, nbind, sizeof(*fd_bind))) == NULL)
+		err(1, "bind fd");
+	for (i = 0; i < nbind; i++) {
+		if (socket_bind("udp", bind_host[i], bind_port[i], 0,
+		    &fd_bind[i], &fd_bind[i]) == -1) {
+			logerrorx("socket bind udp");
+			if (!Debug)
+				die(0);
+		}
 	}
-	fd_listen = -1;
-	if (listen_host && socket_bind("tcp", listen_host, listen_port, 0,
-	    &fd_listen, &fd_listen) == -1) {
-		logerrorx("socket listen tcp");
-		if (!Debug)
-			die(0);
+	if ((fd_listen = reallocarray(NULL, nlisten, sizeof(*fd_listen)))
+	    == NULL)
+		err(1, "listen fd");
+	for (i = 0; i < nlisten; i++) {
+		if (socket_bind("tcp", listen_host[i], listen_port[i], 0,
+		    &fd_listen[i], &fd_listen[i]) == -1) {
+			logerrorx("socket listen tcp");
+			if (!Debug)
+				die(0);
+		}
 	}
 	fd_tls = -1;
 	if (tls_host && socket_bind("tls", tls_host, tls_port, 0,
@@ -742,8 +743,9 @@ main(int argc, char *argv[])
 	    (ev_sendsys = malloc(sizeof(struct event))) == NULL ||
 	    (ev_udp = malloc(sizeof(struct event))) == NULL ||
 	    (ev_udp6 = malloc(sizeof(struct event))) == NULL ||
-	    (ev_bind = malloc(sizeof(struct event))) == NULL ||
-	    (ev_listen = malloc(sizeof(struct event))) == NULL ||
+	    (ev_bind = reallocarray(NULL,nbind,sizeof(struct event))) == NULL ||
+	    (ev_listen = reallocarray(NULL,nlisten,sizeof(struct event)))
+		== NULL ||
 	    (ev_tls = malloc(sizeof(struct event))) == NULL ||
 	    (ev_unix = reallocarray(NULL,nunix,sizeof(struct event))) == NULL ||
 	    (ev_hup = malloc(sizeof(struct event))) == NULL ||
@@ -764,9 +766,12 @@ main(int argc, char *argv[])
 	    ev_sendsys);
 	event_set(ev_udp, fd_udp, EV_READ|EV_PERSIST, udp_readcb, ev_udp);
 	event_set(ev_udp6, fd_udp6, EV_READ|EV_PERSIST, udp_readcb, ev_udp6);
-	event_set(ev_bind, fd_bind, EV_READ|EV_PERSIST, udp_readcb, ev_bind);
-	event_set(ev_listen, fd_listen, EV_READ|EV_PERSIST, tcp_acceptcb,
-	    ev_listen);
+	for (i = 0; i < nbind; i++)
+		event_set(&ev_bind[i], fd_bind[i], EV_READ|EV_PERSIST,
+		    udp_readcb, &ev_bind[i]);
+	for (i = 0; i < nlisten; i++)
+		event_set(&ev_listen[i], fd_listen[i], EV_READ|EV_PERSIST,
+		    tcp_acceptcb, &ev_listen[i]);
 	event_set(ev_tls, fd_tls, EV_READ|EV_PERSIST, tcp_acceptcb, ev_tls);
 	for (i = 0; i < nunix; i++)
 		event_set(&ev_unix[i], fd_unix[i], EV_READ|EV_PERSIST,
@@ -818,10 +823,12 @@ main(int argc, char *argv[])
 		if (fd_udp6 != -1)
 			event_add(ev_udp6, NULL);
 	}
-	if (fd_bind != -1)
-		event_add(ev_bind, NULL);
-	if (fd_listen != -1)
-		event_add(ev_listen, NULL);
+	for (i = 0; i < nbind; i++)
+		if (fd_bind[i] != -1)
+			event_add(&ev_bind[i], NULL);
+	for (i = 0; i < nlisten; i++)
+		if (fd_listen[i] != -1)
+			event_add(&ev_listen[i], NULL);
 	if (fd_tls != -1)
 		event_add(ev_tls, NULL);
 	for (i = 0; i < nunix; i++)
@@ -854,6 +861,24 @@ main(int argc, char *argv[])
 	event_dispatch();
 	/* NOTREACHED */
 	return (0);
+}
+
+void
+address_alloc(const char *name, const char *address, char ***host,
+    char ***port, int *num)
+{
+	char *p;
+
+	/* do not care about memory leak, argv has to be preserved */
+	if ((p = strdup(address)) == NULL)
+		err(1, "%s address %s", name, address);
+	if ((*host = reallocarray(*host, *num + 1, sizeof(**host))) == NULL)
+		err(1, "%s host %s", name, address);
+	if ((*port = reallocarray(*port, *num + 1, sizeof(**port))) == NULL)
+		err(1, "%s port %s", name, address);
+	if (loghost_parse(p, NULL, *host + *num, *port + *num) == -1)
+		errx(1, "bad %s address: %s", name, address);
+	(*num)++;
 }
 
 int
