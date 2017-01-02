@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.164 2016/12/30 22:36:06 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.165 2017/01/02 13:52:11 rzalamena Exp $
 
 machine		amd64
 maxusers	4
@@ -55,6 +55,7 @@ pvbus0		at mainbus0
 
 xen0		at pvbus?		# Xen HVM domU
 xnf*		at xen?			# Xen Netfront
+xbf*		at xen?			# Xen Blkfront
 xspd0		at pci?			# XenSource Platform Device
 
 hyperv0		at pvbus?		# Hyper-V guest
