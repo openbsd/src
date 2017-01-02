@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.26 2016/12/24 16:00:35 kettenis Exp $ */
+/*	$OpenBSD: boot.h,v 1.27 2017/01/02 15:25:50 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -86,9 +86,6 @@ struct boot_dyn {
  */
 void _dl_boot_bind(const long, long *, Elf_Dyn *);
 
-extern char __got_start[];
-extern char __got_end[];
-
 void
 _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 {
@@ -98,7 +95,6 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	Elf_Dyn		*dynp;
 	Elf_Addr	start;
 	size_t		size;
-	int		pagesize;
 	int		n, argc;
 	char		**argv, **envp;
 	long		loff;
@@ -211,11 +207,6 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	 * No further changes to the PLT and/or GOT are needed so make
 	 * them read-only.
 	 */
-
-	if (dl_data[AUX_pagesz] != 0)
-		pagesize = dl_data[AUX_pagesz];
-	else
-		pagesize = 4096;
 
 	/* do any RWX -> RX fixups for executable PLTs and apply GNU_RELRO */
 	phdp = (Elf_Phdr *)dl_data[AUX_phdr];
