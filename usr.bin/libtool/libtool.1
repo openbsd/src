@@ -1,4 +1,4 @@
-.\"	$OpenBSD: libtool.1,v 1.2 2017/01/01 18:51:40 zhuk Exp $
+.\"	$OpenBSD: libtool.1,v 1.3 2017/01/02 09:21:56 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 1 2017 $
+.Dd $Mdocdate: January 2 2017 $
 .Dt LIBTOOL 1
 .Os
 .Sh NAME
@@ -27,24 +27,24 @@ The following differences in behaviour with GNU Libtool are intentional:
 .Bl -bullet
 .It
 Relative
-.Ar -L
+.Fl L
 paths are put before absolute ones.
-This allows to fix many (but not all, unfortunately) issues when software
-links to libraries already installed instead of those just built, because,
-e.g.,
-.Ar -L/usr/local/lib
+This fixes many (but not all, unfortunately) issues when software
+links to libraries already installed instead of those just built because,
+for example,
+.Qq -L/usr/local/lib
 comes before
-.Ar -L../libfoo .
+.Qq -L../libfoo .
 .It
 Extra (duplicate)
-.Ar -L
+.Fl L
 and
-.Ar -l
-items are stripped from link command line.
+.Fl l
+items are stripped from the link command line.
 .It
 When both
-.Ar -lstdc++
+.Qq -lstdc++
 and
-.Ar -lestdc++
-are encountered in link command line, only the latter is kept.
+.Qq -lestdc++
+are encountered in the link command line, only the latter is kept.
 .El
