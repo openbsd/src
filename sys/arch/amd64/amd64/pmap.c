@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.102 2016/09/17 07:37:57 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.103 2017/01/02 07:41:18 tedu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2320,11 +2320,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			       &kpm->pm_pdir[PDIR_SLOT_KERN + old],
 			       newpdes * sizeof (pd_entry_t));
 		}
-
-		/* Invalidate the PDP cache. */
-#if 0
-		pool_cache_invalidate(&pmap_pdp_cache);
-#endif
 	}
 	pmap_maxkvaddr = maxkvaddr;
 	splx(s);
