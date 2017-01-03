@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.140 2016/12/26 21:30:10 jca Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.141 2017/01/03 10:52:21 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -732,7 +732,7 @@ tcp_usrclosed(struct tcpcb *tp)
 int
 tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 {
-	int error = 0, s;
+	int error = 0;
 	struct tcp_ident_mapping tir;
 	struct inpcb *inp;
 	struct tcpcb *tp = NULL;
@@ -741,6 +741,9 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 	struct sockaddr_in6 *fin6, *lin6;
 	struct in6_addr f6, l6;
 #endif
+
+	splsoftassert(IPL_SOFTNET);
+
 	if (dodrop) {
 		if (oldp != NULL || *oldlenp != 0)
 			return (EINVAL);
@@ -781,7 +784,6 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 		return (EINVAL);
 	}
 
-	s = splsoftnet();
 	switch (tir.faddr.ss_family) {
 #ifdef INET6
 	case AF_INET6:
@@ -803,7 +805,6 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 			tp = tcp_drop(tp, ECONNABORTED);
 		else
 			error = ESRCH;
-		splx(s);
 		return (error);
 	}
 
@@ -830,7 +831,6 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 		tir.ruid = -1;
 		tir.euid = -1;
 	}
-	splx(s);
 
 	*oldlenp = sizeof (tir);
 	error = copyout((void *)&tir, oldp, sizeof (tir));

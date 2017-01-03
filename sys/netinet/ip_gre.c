@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.59 2016/03/04 22:38:23 sashan Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.60 2017/01/03 10:52:21 mpi Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -411,12 +411,10 @@ gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct inpcb *inp = sotoinpcb(so);
 
 	if (inp != NULL && inp->inp_pipex && req == PRU_SEND) {
-		int s;
 		struct sockaddr_in *sin4;
 		struct in_addr *ina_dst;
 		struct pipex_session *session;
 
-		s = splsoftnet();
 		ina_dst = NULL;
 		if ((so->so_state & SS_ISCONNECTED) != 0) {
 			inp = sotoinpcb(so);
@@ -432,7 +430,6 @@ gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		    (session = pipex_pptp_userland_lookup_session_ipv4(m,
 			    *ina_dst)))
 			m = pipex_pptp_userland_output(m, session);
-		splx(s);
 
 		if (m == NULL)
 			return (ENOMEM);
