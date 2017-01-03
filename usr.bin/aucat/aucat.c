@@ -212,7 +212,7 @@ slot_new(char *path, int mode, struct aparams *par, int hdr,
 	if (!afile_open(&s->afile, path, hdr,
 		mode == SIO_PLAY ? AFILE_FREAD : AFILE_FWRITE,
 		par, rate, cmax - cmin + 1)) {
-		free(s);
+		xfree(s);
 		return 0;
 	}
 	s->cmin = cmin;
@@ -430,14 +430,14 @@ slot_del(struct slot *s)
 #endif
 		abuf_done(&s->buf);
 		if (s->resampbuf)
-			free(s->resampbuf);
+			xfree(s->resampbuf);
 		if (s->convbuf)
-			free(s->convbuf);
+			xfree(s->convbuf);
 	}
 	for (ps = &slot_list; *ps != s; ps = &(*ps)->next)
 		; /* nothing */
 	*ps = s->next;
-	free(s);
+	xfree(s);
 }
 
 static void
@@ -727,9 +727,9 @@ dev_close(void)
 	if (dev_mh)
 		mio_close(dev_mh);
 	if (dev_mode & SIO_PLAY)
-		free(dev_pbuf);
+		xfree(dev_pbuf);
 	if (dev_mode & SIO_REC)
-		free(dev_rbuf);
+		xfree(dev_rbuf);
 }
 
 static void
@@ -1067,7 +1067,7 @@ offline(void)
 		slot_list_copy(todo, dev_pchan, dev_pbuf);
 		slot_list_iodo();
 	}
-	free(dev_pbuf);
+	xfree(dev_pbuf);
 	while (slot_list)
 		slot_del(slot_list);
 	return 1;
@@ -1217,7 +1217,7 @@ playrec(char *dev, int mode, int bufsz, char *port)
 
 	if (dev_pstate == DEV_START)
 		dev_mmcstop();
-	free(pfds);
+	xfree(pfds);
 	dev_close();
 	while (slot_list)
 		slot_del(slot_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.29 2016/09/30 08:43:23 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.30 2017/01/03 07:33:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -60,7 +60,7 @@ abuf_done(struct abuf *buf)
 		}
 	}
 #endif
-	free(buf->data);
+	xfree(buf->data);
 	buf->data = (void *)0xdeadbeef;
 }
 
