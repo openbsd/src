@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.46 2016/12/28 17:48:04 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.47 2017/01/03 17:00:04 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -137,6 +137,7 @@ extern int	proxy;
 extern char	reply_string[];
 extern off_t	restart_point;
 extern int	keep_alive_timeout;
+extern int	connect_timeout;
 extern int	pipeout;
 extern char	*action;
 

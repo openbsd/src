@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.154 2016/12/28 17:48:04 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.155 2017/01/03 17:00:04 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -165,6 +165,14 @@ url_encode(const char *path)
 
 	*epathp = '\0';
 	return (epath);
+}
+
+/* ARGSUSED */
+static void
+tooslow(int signo)
+{
+	dprintf(STDERR_FILENO, "%s: connect taking too long\n", __progname);
+	_exit(2);
 }
 
 /*
@@ -560,6 +568,11 @@ noslash:
 		}
 #endif /* !SMALL */
 
+		if (connect_timeout) {
+			(void)signal(SIGALRM, tooslow);
+			alarmtimer(connect_timeout);
+		}
+
 		for (error = connect(s, res->ai_addr, res->ai_addrlen);
 		    error != 0 && errno == EINTR; error = connect_wait(s))
 			continue;
@@ -626,6 +639,11 @@ noslash:
 #else /* !NOSSL */
 	fin = fdopen(s, "r+");
 #endif /* !NOSSL */
+
+	if (connect_timeout) {
+		signal(SIGALRM, SIG_DFL);
+		alarmtimer(0);
+	}
 
 	/*
 	 * Construct and send the request. Proxy requests don't want leading /.

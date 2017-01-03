@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.115 2016/12/28 17:48:04 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.116 2017/01/03 17:00:04 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -79,6 +79,8 @@
 
 #include "cmds.h"
 #include "ftp_var.h"
+
+int connect_timeout;
 
 #ifndef NOSSL
 char * const ssl_verify_opts[] = {
@@ -274,7 +276,7 @@ main(volatile int argc, char *argv[])
 	httpuseragent = NULL;
 
 	while ((ch = getopt(argc, argv,
-		    "46AaCc:dD:Eegik:Mmno:pP:r:S:s:tU:vV")) != -1) {
+		    "46AaCc:dD:Eegik:Mmno:pP:r:S:s:tU:vVw:")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -417,6 +419,11 @@ main(volatile int argc, char *argv[])
 			verbose = 0;
 			break;
 
+		case 'w':
+			connect_timeout = strtonum(optarg, 0, 200, &errstr);
+			if (errstr)
+				errx(1, "-w: %s", errstr);
+			break;
 		default:
 			usage();
 		}
@@ -919,17 +926,18 @@ usage(void)
 	    "           ftp://[user:password@]host[:port]/file[/] ...\n"
 	    "       ftp [-C] [-c cookie] [-o output] [-S ssl_options] "
 	    "[-s srcaddr]\n"
-	    "           [-U useragent] "
+	    "           [-U useragent] [-w seconds] "
 	    "http[s]://[user:password@]host[:port]/file ...\n"
 	    "       ftp [-C] [-o output] [-s srcaddr] file:file ...\n"
 	    "       ftp [-C] [-o output] [-s srcaddr] host:/file[/] ...\n"
 #else /* !SMALL */
-	    "ftp [-o output] ftp://[user:password@]host[:port]/file[/] ...\n"
+	    "ftp [-o output] "
+	    "ftp://[user:password@]host[:port]/file[/] ...\n"
 #ifndef NOSSL
-	    "       ftp [-o output] [-S ssl_options] "
+	    "       ftp [-o output] [-S ssl_options] [-w seconds] "
 	    "http[s]://[user:password@]host[:port]/file ...\n"
 #else
-	    "       ftp [-o output] http://host[:port]/file ...\n"
+	    "       ftp [-o output] [-w seconds] http://host[:port]/file ...\n"
 #endif /* NOSSL */
 	    "       ftp [-o output] file:file ...\n"
 	    "       ftp [-o output] host:/file[/] ...\n"

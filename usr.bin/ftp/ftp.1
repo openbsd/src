@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.104 2016/12/22 17:26:18 jmc Exp $
+.\"	$OpenBSD: ftp.1,v 1.105 2017/01/03 17:00:04 deraadt Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: December 22 2016 $
+.Dd $Mdocdate: January 3 2017 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -62,6 +62,7 @@
 .Op Fl S Ar ssl_options
 .Op Fl s Ar srcaddr
 .Op Fl U Ar useragent
+.Op Fl w Ar seconds
 .Sm off
 .Pf http Oo s Oc ://
 .Op Ar user : password No @
@@ -286,6 +287,10 @@ Forces
 .Nm
 to show all responses from the remote server, as well
 as report on data transfer statistics.
+.It Fl w Ar seconds
+For URL format connections to HTTP/HTTPS servers, abort a
+slow connection after
+.Ar seconds .
 .El
 .Pp
 The host with which
