@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.55 2017/01/03 17:13:41 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.56 2017/01/03 17:19:57 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -398,6 +398,13 @@ tls_configure_ssl_verify(struct tls *ctx, SSL_CTX *ssl_ctx, int verify)
 	int rv = -1;
 
 	SSL_CTX_set_verify(ssl_ctx, verify, NULL);
+	SSL_CTX_set_cert_verify_callback(ssl_ctx, tls_ssl_cert_verify_cb, ctx);
+
+	if (ctx->config->verify_depth >= 0)
+		SSL_CTX_set_verify_depth(ssl_ctx, ctx->config->verify_depth);
+
+	if (ctx->config->verify_cert == 0)
+		goto done;
 
 	/* If no CA has been specified, attempt to load the default. */
 	if (ctx->config->ca_mem == NULL && ctx->config->ca_path == NULL) {
@@ -421,11 +428,8 @@ tls_configure_ssl_verify(struct tls *ctx, SSL_CTX *ssl_ctx, int verify)
 		tls_set_errorx(ctx, "ssl verify locations failure");
 		goto err;
 	}
-	if (ctx->config->verify_depth >= 0)
-		SSL_CTX_set_verify_depth(ssl_ctx, ctx->config->verify_depth);
 
-	SSL_CTX_set_cert_verify_callback(ssl_ctx, tls_ssl_cert_verify_cb, ctx);
-
+ done:
 	rv = 0;
 
  err:
