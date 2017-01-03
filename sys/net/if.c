@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.469 2016/12/29 12:12:43 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.470 2017/01/03 13:11:55 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -928,7 +928,7 @@ if_detach(struct ifnet *ifp)
 	struct ifaddr *ifa;
 	struct ifg_list *ifg;
 	struct domain *dp;
-	int i, s;
+	int i, s, s2;
 
 	/* Undo pseudo-driver changes. */
 	if_deactivate(ifp);
@@ -936,7 +936,7 @@ if_detach(struct ifnet *ifp)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	NET_LOCK(s);
-	s = splnet();
+	s2 = splnet();
 	/* Other CPUs must not have a reference before we start destroying. */
 	if_idxmap_remove(ifp);
 
@@ -1011,7 +1011,7 @@ if_detach(struct ifnet *ifp)
 
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
-	splx(s);
+	splx(s2);
 	NET_UNLOCK(s);
 
 	ifq_destroy(&ifp->if_snd);
