@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.31 2016/10/19 10:06:30 gilles Exp $
+.\"	$OpenBSD: smtpd.8,v 1.32 2017/01/03 22:11:39 jmc Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2008, Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 19 2016 $
+.Dd $Mdocdate: January 3 2017 $
 .Dt SMTPD 8
 .Os
 .Sh NAME
@@ -145,8 +145,11 @@ socket used for communication with
 .Xr smtpctl 8 .
 .It Pa /var/spool/smtpd/
 Spool directories for mail during processing.
+.It Pa ~/.forward
+User email forwarding information.
 .El
 .Sh SEE ALSO
+.Xr forward 5 ,
 .Xr smtpd.conf 5 ,
 .Xr mailwrapper 8 ,
 .Xr smtpctl 8
