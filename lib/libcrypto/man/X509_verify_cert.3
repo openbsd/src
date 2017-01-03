@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_verify_cert.3,v 1.4 2016/12/05 18:26:34 schwarze Exp $
+.\"	$OpenBSD: X509_verify_cert.3,v 1.5 2017/01/03 06:29:04 beck Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2016 $
+.Dd $Mdocdate: January 3 2017 $
 .Dt X509_VERIFY_CERT 3
 .Os
 .Sh NAME
@@ -72,21 +72,11 @@ OpenSSL internally for certificate validation, in both the S/MIME and
 SSL/TLS code.
 .Sh RETURN VALUES
 If a complete chain can be built and validated this function returns 1,
-otherwise it return 0.
+otherwise it returns a value <= 0 indicating failure.
 .Pp
-In exceptional circumstances, it can also return a negative code,
-but only if no certificate is set in
-.Fa ctx
-due to a programming error or if a retry operation is requested
-during internal lookups, which never happens with standard lookup
-methods.
-It is however recommended that application check for <= 0 return
-value on error.
-.Pp
-If the function fails, additional error information can be obtained
-by examining
+Additional error information can be obtained by examining
 .Fa ctx ,
-for example using
+using
 .Xr X509_STORE_CTX_get_error 3 .
 .Sh SEE ALSO
 .Xr openssl 1 ,
