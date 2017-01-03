@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.593 2016/10/21 06:20:58 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.594 2017/01/03 09:48:15 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -4003,6 +4003,8 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 		else {
 			if (msr & IA32_FEATURE_CONTROL_VMX_EN)
 				ci->ci_vmm_flags |= CI_VMM_VMX;
+			else
+				ci->ci_vmm_flags |= CI_VMM_DIS;
 		}
 	}
 

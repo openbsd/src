@@ -33,17 +33,16 @@
 #include <machine/pmap.h>
 #include <machine/biosvar.h>
 #include <machine/segments.h>
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/vmmvar.h>
 #include <machine/i82489reg.h>
 
 #include <dev/isa/isareg.h>
 
-#define VMM_DEBUG
+/* #define VMM_DEBUG */
 
 #ifdef VMM_DEBUG
-int vmm_debug = 1;
+int vmm_debug = 0;
 #define DPRINTF(x...)	do { if (vmm_debug) printf(x); } while(0)
 #else
 #define DPRINTF(x...)
@@ -173,6 +172,7 @@ void vmx_dump_vmcs(struct vcpu *);
 const char *msr_name_decode(uint32_t);
 void vmm_segment_desc_decode(uint32_t);
 void vmm_decode_cr0(uint32_t);
+void vmm_decode_cr3(uint32_t);
 void vmm_decode_cr4(uint32_t);
 void vmm_decode_msr_value(uint64_t, uint64_t);
 void vmm_decode_apicbase_msr_value(uint64_t);
@@ -263,7 +263,7 @@ vmm_probe(struct device *parent, void *match, void *aux)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	const char **busname = (const char **)aux;
-	int found_vmx, found_svm;
+	int found_vmx, found_svm, vmm_disabled;
 
 	/* Check if this probe is for us */
 	if (strcmp(*busname, vmm_cd.cd_name) != 0)
@@ -271,6 +271,7 @@ vmm_probe(struct device *parent, void *match, void *aux)
 
 	found_vmx = 0;
 	found_svm = 0;
+	vmm_disabled = 0;
 
 	/* Check if we have at least one CPU with either VMX or SVM */
 	CPU_INFO_FOREACH(cii, ci) {
@@ -278,13 +279,22 @@ vmm_probe(struct device *parent, void *match, void *aux)
 			found_vmx = 1;
 		if (ci->ci_vmm_flags & CI_VMM_SVM)
 			found_svm = 1;
+		if (ci->ci_vmm_flags & CI_VMM_DIS)
+			vmm_disabled = 1;
 	}
 
 	/* Don't support both SVM and VMX at the same time */
 	if (found_vmx && found_svm)
 		return (0);
 
-	return (found_vmx || found_svm);
+	/* SVM is not implemented yet */
+	if (found_vmx)
+		return 1;
+
+	if (vmm_disabled)
+		printf("vmm disabled by firmware\n");
+
+	return 0;
 }
 
 /*
@@ -4847,8 +4857,10 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 	DPRINTF(" cr3=");
 	if (vmread(VMCS_GUEST_IA32_CR3, &r))
 		DPRINTF("(error reading)\n");
-	else
+	else {
 		DPRINTF("0x%08x ", r);
+		vmm_decode_cr3(r);
+	}
 
 	DPRINTF(" cr4=");
 	if (vmread(VMCS_GUEST_IA32_CR4, &r))
@@ -5260,6 +5272,26 @@ vmm_decode_cr0(uint32_t cr0)
 		else
 			DPRINTF(cr0_info[i].vrdi_absent);
 	
+	DPRINTF(")\n");
+}
+
+void
+vmm_decode_cr3(uint32_t cr3)
+{
+	struct vmm_reg_debug_info cr3_info[2] = {
+		{ CR3_PWT, "PWT ", "pwt "},
+		{ CR3_PCD, "PCD", "pcd"}
+	};
+
+	uint8_t i;
+
+	DPRINTF("(");
+	for (i = 0 ; i < 2 ; i++)
+		if (cr3 & cr3_info[i].vrdi_bit)
+			DPRINTF(cr3_info[i].vrdi_present);
+		else
+			DPRINTF(cr3_info[i].vrdi_absent);
+
 	DPRINTF(")\n");
 }
 
