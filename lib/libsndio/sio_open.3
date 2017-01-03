@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.45 2016/02/11 16:30:35 tim Exp $
+.\" $OpenBSD: sio_open.3,v 1.46 2017/01/03 20:29:28 natano Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2016 $
+.Dd $Mdocdate: January 3 2017 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -450,10 +450,6 @@ and
 constants; refer to
 .Xr poll 2
 for more details.
-.Fn sio_pollfd
-returns the number of
-.Vt pollfd
-structures filled.
 The
 .Fn sio_revents
 function returns the bit-mask set by
@@ -478,14 +474,11 @@ may be set if an error occurs, even if
 it is not selected with
 .Fn sio_pollfd .
 .Pp
-The
+The size of the
+.Ar pfd
+array, which the caller must pre-allocate, is provided by the
 .Fn sio_nfds
-function returns the number of
-.Vt pollfd
-structures the caller must preallocate in order to be sure
-that
-.Fn sio_pollfd
-will never overrun.
+function.
 .Ss Synchronizing non-audio events to the audio stream in real-time
 In order to perform actions at precise positions of the audio stream,
 such as displaying video in sync with the audio stream,
@@ -668,12 +661,9 @@ argument, except
 and
 .Fn sio_eof ,
 stop working (i.e. always return 0).
-.Pp
 The
 .Fn sio_eof
-function can be used at any stage;
-it returns 0 if there's no pending error, and a non-zero
-value if there's an error.
+function can be used at any stage.
 .Ss Use with Xr pledge 2
 If the
 .Nm sndio
@@ -733,21 +723,41 @@ The
 .Fn sio_open
 function returns the newly created handle on success or NULL
 on failure.
+.Pp
 The
 .Fn sio_setpar ,
 .Fn sio_getpar ,
 .Fn sio_getcap ,
 .Fn sio_start ,
 .Fn sio_stop ,
-.Fn sio_pollfd ,
 and
 .Fn sio_setvol
 functions return 1 on success and 0 on failure.
+.Pp
+The
+.Fn sio_pollfd
+function returns the number of
+.Va pollfd
+structures filled.
+The
+.Fn sio_nfds
+function returns the number of
+.Va pollfd
+structures the caller must preallocate in order to be sure
+that
+.Fn sio_pollfd
+will never overrun.
+.Pp
 The
 .Fn sio_read
 and
 .Fn sio_write
 functions return the number of bytes transferred.
+.Pp
+The
+.Fn sio_eof
+function returns 0 if there's no pending error, and a non-zero
+value if there's an error.
 .Sh ENVIRONMENT
 .Bl -tag -width "SNDIO_DEBUGXXX" -compact
 .It Ev AUDIODEVICE
