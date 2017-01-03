@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.52 2016/11/06 10:37:38 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.53 2017/01/03 05:34:48 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -775,32 +775,87 @@ check_name_constraints(X509_STORE_CTX *ctx)
 	return 1;
 }
 
-static int
-check_trust(X509_STORE_CTX *ctx)
+/* Given a certificate try and find an exact match in the store */
+
+static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 {
-#ifdef OPENSSL_NO_CHAIN_VERIFY
-	return 1;
-#else
-	int i, ok;
-	X509 *x;
-	int (*cb)(int xok, X509_STORE_CTX *xctx);
+	STACK_OF(X509) *certs;
+	X509 *xtmp = NULL;
+	size_t i;
+
+	/* Lookup all certs with matching subject name */
+	certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
+	if (certs == NULL)
+		return NULL;
+
+	/* Look for exact match */
+	for (i = 0; i < sk_X509_num(certs); i++) {
+		xtmp = sk_X509_value(certs, i);
+		if (!X509_cmp(xtmp, x))
+			break;
+	}
+
+	if (i < sk_X509_num(certs))
+		X509_up_ref(xtmp);
+	else
+		xtmp = NULL;
+
+	sk_X509_pop_free(certs, X509_free);
+	return xtmp;
+}
+
+static int check_trust(X509_STORE_CTX *ctx)
+{
+	size_t i;
+	int ok;
+	X509 *x = NULL;
+	int (*cb) (int xok, X509_STORE_CTX *xctx);
 
 	cb = ctx->verify_cb;
-	/* For now just check the last certificate in the chain */
-	i = sk_X509_num(ctx->chain) - 1;
-	x = sk_X509_value(ctx->chain, i);
-	ok = X509_check_trust(x, ctx->param->trust, 0);
-	if (ok == X509_TRUST_TRUSTED)
-		return 1;
-	ctx->error_depth = i;
-	ctx->current_cert = x;
-	if (ok == X509_TRUST_REJECTED)
-		ctx->error = X509_V_ERR_CERT_REJECTED;
-	else
-		ctx->error = X509_V_ERR_CERT_UNTRUSTED;
-	ok = cb(0, ctx);
-	return ok;
-#endif
+	/* Check all trusted certificates in chain */
+	for (i = ctx->last_untrusted; i < sk_X509_num(ctx->chain); i++) {
+		x = sk_X509_value(ctx->chain, i);
+		ok = X509_check_trust(x, ctx->param->trust, 0);
+
+		/* If explicitly trusted return trusted */
+		if (ok == X509_TRUST_TRUSTED)
+			return X509_TRUST_TRUSTED;
+		/*
+		 * If explicitly rejected notify callback and reject if not
+		 * overridden.
+		 */
+		if (ok == X509_TRUST_REJECTED) {
+			ctx->error_depth = i;
+			ctx->current_cert = x;
+			ctx->error = X509_V_ERR_CERT_REJECTED;
+			ok = cb(0, ctx);
+			if (!ok)
+				return X509_TRUST_REJECTED;
+		}
+	}
+	/*
+	 * If we accept partial chains and have at least one trusted certificate
+	 * return success.
+	 */
+	if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) {
+		X509 *mx;
+		if (ctx->last_untrusted < (int)sk_X509_num(ctx->chain))
+			return X509_TRUST_TRUSTED;
+		x = sk_X509_value(ctx->chain, 0);
+		mx = lookup_cert_match(ctx, x);
+		if (mx) {
+			(void)sk_X509_set(ctx->chain, 0, mx);
+			X509_free(x);
+			ctx->last_untrusted = 0;
+			return X509_TRUST_TRUSTED;
+		}
+	}
+
+	/*
+	 * If no trusted certs in chain at all return untrusted and allow
+	 * standard (no issuer cert) etc errors to be indicated.
+	 */
+	return X509_TRUST_UNTRUSTED;
 }
 
 static int
