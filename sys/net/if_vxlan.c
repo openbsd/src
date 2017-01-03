@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.54 2016/12/13 06:51:11 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.55 2017/01/03 15:35:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -947,17 +947,16 @@ vxlan_if_change(void *arg)
 {
 	struct vxlan_softc	*sc = arg;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-	int			 s, error;
+	int			 s;
 
 	/*
 	 * Reset the configuration after the parent interface disappeared.
 	 */
 	s = splnet();
-	if ((error = vxlan_config(ifp, NULL, NULL)) != 0) {
-		/* The configured tunnel addresses are invalid, remove them */
-		bzero(&sc->sc_src, sizeof(sc->sc_src));
-		bzero(&sc->sc_dst, sizeof(sc->sc_dst));
-	}
+	vxlan_multicast_cleanup(ifp);
+	memset(&sc->sc_src, 0, sizeof(sc->sc_src));
+	memset(&sc->sc_dst, 0, sizeof(sc->sc_dst));
+	sc->sc_dstport = htons(VXLAN_PORT);
 	splx(s);
 }
 
