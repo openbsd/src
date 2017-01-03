@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.11 2016/01/08 16:22:09 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.12 2017/01/03 06:51:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -240,8 +240,7 @@ listen_in(void *arg)
 	if (fcntl(sock, F_SETFL, O_NONBLOCK) < 0) {
 		file_log(f->file);
 		log_puts(": failed to set non-blocking mode\n");
-		close(sock);
-		return;
+		goto bad_close;
 	}
 	if (f->path == NULL) {
 		opt = 1;
@@ -249,14 +248,14 @@ listen_in(void *arg)
 			&opt, sizeof(int)) < 0) {
 			file_log(f->file);
 			log_puts(": failed to set TCP_NODELAY flag\n");
-			close(sock);
-			return;
+			goto bad_close;
 		}
 	}
-	if (sock_new(sock) == NULL) {
-		close(sock);
-		return;
-	}
+	if (sock_new(sock) == NULL)
+		goto bad_close;
+	return;
+bad_close:
+	close(sock);
 }
 
 void
