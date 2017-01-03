@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.15 2016/01/08 16:17:31 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.16 2017/01/03 06:53:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -97,7 +97,7 @@ midi_new(struct midiops *ops, void *arg, int mode)
 	ep->mode = mode;
 
 	/*
-	 * the output buffer is the client intput
+	 * the output buffer is the client input
 	 */
 	if (ep->mode & MODE_MIDIIN)
 		abuf_init(&ep->obuf, MIDI_BUFSZ);
@@ -147,7 +147,7 @@ midi_link(struct midi *ep, struct midi *peer)
 			panic();
 		}
 #endif
-		/* ep has empry buffer, so no need to call midi_tickets() */
+		/* ep has empty buffer, so no need to call midi_tickets() */
 		peer->txmask |= ep->self;
 	}
 }
