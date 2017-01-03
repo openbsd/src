@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.123 2016/12/30 16:57:01 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.124 2017/01/03 16:57:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2516,14 +2516,44 @@ ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 
 	/* Everything has been disabled... */
 	if (min_version == 0 || max_version == 0)
-		return -1;
+		return 0;
 
 	if (min_ver != NULL)
 		*min_ver = min_version;
 	if (max_ver != NULL)
 		*max_ver = max_version;
 
-	return 0;
+	return 1;
+}
+
+int
+ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
+{
+	uint16_t min_version, max_version, shared_version;
+
+	*max_ver = 0;
+
+	if (peer_ver >= TLS1_2_VERSION)
+		shared_version = TLS1_2_VERSION;
+	else if (peer_ver >= TLS1_1_VERSION)
+		shared_version = TLS1_1_VERSION;
+	else if (peer_ver >= TLS1_VERSION)
+		shared_version = TLS1_VERSION;
+	else
+		return 0;
+
+	if (!ssl_enabled_version_range(s, &min_version, &max_version))
+		return 0;
+
+	if (shared_version < min_version)
+		return 0;
+
+	if (shared_version > max_version)
+		shared_version = max_version;
+
+	*max_ver = shared_version;
+
+	return 1;
 }
 
 uint16_t

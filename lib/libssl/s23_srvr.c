@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.48 2016/11/04 18:33:11 guenther Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.49 2017/01/03 16:57:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -220,17 +220,16 @@ ssl23_get_client_hello(SSL *s)
 	 *  6-8   length           > Client Hello message
 	 *  9/10  client_version  /
 	 */
+	uint16_t client_version = 0;
+	uint16_t shared_version;
 	unsigned char *p, *d, *d_len, *dd;
 	unsigned int i;
 	unsigned int csl, sil, cl;
 	int n = 0, j;
 	int type = 0;
-	int v[2];
 
 	if (s->state ==	SSL23_ST_SR_CLNT_HELLO_A) {
 		/* read the initial header */
-		v[0] = v[1] = 0;
-
 		if (!ssl3_setup_buffers(s))
 			return -1;
 
@@ -246,37 +245,14 @@ ssl23_get_client_hello(SSL *s)
 			/*
 			 * SSLv2 header
 			 */
-			if ((p[3] == 0x00) && (p[4] == 0x02)) {
-				/* SSLv2 support has been removed */
+			client_version = p[3] << 8 | p[4];
+
+			if (!ssl_max_shared_version(s, client_version,
+			    &shared_version))
 				goto unsupported;
 
-			} else if (p[3] == SSL3_VERSION_MAJOR) {
-				v[0] = p[3];
-				v[1] = p[4];
-				/* SSLv3/TLS */
-
-				if (p[4] >= TLS1_VERSION_MINOR) {
-					if (p[4] >= TLS1_2_VERSION_MINOR &&
-					    !(s->options & SSL_OP_NO_TLSv1_2)) {
-						s->version = TLS1_2_VERSION;
-						s->state = SSL23_ST_SR_CLNT_HELLO_B;
-					} else if (p[4] >= TLS1_1_VERSION_MINOR &&
-					    !(s->options & SSL_OP_NO_TLSv1_1)) {
-						s->version = TLS1_1_VERSION;
-						/* type=2; */ /* done later to survive restarts */
-						s->state = SSL23_ST_SR_CLNT_HELLO_B;
-					} else if (!(s->options & SSL_OP_NO_TLSv1)) {
-						s->version = TLS1_VERSION;
-						/* type=2; */ /* done later to survive restarts */
-						s->state = SSL23_ST_SR_CLNT_HELLO_B;
-					} else {
-						goto unsupported;
-					}
-				} else {
-					/* SSLv3 support has been removed */
-					goto unsupported;
-				}
-			}
+			s->version = shared_version;
+			s->state = SSL23_ST_SR_CLNT_HELLO_B;
 		} else if ((p[0] == SSL3_RT_HANDSHAKE) &&
 		    (p[1] == SSL3_VERSION_MAJOR) &&
 		    (p[5] == SSL3_MT_CLIENT_HELLO) &&
@@ -286,7 +262,6 @@ ssl23_get_client_hello(SSL *s)
 			 * SSLv3 or tls1 header
 			 */
 
-			v[0] = p[1]; /* major version (= SSL3_VERSION_MAJOR) */
 			/* We must look at client_version inside the Client Hello message
 			 * to get the correct minor version.
 			 * However if we have only a pathologically small fragment of the
@@ -300,43 +275,21 @@ ssl23_get_client_hello(SSL *s)
 				    SSL_R_RECORD_TOO_SMALL);
 				return -1;
 			}
-			/* if major version number > 3 set minor to a value
-			 * which will use the highest version 3 we support.
-			 * If TLS 2.0 ever appears we will need to revise
-			 * this....
-			 */
-			if (p[9] > SSL3_VERSION_MAJOR)
-				v[1] = 0xff;
-			else
-				v[1] = p[10]; /* minor version according to client_version */
-			if (v[1] >= TLS1_VERSION_MINOR) {
-				if (v[1] >= TLS1_2_VERSION_MINOR &&
-				    !(s->options & SSL_OP_NO_TLSv1_2)) {
-					s->version = TLS1_2_VERSION;
-					type = 3;
-				} else if (v[1] >= TLS1_1_VERSION_MINOR &&
-				    !(s->options & SSL_OP_NO_TLSv1_1)) {
-					s->version = TLS1_1_VERSION;
-					type = 3;
-				} else if (!(s->options & SSL_OP_NO_TLSv1)) {
-					s->version = TLS1_VERSION;
-					type = 3;
-				} else {
+			client_version = p[9] << 8 | p[10];
+
+			if (!ssl_max_shared_version(s, client_version,
+			    &shared_version)) {
+				if (s->options & SSL_OP_NO_TLSv1)
 					goto unsupported;
-				}
-			} else {
-				/* SSLv3 */
-				if (!(s->options & SSL_OP_NO_TLSv1)) {
-					/* we won't be able to use TLS of course,
-					 * but this will send an appropriate alert */
-					s->version = TLS1_VERSION;
-					type = 3;
-				} else {
-					goto unsupported;
-				}
+				/*
+				 * We won't be able to use TLS of course,
+				 * but this will send an appropriate alert.
+				 */
+				shared_version = TLS1_VERSION;
 			}
-		}
-		else if ((strncmp("GET ", (char *)p, 4) == 0) ||
+			s->version = shared_version;
+			type = 3;
+		} else if ((strncmp("GET ", (char *)p, 4) == 0) ||
 		    (strncmp("POST ",(char *)p, 5) == 0) ||
 		    (strncmp("HEAD ",(char *)p, 5) == 0) ||
 		    (strncmp("PUT ", (char *)p, 4) == 0)) {
@@ -362,8 +315,7 @@ ssl23_get_client_hello(SSL *s)
 
 		type = 2;
 		p = s->packet;
-		v[0] = p[3]; /* == SSL3_VERSION_MAJOR */
-		v[1] = p[4];
+		client_version = p[3] << 8 | p[4];
 
 		/* An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
 		 * header is sent directly on the wire, not wrapped as a TLS
@@ -421,8 +373,8 @@ ssl23_get_client_hello(SSL *s)
 		d += 3;
 
 		/* client_version */
-		*(d++) = SSL3_VERSION_MAJOR; /* == v[0] */
-		*(d++) = v[1];
+		*(d++) = client_version >> 8;
+		*(d++) = client_version & 0xff;
 
 		/* lets populate the random area */
 		/* get the challenge_length */
