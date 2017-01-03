@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.939 2016/12/30 22:59:12 rpe Exp $
+#	$OpenBSD: install.sub,v 1.940 2017/01/03 19:33:48 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -73,7 +73,7 @@ waitcgiinfo() {
 	wait "$CGIPID" 2>/dev/null
 	[[ -s $CGI_INFO ]] || return
 
-	sed -n 's,^http://\([[A-Za-z0-9\:_][]A-Za-z0-9:._-]*\),\1,p' \
+	sed -En 's,^https?://([[A-Za-z0-9:_][]A-Za-z0-9:._-]*),\1,p' \
 		$CGI_INFO >$HTTP_LIST 2>/dev/null
 	read -r -- _l <$HTTP_LIST
 	: ${HTTP_SERVER:=${_l%%/*}}
@@ -1498,7 +1498,8 @@ install_files() {
 
 # Get several parameters from the user, and xfer files from the http server.
 install_http() {
-	local _file_list _prompt _mirror _url_base
+	local _file_list _prompt _mirror _url_base _err _idx=/tmp/i/index.txt
+	local _idx_url _rc
 
 	# N.B.: 'http_proxy' is an environment variable used by ftp(1). DON'T
 	# change the name or case!
@@ -1558,13 +1559,34 @@ install_http() {
 	: ${HTTP_DIR:=pub/OpenBSD/$HTTP_SETDIR}
 	ask_until "Server directory?" "${resp:-$HTTP_DIR}"
 	HTTP_DIR=$resp
-	_url_base="http://$HTTP_SERVER/$HTTP_DIR"
+	_url_base="$HTTP_PROTO://$HTTP_SERVER/$HTTP_DIR"
 
 	# Get list of files from the server.
 	# Assumes index file is "index.txt" for http (or proxy).
 	# We can't use index.html since the format is server-dependent.
-	_file_list=$(unpriv ftp -Vo - "$_url_base/index.txt" |
-		sed "s/^.* //;s/$(echo '\r')//")
+	# If ftp(1) has tls, fetch index.txt via https. If that fails
+	# tell the user about it and switch to http.
+	rm -f $_idx
+	if $FTP_TLS; then
+		_idx_url=$_url_base/index.txt
+		_err=$(unpriv -f $_idx ftp -w 15 -Vo $_idx "$_idx_url" 2>&1)
+		_rc=$?
+
+		# Consider the https connect failed either if it was refused by
+		# the server, or it took longer than -w sec (exit code 2).
+		if ( (($_rc == 1)) && [[ $_err == *'Connection refused'* ]] ) ||
+			(($_rc == 2)); then
+			ask_yn "Unable to connect using https. Use http instead?" ||
+				return
+			_url_base="http://$HTTP_SERVER/$HTTP_DIR"
+		fi
+	fi
+
+	# Create the list of files by either using the index.txt downloaded
+	# before or by fetching it via http.
+	[[ -s $_idx ]] || unpriv -f $_idx ftp -VMo $_idx "$_url_base/index.txt"
+	_file_list=$(sed "s/^.* //;s/$(echo '\r')//" $_idx)
+	rm -f $_idx
 
 	install_files "$_url_base" "$_file_list"
 
@@ -2905,6 +2927,15 @@ dmesg | sed -n '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
 HTTP_SETDIR=$SETDIR
 set -- $(scan_dmesg "/^OpenBSD $VNAME\([^ ]*\).*$/s//\1/p")
 [[ $1 == -!(stable) ]] && HTTP_SETDIR=snapshots/$ARCH
+
+# Detect if ftp(1) has tls support and set defaults based on that.
+if [[ -e /etc/ssl/cert.pem ]]; then
+	FTP_TLS=true
+	HTTP_PROTO=https
+else
+	FTP_TLS=false
+	HTTP_PROTO=http
+fi
 
 # Scan /var/run/dmesg.boot for interesting devices.
 NIFS=0
