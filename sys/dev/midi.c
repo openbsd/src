@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.41 2016/12/20 16:03:39 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.42 2017/01/03 06:39:44 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -26,7 +26,6 @@
 #include <sys/timeout.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <dev/midi_if.h>
