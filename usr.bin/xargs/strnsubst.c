@@ -1,4 +1,4 @@
-/*	$OpenBSD: strnsubst.c,v 1.5 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: strnsubst.c,v 1.6 2017/01/03 21:47:37 tedu Exp $	*/
 /*	$FreeBSD: strnsubst.c,v 1.6 2002/06/22 12:58:42 jmallett Exp $	*/
 
 /*
@@ -31,7 +31,7 @@ void
 strnsubst(char **str, const char *match, const char *replstr, size_t maxsize)
 {
 	char *s1, *s2, *this;
-	size_t matchlen, repllen, s2len;
+	size_t matchlen, s2len;
 	int n;
 
 	if ((s1 = *str) == NULL)
@@ -50,7 +50,6 @@ strnsubst(char **str, const char *match, const char *replstr, size_t maxsize)
 	*s2 = '\0';
 	s2len = 0;
 	matchlen = strlen(match);
-	repllen = strlen(replstr);
 	for (;;) {
 		if ((this = strstr(s1, match)) == NULL)
 			break;
