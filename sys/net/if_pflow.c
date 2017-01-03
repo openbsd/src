@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.65 2016/12/29 12:12:43 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.66 2017/01/03 10:50:56 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -69,6 +69,7 @@ int	pflow_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry *rt);
 int	pflow_clone_create(struct if_clone *, int);
 int	pflow_clone_destroy(struct ifnet *);
+int	pflow_set(struct pflow_softc *, struct pflowreq *);
 void	pflow_init_timeouts(struct pflow_softc *);
 int	pflow_calc_mtu(struct pflow_softc *, int, int);
 void	pflow_setmtu(struct pflow_softc *, int);
@@ -302,6 +303,153 @@ pflowvalidsockaddr(const struct sockaddr *sa, int ignore_port)
 		return (0);
 	}
 }
+
+int
+pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
+{
+	struct proc		*p = curproc;
+	struct socket		*so;
+	struct sockaddr		*sa;
+	int			 error = 0;
+
+	if (pflowr->addrmask & PFLOW_MASK_VERSION) {
+		switch(pflowr->version) {
+		case PFLOW_PROTO_5:
+		case PFLOW_PROTO_10:
+			break;
+		default:
+			return(EINVAL);
+		}
+	}
+
+	pflow_flush(sc);
+
+	if (pflowr->addrmask & PFLOW_MASK_DSTIP) {
+		if (sc->sc_flowdst != NULL &&
+		    sc->sc_flowdst->sa_family != pflowr->flowdst.ss_family) {
+			free(sc->sc_flowdst, M_DEVBUF, sc->sc_flowdst->sa_len);
+			sc->sc_flowdst = NULL;
+			if (sc->so != NULL) {
+				soclose(sc->so);
+				sc->so = NULL;
+			}
+		}
+
+		if (sc->sc_flowdst == NULL) {
+			switch (pflowr->flowdst.ss_family) {
+			case AF_INET:
+				if ((sc->sc_flowdst = malloc(
+				    sizeof(struct sockaddr_in),
+				    M_DEVBUF,  M_NOWAIT)) == NULL)
+					return (ENOMEM);
+				memcpy(sc->sc_flowdst, &pflowr->flowdst,
+				    sizeof(struct sockaddr_in));
+				sc->sc_flowdst->sa_len = sizeof(struct
+				    sockaddr_in);
+				break;
+			case AF_INET6:
+				if ((sc->sc_flowdst = malloc(
+				    sizeof(struct sockaddr_in6),
+				    M_DEVBUF, M_NOWAIT)) == NULL)
+					return (ENOMEM);
+				memcpy(sc->sc_flowdst, &pflowr->flowdst,
+				    sizeof(struct sockaddr_in6));
+				sc->sc_flowdst->sa_len = sizeof(struct
+				    sockaddr_in6);
+				break;
+			default:
+				break;
+			}
+		}
+		if (sc->sc_flowdst != NULL) {
+			sc->send_nam->m_len = sc->sc_flowdst->sa_len;
+			sa = mtod(sc->send_nam, struct sockaddr *);
+			memcpy(sa, sc->sc_flowdst, sc->sc_flowdst->sa_len);
+		}
+	}
+
+	if (pflowr->addrmask & PFLOW_MASK_SRCIP) {
+		if (sc->sc_flowsrc != NULL &&
+		    sc->sc_flowsrc->sa_family != pflowr->flowsrc.ss_family) {
+			free(sc->sc_flowsrc, M_DEVBUF, sc->sc_flowsrc->sa_len);
+			sc->sc_flowsrc = NULL;
+			if (sc->so != NULL) {
+				soclose(sc->so);
+				sc->so = NULL;
+			}
+		}
+
+		if (sc->sc_flowsrc == NULL) {
+			switch(pflowr->flowsrc.ss_family) {
+			case AF_INET:
+				if ((sc->sc_flowsrc = malloc(
+				    sizeof(struct sockaddr_in),
+				    M_DEVBUF, M_NOWAIT)) == NULL)
+					return (ENOMEM);
+				memcpy(sc->sc_flowsrc, &pflowr->flowsrc,
+				    sizeof(struct sockaddr_in));
+				sc->sc_flowsrc->sa_len = sizeof(struct
+				    sockaddr_in);
+				break;
+			case AF_INET6:
+				if ((sc->sc_flowsrc = malloc(
+				    sizeof(struct sockaddr_in6),
+				    M_DEVBUF, M_NOWAIT)) == NULL)
+					return (ENOMEM);
+				memcpy(sc->sc_flowsrc, &pflowr->flowsrc,
+				    sizeof(struct sockaddr_in6));
+				sc->sc_flowsrc->sa_len = sizeof(struct
+				    sockaddr_in6);
+				break;
+			default:
+				break;
+			}
+		}
+		if (sc->so != NULL) {
+			soclose(sc->so);
+			sc->so = NULL;
+		}
+	}
+
+	if (sc->so == NULL) {
+		if (pflowvalidsockaddr(sc->sc_flowdst, 0)) {
+			error = socreate(sc->sc_flowdst->sa_family,
+			    &so, SOCK_DGRAM, 0);
+			if (error)
+				return (error);
+			if (pflowvalidsockaddr(sc->sc_flowsrc, 1)) {
+				struct mbuf *m;
+
+				MGET(m, M_WAIT, MT_SONAME);
+				m->m_len = sc->sc_flowsrc->sa_len;
+				sa = mtod(m, struct sockaddr *);
+				memcpy(sa, sc->sc_flowsrc,
+				    sc->sc_flowsrc->sa_len);
+
+				error = sobind(so, m, p);
+				m_freem(m);
+				if (error) {
+					soclose(so);
+					return (error);
+				}
+			}
+			sc->so = so;
+		}
+	} else if (!pflowvalidsockaddr(sc->sc_flowdst, 0)) {
+		soclose(sc->so);
+		sc->so = NULL;
+	}
+
+	/* error check is above */
+	if (pflowr->addrmask & PFLOW_MASK_VERSION)
+		sc->sc_version = pflowr->version;
+
+	pflow_setmtu(sc, ETHERMTU);
+	pflow_init_timeouts(sc);
+
+	return (0);
+}
+
 int
 pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -309,9 +457,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct pflow_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct pflowreq		 pflowr;
-	struct socket		*so;
-	struct sockaddr		*sa;
-	struct mbuf		*m;
 	int			 s, error;
 
 	switch (cmd) {
@@ -365,159 +510,12 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = copyin(ifr->ifr_data, &pflowr,
 		    sizeof(pflowr))))
 			return (error);
-		if (pflowr.addrmask & PFLOW_MASK_VERSION) {
-			switch(pflowr.version) {
-			case PFLOW_PROTO_5:
-			case PFLOW_PROTO_10:
-				break;
-			default:
-				return(EINVAL);
-			}
-		}
 
 		s = splnet();
-		pflow_flush(sc);
-
-		if (pflowr.addrmask & PFLOW_MASK_DSTIP) {
-			if (sc->sc_flowdst != NULL &&
-			    sc->sc_flowdst->sa_family !=
-			    pflowr.flowdst.ss_family) {
-				free(sc->sc_flowdst, M_DEVBUF,
-				    sc->sc_flowdst->sa_len);
-				sc->sc_flowdst = NULL;
-				if (sc->so != NULL) {
-					soclose(sc->so);
-					sc->so = NULL;
-				}
-			}
-
-			if (sc->sc_flowdst == NULL) {
-				switch(pflowr.flowdst.ss_family) {
-				case AF_INET:
-					if ((sc->sc_flowdst = malloc(
-					    sizeof(struct sockaddr_in),
-					    M_DEVBUF,  M_NOWAIT)) == NULL) {
-						splx(s);
-						return (ENOMEM);
-					}
-					memcpy(sc->sc_flowdst, &pflowr.flowdst,
-					    sizeof(struct sockaddr_in));
-					sc->sc_flowdst->sa_len = sizeof(struct
-					    sockaddr_in);
-					break;
-				case AF_INET6:
-					if ((sc->sc_flowdst = malloc(
-					    sizeof(struct sockaddr_in6),
-					    M_DEVBUF, M_NOWAIT)) == NULL) {
-						splx(s);
-						return (ENOMEM);
-					}
-					memcpy(sc->sc_flowdst, &pflowr.flowdst,
-					    sizeof(struct sockaddr_in6));
-					sc->sc_flowdst->sa_len = sizeof(struct
-					    sockaddr_in6);
-					break;
-				default:
-					break;
-				}
-			}
-			if (sc->sc_flowdst != NULL) {
-				sc->send_nam->m_len = sc->sc_flowdst->sa_len;
-				sa = mtod(sc->send_nam, struct sockaddr *);
-				memcpy(sa, sc->sc_flowdst,
-				    sc->sc_flowdst->sa_len);
-			}
-		}
-
-		if (pflowr.addrmask & PFLOW_MASK_SRCIP) {
-			if (sc->sc_flowsrc != NULL &&
-			    sc->sc_flowsrc->sa_family !=
-			    pflowr.flowsrc.ss_family) {
-				free(sc->sc_flowsrc, M_DEVBUF,
-				    sc->sc_flowsrc->sa_len);
-				sc->sc_flowsrc = NULL;
-				if (sc->so != NULL) {
-					soclose(sc->so);
-					sc->so = NULL;
-				}
-			}
-
-			if (sc->sc_flowsrc == NULL) {
-				switch(pflowr.flowsrc.ss_family) {
-				case AF_INET:
-					if ((sc->sc_flowsrc = malloc(
-					    sizeof(struct sockaddr_in),
-					    M_DEVBUF, M_NOWAIT)) == NULL) {
-						splx(s);
-						return (ENOMEM);
-					}
-					memcpy(sc->sc_flowsrc, &pflowr.flowsrc,
-					    sizeof(struct sockaddr_in));
-					sc->sc_flowsrc->sa_len = sizeof(struct
-					    sockaddr_in);
-					break;
-				case AF_INET6:
-					if ((sc->sc_flowsrc = malloc(
-					    sizeof(struct sockaddr_in6),
-					    M_DEVBUF, M_NOWAIT)) == NULL) {
-						splx(s);
-						return (ENOMEM);
-					}
-					memcpy(sc->sc_flowsrc, &pflowr.flowsrc,
-					    sizeof(struct sockaddr_in6));
-					sc->sc_flowsrc->sa_len = sizeof(struct
-					    sockaddr_in6);
-					break;
-				default:
-					break;
-				}
-			}
-			if (sc->so != NULL) {
-				soclose(sc->so);
-				sc->so = NULL;
-			}
-		}
-
-		if (sc->so == NULL) {
-			if (pflowvalidsockaddr(sc->sc_flowdst, 0)) {
-				error = socreate(sc->sc_flowdst->sa_family,
-				    &so, SOCK_DGRAM, 0);
-				if (error) {
-					splx(s);
-					return (error);
-				}
-				if (pflowvalidsockaddr(sc->sc_flowsrc, 1)) {
-					MGET(m, M_WAIT, MT_SONAME);
-					m->m_len = sc->sc_flowsrc->sa_len;
-					sa = mtod(m, struct sockaddr *);
-					memcpy(sa, sc->sc_flowsrc,
-					    sc->sc_flowsrc->sa_len);
-
-					error = sobind(so, m, p);
-					m_freem(m);
-					if (error) {
-						soclose(so);
-						splx(s);
-						return (error);
-					}
-				}
-				sc->so = so;
-			}
-		} else {
-			if (!pflowvalidsockaddr(sc->sc_flowdst, 0)) {
-				soclose(sc->so);
-				sc->so = NULL;
-			}
-		}
-
-		/* error check is above */
-		if (pflowr.addrmask & PFLOW_MASK_VERSION)
-			sc->sc_version = pflowr.version;
-
-		pflow_setmtu(sc, ETHERMTU);
-		pflow_init_timeouts(sc);
-
+		error = pflow_set(sc, &pflowr);
 		splx(s);
+		if (error != 0)
+			return (error);
 
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
