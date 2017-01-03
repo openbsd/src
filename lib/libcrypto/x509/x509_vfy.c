@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.53 2017/01/03 05:34:48 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.54 2017/01/03 05:52:28 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -242,6 +242,16 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ctx->error = X509_V_ERR_INVALID_CALL;
 		return -1;
 	}
+	if (ctx->error != X509_V_ERR_UNSPECIFIED) {
+		/*
+		 * This X509_STORE_CTX has not been properly initialized.
+		 */
+		X509err(X509_F_X509_VERIFY_CERT,
+		    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ctx->error = X509_V_ERR_INVALID_CALL;
+		return -1;
+	}
+	ctx->error = X509_V_OK; /* Initialize to OK */
 
 	cb = ctx->verify_cb;
 
@@ -538,7 +548,9 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	/* Safety net, error returns must set ctx->error */
 	if (ok <= 0 && ctx->error == X509_V_OK)
 		ctx->error = X509_V_ERR_UNSPECIFIED;
-	return ok;
+
+	/* Ensure we only return success with ctx->error of X509_V_OK */
+	return (ctx->error == X509_V_OK);
 }
 
 /* Given a STACK_OF(X509) find the issuer of cert (if any)
@@ -2166,6 +2178,12 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	 * have uninitialized data.
 	 */
 	memset(ctx, 0, sizeof(*ctx));
+
+	/*
+	 * Start with this set to not valid - it will be set to valid
+	 * in X509_verify_cert.
+	 */
+	ctx->error = X509_V_ERR_UNSPECIFIED;
 
 	/*
 	 * Set values other than 0.  Keep this in the same order as
