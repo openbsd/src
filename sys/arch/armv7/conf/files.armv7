@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.28 2016/10/09 23:46:23 jsg Exp $
+#	$OpenBSD: files.armv7,v 1.29 2017/01/03 19:57:01 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -64,6 +64,9 @@ include "dev/gpio/files.gpio"
 
 # Machine-independent 1-Wire drivers
 include "dev/onewire/files.onewire"
+
+# Machine-independent FDT drivers
+include "dev/fdt/files.fdt"
 
 # SoC includes
 include "arch/armv7/imx/files.imx"

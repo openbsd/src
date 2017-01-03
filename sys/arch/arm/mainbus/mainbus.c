@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.13 2016/08/06 00:04:39 jsg Exp $ */
+/* $OpenBSD: mainbus.c,v 1.14 2017/01/03 19:57:01 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,6 +30,7 @@ int mainbus_match(struct device *, void *, void *);
 void mainbus_attach(struct device *, struct device *, void *);
 
 void mainbus_attach_node(struct device *, int);
+void mainbus_attach_framebuffer(struct device *);
 
 int mainbus_legacy_search(struct device *, void *, void *);
 
@@ -133,12 +134,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Scan the whole tree. */
-	for (node = OF_child(node);
-	    node != 0;
-	    node = OF_peer(node))
-	{
+	for (node = OF_child(node); node != 0; node = OF_peer(node))
 		mainbus_attach_node(self, node);
-	}
+
+	mainbus_attach_framebuffer(self);
 }
 
 /*
@@ -212,6 +211,18 @@ mainbus_attach_node(struct device *self, int node)
 
 	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(struct fdt_reg));
 	free(fa.fa_intr, M_DEVBUF, fa.fa_nintr * sizeof(uint32_t));
+}
+
+void
+mainbus_attach_framebuffer(struct device *self)
+{
+	int node = OF_finddevice("/chosen");
+
+	if (node == 0)
+		return;
+
+	for (node = OF_child(node); node != 0; node = OF_peer(node))
+		mainbus_attach_node(self, node);
 }
 
 /*
