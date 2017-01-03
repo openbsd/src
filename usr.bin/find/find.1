@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.92 2017/01/03 21:31:16 tedu Exp $
+.\"	$OpenBSD: find.1,v 1.93 2017/01/03 22:19:31 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -183,22 +183,23 @@ was started, rounded up to the next full 24-hour period, is
 24-hour periods.
 .Pp
 .It Ic -delete
-Delete found files and/or directories.
+Delete found files and directories.
 Always returns true.
 This executes
 from the current working directory as
 .Nm
 recurses down the tree.
 It will not attempt to delete a filename with a
-.Dq Pa /
+.Sq Pa /
 character in its pathname relative to
-.Dq Pa \&.
+.Sq Pa \&.
 for security reasons.
 Depth-first traversal processing is implied by this option.
 The
 .Ic -delete
 primary will fail to delete a directory if it is not empty.
 Following symlinks is incompatible with this option.
+.Pp
 .It Ic -depth
 This primary always evaluates to true.
 The same as specifying the
