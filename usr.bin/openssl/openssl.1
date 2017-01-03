@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.83 2016/10/06 14:47:00 naddy Exp $
+.\" $OpenBSD: openssl.1,v 1.84 2017/01/03 22:14:41 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: October 6 2016 $
+.Dd $Mdocdate: January 3 2017 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -245,7 +245,7 @@ If only
 is present then the string is obtained from the default section
 using the name
 .Dq asn1 .
-The encoded data is passed through the ASN1 parser and printed out as
+The encoded data is passed through the ASN.1 parser and printed out as
 though it came from a file;
 the contents can thus be examined and written to a file using the
 .Fl out
@@ -361,7 +361,7 @@ The number of days to certify the certificate for.
 .It Fl enddate Ar date
 Set the expiry date.
 The format of the date is YYMMDDHHMMSSZ
-.Pq the same as an ASN1 UTCTime structure .
+.Pq the same as an ASN.1 UTCTime structure .
 .It Fl extensions Ar section
 The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to
@@ -493,7 +493,7 @@ A single self-signed certificate to be signed by the CA.
 .It Fl startdate Ar date
 Set the start date.
 The format of the date is YYMMDDHHMMSSZ
-.Pq the same as an ASN1 UTCTime structure .
+.Pq the same as an ASN.1 UTCTime structure .
 .It Fl status Ar serial
 Show the status of the certificate with serial number
 .Ar serial .
@@ -2436,9 +2436,9 @@ The options are as follows:
 .It Fl embed
 Generate DSA keys in a broken format.
 The DSA parameters are embedded inside the PrivateKey structure.
-In this form the OCTET STRING contains an ASN1 SEQUENCE consisting of
+In this form the OCTET STRING contains an ASN.1 SEQUENCE consisting of
 two structures:
-a SEQUENCE containing the parameters and an ASN1 INTEGER containing
+a SEQUENCE containing the parameters and an ASN.1 INTEGER containing
 the private key.
 .It Fl in Ar file
 The input file to read from,
@@ -2815,10 +2815,10 @@ any supported algorithm.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl asn1parse
-ASN1parse the output data.
+ASN.1 parse the output data.
 This is useful when combined with the
 .Fl verifyrecover
-option when an ASN1 structure is signed.
+option when an ASN.1 structure is signed.
 .It Fl certin
 The input is a certificate containing a public key.
 .It Fl decrypt
@@ -4161,7 +4161,7 @@ or standard input if not specified.
 .It Fl inform Cm der | pem
 The input format.
 .Cm der
-uses an ASN1 DER-encoded format containing session details.
+uses an ASN.1 DER-encoded format containing session details.
 The precise format can vary from one version to the next.
 .Cm pem
 is the default format: it consists of the DER
@@ -5428,7 +5428,7 @@ Hex dump unsupported extensions.
 .It Cm ext_error
 Print an error message for unsupported certificate extensions.
 .It Cm ext_parse
-ASN1 parse unsupported extensions.
+ASN.1 parse unsupported extensions.
 .It Cm no_aux
 Do not print certificate trust information.
 .It Cm no_extensions
@@ -5593,7 +5593,7 @@ uses a linefeed character for the RDN separator and a spaced
 for the AVA separator,
 as well as indenting the fields by four characters.
 .It Cm show_type
-Show the type of the ASN1 character string.
+Show the type of the ASN.1 character string.
 The type precedes the field contents.
 For example
 .Qq BMPSTRING: Hello World .
