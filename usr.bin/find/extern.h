@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2015/10/05 15:25:16 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.22 2017/01/03 21:31:16 tedu Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,6 +53,7 @@ PLAN	*c_atime(char *, char ***, int);
 PLAN	*c_cmin(char *, char ***, int);
 PLAN	*c_cnewer(char *, char ***, int);
 PLAN	*c_ctime(char *, char ***, int);
+PLAN	*c_delete(char *, char ***, int);
 PLAN	*c_depth(char *, char ***, int);
 PLAN	*c_empty(char *, char ***, int);
 PLAN	*c_exec(char *, char ***, int);
@@ -87,5 +88,5 @@ PLAN	*c_mtime(char *, char ***, int);
 PLAN	*c_not(char *, char ***, int);
 PLAN	*c_or(char *, char ***, int);
 
-extern int ftsoptions, isdepth, isoutput, isxargs;
+extern int ftsoptions, isdelete, isdepth, isoutput, isxargs;
 extern int mayexecve;

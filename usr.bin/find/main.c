@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2014/05/18 08:10:00 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2017/01/03 21:31:16 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,6 +48,7 @@
 time_t now;			/* time find was run */
 int dotfd;			/* starting directory; may be -1 */
 int ftsoptions;			/* options for the fts_open(3) call */
+int isdelete;			/* user specified -delete operator */
 int isdepth;			/* do directories on post-order visit */
 int isoutput;			/* user specified output operator */
 int isxargs;			/* don't permit xargs delimiting chars */

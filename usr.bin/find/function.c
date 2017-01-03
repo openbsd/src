@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.44 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.45 2017/01/03 21:31:16 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -294,6 +294,63 @@ c_depth(char *ignore, char ***ignored, int unused)
 	isdepth = 1;
 
 	return (palloc(N_DEPTH, f_always_true));
+}
+
+/*
+ * -delete functions
+ */
+int
+f_delete(PLAN *plan, FTSENT *entry)
+{
+
+	/* can't delete these */
+	if (strcmp(entry->fts_accpath, ".") == 0 ||
+	    strcmp(entry->fts_accpath, "..") == 0)
+		return 1;
+
+	/* sanity check */
+	if (isdepth == 0 ||                     /* depth off */
+	    (ftsoptions & FTS_NOSTAT))          /* not stat()ing */
+		errx(1, "-delete: insecure options got turned on");
+	if (!(ftsoptions & FTS_PHYSICAL) ||     /* physical off */
+	    (ftsoptions & FTS_LOGICAL))         /* or finally, logical on */
+		errx(1, "-delete: forbidden when symlinks are followed");
+
+	/* Potentially unsafe - do not accept relative paths whatsoever */
+	if (entry->fts_level > FTS_ROOTLEVEL &&
+	    strchr(entry->fts_accpath, '/') != NULL)
+		errx(1, "-delete: %s: relative path potentially not safe",
+		    entry->fts_accpath);
+#if 0
+	/* Turn off user immutable bits if running as root */
+	if ((entry->fts_statp->st_flags & (UF_APPEND|UF_IMMUTABLE)) &&
+	    !(entry->fts_statp->st_flags & (SF_APPEND|SF_IMMUTABLE)) &&
+	    geteuid() == 0)
+		lchflags(entry->fts_accpath,
+		    entry->fts_statp->st_flags &= ~(UF_APPEND|UF_IMMUTABLE));
+#endif
+	/* rmdir directories, unlink everything else */
+	if (S_ISDIR(entry->fts_statp->st_mode)) {
+		if (rmdir(entry->fts_accpath) < 0 && errno != ENOTEMPTY)
+			warn("-delete: rmdir(%s)", entry->fts_path);
+	} else {
+		if (unlink(entry->fts_accpath) < 0)
+			warn("-delete: unlink(%s)", entry->fts_path);
+
+	}
+
+	return 1;
+}
+
+PLAN *
+c_delete(char *ignore, char ***ignored, int unused)
+{
+	ftsoptions &= ~FTS_NOSTAT;
+	isoutput = 1;
+	isdelete = 1;
+	isdepth = 1;
+
+	return (palloc(N_DELETE, f_delete));
 }
  
 /*

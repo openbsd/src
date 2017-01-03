@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.19 2015/10/05 15:25:16 deraadt Exp $	*/
+/*	$OpenBSD: option.c,v 1.20 2017/01/03 21:31:16 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,6 +59,7 @@ static OPTION options[] = {
 	{ "-cmin",	N_CMIN,		c_cmin,		O_ARGV },
 	{ "-cnewer",	N_CNEWER,	c_cnewer,	O_ARGV },
 	{ "-ctime",	N_CTIME,	c_ctime,	O_ARGV },
+	{ "-delete",	N_DELETE,	c_delete,	O_ZERO },
 	{ "-depth",	N_DEPTH,	c_depth,	O_ZERO },
 	{ "-empty",	N_EMPTY,	c_empty,	O_ZERO },
 	{ "-exec",	N_EXEC,		c_exec,		O_ARGVP },
