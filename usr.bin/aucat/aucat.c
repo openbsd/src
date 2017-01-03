@@ -253,6 +253,10 @@ slot_new(char *path, int mode, struct aparams *par, int hdr,
 			log_puts("..");
 			log_puti(s->afile.endpos);
 		}
+		if (s->mode == SIO_PLAY) {
+			log_puts(", vol ");
+			log_puti(s->vol);
+		}
 		log_puts("\n");
 	}
 	s->next = slot_list;
