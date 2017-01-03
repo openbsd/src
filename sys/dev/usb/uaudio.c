@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.121 2016/12/12 06:51:09 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.122 2017/01/03 06:45:58 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -3013,7 +3013,7 @@ uaudio_chan_init(struct chan *ch, int mode, int altidx,
 		    __func__, altidx));
 		use_maxpkt = 1;
 	}
-	if (mode == AUMODE_RECORD) {
+	else if (mode == AUMODE_RECORD) {
 		DPRINTF(("%s: using maxpktsize packets for record channel\n",
 		    __func__));
 		use_maxpkt = 1;
