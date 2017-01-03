@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.31 2016/09/04 16:55:43 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.32 2017/01/03 17:51:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -200,6 +200,11 @@ parent_configure(struct iked *env)
 	env->sc_pfkey = -1;
 	config_setpfkey(env, PROC_IKEV2);
 
+	/* Send private and public keys to cert after forking the children */
+	if (config_setkeys(env) == -1)
+		fatalx("%s: failed to send keys", __func__);
+	config_setreset(env, RESET_CA, PROC_CERT);
+
 	/* Now compile the policies and calculate skip steps */
 	config_setcompile(env, PROC_IKEV2);
 
@@ -255,6 +260,8 @@ parent_reload(struct iked *env, int reset, const char *filename)
 
 	if (reset == RESET_RELOAD) {
 		config_setreset(env, RESET_POLICY, PROC_IKEV2);
+		if (config_setkeys(env) == -1)
+			fatalx("%s: failed to send keys", __func__);
 		config_setreset(env, RESET_CA, PROC_CERT);
 
 		if (parse_config(filename, env) == -1) {

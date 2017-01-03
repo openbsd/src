@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.42 2016/06/01 11:16:41 patrick Exp $	*/
+/*	$OpenBSD: config.c,v 1.43 2017/01/03 17:51:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,9 @@
 #include <err.h>
 #include <pwd.h>
 #include <event.h>
+
+#include <openssl/evp.h>
+#include <openssl/pem.h>
 
 #include "iked.h"
 #include "ikev2.h"
@@ -781,5 +784,91 @@ config_getocsp(struct iked *env, struct imsg *imsg)
 		env->sc_ocsp_url = NULL;
 	log_debug("%s: ocsp_url %s", __func__,
 	    env->sc_ocsp_url ? env->sc_ocsp_url : "none");
+	return (0);
+}
+
+int
+config_setkeys(struct iked *env)
+{
+	FILE			*fp = NULL;
+	EVP_PKEY		*key = NULL;
+	struct iked_id		 privkey;
+	struct iked_id		 pubkey;
+	struct iovec		 iov[2];
+	int			 ret = -1;
+
+	memset(&privkey, 0, sizeof(privkey));
+	memset(&pubkey, 0, sizeof(pubkey));
+
+	/* Read private key */
+	if ((fp = fopen(IKED_PRIVKEY, "r")) == NULL) {
+		log_warn("%s: failed to open private key", __func__);
+		goto done;
+	}
+
+	if ((key = PEM_read_PrivateKey(fp, NULL, NULL, NULL)) == NULL) {
+		log_warnx("%s: failed to read private key", __func__);
+		goto done;
+	}
+
+	if (ca_privkey_serialize(key, &privkey) != 0) {
+		log_warnx("%s: failed to serialize private key", __func__);
+		goto done;
+	}
+	if (ca_pubkey_serialize(key, &pubkey) != 0) {
+		log_warnx("%s: failed to serialize public key", __func__);
+		goto done;
+	}
+
+	iov[0].iov_base = &privkey;
+	iov[0].iov_len = sizeof(privkey);
+	iov[1].iov_base = ibuf_data(privkey.id_buf);
+	iov[1].iov_len = ibuf_length(privkey.id_buf);
+
+	if (proc_composev(&env->sc_ps, PROC_CERT, IMSG_PRIVKEY, iov, 2) == -1) {
+		log_warnx("%s: failed to send private key", __func__);
+		goto done;
+	}
+
+	iov[0].iov_base = &pubkey;
+	iov[0].iov_len = sizeof(pubkey);
+	iov[1].iov_base = ibuf_data(pubkey.id_buf);
+	iov[1].iov_len = ibuf_length(pubkey.id_buf);
+
+	if (proc_composev(&env->sc_ps, PROC_CERT, IMSG_PUBKEY, iov, 2) == -1) {
+		log_warnx("%s: failed to send public key", __func__);
+		goto done;
+	}
+
+	ret = 0;
+ done:
+	if (fp != NULL)
+		fclose(fp);
+
+	ibuf_release(pubkey.id_buf);
+	ibuf_release(privkey.id_buf);
+	EVP_PKEY_free(key);
+
+	return (ret);
+}
+
+int
+config_getkey(struct iked *env, struct imsg *imsg)
+{
+	size_t		 len;
+	struct iked_id	 id;
+
+	len = IMSG_DATA_SIZE(imsg);
+	if (len <= sizeof(id))
+		fatalx("%s: invalid key message", __func__);
+
+	memcpy(&id, imsg->data, sizeof(id));
+	if ((id.id_buf = ibuf_new((uint8_t *)imsg->data + sizeof(id),
+	    len - sizeof(id))) == NULL)
+		fatalx("%s: failed to get key", __func__);
+
+	explicit_bzero(imsg->data, len);
+	ca_getkey(&env->sc_ps, &id, imsg->hdr.type);
+
 	return (0);
 }

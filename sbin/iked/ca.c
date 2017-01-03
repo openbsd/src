@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.40 2015/12/07 12:46:37 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.41 2017/01/03 17:51:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -47,7 +47,7 @@
 #include "ikev2.h"
 
 void	 ca_run(struct privsep *, struct privsep_proc *, void *);
-void	 ca_reset(struct privsep *, struct privsep_proc *, void *);
+void	 ca_reset(struct privsep *);
 int	 ca_reload(struct iked *);
 
 int	 ca_getreq(struct iked *, struct imsg *);
@@ -65,8 +65,6 @@ struct ibuf *
 	 ca_x509_serialize(X509 *);
 int	 ca_x509_subjectaltname_cmp(X509 *, struct iked_static_id *);
 int	 ca_x509_subjectaltname(X509 *cert, struct iked_id *);
-int	 ca_privkey_serialize(EVP_PKEY *, struct iked_id *);
-int	 ca_pubkey_serialize(EVP_PKEY *, struct iked_id *);
 int	 ca_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 
@@ -89,37 +87,15 @@ struct ca_store {
 pid_t
 caproc(struct privsep *ps, struct privsep_proc *p)
 {
-	struct ca_store	*store;
-	FILE		*fp = NULL;
-	EVP_PKEY	*key;
-
-	/*
-	 * This function runs code before privsep
-	 */
-	if ((store = calloc(1, sizeof(*store))) == NULL)
-		fatal("ca: failed to allocate cert store");
-
-	/* Read private key */
-	if ((fp = fopen(IKED_PRIVKEY, "r")) == NULL)
-		fatal("ca: failed to open private key");
-
-	if ((key = PEM_read_PrivateKey(fp, NULL, NULL, NULL)) == NULL)
-		fatalx("ca: failed to read private key");
-	fclose(fp);
-
-	if (ca_privkey_serialize(key, &store->ca_privkey) != 0)
-		fatalx("ca: failed to serialize private key");
-	if (ca_pubkey_serialize(key, &store->ca_pubkey) != 0)
-		fatalx("ca: failed to serialize public key");
-
-	EVP_PKEY_free(key);
-
-	return (proc_run(ps, p, procs, nitems(procs), ca_reset, store));
+	return (proc_run(ps, p, procs, nitems(procs), ca_run, NULL));
 }
 
 void
 ca_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
+	struct iked	*env = ps->ps_env;
+	struct ca_store	*store;
+
 	/*
 	 * pledge in the ca process:
 	 * stdio - for malloc and basic I/O including events.
@@ -129,14 +105,50 @@ ca_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	if (pledge("stdio rpath recvfd", NULL) == -1)
 		fatal("pledge");
 
-	ca_reset(ps, p, arg);
+	if ((store = calloc(1, sizeof(*store))) == NULL)
+		fatal("%s: failed to allocate cert store", __func__);
+
+	env->sc_priv = store;
 }
 
 void
-ca_reset(struct privsep *ps, struct privsep_proc *p, void *arg)
+ca_getkey(struct privsep *ps, struct iked_id *key, enum imsg_type type)
 {
 	struct iked	*env = ps->ps_env;
-	struct ca_store	*store = arg;
+	struct ca_store	*store = env->sc_priv;
+	struct iked_id	*id;
+	const char	*name;
+
+	if (store == NULL)
+		fatalx("%s: invalid store", __func__);
+
+	if (type == IMSG_PRIVKEY) {
+		name = "private";
+		id = &store->ca_privkey;
+	} else if (type == IMSG_PUBKEY) {
+		name = "public";
+		id = &store->ca_pubkey;
+	} else
+		fatalx("%s: invalid type %d", __func__, type);
+
+	log_debug("%s: received %s key type %s length %zd", __func__,
+	    name, print_map(key->id_type, ikev2_cert_map),
+	    ibuf_length(key->id_buf));
+
+	/* clear old key and copy new one */
+	ibuf_release(id->id_buf);
+	memcpy(id, key, sizeof(*id));
+}
+
+void
+ca_reset(struct privsep *ps)
+{
+	struct iked	*env = ps->ps_env;
+	struct ca_store	*store = env->sc_priv;
+
+	if (store->ca_privkey.id_type == IKEV2_ID_NONE ||
+	    store->ca_pubkey.id_type == IKEV2_ID_NONE)
+		fatalx("ca_reset: keys not loaded");
 
 	if (store->ca_cas != NULL)
 		X509_STORE_free(store->ca_cas);
@@ -155,8 +167,6 @@ ca_reset(struct privsep *ps, struct privsep_proc *p, void *arg)
 	    X509_LOOKUP_file())) == NULL)
 		fatalx("ca_reset: failed to add cert lookup");
 
-	env->sc_priv = store;
-
 	if (ca_reload(env) != 0)
 		fatal("ca_reset: reload");
 }
@@ -165,7 +175,6 @@ int
 ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->p_env;
-	struct ca_store		*store = env->sc_priv;
 	unsigned int		 mode;
 
 	switch (imsg->hdr.type) {
@@ -173,8 +182,8 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &mode);
 		memcpy(&mode, imsg->data, sizeof(mode));
 		if (mode == RESET_ALL || mode == RESET_CA) {
-			log_debug("%s: config reload", __func__);
-			ca_reset(&env->sc_ps, p, store);
+			log_debug("%s: config reset", __func__);
+			ca_reset(&env->sc_ps);
 		}
 		break;
 	case IMSG_OCSP_FD:
@@ -182,6 +191,10 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_OCSP_URL:
 		config_getocsp(env, imsg);
+		break;
+	case IMSG_PRIVKEY:
+	case IMSG_PUBKEY:
+		config_getkey(env, imsg);
 		break;
 	default:
 		return (-1);
