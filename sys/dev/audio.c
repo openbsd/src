@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.159 2016/12/20 15:59:07 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.160 2017/01/03 06:42:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1925,7 +1925,7 @@ wskbd_mixer_update(struct audio_softc *sc, struct wskbd_vol *vol)
 			gain = ctrl.un.value.level[i] + vol->step * val_pending;
 			if (gain > AUDIO_MAX_GAIN)
 				gain = AUDIO_MAX_GAIN;
-			if (gain < AUDIO_MIN_GAIN)
+			else if (gain < AUDIO_MIN_GAIN)
 				gain = AUDIO_MIN_GAIN;
 			ctrl.un.value.level[i] = gain;
 			DPRINTFN(1, "%s: wskbd level %d set to %d\n",
