@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.472 2017/01/04 03:42:33 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.473 2017/01/04 03:56:15 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1802,20 +1802,26 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFFLAGS:
 		if ((error = suser(p, 0)) != 0)
 			return (error);
-		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
-			s = splnet();
-			if_down(ifp);
-			splx(s);
-		}
-		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
-			s = splnet();
-			if_up(ifp);
-			splx(s);
-		}
+
 		ifp->if_flags = (ifp->if_flags & IFF_CANTCHANGE) |
 			(ifr->ifr_flags & ~IFF_CANTCHANGE);
-		if (ifp->if_ioctl)
-			(void) (*ifp->if_ioctl)(ifp, cmd, data);
+
+		if (ifp->if_ioctl != NULL) {
+			error = (*ifp->if_ioctl)(ifp, cmd, data);
+			if (error != 0) {
+				ifp->if_flags = oif_flags;
+				break;
+			}
+		}
+
+		if (ISSET(oif_flags ^ ifp->if_flags, IFF_UP)) {
+			s = splnet();
+			if (ISSET(ifp->if_flags, IFF_UP))
+				if_up(ifp);
+			else
+				if_down(ifp);
+			splx(s);
+		}
 		break;
 
 	case SIOCSIFXFLAGS:
