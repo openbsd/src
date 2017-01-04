@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.86 2016/07/14 08:31:18 semarie Exp $	*/
+/*	$OpenBSD: sort.c,v 1.87 2017/01/04 15:30:58 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1224,7 +1224,10 @@ main(int argc, char *argv[])
 		struct file_list fl;
 
 		file_list_init(&fl, false);
-		file_list_populate(&fl, argc, argv, true);
+		if (argc < 1)
+			file_list_add(&fl, "-", true);
+		else
+			file_list_populate(&fl, argc, argv, true);
 		merge_files(&fl, outfile);
 		file_list_clean(&fl);
 	}
