@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsort.c,v 1.13 2015/09/13 08:31:47 guenther Exp $ */
+/*	$OpenBSD: qsort.c,v 1.14 2017/01/04 15:20:30 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -90,16 +90,16 @@ qsort(void *aa, size_t n, size_t es, int (*cmp)(const void *, const void *))
 
 loop:	SWAPINIT(a, es);
 	if (n < 7) {
-		for (pm = (char *)a + es; pm < (char *) a + n * es; pm += es)
-			for (pl = pm; pl > (char *) a && cmp(pl - es, pl) > 0;
+		for (pm = a + es; pm < a + n * es; pm += es)
+			for (pl = pm; pl > a && cmp(pl - es, pl) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
 		return;
 	}
-	pm = (char *)a + (n / 2) * es;
+	pm = a + (n / 2) * es;
 	if (n > 7) {
-		pl = (char *)a;
-		pn = (char *)a + (n - 1) * es;
+		pl = a;
+		pn = a + (n - 1) * es;
 		if (n > 40) {
 			d = (n / 8) * es;
 			pl = med3(pl, pl + d, pl + 2 * d, cmp);
@@ -109,9 +109,9 @@ loop:	SWAPINIT(a, es);
 		pm = med3(pl, pm, pn, cmp);
 	}
 	swap(a, pm);
-	pa = pb = (char *)a + es;
+	pa = pb = a + es;
 
-	pc = pd = (char *)a + (n - 1) * es;
+	pc = pd = a + (n - 1) * es;
 	for (;;) {
 		while (pb <= pc && (cmp_result = cmp(pb, a)) <= 0) {
 			if (cmp_result == 0) {
@@ -134,8 +134,8 @@ loop:	SWAPINIT(a, es);
 		pc -= es;
 	}
 
-	pn = (char *)a + n * es;
-	r = min(pa - (char *)a, pb - pa);
+	pn = a + n * es;
+	r = min(pa - a, pb - pa);
 	vecswap(a, pb - r, r);
 	r = min(pd - pc, pn - pd - es);
 	vecswap(pb, pn - r, r);
