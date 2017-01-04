@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.89 2016/12/18 17:03:08 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.90 2017/01/04 17:26:02 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -238,10 +238,13 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	    ${MAKE} install)
 	mv ${CROSSDIR}/usr/bin/clang ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang
 	mv ${CROSSDIR}/usr/bin/clang++ ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang++
-	cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cc
-	cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-c++
+	cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-clang
 	ln -sf ${TARGET_CANON}-cc ${CROSSDIR}/usr/${TARGET_CANON}/bin/cc
 	ln -sf ${TARGET_CANON}-c++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/c++
+	echo "#!/bin/sh\n${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-clang --sysroot ${CROSSDIR} \"$$""@\"" > ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cc; \
+	chmod +x ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cc;
+	echo "#!/bin/sh\n${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-clang --driver-mode=g++ --sysroot ${CROSSDIR} \"$$""@\"" > ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-c++; \
+	chmod +x ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-c++;
 .elif ${COMPILER_VERSION:L} == "gcc3"
 	(cd ${.CURDIR}/gnu/usr.bin/gcc; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
