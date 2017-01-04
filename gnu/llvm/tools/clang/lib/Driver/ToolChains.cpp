@@ -2977,7 +2977,7 @@ OpenBSD::OpenBSD(const Driver &D, const llvm::Triple &Triple,
                  const ArgList &Args)
     : Generic_ELF(D, Triple, Args) {
   getFilePaths().push_back(getDriver().Dir + "/../lib");
-  getFilePaths().push_back("/usr/lib");
+  getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
 }
 
 Tool *OpenBSD::buildAssembler() const {
