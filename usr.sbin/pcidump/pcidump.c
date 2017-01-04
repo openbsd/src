@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.40 2016/08/27 04:38:48 guenther Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.41 2017/01/04 03:35:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -85,7 +85,7 @@ const char *pci_capnames[] = {
 	"AGP",
 	"Vital Product Data (VPD)",
 	"Slot Identification",
-	"Message Signaled Interrupts (MSI)",
+	"Message Signalled Interrupts (MSI)",
 	"CompactPCI Hot Swap",
 	"PCI-X",
 	"AMD LDT/HT",
@@ -97,7 +97,7 @@ const char *pci_capnames[] = {
 	"AGP8",
 	"Secure",
 	"PCI Express",
-	"Extended Message Signaled Interrupts (MSI-X)",
+	"Extended Message Signalled Interrupts (MSI-X)",
 	"SATA",
 	"PCI Advanced Features"
 };
