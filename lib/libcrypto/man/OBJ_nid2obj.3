@@ -1,7 +1,24 @@
-.\"	$OpenBSD: OBJ_nid2obj.3,v 1.4 2016/11/27 18:22:25 schwarze Exp $
+.\"	$OpenBSD: OBJ_nid2obj.3,v 1.5 2017/01/04 05:14:51 schwarze Exp $
 .\"	OpenSSL c264592d May 14 11:28:00 2006 +0000
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2002, 2006, 2015, 2016 The OpenSSL Project.
 .\" All rights reserved.
 .\"
@@ -49,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 27 2016 $
+.Dd $Mdocdate: January 4 2017 $
 .Dt OBJ_NID2OBJ 3
 .Os
 .Sh NAME
@@ -67,7 +84,7 @@
 .Nm OBJ_create ,
 .Nm OBJ_cleanup ,
 .Nm i2t_ASN1_OBJECT
-.Nd ASN.1 object utility functions
+.Nd inspect and create ASN.1 object identifiers
 .Sh SYNOPSIS
 .In openssl/objects.h
 .Ft ASN1_OBJECT *
@@ -225,8 +242,20 @@ to
 If the two are identical, 0 is returned.
 .Pp
 .Fn OBJ_dup
-returns a copy of
-.Fa o .
+returns a deep copy of
+.Fa o
+if
+.Fa o
+is marked as dynamically allocated.
+The new object and all data contained in it is marked as dynamically
+allocated.
+If
+.Fa o
+is not marked as dynamically allocated,
+.Fn OBJ_dup
+just returns
+.Fa o
+itself.
 .Pp
 .Fn OBJ_create
 adds a new object to the internal table.
@@ -237,6 +266,14 @@ the short name and
 .Fa ln
 the long name.
 A new NID is returned for the created object.
+.Pp
+The new object added to the internal table and all the data
+contained in it is marked as not dynamically allocated.
+Consequently, retrieving it with
+.Fn OBJ_nid2obj
+or a similar function and then calling
+.Xr ASN1_OBJECT_free 3
+on the returned pointer will have no effect.
 .Pp
 .Fn OBJ_cleanup
 cleans up the internal object table: this should be called before
@@ -275,11 +312,13 @@ and
 can process the numerical form of an OID.
 .Sh RETURN VALUES
 .Fn OBJ_nid2obj
-returns an
+and
+.Fn OBJ_dup
+return an
 .Vt ASN1_OBJECT
-structure or
+object or
 .Dv NULL
-if an error occurred.
+if an error occurs.
 .Pp
 .Fn OBJ_nid2ln
 and
@@ -296,6 +335,11 @@ and
 return a NID or
 .Dv NID_undef
 on error.
+.Pp
+.Fn OBJ_create
+returns the new NID or
+.Dv NID_undef
+if an error occurs.
 .Sh EXAMPLES
 Create an object for
 .Sy commonName :
