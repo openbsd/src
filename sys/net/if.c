@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.471 2017/01/04 03:12:54 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.472 2017/01/04 03:42:33 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -651,14 +651,14 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 			else
 				ml_enqueue(ml, m);
 		}
-	}
 
-	if (ml_empty(ml))
-		return;
+		if (ml_empty(ml))
+			return;
+	}
 #endif
 
-	mq_enlist(&ifp->if_inputqueue, ml);
-	task_add(softnettq, ifp->if_inputtask);
+	if (mq_enlist(&ifp->if_inputqueue, ml) == 0)
+		task_add(softnettq, ifp->if_inputtask);
 }
 
 int
