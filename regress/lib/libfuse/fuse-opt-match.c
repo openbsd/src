@@ -39,8 +39,6 @@ match_opts(const struct fuse_opt *opts, const int *results)
 {
 	if (fuse_opt_match(opts, NULL) != 0)
 		return (1);
-	if (fuse_opt_match(opts, "") != 0)
-		return (2);
 
 	if (fuse_opt_match(opts, "bar=") != results[0])
 		return (3);
