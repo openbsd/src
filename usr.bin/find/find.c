@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.21 2017/01/03 21:31:16 tedu Exp $	*/
+/*	$OpenBSD: find.c,v 1.22 2017/01/04 09:21:26 tb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -160,6 +160,15 @@ find_execute(PLAN *plan,	/* search plan */
 				err(1, "pledge");
 		} else {
 			if (pledge("stdio rpath getpw", NULL) == -1)
+				err(1, "pledge");
+		}
+	} else {
+		if (isdelete) {
+			if (pledge("stdio rpath cpath getpw proc exec", NULL)
+			    == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio rpath getpw proc exec", NULL) == -1)
 				err(1, "pledge");
 		}
 	}
