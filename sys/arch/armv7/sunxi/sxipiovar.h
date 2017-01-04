@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipiovar.h,v 1.6 2016/12/27 14:37:02 kettenis Exp $	*/
+/*	$OpenBSD: sxipiovar.h,v 1.7 2017/01/04 12:15:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -43,27 +43,3 @@ struct sxipio_pin {
 
 #define SXIPIO_PIN(port, pin) \
 	"P" #port #pin,  SXIPIO_PORT_ ## port, pin
-
-/*
- * XXX To keep things simple for now, functions below work as if there
- * is 32pins per port, this needs to be taken into account when writing
- * these pin defines.
- */
-
-#define	SXIPIO_INPUT		0
-#define	SXIPIO_OUTPUT		1
-
-#define SXIPIO_USB1_PWR		230
-#define SXIPIO_USB2_PWR		227
-#define SXIPIO_SATA_PWR		40
-#define	SXIPIO_EMAC_NPINS	18	/* PORTA 0-17 */
-
-int sxipio_getcfg(int);
-void sxipio_setcfg(int, int);
-int sxipio_getpin(int);
-void sxipio_setpin(int);
-void sxipio_clrpin(int);
-int sxipio_togglepin(int);
-
-int sxipio_pinctrlbyid(int node, int id);
-int sxipio_pinctrlbyname(int node, const char *);

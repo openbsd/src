@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.17 2016/12/27 14:37:02 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.18 2017/01/04 12:15:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -40,19 +40,13 @@
 #include "gpio.h"
 
 #define	SXIPIO_NPORT		9
-#define	SXIPIO_PA_NPIN		18
-#define	SXIPIO_PB_NPIN		24
-#define	SXIPIO_PC_NPIN		25
-#define	SXIPIO_PD_NPIN		28
-#define	SXIPIO_PE_NPIN		12
-#define	SXIPIO_PF_NPIN		6
-#define	SXIPIO_PG_NPIN		12
-#define	SXIPIO_PH_NPIN		28
-#define	SXIPIO_PI_NPIN		22
-#define	SXIPIO_NPIN	(SXIPIO_PA_NPIN + SXIPIO_PB_NPIN + SXIPIO_PC_NPIN + \
-	SXIPIO_PD_NPIN + SXIPIO_PE_NPIN + SXIPIO_PF_NPIN + SXIPIO_PG_NPIN + \
-	SXIPIO_PH_NPIN + SXIPIO_PI_NPIN)
-#define	SXIPIO_PS_NPIN		84 /* for DRAM controller */
+
+struct sxipio_softc;
+
+struct sxipio_gpio {
+	struct sxipio_softc *sc;
+	int port;
+};
 
 struct intrhand {
 	int (*ih_func)(void *);		/* handler */
@@ -77,8 +71,9 @@ struct sxipio_softc {
 	int			sc_npins;
 	struct gpio_controller	sc_gc;
 
-	struct gpio_chipset_tag	 sc_gpio_tag[SXIPIO_NPORT];
-	gpio_pin_t		 sc_gpio_pins[SXIPIO_NPORT][32];
+	struct sxipio_gpio	sc_gpio[SXIPIO_NPORT];
+	struct gpio_chipset_tag	sc_gpio_tag[SXIPIO_NPORT];
+	gpio_pin_t		sc_gpio_pins[SXIPIO_NPORT][32];
 
 	struct intrhand		*sc_handlers[32];
 };
@@ -91,6 +86,9 @@ struct sxipio_softc {
 #define	SXIPIO_INT_CTL		0x0210
 #define	SXIPIO_INT_STA		0x0214
 #define	SXIPIO_INT_DEB		0x0218 /* debounce register */
+
+#define SXIPIO_GPIO_IN		0
+#define SXIPIO_GPIO_OUT		1
 
 int	sxipio_match(struct device *, void *, void *);
 void	sxipio_attach(struct device *, struct device *, void *);
@@ -108,8 +106,6 @@ int	sxipio_pinctrl(uint32_t, void *);
 void	sxipio_config_pin(void *, uint32_t *, int);
 int	sxipio_get_pin(void *, uint32_t *);
 void	sxipio_set_pin(void *, uint32_t *, int);
-
-struct sxipio_softc *sxipio_sc;
 
 #include "sxipio_pins.h"
 
@@ -180,8 +176,6 @@ sxipio_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
-	sxipio_sc = sc;
-
 	clock_enable_all(faa->fa_node);
 	reset_deassert_all(faa->fa_node);
 
@@ -208,236 +202,6 @@ sxipio_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %d pins\n", sc->sc_npins);
 }
 
-/*
- * GPIO support code
- */
-
-int	sxipio_pin_read(void *, int);
-void	sxipio_pin_write(void *, int, int);
-void	sxipio_pin_ctl(void *, int, int);
-
-static const struct gpio_chipset_tag sxipio_gpio_tag = {
-	.gp_pin_read = sxipio_pin_read,
-	.gp_pin_write = sxipio_pin_write,
-	.gp_pin_ctl = sxipio_pin_ctl
-};
-
-int
-sxipio_pin_read(void *portno, int pin)
-{
-	return sxipio_getpin((*(uint32_t *)portno * 32) + pin)
-	    ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
-}
-
-void
-sxipio_pin_write(void *portno, int pin, int val)
-{
-	if (val)
-		sxipio_setpin((*(uint32_t *)portno * 32) + pin);
-	else
-		sxipio_clrpin((*(uint32_t *)portno * 32) + pin);
-}
-
-void
-sxipio_pin_ctl(void *portno, int pin, int flags)
-{
-	if (ISSET(flags, GPIO_PIN_OUTPUT))
-		sxipio_setcfg((*(uint32_t *)portno * 32) + pin, SXIPIO_OUTPUT);
-	else
-		sxipio_setcfg((*(uint32_t *)portno * 32) + pin, SXIPIO_INPUT);
-}
-
-/* XXX ugly, but cookie has no other purposeful use. */
-static const uint32_t sxipio_ports[SXIPIO_NPORT] = {
-	0, 1, 2, 3, 4, 5, 6, 7, 8
-};
-
-static const int sxipio_last_pin[SXIPIO_NPORT] = {
-	SXIPIO_PA_NPIN,
-	SXIPIO_PB_NPIN,
-	SXIPIO_PC_NPIN,
-	SXIPIO_PD_NPIN,
-	SXIPIO_PE_NPIN,
-	SXIPIO_PF_NPIN,
-	SXIPIO_PG_NPIN,
-	SXIPIO_PH_NPIN,
-	SXIPIO_PI_NPIN
-};
-
-void
-sxipio_attach_gpio(struct device *parent)
-{
-	struct sxipio_softc *sc = (struct sxipio_softc *)parent;
-	struct gpiobus_attach_args gba;
-	int cfg, pin, port;
-	/* get value & state of enabled pins, and disable those in use */
-	pin = 0;
-	port = 0;
-next:
-	sc->sc_gpio_pins[port][pin].pin_num = pin;
-	cfg = sxipio_getcfg((port * 32) + pin);
-#if DEBUG
-	printf("port %d pin %d cfg %d\n", port, pin, cfg);
-#endif
-	if (cfg < 2) {
-		sc->sc_gpio_pins[port][pin].pin_caps =
-		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
-		sc->sc_gpio_pins[port][pin].pin_state =
-		    sxipio_getpin((port * 32) + pin);
-		sc->sc_gpio_pins[port][pin].pin_flags = GPIO_PIN_SET |
-		    (cfg ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT);
-	} else {
-		/* disable control of taken over pins */
-		sc->sc_gpio_pins[port][pin].pin_caps = 0;
-		sc->sc_gpio_pins[port][pin].pin_state = 0;
-		sc->sc_gpio_pins[port][pin].pin_flags = 0;
-	}
-
-	if (++pin < sxipio_last_pin[port])
-		goto next;
-
-	bcopy(&sxipio_gpio_tag, &sc->sc_gpio_tag[port], sizeof(sxipio_gpio_tag));
-	sc->sc_gpio_tag[port].gp_cookie = (void *)&sxipio_ports[port];
-	gba.gba_name = "gpio";
-	gba.gba_gc = &sc->sc_gpio_tag[port];
-	gba.gba_pins = &sc->sc_gpio_pins[port][0];
-	gba.gba_npins = pin;
-
-#if NGPIO > 0
-	config_found(&sc->sc_dev, &gba, gpiobus_print);
-#endif
-
-	pin = 0;
-	if (++port < SXIPIO_NPORT)
-		goto next;
-}
-
-/*
- * Lower Port I/O for MD code under arch/armv7/sunxi.
- * XXX see the comment in sxipiovar.h
- */
-int
-sxipio_getcfg(int pin)
-{
-	struct sxipio_softc *sc = sxipio_sc;
-	uint32_t bit, data, off, reg, port;
-	int s;
-
-	port = pin >> 5;
-	bit = pin - (port << 5);
-	reg = SXIPIO_CFG(port, bit);
-	off = (bit & 7) << 2;
-
-	s = splhigh();
-
-	data = SXIREAD4(sc, reg);
-
-	splx(s);
-
-	return data >> off & 7;
-}
-
-void
-sxipio_setcfg(int pin, int mux)
-{
-	struct sxipio_softc *sc = sxipio_sc;
-	uint32_t bit, cmask, mask, off, reg, port;
-	int s;
-
-	port = pin >> 5;
-	bit = pin - (port << 5);
-	reg = SXIPIO_CFG(port, bit);
-	off = (bit & 7) << 2;
-	cmask = 7 << off;
-	mask = mux << off;
-
-	s = splhigh();
-
-	SXICMS4(sc, reg, cmask, mask);
-
-	splx(s);
-}
-
-int
-sxipio_getpin(int pin)
-{
-	struct sxipio_softc *sc = sxipio_sc;
-	uint32_t bit, data, mask, reg, port;
-	int s;
-
-	port = pin >> 5;
-	bit = pin - (port << 5);
-	reg = SXIPIO_DAT(port);
-	mask = 1 << (bit & 31);
-
-	s = splhigh();
-
-	data = SXIREAD4(sc, reg);
-
-	splx(s);
-
-	return data & mask ? 1 : 0;
-}
-
-void
-sxipio_setpin(int pin)
-{
-	struct sxipio_softc *sc = sxipio_sc;
-	uint32_t bit, mask, reg, port;
-	int s;
-
-	port = pin >> 5;
-	bit = pin - (port << 5);
-	reg = SXIPIO_DAT(port);
-	mask = 1 << (bit & 31);
-
-	s = splhigh();
-
-	SXISET4(sc, reg, mask);
-
-	splx(s);
-}
-
-void
-sxipio_clrpin(int pin)
-{
-	struct sxipio_softc *sc = sxipio_sc;
-	uint32_t bit, mask, reg, port;
-	int s;
-
-	port = pin >> 5;
-	bit = pin - (port << 5);
-	reg = SXIPIO_DAT(port);
-	mask = 1 << (bit & 31);
-
-	s = splhigh();
-
-	SXICLR4(sc, reg, mask);
-
-	splx(s);
-}
-
-int
-sxipio_togglepin(int pin)
-{
-	struct sxipio_softc *sc = sxipio_sc;
-	uint32_t bit, data, mask, reg, port;
-	int s;
-
-	port = pin >> 5;
-	bit = pin - (port << 5);
-	reg = SXIPIO_DAT(port);
-	mask = 1 << (bit & 31);
-
-	s = splhigh();
-
-	data = SXIREAD4(sc, reg);
-	SXIWRITE4(sc, reg, data ^ mask);
-
-	splx(s);
-
-	return data & mask ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
-}
 
 int
 sxipio_pinctrl(uint32_t phandle, void *cookie)
@@ -569,4 +333,116 @@ sxipio_set_pin(void *cookie, uint32_t *cells, int val)
 	else
 		reg &= ~(1 << pin);
 	SXIWRITE4(sc, SXIPIO_DAT(port), reg);
+}
+
+/*
+ * GPIO support code
+ */
+
+int	sxipio_pin_read(void *, int);
+void	sxipio_pin_write(void *, int, int);
+void	sxipio_pin_ctl(void *, int, int);
+
+static const struct gpio_chipset_tag sxipio_gpio_tag = {
+	.gp_pin_read = sxipio_pin_read,
+	.gp_pin_write = sxipio_pin_write,
+	.gp_pin_ctl = sxipio_pin_ctl
+};
+
+int
+sxipio_pin_read(void *cookie, int pin)
+{
+	struct sxipio_gpio *gpio = cookie;
+	uint32_t cells[3];
+
+	cells[0] = gpio->port;
+	cells[1] = pin;
+	cells[2] = 0;
+
+	return sxipio_get_pin(gpio->sc, cells) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
+}
+
+void
+sxipio_pin_write(void *cookie, int pin, int val)
+{
+	struct sxipio_gpio *gpio = cookie;
+	uint32_t cells[3];
+
+	cells[0] = gpio->port;
+	cells[1] = pin;
+	cells[2] = 0;
+
+	sxipio_set_pin(gpio->sc, cells, val);
+}
+
+void
+sxipio_pin_ctl(void *cookie, int pin, int flags)
+{
+	struct sxipio_gpio *gpio = cookie;
+	uint32_t cells[3];
+
+	cells[0] = gpio->port;
+	cells[1] = pin;
+	cells[2] = 0;
+
+	if (ISSET(flags, GPIO_PIN_OUTPUT))
+		sxipio_config_pin(gpio->sc, cells, GPIO_CONFIG_OUTPUT);
+	else
+		sxipio_config_pin(gpio->sc, cells, 0);
+}
+
+void
+sxipio_attach_gpio(struct device *parent)
+{
+	struct sxipio_softc *sc = (struct sxipio_softc *)parent;
+	struct gpiobus_attach_args gba;
+	uint32_t reg;
+	int port, pin;
+	int cfg, state;
+	int i;
+
+	for (i = 0; i < sc->sc_npins; i++) {
+		/* Skip pins that have no gpio function. */
+		if (strcmp(sc->sc_pins[i].funcs[0].name, "gpio_in") != 0 ||
+		    strcmp(sc->sc_pins[i].funcs[1].name, "gpio_out") != 0)
+			continue;
+
+		port = sc->sc_pins[i].port;
+		pin = sc->sc_pins[i].pin;
+
+		/* Get pin configuration. */
+		reg = SXIREAD4(sc, SXIPIO_CFG(port, pin));
+		cfg = (reg >> (pin & 0x7)) & 0x7;
+
+		/* Skip pins that have been assigned other functions. */
+		if (cfg != SXIPIO_GPIO_IN && cfg != SXIPIO_GPIO_OUT)
+			continue;
+
+		/* Get pin state. */
+		reg = SXIREAD4(sc, SXIPIO_DAT(port));
+		state = (reg >> pin) & 1;
+
+		sc->sc_gpio_pins[port][pin].pin_caps =
+		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
+		sc->sc_gpio_pins[port][pin].pin_flags =
+		    GPIO_PIN_SET | (cfg ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT);
+		sc->sc_gpio_pins[port][pin].pin_state = state;
+		sc->sc_gpio_pins[port][pin].pin_num = pin;
+	}
+
+	for (i = 0; i <= port; i++) {
+		memcpy(&sc->sc_gpio_tag[i], &sxipio_gpio_tag, sizeof(sxipio_gpio_tag));
+		sc->sc_gpio_tag[i].gp_cookie = &sc->sc_gpio[i];
+		sc->sc_gpio[i].sc = sc;
+		sc->sc_gpio[i].port = i;
+
+		gba.gba_name = "gpio";
+		gba.gba_gc = &sc->sc_gpio_tag[i];
+		gba.gba_pins = &sc->sc_gpio_pins[i][0];
+		gba.gba_npins = 32;
+		
+#if NGPIO > 0
+		config_found(&sc->sc_dev, &gba, gpiobus_print);
+#endif
+	}
 }
