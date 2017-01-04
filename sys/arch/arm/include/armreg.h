@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.38 2017/01/01 09:54:44 jsg Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.39 2017/01/04 00:40:49 jsg Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -109,11 +109,8 @@
 /* The high-order byte is always the implementor */
 #define CPU_ID_IMPLEMENTOR_MASK	0xff000000
 #define CPU_ID_ARM_LTD		0x41000000 /* 'A' */
-#define CPU_ID_INTEL		0x69000000 /* 'i' */
 
 #define CPU_ID_ARCH_MASK	0x000f0000
-#define CPU_ID_ARCH_V5TE	0x00050000
-#define CPU_ID_ARCH_V5TEJ	0x00060000
 #define CPU_ID_ARCH_V6		0x00070000
 #define CPU_ID_ARCH_CPUID	0x000f0000
 #define CPU_ID_VARIANT_MASK	0x00f00000
@@ -121,25 +118,11 @@
 /* Next three nybbles are part number */
 #define CPU_ID_PARTNO_MASK	0x0000fff0
 
-/* Intel XScale has sub fields in part number */
-#define CPU_ID_XSCALE_COREGEN_MASK	0x0000e000 /* core generation */
-#define CPU_ID_XSCALE_COREREV_MASK	0x00001c00 /* core revision */
-#define CPU_ID_XSCALE_PRODUCT_MASK	0x000003f0 /* product number */
-
 /* And finally, the revision number. */
 #define CPU_ID_REVISION_MASK	0x0000000f
 
 /* Individual CPUs are probably best IDed by everything but the revision. */
 #define CPU_ID_CPU_MASK		0xfffffff0
-#define CPU_ID_PXA250		0x69052100 /* sans core revision */
-#define CPU_ID_PXA210		0x69052120
-#define CPU_ID_PXA250A		0x69052100 /* 1st version Core */
-#define CPU_ID_PXA210A		0x69052120 /* 1st version Core */
-#define CPU_ID_PXA250B		0x69052900 /* 3rd version Core */
-#define CPU_ID_PXA210B		0x69052920 /* 3rd version Core */
-#define CPU_ID_PXA250C		0x69052d00 /* 4th version Core */
-#define CPU_ID_PXA210C		0x69052d20 /* 4th version Core */
-#define CPU_ID_PXA27X		0x69054110
 #define CPU_ID_CORTEX_MASK	0xff0ffff0
 #define CPU_ID_CORTEX_A5	0x410fc050
 #define CPU_ID_CORTEX_A5_MASK	0xff0ffff0
@@ -258,14 +241,6 @@
 #define CPU_CONTROL_TE		(1<<30) /* TE: Thumb Exception Enable */
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
-
-/* XScale Auxillary Control Register (CP15 register 1, opcode2 1) */
-#define XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */
-#define XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
-#define XSCALE_AUXCTL_MD_WB_RA	0x00000000 /* mini-D$ wb, read-allocate */
-#define XSCALE_AUXCTL_MD_WB_RWA	0x00000010 /* mini-D$ wb, read/write-allocate */
-#define XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
-#define XSCALE_AUXCTL_MD_MASK	0x00000030
 
 /* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
 #define CORTEXA9_AUXCTL_FW	(1 << 0) /* Cache and TLB updates broadcast */

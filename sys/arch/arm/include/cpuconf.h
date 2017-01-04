@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.17 2016/08/14 11:30:54 jsg Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.18 2017/01/04 00:40:49 jsg Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -48,12 +48,6 @@
 /*
  * Determine which ARM architecture versions are configured.
  */
-#if defined(CPU_XSCALE_PXA2X0)
-#define	ARM_ARCH_5	1
-#else
-#define	ARM_ARCH_5	0
-#endif
-
 #if defined(CPU_ARMv7)
 #define ARM_ARCH_7     1
 #else 
@@ -63,26 +57,9 @@
 /*
  * Define which MMU classes are configured:
  *
- *	ARM_MMU_GENERIC		Generic ARM MMU, compatible with ARM6.
- *
- *	ARM_MMU_XSCALE		XScale MMU.  Compatible with generic ARM
- *				MMU, but also has several extensions which
- *				require different PTE layout to use.
  *      ARM_MMU_V7		v6/v7 MMU with XP bit enabled subpage
  *				protection is not used, TEX/AP is used instead.
  */
-
-#if defined(CPU_ARMv7)
-#define	ARM_MMU_GENERIC		1
-#else
-#define	ARM_MMU_GENERIC		0
-#endif
-
-#if defined(CPU_XSCALE_PXA2X0)
-#define	ARM_MMU_XSCALE		1
-#else
-#define	ARM_MMU_XSCALE		0
-#endif
 
 #if defined(CPU_ARMv7)
 #define ARM_MMU_V7		1
@@ -90,7 +67,6 @@
 #define ARM_MMU_V7		0
 #endif
 
-#define	ARM_NMMUS		(ARM_MMU_GENERIC +	\
-				 ARM_MMU_XSCALE + ARM_MMU_V7)
+#define	ARM_NMMUS		(ARM_MMU_V7)
 
 #endif /* _ARM_CPUCONF_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.8 2016/08/27 14:22:35 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.9 2017/01/04 00:40:49 jsg Exp $	*/
 /*	$NetBSD: pte.h,v 1.6 2003/04/18 11:08:28 scw Exp $	*/
 
 /*
@@ -146,9 +146,6 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_S_AP(x)	((x) << 10)	/* access permissions */
 #define	L1_S_ADDR_MASK	0xfff00000	/* phys address of section */
 
-#define	L1_S_XSCALE_P	0x00000200	/* ECC enable for this section */
-#define	L1_S_XSCALE_TEX(x) ((x) << 12)	/* Type Extension */
-
 #define	L1_S_V7_TEX(x)	(((x) & 0x7) << 12)	/* Type Extension */
 #define	L1_S_V7_TEX_MASK	(0x7 << 12)	/* Type Extension */
 #define	L1_S_V7_NS	0x00080000	/* Non-secure */
@@ -169,8 +166,6 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_C_DOM_MASK	L1_C_DOM(0xf)
 #define	L1_C_ADDR_MASK	0xfffffc00	/* phys address of L2 Table */
 
-#define	L1_C_XSCALE_P	0x00000200	/* ECC enable for this section */
-
 #define	L1_C_V7_IMP	0x00000200	/* implementation defined */
 #define	L1_C_V7_NS	0x00000008	/* Non-secure */
 #define	L1_C_V7_PXN	0x00000004	/* Privileged eXecute Never */
@@ -183,8 +178,6 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_F_DOM_MASK	L1_F_DOM(0xf)
 #define	L1_F_ADDR_MASK	0xfffff000	/* phys address of L2 Table */
 
-#define	L1_F_XSCALE_P	0x00000200	/* ECC enable for this section */
-
 /*
  * ARM L2 Descriptors
  */
@@ -195,14 +188,6 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_TYPE_T	0x03		/* Tiny Page (pre-V7) */
 #define	L2_TYPE_MASK	0x03		/* mask of type bits */
 
-	/*
-	 * This L2 Descriptor type is available on XScale processors
-	 * when using a Coarse L1 Descriptor.  The Extended Small
-	 * Descriptor has the same format as the XScale Tiny Descriptor,
-	 * but describes a 4K page, rather than a 1K page.
-	 */
-#define	L2_TYPE_XSCALE_XS 0x03		/* XScale Extended Small Page */
-
 #define	L2_B		0x00000004	/* Bufferable page */
 #define	L2_C		0x00000008	/* Cacheable page */
 #define	L2_AP0(x)	((x) << 4)	/* access permissions (sp 0) */
@@ -210,9 +195,6 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_AP2(x)	((x) << 8)	/* access permissions (sp 2) */
 #define	L2_AP3(x)	((x) << 10)	/* access permissions (sp 3) */
 #define	L2_AP(x)	(L2_AP0(x) | L2_AP1(x) | L2_AP2(x) | L2_AP3(x))
-
-#define	L2_XSCALE_L_TEX(x) ((x) << 12)	/* Type Extension */
-#define	L2_XSCALE_T_TEX(x) ((x) << 6)	/* Type Extension */
 
 #define	L2_V7_L_TEX(x)	(((x) & 0x7) << 12)	/* Type Extension */
 #define	L2_V7_L_TEX_MASK	(0x7 << 12)	/* Type Extension */
@@ -225,12 +207,6 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_V7_AF	0x00000010	/* Access Flag */
 #define	L2_V7_S		0x00000400	/* Sharable */
 #define	L2_V7_nG	0x00000800	/* not Global */
-
-/*
- * Access Permissions for L1 and L2 Descriptors. (except for V7)
- */
-#define	AP_W		0x01		/* writable */
-#define	AP_U		0x02		/* user */
 
 /*
  * Short-hand for common AP_* constants.
@@ -252,25 +228,5 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	DOMAIN_CLIENT	0x01		/* client */
 #define	DOMAIN_RESERVED	0x02		/* reserved */
 #define	DOMAIN_MANAGER	0x03		/* manager */
-
-/*
- * Type Extension bits for XScale processors.
- *
- * Behavior of C and B when X == 0:
- *
- * C B  Cacheable  Bufferable  Write Policy  Line Allocate Policy
- * 0 0      N          N            -                 -
- * 0 1      N          Y            -                 -
- * 1 0      Y          Y       Write-through    Read Allocate
- * 1 1      Y          Y        Write-back      Read Allocate
- *
- * Behavior of C and B when X == 1:
- * C B  Cacheable  Bufferable  Write Policy  Line Allocate Policy
- * 0 0      -          -            -                 -           DO NOT USE
- * 0 1      N          Y            -                 -
- * 1 0  Mini-Data      -            -                 -
- * 1 1      Y          Y        Write-back       R/W Allocate
- */
-#define	TEX_XSCALE_X	0x01		/* X modifies C and B */
 
 #endif /* _ARM_PTE_H_ */
