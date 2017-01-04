@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.940 2017/01/03 19:33:48 rpe Exp $
+#	$OpenBSD: install.sub,v 1.941 2017/01/04 13:39:52 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2170,7 +2170,7 @@ startcgiinfo() {
 	# Make sure the ftp subshell gets its own process group.
 	set -m
 	(
-		unpriv2 ftp -Vao - "http://ftp.openbsd.org/cgi-bin/ftplist.cgi?path=$HTTP_SETDIR" \
+		unpriv2 ftp -w 15 -Vao - "$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftplist.cgi?path=$HTTP_SETDIR" \
 			2>/dev/null >$CGI_INFO
 
 		# Remember finish time for adjusting the received timestamp.
@@ -2666,8 +2666,8 @@ do_install(){
 		_i=$_i${TZ:+TZ=$TZ&}
 		_i=$_i${INSTALL_METHOD:+method=$INSTALL_METHOD}
 		_i=${_i%&}
-		[[ -n $_i ]] && unpriv2 ftp -Vao - \
-			"http://ftp.openbsd.org/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
+		[[ -n $_i ]] && unpriv2 ftp -w 15 -Vao - \
+			"$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
 	fi
 
 	# Ensure an enabled console has the correct speed in /etc/ttys.
