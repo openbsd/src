@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.37 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.38 2017/01/04 07:33:14 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -494,11 +494,6 @@ cs4231_set_params(void *vsc, int setmode, int usemode,
 		else
 			return (EINVAL);
 		break;
-	case AUDIO_ENCODING_ULINEAR:
-		if (p->precision != 8)
-			return (EINVAL);
-		bits = FMT_PCM8 >> 5;
-		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
 		if (p->precision == 16)
 			bits = FMT_TWOS_COMP_BE >> 5;
@@ -506,11 +501,6 @@ cs4231_set_params(void *vsc, int setmode, int usemode,
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 8)
-			bits = FMT_PCM8 >> 5;
-		else
-			return (EINVAL);
-		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (p->precision == 8)
 			bits = FMT_PCM8 >> 5;
