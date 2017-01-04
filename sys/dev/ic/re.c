@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.198 2016/11/16 06:06:04 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.199 2017/01/04 01:47:32 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1213,7 +1213,8 @@ re_rx_list_init(struct rl_softc *sc)
 	sc->rl_ldata.rl_rx_considx = 0;
 	sc->rl_head = sc->rl_tail = NULL;
 
-	if_rxr_init(&sc->rl_ldata.rl_rx_ring, 2, sc->rl_ldata.rl_rx_desc_cnt);
+	if_rxr_init(&sc->rl_ldata.rl_rx_ring, 2,
+	    sc->rl_ldata.rl_rx_desc_cnt - 1);
 	re_rx_list_fill(sc);
 
 	return (0);
@@ -1520,7 +1521,8 @@ re_intr(void *arg)
 		claimed = 1;
 
 	if (status & RL_INTRS_CPLUS) {
-		if (status & (sc->rl_rx_ack | RL_ISR_RX_ERR)) {
+		if (status &
+		    (sc->rl_rx_ack | RL_ISR_RX_ERR | RL_ISR_FIFO_OFLOW)) {
 			rx |= re_rxeof(sc);
 			claimed = 1;
 		}
