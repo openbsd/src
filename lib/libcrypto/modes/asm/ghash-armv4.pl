@@ -110,6 +110,7 @@ $code=<<___;
 #include "arm_arch.h"
 
 .text
+.syntax	unified
 .code	32
 
 .type	rem_4bit,%object
@@ -182,7 +183,7 @@ gcm_ghash_4bit:
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
 	ldrh	$Tll,[sp,$nlo]		@ rem_4bit[rem]
 	eor	$Zhl,$Thl,$Zhl,lsr#4
-	ldrplb	$nlo,[$inp,$cnt]
+	ldrbpl	$nlo,[$inp,$cnt]
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
 	eor	$Zhh,$Thh,$Zhh,lsr#4
 
@@ -192,7 +193,7 @@ gcm_ghash_4bit:
 	add	$nhi,$nhi,$nhi
 	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
 	eor	$Zll,$Tll,$Zll,lsr#4
-	ldrplb	$Tll,[$Xi,$cnt]
+	ldrbpl	$Tll,[$Xi,$cnt]
 	eor	$Zll,$Zll,$Zlh,lsl#28
 	eor	$Zlh,$Tlh,$Zlh,lsr#4
 	ldrh	$Tlh,[sp,$nhi]
@@ -210,7 +211,7 @@ gcm_ghash_4bit:
 	add	$inp,$inp,#16
 	mov	$nhi,$Zll
 ___
-	&Zsmash("cmp\t$inp,$len","ldrneb\t$nlo,[$inp,#15]");
+	&Zsmash("cmp\t$inp,$len","ldrbne\t$nlo,[$inp,#15]");
 $code.=<<___;
 	bne	.Louter
 
@@ -268,7 +269,7 @@ gcm_gmult_4bit:
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
 	ldrh	$Tll,[$rem_4bit,$nlo]	@ rem_4bit[rem]
 	eor	$Zhl,$Thl,$Zhl,lsr#4
-	ldrplb	$nlo,[$Xi,$cnt]
+	ldrbpl	$nlo,[$Xi,$cnt]
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
 	eor	$Zhh,$Thh,$Zhh,lsr#4
 
