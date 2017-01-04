@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.55 2017/01/03 15:35:34 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.56 2017/01/04 12:49:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -180,9 +180,9 @@ vxlan_clone_destroy(struct ifnet *ifp)
 	struct vxlan_softc	*sc = ifp->if_softc;
 	int			 s;
 
-	s = splnet();
+	NET_LOCK(s);
 	vxlan_multicast_cleanup(ifp);
-	splx(s);
+	NET_UNLOCK(s);
 
 	vxlan_enable--;
 	LIST_REMOVE(sc, sc_entry);
@@ -394,7 +394,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct if_laddrreq	*lifr = (struct if_laddrreq *)data;
-	int			 error = 0, s;
+	int			 error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -419,20 +419,16 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYADDR:
-		s = splnet();
 		error = vxlan_config(ifp,
 		    (struct sockaddr *)&lifr->addr,
 		    (struct sockaddr *)&lifr->dstaddr);
-		splx(s);
 		break;
 
 	case SIOCDIFPHYADDR:
-		s = splnet();
 		vxlan_multicast_cleanup(ifp);
 		bzero(&sc->sc_src, sizeof(sc->sc_src));
 		bzero(&sc->sc_dst, sizeof(sc->sc_dst));
 		sc->sc_dstport = htons(VXLAN_PORT);
-		splx(s);
 		break;
 
 	case SIOCGLIFPHYADDR:
@@ -453,10 +449,8 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		s = splnet();
 		sc->sc_rdomain = ifr->ifr_rdomainid;
 		(void)vxlan_config(ifp, NULL, NULL);
-		splx(s);
 		break;
 
 	case SIOCGLIFPHYRTABLE:
@@ -470,10 +464,8 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		if (sc->sc_ttl == (u_int8_t)ifr->ifr_ttl)
 			break;
-		s = splnet();
 		sc->sc_ttl = (u_int8_t)(ifr->ifr_ttl);
 		(void)vxlan_config(ifp, NULL, NULL);
-		splx(s);
 		break;
 
 	case SIOCGLIFPHYTTL:
@@ -491,10 +483,8 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 
-		s = splnet();
 		sc->sc_vnetid = (int)ifr->ifr_vnetid;
 		(void)vxlan_config(ifp, NULL, NULL);
-		splx(s);
 		break;
 
 	case SIOCGVNETID:
@@ -509,10 +499,8 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCDVNETID:
-		s = splnet();
 		sc->sc_vnetid = VXLAN_VNI_UNSET;
 		(void)vxlan_config(ifp, NULL, NULL);
-		splx(s);
 		break;
 
 	default:
@@ -925,13 +913,12 @@ vxlan_addr_change(void *arg)
 {
 	struct vxlan_softc	*sc = arg;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-	int			 s, error;
+	int			 error;
 
 	/*
 	 * Reset the configuration after resume or any possible address
 	 * configuration changes.
 	 */
-	s = splnet();
 	if ((error = vxlan_config(ifp, NULL, NULL))) {
 		/*
 		 * The source address of the tunnel can temporarily disappear,
@@ -939,7 +926,6 @@ vxlan_addr_change(void *arg)
 		 * so keep it configured.
 		 */
 	}
-	splx(s);
 }
 
 void
@@ -947,17 +933,14 @@ vxlan_if_change(void *arg)
 {
 	struct vxlan_softc	*sc = arg;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-	int			 s;
 
 	/*
 	 * Reset the configuration after the parent interface disappeared.
 	 */
-	s = splnet();
 	vxlan_multicast_cleanup(ifp);
 	memset(&sc->sc_src, 0, sizeof(sc->sc_src));
 	memset(&sc->sc_dst, 0, sizeof(sc->sc_dst));
 	sc->sc_dstport = htons(VXLAN_PORT);
-	splx(s);
 }
 
 void
@@ -965,14 +948,11 @@ vxlan_link_change(void *arg)
 {
 	struct vxlan_softc	*sc = arg;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-	int			 s;
 
 	/*
 	 * The machine might have lost its multicast associations after
 	 * link state changes.  This fixes a problem with VMware after
 	 * suspend/resume of the host or guest.
 	 */
-	s = splnet();
 	(void)vxlan_config(ifp, NULL, NULL);
-	splx(s);
 }
