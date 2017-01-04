@@ -174,7 +174,7 @@ bn_GF2m_mul_2x2:
 	beq	.Lialu
 
 	veor	$A1,$A1
-	vmov.32	$B1,r3,r3		@ two copies of b1
+	vmov	$B1,r3,r3		@ two copies of b1
 	vmov.32	${A1}[0],r1		@ a1
 
 	veor	$A0,$A0
