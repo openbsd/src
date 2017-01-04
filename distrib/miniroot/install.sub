@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.941 2017/01/04 13:39:52 rpe Exp $
+#	$OpenBSD: install.sub,v 1.942 2017/01/04 13:47:29 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -386,6 +386,10 @@ disklabel_autolayout() {
 	while $AUTO; do
 		ask "URL to autopartitioning template for disklabel?" none
 		[[ $resp == none ]] && break
+		if ! $FTP_TLS && [[ $resp == https://* ]]; then
+			echo "https not supported on this platform."
+			exit 1
+		fi
 		echo "Fetching $resp"
 		if unpriv ftp -Vo - "$resp" >$_dl && [[ -s $_dl ]]; then
 			disklabel -T $_dl -F $_f -w -A $_disk && return
