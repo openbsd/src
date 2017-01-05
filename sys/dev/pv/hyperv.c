@@ -335,9 +335,9 @@ hv_set_version(struct hv_softc *sc)
 {
 	uint64_t ver;
 
-	/* OpenBSD 6.0 */
-	ver = 0x8300ULL << 48;
-	ver |= 6 << 16;
+	/* OpenBSD build date */
+	ver = MSR_HV_GUESTID_OSTYPE_OPENBSD;
+	ver |= OpenBSD << MSR_HV_GUESTID_VERSION_SHIFT;
 	wrmsr(MSR_HV_GUEST_OS_ID, ver);
 }
 
