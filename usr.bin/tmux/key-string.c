@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.41 2016/11/23 16:44:42 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.42 2017/01/05 09:07:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -142,7 +142,7 @@ key_string_get_modifiers(const char **string)
 			break;
 		default:
 			*string = NULL;
-			return 0;
+			return (0);
 		}
 		*string += 2;
 	}

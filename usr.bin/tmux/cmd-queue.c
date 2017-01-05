@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.46 2016/10/18 08:46:43 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.47 2017/01/05 09:07:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -274,7 +274,6 @@ cmdq_format(struct cmdq_item *item, const char *key, const char *fmt, ...)
 
 	free(value);
 }
-
 
 /* Process next item on command queue. */
 u_int
