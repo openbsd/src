@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2017/01/05 12:42:18 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.10 2017/01/05 13:53:09 krw Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -695,8 +695,7 @@ parse_config(char *filename)
 	popfile();
 
 	/* Free macros and check which have not been used. */
-	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
-		next = TAILQ_NEXT(sym, entry);
+	TAILQ_FOREACH_SAFE(sym, &symhead, entry, next) {
 		if (!sym->persist) {
 			free(sym->nam);
 			free(sym->val);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2017/01/05 12:42:18 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.22 2017/01/05 13:53:09 krw Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -814,8 +814,7 @@ parse_config(char *filename)
 	popfile();
 
 	/* Free macros and check which have not been used. */
-	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
-		next = TAILQ_NEXT(sym, entry);
+	TAILQ_FOREACH_SAFE(sym, &symhead, entry, next) {
 		log_debug("warning: macro \"%s\" not used", sym->nam);
 		if (!sym->persist) {
 			free(sym->nam);

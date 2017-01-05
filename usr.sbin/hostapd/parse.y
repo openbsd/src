@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.52 2017/01/05 12:42:18 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.53 2017/01/05 13:53:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1774,8 +1774,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	popfile();
 
 	/* Free macros and check which have not been used. */
-	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
-		next = TAILQ_NEXT(sym, entry);
+	TAILQ_FOREACH_SAFE(sym, &symhead, entry, next) {
 		if (!sym->used)
 			hostapd_log(HOSTAPD_LOG_VERBOSE,
 			    "warning: macro '%s' not used", sym->nam);

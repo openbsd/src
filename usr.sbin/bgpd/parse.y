@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.292 2017/01/05 12:42:18 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.293 2017/01/05 13:53:09 krw Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2755,8 +2755,7 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 	popfile();
 
 	/* Free macros and check which have not been used. */
-	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
-		next = TAILQ_NEXT(sym, entry);
+	TAILQ_FOREACH_SAFE(sym, &symhead, entry, next) {
 		if ((cmd_opts & BGPD_OPT_VERBOSE2) && !sym->used)
 			fprintf(stderr, "warning: macro \"%s\" not "
 			    "used\n", sym->nam);
