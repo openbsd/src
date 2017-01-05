@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_amd64.c,v 1.3 2016/12/24 22:49:38 yasuoka Exp $	*/
+/*	$OpenBSD: softraid_amd64.c,v 1.4 2017/01/05 11:18:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -435,7 +435,7 @@ findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 	const char		 openbsd_uuid_code[] = GPT_UUID_OPENBSD;
 	struct gpt_partition	 gp;
 	static struct uuid	*openbsd_uuid = NULL, openbsd_uuid_space;
-	static u_char		 buf[4096];
+	u_char		 	*buf;
 
 	/* Prepare OpenBSD UUID */
 	if (openbsd_uuid == NULL) {
@@ -456,6 +456,12 @@ findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 		*err = "disk sector > 4096 bytes\n";
 		return (-1);
 	}
+	buf = alloc(bv->sbv_secsize);
+	if (buf == NULL) {
+		*err = "out of memory\n";
+		return (-1);
+	}
+	bzero(buf, bv->sbv_secsize);
 
 	/* LBA1: GPT Header */
 	lba = 1;
@@ -466,17 +472,20 @@ findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 	/* Check signature */
 	if (letoh64(gh.gh_sig) != GPTSIGNATURE) {
 		*err = "bad GPT signature\n";
+		free(buf, bv->sbv_secsize);
 		return (-1);
 	}
 
 	if (letoh32(gh.gh_rev) != GPTREVISION) {
 		*err = "bad GPT revision\n";
+		free(buf, bv->sbv_secsize);
 		return (-1);
 	}
 
 	ghsize = letoh32(gh.gh_size);
 	if (ghsize < GPTMINHDRSIZE || ghsize > sizeof(struct gpt_header)) {
 		*err = "bad GPT header size\n";
+		free(buf, bv->sbv_secsize);
 		return (-1);
 	}
 
@@ -487,6 +496,7 @@ findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 	gh.gh_csum = orig_csum;
 	if (letoh32(orig_csum) != new_csum) {
 		*err = "bad GPT header checksum\n";
+		free(buf, bv->sbv_secsize);
 		return (-1);
 	}
 
@@ -514,6 +524,9 @@ findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 				found = 1;
 		}
 	}
+
+	free(buf, bv->sbv_secsize);
+
 	if (new_csum != letoh32(gh.gh_part_csum)) {
 		*err = "bad GPT entries checksum\n";
 		return (-1);
