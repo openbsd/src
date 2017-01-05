@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OBJECT.3,v 1.5 2017/01/04 09:04:45 schwarze Exp $
+.\"	$OpenBSD: d2i_ASN1_OBJECT.3,v 1.6 2017/01/05 08:24:38 jmc Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 4 2017 $
+.Dd $Mdocdate: January 5 2017 $
 .Dt D2I_ASN1_OBJECT 3
 .Os
 .Sh NAME
@@ -77,7 +77,7 @@ or a value <= 0 if an error occurs.
 .Sh CAVEATS
 .Fn d2i_ASN1_OBJECT
 never sets the long and short names of the object, not even if the
-object identifier matches one that is built-in to the library.
+object identifier matches one that is built into the library.
 To find the names of an object identifier parsed from DER or BER
 input, call
 .Xr OBJ_obj2nid 3
