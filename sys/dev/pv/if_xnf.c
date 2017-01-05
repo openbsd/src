@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.45 2016/12/19 21:08:57 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.46 2017/01/05 13:23:51 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -797,8 +797,7 @@ xnf_rxeof(struct xnf_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	if (!ml_empty(&ml))
-		if_input(ifp, &ml);
+	if_input(ifp, &ml);
 
 	if (xnf_rx_ring_fill(sc) || (sc->sc_rx_cons != rxr->rxr_cons))
 		xen_intr_schedule(sc->sc_xih);
