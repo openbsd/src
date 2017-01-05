@@ -1,136 +1,227 @@
-.\"	$OpenBSD: ASN1_STRING_new.3,v 1.6 2016/12/12 12:52:12 schwarze Exp $
+.\"	$OpenBSD: ASN1_STRING_new.3,v 1.7 2017/01/05 06:08:31 schwarze Exp $
 .\"	OpenSSL 99d63d46 Tue Mar 24 07:52:24 2015 -0400
 .\"
-.\" This file was written by Dr. Stephen Henson.
-.\" Copyright (c) 2002, 2006, 2015 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in
-.\"    the documentation and/or other materials provided with the
-.\"    distribution.
-.\"
-.\" 3. All advertising materials mentioning features or use of this
-.\"    software must display the following acknowledgment:
-.\"    "This product includes software developed by the OpenSSL Project
-.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
-.\"
-.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-.\"    endorse or promote products derived from this software without
-.\"    prior written permission. For written permission, please contact
-.\"    openssl-core@openssl.org.
-.\"
-.\" 5. Products derived from this software may not be called "OpenSSL"
-.\"    nor may "OpenSSL" appear in their names without prior written
-.\"    permission of the OpenSSL Project.
-.\"
-.\" 6. Redistributions of any form whatsoever must retain the following
-.\"    acknowledgment:
-.\"    "This product includes software developed by the OpenSSL Project
-.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-.\" OF THE POSSIBILITY OF SUCH DAMAGE.
-.\"
-.Dd $Mdocdate: December 12 2016 $
+.Dd $Mdocdate: January 5 2017 $
 .Dt ASN1_STRING_NEW 3
 .Os
 .Sh NAME
 .Nm ASN1_STRING_new ,
 .Nm ASN1_STRING_type_new ,
 .Nm ASN1_STRING_free
+.Nm ASN1_OCTET_STRING_new ,
+.Nm ASN1_OCTET_STRING_free ,
+.Nm ASN1_BIT_STRING_new ,
+.Nm ASN1_BIT_STRING_free ,
+.Nm ASN1_INTEGER_new ,
+.Nm ASN1_INTEGER_free ,
+.Nm ASN1_ENUMERATED_new ,
+.Nm ASN1_ENUMERATED_free ,
+.Nm ASN1_UTF8STRING_new ,
+.Nm ASN1_UTF8STRING_free ,
+.Nm ASN1_IA5STRING_new ,
+.Nm ASN1_IA5STRING_free ,
+.Nm ASN1_UNIVERSALSTRING_new ,
+.Nm ASN1_UNIVERSALSTRING_free ,
+.Nm ASN1_BMPSTRING_new ,
+.Nm ASN1_BMPSTRING_free ,
+.Nm ASN1_GENERALSTRING_new ,
+.Nm ASN1_GENERALSTRING_free ,
+.Nm ASN1_T61STRING_new ,
+.Nm ASN1_T61STRING_free ,
+.Nm ASN1_VISIBLESTRING_new ,
+.Nm ASN1_VISIBLESTRING_free ,
+.Nm ASN1_PRINTABLESTRING_new ,
+.Nm ASN1_PRINTABLESTRING_free ,
+.Nm ASN1_PRINTABLE_new ,
+.Nm ASN1_PRINTABLE_free ,
 .Nm DIRECTORYSTRING_new ,
 .Nm DIRECTORYSTRING_free ,
 .Nm DISPLAYTEXT_new ,
-.Nm DISPLAYTEXT_free
-.Nd ASN1_STRING allocation functions
+.Nm DISPLAYTEXT_free ,
+.Nm ASN1_GENERALIZEDTIME_new ,
+.Nm ASN1_GENERALIZEDTIME_free ,
+.Nm ASN1_UTCTIME_new ,
+.Nm ASN1_UTCTIME_free ,
+.Nm ASN1_TIME_new ,
+.Nm ASN1_TIME_free ,
+.Nd allocate and free ASN1_STRING objects
 .Sh SYNOPSIS
 .In openssl/asn1.h
 .Ft ASN1_STRING *
-.Fo ASN1_STRING_new
-.Fa void
-.Fc
+.Fn ASN1_STRING_new void
 .Ft ASN1_STRING *
-.Fo ASN1_STRING_type_new
-.Fa "int type"
-.Fc
+.Fn ASN1_STRING_type_new "int type"
 .Ft void
-.Fo ASN1_STRING_free
-.Fa "ASN1_STRING *a"
-.Fc
+.Fn ASN1_STRING_free "ASN1_STRING *a"
+.Ft ASN1_OCTET_STRING *
+.Fn ASN1_OCTET_STRING_new void
+.Ft void
+.Fn ASN1_OCTET_STRING_free "ASN1_OCTET_STRING *a"
+.Ft ASN1_BIT_STRING *
+.Fn ASN1_BIT_STRING_new void
+.Ft void
+.Fn ASN1_BIT_STRING_free "ASN1_BIT_STRING *a"
+.Ft ASN1_INTEGER *
+.Fn ASN1_INTEGER_new void
+.Ft void
+.Fn ASN1_INTEGER_free "ASN1_INTEGER *a"
+.Ft ASN1_ENUMERATED *
+.Fn ASN1_ENUMERATED_new void
+.Ft void
+.Fn ASN1_ENUMERATED_free "ASN1_ENUMERATED *a"
+.Ft ASN1_UTF8STRING *
+.Fn ASN1_UTF8STRING_new void
+.Ft void
+.Fn ASN1_UTF8STRING_free "ASN1_UTF8STRING *a"
+.Ft ASN1_IA5STRING *
+.Fn ASN1_IA5STRING_new void
+.Ft void
+.Fn ASN1_IA5STRING_free "ASN1_IA5STRING *a"
+.Ft ASN1_UNIVERSALSTRING *
+.Fn ASN1_UNIVERSALSTRING_new void
+.Ft void
+.Fn ASN1_UNIVERSALSTRING_free "ASN1_UNIVERSALSTRING *a"
+.Ft ASN1_BMPSTRING *
+.Fn ASN1_BMPSTRING_new void
+.Ft void
+.Fn ASN1_BMPSTRING_free "ASN1_BMPSTRING *a"
+.Ft ASN1_GENERALSTRING *
+.Fn ASN1_GENERALSTRING_new void
+.Ft void
+.Fn ASN1_GENERALSTRING_free "ASN1_GENERALSTRING *a"
+.Ft ASN1_T61STRING *
+.Fn ASN1_T61STRING_new void
+.Ft void
+.Fn ASN1_T61STRING_free "ASN1_T61STRING *a"
+.Ft ASN1_VISIBLESTRING *
+.Fn ASN1_VISIBLESTRING_new void
+.Ft void
+.Fn ASN1_VISIBLESTRING_free "ASN1_VISIBLESTRING *a"
+.Ft ASN1_PRINTABLESTRING *
+.Fn ASN1_PRINTABLESTRING_new void
+.Ft void
+.Fn ASN1_PRINTABLESTRING_free "ASN1_PRINTABLESTRING *a"
 .Ft ASN1_STRING *
-.Fo DIRECTORYSTRING_new
-.Fa void
-.Fc
+.Fn ASN1_PRINTABLE_new void
 .Ft void
-.Fo DIRECTORYSTRING_free
-.Fa "ASN1_STRING *a"
-.Fc
+.Fn ASN1_PRINTABLE_free "ASN1_STRING *a"
 .Ft ASN1_STRING *
-.Fo DISPLAYTEXT_new
-.Fa void
-.Fc
+.Fn DIRECTORYSTRING_new void
 .Ft void
-.Fo DISPLAYTEXT_free
-.Fa "ASN1_STRING *a"
-.Fc
+.Fn DIRECTORYSTRING_free "ASN1_STRING *a"
+.Ft ASN1_STRING *
+.Fn DISPLAYTEXT_new void
+.Ft void
+.Fn DISPLAYTEXT_free "ASN1_STRING *a"
+.Ft ASN1_GENERALIZEDTIME *
+.Fn ASN1_GENERALIZEDTIME_new void
+.Ft void
+.Fn ASN1_GENERALIZEDTIME_free "ASN1_GENERALIZEDTIME *a"
+.Ft ASN1_UTCTIME *
+.Fn ASN1_UTCTIME_new void
+.Ft void
+.Fn ASN1_UTCTIME_free "ASN1_UTCTIME *a"
+.Ft ASN1_TIME *
+.Fn ASN1_TIME_new void
+.Ft void
+.Fn ASN1_TIME_free "ASN1_TIME *a"
 .Sh DESCRIPTION
-.Fn ASN1_STRING_new ,
-.Fn DIRECTORYSTRING_new ,
-and
-.Fn DISPLAYTEXT_new
-return an allocated
+The
 .Vt ASN1_STRING
-structure.
-Its type is undefined.
+object can represent a variety of ASN.1 built-in types.
+It can store a type and a value.
 .Pp
-.Fn ASN1_STRING_type_new
-returns an allocated
+All the
+.Fn *_new
+functions
+allocate and initialize an empty
 .Vt ASN1_STRING
-structure of type
-.Fa type .
+object.
+The following table shows the type assigned to the new object,
+and which ASN.1 type it represents.
+.Bl -column "ASN1_GENERALIZEDTIME_new()" "V_ASN1_GENERALIZEDTIME"
+.It Em constructor function     Ta Em OpenSSL type          Ta Em ASN.1 type
+.It Ta
+.It Fn ASN1_STRING_new          Ta Dv V_ASN1_OCTET_STRING
+.It Fn ASN1_STRING_type_new     Ta Fa type No argument
+.It Ta
+.It Fn ASN1_OCTET_STRING_new    Ta Dv V_ASN1_OCTET_STRING    Ta OCTET STRING
+.It Fn ASN1_BIT_STRING_new      Ta Dv V_ASN1_BIT_STRING      Ta BIT STRING
+.It Fn ASN1_INTEGER_new         Ta Dv V_ASN1_INTEGER         Ta INTEGER
+.It Fn ASN1_ENUMERATED_new      Ta Dv V_ASN1_ENUMERATED      Ta ENUMERATED
+.It Ta
+.It Fn ASN1_UTF8STRING_new      Ta Dv V_ASN1_UTF8STRING      Ta UTF8String
+.It Fn ASN1_IA5STRING_new       Ta Dv V_ASN1_IA5STRING       Ta IA5String
+.It Ta
+.It Fn ASN1_UNIVERSALSTRING_new Ta Dv V_ASN1_UNIVERSALSTRING Ta UniversalString
+.It Fn ASN1_BMPSTRING_new       Ta Dv V_ASN1_BMPSTRING       Ta BMPString
+.It Fn ASN1_GENERALSTRING_new   Ta Dv V_ASN1_GENERALSTRING   Ta GeneralString
+.It Fn ASN1_T61STRING_new       Ta Dv V_ASN1_T61STRING       Ta T61String
+.It Fn ASN1_VISIBLESTRING_new   Ta Dv V_ASN1_VISIBLESTRING   Ta VisibleString
+.It Fn ASN1_PRINTABLESTRING_new Ta Dv V_ASN1_PRINTABLESTRING Ta PrintableString
+.It Ta
+.It Fn ASN1_PRINTABLE_new       Ta Dv V_ASN1_UNDEF
+.It Fn DIRECTORYSTRING_new      Ta Dv V_ASN1_UNDEF
+.It Fn DISPLAYTEXT_new          Ta Dv V_ASN1_UNDEF
+.It Ta
+.It Fn ASN1_GENERALIZEDTIME_new Ta Dv V_ASN1_GENERALIZEDTIME Ta GeneralizedTime
+.It Fn ASN1_UTCTIME_new         Ta Dv V_ASN1_UTCTIME         Ta UTCTime
+.It Fn ASN1_TIME_new            Ta Dv V_ASN1_UNDEF           Ta TIME
+.El
 .Pp
-.Fn ASN1_STRING_free ,
-.Fn DIRECTORYSTRING_free ,
-and
-.Fn DISPLAYTEXT_free
-free up
-.Fa a .
+All the
+.Fa *_free
+functions free
+.Fa a
+including any data contained in it.
 If
 .Fa a
 is a
 .Dv NULL
 pointer, no action occurs.
-.Pp
-Other string types call the ASN1_STRING functions.
-For example
-.Fn ASN1_OCTET_STRING_new
-calls
-.Fn ASN1_STRING_type V_ASN1_OCTET_STRING .
 .Sh RETURN VALUES
-.Fn ASN1_STRING_new
-and
-.Fn ASN1_STRING_type_new
-return a valid
+All the
+.Fa *_new
+functions return the new
 .Vt ASN1_STRING
-structure or
+object or
 .Dv NULL
-if an error occurred.
+if an error occurs.
 .Sh SEE ALSO
+.Xr ASN1_time_parse 3 ,
+.Xr ASN1_TIME_set 3 ,
 .Xr ERR_get_error 3
+.Sh BUGS
+.Vt ASN1_OCTET_STRING ,
+.Vt ASN1_BIT_STRING ,
+.Vt ASN1_INTEGER ,
+.Vt ASN1_ENUMERATED ,
+.Vt ASN1_UTF8STRING ,
+.Vt ASN1_IA5STRING ,
+.Vt ASN1_UNIVERSALSTRING ,
+.Vt ASN1_BMPSTRING ,
+.Vt ASN1_GENERALSTRING ,
+.Vt ASN1_T61STRING ,
+.Vt ASN1_VISIBLESTRING ,
+.Vt ASN1_PRINTABLESTRING ,
+.Vt ASN1_GENERALIZEDTIME ,
+.Vt ASN1_UTCTIME ,
+and
+.Vt ASN1_TIME
+are merely typedef aliases of
+.Vt ASN1_STRING
+and provide no type safety whatsoever.
