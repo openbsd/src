@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.35 2017/01/01 09:54:44 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.36 2017/01/05 16:16:17 patrick Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -48,6 +48,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/sched.h>
@@ -293,24 +294,23 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 int
-cpu_alloc_idlepcb(struct cpu_info *ci)
+cpu_alloc_idle_pcb(struct cpu_info *ci)
 {
 	vaddr_t uaddr;
 	struct pcb *pcb;
 	struct trapframe *tf;
-	int error;
 
 	/*
 	 * Generate a kernel stack and PCB (in essence, a u-area) for the
 	 * new CPU.
 	 */
-	if (uvm_uarea_alloc(&uaddr)) {
-		error = uvm_fault_wire(kernel_map, uaddr, uaddr + USPACE,
-		    VM_FAULT_WIRE, PROT_READ | PROT_WRITE);
-		if (error)
-			return error;
+	uaddr = (vaddr_t)km_alloc(USPACE, &kv_any, &kp_zero, &kd_nowait);
+	if (uaddr == 0) {
+		printf("%s: unable to allocate idle stack\n",
+		    __func__);
+		return ENOMEM;
 	}
-	ci->ci_idlepcb = pcb = (struct pcb *)uaddr;
+	ci->ci_idle_pcb = pcb = (struct pcb *)uaddr;
 
 	/*
 	 * This code is largely derived from cpu_fork(), with which it

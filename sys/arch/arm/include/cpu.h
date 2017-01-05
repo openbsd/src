@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.41 2016/04/04 09:13:44 patrick Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.42 2017/01/05 16:16:17 patrick Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -187,6 +187,7 @@ struct cpu_info {
 	u_int32_t ci_randseed;
 
 	struct pcb *ci_curpcb;
+	struct pcb *ci_idle_pcb;
 
 	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
 	u_int32_t ci_arm_cputype;	/* CPU type */
@@ -283,8 +284,8 @@ extern int want_resched;	/* resched() was called */
  */
 
 struct device;
-void	cpu_attach	(struct device *);
-int	cpu_alloc_idlepcb	(struct cpu_info *);
+void	cpu_attach(struct device *);
+int	cpu_alloc_idle_pcb(struct cpu_info *);
 
 /*
  * Random cruft
