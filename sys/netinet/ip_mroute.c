@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.101 2016/12/22 11:04:44 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.102 2017/01/05 12:10:54 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -134,8 +134,6 @@ int socket_send(struct socket *, struct mbuf *,
 			    struct sockaddr_in *);
 void expire_upcalls(void *);
 int ip_mdq(struct mbuf *, struct ifnet *, struct mfc *);
-void phyint_send(struct ip *, struct vif *, struct mbuf *);
-void send_packet(struct vif *, struct mbuf *);
 
 static vifi_t	   numvifs = 0;
 
@@ -1303,9 +1301,12 @@ int
 ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 {
 	struct ip  *ip = mtod(m, struct ip *);
+	struct mbuf *mc;
 	vifi_t vifi;
 	struct vif *vifp;
-	int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
+	int hlen = ip->ip_hl << 2;
+	int plen = ntohs(ip->ip_len) - hlen;
+	struct ip_moptions imo;
 
 	/*
 	 * Don't forward if it didn't arrive from the parent vif for its origin.
@@ -1335,51 +1336,35 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	 *		- the ttl exceeds the vif's threshold
 	 *		- there are group members downstream on interface
 	 */
-	for (vifp = viftable, vifi = 0; vifi < numvifs; vifp++, vifi++)
-		if ((rt->mfc_ttls[vifi] > 0) &&
-			(ip->ip_ttl > rt->mfc_ttls[vifi])) {
-			vifp->v_pkt_out++;
-			vifp->v_bytes_out += plen;
-			phyint_send(ip, vifp, m);
-		}
+	for (vifp = viftable, vifi = 0; vifi < numvifs; vifp++, vifi++) {
+		if ((rt->mfc_ttls[vifi] == 0) ||
+		    (ip->ip_ttl <= rt->mfc_ttls[vifi]))
+			continue;
+
+		vifp->v_pkt_out++;
+		vifp->v_bytes_out += plen;
+
+		/*
+		 * Make a new reference to the packet; make sure
+		 * that the IP header is actually copied, not
+		 * just referenced, so that ip_output() only
+		 * scribbles on the copy.
+		 */
+		mc = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+		M_PULLUP(mc, hlen);
+		if (mc == NULL)
+			return (-1);
+
+		/*
+		 * if physical interface option, extract the options
+		 * and then send
+		 */
+		imo.imo_ifidx = vifp->v_ifp->if_index;
+		imo.imo_ttl = mtod(m, struct ip *)->ip_ttl - IPTTLDEC;
+		imo.imo_loop = 1;
+
+		ip_output(mc, NULL, NULL, IP_FORWARDING, &imo, NULL, 0);
+	}
 
 	return (0);
-}
-
-void
-phyint_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
-{
-	struct mbuf *mb_copy;
-	int hlen = ip->ip_hl << 2;
-
-	/*
-	 * Make a new reference to the packet; make sure that
-	 * the IP header is actually copied, not just referenced,
-	 * so that ip_output() only scribbles on the copy.
-	 */
-	mb_copy = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-	M_PULLUP(mb_copy, hlen);
-	if (mb_copy == NULL)
-		return;
-
-	send_packet(vifp, mb_copy);
-}
-
-void
-send_packet(struct vif *vifp, struct mbuf *m)
-{
-	struct ip_moptions imo;
-	int s;
-
-	/*
-	 * if physical interface option, extract the options
-	 * and then send
-	 */
-	imo.imo_ifidx = vifp->v_ifp->if_index;
-	imo.imo_ttl = mtod(m, struct ip *)->ip_ttl - IPTTLDEC;
-	imo.imo_loop = 1;
-
-	s = splsoftnet();
-	ip_output(m, NULL, NULL, IP_FORWARDING, &imo, NULL, 0);
-	splx(s);
 }
