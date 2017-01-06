@@ -1,10 +1,9 @@
-/*	$OpenBSD: endian.h,v 1.8 2015/01/11 11:18:36 dlg Exp $	*/
+/*	$OpenBSD: endian.h,v 1.9 2017/01/06 00:46:49 jsg Exp $	*/
 
 #ifndef _ARM_ENDIAN_H_
 #define _ARM_ENDIAN_H_
 
 #ifdef _KERNEL
-#ifdef __armv7__
 #ifdef __GNUC__
 
 static inline __uint16_t
@@ -45,7 +44,6 @@ ___swap64md(__uint64_t x)
 #define __HAVE_MD_SWAP
 
 #endif  /* __GNUC__ */
-#endif  /* __armv7__ */
 #endif  /* _KERNEL */
 
 #define _BYTE_ORDER _LITTLE_ENDIAN
