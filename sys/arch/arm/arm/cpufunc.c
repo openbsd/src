@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.49 2017/01/02 00:51:18 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.50 2017/01/06 00:06:02 jsg Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ int	arm_dcache_align_mask;
 /* 1 == use cpu_sleep(), 0 == don't */
 int cpu_do_powersave;
 
-#ifdef CPU_ARMv7
 struct cpu_functions armv7_cpufuncs = {
 	/* CPU functions */
 
@@ -135,7 +134,6 @@ struct cpu_functions armv7_cpufuncs = {
 	armv7_context_switch,		/* context_switch	*/
 	armv7_setup			/* cpu setup		*/
 };
-#endif /* CPU_ARMv7 */
 
 /*
  * Global constants also used by locore.s
@@ -149,7 +147,6 @@ int	arm_icache_min_line_size = 32;
 int	arm_dcache_min_line_size = 32;
 int	arm_idcache_min_line_size = 32;
 
-#ifdef CPU_ARMv7
 void arm_get_cachetype_cp15v7 (void);
 int	arm_dcache_l2_nsets;
 int	arm_dcache_l2_assoc;
@@ -265,6 +262,7 @@ armv7_idcache_wbinv_all()
 	__asm volatile("mcr	p15, 0, r0, c7, c5, 0" :: "r" (arg));
 	armv7_dcache_wbinv_all();
 }
+
 /* brute force cache flushing */
 void
 armv7_dcache_wbinv_all()
@@ -305,7 +303,6 @@ armv7_dcache_wbinv_all()
 
 	/* L2 cache flushing removed. Our current L2 caches are separate. */
 }
-#endif /* CPU_ARMv7 */
 
 
 /*
@@ -323,7 +320,6 @@ set_cpufuncs()
 	 * CPU type where we want to use it by default, then we set it.
 	 */
 
-#ifdef CPU_ARMv7
 	if ((cputype & CPU_ID_ARCH_MASK) == CPU_ID_ARCH_CPUID) {
 		uint32_t mmfr0;
 
@@ -351,7 +347,6 @@ set_cpufuncs()
 			return 0;
 		}
 	}
-#endif /* CPU_ARMv7 */
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
@@ -363,7 +358,6 @@ set_cpufuncs()
  * CPU Setup code
  */
 
-#ifdef CPU_ARMv7
 void
 armv7_setup()
 {
@@ -437,4 +431,3 @@ armv7_setup()
 	/* And again. */
 	cpu_idcache_wbinv_all();
 }
-#endif	/* CPU_ARMv7 */

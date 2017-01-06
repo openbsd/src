@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.11 2016/10/22 17:48:41 patrick Exp $	*/
+/*	$OpenBSD: frame.h,v 1.12 2017/01/06 00:06:02 jsg Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
@@ -213,11 +213,6 @@ struct frame {
  * way to take care of both issues and to make sure that the kernel
  * and userland do not leave any outstanding reserves active.
  */
-#if defined(CPU_ARMv7)
-#define CLREX clrex
-#else
-#define CLREX
-#endif
 
 /*
  * PUSHFRAME - macro to push a trap frame on the stack in the current mode
@@ -225,7 +220,7 @@ struct frame {
  */
 
 #define PUSHFRAME							   \
-	CLREX;								   \
+	clrex;								   \
 	sub	sp, sp, #4;		/* Align the stack */		   \
 	str	lr, [sp, #-4]!;		/* Push the return address */	   \
 	sub	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
@@ -240,7 +235,7 @@ struct frame {
  */
 
 #define PULLFRAME							   \
-	CLREX;								   \
+	clrex;								   \
 	ldr	r0, [sp], #0x0004;	/* Get the SPSR from stack */	   \
 	msr	spsr_fsxc, r0;						   \
 	ldmia	sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
@@ -258,7 +253,7 @@ struct frame {
  */
 
 #define PUSHFRAMEINSVC							   \
-	CLREX;								   \
+	clrex;								   \
 	stmdb	sp, {r0-r3};		/* Save 4 registers */		   \
 	mov	r0, lr;			/* Save xxx32 r14 */		   \
 	mov	r1, sp;			/* Save xxx32 sp */		   \
@@ -289,7 +284,7 @@ struct frame {
  */
 
 #define PULLFRAMEFROMSVCANDEXIT						   \
-	CLREX;								   \
+	clrex;								   \
 	ldr	r0, [sp], #0x0004;	/* Get the SPSR from stack */	   \
 	msr	spsr_fsxc, r0;		/* restore SPSR */		   \
 	ldmia	sp, {r0-r14}^;		/* Restore registers (usr mode) */ \

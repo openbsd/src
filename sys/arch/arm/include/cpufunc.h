@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.28 2017/01/04 00:40:49 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.29 2017/01/06 00:06:02 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -218,7 +218,6 @@ u_int	cpufunc_dfar		(void);
 u_int	cpufunc_ifsr		(void);
 u_int	cpufunc_ifar		(void);
 
-#ifdef CPU_ARMv7
 void	armv7_setttb		(u_int);
 
 void	armv7_tlb_flushID_SE	(u_int);
@@ -252,7 +251,6 @@ extern unsigned armv7_dcache_sets_max;
 extern unsigned armv7_dcache_sets_inc;
 extern unsigned armv7_dcache_index_max;
 extern unsigned armv7_dcache_index_inc;
-#endif
 
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb

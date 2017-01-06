@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.7 2016/09/21 11:33:05 kettenis Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.8 2017/01/06 00:06:02 jsg Exp $	*/
 /*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
@@ -105,12 +105,8 @@ ENTRY(copyinstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-#ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
 	mrc	CP15_TPIDRPRW(r4)
-#else
-	ldr	r4, .Lcpu_info_primary
-#endif
 	ldr	r4, [r4, #CI_CURPCB]
 
 #ifdef DEBUG
@@ -157,12 +153,8 @@ ENTRY(copyoutstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-#ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
 	mrc	CP15_TPIDRPRW(r4)
-#else
-	ldr	r4, .Lcpu_info_primary
-#endif
 	ldr	r4, [r4, #CI_CURPCB]
 
 #ifdef DEBUG

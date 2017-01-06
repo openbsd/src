@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.18 2017/01/04 00:40:49 jsg Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.19 2017/01/06 00:06:02 jsg Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -46,26 +46,13 @@
  */
 
 /*
- * Determine which ARM architecture versions are configured.
- */
-#if defined(CPU_ARMv7)
-#define ARM_ARCH_7     1
-#else 
-#define ARM_ARCH_7     0
-#endif
-
-/*
  * Define which MMU classes are configured:
  *
  *      ARM_MMU_V7		v6/v7 MMU with XP bit enabled subpage
  *				protection is not used, TEX/AP is used instead.
  */
 
-#if defined(CPU_ARMv7)
 #define ARM_MMU_V7		1
-#else
-#define ARM_MMU_V7		0
-#endif
 
 #define	ARM_NMMUS		(ARM_MMU_V7)
 

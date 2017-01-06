@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2016/09/24 13:43:25 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 2017/01/06 00:06:02 jsg Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -60,9 +60,7 @@ ASENTRY_NP(start)
 	adr	r1, .Lstart
 	ldmia	r1, {r1, r2, r8, sp}	/* Set initial stack and */
 
-#ifdef CPU_ARMv7
 	mcr	CP15_TPIDRPRW(r8)	/* put curcpu into the TPIDRPRW */
-#endif
 
 	sub	r2, r2, r1		/* get zero init data */
 	mov	r3, #0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.47 2017/01/04 00:40:49 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.48 2017/01/06 00:06:02 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -375,9 +375,7 @@ void	pmap_copy_page_generic(struct vm_page *, struct vm_page *);
 void	pmap_zero_page_generic(struct vm_page *);
 
 void	pmap_pte_init_generic(void);
-#if defined(CPU_ARMv7)
 void	pmap_pte_init_armv7(void);
-#endif /* CPU_ARMv7 */
 #endif /* (ARM_MMU_V7) != 0 */
 
 #if ARM_MMU_V7 == 1
@@ -568,10 +566,8 @@ L1_S_PROT(int ku, vm_prot_t pr)
 	else
 		pte = (pr & PROT_WRITE) ? L1_S_PROT_KW : L1_S_PROT_KR;
 
-#ifdef CPU_ARMv7
 	if ((pr & PROT_EXEC) == 0)
 		pte |= L1_S_V7_XN;
-#endif
 
 	return pte;
 }
@@ -585,10 +581,8 @@ L2_L_PROT(int ku, vm_prot_t pr)
 	else
 		pte = (pr & PROT_WRITE) ? L2_L_PROT_KW : L2_L_PROT_KR;
 
-#ifdef CPU_ARMv7
 	if ((pr & PROT_EXEC) == 0)
 		pte |= L2_V7_L_XN;
-#endif
 
 	return pte;
 }
@@ -602,10 +596,8 @@ L2_S_PROT(int ku, vm_prot_t pr)
 	else
 		pte = (pr & PROT_WRITE) ? L2_S_PROT_KW : L2_S_PROT_KR;
 
-#ifdef CPU_ARMv7
 	if ((pr & PROT_EXEC) == 0)
 		pte |= L2_V7_S_XN;
-#endif
 
 	return pte;
 }

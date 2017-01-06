@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.14 2017/01/03 19:57:01 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.15 2017/01/06 00:06:02 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -83,6 +83,8 @@ mainbus_match(struct device *parent, void *cfdata, void *aux)
 }
 
 extern char *hw_prod;
+extern struct bus_space armv7_bs_tag;
+void platform_init_mainbus(struct device *);
 
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
@@ -97,14 +99,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-#ifdef CPU_ARMv7
 	arm_intr_init_fdt();
-#endif
 
-#ifdef CPU_ARMv7
-	extern struct bus_space armv7_bs_tag;
 	sc->sc_iot = &armv7_bs_tag;
-#endif
 	sc->sc_dmat = &mainbus_dma_tag;
 	sc->sc_acells = OF_getpropint(OF_peer(0), "#address-cells", 1);
 	sc->sc_scells = OF_getpropint(OF_peer(0), "#size-cells", 1);
@@ -119,10 +116,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach CPU first. */
 	mainbus_legacy_found(self, "cpu");
-#ifdef CPU_ARMv7
-	extern void platform_init_mainbus(struct device *);
 	platform_init_mainbus(self);
-#endif
 
 	/* TODO: Scan for interrupt controllers and attach them first? */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopyinout.S,v 1.6 2016/09/21 11:33:05 kettenis Exp $	*/
+/*	$OpenBSD: bcopyinout.S,v 1.7 2017/01/06 00:06:02 jsg Exp $	*/
 /*	$NetBSD: bcopyinout.S,v 1.13 2003/10/31 16:54:05 scw Exp $	*/
 
 /*
@@ -84,12 +84,8 @@ ENTRY(copyin)
 
 	SAVE_REGS
 
-#ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
 	mrc	CP15_TPIDRPRW(r4)
-#else
-	ldr	r4, .Lcpu_info_primary
-#endif
 	ldr	r4, [r4, #CI_CURPCB]
 
 	ldr	r5, [r4, #PCB_ONFAULT]
@@ -303,12 +299,8 @@ ENTRY(copyout)
 
 	SAVE_REGS
 
-#ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
 	mrc	CP15_TPIDRPRW(r4)
-#else
-	ldr	r4, .Lcpu_info_primary
-#endif
 	ldr	r4, [r4, #CI_CURPCB]
 
 	ldr	r5, [r4, #PCB_ONFAULT]
@@ -512,12 +504,8 @@ ENTRY(kcopy)
 
 	SAVE_REGS
 
-#ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
 	mrc	CP15_TPIDRPRW(r4)
-#else
-	ldr	r4, .Lcpu_info_primary
-#endif
 	ldr	r4, [r4, #CI_CURPCB]
 
 	ldr	r5, [r4, #PCB_ONFAULT]
@@ -700,12 +688,8 @@ ENTRY(kcopy)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_1)
-#ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
 	mrc	CP15_TPIDRPRW(r2)
-#else
-	ldr	r2, .Lcpu_info_primary
-#endif
 	ldr	r2, [r2, #CI_CURPCB]
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
@@ -729,12 +713,8 @@ ENTRY(badaddr_read_1)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_2)
-#ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
 	mrc	CP15_TPIDRPRW(r2)
-#else
-	ldr	r2, .Lcpu_info_primary
-#endif
 	ldr	r2, [r2, #CI_CURPCB]
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
@@ -758,12 +738,8 @@ ENTRY(badaddr_read_2)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_4)
-#ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
 	mrc	CP15_TPIDRPRW(r2)
-#else
-	ldr	r2, .Lcpu_info_primary
-#endif
 	ldr	r2, [r2, #CI_CURPCB]
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f

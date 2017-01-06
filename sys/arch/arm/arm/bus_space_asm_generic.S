@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space_asm_generic.S,v 1.4 2016/03/22 23:35:01 patrick Exp $	*/
+/*	$OpenBSD: bus_space_asm_generic.S,v 1.5 2017/01/06 00:06:02 jsg Exp $	*/
 /*	$NetBSD: bus_space_asm_generic.S,v 1.3 2003/03/27 19:46:14 mycroft Exp $	*/
 
 /*
@@ -50,11 +50,9 @@ ENTRY(generic_bs_r_1)
 	ldrb	r0, [r1, r2]
 	mov	pc, lr
 
-#if (ARM_ARCH_5 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_r_2)
 	ldrh	r0, [r1, r2]
 	mov	pc, lr
-#endif
 
 ENTRY(generic_bs_r_4)
 	ldr	r0, [r1, r2]
@@ -68,11 +66,9 @@ ENTRY(generic_bs_w_1)
 	strb	r3, [r1, r2]
 	mov	pc, lr
 
-#if (ARM_ARCH_5 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_w_2)
 	strh	r3, [r1, r2]
 	mov	pc, lr
-#endif
 
 ENTRY(generic_bs_w_4)
 	str	r3, [r1, r2]
@@ -96,7 +92,6 @@ ENTRY(generic_bs_rm_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_5 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_rm_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -110,7 +105,6 @@ ENTRY(generic_armv4_bs_rm_2)
 	bne	1b
 
 	mov	pc, lr
-#endif
 
 ENTRY(generic_bs_rm_4)
 	add	r0, r1, r2
@@ -144,7 +138,6 @@ ENTRY(generic_bs_wm_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_5 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_wm_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -158,7 +151,6 @@ ENTRY(generic_armv4_bs_wm_2)
 	bne	1b
 
 	mov	pc, lr
-#endif
 
 ENTRY(generic_bs_wm_4)
 	add	r0, r1, r2
@@ -192,7 +184,6 @@ ENTRY(generic_bs_rr_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_5 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_rr_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -206,7 +197,6 @@ ENTRY(generic_armv4_bs_rr_2)
 	bne	1b
 
 	mov	pc, lr
-#endif
 
 ENTRY(generic_bs_rr_4)
 	add	r0, r1, r2
@@ -240,7 +230,6 @@ ENTRY(generic_bs_wr_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_5 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_wr_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -254,7 +243,6 @@ ENTRY(generic_armv4_bs_wr_2)
 	bne	1b
 
 	mov	pc, lr
-#endif
 
 ENTRY(generic_bs_wr_4)
 	add	r0, r1, r2
@@ -287,7 +275,6 @@ ENTRY(generic_bs_sr_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_5 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_sr_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -300,7 +287,6 @@ ENTRY(generic_armv4_bs_sr_2)
 	bne	1b
 
 	mov	pc, lr
-#endif
 
 ENTRY(generic_bs_sr_4)
 	add	r0, r1, r2
@@ -319,7 +305,6 @@ ENTRY(generic_bs_sr_4)
  * copy region
  */
 
-#if (ARM_ARCH_5 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_c_2)
 	add	r0, r1, r2
 	ldr	r2, [sp, #0]
@@ -349,4 +334,3 @@ ENTRY(generic_armv4_bs_c_2)
 	bne	3b
 
 	mov	pc, lr
-#endif
