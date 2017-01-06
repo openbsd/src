@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.81 2016/12/17 14:14:09 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.82 2017/01/06 15:37:44 fcambus Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -669,14 +669,8 @@ process_bootargs(void)
  * Machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)

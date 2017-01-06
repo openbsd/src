@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.153 2016/10/09 11:25:40 tom Exp $ */
+/*	$OpenBSD: machdep.c,v 1.154 2017/01/06 15:37:44 fcambus Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -795,14 +795,8 @@ cpu_startup()
  * Machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
