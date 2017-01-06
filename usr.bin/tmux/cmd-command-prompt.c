@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.39 2017/01/06 11:57:03 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.40 2017/01/06 13:26:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -72,7 +72,6 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 	struct client			*c = item->state.c;
 	char				*prompt, *ptr, *input = NULL;
 	size_t				 n;
-	int				 flags;
 
 	if (c->prompt_string != NULL)
 		return (CMD_RETURN_NORMAL);
@@ -117,7 +116,6 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 		input = strsep(&cdata->next_input, ",");
 	}
 
-	flags = 0;
 	if (args_has(args, '1'))
 		cdata->flags |= PROMPT_SINGLE;
 	else if (args_has(args, 'N'))
