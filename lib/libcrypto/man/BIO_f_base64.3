@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_f_base64.3,v 1.6 2016/12/06 14:45:08 schwarze Exp $
+.\"	$OpenBSD: BIO_f_base64.3,v 1.7 2017/01/06 03:45:57 schwarze Exp $
 .\"	OpenSSL fc1d88f0 Wed Jul 2 22:42:40 2014 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: January 6 2017 $
 .Dt BIO_F_BASE64 3
 .Os
 .Sh NAME
@@ -78,15 +78,12 @@ on a base64 BIO that is being written through
 is used to signal that no more data is to be encoded:
 this is used to flush the final block through the BIO.
 .Pp
-The flag
-.Dv BIO_FLAGS_BASE64_NO_NL
-can be set with
-.Xr BIO_set_flags 3
-to encode the data all on one line
-or expect the data to be all on one line.
-.Pp
-Because of the format of base64 encoding the end of the encoded
-block cannot always be reliably determined.
+To encode the data all on one line and to expect the data to be all
+on one line, initialize the base64 BIO as follows:
+.Bd -literal -offset indent
+BIO *b64 = BIO_new(BIO_f_base64());
+BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+.Ed
 .Sh RETURN VALUES
 .Fn BIO_f_base64
 returns the base64 BIO method.
