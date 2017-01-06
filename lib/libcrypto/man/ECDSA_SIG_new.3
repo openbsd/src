@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ECDSA_SIG_new.3,v 1.7 2016/12/11 14:22:43 schwarze Exp $
+.\"	$OpenBSD: ECDSA_SIG_new.3,v 1.8 2017/01/06 20:35:23 schwarze Exp $
 .\"	OpenSSL e6390aca Jul 21 10:06:03 2015 -0400
 .\"
 .\" This file was written by Nils Larsch <nils@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: January 6 2017 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -67,10 +67,7 @@
 .Nm ECDSA_do_verify ,
 .Nm ECDSA_OpenSSL ,
 .Nm ECDSA_get_default_method ,
-.Nm ECDSA_get_ex_data ,
-.Nm ECDSA_get_ex_new_index ,
 .Nm ECDSA_set_default_method ,
-.Nm ECDSA_set_ex_data ,
 .Nm ECDSA_set_method
 .Nd Elliptic Curve Digital Signature Algorithm
 .Sh SYNOPSIS
@@ -163,28 +160,9 @@
 .Fo ECDSA_get_default_method
 .Fa void
 .Fc
-.Ft void*
-.Fo ECDSA_get_ex_data
-.Fa "EC_KEY *d"
-.Fa "int idx"
-.Fc
-.Ft int
-.Fo ECDSA_get_ex_new_index
-.Fa "long argl"
-.Fa "void *argp"
-.Fa "CRYPTO_EX_new *new_func"
-.Fa "CRYPTO_EX_dup *dup_func"
-.Fa "CRYPTO_EX_free *free_func"
-.Fc
 .Ft void
 .Fo ECDSA_set_default_method
 .Fa "const ECDSA_METHOD *meth"
-.Fc
-.Ft int
-.Fo ECDSA_set_ex_data
-.Fa "EC_KEY *d"
-.Fa "int idx"
-.Fa "void *arg"
 .Fc
 .Ft int
 .Fo ECDSA_set_method
@@ -462,6 +440,7 @@ if (ret == -1) {
 .Xr DSA_new 3 ,
 .Xr EC_GROUP_new 3 ,
 .Xr EC_KEY_new 3 ,
+.Xr ECDSA_set_ex_data 3 ,
 .Xr EVP_DigestSignInit 3 ,
 .Xr EVP_DigestVerifyInit 3 ,
 .Xr RSA_new 3
