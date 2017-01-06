@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.102 2017/01/05 12:10:54 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.103 2017/01/06 10:02:57 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -314,20 +314,16 @@ mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
 int
 get_sg_cnt(unsigned int rtableid, struct sioc_sg_req *req)
 {
-	int s;
 	struct mfc *rt;
 
-	s = splsoftnet();
 	rt = mfc_find(rtableid, &req->src, &req->grp);
 	if (rt == NULL) {
-		splx(s);
 		req->pktcnt = req->bytecnt = req->wrong_if = 0xffffffff;
 		return (EADDRNOTAVAIL);
 	}
 	req->pktcnt = rt->mfc_pkt_cnt;
 	req->bytecnt = rt->mfc_byte_cnt;
 	req->wrong_if = rt->mfc_wrong_if;
-	splx(s);
 
 	return (0);
 }
@@ -476,11 +472,7 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	arc4random_buf(&mfchashkey[rtableid], sizeof(mfchashkey[rtableid]));
 	memset(nexpire[rtableid], 0, sizeof(nexpire[rtableid]));
 
-#ifdef PIM
-	pim_assert = 0;
-#endif
-
-	timeout_set(&expire_upcalls_ch[rtableid], expire_upcalls,
+	timeout_set_proc(&expire_upcalls_ch[rtableid], expire_upcalls,
 	    &inp->inp_rtableid);
 	timeout_add_msec(&expire_upcalls_ch[rtableid], EXPIRE_TIMEOUT);
 
@@ -509,10 +501,9 @@ ip_mrouter_done(struct socket *so)
 	vifi_t vifi;
 	struct vif *vifp;
 	int i;
-	int s;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	s = splsoftnet();
+	splsoftassert(IPL_SOFTNET);
 
 	/* Clear out all the vifs currently in use. */
 	for (vifi = 0; vifi < numvifs; vifi++) {
@@ -523,10 +514,6 @@ ip_mrouter_done(struct socket *so)
 
 	numvifs = 0;
 	mrt_api_config = 0;
-
-#ifdef PIM
-	pim_assert = 0;
-#endif
 
 	timeout_del(&expire_upcalls_ch[rtableid]);
 
@@ -548,8 +535,6 @@ ip_mrouter_done(struct socket *so)
 	mfchashtbl[rtableid] = NULL;
 
 	ip_mrouter[rtableid] = NULL;
-
-	splx(s);
 
 	return (0);
 }
@@ -656,7 +641,9 @@ add_vif(struct socket *so, struct mbuf *m)
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
 	struct ifreq ifr;
-	int error, s;
+	int error;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (m == NULL || m->m_len < sizeof(struct vifctl))
 		return (EINVAL);
@@ -700,8 +687,6 @@ add_vif(struct socket *so, struct mbuf *m)
 			return (error);
 	}
 
-	s = splsoftnet();
-
 	vifp->v_flags = vifcp->vifc_flags;
 	vifp->v_threshold = vifcp->vifc_threshold;
 	vifp->v_lcl_addr = vifcp->vifc_lcl_addr;
@@ -712,8 +697,6 @@ add_vif(struct socket *so, struct mbuf *m)
 	vifp->v_pkt_out = 0;
 	vifp->v_bytes_in = 0;
 	vifp->v_bytes_out = 0;
-
-	splx(s);
 
 	/* Adjust numvifs up if the vifi is higher than numvifs. */
 	if (numvifs <= vifcp->vifc_vifi)
@@ -748,7 +731,8 @@ del_vif(struct mbuf *m)
 	vifi_t *vifip;
 	struct vif *vifp;
 	vifi_t vifi;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (m == NULL || m->m_len < sizeof(vifi_t))
 		return (EINVAL);
@@ -761,8 +745,6 @@ del_vif(struct mbuf *m)
 	if (in_nullhost(vifp->v_lcl_addr))
 		return (EADDRNOTAVAIL);
 
-	s = splsoftnet();
-
 	reset_vif(vifp);
 
 	/* Adjust numvifs down */
@@ -770,8 +752,6 @@ del_vif(struct mbuf *m)
 		if (!in_nullhost(viftable[vifi - 1].v_lcl_addr))
 			break;
 	numvifs = vifi;
-
-	splx(s);
 
 	return (0);
 }
@@ -879,9 +859,10 @@ add_mfc(struct socket *so, struct mbuf *m)
 	u_int32_t hash = 0;
 	struct rtdetq *rte, *nrte;
 	u_short nstl;
-	int s;
 	int mfcctl_size = sizeof(struct mfcctl);
 	unsigned int rtableid = inp->inp_rtableid;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (mrt_api_config & MRT_API_FLAGS_ALL)
 		mfcctl_size = sizeof(struct mfcctl2);
@@ -903,19 +884,15 @@ add_mfc(struct socket *so, struct mbuf *m)
 	}
 	mfccp = &mfcctl2;
 
-	s = splsoftnet();
 	/* No hash table allocated for this. */
-	if (mfchashtbl[rtableid] == NULL) {
-		splx(s);
+	if (mfchashtbl[rtableid] == NULL)
 		return (0);
-	}
 
 	rt = mfc_find(rtableid, &mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
 
 	/* If an entry already exists, just update the fields */
 	if (rt) {
 		update_mfc_params(rt, mfccp);
-		splx(s);
 		return (0);
 	}
 
@@ -975,10 +952,8 @@ add_mfc(struct socket *so, struct mbuf *m)
 		}
 		if (rt == NULL) {	/* no upcall, so make a new entry */
 			rt = malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
-			if (rt == NULL) {
-				splx(s);
+			if (rt == NULL)
 				return (ENOBUFS);
-			}
 
 			init_mfc_params(rt, mfccp);
 			rt->mfc_expire	= 0;
@@ -989,7 +964,6 @@ add_mfc(struct socket *so, struct mbuf *m)
 		}
 	}
 
-	splx(s);
 	return (0);
 }
 
@@ -1003,10 +977,11 @@ del_mfc(struct socket *so, struct mbuf *m)
 	struct mfcctl2 mfcctl2;
 	struct mfcctl2 *mfccp;
 	struct mfc *rt;
-	int s;
 	int mfcctl_size = sizeof(struct mfcctl);
 	struct mfcctl *mp = mtod(m, struct mfcctl *);
 	unsigned int rtableid = inp->inp_rtableid;
+
+	splsoftassert(IPL_SOFTNET);
 
 	/*
 	 * XXX: for deleting MFC entries the information in entries
@@ -1022,18 +997,13 @@ del_mfc(struct socket *so, struct mbuf *m)
 
 	mfccp = &mfcctl2;
 
-	s = splsoftnet();
-
 	rt = mfc_find(rtableid, &mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
-	if (rt == NULL) {
-		splx(s);
+	if (rt == NULL)
 		return (EADDRNOTAVAIL);
-	}
 
 	LIST_REMOVE(rt, mfc_hash);
 	free(rt, M_MRTABLE, 0);
 
-	splx(s);
 	return (0);
 }
 
@@ -1103,13 +1073,11 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	/*
 	 * Determine forwarding vifs from the forwarding cache table
 	 */
-	s = splsoftnet();
 	++mrtstat.mrts_mfc_lookups;
 	rt = mfc_find(rtableid, &ip->ip_src, &ip->ip_dst);
 
 	/* Entry exists, so forward if necessary */
 	if (rt != NULL) {
-		splx(s);
 		return (ip_mdq(m, ifp, rt));
 	} else {
 		/*
@@ -1131,15 +1099,12 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		 * that other people can't step on it.
 		 */
 		rte = malloc(sizeof(*rte), M_MRTABLE, M_NOWAIT);
-		if (rte == NULL) {
-			splx(s);
+		if (rte == NULL)
 			return (ENOBUFS);
-		}
 		mb0 = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 		M_PULLUP(mb0, hlen);
 		if (mb0 == NULL) {
 			free(rte, M_MRTABLE, 0);
-			splx(s);
 			return (ENOBUFS);
 		}
 
@@ -1243,7 +1208,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 				non_fatal:
 					free(rte, M_MRTABLE, 0);
 					m_freem(mb0);
-					splx(s);
 					return (0);
 				}
 
@@ -1255,8 +1219,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		rte->m = mb0;
 		rte->ifp = ifp;
 
-		splx(s);
-
 		return (0);
 	}
 }
@@ -1266,12 +1228,11 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 void
 expire_upcalls(void *v)
 {
-	int i;
-	int s;
 	unsigned int rtableid = *(unsigned int *)v;
+	int i, s;
 
-	s = splsoftnet();
 
+	NET_LOCK(s);
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		struct mfc *rt, *nrt;
 
@@ -1289,9 +1250,8 @@ expire_upcalls(void *v)
 			expire_mfc(rt);
 		}
 	}
-
-	splx(s);
 	timeout_add_msec(&expire_upcalls_ch[rtableid], EXPIRE_TIMEOUT);
+	NET_UNLOCK(s);
 }
 
 /*
