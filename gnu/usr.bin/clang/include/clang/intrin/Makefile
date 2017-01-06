@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2016/09/08 18:05:30 pascal Exp $
+# $OpenBSD: Makefile,v 1.3 2017/01/06 14:44:34 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,6 @@ HEADERS=adxintrin.h \
 	cuda_builtin_vars.h \
 	emmintrin.h \
 	f16cintrin.h \
-	float.h \
 	fma4intrin.h \
 	fmaintrin.h \
 	fxsrintrin.h \
@@ -38,9 +37,6 @@ HEADERS=adxintrin.h \
 	ia32intrin.h \
 	immintrin.h \
 	Intrin.h \
-	inttypes.h \
-	iso646.h \
-	limits.h \
 	lzcntintrin.h \
 	mm3dnow.h \
 	mmintrin.h \
@@ -56,18 +52,12 @@ HEADERS=adxintrin.h \
 	shaintrin.h \
 	smmintrin.h \
 	stdalign.h \
-	stdarg.h \
 	stdatomic.h \
-	stdbool.h \
-	stddef.h \
-	__stddef_max_align_t.h \
-	stdint.h \
 	stdnoreturn.h \
 	tbmintrin.h \
 	tgmath.h \
 	tmmintrin.h \
 	unwind.h \
-	vadefs.h \
 	varargs.h \
 	vecintrin.h \
 	__wmmintrin_aes.h \
