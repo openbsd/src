@@ -1,4 +1,4 @@
-.\"	$OpenBSD: UI_new.3,v 1.4 2016/12/04 12:56:40 schwarze Exp $
+.\"	$OpenBSD: UI_new.3,v 1.5 2017/01/06 18:46:38 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 4 2016 $
+.Dd $Mdocdate: January 6 2017 $
 .Dt UI_NEW 3
 .Os
 .Sh NAME
@@ -79,8 +79,6 @@
 .Nd New User Interface
 .Sh SYNOPSIS
 .In openssl/ui.h
-.Fd typedef struct ui_st UI;
-.Fd typedef struct ui_method_st UI_METHOD;
 .Ft UI *
 .Fn UI_new void
 .Ft UI *
@@ -230,8 +228,12 @@
 .Sh DESCRIPTION
 UI stands for User Interface, and is a general purpose set of routines
 to prompt the user for text-based information.
-Through user-written methods (see
-.Xr ui_create 3 ) ,
+Through user-written methods (see the functions
+.Fn UI_create_method
+and
+.Fn UI_method_set_*
+declared in
+.In openssl/ui.h ) ,
 prompting can be done in any way imaginable, be it plain text prompting,
 through dialog boxes or from a cell phone.
 .Pp
