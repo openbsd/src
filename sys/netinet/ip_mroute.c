@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.103 2017/01/06 10:02:57 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.104 2017/01/06 13:48:58 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -81,12 +81,6 @@
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
-
-#define	M_PULLUP(m, len)						 \
-	do {								 \
-		if ((m) && ((m)->m_flags & M_EXT || (m)->m_len < (len))) \
-			(m) = m_pullup((m), (len));			 \
-	} while (/*CONSTCOND*/ 0)
 
 /*
  * Globals.  All but ip_mrouter and ip_mrtproto could be static,
@@ -1102,8 +1096,8 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		if (rte == NULL)
 			return (ENOBUFS);
 		mb0 = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-		M_PULLUP(mb0, hlen);
-		if (mb0 == NULL) {
+		if (mb0 == NULL ||
+		    (mb0 = m_pullup(mb0, hlen)) == NULL) {
 			free(rte, M_MRTABLE, 0);
 			return (ENOBUFS);
 		}
@@ -1141,8 +1135,8 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			 * process
 			 */
 			mm = m_copym(m, 0, hlen, M_NOWAIT);
-			M_PULLUP(mm, hlen);
-			if (mm == NULL)
+			if (mm == NULL ||
+			    (mm = m_pullup(mm, hlen)) == NULL)
 				goto fail1;
 
 			/*
@@ -1264,8 +1258,6 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	struct mbuf *mc;
 	vifi_t vifi;
 	struct vif *vifp;
-	int hlen = ip->ip_hl << 2;
-	int plen = ntohs(ip->ip_len) - hlen;
 	struct ip_moptions imo;
 
 	/*
@@ -1282,13 +1274,13 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	/* If I sourced this packet, it counts as output, else it was input. */
 	if (in_hosteq(ip->ip_src, viftable[vifi].v_lcl_addr)) {
 		viftable[vifi].v_pkt_out++;
-		viftable[vifi].v_bytes_out += plen;
+		viftable[vifi].v_bytes_out += m->m_pkthdr.len;
 	} else {
 		viftable[vifi].v_pkt_in++;
-		viftable[vifi].v_bytes_in += plen;
+		viftable[vifi].v_bytes_in += m->m_pkthdr.len;
 	}
 	rt->mfc_pkt_cnt++;
-	rt->mfc_byte_cnt += plen;
+	rt->mfc_byte_cnt += m->m_pkthdr.len;
 
 	/*
 	 * For each vif, decide if a copy of the packet should be forwarded.
@@ -1302,7 +1294,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			continue;
 
 		vifp->v_pkt_out++;
-		vifp->v_bytes_out += plen;
+		vifp->v_bytes_out += m->m_pkthdr.len;
 
 		/*
 		 * Make a new reference to the packet; make sure
@@ -1310,8 +1302,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 		 * just referenced, so that ip_output() only
 		 * scribbles on the copy.
 		 */
-		mc = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-		M_PULLUP(mc, hlen);
+		mc = m_dup_pkt(m, max_linkhdr, M_NOWAIT);
 		if (mc == NULL)
 			return (-1);
 
