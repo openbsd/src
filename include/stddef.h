@@ -1,4 +1,4 @@
-/*	$OpenBSD: stddef.h,v 1.13 2016/09/09 18:12:37 millert Exp $	*/
+/*	$OpenBSD: stddef.h,v 1.14 2017/01/06 14:36:50 kettenis Exp $	*/
 /*	$NetBSD: stddef.h,v 1.4 1994/10/26 00:56:26 cgd Exp $	*/
 
 /*-
@@ -69,6 +69,16 @@ typedef	__mbstate_t	mbstate_t;
 #define	offsetof(type, member)	__builtin_offsetof(type, member)
 #else
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+#endif
+
+#if __ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103
+#ifndef __CLANG_MAX_ALIGN_T_DEFINED
+#define __CLANG_MAX_ALIGN_T_DEFINED
+typedef struct {
+	long long __max_align_ll __aligned(__alignof__(long long));
+	long double __max_align_ld __aligned(__alignof__(long double));
+} max_align_t;
+#endif
 #endif
 
 #endif /* _STDDEF_H_ */
