@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.90 2016/12/28 18:30:56 jmc Exp $
+.\"	$OpenBSD: mandoc.1,v 1.91 2017/01/06 01:33:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: January 6 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -75,6 +75,10 @@ This overrides any earlier
 and
 .Fl l
 options.
+.It Fl h
+Display only the SYNOPSIS lines.
+Implies
+.Fl c .
 .It Fl I Cm os Ns = Ns Ar name
 Override the default operating system
 .Ar name
@@ -85,10 +89,6 @@ and for the
 .Xr man 7
 .Sq \&TH
 macro.
-.It Fl h
-Display only the SYNOPSIS lines.
-Implies
-.Fl c .
 .It Fl K Ar encoding
 Specify the input encoding.
 The supported
