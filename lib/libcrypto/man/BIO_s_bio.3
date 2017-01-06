@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_bio.3,v 1.8 2016/12/06 12:24:33 schwarze Exp $
+.\"	$OpenBSD: BIO_s_bio.3,v 1.9 2017/01/06 02:29:18 schwarze Exp $
 .\"	OpenSSL c03726ca Aug 27 12:28:08 2015 -0400
 .\"
 .\" This file was written by
@@ -53,7 +53,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: January 6 2017 $
 .Dt BIO_S_BIO 3
 .Os
 .Sh NAME
@@ -328,8 +328,8 @@ application |   TLS-engine
             |     ||    \e/
             |   BIO-pair (internal_bio)
             |   BIO-pair (network_bio)
-            |     ||     /\
-            |     \/     ||
+            |     ||     /\e
+            |     \e/     ||
    +-----------< BIO_operations()
    |        |
  socket     |
@@ -353,8 +353,7 @@ and must be transferred to the network.
 Use
 .Fn BIO_ctrl_get_read_request
 to find out how many bytes must be written into the buffer before the
-.Xr SSL_operation 3
-can successfully be continued.
+SSL operations can successfully be continued.
 .Sh SEE ALSO
 .Xr BIO_new 3 ,
 .Xr BIO_read 3 ,
@@ -362,13 +361,10 @@ can successfully be continued.
 .Xr ssl 3 ,
 .Xr SSL_set_bio 3
 .Sh CAVEATS
-As the data is buffered,
-.Xr SSL_operation 3
-may return with an
+As the data is buffered, SSL operations may return with an
 .Dv ERROR_SSL_WANT_READ
 condition, but there is still data in the write buffer.
-An application must not rely on the error value of
-.Xr SSL_operation 3
+An application must not rely on the error value of the SSL operation
 but must assure that the write buffer is always flushed first.
 Otherwise a deadlock may occur as the peer might be waiting
 for the data before being able to continue.
