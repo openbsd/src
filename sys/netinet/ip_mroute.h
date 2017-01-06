@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.24 2016/12/22 11:04:44 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.25 2017/01/06 14:01:19 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -236,11 +236,11 @@ struct mrtstat {
  * The kernel's virtual-interface structure.
  */
 struct vif {
+	vifi_t    v_id;			/* Virtual interface index */
 	u_int8_t  v_flags;		/* VIFF_ flags defined above */
 	u_int8_t  v_threshold;		/* min ttl required to forward on vif */
 	struct	  in_addr v_lcl_addr;	/* local interface address */
 	struct	  in_addr v_rmt_addr;	/* remote address (tunnels only) */
-	struct	  ifnet *v_ifp;		/* pointer to interface */
 	u_long	  v_pkt_in;		/* # pkts in on interface */
 	u_long	  v_pkt_out;		/* # pkts out on interface */
 	u_long	  v_bytes_in;		/* # bytes in on interface */
@@ -303,7 +303,6 @@ int	mrt_ioctl(struct socket *, u_long, caddr_t);
 int	mrt_sysctl_vif(void *, size_t *);
 int	mrt_sysctl_mfc(void *, size_t *);
 int	ip_mrouter_done(struct socket *);
-void	reset_vif(struct vif *);
 void	vif_delete(struct ifnet *);
 
 #endif /* _KERNEL */
