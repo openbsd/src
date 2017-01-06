@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.129 2016/12/28 10:34:34 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.130 2017/01/06 11:57:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -692,7 +692,7 @@ cmd_template_replace(const char *template, const char *s, int idx)
 
 			buf = xrealloc(buf, len + (strlen(s) * 2) + 1);
 			for (cp = s; *cp != '\0'; cp++) {
-				if (quoted && *cp == '"')
+				if (quoted && (*cp == '"' || *cp == '$'))
 					buf[len++] = '\\';
 				buf[len++] = *cp;
 			}

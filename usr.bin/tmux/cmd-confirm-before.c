@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.31 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.32 2017/01/06 11:57:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -31,7 +31,7 @@
 static enum cmd_retval	cmd_confirm_before_exec(struct cmd *,
 			    struct cmdq_item *);
 
-static int	cmd_confirm_before_callback(void *, const char *);
+static int	cmd_confirm_before_callback(void *, const char *, int);
 static void	cmd_confirm_before_free(void *);
 
 const struct cmd_entry cmd_confirm_before_entry = {
@@ -96,7 +96,7 @@ cmd_confirm_before_error(struct cmdq_item *item, void *data)
 }
 
 static int
-cmd_confirm_before_callback(void *data, const char *s)
+cmd_confirm_before_callback(void *data, const char *s, __unused int done)
 {
 	struct cmd_confirm_before_data	*cdata = data;
 	struct client			*c = cdata->client;
