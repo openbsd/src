@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.82 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.83 2017/01/07 15:28:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -796,6 +796,7 @@ window_choose_write_line(struct window_pane *wp, struct screen_write_ctx *ctx,
 
 	last = screen_size_y(s) - 1;
 	memcpy(&gc, &grid_default_cell, sizeof gc);
+	gc.flags |= GRID_FLAG_NOPALETTE;
 	if (data->selected == data->top + py)
 		style_apply(&gc, oo, "mode-style");
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-clock.c,v 1.21 2016/10/13 20:27:27 nicm Exp $ */
+/* $OpenBSD: window-clock.c,v 1.22 2017/01/07 15:28:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -230,6 +230,7 @@ window_clock_draw_screen(struct window_pane *wp)
 			screen_write_cursormove(&ctx, x, y);
 
 			memcpy(&gc, &grid_default_cell, sizeof gc);
+			gc.flags |= GRID_FLAG_NOPALETTE;
 			gc.fg = colour;
 			screen_write_puts(&ctx, &gc, "%s", tim);
 		}
@@ -242,6 +243,7 @@ window_clock_draw_screen(struct window_pane *wp)
 	y = (screen_size_y(s) / 2) - 3;
 
 	memcpy(&gc, &grid_default_cell, sizeof gc);
+	gc.flags |= GRID_FLAG_NOPALETTE;
 	gc.bg = colour;
 	for (ptr = tim; *ptr != '\0'; ptr++) {
 		if (*ptr >= '0' && *ptr <= '9')
