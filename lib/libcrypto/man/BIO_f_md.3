@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_f_md.3,v 1.6 2016/12/06 14:45:08 schwarze Exp $
+.\"	$OpenBSD: BIO_f_md.3,v 1.7 2017/01/07 08:46:13 jmc Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: January 7 2017 $
 .Dt BIO_F_MD 3
 .Os
 .Sh NAME
@@ -178,7 +178,7 @@ and
 .Fn BIO_get_md_ctx
 return 1 for success and 0 for failure.
 .Sh EXAMPLES
-The following example creates a BIO chain containing an SHA-1 and MD5
+The following example creates a BIO chain containing a SHA-1 and MD5
 digest BIO and passes the string "Hello World" through it.
 Error checking has been omitted for clarity.
 .Bd -literal -offset 2n

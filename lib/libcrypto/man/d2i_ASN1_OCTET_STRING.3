@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.3 2017/01/06 00:27:42 jmc Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.4 2017/01/07 08:46:13 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 6 2017 $
+.Dd $Mdocdate: January 7 2017 $
 .Dt D2I_ASN1_OCTET_STRING 3
 .Os
 .Sh NAME
@@ -301,7 +301,7 @@ decode and encode an ASN.1
 structure defined in RFC 5280 section 4.1.2.4
 and used for ASN.1
 .Vt EDIPartyName
-structures, see
+structures; see
 .Xr EDIPARTYNAME_new 3 .
 When decoding, it accepts any of the types UTF8String, UniversalString,
 BMPString, T61String, or PrintableString.
@@ -347,9 +347,9 @@ decode and encode an ASN.1
 structure defined in RFC 5280 section 4.1
 and used for ASN.1
 .Vt Validity
-structures in certificates, see
-.Xr X509_VAL_new 3 ,
-and also used for certificate revocation lists, see
+structures in certificates; see
+.Xr X509_VAL_new 3 .
+They are also used for certificate revocation lists; see
 .Xr X509_CRL_INFO_new 3 .
 When decoding, it accepts either GeneralizedTime or UTCTime.
 When encoding, it writes out the time type that is actually passed in.

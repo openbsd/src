@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_STORE_load_locations.3,v 1.1 2017/01/07 00:45:04 schwarze Exp $
+.\"	$OpenBSD: X509_STORE_load_locations.3,v 1.2 2017/01/07 08:46:13 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -64,8 +64,9 @@ See that manual page for more information.
 .Fn X509_STORE_set_default_paths
 is similar except that it instructs the
 .Fa store
-to use the default PEM file and directory, see
-.Sx FILES ,
+to use the default PEM file and directory
+(as documented in
+.Sx FILES )
 in addition to what is already configured.
 It ignores errors that occur while trying to load the file or to
 add the directory, but it may still fail for other reasons, for
@@ -107,10 +108,9 @@ default directory for
 .Xr X509_STORE_set1_param 3 ,
 .Xr X509_STORE_set_verify_cb 3
 .Sh BUGS
-By the time adding a directory is found to fail, the file and some
-other directories may already have been successfully loaded, so
-these functions may change the state of the store even when they
-fail.
+By the time that adding a directory is found to have failed,
+the file and some other directories may already have been successfully loaded,
+so these functions may change the state of the store even when they fail.
 .Pp
 .Fn X509_STORE_set_default_paths
 clears the error queue, deleting even error information that was
