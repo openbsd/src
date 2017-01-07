@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1810 2016/12/06 16:55:51 mikeb Exp 
+ *	OpenBSD: pcidevs,v 1.1811 2017/01/07 23:16:12 mlarkin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4538,18 +4538,30 @@
 #define	PCI_PRODUCT_INTEL_XEOND_PCIE_11	0x6f1d		/* Xeon-D PCIE */
 #define	PCI_PRODUCT_INTEL_XEOND_UBOX_0	0x6f1e		/* Xeon-D Ubox */
 #define	PCI_PRODUCT_INTEL_XEOND_UBOX_1	0x6f1f		/* Xeon-D Ubox */
+#define	PCI_PRODUCT_INTEL_E5V4_DMA_0	0x6f20		/* E5 v4 DMA */
+#define	PCI_PRODUCT_INTEL_E5V4_DMA_1	0x6f21		/* E5 v4 DMA */
+#define	PCI_PRODUCT_INTEL_E5V4_DMA_2	0x6f22		/* E5 v4 DMA */
+#define	PCI_PRODUCT_INTEL_E5V4_DMA_3	0x6f23		/* E5 v4 DMA */
+#define	PCI_PRODUCT_INTEL_E5V4_DMA_4	0x6f24		/* E5 v4 DMA */
+#define	PCI_PRODUCT_INTEL_E5V4_DMA_5	0x6f25		/* E5 v4 DMA */
+#define	PCI_PRODUCT_INTEL_E5V4_DMA_6	0x6f26		/* E5 v4 DMA */
+#define	PCI_PRODUCT_INTEL_E5V4_DMA_7	0x6f27		/* E5 v4 DMA */
 #define	PCI_PRODUCT_INTEL_XEOND_ADDRMAP	0x6f28		/* Xeon-D Address Map */
 #define	PCI_PRODUCT_INTEL_XEOND_HOTPLUG	0x6f29		/* Xeon-D Hot Plug */
 #define	PCI_PRODUCT_INTEL_XEOND_RAS	0x6f2a		/* Xeon-D RAS */
 #define	PCI_PRODUCT_INTEL_XEOND_IOAPIC	0x6f2b		/* Xeon-D I/O APIC */
 #define	PCI_PRODUCT_INTEL_XEOND_IOAPIC_2	0x6f2c		/* Xeon-D I/O APIC */
 #define	PCI_PRODUCT_INTEL_XEOND_HA_0	0x6f30		/* Xeon-D Home Agent */
+#define	PCI_PRODUCT_INTEL_E5V4_R2PCIE	0x6f34		/* E5 v4 R2PCIe Agent */
 #define	PCI_PRODUCT_INTEL_XEOND_QPI_R3_0	0x6f36		/* Xeon-D QPI Link */
 #define	PCI_PRODUCT_INTEL_XEOND_QPI_R3_1	0x6f37		/* Xeon-D QPI Link */
 #define	PCI_PRODUCT_INTEL_XEOND_QD_1	0x6f50		/* Xeon-D QuickData */
 #define	PCI_PRODUCT_INTEL_XEOND_QD_2	0x6f51		/* Xeon-D QuickData */
 #define	PCI_PRODUCT_INTEL_XEOND_QD_3	0x6f52		/* Xeon-D QuickData */
 #define	PCI_PRODUCT_INTEL_XEOND_QD_4	0x6f53		/* Xeon-D QuickData */
+#define	PCI_PRODUCT_INTEL_E5V4_RAS	0x6f68		/* E5 v4 RAS */
+#define	PCI_PRODUCT_INTEL_E5V4_DDRIO_1	0x6f6e		/* E5 v4 DDRIO */
+#define	PCI_PRODUCT_INTEL_E5V4_DDRIO_2	0x6f6f		/* E5 v4 DDRIO */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_0	0x6f71		/* Xeon-D Memory */
 #define	PCI_PRODUCT_INTEL_XEOND_QPI_R3_2	0x6f76		/* Xeon-D QPI Debug */
 #define	PCI_PRODUCT_INTEL_XEOND_UBOX_2	0x6f7d		/* Xeon-D Ubox */
@@ -4576,16 +4588,24 @@
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_13	0x6fb5		/* Xeon-D Memory */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_14	0x6fb6		/* Xeon-D Memory */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_15	0x6fb7		/* Xeon-D Memory */
+#define	PCI_PRODUCT_INTEL_E5V4_DDRIO_3	0x6fb8		/* E5 v4 DDRIO */
+#define	PCI_PRODUCT_INTEL_E5V4_DDRIO_4	0x6fb9		/* E5 v4 DDRIO */
+#define	PCI_PRODUCT_INTEL_E5V4_DDRIO_5	0x6fba		/* E5 v4 DDRIO */
+#define	PCI_PRODUCT_INTEL_E5V4_DDRIO_6	0x6fbb		/* E5 v4 DDRIO */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_16	0x6fbc		/* Xeon-D Memory */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_17	0x6fbd		/* Xeon-D Memory */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_18	0x6fbe		/* Xeon-D Memory */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_19	0x6fbf		/* Xeon-D Memory */
 #define	PCI_PRODUCT_INTEL_XEOND_PCU_6	0x6fc0		/* Xeon-D PCU */
+#define	PCI_PRODUCT_INTEL_E5V4_THERMAL_1	0x6fd0		/* E5 v4 Thermal */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_0	0x6fe0		/* Xeon-D Cache */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_1	0x6fe1		/* Xeon-D Cache */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_2	0x6fe2		/* Xeon-D Cache */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_3	0x6fe3		/* Xeon-D Cache */
+#define	PCI_PRODUCT_INTEL_E5V4_CACHE_0	0x6fe4		/* E5 v4 Cache */
+#define	PCI_PRODUCT_INTEL_E5V4_CACHE_1	0x6fe5		/* E5 v4 Cache */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_4	0x6ff8		/* Xeon-D Cache */
+#define	PCI_PRODUCT_INTEL_E5V4_CACHE_2	0x6ff9		/* E5 v4 Cache */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_5	0x6ffc		/* Xeon-D Cache */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_6	0x6ffd		/* Xeon-D Cache */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_7	0x6ffe		/* Xeon-D Cache */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1810 2016/12/06 16:55:51 mikeb Exp 
+ *	OpenBSD: pcidevs,v 1.1811 2017/01/07 23:16:12 mlarkin Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -15668,6 +15668,38 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Xeon-D Ubox",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DMA_0,
+	    "E5 v4 DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DMA_1,
+	    "E5 v4 DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DMA_2,
+	    "E5 v4 DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DMA_3,
+	    "E5 v4 DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DMA_4,
+	    "E5 v4 DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DMA_5,
+	    "E5 v4 DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DMA_6,
+	    "E5 v4 DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DMA_7,
+	    "E5 v4 DMA",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_ADDRMAP,
 	    "Xeon-D Address Map",
 	},
@@ -15692,6 +15724,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Xeon-D Home Agent",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_R2PCIE,
+	    "E5 v4 R2PCIe Agent",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_QPI_R3_0,
 	    "Xeon-D QPI Link",
 	},
@@ -15714,6 +15750,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_QD_4,
 	    "Xeon-D QuickData",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_RAS,
+	    "E5 v4 RAS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DDRIO_1,
+	    "E5 v4 DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DDRIO_2,
+	    "E5 v4 DDRIO",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_0,
@@ -15820,6 +15868,22 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Xeon-D Memory",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DDRIO_3,
+	    "E5 v4 DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DDRIO_4,
+	    "E5 v4 DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DDRIO_5,
+	    "E5 v4 DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_DDRIO_6,
+	    "E5 v4 DDRIO",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_16,
 	    "Xeon-D Memory",
 	},
@@ -15840,6 +15904,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Xeon-D PCU",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_THERMAL_1,
+	    "E5 v4 Thermal",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_0,
 	    "Xeon-D Cache",
 	},
@@ -15856,8 +15924,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Xeon-D Cache",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_CACHE_0,
+	    "E5 v4 Cache",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_CACHE_1,
+	    "E5 v4 Cache",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_4,
 	    "Xeon-D Cache",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V4_CACHE_2,
+	    "E5 v4 Cache",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_5,
