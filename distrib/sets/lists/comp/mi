@@ -2031,6 +2031,7 @@
 ./usr/share/man/man3/X509_STORE_CTX_get_ex_new_index.3
 ./usr/share/man/man3/X509_STORE_CTX_new.3
 ./usr/share/man/man3/X509_STORE_CTX_set_verify_cb.3
+./usr/share/man/man3/X509_STORE_load_locations.3
 ./usr/share/man/man3/X509_STORE_set1_param.3
 ./usr/share/man/man3/X509_STORE_set_verify_cb_func.3
 ./usr/share/man/man3/X509_VERIFY_PARAM_set_flags.3
