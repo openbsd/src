@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.12 2016/10/09 23:46:23 jsg Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.13 2017/01/07 15:44:28 kettenis Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -119,6 +119,14 @@ _C_LABEL(bootstrap_start):
 
 	/* create the bootstrap MMU table at offset 0x00200000 */
 	orr	r0, r9, #0x00200000
+	mov	r3, #0
+	mov	r2, #0
+2:
+	str	r3, [r0, r2]
+	add	r2, r2, #4
+	cmp	r2, #(L1_TABLE_SIZE)
+	bne	2b
+
 	adr	r4, mmu_init_table
 
 	mov	r2, r9, lsr #18
@@ -128,25 +136,23 @@ _C_LABEL(bootstrap_start):
 	str	r2, [r4, #4]
 	str	r3, [r4, #8]
 	str	r3, [r4, #0x14] // ram address for 0xc0000000
-	add	r3, r3, #0x01000000
-	str	r3, [r4, #0x20] // ram address for 0x00000000 (vectors)
 
 	/*
 	 * the first entry has two fields that need to be updated for
 	 * specific ram configuration of this board.
 	 */
-	b	3f
+	b	4f
 
-2:
+3:
 	str	r3, [r0, r2]
 	add	r2, r2, #4
 	add	r3, r3, #(L1_S_SIZE)
 	adds	r1, r1, #-1
-	bhi	2b
-3:	
+	bhi	3b
+4:	
 	ldmia	r4!, {r1,r2,r3}   /* # of sections, PA|attr, VA */
 	cmp	r1, #0
-	bne	2b	
+	bne	3b	
 
 	mcr	CP15_TTBR0(r0)		/* Set TTB */
 	mcr	CP15_TLBIALL(r0)	/* Flush TLB */
@@ -183,11 +189,8 @@ mmu_init_table:
 	/* map SDRAM VA==PA, WT cacheable */
 	MMU_INIT(0x00000000, 0x00000000, 64,
 		 L1_TYPE_S|L1_S_C|L1_S_V7_AP(AP_KRW)|L1_S_V7_AF)
-mmu_init_table2:	
-	/* map VA 0xc0000000..0xc3ffffff to PA 0xa0000000..0xa3ffffff */
+	/* map VA 0xc0000000..0xc3ffffff to PA */
 	MMU_INIT(0xc0000000, 0x00000000, 64,
-		 L1_TYPE_S|L1_S_C|L1_S_V7_AP(AP_KRW)|L1_S_V7_AF)
-	MMU_INIT(0x00000000, 0x00000000, 1,
 		 L1_TYPE_S|L1_S_C|L1_S_V7_AP(AP_KRW)|L1_S_V7_AF)
 
 	.word 0	/* end of table */
