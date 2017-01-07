@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.26 2016/11/21 20:22:43 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.27 2017/01/07 23:33:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -528,15 +528,11 @@ sxiccmu_gmac_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 #define CCU_SDx_CLK_DIV_RATIO_M_SHIFT	0
 
 int
-sxiccmu_mmc_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+sxiccmu_mmc_do_set_frequency(struct sxiccmu_clock *sc, uint32_t freq,
+    uint32_t parent_freq)
 {
-	struct sxiccmu_clock *sc = cookie;
 	uint32_t reg, m, n;
 	uint32_t clk_src;
-	uint32_t parent_freq;
-
-	if (cells[0] != 0)
-		return -1;
 
 	switch (freq) {
 	case 400000:
@@ -549,7 +545,6 @@ sxiccmu_mmc_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	case 52000000:
 		n = 0, m = 0;
 		clk_src = CCU_SDx_CLK_SRC_SEL_PLL6;
-		parent_freq = clock_get_frequency_idx(sc->sc_node, 1);
 		while ((parent_freq / (1 << n) / 16) > freq)
 			n++;
 		while ((parent_freq / (1 << n) / (m + 1)) > freq)
@@ -569,6 +564,19 @@ sxiccmu_mmc_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	SXIWRITE4(sc, 0, reg);
 
 	return 0;
+}
+
+int
+sxiccmu_mmc_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	struct sxiccmu_clock *sc = cookie;
+	uint32_t parent_freq;
+
+	if (cells[0] != 0)
+		return -1;
+
+	parent_freq = clock_get_frequency_idx(sc->sc_node, 1);
+	return sxiccmu_mmc_do_set_frequency(sc, freq, parent_freq);
 }
 
 void
@@ -632,6 +640,9 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 	}
 
 	switch (idx) {
+	case H3_CLK_PLL_PERIPH0:
+		/* XXX default value. */
+		return 600000000;
 	case H3_CLK_APB2:
 		/* XXX Controlled by a MUX. */
 		return 24000000;
@@ -647,16 +658,18 @@ sxiccmu_ccu_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	struct sxiccmu_softc *sc = cookie;
 	struct sxiccmu_clock clock;
 	uint32_t idx = cells[0];
+	uint32_t parent, parent_freq;
 
 	switch (idx) {
 	case H3_CLK_MMC0:
 	case H3_CLK_MMC1:
 	case H3_CLK_MMC2:
-		idx = 0;
 		clock.sc_iot = sc->sc_iot;
 		bus_space_subregion(sc->sc_iot, sc->sc_ioh,
 		    sc->sc_gates[idx].reg, 4, &clock.sc_ioh);
-		return sxiccmu_mmc_set_frequency(&clock, &idx, freq);
+		parent = H3_CLK_PLL_PERIPH0;
+		parent_freq = sxiccmu_ccu_get_frequency(sc, &parent);
+		return sxiccmu_mmc_do_set_frequency(&clock, freq, parent_freq);
 	}
 
 	printf("%s: 0x%08x\n", __func__, cells[0]);

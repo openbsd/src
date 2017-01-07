@@ -5,7 +5,7 @@
  * Clocks Signals
  */
 
-#define H3_PLL_PERIPH0		9
+#define H3_CLK_PLL_PERIPH0	9
 
 #define H3_CLK_APB2		18
 
