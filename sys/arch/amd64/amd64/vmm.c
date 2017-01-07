@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.100 2017/01/07 22:37:03 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.101 2017/01/07 23:01:27 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1216,11 +1216,12 @@ vcpu_reload_vmcs_vmx(uint64_t *vmcs)
 	uint64_t old;
 
 	/* Flush any old state */
-	if (!vmptrst(&old)) {
-		if (old != 0xFFFFFFFFFFFFFFFFULL) {
-			if (vmclear(&old))
-				return (EINVAL);
-		}
+	if (vmptrst(&old))
+		return (EINVAL);
+
+	if (old != 0xFFFFFFFFFFFFFFFFULL) {
+		if (vmclear(&old))
+			return (EINVAL);
 	} else
 		return (EINVAL);
 
