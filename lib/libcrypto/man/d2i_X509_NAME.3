@@ -1,7 +1,7 @@
-.\"	$OpenBSD: d2i_X509_NAME.3,v 1.8 2016/12/28 14:33:34 schwarze Exp $
+.\"	$OpenBSD: d2i_X509_NAME.3,v 1.9 2017/01/07 01:25:14 schwarze Exp $
 .\"	OpenSSL d900a015 Oct 8 14:40:42 2015 +0200
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,13 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: January 7 2017 $
 .Dt D2I_X509_NAME 3
 .Os
 .Sh NAME
 .Nm d2i_X509_NAME ,
 .Nm i2d_X509_NAME ,
 .Nm X509_NAME_dup ,
+.Nm X509_NAME_hash ,
 .Nm d2i_X509_NAME_ENTRY ,
 .Nm i2d_X509_NAME_ENTRY ,
 .Nm X509_NAME_ENTRY_dup
@@ -44,6 +45,10 @@
 .Fc
 .Ft X509_NAME *
 .Fo X509_NAME_dup
+.Fa "X509_NAME *val_in"
+.Fc
+.Ft unsigned long
+.Fo X509_NAME_hash
 .Fa "X509_NAME *val_in"
 .Fc
 .Ft X509_NAME_ENTRY *
@@ -83,6 +88,15 @@ by calling
 and
 .Fn d2i_X509_NAME .
 .Pp
+.Fn X509_NAME_hash
+calculates an
+.Xr SHA1 3
+hash of the DER-encoded form of the name
+.Pf * Fa val_in .
+It is for example used by
+.Xr X509_LOOKUP_hash_dir 3
+to locate certificate files in the file system.
+.Pp
 .Fn d2i_X509_NAME_ENTRY
 and
 .Fn i2d_X509_NAME_ENTRY
@@ -106,6 +120,9 @@ return the new
 object or
 .Dv NULL
 if an error occurs.
+.Pp
+.Fn X509_NAME_hash
+returns the hash value or 0 if an error occurs.
 .Pp
 .Fn d2i_X509_NAME_ENTRY
 and
