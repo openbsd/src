@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.55 2017/01/07 06:45:24 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.56 2017/01/07 13:49:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,6 +226,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	int num, j, retry, trust;
 	int (*cb) (int xok, X509_STORE_CTX *xctx);
 	STACK_OF(X509) *sktmp = NULL;
+
 	if (ctx->cert == NULL) {
 		X509err(X509_F_X509_VERIFY_CERT,
 		    X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
@@ -506,26 +507,21 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 
 	/* We have the chain complete: now we need to check its purpose */
 	ok = check_chain_extensions(ctx);
-
 	if (!ok)
 		goto end;
 
 	/* Check name constraints */
-
 	ok = check_name_constraints(ctx);
-
 	if (!ok)
 		goto end;
 
 	ok = check_id(ctx);
-
 	if (!ok)
 		goto end;
 	/*
 	 * Check revocation status: we do this after copying parameters because
 	 * they may be needed for CRL signature verification.
 	 */
-
 	ok = ctx->check_revocation(ctx);
 	if (!ok)
 		goto end;
@@ -537,9 +533,11 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ok = internal_verify(ctx);
 	if (!ok)
 		goto end;
+
 	/* If we get this far evaluate policies */
 	if (!bad_chain && (ctx->param->flags & X509_V_FLAG_POLICY_CHECK))
 		ok = ctx->check_policy(ctx);
+
  end:
 	if (sktmp != NULL)
 		sk_X509_free(sktmp);
