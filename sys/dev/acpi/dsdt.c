@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.228 2016/12/18 15:59:22 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.229 2017/01/08 12:39:16 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2218,21 +2218,16 @@ aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *addr)
 {
 	int64_t res;
 
-	if (aml_evalinteger(acpi_softc, pcidev, "_ADR", 0, NULL, &res) == 0) {
-		addr->fun = res & 0xFFFF;
-		addr->dev = res >> 16;
-	}
-	while (pcidev != NULL) {
-		/* HID device (PCI or PCIE root): eval _BBN */
-		if (__aml_search(pcidev, "_HID", 0)) {
-			if (aml_evalinteger(acpi_softc, pcidev, "_BBN", 0, NULL, &res) == 0) {
-				addr->bus = res;
-				break;
-			}
-		}
-		pcidev = pcidev->parent;
-	}
-	return (0);
+	if (pcidev->pci == NULL)
+		return -1;
+
+	if (aml_evalinteger(acpi_softc, pcidev, "_ADR", 0, NULL, &res))
+		return -1;
+
+	addr->fun = res & 0xffff;
+	addr->dev = res >> 16;
+	addr->bus = pcidev->pci->bus;
+	return 0;
 }
 
 /* Read/Write from opregion object */
@@ -2274,7 +2269,12 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 
 	if (rgn->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
 		/* Get PCI Root Address for this opregion */
-		aml_rdpciaddr(rgn->node->parent, &pi);
+		if (aml_rdpciaddr(rgn->node->parent, &pi)) {
+			if (mode == ACPI_IOREAD)
+				pi.fun = 0xffff;
+			else
+				return;
+		}
 	}
 
 	tbit = &tmp.v_integer;
