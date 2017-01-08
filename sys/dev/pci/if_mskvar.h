@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mskvar.h,v 1.11 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.12 2017/01/08 18:08:14 visa Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -26,7 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_mskvar.h,v 1.11 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.12 2017/01/08 18:08:14 visa Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -227,5 +227,7 @@ struct skc_attach_args {
 	u_int8_t	skc_type;
 	u_int8_t	skc_rev;
 };
+
+#define MSK_TX_TIMEOUT	5
 
 #endif /* _DEV_PCI_IF_MSKVAR_H_ */

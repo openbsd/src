@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.184 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.185 2017/01/08 18:08:14 visa Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1532,7 +1532,7 @@ sk_start(struct ifnet *ifp)
 		CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_START);
 
 		/* Set a timeout in case the chip goes out to lunch. */
-		ifp->if_timer = 5;
+		ifp->if_timer = SK_TX_TIMEOUT;
 	}
 }
 
@@ -1691,7 +1691,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 		sc_if->sk_cdata.sk_tx_cnt--;
 		SK_INC(idx, SK_TX_RING_CNT);
 	}
-	ifp->if_timer = sc_if->sk_cdata.sk_tx_cnt > 0 ? 5 : 0;
+	ifp->if_timer = sc_if->sk_cdata.sk_tx_cnt > 0 ? SK_TX_TIMEOUT : 0;
 
 	if (sc_if->sk_cdata.sk_tx_cnt < SK_TX_RING_CNT - 2)
 		ifq_clr_oactive(&ifp->if_snd);
