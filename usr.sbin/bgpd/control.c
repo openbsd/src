@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.83 2016/10/14 16:05:35 phessler Exp $ */
+/*	$OpenBSD: control.c,v 1.84 2017/01/08 23:04:42 krw Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -156,9 +156,10 @@ control_connbyfd(int fd)
 {
 	struct ctl_conn	*c;
 
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.fd != fd;
-	    c = TAILQ_NEXT(c, entry))
-		;	/* nothing */
+	TAILQ_FOREACH(c, &ctl_conns, entry) {
+		if (c->ibuf.fd == fd)
+			break;
+	}
 
 	return (c);
 }
@@ -168,9 +169,10 @@ control_connbypid(pid_t pid)
 {
 	struct ctl_conn	*c;
 
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.pid != pid;
-	    c = TAILQ_NEXT(c, entry))
-		;	/* nothing */
+	TAILQ_FOREACH(c, &ctl_conns, entry) {
+		if (c->ibuf.pid == pid)
+			break;
+	}
 
 	return (c);
 }
