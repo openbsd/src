@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.60 2016/12/14 17:56:19 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.61 2017/01/08 21:23:32 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1309,6 +1309,17 @@ vcpu_exit(struct vm_run_params *vrp)
 	int ret;
 
 	switch (vrp->vrp_exit_reason) {
+	case VMX_EXIT_INT_WINDOW:
+	case VMX_EXIT_EXTINT:
+	case VMX_EXIT_EPT_VIOLATION:
+		/*
+		 * We may be exiting to vmd to handle a pending interrupt but
+		 * at the same time the last exit type may have been one of
+		 * these. In this case, there's nothing extra to be done
+		 * here (and falling through to the default case below results
+		 * in more vmd log spam).
+		 */
+		break;
 	case VMX_EXIT_IO:
 		vcpu_exit_inout(vrp);
 		break;
@@ -1326,8 +1337,6 @@ vcpu_exit(struct vm_run_params *vrp)
 			    __func__, ret);
 			return (ret);
 		}
-		break;
-	case VMX_EXIT_INT_WINDOW:
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
 		/* XXX reset VM since we do not support reboot yet */
