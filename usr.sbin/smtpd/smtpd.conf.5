@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.166 2016/09/11 10:56:45 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.167 2017/01/08 01:38:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 11 2016 $
+.Dd $Mdocdate: January 8 2017 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -88,9 +88,6 @@ decision comes the matching of optional session related properties:
 If specified, the rule will only be matched if the client session was
 authenticated either by requesting authentication over the network or
 because the message was submitted over the local enqueuer.
-.El
-.Pp
-.Bl -tag -width Ds
 .It Xo
 .Ic tagged
 .Op Ic \&!
