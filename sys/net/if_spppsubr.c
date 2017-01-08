@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.158 2017/01/02 08:41:21 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.159 2017/01/08 02:16:08 bluhm Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -693,7 +693,7 @@ sppp_attach(struct ifnet *ifp)
 
 	/* Initialize keepalive handler. */
 	if (! spppq) {
-		timeout_set(&keepalive_ch, sppp_keepalive, NULL);
+		timeout_set_proc(&keepalive_ch, sppp_keepalive, NULL);
 		timeout_add_sec(&keepalive_ch, 10);
 	}
 
@@ -4050,9 +4050,10 @@ void
 sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
-	int s;
+	int s, sl;
 	struct timeval tv;
 
+	NET_LOCK(sl);
 	s = splnet();
 	getmicrouptime(&tv);
 	for (sp=spppq; sp; sp=sp->pp_next) {
@@ -4104,6 +4105,7 @@ sppp_keepalive(void *dummy)
 		}
 	}
 	splx(s);
+	NET_UNLOCK(sl);
 	timeout_add_sec(&keepalive_ch, 10);
 }
 
