@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.8 2017/01/08 13:25:07 kettenis Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.9 2017/01/08 14:12:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -32,8 +32,10 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
-#define	SXIRTC_YYMMDD	0x04
-#define	SXIRTC_HHMMSS	0x08
+#define	SXIRTC_YYMMDD		0x04
+#define	SXIRTC_HHMMSS		0x08
+#define	SXIRTC_YYMMDD_A31	0x10
+#define	SXIRTC_HHMMSS_A31	0x14
 
 #define LEAPYEAR(y)        \
     (((y) % 4 == 0 &&    \
@@ -47,6 +49,8 @@ struct sxirtc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_size_t		sc_yymmdd;
+	bus_size_t		sc_hhmmss;
 	uint32_t		base_year;
 	uint32_t		year_mask;
 	uint32_t		leap_shift;
@@ -72,7 +76,8 @@ sxirtc_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-rtc") ||
-	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-rtc"));
+	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-rtc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-rtc"));
 }
 
 void
@@ -93,6 +98,14 @@ sxirtc_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxirtc_attach: bus_space_map failed!");
+
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-rtc")) {
+		sc->sc_yymmdd = SXIRTC_YYMMDD_A31;
+		sc->sc_hhmmss = SXIRTC_HHMMSS_A31;
+	} else {
+		sc->sc_yymmdd = SXIRTC_YYMMDD;
+		sc->sc_hhmmss = SXIRTC_HHMMSS;
+	}
 
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-rtc")) {
 		sc->base_year = 1970;
@@ -123,13 +136,13 @@ sxirtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	struct clock_ymdhms dt;
 	uint32_t reg;
 
-	reg = SXIREAD4(sc, SXIRTC_HHMMSS);
+	reg = SXIREAD4(sc, sc->sc_hhmmss);
 	dt.dt_sec = reg & 0x3f;
 	dt.dt_min = reg >> 8 & 0x3f;
 	dt.dt_hour = reg >> 16 & 0x1f;
 	dt.dt_wday = reg >> 29 & 0x07;
 
-	reg = SXIREAD4(sc, SXIRTC_YYMMDD);
+	reg = SXIREAD4(sc, sc->sc_yymmdd);
 	dt.dt_day = reg & 0x1f;
 	dt.dt_mon = reg >> 8 & 0x0f;
 	dt.dt_year = (reg >> 16 & sc->year_mask) + sc->base_year;
@@ -159,11 +172,11 @@ sxirtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 	    dt.dt_mon > 12 || dt.dt_mon == 0)
 		return 1;
 
-	SXICMS4(sc, SXIRTC_HHMMSS, 0xe0000000 | 0x1f0000 | 0x3f00 | 0x3f,
+	SXICMS4(sc, sc->sc_hhmmss, 0xe0000000 | 0x1f0000 | 0x3f00 | 0x3f,
 	    dt.dt_sec | (dt.dt_min << 8) | (dt.dt_hour << 16) |
 	    (dt.dt_wday << 29));
 
-	SXICMS4(sc, SXIRTC_YYMMDD, 0x00400000 | (sc->year_mask << 16) |
+	SXICMS4(sc, sc->sc_yymmdd, 0x00400000 | (sc->year_mask << 16) |
 	    0x0f00 | 0x1f, dt.dt_day | (dt.dt_mon << 8) |
 	    ((dt.dt_year - sc->base_year) << 16) |
 	    (LEAPYEAR(dt.dt_year) << sc->leap_shift));
