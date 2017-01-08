@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.227 2017/01/08 00:10:22 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.228 2017/01/08 02:01:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -295,7 +295,8 @@ mdoc_node_validate(struct roff_man *mdoc)
 	mdoc->next = ROFF_NEXT_SIBLING;
 	switch (n->type) {
 	case ROFFT_TEXT:
-		if (n->sec != SEC_SYNOPSIS || n->parent->tok != MDOC_Fd)
+		if (n->sec != SEC_SYNOPSIS ||
+		    (n->parent->tok != MDOC_Cd && n->parent->tok != MDOC_Fd))
 			check_text(mdoc, n->line, n->pos, n->string);
 		break;
 	case ROFFT_EQN:
