@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.62 2015/12/25 20:43:04 bentley Exp $ */
+/*	$OpenBSD: html.c,v 1.63 2017/01/08 16:38:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -660,7 +660,7 @@ buffmt_includes(struct html *h, const char *name)
 	while (NULL != (p = strchr(pp, '%'))) {
 		bufncat(h, pp, (size_t)(p - pp));
 		switch (*(p + 1)) {
-		case'I':
+		case 'I':
 			bufcat(h, name);
 			break;
 		default:
