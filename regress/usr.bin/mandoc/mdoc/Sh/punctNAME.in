@@ -1,0 +1,10 @@
+.Dd January 7, 2017
+.Dt SH-PUNCTNAME 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sh-punctNAME
+.Nm second_name ;
+.Nm third_name ,
+.Nd wrong punctuation in the NAME section
+.Sh DESCRIPTION
+One comma is missing, and one is misplaced.

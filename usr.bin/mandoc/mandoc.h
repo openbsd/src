@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc.h,v 1.153 2016/12/28 17:21:17 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.154 2017/01/08 00:10:22 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,10 +65,11 @@ enum	mandocerr {
 	MANDOCERR_DOC_EMPTY, /* no document body */
 	MANDOCERR_SEC_BEFORE, /* content before first section header: macro */
 	MANDOCERR_NAMESEC_FIRST, /* first section is not NAME: Sh title */
-	MANDOCERR_NAMESEC_NONM, /* NAME section without name */
+	MANDOCERR_NAMESEC_NONM, /* NAME section without Nm before Nd */
 	MANDOCERR_NAMESEC_NOND, /* NAME section without description */
 	MANDOCERR_NAMESEC_ND, /* description not at the end of NAME */
 	MANDOCERR_NAMESEC_BAD, /* bad NAME section content: macro */
+	MANDOCERR_NAMESEC_PUNCT, /* missing comma before name: Nm name */
 	MANDOCERR_ND_EMPTY, /* missing description line, using "" */
 	MANDOCERR_SEC_ORDER, /* sections out of conventional order: Sh title */
 	MANDOCERR_SEC_REP, /* duplicate section title: Sh title */

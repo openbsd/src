@@ -1,2 +1,2 @@
-mandoc: emptyNAME.in:4:2: WARNING: NAME section without name
+mandoc: emptyNAME.in:4:2: WARNING: NAME section without Nm before Nd
 mandoc: emptyNAME.in:4:2: WARNING: NAME section without description

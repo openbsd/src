@@ -1,0 +1,12 @@
+SH-ORDERNAME(1)             General Commands Manual            SH-ORDERNAME(1)
+
+NNAAMMEE
+     - name after description in NAME section
+
+   ssuubbsseeccttiioonn
+     SShh--oorrddeerrNNAAMMEE
+
+DDEESSCCRRIIPPTTIIOONN
+     The order of Nm and Nd is wrong in the NAME section.
+
+OpenBSD                         January 7, 2017                        OpenBSD

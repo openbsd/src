@@ -1,0 +1,10 @@
+SH-PUNCTNAME(1)             General Commands Manual            SH-PUNCTNAME(1)
+
+NNAAMMEE
+     SShh--ppuunnccttNNAAMMEE sseeccoonndd__nnaammee; tthhiirrdd__nnaammee, - wrong punctuation in the NAME
+     section
+
+DDEESSCCRRIIPPTTIIOONN
+     One comma is missing, and one is misplaced.
+
+OpenBSD                         January 7, 2017                        OpenBSD

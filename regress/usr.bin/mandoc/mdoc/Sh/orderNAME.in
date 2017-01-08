@@ -1,0 +1,9 @@
+.Dd January 7, 2017
+.Dt SH-ORDERNAME 1
+.Os OpenBSD
+.Sh NAME
+.Nd name after description in NAME section
+.Ss subsection
+.Nm Sh-orderNAME
+.Sh DESCRIPTION
+The order of Nm and Nd is wrong in the NAME section.

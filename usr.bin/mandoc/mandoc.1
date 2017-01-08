@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mandoc.1,v 1.91 2017/01/06 01:33:48 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.92 2017/01/08 00:10:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 6 2017 $
+.Dd $Mdocdate: January 8 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -809,11 +809,13 @@ This may confuse
 .Xr makewhatis 8
 and
 .Xr apropos 1 .
-.It Sy "NAME section without name"
+.It Sy "NAME section without Nm before Nd"
 .Pq mdoc
 The NAME section does not contain any
 .Ic \&Nm
-child macro.
+child macro before the first
+.Ic \&Nd
+macro.
 .It Sy "NAME section without description"
 .Pq mdoc
 The NAME section lacks the mandatory
@@ -830,6 +832,11 @@ The NAME section contains plain text or macros other than
 .Ic \&Nm
 and
 .Ic \&Nd .
+.It Sy "missing comma before name"
+.Pq mdoc
+The NAME section contains an
+.Ic \&Nm
+macro that is neither the first one nor preceded by a comma.
 .It Sy "missing description line, using \(dq\(dq"
 .Pq mdoc
 The
@@ -1622,8 +1629,8 @@ macro fails to specify the list type.
 .It Sy "missing manual name, using \(dq\(dq"
 .Pq mdoc
 The first call to
-.Ic \&Nm
-lacks the required argument.
+.Ic \&Nm ,
+or any call in the NAME section, lacks the required argument.
 .It Sy "uname(3) system call failed, using UNKNOWN"
 .Pq mdoc
 The
