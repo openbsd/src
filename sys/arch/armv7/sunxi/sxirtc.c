@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.7 2016/08/05 21:29:23 kettenis Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.8 2017/01/08 13:25:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -56,7 +56,7 @@ int	sxirtc_match(struct device *, void *, void *);
 void	sxirtc_attach(struct device *, struct device *, void *);
 
 struct cfattach sxirtc_ca = {
-	sizeof(struct device), sxirtc_match, sxirtc_attach
+	sizeof(struct sxirtc_softc), sxirtc_match, sxirtc_attach
 };
 
 struct cfdriver sxirtc_cd = {
