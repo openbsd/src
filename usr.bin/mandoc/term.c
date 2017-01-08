@@ -1,7 +1,7 @@
-/*	$OpenBSD: term.c,v 1.118 2016/08/10 11:02:30 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.119 2017/01/08 18:08:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -604,8 +604,20 @@ encode(struct termp *p, const char *word, size_t sz)
 		if (ASCII_HYPH == word[i] ||
 		    isgraph((unsigned char)word[i]))
 			encode1(p, word[i]);
-		else
+		else {
 			p->buf[p->col++] = word[i];
+
+			/*
+			 * Postpone the effect of \z while handling
+			 * an overstrike sequence from ascii_uc2str().
+			 */
+
+			if (word[i] == '\b' &&
+			    (p->flags & TERMP_BACKBEFORE)) {
+				p->flags &= ~TERMP_BACKBEFORE;
+				p->flags |= TERMP_BACKAFTER;
+			}
+		}
 	}
 }
 
