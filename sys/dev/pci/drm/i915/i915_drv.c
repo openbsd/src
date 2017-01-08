@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.100 2016/04/08 08:27:53 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.101 2017/01/08 12:11:54 fcambus Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1508,8 +1508,8 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		efifb_cndetach();
 #endif
 
-	printf("%s: %dx%d\n", dev_priv->sc_dev.dv_xname,
-	    ri->ri_width, ri->ri_height);
+	printf("%s: %dx%d, %dbpp\n", dev_priv->sc_dev.dv_xname,
+	    ri->ri_width, ri->ri_height, ri->ri_depth);
 
 	intel_fbdev_restore_mode(dev);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.48 2016/04/08 08:27:53 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.49 2017/01/08 12:11:54 fcambus Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -769,7 +769,8 @@ radeondrm_attachhook(struct device *self)
 	radeon_vga_set_state(rdev, false);
 	pci_disable_legacy_vga(&rdev->dev);
 
-	printf("%s: %dx%d\n", rdev->dev.dv_xname, ri->ri_width, ri->ri_height);
+	printf("%s: %dx%d, %dbpp\n", rdev->dev.dv_xname,
+	    ri->ri_width, ri->ri_height, ri->ri_depth);
 
 	config_found_sm(&rdev->dev, &aa, wsemuldisplaydevprint,
 	    wsemuldisplaydevsubmatch);
