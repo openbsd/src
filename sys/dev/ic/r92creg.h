@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.3 2016/03/07 19:41:49 stsp Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.4 2017/01/08 05:48:27 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1056,6 +1056,35 @@ struct r92c_rx_cck {
 	uint8_t		agc_rpt;
 } __packed;
 
+/* Tx report (type 1). */
+struct r88e_tx_rpt_ccx {
+	uint8_t		rptb0;
+#define R88E_RPTB6_PKT_NUM_M	0x0e
+#define R88E_RPTB6_PKT_NUM_S	1
+#define R88E_RPTB0_INT_CCX	0x80
+
+	uint8_t		rptb1;
+#define R88E_RPTB1_MACID_M	0x3f
+#define R88E_RPTB1_MACID_S	0
+#define R88E_RPTB1_PKT_OK	0x40
+#define R88E_RPTB1_BMC		0x80
+
+	uint8_t		rptb2;
+#define R88E_RPTB2_RETRY_CNT_M	0x3f
+#define R88E_RPTB2_RETRY_CNT_S	0
+#define R88E_RPTB2_LIFE_EXPIRE	0x40
+#define R88E_RPTB2_RETRY_OVER	0x80
+
+	uint8_t		queue_time_low;
+	uint8_t		queue_time_high;
+	uint8_t		final_rate;
+	uint8_t		rptb6;
+#define R88E_RPTB6_QSEL_M	0xf0
+#define R88E_RPTB6_QSEL_S	4
+
+	uint8_t		rptb7;
+} __packed;
+
 struct r88e_rx_cck {
 	uint8_t		path_agc[2];
 	uint8_t		sig_qual;
@@ -1155,6 +1184,9 @@ struct r92c_tx_desc_usb {
 	uint16_t	pad;
 } __packed __attribute__((aligned(4)));
 
+#define R88E_TX_RPT_CTRL	0x4ec
+#define R88E_TX_RPT1_ENA	0x01
+
 #define R92C_TXDW0_PKTLEN_M	0x0000ffff
 #define R92C_TXDW0_PKTLEN_S	0
 #define R92C_TXDW0_OFFSET_M	0x00ff0000
@@ -1191,6 +1223,14 @@ struct r92c_tx_desc_usb {
 #define R92C_TXDW1_PKTOFF_S	26
 
 #define R88E_TXDW2_AGGBK	0x00010000
+#define R92C_TXDW2_CCX_RPT	0x00080000
+
+#define R88E_RXDW3_RPT_M	0x0000c000
+#define R88E_RXDW3_RPT_S	14
+#define R88E_RXDW3_RPT_RX	0
+#define R88E_RXDW3_RPT_TX1	1
+#define R88E_RXDW3_RPT_TX2	2
+#define R88E_RXDW3_RPT_HIS	3
 
 #define R92C_TXDW4_RTSRATE_M	0x0000003f
 #define R92C_TXDW4_RTSRATE_S	0
@@ -1205,6 +1245,7 @@ struct r92c_tx_desc_usb {
 #define R92C_TXDW4_SCO_SCA	1
 #define R92C_TXDW4_SCO_SCB	2
 #define R92C_TXDW4_40MHZ	0x02000000
+#define R92C_TXDW4_RTS_SHORT	0x04000000
 
 #define R92C_TXDW5_DATARATE_M		0x0000003f
 #define R92C_TXDW5_DATARATE_S		0

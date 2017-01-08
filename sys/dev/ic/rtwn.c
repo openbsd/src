@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.10 2016/07/26 13:00:28 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.11 2017/01/08 05:48:27 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -692,15 +692,17 @@ rtwn_ra_init(struct rtwn_softc *sc)
 			rtwn_write_4(sc, R92C_ARFR(0), rates & 0x0ff5);
 	}
 
-	if (sc->chip & RTWN_CHIP_88E)
+	if (sc->chip & RTWN_CHIP_88E) {
 		error = rtwn_r88e_ra_init(sc, mode, rates, maxrate,
 		    basicrates, maxbasicrate);
-	else
+		/* We use AMRR with this chip. Start with the lowest rate. */
+		ni->ni_txrate = 0;
+	} else {
 		error = rtwn_r92c_ra_init(sc, mode, rates, maxrate,
 		    basicrates, maxbasicrate);
-
-	/* Indicate highest supported rate. */
-	ni->ni_txrate = rs->rs_nrates - 1;
+		/* No AMRR support yet. Indicate highest supported rate. */
+		ni->ni_txrate = rs->rs_nrates - 1;
+	}
 	return (error);
 }
 

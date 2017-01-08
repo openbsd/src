@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.66 2016/07/21 08:38:33 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.67 2017/01/08 05:48:27 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -47,6 +47,7 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/usb/usb.h>
@@ -171,6 +172,9 @@ struct urtwn_softc {
 	struct urtwn_rx_data		rx_data[URTWN_RX_LIST_COUNT];
 	struct urtwn_tx_data		tx_data[URTWN_TX_LIST_COUNT];
 	TAILQ_HEAD(, urtwn_tx_data)	tx_free_list;
+
+	struct ieee80211_amrr		amrr;
+	struct ieee80211_amrr_node	amn;
 
 #if NBPFILTER > 0
 	caddr_t				sc_drvbpf;
@@ -406,7 +410,10 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 		chip_type |= RTWN_CHIP_88E;
 	else
 		chip_type |= (RTWN_CHIP_92C | RTWN_CHIP_88C);
-		
+
+	sc->amrr.amrr_min_success_threshold =  1;
+	sc->amrr.amrr_max_success_threshold = 10;
+
 	/* Attach the bus-agnostic driver. */
 	sc->sc_sc.sc_ops.cookie = sc;
 	sc->sc_sc.sc_ops.write_1 = urtwn_write_1;
@@ -839,6 +846,15 @@ urtwn_calib_to(void *arg)
 void
 urtwn_calib_cb(struct urtwn_softc *sc, void *arg)
 {
+	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
+	int s;
+
+	s = splnet();
+	if (ic->ic_opmode == IEEE80211_M_STA) {
+		ieee80211_amrr_choose(&sc->amrr, ic->ic_bss, &sc->amn);
+	}
+	splx(s);
+
 	rtwn_calib(&sc->sc_sc);
 }
 
@@ -1142,6 +1158,27 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv,
 	npkts = MS(letoh32(rxd->rxdw2), R92C_RXDW2_PKTCNT);
 	DPRINTFN(4, ("Rx %d frames in one chunk\n", npkts));
 
+	if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+		int ntries, type;
+		struct r88e_tx_rpt_ccx *rxstat;
+
+		type = MS(letoh32(rxd->rxdw3), R88E_RXDW3_RPT);
+
+		if (type == R88E_RXDW3_RPT_TX1) {
+			buf += sizeof(struct r92c_rx_desc_usb);
+			rxstat = (struct r88e_tx_rpt_ccx *)buf;
+			ntries = MS(letoh32(rxstat->rptb2),
+			    R88E_RPTB2_RETRY_CNT);
+
+			if (rxstat->rptb1 & R88E_RPTB1_PKT_OK)
+				sc->amn.amn_txcnt++;
+			if (ntries > 0)
+				sc->amn.amn_retrycnt++;
+
+			goto resubmit;
+		}
+	}
+
 	/* Process all of them. */
 	while (npkts-- > 0) {
 		if (__predict_false(len < sizeof(*rxd)))
@@ -1292,6 +1329,8 @@ urtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 			    SM(R92C_TXDW1_QSEL, R92C_TXDW1_QSEL_BE) |
 			    SM(R92C_TXDW1_RAID, raid));
 			txd->txdw2 |= htole32(R88E_TXDW2_AGGBK);
+			/* Request TX status report for AMRR */
+			txd->txdw2 |= htole32(R92C_TXDW2_CCX_RPT);
 		} else {
 			txd->txdw1 |= htole32(
 			    SM(R92C_TXDW1_MACID, R92C_MACID_BSS) |
@@ -1311,12 +1350,20 @@ urtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 				    R92C_TXDW4_HWRTSEN);
 			}
 		}
-		/* Send RTS at OFDM24. */
-		txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE, 8));
 		txd->txdw5 |= htole32(0x0001ff00);
-		/* Send data at OFDM54. */
-		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, 11));
 
+		if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+			/* Use AMRR */
+			txd->txdw4 |= htole32(R92C_TXDW4_DRVRATE);
+			txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE,
+			    ni->ni_txrate));
+			txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE,
+			    ni->ni_txrate));
+		} else {
+			/* Send RTS at OFDM24 and data at OFDM54. */
+			txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE, 8));
+			txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, 11));
+		}
 	} else {
 		txd->txdw1 |= htole32(
 		    SM(R92C_TXDW1_MACID, 0) |
@@ -1960,6 +2007,16 @@ urtwn_init(void *cookie)
 		if (error != 0 && error != USBD_IN_PROGRESS)
 			return (error);
 	}
+
+	ieee80211_amrr_node_init(&sc->amrr, &sc->amn);
+
+	/*
+	 * Enable TX reports for AMRR.
+	 * In order to get reports we need to explicitly reset the register.
+	 */
+	if (sc->sc_sc.chip & RTWN_CHIP_88E)
+		urtwn_write_1(sc, R88E_TX_RPT_CTRL, (urtwn_read_1(sc,
+		    R88E_TX_RPT_CTRL) & ~0) | R88E_TX_RPT1_ENA);
 
 	return (0);
 }
