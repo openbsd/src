@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.32 2016/10/12 11:57:31 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.33 2017/01/08 20:31:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -90,6 +90,7 @@ void
 vlog(int pri, const char *fmt, va_list ap)
 {
 	char	*nfmt;
+	int	 saved_errno = errno;
 
 	if (debug) {
 		/* best effort in out of mem situations */
@@ -103,8 +104,9 @@ vlog(int pri, const char *fmt, va_list ap)
 		fflush(stderr);
 	} else
 		vsyslog(pri, fmt, ap);
-}
 
+	errno = saved_errno;
+}
 
 void
 log_warn(const char *emsg, ...)
@@ -130,6 +132,8 @@ log_warn(const char *emsg, ...)
 		}
 		va_end(ap);
 	}
+
+	errno = saved_errno;
 }
 
 void
@@ -165,11 +169,10 @@ log_debug(const char *emsg, ...)
 }
 
 static void
-vfatal(const char *emsg, va_list ap)
+vfatalc(int code, const char *emsg, va_list ap)
 {
 	static char	s[BUFSIZ];
 	const char	*sep;
-	int		 saved_errno = errno;
 
 	if (emsg != NULL) {
 		(void)vsnprintf(s, sizeof(s), emsg, ap);
@@ -178,9 +181,9 @@ vfatal(const char *emsg, va_list ap)
 		s[0] = '\0';
 		sep = "";
 	}
-	if (saved_errno)
+	if (code)
 		logit(LOG_CRIT, "%s: %s%s%s",
-		    log_procname, s, sep, strerror(saved_errno));
+		    log_procname, s, sep, strerror(code));
 	else
 		logit(LOG_CRIT, "%s%s%s", log_procname, sep, s);
 }
@@ -191,7 +194,7 @@ fatal(const char *emsg, ...)
 	va_list	ap;
 
 	va_start(ap, emsg);
-	vfatal(emsg, ap);
+	vfatalc(errno, emsg, ap);
 	va_end(ap);
 	exit(1);
 }
@@ -201,9 +204,8 @@ fatalx(const char *emsg, ...)
 {
 	va_list	ap;
 
-	errno = 0;
 	va_start(ap, emsg);
-	vfatal(emsg, ap);
+	vfatalc(0, emsg, ap);
 	va_end(ap);
 	exit(1);
 }
