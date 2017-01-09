@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.31 2017/01/09 19:27:00 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.32 2017/01/09 19:29:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -55,11 +55,13 @@ cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
 	glob_t			 g;
 	int			 i;
 
+	quiet = args_has(args, 'q');
 	if (glob(args->argv[0], 0, NULL, &g) != 0) {
+		if (quiet && errno == ENOENT)
+			return (CMD_RETURN_NORMAL);
 		cmdq_error(item, "%s: %s", args->argv[0], strerror(errno));
 		return (CMD_RETURN_ERROR);
 	}
-	quiet = args_has(args, 'q');
 
 	retval = CMD_RETURN_NORMAL;
 	for (i = 0; i < g.gl_pathc; i++) {
