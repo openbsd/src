@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.5 2016/12/26 23:23:57 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.6 2017/01/09 19:50:06 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -866,8 +866,9 @@ ieee80211_mira_schedule_probe_timers(struct ieee80211_mira_node *mn,
 	if (mcs != ni->ni_txmcs && !timeout_pending(to) &&
 	    !mn->probe_timer_expired[IEEE80211_MIRA_PROBE_TO_UP]) {
 		timeout_add_msec(to, g->probe_interval);
-		DPRINTFN(3, ("start probing up at MCS %d in at least %d msec\n",
-		    mcs, g->probe_interval));
+		DPRINTFN(3, ("start probing up for node %s at MCS %d in at "
+		    "least %d msec\n",
+		    ether_sprintf(ni->ni_macaddr), mcs, g->probe_interval));
 	}
 
 	mcs = ieee80211_mira_next_lower_intra_rate(mn, ni);
@@ -876,8 +877,9 @@ ieee80211_mira_schedule_probe_timers(struct ieee80211_mira_node *mn,
 	if (mcs != ni->ni_txmcs && !timeout_pending(to) &&
 	    !mn->probe_timer_expired[IEEE80211_MIRA_PROBE_TO_DOWN]) {
 		timeout_add_msec(to, g->probe_interval);
-		DPRINTFN(3, ("start probing down at MCS %d in at "
-		    "least %d msec\n", mcs, g->probe_interval));
+		DPRINTFN(3, ("start probing down for node %s at MCS %d in at "
+		    "least %d msec\n",
+		    ether_sprintf(ni->ni_macaddr), mcs, g->probe_interval));
 	}
 }
 
