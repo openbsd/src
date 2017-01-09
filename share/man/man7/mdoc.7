@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mdoc.7,v 1.146 2016/12/28 17:21:17 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.147 2017/01/09 14:10:18 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010, 2011, 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: January 9 2017 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1843,14 +1843,25 @@ The
 list is the most complicated.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&It Ar cell Op <TAB> Ar cell ...
 .D1 Pf \. Sx \&It Ar cell Op Sx \&Ta Ar cell ...
+.D1 Pf \. Sx \&It Ar cell Op <TAB> Ar cell ...
 .Pp
 The arguments consist of one or more lines of text and macros
 representing a complete table line.
-Cells within the line are delimited by tabs or by the special
+Cells within the line are delimited by the special
 .Sx \&Ta
-block macro.
+block macro or by literal tab characters.
+.Pp
+Using literal tabs is strongly discouraged because they are very
+hard to use correctly and
+.Nm
+code using them is very hard to read.
+In particular, a blank character is syntactically significant
+before and after the literal tab character.
+If a word precedes or follows the tab without an intervening blank,
+that word is never interpreted as a macro call, but always output
+literally.
+.Pp
 The tab cell delimiter may only be used within the
 .Sx \&It
 line itself; on following lines, only the
@@ -1865,9 +1876,10 @@ Note that quoted strings may span tab-delimited cells on an
 line.
 For example,
 .Pp
-.Dl .It \(dqcol1 ; <TAB> col2 ;\(dq \&;
+.Dl .It \(dqcol1 ,\& <TAB> col2 ,\(dq \&;
 .Pp
-will preserve the semicolon whitespace except for the last.
+will preserve the whitespace before both commas,
+but not the whitespace before the semicolon.
 .Pp
 See also
 .Sx \&Bl .
