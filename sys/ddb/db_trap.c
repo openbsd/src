@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.26 2016/09/02 12:17:33 tb Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.27 2017/01/09 17:21:42 mpi Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ db_trap(int type, int code)
 	boolean_t	watchpt;
 
 	db_is_active = 1;
+	db_wdog_disable();
 	bkpt = IS_BREAKPOINT_TRAP(type, code);
 	watchpt = IS_WATCHPOINT_TRAP(type, code);
 
@@ -94,5 +95,6 @@ db_trap(int type, int code)
 	}
 
 	db_restart_at_pc(&ddb_regs, watchpt);
+	db_wdog_enable();
 	db_is_active = 0;
 }
