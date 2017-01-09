@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.110 2017/01/09 16:24:20 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.111 2017/01/09 20:18:59 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1350,6 +1350,27 @@ ieee80211_setup_htcaps(struct ieee80211_node *ni, const uint8_t *data,
 	ni->ni_aselcaps = data[25];
 }
 
+#ifndef IEEE80211_STA_ONLY
+/* 
+ * Handle nodes switching from 11n into legacy modes.
+ */
+void
+ieee80211_clear_htcaps(struct ieee80211_node *ni)
+{
+	ni->ni_htcaps = 0;
+	ni->ni_ampdu_param = 0;
+	memset(ni->ni_rxmcs, 0, sizeof(ni->ni_rxmcs));
+	ni->ni_max_rxrate = 0;
+	ni->ni_tx_mcs_set = 0;
+	ni->ni_htxcaps = 0;
+	ni->ni_txbfcaps = 0;
+	ni->ni_aselcaps = 0;
+
+	ni->ni_flags &= ~IEEE80211_NODE_HT;
+
+}
+#endif
+
 /*
  * Install received HT op information in the node's state block.
  */
@@ -1626,6 +1647,8 @@ ieee80211_node_leave_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 			ba->ba_buf = NULL;
 		}
 	}
+
+	ieee80211_clear_htcaps(ni);
 }
 
 /*

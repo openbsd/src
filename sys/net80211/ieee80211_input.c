@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.181 2017/01/09 12:40:00 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.182 2017/01/09 20:18:59 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1802,6 +1802,8 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m,
 	}
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
+	else
+		ieee80211_clear_htcaps(ni);
 	IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
 }
 #endif	/* IEEE80211_STA_ONLY */
@@ -2141,6 +2143,8 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 	ni->ni_chan = ic->ic_bss->ni_chan;
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
+	else
+		ieee80211_clear_htcaps(ni);
  end:
 	if (status != 0) {
 		IEEE80211_SEND_MGMT(ic, ni, resp, status);
