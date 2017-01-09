@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.7 2016/11/18 16:16:39 jca Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.8 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -294,6 +294,8 @@ traphandler_priv_recvmsg(struct privsep_proc *p, struct imsg *imsg)
 int
 traphandler_fork_handler(struct privsep_proc *p, struct imsg *imsg)
 {
+	struct privsep		*ps = p->p_ps;
+	struct snmpd		*env = ps->ps_env;
 	char			 oidbuf[SNMP_MAX_OID_STRLEN];
 	struct sockaddr		*sa;
 	char			*buf;
@@ -303,9 +305,10 @@ traphandler_fork_handler(struct privsep_proc *p, struct imsg *imsg)
 	struct ber_oid		 trapoid;
 	u_int			 uptime;
 	struct passwd		*pw;
-	extern int		 debug;
+	int			 verbose;
 
-	pw = p->p_ps->ps_pw;
+	pw = ps->ps_pw;
+	verbose = log_getverbose();
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -314,7 +317,8 @@ traphandler_fork_handler(struct privsep_proc *p, struct imsg *imsg)
 
 	closefrom(STDERR_FILENO + 1);
 
-	log_init(debug, LOG_DAEMON);
+	log_init((env->sc_flags & SNMPD_F_DEBUG) ? 1 : 0, LOG_DAEMON);
+	log_setverbose(verbose);
 	log_procinit(p->p_title);
 
 	n = IMSG_DATA_SIZE(imsg);

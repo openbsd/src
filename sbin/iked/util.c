@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.32 2016/09/26 16:55:21 jca Exp $	*/
+/*	$OpenBSD: util.c,v 1.33 2017/01/09 14:49:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -34,10 +34,6 @@
 
 #include "iked.h"
 #include "ikev2.h"
-
-/* log.c */
-extern int	 debug;
-extern int	 verbose;
 
 int
 socket_af(struct sockaddr *sa, in_port_t port)
@@ -474,9 +470,8 @@ void
 print_hex(uint8_t *buf, off_t offset, size_t length)
 {
 	unsigned int	 i;
-	extern int	 verbose;
 
-	if (verbose < 3 || !length)
+	if (log_getverbose() < 3 || !length)
 		return;
 
 	for (i = 0; i < length; i++) {
@@ -495,9 +490,8 @@ void
 print_hexval(uint8_t *buf, off_t offset, size_t length)
 {
 	unsigned int	 i;
-	extern int	 verbose;
 
-	if (verbose < 2 || !length)
+	if (log_getverbose() < 2 || !length)
 		return;
 
 	print_debug("0x");
@@ -759,7 +753,7 @@ print_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (debug && verbose > 2) {
+	if (log_getverbose() > 2) {
 		va_start(ap, emsg);
 		vfprintf(stderr, emsg, ap);
 		va_end(ap);
@@ -771,7 +765,7 @@ print_verbose(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (verbose) {
+	if (log_getverbose()) {
 		va_start(ap, emsg);
 		vfprintf(stderr, emsg, ap);
 		va_end(ap);

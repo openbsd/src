@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.73 2016/11/18 16:16:39 jca Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.74 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -560,7 +560,8 @@ struct usmuser {
 struct snmpd {
 	u_int8_t		 sc_flags;
 #define SNMPD_F_VERBOSE		 0x01
-#define SNMPD_F_NONAMES		 0x02
+#define SNMPD_F_DEBUG		 0x02
+#define SNMPD_F_NONAMES		 0x04
 
 	const char		*sc_confpath;
 	struct addresslist	 sc_addresses;
@@ -617,7 +618,8 @@ int		 cmdline_symset(char *);
 /* log.c */
 void	log_init(int, int);
 void	log_procinit(const char *);
-void	log_verbose(int);
+void	log_setverbose(int);
+int	log_getverbose(void);
 void	log_warn(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 void	log_warnx(const char *, ...)

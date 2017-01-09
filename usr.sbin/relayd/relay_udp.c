@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.44 2016/11/10 13:21:58 jca Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.45 2017/01/09 14:49:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -39,7 +39,6 @@
 
 extern volatile sig_atomic_t relay_sessions;
 extern objid_t relay_conid;
-extern int debug;
 
 static struct relayd *env = NULL;
 struct shuffle relay_shuffle;
@@ -467,7 +466,7 @@ relay_dns_request(struct rsession *con)
 
 	if (buf == NULL || priv == NULL || len < 1)
 		return (-1);
-	if (debug)
+	if (log_getverbose() > 1)
 		relay_dns_log(con, buf, len);
 
 	getmonotime(&con->se_tv_start);
@@ -522,7 +521,7 @@ relay_dns_result(struct rsession *con, u_int8_t *buf, size_t len)
 	if (priv == NULL)
 		fatalx("relay_dns_result: response to invalid session");
 
-	if (debug)
+	if (log_getverbose() > 1)
 		relay_dns_log(con, buf, len);
 
 	/*

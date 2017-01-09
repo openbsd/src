@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.6 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: log.h,v 1.7 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Gilles Chehade <gilles@poolp.org>
@@ -21,7 +21,8 @@
 /* log.c */
 void	log_init(int, int);
 void	log_procinit(const char *);
-void	log_verbose(int);
+void	log_setverbose(int);
+int	log_getverbose(void);
 void	log_warn(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 void	log_warnx(const char *, ...)

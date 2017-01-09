@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.14 2016/10/12 19:07:42 reyk Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.15 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 		fatalx("unknown user " SWITCHD_USER);
 
 	log_init(debug, LOG_DAEMON);
-	log_verbose(verbose);
+	log_setverbose(verbose);
 
 	/* Configure the control socket */
 	ps->ps_csock.cs_name = SWITCHD_SOCKET;

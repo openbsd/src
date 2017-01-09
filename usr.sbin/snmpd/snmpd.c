@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.34 2016/10/28 09:07:08 rzalamena Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.35 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -158,6 +158,7 @@ main(int argc, char *argv[])
 		switch (c) {
 		case 'd':
 			debug++;
+			flags |= SNMPD_F_DEBUG;
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -221,7 +222,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", SNMPD_USER);
 
 	log_init(debug, LOG_DAEMON);
-	log_verbose(verbose);
+	log_setverbose(verbose);
 
 	gettimeofday(&env->sc_starttime, NULL);
 	env->sc_engine_boots = 0;

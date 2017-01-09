@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.112 2016/12/01 16:24:48 mestre Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.113 2017/01/09 14:49:22 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -209,7 +209,7 @@ main(int argc, char *argv[])
 	reset_adjtime();
 	if (!lconf.settime) {
 		log_init(lconf.debug, LOG_DAEMON);
-		log_verbose(lconf.verbose);
+		log_setverbose(lconf.verbose);
 		if (!lconf.debug)
 			if (daemon(1, 0))
 				fatal("daemon");
@@ -284,7 +284,7 @@ main(int argc, char *argv[])
 			lconf.settime = 0;
 			timeout = INFTIM;
 			log_init(lconf.debug, LOG_DAEMON);
-			log_verbose(lconf.verbose);
+			log_setverbose(lconf.verbose);
 			log_warnx("no reply received in time, skipping initial "
 			    "time setting");
 			if (!lconf.debug)
@@ -384,7 +384,7 @@ dispatch_imsg(struct ntpd_conf *lconf, int argc, char **argv)
 			if (!lconf->settime)
 				break;
 			log_init(lconf->debug, LOG_DAEMON);
-			log_verbose(lconf->verbose);
+			log_setverbose(lconf->verbose);
 			memcpy(&d, imsg.data, sizeof(d));
 			ntpd_settime(d);
 			/* daemonize now */

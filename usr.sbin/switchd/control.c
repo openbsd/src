@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.6 2017/01/09 14:04:31 krw Exp $	*/
+/*	$OpenBSD: control.c,v 1.7 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2016 Reyk Floeter <reyk@openbsd.org>
@@ -361,7 +361,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			IMSG_SIZE_CHECK(&imsg, &v);
 
 			memcpy(&v, imsg.data, sizeof(v));
-			log_verbose(v);
+			log_setverbose(v);
 
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT, -1);
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_OFP, -1);

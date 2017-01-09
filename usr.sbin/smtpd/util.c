@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.131 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.132 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -812,5 +812,5 @@ log_trace_verbose(int v)
 	tracing = v;
 
 	/* Set debug logging in log.c */
-	log_verbose(v & TRACE_DEBUG ? 2 : foreground_log);
+	log_setverbose(v & TRACE_DEBUG ? 2 : foreground_log);
 }

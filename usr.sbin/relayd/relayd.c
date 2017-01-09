@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.163 2016/11/24 21:01:18 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.164 2017/01/09 14:49:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 	ps->ps_csock.cs_name = RELAYD_SOCKET;
 
 	log_init(debug, LOG_DAEMON);
-	log_verbose(verbose);
+	log_setverbose(verbose);
 
 	if (env->sc_conf.opts & RELAYD_OPT_NOACTION)
 		ps->ps_noaction = 1;

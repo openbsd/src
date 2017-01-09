@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.100 2016/11/17 14:58:37 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.101 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1153,14 +1153,13 @@ server_log(struct client *clt, const char *msg)
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	char			*ptr = NULL, *vmsg = NULL;
 	int			 debug_cmd = -1;
-	extern int		 verbose;
 
 	switch (srv_conf->logformat) {
 	case LOG_FORMAT_CONNECTION:
 		debug_cmd = IMSG_LOG_ACCESS;
 		break;
 	default:
-		if (verbose > 1)
+		if (log_getverbose() > 1)
 			debug_cmd = IMSG_LOG_ERROR;
 		if (EVBUFFER_LENGTH(clt->clt_log)) {
 			while ((ptr =

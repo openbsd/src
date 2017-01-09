@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2016/11/09 20:31:56 jca Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2017/01/09 14:49:22 reyk Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -29,10 +29,6 @@
 #include "ber.h"
 #include "snmp.h"
 #include "snmpd.h"
-
-/* log.c */
-extern int	 debug;
-extern int	 verbose;
 
 /*
  * Convert variable bindings from AgentX to SNMP dialect.
@@ -283,7 +279,7 @@ print_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (debug && verbose > 2) {
+	if (log_getverbose() > 2) {
 		va_start(ap, emsg);
 		vfprintf(stderr, emsg, ap);
 		va_end(ap);
@@ -295,7 +291,7 @@ print_verbose(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (verbose) {
+	if (log_getverbose()) {
 		va_start(ap, emsg);
 		vfprintf(stderr, emsg, ap);
 		va_end(ap);

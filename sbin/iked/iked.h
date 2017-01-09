@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.99 2017/01/03 17:51:38 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.100 2017/01/09 14:49:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -963,7 +963,8 @@ void	 ibuf_zero(struct ibuf *);
 /* log.c */
 void	log_init(int, int);
 void	log_procinit(const char *);
-void	log_verbose(int);
+void	log_setverbose(int);
+int	log_getverbose(void);
 void	log_warn(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 void	log_warnx(const char *, ...)

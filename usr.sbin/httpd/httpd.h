@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.124 2016/11/17 14:52:48 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.125 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -685,7 +685,8 @@ extern struct httpd *httpd_env;
 /* log.c */
 void	log_init(int, int);
 void	log_procinit(const char *);
-void	log_verbose(int);
+void	log_setverbose(int);
+int	log_getverbose(void);
 void	log_warn(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 void	log_warnx(const char *, ...)

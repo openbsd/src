@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.33 2017/01/08 20:31:03 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.34 2017/01/09 14:49:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,13 +24,14 @@
 #include <errno.h>
 #include <time.h>
 
-int		 debug;
-int		 verbose;
+static int	 debug;
+static int	 verbose;
 const char	*log_procname;
 
 void	log_init(int, int);
 void	log_procinit(const char *);
-void	log_verbose(int);
+void	log_setverbose(int);
+int	log_getverbose(void);
 void	log_warn(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 void	log_warnx(const char *, ...)
@@ -71,9 +72,15 @@ log_procinit(const char *procname)
 }
 
 void
-log_verbose(int v)
+log_setverbose(int v)
 {
 	verbose = v;
+}
+
+int
+log_getverbose(void)
+{
+	return (verbose);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.29 2015/12/07 16:05:56 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.30 2017/01/09 14:49:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -495,7 +495,7 @@ proc_dispatch(int fd, short event, void *arg)
 		case IMSG_CTL_VERBOSE:
 			IMSG_SIZE_CHECK(&imsg, &verbose);
 			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			log_setverbose(verbose);
 			break;
 		default:
 			log_warnx("%s: %s %d got invalid imsg %d peerid %d "

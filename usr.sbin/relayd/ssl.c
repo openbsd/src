@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.30 2015/12/30 12:08:34 benno Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.31 2017/01/09 14:49:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -225,9 +225,8 @@ ssl_error(const char *where, const char *what)
 {
 	char		 errbuf[128];
 	unsigned long	 code;
-	extern int	 debug;
 
-	if (!debug)
+	if (log_getverbose() < 2)
 		return;
 	for (; (code = ERR_get_error()) != 0 ;) {
 		ERR_error_string_n(code, errbuf, sizeof(errbuf));

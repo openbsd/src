@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.37 2016/11/24 21:01:18 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.38 2017/01/09 14:49:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -662,7 +662,7 @@ proc_dispatch(int fd, short event, void *arg)
 		case IMSG_CTL_VERBOSE:
 			IMSG_SIZE_CHECK(&imsg, &verbose);
 			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			log_setverbose(verbose);
 			break;
 		case IMSG_CTL_PROCFD:
 			IMSG_SIZE_CHECK(&imsg, &pf);

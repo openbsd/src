@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.217 2016/11/10 13:21:58 jca Exp $	*/
+/*	$OpenBSD: relay.c,v 1.218 2017/01/09 14:49:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -287,11 +287,9 @@ relay_protodebug(struct relay *rlay)
 int
 relay_privinit(struct relay *rlay)
 {
-	extern int	 debug;
-
 	log_debug("%s: adding relay %s", __func__, rlay->rl_conf.name);
 
-	if (debug)
+	if (log_getverbose() > 1)
 		relay_protodebug(rlay);
 
 	switch (rlay->rl_proto->type) {

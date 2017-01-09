@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.62 2016/09/28 12:01:04 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.63 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 	ps->ps_csock.cs_name = NULL;
 
 	log_init(debug, LOG_DAEMON);
-	log_verbose(verbose);
+	log_setverbose(verbose);
 
 	if (env->sc_opts & HTTPD_OPT_NOACTION)
 		ps->ps_noaction = 1;
