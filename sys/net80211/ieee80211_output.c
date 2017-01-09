@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.111 2016/04/12 14:33:27 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.112 2017/01/09 09:30:02 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1084,8 +1084,9 @@ ieee80211_add_htop(u_int8_t *frm, struct ieee80211com *ic)
 	*frm++ = IEEE80211_ELEMID_HTOP;
 	*frm++ = 22;
 	*frm++ = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-	LE_WRITE_2(frm, 0); frm += 2;
-	LE_WRITE_2(frm, 0); frm += 2;
+	*frm++ = ic->ic_bss->ni_htop0;
+	LE_WRITE_2(frm, ic->ic_bss->ni_htop1); frm += 2;
+	LE_WRITE_2(frm, ic->ic_bss->ni_htop2); frm += 2;
 	memset(frm, 0, 16); frm += 16;
 	return frm;
 }
