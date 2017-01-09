@@ -1,4 +1,4 @@
-/* $OpenBSD: xp.c,v 1.1 2016/12/17 05:22:34 aoyama Exp $ */
+/* $OpenBSD: xp.c,v 1.2 2017/01/09 08:46:13 aoyama Exp $ */
 /* $NetBSD: xp.c,v 1.1 2016/12/03 17:38:02 tsutsui Exp $ */
 
 /*-
@@ -205,7 +205,7 @@ xpioctl(dev_t dev, u_long cmd, void *addr, int flags, struct proc *p)
 	case XPIOCDOWNLD:
 		downld = addr;
 		loadsize = downld->size;
-		if (loadsize == 0 || loadsize >= XP_SHM_SIZE) {
+		if (loadsize == 0 || loadsize > sc->sc_shm_size) {
 			return EINVAL;
 		}
 
