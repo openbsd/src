@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.142 2016/12/24 11:17:35 mpi Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.143 2017/01/09 17:10:03 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -556,7 +556,7 @@ esp_input_cb(struct cryptop *crp)
 		return (EINVAL);
 	}
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -575,7 +575,7 @@ esp_input_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			splx(s);
+			NET_UNLOCK(s);
 			return crypto_dispatch(crp);
 		}
 		free(tc, M_XDATA, 0);
@@ -668,7 +668,7 @@ esp_input_cb(struct cryptop *crp)
 	m1 = m_getptr(m, skip, &roff);
 	if (m1 == NULL)	{
 		espstat.esps_hdrops++;
-		splx(s);
+		NET_UNLOCK(s);
 		DPRINTF(("esp_input_cb(): bad mbuf chain, SA %s/%08x\n",
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
@@ -725,7 +725,7 @@ esp_input_cb(struct cryptop *crp)
 	/* Verify pad length */
 	if (lastthree[1] + 2 > m->m_pkthdr.len - skip) {
 		espstat.esps_badilen++;
-		splx(s);
+		NET_UNLOCK(s);
 		DPRINTF(("esp_input_cb(): invalid padding length %d for "
 		    "packet in SA %s/%08x\n", lastthree[1],
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
@@ -737,7 +737,7 @@ esp_input_cb(struct cryptop *crp)
 	/* Verify correct decryption by checking the last padding bytes */
 	if ((lastthree[1] != lastthree[0]) && (lastthree[1] != 0)) {
 		espstat.esps_badenc++;
-		splx(s);
+		NET_UNLOCK(s);
 		DPRINTF(("esp_input(): decryption failed for packet in "
 		    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
 		    sizeof(buf)), ntohl(tdb->tdb_spi)));
@@ -753,11 +753,11 @@ esp_input_cb(struct cryptop *crp)
 
 	/* Back to generic IPsec input processing */
 	error = ipsec_common_input_cb(m, tdb, skip, protoff);
-	splx(s);
+	NET_UNLOCK(s);
 	return (error);
 
  baddone:
-	splx(s);
+	NET_UNLOCK(s);
 
 	m_freem(m);
 

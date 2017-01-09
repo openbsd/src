@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.124 2016/12/24 11:17:35 mpi Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.125 2017/01/09 17:10:02 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -727,7 +727,7 @@ ah_input_cb(struct cryptop *crp)
 		return (EINVAL);
 	}
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -746,7 +746,7 @@ ah_input_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			splx(s);
+			NET_UNLOCK(s);
 			return crypto_dispatch(crp);
 		}
 		free(tc, M_XDATA, 0);
@@ -836,7 +836,7 @@ ah_input_cb(struct cryptop *crp)
 	m1 = m_getptr(m, skip, &roff);
 	if (m1 == NULL) {
 		ahstat.ahs_hdrops++;
-		splx(s);
+		NET_UNLOCK(s);
 		m_freem(m);
 
 		DPRINTF(("ah_input(): bad mbuf chain for packet in SA "
@@ -905,11 +905,11 @@ ah_input_cb(struct cryptop *crp)
 		}
 
 	error = ipsec_common_input_cb(m, tdb, skip, protoff);
-	splx(s);
+	NET_UNLOCK(s);
 	return (error);
 
  baddone:
-	splx(s);
+	NET_UNLOCK(s);
 
 	m_freem(m);
 
