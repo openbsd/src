@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.49 2016/12/24 11:17:35 mpi Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.50 2017/01/09 17:56:37 visa Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -217,7 +217,7 @@ ipcomp_input_cb(struct cryptop *crp)
 		return (EINVAL);
 	}
 
-	s = splsoftnet();
+	NET_LOCK(s);
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -254,7 +254,7 @@ ipcomp_input_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			splx(s);
+			NET_UNLOCK(s);
 			return crypto_dispatch(crp);
 		}
 		free(tc, M_XDATA, 0);
@@ -336,11 +336,11 @@ ipcomp_input_cb(struct cryptop *crp)
 
 	/* Back to generic IPsec input processing */
 	error = ipsec_common_input_cb(m, tdb, skip, protoff);
-	splx(s);
+	NET_UNLOCK(s);
 	return error;
 
 baddone:
-	splx(s);
+	NET_UNLOCK(s);
 
 	m_freem(m);
 
