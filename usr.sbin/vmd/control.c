@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.9 2016/10/12 19:10:03 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.10 2017/01/09 14:04:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -249,9 +249,10 @@ control_connbyfd(int fd)
 {
 	struct ctl_conn	*c;
 
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->iev.ibuf.fd != fd;
-	    c = TAILQ_NEXT(c, entry))
-		;	/* nothing */
+	TAILQ_FOREACH(c, &ctl_conns, entry) {
+		if (c->iev.ibuf.fd == fd)
+			break;
+	}
 
 	return (c);
 }
