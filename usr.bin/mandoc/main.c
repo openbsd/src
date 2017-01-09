@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.181 2017/01/09 01:36:22 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.182 2017/01/09 17:49:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -501,10 +501,10 @@ out:
 
 			/* Stop here until moved to the foreground. */
 
-			tc_pgid = tcgetpgrp(STDIN_FILENO);
+			tc_pgid = tcgetpgrp(tag_files->ofd);
 			if (tc_pgid != man_pgid) {
 				if (tc_pgid == pager_pid) {
-					(void)tcsetpgrp(STDIN_FILENO,
+					(void)tcsetpgrp(tag_files->ofd,
 					    man_pgid);
 					if (signum == SIGTTIN)
 						continue;
@@ -517,7 +517,7 @@ out:
 			/* Once in the foreground, activate the pager. */
 
 			if (pager_pid) {
-				(void)tcsetpgrp(STDIN_FILENO, pager_pid);
+				(void)tcsetpgrp(tag_files->ofd, pager_pid);
 				kill(pager_pid, SIGCONT);
 			} else
 				pager_pid = spawn_pager(tag_files);
@@ -1046,7 +1046,7 @@ spawn_pager(struct tag_files *tag_files)
 		break;
 	default:
 		(void)setpgid(pager_pid, 0);
-		(void)tcsetpgrp(STDIN_FILENO, pager_pid);
+		(void)tcsetpgrp(tag_files->ofd, pager_pid);
 		if (pledge("stdio rpath tmppath tty proc", NULL) == -1)
 			err((int)MANDOCLEVEL_SYSERR, "pledge");
 		tag_files->pager_pid = pager_pid;
@@ -1062,7 +1062,7 @@ spawn_pager(struct tag_files *tag_files)
 
 	/* Do not start the pager before controlling the terminal. */
 
-	while (tcgetpgrp(STDIN_FILENO) != getpid())
+	while (tcgetpgrp(STDOUT_FILENO) != getpid())
 		nanosleep(&timeout, NULL);
 
 	execvp(argv[0], argv);

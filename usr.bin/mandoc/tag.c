@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.16 2016/11/08 16:23:37 schwarze Exp $ */
+/*	$OpenBSD: tag.c,v 1.17 2017/01/09 17:49:55 schwarze Exp $ */
 /*
  * Copyright (c) 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -219,11 +219,11 @@ tag_unlink(void)
 	pid_t	 tc_pgid;
 
 	if (tag_files.tcpgid != -1) {
-		tc_pgid = tcgetpgrp(STDIN_FILENO);
+		tc_pgid = tcgetpgrp(tag_files.ofd);
 		if (tc_pgid == tag_files.pager_pid ||
 		    tc_pgid == getpgid(0) ||
 		    getpgid(tc_pgid) == -1)
-			(void)tcsetpgrp(STDIN_FILENO, tag_files.tcpgid);
+			(void)tcsetpgrp(tag_files.ofd, tag_files.tcpgid);
 	}
 	if (*tag_files.ofn != '\0')
 		unlink(tag_files.ofn);
