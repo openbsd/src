@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.12 2016/11/04 18:07:24 beck Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.13 2017/01/09 15:31:20 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -248,6 +248,8 @@ tls_conninfo_free(struct tls_conninfo *conninfo)
 	conninfo->alpn = NULL;
 	free(conninfo->cipher);
 	conninfo->cipher = NULL;
+	free(conninfo->servername);
+	conninfo->servername = NULL;
 	free(conninfo->version);
 	conninfo->version = NULL;
 
