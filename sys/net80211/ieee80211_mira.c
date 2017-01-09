@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.6 2017/01/09 19:50:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.7 2017/01/09 19:50:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -96,8 +96,6 @@ uint32_t ieee80211_mira_mcs_below(struct ieee80211_mira_node *, int);
 /* Divide two fixed point numbers. */
 #define MIRA_FP_DIV(a, b) \
 	(b == 0 ? (uint64_t)-1 : (((a) << MIRA_FP_SHIFT) / (b)))
-
-#define MIRA_DEBUG
 
 #ifdef MIRA_DEBUG
 #define DPRINTF(x)	do { if (mira_debug > 0) printf x; } while (0)
