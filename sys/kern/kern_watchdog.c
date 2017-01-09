@@ -1,4 +1,4 @@
-/*      $OpenBSD: kern_watchdog.c,v 1.12 2017/01/09 17:21:42 mpi Exp $        */
+/*      $OpenBSD: kern_watchdog.c,v 1.13 2017/01/09 17:58:44 mpi Exp $        */
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -106,25 +106,3 @@ sysctl_wdog(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	return (error);
 }
-
-#ifdef DDB
-void
-db_wdog_disable(void)
-{
-	if (wdog_ctl_cb == NULL || wdog_period == 0)
-		return;
-
-	timeout_del(&wdog_timeout);
-	(void) (*wdog_ctl_cb)(wdog_ctl_cb_arg, 0);
-}
-
-void
-db_wdog_enable(void)
-{
-	if (wdog_ctl_cb == NULL || wdog_period == 0)
-		return;
-
-	(void) (*wdog_ctl_cb)(wdog_ctl_cb_arg, wdog_period);
-	timeout_add(&wdog_timeout, wdog_period * hz / 2);
-}
-#endif
