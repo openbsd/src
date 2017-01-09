@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofpclient.c,v 1.5 2016/12/02 14:39:46 rzalamena Exp $	*/
+/*	$OpenBSD: ofpclient.c,v 1.6 2017/01/09 16:42:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -104,12 +104,12 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 	/* Set a default read timeout */
 	timeout = 3 * 1000;
 
-	log_verbose(res->verbose);
+	log_setverbose(res->verbose);
 
 	ofp_send_hello(&sc, &con, OFP_V_1_3);
 	ofpclient_read(&con, timeout);
 
-	log_verbose(res->quiet ? res->verbose : 2);
+	log_setverbose(res->quiet ? res->verbose : 2);
 
 	switch (res->action) {
 	case DUMP_DESC:
