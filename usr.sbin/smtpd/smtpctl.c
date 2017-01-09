@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.151 2016/09/04 09:33:49 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.152 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -730,7 +730,7 @@ do_show_queue(int argc, struct parameter *argv)
 	now = time(NULL);
 
 	if (!srv_connect()) {
-		log_init(1);
+		log_init(1, LOG_MAIL);
 		queue_init("fs", 0);
 		if (chroot(PATH_SPOOL) == -1 || chdir("/") == -1)
 			err(1, "%s", PATH_SPOOL);

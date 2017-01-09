@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.287 2016/10/19 14:06:07 jmc Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.288 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -139,10 +139,8 @@ const char	*backend_scheduler = "ramqueue";
 const char	*backend_stat = "ram";
 
 int	profiling = 0;
-int	verbose = 0;
 int	debug = 0;
 int	foreground = 0;
-int	foreground_log = 0;
 int	control_socket = -1;
 
 struct tree	 children;
@@ -248,7 +246,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
-			log_verbose(v);
+			log_trace_verbose(v);
 			return;
 
 		case IMSG_CTL_PROFILE:
@@ -456,9 +454,9 @@ main(int argc, char *argv[])
 	flags = 0;
 	opts = 0;
 	debug = 0;
-	verbose = 0;
+	tracing = 0;
 
-	log_init(1);
+	log_init(1, LOG_MAIL);
 
 	TAILQ_INIT(&offline_q);
 
@@ -503,41 +501,41 @@ main(int argc, char *argv[])
 
 		case 'T':
 			if (!strcmp(optarg, "imsg"))
-				verbose |= TRACE_IMSG;
+				tracing |= TRACE_IMSG;
 			else if (!strcmp(optarg, "io"))
-				verbose |= TRACE_IO;
+				tracing |= TRACE_IO;
 			else if (!strcmp(optarg, "smtp"))
-				verbose |= TRACE_SMTP;
+				tracing |= TRACE_SMTP;
 			else if (!strcmp(optarg, "mfa") ||
 			    !strcmp(optarg, "filter") ||
 			    !strcmp(optarg, "filters"))
-				verbose |= TRACE_FILTERS;
+				tracing |= TRACE_FILTERS;
 			else if (!strcmp(optarg, "mta") ||
 			    !strcmp(optarg, "transfer"))
-				verbose |= TRACE_MTA;
+				tracing |= TRACE_MTA;
 			else if (!strcmp(optarg, "bounce") ||
 			    !strcmp(optarg, "bounces"))
-				verbose |= TRACE_BOUNCE;
+				tracing |= TRACE_BOUNCE;
 			else if (!strcmp(optarg, "scheduler"))
-				verbose |= TRACE_SCHEDULER;
+				tracing |= TRACE_SCHEDULER;
 			else if (!strcmp(optarg, "lookup"))
-				verbose |= TRACE_LOOKUP;
+				tracing |= TRACE_LOOKUP;
 			else if (!strcmp(optarg, "stat") ||
 			    !strcmp(optarg, "stats"))
-				verbose |= TRACE_STAT;
+				tracing |= TRACE_STAT;
 			else if (!strcmp(optarg, "rules"))
-				verbose |= TRACE_RULES;
+				tracing |= TRACE_RULES;
 			else if (!strcmp(optarg, "mproc"))
-				verbose |= TRACE_MPROC;
+				tracing |= TRACE_MPROC;
 			else if (!strcmp(optarg, "expand"))
-				verbose |= TRACE_EXPAND;
+				tracing |= TRACE_EXPAND;
 			else if (!strcmp(optarg, "table") ||
 			    !strcmp(optarg, "tables"))
-				verbose |= TRACE_TABLES;
+				tracing |= TRACE_TABLES;
 			else if (!strcmp(optarg, "queue"))
-				verbose |= TRACE_QUEUE;
+				tracing |= TRACE_QUEUE;
 			else if (!strcmp(optarg, "all"))
-				verbose |= ~TRACE_DEBUG;
+				tracing |= ~TRACE_DEBUG;
 			else if (!strcmp(optarg, "profstat"))
 				profiling |= PROFILE_TOSTAT;
 			else if (!strcmp(optarg, "profile-imsg"))
@@ -557,7 +555,7 @@ main(int argc, char *argv[])
 				flags |= SMTPD_MDA_PAUSED;
 			break;
 		case 'v':
-			verbose |=  TRACE_DEBUG;
+			tracing |=  TRACE_DEBUG;
 			break;
 		case 'x':
 			rexec = optarg;
@@ -601,9 +599,8 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
-	log_init(foreground_log);
-	log_verbose(verbose);
-
+	log_init(foreground_log, LOG_MAIL);
+	log_trace_verbose(tracing);
 	load_pki_tree();
 	load_pki_keys();
 
@@ -873,6 +870,8 @@ setup_proc(void)
 	struct imsgbuf *ibuf;
 	struct imsg imsg;
         int setup = 1;
+
+	log_procinit(proc_title(smtpd_process));
 
 	p_parent = calloc(1, sizeof(*p_parent));
 	if (p_parent == NULL)

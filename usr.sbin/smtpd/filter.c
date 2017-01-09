@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.24 2016/11/30 11:52:48 eric Exp $	*/
+/*	$OpenBSD: filter.c,v 1.25 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -197,7 +197,7 @@ filter_postfork(void)
 		p->proc = PROC_FILTER;
 		p->name = xstrdup(filter->name, "filter_postfork");
 		p->data = proc;
-		if (verbose & TRACE_DEBUG)
+		if (tracing & TRACE_DEBUG)
 			filter_add_arg(filter, "-v");
 		if (foreground_log)
 			filter_add_arg(filter, "-d");

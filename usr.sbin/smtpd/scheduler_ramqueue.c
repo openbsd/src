@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.42 2015/10/29 10:25:36 sunil Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.43 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -255,12 +255,12 @@ scheduler_ram_commit(uint32_t msgid)
 	update = tree_xpop(&updates, msgid);
 	r = update->evpcount;
 
-	if (verbose & TRACE_SCHEDULER)
+	if (tracing & TRACE_SCHEDULER)
 		rq_queue_dump(update, "update to commit");
 
 	rq_queue_merge(&ramqueue, update);
 
-	if (verbose & TRACE_SCHEDULER)
+	if (tracing & TRACE_SCHEDULER)
 		rq_queue_dump(&ramqueue, "resulting queue");
 
 	rq_queue_schedule(&ramqueue);
@@ -481,7 +481,7 @@ scheduler_ram_batch(int mask, int *delay, size_t *count, uint64_t *evpids, int *
 	currtime = time(NULL);
 
 	rq_queue_schedule(&ramqueue);
-	if (verbose & TRACE_SCHEDULER)
+	if (tracing & TRACE_SCHEDULER)
 		rq_queue_dump(&ramqueue, "scheduler_ram_batch()");
 
 	i = 0;

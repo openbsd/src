@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.197 2016/09/08 12:06:43 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.198 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -321,7 +321,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 
 		case IMSG_CONF_END:
-			if (verbose & TRACE_TABLES)
+			if (tracing & TRACE_TABLES)
 				table_dump_all();
 
 			/* fork & exec tables that need it */
@@ -354,7 +354,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
-			log_verbose(v);
+			log_trace_verbose(v);
 			return;
 
 		case IMSG_CTL_PROFILE:

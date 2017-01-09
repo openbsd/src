@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.117 2016/09/08 12:06:43 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.118 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -504,14 +504,13 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (c->euid)
 			goto badcred;
 
-		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(verbose))
+		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(v))
 			goto badcred;
 
 		memcpy(&v, imsg->data, sizeof(v));
-		verbose = v;
-		log_verbose(verbose);
+		log_trace_verbose(v);
 
-		control_broadcast_verbose(IMSG_CTL_VERBOSE, verbose);
+		control_broadcast_verbose(IMSG_CTL_VERBOSE, v);
 
 		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 		return;
@@ -520,14 +519,14 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (c->euid)
 			goto badcred;
 
-		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(verbose))
+		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(v))
 			goto badcred;
 
 		memcpy(&v, imsg->data, sizeof(v));
-		verbose |= v;
-		log_verbose(verbose);
+		tracing |= v;
+		log_trace_verbose(tracing);
 
-		control_broadcast_verbose(IMSG_CTL_VERBOSE, verbose);
+		control_broadcast_verbose(IMSG_CTL_VERBOSE, tracing);
 
 		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 		return;
@@ -536,14 +535,14 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (c->euid)
 			goto badcred;
 
-		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(verbose))
+		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(v))
 			goto badcred;
 
 		memcpy(&v, imsg->data, sizeof(v));
-		verbose &= ~v;
-		log_verbose(verbose);
+		tracing &= ~v;
+		log_trace_verbose(tracing);
 
-		control_broadcast_verbose(IMSG_CTL_VERBOSE, verbose);
+		control_broadcast_verbose(IMSG_CTL_VERBOSE, tracing);
 
 		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 		return;
@@ -552,7 +551,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (c->euid)
 			goto badcred;
 
-		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(verbose))
+		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(v))
 			goto badcred;
 
 		memcpy(&v, imsg->data, sizeof(v));
@@ -567,7 +566,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (c->euid)
 			goto badcred;
 
-		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(verbose))
+		if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(v))
 			goto badcred;
 
 		memcpy(&v, imsg->data, sizeof(v));

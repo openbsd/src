@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.25 2016/09/08 12:06:43 eric Exp $	*/
+/*	$OpenBSD: ca.c,v 1.26 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -248,7 +248,7 @@ ca_imsg(struct mproc *p, struct imsg *imsg)
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
-			log_verbose(v);
+			log_trace_verbose(v);
 			return;
 		case IMSG_CTL_PROFILE:
 			m_msg(&m, imsg);

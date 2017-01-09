@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.65 2016/03/17 19:40:43 krw Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.66 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -96,7 +96,7 @@ makemap(int argc, char *argv[])
 	char		*p;
 	int		 fd = -1;
 
-	log_init(1);
+	log_init(1, LOG_MAIL);
 
 	mode = strcmp(__progname, "newaliases") ? P_MAKEMAP : P_NEWALIASES;
 	conf = CONF_FILE;

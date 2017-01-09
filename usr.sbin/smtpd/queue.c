@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.182 2016/09/08 12:06:43 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.183 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -491,7 +491,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
-			log_verbose(v);
+			log_trace_verbose(v);
 			return;
 
 		case IMSG_CTL_PROFILE:

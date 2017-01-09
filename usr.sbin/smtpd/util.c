@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.130 2016/11/30 18:38:32 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.131 2017/01/09 09:53:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -54,6 +54,9 @@
 const char *log_in6addr(const struct in6_addr *);
 const char *log_sockaddr(struct sockaddr *);
 static int  parse_mailname_file(char *, size_t);
+
+int	tracing = 0;
+int	foreground_log = 0;
 
 void *
 xmalloc(size_t size, const char *where)
@@ -789,4 +792,25 @@ int
 base64_decode(char const *src, unsigned char *dest, size_t destsize)
 {
 	return __b64_pton(src, dest, destsize);
+}
+
+void
+log_trace(int mask, const char *emsg, ...)
+{
+	va_list	 ap;
+
+	if (tracing & mask) {
+		va_start(ap, emsg);
+		vlog(LOG_DEBUG, emsg, ap);
+		va_end(ap);
+	}
+}
+
+void
+log_trace_verbose(int v)
+{
+	tracing = v;
+
+	/* Set debug logging in log.c */
+	log_verbose(v & TRACE_DEBUG ? 2 : foreground_log);
 }
