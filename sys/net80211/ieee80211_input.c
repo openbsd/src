@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.180 2016/09/21 12:21:27 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.181 2017/01/09 12:40:00 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1612,7 +1612,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 				    htprot_last, htprot));
 				ic->ic_stats.is_ht_prot_change++;
 				ic->ic_bss->ni_htop1 = ni->ni_htop1;
-				ic->ic_update_htprot(ic, ic->ic_bss);
+				if (ic->ic_update_htprot)
+					ic->ic_update_htprot(ic, ic->ic_bss);
 			}
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.108 2017/01/09 09:31:18 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.109 2017/01/09 12:40:00 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -353,6 +353,16 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 	ni->ni_capinfo = IEEE80211_CAPINFO_IBSS;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
+	if (ic->ic_flags & IEEE80211_F_HTON) {
+		/* 
+		 * Default to non-member HT protection until we have a way
+		 * of picking up information from the environment (such as
+		 * beacons from other networks) which proves that only HT
+		 * STAs are on the air.
+		 */
+		ni->ni_htop1 = IEEE80211_HTPROT_NONMEMBER;
+		ic->ic_protmode = IEEE80211_PROT_RTSCTS;
+	}
 	if (ic->ic_flags & IEEE80211_F_RSNON) {
 		struct ieee80211_key *k;
 
@@ -1423,7 +1433,15 @@ ieee80211_needs_auth(struct ieee80211com *ic, struct ieee80211_node *ni)
 void
 ieee80211_node_join_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	/* TBD */
+	enum ieee80211_htprot;
+
+	/* Update HT protection setting. */
+	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0) {
+		ic->ic_nonhtsta++;
+		ic->ic_bss->ni_htop1 = IEEE80211_HTPROT_NONHT_MIXED;
+		if (ic->ic_update_htprot)
+			ic->ic_update_htprot(ic, ic->ic_bss);
+	}
 }
 
 /*
@@ -1712,6 +1730,16 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_node_leave_ht(ic, ni);
+	else if (ic->ic_flags & IEEE80211_F_HTON) {
+		if (ic->ic_nonhtsta == 0)
+			panic("bogus non-HT station count %d", ic->ic_nonhtsta);
+		if (--ic->ic_nonhtsta == 0) {
+			/* All associated stations now support HT. */
+			ic->ic_bss->ni_htop1 = IEEE80211_HTPROT_NONMEMBER;
+			if (ic->ic_update_htprot)
+				ic->ic_update_htprot(ic, ic->ic_bss);
+		}
+	}
 
 	if (ic->ic_node_leave != NULL)
 		(*ic->ic_node_leave)(ic, ni);

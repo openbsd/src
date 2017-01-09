@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.73 2016/12/17 18:35:54 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.74 2017/01/09 12:40:00 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -310,6 +310,9 @@ struct ieee80211com {
 	u_int			ic_dtim_period;
 	u_int			ic_dtim_count;
 
+#ifndef IEEE80211_STA_ONLY
+	u_int16_t		ic_nonhtsta;	/* # non-HT stations */
+#endif
 	u_int32_t		ic_txbfcaps;
 	u_int16_t		ic_htcaps;
 	u_int8_t		ic_ampdu_params;
