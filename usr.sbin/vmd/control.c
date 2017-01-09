@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.11 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.12 2017/01/09 22:06:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -47,12 +47,12 @@ struct ctl_conn
 	*control_connbyfd(int);
 void	 control_close(int, struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
-int	 control_dispatch_vmm(int, struct privsep_proc *, struct imsg *);
+int	 control_dispatch_vmd(int, struct privsep_proc *, struct imsg *);
 void	 control_imsg_forward(struct imsg *);
 void	 control_run(struct privsep *, struct privsep_proc *, void *);
 
 static struct privsep_proc procs[] = {
-	{ "parent",	PROC_PARENT,	control_dispatch_vmm }
+	{ "parent",	PROC_PARENT,	control_dispatch_vmd }
 };
 
 void
@@ -76,7 +76,7 @@ control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 }
 
 int
-control_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
+control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct ctl_conn		*c;
 
