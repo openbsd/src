@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.106 2016/12/17 18:35:54 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.107 2017/01/09 09:30:47 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1544,6 +1544,10 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    ether_sprintf(ni->ni_macaddr), newassoc ? "newly" : "already",
 	    ni->ni_associd & ~0xc000));
 
+	ieee80211_ht_negotiate(ic, ni);
+	if (ic->ic_flags & IEEE80211_F_HTON)
+		ieee80211_node_join_ht(ic, ni);
+
 	/* give driver a chance to setup state like ni_txrate */
 	if (ic->ic_newassoc)
 		(*ic->ic_newassoc)(ic, ni, newassoc);
@@ -1555,10 +1559,6 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ni->ni_rsncipher = IEEE80211_CIPHER_USEGROUP;
 	} else
 		ieee80211_node_join_rsn(ic, ni);
-
-	ieee80211_ht_negotiate(ic, ni);
-	if (ni->ni_flags & IEEE80211_NODE_HT)
-		ieee80211_node_join_ht(ic, ni);
 
 #if NBRIDGE > 0
 	/*
