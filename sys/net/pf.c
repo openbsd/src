@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1009 2016/12/29 13:01:48 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1010 2017/01/09 14:47:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1184,7 +1184,7 @@ pf_purge_thread(void *v)
 	for (;;) {
 		tsleep(pf_purge_thread, PWAIT, "pftm", 1 * hz);
 
-		s = splsoftnet();
+		NET_LOCK(s);
 
 		/* process a fraction of the state table every second */
 		pf_purge_expired_states(1 + (pf_status.states
@@ -1198,7 +1198,7 @@ pf_purge_thread(void *v)
 			nloops = 0;
 		}
 
-		splx(s);
+		NET_UNLOCK(s);
 	}
 }
 
