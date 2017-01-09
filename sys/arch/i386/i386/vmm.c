@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.8 2017/01/08 22:16:04 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.9 2017/01/09 06:28:27 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -245,6 +245,7 @@ extern struct gate_descriptor *idt;
 /* CPU info (i386) */
 extern char cpu_brandstr[];
 extern uint32_t ecpu_eaxfeature;
+extern int cpu_pae;
 
 /* Constants used in "CR access exit" */
 #define CR_WRITE	0
@@ -268,6 +269,10 @@ vmm_probe(struct device *parent, void *match, void *aux)
 
 	/* Check if this probe is for us */
 	if (strcmp(*busname, vmm_cd.cd_name) != 0)
+		return (0);
+
+	/* i386 must be using PAE */
+	if (!cpu_pae)
 		return (0);
 
 	found_vmx = 0;
