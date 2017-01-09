@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.73 2016/08/03 13:44:49 krw Exp $ */
+/*	$OpenBSD: umass.c,v 1.74 2017/01/09 14:44:28 mpi Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -130,7 +130,6 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/timeout.h>
 #undef KASSERT
 #define KASSERT(cond, msg)

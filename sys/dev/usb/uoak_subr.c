@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoak_subr.c,v 1.7 2015/05/25 12:53:12 jsg Exp $   */
+/*	$OpenBSD: uoak_subr.c,v 1.8 2017/01/09 14:44:28 mpi Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -22,7 +22,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/sensors.h>

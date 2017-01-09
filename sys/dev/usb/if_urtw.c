@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.62 2016/04/13 11:03:37 mpi Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.63 2017/01/09 14:44:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -25,7 +25,6 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/conf.h>
 #include <sys/device.h>
