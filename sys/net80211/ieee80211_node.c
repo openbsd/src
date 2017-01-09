@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.107 2017/01/09 09:30:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.108 2017/01/09 09:31:18 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1680,6 +1680,9 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP)
 		panic("not in ap mode, mode %u", ic->ic_opmode);
+
+	if (ni->ni_state == IEEE80211_STA_COLLECT)
+		return;
 	/*
 	 * If node wasn't previously associated all we need to do is
 	 * reclaim the reference.
