@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.180 2016/09/18 15:45:50 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.181 2017/01/09 01:36:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2012, 2014-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -751,6 +751,7 @@ parse(struct curparse *curp, int fd, const char *file)
 			break;
 		}
 	}
+	mparse_updaterc(curp->mp, &rc);
 }
 
 static void

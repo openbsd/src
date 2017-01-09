@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.154 2017/01/08 00:10:22 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.155 2017/01/09 01:36:22 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -433,3 +433,4 @@ void		  mparse_result(struct mparse *,
 const char	 *mparse_getkeep(const struct mparse *);
 const char	 *mparse_strerror(enum mandocerr);
 const char	 *mparse_strlevel(enum mandoclevel);
+void		  mparse_updaterc(struct mparse *, enum mandoclevel *);

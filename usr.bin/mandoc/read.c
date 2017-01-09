@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.129 2017/01/08 00:10:22 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.130 2017/01/09 01:36:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -845,6 +845,13 @@ mparse_result(struct mparse *curp, struct roff_man **man,
 	}
 	if (man)
 		*man = curp->man;
+}
+
+void
+mparse_updaterc(struct mparse *curp, enum mandoclevel *rc)
+{
+	if (curp->file_status > *rc)
+		*rc = curp->file_status;
 }
 
 void
