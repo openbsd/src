@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.34 2016/08/27 22:52:21 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.35 2017/01/09 22:51:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -430,7 +430,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	/* mprotect the GOT */
 	_dl_protect_segment(object, 0, "__got_start", "__got_end",
-	    GOT_PERMS|PROT_EXEC);
+	    PROT_READ|PROT_EXEC);
 
 	return (fails);
 }

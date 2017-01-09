@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.167 2016/08/28 04:33:17 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.168 2017/01/09 22:51:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -412,25 +412,6 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
-
-	/*
-	 * now that GOT and PLT have been relocated, and we know
-	 * page size, protect them from modification
-	 */
-#ifndef  RTLD_NO_WXORX
-	{
-		extern char *__got_start;
-		extern char *__got_end;
-
-		if (&__got_start != &__got_end) {
-			_dl_mprotect((void *)ELF_TRUNC((long)&__got_start,
-			    _dl_pagesz),
-			    ELF_ROUND((long)&__got_end,_dl_pagesz) -
-			    ELF_TRUNC((long)&__got_start, _dl_pagesz),
-			    GOT_PERMS);
-		}
-	}
-#endif
 
 	_dl_setup_env(argv[0], envp);
 

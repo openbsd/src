@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.6 2016/05/18 20:40:20 deraadt Exp $ */
+/*	$OpenBSD: archdep.h,v 1.7 2017/01/09 22:51:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -43,8 +43,6 @@
 #include "syscall.h"
 #include "util.h"
 
-#define  RTLD_NO_WXORX
-
 /*
  *	The following functions are declared inline so they can
  *	be used before bootstrap linking has been finished.
@@ -72,7 +70,5 @@ RELOC_DYN(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 }
 
 #define RELOC_GOT(obj, offs)
-
-#define GOT_PERMS (PROT_READ|PROT_EXEC)
 
 #endif /* _SH_ARCHDEP_H_ */
