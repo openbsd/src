@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.518 2017/01/07 15:40:23 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.519 2017/01/09 19:27:00 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 7 2017 $
+.Dd $Mdocdate: January 9 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -921,7 +921,10 @@ show debugging information about jobs and terminals.
 .Xc
 .D1 (alias: Ic source )
 Execute commands from
-.Ar path .
+.Ar path
+(which may be a
+.Xr glob 3
+pattern).
 If
 .Fl q
 is given, no error will be returned if

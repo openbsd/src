@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.685 2017/01/07 15:28:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.686 2017/01/09 19:27:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -76,7 +76,7 @@ struct tmuxproc;
 
 #define READ_CHANGE_HITS 3
 
-/* Attribute to make gcc check printf-like arguments. */
+/* Attribute to make GCC check printf-like arguments. */
 #define printflike(a, b) __attribute__ ((format (printf, a, b)))
 
 /* Number of items in array. */
