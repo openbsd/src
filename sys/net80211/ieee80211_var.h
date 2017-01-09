@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.74 2017/01/09 12:40:00 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.75 2017/01/09 16:24:20 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -159,6 +159,9 @@ struct ieee80211_edca_ac_params {
 
 	u_int8_t	ac_acm;
 };
+
+extern const struct ieee80211_edca_ac_params
+	    ieee80211_qap_edca_table[IEEE80211_MODE_MAX][EDCA_NUM_AC];
 
 #define IEEE80211_DEFRAG_SIZE	3	/* must be >= 3 according to spec */
 /*

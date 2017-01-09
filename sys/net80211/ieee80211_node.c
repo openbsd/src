@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.109 2017/01/09 12:40:00 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.110 2017/01/09 16:24:20 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -354,6 +354,10 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if (ic->ic_flags & IEEE80211_F_HTON) {
+		const struct ieee80211_edca_ac_params *ac_qap;
+		struct ieee80211_edca_ac_params *ac;
+		int aci;
+
 		/* 
 		 * Default to non-member HT protection until we have a way
 		 * of picking up information from the environment (such as
@@ -362,6 +366,19 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		 */
 		ni->ni_htop1 = IEEE80211_HTPROT_NONMEMBER;
 		ic->ic_protmode = IEEE80211_PROT_RTSCTS;
+
+		/* Configure QoS EDCA parameters. */
+		for (aci = 0; aci < EDCA_NUM_AC; aci++) {
+			ac = &ic->ic_edca_ac[aci];
+			ac_qap = &ieee80211_qap_edca_table[ic->ic_curmode][aci];
+			ac->ac_acm       = ac_qap->ac_acm;
+			ac->ac_aifsn     = ac_qap->ac_aifsn;
+			ac->ac_ecwmin    = ac_qap->ac_ecwmin;
+			ac->ac_ecwmax    = ac_qap->ac_ecwmax;
+			ac->ac_txoplimit = ac_qap->ac_txoplimit;
+		}
+		if (ic->ic_updateedca)
+			(*ic->ic_updateedca)(ic);
 	}
 	if (ic->ic_flags & IEEE80211_F_RSNON) {
 		struct ieee80211_key *k;
