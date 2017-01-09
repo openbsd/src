@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.942 2017/01/04 13:47:29 rpe Exp $
+#	$OpenBSD: install.sub,v 1.943 2017/01/09 19:42:32 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1502,8 +1502,9 @@ install_files() {
 
 # Get several parameters from the user, and xfer files from the http server.
 install_http() {
-	local _file_list _prompt _mirror _url_base _err _idx=/tmp/i/index.txt
-	local _idx_url _rc
+	local _file_list _prompt _mirror _url_base _err _tls _http_proto
+	local _idx=/tmp/i/index.txt _sha=/tmp/i/SHA256 _sig=/tmp/i/SHA256.sig
+	local _pubkey=/etc/signify/openbsd-${VERSION}-base.pub _f
 
 	# N.B.: 'http_proxy' is an environment variable used by ftp(1). DON'T
 	# change the name or case!
@@ -1519,7 +1520,7 @@ install_http() {
 		_prompt="HTTP Server? (hostname or 'done')"
 	fi
 
-	# Get server IP address or hostname.
+	# Get server IP address or hostname and optionally the http protocol.
 	while :; do
 		ask_until "$_prompt" "$HTTP_SERVER"
 		case $resp in
@@ -1537,8 +1538,17 @@ install_http() {
 			HTTP_SERVER=${1%%/*}
 			# Repeat loop to get user to confirm server address.
 			;;
-		+([A-Za-z0-9\:.\[\]_-]))
-			HTTP_SERVER=$resp
+		?(http?(s)://)+([A-Za-z0-9:.\[\]_-]))
+			case $resp in
+			https://*)	_tls=force _http_proto=https;;
+			http://*)	_tls=no    _http_proto=http;;
+			*)		_tls=try   _http_proto=$HTTP_PROTO;;
+			esac
+			if ! $FTP_TLS && [[ $_tls == force ]]; then
+				echo "https not supported on this platform."
+				$AUTO && exit 1 || continue
+			fi
+			HTTP_SERVER=${resp#*://}
 			break
 			;;
 		*)	echo "'$resp' is not a valid hostname."
@@ -1563,35 +1573,45 @@ install_http() {
 	: ${HTTP_DIR:=pub/OpenBSD/$HTTP_SETDIR}
 	ask_until "Server directory?" "${resp:-$HTTP_DIR}"
 	HTTP_DIR=$resp
-	_url_base="$HTTP_PROTO://$HTTP_SERVER/$HTTP_DIR"
+	_url_base="$_http_proto://$HTTP_SERVER/$HTTP_DIR"
 
-	# Get list of files from the server.
-	# Assumes index file is "index.txt" for http (or proxy).
-	# We can't use index.html since the format is server-dependent.
-	# If ftp(1) has tls, fetch index.txt via https. If that fails
-	# tell the user about it and switch to http.
-	rm -f $_idx
-	if $FTP_TLS; then
-		_idx_url=$_url_base/index.txt
-		_err=$(unpriv -f $_idx ftp -w 15 -Vo $_idx "$_idx_url" 2>&1)
-		_rc=$?
-
-		# Consider the https connect failed either if it was refused by
-		# the server, or it took longer than -w sec (exit code 2).
-		if ( (($_rc == 1)) && [[ $_err == *'Connection refused'* ]] ) ||
-			(($_rc == 2)); then
-			ask_yn "Unable to connect using https. Use http instead?" ||
+	# Fetch SHA256.sig to create the list of files to select from.
+	rm -f $_idx $_sha $_sig
+	if ! unpriv -f $_sig ftp -w 15 -VMo $_sig "$_url_base/SHA256.sig" 2>/dev/null; then
+		case $_tls in
+		force)	$AUTO && exit 1 || return
+			;;
+		try)	ask_yn "Unable to connect using https. Use http instead?" ||
 				return
 			_url_base="http://$HTTP_SERVER/$HTTP_DIR"
+			unpriv -f $_sig ftp -VMo $_sig "$_url_base/SHA256.sig" 2>/dev/null
+			;;
+		esac
+	fi
+
+	# Verify SHA256.sig, write SHA256 and extract the list of files.
+	if unpriv -f $_sha signify -Vep $_pubkey -x $_sig -m $_sha >/dev/null 2>&1; then
+		_file_list="SHA256.sig $(sed -n 's/^SHA256 (\(.*\)).*$/\1/p' $_sha)"
+	else
+		echo "Unable to get a verfied list of distribution sets."
+		# Deny this server, if it's a mirror without a valid SHA256.sig.
+		if [[ $_mirror == yes ]]; then
+			$AUTO && exit 1 || return
 		fi
 	fi
 
-	# Create the list of files by either using the index.txt downloaded
-	# before or by fetching it via http.
-	[[ -s $_idx ]] || unpriv -f $_idx ftp -VMo $_idx "$_url_base/index.txt"
-	_file_list=$(sed "s/^.* //;s/$(echo '\r')//" $_idx)
-	rm -f $_idx
+	# Fetch index.txt, extract file list but add only entries that are not
+	# already in _file_list. This allows for a verified list of distribution
+	# sets from SHA256.sig, siteXX sets or the whole set list from index.txt
+	# if SHA256.sig was not found (e.g. self compiled sets).
+	if unpriv -f $_idx ftp -VMo $_idx "$_url_base/index.txt" 2>/dev/null; then
+		for _f in $(sed -En 's/^.* ([a-zA-Z][a-zA-Z0-9._-]+)$/\1/p' $_idx); do
+			! isin "$_f" $_file_list && _file_list="$_file_list $_f"
+		done
+	fi
 
+	rm -f $_idx $_sha $_sig
+	
 	install_files "$_url_base" "$_file_list"
 
 	# Remember where we installed from, to tell the cgi server.
