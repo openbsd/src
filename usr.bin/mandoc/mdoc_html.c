@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.116 2017/01/08 22:51:53 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.117 2017/01/09 12:48:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1847,7 +1847,7 @@ mdoc_no_pre(MDOC_ARGS)
 	struct htmlpair	tag;
 
 	PAIR_CLASS_INIT(&tag, "none");
-	print_otag(h, TAG_CODE, 1, &tag);
+	print_otag(h, TAG_SPAN, 1, &tag);
 	return 1;
 }
 
