@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.9 2017/01/09 06:28:27 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.10 2017/01/10 09:05:34 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1793,6 +1793,10 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		if (msr & IA32_EPT_VPID_CAP_PAGE_WALK_4) {
 			/* Page walk length 4 supported */
 			eptp |= ((IA32_EPT_PAGE_WALK_LENGTH - 1) << 3);
+		} else {
+			DPRINTF("EPT page walk length 4 not supported");
+			ret = EINVAL;
+			goto exit;
 		}
 
 		if (msr & IA32_EPT_VPID_CAP_WB) {
