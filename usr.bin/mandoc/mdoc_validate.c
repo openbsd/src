@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.230 2017/01/10 13:46:53 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.231 2017/01/10 21:54:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -102,6 +102,7 @@ static	void	 post_sm(POST_ARGS);
 static	void	 post_st(POST_ARGS);
 static	void	 post_std(POST_ARGS);
 static	void	 post_xr(POST_ARGS);
+static	void	 post_xx(POST_ARGS);
 
 static	v_post mdoc_valids[MDOC_MAX] = {
 	NULL,		/* Ap */
@@ -164,7 +165,7 @@ static	v_post mdoc_valids[MDOC_MAX] = {
 	post_bf,	/* Bf */
 	NULL,		/* Bo */
 	NULL,		/* Bq */
-	NULL,		/* Bsx */
+	post_xx,	/* Bsx */
 	post_bx,	/* Bx */
 	post_obsolete,	/* Db */
 	NULL,		/* Dc */
@@ -174,12 +175,12 @@ static	v_post mdoc_valids[MDOC_MAX] = {
 	NULL,		/* Ef */
 	NULL,		/* Em */
 	NULL,		/* Eo */
-	NULL,		/* Fx */
+	post_xx,	/* Fx */
 	NULL,		/* Ms */
 	NULL,		/* No */
 	post_ns,	/* Ns */
-	NULL,		/* Nx */
-	NULL,		/* Ox */
+	post_xx,	/* Nx */
+	post_xx,	/* Ox */
 	NULL,		/* Pc */
 	NULL,		/* Pf */
 	NULL,		/* Po */
@@ -197,7 +198,7 @@ static	v_post mdoc_valids[MDOC_MAX] = {
 	post_hyph,	/* Sx */
 	NULL,		/* Sy */
 	NULL,		/* Tn */
-	NULL,		/* Ux */
+	post_xx,	/* Ux */
 	NULL,		/* Xc */
 	NULL,		/* Xo */
 	post_fo,	/* Fo */
@@ -220,7 +221,7 @@ static	v_post mdoc_valids[MDOC_MAX] = {
 	NULL,		/* %C */
 	post_es,	/* Es */
 	post_en,	/* En */
-	NULL,		/* Dx */
+	post_xx,	/* Dx */
 	NULL,		/* %Q */
 	post_par,	/* br */
 	post_par,	/* sp */
@@ -1019,6 +1020,41 @@ post_es(POST_ARGS)
 
 	post_obsolete(mdoc);
 	mdoc->last_es = mdoc->last;
+}
+
+static void
+post_xx(POST_ARGS)
+{
+	struct roff_node	*n;
+	const char		*os;
+
+	n = mdoc->last;
+	switch (n->tok) {
+	case MDOC_Bsx:
+		os = "BSD/OS";
+		break;
+	case MDOC_Dx:
+		os = "DragonFly";
+		break;
+	case MDOC_Fx:
+		os = "FreeBSD";
+		break;
+	case MDOC_Nx:
+		os = "NetBSD";
+		break;
+	case MDOC_Ox:
+		os = "OpenBSD";
+		break;
+	case MDOC_Ux:
+		os = "UNIX";
+		break;
+	default:
+		abort();
+	}
+	mdoc->next = ROFF_NEXT_CHILD;
+	roff_word_alloc(mdoc, n->line, n->pos, os);
+	mdoc->last->flags |= NODE_NOSRC;
+	mdoc->last = n;
 }
 
 static void

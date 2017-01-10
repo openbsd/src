@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_term.c,v 1.237 2017/01/10 13:46:53 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.238 2017/01/10 21:54:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -78,6 +78,7 @@ static	void	  termp_pf_post(DECL_ARGS);
 static	void	  termp_quote_post(DECL_ARGS);
 static	void	  termp_sh_post(DECL_ARGS);
 static	void	  termp_ss_post(DECL_ARGS);
+static	void	  termp_xx_post(DECL_ARGS);
 
 static	int	  termp__a_pre(DECL_ARGS);
 static	int	  termp__t_pre(DECL_ARGS);
@@ -187,7 +188,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_bf_pre, NULL }, /* Bf */
 	{ termp_quote_pre, termp_quote_post }, /* Bo */
 	{ termp_quote_pre, termp_quote_post }, /* Bq */
-	{ termp_xx_pre, NULL }, /* Bsx */
+	{ termp_xx_pre, termp_xx_post }, /* Bsx */
 	{ termp_bx_pre, NULL }, /* Bx */
 	{ termp_skip_pre, NULL }, /* Db */
 	{ NULL, NULL }, /* Dc */
@@ -197,12 +198,12 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ef */
 	{ termp_em_pre, NULL }, /* Em */
 	{ termp_eo_pre, termp_eo_post }, /* Eo */
-	{ termp_xx_pre, NULL }, /* Fx */
+	{ termp_xx_pre, termp_xx_post }, /* Fx */
 	{ termp_bold_pre, NULL }, /* Ms */
 	{ termp_li_pre, NULL }, /* No */
 	{ termp_ns_pre, NULL }, /* Ns */
-	{ termp_xx_pre, NULL }, /* Nx */
-	{ termp_xx_pre, NULL }, /* Ox */
+	{ termp_xx_pre, termp_xx_post }, /* Nx */
+	{ termp_xx_pre, termp_xx_post }, /* Ox */
 	{ NULL, NULL }, /* Pc */
 	{ NULL, termp_pf_post }, /* Pf */
 	{ termp_quote_pre, termp_quote_post }, /* Po */
@@ -220,7 +221,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_under_pre, NULL }, /* Sx */
 	{ termp_sy_pre, NULL }, /* Sy */
 	{ NULL, NULL }, /* Tn */
-	{ termp_xx_pre, NULL }, /* Ux */
+	{ termp_xx_pre, termp_xx_post }, /* Ux */
 	{ NULL, NULL }, /* Xc */
 	{ NULL, NULL }, /* Xo */
 	{ termp_fo_pre, termp_fo_post }, /* Fo */
@@ -243,7 +244,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, termp____post }, /* %C */
 	{ termp_skip_pre, NULL }, /* Es */
 	{ termp_quote_pre, termp_quote_post }, /* En */
-	{ termp_xx_pre, NULL }, /* Dx */
+	{ termp_xx_pre, termp_xx_post }, /* Dx */
 	{ NULL, termp____post }, /* %Q */
 	{ termp_sp_pre, NULL }, /* br */
 	{ termp_sp_pre, NULL }, /* sp */
@@ -1675,41 +1676,16 @@ termp_bx_pre(DECL_ARGS)
 static int
 termp_xx_pre(DECL_ARGS)
 {
-	const char	*pp;
-	int		 flags;
+	if ((n->aux = p->flags & TERMP_PREKEEP) == 0)
+		p->flags |= TERMP_PREKEEP;
+	return 1;
+}
 
-	pp = NULL;
-	switch (n->tok) {
-	case MDOC_Bsx:
-		pp = "BSD/OS";
-		break;
-	case MDOC_Dx:
-		pp = "DragonFly";
-		break;
-	case MDOC_Fx:
-		pp = "FreeBSD";
-		break;
-	case MDOC_Nx:
-		pp = "NetBSD";
-		break;
-	case MDOC_Ox:
-		pp = "OpenBSD";
-		break;
-	case MDOC_Ux:
-		pp = "UNIX";
-		break;
-	default:
-		abort();
-	}
-
-	term_word(p, pp);
-	if (n->child) {
-		flags = p->flags;
-		p->flags |= TERMP_KEEP;
-		term_word(p, n->child->string);
-		p->flags = flags;
-	}
-	return 0;
+static void
+termp_xx_post(DECL_ARGS)
+{
+	if (n->aux == 0)
+		p->flags &= ~(TERMP_KEEP | TERMP_PREKEEP);
 }
 
 static void

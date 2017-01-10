@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandocdb.c,v 1.183 2016/10/22 10:08:31 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.184 2017/01/10 21:54:34 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2016 Ed Maste <emaste@freebsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -99,6 +99,7 @@ typedef	int (*mdoc_fp)(struct mpage *, const struct roff_meta *,
 struct	mdoc_handler {
 	mdoc_fp		 fp; /* optional handler */
 	uint64_t	 mask;  /* set unless handler returns 0 */
+	int		 taboo;  /* node flags that must not be set */
 };
 
 
@@ -143,7 +144,7 @@ static	int	 parse_mdoc_Xr(struct mpage *, const struct roff_meta *,
 static	void	 putkey(const struct mpage *, char *, uint64_t);
 static	void	 putkeys(const struct mpage *, char *, size_t, uint64_t);
 static	void	 putmdockey(const struct mpage *,
-			const struct roff_node *, uint64_t);
+			const struct roff_node *, uint64_t, int);
 static	int	 render_string(char **, size_t *);
 static	void	 say(const char *, const char *, ...)
 			__attribute__((__format__ (printf, 2, 3)));
@@ -168,129 +169,129 @@ static	struct ohash	 strings; /* table of all strings */
 static	uint64_t	 name_mask;
 
 static	const struct mdoc_handler mdocs[MDOC_MAX] = {
-	{ NULL, 0 },  /* Ap */
-	{ NULL, 0 },  /* Dd */
-	{ NULL, 0 },  /* Dt */
-	{ NULL, 0 },  /* Os */
-	{ parse_mdoc_Sh, TYPE_Sh }, /* Sh */
-	{ parse_mdoc_head, TYPE_Ss }, /* Ss */
-	{ NULL, 0 },  /* Pp */
-	{ NULL, 0 },  /* D1 */
-	{ NULL, 0 },  /* Dl */
-	{ NULL, 0 },  /* Bd */
-	{ NULL, 0 },  /* Ed */
-	{ NULL, 0 },  /* Bl */
-	{ NULL, 0 },  /* El */
-	{ NULL, 0 },  /* It */
-	{ NULL, 0 },  /* Ad */
-	{ NULL, TYPE_An },  /* An */
-	{ NULL, TYPE_Ar },  /* Ar */
-	{ NULL, TYPE_Cd },  /* Cd */
-	{ NULL, TYPE_Cm },  /* Cm */
-	{ NULL, TYPE_Dv },  /* Dv */
-	{ NULL, TYPE_Er },  /* Er */
-	{ NULL, TYPE_Ev },  /* Ev */
-	{ NULL, 0 },  /* Ex */
-	{ NULL, TYPE_Fa },  /* Fa */
-	{ parse_mdoc_Fd, 0 },  /* Fd */
-	{ NULL, TYPE_Fl },  /* Fl */
-	{ parse_mdoc_Fn, 0 },  /* Fn */
-	{ NULL, TYPE_Ft },  /* Ft */
-	{ NULL, TYPE_Ic },  /* Ic */
-	{ NULL, TYPE_In },  /* In */
-	{ NULL, TYPE_Li },  /* Li */
-	{ parse_mdoc_Nd, 0 },  /* Nd */
-	{ parse_mdoc_Nm, 0 },  /* Nm */
-	{ NULL, 0 },  /* Op */
-	{ NULL, 0 },  /* Ot */
-	{ NULL, TYPE_Pa },  /* Pa */
-	{ NULL, 0 },  /* Rv */
-	{ NULL, TYPE_St },  /* St */
-	{ parse_mdoc_Va, TYPE_Va },  /* Va */
-	{ parse_mdoc_Va, TYPE_Vt },  /* Vt */
-	{ parse_mdoc_Xr, 0 },  /* Xr */
-	{ NULL, 0 },  /* %A */
-	{ NULL, 0 },  /* %B */
-	{ NULL, 0 },  /* %D */
-	{ NULL, 0 },  /* %I */
-	{ NULL, 0 },  /* %J */
-	{ NULL, 0 },  /* %N */
-	{ NULL, 0 },  /* %O */
-	{ NULL, 0 },  /* %P */
-	{ NULL, 0 },  /* %R */
-	{ NULL, 0 },  /* %T */
-	{ NULL, 0 },  /* %V */
-	{ NULL, 0 },  /* Ac */
-	{ NULL, 0 },  /* Ao */
-	{ NULL, 0 },  /* Aq */
-	{ NULL, TYPE_At },  /* At */
-	{ NULL, 0 },  /* Bc */
-	{ NULL, 0 },  /* Bf */
-	{ NULL, 0 },  /* Bo */
-	{ NULL, 0 },  /* Bq */
-	{ NULL, TYPE_Bsx },  /* Bsx */
-	{ NULL, TYPE_Bx },  /* Bx */
-	{ NULL, 0 },  /* Db */
-	{ NULL, 0 },  /* Dc */
-	{ NULL, 0 },  /* Do */
-	{ NULL, 0 },  /* Dq */
-	{ NULL, 0 },  /* Ec */
-	{ NULL, 0 },  /* Ef */
-	{ NULL, TYPE_Em },  /* Em */
-	{ NULL, 0 },  /* Eo */
-	{ NULL, TYPE_Fx },  /* Fx */
-	{ NULL, TYPE_Ms },  /* Ms */
-	{ NULL, 0 },  /* No */
-	{ NULL, 0 },  /* Ns */
-	{ NULL, TYPE_Nx },  /* Nx */
-	{ NULL, TYPE_Ox },  /* Ox */
-	{ NULL, 0 },  /* Pc */
-	{ NULL, 0 },  /* Pf */
-	{ NULL, 0 },  /* Po */
-	{ NULL, 0 },  /* Pq */
-	{ NULL, 0 },  /* Qc */
-	{ NULL, 0 },  /* Ql */
-	{ NULL, 0 },  /* Qo */
-	{ NULL, 0 },  /* Qq */
-	{ NULL, 0 },  /* Re */
-	{ NULL, 0 },  /* Rs */
-	{ NULL, 0 },  /* Sc */
-	{ NULL, 0 },  /* So */
-	{ NULL, 0 },  /* Sq */
-	{ NULL, 0 },  /* Sm */
-	{ NULL, 0 },  /* Sx */
-	{ NULL, TYPE_Sy },  /* Sy */
-	{ NULL, TYPE_Tn },  /* Tn */
-	{ NULL, 0 },  /* Ux */
-	{ NULL, 0 },  /* Xc */
-	{ NULL, 0 },  /* Xo */
-	{ parse_mdoc_Fo, 0 },  /* Fo */
-	{ NULL, 0 },  /* Fc */
-	{ NULL, 0 },  /* Oo */
-	{ NULL, 0 },  /* Oc */
-	{ NULL, 0 },  /* Bk */
-	{ NULL, 0 },  /* Ek */
-	{ NULL, 0 },  /* Bt */
-	{ NULL, 0 },  /* Hf */
-	{ NULL, 0 },  /* Fr */
-	{ NULL, 0 },  /* Ud */
-	{ NULL, TYPE_Lb },  /* Lb */
-	{ NULL, 0 },  /* Lp */
-	{ NULL, TYPE_Lk },  /* Lk */
-	{ NULL, TYPE_Mt },  /* Mt */
-	{ NULL, 0 },  /* Brq */
-	{ NULL, 0 },  /* Bro */
-	{ NULL, 0 },  /* Brc */
-	{ NULL, 0 },  /* %C */
-	{ NULL, 0 },  /* Es */
-	{ NULL, 0 },  /* En */
-	{ NULL, TYPE_Dx },  /* Dx */
-	{ NULL, 0 },  /* %Q */
-	{ NULL, 0 },  /* br */
-	{ NULL, 0 },  /* sp */
-	{ NULL, 0 },  /* %U */
-	{ NULL, 0 },  /* Ta */
-	{ NULL, 0 },  /* ll */
+	{ NULL, 0, 0 },  /* Ap */
+	{ NULL, 0, NODE_NOPRT },  /* Dd */
+	{ NULL, 0, NODE_NOPRT },  /* Dt */
+	{ NULL, 0, NODE_NOPRT },  /* Os */
+	{ parse_mdoc_Sh, TYPE_Sh, 0 }, /* Sh */
+	{ parse_mdoc_head, TYPE_Ss, 0 }, /* Ss */
+	{ NULL, 0, 0 },  /* Pp */
+	{ NULL, 0, 0 },  /* D1 */
+	{ NULL, 0, 0 },  /* Dl */
+	{ NULL, 0, 0 },  /* Bd */
+	{ NULL, 0, 0 },  /* Ed */
+	{ NULL, 0, 0 },  /* Bl */
+	{ NULL, 0, 0 },  /* El */
+	{ NULL, 0, 0 },  /* It */
+	{ NULL, 0, 0 },  /* Ad */
+	{ NULL, TYPE_An, 0 },  /* An */
+	{ NULL, TYPE_Ar, 0 },  /* Ar */
+	{ NULL, TYPE_Cd, 0 },  /* Cd */
+	{ NULL, TYPE_Cm, 0 },  /* Cm */
+	{ NULL, TYPE_Dv, 0 },  /* Dv */
+	{ NULL, TYPE_Er, 0 },  /* Er */
+	{ NULL, TYPE_Ev, 0 },  /* Ev */
+	{ NULL, 0, 0 },  /* Ex */
+	{ NULL, TYPE_Fa, 0 },  /* Fa */
+	{ parse_mdoc_Fd, 0, 0 },  /* Fd */
+	{ NULL, TYPE_Fl, 0 },  /* Fl */
+	{ parse_mdoc_Fn, 0, 0 },  /* Fn */
+	{ NULL, TYPE_Ft, 0 },  /* Ft */
+	{ NULL, TYPE_Ic, 0 },  /* Ic */
+	{ NULL, TYPE_In, 0 },  /* In */
+	{ NULL, TYPE_Li, 0 },  /* Li */
+	{ parse_mdoc_Nd, 0, 0 },  /* Nd */
+	{ parse_mdoc_Nm, 0, 0 },  /* Nm */
+	{ NULL, 0, 0 },  /* Op */
+	{ NULL, 0, 0 },  /* Ot */
+	{ NULL, TYPE_Pa, NODE_NOSRC },  /* Pa */
+	{ NULL, 0, 0 },  /* Rv */
+	{ NULL, TYPE_St, 0 },  /* St */
+	{ parse_mdoc_Va, TYPE_Va, 0 },  /* Va */
+	{ parse_mdoc_Va, TYPE_Vt, 0 },  /* Vt */
+	{ parse_mdoc_Xr, 0, 0 },  /* Xr */
+	{ NULL, 0, 0 },  /* %A */
+	{ NULL, 0, 0 },  /* %B */
+	{ NULL, 0, 0 },  /* %D */
+	{ NULL, 0, 0 },  /* %I */
+	{ NULL, 0, 0 },  /* %J */
+	{ NULL, 0, 0 },  /* %N */
+	{ NULL, 0, 0 },  /* %O */
+	{ NULL, 0, 0 },  /* %P */
+	{ NULL, 0, 0 },  /* %R */
+	{ NULL, 0, 0 },  /* %T */
+	{ NULL, 0, 0 },  /* %V */
+	{ NULL, 0, 0 },  /* Ac */
+	{ NULL, 0, 0 },  /* Ao */
+	{ NULL, 0, 0 },  /* Aq */
+	{ NULL, TYPE_At, 0 },  /* At */
+	{ NULL, 0, 0 },  /* Bc */
+	{ NULL, 0, 0 },  /* Bf */
+	{ NULL, 0, 0 },  /* Bo */
+	{ NULL, 0, 0 },  /* Bq */
+	{ NULL, TYPE_Bsx, NODE_NOSRC },  /* Bsx */
+	{ NULL, TYPE_Bx, 0 },  /* Bx */
+	{ NULL, 0, 0 },  /* Db */
+	{ NULL, 0, 0 },  /* Dc */
+	{ NULL, 0, 0 },  /* Do */
+	{ NULL, 0, 0 },  /* Dq */
+	{ NULL, 0, 0 },  /* Ec */
+	{ NULL, 0, 0 },  /* Ef */
+	{ NULL, TYPE_Em, 0 },  /* Em */
+	{ NULL, 0, 0 },  /* Eo */
+	{ NULL, TYPE_Fx, NODE_NOSRC },  /* Fx */
+	{ NULL, TYPE_Ms, 0 },  /* Ms */
+	{ NULL, 0, 0 },  /* No */
+	{ NULL, 0, 0 },  /* Ns */
+	{ NULL, TYPE_Nx, NODE_NOSRC },  /* Nx */
+	{ NULL, TYPE_Ox, NODE_NOSRC },  /* Ox */
+	{ NULL, 0, 0 },  /* Pc */
+	{ NULL, 0, 0 },  /* Pf */
+	{ NULL, 0, 0 },  /* Po */
+	{ NULL, 0, 0 },  /* Pq */
+	{ NULL, 0, 0 },  /* Qc */
+	{ NULL, 0, 0 },  /* Ql */
+	{ NULL, 0, 0 },  /* Qo */
+	{ NULL, 0, 0 },  /* Qq */
+	{ NULL, 0, 0 },  /* Re */
+	{ NULL, 0, 0 },  /* Rs */
+	{ NULL, 0, 0 },  /* Sc */
+	{ NULL, 0, 0 },  /* So */
+	{ NULL, 0, 0 },  /* Sq */
+	{ NULL, 0, 0 },  /* Sm */
+	{ NULL, 0, 0 },  /* Sx */
+	{ NULL, TYPE_Sy, 0 },  /* Sy */
+	{ NULL, TYPE_Tn, 0 },  /* Tn */
+	{ NULL, 0, NODE_NOSRC },  /* Ux */
+	{ NULL, 0, 0 },  /* Xc */
+	{ NULL, 0, 0 },  /* Xo */
+	{ parse_mdoc_Fo, 0, 0 },  /* Fo */
+	{ NULL, 0, 0 },  /* Fc */
+	{ NULL, 0, 0 },  /* Oo */
+	{ NULL, 0, 0 },  /* Oc */
+	{ NULL, 0, 0 },  /* Bk */
+	{ NULL, 0, 0 },  /* Ek */
+	{ NULL, 0, 0 },  /* Bt */
+	{ NULL, 0, 0 },  /* Hf */
+	{ NULL, 0, 0 },  /* Fr */
+	{ NULL, 0, 0 },  /* Ud */
+	{ NULL, TYPE_Lb, 0 },  /* Lb */
+	{ NULL, 0, 0 },  /* Lp */
+	{ NULL, TYPE_Lk, 0 },  /* Lk */
+	{ NULL, TYPE_Mt, NODE_NOSRC },  /* Mt */
+	{ NULL, 0, 0 },  /* Brq */
+	{ NULL, 0, 0 },  /* Bro */
+	{ NULL, 0, 0 },  /* Brc */
+	{ NULL, 0, 0 },  /* %C */
+	{ NULL, 0, 0 },  /* Es */
+	{ NULL, 0, 0 },  /* En */
+	{ NULL, TYPE_Dx, NODE_NOSRC },  /* Dx */
+	{ NULL, 0, 0 },  /* %Q */
+	{ NULL, 0, 0 },  /* br */
+	{ NULL, 0, 0 },  /* sp */
+	{ NULL, 0, 0 },  /* %U */
+	{ NULL, 0, 0 },  /* Ta */
+	{ NULL, 0, 0 },  /* ll */
 };
 
 
@@ -1319,12 +1320,14 @@ putkey(const struct mpage *mpage, char *value, uint64_t type)
  */
 static void
 putmdockey(const struct mpage *mpage,
-	const struct roff_node *n, uint64_t m)
+	const struct roff_node *n, uint64_t m, int taboo)
 {
 
 	for ( ; NULL != n; n = n->next) {
+		if (n->flags & taboo)
+			continue;
 		if (NULL != n->child)
-			putmdockey(mpage, n->child, m);
+			putmdockey(mpage, n->child, m, taboo);
 		if (n->type == ROFFT_TEXT)
 			putkey(mpage, n->string, m);
 	}
@@ -1462,6 +1465,8 @@ parse_mdoc(struct mpage *mpage, const struct roff_meta *meta,
 
 	assert(NULL != n);
 	for (n = n->child; NULL != n; n = n->next) {
+		if (n->flags & mdocs[n->tok].taboo)
+			continue;
 		switch (n->type) {
 		case ROFFT_ELEM:
 		case ROFFT_BLOCK:
@@ -1473,7 +1478,7 @@ parse_mdoc(struct mpage *mpage, const struct roff_meta *meta,
 				       break;
 			if (mdocs[n->tok].mask)
 				putmdockey(mpage, n->child,
-				    mdocs[n->tok].mask);
+				    mdocs[n->tok].mask, mdocs[n->tok].taboo);
 			break;
 		default:
 			assert(n->type != ROFFT_ROOT);
@@ -1641,12 +1646,12 @@ parse_mdoc_Nm(struct mpage *mpage, const struct roff_meta *meta,
 {
 
 	if (SEC_NAME == n->sec)
-		putmdockey(mpage, n->child, NAME_TITLE);
+		putmdockey(mpage, n->child, NAME_TITLE, 0);
 	else if (n->sec == SEC_SYNOPSIS && n->type == ROFFT_HEAD) {
 		if (n->child == NULL)
 			putkey(mpage, meta->name, NAME_SYN);
 		else
-			putmdockey(mpage, n->child, NAME_SYN);
+			putmdockey(mpage, n->child, NAME_SYN, 0);
 	}
 	if ( ! (mpage->name_head_done ||
 	    n->child == NULL || n->child->string == NULL ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.96 2017/01/10 13:46:53 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.97 2017/01/10 21:54:34 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -180,7 +180,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_bf, post_bf, NULL, NULL }, /* Bf */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bo */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bq */
-	{ NULL, pre_ux, NULL, "BSD/OS", NULL }, /* Bsx */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Bsx */
 	{ NULL, pre_bx, NULL, NULL, NULL }, /* Bx */
 	{ NULL, pre_skip, NULL, NULL, NULL }, /* Db */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dc */
@@ -190,12 +190,12 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ef */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Em */
 	{ cond_body, pre_eo, post_eo, NULL, NULL }, /* Eo */
-	{ NULL, pre_ux, NULL, "FreeBSD", NULL }, /* Fx */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Fx */
 	{ NULL, pre_sy, post_font, NULL, NULL }, /* Ms */
 	{ NULL, pre_no, NULL, NULL, NULL }, /* No */
 	{ NULL, pre_ns, NULL, NULL, NULL }, /* Ns */
-	{ NULL, pre_ux, NULL, "NetBSD", NULL }, /* Nx */
-	{ NULL, pre_ux, NULL, "OpenBSD", NULL }, /* Ox */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Nx */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ox */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Pc */
 	{ NULL, NULL, post_pf, NULL, NULL }, /* Pf */
 	{ cond_body, pre_enc, post_enc, "(", ")" }, /* Po */
@@ -213,7 +213,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Sx */
 	{ NULL, pre_sy, post_font, NULL, NULL }, /* Sy */
 	{ NULL, pre_li, post_font, NULL, NULL }, /* Tn */
-	{ NULL, pre_ux, NULL, "UNIX", NULL }, /* Ux */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ux */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Xc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Xo */
 	{ NULL, pre_fo, post_fo, NULL, NULL }, /* Fo */
@@ -236,7 +236,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %C */
 	{ NULL, pre_skip, NULL, NULL, NULL }, /* Es */
 	{ cond_body, pre_en, post_en, NULL, NULL }, /* En */
-	{ NULL, pre_ux, NULL, "DragonFly", NULL }, /* Dx */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Dx */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %Q */
 	{ NULL, pre_br, NULL, NULL, NULL }, /* br */
 	{ NULL, pre_sp, post_sp, NULL, NULL }, /* sp */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.119 2017/01/10 13:46:53 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.120 2017/01/10 21:54:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -730,44 +730,11 @@ mdoc_ar_pre(MDOC_ARGS)
 static int
 mdoc_xx_pre(MDOC_ARGS)
 {
-	const char	*pp;
 	struct htmlpair	 tag;
-	int		 flags;
-
-	switch (n->tok) {
-	case MDOC_Bsx:
-		pp = "BSD/OS";
-		break;
-	case MDOC_Dx:
-		pp = "DragonFly";
-		break;
-	case MDOC_Fx:
-		pp = "FreeBSD";
-		break;
-	case MDOC_Nx:
-		pp = "NetBSD";
-		break;
-	case MDOC_Ox:
-		pp = "OpenBSD";
-		break;
-	case MDOC_Ux:
-		pp = "UNIX";
-		break;
-	default:
-		return 1;
-	}
 
 	PAIR_CLASS_INIT(&tag, "unix");
 	print_otag(h, TAG_SPAN, 1, &tag);
-
-	print_text(h, pp);
-	if (n->child) {
-		flags = h->flags;
-		h->flags |= HTML_KEEP;
-		print_text(h, n->child->string);
-		h->flags = flags;
-	}
-	return 0;
+	return 1;
 }
 
 static int

@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff.c,v 1.158 2017/01/10 14:09:03 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.159 2017/01/10 21:54:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1015,9 +1015,13 @@ roff_node_append(struct roff_man *man, struct roff_node *n)
 		n->parent = man->last->parent;
 		break;
 	case ROFF_NEXT_CHILD:
+		if (man->last->child != NULL) {
+			n->next = man->last->child;
+			man->last->child->prev = n;
+		} else
+			man->last->last = n;
 		man->last->child = n;
 		n->parent = man->last;
-		n->parent->last = n;
 		break;
 	default:
 		abort();
