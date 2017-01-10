@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.265 2016/09/10 16:53:30 natano Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.266 2017/01/10 19:48:32 bluhm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -365,14 +365,14 @@ sys_unmount(struct proc *p, void *v, register_t *retval)
 	if (vfs_busy(mp, VB_WRITE|VB_WAIT))
 		return (EBUSY);
 
-	return (dounmount(mp, SCARG(uap, flags) & MNT_FORCE, p, vp));
+	return (dounmount(mp, SCARG(uap, flags) & MNT_FORCE, p));
 }
 
 /*
  * Do the actual file system unmount.
  */
 int
-dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
+dounmount(struct mount *mp, int flags, struct proc *p)
 {
 	struct vnode *coveredvp;
 	int error;

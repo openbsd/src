@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.254 2016/09/28 22:22:52 kettenis Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.255 2017/01/10 19:48:32 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1578,7 +1578,7 @@ vfs_unmountall(void)
 	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mntlist, mnt_list, nmp) {
 		if ((vfs_busy(mp, VB_WRITE|VB_NOWAIT)) != 0)
 			continue;
-		if ((error = dounmount(mp, MNT_FORCE, curproc, NULL)) != 0) {
+		if ((error = dounmount(mp, MNT_FORCE, curproc)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
 			allerror = 1;
