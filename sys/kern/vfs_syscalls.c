@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.266 2017/01/10 19:48:32 bluhm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.267 2017/01/10 20:13:17 bluhm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -258,8 +258,8 @@ update:
 		TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		checkdirs(vp);
 		VOP_UNLOCK(vp, p);
- 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
- 			error = vfs_allocate_syncvnode(mp);
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
 		(void) VFS_STATFS(mp, &mp->mnt_stat, p);
 		if ((error = VFS_START(mp, 0, p)) != 0)
@@ -378,21 +378,21 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 	int error;
 	int hadsyncer = 0;
 
- 	mp->mnt_flag &=~ MNT_ASYNC;
- 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
- 	if (mp->mnt_syncer != NULL) {
+	mp->mnt_flag &=~ MNT_ASYNC;
+	cache_purgevfs(mp);	/* remove cache entries for this file sys */
+	if (mp->mnt_syncer != NULL) {
 		hadsyncer = 1;
- 		vgone(mp->mnt_syncer);
+		vgone(mp->mnt_syncer);
 		mp->mnt_syncer = NULL;
 	}
 	if (((mp->mnt_flag & MNT_RDONLY) ||
 	    (error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0) ||
- 	    (flags & MNT_FORCE))
- 		error = VFS_UNMOUNT(mp, flags, p);
+	    (flags & MNT_FORCE))
+		error = VFS_UNMOUNT(mp, flags, p);
 
- 	if (error && !(flags & MNT_DOOMED)) {
- 		if ((mp->mnt_flag & MNT_RDONLY) == 0 && hadsyncer)
- 			(void) vfs_allocate_syncvnode(mp);
+	if (error && !(flags & MNT_DOOMED)) {
+		if ((mp->mnt_flag & MNT_RDONLY) == 0 && hadsyncer)
+			(void) vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
 		return (error);
 	}
@@ -400,8 +400,8 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 	TAILQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
 		coveredvp->v_mountedhere = NULL;
- 		vrele(coveredvp);
- 	}
+		vrele(coveredvp);
+	}
 
 	mp->mnt_vfc->vfc_refcount--;
 
@@ -593,7 +593,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 			    flags == 0) &&
 			    (error = VFS_STATFS(mp, sp, p))) {
 				vfs_unbusy(mp);
- 				continue;
+				continue;
 			}
 
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
@@ -2966,4 +2966,3 @@ sys_pwritev(struct proc *p, void *v, register_t *retval)
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    1, &offset, retval));
 }
-
