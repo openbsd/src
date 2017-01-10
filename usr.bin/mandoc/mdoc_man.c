@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_man.c,v 1.94 2016/01/08 17:48:04 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.95 2017/01/10 12:54:27 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -572,6 +572,9 @@ print_node(DECL_ARGS)
 	const struct manact	*act;
 	struct roff_node	*sub;
 	int			 cond, do_sub;
+
+	if (n->flags & NODE_NOPRT)
+		return;
 
 	/*
 	 * Break the line if we were parsed subsequent the current node.

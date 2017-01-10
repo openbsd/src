@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.235 2016/11/08 16:37:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.236 2017/01/10 12:54:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -283,6 +283,8 @@ terminal_mdoc(void *arg, const struct roff_man *mdoc)
 			p->defindent = 5;
 		term_begin(p, print_mdoc_head, print_mdoc_foot,
 		    &mdoc->meta);
+		while (n != NULL && n->flags & NODE_NOPRT)
+			n = n->next;
 		if (n != NULL) {
 			if (n->tok != MDOC_Sh)
 				term_vspace(p);
@@ -308,6 +310,9 @@ print_mdoc_node(DECL_ARGS)
 	int		 chld;
 	struct termpair	 npair;
 	size_t		 offset, rmargin;
+
+	if (n->flags & NODE_NOPRT)
+		return;
 
 	chld = 1;
 	offset = p->offset;
@@ -562,6 +567,8 @@ print_bvspace(struct termp *p,
 	/* Do not vspace directly after Ss/Sh. */
 
 	nn = n;
+	while (nn->prev != NULL && nn->prev->flags & NODE_NOPRT)
+		nn = nn->prev;
 	while (nn->prev == NULL) {
 		do {
 			nn = nn->parent;
@@ -1716,11 +1723,15 @@ termp_pf_post(DECL_ARGS)
 static int
 termp_ss_pre(DECL_ARGS)
 {
+	struct roff_node *nn;
 
 	switch (n->type) {
 	case ROFFT_BLOCK:
 		term_newln(p);
-		if (n->prev)
+		for (nn = n->prev; nn != NULL; nn = nn->prev)
+			if ((nn->flags & NODE_NOPRT) == 0)
+				break;
+		if (nn != NULL)
 			term_vspace(p);
 		break;
 	case ROFFT_HEAD:

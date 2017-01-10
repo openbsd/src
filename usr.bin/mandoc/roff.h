@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff.h,v 1.19 2016/01/08 17:48:04 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.20 2017/01/10 12:54:28 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -109,6 +109,8 @@ struct	roff_node {
 #define	MAN_VALID	  MDOC_VALID
 #define	MAN_EOS		  MDOC_EOS
 #define	MAN_LINE	  MDOC_LINE
+#define	NODE_NOSRC	 (1 << 8)  /* Generated node, not in input file. */
+#define	NODE_NOPRT	 (1 << 9)  /* Shall not print anything. */
 	int		  prev_font; /* Before entering this node. */
 	int		  aux;     /* Decoded node data, type-dependent. */
 	enum roff_type	  type;    /* AST node type. */

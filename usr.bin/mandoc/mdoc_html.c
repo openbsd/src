@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.117 2017/01/09 12:48:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.118 2017/01/10 12:54:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -374,6 +374,9 @@ print_mdoc_node(MDOC_ARGS)
 {
 	int		 child;
 	struct tag	*t;
+
+	if (n->flags & NODE_NOPRT)
+		return;
 
 	child = 1;
 	t = h->tags.head;
