@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.333 2016/12/19 09:22:24 rzalamena Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.334 2017/01/10 09:01:18 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1074,8 +1074,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (m)
-			(void)m_free(m);
+		m_free(m);
 		break;
 
 	case PRCO_GETOPT:
@@ -1242,15 +1241,13 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	u_char opt;
 
 	/* turn off any old options */
-	if (*pcbopt)
-		(void)m_free(*pcbopt);
+	m_free(*pcbopt);
 	*pcbopt = 0;
 	if (m == NULL || m->m_len == 0) {
 		/*
 		 * Only turning off any previous options.
 		 */
-		if (m)
-			(void)m_free(m);
+		m_free(m);
 		return (0);
 	}
 

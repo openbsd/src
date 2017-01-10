@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.90 2016/12/19 09:22:24 rzalamena Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.91 2017/01/10 09:01:18 mpi Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -325,8 +325,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 				inp->inp_flags |= INP_HDRINCL;
 			else
 				inp->inp_flags &= ~INP_HDRINCL;
-			if (*mp)
-				(void)m_free(*mp);
+			m_free(*mp);
 		} else {
 			*mp = m_get(M_WAIT, M_SOOPTS);
 			(*mp)->m_len = sizeof(int);

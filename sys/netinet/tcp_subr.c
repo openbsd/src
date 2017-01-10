@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.157 2016/12/20 09:57:10 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.158 2017/01/10 09:01:18 mpi Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -534,8 +534,7 @@ tcp_close(struct tcpcb *tp)
 		p = q;
 	}
 #endif
-	if (tp->t_template)
-		(void) m_free(tp->t_template);
+	m_free(tp->t_template);
 
 	tp->t_flags |= TF_DEAD;
 	timeout_add(&tp->t_reap_to, 0);

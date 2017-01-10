@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.334 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.335 2017/01/10 09:01:18 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3340,8 +3340,7 @@ syn_cache_rm(struct syn_cache *sc)
 void
 syn_cache_put(struct syn_cache *sc)
 {
-	if (sc->sc_ipopts)
-		(void) m_free(sc->sc_ipopts);
+	m_free(sc->sc_ipopts);
 	if (sc->sc_route4.ro_rt != NULL) {
 		rtfree(sc->sc_route4.ro_rt);
 		sc->sc_route4.ro_rt = NULL;
@@ -4035,8 +4034,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 			 * If we were remembering a previous source route,
 			 * forget it and use the new one we've been given.
 			 */
-			if (sc->sc_ipopts)
-				(void) m_free(sc->sc_ipopts);
+			m_free(sc->sc_ipopts);
 			sc->sc_ipopts = ipopts;
 		}
 		sc->sc_timestamp = tb.ts_recent;
@@ -4049,8 +4047,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 	sc = pool_get(&syn_cache_pool, PR_NOWAIT|PR_ZERO);
 	if (sc == NULL) {
-		if (ipopts)
-			(void) m_free(ipopts);
+		m_free(ipopts);
 		return (-1);
 	}
 

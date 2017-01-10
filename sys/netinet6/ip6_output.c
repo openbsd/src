@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.218 2016/11/18 02:53:47 dlg Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.219 2017/01/10 09:01:18 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1414,8 +1414,7 @@ do { \
 				error = ENOPROTOOPT;
 				break;
 			}
-			if (m)
-				(void)m_free(m);
+			m_free(m);
 			break;
 
 		case PRCO_GETOPT:

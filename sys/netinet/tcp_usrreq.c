@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.141 2017/01/03 10:52:21 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.142 2017/01/10 09:01:18 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -569,8 +569,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (m)
-			(void) m_free(m);
+		m_free(m);
 		break;
 
 	case PRCO_GETOPT:
