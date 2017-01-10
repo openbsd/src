@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.22 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.23 2017/01/10 19:45:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -24,7 +24,8 @@
  * Refresh client.
  */
 
-static enum cmd_retval	cmd_refresh_client_exec(struct cmd *, struct cmdq_item *);
+static enum cmd_retval	cmd_refresh_client_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_refresh_client_entry = {
 	.name = "refresh-client",

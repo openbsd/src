@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-clear-history.c,v 1.21 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-clear-history.c,v 1.22 2017/01/10 19:45:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,13 +44,10 @@ static enum cmd_retval
 cmd_clear_history_exec(__unused struct cmd *self, struct cmdq_item *item)
 {
 	struct window_pane	*wp = item->state.tflag.wp;
-	struct grid		*gd;
-
-	gd = item->state.tflag.wp->base.grid;
 
 	if (wp->mode == &window_copy_mode)
 		window_pane_reset_mode(wp);
-	grid_clear_history(gd);
+	grid_clear_history(wp->base.grid);
 
 	return (CMD_RETURN_NORMAL);
 }
