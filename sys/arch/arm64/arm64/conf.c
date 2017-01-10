@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2017/01/10 13:00:57 patrick Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -42,10 +42,10 @@
 #include "wd.h"
 bdev_decl(wd);
 #include "sd.h"
-#include "st.h"
 #include "cd.h"
 #include "uk.h"
 #include "vnd.h"
+#include "rd.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -66,7 +66,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
 	bdev_notdef(),			/* 15: was: Sony CD-ROM */
 	bdev_notdef(),			/* 16: was: concatenated disk driver */
-	bdev_notdef(),			/* 17: was: rd(4) ramdisk driver */
+	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
 	bdev_notdef(),			/* 18 */
 };
 int	nblkdev = nitems(bdevsw);
@@ -193,7 +193,7 @@ struct cdevsw	cdevsw[] =
 	cdev_video_init(NVIDEO,video),	/* 44: generic video I/O */
 	cdev_random_init(1,random),	/* 45: random data source */
 	cdev_notdef(),			/* 46 */
-	cdev_notdef(),			/* 47 */
+	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
 	cdev_notdef(),			/* 48 */
 	cdev_bktr_init(NBKTR,bktr),     /* 49: Bt848 video capture device */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
@@ -302,7 +302,7 @@ int chrtoblktbl[] = {
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
 	/* 13 */	4,		/* sd */
-	/* 14 */	5,		/* st */
+	/* 14 */	NODEV,
 	/* 15 */	6,		/* cd */
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
@@ -335,7 +335,7 @@ int chrtoblktbl[] = {
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
-	/* 47 */	NODEV,
+	/* 47 */	17,		/* rd */
 };
 
 int nchrtoblktbl = nitems(chrtoblktbl);
