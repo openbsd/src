@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.521 2017/01/09 21:28:56 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.522 2017/01/10 07:55:48 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2017 $
+.Dd $Mdocdate: January 10 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -940,8 +940,7 @@ lines.
 The argument to
 .Em %if
 is expanded as a format and if it evaluates to false
-.Ns ( Ql 0
-or empty), subsequent lines are ignored until
+(zero or empty), subsequent lines are ignored until
 .Em %endif .
 For example:
 .Bd -literal -offset indent
