@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.97 2017/01/10 21:54:34 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.98 2017/01/10 23:36:24 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -77,7 +77,6 @@ static	int	  pre_bf(DECL_ARGS);
 static	int	  pre_bk(DECL_ARGS);
 static	int	  pre_bl(DECL_ARGS);
 static	int	  pre_br(DECL_ARGS);
-static	int	  pre_bx(DECL_ARGS);
 static	int	  pre_dl(DECL_ARGS);
 static	int	  pre_en(DECL_ARGS);
 static	int	  pre_enc(DECL_ARGS);
@@ -181,7 +180,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bo */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Bsx */
-	{ NULL, pre_bx, NULL, NULL, NULL }, /* Bx */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Bx */
 	{ NULL, pre_skip, NULL, NULL, NULL }, /* Db */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dc */
 	{ cond_body, pre_enc, post_enc, "\\(Lq", "\\(Rq" }, /* Do */
@@ -1048,26 +1047,6 @@ pre_br(DECL_ARGS)
 {
 
 	outflags |= MMAN_br;
-	return 0;
-}
-
-static int
-pre_bx(DECL_ARGS)
-{
-
-	n = n->child;
-	if (n) {
-		print_word(n->string);
-		outflags &= ~MMAN_spc;
-		n = n->next;
-	}
-	print_word("BSD");
-	if (NULL == n)
-		return 0;
-	outflags &= ~MMAN_spc;
-	print_word("-");
-	outflags &= ~MMAN_spc;
-	print_word(n->string);
 	return 0;
 }
 

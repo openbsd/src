@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.231 2017/01/10 21:54:34 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.232 2017/01/10 23:36:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -956,17 +956,11 @@ post_defaults(POST_ARGS)
 static void
 post_at(POST_ARGS)
 {
-	struct roff_node	*n;
-	const char		*std_att;
-	char			*att;
+	struct roff_node	*n, *nch;
+	const char		*att;
 
 	n = mdoc->last;
-	if (n->child == NULL) {
-		mdoc->next = ROFF_NEXT_CHILD;
-		roff_word_alloc(mdoc, n->line, n->pos, "AT&T UNIX");
-		mdoc->last = n;
-		return;
-	}
+	nch = n->child;
 
 	/*
 	 * If we have a child, look it up in the standard keys.  If a
@@ -974,17 +968,19 @@ post_at(POST_ARGS)
 	 * prefix "AT&T UNIX " to the existing data.
 	 */
 
-	n = n->child;
-	assert(n->type == ROFFT_TEXT);
-	if ((std_att = mdoc_a2att(n->string)) == NULL) {
+	att = NULL;
+	if (nch != NULL && ((att = mdoc_a2att(nch->string)) == NULL))
 		mandoc_vmsg(MANDOCERR_AT_BAD, mdoc->parse,
-		    n->line, n->pos, "At %s", n->string);
-		mandoc_asprintf(&att, "AT&T UNIX %s", n->string);
-	} else
-		att = mandoc_strdup(std_att);
+		    nch->line, nch->pos, "At %s", nch->string);
 
-	free(n->string);
-	n->string = att;
+	mdoc->next = ROFF_NEXT_CHILD;
+	if (att != NULL) {
+		roff_word_alloc(mdoc, nch->line, nch->pos, att);
+		nch->flags |= NODE_NOPRT;
+	} else
+		roff_word_alloc(mdoc, n->line, n->pos, "AT&T UNIX");
+	mdoc->last->flags |= NODE_NOSRC;
+	mdoc->last = n;
 }
 
 static void
@@ -2103,7 +2099,36 @@ post_dt(POST_ARGS)
 static void
 post_bx(POST_ARGS)
 {
-	struct roff_node	*n;
+	struct roff_node	*n, *nch;
+
+	n = mdoc->last;
+	nch = n->child;
+
+	if (nch != NULL) {
+		mdoc->last = nch;
+		nch = nch->next;
+		mdoc->next = ROFF_NEXT_SIBLING;
+		roff_elem_alloc(mdoc, n->line, n->pos, MDOC_Ns);
+		mdoc->last->flags |= NODE_NOSRC;
+		mdoc->next = ROFF_NEXT_SIBLING;
+	} else
+		mdoc->next = ROFF_NEXT_CHILD;
+	roff_word_alloc(mdoc, n->line, n->pos, "BSD");
+	mdoc->last->flags |= NODE_NOSRC;
+
+	if (nch == NULL) {
+		mdoc->last = n;
+		return;
+	}
+
+	roff_elem_alloc(mdoc, n->line, n->pos, MDOC_Ns);
+	mdoc->last->flags |= NODE_NOSRC;
+	mdoc->next = ROFF_NEXT_SIBLING;
+	roff_word_alloc(mdoc, n->line, n->pos, "-");
+	mdoc->last->flags |= NODE_NOSRC;
+	roff_elem_alloc(mdoc, n->line, n->pos, MDOC_Ns);
+	mdoc->last->flags |= NODE_NOSRC;
+	mdoc->last = n;
 
 	/*
 	 * Make `Bx's second argument always start with an uppercase
@@ -2111,8 +2136,7 @@ post_bx(POST_ARGS)
 	 * uppercase blindly.
 	 */
 
-	if ((n = mdoc->last->child) != NULL && (n = n->next) != NULL)
-		*n->string = (char)toupper((unsigned char)*n->string);
+	*nch->string = (char)toupper((unsigned char)*nch->string);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.184 2017/01/10 21:54:34 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.185 2017/01/10 23:36:24 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -224,13 +224,13 @@ static	const struct mdoc_handler mdocs[MDOC_MAX] = {
 	{ NULL, 0, 0 },  /* Ac */
 	{ NULL, 0, 0 },  /* Ao */
 	{ NULL, 0, 0 },  /* Aq */
-	{ NULL, TYPE_At, 0 },  /* At */
+	{ NULL, TYPE_At, NODE_NOSRC },  /* At */
 	{ NULL, 0, 0 },  /* Bc */
 	{ NULL, 0, 0 },  /* Bf */
 	{ NULL, 0, 0 },  /* Bo */
 	{ NULL, 0, 0 },  /* Bq */
 	{ NULL, TYPE_Bsx, NODE_NOSRC },  /* Bsx */
-	{ NULL, TYPE_Bx, 0 },  /* Bx */
+	{ NULL, TYPE_Bx, NODE_NOSRC },  /* Bx */
 	{ NULL, 0, 0 },  /* Db */
 	{ NULL, 0, 0 },  /* Dc */
 	{ NULL, 0, 0 },  /* Do */
