@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.16 2013/10/21 10:36:14 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.17 2017/01/10 08:26:41 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -219,8 +219,8 @@ smfb_attach_common(struct smfb_softc *sc, int is5xx, bus_space_tag_t memt,
 		}
 	}
 
-	/* XXX print resolution */
-	printf("\n");
+	printf(": %dx%d, %dbpp\n", sc->sc_fb->ri.ri_width,
+	    sc->sc_fb->ri.ri_height, sc->sc_fb->ri.ri_depth);
 
 	sc->sc_scrlist[0] = &sc->sc_fb->wsd;
 	sc->sc_wsl.nscreens = 1;
