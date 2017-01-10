@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.15 2016/12/06 10:38:08 reyk Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.16 2017/01/10 17:16:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -257,6 +257,26 @@ pvbus_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", pva->pva_busname, pnp);
 	return (UNCONF);
+}
+
+void
+pvbus_shutdown(struct device *dev)
+{
+	suspend_randomness();
+
+	log(LOG_KERN | LOG_NOTICE, "Shutting down in response to request"
+	    " from %s host\n", dev->dv_xname);
+	prsignal(initprocess, SIGUSR2);
+}
+
+void
+pvbus_reboot(struct device *dev)
+{
+	suspend_randomness();
+
+	log(LOG_KERN | LOG_NOTICE, "Rebooting in response to request"
+	    " from %s host\n", dev->dv_xname);
+	prsignal(initprocess, SIGINT);
 }
 
 void

@@ -343,16 +343,8 @@ hv_heartbeat(void *arg)
 static void
 hv_shutdown_task(void *arg)
 {
-	extern int allowpowerdown;
-
-	if (allowpowerdown == 0)
-		return;
-
-	suspend_randomness();
-
-	log(LOG_KERN | LOG_NOTICE, "Shutting down in response to "
-	    "request from Hyper-V host\n");
-	prsignal(initprocess, SIGUSR2);
+	struct hv_softc *sc = arg;
+	pvbus_shutdown(&sc->sc_dev);
 }
 
 int

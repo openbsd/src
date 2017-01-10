@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.70 2016/12/21 12:17:15 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.71 2017/01/10 17:16:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -223,27 +223,9 @@ xen_control(void *arg)
 	xs_setprop(sc, "control", "shutdown", "", 0);
 
 	if (strcmp(action, "halt") == 0 || strcmp(action, "poweroff") == 0) {
-		extern int allowpowerdown;
-
-		if (allowpowerdown == 0)
-			return;
-
-		suspend_randomness();
-
-		log(LOG_KERN | LOG_NOTICE, "Shutting down in response to "
-		    "request from Xen host\n");
-		prsignal(initprocess, SIGUSR2);
+		pvbus_shutdown(&sc->sc_dev);
 	} else if (strcmp(action, "reboot") == 0) {
-		extern int allowpowerdown;
-
-		if (allowpowerdown == 0)
-			return;
-
-		suspend_randomness();
-
-		log(LOG_KERN | LOG_NOTICE, "Rebooting in response to request "
-		    "from Xen host\n");
-		prsignal(initprocess, SIGINT);
+		pvbus_reboot(&sc->sc_dev);
 	} else if (strcmp(action, "crash") == 0) {
 		panic("xen told us to do this");
 	} else if (strcmp(action, "suspend") == 0) {
