@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.35 2016/08/03 17:23:38 jcs Exp $
+#	$OpenBSD: files.acpi,v 1.36 2017/01/10 08:54:14 jsg Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -145,3 +145,8 @@ file	dev/acpi/acpials.c		acpials
 device	tpm
 attach	tpm at acpi
 file	dev/acpi/tpm.c			tpm
+
+# Hyper-V Entropy
+device	acpihve
+attach	acpihve at acpi
+file	dev/acpi/acpihve.c		acpihve
