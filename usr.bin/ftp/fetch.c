@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.156 2017/01/07 12:10:11 tb Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.157 2017/01/10 17:43:12 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ struct tls;
 #include "ftp_var.h"
 #include "cmds.h"
 
-static int	url_get(const char *, const char *, const char *);
+static int	url_get(const char *, const char *, const char *, int);
 void		aborthttp(int);
 void		abortfile(int);
 char		hextochar(const char *);
@@ -181,7 +181,7 @@ tooslow(int signo)
  * Returns -1 on failure, 0 on success
  */
 static int
-url_get(const char *origline, const char *proxyenv, const char *outfile)
+url_get(const char *origline, const char *proxyenv, const char *outfile, int lastfile)
 {
 	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *portnum, *path, ststr[4];
 	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
@@ -640,6 +640,18 @@ noslash:
 	fin = fdopen(s, "r+");
 #endif /* !NOSSL */
 
+#ifdef SMALL
+	if (lastfile) {
+		if (pipeout) {
+			if (pledge("stdio rpath inet dns tty",  NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio rpath wpath cpath inet dns tty", NULL) == -1)
+				err(1, "pledge");
+		}
+	}
+#endif
+
 	if (connect_timeout) {
 		signal(SIGALRM, SIG_DFL);
 		alarmtimer(0);
@@ -903,7 +915,7 @@ noslash:
 				fclose(fin);
 			else if (s != -1)
 				close(s);
-			rval = url_get(redirurl, proxyenv, savefile);
+			rval = url_get(redirurl, proxyenv, savefile, lastfile);
 			free(redirurl);
 			goto cleanup_url_get;
 		}
@@ -924,8 +936,15 @@ noslash:
 			warn("Can't open %s", savefile);
 			goto cleanup_url_get;
 		}
-	} else
+	} else {
 		out = fileno(stdout);
+#ifdef SMALL
+		if (lastfile) {
+			if (pledge("stdio tty", NULL) == -1)
+				err(1, "pledge");
+		}
+#endif
+	}
 
 	/* Trap signals */
 	oldintr = NULL;
@@ -1078,7 +1097,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 	char *cp, *url, *host, *dir, *file, *portnum;
 	char *username, *pass, *pathstart;
 	char *ftpproxy, *httpproxy;
-	int rval, xargc;
+	int rval, xargc, lastfile;
 	volatile int argpos;
 	int dirhasglob, filehasglob, oautologin;
 	char rempath[PATH_MAX];
@@ -1110,6 +1129,8 @@ auto_fetch(int argc, char *argv[], char *outfile)
 		free(pass);
 		host = dir = file = portnum = username = pass = NULL;
 
+		lastfile = (argv[argpos+1] == NULL);
+
 		/*
 		 * We muck with the string, so we make a copy.
 		 */
@@ -1127,7 +1148,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 #endif /* !NOSSL */
 		    strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 			redirect_loop = 0;
-			if (url_get(url, httpproxy, outfile) == -1)
+			if (url_get(url, httpproxy, outfile, lastfile) == -1)
 				rval = argpos + 1;
 			continue;
 		}
@@ -1142,7 +1163,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 			char *passend, *passagain, *userend;
 
 			if (ftpproxy) {
-				if (url_get(url, ftpproxy, outfile) == -1)
+				if (url_get(url, ftpproxy, outfile, lastfile) == -1)
 					rval = argpos + 1;
 				continue;
 			}
