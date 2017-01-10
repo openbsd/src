@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.2 2017/01/10 13:13:12 patrick Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -24,16 +24,18 @@
 #include <machine/pcb.h>
 
 static inline void
-__aarch64_set_tcb(uint64_t tcb) {
-	__asm volatile("msr tpidr_el0, %x0" :: "r" (tcb));
-	return ;
+__aarch64_set_tcb(void *tcb)
+{
+	__asm volatile("msr tpidr_el0, %x0" : : "r" (tcb));
 }
-#define TCB_GET(p)              \
-	((void *)((struct pcb *)(p)->p_addr)->pcb_tcb)
-#define TCB_SET(p, addr)        \
-	do {								\
-	(((struct pcb *)(p)->p_addr)->pcb_tcb = (uint64_t)(addr));	\
-	__aarch64_set_tcb((uint64_t)addr);						\
+
+#define TCB_GET(p)		\
+	((struct pcb *)(p)->p_addr)->pcb_tcb
+
+#define TCB_SET(p, addr)	\
+	do {							\
+		((struct pcb *)(p)->p_addr)->pcb_tcb = (addr);	\
+		__aarch64_set_tcb(addr);			\
 	} while (0)
 
 #else /* _KERNEL */
@@ -41,19 +43,15 @@ __aarch64_set_tcb(uint64_t tcb) {
 /* ELF TLS ABI calls for small TCB, with static TLS data after it */
 #define TLS_VARIANT	1
 
-static inline uint64_t
-__aarch64_read_tcb(void) {
-        uint64_t tcb;
+static inline void *
+__aarch64_read_tcb(void)
+{
+	void *tcb;
 	__asm volatile("mrs %x0, tpidr_el0": "=r" (tcb));
-
 	return tcb;
 }
 
-#define TCB_GET(p)              \
-	((void *)__aarch64_read_tcb())
-
-#define TCB_GET_MEMBER(member)	\
-	(((struct thread_control_block *)__aarch64_read_tcb())->member)
+#define TCB_GET()		__aarch64_read_tcb()
 
 #endif /* _KERNEL */
 
