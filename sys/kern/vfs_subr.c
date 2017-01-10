@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.255 2017/01/10 19:48:32 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.256 2017/01/10 19:56:34 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -380,8 +380,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, struct vops *vops,
 		TAILQ_INIT(&vp->v_cache_dst);
 		numvnodes++;
 	} else {
-		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
-		    vp = TAILQ_NEXT(vp, v_freelist)) {
+		TAILQ_FOREACH(vp, listhd, v_freelist) {
 			if (VOP_ISLOCKED(vp) == 0)
 				break;
 		}
@@ -836,10 +835,9 @@ vfs_mount_foreach_vnode(struct mount *mp,
 	int error = 0;
 
 loop:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
+	LIST_FOREACH_SAFE(vp , &mp->mnt_vnodelist, v_mntvnodes, nvp) {
 		if (vp->v_mount != mp)
 			goto loop;
-		nvp = LIST_NEXT(vp, v_mntvnodes);
 
 		error = func(vp, arg);
 
@@ -1873,8 +1871,7 @@ vflushbuf(struct vnode *vp, int sync)
 
 loop:
 	s = splbio();
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp != NULL; bp = nbp) {
-		nbp = LIST_NEXT(bp, b_vnbufs);
+	LIST_FOREACH_SAFE(bp, &vp->v_dirtyblkhd, b_vnbufs, nbp) {
 		if ((bp->b_flags & B_BUSY))
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
