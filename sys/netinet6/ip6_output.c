@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.219 2017/01/10 09:01:18 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.220 2017/01/10 09:04:19 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1916,8 +1916,6 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 	struct ipv6_mreq *mreq;
 	struct ifnet *ifp;
 	struct ip6_moptions *im6o = *im6op;
-	struct route_in6 ro;
-	struct sockaddr_in6 *dst;
 	struct in6_multi_mship *imm;
 	struct proc *p = curproc;	/* XXX */
 
@@ -2033,25 +2031,21 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * appropriate one according to the given multicast address.
 		 */
 		if (mreq->ipv6mr_interface == 0) {
-			/*
-			 * Look up the routing table for the
-			 * address, and choose the outgoing interface.
-			 *   XXX: is it a good approach?
-			 */
-			bzero(&ro, sizeof(ro));
-			ro.ro_tableid = m->m_pkthdr.ph_rtableid;
-			dst = &ro.ro_dst;
-			dst->sin6_len = sizeof(struct sockaddr_in6);
-			dst->sin6_family = AF_INET6;
-			dst->sin6_addr = mreq->ipv6mr_multiaddr;
-			ro.ro_rt = rtalloc(sin6tosa(&ro.ro_dst),
-			    RT_RESOLVE, ro.ro_tableid);
-			if (ro.ro_rt == NULL) {
+			struct rtentry *rt;
+			struct sockaddr_in6 dst;
+
+			memset(&dst, 0, sizeof(dst));
+			dst.sin6_len = sizeof(dst);
+			dst.sin6_family = AF_INET6;
+			dst.sin6_addr = mreq->ipv6mr_multiaddr;
+			rt = rtalloc(sin6tosa(&dst), RT_RESOLVE,
+			    m->m_pkthdr.ph_rtableid);
+			if (rt == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
 			}
-			ifp = if_get(ro.ro_rt->rt_ifidx);
-			rtfree(ro.ro_rt);
+			ifp = if_get(rt->rt_ifidx);
+			rtfree(rt);
 		} else {
 			/*
 			 * If the interface is specified, validate it.
