@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.437 2016/12/13 19:47:32 mikeb Exp $
+#	$OpenBSD: GENERIC,v 1.438 2017/01/10 11:41:32 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -67,6 +67,7 @@ sdhc*		at acpi?
 acpicbkbd*	at acpi?
 acpials*	at acpi?
 tpm*		at acpi?
+acpihve*	at acpi?
 
 mpbios0		at bios0
 
