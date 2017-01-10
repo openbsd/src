@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.236 2017/01/10 12:54:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.237 2017/01/10 13:46:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -317,7 +317,7 @@ print_mdoc_node(DECL_ARGS)
 	chld = 1;
 	offset = p->offset;
 	rmargin = p->rmargin;
-	n->flags &= ~MDOC_ENDED;
+	n->flags &= ~NODE_ENDED;
 	n->prev_font = p->fonti;
 
 	memset(&npair, 0, sizeof(struct termpair));
@@ -328,7 +328,7 @@ print_mdoc_node(DECL_ARGS)
 	 * invoked in a prior line, revert it to PREKEEP.
 	 */
 
-	if (p->flags & TERMP_KEEP && n->flags & MDOC_LINE) {
+	if (p->flags & TERMP_KEEP && n->flags & NODE_LINE) {
 		p->flags &= ~TERMP_KEEP;
 		p->flags |= TERMP_PREKEEP;
 	}
@@ -340,19 +340,19 @@ print_mdoc_node(DECL_ARGS)
 
 	switch (n->type) {
 	case ROFFT_TEXT:
-		if (' ' == *n->string && MDOC_LINE & n->flags)
+		if (' ' == *n->string && NODE_LINE & n->flags)
 			term_newln(p);
-		if (MDOC_DELIMC & n->flags)
+		if (NODE_DELIMC & n->flags)
 			p->flags |= TERMP_NOSPACE;
 		term_word(p, n->string);
-		if (MDOC_DELIMO & n->flags)
+		if (NODE_DELIMO & n->flags)
 			p->flags |= TERMP_NOSPACE;
 		break;
 	case ROFFT_EQN:
-		if ( ! (n->flags & MDOC_LINE))
+		if ( ! (n->flags & NODE_LINE))
 			p->flags |= TERMP_NOSPACE;
 		term_eqn(p, n->eqn);
-		if (n->next != NULL && ! (n->next->flags & MDOC_LINE))
+		if (n->next != NULL && ! (n->next->flags & NODE_LINE))
 			p->flags |= TERMP_NOSPACE;
 		break;
 	case ROFFT_TBL:
@@ -382,7 +382,7 @@ print_mdoc_node(DECL_ARGS)
 	case ROFFT_EQN:
 		break;
 	default:
-		if ( ! termacts[n->tok].post || MDOC_ENDED & n->flags)
+		if ( ! termacts[n->tok].post || NODE_ENDED & n->flags)
 			break;
 		(void)(*termacts[n->tok].post)(p, &npair, meta, n);
 
@@ -392,7 +392,7 @@ print_mdoc_node(DECL_ARGS)
 		 * that it must not call the post handler again.
 		 */
 		if (ENDBODY_NOT != n->end)
-			n->body->flags |= MDOC_ENDED;
+			n->body->flags |= NODE_ENDED;
 
 		/*
 		 * End of line terminating an implicit block
@@ -404,7 +404,7 @@ print_mdoc_node(DECL_ARGS)
 		break;
 	}
 
-	if (MDOC_EOS & n->flags)
+	if (NODE_EOS & n->flags)
 		p->flags |= TERMP_SENTENCE;
 
 	if (MDOC_ll != n->tok) {
@@ -1049,7 +1049,7 @@ termp_fl_pre(DECL_ARGS)
 	if (!(n->child == NULL &&
 	    (n->next == NULL ||
 	     n->next->type == ROFFT_TEXT ||
-	     n->next->flags & MDOC_LINE)))
+	     n->next->flags & NODE_LINE)))
 		p->flags |= TERMP_NOSPACE;
 
 	return 1;
@@ -1094,7 +1094,7 @@ static int
 termp_ns_pre(DECL_ARGS)
 {
 
-	if ( ! (MDOC_LINE & n->flags))
+	if ( ! (NODE_LINE & n->flags))
 		p->flags |= TERMP_NOSPACE;
 	return 1;
 }
@@ -1260,7 +1260,7 @@ synopsis_pre(struct termp *p, const struct roff_node *n)
 	 * Obviously, if we're not in a SYNOPSIS or no prior macros
 	 * exist, do nothing.
 	 */
-	if (NULL == n->prev || ! (MDOC_SYNPRETTY & n->flags))
+	if (NULL == n->prev || ! (NODE_SYNPRETTY & n->flags))
 		return;
 
 	/*
@@ -1409,7 +1409,7 @@ static void
 termp_lb_post(DECL_ARGS)
 {
 
-	if (SEC_LIBRARY == n->sec && MDOC_LINE & n->flags)
+	if (SEC_LIBRARY == n->sec && NODE_LINE & n->flags)
 		term_newln(p);
 }
 
@@ -1437,7 +1437,7 @@ static int
 termp_ft_pre(DECL_ARGS)
 {
 
-	/* NB: MDOC_LINE does not effect this! */
+	/* NB: NODE_LINE does not effect this! */
 	synopsis_pre(p, n);
 	term_fontpush(p, TERMFONT_UNDER);
 	return 1;
@@ -1449,7 +1449,7 @@ termp_fn_pre(DECL_ARGS)
 	size_t		 rmargin = 0;
 	int		 pretty;
 
-	pretty = MDOC_SYNPRETTY & n->flags;
+	pretty = NODE_SYNPRETTY & n->flags;
 
 	synopsis_pre(p, n);
 
@@ -1615,7 +1615,7 @@ termp_bd_pre(DECL_ARGS)
 			break;
 		}
 		if (p->flags & TERMP_NONEWLINE ||
-		    (nn->next && ! (nn->next->flags & MDOC_LINE)))
+		    (nn->next && ! (nn->next->flags & NODE_LINE)))
 			continue;
 		term_flushln(p);
 		p->flags |= TERMP_NOSPACE;
@@ -1716,7 +1716,7 @@ static void
 termp_pf_post(DECL_ARGS)
 {
 
-	if ( ! (n->next == NULL || n->next->flags & MDOC_LINE))
+	if ( ! (n->next == NULL || n->next->flags & NODE_LINE))
 		p->flags |= TERMP_NOSPACE;
 }
 
@@ -1771,7 +1771,7 @@ termp_in_pre(DECL_ARGS)
 
 	synopsis_pre(p, n);
 
-	if (MDOC_SYNPRETTY & n->flags && MDOC_LINE & n->flags) {
+	if (NODE_SYNPRETTY & n->flags && NODE_LINE & n->flags) {
 		term_fontpush(p, TERMFONT_BOLD);
 		term_word(p, "#include");
 		term_word(p, "<");
@@ -1788,13 +1788,13 @@ static void
 termp_in_post(DECL_ARGS)
 {
 
-	if (MDOC_SYNPRETTY & n->flags)
+	if (NODE_SYNPRETTY & n->flags)
 		term_fontpush(p, TERMFONT_BOLD);
 
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, ">");
 
-	if (MDOC_SYNPRETTY & n->flags)
+	if (NODE_SYNPRETTY & n->flags)
 		term_fontpop(p);
 }
 
@@ -2001,7 +2001,7 @@ termp_fo_pre(DECL_ARGS)
 	size_t		 rmargin = 0;
 	int		 pretty;
 
-	pretty = MDOC_SYNPRETTY & n->flags;
+	pretty = NODE_SYNPRETTY & n->flags;
 
 	if (n->type == ROFFT_BLOCK) {
 		synopsis_pre(p, n);
@@ -2047,7 +2047,7 @@ termp_fo_post(DECL_ARGS)
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, ")");
 
-	if (MDOC_SYNPRETTY & n->flags) {
+	if (NODE_SYNPRETTY & n->flags) {
 		p->flags |= TERMP_NOSPACE;
 		term_word(p, ";");
 		term_flushln(p);

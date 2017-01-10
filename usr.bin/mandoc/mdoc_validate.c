@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.229 2017/01/10 12:54:28 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.230 2017/01/10 13:46:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -315,9 +315,9 @@ mdoc_node_validate(struct roff_man *mdoc)
 		 */
 
 		if (n->child != NULL)
-			n->child->flags &= ~MDOC_DELIMC;
+			n->child->flags &= ~NODE_DELIMC;
 		if (n->last != NULL)
-			n->last->flags &= ~MDOC_DELIMO;
+			n->last->flags &= ~NODE_DELIMO;
 
 		/* Call the macro's postprocessor. */
 
@@ -1546,7 +1546,7 @@ static void
 post_ns(POST_ARGS)
 {
 
-	if (mdoc->last->flags & MDOC_LINE)
+	if (mdoc->last->flags & NODE_LINE)
 		mandoc_msg(MANDOCERR_NS_SKIP, mdoc->parse,
 		    mdoc->last->line, mdoc->last->pos, NULL);
 }

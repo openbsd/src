@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.76 2016/01/08 17:48:04 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.77 2017/01/10 13:46:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,7 +93,7 @@ man_unscope(struct roff_man *man, const struct roff_node *to)
 
 		/* Reached the end of the document? */
 
-		if (to == NULL && ! (n->flags & MAN_VALID)) {
+		if (to == NULL && ! (n->flags & NODE_VALID)) {
 			if (man->flags & (MAN_BLINE | MAN_ELINE) &&
 			    man_macros[n->tok].flags & MAN_SCOPED) {
 				mandoc_vmsg(MANDOCERR_BLK_LINE,
@@ -128,7 +128,7 @@ man_unscope(struct roff_man *man, const struct roff_node *to)
 
 		man->last = n;
 		n = n->parent;
-		man->last->flags |= MAN_VALID;
+		man->last->flags |= NODE_VALID;
 	}
 
 	/*
@@ -162,7 +162,7 @@ rew_scope(struct roff_man *man, int tok)
 	for (;;) {
 		if (n->type == ROFFT_ROOT)
 			return;
-		if (n->flags & MAN_VALID) {
+		if (n->flags & NODE_VALID) {
 			n = n->parent;
 			continue;
 		}
@@ -354,13 +354,13 @@ in_line_eoln(MACRO_PROT_ARGS)
 	}
 
 	/*
-	 * Append MAN_EOS in case the last snipped argument
+	 * Append NODE_EOS in case the last snipped argument
 	 * ends with a dot, e.g. `.IR syslog (3).'
 	 */
 
 	if (n != man->last &&
 	    mandoc_eos(man->last->string, strlen(man->last->string)))
-		man->last->flags |= MAN_EOS;
+		man->last->flags |= NODE_EOS;
 
 	/*
 	 * If no arguments are specified and this is MAN_SCOPED (i.e.,

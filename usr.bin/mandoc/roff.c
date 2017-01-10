@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.156 2016/01/08 17:48:04 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.157 2017/01/10 13:46:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -989,11 +989,11 @@ roff_node_alloc(struct roff_man *man, int line, int pos,
 	n->sec = man->lastsec;
 
 	if (man->flags & MDOC_SYNOPSIS)
-		n->flags |= MDOC_SYNPRETTY;
+		n->flags |= NODE_SYNPRETTY;
 	else
-		n->flags &= ~MDOC_SYNPRETTY;
+		n->flags &= ~NODE_SYNPRETTY;
 	if (man->flags & MDOC_NEWLINE)
-		n->flags |= MDOC_LINE;
+		n->flags |= NODE_LINE;
 	man->flags &= ~MDOC_NEWLINE;
 
 	return n;
@@ -1058,9 +1058,9 @@ roff_word_alloc(struct roff_man *man, int line, int pos, const char *word)
 	n->string = roff_strdup(man->roff, word);
 	roff_node_append(man, n);
 	if (man->macroset == MACROSET_MDOC)
-		n->flags |= MDOC_VALID | MDOC_ENDED;
+		n->flags |= NODE_VALID | NODE_ENDED;
 	else
-		n->flags |= MAN_VALID;
+		n->flags |= NODE_VALID;
 	man->next = ROFF_NEXT_SIBLING;
 }
 
@@ -1130,7 +1130,7 @@ roff_addeqn(struct roff_man *man, const struct eqn *eqn)
 	n = roff_node_alloc(man, eqn->ln, eqn->pos, ROFFT_EQN, TOKEN_NONE);
 	n->eqn = eqn;
 	if (eqn->ln > man->last->line)
-		n->flags |= MDOC_LINE;
+		n->flags |= NODE_LINE;
 	roff_node_append(man, n);
 	man->next = ROFF_NEXT_SIBLING;
 }
@@ -1146,9 +1146,9 @@ roff_addtbl(struct roff_man *man, const struct tbl_span *tbl)
 	n->span = tbl;
 	roff_node_append(man, n);
 	if (man->macroset == MACROSET_MDOC)
-		n->flags |= MDOC_VALID | MDOC_ENDED;
+		n->flags |= NODE_VALID | NODE_ENDED;
 	else
-		n->flags |= MAN_VALID;
+		n->flags |= NODE_VALID;
 	man->next = ROFF_NEXT_SIBLING;
 }
 

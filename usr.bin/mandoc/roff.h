@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.20 2017/01/10 12:54:28 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.21 2017/01/10 13:46:53 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -98,17 +98,14 @@ struct	roff_node {
 	int		  tok;     /* Request or macro ID. */
 #define	TOKEN_NONE	 (-1)	   /* No request or macro. */
 	int		  flags;
-#define	MDOC_VALID	 (1 << 0)  /* Has been validated. */
-#define	MDOC_ENDED	 (1 << 1)  /* Gone past body end mark. */
-#define MDOC_EOS	 (1 << 2)  /* At sentence boundary. */
-#define	MDOC_LINE	 (1 << 3)  /* First macro/text on line. */
-#define MDOC_SYNPRETTY	 (1 << 4)  /* SYNOPSIS-style formatting. */
-#define MDOC_BROKEN	 (1 << 5)  /* Must validate parent when ending. */
-#define	MDOC_DELIMO	 (1 << 6)
-#define	MDOC_DELIMC	 (1 << 7)
-#define	MAN_VALID	  MDOC_VALID
-#define	MAN_EOS		  MDOC_EOS
-#define	MAN_LINE	  MDOC_LINE
+#define	NODE_VALID	 (1 << 0)  /* Has been validated. */
+#define	NODE_ENDED	 (1 << 1)  /* Gone past body end mark. */
+#define	NODE_EOS	 (1 << 2)  /* At sentence boundary. */
+#define	NODE_LINE	 (1 << 3)  /* First macro/text on line. */
+#define	NODE_SYNPRETTY	 (1 << 4)  /* SYNOPSIS-style formatting. */
+#define	NODE_BROKEN	 (1 << 5)  /* Must validate parent when ending. */
+#define	NODE_DELIMO	 (1 << 6)
+#define	NODE_DELIMC	 (1 << 7)
 #define	NODE_NOSRC	 (1 << 8)  /* Generated node, not in input file. */
 #define	NODE_NOPRT	 (1 << 9)  /* Shall not print anything. */
 	int		  prev_font; /* Before entering this node. */

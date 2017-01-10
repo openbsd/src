@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.146 2016/08/20 14:43:39 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.147 2017/01/10 13:46:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -138,8 +138,8 @@ mdoc_endbody_alloc(struct roff_man *mdoc, int line, int pos, int tok,
 {
 	struct roff_node *p;
 
-	body->flags |= MDOC_ENDED;
-	body->parent->flags |= MDOC_ENDED;
+	body->flags |= NODE_ENDED;
+	body->parent->flags |= NODE_ENDED;
 	p = roff_node_alloc(mdoc, line, pos, ROFFT_BODY, tok);
 	p->body = body;
 	p->norm = body->norm;
@@ -290,7 +290,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 		 * behaviour that we want to work around it.
 		 */
 		roff_elem_alloc(mdoc, line, offs, MDOC_sp);
-		mdoc->last->flags |= MDOC_VALID | MDOC_ENDED;
+		mdoc->last->flags |= NODE_VALID | NODE_ENDED;
 		mdoc->next = ROFF_NEXT_SIBLING;
 		return 1;
 	}
@@ -309,7 +309,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 	assert(buf < end);
 
 	if (mandoc_eos(buf+offs, (size_t)(end-buf-offs)))
-		mdoc->last->flags |= MDOC_EOS;
+		mdoc->last->flags |= NODE_EOS;
 	return 1;
 }
 

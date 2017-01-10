@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.73 2016/01/08 17:48:04 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.74 2017/01/10 13:46:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -209,14 +209,14 @@ print_man_node(MAN_ARGS)
 			print_paragraph(h);
 			return;
 		}
-		if (n->flags & MAN_LINE && (*n->string == ' ' ||
+		if (n->flags & NODE_LINE && (*n->string == ' ' ||
 		    (n->prev != NULL && mh->fl & MANH_LITERAL &&
 		     ! (h->flags & HTML_NONEWLINE))))
 			print_otag(h, TAG_BR, 0, NULL);
 		print_text(h, n->string);
 		return;
 	case ROFFT_EQN:
-		if (n->flags & MAN_LINE)
+		if (n->flags & NODE_LINE)
 			putchar('\n');
 		print_eqn(h, n->eqn);
 		break;
@@ -510,7 +510,7 @@ man_IP_pre(MAN_ARGS)
 
 	if (MAN_TP == n->tok) {
 		nn = n->child;
-		while (NULL != nn && 0 == (MAN_LINE & nn->flags))
+		while (NULL != nn && 0 == (NODE_LINE & nn->flags))
 			nn = nn->next;
 		while (NULL != nn) {
 			print_man_node(man, nn, mh, h);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.37 2017/01/10 12:54:28 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.38 2017/01/10 13:46:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -157,14 +157,14 @@ print_mdoc(const struct roff_node *n, int indent)
 		}
 
 		putchar(' ');
-		if (MDOC_DELIMO & n->flags)
+		if (NODE_DELIMO & n->flags)
 			putchar('(');
-		if (MDOC_LINE & n->flags)
+		if (NODE_LINE & n->flags)
 			putchar('*');
 		printf("%d:%d", n->line, n->pos + 1);
-		if (MDOC_DELIMC & n->flags)
+		if (NODE_DELIMC & n->flags)
 			putchar(')');
-		if (MDOC_EOS & n->flags)
+		if (NODE_EOS & n->flags)
 			putchar('.');
 		if (NODE_NOSRC & n->flags)
 			printf(" NOSRC");
@@ -250,10 +250,10 @@ print_man(const struct roff_node *n, int indent)
 		for (i = 0; i < indent; i++)
 			putchar(' ');
 		printf("%s (%s) ", p, t);
-		if (MAN_LINE & n->flags)
+		if (NODE_LINE & n->flags)
 			putchar('*');
 		printf("%d:%d", n->line, n->pos + 1);
-		if (MAN_EOS & n->flags)
+		if (NODE_EOS & n->flags)
 			putchar('.');
 		putchar('\n');
 	}
