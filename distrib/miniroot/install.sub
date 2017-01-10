@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.944 2017/01/10 00:15:16 bluhm Exp $
+#	$OpenBSD: install.sub,v 1.945 2017/01/10 17:50:58 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1611,7 +1611,7 @@ install_http() {
 	fi
 
 	rm -f $_idx $_sha $_sig
-	
+
 	install_files "$_url_base" "$_file_list"
 
 	# Remember where we installed from, to tell the cgi server.
