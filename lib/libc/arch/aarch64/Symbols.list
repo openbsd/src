@@ -1,0 +1,15 @@
+__bswap16
+__bswap32
+__mcount
+__multf3
+_fpgetmask
+_fpgetround
+_fpgetsticky
+_fpsetmask
+_fpsetround
+_fpsetsticky
+_mcount
+_memcpy
+_stack
+end
+fabsl
