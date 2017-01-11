@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.221 2017/01/11 22:36:07 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.222 2017/01/11 23:10:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1133,13 +1133,12 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 	struct screen		*s = wp->screen;
 	u_int			 cx, width;
 
-	if (ctx->xoff + ctx->ocx > tty->sx - 1 &&
-	    ctx->ocy == ctx->orlower &&
-	    tty_pane_full_width(tty, ctx))
-		tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
-	else
-		tty_region_off(tty);
-	tty_margin_off(tty);
+	if (ctx->xoff + ctx->ocx > tty->sx - 1 && ctx->ocy == ctx->orlower) {
+		if (tty_pane_full_width(tty, ctx))
+			tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
+		else
+			tty_margin_off(tty);
+	}
 
 	/* Is the cursor in the very last position? */
 	width = ctx->cell->data.width;
