@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.79 2016/12/31 15:52:36 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.80 2017/01/11 08:11:19 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -274,7 +274,7 @@ set -A _KERNV -- $(sysctl -n kern.version |
 	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
 
 (($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
-_FETCH="ftp -MVk ${FTP_KEEPALIVE-0}"
+_FETCH="ftp -MV"
 _OSrev=${_KERNV[0]%\.*}${_KERNV[0]#*\.}
 _PDIR="/var/syspatch"
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
