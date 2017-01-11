@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.81 2016/08/20 20:18:42 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.82 2017/01/11 13:40:24 zhuk Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -221,7 +221,7 @@ ftp_login(const char *host, char *user, char *pass)
 	struct passwd *pw;
 
 #ifndef SMALL
-	if (user == NULL) {
+	if (user == NULL && !anonftp) {
 		if (ruserpass(host, &user, &pass, &acctname) < 0) {
 			code = -1;
 			return (0);
