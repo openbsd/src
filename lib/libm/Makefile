@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.114 2016/09/12 19:47:01 guenther Exp $
+#  $OpenBSD: Makefile,v 1.115 2017/01/11 13:38:13 patrick Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -48,6 +48,8 @@ ARCH_SRCS = e_sqrt.c e_sqrtf.c e_remainder.c e_remainderf.c \
 .elif (${MACHINE_ARCH} == "sh")
 .PATH:	${.CURDIR}/arch/sh
 ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabsf.c
+.elif (${MACHINE_ARCH} == "aarch64")
+.PATH:	${.CURDIR}/arch/aarch64
 .elif (${MACHINE_ARCH} == "arm")
 .PATH:	${.CURDIR}/arch/arm
 .elif (${MACHINE_ARCH} == "m88k")
@@ -134,7 +136,8 @@ SRCS=	${COMMON_SRCS} ${PURE_SRCS}
 CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld80
 SRCS+=		${LONG_SRCS}
 .endif
-.if (${MACHINE_CPU} == "mips64") || (${MACHINE_ARCH} == "sparc64")
+.if (${MACHINE_CPU} == "mips64") || (${MACHINE_ARCH} == "sparc64") || \
+    (${MACHINE_ARCH} == "aarch64")
 .PATH:		${.CURDIR}/src/ld128
 CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld128
 SRCS+=		${LONG_SRCS}
