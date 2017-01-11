@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.20 2016/11/26 19:49:11 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.21 2017/01/11 22:38:10 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2016 $
+.Dd $Mdocdate: January 11 2017 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -58,6 +58,10 @@ and
 rounded to megabytes.
 .It Cm load Ar filename
 Load the configuration from the specified file.
+.It Cm log brief
+Disable verbose debug logging.
+.It Cm log verbose
+Enable verbose debug logging.
 .It Cm reload
 Reload the configuration from the default configuration file.
 .It Cm reset Op Cm all

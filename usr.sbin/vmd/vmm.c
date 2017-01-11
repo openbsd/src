@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.61 2017/01/08 21:23:32 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.62 2017/01/11 22:38:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -82,6 +82,10 @@ uint8_t vcpu_exit_pci(struct vm_run_params *);
 int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void vmm_run(struct privsep *, struct privsep_proc *, void *);
 int vcpu_pic_intr(uint32_t, uint32_t, uint8_t);
+
+int vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
+void vmm_dispatch_vm(int, short, void *);
+void vm_dispatch_vmm(int, short, void *);
 
 static struct vm_mem_range *find_gpa_range(struct vm_create_params *, paddr_t,
     size_t);
@@ -178,7 +182,7 @@ int
 vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep		*ps = p->p_ps;
-	int			 res = 0, cmd = 0;
+	int			 res = 0, cmd = 0, verbose;
 	struct vmd_vm		*vm;
 	struct vm_terminate_params vtp;
 	struct vmop_result	 vmr;
@@ -236,6 +240,18 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 
 		config_getreset(env, imsg);
+		break;
+	case IMSG_CTL_VERBOSE:
+		IMSG_SIZE_CHECK(imsg, &verbose);
+		memcpy(&verbose, imsg->data, sizeof(verbose));
+		log_setverbose(verbose);
+
+		/* Forward message to each VM process */
+		TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+			imsg_compose_event(&vm->vm_iev,
+			    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
+			    -1, &verbose, sizeof(verbose));
+		}
 		break;
 	default:
 		return (-1);
@@ -344,6 +360,128 @@ vmm_shutdown(void)
 		(void)terminate_vm(&vtp);
 		vm_remove(vm);
 	}
+}
+
+int
+vmm_pipe(struct vmd_vm *vm, int fd, void (*cb)(int, short, void *))
+{
+	struct imsgev	*iev = &vm->vm_iev;
+
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+		log_warn("failed to set nonblocking mode on vm pipe");
+		return (-1);
+	}
+
+	imsg_init(&iev->ibuf, fd);
+	iev->handler = cb;
+	iev->data = vm;
+	imsg_event_add(iev);
+
+	return (0);
+}
+
+void
+vmm_dispatch_vm(int fd, short event, void *arg)
+{
+	struct vmd_vm		*vm = arg;
+	struct imsgev		*iev = &vm->vm_iev;
+	struct imsgbuf		*ibuf = &iev->ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsg_read", __func__);
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&iev->ev);
+			return;
+		}
+	}
+
+	if (event & EV_WRITE) {
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
+			fatal("%s: msgbuf_write fd %d", __func__, ibuf->fd);
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&iev->ev);
+			return;
+		}
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsg_get", __func__);
+		if (n == 0)
+			break;
+
+#if DEBUG > 1
+		log_debug("%s: got imsg %d from %s",
+		    __func__, imsg.hdr.type,
+		    vm->vm_params.vmc_params.vcp_name);
+#endif
+
+		switch (imsg.hdr.type) {
+		default:
+			fatalx("%s: got invalid imsg %d from %s",
+			    __func__, imsg.hdr.type,
+			    vm->vm_params.vmc_params.vcp_name);
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(iev);
+}
+
+void
+vm_dispatch_vmm(int fd, short event, void *arg)
+{
+	struct vmd_vm		*vm = arg;
+	struct imsgev		*iev = &vm->vm_iev;
+	struct imsgbuf		*ibuf = &iev->ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+	int			 verbose;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsg_read", __func__);
+		if (n == 0)
+			_exit(0);
+	}
+
+	if (event & EV_WRITE) {
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
+			fatal("%s: msgbuf_write fd %d", __func__, ibuf->fd);
+		if (n == 0)
+			_exit(0);
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsg_get", __func__);
+		if (n == 0)
+			break;
+
+#if DEBUG > 1
+		log_debug("%s: got imsg %d from %s",
+		    __func__, imsg.hdr.type,
+		    vm->vm_params.vmc_params.vcp_name);
+#endif
+
+		switch (imsg.hdr.type) {
+		case IMSG_CTL_VERBOSE:
+			IMSG_SIZE_CHECK(&imsg, &verbose);
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_setverbose(verbose);
+			break;
+		default:
+			fatalx("%s: got invalid imsg %d from %s",
+			    __func__, imsg.hdr.type,
+			    vm->vm_params.vmc_params.vcp_name);
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(iev);
 }
 
 /*
@@ -520,12 +658,14 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		if (read(fds[0], &vcp->vcp_id, sizeof(vcp->vcp_id)) !=
 		    sizeof(vcp->vcp_id))
 			fatal("read vcp id");
-		close(fds[0]);
 
 		if (vcp->vcp_id == 0)
 			goto err;
 
 		*id = vcp->vcp_id;
+
+		if (vmm_pipe(vm, fds[0], vmm_dispatch_vm) == -1)
+			fatal("setup vm pipe");
 
 		return (0);
 	} else {
@@ -548,7 +688,6 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		if (write(fds[1], &vcp->vcp_id, sizeof(vcp->vcp_id)) !=
 		    sizeof(vcp->vcp_id))
 			fatal("write vcp id");
-		close(fds[1]);
 
 		if (ret) {
 			errno = ret;
@@ -593,6 +732,11 @@ start_vm(struct imsg *imsg, uint32_t *id)
 
 		for (i = 0; i < VMM_MAX_NICS_PER_VM; i++)
 			nicfds[i] = vm->vm_ifs[i].vif_fd;
+
+		event_init();
+
+		if (vmm_pipe(vm, fds[1], vm_dispatch_vmm) == -1)
+			fatal("setup vm pipe");
 
 		/* Execute the vcpu run loop(s) for this VM */
 		ret = run_vm(vm->vm_disks, nicfds, vcp, &vrs);
@@ -934,8 +1078,6 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 	if (vcp->vcp_nmemranges == 0 ||
 	    vcp->vcp_nmemranges > VMM_MAX_MEM_RANGES)
 		return (EINVAL);
-
-	event_init();
 
 	tid = calloc(vcp->vcp_ncpus, sizeof(pthread_t));
 	vrp = calloc(vcp->vcp_ncpus, sizeof(struct vm_run_params *));

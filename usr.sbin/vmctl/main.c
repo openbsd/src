@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2016/11/26 18:37:32 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2017/01/11 22:38:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,7 @@ int		 vmm_action(struct parse_result *);
 int		 ctl_console(struct parse_result *, int, char *[]);
 int		 ctl_create(struct parse_result *, int, char *[]);
 int		 ctl_load(struct parse_result *, int, char *[]);
+int		 ctl_log(struct parse_result *, int, char *[]);
 int		 ctl_reload(struct parse_result *, int, char *[]);
 int		 ctl_reset(struct parse_result *, int, char *[]);
 int		 ctl_start(struct parse_result *, int, char *[]);
@@ -60,6 +61,7 @@ struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
 	{ "create",	CMD_CREATE,	ctl_create,	"\"path\" -s size", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"\"path\"" },
+	{ "log",	CMD_LOG,	ctl_log,	"(verbose|brief)" },
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
 	{ "reset",	CMD_RESET,	ctl_reset,	"[all|vms|switches]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
@@ -211,6 +213,11 @@ vmmaction(struct parse_result *res)
 	case CMD_LOAD:
 		imsg_compose(ibuf, IMSG_VMDOP_LOAD, 0, 0, -1,
 		    res->path, strlen(res->path) + 1);
+		done = 1;
+		break;
+	case CMD_LOG:
+		imsg_compose(ibuf, IMSG_CTL_VERBOSE, 0, 0, -1,
+		    &res->verbose, sizeof(res->verbose));
 		done = 1;
 		break;
 	case CMD_RELOAD:
@@ -467,6 +474,22 @@ ctl_load(struct parse_result *res, int argc, char *argv[])
 
 	if ((res->path = strdup(argv[1])) == NULL)
 		err(1, "strdup");
+
+	return (vmmaction(res));
+}
+
+int
+ctl_log(struct parse_result *res, int argc, char *argv[])
+{
+	if (argc != 2)
+		ctl_usage(res->ctl);
+
+	if (strncasecmp("brief", argv[1], strlen(argv[1])) == 0)
+		res->verbose = 0;
+	else if (strncasecmp("verbose", argv[1], strlen(argv[1])) == 0)
+		res->verbose = 2;
+	else
+		ctl_usage(res->ctl);
 
 	return (vmmaction(res));
 }

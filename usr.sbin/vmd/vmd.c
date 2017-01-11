@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.48 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.49 2017/01/11 22:38:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,7 @@ int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep			*ps = p->p_ps;
-	int				 res = 0, ret = 0, cmd = 0;
+	int				 res = 0, ret = 0, cmd = 0, verbose;
 	unsigned int			 v = 0;
 	struct vmop_create_params	 vmc;
 	struct vmop_id			 vid;
@@ -129,6 +129,14 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &v);
 		memcpy(&v, imsg->data, sizeof(v));
 		vmd_reload(v, str);
+		break;
+	case IMSG_CTL_VERBOSE:
+		IMSG_SIZE_CHECK(imsg, &verbose);
+		memcpy(&verbose, imsg->data, sizeof(verbose));
+		log_setverbose(verbose);
+
+		proc_forward_imsg(ps, imsg, PROC_VMM, -1);
+		proc_forward_imsg(ps, imsg, PROC_PRIV, -1);
 		break;
 	default:
 		return (-1);
@@ -647,6 +655,10 @@ vm_stop(struct vmd_vm *vm, int keeptty)
 
 	vm->vm_running = 0;
 
+	if (vm->vm_iev.ibuf.fd != -1) {
+		event_del(&vm->vm_iev.ev);
+		close(vm->vm_iev.ibuf.fd);
+	}
 	for (i = 0; i < VMM_MAX_DISKS_PER_VM; i++) {
 		if (vm->vm_disks[i] != -1) {
 			close(vm->vm_disks[i]);
@@ -742,6 +754,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	for (i = 0; i < vcp->vcp_nnics; i++)
 		vm->vm_ifs[i].vif_fd = -1;
 	vm->vm_kernel = -1;
+	vm->vm_iev.ibuf.fd = -1;
 
 	if (++env->vmd_nvm == 0)
 		fatalx("too many vms");
