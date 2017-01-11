@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.688 2017/01/11 14:56:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.689 2017/01/11 16:05:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1152,6 +1152,8 @@ struct tty {
 	struct event	 key_timer;
 	struct tty_key	*key_tree;
 };
+#define TTY_TYPES \
+	{ "VT100", "VT101", "VT102", "VT220", "VT320", "VT420", "UNKNOWN" }
 
 /* TTY command context. */
 struct tty_ctx {
