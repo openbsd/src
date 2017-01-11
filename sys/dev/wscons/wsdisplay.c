@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.125 2016/11/07 00:26:33 guenther Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.126 2017/01/11 08:21:33 fcambus Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -935,7 +935,7 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct proc *p)
 #ifdef HAVE_WSMOUSED_SUPPORT
 	/* remove the selection at logout */
 	if (sc->sc_copybuffer != NULL)
-		bzero(sc->sc_copybuffer, sc->sc_copybuffer_size);
+		explicit_bzero(sc->sc_copybuffer, sc->sc_copybuffer_size);
 	CLR(sc->sc_flags, SC_PASTE_AVAIL);
 #endif
 
