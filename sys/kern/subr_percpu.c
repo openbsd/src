@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.5 2016/10/27 09:40:20 dlg Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.6 2017/01/11 17:46:28 bluhm Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -181,10 +181,10 @@ counters_read(struct cpumem *cm, uint64_t *output, unsigned int n)
 			/* the generation number is odd during an update */
 			while (enter & 1) {
 				yield();
-				membar_consumer();
 				enter = *gen;
 			}
 
+			membar_consumer();
 			for (i = 0; i < n; i++)
 				temp[i] = counters[i];
 
@@ -213,12 +213,13 @@ counters_zero(struct cpumem *cm, unsigned int n)
 	uint64_t *counters;
 	unsigned int i;
 
-	n++; /* zero the generation numbers too */
-
 	counters = cpumem_first(&cmi, cm);
 	do {
 		for (i = 0; i < n; i++)
 			counters[i] = 0;
+		/* zero the generation numbers too */
+		membar_producer();
+		counters[i] = 0;
 
 		counters = cpumem_next(&cmi, cm);
 	} while (counters != NULL);
@@ -334,4 +335,3 @@ counters_zero(struct cpumem *cm, unsigned int n)
 }
 
 #endif /* MULTIPROCESSOR */
-
