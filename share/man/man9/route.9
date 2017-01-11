@@ -1,4 +1,4 @@
-.\"     $OpenBSD: route.9,v 1.16 2015/11/23 17:53:57 jmc Exp $
+.\"     $OpenBSD: route.9,v 1.17 2017/01/11 15:09:52 rzalamena Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,52 +15,38 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
-.Dt RT_LOOKUP 9
+.Dd $Mdocdate: January 11 2017 $
+.Dt RT_SETGATE 9
 .Os
 .Sh NAME
-.Nm rt_lookup ,
 .Nm rt_setgate ,
 .Nm rtredirect ,
 .Nm rtdeletemsg
 .Nd kernel routing interface
 .Sh SYNOPSIS
 .In net/route.h
-.Ft struct rtentry *
-.Fn rt_lookup "struct sockaddr *dst" "struct sockaddr *mask" "u_int tableid"
 .Ft int
-.Fn rt_setgate "struct rtentry *rt0" "struct sockaddr *dst" \
-"struct sockaddr *gate" "u_int tableid"
+.Fn rt_setgate "struct rtentry *rt" "struct sockaddr *gate" "u_int tableid"
 .Ft void
 .Fn rtredirect "struct sockaddr *dst" "struct sockaddr *gateway" \
-"struct sockaddr *netmask" "int flags" "struct sockaddr *src" \
-"struct rtentry **rtp" "u_int rdomain"
+"struct sockaddr *src" "struct rtentry **rtp" "unsigned int rdomain"
 .Ft int
-.Fn rtdeletemsg "struct rtentry *rt" "u_int tableid"
+.Fn rtdeletemsg "struct rtentry *rt" "struct ifnet *ifp" "u_int tableid"
 .Sh DESCRIPTION
 Routing entries describe the routes to be taken by packets in a router.
 .Bl -tag -width Ds
-.It Fn rt_lookup "struct sockaddr *dst" "struct sockaddr *mask" "u_int tableid"
-Return pointer to routing entry corresponding to address
-.Fa dst
-with a mask of
-.Fa mask
-from table
-.Fa tableid .
-.It Fn rt_setgate "struct rtentry *rt0" "struct sockaddr *dst" \
-"struct sockaddr *gate" "u_int tableid"
+.It Fn rt_setgate "struct rtentry *rt" "struct sockaddr *gate" "u_int tableid"
 Set the address of the gateway for routes described by
-.Fa rt0
+.Fa rt
 to
-.Fa gateway .
+.Fa gate .
 If memory must be allocated to hold the gateway address,
 the address for which
-.Fa rt0
+.Fa rt
 describes routes will be copied from
-.Fa dst .
+.Fa gate .
 .It Fn rtredirect "struct sockaddr *dst" "struct sockaddr *gateway" \
-"struct sockaddr *netmask" "int flags" "struct sockaddr *src" \
-"struct rtentry **rtp" "u_int rdomain"
+"struct sockaddr *src" "struct rtentry **rtp" "unsigned int rdomain"
 Redirect routes to
 .Fa dst
 through
@@ -73,7 +59,7 @@ If
 is not NULL,
 it will be populated by the routing entry corresponding to
 .Fa dst .
-.It Fn rtdeletemsg "struct rtentry *rt" "u_int tableid"
+.It Fn rtdeletemsg "struct rtentry *rt" "struct ifnet *ifp" "u_int tableid"
 Delete routing table entry
 .Fa rt
 from table
