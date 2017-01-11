@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.76 2016/12/30 13:49:34 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.77 2017/01/11 14:56:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -947,8 +947,8 @@ options_table_print_entry(const struct options_table_entry *oe,
 		xsnprintf(out, sizeof out, "%lld", o->num);
 		break;
 	case OPTIONS_TABLE_KEY:
-		xsnprintf(out, sizeof out, "%s",
-		    key_string_lookup_key(o->num));
+		s = key_string_lookup_key(o->num);
+		xsnprintf(out, sizeof out, "%s", s);
 		break;
 	case OPTIONS_TABLE_COLOUR:
 		s = colour_tostring(o->num);

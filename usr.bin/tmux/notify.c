@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.19 2016/10/16 22:18:04 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.20 2017/01/11 14:56:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -76,6 +76,8 @@ static enum cmd_retval
 notify_callback(struct cmdq_item *item, void *data)
 {
 	struct notify_entry	*ne = data;
+
+	log_debug("%s: %s", __func__, ne->name);
 
 	if (strcmp(ne->name, "window-layout-changed") == 0)
 		control_notify_window_layout_changed(ne->window);

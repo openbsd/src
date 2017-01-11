@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.687 2017/01/09 21:03:25 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.688 2017/01/11 14:56:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -654,7 +654,7 @@ struct options_entry {
 	long long		 num;
 	struct grid_cell	 style;
 
-	RB_ENTRY(options_entry) entry;
+	RB_ENTRY(options_entry)	 entry;
 };
 
 /* Scheduled job. */
