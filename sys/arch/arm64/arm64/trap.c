@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.3 2016/12/26 21:30:10 jca Exp $ */
+/* $OpenBSD: trap.c,v 1.4 2017/01/11 13:00:49 patrick Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -166,7 +166,7 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 
 	va = trunc_page(far);
 	if (exe)
-		access_type = PROT_READ;
+		access_type = PROT_EXEC;
 	else
 		access_type = ((esr >> 6) & 1) ? PROT_WRITE : PROT_READ;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.4 2017/01/11 09:32:31 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.5 2017/01/11 13:00:49 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -573,7 +573,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * Insert into table, if this mapping said it needed to be mapped
 	 * now.
 	 */
-	if (flags & (PROT_READ|PROT_WRITE|PMAP_WIRED)) {
+	if (flags & (PROT_READ|PROT_WRITE|PROT_EXEC|PMAP_WIRED)) {
 		pte_insert(pted);
 	}
 
@@ -841,7 +841,7 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	}
 
 	pted->pted_pte = pa & PTE_RPGN;
-	pted->pted_pte |= (flags & (PROT_READ|PROT_WRITE)) | (prot & PROT_EXEC);
+	pted->pted_pte |= flags & (PROT_READ|PROT_WRITE|PROT_EXEC);
 }
 
 
@@ -1810,18 +1810,17 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	    (pted->pted_va & PROT_WRITE)) { /* but is supposedly allowed */
 
 		/*
-		 * Page modified emulation. A write always
-		 * includes a reference.
+		 * Page modified emulation. A write always includes
+		 * a reference.  This means that we can enable read and
+		 * exec as well, akin to the page reference emulation.
 		 */
 		pg->pg_flags |= PG_PMAP_MOD;
 		pg->pg_flags |= PG_PMAP_REF;
 
-		/* Thus, enable read and write. */
-		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_WRITE));
-
-		pted->pted_pte |= PROT_WRITE;
-		*pl3 &= ~ATTR_AP(2);
-		*pl3 |= ATTR_AF;
+		/* Thus, enable read, write and exec. */
+		pted->pted_pte |=
+		    (pted->pted_va & (PROT_READ|PROT_WRITE|PROT_EXEC));
+		pte_insert(pted);
 
 		/* Flush tlb. */
 		ttlb_flush(pm, va & PTE_RPGN);
@@ -1832,18 +1831,15 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	    (pted->pted_va & PROT_EXEC)) { /* but is supposedly allowed */
 
 		/*
-		 * Exec always includes a read/reference.
+		 * Exec always includes a reference. Since we now know
+		 * the page has been accesed, we can enable read as well
+		 * if UVM allows it.
 		 */
 		pg->pg_flags |= PG_PMAP_REF;
 
 		/* Thus, enable read and exec. */
 		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
-		if (pted->pted_pmap == pmap_kernel()) {
-			*pl3 &= ~ATTR_PXN;
-		} else {
-			*pl3 &= ~ATTR_UXN;
-		}
-		*pl3 |= ATTR_AF;
+		pte_insert(pted);
 
 		/* Flush tlb. */
 		ttlb_flush(pm, va & PTE_RPGN);
@@ -1854,13 +1850,15 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	    (pted->pted_va & PROT_READ)) { /* but is supposedly allowed */
 
 		/*
-		 * Page referenced emulation.
+		 * Page referenced emulation. Since we now know the page
+		 * has been accessed, we can enable exec as well if UVM
+		 * allows it.
 		 */
 		pg->pg_flags |= PG_PMAP_REF;
 
-		/* Thus, enable read. */
-		pted->pted_pte |= (pted->pted_va & PROT_READ);
-		*pl3 |= ATTR_AF;
+		/* Thus, enable read and exec. */
+		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
+		pte_insert(pted);
 
 		/* Flush tlb. */
 		ttlb_flush(pm, pted->pted_va & PTE_RPGN);
@@ -1990,7 +1988,7 @@ int pmap_clear_reference(struct vm_page *pg)
 		pted->pted_pte &= ~PROT_MASK;
 		*pl3  |= ATTR_AP(2);	// turns of write as well !?!?
 		*pl3  &= ~ATTR_AF;
-		pted->pted_pte &= ~PROT_WRITE|PROT_READ;
+		pted->pted_pte &= ~PROT_WRITE|PROT_READ|PROT_EXEC;
 
 		ttlb_flush(pted->pted_pmap, pted->pted_va & PTE_RPGN);
 	}
