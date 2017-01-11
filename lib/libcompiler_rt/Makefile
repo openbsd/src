@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2016/09/19 12:19:34 pascal Exp $
+# $OpenBSD: Makefile,v 1.4 2017/01/11 14:18:17 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -163,6 +163,20 @@ SRCS+=	${file}.S
 SRCS+=	${file}.c
 .	endif
 .endfor
+
+.if ${RTARCH} == "aarch64"
+SRCS+=	comparetf2.c \
+	extenddftf2.c \
+	extendsftf2.c \
+	trunctfdf2.c \
+	trunctfsf2.c \
+	fixtfdi.c \
+	fixtfsi.c \
+	floatditf.c \
+	floatsitf.c \
+	floatunsitf.c \
+	multc3.c
+.endif
 
 .if ${RTARCH} == "arm"
 SRCS+=	aeabi_cdcmp.S \
