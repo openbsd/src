@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.205 2016/12/07 09:16:13 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.206 2017/01/11 22:36:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -758,7 +758,7 @@ server_client_handle_key(struct client *c, key_code key)
 		wp = w->active;
 
 	/* Forward mouse keys if disabled. */
-	if (key == KEYC_MOUSE && !options_get_number(s->options, "mouse"))
+	if (KEYC_IS_MOUSE(key) && !options_get_number(s->options, "mouse"))
 		goto forward;
 
 	/* Treat everything as a regular key when pasting is detected. */
