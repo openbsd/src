@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.47 2016/12/22 15:14:05 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.48 2017/01/11 10:58:17 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -5485,11 +5485,6 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	struct switch_flow_classify	 swfcl = {};
 	struct swofp_pipline_desc	 swpld = { .swpld_swfcl = &swfcl };
 
-	/*
-	 * Ensure continuous memory space head to tail of action list
-	 */
-	if ((m = m_pullup(m, sizeof(*pout))) == NULL)
-		return (ENOBUFS);
 	pout = mtod(m, struct ofp_packet_out *);
 	ohlen = ntohs(pout->pout_oh.oh_length);
 	if (ohlen < sizeof(*pout) ||
@@ -5500,11 +5495,6 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	}
 
 	al_len = ntohs(pout->pout_actions_len);
-
-	if ((m = m_pullup(m, (sizeof(*pout) + al_len))) == NULL)
-		return (ENOBUFS);
-	pout = mtod(m, struct ofp_packet_out *);
-
 	al_start = offsetof(struct ofp_packet_out, pout_actions);
 
        /* Validate actions before anything else. */
