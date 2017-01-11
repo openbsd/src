@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.105 2017/01/06 14:01:19 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.106 2017/01/11 13:17:35 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -82,39 +82,43 @@
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
 
+/* #define MCAST_DEBUG */
+
+#ifdef MCAST_DEBUG
+#define DPRINTF(fmt, args...)						\
+	do {								\
+		printf("%s:%d " fmt "\n", __func__, __LINE__, ## args);	\
+	} while (0)
+#else
+#define DPRINTF(fmt, args...)			\
+	do { } while (0)
+#endif
+
 /*
  * Globals.  All but ip_mrouter and ip_mrtproto could be static,
  * except for netstat or debugging purposes.
  */
 struct socket	*ip_mrouter[RT_TABLEID_MAX];
+struct rttimer_queue *mrouterq[RT_TABLEID_MAX];
+uint64_t	 mrt_count[RT_TABLEID_MAX];
 int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
 
-#define NO_RTE_FOUND	0x1
-#define RTE_FOUND	0x2
-
-u_int32_t _mfchash(unsigned int, struct in_addr, struct in_addr);
-
-#define	MFCHASH(r, a, g) _mfchash((r), (a), (g))
-LIST_HEAD(mfchashhdr, mfc) *mfchashtbl[RT_TABLEID_MAX];
-u_long	mfchash[RT_TABLEID_MAX];
-SIPHASH_KEY mfchashkey[RT_TABLEID_MAX];
-
-u_char		nexpire[RT_TABLEID_MAX][MFCTBLSIZ];
 struct mrtstat	mrtstat;
 
-#define		EXPIRE_TIMEOUT	250		/* 4x / second */
-#define		UPCALL_EXPIRE	6		/* number of timeouts */
-struct timeout	expire_upcalls_ch[RT_TABLEID_MAX];
-
+struct rtentry	*mfc_find(struct ifnet *, struct in_addr *,
+    struct in_addr *, unsigned int);
 int get_sg_cnt(unsigned int, struct sioc_sg_req *);
 int get_vif_cnt(unsigned int, struct sioc_vif_req *);
+int mrt_rtwalk_mfcsysctl(struct rtentry *, void *, unsigned int);
 int ip_mrouter_init(struct socket *, struct mbuf *);
+int mrouter_rtwalk_delete(struct rtentry *, void *, unsigned int);
 int get_version(struct mbuf *);
 int add_vif(struct socket *, struct mbuf *);
 int del_vif(struct socket *, struct mbuf *);
-void update_mfc_params(struct mfc *, struct mfcctl2 *);
-void init_mfc_params(struct mfc *, struct mfcctl2 *);
-void expire_mfc(struct mfc *);
+void update_mfc_params(struct mfcctl2 *, unsigned int);
+void mfc_expire_route(struct rtentry *, struct rttimer *);
+int mfc_add(struct mfcctl2 *, struct in_addr *, struct in_addr *,
+    int, unsigned int);
 int add_mfc(struct socket *, struct mbuf *);
 int del_mfc(struct socket *, struct mbuf *);
 int set_api_config(struct socket *, struct mbuf *); /* chose API capabilities */
@@ -122,9 +126,11 @@ int get_api_support(struct mbuf *);
 int get_api_config(struct mbuf *);
 int socket_send(struct socket *, struct mbuf *,
 			    struct sockaddr_in *);
-void expire_upcalls(void *);
-int ip_mdq(struct mbuf *, struct ifnet *, struct mfc *);
+int ip_mdq(struct mbuf *, struct ifnet *, struct rtentry *);
 struct ifnet *if_lookupbyvif(vifi_t, unsigned int);
+struct rtentry *rt_mcast_add(struct ifnet *, struct sockaddr *,
+    struct sockaddr *);
+int rt_mcast_del(struct rtentry *, unsigned int);
 
 /*
  * Rate limit for assert notification messages, in usec
@@ -146,24 +152,32 @@ static u_int32_t mrt_api_config = 0;
  * Statistics are updated by the caller if needed
  * (mrtstat.mrts_mfc_lookups and mrtstat.mrts_mfc_misses)
  */
-static struct mfc *
-mfc_find(unsigned int rtableid, struct in_addr *o, struct in_addr *g)
+struct rtentry *
+mfc_find(struct ifnet *ifp, struct in_addr *origin, struct in_addr *group,
+    unsigned int rtableid)
 {
-	struct mfc *rt;
-	u_int32_t hash;
+	struct rtentry		*rt;
+	struct sockaddr_in	 msin;
 
-	if (mfchashtbl[rtableid] == NULL)
+	memset(&msin, 0, sizeof(msin));
+	msin.sin_len = sizeof(msin);
+	msin.sin_family = AF_INET;
+	msin.sin_addr = *group;
+
+	rt = rtalloc(sintosa(&msin), 0, rtableid);
+	if (rt == NULL)
 		return (NULL);
 
-	hash = MFCHASH(rtableid, *o, *g);
-	LIST_FOREACH(rt, &mfchashtbl[rtableid][hash], mfc_hash) {
-		if (in_hosteq(rt->mfc_origin, *o) &&
-		    in_hosteq(rt->mfc_mcastgrp, *g) &&
-		    (rt->mfc_stall == NULL))
-			break;
-	}
+	/* Return first ocurrence if interface is not specified. */
+	if (ifp == NULL)
+		return (rt);
 
-	return (rt);
+	do {
+		if (rt->rt_ifidx == ifp->if_index)
+			return (rt);
+	} while ((rt = rtable_iterate(rt)) != NULL);
+
+	return (NULL);
 }
 
 /*
@@ -304,16 +318,22 @@ mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
 int
 get_sg_cnt(unsigned int rtableid, struct sioc_sg_req *req)
 {
-	struct mfc *rt;
+	struct rtentry *rt;
+	struct mfc *mfc;
 
-	rt = mfc_find(rtableid, &req->src, &req->grp);
+	rt = mfc_find(NULL, &req->src, &req->grp, rtableid);
 	if (rt == NULL) {
 		req->pktcnt = req->bytecnt = req->wrong_if = 0xffffffff;
 		return (EADDRNOTAVAIL);
 	}
-	req->pktcnt = rt->mfc_pkt_cnt;
-	req->bytecnt = rt->mfc_byte_cnt;
-	req->wrong_if = rt->mfc_wrong_if;
+
+	req->pktcnt = req->bytecnt = req->wrong_if = 0;
+	do {
+		mfc = (struct mfc *)rt->rt_llinfo;
+		req->pktcnt += mfc->mfc_pkt_cnt;
+		req->bytecnt += mfc->mfc_byte_cnt;
+		req->wrong_if += mfc->mfc_wrong_if;
+	} while ((rt = rtable_iterate(rt)) != NULL);
 
 	return (0);
 }
@@ -385,50 +405,83 @@ mrt_sysctl_vif(void *oldp, size_t *oldlenp)
 	return (0);
 }
 
+struct mfcsysctlarg {
+	uint8_t		*msa_start;
+	uint8_t		*msa_cur;
+	uint8_t		*msa_end;
+};
+
+int
+mrt_rtwalk_mfcsysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
+{
+	struct mfc		*mfc = (struct mfc *)rt->rt_llinfo;
+	struct mfcsysctlarg	*msa = (struct mfcsysctlarg *)arg;
+	struct ifnet		*ifp;
+	struct vif		*v;
+	struct mfcinfo		*minfo;
+	int			 error;
+
+	/* Skip non-multicast routes. */
+	if (ISSET(rt->rt_flags, RTF_HOST | RTF_MULTICAST) !=
+	    (RTF_HOST | RTF_MULTICAST))
+		return (0);
+
+	/* Skip route with invalid interfaces. */
+	if ((ifp = if_get(rt->rt_ifidx)) == NULL)
+		return (0);
+	if ((v = (struct vif *)ifp->if_mcast) == NULL) {
+		if_put(ifp);
+		return (0);
+	}
+
+	for (minfo = (struct mfcinfo *)msa->msa_start;
+	     (uint8_t *)minfo <= (msa->msa_end - sizeof(*minfo));
+	     minfo++) {
+		/* Find a new entry or update old entry. */
+		if (!((minfo->mfc_origin.s_addr ==
+		    satosin(rt->rt_gateway)->sin_addr.s_addr &&
+		    minfo->mfc_mcastgrp.s_addr ==
+		    satosin(rt_key(rt))->sin_addr.s_addr) ||
+		    (minfo->mfc_origin.s_addr == 0 &&
+		    minfo->mfc_mcastgrp.s_addr == 0)))
+			continue;
+
+		minfo->mfc_origin = satosin(rt->rt_gateway)->sin_addr;
+		minfo->mfc_mcastgrp = satosin(rt_key(rt))->sin_addr;
+		minfo->mfc_parent = mfc->mfc_parent;
+		minfo->mfc_pkt_cnt += mfc->mfc_pkt_cnt;
+		minfo->mfc_byte_cnt += mfc->mfc_byte_cnt;
+		minfo->mfc_ttls[v->v_id] = mfc->mfc_ttl;
+	}
+
+	if_put(ifp);
+
+	if ((msa->msa_cur + sizeof(minfo)) >= msa->msa_end)
+		return (ENOMEM);
+
+	if ((error = copyout(&minfo, msa->msa_cur, sizeof(minfo))) != 0)
+		return (error);
+
+	msa->msa_cur += sizeof(minfo);
+
+	return (0);
+}
+
 int
 mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
 {
-	caddr_t where = oldp;
-	size_t needed, given;
-	u_long i;
-	unsigned int rtableid;
-	struct mfc *m;
-	struct mfcinfo minfo;
+	struct mfcsysctlarg	 msa = { oldp, oldp, oldp + *oldlenp };
+	unsigned int		 rtableid;
+	int			 error;
 
-	given = *oldlenp;
-	needed = 0;
+	memset(oldp, 0, *oldlenp);
+
 	for (rtableid = 0; rtableid < RT_TABLEID_MAX; rtableid++) {
-		if (mfchashtbl[rtableid] == NULL)
-			continue;
-
-		for (i = 0; i < MFCTBLSIZ; ++i) {
-			LIST_FOREACH(m, &mfchashtbl[rtableid][i], mfc_hash) {
-				minfo.mfc_origin = m->mfc_origin;
-				minfo.mfc_mcastgrp = m->mfc_mcastgrp;
-				minfo.mfc_parent = m->mfc_parent;
-				minfo.mfc_pkt_cnt = m->mfc_pkt_cnt;
-				minfo.mfc_byte_cnt = m->mfc_byte_cnt;
-				memcpy(minfo.mfc_ttls, m->mfc_ttls, MAXVIFS);
-
-				needed += sizeof(minfo);
-				if (where && needed <= given) {
-					int error;
-
-					error = copyout(&minfo, where,
-					    sizeof(minfo));
-					if (error)
-						return (error);
-					where += sizeof(minfo);
-				}
-			}
-		}
+		error = rtable_walk(rtableid, AF_INET, mrt_rtwalk_mfcsysctl,
+		    &msa);
+		if (error != 0)
+			return (error);
 	}
-	if (where) {
-		*oldlenp = needed;
-		if (given < needed)
-			return (ENOMEM);
-	} else
-		*oldlenp = (11 * needed) / 10;
 
 	return (0);
 }
@@ -454,33 +507,27 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	if (*v != 1)
 		return (EINVAL);
 
-	if (ip_mrouter[rtableid] != NULL)
+	if (ip_mrouter[rtableid] != NULL ||
+	    mrouterq[rtableid] != NULL)
 		return (EADDRINUSE);
 
 	ip_mrouter[rtableid] = so;
-
-	mfchashtbl[rtableid] =
-	    hashinit(MFCTBLSIZ, M_MRTABLE, M_WAITOK, &mfchash[rtableid]);
-	arc4random_buf(&mfchashkey[rtableid], sizeof(mfchashkey[rtableid]));
-	memset(nexpire[rtableid], 0, sizeof(nexpire[rtableid]));
-
-	timeout_set_proc(&expire_upcalls_ch[rtableid], expire_upcalls,
-	    &inp->inp_rtableid);
-	timeout_add_msec(&expire_upcalls_ch[rtableid], EXPIRE_TIMEOUT);
+	mrouterq[rtableid] = rt_timer_queue_create(MCAST_EXPIRE_FREQUENCY);
 
 	return (0);
 }
 
-u_int32_t
-_mfchash(unsigned int rtableid, struct in_addr o, struct in_addr g)
+int
+mrouter_rtwalk_delete(struct rtentry *rt, void *arg, unsigned int rtableid)
 {
-	SIPHASH_CTX ctx;
+	/* Skip non-multicast routes. */
+	if (ISSET(rt->rt_flags, RTF_HOST | RTF_MULTICAST) !=
+	    (RTF_HOST | RTF_MULTICAST))
+		return (0);
 
-	SipHash24_Init(&ctx, &mfchashkey[rtableid]);
-	SipHash24_Update(&ctx, &o.s_addr, sizeof(o.s_addr));
-	SipHash24_Update(&ctx, &g.s_addr, sizeof(g.s_addr));
-
-	return (SipHash24_End(&ctx) & mfchash[rtableid]);
+	/* Remove all timers related to this route. */
+	rt_timer_remove_all(rt);
+	return (rt_mcast_del(rt, rtableid));
 }
 
 /*
@@ -491,10 +538,12 @@ ip_mrouter_done(struct socket *so)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	struct ifnet *ifp;
-	int i;
 	unsigned int rtableid = inp->inp_rtableid;
 
 	splsoftassert(IPL_SOFTNET);
+
+	/* Delete all remaining installed multicast routes. */
+	rtable_walk(rtableid, AF_INET, mrouter_rtwalk_delete, NULL);
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rtableid)
@@ -505,26 +554,10 @@ ip_mrouter_done(struct socket *so)
 
 	mrt_api_config = 0;
 
-	timeout_del(&expire_upcalls_ch[rtableid]);
-
-	/*
-	 * Free all multicast forwarding cache entries.
-	 */
-	for (i = 0; i < MFCTBLSIZ; i++) {
-		struct mfc *rt, *nrt;
-
-		for (rt = LIST_FIRST(&mfchashtbl[rtableid][i]); rt; rt = nrt) {
-			nrt = LIST_NEXT(rt, mfc_hash);
-
-			expire_mfc(rt);
-		}
-	}
-
-	memset(nexpire[rtableid], 0, sizeof(nexpire[rtableid]));
-	hashfree(mfchashtbl[rtableid], MFCTBLSIZ, M_MRTABLE);
-	mfchashtbl[rtableid] = NULL;
-
+	rt_timer_queue_destroy(mrouterq[rtableid]);
+	mrouterq[rtableid] = NULL;
 	ip_mrouter[rtableid] = NULL;
+	mrt_count[rtableid] = 0;
 
 	return (0);
 }
@@ -547,7 +580,6 @@ set_api_config(struct socket *so, struct mbuf *m)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	struct ifnet *ifp;
-	int i;
 	u_int32_t *apival;
 	unsigned int rtableid = inp->inp_rtableid;
 
@@ -571,14 +603,9 @@ set_api_config(struct socket *so, struct mbuf *m)
 		*apival = 0;
 		return (EPERM);
 	}
-	for (i = 0; i < MFCTBLSIZ; i++) {
-		if (mfchashtbl[rtableid] == NULL)
-			break;
-
-		if (LIST_FIRST(&mfchashtbl[rtableid][i]) != NULL) {
-			*apival = 0;
-			return (EPERM);
-		}
+	if (mrt_count[rtableid] > 0) {
+		*apival = 0;
+		return (EPERM);
 	}
 
 	mrt_api_config = *apival & mrt_api_support;
@@ -733,73 +760,195 @@ vif_delete(struct ifnet *ifp)
 	free(v, M_MRTABLE, sizeof(*v));
 }
 
-/*
- * update an mfc entry without resetting counters and S,G addresses.
- */
 void
-update_mfc_params(struct mfc *rt, struct mfcctl2 *mfccp)
+mfc_expire_route(struct rtentry *rt, struct rttimer *rtt)
 {
-	int i;
+	struct mfc	*mfc = (struct mfc *)rt->rt_llinfo;
+	unsigned int	 rtableid = rtt->rtt_tableid;
 
-	rt->mfc_parent = mfccp->mfcc_parent;
-	for (i = 0; i < MAXVIFS; i++) {
-		rt->mfc_ttls[i] = mfccp->mfcc_ttls[i];
-		rt->mfc_flags[i] = mfccp->mfcc_flags[i] & mrt_api_config &
-		    MRT_MFC_FLAGS_ALL;
+	DPRINTF("Route domain %d origin %#08X group %#08x interface %d "
+	    "expire %s", rtt->rtt_tableid,
+	    satosin(rt->rt_gateway)->sin_addr.s_addr,
+	    satosin(rt_key(rt))->sin_addr.s_addr,
+	    rt->rt_ifidx, mfc->mfc_expire ? "yes" : "no");
+
+	/* Not expired, add it back to the queue. */
+	if (mfc->mfc_expire == 0) {
+		mfc->mfc_expire = 1;
+		rt_timer_add(rt, mfc_expire_route, mrouterq[rtableid],
+		    rtableid);
+		return;
 	}
+
+	/* Remove all timers related to this route. */
+	rt_timer_remove_all(rt);
+	rt_mcast_del(rt, rtableid);
+}
+
+int
+mfc_add_route(struct ifnet *ifp, struct sockaddr *origin,
+    struct sockaddr *group, struct mfcctl2 *mfccp)
+{
+	struct vif		*v = (struct vif *)ifp->if_mcast;
+	struct rtentry		*rt;
+	struct mfc		*mfc;
+	unsigned int		 rtableid = ifp->if_rdomain;
+
+	rt = rt_mcast_add(ifp, origin, group);
+	if (rt == NULL)
+		return (-1);
+
+	mfc = malloc(sizeof(*mfc), M_MRTABLE, M_NOWAIT | M_ZERO);
+	if (mfc == NULL) {
+		DPRINTF("origin %#08X group %#08X parent %d (%s) "
+		    "malloc failed",
+		    satosin(origin)->sin_addr.s_addr,
+		    satosin(group)->sin_addr.s_addr,
+		    mfccp->mfcc_parent, ifp->if_xname);
+		rt_mcast_del(rt, rtableid);
+		rtfree(rt);
+		return (-1);
+	}
+
+	rt->rt_llinfo = (caddr_t)mfc;
+
+	rt_timer_add(rt, mfc_expire_route, mrouterq[rtableid],
+	    rtableid);
+
+	mfc->mfc_parent = mfccp->mfcc_parent;
+	mfc->mfc_pkt_cnt = 0;
+	mfc->mfc_byte_cnt = 0;
+	mfc->mfc_wrong_if = 0;
+	mfc->mfc_ttl = mfccp->mfcc_ttls[v->v_id];
+	mfc->mfc_flags = mfccp->mfcc_flags[v->v_id] & mrt_api_config &
+	    MRT_MFC_FLAGS_ALL;
+	mfc->mfc_expire = 0;
+
 	/* set the RP address */
 	if (mrt_api_config & MRT_MFC_RP)
-		rt->mfc_rp = mfccp->mfcc_rp;
+		mfc->mfc_rp = mfccp->mfcc_rp;
 	else
-		rt->mfc_rp = zeroin_addr;
-}
+		mfc->mfc_rp = zeroin_addr;
 
-/*
- * fully initialize an mfc entry from the parameter.
- */
-void
-init_mfc_params(struct mfc *rt, struct mfcctl2 *mfccp)
-{
-	rt->mfc_origin     = mfccp->mfcc_origin;
-	rt->mfc_mcastgrp   = mfccp->mfcc_mcastgrp;
-
-	update_mfc_params(rt, mfccp);
-
-	/* initialize pkt counters per src-grp */
-	rt->mfc_pkt_cnt    = 0;
-	rt->mfc_byte_cnt   = 0;
-	rt->mfc_wrong_if   = 0;
-	timerclear(&rt->mfc_last_assert);
+	return (0);
 }
 
 void
-expire_mfc(struct mfc *rt)
+update_mfc_params(struct mfcctl2 *mfccp, unsigned int rtableid)
 {
-	struct rtdetq *rte, *nrte;
+	struct rtentry		*rt;
+	struct mfc		*mfc;
+	struct ifnet		*ifp;
+	int			 i;
+	struct sockaddr_in	 osin, msin;
 
-	for (rte = rt->mfc_stall; rte != NULL; rte = nrte) {
-		nrte = rte->next;
-		m_freem(rte->m);
-		free(rte, M_MRTABLE, 0);
+	memset(&osin, 0, sizeof(osin));
+	osin.sin_len = sizeof(osin);
+	osin.sin_family = AF_INET;
+	osin.sin_addr = mfccp->mfcc_origin;
+
+	memset(&msin, 0, sizeof(msin));
+	msin.sin_len = sizeof(msin);
+	msin.sin_family = AF_INET;
+	msin.sin_addr = mfccp->mfcc_mcastgrp;
+
+	for (i = 0; i < MAXVIFS; i++) {
+		/* Don't add/del upstream routes here. */
+		if (i == mfccp->mfcc_parent)
+			continue;
+
+		/* Test for vif existence and then update the entry. */
+		if ((ifp = if_lookupbyvif(i, rtableid)) == NULL)
+			continue;
+
+		rt = mfc_find(ifp, &mfccp->mfcc_origin,
+		    &mfccp->mfcc_mcastgrp, rtableid);
+
+		/* vif not configured or removed. */
+		if (mfccp->mfcc_ttls[i] == 0) {
+			/* Route doesn't exist, nothing to do. */
+			if (rt == NULL)
+				continue;
+
+			DPRINTF("del route (group %#08X) for vif %d (%s)",
+			    mfccp->mfcc_mcastgrp.s_addr, i, ifp->if_xname);
+			rt_timer_remove_all(rt);
+			rt_mcast_del(rt, rtableid);
+			continue;
+		}
+
+		/* Route exists, look for changes. */
+		if (rt != NULL) {
+			mfc = (struct mfc *)rt->rt_llinfo;
+			/* No new changes to apply. */
+			if (mfccp->mfcc_ttls[i] == mfc->mfc_ttl &&
+			    mfccp->mfcc_parent == mfc->mfc_parent)
+				continue;
+
+			DPRINTF("update route (group %#08X) for vif %d (%s)",
+			    mfccp->mfcc_mcastgrp.s_addr, i, ifp->if_xname);
+			mfc->mfc_ttl = mfccp->mfcc_ttls[i];
+			mfc->mfc_parent = mfccp->mfcc_parent;
+			continue;
+		}
+
+		DPRINTF("add route (group %#08X) for vif %d (%s)",
+		    mfccp->mfcc_mcastgrp.s_addr, i, ifp->if_xname);
+
+		mfc_add_route(ifp, sintosa(&osin), sintosa(&msin), mfccp);
 	}
 
-	LIST_REMOVE(rt, mfc_hash);
-	free(rt, M_MRTABLE, 0);
+	/* Create route for the parent interface. */
+	if ((ifp = if_lookupbyvif(mfccp->mfcc_parent, rtableid)) == NULL) {
+		DPRINTF("failed to find upstream interface %d",
+		    mfccp->mfcc_parent);
+		return;
+	}
+
+	/* We already have a route, nothing to do here. */
+	if (mfc_find(ifp, &mfccp->mfcc_origin,
+	    &mfccp->mfcc_mcastgrp, rtableid) != NULL)
+		return;
+
+	DPRINTF("add upstream route (group %#08X) for if %s",
+	    mfccp->mfcc_mcastgrp.s_addr, ifp->if_xname);
+	mfc_add_route(ifp, sintosa(&osin), sintosa(&msin), mfccp);
 }
 
-/*
- * Add an mfc entry
- */
+int
+mfc_add(struct mfcctl2 *mfcctl2, struct in_addr *origin,
+    struct in_addr *group, int vidx, unsigned int rtableid)
+{
+	struct ifnet		*ifp;
+	struct vif		*v;
+	struct mfcctl2		 mfcctl;
+
+	ifp = if_lookupbyvif(vidx, rtableid);
+	if (ifp == NULL ||
+	    (v = (struct vif *)ifp->if_mcast) == NULL) {
+		DPRINTF("origin %#08X group %#08X parent %d vif doesn't exist",
+		    origin->s_addr, group->s_addr, vidx);
+		return (-1);
+	}
+
+	memset(&mfcctl, 0, sizeof(mfcctl));
+	if (mfcctl2 == NULL) {
+		mfcctl.mfcc_origin = *origin;
+		mfcctl.mfcc_mcastgrp = *group;
+		mfcctl.mfcc_parent = vidx;
+	} else
+		memcpy(&mfcctl, mfcctl2, sizeof(mfcctl));
+
+	update_mfc_params(&mfcctl, rtableid);
+
+	return (0);
+}
+
 int
 add_mfc(struct socket *so, struct mbuf *m)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	struct mfcctl2 mfcctl2;
-	struct mfcctl2 *mfccp;
-	struct mfc *rt;
-	u_int32_t hash = 0;
-	struct rtdetq *rte, *nrte;
-	u_short nstl;
 	int mfcctl_size = sizeof(struct mfcctl);
 	unsigned int rtableid = inp->inp_rtableid;
 
@@ -823,101 +972,20 @@ add_mfc(struct socket *so, struct mbuf *m)
 		memset((caddr_t)&mfcctl2 + sizeof(struct mfcctl), 0,
 		    sizeof(mfcctl2) - sizeof(struct mfcctl));
 	}
-	mfccp = &mfcctl2;
 
-	/* No hash table allocated for this. */
-	if (mfchashtbl[rtableid] == NULL)
-		return (0);
-
-	rt = mfc_find(rtableid, &mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
-
-	/* If an entry already exists, just update the fields */
-	if (rt) {
-		update_mfc_params(rt, mfccp);
-		return (0);
-	}
-
-	/*
-	 * Find the entry for which the upcall was made and update
-	 */
-	nstl = 0;
-	hash = MFCHASH(rtableid, mfccp->mfcc_origin, mfccp->mfcc_mcastgrp);
-	LIST_FOREACH(rt, &mfchashtbl[rtableid][hash], mfc_hash) {
-		if (in_hosteq(rt->mfc_origin, mfccp->mfcc_origin) &&
-		    in_hosteq(rt->mfc_mcastgrp, mfccp->mfcc_mcastgrp) &&
-		    rt->mfc_stall != NULL) {
-			if (nstl++) {
-				log(LOG_ERR, "add_mfc %s o %x g %x "
-				    "p %x dbx %p\n",
-				    "multiple kernel entries",
-				    ntohl(mfccp->mfcc_origin.s_addr),
-				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
-				    mfccp->mfcc_parent, rt->mfc_stall);
-			}
-
-			rte = rt->mfc_stall;
-			init_mfc_params(rt, mfccp);
-			rt->mfc_stall = NULL;
-
-			rt->mfc_expire = 0; /* Don't clean this guy up */
-			nexpire[rtableid][hash]--;
-
-			/* free packets Qed at the end of this entry */
-			for (; rte != NULL; rte = nrte) {
-				nrte = rte->next;
-				if (rte->ifp) {
-					ip_mdq(rte->m, rte->ifp, rt);
-				}
-				m_freem(rte->m);
-				free(rte, M_MRTABLE, 0);
-			}
-		}
-	}
-
-	/*
-	 * It is possible that an entry is being inserted without an upcall
-	 */
-	if (nstl == 0) {
-		/*
-		 * No mfc; make a new one
-		 */
-		LIST_FOREACH(rt, &mfchashtbl[rtableid][hash], mfc_hash) {
-			if (in_hosteq(rt->mfc_origin, mfccp->mfcc_origin) &&
-			    in_hosteq(rt->mfc_mcastgrp, mfccp->mfcc_mcastgrp)) {
-				init_mfc_params(rt, mfccp);
-				if (rt->mfc_expire)
-					nexpire[rtableid][hash]--;
-				rt->mfc_expire = 0;
-				break; /* XXX */
-			}
-		}
-		if (rt == NULL) {	/* no upcall, so make a new entry */
-			rt = malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
-			if (rt == NULL)
-				return (ENOBUFS);
-
-			init_mfc_params(rt, mfccp);
-			rt->mfc_expire	= 0;
-			rt->mfc_stall	= NULL;
-
-			/* insert new entry at head of hash chain */
-			LIST_INSERT_HEAD(&mfchashtbl[rtableid][hash], rt, mfc_hash);
-		}
-	}
+	if (mfc_add(&mfcctl2, &mfcctl2.mfcc_origin, &mfcctl2.mfcc_mcastgrp,
+	    mfcctl2.mfcc_parent, rtableid) == -1)
+		return (EINVAL);
 
 	return (0);
 }
 
-/*
- * Delete an mfc entry
- */
 int
 del_mfc(struct socket *so, struct mbuf *m)
 {
 	struct inpcb *inp = sotoinpcb(so);
+	struct rtentry *rt;
 	struct mfcctl2 mfcctl2;
-	struct mfcctl2 *mfccp;
-	struct mfc *rt;
 	int mfcctl_size = sizeof(struct mfcctl);
 	struct mfcctl *mp = mtod(m, struct mfcctl *);
 	unsigned int rtableid = inp->inp_rtableid;
@@ -936,14 +1004,15 @@ del_mfc(struct socket *so, struct mbuf *m)
 	memset((caddr_t)&mfcctl2 + sizeof(struct mfcctl), 0,
 	    sizeof(mfcctl2) - sizeof(struct mfcctl));
 
-	mfccp = &mfcctl2;
+	DPRINTF("origin %#08X group %#08X rtableid %d",
+	    mfcctl2.mfcc_origin.s_addr, mfcctl2.mfcc_mcastgrp.s_addr, rtableid);
 
-	rt = mfc_find(rtableid, &mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
-	if (rt == NULL)
-		return (EADDRNOTAVAIL);
-
-	LIST_REMOVE(rt, mfc_hash);
-	free(rt, M_MRTABLE, 0);
+	while ((rt = mfc_find(NULL, &mfcctl2.mfcc_origin,
+	    &mfcctl2.mfcc_mcastgrp, rtableid)) != NULL) {
+		/* Remove all timers related to this route. */
+		rt_timer_remove_all(rt);
+		rt_mcast_del(rt, rtableid);
+	}
 
 	return (0);
 }
@@ -980,10 +1049,9 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct vif *v;
-	struct mfc *rt;
+	struct rtentry *rt;
 	static int srctun = 0;
 	struct mbuf *mm;
-	int s;
 	unsigned int rtableid = ifp->if_rdomain;
 
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
@@ -1015,7 +1083,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	 * Determine forwarding vifs from the forwarding cache table
 	 */
 	++mrtstat.mrts_mfc_lookups;
-	rt = mfc_find(rtableid, &ip->ip_src, &ip->ip_dst);
+	rt = mfc_find(NULL, &ip->ip_src, &ip->ip_dst, rtableid);
 
 	/* Entry exists, so forward if necessary */
 	if (rt != NULL) {
@@ -1025,41 +1093,14 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		 * If we don't have a route for packet's origin,
 		 * Make a copy of the packet & send message to routing daemon
 		 */
-
-		struct mbuf *mb0;
-		struct rtdetq *rte;
-		u_int32_t hash;
 		int hlen = ip->ip_hl << 2;
 
+		rtfree(rt);
+
 		++mrtstat.mrts_mfc_misses;
-
 		mrtstat.mrts_no_route++;
-		/*
-		 * Allocate mbufs early so that we don't do extra work if we are
-		 * just going to fail anyway.  Make sure to pullup the header so
-		 * that other people can't step on it.
-		 */
-		rte = malloc(sizeof(*rte), M_MRTABLE, M_NOWAIT);
-		if (rte == NULL)
-			return (ENOBUFS);
-		mb0 = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-		if (mb0 == NULL ||
-		    (mb0 = m_pullup(mb0, hlen)) == NULL) {
-			free(rte, M_MRTABLE, 0);
-			return (ENOBUFS);
-		}
 
-		/* is there an upcall waiting for this flow? */
-		hash = MFCHASH(rtableid, ip->ip_src, ip->ip_dst);
-		LIST_FOREACH(rt, &mfchashtbl[rtableid][hash], mfc_hash) {
-			if (in_hosteq(ip->ip_src, rt->mfc_origin) &&
-			    in_hosteq(ip->ip_dst, rt->mfc_mcastgrp) &&
-			    rt->mfc_stall != NULL)
-				break;
-		}
-
-		if (rt == NULL) {
-			int i;
+		{
 			struct igmpmsg *im;
 
 			/*
@@ -1068,11 +1109,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			 * If none found, drop packet.
 			 */
 			if ((v = (struct vif *)ifp->if_mcast) == NULL)
-				goto non_fatal;
-
-			/* no upcall, so make a new entry */
-			rt = malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
-			if (rt == NULL)
 				goto fail;
 			/*
 			 * Make a copy of the header to send to the user level
@@ -1081,7 +1117,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			mm = m_copym(m, 0, hlen, M_NOWAIT);
 			if (mm == NULL ||
 			    (mm = m_pullup(mm, hlen)) == NULL)
-				goto fail1;
+				goto fail;
 
 			/*
 			 * Send message to routing daemon to install
@@ -1100,123 +1136,42 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 				log(LOG_WARNING, "ip_mforward: ip_mrouter "
 				    "socket queue full\n");
 				++mrtstat.mrts_upq_sockfull;
-			fail1:
-				free(rt, M_MRTABLE, 0);
 			fail:
-				free(rte, M_MRTABLE, 0);
-				m_freem(mb0);
-				splx(s);
 				return (ENOBUFS);
 			}
 
-			/* insert new entry at head of hash chain */
-			rt->mfc_origin = ip->ip_src;
-			rt->mfc_mcastgrp = ip->ip_dst;
-			rt->mfc_pkt_cnt = 0;
-			rt->mfc_byte_cnt = 0;
-			rt->mfc_wrong_if = 0;
-			rt->mfc_expire = UPCALL_EXPIRE;
-			nexpire[rtableid][hash]++;
-			for (i = 0; i < MAXVIFS; i++) {
-				rt->mfc_ttls[i] = 0;
-				rt->mfc_flags[i] = 0;
-			}
-			rt->mfc_parent = -1;
-
-			/* clear the RP address */
-			rt->mfc_rp = zeroin_addr;
-
-			/* link into table */
-			LIST_INSERT_HEAD(&mfchashtbl[rtableid][hash], rt, mfc_hash);
-			/* Add this entry to the end of the queue */
-			rt->mfc_stall = rte;
-		} else {
-			/* determine if q has overflowed */
-			struct rtdetq **p;
-			int npkts = 0;
-
-			/*
-			 * XXX ouch! we need to append to the list, but we
-			 * only have a pointer to the front, so we have to
-			 * scan the entire list every time.
-			 */
-			for (p = &rt->mfc_stall; *p != NULL; p = &(*p)->next)
-				if (++npkts > MAX_UPQ) {
-					mrtstat.mrts_upq_ovflw++;
-				non_fatal:
-					free(rte, M_MRTABLE, 0);
-					m_freem(mb0);
-					return (0);
-				}
-
-			/* Add this entry to the end of the queue */
-			*p = rte;
+			mfc_add(NULL, &ip->ip_src, &ip->ip_dst, v->v_id,
+			    rtableid);
 		}
-
-		rte->next = NULL;
-		rte->m = mb0;
-		rte->ifp = ifp;
 
 		return (0);
 	}
-}
-
-
-/*ARGSUSED*/
-void
-expire_upcalls(void *v)
-{
-	unsigned int rtableid = *(unsigned int *)v;
-	int i, s;
-
-
-	NET_LOCK(s);
-	for (i = 0; i < MFCTBLSIZ; i++) {
-		struct mfc *rt, *nrt;
-
-		if (nexpire[rtableid][i] == 0)
-			continue;
-
-		for (rt = LIST_FIRST(&mfchashtbl[rtableid][i]); rt; rt = nrt) {
-			nrt = LIST_NEXT(rt, mfc_hash);
-
-			if (rt->mfc_expire == 0 || --rt->mfc_expire > 0)
-				continue;
-			nexpire[rtableid][i]--;
-
-			++mrtstat.mrts_cache_cleanups;
-			expire_mfc(rt);
-		}
-	}
-	timeout_add_msec(&expire_upcalls_ch[rtableid], EXPIRE_TIMEOUT);
-	NET_UNLOCK(s);
 }
 
 /*
  * Packet forwarding routine once entry in the cache is made
  */
 int
-ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct mfc *rt)
+ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct rtentry *rt)
 {
 	struct ip  *ip = mtod(m, struct ip *);
+	struct mfc *mfc = (struct mfc *)rt->rt_llinfo;
 	struct vif *v = (struct vif *)ifp0->if_mcast;
 	struct ifnet *ifp;
 	struct mbuf *mc;
-	int i;
-	unsigned int rtableid = ifp0->if_rdomain;
 	struct ip_moptions imo;
 
 	/* Sanity check: we have all promised pointers. */
-	if (v == NULL || rt == NULL)
+	if (v == NULL || mfc == NULL)
 		return (-1);
 
 	/*
 	 * Don't forward if it didn't arrive from the parent vif for its origin.
 	 */
-	if (rt->mfc_parent != v->v_id) {
+	if (mfc->mfc_parent != v->v_id) {
 		/* came in the wrong interface */
 		++mrtstat.mrts_wrong_if;
-		++rt->mfc_wrong_if;
+		mfc->mfc_wrong_if++;
 		return (0);
 	}
 
@@ -1228,8 +1183,6 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct mfc *rt)
 		v->v_pkt_in++;
 		v->v_bytes_in += m->m_pkthdr.len;
 	}
-	rt->mfc_pkt_cnt++;
-	rt->mfc_byte_cnt += m->m_pkthdr.len;
 
 	/*
 	 * For each vif, decide if a copy of the packet should be forwarded.
@@ -1237,15 +1190,31 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct mfc *rt)
 	 *		- the ttl exceeds the vif's threshold
 	 *		- there are group members downstream on interface
 	 */
-	for (i = 0; i < MAXVIFS; i++) {
-		if (rt->mfc_ttls[i] == 0)
+	do {
+		mfc = (struct mfc *)rt->rt_llinfo;
+		mfc->mfc_pkt_cnt++;
+		mfc->mfc_byte_cnt += m->m_pkthdr.len;
+
+		/* Don't let this route expire. */
+		mfc->mfc_expire = 0;
+
+		if (ip->ip_ttl <= mfc->mfc_ttl)
 			continue;
-		if (ip->ip_ttl <= rt->mfc_ttls[i])
-			continue;
-		if ((ifp = if_lookupbyvif(i, rtableid)) == NULL)
+		if ((ifp = if_get(rt->rt_ifidx)) == NULL)
 			continue;
 
-		v = (struct vif *)ifp->if_mcast;
+		/* Sanity check: did we configure this? */
+		if ((v = (struct vif *)ifp->if_mcast) == NULL) {
+			if_put(ifp);
+			continue;
+		}
+
+		/* Don't send in the upstream interface. */
+		if (mfc->mfc_parent == v->v_id) {
+			if_put(ifp);
+			continue;
+		}
+
 		v->v_pkt_out++;
 		v->v_bytes_out += m->m_pkthdr.len;
 
@@ -1256,19 +1225,22 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct mfc *rt)
 		 * scribbles on the copy.
 		 */
 		mc = m_dup_pkt(m, max_linkhdr, M_NOWAIT);
-		if (mc == NULL)
+		if (mc == NULL) {
+			if_put(ifp);
 			return (-1);
+		}
 
 		/*
 		 * if physical interface option, extract the options
 		 * and then send
 		 */
-		imo.imo_ifidx = ifp->if_index;
+		imo.imo_ifidx = rt->rt_ifidx;
 		imo.imo_ttl = ip->ip_ttl - IPTTLDEC;
 		imo.imo_loop = 1;
 
 		ip_output(mc, NULL, NULL, IP_FORWARDING, &imo, NULL, 0);
-	}
+		if_put(ifp);
+	} while ((rt = rtable_iterate(rt)) != NULL);
 
 	return (0);
 }
@@ -1291,4 +1263,50 @@ if_lookupbyvif(vifi_t vifi, unsigned int rtableid)
 	}
 
 	return (NULL);
+}
+
+struct rtentry *
+rt_mcast_add(struct ifnet *ifp, struct sockaddr *origin, struct sockaddr *group)
+{
+	struct ifaddr		*ifa;
+	int			 rv;
+	unsigned int		 rtableid = ifp->if_rdomain;
+
+	if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == NULL) {
+		DPRINTF("ifa == NULL");
+		return (NULL);
+	}
+
+	rv = rt_ifa_add(ifa, RTF_HOST | RTF_MULTICAST, group);
+	if (rv != 0) {
+		DPRINTF("rt_ifa_add failed (%d)", rv);
+		return (NULL);
+	}
+
+	mrt_count[rtableid]++;
+
+	return (mfc_find(ifp, NULL, &satosin(group)->sin_addr, rtableid));
+}
+
+int
+rt_mcast_del(struct rtentry *rt, unsigned int rtableid)
+{
+	struct ifnet		*ifp;
+	int			 rv;
+
+	if ((ifp = if_get(rt->rt_ifidx)) == NULL) {
+		DPRINTF("if_get(%d) failed", rt->rt_ifidx);
+		return (ENOENT);
+	}
+
+	rv = rtdeletemsg(rt, ifp, rtableid);
+	if_put(ifp);
+	if (rv != 0) {
+		DPRINTF("rtdeletemsg failed (%d)", rv);
+		return (rv);
+	}
+
+	mrt_count[rtableid]--;
+
+	return (0);
 }

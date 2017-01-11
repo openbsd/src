@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.25 2017/01/06 14:01:19 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.26 2017/01/11 13:17:35 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -232,6 +232,9 @@ struct mrtstat {
 
 #ifdef _KERNEL
 
+/* How frequent should we look for expired entries (in seconds). */
+#define MCAST_EXPIRE_FREQUENCY		30
+
 /*
  * The kernel's virtual-interface structure.
  */
@@ -253,19 +256,14 @@ struct vif {
  * at a future point.)
  */
 struct mfc {
-	LIST_ENTRY(mfc) mfc_hash;
-	struct	 in_addr mfc_origin;	 	/* ip origin of mcasts */
-	struct	 in_addr mfc_mcastgrp;  	/* multicast group associated */
 	vifi_t	 mfc_parent;			/* incoming vif */
-	u_int8_t mfc_ttls[MAXVIFS]; 		/* forwarding ttls on vifs */
 	u_long	 mfc_pkt_cnt;			/* pkt count for src-grp */
 	u_long	 mfc_byte_cnt;			/* byte count for src-grp */
 	u_long	 mfc_wrong_if;			/* wrong if for src-grp	*/
-	int	 mfc_expire;			/* time to clean entry up */
-	struct	 timeval mfc_last_assert;	/* last time I sent an assert */
-	struct	 rtdetq *mfc_stall;		/* pkts waiting for route */
-	u_int8_t mfc_flags[MAXVIFS];		/* the MRT_MFC_FLAGS_* flags */
+	uint8_t	 mfc_ttl;			/* route interface ttl */
+	uint8_t  mfc_flags;			/* MRT_MFC_FLAGS_* flags */
 	struct in_addr	mfc_rp;			/* the RP address	     */
+	u_long	 mfc_expire;			/* expire timer */
 };
 
 /*
