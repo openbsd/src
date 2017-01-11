@@ -1087,6 +1087,7 @@
 ./usr/share/man/man4/acpidock.4
 ./usr/share/man/man4/acpiec.4
 ./usr/share/man/man4/acpihpet.4
+./usr/share/man/man4/acpihve.4
 ./usr/share/man/man4/acpimadt.4
 ./usr/share/man/man4/acpimcfg.4
 ./usr/share/man/man4/acpiprt.4
