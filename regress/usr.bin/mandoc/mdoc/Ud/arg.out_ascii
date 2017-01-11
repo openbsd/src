@@ -1,0 +1,13 @@
+UD-ARG(1)                   General Commands Manual                  UD-ARG(1)
+
+NNAAMMEE
+     UUdd--aarrgg - obsolete text production macros
+
+DDEESSCCRRIIPPTTIIOONN
+     The newest branch is currently under development.  The stable branch is
+     currently in beta test.  It will be released shortly.
+
+     With arg: currently under development.  is currently in beta test.
+     currently under development.  is currently in beta test.  end
+
+OpenBSD                        January 11, 2017                        OpenBSD

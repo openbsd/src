@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.121 2017/01/10 23:36:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.122 2017/01/11 17:39:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,7 +68,6 @@ static	int		  mdoc_bf_pre(MDOC_ARGS);
 static	void		  mdoc_bk_post(MDOC_ARGS);
 static	int		  mdoc_bk_pre(MDOC_ARGS);
 static	int		  mdoc_bl_pre(MDOC_ARGS);
-static	int		  mdoc_bt_pre(MDOC_ARGS);
 static	int		  mdoc_cd_pre(MDOC_ARGS);
 static	int		  mdoc_d1_pre(MDOC_ARGS);
 static	int		  mdoc_dv_pre(MDOC_ARGS);
@@ -104,7 +103,6 @@ static	int		  mdoc_pp_pre(MDOC_ARGS);
 static	void		  mdoc_quote_post(MDOC_ARGS);
 static	int		  mdoc_quote_pre(MDOC_ARGS);
 static	int		  mdoc_rs_pre(MDOC_ARGS);
-static	int		  mdoc_rv_pre(MDOC_ARGS);
 static	int		  mdoc_sh_pre(MDOC_ARGS);
 static	int		  mdoc_skip_pre(MDOC_ARGS);
 static	int		  mdoc_sm_pre(MDOC_ARGS);
@@ -112,7 +110,6 @@ static	int		  mdoc_sp_pre(MDOC_ARGS);
 static	int		  mdoc_ss_pre(MDOC_ARGS);
 static	int		  mdoc_sx_pre(MDOC_ARGS);
 static	int		  mdoc_sy_pre(MDOC_ARGS);
-static	int		  mdoc_ud_pre(MDOC_ARGS);
 static	int		  mdoc_va_pre(MDOC_ARGS);
 static	int		  mdoc_vt_pre(MDOC_ARGS);
 static	int		  mdoc_xr_pre(MDOC_ARGS);
@@ -155,7 +152,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_quote_pre, mdoc_quote_post}, /* Op */
 	{mdoc_ft_pre, NULL}, /* Ot */
 	{mdoc_pa_pre, NULL}, /* Pa */
-	{mdoc_rv_pre, NULL}, /* Rv */
+	{mdoc_ex_pre, NULL}, /* Rv */
 	{NULL, NULL}, /* St */
 	{mdoc_va_pre, NULL}, /* Va */
 	{mdoc_vt_pre, NULL}, /* Vt */
@@ -221,10 +218,10 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Oc */
 	{mdoc_bk_pre, mdoc_bk_post}, /* Bk */
 	{NULL, NULL}, /* Ek */
-	{mdoc_bt_pre, NULL}, /* Bt */
+	{NULL, NULL}, /* Bt */
 	{NULL, NULL}, /* Hf */
 	{mdoc_em_pre, NULL}, /* Fr */
-	{mdoc_ud_pre, NULL}, /* Ud */
+	{NULL, NULL}, /* Ud */
 	{mdoc_lb_pre, NULL}, /* Lb */
 	{mdoc_pp_pre, NULL}, /* Lp */
 	{mdoc_lk_pre, NULL}, /* Lk */
@@ -919,43 +916,9 @@ mdoc_bl_pre(MDOC_ARGS)
 static int
 mdoc_ex_pre(MDOC_ARGS)
 {
-	struct htmlpair	  tag;
-	struct tag	 *t;
-	struct roff_node *nch;
-
 	if (n->prev)
 		print_otag(h, TAG_BR, 0, NULL);
-
-	PAIR_CLASS_INIT(&tag, "utility");
-
-	print_text(h, "The");
-
-	for (nch = n->child; nch != NULL; nch = nch->next) {
-		assert(nch->type == ROFFT_TEXT);
-
-		t = print_otag(h, TAG_B, 1, &tag);
-		print_text(h, nch->string);
-		print_tagq(h, t);
-
-		if (nch->next == NULL)
-			continue;
-
-		if (nch->prev != NULL || nch->next->next != NULL) {
-			h->flags |= HTML_NOSPACE;
-			print_text(h, ",");
-		}
-
-		if (nch->next->next == NULL)
-			print_text(h, "and");
-	}
-
-	if (n->child != NULL && n->child->next != NULL)
-		print_text(h, "utilities exit\\~0");
-	else
-		print_text(h, "utility exits\\~0");
-
-	print_text(h, "on success, and\\~>0 if an error occurs.");
-	return 0;
+	return 1;
 }
 
 static int
@@ -1633,61 +1596,6 @@ mdoc_ic_pre(MDOC_ARGS)
 }
 
 static int
-mdoc_rv_pre(MDOC_ARGS)
-{
-	struct htmlpair	 tag;
-	struct tag	*t;
-	struct roff_node *nch;
-
-	if (n->prev)
-		print_otag(h, TAG_BR, 0, NULL);
-
-	PAIR_CLASS_INIT(&tag, "fname");
-
-	if (n->child != NULL) {
-		print_text(h, "The");
-
-		for (nch = n->child; nch != NULL; nch = nch->next) {
-			t = print_otag(h, TAG_B, 1, &tag);
-			print_text(h, nch->string);
-			print_tagq(h, t);
-
-			h->flags |= HTML_NOSPACE;
-			print_text(h, "()");
-
-			if (nch->next == NULL)
-				continue;
-
-			if (nch->prev != NULL || nch->next->next != NULL) {
-				h->flags |= HTML_NOSPACE;
-				print_text(h, ",");
-			}
-			if (nch->next->next == NULL)
-				print_text(h, "and");
-		}
-
-		if (n->child != NULL && n->child->next != NULL)
-			print_text(h, "functions return");
-		else
-			print_text(h, "function returns");
-
-		print_text(h, "the value\\~0 if successful;");
-	} else
-		print_text(h, "Upon successful completion,"
-                    " the value\\~0 is returned;");
-
-	print_text(h, "otherwise the value\\~\\-1 is returned"
-	   " and the global variable");
-
-	PAIR_CLASS_INIT(&tag, "var");
-	t = print_otag(h, TAG_B, 1, &tag);
-	print_text(h, "errno");
-	print_tagq(h, t);
-	print_text(h, "is set to indicate the error.");
-	return 0;
-}
-
-static int
 mdoc_va_pre(MDOC_ARGS)
 {
 	struct htmlpair	tag;
@@ -1811,22 +1719,6 @@ mdoc_sy_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag, "symb");
 	print_otag(h, TAG_SPAN, 1, &tag);
 	return 1;
-}
-
-static int
-mdoc_bt_pre(MDOC_ARGS)
-{
-
-	print_text(h, "is currently in beta test.");
-	return 0;
-}
-
-static int
-mdoc_ud_pre(MDOC_ARGS)
-{
-
-	print_text(h, "currently under development.");
-	return 0;
 }
 
 static int

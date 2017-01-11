@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.232 2017/01/10 23:36:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.233 2017/01/11 17:39:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,6 +49,7 @@ enum	check_ineq {
 
 typedef	void	(*v_post)(POST_ARGS);
 
+static	int	 build_list(struct roff_man *, int);
 static	void	 check_text(struct roff_man *, int, int, char *);
 static	void	 check_argv(struct roff_man *,
 			struct roff_node *, struct mdoc_argv *);
@@ -93,6 +94,7 @@ static	void	 post_par(POST_ARGS);
 static	void	 post_prevpar(POST_ARGS);
 static	void	 post_root(POST_ARGS);
 static	void	 post_rs(POST_ARGS);
+static	void	 post_rv(POST_ARGS);
 static	void	 post_sh(POST_ARGS);
 static	void	 post_sh_head(POST_ARGS);
 static	void	 post_sh_name(POST_ARGS);
@@ -141,7 +143,7 @@ static	v_post mdoc_valids[MDOC_MAX] = {
 	NULL,		/* Op */
 	post_obsolete,	/* Ot */
 	post_defaults,	/* Pa */
-	post_std,	/* Rv */
+	post_rv,	/* Rv */
 	post_st,	/* St */
 	NULL,		/* Va */
 	NULL,		/* Vt */
@@ -619,6 +621,10 @@ post_bd(POST_ARGS)
 	}
 }
 
+/*
+ * Stand-alone line macros.
+ */
+
 static void
 post_an_norm(POST_ARGS)
 {
@@ -647,6 +653,148 @@ post_an_norm(POST_ARGS)
 }
 
 static void
+post_eoln(POST_ARGS)
+{
+	struct roff_node	*n;
+
+	n = mdoc->last;
+	if (n->child != NULL)
+		mandoc_vmsg(MANDOCERR_ARG_SKIP, mdoc->parse,
+		    n->line, n->pos, "%s %s",
+		    mdoc_macronames[n->tok], n->child->string);
+
+	while (n->child != NULL)
+		roff_node_delete(mdoc, n->child);
+
+	roff_word_alloc(mdoc, n->line, n->pos, n->tok == MDOC_Bt ?
+	    "is currently in beta test." : "currently under development.");
+	mdoc->last->flags |= NODE_EOS | NODE_NOSRC;
+	mdoc->last = n;
+}
+
+static int
+build_list(struct roff_man *mdoc, int tok)
+{
+	struct roff_node	*n;
+	int			 ic;
+
+	n = mdoc->last->next;
+	for (ic = 1;; ic++) {
+		roff_elem_alloc(mdoc, n->line, n->pos, tok);
+		mdoc->last->flags |= NODE_NOSRC;
+		mdoc_node_relink(mdoc, n);
+		n = mdoc->last = mdoc->last->parent;
+		mdoc->next = ROFF_NEXT_SIBLING;
+		if (n->next == NULL)
+			return ic;
+		if (ic > 1 || n->next->next != NULL) {
+			roff_word_alloc(mdoc, n->line, n->pos, ",");
+			mdoc->last->flags |= NODE_DELIMC | NODE_NOSRC;
+		}
+		n = mdoc->last->next;
+		if (n->next == NULL) {
+			roff_word_alloc(mdoc, n->line, n->pos, "and");
+			mdoc->last->flags |= NODE_NOSRC;
+		}
+	}
+}
+
+static void
+post_ex(POST_ARGS)
+{
+	struct roff_node	*n;
+	int			 ic;
+
+	post_std(mdoc);
+
+	n = mdoc->last;
+	mdoc->next = ROFF_NEXT_CHILD;
+	roff_word_alloc(mdoc, n->line, n->pos, "The");
+	mdoc->last->flags |= NODE_NOSRC;
+
+	if (mdoc->last->next != NULL)
+		ic = build_list(mdoc, MDOC_Nm);
+	else if (mdoc->meta.name != NULL) {
+		roff_elem_alloc(mdoc, n->line, n->pos, MDOC_Nm);
+		mdoc->last->flags |= NODE_NOSRC;
+		roff_word_alloc(mdoc, n->line, n->pos, mdoc->meta.name);
+		mdoc->last->flags |= NODE_NOSRC;
+		mdoc->last = mdoc->last->parent;
+		mdoc->next = ROFF_NEXT_SIBLING;
+		ic = 1;
+	} else {
+		mandoc_msg(MANDOCERR_EX_NONAME, mdoc->parse,
+		    n->line, n->pos, "Ex");
+		ic = 0;
+	}
+
+	roff_word_alloc(mdoc, n->line, n->pos,
+	    ic > 1 ? "utilities exit\\~0" : "utility exits\\~0");
+	mdoc->last->flags |= NODE_NOSRC;
+	roff_word_alloc(mdoc, n->line, n->pos,
+	    "on success, and\\~>0 if an error occurs.");
+	mdoc->last->flags |= NODE_EOS | NODE_NOSRC;
+	mdoc->last = n;
+}
+
+static void
+post_lb(POST_ARGS)
+{
+	struct roff_node	*n;
+
+	n = mdoc->last;
+	assert(n->child->type == ROFFT_TEXT);
+	mdoc->next = ROFF_NEXT_CHILD;
+	roff_word_alloc(mdoc, n->line, n->pos, "library");
+	mdoc->last->flags = NODE_NOSRC;
+	roff_word_alloc(mdoc, n->line, n->pos, "\\(Lq");
+	mdoc->last->flags = NODE_DELIMO | NODE_NOSRC;
+	mdoc->last = mdoc->last->next;
+	roff_word_alloc(mdoc, n->line, n->pos, "\\(Rq");
+	mdoc->last->flags = NODE_DELIMC | NODE_NOSRC;
+	mdoc->last = n;
+}
+
+static void
+post_rv(POST_ARGS)
+{
+	struct roff_node	*n;
+	int			 ic;
+
+	post_std(mdoc);
+
+	n = mdoc->last;
+	mdoc->next = ROFF_NEXT_CHILD;
+	if (n->child != NULL) {
+		roff_word_alloc(mdoc, n->line, n->pos, "The");
+		mdoc->last->flags |= NODE_NOSRC;
+		ic = build_list(mdoc, MDOC_Fn);
+		roff_word_alloc(mdoc, n->line, n->pos,
+		    ic > 1 ? "functions return" : "function returns");
+		mdoc->last->flags |= NODE_NOSRC;
+		roff_word_alloc(mdoc, n->line, n->pos,
+		    "the value\\~0 if successful;");
+	} else
+		roff_word_alloc(mdoc, n->line, n->pos, "Upon successful "
+		    "completion, the value\\~0 is returned;");
+	mdoc->last->flags |= NODE_NOSRC;
+
+	roff_word_alloc(mdoc, n->line, n->pos, "otherwise "
+	    "the value\\~\\-1 is returned and the global variable");
+	mdoc->last->flags |= NODE_NOSRC;
+	roff_elem_alloc(mdoc, n->line, n->pos, MDOC_Va);
+	mdoc->last->flags |= NODE_NOSRC;
+	roff_word_alloc(mdoc, n->line, n->pos, "errno");
+	mdoc->last->flags |= NODE_NOSRC;
+	mdoc->last = mdoc->last->parent;
+	mdoc->next = ROFF_NEXT_SIBLING;
+	roff_word_alloc(mdoc, n->line, n->pos,
+	    "is set to indicate the error.");
+	mdoc->last->flags |= NODE_EOS | NODE_NOSRC;
+	mdoc->last = n;
+}
+
+static void
 post_std(POST_ARGS)
 {
 	struct roff_node *n;
@@ -661,6 +809,30 @@ post_std(POST_ARGS)
 }
 
 static void
+post_st(POST_ARGS)
+{
+	struct roff_node	 *n, *nch;
+	const char		 *p;
+
+	n = mdoc->last;
+	nch = n->child;
+	assert(nch->type == ROFFT_TEXT);
+
+	if ((p = mdoc_a2st(nch->string)) == NULL) {
+		mandoc_vmsg(MANDOCERR_ST_BAD, mdoc->parse,
+		    nch->line, nch->pos, "St %s", nch->string);
+		roff_node_delete(mdoc, n);
+		return;
+	}
+
+	nch->flags |= NODE_NOPRT;
+	mdoc->next = ROFF_NEXT_CHILD;
+	roff_word_alloc(mdoc, nch->line, nch->pos, p);
+	mdoc->last->flags |= NODE_NOSRC;
+	mdoc->last= n;
+}
+
+static void
 post_obsolete(POST_ARGS)
 {
 	struct roff_node *n;
@@ -670,6 +842,10 @@ post_obsolete(POST_ARGS)
 		mandoc_msg(MANDOCERR_MACRO_OBS, mdoc->parse,
 		    n->line, n->pos, mdoc_macronames[n->tok]);
 }
+
+/*
+ * Block macros.
+ */
 
 static void
 post_bf(POST_ARGS)
@@ -734,32 +910,6 @@ post_bf(POST_ARGS)
 		mandoc_vmsg(MANDOCERR_BF_BADFONT, mdoc->parse,
 		    np->child->line, np->child->pos,
 		    "Bf %s", np->child->string);
-}
-
-static void
-post_lb(POST_ARGS)
-{
-	struct roff_node	*n;
-	char			*libname;
-
-	n = mdoc->last->child;
-	assert(n->type == ROFFT_TEXT);
-	mandoc_asprintf(&libname, "library \\(Lq%s\\(Rq", n->string);
-	free(n->string);
-	n->string = libname;
-}
-
-static void
-post_eoln(POST_ARGS)
-{
-	const struct roff_node *n;
-
-	n = mdoc->last;
-	if (n->child != NULL)
-		mandoc_vmsg(MANDOCERR_ARG_SKIP,
-		    mdoc->parse, n->line, n->pos,
-		    "%s %s", mdoc_macronames[n->tok],
-		    n->child->string);
 }
 
 static void
@@ -1437,27 +1587,6 @@ post_root(POST_ARGS)
 	else if (n->tok != MDOC_Sh)
 		mandoc_msg(MANDOCERR_SEC_BEFORE, mdoc->parse,
 		    n->line, n->pos, mdoc_macronames[n->tok]);
-}
-
-static void
-post_st(POST_ARGS)
-{
-	struct roff_node	 *n, *nch;
-	const char		 *p;
-
-	n = mdoc->last;
-	nch = n->child;
-
-	assert(nch->type == ROFFT_TEXT);
-
-	if ((p = mdoc_a2st(nch->string)) == NULL) {
-		mandoc_vmsg(MANDOCERR_ST_BAD, mdoc->parse,
-		    nch->line, nch->pos, "St %s", nch->string);
-		roff_node_delete(mdoc, n);
-	} else {
-		free(nch->string);
-		nch->string = mandoc_strdup(p);
-	}
 }
 
 static void
@@ -2192,32 +2321,6 @@ post_os(POST_ARGS)
 	}
 	mdoc->meta.os = mandoc_strdup(defbuf);
 #endif /*!OSNAME*/
-}
-
-/*
- * If no argument is provided,
- * fill in the name of the current manual page.
- */
-static void
-post_ex(POST_ARGS)
-{
-	struct roff_node *n;
-
-	post_std(mdoc);
-
-	n = mdoc->last;
-	if (n->child != NULL)
-		return;
-
-	if (mdoc->meta.name == NULL) {
-		mandoc_msg(MANDOCERR_EX_NONAME, mdoc->parse,
-		    n->line, n->pos, "Ex");
-		return;
-	}
-
-	mdoc->next = ROFF_NEXT_CHILD;
-	roff_word_alloc(mdoc, n->line, n->pos, mdoc->meta.name);
-	mdoc->last = n;
 }
 
 enum roff_sec

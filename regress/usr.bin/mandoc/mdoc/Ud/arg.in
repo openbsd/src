@@ -1,0 +1,19 @@
+.Dd January 11, 2017
+.Dt UD-ARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ud-arg
+.Nd obsolete text production macros
+.Sh DESCRIPTION
+The newest branch is
+.Ud
+The stable branch
+.Bt
+It will be released shortly.
+.Pp
+With arg:
+.Ud bar
+.Bt foo
+.Ud one two
+.Bt one two
+end

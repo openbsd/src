@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.98 2017/01/10 23:36:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.99 2017/01/11 17:39:45 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -100,14 +100,12 @@ static	int	  pre_no(DECL_ARGS);
 static	int	  pre_ns(DECL_ARGS);
 static	int	  pre_pp(DECL_ARGS);
 static	int	  pre_rs(DECL_ARGS);
-static	int	  pre_rv(DECL_ARGS);
 static	int	  pre_sm(DECL_ARGS);
 static	int	  pre_sp(DECL_ARGS);
 static	int	  pre_sect(DECL_ARGS);
 static	int	  pre_sy(DECL_ARGS);
 static	void	  pre_syn(const struct roff_node *);
 static	int	  pre_vt(DECL_ARGS);
-static	int	  pre_ux(DECL_ARGS);
 static	int	  pre_xr(DECL_ARGS);
 static	void	  print_word(const char *);
 static	void	  print_line(const char *, int);
@@ -155,7 +153,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Op */
 	{ NULL, pre_ft, post_font, NULL, NULL }, /* Ot */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Pa */
-	{ NULL, pre_rv, NULL, NULL, NULL }, /* Rv */
+	{ NULL, pre_ex, NULL, NULL, NULL }, /* Rv */
 	{ NULL, NULL, NULL, NULL, NULL }, /* St */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Va */
 	{ NULL, pre_vt, post_vt, NULL, NULL }, /* Vt */
@@ -221,10 +219,10 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Oc */
 	{ NULL, pre_bk, post_bk, NULL, NULL }, /* Bk */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ek */
-	{ NULL, pre_ux, NULL, "is currently in beta test.", NULL }, /* Bt */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Bt */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Hf */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Fr */
-	{ NULL, pre_ux, NULL, "currently under development.", NULL }, /* Ud */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ud */
 	{ NULL, NULL, post_lb, NULL, NULL }, /* Lb */
 	{ NULL, pre_pp, NULL, NULL, NULL }, /* Lp */
 	{ NULL, pre_lk, NULL, NULL, NULL }, /* Lk */
@@ -598,10 +596,14 @@ print_node(DECL_ARGS)
 			printf("\\&");
 			outflags &= ~MMAN_spc;
 		}
-		if (outflags & MMAN_Sm && ! (n->flags & NODE_DELIMC))
+		if (n->flags & NODE_DELIMC)
+			outflags &= ~(MMAN_spc | MMAN_spc_force);
+		else if (outflags & MMAN_Sm)
 			outflags |= MMAN_spc_force;
 		print_word(n->string);
-		if (outflags & MMAN_Sm && ! (n->flags & NODE_DELIMO))
+		if (n->flags & NODE_DELIMO)
+			outflags &= ~(MMAN_spc | MMAN_spc_force);
+		else if (outflags & MMAN_Sm)
 			outflags |= MMAN_spc;
 	} else {
 		/*
@@ -682,36 +684,8 @@ post_enc(DECL_ARGS)
 static int
 pre_ex(DECL_ARGS)
 {
-	struct roff_node *nch;
-
 	outflags |= MMAN_br | MMAN_nl;
-
-	print_word("The");
-
-	for (nch = n->child; nch != NULL; nch = nch->next) {
-		font_push('B');
-		print_word(nch->string);
-		font_pop();
-
-		if (nch->next == NULL)
-			continue;
-
-		if (nch->prev != NULL || nch->next->next != NULL) {
-			outflags &= ~MMAN_spc;
-			print_word(",");
-		}
-		if (nch->next->next == NULL)
-			print_word("and");
-	}
-
-	if (n->child != NULL && n->child->next != NULL)
-		print_word("utilities exit\\~0");
-	else
-		print_word("utility exits\\~0");
-
-	print_word("on success, and\\~>0 if an error occurs.");
-	outflags |= MMAN_nl;
-	return 0;
+	return 1;
 }
 
 static void
@@ -1623,57 +1597,6 @@ pre_rs(DECL_ARGS)
 }
 
 static int
-pre_rv(DECL_ARGS)
-{
-	struct roff_node *nch;
-
-	outflags |= MMAN_br | MMAN_nl;
-
-	if (n->child != NULL) {
-		print_word("The");
-
-		for (nch = n->child; nch != NULL; nch = nch->next) {
-			font_push('B');
-			print_word(nch->string);
-			font_pop();
-
-			outflags &= ~MMAN_spc;
-			print_word("()");
-
-			if (nch->next == NULL)
-				continue;
-
-			if (nch->prev != NULL || nch->next->next != NULL) {
-				outflags &= ~MMAN_spc;
-				print_word(",");
-			}
-			if (nch->next->next == NULL)
-				print_word("and");
-		}
-
-		if (n->child != NULL && n->child->next != NULL)
-			print_word("functions return");
-		else
-			print_word("function returns");
-
-		print_word("the value\\~0 if successful;");
-	} else
-		print_word("Upon successful completion, "
-		    "the value\\~0 is returned;");
-
-	print_word("otherwise the value\\~\\-1 is returned"
-	    " and the global variable");
-
-	font_push('I');
-	print_word("errno");
-	font_pop();
-
-	print_word("is set to indicate the error.");
-	outflags |= MMAN_nl;
-	return 0;
-}
-
-static int
 pre_skip(DECL_ARGS)
 {
 
@@ -1768,17 +1691,4 @@ pre_xr(DECL_ARGS)
 	print_node(meta, n);
 	print_word(")");
 	return 0;
-}
-
-static int
-pre_ux(DECL_ARGS)
-{
-
-	print_word(manacts[n->tok].prefix);
-	if (NULL == n->child)
-		return 0;
-	outflags &= ~MMAN_spc;
-	print_word("\\ ");
-	outflags &= ~MMAN_spc;
-	return 1;
 }

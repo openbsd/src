@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.239 2017/01/10 23:36:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.240 2017/01/11 17:39:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -89,7 +89,6 @@ static	int	  termp_bf_pre(DECL_ARGS);
 static	int	  termp_bk_pre(DECL_ARGS);
 static	int	  termp_bl_pre(DECL_ARGS);
 static	int	  termp_bold_pre(DECL_ARGS);
-static	int	  termp_bt_pre(DECL_ARGS);
 static	int	  termp_cd_pre(DECL_ARGS);
 static	int	  termp_d1_pre(DECL_ARGS);
 static	int	  termp_eo_pre(DECL_ARGS);
@@ -112,7 +111,6 @@ static	int	  termp_nm_pre(DECL_ARGS);
 static	int	  termp_ns_pre(DECL_ARGS);
 static	int	  termp_quote_pre(DECL_ARGS);
 static	int	  termp_rs_pre(DECL_ARGS);
-static	int	  termp_rv_pre(DECL_ARGS);
 static	int	  termp_sh_pre(DECL_ARGS);
 static	int	  termp_skip_pre(DECL_ARGS);
 static	int	  termp_sm_pre(DECL_ARGS);
@@ -121,7 +119,6 @@ static	int	  termp_ss_pre(DECL_ARGS);
 static	int	  termp_sy_pre(DECL_ARGS);
 static	int	  termp_tag_pre(DECL_ARGS);
 static	int	  termp_under_pre(DECL_ARGS);
-static	int	  termp_ud_pre(DECL_ARGS);
 static	int	  termp_vt_pre(DECL_ARGS);
 static	int	  termp_xr_pre(DECL_ARGS);
 static	int	  termp_xx_pre(DECL_ARGS);
@@ -163,7 +160,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_quote_pre, termp_quote_post }, /* Op */
 	{ termp_ft_pre, NULL }, /* Ot */
 	{ termp_under_pre, NULL }, /* Pa */
-	{ termp_rv_pre, NULL }, /* Rv */
+	{ termp_ex_pre, NULL }, /* Rv */
 	{ NULL, NULL }, /* St */
 	{ termp_under_pre, NULL }, /* Va */
 	{ termp_vt_pre, NULL }, /* Vt */
@@ -229,10 +226,10 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Oc */
 	{ termp_bk_pre, termp_bk_post }, /* Bk */
 	{ NULL, NULL }, /* Ek */
-	{ termp_bt_pre, NULL }, /* Bt */
+	{ NULL, NULL }, /* Bt */
 	{ NULL, NULL }, /* Hf */
 	{ termp_under_pre, NULL }, /* Fr */
-	{ termp_ud_pre, NULL }, /* Ud */
+	{ NULL, NULL }, /* Ud */
 	{ NULL, termp_lb_post }, /* Lb */
 	{ termp_sp_pre, NULL }, /* Lp */
 	{ termp_lk_pre, NULL }, /* Lk */
@@ -1111,91 +1108,10 @@ termp_rs_pre(DECL_ARGS)
 }
 
 static int
-termp_rv_pre(DECL_ARGS)
-{
-	struct roff_node *nch;
-
-	term_newln(p);
-
-	if (n->child != NULL) {
-		term_word(p, "The");
-
-		for (nch = n->child; nch != NULL; nch = nch->next) {
-			term_fontpush(p, TERMFONT_BOLD);
-			term_word(p, nch->string);
-			term_fontpop(p);
-
-			p->flags |= TERMP_NOSPACE;
-			term_word(p, "()");
-
-			if (nch->next == NULL)
-				continue;
-
-			if (nch->prev != NULL || nch->next->next != NULL) {
-				p->flags |= TERMP_NOSPACE;
-				term_word(p, ",");
-			}
-			if (nch->next->next == NULL)
-				term_word(p, "and");
-		}
-
-		if (n->child != NULL && n->child->next != NULL)
-			term_word(p, "functions return");
-		else
-			term_word(p, "function returns");
-
-		term_word(p, "the value\\~0 if successful;");
-	} else
-		term_word(p, "Upon successful completion,"
-		    " the value\\~0 is returned;");
-
-	term_word(p, "otherwise the value\\~\\-1 is returned"
-	    " and the global variable");
-
-	term_fontpush(p, TERMFONT_UNDER);
-	term_word(p, "errno");
-	term_fontpop(p);
-
-	term_word(p, "is set to indicate the error.");
-	p->flags |= TERMP_SENTENCE;
-
-	return 0;
-}
-
-static int
 termp_ex_pre(DECL_ARGS)
 {
-	struct roff_node *nch;
-
 	term_newln(p);
-	term_word(p, "The");
-
-	for (nch = n->child; nch != NULL; nch = nch->next) {
-		term_fontpush(p, TERMFONT_BOLD);
-		term_word(p, nch->string);
-		term_fontpop(p);
-
-		if (nch->next == NULL)
-			continue;
-
-		if (nch->prev != NULL || nch->next->next != NULL) {
-			p->flags |= TERMP_NOSPACE;
-			term_word(p, ",");
-		}
-
-		if (nch->next->next == NULL)
-			term_word(p, "and");
-	}
-
-	if (n->child != NULL && n->child->next != NULL)
-		term_word(p, "utilities exit\\~0");
-	else
-		term_word(p, "utility exits\\~0");
-
-	term_word(p, "on success, and\\~>0 if an error occurs.");
-
-	p->flags |= TERMP_SENTENCE;
-	return 0;
+	return 1;
 }
 
 static int
@@ -1396,30 +1312,12 @@ termp_sh_post(DECL_ARGS)
 	}
 }
 
-static int
-termp_bt_pre(DECL_ARGS)
-{
-
-	term_word(p, "is currently in beta test.");
-	p->flags |= TERMP_SENTENCE;
-	return 0;
-}
-
 static void
 termp_lb_post(DECL_ARGS)
 {
 
 	if (SEC_LIBRARY == n->sec && NODE_LINE & n->flags)
 		term_newln(p);
-}
-
-static int
-termp_ud_pre(DECL_ARGS)
-{
-
-	term_word(p, "currently under development.");
-	p->flags |= TERMP_SENTENCE;
-	return 0;
 }
 
 static int
