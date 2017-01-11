@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.53 2016/10/03 12:26:13 rzalamena Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.54 2017/01/11 08:47:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -483,7 +483,7 @@ struct ifnet *bridge_rtupdate(struct bridge_softc *,
 struct bridge_rtnode *bridge_rtlookup(struct bridge_softc *,
     struct ether_addr *);
 void	bridge_rtflush(struct bridge_softc *, int);
-void	bridge_timer(void *);
+void	bridge_rtage(void *);
 
 u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *,
     struct mbuf *);

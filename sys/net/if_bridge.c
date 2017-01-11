@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.290 2016/12/19 15:49:28 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.291 2017/01/11 08:47:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -168,7 +168,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_brtmax = BRIDGE_RTABLE_MAX;
 	sc->sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
-	timeout_set(&sc->sc_brtimeout, bridge_timer, sc);
+	timeout_set(&sc->sc_brtimeout, bridge_rtage, sc);
 	TAILQ_INIT(&sc->sc_iflist);
 	TAILQ_INIT(&sc->sc_spanlist);
 	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++)
