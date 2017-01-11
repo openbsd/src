@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.80 2017/01/11 08:11:19 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.81 2017/01/11 12:22:13 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -136,18 +136,13 @@ create_rollback()
 
 fetch_and_verify()
 {
-	local _sig=${_TMP}/SHA256.sig _tgz=$1
+	local _tgz=$1
 	[[ -n ${_tgz} ]]
-
-	[[ -f ${_sig} ]] || \
-		unpriv -f "${_sig}" ${_FETCH} -o "${_sig}" "${_URL}/SHA256.sig"
 
 	unpriv -f "${_TMP}/${_tgz}" ${_FETCH} -mD "Get/Verify" -o \
 		"${_TMP}/${_tgz}" "${_URL}/${_tgz}"
 
-	(cd ${_TMP} && unpriv signify -qC -p \
-		/etc/signify/openbsd-${_OSrev}-syspatch.pub -x SHA256.sig \
-		${_tgz})
+	(cd ${_TMP} && sha256 -qC ${_TMP}/SHA256 ${_tgz})
 }
 
 install_file()
@@ -183,11 +178,13 @@ ls_installed()
 
 ls_missing()
 {
-	local _c _idx=${_TMP}/idx.txt _l="$(ls_installed)"
+	local _c _l="$(ls_installed)" _sha=${_TMP}/SHA256
 
-	unpriv -f "${_idx}" ${_FETCH} -o "${_idx}" "${_URL}/index.txt"
+	unpriv -f "${_sha}.sig" ${_FETCH} -o "${_sha}.sig" "${_URL}/SHA256.sig"
+	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
+		/etc/signify/openbsd-${_OSrev}-syspatch.pub
 
-	grep -Eo "syspatch${_OSrev}-[[:digit:]]{3}_[[:alnum:]_]+" ${_idx} |
+	grep -Eo "syspatch${_OSrev}-[[:digit:]]{3}_[[:alnum:]_]+" ${_sha} |
 		while read _c; do _c=${_c##syspatch${_OSrev}-} &&
 		[[ -n ${_l} ]] && echo ${_c} | grep -qw -- "${_l}" || echo ${_c}
 	done | sort -V
