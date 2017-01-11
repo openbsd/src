@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.945 2017/01/10 17:50:58 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.946 2017/01/11 10:57:12 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1593,7 +1593,7 @@ install_http() {
 	if unpriv -f $_sha signify -Vep $_pubkey -x $_sig -m $_sha >/dev/null 2>&1; then
 		_file_list="SHA256.sig $(sed -n 's/^SHA256 (\(.*\)).*$/\1/p' $_sha)"
 	else
-		echo "Unable to get a verfied list of distribution sets."
+		echo "Unable to get a verified list of distribution sets."
 		# Deny this server, if it's a mirror without a valid SHA256.sig.
 		if [[ $_mirror == yes ]]; then
 			$AUTO && exit 1 || return
