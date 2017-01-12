@@ -5,7 +5,7 @@ desc="unlink returns EROFS if the named file resides on a read-only file system"
 
 n0=`namegen`
 n1=`namegen`
- 
+
 expect 0 mkdir ${n0} 0755
 dd if=/dev/zero of=tmpdisk bs=1k count=1024 status=none
 vnconfig vnd1 tmpdisk
