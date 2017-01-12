@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.18 2017/01/12 16:17:22 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.19 2017/01/12 16:18:39 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -47,10 +47,7 @@ bio_s_cb(void)
 static int
 bio_cb_puts(BIO *bio, const char *str)
 {
-	int n;
-
-	n = strlen(str);
-	return (bio_cb_write(bio, str, n));
+	return (bio_cb_write(bio, str, strlen(str)));
 }
 
 static long
