@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstest.c,v 1.4 2014/10/18 03:13:04 doug Exp $	*/
+/*	$OpenBSD: fstest.c,v 1.5 2017/01/12 01:04:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -405,11 +405,7 @@ call_syscall(struct syscall_desc *scall, char *argv[])
 #undef STR
 #undef NUM
 	if (rval < 0) {
-		const char *serrno;
-
-		serrno = err2str(errno);
-		fprintf(stderr, "%s returned %d\n", scall->sd_name, rval);
-		printf("%s\n", serrno);
+		printf("%s\n", err2str(errno));
 		exit(1);
 	}
 	printf("0\n");
@@ -496,12 +492,9 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	if (gids != NULL) {
-		fprintf(stderr, "changing groups to %s\n", gids);
+	if (gids != NULL)
 		set_gids(gids);
-	}
 	if (uid != -1) {
-		fprintf(stderr, "changing uid to %d\n", uid);
 		if (setuid(uid) < 0) {
 			fprintf(stderr, "cannot change uid: %s\n",
 			    strerror(errno));

@@ -8,7 +8,7 @@ n1=`namegen`
 n2=`namegen`
 
 expect 0 mkdir ${n0} 0755
-dd if=/dev/zero of=tmpdisk bs=1k count=1024 2>/dev/null
+dd if=/dev/zero of=tmpdisk bs=1k count=1024 status=none
 vnconfig vnd1 tmpdisk
 newfs /dev/rvnd1c >/dev/null
 mount /dev/vnd1c ${n0}

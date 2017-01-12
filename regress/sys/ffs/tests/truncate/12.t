@@ -6,7 +6,7 @@ desc="truncate returns EFBIG or EINVAL if the length argument was greater than t
 n0=`namegen`
 
 expect 0 create ${n0} 0644
-r=`${FSTEST} truncate ${n0} 999999999999999 2>/dev/null`
+r=`${FSTEST} truncate ${n0} 999999999999999`
 case "${r}" in
 EFBIG|EINVAL)
 	expect 0 stat ${n0} size

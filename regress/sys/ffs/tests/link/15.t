@@ -8,14 +8,14 @@ n1=`namegen`
 n2=`namegen`
 
 expect 0 mkdir ${n0} 0755
-dd if=/dev/zero of=tmpdisk bs=1k count=256 2>/dev/null
+dd if=/dev/zero of=tmpdisk bs=1k count=256 status=none
 vnconfig vnd1 tmpdisk
 newfs /dev/rvnd1c >/dev/null
 mount /dev/vnd1c ${n0}
 expect 0 create ${n0}/${n1} 0644
 i=0
 while :; do
-	link ${n0}/${n1} ${n0}/${i} >/dev/null 2>&1
+	link ${n0}/${n1} ${n0}/${i}
 	if [ $? -ne 0 ]; then
 		break
 	fi

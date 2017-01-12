@@ -7,13 +7,13 @@ n0=`namegen`
 n1=`namegen`
 
 expect 0 mkdir ${n0} 0755
-dd if=/dev/zero of=tmpdisk bs=1k count=256 2>/dev/null
+dd if=/dev/zero of=tmpdisk bs=1k count=256 status=none
 vnconfig vnd1 tmpdisk
 newfs /dev/rvnd1c >/dev/null
 mount /dev/vnd1c ${n0}
 i=0
 while :; do
-	mkfifo ${n0}/${i} >/dev/null 2>&1
+	mkfifo ${n0}/${i} 2>/dev/null
 	if [ $? -ne 0 ]; then
 		break
 	fi
