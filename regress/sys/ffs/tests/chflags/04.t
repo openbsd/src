@@ -1,3 +1,7 @@
+#!/bin/sh
+
+desc="chflags returns ENOENT if path or file does not exist"
+
 n0=`namegen`
 n1=`namegen`
 
