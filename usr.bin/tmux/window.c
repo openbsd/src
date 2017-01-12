@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.178 2017/01/12 00:19:32 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.179 2017/01/12 00:24:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1530,7 +1530,7 @@ window_pane_get_palette(const struct window_pane *wp, int c)
 	if (c < 8)
 		new = wp->palette[c];
 	else if (c >= 90 && c <= 97)
-		new = wp->palette[7 + c - 90];
+		new = wp->palette[8 + c - 90];
 	else if (c & COLOUR_FLAG_256)
 		new = wp->palette[c & ~COLOUR_FLAG_256];
 	if (new == 0)
