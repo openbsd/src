@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.7 2017/01/09 19:50:49 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.8 2017/01/12 18:06:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -1098,7 +1098,7 @@ ieee80211_mira_node_init(struct ieee80211_mira_node *mn)
 }
 
 void
-ieee80211_mira_node_destroy(struct ieee80211_mira_node *mn)
+ieee80211_mira_cancel_timeouts(struct ieee80211_mira_node *mn)
 {
 	int t;
 

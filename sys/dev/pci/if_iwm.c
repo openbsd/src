@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.155 2016/12/18 10:37:42 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.156 2017/01/12 18:06:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5498,7 +5498,7 @@ iwm_newstate_task(void *psc)
 
 	if (ostate == IEEE80211_S_RUN && nstate != ostate) {
 		iwm_disable_beacon_filter(sc);
-		ieee80211_mira_node_destroy(&in->in_mn);
+		ieee80211_mira_cancel_timeouts(&in->in_mn);
 	}
 
 	/* Reset the device if moving out of AUTH, ASSOC, or RUN. */

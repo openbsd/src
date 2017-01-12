@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.h,v 1.2 2016/12/10 14:46:04 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.h,v 1.3 2017/01/12 18:06:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -91,12 +91,14 @@ struct ieee80211_mira_node {
 	struct ieee80211_mira_goodput_stats g[IEEE80211_MIRA_NUM_RATES];
 };
 
-/* Set up and tear down rate control. */
+/* Initialize rate control state. */
 void	ieee80211_mira_node_init(struct ieee80211_mira_node *);
-void	ieee80211_mira_node_destroy(struct ieee80211_mira_node *);
 
 /* Called by drivers from the Tx completion interrupt handler. */
 void	ieee80211_mira_choose(struct ieee80211_mira_node *,
 	    struct ieee80211com *, struct ieee80211_node *);
+
+/* Cancel timeouts scheduled by ieee80211_mira_choose(). */
+void	ieee80211_mira_cancel_timeouts(struct ieee80211_mira_node *);
 
 #endif /* _NET80211_IEEE80211_MIRA_H_ */

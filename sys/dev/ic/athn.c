@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.94 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.95 2017/01/12 18:06:57 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2417,7 +2417,7 @@ athn_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct athn_node *an = (void *)ni;
 	if (ic->ic_flags & IEEE80211_F_HTON)
-		ieee80211_mira_node_destroy(&an->mn);
+		ieee80211_mira_cancel_timeouts(&an->mn);
 }
 #endif
 
@@ -2467,7 +2467,7 @@ void
 athn_iter_mira_delete(void *arg, struct ieee80211_node *ni)
 {
 	struct athn_node *an = (struct athn_node *)ni;
-	ieee80211_mira_node_destroy(&an->mn);
+	ieee80211_mira_cancel_timeouts(&an->mn);
 }
 
 /* Delete pending timeouts managed by MiRA. */
@@ -2478,7 +2478,7 @@ athn_delete_mira_nodes(struct athn_softc *sc)
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
 		struct athn_node *an = (struct athn_node *)ic->ic_bss;
-		ieee80211_mira_node_destroy(&an->mn);
+		ieee80211_mira_cancel_timeouts(&an->mn);
 	} else
 		ieee80211_iterate_nodes(ic, athn_iter_mira_delete, sc);
 }

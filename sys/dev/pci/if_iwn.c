@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.180 2016/12/23 18:44:51 kettenis Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.181 2017/01/12 18:06:57 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1764,7 +1764,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	if (ic->ic_state == IEEE80211_S_RUN &&
 	    (ni->ni_flags & IEEE80211_NODE_HT))
-		ieee80211_mira_node_destroy(&wn->mn);
+		ieee80211_mira_cancel_timeouts(&wn->mn);
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
