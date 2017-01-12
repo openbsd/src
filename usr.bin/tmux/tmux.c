@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.173 2016/12/09 21:39:27 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.174 2017/01/12 15:36:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -295,7 +295,8 @@ main(int argc, char **argv)
 
 	global_s_options = options_create(NULL);
 	options_table_populate_tree(OPTIONS_TABLE_SESSION, global_s_options);
-	options_set_string(global_s_options, "default-shell", "%s", getshell());
+	options_set_string(global_s_options, "default-shell", 0, "%s",
+	    getshell());
 
 	global_w_options = options_create(NULL);
 	options_table_populate_tree(OPTIONS_TABLE_WINDOW, global_w_options);
