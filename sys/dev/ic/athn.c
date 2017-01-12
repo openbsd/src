@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.93 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: athn.c,v 1.94 2017/01/12 16:32:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -53,6 +53,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
+#include <net80211/ieee80211_mira.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/athnreg.h>
@@ -93,7 +94,7 @@ int		athn_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
 void		athn_delete_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
-void		athn_iter_func(void *, struct ieee80211_node *);
+void		athn_iter_calib(void *, struct ieee80211_node *);
 void		athn_calib_to(void *);
 int		athn_init_calib(struct athn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
@@ -122,8 +123,11 @@ int		athn_hw_reset(struct athn_softc *, struct ieee80211_channel *,
 struct		ieee80211_node *athn_node_alloc(struct ieee80211com *);
 void		athn_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
+void		athn_node_leave(struct ieee80211com *, struct ieee80211_node *);
 int		athn_media_change(struct ifnet *);
 void		athn_next_scan(void *);
+void		athn_iter_mira_delete(void *, struct ieee80211_node *);
+void		athn_delete_mira_nodes(struct athn_softc *);
 int		athn_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 void		athn_updateedca(struct ieee80211com *);
@@ -289,11 +293,15 @@ athn_attach(struct athn_softc *sc)
 		int i, ntxstreams, nrxstreams;
 
 		/* Set HT capabilities. */
-		ic->ic_htcaps =
-		    IEEE80211_HTCAP_SMPS_DIS |
-		    IEEE80211_HTCAP_CBW20_40 |
+		ic->ic_htcaps = (IEEE80211_HTCAP_SMPS_DIS <<
+		    IEEE80211_HTCAP_SMPS_SHIFT);
+#ifdef notyet
+		ic->ic_htcaps |= IEEE80211_HTCAP_CBW20_40 |
 		    IEEE80211_HTCAP_SGI40 |
 		    IEEE80211_HTCAP_DSSSCCK40;
+#endif
+		ic->ic_htxcaps = 0;
+#ifdef notyet
 		if (AR_SREV_9271(sc) || AR_SREV_9287_10_OR_LATER(sc))
 			ic->ic_htcaps |= IEEE80211_HTCAP_SGI20;
 		if (AR_SREV_9380_10_OR_LATER(sc))
@@ -302,6 +310,7 @@ athn_attach(struct athn_softc *sc)
 			ic->ic_htcaps |= IEEE80211_HTCAP_TXSTBC;
 			ic->ic_htcaps |= 1 << IEEE80211_HTCAP_RXSTBC_SHIFT;
 		}
+#endif
 		ntxstreams = sc->ntxchains;
 		nrxstreams = sc->nrxchains;
 		if (!AR_SREV_9380_10_OR_LATER(sc)) {
@@ -346,6 +355,9 @@ athn_attach(struct athn_softc *sc)
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
 	ic->ic_node_alloc = athn_node_alloc;
+#ifndef IEEE80211_STA_ONLY
+	ic->ic_node_leave = athn_node_leave;
+#endif
 	ic->ic_newassoc = athn_newassoc;
 	ic->ic_updateslot = athn_updateslot;
 	ic->ic_updateedca = athn_updateedca;
@@ -370,10 +382,13 @@ void
 athn_detach(struct athn_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ieee80211com *ic = &sc->sc_ic;
 	int qid;
 
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->calib_to);
+	if (ic->ic_flags & IEEE80211_F_HTON)
+		athn_delete_mira_nodes(sc);
 
 	if (!(sc->flags & ATHN_FLAG_USB)) {
 		for (qid = 0; qid < ATHN_QID_COUNT; qid++)
@@ -425,6 +440,9 @@ athn_get_chanlist(struct athn_softc *sc)
 			ic->ic_channels[chan].ic_flags =
 			    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
 			    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
+			if (sc->flags & ATHN_FLAG_11N)
+				ic->ic_channels[chan].ic_flags |=
+				    IEEE80211_CHAN_HT;
 		}
 	}
 	if (sc->flags & ATHN_FLAG_11A) {
@@ -433,6 +451,9 @@ athn_get_chanlist(struct athn_softc *sc)
 			ic->ic_channels[chan].ic_freq =
 			    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_5GHZ);
 			ic->ic_channels[chan].ic_flags = IEEE80211_CHAN_A;
+			if (sc->flags & ATHN_FLAG_11N)
+				ic->ic_channels[chan].ic_flags |=
+				    IEEE80211_CHAN_HT;
 		}
 	}
 }
@@ -1206,12 +1227,13 @@ athn_btcoex_disable(struct athn_softc *sc)
 #endif
 
 void
-athn_iter_func(void *arg, struct ieee80211_node *ni)
+athn_iter_calib(void *arg, struct ieee80211_node *ni)
 {
 	struct athn_softc *sc = arg;
 	struct athn_node *an = (struct athn_node *)ni;
 
-	ieee80211_amrr_choose(&sc->amrr, ni, &an->amn);
+	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0)
+		ieee80211_amrr_choose(&sc->amrr, ni, &an->amn);
 }
 
 void
@@ -1251,9 +1273,9 @@ athn_calib_to(void *arg)
 #endif
 	if (ic->ic_fixed_rate == -1) {
 		if (ic->ic_opmode == IEEE80211_M_STA)
-			athn_iter_func(sc, ic->ic_bss);
+			athn_iter_calib(sc, ic->ic_bss);
 		else
-			ieee80211_iterate_nodes(ic, athn_iter_func, sc);
+			ieee80211_iterate_nodes(ic, athn_iter_calib, sc);
 	}
 	timeout_add_msec(&sc->calib_to, 500);
 	splx(s);
@@ -1377,7 +1399,7 @@ athn_ani_ofdm_err_trigger(struct athn_softc *sc)
 			ani->firstep_level++;
 			ops->set_firstep_level(sc, ani->firstep_level);
 		}
-	} else if (sc->sc_ic.ic_curmode != IEEE80211_MODE_11A) {
+	} else if (IEEE80211_IS_CHAN_2GHZ(sc->sc_ic.ic_bss->ni_chan)) {
 		/*
 		 * Beacon RSSI is low, if in b/g mode, turn off OFDM weak
 		 * signal detection and zero first step level to maximize
@@ -1427,7 +1449,7 @@ athn_ani_cck_err_trigger(struct athn_softc *sc)
 			ani->firstep_level++;
 			ops->set_firstep_level(sc, ani->firstep_level);
 		}
-	} else if (sc->sc_ic.ic_curmode != IEEE80211_MODE_11A) {
+	} else if (IEEE80211_IS_CHAN_2GHZ(sc->sc_ic.ic_bss->ni_chan)) {
 		/*
 		 * Beacon RSSI is low, zero first step level to maximize
 		 * CCK sensitivity.
@@ -1790,11 +1812,17 @@ athn_stop_tx_dma(struct athn_softc *sc, int qid)
 int
 athn_txtime(struct athn_softc *sc, int len, int ridx, u_int flags)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 #define divround(a, b)	(((a) + (b) - 1) / (b))
 	int txtime;
 
-	/* XXX HT. */
-	if (athn_rates[ridx].phy == IEEE80211_T_OFDM) {
+	if (athn_rates[ridx].hwrate & 0x80) { /* MCS */
+	 	/* Assumes a 20MHz channel, HT-mixed frame format, no STBC. */
+		txtime = 8 + 8 + 4 + 4 + 4 * 4 + 8 /* HT PLCP */
+		    + 4 * ((8 * len + 16 + 6) / (athn_rates[ridx].rate * 2));
+		if (IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan))
+			txtime += 6; /* aSignalExtension */
+	} else if (athn_rates[ridx].phy == IEEE80211_T_OFDM) {
 		txtime = divround(8 + 4 * len + 3, athn_rates[ridx].rate);
 		/* SIFS is 10us for 11g but Signal Extension adds 6us. */
 		txtime = 16 + 4 + 4 * txtime + 16;
@@ -2306,7 +2334,12 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 struct ieee80211_node *
 athn_node_alloc(struct ieee80211com *ic)
 {
-	return (malloc(sizeof(struct athn_node), M_DEVBUF, M_NOWAIT | M_ZERO));
+	struct athn_node *an;
+
+	an = malloc(sizeof(struct athn_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (ic->ic_flags & IEEE80211_F_HTON)
+		ieee80211_mira_node_init(&an->mn);
+	return (struct ieee80211_node *)an;
 }
 
 void
@@ -2318,7 +2351,11 @@ athn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	uint8_t rate;
 	int ridx, i, j;
 
-	ieee80211_amrr_node_init(&sc->amrr, &an->amn);
+	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0)
+		ieee80211_amrr_node_init(&sc->amrr, &an->amn);
+	else if (ic->ic_opmode == IEEE80211_M_STA)
+		ieee80211_mira_node_init(&an->mn);
+
 	/* Start at lowest available bit-rate, AMRR will raise. */
 	ni->ni_txrate = 0;
 
@@ -2343,7 +2380,46 @@ athn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 		}
 		DPRINTFN(2, ("%d fallbacks to %d\n", i, an->fallback[i]));
 	}
+
+	/* In 11n mode, start at lowest available bit-rate, MiRA will raise. */
+	ni->ni_txmcs = 0;
+
+	for (i = 0; i <= ATHN_MCS_MAX; i++) {
+		/* Map MCS index to HW rate index. */
+		ridx = ATHN_NUM_LEGACY_RATES + i;
+		an->ridx[ridx] = ATHN_RIDX_MCS0 + i;
+
+		DPRINTFN(2, ("mcs %d index %d ", i, ridx));
+		/* Compute fallback rate for retries. */
+		if (i == 0 || i == 8) {
+		 	/* MCS 0 and 8 fall back to the lowest legacy rate. */
+			if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan))
+				an->fallback[ridx] = ATHN_RIDX_OFDM6;
+			else
+				an->fallback[ridx] = ATHN_RIDX_CCK1;
+		} else {
+			/* Other MCS fall back to next supported lower MCS. */
+			an->fallback[ridx] = ATHN_NUM_LEGACY_RATES + i;
+			for (j = i - 1; j >= 0; j--) {
+				if (!isset(ni->ni_rxmcs, j))
+					continue;
+				an->fallback[ridx] = ATHN_NUM_LEGACY_RATES + j;
+				break;
+			}
+		}
+		DPRINTFN(2, (" fallback to %d\n", an->fallback[ridx]));
+	}
 }
+
+#ifndef IEEE80211_STA_ONLY
+void
+athn_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct athn_node *an = (void *)ni;
+	if (ic->ic_flags & IEEE80211_F_HTON)
+		ieee80211_mira_node_destroy(&an->mn);
+}
+#endif
 
 int
 athn_media_change(struct ifnet *ifp)
@@ -2387,6 +2463,26 @@ athn_next_scan(void *arg)
 	splx(s);
 }
 
+void
+athn_iter_mira_delete(void *arg, struct ieee80211_node *ni)
+{
+	struct athn_node *an = (struct athn_node *)ni;
+	ieee80211_mira_node_destroy(&an->mn);
+}
+
+/* Delete pending timeouts managed by MiRA. */
+void
+athn_delete_mira_nodes(struct athn_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_opmode == IEEE80211_M_STA) {
+		struct athn_node *an = (struct athn_node *)ic->ic_bss;
+		ieee80211_mira_node_destroy(&an->mn);
+	} else
+		ieee80211_iterate_nodes(ic, athn_iter_mira_delete, sc);
+}
+
 int
 athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
@@ -2396,6 +2492,10 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 
 	timeout_del(&sc->calib_to);
+
+	if ((ic->ic_flags & IEEE80211_F_HTON) &&
+	    ic->ic_state == IEEE80211_S_RUN && nstate != IEEE80211_S_RUN)
+		athn_delete_mira_nodes(sc);
 
 	switch (nstate) {
 	case IEEE80211_S_INIT:
@@ -2497,7 +2597,7 @@ athn_clock_rate(struct athn_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int clockrate;	/* MHz. */
 
-	if (ic->ic_curmode == IEEE80211_MODE_11A) {
+	if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
 		if (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)
 			clockrate = AR_CLOCK_RATE_FAST_5GHZ_OFDM;
 		else

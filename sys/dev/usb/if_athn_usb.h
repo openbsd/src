@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.h,v 1.6 2015/03/02 14:46:02 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.h,v 1.7 2017/01/12 16:32:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -141,10 +141,10 @@ struct ar_htc_target_rate {
 	uint8_t			isnew;
 	uint32_t		capflags;
 #define AR_RC_DS_FLAG	0x00000001
-#define AR_RC_TS_FLAG	0x00000002
-#define AR_RC_40_FLAG	0x00000004
-#define AR_RC_SGI_FLAG	0x00000008
-#define AR_RC_HT_FLAG	0x00000010
+#define AR_RC_40_FLAG	0x00000002
+#define AR_RC_SGI_FLAG	0x00000004
+#define AR_RC_HT_FLAG	0x00000008
+#define AR_RC_STBC_FLAG	0x00000020
 
 	struct ar_htc_rateset	lg_rates;
 	struct ar_htc_rateset	ht_rates;

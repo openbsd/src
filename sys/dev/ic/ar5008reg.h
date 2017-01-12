@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008reg.h,v 1.3 2010/12/31 17:50:48 damien Exp $	*/
+/*	$OpenBSD: ar5008reg.h,v 1.4 2017/01/12 16:32:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -950,12 +950,11 @@ struct ar_base_eep_header {
 	uint8_t		opCapFlags;
 #define AR_OPFLAGS_11A			0x01
 #define AR_OPFLAGS_11G			0x02
+/* NB: If set, 11n is _disabled_ in the corresponding mode: */
 #define AR_OPFLAGS_11N_5G40		0x04
 #define AR_OPFLAGS_11N_2G40		0x08
 #define AR_OPFLAGS_11N_5G20		0x10
 #define AR_OPFLAGS_11N_2G20		0x20
-/* Shortcut. */
-#define AR_OPFLAGS_11N			0x3c
 
 	uint8_t		eepMisc;
 	uint16_t	regDmn[2];

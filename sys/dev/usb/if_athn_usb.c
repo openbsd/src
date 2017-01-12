@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.43 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.44 2017/01/12 16:32:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -48,6 +48,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
+#include <net80211/ieee80211_mira.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/athnreg.h>
@@ -1023,9 +1024,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state ostate;
 	uint32_t reg, imask;
-#ifndef IEEE80211_STA_ONLY
 	uint8_t sta_index;
-#endif
 	int s, error;
 
 	timeout_del(&sc->calib_to);
@@ -1035,14 +1034,10 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	DPRINTF(("newstate %d -> %d\n", ostate, cmd->state));
 
 	if (ostate == IEEE80211_S_RUN) {
-#ifndef IEEE80211_STA_ONLY
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-			/* XXX really needed? */
-			sta_index = ((struct athn_node *)ic->ic_bss)->sta_index;
-			(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
-			    &sta_index, sizeof(sta_index), NULL);
-		}
-#endif
+		sta_index = ((struct athn_node *)ic->ic_bss)->sta_index;
+		(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
+		    &sta_index, sizeof(sta_index), NULL);
+		usc->nnodes--;
 		reg = AR_READ(sc, AR_RX_FILTER);
 		reg = (reg & ~AR_RX_FILTER_MYBEACON) |
 		    AR_RX_FILTER_BEACON;
@@ -1072,13 +1067,8 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			break;
 
-#ifndef IEEE80211_STA_ONLY
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-			/* Create node entry for our BSS */
-			/* XXX really needed? breaks station mode on down/up */
-			error = athn_usb_create_node(usc, ic->ic_bss);
-		}
-#endif
+		/* Create node entry for our BSS */
+		error = athn_usb_create_node(usc, ic->ic_bss);
 
 		athn_set_bss(sc, ic->ic_bss);
 		athn_usb_wmi_cmd(usc, AR_WMI_CMD_DISABLE_INTR);
@@ -1132,7 +1122,7 @@ athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
 
 	s = splnet();
 	/* NB: Node may have left before we got scheduled. */
-	if (ni->ni_associd != 0)
+	if (ni->ni_associd != 0 && ni->ni_state == IEEE80211_STA_ASSOC)
 		(void)athn_usb_create_node(usc, ni);
 	ieee80211_release_node(ic, ni);
 	splx(s);
@@ -1224,7 +1214,7 @@ athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 	struct athn_node *an = (struct athn_node *)ni;
 	struct ar_htc_target_sta sta;
 	struct ar_htc_target_rate rate;
-	int error;
+	int error, i, j;
 
 	/* Firmware cannot handle more than 8 STAs. */
 	if (usc->nnodes > AR_USB_MAX_STA)
@@ -1257,8 +1247,19 @@ athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 	    ni->ni_rates.rs_nrates);
 	if (ni->ni_flags & IEEE80211_NODE_HT) {
 		rate.capflags |= htobe32(AR_RC_HT_FLAG);
+		/* Setup HT rates. */
+		for (i = 0, j = 0; i < IEEE80211_HT_NUM_MCS; i++) {
+			if (!isset(ni->ni_rxmcs, i))
+				continue;
+			if (j >= AR_HTC_RATE_MAX)
+				break;
+			rate.ht_rates.rs_rates[j++] = i;
+		}
+		rate.ht_rates.rs_nrates = j;
+
+		if (ni->ni_rxmcs[1]) /* dual-stream MIMO rates */
+			rate.capflags |= htobe32(AR_RC_DS_FLAG);
 #ifdef notyet
-		/* XXX setup HT rates */
 		if (ni->ni_htcaps & IEEE80211_HTCAP_CBW20_40)
 			rate.capflags |= htobe32(AR_RC_40_FLAG);
 		if (ni->ni_htcaps & IEEE80211_HTCAP_SGI40)
