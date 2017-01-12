@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.31 2016/11/06 16:55:16 beck Exp $ */
+/* $OpenBSD: tls_server.c,v 1.32 2017/01/12 16:15:58 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -357,10 +357,8 @@ tls_accept_cbs(struct tls *ctx, struct tls **cctx,
 	if ((conn_ctx = tls_accept_common(ctx)) == NULL)
 		goto err;
 
-	if (tls_set_cbs(conn_ctx, read_cb, write_cb, cb_arg) != 0) {
-		tls_set_errorx(ctx, "callback registration failure");
+	if (tls_set_cbs(conn_ctx, read_cb, write_cb, cb_arg) != 0)
 		goto err;
-	}
 
 	*cctx = conn_ctx;
 
