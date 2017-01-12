@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.159 2017/01/10 21:54:34 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.160 2017/01/12 18:02:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1221,16 +1221,12 @@ deroff(char **dest, const struct roff_node *n)
 		return;
 	}
 
-	/* Skip leading whitespace and escape sequences. */
+	/* Skip leading whitespace. */
 
-	cp = n->string;
-	while (*cp != '\0') {
-		if ('\\' == *cp) {
+	for (cp = n->string; *cp != '\0'; cp++) {
+		if (cp[0] == '\\' && strchr(" %&0^|~", cp[1]) != NULL)
 			cp++;
-			mandoc_escape((const char **)&cp, NULL, NULL);
-		} else if (isspace((unsigned char)*cp))
-			cp++;
-		else
+		else if ( ! isspace((unsigned char)*cp))
 			break;
 	}
 
