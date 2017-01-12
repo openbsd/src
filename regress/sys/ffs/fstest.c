@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstest.c,v 1.5 2017/01/12 01:04:50 bluhm Exp $	*/
+/*	$OpenBSD: fstest.c,v 1.6 2017/01/12 01:12:56 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -56,6 +56,7 @@ enum action {
 	ACTION_CHOWN,
 	ACTION_LCHOWN,
 	ACTION_CHFLAGS,
+	ACTION_LCHFLAGS,
 	ACTION_TRUNCATE,
 	ACTION_STAT,
 	ACTION_LSTAT,
@@ -90,6 +91,8 @@ static struct syscall_desc syscalls[] = {
 	{ "lchown", ACTION_LCHOWN, { TYPE_STRING, TYPE_NUMBER,
 				     TYPE_NUMBER, TYPE_NONE } },
 	{ "chflags", ACTION_CHFLAGS, { TYPE_STRING, TYPE_STRING, TYPE_NONE } },
+	{ "lchflags", ACTION_LCHFLAGS, { TYPE_STRING, TYPE_STRING,
+					 TYPE_NONE } },
 	{ "truncate", ACTION_TRUNCATE, { TYPE_STRING, TYPE_NUMBER,
 					 TYPE_NONE } },
 	{ "stat", ACTION_STAT, { TYPE_STRING, TYPE_STRING, TYPE_NONE } },
@@ -378,8 +381,14 @@ call_syscall(struct syscall_desc *scall, char *argv[])
 		ch_flags = str2flags(chflags_flags, STR(1));
 		if (!use_appimm)
 			ch_flags &= ~(SF_APPEND|SF_IMMUTABLE);
-
 		rval = chflags(STR(0), ch_flags);
+		break;
+	case ACTION_LCHFLAGS:
+		ch_flags = str2flags(chflags_flags, STR(1));
+		if (!use_appimm)
+			ch_flags &= ~(SF_APPEND|SF_IMMUTABLE);
+		rval = chflagsat(AT_FDCWD, STR(0), ch_flags,
+		    AT_SYMLINK_NOFOLLOW);
 		break;
 	case ACTION_TRUNCATE:
 		rval = truncate(STR(0), NUM(1));
@@ -525,7 +534,8 @@ main(int argc, char *argv[])
 	for (;;) {
 		scall = find_syscall(argv[0]);
 		if (scall == NULL) {
-			fprintf(stderr, "syscall '%s' not supported\n", argv[0]);
+			fprintf(stderr, "syscall '%s' not supported\n",
+			    argv[0]);
 			exit(1);
 		}
 		argc++;
