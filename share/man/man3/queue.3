@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.64 2016/03/14 22:39:23 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.65 2017/01/12 16:28:49 mpi Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: March 14 2016 $
+.Dd $Mdocdate: January 12 2017 $
 .Dt SLIST_INIT 3
 .Os
 .Sh NAME
@@ -205,7 +205,7 @@
 .Fn TAILQ_REMOVE "TAILQ_HEAD *head" "struct TYPE *elm" "FIELDNAME"
 .Ft void
 .Fn TAILQ_REPLACE "TAILQ_HEAD *head" "struct TYPE *elm" "struct TYPE *elm2" "FIELDNAME"
-.Fn TAILQ_CONCAT "TAILQ_HEAD *head1" "TAILQ_HEAD *head2"
+.Fn TAILQ_CONCAT "TAILQ_HEAD *head1" "TAILQ_HEAD *head2" "FIELDNAME"
 .Sh DESCRIPTION
 These macros define and operate on four types of data structures:
 singly-linked lists, simple queues, lists, and tail queues.
