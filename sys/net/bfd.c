@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.41 2016/09/24 19:29:55 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.42 2017/01/12 16:14:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -273,7 +273,7 @@ bfdinit(void)
 	TAILQ_INIT(&bfd_queue);
 }
 
-/* 
+/*
  * Destroy all bfd sessions and remove the tasks
  *
  */
@@ -281,15 +281,12 @@ void
 bfddestroy(void)
 {
 	struct bfd_config	*bfd;
-	int s;
 
 	/* inform our neighbor we are rebooting */
-	s = splsoftnet();
 	while ((bfd = TAILQ_FIRST(&bfd_queue))) {
 		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_FIB_RESET;
 		bfdclear(bfd->bc_rt);
 	}
-	splx(s);
 
 	taskq_destroy(bfdtq);
 	pool_destroy(&bfd_pool_time);
@@ -351,7 +348,6 @@ bfd_send_task(void *arg)
 {
 	struct bfd_config	*bfd = (struct bfd_config *)arg;
 	struct rtentry		*rt = bfd->bc_rt;
-	int s;
 
 	if (ISSET(rt->rt_flags, RTF_UP)) {
 		bfd_send_control(bfd);
@@ -363,9 +359,7 @@ bfd_send_task(void *arg)
 			bfd_set_state(bfd, BFD_STATE_DOWN);
 		}
 	}
-s = splsoftnet();
 //rt_bfdmsg(bfd);
-splx(s);
 
 	/* re-add 70%-90% jitter to our transmits, rfc 5880 6.8.7 */
 	timeout_add_usec(&bfd->bc_timo_tx,
@@ -592,7 +586,6 @@ void
 bfd_timeout_rx(void *v)
 {
 	struct bfd_config *bfd = v;
-	int s;
 
 	if (++bfd->bc_error >= bfd->bc_neighbor->bn_mult) {
 		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_EXPIRED;
@@ -603,9 +596,7 @@ bfd_timeout_rx(void *v)
 		return;
 	}
 
-	s = splsoftnet();
 	rt_bfdmsg(bfd);
-	splx(s);
 
 	timeout_add_usec(&bfd->bc_timo_rx, bfd->bc_minrx);
 }
@@ -811,7 +802,6 @@ bfd_set_state(struct bfd_config *bfd, int state)
 {
 	struct ifnet	*ifp;
 	struct rtentry	*rt = bfd->bc_rt;
-	int s;
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL) {
@@ -851,9 +841,7 @@ bfd_set_state(struct bfd_config *bfd, int state)
 	}
 
 	bfd->bc_state = state;
-	s = splsoftnet();
 	rt_bfdmsg(bfd);
-	splx(s);
 	if_put(ifp);
 
 	return;
