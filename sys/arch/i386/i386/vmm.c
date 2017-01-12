@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.11 2017/01/12 08:35:53 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.12 2017/01/12 09:02:47 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2270,11 +2270,6 @@ vcpu_init(struct vcpu *vcpu)
 {
 	int ret = 0;
 
-	vcpu->vc_hsa_stack_va = (vaddr_t)malloc(PAGE_SIZE, M_DEVBUF,
-	    M_NOWAIT|M_ZERO);
-	if (!vcpu->vc_hsa_stack_va)
-		return (ENOMEM);
-
 	vcpu->vc_virt_mode = vmm_softc->mode;
 	vcpu->vc_state = VCPU_STATE_STOPPED;
 	if (vmm_softc->mode == VMM_MODE_VMX ||
@@ -2285,9 +2280,6 @@ vcpu_init(struct vcpu *vcpu)
 		ret = vcpu_init_svm(vcpu);
 	else
 		panic("unknown vmm mode\n");
-
-	if (ret)
-		free((void *)vcpu->vc_hsa_stack_va, M_DEVBUF, PAGE_SIZE);
 
 	return (ret);
 }
@@ -2312,8 +2304,6 @@ vcpu_deinit_vmx(struct vcpu *vcpu)
 	if (vcpu->vc_vmx_msr_entry_load_va)
 		km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
 		    PAGE_SIZE, &kv_page, &kp_zero);
-	if (vcpu->vc_hsa_stack_va)
-		free((void *)vcpu->vc_hsa_stack_va, M_DEVBUF, PAGE_SIZE);
 }
 
 /*

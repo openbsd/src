@@ -541,7 +541,6 @@ struct vcpu {
 	uint32_t vc_id;
 	u_int vc_state;
 	SLIST_ENTRY(vcpu) vc_vcpu_link;
-	vaddr_t vc_hsa_stack_va;
 
 	uint8_t vc_virt_mode;
 
