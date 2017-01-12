@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.36 2016/12/09 17:24:55 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.37 2017/01/12 20:29:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -166,6 +166,7 @@ struct xs_softc {
 	TAILQ_HEAD(, xs_watch)	 xs_watches;
 	struct mutex		 xs_watchlck;
 	struct xs_msg		 xs_emsg;
+	struct taskq		*xs_watchtq;
 
 	struct rwlock		 xs_rnglck;
 };
@@ -246,6 +247,8 @@ xs_attach(struct xen_softc *sc)
 	mtx_init(&xs->xs_frqlck, IPL_NET);
 
 	rw_init(&xs->xs_rnglck, "xsrnglck");
+
+	xs->xs_watchtq = taskq_create("xenwatch", 1, IPL_NET, 0);
 
 	mtx_init(&xs->xs_watchlck, IPL_NET);
 	TAILQ_INIT(&xs->xs_watches);
@@ -696,7 +699,7 @@ xs_event(struct xs_softc *xs, struct xs_msg *xsm)
 		if (strcmp(xsw->xsw_token, token))
 			continue;
 		mtx_leave(&xs->xs_watchlck);
-		task_add(systq, xsw->xsw_task);
+		task_add(xs->xs_watchtq, xsw->xsw_task);
 		return (0);
 	}
 	mtx_leave(&xs->xs_watchlck);
