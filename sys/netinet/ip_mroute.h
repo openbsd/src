@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.26 2017/01/11 13:17:35 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.27 2017/01/12 08:22:42 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -18,7 +18,6 @@
  * advanced API support, bandwidth metering and signaling.
  */
 
-#include <sys/queue.h>
 #include <sys/timeout.h>
 
 /*
@@ -35,7 +34,6 @@
 #define	MRT_API_SUPPORT		109	/* supported MRT API */
 #define	MRT_API_CONFIG		110	/* config MRT API */
 
-
 /*
  * Types and macros for handling bitmaps with one bit per virtual interface.
  */
@@ -46,7 +44,6 @@ typedef u_int16_t vifi_t;		/* type of a vif index */
 #define	VIFM_SET(n, m)			((m) |= (1 << (n)))
 #define	VIFM_CLR(n, m)			((m) &= ~(1 << (n)))
 #define	VIFM_ISSET(n, m)		((m) & (1 << (n)))
-#define	VIFM_SETALL(m)			((m) = 0xffffffff)
 #define	VIFM_CLRALL(m)			((m) = 0x00000000)
 #define	VIFM_COPY(mfrom, mto)		((mto) = (mfrom))
 #define	VIFM_SAME(m1, m2)		((m1) == (m2))
@@ -129,63 +126,6 @@ struct vifinfo {
 	u_long	  v_bytes_in;		/* # bytes in on interface */
 	u_long	  v_bytes_out;		/* # bytes out on interface */
 };
-
-/*
- * Structure for installing or delivering an upcall if the
- * measured bandwidth is above or below a threshold.
- *
- * User programs (e.g. daemons) may have a need to know when the
- * bandwidth used by some data flow is above or below some threshold.
- * This interface allows the userland to specify the threshold (in
- * bytes and/or packets) and the measurement interval. Flows are
- * all packet with the same source and destination IP address.
- * At the moment the code is only used for multicast destinations
- * but there is nothing that prevents its use for unicast.
- *
- * The measurement interval cannot be shorter than some Tmin (currently, 3s).
- * The threshold is set in packets and/or bytes per_interval.
- *
- * Measurement works as follows:
- *
- * For >= measurements: 
- * The first packet marks the start of a measurement interval.
- * During an interval we count packets and bytes, and when we
- * pass the threshold we deliver an upcall and we are done.
- * The first packet after the end of the interval resets the
- * count and restarts the measurement.
- *
- * For <= measurement:
- * We start a timer to fire at the end of the interval, and
- * then for each incoming packet we count packets and bytes.
- * When the timer fires, we compare the value with the threshold,
- * schedule an upcall if we are below, and restart the measurement
- * (reschedule timer and zero counters).
- */
-
-struct bw_data {
-	struct timeval	b_time;
-	u_int64_t	b_packets;
-	u_int64_t	b_bytes;
-};
-
-struct bw_upcall {
-	struct in_addr	bu_src;			/* source address            */
-	struct in_addr	bu_dst;			/* destination address       */
-	u_int32_t	bu_flags;		/* misc flags (see below)    */
-#define	BW_UPCALL_UNIT_PACKETS   (1 << 0)	/* threshold (in packets)    */
-#define	BW_UPCALL_UNIT_BYTES     (1 << 1)	/* threshold (in bytes)      */
-#define	BW_UPCALL_GEQ            (1 << 2)	/* upcall if bw >= threshold */
-#define	BW_UPCALL_LEQ            (1 << 3)	/* upcall if bw <= threshold */
-#define	BW_UPCALL_DELETE_ALL     (1 << 4)	/* delete all upcalls for s,d*/
-	struct bw_data	bu_threshold;		/* the bw threshold	     */
-	struct bw_data	bu_measured;		/* the measured bw	     */
-};
-
-/* max. number of upcalls to deliver together */
-#define	BW_UPCALLS_MAX				128
-/* min. threshold time interval for bandwidth measurement */
-#define	BW_UPCALL_THRESHOLD_INTERVAL_MIN_SEC	3
-#define	BW_UPCALL_THRESHOLD_INTERVAL_MIN_USEC	0
 
 /*
  * Argument structure used by mrouted to get src-grp pkt counts.
@@ -282,18 +222,6 @@ struct igmpmsg {
 	u_int8_t  unused3;
 	struct	  in_addr im_src, im_dst;
 };
-
-/*
- * Argument structure used for pkt info. while upcall is made.
- */
-struct rtdetq {
-	struct	mbuf *m;		/* a copy of the packet */
-	struct	ifnet *ifp;		/* interface pkt came in on */
-	struct	rtdetq *next;
-};
-
-#define	MFCTBLSIZ	256
-#define	MAX_UPQ		4		/* max. no of pkts in upcall Q */
 
 int	ip_mrouter_set(struct socket *, int, struct mbuf **);
 int	ip_mrouter_get(struct socket *, int, struct mbuf **);
