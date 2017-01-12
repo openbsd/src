@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.10 2017/01/10 09:05:34 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.11 2017/01/12 08:35:53 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1069,6 +1069,14 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
  * vm_impl_init_vmx
  *
  * Intel VMX specific VM initialization routine
+ *
+ * Parameters:
+ *  vm: the VM being initialized
+ *   p: vmd process owning the VM
+ *
+ * Return values:
+ *  0: the initialization was successful
+ *  ENOMEM: the initialization failed (lack of resources)
  */
 int
 vm_impl_init_vmx(struct vm *vm, struct proc *p)
