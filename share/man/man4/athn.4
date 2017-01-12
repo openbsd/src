@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.30 2016/03/07 13:47:53 stsp Exp $
+.\" $OpenBSD: athn.4,v 1.31 2017/01/12 17:08:38 stsp Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 7 2016 $
+.Dd $Mdocdate: January 12 2017 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -242,10 +242,7 @@ driver was written by
 based on source code licensed under the ISC released in 2008 by
 Atheros Communications for Linux.
 .Sh CAVEATS
-The
-.Nm
-driver does not support any of the 802.11n capabilities offered by
-the adapters.
+Support for 802.11n 40MHz channels and Tx aggregation is not yet implemented.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
