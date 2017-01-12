@@ -48,8 +48,6 @@ main(int ac, char **av)
 		return (6);
 	if (fuse_opt_insert_arg(&args, 1, NULL) != -1)
 		return (7);
-	if (fuse_opt_insert_arg(&args, 1, "") != -1)
-		return (8);
 	if (fuse_opt_insert_arg(&args, -1, "foo") != -1)
 		return (9);
 	if (fuse_opt_insert_arg(&args, 42, "foo") != -1)

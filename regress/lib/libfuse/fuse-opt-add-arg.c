@@ -43,8 +43,6 @@ main(int ac, char **av)
 		return (1);
 	if (fuse_opt_add_arg(&args, NULL) != -1)
 		return (2);
-	if (fuse_opt_add_arg(&args, "") != -1)
-		return (3);
 
 	for (i = 0; i < len; i++)
 		if (strcmp(args.argv[i+1], argstest[i]) != 0)
