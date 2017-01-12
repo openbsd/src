@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.17 2017/01/12 16:08:49 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.18 2017/01/12 16:17:22 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -114,26 +114,6 @@ bio_cb_read(BIO *bio, char *buf, int size)
 	return (rv);
 }
 
-static BIO *
-tls_get_new_cb_bio(struct tls *ctx)
-{
-	BIO *bio;
-
-	if (ctx->read_cb == NULL || ctx->write_cb == NULL) {
-		tls_set_errorx(ctx, "no callbacks registered");
-		return (NULL);
-	}
-	if ((bio = BIO_new(bio_s_cb())) == NULL) {
-		tls_set_errorx(ctx, "failed to create callback i/o");
-		return (NULL);
-	}
-
-	bio->ptr = ctx;
-	bio->init = 1;
-
-	return (bio);
-}
-
 int
 tls_set_cbs(struct tls *ctx, tls_read_cb read_cb, tls_write_cb write_cb,
     void *cb_arg)
@@ -141,12 +121,21 @@ tls_set_cbs(struct tls *ctx, tls_read_cb read_cb, tls_write_cb write_cb,
 	int rv = -1;
 	BIO *bio;
 
+	if (read_cb == NULL || write_cb == NULL) {
+		tls_set_errorx(ctx, "no callbacks provided");
+		goto err;
+	}
+
 	ctx->read_cb = read_cb;
 	ctx->write_cb = write_cb;
 	ctx->cb_arg = cb_arg;
 
-	if ((bio = tls_get_new_cb_bio(ctx)) == NULL)
+	if ((bio = BIO_new(bio_s_cb())) == NULL) {
+		tls_set_errorx(ctx, "failed to create callback i/o");
 		goto err;
+	}
+	bio->ptr = ctx;
+	bio->init = 1;
 
 	SSL_set_bio(ctx->ssl_conn, bio, bio);
 
