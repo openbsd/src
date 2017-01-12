@@ -1463,6 +1463,7 @@ again:
 		case A_NEXT_TAG:
 			if (number <= 0)
 				number = 1;
+			cmd_exec();
 			tagfile = nexttag((int)number);
 			if (tagfile == NULL) {
 				error("No next tag", NULL);
