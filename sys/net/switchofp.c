@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.48 2017/01/11 10:58:17 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.49 2017/01/12 11:49:42 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4747,16 +4747,19 @@ int
 swofp_recv_config_req(struct switch_softc *sc, struct mbuf *m)
 {
 	struct swofp_ofs		*swofs = sc->sc_ofs;
-	struct ofp_switch_config	*osc;
+	struct ofp_switch_config	 osc;
 
-	osc = mtod(m, struct ofp_switch_config *);
+	memcpy(&osc.cfg_oh, mtod(m, caddr_t), sizeof(struct ofp_header));
+	osc.cfg_oh.oh_type = OFP_T_GET_CONFIG_REPLY;
+	osc.cfg_oh.oh_length = htons(sizeof(osc));
 
-	osc->cfg_oh.oh_type = OFP_T_GET_CONFIG_REPLY;
-	osc->cfg_oh.oh_length = htons(sizeof(*osc));
-
-	osc->cfg_flags = htons(swofs->swofs_switch_config.cfg_flags);
-	osc->cfg_miss_send_len =
+	osc.cfg_flags = htons(swofs->swofs_switch_config.cfg_flags);
+	osc.cfg_miss_send_len =
 	    htons(swofs->swofs_switch_config.cfg_miss_send_len);
+	if (m_copyback(m, 0, sizeof(osc), &osc, M_NOWAIT)) {
+		m_freem(m);
+		return (-1);
+	}
 
 	return (swofp_output(sc, m));
 }
