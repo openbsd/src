@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.102 2017/01/05 09:07:16 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.103 2017/01/12 00:19:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1049,7 +1049,7 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 	width = gc->data.width;
 
 	/*
-	 * If this is a wide character and there is no room on the screen, for
+	 * If this is a wide character and there is no room on the screen for
 	 * the entire character, don't print it.
 	 */
 	if (!(s->mode & MODE_WRAP) && (width > 1 &&
