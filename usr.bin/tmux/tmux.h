@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.693 2017/01/12 15:36:35 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.694 2017/01/13 10:12:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -443,6 +443,7 @@ enum msgtype {
 	MSG_SUSPEND,
 	MSG_UNLOCK,
 	MSG_WAKEUP,
+	MSG_EXEC,
 };
 
 /*
@@ -1880,6 +1881,7 @@ int	 server_client_open(struct client *, char **);
 void	 server_client_unref(struct client *);
 void	 server_client_lost(struct client *);
 void	 server_client_detach(struct client *, enum msgtype);
+void	 server_client_exec(struct client *, const char *);
 void	 server_client_loop(void);
 void	 server_client_push_stdout(struct client *);
 void	 server_client_push_stderr(struct client *);

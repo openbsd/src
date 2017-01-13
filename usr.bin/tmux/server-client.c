@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.206 2017/01/11 22:36:07 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.207 2017/01/13 10:12:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -294,6 +294,32 @@ server_client_detach(struct client *c, enum msgtype msgtype)
 
 	notify_client("client-detached", c);
 	proc_send_s(c->peer, msgtype, s->name);
+}
+
+/* Execute command to replace a client, */
+void
+server_client_exec(struct client *c, const char *cmd)
+{
+	struct session	*s = c->session;
+	char		*msg, *shell;
+	size_t		 cmdsize, shellsize;
+
+	if (*cmd == '\0')
+		return;
+	cmdsize = strlen(cmd) + 1;
+
+	if (s != NULL)
+		shell = options_get_string(s->options, "default-shell");
+	else
+		shell = options_get_string(global_s_options, "default-shell");
+	shellsize = strlen(shell) + 1;
+
+	msg = xmalloc(cmdsize + shellsize);
+	memcpy(msg, cmd, cmdsize);
+	memcpy(msg + cmdsize, shell, shellsize);
+
+	proc_send(c->peer, MSG_EXEC, -1, msg, cmdsize + shellsize);
+	free(msg);
 }
 
 /* Check for mouse keys. */
