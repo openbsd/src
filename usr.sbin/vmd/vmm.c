@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.62 2017/01/11 22:38:10 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.63 2017/01/13 14:50:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -219,11 +219,31 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &vtp);
 		memcpy(&vtp, imsg->data, sizeof(vtp));
 		id = vtp.vtp_vm_id;
-		res = terminate_vm(&vtp);
-		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
-		/* Remove local reference if it exists */
-		if ((vm = vm_getbyid(id)) != NULL)
+
+		if ((vm = vm_getbyid(id)) != NULL &&
+		    vm->vm_shutdown == 0) {
+			log_debug("%s: sending shutdown request to vm %d",
+			    __func__, id);
+
+			/*
+			 * Request reboot but mark the VM as shutting down.
+			 * This way we can terminate the VM after the triple
+			 * fault instead of reboot and avoid being stuck in
+			 * the ACPI-less powerdown ("press any key to reboot")
+			 * of the VM.
+			 */
+			vm->vm_shutdown = 1;
+			if (imsg_compose_event(&vm->vm_iev,
+			    IMSG_VMDOP_VM_REBOOT, 0, 0, -1, NULL, 0) == -1)
+				res = errno;
+			else
+				res = 0;
+		} else {
+			/* Terminate VMs that are unknown or shutting down */
+			res = terminate_vm(&vtp);
 			vm_remove(vm);
+		}
+		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		res = get_info_vm(ps, imsg, 0);
@@ -315,6 +335,10 @@ vmm_sighdlr(int sig, short event, void *arg)
 
 				if (WIFEXITED(status))
 					ret = WEXITSTATUS(status);
+
+				/* don't reboot on pending shutdown */
+				if (ret == EAGAIN && vm->vm_shutdown)
+					ret = 0;
 
 				vmid = vm->vm_params.vmc_params.vcp_id;
 				vtp.vtp_vm_id = vmid;
@@ -473,6 +497,14 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			IMSG_SIZE_CHECK(&imsg, &verbose);
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
+			break;
+		case IMSG_VMDOP_VM_SHUTDOWN:
+			if (vmmci_ctl(VMMCI_SHUTDOWN) == -1)
+				_exit(0);
+			break;
+		case IMSG_VMDOP_VM_REBOOT:
+			if (vmmci_ctl(VMMCI_REBOOT) == -1)
+				_exit(0);
 			break;
 		default:
 			fatalx("%s: got invalid imsg %d from %s",

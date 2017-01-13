@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.10 2016/10/12 06:56:54 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.11 2017/01/13 14:50:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -32,7 +32,7 @@ struct pci pci;
 extern char *__progname;
 
 /* PIC IRQs, assigned to devices in order */
-const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 7, 9, 10, 11, 14};
+const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 7, 9, 10, 11, 14, 15};
 
 /*
  * pci_add_bar

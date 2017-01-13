@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.6 2016/10/12 06:56:54 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.7 2017/01/13 14:50:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -30,6 +30,9 @@
 
 #define VIONET_QUEUE_SIZE	64
 #define VIONET_QUEUE_MASK	(VIONET_QUEUE_SIZE - 1)
+
+/* Version of the VMM Control Interface */
+#define VMMCI_VERSION		1
 
 /* All the devices we support have either 1 or 2 queues */
 #define VIRTIO_MAX_QUEUES	2
@@ -133,6 +136,18 @@ struct virtio_net_hdr {
 /*	uint16_t num_buffers; */
 };
 
+enum vmmci_cmd {
+	VMMCI_NONE = 0,
+	VMMCI_SHUTDOWN,
+	VMMCI_REBOOT,
+};
+
+struct vmmci_dev {
+	struct virtio_io_cfg cfg;
+	enum vmmci_cmd cmd;
+	uint32_t vm_id;
+	int irq;
+};
 
 void virtio_init(struct vm_create_params *, int *, int *);
 uint32_t vring_size(uint32_t);
@@ -154,5 +169,8 @@ int vionet_notifyq(struct vionet_dev *);
 void vionet_notify_rx(struct vionet_dev *);
 void vionet_process_rx(uint32_t);
 int vionet_enq_rx(struct vionet_dev *, char *, ssize_t, int *);
+
+int vmmci_io(int, uint16_t, uint32_t *, uint8_t *, void *);
+int vmmci_ctl(unsigned int);
 
 const char *vioblk_cmd_name(uint32_t);

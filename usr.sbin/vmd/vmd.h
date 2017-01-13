@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.41 2017/01/11 22:38:10 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.42 2017/01/13 14:50:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -72,7 +72,9 @@ enum imsg_type {
 	IMSG_VMDOP_PRIV_IFCREATE,
 	IMSG_VMDOP_PRIV_IFUP,
 	IMSG_VMDOP_PRIV_IFDOWN,
-	IMSG_VMDOP_PRIV_IFGROUP
+	IMSG_VMDOP_PRIV_IFGROUP,
+	IMSG_VMDOP_VM_SHUTDOWN,
+	IMSG_VMDOP_VM_REBOOT
 };
 
 struct vmop_result {
@@ -161,6 +163,7 @@ struct vmd_vm {
 	/* When set, VM is not started by default (PROC_PARENT only) */
 	int			 vm_disabled;
 	struct imsgev		 vm_iev;
+	int			 vm_shutdown;
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
 TAILQ_HEAD(vmlist, vmd_vm);
