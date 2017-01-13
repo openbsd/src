@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmmci.4,v 1.1 2017/01/13 14:40:19 reyk Exp $
+.\"	$OpenBSD: vmmci.4,v 1.2 2017/01/13 16:02:27 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm vmmci
-.Nd VMM Control Interface
+.Nd VMM control interface
 .Sh SYNOPSIS
 .Cd "vmmci* at virtio?"
 .Sh DESCRIPTION
@@ -32,7 +32,7 @@ driver provides a control interface for virtual machines running inside
 hosts.
 .Pp
 The driver handles shutdown and reboot requests from the
-.Xr vmm
+.Xr vmm 4
 host by signalling
 .Xr init 8
 with
@@ -40,7 +40,6 @@ with
 and
 .Dv SIGINT
 respectively.
-.Ed
 .Sh SEE ALSO
 .Xr pvbus 4 ,
 .Xr vmm 4 ,
