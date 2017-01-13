@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.293 2017/01/05 13:53:09 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.294 2017/01/13 18:59:12 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1052,8 +1052,19 @@ peeropts	: REMOTEAS as4number	{
 		| PASSIVE		{
 			curpeer->conf.passive = 1;
 		}
-		| DOWN		{
+		| DOWN			{
 			curpeer->conf.down = 1;
+		}
+		| DOWN STRING		{
+			curpeer->conf.down = 1;
+			if (strlcpy(curpeer->conf.shutcomm, $2,
+				sizeof(curpeer->conf.shutcomm)) >=
+				sizeof(curpeer->conf.shutcomm)) {
+				    yyerror("shutdown reason too long");
+				    free($2);
+				    YYERROR;
+			}
+			free($2);
 		}
 		| RIB STRING	{
 			if (!find_rib($2)) {

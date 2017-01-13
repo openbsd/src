@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.84 2017/01/08 23:04:42 krw Exp $ */
+/*	$OpenBSD: control.c,v 1.85 2017/01/13 18:59:12 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -340,9 +340,15 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				switch (imsg.hdr.type) {
 				case IMSG_CTL_NEIGHBOR_UP:
 					bgp_fsm(p, EVNT_START);
+					p->conf.down = 0;
+					p->conf.shutcomm[0] = '\0';
 					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_DOWN:
+					p->conf.down = 1;
+					strlcpy(p->conf.shutcomm,
+					    neighbor->shutcomm,
+					    sizeof(neighbor->shutcomm));
 					session_stop(p, ERR_CEASE_ADMIN_DOWN);
 					control_result(c, CTL_RES_OK);
 					break;

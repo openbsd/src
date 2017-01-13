@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.71 2016/10/26 17:24:13 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.72 2017/01/13 18:59:12 phessler Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2016 $
+.Dd $Mdocdate: January 13 2017 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -104,8 +104,16 @@ Destroy a previously cloned peer.
 The peer must be down before calling this function.
 .Ar peer
 may be the neighbor's address or description.
-.It Cm neighbor Ar peer Cm down
+.It Cm neighbor Ar peer Cm down Op Ar reason
 Take the BGP session to the specified neighbor down.
+If a
+.Ar reason
+is provided, the
+.Ar reason
+is sent as Administrative Shutdown Communication to the neighbor.
+The
+.Ar reason
+cannot exceed 128 octets.
 .Ar peer
 may be the neighbor's address or description.
 .It Cm neighbor Ar peer Cm refresh

@@ -1,7 +1,8 @@
-/*	$OpenBSD: session.c,v 1.356 2016/12/19 07:19:55 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.357 2017/01/13 18:59:12 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2017 Peter van Dijk <peter.van.dijk@powerdns.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -571,6 +572,9 @@ session_main(int debug, int verbose)
 
 	while ((p = peers) != NULL) {
 		peers = p->next;
+		strlcpy(p->conf.shutcomm,
+		    "bgpd shutting down",
+		    sizeof(p->conf.shutcomm));
 		session_stop(p, ERR_CEASE_ADMIN_DOWN);
 		pfkey_remove(p);
 		free(p);
@@ -2221,6 +2225,7 @@ parse_notification(struct peer *peer)
 	u_int8_t	 subcode;
 	u_int8_t	 capa_code;
 	u_int8_t	 capa_len;
+	u_int8_t	 shutcomm_len;
 	u_int8_t	 i;
 
 	/* just log */
@@ -2313,6 +2318,31 @@ parse_notification(struct peer *peer)
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_OPT) {
 		session_capa_ann_none(peer);
 		return (1);
+	}
+
+	if (errcode == ERR_CEASE && subcode == ERR_CEASE_ADMIN_DOWN) {
+		if (datalen >= sizeof(shutcomm_len)) {
+			memcpy(&shutcomm_len, p, sizeof(shutcomm_len));
+			p += sizeof(shutcomm_len);
+			datalen -= sizeof(shutcomm_len);
+			if(datalen < shutcomm_len) {
+			    log_peer_warnx(&peer->conf,
+				"received truncated shutdown reason");
+			    return (0);
+			}
+			if (shutcomm_len > (SHUT_COMM_LEN-1)) {
+			    log_peer_warnx(&peer->conf,
+				"received overly long shutdown reason");
+			    return (0);
+			}
+			memcpy(peer->stats.last_shutcomm, p, shutcomm_len);
+			peer->stats.last_shutcomm[shutcomm_len] = '\0';
+			log_peer_warnx(&peer->conf,
+			    "received shutdown reason: \"%s\"",
+			    log_shutcomm(peer->stats.last_shutcomm));
+			p += shutcomm_len;
+			datalen -= shutcomm_len;
+		}
 	}
 
 	return (0);
@@ -3195,11 +3225,29 @@ session_demote(struct peer *p, int level)
 void
 session_stop(struct peer *peer, u_int8_t subcode)
 {
+	char data[SHUT_COMM_LEN];
+	uint8_t datalen;
+	uint8_t shutcomm_len;
+	char *communication;
+
+	datalen = 0;
+
+	communication = peer->conf.shutcomm;
+
+	if (subcode == ERR_CEASE_ADMIN_DOWN && communication &&
+	    *communication) {
+		shutcomm_len = strlen(communication);
+		if(shutcomm_len < SHUT_COMM_LEN) {
+			data[0] = shutcomm_len;
+			datalen = shutcomm_len + sizeof(data[0]);
+			memcpy(data + 1, communication, shutcomm_len);
+		}
+	}
 	switch (peer->state) {
 	case STATE_OPENSENT:
 	case STATE_OPENCONFIRM:
 	case STATE_ESTABLISHED:
-		session_notification(peer, ERR_CEASE, subcode, NULL, 0);
+		session_notification(peer, ERR_CEASE, subcode, data, datalen);
 		break;
 	default:
 		/* session not open, no need to send notification */

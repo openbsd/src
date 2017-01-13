@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2016/06/03 17:36:37 benno Exp $ */
+/*	$OpenBSD: util.c,v 1.22 2017/01/13 18:59:12 phessler Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <vis.h>
 
 #include "bgpd.h"
 #include "rde.h"
@@ -156,6 +157,15 @@ log_ext_subtype(u_int8_t subtype)
 		snprintf(etype, sizeof(etype), "[%u]", subtype);
 		return (etype);
 	}
+}
+
+const char *
+log_shutcomm(const char *communication) {
+	static char buf[(SHUT_COMM_LEN - 1) * 4 + 1];
+
+	strnvis(buf, communication, sizeof(buf), VIS_NL | VIS_OCTAL);
+
+	return buf;
 }
 
 const char *

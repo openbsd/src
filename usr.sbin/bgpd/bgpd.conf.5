@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.151 2016/10/30 16:50:22 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.152 2017/01/13 18:59:12 phessler Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2016 $
+.Dd $Mdocdate: January 13 2017 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -737,9 +737,18 @@ The description is used when logging neighbor events, in status
 reports, for specifying neighbors, etc., but has no further meaning to
 .Xr bgpd 8 .
 .Pp
-.It Ic down
+.It Ic down Op Ar reason
 Do not start the session when bgpd comes up but stay in
 .Em IDLE .
+If the session is cleared at runtime, after a
+.Ic down
+.Ar reason
+was configured at runtime, the
+.Ar reason
+is sent as Administrative Shutdown Communication.
+The
+.Ar reason
+cannot exceed 128 octets.
 .Pp
 .It Xo
 .Ic dump
