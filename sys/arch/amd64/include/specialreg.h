@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.51 2016/10/06 07:37:51 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.52 2017/01/13 17:15:27 mikeb Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -836,6 +836,12 @@
 #define	C3_CRYPT_CWLO_KEY128		0x0000000a	/* 128bit, 10 rds */
 #define	C3_CRYPT_CWLO_KEY192		0x0000040c	/* 192bit, 12 rds */
 #define	C3_CRYPT_CWLO_KEY256		0x0000080e	/* 256bit, 15 rds */
+
+/* Intel Silicon Debug */
+#define IA32_DEBUG_INTERFACE		0xc80
+#define IA32_DEBUG_INTERFACE_ENABLE	0x00000001
+#define IA32_DEBUG_INTERFACE_LOCK	0x40000000
+#define IA32_DEBUG_INTERFACE_MASK	0x80000000
 
 /*
  * VMX
