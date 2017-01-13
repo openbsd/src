@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.49 2017/01/11 22:38:10 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.50 2017/01/13 19:21:16 edd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -226,9 +226,11 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&vmr, imsg->data, sizeof(vmr));
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
 		if (vmr.vmr_result == 0) {
-			/* Remove local reference */
 			vm = vm_getbyid(vmr.vmr_id);
-			vm_remove(vm);
+			if (vm->vm_from_config)
+				vm->vm_running = 0;
+			else
+				vm_remove(vm);
 		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
@@ -237,8 +239,10 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if ((vm = vm_getbyid(vmr.vmr_id)) == NULL)
 			break;
 		if (vmr.vmr_result == 0) {
-			/* Remove local reference */
-			vm_remove(vm);
+			if (vm->vm_from_config)
+				vm->vm_running = 0;
+			else
+				vm_remove(vm);
 		} else if (vmr.vmr_result == EAGAIN) {
 			/* Stop VM instance but keep the tty open */
 			vm_stop(vm, 1);
@@ -531,12 +535,15 @@ vmd_configure(void)
 void
 vmd_reload(unsigned int reset, const char *filename)
 {
-	struct vmd_vm		*vm;
+	struct vmd_vm		*vm, *next_vm;
 	struct vmd_switch	*vsw;
+	int			 reload = 0;
 
 	/* Switch back to the default config file */
-	if (filename == NULL || *filename == '\0')
+	if (filename == NULL || *filename == '\0') {
 		filename = env->vmd_conffile;
+		reload = 1;
+	}
 
 	log_debug("%s: level %d config file %s", __func__, reset, filename);
 
@@ -545,7 +552,21 @@ vmd_reload(unsigned int reset, const char *filename)
 		config_purge(env, reset);
 		config_setreset(env, reset);
 	} else {
-		/* Reload the configuration */
+		/*
+		 * Load or reload the configuration.
+		 *
+		 * Reloading removes all non-running VMs before processing the
+		 * config file, whereas loading only adds to the existing list
+		 * of VMs.
+		 */
+
+		if (reload) {
+			TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry, next_vm) {
+				if (vm->vm_running == 0)
+					vm_remove(vm);
+			}
+		}
+
 		if (parse_config(filename) == -1) {
 			log_debug("%s: failed to load config file %s",
 			    __func__, filename);

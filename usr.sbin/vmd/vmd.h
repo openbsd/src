@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.42 2017/01/13 14:50:56 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.43 2017/01/13 19:21:16 edd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -162,6 +162,8 @@ struct vmd_vm {
 	int			 vm_running;
 	/* When set, VM is not started by default (PROC_PARENT only) */
 	int			 vm_disabled;
+	/* When set, VM was defined in a config file */
+	int			 vm_from_config;
 	struct imsgev		 vm_iev;
 	int			 vm_shutdown;
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;

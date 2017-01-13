@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2017/01/05 13:53:10 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2017/01/13 19:21:16 edd Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -288,6 +288,7 @@ vm		: VM string			{
 					    vcp->vcp_name,
 					    vcp_disable ? "disabled" : "enabled");
 				}
+				vm->vm_from_config = 1;
 			}
 		}
 		;

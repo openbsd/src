@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.22 2017/01/13 14:53:33 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.23 2017/01/13 19:21:16 edd Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -57,13 +57,14 @@ and
 .Ar size ,
 rounded to megabytes.
 .It Cm load Ar filename
-Load the configuration from the specified file.
+Load additional configuration from the specified file.
 .It Cm log brief
 Disable verbose debug logging.
 .It Cm log verbose
 Enable verbose debug logging.
 .It Cm reload
-Reload the configuration from the default configuration file.
+Remove all stopped VMs and reload the configuration from the default
+configuration file.
 .It Cm reset Op Cm all
 Reset the running state.
 .It Cm reset switches
@@ -111,6 +112,8 @@ Stops (terminates) a VM defined by the specified VM
 A graceful shutdown will be attempted if the VM supports the
 .Xr vmmci 4
 device.
+Once stopped, if the VM was not defined in a configuration file, then it is
+removed.
 .El
 .Pp
 If the
