@@ -1,0 +1,8 @@
+Use a NFS mount via loopback for testing file system operations.
+By changing files directly on the server and accessing them on the
+client or vice versa, specific kernel behavior can be triggered.
+Especially using file mmap(2) over NFS is tested.
+
+These tests must be run as root, on a system with a free vnd0 slot.
+They create an entry in /etc/exports and start NFS server daemons
+for a loopback mount.
