@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.56 2017/01/03 17:19:57 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.57 2017/01/13 17:09:51 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -557,7 +557,7 @@ tls_handshake(struct tls *ctx)
 		rv = tls_handshake_server(ctx);
 
 	if (rv == 0) {
-		ctx->ssl_peer_cert =  SSL_get_peer_certificate(ctx->ssl_conn);
+		ctx->ssl_peer_cert = SSL_get_peer_certificate(ctx->ssl_conn);
 		if (tls_conninfo_populate(ctx) == -1)
 		    rv = -1;
 		if (ctx->ocsp == NULL)
@@ -623,7 +623,7 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen)
 		rv = (ssize_t)ssl_ret;
 		goto out;
 	}
-	rv =  (ssize_t)tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write");
+	rv = (ssize_t)tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write");
 
  out:
 	/* Prevent callers from performing incorrect error handling */
