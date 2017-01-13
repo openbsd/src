@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.47 2016/12/09 21:39:27 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.48 2017/01/13 11:56:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -385,8 +385,7 @@ tty_term_find(char *name, int fd, char **cause)
 	struct tty_code				*code;
 	u_int					 i;
 	int		 			 n, error;
-	char					*s;
-	const char				*acs;
+	const char				*s, *acs;
 
 	LIST_FOREACH(term, &tty_terms, entry) {
 		if (strcmp(term->name, name) == 0) {

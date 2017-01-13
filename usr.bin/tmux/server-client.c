@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.207 2017/01/13 10:12:12 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.208 2017/01/13 11:56:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -296,12 +296,13 @@ server_client_detach(struct client *c, enum msgtype msgtype)
 	proc_send_s(c->peer, msgtype, s->name);
 }
 
-/* Execute command to replace a client, */
+/* Execute command to replace a client. */
 void
 server_client_exec(struct client *c, const char *cmd)
 {
 	struct session	*s = c->session;
-	char		*msg, *shell;
+	char		*msg;
+	const char	*shell;
 	size_t		 cmdsize, shellsize;
 
 	if (*cmd == '\0')

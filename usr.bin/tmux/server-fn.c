@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.102 2016/10/16 22:06:40 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.103 2017/01/13 11:56:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -35,9 +35,9 @@ static void		 server_destroy_session_group(struct session *);
 void
 server_fill_environ(struct session *s, struct environ *env)
 {
-	char	*term;
-	u_int	 idx;
-	long	 pid;
+	const char	*term;
+	u_int		 idx;
+	long		 pid;
 
 	if (s != NULL) {
 		term = options_get_string(global_options, "default-terminal");
