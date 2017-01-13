@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.695 2017/01/13 11:56:43 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.696 2017/01/13 11:58:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1636,7 +1636,7 @@ struct options_entry *options_set_number(struct options *, const char *,
 long long options_get_number(struct options *, const char *);
 struct options_entry *options_set_style(struct options *, const char *, int,
 	    const char *);
-struct grid_cell *options_get_style(struct options *, const char *);
+const struct grid_cell *options_get_style(struct options *, const char *);
 
 /* options-table.c */
 extern const struct options_table_entry options_table[];
