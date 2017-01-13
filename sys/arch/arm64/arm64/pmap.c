@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.6 2017/01/13 12:28:52 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.7 2017/01/13 12:34:08 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -194,6 +194,7 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
     vm_prot_t prot, int flags, int cache);
 void pmap_pte_insert(struct pte_desc *pted);
 void pmap_pte_remove(struct pte_desc *pted, int);
+void pmap_pte_update(struct pte_desc *pted, uint64_t *pl3);
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 void pmap_pinit(pmap_t pm);
 void pmap_release(pmap_t pm);
@@ -296,12 +297,15 @@ pmap_vp_lookup(pmap_t pm, vaddr_t va, uint64_t **pl3entry)
 	struct pte_desc *pted;
 
 	if (pm->have_4_level_pt) {
-		vp1 = pm->pm_vp.l0->vp[VP_IDX0(va)];
-		if (vp1 == NULL) {
+		if (pm->pm_vp.l0 == NULL) {
 			return NULL;
 		}
+		vp1 = pm->pm_vp.l0->vp[VP_IDX0(va)];
 	} else {
 		vp1 = pm->pm_vp.l1;
+	}
+	if (vp1 == NULL) {
+		return NULL;
 	}
 
 	vp2 = vp1->vp[VP_IDX1(va)];
@@ -1660,10 +1664,21 @@ pmap_pte_insert(struct pte_desc *pted)
 {
 	/* put entry into table */
 	/* need to deal with ref/change here */
+	pmap_t pm = pted->pted_pmap;
+	uint64_t *pl3;
+
+	if (pmap_vp_lookup(pm, pted->pted_va, &pl3) == NULL) {
+		panic("pmap_pte_insert: have a pted, but missing a vp"
+		    " for %x va pmap %x", __func__, pted->pted_va, pm);
+	}
+
+	pmap_pte_update(pted, pl3);
+}
+
+void
+pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
+{
 	uint64_t pte, access_bits;
-	struct pmapvp1 *vp1;
-	struct pmapvp2 *vp2;
-	struct pmapvp3 *vp3;
 	pmap_t pm = pted->pted_pmap;
 	uint64_t attr = 0;
 
@@ -1698,28 +1713,13 @@ pmap_pte_insert(struct pte_desc *pted)
 
 	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
 
-	if (pm->have_4_level_pt) {
-		vp1 = pm->pm_vp.l0->vp[VP_IDX0(pted->pted_va)];
-	} else {
-		vp1 = pm->pm_vp.l1;
-	}
-	vp2 = vp1->vp[VP_IDX1(pted->pted_va)];
-	if (vp2 == NULL) {
-		panic("have a pted, but missing the l2 for %x va pmap %x",
-		    pted->pted_va, pm);
-	}
-	vp3 = vp2->vp[VP_IDX2(pted->pted_va)];
-	if (vp3 == NULL) {
-		panic("have a pted, but missing the l2 for %x va pmap %x",
-		    pted->pted_va, pm);
-	}
-	vp3->l3[VP_IDX3(pted->pted_va)] = pte;
+	*pl3 = pte;
 #if 0
 	__asm __volatile("dsb");
 	dcache_wb_pou((vaddr_t)&l2[VP_IDX2(pted->pted_va)], sizeof(l2[VP_IDX2(pted->pted_va)]));
 	//cpu_tlb_flushID_SE(pted->pted_va & PTE_RPGN);
 #endif
-	dcache_wb_pou((vaddr_t) &vp3->l3[VP_IDX3(pted->pted_va)],8);
+	dcache_wb_pou((vaddr_t) pl3, 8);
 	__asm __volatile("dsb sy");
 }
 
