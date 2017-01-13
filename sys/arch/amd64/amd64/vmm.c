@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.105 2017/01/12 09:02:47 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.106 2017/01/13 02:38:41 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1139,12 +1139,69 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
  * vm_impl_init_svm
  *
  * AMD SVM specific VM initialization routine
+ *
+ * Parameters:
+ *  vm: the VM being initialized
+ *   p: vmd process owning the VM
+ *
+ * Return values:
+ *  0: the initialization was successful
+ *  ENOMEM: the initialization failed (lack of resources)
  */
 int
 vm_impl_init_svm(struct vm *vm, struct proc *p)
 {
-	/* XXX removed due to rot */
-	return (-1);
+	int i, ret;
+	vaddr_t mingpa, maxgpa;
+	struct pmap *pmap;
+	struct vm_mem_range *vmr;
+
+	/* If not RVI, nothing to do here */
+	if (vmm_softc->mode != VMM_MODE_RVI)
+		return (0);
+
+	/* Create a new pmap for this VM */
+	pmap = pmap_create();
+	if (!pmap) {
+		printf("vm_impl_init_svm: pmap_create failed\n");
+		return (ENOMEM);
+	}
+
+	/*
+	 * Create a new UVM map for this VM, and assign it the pmap just
+	 * created.
+	 */
+	vmr = &vm->vm_memranges[0];
+	mingpa = vmr->vmr_gpa;
+	vmr = &vm->vm_memranges[vm->vm_nmemranges - 1];
+	maxgpa = vmr->vmr_gpa + vmr->vmr_size;
+	vm->vm_map = uvm_map_create(pmap, mingpa, maxgpa,
+	    VM_MAP_ISVMSPACE | VM_MAP_PAGEABLE);
+
+	if (!vm->vm_map) {
+		printf("vm_impl_init_svm: uvm_map_create failed\n");
+		pmap_destroy(pmap);
+		return (ENOMEM);
+	}
+
+	/* Map the new map with an anon */
+	DPRINTF("vm_impl_init_svm: created vm_map @ %p\n", vm->vm_map);
+	for (i = 0; i < vm->vm_nmemranges; i++) {
+		vmr = &vm->vm_memranges[i];
+		ret = uvm_share(vm->vm_map, vmr->vmr_gpa,
+		    PROT_READ | PROT_WRITE | PROT_EXEC,
+		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
+		if (ret) {
+			printf("vm_impl_init_svm: uvm_share failed (%d)\n",
+			    ret);
+			/* uvm_map_deallocate calls pmap_destroy for us */
+			uvm_map_deallocate(vm->vm_map);
+			vm->vm_map = NULL;
+			return (ENOMEM);
+		}
+	}
+
+	return (0);
 }
 
 /*
