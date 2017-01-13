@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1811 2017/01/07 23:16:12 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1812 2017/01/13 14:19:42 reyk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6209,6 +6209,7 @@
 
 /* OpenBSD VMM products */
 #define	PCI_PRODUCT_OPENBSD_PCHB	0x0666		/* VMM PCI Host Bridge */
+#define	PCI_PRODUCT_OPENBSD_CONTROL	0x0777		/* VMM Control Interface */
 
 /* Option products */
 #define	PCI_PRODUCT_OPTION_F32	0x000c		/* 3G+ UMTS HSDPA */

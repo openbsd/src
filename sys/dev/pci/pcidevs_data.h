@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1811 2017/01/07 23:16:12 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1812 2017/01/13 14:19:42 reyk Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -21758,6 +21758,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
 	    "VMM PCI Host Bridge",
+	},
+	{
+	    PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_CONTROL,
+	    "VMM Control Interface",
 	},
 	{
 	    PCI_VENDOR_OPTION, PCI_PRODUCT_OPTION_F32,
