@@ -468,7 +468,109 @@ struct vm;
 /*
  * Implementation-specific cpu state
  */
+struct vmcb_segment {
+	uint16_t 			vs_sel;			/* 000h */
+	uint16_t 			vs_attr;		/* 002h */
+	uint32_t			vs_lim;			/* 004h */
+	uint64_t			vs_base;		/* 008h */
+};
+
 struct vmcb {
+	union {
+		struct {
+			uint32_t	v_cr_rw;		/* 000h */
+			uint32_t	v_dr_rw;		/* 004h */
+			uint32_t	v_excp;			/* 008h */
+			uint32_t	v_intercept1;		/* 00Ch */
+			uint32_t	v_intercept2;		/* 010h */
+			uint8_t		v_pad1[0x28];		/* 014h-03Bh */
+			uint16_t	v_pause_thr;		/* 03Ch */
+			uint16_t	v_pause_ct;		/* 03Eh */
+			uint64_t	v_iopm_pa;		/* 040h */
+			uint64_t	v_msrpm_pa;		/* 048h */
+			uint64_t	v_tsc_offset;		/* 050h */
+			uint32_t	v_asid;			/* 058h */
+			uint8_t		v_tlb_control;		/* 05Ch */
+			uint8_t		v_pad2[0x3];		/* 05Dh-05Fh */
+			uint8_t		v_tpr;			/* 060h */
+			uint8_t		v_irq;			/* 061h */
+			uint8_t		v_misc1;		/* 062h */
+			uint8_t		v_misc2;		/* 063h */
+			uint8_t		v_misc3;		/* 064h */
+			uint8_t		v_pad3[0x3];		/* 065h-067h */
+			uint64_t	v_intr_shadow;		/* 068h */
+			uint64_t	v_exitcode;		/* 070h */
+			uint64_t	v_exitinfo1;		/* 078h */
+			uint64_t	v_exitinfo2;		/* 080h */
+			uint64_t	v_extintinfo;		/* 088h */
+			uint64_t	v_np_enable;		/* 090h */
+			uint64_t	v_avic_apic_bar;	/* 098h */
+			uint64_t	v_pad4;			/* 0A0h */
+			uint64_t	v_eventinj;		/* 0A8h */
+			uint64_t	v_n_cr3;		/* 0B0h */
+			uint64_t	v_lbr_virt_enable;	/* 0B8h */
+			uint64_t	v_vmcb_clean_bits;	/* 0C0h */
+			uint64_t	v_nrip;			/* 0C8h */
+			uint8_t		v_n_bytes_fetched;	/* 0D0h */
+			uint8_t		v_guest_ins_bytes[0xf];	/* 0D1h-0DFh */
+			uint64_t	v_avic_apic_back_page;	/* 0E0h */
+			uint64_t	v_pad5;			/* 0E8h-0EFh */
+			uint64_t	v_avic_logical_table;	/* 0F0h */
+			uint64_t	v_avic_phys;		/* 0F8h */
+			
+		};
+		uint8_t vmcb_control[0x400];
+	};
+
+	union {
+		struct {
+			/* Offsets here are relative to start of VMCB SSA */
+			struct vmcb_segment	v_es;		/* 000h */
+			struct vmcb_segment	v_cs;		/* 010h */
+			struct vmcb_segment	v_ss;		/* 020h */
+			struct vmcb_segment	v_ds;		/* 030h */
+			struct vmcb_segment	v_fs;		/* 040h */
+			struct vmcb_segment	v_gs;		/* 050h */
+			struct vmcb_segment	v_gdtr;		/* 060h */
+			struct vmcb_segment	v_ldtr;		/* 070h */
+			struct vmcb_segment	v_idtr;		/* 080h */
+			struct vmcb_segment	v_tr;		/* 090h */
+			uint8_t 		v_pad6[0x2B];	/* 0A0h-0CAh */
+			uint8_t			v_cpl;		/* 0CBh */
+			uint32_t		v_pad7;		/* 0CCh-0CFh */
+			uint64_t		v_efer;		/* 0D0h */
+			uint8_t			v_pad8[0x70];	/* 0D8h-147h */
+			uint64_t		v_cr4;		/* 148h */
+			uint64_t		v_cr3;		/* 150h */
+			uint64_t		v_cr0;		/* 158h */
+			uint64_t		v_dr7;		/* 160h */
+			uint64_t		v_dr6;		/* 168h */
+			uint64_t		v_rflags;	/* 170h */
+			uint64_t		v_rip;		/* 178h */
+			uint64_t		v_pad9[0xB];	/* 180h-1D7h */
+			uint64_t		v_rsp;		/* 1D8h */
+			uint64_t		v_pad10[0x3];	/* 1E0h-1F7h */
+			uint64_t		v_rax;		/* 1F8h */
+			uint64_t		v_star;		/* 200h */
+			uint64_t		v_lstar;	/* 208h */
+			uint64_t		v_cstar;	/* 210h */
+			uint64_t		v_sfmask;	/* 218h */
+			uint64_t		v_kgsbase;	/* 220h */
+			uint64_t		v_sysenter_cs;	/* 228h */
+			uint64_t		v_sysenter_esp;	/* 230h */
+			uint64_t		v_sysenter_eip;	/* 238h */
+			uint64_t		v_cr2;		/* 240h */
+			uint64_t		v_pad11[0x4];	/* 248h-267h */
+			uint64_t		v_g_pat;	/* 268h */
+			uint64_t		v_dbgctl;	/* 270h */
+			uint64_t		v_br_from;	/* 278h */
+			uint64_t		v_br_to;	/* 280h */
+			uint64_t		v_lastexcpfrom;	/* 288h */
+			uint64_t		v_lastexcpto;	/* 290h */
+		};
+
+		uint8_t vmcb_layout[PAGE_SIZE - 0x400];
+	};
 };
 
 struct vmcs {
