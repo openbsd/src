@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: simplebus.c,v 1.2 2017/01/13 22:52:24 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -194,7 +194,7 @@ int
 simplebus_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
     int flag, bus_space_handle_t *bshp)
 {
-	struct simplebus_softc *sc = (struct simplebus_softc *)t;
+	struct simplebus_softc *sc = t->bus_private;
 	uint64_t addr, rfrom, rto, rsize;
 	uint32_t *range;
 	int parent, rlen, rone;
