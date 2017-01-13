@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.2 2014/04/18 14:38:21 guenther Exp $	*/
+/*	$OpenBSD: probe.c,v 1.3 2017/01/13 15:28:02 kettenis Exp $	*/
 
 /*
  * Written by Michael Shalayeff, 2004. Public Domain.
@@ -8,7 +8,11 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <err.h>
+
+#ifdef __hppa__
 
 char moo[] = "moo";	/* writable */
 const char blah[] = "blah";	/* not */
@@ -66,3 +70,14 @@ main(int argc, char *argv[])
 
 	exit(0);
 }
+
+#else
+
+int
+main(int argc, char *argv[])
+{
+	printf("SKIPPED\n");
+	exit(0);
+}
+
+#endif
