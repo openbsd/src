@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.327 2016/11/24 17:39:49 mikeb Exp $
+#	$OpenBSD: files.pci,v 1.328 2017/01/13 14:37:32 reyk Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -833,6 +833,10 @@ file	dev/pci/viornd.c		viornd
 device	vioscsi: scsi
 attach	vioscsi at virtio
 file	dev/pci/vioscsi.c		vioscsi
+
+device	vmmci
+attach	vmmci at virtio
+file	dev/pci/vmmci.c			vmmci
 
 include "dev/pci/files.agp"
 include "dev/pci/drm/files.drm"
