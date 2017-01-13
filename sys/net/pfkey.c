@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.33 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.34 2017/01/13 08:52:09 mpi Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -136,7 +136,8 @@ int
 pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
 {
 	struct mbuf *packet2;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (more) {
 		if (!(packet2 = m_dup_pkt(packet, 0, M_DONTWAIT)))
@@ -144,13 +145,10 @@ pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
 	} else
 		packet2 = packet;
 
-	s = splsoftnet();
 	if (!sbappendaddr(&socket->so_rcv, &pfkey_addr, packet2, NULL)) {
 		m_freem(packet2);
-		splx(s);
 		return (ENOBUFS);
 	}
-	splx(s);
 
 	sorwakeup(socket);
 	return (0);

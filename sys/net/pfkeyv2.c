@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.148 2016/09/15 02:00:18 dlg Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.149 2017/01/13 08:52:09 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -783,7 +783,7 @@ int
 pfkeyv2_send(struct socket *socket, void *message, int len)
 {
 	int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST;
-	int delflag = 0, s;
+	int delflag = 0;
 	struct sockaddr_encap encapdst, encapnetmask;
 	struct ipsec_policy *ipo, *tmpipo;
 	struct ipsec_acquire *ipa;
@@ -806,6 +806,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	struct sadb_ident *sid, *did;
 
 	u_int rdomain;
+
+	splsoftassert(IPL_SOFTNET);
 
 	/* Verify that we received this over a legitimate pfkeyv2 socket */
 	bzero(headers, sizeof(headers));
@@ -940,8 +942,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		}
 #endif /* IPSEC */
 
-		s = splsoftnet();
-
 		/* Find TDB */
 		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
@@ -949,7 +949,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		/* If there's no such SA, we're done */
 		if (sa2 == NULL) {
 			rval = ESRCH;
-			goto splxret;
+			goto ret;
 		}
 
 		/* If this is a reserved SA */
@@ -969,7 +969,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    &newsa->tdb_sproto, &alg))) {
 				tdb_free(freeme);
 				freeme = NULL;
-				goto splxret;
+				goto ret;
 			}
 
 			/* Initialize SA */
@@ -1020,7 +1020,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				rval = EINVAL;
 				tdb_free(freeme);
 				freeme = NULL;
-				goto splxret;
+				goto ret;
 			}
 
 			newsa->tdb_cur_allocations = sa2->tdb_cur_allocations;
@@ -1041,7 +1041,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    headers[SADB_EXT_IDENTITY_DST] ||
 			    headers[SADB_EXT_SENSITIVITY]) {
 				rval = EINVAL;
-				goto splxret;
+				goto ret;
 			}
 
 			import_sa(sa2, headers[SADB_EXT_SA], NULL);
@@ -1059,7 +1059,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 #endif
 		}
 
-		splx(s);
 		break;
 	case SADB_ADD:
 		ssa = (struct sadb_sa *) headers[SADB_EXT_SA];
@@ -1092,21 +1091,19 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		}
 #endif /* IPSEC */
 
-		s = splsoftnet();
-
 		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 
 		/* We can't add an existing SA! */
 		if (sa2 != NULL) {
 			rval = EEXIST;
-			goto splxret;
+			goto ret;
 		}
 
 		/* We can only add "mature" SAs */
 		if (ssa->sadb_sa_state != SADB_SASTATE_MATURE) {
 			rval = EINVAL;
-			goto splxret;
+			goto ret;
 		}
 
 		/* Allocate and initialize new TDB */
@@ -1124,7 +1121,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    &newsa->tdb_sproto, &alg))) {
 				tdb_free(freeme);
 				freeme = NULL;
-				goto splxret;
+				goto ret;
 			}
 
 			import_sa(newsa, headers[SADB_EXT_SA], &ii);
@@ -1177,14 +1174,12 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				rval = EINVAL;
 				tdb_free(freeme);
 				freeme = NULL;
-				goto splxret;
+				goto ret;
 			}
 		}
 
 		/* Add TDB in table */
 		puttdb((struct tdb *) freeme);
-
-		splx(s);
 
 		freeme = NULL;
 		break;
@@ -1194,18 +1189,15 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		sunionp =
 		    (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
 			sizeof(struct sadb_address));
-		s = splsoftnet();
 
 		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 		if (sa2 == NULL) {
 			rval = ESRCH;
-			goto splxret;
+			goto ret;
 		}
 
 		tdb_delete(sa2);
-
-		splx(s);
 
 		sa2 = NULL;
 		break;
@@ -1230,20 +1222,16 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
 			sizeof(struct sadb_address));
 
-		s = splsoftnet();
-
 		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 		if (sa2 == NULL) {
 			rval = ESRCH;
-			goto splxret;
+			goto ret;
 		}
 
 		rval = pfkeyv2_get(sa2, headers, &freeme, NULL);
 		if (rval)
 			mode = PFKEYV2_SENDMESSAGE_UNICAST;
-
-		splx(s);
 
 		break;
 
@@ -1323,15 +1311,12 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		switch (smsg->sadb_msg_satype) {
 		case SADB_SATYPE_UNSPEC:
-			s = splsoftnet();
-
 			for (ipo = TAILQ_FIRST(&ipsec_policy_head);
 			    ipo != NULL; ipo = tmpipo) {
 				tmpipo = TAILQ_NEXT(ipo, ipo_list);
 				if (ipo->ipo_rdomain == rdomain)
 					ipsec_delete_policy(ipo);
 			}
-			splx(s);
 			/* FALLTHROUGH */
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
@@ -1340,12 +1325,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 #ifdef TCP_SIGNATURE
 		case SADB_X_SATYPE_TCPSIGNATURE:
 #endif /* TCP_SIGNATURE */
-			s = splsoftnet();
-
 			tdb_walk(rdomain, pfkeyv2_flush_walker,
 			    (u_int8_t *) &(smsg->sadb_msg_satype));
 
-			splx(s);
 			break;
 
 		default:
@@ -1360,10 +1342,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		dump_state.sadb_msg = (struct sadb_msg *) headers[0];
 		dump_state.socket = socket;
 
-		s = splsoftnet();
 		rval = tdb_walk(rdomain, pfkeyv2_dump_walker, &dump_state);
-		splx(s);
-
 		if (!rval)
 			goto realret;
 
@@ -1381,13 +1360,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		sunionp = (union sockaddr_union *) (headers[SADB_EXT_ADDRESS_DST] +
 		    sizeof(struct sadb_address));
 
-		s = splsoftnet();
-
 		tdb1 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 		if (tdb1 == NULL) {
 			rval = ESRCH;
-			goto splxret;
+			goto ret;
 		}
 
 		ssa = (struct sadb_sa *) headers[SADB_X_EXT_SA2];
@@ -1399,14 +1376,14 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    SADB_X_GETSPROTO(sa_proto->sadb_protocol_proto));
 		if (tdb2 == NULL) {
 			rval = ESRCH;
-			goto splxret;
+			goto ret;
 		}
 
 		/* Detect cycles */
 		for (tdb3 = tdb2; tdb3; tdb3 = tdb3->tdb_onext)
 			if (tdb3 == tdb1) {
 				rval = ESRCH;
-				goto splxret;
+				goto ret;
 			}
 
 		/* Maintenance */
@@ -1421,8 +1398,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		/* Link them */
 		tdb1->tdb_onext = tdb2;
 		tdb2->tdb_inext = tdb1;
-
-		splx(s);
 	}
 	break;
 
@@ -1472,7 +1447,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    headers[SADB_X_EXT_PROTOCOL], headers[SADB_X_EXT_FLOW_TYPE]);
 
 		/* Determine whether the exact same SPD entry already exists. */
-		s = splsoftnet();
 		if ((rn = rn_match(&encapdst, rnh)) != NULL) {
 			ipo = (struct ipsec_policy *)rn;
 
@@ -1494,7 +1468,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		if (exists && (ipo->ipo_flags & IPSP_POLICY_STATIC)) {
 			if (!(sab->sadb_protocol_flags &
 				SADB_X_POLICYFLAGS_POLICY)) {
-				splx(s);
 				goto ret;
 			}
 		}
@@ -1503,12 +1476,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		if (delflag) {
 			if (exists) {
 				rval = ipsec_delete_policy(ipo);
-				splx(s);
 				goto ret;
 			}
 
 			/* If we were asked to delete something non-existent, error. */
-			splx(s);
 			rval = ESRCH;
 			break;
 		}
@@ -1524,7 +1495,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			/* Allocate policy entry */
 			ipo = pool_get(&ipsec_policy_pool, PR_NOWAIT|PR_ZERO);
 			if (ipo == NULL) {
-				splx(s);
 				rval = ENOMEM;
 				goto ret;
 			}
@@ -1561,7 +1531,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			else
 				ipsec_delete_policy(ipo);
 
-			splx(s);
 			rval = EINVAL;
 			goto ret;
 		}
@@ -1596,7 +1565,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 					ipsec_delete_policy(ipo);
 				else
 					pool_put(&ipsec_policy_pool, ipo);
-				splx(s);
 				rval = ENOBUFS;
 				goto ret;
 			}
@@ -1628,7 +1596,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 					ipsp_ids_free(ipo->ipo_ids);
 				pool_put(&ipsec_policy_pool, ipo);
 
-				splx(s);
 				goto ret;
 			}
 			TAILQ_INSERT_HEAD(&ipsec_policy_head, ipo, ipo_list);
@@ -1636,8 +1603,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		} else {
 			ipo->ipo_last_searched = ipo->ipo_flags = 0;
 		}
-
-		splx(s);
 	}
 	break;
 
@@ -1678,7 +1643,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				}
 			}
 		}
-	
 
 		break;
 
@@ -1725,10 +1689,6 @@ realret:
 		free(sa1, M_PFKEY, 0);
 
 	return (rval);
-
-splxret:
-	splx(s);
-	goto ret;
 }
 
 /*
@@ -2187,15 +2147,14 @@ ret:
 	return (rval);
 }
 
-/*
- * Caller is responsible for setting at least splsoftnet().
- */
 int
 pfkeyv2_ipo_walk(u_int rdomain, int (*walker)(struct ipsec_policy *, void *),
     void *arg)
 {
 	int rval = 0;
 	struct ipsec_policy *ipo;
+
+	splsoftassert(IPL_SOFTNET);
 
 	TAILQ_FOREACH(ipo, &ipsec_policy_head, ipo_list) {
 		if (ipo->ipo_rdomain != rdomain)
