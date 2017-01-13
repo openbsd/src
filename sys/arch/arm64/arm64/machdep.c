@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.2 2016/12/19 07:44:54 jsg Exp $ */
+/* $OpenBSD: machdep.c,v 1.3 2017/01/13 09:18:11 fcambus Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -293,14 +293,8 @@ cpu_startup()
  */
 
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)

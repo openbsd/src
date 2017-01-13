@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.52 2016/09/23 11:38:21 kettenis Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.53 2017/01/13 09:18:11 fcambus Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -300,14 +300,8 @@ cpu_startup()
  */
 
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 #if NAPM > 0
 	extern int cpu_apmwarn;

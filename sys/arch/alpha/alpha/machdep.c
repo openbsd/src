@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.176 2016/10/09 11:25:39 tom Exp $ */
+/* $OpenBSD: machdep.c,v 1.177 2017/01/13 09:18:11 fcambus Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1553,14 +1553,8 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	dev_t consdev;
 #if NIOASIC > 0
