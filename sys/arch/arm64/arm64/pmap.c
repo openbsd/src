@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.5 2017/01/11 13:00:49 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.6 2017/01/13 12:28:52 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -192,8 +192,8 @@ void pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3
 void
 pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
     vm_prot_t prot, int flags, int cache);
-void pte_insert(struct pte_desc *pted);
-void pte_remove(struct pte_desc *pted, int);
+void pmap_pte_insert(struct pte_desc *pted);
+void pmap_pte_remove(struct pte_desc *pted, int);
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 void pmap_pinit(pmap_t pm);
 void pmap_release(pmap_t pm);
@@ -574,7 +574,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * now.
 	 */
 	if (flags & (PROT_READ|PROT_WRITE|PROT_EXEC|PMAP_WIRED)) {
-		pte_insert(pted);
+		pmap_pte_insert(pted);
 	}
 
 //	cpu_dcache_inv_range(va & PAGE_MASK, PAGE_SIZE);
@@ -656,7 +656,7 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 	__asm __volatile("dsb sy");
 	//dcache_wbinv_poc(va & PTE_RPGN, pted->pted_pte & PTE_RPGN, PAGE_SIZE);
 
-	pte_remove(pted, pm != pmap_kernel());
+	pmap_pte_remove(pted, pm != pmap_kernel());
 
 	ttlb_flush(pm, pted->pted_va & PTE_RPGN);
 
@@ -730,7 +730,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	 * We were told to map the page, probably called from vm_fault,
 	 * so map the page!
 	 */
-	pte_insert(pted);
+	pmap_pte_insert(pted);
 
 	ttlb_flush(pm, va & PTE_RPGN);
 
@@ -778,7 +778,7 @@ pmap_kremove_pg(vaddr_t va)
 	 * so that we know the mapping information is either valid,
 	 * or that the mapping is not present in the hash table.
 	 */
-	pte_remove(pted, 0);
+	pmap_pte_remove(pted, 0);
 
 	ttlb_flush(pm, pted->pted_va & PTE_RPGN);
 
@@ -1534,7 +1534,7 @@ pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 
 	pted->pted_va &= ~PROT_WRITE;
 	pted->pted_pte &= ~PROT_WRITE;
-	pte_insert(pted);
+	pmap_pte_insert(pted);
 
 	ttlb_flush(pm, pted->pted_va & PTE_RPGN);
 
@@ -1656,7 +1656,7 @@ STATIC uint64_t ap_bits_kern [8] = {
 };
 
 void
-pte_insert(struct pte_desc *pted)
+pmap_pte_insert(struct pte_desc *pted)
 {
 	/* put entry into table */
 	/* need to deal with ref/change here */
@@ -1685,7 +1685,7 @@ pte_insert(struct pte_desc *pted)
 		attr |= ATTR_SH(SH_INNER);
 		break;
 	default:
-		panic("pte_insert:invalid cache mode");
+		panic("pmap_pte_insert: invalid cache mode");
 	}
 
 	// kernel mappings are global, so nG should not be set
@@ -1724,7 +1724,7 @@ pte_insert(struct pte_desc *pted)
 }
 
 void
-pte_remove(struct pte_desc *pted, int remove_pted)
+pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 {
 	/* put entry into table */
 	/* need to deal with ref/change here */
@@ -1820,7 +1820,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		/* Thus, enable read, write and exec. */
 		pted->pted_pte |=
 		    (pted->pted_va & (PROT_READ|PROT_WRITE|PROT_EXEC));
-		pte_insert(pted);
+		pmap_pte_insert(pted);
 
 		/* Flush tlb. */
 		ttlb_flush(pm, va & PTE_RPGN);
@@ -1839,7 +1839,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		/* Thus, enable read and exec. */
 		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
-		pte_insert(pted);
+		pmap_pte_insert(pted);
 
 		/* Flush tlb. */
 		ttlb_flush(pm, va & PTE_RPGN);
@@ -1858,7 +1858,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		/* Thus, enable read and exec. */
 		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
-		pte_insert(pted);
+		pmap_pte_insert(pted);
 
 		/* Flush tlb. */
 		ttlb_flush(pm, pted->pted_va & PTE_RPGN);
