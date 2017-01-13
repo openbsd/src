@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.7 2017/01/13 12:34:08 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.8 2017/01/13 12:36:45 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1529,16 +1529,17 @@ void
 pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 {
 	struct pte_desc *pted;
+	uint64_t *pl3;
 
 	/* Every VA needs a pted, even unmanaged ones. */
-	pted = pmap_vp_lookup(pm, va, NULL);
+	pted = pmap_vp_lookup(pm, va, &pl3);
 	if (!pted || !PTED_VALID(pted)) {
 		return;
 	}
 
 	pted->pted_va &= ~PROT_WRITE;
 	pted->pted_pte &= ~PROT_WRITE;
-	pmap_pte_insert(pted);
+	pmap_pte_update(pted, pl3);
 
 	ttlb_flush(pm, pted->pted_va & PTE_RPGN);
 
@@ -1820,7 +1821,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		/* Thus, enable read, write and exec. */
 		pted->pted_pte |=
 		    (pted->pted_va & (PROT_READ|PROT_WRITE|PROT_EXEC));
-		pmap_pte_insert(pted);
+		pmap_pte_update(pted, pl3);
 
 		/* Flush tlb. */
 		ttlb_flush(pm, va & PTE_RPGN);
@@ -1839,7 +1840,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		/* Thus, enable read and exec. */
 		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
-		pmap_pte_insert(pted);
+		pmap_pte_update(pted, pl3);
 
 		/* Flush tlb. */
 		ttlb_flush(pm, va & PTE_RPGN);
@@ -1858,7 +1859,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		/* Thus, enable read and exec. */
 		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
-		pmap_pte_insert(pted);
+		pmap_pte_update(pted, pl3);
 
 		/* Flush tlb. */
 		ttlb_flush(pm, pted->pted_va & PTE_RPGN);
@@ -1971,7 +1972,6 @@ int pmap_clear_modify(struct vm_page *pg)
 int pmap_clear_reference(struct vm_page *pg)
 {
 	struct pte_desc *pted;
-	uint64_t *pl3 = NULL;
 
 	//printf("%s\n", __func__);
 
@@ -1983,13 +1983,8 @@ int pmap_clear_reference(struct vm_page *pg)
 	pg->pg_flags &= ~PG_PMAP_REF;
 
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-		if (pmap_vp_lookup(pted->pted_pmap, pted->pted_va & PTE_RPGN, &pl3) == NULL)
-			panic("failed to look up pte\n");
 		pted->pted_pte &= ~PROT_MASK;
-		*pl3  |= ATTR_AP(2);	// turns of write as well !?!?
-		*pl3  &= ~ATTR_AF;
-		pted->pted_pte &= ~PROT_WRITE|PROT_READ|PROT_EXEC;
-
+		pmap_pte_insert(pted);
 		ttlb_flush(pted->pted_pmap, pted->pted_va & PTE_RPGN);
 	}
 	splx(s);
