@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.h,v 1.1 2016/09/03 22:00:06 benno Exp $	*/
+/*	$OpenBSD: traceroute.h,v 1.2 2017/01/13 18:00:10 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ extern u_char		 proto;
 #define ICMP_CODE 0;
 
 extern int verbose;
-extern int waittime;		/* time to wait for response (in seconds) */
+extern int curwaittime;		/* time left to wait for response */
 extern int nflag;		/* print addresses numerically */
 extern int dump;
 extern int Aflag;		/* lookup ASN */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.149 2016/09/28 06:39:12 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.150 2017/01/13 18:00:10 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ u_int16_t	port = 32768+666;/* start udp dest port # for probe packets */
 u_char		proto = IPPROTO_UDP;
 
 int		verbose;
-int		waittime = 5;	/* time to wait for response (in seconds) */
+int		curwaittime;	/* time left to wait for response */
 int		nflag;		/* print addresses numerically */
 int		dump;
 int		Aflag;		/* lookup ASN */
@@ -312,7 +312,7 @@ main(int argc, char *argv[])
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	int ttl_flag = 0, incflag = 1, protoset = 0, sump = 0;
 	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0, error, packetlen;
-	int rcvcmsglen, rcvsock4, rcvsock6, sndsock4, sndsock6;
+	int rcvcmsglen, rcvsock4, rcvsock6, sndsock4, sndsock6, waittime;
 	int v4sock_errno, v6sock_errno;
 	struct addrinfo hints, *res;
 	struct passwd *pw;
@@ -335,6 +335,8 @@ main(int argc, char *argv[])
 
 	rcvsock4 = rcvsock6 = sndsock4 = sndsock6 = -1;
 	v4sock_errno = v6sock_errno = 0;
+
+	waittime = 5 * 1000;
 
 	if ((rcvsock6 = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
 		v6sock_errno = errno;
@@ -533,6 +535,7 @@ main(int argc, char *argv[])
 			waittime = strtonum(optarg, 2, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "wait must be >1 sec.");
+			waittime *= 1000;
 			break;
 		case 'x':
 			xflag = 1;
@@ -838,13 +841,20 @@ main(int argc, char *argv[])
 
 			gettime(&t1);
 			send_probe(++seq, ttl, incflag, to);
+			curwaittime = waittime;
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				gettime(&t2);
 				i = packet_ok(to->sa_family, &rcvmhdr, cc, seq,
 				    incflag);
-				/* Skip short packet */
-				if (i == 0)
+				/* Skip wrong packet */
+				if (i == 0) {
+					curwaittime = waittime -
+					    ((t2.tv_sec - t1.tv_sec) * 1000 +
+					    (t2.tv_usec - t1.tv_usec) / 1000);
+					if (curwaittime < 0)
+						curwaittime = 0;
 					continue;
+				}
 				if (to->sa_family == AF_INET) {
 					ip = (struct ip *)packet;
 					if (from4.sin_addr.s_addr != lastaddr) {
