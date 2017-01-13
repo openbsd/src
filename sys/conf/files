@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.636 2016/12/15 19:18:41 fcambus Exp $
+#	$OpenBSD: files,v 1.637 2017/01/13 13:25:01 stsp Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -808,7 +808,7 @@ file net80211/ieee80211_crypto_tkip.c	wlan
 file net80211/ieee80211_crypto_wep.c	wlan
 file net80211/ieee80211_input.c		wlan
 file net80211/ieee80211_ioctl.c		wlan
-file net80211/ieee80211_mira.c		wlan & (iwm | iwn)
+file net80211/ieee80211_mira.c		wlan
 file net80211/ieee80211_node.c		wlan
 file net80211/ieee80211_output.c	wlan
 file net80211/ieee80211_pae_input.c	wlan
