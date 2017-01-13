@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1811 2017/01/07 23:16:12 mlarkin Exp $
+$OpenBSD: pcidevs,v 1.1812 2017/01/13 14:19:42 reyk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6204,6 +6204,7 @@ product OPTI 82C861		0xc861	82C861
 
 /* OpenBSD VMM products */
 product OPENBSD PCHB		0x0666	VMM PCI Host Bridge
+product OPENBSD CONTROL		0x0777	VMM Control Interface
 
 /* Option products */
 product OPTION F32		0x000c	3G+ UMTS HSDPA
