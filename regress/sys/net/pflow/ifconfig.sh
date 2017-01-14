@@ -3,7 +3,7 @@
 echo '#### up'
 ifconfig pflow0 up; ifconfig pflow0 | grep -v '^[[:space:]]index'
 echo '#### flowdst syntax error'
-ifconfig pflow0 flowdst 127.0.0.1; ifconfig pflow0 | grep -v '^[[:space:]]index'
+ifconfig pflow0 flowdst; ifconfig pflow0 | grep -v '^[[:space:]]index'
 echo '#### invalid flowdst port'
 ifconfig pflow0 flowdst 127.0.0.1:0; ifconfig pflow0 | grep -v \
 	'^[[:space:]]index'

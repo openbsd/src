@@ -3,7 +3,7 @@ pflow0: flags=1<UP> mtu 1492
 	pflow: receiver: INVALID:INVALID version: 5
 	groups: pflow
 #### flowdst syntax error
-ifconfig: 127.0.0.1 bad value
+ifconfig: 'flowdst' requires argument
 pflow0: flags=1<UP> mtu 1492
 	pflow: receiver: INVALID:INVALID version: 5
 	groups: pflow
