@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.157 2017/01/10 17:43:12 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.158 2017/01/14 18:03:11 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -76,13 +76,11 @@ char		*recode_credentials(const char *_userinfo);
 int		ftp_printf(FILE *, struct tls *, const char *, ...) __attribute__((format(printf, 3, 4)));
 char		*ftp_readline(FILE *, struct tls *, size_t *);
 size_t		ftp_read(FILE *, struct tls *, char *, size_t);
-#ifndef SMALL
-int		proxy_connect(int, char *, char *);
-#endif /* !SMALL */
 #ifndef NOSSL
+int		proxy_connect(int, char *, char *);
 int		SSL_vprintf(struct tls *, const char *, va_list);
 char		*SSL_readline(struct tls *, size_t *);
-#endif /* !SMALL */
+#endif /* !NOSSL */
 
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
 #define	HTTP_URL	"http://"	/* http URL prefix */
@@ -592,10 +590,10 @@ noslash:
 		else
 			port = NULL;
 
-#ifndef SMALL
+#ifndef NOSSL
 		if (proxyenv && sslhost)
 			proxy_connect(s, sslhost, credentials);
-#endif /* !SMALL */
+#endif /* !NOSSL */
 		break;
 	}
 	freeaddrinfo(res0);
@@ -1649,4 +1647,4 @@ proxy_connect(int socket, char *host, char *cookie)
 	free(connstr);
 	return(200);
 }
-#endif /* !SMALL */
+#endif /* !NOSSL */
