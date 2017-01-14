@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.68 2016/10/05 23:28:28 tb Exp $ */
+/* $OpenBSD: doas.c,v 1.69 2017/01/14 18:51:24 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -334,6 +334,9 @@ main(int argc, char **argv)
 		    target);
 		exit(1);	/* fail safe */
 	}
+
+	if (geteuid())
+		errx(1, "not installed setuid");
 
 	parseconfig("/etc/doas.conf", 1);
 
