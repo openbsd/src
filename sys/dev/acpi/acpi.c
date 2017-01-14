@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.319 2017/01/11 09:39:39 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.320 2017/01/14 11:32:00 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -614,7 +614,6 @@ acpi_getpci(struct aml_node *node, void *arg)
 	pci->dev = ACPI_ADR_PCIDEV(val);
 	pci->fun = ACPI_ADR_PCIFUN(val);
 	pci->node = node;
-	node->pci = pci;
 	pci->sub = -1;
 
 	dnprintf(10, "%.2x:%.2x.%x -> %s\n", 
@@ -640,12 +639,17 @@ acpi_getpci(struct aml_node *node, void *arg)
 		pci->_s4w = -1;
 
 	/* Check if PCI device exists */
-	if (pci->dev > 31 || pci->fun > 7)
-		return 1;
+	if (pci->dev > 0x1F || pci->fun > 7) {
+		free(pci, M_DEVBUF, sizeof(*pci));
+		return (1);
+	}
 	tag = pci_make_tag(pc, pci->bus, pci->dev, pci->fun);
 	reg = pci_conf_read(pc, tag, PCI_ID_REG);
-	if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID)
-		return 1;
+	if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID) {
+		free(pci, M_DEVBUF, sizeof(*pci));
+		return (1);
+	}
+	node->pci = pci;
 
 	TAILQ_INSERT_TAIL(&acpi_pcidevs, pci, next);
 
@@ -1062,11 +1066,11 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		config_found_sm(self, &aaa, acpi_print, acpi_submatch);
 	}
 
-	/* get PCI mapping */
-	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_getpci, sc);
-
 	/* initialize runtime environment */
 	aml_find_node(&aml_root, "_INI", acpi_inidev, sc);
+
+	/* Get PCI mapping */
+	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_getpci, sc);
 
 	/* attach pci interrupt routing tables */
 	aml_find_node(&aml_root, "_PRT", acpi_foundprt, sc);
