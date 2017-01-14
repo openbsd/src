@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.8 2017/01/13 12:36:45 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.9 2017/01/14 00:32:34 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -601,8 +601,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 	}
 
-	splx(s);
-
 #if 0
 	/* only instruction sync executable pages */
 	if (need_sync)
@@ -611,6 +609,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	error = 0;
 out:
+	splx(s);
 	/* MP - free pmap lock */
 	return error;
 }
