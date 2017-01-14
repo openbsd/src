@@ -138,7 +138,7 @@ SSA value ``%obj.relocated`` which represents the potentially changed value of
 ``%obj`` after the safepoint and update any following uses appropriately.  The 
 resulting relocation sequence is:
 
-.. code-block:: llvm
+.. code-block:: text
 
   define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) 
          gc "statepoint-example" {
@@ -237,7 +237,7 @@ afterwards.
 If we extend our previous example to include a pointless derived pointer, 
 we get:
 
-.. code-block:: llvm
+.. code-block:: text
 
   define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) 
          gc "statepoint-example" {
@@ -251,7 +251,9 @@ we get:
 
 Note that in this example %p and %obj.relocate are the same address and we
 could replace one with the other, potentially removing the derived pointer
-from the live set at the safepoint entirely.  
+from the live set at the safepoint entirely.
+
+.. _gc_transition_args:
 
 GC Transitions
 ^^^^^^^^^^^^^^^^^^
@@ -260,7 +262,7 @@ As a practical consideration, many garbage-collected systems allow code that is
 collector-aware ("managed code") to call code that is not collector-aware
 ("unmanaged code"). It is common that such calls must also be safepoints, since
 it is desirable to allow the collector to run during the execution of
-unmanaged code. Futhermore, it is common that coordinating the transition from
+unmanaged code. Furthermore, it is common that coordinating the transition from
 managed to unmanaged code requires extra code generation at the call site to
 inform the collector of the transition. In order to support these needs, a
 statepoint may be marked as a GC transition, and data that is necessary to
@@ -281,7 +283,7 @@ Let's assume a hypothetical GC--somewhat unimaginatively named "hypothetical-gc"
 --that requires that a TLS variable must be written to before and after a call
 to unmanaged code. The resulting relocation sequence is:
 
-.. code-block:: llvm
+.. code-block:: text
 
   @flag = thread_local global i32 0, align 4
 
@@ -566,15 +568,36 @@ Each statepoint generates the following Locations:
 * Constant which describes number of following deopt *Locations* (not
   operands)
 * Variable number of Locations, one for each deopt parameter listed in
-  the IR statepoint (same number as described by previous Constant)
-* Variable number of Locations pairs, one pair for each unique pointer
-  which needs relocated.  The first Location in each pair describes
-  the base pointer for the object.  The second is the derived pointer
-  actually being relocated.  It is guaranteed that the base pointer
-  must also appear explicitly as a relocation pair if used after the
-  statepoint. There may be fewer pairs then gc parameters in the IR
+  the IR statepoint (same number as described by previous Constant).  At 
+  the moment, only deopt parameters with a bitwidth of 64 bits or less 
+  are supported.  Values of a type larger than 64 bits can be specified 
+  and reported only if a) the value is constant at the call site, and b) 
+  the constant can be represented with less than 64 bits (assuming zero 
+  extension to the original bitwidth).
+* Variable number of relocation records, each of which consists of 
+  exactly two Locations.  Relocation records are described in detail
+  below.
+
+Each relocation record provides sufficient information for a collector to 
+relocate one or more derived pointers.  Each record consists of a pair of 
+Locations.  The second element in the record represents the pointer (or 
+pointers) which need updated.  The first element in the record provides a 
+pointer to the base of the object with which the pointer(s) being relocated is
+associated.  This information is required for handling generalized derived 
+pointers since a pointer may be outside the bounds of the original allocation,
+but still needs to be relocated with the allocation.  Additionally:
+
+* It is guaranteed that the base pointer must also appear explicitly as a 
+  relocation pair if used after the statepoint. 
+* There may be fewer relocation records then gc parameters in the IR
   statepoint. Each *unique* pair will occur at least once; duplicates
-  are possible.
+  are possible.  
+* The Locations within each record may either be of pointer size or a 
+  multiple of pointer size.  In the later case, the record must be 
+  interpreted as describing a sequence of pointers and their corresponding 
+  base pointers. If the Location is of size N x sizeof(pointer), then
+  there will be N records of one pointer each contained within the Location.
+  Both Locations in a pair can be assumed to be of the same size.
 
 Note that the Locations used in each section may describe the same
 physical location.  e.g. A stack slot may appear as a deopt location,
@@ -639,7 +662,7 @@ distinguish between GC references and non-GC references in IR it is given.
 
 As an example, given this code:
 
-.. code-block:: llvm
+.. code-block:: text
 
   define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) 
          gc "statepoint-example" {
@@ -649,7 +672,7 @@ As an example, given this code:
 
 The pass would produce this IR:
 
-.. code-block:: llvm
+.. code-block:: text
 
   define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) 
          gc "statepoint-example" {
@@ -714,7 +737,7 @@ As an example, given input IR of the following:
 
 This pass would produce the following IR:
 
-.. code-block:: llvm
+.. code-block:: text
 
   define void @test() gc "statepoint-example" {
     %safepoint_token = call token (i64, i32, void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 2882400000, i32 0, void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
@@ -767,6 +790,41 @@ Supported Architectures
 
 Support for statepoint generation requires some code for each backend.
 Today, only X86_64 is supported.  
+
+Problem Areas and Active Work
+=============================
+
+#. As the existing users of the late rewriting model have matured, we've found
+   cases where the optimizer breaks the assumption that an SSA value of
+   gc-pointer type actually contains a gc-pointer and vice-versa.  We need to
+   clarify our expectations and propose at least one small IR change.  (Today,
+   the gc-pointer distinction is managed via address spaces.  This turns out
+   not to be quite strong enough.)
+
+#. Support for languages which allow unmanaged pointers to garbage collected
+   objects (i.e. pass a pointer to an object to a C routine) via pinning.
+
+#. Support for garbage collected objects allocated on the stack.  Specifically,
+   allocas are always assumed to be in address space 0 and we need a
+   cast/promotion operator to let rewriting identify them.
+
+#. The current statepoint lowering is known to be somewhat poor.  In the very
+   long term, we'd like to integrate statepoints with the register allocator;
+   in the near term this is unlikely to happen.  We've found the quality of
+   lowering to be relatively unimportant as hot-statepoints are almost always
+   inliner bugs.
+
+#. Concerns have been raised that the statepoint representation results in a
+   large amount of IR being produced for some examples and that this
+   contributes to higher than expected memory usage and compile times.  There's
+   no immediate plans to make changes due to this, but alternate models may be
+   explored in the future.
+
+#. Relocations along exceptional paths are currently broken in ToT.  In
+   particular, there is current no way to represent a rethrow on a path which
+   also has relocations.  See `this llvm-dev discussion
+   <https://groups.google.com/forum/#!topic/llvm-dev/AE417XjgxvI>`_ for more
+   detail.
 
 Bugs and Enhancements
 =====================

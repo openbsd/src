@@ -63,6 +63,23 @@ The semantics are as follows:
   a sequence equivalent to "movs pc, lr" will be used.
 
 
+abi_tag (gnu::abi_tag)
+----------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+The ``abi_tag`` attribute can be applied to a function, variable, class or
+inline namespace declaration to modify the mangled name of the entity. It gives
+the ability to distinguish between different versions of the same entity but
+with different ABI versions supported. For example, a newer version of a class
+could have a different set of data members and thus have a different size. Using
+the ``abi_tag`` attribute, it is possible to have different mangled names for
+a global variable of the class type. Therefor, the old code could keep using
+the old manged name and the new code will use the new mangled name with tags.
+
+
 acquire_capability (acquire_shared_capability, clang::acquire_capability, clang::acquire_shared_capability)
 -----------------------------------------------------------------------------------------------------------
 .. csv-table:: Supported Syntaxes
@@ -71,6 +88,62 @@ acquire_capability (acquire_shared_capability, clang::acquire_capability, clang:
    "X","X","","", ""
 
 Marks a function as acquiring a capability.
+
+
+interrupt
+---------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","","","", ""
+
+Clang supports the GNU style ``__attribute__((interrupt))`` attribute on
+x86/x86-64 targets.The compiler generates function entry and exit sequences
+suitable for use in an interrupt handler when this attribute is present.
+The 'IRET' instruction, instead of the 'RET' instruction, is used to return
+from interrupt or exception handlers.  All registers, except for the EFLAGS
+register which is restored by the 'IRET' instruction, are preserved by the
+compiler.
+
+Any interruptible-without-stack-switch code must be compiled with
+-mno-red-zone since interrupt handlers can and will, because of the
+hardware design, touch the red zone.
+
+1. interrupt handler must be declared with a mandatory pointer argument:
+
+  .. code-block:: c
+
+    struct interrupt_frame
+    {
+      uword_t ip;
+      uword_t cs;
+      uword_t flags;
+      uword_t sp;
+      uword_t ss;
+    };
+
+    __attribute__ ((interrupt))
+    void f (struct interrupt_frame *frame) {
+      ...
+    }
+
+2. exception handler:
+
+  The exception handler is very similar to the interrupt handler with
+  a different mandatory function signature:
+
+  .. code-block:: c
+
+    __attribute__ ((interrupt))
+    void f (struct interrupt_frame *frame, uword_t error_code) {
+      ...
+    }
+
+  and compiler pops 'ERROR_CODE' off stack before the 'IRET' instruction.
+
+  The exception handler should only be used for exceptions which push an
+  error code and all other exceptions must use the interrupt handler.
+  The system will crash if the wrong handler is used.
 
 
 assert_capability (assert_shared_capability, clang::assert_capability, clang::assert_shared_capability)
@@ -123,7 +196,7 @@ the function declaration for a hypothetical function ``f``:
 
 .. code-block:: c++
 
-  void f(void) __attribute__((availability(macosx,introduced=10.4,deprecated=10.6,obsoleted=10.7)));
+  void f(void) __attribute__((availability(macos,introduced=10.4,deprecated=10.6,obsoleted=10.7)));
 
 The availability attribute states that ``f`` was introduced in Mac OS X 10.4,
 deprecated in Mac OS X 10.6, and obsoleted in Mac OS X 10.7.  This information
@@ -158,6 +231,11 @@ message=\ *string-literal*
   error about use of a deprecated or obsoleted declaration.  Useful to direct
   users to replacement APIs.
 
+replacement=\ *string-literal*
+  Additional message text that Clang will use to provide Fix-It when emitting
+  a warning about use of a deprecated declaration. The Fix-It will replace
+  the deprecated declaration with the new declaration specified.
+
 Multiple availability attributes can be placed on a declaration, which may
 correspond to different platforms.  Only the availability attribute with the
 platform corresponding to the target platform will be used; any others will be
@@ -170,9 +248,11 @@ are:
   the ``-mios-version-min=*version*`` or ``-miphoneos-version-min=*version*``
   command-line arguments.
 
-``macosx``
+``macos``
   Apple's Mac OS X operating system.  The minimum deployment target is
   specified by the ``-mmacosx-version-min=*version*`` command-line argument.
+  ``macosx`` is supported for backward-compatibility reasons, but it is
+  deprecated.
 
 ``tvos``
   Apple's tvOS operating system.  The minimum deployment target is specified by
@@ -182,14 +262,20 @@ are:
   Apple's watchOS operating system.  The minimum deployment target is specified by
   the ``-mwatchos-version-min=*version*`` command-line argument.
 
-A declaration can be used even when deploying back to a platform version prior
-to when the declaration was introduced.  When this happens, the declaration is
-`weakly linked
+A declaration can typically be used even when deploying back to a platform
+version prior to when the declaration was introduced.  When this happens, the
+declaration is `weakly linked
 <https://developer.apple.com/library/mac/#documentation/MacOSX/Conceptual/BPFrameworks/Concepts/WeakLinking.html>`_,
 as if the ``weak_import`` attribute were added to the declaration.  A
 weakly-linked declaration may or may not be present a run-time, and a program
 can determine whether the declaration is present by checking whether the
 address of that declaration is non-NULL.
+
+The flag ``strict`` disallows using API when deploying back to a
+platform version prior to when the declaration was introduced.  An
+attempt to use such API before its introduction causes a hard error.
+Weakly-linking is almost always a better API choice, since it allows
+users to query availability at runtime.
 
 If there are multiple declarations of the same entity, the availability
 attributes must either match on a per-platform basis or later
@@ -198,24 +284,24 @@ platform. For example:
 
 .. code-block:: c
 
-  void g(void) __attribute__((availability(macosx,introduced=10.4)));
-  void g(void) __attribute__((availability(macosx,introduced=10.4))); // okay, matches
+  void g(void) __attribute__((availability(macos,introduced=10.4)));
+  void g(void) __attribute__((availability(macos,introduced=10.4))); // okay, matches
   void g(void) __attribute__((availability(ios,introduced=4.0))); // okay, adds a new platform
-  void g(void); // okay, inherits both macosx and ios availability from above.
-  void g(void) __attribute__((availability(macosx,introduced=10.5))); // error: mismatch
+  void g(void); // okay, inherits both macos and ios availability from above.
+  void g(void) __attribute__((availability(macos,introduced=10.5))); // error: mismatch
 
 When one method overrides another, the overriding method can be more widely available than the overridden method, e.g.,:
 
 .. code-block:: objc
 
   @interface A
-  - (id)method __attribute__((availability(macosx,introduced=10.4)));
-  - (id)method2 __attribute__((availability(macosx,introduced=10.4)));
+  - (id)method __attribute__((availability(macos,introduced=10.4)));
+  - (id)method2 __attribute__((availability(macos,introduced=10.4)));
   @end
 
   @interface B : A
-  - (id)method __attribute__((availability(macosx,introduced=10.3))); // okay: method moved into base class later
-  - (id)method __attribute__((availability(macosx,introduced=10.5))); // error: this method was available via the base class in 10.4
+  - (id)method __attribute__((availability(macos,introduced=10.3))); // okay: method moved into base class later
+  - (id)method __attribute__((availability(macos,introduced=10.5))); // error: this method was available via the base class in 10.4
   @end
 
 
@@ -263,6 +349,31 @@ Note, this attribute does not change the meaning of the program, but may result
 in generation of more efficient code.
 
 
+deprecated (gnu::deprecated)
+----------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","X","", ""
+
+The ``deprecated`` attribute can be applied to a function, a variable, or a
+type. This is useful when identifying functions, variables, or types that are
+expected to be removed in a future version of a program.
+
+Consider the function declaration for a hypothetical function ``f``:
+
+.. code-block:: c++
+
+  void f(void) __attribute__((deprecated("message", "replacement")));
+
+When spelled as `__attribute__((deprecated))`, the deprecated attribute can have
+two optional string arguments. The first one is the message to display when
+emitting the warning; the second one enables the compiler to provide a Fix-It
+to replace the deprecated name with a new name. Otherwise, when spelled as
+`[[gnu::deprecated]] or [[deprecated]]`, the attribute can have one optional
+string argument which is the message to display when emitting the warning.
+
+
 disable_tail_calls (clang::disable_tail_calls)
 ----------------------------------------------
 .. csv-table:: Supported Syntaxes
@@ -284,7 +395,7 @@ For example:
 
 Marking virtual functions as ``disable_tail_calls`` is legal.
 
-  .. code-block: c++
+  .. code-block:: c++
 
     int callee(int);
 
@@ -390,6 +501,55 @@ not ODR-equivalent.
 
 Query for this feature with ``__has_attribute(enable_if)``.
 
+Note that functions with one or more ``enable_if`` attributes may not have
+their address taken, unless all of the conditions specified by said
+``enable_if`` are constants that evaluate to ``true``. For example:
+
+.. code-block:: c
+
+  const int TrueConstant = 1;
+  const int FalseConstant = 0;
+  int f(int a) __attribute__((enable_if(a > 0, "")));
+  int g(int a) __attribute__((enable_if(a == 0 || a != 0, "")));
+  int h(int a) __attribute__((enable_if(1, "")));
+  int i(int a) __attribute__((enable_if(TrueConstant, "")));
+  int j(int a) __attribute__((enable_if(FalseConstant, "")));
+
+  void fn() {
+    int (*ptr)(int);
+    ptr = &f; // error: 'a > 0' is not always true
+    ptr = &g; // error: 'a == 0 || a != 0' is not a truthy constant
+    ptr = &h; // OK: 1 is a truthy constant
+    ptr = &i; // OK: 'TrueConstant' is a truthy constant
+    ptr = &j; // error: 'FalseConstant' is a constant, but not truthy
+  }
+
+Because ``enable_if`` evaluation happens during overload resolution,
+``enable_if`` may give unintuitive results when used with templates, depending
+on when overloads are resolved. In the example below, clang will emit a
+diagnostic about no viable overloads for ``foo`` in ``bar``, but not in ``baz``:
+
+.. code-block:: c++
+
+  double foo(int i) __attribute__((enable_if(i > 0, "")));
+  void *foo(int i) __attribute__((enable_if(i <= 0, "")));
+  template <int I>
+  auto bar() { return foo(I); }
+
+  template <typename T>
+  auto baz() { return foo(T::number); }
+
+  struct WithNumber { constexpr static int number = 1; };
+  void callThem() {
+    bar<sizeof(WithNumber)>();
+    baz<WithNumber>();
+  }
+
+This is because, in ``bar``, ``foo`` is resolved prior to template
+instantiation, so the value for ``I`` isn't known (thus, both ``enable_if``
+conditions for ``foo`` fail). However, in ``baz``, ``foo`` is resolved during
+template instantiation, so the value for ``T::number`` is known.
+
 
 flatten (gnu::flatten)
 ----------------------
@@ -466,6 +626,22 @@ Clang implements two kinds of checks with this attribute.
    In this case Clang does not warn because the format string ``s`` and
    the corresponding arguments are annotated.  If the arguments are
    incorrect, the caller of ``foo`` will receive a warning.
+
+
+ifunc (gnu::ifunc)
+------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+``__attribute__((ifunc("resolver")))`` is used to mark that the address of a declaration should be resolved at runtime by calling a resolver function.
+
+The symbol name of the resolver function is given in quotes.  A function with this name (after mangling) must be defined in the current translation unit; it may be ``static``.  The resolver function should take no arguments and return a pointer.
+
+The ``ifunc`` attribute may only be used on a function declaration.  A function declaration with an ``ifunc`` attribute is considered to be a definition of the declared entity.  The entity must not have weak linkage; for example, in C++, it cannot be applied to a declaration if a definition at that location would be considered inline.
+
+Not all targets support this attribute.  ELF targets support this attribute when using binutils v2.20.1 or higher and glibc v2.11.1 or higher.  Non-ELF targets currently do not support this attribute.
 
 
 internal_linkage (clang::internal_linkage)
@@ -668,7 +844,7 @@ The ``not_tail_called`` attribute prevents tail-call optimization on statically 
 
 For example, it prevents tail-call optimization in the following case:
 
-  .. code-block: c
+  .. code-block:: c
 
     int __attribute__((not_tail_called)) foo1(int);
 
@@ -678,7 +854,7 @@ For example, it prevents tail-call optimization in the following case:
 
 However, it doesn't prevent tail-call optimization in this case:
 
-  .. code-block: c
+  .. code-block:: c
 
     int __attribute__((not_tail_called)) foo1(int);
 
@@ -692,7 +868,7 @@ However, it doesn't prevent tail-call optimization in this case:
 
 Marking virtual functions as ``not_tail_called`` is an error:
 
-  .. code-block: c++
+  .. code-block:: c++
 
     class Base {
     public:
@@ -712,6 +888,61 @@ Marking virtual functions as ``not_tail_called`` is an error:
       // not_tail_called on a virtual function is an error.
       [[clang::not_tail_called]] int foo2() override;
     };
+
+
+#pragma omp declare simd
+------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "","","","", "X"
+
+The `declare simd` construct can be applied to a function to enable the creation
+of one or more versions that can process multiple arguments using SIMD
+instructions from a single invocation in a SIMD loop. The `declare simd`
+directive is a declarative directive. There may be multiple `declare simd`
+directives for a function. The use of a `declare simd` construct on a function
+enables the creation of SIMD versions of the associated function that can be
+used to process multiple arguments from a single invocation from a SIMD loop
+concurrently.
+The syntax of the `declare simd` construct is as follows:
+
+  .. code-block:: c
+
+  #pragma omp declare simd [clause[[,] clause] ...] new-line
+  [#pragma omp declare simd [clause[[,] clause] ...] new-line]
+  [...]
+  function definition or declaration
+
+where clause is one of the following:
+
+  .. code-block:: c
+
+  simdlen(length)
+  linear(argument-list[:constant-linear-step])
+  aligned(argument-list[:alignment])
+  uniform(argument-list)
+  inbranch
+  notinbranch
+
+
+#pragma omp declare target
+--------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "","","","", "X"
+
+The `declare target` directive specifies that variables and functions are mapped
+to a device for OpenMP offload mechanism.
+
+The syntax of the declare target directive is as follows:
+
+  .. code-block:: c
+
+  #pragma omp declare target new-line
+  declarations-definition-seq
+  #pragma omp end declare target new-line
 
 
 objc_boxable
@@ -845,6 +1076,16 @@ can only be placed before an @protocol or @interface declaration:
   @end
 
 
+objc_runtime_visible
+--------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","","","", ""
+
+This attribute specifies that the Objective-C class to which it applies is visible to the Objective-C runtime but not to the linker. Classes annotated with this attribute cannot be subclassed and cannot have categories defined for them.
+
+
 optnone (clang::optnone)
 ------------------------
 .. csv-table:: Supported Syntaxes
@@ -961,6 +1202,24 @@ release_capability (release_shared_capability, clang::release_capability, clang:
 Marks a function as releasing a capability.
 
 
+kernel
+------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","","","", ""
+
+``__attribute__((kernel))`` is used to mark a ``kernel`` function in
+RenderScript.
+
+In RenderScript, ``kernel`` functions are used to express data-parallel
+computations.  The RenderScript runtime efficiently parallelizes ``kernel``
+functions to run on computational resources such as multi-core CPUs and GPUs.
+See the RenderScript_ documentation for more information.
+
+.. _RenderScript: https://developer.android.com/guide/topics/renderscript/compute.html
+
+
 target (gnu::target)
 --------------------
 .. csv-table:: Supported Syntaxes
@@ -996,8 +1255,83 @@ whether acquiring the capability means success (true), or failing to acquire
 the capability means success (false).
 
 
+nodiscard, warn_unused_result, clang::warn_unused_result, gnu::warn_unused_result
+---------------------------------------------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+Clang supports the ability to diagnose when the results of a function call
+expression are discarded under suspicious circumstances. A diagnostic is
+generated when a function or its return type is marked with ``[[nodiscard]]``
+(or ``__attribute__((warn_unused_result))``) and the function call appears as a
+potentially-evaluated discarded-value expression that is not explicitly cast to
+`void`.
+
+.. code-block: c++
+  struct [[nodiscard]] error_info { /*...*/ };
+  error_info enable_missile_safety_mode();
+  
+  void launch_missiles();
+  void test_missiles() {
+    enable_missile_safety_mode(); // diagnoses
+    launch_missiles();
+  }
+  error_info &foo();
+  void f() { foo(); } // Does not diagnose, error_info is a reference.
+
+
+xray_always_instrument (clang::xray_always_instrument), xray_never_instrument (clang::xray_never_instrument)
+------------------------------------------------------------------------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+``__attribute__((xray_always_instrument))`` or ``[[clang::xray_always_instrument]]`` is used to mark member functions (in C++), methods (in Objective C), and free functions (in C, C++, and Objective C) to be instrumented with XRay. This will cause the function to always have space at the beginning and exit points to allow for runtime patching.
+
+Conversely, ``__attribute__((xray_never_instrument))`` or ``[[clang::xray_never_instrument]]`` will inhibit the insertion of these instrumentation points.
+
+If a function has neither of these attributes, they become subject to the XRay heuristics used to determine whether a function should be instrumented or otherwise.
+
+
 Variable Attributes
 ===================
+
+
+dllexport (gnu::dllexport)
+--------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","X","", ""
+
+The ``__declspec(dllexport)`` attribute declares a variable, function, or
+Objective-C interface to be exported from the module.  It is available under the
+``-fdeclspec`` flag for compatibility with various compilers.  The primary use
+is for COFF object files which explicitly specify what interfaces are available
+for external use.  See the dllexport_ documentation on MSDN for more
+information.
+
+.. _dllexport: https://msdn.microsoft.com/en-us/library/3y1sfaz2.aspx
+
+
+dllimport (gnu::dllimport)
+--------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","X","", ""
+
+The ``__declspec(dllimport)`` attribute declares a variable, function, or
+Objective-C interface to be imported from an external module.  It is available
+under the ``-fdeclspec`` flag for compatibility with various compilers.  The
+primary use is for COFF object files which explicitly specify what interfaces
+are imported from external modules.  See the dllimport_ documentation on MSDN
+for more information.
+
+.. _dllimport: https://msdn.microsoft.com/en-us/library/3y1sfaz2.aspx
 
 
 init_seg
@@ -1017,6 +1351,33 @@ after the standard ``.CRT$XCU`` sections.  See the init_seg_
 documentation on MSDN for more information.
 
 .. _init_seg: http://msdn.microsoft.com/en-us/library/7977wcck(v=vs.110).aspx
+
+
+nodebug (gnu::nodebug)
+----------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+The ``nodebug`` attribute allows you to suppress debugging information for a
+function or method, or for a variable that is not a parameter or a non-static
+data member.
+
+
+nosvm
+-----
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","","","", ""
+
+OpenCL 2.0 supports the optional ``__attribute__((nosvm))`` qualifier for
+pointer variable. It informs the compiler that the pointer does not refer
+to a shared virtual memory region. See OpenCL v2.0 s6.7.2 for details.
+
+Since it is not widely used and has been removed from OpenCL 2.1, it is ignored
+by Clang.
 
 
 pass_object_size
@@ -1130,6 +1491,162 @@ The ``section`` attribute allows you to specify a specific section a
 global variable or function should be in after translation.
 
 
+swiftcall (gnu::swiftcall)
+--------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+The ``swiftcall`` attribute indicates that a function should be called
+using the Swift calling convention for a function or function pointer.
+
+The lowering for the Swift calling convention, as described by the Swift
+ABI documentation, occurs in multiple phases.  The first, "high-level"
+phase breaks down the formal parameters and results into innately direct
+and indirect components, adds implicit paraameters for the generic
+signature, and assigns the context and error ABI treatments to parameters
+where applicable.  The second phase breaks down the direct parameters
+and results from the first phase and assigns them to registers or the
+stack.  The ``swiftcall`` convention only handles this second phase of
+lowering; the C function type must accurately reflect the results
+of the first phase, as follows:
+
+- Results classified as indirect by high-level lowering should be
+  represented as parameters with the ``swift_indirect_result`` attribute.
+
+- Results classified as direct by high-level lowering should be represented
+  as follows:
+
+  - First, remove any empty direct results.
+
+  - If there are no direct results, the C result type should be ``void``.
+
+  - If there is one direct result, the C result type should be a type with
+    the exact layout of that result type.
+
+  - If there are a multiple direct results, the C result type should be
+    a struct type with the exact layout of a tuple of those results.
+
+- Parameters classified as indirect by high-level lowering should be
+  represented as parameters of pointer type.
+
+- Parameters classified as direct by high-level lowering should be
+  omitted if they are empty types; otherwise, they should be represented
+  as a parameter type with a layout exactly matching the layout of the
+  Swift parameter type.
+
+- The context parameter, if present, should be represented as a trailing
+  parameter with the ``swift_context`` attribute.
+
+- The error result parameter, if present, should be represented as a
+  trailing parameter (always following a context parameter) with the
+  ``swift_error_result`` attribute.
+
+``swiftcall`` does not support variadic arguments or unprototyped functions.
+
+The parameter ABI treatment attributes are aspects of the function type.
+A function type which which applies an ABI treatment attribute to a
+parameter is a different type from an otherwise-identical function type
+that does not.  A single parameter may not have multiple ABI treatment
+attributes.
+
+Support for this feature is target-dependent, although it should be
+supported on every target that Swift supports.  Query for this support
+with ``__has_attribute(swiftcall)``.  This implies support for the
+``swift_context``, ``swift_error_result``, and ``swift_indirect_result``
+attributes.
+
+
+swift_context (gnu::swift_context)
+----------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+The ``swift_context`` attribute marks a parameter of a ``swiftcall``
+function as having the special context-parameter ABI treatment.
+
+This treatment generally passes the context value in a special register
+which is normally callee-preserved.
+
+A ``swift_context`` parameter must either be the last parameter or must be
+followed by a ``swift_error_result`` parameter (which itself must always be
+the last parameter).
+
+A context parameter must have pointer or reference type.
+
+
+swift_error_result (gnu::swift_error_result)
+--------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+The ``swift_error_result`` attribute marks a parameter of a ``swiftcall``
+function as having the special error-result ABI treatment.
+
+This treatment generally passes the underlying error value in and out of
+the function through a special register which is normally callee-preserved.
+This is modeled in C by pretending that the register is addressable memory:
+
+- The caller appears to pass the address of a variable of pointer type.
+  The current value of this variable is copied into the register before
+  the call; if the call returns normally, the value is copied back into the
+  variable.
+
+- The callee appears to receive the address of a variable.  This address
+  is actually a hidden location in its own stack, initialized with the
+  value of the register upon entry.  When the function returns normally,
+  the value in that hidden location is written back to the register.
+
+A ``swift_error_result`` parameter must be the last parameter, and it must be
+preceded by a ``swift_context`` parameter.
+
+A ``swift_error_result`` parameter must have type ``T**`` or ``T*&`` for some
+type T.  Note that no qualifiers are permitted on the intermediate level.
+
+It is undefined behavior if the caller does not pass a pointer or
+reference to a valid object.
+
+The standard convention is that the error value itself (that is, the
+value stored in the apparent argument) will be null upon function entry,
+but this is not enforced by the ABI.
+
+
+swift_indirect_result (gnu::swift_indirect_result)
+--------------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+The ``swift_indirect_result`` attribute marks a parameter of a ``swiftcall``
+function as having the special indirect-result ABI treatmenet.
+
+This treatment gives the parameter the target's normal indirect-result
+ABI treatment, which may involve passing it differently from an ordinary
+parameter.  However, only the first indirect result will receive this
+treatment.  Furthermore, low-level lowering may decide that a direct result
+must be returned indirectly; if so, this will take priority over the
+``swift_indirect_result`` parameters.
+
+A ``swift_indirect_result`` parameter must either be the first parameter or
+follow another ``swift_indirect_result`` parameter.
+
+A ``swift_indirect_result`` parameter must have type ``T*`` or ``T&`` for
+some object type ``T``.  If ``T`` is a complete type at the point of
+definition of a function, it is undefined behavior if the argument
+value does not point to storage of adequate size and alignment for a
+value of type ``T``.
+
+Making indirect results explicit in the signature allows C functions to
+directly construct objects into them without relying on language
+optimizations like C++'s named return value optimization (NRVO).
+
+
 tls_model (gnu::tls_model)
 --------------------------
 .. csv-table:: Supported Syntaxes
@@ -1168,6 +1685,34 @@ declared with static storage duration, such as globals, class static data
 members, and static locals.
 
 
+maybe_unused, unused, gnu::unused
+---------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","X","","", ""
+
+When passing the ``-Wunused`` flag to Clang, entities that are unused by the
+program may be diagnosed. The ``[[maybe_unused]]`` (or
+``__attribute__((unused))``) attribute can be used to silence such diagnostics
+when the entity cannot be removed. For instance, a local variable may exist
+solely for use in an ``assert()`` statement, which makes the local variable
+unused when ``NDEBUG`` is defined.
+
+The attribute may be applied to the declaration of a class, a typedef, a
+variable, a function or method, a function parameter, an enumeration, an
+enumerator, a non-static data member, or a label.
+
+.. code-block: c++
+  #include <cassert>
+
+  [[maybe_unused]] void f([[maybe_unused]] bool thing1,
+                          [[maybe_unused]] bool thing2) {
+    [[maybe_unused]] bool b = thing1 && thing2;
+    assert(b);
+  }
+
+
 Type Attributes
 ===============
 
@@ -1195,6 +1740,19 @@ If the pointer value does not have the specified alignment at runtime, the
 behavior of the program is undefined.
 
 
+empty_bases
+-----------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "","","X","", ""
+
+The empty_bases attribute permits the compiler to utilize the
+empty-base-optimization more frequently.
+This attribute only applies to struct, class, and union types.
+It is only supported when using the Microsoft C++ ABI.
+
+
 flag_enum
 ---------
 .. csv-table:: Supported Syntaxes
@@ -1206,6 +1764,29 @@ This attribute can be added to an enumerator to signal to the compiler that it
 is intended to be used as a flag type. This will cause the compiler to assume
 that the range of the type includes all of the values that you can get by
 manipulating bits of the enumerator when issuing warnings.
+
+
+lto_visibility_public (clang::lto_visibility_public)
+----------------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "","X","","", ""
+
+See :doc:`LTOVisibility`.
+
+
+layout_version
+--------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "","","X","", ""
+
+The layout_version attribute requests that the compiler utilize the class
+layout rules of a particular compiler version.
+This attribute only applies to struct, class, and union types.
+It is only supported when using the Microsoft C++ ABI.
 
 
 __single_inhertiance, __multiple_inheritance, __virtual_inheritance
@@ -1273,15 +1854,15 @@ Statement Attributes
 ====================
 
 
-fallthrough (clang::fallthrough)
---------------------------------
+fallthrough, clang::fallthrough
+-------------------------------
 .. csv-table:: Supported Syntaxes
    :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
 
    "","X","","", ""
 
-The ``clang::fallthrough`` attribute is used along with the
-``-Wimplicit-fallthrough`` argument to annotate intentional fall-through
+The ``fallthrough`` (or ``clang::fallthrough``) attribute is used
+to annotate intentional fall-through
 between switch labels.  It can only be applied to a null statement placed at a
 point of execution between any statement and the next switch label.  It is
 common to mark these places with a specific comment, but this attribute is
@@ -1291,6 +1872,10 @@ be used wherever an intended fall-through occurs.  It is designed to mimic
 control-flow statements like ``break;``, so it can be placed in most places
 where ``break;`` can, but only if there are no statements on the execution path
 between it and the next switch label.
+
+By default, Clang does not warn on unannotated fallthrough from one ``switch``
+case to another. Diagnostics on fallthrough without a corresponding annotation
+can be enabled with the ``-Wimplicit-fallthrough`` argument.
 
 Here is an example:
 
@@ -1396,155 +1981,48 @@ is equivalent to ``#pragma clang loop unroll(disable)``.  See
 for further details including limitations of the unroll hints.
 
 
-Type Safety Checking
-====================
-Clang supports additional attributes to enable checking type safety properties
-that can't be enforced by the C type system.  Use cases include:
+__read_only, __write_only, __read_write (read_only, write_only, read_write)
+---------------------------------------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
 
-* MPI library implementations, where these attributes enable checking that
-  the buffer type matches the passed ``MPI_Datatype``;
-* for HDF5 library there is a similar use case to MPI;
-* checking types of variadic functions' arguments for functions like
-  ``fcntl()`` and ``ioctl()``.
+   "","","","X", ""
 
-You can detect support for these attributes with ``__has_attribute()``.  For
-example:
+The access qualifiers must be used with image object arguments or pipe arguments
+to declare if they are being read or written by a kernel or function.
 
-.. code-block:: c++
+The read_only/__read_only, write_only/__write_only and read_write/__read_write
+names are reserved for use as access qualifiers and shall not be used otherwise.
 
-  #if defined(__has_attribute)
-  #  if __has_attribute(argument_with_type_tag) && \
-        __has_attribute(pointer_with_type_tag) && \
-        __has_attribute(type_tag_for_datatype)
-  #    define ATTR_MPI_PWT(buffer_idx, type_idx) __attribute__((pointer_with_type_tag(mpi,buffer_idx,type_idx)))
-  /* ... other macros ...  */
-  #  endif
-  #endif
+.. code-block:: c
 
-  #if !defined(ATTR_MPI_PWT)
-  # define ATTR_MPI_PWT(buffer_idx, type_idx)
-  #endif
+  kernel void
+  foo (read_only image2d_t imageA,
+       write_only image2d_t imageB) {
+    ...
+  }
 
-  int MPI_Send(void *buf, int count, MPI_Datatype datatype /*, other args omitted */)
-      ATTR_MPI_PWT(1,3);
+In the above example imageA is a read-only 2D image object, and imageB is a
+write-only 2D image object.
 
-argument_with_type_tag
-----------------------
+The read_write (or __read_write) qualifier can not be used with pipe.
+
+More details can be found in the OpenCL C language Spec v2.0, Section 6.6.
+
+
+__attribute__((opencl_unroll_hint))
+-----------------------------------
 .. csv-table:: Supported Syntaxes
    :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
 
    "X","","","", ""
 
-Use ``__attribute__((argument_with_type_tag(arg_kind, arg_idx,
-type_tag_idx)))`` on a function declaration to specify that the function
-accepts a type tag that determines the type of some other argument.
-``arg_kind`` is an identifier that should be used when annotating all
-applicable type tags.
-
-This attribute is primarily useful for checking arguments of variadic functions
-(``pointer_with_type_tag`` can be used in most non-variadic cases).
-
-For example:
-
-.. code-block:: c++
-
-  int fcntl(int fd, int cmd, ...)
-      __attribute__(( argument_with_type_tag(fcntl,3,2) ));
-
-
-pointer_with_type_tag
----------------------
-.. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
-
-   "X","","","", ""
-
-Use ``__attribute__((pointer_with_type_tag(ptr_kind, ptr_idx, type_tag_idx)))``
-on a function declaration to specify that the function accepts a type tag that
-determines the pointee type of some other pointer argument.
-
-For example:
-
-.. code-block:: c++
-
-  int MPI_Send(void *buf, int count, MPI_Datatype datatype /*, other args omitted */)
-      __attribute__(( pointer_with_type_tag(mpi,1,3) ));
-
-
-type_tag_for_datatype
----------------------
-.. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
-
-   "X","","","", ""
-
-Clang supports annotating type tags of two forms.
-
-* **Type tag that is an expression containing a reference to some declared
-  identifier.** Use ``__attribute__((type_tag_for_datatype(kind, type)))`` on a
-  declaration with that identifier:
-
-  .. code-block:: c++
-
-    extern struct mpi_datatype mpi_datatype_int
-        __attribute__(( type_tag_for_datatype(mpi,int) ));
-    #define MPI_INT ((MPI_Datatype) &mpi_datatype_int)
-
-* **Type tag that is an integral literal.** Introduce a ``static const``
-  variable with a corresponding initializer value and attach
-  ``__attribute__((type_tag_for_datatype(kind, type)))`` on that declaration,
-  for example:
-
-  .. code-block:: c++
-
-    #define MPI_INT ((MPI_Datatype) 42)
-    static const MPI_Datatype mpi_datatype_int
-        __attribute__(( type_tag_for_datatype(mpi,int) )) = 42
-
-The attribute also accepts an optional third argument that determines how the
-expression is compared to the type tag.  There are two supported flags:
-
-* ``layout_compatible`` will cause types to be compared according to
-  layout-compatibility rules (C++11 [class.mem] p 17, 18).  This is
-  implemented to support annotating types like ``MPI_DOUBLE_INT``.
-
-  For example:
-
-  .. code-block:: c++
-
-    /* In mpi.h */
-    struct internal_mpi_double_int { double d; int i; };
-    extern struct mpi_datatype mpi_datatype_double_int
-        __attribute__(( type_tag_for_datatype(mpi, struct internal_mpi_double_int, layout_compatible) ));
-
-    #define MPI_DOUBLE_INT ((MPI_Datatype) &mpi_datatype_double_int)
-
-    /* In user code */
-    struct my_pair { double a; int b; };
-    struct my_pair *buffer;
-    MPI_Send(buffer, 1, MPI_DOUBLE_INT /*, ...  */); // no warning
-
-    struct my_int_pair { int a; int b; }
-    struct my_int_pair *buffer2;
-    MPI_Send(buffer2, 1, MPI_DOUBLE_INT /*, ...  */); // warning: actual buffer element
-                                                      // type 'struct my_int_pair'
-                                                      // doesn't match specified MPI_Datatype
-
-* ``must_be_null`` specifies that the expression should be a null pointer
-  constant, for example:
-
-  .. code-block:: c++
-
-    /* In mpi.h */
-    extern struct mpi_datatype mpi_datatype_null
-        __attribute__(( type_tag_for_datatype(mpi, void, must_be_null) ));
-
-    #define MPI_DATATYPE_NULL ((MPI_Datatype) &mpi_datatype_null)
-
-    /* In user code */
-    MPI_Send(buffer, 1, MPI_DATATYPE_NULL /*, ...  */); // warning: MPI_DATATYPE_NULL
-                                                        // was specified but buffer
-                                                        // is not a null pointer
+The opencl_unroll_hint attribute qualifier can be used to specify that a loop
+(for, while and do loops) can be unrolled. This attribute qualifier can be
+used to specify full unrolling or partial unrolling by a specified amount.
+This is a compiler hint and the compiler may ignore this directive. See
+`OpenCL v2.0 <https://www.khronos.org/registry/cl/specs/opencl-2.0.pdf>`_
+s6.11.5 for details.
 
 
 AMD GPU Register Attributes
@@ -1654,6 +2132,78 @@ pcs (gnu::pcs)
 On ARM targets, this attribute can be used to select calling conventions
 similar to ``stdcall`` on x86. Valid parameter values are "aapcs" and
 "aapcs-vfp".
+
+
+preserve_all
+------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","","","", ""
+
+On X86-64 and AArch64 targets, this attribute changes the calling convention of
+a function. The ``preserve_all`` calling convention attempts to make the code
+in the caller even less intrusive than the ``preserve_most`` calling convention.
+This calling convention also behaves identical to the ``C`` calling convention
+on how arguments and return values are passed, but it uses a different set of
+caller/callee-saved registers. This removes the burden of saving and
+recovering a large register set before and after the call in the caller. If
+the arguments are passed in callee-saved registers, then they will be
+preserved by the callee across the call. This doesn't apply for values
+returned in callee-saved registers.
+
+- On X86-64 the callee preserves all general purpose registers, except for
+  R11. R11 can be used as a scratch register. Furthermore it also preserves
+  all floating-point registers (XMMs/YMMs).
+
+The idea behind this convention is to support calls to runtime functions
+that don't need to call out to any other functions.
+
+This calling convention, like the ``preserve_most`` calling convention, will be
+used by a future version of the Objective-C runtime and should be considered
+experimental at this time.
+
+
+preserve_most
+-------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","","","", ""
+
+On X86-64 and AArch64 targets, this attribute changes the calling convention of
+a function. The ``preserve_most`` calling convention attempts to make the code
+in the caller as unintrusive as possible. This convention behaves identically
+to the ``C`` calling convention on how arguments and return values are passed,
+but it uses a different set of caller/callee-saved registers. This alleviates
+the burden of saving and recovering a large register set before and after the
+call in the caller. If the arguments are passed in callee-saved registers,
+then they will be preserved by the callee across the call. This doesn't
+apply for values returned in callee-saved registers.
+
+- On X86-64 the callee preserves all general purpose registers, except for
+  R11. R11 can be used as a scratch register. Floating-point registers
+  (XMMs/YMMs) are not preserved and need to be saved by the caller.
+
+The idea behind this convention is to support calls to runtime functions
+that have a hot path and a cold path. The hot path is usually a small piece
+of code that doesn't use many registers. The cold path might need to call out to
+another function and therefore only needs to preserve the caller-saved
+registers, which haven't already been saved by the caller. The
+`preserve_most` calling convention is very similar to the ``cold`` calling
+convention in terms of caller/callee-saved registers, but they are used for
+different types of function calls. ``coldcc`` is for function calls that are
+rarely executed, whereas `preserve_most` function calls are intended to be
+on the hot path and definitely executed a lot. Furthermore ``preserve_most``
+doesn't prevent the inliner from inlining the function call.
+
+This calling convention will be used by a future version of the Objective-C
+runtime and should therefore still be considered experimental at this time.
+Although this convention was created to optimize certain runtime calls to
+the Objective-C runtime, it is not limited to this runtime and might be used
+by other runtimes in the future too. The current implementation only
+supports X86-64 and AArch64, but the intention is to support more architectures
+in the future.
 
 
 regparm (gnu::regparm)
@@ -1818,6 +2368,157 @@ test_typestate
 
 Use ``__attribute__((test_typestate(tested_state)))`` to indicate that a method
 returns true if the object is in the specified state..
+
+
+Type Safety Checking
+====================
+Clang supports additional attributes to enable checking type safety properties
+that can't be enforced by the C type system.  Use cases include:
+
+* MPI library implementations, where these attributes enable checking that
+  the buffer type matches the passed ``MPI_Datatype``;
+* for HDF5 library there is a similar use case to MPI;
+* checking types of variadic functions' arguments for functions like
+  ``fcntl()`` and ``ioctl()``.
+
+You can detect support for these attributes with ``__has_attribute()``.  For
+example:
+
+.. code-block:: c++
+
+  #if defined(__has_attribute)
+  #  if __has_attribute(argument_with_type_tag) && \
+        __has_attribute(pointer_with_type_tag) && \
+        __has_attribute(type_tag_for_datatype)
+  #    define ATTR_MPI_PWT(buffer_idx, type_idx) __attribute__((pointer_with_type_tag(mpi,buffer_idx,type_idx)))
+  /* ... other macros ...  */
+  #  endif
+  #endif
+
+  #if !defined(ATTR_MPI_PWT)
+  # define ATTR_MPI_PWT(buffer_idx, type_idx)
+  #endif
+
+  int MPI_Send(void *buf, int count, MPI_Datatype datatype /*, other args omitted */)
+      ATTR_MPI_PWT(1,3);
+
+argument_with_type_tag
+----------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","","","", ""
+
+Use ``__attribute__((argument_with_type_tag(arg_kind, arg_idx,
+type_tag_idx)))`` on a function declaration to specify that the function
+accepts a type tag that determines the type of some other argument.
+``arg_kind`` is an identifier that should be used when annotating all
+applicable type tags.
+
+This attribute is primarily useful for checking arguments of variadic functions
+(``pointer_with_type_tag`` can be used in most non-variadic cases).
+
+For example:
+
+.. code-block:: c++
+
+  int fcntl(int fd, int cmd, ...)
+      __attribute__(( argument_with_type_tag(fcntl,3,2) ));
+
+
+pointer_with_type_tag
+---------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","","","", ""
+
+Use ``__attribute__((pointer_with_type_tag(ptr_kind, ptr_idx, type_tag_idx)))``
+on a function declaration to specify that the function accepts a type tag that
+determines the pointee type of some other pointer argument.
+
+For example:
+
+.. code-block:: c++
+
+  int MPI_Send(void *buf, int count, MPI_Datatype datatype /*, other args omitted */)
+      __attribute__(( pointer_with_type_tag(mpi,1,3) ));
+
+
+type_tag_for_datatype
+---------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword", "Pragma"
+
+   "X","","","", ""
+
+Clang supports annotating type tags of two forms.
+
+* **Type tag that is an expression containing a reference to some declared
+  identifier.** Use ``__attribute__((type_tag_for_datatype(kind, type)))`` on a
+  declaration with that identifier:
+
+  .. code-block:: c++
+
+    extern struct mpi_datatype mpi_datatype_int
+        __attribute__(( type_tag_for_datatype(mpi,int) ));
+    #define MPI_INT ((MPI_Datatype) &mpi_datatype_int)
+
+* **Type tag that is an integral literal.** Introduce a ``static const``
+  variable with a corresponding initializer value and attach
+  ``__attribute__((type_tag_for_datatype(kind, type)))`` on that declaration,
+  for example:
+
+  .. code-block:: c++
+
+    #define MPI_INT ((MPI_Datatype) 42)
+    static const MPI_Datatype mpi_datatype_int
+        __attribute__(( type_tag_for_datatype(mpi,int) )) = 42
+
+The attribute also accepts an optional third argument that determines how the
+expression is compared to the type tag.  There are two supported flags:
+
+* ``layout_compatible`` will cause types to be compared according to
+  layout-compatibility rules (C++11 [class.mem] p 17, 18).  This is
+  implemented to support annotating types like ``MPI_DOUBLE_INT``.
+
+  For example:
+
+  .. code-block:: c++
+
+    /* In mpi.h */
+    struct internal_mpi_double_int { double d; int i; };
+    extern struct mpi_datatype mpi_datatype_double_int
+        __attribute__(( type_tag_for_datatype(mpi, struct internal_mpi_double_int, layout_compatible) ));
+
+    #define MPI_DOUBLE_INT ((MPI_Datatype) &mpi_datatype_double_int)
+
+    /* In user code */
+    struct my_pair { double a; int b; };
+    struct my_pair *buffer;
+    MPI_Send(buffer, 1, MPI_DOUBLE_INT /*, ...  */); // no warning
+
+    struct my_int_pair { int a; int b; }
+    struct my_int_pair *buffer2;
+    MPI_Send(buffer2, 1, MPI_DOUBLE_INT /*, ...  */); // warning: actual buffer element
+                                                      // type 'struct my_int_pair'
+                                                      // doesn't match specified MPI_Datatype
+
+* ``must_be_null`` specifies that the expression should be a null pointer
+  constant, for example:
+
+  .. code-block:: c++
+
+    /* In mpi.h */
+    extern struct mpi_datatype mpi_datatype_null
+        __attribute__(( type_tag_for_datatype(mpi, void, must_be_null) ));
+
+    #define MPI_DATATYPE_NULL ((MPI_Datatype) &mpi_datatype_null)
+
+    /* In user code */
+    MPI_Send(buffer, 1, MPI_DATATYPE_NULL /*, ...  */); // warning: MPI_DATATYPE_NULL
+                                                        // was specified but buffer
+                                                        // is not a null pointer
 
 
 OpenCL Address Spaces

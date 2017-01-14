@@ -79,7 +79,7 @@ print >> out_file, '''\
 <!--*************************************************************************-->
 <h1>C++ Defect Report Support in Clang</h1>
 <!--*************************************************************************-->
-<p>Last updated: $Date: 2016/09/03 22:46:56 $</p>
+<p>Last updated: $Date: 2017/01/14 19:55:50 $</p>
 
 <h2 id="cxxdr">C++ defect report implementation status</h2>
 
@@ -102,10 +102,10 @@ def availability(issue):
   if status == 'unknown':
     avail = 'Unknown'
     avail_style = ' class="none"'
-  elif status == '3.9':
+  elif status == '4.0':
     avail = 'SVN'
     avail_style = ' class="svn"'
-  elif status.startswith('3.'):
+  elif re.match('^[0-9]+\.', status):
     avail = 'Clang %s' % status
     avail_style = ' class="full"'
   elif status == 'yes':
