@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:48 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 LIB=	LLVMAnalysis
 NOPIC=
@@ -9,6 +9,7 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Analysis
 .include <bsd.own.mk>
 SRCS=	AliasAnalysis.cpp \
 	AliasAnalysisEvaluator.cpp \
+	AliasAnalysisSummary.cpp \
 	AliasSetTracker.cpp \
 	Analysis.cpp \
 	AssumptionCache.cpp \
@@ -18,7 +19,8 @@ SRCS=	AliasAnalysis.cpp \
 	BranchProbabilityInfo.cpp \
 	CFG.cpp \
 	CFGPrinter.cpp \
-	CFLAliasAnalysis.cpp \
+	CFLAndersAliasAnalysis.cpp \
+	CFLSteensAliasAnalysis.cpp \
 	CGSCCPassManager.cpp \
 	CallGraph.cpp \
 	CallGraphSCCPass.cpp \
@@ -36,12 +38,14 @@ SRCS=	AliasAnalysis.cpp \
 	EHPersonalities.cpp \
 	GlobalsModRef.cpp \
 	IVUsers.cpp \
+	IndirectCallPromotionAnalysis.cpp \
 	InlineCost.cpp \
 	InstCount.cpp \
 	InstructionSimplify.cpp \
 	Interval.cpp \
 	IntervalPartition.cpp \
 	IteratedDominanceFrontier.cpp \
+	LazyBlockFrequencyInfo.cpp \
 	LazyCallGraph.cpp \
 	LazyValueInfo.cpp \
 	Lint.cpp \
@@ -49,18 +53,23 @@ SRCS=	AliasAnalysis.cpp \
 	LoopAccessAnalysis.cpp \
 	LoopInfo.cpp \
 	LoopPass.cpp \
+	LoopPassManager.cpp \
+	LoopUnrollAnalyzer.cpp \
 	MemDepPrinter.cpp \
 	MemDerefPrinter.cpp \
 	MemoryBuiltins.cpp \
 	MemoryDependenceAnalysis.cpp \
 	MemoryLocation.cpp \
 	ModuleDebugInfoPrinter.cpp \
+	ModuleSummaryAnalysis.cpp \
 	ObjCARCAliasAnalysis.cpp \
 	ObjCARCAnalysisUtils.cpp \
 	ObjCARCInstKind.cpp \
+	OptimizationDiagnosticInfo.cpp \
 	OrderedBasicBlock.cpp \
 	PHITransAddr.cpp \
 	PostDominators.cpp \
+	ProfileSummaryInfo.cpp \
 	PtrUseVisitor.cpp \
 	RegionInfo.cpp \
 	RegionPass.cpp \
@@ -74,6 +83,7 @@ SRCS=	AliasAnalysis.cpp \
 	TargetTransformInfo.cpp \
 	Trace.cpp \
 	TypeBasedAliasAnalysis.cpp \
+	TypeMetadataUtils.cpp \
 	ScopedNoAliasAA.cpp \
 	ValueTracking.cpp \
 	VectorUtils.cpp

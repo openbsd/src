@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:49 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 LIB=	LLVMSupport
 NOPIC=
@@ -28,6 +28,7 @@ SRCS=	APFloat.cpp \
 	DeltaAlgorithm.cpp \
 	DAGDeltaAlgorithm.cpp \
 	Dwarf.cpp \
+	Error.cpp \
 	ErrorHandling.cpp \
 	FileUtilities.cpp \
 	FileOutputBuffer.cpp \
@@ -54,6 +55,8 @@ SRCS=	APFloat.cpp \
 	RandomNumberGenerator.cpp \
 	Regex.cpp \
 	ScaledNumber.cpp \
+	ScopedPrinter.cpp \
+	SHA1.cpp \
 	SmallPtrSet.cpp \
 	SmallVector.cpp \
 	SourceMgr.cpp \

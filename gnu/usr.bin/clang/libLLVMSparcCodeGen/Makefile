@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:49 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 LIB=	LLVMSparcCodeGen
 NOPIC=
@@ -9,6 +9,7 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/Sparc \
 
 .include <bsd.own.mk>
 SRCS=	DelaySlotFiller.cpp \
+	LeonPasses.cpp \
 	SparcAsmPrinter.cpp \
 	SparcInstrInfo.cpp \
 	SparcISelDAGToDAG.cpp \

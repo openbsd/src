@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:49 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 LIB=	LLVMProfileData
 NOPIC=
@@ -10,9 +10,7 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/ProfileData
 SRCS=	InstrProf.cpp \
 	InstrProfReader.cpp \
 	InstrProfWriter.cpp \
-	CoverageMapping.cpp \
-	CoverageMappingWriter.cpp \
-	CoverageMappingReader.cpp \
+	ProfileSummaryBuilder.cpp \
 	SampleProf.cpp \
 	SampleProfReader.cpp \
 	SampleProfWriter.cpp

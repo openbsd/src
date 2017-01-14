@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:49 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 LIB=	LLVMCodeGen
 NOPIC=
@@ -18,14 +18,13 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	CallingConvLower.cpp \
 	CodeGen.cpp \
 	CodeGenPrepare.cpp \
-	CoreCLRGC.cpp \
 	CriticalAntiDepBreaker.cpp \
 	DFAPacketizer.cpp \
 	DeadMachineInstructionElim.cpp \
+	DetectDeadLanes.cpp \
 	DwarfEHPrepare.cpp \
 	EarlyIfConversion.cpp \
 	EdgeBundles.cpp \
-	ErlangGC.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
 	ExpandPostRAPseudos.cpp \
@@ -57,6 +56,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	LiveStackAnalysis.cpp \
 	LiveVariables.cpp \
 	LocalStackSlotAllocation.cpp \
+	LowerEmuTLS.cpp \
 	MachineBasicBlock.cpp \
 	MachineBlockFrequencyInfo.cpp \
 	MachineBlockPlacement.cpp \
@@ -87,14 +87,15 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	MachineVerifier.cpp \
 	MIRPrinter.cpp \
 	MIRPrintingPass.cpp \
-	OcamlGC.cpp \
 	OptimizePHIs.cpp \
 	PHIElimination.cpp \
 	PHIEliminationUtils.cpp \
 	ParallelCG.cpp \
-	Passes.cpp \
+	PatchableFunction.cpp \
 	PeepholeOptimizer.cpp \
+	PostRAHazardRecognizer.cpp \
 	PostRASchedulerList.cpp \
+	PreISelIntrinsicLowering.cpp \
 	ProcessImplicitDefs.cpp \
 	PrologEpilogInserter.cpp \
 	PseudoSourceValue.cpp \
@@ -103,16 +104,22 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	RegAllocFast.cpp \
 	RegAllocGreedy.cpp \
 	RegAllocPBQP.cpp \
+	RegUsageInfoCollector.cpp \
+	RegUsageInfoPropagate.cpp \
 	RegisterClassInfo.cpp \
 	RegisterCoalescer.cpp \
 	RegisterPressure.cpp \
 	RegisterScavenging.cpp \
+	RegisterUsageInfo.cpp \
+	RenameIndependentSubregs.cpp \
+	SafeStack.cpp \
+	SafeStackColoring.cpp \
+	SafeStackLayout.cpp \
 	ScheduleDAG.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \
 	ScoreboardHazardRecognizer.cpp \
 	ShrinkWrap.cpp \
-	ShadowStackGC.cpp \
 	ShadowStackGCLowering.cpp \
 	SjLjEHPrepare.cpp \
 	SlotIndexes.cpp \
@@ -123,19 +130,21 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	StackSlotColoring.cpp \
 	StackMapLivenessAnalysis.cpp \
 	StackMaps.cpp \
-	StatepointExampleGC.cpp \
 	TailDuplication.cpp \
+	TailDuplicator.cpp \
 	TargetFrameLoweringImpl.cpp \
 	TargetInstrInfo.cpp \
 	TargetLoweringBase.cpp \
 	TargetLoweringObjectFileImpl.cpp \
 	TargetOptionsImpl.cpp \
+	TargetPassConfig.cpp \
 	TargetRegisterInfo.cpp \
 	TargetSchedule.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
 	VirtRegMap.cpp \
-	WinEHPrepare.cpp
+	WinEHPrepare.cpp \
+	XRayInstrumentation.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/CodeGen
 

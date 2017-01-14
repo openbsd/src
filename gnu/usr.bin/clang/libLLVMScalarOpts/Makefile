@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:49 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 LIB=	LLVMScalarOpts
 NOPIC=
@@ -20,11 +20,14 @@ SRCS=	ADCE.cpp \
 	FlattenCFGPass.cpp \
 	Float2Int.cpp \
 	GVN.cpp \
+	GVNHoist.cpp \
+	GuardWidening.cpp \
 	InductiveRangeCheckElimination.cpp \
 	IndVarSimplify.cpp \
 	JumpThreading.cpp \
 	LICM.cpp \
 	LoadCombine.cpp \
+	LoopDataPrefetch.cpp \
 	LoopDeletion.cpp \
 	LoopDistribute.cpp \
 	LoopIdiomRecognize.cpp \
@@ -33,9 +36,11 @@ SRCS=	ADCE.cpp \
 	LoopLoadElimination.cpp \
 	LoopRerollPass.cpp \
 	LoopRotation.cpp \
+	LoopSimplifyCFG.cpp \
 	LoopStrengthReduce.cpp \
 	LoopUnrollPass.cpp \
 	LoopUnswitch.cpp \
+	LoopVersioningLICM.cpp \
 	LowerAtomic.cpp \
 	LowerExpectIntrinsic.cpp \
 	MemCpyOptimizer.cpp \
@@ -49,7 +54,6 @@ SRCS=	ADCE.cpp \
 	SCCP.cpp \
 	SROA.cpp \
 	Scalar.cpp \
-	ScalarReplAggregates.cpp \
 	Scalarizer.cpp \
 	SeparateConstOffsetFromGEP.cpp \
 	SimplifyCFGPass.cpp \

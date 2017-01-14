@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:50 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 LIB=	LLVMX86CodeGen
 NOPIC=
@@ -11,6 +11,9 @@ SRCS=	X86AsmPrinter.cpp \
 	X86CallFrameOptimization.cpp \
 	X86ExpandPseudo.cpp \
 	X86FastISel.cpp \
+	X86FixupBWInsts.cpp \
+	X86FixupLEAs.cpp \
+	X86FixupSetCC.cpp \
 	X86FloatingPoint.cpp \
 	X86FrameLowering.cpp \
 	X86ISelDAGToDAG.cpp \
@@ -27,7 +30,7 @@ SRCS=	X86AsmPrinter.cpp \
 	X86TargetObjectFile.cpp \
 	X86TargetTransformInfo.cpp \
 	X86VZeroUpper.cpp \
-	X86FixupLEAs.cpp \
+	X86WinAllocaExpander.cpp \
 	X86WinEHState.cpp \
 	X86OptimizeLEAs.cpp
 

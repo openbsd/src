@@ -15,14 +15,8 @@
 /* Define to enable crash overrides */
 #define ENABLE_CRASH_OVERRIDES
 
-/* Define to disable C++ atexit */
-#define DISABLE_LLVM_DYLIB_ATEXIT
-
 /* Define if position independent code is enabled */
 #define ENABLE_PIC
-
-/* Define if timestamp information (e.g., __DATE__) is allowed */
-#define ENABLE_TIMESTAMPS 1
 
 /* Define to 1 if you have the `arc4random' function. */
 #define HAVE_DECL_ARC4RANDOM 1
@@ -256,6 +250,9 @@
 /* Define if you have the shl_load function. */
 #undef HAVE_SHL_LOAD
 
+/* Define to 1 if you have the `sigaltstack' function. */
+#define HAVE_SIGALTSTACK 1
+
 /* Define to 1 if you have the `siglongjmp' function. */
 /* #undef HAVE_SIGLONGJMP */
 
@@ -327,6 +324,9 @@
 /* Define if the setupterm() function is supported this platform. */
 #define HAVE_TERMINFO 1
 
+/* Define if the xar_open() function is supported this platform. */
+/* #undef HAVE_LIBXAR */
+
 /* Define to 1 if you have the <termios.h> header file. */
 #define HAVE_TERMIOS_H 1
 
@@ -335,6 +335,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the `_Unwind_Backtrace' function. */
+/* #undef HAVE_UNWIND_BACKTRACE */
 
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1
@@ -496,13 +499,16 @@
 #define LLVM_VERSION_MAJOR 3
 
 /* Minor version of the LLVM API */
-#define LLVM_VERSION_MINOR 8
+#define LLVM_VERSION_MINOR 9
 
 /* Patch version of the LLVM API */
 #define LLVM_VERSION_PATCH 1
 
 /* LLVM version string */
-#define LLVM_VERSION_STRING "3.8.1"
+#define LLVM_VERSION_STRING "3.9.1"
+
+/* LLVM version information */
+/* #undef LLVM_VERSION_INFO */
 
 /* Define if we link Polly to the tools */
 /* #undef LINK_POLLY_INTO_TOOLS */
@@ -534,13 +540,16 @@
 #define PACKAGE_NAME "LLVM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LLVM 3.8.1"
+#define PACKAGE_STRING "LLVM 3.9.1"
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.8.1"
+#define PACKAGE_VERSION "3.9.1"
+
+/* Define to the vendor of this package. */
+/* #undef PACKAGE_VENDOR */
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -556,9 +565,6 @@
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
-
-/* Type of 1st arg on ELM Callback */
-/* #undef WIN32_ELMCB_PCSTR */
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t

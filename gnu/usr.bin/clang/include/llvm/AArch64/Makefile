@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/11/24 22:32:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ HDRS=	AArch64GenAsmMatcher.inc AArch64GenAsmWriter.inc \
 	AArch64GenInstrInfo.inc AArch64GenRegisterInfo.inc \
 	AArch64GenSubtargetInfo.inc \
 	AArch64GenMCCodeEmitter.inc AArch64GenMCPseudoLowering.inc \
-	AArch64GenDisassemblerTables.inc
+	AArch64GenSystemOperands.inc
 
 all: ${HDRS}
 
@@ -84,8 +84,8 @@ AArch64GenMCPseudoLowering.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
 		-o ${.TARGET} ${.ALLSRC}
 
-AArch64GenDisassemblerTables.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-disassembler \
+AArch64GenSystemOperands.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-searchable-tables \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
 		-o ${.TARGET} ${.ALLSRC}
 

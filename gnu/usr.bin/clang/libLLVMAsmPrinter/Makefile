@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:49 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 LIB=	LLVMAsmPrinter
 NOPIC=
@@ -10,7 +10,9 @@ SRCS=	AddressPool.cpp \
 	AsmPrinter.cpp \
 	AsmPrinterDwarf.cpp \
 	AsmPrinterInlineAsm.cpp \
+	CodeViewDebug.cpp \
 	DbgValueHistoryCalculator.cpp \
+	DebugHandlerBase.cpp \
 	DebugLocStream.cpp \
 	DIE.cpp \
 	DIEHash.cpp \
@@ -25,8 +27,7 @@ SRCS=	AddressPool.cpp \
 	EHStreamer.cpp \
 	ErlangGCPrinter.cpp \
 	OcamlGCPrinter.cpp \
-	WinException.cpp \
-	WinCodeViewLineTables.cpp
+	WinException.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/CodeGen/AsmPrinter
 

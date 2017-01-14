@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 11:02:05 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -38,6 +38,9 @@ SUBDIR+=libLLVMOption
 SUBDIR+=libLLVMTarget
 SUBDIR+=libLLVMAsmParser
 SUBDIR+=libLLVMProfileData
+SUBDIR+=libLLVMCoverage
+SUBDIR+=libLLVMDebugInfoCodeView
+SUBDIR+=libLLVMGlobalISel
 
 SUBDIR+=include/llvm/${LLVM_ARCH}
 

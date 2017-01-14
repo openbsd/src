@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:49 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
 
 LIB=	LLVMMC
 NOPIC=
@@ -17,7 +17,7 @@ SRCS=	ConstantPools.cpp \
 	MCAsmStreamer.cpp \
 	MCAssembler.cpp \
 	MCCodeEmitter.cpp \
-	MCCodeGenInfo.cpp \
+	MCCodeView.cpp \
 	MCContext.cpp \
 	MCDwarf.cpp \
 	MCELFObjectTargetWriter.cpp \
@@ -46,7 +46,6 @@ SRCS=	ConstantPools.cpp \
 	MCSubtargetInfo.cpp \
 	MCSymbol.cpp \
 	MCSymbolELF.cpp \
-	MCSymbolizer.cpp \
 	MCTargetOptions.cpp \
 	MCValue.cpp \
 	MCWin64EH.cpp \
@@ -55,8 +54,7 @@ SRCS=	ConstantPools.cpp \
 	StringTableBuilder.cpp \
 	SubtargetFeature.cpp \
 	WinCOFFObjectWriter.cpp \
-	WinCOFFStreamer.cpp \
-	YAML.cpp
+	WinCOFFStreamer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/MC
 
