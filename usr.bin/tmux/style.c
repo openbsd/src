@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.12 2017/01/13 11:58:49 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.13 2017/01/15 20:48:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -127,55 +127,6 @@ style_tostring(struct grid_cell *gc)
 	if (*s == '\0')
 		return ("default");
 	return (s);
-}
-
-/* Synchronize new -style option with the old one. */
-void
-style_update_new(struct options *oo, const char *name, const char *newname)
-{
-	int			 value;
-	struct grid_cell	*gc;
-	struct options_entry	*o;
-
-	/* It's a colour or attribute, but with no -style equivalent. */
-	if (newname == NULL)
-		return;
-
-	o = options_find1(oo, newname);
-	if (o == NULL)
-		o = options_set_style(oo, newname, 0, "default");
-	gc = &o->style;
-
-	o = options_find1(oo, name);
-	if (o == NULL)
-		o = options_set_number(oo, name, 8);
-	value = o->num;
-
-	if (strstr(name, "-bg") != NULL)
-		gc->bg = value;
-	else if (strstr(name, "-fg") != NULL)
-		gc->fg = value;
-	else if (strstr(name, "-attr") != NULL)
-		gc->attr = value;
-}
-
-/* Synchronize all the old options with the new -style one. */
-void
-style_update_old(struct options *oo, const char *name, struct grid_cell *gc)
-{
-	char	newname[128];
-	int	size;
-
-	size = strrchr(name, '-') - name;
-
-	xsnprintf(newname, sizeof newname, "%.*s-bg", size, name);
-	options_set_number(oo, newname, gc->bg);
-
-	xsnprintf(newname, sizeof newname, "%.*s-fg", size, name);
-	options_set_number(oo, newname, gc->fg);
-
-	xsnprintf(newname, sizeof newname, "%.*s-attr", size, name);
-	options_set_number(oo, newname, gc->attr);
 }
 
 /* Apply a style. */
