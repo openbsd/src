@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.2 2016/12/18 14:40:25 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.3 2017/01/15 18:13:56 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -346,7 +346,8 @@ create_pagetables:
 	 */
 
 	/* Find the size of the kernel */
-	ldr	x6, .Lstart
+	adr	x6, .Lstart
+	ldr	x6, [x6]
 	sub	x6, x6, x29
 
 	/* End is the symbol address */
