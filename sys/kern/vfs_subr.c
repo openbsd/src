@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.256 2017/01/10 19:56:34 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.257 2017/01/15 23:18:05 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1251,12 +1251,12 @@ vprint(char *label, struct vnode *vp)
 void
 printlockedvnodes(void)
 {
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	struct vnode *vp;
 
 	printf("Locked vnodes\n");
 
-	TAILQ_FOREACH_SAFE(mp, &mountlist, mnt_list, nmp) {
+	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (vfs_busy(mp, VB_READ|VB_NOWAIT))
 			continue;
 		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
@@ -1574,8 +1574,9 @@ vfs_unmountall(void)
  retry:
 	allerror = 0;
 	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mntlist, mnt_list, nmp) {
-		if ((vfs_busy(mp, VB_WRITE|VB_NOWAIT)) != 0)
+		if (vfs_busy(mp, VB_WRITE|VB_NOWAIT))
 			continue;
+		/* XXX Here is a race, the next pointer is not locked. */
 		if ((error = dounmount(mp, MNT_FORCE, curproc)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.267 2017/01/10 20:13:17 bluhm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.268 2017/01/15 23:18:05 bluhm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -425,10 +425,10 @@ struct ctldebug debug0 = { "syncprt", &syncprt };
 int
 sys_sync(struct proc *p, void *v, register_t *retval)
 {
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	int asyncflag;
 
-	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mntlist, mnt_list, nmp) {
+	TAILQ_FOREACH_REVERSE(mp, &mountlist, mntlist, mnt_list) {
 		if (vfs_busy(mp, VB_READ|VB_NOWAIT))
 			continue;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
@@ -570,7 +570,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 		syscallarg(size_t) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	struct statfs *sp;
 	struct statfs *sfsp;
 	size_t count, maxcount;
@@ -580,7 +580,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 	sfsp = SCARG(uap, buf);
 	count = 0;
 
-	TAILQ_FOREACH_SAFE(mp, &mountlist, mnt_list, nmp) {
+	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (vfs_busy(mp, VB_READ|VB_NOWAIT))
 			continue;
 		if (sfsp && count < maxcount) {
