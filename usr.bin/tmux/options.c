@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.24 2017/01/13 11:58:49 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.25 2017/01/15 20:14:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -151,7 +151,7 @@ options_set_string(struct options *oo, const char *name, int append,
 	if (o == NULL || !append)
 		value = s;
 	else {
-		xasprintf(&value, "%s%s", s, o->str);
+		xasprintf(&value, "%s%s", o->str, s);
 		free(s);
 	}
 
