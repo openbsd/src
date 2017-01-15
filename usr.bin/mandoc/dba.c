@@ -1,6 +1,6 @@
-/*	$OpenBSD: dba.c,v 1.5 2016/08/17 20:46:06 schwarze Exp $ */
+/*	$OpenBSD: dba.c,v 1.6 2017/01/15 15:28:51 schwarze Exp $ */
 /*
- * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,23 +20,34 @@
 #include <sys/types.h>
 #include <endian.h>
 #include <errno.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "mandoc_aux.h"
+#include "mandoc_ohash.h"
 #include "mansearch.h"
 #include "dba_write.h"
 #include "dba_array.h"
 #include "dba.h"
 
+struct macro_entry {
+	struct dba_array	*pages;
+	char			 value[];
+};
+
 static void	*prepend(const char *, char);
 static void	 dba_pages_write(struct dba_array *);
 static int	 compare_names(const void *, const void *);
 static int	 compare_strings(const void *, const void *);
+
+static struct macro_entry
+		*get_macro_entry(struct ohash *, const char *, int32_t);
 static void	 dba_macros_write(struct dba_array *);
-static void	 dba_macro_write(struct dba_array *);
+static void	 dba_macro_write(struct ohash *);
+static int	 compare_entries(const void *, const void *);
 
 
 /*** top-level functions **********************************************/
@@ -45,29 +56,37 @@ struct dba *
 dba_new(int32_t npages)
 {
 	struct dba	*dba;
+	struct ohash	*macro;
 	int32_t		 im;
 
 	dba = mandoc_malloc(sizeof(*dba));
 	dba->pages = dba_array_new(npages, DBA_GROW);
 	dba->macros = dba_array_new(MACRO_MAX, 0);
-	for (im = 0; im < MACRO_MAX; im++)
-		dba_array_set(dba->macros, im, dba_array_new(128, DBA_GROW));
+	for (im = 0; im < MACRO_MAX; im++) {
+		macro = mandoc_malloc(sizeof(*macro));
+		mandoc_ohash_init(macro, 4,
+		    offsetof(struct macro_entry, value));
+		dba_array_set(dba->macros, im, macro);
+	}
 	return dba;
 }
 
 void
 dba_free(struct dba *dba)
 {
-	struct dba_array	*page, *macro, *entry;
+	struct dba_array	*page;
+	struct ohash		*macro;
+	struct macro_entry	*entry;
+	unsigned int		 slot;
 
 	dba_array_FOREACH(dba->macros, macro) {
-		dba_array_undel(macro);
-		dba_array_FOREACH(macro, entry) {
-			free(dba_array_get(entry, 0));
-			dba_array_free(dba_array_get(entry, 1));
-			dba_array_free(entry);
+		for (entry = ohash_first(macro, &slot); entry != NULL;
+		     entry = ohash_next(macro, &slot)) {
+			dba_array_free(entry->pages);
+			free(entry);
 		}
-		dba_array_free(macro);
+		ohash_delete(macro);
+		free(macro);
 	}
 	dba_array_free(dba->macros);
 
@@ -307,57 +326,64 @@ compare_strings(const void *vp1, const void *vp2)
 /*** functions for handling macros ************************************/
 
 /*
- * Create a new macro entry and append it to one of the macro tables.
+ * In the hash table for a single macro, look up an entry by
+ * the macro value or add an empty one if it doesn't exist yet.
+ */
+static struct macro_entry *
+get_macro_entry(struct ohash *macro, const char *value, int32_t np)
+{
+	struct macro_entry	*entry;
+	size_t			 len;
+	unsigned int		 slot;
+
+	slot = ohash_qlookup(macro, value);
+	if ((entry = ohash_find(macro, slot)) == NULL) {
+		len = strlen(value) + 1;
+		entry = mandoc_malloc(sizeof(*entry) + len);
+		memcpy(&entry->value, value, len);
+		entry->pages = dba_array_new(np, DBA_GROW);
+		ohash_insert(macro, slot, entry);
+	}
+	return entry;
+}
+
+/*
+ * In addition to get_macro_entry(), add multiple page references,
+ * converting them from the on-disk format (byte offsets in the file)
+ * to page pointers in memory.
  */
 void
 dba_macro_new(struct dba *dba, int32_t im, const char *value,
     const int32_t *pp)
 {
-	struct dba_array	*entry, *pages;
+	struct macro_entry	*entry;
 	const int32_t		*ip;
 	int32_t			 np;
 
 	np = 0;
 	for (ip = pp; *ip; ip++)
 		np++;
-	pages = dba_array_new(np, DBA_GROW);
+
+	entry = get_macro_entry(dba_array_get(dba->macros, im), value, np);
 	for (ip = pp; *ip; ip++)
-		dba_array_add(pages, dba_array_get(dba->pages,
+		dba_array_add(entry->pages, dba_array_get(dba->pages,
 		    be32toh(*ip) / 5 / sizeof(*ip) - 1));
-
-	entry = dba_array_new(2, 0);
-	dba_array_add(entry, mandoc_strdup(value));
-	dba_array_add(entry, pages);
-
-	dba_array_add(dba_array_get(dba->macros, im), entry);
 }
 
 /*
- * Look up a macro entry by value and add a reference to a new page to it.
- * If the value does not yet exist, create a new macro entry
- * and add it to the macro table in question.
+ * In addition to get_macro_entry(), add one page reference,
+ * directly taking the in-memory page pointer as an argument.
  */
 void
 dba_macro_add(struct dba_array *macros, int32_t im, const char *value,
     struct dba_array *page)
 {
-	struct dba_array	*macro, *entry, *pages;
+	struct macro_entry	*entry;
 
 	if (*value == '\0')
 		return;
-	macro = dba_array_get(macros, im);
-	dba_array_FOREACH(macro, entry)
-		if (strcmp(value, dba_array_get(entry, 0)) == 0)
-			break;
-	if (entry == NULL) {
-		entry = dba_array_new(2, 0);
-		dba_array_add(entry, mandoc_strdup(value));
-		pages = dba_array_new(1, DBA_GROW);
-		dba_array_add(entry, pages);
-		dba_array_add(macro, entry);
-	} else
-		pages = dba_array_get(entry, 1);
-	dba_array_add(pages, page);
+	entry = get_macro_entry(dba_array_get(macros, im), value, 1);
+	dba_array_add(entry->pages, page);
 }
 
 /*
@@ -369,7 +395,7 @@ dba_macro_add(struct dba_array *macros, int32_t im, const char *value,
 static void
 dba_macros_write(struct dba_array *macros)
 {
-	struct dba_array	*macro;
+	struct ohash		*macro;
 	int32_t			 im, pos_macros, pos_end;
 
 	pos_macros = dba_array_writelen(macros, 1);
@@ -395,38 +421,80 @@ dba_macros_write(struct dba_array *macros)
  * - A list of pointers to pages, each list ending in a 0 integer.
  */
 static void
-dba_macro_write(struct dba_array *macro)
+dba_macro_write(struct ohash *macro)
 {
-	struct dba_array	*entry, *pages, *page;
-	int			 empty;
-	int32_t			 addr, pos_macro, pos_end;
+	struct macro_entry	**entries, *entry;
+	struct dba_array	 *page;
+	int32_t			 *kpos, *dpos;
+	unsigned int		  ie, ne, slot;
+	int			  use;
+	int32_t			  addr, pos_macro, pos_end;
 
-	dba_array_FOREACH(macro, entry) {
-		pages = dba_array_get(entry, 1);
-		empty = 1;
-		dba_array_FOREACH(pages, page)
+	/* Temporary storage for filtering and sorting. */
+
+	ne = ohash_entries(macro);
+	entries = mandoc_reallocarray(NULL, ne, sizeof(*entries));
+	kpos = mandoc_reallocarray(NULL, ne, sizeof(*kpos));
+	dpos = mandoc_reallocarray(NULL, ne, sizeof(*dpos));
+
+	/* Build a list of non-empty entries and sort it. */
+
+	ne = 0;
+	for (entry = ohash_first(macro, &slot); entry != NULL;
+	     entry = ohash_next(macro, &slot)) {
+		use = 0;
+		dba_array_FOREACH(entry->pages, page)
 			if (dba_array_getpos(page))
-				empty = 0;
-		if (empty)
-			dba_array_del(macro);
+				use = 1;
+		if (use)
+			entries[ne++] = entry;
 	}
-	pos_macro = dba_array_writelen(macro, 2);
-	dba_array_FOREACH(macro, entry) {
-		dba_array_setpos(entry, 0, dba_tell());
-		dba_str_write(dba_array_get(entry, 0));
+	qsort(entries, ne, sizeof(*entries), compare_entries);
+
+	/* Number of entries, and space for the pointer pairs. */
+
+	dba_int_write(ne);
+	pos_macro = dba_skip(2, ne);
+
+	/* String table. */
+
+	for (ie = 0; ie < ne; ie++) {
+		kpos[ie] = dba_tell();
+		dba_str_write(entries[ie]->value);
 	}
 	dba_align();
-	dba_array_FOREACH(macro, entry) {
-		dba_array_setpos(entry, 1, dba_tell());
-		pages = dba_array_get(entry, 1);
-		dba_array_FOREACH(pages, page)
+
+	/* Pages table. */
+
+	for (ie = 0; ie < ne; ie++) {
+		dpos[ie] = dba_tell();
+		dba_array_FOREACH(entries[ie]->pages, page)
 			if ((addr = dba_array_getpos(page)))
 				dba_int_write(addr);
 		dba_int_write(0);
 	}
 	pos_end = dba_tell();
+
+	/* Fill in the pointer pairs. */
+
 	dba_seek(pos_macro);
-	dba_array_FOREACH(macro, entry)
-		dba_array_writepos(entry);
+	for (ie = 0; ie < ne; ie++) {
+		dba_int_write(kpos[ie]);
+		dba_int_write(dpos[ie]);
+	}
 	dba_seek(pos_end);
+
+	free(entries);
+	free(kpos);
+	free(dpos);
+}
+
+static int
+compare_entries(const void *vp1, const void *vp2)
+{
+	const struct macro_entry *ep1, *ep2;
+
+	ep1 = *(struct macro_entry **)vp1;
+	ep2 = *(struct macro_entry **)vp2;
+	return strcmp(ep1->value, ep2->value);
 }
