@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.16 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.17 2017/01/15 22:00:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -90,7 +90,8 @@ cmd_display_panes_callback(struct client *c, struct window_pane *wp)
 	xasprintf(&expanded, "%%%u", wp->id);
 	cmd = cmd_template_replace(template, expanded, 1);
 
-	if (cmd_string_parse(cmd, &cmdlist, NULL, 0, &cause) != 0) {
+	cmdlist = cmd_string_parse(cmd, NULL, 0, &cause);
+	if (cmdlist == NULL) {
 		if (cause != NULL) {
 			new_item = cmdq_get_callback(cmd_display_panes_error,
 			    cause);

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.83 2017/01/07 15:28:13 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.84 2017/01/15 22:00:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -255,7 +255,8 @@ window_choose_data_run(struct window_choose_data *cdata)
 	if (cdata->command == NULL)
 		return;
 
-	if (cmd_string_parse(cdata->command, &cmdlist, NULL, 0, &cause) != 0) {
+	cmdlist = cmd_string_parse(cdata->command, NULL, 0, &cause);
+	if (cmdlist == NULL) {
 		if (cause != NULL) {
 			*cause = toupper((u_char) *cause);
 			status_message_set(cdata->start_client, "%s", cause);

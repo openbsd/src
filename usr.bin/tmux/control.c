@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.19 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.20 2017/01/15 22:00:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -85,7 +85,8 @@ control_callback(struct client *c, int closed, __unused void *data)
 			break;
 		}
 
-		if (cmd_string_parse(line, &cmdlist, NULL, 0, &cause) != 0) {
+		cmdlist = cmd_string_parse(line, NULL, 0, &cause);
+		if (cmdlist == NULL) {
 			item = cmdq_get_callback(control_error, cause);
 			cmdq_append(c, item);
 		} else {

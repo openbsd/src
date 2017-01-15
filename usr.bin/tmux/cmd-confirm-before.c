@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.32 2017/01/06 11:57:03 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.33 2017/01/15 22:00:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -112,7 +112,8 @@ cmd_confirm_before_callback(void *data, const char *s, __unused int done)
 	if (tolower((u_char) s[0]) != 'y' || s[1] != '\0')
 		return (0);
 
-	if (cmd_string_parse(cdata->cmd, &cmdlist, NULL, 0, &cause) != 0) {
+	cmdlist = cmd_string_parse(cdata->cmd, NULL, 0, &cause);
+	if (cmdlist == NULL) {
 		if (cause != NULL) {
 			new_item = cmdq_get_callback(cmd_confirm_before_error,
 			    cause);

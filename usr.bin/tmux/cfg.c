@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.52 2017/01/09 21:28:56 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.53 2017/01/15 22:00:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -141,7 +141,8 @@ load_cfg(const char *path, struct client *c, struct cmdq_item *item, int quiet)
 		if (condition == -1)
 			continue;
 
-		if (cmd_string_parse(p, &cmdlist, path, line, &cause1) != 0) {
+		cmdlist = cmd_string_parse(p, path, line, &cause1);
+		if (cmdlist == NULL) {
 			free(buf);
 			if (cause1 == NULL)
 				continue;
