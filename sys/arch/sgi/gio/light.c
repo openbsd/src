@@ -1,4 +1,4 @@
-/*	$OpenBSD: light.c,v 1.7 2014/12/07 17:15:56 miod Exp $	*/
+/*	$OpenBSD: light.c,v 1.8 2017/01/15 20:22:33 fcambus Exp $	*/
 /*	$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
 
 /*
@@ -417,7 +417,7 @@ light_attach(struct device *parent, struct device *self, void *aux)
 		printf(": LG%dMC\n",
 		    LIGHT_IS_LG1(sc->sc_dc->dc_boardrev) ? 1 : 2);
 	printf(", revision %d\n", dc->dc_boardrev);
-	printf("%s: %dx%d %d-bit frame buffer\n", self->dv_xname,
+	printf("%s: %dx%d, %dbpp\n", self->dv_xname,
 	    dc->dc_ri.ri_width, dc->dc_ri.ri_height, dc->dc_ri.ri_depth);
 
 	sc->sc_scrlist[0] = &dc->dc_wsd;

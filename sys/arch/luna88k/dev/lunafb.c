@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.22 2014/07/22 13:39:16 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.23 2017/01/15 20:22:33 fcambus Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -200,7 +200,7 @@ omfbattach(struct device *parent, struct device *self, void *args)
 			M_WAITOK | M_ZERO);
 		omfb_getdevconfig(OMFB_FB_WADDR, sc->sc_dc);
 	}
-	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
+	printf(": %dx%d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    hwplanebits);
 
 	waa.console = omfb_console;

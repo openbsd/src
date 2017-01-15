@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.12 2015/09/08 10:21:50 deraadt Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.13 2017/01/15 20:22:33 fcambus Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -424,7 +424,7 @@ grtwo_attach(struct device *parent, struct device *self, void *aux)
 	dc->dc_sc = sc;
 
 	printf(", revision %d, monitor sense %d\n", dc->boardrev, dc->monitor);
-	printf("%s: %dx%d %d-bit frame buffer\n",
+	printf("%s: %dx%d, %dbpp\n",
 	    self->dv_xname, GRTWO_WIDTH, GRTWO_HEIGHT, dc->depth);
 
 	sc->sc_scrlist[0] = &dc->dc_wsd;

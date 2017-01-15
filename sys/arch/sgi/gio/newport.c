@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.10 2015/09/08 10:21:50 deraadt Exp $	*/
+/*	$OpenBSD: newport.c,v 1.11 2017/01/15 20:22:33 fcambus Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -545,7 +545,7 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 		descr = "NG1";
 	printf(": %s (board rev %d, xmap rev %d, vc2 rev %d)\n",
 	    descr, dc->dc_boardrev, dc->dc_xmaprev, dc->dc_vc2rev);
-	printf("%s: %dx%d %d-bit frame buffer\n",
+	printf("%s: %dx%d, %dbpp\n",
 	    self->dv_xname, dc->dc_xres, dc->dc_yres, dc->dc_depth);
 #ifdef DEBUG
 	printf("%s: REX3 config = %06x\n",

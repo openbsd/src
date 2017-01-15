@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfb.c,v 1.23 2013/10/20 20:07:22 miod Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.24 2017/01/15 20:22:33 fcambus Exp $	*/
 /*	$NetBSD: cfb.c,v 1.7 1996/12/05 01:39:39 cgd Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ cfbattach(parent, self, aux)
 		printf(": can't map mem space\n");
 		return;
 	}
-	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
+	printf(": %dx%d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
 	/* Establish an interrupt handler, and clear any pending interrupts */

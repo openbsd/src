@@ -1,4 +1,4 @@
-/*	$OpenBSD: sisfb.c,v 1.4 2013/10/21 10:36:14 miod Exp $	*/
+/*	$OpenBSD: sisfb.c,v 1.5 2017/01/15 20:22:33 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -240,7 +240,7 @@ sisfb_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	printf(": %dx%dx%d frame buffer\n",
+	printf(": %dx%d, %dbpp\n",
 	    fb->ri.ri_width, fb->ri.ri_height, fb->ri.ri_depth);
 
 	sc->sc_scrlist[0] = &fb->wsd;
