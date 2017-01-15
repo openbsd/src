@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.3 2017/01/13 09:18:11 fcambus Exp $ */
+/* $OpenBSD: machdep.c,v 1.4 2017/01/15 18:19:00 patrick Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -769,6 +769,8 @@ initarm(struct arm64_bootparams *abp)
 	void *fdt = NULL;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
+	int (*map_a4x_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
 
 #if 0
 	gdb_w = 1;
@@ -929,12 +931,16 @@ int pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
     int flags, bus_space_handle_t *bshp);
 
 	map_func_save = arm64_bs_tag._space_map;
+	map_a4x_func_save = arm64_a4x_bs_tag._space_map;
+
 	arm64_bs_tag._space_map = pmap_bootstrap_bs_map;
+	arm64_a4x_bs_tag._space_map = pmap_bootstrap_bs_map;
 
 	// cninit
 	consinit();
 
 	arm64_bs_tag._space_map = map_func_save;
+	arm64_a4x_bs_tag._space_map = map_a4x_func_save;
 
 	/* XXX */
 	pmap_avail_fixup();
