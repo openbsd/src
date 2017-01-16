@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.80 2017/01/15 20:48:41 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.81 2017/01/16 14:49:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -63,6 +63,13 @@ const struct options_table_entry options_table[] = {
 	  .minimum = 1,
 	  .maximum = INT_MAX,
 	  .default_num = 20
+	},
+
+	{ .name = "command-alias",
+	  .type = OPTIONS_TABLE_ARRAY,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .default_str = "split-pane=split-window,"
+	                 "splitp=split-window"
 	},
 
 	{ .name = "default-terminal",

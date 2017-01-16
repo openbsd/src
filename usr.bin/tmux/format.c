@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.116 2017/01/15 20:48:41 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.117 2017/01/16 14:49:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -622,7 +622,7 @@ format_find(struct format_tree *ft, const char *key, int modifiers)
 	struct format_entry	*fe, fe_find;
 	struct environ_entry	*envent;
 	static char		 s[64];
-	struct option		*o;
+	struct options_entry	*o;
 	const char		*found;
 	int			 idx;
 	char			*copy, *saved;
