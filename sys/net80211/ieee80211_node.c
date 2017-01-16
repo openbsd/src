@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.111 2017/01/09 20:18:59 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.112 2017/01/16 09:35:43 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1638,6 +1638,7 @@ ieee80211_node_leave_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 	int i;
 
 	/* free all Block Ack records */
+	ieee80211_ba_del(ni);
 	for (tid = 0; tid < IEEE80211_NUM_TID; tid++) {
 		ba = &ni->ni_rx_ba[tid];
 		if (ba->ba_buf != NULL) {
