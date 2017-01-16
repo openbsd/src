@@ -1,4 +1,4 @@
-.\"	$OpenBSD: switchd.conf.5,v 1.4 2016/10/20 19:55:29 jmc Exp $
+.\"	$OpenBSD: switchd.conf.5,v 1.5 2017/01/16 13:03:18 sthen Exp $
 .\"
 .\" Copyright (c) 2014, 2015, 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -17,7 +17,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: October 20 2016 $
+.Dd $Mdocdate: January 16 2017 $
 .Dt SWITCHD.CONF 5
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ Additional configuration files can be included with the
 .Ic include
 keyword, for example:
 .Bd -literal -offset indent
-include "/etc/snmpd.conf.local"
+include "/etc/switchd.conf.local"
 .Ed
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
