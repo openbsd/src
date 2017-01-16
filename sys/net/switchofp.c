@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.49 2017/01/12 11:49:42 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.50 2017/01/16 10:49:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -5428,17 +5428,6 @@ swofp_group_mod_delete(struct switch_softc *sc, struct mbuf *m)
 
 	m_freem(m);
 	return (0);
-}
-
-const char *
-swofp_group_mod_cmd_str(uint16_t cmd)
-{
-	const char *cmd_str[] = { "Add", "Modify", "Delete" };
-
-	if (cmd > OFP_GROUPCMD_DELETE)
-		return ("Unknown");
-	else
-		return (cmd_str[cmd]);
 }
 
 int
