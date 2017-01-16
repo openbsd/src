@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.10 2016/12/22 15:06:47 mikeb Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.11 2017/01/16 11:25:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -44,7 +44,7 @@ extern struct rwlock	switch_ifs_lk;
 #include <sys/selinfo.h>
 #include <sys/vnode.h>
 
-struct switch_softc *vsw_dev2sc(dev_t);
+struct switch_softc *switch_dev2sc(dev_t);
 int	switchopen(dev_t, int, int, struct proc *);
 int	switchread(dev_t, struct uio *, int);
 int	switchwrite(dev_t, struct uio *, int);
