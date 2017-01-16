@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.109 2017/01/16 18:09:35 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.110 2017/01/16 18:18:16 mikeb Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -928,7 +928,7 @@ mpii_read(struct mpii_softc *sc, bus_size_t r)
 	    BUS_SPACE_BARRIER_READ);
 	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 
-	DNPRINTF(MPII_D_RW, "%s: mpii_read %#x %#x\n", DEVNAME(sc), r, rv);
+	DNPRINTF(MPII_D_RW, "%s: mpii_read %#lx %#x\n", DEVNAME(sc), r, rv);
 
 	return (rv);
 }
@@ -936,7 +936,7 @@ mpii_read(struct mpii_softc *sc, bus_size_t r)
 void
 mpii_write(struct mpii_softc *sc, bus_size_t r, u_int32_t v)
 {
-	DNPRINTF(MPII_D_RW, "%s: mpii_write %#x %#x\n", DEVNAME(sc), r, v);
+	DNPRINTF(MPII_D_RW, "%s: mpii_write %#lx %#x\n", DEVNAME(sc), r, v);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
@@ -950,7 +950,7 @@ mpii_wait_eq(struct mpii_softc *sc, bus_size_t r, u_int32_t mask,
 {
 	int			i;
 
-	DNPRINTF(MPII_D_RW, "%s: mpii_wait_eq %#x %#x %#x\n", DEVNAME(sc), r,
+	DNPRINTF(MPII_D_RW, "%s: mpii_wait_eq %#lx %#x %#x\n", DEVNAME(sc), r,
 	    mask, target);
 
 	for (i = 0; i < 15000; i++) {
@@ -968,7 +968,7 @@ mpii_wait_ne(struct mpii_softc *sc, bus_size_t r, u_int32_t mask,
 {
 	int			i;
 
-	DNPRINTF(MPII_D_RW, "%s: mpii_wait_ne %#x %#x %#x\n", DEVNAME(sc), r,
+	DNPRINTF(MPII_D_RW, "%s: mpii_wait_ne %#lx %#x %#x\n", DEVNAME(sc), r,
 	    mask, target);
 
 	for (i = 0; i < 15000; i++) {
@@ -1187,7 +1187,7 @@ mpii_handshake_recv(struct mpii_softc *sc, void *buf, size_t dwords)
 	if (mpii_handshake_recv_dword(sc, &dbuf[0]) != 0)
 		return (1);
 
-	DNPRINTF(MPII_D_CMD, "%s: mpii_handshake_recv dwords: %d reply: %d\n",
+	DNPRINTF(MPII_D_CMD, "%s: mpii_handshake_recv dwords: %lu reply: %d\n",
 	    DEVNAME(sc), dwords, reply->msg_length);
 
 	/*
@@ -2427,7 +2427,7 @@ mdmfree:
 void
 mpii_dmamem_free(struct mpii_softc *sc, struct mpii_dmamem *mdm)
 {
-	DNPRINTF(MPII_D_MEM, "%s: mpii_dmamem_free %#x\n", DEVNAME(sc), mdm);
+	DNPRINTF(MPII_D_MEM, "%s: mpii_dmamem_free %p\n", DEVNAME(sc), mdm);
 
 	bus_dmamap_unload(sc->sc_dmat, mdm->mdm_map);
 	bus_dmamem_unmap(sc->sc_dmat, mdm->mdm_kva, mdm->mdm_size);
@@ -2546,8 +2546,8 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 		ccb->ccb_cmd_dva = (u_int32_t)MPII_DMA_DVA(sc->sc_requests) +
 		    ccb->ccb_offset;
 
-		DNPRINTF(MPII_D_CCB, "%s: mpii_alloc_ccbs(%d) ccb: %#x map: %#x "
-		    "sc: %#x smid: %#x offs: %#x cmd: %#x dva: %#x\n",
+		DNPRINTF(MPII_D_CCB, "%s: mpii_alloc_ccbs(%d) ccb: %p map: %p "
+		    "sc: %p smid: %#x offs: %#lx cmd: %p dva: %#lx\n",
 		    DEVNAME(sc), i, ccb, ccb->ccb_dmamap, ccb->ccb_sc,
 		    ccb->ccb_smid, ccb->ccb_offset, ccb->ccb_cmd,
 		    ccb->ccb_cmd_dva);
@@ -2576,7 +2576,7 @@ mpii_put_ccb(void *cookie, void *io)
 	struct mpii_softc	*sc = cookie;
 	struct mpii_ccb		*ccb = io;
 
-	DNPRINTF(MPII_D_CCB, "%s: mpii_put_ccb %#x\n", DEVNAME(sc), ccb);
+	DNPRINTF(MPII_D_CCB, "%s: mpii_put_ccb %p\n", DEVNAME(sc), ccb);
 
 	ccb->ccb_state = MPII_CCB_FREE;
 	ccb->ccb_cookie = NULL;
@@ -2609,7 +2609,7 @@ mpii_get_ccb(void *cookie)
 
 	KERNEL_LOCK();
 
-	DNPRINTF(MPII_D_CCB, "%s: mpii_get_ccb %#x\n", DEVNAME(sc), ccb);
+	DNPRINTF(MPII_D_CCB, "%s: mpii_get_ccb %p\n", DEVNAME(sc), ccb);
 
 	return (ccb);
 }
@@ -2662,7 +2662,7 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	struct mpii_request_descr	descr;
 	u_long				 *rdp = (u_long *)&descr;
 
-	DNPRINTF(MPII_D_RW, "%s: mpii_start %#x\n", DEVNAME(sc),
+	DNPRINTF(MPII_D_RW, "%s: mpii_start %#lx\n", DEVNAME(sc),
 	    ccb->ccb_cmd_dva);
 
 	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_requests),
@@ -2691,10 +2691,10 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	descr.smid = ccb->ccb_smid;
 
 	DNPRINTF(MPII_D_RW, "%s:   MPII_REQ_DESCR_POST_LOW (0x%08x) write "
-	    "0x%08x\n", DEVNAME(sc), MPII_REQ_DESCR_POST_LOW, *rdp);
+	    "0x%08lx\n", DEVNAME(sc), MPII_REQ_DESCR_POST_LOW, *rdp);
 
 	DNPRINTF(MPII_D_RW, "%s:   MPII_REQ_DESCR_POST_HIGH (0x%08x) write "
-	    "0x%08x\n", DEVNAME(sc), MPII_REQ_DESCR_POST_HIGH, *(rdp+1));
+	    "0x%08lx\n", DEVNAME(sc), MPII_REQ_DESCR_POST_HIGH, *(rdp+1));
 
 #if defined(__LP64__)
 	bus_space_write_raw_8(sc->sc_iot, sc->sc_ioh,
