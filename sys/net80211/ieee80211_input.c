@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.183 2017/01/10 08:19:49 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.184 2017/01/16 09:35:06 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -75,7 +75,7 @@ void	ieee80211_decap(struct ieee80211com *, struct mbuf *,
 void	ieee80211_amsdu_decap(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int);
 void	ieee80211_deliver_data(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *);
+	    struct ieee80211_node *, int);
 int	ieee80211_parse_edca_params_body(struct ieee80211com *,
 	    const u_int8_t *);
 int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
@@ -892,7 +892,7 @@ ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 void
 ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni)
+    struct ieee80211_node *ni, int mcast)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ether_header *eh;
@@ -912,6 +912,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 	/*
 	 * Perform as a bridge within the AP.  Notice that we do not
 	 * bridge EAPOL frames as suggested in C.1.1 of IEEE Std 802.1X.
+	 * And we do not forward unicast frames received on a multicast address.
 	 */
 	m1 = NULL;
 #ifndef IEEE80211_STA_ONLY
@@ -926,7 +927,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 				ifp->if_oerrors++;
 			else
 				m1->m_flags |= M_MCAST;
-		} else {
+		} else if (!mcast) {
 			ni1 = ieee80211_find_node(ic, eh->ether_dhost);
 			if (ni1 != NULL &&
 			    ni1->ni_state == IEEE80211_STA_ASSOC) {
@@ -968,6 +969,7 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
 	struct ether_header eh;
 	struct ieee80211_frame *wh;
 	struct llc *llc;
+	int mcast;
 
 	if (m->m_len < hdrlen + LLC_SNAPFRAMELEN &&
 	    (m = m_pullup(m, hdrlen + LLC_SNAPFRAMELEN)) == NULL) {
@@ -975,6 +977,7 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
 		return;
 	}
 	wh = mtod(m, struct ieee80211_frame *);
+	mcast = IEEE80211_IS_MULTICAST(wh->i_addr1);
 	switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
 		IEEE80211_ADDR_COPY(eh.ether_dhost, wh->i_addr1);
@@ -1017,7 +1020,7 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
 			return;
 		}
 	}
-	ieee80211_deliver_data(ic, m, ni);
+	ieee80211_deliver_data(ic, m, ni, mcast);
 }
 
 /*
@@ -1030,7 +1033,11 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 	struct mbuf *n;
 	struct ether_header *eh;
 	struct llc *llc;
-	int len, pad;
+	int len, pad, mcast;
+	struct ieee80211_frame *wh;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	mcast = IEEE80211_IS_MULTICAST(wh->i_addr1);
 
 	/* strip 802.11 header */
 	m_adj(m, hdrlen);
@@ -1087,7 +1094,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 			m_freem(m);
 			break;
 		}
-		ieee80211_deliver_data(ic, m, ni);
+		ieee80211_deliver_data(ic, m, ni, mcast);
 
 		if (n->m_len == 0) {
 			m_freem(n);
