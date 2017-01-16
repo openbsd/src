@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.27 2017/01/16 14:49:14 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.28 2017/01/16 23:45:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -647,11 +647,14 @@ options_style_update_old(struct options *oo, struct options_entry *o)
 	size = strrchr(o->name, '-') - o->name;
 
 	xsnprintf(newname, sizeof newname, "%.*s-bg", size, o->name);
-	options_set_number(oo, newname, o->style.bg);
+	if (options_get(oo, newname) != NULL)
+		options_set_number(oo, newname, o->style.bg);
 
 	xsnprintf(newname, sizeof newname, "%.*s-fg", size, o->name);
-	options_set_number(oo, newname, o->style.fg);
+	if (options_get(oo, newname) != NULL)
+		options_set_number(oo, newname, o->style.fg);
 
 	xsnprintf(newname, sizeof newname, "%.*s-attr", size, o->name);
-	options_set_number(oo, newname, o->style.attr);
+	if (options_get(oo, newname) != NULL)
+		options_set_number(oo, newname, o->style.attr);
 }
