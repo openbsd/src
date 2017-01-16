@@ -9,7 +9,6 @@ sourceTransportPort: 3039
 destinationTransportPort: 303a
 ipClassOfService: 00
 protocolIdentifier: 06
-duration >= 9 && duration <= 12: 1
 ingressInterface == egressInterface && egressInterface > 0: 1
 12 elements
 SetId: 256
@@ -21,7 +20,6 @@ sourceTransportPort: 303a
 destinationTransportPort: 3039
 ipClassOfService: 00
 protocolIdentifier: 06
-duration >= 9 && duration <= 12: 1
 ingressInterface == egressInterface && egressInterface > 0: 1
 12 elements
 SetId: 256
@@ -33,7 +31,6 @@ sourceTransportPort: 3039
 destinationTransportPort: 303a
 ipClassOfService: 00
 protocolIdentifier: 06
-duration >= 9 && duration <= 12: 1
 ingressInterface == egressInterface && egressInterface > 0: 1
 12 elements
 SetId: 256
@@ -45,5 +42,4 @@ sourceTransportPort: 303a
 destinationTransportPort: 3039
 ipClassOfService: 00
 protocolIdentifier: 06
-duration >= 9 && duration <= 12: 1
 ingressInterface == egressInterface && egressInterface > 0: 1
