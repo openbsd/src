@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.52 2017/01/16 11:20:33 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.53 2017/01/16 11:20:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -2672,7 +2672,7 @@ swofp_ox_match_ipv6_addr(struct switch_flow_classify *swfcl,
 			return (1);
 		break;
 	default:
-		return(1);
+		return (1);
 	}
 
 	switch (OFP_OXM_GET_FIELD(oxm)) {
