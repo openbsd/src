@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.50 2017/01/16 10:49:35 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.51 2017/01/16 10:58:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -118,7 +118,7 @@ struct swofp_action_set {
 
 /* Same as total number of OFP_ACTION_ */
 #define SWOFP_ACTION_SET_MAX		18
-struct swofp_pipline_desc {
+struct swofp_pipeline_desc {
 	uint32_t			 swpld_table_id;
 	uint64_t			 swpld_cookie;
 	uint64_t			 swpld_metadata;
@@ -267,10 +267,10 @@ int	 swofp_nx_match_put(struct ofp_match *, uint8_t, int, caddr_t);
  */
 struct mbuf
 	*swofp_action_push_vlan(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, struct ofp_action_header *);
+	    struct swofp_pipeline_desc *, struct ofp_action_header *);
 struct mbuf
 	*swofp_action_pop_vlan(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, struct ofp_action_header *);
+	    struct swofp_pipeline_desc *, struct ofp_action_header *);
 
 /*
  * OpenFlow protocol set field action handlers
@@ -306,7 +306,7 @@ struct mbuf
 	*swofp_apply_set_field_tunnel(struct mbuf *, int,
 	    struct switch_flow_classify *, struct switch_flow_classify *);
 struct mbuf
-	*swofp_apply_set_field(struct mbuf *, struct swofp_pipline_desc *);
+	*swofp_apply_set_field(struct mbuf *, struct swofp_pipeline_desc *);
 int	 swofp_ox_set_vlan_vid(struct switch_flow_classify *,
 	    struct ofp_ox_match *);
 int	 swofp_ox_set_uint8(struct switch_flow_classify *,
@@ -328,43 +328,43 @@ int	 swofp_ox_set_ipv6_addr(struct switch_flow_classify *,
  * OpenFlow protocol execute action handlers
  */
 int	 swofp_action_output_controller(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, uint16_t, uint8_t);
+	    struct swofp_pipeline_desc *, uint16_t, uint8_t);
 struct mbuf
 	*swofp_action_output(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, struct ofp_action_header *);
+	    struct swofp_pipeline_desc *, struct ofp_action_header *);
 struct mbuf
 	*swofp_action_group_all(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, struct swofp_group_entry *);
+	    struct swofp_pipeline_desc *, struct swofp_group_entry *);
 struct mbuf
 	*swofp_action_group(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, struct ofp_action_header *);
+	    struct swofp_pipeline_desc *, struct ofp_action_header *);
 struct mbuf
 	*swofp_action_set_field(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, struct ofp_action_header *);
+	    struct swofp_pipeline_desc *, struct ofp_action_header *);
 struct mbuf
 	*swofp_execute_action(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, struct ofp_action_header *);
+	    struct swofp_pipeline_desc *, struct ofp_action_header *);
 struct mbuf
 	*swofp_execute_action_set_field(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, struct ofp_action_header *);
+	    struct swofp_pipeline_desc *, struct ofp_action_header *);
 struct mbuf
 	*swofp_execute_action_set(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *);
+	    struct swofp_pipeline_desc *);
 struct mbuf
 	*swofp_apply_actions(struct switch_softc *, struct mbuf *,
-	    struct swofp_pipline_desc *, struct ofp_instruction_actions *);
+	    struct swofp_pipeline_desc *, struct ofp_instruction_actions *);
 struct swofp_action_set
-	*swofp_lookup_action_set(struct swofp_pipline_desc *, uint16_t);
+	*swofp_lookup_action_set(struct swofp_pipeline_desc *, uint16_t);
 void	 swofp_write_actions_set_field(struct swofp_action_set *,
 	    struct ofp_action_header *);
 int	 swofp_write_actions(struct ofp_instruction_actions *,
-	    struct swofp_pipline_desc *);
+	    struct swofp_pipeline_desc *);
 void	 swofp_clear_actions_set_field(struct swofp_action_set *,
 	    struct ofp_action_header *);
 int	 swofp_clear_actions(struct ofp_instruction_actions *,
-	    struct swofp_pipline_desc *);
+	    struct swofp_pipeline_desc *);
 void	 swofp_write_metadata(struct ofp_instruction_write_metadata *,
-	    struct swofp_pipline_desc *);
+	    struct swofp_pipeline_desc *);
 
 /*
  * OpenFlow protocol message handlers
@@ -907,7 +907,7 @@ struct ofp_oxm_class ofp_oxm_nxm_handlers[] = {
 struct ofp_action_handler {
 	uint16_t	 action_type;
 	struct mbuf *	(*action)(struct switch_softc *,  struct mbuf *,
-	    struct swofp_pipline_desc *, struct ofp_action_header *);
+	    struct swofp_pipeline_desc *, struct ofp_action_header *);
 };
 struct ofp_action_handler ofp_action_handlers[] = {
 	/*
@@ -990,7 +990,7 @@ struct pool swpld_pool;
 void
 swofp_attach(void)
 {
-	pool_init(&swpld_pool, sizeof(struct swofp_pipline_desc), 0, 0, 0,
+	pool_init(&swpld_pool, sizeof(struct swofp_pipeline_desc), 0, 0, 0,
 	    "swpld", NULL);
 }
 
@@ -1220,10 +1220,10 @@ swofp_lookup_action_handler(uint16_t type)
 	return (NULL);
 }
 
-struct swofp_pipline_desc *
-swofp_pipline_desc_create(struct switch_flow_classify *swfcl)
+struct swofp_pipeline_desc *
+swofp_pipeline_desc_create(struct switch_flow_classify *swfcl)
 {
-	struct swofp_pipline_desc	*swpld = NULL;
+	struct swofp_pipeline_desc	*swpld = NULL;
 	struct swofp_action_set		*swas = NULL;
 	struct ofp_action_header	*set_fields = NULL;
 	int				 i;
@@ -1251,7 +1251,7 @@ swofp_pipline_desc_create(struct switch_flow_classify *swfcl)
 }
 
 void
-swofp_pipline_desc_destroy(struct swofp_pipline_desc *swpld)
+swofp_pipeline_desc_destroy(struct swofp_pipeline_desc *swpld)
 {
 	switch_swfcl_free(&swpld->swpld_pre_swfcl);
 	pool_put(&swpld_pool, swpld);
@@ -2944,7 +2944,7 @@ swofp_ox_match_uint32(struct switch_flow_classify *swfcl,
 	case OFP_XM_T_IN_PORT:
 		/*
 		 * in_port isn't network byte order becouse
-		 * it's pipline match field.
+		 * it's pipeline match field.
 		 */
 		in = htonl(swfcl->swfcl_in_port);
 		break;
@@ -3120,7 +3120,7 @@ swofp_expand_8021q_tag(struct mbuf *m)
 
 struct mbuf *
 swofp_action_pop_vlan(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld, struct ofp_action_header *oah)
+    struct swofp_pipeline_desc *swpld, struct ofp_action_header *oah)
 {
 	struct switch_flow_classify	*swfcl = swpld->swpld_swfcl;
 	struct ether_vlan_header	*evl;
@@ -3181,7 +3181,7 @@ swofp_action_pop_vlan(struct switch_softc *sc, struct mbuf *m,
 
 struct mbuf *
 swofp_action_push_vlan(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld, struct ofp_action_header *oah)
+    struct swofp_pipeline_desc *swpld, struct ofp_action_header *oah)
 {
 	struct switch_flow_classify	*swfcl = swpld->swpld_swfcl;
 	struct ofp_action_push		*oap;
@@ -3262,7 +3262,7 @@ swofp_action_push_vlan(struct switch_softc *sc, struct mbuf *m,
  */
 int
 swofp_action_output_controller(struct switch_softc *sc, struct mbuf *m0,
-    struct swofp_pipline_desc *swpld , uint16_t frame_max_len, uint8_t reason)
+    struct swofp_pipeline_desc *swpld , uint16_t frame_max_len, uint8_t reason)
 {
 	struct swofp_ofs		*swofs = sc->sc_ofs;
 	struct switch_flow_classify	*swfcl = swpld->swpld_swfcl;
@@ -3393,7 +3393,7 @@ swofp_action_output_controller(struct switch_softc *sc, struct mbuf *m0,
 
 struct mbuf *
 swofp_action_output(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld, struct ofp_action_header *oah)
+    struct swofp_pipeline_desc *swpld, struct ofp_action_header *oah)
 {
 	struct ofp_action_output	*oao;
 	struct switch_port		*swpo;
@@ -3480,12 +3480,12 @@ swofp_action_output(struct switch_softc *sc, struct mbuf *m,
 
 struct mbuf *
 swofp_action_group_all(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld, struct swofp_group_entry *swge)
+    struct swofp_pipeline_desc *swpld, struct swofp_group_entry *swge)
 {
 	struct ofp_bucket		*bucket;
 	struct ofp_action_header	*ah;
 	int				 actions_len;
-	struct swofp_pipline_desc	*clean_swpld = NULL;
+	struct swofp_pipeline_desc	*clean_swpld = NULL;
 	struct switch_flow_classify	 swfcl;
 	struct mbuf			*n;
 
@@ -3498,7 +3498,7 @@ swofp_action_group_all(struct switch_softc *sc, struct mbuf *m,
 		if (switch_swfcl_dup(swpld->swpld_swfcl, &swfcl) != 0)
 			goto failed;
 
-		clean_swpld = swofp_pipline_desc_create(&swfcl);
+		clean_swpld = swofp_pipeline_desc_create(&swfcl);
 		if (clean_swpld == NULL)
 			goto failed;
 
@@ -3515,7 +3515,7 @@ swofp_action_group_all(struct switch_softc *sc, struct mbuf *m,
 		}
 
 		m_freem(n);
-		swofp_pipline_desc_destroy(clean_swpld);
+		swofp_pipeline_desc_destroy(clean_swpld);
 		clean_swpld = NULL;
 		switch_swfcl_free(&swfcl);
 	}
@@ -3525,13 +3525,13 @@ swofp_action_group_all(struct switch_softc *sc, struct mbuf *m,
  failed:
 	m_freem(m);
 	if (clean_swpld)
-		swofp_pipline_desc_destroy(clean_swpld);
+		swofp_pipeline_desc_destroy(clean_swpld);
 	return (NULL);
 }
 
 struct mbuf *
 swofp_action_group(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld, struct ofp_action_header *oah)
+    struct swofp_pipeline_desc *swpld, struct ofp_action_header *oah)
 {
 	struct ofp_action_group		*oag;
 	struct swofp_group_entry	*swge;
@@ -4066,7 +4066,7 @@ swofp_apply_set_field_tunnel(struct mbuf *m, int off,
 }
 
 struct mbuf *
-swofp_apply_set_field(struct mbuf *m, struct swofp_pipline_desc *swpld)
+swofp_apply_set_field(struct mbuf *m, struct swofp_pipeline_desc *swpld)
 {
 	return swofp_apply_set_field_tunnel(m, 0,
 	    &swpld->swpld_pre_swfcl, swpld->swpld_swfcl);
@@ -4074,7 +4074,7 @@ swofp_apply_set_field(struct mbuf *m, struct swofp_pipline_desc *swpld)
 
 struct mbuf *
 swofp_action_set_field(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld, struct ofp_action_header *oah)
+    struct swofp_pipeline_desc *swpld, struct ofp_action_header *oah)
 {
 	struct ofp_oxm_class *oxm_handler;
 	struct ofp_action_set_field *oasf;
@@ -4279,7 +4279,7 @@ swofp_action_set_field(struct switch_softc *sc, struct mbuf *m,
 
 struct mbuf *
 swofp_execute_action(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld, struct ofp_action_header *oah)
+    struct swofp_pipeline_desc *swpld, struct ofp_action_header *oah)
 {
 	struct ofp_action_handler	*handler;
 
@@ -4302,7 +4302,7 @@ swofp_execute_action(struct switch_softc *sc, struct mbuf *m,
 
 struct mbuf *
 swofp_execute_action_set_field(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld, struct ofp_action_header *oah)
+    struct swofp_pipeline_desc *swpld, struct ofp_action_header *oah)
 {
 	struct ofp_action_header	**set_fields;
 	int i;
@@ -4324,7 +4324,7 @@ swofp_execute_action_set_field(struct switch_softc *sc, struct mbuf *m,
 
 struct mbuf *
 swofp_execute_action_set(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld)
+    struct swofp_pipeline_desc *swpld)
 {
 	struct swofp_action_set	*swas;
 	int			 i;
@@ -4355,7 +4355,7 @@ swofp_execute_action_set(struct switch_softc *sc, struct mbuf *m,
 
 struct mbuf *
 swofp_apply_actions(struct switch_softc *sc, struct mbuf *m,
-    struct swofp_pipline_desc *swpld, struct ofp_instruction_actions *oia)
+    struct swofp_pipeline_desc *swpld, struct ofp_instruction_actions *oia)
 {
 	struct ofp_action_header	*oah;
 
@@ -4371,7 +4371,7 @@ swofp_apply_actions(struct switch_softc *sc, struct mbuf *m,
 }
 
 struct swofp_action_set *
-swofp_lookup_action_set(struct swofp_pipline_desc *swpld, uint16_t type)
+swofp_lookup_action_set(struct swofp_pipeline_desc *swpld, uint16_t type)
 {
 	int	i;
 
@@ -4401,7 +4401,7 @@ swofp_write_actions_set_field(struct swofp_action_set *swas,
 
 int
 swofp_write_actions(struct ofp_instruction_actions *oia,
-    struct swofp_pipline_desc *swpld)
+    struct swofp_pipeline_desc *swpld)
 {
 	struct swofp_action_set		*swas;
 	struct ofp_action_header	*oah;
@@ -4438,7 +4438,7 @@ swofp_clear_actions_set_field(struct swofp_action_set *swas,
 
 int
 swofp_clear_actions(struct ofp_instruction_actions *oia,
-    struct swofp_pipline_desc *swpld)
+    struct swofp_pipeline_desc *swpld)
 {
 	struct swofp_action_set		*swas;
 	struct ofp_action_header	*oah;
@@ -4459,7 +4459,7 @@ swofp_clear_actions(struct ofp_instruction_actions *oia,
 
 void
 swofp_write_metadata(struct ofp_instruction_write_metadata *iowm,
-    struct swofp_pipline_desc *swpld)
+    struct swofp_pipeline_desc *swpld)
 {
 	uint64_t val, mask;
 
@@ -4476,11 +4476,11 @@ swofp_forward_ofs(struct switch_softc *sc, struct switch_flow_classify *swfcl,
 	struct swofp_ofs		*ofs = sc->sc_ofs;
 	struct swofp_flow_entry		*swfe;
 	struct swofp_flow_table		*swft;
-	struct swofp_pipline_desc	*swpld;
+	struct swofp_pipeline_desc	*swpld;
 	int				 error;
 	uint8_t				 next_table_id = 0;
 
-	swpld = swofp_pipline_desc_create(swfcl);
+	swpld = swofp_pipeline_desc_create(swfcl);
 	if (swpld == NULL) {
 		m_freem(m);
 		return;
@@ -4547,7 +4547,7 @@ swofp_forward_ofs(struct switch_softc *sc, struct switch_flow_classify *swfcl,
 	m = swofp_execute_action_set(sc, m, swpld);
  out:
 	m_freem(m);
-	swofp_pipline_desc_destroy(swpld);
+	swofp_pipeline_desc_destroy(swpld);
 }
 
 int
@@ -5475,7 +5475,7 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
 	int				 al_start, al_len, off;
 	uint16_t			 ohlen, error;
 	struct switch_flow_classify	 swfcl = {};
-	struct swofp_pipline_desc	 swpld = { .swpld_swfcl = &swfcl };
+	struct swofp_pipeline_desc	 swpld = { .swpld_swfcl = &swfcl };
 
 	pout = mtod(m, struct ofp_packet_out *);
 	ohlen = ntohs(pout->pout_oh.oh_length);
