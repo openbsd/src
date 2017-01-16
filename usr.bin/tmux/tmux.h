@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.699 2017/01/16 14:49:14 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.700 2017/01/16 14:52:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1823,7 +1823,6 @@ void printflike(2, 3) cmdq_print(struct cmdq_item *, const char *, ...);
 void printflike(2, 3) cmdq_error(struct cmdq_item *, const char *, ...);
 
 /* cmd-string.c */
-int		 cmd_string_split(const char *, int *, char ***);
 struct cmd_list	*cmd_string_parse(const char *, const char *, u_int, char **);
 
 /* cmd-wait-for.c */
