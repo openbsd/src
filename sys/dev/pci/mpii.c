@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.108 2016/11/06 09:58:16 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.109 2017/01/16 18:09:35 mikeb Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -3063,7 +3063,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	DNPRINTF(MPII_D_CMD, "%s:  bidirectional_transfer_count: 0x%08x\n",
 	    DEVNAME(sc), letoh32(sie->bidirectional_transfer_count));
 
-	if (sie->scsi_state & MPII_SCSIIO_ERR_STATE_NO_SCSI_STATUS)
+	if (sie->scsi_state & MPII_SCSIIO_STATE_NO_SCSI_STATUS)
 		xs->status = SCSI_TERMINATED;
 	else
 		xs->status = sie->scsi_status;
@@ -3117,7 +3117,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 
 	sense = (struct scsi_sense_data *)((caddr_t)ccb->ccb_cmd +
 	    sc->sc_request_size - sizeof(*sense));
-	if (sie->scsi_state & MPII_SCSIIO_ERR_STATE_AUTOSENSE_VALID)
+	if (sie->scsi_state & MPII_SCSIIO_STATE_AUTOSENSE_VALID)
 		memcpy(&xs->sense, sense, sizeof(xs->sense));
 
 	DNPRINTF(MPII_D_CMD, "%s:  xs err: %d status: %#x\n", DEVNAME(sc),
