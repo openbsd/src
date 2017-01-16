@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.51 2017/01/16 10:58:35 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.52 2017/01/16 11:20:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -169,6 +169,14 @@ struct ofp_action_handler
 	*swofp_lookup_action_handler(uint16_t);
 ofp_msg_handler
 	*swofp_flow_mod_lookup_handler(uint8_t);
+struct swofp_pipeline_desc
+	*swofp_pipeline_desc_create(struct switch_flow_classify *);
+void	 swofp_pipeline_desc_destroy(struct swofp_pipeline_desc *);
+int	 swofp_flow_match_by_swfcl(struct ofp_match *,
+	    struct switch_flow_classify *);
+struct swofp_flow_entry
+	*swofp_flow_lookup(struct swofp_flow_table *,
+	    struct switch_flow_classify *);
 
 /*
  * Flow table
@@ -181,6 +189,10 @@ int	 swofp_flow_table_delete(struct switch_softc *, uint16_t);
 void	 swofp_flow_table_delete_all(struct switch_softc *);
 void	 swofp_flow_delete_on_table_by_group(struct switch_softc *,
 	    struct swofp_flow_table *, uint32_t);
+void	 swofp_flow_delete_on_table(struct switch_softc *,
+	    struct swofp_flow_table *, struct ofp_match *, uint16_t,
+	    uint64_t, uint64_t cookie_mask, uint32_t,
+	    uint32_t, int);
 
 /*
  * Group table
@@ -212,6 +224,12 @@ int	 swofp_flow_cmp_non_strict(struct swofp_flow_entry *,
 	    struct ofp_match *);
 int	 swofp_flow_cmp_strict(struct swofp_flow_entry *, struct ofp_match *,
 	    uint32_t);
+int	 swofp_flow_cmp_common(struct swofp_flow_entry *,
+	    struct ofp_match *, int);
+struct swofp_flow_entry
+	*swofp_flow_search_by_table(struct swofp_flow_table *,
+	    struct ofp_match *, uint16_t);
+int	 swofp_flow_has_group(struct ofp_instruction_actions *, uint32_t);
 int	 swofp_flow_filter_out_port(struct ofp_instruction_actions *,
 	    uint32_t);
 int	 swofp_flow_filter(struct swofp_flow_entry *, uint64_t, uint64_t,
@@ -271,6 +289,8 @@ struct mbuf
 struct mbuf
 	*swofp_action_pop_vlan(struct switch_softc *, struct mbuf *,
 	    struct swofp_pipeline_desc *, struct ofp_action_header *);
+struct mbuf
+	*swofp_expand_8021q_tag(struct mbuf *);
 
 /*
  * OpenFlow protocol set field action handlers
@@ -1256,8 +1276,6 @@ swofp_pipeline_desc_destroy(struct swofp_pipeline_desc *swpld)
 	switch_swfcl_free(&swpld->swpld_pre_swfcl);
 	pool_put(&swpld_pool, swpld);
 }
-
-
 
 struct swofp_flow_table *
 swofp_flow_table_lookup(struct switch_softc *sc, uint16_t table_id)
@@ -3059,7 +3077,7 @@ swofp_ox_match_ether_addr(struct switch_flow_classify *swfcl,
 }
 
 int
-swofp_flow_match_by_swfcl(struct ofp_match* om,
+swofp_flow_match_by_swfcl(struct ofp_match *om,
     struct switch_flow_classify *swfcl)
 {
 	struct ofp_oxm_class	*oxm_handler;
