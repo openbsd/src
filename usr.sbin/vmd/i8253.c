@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.4 2016/10/26 05:26:36 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.5 2017/01/17 21:51:01 krw Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -241,6 +241,6 @@ i8253_fire(int fd, short type, void *arg)
 	tv.tv_usec = (i8253_counter[0].start * NS_PER_TICK) / 1000;
 
 	vcpu_assert_pic_irq((ptrdiff_t)arg, 0, 0);
-	
+
 	evtimer_add(&i8253_counter[0].timer, &tv);
 }

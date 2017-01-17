@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.63 2017/01/13 14:50:56 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.64 2017/01/17 21:51:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -166,7 +166,7 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 	/*
 	 * pledge in the vmm process:
- 	 * stdio - for malloc and basic I/O including events.
+	 * stdio - for malloc and basic I/O including events.
 	 * vmm - for the vmm ioctls and operations.
 	 * proc - for forking and maitaining vms.
 	 * recvfd - for disks, interfaces and other fds.
@@ -368,7 +368,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 
 /*
  * vmm_shutdown
- * 
+ *
  * Terminate VMs on shutdown to avoid "zombie VM" processes.
  */
 void
@@ -728,7 +728,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 
 		/*
 		 * pledge in the vm processes:
-	 	 * stdio - for malloc and basic I/O including events.
+		 * stdio - for malloc and basic I/O including events.
 		 * vmm - for the vmm ioctls and operations.
 		 */
 		if (pledge("stdio vmm", NULL) == -1)
@@ -737,7 +737,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		/*
 		 * Set up default "flat 32 bit" register state - RIP,
 		 * RSP, and GDT info will be set in bootloader
-	 	 */
+		 */
 		memcpy(&vrs, &vcpu_init_flat32, sizeof(struct vcpu_reg_state));
 
 		/* Find and open kernel image */
@@ -1025,7 +1025,7 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
 
 	/* Reset the IO port map */
 	memset(&ioports_map, 0, sizeof(io_fn_t) * MAX_PORTS);
-	
+
 	/* Init i8253 PIT */
 	i8253_init(vcp->vcp_id);
 	ioports_map[TIMER_CTRL] = vcpu_exit_i8253;
@@ -1053,7 +1053,7 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
 	/* Initialize PCI */
 	for (i = VMM_PCI_IO_BAR_BASE; i <= VMM_PCI_IO_BAR_END; i++)
 		ioports_map[i] = vcpu_exit_pci;
-	
+
 	ioports_map[PCI_MODE1_ADDRESS_REG] = vcpu_exit_pci;
 	ioports_map[PCI_MODE1_DATA_REG] = vcpu_exit_pci;
 	pci_init();
@@ -1453,7 +1453,7 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 		intr = ioports_map[vei->vei.vei_port](vrp);
 	else if (vei->vei.vei_dir == VEI_DIR_IN)
 			vei->vei.vei_data = 0xFFFFFFFF;
-	
+
 	if (intr != 0xFF)
 		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);
 }

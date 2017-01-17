@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.4 2016/11/20 22:54:40 mlarkin Exp $ */
+/* $OpenBSD: i8259.c,v 1.5 2017/01/17 21:51:01 krw Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -84,7 +84,7 @@ i8259_is_pending(void)
 		pending = 1;
 
 	return pending;
-}	
+}
 
 /*
  * i8259_ack
@@ -195,7 +195,7 @@ i8259_assert_irq(uint8_t irq)
 		pics[MASTER].irr |= (1 << 2);
 		pics[MASTER].asserted = 1;
 	}
-}	
+}
 
 /*
  * i8259_deassert_irq
@@ -253,32 +253,32 @@ i8259_write_datareg(uint8_t n, uint8_t data)
 				    "clear", __func__, n);
 				return;
 			}
-	
+
 			if (data & ICW4_AEOI) {
 				log_warn("%s: pic %d: aeoi mode set",
 				    __func__, n);
 				pic->auto_eoi = 1;
 				return;
 			}
-	
+
 			if (data & ICW4_MS) {
 				log_warn("%s: pic %d init error: M/S mode",
 				    __func__, n);
 				return;
 			}
-	
+
 			if (data & ICW4_BUF) {
 				log_warn("%s: pic %d init error: buf mode",
 				    __func__, n);
 				return;
 			}
-	
+
 			if (data & 0xe0) {
 				log_warn("%s: pic %d init error: invalid icw4 "
 				    " 0x%x", __func__, n, data);
 				return;
 			}
-		}	
+		}
 
 		pic->cur_icw++;
 		if (pic->cur_icw == 5) {
@@ -348,7 +348,7 @@ i8259_rotate_priority(uint8_t n)
  * Parameters:
  *  n: PIC whose command register should be written to
  *  data: data to write
- */ 
+ */
 static void
 i8259_write_cmdreg(uint8_t n, uint8_t data)
 {
@@ -550,7 +550,6 @@ i8259_io_write(union vm_exit *vei)
 		i8259_write_datareg(n, data);
 	else
 		i8259_write_cmdreg(n, data);
-	
 }
 
 /*

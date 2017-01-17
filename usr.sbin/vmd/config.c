@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.22 2016/12/14 06:59:12 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.23 2017/01/17 21:51:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -338,7 +338,7 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 {
 	struct vmd_vm	*vm;
 	unsigned int	 n;
-	
+
 	errno = 0;
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
 		errno = ENOENT;

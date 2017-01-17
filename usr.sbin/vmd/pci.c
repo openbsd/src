@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.11 2017/01/13 14:50:56 reyk Exp $	*/
+/*	$OpenBSD: pci.c,v 1.12 2017/01/17 21:51:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -40,7 +40,7 @@ const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 7, 9, 10, 11, 14, 15};
  * Adds a BAR for the PCI device 'id'. On access, 'barfn' will be
  * called, and passed 'cookie' as an identifier.
  *
- * BARs are fixed size, meaning all I/O BARs requested have the 
+ * BARs are fixed size, meaning all I/O BARs requested have the
  * same size and all MMIO BARs have the same size.
  *
  * Parameters:
@@ -267,7 +267,7 @@ pci_handle_io(struct vm_run_params *vrp)
 		    __progname, (uint64_t)reg);
 		/* Reads from undefined ports return 0xFF */
 		if (dir == 1)
-			vei->vei.vei_data = 0xFFFFFFFF;	
+			vei->vei.vei_data = 0xFFFFFFFF;
 	}
 
 	if (intr != 0xFF) {

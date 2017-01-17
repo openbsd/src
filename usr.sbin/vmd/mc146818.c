@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.4 2016/10/26 05:26:36 mlarkin Exp $ */
+/* $OpenBSD: mc146818.c,v 1.5 2017/01/17 21:51:01 krw Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -130,7 +130,7 @@ void
 mc146818_init(uint32_t vm_id)
 {
 	memset(&rtc, 0, sizeof(rtc));
-	time(&rtc.now);	
+	time(&rtc.now);
 
 	rtc.regs[MC_REGB] = MC_REGB_24HR | MC_REGB_BINARY;
 	rtc_updateregs();
@@ -270,7 +270,7 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 			}
 			rtc.idx = MC_REGD;
 		} else {
-			data = rtc.regs[rtc.idx]; 
+			data = rtc.regs[rtc.idx];
 			vei->vei.vei_data = data;
 
 			if (rtc.idx == MC_REGC) {

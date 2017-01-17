@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.28 2017/01/13 15:12:13 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.29 2017/01/17 21:51:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1419,9 +1419,9 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 			} else {
 				/*
 				 * If the address is zero, always randomize
-				 * it in vmd(8) because we cannot rely on 
+				 * it in vmd(8) because we cannot rely on
 				 * the guest OS to do the right thing like
-			 	 * OpenBSD does.  Based on ether_fakeaddr()
+				 * OpenBSD does.  Based on ether_fakeaddr()
 				 * from the kernel, incremented by one to
 				 * differentiate the source.
 				 */

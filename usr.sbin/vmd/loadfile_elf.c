@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.22 2016/11/26 20:03:42 reyk Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.23 2017/01/17 21:51:01 krw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ push_pt(void)
 	memset(ptes, 0, sizeof(ptes));
 	for (i = 0 ; i < NPTE_PG; i++) {
 		ptes[i] = PG_V | PG_PS | (NBPD * i);
-	}	
+	}
 	write_mem(PML4_PAGE, ptes, PAGE_SIZE);
 #else
 	/* PML3 [0] - first 1GB */
