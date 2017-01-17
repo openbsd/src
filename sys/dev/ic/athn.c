@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.95 2017/01/12 18:06:57 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.96 2017/01/17 20:07:39 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2337,7 +2337,7 @@ athn_node_alloc(struct ieee80211com *ic)
 	struct athn_node *an;
 
 	an = malloc(sizeof(struct athn_node), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ic->ic_flags & IEEE80211_F_HTON)
+	if (an && (ic->ic_flags & IEEE80211_F_HTON))
 		ieee80211_mira_node_init(&an->mn);
 	return (struct ieee80211_node *)an;
 }
