@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.1 2017/01/12 15:50:16 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.2 2017/01/17 13:19:36 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -287,7 +287,7 @@ main(int argc, char **argv)
 	if ((client_cfg = tls_config_new()) == NULL)
 		errx(1, "failed to create tls client config");
 	tls_config_insecure_noverifyname(client_cfg);
-	if (tls_config_set_ca_file(client_cfg, argv[3]))
+	if (tls_config_set_ca_file(client_cfg, argv[3]) == -1)
 		errx(1, "failed to set ca: %s", tls_config_error(client_cfg));
 
 	if ((server = tls_server()) == NULL)
