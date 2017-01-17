@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.h,v 1.11 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: ripe.h,v 1.12 2017/01/17 16:30:54 jca Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -128,7 +128,7 @@ void	 md_list_clr(struct auth_md_head *);
 /* neighbor.c */
 void		 nbr_init(u_int32_t);
 struct nbr	*nbr_new(u_int32_t, struct iface *);
-void		 nbr_act_del(struct nbr *);
+void		 nbr_del(struct nbr *);
 
 struct nbr		*nbr_find_ip(struct iface *, u_int32_t);
 struct nbr		*nbr_find_peerid(u_int32_t);
@@ -137,7 +137,7 @@ void			 nbr_failed_delete(struct nbr_failed *);
 
 int		 nbr_fsm(struct nbr *, enum nbr_event);
 void		 nbr_timeout_timer(int, short, void *);
-void		 nbr_act_delete(struct nbr *);
+void		 nbr_act_del(struct nbr *);
 
 const char	*nbr_event_name(int);
 const char	*nbr_action_name(int);

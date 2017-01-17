@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.10 2016/07/18 21:20:31 benno Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.11 2017/01/17 16:30:54 jca Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -203,6 +203,21 @@ nbr_new(u_int32_t nbr_id, struct iface *iface)
 }
 
 void
+nbr_del(struct nbr *nbr)
+{
+	log_debug("nbr_del: neighbor ID %s, peerid %u", inet_ntoa(nbr->id),
+	    nbr->peerid);
+
+	/* stop timer */
+	nbr_stop_timer(nbr);
+
+	LIST_REMOVE(nbr, entry);
+	LIST_REMOVE(nbr, hash);
+
+	free(nbr);
+}
+
+void
 nbr_act_del(struct nbr *nbr)
 {
 	/* If there is no authentication or it is just a route request
@@ -211,20 +226,15 @@ nbr_act_del(struct nbr *nbr)
 	    nbr->state != NBR_STA_REQ_RCVD)
 		nbr_failed_new(nbr);
 
-	log_debug("nbr_del: neighbor ID %s, peerid %u", inet_ntoa(nbr->id),
+	log_debug("nbr_act_del: neighbor ID %s, peerid %u", inet_ntoa(nbr->id),
 	    nbr->peerid);
 
-	/* stop timer */
-	nbr_stop_timer(nbr);
+	/* schedule kill timer */
+	nbr_set_timer(nbr);
 
 	/* clear lists */
 	clear_list(&nbr->rq_list);
 	clear_list(&nbr->rp_list);
-
-	LIST_REMOVE(nbr, entry);
-	LIST_REMOVE(nbr, hash);
-
-	free(nbr);
 }
 
 struct nbr *
@@ -316,7 +326,10 @@ nbr_timeout_timer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	nbr_fsm(nbr, NBR_EVT_TIMEOUT);
+	if (nbr->state == NBR_STA_DOWN)
+		nbr_del(nbr);
+	else
+		nbr_fsm(nbr, NBR_EVT_TIMEOUT);
 }
 
 /* ARGSUSED */

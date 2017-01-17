@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.13 2015/09/27 17:32:36 stsp Exp $ */
+/*	$OpenBSD: interface.c,v 1.14 2017/01/17 16:30:54 jca Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -467,7 +467,7 @@ if_del(struct iface *iface)
 
 	/* clear lists etc */
 	while ((nbr = LIST_FIRST(&iface->nbr_list)) != NULL)
-		nbr_act_del(nbr);
+		nbr_del(nbr);
 
 	/* XXX rq_list, rp_list */
 
