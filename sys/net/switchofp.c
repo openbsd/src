@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.54 2017/01/17 09:36:28 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.55 2017/01/17 12:30:35 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1057,8 +1057,6 @@ swofp_create(struct switch_softc *sc)
 	bpfattach(&sc->sc_ofbpf, &sc->sc_if, DLT_OPENFLOW,
 	    sizeof(struct ofp_header));
 #endif
-
-	DPRINTF(sc, "enable OpenFlow switch capability\n");
 
 	return (0);
 }
@@ -4378,8 +4376,6 @@ swofp_execute_action(struct switch_softc *sc, struct mbuf *m,
 		m_freem(m);
 		return (NULL);
 	}
-
-	DPRINTF(sc, "execute action type %u\n", handler->action_type);
 
 	m = handler->action(sc, m, swpld, oah);
 	if (m == NULL)

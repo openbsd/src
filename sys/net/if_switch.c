@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.17 2016/12/22 15:14:05 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.18 2017/01/17 12:30:35 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -54,21 +54,12 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef SWITCH_DEBUG
-#define DPRINTF(...)	printf(__VA_ARGS__)
-#else
-#define DPRINTF(x...)
-#endif
-
 #include <net/ofp.h>
 #include <net/if_bridge.h>
 #include <net/if_switch.h>
 
-struct switch_softc
-	*switch_lookup(int);
 int	 switch_clone_create(struct if_clone *, int);
 int	 switch_clone_destroy(struct ifnet *);
-void	 switchintr(void);
 void	 switch_process(struct ifnet *, struct mbuf *);
 int	 switch_port_set_local(struct switch_softc *, struct switch_port *);
 int	 switch_port_unset_local(struct switch_softc *, struct switch_port *);
@@ -77,20 +68,13 @@ int	 switch_port_add(struct switch_softc *, struct ifbreq *);
 void	 switch_port_detach(void *);
 int	 switch_port_del(struct switch_softc *, struct ifbreq *);
 int	 switch_port_list(struct switch_softc *, struct ifbifconf *);
-int	 switch_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *);
-void	 switch_start(struct ifnet *);
 int	 switch_input(struct ifnet *, struct mbuf *, void *);
-int	 switch_stop(struct ifnet *, int);
 struct mbuf
 	*switch_port_ingress(struct switch_softc *, struct ifnet *,
-	    struct mbuf *);
-void	 switch_port_egress(struct switch_softc *, struct switch_fwdp_queue *,
 	    struct mbuf *);
 int	 switch_ifenqueue(struct switch_softc *, struct ifnet *,
 	    struct mbuf *, int);
 void	 switch_port_ifb_start(struct ifnet *);
-void	 switch_swfcl_free(struct switch_flow_classify *);
 
 struct mbuf
 	*switch_flow_classifier_udp(struct mbuf *, int *,
@@ -143,7 +127,6 @@ switchattach(int n)
 	swofp_attach();
 	LIST_INIT(&switch_list);
 	if_clone_attach(&switch_cloner);
-	DPRINTF("switch attached\n");
 }
 
 struct switch_softc *
@@ -173,8 +156,8 @@ switch_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = switch_ioctl;
-	ifp->if_output = switch_output;
-	ifp->if_start = switch_start;
+	ifp->if_output = NULL;
+	ifp->if_start = NULL;
 	ifp->if_type = IFT_BRIDGE;
 	ifp->if_addrlen = 0;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
@@ -197,8 +180,6 @@ switch_clone_create(struct if_clone *ifc, int unit)
 	swofp_create(sc);
 
 	LIST_INSERT_HEAD(&switch_list, sc, sc_switch_next);
-
-	log(LOG_INFO, "%s: switch created\n", ifp->if_xname);
 
 	return (0);
 }
@@ -664,20 +645,6 @@ switch_port_del(struct switch_softc *sc, struct ifbreq *req)
 		error = ENOENT;
 
 	return (error);
-}
-
-int
-switch_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
-    struct rtentry *rt)
-{
-	DPRINTF("%s: %s called\n", ifp->if_xname, __func__);
-	return (0);
-}
-
-void
-switch_start(struct ifnet *ifp)
-{
-	DPRINTF("%s: %s called\n", ifp->if_xname, __func__);
 }
 
 int
