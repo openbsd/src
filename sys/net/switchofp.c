@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.56 2017/01/17 12:34:21 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.57 2017/01/17 16:47:55 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1244,7 +1244,6 @@ swofp_pipeline_desc_create(struct switch_flow_classify *swfcl)
 {
 	struct swofp_pipeline_desc	*swpld = NULL;
 	struct swofp_action_set		*swas = NULL;
-	struct ofp_action_header	*set_fields = NULL;
 	int				 i;
 
 	swpld = pool_get(&swpld_pool, PR_NOWAIT|PR_ZERO);
@@ -1259,7 +1258,8 @@ swofp_pipeline_desc_create(struct switch_flow_classify *swfcl)
 	for (i = 0; i < nitems(ofp_action_handlers); i++) {
 		swas[i].swas_type = ofp_action_handlers[i].action_type;
 		if (swas[i].swas_type == OFP_ACTION_SET_FIELD)
-			swas[i].swas_action = set_fields;
+			swas[i].swas_action = (struct ofp_action_header *)
+			    swpld->swpld_set_fields;
 		else
 			swas[i].swas_action = NULL;
 	}
