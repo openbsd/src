@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.556 2017/01/04 09:56:08 tb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.557 2017/01/17 21:08:34 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 4 2017 $
+.Dd $Mdocdate: January 17 2017 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -2641,7 +2641,7 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
 pf-rule        = action [ ( "in" | "out" ) ]
                  [ "log" [ "(" logopts ")"] ] [ "quick" ]
                  [ "on" ( ifspec | "rdomain" number ) ] [ af ]
-                 [ protospec ] hosts [ filteropts ]
+                 [ protospec ] [ hosts ] [ filteropts ]
 
 logopts        = logopt [ [ "," ] logopts ]
 logopt         = "all" | "matches" | "user" | "to" interface-name
