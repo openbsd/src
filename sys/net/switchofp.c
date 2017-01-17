@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.53 2017/01/16 11:20:57 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.54 2017/01/17 09:36:28 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -210,8 +210,8 @@ int	 swofp_validate_buckets(struct switch_softc *, struct mbuf *, uint8_t,
 /*
  * Flow entry
  */
-int	 swofp_flow_entry_put_instructions(struct mbuf *,
-	    struct swofp_flow_entry *, uint16_t *, uint16_t *);
+int	 swofp_flow_entry_put_instructions(struct switch_softc *,
+	    struct mbuf *, struct swofp_flow_entry *, uint16_t *, uint16_t *);
 void	 swofp_flow_entry_instruction_free(struct swofp_flow_entry *);
 void	 swofp_flow_entry_free(struct swofp_flow_entry **);
 void	 swofp_flow_entry_add(struct switch_softc *, struct swofp_flow_table *,
@@ -237,9 +237,10 @@ int	 swofp_flow_filter(struct swofp_flow_entry *, uint64_t, uint64_t,
 void	 swofp_flow_timeout(struct switch_softc *);
 int	 swofp_validate_oxm(struct ofp_ox_match *, uint16_t *);
 int	 swofp_validate_flow_match(struct ofp_match *, uint16_t *);
-int	 swofp_validate_flow_instruction(struct ofp_instruction *, size_t,
-	    uint16_t *, uint16_t *);
-int	 swofp_validate_action(struct ofp_action_header *, size_t, uint16_t *);
+int	 swofp_validate_flow_instruction(struct switch_softc *,
+	    struct ofp_instruction *, size_t, uint16_t *, uint16_t *);
+int	 swofp_validate_action(struct switch_softc *sc,
+	    struct ofp_action_header *, size_t, uint16_t *);
 
 /*
  * OpenFlow protocol compare oxm
@@ -1509,7 +1510,8 @@ swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
 
 		ah = (struct ofp_action_header *)
 		    (mtod(m, caddr_t) + off + sizeof(*bucket));
-		if (swofp_validate_action(ah, blen - sizeof(*bucket), error)) {
+		if (swofp_validate_action(sc, ah, blen - sizeof(*bucket),
+		    error)) {
 			*etype = OFP_ERRTYPE_BAD_ACTION;
 			return (-1);
 		}
@@ -1959,8 +1961,9 @@ swofp_validate_flow_match(struct ofp_match *om, uint16_t *err)
 }
 
 int
-swofp_validate_flow_instruction(struct ofp_instruction *oi, size_t total,
-    uint16_t *etype, uint16_t *err)
+swofp_validate_flow_instruction(struct switch_softc *sc,
+    struct ofp_instruction *oi, size_t total, uint16_t *etype,
+    uint16_t *err)
 {
 	struct ofp_action_header	*oah;
 	struct ofp_instruction_actions	*oia;
@@ -2008,7 +2011,8 @@ swofp_validate_flow_instruction(struct ofp_instruction *oi, size_t total,
 		/* Validate actions before iterating over them. */
 		oah = (struct ofp_action_header *)
 		    ((uint8_t *)oia + sizeof(*oia));
-		if (swofp_validate_action(oah, ilen - sizeof(*oia), err)) {
+		if (swofp_validate_action(sc, oah, ilen - sizeof(*oia),
+		    err)) {
 			*etype = OFP_ERRTYPE_BAD_ACTION;
 			return (-1);
 		}
@@ -2025,11 +2029,15 @@ swofp_validate_flow_instruction(struct ofp_instruction *oi, size_t total,
 }
 
 int
-swofp_validate_action(struct ofp_action_header *ah, size_t ahtotal,
-    uint16_t *err)
+swofp_validate_action(struct switch_softc *sc, struct ofp_action_header *ah,
+    size_t ahtotal, uint16_t *err)
 {
 	struct ofp_action_handler	*oah;
 	struct ofp_ox_match		*oxm;
+	struct ofp_action_push		*ap;
+	struct ofp_action_group		*ag;
+	struct ofp_action_output	*ao;
+	struct switch_port		*swpo;
 	uint8_t				*dptr;
 	int				 ahtype, ahlen, oxmlen;
 
@@ -2057,10 +2065,50 @@ swofp_validate_action(struct ofp_action_header *ah, size_t ahtotal,
 			*err = OFP_ERRACTION_LEN;
 			return (-1);
 		}
+
+		ao = (struct ofp_action_output *)ah;
+		switch (ntohl(ao->ao_port)) {
+		case OFP_PORT_ANY:
+			*err = OFP_ERRACTION_OUT_PORT;
+			return (-1);
+
+		case OFP_PORT_ALL:
+		case OFP_PORT_NORMAL:
+			/* TODO implement port ALL and NORMAL. */
+			*err = OFP_ERRACTION_OUT_PORT;
+			return (-1);
+
+		case OFP_PORT_CONTROLLER:
+		case OFP_PORT_FLOWTABLE:
+		case OFP_PORT_FLOOD:
+		case OFP_PORT_INPUT:
+		case OFP_PORT_LOCAL:
+			break;
+
+		default:
+			TAILQ_FOREACH(swpo, &sc->sc_swpo_list,
+			    swpo_list_next) {
+				if (swpo->swpo_port_no ==
+				    ntohl(ao->ao_port))
+					break;
+			}
+			if (swpo == NULL) {
+				*err = OFP_ERRACTION_OUT_PORT;
+				return (-1);
+			}
+			break;
+		}
 		break;
 	case OFP_ACTION_GROUP:
 		if (ahlen != sizeof(struct ofp_action_group)) {
 			*err = OFP_ERRACTION_LEN;
+			return (-1);
+		}
+
+		ag = (struct ofp_action_group *)ah;
+		if (swofp_group_entry_lookup(sc,
+		    ntohl(ag->ag_group_id)) == NULL) {
+			*err = OFP_ERRACTION_BAD_OUT_GROUP;
 			return (-1);
 		}
 		break;
@@ -2098,6 +2146,24 @@ swofp_validate_action(struct ofp_action_header *ah, size_t ahtotal,
 			*err = OFP_ERRACTION_LEN;
 			return (-1);
 		}
+
+		ap = (struct ofp_action_push *)ah;
+		switch (ntohs(ap->ap_type)) {
+		case OFP_ACTION_PUSH_VLAN:
+			if (ntohs(ap->ap_ethertype) != ETHERTYPE_VLAN &&
+			    ntohs(ap->ap_ethertype) != ETHERTYPE_QINQ) {
+				*err = OFP_ERRACTION_ARGUMENT;
+				return (-1);
+			}
+			break;
+
+		case OFP_ACTION_PUSH_MPLS:
+		case OFP_ACTION_PUSH_PBB:
+			/* Not implemented yet. */
+		default:
+			*err = OFP_ERRACTION_TYPE;
+			return (-1);
+		}
 		break;
 	case OFP_ACTION_POP_MPLS:
 		if (ahlen != sizeof(struct ofp_action_pop_mpls)) {
@@ -2111,15 +2177,17 @@ swofp_validate_action(struct ofp_action_header *ah, size_t ahtotal,
 			return (-1);
 		}
 
-		oxmlen = ahlen - sizeof(struct ofp_action_set_field);
+		oxmlen = ahlen - (sizeof(struct ofp_action_set_field) -
+		    offsetof(struct ofp_action_set_field, asf_field));
 		if (oxmlen < sizeof(*oxm)) {
 			*err = OFP_ERRACTION_LEN;
 			return (-1);
 		}
 
 		dptr = (uint8_t *)ah;
-		dptr += sizeof(struct ofp_action_set_field);
-		while (oxmlen) {
+		dptr += sizeof(struct ofp_action_set_field) -
+		    offsetof(struct ofp_action_set_field, asf_field);
+		while (oxmlen > 0) {
 			oxm = (struct ofp_ox_match *)dptr;
 			if (swofp_validate_oxm(oxm, err)) {
 				if (*err == OFP_ERRMATCH_BAD_LEN)
@@ -2149,8 +2217,10 @@ swofp_validate_action(struct ofp_action_header *ah, size_t ahtotal,
 	}
 
 	ahtotal -= min(ahlen, ahtotal);
-	if (ahtotal)
+	if (ahtotal) {
+		ah = (struct ofp_action_header *)((uint8_t *)ah + ahlen);
 		goto parse_next_action;
+	}
 
 	return (0);
 }
@@ -4869,7 +4939,7 @@ swofp_send_flow_removed(struct switch_softc *sc, struct swofp_flow_entry *swfe,
  * OpenFlow protocol FLOW MOD message handlers
  */
 int
-swofp_flow_entry_put_instructions(struct mbuf *m,
+swofp_flow_entry_put_instructions(struct switch_softc *sc, struct mbuf *m,
     struct swofp_flow_entry *swfe, uint16_t *etype, uint16_t *error)
 {
 	struct ofp_flow_mod	*ofm;
@@ -4893,7 +4963,7 @@ swofp_flow_entry_put_instructions(struct mbuf *m,
 	for (off = start; off < start + len; off += ntohs(oi->i_len)) {
 		oi = (struct ofp_instruction *)(mtod(m, caddr_t) + off);
 
-		if (swofp_validate_flow_instruction(oi,
+		if (swofp_validate_flow_instruction(sc, oi,
 		    len - (off - start), etype, error))
 			return (-1);
 
@@ -5063,7 +5133,7 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	if (omlen == sizeof(*om) && swfe->swfe_priority == 0)
 		swfe->swfe_tablemiss = 1;
 
-	if (swofp_flow_entry_put_instructions(m, swfe, &etype, &error))
+	if (swofp_flow_entry_put_instructions(sc, m, swfe, &etype, &error))
 		goto ofp_error_free_flow;
 
 	if (old_swfe) {
@@ -5157,7 +5227,7 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 		    ntohl(ofm->fm_out_group)))
 			continue;
 
-		if (swofp_flow_entry_put_instructions(m, swfe, &etype,
+		if (swofp_flow_entry_put_instructions(sc, m, swfe, &etype,
 		    &error)) {
 			/*
 			 * If error occurs in swofp_flow_entry_put_instructions,
@@ -5510,7 +5580,7 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
        /* Validate actions before anything else. */
 	ah = (struct ofp_action_header *)
 	    ((uint8_t *)pout + sizeof(*pout));
-	if (swofp_validate_action(ah, al_len, &error)) {
+	if (swofp_validate_action(sc, ah, al_len, &error)) {
 		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_ACTION, error);
 		return (EINVAL);
 	}
