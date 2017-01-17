@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.42 2016/12/22 15:31:43 rzalamena Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.43 2017/01/17 09:21:50 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -791,15 +791,15 @@ ofp13_validate_action(struct switchd *sc, struct ofp_header *oh,
 		    print_map(type, ofp_action_map), len);
 
 		len -= sizeof(*asf) - sizeof(asf->asf_field);
-		while (len) {
+		while (len > 0) {
 			if ((oxm = ibuf_seek(ibuf, moff, sizeof(*oxm)))
 			    == NULL)
 				return (-1);
 			if (ofp13_validate_oxm(sc, oxm, oh, ibuf, moff) == -1)
 				return (-1);
 
-			len -= sizeof(*oxm) - oxm->oxm_length;
-			moff += sizeof(*oxm) - oxm->oxm_length;
+			len -= sizeof(*oxm) + oxm->oxm_length;
+			moff += sizeof(*oxm) + oxm->oxm_length;
 		}
 		break;
 
