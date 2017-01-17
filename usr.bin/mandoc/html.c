@@ -1,7 +1,7 @@
-/*	$OpenBSD: html.c,v 1.63 2017/01/08 16:38:04 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.64 2017/01/17 01:47:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -90,22 +90,6 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"mover",	0}, /* TAG_MOVER*/
 };
 
-static	const char	*const htmlattrs[ATTR_MAX] = {
-	"name", /* ATTR_NAME */
-	"rel", /* ATTR_REL */
-	"href", /* ATTR_HREF */
-	"type", /* ATTR_TYPE */
-	"media", /* ATTR_MEDIA */
-	"class", /* ATTR_CLASS */
-	"style", /* ATTR_STYLE */
-	"id", /* ATTR_ID */
-	"colspan", /* ATTR_COLSPAN */
-	"charset", /* ATTR_CHARSET */
-	"open", /* ATTR_OPEN */
-	"close", /* ATTR_CLOSE */
-	"mathvariant", /* ATTR_MATHVARIANT */
-};
-
 static	const char	*const roffscales[SCALE_MAX] = {
 	"cm", /* SCALE_CM */
 	"in", /* SCALE_IN */
@@ -119,6 +103,7 @@ static	const char	*const roffscales[SCALE_MAX] = {
 	"ex", /* SCALE_FS */
 };
 
+static	void	 a2width(const char *, struct roffsu *);
 static	void	 bufncat(struct html *, const char *, size_t);
 static	void	 print_ctag(struct html *, struct tag *);
 static	int	 print_escape(char);
@@ -163,17 +148,14 @@ html_free(void *p)
 void
 print_gen_head(struct html *h)
 {
-	struct htmlpair	 tag[4];
 	struct tag	*t;
 
-	tag[0].key = ATTR_CHARSET;
-	tag[0].val = "utf-8";
-	print_otag(h, TAG_META, 1, tag);
+	print_otag(h, TAG_META, "?", "charset", "utf-8");
 
 	/*
 	 * Print a default style-sheet.
 	 */
-	t = print_otag(h, TAG_STYLE, 0, NULL);
+	t = print_otag(h, TAG_STYLE, "");
 	print_text(h, "table.head, table.foot { width: 100%; }\n"
 	      "td.head-rtitle, td.foot-os { text-align: right; }\n"
 	      "td.head-vol { text-align: center; }\n"
@@ -182,17 +164,9 @@ print_gen_head(struct html *h)
 	      "div.spacer { margin: 1em 0; }\n");
 	print_tagq(h, t);
 
-	if (h->style) {
-		tag[0].key = ATTR_REL;
-		tag[0].val = "stylesheet";
-		tag[1].key = ATTR_HREF;
-		tag[1].val = h->style;
-		tag[2].key = ATTR_TYPE;
-		tag[2].val = "text/css";
-		tag[3].key = ATTR_MEDIA;
-		tag[3].val = "all";
-		print_otag(h, TAG_LINK, 4, tag);
-	}
+	if (h->style)
+		print_otag(h, TAG_LINK, "?h??", "rel", "stylesheet",
+		    h->style, "type", "text/css", "media", "all");
 }
 
 static void
@@ -231,14 +205,14 @@ print_metaf(struct html *h, enum mandoc_esc deco)
 
 	switch (font) {
 	case HTMLFONT_ITALIC:
-		h->metaf = print_otag(h, TAG_I, 0, NULL);
+		h->metaf = print_otag(h, TAG_I, "");
 		break;
 	case HTMLFONT_BOLD:
-		h->metaf = print_otag(h, TAG_B, 0, NULL);
+		h->metaf = print_otag(h, TAG_B, "");
 		break;
 	case HTMLFONT_BI:
-		h->metaf = print_otag(h, TAG_B, 0, NULL);
-		print_otag(h, TAG_I, 0, NULL);
+		h->metaf = print_otag(h, TAG_B, "");
+		print_otag(h, TAG_I, "");
 		break;
 	default:
 		break;
@@ -431,11 +405,13 @@ print_attr(struct html *h, const char *key, const char *val)
 }
 
 struct tag *
-print_otag(struct html *h, enum htmltag tag,
-		int sz, const struct htmlpair *p)
+print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 {
-	int		 i;
+	va_list		 ap;
+	struct roffsu	 mysu, *su;
 	struct tag	*t;
+	char		*s;
+	int		 i, have_style;
 
 	/* Push this tags onto the stack of open scopes. */
 
@@ -466,8 +442,104 @@ print_otag(struct html *h, enum htmltag tag,
 	/* Print out the tag name and attributes. */
 
 	printf("<%s", htmltags[tag].name);
-	for (i = 0; i < sz; i++)
-		print_attr(h, htmlattrs[p[i].key], p[i].val);
+
+	va_start(ap, fmt);
+
+	have_style = 0;
+	while (*fmt != '\0') {
+		if (*fmt == 's') {
+			printf(" style=\"");
+			have_style = 1;
+			fmt++;
+			break;
+		}
+		s = va_arg(ap, char *);
+		switch (*fmt++) {
+		case 'c':
+			print_attr(h, "class", s);
+			break;
+		case 'h':
+			print_attr(h, "href", s);
+			break;
+		case 'i':
+			print_attr(h, "id", s);
+			break;
+		case '?':
+			print_attr(h, s, va_arg(ap, char *));
+			break;
+		default:
+			abort();
+		}
+	}
+
+	/* Print out styles. */
+
+	s = NULL;
+	su = &mysu;
+	while (*fmt != '\0') {
+
+		/* First letter: input argument type. */
+
+		switch (*fmt++) {
+		case 'h':
+			i = va_arg(ap, int);
+			SCALE_HS_INIT(su, i);
+			break;
+		case 's':
+			s = va_arg(ap, char *);
+			break;
+		case 'u':
+			su = va_arg(ap, struct roffsu *);
+			break;
+		case 'v':
+			i = va_arg(ap, int);
+			SCALE_VS_INIT(su, i);
+			break;
+		case 'w':
+			s = va_arg(ap, char *);
+			a2width(s, su);
+			break;
+		default:
+			abort();
+		}
+
+		/* Second letter: style name. */
+
+		bufinit(h);
+		switch (*fmt++) {
+		case 'b':
+			bufcat_su(h, "margin-bottom", su);
+			break;
+		case 'h':
+			bufcat_su(h, "height", su);
+			break;
+		case 'i':
+			bufcat_su(h, "text-indent", su);
+			break;
+		case 'l':
+			bufcat_su(h, "margin-left", su);
+			break;
+		case 't':
+			bufcat_su(h, "margin-top", su);
+			break;
+		case 'w':
+			bufcat_su(h, "width", su);
+			break;
+		case 'W':
+			bufcat_su(h, "min-width", su);
+			break;
+		case '?':
+			bufcat_style(h, s, va_arg(ap, char *));
+			break;
+		default:
+			abort();
+		}
+		printf("%s", h->buf);
+	}
+	if (have_style)
+		putchar('"');
+
+	va_end(ap);
 
 	/* Accommodate for "well-formed" singleton escaping. */
 
@@ -531,14 +603,14 @@ print_text(struct html *h, const char *word)
 	assert(NULL == h->metaf);
 	switch (h->metac) {
 	case HTMLFONT_ITALIC:
-		h->metaf = print_otag(h, TAG_I, 0, NULL);
+		h->metaf = print_otag(h, TAG_I, "");
 		break;
 	case HTMLFONT_BOLD:
-		h->metaf = print_otag(h, TAG_B, 0, NULL);
+		h->metaf = print_otag(h, TAG_B, "");
 		break;
 	case HTMLFONT_BI:
-		h->metaf = print_otag(h, TAG_B, 0, NULL);
-		print_otag(h, TAG_I, 0, NULL);
+		h->metaf = print_otag(h, TAG_B, "");
+		print_otag(h, TAG_I, "");
 		break;
 	default:
 		break;
@@ -588,13 +660,26 @@ void
 print_paragraph(struct html *h)
 {
 	struct tag	*t;
-	struct htmlpair	 tag;
 
-	PAIR_CLASS_INIT(&tag, "spacer");
-	t = print_otag(h, TAG_DIV, 1, &tag);
+	t = print_otag(h, TAG_DIV, "c", "spacer");
 	print_tagq(h, t);
 }
 
+
+/*
+ * Calculate the scaling unit passed in a `-width' argument.  This uses
+ * either a native scaling unit (e.g., 1i, 2m) or the string length of
+ * the value.
+ */
+static void
+a2width(const char *p, struct roffsu *su)
+{
+	if (a2roffsu(p, su, SCALE_MAX) < 2) {
+		su->unit = SCALE_EN;
+		su->scale = html_strlen(p);
+	} else if (su->scale < 0.0)
+		su->scale = 0.0;
+}
 
 void
 bufinit(struct html *h)

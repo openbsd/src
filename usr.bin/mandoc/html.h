@@ -1,6 +1,7 @@
-/*	$OpenBSD: html.h,v 1.35 2016/07/19 13:30:16 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.36 2017/01/17 01:47:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,23 +66,6 @@ enum	htmltag {
 	TAG_MAX
 };
 
-enum	htmlattr {
-	ATTR_NAME,
-	ATTR_REL,
-	ATTR_HREF,
-	ATTR_TYPE,
-	ATTR_MEDIA,
-	ATTR_CLASS,
-	ATTR_STYLE,
-	ATTR_ID,
-	ATTR_COLSPAN,
-	ATTR_CHARSET,
-	ATTR_OPEN,
-	ATTR_CLOSE,
-	ATTR_MATHVARIANT,
-	ATTR_MAX
-};
-
 enum	htmlfont {
 	HTMLFONT_NONE = 0,
 	HTMLFONT_BOLD,
@@ -98,22 +82,6 @@ struct	tag {
 struct tagq {
 	struct tag	 *head;
 };
-
-struct	htmlpair {
-	enum htmlattr	  key;
-	const char	 *val;
-};
-
-#define	PAIR_INIT(p, t, v) \
-	do { \
-		(p)->key = (t); \
-		(p)->val = (v); \
-	} while (/* CONSTCOND */ 0)
-
-#define	PAIR_ID_INIT(p, v)	PAIR_INIT(p, ATTR_ID, v)
-#define	PAIR_CLASS_INIT(p, v)	PAIR_INIT(p, ATTR_CLASS, v)
-#define	PAIR_HREF_INIT(p, v)	PAIR_INIT(p, ATTR_HREF, v)
-#define	PAIR_STYLE_INIT(p, h)	PAIR_INIT(p, ATTR_STYLE, (h)->buf)
 
 struct	html {
 	int		  flags;
@@ -148,8 +116,7 @@ struct	eqn;
 
 void		  print_gen_decls(struct html *);
 void		  print_gen_head(struct html *);
-struct tag	 *print_otag(struct html *, enum htmltag,
-				int, const struct htmlpair *);
+struct tag	 *print_otag(struct html *, enum htmltag, const char *, ...);
 void		  print_tagq(struct html *, const struct tag *);
 void		  print_stagq(struct html *, const struct tag *);
 void		  print_text(struct html *, const char *);
