@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.22 2016/09/16 02:50:54 dlg Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.23 2017/01/17 17:19:21 stefan Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -46,16 +46,9 @@
 
 /* Pool with uvm_addr_state structures. */
 struct pool uaddr_pool;
-struct pool uaddr_hint_pool;
 struct pool uaddr_bestfit_pool;
 struct pool uaddr_pivot_pool;
 struct pool uaddr_rnd_pool;
-
-/* uvm_addr state for hint based selector. */
-struct uaddr_hint_state {
-	struct uvm_addr_state		 uaddr;
-	vsize_t				 max_dist;
-};
 
 /* uvm_addr state for bestfit selector. */
 struct uaddr_bestfit_state {
@@ -118,7 +111,6 @@ void			 uaddr_kremove(struct vm_map *,
 void			 uaddr_kbootstrapdestroy(struct uvm_addr_state *);
 
 void			 uaddr_destroy(struct uvm_addr_state *);
-void			 uaddr_hint_destroy(struct uvm_addr_state *);
 void			 uaddr_kbootstrap_destroy(struct uvm_addr_state *);
 void			 uaddr_rnd_destroy(struct uvm_addr_state *);
 void			 uaddr_bestfit_destroy(struct uvm_addr_state *);
@@ -136,10 +128,6 @@ int			 uaddr_kbootstrap_select(struct vm_map *,
 			    vaddr_t);
 int			 uaddr_rnd_select(struct vm_map *,
 			    struct uvm_addr_state *, struct vm_map_entry **,
-			    vaddr_t *, vsize_t, vaddr_t, vaddr_t, vm_prot_t,
-			    vaddr_t);
-int			 uaddr_hint_select(struct vm_map *,
-			    struct uvm_addr_state*, struct vm_map_entry **,
 			    vaddr_t *, vsize_t, vaddr_t, vaddr_t, vm_prot_t,
 			    vaddr_t);
 int			 uaddr_bestfit_select(struct vm_map *,
@@ -290,8 +278,6 @@ uvm_addr_init(void)
 {
 	pool_init(&uaddr_pool, sizeof(struct uvm_addr_state), 0,
 	    IPL_VM, PR_WAITOK, "uaddr", NULL);
-	pool_init(&uaddr_hint_pool, sizeof(struct uaddr_hint_state), 0,
-	    IPL_VM, PR_WAITOK, "uaddrhint", NULL);
 	pool_init(&uaddr_bestfit_pool, sizeof(struct uaddr_bestfit_state), 0,
 	    IPL_VM, PR_WAITOK, "uaddrbest", NULL);
 	pool_init(&uaddr_pivot_pool, sizeof(struct uaddr_pivot_state), 0,
@@ -740,116 +726,6 @@ uaddr_rnd_print(struct uvm_addr_state *uaddr_p, boolean_t full,
 #endif
 
 /*
- * An allocator that selects an address within distance of the hint.
- *
- * If no hint is given, the allocator refuses to allocate.
- */
-const struct uvm_addr_functions uaddr_hint_functions = {
-	.uaddr_select = &uaddr_hint_select,
-	.uaddr_destroy = &uaddr_hint_destroy,
-	.uaddr_name = "uaddr_hint"
-};
-
-/*
- * Create uaddr_hint state.
- */
-struct uvm_addr_state *
-uaddr_hint_create(vaddr_t minaddr, vaddr_t maxaddr, vsize_t max_dist)
-{
-	struct uaddr_hint_state *ua_hint;
-
-	KASSERT(uaddr_hint_pool.pr_size == sizeof(*ua_hint));
-
-	ua_hint = pool_get(&uaddr_hint_pool, PR_WAITOK);
-	ua_hint->uaddr.uaddr_minaddr = minaddr;
-	ua_hint->uaddr.uaddr_maxaddr = maxaddr;
-	ua_hint->uaddr.uaddr_functions = &uaddr_hint_functions;
-	ua_hint->max_dist = max_dist;
-	return &ua_hint->uaddr;
-}
-
-/*
- * Destroy uaddr_hint state.
- */
-void
-uaddr_hint_destroy(struct uvm_addr_state *uaddr)
-{
-	pool_put(&uaddr_hint_pool, uaddr);
-}
-
-/*
- * Hint selector.
- *
- * Attempts to find an address that is within max_dist of the hint.
- */
-int
-uaddr_hint_select(struct vm_map *map, struct uvm_addr_state *uaddr_param,
-    struct vm_map_entry **entry_out, vaddr_t *addr_out,
-    vsize_t sz, vaddr_t align, vaddr_t offset,
-    vm_prot_t prot, vaddr_t hint)
-{
-	struct uaddr_hint_state	*uaddr =
-	    (struct uaddr_hint_state *)uaddr_param;
-	vsize_t			 before_gap, after_gap;
-	vaddr_t			 low, high;
-	int			 dir;
-
-	if (hint == 0)
-		return ENOMEM;
-
-	/* Calculate upper and lower bound for selected address. */
-	high = hint + uaddr->max_dist;
-	if (high < hint)	/* overflow */
-		high = map->max_offset;
-	high = MIN(high, uaddr->uaddr.uaddr_maxaddr);
-	if (high < sz)
-		return ENOMEM;	/* Protect against underflow. */
-	high -= sz;
-
-	/* Calculate lower bound for selected address. */
-	low = hint - uaddr->max_dist;
-	if (low > hint)		/* underflow */
-		low = map->min_offset;
-	low = MAX(low, uaddr->uaddr.uaddr_minaddr);
-
-	/* Search strategy setup. */
-	before_gap = PAGE_SIZE +
-	    (arc4random_uniform(UADDR_HINT_MAXGAP) & ~(vaddr_t)PAGE_MASK);
-	after_gap = PAGE_SIZE +
-	    (arc4random_uniform(UADDR_HINT_MAXGAP) & ~(vaddr_t)PAGE_MASK);
-	dir = (arc4random() & 0x01) ? 1 : -1;
-
-	/*
-	 * Try to search:
-	 * - forward,  with gap
-	 * - backward, with gap
-	 * - forward,  without gap
-	 * - backward, without gap
-	 * (Where forward is in the direction specified by dir and
-	 * backward is in the direction specified by -dir).
-	 */
-	if (uvm_addr_linsearch(map, uaddr_param,
-	    entry_out, addr_out, hint, sz, align, offset,
-	    dir, low, high, before_gap, after_gap) == 0)
-		return 0;
-	if (uvm_addr_linsearch(map, uaddr_param,
-	    entry_out, addr_out, hint, sz, align, offset,
-	    -dir, low, high, before_gap, after_gap) == 0)
-		return 0;
-
-	if (uvm_addr_linsearch(map, uaddr_param,
-	    entry_out, addr_out, hint, sz, align, offset,
-	    dir, low, high, 0, 0) == 0)
-		return 0;
-	if (uvm_addr_linsearch(map, uaddr_param,
-	    entry_out, addr_out, hint, sz, align, offset,
-	    -dir, low, high, 0, 0) == 0)
-		return 0;
-
-	return ENOMEM;
-}
-
-/*
  * Kernel allocation bootstrap logic.
  */
 const struct uvm_addr_functions uaddr_kernel_functions = {
@@ -1242,9 +1118,16 @@ uaddr_pivot_select(struct vm_map *map, struct uvm_addr_state *uaddr_p,
 	vsize_t				 before_gap, after_gap;
 	int				 err;
 
-	/* Hint must be handled by dedicated hint allocator. */
-	if (hint != 0)
-		return EINVAL;
+	/*
+	 * When we have a hint, use the rnd allocator that finds the
+	 * area that is closest to the hint, if there is such an area.
+	 */
+	if (hint != 0) {
+		if (uaddr_rnd_select(map, uaddr_p, entry_out, addr_out,
+		    sz, align, offset, prot, hint) == 0)
+			return 0;
+		return ENOMEM;
+	}
 
 	/*
 	 * Select a random pivot and a random gap sizes around the allocation.
