@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.75 2017/01/17 01:47:46 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.76 2017/01/17 15:32:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -170,14 +170,13 @@ html_man(void *arg, const struct roff_man *man)
 static void
 print_man_head(MAN_ARGS)
 {
+	char	*cp;
 
 	print_gen_head(h);
-	assert(man->title);
-	assert(man->msec);
-	bufinit(h);
-	bufcat_fmt(h, "%s(%s)", man->title, man->msec);
+	mandoc_asprintf(&cp, "%s(%s)", man->title, man->msec);
 	print_otag(h, TAG_TITLE, "");
-	print_text(h, h->buf);
+	print_text(h, cp);
+	free(cp);
 }
 
 static void

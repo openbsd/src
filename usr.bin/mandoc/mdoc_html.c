@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.123 2017/01/17 01:47:46 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.124 2017/01/17 15:32:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -322,17 +322,23 @@ html_mdoc(void *arg, const struct roff_man *mdoc)
 static void
 print_mdoc_head(MDOC_ARGS)
 {
+	char	*cp;
 
 	print_gen_head(h);
-	bufinit(h);
-	bufcat(h, meta->title);
-	if (meta->msec)
-		bufcat_fmt(h, "(%s)", meta->msec);
-	if (meta->arch)
-		bufcat_fmt(h, " (%s)", meta->arch);
+
+	if (meta->arch != NULL && meta->msec != NULL)
+		mandoc_asprintf(&cp, "%s(%s) (%s)", meta->title,
+		    meta->msec, meta->arch);
+	else if (meta->msec != NULL)
+		mandoc_asprintf(&cp, "%s(%s)", meta->title, meta->msec);
+	else if (meta->arch != NULL)
+		mandoc_asprintf(&cp, "%s (%s)", meta->title, meta->arch);
+	else
+		cp = mandoc_strdup(meta->title);
 
 	print_otag(h, TAG_TITLE, "");
-	print_text(h, h->buf);
+	print_text(h, cp);
+	free(cp);
 }
 
 static void
@@ -487,9 +493,33 @@ mdoc_root_pre(MDOC_ARGS)
 	return 1;
 }
 
+char *
+make_id(const struct roff_node *n)
+{
+	const struct roff_node	*nch;
+	char			*buf, *cp;
+
+	for (nch = n->child; nch != NULL; nch = nch->next)
+		if (nch->type != ROFFT_TEXT)
+			return NULL;
+
+	buf = NULL;
+	deroff(&buf, n);
+
+	/* http://www.w3.org/TR/html5/dom.html#the-id-attribute */
+
+	for (cp = buf; *cp != '\0'; cp++)
+		if (*cp == ' ')
+			*cp = '_';
+
+	return buf;
+}
+
 static int
 mdoc_sh_pre(MDOC_ARGS)
 {
+	char	*id;
+
 	switch (n->type) {
 	case ROFFT_BLOCK:
 		print_otag(h, TAG_DIV, "c", "section");
@@ -502,17 +532,10 @@ mdoc_sh_pre(MDOC_ARGS)
 		break;
 	}
 
-	bufinit(h);
-
-	for (n = n->child; n != NULL && n->type == ROFFT_TEXT; ) {
-		bufcat_id(h, n->string);
-		if (NULL != (n = n->next))
-			bufcat_id(h, " ");
-	}
-
-	if (NULL == n)
-		print_otag(h, TAG_H1, "i", h->buf);
-	else
+	if ((id = make_id(n)) != NULL) {
+		print_otag(h, TAG_H1, "i", id);
+		free(id);
+	} else
 		print_otag(h, TAG_H1, "");
 
 	return 1;
@@ -521,23 +544,18 @@ mdoc_sh_pre(MDOC_ARGS)
 static int
 mdoc_ss_pre(MDOC_ARGS)
 {
+	char	*id;
+
 	if (n->type == ROFFT_BLOCK) {
 		print_otag(h, TAG_DIV, "c", "subsection");
 		return 1;
 	} else if (n->type == ROFFT_BODY)
 		return 1;
 
-	bufinit(h);
-
-	for (n = n->child; n != NULL && n->type == ROFFT_TEXT; ) {
-		bufcat_id(h, n->string);
-		if (NULL != (n = n->next))
-			bufcat_id(h, " ");
-	}
-
-	if (NULL == n)
-		print_otag(h, TAG_H2, "i", h->buf);
-	else
+	if ((id = make_id(n)) != NULL) {
+		print_otag(h, TAG_H2, "i", id);
+		free(id);
+	} else
 		print_otag(h, TAG_H2, "");
 
 	return 1;
@@ -621,12 +639,11 @@ mdoc_xr_pre(MDOC_ARGS)
 	if (NULL == n->child)
 		return 0;
 
-	if (h->base_man) {
-		buffmt_man(h, n->child->string,
-		    n->child->next ?
-		    n->child->next->string : NULL);
-		print_otag(h, TAG_A, "ch", "link-man", h->buf);
-	} else
+	if (h->base_man)
+		print_otag(h, TAG_A, "chM", "link-man",
+		    n->child->string, n->child->next == NULL ?
+		    NULL : n->child->next->string);
+	else
 		print_otag(h, TAG_A, "c", "link-man");
 
 	n = n->child;
@@ -848,17 +865,15 @@ mdoc_d1_pre(MDOC_ARGS)
 static int
 mdoc_sx_pre(MDOC_ARGS)
 {
-	bufinit(h);
-	bufcat(h, "#");
-
-	for (n = n->child; n; ) {
-		bufcat_id(h, n->string);
-		if (NULL != (n = n->next))
-			bufcat_id(h, " ");
-	}
+	char	*id;
 
 	print_otag(h, TAG_I, "c", "link-sec");
-	print_otag(h, TAG_A, "ch", "link-sec", h->buf);
+	if ((id = make_id(n)) != NULL) {
+		print_otag(h, TAG_A, "chR", "link-sec", id);
+		free(id);
+	} else
+		print_otag(h, TAG_A, "c", "link-sec");
+
 	return 1;
 }
 
@@ -1049,9 +1064,8 @@ mdoc_fa_pre(MDOC_ARGS)
 static int
 mdoc_fd_pre(MDOC_ARGS)
 {
-	char		 buf[BUFSIZ];
-	size_t		 sz;
 	struct tag	*t;
+	char		*buf, *cp;
 
 	synopsis_pre(h, n);
 
@@ -1071,25 +1085,16 @@ mdoc_fd_pre(MDOC_ARGS)
 	if (NULL != (n = n->next)) {
 		assert(n->type == ROFFT_TEXT);
 
-		/*
-		 * XXX This is broken and not easy to fix.
-		 * When using -Oincludes, truncation may occur.
-		 * Dynamic allocation wouldn't help because
-		 * passing long strings to buffmt_includes()
-		 * does not work either.
-		 */
-
-		strlcpy(buf, '<' == *n->string || '"' == *n->string ?
-		    n->string + 1 : n->string, BUFSIZ);
-
-		sz = strlen(buf);
-		if (sz && ('>' == buf[sz - 1] || '"' == buf[sz - 1]))
-			buf[sz - 1] = '\0';
-
 		if (h->base_includes) {
-			buffmt_includes(h, buf);
-			t = print_otag(h, TAG_A, "ch", "link-includes",
-			    h->buf);
+			cp = n->string;
+			if (*cp == '<' || *cp == '"')
+				cp++;
+			buf = mandoc_strdup(cp);
+			cp = strchr(buf, '\0') - 1;
+			if (cp >= buf && (*cp == '>' || *cp == '"'))
+				*cp = '\0';
+			t = print_otag(h, TAG_A, "chI", "link-includes", buf);
+			free(buf);
 		} else
 			t = print_otag(h, TAG_A, "c", "link-includes");
 
@@ -1277,16 +1282,16 @@ static int
 mdoc_mt_pre(MDOC_ARGS)
 {
 	struct tag	*t;
+	char		*cp;
 
 	for (n = n->child; n; n = n->next) {
 		assert(n->type == ROFFT_TEXT);
 
-		bufinit(h);
-		bufcat(h, "mailto:");
-		bufcat(h, n->string);
-		t = print_otag(h, TAG_A, "ch", "link-mail", h->buf);
+		mandoc_asprintf(&cp, "mailto:%s", n->string);
+		t = print_otag(h, TAG_A, "ch", "link-mail", cp);
 		print_text(h, n->string);
 		print_tagq(h, t);
+		free(cp);
 	}
 
 	return 0;
@@ -1353,11 +1358,10 @@ mdoc_in_pre(MDOC_ARGS)
 	if (NULL != (n = n->child)) {
 		assert(n->type == ROFFT_TEXT);
 
-		if (h->base_includes) {
-			buffmt_includes(h, n->string);
-			t = print_otag(h, TAG_A, "ch", "link-includes",
-			    h->buf);
-		} else
+		if (h->base_includes)
+			t = print_otag(h, TAG_A, "chI", "link-includes",
+			    n->string);
+		else
 			t = print_otag(h, TAG_A, "c", "link-includes");
 		print_text(h, n->string);
 		print_tagq(h, t);

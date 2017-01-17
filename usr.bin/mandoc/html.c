@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.64 2017/01/17 01:47:46 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.65 2017/01/17 15:32:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -104,12 +104,11 @@ static	const char	*const roffscales[SCALE_MAX] = {
 };
 
 static	void	 a2width(const char *, struct roffsu *);
-static	void	 bufncat(struct html *, const char *, size_t);
 static	void	 print_ctag(struct html *, struct tag *);
 static	int	 print_escape(char);
-static	int	 print_encode(struct html *, const char *, int);
+static	int	 print_encode(struct html *, const char *, const char *, int);
+static	void	 print_href(struct html *, const char *, const char *, int);
 static	void	 print_metaf(struct html *, enum mandoc_esc);
-static	void	 print_attr(struct html *, const char *, const char *);
 
 
 void *
@@ -302,7 +301,7 @@ print_escape(char c)
 }
 
 static int
-print_encode(struct html *h, const char *p, int norecurse)
+print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 {
 	size_t		 sz;
 	int		 c, len, nospace;
@@ -311,9 +310,12 @@ print_encode(struct html *h, const char *p, int norecurse)
 	static const char rejs[9] = { '\\', '<', '>', '&', '"',
 		ASCII_NBRSP, ASCII_HYPH, ASCII_BREAK, '\0' };
 
+	if (pend == NULL)
+		pend = strchr(p, '\0');
+
 	nospace = 0;
 
-	while ('\0' != *p) {
+	while (p < pend) {
 		if (HTML_SKIPCHAR & h->flags && '\\' != *p) {
 			h->flags &= ~HTML_SKIPCHAR;
 			p++;
@@ -321,11 +323,13 @@ print_encode(struct html *h, const char *p, int norecurse)
 		}
 
 		sz = strcspn(p, rejs);
+		if (p + sz > pend)
+			sz = pend - p;
 
 		fwrite(p, 1, sz, stdout);
 		p += (int)sz;
 
-		if ('\0' == *p)
+		if (p >= pend)
 			break;
 
 		if (print_escape(*p++))
@@ -397,11 +401,27 @@ print_encode(struct html *h, const char *p, int norecurse)
 }
 
 static void
-print_attr(struct html *h, const char *key, const char *val)
+print_href(struct html *h, const char *name, const char *sec, int man)
 {
-	printf(" %s=\"", key);
-	(void)print_encode(h, val, 1);
-	putchar('\"');
+	const char	*p, *pp;
+
+	pp = man ? h->base_man : h->base_includes;
+	while ((p = strchr(pp, '%')) != NULL) {
+		print_encode(h, pp, p, 1);
+		if (man && p[1] == 'S') {
+			if (sec == NULL)
+				putchar('1');
+			else
+				print_encode(h, sec, NULL, 1);
+		} else if ((man && p[1] == 'N') ||
+		    (man == 0 && p[1] == 'I'))
+			print_encode(h, name, NULL, 1);
+		else
+			print_encode(h, p, p + 2, 1);
+		pp = p + 2;
+	}
+	if (*pp != '\0')
+		print_encode(h, pp, NULL, 1);
 }
 
 struct tag *
@@ -410,7 +430,9 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 	va_list		 ap;
 	struct roffsu	 mysu, *su;
 	struct tag	*t;
+	const char	*attr;
 	char		*s;
+	double		 v;
 	int		 i, have_style;
 
 	/* Push this tags onto the stack of open scopes. */
@@ -456,20 +478,40 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		s = va_arg(ap, char *);
 		switch (*fmt++) {
 		case 'c':
-			print_attr(h, "class", s);
+			attr = "class";
 			break;
 		case 'h':
-			print_attr(h, "href", s);
+			attr = "href";
 			break;
 		case 'i':
-			print_attr(h, "id", s);
+			attr = "id";
 			break;
 		case '?':
-			print_attr(h, s, va_arg(ap, char *));
+			attr = s;
+			s = va_arg(ap, char *);
 			break;
 		default:
 			abort();
 		}
+		printf(" %s=\"", attr);
+		switch (*fmt) {
+		case 'M':
+			print_href(h, s, va_arg(ap, char *), 1);
+			fmt++;
+			break;
+		case 'I':
+			print_href(h, s, NULL, 0);
+			fmt++;
+			break;
+		case 'R':
+			putchar('#');
+			fmt++;
+			/* FALLTHROUGH */
+		default:
+			print_encode(h, s, NULL, 1);
+			break;
+		}
+		putchar('"');
 	}
 
 	/* Print out styles. */
@@ -505,36 +547,40 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 
 		/* Second letter: style name. */
 
-		bufinit(h);
 		switch (*fmt++) {
 		case 'b':
-			bufcat_su(h, "margin-bottom", su);
+			attr = "margin-bottom";
 			break;
 		case 'h':
-			bufcat_su(h, "height", su);
+			attr = "height";
 			break;
 		case 'i':
-			bufcat_su(h, "text-indent", su);
+			attr = "text-indent";
 			break;
 		case 'l':
-			bufcat_su(h, "margin-left", su);
+			attr = "margin-left";
 			break;
 		case 't':
-			bufcat_su(h, "margin-top", su);
+			attr = "margin-top";
 			break;
 		case 'w':
-			bufcat_su(h, "width", su);
+			attr = "width";
 			break;
 		case 'W':
-			bufcat_su(h, "min-width", su);
+			attr = "min-width";
 			break;
 		case '?':
-			bufcat_style(h, s, va_arg(ap, char *));
-			break;
+			printf("%s: %s;", s, va_arg(ap, char *));
+			continue;
 		default:
 			abort();
 		}
-		printf("%s", h->buf);
+		v = su->scale;
+		if (su->unit == SCALE_MM && (v /= 100.0) == 0.0)
+			v = 1.0;
+		else if (su->unit == SCALE_BU)
+			v /= 24.0;
+		printf("%s: %.2f%s;", attr, v, roffscales[su->unit]);
 	}
 	if (have_style)
 		putchar('"');
@@ -617,7 +663,7 @@ print_text(struct html *h, const char *word)
 	}
 
 	assert(word);
-	if ( ! print_encode(h, word, 0)) {
+	if ( ! print_encode(h, word, NULL, 0)) {
 		if ( ! (h->flags & HTML_NONOSPACE))
 			h->flags &= ~HTML_NOSPACE;
 		h->flags &= ~HTML_NONEWLINE;
@@ -679,132 +725,4 @@ a2width(const char *p, struct roffsu *su)
 		su->scale = html_strlen(p);
 	} else if (su->scale < 0.0)
 		su->scale = 0.0;
-}
-
-void
-bufinit(struct html *h)
-{
-
-	h->buf[0] = '\0';
-	h->buflen = 0;
-}
-
-void
-bufcat_style(struct html *h, const char *key, const char *val)
-{
-
-	bufcat(h, key);
-	bufcat(h, ":");
-	bufcat(h, val);
-	bufcat(h, ";");
-}
-
-void
-bufcat(struct html *h, const char *p)
-{
-
-	/*
-	 * XXX This is broken and not easy to fix.
-	 * When using the -Oincludes option, buffmt_includes()
-	 * may pass in strings overrunning BUFSIZ, causing a crash.
-	 */
-
-	h->buflen = strlcat(h->buf, p, BUFSIZ);
-	assert(h->buflen < BUFSIZ);
-}
-
-void
-bufcat_fmt(struct html *h, const char *fmt, ...)
-{
-	va_list		 ap;
-
-	va_start(ap, fmt);
-	(void)vsnprintf(h->buf + (int)h->buflen,
-	    BUFSIZ - h->buflen - 1, fmt, ap);
-	va_end(ap);
-	h->buflen = strlen(h->buf);
-}
-
-static void
-bufncat(struct html *h, const char *p, size_t sz)
-{
-
-	assert(h->buflen + sz + 1 < BUFSIZ);
-	strncat(h->buf, p, sz);
-	h->buflen += sz;
-}
-
-void
-buffmt_includes(struct html *h, const char *name)
-{
-	const char	*p, *pp;
-
-	pp = h->base_includes;
-
-	bufinit(h);
-	while (NULL != (p = strchr(pp, '%'))) {
-		bufncat(h, pp, (size_t)(p - pp));
-		switch (*(p + 1)) {
-		case 'I':
-			bufcat(h, name);
-			break;
-		default:
-			bufncat(h, p, 2);
-			break;
-		}
-		pp = p + 2;
-	}
-	if (pp)
-		bufcat(h, pp);
-}
-
-void
-buffmt_man(struct html *h, const char *name, const char *sec)
-{
-	const char	*p, *pp;
-
-	pp = h->base_man;
-
-	bufinit(h);
-	while (NULL != (p = strchr(pp, '%'))) {
-		bufncat(h, pp, (size_t)(p - pp));
-		switch (*(p + 1)) {
-		case 'S':
-			bufcat(h, sec ? sec : "1");
-			break;
-		case 'N':
-			bufcat_fmt(h, "%s", name);
-			break;
-		default:
-			bufncat(h, p, 2);
-			break;
-		}
-		pp = p + 2;
-	}
-	if (pp)
-		bufcat(h, pp);
-}
-
-void
-bufcat_su(struct html *h, const char *p, const struct roffsu *su)
-{
-	double		 v;
-
-	v = su->scale;
-	if (SCALE_MM == su->unit && 0.0 == (v /= 100.0))
-		v = 1.0;
-	else if (SCALE_BU == su->unit)
-		v /= 24.0;
-
-	bufcat_fmt(h, "%s: %.2f%s;", p, v, roffscales[su->unit]);
-}
-
-void
-bufcat_id(struct html *h, const char *src)
-{
-
-	/* Cf. <http://www.w3.org/TR/html5/dom.html#the-id-attribute>. */
-
-	for (; '\0' != *src; src++)
-		bufncat(h, *src == ' ' ? "_" : src, 1);
 }
