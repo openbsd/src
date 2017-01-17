@@ -30,13 +30,11 @@
 #include "ipc.h"
 #include "remote.h"
 
-#define XFRD_TRANSFER_TIMEOUT_START 10 /* empty zone timeout is between x and 2*x seconds */
-#define XFRD_TRANSFER_TIMEOUT_MAX 86400 /* empty zone timeout max expbackoff */
 #define XFRD_UDP_TIMEOUT 10 /* seconds, before a udp request times out */
 #define XFRD_NO_IXFR_CACHE 172800 /* 48h before retrying ixfr's after notimpl */
 #define XFRD_LOWERBOUND_REFRESH 1 /* seconds, smallest refresh timeout */
 #define XFRD_LOWERBOUND_RETRY 1 /* seconds, smallest retry timeout */
-#define XFRD_MAX_ROUNDS 3 /* max number of rounds along the masters */
+#define XFRD_MAX_ROUNDS 1 /* max number of rounds along the masters */
 #define XFRD_TSIG_MAX_UNSIGNED 103 /* max number of packets without tsig in a tcp stream. */
 			/* rfc recommends 100, +3 for offbyone errors/interoperability. */
 #define XFRD_CHILD_REAP_TIMEOUT 60 /* seconds to wakeup and reap lost children */
@@ -412,7 +410,7 @@ xfrd_init_slave_zone(xfrd_state_t* xfrd, zone_options_t* zone_opt)
 	xzone->state = xfrd_zone_refreshing;
 	xzone->zone_options = zone_opt;
 	/* first retry will use first master */
-	xzone->master = 0;
+	xzone->master = xzone->zone_options->pattern->request_xfr;
 	xzone->master_num = 0;
 	xzone->next_master = 0;
 	xzone->fresh_xfr_timeout = XFRD_TRANSFER_TIMEOUT_START;
@@ -727,11 +725,24 @@ static void
 xfrd_set_timer_retry(xfrd_zone_t* zone)
 {
 	time_t set_retry;
+	int mult;
+	/* perform exponential backoff in all the cases */
+	if(zone->fresh_xfr_timeout == 0)
+		zone->fresh_xfr_timeout = XFRD_TRANSFER_TIMEOUT_START;
+	else {
+		/* exponential backoff - some master data in zones is paid-for
+		   but non-working, and will not get fixed. */
+		zone->fresh_xfr_timeout *= 2;
+		if(zone->fresh_xfr_timeout > XFRD_TRANSFER_TIMEOUT_MAX)
+			zone->fresh_xfr_timeout = XFRD_TRANSFER_TIMEOUT_MAX;
+	}
+	/* exponential backoff multiplier, starts at 1, backs off */
+	mult = zone->fresh_xfr_timeout / XFRD_TRANSFER_TIMEOUT_START;
+	if(mult == 0) mult = 1;
+
 	/* set timer for next retry or expire timeout if earlier. */
 	if(zone->soa_disk_acquired == 0) {
 		/* if no information, use reasonable timeout */
-		if(zone->fresh_xfr_timeout == 0)
-			zone->fresh_xfr_timeout = XFRD_TRANSFER_TIMEOUT_START;
 #ifdef HAVE_ARC4RANDOM_UNIFORM
 		xfrd_set_timer(zone, zone->fresh_xfr_timeout
 			+ arc4random_uniform(zone->fresh_xfr_timeout));
@@ -742,16 +753,12 @@ xfrd_set_timer_retry(xfrd_zone_t* zone)
 		xfrd_set_timer(zone, zone->fresh_xfr_timeout
 			+ random()%zone->fresh_xfr_timeout);
 #endif
-		/* exponential backoff - some master data in zones is paid-for
-		   but non-working, and will not get fixed. */
-		zone->fresh_xfr_timeout *= 2;
-		if(zone->fresh_xfr_timeout > XFRD_TRANSFER_TIMEOUT_MAX)
-			zone->fresh_xfr_timeout = XFRD_TRANSFER_TIMEOUT_MAX;
 	} else if(zone->state == xfrd_zone_expired ||
-		xfrd_time() + (time_t)ntohl(zone->soa_disk.retry) <
+		xfrd_time() + (time_t)ntohl(zone->soa_disk.retry)*mult <
 		zone->soa_disk_acquired + (time_t)ntohl(zone->soa_disk.expire))
 	{
 		set_retry = ntohl(zone->soa_disk.retry);
+		set_retry *= mult;
 		if(set_retry > (time_t)zone->zone_options->pattern->max_retry_time)
 			set_retry = zone->zone_options->pattern->max_retry_time;
 		else if(set_retry < (time_t)zone->zone_options->pattern->min_retry_time)
@@ -760,13 +767,14 @@ xfrd_set_timer_retry(xfrd_zone_t* zone)
 			set_retry =  XFRD_LOWERBOUND_RETRY;
 		xfrd_set_timer(zone, set_retry);
 	} else {
-		if(ntohl(zone->soa_disk.expire) < XFRD_LOWERBOUND_RETRY)
+		set_retry = ntohl(zone->soa_disk.expire);
+		if(set_retry < XFRD_LOWERBOUND_RETRY)
 			xfrd_set_timer(zone, XFRD_LOWERBOUND_RETRY);
 		else {
-			if(zone->soa_disk_acquired + (time_t)ntohl(zone->soa_disk.expire) < xfrd_time())
+			if(zone->soa_disk_acquired + set_retry < xfrd_time())
 				xfrd_set_timer(zone, XFRD_LOWERBOUND_RETRY);
 			else xfrd_set_timer(zone, zone->soa_disk_acquired +
-				ntohl(zone->soa_disk.expire) - xfrd_time());
+				set_retry - xfrd_time());
 		}
 	}
 }
@@ -1130,6 +1138,8 @@ xfrd_handle_incoming_soa(xfrd_zone_t* zone,
 		zone->soa_nsd = zone->soa_disk;
 		zone->soa_nsd_acquired = zone->soa_disk_acquired;
 		xfrd->write_zonefile_needed = 1;
+		/* reset exponential backoff, we got a normal timer now */
+		zone->fresh_xfr_timeout = 0;
 		if(xfrd_time() - zone->soa_disk_acquired
 			< (time_t)ntohl(zone->soa_disk.refresh))
 		{
@@ -1269,6 +1279,19 @@ xfrd_udp_release(xfrd_zone_t* zone)
 		xfrd->udp_use_num--;
 }
 
+/** disable ixfr for master */
+void
+xfrd_disable_ixfr(xfrd_zone_t* zone)
+{
+	if(!(zone->master->ixfr_disabled &&
+		(zone->master->ixfr_disabled + XFRD_NO_IXFR_CACHE) <= time(NULL))) {
+		/* start new round, with IXFR disabled */
+		zone->round_num = 0;
+		zone->next_master = zone->master_num;
+	}
+	zone->master->ixfr_disabled = time(NULL);
+}
+
 static void
 xfrd_udp_read(xfrd_zone_t* zone)
 {
@@ -1276,7 +1299,7 @@ xfrd_udp_read(xfrd_zone_t* zone)
 	if(!xfrd_udp_read_packet(xfrd->packet, zone->zone_handler.ev_fd)) {
 		zone->master->bad_xfr_count++;
 		if (zone->master->bad_xfr_count > 2) {
-			zone->master->ixfr_disabled = time(NULL);
+			xfrd_disable_ixfr(zone);
 			zone->master->bad_xfr_count = 0;
 		}
 		/* drop packet */
@@ -1303,7 +1326,7 @@ xfrd_udp_read(xfrd_zone_t* zone)
 			xfrd_udp_release(zone);
 			break;
 		case xfrd_packet_notimpl:
-			zone->master->ixfr_disabled = time(NULL);
+			xfrd_disable_ixfr(zone);
 			/* drop packet */
 			xfrd_udp_release(zone);
 			/* query next server */
@@ -1320,7 +1343,7 @@ xfrd_udp_read(xfrd_zone_t* zone)
 		default:
 			zone->master->bad_xfr_count++;
 			if (zone->master->bad_xfr_count > 2) {
-				zone->master->ixfr_disabled = time(NULL);
+				xfrd_disable_ixfr(zone);
 				zone->master->bad_xfr_count = 0;
 			}
 			/* drop packet */

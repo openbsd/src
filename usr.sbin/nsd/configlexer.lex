@@ -66,15 +66,6 @@ static void config_start_include(const char* filename)
 		c_error_msg("include %s: malloc failure", filename);
 		return;
 	}
-	if (cfg_parser->chroot) {
-		int l = strlen(cfg_parser->chroot); /* chroot has trailing slash */
-		if (strncmp(cfg_parser->chroot, filename, l) != 0) {
-			c_error_msg("include file '%s' is not relative to chroot '%s'",
-				filename, cfg_parser->chroot);
-			return;
-		}
-		filename += l - 1; /* strip chroot without trailing slash */
-	}
 	nm = strdup(filename);
 	if(!nm) {
 		c_error_msg("include %s: strdup failure", filename);
@@ -103,12 +94,23 @@ static void config_start_include(const char* filename)
 
 static void config_start_include_glob(const char* filename)
 {
-	 /* check for wildcards */
+	/* check for wildcards */
 #ifdef HAVE_GLOB
-	 glob_t g;
-	 size_t i;
-	 int r, flags;
-	 if(!(!strchr(filename, '*') && !strchr(filename, '?') &&
+	glob_t g;
+	size_t i;
+	int r, flags;
+#endif /* HAVE_GLOB */
+	if (cfg_parser->chroot) {
+		int l = strlen(cfg_parser->chroot); /* chroot has trailing slash */
+		if (strncmp(cfg_parser->chroot, filename, l) != 0) {
+			c_error_msg("include file '%s' is not relative to chroot '%s'",
+				filename, cfg_parser->chroot);
+			return;
+		}
+		filename += l - 1; /* strip chroot without trailing slash */
+	}
+#ifdef HAVE_GLOB
+	if(!(!strchr(filename, '*') && !strchr(filename, '?') &&
 		 !strchr(filename, '[') && !strchr(filename, '{') &&
 		 !strchr(filename, '~'))) {
 		 flags = 0
@@ -141,9 +143,9 @@ static void config_start_include_glob(const char* filename)
 		}
 		globfree(&g);
 		return;
-	 }
+	}
 #endif /* HAVE_GLOB */
-	 config_start_include(filename);
+	config_start_include(filename);
 }
 
 static void config_end_include(void)

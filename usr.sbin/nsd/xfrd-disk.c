@@ -165,8 +165,15 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		region_destroy(tempregion);
 		return;
 	}
-	if(!xfrd_read_check_str(in, XFRD_FILE_MAGIC) ||
-	   !xfrd_read_check_str(in, "filetime:") ||
+	if(!xfrd_read_check_str(in, XFRD_FILE_MAGIC)) {
+		/* older file version; reset everything */
+		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: file %s is old version. refreshing all zones.",
+			statefile));
+		fclose(in);
+		region_destroy(tempregion);
+		return;
+	}
+	if(!xfrd_read_check_str(in, "filetime:") ||
 	   !xfrd_read_i32(in, &filetime) ||
 	   (time_t)filetime > xfrd_time()+15 ||
 	   !xfrd_read_check_str(in, "numzones:") ||
@@ -183,7 +190,7 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		char *p;
 		xfrd_zone_t* zone;
 		const dname_type* dname;
-		uint32_t state, masnum, nextmas, round_num, timeout;
+		uint32_t state, masnum, nextmas, round_num, timeout, backoff;
 		xfrd_soa_t soa_nsd_read, soa_disk_read, soa_notified_read;
 		time_t soa_nsd_acquired_read,
 			soa_disk_acquired_read, soa_notified_acquired_read;
@@ -214,6 +221,8 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		   !xfrd_read_i32(in, &round_num) ||
 		   !xfrd_read_check_str(in, "next_timeout:") ||
 		   !xfrd_read_i32(in, &timeout) ||
+		   !xfrd_read_check_str(in, "backoff:") ||
+		   !xfrd_read_i32(in, &backoff) ||
 		   !xfrd_read_state_soa(in, "soa_nsd_acquired:", "soa_nsd:",
 			&soa_nsd_read, &soa_nsd_acquired_read) ||
 		   !xfrd_read_state_soa(in, "soa_disk_acquired:", "soa_disk:",
@@ -249,6 +258,7 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		zone->round_num = round_num;
 		zone->timeout.tv_sec = timeout;
 		zone->timeout.tv_usec = 0;
+		zone->fresh_xfr_timeout = backoff*XFRD_TRANSFER_TIMEOUT_START;
 
 		/* read the zone OK, now set the master properly */
 		zone->master = acl_find_num(zone->zone_options->pattern->
@@ -296,10 +306,14 @@ xfrd_read_state(struct xfrd_state* xfrd)
 			zone->state = state;
 			xfrd_set_timer(zone, timeout);
 		}	
-		if(zone->soa_nsd_acquired == 0 && soa_nsd_acquired_read == 0 &&
-			soa_disk_acquired_read == 0) {
-			/* continue expon backoff where we were + check now */
-			zone->fresh_xfr_timeout = timeout;
+		if((zone->soa_nsd_acquired == 0 && soa_nsd_acquired_read == 0 &&
+			soa_disk_acquired_read == 0) ||
+			(zone->state != xfrd_zone_ok && timeout != 0)) {
+			/* but don't check now, because that would mean a
+			 * storm of attempts on some master servers */
+			xfrd_deactivate_zone(zone);
+			zone->state = state;
+			xfrd_set_timer(zone, timeout);
 		}
 
 		/* handle as an incoming SOA. */
@@ -318,7 +332,8 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		{
 			xfrd_send_expire_notification(zone);
 		}
-		xfrd_handle_incoming_soa(zone, &incoming_soa, incoming_acquired);
+		if(incoming_acquired != 0)
+			xfrd_handle_incoming_soa(zone, &incoming_soa, incoming_acquired);
 	}
 
 	if(!xfrd_read_check_str(in, XFRD_FILE_MAGIC)) {
@@ -477,6 +492,7 @@ xfrd_write_state(struct xfrd_state* xfrd)
 			neato_timeout(out, "\t# =", zone->timeout.tv_sec);
 		}
 		fprintf(out, "\n");
+		fprintf(out, "\tbackoff: %d\n", zone->fresh_xfr_timeout/XFRD_TRANSFER_TIMEOUT_START);
 		xfrd_write_state_soa(out, "soa_nsd", &zone->soa_nsd,
 			zone->soa_nsd_acquired, zone->apex);
 		xfrd_write_state_soa(out, "soa_disk", &zone->soa_disk,

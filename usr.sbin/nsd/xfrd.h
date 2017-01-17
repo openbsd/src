@@ -244,6 +244,9 @@ enum xfrd_packet_result {
 #define XFRD_MAX_UDP 64 /* max number of UDP sockets at a time for IXFR */
 #define XFRD_MAX_UDP_NOTIFY 64 /* max concurrent UDP sockets for NOTIFY */
 
+#define XFRD_TRANSFER_TIMEOUT_START 10 /* empty zone timeout is between x and 2*x seconds */
+#define XFRD_TRANSFER_TIMEOUT_MAX 86400 /* empty zone timeout max expbackoff */
+
 extern xfrd_state_t* xfrd;
 
 /* start xfrd, new start. Pass socket to server_main. */
@@ -255,6 +258,9 @@ void xfrd_init_slave_zone(xfrd_state_t* xfrd, zone_options_t* zone_opt);
 
 /* delete slave zone */
 void xfrd_del_slave_zone(xfrd_state_t* xfrd, const dname_type* dname);
+
+/* disable ixfr for a while for zone->master */
+void xfrd_disable_ixfr(xfrd_zone_t* zone);
 
 /* get the current time epoch. Cached for speed. */
 time_t xfrd_time(void);

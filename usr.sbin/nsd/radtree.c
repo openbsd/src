@@ -636,11 +636,13 @@ radnode_cleanup_onechild(struct region* region, struct radnode* n,
 		return 0;
 	}
 	/* we know that .str and join are malloced, thus aligned */
-	memcpy(join, par->array[pidx].str, par->array[pidx].len);
+	if(par->array[pidx].str)
+	    memcpy(join, par->array[pidx].str, par->array[pidx].len);
 	/* the array lookup is gone, put its character in the lookup string*/
 	join[par->array[pidx].len] = child->pidx + n->offset;
 	/* but join+len may not be aligned */
-	memmove(join+par->array[pidx].len+1, n->array[0].str, n->array[0].len);
+	if(n->array[0].str)
+	    memmove(join+par->array[pidx].len+1, n->array[0].str, n->array[0].len);
 	region_recycle(region, par->array[pidx].str, par->array[pidx].len);
 	par->array[pidx].str = join;
 	par->array[pidx].len = joinlen;

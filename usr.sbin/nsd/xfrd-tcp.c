@@ -490,6 +490,14 @@ xfrd_tcp_open(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
 	int fd, family, conn;
 	struct timeval tv;
 	assert(zone->tcp_conn != -1);
+
+	/* if there is no next master, fallback to use the first one */
+	/* but there really should be a master set */
+	if(!zone->master) {
+		zone->master = zone->zone_options->pattern->request_xfr;
+		zone->master_num = 0;
+	}
+
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s open tcp conn to %s",
 		zone->apex_str, zone->master->ip_address_spec));
 	tp->tcp_r->is_reading = 1;
@@ -879,7 +887,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 			assert(zone->round_num == -1);
 			break;
 		case xfrd_packet_notimpl:
-			zone->master->ixfr_disabled = time(NULL);
+			xfrd_disable_ixfr(zone);
 			xfrd_tcp_release(xfrd->tcp_set, zone);
 			/* query next server */
 			xfrd_make_request(zone);

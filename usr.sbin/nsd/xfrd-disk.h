@@ -14,7 +14,7 @@ struct xfrd_state;
 struct nsd;
 
 /* magic string to identify xfrd state file */
-#define XFRD_FILE_MAGIC "NSDXFRD1"
+#define XFRD_FILE_MAGIC "NSDXFRD2"
 
 /* read from state file as many zones as possible (until error/eof).*/
 void xfrd_read_state(struct xfrd_state* xfrd);

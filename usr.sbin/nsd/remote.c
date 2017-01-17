@@ -1469,7 +1469,7 @@ repat_interrupt_zones(xfrd_state_t* xfrd, nsd_options_t* newopt)
 			xz->master = 0;
 			xz->master_num = 0;
 			xz->next_master = -1;
-			xz->round_num = 0; /* fresh set of retries */
+			xz->round_num = -1; /* fresh set of retries */
 		}
 	}
 	/* if notify list changed:
