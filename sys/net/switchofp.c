@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.57 2017/01/17 16:47:55 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.58 2017/01/17 16:54:40 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1599,8 +1599,8 @@ swofp_flow_timeout(struct switch_softc *sc)
 			if (swfe->swfe_idle_timeout) {
 				timespecsub(&now, &swfe->swfe_idle_time, &idle);
 				if (swfe->swfe_idle_timeout < idle.tv_sec) {
-					DPRINTF(sc, "flow(id:%d) expired "
-					    "by idle timeout\n", swfe->swfe_id);
+					DPRINTF(sc, "flow expired "
+					    "by idle timeout\n");
 					swofp_flow_entry_delete(sc, swft, swfe,
 					    OFP_FLOWREM_REASON_IDLE_TIMEOUT);
 					continue;
@@ -1610,8 +1610,8 @@ swofp_flow_timeout(struct switch_softc *sc)
 				timespecsub(&now, &swfe->swfe_installed_time,
 				    &duration);
 				if (swfe->swfe_hard_timeout < duration.tv_sec) {
-					DPRINTF(sc, "flow(id:%d) expired "
-					    "by hard timeout\n", swfe->swfe_id);
+					DPRINTF(sc, "flow expired "
+					    "by hard timeout\n");
 					swofp_flow_entry_delete(sc, swft, swfe,
 					    OFP_FLOWREM_REASON_HARD_TIMEOUT);
 				}
