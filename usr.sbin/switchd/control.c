@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.8 2017/01/17 22:10:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2010-2016 Reyk Floeter <reyk@openbsd.org>
@@ -69,7 +69,7 @@ control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	/*
 	 * pledge in the control process:
- 	 * stdio - for malloc and basic I/O including events.
+	 * stdio - for malloc and basic I/O including events.
 	 * cpath - for managing the control socket.
 	 * unix - for the control socket.
 	 * recvfd - for the proc fd exchange.

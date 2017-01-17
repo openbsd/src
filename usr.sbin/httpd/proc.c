@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.35 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.36 2017/01/17 22:10:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -208,7 +208,7 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 		proc_setup(ps, procs, nproc);
 
 		/*
-		 * Create the children sockets so we can use them 
+		 * Create the children sockets so we can use them
 		 * to distribute the rest of the socketpair()s using
 		 * proc_connect() later.
 		 */
