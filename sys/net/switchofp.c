@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.55 2017/01/17 12:30:35 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.56 2017/01/17 12:34:21 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4074,8 +4074,11 @@ swofp_apply_set_field_ether(struct mbuf *m, int off,
 		default:
 			break;
 		}
-		memcpy(swfcl->swfcl_vlan, pre_swfcl->swfcl_vlan,
-		    sizeof(*swfcl->swfcl_vlan));
+
+		/* Update the classifier if it exists. */
+		if (swfcl->swfcl_vlan)
+			memcpy(swfcl->swfcl_vlan, pre_swfcl->swfcl_vlan,
+			    sizeof(*swfcl->swfcl_vlan));
 	}
 
 	if (pre_swfcl->swfcl_ether) {
