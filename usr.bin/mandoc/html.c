@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.65 2017/01/17 15:32:39 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.66 2017/01/18 19:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -36,58 +36,66 @@
 struct	htmldata {
 	const char	 *name;
 	int		  flags;
-#define	HTML_CLRLINE	 (1 << 0)
-#define	HTML_NOSTACK	 (1 << 1)
-#define	HTML_AUTOCLOSE	 (1 << 2) /* Tag has auto-closure. */
+#define	HTML_NOSTACK	 (1 << 0)
+#define	HTML_AUTOCLOSE	 (1 << 1)
+#define	HTML_NLBEFORE	 (1 << 2)
+#define	HTML_NLBEGIN	 (1 << 3)
+#define	HTML_NLEND	 (1 << 4)
+#define	HTML_NLAFTER	 (1 << 5)
+#define	HTML_NLAROUND	 (HTML_NLBEFORE | HTML_NLAFTER)
+#define	HTML_NLINSIDE	 (HTML_NLBEGIN | HTML_NLEND)
+#define	HTML_NLALL	 (HTML_NLAROUND | HTML_NLINSIDE)
+#define	HTML_INDENT	 (1 << 6)
+#define	HTML_NOINDENT	 (1 << 7)
 };
 
 static	const struct htmldata htmltags[TAG_MAX] = {
-	{"html",	HTML_CLRLINE}, /* TAG_HTML */
-	{"head",	HTML_CLRLINE}, /* TAG_HEAD */
-	{"body",	HTML_CLRLINE}, /* TAG_BODY */
-	{"meta",	HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_META */
-	{"title",	HTML_CLRLINE}, /* TAG_TITLE */
-	{"div",		HTML_CLRLINE}, /* TAG_DIV */
-	{"h1",		0}, /* TAG_H1 */
-	{"h2",		0}, /* TAG_H2 */
-	{"span",	0}, /* TAG_SPAN */
-	{"link",	HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_LINK */
-	{"br",		HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_BR */
-	{"a",		0}, /* TAG_A */
-	{"table",	HTML_CLRLINE}, /* TAG_TABLE */
-	{"tbody",	HTML_CLRLINE}, /* TAG_TBODY */
-	{"col",		HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_COL */
-	{"tr",		HTML_CLRLINE}, /* TAG_TR */
-	{"td",		HTML_CLRLINE}, /* TAG_TD */
-	{"li",		HTML_CLRLINE}, /* TAG_LI */
-	{"ul",		HTML_CLRLINE}, /* TAG_UL */
-	{"ol",		HTML_CLRLINE}, /* TAG_OL */
-	{"dl",		HTML_CLRLINE}, /* TAG_DL */
-	{"dt",		HTML_CLRLINE}, /* TAG_DT */
-	{"dd",		HTML_CLRLINE}, /* TAG_DD */
-	{"blockquote",	HTML_CLRLINE}, /* TAG_BLOCKQUOTE */
-	{"pre",		HTML_CLRLINE }, /* TAG_PRE */
-	{"b",		0 }, /* TAG_B */
-	{"i",		0 }, /* TAG_I */
-	{"code",	0 }, /* TAG_CODE */
-	{"small",	0 }, /* TAG_SMALL */
-	{"style",	HTML_CLRLINE}, /* TAG_STYLE */
-	{"math",	HTML_CLRLINE}, /* TAG_MATH */
-	{"mrow",	0}, /* TAG_MROW */
-	{"mi",		0}, /* TAG_MI */
-	{"mo",		0}, /* TAG_MO */
-	{"msup",	0}, /* TAG_MSUP */
-	{"msub",	0}, /* TAG_MSUB */
-	{"msubsup",	0}, /* TAG_MSUBSUP */
-	{"mfrac",	0}, /* TAG_MFRAC */
-	{"msqrt",	0}, /* TAG_MSQRT */
-	{"mfenced",	0}, /* TAG_MFENCED */
-	{"mtable",	0}, /* TAG_MTABLE */
-	{"mtr",		0}, /* TAG_MTR */
-	{"mtd",		0}, /* TAG_MTD */
-	{"munderover",	0}, /* TAG_MUNDEROVER */
-	{"munder",	0}, /* TAG_MUNDER*/
-	{"mover",	0}, /* TAG_MOVER*/
+	{"html",	HTML_NLALL},
+	{"head",	HTML_NLALL | HTML_INDENT},
+	{"body",	HTML_NLALL},
+	{"meta",	HTML_NOSTACK | HTML_AUTOCLOSE | HTML_NLALL},
+	{"title",	HTML_NLAROUND},
+	{"div",		HTML_NLAROUND},
+	{"h1",		HTML_NLAROUND},
+	{"h2",		HTML_NLAROUND},
+	{"span",	0},
+	{"link",	HTML_NOSTACK | HTML_AUTOCLOSE | HTML_NLALL},
+	{"br",		HTML_NOSTACK | HTML_AUTOCLOSE | HTML_NLALL},
+	{"a",		0},
+	{"table",	HTML_NLALL | HTML_INDENT},
+	{"tbody",	HTML_NLALL | HTML_INDENT},
+	{"col",		HTML_NOSTACK | HTML_AUTOCLOSE | HTML_NLALL},
+	{"tr",		HTML_NLALL | HTML_INDENT},
+	{"td",		HTML_NLAROUND},
+	{"li",		HTML_NLAROUND | HTML_INDENT},
+	{"ul",		HTML_NLALL | HTML_INDENT},
+	{"ol",		HTML_NLALL | HTML_INDENT},
+	{"dl",		HTML_NLALL | HTML_INDENT},
+	{"dt",		HTML_NLAROUND},
+	{"dd",		HTML_NLAROUND | HTML_INDENT},
+	{"blockquote",	HTML_NLALL | HTML_INDENT},
+	{"pre",		HTML_NLALL | HTML_NOINDENT},
+	{"b",		0},
+	{"i",		0},
+	{"code",	0},
+	{"small",	0},
+	{"style",	HTML_NLALL | HTML_INDENT},
+	{"math",	HTML_NLALL | HTML_INDENT},
+	{"mrow",	0},
+	{"mi",		0},
+	{"mo",		0},
+	{"msup",	0},
+	{"msub",	0},
+	{"msubsup",	0},
+	{"mfrac",	0},
+	{"msqrt",	0},
+	{"mfenced",	0},
+	{"mtable",	0},
+	{"mtr",		0},
+	{"mtd",		0},
+	{"munderover",	0},
+	{"munder",	0},
+	{"mover",	0},
 };
 
 static	const char	*const roffscales[SCALE_MAX] = {
@@ -104,6 +112,8 @@ static	const char	*const roffscales[SCALE_MAX] = {
 };
 
 static	void	 a2width(const char *, struct roffsu *);
+static	void	 html_endline(struct html *);
+static	void	 html_indent(struct html *);
 static	void	 print_ctag(struct html *, struct tag *);
 static	int	 print_escape(char);
 static	int	 print_encode(struct html *, const char *, const char *, int);
@@ -154,13 +164,19 @@ print_gen_head(struct html *h)
 	/*
 	 * Print a default style-sheet.
 	 */
+
 	t = print_otag(h, TAG_STYLE, "");
-	print_text(h, "table.head, table.foot { width: 100%; }\n"
-	      "td.head-rtitle, td.foot-os { text-align: right; }\n"
-	      "td.head-vol { text-align: center; }\n"
-	      "table.foot td { width: 50%; }\n"
-	      "table.head td { width: 33%; }\n"
-	      "div.spacer { margin: 1em 0; }\n");
+	print_text(h, "table.head, table.foot { width: 100%; }");
+	html_endline(h);
+	print_text(h, "td.head-rtitle, td.foot-os { text-align: right; }");
+	html_endline(h);
+	print_text(h, "td.head-vol { text-align: center; }");
+	html_endline(h);
+	print_text(h, "table.foot td { width: 50%; }");
+	html_endline(h);
+	print_text(h, "table.head td { width: 33%; }");
+	html_endline(h);
+	print_text(h, "div.spacer { margin: 1em 0; }");
 	print_tagq(h, t);
 
 	if (h->style)
@@ -433,11 +449,13 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 	const char	*attr;
 	char		*s;
 	double		 v;
-	int		 i, have_style;
+	int		 i, have_style, tflags;
+
+	tflags = htmltags[tag].flags;
 
 	/* Push this tags onto the stack of open scopes. */
 
-	if ( ! (HTML_NOSTACK & htmltags[tag].flags)) {
+	if ((tflags & HTML_NOSTACK) == 0) {
 		t = mandoc_malloc(sizeof(struct tag));
 		t->tag = tag;
 		t->next = h->tags.head;
@@ -445,16 +463,19 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 	} else
 		t = NULL;
 
-	if ( ! (HTML_NOSPACE & h->flags))
-		if ( ! (HTML_CLRLINE & htmltags[tag].flags)) {
-			/* Manage keeps! */
-			if ( ! (HTML_KEEP & h->flags)) {
-				if (HTML_PREKEEP & h->flags)
-					h->flags |= HTML_KEEP;
-				putchar(' ');
-			} else
-				printf("&#160;");
+	if (tflags & HTML_NLBEFORE)
+		html_endline(h);
+	if (h->flags & HTML_NLDONE)
+		html_indent(h);
+	else if ((h->flags & HTML_NOSPACE) == 0) {
+		if (h->flags & HTML_KEEP)
+			printf("&#160;");
+		else {
+			if (h->flags & HTML_PREKEEP)
+				h->flags |= HTML_KEEP;
+			putchar(' ');
 		}
+	}
 
 	if ( ! (h->flags & HTML_NONOSPACE))
 		h->flags &= ~HTML_NOSPACE;
@@ -594,10 +615,15 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 
 	putchar('>');
 
-	h->flags |= HTML_NOSPACE;
+	if (tflags & HTML_NLBEGIN)
+		html_endline(h);
+	else
+		h->flags |= HTML_NOSPACE;
 
-	if ((HTML_AUTOCLOSE | HTML_CLRLINE) & htmltags[tag].flags)
-		putchar('\n');
+	if (tflags & HTML_INDENT)
+		h->indent++;
+	if (tflags & HTML_NOINDENT)
+		h->noindent++;
 
 	return t;
 }
@@ -605,6 +631,7 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 static void
 print_ctag(struct html *h, struct tag *tag)
 {
+	int	 tflags;
 
 	/*
 	 * Remember to close out and nullify the current
@@ -615,11 +642,18 @@ print_ctag(struct html *h, struct tag *tag)
 	if (tag == h->tblt)
 		h->tblt = NULL;
 
+	tflags = htmltags[tag->tag].flags;
+
+	if (tflags & HTML_INDENT)
+		h->indent--;
+	if (tflags & HTML_NOINDENT)
+		h->noindent--;
+	if (tflags & HTML_NLEND)
+		html_endline(h);
+	html_indent(h);
 	printf("</%s>", htmltags[tag->tag].name);
-	if (HTML_CLRLINE & htmltags[tag->tag].flags) {
-		h->flags |= HTML_NOSPACE;
-		putchar('\n');
-	}
+	if (tflags & HTML_NLAFTER)
+		html_endline(h);
 
 	h->tags.head = tag->next;
 	free(tag);
@@ -630,14 +664,13 @@ print_gen_decls(struct html *h)
 {
 
 	puts("<!DOCTYPE html>");
+	h->flags |= HTML_NLDONE;
 }
 
 void
 print_text(struct html *h, const char *word)
 {
-
-	if ( ! (HTML_NOSPACE & h->flags)) {
-		/* Manage keeps! */
+	if ((h->flags & (HTML_NLDONE | HTML_NOSPACE)) == 0) {
 		if ( ! (HTML_KEEP & h->flags)) {
 			if (HTML_PREKEEP & h->flags)
 				h->flags |= HTML_KEEP;
@@ -659,6 +692,7 @@ print_text(struct html *h, const char *word)
 		print_otag(h, TAG_I, "");
 		break;
 	default:
+		html_indent(h);
 		break;
 	}
 
@@ -711,6 +745,39 @@ print_paragraph(struct html *h)
 	print_tagq(h, t);
 }
 
+/*
+ * If something was printed on the current output line, end it.
+ * Not to be called right after html_indent().
+ */
+static void
+html_endline(struct html *h)
+{
+	if (h->flags & HTML_NLDONE)
+		return;
+
+	putchar('\n');
+	h->flags |= HTML_NLDONE | HTML_NOSPACE;
+}
+
+/*
+ * If at the beginning of a new output line,
+ * perform indentation and mark the line as containing output.
+ * Make sure to really produce some output right afterwards,
+ * but do not use print_otag() for producing it.
+ */
+static void
+html_indent(struct html *h)
+{
+	int	 i;
+
+	if ((h->flags & HTML_NLDONE) == 0)
+		return;
+
+	if (h->noindent == 0)
+		for (i = 0; i < h->indent * 2; i++)
+			putchar(' ');
+	h->flags &= ~(HTML_NLDONE | HTML_NOSPACE);
+}
 
 /*
  * Calculate the scaling unit passed in a `-width' argument.  This uses

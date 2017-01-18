@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.76 2017/01/17 15:32:39 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.77 2017/01/18 19:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -164,7 +164,6 @@ html_man(void *arg, const struct roff_man *man)
 
 	print_man_nodelist(&man->meta, man->first, &mh, h);
 	print_tagq(h, t);
-	putchar('\n');
 }
 
 static void

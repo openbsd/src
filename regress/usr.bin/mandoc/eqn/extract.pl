@@ -12,6 +12,7 @@ while (<>) {
 		next unless length;
 	}
 	s/<\/math>.*// and $ended = 1;
+	s/^ *//;
 	print "$_\n" if length;
 	exit 0 if $ended;
 }

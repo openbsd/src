@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.124 2017/01/17 15:32:39 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.125 2017/01/18 19:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -316,7 +316,6 @@ html_mdoc(void *arg, const struct roff_man *mdoc)
 	print_mdoc_nodelist(&mdoc->meta, mdoc->first->child, h);
 	mdoc_root_post(&mdoc->meta, mdoc->first->child, h);
 	print_tagq(h, t);
-	putchar('\n');
 }
 
 static void
