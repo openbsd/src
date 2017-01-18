@@ -19,8 +19,8 @@ class Sniff1(threading.Thread):
 			self.packet = self.captured[0]
 
 dstaddr=sys.argv[1]
-pid=os.getpid() & 0xffff
-hdr=IPv6(src=SRC_OUT6, dst=dstaddr)/ICMPv6EchoRequest(id=pid)
+eid=os.getpid() & 0xffff
+hdr=IPv6(src=SRC_OUT6, dst=dstaddr)/ICMPv6EchoRequest(id=eid)
 payload="a" * (1400 - len(str(hdr)))
 ip=hdr/payload
 eth=Ether(src=SRC_MAC, dst=PF_MAC)/ip

@@ -12,20 +12,22 @@ import os
 from addr import *
 from scapy.all import *
 
-pid=os.getpid() & 0xffff
+pid=os.getpid()
+eid=pid & 0xffff
 payload=100 * "ABCDEFGHIJKLMNOP"
-packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/ICMPv6EchoRequest(id=pid, data=payload)
+packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/ICMPv6EchoRequest(id=eid, data=payload)
 request_cksum=ICMPv6Unknown(str(packet.payload)).cksum
 print "request cksum=%#x" % (request_cksum)
 frag=[]
-frag.append(IPv6ExtHdrFragment(nh=58, id=pid, m=1)/str(packet)[40:56])
+fid=pid & 0xffffffff
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/str(packet)[40:56])
 offset=2
 chunk=4
 while 40+8*(offset+chunk) < len(payload):
-	frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=offset, m=1)/
+	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=offset, m=1)/
 	    str(packet)[40+(8*offset):40+8*(offset+chunk)])
 	offset+=chunk
-frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=offset)/
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=offset)/
     str(packet)[40+(8*offset):])
 eth=[]
 for f in frag:
@@ -47,7 +49,7 @@ for a in ans:
 	    icmp6types[a.payload.payload.payload.type] == 'Echo Reply':
 		id=a.payload.payload.payload.id
 		print "id=%#x" % (id)
-		if id != pid:
+		if id != eid:
 			print "WRONG ECHO REPLY ID"
 			exit(2)
 		reply_cksum=a.payload.payload.payload.cksum

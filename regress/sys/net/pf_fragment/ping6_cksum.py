@@ -6,10 +6,10 @@ from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]
-pid=os.getpid() & 0xffff
+eid=os.getpid() & 0xffff
 payload="a" * 1452
 p=(Ether(src=SRC_MAC, dst=PF_MAC)/IPv6(src=SRC_OUT6, dst=dstaddr)/
-    ICMPv6EchoRequest(id=pid, data=payload))
+    ICMPv6EchoRequest(id=eid, data=payload))
 echocksum=IPv6(str(p.payload)).payload.cksum
 print "echocksum=%#04x" % (echocksum)
 a=srp1(p, iface=SRC_IF, timeout=2)

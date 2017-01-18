@@ -5,10 +5,10 @@ from addr import *
 from scapy.all import *
 
 ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
-port=os.getpid() & 0xffff
+tport=os.getpid() & 0xffff
 
 print "Send SYN packet, receive SYN+ACK."
-syn=TCP(sport=port, dport='chargen', seq=1, flags='S', window=(2**16)-1)
+syn=TCP(sport=tport, dport='chargen', seq=1, flags='S', window=(2**16)-1)
 synack=sr1(ip/syn, iface=LOCAL_IF, timeout=5)
 
 if synack is None:

@@ -23,29 +23,29 @@ class Sniff1(threading.Thread):
 		if self.captured:
 			self.packet = self.captured[0]
 
-fake_port=os.getpid() & 0xffff
+tport=os.getpid() & 0xffff
 
 ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 
 print "Send SYN packet, receive SYN+ACK"
-syn=TCP(sport=fake_port, dport='echo', seq=1, flags='S', window=(2**16)-1)
-syn_ack=sr1(ip/syn, iface=LOCAL_IF, timeout=5)
+syn=TCP(sport=tport, dport='echo', seq=1, flags='S', window=(2**16)-1)
+synack=sr1(ip/syn, iface=LOCAL_IF, timeout=5)
 
-if syn_ack is None:
+if synack is None:
 	print "ERROR: no matching SYN+ACK packet received"
 	exit(1)
 
 print "Send ACK packet to finish handshake."
-ack=TCP(sport=syn_ack.dport, dport=syn_ack.sport, seq=2, flags='A',
-    ack=syn_ack.seq+1)
+ack=TCP(sport=synack.dport, dport=synack.sport, seq=2, flags='A',
+    ack=synack.seq+1)
 send(ip/ack, iface=LOCAL_IF)
 
 print "Connection is established, send bogus SYN, expect challenge ACK"
-bogus_syn=TCP(sport=fake_port, dport='echo', seq=1000000, flags='S',
+bogus_syn=TCP(sport=syn.sport, dport=syn.dport, seq=1000000, flags='S',
     window=(2**16)-1)
 sniffer = Sniff1();
-sniffer.filter = "src %s and tcp port echo and dst %s and tcp port %u " \
-    "and tcp[tcpflags] = tcp-ack" % (REMOTE_ADDR, FAKE_NET_ADDR, fake_port)
+sniffer.filter = "src %s and tcp port %u and dst %s and tcp port %u " \
+    "and tcp[tcpflags] = tcp-ack" % (ip.dst, syn.dport, ip.src, syn.sport)
 sniffer.start()
 time.sleep(1)
 send(ip/bogus_syn, iface=LOCAL_IF)
@@ -56,9 +56,9 @@ if challenge_ack is None:
 	print "ERROR: no matching ACK packet received"
 	exit(1)
 
-if challenge_ack.getlayer(TCP).seq != (syn_ack.seq + 1):
+if challenge_ack.getlayer(TCP).seq != (synack.seq + 1):
 	print "ERROR: expecting seq %d got %d in challange ack" % \
-	    (challenge_ack.getlayer(TCP).seq, (syn_ack.seq + 1))
+	    (challenge_ack.getlayer(TCP).seq, (synack.seq + 1))
 	exit(1)
 
 exit(0)

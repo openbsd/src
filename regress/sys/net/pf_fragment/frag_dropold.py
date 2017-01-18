@@ -27,16 +27,18 @@ class Sniff1(threading.Thread):
 			self.packet = self.captured[0]
 
 dstaddr=sys.argv[1]
-pid=os.getpid() & 0xffff
+pid=os.getpid()
+eid=pid & 0xffff
 payload="ABCDEFGHIJKLOMNOQRSTUVWX"
 dummy="01234567"
-packet=IP(src=SRC_OUT, dst=dstaddr)/ICMP(id=pid)/payload
+packet=IP(src=SRC_OUT, dst=dstaddr)/ICMP(type='echo-request', id=eid)/payload
+fid=pid & 0xffff
 frag0=str(packet)[20:28]
 frag1=dummy
 frag2=str(packet)[28:52]
-pkt0=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=pid, frag=0, flags='MF')/frag0
-pkt1=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=pid, frag=2, flags='MF')/frag1
-pkt2=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=pid, frag=1)/frag2
+pkt0=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=fid, frag=0, flags='MF')/frag0
+pkt1=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=fid, frag=2, flags='MF')/frag1
+pkt2=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=fid, frag=1)/frag2
 eth=[]
 eth.append(Ether(src=SRC_MAC, dst=PF_MAC)/pkt0)
 eth.append(Ether(src=SRC_MAC, dst=PF_MAC)/pkt1)
@@ -56,7 +58,7 @@ if a and a.type == ETH_P_IP and \
     icmptypes[a.payload.payload.type] == 'echo-reply':
 	id=a.payload.payload.id
 	print "id=%#x" % (id)
-	if id != pid:
+	if id != eid:
 		print "WRONG ECHO REPLY ID"
 		exit(2)
 	load=a.payload.payload.payload.load

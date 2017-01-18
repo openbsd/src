@@ -6,8 +6,8 @@ from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]
-pid=os.getpid() & 0xffff
-hdr=IP(flags="DF", src=SRC_OUT, dst=dstaddr)/ICMP(id=pid)
+eid=os.getpid() & 0xffff
+hdr=IP(flags="DF", src=SRC_OUT, dst=dstaddr)/ICMP(type='echo-request', id=eid)
 payload="a" * (1400 - len(str(hdr)))
 ip=hdr/payload
 eth=Ether(src=SRC_MAC, dst=PF_MAC)/ip

@@ -6,10 +6,13 @@ from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]
-pid=os.getpid() & 0xffff
+uport=os.getpid() & 0xffff
+# inetd ignores UDP packets from privileged port or nfs
+if uport < 1024 or uport == 2049:
+	port+=1024
 payload="a" * 1472
 p=(Ether(src=SRC_MAC, dst=PF_MAC)/IP(flags="DF", src=SRC_OUT, dst=dstaddr)/
-    UDP(sport=pid,dport=9)/payload)
+    UDP(sport=uport, dport=9)/payload)
 ipcksum=IP(str(p.payload)).chksum
 print "ipcksum=%#04x" % (ipcksum)
 udpcksum=IP(str(p.payload)).payload.chksum

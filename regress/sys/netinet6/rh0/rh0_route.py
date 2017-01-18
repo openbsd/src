@@ -7,11 +7,11 @@ import os
 from addr import *
 from scapy.all import *
 
-pid=os.getpid() & 0xffff
+eid=os.getpid() & 0xffff
 payload="ABCDEFGHIJKLMNOP"
 packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/\
     IPv6ExtHdrRouting(addresses=[SRT_IN6, SRT_OUT6], segleft=2)/\
-    ICMPv6EchoRequest(id=pid, data=payload)
+    ICMPv6EchoRequest(id=eid, data=payload)
 eth=Ether(src=SRC_MAC, dst=DST_MAC)/packet
 
 if os.fork() == 0:

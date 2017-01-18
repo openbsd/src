@@ -6,10 +6,10 @@ from scapy.all import *
 
 e=Ether(src=LOCAL_MAC, dst=REMOTE_MAC)
 ip6=IPv6(src=FAKE_NET_ADDR6, dst=REMOTE_ADDR6)
-port=os.getpid() & 0xffff
+tport=os.getpid() & 0xffff
 
 print "Send SYN packet, receive SYN+ACK."
-syn=TCP(sport=port, dport='chargen', seq=1, flags='S', window=(2**16)-1)
+syn=TCP(sport=tport, dport='chargen', seq=1, flags='S', window=(2**16)-1)
 synack=srp1(e/ip6/syn, iface=LOCAL_IF, timeout=5)
 
 if synack is None:

@@ -8,15 +8,15 @@ from scapy.all import *
 
 e=Ether(src=LOCAL_MAC, dst=REMOTE_MAC)
 ip6=IPv6(src=FAKE_NET_ADDR6, dst=REMOTE_ADDR6)
-port=os.getpid() & 0xffff
-# inetd ignores packets from privileged port or nfs
-if port < 1024 or port == 2049:
-	port+=1024
+uport=os.getpid() & 0xffff
+# inetd ignores UDP packets from privileged port or nfs
+if uport < 1024 or uport == 2049:
+	uport+=1024
 
 print "Send UDP packet with 1400 octets payload, receive echo."
 data=''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase +
     string.digits) for _ in range(1400))
-udp=UDP(sport=port, dport='echo')/data
+udp=UDP(sport=uport, dport='echo')/data
 echo=srp1(e/ip6/udp, iface=LOCAL_IF, timeout=5)
 
 if echo is None:

@@ -24,8 +24,8 @@ srcaddr=sys.argv[1]
 dstaddr=sys.argv[2]
 size=int(sys.argv[3])
 expect=int(sys.argv[4])
-pid=os.getpid() & 0xffff
-hdr=IPv6(src=srcaddr, dst=dstaddr)/ICMPv6EchoRequest(id=pid)
+eid=os.getpid() & 0xffff
+hdr=IPv6(src=srcaddr, dst=dstaddr)/ICMPv6EchoRequest(id=eid)
 payload="a" * (size - len(str(hdr)))
 ip=hdr/payload
 iplen=IPv6(str(ip)).plen

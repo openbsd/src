@@ -18,18 +18,20 @@ permute.append([2,0,1])
 permute.append([1,2,0])
 permute.append([2,1,0])
 
-pid=os.getpid() & 0xffff
+pid=os.getpid()
 payload="ABCDEFGHIJKLMNOP"
 for p in permute:
 	pid += 1
+	eid=pid & 0xffff
 	packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/ \
-	    ICMPv6EchoRequest(id=pid, data=payload)
+	    ICMPv6EchoRequest(id=eid, data=payload)
 	frag=[]
-	frag.append(IPv6ExtHdrFragment(nh=58, id=pid, m=1)/ \
+	fid=pid & 0xffffffff
+	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/ \
 	    str(packet)[40:48])
-	frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=1, m=1)/ \
+	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1, m=1)/ \
 	    str(packet)[48:56])
-	frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=2)/ \
+	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=2)/ \
 	    str(packet)[56:64])
 	eth=[]
 	for i in range(3):
@@ -49,7 +51,7 @@ for p in permute:
 		    icmp6types[a.payload.payload.type] == 'Echo Reply':
 			id=a.payload.payload.id
 			print "id=%#x" % (id)
-			if id != pid:
+			if id != eid:
 				print "WRONG ECHO REPLY ID"
 				exit(2)
 			data=a.payload.payload.data

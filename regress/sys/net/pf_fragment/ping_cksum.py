@@ -6,10 +6,10 @@ from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]
-pid=os.getpid() & 0xffff
+eid=os.getpid() & 0xffff
 payload="a" * 1472
 p=(Ether(src=SRC_MAC, dst=PF_MAC)/IP(flags="DF", src=SRC_OUT, dst=dstaddr)/
-    ICMP(id=pid)/payload)
+    ICMP(type='echo-request', id=eid)/payload)
 ipcksum=IP(str(p.payload)).chksum
 print "ipcksum=%#04x" % (ipcksum)
 echocksum=IP(str(p.payload)).payload.chksum

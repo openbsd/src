@@ -9,12 +9,17 @@ import os
 from addr import *
 from scapy.all import *
 
-pid=os.getpid() & 0xffff
+pid=os.getpid()
+uport=pid & 0xffff
+# inetd ignores UDP packets from privileged port or nfs
+if uport < 1024 or uport == 2049:
+	port+=1024
 payload="ABCDEFGHIJKLMNOP"
-packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/UDP(sport=pid, dport=7)/payload
+packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/UDP(sport=uport, dport=7)/payload
 frag=[]
-frag.append(IPv6ExtHdrFragment(nh=17, id=pid, m=1)/str(packet)[40:48])
-frag.append(IPv6ExtHdrFragment(nh=17, id=pid, offset=1)/str(packet)[48:64])
+fid=pid & 0xffffffff
+frag.append(IPv6ExtHdrFragment(nh=17, id=fid, m=1)/str(packet)[40:48])
+frag.append(IPv6ExtHdrFragment(nh=17, id=fid, offset=1)/str(packet)[48:64])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=SRC_OUT6, dst=DST_IN6)/f
@@ -33,7 +38,7 @@ for a in ans:
 	    a.payload.payload.sport == 7:
 		port=a.payload.payload.dport
 		print "port=%d" % (port)
-		if port != pid:
+		if port != uport:
 			print "WRONG UDP ECHO REPLY PORT"
 			exit(2)
 		data=a.payload.payload.load

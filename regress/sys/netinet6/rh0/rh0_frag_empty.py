@@ -8,12 +8,14 @@ import os
 from addr import *
 from scapy.all import *
 
-pid=os.getpid() & 0xffff
+pid=os.getpid()
+eid=pid & 0xffff
+fid=pid & 0xffffffff
 payload="ABCDEFGHIJKLMNOP"
 packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/\
-    IPv6ExtHdrFragment(id=pid)/\
+    IPv6ExtHdrFragment(id=fid)/\
     IPv6ExtHdrRouting(addresses=[])/\
-    ICMPv6EchoRequest(id=pid, data=payload)
+    ICMPv6EchoRequest(id=eid, data=payload)
 eth=Ether(src=SRC_MAC, dst=DST_MAC)/packet
 
 if os.fork() == 0:
@@ -30,7 +32,7 @@ for a in ans:
 		reply=a.payload.payload
 		id=reply.id
 		print "id=%#x" % (id)
-		if id != pid:
+		if id != eid:
 			print "WRONG ECHO REPLY ID"
 			exit(2)
 		data=reply.data
