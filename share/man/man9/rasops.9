@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rasops.9,v 1.16 2015/09/07 18:43:54 kettenis Exp $
+.\"	$OpenBSD: rasops.9,v 1.17 2017/01/18 20:07:40 fcambus Exp $
 .\"     $NetBSD: rasops.9,v 1.4 2002/02/13 08:18:50 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 7 2015 $
+.Dd $Mdocdate: January 18 2017 $
 .Dt RASOPS 9
 .Os
 .Sh NAME
@@ -130,7 +130,7 @@ The value of the
 .Em ri_flg
 member is formed by OR'ing the following values:
 .Pp
-.Bl -tag -offset indent -width RI_CURSORCLIP -compact
+.Bl -tag -offset indent -width RI_CLEARMARGINS -compact
 .It RI_FULLCLEAR
 Force eraserows() to clear the whole screen instead of only text lines,
 when invoked with an
@@ -144,6 +144,8 @@ Specifies that the frame buffer endianness is different from the CPU's.
 Set when the text cursor is enabled.
 .It RI_CLEAR
 Clear the display upon initialization.
+.It RI_CLEARMARGINS
+Clear display margins upon initialization.
 .It RI_CENTER
 Center the text area.
 .\" Only honoured if option RASOPS_CLIPPING which we don't use.
