@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.294 2017/01/13 18:59:12 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.295 2017/01/18 04:28:45 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -140,7 +140,7 @@ struct filter_rule	*get_rule(enum action_types);
 
 int		 getcommunity(char *);
 int		 parsecommunity(struct filter_community *, char *);
-u_int		 getlargecommunity(char *);
+int64_t 	 getlargecommunity(char *);
 int		 parselargecommunity(struct filter_largecommunity *, char *);
 int		 parsesubtype(char *);
 int		 parseextvalue(char *, u_int32_t *);
@@ -2966,7 +2966,7 @@ parsecommunity(struct filter_community *c, char *s)
 	return (0);
 }
 
-u_int
+int64_t
 getlargecommunity(char *s)
 {
 	u_int		 val;
