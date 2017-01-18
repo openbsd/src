@@ -16,7 +16,7 @@ if synack is None:
 	print "ERROR: no SYN+ACK from chargen server received"
 	exit(1)
 
-print "Send ack packet, receive chargen data."
+print "Send ACK packet, receive chargen data."
 ack=TCP(sport=synack.dport, dport=synack.sport, seq=2, flags='A',
     ack=synack.seq+1, window=(2**16)-1)
 data=srp1(e/ip6/ack, iface=LOCAL_IF, timeout=5)
