@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.67 2017/01/18 08:47:00 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.68 2017/01/18 08:48:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -372,45 +372,36 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 	}
 
 	if (pflowr->addrmask & PFLOW_MASK_SRCIP) {
-		if (sc->sc_flowsrc != NULL &&
-		    sc->sc_flowsrc->sa_family != pflowr->flowsrc.ss_family) {
+		if (sc->sc_flowsrc != NULL)
 			free(sc->sc_flowsrc, M_DEVBUF, sc->sc_flowsrc->sa_len);
-			sc->sc_flowsrc = NULL;
-			if (sc->so != NULL) {
-				soclose(sc->so);
-				sc->so = NULL;
-			}
-		}
-
-		if (sc->sc_flowsrc == NULL) {
-			switch(pflowr->flowsrc.ss_family) {
-			case AF_INET:
-				if ((sc->sc_flowsrc = malloc(
-				    sizeof(struct sockaddr_in),
-				    M_DEVBUF, M_NOWAIT)) == NULL)
-					return (ENOMEM);
-				memcpy(sc->sc_flowsrc, &pflowr->flowsrc,
-				    sizeof(struct sockaddr_in));
-				sc->sc_flowsrc->sa_len = sizeof(struct
-				    sockaddr_in);
-				break;
-			case AF_INET6:
-				if ((sc->sc_flowsrc = malloc(
-				    sizeof(struct sockaddr_in6),
-				    M_DEVBUF, M_NOWAIT)) == NULL)
-					return (ENOMEM);
-				memcpy(sc->sc_flowsrc, &pflowr->flowsrc,
-				    sizeof(struct sockaddr_in6));
-				sc->sc_flowsrc->sa_len = sizeof(struct
-				    sockaddr_in6);
-				break;
-			default:
-				break;
-			}
-		}
+		sc->sc_flowsrc = NULL;
 		if (sc->so != NULL) {
 			soclose(sc->so);
 			sc->so = NULL;
+		}
+		switch(pflowr->flowsrc.ss_family) {
+		case AF_INET:
+			if ((sc->sc_flowsrc = malloc(
+			    sizeof(struct sockaddr_in),
+			    M_DEVBUF, M_NOWAIT)) == NULL)
+				return (ENOMEM);
+			memcpy(sc->sc_flowsrc, &pflowr->flowsrc,
+			    sizeof(struct sockaddr_in));
+			sc->sc_flowsrc->sa_len = sizeof(struct
+			    sockaddr_in);
+			break;
+		case AF_INET6:
+			if ((sc->sc_flowsrc = malloc(
+			    sizeof(struct sockaddr_in6),
+			    M_DEVBUF, M_NOWAIT)) == NULL)
+				return (ENOMEM);
+			memcpy(sc->sc_flowsrc, &pflowr->flowsrc,
+			    sizeof(struct sockaddr_in6));
+			sc->sc_flowsrc->sa_len = sizeof(struct
+			    sockaddr_in6);
+			break;
+		default:
+			break;
 		}
 	}
 
