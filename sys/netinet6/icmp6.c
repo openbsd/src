@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.195 2016/12/19 08:36:50 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.196 2017/01/18 17:59:01 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -216,8 +216,7 @@ icmp6_mtudisc_callback_register(void (*func)(struct sockaddr_in6 *, u_int))
 {
 	struct icmp6_mtudisc_callback *mc;
 
-	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
-	     mc = LIST_NEXT(mc, mc_list)) {
+	LIST_FOREACH(mc, &icmp6_mtudisc_callbacks, mc_list) {
 		if (mc->mc_func == func)
 			return;
 	}
@@ -1023,9 +1022,9 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	if (rt != NULL && ISSET(rt->rt_flags, RTF_HOST) &&
 	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
 	    (rt->rt_rmx.rmx_mtu > mtu || rt->rt_rmx.rmx_mtu == 0)) {
-	    	struct ifnet *ifp;
+		struct ifnet *ifp;
 
-	    	ifp = if_get(rt->rt_ifidx);
+		ifp = if_get(rt->rt_ifidx);
 		if (ifp != NULL && mtu < ifp->if_mtu) {
 			icmp6stat.icp6s_pmtuchg++;
 			rt->rt_rmx.rmx_mtu = mtu;
@@ -1038,8 +1037,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	 * Notify protocols that the MTU for this destination
 	 * has changed.
 	 */
-	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
-	     mc = LIST_NEXT(mc, mc_list))
+	LIST_FOREACH(mc, &icmp6_mtudisc_callbacks, mc_list)
 		(*mc->mc_func)(&sin6, m->m_pkthdr.ph_rtableid);
 }
 
