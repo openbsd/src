@@ -1046,7 +1046,7 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 		    timo);
 		mtx_leave(&sc->sc_nvslck);
 		if (rv == EWOULDBLOCK)
-			printf("%s: NVSP opertaion %d timed out\n",
+			printf("%s: NVSP operation %d timed out\n",
 			    sc->sc_dev.dv_xname, hdr->nvs_type);
 	}
 	return (rv);
@@ -1358,7 +1358,7 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 			hvn_release_cmd(sc, rc);
 			rv = 0;
 		} else if (rv == EWOULDBLOCK) {
-			printf("%s: RNDIS opertaion %d timed out\n",
+			printf("%s: RNDIS operation %d timed out\n",
 			    sc->sc_dev.dv_xname, hdr->rm_type);
 		}
 		break;
