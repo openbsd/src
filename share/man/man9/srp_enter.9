@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.14 2016/07/27 12:55:41 jca Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.15 2017/01/18 13:18:07 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2016 $
+.Dd $Mdocdate: January 18 2017 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@ must be used to ensure that the data is no longer in use via any srp
 structures.
 .Fn srp_swap
 uses atomic CPU operations to change the reference.
-.Fn srp_update_locked
+.Fn srp_swap_locked
 may be used if modifications to
 .Fa p
 are already serialised by the caller.
