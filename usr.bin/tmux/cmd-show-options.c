@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.36 2017/01/16 14:49:14 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.37 2017/01/18 08:40:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -131,7 +131,8 @@ cmd_show_options_one(struct cmd *self, struct cmdq_item *item,
 			cmdq_error(item, "ambiguous option: %s", name);
 			return (CMD_RETURN_ERROR);
 		}
-		if (options_match_get(oo, name, &idx, 0, &ambiguous) != NULL)
+		if (*name != '@' &&
+		    options_match_get(oo, name, &idx, 0, &ambiguous) != NULL)
 			return (CMD_RETURN_NORMAL);
 		cmdq_error(item, "unknown option: %s", name);
 		return (CMD_RETURN_ERROR);
