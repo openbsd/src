@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.3 2017/01/16 19:12:36 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2017/01/18 11:56:10 bluhm Exp $
 
 PROGS=		mmap-sysctl-copyin mmap-sysctl-copyout
 OBJS=		${PROGS:S/$/.o/}
-CLEANFILES=	diskimage
+CLEANFILES=	${PROGS} diskimage stamp-*
 
 .PHONY: disk nfs mount unconfig clean
 
@@ -34,10 +34,6 @@ unconfig:
 	-rmdir /mnt/regress-nfs-server 2>/dev/null || true
 	-vnconfig -u vnd0 2>/dev/null || true
 	-rm -f stamp-setup
-
-clean: _SUBDIRUSE unconfig
-	rm -f a.out [Ee]rrs mklog *.core y.tab.h stamp-* \
-	    ${PROGS} ${OBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 
 stamp-setup:
 	@echo '\n======== $@ ========'

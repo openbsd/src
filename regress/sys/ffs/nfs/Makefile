@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2017/01/16 19:12:36 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2017/01/18 11:56:10 bluhm Exp $
 
 TESTS=		chflags chmod chown link mkdir mkfifo open rename rmdir \
 		symlink truncate unlink
-CLEANFILES=	diskimage
+CLEANFILES=	diskimage stamp-*
 
 .PHONY: disk nfs mount unconfig clean
 
@@ -34,10 +34,6 @@ unconfig:
 	-rmdir /mnt/regress-nfs-server 2>/dev/null || true
 	-vnconfig -u vnd0 2>/dev/null || true
 	-rm -f stamp-setup
-
-clean: _SUBDIRUSE unconfig
-	rm -f a.out [Ee]rrs mklog *.core y.tab.h stamp-* \
-	    ${PROG} ${OBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 
 stamp-setup:
 	@echo '\n======== $@ ========'
