@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.14 2016/12/23 12:52:12 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.15 2017/01/18 22:18:47 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -1184,6 +1184,11 @@ xbf_ring_destroy(struct xbf_softc *sc)
 		free(sc->sc_xs_map, M_DEVBUF, sc->sc_xr_ndesc *
 		    sizeof(bus_dmamap_t));
 		sc->sc_xs_map = NULL;
+	}
+	if (sc->sc_xs_bb) {
+		free(sc->sc_xs_bb, M_DEVBUF, sc->sc_xr_ndesc *
+		    sizeof(struct xbf_dma_mem));
+		sc->sc_xs_bb = NULL;
 	}
 
 	xbf_dma_free(sc, &sc->sc_xr_dma);
