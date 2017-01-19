@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.1 2017/01/13 14:37:32 reyk Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.2 2017/01/19 10:16:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -44,6 +44,8 @@ struct vmmci_softc {
 	struct virtio_softc	*sc_virtio;
 	enum vmmci_cmd		 sc_cmd;
 	unsigned int		 sc_interval;
+	struct ksensordev	 sc_sensordev;
+	struct ksensor		 sc_sensor;
 	struct timeout		 sc_tick;
 };
 
@@ -51,6 +53,8 @@ int	vmmci_match(struct device *, void *, void *);
 void	vmmci_attach(struct device *, struct device *, void *);
 
 int	vmmci_config_change(struct virtio_softc *);
+void	vmmci_tick(void *);
+void	vmmci_tick_hook(struct device *);
 
 struct cfattach vmmci_ca = {
 	sizeof(struct vmmci_softc),
@@ -58,6 +62,14 @@ struct cfattach vmmci_ca = {
 	vmmci_attach,
 	NULL
 };
+
+/* Configuration registers */
+#define VMMCI_CONFIG_COMMAND	0
+#define VMMCI_CONFIG_TIME_SEC	4
+#define VMMCI_CONFIG_TIME_USEC	12
+
+/* Feature bits */
+#define VMMCI_F_TIMESYNC	(1<<0)
 
 struct cfdriver vmmci_cd = {
 	NULL, "vmmci", DV_DULL
@@ -77,6 +89,7 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vmmci_softc *sc = (struct vmmci_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
+	uint32_t features;
 
 	if (vsc->sc_child != NULL)
 		panic("already attached to something else");
@@ -87,7 +100,19 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_NET;
 	sc->sc_virtio = vsc;
 
-	virtio_negotiate_features(vsc, 0, NULL);
+	features = VMMCI_F_TIMESYNC;
+	features = virtio_negotiate_features(vsc, features, NULL);
+
+	if (features & VMMCI_F_TIMESYNC) {
+		strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+		    sizeof(sc->sc_sensordev.xname));
+		sc->sc_sensor.type = SENSOR_TIMEDELTA;
+		sc->sc_sensor.status = SENSOR_S_UNKNOWN;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
+		sensordev_install(&sc->sc_sensordev);
+
+		config_mountroot(self, vmmci_tick_hook);
+	}
 
 	printf("\n");
 }
@@ -96,8 +121,10 @@ int
 vmmci_config_change(struct virtio_softc *vsc)
 {
 	struct vmmci_softc *sc = (struct vmmci_softc *)vsc->sc_child;
-	int cmd = virtio_read_device_config_1(vsc, 0);
+	int cmd;
 
+	/* Check for command */
+	cmd = virtio_read_device_config_1(vsc, VMMCI_CONFIG_COMMAND);
 	if (cmd == sc->sc_cmd)
 		return (0);
 	sc->sc_cmd = cmd;
@@ -118,4 +145,39 @@ vmmci_config_change(struct virtio_softc *vsc)
 	}
 
 	return (1);
+}
+
+void
+vmmci_tick(void *arg)
+{
+	struct vmmci_softc	*sc = arg;
+	struct virtio_softc	*vsc = sc->sc_virtio;
+	struct timeval		*guest = &sc->sc_sensor.tv;
+	struct timeval		 host, diff;
+
+	microtime(guest);
+
+	/* Update time delta sensor */
+	host.tv_sec = virtio_read_device_config_8(vsc, VMMCI_CONFIG_TIME_SEC);
+	host.tv_usec = virtio_read_device_config_8(vsc, VMMCI_CONFIG_TIME_USEC);
+
+	if (host.tv_usec > 0) {
+		timersub(guest, &host, &diff);
+
+		sc->sc_sensor.value = (uint64_t)diff.tv_sec * 1000000000LL +
+		    (uint64_t)diff.tv_usec * 1000LL;
+		sc->sc_sensor.status = SENSOR_S_OK;
+	} else
+		sc->sc_sensor.status = SENSOR_S_UNKNOWN;
+
+	timeout_add_sec(&sc->sc_tick, 15);
+}
+
+void
+vmmci_tick_hook(struct device *self)
+{
+	struct vmmci_softc	*sc = (struct vmmci_softc *)self;
+
+	timeout_set(&sc->sc_tick, vmmci_tick, sc);
+	vmmci_tick(sc);
 }

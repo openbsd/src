@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.29 2017/01/17 21:51:01 krw Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.30 2017/01/19 10:16:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -56,6 +56,8 @@ int nr_vionet;
 
 #define VIRTIO_NET_F_MAC	(1<<5)
 
+#define VMMCI_F_TIMESYNC	(1<<0)
+
 const char *
 vioblk_cmd_name(uint32_t type)
 {
@@ -110,6 +112,8 @@ virtio_reg_name(uint8_t reg)
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI: return "device config 0";
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4: return "device config 1";
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 8: return "device config 2";
+	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 12: return "device config 3";
+	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 16: return "device config 4";
 	default: return "unknown";
 	}
 }
@@ -1243,6 +1247,20 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI:
 			*data = vmmci.cmd;
 			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4:
+			/* Update time once when reading the first register */
+			gettimeofday(&vmmci.time, NULL);
+			*data = (uint64_t)vmmci.time.tv_sec;
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 8:
+			*data = (uint64_t)vmmci.time.tv_sec << 32;
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 12:
+			*data = (uint64_t)vmmci.time.tv_usec;
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 16:
+			*data = (uint64_t)vmmci.time.tv_usec << 32;
+			break;
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
 			*data = vmmci.cfg.device_feature;
 			break;
@@ -1458,7 +1476,7 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 		return;
 	}
 
-	vmmci.cfg.device_feature = 0;
+	vmmci.cfg.device_feature = VMMCI_F_TIMESYNC;
 	vmmci.vm_id = vcp->vcp_id;
 	vmmci.irq = pci_get_dev_irq(id);
 }

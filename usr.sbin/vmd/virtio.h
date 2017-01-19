@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.7 2017/01/13 14:50:56 reyk Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.8 2017/01/19 10:16:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -144,6 +144,7 @@ enum vmmci_cmd {
 
 struct vmmci_dev {
 	struct virtio_io_cfg cfg;
+	struct timeval time;
 	enum vmmci_cmd cmd;
 	uint32_t vm_id;
 	int irq;
