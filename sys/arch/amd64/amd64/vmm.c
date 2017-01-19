@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.106 2017/01/13 02:38:41 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.107 2017/01/19 00:03:52 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1670,7 +1670,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1))
 		vcpu->vc_vmx_procbased2_ctls = rdmsr(IA32_VMX_PROCBASED2_CTLS);
 
-
 	/*
 	 * Pinbased ctrls
 	 *
@@ -2075,7 +2074,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmx_setmsrbrw(vcpu, MSR_FSBASE);
 	vmx_setmsrbrw(vcpu, MSR_GSBASE);
 	vmx_setmsrbrw(vcpu, MSR_KERNELGSBASE);
-	
 
 	/* XXX CR0 shadow */
 	/* XXX CR4 shadow */
