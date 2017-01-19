@@ -446,8 +446,8 @@ struct vm_rwregs_params {
 #define VMX_NUM_MSR_STORE 1
 
 /* MSR bitmap manipulation macros */
-#define MSRIDX(m) ((m) / 8)
-#define MSRBIT(m) (1 << (m) % 8)
+#define VMX_MSRIDX(m) ((m) / 8)
+#define VMX_MSRBIT(m) (1 << (m) % 8)
 
 enum {
 	VMM_MODE_UNKNOWN,

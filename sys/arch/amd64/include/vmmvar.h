@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.27 2017/01/19 01:33:45 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.28 2017/01/19 05:53:40 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -455,8 +455,8 @@ struct vm_rwregs_params {
 #define VMX_NUM_MSR_STORE 6
 
 /* MSR bitmap manipulation macros */
-#define MSRIDX(m) ((m) / 8)
-#define MSRBIT(m) (1 << (m) % 8)
+#define VMX_MSRIDX(m) ((m) / 8)
+#define VMX_MSRBIT(m) (1 << (m) % 8)
 
 enum {
 	VMM_MODE_UNKNOWN,

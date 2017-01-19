@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.109 2017/01/19 01:46:20 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.110 2017/01/19 05:53:40 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1570,11 +1570,11 @@ vmx_setmsrbr(struct vcpu *vcpu, uint32_t msr)
 	 * "High" MSRs (0xc0000000 - 0xc0001fff) @ 0x400
 	 */
 	if (msr <= 0x1fff) {
-		idx = MSRIDX(msr);
-		msrs[idx] &= ~(MSRBIT(msr));
+		idx = VMX_MSRIDX(msr);
+		msrs[idx] &= ~(VMX_MSRBIT(msr));
 	} else if (msr >= 0xc0000000 && msr <= 0xc0001fff) {
-		idx = MSRIDX(msr - 0xc0000000) + 0x400;
-		msrs[idx] &= ~(MSRBIT(msr - 0xc0000000));
+		idx = VMX_MSRIDX(msr - 0xc0000000) + 0x400;
+		msrs[idx] &= ~(VMX_MSRBIT(msr - 0xc0000000));
 	} else
 		printf("%s: invalid msr 0x%x\n", __func__, msr);
 }
@@ -1602,11 +1602,11 @@ vmx_setmsrbw(struct vcpu *vcpu, uint32_t msr)
 	 * "High" MSRs (0xc0000000 - 0xc0001fff) @ 0xc00
 	 */
 	if (msr <= 0x1fff) {
-		idx = MSRIDX(msr) + 0x800;
-		msrs[idx] &= ~(MSRBIT(msr));
+		idx = VMX_MSRIDX(msr) + 0x800;
+		msrs[idx] &= ~(VMX_MSRBIT(msr));
 	} else if (msr >= 0xc0000000 && msr <= 0xc0001fff) {
-		idx = MSRIDX(msr - 0xc0000000) + 0xc00;
-		msrs[idx] &= ~(MSRBIT(msr - 0xc0000000));
+		idx = VMX_MSRIDX(msr - 0xc0000000) + 0xc00;
+		msrs[idx] &= ~(VMX_MSRBIT(msr - 0xc0000000));
 	} else
 		printf("%s: invalid msr 0x%x\n", __func__, msr);
 }
