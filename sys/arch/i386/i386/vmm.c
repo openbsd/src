@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.14 2017/01/18 08:38:34 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.15 2017/01/19 00:04:38 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1875,8 +1875,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		}
 
 		DPRINTF("guest eptp = 0x%llx\n", eptp);
-		DPRINTF("write 0x%x to EPT_LO\n", (uint32_t)(eptp & 0xFFFFFFFFUL));
-		if (vmwrite(VMCS_GUEST_IA32_EPTP, (uint32_t)(eptp & 0xFFFFFFFFUL))) {
+		if (vmwrite(VMCS_GUEST_IA32_EPTP,
+		    (uint32_t)(eptp & 0xFFFFFFFFUL))) {
 			ret = EINVAL;
 			goto exit;
 		}
@@ -1952,7 +1952,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	cr4 = (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0) &
 	    (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1);
 
-	if (!ug)
+	if (ug == 0)
 		cr4 |= CR4_PSE;
 
 	vrs->vrs_crs[VCPU_REGS_CR0] = cr0;
@@ -1960,14 +1960,14 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vrs->vrs_crs[VCPU_REGS_CR4] = cr4;
 
 	/*
-	 * Select MSRs to be loaded on exit
+	 * Select host MSRs to be loaded on exit
 	 */
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_load_va;
 	msr_store[0].vms_index = MSR_EFER;
 	msr_store[0].vms_data = rdmsr(MSR_EFER);
 
 	/*
-	 * Select MSRs to be loaded on entry / saved on exit
+	 * Select guest MSRs to be loaded on entry / saved on exit
 	 */
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
 
@@ -2049,13 +2049,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 */
 	memset((uint8_t *)vcpu->vc_msr_bitmap_va, 0xFF, PAGE_SIZE);
 	vmx_setmsrbrw(vcpu, MSR_IA32_FEATURE_CONTROL);
-	vmx_setmsrbrw(vcpu, MSR_MTRRcap);
 	vmx_setmsrbrw(vcpu, MSR_SYSENTER_CS);
 	vmx_setmsrbrw(vcpu, MSR_SYSENTER_ESP);
 	vmx_setmsrbrw(vcpu, MSR_SYSENTER_EIP);
-	vmx_setmsrbrw(vcpu, MSR_MTRRvarBase);
-	vmx_setmsrbrw(vcpu, MSR_CR_PAT);
-	vmx_setmsrbrw(vcpu, MSR_MTRRdefType);
 	vmx_setmsrbrw(vcpu, MSR_EFER);
 	vmx_setmsrbrw(vcpu, MSR_STAR);
 	vmx_setmsrbrw(vcpu, MSR_LSTAR);
@@ -2065,7 +2061,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmx_setmsrbrw(vcpu, MSR_GSBASE);
 	vmx_setmsrbrw(vcpu, MSR_KERNELGSBASE);
 	
-
 	/* XXX CR0 shadow */
 	/* XXX CR4 shadow */
 
@@ -2938,8 +2933,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	uint32_t insn_error, exit_reason;
 	struct schedstate_percpu *spc;
 	struct vmx_invvpid_descriptor vid;
-	uint32_t eii;
-	uint32_t procbased;
+	uint32_t eii, procbased;
 	uint16_t irq;
 
 	resume = 0;
@@ -3003,7 +2997,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 * reset certain pcpu-specific values.
 			 */
 			ci = curcpu();
-			setregion(&gdt, ci->ci_gdt, NGDT * sizeof(union descriptor) - 1);
+			setregion(&gdt, ci->ci_gdt,
+			    NGDT * sizeof(union descriptor) - 1);
 
 			vcpu->vc_last_pcpu = ci;
 
@@ -3091,9 +3086,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		KERNEL_UNLOCK();
 		ret = vmx_enter_guest(&vcpu->vc_control_pa,
 		    &vcpu->vc_gueststate, resume, gdt.rd_base);
-
-		/* XXX */
-		tlbflushg();
 
 		exit_reason = VM_EXIT_NONE;
 		if (ret == 0) {
@@ -3596,8 +3588,7 @@ vmx_handle_np_fault(struct vcpu *vcpu)
 int
 vmx_handle_inout(struct vcpu *vcpu)
 {
-	uint32_t insn_length;
-	uint32_t exit_qual;
+	uint32_t insn_length, exit_qual;
 	int ret;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
@@ -3666,8 +3657,7 @@ vmx_handle_inout(struct vcpu *vcpu)
 int
 vmx_handle_cr(struct vcpu *vcpu)
 {
-	uint32_t insn_length;
-	uint32_t exit_qual;
+	uint32_t insn_length, exit_qual;
 	uint8_t crnum, dir;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
@@ -3859,6 +3849,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		 *  hyperthreading (CPUID_HTT)
 		 *  pending break enabled (CPUID_PBE)
 		 *  MTRR (CPUID_MTRR)
+		 *  PAT (CPUID_PAT)
 		 * plus:
 		 *  hypervisor (CPUIDECX_HV)
 		 */
@@ -3875,7 +3866,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC |
 		      CPUID_HTT | CPUID_DS | CPUID_APIC |
 		      CPUID_PSN | CPUID_SS | CPUID_PBE |
-		      CPUID_MTRR);
+		      CPUID_MTRR | CPUID_PAT);
 		break;
 	case 0x02:	/* Cache and TLB information */
 		DPRINTF("vmx_handle_cpuid: function 0x02 (cache/TLB) not"
