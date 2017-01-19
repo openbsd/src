@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.68 2017/01/19 15:27:26 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.69 2017/01/19 16:56:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -73,7 +73,6 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"dl",		HTML_NLALL | HTML_INDENT},
 	{"dt",		HTML_NLAROUND},
 	{"dd",		HTML_NLAROUND | HTML_INDENT},
-	{"blockquote",	HTML_NLALL | HTML_INDENT},
 	{"pre",		HTML_NLALL | HTML_NOINDENT},
 	{"b",		0},
 	{"i",		0},
