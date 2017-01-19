@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.16 2017/01/19 01:34:21 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.17 2017/01/19 01:46:20 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2465,6 +2465,9 @@ vcpu_init(struct vcpu *vcpu)
  * vcpu_deinit_vmx
  *
  * Deinitializes the vcpu described by 'vcpu'
+ *
+ * Parameters:
+ *  vcpu: the vcpu to be deinited
  */
 void
 vcpu_deinit_vmx(struct vcpu *vcpu)
@@ -2487,17 +2490,34 @@ vcpu_deinit_vmx(struct vcpu *vcpu)
  * vcpu_deinit_svm
  *
  * Deinitializes the vcpu described by 'vcpu'
+ *
+ * Parameters:
+ *  vcpu: the vcpu to be deinited
  */
 void
 vcpu_deinit_svm(struct vcpu *vcpu)
 {
-	/* Unused */
+	if (vcpu->vc_control_va)
+		km_free((void *)vcpu->vc_control_va, PAGE_SIZE, &kv_page,
+		    &kp_zero);
+	if (vcpu->vc_msr_bitmap_va)
+		km_free((void *)vcpu->vc_msr_bitmap_va, 2 * PAGE_SIZE, &kv_any,
+		    &vmm_kp_contig);
+	if (vcpu->vc_svm_hsa_va)
+		km_free((void *)vcpu->vc_svm_hsa_va, PAGE_SIZE, &kv_page,
+		    &kp_zero);
+	if (vcpu->vc_svm_ioio_va)
+		km_free((void *)vcpu->vc_svm_ioio_va, 3 * PAGE_SIZE, &kv_any,
+		    &vmm_kp_contig);
 }
 
 /*
  * vcpu_deinit
  *
  * Calls the architecture-specific VCPU deinit routine
+ *
+ * Parameters:
+ *  vcpu: the vcpu to be deinited
  */
 void
 vcpu_deinit(struct vcpu *vcpu)
