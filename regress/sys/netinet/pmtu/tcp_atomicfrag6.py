@@ -30,15 +30,13 @@ time.sleep(1)
 
 print "Send ICMP6 packet too big packet with MTU 1272."
 icmp6=ICMPv6PacketTooBig(mtu=1272)/data.payload
-sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
-
-print "Path MTU discovery will resend first data with length 1272."
-# srp1 cannot be used, fragment answer will not match on outgoing udp packet
+# srp1 cannot be used, fragment answer will not match outgoing icmp packet
 if os.fork() == 0:
 	time.sleep(1)
-	sendp(e/ip6/ack, iface=LOCAL_IF)
+	sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
 	os._exit(0)
 
+print "Path MTU discovery will resend first data with length 1272."
 ans=sniff(iface=LOCAL_IF, timeout=3, filter=
     "ip6 and src "+ip6.dst+" and dst "+ip6.src+" and proto ipv6-frag")
 

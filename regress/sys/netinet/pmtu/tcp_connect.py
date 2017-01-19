@@ -30,14 +30,21 @@ time.sleep(1)
 print "Send ICMP fragmentation needed packet with MTU 1300."
 icmp=ICMP(type="dest-unreach", code="fragmentation-needed",
     nexthopmtu=1300)/data
-send(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/icmp, iface=LOCAL_IF)
+# sr1 cannot be used, tcp data will not match outgoing icmp packet
+if os.fork() == 0:
+	time.sleep(1)
+	send(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/icmp, iface=LOCAL_IF)
+	os._exit(0)
 
 print "Path MTU discovery will resend first data with length 1300."
-data=sr1(ip/ack, iface=LOCAL_IF, timeout=5)
+ans=sniff(iface=LOCAL_IF, timeout=3, count=1, filter=
+    "ip and src %s and tcp port %u and dst %s and tcp port %u" %
+    (ip.dst, syn.dport, ip.src, syn.sport))
 
-if data is None:
+if len(ans) == 0:
 	print "ERROR: no data retransmit from chargen server received"
 	exit(1)
+data=ans[0]
 
 print "Cleanup the other's socket with a reset packet."
 rst=TCP(sport=synack.dport, dport=synack.sport, seq=2, flags='AR',

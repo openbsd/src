@@ -30,14 +30,21 @@ time.sleep(1)
 
 print "Send ICMP6 packet too big packet with MTU 1300."
 icmp6=ICMPv6PacketTooBig(mtu=1300)/data.payload
-sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
+# srp1 cannot be used, tcp data will not match outgoing icmp packet
+if os.fork() == 0:
+	time.sleep(1)
+	sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
+	os._exit(0)
 
 print "Path MTU discovery will resend first data with length 1300."
-data=srp1(e/ip6/ack, iface=LOCAL_IF, timeout=5)
+ans=sniff(iface=LOCAL_IF, timeout=3, count=1, filter=
+    "ip6 and src %s and tcp port %u and dst %s and tcp port %u" %
+    (ip6.dst, syn.dport, ip6.src, syn.sport))
 
-if data is None:
+if len(ans) == 0:
 	print "ERROR: no data retransmit from chargen server received"
 	exit(1)
+data=ans[0]
 
 print "Cleanup the other's socket with a reset packet."
 rst=TCP(sport=synack.dport, dport=synack.sport, seq=2, flags='AR',
