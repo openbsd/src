@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.77 2017/01/18 19:22:18 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.78 2017/01/19 01:00:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -213,8 +213,6 @@ print_man_node(MAN_ARGS)
 		print_text(h, n->string);
 		return;
 	case ROFFT_EQN:
-		if (n->flags & NODE_LINE)
-			putchar('\n');
 		print_eqn(h, n->eqn);
 		break;
 	case ROFFT_TBL:

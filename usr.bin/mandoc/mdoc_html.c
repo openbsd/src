@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.125 2017/01/18 19:22:18 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.126 2017/01/19 01:00:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -382,8 +382,6 @@ print_mdoc_node(MDOC_ARGS)
 			h->flags |= HTML_NOSPACE;
 		return;
 	case ROFFT_EQN:
-		if (n->flags & NODE_LINE)
-			putchar('\n');
 		print_eqn(h, n->eqn);
 		break;
 	case ROFFT_TBL:

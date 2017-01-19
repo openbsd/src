@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.38 2017/01/18 19:22:18 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.39 2017/01/19 01:00:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -95,9 +95,12 @@ struct	html {
 #define	HTML_NOSPLIT	 (1 << 7) /* do not break line before .An */
 #define	HTML_SPLIT	 (1 << 8) /* break line before .An */
 #define	HTML_NONEWLINE	 (1 << 9) /* No line break in nofill mode. */
-#define	HTML_NLDONE	 (1 << 10) /* Just started a new line of HTML. */
-	int		  indent; /* current output indentation level */
+#define	HTML_BUFFER	 (1 << 10) /* Collect a word to see if it fits. */
+	size_t		  indent; /* current output indentation level */
 	int		  noindent; /* indent disabled by <pre> */
+	size_t		  col; /* current output byte position */
+	size_t		  bufcol; /* current buf byte position */
+	char		  buf[80]; /* output buffer */
 	struct tagq	  tags; /* stack of open tags */
 	struct rofftbl	  tbl; /* current table */
 	struct tag	 *tblt; /* current open table scope */

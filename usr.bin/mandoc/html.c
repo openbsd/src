@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.66 2017/01/18 19:22:18 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.67 2017/01/19 01:00:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -112,10 +112,14 @@ static	const char	*const roffscales[SCALE_MAX] = {
 };
 
 static	void	 a2width(const char *, struct roffsu *);
-static	void	 html_endline(struct html *);
-static	void	 html_indent(struct html *);
+static	void	 print_byte(struct html *, char);
+static	void	 print_endline(struct html *);
+static	void	 print_endword(struct html *);
+static	void	 print_indent(struct html *);
+static	void	 print_word(struct html *, const char *);
+
 static	void	 print_ctag(struct html *, struct tag *);
-static	int	 print_escape(char);
+static	int	 print_escape(struct html *, char);
 static	int	 print_encode(struct html *, const char *, const char *, int);
 static	void	 print_href(struct html *, const char *, const char *, int);
 static	void	 print_metaf(struct html *, enum mandoc_esc);
@@ -167,15 +171,15 @@ print_gen_head(struct html *h)
 
 	t = print_otag(h, TAG_STYLE, "");
 	print_text(h, "table.head, table.foot { width: 100%; }");
-	html_endline(h);
+	print_endline(h);
 	print_text(h, "td.head-rtitle, td.foot-os { text-align: right; }");
-	html_endline(h);
+	print_endline(h);
 	print_text(h, "td.head-vol { text-align: center; }");
-	html_endline(h);
+	print_endline(h);
 	print_text(h, "table.foot td { width: 50%; }");
-	html_endline(h);
+	print_endline(h);
 	print_text(h, "table.head td { width: 33%; }");
-	html_endline(h);
+	print_endline(h);
 	print_text(h, "div.spacer { margin: 1em 0; }");
 	print_tagq(h, t);
 
@@ -286,27 +290,27 @@ html_strlen(const char *cp)
 }
 
 static int
-print_escape(char c)
+print_escape(struct html *h, char c)
 {
 
 	switch (c) {
 	case '<':
-		printf("&lt;");
+		print_word(h, "&lt;");
 		break;
 	case '>':
-		printf("&gt;");
+		print_word(h, "&gt;");
 		break;
 	case '&':
-		printf("&amp;");
+		print_word(h, "&amp;");
 		break;
 	case '"':
-		printf("&quot;");
+		print_word(h, "&quot;");
 		break;
 	case ASCII_NBRSP:
-		printf("&nbsp;");
+		print_word(h, "&nbsp;");
 		break;
 	case ASCII_HYPH:
-		putchar('-');
+		print_byte(h, '-');
 		break;
 	case ASCII_BREAK:
 		break;
@@ -319,6 +323,7 @@ print_escape(char c)
 static int
 print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 {
+	char		 numbuf[16];
 	size_t		 sz;
 	int		 c, len, nospace;
 	const char	*seq;
@@ -338,17 +343,16 @@ print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 			continue;
 		}
 
-		sz = strcspn(p, rejs);
-		if (p + sz > pend)
-			sz = pend - p;
-
-		fwrite(p, 1, sz, stdout);
-		p += (int)sz;
+		for (sz = strcspn(p, rejs); sz-- && p < pend; p++)
+			if (*p == ' ')
+				print_endword(h);
+			else
+				print_byte(h, *p);
 
 		if (p >= pend)
 			break;
 
-		if (print_escape(*p++))
+		if (print_escape(h, *p++))
 			continue;
 
 		esc = mandoc_escape(&p, &seq, &len);
@@ -407,10 +411,11 @@ print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 		if ((c < 0x20 && c != 0x09) ||
 		    (c > 0x7E && c < 0xA0))
 			c = 0xFFFD;
-		if (c > 0x7E)
-			printf("&#%d;", c);
-		else if ( ! print_escape(c))
-			putchar(c);
+		if (c > 0x7E) {
+			(void)snprintf(numbuf, sizeof(numbuf), "&#%d;", c);
+			print_word(h, numbuf);
+		} else if (print_escape(h, c) == 0)
+			print_byte(h, c);
 	}
 
 	return nospace;
@@ -426,7 +431,7 @@ print_href(struct html *h, const char *name, const char *sec, int man)
 		print_encode(h, pp, p, 1);
 		if (man && p[1] == 'S') {
 			if (sec == NULL)
-				putchar('1');
+				print_byte(h, '1');
 			else
 				print_encode(h, sec, NULL, 1);
 		} else if ((man && p[1] == 'N') ||
@@ -445,6 +450,7 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 {
 	va_list		 ap;
 	struct roffsu	 mysu, *su;
+	char		 numbuf[16];
 	struct tag	*t;
 	const char	*attr;
 	char		*s;
@@ -464,16 +470,16 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		t = NULL;
 
 	if (tflags & HTML_NLBEFORE)
-		html_endline(h);
-	if (h->flags & HTML_NLDONE)
-		html_indent(h);
+		print_endline(h);
+	if (h->col == 0)
+		print_indent(h);
 	else if ((h->flags & HTML_NOSPACE) == 0) {
 		if (h->flags & HTML_KEEP)
-			printf("&#160;");
+			print_word(h, "&#160;");
 		else {
 			if (h->flags & HTML_PREKEEP)
 				h->flags |= HTML_KEEP;
-			putchar(' ');
+			print_endword(h);
 		}
 	}
 
@@ -484,14 +490,15 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 
 	/* Print out the tag name and attributes. */
 
-	printf("<%s", htmltags[tag].name);
+	print_byte(h, '<');
+	print_word(h, htmltags[tag].name);
 
 	va_start(ap, fmt);
 
 	have_style = 0;
 	while (*fmt != '\0') {
 		if (*fmt == 's') {
-			printf(" style=\"");
+			print_word(h, " style=\"");
 			have_style = 1;
 			fmt++;
 			break;
@@ -514,7 +521,10 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		default:
 			abort();
 		}
-		printf(" %s=\"", attr);
+		print_byte(h, ' ');
+		print_word(h, attr);
+		print_byte(h, '=');
+		print_byte(h, '"');
 		switch (*fmt) {
 		case 'M':
 			print_href(h, s, va_arg(ap, char *), 1);
@@ -525,14 +535,14 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			fmt++;
 			break;
 		case 'R':
-			putchar('#');
+			print_byte(h, '#');
 			fmt++;
 			/* FALLTHROUGH */
 		default:
 			print_encode(h, s, NULL, 1);
 			break;
 		}
-		putchar('"');
+		print_byte(h, '"');
 	}
 
 	/* Print out styles. */
@@ -591,7 +601,13 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			attr = "min-width";
 			break;
 		case '?':
-			printf("%s: %s;", s, va_arg(ap, char *));
+			print_word(h, s);
+			print_byte(h, ':');
+			print_byte(h, ' ');
+			print_word(h, va_arg(ap, char *));
+			print_byte(h, ';');
+			if (*fmt != '\0')
+				print_byte(h, ' ');
 			continue;
 		default:
 			abort();
@@ -601,22 +617,30 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			v = 1.0;
 		else if (su->unit == SCALE_BU)
 			v /= 24.0;
-		printf("%s: %.2f%s;", attr, v, roffscales[su->unit]);
+		print_word(h, attr);
+		print_byte(h, ':');
+		print_byte(h, ' ');
+		(void)snprintf(numbuf, sizeof(numbuf), "%.2f", v);
+		print_word(h, numbuf);
+		print_word(h, roffscales[su->unit]);
+		print_byte(h, ';');
+		if (*fmt != '\0')
+			print_byte(h, ' ');
 	}
 	if (have_style)
-		putchar('"');
+		print_byte(h, '"');
 
 	va_end(ap);
 
 	/* Accommodate for "well-formed" singleton escaping. */
 
 	if (HTML_AUTOCLOSE & htmltags[tag].flags)
-		putchar('/');
+		print_byte(h, '/');
 
-	putchar('>');
+	print_byte(h, '>');
 
 	if (tflags & HTML_NLBEGIN)
-		html_endline(h);
+		print_endline(h);
 	else
 		h->flags |= HTML_NOSPACE;
 
@@ -649,11 +673,14 @@ print_ctag(struct html *h, struct tag *tag)
 	if (tflags & HTML_NOINDENT)
 		h->noindent--;
 	if (tflags & HTML_NLEND)
-		html_endline(h);
-	html_indent(h);
-	printf("</%s>", htmltags[tag->tag].name);
+		print_endline(h);
+	print_indent(h);
+	print_byte(h, '<');
+	print_byte(h, '/');
+	print_word(h, htmltags[tag->tag].name);
+	print_byte(h, '>');
 	if (tflags & HTML_NLAFTER)
-		html_endline(h);
+		print_endline(h);
 
 	h->tags.head = tag->next;
 	free(tag);
@@ -662,21 +689,20 @@ print_ctag(struct html *h, struct tag *tag)
 void
 print_gen_decls(struct html *h)
 {
-
-	puts("<!DOCTYPE html>");
-	h->flags |= HTML_NLDONE;
+	print_word(h, "<!DOCTYPE html>");
+	print_endline(h);
 }
 
 void
 print_text(struct html *h, const char *word)
 {
-	if ((h->flags & (HTML_NLDONE | HTML_NOSPACE)) == 0) {
+	if (h->col && (h->flags & HTML_NOSPACE) == 0) {
 		if ( ! (HTML_KEEP & h->flags)) {
 			if (HTML_PREKEEP & h->flags)
 				h->flags |= HTML_KEEP;
-			putchar(' ');
+			print_endword(h);
 		} else
-			printf("&#160;");
+			print_word(h, "&#160;");
 	}
 
 	assert(NULL == h->metaf);
@@ -692,7 +718,7 @@ print_text(struct html *h, const char *word)
 		print_otag(h, TAG_I, "");
 		break;
 	default:
-		html_indent(h);
+		print_indent(h);
 		break;
 	}
 
@@ -745,18 +771,85 @@ print_paragraph(struct html *h)
 	print_tagq(h, t);
 }
 
+
+/***********************************************************************
+ * Low level output functions.
+ * They implement line breaking using a short static buffer.
+ ***********************************************************************/
+
 /*
- * If something was printed on the current output line, end it.
- * Not to be called right after html_indent().
+ * Buffer one HTML output byte.
+ * If the buffer is full, flush and deactivate it and start a new line.
+ * If the buffer is inactive, print directly.
  */
 static void
-html_endline(struct html *h)
+print_byte(struct html *h, char c)
 {
-	if (h->flags & HTML_NLDONE)
+	if ((h->flags & HTML_BUFFER) == 0) {
+		putchar(c);
+		h->col++;
 		return;
+	}
+
+	if (h->col + h->bufcol < sizeof(h->buf)) {
+		h->buf[h->bufcol++] = c;
+		return;
+	}
 
 	putchar('\n');
-	h->flags |= HTML_NLDONE | HTML_NOSPACE;
+	h->col = 0;
+	print_indent(h);
+	putchar(' ');
+	putchar(' ');
+	fwrite(h->buf, h->bufcol, 1, stdout);
+	putchar(c);
+	h->col = (h->indent + 1) * 2 + h->bufcol + 1;
+	h->bufcol = 0;
+	h->flags &= ~HTML_BUFFER;
+}
+
+/*
+ * If something was printed on the current output line, end it.
+ * Not to be called right after print_indent().
+ */
+static void
+print_endline(struct html *h)
+{
+	if (h->col == 0)
+		return;
+
+	if (h->bufcol) {
+		putchar(' ');
+		fwrite(h->buf, h->bufcol, 1, stdout);
+		h->bufcol = 0;
+	}
+	putchar('\n');
+	h->col = 0;
+	h->flags |= HTML_NOSPACE;
+	h->flags &= ~HTML_BUFFER;
+}
+
+/*
+ * Flush the HTML output buffer.
+ * If it is inactive, activate it.
+ */
+static void
+print_endword(struct html *h)
+{
+	if (h->noindent) {
+		print_byte(h, ' ');
+		return;
+	}
+
+	if ((h->flags & HTML_BUFFER) == 0) {
+		h->col++;
+		h->flags |= HTML_BUFFER;
+	} else if (h->bufcol) {
+		putchar(' ');
+		fwrite(h->buf, h->bufcol, 1, stdout);
+		h->col += h->bufcol + 1;
+	}
+	h->bufcol = 0;
 }
 
 /*
@@ -766,17 +859,30 @@ html_endline(struct html *h)
  * but do not use print_otag() for producing it.
  */
 static void
-html_indent(struct html *h)
+print_indent(struct html *h)
 {
-	int	 i;
+	size_t	 i;
 
-	if ((h->flags & HTML_NLDONE) == 0)
+	if (h->col)
 		return;
 
-	if (h->noindent == 0)
-		for (i = 0; i < h->indent * 2; i++)
+	if (h->noindent == 0) {
+		h->col = h->indent * 2;
+		for (i = 0; i < h->col; i++)
 			putchar(' ');
-	h->flags &= ~(HTML_NLDONE | HTML_NOSPACE);
+	}
+	h->flags &= ~HTML_NOSPACE;
+}
+
+/*
+ * Print or buffer some characters
+ * depending on the current HTML output buffer state.
+ */
+static void
+print_word(struct html *h, const char *cp)
+{
+	while (*cp != '\0')
+		print_byte(h, *cp++);
 }
 
 /*
