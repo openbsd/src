@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.9 2016/09/20 10:41:43 phessler Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.10 2017/01/19 23:18:29 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -53,31 +53,55 @@
 #define BFD_FLAG_D			0x02
 #define BFD_FLAG_M			0x01
 
+struct sockaddr_bfd {
+	uint8_t		bs_len;		/* total length */
+	uint8_t		bs_family;	/* address family */
+	/* above matches sockaddr_storage */
+
+	/* Sorted for bit boundaries */
+	uint16_t	bs_mode;
+	uint32_t	bs_localdiscr;
+
+	int64_t		bs_uptime;
+
+	int64_t		bs_lastuptime;
+
+	uint32_t	bs_mintx;
+	uint32_t	bs_minrx;
+
+	uint32_t	bs_minecho;
+	uint32_t	bs_localdiag;
+
+	uint32_t	bs_remotediscr;
+	uint32_t	bs_remotediag;
+
+	uint16_t	bs_multiplier;
+	uint16_t	bs_pad0;
+	int		bs_state;
+	int		bs_remotestate;
+	int		bs_laststate;
+	int		bs_error;
+
+	/* add padding to reach a power of two */
+	uint64_t	bs_pad1;
+};
+
 struct bfd_msghdr {
-	unsigned short	bm_msglen;
-	unsigned char	bm_version;
-	unsigned char	bm_type;
-	unsigned short	bm_hdrlen;
+	uint16_t	bm_msglen;
+	uint8_t		bm_version;
+	uint8_t		bm_type;
+	uint16_t	bm_hdrlen;
+	uint16_t	bm_index;
+
+	uint16_t	bm_tableid;
+	uint8_t		bm_priority;
+	uint8_t		bm_mpls;
 	int		bm_addrs;
-	/* above matches rtm_msghdr */
+	int		bm_flags;
+	/* above matches rt_msghdr */
+	uint16_t	bm_pad0;	/* for 4 byte boundary */
 
-	uint16_t	bm_mode;
-	uint32_t	bm_mintx;
-	uint32_t	bm_minrx;
-	uint32_t	bm_minecho;
-	uint16_t	bm_multiplier;
-
-	time_t		bm_uptime;
-	time_t		bm_lastuptime;
-	int		bm_state;
-	int		bm_remotestate;
-	int		bm_laststate;
-	int		bm_error;
-
-	uint32_t	bm_localdiscr;
-	uint32_t	bm_localdiag;
-	uint32_t	bm_remotediscr;
-	uint32_t	bm_remotediag;
+	struct sockaddr_bfd	bm_sa;	/* bfd msg for userland */
 };
 
 #ifdef _KERNEL
@@ -124,6 +148,8 @@ struct bfd_config {
 	int			 bc_minecho;
 	int			 bc_multiplier;
 };
+
+struct sockaddr *bfd2sa(struct rtentry *, struct sockaddr_bfd *);
 
 int		 bfdset(struct rtentry *);
 void		 bfdclear(struct rtentry *);

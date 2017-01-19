@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.46 2017/01/19 10:19:39 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.47 2017/01/19 23:18:29 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -310,6 +310,41 @@ bfd_lookup(struct rtentry *rt)
 			return (bfd);
 	}
 	return (NULL);
+}
+
+struct sockaddr *
+bfd2sa(struct rtentry *rt, struct sockaddr_bfd *sa_bfd)
+{
+	struct bfd_config *bfd;
+
+	bfd = bfd_lookup(rt);
+
+	if (bfd == NULL)
+		return (NULL);
+
+	memset(sa_bfd, 0, sizeof(*sa_bfd));
+	sa_bfd->bs_len = sizeof(*sa_bfd);
+	sa_bfd->bs_family = bfd->bc_rt->rt_dest->sa_family;
+
+	sa_bfd->bs_mode = bfd->bc_mode;
+	sa_bfd->bs_mintx = bfd->bc_mintx;
+	sa_bfd->bs_minrx = bfd->bc_minrx;
+	sa_bfd->bs_minecho = bfd->bc_minecho;
+	sa_bfd->bs_multiplier = bfd->bc_multiplier;
+
+	sa_bfd->bs_uptime = bfd->bc_time->tv_sec;
+	sa_bfd->bs_lastuptime = bfd->bc_lastuptime;
+	sa_bfd->bs_state = bfd->bc_state;
+	sa_bfd->bs_remotestate = bfd->bc_neighbor->bn_rstate;
+	sa_bfd->bs_laststate = bfd->bc_laststate;
+	sa_bfd->bs_error = bfd->bc_error;
+
+	sa_bfd->bs_localdiscr = bfd->bc_neighbor->bn_ldiscr;
+	sa_bfd->bs_localdiag = bfd->bc_neighbor->bn_ldiag;
+	sa_bfd->bs_remotediscr = bfd->bc_neighbor->bn_rdiscr;
+	sa_bfd->bs_remotediag = bfd->bc_neighbor->bn_rdiag;
+
+	return ((struct sockaddr *)sa_bfd);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.150 2017/01/19 02:55:18 phessler Exp $	*/
+/*	$OpenBSD: route.h,v 1.151 2017/01/19 23:18:29 phessler Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -259,6 +259,7 @@ struct rt_msghdr {
 #define RTA_SRC		0x100	/* source sockaddr present */
 #define RTA_SRCMASK	0x200	/* source netmask present */
 #define RTA_LABEL	0x400	/* route label present */
+#define RTA_BFD 	0x800	/* bfd present */
 
 /*
  * Index offsets for sockaddr array for alternate internal encoding.
@@ -274,7 +275,8 @@ struct rt_msghdr {
 #define RTAX_SRC	8	/* source sockaddr present */
 #define RTAX_SRCMASK	9	/* source netmask present */
 #define RTAX_LABEL	10	/* route label present */
-#define RTAX_MAX	11	/* size of array to allocate */
+#define RTAX_BFD	11	/* bfd present */
+#define RTAX_MAX	12	/* size of array to allocate */
 
 /*
  * setsockopt defines used for the filtering.

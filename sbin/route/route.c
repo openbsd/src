@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.194 2017/01/17 19:05:47 jca Exp $	*/
+/*	$OpenBSD: route.c,v 1.195 2017/01/19 23:18:29 phessler Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ const char *bfd_state(unsigned int);
 const char *bfd_diag(unsigned int);
 const char *bfd_calc_uptime(time_t);
 void	 print_bfdmsg(struct rt_msghdr *);
+void	 print_sabfd(struct sockaddr_bfd *, int);
 #endif
 const char *get_linkstate(int, int);
 void	 print_rtmsg(struct rt_msghdr *, int);
@@ -1444,6 +1445,9 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL, *ifa = NULL;
 	struct sockaddr_dl *ifp = NULL;
 	struct sockaddr_rtlabel *sa_rl = NULL;
+#ifdef BFD
+	struct sockaddr_bfd *sa_bfd = NULL;
+#endif
 	struct sockaddr *mpls = NULL;
 	struct sockaddr *sa;
 	char *cp;
@@ -1492,6 +1496,11 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 				case RTA_LABEL:
 					sa_rl = (struct sockaddr_rtlabel *)sa;
 					break;
+#ifdef BFD
+				case RTA_BFD:
+					sa_bfd = (struct sockaddr_bfd *)sa;
+					break;
+#endif
 				}
 				ADVANCE(cp, sa);
 			}
@@ -1524,6 +1533,10 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 	printf("\n");
 	if (sa_rl != NULL)
 		printf("      label: %s\n", sa_rl->sr_label);
+#ifdef BFD
+	if (sa_bfd)
+		print_sabfd(sa_bfd, rtm->rtm_fmask);
+#endif
 
 #define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
 	relative_expire = rtm->rtm_rmx.rmx_expire ?
@@ -1626,40 +1639,61 @@ void
 print_bfdmsg(struct rt_msghdr *rtm)
 {
 	struct bfd_msghdr *bfdm = (struct bfd_msghdr *)rtm;
+
+	printf("\n");
+	print_sabfd(&bfdm->bm_sa, rtm->rtm_fmask);
+	pmsg_addrs(((char *)rtm + rtm->rtm_hdrlen), rtm->rtm_addrs);
+}
+
+void
+print_sabfd(struct sockaddr_bfd *sa_bfd, int fmask)
+{
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
 
-	printf(" mode ");
-	switch (bfdm->bm_mode) {
+	printf("        BFD:");
+
+	/* only show the state, unless verbose or -bfd */
+	if (!verbose && ((fmask & RTF_BFD) != RTF_BFD)) {
+		printf(" %s\n", bfd_state(sa_bfd->bs_state));
+		return;
+	}
+
+	switch (sa_bfd->bs_mode) {
 	case BFD_MODE_ASYNC:
-		printf("async");
+		printf(" async");
 		break;
 	case BFD_MODE_DEMAND:
-		printf("demand");
+		printf(" demand");
 		break;
 	default:
-		printf("unknown %u", bfdm->bm_mode);
+		printf(" unknown %u", sa_bfd->bs_mode);
 		break;
 	}
-	printf(" state %s", bfd_state(bfdm->bm_state));
-	printf(" remotestate %s", bfd_state(bfdm->bm_remotestate));
-	printf(" laststate %s", bfd_state(bfdm->bm_laststate));
 
-	printf(" error %d", bfdm->bm_error);
-	printf(" localdiscr %u", bfdm->bm_localdiscr);
-	printf(" remotediscr %u", bfdm->bm_remotediscr);
-	printf(" localdiag %s", bfd_diag(bfdm->bm_localdiag));
-	printf(" remotediag %s", bfd_diag(bfdm->bm_remotediag));
-	printf(" uptime %s", bfd_calc_uptime(tv.tv_sec - bfdm->bm_uptime));
-	printf(" lastuptime %s", bfd_calc_uptime(bfdm->bm_lastuptime));
+	printf(" state %s", bfd_state(sa_bfd->bs_state));
+	printf(" remote %s", bfd_state(sa_bfd->bs_remotestate));
+	printf(" laststate %s", bfd_state(sa_bfd->bs_laststate));
 
-	printf(" mintx %u", bfdm->bm_mintx);
-	printf(" minrx %u", bfdm->bm_minrx);
-	printf(" minecho %u", bfdm->bm_minecho);
-	printf(" multiplier %u", bfdm->bm_multiplier);
-
-	pmsg_addrs(((char *)rtm + rtm->rtm_hdrlen), rtm->rtm_addrs);
+	printf(" error %d", sa_bfd->bs_error);
+	printf("\n            ");
+	printf(" diag %s", bfd_diag(sa_bfd->bs_localdiag));
+	printf(" remote %s", bfd_diag(sa_bfd->bs_remotediag));
+	printf("\n            ");
+	printf(" discr %u", sa_bfd->bs_localdiscr);
+	printf(" remote %u", sa_bfd->bs_remotediscr);
+	printf("\n            ");
+	printf(" uptime %s", bfd_calc_uptime(tv.tv_sec - sa_bfd->bs_uptime));
+	if (sa_bfd->bs_lastuptime)
+		printf(" last state time %s",
+		    bfd_calc_uptime(sa_bfd->bs_lastuptime));
+	printf("\n            ");
+	printf(" mintx %u", sa_bfd->bs_mintx);
+	printf(" minrx %u", sa_bfd->bs_minrx);
+	printf(" minecho %u", sa_bfd->bs_minecho);
+	printf(" multiplier %u", sa_bfd->bs_multiplier);
+	printf("\n");
 }
 #endif /* BFD */
 
