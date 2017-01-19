@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.77 2016/11/14 10:32:46 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.78 2017/01/19 23:16:47 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -238,6 +238,8 @@ loioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int error = 0;
 
 	switch (cmd) {
+	case SIOCSIFFLAGS:
+		break;
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_RUNNING;
