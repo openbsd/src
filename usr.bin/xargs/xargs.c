@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.31 2015/12/09 19:29:49 mmcc Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.32 2017/01/19 17:08:41 millert Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -278,15 +278,22 @@ parse_input(int argc, char *argv[])
 		}
 		goto arg1;
 	case '\0':
-		if (zflag)
+		if (zflag) {
+			/*
+			 * Increment 'count', so that nulls will be treated
+			 * as end-of-line, as well as end-of-argument.  This
+			 * is needed so -0 works properly with -I and -L.
+			 */
+			count++;
 			goto arg2;
+		}
 		goto addch;
 	case '\n':
+		if (zflag)
+			goto addch;
 		hasblank = 1;
 		if (hadblank == 0)
 			count++;
-		if (zflag)
-			goto addch;
 
 		/* Quotes do not escape newlines. */
 arg1:		if (insingle || indouble)
