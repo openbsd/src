@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.78 2017/01/19 01:00:11 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.79 2017/01/19 13:34:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -146,24 +146,22 @@ html_man(void *arg, const struct roff_man *man)
 {
 	struct mhtml	 mh;
 	struct html	*h;
-	struct tag	*t, *tt;
+	struct tag	*t;
 
 	memset(&mh, 0, sizeof(mh));
 	h = (struct html *)arg;
 
-	if ( ! (HTML_FRAGMENT & h->oflags)) {
+	if ((h->oflags & HTML_FRAGMENT) == 0) {
 		print_gen_decls(h);
-		t = print_otag(h, TAG_HTML, "");
-		tt = print_otag(h, TAG_HEAD, "");
+		print_otag(h, TAG_HTML, "");
+		t = print_otag(h, TAG_HEAD, "");
 		print_man_head(&man->meta, man->first, &mh, h);
-		print_tagq(h, tt);
+		print_tagq(h, t);
 		print_otag(h, TAG_BODY, "");
-		print_otag(h, TAG_DIV, "c", "mandoc");
-	} else
-		t = print_otag(h, TAG_DIV, "c", "mandoc");
+	}
 
 	print_man_nodelist(&man->meta, man->first, &mh, h);
-	print_tagq(h, t);
+	print_tagq(h, NULL);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.126 2017/01/19 01:00:11 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.127 2017/01/19 13:34:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -297,25 +297,23 @@ void
 html_mdoc(void *arg, const struct roff_man *mdoc)
 {
 	struct html	*h;
-	struct tag	*t, *tt;
+	struct tag	*t;
 
 	h = (struct html *)arg;
 
-	if ( ! (HTML_FRAGMENT & h->oflags)) {
+	if ((h->oflags & HTML_FRAGMENT) == 0) {
 		print_gen_decls(h);
-		t = print_otag(h, TAG_HTML, "");
-		tt = print_otag(h, TAG_HEAD, "");
+		print_otag(h, TAG_HTML, "");
+		t = print_otag(h, TAG_HEAD, "");
 		print_mdoc_head(&mdoc->meta, mdoc->first->child, h);
-		print_tagq(h, tt);
+		print_tagq(h, t);
 		print_otag(h, TAG_BODY, "");
-		print_otag(h, TAG_DIV, "c", "mandoc");
-	} else
-		t = print_otag(h, TAG_DIV, "c", "mandoc");
+	}
 
 	mdoc_root_pre(&mdoc->meta, mdoc->first->child, h);
 	print_mdoc_nodelist(&mdoc->meta, mdoc->first->child, h);
 	mdoc_root_post(&mdoc->meta, mdoc->first->child, h);
-	print_tagq(h, t);
+	print_tagq(h, NULL);
 }
 
 static void

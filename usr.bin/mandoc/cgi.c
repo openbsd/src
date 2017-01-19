@@ -1,7 +1,7 @@
-/*	$OpenBSD: cgi.c,v 1.80 2016/09/11 23:59:02 bentley Exp $ */
+/*	$OpenBSD: cgi.c,v 1.81 2017/01/19 13:34:59 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
+ * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -354,8 +354,7 @@ resp_begin_html(int code, const char *msg)
 	       " type=\"text/css\" media=\"all\">\n"
 	       "<title>%s</title>\n"
 	       "</head>\n"
-	       "<body>\n"
-	       "<!-- Begin page content. //-->\n",
+	       "<body>\n",
 	       CSS_DIR, CUSTOMIZE_TITLE);
 
 	resp_copy(MAN_DIR "/header.html");
@@ -376,9 +375,7 @@ resp_searchform(const struct req *req, enum focus focus)
 {
 	int		 i;
 
-	puts("<!-- Begin search form. //-->");
-	printf("<div id=\"mancgi\">\n"
-	       "<form action=\"/%s\" method=\"get\">\n"
+	printf("<form action=\"/%s\" method=\"get\">\n"
 	       "<fieldset>\n"
 	       "<legend>Manual Page Search Parameters</legend>\n",
 	       scriptname);
@@ -446,9 +443,7 @@ resp_searchform(const struct req *req, enum focus focus)
 	}
 
 	puts("</fieldset>\n"
-	     "</form>\n"
-	     "</div>");
-	puts("<!-- End search form. //-->");
+	     "</form>");
 }
 
 static int
