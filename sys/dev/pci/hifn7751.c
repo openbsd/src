@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.175 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.176 2017/01/19 10:20:29 jsg Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1925,7 +1925,7 @@ int
 hifn_process(struct cryptop *crp)
 {
 	struct hifn_command *cmd = NULL;
-	int card, session, err, ivlen;
+	int card, session, err = 0, ivlen;
 	struct hifn_softc *sc;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
 
