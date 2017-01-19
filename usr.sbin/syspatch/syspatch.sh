@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.82 2017/01/19 08:31:53 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.83 2017/01/19 08:45:23 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -247,8 +247,7 @@ sp_cleanup()
 
 unpriv()
 {
-	# XXX use a dedicated user?
-	local _file=$2 _user=_pkgfetch
+	local _file=$2 _user=_syspatch
 
 	if [[ $1 == -f && -n ${_file} ]]; then
 		>${_file}
