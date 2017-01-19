@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.149 2016/11/21 10:30:42 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.150 2017/01/19 02:55:18 phessler Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ struct rt_msghdr {
 #define RTA_BRD		0x80	/* for NEWADDR, broadcast or p-p dest addr */
 #define RTA_SRC		0x100	/* source sockaddr present */
 #define RTA_SRCMASK	0x200	/* source netmask present */
-#define	RTA_LABEL	0x400	/* route label present */
+#define RTA_LABEL	0x400	/* route label present */
 
 /*
  * Index offsets for sockaddr array for alternate internal encoding.
