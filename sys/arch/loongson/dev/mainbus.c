@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.9 2016/11/17 14:41:21 visa Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.10 2017/01/19 15:09:04 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -66,6 +66,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	caa.caa_maa.maa_name = "cpu";
 	caa.caa_hw = &bootcpu_hwinfo;
 	config_found(self, &caa, mainbus_print);
+
+#ifdef MULTIPROCESSOR
+	if (sys_platform->config_secondary_cpus != NULL)
+		sys_platform->config_secondary_cpus(self, mainbus_print);
+#endif
 
 	caa.caa_maa.maa_name = "bonito";
 	config_found(self, &caa.caa_maa, mainbus_print);

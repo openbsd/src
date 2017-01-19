@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2016/11/17 14:41:21 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.11 2017/01/19 15:09:04 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -188,6 +188,11 @@ void	set_intr(int, uint32_t, uint32_t(*)(uint32_t, struct trapframe *));
 
 uint32_t updateimask(uint32_t);
 void	dosoftint(void);
+
+#ifdef MULTIPROCESSOR
+extern uint32_t ipi_mask;
+#define ENABLEIPI() updateimask(~ipi_mask)
+#endif
 
 struct pic {
 	void	(*pic_eoi)(int);

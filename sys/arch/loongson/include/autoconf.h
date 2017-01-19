@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.13 2016/12/11 07:57:14 visa Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.14 2017/01/19 15:09:04 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -74,6 +74,17 @@ struct platform {
 	void				(*reset)(void);
 	int				(*suspend)(void);
 	int				(*resume)(void);
+
+#ifdef MULTIPROCESSOR
+	void				(*config_secondary_cpus)(
+					    struct device *, cfprint_t);
+	void				(*boot_secondary_cpu)(
+					    struct cpu_info *);
+	int				(*ipi_establish)(int (*)(void *),
+					    cpuid_t);
+	void				(*ipi_set)(cpuid_t);
+	void				(*ipi_clear)(cpuid_t);
+#endif /* MULTIPROCESSOR */
 };
 
 #define LOONGSON_MAXCPUS	16

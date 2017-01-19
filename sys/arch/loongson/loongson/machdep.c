@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 2017/01/06 15:37:44 fcambus Exp $ */
+/*	$OpenBSD: machdep.c,v 1.72 2017/01/19 15:09:04 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -117,6 +117,12 @@ int	ncpu = 1;		/* At least one CPU in the system. */
 int	nnodes = 1;		/* Number of NUMA nodes, only on 3A. */
 struct	user *proc0paddr;
 int	lid_suspend = 1;
+
+#ifdef MULTIPROCESSOR
+uint64_t cpu_spinup_a0;
+uint64_t cpu_spinup_sp;
+uint32_t ipi_mask;
+#endif
 
 const struct platform *sys_platform;
 struct cpu_hwinfo bootcpu_hwinfo;
@@ -511,6 +517,13 @@ mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
 	extern char exception[], e_exception[];
 	extern char *hw_vendor, *hw_prod;
 	extern void xtlb_miss;
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Set curcpu address on primary processor.
+	 */
+	setcurcpu(&cpu_info_primary);
+#endif
 
 	/*
 	 * Make sure we can access the extended address space.
@@ -1231,3 +1244,88 @@ pmoncnputc(dev_t dev, int c)
 	else
 		pmon_printf("%c", c);
 }
+
+#ifdef MULTIPROCESSOR
+
+void
+hw_cpu_hatch(struct cpu_info *ci)
+{
+	int s;
+
+	/*
+	 * Set curcpu address on this processor.
+	 */
+	setcurcpu(ci);
+
+	tlb_init(ci->ci_hw.tlbsize);
+	tlb_set_pid(0);
+
+	/*
+	 * Make sure we can access the extended address space.
+	 */
+	setsr(getsr() | SR_KX | SR_UX);
+
+	/*
+	 * Turn off bootstrap exception vectors.
+	 */
+	setsr(getsr() & ~SR_BOOT_EXC_VEC);
+
+	/*
+	 * Clear out the I and D caches.
+	 */
+	switch (loongson_ver) {
+#ifdef CPU_LOONGSON3
+	case 0x3a:
+	case 0x3b:
+		Loongson3_ConfigCache(ci);
+		Loongson3_SyncCache(ci);
+		break;
+#endif
+	default:
+		panic("%s: unhandled Loongson version %x\n", __func__,
+		    loongson_ver);
+	}
+
+	(*md_startclock)(ci);
+
+	mips64_ipi_init();
+
+	ncpus++;
+	cpuset_add(&cpus_running, ci);
+
+	spl0();
+	(void)updateimask(0);
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
+}
+
+void
+hw_cpu_boot_secondary(struct cpu_info *ci)
+{
+	sys_platform->boot_secondary_cpu(ci);
+}
+
+int
+hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
+{
+	if (sys_platform->ipi_establish != NULL)
+		return sys_platform->ipi_establish(func, cpuid);
+	else
+		return 0;
+}
+
+void
+hw_ipi_intr_set(u_long cpuid)
+{
+	sys_platform->ipi_set(cpuid);
+}
+
+void
+hw_ipi_intr_clear(u_long cpuid)
+{
+	if (sys_platform->ipi_clear != NULL)
+		sys_platform->ipi_clear(cpuid);
+}
+
+#endif /* MULTIPROCESSOR */
