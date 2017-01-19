@@ -670,6 +670,12 @@ struct vcpu {
 	paddr_t vc_vmx_msr_exit_load_pa;
 	vaddr_t vc_vmx_msr_entry_load_va;
 	paddr_t vc_vmx_msr_entry_load_pa;
+
+	/* SVM only */
+	vaddr_t vc_svm_hsa_va;
+	paddr_t vc_svm_hsa_pa;
+	vaddr_t vc_svm_ioio_va;
+	paddr_t vc_svm_ioio_pa;
 };
 
 SLIST_HEAD(vcpu_head, vcpu);
