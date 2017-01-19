@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.345 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.346 2017/01/19 04:06:26 phessler Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -883,17 +883,17 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 	}
 #endif
 
+#ifdef BFD
+	if (ISSET(rt->rt_flags, RTF_BFD))
+		bfdclear(rt);
+#endif
+
 	error = rtable_delete(tableid, info->rti_info[RTAX_DST],
 	    info->rti_info[RTAX_NETMASK], rt);
 	if (error != 0) {
 		rtfree(rt);
 		return (ESRCH);
 	}
-
-#ifdef BFD
-	if (ISSET(rt->rt_flags, RTF_BFD))
-		bfdclear(rt);
-#endif
 
 	/* Release next hop cache before flushing cloned entries. */
 	rt_putgwroute(rt);
