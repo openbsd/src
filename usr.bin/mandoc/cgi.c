@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.81 2017/01/19 13:34:59 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.82 2017/01/19 13:55:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
@@ -349,10 +349,10 @@ resp_begin_html(int code, const char *msg)
 	printf("<!DOCTYPE html>\n"
 	       "<html>\n"
 	       "<head>\n"
-	       "<meta charset=\"UTF-8\"/>\n"
-	       "<link rel=\"stylesheet\" href=\"%s/mandoc.css\""
+	       "  <meta charset=\"UTF-8\"/>\n"
+	       "  <link rel=\"stylesheet\" href=\"%s/mandoc.css\""
 	       " type=\"text/css\" media=\"all\">\n"
-	       "<title>%s</title>\n"
+	       "  <title>%s</title>\n"
 	       "</head>\n"
 	       "<body>\n",
 	       CSS_DIR, CUSTOMIZE_TITLE);
@@ -376,13 +376,13 @@ resp_searchform(const struct req *req, enum focus focus)
 	int		 i;
 
 	printf("<form action=\"/%s\" method=\"get\">\n"
-	       "<fieldset>\n"
-	       "<legend>Manual Page Search Parameters</legend>\n",
+	       "  <fieldset>\n"
+	       "    <legend>Manual Page Search Parameters</legend>\n",
 	       scriptname);
 
 	/* Write query input box. */
 
-	printf("<input type=\"text\" name=\"query\" value=\"");
+	printf("    <input type=\"text\" name=\"query\" value=\"");
 	if (req->q.query != NULL)
 		html_print(req->q.query);
 	printf( "\" size=\"40\"");
@@ -392,45 +392,46 @@ resp_searchform(const struct req *req, enum focus focus)
 
 	/* Write submission buttons. */
 
-	printf(	"<button type=\"submit\" name=\"apropos\" value=\"0\">"
+	printf(	"    <button type=\"submit\" name=\"apropos\" value=\"0\">"
 		"man</button>\n"
-		"<button type=\"submit\" name=\"apropos\" value=\"1\">"
-		"apropos</button>\n<br/>\n");
+		"    <button type=\"submit\" name=\"apropos\" value=\"1\">"
+		"apropos</button>\n"
+		"    <br/>\n");
 
 	/* Write section selector. */
 
-	puts("<select name=\"sec\">");
+	puts("    <select name=\"sec\">");
 	for (i = 0; i < sec_MAX; i++) {
-		printf("<option value=\"%s\"", sec_numbers[i]);
+		printf("      <option value=\"%s\"", sec_numbers[i]);
 		if (NULL != req->q.sec &&
 		    0 == strcmp(sec_numbers[i], req->q.sec))
 			printf(" selected=\"selected\"");
 		printf(">%s</option>\n", sec_names[i]);
 	}
-	puts("</select>");
+	puts("    </select>");
 
 	/* Write architecture selector. */
 
-	printf(	"<select name=\"arch\">\n"
-		"<option value=\"default\"");
+	printf(	"    <select name=\"arch\">\n"
+		"      <option value=\"default\"");
 	if (NULL == req->q.arch)
 		printf(" selected=\"selected\"");
 	puts(">All Architectures</option>");
 	for (i = 0; i < arch_MAX; i++) {
-		printf("<option value=\"%s\"", arch_names[i]);
+		printf("      <option value=\"%s\"", arch_names[i]);
 		if (NULL != req->q.arch &&
 		    0 == strcmp(arch_names[i], req->q.arch))
 			printf(" selected=\"selected\"");
 		printf(">%s</option>\n", arch_names[i]);
 	}
-	puts("</select>");
+	puts("    </select>");
 
 	/* Write manpath selector. */
 
 	if (req->psz > 1) {
-		puts("<select name=\"manpath\">");
+		puts("    <select name=\"manpath\">");
 		for (i = 0; i < (int)req->psz; i++) {
-			printf("<option ");
+			printf("      <option ");
 			if (strcmp(req->q.manpath, req->p[i]) == 0)
 				printf("selected=\"selected\" ");
 			printf("value=\"");
@@ -439,10 +440,10 @@ resp_searchform(const struct req *req, enum focus focus)
 			html_print(req->p[i]);
 			puts("</option>");
 		}
-		puts("</select>");
+		puts("    </select>");
 	}
 
-	puts("</fieldset>\n"
+	puts("  </fieldset>\n"
 	     "</form>");
 }
 
@@ -577,19 +578,18 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		puts("<table>");
 
 		for (i = 0; i < sz; i++) {
-			printf("<tr>\n"
-			       "<td class=\"title\">\n"
+			printf("  <tr>\n"
+			       "    <td class=\"title\">"
 			       "<a href=\"/%s%s%s/%s",
 			    scriptname, *scriptname == '\0' ? "" : "/",
 			    req->q.manpath, r[i].file);
 			printf("\">");
 			html_print(r[i].names);
-			printf("</a>\n"
-			       "</td>\n"
-			       "<td class=\"desc\">");
+			printf("</a></td>\n"
+			       "    <td class=\"desc\">");
 			html_print(r[i].output);
 			puts("</td>\n"
-			     "</tr>");
+			     "  </tr>");
 		}
 
 		puts("</table>\n"
