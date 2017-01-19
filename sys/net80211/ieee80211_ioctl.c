@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.47 2016/12/31 17:51:44 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.48 2017/01/19 01:07:35 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -305,8 +305,11 @@ ieee80211_ioctl_setwpaparms(struct ieee80211com *ic,
 		ic->ic_rsnciphers |= IEEE80211_CIPHER_CCMP;
 	if (wpa->i_ciphers & IEEE80211_WPA_CIPHER_USEGROUP)
 		ic->ic_rsnciphers = IEEE80211_CIPHER_USEGROUP;
-	if (ic->ic_rsnciphers == 0)	/* set to default (CCMP) */
+	if (ic->ic_rsnciphers == 0) { /* set to default (CCMP, TKIP if WPA1) */
 		ic->ic_rsnciphers = IEEE80211_CIPHER_CCMP;
+		if (ic->ic_rsnprotos & IEEE80211_PROTO_WPA)
+			ic->ic_rsnciphers |= IEEE80211_CIPHER_TKIP;
+	}
 
 	ic->ic_flags |= IEEE80211_F_RSNON;
 
