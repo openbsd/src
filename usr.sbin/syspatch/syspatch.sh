@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.83 2017/01/19 08:45:23 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.84 2017/01/19 09:08:45 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -140,7 +140,7 @@ fetch_and_verify()
 	[[ -n ${_tgz} ]]
 
 	unpriv -f "${_TMP}/${_tgz}" ftp -Vm -D "Get/Verify" -o \
-		"${_TMP}/${_tgz}" "${_URL}/${_tgz}"
+		"${_TMP}/${_tgz}" "${_MIRROR}/${_tgz}"
 
 	(cd ${_TMP} && sha256 -qC ${_TMP}/SHA256 ${_tgz})
 }
@@ -180,9 +180,11 @@ ls_missing()
 {
 	local _c _l="$(ls_installed)" _sha=${_TMP}/SHA256
 
-	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_URL}/SHA256.sig"
+	# don't output anything on stdout to prevent corrupting the patch list
+	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_MIRROR}/SHA256.sig" |
+		>/dev/null
 	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
-		/etc/signify/openbsd-${_OSrev}-syspatch.pub
+		/etc/signify/openbsd-${_OSrev}-syspatch.pub >/dev/null
 
 	grep -Eo "syspatch${_OSrev}-[[:digit:]]{3}_[[:alnum:]_]+" ${_sha} |
 		while read _c; do _c=${_c##syspatch${_OSrev}-} &&
@@ -245,6 +247,16 @@ sp_cleanup()
 	done
 }
 
+stripcom() {                                                                    
+	local _file=$1 _line
+	[[ -f ${_file} ]]
+
+	while read _line; do
+		_line=${_line%%#*}
+		[[ -n ${_line} ]] && print -r -- "${_line}"
+	done <${_file}
+}
+
 unpriv()
 {
 	local _file=$2 _user=_syspatch
@@ -270,12 +282,13 @@ set -A _KERNV -- $(sysctl -n kern.version |
 	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
 
 (($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
+_MIRROR=$(stripcom /etc/mirror.conf) ||
+	sp_err "${0##*/}: no mirror configured in /etc/mirror.conf"
+_MIRROR=${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)/
 _OSrev=${_KERNV[0]%\.*}${_KERNV[0]#*\.}
 _PDIR="/var/syspatch"
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
-# XXX to be discussed
-_URL=https://syspatch.openbsd.org/pub/OpenBSD/${_KERNV[0]}/syspatch/$(machine)
-readonly _BSDMP _FETCH _OSrev _PDIR _REL _TMP _URL
+readonly _BSDMP _MIRROR _OSrev _PDIR _REL _TMP
 
 trap 'set +e; rm -rf "${_TMP}"' EXIT
 trap exit HUP INT TERM
