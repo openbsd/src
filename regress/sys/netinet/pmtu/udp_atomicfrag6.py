@@ -30,8 +30,8 @@ sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
 print "Clear route cache at echo socket by sending from different address."
 sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/udp, iface=LOCAL_IF)
 
-print "Path MTU discovery will send UDP atomic fragment with length 1256."
-# srp1 cannot be used, fragment answer will not match on outgoing udp packet
+print "Path MTU discovery will not send UDP atomic fragment."
+# srp1 cannot be used, fragment answer will not match on outgoing UDP packet
 if os.fork() == 0:
 	time.sleep(1)
 	sendp(e/ip6/udp, iface=LOCAL_IF)
@@ -40,6 +40,8 @@ if os.fork() == 0:
 ans=sniff(iface=LOCAL_IF, timeout=3, filter=
     "ip6 and src "+ip6.dst+" and dst "+ip6.src+" and proto ipv6-frag")
 
+print "IPv6 atomic fragments must not be generated."
+frag=None
 for a in ans:
 	fh=a.payload.payload
 	if fh.offset != 0 or fh.nh != (ip6/udp).nh:
@@ -49,30 +51,19 @@ for a in ans:
 		continue
 	frag=a
 	break
-else:
-	print "ERROR: no matching IPv6 fragment UDP answer found"
+
+if frag is not None:
+	print "ERROR: matching IPv6 fragment UDP answer found"
 	exit(1)
 
-if frag.offset != 0:
-	print "ERROR: TCP fragment is not atomic, offset is %d." % frag.offset
-	exit(1)
+print "Send echo again and expect reply without fragmentation."
+reply=srp1(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/udp, iface=LOCAL_IF)
 
-if frag.m != 0:
-	print "ERROR: TCP fragment is not atomic, more fragment bit is set."
-	exit(1)
-
-print "UDP echo has IPv6 and UDP header, so expected payload len is 1248"
-elen = echo.plen + len(IPv6())
-print "elen=%d" % elen
+print "UDP echo has IPv6 and UDP header, so expected payload len is 1248."
+elen = reply.plen + len(IPv6())
+print "rlen=%d" % elen
 if elen != 1248:
-	print "ERROR: UDP echo payload len is %d, expected 1248." % elen
-	exit(1)
-
-print "Atomic fragment contains 8 octet header, so expected len is 1256"
-flen = frag.plen + len(IPv6())
-print "flen=%d" % flen
-if flen != 1256:
-	print "ERROR: UDP atomic fragment len is %d, expected 1256." % flen
+	print "ERROR: UDP reply payload len is %d, expected 1248." % elen
 	exit(1)
 
 exit(0)

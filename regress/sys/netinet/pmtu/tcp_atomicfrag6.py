@@ -30,16 +30,18 @@ time.sleep(1)
 
 print "Send ICMP6 packet too big packet with MTU 1272."
 icmp6=ICMPv6PacketTooBig(mtu=1272)/data.payload
-# srp1 cannot be used, fragment answer will not match outgoing icmp packet
+# srp1 cannot be used, fragment answer will not match outgoing ICMP6 packet
 if os.fork() == 0:
 	time.sleep(1)
 	sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
 	os._exit(0)
 
-print "Path MTU discovery will resend first data with length 1272."
+print "Path MTU discovery will not resend data, ICMP6 packet is ignored."
 ans=sniff(iface=LOCAL_IF, timeout=3, filter=
     "ip6 and src "+ip6.dst+" and dst "+ip6.src+" and proto ipv6-frag")
 
+print "IPv6 atomic fragments must not be generated."
+frag=None
 for a in ans:
 	fh=a.payload.payload
 	if fh.offset != 0 or fh.nh != (ip6/syn).nh:
@@ -49,8 +51,16 @@ for a in ans:
 		continue
 	frag=a
 	break
-else:
-	print "ERROR: no fragement retransmit from chargen server received"
+
+if frag is not None:
+	print "ERROR: matching IPv6 fragment TCP answer found"
+	exit(1)
+
+print "Send ACK again to trigger retransmit."
+data=srp1(e/ip6/ack, iface=LOCAL_IF, timeout=5)
+
+if data is None:
+	print "ERROR: no data retransmit from chargen server received"
 	exit(1)
 
 print "Cleanup the other's socket with a reset packet."
@@ -58,19 +68,10 @@ rst=TCP(sport=synack.dport, dport=synack.sport, seq=2, flags='AR',
     ack=synack.seq+1)
 sendp(e/ip6/rst, iface=LOCAL_IF)
 
-if frag.offset != 0:
-	print "ERROR: TCP fragment is not atomic, offset is %d." % frag.offset
-	exit(1)
-
-if frag.m != 0:
-	print "ERROR: TCP fragment is not atomic, more fragment bit is set."
-	exit(1)
-
-print "Atomic fragment contains 8 octet header, so expected len is 1280"
-flen = frag.plen + len(IPv6())
-print "flen=%d" % flen
-if flen != 1280:
-	print "ERROR: TCP atomic fragment len is %d, expected 1280." % flen
+len = data.plen + len(IPv6())
+print "len=%d" % len
+if len != 1500:
+	print "ERROR: TCP data packet len is %d, expected 1500." % len
 	exit(1)
 
 exit(0)

@@ -30,7 +30,7 @@ time.sleep(1)
 print "Send ICMP fragmentation needed packet with MTU 1300."
 icmp=ICMP(type="dest-unreach", code="fragmentation-needed",
     nexthopmtu=1300)/data
-# sr1 cannot be used, tcp data will not match outgoing icmp packet
+# sr1 cannot be used, TCP data will not match outgoing ICMP packet
 if os.fork() == 0:
 	time.sleep(1)
 	send(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/icmp, iface=LOCAL_IF)
@@ -56,4 +56,5 @@ print "len=%d" % len
 if len != 1300:
 	print "ERROR: TCP data packet len is %d, expected 1300." % len
 	exit(1)
+
 exit(0)

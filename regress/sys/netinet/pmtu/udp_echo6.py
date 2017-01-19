@@ -31,7 +31,7 @@ print "Clear route cache at echo socket by sending from different address."
 sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/udp, iface=LOCAL_IF)
 
 print "Path MTU discovery will send UDP fragment with maximum length 1300."
-# srp1 cannot be used, fragment answer will not match on outgoing udp packet
+# srp1 cannot be used, fragment answer will not match on outgoing UDP packet
 if os.fork() == 0:
 	time.sleep(1)
 	sendp(e/ip6/udp, iface=LOCAL_IF)
@@ -53,14 +53,14 @@ else:
 	print "ERROR: no matching IPv6 fragment UDP answer found"
 	exit(1)
 
-print "UDP echo has IPv6 and UDP header, so expected payload len is 1448"
+print "UDP echo has IPv6 and UDP header, so expected payload len is 1448."
 elen = echo.plen + len(IPv6())
 print "elen=%d" % elen
 if elen != 1448:
 	print "ERROR: UDP echo payload len is %d, expected 1448." % elen
 	exit(1)
 
-print "Fragments contain multiple of 8 octets, so expected len is 1296"
+print "Fragments contain multiple of 8 octets, so expected len is 1296."
 flen = frag.plen + len(IPv6())
 print "flen=%d" % flen
 if flen != 1296:
