@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.67 2017/01/19 01:00:11 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.68 2017/01/19 15:27:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -180,7 +180,7 @@ print_gen_head(struct html *h)
 	print_endline(h);
 	print_text(h, "table.head td { width: 33%; }");
 	print_endline(h);
-	print_text(h, "div.spacer { margin: 1em 0; }");
+	print_text(h, "div.Pp { margin: 1ex 0ex; }");
 	print_tagq(h, t);
 
 	if (h->style)
@@ -767,7 +767,7 @@ print_paragraph(struct html *h)
 {
 	struct tag	*t;
 
-	t = print_otag(h, TAG_DIV, "c", "spacer");
+	t = print_otag(h, TAG_DIV, "c", "Pp");
 	print_tagq(h, t);
 }
 

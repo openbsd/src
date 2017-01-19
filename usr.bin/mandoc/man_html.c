@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.79 2017/01/19 13:34:59 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.80 2017/01/19 15:27:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -160,7 +160,11 @@ html_man(void *arg, const struct roff_man *man)
 		print_otag(h, TAG_BODY, "");
 	}
 
-	print_man_nodelist(&man->meta, man->first, &mh, h);
+	man_root_pre(&man->meta, man->first, &mh, h);
+	t = print_otag(h, TAG_DIV, "c", "manual-text");
+	print_man_nodelist(&man->meta, man->first->child, &mh, h);
+	print_tagq(h, t);
+	man_root_post(&man->meta, man->first, &mh, h);
 	print_tagq(h, NULL);
 }
 
@@ -196,9 +200,6 @@ print_man_node(MAN_ARGS)
 	t = h->tags.head;
 
 	switch (n->type) {
-	case ROFFT_ROOT:
-		man_root_pre(man, n, mh, h);
-		break;
 	case ROFFT_TEXT:
 		if ('\0' == *n->string) {
 			print_paragraph(h);
@@ -252,9 +253,6 @@ print_man_node(MAN_ARGS)
 	print_stagq(h, t);
 
 	switch (n->type) {
-	case ROFFT_ROOT:
-		man_root_post(man, n, mh, h);
-		break;
 	case ROFFT_EQN:
 		break;
 	default:
@@ -351,12 +349,11 @@ man_SH_pre(MAN_ARGS)
 {
 	if (n->type == ROFFT_BLOCK) {
 		mh->fl &= ~MANH_LITERAL;
-		print_otag(h, TAG_DIV, "c", "section");
 		return 1;
 	} else if (n->type == ROFFT_BODY)
 		return 1;
 
-	print_otag(h, TAG_H1, "");
+	print_otag(h, TAG_H1, "c", "Sh");
 	return 1;
 }
 
@@ -430,12 +427,11 @@ man_SS_pre(MAN_ARGS)
 {
 	if (n->type == ROFFT_BLOCK) {
 		mh->fl &= ~MANH_LITERAL;
-		print_otag(h, TAG_DIV, "c", "subsection");
 		return 1;
 	} else if (n->type == ROFFT_BODY)
 		return 1;
 
-	print_otag(h, TAG_H2, "");
+	print_otag(h, TAG_H2, "c", "Ss");
 	return 1;
 }
 
@@ -508,7 +504,7 @@ man_HP_pre(MAN_ARGS)
 	sui.scale = -sum.scale;
 
 	print_bvspace(h, n);
-	print_otag(h, TAG_DIV, "csului", "spacer", &sum, &sui);
+	print_otag(h, TAG_DIV, "csului", "Pp", &sum, &sui);
 	return 1;
 }
 
