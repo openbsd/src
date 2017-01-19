@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.8 2016/09/26 15:43:26 kettenis Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.9 2017/01/19 23:47:04 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -44,10 +44,7 @@
 #define	MD_START_ARGS	\
 	int argc, char **argv, char **envp, void (*cleanup)(void)
 #endif
-#ifndef MD_START
-#define	MD_START	___start
 static void		___start(MD_START_ARGS) __used;
-#endif
 #ifndef	MD_EPROL_LABEL
 #define	MD_EPROL_LABEL	__asm("  .text\n_eprol:")
 #endif
@@ -70,7 +67,7 @@ MD_CRT0_START;
 #endif
 
 void
-MD_START(MD_START_ARGS)
+___start(MD_START_ARGS)
 {
 	char ***environp;
 #ifdef MD_START_SETUP

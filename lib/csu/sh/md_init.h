@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.6 2016/03/20 02:32:39 guenther Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.7 2017/01/19 23:47:04 guenther Exp $	*/
 /*	$NetBSD: dot_init.h,v 1.3 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
@@ -144,6 +144,3 @@ __asm(".section " #section "\n"		\
 	"	mov	#1, r0						\n" \
 	"	.word	0xc380	/* trapa #0x80 */			\n" \
 	".previous")
-
-/* no ASM stub for __start; the C routine can be called directly */
-#define	MD_START	___start

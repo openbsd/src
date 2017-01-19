@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.7 2016/08/07 02:34:52 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.8 2017/01/19 23:47:04 guenther Exp $ */
 /*-
  * Copyright (c) 2001 Ross Harvey
  * All rights reserved.
@@ -108,7 +108,6 @@
 	"_dl_printf:				\n" \
 	"	ret")
 
-#define	MD_START		___start
 #define	MD_START_ARGS		char **sp, void (*cleanup)(void)
 #define	MD_START_SETUP				\
 	char **argv, **envp;			\
