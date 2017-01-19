@@ -56,6 +56,10 @@ do_files:
 .if ${PLATFORM} == "OMAP"
 	cp ${PUBOOT}/${UBOOT}/{MLO,u-boot.img} ${MOUNT_POINT}/
 .endif
+.if ${BOARD} == "nitrogen"
+	${MKUBOOT} -t script -a arm -o linux \
+	    ${.CURDIR}/../boot.cmd ${MOUNT_POINT}/6x_bootscript
+.endif
 .if ${BOARD} == "cubox" || ${BOARD} == "wandboard"
 	dd if=${PUBOOT}/${UBOOT}/SPL of=${VND_CDEV} bs=1024 seek=1
 	dd if=${PUBOOT}/${UBOOT}/u-boot.img of=${VND_CDEV} bs=1024 seek=69
