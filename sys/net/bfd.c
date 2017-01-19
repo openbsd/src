@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.44 2017/01/19 09:08:50 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.45 2017/01/19 09:57:39 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -157,6 +157,7 @@ void	 bfd_send_control(void *);
 
 void	 bfd_start_task(void *);
 void	 bfd_send_task(void *);
+void	 bfd_error(struct bfd_config *);
 void	 bfd_timeout_rx(void *);
 void	 bfd_timeout_tx(void *);
 
@@ -563,7 +564,7 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 		flags = MSG_DONTWAIT;
 		error = soreceive(so, NULL, &uio, &m, NULL, &flags, 0);
 		if (error && error != EAGAIN) {
-			bfd->bc_error++;
+			bfd_error(bfd);
 			return;
 		}
 		if (m != NULL)
@@ -573,6 +574,16 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 	return;
 }
 
+void
+bfd_error(struct bfd_config *bfd)
+{
+	if (++bfd->bc_error >= bfd->bc_neighbor->bn_mult) {
+		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_EXPIRED;
+		bfd_reset(bfd);
+		if (bfd->bc_state > BFD_STATE_DOWN)
+			bfd_set_state(bfd, BFD_STATE_DOWN);
+	}
+}
 
 void
 bfd_timeout_tx(void *v)
@@ -589,15 +600,7 @@ bfd_timeout_rx(void *v)
 {
 	struct bfd_config *bfd = v;
 
-	if (++bfd->bc_error >= bfd->bc_neighbor->bn_mult) {
-		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_EXPIRED;
-		bfd_reset(bfd);
-		if (bfd->bc_state > BFD_STATE_DOWN)
-			bfd_set_state(bfd, BFD_STATE_DOWN);
-
-		return;
-	}
-
+	bfd_error(bfd);
 	rt_bfdmsg(bfd);
 
 	timeout_add_usec(&bfd->bc_timo_rx, bfd->bc_minrx);
@@ -700,7 +703,7 @@ bfd_input(struct bfd_config *bfd, struct mbuf *m)
 	if ((ntohl(peer->bfd_your_discriminator) != 0) &&
 	    (ntohl(peer->bfd_your_discriminator) !=
 	    bfd->bc_neighbor->bn_ldiscr)) {
-		bfd->bc_error++;
+		bfd_error(bfd);
 		goto discard;
 	}
 
@@ -891,6 +894,7 @@ bfd_send_control(void *x)
 	error = bfd_send(bfd, m);
 
 	if (error) {
+		bfd_error(bfd);
 		if (!(error == EHOSTDOWN || error == ECONNREFUSED)) {
 			printf("%s: %u\n", __func__, error);
 		}
