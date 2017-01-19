@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: redirect.sh,v 1.2 2016/09/28 11:46:45 bluhm Exp $
+#	$OpenBSD: redirect.sh,v 1.3 2017/01/19 08:41:50 beck Exp $
 
 : ${FTP:=ftp}
 
@@ -17,8 +17,10 @@ while pkill -fx "nc -l $rport1" && sleep 1; do done
 
 echo "HTTP/1.0 302 Found\r\nLocation: $loc\r\n\r" | nc -l $rport1 >/dev/null &
 
-# Give the "server" some time to start
+# Wait for the "server" to start
+until fstat | egrep 'nc[ ]+.*tcp 0x0 \*:9000' > /dev/null; do
 sleep .1
+done
 
 res=$(${FTP} -o/dev/null $req1 2>&1 | sed '/^Redirected to /{s///;x;};$!d;x')
 
