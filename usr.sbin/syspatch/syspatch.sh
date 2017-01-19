@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.81 2017/01/11 12:22:13 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.82 2017/01/19 08:31:53 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -139,7 +139,7 @@ fetch_and_verify()
 	local _tgz=$1
 	[[ -n ${_tgz} ]]
 
-	unpriv -f "${_TMP}/${_tgz}" ${_FETCH} -mD "Get/Verify" -o \
+	unpriv -f "${_TMP}/${_tgz}" ftp -Vm -D "Get/Verify" -o \
 		"${_TMP}/${_tgz}" "${_URL}/${_tgz}"
 
 	(cd ${_TMP} && sha256 -qC ${_TMP}/SHA256 ${_tgz})
@@ -180,7 +180,7 @@ ls_missing()
 {
 	local _c _l="$(ls_installed)" _sha=${_TMP}/SHA256
 
-	unpriv -f "${_sha}.sig" ${_FETCH} -o "${_sha}.sig" "${_URL}/SHA256.sig"
+	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_URL}/SHA256.sig"
 	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub
 
@@ -271,7 +271,6 @@ set -A _KERNV -- $(sysctl -n kern.version |
 	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
 
 (($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
-_FETCH="ftp -MV"
 _OSrev=${_KERNV[0]%\.*}${_KERNV[0]#*\.}
 _PDIR="/var/syspatch"
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
