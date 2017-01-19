@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.45 2017/01/19 09:57:39 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.46 2017/01/19 10:19:39 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -668,7 +668,7 @@ bfd_input(struct bfd_config *bfd, struct mbuf *m)
 	struct bfd_header	*peer;
 	struct bfd_auth_header	*auth;
 	struct mbuf		*mp, *mp0;
-	unsigned int		 ver, diag, state, flags;
+	unsigned int		 ver, diag = BFD_DIAG_NONE, state, flags;
 	int			 offp;
 
 	mp = m_pulldown(m, 0, sizeof(*peer), &offp);
