@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.85 2017/01/19 23:04:48 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.86 2017/01/19 23:41:57 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -247,16 +247,6 @@ sp_cleanup()
 	done
 }
 
-stripcom() {                                                                    
-	local _file=$1 _line
-	[[ -f ${_file} ]]
-
-	while read _line; do
-		_line=${_line%%#*}
-		[[ -n ${_line} ]] && print -r -- "${_line}"
-	done <${_file}
-}
-
 unpriv()
 {
 	local _file=$2 _user=_syspatch
@@ -272,23 +262,25 @@ unpriv()
 	eval su -s /bin/sh ${_user} -c "'$@'"
 }
 
-# XXX needs a way to match release <=> syspatch
+[[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|r)) ]] &&
+	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
+
 # only run on release (not -current nor -stable)
 set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 ((${#_KERNV[*]} > 1)) && sp_err "Unsupported release ${_KERNV[*]}"
 
-[[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|r)) ]] &&
-	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
+_MIRROR=$(while read _line; do _line=${_line%%#*}; [[ -n ${_line} ]] &&
+	print -r -- "${_line}"; done </etc/installurl | tail -1)
+[[ -z ${_MIRROR} ]] && sp_err "${0##*/}: no URL configured in /etc/installurl"
+_MIRROR="${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)"
 
 (($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
-_MIRROR=$(stripcom /etc/installurl) ||
-	sp_err "${0##*/}: no mirror configured in /etc/installurl"
-_MIRROR=${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)/
 _OSrev=${_KERNV[0]%\.*}${_KERNV[0]#*\.}
 _PDIR="/var/syspatch"
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
-readonly _BSDMP _MIRROR _OSrev _PDIR _REL _TMP
+
+readonly _BSDMP _KERNV _MIRROR _OSrev _PDIR _REL _TMP
 
 trap 'set +e; rm -rf "${_TMP}"' EXIT
 trap exit HUP INT TERM
