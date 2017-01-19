@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.84 2017/01/19 09:08:45 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.85 2017/01/19 23:04:48 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -181,7 +181,7 @@ ls_missing()
 	local _c _l="$(ls_installed)" _sha=${_TMP}/SHA256
 
 	# don't output anything on stdout to prevent corrupting the patch list
-	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_MIRROR}/SHA256.sig" |
+	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_MIRROR}/SHA256.sig" \
 		>/dev/null
 	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub >/dev/null
@@ -282,8 +282,8 @@ set -A _KERNV -- $(sysctl -n kern.version |
 	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
 
 (($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
-_MIRROR=$(stripcom /etc/mirror.conf) ||
-	sp_err "${0##*/}: no mirror configured in /etc/mirror.conf"
+_MIRROR=$(stripcom /etc/installurl) ||
+	sp_err "${0##*/}: no mirror configured in /etc/installurl"
 _MIRROR=${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)/
 _OSrev=${_KERNV[0]%\.*}${_KERNV[0]#*\.}
 _PDIR="/var/syspatch"
