@@ -449,6 +449,10 @@ struct vm_rwregs_params {
 #define VMX_MSRIDX(m) ((m) / 8)
 #define VMX_MSRBIT(m) (1 << (m) % 8)
 
+#define SVM_MSRIDX(m) ((m) / 4)
+#define SVM_MSRBIT_R(m) (1 << (((m) % 4) * 2))
+#define SVM_MSRBIT_W(m) (1 << (((m) % 4) * 2 + 1))
+
 enum {
 	VMM_MODE_UNKNOWN,
 	VMM_MODE_VMX,
