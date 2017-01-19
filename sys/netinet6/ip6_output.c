@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.220 2017/01/10 09:04:19 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.221 2017/01/19 14:49:19 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ int ip6_insertfraghdr(struct mbuf *, struct mbuf *, int,
 	struct ip6_frag **);
 int ip6_insert_jumboopt(struct ip6_exthdrs *, u_int32_t);
 int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
-int ip6_getpmtu(struct rtentry *, struct ifnet *, u_long *, int *);
+int ip6_getpmtu(struct rtentry *, struct ifnet *, u_long *);
 int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
 static __inline u_int16_t __attribute__((__unused__))
     in6_cksum_phdr(const struct in6_addr *, const struct in6_addr *,
@@ -160,7 +160,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	struct sockaddr_in6 *dst, dstsock;
 	int error = 0;
 	u_long mtu;
-	int alwaysfrag, dontfrag;
+	int dontfrag;
 	u_int16_t src_scope, dst_scope;
 	u_int32_t optlen = 0, plen = 0, unfragpartlen = 0;
 	struct ip6_exthdrs exthdrs;
@@ -555,7 +555,7 @@ reroute:
 	}
 
 	/* Determine path MTU. */
-	if ((error = ip6_getpmtu(ro_pmtu->ro_rt, ifp, &mtu, &alwaysfrag)) != 0)
+	if ((error = ip6_getpmtu(ro_pmtu->ro_rt, ifp, &mtu)) != 0)
 		goto bad;
 
 	/*
@@ -654,19 +654,13 @@ reroute:
 	 * If necessary, do IPv6 fragmentation before sending.
 	 *
 	 * the logic here is rather complex:
-	 * 1: normal case (dontfrag == 0, alwaysfrag == 0)
+	 * 1: normal case (dontfrag == 0)
 	 * 1-a: send as is if tlen <= path mtu
 	 * 1-b: fragment if tlen > path mtu
 	 *
 	 * 2: if user asks us not to fragment (dontfrag == 1)
 	 * 2-a: send as is if tlen <= interface mtu
 	 * 2-b: error if tlen > interface mtu
-	 *
-	 * 3: if we always need to attach fragment header (alwaysfrag == 1)
-	 *      always fragment
-	 *
-	 * 4: if dontfrag == 1 && alwaysfrag == 1
-	 *      error, as we cannot handle this conflicting request
 	 */
 	tlen = m->m_pkthdr.len;
 
@@ -674,11 +668,6 @@ reroute:
 		dontfrag = 1;
 	else
 		dontfrag = 0;
-	if (dontfrag && alwaysfrag) {	/* case 4 */
-		/* conflicting request - can't transmit */
-		error = EMSGSIZE;
-		goto bad;
-	}
 	if (dontfrag && tlen > ifp->if_mtu) {	/* case 2-b */
 		error = EMSGSIZE;
 		goto bad;
@@ -687,13 +676,13 @@ reroute:
 	/*
 	 * transmit packet without fragmentation
 	 */
-	if (dontfrag || (!alwaysfrag && tlen <= mtu)) {	/* case 1-a and 2-a */
+	if (dontfrag || (tlen <= mtu)) {	/* case 1-a and 2-a */
 		error = ifp->if_output(ifp, m, sin6tosa(dst), ro->ro_rt);
 		goto done;
 	}
 
 	/*
-	 * try to fragment the packet.  case 1-b and 3
+	 * try to fragment the packet.  case 1-b
 	 */
 	if (mtu < IPV6_MMTU) {
 		/* path MTU cannot be less than IPV6_MMTU */
@@ -1021,11 +1010,9 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 }
 
 int
-ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup,
-    int *alwaysfragp)
+ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup)
 {
 	u_int32_t mtu = 0;
-	int alwaysfrag = 0;
 	int error = 0;
 
 	if (rt != NULL) {
@@ -1033,15 +1020,7 @@ ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup,
 		if (mtu == 0)
 			mtu = ifp->if_mtu;
 		else if (mtu < IPV6_MMTU) {
-			/*
-			 * RFC2460 section 5, last paragraph:
-			 * if we record ICMPv6 too big message with
-			 * mtu < IPV6_MMTU, transmit packets sized IPV6_MMTU
-			 * or smaller, with fragment header attached.
-			 * (fragment header is needed regardless from the
-			 * packet size, for translators to identify packets)
-			 */
-			alwaysfrag = 1;
+			/* RFC8021 IPv6 Atomic Fragments Considered Harmful */
 			mtu = IPV6_MMTU;
 		} else if (mtu > ifp->if_mtu) {
 			/*
@@ -1061,8 +1040,6 @@ ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup,
 	}
 
 	*mtup = mtu;
-	if (alwaysfragp)
-		*alwaysfragp = alwaysfrag;
 	return (error);
 }
 
@@ -1525,7 +1502,7 @@ do { \
 				 * routing, or optional information to specify
 				 * the outgoing interface.
 				 */
-				error = ip6_getpmtu(rt, ifp, &pmtu, NULL);
+				error = ip6_getpmtu(rt, ifp, &pmtu);
 				if_put(ifp);
 				if (error)
 					break;

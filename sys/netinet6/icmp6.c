@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.196 2017/01/18 17:59:01 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.197 2017/01/19 14:49:19 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -980,11 +980,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 sin6;
 
-	/*
-	 * The MTU may not be less then the minimal IPv6 MTU except for the
-	 * hack in ip6_output/ip6_setpmtu where we always include a frag header.
-	 */
-	if (mtu < IPV6_MMTU - sizeof(struct ip6_frag))
+	if (mtu < IPV6_MMTU)
 		return;
 
 	/*
