@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.42 2017/01/12 16:14:42 mpi Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.43 2017/01/19 08:55:46 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -234,6 +234,7 @@ bfdclear(struct rtentry *rt)
 	if (rtisvalid(bfd->bc_rt))
 		bfd_senddown(bfd);
 
+	rt->rt_flags &= ~RTF_BFD;
 	if (bfd->bc_so) {
 		/* remove upcall before calling soclose or it will be called */
 		bfd->bc_so->so_upcall = NULL;
@@ -247,6 +248,7 @@ bfdclear(struct rtentry *rt)
 		soclose(bfd->bc_sosend);
 
 	rtfree(bfd->bc_rt);
+	bfd->bc_rt = NULL;
 
 	pool_put(&bfd_pool_time, bfd->bc_time);
 	pool_put(&bfd_pool_neigh, bfd->bc_neighbor);
