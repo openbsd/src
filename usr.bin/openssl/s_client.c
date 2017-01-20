@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.29 2016/12/30 17:25:48 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.30 2017/01/20 08:57:12 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -365,7 +365,7 @@ s_client_main(int argc, char **argv)
 	long socket_mtu = 0;
 
 	if (single_execution) {
-		if (pledge("stdio inet dns rpath wpath cpath tty", NULL) == -1) {
+		if (pledge("stdio cpath wpath rpath inet dns tty", NULL) == -1) {
 			perror("pledge");
 			exit(1);
 		}

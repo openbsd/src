@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.7 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: smime.c,v 1.8 2017/01/20 08:57:12 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -113,7 +113,7 @@ smime_main(int argc, char **argv)
 	X509_VERIFY_PARAM *vpm = NULL;
 
 	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath tty", NULL) == -1) {
+		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
 			perror("pledge");
 			exit(1);
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.10 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: rand.c,v 1.11 2017/01/20 08:57:12 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -110,7 +110,7 @@ rand_main(int argc, char **argv)
 	BIO *out = NULL;
 
 	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath", NULL) == -1) {
+		if (pledge("stdio cpath wpath rpath", NULL) == -1) {
 			perror("pledge");
 			exit(1);
 		}

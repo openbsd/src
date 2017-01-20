@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.8 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: dh.c,v 1.9 2017/01/20 08:57:11 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,7 +159,7 @@ dh_main(int argc, char **argv)
 	int ret = 1;
 
 	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath", NULL) == -1) {
+		if (pledge("stdio cpath wpath rpath", NULL) == -1) {
 			perror("pledge");
 			exit(1);
 		}

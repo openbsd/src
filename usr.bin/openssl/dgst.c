@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.9 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: dgst.c,v 1.10 2017/01/20 08:57:11 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -124,7 +124,7 @@ dgst_main(int argc, char **argv)
 	STACK_OF(OPENSSL_STRING) * sigopts = NULL, *macopts = NULL;
 
 	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath tty", NULL) == -1) {
+		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
 			perror("pledge");
 			exit(1);
 		}

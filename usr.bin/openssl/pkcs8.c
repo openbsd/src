@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.9 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.10 2017/01/20 08:57:12 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -227,7 +227,7 @@ pkcs8_main(int argc, char **argv)
 	int ret = 1;
 
 	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath tty", NULL) == -1) {
+		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
 			perror("pledge");
 			exit(1);
 		}
