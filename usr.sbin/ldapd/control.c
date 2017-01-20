@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.14 2017/01/09 14:04:31 krw Exp $	*/
+/*	$OpenBSD: control.c,v 1.15 2017/01/20 11:55:08 benno Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -35,6 +35,7 @@
 #include <unistd.h>
 
 #include "ldapd.h"
+#include "log.h"
 
 #define	CONTROL_BACKLOG	5
 

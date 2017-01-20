@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.16 2014/11/16 19:04:40 bluhm Exp $ */
+/*	$OpenBSD: schema.c,v 1.17 2017/01/20 11:55:08 benno Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -24,6 +24,7 @@
 #include <syslog.h>
 
 #include "ldapd.h"
+#include "log.h"
 
 #define ERROR	-1
 #define STRING	 1

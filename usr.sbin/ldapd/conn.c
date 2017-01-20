@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.13 2016/05/01 00:32:37 jmatthew Exp $ */
+/*	$OpenBSD: conn.c,v 1.14 2017/01/20 11:55:08 benno Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "ldapd.h"
+#include "log.h"
 
 int			 conn_dispatch(struct conn *conn);
 int			 conn_tls_init(struct conn *);

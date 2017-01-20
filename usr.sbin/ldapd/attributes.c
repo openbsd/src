@@ -1,4 +1,4 @@
-/*	$OpenBSD: attributes.c,v 1.3 2010/10/19 09:34:41 martinh Exp $ */
+/*	$OpenBSD: attributes.c,v 1.4 2017/01/20 11:55:08 benno Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -24,6 +24,7 @@
 #include <time.h>
 
 #include "ldapd.h"
+#include "log.h"
 
 struct ber_element *
 ldap_get_attribute(struct ber_element *entry, const char *attr)

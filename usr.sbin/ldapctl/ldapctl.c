@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.9 2016/02/02 18:18:04 jca Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.10 2017/01/20 11:55:08 benno Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -42,6 +42,7 @@
 #include <event.h>
 
 #include "ldapd.h"
+#include "log.h"
 
 enum action {
 	NONE,
@@ -61,6 +62,7 @@ int		 compact_namespace(struct namespace *ns, const char *datadir);
 int		 compact_namespaces(const char *datadir);
 int		 index_namespace(struct namespace *ns, const char *datadir);
 int		 index_namespaces(const char *datadir);
+int		 ssl_load_certfile(struct ldapd_config *, const char *, u_int8_t);
 
 __dead void
 usage(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2017/01/05 13:53:09 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.23 2017/01/20 11:55:08 benno Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -45,6 +45,7 @@
 #include <unistd.h>
 
 #include "ldapd.h"
+#include "log.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {

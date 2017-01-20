@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.11 2015/12/24 17:47:57 mmcc Exp $ */
+/*	$OpenBSD: auth.c,v 1.12 2017/01/20 11:55:08 benno Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "ldapd.h"
+#include "log.h"
 
 static int
 aci_matches(struct aci *aci, struct conn *conn, struct namespace *ns,

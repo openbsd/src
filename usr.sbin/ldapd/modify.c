@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.17 2015/12/24 17:47:57 mmcc Exp $ */
+/*	$OpenBSD: modify.c,v 1.18 2017/01/20 11:55:08 benno Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "ldapd.h"
+#include "log.h"
 #include "uuid.h"
 
 int

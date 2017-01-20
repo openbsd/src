@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.16 2016/02/04 12:48:06 jca Exp $ */
+/*	$OpenBSD: namespace.c,v 1.17 2017/01/20 11:55:08 benno Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -27,6 +27,7 @@
 #include <zlib.h>
 
 #include "ldapd.h"
+#include "log.h"
 
 extern const char	*datadir;
 
