@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.12 2017/01/09 22:51:04 kettenis Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.13 2017/01/20 10:40:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -33,14 +33,8 @@
 #define	RELOC_TAG	DT_RELA
 #define	HAVE_JMPREL	1
 
-#define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
-
 #define	MACHID	EM_PARISC		/* ELF e_machine ID value checked */
 
-#define	RELTYPE	Elf_Rela
-#define	RELSIZE	sizeof(Elf_Rela)
-
-#include <sys/mman.h>
 #include <elf_abi.h>
 #include <machine/reloc.h>
 #include "syscall.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.9 2017/01/09 22:51:04 kettenis Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.10 2017/01/20 10:40:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -31,14 +31,8 @@
 
 #define	RELOC_TAG	DT_RELA
 
-#define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
-
 #define	MACHID	EM_AMD64	/* ELF e_machine ID value checked */
 
-#define	RELTYPE	Elf32_Rela
-#define	RELSIZE	sizeof(Elf32_Rela)
-
-#include <sys/mman.h>
 #include <elf_abi.h>
 #include <machine/reloc.h>
 #include "syscall.h"
