@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.16 2016/08/27 01:50:07 guenther Exp $	*/
+/*	$OpenBSD: utils.c,v 1.17 2017/01/20 03:47:31 krw Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ GetEtherAddr(u_int8_t *addr)
 void
 DspFlnm(u_int size, char *flnm)
 {
-	int i;
+	u_int i;
 
 	(void) fprintf(DbgFp, "\n\t\tFile Name (%u): <", size);
 	for (i = 0; i < size; i++)
