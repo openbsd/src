@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.144 2016/09/26 16:55:02 rzalamena Exp $ */
+/*	$OpenBSD: ntp.c,v 1.145 2017/01/20 01:21:18 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -358,8 +358,10 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & (POLLIN|POLLERR)) {
 			nfds--;
-			if (ntp_dispatch_imsg() == -1)
+			if (ntp_dispatch_imsg() == -1) {
+				log_warn("pipe write error (from main)");
 				ntp_quit = 1;
+			}
 		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_DNS].revents & POLLOUT))
@@ -371,8 +373,10 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 
 		if (nfds > 0 && pfd[PFD_PIPE_DNS].revents & (POLLIN|POLLERR)) {
 			nfds--;
-			if (ntp_dispatch_imsg_dns() == -1)
+			if (ntp_dispatch_imsg_dns() == -1) {
+				log_warn("pipe write error (from dns engine)");
 				ntp_quit = 1;
+			}
 		}
 
 		if (nfds > 0 && pfd[PFD_SOCK_CTL].revents & (POLLIN|POLLERR)) {
@@ -383,16 +387,20 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		for (j = PFD_MAX; nfds > 0 && j < idx_peers; j++)
 			if (pfd[j].revents & (POLLIN|POLLERR)) {
 				nfds--;
-				if (server_dispatch(pfd[j].fd, conf) == -1)
+				if (server_dispatch(pfd[j].fd, conf) == -1) {
+					log_warn("pipe write error (conf)");
 					ntp_quit = 1;
+				}
 			}
 
 		for (; nfds > 0 && j < idx_clients; j++) {
 			if (pfd[j].revents & (POLLIN|POLLERR)) {
 				nfds--;
 				if (client_dispatch(idx2peer[j - idx_peers],
-				    conf->settime) == -1)
+				    conf->settime) == -1) {
+					log_warn("pipe write error (settime)");
 					ntp_quit = 1;
+				}
 			}
 		}
 
