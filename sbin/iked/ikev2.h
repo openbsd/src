@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.24 2017/01/04 12:31:01 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.25 2017/01/20 13:46:10 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -348,6 +348,7 @@ struct ikev2_notify {
 #define IKEV2_N_PSK_CONFIRM			16426	/* RFC6631 */
 #define IKEV2_N_ERX_SUPPORTED			16427	/* RFC6867 */
 #define IKEV2_N_IFOM_CAPABILITY			16428	/* OA3GPP */
+#define IKEV2_N_FRAGMENTATION_SUPPORTED		16430	/* RFC7383 */
 #define IKEV2_N_SIGNATURE_HASH_ALGORITHMS	16431	/* RFC7427 */
 
 extern struct iked_constmap ikev2_n_map[];
