@@ -1,4 +1,4 @@
-/*	$OpenBSD: teach.c,v 1.16 2015/12/02 20:05:01 tb Exp $	*/
+/*	$OpenBSD: teach.c,v 1.17 2017/01/20 01:12:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	/* NOT REACHED */
 }
 
-void
+__dead void
 leave(void)
 {
 	clear();

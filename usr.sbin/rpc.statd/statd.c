@@ -1,4 +1,4 @@
-/*	$OpenBSD: statd.c,v 1.2 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: statd.c,v 1.3 2017/01/20 01:12:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -80,7 +80,7 @@ static int unmon_host(DBT *, HostInfo *, void *);
 static int notify_one(DBT *, HostInfo *, void *);
 static void init_file(char *);
 static int notify_one_host(char *);
-static void die(int);
+static __dead void die(int);
 
 int main(int, char **);
 
@@ -588,7 +588,7 @@ notify_one_host(char *hostname)
 	return (TRUE);
 }
 
-static void
+static __dead void
 die(int n)
 {
 	(*db->close)(db);
