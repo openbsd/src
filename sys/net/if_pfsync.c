@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.240 2017/01/20 00:51:56 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.241 2017/01/20 03:56:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1164,7 +1164,8 @@ void
 pfsync_update_net_tdb(struct pfsync_tdb *pt)
 {
 	struct tdb		*tdb;
-	int			 s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	/* check for invalid values */
 	if (ntohl(pt->spi) <= SPI_RESERVED_MAX ||
@@ -1172,7 +1173,6 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 	     pt->dst.sa.sa_family != AF_INET6))
 		goto bad;
 
-	s = splsoftnet();
 	tdb = gettdb(ntohs(pt->rdomain), pt->spi,
 	    (union sockaddr_union *)&pt->dst, pt->sproto);
 	if (tdb) {
@@ -1182,14 +1182,12 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 		/* Neither replay nor byte counter should ever decrease. */
 		if (pt->rpl < tdb->tdb_rpl ||
 		    pt->cur_bytes < tdb->tdb_cur_bytes) {
-			splx(s);
 			goto bad;
 		}
 
 		tdb->tdb_rpl = pt->rpl;
 		tdb->tdb_cur_bytes = pt->cur_bytes;
 	}
-	splx(s);
 	return;
 
  bad:
