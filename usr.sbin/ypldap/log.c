@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2015/11/17 02:16:52 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2017/01/20 12:39:36 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -11,12 +11,10 @@
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER
- * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/types.h>
 
 #include <errno.h>
 #include <stdarg.h>
@@ -25,19 +23,13 @@
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
+#include <unistd.h>
 
-void		 log_init(int);
-void		 log_warn(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_info(const char *, ...);
-void		 log_debug(const char *, ...);
-__dead void	 fatal(const char *);
-__dead void	 fatalx(const char *);
+#include "log.h"
 
-int	 debug;
-
-void	 vlog(int, const char *, va_list);
-void	 logit(int, const char *, ...);
+int		 debug;
+int		 verbose;
+const char	*log_procname;
 
 void
 log_init(int n_debug)
@@ -50,6 +42,12 @@ log_init(int n_debug)
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	tzset();
+}
+
+void
+log_verbose(int v)
+{
+	verbose = v;
 }
 
 void
@@ -80,7 +78,6 @@ vlog(int pri, const char *fmt, va_list ap)
 	} else
 		vsyslog(pri, fmt, ap);
 }
-
 
 void
 log_warn(const char *emsg, ...)
@@ -131,7 +128,7 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (debug > 1) {
+	if (verbose) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
 		va_end(ap);
@@ -142,13 +139,15 @@ void
 fatal(const char *emsg)
 {
 	if (emsg == NULL)
-		logit(LOG_CRIT, "fatal: %s", strerror(errno));
+		logit(LOG_CRIT, "fatal in %s: %s", log_procname,
+		    strerror(errno));
 	else
 		if (errno)
-			logit(LOG_CRIT, "fatal: %s: %s",
-			    emsg, strerror(errno));
+			logit(LOG_CRIT, "fatal in %s: %s: %s",
+			    log_procname, emsg, strerror(errno));
 		else
-			logit(LOG_CRIT, "fatal: %s", emsg);
+			logit(LOG_CRIT, "fatal in %s: %s",
+			    log_procname, emsg);
 
 	exit(1);
 }

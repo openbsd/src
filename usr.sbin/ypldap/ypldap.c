@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.20 2016/11/29 17:15:27 mestre Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.21 2017/01/20 12:39:36 benno Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -37,6 +37,7 @@
 #include <limits.h>
 
 #include "ypldap.h"
+#include "log.h"
 
 __dead void	 usage(void);
 int		 check_child(pid_t, const char *);
@@ -507,6 +508,7 @@ main(int argc, char *argv[])
 
 	debug = 0;
 	ypldap_process = PROC_MAIN;
+	log_procname = log_procnames[ypldap_process];
 
 	log_init(1);
 
@@ -514,6 +516,7 @@ main(int argc, char *argv[])
 		switch (c) {
 		case 'd':
 			debug = 2;
+			log_verbose(debug);
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
