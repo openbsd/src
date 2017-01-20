@@ -1,4 +1,4 @@
-/*	$OpenBSD: tutor.h,v 1.5 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: tutor.h,v 1.6 2017/01/20 01:55:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -63,5 +63,5 @@ extern	const struct situatn	test[];
 
 int	brdeq(const int *, const int *);
 void	clrest(void);
-void	leave(void);
-void	tutor(void);
+__dead void	leave(void);
+__dead void	tutor(void);

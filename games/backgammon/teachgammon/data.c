@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.7 2012/12/05 23:19:48 deraadt Exp $	*/
+/*	$OpenBSD: data.c,v 1.8 2017/01/20 01:55:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -28,6 +28,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/types.h>
 
 #include "tutor.h"
 
