@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.47 2017/01/19 23:18:29 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.48 2017/01/20 08:37:48 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -688,7 +688,7 @@ bfd_reset(struct bfd_config *bfd)
 	bfd->bc_neighbor->bn_mult = 3;
 
 	bfd->bc_mintx = bfd->bc_neighbor->bn_mintx;
-	bfd->bc_minrx = bfd->bc_neighbor->bn_rminrx;
+	bfd->bc_minrx = bfd->bc_neighbor->bn_req_rminrx;
 	bfd->bc_multiplier = bfd->bc_neighbor->bn_mult;
 	bfd->bc_minecho = 0;	//XXX - BFD_SECOND;
 
