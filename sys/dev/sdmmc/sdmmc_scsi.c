@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.36 2016/05/05 10:51:10 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.37 2017/01/20 00:52:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -424,6 +424,7 @@ sdmmc_inquiry(struct scsi_xfer *xs)
 
 	memset(&inq, 0, sizeof inq);
 	inq.device = T_DIRECT;
+	inq.dev_qual2 = SID_REMOVABLE;
 	inq.version = 2;
 	inq.response_format = 2;
 	inq.additional_length = 32;
