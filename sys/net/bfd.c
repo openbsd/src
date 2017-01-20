@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.51 2017/01/20 09:18:52 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.52 2017/01/20 10:18:52 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -860,7 +860,7 @@ bfd_set_state(struct bfd_config *bfd, int state)
 		bfd->bc_neighbor->bn_ldiag = 0;
 
 	if (!rtisvalid(rt))
-		bfd->bc_neighbor->bn_lstate = BFD_STATE_ADMINDOWN;
+		bfd->bc_neighbor->bn_lstate = BFD_STATE_DOWN;
 
 	switch (state) {
 	case BFD_STATE_ADMINDOWN:
