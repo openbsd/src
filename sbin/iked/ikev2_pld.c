@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.56 2017/01/20 13:47:17 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.57 2017/01/20 13:49:48 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1455,6 +1455,8 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 		localdel->del_nspi = htobe16(found);
 
 		for (i = 0; i < cnt; i++) {
+			if (localspi[i] == 0)	/* happens if found < cnt */
+				continue;
 			switch (sz) {
 			case 4:
 				spi32 = htobe32(localspi[i]);
