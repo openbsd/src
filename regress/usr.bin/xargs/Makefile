@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2010/03/25 01:43:47 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/01/20 12:19:02 bluhm Exp $
 
-regress: showargs
+PROG= showargs
+
+run-regress-showargs:
 	@sh ${.CURDIR}/xargs-L.sh
-
-clean:
-	rm -f showargs
 
 .include <bsd.regress.mk>
