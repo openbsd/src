@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.48 2017/01/20 08:37:48 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.49 2017/01/20 08:50:45 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -390,8 +390,8 @@ bfd_send_task(void *arg)
 	if (ISSET(rt->rt_flags, RTF_UP)) {
 		bfd_send_control(bfd);
 	} else {
-		bfd->bc_error++;
 		if (bfd->bc_neighbor->bn_lstate > BFD_STATE_DOWN) {
+			bfd->bc_error++;
 			bfd->bc_neighbor->bn_ldiag = BFD_DIAG_PATH_DOWN;
 			bfd_reset(bfd);
 			bfd_set_state(bfd, BFD_STATE_DOWN);
