@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.132 2017/01/20 21:37:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.133 2017/01/20 23:50:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,6 +68,7 @@ static	void		  mdoc_bk_post(MDOC_ARGS);
 static	int		  mdoc_bk_pre(MDOC_ARGS);
 static	int		  mdoc_bl_pre(MDOC_ARGS);
 static	int		  mdoc_cd_pre(MDOC_ARGS);
+static	int		  mdoc_cm_pre(MDOC_ARGS);
 static	int		  mdoc_d1_pre(MDOC_ARGS);
 static	int		  mdoc_dv_pre(MDOC_ARGS);
 static	int		  mdoc_fa_pre(MDOC_ARGS);
@@ -133,7 +134,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_an_pre, NULL}, /* An */
 	{mdoc_ar_pre, NULL}, /* Ar */
 	{mdoc_cd_pre, NULL}, /* Cd */
-	{mdoc_fl_pre, NULL}, /* Cm */
+	{mdoc_cm_pre, NULL}, /* Cm */
 	{mdoc_dv_pre, NULL}, /* Dv */
 	{mdoc_er_pre, NULL}, /* Er */
 	{mdoc_ev_pre, NULL}, /* Ev */
@@ -543,13 +544,7 @@ mdoc_ss_pre(MDOC_ARGS)
 static int
 mdoc_fl_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_B, "c", "flag");
-
-	/* `Cm' has no leading hyphen. */
-
-	if (MDOC_Cm == n->tok)
-		return 1;
-
+	print_otag(h, TAG_B, "c", "Fl");
 	print_text(h, "\\-");
 
 	if (!(n->child == NULL &&
@@ -558,6 +553,13 @@ mdoc_fl_pre(MDOC_ARGS)
 	     n->next->flags & NODE_LINE)))
 		h->flags |= HTML_NOSPACE;
 
+	return 1;
+}
+
+static int
+mdoc_cm_pre(MDOC_ARGS)
+{
+	print_otag(h, TAG_B, "c", "Cm");
 	return 1;
 }
 
@@ -584,7 +586,7 @@ mdoc_nm_pre(MDOC_ARGS)
 		print_otag(h, TAG_TD, "");
 		/* FALLTHROUGH */
 	case ROFFT_ELEM:
-		print_otag(h, TAG_B, "c", "name");
+		print_otag(h, TAG_B, "c", "Nm");
 		if (n->child == NULL && meta->name != NULL)
 			print_text(h, meta->name);
 		return 1;
@@ -596,7 +598,7 @@ mdoc_nm_pre(MDOC_ARGS)
 	}
 
 	synopsis_pre(h, n);
-	print_otag(h, TAG_TABLE, "c", "synopsis");
+	print_otag(h, TAG_TABLE, "c", "Nm");
 
 	for (len = 0, n = n->head->child; n; n = n->next)
 		if (n->type == ROFFT_TEXT)
@@ -652,7 +654,7 @@ mdoc_ns_pre(MDOC_ARGS)
 static int
 mdoc_ar_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_I, "c", "arg");
+	print_otag(h, TAG_I, "c", "Ar");
 	return 1;
 }
 
@@ -989,14 +991,14 @@ mdoc_bd_pre(MDOC_ARGS)
 static int
 mdoc_pa_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_I, "c", "file");
+	print_otag(h, TAG_I, "c", "Pa");
 	return 1;
 }
 
 static int
 mdoc_ad_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_I, "c", "addr");
+	print_otag(h, TAG_I, "c", "Ad");
 	return 1;
 }
 
@@ -1020,7 +1022,7 @@ mdoc_an_pre(MDOC_ARGS)
 	if (n->sec == SEC_AUTHORS && ! (h->flags & HTML_NOSPLIT))
 		h->flags |= HTML_SPLIT;
 
-	print_otag(h, TAG_SPAN, "c", "author");
+	print_otag(h, TAG_SPAN, "c", "An");
 	return 1;
 }
 
@@ -1028,28 +1030,28 @@ static int
 mdoc_cd_pre(MDOC_ARGS)
 {
 	synopsis_pre(h, n);
-	print_otag(h, TAG_B, "c", "config");
+	print_otag(h, TAG_B, "c", "Cd");
 	return 1;
 }
 
 static int
 mdoc_dv_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_SPAN, "c", "define");
+	print_otag(h, TAG_CODE, "c", "Dv");
 	return 1;
 }
 
 static int
 mdoc_ev_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_SPAN, "c", "env");
+	print_otag(h, TAG_CODE, "c", "Ev");
 	return 1;
 }
 
 static int
 mdoc_er_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_SPAN, "c", "errno");
+	print_otag(h, TAG_CODE, "c", "Er");
 	return 1;
 }
 
@@ -1060,12 +1062,12 @@ mdoc_fa_pre(MDOC_ARGS)
 	struct tag		*t;
 
 	if (n->parent->tok != MDOC_Fo) {
-		print_otag(h, TAG_I, "c", "farg");
+		print_otag(h, TAG_I, "c", "Fa");
 		return 1;
 	}
 
 	for (nn = n->child; nn; nn = nn->next) {
-		t = print_otag(h, TAG_I, "c", "farg");
+		t = print_otag(h, TAG_I, "c", "Fa");
 		print_text(h, nn->string);
 		print_tagq(h, t);
 		if (nn->next) {
@@ -1096,11 +1098,11 @@ mdoc_fd_pre(MDOC_ARGS)
 	assert(n->type == ROFFT_TEXT);
 
 	if (strcmp(n->string, "#include")) {
-		print_otag(h, TAG_B, "c", "macro");
+		print_otag(h, TAG_B, "c", "Fd");
 		return 1;
 	}
 
-	print_otag(h, TAG_B, "c", "includes");
+	print_otag(h, TAG_B, "c", "In");
 	print_text(h, n->string);
 
 	if (NULL != (n = n->next)) {
@@ -1114,10 +1116,10 @@ mdoc_fd_pre(MDOC_ARGS)
 			cp = strchr(buf, '\0') - 1;
 			if (cp >= buf && (*cp == '>' || *cp == '"'))
 				*cp = '\0';
-			t = print_otag(h, TAG_A, "chI", "link-includes", buf);
+			t = print_otag(h, TAG_A, "chI", "In", buf);
 			free(buf);
 		} else
-			t = print_otag(h, TAG_A, "c", "link-includes");
+			t = print_otag(h, TAG_A, "c", "In");
 
 		print_text(h, n->string);
 		print_tagq(h, t);
@@ -1144,7 +1146,7 @@ mdoc_vt_pre(MDOC_ARGS)
 	} else if (n->type == ROFFT_HEAD)
 		return 0;
 
-	print_otag(h, TAG_SPAN, "c", "type");
+	print_otag(h, TAG_I, "c", "Vt");
 	return 1;
 }
 
@@ -1152,7 +1154,7 @@ static int
 mdoc_ft_pre(MDOC_ARGS)
 {
 	synopsis_pre(h, n);
-	print_otag(h, TAG_I, "c", "ftype");
+	print_otag(h, TAG_I, "c", "Ft");
 	return 1;
 }
 
@@ -1173,7 +1175,7 @@ mdoc_fn_pre(MDOC_ARGS)
 
 	ep = strchr(sp, ' ');
 	if (NULL != ep) {
-		t = print_otag(h, TAG_I, "c", "ftype");
+		t = print_otag(h, TAG_I, "c", "Ft");
 
 		while (ep) {
 			sz = MIN((int)(ep - sp), BUFSIZ - 1);
@@ -1186,7 +1188,7 @@ mdoc_fn_pre(MDOC_ARGS)
 		print_tagq(h, t);
 	}
 
-	t = print_otag(h, TAG_B, "c", "fname");
+	t = print_otag(h, TAG_B, "c", "Fn");
 
 	if (sp)
 		print_text(h, sp);
@@ -1199,10 +1201,10 @@ mdoc_fn_pre(MDOC_ARGS)
 
 	for (n = n->child->next; n; n = n->next) {
 		if (NODE_SYNPRETTY & n->flags)
-			t = print_otag(h, TAG_I, "css?", "farg",
+			t = print_otag(h, TAG_I, "css?", "Fa",
 			    "white-space", "nowrap");
 		else
-			t = print_otag(h, TAG_I, "c", "farg");
+			t = print_otag(h, TAG_I, "c", "Fa");
 		print_text(h, n->string);
 		print_tagq(h, t);
 		if (n->next) {
@@ -1288,7 +1290,7 @@ mdoc_lk_pre(MDOC_ARGS)
 
 	assert(n->type == ROFFT_TEXT);
 
-	print_otag(h, TAG_A, "ch", "link-ext", n->string);
+	print_otag(h, TAG_A, "ch", "Lk", n->string);
 
 	if (NULL == n->next)
 		print_text(h, n->string);
@@ -1309,7 +1311,7 @@ mdoc_mt_pre(MDOC_ARGS)
 		assert(n->type == ROFFT_TEXT);
 
 		mandoc_asprintf(&cp, "mailto:%s", n->string);
-		t = print_otag(h, TAG_A, "ch", "link-mail", cp);
+		t = print_otag(h, TAG_A, "ch", "Mt", cp);
 		print_text(h, n->string);
 		print_tagq(h, t);
 		free(cp);
@@ -1337,7 +1339,7 @@ mdoc_fo_pre(MDOC_ARGS)
 		return 0;
 
 	assert(n->child->string);
-	t = print_otag(h, TAG_B, "c", "fname");
+	t = print_otag(h, TAG_B, "c", "Fn");
 	print_text(h, n->child->string);
 	print_tagq(h, t);
 	return 0;
@@ -1361,7 +1363,7 @@ mdoc_in_pre(MDOC_ARGS)
 	struct tag	*t;
 
 	synopsis_pre(h, n);
-	print_otag(h, TAG_B, "c", "includes");
+	print_otag(h, TAG_B, "c", "In");
 
 	/*
 	 * The first argument of the `In' gets special treatment as
@@ -1380,10 +1382,9 @@ mdoc_in_pre(MDOC_ARGS)
 		assert(n->type == ROFFT_TEXT);
 
 		if (h->base_includes)
-			t = print_otag(h, TAG_A, "chI", "link-includes",
-			    n->string);
+			t = print_otag(h, TAG_A, "chI", "In", n->string);
 		else
-			t = print_otag(h, TAG_A, "c", "link-includes");
+			t = print_otag(h, TAG_A, "c", "In");
 		print_text(h, n->string);
 		print_tagq(h, t);
 
@@ -1404,14 +1405,14 @@ mdoc_in_pre(MDOC_ARGS)
 static int
 mdoc_ic_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_B, "c", "cmd");
+	print_otag(h, TAG_B, "c", "Ic");
 	return 1;
 }
 
 static int
 mdoc_va_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_B, "c", "var");
+	print_otag(h, TAG_I, "c", "Va");
 	return 1;
 }
 
@@ -1456,7 +1457,7 @@ mdoc_bf_pre(MDOC_ARGS)
 static int
 mdoc_ms_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_SPAN, "c", "symb");
+	print_otag(h, TAG_B, "c", "Ms");
 	return 1;
 }
 
@@ -1516,7 +1517,7 @@ mdoc_lb_pre(MDOC_ARGS)
 	if (SEC_LIBRARY == n->sec && NODE_LINE & n->flags && n->prev)
 		print_otag(h, TAG_BR, "");
 
-	print_otag(h, TAG_SPAN, "c", "lib");
+	print_otag(h, TAG_SPAN, "c", "Lb");
 	return 1;
 }
 
@@ -1655,7 +1656,7 @@ mdoc_quote_pre(MDOC_ARGS)
 	case MDOC_Op:
 		print_text(h, "\\(lB");
 		h->flags |= HTML_NOSPACE;
-		print_otag(h, TAG_SPAN, "c", "opt");
+		print_otag(h, TAG_SPAN, "c", "Op");
 		break;
 	case MDOC_En:
 		if (NULL == n->norm->Es ||

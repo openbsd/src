@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.80 2017/01/19 15:27:26 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.81 2017/01/20 23:50:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -515,7 +515,7 @@ man_OP_pre(MAN_ARGS)
 
 	print_text(h, "[");
 	h->flags |= HTML_NOSPACE;
-	tt = print_otag(h, TAG_SPAN, "c", "opt");
+	tt = print_otag(h, TAG_SPAN, "c", "Op");
 
 	if (NULL != (n = n->child)) {
 		print_otag(h, TAG_B, "");
@@ -601,7 +601,7 @@ man_UR_pre(MAN_ARGS)
 	assert(n->type == ROFFT_HEAD);
 	if (n->child != NULL) {
 		assert(n->child->type == ROFFT_TEXT);
-		print_otag(h, TAG_A, "ch", "link-ext", n->child->string);
+		print_otag(h, TAG_A, "ch", "Lk", n->child->string);
 	}
 
 	assert(n->next->type == ROFFT_BODY);
