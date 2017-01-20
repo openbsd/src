@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.41 2017/01/03 17:51:38 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.42 2017/01/20 14:08:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -635,6 +635,7 @@ ca_reload(struct iked *env)
 
 		if (ibuf_add(env->sc_certreq, md, len) != 0) {
 			ibuf_release(env->sc_certreq);
+			env->sc_certreq = NULL;
 			return (-1);
 		}
 	}
@@ -778,6 +779,7 @@ ca_by_issuer(X509_STORE *ctx, X509_NAME *subject, struct iked_static_id *id)
 int
 ca_subjectpubkey_digest(X509 *x509, uint8_t *md, unsigned int *size)
 {
+	EVP_PKEY	*pkey;
 	uint8_t		*buf = NULL;
 	int		 buflen;
 
@@ -790,8 +792,11 @@ ca_subjectpubkey_digest(X509 *x509, uint8_t *md, unsigned int *size)
 	 * that includes the public key type (eg. RSA) and the
 	 * public key value (see 3.7 of RFC4306).
 	 */
-	buflen = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(x509), &buf);
-	if (!buflen)
+	if ((pkey = X509_get_pubkey(x509)) == NULL)
+		return (-1);
+	buflen = i2d_PUBKEY(pkey, &buf);
+	EVP_PKEY_free(pkey);
+	if (buflen == 0)
 		return (-1);
 	if (!EVP_Digest(buf, buflen, md, size, EVP_sha1(), NULL)) {
 		free(buf);
@@ -1371,6 +1376,6 @@ ca_sslerror(const char *caller)
 	unsigned long	 error;
 
 	while ((error = ERR_get_error()) != 0)
-		log_warn("%s: %s: %.100s", __func__, caller,
+		log_warnx("%s: %s: %.100s", __func__, caller,
 		    ERR_error_string(error, NULL));
 }
