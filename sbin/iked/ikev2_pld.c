@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.55 2015/10/15 18:40:38 mmcc Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.56 2017/01/20 13:47:17 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -112,7 +112,7 @@ ikev2_pld_parse(struct iked *env, struct ike_header *hdr,
 {
 	log_debug("%s: header ispi %s rspi %s"
 	    " nextpayload %s version 0x%02x exchange %s flags 0x%02x"
-	    " msgid %d length %d response %d", __func__,
+	    " msgid %d length %u response %d", __func__,
 	    print_spi(betoh64(hdr->ike_ispi), 8),
 	    print_spi(betoh64(hdr->ike_rspi), 8),
 	    print_map(hdr->ike_nextpayload, ikev2_payload_map),
