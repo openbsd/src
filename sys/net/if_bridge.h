@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.54 2017/01/11 08:47:48 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.55 2017/01/20 05:03:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -407,11 +407,22 @@ struct bridge_iflist {
 	    ((struct bridge_iflist *)_bp2)->bridge_sc)
 
 /*
+ * XXX ip_ipsp.h's sockaddr_union should be converted to sockaddr *
+ * passing with correct sa_len, then a good approach for cleaning this
+ * will become more clear.
+ */
+union brsockaddr_union {
+	struct sockaddr		sa;
+	struct sockaddr_in	sin;
+	struct sockaddr_in6	sin6;
+};
+
+/*
  * Bridge tunnel tagging
  */
 struct bridge_tunneltag {
-	union pfsockaddr_union		brtag_peer;
-	union pfsockaddr_union		brtag_local;
+	union brsockaddr_union		brtag_peer;
+	union brsockaddr_union		brtag_local;
 	u_int32_t			brtag_id;
 };
 

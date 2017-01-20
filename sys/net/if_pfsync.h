@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.48 2015/01/24 00:29:06 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.49 2017/01/20 05:03:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -210,10 +210,9 @@ struct pfsync_bus {
 /*
  * TDB
  */
-
 struct pfsync_tdb {
 	u_int32_t			spi;
-	union pfsockaddr_union		dst;
+	union sockaddr_union		dst;
 	u_int64_t			rpl;
 	u_int64_t			cur_bytes;
 	u_int8_t			sproto;
