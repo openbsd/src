@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.116 2017/01/03 17:00:04 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.117 2017/01/20 04:03:53 krw Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -914,7 +914,7 @@ help(int argc, char *argv[])
 }
 #endif /* !SMALL */
 
-void
+__dead void
 usage(void)
 {
 	fprintf(stderr, "usage: "

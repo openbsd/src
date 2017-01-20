@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.47 2017/01/03 17:00:04 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.48 2017/01/20 04:03:53 krw Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -109,7 +109,8 @@ void	sethash(int, char **);
 void	setpeer(int, char **);
 void	setttywidth(int);
 char   *slurpstring(void);
-void	usage(void);
+
+__dead void	usage(void);
 
 void	cookie_get(const char *, const char *, int, char **);
 void	cookie_load(void);
