@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.49 2017/01/20 08:50:45 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.50 2017/01/20 09:01:19 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -612,6 +612,9 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 void
 bfd_error(struct bfd_config *bfd)
 {
+	if (bfd->bc_state <= BFD_STATE_DOWN)
+		return;
+
 	if (++bfd->bc_error >= bfd->bc_neighbor->bn_mult) {
 		bfd->bc_neighbor->bn_ldiag = BFD_DIAG_EXPIRED;
 		bfd_reset(bfd);
