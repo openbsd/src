@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.56 2017/01/07 13:49:07 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.57 2017/01/20 00:37:40 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -243,7 +243,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ctx->error = X509_V_ERR_INVALID_CALL;
 		return -1;
 	}
-	if (ctx->error != X509_V_ERR_UNSPECIFIED) {
+	if (ctx->error != X509_V_ERR_INVALID_CALL) {
 		/*
 		 * This X509_STORE_CTX has not been properly initialized.
 		 */
@@ -562,7 +562,7 @@ find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 		issuer = sk_X509_value(sk, i);
 		if (ctx->check_issued(ctx, x, issuer)) {
 			rv = issuer;
-			if (x509_check_cert_time(ctx, rv, 1))
+			if (x509_check_cert_time(ctx, rv, -1))
 				break;
 		}
 	}
@@ -1698,141 +1698,141 @@ check_policy(X509_STORE_CTX *ctx)
 	return 1;
 }
 
-int
-x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet)
+/*
+ * Inform the verify callback of an error.
+ *
+ * If x is not NULL it is the error cert, otherwise use the chain cert
+ * at depth.
+ *
+ * If err is not X509_V_OK, that's the error value, otherwise leave
+ * unchanged (presumably set by the caller).
+ *
+ * Returns 0 to abort verification with an error, non-zero to continue.
+ */
+static int
+verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
 {
-	time_t *ptime = NULL;
-	int i;
+	ctx->error_depth = depth;
+	ctx->current_cert = (x != NULL) ? x : sk_X509_value(ctx->chain, depth);
+	if (err != X509_V_OK)
+		ctx->error = err;
+	return ctx->verify_cb(0, ctx);
+}
 
-	if (ctx->param->flags & X509_V_FLAG_NO_CHECK_TIME)
-		return (1);
+/*
+ * Check certificate validity times.
+ *
+ * If depth >= 0, invoke verification callbacks on error, otherwise just return
+ * the validation status.
+ *
+ * Return 1 on success, 0 otherwise.
+ */
+int
+x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
+{
+	time_t *ptime;
+	int i;
 
 	if (ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME)
 		ptime = &ctx->param->check_time;
+	else if (ctx->param->flags & X509_V_FLAG_NO_CHECK_TIME)
+		return 1;
+	else
+		ptime = NULL;
 
 	i = X509_cmp_time(X509_get_notBefore(x), ptime);
-	if (i == 0) {
-		if (quiet)
-			return 0;
-		ctx->error = X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
-		ctx->current_cert = x;
-		if (!ctx->verify_cb(0, ctx))
-			return 0;
-	}
-
-	if (i > 0) {
-		if (quiet)
-			return 0;
-		ctx->error = X509_V_ERR_CERT_NOT_YET_VALID;
-		ctx->current_cert = x;
-		if (!ctx->verify_cb(0, ctx))
-			return 0;
-	}
+	if (i >= 0 && depth < 0)
+		return 0;
+	if (i == 0 && !verify_cb_cert(ctx, x, depth,
+	    X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD))
+		return 0;
+	if (i > 0 && !verify_cb_cert(ctx, x, depth,
+		X509_V_ERR_CERT_NOT_YET_VALID))
+		return 0;
 
 	i = X509_cmp_time(X509_get_notAfter(x), ptime);
-	if (i == 0) {
-		if (quiet)
-			return 0;
-		ctx->error = X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
-		ctx->current_cert = x;
-		if (!ctx->verify_cb(0, ctx))
-			return 0;
-	}
-
-	if (i < 0) {
-		if (quiet)
-			return 0;
-		ctx->error = X509_V_ERR_CERT_HAS_EXPIRED;
-		ctx->current_cert = x;
-		if (!ctx->verify_cb(0, ctx))
-			return 0;
-	}
-
+	if (i <= 0 && depth < 0)
+		return 0;
+	if (i == 0 && !verify_cb_cert(ctx, x, depth,
+	    X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD))
+		return 0;
+	if (i < 0 && !verify_cb_cert(ctx, x, depth,
+	    X509_V_ERR_CERT_HAS_EXPIRED))
+		return 0;
 	return 1;
 }
 
 static int
 internal_verify(X509_STORE_CTX *ctx)
 {
-	int ok = 0, n;
-	X509 *xs, *xi;
-	EVP_PKEY *pkey = NULL;
-	int (*cb)(int xok, X509_STORE_CTX *xctx);
-
-	cb = ctx->verify_cb;
-
-	n = sk_X509_num(ctx->chain);
-	ctx->error_depth = n - 1;
-	n--;
-	xi = sk_X509_value(ctx->chain, n);
+	int n = sk_X509_num(ctx->chain) - 1;
+	X509 *xi = sk_X509_value(ctx->chain, n);
+	X509 *xs;
 
 	if (ctx->check_issued(ctx, xi, xi))
 		xs = xi;
 	else {
-		if (n <= 0) {
-			ctx->error = X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE;
-			ctx->current_cert = xi;
-			ok = cb(0, ctx);
-			goto end;
-		} else {
-			n--;
-			ctx->error_depth = n;
-			xs = sk_X509_value(ctx->chain, n);
+		if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) {
+			xs = xi;
+			goto check_cert;
 		}
+		if (n <= 0)
+			return verify_cb_cert(ctx, xi, 0,
+			    X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE);
+		n--;
+		ctx->error_depth = n;
+		xs = sk_X509_value(ctx->chain, n);
 	}
 
-/*	ctx->error=0;  not needed */
+	/*
+	 * Do not clear ctx->error=0, it must be "sticky", only the
+	 * user's callback is allowed to reset errors (at its own
+	 * peril).
+	 */
 	while (n >= 0) {
-		ctx->error_depth = n;
+		EVP_PKEY *pkey;
 
-		/* Skip signature check for self signed certificates unless
-		 * explicitly asked for. It doesn't add any security and
-		 * just wastes time.
+		/*
+		 * Skip signature check for self signed certificates
+		 * unless explicitly asked for.  It doesn't add any
+		 * security and just wastes time.  If the issuer's
+		 * public key is unusable, report the issuer
+		 * certificate and its depth (rather than the depth of
+		 * the subject).
 		 */
-		if (!xs->valid && (xs != xi ||
-		    (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE))) {
+		if (xs != xi || (ctx->param->flags &
+			X509_V_FLAG_CHECK_SS_SIGNATURE)) {
 			if ((pkey = X509_get_pubkey(xi)) == NULL) {
-				ctx->error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
-				ctx->current_cert = xi;
-				ok = (*cb)(0, ctx);
-				if (!ok)
-					goto end;
+				if (!verify_cb_cert(ctx, xi, xi != xs ? n+1 : n,
+					X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
+					return 0;
 			} else if (X509_verify(xs, pkey) <= 0) {
-				ctx->error = X509_V_ERR_CERT_SIGNATURE_FAILURE;
-				ctx->current_cert = xs;
-				ok = (*cb)(0, ctx);
-				if (!ok) {
-					EVP_PKEY_free(pkey);
-					goto end;
-				}
+				if (!verify_cb_cert(ctx, xs, n,
+					X509_V_ERR_CERT_SIGNATURE_FAILURE))
+					return 0;
 			}
-			EVP_PKEY_free(pkey);
-			pkey = NULL;
 		}
+check_cert:
+		/* Calls verify callback as needed */
+		if (!x509_check_cert_time(ctx, xs, n))
+			return 0;
 
-		xs->valid = 1;
-
-		ok = x509_check_cert_time(ctx, xs, 0);
-		if (!ok)
-			goto end;
-
-		/* The last error (if any) is still in the error value */
+		/*
+		 * Signal success at this depth.  However, the
+		 * previous error (if any) is retained.
+		 */
 		ctx->current_issuer = xi;
 		ctx->current_cert = xs;
-		ok = (*cb)(1, ctx);
-		if (!ok)
-			goto end;
+		ctx->error_depth = n;
+		if (!ctx->verify_cb(1, ctx))
+			return 0;
 
-		n--;
-		if (n >= 0) {
+		if (--n >= 0) {
 			xi = xs;
 			xs = sk_X509_value(ctx->chain, n);
 		}
 	}
-	ok = 1;
-
-end:
-	return ok;
+	return 1;
 }
 
 int
@@ -2177,9 +2177,9 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 
 	/*
 	 * Start with this set to not valid - it will be set to valid
-	 * in X509_verify_cert.
+	 * in X509_verify_cert, or before the callback is called.
 	 */
-	ctx->error = X509_V_ERR_UNSPECIFIED;
+	ctx->error = X509_V_ERR_INVALID_CALL;
 
 	/*
 	 * Set values other than 0.  Keep this in the same order as
