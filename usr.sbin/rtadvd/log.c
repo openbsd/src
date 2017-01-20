@@ -1,3 +1,5 @@
+/*	$OpenBSD: log.c,v 1.2 2017/01/20 23:29:58 benno Exp $ */
+
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
@@ -14,9 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <err.h>
 #include <errno.h>
-#include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,10 +27,9 @@
 
 #include "log.h"
 
-int	debug;
-
-void	logit(int, const char *, ...);
-void	vlog(int pri, const char *fmt, va_list ap);
+int		 debug;
+int		 verbose;
+const char	*log_procname;
 
 void
 log_init(int n_debug)
@@ -43,6 +42,12 @@ log_init(int n_debug)
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	tzset();
+}
+
+void
+log_verbose(int v)
+{
+	verbose = v;
 }
 
 void
@@ -80,12 +85,12 @@ log_warn(const char *emsg, ...)
 	char	*nfmt;
 	va_list	 ap;
 
+	/* best effort to even work in out of memory situations */
 	if (emsg == NULL)
 		logit(LOG_CRIT, "%s", strerror(errno));
 	else {
 		va_start(ap, emsg);
 
-		/* best effort to even work in out of memory situations */
 		if (asprintf(&nfmt, "%s: %s", emsg, strerror(errno)) == -1) {
 			/* we tried it... */
 			vlog(LOG_CRIT, emsg, ap);
@@ -123,7 +128,7 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (debug) {
+	if (verbose) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
 		va_end(ap);
@@ -133,18 +138,16 @@ log_debug(const char *emsg, ...)
 void
 fatal(const char *emsg)
 {
-	extern char	*__progname;
-
 	if (emsg == NULL)
-		logit(LOG_CRIT, "fatal in %s: %s", __progname,
+		logit(LOG_CRIT, "fatal in %s: %s", log_procname,
 		    strerror(errno));
 	else
 		if (errno)
 			logit(LOG_CRIT, "fatal in %s: %s: %s",
-			    __progname, emsg, strerror(errno));
+			    log_procname, emsg, strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal in %s: %s",
-			    __progname, emsg);
+			    log_procname, emsg);
 
 	exit(1);
 }

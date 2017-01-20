@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.82 2016/09/26 17:15:19 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.83 2017/01/20 23:29:58 benno Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -163,6 +163,7 @@ main(int argc, char *argv[])
 	struct event ev_sigusr1;
 	struct rainfo *rai;
 
+	log_procname = getprogname();
 	log_init(1);		/* log to stderr until daemonized */
 
 	closefrom(3);
@@ -192,7 +193,8 @@ main(int argc, char *argv[])
 		devnull = open(_PATH_DEVNULL, O_RDWR, 0);
 		if (devnull == -1)
 			fatal("open(\"" _PATH_DEVNULL "\")");
-	}
+	} else
+		log_verbose(1);
 
 	SLIST_INIT(&ralist);
 
