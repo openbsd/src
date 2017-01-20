@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.81 2016/10/28 08:01:53 rzalamena Exp $	*/
+/*	$OpenBSD: mib.c,v 1.82 2017/01/20 09:11:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -41,6 +41,7 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/pfvar.h>
+#include <netinet/ip_ipsp.h>
 #include <net/if_pfsync.h>
 
 #include <stdlib.h>
