@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.151 2017/01/19 23:18:29 phessler Exp $	*/
+/*	$OpenBSD: route.h,v 1.152 2017/01/20 08:10:54 dlg Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -318,6 +318,26 @@ struct rt_addrinfo {
 };
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum rtstat_counters {
+	rts_badredirect,	/* bogus redirect calls */
+	rts_dynamic,		/* routes created by redirects */
+	rts_newgateway,		/* routes modified by redirects */
+	rts_unreach,		/* lookups which failed */
+	rts_wildcard,		/* lookups satisfied by a wildcard */
+
+	rts_ncounters
+};
+
+static inline void
+rtstat_inc(enum rtstat_counters c)
+{
+	extern struct cpumem *rtcounters;
+
+	counters_inc(rtcounters, c);
+}
 
 /* 
  * This structure, and the prototypes for the rt_timer_{init,remove_all,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.213 2017/01/19 23:18:29 phessler Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.214 2017/01/20 08:10:54 dlg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ void		 rt_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
 
 int		 sysctl_iflist(int, struct walkarg *);
 int		 sysctl_ifnames(struct walkarg *);
+int		 sysctl_rtable_rtstat(void *, size_t *, void *);
 
 struct routecb {
 	struct rawcb	rcb;
@@ -1611,9 +1612,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		break;
 
 	case NET_RT_STATS:
-		error = sysctl_rdstruct(where, given, new,
-		    &rtstat, sizeof(rtstat));
-		return (error);
+		return (sysctl_rtable_rtstat(where, given, new));
 	case NET_RT_TABLE:
 		tableid = w.w_arg;
 		if (!rtable_exists(tableid))
@@ -1637,6 +1636,25 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		*given = (11 * w.w_needed) / 10;
 
 	return (error);
+}
+
+int
+sysctl_rtable_rtstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	extern struct cpumem *rtcounters;
+	uint64_t counters[rts_ncounters];
+	struct rtstat rtstat;
+	uint32_t *words = (uint32_t *)&rtstat;
+	int i;
+
+	KASSERT(sizeof(rtstat) == (nitems(counters) * sizeof(uint32_t)));
+
+	counters_read(rtcounters, counters, nitems(counters));
+
+	for (i = 0; i < nitems(counters); i++)
+		words[i] = (uint32_t)counters[i];
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp, &rtstat, sizeof(rtstat)));
 }
 
 /*

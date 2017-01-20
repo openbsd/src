@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.346 2017/01/19 04:06:26 phessler Exp $	*/
+/*	$OpenBSD: route.c,v 1.347 2017/01/20 08:10:54 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ static uint32_t		rt_hashjitter;
 
 extern unsigned int	rtmap_limit;
 
-struct rtstat		rtstat;
+struct cpumem *		rtcounters;
 int			rttrash;	/* routes not in table but not freed */
 int			ifatrash;	/* ifas not in ifp list but not free */
 
@@ -191,6 +191,8 @@ TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 void
 route_init(void)
 {
+	rtcounters = counters_alloc(rts_ncounters, M_COUNTERS);
+
 	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, IPL_SOFTNET, 0,
 	    "rtentry", NULL);
 
@@ -273,7 +275,7 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 		}
 		rt->rt_use++;
 	} else
-		rtstat.rts_unreach++;
+		rtstat_inc(rts_unreach);
 	return (rt);
 }
 
@@ -545,7 +547,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 {
 	struct rtentry		*rt;
 	int			 error = 0;
-	u_int32_t		*stat = NULL;
+	enum rtstat_counters	 stat = rts_ncounters;
 	struct rt_addrinfo	 info;
 	struct ifaddr		*ifa;
 	unsigned int		 ifidx = 0;
@@ -617,7 +619,7 @@ create:
 				flags = rt->rt_flags;
 				prio = rt->rt_priority;
 			}
-			stat = &rtstat.rts_dynamic;
+			stat = rts_dynamic;
 		} else {
 			/*
 			 * Smash the current notion of the gateway to
@@ -626,7 +628,7 @@ create:
 			rt->rt_flags |= RTF_MODIFIED;
 			flags |= RTF_MODIFIED;
 			prio = rt->rt_priority;
-			stat = &rtstat.rts_newgateway;
+			stat = rts_newgateway;
 			rt_setgate(rt, gateway, rdomain);
 		}
 	} else
@@ -640,9 +642,9 @@ done:
 	}
 out:
 	if (error)
-		rtstat.rts_badredirect++;
-	else if (stat != NULL)
-		(*stat)++;
+		rtstat_inc(rts_badredirect);
+	else if (stat != rts_ncounters)
+		rtstat_inc(stat);
 	bzero((caddr_t)&info, sizeof(info));
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
