@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.2 2017/01/20 08:03:21 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -41,9 +41,6 @@
 int	com_fdt_match(struct device *, void *, void *);
 void	com_fdt_attach(struct device *, struct device *, void *);
 int	com_fdt_intr_designware(void *);
-
-extern int comcnspeed;
-extern int comcnmode;
 
 struct com_fdt_softc {
 	struct com_softc	 sc;
@@ -89,8 +86,7 @@ com_fdt_init_cons(void)
 	if (bus_space_map(comconsiot, reg.addr, reg.size, 0, &comconsioh))
 		return;
 
-	comconsrate = comcnspeed;
-	comconscflag = comcnmode;
+	comconsrate = B115200;
 	cn_tab = &com_fdt_cons;
 }
 

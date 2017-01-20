@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.2 2017/01/20 08:03:21 patrick Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -185,9 +185,6 @@ struct pluart_softc *pluart_sc(dev_t dev);
 
 int pluart_intr(void *);
 
-extern int comcnspeed;
-extern int comcnmode;
-
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
 cdev_decl(pluart);
@@ -217,7 +214,7 @@ pluart_init_cons(void)
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	pluartcnattach(&arm64_bs_tag, reg.addr, comcnspeed, comcnmode);
+	pluartcnattach(&arm64_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
 }
 
 int
