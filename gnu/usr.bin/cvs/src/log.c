@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 1992, Brian Berliner and Jeff Polk
  * Copyright (c) 1989-1992, Brian Berliner
- * 
+ *
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
- * 
+ *
  * Print Log Information
- * 
+ *
  * Prints the RCS "log" (rlog) information for the specified files.  With no
  * argument, prints the log information for all the files in the directory
  * (recursive by default).
@@ -329,7 +329,7 @@ cvslog (argc, argv)
 		free (p->end);
 	    free (p);
 	}
-	    
+
 	if (log_data.header)
 	    send_arg ("-h");
 	if (local)
@@ -794,7 +794,7 @@ log_fileproc (callerdat, finfo)
 	if (p != NULL)
 	{
 	    Entnode *e;
-	    
+
 	    e = (Entnode *) p->data;
 	    if (e->version[0] == '0' && e->version[1] == '\0')
 	    {
@@ -804,10 +804,10 @@ log_fileproc (callerdat, finfo)
 		return(0);
 	    }
 	}
-	
+
 	if (!really_quiet)
 	    error (0, 0, "nothing known about %s", finfo->file);
-	
+
 	return (1);
     }
 
