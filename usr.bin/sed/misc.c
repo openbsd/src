@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.11 2015/10/26 14:08:47 mmcc Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 2017/01/20 10:26:16 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -101,7 +101,7 @@ strregerror(int errcode, regex_t *preg)
 /*
  * Error reporting function
  */
-void
+__dead void
 error(int severity, const char *fmt, ...)
 {
 	va_list ap;
@@ -109,15 +109,24 @@ error(int severity, const char *fmt, ...)
 	va_start(ap, fmt);
 	(void)fprintf(stderr, "sed: ");
 	switch (severity) {
-	case WARNING:
 	case COMPILE:
 		(void)fprintf(stderr, "%lu: %s: ", linenum, fname);
 	}
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
-	if (severity == WARNING)
-		return;
 	exit(1);
-	/* NOTREACHED */
+}
+
+void
+warning(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void)fprintf(stderr, "sed: ");
+	(void)fprintf(stderr, "%lu: %s: ", linenum, fname);
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
 }

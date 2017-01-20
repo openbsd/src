@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.29 2016/10/11 19:27:39 martijn Exp $	*/
+/*	$OpenBSD: process.c,v 1.30 2017/01/20 10:26:16 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -539,7 +539,6 @@ regexec_e(regex_t *preg, const char *string, int eflags,
 		return (0);
 	}
 	error(FATAL, "RE error: %s", strregerror(eval, defpreg));
-	/* NOTREACHED */
 }
 
 /*

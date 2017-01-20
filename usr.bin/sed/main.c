@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2016/07/14 08:31:18 semarie Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2017/01/20 10:26:16 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -285,7 +285,8 @@ again:
 			}
 		}
 	}
-	/* NOTREACHED */
+
+	return (NULL);
 }
 
 /*
@@ -329,7 +330,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			fclose(infile);
 			if (*oldfname != '\0') {
 				if (rename(fname, oldfname) != 0) {
-					error(WARNING, "rename()");
+					warning("rename()");
 					unlink(tmpfname);
 					exit(1);
 				}
@@ -389,7 +390,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			outfname = "stdout";
 		}
 		if ((infile = fopen(fname, "r")) == NULL) {
-			error(WARNING, "%s", strerror(errno));
+			warning("%s", strerror(errno));
 			rval = 1;
 			continue;
 		}

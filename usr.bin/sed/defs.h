@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.7 2015/10/26 22:24:44 jca Exp $ */
+/*	$OpenBSD: defs.h,v 1.8 2017/01/20 10:26:16 krw Exp $ */
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -136,7 +136,6 @@ typedef struct {
 /*
  * Error severity codes:
  */
-#define	WARNING		0	/* Just print the warning */
 #define	FATAL		1	/* Exit immediately with 1 */
 #define	COMPILE		2	/* Print error, count and finish script */
 
