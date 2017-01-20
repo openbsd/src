@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.158 2017/01/14 18:03:11 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.159 2017/01/20 05:51:50 krw Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -198,11 +198,14 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	char *proxyhost = NULL;
 #ifndef NOSSL
 	char *sslpath = NULL, *sslhost = NULL;
-	char *locbase, *full_host = NULL;
+	char *full_host = NULL;
 	const char *scheme;
 	int ishttpurl = 0, ishttpsurl = 0;
-	struct addrinfo *ares = NULL;
 #endif /* !NOSSL */
+#ifndef SMALL
+	char *locbase;
+	struct addrinfo *ares = NULL;
+#endif
 	struct tls *tls = NULL;
 	int status;
 	int save_errno;
