@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.68 2017/01/18 08:48:06 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.69 2017/01/20 00:51:56 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -455,7 +455,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-	case SIOCAIFADDR:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {

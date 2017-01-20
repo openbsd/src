@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.159 2017/01/08 02:16:08 bluhm Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.160 2017/01/20 00:51:56 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -824,7 +824,6 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 	rv = 0;
 	switch (cmd) {
-	case SIOCAIFADDR:
 	case SIOCSIFDSTADDR:
 		break;
 

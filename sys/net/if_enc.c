@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.65 2016/09/04 21:46:36 krw Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.66 2017/01/20 00:51:56 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -184,7 +184,6 @@ enc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int		 error;
 
 	switch (cmd) {
-	case SIOCAIFADDR:
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFFLAGS:
