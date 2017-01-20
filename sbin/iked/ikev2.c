@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.131 2016/06/02 07:14:26 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.132 2017/01/20 13:51:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -222,6 +222,9 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_CERTVALID:
 	case IMSG_CERTINVALID:
+		if (IMSG_DATA_SIZE(imsg) < sizeof(type) + sizeof(sh))
+			fatalx("bad length imsg received");
+
 		memcpy(&sh, imsg->data, sizeof(sh));
 		memcpy(&type, (uint8_t *)imsg->data + sizeof(sh),
 		    sizeof(type));
