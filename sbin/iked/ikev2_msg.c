@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.46 2016/09/04 10:26:02 vgross Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.47 2017/01/20 13:58:05 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -208,6 +208,8 @@ ikev2_msg_valid_ike_sa(struct iked *env, struct ike_header *oldhdr,
 #endif
 
 	if (msg->msg_sa != NULL && msg->msg_policy != NULL) {
+		if (msg->msg_sa->sa_state == IKEV2_STATE_CLOSED)
+			return (-1);
 		/*
 		 * Only permit informational requests from initiator
 		 * on closing SAs (for DELETE).
