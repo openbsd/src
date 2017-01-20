@@ -1,4 +1,8 @@
-# $OpenBSD: Makefile,v 1.3 2016/12/19 23:50:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2017/01/20 07:55:20 patrick Exp $
+
+.include <bsd.own.mk>
+
+.if ${COMPILER_VERSION:L} == "clang"
 
 HDRDIR=		${.CURDIR}/include
 SRCDIR=		${.CURDIR}/src
@@ -249,3 +253,8 @@ includes:
 .	endfor
 
 .include <bsd.lib.mk>
+
+.else
+NOPROG=
+.include <bsd.prog.mk>
+.endif

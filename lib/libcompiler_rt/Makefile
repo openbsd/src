@@ -1,6 +1,8 @@
-# $OpenBSD: Makefile,v 1.4 2017/01/11 14:18:17 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2017/01/20 07:55:20 patrick Exp $
 
 .include <bsd.own.mk>
+
+.if ${COMPILER_VERSION:L} == "clang"
 
 LIB=	compiler_rt
 NOPIC=
@@ -239,3 +241,8 @@ SRCS+=	divtc3.c \
 .endif
 
 .include <bsd.lib.mk>
+
+.else
+NOPROG=
+.include <bsd.prog.mk>
+.endif
