@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.60 2017/01/05 12:42:18 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.61 2017/01/20 13:56:51 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -455,8 +455,10 @@ ikev2rule	: IKEV2 name ikeflags satype af proto hosts_list peers
 		    filters {
 			if (create_ike($2, $5, $6, $7, &$8, $9, $10, $4, $3,
 			    $11.srcid, $11.dstid, $12, &$13, &$14,
-			    $16, $15) == -1)
+			    $16, $15) == -1) {
+				yyerror("create_ike failed");
 				YYERROR;
+			}
 		}
 		;
 
@@ -2424,6 +2426,9 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 
 	bzero(&pol, sizeof(pol));
 	bzero(&prop, sizeof(prop));
+	bzero(&ikexforms, sizeof(ikexforms));
+	bzero(&ipsecxforms, sizeof(ipsecxforms));
+	bzero(&flows, sizeof(flows));
 	bzero(idstr, sizeof(idstr));
 
 	pol.pol_id = ++policy_id;
@@ -2621,6 +2626,8 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 
 	for (j = 0, ipa = hosts->src, ipb = hosts->dst; ipa && ipb;
 	    ipa = ipa->next, ipb = ipb->next, j++) {
+		if (j >= nitems(flows))
+			fatalx("create_ike: too many flows");
 		memcpy(&flows[j].flow_src.addr, &ipa->address,
 		    sizeof(ipa->address));
 		flows[j].flow_src.addr_af = ipa->af;
@@ -2648,8 +2655,10 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 
 		flows[j].flow_ipproto = ipproto;
 
-		pol.pol_nflows++;
-		RB_INSERT(iked_flows, &pol.pol_flows, &flows[j]);
+		if (RB_INSERT(iked_flows, &pol.pol_flows, &flows[j]) == NULL)
+			pol.pol_nflows++;
+		else
+			warnx("create_ike: duplicate flow");
 	}
 
 	for (j = 0, ipa = ikecfg; ipa; ipa = ipa->next, j++) {
