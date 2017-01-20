@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.82 2017/01/11 13:40:24 zhuk Exp $	*/
+/*	$OpenBSD: util.c,v 1.83 2017/01/20 01:19:18 krw Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -438,7 +438,9 @@ remglob2(char *argv[], int doswitch, char **errbuf, FILE **ftemp, char *type)
 			return (NULL);
 		}
 	}
+#ifndef SMALL
 again:
+#endif
 	if (fgets(buf, sizeof(buf), *ftemp) == NULL) {
 		(void)fclose(*ftemp);
 		*ftemp = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.7 2016/12/16 17:44:59 krw Exp $	*/
+/*	$OpenBSD: small.c,v 1.8 2017/01/20 01:19:18 krw Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -289,7 +289,9 @@ usage:
 	recvrequest("RETR", argv[2], argv[1], mode,
 	    argv[1] != oldargv1 || argv[2] != oldargv2 || !interactive, loc);
 	restart_point = 0;
+#ifndef SMALL
 freegetit:
+#endif
 	if (oldargv2 != globargv2)	/* free up after globulize() */
 		free(globargv2);
 	return (rval);
