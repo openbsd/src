@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.130 2017/01/19 16:56:53 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.131 2017/01/20 19:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -238,21 +238,6 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc__x_pre, mdoc__x_post}, /* %U */
 	{NULL, NULL}, /* Ta */
 	{mdoc_skip_pre, NULL}, /* ll */
-};
-
-static	const char * const lists[LIST_MAX] = {
-	NULL,
-	"list-bul",
-	"list-col",
-	"list-dash",
-	"list-diag",
-	"list-enum",
-	"list-hang",
-	"list-hyph",
-	"list-inset",
-	"list-item",
-	"list-ohang",
-	"list-tag"
 };
 
 
@@ -681,75 +666,104 @@ mdoc_xx_pre(MDOC_ARGS)
 static int
 mdoc_it_pre(MDOC_ARGS)
 {
-	enum mdoc_list	 type;
-	const struct roff_node *bl;
+	const struct roff_node	*bl;
+	const char		*cattr;
+	enum mdoc_list		 type;
 
 	bl = n->parent;
-	while (bl && MDOC_Bl != bl->tok)
+	while (bl != NULL && bl->tok != MDOC_Bl)
 		bl = bl->parent;
 	type = bl->norm->Bl.type;
 
-	if (n->type == ROFFT_HEAD) {
-		switch (type) {
-		case LIST_bullet:
-		case LIST_dash:
-		case LIST_item:
-		case LIST_hyphen:
-		case LIST_enum:
+	switch (type) {
+	case LIST_bullet:
+		cattr = "It-bullet";
+		break;
+	case LIST_dash:
+	case LIST_hyphen:
+		cattr = "It-dash";
+		break;
+	case LIST_item:
+		cattr = "It-item";
+		break;
+	case LIST_enum:
+		cattr = "It-enum";
+		break;
+	case LIST_diag:
+		cattr = "It-diag";
+		break;
+	case LIST_hang:
+		cattr = "It-hang";
+		break;
+	case LIST_inset:
+		cattr = "It-inset";
+		break;
+	case LIST_ohang:
+		cattr = "It-ohang";
+		break;
+	case LIST_tag:
+		cattr = "It-tag";
+		break;
+	case LIST_column:
+		cattr = "It-column";
+		break;
+	default:
+		break;
+	}
+
+	switch (type) {
+	case LIST_bullet:
+	case LIST_dash:
+	case LIST_hyphen:
+	case LIST_item:
+	case LIST_enum:
+		switch (n->type) {
+		case ROFFT_HEAD:
 			return 0;
-		case LIST_diag:
-		case LIST_hang:
-		case LIST_inset:
-		case LIST_ohang:
-		case LIST_tag:
-			print_otag(h, TAG_DT, "csvt", lists[type],
-			    !bl->norm->Bl.comp);
-			if (LIST_diag != type)
-				break;
-			print_otag(h, TAG_B, "c", "diag");
-			break;
-		case LIST_column:
-			break;
-		default:
-			break;
-		}
-	} else if (n->type == ROFFT_BODY) {
-		switch (type) {
-		case LIST_bullet:
-		case LIST_hyphen:
-		case LIST_dash:
-		case LIST_enum:
-		case LIST_item:
-			print_otag(h, TAG_LI, "csvt", lists[type],
-			    !bl->norm->Bl.comp);
-			break;
-		case LIST_diag:
-		case LIST_hang:
-		case LIST_inset:
-		case LIST_ohang:
-		case LIST_tag:
-			if (NULL == bl->norm->Bl.width) {
-				print_otag(h, TAG_DD, "c", lists[type]);
-				break;
-			}
-			print_otag(h, TAG_DD, "cswl", lists[type],
-			    bl->norm->Bl.width);
-			break;
-		case LIST_column:
-			print_otag(h, TAG_TD, "csvt", lists[type],
+		case ROFFT_BODY:
+			print_otag(h, TAG_LI, "csvt", cattr,
 			    !bl->norm->Bl.comp);
 			break;
 		default:
 			break;
 		}
-	} else {
-		switch (type) {
-		case LIST_column:
-			print_otag(h, TAG_TR, "c", lists[type]);
+		break;
+	case LIST_diag:
+	case LIST_hang:
+	case LIST_inset:
+	case LIST_ohang:
+	case LIST_tag:
+		switch (n->type) {
+		case ROFFT_HEAD:
+			print_otag(h, TAG_DT, "csvt", cattr,
+			    !bl->norm->Bl.comp);
+			if (type == LIST_diag)
+				print_otag(h, TAG_B, "c", cattr);
+			break;
+		case ROFFT_BODY:
+			if (bl->norm->Bl.width == NULL)
+				print_otag(h, TAG_DD, "c", cattr);
+			else
+				print_otag(h, TAG_DD, "cswl", cattr,
+				    bl->norm->Bl.width);
 			break;
 		default:
 			break;
 		}
+		break;
+	case LIST_column:
+		switch (n->type) {
+		case ROFFT_HEAD:
+			break;
+		case ROFFT_BODY:
+			print_otag(h, TAG_TD, "csvt", cattr,
+			    !bl->norm->Bl.comp);
+			break;
+		default:
+			print_otag(h, TAG_TR, "c", cattr);
+		}
+	default:
+		break;
 	}
 
 	return 1;
@@ -758,8 +772,8 @@ mdoc_it_pre(MDOC_ARGS)
 static int
 mdoc_bl_pre(MDOC_ARGS)
 {
+	const char	*cattr;
 	int		 i;
-	char		 buf[BUFSIZ];
 	enum htmltag	 elemtype;
 
 	if (n->type == ROFFT_BODY) {
@@ -786,39 +800,57 @@ mdoc_bl_pre(MDOC_ARGS)
 		return 0;
 	}
 
-	assert(lists[n->norm->Bl.type]);
-	(void)strlcpy(buf, "list ", BUFSIZ);
-	(void)strlcat(buf, lists[n->norm->Bl.type], BUFSIZ);
-
 	switch (n->norm->Bl.type) {
 	case LIST_bullet:
+		elemtype = TAG_UL;
+		cattr = "Bl-bullet";
+		break;
 	case LIST_dash:
 	case LIST_hyphen:
+		elemtype = TAG_UL;
+		cattr = "Bl-dash";
+		break;
 	case LIST_item:
 		elemtype = TAG_UL;
+		cattr = "Bl-item";
 		break;
 	case LIST_enum:
 		elemtype = TAG_OL;
+		cattr = "Bl-enum";
 		break;
 	case LIST_diag:
+		elemtype = TAG_DL;
+		cattr = "Bl-diag";
+		break;
 	case LIST_hang:
+		elemtype = TAG_DL;
+		cattr = "Bl-hang";
+		break;
 	case LIST_inset:
+		elemtype = TAG_DL;
+		cattr = "Bl-inset";
+		break;
 	case LIST_ohang:
+		elemtype = TAG_DL;
+		cattr = "Bl-ohang";
+		break;
 	case LIST_tag:
 		elemtype = TAG_DL;
+		cattr = "Bl-tag";
 		break;
 	case LIST_column:
 		elemtype = TAG_TABLE;
+		cattr = "Bl-column";
 		break;
 	default:
 		abort();
 	}
 
 	if (n->norm->Bl.offs)
-		print_otag(h, elemtype, "csvtvbwl", buf, 0, 0,
+		print_otag(h, elemtype, "csvtvbwl", cattr, 0, 0,
 		    n->norm->Bl.offs);
 	else
-		print_otag(h, elemtype, "csvtvb", buf, 0, 0);
+		print_otag(h, elemtype, "csvtvb", cattr, 0, 0);
 
 	return 1;
 }
