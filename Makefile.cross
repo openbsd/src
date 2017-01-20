@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.90 2017/01/04 17:26:02 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.91 2017/01/20 05:00:53 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -151,6 +151,8 @@ ${CROSSDIRS}:
 
 ${CROSSOBJ}:	${CROSSDIRS}
 	@-mkdir -p ${CROSSDIR}/usr/obj
+	@-chgrp ${WOBJGROUP} ${CROSSDIR}/usr/obj
+	@-chmod g+w ${CROSSDIR}/usr/obj
 	@(cd ${.CURDIR} && \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    COMPILER_VERSION=${COMPILER_VERSION} \
