@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.69 2016/12/18 06:11:23 krw Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.70 2017/01/20 03:31:40 krw Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -52,9 +52,6 @@
 #include <ifaddrs.h>
 #include <paths.h>
 
-#define FATAL		1	/* fatal error occurred */
-#define NONFATAL	0	/* non fatal error occurred */
-
 /*
  * The structures for each interface.
  */
@@ -82,13 +79,14 @@ void   init_one(char *);
 void   init_all(void);
 void   rarp_loop(void);
 void   lookup_addrs(char *, struct if_info *);
-void   usage(void);
+__dead void   usage(void);
 void   rarp_process(struct if_info *, u_char *);
 void   rarp_reply(struct if_info *, struct if_addr *,
 	    struct ether_header *, u_int32_t, struct hostent *);
 void	arptab_init(void);
 int    arptab_set(u_char *, u_int32_t);
-void   error(int, const char *,...);
+__dead void   error(const char *,...);
+void   warning(const char *,...);
 void   debug(const char *,...);
 u_int32_t ipaddrtonetmask(u_int32_t);
 int    rarp_bootable(u_int32_t);
@@ -129,7 +127,6 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -149,7 +146,7 @@ main(int argc, char *argv[])
 
 	if ((!fflag) && (!dflag)) {
 		if (daemon(0, 0) == -1)
-			error(FATAL, "failed to daemonize: %s", strerror(errno));
+			error("failed to daemonize: %s", strerror(errno));
 	}
 	rarp_loop();
 	exit(0);
@@ -175,10 +172,8 @@ init_one(char *ifname)
 		return;
 
 	p = malloc(sizeof(*p));
-	if (p == 0) {
-		error(FATAL, "malloc: %s", strerror(errno));
-		/* NOTREACHED */
-	}
+	if (p == 0)
+		error("malloc: %s", strerror(errno));
 
 	p->ii_next = iflist;
 	iflist = p;
@@ -199,10 +194,8 @@ init_all(void)
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_dl *sdl;
 
-	if (getifaddrs(&ifap) != 0) {
-		error(FATAL, "getifaddrs: %s", strerror(errno));
-		/* NOTREACHED */
-	}
+	if (getifaddrs(&ifap) != 0)
+		error("getifaddrs: %s", strerror(errno));
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
@@ -218,7 +211,7 @@ init_all(void)
 	freeifaddrs(ifap);
 }
 
-void
+__dead void
 usage(void)
 {
 	(void) fprintf(stderr, "usage: rarpd [-adflt] if0 [... ifN]\n");
@@ -252,13 +245,12 @@ rarp_open(char *device)
 	u_int   dlt;
 
 	if ((fd = open("/dev/bpf0", O_RDWR)) == -1)
-		error(FATAL, "/dev/bpf0: %s", strerror(errno));
+		error("/dev/bpf0: %s", strerror(errno));
 
 	/* Set immediate mode so packets are processed as they arrive. */
 	immediate = 1;
 	if (ioctl(fd, BIOCIMMEDIATE, &immediate) < 0) {
-		error(FATAL, "BIOCIMMEDIATE: %s", strerror(errno));
-		/* NOTREACHED */
+		error("BIOCIMMEDIATE: %s", strerror(errno));
 	}
 
 	(void) strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name);
@@ -267,31 +259,25 @@ rarp_open(char *device)
 			close(fd);
 			return -1;
 		}
-		error(FATAL, "BIOCSETIF: %s", strerror(errno));
-		/* NOTREACHED */
+		error("BIOCSETIF: %s", strerror(errno));
 	}
 
 	/*
 	 * Check that the data link layer is an Ethernet; this code
 	 * won't work with anything else.
 	 */
-	if (ioctl(fd, BIOCGDLT, (caddr_t) &dlt) < 0) {
-		error(FATAL, "BIOCGDLT: %s", strerror(errno));
-		/* NOTREACHED */
-	}
+	if (ioctl(fd, BIOCGDLT, (caddr_t) &dlt) < 0)
+		error("BIOCGDLT: %s", strerror(errno));
 	if (dlt != DLT_EN10MB) {
 		if (aflag) {	/* for -a skip not ethernet interfaces */
 			close(fd);
 			return -1;
 		}
-		error(FATAL, "%s is not an ethernet", device);
-		/* NOTREACHED */
+		error("%s is not an ethernet", device);
 	}
 	/* Set filter program. */
-	if (ioctl(fd, BIOCSETF, (caddr_t)&filter) < 0) {
-		error(FATAL, "BIOCSETF: %s", strerror(errno));
-		/* NOTREACHED */
-	}
+	if (ioctl(fd, BIOCSETF, (caddr_t)&filter) < 0)
+		error("BIOCSETF: %s", strerror(errno));
 	return fd;
 }
 /*
@@ -307,7 +293,7 @@ rarp_check(u_char *p, int len)
 	(void) debug("got a packet");
 
 	if (len < sizeof(*ep) + sizeof(*ap)) {
-		error(NONFATAL, "truncated request");
+		warning("truncated request");
 		return 0;
 	}
 	/* XXX This test might be better off broken out... */
@@ -316,15 +302,15 @@ rarp_check(u_char *p, int len)
 	    ntohs (ap->arp_op) != ARPOP_REVREQUEST ||
 	    ntohs (ap->arp_pro) != ETHERTYPE_IP ||
 	    ap->arp_hln != 6 || ap->arp_pln != 4) {
-		error(NONFATAL, "request fails sanity check");
+		warning("request fails sanity check");
 		return 0;
 	}
 	if (memcmp((char *) &ep->ether_shost, (char *) &ap->arp_sha, 6) != 0) {
-		error(NONFATAL, "ether/arp sender address mismatch");
+		warning("ether/arp sender address mismatch");
 		return 0;
 	}
 	if (memcmp((char *) &ap->arp_sha, (char *) &ap->arp_tha, 6) != 0) {
-		error(NONFATAL, "ether/arp target address mismatch");
+		warning("ether/arp target address mismatch");
 		return 0;
 	}
 	return 1;
@@ -343,35 +329,27 @@ rarp_loop(void)
 	u_char	*buf, *bp, *ep;
 	struct if_info *ii;
 
-	if (iflist == 0) {
-		error(FATAL, "no interfaces");
-		/* NOTREACHED */
-	}
-	if (ioctl(iflist->ii_fd, BIOCGBLEN, (caddr_t)&bufsize) < 0) {
-		error(FATAL, "BIOCGBLEN: %s", strerror(errno));
-		/* NOTREACHED */
-	}
+	if (iflist == 0)
+		error("no interfaces");
+	if (ioctl(iflist->ii_fd, BIOCGBLEN, (caddr_t)&bufsize) < 0)
+		error("BIOCGBLEN: %s", strerror(errno));
 
 	arptab_init();
 
 	if (pledge("stdio rpath dns", NULL) == -1)
-		error(FATAL, "pledge");
+		error("pledge");
 
 	buf = malloc((size_t) bufsize);
-	if (buf == 0) {
-		error(FATAL, "malloc: %s", strerror(errno));
-		/* NOTREACHED */
-	}
+	if (buf == 0)
+		error("malloc: %s", strerror(errno));
 	/*
 	 * Initialize the set of descriptors to listen to.
 	 */
 	for (ii = iflist; ii; ii = ii->ii_next)
 		numfd++;
 	pfd = reallocarray(NULL, numfd, sizeof(*pfd));
-	if (pfd == NULL) {
-		error(FATAL, "reallocarray: %s", strerror(errno));
-		/* NOTREACHED */
-	}
+	if (pfd == NULL)
+		error("reallocarray: %s", strerror(errno));
 	for (i = 0, ii = iflist; ii; ii = ii->ii_next, i++) {
 		pfd[i].fd = ii->ii_fd;
 		pfd[i].events = POLLIN;
@@ -381,8 +359,7 @@ rarp_loop(void)
 		if (poll(pfd, numfd, -1) == -1) {
 			if (errno == EINTR)
 				continue;
-			error(FATAL, "poll: %s", strerror(errno));
-			/* NOTREACHED */
+			error("poll: %s", strerror(errno));
 		}
 		for (i = 0, ii = iflist; ii; ii = ii->ii_next, i++) {
 			if (pfd[i].revents == 0)
@@ -393,10 +370,8 @@ rarp_loop(void)
 			/* Don't choke when we get ptraced */
 			if (cc < 0 && errno == EINTR)
 				goto again;
-			if (cc < 0) {
-				error(FATAL, "read: %s", strerror(errno));
-				/* NOTREACHED */
-			}
+			if (cc < 0)
+				error("read: %s", strerror(errno));
 			/* Loop through the packet(s) */
 #define bhp ((struct bpf_hdr *)bp)
 			bp = buf;
@@ -437,15 +412,11 @@ rarp_bootable(u_int32_t addr)
 	if ((d = dd))
 		rewinddir(d);
 	else {
-		if (chdir(TFTP_DIR) == -1) {
-			error(FATAL, "chdir: %s", strerror(errno));
-			/* NOTREACHED */
-		}
+		if (chdir(TFTP_DIR) == -1)
+			error("chdir: %s", strerror(errno));
 		d = opendir(".");
-		if (d == 0) {
-			error(FATAL, "opendir: %s", strerror(errno));
-			/* NOTREACHED */
-		}
+		if (d == 0)
+			error("opendir: %s", strerror(errno));
 		dd = d;
 	}
 	while ((dent = readdir(d)))
@@ -498,10 +469,8 @@ rarp_process(struct if_info *ii, u_char *pkt)
 	}
 
 	/* Choose correct address from list. */
-	if (hp->h_addrtype != AF_INET) {
-		error(FATAL, "cannot handle non IP addresses");
-		/* NOTREACHED */
-	}
+	if (hp->h_addrtype != AF_INET)
+		error("cannot handle non IP addresses");
 	for (target_ipaddr = 0, ia = ii->ii_addrs; ia; ia = ia->ia_next) {
 		target_ipaddr = choose_ipaddr((u_int32_t **) hp->h_addr_list,
 		    ia->ia_ipaddr & ia->ia_netmask, ia->ia_netmask);
@@ -512,7 +481,7 @@ rarp_process(struct if_info *ii, u_char *pkt)
 	if (target_ipaddr == 0) {
 		for (ia = ii->ii_addrs; ia; ia = ia->ia_next) {
 			in.s_addr = ia->ia_ipaddr & ia->ia_netmask;
-			error(NONFATAL, "cannot find %s on net %s",
+			error("cannot find %s on net %s",
 			    ename, inet_ntoa(in));
 		}
 		return;
@@ -536,10 +505,8 @@ lookup_addrs(char *ifname, struct if_info *p)
 	struct in_addr in;
 	int found = 0;
 
-	if (getifaddrs(&ifap) != 0) {
-		error(FATAL, "getifaddrs: %s", strerror(errno));
-		/* NOTREACHED */
-	}
+	if (getifaddrs(&ifap) != 0)
+		error("getifaddrs: %s", strerror(errno));
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (strcmp(ifa->ifa_name, ifname))
@@ -557,7 +524,7 @@ lookup_addrs(char *ifname, struct if_info *p)
 		} else if (sdl->sdl_family == AF_INET) {
 			ia = malloc(sizeof (struct if_addr));
 			if (ia == NULL)
-				error(FATAL, "lookup_addrs: malloc: %s",
+				error("lookup_addrs: malloc: %s",
 				    strerror(errno));
 			ia->ia_next = NULL;
 			ia->ia_ipaddr =
@@ -583,7 +550,7 @@ lookup_addrs(char *ifname, struct if_info *p)
 	}
 	freeifaddrs(ifap);
 	if (!found)
-		error(FATAL, "lookup_addrs: Never saw interface `%s'!", ifname);
+		error("lookup_addrs: Never saw interface `%s'!", ifname);
 }
 
 /*
@@ -661,7 +628,7 @@ rarp_reply(struct if_info *ii, struct if_addr *ia, struct ether_header *ep,
 	len = sizeof(*ep) + sizeof(*ap);
 	n = write(ii->ii_fd, (char *) ep, len);
 	if (n != len)
-		error(NONFATAL, "write: only %d of %d bytes written", n, len);
+		warning("write: only %d of %d bytes written", n, len);
 }
 /*
  * Get the netmask of an IP address.  This routine is used if
@@ -676,20 +643,16 @@ ipaddrtonetmask(u_int32_t addr)
 		return IN_CLASSB_NET;
 	if (IN_CLASSC(addr))
 		return IN_CLASSC_NET;
-	error(FATAL, "unknown IP address class: %08X", addr);
-	/* NOTREACHED */
+	error("unknown IP address class: %08X", addr);
 }
 
 void
-error(int fatal, const char *fmt,...)
+warning(const char *fmt,...)
 {
 	va_list ap;
 
 	if (dflag) {
-		if (fatal)
-			(void) fprintf(stderr, "rarpd: error: ");
-		else
-			(void) fprintf(stderr, "rarpd: warning: ");
+		(void) fprintf(stderr, "rarpd: warning: ");
 		va_start(ap, fmt);
 		(void) vfprintf(stderr, fmt, ap);
 		va_end(ap);
@@ -698,9 +661,24 @@ error(int fatal, const char *fmt,...)
 	va_start(ap, fmt);
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
-	if (fatal)
-		exit(1);
-	/* NOTREACHED */
+}
+
+__dead void
+error(const char *fmt,...)
+{
+	va_list ap;
+
+	if (dflag) {
+		(void) fprintf(stderr, "rarpd: error: ");
+		va_start(ap, fmt);
+		(void) vfprintf(stderr, fmt, ap);
+		va_end(ap);
+		(void) fprintf(stderr, "\n");
+	}
+	va_start(ap, fmt);
+	vsyslog(LOG_ERR, fmt, ap);
+	va_end(ap);
+	exit(1);
 }
 
 void
