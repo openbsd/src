@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.100 2017/01/09 14:49:21 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.101 2017/01/20 14:10:05 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -940,7 +940,7 @@ void	 print_verbose(const char *, ...)
 
 /* imsg_util.c */
 struct ibuf *
-	 ibuf_new(void *, size_t);
+	 ibuf_new(const void *, size_t);
 struct ibuf *
 	 ibuf_static(void);
 int	 ibuf_cat(struct ibuf *, struct ibuf *);
