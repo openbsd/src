@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.10 2016/05/27 09:18:11 martijn Exp $	*/
+/*	$OpenBSD: log.c,v 1.11 2017/01/20 00:55:52 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,7 +32,7 @@
  *
  *	LOG_CURSOR_INIT		MARK
  *	LOG_CURSOR_END		MARK
- *	LOG_LINE_APPEND 	recno_t		char *
+ *	LOG_LINE_APPEND		recno_t		char *
  *	LOG_LINE_DELETE		recno_t		char *
  *	LOG_LINE_INSERT		recno_t		char *
  *	LOG_LINE_RESET_F	recno_t		char *
