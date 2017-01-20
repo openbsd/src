@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.947 2017/01/11 20:43:46 tb Exp $
+#	$OpenBSD: install.sub,v 1.948 2017/01/20 23:14:52 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1425,8 +1425,7 @@ install_files() {
 			_issue="Cannot fetch SHA256.sig" && break
 
 		# Verify signature file with public keys.
-		! unpriv -f "$_cfile" signify -Vep /etc/signify/openbsd-${VERSION}-base.pub \
-			-x "$_cfile.sig" -m "$_cfile" &&
+		! unpriv -f "$_cfile" signify -Vep $PUB_KEY -x "$_cfile.sig" -m "$_cfile" &&
 			_issue="Signature check of SHA256.sig failed" && break
 
 		for _f in $_get_sets; do
@@ -1502,9 +1501,8 @@ install_files() {
 
 # Get several parameters from the user, and xfer files from the http server.
 install_http() {
-	local _file_list _prompt _mirror _url_base _err _tls _http_proto
+	local _file_list _prompt _mirror _url_base _err _tls _http_proto _f
 	local _idx=/tmp/i/index.txt _sha=/tmp/i/SHA256 _sig=/tmp/i/SHA256.sig
-	local _pubkey=/etc/signify/openbsd-${VERSION}-base.pub _f
 
 	# N.B.: 'http_proxy' is an environment variable used by ftp(1). DON'T
 	# change the name or case!
@@ -1590,7 +1588,7 @@ install_http() {
 	fi
 
 	# Verify SHA256.sig, write SHA256 and extract the list of files.
-	if unpriv -f $_sha signify -Vep $_pubkey -x $_sig -m $_sha >/dev/null 2>&1; then
+	if unpriv -f $_sha signify -Vep $PUB_KEY -x $_sig -m $_sha >/dev/null 2>&1; then
 		_file_list="SHA256.sig $(sed -n 's/^SHA256 (\(.*\)).*$/\1/p' $_sha)"
 	else
 		echo "Unable to get a verified list of distribution sets."
@@ -2936,6 +2934,7 @@ HTTP_DIR=
 HTTP_SEC=/tmp/i/httpsec
 HTTP_LIST=/tmp/i/httplist
 WLANLIST=/tmp/i/wlanlist
+PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
 
 # Do not limit ourselves during installs or upgrades.
 for _opt in d f l m n p s; do
