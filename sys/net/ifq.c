@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.4 2015/12/29 12:35:43 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.5 2017/01/20 03:48:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -172,7 +172,7 @@ ifq_init(struct ifqueue *ifq, struct ifnet *ifp)
 	ifq->ifq_if = ifp;
 
 	mtx_init(&ifq->ifq_mtx, IPL_NET);
-	ifq->ifq_drops = 0;
+	ifq->ifq_qdrops = 0;
 
 	/* default to priq */
 	ifq->ifq_ops = &priq_ops;
@@ -214,7 +214,7 @@ ifq_attach(struct ifqueue *ifq, const struct ifq_ops *newops, void *opsarg)
 
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		if (ifq->ifq_ops->ifqop_enq(ifq, m) != 0) {
-			ifq->ifq_drops++;
+			ifq->ifq_qdrops++;
 			ml_enqueue(&free_ml, m);
 		} else
 			ifq->ifq_len++;
@@ -246,10 +246,15 @@ ifq_enqueue_try(struct ifqueue *ifq, struct mbuf *m)
 
 	mtx_enter(&ifq->ifq_mtx);
 	rv = ifq->ifq_ops->ifqop_enq(ifq, m);
-	if (rv == 0)
+	if (rv == 0) {
 		ifq->ifq_len++;
-	else
-		ifq->ifq_drops++;
+
+		ifq->ifq_packets++;
+		ifq->ifq_bytes += m->m_pkthdr.len;
+		if (ISSET(m->m_flags, M_MCAST))
+			ifq->ifq_mcasts++;
+	} else
+		ifq->ifq_qdrops++;
 	mtx_leave(&ifq->ifq_mtx);
 
 	return (rv);
@@ -330,7 +335,7 @@ ifq_purge(struct ifqueue *ifq)
 	ifq->ifq_ops->ifqop_purge(ifq, &ml);
 	rv = ifq->ifq_len;
 	ifq->ifq_len = 0;
-	ifq->ifq_drops += rv;
+	ifq->ifq_qdrops += rv;
 	mtx_leave(&ifq->ifq_mtx);
 
 	KASSERT(rv == ml_len(&ml));

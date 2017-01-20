@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.5 2016/01/20 17:27:16 mikeb Exp $ */
+/*	$OpenBSD: ifq.h,v 1.6 2017/01/20 03:48:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -28,11 +28,17 @@ struct ifqueue {
 
 	/* mbuf handling */
 	struct mutex		 ifq_mtx;
-	uint64_t		 ifq_drops;
 	const struct ifq_ops	*ifq_ops;
 	void			*ifq_q;
 	unsigned int		 ifq_len;
 	unsigned int		 ifq_oactive;
+
+	/* statistics */
+	uint64_t		 ifq_packets;
+	uint64_t		 ifq_bytes;
+	uint64_t		 ifq_qdrops;
+	uint64_t		 ifq_errors;
+	uint64_t		 ifq_mcasts;
 
 	/* work serialisation */
 	struct mutex		 ifq_task_mtx;
