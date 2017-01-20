@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.67 2016/09/02 17:10:34 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.68 2017/01/20 12:19:18 benno Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -98,6 +98,7 @@ lde(int debug, int verbose)
 
 	setproctitle("label decision engine");
 	ldpd_process = PROC_LDE_ENGINE;
+	log_procname = log_procnames[PROC_LDE_ENGINE];
 
 	if ((pw = getpwnam(LDPD_USER)) == NULL)
 		fatal("getpwnam");

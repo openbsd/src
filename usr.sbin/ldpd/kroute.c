@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.61 2016/06/18 01:25:53 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.62 2017/01/20 12:19:18 benno Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -1414,7 +1414,6 @@ rtmsg_process(char *buf, size_t len)
 			fatalx("rtmsg_process: partial rtm in buffer");
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
-		log_rtmsg(rtm->rtm_type);
 
 		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);

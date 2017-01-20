@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.80 2016/07/01 23:36:38 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.81 2017/01/20 12:19:18 benno Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -357,6 +357,12 @@ enum ldpd_process {
 	PROC_LDE_ENGINE
 } ldpd_process;
 
+static const char * const log_procnames[] = {
+	"parent",
+	"ldpe",
+	"lde"
+};
+
 enum socket_type {
 	LDP_SOCKET_DISC,
 	LDP_SOCKET_EDISC,
@@ -602,5 +608,28 @@ int		 sock_set_ipv6_mcast_loop(int);
 
 /* printconf.c */
 void	print_config(struct ldpd_conf *);
+
+/* logmsg.h */
+struct in6_addr;
+union ldpd_addr;
+struct hello_source;
+struct fec;
+
+const char	*log_sockaddr(void *);
+const char	*log_in6addr(const struct in6_addr *);
+const char	*log_in6addr_scope(const struct in6_addr *, unsigned int);
+const char	*log_addr(int, const union ldpd_addr *);
+char		*log_label(uint32_t);
+char		*log_hello_src(const struct hello_source *);
+const char	*log_map(const struct map *);
+const char	*log_fec(const struct fec *);
+const char	*af_name(int);
+const char	*socket_name(int);
+const char	*nbr_state_name(int);
+const char	*if_state_name(int);
+const char	*if_type_name(enum iface_type);
+const char	*msg_name(uint16_t);
+const char	*status_code_name(uint32_t);
+const char	*pw_type_name(uint16_t);
 
 #endif	/* _LDPD_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.59 2016/09/28 14:39:52 krw Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.60 2017/01/20 12:19:18 benno Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -113,6 +113,7 @@ main(int argc, char *argv[])
 
 	conffile = CONF_FILE;
 	ldpd_process = PROC_MAIN;
+	log_procname = log_procnames[ldpd_process];
 
 	log_init(1);	/* log to stderr until daemonized */
 	log_verbose(1);
