@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.136 2016/09/02 09:39:32 vgross Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.137 2017/01/20 04:22:58 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -817,7 +817,6 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
     void *v, int proto)
 {
 	struct ip *ip = v;
-	int s;
 
 	if (cmd == PRC_MSGSIZE && ip && ip_mtudisc && ip->ip_v == 4) {
 		struct tdb *tdbp;
@@ -846,21 +845,16 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 
 		bcopy((caddr_t)ip + hlen, &spi, sizeof(u_int32_t));
 
-		s = splsoftnet();
 		tdbp = gettdb(rdomain, spi, (union sockaddr_union *)&dst,
 		    proto);
-		if (tdbp == NULL || tdbp->tdb_flags & TDBF_INVALID) {
-			splx(s);
+		if (tdbp == NULL || tdbp->tdb_flags & TDBF_INVALID)
 			return (NULL);
-		}
 
 		/* Walk the chain backwards to the first tdb */
 		for (; tdbp; tdbp = tdbp->tdb_inext) {
 			if (tdbp->tdb_flags & TDBF_INVALID ||
-			    (adjust = ipsec_hdrsz(tdbp)) == -1) {
-				splx(s);
+			    (adjust = ipsec_hdrsz(tdbp)) == -1)
 				return (NULL);
-			}
 
 			mtu -= adjust;
 
@@ -873,8 +867,6 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 			    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu,
 			    adjust));
 		}
-		splx(s);
-		return (NULL);
 	}
 	return (NULL);
 }
@@ -890,7 +882,8 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	ssize_t adjust;
 	struct sockaddr_in dst, src;
 	union sockaddr_union *su_dst, *su_src;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	icp = (struct icmp *)((caddr_t) ip - offsetof(struct icmp, icmp_ip));
 	mtu = ntohs(icp->icmp_nextmtu);
@@ -913,7 +906,6 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	src.sin_addr.s_addr = ip->ip_src.s_addr;
 	su_src = (union sockaddr_union *)&src;
 
-	s = splsoftnet();
 	tdbp = gettdbbysrcdst(rdomain, 0, su_src, su_dst, IPPROTO_ESP);
 
 	for (; tdbp != NULL; tdbp = tdbp->tdb_snext) {
@@ -934,7 +926,6 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			}
 		}
 	}
-	splx(s);
 	return (NULL);
 }
 
