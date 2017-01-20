@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.70 2017/01/20 03:31:40 krw Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.71 2017/01/20 06:22:38 krw Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -481,7 +481,7 @@ rarp_process(struct if_info *ii, u_char *pkt)
 	if (target_ipaddr == 0) {
 		for (ia = ii->ii_addrs; ia; ia = ia->ia_next) {
 			in.s_addr = ia->ia_ipaddr & ia->ia_netmask;
-			error("cannot find %s on net %s",
+			warning("cannot find %s on net %s",
 			    ename, inet_ntoa(in));
 		}
 		return;
