@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.21 2017/01/21 08:49:59 florian Exp $ */
+/*	$Id: main.c,v 1.22 2017/01/21 08:51:00 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -92,24 +92,14 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
-	if (0 == argc)
+	if (1 != argc)
 		goto usage;
-
-	/* Make sure that the domains are sane. */
-
-	for (i = 0; i < (size_t)argc; i++) {
-		if (domain_valid(argv[i]))
-			continue;
-		errx(EXIT_FAILURE, "%s: bad domain syntax", argv[i]);
-	}
 
 	if ((domain = domain_find(conf, argv[0])) == NULL)
 		errx(EXIT_FAILURE, "domain %s not found\n", argv[0]);
 
 	argc--;
 	argv++;
-	if (argc != 0)
-		goto usage;
 
 	if (getuid() != 0)
 		errx(EXIT_FAILURE, "must be run as root");
