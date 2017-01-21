@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.15 2017/01/21 08:41:42 benno Exp $ */
+/*	$Id: main.c,v 1.16 2017/01/21 08:43:09 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,15 +54,10 @@ main(int argc, char *argv[])
 	struct domain_c		*domain = NULL;
 	struct altname_c	*ac;
 
-	while (-1 != (c = getopt(argc, argv, "bFnNrvf:C:")))
+	while (-1 != (c = getopt(argc, argv, "bFnNrvf:")))
 		switch (c) {
 		case 'b':
 			backup = 1;
-			break;
-		case 'C':
-			free(chngdir);
-			if (NULL == (chngdir = strdup(optarg)))
-				err(EXIT_FAILURE, "strdup");
 			break;
 		case 'f':
 			if (NULL == (conffile = strdup(optarg)))
@@ -141,8 +136,10 @@ main(int argc, char *argv[])
 		/* XXX replace with existance check in parse.y */
 		err(EXIT_FAILURE, "no account key in config?");
 	}
-	if (NULL == chngdir)
+	if (domain->challengedir == NULL)
 		chngdir = strdup(WWW_DIR);
+	else
+		chngdir = domain->challengedir;
 
 	if (NULL == chngdir)
 		err(EXIT_FAILURE, "strdup");
@@ -170,7 +167,7 @@ main(int argc, char *argv[])
 	}
 
 	if (-1 == access(chngdir, R_OK)) {
-		warnx("%s: -C directory must exist", chngdir);
+		warnx("%s: challenge directory must exist", chngdir);
 		ne++;
 	}
 
@@ -397,16 +394,11 @@ main(int argc, char *argv[])
 	    checkexit(pids[COMP_DNS], COMP_DNS) +
 	    checkexit(pids[COMP_REVOKE], COMP_REVOKE);
 
-	free(acctkey);
-	free(chngdir);
 	free(alts);
 	return (COMP__MAX != rc ? EXIT_FAILURE :
 	    (2 == c ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr,
-	    "usage: acme-client [-bFnNrv] [-C challengedir]\n"
-	    "                   [-f file] domain\n");
-	free(acctkey);
-	free(chngdir);
+	    "usage: acme-client [-bFnNrv] [-f file] domain\n");
 	return (EXIT_FAILURE);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2017/01/21 08:41:42 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2017/01/21 08:43:09 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -92,7 +92,7 @@ typedef struct {
 %}
 
 %token	AUTHORITY AGREEMENT URL API ACCOUNT
-%token	DOMAIN ALTERNATIVE NAMES CERT KEY SIGN WITH
+%token	DOMAIN ALTERNATIVE NAMES CERT KEY SIGN WITH CHALLENGEDIR
 %token	YES NO
 %token	INCLUDE
 %token	ERROR
@@ -298,6 +298,16 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 			}
 			domain->auth = s;
 		}
+		| CHALLENGEDIR STRING {
+			char *s;
+			if (domain->challengedir != NULL) {
+				yyerror("duplicate challengedir");
+				YYERROR;
+			}
+			if ((s = strdup($2)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+			domain->challengedir = s;
+		}
 		;
 
 altname_l	: altname comma altname_l
@@ -366,6 +376,7 @@ lookup(char *s)
 		{"api",			API},
 		{"authority",		AUTHORITY},
 		{"certificate",		CERT},
+		{"challengedir",	CHALLENGEDIR},
 		{"domain",		DOMAIN},
 		{"include",		INCLUDE},
 		{"key",			KEY},

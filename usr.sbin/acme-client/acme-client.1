@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.12 2017/01/21 08:41:42 benno Exp $
+.\"	$OpenBSD: acme-client.1,v 1.13 2017/01/21 08:43:09 benno Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -23,7 +23,6 @@
 .Sh SYNOPSIS
 .Nm acme-client
 .Op Fl bFNnrv
-.Op Fl C Ar challengedir
 .Op Fl f Ar configfile
 .Ar domain
 .Sh DESCRIPTION
@@ -49,8 +48,6 @@ is the current
 Epoch.
 Any given backup uses the same Epoch time for all three certificates.
 If there are no certificates in place, this option does nothing.
-.It Fl C Ar challengedir
-The directory to register challenges.
 .It Fl F
 Force updating the certificate signature even if it's too soon.
 .It Fl f Ar configfile

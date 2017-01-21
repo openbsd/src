@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.2 2016/09/18 21:53:41 jmc Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.3 2017/01/21 08:43:09 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2016 $
+.Dd $Mdocdate: January 21 2017 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -123,18 +123,21 @@ The private key file for which the certificate will be obtained.
 .It Ic domain certificate Ar file
 The filename of the certificate that will be issued.
 .It Ic sign with Ar authority
-the certificate authority (as declared above in the
+The certificate authority (as declared above in the
 .Sx AUTHORITIES
 section) to use for this domain is selected.
+.It Ic challengedir Ar path
+The directory in which the challenge file will be stored.
 .El
 .Pp
 An example domain declaration looks like this:
 .Bd -literal -offset indent
 domain example.com {
-	alternative names { secure.example.com }
-	domain key /etc/ssl/private/example.com.key
-	domain certificate /etc/ssl/example.com.crt
+	alternative names { secure.example.com www.example.com }
+	domain key "/etc/ssl/private/example.com.key"
+	domain certificate "/etc/ssl/example.com.crt"
 	sign with letsencrypt
+	challengedir "/var/www/acme"
 }
 .Ed
 .Sh FILES
