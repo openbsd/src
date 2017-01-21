@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.22 2015/09/21 21:22:44 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.23 2017/01/21 14:45:29 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -30,10 +30,12 @@
 
 #include <machine/regdef.h>
 
-#define	_MIPS_ISA_MIPS1	1	/* R2000/R3000 */
-#define	_MIPS_ISA_MIPS2	2	/* R4000/R6000 */
-#define	_MIPS_ISA_MIPS3	3	/* R4000 */
-#define	_MIPS_ISA_MIPS4	4	/* TFP (R1x000) */
+#define	_MIPS_ISA_MIPS1		1	/* R2000/R3000 */
+#define	_MIPS_ISA_MIPS2		2	/* R4000/R6000 */
+#define	_MIPS_ISA_MIPS3		3	/* R4000 */
+#define	_MIPS_ISA_MIPS4		4	/* TFP (R1x000) */
+#define	_MIPS_ISA_MIPS32	32	/* MIPS32 */
+#define	_MIPS_ISA_MIPS64	64	/* MIPS64 */
 
 #if !defined(ABICALLS) && !defined(_NO_ABICALLS)
 #define	ABICALLS	.abicalls
@@ -128,7 +130,8 @@
 /*
  *  Basic register operations based on selected ISA
  */
-#if (_MIPS_ISA == _MIPS_ISA_MIPS1 || _MIPS_ISA == _MIPS_ISA_MIPS2)
+#if (_MIPS_ISA == _MIPS_ISA_MIPS1 || _MIPS_ISA == _MIPS_ISA_MIPS2 || \
+    _MIPS_ISA == _MIPS_ISA_MIPS32)
 #define REGSZ		4	/* 32 bit mode register size */
 #define LOGREGSZ	2	/* log rsize */
 #define	REG_S	sw
@@ -138,7 +141,8 @@
 #define	CF_RA_OFFS	20	/* Call ra save offset */
 #endif
 
-#if (_MIPS_ISA == _MIPS_ISA_MIPS3 || _MIPS_ISA == _MIPS_ISA_MIPS4)
+#if (_MIPS_ISA == _MIPS_ISA_MIPS3 || _MIPS_ISA == _MIPS_ISA_MIPS4 || \
+    _MIPS_ISA == _MIPS_ISA_MIPS64)
 #define REGSZ		8	/* 64 bit mode register size */
 #define LOGREGSZ	3	/* log rsize */
 #define	REG_S	sd

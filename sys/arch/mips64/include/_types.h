@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.21 2017/01/03 09:51:28 visa Exp $	*/
+/*	$OpenBSD: _types.h,v 1.22 2017/01/21 14:45:29 visa Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,10 +53,12 @@
 /*
  *  We need to handle the various ISA levels for sizes.
  */
-#define	_MIPS_ISA_MIPS1	1	/* R2000/R3000 */
-#define	_MIPS_ISA_MIPS2	2	/* R4000/R6000 */
-#define	_MIPS_ISA_MIPS3	3	/* R4000 */
-#define	_MIPS_ISA_MIPS4	4	/* TFP (R1x000) */
+#define	_MIPS_ISA_MIPS1		1	/* R2000/R3000 */
+#define	_MIPS_ISA_MIPS2		2	/* R4000/R6000 */
+#define	_MIPS_ISA_MIPS3		3	/* R4000 */
+#define	_MIPS_ISA_MIPS4		4	/* TFP (R1x000) */
+#define	_MIPS_ISA_MIPS32	32	/* MIPS32 */
+#define	_MIPS_ISA_MIPS64	64	/* MIPS64 */
 
 /* 7.18.1.1 Exact-width integer types */
 typedef	signed char		__int8_t;
