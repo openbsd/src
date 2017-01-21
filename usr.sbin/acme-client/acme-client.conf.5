@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.4 2017/01/21 08:55:09 florian Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.5 2017/01/21 08:57:49 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -130,6 +130,9 @@ The certificate authority (as declared above in the
 section) to use for this domain is selected.
 .It Ic challengedir Ar path
 The directory in which the challenge file will be stored.
+If it is not specified, a default of
+.Pa /var/www/acme
+will be used.
 .El
 .Pp
 An example domain declaration looks like this:
