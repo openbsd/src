@@ -1,4 +1,4 @@
-/*	$OpenBSD: k_sinl.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: k_sinl.c,v 1.2 2017/01/21 08:29:13 krw Exp $	*/
 /* From: @(#)k_sin.c 1.3 95/01/18 */
 /*
  * ====================================================
@@ -7,7 +7,7 @@
  *
  * Developed at SunSoft, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */

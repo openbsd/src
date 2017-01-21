@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_array.c,v 1.13 2016/12/20 22:19:08 krw Exp $ */
+/*	$OpenBSD: xdr_array.c,v 1.14 2017/01/21 08:29:13 krw Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -96,7 +96,7 @@ xdr_array(XDR *xdrs,
 			break;
 		}
 	}
-	
+
 	/*
 	 * now we xdr each element of array
 	 */
@@ -139,5 +139,5 @@ xdr_vector(XDR *xdrs, char *basep, u_int nelem, u_int elemsize,
 			return(FALSE);
 		elptr += elemsize;
 	}
-	return(TRUE);	
+	return(TRUE);
 }

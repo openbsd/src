@@ -18,7 +18,7 @@
  *	atanhl(x) = --- * log(1 + -------) = 0.5 * log1p(2 * --------)
  *                   2             1 - x                      1 - x
  *
- * 	For x<0.5
+ *	For x<0.5
  *	atanhl(x) = 0.5*log1pl(2x+2x*x/(1-x))
  *
  * Special cases:

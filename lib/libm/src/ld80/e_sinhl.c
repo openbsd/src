@@ -17,7 +17,7 @@
  *	2.
  *		                                     E + E/(E+1)
  *	    0        <= x <= 25     :  sinhl(x) := --------------, E=expm1l(x)
- *			       			         2
+ *						         2
  *
  *	    25       <= x <= lnovft :  sinhl(x) := expl(x)/2
  *	    lnovft   <= x <= ln2ovft:  sinhl(x) := expl(x/2)/2 * expl(x/2)

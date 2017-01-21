@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_powl.c,v 1.6 2016/09/12 19:47:03 guenther Exp $	*/
+/*	$OpenBSD: e_powl.c,v 1.7 2017/01/21 08:29:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -591,7 +591,7 @@ if( s < (-MAXLOGL+2.0L) )
 /* First bit of the power */
 if( n & 1 )
 	y = x;
-		
+
 else
 	{
 	y = 1.0L;
