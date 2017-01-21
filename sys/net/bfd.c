@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.52 2017/01/20 10:18:52 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.53 2017/01/21 08:40:04 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -595,7 +595,7 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 
 	uio.uio_procp = NULL;
 	do {
-		uio.uio_resid = 1000000000;
+		uio.uio_resid =  BFD_HDRLEN;
 		flags = MSG_DONTWAIT;
 		error = soreceive(so, NULL, &uio, &m, NULL, &flags, 0);
 		if (error && error != EAGAIN) {
@@ -906,12 +906,13 @@ bfd_send_control(void *x)
 	struct bfd_config	*bfd = x;
 	struct mbuf		*m;
 	struct bfd_header	*h;
-	int error;
+	int error, len;
 
 	MGETHDR(m, M_WAIT, MT_DATA);
 	MCLGET(m, M_WAIT);
 
-	m->m_len = m->m_pkthdr.len = sizeof(*bfd);
+	len = BFD_HDRLEN;
+	m->m_len = m->m_pkthdr.len = len;
 	h = mtod(m, struct bfd_header *);
 
 	memset(h, 0xff, sizeof(*h));	/* canary */
