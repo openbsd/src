@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.948 2017/01/20 23:14:52 rpe Exp $
+#	$OpenBSD: install.sub,v 1.949 2017/01/21 04:33:00 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1503,6 +1503,7 @@ install_files() {
 install_http() {
 	local _file_list _prompt _mirror _url_base _err _tls _http_proto _f
 	local _idx=/tmp/i/index.txt _sha=/tmp/i/SHA256 _sig=/tmp/i/SHA256.sig
+	local _http_server _install_url
 
 	# N.B.: 'http_proxy' is an environment variable used by ftp(1). DON'T
 	# change the name or case!
@@ -1518,9 +1519,17 @@ install_http() {
 		_prompt="HTTP Server? (hostname or 'done')"
 	fi
 
+	# Use information from /etc/installurl as defaults for upgrades.
+	# Format of installurl: _http_proto://_http_server/_url_path
+	if [[ $MODE == upgrade ]] &&
+		_install_url=$(stripcom /mnt/etc/installurl); then
+		_http_server=${_install_url#*://}
+		_http_server=${_http_server%%/*}
+	fi
+
 	# Get server IP address or hostname and optionally the http protocol.
 	while :; do
-		ask_until "$_prompt" "$HTTP_SERVER"
+		ask_until "$_prompt" "${_http_server:-$HTTP_SERVER}"
 		case $resp in
 		done)	return
 			;;
@@ -1613,15 +1622,8 @@ install_http() {
 	install_files "$_url_base" "$_file_list"
 
 	# Remember where we installed from, to tell the cgi server.
-	INSTALL_URL=$_url_base
-
-	# Bake a package path only if we installed from a mirror.
-	PACKAGE_PATH=
-	if [[ -n $_mirror ]]; then
-		PACKAGE_PATH=$(print -r -- "$_url_base" |
-			sed -E "/\/(snapshots|[0-9]\.[0-9])\/($ARCH)\/*$/!d
-				s!!/\1/packages/$(arch -s)/!;q")
-	fi
+	INSTALL_URL=
+	[[ $_mirror == yes ]] && INSTALL_URL=${_url_base%/$HTTP_SETDIR}
 }
 
 # Ask for the path to the set files on an already mounted filesystem and start
@@ -2192,7 +2194,8 @@ startcgiinfo() {
 	# Make sure the ftp subshell gets its own process group.
 	set -m
 	(
-		unpriv2 ftp -w 15 -Vao - "$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftplist.cgi?path=$HTTP_SETDIR" \
+		unpriv2 ftp -w 15 -Vao - \
+			"$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftplist.cgi?dbversion=1" \
 			2>/dev/null >$CGI_INFO
 
 		# Remember finish time for adjusting the received timestamp.
@@ -2452,12 +2455,9 @@ finish_up() {
 		done </mnt/etc/fstab
 	fi
 
-	# Create or update pkg.conf with the new package path, if any.
-	if [[ -n $PACKAGE_PATH ]]; then
-		grep -v '^[ 	]*installpath[ 	]*=' /mnt/etc/pkg.conf 2>/dev/null >/tmp/i/pkgconf
-		print -r -- "installpath = $PACKAGE_PATH" >>/tmp/i/pkgconf
-		cp /tmp/i/pkgconf /mnt/etc/pkg.conf
-	fi
+	# Create /etc/installurl with the mirror used during install.
+	[[ $MODE == install && -n $INSTALL_URL ]] &&
+		echo "$INSTALL_URL" >/mnt/etc/installurl
 
 	echo -n "Making all device nodes..."
 	(cd /mnt/dev; sh MAKEDEV all
@@ -2689,7 +2689,8 @@ do_install(){
 		_i=$_i${INSTALL_METHOD:+method=$INSTALL_METHOD}
 		_i=${_i%&}
 		[[ -n $_i ]] && unpriv2 ftp -w 15 -Vao - \
-			"$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
+			"$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftpinstall.cgi?dbversion=1&$_i" \ 
+			 >/dev/null 2>&1 &
 	fi
 
 	# Ensure an enabled console has the correct speed in /etc/ttys.
@@ -2921,14 +2922,12 @@ AI_SERVER=
 
 ROOTDISK=
 ROOTDEV=
-PACKAGE_PATH=
 
 SETDIR="$VNAME/$ARCH"
 CGI_INFO=/tmp/i/cgiinfo
 CGI_TZ=
 CGI_TIME=
 CGI_METHOD=
-INSTALL_URL=
 INSTALL_METHOD=
 HTTP_DIR=
 HTTP_SEC=/tmp/i/httpsec
