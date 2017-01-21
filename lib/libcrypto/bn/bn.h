@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.32 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: bn.h,v 1.33 2017/01/21 09:38:58 beck Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -418,10 +418,12 @@ int	BN_lshift(BIGNUM *r, const BIGNUM *a, int n);
 int	BN_lshift1(BIGNUM *r, const BIGNUM *a);
 int	BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
 
+#ifndef LIBRESSL_INTERNAL
 int	BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx);
 int	BN_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+#endif
 int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont);
 int	BN_mod_exp_mont_word(BIGNUM *r, BN_ULONG a, const BIGNUM *p,

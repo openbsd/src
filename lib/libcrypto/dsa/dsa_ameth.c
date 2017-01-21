@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.20 2016/10/19 16:49:11 jsing Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.21 2017/01/21 09:38:59 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -66,8 +66,8 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-
 #include "asn1_locl.h"
+#include "bn_lcl.h"
 
 static int
 dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
@@ -224,7 +224,7 @@ dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 		goto dsaerr;
 	}
 
-	if (!BN_mod_exp(dsa->pub_key, dsa->g, dsa->priv_key, dsa->p, ctx)) {
+	if (!BN_mod_exp_ct(dsa->pub_key, dsa->g, dsa->priv_key, dsa->p, ctx)) {
 		DSAerr(DSA_F_DSA_PRIV_DECODE,DSA_R_BN_ERROR);
 		goto dsaerr;
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_key.c,v 1.22 2016/06/30 02:02:06 bcook Exp $ */
+/* $OpenBSD: dsa_key.c,v 1.23 2017/01/21 09:38:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,7 @@
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
+#include "bn_lcl.h"
 
 static int dsa_builtin_keygen(DSA *dsa);
 
@@ -108,7 +109,7 @@ dsa_builtin_keygen(DSA *dsa)
 
 		BN_with_flags(&prk, priv_key, BN_FLG_CONSTTIME);
 
-		if (!BN_mod_exp(pub_key, dsa->g, &prk, dsa->p, ctx))
+		if (!BN_mod_exp_ct(pub_key, dsa->g, &prk, dsa->p, ctx))
 			goto err;
 	}
 

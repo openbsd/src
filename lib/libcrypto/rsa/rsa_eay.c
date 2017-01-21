@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.43 2016/09/09 11:39:11 tb Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.44 2017/01/21 09:38:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,6 +118,8 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 
+#include "bn_lcl.h"
+
 static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
     unsigned char *to, RSA *rsa, int padding);
 static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
@@ -137,7 +139,7 @@ static RSA_METHOD rsa_pkcs1_eay_meth = {
 	.rsa_priv_enc = RSA_eay_private_encrypt, /* signing */
 	.rsa_priv_dec = RSA_eay_private_decrypt,
 	.rsa_mod_exp = RSA_eay_mod_exp,
-	.bn_mod_exp = BN_mod_exp_mont, /* XXX probably we should not use Montgomery if  e == 3 */
+	.bn_mod_exp = BN_mod_exp_mont_ct, /* XXX probably we should not use Montgomery if  e == 3 */
 	.init = RSA_eay_init,
 	.finish = RSA_eay_finish,
 };

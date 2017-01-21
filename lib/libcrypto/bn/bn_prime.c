@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.15 2016/07/05 02:54:35 bcook Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.16 2017/01/21 09:38:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -369,7 +369,7 @@ static int
 witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1, const BIGNUM *a1_odd,
     int k, BN_CTX *ctx, BN_MONT_CTX *mont)
 {
-	if (!BN_mod_exp_mont(w, w, a1_odd, a, ctx, mont))
+	if (!BN_mod_exp_mont_ct(w, w, a1_odd, a, ctx, mont))
 		/* w := w^a1_odd mod a */
 		return -1;
 	if (BN_is_one(w))

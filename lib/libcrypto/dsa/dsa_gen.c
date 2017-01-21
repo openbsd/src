@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.22 2015/07/15 18:34:37 miod Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.23 2017/01/21 09:38:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,7 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
+#include "bn_lcl.h"
 #include "dsa_locl.h"
 
 int
@@ -315,7 +316,7 @@ end:
 
 	for (;;) {
 		/* g=test^r0%p */
-		if (!BN_mod_exp_mont(g, test, r0, p, ctx, mont))
+		if (!BN_mod_exp_mont_ct(g, test, r0, p, ctx, mont))
 			goto err;
 		if (!BN_is_one(g))
 			break;

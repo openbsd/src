@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqrt.c,v 1.7 2016/11/08 01:40:22 guenther Exp $ */
+/* $OpenBSD: bn_sqrt.c,v 1.8 2017/01/21 09:38:58 beck Exp $ */
 /* Written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * and Bodo Moeller for the OpenSSL project. */
 /* ====================================================================
@@ -149,7 +149,7 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		q->neg = 0;
 		if (!BN_add_word(q, 1))
 			goto end;
-		if (!BN_mod_exp(ret, A, q, p, ctx))
+		if (!BN_mod_exp_ct(ret, A, q, p, ctx))
 			goto end;
 		err = 0;
 		goto vrfy;
@@ -190,7 +190,7 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		if (!BN_rshift(q, p, 3))
 			goto end;
 		q->neg = 0;
-		if (!BN_mod_exp(b, t, q, p, ctx))
+		if (!BN_mod_exp_ct(b, t, q, p, ctx))
 			goto end;
 
 		/* y := b^2 */
@@ -272,7 +272,7 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	/* Now that we have some non-square, we can find an element
 	 * of order  2^e  by computing its q'th power. */
-	if (!BN_mod_exp(y, y, q, p, ctx))
+	if (!BN_mod_exp_ct(y, y, q, p, ctx))
 		goto end;
 	if (BN_is_one(y)) {
 		BNerr(BN_F_BN_MOD_SQRT, BN_R_P_IS_NOT_PRIME);
@@ -314,7 +314,7 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		} else if (!BN_one(x))
 			goto end;
 	} else {
-		if (!BN_mod_exp(x, A, t, p, ctx))
+		if (!BN_mod_exp_ct(x, A, t, p, ctx))
 			goto end;
 		if (BN_is_zero(x)) {
 			/* special case: a == 0  (mod p) */

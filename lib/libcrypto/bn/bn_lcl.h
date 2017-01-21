@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.23 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.24 2017/01/21 09:38:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -583,6 +583,16 @@ BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, int 
 BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, int num);
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
+
+/* Explicitly const time / non-const time versions for internal use */
+int BN_mod_exp_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx);
+int BN_mod_exp_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx);
+int BN_mod_exp_mont_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+int BN_mod_exp_mont_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 __END_HIDDEN_DECLS
 

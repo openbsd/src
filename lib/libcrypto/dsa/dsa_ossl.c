@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.26 2016/06/21 04:16:53 bcook Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.27 2017/01/21 09:38:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,8 @@
 #include <openssl/dsa.h>
 #include <openssl/err.h>
 #include <openssl/sha.h>
+
+#include "bn_lcl.h"
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
@@ -238,7 +240,7 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 					dsa->method_mont_p))
 			goto err;
 	} else {
-		if (!BN_mod_exp_mont(r, dsa->g, &k, dsa->p, ctx, dsa->method_mont_p))
+		if (!BN_mod_exp_mont_ct(r, dsa->g, &k, dsa->p, ctx, dsa->method_mont_p))
 			goto err;
 	}
 

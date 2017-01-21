@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.16 2016/03/02 14:28:14 beck Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.17 2017/01/21 09:38:59 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -72,6 +72,8 @@
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
+
+#include "bn_lcl.h"
 
 /* Utility function: read a DWORD (4 byte unsigned integer) in little endian
  * format
@@ -340,7 +342,7 @@ b2i_dss(const unsigned char **in, unsigned int length, unsigned int bitlen,
 			goto memerr;
 		if (!(ctx = BN_CTX_new()))
 			goto memerr;
-		if (!BN_mod_exp(dsa->pub_key, dsa->g,
+		if (!BN_mod_exp_ct(dsa->pub_key, dsa->g,
 		    dsa->priv_key, dsa->p, ctx))
 			goto memerr;
 		BN_CTX_free(ctx);

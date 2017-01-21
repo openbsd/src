@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.25 2016/07/07 11:53:12 bcook Exp $ */
+/* $OpenBSD: dh_key.c,v 1.26 2017/01/21 09:38:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +61,8 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/err.h>
+
+#include "bn_lcl.h"
 
 static int generate_key(DH *dh);
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
@@ -233,7 +235,7 @@ static int
 dh_bn_mod_exp(const DH *dh, BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
-	return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
+	return BN_mod_exp_mont_ct(r, a, p, m, ctx, m_ctx);
 }
 
 static int

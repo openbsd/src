@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.14 2014/07/12 16:03:36 miod Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.15 2017/01/21 09:38:58 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -372,7 +372,7 @@ BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m,
 		    ctx, ret->m_ctx))
 			goto err;
 	} else {
-		if (!BN_mod_exp(ret->A, ret->A, ret->e, ret->mod, ctx))
+		if (!BN_mod_exp_ct(ret->A, ret->A, ret->e, ret->mod, ctx))
 			goto err;
 	}
 

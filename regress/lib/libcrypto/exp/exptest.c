@@ -64,6 +64,15 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
+int BN_mod_exp_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx);
+int BN_mod_exp_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx);
+int BN_mod_exp_mont_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+int BN_mod_exp_mont_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+
 #define NUM_BITS	(BN_BITS*2)
 
 /*
@@ -116,6 +125,18 @@ static int test_exp_mod_zero(void)
 	if (!a_is_zero_mod_one("BN_mod_exp", &r, &a))
 		failed = 1;
 
+	if (!BN_mod_exp_ct(&r, &a, &p, &m, ctx))
+		goto err;
+
+	if (!a_is_zero_mod_one("BN_mod_exp_ct", &r, &a))
+		failed = 1;
+
+	if (!BN_mod_exp_nonct(&r, &a, &p, &m, ctx))
+		goto err;
+
+	if (!a_is_zero_mod_one("BN_mod_exp_nonct", &r, &a))
+		failed = 1;
+
 	if (!BN_mod_exp_recp(&r, &a, &p, &m, ctx))
 		goto err;
 
@@ -132,6 +153,18 @@ static int test_exp_mod_zero(void)
 		goto err;
 
 	if (!a_is_zero_mod_one("BN_mod_exp_mont", &r, &a))
+		failed = 1;
+
+	if (!BN_mod_exp_mont_ct(&r, &a, &p, &m, ctx, NULL))
+		goto err;
+
+	if (!a_is_zero_mod_one("BN_mod_exp_mont_ct", &r, &a))
+		failed = 1;
+
+	if (!BN_mod_exp_mont_nonct(&r, &a, &p, &m, ctx, NULL))
+		goto err;
+
+	if (!a_is_zero_mod_one("BN_mod_exp_mont_nonct", &r, &a))
 		failed = 1;
 
 	if (!BN_mod_exp_mont_consttime(&r, &a, &p, &m, ctx, NULL)) {
@@ -175,7 +208,8 @@ int main(int argc, char *argv[])
 	BIO *out = NULL;
 	int i, ret;
 	unsigned char c;
-	BIGNUM *r_mont, *r_mont_const, *r_recp, *r_simple, *a, *b, *m;
+	BIGNUM *r_mont, *r_mont_const, *r_recp, *r_simple,
+	    *r_mont_ct, *r_mont_nonct, *a, *b, *m;
 
 	ERR_load_BN_strings();
 
@@ -184,6 +218,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	r_mont = BN_new();
 	r_mont_const = BN_new();
+	r_mont_ct = BN_new();
+	r_mont_nonct = BN_new();
 	r_recp = BN_new();
 	r_simple = BN_new();
 	a = BN_new();
@@ -221,6 +257,20 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
+		ret = BN_mod_exp_mont_ct(r_mont_ct, a, b, m, ctx, NULL);
+		if (ret <= 0) {
+			printf("BN_mod_exp_mont_ct() problems\n");
+			ERR_print_errors(out);
+			exit(1);
+		}
+
+		ret = BN_mod_exp_mont_nonct(r_mont_nonct, a, b, m, ctx, NULL);
+		if (ret <= 0) {
+			printf("BN_mod_exp_mont_nonct() problems\n");
+			ERR_print_errors(out);
+			exit(1);
+		}
+
 		ret = BN_mod_exp_recp(r_recp, a, b, m, ctx);
 		if (ret <= 0) {
 			printf("BN_mod_exp_recp() problems\n");
@@ -254,6 +304,10 @@ int main(int argc, char *argv[])
 				printf("\nsimple and mont const time results differ\n");
 			if (BN_cmp(r_simple, r_recp) != 0)
 				printf("\nsimple and recp results differ\n");
+			if (BN_cmp(r_mont, r_mont_ct) != 0)
+				printf("\nmont_ct and mont results differ\n");
+			if (BN_cmp(r_mont_ct, r_mont_nonct) != 0)
+				printf("\nmont_ct and mont_nonct results differ\n");
 
 			printf("a (%3d) = ", BN_num_bits(a));
 			BN_print(out, a);

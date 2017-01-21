@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.27 2017/01/21 04:34:16 beck Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.28 2017/01/21 09:38:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,9 +172,9 @@ err:
 	return (ret);
 }
 
-int
-BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
-    BN_CTX *ctx)
+static int
+BN_mod_exp_internal(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    BN_CTX *ctx, int ct)
 {
 	int ret;
 
@@ -213,12 +213,11 @@ BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	 */
 
 	if (BN_is_odd(m)) {
-		if (a->top == 1 && !a->neg &&
-		    (BN_get_flags(p, BN_FLG_CONSTTIME) == 0)) {
+		if (a->top == 1 && !a->neg && !ct) {
 			BN_ULONG A = a->d[0];
 			ret = BN_mod_exp_mont_word(r, A,p, m,ctx, NULL);
 		} else
-			ret = BN_mod_exp_mont(r, a,p, m,ctx, NULL);
+			ret = BN_mod_exp_mont_ct(r, a,p, m,ctx, NULL);
 	} else	{
 		ret = BN_mod_exp_recp(r, a,p, m, ctx);
 	}
@@ -226,6 +225,30 @@ BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	bn_check_top(r);
 	return (ret);
 }
+
+int
+BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    BN_CTX *ctx)
+{
+	return BN_mod_exp_internal(r, a, p, m, ctx,
+	    (BN_get_flags(p, BN_FLG_CONSTTIME) != 0));
+}
+
+int
+BN_mod_exp_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    BN_CTX *ctx)
+{
+	return BN_mod_exp_internal(r, a, p, m, ctx, 1);
+}
+
+
+int
+BN_mod_exp_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    BN_CTX *ctx)
+{
+	return BN_mod_exp_internal(r, a, p, m, ctx, 0);
+}
+
 
 int
 BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
@@ -361,9 +384,9 @@ err:
 	return (ret);
 }
 
-int
-BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
-    BN_CTX *ctx, BN_MONT_CTX *in_mont)
+static int
+BN_mod_exp_mont_internal(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    BN_CTX *ctx, BN_MONT_CTX *in_mont, int ct)
 {
 	int i, j, bits, ret = 0, wstart, wend, window, wvalue;
 	int start = 1;
@@ -373,7 +396,7 @@ BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	BIGNUM *val[TABLE_SIZE];
 	BN_MONT_CTX *mont = NULL;
 
-	if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0) {
+	if (ct) {
 		return BN_mod_exp_mont_consttime(rr, a, p, m, ctx, in_mont);
 	}
 
@@ -513,6 +536,27 @@ err:
 	return (ret);
 }
 
+int
+BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    BN_CTX *ctx, BN_MONT_CTX *in_mont)
+{
+	return BN_mod_exp_mont_internal(rr, a, p, m, ctx, in_mont,
+	    (BN_get_flags(p, BN_FLG_CONSTTIME) != 0));
+}
+
+int
+BN_mod_exp_mont_ct(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    BN_CTX *ctx, BN_MONT_CTX *in_mont)
+{
+	return BN_mod_exp_mont_internal(rr, a, p, m, ctx, in_mont, 1);
+}
+
+int
+BN_mod_exp_mont_nonct(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    BN_CTX *ctx, BN_MONT_CTX *in_mont)
+{
+	return BN_mod_exp_mont_internal(rr, a, p, m, ctx, in_mont, 0);
+}
 
 /* BN_mod_exp_mont_consttime() stores the precomputed powers in a specific layout
  * so that accessing any of these table values shows the same access pattern as far

@@ -84,6 +84,15 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
+int BN_mod_exp_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx);
+int BN_mod_exp_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx);
+int BN_mod_exp_mont_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+int BN_mod_exp_mont_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
 
 const int num0 = 100; /* number of tests */
@@ -1037,6 +1046,14 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		fprintf(stderr, "BN_mod_exp with zero modulus succeeded!\n");
 		return (0);
 	}
+	if (BN_mod_exp_ct(d, a, b, c, ctx)) {
+		fprintf(stderr, "BN_mod_exp_ct with zero modulus succeeded!\n");
+		return (0);
+	}
+	if (BN_mod_exp_nonct(d, a, b, c, ctx)) {
+		fprintf(stderr, "BN_mod_exp_nonct with zero modulus succeeded!\n");
+		return (0);
+	}
 
 	BN_bntest_rand(c, 30, 0, 1); /* must be odd for montgomery */
 	for (i = 0; i < num2; i++) {
@@ -1044,6 +1061,70 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		BN_bntest_rand(b, 2 + i, 0, 0);
 
 		if (!BN_mod_exp(d, a, b, c, ctx)) {
+			rc = 0;
+			break;
+		}
+
+		if (bp != NULL) {
+			if (!results) {
+				BN_print(bp, a);
+				BIO_puts(bp, " ^ ");
+				BN_print(bp, b);
+				BIO_puts(bp, " % ");
+				BN_print(bp, c);
+				BIO_puts(bp, " - ");
+			}
+			BN_print(bp, d);
+			BIO_puts(bp, "\n");
+		}
+		BN_exp(e, a, b, ctx);
+		BN_sub(e, e, d);
+		BN_div(a, b, e, c, ctx);
+		if (!BN_is_zero(b)) {
+			fprintf(stderr, "Modulo exponentiation test failed!\n");
+			rc = 0;
+			break;
+		}
+	}
+
+	BN_bntest_rand(c, 30, 0, 1); /* must be odd for montgomery */
+	for (i = 0; i < num2; i++) {
+		BN_bntest_rand(a, 20 + i * 5, 0, 0);
+		BN_bntest_rand(b, 2 + i, 0, 0);
+
+		if (!BN_mod_exp_ct(d, a, b, c, ctx)) {
+			rc = 0;
+			break;
+		}
+
+		if (bp != NULL) {
+			if (!results) {
+				BN_print(bp, a);
+				BIO_puts(bp, " ^ ");
+				BN_print(bp, b);
+				BIO_puts(bp, " % ");
+				BN_print(bp, c);
+				BIO_puts(bp, " - ");
+			}
+			BN_print(bp, d);
+			BIO_puts(bp, "\n");
+		}
+		BN_exp(e, a, b, ctx);
+		BN_sub(e, e, d);
+		BN_div(a, b, e, c, ctx);
+		if (!BN_is_zero(b)) {
+			fprintf(stderr, "Modulo exponentiation test failed!\n");
+			rc = 0;
+			break;
+		}
+	}
+
+	BN_bntest_rand(c, 30, 0, 1); /* must be odd for montgomery */
+	for (i = 0; i < num2; i++) {
+		BN_bntest_rand(a, 20 + i * 5, 0, 0);
+		BN_bntest_rand(b, 2 + i, 0, 0);
+
+		if (!BN_mod_exp_nonct(d, a, b, c, ctx)) {
 			rc = 0;
 			break;
 		}
