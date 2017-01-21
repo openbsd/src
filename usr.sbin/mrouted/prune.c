@@ -23,21 +23,6 @@ extern int phys_vif;
  */
 #define CACHE_LIFETIME(x) ((x) + (arc4random_uniform(x)))
 
-#define CHK_GS(x, y) {	\
-		switch(x) { \
-			case 2:	\
-			case 4:	\
-			case 8:	\
-			case 16: \
-			case 32: \
-			case 64: \
-			case 128: \
-			case 256: y = 1; \
-				  break; \
-			default:  y = 0; \
-		} \
-	}
-
 struct gtable *kernel_table;		/* ptr to list of kernel grp entries*/
 static struct gtable *kernel_no_route;	/* list of grp entries w/o routes   */
 struct gtable *gtp;			/* pointer for kernel rt entries    */
@@ -1433,10 +1418,19 @@ age_table_entry(void)
 
 	/* retransmit graft if graft sent flag is still set */
 	if (gt->gt_grftsnt) {
-	    int y;
-	    CHK_GS(gt->gt_grftsnt++, y);
-	    if (y)
+	    switch(gt->gt_grftsnt++) {
+	    case 2:
+	    case 4:
+	    case 8:
+	    case 16:
+	    case 32:
+	    case 64:
+	    case 128:
 		send_graft(gt);
+		break;
+	    default:
+		break;
+	    }
 	}
 
 	/*
