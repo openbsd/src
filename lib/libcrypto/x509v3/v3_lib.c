@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_lib.c,v 1.15 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_lib.c,v 1.16 2017/01/21 04:42:16 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -91,10 +91,24 @@ ext_cmp(const X509V3_EXT_METHOD * const *a, const X509V3_EXT_METHOD * const *b)
 	return ((*a)->ext_nid - (*b)->ext_nid);
 }
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const X509V3_EXT_METHOD *,
-    const X509V3_EXT_METHOD *, ext);
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const X509V3_EXT_METHOD *,
-    const X509V3_EXT_METHOD *, ext);
+static int ext_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int ext_cmp(const X509V3_EXT_METHOD * const *, const X509V3_EXT_METHOD * const *);
+static const X509V3_EXT_METHOD * *OBJ_bsearch_ext(const X509V3_EXT_METHOD * *key, const X509V3_EXT_METHOD * const *base, int num);
+
+static int
+ext_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	const X509V3_EXT_METHOD * const *a = a_;
+	const X509V3_EXT_METHOD * const *b = b_;
+	return ext_cmp(a, b);
+}
+
+static const X509V3_EXT_METHOD * *
+OBJ_bsearch_ext(const X509V3_EXT_METHOD * *key, const X509V3_EXT_METHOD * const *base, int num)
+{
+	return (const X509V3_EXT_METHOD * *)OBJ_bsearch_(key, base, num, sizeof(const X509V3_EXT_METHOD *),
+	    ext_cmp_BSEARCH_CMP_FN);
+}
 
 const X509V3_EXT_METHOD *
 X509V3_EXT_get_nid(int nid)
