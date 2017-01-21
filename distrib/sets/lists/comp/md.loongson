@@ -577,6 +577,7 @@
 ./usr/include/loongson/loongson3.h
 ./usr/include/loongson/memconf.h
 ./usr/include/loongson/mips_opcode.h
+./usr/include/loongson/mplock.h
 ./usr/include/loongson/mutex.h
 ./usr/include/loongson/param.h
 ./usr/include/loongson/pcb.h
