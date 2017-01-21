@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2016/03/16 15:41:11 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2017/01/21 11:32:04 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -232,8 +232,7 @@ setpeer(char *host, char *port)
 
 		memset(&ss, 0, sizeof(ss));
 		ss.ss_family = res->ai_family;
-		ss.ss_len = res->ai_addrlen;
-		if (bind(f, (struct sockaddr *)&ss, ss.ss_len) < 0) {
+		if (bind(f, (struct sockaddr *)&ss, res->ai_addrlen) < 0) {
 			cause = "bind";
 			close(f);
 			f = -1;

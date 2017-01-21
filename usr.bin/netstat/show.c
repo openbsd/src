@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.52 2016/09/03 14:23:14 phessler Exp $	*/
+/*	$OpenBSD: show.c,v 1.53 2017/01/21 11:32:04 guenther Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -449,7 +449,6 @@ routename(struct sockaddr *sa)
 
 		memset(&sin6, 0, sizeof(sin6));
 		memcpy(&sin6, sa, sa->sa_len);
-		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
 		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
 		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
@@ -520,7 +519,7 @@ routename6(struct sockaddr_in6 *sin6)
 	else
 		niflags |= NI_NOFQDN;
 
-	if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
+	if (getnameinfo((struct sockaddr *)sin6, sizeof(*sin6),
 	    line, sizeof(line), NULL, 0, niflags) != 0)
 		strncpy(line, "invalid", sizeof(line));
 
@@ -640,7 +639,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 
 	if (nflag)
 		flag |= NI_NUMERICHOST;
-	error = getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+	error = getnameinfo((struct sockaddr *)&sin6, sizeof(sin6),
 	    hbuf, sizeof(hbuf), NULL, 0, flag);
 	if (error)
 		snprintf(hbuf, sizeof(hbuf), "invalid");

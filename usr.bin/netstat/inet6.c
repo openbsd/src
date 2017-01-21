@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.51 2016/12/22 11:04:44 rzalamena Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.52 2017/01/21 11:32:04 guenther Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -983,7 +983,6 @@ inet6name(struct in6_addr *in6p)
 		strlcpy(line, cp, sizeof(line));
 	else {
 		memset(&sin6, 0, sizeof(sin6));
-		sin6.sin6_len = sizeof(sin6);
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_addr = *in6p;
 #ifdef __KAME__
@@ -996,7 +995,7 @@ inet6name(struct in6_addr *in6p)
 			sin6.sin6_addr.s6_addr[3] = 0;
 		}
 #endif
-		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+		if (getnameinfo((struct sockaddr *)&sin6, sizeof(sin6),
 		    hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
 			strlcpy(hbuf, "?", sizeof hbuf);
 		strlcpy(line, hbuf, sizeof(line));

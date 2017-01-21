@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.6 2015/12/05 13:19:32 claudio Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.7 2017/01/21 11:32:04 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -106,7 +106,6 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "socket");
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	sun.sun_len = sizeof(sun);
 	strlcpy(sun.sun_path, npppd_ctlpath, sizeof(sun.sun_path));
 	if (connect(ctlsock, (struct sockaddr *)&sun, sizeof(sun)) < 0)
 		err(EXIT_FAILURE, "connect");

@@ -1,4 +1,4 @@
-/* $OpenBSD: mux.c,v 1.63 2016/10/19 23:21:56 dtucker Exp $ */
+/* $OpenBSD: mux.c,v 1.64 2017/01/21 11:32:04 guenther Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -2163,8 +2163,6 @@ muxclient(const char *path)
 
 	memset(&addr, '\0', sizeof(addr));
 	addr.sun_family = AF_UNIX;
-	addr.sun_len = offsetof(struct sockaddr_un, sun_path) +
-	    strlen(path) + 1;
 
 	if (strlcpy(addr.sun_path, path,
 	    sizeof(addr.sun_path)) >= sizeof(addr.sun_path))
@@ -2174,7 +2172,7 @@ muxclient(const char *path)
 	if ((sock = socket(PF_UNIX, SOCK_STREAM, 0)) < 0)
 		fatal("%s socket(): %s", __func__, strerror(errno));
 
-	if (connect(sock, (struct sockaddr *)&addr, addr.sun_len) == -1) {
+	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
 		switch (muxclient_command) {
 		case SSHMUX_COMMAND_OPEN:
 		case SSHMUX_COMMAND_STDIO_FWD:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsrr.c,v 1.14 2015/08/21 02:07:32 deraadt Exp $	*/
+/*	$OpenBSD: rsrr.c,v 1.15 2017/01/21 11:32:04 guenther Exp $	*/
 /*	$NetBSD: rsrr.c,v 1.3 1995/12/10 10:07:14 mycroft Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ static void	rsrr_cache(struct gtable *gt, struct rsrr_rq *route_query);
 void
 rsrr_init(void)
 {
-    int servlen;
     struct sockaddr_un serv_addr;
 
     if ((rsrr_socket = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
@@ -93,11 +92,8 @@ rsrr_init(void)
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sun_family = AF_UNIX;
     strlcpy(serv_addr.sun_path, RSRR_SERV_PATH, sizeof serv_addr.sun_path);
-    servlen = offsetof(struct sockaddr_un, sun_path) +
-		strlen(serv_addr.sun_path);
-    serv_addr.sun_len = servlen;
 
-    if (bind(rsrr_socket, (struct sockaddr *) &serv_addr, servlen) < 0)
+    if (bind(rsrr_socket, (struct sockaddr *)&serv_addr, sizeof serv_addr) < 0)
 	logit(LOG_ERR, errno, "Can't bind RSRR socket");
 
     if (register_input_handler(rsrr_socket,rsrr_read) < 0)

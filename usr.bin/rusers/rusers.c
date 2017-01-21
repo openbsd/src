@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.39 2016/08/05 10:34:18 jca Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.40 2017/01/21 11:32:04 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -418,7 +418,7 @@ retry:
 	msgp->acpted_rply.ar_results.where = (caddr_t)resp;
 	msgp->acpted_rply.ar_results.proc = xdr_rmtcallres;
 
-	fromlen = sizeof(struct sockaddr);
+	fromlen = sizeof(raddr);
 	inlen = recvfrom(sock, inbuf, sizeof(inbuf), 0,
 	    (struct sockaddr *)&raddr, &fromlen);
 	if (inlen < 0) {
@@ -534,7 +534,6 @@ allhosts(void)
 	outlen[1] = xdr_getpos(&xdr);
 	xdr_destroy(&xdr);
 
-	baddr.sin_len = sizeof(struct sockaddr_in);
 	baddr.sin_family = AF_INET;
 	baddr.sin_port = htons(PMAPPORT);
 	baddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -572,12 +571,12 @@ allhosts(void)
 			if (i & 1) {
 				if (sendto(sock[0], buf[0], outlen[0], 0,
 				    (struct sockaddr *)&baddr,
-				    sizeof(struct sockaddr)) != outlen[0])
+				    sizeof(baddr)) != outlen[0])
 					err(1, "can't send broadcast packet");
 			} else {
 				if (sendto(sock[1], buf[1], outlen[1], 0,
 				    (struct sockaddr *)&baddr,
-				    sizeof(struct sockaddr)) != outlen[1])
+				    sizeof(baddr)) != outlen[1])
 					err(1, "can't send broadcast packet");
 			}
 		}

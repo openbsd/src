@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetname.c,v 1.2 2015/01/16 00:03:37 deraadt Exp $	*/
+/*	$OpenBSD: inetname.c,v 1.3 2017/01/21 11:32:04 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -52,9 +52,8 @@ inet6name(struct in6_addr *in6)
                 return "*";
         memset(&sin6, 0, sizeof(sin6));
         sin6.sin6_family = AF_INET6;
-        sin6.sin6_len = sizeof(struct sockaddr_in6);
         sin6.sin6_addr = *in6;
-        if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+        if (getnameinfo((struct sockaddr *)&sin6, sizeof(struct sockaddr_in6),
             line, sizeof(line), NULL, 0, flags) == 0)
                 return line;
         return "?";
@@ -73,10 +72,9 @@ inetname(struct in_addr in)
 
         memset(&si, 0, sizeof(si));
         si.sin_family = AF_INET;
-        si.sin_len = sizeof(struct sockaddr_in);
         si.sin_addr = in;
 
-        e = getnameinfo((struct sockaddr *)&si, si.sin_len,
+        e = getnameinfo((struct sockaddr *)&si, sizeof(struct sockaddr_in),
                         line, sizeof(line), NULL, 0, flags);
 
         if (e == 0)
