@@ -1,4 +1,4 @@
-/*	$OpenBSD: procs.c,v 1.2 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: procs.c,v 1.3 2017/01/21 08:33:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -143,7 +143,7 @@ sm_mon_1_svc(mon *arg, struct svc_req *req)
  *		In the unlikely event of more than one identical monitor
  *		request, all are removed.
  */
-int 
+int
 do_unmon(char *name, HostInfo *hp, void *ptr)
 {
 	my_id *idp = ptr;

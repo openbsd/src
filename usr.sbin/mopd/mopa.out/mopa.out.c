@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopa.out.c,v 1.15 2016/12/20 22:19:08 krw Exp $ */
+/*	$OpenBSD: mopa.out.c,v 1.16 2017/01/21 08:33:51 krw Exp $ */
 
 /*
  * mopa.out - Convert a Unix format kernel into something that
@@ -10,10 +10,10 @@
  *
  * If necessary, the a.out header is stripped, and the program
  * segments are padded out. The BSS segment is zero filled.
- * A header is prepended that looks like an IHD header. In 
+ * A header is prepended that looks like an IHD header. In
  * particular the Unix machine ID is placed where mopd expects
  * the image type to be (offset is IHD_W_ALIAS). If the machine
- * ID could be mistaken for a DEC image type, then the conversion 
+ * ID could be mistaken for a DEC image type, then the conversion
  * is aborted. The original a.out header is copied into the front
  * of the header so that once we have detected the Unix machine
  * ID we can haul the load address and the xfer address out.
@@ -92,21 +92,21 @@ main (int argc, char **argv)
 	int	i, j;
 	struct dllist dl;
 	short image_type;
-	
+
 #ifdef NOAOUT
 	fprintf(stderr, "%s: has no function in OS/BSD\n", argv[0]);
 	return(1);
-#endif	
+#endif
 
 	if (argc != 3) {
 		fprintf (stderr, "usage: %s infile outfile\n", argv[0]);
 		return (1);
 	}
-	
+
 	dl.ldfd = open (argv[1], O_RDONLY);
 	if (dl.ldfd == -1)
 		err(2, "open `%s'", argv[1]);
-	
+
 	if (GetFileInfo(&dl, 0) == -1)
 		errx(3, "`%s' is an unknown file type", argv[1]);
 
@@ -192,13 +192,13 @@ main (int argc, char **argv)
 		mopFilePutLX(header, 0xd4 + EISD_L_SECSIZE, i, 4);
 		break;
 	}
-	
+
 	out = fopen (argv[2], "w");
 	if (!out)
 		err(2, "writing `%s'", argv[2]);
-	
+
 	/* Now we do the actual work. Write MOP-image header */
-	
+
 	fwrite (header, sizeof (header), 1, out);
 
 	switch (dl.image_type) {
@@ -229,11 +229,11 @@ main (int argc, char **argv)
 	default:
 		break;
 	}
-	
+
 	while ((i = mopFileRead(&dl,header)) > 0) {
 		(void)fwrite(header, i, 1, out);
 	}
-	
+
 	fclose (out);
 	exit(0);
 }

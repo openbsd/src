@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.37 2016/08/03 23:37:25 krw Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.38 2017/01/21 08:33:51 krw Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -9,7 +9,7 @@
  * about packet rate and loss for each hop along the path.  It can
  * usually be invoked just as
  *
- * 	mtrace source
+ *	mtrace source
  *
  * to trace the route from that source to the local host for a default
  * group when only the route is desired and not group-specific packet
@@ -21,7 +21,7 @@
  * Xerox PARC).  It attempts to parallel in command syntax and output
  * format the unicast traceroute program written by Van Jacobson (LBL)
  * for the parts where that makes sense.
- * 
+ *
  * Copyright (c) 1998-2001.
  * The University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -170,7 +170,7 @@ inet_name(u_int32_t addr)
 }
 
 
-u_int32_t 
+u_int32_t
 host_addr(char *name)
 {
     struct hostent *e = NULL;
@@ -261,7 +261,7 @@ flag_type(u_int type)
 	(void) snprintf(buf, sizeof buf, "Unknown error code %d", type);
 	return (buf);
     }
-}    
+}
 
 /*
  * If destination is on a local net, get the netmask, else set the
@@ -284,7 +284,7 @@ get_netmask(int s, u_int32_t dst)
 	return (retval);
     }
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-	if (ifa->ifa_addr->sa_family != AF_INET) 
+	if (ifa->ifa_addr->sa_family != AF_INET)
              continue;
 	if_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 	if_mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
@@ -973,7 +973,7 @@ fixup_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
 	res = ((ntohl(n->tr_pktcnt) < ntohl(b->tr_pktcnt)) ||
 	       (ntohl(n->tr_pktcnt) < ntohl(p->tr_pktcnt)));
 	if (debug > 2)
-    	    printf("\t\tr=%d, res=%d\n", *r, res);
+	    printf("\t\tr=%d, res=%d\n", *r, res);
 	if (*r) {
 	    if (res || *r > 1) {
 		/*
@@ -1082,7 +1082,7 @@ print_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
 	if (ttl < n->tr_fttl) ttl = n->tr_fttl;
 	else ++ttl;
     }
-	   
+
     printf("     %c      \\__   ttl%5d   ", first ? 'v' : '|', ttl);
     stat_line(p, n, FALSE, r);
     if (!first) {
@@ -1288,7 +1288,7 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
     }
 
 #ifdef SUNOS5
-    /*
+   /*
      * SunOS 5.X prior to SunOS 2.6, getsockname returns 0 for udp socket.
      * This call to sysinfo will return the hostname.
      * If the default multicast interface (set with the route
@@ -1299,7 +1299,7 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
 	char myhostname[HOST_NAME_MAX+1];
 	struct hostent *hp;
 	int error;
-    
+
 	error = sysinfo(SI_HOSTNAME, myhostname, sizeof(myhostname));
 	if (error == -1) {
 	    perror("Getting my hostname");
@@ -1347,7 +1347,7 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
     }
 
     /*
-     * If the response is to be a multicast address, make sure we 
+     * If the response is to be a multicast address, make sure we
      * are listening on that multicast address.
      */
     if (raddr) {
@@ -1386,7 +1386,7 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
 	hops = qno;
 	tries = nqueries;
 	printf("Querying reverse path, maximum %d hops... ", qno);
-	fflush(stdout); 
+	fflush(stdout);
     }
     base.rtime = 0;
     base.len = 0;
@@ -1462,7 +1462,7 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
 	    r = base.resps + base.len - 1;
 	    if (base.len == hops &&
 		(hops == 1 || (base.resps+nexthop-2)->tr_outaddr == lastout)) {
-	    	if (hops == nexthop) {
+		if (hops == nexthop) {
 		    print_trace(-hops, &base);
 		} else {
 		    printf("\nResuming...\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.17 2014/12/13 14:44:59 miod Exp $ */
+/*	$OpenBSD: file.c,v 1.18 2017/01/21 08:33:51 krw Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -891,12 +891,12 @@ CheckAOutFile(int fd)
 		return(-1);
 
 	(void)lseek(fd, (off_t) 0, SEEK_SET);
-	
+
 	if (read(fd, (char *)&ex_swap, sizeof(ex_swap)) != sizeof(ex_swap))
 		return(-1);
 
 	(void)lseek(fd, (off_t) 0, SEEK_SET);
-	
+
 	mid = getMID(mid, N_GETMID (ex));
 
 	if (mid == -1) {
@@ -1227,7 +1227,7 @@ mopFileRead(struct dllist *dlslot, u_char *buf)
 		len = 0;
 
 		total = dlslot->a_text;
-		
+
 		if (pos < total) {
 			notdone = total - pos;
 			if (notdone <= bsz) {
@@ -1256,7 +1256,7 @@ mopFileRead(struct dllist *dlslot, u_char *buf)
 		}
 
 		total = total + dlslot->a_data;
-		
+
 		if ((bsz > 0) && (pos < total)) {
 			notdone = total - pos;
 			if (notdone <= bsz) {
@@ -1283,7 +1283,7 @@ mopFileRead(struct dllist *dlslot, u_char *buf)
 			pos = pos + outlen;
 			bsz = bsz - outlen;
 		}
-		
+
 		total = total + dlslot->a_bss;
 
 		if ((bsz > 0) && (pos < total)) {
@@ -1298,7 +1298,7 @@ mopFileRead(struct dllist *dlslot, u_char *buf)
 			pos = pos + outlen;
 			bsz = bsz - outlen;
 		}
-		
+
 		total = total + dlslot->a_bss_fill;
 
 		if ((bsz > 0) && (pos < total)) {
@@ -1313,7 +1313,7 @@ mopFileRead(struct dllist *dlslot, u_char *buf)
 			pos = pos + outlen;
 			bsz = bsz - outlen;
 		}
-		
+
 		dlslot->a_lseek = pos;
 		break;
 

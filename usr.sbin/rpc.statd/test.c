@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.1 2008/06/15 04:43:28 sturm Exp $	*/
+/*	$OpenBSD: test.c,v 1.2 2017/01/21 08:33:51 krw Exp $	*/
 
 #include <stdio.h>
 #include <rpc/rpc.h>
@@ -83,7 +83,7 @@ sm_simu_crash_1(argp, clnt)
 }
 
 
-int 
+int
 main(argc, argv)
 	int argc;
 	char **argv;

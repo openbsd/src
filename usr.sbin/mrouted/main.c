@@ -115,7 +115,7 @@ main(int argc, char *argv[])
     }
     argc -= optind;
     argv += optind;
-    
+
     if (argc > 0) {
 usage:	fprintf(stderr,
 		"usage: mrouted [-p] [-c config_file] [-d [debug_level]]\n");

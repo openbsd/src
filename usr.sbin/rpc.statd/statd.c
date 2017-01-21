@@ -1,4 +1,4 @@
-/*	$OpenBSD: statd.c,v 1.3 2017/01/20 01:12:44 krw Exp $	*/
+/*	$OpenBSD: statd.c,v 1.4 2017/01/21 08:33:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -58,8 +58,8 @@
 #include "statd.h"
 
 struct sigaction sa;
-int     	debug = 0;		/* Controls syslog() for debug msgs */
-int     	_rpcsvcdirty = 0;	/* XXX ??? */
+int		debug = 0;		/* Controls syslog() for debug msgs */
+int		_rpcsvcdirty = 0;	/* XXX ??? */
 static DB	*db;			/* Database file */
 
 Header		 status_info;
@@ -176,7 +176,7 @@ main(int argc, char **argv)
  *		of SM_NOTIFY to other systems, so it is normal for the
  *		children to exit when they have done their work.
  */
-void 
+void
 notify_handler(int sig)
 {
 	time_t now;
@@ -206,7 +206,7 @@ notify_handler(int sig)
  * Purpose:	Packaged call of msync() to flush changes to mmap()ed file
  * Returns:	Nothing.  Errors to syslog.
  */
-void 
+void
 sync_file()
 {
 	DBT data;
@@ -308,7 +308,7 @@ bad:
 /*
  * Purpose:	Call the given function if the element is valid
  * Returns:	Nothing - exits on error
- * Notes:	
+ * Notes:
  */
 static int
 walk_one(int (*fun)(DBT *, HostInfo *, void *), DBT *key, DBT *data, void *ptr)
@@ -329,7 +329,7 @@ walk_one(int (*fun)(DBT *, HostInfo *, void *), DBT *key, DBT *data, void *ptr)
 /*
  * Purpose:	Iterate over all elements calling the given function
  * Returns:	-1 if function failed, 0 on success
- * Notes:	
+ * Notes:
  */
 static int
 walk_db(int (*fun)(DBT *, HostInfo *, void *), void *ptr)
@@ -379,7 +379,7 @@ bad:
  *		that the host was previously monitored is recorded by
  *		setting the notifyReqd flag, which will in due course
  *		cause a SM_NOTIFY to be sent.
- *		 
+ *
  *		Note that if we crash twice in quick succession, some hosts
  *		may already have notifyReqd set, where we didn't manage to
  *		notify them before the second crash occurred.
@@ -400,7 +400,7 @@ reset_host(DBT *key, HostInfo *hi, void *ptr)
 /*
  * Purpose:	Check if there is work to be done.
  * Returns:	0 if there is no work to be done -1 if there is.
- * Notes:	
+ * Notes:
  */
 static int
 check_work(DBT *key, HostInfo *hi, void *ptr)
@@ -412,7 +412,7 @@ check_work(DBT *key, HostInfo *hi, void *ptr)
 /*
  * Purpose:	Unmonitor a host
  * Returns:	0
- * Notes:	
+ * Notes:
  */
 static int
 unmon_host(DBT *key, HostInfo *hi, void *ptr)
@@ -428,7 +428,7 @@ unmon_host(DBT *key, HostInfo *hi, void *ptr)
 /*
  * Purpose:	Notify one host.
  * Returns:	0 if success -1 on failure
- * Notes:	
+ * Notes:
  */
 static int
 notify_one(DBT *key, HostInfo *hi, void *ptr)
@@ -487,12 +487,12 @@ notify_one(DBT *key, HostInfo *hi, void *ptr)
  *		all hosts that had a monitor list, and incrementing
  *		the state number to the next even value.
  */
-static void 
+static void
 init_file(char *filename)
 {
 	DBT data;
 
-	db = dbopen(filename, O_RDWR|O_CREAT|O_NDELAY|O_EXLOCK, 0644, DB_HASH, 
+	db = dbopen(filename, O_RDWR|O_CREAT|O_NDELAY|O_EXLOCK, 0644, DB_HASH,
 	    NULL);
 	if (db == NULL)
 		err(1, "Cannot open `%s'", filename);
@@ -553,7 +553,7 @@ unmon_hosts(void)
 	sync_file();
 }
 
-static int 
+static int
 notify_one_host(char *hostname)
 {
 	struct timeval timeout = {20, 0};	/* 20 secs timeout */
