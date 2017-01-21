@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.86 2016/08/30 20:18:17 yasuoka Exp $
+#	$OpenBSD: files.amd64,v 1.87 2017/01/21 10:58:15 reyk Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -112,6 +112,11 @@ file	arch/amd64/amd64/ioapic.c		ioapic needs-flag
 device efifb: wsemuldisplaydev, rasops32, rasops24, rasops16, rasops8, rasops4
 attach efifb at mainbus
 file arch/amd64/amd64/efifb.c			efifb needs-flag
+
+#
+# Paravirtual device bus and virtio
+#
+include "dev/pv/files.pv"
 
 #
 # PCI drivers
@@ -253,11 +258,6 @@ include "dev/onewire/files.onewire"
 # IPMI
 #
 attach	ipmi at mainbus
-
-#
-# Paravirtual device bus
-#
-include "dev/pv/files.pv"
 
 #
 # device major numbers

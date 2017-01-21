@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.230 2016/10/21 06:20:58 mlarkin Exp $
+#	$OpenBSD: files.i386,v 1.231 2017/01/21 10:58:15 reyk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -89,6 +89,11 @@ file	arch/i386/i386/mainbus.c	mainbus
 file   arch/i386/i386/codepatch.c
 
 #device	mca at root {...}
+
+#
+# Paravirtual device bus
+#
+include "dev/pv/files.pv"
 
 #
 # PCI-only drivers
@@ -400,11 +405,6 @@ file	arch/i386/i386/vmm_support.S		vmm
 # IPMI
 #
 attach	ipmi at mainbus
-
-#
-# Paravirtual device bus
-#
-include "dev/pv/files.pv"
 
 # Dell Embedded Systems Management
 device	esm

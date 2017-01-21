@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.43 2017/01/02 00:51:18 jsg Exp $
+#	$OpenBSD: files.arm,v 1.44 2017/01/21 10:58:15 reyk Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -19,6 +19,7 @@ file	arch/arm/arm/fiq_subr.S			fiq
 define	fdt {[early = 0]}
 
 # mainbus files
+define	mainbus {}
 device	mainbus: fdt
 attach	mainbus at root
 file	arch/arm/mainbus/mainbus.c		mainbus
