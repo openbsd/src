@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.18 2017/01/21 09:05:31 benno Exp $
+.\"	$OpenBSD: acme-client.1,v 1.19 2017/01/21 15:53:15 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -22,7 +22,7 @@
 .Nd ACME client
 .Sh SYNOPSIS
 .Nm acme-client
-.Op Fl FADrvn
+.Op Fl ADFnrv
 .Op Fl f Ar configfile
 .Ar domain
 .Sh DESCRIPTION
@@ -33,21 +33,21 @@ Automatic Certificate Management Environment (ACME) client.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Create a new RSA account key if one does not already exist.
+.It Fl D
+Create a new RSA domain key if one does not already exist.
 .It Fl F
 Force updating the certificate signature even if it's too soon.
 .It Fl f Ar configfile
 Specify an alternative configuration file.
-.It Fl D
-Create a new RSA domain key if one does not already exist.
-.It Fl A
-Create a new RSA account key if one does not already exist.
+.It Fl n
+No operation: check and print configuration.
 .It Fl r
 Revoke the X509 certificate found in the certificates.
 .It Fl v
 Verbose operation.
 Specify twice to also trace communication and data transfers.
-.It Fl n
-No operation, check and print configuration.
 .It Ar domain
 The domain name.
 .El

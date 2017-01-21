@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.28 2017/01/21 12:59:06 benno Exp $ */
+/*	$Id: main.c,v 1.29 2017/01/21 15:53:15 jmc Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -434,6 +434,6 @@ main(int argc, char *argv[])
 	    (2 == c ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr,
-	    "usage: acme-client [-FADrvn] [-f file] domain\n");
+	    "usage: acme-client [-ADFnrv] [-f configfile] domain\n");
 	return (EXIT_FAILURE);
 }
