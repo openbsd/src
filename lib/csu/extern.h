@@ -13,12 +13,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-struct ps_strings;
 
-extern void ___start(int argc, char **argv, char **envp, void (*cleanup)(void),
-    const void *obj, struct ps_strings *ps_strings);
-extern void __init(void);
-extern int main(int argc, char *argv[], char *envp[]);
+void	__init(void) __dso_hidden;
+int	main(int argc, char *argv[], char *envp[]);
 
 typedef void (*init_f)(void);
 
