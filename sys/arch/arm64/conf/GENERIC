@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.1 2016/12/17 23:38:33 patrick Exp $
+# $OpenBSD: GENERIC,v 1.2 2017/01/21 08:54:24 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -56,3 +56,143 @@ vio*		at virtio?
 vioblk*		at virtio?
 viomb*		at virtio?
 viornd*		at virtio?
+
+# Sunxi SoCs
+sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs
+gpio*		at sxipio?
+sxiccmu*	at fdt? early 1	# Clock Control Module/Unit
+sxirtc*		at fdt?		# Real Time Clock
+sximmc*		at fdt?		# SD/MMC card controller
+sdmmc*		at sximmc?	# SD/MMC bus
+ehci*		at fdt?		# EHCI (shim)
+usb*		at ehci?
+
+# USB devices
+uhub*	at usb?			# USB Hubs
+uhub*	at uhub?		# USB Hubs
+ualea*	at uhub?		# Araneus Alea II TRNG
+uonerng* at uhub?		# Moonbase Otago OneRNG
+umodem*	at uhub?		# USB Modems/Serial
+ucom*	at umodem?
+uvisor*	at uhub?		# Handspring Visor
+ucom*	at uvisor?
+uvscom*	at uhub?		# SUNTAC Slipper U VS-10U serial
+ucom*	at uvscom?
+ubsa*	at uhub?		# Belkin serial adapter
+ucom*	at ubsa?
+uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi?
+uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom?
+umct*	at uhub?		# MCT USB-RS232 serial adapter
+ucom*	at umct?
+uslcom*	at uhub?		# Silicon Laboratories CP210x serial
+ucom*	at uslcom?
+uark*	at uhub?		# Arkmicro ARK3116 serial
+ucom*	at uark?
+moscom*	at uhub?		# MosChip MCS7703 serial
+ucom*	at moscom?
+umcs*	at uhub?		# MosChip MCS78x0 serial
+ucom*	at umcs?
+uipaq*	at uhub?		# iPAQ serial adapter
+ucom*	at uipaq?
+umsm*	at uhub?		# Qualcomm MSM EVDO
+ucom*	at umsm?
+uchcom*	at uhub?		# WinChipHead CH341/340 serial
+ucom*	at uchcom?
+uticom*	at uhub?		# TI serial
+ucom*	at uticom?
+uaudio* at uhub?		# USB Audio
+audio*	at uaudio?
+umidi*	at uhub?		# USB MIDI
+midi*	at umidi?
+ulpt*	at uhub?		# USB Printers
+umass*	at uhub?		# USB Mass Storage devices
+uhidev*	at uhub?		# Human Interface Devices
+ums*	at uhidev?		# USB mouse
+wsmouse* at ums? mux 0
+uts*	at uhub?		# USB touchscreen
+wsmouse* at uts? mux 0
+uwacom*	at uhidev?		# USB Wacom tablet
+wsmouse* at uwacom? mux 0
+ukbd*	at uhidev?		# USB keyboard
+wskbd*	at ukbd? mux 1
+ucycom*	at uhidev?		# Cypress serial
+ucom*	at ucycom?
+uslhcom* at uhidev?		# Silicon Labs CP2110 USB HID UART
+ucom*	at uslhcom?
+uhid*	at uhidev?		# USB generic HID support
+upd*	at uhidev?		# USB Power Devices sensors
+aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+atu*	at uhub?		# Atmel AT76c50x based 802.11b
+axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
+axen*	at uhub?		# ASIX Electronics AX88179 USB Ethernet
+cue*	at uhub?		# CATC USB-EL1201A based Ethernet
+kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+smsc*	at uhub?		# SMSC LAN95xx Ethernet
+cdce*	at uhub?		# CDC Ethernet
+urndis*	at uhub?		# Remote NDIS Ethernet
+upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
+udav*	at uhub?		# Davicom DM9601 based Ethernet
+mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
+url*	at uhub?		# Realtek RTL8150L based adapters
+ure*	at uhub?		# Realtek RTL8152 based adapters
+wi*	at uhub?		# WaveLAN IEEE 802.11DS
+udsbr*	at uhub?		# D-Link DSB-R100 radio
+radio*	at udsbr?		# USB radio
+uberry*	at uhub?		# Research In Motion BlackBerry
+ugen*	at uhub?		# USB Generic driver
+uath*	at uhub?		# Atheros AR5005UG/AR5005UX
+ural*	at uhub?		# Ralink RT2500USB
+rum*	at uhub?		# Ralink RT2501USB/RT2601USB
+run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
+otus*	at uhub?		# Atheros AR9001U
+athn*	at uhub?		# Atheros AR9002U
+zyd*	at uhub?		# Zydas ZD1211
+upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
+urtw*	at uhub?		# Realtek 8187
+rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+urtwn*	at uhub?		# Realtek RTL8188CU/RTL8192CU
+udcf*	at uhub?		# Gude Expert mouseCLOCK
+uthum*	at uhidev?		# TEMPerHUM sensor
+ugold*	at uhidev?		# gold TEMPer sensor
+utrh*	at uhidev?		# USBRH sensor
+utwitch* at uhidev?		# YUREX BBU sensor
+uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
+uoakrh*	at uhidev?		# Toradex OAK temp and rel humidity
+uoaklux* at uhidev?		# Toradex OAK LUX
+uoakv*	at uhidev?		# Toradex OAK 10V sensor
+onewire* at uow?
+uvideo*	at uhub?		# USB Video
+video*	at uvideo?
+utvfu*	at uhub?		# Fushicai Audio-Video Grabber
+video*	at utvfu?
+audio*	at utvfu?
+udl*	at uhub?		# DisplayLink USB displays
+wsdisplay* at udl?
+
+atphy*		at mii?			# Attansic F1 PHYs
+rgephy*		at mii?			# Realtek 8169S/8110S PHY
+rlphy*		at mii?			# Realtek 8139 internal PHYs
+ukphy*		at mii?			# "unknown" PHYs
+
+scsibus*	at scsi?
+sd*		at scsibus?
+cd*		at scsibus?
+st*		at scsibus?
+ch*		at scsibus?
+uk*		at scsibus?
+
+# 1-Wire devices
+option	ONEWIREVERBOSE
+owid*		at onewire?		# ID
+owsbm*		at onewire?		# Smart Battery Monitor
+owtemp*		at onewire?		# Temperature
+owctr*		at onewire?		# Counter device
+
+# Pseudo-Devices
+pseudo-device	hotplug		1	# devices hot plugging
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
