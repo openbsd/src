@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.18 2017/01/21 08:45:52 benno Exp $ */
+/*	$Id: main.c,v 1.19 2017/01/21 08:47:21 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 	struct domain_c		*domain = NULL;
 	struct altname_c	*ac;
 
-	while (-1 != (c = getopt(argc, argv, "bFADrvf:")))
+	while (-1 != (c = getopt(argc, argv, "bFADrvnf:")))
 		switch (c) {
 		case 'b':
 			backup = 1;
@@ -78,6 +78,9 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose = verbose ? 2 : 1;
 			popts |= ACME_OPT_VERBOSE;
+			break;
+		case 'n':
+			popts |= ACME_OPT_CHECK;
 			break;
 		default:
 			goto usage;
@@ -181,6 +184,9 @@ main(int argc, char *argv[])
 
 	if (ne > 0)
 		exit(EXIT_FAILURE);
+
+	if (popts & ACME_OPT_CHECK)
+		exit(EXIT_SUCCESS);
 
 	/* Set the zeroth altname as our domain. */
 	altsz = domain->altname_count + 1;
@@ -399,6 +405,6 @@ main(int argc, char *argv[])
 	    (2 == c ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr,
-	    "usage: acme-client [-bFADrv] [-f file] domain\n");
+	    "usage: acme-client [-bFADrvn] [-f file] domain\n");
 	return (EXIT_FAILURE);
 }

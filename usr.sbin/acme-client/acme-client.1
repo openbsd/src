@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.14 2017/01/21 08:44:35 benno Exp $
+.\"	$OpenBSD: acme-client.1,v 1.15 2017/01/21 08:47:21 benno Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -22,7 +22,7 @@
 .Nd ACME client
 .Sh SYNOPSIS
 .Nm acme-client
-.Op Fl bFNnrv
+.Op Fl bFADrvn
 .Op Fl f Ar configfile
 .Ar domain
 .Sh DESCRIPTION
@@ -61,6 +61,8 @@ Revoke the X509 certificate found in the certificates.
 .It Fl v
 Verbose operation.
 Specify twice to also trace communication and data transfers.
+.It Fl n
+No operation, check and print configuration.
 .It Ar domain
 The domain name.
 .El

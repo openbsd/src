@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2017/01/21 08:43:09 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.7 2017/01/21 08:47:21 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -62,7 +62,8 @@ int		 findeol(void);
 struct authority_c	*conf_new_authority(struct acme_conf *, char *);
 struct domain_c		*conf_new_domain(struct acme_conf *, char *);
 struct keyfile		*conf_new_keyfile(struct acme_conf *, char *);
-void			 clear_config(struct acme_conf *xconf);
+void			 clear_config(struct acme_conf *);
+void			 print_config(struct acme_conf *);
 int			 conf_check_file(char *, int);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
@@ -716,6 +717,9 @@ parse_config(const char *filename, int opts)
 		}
 	}
 
+	if (opts & ACME_OPT_CHECK)
+		print_config(conf);
+
 	if (errors) {
 		clear_config(conf);
 		return (NULL);
@@ -911,6 +915,49 @@ clear_config(struct acme_conf *xconf)
 		free(d);
 	}
 	free(xconf);
+}
+
+void
+print_config(struct acme_conf *xconf)
+{
+	struct authority_c	*a;
+	struct domain_c		*d;
+	struct altname_c	*ac;
+	int			 f;
+
+	LIST_FOREACH(a, &xconf->authority_list, entry) {
+		printf("authority %s {\n", a->name);
+		if (a->agreement != NULL)
+			printf("\tagreement url \"%s\"\n", a->agreement);
+		if (a->api != NULL)
+			printf("\tapi url \"%s\"\n", a->api);
+		if (a->account != NULL)
+			printf("\taccount key \"%s\"\n", a->account);
+		printf("}\n\n");
+	}
+	LIST_FOREACH(d, &xconf->domain_list, entry) {
+		f = 0;
+		printf("domain %s {\n", d->domain);
+		LIST_FOREACH(ac, &d->altname_list, entry) {
+			if (!f)
+				printf("\talternative names { ");
+			if (ac->domain != NULL) {
+				printf("%s%s", f ? ", " : " ", ac->domain);
+				f = 1;
+			}
+		}
+		if (f)
+			printf("}\n");
+		if (d->key != NULL)
+			printf("\tdomain key \"%s\"\n", d->key);
+		if (d->cert != NULL)
+			printf("\tdomain certificate \"%s\"\n", d->cert);
+		if (d->auth != NULL)
+			printf("\tsign with \"%s\"\n", d->auth);
+		if (d->challengedir != NULL)
+			printf("\tchallengedir \"%s\"\n", d->challengedir);
+		printf("}\n\n");
+	}
 }
 
 /*
