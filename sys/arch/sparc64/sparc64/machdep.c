@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.182 2017/01/13 09:18:11 fcambus Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.183 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -496,7 +496,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sendsig: %s[%d] sig %d scp %p\n",
-		    p->p_comm, p->p_p->ps_pid, sig, &fp->sf_sc);
+		    p->p_p->ps_comm, p->p_p->ps_pid, sig, &fp->sf_sc);
 	}
 #endif
 

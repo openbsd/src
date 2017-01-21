@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.39 2016/10/08 05:49:08 guenther Exp $ */
+/* $OpenBSD: interrupt.c,v 1.40 2017/01/21 05:42:03 guenther Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -348,7 +348,7 @@ fatal:
 	printf("    curproc = %p\n", curproc);
 	if (curproc != NULL)
 		printf("        pid = %d, comm = %s\n", curproc->p_p->ps_pid,
-		    curproc->p_comm);
+		    curproc->p_p->ps_comm);
 	printf("\n");
 	panic("machine check");
 }

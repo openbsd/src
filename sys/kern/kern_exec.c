@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.184 2016/10/22 02:09:14 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.185 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -492,9 +492,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	arc4random_buf(&pr->ps_sigcookie, sizeof pr->ps_sigcookie);
 
 	/* set command name & other accounting info */
-	memset(p->p_comm, 0, sizeof(p->p_comm));
+	memset(pr->ps_comm, 0, sizeof(pr->ps_comm));
 	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
-	memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, len);
+	memcpy(pr->ps_comm, nid.ni_cnd.cn_nameptr, len);
 	pr->ps_acflag &= ~AFORK;
 
 	/* record proc's vnode, for use by sysctl */

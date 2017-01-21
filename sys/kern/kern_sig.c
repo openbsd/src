@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.206 2016/10/05 02:31:52 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.207 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1511,12 +1511,12 @@ coredump(struct proc *p)
 		 * that core will silently fail.
 		 */
 		len = snprintf(name, sizeof(name), "%s/%s/%u.core",
-		    dir, p->p_comm, pr->ps_pid);
+		    dir, pr->ps_comm, pr->ps_pid);
 	} else if (incrash && nosuidcoredump == 2)
 		len = snprintf(name, sizeof(name), "%s/%s.core",
-		    dir, p->p_comm);
+		    dir, pr->ps_comm);
 	else
-		len = snprintf(name, sizeof(name), "%s.core", p->p_comm);
+		len = snprintf(name, sizeof(name), "%s.core", pr->ps_comm);
 	if (len >= sizeof(name))
 		return (EACCES);
 
@@ -1611,12 +1611,13 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 		    io->io_offset + coffset, segflg,
 		    IO_UNIT, io->io_cred, NULL, io->io_proc);
 		if (error) {
+			struct process *pr = io->io_proc->p_p;
 			if (error == ENOSPC)
 				log(LOG_ERR, "coredump of %s(%d) failed, filesystem full\n",
-				    io->io_proc->p_comm, io->io_proc->p_p->ps_pid);
+				    pr->ps_comm, pr->ps_pid);
 			else
 				log(LOG_ERR, "coredump of %s(%d), write failed: errno %d\n",
-				    io->io_proc->p_comm, io->io_proc->p_p->ps_pid, error);
+				    pr->ps_comm, pr->ps_pid, error);
 			return (error);
 		}
 

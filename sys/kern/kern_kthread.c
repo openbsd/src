@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.39 2016/11/07 00:26:32 guenther Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.40 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ kthread_create(void (*func)(void *), void *arg,
 		return (error);
 
 	/* Name it as specified. */
-	strlcpy(p->p_comm, name, sizeof p->p_comm);
+	strlcpy(p->p_p->ps_comm, name, sizeof p->p_p->ps_comm);
 
 	/* All done! */
 	if (newpp != NULL)
@@ -94,7 +94,7 @@ kthread_exit(int ecode)
 	 */
 	if (ecode != 0)
 		printf("WARNING: thread `%s' (%d) exits with status %d\n",
-		    curproc->p_comm, curproc->p_tid, ecode);
+		    curproc->p_p->ps_comm, curproc->p_tid, ecode);
 
 	exit1(curproc, W_EXITCODE(ecode, 0), EXIT_NORMAL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exesdhc.c,v 1.8 2016/07/26 22:10:10 patrick Exp $	*/
+/*	$OpenBSD: exesdhc.c,v 1.9 2017/01/21 05:42:03 guenther Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -679,7 +679,7 @@ exesdhc_start_command(struct exesdhc_softc *sc, struct sdmmc_command *cmd)
 	DPRINTF(1,("%s: start cmd %u arg=%#x data=%p dlen=%d flags=%#x "
 	    "proc=\"%s\"\n", HDEVNAME(sc), cmd->c_opcode, cmd->c_arg,
 	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc ?
-	    curproc->p_comm : ""));
+	    curproc->p_p->ps_comm : ""));
 
 	/*
 	 * The maximum block length for commands should be the minimum

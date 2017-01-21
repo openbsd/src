@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.32 2016/12/18 20:10:39 patrick Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.33 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -94,6 +94,7 @@ int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS;
 void
 scdebug_call(struct proc *p, register_t code, const register_t args[])
 {
+	struct process *pr;
 	struct sysent *sy;
 	struct emul *em;
 	int i;
@@ -101,13 +102,14 @@ scdebug_call(struct proc *p, register_t code, const register_t args[])
 	if (!(scdebug & SCDEBUG_CALLS))
 		return;
 
-	em = p->p_p->ps_emul;
+	pr = p->p_p;
+	em = pr->ps_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
 	     sy->sy_call == sys_nosys))
 		return;
-		
-	printf("proc %d (%s): %s num ", p->p_p->ps_pid, p->p_comm, em->e_name);
+
+	printf("proc %d (%s): %s num ", pr->ps_pid, pr->ps_comm, em->e_name);
 	if (code < 0 || code >= em->e_nsysent)
 		printf("OUT OF RANGE (%ld)", code);
 	else {
@@ -127,19 +129,21 @@ void
 scdebug_ret(struct proc *p, register_t code, int error,
     const register_t retval[])
 {
+	struct process *pr;
 	struct sysent *sy;
 	struct emul *em;
 
 	if (!(scdebug & SCDEBUG_RETURNS))
 		return;
 
-	em = p->p_p->ps_emul;
+	pr = p->p_p;
+	em = pr->ps_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
 	    sy->sy_call == sys_nosys))
 		return;
 		
-	printf("proc %d (%s): %s num ", p->p_p->ps_pid, p->p_comm, em->e_name);
+	printf("proc %d (%s): %s num ", pr->ps_pid, pr->ps_comm, em->e_name);
 	if (code < 0 || code >= em->e_nsysent)
 		printf("OUT OF RANGE (%ld)", code);
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.19 2016/10/08 05:49:09 guenther Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.20 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -237,9 +237,9 @@ fpu_cleanup(p, fs)
 
 	case FSR_TT_HWERR:
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
-		    p->p_comm, p->p_p->ps_pid);
+		    p->p_p->ps_comm, p->p_p->ps_pid);
 		uprintf("%s[%d]: fpu hardware error\n",
-		    p->p_comm, p->p_p->ps_pid);
+		    p->p_p->ps_comm, p->p_p->ps_pid);
 		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, -1, FPE_FLTINV, sv);	/* ??? */
 		KERNEL_UNLOCK();

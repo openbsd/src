@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.65 2016/11/28 21:50:12 patrick Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.66 2017/01/21 05:42:03 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -601,7 +601,7 @@ struct elfcore_procinfo {
 	uint32_t	cpi_rgid;	/* real group ID */
 	uint32_t	cpi_egid;	/* effective group ID */
 	uint32_t	cpi_svgid;	/* saved group ID */
-	int8_t		cpi_name[32];	/* copy of p->p_comm */
+	int8_t		cpi_name[32];	/* copy of pr->ps_comm */
 };
 
 /*

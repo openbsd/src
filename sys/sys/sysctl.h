@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.170 2016/11/07 00:26:32 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.171 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -577,7 +577,7 @@ do {									\
 	/* XXX depends on e_name being an array and not a pointer */	\
 	copy_str((kp)->p_emul, (char *)(pr)->ps_emul +			\
 	    offsetof(struct emul, e_name), sizeof((kp)->p_emul));	\
-	strlcpy((kp)->p_comm, (p)->p_comm, sizeof((kp)->p_comm));	\
+	strlcpy((kp)->p_comm, (pr)->ps_comm, sizeof((kp)->p_comm));	\
 	strlcpy((kp)->p_login, (sess)->s_login,			\
 	    MIN(sizeof((kp)->p_login), sizeof((sess)->s_login)));	\
 									\

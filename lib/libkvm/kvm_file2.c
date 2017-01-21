@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.51 2016/11/07 00:26:33 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.52 2017/01/21 05:42:04 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -273,7 +273,6 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct filedesc0 filed0;
 #define filed	filed0.fd_fd
 	struct processlist allprocess;
-	struct proc proc;
 	struct process *pr, process;
 	struct ucred ucred;
 	char *filebuf = NULL;
@@ -327,15 +326,6 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		if (process.ps_flags & (PS_SYSTEM | PS_EMBRYO | PS_EXITING))
 			continue;
 
-		if (process.ps_mainproc == NULL)
-			continue;
-		/* XXX only needed for p_comm now */
-		if (KREAD(kd, (u_long)process.ps_mainproc, &proc)) {
-			_kvm_err(kd, kd->program, "can't read proc at %lx",
-			    (u_long)process.ps_mainproc);
-			goto cleanup;
-		}
-
 		if (op == KERN_FILE_BYPID) {
 			/* check if this is the pid we are looking for */
 			if (arg > 0 && process.ps_pid != (pid_t)arg)
@@ -348,8 +338,6 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			    (u_long)process.ps_ucred);
 			goto cleanup;
 		}
-		process.ps_mainproc = &proc;
-		proc.p_p = &process;
 		process.ps_ucred = &ucred;
 
 		if (op == KERN_FILE_BYUID && arg >= 0 &&
@@ -731,8 +719,7 @@ fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr,
 		kf->p_uid = pr->ps_ucred->cr_uid;
 		kf->p_gid = pr->ps_ucred->cr_gid;
 		kf->p_tid = -1;
-		strlcpy(kf->p_comm, pr->ps_mainproc->p_comm,
-		    sizeof(kf->p_comm));
+		strlcpy(kf->p_comm, pr->ps_comm, sizeof(kf->p_comm));
 		if (pr->ps_fd != NULL)
 			kf->fd_ofileflags = pr->ps_fd->fd_ofileflags[fd];
 	}

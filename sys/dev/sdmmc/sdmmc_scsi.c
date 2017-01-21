@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.37 2017/01/20 00:52:32 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.38 2017/01/21 05:42:04 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -313,7 +313,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 
 	DPRINTF(("%s: scsi cmd target=%d opcode=%#x proc=\"%s\" (poll=%#x)\n",
 	    DEVNAME(sc), link->target, xs->cmd->opcode, curproc ?
-	    curproc->p_comm : "", xs->flags & SCSI_POLL));
+	    curproc->p_p->ps_comm : "", xs->flags & SCSI_POLL));
 
 	xs->error = XS_NOERROR;
 
@@ -476,7 +476,7 @@ sdmmc_complete_xs(void *arg)
 
 	DPRINTF(("%s: scsi cmd target=%d opcode=%#x proc=\"%s\" (poll=%#x)"
 	    " complete\n", DEVNAME(sc), link->target, xs->cmd->opcode,
-	    curproc ? curproc->p_comm : "", xs->flags & SCSI_POLL));
+	    curproc ? curproc->p_p->ps_comm : "", xs->flags & SCSI_POLL));
 
 	s = splbio();
 
@@ -507,7 +507,7 @@ sdmmc_done_xs(struct sdmmc_ccb *ccb)
 
 	DPRINTF(("%s: scsi cmd target=%d opcode=%#x proc=\"%s\" (error=%#x)"
 	    " done\n", DEVNAME(sc), link->target, xs->cmd->opcode,
-	    curproc ? curproc->p_comm : "", xs->error));
+	    curproc ? curproc->p_p->ps_comm : "", xs->error));
 
 	xs->resid = 0;
 

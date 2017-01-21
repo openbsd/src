@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.320 2016/11/11 18:59:09 mikeb Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.321 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1214,8 +1214,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 		kf->p_uid = pr->ps_ucred->cr_uid;
 		kf->p_gid = pr->ps_ucred->cr_gid;
 		kf->p_tid = -1;
-		strlcpy(kf->p_comm, pr->ps_mainproc->p_comm,
-		    sizeof(kf->p_comm));
+		strlcpy(kf->p_comm, pr->ps_comm, sizeof(kf->p_comm));
 	}
 	if (fdp != NULL)
 		kf->fd_ofileflags = fdp->fd_ofileflags[fd];

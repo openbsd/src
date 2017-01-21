@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.228 2016/11/07 02:50:33 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.229 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -207,6 +207,9 @@ struct process {
 	struct	plimit *ps_limit;	/* Process limits. */
 	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
 	struct	emul *ps_emul;		/* Emulation information */
+
+	char	ps_comm[MAXCOMLEN+1];
+
 	vaddr_t	ps_strings;		/* User pointers to argv/env */
 	vaddr_t	ps_stackgap;		/* User pointer to the "stackgap" */
 	vaddr_t	ps_sigcode;		/* User pointer to the signal code */
@@ -334,8 +337,6 @@ struct proc {
 
 	u_char	p_priority;	/* Process priority. */
 	u_char	p_usrpri;	/* User-priority based on p_estcpu and ps_nice. */
-	char	p_comm[MAXCOMLEN+1];
-
 	int	p_pledge_syscall;	/* Cache of current syscall */
 
 #ifndef	__HAVE_MD_TCB

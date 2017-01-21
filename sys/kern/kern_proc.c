@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.71 2016/11/07 00:26:32 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.72 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -421,7 +421,7 @@ proc_printit(struct proc *p, const char *modif,
 	else
 		pst = pstat[(int)p->p_stat - 1];
 
-	(*pr)("PROC (%s) tid=%d stat=%s\n", p->p_comm, p->p_tid, pst);
+	(*pr)("PROC (%s) pid=%d stat=%s\n", p->p_p->ps_comm, p->p_tid, pst);
 	(*pr)("    flags process=%b proc=%b\n",
 	    p->p_p->ps_flags, PS_BITS, p->p_flag, P_BITS);
 	(*pr)("    pri=%u, usrpri=%u, nice=%d\n",
@@ -504,7 +504,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 				case 'a':
 					db_printf("%-10.10s  %18p  %18p  %18p\n",
-					    p->p_comm, p, p->p_addr, p->p_vmspace);
+					    pr->ps_comm, p, p->p_addr, p->p_vmspace);
 					break;
 
 				case 'n':
@@ -515,11 +515,11 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 					    pr->ps_ucred->cr_ruid, p->p_stat,
 					    p->p_flag | pr->ps_flags,
 					    (p->p_wchan && p->p_wmesg) ?
-						p->p_wmesg : "", p->p_comm);
+						p->p_wmesg : "", pr->ps_comm);
 					break;
 
 				case 'w':
-					db_printf("%-16s  %-8s  %18p  %s\n", p->p_comm,
+					db_printf("%-16s  %-8s  %18p  %s\n", pr->ps_comm,
 					    pr->ps_emul->e_name, p->p_wchan,
 					    (p->p_wchan && p->p_wmesg) ? 
 						p->p_wmesg : "");
@@ -531,7 +531,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 					    pr->ps_pid, pr->ps_ucred->cr_ruid,
 					    pr->ps_flags, p->p_flag,
 					    CPU_INFO_UNIT(p->p_cpu),
-					    p->p_comm);
+					    pr->ps_comm);
 					break;
 
 				}

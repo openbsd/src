@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.8 2016/05/18 20:21:13 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.9 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -368,15 +368,10 @@ __db_procname_by_asid(int asid)
 {
 	static char notfound[] = "---";
 	struct process *pr;
-	struct proc *p;
 
 	LIST_FOREACH(pr, &allprocess, ps_list) {
-		/* find a thread that still has the process vmspace attached */
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link)
-			if (p->p_vmspace != NULL)
-				break;
-		if (p != NULL && p->p_vmspace->vm_map.pmap->pm_asid == asid)
-			return (p->p_comm);
+		if (pr->ps_vmspace->vm_map.pmap->pm_asid == asid)
+			return (pr->ps_comm);
 	}
 
 	return (notfound);
@@ -643,7 +638,7 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 		    pcb->pcb_sf.sf_r7_bank, i, i * 100 / MAX_STACK,
 		    (vaddr_t)pcb + PAGE_SIZE, j, j * 100 / MAX_FRAME,
 		    j / sizeof(struct trapframe),
-		    p->p_comm);
+		    p->p_p->ps_comm);
 	}
 #undef	MAX_STACK
 #undef	MAX_FRAME

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.100 2017/01/02 18:19:34 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.101 2017/01/21 05:42:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1822,13 +1822,13 @@ pmap_alloc_tlbpid(struct proc *p)
 	if (curproc) {
 		DPRINTF(PDB_FOLLOW|PDB_TLBPID, 
 			("pmap_alloc_tlbpid: curproc %d '%s' ",
-				curproc->p_p->ps_pid, curproc->p_comm));
+				curproc->p_p->ps_pid, curproc->p_p->ps_comm));
 	} else {
 		DPRINTF(PDB_FOLLOW|PDB_TLBPID, 
 			("pmap_alloc_tlbpid: curproc <none> "));
 	}
 	DPRINTF(PDB_FOLLOW|PDB_TLBPID, ("segtab %p tlbpid %u pid %d '%s'\n",
-			pmap->pm_segtab, id, p->p_p->ps_pid, p->p_comm));
+			pmap->pm_segtab, id, p->p_p->ps_pid, p->p_p->ps_comm));
 
 	return (id);
 }

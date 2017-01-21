@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2016/10/08 05:49:08 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2017/01/21 05:42:03 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -245,7 +245,8 @@ copyfault:
 	case T_NMI|T_USER:
 #ifdef TRAP_SIGDEBUG
 		printf("pid %d (%s): %s at rip %llx addr %llx\n",
-		    p->p_p->ps_pid, p->p_comm, "BUS", frame->tf_rip, rcr2());
+		    p->p_p->ps_pid, p->p_p->ps_comm, "BUS",
+		    frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
 		sv.sival_ptr = (void *)frame->tf_rip;
@@ -269,7 +270,8 @@ copyfault:
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 #ifdef TRAP_SIGDEBUG
 		printf("pid %d (%s): %s at rip %llx addr %llx\n",
-		    p->p_p->ps_pid, p->p_comm, "ILL", frame->tf_rip, rcr2());
+		    p->p_p->ps_pid, p->p_p->ps_comm, "ILL",
+		    frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
 		sv.sival_ptr = (void *)frame->tf_rip;
@@ -394,15 +396,15 @@ faultcommon:
 		}
 		if (error == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed:"
-			    " out of swap\n", p->p_p->ps_pid, p->p_comm,
+			    " out of swap\n", p->p_p->ps_pid, p->p_p->ps_comm,
 			    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 			sv.sival_ptr = (void *)fa;
 			trapsignal(p, SIGKILL, T_PAGEFLT, SEGV_MAPERR, sv);
 		} else {
 #ifdef TRAP_SIGDEBUG
 			printf("pid %d (%s): %s at rip %llx addr %llx\n",
-			    p->p_p->ps_pid, p->p_comm, "SEGV", frame->tf_rip,
-			    rcr2());
+			    p->p_p->ps_pid, p->p_p->ps_comm, "SEGV",
+			    frame->tf_rip, rcr2());
 			frame_dump(frame);
 #endif
 			sv.sival_ptr = (void *)fa;
