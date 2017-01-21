@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.10 2017/01/21 10:58:15 reyk Exp $
+#	$OpenBSD: files.pv,v 1.11 2017/01/21 11:33:01 reyk Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -42,32 +42,32 @@ file	dev/pv/if_hvn.c			hvn
 
 # VirtIO
 device	virtio {}
-file	dev/pci/virtio.c		virtio
+file	dev/pv/virtio.c			virtio
 
 device	vio
 attach	vio at virtio
-file	dev/pci/if_vio.c		vio
+file	dev/pv/if_vio.c			vio
 
 device	vioblk: scsi
 attach	vioblk at virtio
-file	dev/pci/vioblk.c		vioblk
+file	dev/pv/vioblk.c			vioblk
 
 device	viocon
 attach	viocon at virtio
-file	dev/pci/viocon.c		viocon		needs-flag
+file	dev/pv/viocon.c			viocon		needs-flag
 
 device	viomb
 attach	viomb at virtio
-file	dev/pci/viomb.c			viomb
+file	dev/pv/viomb.c			viomb
 
 device	viornd
 attach	viornd at virtio
-file	dev/pci/viornd.c		viornd
+file	dev/pv/viornd.c			viornd
 
 device	vioscsi: scsi
 attach	vioscsi at virtio
-file	dev/pci/vioscsi.c		vioscsi
+file	dev/pv/vioscsi.c		vioscsi
 
 device	vmmci
 attach	vmmci at virtio
-file	dev/pci/vmmci.c			vmmci
+file	dev/pv/vmmci.c			vmmci

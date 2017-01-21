@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.1 2017/01/21 11:22:52 reyk Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.2 2017/01/21 11:33:01 reyk Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -23,7 +23,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/pci/vioscsireg.h>
+#include <dev/pv/vioscsireg.h>
 #include <dev/pv/virtiovar.h>
 
 #include <scsi/scsi_all.h>
