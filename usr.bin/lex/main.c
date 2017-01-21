@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2016/12/25 16:40:06 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2017/01/21 08:33:07 krw Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -136,7 +136,7 @@ static int preproc_level = 1000;
 int flex_main PROTO((int argc, char *argv[]));
 int main PROTO((int argc, char *argv[]));
 
-int 
+int
 flex_main(argc, argv)
 	int argc;
 	char *argv[];
@@ -201,7 +201,7 @@ flex_main(argc, argv)
 }
 
 /* Wrapper around flex_main, so flex_main can be built as a library. */
-int 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -225,7 +225,7 @@ main(argc, argv)
 
 /* check_options - check user-specified options */
 
-void 
+void
 check_options()
 {
 	int i;
@@ -472,7 +472,7 @@ check_options()
  *    This routine does not return.
  */
 
-void 
+void
 flexend(exit_status)
 	int exit_status;
 
@@ -903,7 +903,7 @@ flexend(exit_status)
 
 /* flexinit - initialize flex */
 
-void 
+void
 flexinit(argc, argv)
 	int argc;
 	char **argv;
@@ -1433,7 +1433,7 @@ flexinit(argc, argv)
 
 /* readin - read in the rules section of the input file(s) */
 
-void 
+void
 readin()
 {
 	static char yy_stdinit[] = "FILE *yyin = stdin, *yyout = stdout;";
@@ -1455,7 +1455,7 @@ readin()
 	 * However, if the POSIXLY_CORRECT variable is set, then we quietly
 	 * make flex as posix-compatible as possible.  This is the
 	 * recommended behavior according to the GNU Coding Standards.
-	 * 
+	 *
 	 * Note: The posix option was added to flex to provide the posix
 	 * behavior of the repeat operator in regular expressions, e.g.,
 	 * `ab{3}'
@@ -1659,7 +1659,7 @@ readin()
 
 /* set_up_initial_allocations - allocate memory for internal tables */
 
-void 
+void
 set_up_initial_allocations()
 {
 	maximum_mns = (long_align ? MAXIMUM_MNS_LONG : MAXIMUM_MNS);
@@ -1739,7 +1739,7 @@ basename2(path, strip_ext)
 	return b;
 }
 
-void 
+void
 usage()
 {
 	FILE *f = stdout;

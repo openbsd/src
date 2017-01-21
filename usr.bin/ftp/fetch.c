@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.159 2017/01/20 05:51:50 krw Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.160 2017/01/21 08:33:07 krw Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -100,8 +100,8 @@ static int	redirect_loop;
 
 /*
  * Determine whether the character needs encoding, per RFC1738:
- * 	- No corresponding graphic US-ASCII.
- * 	- Unsafe characters.
+ *	- No corresponding graphic US-ASCII.
+ *	- Unsafe characters.
  */
 static int
 unsafe_char(const char *c0)

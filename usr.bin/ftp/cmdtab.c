@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.28 2015/01/30 04:45:45 tedu Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.29 2017/01/21 08:33:07 krw Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ char	umaskhelp[] =	"get (set) umask on remote side";
 char	userhelp[] =	"send new user information";
 char	verbosehelp[] =	"toggle verbose mode";
 
-#define CMPL(x)	__STRING(x), 
+#define CMPL(x)	__STRING(x),
 #define CMPL0	"",
 #define H(x)	x
 

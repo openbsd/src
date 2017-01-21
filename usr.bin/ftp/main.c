@@ -1,10 +1,10 @@
-/*	$OpenBSD: main.c,v 1.117 2017/01/20 04:03:53 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.118 2017/01/21 08:33:07 krw Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -334,10 +334,10 @@ main(volatile int argc, char *argv[])
 			break;
 
 		case 'k':
-			keep_alive_timeout = strtonum(optarg, 0, INT_MAX, 
+			keep_alive_timeout = strtonum(optarg, 0, INT_MAX,
 			    &errstr);
 			if (errstr != NULL) {
-				warnx("keep alive amount is %s: %s", errstr, 
+				warnx("keep alive amount is %s: %s", errstr,
 					optarg);
 				usage();
 			}
@@ -377,7 +377,7 @@ main(volatile int argc, char *argv[])
 		case 'r':
 			retry_connect = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr != NULL) {
-				warnx("retry amount is %s: %s", errstr, 
+				warnx("retry amount is %s: %s", errstr,
 					optarg);
 				usage();
 			}

@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.32 2015/11/11 02:52:46 deraadt Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.33 2017/01/21 08:33:07 krw Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 
 /*
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 	struct commandline cmd;
 
 	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1) {
-		perror("pledge");		
+		perror("pledge");
 		exit(1);
 	}
 

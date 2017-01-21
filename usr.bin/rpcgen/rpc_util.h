@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.h,v 1.16 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.h,v 1.17 2017/01/21 08:33:07 krw Exp $	*/
 /*	$NetBSD: rpc_util.h,v 1.3 1995/06/11 21:50:10 pk Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 /*      @(#)rpc_util.h  1.5  90/08/29  (C) 1987 SMI   */
 
 /*
- * rpc_util.h, Useful definitions for the RPC protocol compiler 
+ * rpc_util.h, Useful definitions for the RPC protocol compiler
  */
 
 struct list {
@@ -48,7 +48,7 @@ typedef struct list list;
 #define GET 2
 
 /*
- * Global variables 
+ * Global variables
  */
 #define MAXLINESIZE 1024
 extern char curline[MAXLINESIZE];
@@ -88,7 +88,7 @@ extern int timerflag;
 extern int nonfatalerrors;
 
 /*
- * rpc_util routines 
+ * rpc_util routines
  */
 void storeval(list **, definition *);
 
@@ -115,18 +115,18 @@ void record_open(char *);
 bas_type *find_type(char *);
 char *make_argname(char *, char *);
 /*
- * rpc_cout routines 
+ * rpc_cout routines
  */
 void emit(definition *);
 
 /*
- * rpc_hout routines 
+ * rpc_hout routines
  */
 void print_datadef(definition *);
 void print_funcdef(definition *);
 
 /*
- * rpc_svcout routines 
+ * rpc_svcout routines
  */
 void write_most(char *, int, int);
 void write_rest(void);

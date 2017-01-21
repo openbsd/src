@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.83 2017/01/20 01:19:18 krw Exp $	*/
+/*	$OpenBSD: util.c,v 1.84 2017/01/21 08:33:07 krw Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -620,11 +620,11 @@ remotemodtime(const char *file, int noisy)
 	if (command("MDTM %s", file) == COMPLETE) {
 		struct tm timebuf;
 		int yy, mo, day, hour, min, sec;
- 		/*
- 		 * time-val = 14DIGIT [ "." 1*DIGIT ]
- 		 *		YYYYMMDDHHMMSS[.sss]
- 		 * mdtm-response = "213" SP time-val CRLF / error-response
- 		 */
+		/*
+		 * time-val = 14DIGIT [ "." 1*DIGIT ]
+		 *		YYYYMMDDHHMMSS[.sss]
+		 * mdtm-response = "213" SP time-val CRLF / error-response
+		 */
 		/* TODO: parse .sss as well, use timespecs. */
 		char *timestr = reply_string;
 
@@ -634,9 +634,9 @@ remotemodtime(const char *file, int noisy)
 		while (isspace((unsigned char)*timestr))
 			timestr++;
 		if (strncmp(timestr, "191", 3) == 0) {
- 			fprintf(ttyout,
- 	    "Y2K warning! Fixed incorrect time-val received from server.\n");
-	    		timestr[0] = ' ';
+			fprintf(ttyout,
+	    "Y2K warning! Fixed incorrect time-val received from server.\n");
+			timestr[0] = ' ';
 			timestr[1] = '2';
 			timestr[2] = '0';
 		}
@@ -684,7 +684,7 @@ fileindir(const char *file, const char *dir)
 	char	realdir[PATH_MAX];
 	size_t	dirlen;
 
-		 			/* determine parent directory of file */
+					/* determine parent directory of file */
 	(void)strlcpy(parentdirbuf, file, sizeof(parentdirbuf));
 	parentdir = dirname(parentdirbuf);
 	if (strcmp(parentdir, ".") == 0)
@@ -828,7 +828,7 @@ progressmeter(int flag, const char *filename)
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		    "|%.*s%*s|", i, 
+		    "|%.*s%*s|", i,
 		    "*******************************************************"
 		    "*******************************************************"
 		    "*******************************************************"

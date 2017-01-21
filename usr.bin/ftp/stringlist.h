@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.h,v 1.5 2015/05/20 23:39:55 schwarze Exp $	*/
+/*	$OpenBSD: stringlist.h,v 1.6 2017/01/21 08:33:07 krw Exp $	*/
 /*	$NetBSD: stringlist.h,v 1.2 1997/01/17 06:11:36 lukem Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #ifndef SMALL
 
 #ifndef _STRINGLIST_H
-#define _STRINGLIST_H 
+#define _STRINGLIST_H
 
 #include <sys/types.h>
 
