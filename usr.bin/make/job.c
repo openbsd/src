@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.137 2017/01/21 11:30:11 deraadt Exp $	*/
+/*	$OpenBSD: job.c,v 1.138 2017/01/21 12:31:34 natano Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -179,11 +179,9 @@ really_kill(Job *job, int signo)
 		if (kill(pid, signo) == 0)
 			return "process got signal";
 	}
-	if (errno == ESRCH) {
+	if (errno == ESRCH)
 		job->flags |= JOB_LOST;
-		return "not found";
-	} else
-		return "should not happen";
+	return strerror(errno);
 }
 
 static void
