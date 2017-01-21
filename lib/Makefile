@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.72 2016/09/23 09:18:05 sthen Exp $
+#	$OpenBSD: Makefile,v 1.73 2017/01/21 01:34:50 patrick Exp $
 #	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
-SUBDIR=	csu libarch libc libcrypto libcurses libedit libevent libexpat \
+SUBDIR=	csu libarch libc libcompiler_rt libcrypto libcurses \
+	libcxx libcxxabi libedit libevent libexpat \
 	libform libfuse libkeynote libkvm libl libm libmenu \
 	libossaudio libpanel libpcap libradius librthread \
 	librpcsvc libskey libsndio libssl libtls libusbhid \
