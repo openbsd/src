@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.53 2017/01/21 08:40:04 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.54 2017/01/21 10:15:15 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -595,7 +595,7 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 
 	uio.uio_procp = NULL;
 	do {
-		uio.uio_resid =  BFD_HDRLEN;
+		uio.uio_resid = so->so_rcv.sb_cc;
 		flags = MSG_DONTWAIT;
 		error = soreceive(so, NULL, &uio, &m, NULL, &flags, 0);
 		if (error && error != EAGAIN) {
@@ -604,7 +604,7 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 		}
 		if (m != NULL)
 			bfd_input(bfd, m);
-	} while (m != NULL);
+	} while (so->so_rcv.sb_cc);
 
 	return;
 }
