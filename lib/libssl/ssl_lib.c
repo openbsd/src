@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.124 2017/01/03 16:57:15 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.125 2017/01/21 04:16:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3093,4 +3093,18 @@ SSL_cache_hit(SSL *s)
 	return (s->hit);
 }
 
-IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
+
+static int
+ssl_cipher_id_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	SSL_CIPHER const *a = a_;
+	SSL_CIPHER const *b = b_;
+	return ssl_cipher_id_cmp(a, b);
+}
+
+SSL_CIPHER *
+OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base, int num)
+{
+	return (SSL_CIPHER *)OBJ_bsearch_(key, base, num, sizeof(SSL_CIPHER),
+	    ssl_cipher_id_cmp_BSEARCH_CMP_FN);
+}
