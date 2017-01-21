@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.10 2017/01/21 00:45:13 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.11 2017/01/21 01:43:16 guenther Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -89,7 +89,7 @@
 	"	.previous")
 
 
-#include <sys/exec.h>		/* for struct psstrings */
+#include <sys/exec.h>		/* for struct ps_strings */
 
 #define	MD_CRT0_START						\
 	__asm(							\
