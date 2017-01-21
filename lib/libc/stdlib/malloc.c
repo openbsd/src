@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.211 2016/11/04 09:11:20 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.212 2017/01/21 07:47:42 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -73,6 +73,12 @@
  * Set to zero to be the most strict.
  */
 #define MALLOC_LEEWAY		0
+#define MALLOC_MOVE_COND(sz)	((sz) - mopts.malloc_guard < 		\
+				    MALLOC_PAGESIZE - MALLOC_LEEWAY)
+#define MALLOC_MOVE(p, sz)  	(((char *)(p)) +			\
+				    ((MALLOC_PAGESIZE - MALLOC_LEEWAY -	\
+			    	    ((sz) - mopts.malloc_guard)) & 	\
+				    ~(MALLOC_MINSIZE - 1)))
 
 #define PAGEROUND(x)  (((x) + (MALLOC_PAGEMASK)) & ~MALLOC_PAGEMASK)
 
@@ -199,6 +205,7 @@ char		*malloc_options;	/* compile-time options */
 static u_char getrbyte(struct dir_info *d);
 static __dead void wrterror(struct dir_info *d, char *msg, ...)
     __attribute__((__format__ (printf, 2, 3)));
+static void fill_canary(char *ptr, size_t sz, size_t allocated);
 
 #ifdef MALLOC_STATS
 void malloc_dump(int, int, struct dir_info *);
@@ -209,8 +216,8 @@ static void malloc_exit(void);
 #define CALLER	NULL
 #endif
 
-/* low bits of r->p determine size: 0 means >= page size and p->size holding
- *  real size, otherwise r->size is a shift count, or 1 for malloc(0)
+/* low bits of r->p determine size: 0 means >= page size and r->size holding
+ * real size, otherwise low bits are a shift count, or 1 for malloc(0)
  */
 #define REALSIZE(sz, r)						\
 	(sz) = (uintptr_t)(r)->p & MALLOC_PAGEMASK,		\
@@ -905,23 +912,10 @@ omalloc_make_chunks(struct dir_info *d, int bits, int listnum)
 	return bp;
 }
 
-
-/*
- * Allocate a chunk
- */
-static void *
-malloc_bytes(struct dir_info *d, size_t argsize, void *f)
+static int
+find_chunksize(size_t size)
 {
-	int		i, j, listnum;
-	size_t		k, size;
-	u_short		u, *lp;
-	struct chunk_info *bp;
-
-	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)(uintptr_t)d) ||
-	    d->canary1 != ~d->canary2)
-		wrterror(d, "internal struct corrupt");
-
-	size = argsize;
+	int		i, j;
 
 	/* Don't bother with anything less than this */
 	/* unless we have a malloc(0) requests */
@@ -937,6 +931,25 @@ malloc_bytes(struct dir_info *d, size_t argsize, void *f)
 		while (i >>= 1)
 			j++;
 	}
+	return j;
+}
+
+/*
+ * Allocate a chunk
+ */
+static void *
+malloc_bytes(struct dir_info *d, size_t size, void *f)
+{
+	int		i, j, listnum;
+	size_t		k;
+	u_short		u, *lp;
+	struct chunk_info *bp;
+
+	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)(uintptr_t)d) ||
+	    d->canary1 != ~d->canary2)
+		wrterror(d, "internal struct corrupt");
+
+	j = find_chunksize(size);
 
 	listnum = getrbyte(d) % MALLOC_CHUNK_LISTS;
 	/* If it's empty, make a page more of that size chunks */
@@ -990,22 +1003,27 @@ malloc_bytes(struct dir_info *d, size_t argsize, void *f)
 	k += (lp - bp->bits) * MALLOC_BITS;
 	
 	if (mopts.chunk_canaries)
-		bp->bits[bp->offset + k] = argsize;
+		bp->bits[bp->offset + k] = size;
 
 	k <<= bp->shift;
 
 	if (bp->size > 0) {
 		if (mopts.malloc_junk == 2)
 			memset((char *)bp->page + k, SOME_JUNK, bp->size);
-		else if (mopts.chunk_canaries) {
-			size_t sz = bp->size - argsize;
-
-			if (sz > CHUNK_CHECK_LENGTH)
-				sz = CHUNK_CHECK_LENGTH;
-			memset((char *)bp->page + k + argsize, SOME_JUNK, sz);
-		}
+		else if (mopts.chunk_canaries)
+			fill_canary((char *)bp->page + k, size, bp->size);
 	}
 	return ((char *)bp->page + k);
+}
+
+static void
+fill_canary(char *ptr, size_t sz, size_t allocated)
+{
+	size_t check_sz = allocated - sz;
+
+	if (check_sz > CHUNK_CHECK_LENGTH)
+		check_sz = CHUNK_CHECK_LENGTH;
+	memset(ptr + sz, SOME_JUNK, check_sz);
 }
 
 static void
@@ -1130,13 +1148,12 @@ omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
 			STATS_ADD(pool->malloc_guarded, mopts.malloc_guard);
 		}
 
-		if (sz - mopts.malloc_guard < MALLOC_PAGESIZE - MALLOC_LEEWAY) {
+		if (MALLOC_MOVE_COND(sz)) {
 			/* fill whole allocation */
 			if (mopts.malloc_junk == 2)
 				memset(p, SOME_JUNK, psz - mopts.malloc_guard);
 			/* shift towards the end */
-			p = ((char *)p) + ((MALLOC_PAGESIZE - MALLOC_LEEWAY -
-			    (sz - mopts.malloc_guard)) & ~(MALLOC_MINSIZE-1));
+			p = MALLOC_MOVE(p, sz);
 			/* fill zeros if needed and overwritten above */
 			if (zero_fill && mopts.malloc_junk == 2)
 				memset(p, 0, sz - mopts.malloc_guard);
@@ -1149,14 +1166,9 @@ omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
 					memset(p, SOME_JUNK,
 					    psz - mopts.malloc_guard);
 			}
-			else if (mopts.chunk_canaries) {
-				size_t csz = psz - sz;
-
-				if (csz > CHUNK_CHECK_LENGTH)
-					csz = CHUNK_CHECK_LENGTH;
-				memset((char *)p + sz - mopts.malloc_guard,
-				    SOME_JUNK, csz);
-			}
+			else if (mopts.chunk_canaries)
+				fill_canary(p, sz - mopts.malloc_guard,
+				    psz - mopts.malloc_guard);
 		}
 
 	} else {
@@ -1308,8 +1320,7 @@ ofree(struct dir_info *argpool, void *p)
 
 	REALSIZE(sz, r);
 	if (sz > MALLOC_MAXCHUNK) {
-		if (sz - mopts.malloc_guard >= MALLOC_PAGESIZE -
-		    MALLOC_LEEWAY) {
+		if (!MALLOC_MOVE_COND(sz)) {
 			if (r->p != p)
 				wrterror(pool, "bogus pointer %p", p);
 			if (mopts.chunk_canaries)
@@ -1410,9 +1421,11 @@ orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
 {
 	struct dir_info *pool;
 	struct region_info *r;
+	struct chunk_info *info;
 	size_t oldsz, goldsz, gnewsz;
 	void *q, *ret;
 	int i;
+	uint32_t chunknum;
 	
 	pool = argpool;
 
@@ -1445,6 +1458,11 @@ orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
 	}
 
 	REALSIZE(oldsz, r);
+	if (mopts.chunk_canaries && oldsz <= MALLOC_MAXCHUNK) {
+		chunknum = find_chunknum(pool, r, p, 0);
+		info = (struct chunk_info *)r->size;
+	}
+
 	goldsz = oldsz;
 	if (oldsz > MALLOC_MAXCHUNK) {
 		if (oldsz < mopts.malloc_guard)
@@ -1457,11 +1475,14 @@ orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
 		gnewsz += mopts.malloc_guard;
 
 	if (newsz > MALLOC_MAXCHUNK && oldsz > MALLOC_MAXCHUNK && p == r->p &&
-	    !mopts.chunk_canaries && !mopts.malloc_realloc) {
+	    !mopts.malloc_realloc) {
+		/* First case: from n pages sized allocation to m pages sized
+		   allocation, no malloc_move in effect */
 		size_t roldsz = PAGEROUND(goldsz);
 		size_t rnewsz = PAGEROUND(gnewsz);
 
 		if (rnewsz > roldsz) {
+			/* try to extend existing region */
 			if (!mopts.malloc_guard) {
 				void *hint = (char *)p + roldsz;
 				size_t needed = rnewsz - roldsz;
@@ -1482,6 +1503,8 @@ gotit:
 					if (mopts.malloc_junk == 2)
 						memset(q, SOME_JUNK, needed);
 					r->size = newsz;
+					if (mopts.chunk_canaries)
+						fill_canary(p, newsz, PAGEROUND(newsz));
 					STATS_SETF(r, f);
 					STATS_INC(pool->cheap_reallocs);
 					ret = p;
@@ -1492,6 +1515,7 @@ gotit:
 				}
 			}
 		} else if (rnewsz < roldsz) {
+			/* shrink number of pages */
 			if (mopts.malloc_guard) {
 				if (mprotect((char *)p + roldsz -
 				    mopts.malloc_guard, mopts.malloc_guard,
@@ -1504,27 +1528,38 @@ gotit:
 			}
 			unmap(pool, (char *)p + rnewsz, roldsz - rnewsz);
 			r->size = gnewsz;
+			if (mopts.chunk_canaries)
+				fill_canary(p, newsz, PAGEROUND(newsz));
 			STATS_SETF(r, f);
 			ret = p;
 			goto done;
 		} else {
+			/* number of pages remains the same */
 			if (newsz > oldsz && mopts.malloc_junk == 2)
 				memset((char *)p + newsz, SOME_JUNK,
 				    rnewsz - mopts.malloc_guard - newsz);
 			r->size = gnewsz;
+			if (mopts.chunk_canaries)
+				fill_canary(p, newsz, PAGEROUND(newsz));
 			STATS_SETF(r, f);
 			ret = p;
 			goto done;
 		}
 	}
-	if (newsz <= oldsz && newsz > oldsz / 2 && !mopts.chunk_canaries &&
-	    !mopts.malloc_realloc) {
-		if (mopts.malloc_junk == 2 && newsz > 0)
+	if (oldsz <= MALLOC_MAXCHUNK && oldsz > 0 &&
+	    newsz <= MALLOC_MAXCHUNK && newsz > 0 &&
+	    1 << find_chunksize(newsz) == oldsz && !mopts.malloc_realloc) {
+		/* do not reallocate if new size fits good in existing chunk */
+		if (mopts.malloc_junk == 2)
 			memset((char *)p + newsz, SOME_JUNK, oldsz - newsz);
+		if (mopts.chunk_canaries) {
+			info->bits[info->offset + chunknum] = newsz;
+			fill_canary(p, newsz, info->size);
+		}
 		STATS_SETF(r, f);
 		ret = p;
-	} else if (newsz != oldsz || mopts.chunk_canaries ||
-	    mopts.malloc_realloc) {
+	} else if (newsz != oldsz || mopts.malloc_realloc) {
+		/* create new allocation */
 		q = omalloc(pool, newsz, 0, f);
 		if (q == NULL) {
 			ret = NULL;
@@ -1535,6 +1570,12 @@ gotit:
 		ofree(pool, p);
 		ret = q;
 	} else {
+		/* > page size allocation didnt change */
+		if (mopts.chunk_canaries && oldsz <= MALLOC_MAXCHUNK) {
+			info->bits[info->offset + chunknum] = newsz;
+			if (info->size > 0)
+				fill_canary(p, newsz, info->size);
+		}	
 		STATS_SETF(r, f);
 		ret = p;
 	}
