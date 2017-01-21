@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2017/01/21 12:04:37 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.13 2017/01/21 12:59:06 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -370,7 +370,7 @@ altname		: STRING {
 				err(EXIT_FAILURE, "strdup");
 			}
 			ac->domain = s;
-			LIST_INSERT_HEAD(&domain->altname_list, ac, entry);
+			TAILQ_INSERT_TAIL(&domain->altname_list, ac, entry);
 			domain->altname_count++;
 			/*
 			 * XXX we could check if altname is duplicate
@@ -740,8 +740,8 @@ parse_config(const char *filename, int opts)
 	}
 	topfile = file;
 
-	LIST_INIT(&conf->authority_list);
-	LIST_INIT(&conf->domain_list);
+	TAILQ_INIT(&conf->authority_list);
+	TAILQ_INIT(&conf->domain_list);
 
 	yyparse();
 	errors = file->errors;
@@ -857,7 +857,7 @@ conf_new_authority(struct acme_conf *c, char *s)
 		return (NULL);
 	if ((a = calloc(1, sizeof(struct authority_c))) == NULL)
 		err(EXIT_FAILURE, "calloc");
-	LIST_INSERT_HEAD(&c->authority_list, a, entry);
+	TAILQ_INSERT_TAIL(&c->authority_list, a, entry);
 
 	a->name = s;
 	return (a);
@@ -868,7 +868,7 @@ authority_find(struct acme_conf *c, char *s)
 {
 	struct authority_c	*a;
 
-	LIST_FOREACH(a, &c->authority_list, entry) {
+	TAILQ_FOREACH(a, &c->authority_list, entry) {
 		if (strncmp(a->name, s, AUTH_MAXLEN) == 0) {
 			return (a);
 		}
@@ -882,7 +882,7 @@ authority_find0(struct acme_conf *c)
 	struct authority_c	*a, *b;
 	a = b = NULL;
 
-	LIST_FOREACH(a, &c->authority_list, entry)
+	TAILQ_FOREACH(a, &c->authority_list, entry)
 	    b = a;
 
 	return (b);
@@ -898,10 +898,10 @@ conf_new_domain(struct acme_conf *c, char *s)
 		return (NULL);
 	if ((d = calloc(1, sizeof(struct domain_c))) == NULL)
 		err(EXIT_FAILURE, "calloc");
-	LIST_INSERT_HEAD(&c->domain_list, d, entry);
+	TAILQ_INSERT_TAIL(&c->domain_list, d, entry);
 
 	d->domain = s;
-	LIST_INIT(&d->altname_list);
+	TAILQ_INIT(&d->altname_list);
 
 	return (d);
 }
@@ -911,7 +911,7 @@ domain_find(struct acme_conf *c, char *s)
 {
 	struct domain_c	*d;
 
-	LIST_FOREACH(d, &c->domain_list, entry) {
+	TAILQ_FOREACH(d, &c->domain_list, entry) {
 		if (strncmp(d->domain, s, DOMAIN_MAXLEN) == 0) {
 			return (d);
 		}
@@ -945,16 +945,16 @@ clear_config(struct acme_conf *xconf)
 	struct domain_c		*d;
 	struct altname_c	*ac;
 
-	while ((a = LIST_FIRST(&xconf->authority_list)) != NULL) {
-		LIST_REMOVE(a, entry);
+	while ((a = TAILQ_FIRST(&xconf->authority_list)) != NULL) {
+		TAILQ_REMOVE(&xconf->authority_list, a, entry);
 		free(a);
 	}
-	while ((d = LIST_FIRST(&xconf->domain_list)) != NULL) {
-		while ((ac = LIST_FIRST(&d->altname_list)) != NULL) {
-			LIST_REMOVE(ac, entry);
+	while ((d = TAILQ_FIRST(&xconf->domain_list)) != NULL) {
+		while ((ac = TAILQ_FIRST(&d->altname_list)) != NULL) {
+			TAILQ_REMOVE(&d->altname_list, ac, entry);
 			free(ac);
 		}
-		LIST_REMOVE(d, entry);
+		TAILQ_REMOVE(&xconf->domain_list, d, entry);
 		free(d);
 	}
 	free(xconf);
@@ -968,7 +968,7 @@ print_config(struct acme_conf *xconf)
 	struct altname_c	*ac;
 	int			 f;
 
-	LIST_FOREACH(a, &xconf->authority_list, entry) {
+	TAILQ_FOREACH(a, &xconf->authority_list, entry) {
 		printf("authority %s {\n", a->name);
 		if (a->agreement != NULL)
 			printf("\tagreement url \"%s\"\n", a->agreement);
@@ -978,10 +978,10 @@ print_config(struct acme_conf *xconf)
 			printf("\taccount key \"%s\"\n", a->account);
 		printf("}\n\n");
 	}
-	LIST_FOREACH(d, &xconf->domain_list, entry) {
+	TAILQ_FOREACH(d, &xconf->domain_list, entry) {
 		f = 0;
 		printf("domain %s {\n", d->domain);
-		LIST_FOREACH(ac, &d->altname_list, entry) {
+		TAILQ_FOREACH(ac, &d->altname_list, entry) {
 			if (!f)
 				printf("\talternative names { ");
 			if (ac->domain != NULL) {

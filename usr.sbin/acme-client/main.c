@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.27 2017/01/21 12:54:10 florian Exp $ */
+/*	$Id: main.c,v 1.28 2017/01/21 12:59:06 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 	alts[0] = domain->domain;
 	i = 1;
 	/* XXX get rid of alts[] later */
-	LIST_FOREACH(ac, &domain->altname_list, entry)
+	TAILQ_FOREACH(ac, &domain->altname_list, entry)
 		alts[i++] = ac->domain;
 
 	/*
