@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.26 2016/09/03 17:26:29 bcook Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.27 2017/01/21 04:34:16 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -212,37 +212,16 @@ BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	 * has been integrated into OpenSSL.)
 	 */
 
-#define MONT_MUL_MOD
-#define MONT_EXP_WORD
-#define RECP_MUL_MOD
-
-#ifdef MONT_MUL_MOD
-	/* I have finally been able to take out this pre-condition of
-	 * the top bit being set.  It was caused by an error in BN_div
-	 * with negatives.  There was also another problem when for a^b%m
-	 * a >= m.  eay 07-May-97 */
-/*	if ((m->d[m->top-1]&BN_TBIT) && BN_is_odd(m)) */
-
 	if (BN_is_odd(m)) {
-#  ifdef MONT_EXP_WORD
 		if (a->top == 1 && !a->neg &&
 		    (BN_get_flags(p, BN_FLG_CONSTTIME) == 0)) {
 			BN_ULONG A = a->d[0];
 			ret = BN_mod_exp_mont_word(r, A,p, m,ctx, NULL);
 		} else
-#  endif
 			ret = BN_mod_exp_mont(r, a,p, m,ctx, NULL);
-	} else
-#endif
-#ifdef RECP_MUL_MOD
-	{
+	} else	{
 		ret = BN_mod_exp_recp(r, a,p, m, ctx);
 	}
-#else
-	{
-		ret = BN_mod_exp_simple(r, a,p, m, ctx);
-	}
-#endif
 
 	bn_check_top(r);
 	return (ret);
