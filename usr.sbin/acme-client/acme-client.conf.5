@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.6 2017/01/21 09:00:29 benno Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.7 2017/01/21 09:05:31 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -124,8 +124,14 @@ The private key file for which the certificate will be obtained.
 The filename of the certificate that will be issued.
 .It Ic domain chain certificate Ar file
 The filename in which to store the certificate chain that will be returned by the CA.
+It needs to be in the same directory as the
+.Ar domain certificate
+(or in a subdirectory) and can be specified as a relative or absolute path.
 .It Ic domain full chain certificate Ar file
 The filename  in which to store the full certificate chain that will be returned by the CA.
+It needs to be in the same directory as the
+.Ar domain certificate
+(or in a subdirectory) and can be specified as a relative or absolute path.
 .It Ic sign with Ar authority
 The certificate authority (as declared above in the
 .Sx AUTHORITIES

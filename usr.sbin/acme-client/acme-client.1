@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.17 2017/01/21 08:57:05 benno Exp $
+.\"	$OpenBSD: acme-client.1,v 1.18 2017/01/21 09:05:31 benno Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -52,26 +52,28 @@ No operation, check and print configuration.
 The domain name.
 .El
 .Pp
-Public certificates are by default placed in
-.Pa /etc/ssl/acme
-as
-.Pa cert.pem Pq the domain certificate ,
-.Pa chain.pem ,
-and
-.Pa fullchain.pem ,
-respectively.
-.Pa cert.pem
-is checked for its expiration: if more than 30 days from expiry,
 .Nm
-does not attempt to refresh the signature.
+looks in its configuration for a
+.Ar domain
+section corresponding to the domain given as command line argument.
+It then uses that configuration to retrieve a TLS certificate.
+If the certificate already exists and is less than 30 days from expiry,
+.Nm
+will attempt to refresh the signature.
+Before a certificate can be requested, an account key needs to be
+created using the
+.Fl A
+argument.
+The first time a certificate is requested, the RSA key needs to be created with
+.Fl D .
 .Pp
-Challenges are used to verify that the submitter has access to
-the registered domains.
+Challenges are used to verify that the submitter has access to the
+registered domains.
 .Nm
 only implements the
 .Dq http-01
-challenge type, where a file is created within a directory accessible by
-a locally-run web server.
+challenge type, where a file is created within a directory accessible
+by a locally-run web server.
 The default challenge directory
 .Pa /var/www/acme
 can be served by
@@ -85,13 +87,9 @@ location "/.well-known/acme-challenge/*" {
 }
 .Ed
 .Sh FILES
-.Bl -tag -width "/etc/ssl/acme/private/privkey.pem" -compact
-.It Pa /etc/acme/privkey.pem
-Default accountkey.
-.It Pa /etc/ssl/acme
-Default certdir.
-.It Pa /etc/ssl/acme/private/privkey.pem
-Default domainkey.
+.Bl -tag -width "/etc/acme-client.conf" -compact
+.It Pa /etc/acme-client.conf
+Default configuration.
 .It Pa /var/www/acme
 Default challengedir.
 .El
@@ -106,7 +104,7 @@ as in the
 .Sx Challenges
 section:
 .Pp
-.Dl # acme-client -vNn www.foo.com
+.Dl # acme-client -vN www.example.com
 .Pp
 A daily
 .Xr cron 8
@@ -114,7 +112,7 @@ job can renew the certificates:
 .Bd -literal -offset indent
 #! /bin/sh
 
-acme-client www.foo.com
+acme-client www.example.com
 
 if [ $? -eq 0 ]
 then
