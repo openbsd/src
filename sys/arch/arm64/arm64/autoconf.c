@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2017/01/21 09:40:15 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -39,6 +39,7 @@ cpu_configure(void)
 	(void)config_rootfound("mainbus", NULL);
 
 	cold = 0;
+	spl0();
 }
 
 void
