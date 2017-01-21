@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.9 2016/10/03 22:13:30 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.10 2017/01/21 00:45:13 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -32,6 +32,28 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * arm overrides these because it uses %progbits instead of @progbits
+ */
+#define MD_DATA_SECTION_FLAGS_SYMBOL(section, flags, type, symbol)	\
+	extern __dso_hidden type symbol[];				\
+	__asm("	.section "section",\""flags"\",%progbits		\n" \
+	"	.balign 4						\n" \
+	#symbol":							\n" \
+	"	.previous")
+#define MD_DATA_SECTION_SYMBOL_VALUE(section, type, symbol, value)	\
+	extern __dso_hidden type symbol[];				\
+	__asm("	.section "section",\"aw\",%progbits			\n" \
+	"	.balign 4						\n" \
+	#symbol":							\n" \
+	"	.int "#value"						\n" \
+	"	.previous")
+#define MD_DATA_SECTION_FLAGS_VALUE(section, flags, value)		\
+	__asm("	.section "section",\""flags"\",%progbits		\n" \
+	"	.balign 4						\n" \
+	"	.int "#value"						\n" \
+	"	.previous")
 
 #ifdef __PIC__
 	/* This nastyness derived from gcc3 output */

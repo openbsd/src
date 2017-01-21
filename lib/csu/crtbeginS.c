@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.16 2015/04/07 01:27:06 guenther Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.17 2017/01/21 00:45:13 guenther Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -50,8 +50,7 @@
  * java class registration hooks
  */
 
-static void *__JCR_LIST__[]
-    __attribute__((section(".jcr"), aligned(sizeof(void*)))) = { };
+MD_DATA_SECTION_FLAGS_SYMBOL(".jcr", "aw", void *, __JCR_LIST__);
 
 extern void _Jv_RegisterClasses (void *)
     __attribute__((weak));
@@ -94,11 +93,8 @@ pthread_atfork(void (*prep)(void), void (*parent)(void), void (*child)(void))
 /* hppa doesn't permit directives in first column, so space after newline */
 asm(".hidden pthread_atfork\n .weak pthread_atfork");
 
-
-static init_f __CTOR_LIST__[1]
-    __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-static init_f __DTOR_LIST__[1]
-    __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
+MD_DATA_SECTION_SYMBOL_VALUE(".ctors", init_f, __CTOR_LIST__, -1);
+MD_DATA_SECTION_SYMBOL_VALUE(".dtors", init_f, __DTOR_LIST__, -1);
 
 static void	__dtors(void) __used;
 static void	__ctors(void) __used;

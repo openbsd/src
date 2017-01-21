@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.21 2016/12/22 09:32:04 kettenis Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.22 2017/01/21 00:45:13 guenther Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -56,15 +56,13 @@ void __register_frame_info(const void *begin, struct dwarf2_eh_object *ob)
 {
 }
 
-static const char __EH_FRAME_BEGIN__[]
-    __attribute__((section(".eh_frame"), aligned(4))) = { };
+MD_DATA_SECTION_FLAGS_SYMBOL(".eh_frame", "a", const void *, __EH_FRAME_BEGIN__);
 
 /*
  * java class registration hooks
  */
 
-static void *__JCR_LIST__[]
-    __attribute__((section(".jcr"), aligned(sizeof(void*)))) = { };
+MD_DATA_SECTION_FLAGS_SYMBOL(".jcr", "aw", void *, __JCR_LIST__);
 
 extern void _Jv_RegisterClasses (void *)
     __attribute__((weak));
@@ -83,11 +81,8 @@ __asm(".hidden  __dso_handle");
 
 long __guard_local __dso_hidden __attribute__((section(".openbsd.randomdata")));
 
-
-static init_f __CTOR_LIST__[1]
-    __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-static init_f __DTOR_LIST__[1]
-    __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
+MD_DATA_SECTION_SYMBOL_VALUE(".ctors", init_f, __CTOR_LIST__, -1);
+MD_DATA_SECTION_SYMBOL_VALUE(".dtors", init_f, __DTOR_LIST__, -1);
 
 static void	__dtors(void) __used;
 static void	__ctors(void) __used;
