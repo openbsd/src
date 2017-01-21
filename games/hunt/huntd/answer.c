@@ -1,33 +1,33 @@
-/*	$OpenBSD: answer.c,v 1.21 2016/08/27 02:06:40 guenther Exp $	*/
+/*	$OpenBSD: answer.c,v 1.22 2017/01/21 08:22:57 krw Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are 
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
  * met:
- * 
- * + Redistributions of source code must retain the above copyright 
+ *
+ * + Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * + Redistributions in binary form must reproduce the above copyright 
- *   notice, this list of conditions and the following disclaimer in the 
+ * + Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
  *   documentation and/or other materials provided with the distribution.
- * + Neither the name of the University of California, San Francisco nor 
- *   the names of its contributors may be used to endorse or promote 
- *   products derived from this software without specific prior written 
+ * + Neither the name of the University of California, San Francisco nor
+ *   the names of its contributors may be used to endorse or promote
+ *   products derived from this software without specific prior written
  *   permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -93,8 +93,8 @@ answer_first(void)
 	sp->sourcelen = socklen;
 
 	/* Warn if we lose connection info: */
-	if (socklen > sizeof Spawn->source) 
-		logx(LOG_WARNING, 
+	if (socklen > sizeof Spawn->source)
+		logx(LOG_WARNING,
 		    "struct sockaddr is not big enough! (%d > %zu)",
 		    socklen, sizeof Spawn->source);
 
@@ -122,11 +122,11 @@ answer_next(struct spawn *sp)
 	u_int32_t		version;
 	FILE			*conn;
 	int			len;
-	char 			teamstr[] = "[x]";
+	char			teamstr[] = "[x]";
 
 	if (sp->reading_msg) {
 		/* Receive a message from a player */
-		len = read(sp->fd, sp->msg + sp->msglen, 
+		len = read(sp->fd, sp->msg + sp->msglen,
 		    sizeof sp->msg - sp->msglen);
 		if (len < 0)
 			goto error;
@@ -148,7 +148,7 @@ answer_next(struct spawn *sp)
 	}
 
 	/* Fill the buffer */
-	len = read(sp->fd, sp->inbuf + sp->inlen, 
+	len = read(sp->fd, sp->inbuf + sp->inlen,
 	    sizeof sp->inbuf - sp->inlen);
 	if (len <= 0)
 		goto error;
@@ -233,7 +233,7 @@ answer_next(struct spawn *sp)
 	}
 
 	/* Find the player's running scorecard */
-	pp->p_ident = get_ident(&sp->source, sp->sourcelen, sp->uid, 
+	pp->p_ident = get_ident(&sp->source, sp->sourcelen, sp->uid,
 	    sp->name, sp->team);
 	pp->p_output = conn;
 	pp->p_death[0] = '\0';
@@ -253,7 +253,7 @@ answer_next(struct spawn *sp)
 	return TRUE;
 
 error:
-	if (len < 0) 
+	if (len < 0)
 		logit(LOG_WARNING, "read");
 	else
 		logx(LOG_WARNING, "lost connection to new client");
@@ -278,9 +278,9 @@ stmonitor(PLAYER *pp)
 	drawmaze(pp);
 
 	/* Put the monitor's name near the bottom right on all screens: */
-	outyx(ALL_PLAYERS, 
+	outyx(ALL_PLAYERS,
 		STAT_MON_ROW + 1 + (pp - Monitor), STAT_NAME_COL,
-		"%5.5s%c%-10.10s %c", " ", 
+		"%5.5s%c%-10.10s %c", " ",
 		stat_char(pp), pp->p_ident->i_name, pp->p_ident->i_team);
 
 	/* Ready the monitor: */
@@ -378,8 +378,8 @@ stplayer(PLAYER *newpp, int enter_status)
 		check(pp, y, x);
 
 	/* Create a score line for the new player: */
-	(void) snprintf(Buf, sizeof Buf, "%5.2f%c%-10.10s %c", 
-		newpp->p_ident->i_score, stat_char(newpp), 
+	(void) snprintf(Buf, sizeof Buf, "%5.2f%c%-10.10s %c",
+		newpp->p_ident->i_score, stat_char(newpp),
 		newpp->p_ident->i_name, newpp->p_ident->i_team);
 	len = strlen(Buf);
 	y = STAT_PLAY_ROW + 1 + (newpp - Player);
@@ -457,7 +457,7 @@ get_ident(struct sockaddr *sa, int salen, u_long uid, char *name, char team)
 		if (ip->i_team != team) {
 			logx(LOG_INFO, "player %s %s team %c",
 				name,
-				team == ' ' ? "left" : ip->i_team == ' ' ? 
+				team == ' ' ? "left" : ip->i_team == ' ' ?
 					"joined" : "changed to",
 				team == ' ' ? ip->i_team : team);
 			ip->i_team = team;
@@ -497,7 +497,7 @@ get_ident(struct sockaddr *sa, int salen, u_long uid, char *name, char team)
 		Scores = ip;
 
 		logx(LOG_INFO, "new player: %s%s%c%s",
-			name, 
+			name,
 			team == ' ' ? "" : " (team ",
 			team,
 			team == ' ' ? "" : ")");

@@ -1,33 +1,33 @@
-/*	$OpenBSD: shots.c,v 1.13 2016/08/27 02:06:40 guenther Exp $	*/
+/*	$OpenBSD: shots.c,v 1.14 2017/01/21 08:22:57 krw Exp $	*/
 /*	$NetBSD: shots.c,v 1.3 1997/10/11 08:13:50 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are 
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
  * met:
- * 
- * + Redistributions of source code must retain the above copyright 
+ *
+ * + Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * + Redistributions in binary form must reproduce the above copyright 
- *   notice, this list of conditions and the following disclaimer in the 
+ * + Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
  *   documentation and/or other materials provided with the distribution.
- * + Neither the name of the University of California, San Francisco nor 
- *   the names of its contributors may be used to endorse or promote 
- *   products derived from this software without specific prior written 
+ * + Neither the name of the University of California, San Francisco nor
+ *   the names of its contributors may be used to endorse or promote
+ *   products derived from this software without specific prior written
  *   permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -558,7 +558,7 @@ drone_move:
 		 * Players have a 1% chance of absorbing a drone,
 		 * if they are facing it.
 		 */
-		if (rand_num(100) < conf_pdroneabsorb && opposite(bp->b_face, 
+		if (rand_num(100) < conf_pdroneabsorb && opposite(bp->b_face,
 		    Maze[bp->b_y][bp->b_x])) {
 
 			/* Feel the power: */
@@ -623,7 +623,7 @@ save_bullet(BULLET *bp)
 	  case BOOT_PAIR:
 		mark_boot(bp);
 		/* FALLTHROUGH */
-		
+
 	  /* The bullet flies over everything else: */
 	  default:
 		Maze[bp->b_y][bp->b_x] = bp->b_type;
@@ -679,7 +679,7 @@ again:
 	switch (Maze[y][x]) {
 	  default:
 		/*
-		 * Flier is over something other than space, a wall 
+		 * Flier is over something other than space, a wall
 		 * or a door. Randomly move (drift) the flier a little bit
 		 * and then try again:
 		 */
@@ -875,7 +875,7 @@ chkslime(BULLET *bp, BULLET *next)
 	*nbp = *bp;
 
 	/* Move it around: */
-	move_slime(nbp, nbp->b_type == SLIME ? conf_slimespeed : 
+	move_slime(nbp, nbp->b_type == SLIME ? conf_slimespeed :
 	    conf_lavaspeed, next);
 }
 

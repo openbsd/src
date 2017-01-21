@@ -1,4 +1,4 @@
-/*	$OpenBSD: tutor.h,v 1.6 2017/01/20 01:55:25 tb Exp $	*/
+/*	$OpenBSD: tutor.h,v 1.7 2017/01/21 08:22:57 krw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -51,7 +51,7 @@ extern	const char	*const intro1[];
 extern	const char	*const intro2[];
 extern	const char	*const lastch[];
 extern	const char	*const list[];
-extern	int	 	maxmoves;
+extern	int		maxmoves;
 extern	const char	*const moves[];
 extern	const char	*const opts;
 extern	const char	*const prog[];

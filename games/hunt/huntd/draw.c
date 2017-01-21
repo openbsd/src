@@ -1,33 +1,33 @@
-/*	$OpenBSD: draw.c,v 1.10 2016/08/27 02:06:40 guenther Exp $	*/
+/*	$OpenBSD: draw.c,v 1.11 2017/01/21 08:22:57 krw Exp $	*/
 /*	$NetBSD: draw.c,v 1.2 1997/10/10 16:33:04 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are 
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
  * met:
- * 
- * + Redistributions of source code must retain the above copyright 
+ *
+ * + Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * + Redistributions in binary form must reproduce the above copyright 
- *   notice, this list of conditions and the following disclaimer in the 
+ * + Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
  *   documentation and/or other materials provided with the distribution.
- * + Neither the name of the University of California, San Francisco nor 
- *   the names of its contributors may be used to endorse or promote 
- *   products derived from this software without specific prior written 
+ * + Neither the name of the University of California, San Francisco nor
+ *   the names of its contributors may be used to endorse or promote
+ *   products derived from this software without specific prior written
  *   permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -107,8 +107,8 @@ drawstatus(PLAYER *pp)
 
 	outyx(pp, STAT_PLAY_ROW, STAT_LABEL_COL, "Player:");
 	for (i = STAT_PLAY_ROW + 1, np = Player; np < End_player; np++, i++) {
-		outyx(pp, i, STAT_NAME_COL, "%5.2f%c%-10.10s %c", 
-			np->p_ident->i_score, stat_char(np), 
+		outyx(pp, i, STAT_NAME_COL, "%5.2f%c%-10.10s %c",
+			np->p_ident->i_score, stat_char(np),
 			np->p_ident->i_name, np->p_ident->i_team);
 	}
 
@@ -191,7 +191,7 @@ see(PLAYER *pp, int face)
 	x = pp->p_x;
 	y = pp->p_y;
 
-	#define seewalk(dx, dy) 					\
+	#define seewalk(dx, dy)						\
 		x += (dx);						\
 		y += (dy);						\
 		sp = &Maze[y][x];					\
@@ -259,7 +259,7 @@ void
 showstat(PLAYER *pp)
 {
 
-	outyx(ALL_PLAYERS, 
+	outyx(ALL_PLAYERS,
 		STAT_PLAY_ROW + 1 + (pp - Player), STAT_SCAN_COL,
 		"%c", stat_char(pp));
 }

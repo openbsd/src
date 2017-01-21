@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc.c,v 1.7 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: crc.c,v 1.8 2017/01/21 08:22:57 krw Exp $	*/
 /*	$NetBSD: crc.c,v 1.2 1995/03/21 12:04:59 cgd Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ crc_start(void)
 	crcval = step = 0;
 }
 
-/* Process nr bytes at a time; ptr points to them */	
+/* Process nr bytes at a time; ptr points to them */
 unsigned long
 crc(const char *ptr, int nr)
 {

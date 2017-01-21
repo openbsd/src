@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2017/01/20 03:47:31 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2017/01/21 08:22:57 krw Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public domain. */
 
 #include <sys/select.h>
@@ -129,7 +129,7 @@ parse_int(char *p, struct kwvar *kvp, const char *fnm, int *linep)
 
 	/* expect a number */
 	valuestart = p;
-	if (*p == '-') 
+	if (*p == '-')
 		p++;
 	digitstart = p;
 	while (isdigit((unsigned char)*p))
@@ -140,12 +140,12 @@ parse_int(char *p, struct kwvar *kvp, const char *fnm, int *linep)
 		*p = '\0';
 		newval = atoi(valuestart);
 		*p = savec;
-		logx(LOG_INFO, "%s:%d: %s: %d -> %d", 
+		logx(LOG_INFO, "%s:%d: %s: %d -> %d",
 			fnm, *linep, kvp->kw, *(int *)kvp->var, newval);
 		*(int *)kvp->var = newval;
 		return p;
 	} else {
-		logx(LOG_ERR, "%s:%d: invalid integer value \"%s\"", 
+		logx(LOG_ERR, "%s:%d: invalid integer value \"%s\"",
 		    fnm, *linep, valuestart);
 		return NULL;
 	}
@@ -203,14 +203,14 @@ parse_line(char *buf, char *fnm, int *line)
 	/* match the configuration variable name */
 	savec = *endword;
 	*endword = '\0';
-	for (kvp = keywords; kvp->kw; kvp++) 
+	for (kvp = keywords; kvp->kw; kvp++)
 		if (strcmp(kvp->kw, word) == 0)
 			break;
 	*endword = savec;
 
 	if (kvp->kw == NULL) {
-		logx(LOG_ERR, 
-		    "%s:%d: unrecognised variable \"%.*s\"", 
+		logx(LOG_ERR,
+		    "%s:%d: unrecognised variable \"%.*s\"",
 		    fnm, *line, (int)(endword - word), word);
 		return;
 	}
@@ -230,7 +230,7 @@ parse_line(char *buf, char *fnm, int *line)
 
 	/* parse the value */
 	p = parse_value(p, kvp, fnm, line);
-	if (!p) 
+	if (!p)
 		return;
 
 	/* skip trailing whitespace */
@@ -268,7 +268,7 @@ load_config(FILE *f, char *fnm)
 }
 
 /*
- * load various config file, allowing later ones to 
+ * load various config file, allowing later ones to
  * overwrite earlier values
  */
 void
@@ -276,10 +276,10 @@ config(void)
 {
 	char *home;
 	char nm[MAXNAMLEN + 1];
-	static char *fnms[] = { 
+	static char *fnms[] = {
 		"/etc/hunt.conf",
-		"%s/.hunt.conf", 
-		".hunt.conf", 
+		"%s/.hunt.conf",
+		".hunt.conf",
 		NULL
 	};
 	int fn;
@@ -294,7 +294,7 @@ config(void)
 		if ((f = fopen(nm, "r")) != NULL) {
 			load_config(f, nm);
 			fclose(f);
-		} 
+		}
 		else if (errno != ENOENT)
 			logit(LOG_WARNING, "%s", nm);
 	}

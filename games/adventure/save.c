@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.11 2016/03/08 10:48:39 mestre Exp $	*/
+/*	$OpenBSD: save.c,v 1.12 2017/01/21 08:22:57 krw Exp $	*/
 /*	$NetBSD: save.c,v 1.2 1995/03/21 12:05:08 cgd Exp $	*/
 
 /*-
@@ -117,7 +117,7 @@ struct savestruct save_array[] =
  * to output the data using checksum to start random #s
  */
 int
-save(const char *outfile)	
+save(const char *outfile)
 {
 	FILE   *out;
 	struct savestruct *p;

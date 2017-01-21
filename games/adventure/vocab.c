@@ -1,4 +1,4 @@
-/*	$OpenBSD: vocab.c,v 1.15 2016/03/08 10:48:39 mestre Exp $	*/
+/*	$OpenBSD: vocab.c,v 1.16 2017/01/21 08:22:57 krw Exp $	*/
 /*	$NetBSD: vocab.c,v 1.2 1995/03/21 12:05:13 cgd Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ drop(int object, int where)
  * value: used for storing only
  */
 int
-vocab(const char *word, int type, int value)	
+vocab(const char *word, int type, int value)
 {
 	int	adr;
 	const char *s;
