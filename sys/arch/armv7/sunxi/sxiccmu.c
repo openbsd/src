@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.27 2017/01/07 23:33:53 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.28 2017/01/21 03:51:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -63,6 +63,11 @@ struct sxiccmu_softc {
 	struct sxiccmu_ccu_bit	*sc_resets;
 	int			sc_nresets;
 	struct reset_device	sc_rd;
+
+	uint32_t		(*sc_get_frequency)(struct sxiccmu_softc *,
+				    uint32_t);
+	int			(*sc_set_frequency)(struct sxiccmu_softc *,
+				    uint32_t, uint32_t);
 };
 
 int	sxiccmu_match(struct device *, void *, void *);
@@ -82,6 +87,9 @@ uint32_t sxiccmu_ccu_get_frequency(void *, uint32_t *);
 int	sxiccmu_ccu_set_frequency(void *, uint32_t *, uint32_t);
 void	sxiccmu_ccu_enable(void *, uint32_t *, int);
 void	sxiccmu_ccu_reset(void *, uint32_t *, int);
+
+uint32_t sxiccmu_h3_get_frequency(struct sxiccmu_softc *, uint32_t);
+int	sxiccmu_h3_set_frequency(struct sxiccmu_softc *, uint32_t, uint32_t);
 
 int
 sxiccmu_match(struct device *parent, void *match, void *aux)
@@ -122,6 +130,8 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ngates = nitems(sun8i_h3_gates);
 		sc->sc_resets = sun8i_h3_resets;
 		sc->sc_nresets = nitems(sun8i_h3_resets);
+		sc->sc_get_frequency = sxiccmu_h3_get_frequency;
+		sc->sc_set_frequency = sxiccmu_h3_set_frequency;
 	} else {
 		for (node = OF_child(node); node; node = OF_peer(node))
 			sxiccmu_attach_clock(sc, node);
@@ -639,6 +649,12 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 		return sxiccmu_ccu_get_frequency(sc, &parent);
 	}
 
+	return sc->sc_get_frequency(sc, idx);
+}
+
+uint32_t
+sxiccmu_h3_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
+{
 	switch (idx) {
 	case H3_CLK_PLL_PERIPH0:
 		/* XXX default value. */
@@ -648,7 +664,7 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 		return 24000000;
 	}
 
-	printf("%s: 0x%08x\n", __func__, cells[0]);
+	printf("%s: 0x%08x\n", __func__, idx);
 	return 0;
 }
 
@@ -656,8 +672,15 @@ int
 sxiccmu_ccu_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	struct sxiccmu_softc *sc = cookie;
-	struct sxiccmu_clock clock;
 	uint32_t idx = cells[0];
+
+	return sc->sc_set_frequency(sc, idx, freq);
+}
+
+int
+sxiccmu_h3_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
+{
+	struct sxiccmu_clock clock;
 	uint32_t parent, parent_freq;
 
 	switch (idx) {
@@ -672,7 +695,7 @@ sxiccmu_ccu_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		return sxiccmu_mmc_do_set_frequency(&clock, freq, parent_freq);
 	}
 
-	printf("%s: 0x%08x\n", __func__, cells[0]);
+	printf("%s: 0x%08x\n", __func__, idx);
 	return -1;
 }
 
