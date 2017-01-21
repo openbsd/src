@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.11 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: objects.h,v 1.12 2017/01/21 04:53:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1016,6 +1016,8 @@ const void *	OBJ_bsearch_ex_(const void *key, const void *base, int num,
 		    int size, int (*cmp)(const void *, const void *),
 		    int flags);
 
+#ifndef LIBRESSL_INTERNAL
+
 #define _DECLARE_OBJ_BSEARCH_CMP_FN(scope, type1, type2, nm)	\
   static int nm##_cmp_BSEARCH_CMP_FN(const void *, const void *); \
   static int nm##_cmp(type1 const *, type2 const *); \
@@ -1094,6 +1096,8 @@ const void *	OBJ_bsearch_ex_(const void *key, const void *base, int num,
 			 ((void)CHECKED_PTR_OF(type1,cmp##_type_1),	\
 			  (void)type_2=CHECKED_PTR_OF(type2,cmp##_type_2), \
 			  cmp##_BSEARCH_CMP_FN)),flags)
+
+#endif /* !LIBRESSL_INTERNAL */
 
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(const ASN1_OBJECT *obj);
