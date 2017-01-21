@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_srvr.c,v 1.20 2016/11/04 18:30:21 guenther Exp $ */
+/* $OpenBSD: t1_srvr.c,v 1.21 2017/01/21 06:50:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,6 +69,8 @@ static const SSL_METHOD *tls1_get_server_method(int ver);
 
 static const SSL_METHOD TLS_server_method_data = {
 	.version = TLS1_2_VERSION,
+	.min_version = TLS1_VERSION,
+	.max_version = TLS1_2_VERSION,
 	.ssl_new = tls1_new,
 	.ssl_clear = tls1_clear,
 	.ssl_free = tls1_free,
@@ -101,6 +103,8 @@ static const SSL_METHOD TLS_server_method_data = {
 
 static const SSL_METHOD TLSv1_server_method_data = {
 	.version = TLS1_VERSION,
+	.min_version = TLS1_VERSION,
+	.max_version = TLS1_VERSION,
 	.ssl_new = tls1_new,
 	.ssl_clear = tls1_clear,
 	.ssl_free = tls1_free,
@@ -133,6 +137,8 @@ static const SSL_METHOD TLSv1_server_method_data = {
 
 static const SSL_METHOD TLSv1_1_server_method_data = {
 	.version = TLS1_1_VERSION,
+	.min_version = TLS1_1_VERSION,
+	.max_version = TLS1_1_VERSION,
 	.ssl_new = tls1_new,
 	.ssl_clear = tls1_clear,
 	.ssl_free = tls1_free,
@@ -165,6 +171,8 @@ static const SSL_METHOD TLSv1_1_server_method_data = {
 
 static const SSL_METHOD TLSv1_2_server_method_data = {
 	.version = TLS1_2_VERSION,
+	.min_version = TLS1_2_VERSION,
+	.max_version = TLS1_2_VERSION,
 	.ssl_new = tls1_new,
 	.ssl_clear = tls1_clear,
 	.ssl_free = tls1_free,

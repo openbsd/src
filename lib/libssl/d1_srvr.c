@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.69 2016/12/06 13:38:11 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.70 2017/01/21 06:50:02 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -130,6 +130,8 @@ static int dtls1_send_hello_verify_request(SSL *s);
 
 static const SSL_METHOD DTLSv1_server_method_data = {
 	.version = DTLS1_VERSION,
+	.min_version = DTLS1_VERSION,
+	.max_version = DTLS1_VERSION,
 	.ssl_new = dtls1_new,
 	.ssl_clear = dtls1_clear,
 	.ssl_free = dtls1_free,
