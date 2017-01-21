@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.12 2014/09/07 19:43:35 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.13 2017/01/21 08:31:44 krw Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
 
 /*-
@@ -35,9 +35,9 @@
 struct entry	*addentry(char *, ino_t, int);
 long		 addfile(char *, ino_t, int);
 void		 badentry(struct entry *, char *);
-void	 	 canon(char *, char *, size_t);
+void		 canon(char *, char *, size_t);
 void		 checkrestore(void);
-void 		 cleanup(void);
+void		 cleanup(void);
 void		 closemt(void);
 void		 createfiles(void);
 void		 createleaves(char *);
@@ -46,18 +46,18 @@ long		 deletefile(char *, ino_t, int);
 void		 deleteino(ino_t);
 ino_t		 dirlookup(const char *);
 void		 dumpsymtable(char *, long);
-void	 	 extractdirs(int);
+void		 extractdirs(int);
 int		 extractfile(char *);
 void		 findunreflinks(void);
 char		*flagvalues(struct entry *);
 void		 freeentry(struct entry *);
 void		 freename(char *);
-int	 	 genliteraldir(char *, ino_t);
+int		 genliteraldir(char *, ino_t);
 char		*gentempname(struct entry *);
 void		 getfile(void (*)(char *, size_t), void (*)(char *, size_t));
 void		 getvol(long);
 void		 initsymtable(char *);
-int	 	 inodetype(ino_t);
+int		 inodetype(ino_t);
 int		 linkit(char *, char *, int);
 struct entry	*lookupino(ino_t);
 struct entry	*lookupname(char *);
@@ -71,7 +71,7 @@ char		*myname(struct entry *);
 void		 newnode(struct entry *);
 void		 newtapebuf(long);
 long		 nodeupdates(char *, ino_t, int);
-void	 	 onintr(int);
+void		 onintr(int);
 void		 panic(const char *, ...)
 		    __attribute__((__format__ (printf, 1, 2)));
 void		 pathcheck(char *);
@@ -86,15 +86,15 @@ int		 reply(char *);
 RST_DIR		*rst_opendir(const char *);
 struct direct	*rst_readdir(RST_DIR *);
 void		 rst_closedir(RST_DIR *dirp);
-void	 	 runcmdshell(void);
+void		 runcmdshell(void);
 char		*savename(char *);
-void	 	 setdirmodes(int);
+void		 setdirmodes(int);
 void		 setinput(char *);
 void		 setup(void);
-void	 	 skipdirs(void);
+void		 skipdirs(void);
 void		 skipfile(void);
 void		 skipmaps(void);
-void	 	 treescan(char *, ino_t, long (*)(char *, ino_t, int));
+void		 treescan(char *, ino_t, long (*)(char *, ino_t, int));
 ino_t		 upperbnd(ino_t);
 long		 verifyfile(char *, ino_t, int);
 void		 xtrnull(char *, size_t);

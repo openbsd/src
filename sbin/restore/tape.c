@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.48 2016/12/26 23:43:52 krw Exp $	*/
+/*	$OpenBSD: tape.c,v 1.49 2017/01/21 08:31:44 krw Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -392,32 +392,32 @@ gethdr:
 	}
 	tapesread |= 1 << volno;
 	blksread = savecnt;
- 	/*
- 	 * If continuing from the previous volume, skip over any
- 	 * blocks read already at the end of the previous volume.
- 	 *
- 	 * If coming to this volume at random, skip to the beginning
- 	 * of the next record.
- 	 */
+	/*
+	 * If continuing from the previous volume, skip over any
+	 * blocks read already at the end of the previous volume.
+	 *
+	 * If coming to this volume at random, skip to the beginning
+	 * of the next record.
+	 */
 	Dprintf(stdout, "read %ld recs, tape starts with %lld\n",
 		tpblksread, tmpbuf.c_firstrec);
- 	if (tmpbuf.c_type == TS_TAPE && (tmpbuf.c_flags & DR_NEWHEADER)) {
- 		if (!wantnext) {
- 			tpblksread = tmpbuf.c_firstrec;
- 			for (i = tmpbuf.c_count; i > 0; i--)
- 				readtape(buf);
- 		} else if (tmpbuf.c_firstrec > 0 &&
+	if (tmpbuf.c_type == TS_TAPE && (tmpbuf.c_flags & DR_NEWHEADER)) {
+		if (!wantnext) {
+			tpblksread = tmpbuf.c_firstrec;
+			for (i = tmpbuf.c_count; i > 0; i--)
+				readtape(buf);
+		} else if (tmpbuf.c_firstrec > 0 &&
 			   tmpbuf.c_firstrec < tpblksread - 1) {
 			/*
 			 * -1 since we've read the volume header
 			 */
- 			i = tpblksread - tmpbuf.c_firstrec - 1;
+			i = tpblksread - tmpbuf.c_firstrec - 1;
 			Dprintf(stderr, "Skipping %ld duplicate record%s.\n",
 				i, (i == 1) ? "" : "s");
- 			while (--i >= 0)
- 				readtape(buf);
- 		}
- 	}
+			while (--i >= 0)
+				readtape(buf);
+		}
+	}
 	if (curfile.action == USING) {
 		if (volno == 1)
 			panic("active file into volume 1\n");
@@ -1061,7 +1061,7 @@ good:
 			buf->c_birthtimensec = 0;
 			buf->c_atimensec = buf->c_mtimensec = 0;
 		}
-			
+
 	case TS_ADDR:
 		break;
 
@@ -1073,7 +1073,7 @@ good:
 	buf->c_magic = FS_UFS2_MAGIC;
 
 	/*
-	 * If we are restoring a filesystem with old format inodes, 
+	 * If we are restoring a filesystem with old format inodes,
 	 * copy the uid/gid to the new location.
 	 */
 	if (oldinofmt) {
@@ -1099,10 +1099,10 @@ accthdr(struct s_spcl *header)
 	if (header->c_type == TS_TAPE) {
 		fprintf(stderr, "Volume header (%s inode format) ",
 		    oldinofmt ? "old" : "new");
- 		if (header->c_firstrec)
- 			fprintf(stderr, "begins with record %lld",
- 				(long long)header->c_firstrec);
- 		fprintf(stderr, "\n");
+		if (header->c_firstrec)
+			fprintf(stderr, "begins with record %lld",
+				(long long)header->c_firstrec);
+		fprintf(stderr, "\n");
 		previno = (ino_t)-1;
 		return;
 	}

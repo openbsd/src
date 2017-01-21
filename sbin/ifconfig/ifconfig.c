@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.336 2016/12/25 20:30:41 krw Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.337 2017/01/21 08:31:44 krw Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1891,7 +1891,7 @@ setifwpakey(const char *val, int d)
 			if (val == NULL || passlen != sizeof(psk.i_psk))
 				errx(1, "wpakey: invalid pre-shared key");
 		} else {
-			/* Parse a WPA passphrase */ 
+			/* Parse a WPA passphrase */
 			if (passlen < 8 || passlen > 63)
 				errx(1, "wpakey: passphrase must be between "
 				    "8 and 63 characters");
@@ -3094,7 +3094,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 			for (i = 0, printed_type = 0; i < ifmr.ifm_count; i++) {
 				if (IFM_TYPE(media_list[i]) == type) {
 
-					/* 
+					/*
 					 * Don't advertise media with fixed
 					 * data rates for wireless interfaces.
 					 * Normal people don't need these.
@@ -4444,7 +4444,7 @@ pflow_status(void)
 	case AF_INET:
 		sin = (struct sockaddr_in*)&preq.flowdst;
 		printf("receiver: %s:", sin->sin_addr.s_addr != INADDR_ANY ?
-		    buf : "INVALID");	
+		    buf : "INVALID");
 		if (sin->sin_port == 0)
 			printf("%s ", "INVALID");
 		else
@@ -4454,7 +4454,7 @@ pflow_status(void)
 		sin6 = (struct sockaddr_in6*) &preq.flowdst;
 		printf("receiver: [%s]:",
 		    !IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ? buf :
-		    "INVALID");	
+		    "INVALID");
 		if (sin6->sin6_port == 0)
 			printf("%s ", "INVALID");
 		else

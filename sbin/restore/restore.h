@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.h,v 1.8 2010/07/20 20:47:13 miod Exp $	*/
+/*	$OpenBSD: restore.h,v 1.9 2017/01/21 08:31:44 krw Exp $	*/
 /*	$NetBSD: restore.h,v 1.8 1997/07/01 05:37:54 lukem Exp $	*/
 
 /*
@@ -51,8 +51,8 @@ extern int	yflag;		/* always try to recover from tape errors */
 /*
  * Global variables
  */
-extern char	*dumpmap; 	/* map of inodes on this dump tape */
-extern char	*usedinomap; 	/* map of inodes that are in use on this fs */
+extern char	*dumpmap;	/* map of inodes on this dump tape */
+extern char	*usedinomap;	/* map of inodes that are in use on this fs */
 extern ino_t	maxino;		/* highest numbered inode in this file system */
 extern long	dumpnum;	/* location of the dump on this tape */
 extern long	volno;		/* current volume being read */

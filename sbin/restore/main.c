@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2016/07/28 21:37:10 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2017/01/21 08:31:44 krw Exp $	*/
 /*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ char	*usedinomap;
 ino_t	maxino;
 time_t	dumptime;
 time_t	dumpdate;
-FILE 	*terminal;
+FILE	*terminal;
 char	*tmpdir;
 
 static void obsolete(int *, char **[]);
