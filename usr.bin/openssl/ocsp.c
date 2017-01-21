@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.11 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: ocsp.c,v 1.12 2017/01/21 09:29:09 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -496,8 +496,8 @@ ocsp_main(int argc, char **argv)
 		BIO_printf(bio_err, "-rkey file	 responder key to sign responses with\n");
 		BIO_printf(bio_err, "-rother file	 other certificates to include in response\n");
 		BIO_printf(bio_err, "-resp_no_certs     don't include any certificates in response\n");
-		BIO_printf(bio_err, "-nmin n	 	 number of minutes before next update\n");
-		BIO_printf(bio_err, "-ndays n	 	 number of days before next update\n");
+		BIO_printf(bio_err, "-nmin n		 number of minutes before next update\n");
+		BIO_printf(bio_err, "-ndays n		 number of days before next update\n");
 		BIO_printf(bio_err, "-resp_key_id       identify reponse by signing certificate key ID\n");
 		BIO_printf(bio_err, "-nrequest n        number of requests to accept (default unlimited)\n");
 		BIO_printf(bio_err, "-<dgst alg>     use specified digest in the request\n");
