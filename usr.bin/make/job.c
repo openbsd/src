@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.138 2017/01/21 12:31:34 natano Exp $	*/
+/*	$OpenBSD: job.c,v 1.139 2017/01/21 12:35:40 natano Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -159,7 +159,6 @@ static const char *really_kill(Job *, int);
 static void debug_kill_printf(const char *, ...);
 static void debug_vprintf(const char *, va_list);
 static void may_remove_target(Job *);
-static const char *really_kill(Job *, int);
 static void print_error(Job *);
 static void internal_print_errors(void);
 
