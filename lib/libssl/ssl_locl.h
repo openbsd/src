@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.144 2017/01/03 16:57:15 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.145 2017/01/21 04:18:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -518,7 +518,7 @@ int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, unsigned char *session, int len,
     const unsigned char *limit);
 int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
-DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
+SSL_CIPHER *OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base, int num);
 int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
     const SSL_CIPHER * const *bp);
 STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p,
