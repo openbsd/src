@@ -5,6 +5,57 @@
  * Clocks Signals
  */
 
+#define A64_CLK_PLL_PERIPH0	11
+#define A64_CLK_PLL_PERIPH0_2X	12
+
+#define A64_CLK_APB2		26
+
+#define A64_CLK_BUS_MMC0	31
+#define A64_CLK_BUS_MMC1	32
+#define A64_CLK_BUS_MMC2	33
+
+#define A64_CLK_BUS_EHCI0	42
+#define A64_CLK_BUS_EHCI1	43
+#define A64_CLK_BUS_OHCI0	44
+#define A64_CLK_BUS_OHCI1	45
+
+#define A64_CLK_BUS_UART0	67
+#define A64_CLK_BUS_UART1	68
+#define A64_CLK_BUS_UART2	69
+#define A64_CLK_BUS_UART3	70
+#define A64_CLK_BUS_UART4	71
+
+#define A64_CLK_MMC0		75
+#define A64_CLK_MMC1		76
+#define A64_CLK_MMC2		77
+
+#define A64_CLK_USB_OHCI0	91
+#define A64_CLK_USB_OHCI1	93
+#define A64_CLK_USB_PHY0	86
+#define A64_CLK_USB_PHY1	87
+
+struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
+	[A64_CLK_BUS_MMC0] =  { 0x0060, 8 },
+	[A64_CLK_BUS_MMC1] =  { 0x0060, 9 },
+	[A64_CLK_BUS_MMC2] =  { 0x0060, 10 },
+	[A64_CLK_BUS_EHCI0] = { 0x0060, 24 },
+	[A64_CLK_BUS_EHCI1] = { 0x0060, 25 },
+	[A64_CLK_BUS_OHCI0] = { 0x0060, 28 },
+	[A64_CLK_BUS_OHCI1] = { 0x0060, 29 },
+	[A64_CLK_BUS_UART0] = { 0x006c, 16, A64_CLK_APB2 },
+	[A64_CLK_BUS_UART1] = { 0x006c, 17, A64_CLK_APB2 },
+	[A64_CLK_BUS_UART2] = { 0x006c, 18, A64_CLK_APB2 },
+	[A64_CLK_BUS_UART3] = { 0x006c, 19, A64_CLK_APB2 },
+	[A64_CLK_BUS_UART4] = { 0x006c, 20, A64_CLK_APB2 },
+	[A64_CLK_MMC0]      = { 0x0088, 31 },
+	[A64_CLK_MMC1]      = { 0x008c, 31 },
+	[A64_CLK_MMC2]      = { 0x0090, 31 },
+	[A64_CLK_USB_OHCI0] = { 0x00cc, 16 },
+	[A64_CLK_USB_OHCI1] = { 0x00cc, 17 },
+	[A64_CLK_USB_PHY0] =  { 0x00cc,  8 },
+	[A64_CLK_USB_PHY1] =  { 0x00cc,  9 },
+};
+
 #define H3_CLK_PLL_PERIPH0	9
 
 #define H3_CLK_APB2		18
@@ -67,6 +118,30 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 /*
  * Reset Signals
  */
+
+#define A64_RST_USB_PHY0	0
+#define A64_RST_USB_PHY1	1
+
+#define A64_RST_BUS_MMC0	8
+#define A64_RST_BUS_MMC1	9
+#define A64_RST_BUS_MMC2	10
+
+#define A64_RST_BUS_EHCI0	19
+#define A64_RST_BUS_EHCI1	20
+#define A64_RST_BUS_OHCI0	21
+#define A64_RST_BUS_OHCI1	22
+
+struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
+	[A64_RST_USB_PHY0] =  { 0x00cc, 0 },
+	[A64_RST_USB_PHY1] =  { 0x00cc, 1 },
+	[A64_RST_BUS_MMC0] =  { 0x02c0, 8 },
+	[A64_RST_BUS_MMC1] =  { 0x02c0, 9 },
+	[A64_RST_BUS_MMC2] =  { 0x02c0, 10 },
+	[A64_RST_BUS_EHCI0] = { 0x02c0, 24 },
+	[A64_RST_BUS_EHCI1] = { 0x02c0, 25 },
+	[A64_RST_BUS_OHCI0] = { 0x02c0, 28 },
+	[A64_RST_BUS_OHCI1] = { 0x02c0, 29 },
+};
 
 #define H3_RST_USB_PHY0		0
 #define H3_RST_USB_PHY1		1
