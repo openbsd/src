@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.214 2017/01/20 08:10:54 dlg Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.215 2017/01/21 03:44:46 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -92,7 +92,6 @@
 
 struct sockaddr		route_dst = { 2, PF_ROUTE, };
 struct sockaddr		route_src = { 2, PF_ROUTE, };
-struct sockproto	route_proto = { PF_ROUTE, };
 
 struct walkarg {
 	int	w_op, w_arg, w_given, w_needed, w_tmemsize;
@@ -100,7 +99,7 @@ struct walkarg {
 };
 
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf **);
-void	route_input(struct mbuf *m0, ...);
+void	route_input(struct mbuf *m0, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
 
@@ -332,7 +331,7 @@ rt_senddesync(void *data)
 }
 
 void
-route_input(struct mbuf *m0, ...)
+route_input(struct mbuf *m0, sa_family_t sa_family)
 {
 	struct rawcb *rp;
 	struct routecb *rop;
@@ -340,15 +339,10 @@ route_input(struct mbuf *m0, ...)
 	struct mbuf *m = m0;
 	int s, sockets = 0;
 	struct socket *last = NULL;
-	va_list ap;
-	struct sockproto *proto;
 	struct sockaddr *sosrc, *sodst;
 	
-	va_start(ap, m0);
-	proto = va_arg(ap, struct sockproto *);
-	sosrc = va_arg(ap, struct sockaddr *);
-	sodst = va_arg(ap, struct sockaddr *);
-	va_end(ap);
+	sosrc = &route_src;
+	sodst = &route_dst;
 
 	/* ensure that we can access the rtm_type via mtod() */
 	if (m->m_len < offsetof(struct rt_msghdr, rtm_type) + 1) {
@@ -359,10 +353,16 @@ route_input(struct mbuf *m0, ...)
 	LIST_FOREACH(rp, &rawcb, rcb_list) {
 		if (rp->rcb_socket->so_state & SS_CANTRCVMORE)
 			continue;
-		if (rp->rcb_proto.sp_family != proto->sp_family)
+		if (rp->rcb_proto.sp_family != PF_ROUTE)
 			continue;
-		if (rp->rcb_proto.sp_protocol && proto->sp_protocol &&
-		    rp->rcb_proto.sp_protocol != proto->sp_protocol)
+		/*
+		 * If route socket is bound to an address family only send
+		 * messages that match the address family. Address family
+		 * agnostic messages are always send.
+		 */
+		if (rp->rcb_proto.sp_protocol != AF_UNSPEC &&
+		    sa_family != AF_UNSPEC &&
+		    rp->rcb_proto.sp_protocol != sa_family)
 			continue;
 		/*
 		 * We assume the lower level routines have
@@ -953,8 +953,6 @@ flush:
 			rtm->rtm_flags |= RTF_DONE;
 		}
 	}
-	if (info.rti_info[RTAX_DST])
-		route_proto.sp_protocol = info.rti_info[RTAX_DST]->sa_family;
 	if (rt)
 		rtfree(rt);
 
@@ -970,9 +968,8 @@ fail:
 		}
 		/* There is another listener, so construct message */
 		rp = sotorawcb(so);
-	}
-	if (rp)
 		rp->rcb_proto.sp_family = 0; /* Avoid us */
+	}
 	if (rtm) {
 		if (m_copyback(m, 0, rtm->rtm_msglen, rtm, M_NOWAIT)) {
 			m_freem(m);
@@ -982,9 +979,10 @@ fail:
 		free(rtm, M_RTABLE, 0);
 	}
 	if (m)
-		route_input(m, &route_proto, &route_src, &route_dst);
+		route_input(m, info.rti_info[RTAX_DST] ?
+		    info.rti_info[RTAX_DST]->sa_family : AF_UNSPEC);
 	if (rp)
-		rp->rcb_proto.sp_family = PF_ROUTE;
+		rp->rcb_proto.sp_family = PF_ROUTE; /* Readd us */
 
 	return (error);
 }
@@ -1056,7 +1054,6 @@ rt_setmetrics(u_long which, const struct rt_metrics *in,
 
 		out->rmx_expire = expire;
 	}
-	/* RTV_PRIORITY handled before */
 }
 
 void
@@ -1258,11 +1255,7 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, uint8_t prio,
 	rtm->rtm_tableid = tableid;
 	rtm->rtm_addrs = rtinfo->rti_addrs;
 	rtm->rtm_index = ifidx;
-	if (sa == NULL)
-		route_proto.sp_protocol = 0;
-	else
-		route_proto.sp_protocol = sa->sa_family;
-	route_input(m, &route_proto, &route_src, &route_dst);
+	route_input(m, sa ? sa->sa_family : AF_UNSPEC);
 }
 
 /*
@@ -1287,8 +1280,7 @@ rt_ifmsg(struct ifnet *ifp)
 	ifm->ifm_xflags = ifp->if_xflags;
 	ifm->ifm_data = ifp->if_data;
 	ifm->ifm_addrs = 0;
-	route_proto.sp_protocol = 0;
-	route_input(m, &route_proto, &route_src, &route_dst);
+	route_input(m, AF_UNSPEC);
 }
 
 /*
@@ -1324,11 +1316,7 @@ rt_sendaddrmsg(struct rtentry *rt, int cmd, struct ifaddr *ifa)
 	ifam->ifam_addrs = info.rti_addrs;
 	ifam->ifam_tableid = ifp->if_rdomain;
 
-	if (ifa->ifa_addr == NULL)
-		route_proto.sp_protocol = 0;
-	else
-		route_proto.sp_protocol = ifa->ifa_addr->sa_family;
-	route_input(m, &route_proto, &route_src, &route_dst);
+	route_input(m, ifa->ifa_addr ? ifa->ifa_addr->sa_family : AF_UNSPEC);
 }
 
 /*
@@ -1350,8 +1338,7 @@ rt_ifannouncemsg(struct ifnet *ifp, int what)
 	ifan->ifan_index = ifp->if_index;
 	strlcpy(ifan->ifan_name, ifp->if_xname, sizeof(ifan->ifan_name));
 	ifan->ifan_what = what;
-	route_proto.sp_protocol = 0;
-	route_input(m, &route_proto, &route_src, &route_dst);
+	route_input(m, AF_UNSPEC);
 }
 
 #ifdef BFD
@@ -1382,8 +1369,7 @@ rt_bfdmsg(struct bfd_config *bfd)
 	bfd2sa(bfd->bc_rt, &sa_bfd);
 	memcpy(&bfdm->bm_sa, &sa_bfd, sizeof(sa_bfd));
 
-	route_proto.sp_protocol = info.rti_info[RTAX_DST]->sa_family;
-	route_input(m, &route_proto, &route_src, &route_dst);
+	route_input(m, info.rti_info[RTAX_DST]->sa_family);
 }
 #endif /* BFD */
 
@@ -1665,7 +1651,7 @@ extern	struct domain routedomain;		/* or at least forward */
 
 struct protosw routesw[] = {
 { SOCK_RAW,	&routedomain,	0,		PR_ATOMIC|PR_ADDR|PR_WANTRCVD,
-  route_input,	route_output,	0,		route_ctloutput,
+  0,		route_output,	0,		route_ctloutput,
   route_usrreq,
   raw_init,	0,		0,		0,
   sysctl_rtable,
