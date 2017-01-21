@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.58 2017/01/21 01:07:25 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.59 2017/01/21 01:09:54 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2185,7 +2185,7 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 
 	/*
 	 * Start with this set to not valid - it will be set to valid
-	 * in X509_verify_cert, or before the callback is called.
+	 * in X509_verify_cert.
 	 */
 	ctx->error = X509_V_ERR_INVALID_CALL;
 
