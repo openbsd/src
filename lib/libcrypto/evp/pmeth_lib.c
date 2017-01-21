@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.11 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.12 2017/01/21 04:38:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -103,8 +103,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 	&cmac_pkey_meth,
 };
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
-    pmeth);
+static int pmeth_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int pmeth_cmp(const EVP_PKEY_METHOD * const *, const EVP_PKEY_METHOD * const *);
+static const EVP_PKEY_METHOD * *OBJ_bsearch_pmeth(const EVP_PKEY_METHOD * *key, const EVP_PKEY_METHOD * const *base, int num);
 
 static int
 pmeth_cmp(const EVP_PKEY_METHOD * const *a, const EVP_PKEY_METHOD * const *b)
@@ -112,8 +113,21 @@ pmeth_cmp(const EVP_PKEY_METHOD * const *a, const EVP_PKEY_METHOD * const *b)
 	return ((*a)->pkey_id - (*b)->pkey_id);
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
-    pmeth);
+
+static int
+pmeth_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	const EVP_PKEY_METHOD * const *a = a_;
+	const EVP_PKEY_METHOD * const *b = b_;
+	return pmeth_cmp(a, b);
+}
+
+static const EVP_PKEY_METHOD * *
+OBJ_bsearch_pmeth(const EVP_PKEY_METHOD * *key, const EVP_PKEY_METHOD * const *base, int num)
+{
+	return (const EVP_PKEY_METHOD * *)OBJ_bsearch_(key, base, num, sizeof(const EVP_PKEY_METHOD *),
+	    pmeth_cmp_BSEARCH_CMP_FN);
+}
 
 const EVP_PKEY_METHOD *
 EVP_PKEY_meth_find(int type)

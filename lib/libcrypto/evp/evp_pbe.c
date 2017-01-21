@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.23 2015/02/08 22:20:18 miod Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.24 2017/01/21 04:38:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -169,7 +169,9 @@ EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	return 1;
 }
 
-DECLARE_OBJ_BSEARCH_CMP_FN(EVP_PBE_CTL, EVP_PBE_CTL, pbe2);
+static int pbe2_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int pbe2_cmp(EVP_PBE_CTL const *, EVP_PBE_CTL const *);
+static EVP_PBE_CTL *OBJ_bsearch_pbe2(EVP_PBE_CTL *key, EVP_PBE_CTL const *base, int num);
 
 static int
 pbe2_cmp(const EVP_PBE_CTL *pbe1, const EVP_PBE_CTL *pbe2)
@@ -182,7 +184,21 @@ pbe2_cmp(const EVP_PBE_CTL *pbe1, const EVP_PBE_CTL *pbe2)
 		return pbe1->pbe_nid - pbe2->pbe_nid;
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(EVP_PBE_CTL, EVP_PBE_CTL, pbe2);
+
+static int
+pbe2_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	EVP_PBE_CTL const *a = a_;
+	EVP_PBE_CTL const *b = b_;
+	return pbe2_cmp(a, b);
+}
+
+static EVP_PBE_CTL *
+OBJ_bsearch_pbe2(EVP_PBE_CTL *key, EVP_PBE_CTL const *base, int num)
+{
+	return (EVP_PBE_CTL *)OBJ_bsearch_(key, base, num, sizeof(EVP_PBE_CTL),
+	    pbe2_cmp_BSEARCH_CMP_FN);
+}
 
 static int
 pbe_cmp(const EVP_PBE_CTL * const *a, const EVP_PBE_CTL * const *b)
