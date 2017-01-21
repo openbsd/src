@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.25 2017/01/21 08:55:09 florian Exp $ */
+/*	$Id: main.c,v 1.26 2017/01/21 09:00:29 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,7 +36,8 @@ int
 main(int argc, char *argv[])
 {
 	const char	 **alts = NULL;
-	char		 *certdir = NULL, *certfile = NULL, *chainfile = NULL;
+	char		 *certdir = NULL, *certfile = NULL;
+	char		 *chainfile = NULL, *fullchainfile = NULL;
 	char		 *acctkey = NULL;
 	char		 *chngdir = NULL, *auth = NULL, *agreement = NULL;
 	char		 *conffile = CONF_FILE;
@@ -126,6 +127,16 @@ main(int argc, char *argv[])
 			chainfile = domain->chain;
 
 		if ((chainfile = strdup(chainfile)) == NULL)
+			err(EXIT_FAILURE, "strdup");
+	}
+
+	if(domain->fullchain != NULL) {
+		if ((fullchainfile = strstr(domain->fullchain, certdir)) != NULL)
+			fullchainfile = domain->fullchain + strlen(certdir);
+		else
+			fullchainfile = domain->fullchain;
+
+		if ((fullchainfile = strdup(fullchainfile)) == NULL)
 			err(EXIT_FAILURE, "strdup");
 	}
 
@@ -347,7 +358,8 @@ main(int argc, char *argv[])
 		free(alts);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
-		c = fileproc(file_fds[1], certdir, certfile, chainfile, NULL);
+		c = fileproc(file_fds[1], certdir, certfile, chainfile,
+		    fullchainfile);
 		/*
 		 * This is different from the other processes in that it
 		 * can return 2 if the certificates were updated.

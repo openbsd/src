@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.h,v 1.5 2017/01/21 08:55:09 florian Exp $ */
+/*	$OpenBSD: parse.h,v 1.6 2017/01/21 09:00:29 benno Exp $ */
 /*
  * Copyright (c) 2016 Sebastian Benoit <benno@openbsd.org>
  *
@@ -43,6 +43,7 @@ struct domain_c {
 	char		       	*key;
 	char		       	*cert;
 	char			*chain;
+	char			*fullchain;
 	char		       	*auth;
 	char		       	*challengedir;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2017/01/21 08:55:09 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.9 2017/01/21 09:00:29 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -93,7 +93,7 @@ typedef struct {
 %}
 
 %token	AUTHORITY AGREEMENT URL API ACCOUNT
-%token	DOMAIN ALTERNATIVE NAMES CERT CHAIN KEY SIGN WITH CHALLENGEDIR
+%token	DOMAIN ALTERNATIVE NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR
 %token	YES NO
 %token	INCLUDE
 %token	ERROR
@@ -300,6 +300,21 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 			}
 			domain->chain = s;
 		}
+		| DOMAIN FULL CHAIN CERT STRING {
+			char *s;
+			if (domain->fullchain != NULL) {
+				yyerror("duplicate chain");
+				YYERROR;
+			}
+			if ((s = strdup($5)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+			if ((conf_new_keyfile(conf, s)) == NULL) {
+				free(s);
+				yyerror("domain full chain file already used");
+				YYERROR;
+			}
+			domain->fullchain = s;
+		}
 		| SIGN WITH STRING {
 			char *s;
 			if (domain->auth != NULL) {
@@ -395,6 +410,7 @@ lookup(char *s)
 		{"chain",		CHAIN},
 		{"challengedir",	CHALLENGEDIR},
 		{"domain",		DOMAIN},
+		{"full",		FULL},
 		{"include",		INCLUDE},
 		{"key",			KEY},
 		{"names",		NAMES},
@@ -970,6 +986,9 @@ print_config(struct acme_conf *xconf)
 			printf("\tdomain certificate \"%s\"\n", d->cert);
 		if (d->chain != NULL)
 			printf("\tdomain certificate chain \"%s\"\n", d->chain);
+		if (d->fullchain != NULL)
+			printf("\tdomain full certificate chain \"%s\"\n",
+			    d->fullchain);
 		if (d->auth != NULL)
 			printf("\tsign with \"%s\"\n", d->auth);
 		if (d->challengedir != NULL)
