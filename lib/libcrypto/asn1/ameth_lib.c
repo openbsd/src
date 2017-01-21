@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.15 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.16 2017/01/21 04:31:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -114,8 +114,9 @@ typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
 DECLARE_STACK_OF(EVP_PKEY_ASN1_METHOD)
 static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
-    const EVP_PKEY_ASN1_METHOD *, ameth);
+static int ameth_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *, const EVP_PKEY_ASN1_METHOD * const *);
+static const EVP_PKEY_ASN1_METHOD * *OBJ_bsearch_ameth(const EVP_PKEY_ASN1_METHOD * *key, const EVP_PKEY_ASN1_METHOD * const *base, int num);
 
 static int
 ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *a,
@@ -124,8 +125,21 @@ ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *a,
 	return ((*a)->pkey_id - (*b)->pkey_id);
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
-    const EVP_PKEY_ASN1_METHOD *, ameth);
+
+static int
+ameth_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	const EVP_PKEY_ASN1_METHOD * const *a = a_;
+	const EVP_PKEY_ASN1_METHOD * const *b = b_;
+	return ameth_cmp(a, b);
+}
+
+static const EVP_PKEY_ASN1_METHOD * *
+OBJ_bsearch_ameth(const EVP_PKEY_ASN1_METHOD * *key, const EVP_PKEY_ASN1_METHOD * const *base, int num)
+{
+	return (const EVP_PKEY_ASN1_METHOD * *)OBJ_bsearch_(key, base, num, sizeof(const EVP_PKEY_ASN1_METHOD *),
+	    ameth_cmp_BSEARCH_CMP_FN);
+}
 
 int
 EVP_PKEY_asn1_get_count(void)

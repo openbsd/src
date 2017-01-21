@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.19 2015/02/10 11:22:21 jsing Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.20 2017/01/21 04:31:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -201,7 +201,9 @@ sk_table_cmp(const ASN1_STRING_TABLE * const *a,
 	return (*a)->nid - (*b)->nid;
 }
 
-DECLARE_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table);
+static int table_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int table_cmp(ASN1_STRING_TABLE const *, ASN1_STRING_TABLE const *);
+static ASN1_STRING_TABLE *OBJ_bsearch_table(ASN1_STRING_TABLE *key, ASN1_STRING_TABLE const *base, int num);
 
 static int
 table_cmp(const ASN1_STRING_TABLE *a, const ASN1_STRING_TABLE *b)
@@ -209,7 +211,21 @@ table_cmp(const ASN1_STRING_TABLE *a, const ASN1_STRING_TABLE *b)
 	return a->nid - b->nid;
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table);
+
+static int
+table_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	ASN1_STRING_TABLE const *a = a_;
+	ASN1_STRING_TABLE const *b = b_;
+	return table_cmp(a, b);
+}
+
+static ASN1_STRING_TABLE *
+OBJ_bsearch_table(ASN1_STRING_TABLE *key, ASN1_STRING_TABLE const *base, int num)
+{
+	return (ASN1_STRING_TABLE *)OBJ_bsearch_(key, base, num, sizeof(ASN1_STRING_TABLE),
+	    table_cmp_BSEARCH_CMP_FN);
+}
 
 ASN1_STRING_TABLE *
 ASN1_STRING_TABLE_get(int nid)
