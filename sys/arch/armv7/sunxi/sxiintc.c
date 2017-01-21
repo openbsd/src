@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.c,v 1.2 2016/08/06 18:21:34 patrick Exp $	*/
+/*	$OpenBSD: sxiintc.c,v 1.3 2017/01/21 08:26:49 patrick Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -27,7 +27,7 @@
 #include <machine/fdt.h>
 
 #include <armv7/armv7/armv7var.h>
-#include <armv7/sunxi/sunxireg.h>
+#include <dev/fdt/sunxireg.h>
 #include <armv7/sunxi/sxiintc.h>
 
 #include <dev/ofw/openfirm.h>

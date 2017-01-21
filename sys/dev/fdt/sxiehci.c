@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiehci.c,v 1.11 2017/01/21 05:19:53 patrick Exp $ */
+/*	$OpenBSD: sxiehci.c,v 1.1 2017/01/21 08:26:49 patrick Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>

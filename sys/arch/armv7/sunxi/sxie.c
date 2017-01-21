@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.23 2016/10/22 11:00:02 jsg Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.24 2017/01/21 08:26:49 patrick Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -46,7 +46,7 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <armv7/sunxi/sunxireg.h>
+#include <dev/fdt/sunxireg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>

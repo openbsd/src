@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.11 2016/10/08 11:21:41 kettenis Exp $ */
+/* $OpenBSD: sxidog.c,v 1.12 2017/01/21 08:26:49 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -23,7 +23,7 @@
 #include <machine/fdt.h>
 
 #include <armv7/armv7/armv7_machdep.h>
-#include <armv7/sunxi/sunxireg.h>
+#include <dev/fdt/sunxireg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>

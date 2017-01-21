@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.19 2017/01/21 07:10:04 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.1 2017/01/21 08:26:49 patrick Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -34,8 +34,8 @@
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
-#include <armv7/sunxi/sunxireg.h>
-#include <armv7/sunxi/sxipiovar.h>
+#include <dev/fdt/sunxireg.h>
+#include <dev/fdt/sxipiovar.h>
 
 #include "gpio.h"
 

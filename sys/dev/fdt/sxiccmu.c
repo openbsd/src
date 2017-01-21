@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.29 2017/01/21 05:19:08 patrick Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.1 2017/01/21 08:26:49 patrick Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -29,7 +29,7 @@
 #include <machine/fdt.h>
 #include <machine/intr.h>
 
-#include <armv7/sunxi/sunxireg.h>
+#include <dev/fdt/sunxireg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>

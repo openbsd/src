@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.9 2017/01/08 14:12:32 kettenis Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.1 2017/01/21 08:26:49 patrick Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -26,8 +26,7 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <armv7/armv7/armv7var.h>
-#include <armv7/sunxi/sunxireg.h>
+#include <dev/fdt/sunxireg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>

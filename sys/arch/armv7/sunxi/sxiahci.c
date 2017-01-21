@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiahci.c,v 1.11 2016/08/22 11:24:45 kettenis Exp $	*/
+/*	$OpenBSD: sxiahci.c,v 1.12 2017/01/21 08:26:49 patrick Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013,2014 Artturi Alm
@@ -31,7 +31,7 @@
 #include <dev/ic/ahcivar.h>
 
 #include <armv7/armv7/armv7var.h>
-#include <armv7/sunxi/sunxireg.h>
+#include <dev/fdt/sunxireg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
