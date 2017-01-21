@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.30 2017/01/20 10:26:16 krw Exp $	*/
+/*	$OpenBSD: process.c,v 1.31 2017/01/21 10:05:23 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -393,7 +393,7 @@ substitute(struct s_command *cp)
 			else
 				slen--;
 			if (*s != '\0') {
-			 	cspace(&SS, s++, 1, APPEND);
+				cspace(&SS, s++, 1, APPEND);
 				le++;
 			}
 			lastempty = 1;
@@ -568,12 +568,12 @@ regsub(SPACE *sp, char *string, char *src)
 		else
 			no = -1;
 		if (no < 0) {		/* Ordinary character. */
- 			if (c == '\\' && (*src == '\\' || *src == '&'))
- 				c = *src++;
+			if (c == '\\' && (*src == '\\' || *src == '&'))
+				c = *src++;
 			NEEDSP(1);
- 			*dst++ = c;
+			*dst++ = c;
 			++sp->len;
- 		} else if (match[no].rm_so != -1 && match[no].rm_eo != -1) {
+		} else if (match[no].rm_so != -1 && match[no].rm_eo != -1) {
 			len = match[no].rm_eo - match[no].rm_so;
 			NEEDSP(len);
 			memmove(dst, string + match[no].rm_so, len);
