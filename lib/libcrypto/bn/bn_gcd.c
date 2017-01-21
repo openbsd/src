@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.12 2017/01/21 11:00:46 beck Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.13 2017/01/21 23:02:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -420,7 +420,7 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 					}
 				}
 			} else {
-				if (!BN_div_ct(D, M, A, B, ctx))
+				if (!BN_div_nonct(D, M, A, B, ctx))
 					goto err;
 			}
 
