@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.81 2017/01/20 23:50:59 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.82 2017/01/21 01:20:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -453,16 +453,16 @@ man_IP_pre(MAN_ARGS)
 	const struct roff_node	*nn;
 
 	if (n->type == ROFFT_BODY) {
-		print_otag(h, TAG_DD, "");
+		print_otag(h, TAG_DD, "c", "It-tag");
 		return 1;
 	} else if (n->type != ROFFT_HEAD) {
-		print_otag(h, TAG_DL, "");
+		print_otag(h, TAG_DL, "c", "Bl-tag");
 		return 1;
 	}
 
 	/* FIXME: width specification. */
 
-	print_otag(h, TAG_DT, "");
+	print_otag(h, TAG_DT, "c", "It-tag");
 
 	/* For IP, only print the first header element. */
 

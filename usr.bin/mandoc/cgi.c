@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.82 2017/01/19 13:55:49 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.83 2017/01/21 01:20:29 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
@@ -492,9 +492,9 @@ pg_index(const struct req *req)
 	resp_searchform(req, FOCUS_QUERY);
 	printf("<p>\n"
 	       "This web interface is documented in the\n"
-	       "<a href=\"/%s%sman.cgi.8\">man.cgi(8)</a>\n"
+	       "<a class=\"Xr\" href=\"/%s%sman.cgi.8\">man.cgi(8)</a>\n"
 	       "manual, and the\n"
-	       "<a href=\"/%s%sapropos.1\">apropos(1)</a>\n"
+	       "<a class=\"Xr\" href=\"/%s%sapropos.1\">apropos(1)</a>\n"
 	       "manual explains the query syntax.\n"
 	       "</p>\n",
 	       scriptname, *scriptname == '\0' ? "" : "/",
@@ -574,26 +574,21 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 	    req->q.equal || sz == 1 ? FOCUS_NONE : FOCUS_QUERY);
 
 	if (sz > 1) {
-		puts("<div class=\"results\">");
-		puts("<table>");
-
+		puts("<table class=\"results\">");
 		for (i = 0; i < sz; i++) {
 			printf("  <tr>\n"
-			       "    <td class=\"title\">"
-			       "<a href=\"/%s%s%s/%s",
+			       "    <td>"
+			       "<a class=\"Xr\" href=\"/%s%s%s/%s\">",
 			    scriptname, *scriptname == '\0' ? "" : "/",
 			    req->q.manpath, r[i].file);
-			printf("\">");
 			html_print(r[i].names);
 			printf("</a></td>\n"
-			       "    <td class=\"desc\">");
+			       "    <td><span class=\"Nd\">");
 			html_print(r[i].output);
-			puts("</td>\n"
+			puts("</span></td>\n"
 			     "  </tr>");
 		}
-
-		puts("</table>\n"
-		     "</div>");
+		puts("</table>");
 	}
 
 	/*

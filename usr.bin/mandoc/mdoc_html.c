@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.133 2017/01/20 23:50:59 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.134 2017/01/21 01:20:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -572,7 +572,7 @@ mdoc_nd_pre(MDOC_ARGS)
 	/* XXX: this tag in theory can contain block elements. */
 
 	print_text(h, "\\(em");
-	print_otag(h, TAG_SPAN, "c", "desc");
+	print_otag(h, TAG_SPAN, "c", "Nd");
 	return 1;
 }
 
@@ -661,7 +661,7 @@ mdoc_ar_pre(MDOC_ARGS)
 static int
 mdoc_xx_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_SPAN, "c", "unix");
+	print_otag(h, TAG_SPAN, "c", "Ux");
 	return 1;
 }
 
@@ -868,7 +868,7 @@ mdoc_ex_pre(MDOC_ARGS)
 static int
 mdoc_em_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_SPAN, "c", "emph");
+	print_otag(h, TAG_I, "c", "Em");
 	return 1;
 }
 
@@ -1437,9 +1437,9 @@ mdoc_bf_pre(MDOC_ARGS)
 		return 1;
 
 	if (FONT_Em == n->norm->Bf.font)
-		cattr = "emph";
+		cattr = "Em";
 	else if (FONT_Sy == n->norm->Bf.font)
-		cattr = "symb";
+		cattr = "Sy";
 	else if (FONT_Li == n->norm->Bf.font)
 		cattr = "Li";
 	else
@@ -1493,7 +1493,7 @@ mdoc_rs_pre(MDOC_ARGS)
 static int
 mdoc_no_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_SPAN, "c", "none");
+	print_otag(h, TAG_SPAN, "c", "No");
 	return 1;
 }
 
@@ -1507,7 +1507,7 @@ mdoc_li_pre(MDOC_ARGS)
 static int
 mdoc_sy_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_SPAN, "c", "symb");
+	print_otag(h, TAG_B, "c", "Sy");
 	return 1;
 }
 
