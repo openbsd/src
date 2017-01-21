@@ -19,6 +19,8 @@
 #define A64_CLK_BUS_OHCI0	44
 #define A64_CLK_BUS_OHCI1	45
 
+#define A64_CLK_BUS_PIO		58
+
 #define A64_CLK_BUS_UART0	67
 #define A64_CLK_BUS_UART1	68
 #define A64_CLK_BUS_UART2	69
@@ -42,6 +44,7 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 	[A64_CLK_BUS_EHCI1] = { 0x0060, 25 },
 	[A64_CLK_BUS_OHCI0] = { 0x0060, 28 },
 	[A64_CLK_BUS_OHCI1] = { 0x0060, 29 },
+	[A64_CLK_BUS_PIO]   = { 0x0068, 5 },
 	[A64_CLK_BUS_UART0] = { 0x006c, 16, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART1] = { 0x006c, 17, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART2] = { 0x006c, 18, A64_CLK_APB2 },
