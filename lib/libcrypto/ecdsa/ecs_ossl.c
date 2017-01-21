@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.7 2017/01/05 13:25:52 jsing Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.8 2017/01/21 11:00:47 beck Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -58,10 +58,12 @@
 
 #include <openssl/opensslconf.h>
 
-#include "ecs_locl.h"
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/bn.h>
+
+#include "bn_lcl.h"
+#include "ecs_locl.h"
 
 static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dlen,
     const BIGNUM *, const BIGNUM *, EC_KEY *eckey);
@@ -176,7 +178,7 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	} while (BN_is_zero(r));
 
 	/* compute the inverse of k */
-	if (!BN_mod_inverse(k, k, order, ctx)) {
+	if (!BN_mod_inverse_ct(k, k, order, ctx)) {
 		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
 		goto err;
 	}
@@ -360,7 +362,7 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 		goto err;
 	}
 	/* calculate tmp1 = inv(S) mod order */
-	if (!BN_mod_inverse(u2, sig->s, order, ctx)) {
+	if (!BN_mod_inverse_ct(u2, sig->s, order, ctx)) {
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_BN_LIB);
 		goto err;
 	}

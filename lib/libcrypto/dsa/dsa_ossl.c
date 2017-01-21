@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.28 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.29 2017/01/21 11:00:46 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -248,7 +248,7 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		goto err;
 
 	/* Compute  part of 's = inv(k) (m + xr) mod q' */
-	if ((kinv = BN_mod_inverse(NULL, &k, dsa->q, ctx)) == NULL)
+	if ((kinv = BN_mod_inverse_ct(NULL, &k, dsa->q, ctx)) == NULL)
 		goto err;
 
 	BN_clear_free(*kinvp);
@@ -312,7 +312,7 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 
 	/* Calculate W = inv(S) mod Q
 	 * save W in u2 */
-	if ((BN_mod_inverse(&u2, sig->s, dsa->q, ctx)) == NULL)
+	if ((BN_mod_inverse_ct(&u2, sig->s, dsa->q, ctx)) == NULL)
 		goto err;
 
 	/* save M in u1 */

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_x931p.c,v 1.8 2015/04/29 00:11:12 doug Exp $ */
+/* $OpenBSD: bn_x931p.c,v 1.9 2017/01/21 11:00:46 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -58,6 +58,8 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
+
+#include "bn_lcl.h"
 
 /* X9.31 routines for prime derivation */
 
@@ -134,13 +136,13 @@ BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2, const BIGNUM *Xp,
 
 	/* First set p to value of Rp */
 
-	if (!BN_mod_inverse(p, p2, p1, ctx))
+	if (!BN_mod_inverse_ct(p, p2, p1, ctx))
 		goto err;
 
 	if (!BN_mul(p, p, p2, ctx))
 		goto err;
 
-	if (!BN_mod_inverse(t, p1, p2, ctx))
+	if (!BN_mod_inverse_ct(t, p1, p2, ctx))
 		goto err;
 
 	if (!BN_mul(t, t, p1, ctx))

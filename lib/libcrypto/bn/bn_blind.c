@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.15 2017/01/21 09:38:58 beck Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.16 2017/01/21 11:00:46 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -351,7 +351,7 @@ BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m,
 	do {
 		if (!BN_rand_range(ret->A, ret->mod))
 			goto err;
-		if (BN_mod_inverse(ret->Ai, ret->A, ret->mod, ctx) == NULL) {
+		if (BN_mod_inverse_ct(ret->Ai, ret->A, ret->mod, ctx) == NULL) {
 			/* this should almost never happen for good RSA keys */
 			unsigned long error = ERR_peek_last_error();
 			if (ERR_GET_REASON(error) == BN_R_NO_INVERSE) {

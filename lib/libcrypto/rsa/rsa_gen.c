@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_gen.c,v 1.19 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: rsa_gen.c,v 1.20 2017/01/21 11:00:47 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -197,7 +197,7 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 
 	BN_with_flags(&pr0, r0, BN_FLG_CONSTTIME);
 
-	if (!BN_mod_inverse(rsa->d, rsa->e, &pr0, ctx)) /* d */
+	if (!BN_mod_inverse_ct(rsa->d, rsa->e, &pr0, ctx)) /* d */
 		goto err;
 
 	/* set up d for correct BN_FLG_CONSTTIME flag */
@@ -213,7 +213,7 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 
 	/* calculate inverse of q mod p */
 	BN_with_flags(&p, rsa->p, BN_FLG_CONSTTIME);
-	if (!BN_mod_inverse(rsa->iqmp, rsa->q, &p, ctx))
+	if (!BN_mod_inverse_ct(rsa->iqmp, rsa->q, &p, ctx))
 		goto err;
 
 	ok = 1;

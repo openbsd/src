@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.16 2016/07/07 11:53:12 bcook Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.17 2017/01/21 11:00:47 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,8 @@
 #include <openssl/err.h>
 #include <openssl/lhash.h>
 #include <openssl/rsa.h>
+
+#include "bn_lcl.h"
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -160,7 +162,7 @@ rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p, const BIGNUM *q,
 	if (!BN_mul(r0, r1, r2, ctx))
 		goto err;
 
-	ret = BN_mod_inverse(NULL, d, r0, ctx);
+	ret = BN_mod_inverse_ct(NULL, d, r0, ctx);
 err:
 	BN_CTX_end(ctx);
 	return ret;

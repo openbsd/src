@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.25 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.26 2017/01/21 11:00:46 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -599,5 +599,9 @@ int BN_div_ct(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     BN_CTX *ctx);
 #define BN_mod_ct(rem,m,d,ctx) BN_div_ct(NULL,(rem),(m),(d),(ctx))
 #define BN_mod_nonct(rem,m,d,ctx) BN_div_nonct(NULL,(rem),(m),(d),(ctx))
+BIGNUM *BN_mod_inverse_ct(BIGNUM *ret, const BIGNUM *a, const BIGNUM *n,
+    BN_CTX *ctx);
+BIGNUM *BN_mod_inverse_nonct(BIGNUM *ret, const BIGNUM *a, const BIGNUM *n,
+    BN_CTX *ctx);
 __END_HIDDEN_DECLS
 #endif

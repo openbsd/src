@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.15 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.16 2017/01/21 11:00:47 beck Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -64,6 +64,7 @@
 
 #include <openssl/err.h>
 
+#include "bn_lcl.h"
 #include "ec_lcl.h"
 
 const EC_METHOD *
@@ -581,7 +582,7 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP * group, const EC_POIN
 			}
 		}
 	} else {
-		if (!BN_mod_inverse(Z_1, Z_, &group->field, ctx)) {
+		if (!BN_mod_inverse_ct(Z_1, Z_, &group->field, ctx)) {
 			ECerr(EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES, ERR_R_BN_LIB);
 			goto err;
 		}
@@ -1311,7 +1312,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP * group, size_t num, EC_POINT * 
 
 	/* invert heap[1] */
 	if (!BN_is_zero(heap[1])) {
-		if (!BN_mod_inverse(heap[1], heap[1], &group->field, ctx)) {
+		if (!BN_mod_inverse_ct(heap[1], heap[1], &group->field, ctx)) {
 			ECerr(EC_F_EC_GFP_SIMPLE_POINTS_MAKE_AFFINE, ERR_R_BN_LIB);
 			goto err;
 		}

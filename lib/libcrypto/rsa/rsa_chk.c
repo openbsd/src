@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_chk.c,v 1.10 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: rsa_chk.c,v 1.11 2017/01/21 11:00:47 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -191,7 +191,7 @@ RSA_check_key(const RSA *key)
 		}
 
 		/* iqmp = q^-1 mod p? */
-		if (!BN_mod_inverse(i, key->q, key->p, ctx)) {
+		if (!BN_mod_inverse_ct(i, key->q, key->p, ctx)) {
 			ret = -1;
 			goto err;
 		}

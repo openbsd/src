@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.11 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.12 2017/01/21 11:00:46 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -231,17 +231,16 @@ err:
 static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a,
     const BIGNUM *n, BN_CTX *ctx);
 
-BIGNUM *
-BN_mod_inverse(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
+static BIGNUM *
+BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
+    int ct)
 {
 	BIGNUM *A, *B, *X, *Y, *M, *D, *T, *R = NULL;
 	BIGNUM *ret = NULL;
 	int sign;
 
-	if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0) ||
-	    (BN_get_flags(n, BN_FLG_CONSTTIME) != 0)) {
+	if (ct)
 		return BN_mod_inverse_no_branch(in, a, n, ctx);
-	}
 
 	bn_check_top(a);
 	bn_check_top(n);
@@ -524,6 +523,25 @@ err:
 	return (ret);
 }
 
+BIGNUM *
+BN_mod_inverse(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
+{
+	int ct = ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0) ||
+	    (BN_get_flags(n, BN_FLG_CONSTTIME) != 0));
+	return BN_mod_inverse_internal(in, a, n, ctx, ct);
+}
+
+BIGNUM *
+BN_mod_inverse_nonct(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
+{
+	return BN_mod_inverse_internal(in, a, n, ctx, 0);
+}
+
+BIGNUM *
+BN_mod_inverse_ct(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
+{
+	return BN_mod_inverse_internal(in, a, n, ctx, 1);
+}
 
 /* BN_mod_inverse_no_branch is a special version of BN_mod_inverse.
  * It does not contain branches that may leak sensitive information.

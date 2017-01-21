@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001.c,v 1.5 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: gostr341001.c,v 1.6 2017/01/21 11:00:47 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -294,7 +294,7 @@ gost2001_do_verify(BIGNUM *md, ECDSA_SIG *sig, GOST_KEY *ec)
 		goto err;
 	if (BN_is_zero(e))
 		BN_one(e);
-	if ((v = BN_mod_inverse(v, e, order, ctx)) == NULL)
+	if ((v = BN_mod_inverse_ct(v, e, order, ctx)) == NULL)
 		goto err;
 	if (BN_mod_mul(z1, sig->s, v, order, ctx) == 0)
 		goto err;
