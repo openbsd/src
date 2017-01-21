@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.156 2017/01/12 18:06:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.157 2017/01/21 11:21:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5496,10 +5496,8 @@ iwm_newstate_task(void *psc)
 	if (ostate == IEEE80211_S_SCAN && nstate != ostate)
 		iwm_led_blink_stop(sc);
 
-	if (ostate == IEEE80211_S_RUN && nstate != ostate) {
+	if (ostate == IEEE80211_S_RUN && nstate != ostate)
 		iwm_disable_beacon_filter(sc);
-		ieee80211_mira_cancel_timeouts(&in->in_mn);
-	}
 
 	/* Reset the device if moving out of AUTH, ASSOC, or RUN. */
 	/* XXX Is there a way to switch states without a full reset? */
@@ -5632,8 +5630,11 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwm_softc *sc = ifp->if_softc;
+	struct iwm_node *in = (void *)ic->ic_bss;
 
 	timeout_del(&sc->sc_calib_to);
+	if (ic->ic_state == IEEE80211_S_RUN)
+		ieee80211_mira_cancel_timeouts(&in->in_mn);
 
 	sc->ns_nstate = nstate;
 	sc->ns_arg = arg;
@@ -6116,6 +6117,8 @@ iwm_stop(struct ifnet *ifp, int disable)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	in->in_phyctxt = NULL;
+	if (ic->ic_state == IEEE80211_S_RUN)
+		ieee80211_mira_cancel_timeouts(&in->in_mn);
 
 	task_del(systq, &sc->init_task);
 	task_del(sc->sc_nswq, &sc->newstate_task);
