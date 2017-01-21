@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2017/01/10 13:00:57 patrick Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 2017/01/21 08:45:45 patrick Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -370,18 +370,3 @@ dev_rawpart(struct device *dv)
 
 	return (NODEV);
 }
-
-#include <dev/cons.h>
-
-cons_decl(com);
-cons_decl(ws);
-
-struct	consdev constab[] = {
-#if NWSDISPLAY > 0
-	cons_init(ws),
-#endif
-#if NCOM > 0
-	cons_init(com),
-#endif
-	{ 0 },
-};
