@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.134 2017/01/21 01:20:29 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.135 2017/01/21 02:09:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -723,8 +723,10 @@ mdoc_it_pre(MDOC_ARGS)
 		case ROFFT_HEAD:
 			return 0;
 		case ROFFT_BODY:
-			print_otag(h, TAG_LI, "csvt", cattr,
-			    !bl->norm->Bl.comp);
+			if (bl->norm->Bl.comp)
+				print_otag(h, TAG_LI, "csvt", cattr, 0);
+			else
+				print_otag(h, TAG_LI, "c", cattr);
 			break;
 		default:
 			break;
@@ -737,8 +739,10 @@ mdoc_it_pre(MDOC_ARGS)
 	case LIST_tag:
 		switch (n->type) {
 		case ROFFT_HEAD:
-			print_otag(h, TAG_DT, "csvt", cattr,
-			    !bl->norm->Bl.comp);
+			if (bl->norm->Bl.comp)
+				print_otag(h, TAG_DT, "csvt", cattr, 0);
+			else
+				print_otag(h, TAG_DT, "c", cattr);
 			if (type == LIST_diag)
 				print_otag(h, TAG_B, "c", cattr);
 			break;
@@ -758,8 +762,10 @@ mdoc_it_pre(MDOC_ARGS)
 		case ROFFT_HEAD:
 			break;
 		case ROFFT_BODY:
-			print_otag(h, TAG_TD, "csvt", cattr,
-			    !bl->norm->Bl.comp);
+			if (bl->norm->Bl.comp)
+				print_otag(h, TAG_TD, "csvt", cattr, 0);
+			else
+				print_otag(h, TAG_TD, "c", cattr);
 			break;
 		default:
 			print_otag(h, TAG_TR, "c", cattr);
@@ -849,10 +855,9 @@ mdoc_bl_pre(MDOC_ARGS)
 	}
 
 	if (n->norm->Bl.offs)
-		print_otag(h, elemtype, "csvtvbwl", cattr, 0, 0,
-		    n->norm->Bl.offs);
+		print_otag(h, elemtype, "cswl", cattr, n->norm->Bl.offs);
 	else
-		print_otag(h, elemtype, "csvtvb", cattr, 0, 0);
+		print_otag(h, elemtype, "c", cattr);
 
 	return 1;
 }
