@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2017/01/21 11:45:52 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.11 2017/01/21 11:51:58 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -996,9 +996,9 @@ print_config(struct acme_conf *xconf)
 		if (d->cert != NULL)
 			printf("\tdomain certificate \"%s\"\n", d->cert);
 		if (d->chain != NULL)
-			printf("\tdomain certificate chain \"%s\"\n", d->chain);
+			printf("\tdomain chain certificate \"%s\"\n", d->chain);
 		if (d->fullchain != NULL)
-			printf("\tdomain full certificate chain \"%s\"\n",
+			printf("\tdomain full chain certificate \"%s\"\n",
 			    d->fullchain);
 		if (d->auth != NULL)
 			printf("\tsign with \"%s\"\n", d->auth);
