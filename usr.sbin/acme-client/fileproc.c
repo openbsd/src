@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.7 2017/01/21 08:52:30 florian Exp $ */
+/*	$Id: fileproc.c,v 1.8 2017/01/21 08:53:10 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "extern.h"
@@ -65,12 +64,10 @@ int
 fileproc(int certsock, const char *certdir)
 {
 	char		*csr = NULL, *ch = NULL;
-	char		 file[PATH_MAX];
 	size_t		 chsz, csz;
 	int		 rc = 0;
 	long		 lval;
 	enum fileop	 op;
-	time_t		 t;
 
 	/* File-system and sandbox jailing. */
 
