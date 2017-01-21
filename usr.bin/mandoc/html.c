@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.69 2017/01/19 16:56:53 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.70 2017/01/21 02:28:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -174,10 +174,6 @@ print_gen_head(struct html *h)
 	print_text(h, "td.head-rtitle, td.foot-os { text-align: right; }");
 	print_endline(h);
 	print_text(h, "td.head-vol { text-align: center; }");
-	print_endline(h);
-	print_text(h, "table.foot td { width: 50%; }");
-	print_endline(h);
-	print_text(h, "table.head td { width: 33%; }");
 	print_endline(h);
 	print_text(h, "div.Pp { margin: 1ex 0ex; }");
 	print_tagq(h, t);
