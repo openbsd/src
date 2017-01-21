@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.7 2017/01/21 08:52:30 florian Exp $ */
+/*	$Id: extern.h,v 1.8 2017/01/21 08:54:26 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,13 +20,6 @@
 #include "parse.h"
 
 #define MAX_SERVERS_DNS 8
-
-#define	CERT_PEM "cert.pem"
-#define	CERT_BAK "cert.pem~"
-#define	CHAIN_PEM "chain.pem"
-#define	CHAIN_BAK "chain.pem~"
-#define	FCHAIN_PEM "fullchain.pem"
-#define	FCHAIN_BAK "fullchain.pem~"
 
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
@@ -183,9 +176,10 @@ int		 acctproc(int, const char *, int);
 int		 certproc(int, int);
 int		 chngproc(int, const char *);
 int		 dnsproc(int);
-int		 revokeproc(int, const char *,
+int		 revokeproc(int, const char *, const char *,
 			int, int, const char *const *, size_t);
-int		 fileproc(int, const char *);
+int		 fileproc(int, const char *, const char *, const char *,
+			const char *);
 int		 keyproc(int, const char *,
 			const char **, size_t, int);
 int		 netproc(int, int, int, int, int, int, int, int,

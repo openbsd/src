@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.23 2017/01/21 08:52:30 florian Exp $ */
+/*	$Id: main.c,v 1.24 2017/01/21 08:54:26 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <libgen.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,8 +36,8 @@ int
 main(int argc, char *argv[])
 {
 	const char	 **alts = NULL;
-	char		 *certdir = NULL, *acctkey = NULL, *chngdir = NULL;
-	char		 *auth = NULL, *agreement = NULL;
+	char		 *certdir = NULL, *certfile = NULL, *acctkey = NULL;
+	char		 *chngdir = NULL, *auth = NULL, *agreement = NULL;
 	char		 *conffile = CONF_FILE;
 	int		  key_fds[2], acct_fds[2], chng_fds[2], cert_fds[2];
 	int		  file_fds[2], dns_fds[2], rvk_fds[2];
@@ -105,7 +106,17 @@ main(int argc, char *argv[])
 	 * specified them on the command-line.
 	 */
 
-	certdir = domain->cert;
+	if ((certdir = dirname(domain->cert)) != NULL) {
+		if ((certdir = strdup(certdir)) == NULL)
+			err(EXIT_FAILURE, "strdup");
+	} else
+		err(EXIT_FAILURE, "dirname");
+
+	if ((certfile = basename(domain->cert)) != NULL) {
+		if ((certfile = strdup(certfile)) == NULL)
+			err(EXIT_FAILURE, "strdup");
+	} else
+		err(EXIT_FAILURE, "basename");
 
 	if ((auth = domain->auth) == NULL) {
 		/* use the first authority from the config as default XXX */
@@ -325,7 +336,7 @@ main(int argc, char *argv[])
 		free(alts);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
-		c = fileproc(file_fds[1], certdir);
+		c = fileproc(file_fds[1], certdir, certfile, NULL, NULL);
 		/*
 		 * This is different from the other processes in that it
 		 * can return 2 if the certificates were updated.
@@ -357,7 +368,7 @@ main(int argc, char *argv[])
 
 	if (0 == pids[COMP_REVOKE]) {
 		proccomp = COMP_REVOKE;
-		c = revokeproc(rvk_fds[0], certdir, force, revocate,
+		c = revokeproc(rvk_fds[0], certdir, certfile, force, revocate,
 		    (const char *const *)alts, altsz);
 		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);

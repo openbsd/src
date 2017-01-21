@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.8 2017/01/21 08:53:10 florian Exp $ */
+/*	$Id: fileproc.c,v 1.9 2017/01/21 08:54:26 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -61,9 +61,12 @@ serialise(const char *tmp, const char *real,
 }
 
 int
-fileproc(int certsock, const char *certdir)
+fileproc(int certsock, const char *certdir, const char *certfile, const char
+    *chainfile, const char *fullchainfile)
 {
 	char		*csr = NULL, *ch = NULL;
+	char		*certfile_bak = NULL, *chainfile_bak = NULL;
+	char		*fullchainfile_bak = NULL;
 	size_t		 chsz, csz;
 	int		 rc = 0;
 	long		 lval;
@@ -112,23 +115,30 @@ fileproc(int certsock, const char *certdir)
 	 */
 
 	if (FILE_REMOVE == op) {
-		if (-1 == unlink(CERT_PEM) && ENOENT != errno) {
-			warn("%s/%s", certdir, CERT_PEM);
-			goto out;
-		} else
-			dodbg("%s/%s: unlinked", certdir, CERT_PEM);
+		if (certfile) {
+			if (-1 == unlink(certfile) && ENOENT != errno) {
+				warn("%s/%s", certdir, certfile);
+				goto out;
+			} else
+				dodbg("%s/%s: unlinked", certdir, certfile);
+		}
 
-		if (-1 == unlink(CHAIN_PEM) && ENOENT != errno) {
-			warn("%s/%s", certdir, CHAIN_PEM);
-			goto out;
-		} else
-			dodbg("%s/%s: unlinked", certdir, CHAIN_PEM);
+		if (chainfile) {
+			if (-1 == unlink(chainfile) && ENOENT != errno) {
+				warn("%s/%s", certdir, chainfile);
+				goto out;
+			} else
+				dodbg("%s/%s: unlinked", certdir, chainfile);
+		}
 
-		if (-1 == unlink(FCHAIN_PEM) && ENOENT != errno) {
-			warn("%s/%s", certdir, FCHAIN_PEM);
-			goto out;
-		} else
-			dodbg("%s/%s: unlinked", certdir, FCHAIN_PEM);
+		if (fullchainfile) {
+			if (-1 == unlink(fullchainfile) && ENOENT != errno) {
+				warn("%s/%s", certdir, fullchainfile);
+				goto out;
+			} else
+				dodbg("%s/%s: unlinked", certdir,
+				    fullchainfile);
+		}
 
 		rc = 2;
 		goto out;
@@ -141,12 +151,32 @@ fileproc(int certsock, const char *certdir)
 	 * Once downloaded, dump it into CHAIN_BAK.
 	 */
 
+	if (asprintf(&certfile_bak, "%s~", certfile) == -1) {
+		warn("asprintf");
+		goto out;
+	}
+
+	if (chainfile)
+		if (asprintf(&chainfile_bak, "%s~", chainfile) == -1) {
+			warn("asprintf");
+			goto out;
+		}
+
+	if (fullchainfile)
+		if (asprintf(&fullchainfile_bak, "%s~", fullchainfile) == -1) {
+			warn("asprintf");
+			goto out;
+		}
+
 	if (NULL == (ch = readbuf(certsock, COMM_CHAIN, &chsz)))
 		goto out;
-	if (!serialise(CHAIN_BAK, CHAIN_PEM, ch, chsz, NULL, 0))
-		goto out;
 
-	dodbg("%s/%s: created", certdir, CHAIN_PEM);
+	if (chainfile) {
+		if (!serialise(chainfile_bak, chainfile, ch, chsz, NULL, 0))
+			goto out;
+
+		dodbg("%s/%s: created", certdir, chainfile);
+	}
 
 	/*
 	 * Next, wait until we receive the DER encoded (signed)
@@ -157,10 +187,10 @@ fileproc(int certsock, const char *certdir)
 
 	if (NULL == (csr = readbuf(certsock, COMM_CSR, &csz)))
 		goto out;
-	if (!serialise(CERT_BAK, CERT_PEM, csr, csz, NULL, 0))
+	if (!serialise(certfile_bak, certfile, csr, csz, NULL, 0))
 		goto out;
 
-	dodbg("%s/%s: created", certdir, CERT_PEM);
+	dodbg("%s/%s: created", certdir, certfile);
 
 	/*
 	 * Finally, create the full-chain file.
@@ -168,16 +198,21 @@ fileproc(int certsock, const char *certdir)
 	 * We return the special error code 2 to indicate that the
 	 * on-file certificates were changed.
 	 */
+	if (fullchainfile) {
+		if (!serialise(fullchainfile_bak, fullchainfile, csr, csz, ch,
+		    chsz))
+			goto out;
 
-	if (!serialise(FCHAIN_BAK, FCHAIN_PEM, csr, csz, ch, chsz))
-		goto out;
-
-	dodbg("%s/%s: created", certdir, FCHAIN_PEM);
+		dodbg("%s/%s: created", certdir, fullchainfile);
+	}
 
 	rc = 2;
 out:
 	close(certsock);
 	free(csr);
 	free(ch);
+	free(certfile_bak);
+	free(chainfile_bak);
+	free(fullchainfile_bak);
 	return (rc);
 }
