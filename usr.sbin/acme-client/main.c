@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.24 2017/01/21 08:54:26 florian Exp $ */
+/*	$Id: main.c,v 1.25 2017/01/21 08:55:09 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,7 +36,8 @@ int
 main(int argc, char *argv[])
 {
 	const char	 **alts = NULL;
-	char		 *certdir = NULL, *certfile = NULL, *acctkey = NULL;
+	char		 *certdir = NULL, *certfile = NULL, *chainfile = NULL;
+	char		 *acctkey = NULL;
 	char		 *chngdir = NULL, *auth = NULL, *agreement = NULL;
 	char		 *conffile = CONF_FILE;
 	int		  key_fds[2], acct_fds[2], chng_fds[2], cert_fds[2];
@@ -117,6 +118,16 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "strdup");
 	} else
 		err(EXIT_FAILURE, "basename");
+
+	if(domain->chain != NULL) {
+		if ((chainfile = strstr(domain->chain, certdir)) != NULL)
+			chainfile = domain->chain + strlen(certdir);
+		else
+			chainfile = domain->chain;
+
+		if ((chainfile = strdup(chainfile)) == NULL)
+			err(EXIT_FAILURE, "strdup");
+	}
 
 	if ((auth = domain->auth) == NULL) {
 		/* use the first authority from the config as default XXX */
@@ -336,7 +347,7 @@ main(int argc, char *argv[])
 		free(alts);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
-		c = fileproc(file_fds[1], certdir, certfile, NULL, NULL);
+		c = fileproc(file_fds[1], certdir, certfile, chainfile, NULL);
 		/*
 		 * This is different from the other processes in that it
 		 * can return 2 if the certificates were updated.

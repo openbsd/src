@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2017/01/21 08:47:21 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.8 2017/01/21 08:55:09 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -93,7 +93,7 @@ typedef struct {
 %}
 
 %token	AUTHORITY AGREEMENT URL API ACCOUNT
-%token	DOMAIN ALTERNATIVE NAMES CERT KEY SIGN WITH CHALLENGEDIR
+%token	DOMAIN ALTERNATIVE NAMES CERT CHAIN KEY SIGN WITH CHALLENGEDIR
 %token	YES NO
 %token	INCLUDE
 %token	ERROR
@@ -258,7 +258,7 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 				free(s);
 				YYERROR;
 			}
-			if (((void *)conf_new_keyfile(conf, s)) == NULL) {
+			if ((conf_new_keyfile(conf, s)) == NULL) {
 				free(s);
 				yyerror("domain key file already used");
 				YYERROR;
@@ -278,12 +278,27 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 				yyerror("not an absolute path");
 				YYERROR;				
 			}
-			if (((void *)conf_new_keyfile(conf, s)) == NULL) {
+			if ((conf_new_keyfile(conf, s)) == NULL) {
 				free(s);
 				yyerror("domain cert file already used");
 				YYERROR;
 			}
 			domain->cert = s;
+		}
+		| DOMAIN CHAIN CERT STRING {
+			char *s;
+			if (domain->chain != NULL) {
+				yyerror("duplicate chain");
+				YYERROR;
+			}
+			if ((s = strdup($4)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+			if ((conf_new_keyfile(conf, s)) == NULL) {
+				free(s);
+				yyerror("domain chain file already used");
+				YYERROR;
+			}
+			domain->chain = s;
 		}
 		| SIGN WITH STRING {
 			char *s;
@@ -377,6 +392,7 @@ lookup(char *s)
 		{"api",			API},
 		{"authority",		AUTHORITY},
 		{"certificate",		CERT},
+		{"chain",		CHAIN},
 		{"challengedir",	CHALLENGEDIR},
 		{"domain",		DOMAIN},
 		{"include",		INCLUDE},
@@ -952,6 +968,8 @@ print_config(struct acme_conf *xconf)
 			printf("\tdomain key \"%s\"\n", d->key);
 		if (d->cert != NULL)
 			printf("\tdomain certificate \"%s\"\n", d->cert);
+		if (d->chain != NULL)
+			printf("\tdomain certificate chain \"%s\"\n", d->chain);
 		if (d->auth != NULL)
 			printf("\tsign with \"%s\"\n", d->auth);
 		if (d->challengedir != NULL)
