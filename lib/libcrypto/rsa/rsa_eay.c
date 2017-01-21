@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.44 2017/01/21 09:38:59 beck Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.45 2017/01/21 10:38:29 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -770,7 +770,7 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	BN_init(&c);
 	BN_with_flags(&c, I, BN_FLG_CONSTTIME);
 
-	if (!BN_mod(r1, &c, rsa->q, ctx))
+	if (!BN_mod_ct(r1, &c, rsa->q, ctx))
 		goto err;
 
 	/* compute r1^dmq1 mod q */
@@ -784,7 +784,7 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	/* compute I mod p */
 	BN_with_flags(&c, I, BN_FLG_CONSTTIME);
 
-	if (!BN_mod(r1, &c, rsa->p, ctx))
+	if (!BN_mod_ct(r1, &c, rsa->p, ctx))
 		goto err;
 
 	/* compute r1^dmp1 mod p */
@@ -813,7 +813,7 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	BN_init(&pr1);
 	BN_with_flags(&pr1, r1, BN_FLG_CONSTTIME);
 
-	if (!BN_mod(r0, &pr1, rsa->p, ctx))
+	if (!BN_mod_ct(r0, &pr1, rsa->p, ctx))
 		goto err;
 
 	/*
@@ -844,7 +844,7 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 		 */
 		if (!BN_sub(vrfy, vrfy, I))
 			goto err;
-		if (!BN_mod(vrfy, vrfy, rsa->n, ctx))
+		if (!BN_mod_ct(vrfy, vrfy, rsa->n, ctx))
 			goto err;
 		if (BN_is_negative(vrfy))
 			if (!BN_add(vrfy, vrfy, rsa->n))

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.27 2017/01/21 09:38:59 beck Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.28 2017/01/21 10:38:29 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,7 +244,7 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 			goto err;
 	}
 
-	if (!BN_mod(r,r,dsa->q,ctx))
+	if (!BN_mod_ct(r,r,dsa->q,ctx))
 		goto err;
 
 	/* Compute  part of 's = inv(k) (m + xr) mod q' */
@@ -351,10 +351,10 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 						mont))
 			goto err;
 	}
-		
+
 	/* BN_copy(&u1,&t1); */
 	/* let u1 = u1 mod q */
-	if (!BN_mod(&u1, &t1, dsa->q, ctx))
+	if (!BN_mod_ct(&u1, &t1, dsa->q, ctx))
 		goto err;
 
 	/* V is now in u1.  If the signature is correct, it will be

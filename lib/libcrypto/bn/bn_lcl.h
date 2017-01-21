@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.24 2017/01/21 09:38:58 beck Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.25 2017/01/21 10:38:29 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -593,7 +593,11 @@ int BN_mod_exp_mont_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 int BN_mod_exp_mont_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-
+int BN_div_nonct(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
+    BN_CTX *ctx);
+int BN_div_ct(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
+    BN_CTX *ctx);
+#define BN_mod_ct(rem,m,d,ctx) BN_div_ct(NULL,(rem),(m),(d),(ctx))
+#define BN_mod_nonct(rem,m,d,ctx) BN_div_nonct(NULL,(rem),(m),(d),(ctx))
 __END_HIDDEN_DECLS
-
 #endif

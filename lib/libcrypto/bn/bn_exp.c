@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.28 2017/01/21 09:38:58 beck Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.29 2017/01/21 10:38:29 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -735,7 +735,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	/* prepare a^1 in Montgomery domain */
 	if (a->neg || BN_ucmp(a, m) >= 0) {
-		if (!BN_mod(&am, a,m, ctx))
+		if (!BN_mod_ct(&am, a,m, ctx))
 			goto err;
 		if (!BN_to_montgomery(&am, &am, mont, ctx))
 			goto err;
@@ -924,7 +924,7 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 #define BN_MOD_MUL_WORD(r, w, m) \
 		(BN_mul_word(r, (w)) && \
 		(/* BN_ucmp(r, (m)) < 0 ? 1 :*/  \
-			(BN_mod(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1))))
+			(BN_mod_ct(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1))))
 		/* BN_MOD_MUL_WORD is only used with 'w' large,
 		 * so the BN_ucmp test is probably more overhead
 		 * than always using BN_mod (which uses BN_copy if

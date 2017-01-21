@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.24 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.25 2017/01/21 10:38:29 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -418,7 +418,7 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 			Ri->d[1] = BN_MASK2;
 			Ri->top = 2;
 		}
-		if (!BN_div(Ri, NULL, Ri, &tmod, ctx))
+		if (!BN_div_ct(Ri, NULL, Ri, &tmod, ctx))
 			goto err;
 		/* Ni = (R*Ri-1)/N,
 		 * keep only couple of least significant words: */
@@ -446,7 +446,7 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 			if (!BN_set_word(Ri, BN_MASK2))
 				goto err;  /* Ri-- (mod word size) */
 		}
-		if (!BN_div(Ri, NULL, Ri, &tmod, ctx))
+		if (!BN_div_ct(Ri, NULL, Ri, &tmod, ctx))
 			goto err;
 		/* Ni = (R*Ri-1)/N,
 		 * keep only least significant word: */
@@ -468,7 +468,7 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		if (!BN_sub_word(Ri, 1))
 			goto err;
 		/* Ni = (R*Ri-1) / N */
-		if (!BN_div(&(mont->Ni), NULL, Ri, &mont->N, ctx))
+		if (!BN_div_ct(&(mont->Ni), NULL, Ri, &mont->N, ctx))
 			goto err;
 	}
 #endif
@@ -477,7 +477,7 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 	BN_zero(&(mont->RR));
 	if (!BN_set_bit(&(mont->RR), mont->ri*2))
 		goto err;
-	if (!BN_mod(&(mont->RR), &(mont->RR), &(mont->N), ctx))
+	if (!BN_mod_ct(&(mont->RR), &(mont->RR), &(mont->N), ctx))
 		goto err;
 
 	ret = 1;

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp2.c,v 1.10 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: bn_exp2.c,v 1.11 2017/01/21 10:38:29 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -175,7 +175,7 @@ BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	 * Build table for a1:   val1[i] := a1^(2*i + 1) mod m  for i = 0 .. 2^(window1-1)
 	 */
 	if (a1->neg || BN_ucmp(a1, m) >= 0) {
-		if (!BN_mod(val1[0], a1, m, ctx))
+		if (!BN_mod_ct(val1[0], a1, m, ctx))
 			goto err;
 		a_mod_m = val1[0];
 	} else
@@ -206,7 +206,7 @@ BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	 * Build table for a2:   val2[i] := a2^(2*i + 1) mod m  for i = 0 .. 2^(window2-1)
 	 */
 	if (a2->neg || BN_ucmp(a2, m) >= 0) {
-		if (!BN_mod(val2[0], a2, m, ctx))
+		if (!BN_mod_ct(val2[0], a2, m, ctx))
 			goto err;
 		a_mod_m = val2[0];
 	} else

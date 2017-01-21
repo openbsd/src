@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001.c,v 1.4 2015/02/14 06:40:04 jsing Exp $ */
+/* $OpenBSD: gostr341001.c,v 1.5 2017/01/21 10:38:29 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -57,6 +57,8 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/gost.h>
+
+#include "bn_lcl.h"
 #include "gost_locl.h"
 
 /* Convert little-endian byte array into bignum */
@@ -175,7 +177,7 @@ gost2001_do_sign(BIGNUM *md, GOST_KEY *eckey)
 	priv_key = GOST_KEY_get0_private_key(eckey);
 	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if (BN_mod(e, md, order, ctx) == 0)
+	if (BN_mod_ct(e, md, order, ctx) == 0)
 		goto err;
 	if (BN_is_zero(e))
 		BN_one(e);
@@ -288,7 +290,7 @@ gost2001_do_verify(BIGNUM *md, ECDSA_SIG *sig, GOST_KEY *ec)
 		goto err;
 	}
 
-	if (BN_mod(e, md, order, ctx) == 0)
+	if (BN_mod_ct(e, md, order, ctx) == 0)
 		goto err;
 	if (BN_is_zero(e))
 		BN_one(e);
@@ -310,7 +312,7 @@ gost2001_do_verify(BIGNUM *md, ECDSA_SIG *sig, GOST_KEY *ec)
 		GOSTerr(GOST_F_GOST2001_DO_VERIFY, ERR_R_EC_LIB);
 		goto err;
 	}
-	if (BN_mod(R, X, order, ctx) == 0)
+	if (BN_mod_ct(R, X, order, ctx) == 0)
 		goto err;
 	if (BN_cmp(R, sig->r) != 0) {
 		GOSTerr(GOST_F_GOST2001_DO_VERIFY, GOST_R_SIGNATURE_MISMATCH);

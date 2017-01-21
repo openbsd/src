@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.21 2017/01/21 09:38:59 beck Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.22 2017/01/21 10:38:29 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -501,7 +501,7 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	if (BN_sub(p1, dsa->p, BN_value_one()) == 0)
 		goto err;
 	/* j = (p - 1) / q */
-	if (BN_div(j, NULL, p1, dsa->q, ctx) == 0)
+	if (BN_div_ct(j, NULL, p1, dsa->q, ctx) == 0)
 		goto err;
 	/* q * j should == p - 1 */
 	if (BN_mul(newp1, dsa->q, j, ctx) == 0)

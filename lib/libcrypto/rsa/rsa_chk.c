@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_chk.c,v 1.9 2014/07/10 07:43:11 jsing Exp $ */
+/* $OpenBSD: rsa_chk.c,v 1.10 2017/01/21 10:38:29 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -51,6 +51,8 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
+
+#include "bn_lcl.h"
 
 int
 RSA_check_key(const RSA *key)
@@ -132,7 +134,7 @@ RSA_check_key(const RSA *key)
 		ret = -1;
 		goto err;
 	}
-	r = BN_div(k, NULL, l, m, ctx); /* remainder is 0 */
+	r = BN_div_ct(k, NULL, l, m, ctx); /* remainder is 0 */
 	if (!r) {
 		ret = -1;
 		goto err;
@@ -157,7 +159,7 @@ RSA_check_key(const RSA *key)
 			goto err;
 		}
 
-		r = BN_mod(j, key->d, i, ctx);
+		r = BN_mod_ct(j, key->d, i, ctx);
 		if (!r) {
 			ret = -1;
 			goto err;
@@ -176,7 +178,7 @@ RSA_check_key(const RSA *key)
 			goto err;
 		}
 
-		r = BN_mod(j, key->d, i, ctx);
+		r = BN_mod_ct(j, key->d, i, ctx);
 		if (!r) {
 			ret = -1;
 			goto err;

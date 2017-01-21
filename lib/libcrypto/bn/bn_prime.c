@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.16 2017/01/21 09:38:58 beck Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.17 2017/01/21 10:38:29 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -443,7 +443,7 @@ probable_prime_dh(BIGNUM *rnd, int bits, const BIGNUM *add, const BIGNUM *rem,
 
 	/* we need ((rnd-rem) % add) == 0 */
 
-	if (!BN_mod(t1, rnd, add, ctx))
+	if (!BN_mod_ct(t1, rnd, add, ctx))
 		goto err;
 	if (!BN_sub(rnd, rnd, t1))
 		goto err;
@@ -500,7 +500,7 @@ probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
 		goto err;
 
 	/* we need ((rnd-rem) % add) == 0 */
-	if (!BN_mod(t1, q,qadd, ctx))
+	if (!BN_mod_ct(t1, q,qadd, ctx))
 		goto err;
 	if (!BN_sub(q, q, t1))
 		goto err;
