@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.19 2017/01/21 08:47:21 benno Exp $ */
+/*	$Id: main.c,v 1.20 2017/01/21 08:48:11 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 	}
 
 	if (!(popts & ACME_OPT_NEWDKEY) && -1 == access(domain->key, R_OK)) {
-		warnx("%s: -k file must exist", domain->key);
+		warnx("%s: domain key file must exist", domain->key);
 		ne++;
 	} else if ((popts & ACME_OPT_NEWDKEY) && -1 != access(domain->key, R_OK)) {
 		dodbg("%s: domain key exists (not creating)", domain->key);
