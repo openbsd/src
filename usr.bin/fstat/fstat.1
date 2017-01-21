@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.53 2016/10/02 23:16:08 guenther Exp $
+.\"	$OpenBSD: fstat.1,v 1.54 2017/01/21 12:21:56 deraadt Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: October 2 2016 $
+.Dd $Mdocdate: January 21 2017 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -159,13 +159,13 @@ using a symbolic format (see
 otherwise, the mode is printed
 as an octal number.
 .It Li R/W
-This column describes the access mode that the file allows.
-The letter
-.Sq r
-indicates open for reading;
-the letter
-.Sq w
-indicates open for writing.
+This column describes the properties of the file descriptor:
+.Bd -literal -offset indent
+r	Open for reading
+w	Open for writing
+e	close-on-exec flag is set
+.Ed
+.Pp
 This field is useful when trying to find the processes that are
 preventing a file system from being downgraded to read-only.
 .It Li SZ | DV

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.89 2016/10/02 23:16:08 guenther Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.90 2017/01/21 12:21:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -54,6 +54,7 @@
 #include <sys/socketvar.h>
 #include <sys/eventvar.h>
 #include <sys/sysctl.h>
+#include <sys/filedesc.h>
 #define _KERNEL /* for DTYPE_* */
 #include <sys/file.h>
 #undef _KERNEL
@@ -317,10 +318,10 @@ fstat_header(void)
 {
 	if (nflg)
 		printf("%s",
-"USER     CMD          PID   FD  DEV      INUM       MODE R/W    SZ|DV");
+"USER     CMD          PID   FD  DEV      INUM       MODE   R/W    SZ|DV");
 	else
 		printf("%s",
-"USER     CMD          PID   FD MOUNT        INUM MODE       R/W    SZ|DV");
+"USER     CMD          PID   FD MOUNT        INUM MODE         R/W    SZ|DV");
 	if (oflg)
 		printf("%s", ":OFFSET  ");
 	if (checkfile && fsflg == 0)
@@ -396,7 +397,7 @@ void
 vtrans(struct kinfo_file *kf)
 {
 	const char *badtype = NULL;
-	char rw[3], mode[12];
+	char rwep[5], mode[12];
 	char *filename = NULL;
 
 	if (kf->v_type == VNON)
@@ -444,12 +445,14 @@ vtrans(struct kinfo_file *kf)
 	printf(" %8llu%s %11s", kf->va_fileid,
 	    kf->va_nlink == 0 ? "*" : " ",
 	    mode);
-	rw[0] = '\0';
+	rwep[0] = '\0';
 	if (kf->f_flag & FREAD)
-		strlcat(rw, "r", sizeof rw);
+		strlcat(rwep, "r", sizeof rwep);
 	if (kf->f_flag & FWRITE)
-		strlcat(rw, "w", sizeof rw);
-	printf(" %2s", rw);
+		strlcat(rwep, "w", sizeof rwep);
+	if (kf->fd_ofileflags & UF_EXCLOSE)
+		strlcat(rwep, "e", sizeof rwep);
+	printf(" %4s", rwep);
 	switch (kf->v_type) {
 	case VBLK:
 	case VCHR: {
