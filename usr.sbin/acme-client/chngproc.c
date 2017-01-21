@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.8 2017/01/21 08:41:42 benno Exp $ */
+/*	$Id: chngproc.c,v 1.9 2017/01/21 08:49:30 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,7 +35,6 @@ chngproc(int netsock, const char *root)
 	long		  lval;
 	enum chngop	  op;
 	void		 *pp;
-	int		  remote = 0; /* XXX maybe remove */
 
 	if (chroot(root) == -1) {
 		warn("chroot");
@@ -99,37 +98,22 @@ chngproc(int netsock, const char *root)
 		}
 
 		/*
-		 * I use this for testing when letskencrypt is being run
-		 * on machines apart from where I'm hosting the
-		 * challenge directory.
-		 * DON'T DEPEND ON THIS FEATURE.
+		 * Create and write to our challenge file.
+		 * Note: we use file descriptors instead of FILE
+		 * because we want to minimise our pledges.
 		 */
-		if (remote) {
-			puts("RUN THIS IN THE CHALLENGE DIRECTORY");
-			puts("YOU HAVE 20 SECONDS...");
-			printf("doas sh -c \"echo %s > %s\"\n",
-			    fmt, fs[fsz - 1]);
-			sleep(20);
-			puts("TIME'S UP.");
-		} else {
-			/*
-			 * Create and write to our challenge file.
-			 * Note: we use file descriptors instead of FILE
-			 * because we want to minimise our pledges.
-			 */
-			fd = open(fs[fsz - 1], O_WRONLY|O_EXCL|O_CREAT, 0444);
-			if (-1 == fd) {
-				warn("%s", fs[fsz - 1]);
-				goto out;
-			} if (-1 == write(fd, fmt, strlen(fmt))) {
-				warn("%s", fs[fsz - 1]);
-				goto out;
-			} else if (-1 == close(fd)) {
-				warn("%s", fs[fsz - 1]);
-				goto out;
-			}
-			fd = -1;
+		fd = open(fs[fsz - 1], O_WRONLY|O_EXCL|O_CREAT, 0444);
+		if (-1 == fd) {
+			warn("%s", fs[fsz - 1]);
+			goto out;
+		} if (-1 == write(fd, fmt, strlen(fmt))) {
+			warn("%s", fs[fsz - 1]);
+			goto out;
+		} else if (-1 == close(fd)) {
+			warn("%s", fs[fsz - 1]);
+			goto out;
 		}
+		fd = -1;
 
 		free(th);
 		free(fmt);
