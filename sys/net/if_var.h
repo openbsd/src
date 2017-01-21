@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.78 2017/01/06 14:01:19 rzalamena Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.79 2017/01/21 01:32:19 patrick Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ struct ifnet {				/* and the entries */
 #define if_carpdev	if_carp_ptr.carp_d
 	unsigned int if_index;		/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_watchdog called */
-	short	if_flags;		/* up/down, broadcast, etc. */
+	unsigned short if_flags;	/* up/down, broadcast, etc. */
 	int	if_xflags;		/* extra softnet flags */
 	struct	if_data if_data;	/* stats and other data about if */
 	u_int32_t if_hardmtu;		/* maximum MTU device supports */
