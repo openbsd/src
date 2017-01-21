@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.3 2016/12/20 22:19:08 krw Exp $	*/
+/*	$OpenBSD: db.c,v 1.4 2017/01/21 08:18:53 krw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ dbopen(const char *fname, int flags, int mode, DBTYPE type,
 
 #define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
 #define	USE_OPEN_FLAGS							\
-	(O_CREAT | O_EXCL | O_EXLOCK | O_NOFOLLOW | O_NONBLOCK | 	\
+	(O_CREAT | O_EXCL | O_EXLOCK | O_NOFOLLOW | O_NONBLOCK |	\
 	 O_RDONLY | O_RDWR | O_SHLOCK | O_SYNC | O_TRUNC)
 
 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)

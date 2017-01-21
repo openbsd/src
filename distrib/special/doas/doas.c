@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.2 2016/12/15 20:32:44 krw Exp $ */
+/* $OpenBSD: doas.c,v 1.3 2017/01/21 08:18:53 krw Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -97,7 +97,7 @@ main(int argc, char **argv)
 	if (setgroups(1, groups) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		err(1, "failed to change user"); 
+		err(1, "failed to change user");
 
 	execvp(cmd, argv);
 	if (errno == ENOENT)
