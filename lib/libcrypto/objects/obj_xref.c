@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_xref.c,v 1.7 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: obj_xref.c,v 1.8 2017/01/21 04:44:43 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -68,8 +68,24 @@ sig_cmp(const nid_triple *a, const nid_triple *b)
 	return a->sign_id - b->sign_id;
 }
 
-DECLARE_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
+static int sig_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int sig_cmp(nid_triple const *, nid_triple const *);
+static nid_triple *OBJ_bsearch_sig(nid_triple *key, nid_triple const *base, int num);
+
+static int
+sig_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	nid_triple const *a = a_;
+	nid_triple const *b = b_;
+	return sig_cmp(a, b);
+}
+
+static nid_triple *
+OBJ_bsearch_sig(nid_triple *key, nid_triple const *base, int num)
+{
+	return (nid_triple *)OBJ_bsearch_(key, base, num, sizeof(nid_triple),
+	    sig_cmp_BSEARCH_CMP_FN);
+}
 
 static int
 sig_sk_cmp(const nid_triple * const *a, const nid_triple * const *b)
@@ -77,7 +93,9 @@ sig_sk_cmp(const nid_triple * const *a, const nid_triple * const *b)
 	return (*a)->sign_id - (*b)->sign_id;
 }
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, sigx);
+static int sigx_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int sigx_cmp(const nid_triple * const *, const nid_triple * const *);
+static const nid_triple * *OBJ_bsearch_sigx(const nid_triple * *key, const nid_triple * const *base, int num);
 
 static int
 sigx_cmp(const nid_triple * const *a, const nid_triple * const *b)
@@ -90,7 +108,21 @@ sigx_cmp(const nid_triple * const *a, const nid_triple * const *b)
 	return (*a)->pkey_id - (*b)->pkey_id;
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, sigx);
+
+static int
+sigx_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	const nid_triple * const *a = a_;
+	const nid_triple * const *b = b_;
+	return sigx_cmp(a, b);
+}
+
+static const nid_triple * *
+OBJ_bsearch_sigx(const nid_triple * *key, const nid_triple * const *base, int num)
+{
+	return (const nid_triple * *)OBJ_bsearch_(key, base, num, sizeof(const nid_triple *),
+	    sigx_cmp_BSEARCH_CMP_FN);
+}
 
 int
 OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)

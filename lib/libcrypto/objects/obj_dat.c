@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.37 2016/12/22 16:57:38 inoguchi Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.38 2017/01/21 04:44:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,9 +72,15 @@
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
 #include "obj_dat.h"
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn);
-DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln);
-DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj);
+static int sn_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int sn_cmp(const ASN1_OBJECT * const *, unsigned int const *);
+static unsigned int *OBJ_bsearch_sn(const ASN1_OBJECT * *key, unsigned int const *base, int num);
+static int ln_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int ln_cmp(const ASN1_OBJECT * const *, unsigned int const *);
+static unsigned int *OBJ_bsearch_ln(const ASN1_OBJECT * *key, unsigned int const *base, int num);
+static int obj_cmp_BSEARCH_CMP_FN(const void *, const void *);
+static int obj_cmp(const ASN1_OBJECT * const *, unsigned int const *);
+static unsigned int *OBJ_bsearch_obj(const ASN1_OBJECT * *key, unsigned int const *base, int num);
 
 #define ADDED_DATA	0
 #define ADDED_SNAME	1
@@ -95,14 +101,42 @@ static int sn_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
 	return (strcmp((*a)->sn, nid_objs[*b].sn));
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn);
+
+static int
+sn_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	const ASN1_OBJECT * const *a = a_;
+	unsigned int const *b = b_;
+	return sn_cmp(a, b);
+}
+
+static unsigned int *
+OBJ_bsearch_sn(const ASN1_OBJECT * *key, unsigned int const *base, int num)
+{
+	return (unsigned int *)OBJ_bsearch_(key, base, num, sizeof(unsigned int),
+	    sn_cmp_BSEARCH_CMP_FN);
+}
 
 static int ln_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
 {
 	return (strcmp((*a)->ln, nid_objs[*b].ln));
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln);
+
+static int
+ln_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	const ASN1_OBJECT * const *a = a_;
+	unsigned int const *b = b_;
+	return ln_cmp(a, b);
+}
+
+static unsigned int *
+OBJ_bsearch_ln(const ASN1_OBJECT * *key, unsigned int const *base, int num)
+{
+	return (unsigned int *)OBJ_bsearch_(key, base, num, sizeof(unsigned int),
+	    ln_cmp_BSEARCH_CMP_FN);
+}
 
 static unsigned long
 added_obj_hash(const ADDED_OBJ *ca)
@@ -400,7 +434,21 @@ obj_cmp(const ASN1_OBJECT * const *ap, const unsigned int *bp)
 	return (memcmp(a->data, b->data, a->length));
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj);
+
+static int
+obj_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	const ASN1_OBJECT * const *a = a_;
+	unsigned int const *b = b_;
+	return obj_cmp(a, b);
+}
+
+static unsigned int *
+OBJ_bsearch_obj(const ASN1_OBJECT * *key, unsigned int const *base, int num)
+{
+	return (unsigned int *)OBJ_bsearch_(key, base, num, sizeof(unsigned int),
+	    obj_cmp_BSEARCH_CMP_FN);
+}
 
 int
 OBJ_obj2nid(const ASN1_OBJECT *a)
