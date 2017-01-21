@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2017/01/21 12:59:06 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.14 2017/01/21 13:16:40 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -879,13 +879,7 @@ authority_find(struct acme_conf *c, char *s)
 struct authority_c *
 authority_find0(struct acme_conf *c)
 {
-	struct authority_c	*a, *b;
-	a = b = NULL;
-
-	TAILQ_FOREACH(a, &c->authority_list, entry)
-	    b = a;
-
-	return (b);
+	return (TAILQ_FIRST(&c->authority_list));
 }
 
 struct domain_c *
