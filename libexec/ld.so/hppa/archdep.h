@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.13 2017/01/20 10:40:30 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.14 2017/01/21 01:15:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -39,13 +39,6 @@
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"
-
-static inline void *
-_dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
-{
-	return((void *)_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
-	    flags, fd, 0, offset));
-}
 
 
 static inline void

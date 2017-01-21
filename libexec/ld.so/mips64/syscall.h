@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.25 2016/08/28 06:15:32 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.26 2017/01/21 01:15:00 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -39,7 +39,7 @@
 
 int	_dl_close(int);
 __dead
-int	_dl_exit(int);
+void	_dl_exit(int);
 int	_dl_fstat(int, struct stat *);
 int	_dl_getcwd(char *, size_t);
 ssize_t	_dl_getdents(int, char *, size_t);
@@ -61,8 +61,8 @@ int	_dl_sendsyslog(const char *, size_t, int);
 static inline void *
 _dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
-	return((void *)_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
-	    flags, fd, 0, offset));
+	return (void *)_dl__syscall(SYS_mmap, addr, len, prot,
+	    flags, fd, 0, offset);
 }
 
 #endif /*__DL_SYSCALL_H__*/
