@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2016/11/08 19:04:48 natano Exp $
+#	$OpenBSD: Makefile,v 1.26 2017/01/21 00:46:32 guenther Exp $
 
 OBJS=		crt0.o gcrt0.o
 OBJS+=		crtbegin.o crtend.o
@@ -33,6 +33,13 @@ PICFLAG=
 PICFLAG=	-fPIC
 .endif
 
+RCFLAGS=-DRCRT0
+# amd64 can access the stack protector before relocation has occurred.
+# Other archs aren't so lucky
+.if ${MACHINE_ARCH} != "amd64"
+RCFLAGS+=-fno-stack-protector 
+.endif
+
 all: ${OBJS}
 
 crt0.o: crt0.c
@@ -48,8 +55,8 @@ gcrt0.o: crt0.c
 	@rm -f ${.TARGET}.o
 
 rcrt0.o: crt0.c
-	@echo ${COMPILE.c} -DRCRT0 -fno-stack-protector ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} -DRCRT0 -fno-stack-protector ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} ${RCFLAGS} ${.CURDIR}/crt0.c -o ${.TARGET}
+	@${COMPILE.c} ${RCFLAGS} ${.CURDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
