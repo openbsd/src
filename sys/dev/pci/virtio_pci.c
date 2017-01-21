@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.16 2017/01/13 14:37:32 reyk Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.17 2017/01/21 11:29:52 reyk Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/pci/virtioreg.h>
-#include <dev/pci/virtiovar.h>
+#include <dev/pv/virtioreg.h>
+#include <dev/pv/virtiovar.h>
 
 /*
  * XXX: Before being used on big endian arches, the access to config registers

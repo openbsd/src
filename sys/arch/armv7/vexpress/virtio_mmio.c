@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.5 2016/08/06 00:30:47 jsg Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.6 2017/01/21 11:29:52 reyk Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -34,8 +34,8 @@
 #include <sys/device.h>
 #include <sys/mutex.h>
 
-#include <dev/pci/virtioreg.h>
-#include <dev/pci/virtiovar.h>
+#include <dev/pv/virtioreg.h>
+#include <dev/pv/virtiovar.h>
 
 #include <machine/fdt.h>
 #include <armv7/armv7/armv7var.h>
