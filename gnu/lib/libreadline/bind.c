@@ -381,7 +381,7 @@ rl_translate_keyseq (seq, array, len)
 		  array[l++] = (seq[i] == '?') ? RUBOUT : CTRL (_rl_to_upper (seq[i]));
 		}
 	      continue;
-	    }	      
+	    }
 
 	  /* Translate other backslash-escaped characters.  These are the
 	     same escape sequences that bash's `echo' and `printf' builtins
@@ -523,12 +523,12 @@ _rl_untranslate_macro_value (seq)
 	  c = _rl_to_lower (UNCTRL (c));
 	}
       else if (c == RUBOUT)
- 	{
- 	  *r++ = '\\';
- 	  *r++ = 'C';
- 	  *r++ = '-';
- 	  c = '?';
- 	}
+	{
+	  *r++ = '\\';
+	  *r++ = 'C';
+	  *r++ = '-';
+	  c = '?';
+	}
 
       if (c == ESC)
 	{
@@ -738,7 +738,7 @@ _rl_read_init_file (filename, include_level)
 
   if (buffer == 0)
     return (errno);
-  
+
   if (include_level == 0 && filename != last_readline_init_file)
     {
       FREE (last_readline_init_file);
@@ -800,7 +800,7 @@ _rl_init_file_error (msg)
 
 /* **************************************************************** */
 /*								    */
-/*			Parser Directives       		    */
+/*			Parser Directives			    */
 /*								    */
 /* **************************************************************** */
 
@@ -962,7 +962,7 @@ parser_include (args)
 
   return r;
 }
-  
+
 /* Associate textual names with actual functions. */
 static struct {
   const char *name;
@@ -1525,7 +1525,7 @@ sv_isrchterm (value)
   free (v);
   return 0;
 }
-      
+
 /* Return the character which matches NAME.
    For example, `Space' returns ' '. */
 
@@ -1602,7 +1602,7 @@ rl_get_keymap_name (map)
       return ((char *)keymap_names[i].name);
   return ((char *)NULL);
 }
-  
+
 void
 rl_set_keymap (map)
      Keymap map;
@@ -1828,7 +1828,7 @@ rl_invoking_keyseqs_in_map (function, map)
 		    keyname[0] = (char) key;
 		    keyname[1] = '\0';
 		  }
-		
+
 		strlcat (keyname, seqs[i], len);
 		free (seqs[i]);
 

@@ -82,7 +82,7 @@ static int tcap_initialized;
 
 #if !defined (__linux__)
 #  if defined (__EMX__) || defined (NEED_EXTERN_PC)
-extern 
+extern
 #  endif /* __EMX__ || NEED_EXTERN_PC */
 char PC, *BC, *UP;
 #endif /* __linux__ */
@@ -280,7 +280,7 @@ rl_get_screen_size (rows, cols)
   if (cols)
     *cols = _rl_screenwidth;
 }
-     
+
 void
 rl_resize_terminal ()
 {
@@ -610,7 +610,7 @@ rl_ding ()
 
 /* **************************************************************** */
 /*								    */
-/*	 	Controlling the Meta Key and Keypad		    */
+/*		Controlling the Meta Key and Keypad		    */
 /*								    */
 /* **************************************************************** */
 
@@ -637,7 +637,7 @@ _rl_control_keypad (on)
 
 /* **************************************************************** */
 /*								    */
-/*	 		Controlling the Cursor			    */
+/*			Controlling the Cursor			    */
 /*								    */
 /* **************************************************************** */
 

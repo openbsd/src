@@ -261,7 +261,7 @@ rl_compignore_func_t *rl_ignore_some_completions_function = (rl_compignore_func_
    and a pointer to the quoting character to be used, which the function can
    reset if desired. */
 rl_quote_func_t *rl_filename_quoting_function = rl_quote_filename;
-         
+
 /* Function to call to remove quoting characters from a filename.  Called
    before completion is attempted, so the embedded quotes do not interfere
    with matching names in the file system.  Readline doesn't do anything
@@ -557,7 +557,7 @@ print_filename (to_print, full_pathname)
     {
       PUTX (*s);
     }
-#else  
+#else
   char *s, c, *new_full_pathname;
   int extension_char;
 
@@ -697,7 +697,7 @@ _rl_find_completion_word (fp, dp)
 	      else if (quote_char == '"')
 		found_quote |= RL_QF_DOUBLE_QUOTE;
 	      else
-		found_quote |= RL_QF_OTHER_QUOTE;      
+		found_quote |= RL_QF_OTHER_QUOTE;
 	    }
 	}
     }
@@ -809,7 +809,7 @@ gen_completion_matches (text, start, end, our_func, found_quote, quote_char)
 
   matches = rl_completion_matches (text, our_func);
   FREE (temp);
-  return matches;  
+  return matches;
 }
 
 /* Filter out duplicates in MATCHES.  This frees up the strings in
@@ -1212,7 +1212,7 @@ display_matches (matches)
       (*rl_completion_display_matches_hook) (matches, len, max);
       return;
     }
-	
+
   /* If there are many items, then ask the user if she really wants to
      see them all. */
   if (len >= rl_completion_query_items)
@@ -1671,7 +1671,7 @@ rl_username_completion_function (text, state)
     }
   else
     {
-      int len = 2 + strlen(entry->pw_name);	    
+      int len = 2 + strlen(entry->pw_name);
       value = (char *)xmalloc (len);
 
       *value = *text;
@@ -1741,7 +1741,7 @@ rl_filename_completion_function (text, state)
       /* searches from current directory on the drive */
       else if (ISALPHA ((unsigned char)dirname[0]) && dirname[1] == ':')
         {
-	  /* XXX DOS strlcpy anyone? */	
+	  /* XXX DOS strlcpy anyone? */
           strlcpy (filename, dirname + 2, filename_len);
           dirname[2] = '\0';
         }
@@ -1854,7 +1854,7 @@ rl_filename_completion_function (text, state)
       /* dirname && (strcmp (dirname, ".") != 0) */
       if (dirname && (dirname[0] != '.' || dirname[1]))
 	{
-	  int templen;	
+	  int templen;
 	  if (rl_complete_with_tilde_expansion && *users_dirname == '~')
 	    {
 	      dirlen = strlen (dirname);
@@ -1959,12 +1959,12 @@ rl_menu_complete (count, ignore)
 
       if (matches == 0 || postprocess_matches (&matches, matching_filenames) == 0)
 	{
-    	  rl_ding ();
+	  rl_ding ();
 	  FREE (matches);
 	  matches = (char **)0;
 	  FREE (orig_text);
 	  orig_text = (char *)0;
-    	  completion_changed_buffer = 0;
+	  completion_changed_buffer = 0;
           return (0);
 	}
 
@@ -1978,7 +1978,7 @@ rl_menu_complete (count, ignore)
      rl_line_buffer[orig_start] and rl_line_buffer[rl_point] with
      matches[match_list_index], and add any necessary closing char. */
 
-  if (matches == 0 || match_list_size == 0) 
+  if (matches == 0 || match_list_size == 0)
     {
       rl_ding ();
       FREE (matches);

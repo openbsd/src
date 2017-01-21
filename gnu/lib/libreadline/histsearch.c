@@ -68,7 +68,7 @@ history_search_internal (string, direction, anchored)
   register char *line;
   register int line_index;
   int string_len;
-  HIST_ENTRY **the_history; 	/* local */
+  HIST_ENTRY **the_history;	/* local */
 
   i = history_offset;
   reverse = (direction < 0);

@@ -54,7 +54,7 @@
    things to handle at once, and dispatches them via select().  Call
    rl_callback_handler_install() with the prompt and a function to call
    whenever a complete line of input is ready.  The user must then
-   call rl_callback_read_char() every time some input is available, and 
+   call rl_callback_read_char() every time some input is available, and
    rl_callback_read_char() will call the user's function with the complete
    text read in at each end of line.  The terminal is kept prepped and
    signals handled all the time, except during calls to the user's function. */

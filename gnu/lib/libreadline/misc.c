@@ -323,7 +323,7 @@ rl_replace_from_history (entry, flags)
       rl_mark = rl_end;
     }
 #endif
-}  
+}
 
 /* **************************************************************** */
 /*								    */

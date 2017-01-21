@@ -91,7 +91,7 @@ static int signals_set_flag;
 static int sigwinch_set_flag;
 
 /* **************************************************************** */
-/*					        		    */
+/*								    */
 /*			   Signal Handling                          */
 /*								    */
 /* **************************************************************** */
@@ -378,7 +378,7 @@ rl_reset_after_signal ()
 /* Free up the readline variable line state for the current line (undo list,
    any partial history entry, any keyboard macros in progress, and any
    numeric arguments in process) after catching a signal, before calling
-   rl_cleanup_after_signal(). */ 
+   rl_cleanup_after_signal(). */
 void
 rl_free_line_state ()
 {

@@ -35,7 +35,7 @@ savestring (s)
 	char * cp;
 	cp = strdup(s);
 	if (cp == NULL) {
-		fprintf (stderr, "savestring: out of virtual memory\n"); 
+		fprintf (stderr, "savestring: out of virtual memory\n");
 		exit (2);
 	}
 	return(cp);

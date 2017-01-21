@@ -83,7 +83,7 @@ KEYMAP_ENTRY_ARRAY emacs_standard_keymap = {
   { ISFUNC, rl_insert },		/* - */
   { ISFUNC, rl_insert },		/* . */
   { ISFUNC, rl_insert },		/* / */
-	
+
 	  /* Regular digits. */
   { ISFUNC, rl_insert },		/* 0 */
   { ISFUNC, rl_insert },		/* 1 */
@@ -329,7 +329,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, rl_vi_editing_mode },	/* Meta-Control-j */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-Control-k */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-Control-l */
-  { ISFUNC, rl_vi_editing_mode }, 	/* Meta-Control-m */
+  { ISFUNC, rl_vi_editing_mode },	/* Meta-Control-m */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-Control-n */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-Control-o */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-Control-p */
@@ -364,21 +364,21 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, rl_insert_completions },	/* Meta-* */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-+ */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-, */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-- */
+  { ISFUNC, rl_digit_argument },	/* Meta-- */
   { ISFUNC, rl_yank_last_arg},		/* Meta-. */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-/ */
 
   /* Regular digits. */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-0 */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-1 */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-2 */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-3 */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-4 */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-5 */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-6 */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-7 */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-8 */
-  { ISFUNC, rl_digit_argument }, 	/* Meta-9 */
+  { ISFUNC, rl_digit_argument },	/* Meta-0 */
+  { ISFUNC, rl_digit_argument },	/* Meta-1 */
+  { ISFUNC, rl_digit_argument },	/* Meta-2 */
+  { ISFUNC, rl_digit_argument },	/* Meta-3 */
+  { ISFUNC, rl_digit_argument },	/* Meta-4 */
+  { ISFUNC, rl_digit_argument },	/* Meta-5 */
+  { ISFUNC, rl_digit_argument },	/* Meta-6 */
+  { ISFUNC, rl_digit_argument },	/* Meta-7 */
+  { ISFUNC, rl_digit_argument },	/* Meta-8 */
+  { ISFUNC, rl_digit_argument },	/* Meta-9 */
 
   /* A little more punctuation. */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-: */
@@ -428,7 +428,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   /* Lowercase alphabet. */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-a */
   { ISFUNC, rl_backward_word },		/* Meta-b */
-  { ISFUNC, rl_capitalize_word }, 	/* Meta-c */
+  { ISFUNC, rl_capitalize_word },	/* Meta-c */
   { ISFUNC, rl_kill_word },		/* Meta-d */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-e */
   { ISFUNC, rl_forward_word },		/* Meta-f */
@@ -445,7 +445,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-q */
   { ISFUNC, rl_revert_line },		/* Meta-r */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-s */
-  { ISFUNC, rl_transpose_words }, 	/* Meta-t */
+  { ISFUNC, rl_transpose_words },	/* Meta-t */
   { ISFUNC, rl_upcase_word },		/* Meta-u */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-v */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-w */

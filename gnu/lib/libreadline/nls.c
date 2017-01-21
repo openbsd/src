@@ -50,7 +50,7 @@
 #include "rlshell.h"
 #include "rlprivate.h"
 
-#if !defined (HAVE_SETLOCALE)    
+#if !defined (HAVE_SETLOCALE)
 /* A list of legal values for the LANG or LC_CTYPE environment variables.
    If a locale name in this list is the value for the LC_ALL, LC_CTYPE,
    or LANG environment variable (using the first of those with a value),

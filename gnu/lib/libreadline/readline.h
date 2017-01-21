@@ -309,7 +309,7 @@ extern rl_command_func_t *rl_function_of_keyseq PARAMS((const char *, Keymap, in
 extern void rl_list_funmap_names PARAMS((void));
 extern char **rl_invoking_keyseqs_in_map PARAMS((rl_command_func_t *, Keymap));
 extern char **rl_invoking_keyseqs PARAMS((rl_command_func_t *));
- 
+
 extern void rl_function_dumper PARAMS((int));
 extern void rl_macro_dumper PARAMS((int));
 extern void rl_variable_dumper PARAMS((int));
@@ -411,7 +411,7 @@ extern int rl_clear_signals PARAMS((void));
 extern void rl_cleanup_after_signal PARAMS((void));
 extern void rl_reset_after_signal PARAMS((void));
 extern void rl_free_line_state PARAMS((void));
- 
+
 extern int rl_set_paren_blink_timeout PARAMS((int));
 
 /* Undocumented. */
@@ -524,7 +524,7 @@ extern rl_hook_func_t *rl_startup_hook;
    readline_internal_setup () returns and readline_internal starts
    reading input characters. */
 extern rl_hook_func_t *rl_pre_input_hook;
-      
+
 /* The address of a function to call periodically while Readline is
    awaiting character input, or NULL, for no event handling. */
 extern rl_hook_func_t *rl_event_hook;
@@ -606,7 +606,7 @@ extern const char *rl_basic_word_break_characters;
 extern const char *rl_completer_word_break_characters;
 
 /* List of characters which can be used to quote a substring of the line.
-   Completion occurs on the entire substring, and within the substring   
+   Completion occurs on the entire substring, and within the substring
    rl_completer_word_break_characters are treated as any other character,
    unless they also appear within this list. */
 extern const char *rl_completer_quote_characters;

@@ -314,7 +314,7 @@ rl_forward_char (count, key)
   return (rl_forward_byte (count, key));
 }
 #endif /* !HANDLE_MULTIBYTE */
-  
+
 /* Backwards compatibility. */
 int
 rl_forward (count, key)
@@ -679,7 +679,7 @@ _rl_insert_char (count, c)
 	}
     }
 #endif /* HANDLE_MULTIBYTE */
-	  
+
   /* If we can optimize, then do it.  But don't let people crash
      readline because of extra large arguments. */
   if (count > 1 && count <= 1024)
@@ -826,7 +826,7 @@ rl_insert (count, c)
      int count, c;
 {
   return (rl_insert_mode == RL_IM_INSERT ? _rl_insert_char (count, c)
-  					 : _rl_overwrite_char (count, c));
+					 : _rl_overwrite_char (count, c));
 }
 
 /* Insert the next typed character verbatim. */
@@ -848,7 +848,7 @@ rl_quoted_insert (count, key)
   _rl_restore_tty_signals ();
 #endif
 
-  return (_rl_insert_char (count, c));  
+  return (_rl_insert_char (count, c));
 }
 
 /* Insert a tab character. */
@@ -943,7 +943,7 @@ _rl_overwrite_rubout (count, key)
 
   return 0;
 }
-  
+
 /* Rubout the character behind point. */
 int
 rl_rubout (count, key)
@@ -1067,7 +1067,7 @@ rl_delete (count, key)
 	new_point = _rl_find_next_mbchar (rl_line_buffer, rl_point, 1, MB_FIND_NONZERO);
       else
 	new_point = rl_point + 1;
-	
+
       return (rl_delete_text (rl_point, new_point));
     }
 }
@@ -1075,7 +1075,7 @@ rl_delete (count, key)
 /* Delete the character under the cursor, unless the insertion
    point is at the end of the line, in which case the character
    behind the cursor is deleted.  COUNT is obeyed and may be used
-   to delete forward or backward that many characters. */      
+   to delete forward or backward that many characters. */
 int
 rl_rubout_or_delete (count, key)
      int count, key;
@@ -1084,7 +1084,7 @@ rl_rubout_or_delete (count, key)
     return (_rl_rubout_char (count, key));
   else
     return (rl_delete (count, key));
-}  
+}
 
 /* Delete all spaces and tabs around point. */
 int

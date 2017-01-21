@@ -190,7 +190,7 @@ static int prompt_last_screen_line;
 	\002 (^B) end non-visible characters
    all characters except \001 and \002 (following a \001) are copied to
    the returned string; all characters except those between \001 and
-   \002 are assumed to be `visible'. */	
+   \002 are assumed to be `visible'. */
 
 static char *
 expand_prompt (pmt, lp, lip, niflp)
@@ -373,7 +373,7 @@ init_line_structures (minsize)
       inv_lbreaks[0] = vis_lbreaks[0] = 0;
     }
 }
-  
+
 /* Basic redisplay algorithm. */
 void
 rl_redisplay ()
@@ -491,7 +491,7 @@ rl_redisplay ()
 	  } \
       } while (0)
 
-#if defined (HANDLE_MULTIBYTE)	  
+#if defined (HANDLE_MULTIBYTE)
 #define CHECK_LPOS() \
       do { \
 	lpos++; \
@@ -1121,7 +1121,7 @@ update_line (old, new, current_line, omax, nmax, inv_botlin)
 	}
     }
 
-      
+
   /* Find first difference. */
 #if defined (HANDLE_MULTIBYTE)
   if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
@@ -1399,7 +1399,7 @@ update_line (old, new, current_line, omax, nmax, inv_botlin)
 	    col_lendiff = lendiff;
 
 	  if (col_lendiff)
-	    {	  
+	    {
 	      if (_rl_term_autowrap && current_line < inv_botlin)
 		space_to_eol (col_lendiff);
 	      else
@@ -2027,7 +2027,7 @@ redraw_prompt (t)
   prompt_last_invisible = oldlast;
   prompt_invis_chars_first_line = oldninvis;
 }
-      
+
 /* Redisplay the current line after a SIGWINCH is received. */
 void
 _rl_redisplay_after_sigwinch ()

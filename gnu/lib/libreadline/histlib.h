@@ -37,12 +37,12 @@
 #if !defined (savestring)
 #include <stdio.h>
 static char *
-xstrdup(const char *s) 
+xstrdup(const char *s)
 {
 	char * cp;
 	cp = strdup(s);
 	if (cp == NULL) {
-		fprintf (stderr, "xstrdup: out of virtual memory\n"); 
+		fprintf (stderr, "xstrdup: out of virtual memory\n");
 		exit (2);
 	}
 	return(cp);

@@ -109,7 +109,7 @@ history_filename (filename)
 
   if (return_val)
     return (return_val);
-  
+
   home = sh_get_env_value ("HOME");
 
   if (home == 0 || *home == '\0') {
@@ -425,11 +425,11 @@ mmap_error:
 	close (file);
 	return rv;
       }
-#else    
+#else
     buffer = (char *)malloc (buffer_size);
     if (buffer == 0)
       {
-      	rv = errno;
+	rv = errno;
 	FREE (output);
 	close (file);
 	return rv;
