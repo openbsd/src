@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.22 2017/01/21 08:51:00 florian Exp $ */
+/*	$Id: main.c,v 1.23 2017/01/21 08:52:30 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,7 +40,6 @@ main(int argc, char *argv[])
 	char		 *conffile = CONF_FILE;
 	int		  key_fds[2], acct_fds[2], chng_fds[2], cert_fds[2];
 	int		  file_fds[2], dns_fds[2], rvk_fds[2];
-	int		  backup = 0;
 	int		  force = 0;
 	int		  c, rc, revocate = 0;
 	int		  popts = 0;
@@ -54,11 +53,8 @@ main(int argc, char *argv[])
 	struct domain_c		*domain = NULL;
 	struct altname_c	*ac;
 
-	while (-1 != (c = getopt(argc, argv, "bFADrvnf:")))
+	while (-1 != (c = getopt(argc, argv, "FADrvnf:")))
 		switch (c) {
-		case 'b':
-			backup = 1;
-			break;
 		case 'f':
 			if (NULL == (conffile = strdup(optarg)))
 				err(EXIT_FAILURE, "strdup");
@@ -329,7 +325,7 @@ main(int argc, char *argv[])
 		free(alts);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
-		c = fileproc(file_fds[1], backup, certdir);
+		c = fileproc(file_fds[1], certdir);
 		/*
 		 * This is different from the other processes in that it
 		 * can return 2 if the certificates were updated.
@@ -395,6 +391,6 @@ main(int argc, char *argv[])
 	    (2 == c ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr,
-	    "usage: acme-client [-bFADrvn] [-f file] domain\n");
+	    "usage: acme-client [-FADrvn] [-f file] domain\n");
 	return (EXIT_FAILURE);
 }

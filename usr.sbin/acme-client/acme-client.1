@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.15 2017/01/21 08:47:21 benno Exp $
+.\"	$OpenBSD: acme-client.1,v 1.16 2017/01/21 08:52:30 florian Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -22,7 +22,7 @@
 .Nd ACME client
 .Sh SYNOPSIS
 .Nm acme-client
-.Op Fl bFADrvn
+.Op Fl FADrvn
 .Op Fl f Ar configfile
 .Ar domain
 .Sh DESCRIPTION
@@ -33,21 +33,6 @@ Automatic Certificate Management Environment (ACME) client.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl b
-Back up all certificates in the certificate directory.
-This only happens if a remove or replace operation is possible.
-The backups are named
-.Pa cert-NNNNN.pem ,
-.Pa chain-NNNNN.pem ,
-and
-.Pa fullchain-NNNNN.pem ,
-where
-.Li NNNNN
-is the current
-.Ux
-Epoch.
-Any given backup uses the same Epoch time for all three certificates.
-If there are no certificates in place, this option does nothing.
 .It Fl F
 Force updating the certificate signature even if it's too soon.
 .It Fl f Ar configfile

@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.6 2017/01/21 08:41:42 benno Exp $ */
+/*	$Id: extern.h,v 1.7 2017/01/21 08:52:30 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -185,7 +185,7 @@ int		 chngproc(int, const char *);
 int		 dnsproc(int);
 int		 revokeproc(int, const char *,
 			int, int, const char *const *, size_t);
-int		 fileproc(int, int, const char *);
+int		 fileproc(int, const char *);
 int		 keyproc(int, const char *,
 			const char **, size_t, int);
 int		 netproc(int, int, int, int, int, int, int, int,

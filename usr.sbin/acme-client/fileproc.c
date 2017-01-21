@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.6 2016/09/13 17:13:37 deraadt Exp $ */
+/*	$Id: fileproc.c,v 1.7 2017/01/21 08:52:30 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -62,7 +62,7 @@ serialise(const char *tmp, const char *real,
 }
 
 int
-fileproc(int certsock, int backup, const char *certdir)
+fileproc(int certsock, const char *certdir)
 {
 	char		*csr = NULL, *ch = NULL;
 	char		 file[PATH_MAX];
@@ -106,42 +106,6 @@ fileproc(int certsock, int backup, const char *certdir)
 	} else if (FILE__MAX == op) {
 		warnx("unknown operation from certproc");
 		goto out;
-	}
-
-	/*
-	 * If we're backing up, then copy all files (found) by linking
-	 * them to the file followed by the epoch in seconds.
-	 * If we're going to remove, the unlink(2) will cause the
-	 * original to go away.
-	 * If we're going to update, the rename(2) will replace the
-	 * certificate, leaving the backup as the only one.
-	 */
-
-	if (backup) {
-		t = time(NULL);
-		snprintf(file, sizeof(file),
-			"cert-%llu.pem", (unsigned long long)t);
-		if (-1 == link(CERT_PEM, file) && ENOENT != errno) {
-			warnx("%s/%s", certdir, CERT_PEM);
-			goto out;
-		} else
-			dodbg("%s/%s: linked to %s", certdir, CERT_PEM, file);
-
-		snprintf(file, sizeof(file),
-			"chain-%llu.pem", (unsigned long long)t);
-		if (-1 == link(CHAIN_PEM, file) && ENOENT != errno) {
-			warnx("%s/%s", certdir, CHAIN_PEM);
-			goto out;
-		} else
-			dodbg("%s/%s: linked to %s", certdir, CHAIN_PEM, file);
-
-		snprintf(file, sizeof(file),
-			"fullchain-%llu.pem", (unsigned long long)t);
-		if (-1 == link(FCHAIN_PEM, file) && ENOENT != errno) {
-			warnx("%s/%s", certdir, FCHAIN_PEM);
-			goto out;
-		} else
-			dodbg("%s/%s: linked to %s", certdir, FCHAIN_PEM, file);
 	}
 
 	/*
