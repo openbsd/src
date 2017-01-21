@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2017/01/05 13:53:09 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2017/01/21 08:41:42 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -63,7 +63,7 @@ struct authority_c	*conf_new_authority(struct acme_conf *, char *);
 struct domain_c		*conf_new_domain(struct acme_conf *, char *);
 struct keyfile		*conf_new_keyfile(struct acme_conf *, char *);
 void			 clear_config(struct acme_conf *xconf);
-int			 conf_check_file(char *);
+int			 conf_check_file(char *, int);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -215,10 +215,6 @@ authorityoptsl	: AGREEMENT URL STRING {
 			}
 			if ((s = strdup($3)) == NULL)
 				err(EXIT_FAILURE, "strdup");
-			if (!conf_check_file(s)) {
-				free(s);
-				YYERROR;
-			}
 			auth->account = s;
 		}
 		;
@@ -256,6 +252,11 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 			}
 			if ((s = strdup($3)) == NULL)
 				err(EXIT_FAILURE, "strdup");
+			if (!conf_check_file(s,
+			    (conf->opts & ACME_OPT_NEWDKEY))) {
+				free(s);
+				YYERROR;
+			}
 			if (((void *)conf_new_keyfile(conf, s)) == NULL) {
 				free(s);
 				yyerror("domain key file already used");
@@ -264,7 +265,7 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 			domain->key = s;
 		}
 		| DOMAIN CERT STRING {
-			char		*s;
+			char *s;
 			if (domain->cert != NULL) {
 				yyerror("duplicate cert");
 				YYERROR;
@@ -318,6 +319,7 @@ altname		: STRING {
 			}
 			ac->domain = s;
 			LIST_INSERT_HEAD(&domain->altname_list, ac, entry);
+			domain->altname_count++;
 			/*
 			 * XXX we could check if altname is duplicate
 			 * or identical to domain->domain
@@ -602,7 +604,7 @@ nodigits:
 	x != '!' && x != '=' && x != '#' && \
 	x != ','))
 
-	if (isalnum(c) || c == ':' || c == '_' || c == '/') {
+	if (isalnum(c) || c == ':' || c == '_') {
 		do {
 			*p++ = c;
 			if ((unsigned)(p-buf) >= sizeof(buf)) {
@@ -918,7 +920,7 @@ domain_valid(const char *cp)
 }
 
 int
-conf_check_file(char *s)
+conf_check_file(char *s, int dontstat)
 {
 	struct stat st;
 
@@ -926,6 +928,8 @@ conf_check_file(char *s)
 		warnx("%s: not an absolute path", s);
 		return (0);
 	}
+	if (dontstat)
+		return (1);
 	if (stat(s, &st)) {
 		warn("cannot stat %s", s);
 		return (0);

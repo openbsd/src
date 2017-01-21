@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.5 2016/09/01 12:17:00 florian Exp $ */
+/*	$Id: extern.h,v 1.6 2017/01/21 08:41:42 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,6 +16,8 @@
  */
 #ifndef EXTERN_H
 #define EXTERN_H
+
+#include "parse.h"
 
 #define MAX_SERVERS_DNS 8
 
@@ -145,14 +147,6 @@ enum	comm {
 	COMM__MAX
 };
 
-struct authority {
-	char	*name;
-	char	*agreement;
-	char	*caurl;
-};
-
-extern struct authority authorities[];
-
 /*
  * This contains the URI and token of an ACME-issued challenge.
  * A challenge consists of a token, which we must present on the
@@ -187,15 +181,16 @@ __BEGIN_DECLS
  */
 int		 acctproc(int, const char *, int);
 int		 certproc(int, int);
-int		 chngproc(int, const char *, int);
+int		 chngproc(int, const char *);
 int		 dnsproc(int);
 int		 revokeproc(int, const char *,
 			int, int, const char *const *, size_t);
 int		 fileproc(int, int, const char *);
 int		 keyproc(int, const char *,
 			const char **, size_t, int);
-int		 netproc(int, int, int, int, int, int, int, int, int,
-			const char *const *, size_t, const char *);
+int		 netproc(int, int, int, int, int, int, int, int,
+			struct authority_c *, const char *const *,
+			size_t, const char *);
 
 /*
  * Debugging functions.

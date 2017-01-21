@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.h,v 1.1 2016/09/18 20:18:25 benno Exp $ */
+/*	$OpenBSD: parse.h,v 1.2 2017/01/21 08:41:42 benno Exp $ */
 /*
  * Copyright (c) 2016 Sebastian Benoit <benno@openbsd.org>
  *
@@ -38,6 +38,7 @@ struct authority_c {
 struct domain_c {
 	LIST_ENTRY(domain_c)	 entry;
 	LIST_HEAD(, altname_c)	altname_list;
+	int			altname_count;
 	char		       	*domain;
 	char		       	*key;
 	char		       	*cert;
@@ -55,6 +56,8 @@ struct keyfile {
 };
 
 #define ACME_OPT_VERBOSE	0x00000001
+#define ACME_OPT_NEWACCT	0x00000002
+#define ACME_OPT_NEWDKEY	0x00000004
 
 struct acme_conf {
 	int			 opts;

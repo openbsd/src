@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.14 2016/09/18 20:18:25 benno Exp $ */
+/*	$Id: main.c,v 1.15 2017/01/21 08:41:42 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,69 +28,36 @@
 #include "extern.h"
 #include "parse.h"
 
-#define SSL_DIR "/etc/ssl/acme"
-#define SSL_PRIV_DIR "/etc/ssl/acme/private"
-#define ETC_DIR "/etc/acme"
 #define WWW_DIR "/var/www/acme"
-#define PRIVKEY_FILE "privkey.pem"
-
-struct authority authorities[] = {
-#define	DEFAULT_AUTHORITY 0
-	{"letsencrypt",
-	    "https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf",
-	    "https://acme-v01.api.letsencrypt.org/directory"},
-	{"letsencrypt-staging",
-	    "https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf",
-	    "https://acme-staging.api.letsencrypt.org/directory"},
-};
-
-/*
- * Wrap around asprintf(3), which sometimes nullifies the input values,
- * sometimes not, but always returns <0 on error.
- * Returns NULL on failure or the pointer on success.
- */
-static char *
-doasprintf(const char *fmt, ...)
-{
-	int	 c;
-	char	*cp;
-	va_list	 ap;
-
-	va_start(ap, fmt);
-	c = vasprintf(&cp, fmt, ap);
-	va_end(ap);
-	return (c < 0 ? NULL : cp);
-}
+#define CONF_FILE "/etc/acme-client.conf"
 
 int
 main(int argc, char *argv[])
 {
-	const char	 *domain, *agreement = NULL, **alts = NULL;
+	const char	 **alts = NULL;
 	char		 *certdir = NULL, *acctkey = NULL, *chngdir = NULL;
-	char		 *keyfile = NULL;
+	char		 *auth = NULL, *agreement = NULL;
+	char		 *conffile = CONF_FILE;
 	int		  key_fds[2], acct_fds[2], chng_fds[2], cert_fds[2];
 	int		  file_fds[2], dns_fds[2], rvk_fds[2];
-	int		  newacct = 0, remote = 0, backup = 0;
-	int		  force = 0, multidir = 0, newkey = 0;
+	int		  backup = 0;
+	int		  force = 0;
 	int		  c, rc, revocate = 0;
-	int		  authority = DEFAULT_AUTHORITY;
+	int		  popts = 0;
 	pid_t		  pids[COMP__MAX];
 	extern int	  verbose;
 	extern enum comp  proccomp;
 	size_t		  i, altsz, ne;
 
-	while (-1 != (c = getopt(argc, argv, "bFmnNrs:tva:f:c:C:k:")))
+	struct acme_conf	*conf = NULL;
+	struct authority_c	*authority = NULL;
+	struct domain_c		*domain = NULL;
+	struct altname_c	*ac;
+
+	while (-1 != (c = getopt(argc, argv, "bFnNrvf:C:")))
 		switch (c) {
-		case 'a':
-			agreement = optarg;
-			break;
 		case 'b':
 			backup = 1;
-			break;
-		case 'c':
-			free(certdir);
-			if (NULL == (certdir = strdup(optarg)))
-				err(EXIT_FAILURE, "strdup");
 			break;
 		case 'C':
 			free(chngdir);
@@ -98,57 +65,32 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE, "strdup");
 			break;
 		case 'f':
-			free(acctkey);
-			if (NULL == (acctkey = strdup(optarg)))
+			if (NULL == (conffile = strdup(optarg)))
 				err(EXIT_FAILURE, "strdup");
 			break;
 		case 'F':
 			force = 1;
 			break;
-		case 'k':
-			free(keyfile);
-			if (NULL == (keyfile = strdup(optarg)))
-				err(EXIT_FAILURE, "strdup");
-			break;
-		case 'm':
-			multidir = 1;
-			break;
 		case 'n':
-			newacct = 1;
+			popts |= ACME_OPT_NEWACCT;
 			break;
 		case 'N':
-			newkey = 1;
+			popts |= ACME_OPT_NEWDKEY;
 			break;
 		case 'r':
 			revocate = 1;
 			break;
-		case 's':
-			authority = -1;
-			for (i = 0; i < nitems(authorities); i++) {
-				if (strcmp(authorities[i].name, optarg) == 0) {
-					authority = i;
-					break;
-				}
-			}
-			if (-1 == authority)
-				errx(EXIT_FAILURE, "unknown acme authority");
-			break;
-		case 't':
-			/*
-			 / Undocumented feature.
-			 * Don't use it.
-			 */
-			remote = 1;
-			break;
 		case 'v':
 			verbose = verbose ? 2 : 1;
+			popts |= ACME_OPT_VERBOSE;
 			break;
 		default:
 			goto usage;
 		}
 
-	if (NULL == agreement)
-		agreement = authorities[authority].agreement;
+	/* parse config file */
+	if ((conf = parse_config(conffile, popts)) == NULL)
+		exit(EXIT_FAILURE);
 
 	argc -= optind;
 	argv += optind;
@@ -163,9 +105,13 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE, "%s: bad domain syntax", argv[i]);
 	}
 
-	domain = argv[0];
+	if ((domain = domain_find(conf, argv[0])) == NULL)
+		errx(EXIT_FAILURE, "domain %s not found\n", argv[0]);
+
 	argc--;
 	argv++;
+	if (argc != 0)
+		goto usage;
 
 	if (getuid() != 0)
 		errx(EXIT_FAILURE, "must be run as root");
@@ -173,51 +119,54 @@ main(int argc, char *argv[])
 	/*
 	 * Now we allocate our directories and file paths IFF we haven't
 	 * specified them on the command-line.
-	 * If we're in "multidir" (-m) mode, we use our initial domain
-	 * name when specifying the prefixes.
-	 * Otherwise, we put them all in a known location.
 	 */
 
-	if (NULL == certdir)
-		certdir = multidir ?
-			doasprintf(SSL_DIR "/%s", domain) :
-			strdup(SSL_DIR);
-	if (NULL == keyfile)
-		keyfile = multidir ?
-			doasprintf(SSL_PRIV_DIR "/%s/"
-				PRIVKEY_FILE, domain) :
-			strdup(SSL_PRIV_DIR "/" PRIVKEY_FILE);
-	if (NULL == acctkey)
-		acctkey = multidir ?
-			doasprintf(ETC_DIR "/%s/"
-				PRIVKEY_FILE, domain) :
-			strdup(ETC_DIR "/" PRIVKEY_FILE);
+	certdir = domain->cert;
+
+	if ((auth = domain->auth) == NULL) {
+		/* use the first authority from the config as default XXX */
+		authority = authority_find0(conf);
+		if (authority == NULL)
+			errx(EXIT_FAILURE, "no authorities configured\n");
+	} else {
+		authority = authority_find(conf, auth);
+		if (authority == NULL)
+			errx(EXIT_FAILURE, "authority %s not found\n", auth);
+	}
+
+	agreement = authority->agreement;
+	acctkey = authority->account;
+
+	if (NULL == acctkey) {
+		/* XXX replace with existance check in parse.y */
+		err(EXIT_FAILURE, "no account key in config?");
+	}
 	if (NULL == chngdir)
 		chngdir = strdup(WWW_DIR);
 
-	if (NULL == certdir || NULL == keyfile ||
-	    NULL == acctkey || NULL == chngdir)
+	if (NULL == chngdir)
 		err(EXIT_FAILURE, "strdup");
 
 	/*
 	 * Do some quick checks to see if our paths exist.
 	 * This will be done in the children, but we might as well check
 	 * now before the fork.
+	 * XXX maybe use conf_check_file() from parse.y
 	 */
 
 	ne = 0;
 
 	if (-1 == access(certdir, R_OK)) {
-		warnx("%s: -c directory must exist", certdir);
+		warnx("%s: cert directory must exist", certdir);
 		ne++;
 	}
 
-	if (!newkey && -1 == access(keyfile, R_OK)) {
-		warnx("%s: -k file must exist", keyfile);
+	if (!(popts & ACME_OPT_NEWDKEY) && -1 == access(domain->key, R_OK)) {
+		warnx("%s: -k file must exist", domain->key);
 		ne++;
-	} else if (newkey && -1 != access(keyfile, R_OK)) {
-		dodbg("%s: domain key exists (not creating)", keyfile);
-		newkey = 0;
+	} else if ((popts & ACME_OPT_NEWDKEY) && -1 != access(domain->key, R_OK)) {
+		dodbg("%s: domain key exists (not creating)", domain->key);
+		popts &= ~ACME_OPT_NEWDKEY;
 	}
 
 	if (-1 == access(chngdir, R_OK)) {
@@ -225,26 +174,27 @@ main(int argc, char *argv[])
 		ne++;
 	}
 
-	if (!newacct && -1 == access(acctkey, R_OK)) {
+	if (!(popts & ACME_OPT_NEWACCT) && -1 == access(acctkey, R_OK)) {
 		warnx("%s: -f file must exist", acctkey);
 		ne++;
-	} else if (newacct && -1 != access(acctkey, R_OK)) {
+	} else if ((popts & ACME_OPT_NEWACCT) && -1 != access(acctkey, R_OK)) {
 		dodbg("%s: account key exists (not creating)", acctkey);
-		newacct = 0;
+		popts &= ~ACME_OPT_NEWACCT;
 	}
 
 	if (ne > 0)
 		exit(EXIT_FAILURE);
 
 	/* Set the zeroth altname as our domain. */
-
-	altsz = argc + 1;
+	altsz = domain->altname_count + 1;
 	alts = calloc(altsz, sizeof(char *));
 	if (NULL == alts)
 		err(EXIT_FAILURE, "calloc");
-	alts[0] = domain;
-	for (i = 0; i < (size_t)argc; i++)
-		alts[i + 1] = argv[i];
+	alts[0] = domain->domain;
+	i = 1;
+	/* XXX get rid of alts[] later */
+	LIST_FOREACH(ac, &domain->altname_list, entry)
+		alts[i++] = ac->domain;
 
 	/*
 	 * Open channels between our components.
@@ -283,7 +233,7 @@ main(int argc, char *argv[])
 		c = netproc(key_fds[1], acct_fds[1],
 		    chng_fds[1], cert_fds[1],
 		    dns_fds[1], rvk_fds[1],
-		    newacct, revocate, authority,
+		    (popts & ACME_OPT_NEWACCT), revocate, authority,
 		    (const char *const *)alts, altsz,
 		    agreement);
 		free(alts);
@@ -311,8 +261,8 @@ main(int argc, char *argv[])
 		close(chng_fds[0]);
 		close(file_fds[0]);
 		close(file_fds[1]);
-		c = keyproc(key_fds[0], keyfile,
-		    (const char **)alts, altsz, newkey);
+		c = keyproc(key_fds[0], domain->key,
+		    (const char **)alts, altsz, (popts & ACME_OPT_NEWDKEY));
 		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
@@ -333,7 +283,7 @@ main(int argc, char *argv[])
 		close(chng_fds[0]);
 		close(file_fds[0]);
 		close(file_fds[1]);
-		c = acctproc(acct_fds[0], acctkey, newacct);
+		c = acctproc(acct_fds[0], acctkey, (popts & ACME_OPT_NEWACCT));
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -352,7 +302,7 @@ main(int argc, char *argv[])
 		close(rvk_fds[0]);
 		close(file_fds[0]);
 		close(file_fds[1]);
-		c = chngproc(chng_fds[0], chngdir, remote);
+		c = chngproc(chng_fds[0], chngdir);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -447,8 +397,6 @@ main(int argc, char *argv[])
 	    checkexit(pids[COMP_DNS], COMP_DNS) +
 	    checkexit(pids[COMP_REVOKE], COMP_REVOKE);
 
-	free(certdir);
-	free(keyfile);
 	free(acctkey);
 	free(chngdir);
 	free(alts);
@@ -456,11 +404,8 @@ main(int argc, char *argv[])
 	    (2 == c ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr,
-	    "usage: acme-client [-bFmnNrv] [-a agreement] [-C challengedir]\n"
-	    "                   [-c certdir] [-f accountkey] [-k domainkey]\n"
-	    "                   [-s authority] domain [altnames...]\n");
-	free(certdir);
-	free(keyfile);
+	    "usage: acme-client [-bFnNrv] [-C challengedir]\n"
+	    "                   [-f file] domain\n");
 	free(acctkey);
 	free(chngdir);
 	return (EXIT_FAILURE);

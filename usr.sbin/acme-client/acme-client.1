@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.11 2016/09/15 20:44:24 jmc Exp $
+.\"	$OpenBSD: acme-client.1,v 1.12 2017/01/21 08:41:42 benno Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2016 $
+.Dd $Mdocdate: January 21 2017 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -22,15 +22,10 @@
 .Nd ACME client
 .Sh SYNOPSIS
 .Nm acme-client
-.Op Fl bFmNnrv
-.Op Fl a Ar agreement
+.Op Fl bFNnrv
 .Op Fl C Ar challengedir
-.Op Fl c Ar certdir
-.Op Fl f Ar accountkey
-.Op Fl k Ar domainkey
-.Op Fl s Ar authority
+.Op Fl f Ar configfile
 .Ar domain
-.Op Ar altnames
 .Sh DESCRIPTION
 The
 .Nm
@@ -39,8 +34,6 @@ Automatic Certificate Management Environment (ACME) client.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar agreement
-Use an alternative user agreement URL.
 .It Fl b
 Back up all certificates in the certificate directory.
 This only happens if a remove or replace operation is possible.
@@ -58,67 +51,21 @@ Any given backup uses the same Epoch time for all three certificates.
 If there are no certificates in place, this option does nothing.
 .It Fl C Ar challengedir
 The directory to register challenges.
-.It Fl c Ar certdir
-The directory to store public certificates.
 .It Fl F
 Force updating the certificate signature even if it's too soon.
-.It Fl f Ar accountkey
-The account private key.
-This was either made with a previous client or with
-.Fl n .
-.It Fl k Ar domainkey
-The private key for the domain.
-This may also be created with
-.Fl N .
-.It Fl m
-Append
-.Ar domain
-to all default paths except the challenge path
-.Pq i.e. those that are overridden by Fl c , k , f .
-Thus,
-.Ar foo.com
-as the initial domain would make the default domain private key into
-.Pa /etc/ssl/acme/private/foo.com/privkey.pem .
-This is useful in setups with multiple domain sets.
+.It Fl f Ar configfile
+Specify an alternative configuration file.
 .It Fl N
 Create a new RSA domain key if one does not already exist.
 .It Fl n
 Create a new RSA account key if one does not already exist.
 .It Fl r
 Revoke the X509 certificate found in the certificates.
-.It Fl s Ar authority
-ACME
-.Ar authority
-to talk to.
-Currently the following authorities are available:
-.Pp
-.Bl -tag -width "letsencrypt-staging" -compact
-.It Cm letsencrypt
-Let's Encrypt authority
-.It Cm letsencrypt-staging
-Let's Encrypt staging authority
-.El
-.Pp
-The default is
-.Cm letsencrypt .
 .It Fl v
 Verbose operation.
 Specify twice to also trace communication and data transfers.
 .It Ar domain
 The domain name.
-The only difference between this and
-.Ar altnames
-is that it's put into the certificate's
-.Li CN
-field and it uses the
-.Qq main
-domain when specifying
-.Fl m .
-.It Ar altnames
-Alternative names
-.Pq Dq SAN
-for the domain name.
-The number of SAN entries is limited to 100 or so.
 .El
 .Pp
 Public certificates are by default placed in
@@ -175,7 +122,7 @@ as in the
 .Sx Challenges
 section:
 .Pp
-.Dl # acme-client -vNn foo.com www.foo.com smtp.foo.com
+.Dl # acme-client -vNn www.foo.com
 .Pp
 A daily
 .Xr cron 8
@@ -183,7 +130,7 @@ job can renew the certificates:
 .Bd -literal -offset indent
 #! /bin/sh
 
-acme-client foo.com www.foo.com smtp.foo.com
+acme-client www.foo.com
 
 if [ $? -eq 0 ]
 then
