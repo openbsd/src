@@ -562,7 +562,7 @@ reset_neighbor_state(vifi_t vifi, u_int32_t addr)
 
 		g->gt_prsent_timer = 0;
 		g->gt_grftsnt = 0;
-		while (st = g->gt_srctbl) {
+		while ((st = g->gt_srctbl)) {
 		    g->gt_srctbl = st->st_next;
 		    k_del_rg(st->st_origin, g);
 		    kroutes--;
