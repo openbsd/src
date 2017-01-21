@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.8 2017/01/19 10:16:22 reyk Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.9 2017/01/21 12:45:41 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <dev/pci/virtioreg.h>
+#include <dev/pv/virtioreg.h>
 
 #define VIRTQUEUE_ALIGN(n)      (((n)+(VIRTIO_PAGE_SIZE-1))&    \
 	~(VIRTIO_PAGE_SIZE-1))
