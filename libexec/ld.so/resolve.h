@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.81 2016/08/30 12:47:19 kettenis Exp $ */
+/*	$OpenBSD: resolve.h,v 1.82 2017/01/22 01:20:36 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -169,6 +169,7 @@ struct elf_object {
 	unsigned int grpsym_gen;
 
 	char **rpath;
+	char **runpath;
 
 	/* nonzero if trace enabled for this object */
 	int traced;

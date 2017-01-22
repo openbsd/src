@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.75 2016/08/23 06:46:17 kettenis Exp $ */
+/*	$OpenBSD: resolve.c,v 1.76 2017/01/22 01:20:36 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -221,7 +221,7 @@ _dl_origin_path(elf_object_t *object, char *origin_path)
 }
 
 /*
- * Perform $ORIGIN substitutions on rpath
+ * Perform $ORIGIN substitutions on runpath and rpath
  */
 static void
 _dl_origin_subst(elf_object_t *object)
@@ -232,7 +232,10 @@ _dl_origin_subst(elf_object_t *object)
 	if (_dl_origin_path(object, origin_path) != 0)
 		return;
 
-	/* perform path substitutions on each segment of rpath */
+	/* perform path substitutions on each segment of runpath and rpath */
+	for (pp = object->runpath; *pp != NULL; pp++) {
+		_dl_origin_subst_path(object, origin_path, pp);
+	}
 	for (pp = object->rpath; *pp != NULL; pp++) {
 		_dl_origin_subst_path(object, origin_path, pp);
 	}
@@ -272,6 +275,15 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 			object->obj_flags |= DF_1_NOW;
 		if (dynp->d_tag == DT_FLAGS_1)
 			object->obj_flags |= dynp->d_un.d_val;
+		if (dynp->d_tag == DT_FLAGS) {
+			object->dyn.flags |= dynp->d_un.d_val;
+			if (dynp->d_un.d_val & DF_SYMBOLIC)
+				object->dyn.symbolic = 1;
+			if (dynp->d_un.d_val & DF_ORIGIN)
+				object->obj_flags |= DF_1_ORIGIN;
+			if (dynp->d_un.d_val & DF_BIND_NOW)
+				object->obj_flags |= DF_1_NOW;
+		}
 		if (dynp->d_tag == DT_RELACOUNT)
 			object->relacount = dynp->d_un.d_val;
 		if (dynp->d_tag == DT_RELCOUNT)
@@ -362,11 +374,18 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	TAILQ_INIT(&object->grpsym_list);
 	TAILQ_INIT(&object->grpref_list);
 
-	if (object->dyn.rpath) {
+	if (object->dyn.runpath)
+		object->runpath = _dl_split_path(object->dyn.runpath);
+	/*
+	 * DT_RPATH is ignored if DT_RUNPATH is present...except in
+	 * the exe, whose DT_RPATH is a fallback for libs that don't
+	 * use DT_RUNPATH
+	 */
+	if (object->dyn.rpath && (object->runpath == NULL ||
+	    objtype == OBJTYPE_EXE))
 		object->rpath = _dl_split_path(object->dyn.rpath);
-		if ((object->obj_flags & DF_1_ORIGIN) && _dl_trust)
-			_dl_origin_subst(object);
-	}
+	if ((object->obj_flags & DF_1_ORIGIN) && _dl_trust)
+		_dl_origin_subst(object);
 
 	_dl_trace_object_setup(object);
 
@@ -406,12 +425,10 @@ _dl_cleanup_objects()
 	head = free_objects;
 	free_objects = NULL;
 	while (head != NULL) {
-		if (head->load_name)
-			_dl_free(head->load_name);
-		if (head->sod.sod_name)
-			_dl_free((char *)head->sod.sod_name);
-		if (head->rpath)
-			_dl_free_path(head->rpath);
+		_dl_free(head->load_name);
+		_dl_free((char *)head->sod.sod_name);
+		_dl_free_path(head->runpath);
+		_dl_free_path(head->rpath);
 		_dl_tailq_free(TAILQ_FIRST(&head->grpsym_list));
 		_dl_tailq_free(TAILQ_FIRST(&head->child_list));
 		_dl_tailq_free(TAILQ_FIRST(&head->grpref_list));
