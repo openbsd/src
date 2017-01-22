@@ -115,6 +115,11 @@
 ./usr/include/dev/eisa/eisadevs_data.h
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
+./usr/include/dev/fdt
+./usr/include/dev/fdt/sunxireg.h
+./usr/include/dev/fdt/sxiccmu_clocks.h
+./usr/include/dev/fdt/sxipio_pins.h
+./usr/include/dev/fdt/sxipiovar.h
 ./usr/include/dev/flashvar.h
 ./usr/include/dev/gpio
 ./usr/include/dev/gpio/gpiovar.h
@@ -614,10 +619,6 @@
 ./usr/include/dev/pci/ubsecreg.h
 ./usr/include/dev/pci/ubsecvar.h
 ./usr/include/dev/pci/vga_pcivar.h
-./usr/include/dev/pci/vioblkreg.h
-./usr/include/dev/pci/vioscsireg.h
-./usr/include/dev/pci/virtioreg.h
-./usr/include/dev/pci/virtiovar.h
 ./usr/include/dev/pci/ydsreg.h
 ./usr/include/dev/pci/ydsvar.h
 ./usr/include/dev/pckbc
@@ -643,6 +644,10 @@
 ./usr/include/dev/pv/ndis.h
 ./usr/include/dev/pv/pvreg.h
 ./usr/include/dev/pv/pvvar.h
+./usr/include/dev/pv/vioblkreg.h
+./usr/include/dev/pv/vioscsireg.h
+./usr/include/dev/pv/virtioreg.h
+./usr/include/dev/pv/virtiovar.h
 ./usr/include/dev/pv/xenreg.h
 ./usr/include/dev/pv/xenvar.h
 ./usr/include/dev/radio_if.h
