@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.951 2017/01/22 22:47:11 rpe Exp $
+#	$OpenBSD: install.sub,v 1.952 2017/01/22 23:23:23 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -66,18 +66,27 @@ usage() {
 	exit 1
 }
 
-# Wait for the ftp process to finish, or be killed after the timeout.
+# Wait for the ftp process to finish, or be killed after the timeout and
+# extract various informations from the ftplist.cgi output.
 waitcgiinfo() {
 	local _l _key _val
 
+	# Wait for the ftp(1) process started in startcgiinfo() to end and
+	# ensure, there is actual data to extract info from.
 	wait "$CGIPID" 2>/dev/null
 	[[ -s $CGI_INFO ]] || return
 
+	# Extract list of mirror servers from the ftplist.cgi output.
 	sed -En 's,^https?://([[A-Za-z0-9:_][]A-Za-z0-9:._-]*),\1,p' \
 		$CGI_INFO >$HTTP_LIST 2>/dev/null
+
+	# Extract the previously selected mirror server (first entry in the
+	# ftplist.cgi output).
 	read -r -- _l <$HTTP_LIST
 	: ${HTTP_SERVER:=${_l%%/*}}
 
+	# Extract the previously used install method, timezone information
+	# and a reference timestamp.
 	while IFS='=' read -r -- _key _val; do
 		case $_key=$_val in
 		method=+([a-z])*([0-9]))	CGI_METHOD=$_val;;
@@ -229,12 +238,10 @@ prep_root_mail() {
 __EOT
 }
 
-# Examine the contents of the DHCP lease file named in $1 for a line
-# containing the field provided as parameters.
+# Examine the contents of the DHCP lease file $1 for a line containing the
+# field provided as parameters and return the value of the first field found.
 #
 # Note that strings are unescaped but not unvis()'d.
-#
-# Return the value of the first field found.
 lease_value () {
 	local _lf=$1 _o
 
@@ -251,7 +258,8 @@ lease_value () {
 # Device related functions
 # ------------------------------------------------------------------------------
 
-# Show device name, label and size for the provided list of devices.
+# Show device name, label and size for the provided list of disk devices.
+# Create device nodes as needed and cleanup afterwards.
 diskinfo() {
 	local _d
 
@@ -314,7 +322,7 @@ get_ifs() {
 	done
 }
 
-# Return the device name of the device $1, which may be a disklabel UID.
+# Return the device name of the disk device $1, which may be a disklabel UID.
 get_dkdev_name() {
 	local _dev=${1#/dev/} _d
 
@@ -351,11 +359,15 @@ disk_has() {
 	local _p_sr='OPENBSD, SR'
 	local _p_sr_crypto='OPENBSD, SR CRYPTO'
 
+	# Compose command and patterns based on the parameters.
 	eval "_cmd=\"\$_c_${_pttype}\""
 	eval "_p_pttype=\"\$_p_${_pttype}\""
 	eval "_p_part=\"\$_p_${_pttype}_${_part}\""
+
+	# Set the default command if none was defined before.
 	_cmd=${_cmd:-fdisk $_disk}
 
+	# Abort in case of undefined patterns.
 	[[ -z $_p_pttype ]] && exit
 	[[ -n $_part && -z $_p_part ]] && exit
 
@@ -429,7 +441,7 @@ configure_disk() {
 	rm -f /tmp/i/*.$_disk
 	md_prep_disklabel $_disk || return
 
-	# Make sure there is a '/ mount point.
+	# Make sure a '/' mount point exists on the root disk.
 	if ! grep -qs ' / ffs ' /tmp/i/fstab.$ROOTDISK; then
 		echo "'/' must be configured!"
 		$AUTO && exit 1 || return 1
@@ -521,31 +533,37 @@ get_responsefile() {
 	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf _mode=install
 	[[ -f $_rf ]] && cp $_rf /tmp/ai/ai.$_mode.conf && AI_MODE=$_mode && return
 
-	# Select a network interface for initial dhcp request.
-	# Ask if multiple were found and system was not netbooted.
-	# Extract server ip address, installer mode and response file path
-	# from lease file. Prime hostname with host-name option.
 	for _if in ''; do
 		[[ -x /sbin/dhclient ]] || break
+
+		# Select a network interface for initial dhcp request.
+		# Prefer the interface the system netbooted from.
 		set -- $(get_ifs netboot)
 		(($# == 0)) && set -- $(get_ifs)
 		(($# == 1)) && _if=$1
+
+		# Ask if multiple were found and system was not netbooted.
 		while (($# > 1)); do
 			ask_which "network interface" \
 				"should be used for the initial DHCP request" "$*"
 			isin "$resp" $* && _if=$resp && break
 		done
+
+		# Issue initial dhcp request via the found interface.
 		[[ -n $_if ]] && dhclient $_if || break
 		_lf=/var/db/dhclient.leases.$_if
 
+		# Extract installer mode and response file path from lease file.
 		_aifile=$(lease_value $_lf filename bootfile-name)
 		[[ $_aifile == ?(*/)auto_@(install|upgrade) ]] || _aifile=
 		_path=${_aifile%auto_@(install|upgrade)}
 		_mode=${_aifile##*?(/)auto_}
 
+		# Extract installer server ip address from lease file.
 		AI_SERVER=$(lease_value $_lf server-name tftp-server-name next-server)
 		export AI_SERVER
 
+		# Prime hostname with host-name option from lease file.
 		_hn=$(lease_value $_lf host-name)
 		hostname "$_hn"
 	done
@@ -1499,19 +1517,21 @@ install_files() {
 	[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc" || true
 }
 
-# Get several parameters from the user, and xfer files from the http server.
+# Fetch install sets from an HTTP server possibly using a proxy.
 install_http() {
 	local _f _file_list _prompt _url_base _tls _http_proto _http_server
 	local _idx=/tmp/i/index.txt _sha=/tmp/i/SHA256 _sig=/tmp/i/SHA256.sig
 	local _install_url _mirror_url _mirror_srv _mirror_dir
 
-	# N.B.: 'http_proxy' is an environment variable used by ftp(1). DON'T
-	# change the name or case!
+	# N.B.: 'http_proxy' is an environment variable used by ftp(1).
+	# DON'T change the name or case!
 	ask "HTTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
 		"${http_proxy:-none}"
 	unset http_proxy
 	[[ $resp == none ]] || export http_proxy=$resp
 
+	# If the mirror server listfile download failed, inform the user and
+	# show a reduced prompt.
 	if [[ -s $HTTP_LIST ]]; then
 		_prompt="HTTP Server? (hostname, list#, 'done' or '?')"
 	else
@@ -1534,12 +1554,13 @@ install_http() {
 		done)	return
 			;;
 		"?")	[[ -s $HTTP_LIST ]] || continue
+			# Show a numbered list of mirror servers.
 			cat -n < $HTTP_LIST | more -c
 			;;
 		+([0-9]))
-			# A numeric hostname is ignored. A number is only used
-			# as a line number in $HTTP_LIST.
+			# A number is only used as a line number in $HTTP_LIST.
 			[[ -s $HTTP_LIST ]] || continue
+			# Extract the URL from the mirror server listfile.
 			set -- $(sed -n "${resp}p" $HTTP_LIST)
 			(($# < 1)) && { echo "There is no line $resp."; continue; }
 			HTTP_SERVER=${1%%/*}
@@ -1584,6 +1605,7 @@ install_http() {
 		INSTALL_MIRROR=$_mirror_url
 	fi
 
+	# Set HTTP_DIR to a default path in case it was not defined yet.
 	: ${HTTP_DIR:=pub/OpenBSD/$HTTP_SETDIR}
 	ask_until "Server directory?" "${resp:-$HTTP_DIR}"
 	HTTP_DIR=$resp
@@ -1653,7 +1675,7 @@ install_mounted_fs() {
 	install_files "file://$_dir" "$(ls $_dir/)"
 }
 
-# Install sets from CD-ROM.
+# Install sets from CD-ROM drive $1.
 install_cdrom() {
 	local _drive=$1
 
@@ -1662,14 +1684,16 @@ install_cdrom() {
 	install_mounted_fs
 }
 
-# Ask for the disk device containing the set files, mount it and start the set
-# installation.
+# Install sets from disk.
+# Ask for the disk device containing the set files.
 install_disk() {
 	if ! ask_yn "Is the disk partition already mounted?"; then
 		ask_which "disk" "contains the $MODE media" \
 			'$(bsort $(get_dkdevs))' \
 			'$(bsort $(rmel $ROOTDISK $(get_dkdevs)))'
 		[[ $resp == done ]] && return 1
+
+		# Ensure the device file exists and mount the fs on /mnt2.
 		makedev $resp && mount_mnt2 $resp || return
 	fi
 
@@ -2338,15 +2362,27 @@ feed_random() {
 # selects from that location. Repeat as many times as the user needs to get all
 # desired sets.
 install_sets() {
-	local _cddevs=$(get_cddevs) _d=$CGI_METHOD _im _locs="disk http" _src
+	local _cddevs=$(get_cddevs) _d _im _locs="disk http" _src
 
 	echo
 
+	# Set default location to method recorded last time.
+	_d=$CGI_METHOD
+
+	# Set default location to HTTP in case we netbooted.
 	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
+
+	# Set default location to the first cdrom device if any are found.
 	[[ -n $_cddevs ]] && : ${_d:=cd0}
+
+	# Add NFS to set locations if the boot kernel supports it.
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
+
+	# In case none of the above applied, set HTTP as default location.
 	: ${_d:=http}
 
+	# If the default location set so far is not one of the cdrom devices or
+	# is not in the list of valid locations, set a sane default.
 	if ! isin "$_d" $_cddevs $_locs; then
 		for _src in http $_cddevs nfs disk; do
 			isin "$_src" $_cddevs $_locs && _d=$_src && break
@@ -2355,6 +2391,7 @@ install_sets() {
 
 	echo "Let's $MODE the sets!"
 	while :; do
+		# Get list of cdroms again in case one just got plugged in.
 		_cddevs=$(get_cddevs)
 		umount -f /mnt2 >/dev/null 2>&1
 
@@ -2379,7 +2416,10 @@ install_sets() {
 			;;
 		esac
 
+		# Preserve the selected install source selection.
 		[[ -n $INSTALL_METHOD ]] && _d=$INSTALL_METHOD
+
+		# Set default to 'done' to leave the while-loop.
 		sane_install quiet || $AUTO && _d=done
 	done
 }
