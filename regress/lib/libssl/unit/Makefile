@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2016/12/30 16:58:12 jsing Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/01/22 08:19:36 jsing Exp $
 
 TEST_CASES+= cipher_list
 TEST_CASES+= ssl_versions
@@ -9,6 +9,7 @@ REGRESS_TARGETS= all_tests
 WARNINGS=	Yes
 LDLIBS=		${SSL_INT} -lcrypto
 CFLAGS+=	-DLIBRESSL_INTERNAL -Wall -Wundef -Werror
+CFLAGS+=	-I${.CURDIR}/../../../../lib/libssl
 
 CLEANFILES+= ${TEST_CASES}
 
