@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.96 2016/12/21 16:44:31 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.97 2017/01/22 05:14:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -371,8 +371,8 @@ tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
     size_t *pformatslen)
 {
 	if (client_formats != 0) {
-		*pformats = s->session->tlsext_ecpointformatlist;
-		*pformatslen = s->session->tlsext_ecpointformatlist_length;
+		*pformats = SSI(s)->tlsext_ecpointformatlist;
+		*pformatslen = SSI(s)->tlsext_ecpointformatlist_length;
 		return;
 	}
 
@@ -394,8 +394,8 @@ tls1_get_curvelist(SSL *s, int client_curves, const uint16_t **pcurves,
     size_t *pcurveslen)
 {
 	if (client_curves != 0) {
-		*pcurves = s->session->tlsext_ellipticcurvelist;
-		*pcurveslen = s->session->tlsext_ellipticcurvelist_length;
+		*pcurves = SSI(s)->tlsext_ellipticcurvelist;
+		*pcurveslen = SSI(s)->tlsext_ellipticcurvelist_length;
 		return;
 	}
 
@@ -956,7 +956,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 	using_ecc = ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA)) &&
-	    s->session->tlsext_ecpointformatlist != NULL;
+	    SSI(s)->tlsext_ecpointformatlist != NULL;
 
 	ret += 2;
 	if (ret >= limit)
@@ -1343,9 +1343,9 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			}
 
 			if (!s->hit) {
-				free(s->session->tlsext_ecpointformatlist);
-				s->session->tlsext_ecpointformatlist = NULL;
-				s->session->tlsext_ecpointformatlist_length = 0;
+				free(SSI(s)->tlsext_ecpointformatlist);
+				SSI(s)->tlsext_ecpointformatlist = NULL;
+				SSI(s)->tlsext_ecpointformatlist_length = 0;
 
 				if ((formats = reallocarray(NULL, formatslen,
 				    sizeof(uint8_t))) == NULL) {
@@ -1353,8 +1353,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 					return 0;
 				}
 				memcpy(formats, sdata, formatslen);
-				s->session->tlsext_ecpointformatlist = formats;
-				s->session->tlsext_ecpointformatlist_length =
+				SSI(s)->tlsext_ecpointformatlist = formats;
+				SSI(s)->tlsext_ecpointformatlist_length =
 				    formatslen;
 			}
 		} else if (type == TLSEXT_TYPE_elliptic_curves &&
@@ -1375,11 +1375,11 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			curveslen /= 2;
 
 			if (!s->hit) {
-				if (s->session->tlsext_ellipticcurvelist) {
+				if (SSI(s)->tlsext_ellipticcurvelist) {
 					*al = TLS1_AD_DECODE_ERROR;
 					return 0;
 				}
-				s->session->tlsext_ellipticcurvelist_length = 0;
+				SSI(s)->tlsext_ellipticcurvelist_length = 0;
 				if ((curves = reallocarray(NULL, curveslen,
 				    sizeof(uint16_t))) == NULL) {
 					*al = TLS1_AD_INTERNAL_ERROR;
@@ -1387,8 +1387,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				}
 				for (i = 0; i < curveslen; i++)
 					n2s(sdata, curves[i]);
-				s->session->tlsext_ellipticcurvelist = curves;
-				s->session->tlsext_ellipticcurvelist_length = curveslen;
+				SSI(s)->tlsext_ellipticcurvelist = curves;
+				SSI(s)->tlsext_ellipticcurvelist_length = curveslen;
 			}
 		}
 		else if (type == TLSEXT_TYPE_session_ticket) {
@@ -1671,9 +1671,9 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 			}
 
 			if (!s->hit) {
-				free(s->session->tlsext_ecpointformatlist);
-				s->session->tlsext_ecpointformatlist = NULL;
-				s->session->tlsext_ecpointformatlist_length = 0;
+				free(SSI(s)->tlsext_ecpointformatlist);
+				SSI(s)->tlsext_ecpointformatlist = NULL;
+				SSI(s)->tlsext_ecpointformatlist_length = 0;
 
 				if ((formats = reallocarray(NULL, formatslen,
 				    sizeof(uint8_t))) == NULL) {
@@ -1681,8 +1681,8 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 					return 0;
 				}
 				memcpy(formats, sdata, formatslen);
-				s->session->tlsext_ecpointformatlist = formats;
-				s->session->tlsext_ecpointformatlist_length =
+				SSI(s)->tlsext_ecpointformatlist = formats;
+				SSI(s)->tlsext_ecpointformatlist_length =
 				    formatslen;
 			}
 		}
@@ -1946,15 +1946,15 @@ ssl_check_serverhello_tlsext(SSL *s)
 	unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 	if ((s->tlsext_ecpointformatlist != NULL) &&
 	    (s->tlsext_ecpointformatlist_length > 0) &&
-	    (s->session->tlsext_ecpointformatlist != NULL) &&
-	    (s->session->tlsext_ecpointformatlist_length > 0) &&
+	    (SSI(s)->tlsext_ecpointformatlist != NULL) &&
+	    (SSI(s)->tlsext_ecpointformatlist_length > 0) &&
 	    ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
 		/* we are using an ECC cipher */
 		size_t i;
 		unsigned char *list;
 		int found_uncompressed = 0;
-		list = s->session->tlsext_ecpointformatlist;
-		for (i = 0; i < s->session->tlsext_ecpointformatlist_length; i++) {
+		list = SSI(s)->tlsext_ecpointformatlist;
+		for (i = 0; i < SSI(s)->tlsext_ecpointformatlist_length; i++) {
 			if (*(list++) == TLSEXT_ECPOINTFORMAT_uncompressed) {
 				found_uncompressed = 1;
 				break;

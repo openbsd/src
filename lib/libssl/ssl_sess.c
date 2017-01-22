@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.54 2017/01/22 03:50:45 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.55 2017/01/22 05:14:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -217,10 +217,10 @@ SSL_SESSION_new(void)
 	ss->next = NULL;
 	ss->tlsext_hostname = NULL;
 
-	ss->tlsext_ecpointformatlist_length = 0;
-	ss->tlsext_ecpointformatlist = NULL;
-	ss->tlsext_ellipticcurvelist_length = 0;
-	ss->tlsext_ellipticcurvelist = NULL;
+	ss->internal->tlsext_ecpointformatlist_length = 0;
+	ss->internal->tlsext_ecpointformatlist = NULL;
+	ss->internal->tlsext_ellipticcurvelist_length = 0;
+	ss->internal->tlsext_ellipticcurvelist = NULL;
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 
@@ -706,10 +706,10 @@ SSL_SESSION_free(SSL_SESSION *ss)
 		sk_SSL_CIPHER_free(ss->ciphers);
 	free(ss->tlsext_hostname);
 	free(ss->tlsext_tick);
-	ss->tlsext_ecpointformatlist_length = 0;
-	free(ss->tlsext_ecpointformatlist);
-	ss->tlsext_ellipticcurvelist_length = 0;
-	free(ss->tlsext_ellipticcurvelist);
+	ss->internal->tlsext_ecpointformatlist_length = 0;
+	free(ss->internal->tlsext_ecpointformatlist);
+	ss->internal->tlsext_ellipticcurvelist_length = 0;
+	free(ss->internal->tlsext_ellipticcurvelist);
 
 	explicit_bzero(ss->internal, sizeof(*ss->internal));
 	free(ss->internal);

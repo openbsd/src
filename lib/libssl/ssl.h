@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.104 2017/01/22 04:07:44 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.105 2017/01/22 05:14:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -507,10 +507,6 @@ struct ssl_session_st {
 	 * efficient and to implement a maximum cache size. */
 	struct ssl_session_st *prev, *next;
 	char *tlsext_hostname;
-	size_t tlsext_ecpointformatlist_length;
-	uint8_t *tlsext_ecpointformatlist; /* peer's list */
-	size_t tlsext_ellipticcurvelist_length;
-	uint16_t *tlsext_ellipticcurvelist; /* peer's list */
 
 	/* RFC4507 info */
 	unsigned char *tlsext_tick;	/* Session ticket */

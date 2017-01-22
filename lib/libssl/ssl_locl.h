@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.147 2017/01/22 04:07:44 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.148 2017/01/22 05:14:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -373,8 +373,12 @@ __BEGIN_HIDDEN_DECLS
 #define NAMED_CURVE_TYPE           3
 
 typedef struct ssl_session_internal_st {
-
+	size_t tlsext_ecpointformatlist_length;
+	uint8_t *tlsext_ecpointformatlist; /* peer's list */
+	size_t tlsext_ellipticcurvelist_length;
+	uint16_t *tlsext_ellipticcurvelist; /* peer's list */
 } SSL_SESSION_INTERNAL;
+#define SSI(s) (s->session->internal)
 
 typedef struct ssl_ctx_internal_st {
 	uint16_t min_version;
