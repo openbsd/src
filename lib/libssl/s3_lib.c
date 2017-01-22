@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.116 2017/01/22 00:03:18 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.117 2017/01/22 00:09:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1809,19 +1809,12 @@ ssl3_handshake_write(SSL *s)
 int
 ssl3_new(SSL *s)
 {
-	SSL3_STATE	*s3;
-
-	if ((s3 = calloc(1, sizeof *s3)) == NULL)
-		goto err;
-	memset(s3->rrec.seq_num, 0, sizeof(s3->rrec.seq_num));
-	memset(s3->wrec.seq_num, 0, sizeof(s3->wrec.seq_num));
-
-	s->s3 = s3;
+	if ((s->s3 = calloc(1, sizeof(*s->s3))) == NULL)
+		return (0);
 
 	s->method->ssl_clear(s);
+
 	return (1);
-err:
-	return (0);
 }
 
 void
