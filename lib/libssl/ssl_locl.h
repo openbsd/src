@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.149 2017/01/22 06:36:49 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.150 2017/01/22 07:16:39 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -449,8 +449,69 @@ typedef struct ssl3_state_internal_st {
 } SSL3_STATE_INTERNAL;
 
 typedef struct dtls1_state_internal_st {
+	unsigned int send_cookie;
+	unsigned char cookie[DTLS1_COOKIE_LENGTH];
+	unsigned char rcvd_cookie[DTLS1_COOKIE_LENGTH];
+	unsigned int cookie_len;
 
+	/*
+	 * The current data and handshake epoch.  This is initially
+	 * undefined, and starts at zero once the initial handshake is
+	 * completed
+	 */
+	unsigned short r_epoch;
+	unsigned short w_epoch;
+
+	/* records being received in the current epoch */
+	DTLS1_BITMAP bitmap;
+
+	/* renegotiation starts a new set of sequence numbers */
+	DTLS1_BITMAP next_bitmap;
+
+	/* handshake message numbers */
+	unsigned short handshake_write_seq;
+	unsigned short next_handshake_write_seq;
+
+	unsigned short handshake_read_seq;
+
+	/* save last sequence number for retransmissions */
+	unsigned char last_write_sequence[8];
+
+	/* Received handshake records (processed and unprocessed) */
+	record_pqueue unprocessed_rcds;
+	record_pqueue processed_rcds;
+
+	/* Buffered handshake messages */
+	struct _pqueue *buffered_messages;
+
+	/* Buffered application records.
+	 * Only for records between CCS and Finished
+	 * to prevent either protocol violation or
+	 * unnecessary message loss.
+	 */
+	record_pqueue buffered_app_data;
+
+	/* Is set when listening for new connections with dtls1_listen() */
+	unsigned int listen;
+
+	unsigned int mtu; /* max DTLS packet size */
+
+	struct hm_header_st w_msg_hdr;
+	struct hm_header_st r_msg_hdr;
+
+	struct dtls1_timeout_st timeout;
+
+	/* storage for Alert/Handshake protocol data received but not
+	 * yet processed by ssl3_read_bytes: */
+	unsigned char alert_fragment[DTLS1_AL_HEADER_LENGTH];
+	unsigned int alert_fragment_len;
+	unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
+	unsigned int handshake_fragment_len;
+
+	unsigned int retransmitting;
+	unsigned int change_cipher_spec_ok;
 } DTLS1_STATE_INTERNAL;
+#define D1I(s) (s->d1->internal)
 
 typedef struct cert_pkey_st {
 	X509 *x509;

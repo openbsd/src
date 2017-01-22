@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.87 2016/11/06 17:21:04 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.88 2017/01/22 07:16:39 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -849,7 +849,7 @@ tls1_enc(SSL *s, int send)
 
 		if (SSL_IS_DTLS(s)) {
 			dtls1_build_sequence_number(ad, seq,
-			    send ? s->d1->w_epoch : s->d1->r_epoch);
+			    send ? D1I(s)->w_epoch : D1I(s)->r_epoch);
 		} else {
 			memcpy(ad, seq, SSL3_SEQUENCE_SIZE);
 			tls1_record_sequence_increment(seq);
@@ -1040,7 +1040,7 @@ tls1_enc(SSL *s, int send)
 
 			if (SSL_IS_DTLS(s)) {
 				dtls1_build_sequence_number(buf, seq,
-				    send ? s->d1->w_epoch : s->d1->r_epoch);
+				    send ? D1I(s)->w_epoch : D1I(s)->r_epoch);
 			} else {
 				memcpy(buf, seq, SSL3_SEQUENCE_SIZE);
 				tls1_record_sequence_increment(seq);
@@ -1217,7 +1217,7 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 
 	if (SSL_IS_DTLS(ssl))
 		dtls1_build_sequence_number(header, seq,
-		    send ? ssl->d1->w_epoch : ssl->d1->r_epoch);
+		    send ? D1I(ssl)->w_epoch : D1I(ssl)->r_epoch);
 	else
 		memcpy(header, seq, SSL3_SEQUENCE_SIZE);
 

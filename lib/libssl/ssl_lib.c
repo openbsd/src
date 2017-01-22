@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.127 2017/01/22 06:36:49 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.128 2017/01/22 07:16:39 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1078,7 +1078,7 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 			return (0);
 #endif
 		if (SSL_IS_DTLS(s)) {
-			s->d1->mtu = larg;
+			D1I(s)->mtu = larg;
 			return (larg);
 		}
 		return (0);

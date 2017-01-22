@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.160 2017/01/22 06:36:49 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.161 2017/01/22 07:16:39 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -611,7 +611,7 @@ ssl3_client_hello(SSL *s)
 		 * HelloVerifyRequest, we must retain the original client
 		 * random value.
 		 */
-		if (!SSL_IS_DTLS(s) || s->d1->send_cookie == 0)
+		if (!SSL_IS_DTLS(s) || D1I(s)->send_cookie == 0)
 			arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
 		d = p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_HELLO);
@@ -671,14 +671,14 @@ ssl3_client_hello(SSL *s)
 
 		/* DTLS Cookie. */
 		if (SSL_IS_DTLS(s)) {
-			if (s->d1->cookie_len > sizeof(s->d1->cookie)) {
+			if (D1I(s)->cookie_len > sizeof(D1I(s)->cookie)) {
 				SSLerr(SSL_F_DTLS1_CLIENT_HELLO,
 				    ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
-			*(p++) = s->d1->cookie_len;
-			memcpy(p, s->d1->cookie, s->d1->cookie_len);
-			p += s->d1->cookie_len;
+			*(p++) = D1I(s)->cookie_len;
+			memcpy(p, D1I(s)->cookie, D1I(s)->cookie_len);
+			p += D1I(s)->cookie_len;
 		}
 
 		/* Ciphers supported */
@@ -743,7 +743,7 @@ ssl3_get_server_hello(SSL *s)
 
 	if (SSL_IS_DTLS(s)) {
 		if (s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
-			if (s->d1->send_cookie == 0) {
+			if (D1I(s)->send_cookie == 0) {
 				s->s3->tmp.reuse_message = 1;
 				return (1);
 			} else {

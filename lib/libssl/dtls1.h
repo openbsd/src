@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls1.h,v 1.20 2017/01/22 03:50:45 jsing Exp $ */
+/* $OpenBSD: dtls1.h,v 1.21 2017/01/22 07:16:39 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -153,76 +153,14 @@ typedef struct hm_fragment_st {
 struct dtls1_state_internal_st;
 
 typedef struct dtls1_state_st {
-	unsigned int send_cookie;
-	unsigned char cookie[DTLS1_COOKIE_LENGTH];
-	unsigned char rcvd_cookie[DTLS1_COOKIE_LENGTH];
-	unsigned int cookie_len;
-
-	/*
-	 * The current data and handshake epoch.  This is initially
-	 * undefined, and starts at zero once the initial handshake is
-	 * completed
-	 */
-	unsigned short r_epoch;
-	unsigned short w_epoch;
-
-	/* records being received in the current epoch */
-	DTLS1_BITMAP bitmap;
-
-	/* renegotiation starts a new set of sequence numbers */
-	DTLS1_BITMAP next_bitmap;
-
-	/* handshake message numbers */
-	unsigned short handshake_write_seq;
-	unsigned short next_handshake_write_seq;
-
-	unsigned short handshake_read_seq;
-
-	/* save last sequence number for retransmissions */
-	unsigned char last_write_sequence[8];
-
-	/* Received handshake records (processed and unprocessed) */
-	record_pqueue unprocessed_rcds;
-	record_pqueue processed_rcds;
-
-	/* Buffered handshake messages */
-	struct _pqueue *buffered_messages;
-
 	/* Buffered (sent) handshake records */
 	struct _pqueue *sent_messages;
-
-	/* Buffered application records.
-	 * Only for records between CCS and Finished
-	 * to prevent either protocol violation or
-	 * unnecessary message loss.
-	 */
-	record_pqueue buffered_app_data;
-
-	/* Is set when listening for new connections with dtls1_listen() */
-	unsigned int listen;
-
-	unsigned int mtu; /* max DTLS packet size */
-
-	struct hm_header_st w_msg_hdr;
-	struct hm_header_st r_msg_hdr;
-
-	struct dtls1_timeout_st timeout;
 
 	/* Indicates when the last handshake msg or heartbeat sent will timeout */
 	struct timeval next_timeout;
 
 	/* Timeout duration */
 	unsigned short timeout_duration;
-
-	/* storage for Alert/Handshake protocol data received but not
-	 * yet processed by ssl3_read_bytes: */
-	unsigned char alert_fragment[DTLS1_AL_HEADER_LENGTH];
-	unsigned int alert_fragment_len;
-	unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
-	unsigned int handshake_fragment_len;
-
-	unsigned int retransmitting;
-	unsigned int change_cipher_spec_ok;
 
 	struct dtls1_state_internal_st *internal;
 } DTLS1_STATE;

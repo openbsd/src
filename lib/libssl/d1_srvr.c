@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.70 2017/01/21 06:50:02 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.71 2017/01/22 07:16:39 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -193,14 +193,14 @@ dtls1_accept(SSL *s)
 	else if (s->ctx->info_callback != NULL)
 		cb = s->ctx->info_callback;
 
-	listen = s->d1->listen;
+	listen = D1I(s)->listen;
 
 	/* init things to blank */
 	s->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s))
 		SSL_clear(s);
 
-	s->d1->listen = listen;
+	D1I(s)->listen = listen;
 
 	if (s->cert == NULL) {
 		SSLerr(SSL_F_DTLS1_ACCEPT, SSL_R_NO_CERTIFICATE_SET);
@@ -317,13 +317,13 @@ dtls1_accept(SSL *s)
 			/* If we're just listening, stop here */
 			if (listen && s->state == SSL3_ST_SW_SRVR_HELLO_A) {
 				ret = 2;
-				s->d1->listen = 0;
+				D1I(s)->listen = 0;
 				/* Set expected sequence numbers
 				 * to continue the handshake.
 				 */
-				s->d1->handshake_read_seq = 2;
-				s->d1->handshake_write_seq = 1;
-				s->d1->next_handshake_write_seq = 1;
+				D1I(s)->handshake_read_seq = 2;
+				D1I(s)->handshake_write_seq = 1;
+				D1I(s)->next_handshake_write_seq = 1;
 				goto end;
 			}
 
@@ -534,7 +534,7 @@ dtls1_accept(SSL *s)
 		case SSL3_ST_SR_CERT_VRFY_A:
 		case SSL3_ST_SR_CERT_VRFY_B:
 
-			s->d1->change_cipher_spec_ok = 1;
+			D1I(s)->change_cipher_spec_ok = 1;
 			/* we should decide if we expected this one */
 			ret = ssl3_get_cert_verify(s);
 			if (ret <= 0)
@@ -545,7 +545,7 @@ dtls1_accept(SSL *s)
 
 		case SSL3_ST_SR_FINISHED_A:
 		case SSL3_ST_SR_FINISHED_B:
-			s->d1->change_cipher_spec_ok = 1;
+			D1I(s)->change_cipher_spec_ok = 1;
 			ret = ssl3_get_finished(s, SSL3_ST_SR_FINISHED_A,
 			SSL3_ST_SR_FINISHED_B);
 			if (ret <= 0)
@@ -652,10 +652,10 @@ dtls1_accept(SSL *s)
 			ret = 1;
 
 			/* done handshaking, next message is client hello */
-			s->d1->handshake_read_seq = 0;
+			D1I(s)->handshake_read_seq = 0;
 			/* next message is server hello */
-			s->d1->handshake_write_seq = 0;
-			s->d1->next_handshake_write_seq = 0;
+			D1I(s)->handshake_write_seq = 0;
+			D1I(s)->next_handshake_write_seq = 0;
 			goto end;
 			/* break; */
 
@@ -705,16 +705,16 @@ dtls1_send_hello_verify_request(SSL *s)
 		*(p++) = s->version & 0xFF;
 
 		if (s->ctx->app_gen_cookie_cb == NULL ||
-		    s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
-			&(s->d1->cookie_len)) == 0) {
+		    s->ctx->app_gen_cookie_cb(s, D1I(s)->cookie,
+			&(D1I(s)->cookie_len)) == 0) {
 			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
 			    ERR_R_INTERNAL_ERROR);
 			return 0;
 		}
 
-		*(p++) = (unsigned char) s->d1->cookie_len;
-		memcpy(p, s->d1->cookie, s->d1->cookie_len);
-		p += s->d1->cookie_len;
+		*(p++) = (unsigned char) D1I(s)->cookie_len;
+		memcpy(p, D1I(s)->cookie, D1I(s)->cookie_len);
+		p += D1I(s)->cookie_len;
 
 		ssl3_handshake_msg_finish(s, p - d);
 

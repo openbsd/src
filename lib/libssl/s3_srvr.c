@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.139 2017/01/22 06:36:49 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.140 2017/01/22 07:16:39 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -854,7 +854,7 @@ ssl3_get_client_hello(SSL *s)
 		 * HelloVerify message has not been sent--make sure that it
 		 * does not cause an overflow.
 		 */
-		if (cookie_len > sizeof(s->d1->rcvd_cookie)) {
+		if (cookie_len > sizeof(D1I(s)->rcvd_cookie)) {
 			/* too much data */
 			al = SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
@@ -868,19 +868,19 @@ ssl3_get_client_hello(SSL *s)
 		/* verify the cookie if appropriate option is set. */
 		if ((SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
 		    cookie_len > 0) {
-			memcpy(s->d1->rcvd_cookie, p, cookie_len);
+			memcpy(D1I(s)->rcvd_cookie, p, cookie_len);
 
 			if (s->ctx->app_verify_cookie_cb != NULL) {
 				if (s->ctx->app_verify_cookie_cb(s,
-				    s->d1->rcvd_cookie, cookie_len) == 0) {
+				    D1I(s)->rcvd_cookie, cookie_len) == 0) {
 					al = SSL_AD_HANDSHAKE_FAILURE;
 					SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
 					    SSL_R_COOKIE_MISMATCH);
 					goto f_err;
 				}
 				/* else cookie verification succeeded */
-			} else if (timingsafe_memcmp(s->d1->rcvd_cookie, s->d1->cookie,
-			    s->d1->cookie_len) != 0) {
+			} else if (timingsafe_memcmp(D1I(s)->rcvd_cookie, D1I(s)->cookie,
+			    D1I(s)->cookie_len) != 0) {
 				/* default verification */
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
