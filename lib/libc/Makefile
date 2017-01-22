@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2016/04/26 14:49:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.40 2017/01/22 23:56:44 jsg Exp $
 #
 # The YP functions are always in libc. To choose that getpwent() and friends
 # actually call the YP functions, put -DYP on the CFLAGS line below.
@@ -10,7 +10,12 @@ LIBREBUILD=y
 CLEANFILES+=tags Symbols.map
 CFLAGS+=-Wimplicit
 #CFLAGS+=-Werror
-LDADD=-nostdlib -lgcc
+LDADD=-nostdlib
+.if ${COMPILER_VERSION:L} == "clang"
+LDADD+=-lcompiler_rt
+.else
+LDADD+=-lgcc
+.endif
 
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LISTS=	${LIBCSRCDIR}/Symbols.list \
