@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.33 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.34 2017/01/22 04:48:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -267,12 +267,12 @@ void		 hfsc_deq_commit(struct ifqueue *, struct mbuf *, void *);
 void		 hfsc_purge(struct ifqueue *, struct mbuf_list *);
 
 const struct ifq_ops hfsc_ops = {
-        hfsc_alloc,
-        hfsc_free,
-        hfsc_enq,
-        hfsc_deq_begin,
-        hfsc_deq_commit,
-        hfsc_purge,
+	hfsc_alloc,
+	hfsc_free,
+	hfsc_enq,
+	hfsc_deq_begin,
+	hfsc_deq_commit,
+	hfsc_purge,
 };
 
 const struct ifq_ops * const ifq_hfsc_ops = &hfsc_ops;
