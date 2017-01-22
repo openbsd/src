@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.637 2017/01/13 13:25:01 stsp Exp $
+#	$OpenBSD: files,v 1.638 2017/01/22 20:08:10 reyk Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -443,6 +443,7 @@ define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 define	sdmmcbus {}			# SD/MMC attachment
 define	btbus {}			# Bluetooth host controller
 define	agpbus {}			# AGP bridge
+device	virtio {}			# VirtIO
 
 # UHCI USB controller
 device	uhci: usbus
