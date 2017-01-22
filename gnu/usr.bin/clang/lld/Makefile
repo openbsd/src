@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2017/01/22 03:56:33 jsg Exp $
+# $OpenBSD: Makefile,v 1.3 2017/01/22 06:00:14 patrick Exp $
 
 .include <bsd.own.mk>
 
-PROG=	lld
+PROG=	ld.lld
 BINDIR=	/usr/bin
 SRCS=	lld.cpp
 NOMAN=
