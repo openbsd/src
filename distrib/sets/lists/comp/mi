@@ -818,8 +818,6 @@
 ./usr/include/dev/wsfont/lucida16x29.h
 ./usr/include/dev/wsfont/omron12x20.h
 ./usr/include/dev/wsfont/qvss8x15.h
-./usr/include/dev/wsfont/sony12x24.h
-./usr/include/dev/wsfont/sony8x16.h
 ./usr/include/dev/wsfont/vt220l8x10.h
 ./usr/include/dev/wsfont/vt220l8x8.h
 ./usr/include/dev/wsfont/wsfont.h
