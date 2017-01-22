@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.949 2017/01/21 04:33:00 rpe Exp $
+#	$OpenBSD: install.sub,v 1.950 2017/01/22 03:30:23 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1501,9 +1501,9 @@ install_files() {
 
 # Get several parameters from the user, and xfer files from the http server.
 install_http() {
-	local _file_list _prompt _mirror _url_base _err _tls _http_proto _f
+	local _f _file_list _prompt _url_base _tls _http_proto _http_server
 	local _idx=/tmp/i/index.txt _sha=/tmp/i/SHA256 _sig=/tmp/i/SHA256.sig
-	local _http_server _install_url
+	local _install_url _mirror_url _mirror_srv _mirror_dir
 
 	# N.B.: 'http_proxy' is an environment variable used by ftp(1). DON'T
 	# change the name or case!
@@ -1567,14 +1567,21 @@ install_http() {
 	# name. This means the last install from a mirror will not keep
 	# the specific directory info. But an install from a local
 	# server *will* remember the specific directory info.
+	# Format: _mirror_srv/_mirror_dir location_info
+	#         ^---- _mirror_url ----^
 	set -- $(sed "/^$HTTP_SERVER/x;\$!d;x" $HTTP_LIST 2>/dev/null)
-	resp=${1#*/}
-	# If there is no directory specified, don't use the server name!
-	[[ $resp == "$1" ]] && resp=
+	_mirror_url=$1
+	_mirror_srv=${_mirror_url%%/*}
+	_mirror_dir=${_mirror_url#*$_mirror_srv}
+
+	resp=$_mirror_dir/$HTTP_SETDIR
+	# If there is no directory specified, don't use this entry!
+	[[ -z $_mirror_dir ]] && resp=
+	INSTALL_MIRROR=
 	if (($# > 1)); then
 		# It's a mirror, since it has location info.
-		resp=$resp/$HTTP_SETDIR
-		_mirror=yes
+		resp=$_mirror_dir/$HTTP_SETDIR
+		INSTALL_MIRROR=$_mirror_url
 	fi
 
 	: ${HTTP_DIR:=pub/OpenBSD/$HTTP_SETDIR}
@@ -1590,6 +1597,7 @@ install_http() {
 			;;
 		try)	ask_yn "Unable to connect using https. Use http instead?" ||
 				return
+			_http_proto=http
 			_url_base="http://$HTTP_SERVER/$HTTP_DIR"
 			unpriv -f $_sig ftp -VMo $_sig "$_url_base/SHA256.sig" 2>/dev/null
 			;;
@@ -1602,7 +1610,7 @@ install_http() {
 	else
 		echo "Unable to get a verified list of distribution sets."
 		# Deny this server, if it's a mirror without a valid SHA256.sig.
-		if [[ $_mirror == yes ]]; then
+		if [[ -n $INSTALL_MIRROR ]]; then
 			$AUTO && exit 1 || return
 		fi
 	fi
@@ -1616,14 +1624,13 @@ install_http() {
 			! isin "$_f" $_file_list && _file_list="$_file_list $_f"
 		done
 	fi
-
 	rm -f $_idx $_sha $_sig
 
 	install_files "$_url_base" "$_file_list"
 
 	# Remember where we installed from, to tell the cgi server.
-	INSTALL_URL=
-	[[ $_mirror == yes ]] && INSTALL_URL=${_url_base%/$HTTP_SETDIR}
+	INSTALL_URL=${_url_base%/$HTTP_SETDIR}
+	[[ -n $INSTALL_MIRROR ]] && INSTALL_URL=$_http_proto://$INSTALL_MIRROR
 }
 
 # Ask for the path to the set files on an already mounted filesystem and start
@@ -2456,8 +2463,9 @@ finish_up() {
 	fi
 
 	# Create /etc/installurl with the mirror used during install.
-	[[ $MODE == install && -n $INSTALL_URL ]] &&
+	if [[ $MODE == install && -n $INSTALL_MIRROR ]]; then
 		echo "$INSTALL_URL" >/mnt/etc/installurl
+	fi
 
 	echo -n "Making all device nodes..."
 	(cd /mnt/dev; sh MAKEDEV all
