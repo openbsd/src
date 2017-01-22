@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.2 2017/01/22 04:18:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -508,7 +508,7 @@ efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
 		if (mm->NumberOfPages < pages)
 			continue;
 
-		for (j = 0; j < mm->NumberOfPages; i++) {
+		for (j = 0; j < mm->NumberOfPages; j++) {
 			EFI_PHYSICAL_ADDRESS paddr;
 
 			if (mm->NumberOfPages - j < pages)
