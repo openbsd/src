@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.84 2017/01/21 08:50:58 tb Exp $
+.\"	$OpenBSD: release.8,v 1.85 2017/01/22 03:40:43 rpe Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"	Copyright (c) 2016 Theo Buehler <tb@openbsd.org>
@@ -10,14 +10,14 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: January 21 2017 $
+.Dd $Mdocdate: January 22 2017 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
 .Nm release
 .Nd building an OpenBSD release
 .Sh DESCRIPTION
-There are several steps necessary to build a system release:
+There are several steps necessary to build a release:
 .Pp
 .Bl -enum -compact -offset indent
 .It
@@ -25,13 +25,13 @@ Update sources.
 .It
 Build and install a new kernel.
 .It
-Build a new system.
+Build a new base system.
 .It
-Make and validate the system release.
+Make and validate the base system release.
 .It
-Build and install xenocara.
+Build and install Xenocara.
 .It
-Make and validate the xenocara release.
+Make and validate the Xenocara release.
 .It
 Make the third party packages.
 .It
@@ -123,7 +123,7 @@ The current kernel is copied to
 and the new kernel to
 .Pa /bsd .
 Reboot.
-.Ss 3. Build a new system
+.Ss 3. Build a new base system
 The build process will place the object files in a tree under
 .Pa /usr/obj .
 This directory should be empty and owned by build:wobj with mode 770.
@@ -144,10 +144,10 @@ using
 and
 .Xr MAKEDEV 8 .
 .Pp
-At this point, the system is up to date and running the code that will be
-made into a release.
-.Ss 4. Make and validate the system release
-The system release consists of at least one generic kernel,
+At this point, the base system is up to date and running the code
+that will be made into a release.
+.Ss 4. Make and validate the base system release
+The base system release consists of at least one generic kernel,
 some installation media, the release tarballs,
 installation instructions, and checksum files.
 .Pp
@@ -192,18 +192,18 @@ Make the release and check the contents of the release tarballs:
 # cd /usr/src/distrib/sets && sh checkflist
 # unset RELEASEDIR DESTDIR
 .Ed
-.Ss 5. Build and install xenocara
+.Ss 5. Build and install Xenocara
 Xenocara is based on the X.Org modular build system.
 Its sources are supposed to be in
 .Pa /usr/xenocara .
 The
 .Pa /usr/src
-tree is also needed while building xenocara.
+tree is also needed while building Xenocara.
 The object directory
 .Pa /usr/xobj
-should be empty and owned by build:wobj with permissions 770.
+should be empty and owned by build:wobj with mode 770.
 .Pp
-The following steps will build and install xenocara.
+The following steps will build and install Xenocara.
 .Bd -literal -offset indent
 # cd /usr/xenocara
 # make bootstrap
@@ -213,7 +213,7 @@ The following steps will build and install xenocara.
 .Pp
 The X Window System is created and installed in
 .Pa /usr/X11R6 .
-.Ss 6. Make and validate the xenocara release
+.Ss 6. Make and validate the Xenocara release
 Xenocara uses
 .Va DESTDIR
 and
@@ -221,12 +221,12 @@ and
 as described above.
 Use a different
 .Va DESTDIR
-for the xenocara release than for the base release,
+for the Xenocara release than for the base release,
 as the contents of
 .Va DESTDIR
 will be removed.
 .Pp
-The steps to build and validate the xenocara release are:
+The steps to build and validate the Xenocara release are:
 .Bd -literal -offset indent
 # export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
 # make release
@@ -236,7 +236,7 @@ The steps to build and validate the xenocara release are:
 .Pp
 At this point,
 .Ox
-system and X Window System tarballs are in
+base system and X Window System tarballs are in
 .Va RELEASEDIR .
 .Ss 7. Make the third party packages
 The ports subsystem of contributed applications is capable of producing
