@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.10 2016/12/13 06:51:11 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.11 2017/01/22 10:17:39 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -184,8 +184,6 @@ etherip_start(struct ifnet *ifp)
 			m_freem(m);
 			continue;
 		}
-
-		ifp->if_opackets++;
 
 		switch (sc->sc_src.ss_family) {
 		case AF_INET:

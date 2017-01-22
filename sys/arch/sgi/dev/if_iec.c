@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.22 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.23 2017/01/22 10:17:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -1354,7 +1354,6 @@ iec_txintr(struct iec_softc *sc, uint32_t stat)
 		} else {
 			ifp->if_collisions += IOC3_ENET_TCDC_COLLISION_MASK &
 			    bus_space_read_4(st, sh, IOC3_ENET_TCDC);
-			ifp->if_opackets++;
 		}
 	}
 

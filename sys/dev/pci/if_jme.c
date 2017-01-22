@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.48 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.49 2017/01/22 10:17:38 dlg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1525,7 +1525,6 @@ jme_txeof(struct jme_softc *sc)
 		if (status & (JME_TD_TMOUT | JME_TD_RETRY_EXP)) {
 			ifp->if_oerrors++;
 		} else {
-			ifp->if_opackets++;
 			if (status & JME_TD_COLLISION) {
 				ifp->if_collisions +=
 				    letoh32(txd->tx_desc->buflen) &

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.24 2016/07/26 13:00:28 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.25 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1126,7 +1126,6 @@ rtwn_tx_done(struct rtwn_pci_softc *sc, int qid)
 		ieee80211_release_node(ic, tx_data->ni);
 		tx_data->ni = NULL;
 
-		ifp->if_opackets++;
 		sc->sc_sc.sc_tx_timer = 0;
 		tx_ring->queued--;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.8 2016/11/25 12:43:26 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.9 2017/01/22 10:17:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1774,7 +1774,6 @@ umb_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				usbd_clear_endpoint_stall_async(sc->sc_tx_pipe);
 		}
 	} else {
-		ifp->if_opackets++;
 		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 			umb_start(ifp);
 	}

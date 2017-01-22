@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.105 2016/04/13 11:03:37 mpi Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.106 2017/01/22 10:17:39 dlg Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1110,8 +1110,6 @@ aue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		splx(s);
 		return;
 	}
-
-	ifp->if_opackets++;
 
 	m_freem(c->aue_mbuf);
 	c->aue_mbuf = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.137 2016/12/23 18:44:51 kettenis Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.138 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1361,8 +1361,6 @@ wpi_tx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 
 	if ((letoh32(stat->status) & 0xff) != 1)
 		ifp->if_oerrors++;
-	else
-		ifp->if_opackets++;
 
 	/* Unmap and free mbuf. */
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,

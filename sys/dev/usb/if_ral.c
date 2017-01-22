@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.141 2016/11/06 12:58:01 mpi Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.142 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -681,7 +681,6 @@ ural_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	data->ni = NULL;
 
 	sc->tx_queued--;
-	ifp->if_opackets++;
 
 	DPRINTFN(10, ("tx done\n"));
 

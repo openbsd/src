@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.152 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.153 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1033,7 +1033,6 @@ vr_txeof(struct vr_softc *sc)
 
 		ifp->if_collisions +=(txstat & VR_TXSTAT_COLLCNT) >> 3;
 
-		ifp->if_opackets++;
 		if (cur_tx->vr_map != NULL && cur_tx->vr_map->dm_nsegs > 0)
 			bus_dmamap_unload(sc->sc_dmat, cur_tx->vr_map);
 

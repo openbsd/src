@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.76 2016/11/06 12:58:01 mpi Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.77 2017/01/22 10:17:39 dlg Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -769,8 +769,6 @@ cue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		splx(s);
 		return;
 	}
-
-	ifp->if_opackets++;
 
 	m_freem(c->cue_mbuf);
 	c->cue_mbuf = NULL;

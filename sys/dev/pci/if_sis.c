@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.134 2016/04/13 10:34:32 mpi Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.135 2017/01/22 10:17:38 dlg Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1498,7 +1498,6 @@ sis_txeof(struct sis_softc *sc)
 
 		ifp->if_collisions += (txstat & SIS_TXSTAT_COLLCNT) >> 16;
 
-		ifp->if_opackets++;
 		if (cur_tx->map->dm_nsegs != 0) {
 			bus_dmamap_t map = cur_tx->map;
 

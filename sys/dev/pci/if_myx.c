@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.99 2016/10/31 01:38:57 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.100 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1685,8 +1685,6 @@ myx_txeof(struct myx_softc *sc, u_int32_t done_count)
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, map);
 		m_freem(ms->ms_m);
-
-		ifp->if_opackets++;
 
 		if (++cons >= sc->sc_tx_ring_count)
 			cons = 0;

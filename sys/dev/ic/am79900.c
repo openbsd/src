@@ -1,4 +1,4 @@
-/*	$OpenBSD: am79900.c,v 1.6 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: am79900.c,v 1.7 2017/01/22 10:17:37 dlg Exp $	*/
 /*	$NetBSD: am79900.c,v 1.23 2012/02/02 19:43:02 tls Exp $	*/
 
 /*-
@@ -382,7 +382,6 @@ am79900_tint(struct lance_softc *sc)
 			else if (tmd.tmd1 & LE_T1_MORE)
 				/* Real number is unknown. */
 				ifp->if_collisions += 2;
-			ifp->if_opackets++;
 		}
 
 		if (++bix == sc->sc_ntbuf)

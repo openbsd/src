@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.91 2016/04/13 10:49:26 mpi Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.92 2017/01/22 10:17:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1066,7 +1066,6 @@ cmalo_tx_done(struct malo_softc *sc)
 
 	DPRINTF(2, "%s: TX done\n", sc->sc_dev.dv_xname);
 
-	ifp->if_opackets++;
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 	cmalo_start(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.37 2016/11/06 12:58:01 mpi Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.38 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -1022,7 +1022,6 @@ mos_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		mos_start(ifp);
 
-	ifp->if_opackets++;
 	splx(s);
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.68 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.69 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -1030,9 +1030,6 @@ stge_stats_update(struct stge_softc *sc)
 	    (u_int) CSR_READ_2(sc, STGE_FramesLostRxErrors);
 
 	(void) CSR_READ_4(sc, STGE_OctetXmtdOk);
-
-	ifp->if_opackets +=
-	    CSR_READ_4(sc, STGE_FramesXmtdOk);
 
 	ifp->if_collisions +=
 	    CSR_READ_4(sc, STGE_LateCollisions) +

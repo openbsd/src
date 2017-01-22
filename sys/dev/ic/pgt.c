@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.88 2016/11/29 10:22:30 jsg Exp $  */
+/*	$OpenBSD: pgt.c,v 1.89 2017/01/22 10:17:38 dlg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2181,7 +2181,6 @@ pgt_start(struct ifnet *ifp)
 			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-			ifp->if_opackets++;
 			ifp->if_timer = 1;
 			sc->sc_txtimer = 5;
 			ni = ieee80211_find_txnode(&sc->sc_ic,

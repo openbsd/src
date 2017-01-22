@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.38 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.39 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -319,8 +319,6 @@ startagain:
 	}
 
 	splx(s);
-
-	ifp->if_opackets++;
 
 	goto startagain;
 }

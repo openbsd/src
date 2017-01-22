@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.120 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: gem.c,v 1.121 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1638,7 +1638,6 @@ gem_tint(struct gem_softc *sc, u_int32_t status)
 			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
-			ifp->if_opackets++;
 		}
 		free++;
 		if (++cons == GEM_NTXDESC)

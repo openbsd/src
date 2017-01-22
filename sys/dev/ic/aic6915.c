@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.21 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.22 2017/01/22 10:17:37 dlg Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -864,8 +864,6 @@ sf_stats_update(struct sf_softc *sc)
 		    SF_STATS_BASE + (i * sizeof(uint32_t)));
 		sf_genreg_write(sc, SF_STATS_BASE + (i * sizeof(uint32_t)), 0);
 	}
-
-	ifp->if_opackets += stats.TransmitOKFrames;
 
 	ifp->if_collisions += stats.SingleCollisionFrames +
 	    stats.MultipleCollisionFrames;

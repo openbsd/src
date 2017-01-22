@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.80 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.81 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -762,8 +762,6 @@ hme_tint(struct hme_softc *sc)
 			break;
 
 		ifq_clr_oactive(&ifp->if_snd);
-		if (txflags & HME_XD_EOP)
-			ifp->if_opackets++;
 
 		if (sd->sd_mbuf != NULL) {
 			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map,

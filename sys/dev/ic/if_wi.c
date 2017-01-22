@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.166 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.167 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -836,8 +836,6 @@ wi_txeof(struct wi_softc *sc, int status)
 
 	if (status & WI_EV_TX_EXC)
 		ifp->if_oerrors++;
-	else
-		ifp->if_opackets++;
 
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.46 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.47 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -625,8 +625,7 @@ egintr(void *arg)
 			if (sc->eg_pcb[6] || sc->eg_pcb[7]) {
 				DPRINTF(("packet dropped\n"));
 				sc->sc_arpcom.ac_if.if_oerrors++;
-			} else
-				sc->sc_arpcom.ac_if.if_opackets++;
+			}
 			sc->sc_arpcom.ac_if.if_collisions +=
 			    sc->eg_pcb[8] & 0xf;
 			ifq_clr_oactive(&sc->sc_arpcom.ac_if.if_snd);

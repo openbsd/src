@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.40 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.41 2017/01/22 10:17:38 dlg Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1624,9 +1624,6 @@ alc_stats_update(struct alc_softc *sc)
 	stat->tx_pkts_truncated += smb->tx_pkts_truncated;
 	stat->tx_bcast_bytes += smb->tx_bcast_bytes;
 	stat->tx_mcast_bytes += smb->tx_mcast_bytes;
-
-	/* Update counters in ifnet. */
-	ifp->if_opackets += smb->tx_frames;
 
 	ifp->if_collisions += smb->tx_single_colls +
 	    smb->tx_multi_colls * 2 + smb->tx_late_colls +

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.23 2016/09/14 12:41:09 mpi Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.24 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -1086,7 +1086,6 @@ axen_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		axen_start(ifp);
 
-	ifp->if_opackets++;
 	splx(s);
 }
 

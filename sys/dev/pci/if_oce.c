@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.98 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.99 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1204,7 +1204,6 @@ oce_start(struct ifnet *ifp)
 int
 oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wqidx)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf *m = *mpp;
 	struct oce_wq *wq = sc->sc_wq[wqidx];
 	struct oce_pkt *pkt = NULL;
@@ -1307,8 +1306,6 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wqidx)
 	}
 
 	oce_pkt_put(&wq->pkt_list, pkt);
-
-	ifp->if_opackets++;
 
 	oce_dma_sync(&wq->ring->dma, BUS_DMASYNC_POSTREAD |
 	    BUS_DMASYNC_POSTWRITE);

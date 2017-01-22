@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.54 2016/11/06 12:58:01 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.55 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1257,7 +1257,6 @@ otus_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		return;
 	}
 	sc->sc_tx_timer = 0;
-	ifp->if_opackets++;
 	ifq_clr_oactive(&ifp->if_snd);
 	otus_start(ifp);
 	splx(s);

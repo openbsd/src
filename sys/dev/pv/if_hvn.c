@@ -481,8 +481,6 @@ hvn_start(struct ifnet *ifp)
 		}
 
 		sc->sc_tx_next++;
-
-		ifp->if_opackets++;
 	}
 }
 

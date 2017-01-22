@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.33 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.34 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1932,9 +1932,6 @@ age_stats_update(struct age_softc *sc)
 	stat->tx_pkts_truncated += smb->tx_pkts_truncated;
 	stat->tx_bcast_bytes += smb->tx_bcast_bytes;
 	stat->tx_mcast_bytes += smb->tx_mcast_bytes;
-
-	/* Update counters in ifnet. */
-	ifp->if_opackets += smb->tx_frames;
 
 	ifp->if_collisions += smb->tx_single_colls +
 	    smb->tx_multi_colls + smb->tx_late_colls +

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.34 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.35 2017/01/22 10:17:38 dlg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1912,7 +1912,6 @@ et_txeof(struct et_softc *sc)
 			bus_dmamap_unload(sc->sc_dmat, tb->tb_dmap);
 			m_freem(tb->tb_mbuf);
 			tb->tb_mbuf = NULL;
-			ifp->if_opackets++;
 		}
 
 		if (++tbd->tbd_start_index == ET_TX_NDESC) {

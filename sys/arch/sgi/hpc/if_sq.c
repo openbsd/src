@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.27 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.28 2017/01/22 10:17:37 dlg Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -1319,7 +1319,6 @@ sq_txring_hpc1(struct sq_softc *sc)
 		m_freem(sc->sc_txmbuf[i]);
 		sc->sc_txmbuf[i] = NULL;
 
-		ifp->if_opackets++;
 		sc->sc_nfreetx++;
 
 		SQ_TRACE(SQ_DONE_DMA, sc, i, status);
@@ -1407,7 +1406,6 @@ sq_txring_hpc3(struct sq_softc *sc)
 		m_freem(sc->sc_txmbuf[i]);
 		sc->sc_txmbuf[i] = NULL;
 
-		ifp->if_opackets++;
 		sc->sc_nfreetx++;
 
 		SQ_TRACE(SQ_DONE_DMA, sc, i, status);

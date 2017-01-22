@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.181 2017/01/12 18:06:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.182 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2399,8 +2399,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, uint8_t nframes,
 	if (txfail) {
 		DPRINTF(("%s: status=0x%x\n", __func__, status));
 		ifp->if_oerrors++;
-	} else
-		ifp->if_opackets++;
+	}
 
 	/* Unmap and free mbuf. */
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,

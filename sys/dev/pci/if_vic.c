@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.96 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.97 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1109,7 +1109,6 @@ vic_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
-		ifp->if_opackets++;
 		sc->sc_txpending++;
 
 		VIC_INC(sc->sc_data->vd_tx_nextidx, sc->sc_data->vd_tx_length);

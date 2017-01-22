@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.28 2016/04/13 11:34:00 mpi Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.29 2017/01/22 10:17:37 dlg Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -570,8 +570,6 @@ mc_start(struct ifnet *ifp)
 		 */
 		ifq_set_oactive(&ifp->if_snd);
 		maceput(sc, m);
-
-		ifp->if_opackets++;		/* # of pkts */
 	}
 }
 

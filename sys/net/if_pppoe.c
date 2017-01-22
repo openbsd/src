@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.59 2017/01/02 08:44:13 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.60 2017/01/22 10:17:39 dlg Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -778,7 +778,6 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	/* encapsulated packet is forced into rdomain of physical interface */
 	m->m_pkthdr.ph_rtableid = eth_if->if_rdomain;
 
-	sc->sc_sppp.pp_if.if_opackets++;
 	ret = eth_if->if_output(eth_if, m, &dst, NULL);
 	if_put(eth_if);
 

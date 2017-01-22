@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.52 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.53 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -753,7 +753,6 @@ i82596_tint(sc, scbstatus)
 	}
 
 	if (status & IE_STAT_OK) {
-		ifp->if_opackets++;
 		ifp->if_collisions += (status & IE_XS_MAXCOLL);
 	} else {
 		ifp->if_oerrors++;

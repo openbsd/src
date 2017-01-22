@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.43 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.44 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -976,9 +976,7 @@ lii_txintr(struct lii_softc *sc)
 		sc->sc_txd_ack = (sc->sc_txd_ack + txph->txph_size + 7 ) & ~3;
 		sc->sc_txd_ack %= AT_TXD_BUFFER_SIZE;
 
-		if (txs->txps_flags & LII_TXF_SUCCESS)
-			++ifp->if_opackets;
-		else
+		if (!ISSET(txs->txps_flags, LII_TXF_SUCCESS))
 			++ifp->if_oerrors;
 		ifq_clr_oactive(&ifp->if_snd);
 	}

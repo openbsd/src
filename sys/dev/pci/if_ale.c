@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.44 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.45 2017/01/22 10:17:38 dlg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1226,9 +1226,6 @@ ale_stats_update(struct ale_softc *sc)
 	stat->tx_pkts_truncated += smb->tx_pkts_truncated;
 	stat->tx_bcast_bytes += smb->tx_bcast_bytes;
 	stat->tx_mcast_bytes += smb->tx_mcast_bytes;
-
-	/* Update counters in ifnet. */
-	ifp->if_opackets += smb->tx_frames;
 
 	ifp->if_collisions += smb->tx_single_colls +
 	    smb->tx_multi_colls * 2 + smb->tx_late_colls +

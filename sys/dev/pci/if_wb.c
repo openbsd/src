@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.67 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.68 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1035,7 +1035,6 @@ void wb_txeof(sc)
 
 		ifp->if_collisions += (txstat & WB_TXSTAT_COLLCNT) >> 3;
 
-		ifp->if_opackets++;
 		m_freem(cur_tx->wb_mbuf);
 		cur_tx->wb_mbuf = NULL;
 

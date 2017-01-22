@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.67 2017/01/08 05:48:27 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.68 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1237,7 +1237,6 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv,
 		return;
 	}
 	sc->sc_sc.sc_tx_timer = 0;
-	ifp->if_opackets++;
 
 	/* We just released a Tx buffer, notify Tx. */
 	if (ifq_is_oactive(&ifp->if_snd)) {

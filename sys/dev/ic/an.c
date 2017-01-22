@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.71 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: an.c,v 1.72 2017/01/22 10:17:37 dlg Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -494,8 +494,6 @@ an_txeof(struct an_softc *sc, u_int16_t status)
 
 	if (status & AN_EV_TX_EXC)
 		ifp->if_oerrors++;
-	else
-		ifp->if_opackets++;
 
 	cur = sc->sc_txcur;
 	if (sc->sc_txd[cur].d_fid == id) {
@@ -1107,7 +1105,6 @@ an_start(struct ifnet *ifp)
 			break;
 		}
 		ifq_deq_commit(&ifp->if_snd, m);
-		ifp->if_opackets++;
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);

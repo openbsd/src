@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.29 2016/04/13 10:49:26 mpi Exp $ */
+/* $OpenBSD: lemac.c,v 1.30 2017/01/22 10:17:38 dlg Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -153,7 +153,6 @@ lemac_tne_intr(struct lemac_softc *sc)
 	sc->sc_cntrs.cntr_tne_intrs++;
 	while (txcount-- > 0) {
 		unsigned txsts = LEMAC_INB(sc, LEMAC_REG_TDQ);
-		sc->sc_if.if_opackets++;		/* another one done */
 		if ((txsts & (LEMAC_TDQ_LCL|LEMAC_TDQ_NCL))
 		    || (txsts & LEMAC_TDQ_COL) == LEMAC_TDQ_EXCCOL) {
 			if (txsts & LEMAC_TDQ_NCL)

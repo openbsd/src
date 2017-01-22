@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.24 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: ti.c,v 1.25 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1637,9 +1637,6 @@ ti_txeof_tigon1(struct ti_softc *sc)
 		ti_mem_read(sc, TI_TX_RING_BASE + idx * sizeof(txdesc),
 			    sizeof(txdesc), (caddr_t)&txdesc);
 
-		if (txdesc.ti_flags & TI_BDFLAG_END)
-			ifp->if_opackets++;
-
 		if (sc->ti_cdata.ti_tx_chain[idx] != NULL) {
 			m_freem(sc->ti_cdata.ti_tx_chain[idx]);
 			sc->ti_cdata.ti_tx_chain[idx] = NULL;
@@ -1684,8 +1681,6 @@ ti_txeof_tigon2(struct ti_softc *sc)
 		idx = sc->ti_tx_saved_considx;
 		cur_tx = &sc->ti_rdata->ti_tx_ring[idx];
 
-		if (cur_tx->ti_flags & TI_BDFLAG_END)
-			ifp->if_opackets++;
 		if (sc->ti_cdata.ti_tx_chain[idx] != NULL) {
 			m_freem(sc->ti_cdata.ti_tx_chain[idx]);
 			sc->ti_cdata.ti_tx_chain[idx] = NULL;

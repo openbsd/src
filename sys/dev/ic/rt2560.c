@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.81 2016/10/06 15:18:48 stsp Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.82 2017/01/22 10:17:38 dlg Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -940,7 +940,6 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 		case RT2560_TX_SUCCESS:
 			DPRINTFN(10, ("data frame sent successfully\n"));
 			rn->amn.amn_txcnt++;
-			ifp->if_opackets++;
 			break;
 
 		case RT2560_TX_SUCCESS_RETRY:
@@ -948,7 +947,6 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 			    (letoh32(desc->flags) >> 5) & 0x7));
 			rn->amn.amn_txcnt++;
 			rn->amn.amn_retrycnt++;
-			ifp->if_opackets++;
 			break;
 
 		case RT2560_TX_FAIL_RETRY:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.171 2016/12/21 13:13:01 mikeb Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.172 2017/01/22 10:17:39 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -590,7 +590,6 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		ifp->if_collisions++;
 		return (error);
 	}
-	ifp->if_opackets++;
 
 	tun_wakeup(tp);
 	return (0);
@@ -832,7 +831,6 @@ tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
-		ifp->if_opackets++;
 	}
 
 	while (m0 != NULL && uio->uio_resid > 0 && error == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.1 2017/01/21 11:21:28 reyk Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.2 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1148,7 +1148,6 @@ vio_txeof(struct virtqueue *vq)
 		bus_dmamap_unload(vsc->sc_dmat, sc->sc_tx_dmamaps[slot]);
 		sc->sc_tx_mbufs[slot] = 0;
 		virtio_dequeue_commit(vq, slot);
-		ifp->if_opackets++;
 		m_freem(m);
 	}
 

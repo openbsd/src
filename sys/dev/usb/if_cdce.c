@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.72 2016/10/12 21:51:11 fcambus Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.73 2017/01/22 10:17:39 dlg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -814,8 +814,6 @@ cdce_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (err)
 		ifp->if_oerrors++;
-	else
-		ifp->if_opackets++;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		cdce_start(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.95 2016/04/13 10:49:26 mpi Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.96 2017/01/22 10:17:38 dlg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -718,9 +718,7 @@ rl_txeof(struct rl_softc *sc)
 		if ((txstat & RL_TXSTAT_TX_UNDERRUN) &&
 		    (sc->rl_txthresh < 2016))
 			sc->rl_txthresh += 32;
-		if (txstat & RL_TXSTAT_TX_OK)
-			ifp->if_opackets++;
-		else {
+		if (!ISSET(txstat, RL_TXSTAT_TX_OK)) {
 			int oldthresh;
 
 			ifp->if_oerrors++;

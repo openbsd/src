@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.58 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.59 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -722,7 +722,7 @@ xe_intr(arg)
 		xe_start(ifp);
 
 	/* Detected excessive collisions? */
-	if ((tx_status & EXCESSIVE_COLL) && ifp->if_opackets > 0) {
+	if (tx_status & EXCESSIVE_COLL) {
 		DPRINTF(XED_INTR,
 		    ("%s: excessive collisions\n", sc->sc_dev.dv_xname));
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
@@ -730,7 +730,7 @@ xe_intr(arg)
 		ifp->if_oerrors++;
 	}
 	
-	if ((tx_status & TX_ABORT) && ifp->if_opackets > 0)
+	if (tx_status & TX_ABORT)
 		ifp->if_oerrors++;
 
 end:
@@ -1149,7 +1149,6 @@ xe_start(ifp)
 	splx(s);
 
 	ifp->if_timer = 5;
-	++ifp->if_opackets;
 }
 
 int

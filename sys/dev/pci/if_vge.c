@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.70 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.71 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1181,8 +1181,6 @@ vge_txeof(struct vge_softc *sc)
 			ifp->if_collisions++;
 		if (txstat & VGE_TDSTS_TXERR)
 			ifp->if_oerrors++;
-		else
-			ifp->if_opackets++;
 
 		sc->vge_ldata.vge_tx_free++;
 		VGE_TX_DESC_INC(idx);

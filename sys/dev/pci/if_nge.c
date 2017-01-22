@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.91 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.92 2017/01/22 10:17:38 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1143,7 +1143,6 @@ nge_txeof(struct nge_softc *sc)
 		ifp->if_collisions +=
 		    (cur_tx->nge_txstat & NGE_TXSTAT_COLLCNT) >> 16;
 
-		ifp->if_opackets++;
 		if (cur_tx->nge_mbuf != NULL) {
 			m_freem(cur_tx->nge_mbuf);
 			cur_tx->nge_mbuf = NULL;

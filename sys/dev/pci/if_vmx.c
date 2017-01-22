@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.44 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.45 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1081,7 +1081,6 @@ vmxnet3_start(struct ifnet *ifp)
 		/* Change the ownership by flipping the "generation" bit */
 		txd->tx_word2 ^= htole32(VMXNET3_TX_GEN_M << VMXNET3_TX_GEN_S);
 
-		ifp->if_opackets++;
 		used += n;
 	}
 

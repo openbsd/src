@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.36 2016/04/13 11:34:00 mpi Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.37 2017/01/22 10:17:37 dlg Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1371,7 +1371,6 @@ mec_txintr(struct mec_softc *sc, uint32_t stat)
 			col = (txstat & MEC_TXSTAT_COLCNT) >>
 			    MEC_TXSTAT_COLCNT_SHIFT;
 			ifp->if_collisions += col;
-			ifp->if_opackets++;
 		}
 	}
 

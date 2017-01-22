@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.44 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.45 2017/01/22 10:17:38 dlg Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -515,7 +515,6 @@ ex_start(struct ifnet *ifp)
 				    BPF_DIRECTION_OUT);
 #endif
 			ifp->if_timer = 2;
-			ifp->if_opackets++;
 			m_freem(opkt);
 		} else {
 			ifq_deq_rollback(&ifp->if_snd, opkt);
@@ -621,9 +620,7 @@ ex_tx_intr(struct ex_softc *sc)
 			break;
 		tx_status = CSR_READ_2(sc, IO_PORT_REG);
 		sc->tx_head = CSR_READ_2(sc, IO_PORT_REG);
-		if (tx_status & TX_OK_bit)
-			ifp->if_opackets++;
-		else
+		if (!ISSET(tx_status, TX_OK_bit))
 			ifp->if_oerrors++;
 		ifp->if_collisions += tx_status & No_Collisions_bits;
 	}

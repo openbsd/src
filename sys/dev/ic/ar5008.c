@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.38 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.39 2017/01/22 10:17:37 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -981,7 +981,6 @@ ar5008_tx_process(struct athn_softc *sc, int qid)
 		return (EBUSY);
 
 	SIMPLEQ_REMOVE_HEAD(&txq->head, bf_list);
-	ifp->if_opackets++;
 
 	sc->sc_tx_timer = 0;
 

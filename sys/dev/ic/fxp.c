@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.130 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.131 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -941,7 +941,6 @@ fxp_stats_update(void *arg)
 	int s;
 
 	FXP_STATS_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	ifp->if_opackets += letoh32(sp->tx_good);
 	ifp->if_collisions += letoh32(sp->tx_total_collisions);
 	if (sp->rx_good) {
 		sc->rx_idle_secs = 0;

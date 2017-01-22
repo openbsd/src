@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.91 2016/08/17 11:50:52 stsp Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.92 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1172,8 +1172,6 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 
 			SLIST_INSERT_HEAD(&sc->data_pool, data, next);
 			ring->data[ring->next] = NULL;
-
-			ifp->if_opackets++;
 		}
 		ring->queued--;
 		ring->next = (ring->next + 1) % RT2860_TX_RING_COUNT;

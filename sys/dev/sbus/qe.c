@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.39 2016/04/13 11:36:00 mpi Exp $	*/
+/*	$OpenBSD: qe.c,v 1.40 2017/01/22 10:17:39 dlg Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -627,7 +627,6 @@ qe_tint(sc)
 			break;
 
 		ifq_clr_oactive(&ifp->if_snd);
-		ifp->if_opackets++;
 
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;

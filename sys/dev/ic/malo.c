@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.112 2016/04/13 10:49:26 mpi Exp $ */
+/*	$OpenBSD: malo.c,v 1.113 2017/01/22 10:17:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1333,7 +1333,6 @@ malo_tx_intr(struct malo_softc *sc)
 		case 0x1:
 			DPRINTF(2, "%s: data frame was sent successfully\n",
 			    sc->sc_dev.dv_xname);
-			ifp->if_opackets++;
 			break;
 		default:
 			DPRINTF(1, "%s: data frame sending error\n",

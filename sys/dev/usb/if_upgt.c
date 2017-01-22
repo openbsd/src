@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.78 2016/11/06 12:58:01 mpi Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.79 2017/01/22 10:17:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1604,7 +1604,6 @@ upgt_tx_done(struct upgt_softc *sc, uint8_t *data)
 			data_tx->addr = 0;
 
 			sc->tx_queued--;
-			ifp->if_opackets++;
 
 			DPRINTF(2, "%s: TX done: ", sc->sc_dev.dv_xname);
 			DPRINTF(2, "memaddr=0x%08x, status=0x%04x, rssi=%d, ",

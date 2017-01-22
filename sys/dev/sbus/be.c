@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.41 2016/04/13 11:36:00 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.42 2017/01/22 10:17:39 dlg Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -850,7 +850,6 @@ betint(struct be_softc *sc)
 			break;
 
 		ifq_clr_oactive(&ifp->if_snd);
-		ifp->if_opackets++;
 
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;

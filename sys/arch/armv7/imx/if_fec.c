@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.19 2016/10/21 22:34:00 jsg Exp $ */
+/* $OpenBSD: if_fec.c,v 1.20 2017/01/22 10:17:37 dlg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -810,8 +810,6 @@ fec_start(struct ifnet *ifp)
 		}
 
 		ifq_deq_commit(&ifp->if_snd, m_head);
-
-		ifp->if_opackets++;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)

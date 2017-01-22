@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.124 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.125 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -818,7 +818,6 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
 				m_freem(m);
 				txd->tx_addrlo = 0;
 				txd->tx_addrhi = 0;
-				ifp->if_opackets++;
 			}
 		}
 		ifq_clr_oactive(&ifp->if_snd);
@@ -1247,7 +1246,6 @@ txp_tick(void *vsc)
 	    ext[2].ext_1;
 	ifp->if_collisions += ext[0].ext_2 + ext[0].ext_3 + ext[1].ext_2 +
 	    ext[1].ext_3;
-	ifp->if_opackets += rsp->rsp_par2;
 
 out:
 	if (rsp != NULL)

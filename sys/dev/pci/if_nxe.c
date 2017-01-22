@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.73 2016/04/13 10:34:32 mpi Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.74 2017/01/22 10:17:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1389,7 +1389,6 @@ nxe_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
-		ifp->if_opackets++;
 	} while (nr->nr_ready >= NXE_TXD_DESCS);
 
 	nxe_ring_sync(sc, nr, BUS_DMASYNC_PREWRITE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.131 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: xl.c,v 1.132 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1272,7 +1272,6 @@ xl_txeof(struct xl_softc *sc)
 			break;
 
 		sc->xl_cdata.xl_tx_head = cur_tx->xl_next;
-		ifp->if_opackets++;
 		if (cur_tx->map->dm_nsegs != 0) {
 			bus_dmamap_t map = cur_tx->map;
 
@@ -1333,8 +1332,6 @@ xl_txeof_90xB(struct xl_softc *sc)
 			    0, cur_tx->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, cur_tx->map);
 		}
-
-		ifp->if_opackets++;
 
 		sc->xl_cdata.xl_tx_cnt--;
 		XL_INC(idx, XL_TX_LIST_CNT);

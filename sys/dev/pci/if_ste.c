@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.64 2016/04/13 10:34:32 mpi Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.65 2017/01/22 10:17:38 dlg Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -749,7 +749,6 @@ ste_txeof(struct ste_softc *sc)
 		m_freem(cur_tx->ste_mbuf);
 		cur_tx->ste_mbuf = NULL;
 		ifq_clr_oactive(&ifp->if_snd);
-		ifp->if_opackets++;
 
 		STE_INC(idx, STE_TX_LIST_CNT);
 	}

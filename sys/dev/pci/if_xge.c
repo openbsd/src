@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.74 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.75 2017/01/22 10:17:39 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -901,7 +901,6 @@ xge_intr(void *pv)
 		}
 		bus_dmamap_unload(sc->sc_dmat, dmp);
 		m_freem(sc->sc_txb[i]);
-		ifp->if_opackets++;
 		sc->sc_lasttx = i;
 	}
 

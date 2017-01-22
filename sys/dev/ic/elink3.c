@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.94 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.95 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1046,8 +1046,6 @@ startagain:
 		bus_space_write_1(iot, ioh, txreg, 0);
 
 	splx(sh);
-
-	++ifp->if_opackets;
 
 readcheck:
 	if ((bus_space_read_2(iot, ioh, ep_w1_reg(sc, EP_W1_RX_STATUS)) &

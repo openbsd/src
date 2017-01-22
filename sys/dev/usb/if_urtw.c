@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.63 2017/01/09 14:44:28 mpi Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.64 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -2524,7 +2524,6 @@ urtw_txeof_low(struct usbd_xfer *xfer, void *priv,
 	data->ni = NULL;
 
 	sc->sc_txtimer = 0;
-	ifp->if_opackets++;
 
 	sc->sc_tx_low_queued--;
 	ifq_clr_oactive(&ifp->if_snd);
@@ -2563,7 +2562,6 @@ urtw_txeof_normal(struct usbd_xfer *xfer, void *priv,
 	data->ni = NULL;
 
 	sc->sc_txtimer = 0;
-	ifp->if_opackets++;
 
 	sc->sc_tx_normal_queued--;
 	ifq_clr_oactive(&ifp->if_snd);

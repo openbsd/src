@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.28 2016/11/29 10:09:57 reyk Exp $ */
+/* $OpenBSD: if_vether.c,v 1.29 2017/01/22 10:17:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -133,7 +133,6 @@ vetherstart(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 
-		ifp->if_opackets++;
 		m_freem(m);
 	}
 }

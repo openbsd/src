@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.2 2016/08/07 00:21:57 jmatthew Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.3 2017/01/22 10:17:39 dlg Exp $	*/
 /*-
  * Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
@@ -1156,7 +1156,6 @@ ure_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		ure_start(ifp);
 
-	ifp->if_opackets++;
 	splx(s);
 	
 }

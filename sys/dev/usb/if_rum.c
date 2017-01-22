@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.119 2016/04/13 11:03:37 mpi Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.120 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -742,7 +742,6 @@ rum_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	data->ni = NULL;
 
 	sc->tx_queued--;
-	ifp->if_opackets++;
 
 	DPRINTFN(10, ("tx done\n"));
 

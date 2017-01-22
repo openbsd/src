@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.42 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.43 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1268,7 +1268,6 @@ pcn_txintr(struct pcn_softc *sc)
 			/* Real number is unknown. */
 			ifp->if_collisions += 2;
 		}
-		ifp->if_opackets++;
  next_packet:
 		sc->sc_txfree += txs->txs_dmamap->dm_nsegs;
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.52 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.53 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -940,7 +940,6 @@ ietint(sc)
 		printf("ietint: command still busy!\n");
 
 	if (status & IE_STAT_OK) {
-		ifp->if_opackets++;
 		ifp->if_collisions += status & IE_XS_MAXCOLL;
 	} else {
 		ifp->if_oerrors++;

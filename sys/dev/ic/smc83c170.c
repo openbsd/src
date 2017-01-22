@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.26 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.27 2017/01/22 10:17:38 dlg Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -755,8 +755,6 @@ epic_intr(void *arg)
 			 */
 			if ((txstatus & ET_TXSTAT_PACKETTX) == 0)
 				ifp->if_oerrors++;
-			else
-				ifp->if_opackets++;
 			ifp->if_collisions +=
 			    TXSTAT_COLLISIONS(txstatus);
 			if (txstatus & ET_TXSTAT_CARSENSELOST)

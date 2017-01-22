@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.185 2017/01/08 18:08:14 visa Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.186 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1672,8 +1672,6 @@ sk_txeof(struct sk_if_softc *sc_if)
 			SK_CDTXSYNC(sc_if, idx, 1, BUS_DMASYNC_PREREAD);
 			break;
 		}
-		if (sk_ctl & SK_TXCTL_LASTFRAG)
-			ifp->if_opackets++;
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			entry = sc_if->sk_cdata.sk_tx_map[idx];
 

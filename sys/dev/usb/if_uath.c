@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.78 2016/11/06 12:58:01 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.79 2017/01/22 10:17:39 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1334,7 +1334,6 @@ uath_data_txeof(struct usbd_xfer *xfer, void *priv,
 	data->ni = NULL;
 
 	sc->tx_queued--;
-	ifp->if_opackets++;
 
 	sc->sc_tx_timer = 0;
 	ifq_clr_oactive(&ifp->if_snd);

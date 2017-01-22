@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.91 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1070,7 +1070,6 @@ rt2661_tx_intr(struct rt2661_softc *sc)
 				if (retrycnt > 0)
 					amn->amn.amn_retrycnt++;
 			}
-			ifp->if_opackets++;
 			break;
 
 		case RT2661_TX_RETRY_FAIL:

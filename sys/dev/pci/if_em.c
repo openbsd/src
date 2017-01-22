@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.332 2016/10/27 03:06:53 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.333 2017/01/22 10:17:38 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2415,8 +2415,6 @@ em_txeof(struct em_softc *sc)
 
 	if (free == 0)
 		return;
-
-	ifp->if_opackets += free;
 
 	sc->sc_tx_desc_tail = tail;
 

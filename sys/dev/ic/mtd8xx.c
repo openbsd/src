@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.30 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.31 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -1031,7 +1031,6 @@ mtd_txeof(struct mtd_softc *sc)
 			ifp->if_collisions += TSW_NCR_GET(txstat);
 		}
 
-		ifp->if_opackets++;
 		if (sc->mtd_cdata.mtd_tx_chain[idx].sd_map->dm_nsegs != 0) {
 			bus_dmamap_t map =
 			    sc->mtd_cdata.mtd_tx_chain[idx].sd_map;

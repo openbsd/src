@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.50 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.51 2017/01/22 10:17:38 dlg Exp $	*/
 
 /*
  *
@@ -1846,7 +1846,6 @@ cas_tint(struct cas_softc *sc, u_int32_t status)
 			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
-			ifp->if_opackets++;
 		}
 		freed++;
 		if (++cons == CAS_NTXDESC)

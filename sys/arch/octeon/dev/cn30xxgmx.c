@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.31 2016/11/26 15:36:10 martijn Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.32 2017/01/22 10:17:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1323,8 +1323,6 @@ cn30xxgmx_stats(struct cn30xxgmx_port_softc *sc)
 	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_BAD);
 	ifp->if_iqdrops +=
 	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_DRP);
-	ifp->if_opackets +=
-	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_TX0_STAT3);
 	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT0);
 	ifp->if_oerrors +=
 	    (uint32_t)tmp + ((uint32_t)(tmp >> 32) * 16);

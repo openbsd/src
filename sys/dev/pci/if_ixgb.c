@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.70 2016/11/29 10:22:30 jsg Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.71 2017/01/22 10:17:38 dlg Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1383,8 +1383,6 @@ ixgb_txeof(struct ixgb_softc *sc)
 		num_avail++;
 
 		if (tx_buffer->m_head != NULL) {
-			ifp->if_opackets++;
-
 			if (tx_buffer->map->dm_nsegs > 0) {
 				bus_dmamap_sync(sc->txtag, tx_buffer->map,
 				    0, tx_buffer->map->dm_mapsize,
