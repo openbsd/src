@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:48 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/22 03:56:33 jsg Exp $
 
 PROG=	clang-tblgen
 NOMAN=
@@ -6,6 +6,7 @@ NOMAN=
 LDADD+=	-ltermlib
 DPADD+=	${LIBTERMLIB}
 
+.include <bsd.own.mk>
 SRCS=	ClangASTNodesEmitter.cpp \
 	ClangAttrEmitter.cpp \
 	ClangCommentCommandInfoEmitter.cpp \

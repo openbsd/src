@@ -1,4 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2017/01/22 03:13:07 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/22 03:56:33 jsg Exp $
+
+.include <bsd.own.mk>
 
 PROG=	lld
 BINDIR=	/usr/bin
