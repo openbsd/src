@@ -1,5 +1,4 @@
-#	$OpenBSD: install.md,v 1.43 2017/01/19 06:55:58 jsg Exp $
-#
+#	$OpenBSD: install.md,v 1.44 2017/01/22 23:43:54 rpe Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
