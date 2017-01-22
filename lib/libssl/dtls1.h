@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls1.h,v 1.19 2016/12/30 15:10:57 jsing Exp $ */
+/* $OpenBSD: dtls1.h,v 1.20 2017/01/22 03:50:45 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -150,6 +150,8 @@ typedef struct hm_fragment_st {
 	unsigned char *reassembly;
 } hm_fragment;
 
+struct dtls1_state_internal_st;
+
 typedef struct dtls1_state_st {
 	unsigned int send_cookie;
 	unsigned char cookie[DTLS1_COOKIE_LENGTH];
@@ -222,7 +224,7 @@ typedef struct dtls1_state_st {
 	unsigned int retransmitting;
 	unsigned int change_cipher_spec_ok;
 
-
+	struct dtls1_state_internal_st *internal;
 } DTLS1_STATE;
 
 typedef struct dtls1_record_data_st {

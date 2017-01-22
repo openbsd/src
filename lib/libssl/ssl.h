@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.102 2016/12/30 17:20:51 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.103 2017/01/22 03:50:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -353,6 +353,7 @@ extern "C" {
  * 'struct ssl_st *' function parameters used to prototype callbacks
  * in SSL_CTX. */
 typedef struct ssl_st *ssl_crock_st;
+
 typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
 typedef struct ssl_method_st SSL_METHOD;
 typedef struct ssl_cipher_st SSL_CIPHER;
@@ -455,6 +456,8 @@ struct ssl_method_st {
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
  */
+struct ssl_session_internal_st;
+
 struct ssl_session_st {
 	int ssl_version;	/* what ssl version session info is
 				 * being kept in here? */
@@ -513,6 +516,8 @@ struct ssl_session_st {
 	unsigned char *tlsext_tick;	/* Session ticket */
 	size_t tlsext_ticklen;		/* Session ticket length */
 	long tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
+
+	struct ssl_session_internal_st *internal;
 };
 
 #endif
@@ -686,6 +691,8 @@ DECLARE_STACK_OF(SSL_COMP)
 struct lhash_st_SSL_SESSION {
 	int dummy;
 };
+
+struct ssl_ctx_internal_st;
 
 struct ssl_ctx_st {
 	const SSL_METHOD *method;
@@ -885,6 +892,8 @@ struct ssl_ctx_st {
 
 	/* SRTP profiles we are willing to do from RFC 5764 */
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
+
+	struct ssl_ctx_internal_st *internal;
 };
 
 #endif
@@ -997,6 +1006,7 @@ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
 #define SSL_MAC_FLAG_WRITE_MAC_STREAM 2
 
 #ifndef OPENSSL_NO_SSL_INTERN
+struct ssl_internal_st;
 
 struct ssl_st {
 	/* protocol version
@@ -1192,6 +1202,7 @@ struct ssl_st {
 	void *tls_session_secret_cb_arg;
 
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
+#define session_ctx initial_ctx
 
 	/* Next protocol negotiation. For the client, this is the protocol that
 	 * we sent in NextProtocol and is set when handling ServerHello
@@ -1202,8 +1213,6 @@ struct ssl_st {
 	 * before the Finished message. */
 	unsigned char *next_proto_negotiated;
 	unsigned char next_proto_negotiated_len;
-
-#define session_ctx initial_ctx
 
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;	/* What we'll do */
 	SRTP_PROTECTION_PROFILE *srtp_profile;			/* What's been chosen */
@@ -1224,6 +1233,7 @@ struct ssl_st {
 		 	 * 2 if we are a server and are inside a handshake
 	                 * (i.e. not just sending a HelloRequest) */
 
+	struct ssl_internal_st *internal;
 };
 
 #endif

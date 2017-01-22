@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.34 2016/11/04 18:33:11 guenther Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.35 2017/01/22 03:50:45 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -105,7 +105,12 @@ dtls1_new(SSL *s)
 
 	if (!ssl3_new(s))
 		return (0);
-	if ((d1 = calloc(1, sizeof *d1)) == NULL) {
+	if ((d1 = calloc(1, sizeof(*d1))) == NULL) {
+		ssl3_free(s);
+		return (0);
+	}
+	if ((d1->internal = calloc(1, sizeof(*d1->internal))) == NULL) {
+		free(d1);
 		ssl3_free(s);
 		return (0);
 	}
@@ -199,14 +204,19 @@ dtls1_free(SSL *s)
 	pqueue_free(s->d1->sent_messages);
 	pqueue_free(s->d1->buffered_app_data.q);
 
-	explicit_bzero(s->d1, sizeof *s->d1);
+	explicit_bzero(s->d1->internal, sizeof(*s->d1->internal));
+	free(s->d1->internal);
+
+	explicit_bzero(s->d1, sizeof(*s->d1));
 	free(s->d1);
+
 	s->d1 = NULL;
 }
 
 void
 dtls1_clear(SSL *s)
 {
+	struct dtls1_state_internal_st *internal;
 	pqueue unprocessed_rcds;
 	pqueue processed_rcds;
 	pqueue buffered_messages;
@@ -224,7 +234,10 @@ dtls1_clear(SSL *s)
 
 		dtls1_clear_queues(s);
 
-		memset(s->d1, 0, sizeof(*(s->d1)));
+		memset(s->d1->internal, 0, sizeof(*s->d1->internal));
+		internal = s->d1->internal;
+		memset(s->d1, 0, sizeof(*s->d1));
+		s->d1->internal = internal;
 
 		if (s->server) {
 			s->d1->cookie_len = sizeof(s->d1->cookie);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.145 2017/01/21 04:18:18 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.146 2017/01/22 03:50:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -371,6 +371,26 @@ __BEGIN_HIDDEN_DECLS
 #define EXPLICIT_PRIME_CURVE_TYPE  1
 #define EXPLICIT_CHAR2_CURVE_TYPE  2
 #define NAMED_CURVE_TYPE           3
+
+typedef struct ssl_session_internal_st {
+
+} SSL_SESSION_INTERNAL;
+
+typedef struct ssl_ctx_internal_st {
+
+} SSL_CTX_INTERNAL;
+
+typedef struct ssl_internal_st {
+
+} SSL_INTERNAL;
+
+typedef struct ssl3_state_internal_st {
+
+} SSL3_STATE_INTERNAL;
+
+typedef struct dtls1_state_internal_st {
+
+} DTLS1_STATE_INTERNAL;
 
 typedef struct cert_pkey_st {
 	X509 *x509;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.53 2016/11/02 11:21:05 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.54 2017/01/22 03:50:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -199,10 +199,14 @@ SSL_SESSION_new(void)
 {
 	SSL_SESSION *ss;
 
-	ss = calloc(1, sizeof(SSL_SESSION));
-	if (ss == NULL) {
+	if ((ss = calloc(1, sizeof(*ss))) == NULL) {
 		SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
-		return (0);
+		return (NULL);
+	}
+	if ((ss->internal = calloc(1, sizeof(*ss->internal))) == NULL) {
+		free(ss);
+		SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
+		return (NULL);
 	}
 
 	ss->verify_result = 1; /* avoid 0 (= X509_V_OK) just in case */
@@ -706,6 +710,10 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	free(ss->tlsext_ecpointformatlist);
 	ss->tlsext_ellipticcurvelist_length = 0;
 	free(ss->tlsext_ellipticcurvelist);
+
+	explicit_bzero(ss->internal, sizeof(*ss->internal));
+	free(ss->internal);
+
 	explicit_bzero(ss, sizeof(*ss));
 	free(ss);
 }

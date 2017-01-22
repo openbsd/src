@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.117 2017/01/22 00:09:13 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.118 2017/01/22 03:50:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1811,6 +1811,10 @@ ssl3_new(SSL *s)
 {
 	if ((s->s3 = calloc(1, sizeof(*s->s3))) == NULL)
 		return (0);
+	if ((s->s3->internal = calloc(1, sizeof(*s->s3->internal))) == NULL) {
+		free(s->s3);
+		return (0);
+	}
 
 	s->method->ssl_clear(s);
 
@@ -1840,14 +1844,19 @@ ssl3_free(SSL *s)
 	tls1_free_digest_list(s);
 	free(s->s3->alpn_selected);
 
-	explicit_bzero(s->s3, sizeof *s->s3);
+	explicit_bzero(s->s3->internal, sizeof(*s->s3->internal));
+	free(s->s3->internal);
+
+	explicit_bzero(s->s3, sizeof(*s->s3));
 	free(s->s3);
+
 	s->s3 = NULL;
 }
 
 void
 ssl3_clear(SSL *s)
 {
+	struct ssl3_state_internal_st *internal;
 	unsigned char	*rp, *wp;
 	size_t		 rlen, wlen;
 
@@ -1878,7 +1887,10 @@ ssl3_clear(SSL *s)
 	free(s->s3->alpn_selected);
 	s->s3->alpn_selected = NULL;
 
-	memset(s->s3, 0, sizeof *s->s3);
+	memset(s->s3->internal, 0, sizeof(*s->s3->internal));
+	internal = s->s3->internal;
+	memset(s->s3, 0, sizeof(*s->s3));
+	s->s3->internal = internal;
 
 	s->s3->rbuf.buf = rp;
 	s->s3->wbuf.buf = wp;

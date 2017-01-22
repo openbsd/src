@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.43 2016/12/30 15:10:57 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.44 2017/01/22 03:50:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -359,6 +359,8 @@ typedef struct ssl3_buffer_st {
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
+struct ssl3_state_internal_st;
+
 typedef struct ssl3_state_st {
 	long flags;
 	int delay_buf_pop_ret;
@@ -489,6 +491,8 @@ typedef struct ssl3_state_st {
 	 */
 	unsigned char *alpn_selected;
 	unsigned int alpn_selected_len;
+
+	struct ssl3_state_internal_st *internal;
 } SSL3_STATE;
 
 #endif

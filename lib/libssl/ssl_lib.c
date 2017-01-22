@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.125 2017/01/21 04:16:49 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.126 2017/01/22 03:50:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -274,10 +274,15 @@ SSL_new(SSL_CTX *ctx)
 		return (NULL);
 	}
 
-	s = calloc(1, sizeof(SSL));
-	if (s == NULL)
-		goto err;
-
+	if ((s = calloc(1, sizeof(*s))) == NULL) {
+		SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
+		return (NULL);
+	}
+	if ((s->internal = calloc(1, sizeof(*s->internal))) == NULL) {
+		free(s);
+		SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
+		return (NULL);
+	}
 
 	s->options = ctx->options;
 	s->mode = ctx->mode;
@@ -361,7 +366,7 @@ SSL_new(SSL_CTX *ctx)
 
 	return (s);
 
-err:
+ err:
 	SSL_free(s);
 	SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
 	return (NULL);
@@ -549,7 +554,6 @@ SSL_free(SSL *s)
 
 	SSL_CTX_free(s->ctx);
 
-
 	free(s->next_proto_negotiated);
 	free(s->alpn_client_proto_list);
 
@@ -558,6 +562,7 @@ SSL_free(SSL *s)
 		sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
 #endif
 
+	free(s->internal);
 	free(s);
 }
 
@@ -1792,10 +1797,20 @@ ssl_session_LHASH_COMP(const void *arg1, const void *arg2)
 SSL_CTX *
 SSL_CTX_new(const SSL_METHOD *meth)
 {
-	SSL_CTX	*ret = NULL;
+	SSL_CTX	*ret;
 
 	if (meth == NULL) {
 		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_NULL_SSL_METHOD_PASSED);
+		return (NULL);
+	}
+
+	if ((ret = calloc(1, sizeof(*ret))) == NULL) {
+		SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
+		return (NULL);
+	}
+	if ((ret->internal = calloc(1, sizeof(*ret->internal))) == NULL) {
+		free(ret);
+		SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 
@@ -1804,9 +1819,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 		    SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
 		goto err;
 	}
-	ret = calloc(1, sizeof(SSL_CTX));
-	if (ret == NULL)
-		goto err;
 
 	ret->method = meth;
 
@@ -1993,6 +2005,7 @@ SSL_CTX_free(SSL_CTX *a)
 
 	free(a->alpn_client_proto_list);
 
+	free(a->internal);
 	free(a);
 }
 
