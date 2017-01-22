@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.43 2016/11/11 14:03:33 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.44 2017/01/22 03:59:30 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -106,8 +106,10 @@ int tls_config_set_keypair_file(struct tls_config *_config,
     const char *_cert_file, const char *_key_file);
 int tls_config_set_keypair_mem(struct tls_config *_config, const uint8_t *_cert,
     size_t _cert_len, const uint8_t *_key, size_t _key_len);
-int tls_config_set_ocsp_staple_mem(struct tls_config *_config, char *_staple, size_t _len);
-int tls_config_set_ocsp_staple_file(struct tls_config *_config, const char *_staple_file);
+int tls_config_set_ocsp_staple_mem(struct tls_config *_config, char *_staple,
+    size_t _len);
+int tls_config_set_ocsp_staple_file(struct tls_config *_config,
+    const char *_staple_file);
 int tls_config_set_protocols(struct tls_config *_config, uint32_t _protocols);
 int tls_config_set_verify_depth(struct tls_config *_config, int _verify_depth);
 
@@ -166,7 +168,8 @@ const char *tls_conn_version(struct tls *_ctx);
 
 uint8_t *tls_load_file(const char *_file, size_t *_len, char *_password);
 
-int tls_ocsp_process_response(struct tls *_ctx, const unsigned char *_response, size_t _size);
+int tls_ocsp_process_response(struct tls *_ctx, const unsigned char *_response,
+    size_t _size);
 int tls_peer_ocsp_cert_status(struct tls *_ctx);
 int tls_peer_ocsp_crl_reason(struct tls *_ctx);
 time_t tls_peer_ocsp_next_update(struct tls *_ctx);
