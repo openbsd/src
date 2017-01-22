@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.57 2017/01/13 17:09:51 deraadt Exp $ */
+/* $OpenBSD: tls.c,v 1.58 2017/01/22 08:27:50 claudio Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -358,6 +358,10 @@ tls_configure_ssl(struct tls *ctx, SSL_CTX *ssl_ctx)
 		X509_VERIFY_PARAM_set_flags(ssl_ctx->param,
 		    X509_V_FLAG_NO_CHECK_TIME);
 	}
+
+	/* Disable any form of session caching by default */
+	SSL_CTX_set_session_cache_mode(ssl_ctx, SSL_SESS_CACHE_OFF);
+	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TICKET);
 
 	return (0);
 
