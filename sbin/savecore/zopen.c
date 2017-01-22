@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.3 2016/09/04 15:45:27 tedu Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.4 2017/01/22 01:55:08 krw Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -178,7 +178,6 @@ struct s_zstate {
 
 static int	cl_block(struct s_zstate *);
 static void	cl_hash(struct s_zstate *, count_int);
-static code_int	getcode(struct s_zstate *);
 static int	output(struct s_zstate *, code_int);
 
 /*-
