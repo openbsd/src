@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.44 2017/01/22 03:50:45 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.45 2017/01/22 09:02:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -363,134 +363,21 @@ struct ssl3_state_internal_st;
 
 typedef struct ssl3_state_st {
 	long flags;
-	int delay_buf_pop_ret;
-
-	unsigned char read_sequence[SSL3_SEQUENCE_SIZE];
-	int read_mac_secret_size;
-	unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
-	unsigned char write_sequence[SSL3_SEQUENCE_SIZE];
-	int write_mac_secret_size;
-	unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
 
 	unsigned char server_random[SSL3_RANDOM_SIZE];
 	unsigned char client_random[SSL3_RANDOM_SIZE];
 
-	/* flags for countermeasure against known-IV weakness */
-	int need_empty_fragments;
-	int empty_fragment_done;
-
 	SSL3_BUFFER rbuf;	/* read IO goes into here */
 	SSL3_BUFFER wbuf;	/* write IO goes into here */
 
-	SSL3_RECORD rrec;	/* each decoded record goes in here */
-	SSL3_RECORD wrec;	/* goes out from here */
-
-	/* storage for Alert/Handshake protocol data received but not
-	 * yet processed by ssl3_read_bytes: */
-	unsigned char alert_fragment[2];
-	unsigned int alert_fragment_len;
-	unsigned char handshake_fragment[4];
-	unsigned int handshake_fragment_len;
-
-	/* partial write - check the numbers match */
-	unsigned int wnum;	/* number of bytes sent so far */
-	int wpend_tot;		/* number bytes written */
-	int wpend_type;
-	int wpend_ret;		/* number of bytes submitted */
-	const unsigned char *wpend_buf;
-
-	/* used during startup, digest all incoming/outgoing packets */
-	BIO *handshake_buffer;
-	/* When set of handshake digests is determined, buffer is hashed
-	 * and freed and MD_CTX-es for all required digests are stored in
-	 * this array */
-	EVP_MD_CTX **handshake_dgst;
-	/* this is set whenerver we see a change_cipher_spec message
-	 * come in when we are not looking for one */
-	int change_cipher_spec;
-
-	int warn_alert;
-	int fatal_alert;
 	/* we allow one fatal and one warning alert to be outstanding,
 	 * send close alert via the warning alert */
 	int alert_dispatch;
 	unsigned char send_alert[2];
 
-	/* This flag is set when we should renegotiate ASAP, basically when
-	 * there is no more data in the read or write buffers */
-	int renegotiate;
-	int total_renegotiations;
-	int num_renegotiations;
-
-	int in_read_app_data;
-
-	struct	{
-		/* actually only needs to be 16+20 */
-		unsigned char cert_verify_md[EVP_MAX_MD_SIZE*2];
-
-		/* actually only need to be 16+20 for SSLv3 and 12 for TLS */
-		unsigned char finish_md[EVP_MAX_MD_SIZE*2];
-		int finish_md_len;
-		unsigned char peer_finish_md[EVP_MAX_MD_SIZE*2];
-		int peer_finish_md_len;
-
-		unsigned long message_size;
-		int message_type;
-
-		/* used to hold the new cipher we are going to use */
-		const SSL_CIPHER *new_cipher;
-		DH *dh;
-
-		EC_KEY *ecdh; /* holds short lived ECDH key */
-
-		uint8_t *x25519;
-
-		/* used when SSL_ST_FLUSH_DATA is entered */
-		int next_state;
-
-		int reuse_message;
-
-		/* used for certificate requests */
-		int cert_req;
-		int ctype_num;
-		char ctype[SSL3_CT_NUMBER];
-		STACK_OF(X509_NAME) *ca_names;
-
-		int key_block_length;
-		unsigned char *key_block;
-
-		const EVP_CIPHER *new_sym_enc;
-		const EVP_AEAD *new_aead;
-		const EVP_MD *new_hash;
-		int new_mac_pkey_type;
+	struct {
 		int new_mac_secret_size;
-		int cert_request;
 	} tmp;
-
-	/* Connection binding to prevent renegotiation attacks */
-	unsigned char previous_client_finished[EVP_MAX_MD_SIZE];
-	unsigned char previous_client_finished_len;
-	unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
-	unsigned char previous_server_finished_len;
-	int send_connection_binding; /* TODOEKR */
-
-	/* Set if we saw the Next Protocol Negotiation extension from our peer.
-	 */
-	int next_proto_neg_seen;
-
-	/*
-	 * ALPN information
-	 * (we are in the process of transitioning from NPN to ALPN).
-	 */
-
-	/*
-	 * In a server these point to the selected ALPN protocol after the
-	 * ClientHello has been processed. In a client these contain the
-	 * protocol that the server selected once the ServerHello has been
-	 * processed.
-	 */
-	unsigned char *alpn_selected;
-	unsigned int alpn_selected_len;
 
 	struct ssl3_state_internal_st *internal;
 } SSL3_STATE;

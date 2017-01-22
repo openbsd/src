@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.71 2017/01/22 07:16:39 beck Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.72 2017/01/22 09:02:07 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -278,7 +278,7 @@ dtls1_accept(SSL *s)
 			ret = ssl3_send_hello_request(s);
 			if (ret <= 0)
 				goto end;
-			s->s3->tmp.next_state = SSL3_ST_SR_CLNT_HELLO_A;
+			S3I(s)->tmp.next_state = SSL3_ST_SR_CLNT_HELLO_A;
 			s->state = SSL3_ST_SW_FLUSH;
 			s->init_num = 0;
 
@@ -311,7 +311,7 @@ dtls1_accept(SSL *s)
 
 			/* Reflect ClientHello sequence to remain stateless while listening */
 			if (listen) {
-				memcpy(s->s3->write_sequence, s->s3->read_sequence, sizeof(s->s3->write_sequence));
+				memcpy(S3I(s)->write_sequence, S3I(s)->read_sequence, sizeof(S3I(s)->write_sequence));
 			}
 
 			/* If we're just listening, stop here */
@@ -336,7 +336,7 @@ dtls1_accept(SSL *s)
 			if (ret <= 0)
 				goto end;
 			s->state = SSL3_ST_SW_FLUSH;
-			s->s3->tmp.next_state = SSL3_ST_SR_CLNT_HELLO_A;
+			S3I(s)->tmp.next_state = SSL3_ST_SR_CLNT_HELLO_A;
 
 			/* HelloVerifyRequest resets Finished MAC */
 			if (!tls1_init_finished_mac(s)) {
@@ -367,7 +367,7 @@ dtls1_accept(SSL *s)
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
 			/* Check if it is anon DH. */
-			if (!(s->s3->tmp.new_cipher->algorithm_auth &
+			if (!(S3I(s)->tmp.new_cipher->algorithm_auth &
 			    SSL_aNULL)) {
 				dtls1_start_timer(s);
 				ret = ssl3_send_server_certificate(s);
@@ -386,7 +386,7 @@ dtls1_accept(SSL *s)
 
 		case SSL3_ST_SW_KEY_EXCH_A:
 		case SSL3_ST_SW_KEY_EXCH_B:
-			alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+			alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
 
 			/* Only send if using a DH key exchange. */
 			if (alg_k & (SSL_kDHE|SSL_kECDHE)) {
@@ -423,15 +423,15 @@ dtls1_accept(SSL *s)
 			if (!(s->verify_mode & SSL_VERIFY_PEER) ||
 			    ((s->session->peer != NULL) &&
 			     (s->verify_mode & SSL_VERIFY_CLIENT_ONCE)) ||
-			    ((s->s3->tmp.new_cipher->algorithm_auth &
+			    ((S3I(s)->tmp.new_cipher->algorithm_auth &
 			     SSL_aNULL) && !(s->verify_mode &
 			     SSL_VERIFY_FAIL_IF_NO_PEER_CERT))) {
 				/* no cert request */
 				skip = 1;
-				s->s3->tmp.cert_request = 0;
+				S3I(s)->tmp.cert_request = 0;
 				s->state = SSL3_ST_SW_SRVR_DONE_A;
 			} else {
-				s->s3->tmp.cert_request = 1;
+				S3I(s)->tmp.cert_request = 1;
 				dtls1_start_timer(s);
 				ret = ssl3_send_certificate_request(s);
 				if (ret <= 0)
@@ -447,7 +447,7 @@ dtls1_accept(SSL *s)
 			ret = ssl3_send_server_done(s);
 			if (ret <= 0)
 				goto end;
-			s->s3->tmp.next_state = SSL3_ST_SR_CERT_A;
+			S3I(s)->tmp.next_state = SSL3_ST_SR_CERT_A;
 			s->state = SSL3_ST_SW_FLUSH;
 			s->init_num = 0;
 			break;
@@ -458,19 +458,19 @@ dtls1_accept(SSL *s)
 				/* If the write error was fatal, stop trying */
 				if (!BIO_should_retry(s->wbio)) {
 					s->rwstate = SSL_NOTHING;
-					s->state = s->s3->tmp.next_state;
+					s->state = S3I(s)->tmp.next_state;
 				}
 
 				ret = -1;
 				goto end;
 			}
 			s->rwstate = SSL_NOTHING;
-			s->state = s->s3->tmp.next_state;
+			s->state = S3I(s)->tmp.next_state;
 			break;
 
 		case SSL3_ST_SR_CERT_A:
 		case SSL3_ST_SR_CERT_B:
-			if (s->s3->tmp.cert_request) {
+			if (S3I(s)->tmp.cert_request) {
 				ret = ssl3_get_client_certificate(s);
 				if (ret <= 0)
 					goto end;
@@ -506,7 +506,7 @@ dtls1_accept(SSL *s)
 				 * For sigalgs freeze the handshake buffer
 				 * at this point and digest cached records.
 				 */
-				if (!s->s3->handshake_buffer) {
+				if (!S3I(s)->handshake_buffer) {
 					SSLerr(SSL_F_SSL3_ACCEPT,
 					    ERR_R_INTERNAL_ERROR);
 					ret = -1;
@@ -524,10 +524,10 @@ dtls1_accept(SSL *s)
 				/* We need to get hashes here so if there is
 				 * a client cert, it can be verified */
 				s->method->ssl3_enc->cert_verify_mac(s,
-				    NID_md5, &(s->s3->tmp.cert_verify_md[0]));
+				    NID_md5, &(S3I(s)->tmp.cert_verify_md[0]));
 				s->method->ssl3_enc->cert_verify_mac(s,
 				    NID_sha1,
-				    &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
+				    &(S3I(s)->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
 			}
 			break;
 
@@ -582,7 +582,7 @@ dtls1_accept(SSL *s)
 		case SSL3_ST_SW_CHANGE_A:
 		case SSL3_ST_SW_CHANGE_B:
 
-			s->session->cipher = s->s3->tmp.new_cipher;
+			s->session->cipher = S3I(s)->tmp.new_cipher;
 			if (!s->method->ssl3_enc->setup_key_block(s)) {
 				ret = -1;
 				goto end;
@@ -617,10 +617,10 @@ dtls1_accept(SSL *s)
 				goto end;
 			s->state = SSL3_ST_SW_FLUSH;
 			if (s->hit) {
-				s->s3->tmp.next_state = SSL3_ST_SR_FINISHED_A;
+				S3I(s)->tmp.next_state = SSL3_ST_SR_FINISHED_A;
 
 			} else {
-				s->s3->tmp.next_state = SSL_ST_OK;
+				S3I(s)->tmp.next_state = SSL_ST_OK;
 			}
 			s->init_num = 0;
 			break;
@@ -666,7 +666,7 @@ dtls1_accept(SSL *s)
 			/* break; */
 		}
 
-		if (!s->s3->tmp.reuse_message && !skip) {
+		if (!S3I(s)->tmp.reuse_message && !skip) {
 			if (s->debug) {
 				if ((ret = BIO_flush(s->wbio)) <= 0)
 					goto end;

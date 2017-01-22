@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.161 2017/01/22 07:16:39 beck Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.162 2017/01/22 09:02:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -293,7 +293,7 @@ ssl3_connect(SSL *s)
 				break;
 			}
 			/* Check if it is anon DH/ECDH. */
-			if (!(s->s3->tmp.new_cipher->algorithm_auth &
+			if (!(S3I(s)->tmp.new_cipher->algorithm_auth &
 			    SSL_aNULL)) {
 				ret = ssl3_get_server_certificate(s);
 				if (ret <= 0)
@@ -341,7 +341,7 @@ ssl3_connect(SSL *s)
 			ret = ssl3_get_server_done(s);
 			if (ret <= 0)
 				goto end;
-			if (s->s3->tmp.cert_req)
+			if (S3I(s)->tmp.cert_req)
 				s->state = SSL3_ST_CW_CERT_A;
 			else
 				s->state = SSL3_ST_CW_KEY_EXCH_A;
@@ -381,15 +381,15 @@ ssl3_connect(SSL *s)
 			 * message when client's ECDH public key is sent
 			 * inside the client certificate.
 			 */
-			if (s->s3->tmp.cert_req == 1) {
+			if (S3I(s)->tmp.cert_req == 1) {
 				s->state = SSL3_ST_CW_CERT_VRFY_A;
 			} else {
 				s->state = SSL3_ST_CW_CHANGE_A;
-				s->s3->change_cipher_spec = 0;
+				S3I(s)->change_cipher_spec = 0;
 			}
 			if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
 				s->state = SSL3_ST_CW_CHANGE_A;
-				s->s3->change_cipher_spec = 0;
+				S3I(s)->change_cipher_spec = 0;
 			}
 
 			s->init_num = 0;
@@ -402,7 +402,7 @@ ssl3_connect(SSL *s)
 				goto end;
 			s->state = SSL3_ST_CW_CHANGE_A;
 			s->init_num = 0;
-			s->s3->change_cipher_spec = 0;
+			S3I(s)->change_cipher_spec = 0;
 			break;
 
 		case SSL3_ST_CW_CHANGE_A:
@@ -412,13 +412,13 @@ ssl3_connect(SSL *s)
 			if (ret <= 0)
 				goto end;
 
-			if (s->s3->next_proto_neg_seen)
+			if (S3I(s)->next_proto_neg_seen)
 				s->state = SSL3_ST_CW_NEXT_PROTO_A;
 			else
 				s->state = SSL3_ST_CW_FINISHED_A;
 			s->init_num = 0;
 
-			s->session->cipher = s->s3->tmp.new_cipher;
+			s->session->cipher = S3I(s)->tmp.new_cipher;
 			if (!s->method->ssl3_enc->setup_key_block(s)) {
 				ret = -1;
 				goto end;
@@ -454,21 +454,21 @@ ssl3_connect(SSL *s)
 			/* clear flags */
 			s->s3->flags &= ~SSL3_FLAGS_POP_BUFFER;
 			if (s->hit) {
-				s->s3->tmp.next_state = SSL_ST_OK;
+				S3I(s)->tmp.next_state = SSL_ST_OK;
 				if (s->s3->flags &
 				    SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
 					s->state = SSL_ST_OK;
 					s->s3->flags|=SSL3_FLAGS_POP_BUFFER;
-					s->s3->delay_buf_pop_ret = 0;
+					S3I(s)->delay_buf_pop_ret = 0;
 				}
 			} else {
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->tlsext_ticket_expected)
-					s->s3->tmp.next_state =
+					S3I(s)->tmp.next_state =
 					    SSL3_ST_CR_SESSION_TICKET_A;
 				else
 
-				s->s3->tmp.next_state = SSL3_ST_CR_FINISHED_A;
+				S3I(s)->tmp.next_state = SSL3_ST_CR_FINISHED_A;
 			}
 			s->init_num = 0;
 			break;
@@ -513,7 +513,7 @@ ssl3_connect(SSL *s)
 				goto end;
 			}
 			s->rwstate = SSL_NOTHING;
-			s->state = s->s3->tmp.next_state;
+			s->state = S3I(s)->tmp.next_state;
 			break;
 
 		case SSL_ST_OK:
@@ -561,7 +561,7 @@ ssl3_connect(SSL *s)
 		}
 
 		/* did we do anything */
-		if (!s->s3->tmp.reuse_message && !skip) {
+		if (!S3I(s)->tmp.reuse_message && !skip) {
 			if (s->debug) {
 				if ((ret = BIO_flush(s->wbio)) <= 0)
 					goto end;
@@ -742,9 +742,9 @@ ssl3_get_server_hello(SSL *s)
 	CBS_init(&cbs, s->init_msg, n);
 
 	if (SSL_IS_DTLS(s)) {
-		if (s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
+		if (S3I(s)->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
 			if (D1I(s)->send_cookie == 0) {
-				s->s3->tmp.reuse_message = 1;
+				S3I(s)->tmp.reuse_message = 1;
 				return (1);
 			} else {
 				/* Already sent a cookie. */
@@ -756,7 +756,7 @@ ssl3_get_server_hello(SSL *s)
 		}
 	}
 
-	if (s->s3->tmp.message_type != SSL3_MT_SERVER_HELLO) {
+	if (S3I(s)->tmp.message_type != SSL3_MT_SERVER_HELLO) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
 		    SSL_R_BAD_MESSAGE_TYPE);
@@ -887,13 +887,13 @@ ssl3_get_server_hello(SSL *s)
 		    SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
 		goto f_err;
 	}
-	s->s3->tmp.new_cipher = cipher;
+	S3I(s)->tmp.new_cipher = cipher;
 
 	/*
 	 * Don't digest cached records if no sigalgs: we may need them for
 	 * client authentication.
 	 */
-	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+	alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
 	if (!(SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) &&
 	    !tls1_digest_cached_records(s)) {
 		al = SSL_AD_INTERNAL_ERROR;
@@ -956,12 +956,12 @@ ssl3_get_server_certificate(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	if (s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
-		s->s3->tmp.reuse_message = 1;
+	if (S3I(s)->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
+		S3I(s)->tmp.reuse_message = 1;
 		return (1);
 	}
 
-	if (s->s3->tmp.message_type != SSL3_MT_CERTIFICATE) {
+	if (S3I(s)->tmp.message_type != SSL3_MT_CERTIFICATE) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
 		    SSL_R_BAD_MESSAGE_TYPE);
@@ -1113,7 +1113,7 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 	long alg_a;
 	int al;
 
-	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
 	sc = s->session->sess_cert;
 
 	if (*nn < 0)
@@ -1280,7 +1280,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 	int nid;
 	int al;
 
-	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
 	sc = s->session->sess_cert;
 
 	if (*nn < 0)
@@ -1366,8 +1366,8 @@ ssl3_get_server_key_exchange(SSL *s)
 	const		 EVP_MD *md = NULL;
 	RSA		*rsa = NULL;
 
-	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+	alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
+	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
 
 	/*
 	 * Use same message size as in ssl3_get_certificate_request()
@@ -1380,7 +1380,7 @@ ssl3_get_server_key_exchange(SSL *s)
 
 	EVP_MD_CTX_init(&md_ctx);
 
-	if (s->s3->tmp.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
+	if (S3I(s)->tmp.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
 		/*
 		 * Do not skip server key exchange if this cipher suite uses
 		 * ephemeral keys.
@@ -1392,7 +1392,7 @@ ssl3_get_server_key_exchange(SSL *s)
 			goto f_err;
 		}
 
-		s->s3->tmp.reuse_message = 1;
+		S3I(s)->tmp.reuse_message = 1;
 		EVP_MD_CTX_cleanup(&md_ctx);
 		return (1);
 	}
@@ -1585,22 +1585,22 @@ ssl3_get_certificate_request(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	s->s3->tmp.cert_req = 0;
+	S3I(s)->tmp.cert_req = 0;
 
-	if (s->s3->tmp.message_type == SSL3_MT_SERVER_DONE) {
-		s->s3->tmp.reuse_message = 1;
+	if (S3I(s)->tmp.message_type == SSL3_MT_SERVER_DONE) {
+		S3I(s)->tmp.reuse_message = 1;
 		/*
 		 * If we get here we don't need any cached handshake records
 		 * as we wont be doing client auth.
 		 */
-		if (s->s3->handshake_buffer) {
+		if (S3I(s)->handshake_buffer) {
 			if (!tls1_digest_cached_records(s))
 				goto err;
 		}
 		return (1);
 	}
 
-	if (s->s3->tmp.message_type != SSL3_MT_CERTIFICATE_REQUEST) {
+	if (S3I(s)->tmp.message_type != SSL3_MT_CERTIFICATE_REQUEST) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
 		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
 		    SSL_R_WRONG_MESSAGE_TYPE);
@@ -1608,7 +1608,7 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	/* TLS does not like anon-DH with client cert */
-	if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
+	if (S3I(s)->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
 		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
 		    SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER);
@@ -1632,8 +1632,8 @@ ssl3_get_certificate_request(SSL *s)
 	if (ctype_num > SSL3_CT_NUMBER)
 		ctype_num = SSL3_CT_NUMBER;
 	if (!CBS_get_bytes(&cert_request, &ctypes, ctype_num) ||
-	    !CBS_write_bytes(&ctypes, (uint8_t *)s->s3->tmp.ctype,
-	    sizeof(s->s3->tmp.ctype), NULL)) {
+	    !CBS_write_bytes(&ctypes, (uint8_t *)S3I(s)->tmp.ctype,
+	    sizeof(S3I(s)->tmp.ctype), NULL)) {
 		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
 		    SSL_R_DATA_LENGTH_TOO_LONG);
 		goto err;
@@ -1722,11 +1722,11 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	/* we should setup a certificate to return.... */
-	s->s3->tmp.cert_req = 1;
-	s->s3->tmp.ctype_num = ctype_num;
-	if (s->s3->tmp.ca_names != NULL)
-		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
-	s->s3->tmp.ca_names = ca_sk;
+	S3I(s)->tmp.cert_req = 1;
+	S3I(s)->tmp.ctype_num = ctype_num;
+	if (S3I(s)->tmp.ca_names != NULL)
+		sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
+	S3I(s)->tmp.ca_names = ca_sk;
 	ca_sk = NULL;
 
 	ret = 1;
@@ -1761,11 +1761,11 @@ ssl3_get_new_session_ticket(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	if (s->s3->tmp.message_type == SSL3_MT_FINISHED) {
-		s->s3->tmp.reuse_message = 1;
+	if (S3I(s)->tmp.message_type == SSL3_MT_FINISHED) {
+		S3I(s)->tmp.reuse_message = 1;
 		return (1);
 	}
-	if (s->s3->tmp.message_type != SSL3_MT_NEWSESSION_TICKET) {
+	if (S3I(s)->tmp.message_type != SSL3_MT_NEWSESSION_TICKET) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,
 		    SSL_R_BAD_MESSAGE_TYPE);
@@ -2255,7 +2255,7 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	/*
 	 * If we have client certificate, use its secret as peer key.
 	 */
-	if (s->s3->tmp.cert_req && s->cert->key->privatekey) {
+	if (S3I(s)->tmp.cert_req && s->cert->key->privatekey) {
 		if (EVP_PKEY_derive_set_peer(pkey_ctx,
 		    s->cert->key->privatekey) <=0) {
 			/*
@@ -2339,7 +2339,7 @@ ssl3_send_client_key_exchange(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A) {
-		alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+		alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
 
 		if ((sess_cert = s->session->sess_cert) == NULL) {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
@@ -2427,7 +2427,7 @@ ssl3_send_client_verify(SSL *s)
 			long hdatalen = 0;
 			void *hdata;
 			const EVP_MD *md = s->cert->key->digest;
-			hdatalen = BIO_get_mem_data(s->s3->handshake_buffer,
+			hdatalen = BIO_get_mem_data(S3I(s)->handshake_buffer,
 			    &hdata);
 			if (hdatalen <= 0 ||
 			    !tls12_get_sigandhash(p, pkey, md)) {
@@ -2491,7 +2491,7 @@ ssl3_send_client_verify(SSL *s)
 			int nid;
 			size_t sigsize;
 
-			hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+			hdatalen = BIO_get_mem_data(S3I(s)->handshake_buffer, &hdata);
 			if (hdatalen <= 0) {
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
 				    ERR_R_INTERNAL_ERROR);
@@ -2590,7 +2590,7 @@ ssl3_send_client_certificate(SSL *s)
 		X509_free(x509);
 		EVP_PKEY_free(pkey);
 		if (i == 0)
-			s->s3->tmp.cert_req = 2;
+			S3I(s)->tmp.cert_req = 2;
 
 		/* Ok, we have a cert */
 		s->state = SSL3_ST_CW_CERT_C;
@@ -2601,7 +2601,7 @@ ssl3_send_client_certificate(SSL *s)
 		    SSL3_MT_CERTIFICATE))
 			goto err;
 		if (!ssl3_output_cert_chain(s, &client_cert,
-		    (s->s3->tmp.cert_req == 2) ? NULL : s->cert->key->x509))
+		    (S3I(s)->tmp.cert_req == 2) ? NULL : s->cert->key->x509))
 			goto err;
 		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
 			goto err;
@@ -2629,8 +2629,8 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	SESS_CERT	*sc;
 	DH		*dh;
 
-	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+	alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
+	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
 
 	/* We don't have a certificate. */
 	if (alg_a & SSL_aNULL)
@@ -2740,9 +2740,9 @@ ssl3_check_finished(SSL *s)
 	    SSL3_ST_CR_CERT_B, -1, s->max_cert_list, &ok);
 	if (!ok)
 		return ((int)n);
-	s->s3->tmp.reuse_message = 1;
-	if ((s->s3->tmp.message_type == SSL3_MT_FINISHED) ||
-	    (s->s3->tmp.message_type == SSL3_MT_NEWSESSION_TICKET))
+	S3I(s)->tmp.reuse_message = 1;
+	if ((S3I(s)->tmp.message_type == SSL3_MT_FINISHED) ||
+	    (S3I(s)->tmp.message_type == SSL3_MT_NEWSESSION_TICKET))
 		return (2);
 
 	return (1);

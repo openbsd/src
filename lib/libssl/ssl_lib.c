@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.128 2017/01/22 07:16:39 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.129 2017/01/22 09:02:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -702,10 +702,10 @@ SSL_get_finished(const SSL *s, void *buf, size_t count)
 	size_t	ret = 0;
 
 	if (s->s3 != NULL) {
-		ret = s->s3->tmp.finish_md_len;
+		ret = S3I(s)->tmp.finish_md_len;
 		if (count > ret)
 			count = ret;
-		memcpy(buf, s->s3->tmp.finish_md, count);
+		memcpy(buf, S3I(s)->tmp.finish_md, count);
 	}
 	return (ret);
 }
@@ -717,10 +717,10 @@ SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 	size_t	ret = 0;
 
 	if (s->s3 != NULL) {
-		ret = s->s3->tmp.peer_finish_md_len;
+		ret = S3I(s)->tmp.peer_finish_md_len;
 		if (count > ret)
 			count = ret;
-		memcpy(buf, s->s3->tmp.peer_finish_md, count);
+		memcpy(buf, S3I(s)->tmp.peer_finish_md, count);
 	}
 	return (ret);
 }
@@ -1089,7 +1089,7 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return (1);
 	case SSL_CTRL_GET_RI_SUPPORT:
 		if (s->s3)
-			return (s->s3->send_connection_binding);
+			return (S3I(s)->send_connection_binding);
 		else return (0);
 	default:
 		return (s->method->ssl_ctrl(s, cmd, larg, parg));
@@ -1425,7 +1425,7 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 	uint16_t		 cipher_value, max_version;
 
 	if (s->s3)
-		s->s3->send_connection_binding = 0;
+		S3I(s)->send_connection_binding = 0;
 
 	/*
 	 * RFC 5246 section 7.4.1.2 defines the interval as [2,2^16-2].
@@ -1464,7 +1464,7 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 
 				goto err;
 			}
-			s->s3->send_connection_binding = 1;
+			S3I(s)->send_connection_binding = 1;
 			continue;
 		}
 
@@ -1725,8 +1725,8 @@ SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
 	*len = 0;
 
 	if (ssl->s3 != NULL) {
-		*data = ssl->s3->alpn_selected;
-		*len = ssl->s3->alpn_selected_len;
+		*data = ssl->s3->internal->alpn_selected;
+		*len = ssl->s3->internal->alpn_selected_len;
 	}
 }
 
@@ -2119,7 +2119,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 int
 ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 {
-	const SSL_CIPHER	*cs = s->s3->tmp.new_cipher;
+	const SSL_CIPHER	*cs = S3I(s)->tmp.new_cipher;
 	unsigned long		 alg_a;
 
 	alg_a = cs->algorithm_auth;
@@ -2148,9 +2148,9 @@ ssl_get_server_send_pkey(const SSL *s)
 	int		 i;
 
 	c = s->cert;
-	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
+	ssl_set_cert_masks(c, S3I(s)->tmp.new_cipher);
 
-	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
 
 	if (alg_a & SSL_aECDSA) {
 		i = SSL_PKEY_ECC;
@@ -2221,9 +2221,9 @@ ssl_get_auto_dh(SSL *s)
 
 	if (s->cert->dh_tmp_auto == 2) {
 		keylen = 1024;
-	} else if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
+	} else if (S3I(s)->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
 		keylen = 1024;
-		if (s->s3->tmp.new_cipher->strength_bits == 256)
+		if (S3I(s)->tmp.new_cipher->strength_bits == 256)
 			keylen = 3072;
 	} else {
 		if ((cpk = ssl_get_server_send_pkey(s)) == NULL)
@@ -2396,7 +2396,7 @@ SSL_get_error(const SSL *s, int i)
 
 	if (i == 0) {
 		if ((s->shutdown & SSL_RECEIVED_SHUTDOWN) &&
-		    (s->s3->warn_alert == SSL_AD_CLOSE_NOTIFY))
+		    (S3I(s)->warn_alert == SSL_AD_CLOSE_NOTIFY))
 		return (SSL_ERROR_ZERO_RETURN);
 	}
 	return (SSL_ERROR_SYSCALL);

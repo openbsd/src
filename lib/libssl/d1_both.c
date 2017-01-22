@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.41 2017/01/22 07:16:38 beck Exp $ */
+/* $OpenBSD: d1_both.c,v 1.42 2017/01/22 09:02:07 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -403,12 +403,12 @@ dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	unsigned long msg_len;
 
 	/*
-	 * s3->tmp is used to store messages that are unexpected, caused
+	 * s3->internal->tmp is used to store messages that are unexpected, caused
 	 * by the absence of an optional handshake message
 	 */
-	if (s->s3->tmp.reuse_message) {
-		s->s3->tmp.reuse_message = 0;
-		if ((mt >= 0) && (s->s3->tmp.message_type != mt)) {
+	if (S3I(s)->tmp.reuse_message) {
+		S3I(s)->tmp.reuse_message = 0;
+		if ((mt >= 0) && (S3I(s)->tmp.message_type != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerr(SSL_F_DTLS1_GET_MESSAGE,
 			    SSL_R_UNEXPECTED_MESSAGE);
@@ -416,7 +416,7 @@ dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		}
 		*ok = 1;
 		s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
-		s->init_num = (int)s->s3->tmp.message_size;
+		s->init_num = (int)S3I(s)->tmp.message_size;
 		return s->init_num;
 	}
 
@@ -499,9 +499,9 @@ dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr, int max)
 			return SSL_AD_INTERNAL_ERROR;
 		}
 
-		s->s3->tmp.message_size = msg_len;
+		S3I(s)->tmp.message_size = msg_len;
 		D1I(s)->r_msg_hdr.msg_len = msg_len;
-		s->s3->tmp.message_type = msg_hdr->type;
+		S3I(s)->tmp.message_type = msg_hdr->type;
 		D1I(s)->r_msg_hdr.type = msg_hdr->type;
 		D1I(s)->r_msg_hdr.seq = msg_hdr->seq;
 	} else if (msg_len != D1I(s)->r_msg_hdr.msg_len) {
@@ -905,8 +905,8 @@ f_err:
 /*
  * for these 2 messages, we need to
  * ssl->enc_read_ctx			re-init
- * ssl->s3->read_sequence		zero
- * ssl->s3->read_mac_secret		re-init
+ * ssl->s3->internal->read_sequence		zero
+ * ssl->s3->internal->read_mac_secret		re-init
  * ssl->session->read_sym_enc		assign
  * ssl->session->read_hash		assign
  */
@@ -1132,10 +1132,10 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 
 	if (frag->msg_header.saved_retransmit_state.epoch ==
 	    saved_state.epoch - 1) {
-		memcpy(save_write_sequence, s->s3->write_sequence,
-		    sizeof(s->s3->write_sequence));
-		memcpy(s->s3->write_sequence, D1I(s)->last_write_sequence,
-		    sizeof(s->s3->write_sequence));
+		memcpy(save_write_sequence, S3I(s)->write_sequence,
+		    sizeof(S3I(s)->write_sequence));
+		memcpy(S3I(s)->write_sequence, D1I(s)->last_write_sequence,
+		    sizeof(S3I(s)->write_sequence));
 	}
 
 	ret = dtls1_do_write(s, frag->msg_header.is_ccs ?
@@ -1149,10 +1149,10 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 
 	if (frag->msg_header.saved_retransmit_state.epoch ==
 	    saved_state.epoch - 1) {
-		memcpy(D1I(s)->last_write_sequence, s->s3->write_sequence,
-		    sizeof(s->s3->write_sequence));
-		memcpy(s->s3->write_sequence, save_write_sequence,
-		    sizeof(s->s3->write_sequence));
+		memcpy(D1I(s)->last_write_sequence, S3I(s)->write_sequence,
+		    sizeof(S3I(s)->write_sequence));
+		memcpy(S3I(s)->write_sequence, save_write_sequence,
+		    sizeof(S3I(s)->write_sequence));
 	}
 
 	D1I(s)->retransmitting = 0;

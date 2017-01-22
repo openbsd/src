@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.119 2017/01/22 06:36:49 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.120 2017/01/22 09:02:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1681,8 +1681,8 @@ ssl3_pending(const SSL *s)
 	if (s->rstate == SSL_ST_READ_BODY)
 		return 0;
 
-	return (s->s3->rrec.type == SSL3_RT_APPLICATION_DATA) ?
-	    s->s3->rrec.length : 0;
+	return (S3I(s)->rrec.type == SSL3_RT_APPLICATION_DATA) ?
+	    S3I(s)->rrec.length : 0;
 }
 
 int
@@ -1811,7 +1811,7 @@ ssl3_new(SSL *s)
 {
 	if ((s->s3 = calloc(1, sizeof(*s->s3))) == NULL)
 		return (0);
-	if ((s->s3->internal = calloc(1, sizeof(*s->s3->internal))) == NULL) {
+	if ((S3I(s) = calloc(1, sizeof(*S3I(s)))) == NULL) {
 		free(s->s3);
 		return (0);
 	}
@@ -1831,21 +1831,21 @@ ssl3_free(SSL *s)
 	ssl3_release_read_buffer(s);
 	ssl3_release_write_buffer(s);
 
-	DH_free(s->s3->tmp.dh);
-	EC_KEY_free(s->s3->tmp.ecdh);
+	DH_free(S3I(s)->tmp.dh);
+	EC_KEY_free(S3I(s)->tmp.ecdh);
 
-	if (s->s3->tmp.x25519 != NULL)
-		explicit_bzero(s->s3->tmp.x25519, X25519_KEY_LENGTH);
-	free(s->s3->tmp.x25519);
+	if (S3I(s)->tmp.x25519 != NULL)
+		explicit_bzero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
+	free(S3I(s)->tmp.x25519);
 
-	if (s->s3->tmp.ca_names != NULL)
-		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
-	BIO_free(s->s3->handshake_buffer);
+	if (S3I(s)->tmp.ca_names != NULL)
+		sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
+	BIO_free(S3I(s)->handshake_buffer);
 	tls1_free_digest_list(s);
-	free(s->s3->alpn_selected);
+	free(S3I(s)->alpn_selected);
 
-	explicit_bzero(s->s3->internal, sizeof(*s->s3->internal));
-	free(s->s3->internal);
+	explicit_bzero(S3I(s), sizeof(*S3I(s)));
+	free(S3I(s));
 
 	explicit_bzero(s->s3, sizeof(*s->s3));
 	free(s->s3);
@@ -1861,36 +1861,36 @@ ssl3_clear(SSL *s)
 	size_t		 rlen, wlen;
 
 	tls1_cleanup_key_block(s);
-	if (s->s3->tmp.ca_names != NULL)
-		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
+	if (S3I(s)->tmp.ca_names != NULL)
+		sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 
-	DH_free(s->s3->tmp.dh);
-	s->s3->tmp.dh = NULL;
-	EC_KEY_free(s->s3->tmp.ecdh);
-	s->s3->tmp.ecdh = NULL;
+	DH_free(S3I(s)->tmp.dh);
+	S3I(s)->tmp.dh = NULL;
+	EC_KEY_free(S3I(s)->tmp.ecdh);
+	S3I(s)->tmp.ecdh = NULL;
 
-	if (s->s3->tmp.x25519 != NULL)
-		explicit_bzero(s->s3->tmp.x25519, X25519_KEY_LENGTH);
-	free(s->s3->tmp.x25519);
-	s->s3->tmp.x25519 = NULL;
+	if (S3I(s)->tmp.x25519 != NULL)
+		explicit_bzero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
+	free(S3I(s)->tmp.x25519);
+	S3I(s)->tmp.x25519 = NULL;
 
 	rp = s->s3->rbuf.buf;
 	wp = s->s3->wbuf.buf;
 	rlen = s->s3->rbuf.len;
 	wlen = s->s3->wbuf.len;
 
-	BIO_free(s->s3->handshake_buffer);
-	s->s3->handshake_buffer = NULL;
+	BIO_free(S3I(s)->handshake_buffer);
+	S3I(s)->handshake_buffer = NULL;
 
 	tls1_free_digest_list(s);
 
-	free(s->s3->alpn_selected);
-	s->s3->alpn_selected = NULL;
+	free(S3I(s)->alpn_selected);
+	S3I(s)->alpn_selected = NULL;
 
-	memset(s->s3->internal, 0, sizeof(*s->s3->internal));
-	internal = s->s3->internal;
+	memset(S3I(s), 0, sizeof(*S3I(s)));
+	internal = S3I(s);
 	memset(s->s3, 0, sizeof(*s->s3));
-	s->s3->internal = internal;
+	S3I(s) = internal;
 
 	s->s3->rbuf.buf = rp;
 	s->s3->wbuf.buf = wp;
@@ -1898,6 +1898,12 @@ ssl3_clear(SSL *s)
 	s->s3->wbuf.len = wlen;
 
 	ssl_free_wbio_buffer(s);
+
+	/* Not needed... */
+	S3I(s)->renegotiate = 0;
+	S3I(s)->total_renegotiations = 0;
+	S3I(s)->num_renegotiations = 0;
+	S3I(s)->in_read_app_data = 0;
 
 	s->packet_length = 0;
 	s->version = TLS1_VERSION;
@@ -1989,14 +1995,14 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_GET_CLIENT_CERT_REQUEST:
 		break;
 	case SSL_CTRL_GET_NUM_RENEGOTIATIONS:
-		ret = s->s3->num_renegotiations;
+		ret = S3I(s)->num_renegotiations;
 		break;
 	case SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS:
-		ret = s->s3->num_renegotiations;
-		s->s3->num_renegotiations = 0;
+		ret = S3I(s)->num_renegotiations;
+		S3I(s)->num_renegotiations = 0;
 		break;
 	case SSL_CTRL_GET_TOTAL_RENEGOTIATIONS:
-		ret = s->s3->total_renegotiations;
+		ret = S3I(s)->total_renegotiations;
 		break;
 	case SSL_CTRL_GET_FLAGS:
 		ret = (int)(s->s3->flags);
@@ -2463,7 +2469,7 @@ ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	int		ret = 0;
 	unsigned long	alg_k;
 
-	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+	alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
 
 #ifndef OPENSSL_NO_GOST
 	if ((alg_k & SSL_kGOST)) {
@@ -2552,7 +2558,7 @@ ssl3_write(SSL *s, const void *buf, int len)
 	}
 #endif
 	errno = 0;
-	if (s->s3->renegotiate)
+	if (S3I(s)->renegotiate)
 		ssl3_renegotiate_check(s);
 
 	/*
@@ -2564,13 +2570,13 @@ ssl3_write(SSL *s, const void *buf, int len)
 	/* The second test is because the buffer may have been removed */
 	if ((s->s3->flags & SSL3_FLAGS_POP_BUFFER) && (s->wbio == s->bbio)) {
 		/* First time through, we write into the buffer */
-		if (s->s3->delay_buf_pop_ret == 0) {
+		if (S3I(s)->delay_buf_pop_ret == 0) {
 			ret = ssl3_write_bytes(s, SSL3_RT_APPLICATION_DATA,
 			    buf, len);
 			if (ret <= 0)
 				return (ret);
 
-			s->s3->delay_buf_pop_ret = ret;
+			S3I(s)->delay_buf_pop_ret = ret;
 		}
 
 		s->rwstate = SSL_WRITING;
@@ -2583,8 +2589,8 @@ ssl3_write(SSL *s, const void *buf, int len)
 		ssl_free_wbio_buffer(s);
 		s->s3->flags&= ~SSL3_FLAGS_POP_BUFFER;
 
-		ret = s->s3->delay_buf_pop_ret;
-		s->s3->delay_buf_pop_ret = 0;
+		ret = S3I(s)->delay_buf_pop_ret;
+		S3I(s)->delay_buf_pop_ret = 0;
 	} else {
 		ret = s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA,
 		    buf, len);
@@ -2601,12 +2607,12 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 	int	ret;
 
 	errno = 0;
-	if (s->s3->renegotiate)
+	if (S3I(s)->renegotiate)
 		ssl3_renegotiate_check(s);
-	s->s3->in_read_app_data = 1;
+	S3I(s)->in_read_app_data = 1;
 	ret = s->method->ssl_read_bytes(s,
 	    SSL3_RT_APPLICATION_DATA, buf, len, peek);
-	if ((ret == -1) && (s->s3->in_read_app_data == 2)) {
+	if ((ret == -1) && (S3I(s)->in_read_app_data == 2)) {
 		/*
 		 * ssl3_read_bytes decided to call s->handshake_func, which
 		 * called ssl3_read_bytes to read handshake data.
@@ -2619,7 +2625,7 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 		    SSL3_RT_APPLICATION_DATA, buf, len, peek);
 		s->in_handshake--;
 	} else
-		s->s3->in_read_app_data = 0;
+		S3I(s)->in_read_app_data = 0;
 
 	return (ret);
 }
@@ -2645,7 +2651,7 @@ ssl3_renegotiate(SSL *s)
 	if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
 		return (0);
 
-	s->s3->renegotiate = 1;
+	S3I(s)->renegotiate = 1;
 	return (1);
 }
 
@@ -2654,7 +2660,7 @@ ssl3_renegotiate_check(SSL *s)
 {
 	int	ret = 0;
 
-	if (s->s3->renegotiate) {
+	if (S3I(s)->renegotiate) {
 		if ((s->s3->rbuf.left == 0) && (s->s3->wbuf.left == 0) &&
 		    !SSL_in_init(s)) {
 			/*
@@ -2664,9 +2670,9 @@ ssl3_renegotiate_check(SSL *s)
 			 */
 			/* SSL_ST_ACCEPT */
 			s->state = SSL_ST_RENEGOTIATE;
-			s->s3->renegotiate = 0;
-			s->s3->num_renegotiations++;
-			s->s3->total_renegotiations++;
+			S3I(s)->renegotiate = 0;
+			S3I(s)->num_renegotiations++;
+			S3I(s)->total_renegotiations++;
 			ret = 1;
 		}
 	}
@@ -2679,7 +2685,7 @@ ssl3_renegotiate_check(SSL *s)
 long
 ssl_get_algorithm2(SSL *s)
 {
-	long	alg2 = s->s3->tmp.new_cipher->algorithm2;
+	long	alg2 = S3I(s)->tmp.new_cipher->algorithm2;
 
 	if (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF &&
 	    alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.88 2017/01/22 07:16:39 beck Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.89 2017/01/22 09:02:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,26 +146,26 @@
 void
 tls1_cleanup_key_block(SSL *s)
 {
-	if (s->s3->tmp.key_block != NULL) {
-		explicit_bzero(s->s3->tmp.key_block,
-		    s->s3->tmp.key_block_length);
-		free(s->s3->tmp.key_block);
-		s->s3->tmp.key_block = NULL;
+	if (S3I(s)->tmp.key_block != NULL) {
+		explicit_bzero(S3I(s)->tmp.key_block,
+		    S3I(s)->tmp.key_block_length);
+		free(S3I(s)->tmp.key_block);
+		S3I(s)->tmp.key_block = NULL;
 	}
-	s->s3->tmp.key_block_length = 0;
+	S3I(s)->tmp.key_block_length = 0;
 }
 
 int
 tls1_init_finished_mac(SSL *s)
 {
-	BIO_free(s->s3->handshake_buffer);
+	BIO_free(S3I(s)->handshake_buffer);
 	tls1_free_digest_list(s);
 
-	s->s3->handshake_buffer = BIO_new(BIO_s_mem());
-	if (s->s3->handshake_buffer == NULL)
+	S3I(s)->handshake_buffer = BIO_new(BIO_s_mem());
+	if (S3I(s)->handshake_buffer == NULL)
 		return (0);
 
-	(void)BIO_set_close(s->s3->handshake_buffer, BIO_CLOSE);
+	(void)BIO_set_close(S3I(s)->handshake_buffer, BIO_CLOSE);
 
 	return (1);
 }
@@ -177,15 +177,15 @@ tls1_free_digest_list(SSL *s)
 
 	if (s == NULL)
 		return;
-	if (s->s3->handshake_dgst == NULL)
+	if (S3I(s)->handshake_dgst == NULL)
 		return;
 
 	for (i = 0; i < SSL_MAX_DIGEST; i++) {
-		if (s->s3->handshake_dgst[i])
-			EVP_MD_CTX_destroy(s->s3->handshake_dgst[i]);
+		if (S3I(s)->handshake_dgst[i])
+			EVP_MD_CTX_destroy(S3I(s)->handshake_dgst[i]);
 	}
-	free(s->s3->handshake_dgst);
-	s->s3->handshake_dgst = NULL;
+	free(S3I(s)->handshake_dgst);
+	S3I(s)->handshake_dgst = NULL;
 }
 
 int
@@ -193,16 +193,16 @@ tls1_finish_mac(SSL *s, const unsigned char *buf, int len)
 {
 	int i;
 
-	if (s->s3->handshake_buffer &&
+	if (S3I(s)->handshake_buffer &&
 	    !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
-		BIO_write(s->s3->handshake_buffer, (void *)buf, len);
+		BIO_write(S3I(s)->handshake_buffer, (void *)buf, len);
 		return 1;
 	}
 
 	for (i = 0; i < SSL_MAX_DIGEST; i++) {
-		if (s->s3->handshake_dgst[i] == NULL)
+		if (S3I(s)->handshake_dgst[i] == NULL)
 			continue;
-		if (!EVP_DigestUpdate(s->s3->handshake_dgst[i], buf, len)) {
+		if (!EVP_DigestUpdate(S3I(s)->handshake_dgst[i], buf, len)) {
 			SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_EVP_LIB);
 			return 0;
 		}
@@ -221,12 +221,12 @@ tls1_digest_cached_records(SSL *s)
 
 	tls1_free_digest_list(s);
 
-	s->s3->handshake_dgst = calloc(SSL_MAX_DIGEST, sizeof(EVP_MD_CTX *));
-	if (s->s3->handshake_dgst == NULL) {
+	S3I(s)->handshake_dgst = calloc(SSL_MAX_DIGEST, sizeof(EVP_MD_CTX *));
+	if (S3I(s)->handshake_dgst == NULL) {
 		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+	hdatalen = BIO_get_mem_data(S3I(s)->handshake_buffer, &hdata);
 	if (hdatalen <= 0) {
 		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS,
 		    SSL_R_BAD_HANDSHAKE_LENGTH);
@@ -238,17 +238,17 @@ tls1_digest_cached_records(SSL *s)
 		if ((mask & ssl_get_algorithm2(s)) == 0 || md == NULL)
 			continue;
 
-		s->s3->handshake_dgst[i] = EVP_MD_CTX_create();
-		if (s->s3->handshake_dgst[i] == NULL) {
+		S3I(s)->handshake_dgst[i] = EVP_MD_CTX_create();
+		if (S3I(s)->handshake_dgst[i] == NULL) {
 			SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS,
 			    ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		if (!EVP_DigestInit_ex(s->s3->handshake_dgst[i], md, NULL)) {
+		if (!EVP_DigestInit_ex(S3I(s)->handshake_dgst[i], md, NULL)) {
 			SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_EVP_LIB);
 			goto err;
 		}
-		if (!EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata,
+		if (!EVP_DigestUpdate(S3I(s)->handshake_dgst[i], hdata,
 		    hdatalen)) {
 			SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_EVP_LIB);
 			goto err;
@@ -256,8 +256,8 @@ tls1_digest_cached_records(SSL *s)
 	}
 
 	if (!(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
-		BIO_free(s->s3->handshake_buffer);
-		s->s3->handshake_buffer = NULL;
+		BIO_free(S3I(s)->handshake_buffer);
+		S3I(s)->handshake_buffer = NULL;
 	}
 
 	return 1;
@@ -457,7 +457,7 @@ static int
 tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
     unsigned key_len, const unsigned char *iv, unsigned iv_len)
 {
-	const EVP_AEAD *aead = s->s3->tmp.new_aead;
+	const EVP_AEAD *aead = S3I(s)->tmp.new_aead;
 	SSL_AEAD_CTX *aead_ctx;
 
 	if (is_read) {
@@ -482,10 +482,10 @@ tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
 	aead_ctx->fixed_nonce_len = iv_len;
 	aead_ctx->variable_nonce_len = 8;  /* always the case, currently. */
 	aead_ctx->variable_nonce_in_record =
-	    (s->s3->tmp.new_cipher->algorithm2 &
+	    (S3I(s)->tmp.new_cipher->algorithm2 &
 	    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD) != 0;
 	aead_ctx->xor_fixed_nonce =
-	    s->s3->tmp.new_cipher->algorithm_enc == SSL_CHACHA20POLY1305;
+	    S3I(s)->tmp.new_cipher->algorithm_enc == SSL_CHACHA20POLY1305;
 	aead_ctx->tag_len = EVP_AEAD_max_overhead(aead);
 
 	if (aead_ctx->xor_fixed_nonce) {
@@ -526,12 +526,12 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 	const EVP_MD *mac;
 	int mac_type;
 
-	cipher = s->s3->tmp.new_sym_enc;
-	mac = s->s3->tmp.new_hash;
-	mac_type = s->s3->tmp.new_mac_pkey_type;
+	cipher = S3I(s)->tmp.new_sym_enc;
+	mac = S3I(s)->tmp.new_hash;
+	mac_type = S3I(s)->tmp.new_mac_pkey_type;
 
 	if (is_read) {
-		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+		if (S3I(s)->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
 			s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
 		else
 			s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
@@ -548,7 +548,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 			goto err;
 		s->read_hash = mac_ctx;
 	} else {
-		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+		if (S3I(s)->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
 			s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
 		else
 			s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
@@ -595,15 +595,15 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 		    mac_secret_size, (unsigned char *)mac_secret);
 	}
 
-	if (s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT) {
+	if (S3I(s)->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT) {
 		int nid;
-		if (s->s3->tmp.new_cipher->algorithm2 & SSL_HANDSHAKE_MAC_GOST94)
+		if (S3I(s)->tmp.new_cipher->algorithm2 & SSL_HANDSHAKE_MAC_GOST94)
 			nid = NID_id_Gost28147_89_CryptoPro_A_ParamSet;
 		else
 			nid = NID_id_tc26_gost_28147_param_Z;
 
 		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_GOST_SET_SBOX, nid, 0);
-		if (s->s3->tmp.new_cipher->algorithm_mac == SSL_GOST89MAC)
+		if (S3I(s)->tmp.new_cipher->algorithm_mac == SSL_GOST89MAC)
 			EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_GOST_SET_SBOX, nid, 0);
 	}
 
@@ -628,8 +628,8 @@ tls1_change_cipher_state(SSL *s, int which)
 	char is_read, use_client_keys;
 
 
-	cipher = s->s3->tmp.new_sym_enc;
-	aead = s->s3->tmp.new_aead;
+	cipher = S3I(s)->tmp.new_sym_enc;
+	aead = S3I(s)->tmp.new_aead;
 
 	/*
 	 * is_read is true if we have just read a ChangeCipherSpec message,
@@ -652,13 +652,13 @@ tls1_change_cipher_state(SSL *s, int which)
 	 * dtls1_reset_seq_numbers().
 	 */
 	if (!SSL_IS_DTLS(s)) {
-		seq = is_read ? s->s3->read_sequence : s->s3->write_sequence;
+		seq = is_read ? S3I(s)->read_sequence : S3I(s)->write_sequence;
 		memset(seq, 0, SSL3_SEQUENCE_SIZE);
 	}
 
 	if (aead != NULL) {
 		key_len = EVP_AEAD_key_length(aead);
-		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(s->s3->tmp.new_cipher);
+		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(S3I(s)->tmp.new_cipher);
 	} else {
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
@@ -670,7 +670,7 @@ tls1_change_cipher_state(SSL *s, int which)
 
 	mac_secret_size = s->s3->tmp.new_mac_secret_size;
 
-	key_block = s->s3->tmp.key_block;
+	key_block = S3I(s)->tmp.key_block;
 	client_write_mac_secret = key_block;
 	key_block += mac_secret_size;
 	server_write_mac_secret = key_block;
@@ -694,17 +694,17 @@ tls1_change_cipher_state(SSL *s, int which)
 		iv = server_write_iv;
 	}
 
-	if (key_block - s->s3->tmp.key_block != s->s3->tmp.key_block_length) {
+	if (key_block - S3I(s)->tmp.key_block != S3I(s)->tmp.key_block_length) {
 		SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
 		goto err2;
 	}
 
 	if (is_read) {
-		memcpy(s->s3->read_mac_secret, mac_secret, mac_secret_size);
-		s->s3->read_mac_secret_size = mac_secret_size;
+		memcpy(S3I(s)->read_mac_secret, mac_secret, mac_secret_size);
+		S3I(s)->read_mac_secret_size = mac_secret_size;
 	} else {
-		memcpy(s->s3->write_mac_secret, mac_secret, mac_secret_size);
-		s->s3->write_mac_secret_size = mac_secret_size;
+		memcpy(S3I(s)->write_mac_secret, mac_secret, mac_secret_size);
+		S3I(s)->write_mac_secret_size = mac_secret_size;
 	}
 
 	if (aead != NULL) {
@@ -730,7 +730,7 @@ tls1_setup_key_block(SSL *s)
 	const EVP_MD *mac = NULL;
 	int ret = 0;
 
-	if (s->s3->tmp.key_block_length != 0)
+	if (S3I(s)->tmp.key_block_length != 0)
 		return (1);
 
 	if (s->session->cipher &&
@@ -757,10 +757,10 @@ tls1_setup_key_block(SSL *s)
 			iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
 	}
 
-	s->s3->tmp.new_aead = aead;
-	s->s3->tmp.new_sym_enc = cipher;
-	s->s3->tmp.new_hash = mac;
-	s->s3->tmp.new_mac_pkey_type = mac_type;
+	S3I(s)->tmp.new_aead = aead;
+	S3I(s)->tmp.new_sym_enc = cipher;
+	S3I(s)->tmp.new_hash = mac;
+	S3I(s)->tmp.new_mac_pkey_type = mac_type;
 	s->s3->tmp.new_mac_secret_size = mac_secret_size;
 
 	tls1_cleanup_key_block(s);
@@ -772,8 +772,8 @@ tls1_setup_key_block(SSL *s)
 	}
 	key_block_len = (mac_secret_size + key_len + iv_len) * 2;
 
-	s->s3->tmp.key_block_length = key_block_len;
-	s->s3->tmp.key_block = key_block;
+	S3I(s)->tmp.key_block_length = key_block_len;
+	S3I(s)->tmp.key_block = key_block;
 
 	if ((tmp_block = malloc(key_block_len)) == NULL) {
 		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
@@ -789,15 +789,15 @@ tls1_setup_key_block(SSL *s)
 		 * Enable vulnerability countermeasure for CBC ciphers with
 		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
 		 */
-		s->s3->need_empty_fragments = 1;
+		S3I(s)->need_empty_fragments = 1;
 
 		if (s->session->cipher != NULL) {
 			if (s->session->cipher->algorithm_enc == SSL_eNULL)
-				s->s3->need_empty_fragments = 0;
+				S3I(s)->need_empty_fragments = 0;
 
 #ifndef OPENSSL_NO_RC4
 			if (s->session->cipher->algorithm_enc == SSL_RC4)
-				s->s3->need_empty_fragments = 0;
+				S3I(s)->need_empty_fragments = 0;
 #endif
 		}
 	}
@@ -834,12 +834,12 @@ tls1_enc(SSL *s, int send)
 
 	if (send) {
 		aead = s->aead_write_ctx;
-		rec = &s->s3->wrec;
-		seq = s->s3->write_sequence;
+		rec = &S3I(s)->wrec;
+		seq = S3I(s)->write_sequence;
 	} else {
 		aead = s->aead_read_ctx;
-		rec = &s->s3->rrec;
-		seq = s->s3->read_sequence;
+		rec = &S3I(s)->rrec;
+		seq = S3I(s)->read_sequence;
 	}
 
 	if (aead) {
@@ -1102,14 +1102,14 @@ tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
 	unsigned int ret;
 	int i;
 
-	if (s->s3->handshake_buffer)
+	if (S3I(s)->handshake_buffer)
 		if (!tls1_digest_cached_records(s))
 			return 0;
 
 	for (i = 0; i < SSL_MAX_DIGEST; i++) {
-		if (s->s3->handshake_dgst[i] &&
-		    EVP_MD_CTX_type(s->s3->handshake_dgst[i]) == md_nid) {
-			d = s->s3->handshake_dgst[i];
+		if (S3I(s)->handshake_dgst[i] &&
+		    EVP_MD_CTX_type(S3I(s)->handshake_dgst[i]) == md_nid) {
+			d = S3I(s)->handshake_dgst[i];
 			break;
 		}
 	}
@@ -1141,7 +1141,7 @@ tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 
 	q = buf;
 
-	if (s->s3->handshake_buffer)
+	if (S3I(s)->handshake_buffer)
 		if (!tls1_digest_cached_records(s))
 			return 0;
 
@@ -1150,7 +1150,7 @@ tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 	for (idx = 0; ssl_get_handshake_digest(idx, &mask, &md); idx++) {
 		if (ssl_get_algorithm2(s) & mask) {
 			int hashsize = EVP_MD_size(md);
-			EVP_MD_CTX *hdgst = s->s3->handshake_dgst[idx];
+			EVP_MD_CTX *hdgst = S3I(s)->handshake_dgst[idx];
 			if (!hdgst || hashsize < 0 ||
 			    hashsize > (int)(sizeof buf - (size_t)(q - buf))) {
 				/* internal error: 'buf' is too small for this cipersuite! */
@@ -1193,12 +1193,12 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	int t;
 
 	if (send) {
-		rec = &(ssl->s3->wrec);
-		seq = &(ssl->s3->write_sequence[0]);
+		rec = &(ssl->s3->internal->wrec);
+		seq = &(ssl->s3->internal->write_sequence[0]);
 		hash = ssl->write_hash;
 	} else {
-		rec = &(ssl->s3->rrec);
-		seq = &(ssl->s3->read_sequence[0]);
+		rec = &(ssl->s3->internal->rrec);
+		seq = &(ssl->s3->internal->read_sequence[0]);
 		hash = ssl->read_hash;
 	}
 
@@ -1241,8 +1241,8 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 		if (!ssl3_cbc_digest_record(mac_ctx,
 		    md, &md_size, header, rec->input,
 		    rec->length + md_size, orig_len,
-		    ssl->s3->read_mac_secret,
-		    ssl->s3->read_mac_secret_size))
+		    ssl->s3->internal->read_mac_secret,
+		    ssl->s3->internal->read_mac_secret_size))
 			return -1;
 	} else {
 		EVP_DigestSignUpdate(mac_ctx, header, sizeof(header));

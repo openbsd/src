@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.49 2017/01/03 16:57:15 jsing Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.50 2017/01/22 09:02:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -407,9 +407,9 @@ ssl23_get_client_hello(SSL *s)
 		l2n3((long)i, d_len);
 
 		/* get the data reused from the init_buf */
-		s->s3->tmp.reuse_message = 1;
-		s->s3->tmp.message_type = SSL3_MT_CLIENT_HELLO;
-		s->s3->tmp.message_size = i;
+		S3I(s)->tmp.reuse_message = 1;
+		S3I(s)->tmp.message_type = SSL3_MT_CLIENT_HELLO;
+		S3I(s)->tmp.message_size = i;
 	}
 
 	/* imaginary new state (for program structure): */

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.53 2016/12/21 16:44:31 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.54 2017/01/22 09:02:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -507,7 +507,7 @@ SSL_get_client_CA_list(const SSL *s)
 		/* We are in the client. */
 		if (((s->version >> 8) == SSL3_VERSION_MAJOR) &&
 		    (s->s3 != NULL))
-			return (s->s3->tmp.ca_names);
+			return (S3I(s)->tmp.ca_names);
 		else
 			return (NULL);
 	} else {
