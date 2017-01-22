@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.105 2017/01/22 05:14:42 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.106 2017/01/22 06:36:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -841,48 +841,6 @@ struct ssl_ctx_st {
 	int (*tlsext_status_cb)(SSL *ssl, void *arg);
 	void *tlsext_status_arg;
 
-
-
-
-	/* Next protocol negotiation information */
-	/* (for experimental NPN extension). */
-
-	/* For a server, this contains a callback function by which the set of
-	 * advertised protocols can be provided. */
-	int (*next_protos_advertised_cb)(SSL *s, const unsigned char **buf,
-	    unsigned int *len, void *arg);
-	void *next_protos_advertised_cb_arg;
-	/* For a client, this contains a callback function that selects the
-	 * next protocol from the list provided by the server. */
-	int (*next_proto_select_cb)(SSL *s, unsigned char **out,
-	    unsigned char *outlen, const unsigned char *in,
-	    unsigned int inlen, void *arg);
-	void *next_proto_select_cb_arg;
-
-	/*
-	 * ALPN information
-	 * (we are in the process of transitioning from NPN to ALPN).
-	 */
-
-	/*
-	 * Server callback function that allows the server to select the
-	 * protocol for the connection.
-	 *   out: on successful return, this must point to the raw protocol
-	 *       name (without the length prefix).
-	 *   outlen: on successful return, this contains the length of out.
-	 *   in: points to the client's list of supported protocols in
-	 *       wire-format.
-	 *   inlen: the length of in.
-	 */
-	int (*alpn_select_cb)(SSL *s, const unsigned char **out,
-	    unsigned char *outlen, const unsigned char *in, unsigned int inlen,
-	    void *arg);
-	void *alpn_select_cb_arg;
-
-	/* Client list of supported protocols in wire format. */
-	unsigned char *alpn_client_proto_list;
-	unsigned int alpn_client_proto_list_len;
-
 	/* SRTP profiles we are willing to do from RFC 5764 */
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
 
@@ -1194,16 +1152,6 @@ struct ssl_st {
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 #define session_ctx initial_ctx
 
-	/* Next protocol negotiation. For the client, this is the protocol that
-	 * we sent in NextProtocol and is set when handling ServerHello
-	 * extensions.
-	 *
-	 * For a server, this is the client's selected_protocol from
-	 * NextProtocol and is set when handling the NextProtocol message,
-	 * before the Finished message. */
-	unsigned char *next_proto_negotiated;
-	unsigned char next_proto_negotiated_len;
-
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;	/* What we'll do */
 	SRTP_PROTECTION_PROFILE *srtp_profile;			/* What's been chosen */
 
@@ -1214,10 +1162,6 @@ struct ssl_st {
 					   */
 	unsigned int tlsext_hb_pending; /* Indicates if a HeartbeatRequest is in flight */
 	unsigned int tlsext_hb_seq;	/* HeartbeatRequest sequence number */
-
-	/* Client list of supported protocols in wire format. */
-	unsigned char *alpn_client_proto_list;
-	unsigned int alpn_client_proto_list_len;
 
 	int renegotiate;/* 1 if we are renegotiating.
 		 	 * 2 if we are a server and are inside a handshake

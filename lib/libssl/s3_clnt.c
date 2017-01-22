@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.159 2016/12/26 16:33:51 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.160 2017/01/22 06:36:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2702,10 +2702,10 @@ ssl3_send_next_proto(SSL *s)
 	if (s->state == SSL3_ST_CW_NEXT_PROTO_A) {
 		d = p = ssl3_handshake_msg_start(s, SSL3_MT_NEXT_PROTO);
 
-		len = s->next_proto_negotiated_len;
+		len = s->internal->next_proto_negotiated_len;
 		padding_len = 32 - ((len + 2) % 32);
 		*(p++) = len;
-		memcpy(p, s->next_proto_negotiated, len);
+		memcpy(p, s->internal->next_proto_negotiated, len);
 		p += len;
 		*(p++) = padding_len;
 		memset(p, 0, padding_len);

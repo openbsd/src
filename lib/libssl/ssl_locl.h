@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.148 2017/01/22 05:14:42 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.149 2017/01/22 06:36:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -383,11 +383,65 @@ typedef struct ssl_session_internal_st {
 typedef struct ssl_ctx_internal_st {
 	uint16_t min_version;
 	uint16_t max_version;
+
+	/* Next protocol negotiation information */
+	/* (for experimental NPN extension). */
+
+	/* For a server, this contains a callback function by which the set of
+	 * advertised protocols can be provided. */
+	int (*next_protos_advertised_cb)(SSL *s, const unsigned char **buf,
+	    unsigned int *len, void *arg);
+	void *next_protos_advertised_cb_arg;
+	/* For a client, this contains a callback function that selects the
+	 * next protocol from the list provided by the server. */
+	int (*next_proto_select_cb)(SSL *s, unsigned char **out,
+	    unsigned char *outlen, const unsigned char *in,
+	    unsigned int inlen, void *arg);
+	void *next_proto_select_cb_arg;
+
+	/*
+	 * ALPN information
+	 * (we are in the process of transitioning from NPN to ALPN).
+	 */
+
+	/*
+	 * Server callback function that allows the server to select the
+	 * protocol for the connection.
+	 *   out: on successful return, this must point to the raw protocol
+	 *       name (without the length prefix).
+	 *   outlen: on successful return, this contains the length of out.
+	 *   in: points to the client's list of supported protocols in
+	 *       wire-format.
+	 *   inlen: the length of in.
+	 */
+	int (*alpn_select_cb)(SSL *s, const unsigned char **out,
+	    unsigned char *outlen, const unsigned char *in, unsigned int inlen,
+	    void *arg);
+	void *alpn_select_cb_arg;
+
+	/* Client list of supported protocols in wire format. */
+	unsigned char *alpn_client_proto_list;
+	unsigned int alpn_client_proto_list_len;
+
 } SSL_CTX_INTERNAL;
 
 typedef struct ssl_internal_st {
 	uint16_t min_version;
 	uint16_t max_version;
+
+	/* Next protocol negotiation. For the client, this is the protocol that
+	 * we sent in NextProtocol and is set when handling ServerHello
+	 * extensions.
+	 *
+	 * For a server, this is the client's selected_protocol from
+	 * NextProtocol and is set when handling the NextProtocol message,
+	 * before the Finished message. */
+	unsigned char *next_proto_negotiated;
+	unsigned char next_proto_negotiated_len;
+
+	/* Client list of supported protocols in wire format. */
+	unsigned char *alpn_client_proto_list;
+	unsigned int alpn_client_proto_list_len;
 } SSL_INTERNAL;
 
 typedef struct ssl3_state_internal_st {

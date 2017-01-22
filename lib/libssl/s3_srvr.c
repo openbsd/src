@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.138 2016/12/21 16:44:31 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.139 2017/01/22 06:36:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2905,15 +2905,15 @@ ssl3_get_next_proto(SSL *s)
 	 * XXX We should not NULL it, but this matches old behavior of not
 	 * freeing before malloc.
 	 */
-	s->next_proto_negotiated = NULL;
-	s->next_proto_negotiated_len = 0;
+	s->internal->next_proto_negotiated = NULL;
+	s->internal->next_proto_negotiated_len = 0;
 
-	if (!CBS_stow(&proto, &s->next_proto_negotiated, &len)) {
+	if (!CBS_stow(&proto, &s->internal->next_proto_negotiated, &len)) {
 		SSLerr(SSL_F_SSL3_GET_NEXT_PROTO,
 		    ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
-	s->next_proto_negotiated_len = (uint8_t)len;
+	s->internal->next_proto_negotiated_len = (uint8_t)len;
 
 	return (1);
 }

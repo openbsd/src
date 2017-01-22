@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.118 2017/01/22 03:50:45 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.119 2017/01/22 06:36:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1902,9 +1902,9 @@ ssl3_clear(SSL *s)
 	s->packet_length = 0;
 	s->version = TLS1_VERSION;
 
-	free(s->next_proto_negotiated);
-	s->next_proto_negotiated = NULL;
-	s->next_proto_negotiated_len = 0;
+	free(s->internal->next_proto_negotiated);
+	s->internal->next_proto_negotiated = NULL;
+	s->internal->next_proto_negotiated_len = 0;
 }
 
 static long

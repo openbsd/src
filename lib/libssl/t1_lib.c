@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.97 2017/01/22 05:14:42 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.98 2017/01/22 06:36:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -862,7 +862,8 @@ skip_ext:
 			i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
 	}
 
-	if (s->ctx->next_proto_select_cb && !s->s3->tmp.finish_md_len) {
+	if (s->ctx->internal->next_proto_select_cb &&
+	    !s->s3->tmp.finish_md_len) {
 		/* The client advertises an emtpy extension to indicate its
 		 * support for Next Protocol Negotiation */
 		if ((size_t)(limit - ret) < 4)
@@ -871,16 +872,17 @@ skip_ext:
 		s2n(0, ret);
 	}
 
-	if (s->alpn_client_proto_list != NULL &&
+	if (s->internal->alpn_client_proto_list != NULL &&
 	    s->s3->tmp.finish_md_len == 0) {
-		if ((size_t)(limit - ret) < 6 + s->alpn_client_proto_list_len)
+		if ((size_t)(limit - ret) <
+		    6 + s->internal->alpn_client_proto_list_len)
 			return (NULL);
 		s2n(TLSEXT_TYPE_application_layer_protocol_negotiation, ret);
-		s2n(2 + s->alpn_client_proto_list_len, ret);
-		s2n(s->alpn_client_proto_list_len, ret);
-		memcpy(ret, s->alpn_client_proto_list,
-		    s->alpn_client_proto_list_len);
-		ret += s->alpn_client_proto_list_len;
+		s2n(2 + s->internal->alpn_client_proto_list_len, ret);
+		s2n(s->internal->alpn_client_proto_list_len, ret);
+		memcpy(ret, s->internal->alpn_client_proto_list,
+		    s->internal->alpn_client_proto_list_len);
+		ret += s->internal->alpn_client_proto_list_len;
 	}
 
 #ifndef OPENSSL_NO_SRTP
@@ -1085,13 +1087,13 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 
 	next_proto_neg_seen = s->s3->next_proto_neg_seen;
 	s->s3->next_proto_neg_seen = 0;
-	if (next_proto_neg_seen && s->ctx->next_protos_advertised_cb) {
+	if (next_proto_neg_seen && s->ctx->internal->next_protos_advertised_cb) {
 		const unsigned char *npa;
 		unsigned int npalen;
 		int r;
 
-		r = s->ctx->next_protos_advertised_cb(s, &npa, &npalen,
-		    s->ctx->next_protos_advertised_cb_arg);
+		r = s->ctx->internal->next_protos_advertised_cb(s, &npa, &npalen,
+		    s->ctx->internal->next_protos_advertised_cb_arg);
 		if (r == SSL_TLSEXT_ERR_OK) {
 			if ((size_t)(limit - ret) < 4 + npalen)
 				return NULL;
@@ -1142,7 +1144,7 @@ tls1_alpn_handle_client_hello(SSL *s, const unsigned char *data,
 	unsigned char selected_len;
 	int r;
 
-	if (s->ctx->alpn_select_cb == NULL)
+	if (s->ctx->internal->alpn_select_cb == NULL)
 		return (1);
 
 	if (data_len < 2)
@@ -1169,8 +1171,9 @@ tls1_alpn_handle_client_hello(SSL *s, const unsigned char *data,
 			goto parse_error;
 	}
 
-	r = s->ctx->alpn_select_cb(s, &selected, &selected_len,
-	    CBS_data(&alpn), CBS_len(&alpn), s->ctx->alpn_select_cb_arg);
+	r = s->ctx->internal->alpn_select_cb(s, &selected, &selected_len,
+	    CBS_data(&alpn), CBS_len(&alpn),
+	    s->ctx->internal->alpn_select_cb_arg);
 	if (r == SSL_TLSEXT_ERR_OK) {
 		free(s->s3->alpn_selected);
 		if ((s->s3->alpn_selected = malloc(selected_len)) == NULL) {
@@ -1547,7 +1550,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		}
 		else if (type ==
 		    TLSEXT_TYPE_application_layer_protocol_negotiation &&
-		    s->ctx->alpn_select_cb != NULL &&
+		    s->ctx->internal->alpn_select_cb != NULL &&
 		    s->s3->tmp.finish_md_len == 0) {
 			if (tls1_alpn_handle_client_hello(s, data,
 			    size, al) != 1)
@@ -1716,7 +1719,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 			unsigned char selected_len;
 
 			/* We must have requested it. */
-			if (s->ctx->next_proto_select_cb == NULL) {
+			if (s->ctx->internal->next_proto_select_cb == NULL) {
 				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
 				return 0;
 			}
@@ -1725,17 +1728,20 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 				*al = TLS1_AD_DECODE_ERROR;
 				return 0;
 			}
-			if (s->ctx->next_proto_select_cb(s, &selected, &selected_len, data, size, s->ctx->next_proto_select_cb_arg) != SSL_TLSEXT_ERR_OK) {
+			if (s->ctx->internal->next_proto_select_cb(s, &selected,
+			    &selected_len, data, size,
+			    s->ctx->internal->next_proto_select_cb_arg) !=
+			    SSL_TLSEXT_ERR_OK) {
 				*al = TLS1_AD_INTERNAL_ERROR;
 				return 0;
 			}
-			s->next_proto_negotiated = malloc(selected_len);
-			if (!s->next_proto_negotiated) {
+			s->internal->next_proto_negotiated = malloc(selected_len);
+			if (!s->internal->next_proto_negotiated) {
 				*al = TLS1_AD_INTERNAL_ERROR;
 				return 0;
 			}
-			memcpy(s->next_proto_negotiated, selected, selected_len);
-			s->next_proto_negotiated_len = selected_len;
+			memcpy(s->internal->next_proto_negotiated, selected, selected_len);
+			s->internal->next_proto_negotiated_len = selected_len;
 			s->s3->next_proto_neg_seen = 1;
 		}
 		else if (type ==
@@ -1743,7 +1749,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 			unsigned int len;
 
 			/* We must have requested it. */
-			if (s->alpn_client_proto_list == NULL) {
+			if (s->internal->alpn_client_proto_list == NULL) {
 				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
 				return 0;
 			}

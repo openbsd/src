@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.126 2017/01/22 03:50:45 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.127 2017/01/22 06:36:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -336,18 +336,18 @@ SSL_new(SSL_CTX *ctx)
 	s->tlsext_ocsp_resplen = -1;
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	s->initial_ctx = ctx;
-	s->next_proto_negotiated = NULL;
+	s->internal->next_proto_negotiated = NULL;
 
-	if (s->ctx->alpn_client_proto_list != NULL) {
-		s->alpn_client_proto_list =
-		    malloc(s->ctx->alpn_client_proto_list_len);
-		if (s->alpn_client_proto_list == NULL)
+	if (s->ctx->internal->alpn_client_proto_list != NULL) {
+		s->internal->alpn_client_proto_list =
+		    malloc(s->ctx->internal->alpn_client_proto_list_len);
+		if (s->internal->alpn_client_proto_list == NULL)
 			goto err;
-		memcpy(s->alpn_client_proto_list,
-		    s->ctx->alpn_client_proto_list,
-		    s->ctx->alpn_client_proto_list_len);
-		s->alpn_client_proto_list_len =
-		    s->ctx->alpn_client_proto_list_len;
+		memcpy(s->internal->alpn_client_proto_list,
+		    s->ctx->internal->alpn_client_proto_list,
+		    s->ctx->internal->alpn_client_proto_list_len);
+		s->internal->alpn_client_proto_list_len =
+		    s->ctx->internal->alpn_client_proto_list_len;
 	}
 
 	s->verify_result = X509_V_OK;
@@ -554,8 +554,8 @@ SSL_free(SSL *s)
 
 	SSL_CTX_free(s->ctx);
 
-	free(s->next_proto_negotiated);
-	free(s->alpn_client_proto_list);
+	free(s->internal->next_proto_negotiated);
+	free(s->internal->alpn_client_proto_list);
 
 #ifndef OPENSSL_NO_SRTP
 	if (s->srtp_profiles)
@@ -1614,11 +1614,11 @@ void
 SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
     unsigned *len)
 {
-	*data = s->next_proto_negotiated;
+	*data = s->internal->next_proto_negotiated;
 	if (!*data) {
 		*len = 0;
 	} else {
-		*len = s->next_proto_negotiated_len;
+		*len = s->internal->next_proto_negotiated_len;
 	}
 }
 
@@ -1637,8 +1637,8 @@ void
 SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *ctx, int (*cb) (SSL *ssl,
     const unsigned char **out, unsigned int *outlen, void *arg), void *arg)
 {
-	ctx->next_protos_advertised_cb = cb;
-	ctx->next_protos_advertised_cb_arg = arg;
+	ctx->internal->next_protos_advertised_cb = cb;
+	ctx->internal->next_protos_advertised_cb_arg = arg;
 }
 
 /*
@@ -1657,8 +1657,8 @@ SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s,
     unsigned char **out, unsigned char *outlen, const unsigned char *in,
     unsigned int inlen, void *arg), void *arg)
 {
-	ctx->next_proto_select_cb = cb;
-	ctx->next_proto_select_cb_arg = arg;
+	ctx->internal->next_proto_select_cb = cb;
+	ctx->internal->next_proto_select_cb_arg = arg;
 }
 
 /*
@@ -1670,11 +1670,11 @@ int
 SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
     unsigned int protos_len)
 {
-	free(ctx->alpn_client_proto_list);
-	if ((ctx->alpn_client_proto_list = malloc(protos_len)) == NULL)
+	free(ctx->internal->alpn_client_proto_list);
+	if ((ctx->internal->alpn_client_proto_list = malloc(protos_len)) == NULL)
 		return (1);
-	memcpy(ctx->alpn_client_proto_list, protos, protos_len);
-	ctx->alpn_client_proto_list_len = protos_len;
+	memcpy(ctx->internal->alpn_client_proto_list, protos, protos_len);
+	ctx->internal->alpn_client_proto_list_len = protos_len;
 
 	return (0);
 }
@@ -1688,11 +1688,11 @@ int
 SSL_set_alpn_protos(SSL *ssl, const unsigned char* protos,
     unsigned int protos_len)
 {
-	free(ssl->alpn_client_proto_list);
-	if ((ssl->alpn_client_proto_list = malloc(protos_len)) == NULL)
+	free(ssl->internal->alpn_client_proto_list);
+	if ((ssl->internal->alpn_client_proto_list = malloc(protos_len)) == NULL)
 		return (1);
-	memcpy(ssl->alpn_client_proto_list, protos, protos_len);
-	ssl->alpn_client_proto_list_len = protos_len;
+	memcpy(ssl->internal->alpn_client_proto_list, protos, protos_len);
+	ssl->internal->alpn_client_proto_list_len = protos_len;
 
 	return (0);
 }
@@ -1707,8 +1707,8 @@ SSL_CTX_set_alpn_select_cb(SSL_CTX* ctx,
     int (*cb) (SSL *ssl, const unsigned char **out, unsigned char *outlen,
     const unsigned char *in, unsigned int inlen, void *arg), void *arg)
 {
-	ctx->alpn_select_cb = cb;
-	ctx->alpn_select_cb_arg = arg;
+	ctx->internal->alpn_select_cb = cb;
+	ctx->internal->alpn_select_cb_arg = arg;
 }
 
 /*
@@ -1912,8 +1912,8 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->tlsext_status_cb = 0;
 	ret->tlsext_status_arg = NULL;
 
-	ret->next_protos_advertised_cb = 0;
-	ret->next_proto_select_cb = 0;
+	ret->internal->next_protos_advertised_cb = 0;
+	ret->internal->next_proto_select_cb = 0;
 #ifndef OPENSSL_NO_ENGINE
 	ret->client_cert_engine = NULL;
 #ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
@@ -2003,7 +2003,7 @@ SSL_CTX_free(SSL_CTX *a)
 		ENGINE_finish(a->client_cert_engine);
 #endif
 
-	free(a->alpn_client_proto_list);
+	free(a->internal->alpn_client_proto_list);
 
 	free(a->internal);
 	free(a);
