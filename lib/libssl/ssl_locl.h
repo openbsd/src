@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.146 2017/01/22 03:50:45 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.147 2017/01/22 04:07:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -377,11 +377,13 @@ typedef struct ssl_session_internal_st {
 } SSL_SESSION_INTERNAL;
 
 typedef struct ssl_ctx_internal_st {
-
+	uint16_t min_version;
+	uint16_t max_version;
 } SSL_CTX_INTERNAL;
 
 typedef struct ssl_internal_st {
-
+	uint16_t min_version;
+	uint16_t max_version;
 } SSL_INTERNAL;
 
 typedef struct ssl3_state_internal_st {

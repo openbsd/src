@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.103 2017/01/22 03:50:45 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.104 2017/01/22 04:07:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -697,9 +697,6 @@ struct ssl_ctx_internal_st;
 struct ssl_ctx_st {
 	const SSL_METHOD *method;
 
-	uint16_t min_version;
-	uint16_t max_version;
-
 	STACK_OF(SSL_CIPHER) *cipher_list;
 	/* same as above but sorted for lookup */
 	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
@@ -1013,9 +1010,6 @@ struct ssl_st {
 	 * (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION, DTLS1_VERSION)
 	 */
 	int version;
-
-	uint16_t min_version;
-	uint16_t max_version;
 
 	int type; /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
 
