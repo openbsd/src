@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.950 2017/01/22 03:30:23 rpe Exp $
+#	$OpenBSD: install.sub,v 1.951 2017/01/22 22:47:11 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -159,8 +159,8 @@ http_time() {
 # Quotes are added if needed, so you should not do that yourself.
 quote() (
 	# Since this is a subshell we won't pollute the calling namespace.
-	for a; do
-		alias Q=$a; a=$(alias Q); print -rn -- " ${a#Q=}"
+	for _a; do
+		alias Q=$_a; _a=$(alias Q); print -rn -- " ${_a#Q=}"
 	done | sed '1s/ //'
 	echo
 )
