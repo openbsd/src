@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.115 2016/12/30 17:20:51 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.116 2017/01/22 00:03:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1886,6 +1886,7 @@ ssl3_clear(SSL *s)
 	s->s3->alpn_selected = NULL;
 
 	memset(s->s3, 0, sizeof *s->s3);
+
 	s->s3->rbuf.buf = rp;
 	s->s3->wbuf.buf = wp;
 	s->s3->rbuf.len = rlen;
@@ -1894,10 +1895,6 @@ ssl3_clear(SSL *s)
 	ssl_free_wbio_buffer(s);
 
 	s->packet_length = 0;
-	s->s3->renegotiate = 0;
-	s->s3->total_renegotiations = 0;
-	s->s3->num_renegotiations = 0;
-	s->s3->in_read_app_data = 0;
 	s->version = TLS1_VERSION;
 
 	free(s->next_proto_negotiated);
