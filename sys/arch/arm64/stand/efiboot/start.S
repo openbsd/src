@@ -1,4 +1,4 @@
-/* $OpenBSD: start.S,v 1.2 2016/12/18 14:40:25 patrick Exp $ */
+/* $OpenBSD: start.S,v 1.3 2017/01/22 01:38:25 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define	IMAGE_SCN_MEM_EXECUTE		0x20000000
 #define	IMAGE_SCN_MEM_READ		0x40000000
 
-	.section .peheader
+	.section .peheader, "a"
 efi_start:
 	/* The MS-DOS Stub, only used to get the offset of the COFF header */
 	.ascii	"MZ"
