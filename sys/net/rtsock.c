@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.215 2017/01/21 03:44:46 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.216 2017/01/22 04:31:02 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -488,7 +488,6 @@ route_output(struct mbuf *m, ...)
 	so = va_arg(ap, struct socket *);
 	va_end(ap);
 
-	info.rti_info[RTAX_DST] = NULL;	/* for error handling (goto flush) */
 	if (m == NULL || ((m->m_len < sizeof(int32_t)) &&
 	    (m = m_pullup(m, sizeof(int32_t))) == 0))
 		return (ENOBUFS);
@@ -555,10 +554,10 @@ route_output(struct mbuf *m, ...)
 	if (!rtable_exists(tableid)) {
 		if (rtm->rtm_type == RTM_ADD) {
 			if ((error = rtable_add(tableid)) != 0)
-				goto flush;
+				goto fail;
 		} else {
 			error = EINVAL;
-			goto flush;
+			goto fail;
 		}
 	}
 
@@ -598,7 +597,7 @@ route_output(struct mbuf *m, ...)
 	    info.rti_info[RTAX_GATEWAY]->sa_family >= AF_MAX) ||
 	    info.rti_info[RTAX_GENMASK] != NULL) {
 		error = EINVAL;
-		goto flush;
+		goto fail;
 	}
 #ifdef MPLS
 	info.rti_mpls = rtm->rtm_mpls;
@@ -610,6 +609,11 @@ route_output(struct mbuf *m, ...)
 		info.rti_flags |= RTF_LLINFO;
 	}
 
+	/*
+	 * Do not use goto flush before this point since the message itself
+	 * may be not consistent and could cause unexpected behaviour in other
+	 * userland clients. Use goto fail instead.
+	 */
 	switch (rtm->rtm_type) {
 	case RTM_ADD:
 		if (info.rti_info[RTAX_GATEWAY] == NULL) {
@@ -647,11 +651,6 @@ route_output(struct mbuf *m, ...)
 		}
 		break;
 	case RTM_DELETE:
-		if (!rtable_exists(tableid)) {
-			error = EAFNOSUPPORT;
-			goto flush;
-		}
-
 		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
 		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
 		    prio);
@@ -690,10 +689,6 @@ route_output(struct mbuf *m, ...)
 			goto report;
 		break;
 	case RTM_GET:
-		if (!rtable_exists(tableid)) {
-			error = EAFNOSUPPORT;
-			goto flush;
-		}
 		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
 		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
 		    prio);
@@ -764,11 +759,6 @@ report:
 		break;
 	case RTM_CHANGE:
 	case RTM_LOCK:
-		if (!rtable_exists(tableid)) {
-			error = EAFNOSUPPORT;
-			goto flush;
-		}
-
 		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
 		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
 		    prio);
