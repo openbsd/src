@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.152 2017/01/20 08:10:54 dlg Exp $	*/
+/*	$OpenBSD: route.h,v 1.153 2017/01/22 03:47:20 krw Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 /*
  * Kernel resident routing tables.
- * 
+ *
  * The routing tables are initialized when interface addresses
  * are set by making entries for all directly connected interfaces.
  */
@@ -102,7 +102,7 @@ struct rtentry {
 	struct sockaddr	*rt_gateway;	/* value */
 	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */
 	caddr_t		 rt_llinfo;	/* pointer to link level info cache or
-					   to an MPLS structure */ 
+					   to an MPLS structure */
 	union {
 		struct rtentry	*_nh;	/* implied entry for gatewayed routes */
 		unsigned int	 _ref;	/* # gatewayed caching this route */
@@ -259,7 +259,7 @@ struct rt_msghdr {
 #define RTA_SRC		0x100	/* source sockaddr present */
 #define RTA_SRCMASK	0x200	/* source netmask present */
 #define RTA_LABEL	0x400	/* route label present */
-#define RTA_BFD 	0x800	/* bfd present */
+#define RTA_BFD		0x800	/* bfd present */
 
 /*
  * Index offsets for sockaddr array for alternate internal encoding.
@@ -339,19 +339,19 @@ rtstat_inc(enum rtstat_counters c)
 	counters_inc(rtcounters, c);
 }
 
-/* 
+/*
  * This structure, and the prototypes for the rt_timer_{init,remove_all,
  * add,timer} functions all used with the kind permission of BSDI.
  * These allow functions to be called for routes at specific times.
  */
 struct rttimer {
 	TAILQ_ENTRY(rttimer)	rtt_next;  /* entry on timer queue */
-	LIST_ENTRY(rttimer) 	rtt_link;  /* multiple timers per rtentry */
+	LIST_ENTRY(rttimer)	rtt_link;  /* multiple timers per rtentry */
 	struct rttimer_queue	*rtt_queue;/* back pointer to queue */
-	struct rtentry  	*rtt_rt;   /* Back pointer to the route */
-	void            	(*rtt_func)(struct rtentry *, 
+	struct rtentry		*rtt_rt;   /* Back pointer to the route */
+	void			(*rtt_func)(struct rtentry *,
 						 struct rttimer *);
-	time_t          	rtt_time; /* When this timer was registered */
+	time_t			rtt_time; /* When this timer was registered */
 	u_int			rtt_tableid;	/* routing table id of rtt_rt */
 };
 
