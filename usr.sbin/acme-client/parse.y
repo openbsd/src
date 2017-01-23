@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2017/01/21 13:16:40 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.15 2017/01/23 03:31:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -287,7 +287,7 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 			if (s[0] != '/') {
 				free(s);
 				yyerror("not an absolute path");
-				YYERROR;				
+				YYERROR;
 			}
 			if ((conf_new_keyfile(conf, s)) == NULL) {
 				free(s);
@@ -334,7 +334,7 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 			}
 			if ((s = strdup($3)) == NULL)
 				err(EXIT_FAILURE, "strdup");
-		        if (authority_find(conf, s) == NULL) {
+			if (authority_find(conf, s) == NULL) {
 				yyerror("use: unknown authority");
 				YYERROR;
 			}
