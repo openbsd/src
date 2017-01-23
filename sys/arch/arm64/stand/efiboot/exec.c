@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: exec.c,v 1.2 2017/01/23 12:02:14 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -37,7 +37,7 @@ run_loadfile(u_long *marks, int howto)
 {
 	Elf_Ehdr *elf = (Elf_Ehdr *)marks[MARK_SYM];
 	Elf_Shdr *shp = (Elf_Shdr *)(marks[MARK_SYM] + elf->e_shoff);
-	u_long esym = marks[MARK_END] & 0x7fffffffff;
+	u_long esym = marks[MARK_END] & 0x000fffffff;
 	u_long offset = 0;
 	char args[256];
 	char *cp;
