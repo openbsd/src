@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_srvr.c,v 1.22 2017/01/23 10:22:06 jsing Exp $ */
+/* $OpenBSD: t1_srvr.c,v 1.23 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,7 +67,7 @@
 
 static const SSL_METHOD *tls1_get_server_method(int ver);
 
-static const SSL_METHOD TLS_server_method_data = {
+static const SSL_METHOD_INTERNAL TLS_server_method_internal_data = {
 	.version = TLS1_2_VERSION,
 	.min_version = TLS1_VERSION,
 	.max_version = TLS1_2_VERSION,
@@ -80,24 +80,28 @@ static const SSL_METHOD TLS_server_method_data = {
 	.ssl_peek = ssl23_peek,
 	.ssl_write = ssl23_write,
 	.ssl_shutdown = ssl_undefined_function,
+	.ssl_pending = ssl_undefined_const_function,
+	.get_ssl_method = tls1_get_server_method,
+	.get_timeout = ssl23_default_timeout,
+	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl_undefined_function,
 	.ssl_renegotiate_check = ssl_ok,
 	.ssl_get_message = ssl3_get_message,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.ssl_pending = ssl_undefined_const_function,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_ssl_method = tls1_get_server_method,
-	.get_timeout = ssl23_default_timeout,
 	.ssl3_enc = &ssl3_undef_enc_method,
-	.ssl_version = ssl_undefined_void_function,
 };
 
-static const SSL_METHOD TLSv1_server_method_data = {
+static const SSL_METHOD TLS_server_method_data = {
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &TLS_server_method_internal_data,
+};
+
+static const SSL_METHOD_INTERNAL TLSv1_server_method_internal_data = {
 	.version = TLS1_VERSION,
 	.min_version = TLS1_VERSION,
 	.max_version = TLS1_VERSION,
@@ -110,24 +114,28 @@ static const SSL_METHOD TLSv1_server_method_data = {
 	.ssl_peek = ssl3_peek,
 	.ssl_write = ssl3_write,
 	.ssl_shutdown = ssl3_shutdown,
+	.ssl_pending = ssl3_pending,
+	.get_ssl_method = tls1_get_server_method,
+	.get_timeout = tls1_default_timeout,
+	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_get_message = ssl3_get_message,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.ssl_pending = ssl3_pending,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_ssl_method = tls1_get_server_method,
-	.get_timeout = tls1_default_timeout,
 	.ssl3_enc = &TLSv1_enc_data,
-	.ssl_version = ssl_undefined_void_function,
 };
 
-static const SSL_METHOD TLSv1_1_server_method_data = {
+static const SSL_METHOD TLSv1_server_method_data = {
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &TLSv1_server_method_internal_data,
+};
+
+static const SSL_METHOD_INTERNAL TLSv1_1_server_method_internal_data = {
 	.version = TLS1_1_VERSION,
 	.min_version = TLS1_1_VERSION,
 	.max_version = TLS1_1_VERSION,
@@ -140,24 +148,28 @@ static const SSL_METHOD TLSv1_1_server_method_data = {
 	.ssl_peek = ssl3_peek,
 	.ssl_write = ssl3_write,
 	.ssl_shutdown = ssl3_shutdown,
+	.ssl_pending = ssl3_pending,
+	.get_ssl_method = tls1_get_server_method,
+	.get_timeout = tls1_default_timeout,
+	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_get_message = ssl3_get_message,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.ssl_pending = ssl3_pending,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_ssl_method = tls1_get_server_method,
-	.get_timeout = tls1_default_timeout,
 	.ssl3_enc = &TLSv1_1_enc_data,
-	.ssl_version = ssl_undefined_void_function,
 };
 
-static const SSL_METHOD TLSv1_2_server_method_data = {
+static const SSL_METHOD TLSv1_1_server_method_data = {
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &TLSv1_1_server_method_internal_data,
+};
+
+static const SSL_METHOD_INTERNAL TLSv1_2_server_method_internal_data = {
 	.version = TLS1_2_VERSION,
 	.min_version = TLS1_2_VERSION,
 	.max_version = TLS1_2_VERSION,
@@ -170,21 +182,25 @@ static const SSL_METHOD TLSv1_2_server_method_data = {
 	.ssl_peek = ssl3_peek,
 	.ssl_write = ssl3_write,
 	.ssl_shutdown = ssl3_shutdown,
+	.ssl_pending = ssl3_pending,
+	.get_ssl_method = tls1_get_server_method,
+	.get_timeout = tls1_default_timeout,
+	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_get_message = ssl3_get_message,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
+	.ssl3_enc = &TLSv1_2_enc_data,
+};
+
+static const SSL_METHOD TLSv1_2_server_method_data = {
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.ssl_pending = ssl3_pending,
 	.num_ciphers = ssl3_num_ciphers,
 	.get_cipher = ssl3_get_cipher,
-	.get_ssl_method = tls1_get_server_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl3_enc = &TLSv1_2_enc_data,
-	.ssl_version = ssl_undefined_void_function,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &TLSv1_2_server_method_internal_data,
 };
 
 static const SSL_METHOD *

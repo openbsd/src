@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.68 2017/01/23 10:22:06 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.69 2017/01/23 13:36:13 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -130,7 +130,7 @@
 static const SSL_METHOD *dtls1_get_client_method(int ver);
 static int dtls1_get_hello_verify(SSL *s);
 
-static const SSL_METHOD DTLSv1_client_method_data = {
+static const SSL_METHOD_INTERNAL DTLSv1_client_method_internal_data = {
 	.version = DTLS1_VERSION,
 	.min_version = DTLS1_VERSION,
 	.max_version = DTLS1_VERSION,
@@ -143,21 +143,25 @@ static const SSL_METHOD DTLSv1_client_method_data = {
 	.ssl_peek = ssl3_peek,
 	.ssl_write = ssl3_write,
 	.ssl_shutdown = dtls1_shutdown,
+	.ssl_pending = ssl3_pending,
+	.get_ssl_method = dtls1_get_client_method,
+	.get_timeout = dtls1_default_timeout,
+	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_get_message = dtls1_get_message,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
+	.ssl3_enc = &DTLSv1_enc_data,
+};
+
+static const SSL_METHOD DTLSv1_client_method_data = {
 	.ssl_dispatch_alert = dtls1_dispatch_alert,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.ssl_pending = ssl3_pending,
 	.num_ciphers = ssl3_num_ciphers,
 	.get_cipher = dtls1_get_cipher,
-	.get_ssl_method = dtls1_get_client_method,
-	.get_timeout = dtls1_default_timeout,
-	.ssl3_enc = &DTLSv1_enc_data,
-	.ssl_version = ssl_undefined_void_function,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &DTLSv1_client_method_internal_data,
 };
 
 const SSL_METHOD *
@@ -434,12 +438,12 @@ dtls1_connect(SSL *s)
 			s->internal->init_num = 0;
 
 			s->session->cipher = S3I(s)->tmp.new_cipher;
-			if (!s->method->ssl3_enc->setup_key_block(s)) {
+			if (!s->method->internal->ssl3_enc->setup_key_block(s)) {
 				ret = -1;
 				goto end;
 			}
 
-			if (!s->method->ssl3_enc->change_cipher_state(s,
+			if (!s->method->internal->ssl3_enc->change_cipher_state(s,
 			    SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
 				ret = -1;
 				goto end;
@@ -455,8 +459,8 @@ dtls1_connect(SSL *s)
 				dtls1_start_timer(s);
 			ret = ssl3_send_finished(s,
 			    SSL3_ST_CW_FINISHED_A, SSL3_ST_CW_FINISHED_B,
-			    s->method->ssl3_enc->client_finished_label,
-			    s->method->ssl3_enc->client_finished_label_len);
+			    s->method->internal->ssl3_enc->client_finished_label,
+			    s->method->internal->ssl3_enc->client_finished_label_len);
 			if (ret <= 0)
 				goto end;
 			s->internal->state = SSL3_ST_CW_FLUSH;
@@ -608,7 +612,7 @@ dtls1_get_hello_verify(SSL *s)
 	uint16_t ssl_version;
 	CBS hello_verify_request, cookie;
 
-	n = s->method->ssl_get_message(s, DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A,
+	n = s->method->internal->ssl_get_message(s, DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A,
 	    DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B, -1, s->internal->max_cert_list, &ok);
 
 	if (!ok)

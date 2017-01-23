@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.169 2017/01/23 08:48:44 beck Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.170 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -419,12 +419,12 @@ ssl3_connect(SSL *s)
 			s->internal->init_num = 0;
 
 			s->session->cipher = S3I(s)->tmp.new_cipher;
-			if (!s->method->ssl3_enc->setup_key_block(s)) {
+			if (!s->method->internal->ssl3_enc->setup_key_block(s)) {
 				ret = -1;
 				goto end;
 			}
 
-			if (!s->method->ssl3_enc->change_cipher_state(s,
+			if (!s->method->internal->ssl3_enc->change_cipher_state(s,
 			    SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
 				ret = -1;
 				goto end;
@@ -444,8 +444,8 @@ ssl3_connect(SSL *s)
 		case SSL3_ST_CW_FINISHED_B:
 			ret = ssl3_send_finished(s, SSL3_ST_CW_FINISHED_A,
 			    SSL3_ST_CW_FINISHED_B,
-			    s->method->ssl3_enc->client_finished_label,
-			    s->method->ssl3_enc->client_finished_label_len);
+			    s->method->internal->ssl3_enc->client_finished_label,
+			    s->method->internal->ssl3_enc->client_finished_label_len);
 			if (ret <= 0)
 				goto end;
 			s->s3->flags |= SSL3_FLAGS_CCS_OK;
@@ -730,7 +730,7 @@ ssl3_get_server_hello(SSL *s)
 	int i, al, ok;
 	long n;
 
-	n = s->method->ssl_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
+	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
 	    SSL3_ST_CR_SRVR_HELLO_B, -1, 20000, /* ?? */ &ok);
 
 	if (!ok)
@@ -950,7 +950,7 @@ ssl3_get_server_certificate(SSL *s)
 	SESS_CERT		*sc;
 	EVP_PKEY		*pkey = NULL;
 
-	n = s->method->ssl_get_message(s, SSL3_ST_CR_CERT_A,
+	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_CERT_A,
 	    SSL3_ST_CR_CERT_B, -1, s->internal->max_cert_list, &ok);
 
 	if (!ok)
@@ -1373,7 +1373,7 @@ ssl3_get_server_key_exchange(SSL *s)
 	 * Use same message size as in ssl3_get_certificate_request()
 	 * as ServerKeyExchange message may be skipped.
 	 */
-	n = s->method->ssl_get_message(s, SSL3_ST_CR_KEY_EXCH_A,
+	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_KEY_EXCH_A,
 	    SSL3_ST_CR_KEY_EXCH_B, -1, s->internal->max_cert_list, &ok);
 	if (!ok)
 		return ((int)n);
@@ -1579,7 +1579,7 @@ ssl3_get_certificate_request(SSL *s)
 	const unsigned char	*q;
 	STACK_OF(X509_NAME)	*ca_sk = NULL;
 
-	n = s->method->ssl_get_message(s, SSL3_ST_CR_CERT_REQ_A,
+	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_CERT_REQ_A,
 	    SSL3_ST_CR_CERT_REQ_B, -1, s->internal->max_cert_list, &ok);
 
 	if (!ok)
@@ -1756,7 +1756,7 @@ ssl3_get_new_session_ticket(SSL *s)
 	long			 n;
 	CBS			 cbs, session_ticket;
 
-	n = s->method->ssl_get_message(s, SSL3_ST_CR_SESSION_TICKET_A,
+	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_SESSION_TICKET_A,
 	    SSL3_ST_CR_SESSION_TICKET_B, -1, 16384, &ok);
 	if (!ok)
 		return ((int)n);
@@ -1836,7 +1836,7 @@ ssl3_get_cert_status(SSL *s)
 	long			 n;
 	uint8_t			 status_type;
 
-	n = s->method->ssl_get_message(s, SSL3_ST_CR_CERT_STATUS_A,
+	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_CERT_STATUS_A,
 	    SSL3_ST_CR_CERT_STATUS_B, SSL3_MT_CERTIFICATE_STATUS,
 	    16384, &ok);
 
@@ -1915,7 +1915,7 @@ ssl3_get_server_done(SSL *s)
 	int	ok, ret = 0;
 	long	n;
 
-	n = s->method->ssl_get_message(s, SSL3_ST_CR_SRVR_DONE_A,
+	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_SRVR_DONE_A,
 	    SSL3_ST_CR_SRVR_DONE_B, SSL3_MT_SERVER_DONE,
 	    30, /* should be very small, like 0 :-) */ &ok);
 
@@ -1979,7 +1979,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		goto err;
 
 	s->session->master_key_length =
-	    s->method->ssl3_enc->generate_master_secret(s,
+	    s->method->internal->ssl3_enc->generate_master_secret(s,
 		s->session->master_key, pms, sizeof(pms));
 
 	ret = 1;
@@ -2034,7 +2034,7 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 
 	/* Generate master key from the result. */
 	s->session->master_key_length =
-	    s->method->ssl3_enc->generate_master_secret(s,
+	    s->method->internal->ssl3_enc->generate_master_secret(s,
 		s->session->master_key, key, key_len);
 
 	if (!CBB_add_u16_length_prefixed(cbb, &dh_Yc))
@@ -2109,7 +2109,7 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 
 	/* Generate master key from the result. */
 	s->session->master_key_length =
-	    s->method->ssl3_enc->generate_master_secret(s,
+	    s->method->internal->ssl3_enc->generate_master_secret(s,
 		s->session->master_key, key, key_len);
 
 	encoded_len = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ecdh),
@@ -2178,7 +2178,7 @@ ssl3_send_client_kex_ecdhe_ecx(SSL *s, SESS_CERT *sc, CBB *cbb)
 
 	/* Generate master key from the result. */
 	s->session->master_key_length =
-	    s->method->ssl3_enc->generate_master_secret(s,
+	    s->method->internal->ssl3_enc->generate_master_secret(s,
 		s->session->master_key, shared_key, X25519_KEY_LENGTH);
 
 	ret = 1;
@@ -2318,7 +2318,7 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	}
 	EVP_PKEY_CTX_free(pkey_ctx);
 	s->session->master_key_length =
-	    s->method->ssl3_enc->generate_master_secret(s,
+	    s->method->internal->ssl3_enc->generate_master_secret(s,
 		s->session->master_key, premaster_secret, 32);
 
 	ret = 1;
@@ -2415,7 +2415,7 @@ ssl3_send_client_verify(SSL *s)
 		EVP_PKEY_sign_init(pctx);
 		if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1()) > 0) {
 			if (!SSL_USE_SIGALGS(s))
-				s->method->ssl3_enc->cert_verify_mac(s,
+				s->method->internal->ssl3_enc->cert_verify_mac(s,
 				    NID_sha1, &(data[MD5_DIGEST_LENGTH]));
 		} else {
 			ERR_clear_error();
@@ -2449,7 +2449,7 @@ ssl3_send_client_verify(SSL *s)
 			if (!tls1_digest_cached_records(s))
 				goto err;
 		} else if (pkey->type == EVP_PKEY_RSA) {
-			s->method->ssl3_enc->cert_verify_mac(
+			s->method->internal->ssl3_enc->cert_verify_mac(
 			    s, NID_md5, &(data[0]));
 			if (RSA_sign(NID_md5_sha1, data,
 			    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH, &(p[2]),
@@ -2737,7 +2737,7 @@ ssl3_check_finished(SSL *s)
 		return (1);
 	/* this function is called when we really expect a Certificate
 	 * message, so permit appropriate message length */
-	n = s->method->ssl_get_message(s, SSL3_ST_CR_CERT_A,
+	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_CERT_A,
 	    SSL3_ST_CR_CERT_B, -1, s->internal->max_cert_list, &ok);
 	if (!ok)
 		return ((int)n);

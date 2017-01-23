@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.55 2017/01/23 08:48:44 beck Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.56 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -450,7 +450,7 @@ ssl23_get_client_hello(SSL *s)
 			s->method = TLSv1_server_method();
 		else
 			goto unsupported;
-		s->internal->handshake_func = s->method->ssl_accept;
+		s->internal->handshake_func = s->method->internal->ssl_accept;
 	} else {
 		/* bad, very bad */
 		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.62 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.63 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -725,9 +725,9 @@ SSL_set_session(SSL *s, SSL_SESSION *session)
 	const SSL_METHOD *meth;
 
 	if (session != NULL) {
-		meth = s->ctx->method->get_ssl_method(session->ssl_version);
+		meth = s->ctx->method->internal->get_ssl_method(session->ssl_version);
 		if (meth == NULL)
-			meth = s->method->get_ssl_method(session->ssl_version);
+			meth = s->method->internal->get_ssl_method(session->ssl_version);
 		if (meth == NULL) {
 			SSLerr(SSL_F_SSL_SET_SESSION,
 			    SSL_R_UNABLE_TO_FIND_SSL_METHOD);
@@ -738,7 +738,6 @@ SSL_set_session(SSL *s, SSL_SESSION *session)
 			if (!SSL_set_ssl_method(s, meth))
 				return (0);
 		}
-
 
 		/* CRYPTO_w_lock(CRYPTO_LOCK_SSL);*/
 		CRYPTO_add(&session->references, 1, CRYPTO_LOCK_SSL_SESSION);

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.126 2017/01/23 08:48:44 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.127 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1816,7 +1816,7 @@ ssl3_new(SSL *s)
 		return (0);
 	}
 
-	s->method->ssl_clear(s);
+	s->method->internal->ssl_clear(s);
 
 	return (1);
 }
@@ -2533,7 +2533,7 @@ ssl3_shutdown(SSL *s)
 		}
 	} else if (!(s->internal->shutdown & SSL_RECEIVED_SHUTDOWN)) {
 		/* If we are waiting for a close from our peer, we are closed */
-		s->method->ssl_read_bytes(s, 0, NULL, 0, 0);
+		s->method->internal->ssl_read_bytes(s, 0, NULL, 0, 0);
 		if (!(s->internal->shutdown & SSL_RECEIVED_SHUTDOWN)) {
 			return(-1);	/* return WANT_READ */
 		}
@@ -2592,8 +2592,8 @@ ssl3_write(SSL *s, const void *buf, int len)
 		ret = S3I(s)->delay_buf_pop_ret;
 		S3I(s)->delay_buf_pop_ret = 0;
 	} else {
-		ret = s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA,
-		    buf, len);
+		ret = s->method->internal->ssl_write_bytes(s,
+		    SSL3_RT_APPLICATION_DATA, buf, len);
 		if (ret <= 0)
 			return (ret);
 	}
@@ -2610,7 +2610,7 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 	if (S3I(s)->renegotiate)
 		ssl3_renegotiate_check(s);
 	S3I(s)->in_read_app_data = 1;
-	ret = s->method->ssl_read_bytes(s,
+	ret = s->method->internal->ssl_read_bytes(s,
 	    SSL3_RT_APPLICATION_DATA, buf, len, peek);
 	if ((ret == -1) && (S3I(s)->in_read_app_data == 2)) {
 		/*
@@ -2621,7 +2621,7 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 		 * handshake processing and try to read application data again.
 		 */
 		s->internal->in_handshake++;
-		ret = s->method->ssl_read_bytes(s,
+		ret = s->method->internal->ssl_read_bytes(s,
 		    SSL3_RT_APPLICATION_DATA, buf, len, peek);
 		s->internal->in_handshake--;
 	} else
@@ -2687,7 +2687,7 @@ ssl_get_algorithm2(SSL *s)
 {
 	long	alg2 = S3I(s)->tmp.new_cipher->algorithm2;
 
-	if (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF &&
+	if (s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF &&
 	    alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))
 		return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
 	return alg2;

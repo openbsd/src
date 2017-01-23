@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.160 2017/01/23 08:48:44 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.161 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -327,19 +327,20 @@ __BEGIN_HIDDEN_DECLS
 #define SSL_C_PKEYLENGTH(c)	1024
 
 /* Check if an SSL structure is using DTLS. */
-#define SSL_IS_DTLS(s) (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
+#define SSL_IS_DTLS(s) \
+	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
 
 /* See if we need explicit IV. */
 #define SSL_USE_EXPLICIT_IV(s) \
-	(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_EXPLICIT_IV)
+	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_EXPLICIT_IV)
 
 /* See if we use signature algorithms extension. */
 #define SSL_USE_SIGALGS(s) \
-	(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
+	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
 
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_USE_TLS1_2_CIPHERS(s) \
-	(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
+	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
 
 /* Mostly for SSLv3 */
 #define SSL_PKEY_RSA_ENC	0
@@ -371,6 +372,41 @@ __BEGIN_HIDDEN_DECLS
 #define EXPLICIT_PRIME_CURVE_TYPE  1
 #define EXPLICIT_CHAR2_CURVE_TYPE  2
 #define NAMED_CURVE_TYPE           3
+
+typedef struct ssl_method_internal_st {
+	int version;
+
+	uint16_t min_version;
+	uint16_t max_version;
+
+	int (*ssl_new)(SSL *s);
+	void (*ssl_clear)(SSL *s);
+	void (*ssl_free)(SSL *s);
+
+	int (*ssl_accept)(SSL *s);
+	int (*ssl_connect)(SSL *s);
+	int (*ssl_read)(SSL *s, void *buf, int len);
+	int (*ssl_peek)(SSL *s, void *buf, int len);
+	int (*ssl_write)(SSL *s, const void *buf, int len);
+	int (*ssl_shutdown)(SSL *s);
+
+	int (*ssl_renegotiate)(SSL *s);
+	int (*ssl_renegotiate_check)(SSL *s);
+
+	long (*ssl_get_message)(SSL *s, int st1, int stn, int mt,
+	    long max, int *ok);
+	int (*ssl_read_bytes)(SSL *s, int type, unsigned char *buf,
+	    int len, int peek);
+	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
+
+	int (*ssl_pending)(const SSL *s);
+	const struct ssl_method_st *(*get_ssl_method)(int version);
+
+	long (*get_timeout)(void);
+	int (*ssl_version)(void);
+
+	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
+} SSL_METHOD_INTERNAL;
 
 typedef struct ssl_session_internal_st {
 	CRYPTO_EX_DATA ex_data; /* application specific data */

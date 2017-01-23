@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.66 2017/01/23 08:48:44 beck Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.67 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -382,7 +382,7 @@ again:
 	/* decrypt in place in 'rr->input' */
 	rr->data = rr->input;
 
-	enc_err = s->method->ssl3_enc->enc(s, 0);
+	enc_err = s->method->internal->ssl3_enc->enc(s, 0);
 	/* enc_err is:
 	 *    0: (in non-constant time) if the record is publically invalid.
 	 *    1: if the padding is valid
@@ -438,7 +438,7 @@ again:
 			mac = &rr->data[rr->length];
 		}
 
-		i = s->method->ssl3_enc->mac(s,md,0 /* not send */);
+		i = s->method->internal->ssl3_enc->mac(s,md,0 /* not send */);
 		if (i < 0 || mac == NULL ||
 		    timingsafe_memcmp(md, mac, (size_t)mac_size) != 0)
 			enc_err = -1;
@@ -710,7 +710,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	 * wr->data still points in the wb->buf */
 
 	if (mac_size != 0) {
-		if (s->method->ssl3_enc->mac(s,
+		if (s->method->internal->ssl3_enc->mac(s,
 		    &(p[wr->length + eivlen]), 1) < 0)
 			goto err;
 		wr->length += mac_size;
@@ -727,7 +727,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	}
 
 	/* ssl3_enc can only have an error on read */
-	s->method->ssl3_enc->enc(s, 1);
+	s->method->internal->ssl3_enc->enc(s, 1);
 
 	/* record length after mac and block padding */
 	s2n(wr->length, plen);
@@ -1323,25 +1323,25 @@ ssl3_do_change_cipher_spec(SSL *s)
 		}
 
 		s->session->cipher = S3I(s)->tmp.new_cipher;
-		if (!s->method->ssl3_enc->setup_key_block(s))
+		if (!s->method->internal->ssl3_enc->setup_key_block(s))
 			return (0);
 	}
 
-	if (!s->method->ssl3_enc->change_cipher_state(s, i))
+	if (!s->method->internal->ssl3_enc->change_cipher_state(s, i))
 		return (0);
 
 	/* we have to record the message digest at
 	 * this point so we can get it before we read
 	 * the finished message */
 	if (s->internal->state & SSL_ST_CONNECT) {
-		sender = s->method->ssl3_enc->server_finished_label;
-		slen = s->method->ssl3_enc->server_finished_label_len;
+		sender = s->method->internal->ssl3_enc->server_finished_label;
+		slen = s->method->internal->ssl3_enc->server_finished_label_len;
 	} else {
-		sender = s->method->ssl3_enc->client_finished_label;
-		slen = s->method->ssl3_enc->client_finished_label_len;
+		sender = s->method->internal->ssl3_enc->client_finished_label;
+		slen = s->method->internal->ssl3_enc->client_finished_label_len;
 	}
 
-	i = s->method->ssl3_enc->final_finish_mac(s, sender, slen,
+	i = s->method->internal->ssl3_enc->final_finish_mac(s, sender, slen,
 	    S3I(s)->tmp.peer_finish_md);
 	if (i == 0) {
 		SSLerr(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
@@ -1356,7 +1356,7 @@ int
 ssl3_send_alert(SSL *s, int level, int desc)
 {
 	/* Map tls/ssl alert value to correct one */
-	desc = s->method->ssl3_enc->alert_value(desc);
+	desc = s->method->internal->ssl3_enc->alert_value(desc);
 	if (desc < 0)
 		return -1;
 	/* If a fatal one, remove from cache */

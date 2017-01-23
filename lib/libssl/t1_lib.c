@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.104 2017/01/23 08:48:45 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.105 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -191,7 +191,7 @@ tls1_new(SSL *s)
 {
 	if (!ssl3_new(s))
 		return (0);
-	s->method->ssl_clear(s);
+	s->method->internal->ssl_clear(s);
 	return (1);
 }
 
@@ -209,7 +209,7 @@ void
 tls1_clear(SSL *s)
 {
 	ssl3_clear(s);
-	s->version = s->method->version;
+	s->version = s->method->internal->version;
 }
 
 

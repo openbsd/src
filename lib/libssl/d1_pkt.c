@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.56 2017/01/23 08:48:44 beck Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.57 2017/01/23 13:36:13 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -361,7 +361,7 @@ dtls1_process_record(SSL *s)
 	/* decrypt in place in 'rr->input' */
 	rr->data = rr->input;
 
-	enc_err = s->method->ssl3_enc->enc(s, 0);
+	enc_err = s->method->internal->ssl3_enc->enc(s, 0);
 	/* enc_err is:
 	 *    0: (in non-constant time) if the record is publically invalid.
 	 *    1: if the padding is valid
@@ -417,7 +417,7 @@ dtls1_process_record(SSL *s)
 			mac = &rr->data[rr->length];
 		}
 
-		i = s->method->ssl3_enc->mac(s, md, 0 /* not send */);
+		i = s->method->internal->ssl3_enc->mac(s, md, 0 /* not send */);
 		if (i < 0 || mac == NULL || timingsafe_memcmp(md, mac, (size_t)mac_size) != 0)
 			enc_err = -1;
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
@@ -1279,7 +1279,7 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	 * wr->data still points in the wb->buf */
 
 	if (mac_size != 0) {
-		if (s->method->ssl3_enc->mac(s, &(p[wr->length + bs]), 1) < 0)
+		if (s->method->internal->ssl3_enc->mac(s, &(p[wr->length + bs]), 1) < 0)
 			goto err;
 		wr->length += mac_size;
 	}
@@ -1298,7 +1298,7 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		wr->length += bs;
 	}
 
-	s->method->ssl3_enc->enc(s, 1);
+	s->method->internal->ssl3_enc->enc(s, 1);
 
 	/* record length after mac and block padding */
 /*	if (type == SSL3_RT_APPLICATION_DATA ||

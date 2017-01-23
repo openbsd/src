@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.138 2017/01/23 10:22:06 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.139 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -212,7 +212,7 @@ SSL_clear(SSL *s)
 
 	s->internal->state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
 
-	s->version = s->method->version;
+	s->version = s->method->internal->version;
 	s->client_version = s->version;
 	s->internal->rwstate = SSL_NOTHING;
 	s->internal->rstate = SSL_ST_READ_HEADER;
@@ -232,12 +232,12 @@ SSL_clear(SSL *s)
 	 */
 	if (!s->internal->in_handshake && (s->session == NULL) &&
 	    (s->method != s->ctx->method)) {
-		s->method->ssl_free(s);
+		s->method->internal->ssl_free(s);
 		s->method = s->ctx->method;
-		if (!s->method->ssl_new(s))
+		if (!s->method->internal->ssl_new(s))
 			return (0);
 	} else
-		s->method->ssl_clear(s);
+		s->method->internal->ssl_clear(s);
 
 	return (1);
 }
@@ -354,11 +354,11 @@ SSL_new(SSL_CTX *ctx)
 
 	s->method = ctx->method;
 
-	if (!s->method->ssl_new(s))
+	if (!s->method->internal->ssl_new(s))
 		goto err;
 
 	s->references = 1;
-	s->server = (ctx->method->ssl_accept == ssl_undefined_function) ? 0 : 1;
+	s->server = (ctx->method->internal->ssl_accept == ssl_undefined_function) ? 0 : 1;
 
 	SSL_clear(s);
 
@@ -550,7 +550,7 @@ SSL_free(SSL *s)
 		sk_X509_NAME_pop_free(s->internal->client_CA, X509_NAME_free);
 
 	if (s->method != NULL)
-		s->method->ssl_free(s);
+		s->method->internal->ssl_free(s);
 
 	SSL_CTX_free(s->ctx);
 
@@ -799,7 +799,7 @@ SSL_pending(const SSL *s)
 	 * (Note that SSL_pending() is often used as a boolean value,
 	 * so we'd better not return -1.)
 	 */
-	return (s->method->ssl_pending(s));
+	return (s->method->internal->ssl_pending(s));
 }
 
 X509 *
@@ -856,9 +856,9 @@ SSL_copy_session_id(SSL *t, const SSL *f)
 	 * vice-versa.
 	 */
 	if (t->method != f->method) {
-		t->method->ssl_free(t);	/* cleanup current */
-		t->method=f->method;	/* change method */
-		t->method->ssl_new(t);	/* setup new */
+		t->method->internal->ssl_free(t);	/* cleanup current */
+		t->method = f->method;	/* change method */
+		t->method->internal->ssl_new(t);	/* setup new */
 	}
 
 	tmp = t->cert;
@@ -925,7 +925,7 @@ SSL_accept(SSL *s)
 	if (s->internal->handshake_func == NULL)
 		SSL_set_accept_state(s); /* Not properly initialized yet */
 
-	return (s->method->ssl_accept(s));
+	return (s->method->internal->ssl_accept(s));
 }
 
 int
@@ -934,13 +934,13 @@ SSL_connect(SSL *s)
 	if (s->internal->handshake_func == NULL)
 		SSL_set_connect_state(s); /* Not properly initialized yet */
 
-	return (s->method->ssl_connect(s));
+	return (s->method->internal->ssl_connect(s));
 }
 
 long
 SSL_get_default_timeout(const SSL *s)
 {
-	return (s->method->get_timeout());
+	return (s->method->internal->get_timeout());
 }
 
 int
@@ -955,7 +955,7 @@ SSL_read(SSL *s, void *buf, int num)
 		s->internal->rwstate = SSL_NOTHING;
 		return (0);
 	}
-	return (s->method->ssl_read(s, buf, num));
+	return (s->method->internal->ssl_read(s, buf, num));
 }
 
 int
@@ -969,7 +969,7 @@ SSL_peek(SSL *s, void *buf, int num)
 	if (s->internal->shutdown & SSL_RECEIVED_SHUTDOWN) {
 		return (0);
 	}
-	return (s->method->ssl_peek(s, buf, num));
+	return (s->method->internal->ssl_peek(s, buf, num));
 }
 
 int
@@ -985,7 +985,7 @@ SSL_write(SSL *s, const void *buf, int num)
 		SSLerr(SSL_F_SSL_WRITE, SSL_R_PROTOCOL_IS_SHUTDOWN);
 		return (-1);
 	}
-	return (s->method->ssl_write(s, buf, num));
+	return (s->method->internal->ssl_write(s, buf, num));
 }
 
 int
@@ -1004,7 +1004,7 @@ SSL_shutdown(SSL *s)
 	}
 
 	if ((s != NULL) && !SSL_in_init(s))
-		return (s->method->ssl_shutdown(s));
+		return (s->method->internal->ssl_shutdown(s));
 	else
 		return (1);
 }
@@ -1017,7 +1017,7 @@ SSL_renegotiate(SSL *s)
 
 	s->internal->new_session = 1;
 
-	return (s->method->ssl_renegotiate(s));
+	return (s->method->internal->ssl_renegotiate(s));
 }
 
 int
@@ -1028,7 +1028,7 @@ SSL_renegotiate_abbreviated(SSL *s)
 
 	s->internal->new_session = 0;
 
-	return (s->method->ssl_renegotiate(s));
+	return (s->method->internal->ssl_renegotiate(s));
 }
 
 int
@@ -1737,7 +1737,7 @@ SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     const char *label, size_t llen, const unsigned char *p, size_t plen,
     int use_context)
 {
-	return (s->method->ssl3_enc->export_keying_material(s, out, olen,
+	return (s->method->internal->ssl3_enc->export_keying_material(s, out, olen,
 	    label, llen, p, plen, use_context));
 }
 
@@ -1831,7 +1831,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->internal->session_cache_tail = NULL;
 
 	/* We take the system default */
-	ret->session_timeout = meth->get_timeout();
+	ret->session_timeout = meth->internal->get_timeout();
 
 	ret->internal->new_session_cb = 0;
 	ret->internal->remove_session_cb = 0;
@@ -2309,20 +2309,20 @@ SSL_set_ssl_method(SSL *s, const SSL_METHOD *meth)
 
 	if (s->method != meth) {
 		if (s->internal->handshake_func != NULL)
-			conn = (s->internal->handshake_func == s->method->ssl_connect);
+			conn = (s->internal->handshake_func == s->method->internal->ssl_connect);
 
-		if (s->method->version == meth->version)
+		if (s->method->internal->version == meth->internal->version)
 			s->method = meth;
 		else {
-			s->method->ssl_free(s);
+			s->method->internal->ssl_free(s);
 			s->method = meth;
-			ret = s->method->ssl_new(s);
+			ret = s->method->internal->ssl_new(s);
 		}
 
 		if (conn == 1)
-			s->internal->handshake_func = meth->ssl_connect;
+			s->internal->handshake_func = meth->internal->ssl_connect;
 		else if (conn == 0)
-			s->internal->handshake_func = meth->ssl_accept;
+			s->internal->handshake_func = meth->internal->ssl_accept;
 	}
 	return (ret);
 }
@@ -2415,7 +2415,7 @@ SSL_do_handshake(SSL *s)
 		return (-1);
 	}
 
-	s->method->ssl_renegotiate_check(s);
+	s->method->internal->ssl_renegotiate_check(s);
 
 	if (SSL_in_init(s) || SSL_in_before(s)) {
 		ret = s->internal->handshake_func(s);
@@ -2433,7 +2433,7 @@ SSL_set_accept_state(SSL *s)
 	s->server = 1;
 	s->internal->shutdown = 0;
 	s->internal->state = SSL_ST_ACCEPT|SSL_ST_BEFORE;
-	s->internal->handshake_func = s->method->ssl_accept;
+	s->internal->handshake_func = s->method->internal->ssl_accept;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
 	ssl_clear_hash_ctx(&s->read_hash);
@@ -2446,7 +2446,7 @@ SSL_set_connect_state(SSL *s)
 	s->server = 0;
 	s->internal->shutdown = 0;
 	s->internal->state = SSL_ST_CONNECT|SSL_ST_BEFORE;
-	s->internal->handshake_func = s->method->ssl_connect;
+	s->internal->handshake_func = s->method->internal->ssl_connect;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
 	ssl_clear_hash_ctx(&s->read_hash);
@@ -2581,7 +2581,7 @@ ssl_max_server_version(SSL *s)
 	 * The SSL method will be changed during version negotiation, as such
 	 * we want to use the SSL method from the context.
 	 */
-	max_version = s->ctx->method->version;
+	max_version = s->ctx->method->internal->version;
 
 	if (SSL_IS_DTLS(s))
 		return (DTLS1_VERSION);
@@ -2625,9 +2625,9 @@ SSL_dup(SSL *s)
 		 * and thus we can't use SSL_copy_session_id.
 		 */
 
-		ret->method->ssl_free(ret);
+		ret->method->internal->ssl_free(ret);
 		ret->method = s->method;
-		ret->method->ssl_new(ret);
+		ret->method->internal->ssl_new(ret);
 
 		if (s->cert != NULL) {
 			if (ret->cert != NULL) {

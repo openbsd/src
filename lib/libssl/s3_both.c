@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.54 2017/01/23 08:48:44 beck Exp $ */
+/* $OpenBSD: s3_both.c,v 1.55 2017/01/23 13:36:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,10 +170,10 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 	int md_len;
 
 	if (s->internal->state == a) {
-		md_len = s->method->ssl3_enc->finish_mac_length;
+		md_len = s->method->internal->ssl3_enc->finish_mac_length;
 		OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
 
-		if (s->method->ssl3_enc->final_finish_mac(s, sender, slen,
+		if (s->method->internal->ssl3_enc->final_finish_mac(s, sender, slen,
 		    S3I(s)->tmp.finish_md) != md_len)
 			return (0);
 		S3I(s)->tmp.finish_md_len = md_len;
@@ -217,15 +217,15 @@ ssl3_take_mac(SSL *s)
 		return;
 
 	if (s->internal->state & SSL_ST_CONNECT) {
-		sender = s->method->ssl3_enc->server_finished_label;
-		slen = s->method->ssl3_enc->server_finished_label_len;
+		sender = s->method->internal->ssl3_enc->server_finished_label;
+		slen = s->method->internal->ssl3_enc->server_finished_label_len;
 	} else {
-		sender = s->method->ssl3_enc->client_finished_label;
-		slen = s->method->ssl3_enc->client_finished_label_len;
+		sender = s->method->internal->ssl3_enc->client_finished_label;
+		slen = s->method->internal->ssl3_enc->client_finished_label_len;
 	}
 
 	S3I(s)->tmp.peer_finish_md_len =
-	    s->method->ssl3_enc->final_finish_mac(s, sender, slen,
+	    s->method->internal->ssl3_enc->final_finish_mac(s, sender, slen,
 		S3I(s)->tmp.peer_finish_md);
 }
 
@@ -237,7 +237,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 	CBS cbs;
 
 	/* should actually be 36+4 :-) */
-	n = s->method->ssl_get_message(s, a, b, SSL3_MT_FINISHED, 64, &ok);
+	n = s->method->internal->ssl_get_message(s, a, b, SSL3_MT_FINISHED, 64, &ok);
 	if (!ok)
 		return ((int)n);
 
@@ -249,7 +249,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 	}
 	S3I(s)->change_cipher_spec = 0;
 
-	md_len = s->method->ssl3_enc->finish_mac_length;
+	md_len = s->method->internal->ssl3_enc->finish_mac_length;
 
 	if (n < 0) {
 		al = SSL_AD_DECODE_ERROR;
@@ -438,7 +438,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 		do {
 			while (s->internal->init_num < 4) {
-				i = s->method->ssl_read_bytes(s,
+				i = s->method->internal->ssl_read_bytes(s,
 				    SSL3_RT_HANDSHAKE, &p[s->internal->init_num],
 				    4 - s->internal->init_num, 0);
 				if (i <= 0) {
@@ -507,7 +507,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	p = s->internal->init_msg;
 	n = S3I(s)->tmp.message_size - s->internal->init_num;
 	while (n > 0) {
-		i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+		i = s->method->internal->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
 		    &p[s->internal->init_num], n, 0);
 		if (i <= 0) {
 			s->internal->rwstate = SSL_READING;
