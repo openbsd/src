@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.4 2017/01/23 10:46:02 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.5 2017/01/23 10:47:53 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -109,6 +109,23 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 		    M_TEMP, M_WAITOK);
 		OF_getpropintarray(sc->sc_node, "dma-ranges",
 		    sc->sc_dmaranges, sc->sc_dmarangeslen);
+	}
+
+	/*
+	 * The device tree provided by the Raspberry Pi firmware lacks
+	 * a "dma-ranges" option.  So provide the information until
+	 * that gets fixed.
+	 */
+	if (sc->sc_dmaranges == NULL) {
+		node = OF_parent(sc->sc_node);
+		if (OF_is_compatible(node, "brcm,bcm2709")) {
+			sc->sc_dmarangeslen = 3 * sizeof(uint32_t);
+			sc->sc_dmaranges = malloc(sc->sc_dmarangeslen,
+			    M_TEMP, M_WAITOK);
+			sc->sc_dmaranges[0] = 0xc0000000;
+			sc->sc_dmaranges[1] = 0x00000000;
+			sc->sc_dmaranges[2] = 0x3f000000;
+		}
 	}
 
 	/* Scan the whole tree. */
