@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.30 2017/01/23 04:25:02 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.31 2017/01/23 04:26:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -160,7 +160,7 @@ struct mfii_ccb {
 	bus_addr_t		ccb_request_offset;
 
 	struct mfi_sense	*ccb_sense;
-	u_int32_t		ccb_sense_dva;
+	u_int64_t		ccb_sense_dva;
 	bus_addr_t		ccb_sense_offset;
 
 	struct mfii_sge		*ccb_sgl;
@@ -1773,8 +1773,8 @@ mfii_init_ccb(struct mfii_softc *sc)
 		ccb->ccb_sense_offset = MFI_SENSE_SIZE * i;
 		ccb->ccb_sense = (struct mfi_sense *)(sense + 
 		    ccb->ccb_sense_offset);
-		ccb->ccb_sense_dva = (u_int32_t)(MFII_DMA_DVA(sc->sc_sense) +
-		    ccb->ccb_sense_offset);
+		ccb->ccb_sense_dva = MFII_DMA_DVA(sc->sc_sense) +
+		    ccb->ccb_sense_offset;
 
 		/* select i'th sgl */
 		ccb->ccb_sgl_offset = sizeof(struct mfii_sge) *
