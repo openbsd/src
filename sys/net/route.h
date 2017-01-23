@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.153 2017/01/22 03:47:20 krw Exp $	*/
+/*	$OpenBSD: route.h,v 1.154 2017/01/23 00:12:52 krw Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ struct rt_msghdr {
 #define RTV_RTTVAR	0x80	/* init or lock _rttvar */
 
 /*
- * Bitmask values for rtm_addr.
+ * Bitmask values for rtm_addrs.
  */
 #define RTA_DST		0x1	/* destination sockaddr present */
 #define RTA_GATEWAY	0x2	/* gateway sockaddr present */
