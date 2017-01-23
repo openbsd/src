@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.23 2016/06/21 15:25:37 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.24 2017/01/23 10:30:58 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -220,7 +220,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		type = ELF_R_TYPE(rels->r_info);
 
 		if (reloc_target_flags[type] & _RF_E) {
-			_dl_printf(" bad relocation %d %d\n", i, type);
+			_dl_printf(" bad relocation %ld %d\n", i, type);
 			_dl_exit(1);
 		}
 		if (type == R_TYPE(NONE))

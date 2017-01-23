@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.22 2016/06/18 02:40:46 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.23 2017/01/23 10:30:58 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -187,7 +187,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	gotp = object->dyn.pltgot;
 	n = object->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM];
 
-	DL_DEB(("loff: '%p'\n", loff));
+	DL_DEB(("loff: 0x%lx\n", (unsigned long)loff));
 	/*
 	 *  Set up pointers for run time (lazy) resolving.
 	 */
