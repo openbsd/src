@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.31 2016/04/24 17:30:31 matthieu Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.32 2017/01/23 04:43:46 deraadt Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/errno.h>
+#include <sys/fcntl.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -300,11 +301,15 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 		*(int *)data = idx + 1;
 		return (0);
 	    case VT_ACTIVATE:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 		idx = *(int *)data - 1;
 		if (idx < 0)
 			return (EINVAL);
 		return (wsdisplay_switch((struct device *)sc, idx, 1));
 	    case VT_WAITACTIVE:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 		idx = *(int *)data - 1;
 		if (idx < 0)
 			return (EINVAL);
@@ -340,6 +345,8 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 	switch (cmd) {
 	    case VT_SETMODE:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 #define newmode ((struct vt_mode *)data)
 		if (newmode->mode == VT_PROCESS) {
 			res = usl_sync_init(scr, &sd, p->p_p, newmode->acqsig,
@@ -366,6 +373,8 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #undef cmode
 		return (0);
 	    case VT_RELDISP:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 #define d (*(int *)data)
 		sd = usl_sync_get(scr);
 		if (!sd)
@@ -384,6 +393,8 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 	    case KDENABIO:
 	    case KDDISABIO:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 		/*
 		 * This is a lie, but non-x86 platforms are not supposed to
 		 * issue these ioctls anyway.
@@ -391,6 +402,8 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		return (0);
 
 	    case KDSETRAD:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 		/* XXX ignore for now */
 		return (0);
 
@@ -401,6 +414,8 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	     * the following are converted to wsdisplay ioctls
 	     */
 	    case KDSETMODE:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 		req = WSDISPLAYIO_SMODE;
 #define d (*(int *)data)
 		switch (d) {
@@ -417,6 +432,8 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		arg = &intarg;
 		break;
 	    case KDMKTONE:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 		req = WSKBDIO_COMPLEXBELL;
 #define d (*(int *)data)
 		if (d) {
@@ -437,6 +454,8 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		arg = &bd;
 		break;
 	    case KDSETLED:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 		req = WSKBDIO_SETLEDS;
 		intarg = 0;
 #define d (*(int *)data)
@@ -455,6 +474,8 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		break;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	    case KDSKBMODE:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 		req = WSKBDIO_SETMODE;
 		switch (*(int *)data) {
 		    case K_RAW:
