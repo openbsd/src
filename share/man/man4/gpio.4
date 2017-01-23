@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.24 2015/09/14 17:09:26 schwarze Exp $
+.\"	$OpenBSD: gpio.4,v 1.25 2017/01/23 03:01:41 jsg Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: January 23 2017 $
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .Cd "gpio* at pcagpio?"
 .Cd "gpio* at pcaled?"
 .Cd "gpio* at skgpio?" Pq amd64, i386
+.Cd "gpio* at sxipio?" Pq arm64, armv7
 .Cd "gpio0 at voyager?" Pq loongson
 .Pp
 .In sys/types.h
