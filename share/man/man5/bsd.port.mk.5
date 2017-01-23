@@ -1,5 +1,5 @@
 
-.\" $OpenBSD: bsd.port.mk.5,v 1.443 2017/01/23 10:49:12 phessler Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.444 2017/01/23 11:13:11 zhuk Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1294,6 +1294,14 @@ preferring various gnu programs, unless
 .Ev BUILD_DEPENDS
 explicitly ask for them.
 Read-only, available for debugging purposes.
+.It Ev CLANG_ARCHS, GCC3_ARCHS , GCC4_ARCHS
+List of architectures using Clang 3.9.1, GCC 3.3.6 or GCC 4.2.1.
+Read-only.
+Use with
+.Ev NOT_FOR_ARCHS
+or
+.Ev ONLY_FOR_ARCHS
+to limit ports to architectures where they compile.
 .It Ev CONFIGURE_ARGS
 Arguments to pass to configure script.
 Defaults are empty, except for
@@ -1684,14 +1692,6 @@ Path to the current port's directory, relative to ${PORTSDIR},
 including flavors and subpackages.
 See
 .Xr pkgpath 7 .
-.It Ev GCC3_ARCHS , GCC4_ARCHS , CLANG_ARCHS
-List of architectures using gcc 3.3.6, gcc 4.2.1, or clang 3.9.1.
-Read-only.
-Use with
-.Ev NOT_FOR_ARCHS
-or
-.Ev ONLY_FOR_ARCHS
-to limit ports to architectures where they compile.
 .It Ev GH_*
 Support for GitHub-hosted projects.
 Leave empty for non hosted projects.
@@ -1815,6 +1815,15 @@ Default:
 Arguments to pass to libtool.
 If USE_LIBTOOL is set, the environment variable LIBTOOL is set
 to ${LIBTOOL} ${LIBTOOL_FLAGS}.
+.It Ev LLVM_ARCHS
+Set to the list of architectures where LLVM/Clang could be used,
+e.g., via lang/clang port module, see
+.Xr port-modules 5 .
+Read-only.
+Use with
+.Ev NOT_FOR_ARCHS
+or
+.Ev ONLY_FOR_ARCHS .
 .It Ev LOCALBASE
 where other ports have already been installed.
 Default:
