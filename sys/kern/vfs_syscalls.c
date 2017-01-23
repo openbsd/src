@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.268 2017/01/15 23:18:05 bluhm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.269 2017/01/23 22:34:10 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -829,7 +829,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		if (error == ENODEV &&
 		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
 		    (error =
-			dupfdopen(fdp, indx, p->p_dupfd, flags)) == 0) {
+			dupfdopen(p, indx, flags)) == 0) {
 			closef(fp, p);
 			*retval = indx;
 			goto out;
