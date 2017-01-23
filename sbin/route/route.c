@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.195 2017/01/19 23:18:29 phessler Exp $	*/
+/*	$OpenBSD: route.c,v 1.196 2017/01/23 00:10:07 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ main(int argc, char **argv)
 		exit(flushroutes(argc, argv));
 		break;
 	}
-		
+
 	if (pledge("stdio rpath dns", NULL) == -1)
 		err(1, "pledge");
 
@@ -1309,7 +1309,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	else
 		printf("[rtm_type %d out of range]", rtm->rtm_type);
 
-	printf(": len %d", rtm->rtm_msglen);	
+	printf(": len %d", rtm->rtm_msglen);
 	switch (rtm->rtm_type) {
 	case RTM_DESYNC:
 		printf("\n");
@@ -1632,7 +1632,7 @@ bfd_calc_uptime(time_t time)
 
 	tp = localtime(&time);
 	(void)strftime(buf, sizeof(buf), fmt, tp);
-	return (buf);		
+	return (buf);
 }
 
 void
