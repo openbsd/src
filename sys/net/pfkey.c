@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.34 2017/01/13 08:52:09 mpi Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.35 2017/01/23 16:31:24 bluhm Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -270,7 +270,7 @@ static struct protosw pfkey_protosw_template = {
 	&pfkeydomain,
 	-1, /* protocol */
 	PR_ATOMIC | PR_ADDR,
-	(void *) raw_input,
+	NULL, /* input */
 	(void *) pfkey_output,
 	NULL, /* ctlinput */
 	NULL, /* ctloutput */

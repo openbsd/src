@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.91 2017/01/10 09:01:18 mpi Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.92 2017/01/23 16:31:24 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -115,11 +115,6 @@ rip_init(void)
 
 struct sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
 
-/*
- * Setup generic address and protocol structures
- * for raw_input routine, then pass them along with
- * mbuf chain.
- */
 void
 rip_input(struct mbuf *m, ...)
 {

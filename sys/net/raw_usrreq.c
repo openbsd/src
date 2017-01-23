@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.27 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.28 2017/01/23 16:31:24 bluhm Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -53,82 +53,6 @@ raw_init(void)
 {
 
 	LIST_INIT(&rawcb);
-}
-
-
-/*
- * Raw protocol input routine.  Find the socket
- * associated with the packet(s) and move them over.  If
- * nothing exists for this packet, drop it.
- */
-/*
- * Raw protocol interface.
- */
-void
-raw_input(struct mbuf *m0, ...)
-{
-	struct rawcb *rp;
-	struct mbuf *m = m0;
-	int sockets = 0;
-	struct socket *last;
-	va_list ap;
-	struct sockproto *proto;
-	struct sockaddr *src, *dst;
-	
-	va_start(ap, m0);
-	proto = va_arg(ap, struct sockproto *);
-	src = va_arg(ap, struct sockaddr *);
-	dst = va_arg(ap, struct sockaddr *);
-	va_end(ap);
-
-	last = 0;
-	LIST_FOREACH(rp, &rawcb, rcb_list) {
-		if (rp->rcb_socket->so_state & SS_CANTRCVMORE)
-			continue;
-		if (rp->rcb_proto.sp_family != proto->sp_family)
-			continue;
-		if (rp->rcb_proto.sp_protocol  &&
-		    rp->rcb_proto.sp_protocol != proto->sp_protocol)
-			continue;
-		/*
-		 * We assume the lower level routines have
-		 * placed the address in a canonical format
-		 * suitable for a structure comparison.
-		 *
-		 * Note that if the lengths are not the same
-		 * the comparison will fail at the first byte.
-		 */
-#define	equal(a1, a2) \
-  (bcmp((caddr_t)(a1), (caddr_t)(a2), a1->sa_len) == 0)
-		if (rp->rcb_laddr && !equal(rp->rcb_laddr, dst))
-			continue;
-		if (rp->rcb_faddr && !equal(rp->rcb_faddr, src))
-			continue;
-		if (last) {
-			struct mbuf *n;
-			if ((n = m_copym(m, 0, M_COPYALL, M_NOWAIT)) != NULL) {
-				if (sbappendaddr(&last->so_rcv, src,
-				    n, (struct mbuf *)NULL) == 0)
-					/* should notify about lost packet */
-					m_freem(n);
-				else {
-					sorwakeup(last);
-					sockets++;
-				}
-			}
-		}
-		last = rp->rcb_socket;
-	}
-	if (last) {
-		if (sbappendaddr(&last->so_rcv, src,
-		    m, (struct mbuf *)NULL) == 0)
-			m_freem(m);
-		else {
-			sorwakeup(last);
-			sockets++;
-		}
-	} else
-		m_freem(m);
 }
 
 int
