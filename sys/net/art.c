@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.24 2016/09/15 02:00:18 dlg Exp $ */
+/*	$OpenBSD: art.c,v 1.25 2017/01/23 01:02:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -247,7 +247,7 @@ art_findex(struct art_table *at, uint8_t *addr)
  * Return the best existing match for a destination.
  */
 struct art_node *
-art_match(struct art_root *ar, uint8_t *addr, struct srp_ref *nsr)
+art_match(struct art_root *ar, void *addr, struct srp_ref *nsr)
 {
 	struct srp_ref		dsr, ndsr;
 	void			*entry;
@@ -310,7 +310,7 @@ done:
  * it does not exist.
  */
 struct art_node *
-art_lookup(struct art_root *ar, uint8_t *addr, int plen, struct srp_ref *nsr)
+art_lookup(struct art_root *ar, void *addr, int plen, struct srp_ref *nsr)
 {
 	void			*entry;
 	struct art_table	*at;
@@ -368,7 +368,7 @@ done:
  * same destination/mask pair is already present.
  */
 struct art_node *
-art_insert(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
+art_insert(struct art_root *ar, struct art_node *an, void *addr, int plen)
 {
 	struct art_table	*at, *child;
 	struct art_node		*node;
@@ -472,7 +472,7 @@ art_table_insert(struct art_root *ar, struct art_table *at, int i,
  * Deletion API function.
  */
 struct art_node *
-art_delete(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
+art_delete(struct art_root *ar, struct art_node *an, void *addr, int plen)
 {
 	struct art_table	*at;
 	struct art_node		*node;
@@ -922,7 +922,7 @@ moveup:
 }
 
 struct art_node *
-art_get(struct sockaddr *dst, uint8_t plen)
+art_get(void *dst, uint8_t plen)
 {
 	struct art_node		*an;
 

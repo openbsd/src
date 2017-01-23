@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.15 2016/08/30 07:42:57 jmatthew Exp $ */
+/* $OpenBSD: art.h,v 1.16 2017/01/23 01:02:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -48,7 +48,7 @@ struct rtentry;
 struct art_node {
 	SRPL_HEAD(, rtentry)	 an_rtlist;	/* Route related to this node */
 	union {
-		struct sockaddr	*an__dst;	/* Destination address (key) */
+		void		*an__dst;	/* Destination address (key) */
 		struct art_node	*an__gc;	/* Entry on GC list */
 	}			 an_pointer;
 	uint8_t			 an_plen;	/* Prefix length */
@@ -58,17 +58,17 @@ struct art_node {
 
 void		 art_init(void);
 struct art_root	*art_alloc(unsigned int, unsigned int, unsigned int);
-struct art_node *art_insert(struct art_root *, struct art_node *, uint8_t *,
+struct art_node *art_insert(struct art_root *, struct art_node *, void *,
 		     int);
-struct art_node *art_delete(struct art_root *, struct art_node *, uint8_t *,
+struct art_node *art_delete(struct art_root *, struct art_node *, void *,
 		     int);
-struct art_node	*art_match(struct art_root *, uint8_t *, struct srp_ref *);
-struct art_node *art_lookup(struct art_root *, uint8_t *, int,
+struct art_node	*art_match(struct art_root *, void *, struct srp_ref *);
+struct art_node *art_lookup(struct art_root *, void *, int,
 		     struct srp_ref *);
 int		 art_walk(struct art_root *,
 		     int (*)(struct art_node *, void *), void *);
 
-struct art_node	*art_get(struct sockaddr *, uint8_t);
+struct art_node	*art_get(void *, uint8_t);
 void		 art_put(struct art_node *);
 
 #endif /* _NET_ART_H_ */
