@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 2017/01/23 12:29:50 kettenis Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
+#include <sys/rwlock.h>
 
 #include <machine/cpu.h>
 #include <arm64/conf.h>
@@ -89,7 +90,6 @@
 
 extern char *memhook;            /* poor name! */
 caddr_t zeropage;
-int physlock;
 
 /* open counter for aperture */
 #ifdef APERTURE
@@ -98,42 +98,40 @@ extern int allowaperture;
 #endif
 
 
-/*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
+	extern int allowkmem;
+
 	switch (minor(dev)) {
-		case 0:
-		case 1:
-		case 2:
-		case 12:
+	case 0:
+	case 1:
+		if (securelevel <= 0 || allowkmem)
 			break;
+		return (EPERM);
+	case 2:
+	case 12:
+		break;
 #ifdef APERTURE
 	case 4:
-	        if (suser(p, 0) != 0 || !allowaperture)
+		if (suser(p, 0) != 0 || !allowaperture)
 			return (EPERM);
 
-		/* authorize only one simultaneous open() */
-		if (ap_open_count > 0)
-			return(EPERM);
+		/* authorize only one simultaneous open() unless
+		 * allowaperture=3 */
+		if (ap_open_count > 0 && allowaperture < 3)
+			return (EPERM);
 		ap_open_count++;
 		break;
 #endif
-		default:
-			return (ENXIO);
+	default:
+		return (ENXIO);
 	}
 	return (0);
 }
 
-/*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 #ifdef APERTURE
 	if (minor(dev) == 4)
@@ -141,34 +139,23 @@ mmclose(dev, flag, mode, p)
 #endif
 	return (0);
 }
-#define DEV_MEM 0
-#define DEV_KMEM 1
-#define DEV_NULL 2
-#define DEV_ZERO 12
 
-/*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	register vaddr_t o, v;
-	register int c;
-	register struct iovec *iov;
+	static struct rwlock physlock = RWLOCK_INITIALIZER("mmrw");
+	vaddr_t o, v;
+	size_t c;
+	struct iovec *iov;
 	int error = 0;
 	vm_prot_t prot;
 
-	if (minor(dev) == DEV_MEM) {
+	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
+		error = rw_enter(&physlock, RW_WRITE | RW_INTR);
+		if (error)
+			return (error);
+
 	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -181,7 +168,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-		case DEV_MEM:
+		case 0:
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? PROT_READ :
 			    PROT_WRITE;
@@ -189,28 +176,28 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
+			c = ulmin(uio->uio_resid, PAGE_SIZE - o);
 			error = uiomove((caddr_t)memhook + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)memhook,
 			    (vaddr_t)memhook + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
 
-		case DEV_KMEM:
+		case 1:
 			v = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
+			c = ulmin(iov->iov_len, MAXPHYS);
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-		case DEV_NULL:
+		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-		case DEV_ZERO:
+		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
 				return (0);
@@ -218,7 +205,7 @@ mmrw(dev, uio, flags)
 			if (zeropage == NULL)
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
-			c = min(iov->iov_len, PAGE_SIZE);
+			c = ulmin(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			break;
 
@@ -226,20 +213,14 @@ mmrw(dev, uio, flags)
 			return (ENXIO);
 		}
 	}
-	if (minor(dev) == DEV_MEM) {
-/*unlock:*/
-		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
-		physlock = 0;
+	if (minor(dev) == 0) {
+		rw_exit(&physlock);
 	}
 	return (error);
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	struct proc *p = curproc;	/* XXX */
 
@@ -251,7 +232,7 @@ mmmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != DEV_MEM)
+	if (minor(dev) != 0)
 		return (-1);
 
 	/* minor device 0 is physical memory */
@@ -261,10 +242,9 @@ mmmmap(dev, off, prot)
 		return -1;
 	return off;
 }
-/*ARGSUSED*/
+
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }
-
