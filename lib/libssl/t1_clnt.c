@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_clnt.c,v 1.20 2017/01/21 06:50:02 jsing Exp $ */
+/* $OpenBSD: t1_clnt.c,v 1.21 2017/01/23 10:22:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,8 +85,6 @@ static const SSL_METHOD TLS_client_method_data = {
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.ssl_ctrl = ssl3_ctrl,
-	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
 	.get_cipher_by_char = ssl3_get_cipher_by_char,
 	.put_cipher_by_char = ssl3_put_cipher_by_char,
 	.ssl_pending = ssl_undefined_const_function,
@@ -96,8 +94,6 @@ static const SSL_METHOD TLS_client_method_data = {
 	.get_timeout = ssl23_default_timeout,
 	.ssl3_enc = &ssl3_undef_enc_method,
 	.ssl_version = ssl_undefined_void_function,
-	.ssl_callback_ctrl = ssl3_callback_ctrl,
-	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
 };
 
 static const SSL_METHOD TLSv1_client_method_data = {
@@ -119,8 +115,6 @@ static const SSL_METHOD TLSv1_client_method_data = {
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.ssl_ctrl = ssl3_ctrl,
-	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
 	.get_cipher_by_char = ssl3_get_cipher_by_char,
 	.put_cipher_by_char = ssl3_put_cipher_by_char,
 	.ssl_pending = ssl3_pending,
@@ -130,8 +124,6 @@ static const SSL_METHOD TLSv1_client_method_data = {
 	.get_timeout = tls1_default_timeout,
 	.ssl3_enc = &TLSv1_enc_data,
 	.ssl_version = ssl_undefined_void_function,
-	.ssl_callback_ctrl = ssl3_callback_ctrl,
-	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
 };
 
 static const SSL_METHOD TLSv1_1_client_method_data = {
@@ -153,8 +145,6 @@ static const SSL_METHOD TLSv1_1_client_method_data = {
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.ssl_ctrl = ssl3_ctrl,
-	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
 	.get_cipher_by_char = ssl3_get_cipher_by_char,
 	.put_cipher_by_char = ssl3_put_cipher_by_char,
 	.ssl_pending = ssl3_pending,
@@ -164,8 +154,6 @@ static const SSL_METHOD TLSv1_1_client_method_data = {
 	.get_timeout = tls1_default_timeout,
 	.ssl3_enc = &TLSv1_1_enc_data,
 	.ssl_version = ssl_undefined_void_function,
-	.ssl_callback_ctrl = ssl3_callback_ctrl,
-	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
 };
 
 static const SSL_METHOD TLSv1_2_client_method_data = {
@@ -187,8 +175,6 @@ static const SSL_METHOD TLSv1_2_client_method_data = {
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.ssl_ctrl = ssl3_ctrl,
-	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
 	.get_cipher_by_char = ssl3_get_cipher_by_char,
 	.put_cipher_by_char = ssl3_put_cipher_by_char,
 	.ssl_pending = ssl3_pending,
@@ -198,8 +184,6 @@ static const SSL_METHOD TLSv1_2_client_method_data = {
 	.get_timeout = tls1_default_timeout,
 	.ssl3_enc = &TLSv1_2_enc_data,
 	.ssl_version = ssl_undefined_void_function,
-	.ssl_callback_ctrl = ssl3_callback_ctrl,
-	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
 };
 
 static const SSL_METHOD *

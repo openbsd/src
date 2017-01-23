@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.137 2017/01/23 08:48:44 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.138 2017/01/23 10:22:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1092,7 +1092,9 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 			return (S3I(s)->send_connection_binding);
 		else return (0);
 	default:
-		return (s->method->ssl_ctrl(s, cmd, larg, parg));
+		if (SSL_IS_DTLS(s))
+			return dtls1_ctrl(s, cmd, larg, parg);
+		return ssl3_ctrl(s, cmd, larg, parg);
 	}
 }
 
@@ -1107,7 +1109,7 @@ SSL_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 		return (1);
 
 	default:
-		return (s->method->ssl_callback_ctrl(s, cmd, fp));
+		return (ssl3_callback_ctrl(s, cmd, fp));
 	}
 }
 
@@ -1192,7 +1194,7 @@ SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		ctx->internal->max_send_fragment = larg;
 		return (1);
 	default:
-		return (ctx->method->ssl_ctx_ctrl(ctx, cmd, larg, parg));
+		return (ssl3_ctx_ctrl(ctx, cmd, larg, parg));
 	}
 }
 
@@ -1207,7 +1209,7 @@ SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		return (1);
 
 	default:
-		return (ctx->method->ssl_ctx_callback_ctrl(ctx, cmd, fp));
+		return (ssl3_ctx_callback_ctrl(ctx, cmd, fp));
 	}
 }
 

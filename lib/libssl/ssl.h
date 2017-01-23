@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.116 2017/01/23 08:48:44 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.117 2017/01/23 10:22:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -417,8 +417,6 @@ struct ssl_method_st {
 	    int len, int peek);
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
 	int (*ssl_dispatch_alert)(SSL *s);
-	long (*ssl_ctrl)(SSL *s, int cmd, long larg, void *parg);
-	long (*ssl_ctx_ctrl)(SSL_CTX *ctx, int cmd, long larg, void *parg);
 	const SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
 	int (*put_cipher_by_char)(const SSL_CIPHER *cipher, unsigned char *ptr);
 	int (*ssl_pending)(const SSL *s);
@@ -428,8 +426,6 @@ struct ssl_method_st {
 	long (*get_timeout)(void);
 	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
 	int (*ssl_version)(void);
-	long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)(void));
-	long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)(void));
 };
 
 /* Lets make this into an ASN.1 type structure as follows

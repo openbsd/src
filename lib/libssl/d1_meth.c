@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_meth.c,v 1.11 2017/01/21 06:50:02 jsing Exp $ */
+/* $OpenBSD: d1_meth.c,v 1.12 2017/01/23 10:22:06 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -84,8 +84,6 @@ static const SSL_METHOD DTLSv1_method_data = {
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
 	.ssl_dispatch_alert = dtls1_dispatch_alert,
-	.ssl_ctrl = dtls1_ctrl,
-	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
 	.get_cipher_by_char = ssl3_get_cipher_by_char,
 	.put_cipher_by_char = ssl3_put_cipher_by_char,
 	.ssl_pending = ssl3_pending,
@@ -95,8 +93,6 @@ static const SSL_METHOD DTLSv1_method_data = {
 	.get_timeout = dtls1_default_timeout,
 	.ssl3_enc = &DTLSv1_enc_data,
 	.ssl_version = ssl_undefined_void_function,
-	.ssl_callback_ctrl = ssl3_callback_ctrl,
-	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
 };
 
 const SSL_METHOD *
