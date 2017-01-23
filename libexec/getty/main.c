@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2016/03/16 15:41:10 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2017/01/23 04:57:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -170,11 +170,6 @@ main(int argc, char *argv[])
 
 	ioctl(0, FIOASYNC, &off);	/* turn off async mode */
 
-	if (pledge("stdio rpath wpath fattr proc exec tty", NULL) == -1) {
-		syslog(LOG_ERR, "pledge: %m");
-		exit(1);
-	}
-
 	/*
 	 * The following is a work around for vhangup interactions
 	 * which cause great problems getting window systems started.
@@ -183,6 +178,11 @@ main(int argc, char *argv[])
 	 * J. Gettys - MIT Project Athena.
 	 */
 	if (argc <= 2 || strcmp(argv[2], "-") == 0) {
+		if (pledge("stdio rpath proc exec tty", NULL) == -1) {
+			syslog(LOG_ERR, "pledge: %m");
+			exit(1);
+		}
+
 		if ((tname = ttyname(0)) == NULL) {
 			syslog(LOG_ERR, "stdin: %m");
 			exit(1);
