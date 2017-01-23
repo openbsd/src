@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.31 2017/01/23 04:26:57 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.32 2017/01/23 05:18:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -192,16 +192,10 @@ struct mfii_ccb {
 };
 SIMPLEQ_HEAD(mfii_ccb_list, mfii_ccb);
 
-struct mfii_pd_link {
-	u_int16_t		pd_id;
-	struct mfi_pd_details	pd_info;
-	u_int16_t		pd_handle;
-};
-
 struct mfii_pd_softc {
 	struct scsi_link	pd_link;
 	struct scsibus_softc	*pd_scsibus;
-	struct mfii_pd_link	*pd_links[MFI_MAX_PD];
+	struct srp		pd_dev_handles;
 	uint8_t			pd_timeout;
 };
 
@@ -337,6 +331,8 @@ int			mfii_scsi_cmd_cdb(struct mfii_softc *,
 int			mfii_pd_scsi_cmd_cdb(struct mfii_softc *,
 			    struct scsi_xfer *);
 
+int			mfii_dev_handles_update(struct mfii_softc *sc);
+void			mfii_dev_handles_dtor(void *, void *);
 
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
 
@@ -529,59 +525,81 @@ pci_unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 }
 
+struct srp_gc mfii_dev_handles_gc =
+    SRP_GC_INITIALIZER(mfii_dev_handles_dtor, NULL);
+
+static inline uint16_t
+mfii_dev_handle(struct mfii_softc *sc, uint16_t target)
+{
+	struct srp_ref sr;
+	uint16_t *map, handle;
+
+	map = srp_enter(&sr, &sc->sc_pd->pd_dev_handles);
+	handle = map[target];
+	srp_leave(&sr);
+
+	return (handle);
+}
+
+int
+mfii_dev_handles_update(struct mfii_softc *sc)
+{
+	struct mfii_ld_map *lm;
+	uint16_t *dev_handles = NULL;
+	struct mfii_ccb *ccb;
+	int i;
+	int rv = 0;
+
+	lm = malloc(sizeof(*lm), M_TEMP, M_WAITOK|M_ZERO);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+
+	rv = mfii_mgmt(sc, ccb, MR_DCMD_LD_MAP_GET_INFO, NULL,
+	    lm, sizeof(*lm), SCSI_DATA_IN|SCSI_NOSLEEP);
+
+	scsi_io_put(&sc->sc_iopool, ccb);
+	if (rv != 0) {
+		rv = EIO;
+		goto free_lm;
+	}
+
+	dev_handles = mallocarray(MFI_MAX_PD, sizeof(*dev_handles),
+	    M_DEVBUF, M_WAITOK);
+
+	for (i = 0; i < MFI_MAX_PD; i++)
+		dev_handles[i] = lm->mlm_dev_handle[i].mdh_cur_handle;
+
+	/* commit the updated info */
+	sc->sc_pd->pd_timeout = lm->mlm_pd_timeout;
+	srp_update_locked(&mfii_dev_handles_gc,
+	    &sc->sc_pd->pd_dev_handles, dev_handles);
+
+free_lm:
+	free(lm, M_TEMP, sizeof(*lm));
+
+	return (rv);
+}
+
+void
+mfii_dev_handles_dtor(void *null, void *v)
+{
+	uint16_t *dev_handles = v;
+
+	free(dev_handles, M_DEVBUF, sizeof(*dev_handles) * MFI_MAX_PD);
+}
+
 int
 mfii_syspd(struct mfii_softc *sc)
 {
 	struct scsibus_attach_args saa;
 	struct scsi_link *link;
-	struct mfii_ld_map *lm;
-	struct mfii_pd_link *pl;
-	struct mfi_pd_list *pd;
-	struct mfii_ccb *ccb;
-	u_int npds, i;
-	int rv;
 
 	sc->sc_pd = malloc(sizeof(*sc->sc_pd), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (sc->sc_pd == NULL)
 		return (1);
 
-	lm = malloc(sizeof(*lm), M_TEMP, M_WAITOK|M_ZERO);
-	if (lm == NULL)
+	srp_init(&sc->sc_pd->pd_dev_handles);
+	if (mfii_dev_handles_update(sc) != 0)
 		goto free_pdsc;
-
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
-	rv = mfii_mgmt(sc, ccb, MR_DCMD_LD_MAP_GET_INFO, NULL,
-	    lm, sizeof(*lm), SCSI_DATA_IN|SCSI_NOSLEEP);
-	scsi_io_put(&sc->sc_iopool, ccb);
-	if (rv != 0)
-		goto free_lm;
-
-	sc->sc_pd->pd_timeout = lm->mlm_pd_timeout;
-
-	pd = malloc(sizeof(*pd), M_TEMP, M_WAITOK|M_ZERO);
-	if (pd == NULL)
-		goto free_lm;
-
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
-	rv = mfii_mgmt(sc, ccb, MR_DCMD_PD_GET_LIST, NULL,
-	    pd, sizeof(*pd), SCSI_DATA_IN|SCSI_NOSLEEP);
-	scsi_io_put(&sc->sc_iopool, ccb);
-	if (rv != 0)
-		goto free_pd;
-
-	npds = letoh32(pd->mpl_no_pd);
-	for (i = 0; i < npds; i++) {
-		pl = malloc(sizeof(*pl), M_DEVBUF, M_WAITOK|M_ZERO);
-		if (pl == NULL)
-			goto free_pl;
-
-		pl->pd_id = pd->mpl_address[i].mpa_pd_id;
-		pl->pd_handle = lm->mlm_dev_handle[i].mdh_cur_handle;
-		sc->sc_pd->pd_links[i] = pl;
-	}
-
-	free(pd, M_TEMP, 0);
-	free(lm, M_TEMP, 0);
 
 	link = &sc->sc_pd->pd_link;
 	link->adapter = &mfii_pd_switch;
@@ -598,18 +616,7 @@ mfii_syspd(struct mfii_softc *sc)
 	    config_found(&sc->sc_dev, &saa, scsiprint);
 
 	return (0);
-free_pl:
-	for (i = 0; i < npds; i++) {
-		pl = sc->sc_pd->pd_links[i];
-		if (pl == NULL)
-			break;
 
-		free(pl, M_DEVBUF, 0);
-	}
-free_pd:
-	free(pd, M_TEMP, 0);
-free_lm:
-	free(lm, M_TEMP, 0);
 free_pdsc:
 	free(sc->sc_pd, M_DEVBUF, 0);
 	return (1);
@@ -1527,10 +1534,10 @@ mfii_pd_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_data = xs->data;
 	ccb->ccb_len = xs->datalen;
 
-	if (mfii_pd_scsi_cmd_cdb(sc, xs) != 0)
-		goto stuffup;
+	xs->error = mfii_pd_scsi_cmd_cdb(sc, xs);
+	if (xs->error != XS_NOERROR)
+		goto done;
 
-	xs->error = XS_NOERROR;
 	xs->resid = 0;
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
@@ -1544,35 +1551,33 @@ mfii_pd_scsi_cmd(struct scsi_xfer *xs)
 
 stuffup:
 	xs->error = XS_DRIVER_STUFFUP;
+done:
 	scsi_done(xs);
 }
 
 int
 mfii_pd_scsi_probe(struct scsi_link *link)
 {
-	struct mfii_ccb *ccb;
-	union mfi_mbox mbox;
 	struct mfii_softc *sc = link->adapter_softc;
-	struct mfii_pd_link *pl = sc->sc_pd->pd_links[link->target];
+	struct mfii_ccb *ccb;
+	struct mfi_pd_details mpd;
+	union mfi_mbox mbox;
 	int rv;
 
 	if (link->lun > 0)
 		return (0);
 
-	if (pl == NULL)
-		return (ENXIO);
-
 	memset(&mbox, 0, sizeof(mbox));
-	mbox.s[0] = pl->pd_id;
+	mbox.s[0] = htole16(link->target);
 
 	ccb = scsi_io_get(&sc->sc_iopool, 0);
-	rv = mfii_mgmt(sc, ccb, MR_DCMD_PD_GET_INFO, &mbox, &pl->pd_info,
-	    sizeof(pl->pd_info), SCSI_DATA_IN|SCSI_NOSLEEP);
+	rv = mfii_mgmt(sc, ccb, MR_DCMD_PD_GET_INFO, &mbox, &mpd, sizeof(mpd),
+	    SCSI_DATA_IN|SCSI_NOSLEEP);
 	scsi_io_put(&sc->sc_iopool, ccb);
 	if (rv != 0)
 		return (EIO);
 
-	if (letoh16(pl->pd_info.mpd_fw_state) != MFI_PD_SYSTEM)
+	if (mpd.mpd_fw_state != htole16(MFI_PD_SYSTEM))
 		return (ENXIO);
 
 	return (0);
@@ -1585,8 +1590,13 @@ mfii_pd_scsi_cmd_cdb(struct mfii_softc *sc, struct scsi_xfer *xs)
 	struct mfii_ccb *ccb = xs->io;
 	struct mpii_msg_scsi_io *io = ccb->ccb_request;
 	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
+	uint16_t dev_handle;
 
-	io->dev_handle = sc->sc_pd->pd_links[link->target]->pd_handle;
+	dev_handle = mfii_dev_handle(sc, link->target);
+	if (dev_handle == htole16(0xffff))
+		return (XS_SELTIMEOUT);
+
+	io->dev_handle = dev_handle;
 	io->function = 0;
 	io->sense_buffer_low_address = htole32(ccb->ccb_sense_dva);
 	io->sgl_flags = htole16(0x02); /* XXX */
@@ -1617,15 +1627,15 @@ mfii_pd_scsi_cmd_cdb(struct mfii_softc *sc, struct scsi_xfer *xs)
 
 	if (mfii_load_ccb(sc, ccb, ctx + 1,
 	    ISSET(xs->flags, SCSI_NOSLEEP)) != 0)
-		return (1);
+		return (XS_DRIVER_STUFFUP);
 
 	ctx->num_sge = (ccb->ccb_len == 0) ? 0 : ccb->ccb_dmamap->dm_nsegs;
 
 	ccb->ccb_req.flags = MFII_REQ_TYPE_HI_PRI;
 	ccb->ccb_req.smid = letoh16(ccb->ccb_smid);
-	ccb->ccb_req.dev_handle = sc->sc_pd->pd_links[link->target]->pd_handle;
+	ccb->ccb_req.dev_handle = dev_handle;
 
-	return (0);
+	return (XS_NOERROR);
 }
 
 int
