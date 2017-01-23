@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.2 2017/01/13 22:52:24 patrick Exp $ */
+/* $OpenBSD: simplebus.c,v 1.3 2017/01/23 06:13:34 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -34,8 +34,7 @@ void simplebus_attach_node(struct device *, int);
 int simplebus_bs_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 
 struct cfattach simplebus_ca = {
-	sizeof(struct simplebus_softc), simplebus_match, simplebus_attach, NULL,
-	config_activate_children
+	sizeof(struct simplebus_softc), simplebus_match, simplebus_attach
 };
 
 struct cfdriver simplebus_cd = {
