@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: redirect.sh,v 1.5 2017/01/23 22:26:19 bluhm Exp $
+#	$OpenBSD: redirect.sh,v 1.6 2017/01/23 23:10:35 bluhm Exp $
 
 : ${FTP:=ftp}
 
@@ -23,7 +23,7 @@ until fstat | egrep 'nc[ ]+.*tcp 0x[0-9a-f]* \*:9000' > /dev/null; do
 	sleep .1
 done
 
-unset ftp_proxy
+unset http_proxy
 
 res=$(${FTP} -4 -o/dev/null -v $req1 2>&1 | \
     sed '/^Redirected to /{s///;x;};$!d;x')
