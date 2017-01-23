@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.148 2017/01/17 23:28:04 mestre Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.149 2017/01/23 09:09:15 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1099,6 +1099,8 @@ handler(struct con *cp)
 
 		if (n == 0)
 			closecon(cp);
+		if (errno == EAGAIN)
+			return;
 		else if (n == -1) {
 			if (debug > 0)
 				warn("read");
@@ -1153,6 +1155,8 @@ handlew(struct con *cp, int one)
 				closecon(cp);
 				goto handled;
 			} else if (n == -1) {
+				if (errno == EAGAIN)
+					return;
 				if (debug > 0 && errno != EPIPE)
 					warn("write");
 				closecon(cp);
@@ -1179,6 +1183,8 @@ handlew(struct con *cp, int one)
 		if (n == 0)
 			closecon(cp);
 		else if (n == -1) {
+			if (errno == EAGAIN)
+				return;
 			if (debug > 0 && errno != EPIPE)
 				warn("write");
 			closecon(cp);
@@ -1665,7 +1671,8 @@ jail:
 			int s2;
 
 			sinlen = sizeof(sin);
-			s2 = accept(smtplisten, (struct sockaddr *)&sin, &sinlen);
+			s2 = accept4(smtplisten, (struct sockaddr *)&sin, &sinlen,
+			    SOCK_NONBLOCK);
 			if (s2 == -1) {
 				switch (errno) {
 				case EINTR:
