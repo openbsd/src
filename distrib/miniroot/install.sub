@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.954 2017/01/22 23:38:30 rpe Exp $
+#	$OpenBSD: install.sub,v 1.955 2017/01/23 02:11:30 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -526,8 +526,8 @@ log_answers() {
 
 # Fetch response file for autoinstall.
 get_responsefile() {
-	local _rf _if _mac _mode _lf _hn _path _aifile
-	AI_MODE=
+	local _rf _if _mode _lf _hn _path _aifile
+	export AI_MAC= AI_MODE= AI_SERVER=
 
 	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
 	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf _mode=install
@@ -561,7 +561,6 @@ get_responsefile() {
 
 		# Extract installer server ip address from lease file.
 		AI_SERVER=$(lease_value $_lf server-name tftp-server-name next-server)
-		export AI_SERVER
 
 		# Prime hostname with host-name option from lease file.
 		_hn=$(lease_value $_lf host-name)
@@ -572,8 +571,8 @@ get_responsefile() {
 	# one was missing. Try to fetch mac-mode.conf, then hostname-mode.conf,
 	# and finally mode.conf.
 	if [[ -n $AI_SERVER && -n $_mode ]]; then
-		_mac=$(ifconfig $_if | sed 's/.*lladdr \(.*\)/\1/p;d')
-		for _rf in {$_mac-,${_hn:+$_hn-,}}$_mode; do
+		AI_MAC=$(ifconfig $_if | sed 's/.*lladdr \(.*\)/\1/p;d')
+		for _rf in {$AI_MAC-,${_hn:+$_hn-,}}$_mode; do
 			_url="http://$AI_SERVER/$_path$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
 			if unpriv ftp -Vo - "$_url" >"/tmp/ai/ai.$_mode.conf" 2>/dev/null; then
@@ -2964,9 +2963,6 @@ if ! $AUTO; then
 	# Kill the child on exit.
 	retrap
 fi
-
-AI_MODE=
-AI_SERVER=
 
 ROOTDISK=
 ROOTDEV=
