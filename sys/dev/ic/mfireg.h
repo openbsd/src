@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.46 2017/01/23 01:10:31 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.47 2017/01/23 01:20:08 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -259,29 +259,57 @@ typedef enum {
 	MFI_EVT_LOCALE_ALL =			0xffff
 } mfi_evt_locale_t;
 
-typedef enum {
-	MR_EVT_ARGS_NONE =			0x00,
-	MR_EVT_ARGS_CDB_SENSE,
-	MR_EVT_ARGS_LD,
-	MR_EVT_ARGS_LD_COUNT,
-	MR_EVT_ARGS_LD_LBA,
-	MR_EVT_ARGS_LD_OWNER,
-	MR_EVT_ARGS_LD_LBA_PD_LBA,
-	MR_EVT_ARGS_LD_PROG,
-	MR_EVT_ARGS_LD_STATE,
-	MR_EVT_ARGS_LD_STRIP,
-	MR_EVT_ARGS_PD,
-	MR_EVT_ARGS_PD_ERR,
-	MR_EVT_ARGS_PD_LBA,
-	MR_EVT_ARGS_PD_LBA_LD,
-	MR_EVT_ARGS_PD_PROG,
-	MR_EVT_ARGS_PD_STATE,
-	MR_EVT_ARGS_PCI,
-	MR_EVT_ARGS_RATE,
-	MR_EVT_ARGS_STR,
-	MR_EVT_ARGS_TIME,
-	MR_EVT_ARGS_ECC
-} mfi_evt_args;
+#define MFI_EVT_ARGS_NONE			0x00
+#define MFI_EVT_ARGS_CDB_SENSE			0x01
+#define MFI_EVT_ARGS_LD				0x02
+#define MFI_EVT_ARGS_LD_COUNT			0x03
+#define MFI_EVT_ARGS_LD_LBA			0x04
+#define MFI_EVT_ARGS_LD_OWNER			0x05
+#define MFI_EVT_ARGS_LD_LBA_PD_LBA		0x06
+#define MFI_EVT_ARGS_LD_PROG			0x07
+#define MFI_EVT_ARGS_LD_STATE			0x08
+#define MFI_EVT_ARGS_LD_STRIP			0x09
+#define MFI_EVT_ARGS_PD				0x0a
+#define MFI_EVT_ARGS_PD_ERR			0x0b
+#define MFI_EVT_ARGS_PD_LBA			0x0c
+#define MFI_EVT_ARGS_PD_LBA_LD			0x0d
+#define MFI_EVT_ARGS_PD_PROG			0x0e
+#define MFI_EVT_ARGS_PD_STATE			0x0f
+#define MFI_EVT_ARGS_PCI			0x10
+#define MFI_EVT_ARGS_RATE			0x11
+#define MFI_EVT_ARGS_STR			0x12
+#define MFI_EVT_ARGS_TIME			0x13
+#define MFI_EVT_ARGS_ECC			0x14
+#define MFI_EVT_ARGS_LD_PROP			0x15
+#define MFI_EVT_ARGS_PD_SPARE			0x16
+#define MFI_EVT_ARGS_PD_INDEX			0x17
+#define MFI_EVT_ARGS_DIAG_PASS			0x18
+#define MFI_EVT_ARGS_DIAG_FAIL			0x19
+#define MFI_EVT_ARGS_PD_LBA_LBA			0x1a
+#define MFI_EVT_ARGS_PORT_PHY			0x1b
+#define MFI_EVT_ARGS_PD_MISSING			0x1c
+#define MFI_EVT_ARGS_PD_ADDRESS			0x1d
+#define MFI_EVT_ARGS_BITMAP			0x1e
+#define MFI_EVT_ARGS_CONNECTOR			0x1f
+#define MFI_EVT_ARGS_PD_PD			0x20
+#define MFI_EVT_ARGS_PD_FRU			0x21
+#define MFI_EVT_ARGS_PD_PATHINFO		0x22
+#define MFI_EVT_ARGS_PD_POWER_STATE		0x23
+#define MFI_EVT_ARGS_GENERIC			0x24
+
+#define MFI_EVT_CFG_CLEARED			0x0004
+#define MFI_EVT_LD_STATE_CHANGE			0x0051
+#define MFI_EVT_PD_INSERTED			0x005b
+#define MFI_EVT_PD_REMOVED			0x0070
+#define MFI_EVT_PD_STATE_CHANGE			0x0072
+#define MFI_EVT_LD_CREATED			0x008a
+#define MFI_EVT_LD_DELETED			0x008b
+#define MFI_EVT_FOREIGN_CFG_IMPORTED		0x00db
+#define MFI_EVT_PD_REMOVED_EXT			0x00f8
+#define MFI_EVT_PD_INSERTED_EXT			0x00f7
+#define MFI_EVT_LD_OFFLINE			0x00fc
+#define MFI_EVT_CTRL_HOST_BUS_SCAN_REQUESTED	0x0152
+#define MFI_EVT_CTRL_PROP_CHANGED		0x012f
 
 /* driver definitions */
 #define MFI_MAX_PD_CHANNELS			2
@@ -461,6 +489,31 @@ struct mfi_evtarg_pd {
 	uint8_t			mep_slot_number;
 } __packed;
 
+struct mfi_evtarg_pd_address {
+	uint16_t		device_id;
+	uint16_t		encl_id;
+
+	union {
+		struct {
+			uint8_t			encl_index;
+			uint8_t			slot_number;
+		} __packed		pd_address;
+		struct {
+			uint8_t			encl_position;
+			uint8_t			encl_connector_index;
+		} __packed		encl_address;
+	} __packed		address;
+
+        uint8_t			scsi_dev_type;
+
+	union {
+		uint8_t			port_bitmap;
+		uint8_t			port_numbers;
+	} __packed		connected;
+
+	uint64_t		sas_addr[2];
+} __packed __aligned(8);
+
 struct mfi_evt_detail {
 	uint32_t				med_seq_num;
 	uint32_t				med_time_stamp;
@@ -569,6 +622,8 @@ struct mfi_evt_detail {
 			uint32_t		elog;
 			char			str[64];
 		} __packed			ecc;
+
+		struct mfi_evtarg_pd_address	pd_address;
 
 		uint8_t				b[96];
 		uint16_t			s[48];
