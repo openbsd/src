@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.155 2017/01/23 13:08:47 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.156 2017/01/23 22:47:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -38,11 +38,12 @@ enum peer_state {
  * How do we identify peers between the session handler and the rde?
  * Currently I assume that we can do that with the neighbor_ip...
  */
-struct rib_desc;
 LIST_HEAD(rde_peer_head, rde_peer);
 LIST_HEAD(aspath_head, rde_aspath);
 RB_HEAD(uptree_prefix, update_prefix);
 RB_HEAD(uptree_attr, update_attr);
+struct rib_desc;
+struct rib;
 RB_HEAD(rib_tree, rib_entry);
 TAILQ_HEAD(uplist_prefix, update_prefix);
 TAILQ_HEAD(uplist_attr, update_attr);
@@ -267,7 +268,7 @@ struct pt_entry_vpn4 {
 struct rib_context {
 	LIST_ENTRY(rib_context)		 entry;
 	struct rib_entry		*ctx_re;
-	struct rib_desc			*ctx_rib;
+	struct rib			*ctx_rib;
 	void		(*ctx_upcall)(struct rib_entry *, void *);
 	void		(*ctx_done)(void *);
 	void		(*ctx_wait)(void *);
@@ -281,18 +282,22 @@ struct rib_entry {
 	struct prefix_head	 prefix_h;
 	struct prefix		*active; /* for fast access */
 	struct pt_entry		*prefix;
-	u_int16_t		 ribid;
+	struct rib		*rib;
 	u_int16_t		 flags;
+};
+
+struct rib {
+	struct rib_tree		tree;
+	u_int16_t		flags;
+	u_int16_t		id;
 };
 
 struct rib_desc {
 	char			name[PEER_DESCR_LEN];
-	struct rib_tree		rib;
+	struct rib		rib;
 	struct filter_head	*in_rules;
 	struct filter_head	*in_rules_tmp;
 	u_int			rtableid;
-	u_int16_t		flags;
-	u_int16_t		id;
 	enum reconf_action 	state;
 };
 
@@ -425,9 +430,9 @@ extern struct rib_desc	*ribs;
 struct rib_desc	 *rib_new(char *, u_int, u_int16_t);
 struct rib_desc	 *rib_find(char *);
 void		 rib_free(struct rib_desc *);
-struct rib_entry *rib_get(struct rib_desc *, struct bgpd_addr *, int);
-struct rib_entry *rib_lookup(struct rib_desc *, struct bgpd_addr *);
-void		 rib_dump(struct rib_desc *, void (*)(struct rib_entry *, void *),
+struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
+struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
+void		 rib_dump(struct rib *, void (*)(struct rib_entry *, void *),
 		     void *, u_int8_t);
 void		 rib_dump_r(struct rib_context *);
 void		 rib_dump_runner(void);
@@ -435,7 +440,7 @@ int		 rib_dump_pending(void);
 
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);
-int		 path_update(struct rib_desc *, struct rde_peer *,
+int		 path_update(struct rib *, struct rde_peer *,
 		     struct rde_aspath *, struct bgpd_addr *, int);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
@@ -448,12 +453,12 @@ struct rde_aspath *path_get(void);
 void		 path_put(struct rde_aspath *);
 
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
-struct prefix	*prefix_get(struct rib_desc *, struct rde_peer *,
+struct prefix	*prefix_get(struct rib *, struct rde_peer *,
 		    struct bgpd_addr *, int, u_int32_t);
-int		 prefix_add(struct rib_desc *, struct rde_aspath *,
+int		 prefix_add(struct rib *, struct rde_aspath *,
 		    struct bgpd_addr *, int);
 void		 prefix_move(struct rde_aspath *, struct prefix *);
-int		 prefix_remove(struct rib_desc *, struct rde_peer *,
+int		 prefix_remove(struct rib *, struct rde_peer *,
 		    struct bgpd_addr *, int, u_int32_t);
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t);
 int		 prefix_writebuf(struct ibuf *, struct bgpd_addr *, u_int8_t);

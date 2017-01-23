@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.355 2017/01/23 12:25:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.356 2017/01/23 22:47:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -723,8 +723,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (rib == NULL)
 				rib = rib_new(rn.name, rn.rtableid, rn.flags);
 			else if (rib->rtableid != rn.rtableid ||
-			    (rib->flags & F_RIB_HASNOFIB) !=
-			    (rib->flags & F_RIB_HASNOFIB)) {
+			    (rib->rib.flags & F_RIB_HASNOFIB) !=
+			    (rib->rib.flags & F_RIB_HASNOFIB)) {
 				struct filter_head	*in_rules;
 				/*
 				 * Big hammer in the F_RIB_HASNOFIB case but
@@ -755,7 +755,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				free(r);
 				break;
 			}
-			r->peer.ribid = rib->id;
+			r->peer.ribid = rib->rib.id;
 			parent_set = &r->set;
 			if (r->dir == DIR_IN) {
 				nr = rib->in_rules_tmp;
@@ -1298,7 +1298,7 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 	peer->prefix_rcvd_update++;
 	/* add original path to the Adj-RIB-In */
 	if (peer->conf.softreconfig_in)
-		r += path_update(&ribs[0], peer, asp, prefix, prefixlen);
+		r += path_update(&ribs[0].rib, peer, asp, prefix, prefixlen);
 
 	for (i = 1; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
@@ -1313,9 +1313,9 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 		if (action == ACTION_ALLOW) {
 			rde_update_log("update", i, peer,
 			    &fasp->nexthop->exit_nexthop, prefix, prefixlen);
-			r += path_update(&ribs[i], peer, fasp, prefix,
+			r += path_update(&ribs[i].rib, peer, fasp, prefix,
 			    prefixlen);
-		} else if (prefix_remove(&ribs[i], peer, prefix, prefixlen,
+		} else if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen,
 		    0)) {
 			rde_update_log("filtered withdraw", i, peer,
 			    NULL, prefix, prefixlen);
@@ -1345,7 +1345,7 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	for (i = rib_size - 1; ; i--) {
 		if (*ribs[i].name == '\0')
 			break;
-		if (prefix_remove(&ribs[i], peer, prefix, prefixlen, 0)) {
+		if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen, 0)) {
 			rde_update_log("withdraw", i, peer, NULL, prefix,
 			    prefixlen);
 			r++;
@@ -2354,7 +2354,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	ctx->req.pid = pid;
 	ctx->req.type = type;
 	ctx->ribctx.ctx_count = RDE_RUNNER_ROUNDS;
-	ctx->ribctx.ctx_rib = rib;
+	ctx->ribctx.ctx_rib = &rib->rib;
 	switch (ctx->req.type) {
 	case IMSG_CTL_SHOW_NETWORK:
 		ctx->ribctx.ctx_upcall = network_dump_upcall;
@@ -2382,9 +2382,9 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			fatalx("rde_dump_ctx_new: unknown af");
 		}
 		if (req->prefixlen == hostplen)
-			re = rib_lookup(rib, &req->prefix);
+			re = rib_lookup(&rib->rib, &req->prefix);
 		else
-			re = rib_get(rib, &req->prefix, req->prefixlen);
+			re = rib_get(&rib->rib, &req->prefix, req->prefixlen);
 		if (re)
 			rde_dump_upcall(re, ctx);
 		rde_dump_done(ctx);
@@ -2433,7 +2433,7 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 		mrt_dump_v2_hdr(&ctx->mrt, conf, &peerlist);
 
 	ctx->ribctx.ctx_count = RDE_RUNNER_ROUNDS;
-	ctx->ribctx.ctx_rib = rib;
+	ctx->ribctx.ctx_rib = &rib->rib;
 	ctx->ribctx.ctx_upcall = mrt_dump_upcall;
 	ctx->ribctx.ctx_done = mrt_done;
 	ctx->ribctx.ctx_arg = &ctx->mrt;
@@ -2647,7 +2647,7 @@ rde_reload_done(void)
 		peer->reconf_out = 0;
 		peer->reconf_rib = 0;
 		if (peer->rib != rib_find(peer->conf.rib)) {
-			rib_dump(peer->rib,
+			rib_dump(&peer->rib->rib,
 			    rde_softreconfig_unload_peer, peer, AID_UNSPEC);
 			peer->rib = rib_find(peer->conf.rib);
 			if (peer->rib == NULL)
@@ -2683,7 +2683,7 @@ rde_reload_done(void)
 			ribs[rid].state = RECONF_RELOAD;
 			/* FALLTHROUGH */
 		case RECONF_REINIT:
-			rib_dump(&ribs[0], rde_softreconfig_in, &ribs[rid],
+			rib_dump(&ribs[0].rib, rde_softreconfig_in, &ribs[rid],
 			    AID_UNSPEC);
 			break;
 		case RECONF_RELOAD:
@@ -2695,7 +2695,7 @@ rde_reload_done(void)
 	}
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->reconf_out)
-			rib_dump(peer->rib, rde_softreconfig_out,
+			rib_dump(&peer->rib->rib, rde_softreconfig_out,
 			    peer, AID_UNSPEC);
 		else if (peer->reconf_rib)
 			/* dump the full table to neighbors that changed rib */
@@ -2757,14 +2757,15 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 			/* nothing todo */
 		if (oa == ACTION_DENY && na == ACTION_ALLOW) {
 			/* update Local-RIB */
-			path_update(rib, peer, nasp, &addr, pt->prefixlen);
+			path_update(&rib->rib, peer, nasp, &addr,
+			    pt->prefixlen);
 		} else if (oa == ACTION_ALLOW && na == ACTION_DENY) {
 			/* remove from Local-RIB */
-			prefix_remove(rib, peer, &addr, pt->prefixlen, 0);
+			prefix_remove(&rib->rib, peer, &addr, pt->prefixlen, 0);
 		} else if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
 			if (path_compare(nasp, oasp) != 0)
 				/* send update */
-				path_update(rib, peer, nasp, &addr,
+				path_update(&rib->rib, peer, nasp, &addr,
 				    pt->prefixlen);
 		}
 
@@ -2867,7 +2868,7 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 {
 	struct rde_peer		*peer = ptr;
 
-	if (re->ribid != peer->rib->id)
+	if (re->rib != &peer->rib->rib)
 		fatalx("King Bula: monstrous evil horror.");
 	if (re->active == NULL)
 		return;
@@ -2890,7 +2891,7 @@ rde_generate_updates(u_int16_t ribid, struct prefix *new, struct prefix *old)
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->conf.id == 0)
 			continue;
-		if (peer->rib->id != ribid)
+		if (peer->rib->rib.id != ribid)
 			continue;
 		if (peer->state != PEER_UP)
 			continue;
@@ -3361,7 +3362,7 @@ peer_dump(u_int32_t id, u_int8_t aid)
 	if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
 		up_generate_default(out_rules, peer, aid);
 	else
-		rib_dump(peer->rib, rde_up_dump_upcall, peer, aid);
+		rib_dump(&peer->rib->rib, rde_up_dump_upcall, peer, aid);
 	if (peer->capa.grestart.restart)
 		up_generate_marker(peer, aid);
 }
@@ -3492,7 +3493,7 @@ network_add(struct network_config *nc, int flagstatic)
 	for (i = 1; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
-		path_update(&ribs[i], peerself, asp, &nc->prefix,
+		path_update(&ribs[i].rib, peerself, asp, &nc->prefix,
 		    nc->prefixlen);
 	}
 	path_put(asp);
@@ -3540,8 +3541,8 @@ network_delete(struct network_config *nc, int flagstatic)
 	for (i = rib_size - 1; i > 0; i--) {
 		if (*ribs[i].name == '\0')
 			break;
-		prefix_remove(&ribs[i], peerself, &nc->prefix, nc->prefixlen,
-		    flags);
+		prefix_remove(&ribs[i].rib, peerself, &nc->prefix,
+		    nc->prefixlen, flags);
 	}
 }
 

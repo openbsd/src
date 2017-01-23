@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.147 2017/01/23 13:08:47 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.148 2017/01/23 22:47:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -39,7 +39,7 @@ struct rib_desc *ribs;
 
 LIST_HEAD(, rib_context) rib_dump_h = LIST_HEAD_INITIALIZER(rib_dump_h);
 
-struct rib_entry *rib_add(struct rib_desc *, struct bgpd_addr *, int);
+struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
 int rib_compare(const struct rib_entry *, const struct rib_entry *);
 void rib_remove(struct rib_entry *);
 int rib_empty(struct rib_entry *);
@@ -48,6 +48,11 @@ struct rib_entry *rib_restart(struct rib_context *);
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
 RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
 
+static inline struct rib_tree *
+rib_tree(struct rib *rib)
+{
+	return (&rib->tree);
+}
 
 /* RIB specific functions */
 struct rib_desc *
@@ -73,10 +78,10 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 
 	bzero(&ribs[id], sizeof(struct rib_desc));
 	strlcpy(ribs[id].name, name, sizeof(ribs[id].name));
-	RB_INIT(&ribs[id].rib);
+	RB_INIT(rib_tree(&ribs[id].rib));
 	ribs[id].state = RECONF_REINIT;
-	ribs[id].id = id;
-	ribs[id].flags = flags;
+	ribs[id].rib.id = id;
+	ribs[id].rib.flags = flags;
 	ribs[id].rtableid = rtableid;
 
 	ribs[id].in_rules = calloc(1, sizeof(struct filter_head));
@@ -113,7 +118,7 @@ rib_free(struct rib_desc *rib)
 	/* abort pending rib_dumps */
 	for (ctx = LIST_FIRST(&rib_dump_h); ctx != NULL; ctx = next) {
 		next = LIST_NEXT(ctx, entry);
-		if (ctx->ctx_rib == rib) {
+		if (ctx->ctx_rib == &rib->rib) {
 			re = ctx->ctx_re;
 			re->flags &= ~F_RIB_ENTRYLOCK;
 			LIST_REMOVE(ctx, entry);
@@ -124,8 +129,8 @@ rib_free(struct rib_desc *rib)
 		}
 	}
 
-	for (re = RB_MIN(rib_tree, &rib->rib); re != NULL; re = xre) {
-		xre = RB_NEXT(rib_tree,  &rib->rib, re);
+	for (re = RB_MIN(rib_tree, rib_tree(&rib->rib)); re != NULL; re = xre) {
+		xre = RB_NEXT(rib_tree, rib_tree(&rib->rib), re);
 
 		/*
 		 * Removing the prefixes is tricky because the last one
@@ -160,7 +165,7 @@ rib_compare(const struct rib_entry *a, const struct rib_entry *b)
 }
 
 struct rib_entry *
-rib_get(struct rib_desc *rib, struct bgpd_addr *prefix, int prefixlen)
+rib_get(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 {
 	struct rib_entry xre;
 	struct pt_entry	*pte;
@@ -169,11 +174,11 @@ rib_get(struct rib_desc *rib, struct bgpd_addr *prefix, int prefixlen)
 	bzero(&xre, sizeof(xre));
 	xre.prefix = pte;
 
-	return (RB_FIND(rib_tree, &rib->rib, &xre));
+	return (RB_FIND(rib_tree, rib_tree(rib), &xre));
 }
 
 struct rib_entry *
-rib_lookup(struct rib_desc *rib, struct bgpd_addr *addr)
+rib_lookup(struct rib *rib, struct bgpd_addr *addr)
 {
 	struct rib_entry *re;
 	int		 i;
@@ -202,7 +207,7 @@ rib_lookup(struct rib_desc *rib, struct bgpd_addr *addr)
 
 
 struct rib_entry *
-rib_add(struct rib_desc *rib, struct bgpd_addr *prefix, int prefixlen)
+rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 {
 	struct pt_entry	*pte;
 	struct rib_entry *re;
@@ -216,10 +221,10 @@ rib_add(struct rib_desc *rib, struct bgpd_addr *prefix, int prefixlen)
 
 	LIST_INIT(&re->prefix_h);
 	re->prefix = pte;
+	re->rib = rib;
 	re->flags = rib->flags;
-	re->ribid = rib->id;
 
-        if (RB_INSERT(rib_tree, &rib->rib, re) != NULL) {
+        if (RB_INSERT(rib_tree, rib_tree(rib), re) != NULL) {
 		log_warnx("rib_add: insert failed");
 		free(re);
 		return (NULL);
@@ -246,7 +251,7 @@ rib_remove(struct rib_entry *re)
 	if (pt_empty(re->prefix))
 		pt_remove(re->prefix);
 
-	if (RB_REMOVE(rib_tree, &ribs[re->ribid].rib, re) == NULL)
+	if (RB_REMOVE(rib_tree, rib_tree(re->rib), re) == NULL)
 		log_warnx("rib_remove: remove failed.");
 
 	free(re);
@@ -260,7 +265,7 @@ rib_empty(struct rib_entry *re)
 }
 
 void
-rib_dump(struct rib_desc *rib, void (*upcall)(struct rib_entry *, void *),
+rib_dump(struct rib *rib, void (*upcall)(struct rib_entry *, void *),
     void *arg, u_int8_t aid)
 {
 	struct rib_context	*ctx;
@@ -281,7 +286,7 @@ rib_dump_r(struct rib_context *ctx)
 	unsigned int		 i;
 
 	if (ctx->ctx_re == NULL) {
-		re = RB_MIN(rib_tree, &ctx->ctx_rib->rib);
+		re = RB_MIN(rib_tree, rib_tree(ctx->ctx_rib));
 		LIST_INSERT_HEAD(&rib_dump_h, ctx, entry);
 	} else
 		re = rib_restart(ctx);
@@ -393,7 +398,7 @@ path_shutdown(void)
 }
 
 int
-path_update(struct rib_desc *rib, struct rde_peer *peer, struct rde_aspath *nasp,
+path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
     struct bgpd_addr *prefix, int prefixlen)
 {
 	struct rde_aspath	*asp;
@@ -542,7 +547,7 @@ path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 		}
 
 		/* only count Adj-RIB-In */
-		if (p->rib->ribid == 0)
+		if (p->rib->rib == &ribs[0].rib)
 			rprefixes++;
 
 		prefix_destroy(p);
@@ -677,7 +682,7 @@ static void		 prefix_unlink(struct prefix *);
  * search for specified prefix of a peer. Returns NULL if not found.
  */
 struct prefix *
-prefix_get(struct rib_desc *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
+prefix_get(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
     int prefixlen, u_int32_t flags)
 {
 	struct rib_entry	*re;
@@ -692,7 +697,7 @@ prefix_get(struct rib_desc *rib, struct rde_peer *peer, struct bgpd_addr *prefix
  * Adds or updates a prefix.
  */
 int
-prefix_add(struct rib_desc *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
+prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
     int prefixlen)
 
 {
@@ -779,7 +784,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
  * pt_entry -- become empty remove them too.
  */
 int
-prefix_remove(struct rib_desc *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
+prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
     int prefixlen, u_int32_t flags)
 {
 	struct prefix		*p;
@@ -899,7 +904,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 		/*
 		 * skip non local-RIBs or RIBs that are flagged as noeval.
 		 */
-		if (p->rib->flags & F_RIB_NOEVALUATE)
+		if (p->rib->rib->flags & F_RIB_NOEVALUATE)
 			continue;
 
 		if (oldstate == state && state == NEXTHOP_REACH) {
@@ -909,9 +914,9 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 			 * or other internal infos. This will not change
 			 * the routing decision so shortcut here.
 			 */
-			if ((p->rib->flags & F_RIB_NOFIB) == 0 &&
+			if ((p->rib->rib->flags & F_RIB_NOFIB) == 0 &&
 			    p == p->rib->active)
-				rde_send_kroute(p, NULL, p->rib->ribid);
+				rde_send_kroute(p, NULL, p->rib->rib->id);
 			continue;
 		}
 
