@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_enc.c,v 1.13 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: d1_enc.c,v 1.14 2017/01/23 08:08:06 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -162,16 +162,16 @@ dtls1_enc(SSL *s, int send)
 			}
 		}
 	} else {
-		if (EVP_MD_CTX_md(s->internal->read_hash)) {
-			mac_size = EVP_MD_CTX_size(s->internal->read_hash);
+		if (EVP_MD_CTX_md(s->read_hash)) {
+			mac_size = EVP_MD_CTX_size(s->read_hash);
 			OPENSSL_assert(mac_size >= 0);
 		}
-		ds = s->internal->enc_read_ctx;
+		ds = s->enc_read_ctx;
 		rec = &(S3I(s)->rrec);
-		if (s->internal->enc_read_ctx == NULL)
+		if (s->enc_read_ctx == NULL)
 			enc = NULL;
 		else
-			enc = EVP_CIPHER_CTX_cipher(s->internal->enc_read_ctx);
+			enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
 	}
 
 

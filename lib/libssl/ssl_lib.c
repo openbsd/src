@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.135 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.136 2017/01/23 08:08:06 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,7 +221,7 @@ SSL_clear(SSL *s)
 	s->internal->init_buf = NULL;
 
 	ssl_clear_cipher_ctx(s);
-	ssl_clear_hash_ctx(&s->internal->read_hash);
+	ssl_clear_hash_ctx(&s->read_hash);
 	ssl_clear_hash_ctx(&s->internal->write_hash);
 
 	s->internal->first_packet = 0;
@@ -528,7 +528,7 @@ SSL_free(SSL *s)
 	}
 
 	ssl_clear_cipher_ctx(s);
-	ssl_clear_hash_ctx(&s->internal->read_hash);
+	ssl_clear_hash_ctx(&s->read_hash);
 	ssl_clear_hash_ctx(&s->internal->write_hash);
 
 	if (s->cert != NULL)
@@ -2434,7 +2434,7 @@ SSL_set_accept_state(SSL *s)
 	s->internal->handshake_func = s->method->ssl_accept;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
-	ssl_clear_hash_ctx(&s->internal->read_hash);
+	ssl_clear_hash_ctx(&s->read_hash);
 	ssl_clear_hash_ctx(&s->internal->write_hash);
 }
 
@@ -2447,7 +2447,7 @@ SSL_set_connect_state(SSL *s)
 	s->internal->handshake_func = s->method->ssl_connect;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
-	ssl_clear_hash_ctx(&s->internal->read_hash);
+	ssl_clear_hash_ctx(&s->read_hash);
 	ssl_clear_hash_ctx(&s->internal->write_hash);
 }
 
@@ -2732,8 +2732,8 @@ err:
 void
 ssl_clear_cipher_ctx(SSL *s)
 {
-	EVP_CIPHER_CTX_free(s->internal->enc_read_ctx);
-	s->internal->enc_read_ctx = NULL;
+	EVP_CIPHER_CTX_free(s->enc_read_ctx);
+	s->enc_read_ctx = NULL;
 	EVP_CIPHER_CTX_free(s->internal->enc_write_ctx);
 	s->internal->enc_write_ctx = NULL;
 

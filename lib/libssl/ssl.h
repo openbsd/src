@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.114 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.115 2017/01/23 08:08:06 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -893,6 +893,14 @@ struct ssl_st {
 
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 #define session_ctx initial_ctx
+
+	/*
+	 * XXX really should be internal, but is
+	 * touched unnaturally by wpa-supplicant
+	 * and freeradius and other perversions
+	 */
+	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
+	EVP_MD_CTX *read_hash;			/* used for mac generation */
 
 	struct ssl_internal_st *internal;
 };

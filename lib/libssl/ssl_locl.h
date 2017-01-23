@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.158 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.159 2017/01/23 08:08:06 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -669,9 +669,6 @@ typedef struct ssl_internal_st {
 	SSL_AEAD_CTX *aead_read_ctx;	/* AEAD context. If non-NULL, then
 					   enc_read_ctx and read_hash are
 					   ignored. */
-
-	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
-	EVP_MD_CTX *read_hash;			/* used for mac generation */
 
 	SSL_AEAD_CTX *aead_write_ctx;	/* AEAD context. If non-NULL, then
 					   enc_write_ctx and write_hash are

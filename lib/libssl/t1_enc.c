@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.90 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.91 2017/01/23 08:08:06 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -536,17 +536,17 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 		else
 			s->internal->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
 
-		EVP_CIPHER_CTX_free(s->internal->enc_read_ctx);
-		s->internal->enc_read_ctx = NULL;
-		EVP_MD_CTX_destroy(s->internal->read_hash);
-		s->internal->read_hash = NULL;
+		EVP_CIPHER_CTX_free(s->enc_read_ctx);
+		s->enc_read_ctx = NULL;
+		EVP_MD_CTX_destroy(s->read_hash);
+		s->read_hash = NULL;
 
 		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
 			goto err;
-		s->internal->enc_read_ctx = cipher_ctx;
+		s->enc_read_ctx = cipher_ctx;
 		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
 			goto err;
-		s->internal->read_hash = mac_ctx;
+		s->read_hash = mac_ctx;
 	} else {
 		if (S3I(s)->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
 			s->internal->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
@@ -1016,15 +1016,15 @@ tls1_enc(SSL *s, int send)
 			}
 		}
 	} else {
-		if (EVP_MD_CTX_md(s->internal->read_hash)) {
-			int n = EVP_MD_CTX_size(s->internal->read_hash);
+		if (EVP_MD_CTX_md(s->read_hash)) {
+			int n = EVP_MD_CTX_size(s->read_hash);
 			OPENSSL_assert(n >= 0);
 		}
-		ds = s->internal->enc_read_ctx;
-		if (s->internal->enc_read_ctx == NULL)
+		ds = s->enc_read_ctx;
+		if (s->enc_read_ctx == NULL)
 			enc = NULL;
 		else
-			enc = EVP_CIPHER_CTX_cipher(s->internal->enc_read_ctx);
+			enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
 	}
 
 	if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
@@ -1085,8 +1085,8 @@ tls1_enc(SSL *s, int send)
 		}
 
 		ret = 1;
-		if (EVP_MD_CTX_md(s->internal->read_hash) != NULL)
-			mac_size = EVP_MD_CTX_size(s->internal->read_hash);
+		if (EVP_MD_CTX_md(s->read_hash) != NULL)
+			mac_size = EVP_MD_CTX_size(s->read_hash);
 		if ((bs != 1) && !send)
 			ret = tls1_cbc_remove_padding(s, rec, bs, mac_size);
 		if (pad && !send)
@@ -1199,7 +1199,7 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	} else {
 		rec = &(ssl->s3->internal->rrec);
 		seq = &(ssl->s3->internal->read_sequence[0]);
-		hash = ssl->internal->read_hash;
+		hash = ssl->read_hash;
 	}
 
 	t = EVP_MD_CTX_size(hash);
@@ -1232,7 +1232,7 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	header[12] = (rec->length) & 0xff;
 
 	if (!send &&
-	    EVP_CIPHER_CTX_mode(ssl->internal->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
+	    EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
 	    ssl3_cbc_record_digest_supported(mac_ctx)) {
 		/* This is a CBC-encrypted record. We must avoid leaking any
 		 * timing-side channel information about how many blocks of

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.54 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.55 2017/01/23 08:08:06 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -375,12 +375,12 @@ dtls1_process_record(SSL *s)
 
 
 	/* r->length is now the compressed data plus mac */
-	if ((sess != NULL) && (s->internal->enc_read_ctx != NULL) &&
-	    (EVP_MD_CTX_md(s->internal->read_hash) != NULL)) {
-		/* s->internal->read_hash != NULL => mac_size != -1 */
+	if ((sess != NULL) && (s->enc_read_ctx != NULL) &&
+	    (EVP_MD_CTX_md(s->read_hash) != NULL)) {
+		/* s->read_hash != NULL => mac_size != -1 */
 		unsigned char *mac = NULL;
 		unsigned char mac_tmp[EVP_MAX_MD_SIZE];
-		mac_size = EVP_MD_CTX_size(s->internal->read_hash);
+		mac_size = EVP_MD_CTX_size(s->read_hash);
 		OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
 
 		/* kludge: *_cbc_remove_padding passes padding length in rr->type */
@@ -393,14 +393,14 @@ dtls1_process_record(SSL *s)
 		 */
 		if (orig_len < mac_size ||
 			/* CBC records must have a padding length byte too. */
-		    (EVP_CIPHER_CTX_mode(s->internal->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
+		    (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
 		    orig_len < mac_size + 1)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_DTLS1_PROCESS_RECORD, SSL_R_LENGTH_TOO_SHORT);
 			goto f_err;
 		}
 
-		if (EVP_CIPHER_CTX_mode(s->internal->enc_read_ctx) == EVP_CIPH_CBC_MODE) {
+		if (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE) {
 			/* We update the length so that the TLS header bytes
 			 * can be constructed correctly but we need to extract
 			 * the MAC in constant time from within the record,
@@ -759,7 +759,7 @@ start:
 		/* make sure that we are not getting application data when we
 		 * are doing a handshake for the first time */
 		if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA) &&
-			(s->internal->enc_read_ctx == NULL)) {
+			(s->enc_read_ctx == NULL)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerr(SSL_F_DTLS1_READ_BYTES, SSL_R_APP_DATA_IN_HANDSHAKE);
 			goto f_err;
