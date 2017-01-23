@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.23 2017/01/23 03:47:37 benno Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.24 2017/01/23 04:25:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -121,7 +121,7 @@ priv_init(void)
 
 #if notyet
 	/* This needs to do bpf ioctl */
-	if (pledge("stdio rpath wpath cpath ioctl sendfd proc", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 		err(1, "pledge");
 #endif
 	while (!gotsig_chld) {

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.37 2016/10/27 10:48:25 schwarze Exp $
+.\" $OpenBSD: pledge.2,v 1.38 2017/01/23 04:25:05 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2016 $
+.Dd $Mdocdate: January 23 2017 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -76,11 +76,25 @@ Read-only, for
 .Pp
 .It Xr ioctl 2
 Only the
-.Dv FIONREAD
+.Dv FIONREAD ,
+.Dv FIONBIO ,
+.Dv FIOCLEX ,
 and
-.Dv FIONBIO
+.Dv FIONCLEX
 operations are allowed by default.
-Use of the "tty" and "ioctl" promises receive more ioctl requests.
+Various ioctl requests are allowed against specific file descriptors
+based upon the requests
+.Va "audio" ,
+.Va "bpf" ,
+.Va "disklabel" ,
+.Va "drm" ,
+.Va "inet" ,
+.Va "pf" ,
+.Va "route" ,
+.Va "tape" ,
+.Va "tty" ,
+and
+.Va "vmm".
 .Pp
 .It Xr chmod 2
 .It Xr fchmod 2
@@ -386,26 +400,12 @@ File descriptors referring to directories may not be passed.
 Allows receiving of file descriptors using
 .Xr recvmsg 2 .
 File descriptors referring to directories may not be passed.
-.It Va "ioctl"
-Allows a subset of
-.Xr ioctl 2
-operations:
-.Pp
-.Dv FIOCLEX ,
-.Dv FIONCLEX ,
-.Dv FIOASYNC ,
-.Dv FIOGETOWN ,
+.It Va "tape"
+Allow
+.Dv MTIOCGET
 and
-.Dv FIOSETOWN .
-On a tty device
-.Dv TIOCGETA will succeed otherwise fail with
-.Er EPERM .
-On a tty device,
-.Dv TIOCGPGRP
-and
-.Dv TIOCGWINSZ
-are allowed.
-A few other operations are allowed, but not listed here.
+.Dv MTIOCTOP
+operations against tape drives.
 .It Va "tty"
 In addition to allowing read-write operations on
 .Pa /dev/tty ,
@@ -528,6 +528,10 @@ devices:
 .Dv AUDIO_SETPAR ,
 .Dv AUDIO_START ,
 .Dv AUDIO_STOP .
+.It Va "bpf"
+Allow
+.Dv BIOCGSTATS
+operation for statistics collection from a bpf device.
 .Pp
 See
 .Xr sio_open 3

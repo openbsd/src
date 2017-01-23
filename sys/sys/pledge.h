@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.29 2016/07/03 04:36:08 semarie Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.30 2017/01/23 04:25:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -36,7 +36,7 @@
 #define PLEDGE_FLOCK	0x0000000000000080ULL	/* file locking */
 #define PLEDGE_UNIX	0x0000000000000100ULL	/* AF_UNIX sockets */
 #define PLEDGE_ID	0x0000000000000200ULL	/* allow setuid, setgid, etc */
-#define PLEDGE_IOCTL	0x0000000000000400ULL	/* Select ioctl */
+#define PLEDGE_TAPE	0x0000000000000400ULL	/* Tape ioctl */
 #define PLEDGE_GETPW	0x0000000000000800ULL	/* YP enables if ypbind.lock */
 #define PLEDGE_PROC	0x0000000000001000ULL	/* fork, waitpid, etc */
 #define PLEDGE_SETTIME	0x0000000000002000ULL	/* able to set/adj time/freq */
@@ -58,6 +58,7 @@
 #define PLEDGE_VMM	0x0000000040000000ULL	/* vmm ioctls */
 #define PLEDGE_CHOWN	0x0000000080000000ULL	/* chown(2) family */
 #define PLEDGE_CHOWNUID	0x0000000100000000ULL	/* allow owner/group changes */
+#define PLEDGE_BPF	0x0000000200000000ULL	/* bpf ioctl */
 
 /*
  * Bits outside PLEDGE_USERSET are used by the kernel itself
@@ -82,7 +83,7 @@ static struct {
 	{ PLEDGE_FLOCK,		"flock" },
 	{ PLEDGE_UNIX,		"unix" },
 	{ PLEDGE_ID,		"id" },
-	{ PLEDGE_IOCTL,		"ioctl" },
+	{ PLEDGE_TAPE,		"tape" },
 	{ PLEDGE_GETPW,		"getpw" },
 	{ PLEDGE_PROC,		"proc" },
 	{ PLEDGE_SETTIME,	"settime" },
@@ -103,6 +104,7 @@ static struct {
 	{ PLEDGE_DRM,		"drm" },
 	{ PLEDGE_VMM,		"vmm" },
 	{ PLEDGE_CHOWNUID,	"chown" },
+	{ PLEDGE_BPF,		"bpf" },
 	{ 0, NULL },
 };
 #endif

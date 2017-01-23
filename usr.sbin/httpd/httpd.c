@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.63 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.64 2017/01/23 04:25:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -222,8 +222,7 @@ main(int argc, char *argv[])
 	if (ps->ps_noaction == 0)
 		log_info("startup");
 
-	if (pledge("stdio rpath wpath cpath inet dns ioctl sendfd",
-	    NULL) == -1)
+	if (pledge("stdio rpath wpath cpath inet dns sendfd", NULL) == -1)
 		fatal("pledge");
 
 	event_init();

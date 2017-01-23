@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.190 2017/01/23 03:17:55 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.191 2017/01/23 04:25:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -235,8 +235,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	/*
 	 * FIONREAD/FIONBIO for "stdio"
-	 * A few non-tty ioctl available using "ioctl"
-	 * tty-centric ioctl available using "tty"
+	 * Other ioctl are selectively allowed based upon other pledges.
 	 */
 	[SYS_ioctl] = PLEDGE_STDIO,
 
@@ -360,6 +359,7 @@ static const struct {
 	uint64_t flags;
 } pledgereq[] = {
 	{ "audio",		PLEDGE_AUDIO },
+	{ "bpf",		PLEDGE_BPF },
 	{ "chown",		PLEDGE_CHOWN | PLEDGE_CHOWNUID },
 	{ "cpath",		PLEDGE_CPATH },
 	{ "disklabel",		PLEDGE_DISKLABEL },
@@ -372,7 +372,6 @@ static const struct {
 	{ "getpw",		PLEDGE_GETPW },
 	{ "id",			PLEDGE_ID },
 	{ "inet",		PLEDGE_INET },
-	{ "ioctl",		PLEDGE_IOCTL },
 	{ "mcast",		PLEDGE_MCAST },
 	{ "pf",			PLEDGE_PF },
 	{ "proc",		PLEDGE_PROC },
@@ -384,6 +383,7 @@ static const struct {
 	{ "sendfd",		PLEDGE_SENDFD },
 	{ "settime",		PLEDGE_SETTIME },
 	{ "stdio",		PLEDGE_STDIO },
+	{ "tape",		PLEDGE_TAPE },
 	{ "tmppath",		PLEDGE_TMPPATH },
 	{ "tty",		PLEDGE_TTY },
 	{ "unix",		PLEDGE_UNIX },
@@ -1127,33 +1127,32 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			return (ENOTTY);
 	}
 
-	/*
-	 * Further sets of ioctl become available, but are checked a
-	 * bit more carefully against the vnode.
-	 */
-	if ((p->p_p->ps_pledge & PLEDGE_IOCTL)) {
+	if ((p->p_p->ps_pledge & PLEDGE_INET)) {
 		switch (com) {
-		case TIOCGETA:
-		case TIOCGPGRP:
-		case TIOCGWINSZ:	/* ENOTTY return for non-tty */
-			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
+		case SIOCGIFGROUP:
+			if (fp->f_type == DTYPE_SOCKET)
 				return (0);
-			return (ENOTTY);
+			break;
+		}
+	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_BPF)) {
+		switch (com) {
 		case BIOCGSTATS:	/* bpf: tcpdump privsep on ^C */
 			if (fp->f_type == DTYPE_VNODE &&
 			    fp->f_ops->fo_ioctl == vn_ioctl)
 				return (0);
 			break;
+		}
+	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_TAPE)) {
+		switch (com) {
 		case MTIOCGET:
 		case MTIOCTOP:
 			/* for pax(1) and such, checking tapes... */
 			if (fp->f_type == DTYPE_VNODE &&
 			    (vp->v_type == VCHR || vp->v_type == VBLK))
-				return (0);
-			break;
-		case SIOCGIFGROUP:
-			if ((p->p_p->ps_pledge & PLEDGE_INET) &&
-			    fp->f_type == DTYPE_SOCKET)
 				return (0);
 			break;
 		}
@@ -1314,7 +1313,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 #endif
 	}
 
-	return pledge_fail(p, error, PLEDGE_IOCTL);
+	return pledge_fail(p, error, PLEDGE_TTY);
 }
 
 int
