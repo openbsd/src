@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.16 2016/09/01 10:00:38 tedu Exp $
+#	$OpenBSD: Makefile,v 1.17 2017/01/23 12:39:37 kettenis Exp $
 
-.if ${MACHINE} == "armv7" || ${MACHINE} == "macppc" || \
-    ${MACHINE} == "octeon" || \
+.if ${MACHINE} == "arm64" || ${MACHINE} == "armv7" || \
+    ${MACHINE} == "macppc" || ${MACHINE} == "octeon" || \
     ${MACHINE} == "sparc64"
 PROG=	eeprom
 
