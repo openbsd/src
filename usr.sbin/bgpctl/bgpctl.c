@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.191 2017/01/13 18:59:12 phessler Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.192 2017/01/23 23:35:42 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -38,7 +38,6 @@
 #include "bgpd.h"
 #include "session.h"
 #include "rde.h"
-#include "log.h"
 #include "parser.h"
 #include "irrfilter.h"
 #include "mrtparser.h"
@@ -99,6 +98,15 @@ void		 mrt_to_bgpd_addr(union mrt_addr *, struct bgpd_addr *);
 const char	*msg_type(u_int8_t);
 void		 network_bulk(struct parse_result *);
 const char	*print_auth_method(enum auth_method);
+
+/*
+ * XXX Your Mission, Should You Choose To Accept It
+ * is to get rid of the reacharound into bgpd XXX
+ */
+__dead void fatal(const char *, ...)
+	__attribute__((__format__ (printf, 1, 2)));
+__dead void fatalx(const char *, ...)
+	__attribute__((__format__ (printf, 1, 2)));
 
 struct imsgbuf	*ibuf;
 struct mrt_parser show_mrt = { show_mrt_dump, show_mrt_state, show_mrt_msg };
@@ -2015,27 +2023,7 @@ msg_type(u_int8_t type)
 	return (msgtypenames[type]);
 }
 
-/* following functions are necessary for the imsg framework */
-void
-log_warnx(const char *emsg, ...)
-{
-	va_list	 ap;
-
-	va_start(ap, emsg);
-	vwarnx(emsg, ap);
-	va_end(ap);
-}
-
-void
-log_warn(const char *emsg, ...)
-{
-	va_list	 ap;
-
-	va_start(ap, emsg);
-	vwarn(emsg, ap);
-	va_end(ap);
-}
-
+/* XXX get rid of the reacharound XXX */
 void
 fatal(const char *emsg, ...)
 {
@@ -2047,7 +2035,12 @@ fatal(const char *emsg, ...)
 }
 
 void
-fatalx(const char *emsg)
+fatalx(const char *emsg, ...)
 {
-	errx(1, "%s", emsg);
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	verrx(1, emsg, ap);
+	va_end(ap);
 }
+
