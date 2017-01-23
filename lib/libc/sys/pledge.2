@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.38 2017/01/23 04:25:05 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.39 2017/01/23 07:19:39 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -84,17 +84,17 @@ and
 operations are allowed by default.
 Various ioctl requests are allowed against specific file descriptors
 based upon the requests
-.Va "audio" ,
-.Va "bpf" ,
-.Va "disklabel" ,
-.Va "drm" ,
-.Va "inet" ,
-.Va "pf" ,
-.Va "route" ,
-.Va "tape" ,
-.Va "tty" ,
+.Va audio ,
+.Va bpf ,
+.Va disklabel ,
+.Va drm ,
+.Va inet ,
+.Va pf ,
+.Va route ,
+.Va tape ,
+.Va tty ,
 and
-.Va "vmm".
+.Va vmm .
 .Pp
 .It Xr chmod 2
 .It Xr fchmod 2
@@ -142,7 +142,7 @@ The
 .Ar promises
 is specified as a string, with space separated keywords:
 .Bl -tag -width "tmppath" -offset indent
-.It Va "stdio"
+.It Va stdio
 The following system calls are permitted to allow most basic functions
 in libc, including memory allocation, most types of IO operations on
 previously allocated file descriptors:
@@ -222,7 +222,7 @@ Note that
 is only permitted if its destination socket address is
 .Dv NULL .
 As a result, all the expected functionalities of libc stdio work.
-.It Va "rpath"
+.It Va rpath
 A number of system calls are allowed if they only cause
 read-only effects on the filesystem:
 .Pp
@@ -243,7 +243,7 @@ read-only effects on the filesystem:
 .Xr fchownat 2 ,
 .Xr fstat 2 ,
 .Xr getfsstat 2 .
-.It Va "wpath"
+.It Va wpath
 A number of system calls are allowed and may cause
 write-effects on the filesystem:
 .Pp
@@ -262,7 +262,7 @@ write-effects on the filesystem:
 .Xr fchown 2 ,
 .Xr fchownat 2 ,
 .Xr fstat 2 .
-.It Va "cpath"
+.It Va cpath
 A number of system calls and sub-modes are allowed, which may
 create new files or directories in the filesystem:
 .Pp
@@ -277,12 +277,12 @@ create new files or directories in the filesystem:
 .Xr mkdir 2 ,
 .Xr mkdirat 2 ,
 .Xr rmdir 2 .
-.It Va "dpath"
+.It Va dpath
 A number of system calls are allowed to create special files:
 .Pp
 .Xr mkfifo 2 ,
 .Xr mknod 2 .
-.It Va "tmppath"
+.It Va tmppath
 A number of system calls are allowed to do operations in the
 .Pa /tmp
 directory, including create, read, or write:
@@ -293,7 +293,7 @@ directory, including create, read, or write:
 .Xr chown 2 ,
 .Xr unlink 2 ,
 .Xr fstat 2 .
-.It Va "inet"
+.It Va inet
 The following system calls are allowed to operate in the
 .Dv AF_INET
 and
@@ -313,7 +313,7 @@ domains:
 .Pp
 .Xr setsockopt 2
 has been reduced in functionality substantially.
-.It Va "fattr"
+.It Va fattr
 The following system calls are allowed to make explicit changes
 to fields in
 .Va struct stat
@@ -333,11 +333,11 @@ relating to a file:
 .Xr lchown 2 ,
 .Xr fchown 2 ,
 .Xr utimes 2 .
-.It Va "chown"
+.It Va chown
 The
 .Xr chown 2
 family is allowed to change the user or group on a file.
-.It Va "flock"
+.It Va flock
 File locking via
 .Xr fcntl 2 ,
 .Xr flock 2 ,
@@ -347,7 +347,7 @@ and
 is allowed.
 No distinction is made between shared and exclusive locks.
 This promise is required for unlock as well as lock.
-.It Va "unix"
+.It Va unix
 The following system calls are allowed to operate in the
 .Dv AF_UNIX
 domain:
@@ -362,7 +362,7 @@ domain:
 .Xr getsockname 2 ,
 .Xr setsockopt 2 ,
 .Xr getsockopt 2 .
-.It Va "dns"
+.It Va dns
 Subsequent to a successful
 .Xr open 2
 of
@@ -373,7 +373,7 @@ a few system calls become able to allow DNS network transactions:
 .Xr recvfrom 2 ,
 .Xr socket 2 ,
 .Xr connect 2 .
-.It Va "getpw"
+.It Va getpw
 This allows read-only opening of files in
 .Pa /etc
 for the
@@ -390,23 +390,23 @@ environment, so a successful
 of
 .Pa /var/run/ypbind.lock
 enables
-.Va "inet"
+.Va inet
 operations.
-.It Va "sendfd"
+.It Va sendfd
 Allows sending of file descriptors using
 .Xr sendmsg 2 .
 File descriptors referring to directories may not be passed.
-.It Va "recvfd"
+.It Va recvfd
 Allows receiving of file descriptors using
 .Xr recvmsg 2 .
 File descriptors referring to directories may not be passed.
-.It Va "tape"
+.It Va tape
 Allow
 .Dv MTIOCGET
 and
 .Dv MTIOCTOP
 operations against tape drives.
-.It Va "tty"
+.It Va tty
 In addition to allowing read-write operations on
 .Pa /dev/tty ,
 this opens up a variety of
@@ -428,12 +428,12 @@ and
 .Dv TIOCSETAF .
 .Pp
 If
-.Va "tty"
+.Va tty
 is accompanied with
-.Va "rpath" ,
+.Va rpath ,
 .Xr revoke 2
 is permitted.
-.It Va "proc"
+.It Va proc
 Allows the following process relationship operations:
 .Pp
 .Xr fork 2 ,
@@ -444,36 +444,36 @@ Allows the following process relationship operations:
 .Xr setrlimit 2 ,
 .Xr setpgid 2 ,
 .Xr setsid 2 .
-.It Va "exec"
+.It Va exec
 Allows a process to call
 .Xr execve 2 .
 Coupled with the
-.Va "proc"
+.Va proc
 promise, this allows a process to fork and execute another program.
 The new program starts running without pledge active and hopefully
 makes a new
 .Fn pledge .
-.It Va "prot_exec"
+.It Va prot_exec
 Allows the use of
 .Dv PROT_EXEC
 with
 .Xr mmap 2
 and
 .Xr mprotect 2 .
-.It Va "settime"
+.It Va settime
 Allows the setting of system time, via the
 .Xr settimeofday 2 ,
 .Xr adjtime 2 ,
 and
 .Xr adjfreq 2
 system calls.
-.It Va "ps"
+.It Va ps
 Allows enough
 .Xr sysctl 3
 interfaces to allow inspection of processes operating on the system using
 programs like
 .Xr ps 1 .
-.It Va "vminfo"
+.It Va vminfo
 Allows enough
 .Xr sysctl 3
 interfaces to allow inspection of the system's virtual memory by
@@ -481,7 +481,7 @@ programs like
 .Xr top 1
 and
 .Xr vmstat 8 .
-.It Va "id"
+.It Va id
 Allows the following system calls which can change the rights of a
 process:
 .Pp
@@ -498,7 +498,7 @@ process:
 .Xr setrlimit 2 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2 .
-.It Va "pf"
+.It Va pf
 Allows a subset of
 .Xr ioctl 2
 operations on the
@@ -516,7 +516,7 @@ device:
 .Dv DIOCRSETADDRS ,
 .Dv DIOCXBEGIN ,
 .Dv DIOCXCOMMIT .
-.It Va "audio"
+.It Va audio
 Allows a subset of
 .Xr ioctl 2
 operations on
@@ -528,7 +528,7 @@ devices:
 .Dv AUDIO_SETPAR ,
 .Dv AUDIO_START ,
 .Dv AUDIO_STOP .
-.It Va "bpf"
+.It Va bpf
 Allow
 .Dv BIOCGSTATS
 operation for statistics collection from a bpf device.
