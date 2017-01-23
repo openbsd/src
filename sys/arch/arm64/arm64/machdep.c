@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.6 2017/01/23 13:41:45 patrick Exp $ */
+/* $OpenBSD: machdep.c,v 1.7 2017/01/23 14:02:02 jsg Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -286,6 +286,14 @@ cpu_startup()
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_flags = 0;
 	curpcb->pcb_tf = &proc0tf;
+
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 }
 
 /*
