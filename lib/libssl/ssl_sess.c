@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.58 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.59 2017/01/23 04:55:27 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -326,8 +326,8 @@ ssl_get_new_session(SSL *s, int session)
 
 		/* Choose which callback will set the session ID. */
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-		if (s->generate_session_id)
-			cb = s->generate_session_id;
+		if (s->internal->generate_session_id)
+			cb = s->internal->generate_session_id;
 		else if (s->session_ctx->internal->generate_session_id)
 			cb = s->session_ctx->internal->generate_session_id;
 		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
@@ -849,8 +849,8 @@ SSL_set_session_secret_cb(SSL *s, int (*tls_session_secret_cb)(SSL *s,
 {
 	if (s == NULL)
 		return (0);
-	s->tls_session_secret_cb = tls_session_secret_cb;
-	s->tls_session_secret_cb_arg = arg;
+	s->internal->tls_session_secret_cb = tls_session_secret_cb;
+	s->internal->tls_session_secret_cb_arg = arg;
 	return (1);
 }
 
@@ -860,8 +860,8 @@ SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
 {
 	if (s == NULL)
 		return (0);
-	s->tls_session_ticket_ext_cb = cb;
-	s->tls_session_ticket_ext_cb_arg = arg;
+	s->internal->tls_session_ticket_ext_cb = cb;
+	s->internal->tls_session_ticket_ext_cb_arg = arg;
 	return (1);
 }
 

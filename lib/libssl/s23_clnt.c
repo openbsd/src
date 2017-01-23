@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.51 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.52 2017/01/23 04:55:26 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,12 +130,12 @@ ssl23_connect(SSL *s)
 	ERR_clear_error();
 	errno = 0;
 
-	if (s->info_callback != NULL)
-		cb = s->info_callback;
+	if (s->internal->info_callback != NULL)
+		cb = s->internal->info_callback;
 	else if (s->ctx->internal->info_callback != NULL)
 		cb = s->ctx->internal->info_callback;
 
-	s->in_handshake++;
+	s->internal->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s))
 		SSL_clear(s);
 
@@ -218,7 +218,7 @@ ssl23_connect(SSL *s)
 	}
 
 end:
-	s->in_handshake--;
+	s->internal->in_handshake--;
 	if (cb != NULL)
 		cb(s, SSL_CB_CONNECT_EXIT, ret);
 
@@ -332,10 +332,10 @@ ssl23_client_hello(SSL *s)
 	/* SSL3_ST_CW_CLNT_HELLO_B */
 	ret = ssl23_write_bytes(s);
 
-	if ((ret >= 2) && s->msg_callback) {
+	if ((ret >= 2) && s->internal->msg_callback) {
 		/* Client Hello has been sent; tell msg_callback */
-		s->msg_callback(1, s->client_version, SSL3_RT_HANDSHAKE,
-		    s->init_buf->data + 5, ret - 5, s, s->msg_callback_arg);
+		s->internal->msg_callback(1, s->client_version, SSL3_RT_HANDSHAKE,
+		    s->init_buf->data + 5, ret - 5, s, s->internal->msg_callback_arg);
 	}
 
 	return ret;
@@ -394,8 +394,8 @@ ssl23_get_server_hello(SSL *s)
 			void (*cb)(const SSL *ssl, int type, int val) = NULL;
 			int j;
 
-			if (s->info_callback != NULL)
-				cb = s->info_callback;
+			if (s->internal->info_callback != NULL)
+				cb = s->internal->info_callback;
 			else if (s->ctx->internal->info_callback != NULL)
 				cb = s->ctx->internal->info_callback;
 
@@ -405,9 +405,9 @@ ssl23_get_server_hello(SSL *s)
 				cb(s, SSL_CB_READ_ALERT, j);
 			}
 
-			if (s->msg_callback)
-				s->msg_callback(0, s->version, SSL3_RT_ALERT,
-				    p + 5, 2, s, s->msg_callback_arg);
+			if (s->internal->msg_callback)
+				s->internal->msg_callback(0, s->version, SSL3_RT_ALERT,
+				    p + 5, 2, s, s->internal->msg_callback_arg);
 
 			s->rwstate = SSL_NOTHING;
 			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,
@@ -433,7 +433,7 @@ ssl23_get_server_hello(SSL *s)
 		s->s3->rbuf.left = n;
 		s->s3->rbuf.offset = 0;
 
-		s->handshake_func = s->method->ssl_connect;
+		s->internal->handshake_func = s->method->ssl_connect;
 	} else {
 		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO, SSL_R_UNKNOWN_PROTOCOL);
 		goto err;

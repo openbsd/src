@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.122 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.123 2017/01/23 04:55:26 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2102,7 +2102,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		}
 		break;
 	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
-		s->tlsext_debug_arg = parg;
+		s->internal->tlsext_debug_arg = parg;
 		ret = 1;
 		break;
 
@@ -2181,7 +2181,7 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 		s->cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		break;
 	case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
-		s->tlsext_debug_cb = (void (*)(SSL *, int , int,
+		s->internal->tlsext_debug_cb = (void (*)(SSL *, int , int,
 		    unsigned char *, int, void *))fp;
 		break;
 	default:
@@ -2614,16 +2614,16 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 	    SSL3_RT_APPLICATION_DATA, buf, len, peek);
 	if ((ret == -1) && (S3I(s)->in_read_app_data == 2)) {
 		/*
-		 * ssl3_read_bytes decided to call s->handshake_func, which
+		 * ssl3_read_bytes decided to call s->internal->handshake_func, which
 		 * called ssl3_read_bytes to read handshake data.
 		 * However, ssl3_read_bytes actually found application data
 		 * and thinks that application data makes sense here; so disable
 		 * handshake processing and try to read application data again.
 		 */
-		s->in_handshake++;
+		s->internal->in_handshake++;
 		ret = s->method->ssl_read_bytes(s,
 		    SSL3_RT_APPLICATION_DATA, buf, len, peek);
-		s->in_handshake--;
+		s->internal->in_handshake--;
 	} else
 		S3I(s)->in_read_app_data = 0;
 
@@ -2645,7 +2645,7 @@ ssl3_peek(SSL *s, void *buf, int len)
 int
 ssl3_renegotiate(SSL *s)
 {
-	if (s->handshake_func == NULL)
+	if (s->internal->handshake_func == NULL)
 		return (1);
 
 	if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)

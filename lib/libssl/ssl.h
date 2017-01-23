@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.110 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.111 2017/01/23 04:55:27 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -908,10 +908,6 @@ struct ssl_st {
 	 * in SSL_accept or SSL_connect */
 	int rwstate;
 
-	/* true when we are actually in SSL_accept() or SSL_connect() */
-	int in_handshake;
-	int (*handshake_func)(SSL *);
-
 	/* Imagine that here's a boolean member "init" that is
 	 * switched as soon as SSL_set_{accept/connect}_state
 	 * is called for the first time, so that "state" and
@@ -946,11 +942,6 @@ struct ssl_st {
 
 	int read_ahead;		/* Read as many input bytes as possible
 				 * (for non-blocking reads) */
-
-	/* callback that allows applications to peek at protocol messages */
-	void (*msg_callback)(int write_p, int version, int content_type,
-	    const void *buf, size_t len, SSL *ssl, void *arg);
-	void *msg_callback_arg;
 
 	int hit;		/* reusing a previous session */
 
@@ -992,16 +983,9 @@ struct ssl_st {
 	/* This can also be in the session once a session is established */
 	SSL_SESSION *session;
 
-	/* Default generate session ID callback. */
-	GEN_SESSION_CB generate_session_id;
-
 	/* Used in SSL2 and SSL3 */
 	int verify_mode;	/* 0 don't care about verify failure.
 				 * 1 fail if verify fails */
-	int (*verify_callback)(int ok,X509_STORE_CTX *ctx); /* fail if callback returns 0 */
-
-	void (*info_callback)(const SSL *ssl,int type,int val); /* optional informational callback */
-
 	int error;		/* error bytes to be written */
 	int error_code;		/* actual code */
 
@@ -1028,11 +1012,9 @@ struct ssl_st {
 	int client_version;	/* what was passed, used for
 				 * SSLv3/TLS rollback check */
 	unsigned int max_send_fragment;
-	/* TLS extension debug callback */
-	void (*tlsext_debug_cb)(SSL *s, int client_server, int type,
-	    unsigned char *data, int len, void *arg);
-	void *tlsext_debug_arg;
+
 	char *tlsext_hostname;
+
 	int servername_done;	/* no further mod of servername
 				   0 : call the servername extension callback.
 				   1 : prepare 2, allow last ack just after in server callback.
@@ -1059,14 +1041,6 @@ struct ssl_st {
 
 	/* TLS Session Ticket extension override */
 	TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
-
-	/* TLS Session Ticket extension callback */
-	tls_session_ticket_ext_cb_fn tls_session_ticket_ext_cb;
-	void *tls_session_ticket_ext_cb_arg;
-
-	/* TLS pre-shared secret session resumption */
-	tls_session_secret_cb_fn tls_session_secret_cb;
-	void *tls_session_secret_cb_arg;
 
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 #define session_ctx initial_ctx

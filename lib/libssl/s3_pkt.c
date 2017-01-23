@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.62 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.63 2017/01/23 04:55:26 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -513,8 +513,8 @@ ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	tot = S3I(s)->wnum;
 	S3I(s)->wnum = 0;
 
-	if (SSL_in_init(s) && !s->in_handshake) {
-		i = s->handshake_func(s);
+	if (SSL_in_init(s) && !s->internal->in_handshake) {
+		i = s->internal->handshake_func(s);
 		if (i < 0)
 			return (i);
 		if (i == 0) {
@@ -886,9 +886,9 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	 * Now S3I(s)->handshake_fragment_len == 0 if
 	 * type == SSL3_RT_HANDSHAKE.
 	 */
-	if (!s->in_handshake && SSL_in_init(s)) {
+	if (!s->internal->in_handshake && SSL_in_init(s)) {
 		/* type == SSL3_RT_APPLICATION_DATA */
-		i = s->handshake_func(s);
+		i = s->internal->handshake_func(s);
 		if (i < 0)
 			return (i);
 		if (i == 0) {
@@ -1049,17 +1049,17 @@ start:
 			goto f_err;
 		}
 
-		if (s->msg_callback)
-			s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
 			    S3I(s)->handshake_fragment, 4, s,
-			    s->msg_callback_arg);
+			    s->internal->msg_callback_arg);
 
 		if (SSL_is_init_finished(s) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
 		    !S3I(s)->renegotiate) {
 			ssl3_renegotiate(s);
 			if (ssl3_renegotiate_check(s)) {
-				i = s->handshake_func(s);
+				i = s->internal->handshake_func(s);
 				if (i < 0)
 					return (i);
 				if (i == 0) {
@@ -1109,12 +1109,12 @@ start:
 
 		S3I(s)->alert_fragment_len = 0;
 
-		if (s->msg_callback)
-			s->msg_callback(0, s->version, SSL3_RT_ALERT,
-			    S3I(s)->alert_fragment, 2, s, s->msg_callback_arg);
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(0, s->version, SSL3_RT_ALERT,
+			    S3I(s)->alert_fragment, 2, s, s->internal->msg_callback_arg);
 
-		if (s->info_callback != NULL)
-			cb = s->info_callback;
+		if (s->internal->info_callback != NULL)
+			cb = s->internal->info_callback;
 		else if (s->ctx->internal->info_callback != NULL)
 			cb = s->ctx->internal->info_callback;
 
@@ -1200,10 +1200,10 @@ start:
 
 		rr->length = 0;
 
-		if (s->msg_callback) {
-			s->msg_callback(0, s->version,
+		if (s->internal->msg_callback) {
+			s->internal->msg_callback(0, s->version,
 			    SSL3_RT_CHANGE_CIPHER_SPEC, rr->data, 1, s,
-			    s->msg_callback_arg);
+			    s->internal->msg_callback_arg);
 		}
 
 		S3I(s)->change_cipher_spec = 1;
@@ -1214,14 +1214,14 @@ start:
 	}
 
 	/* Unexpected handshake message (Client Hello, or protocol violation) */
-	if ((S3I(s)->handshake_fragment_len >= 4) && !s->in_handshake) {
+	if ((S3I(s)->handshake_fragment_len >= 4) && !s->internal->in_handshake) {
 		if (((s->state&SSL_ST_MASK) == SSL_ST_OK) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
 			s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
 			s->renegotiate = 1;
 			s->new_session = 1;
 		}
-		i = s->handshake_func(s);
+		i = s->internal->handshake_func(s);
 		if (i < 0)
 			return (i);
 		if (i == 0) {
@@ -1265,7 +1265,7 @@ start:
 	case SSL3_RT_ALERT:
 	case SSL3_RT_HANDSHAKE:
 		/* we already handled all of these, with the possible exception
-		 * of SSL3_RT_HANDSHAKE when s->in_handshake is set, but that
+		 * of SSL3_RT_HANDSHAKE when s->internal->in_handshake is set, but that
 		 * should not happen when type != rr->type */
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
@@ -1391,12 +1391,12 @@ ssl3_dispatch_alert(SSL *s)
 		if (s->s3->send_alert[0] == SSL3_AL_FATAL)
 			(void)BIO_flush(s->wbio);
 
-		if (s->msg_callback)
-			s->msg_callback(1, s->version, SSL3_RT_ALERT,
-			    s->s3->send_alert, 2, s, s->msg_callback_arg);
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(1, s->version, SSL3_RT_ALERT,
+			    s->s3->send_alert, 2, s, s->internal->msg_callback_arg);
 
-		if (s->info_callback != NULL)
-			cb = s->info_callback;
+		if (s->internal->info_callback != NULL)
+			cb = s->internal->info_callback;
 		else if (s->ctx->internal->info_callback != NULL)
 			cb = s->ctx->internal->info_callback;
 

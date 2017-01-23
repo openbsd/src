@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_lib.c,v 1.18 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: s23_lib.c,v 1.19 2017/01/23 04:55:26 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,8 +74,8 @@ ssl23_read(SSL *s, void *buf, int len)
 	int n;
 
 	errno = 0;
-	if (SSL_in_init(s) && (!s->in_handshake)) {
-		n = s->handshake_func(s);
+	if (SSL_in_init(s) && (!s->internal->in_handshake)) {
+		n = s->internal->handshake_func(s);
 		if (n < 0)
 			return (n);
 		if (n == 0) {
@@ -95,8 +95,8 @@ ssl23_peek(SSL *s, void *buf, int len)
 	int n;
 
 	errno = 0;
-	if (SSL_in_init(s) && (!s->in_handshake)) {
-		n = s->handshake_func(s);
+	if (SSL_in_init(s) && (!s->internal->in_handshake)) {
+		n = s->internal->handshake_func(s);
 		if (n < 0)
 			return (n);
 		if (n == 0) {
@@ -116,8 +116,8 @@ ssl23_write(SSL *s, const void *buf, int len)
 	int n;
 
 	errno = 0;
-	if (SSL_in_init(s) && (!s->in_handshake)) {
-		n = s->handshake_func(s);
+	if (SSL_in_init(s) && (!s->internal->in_handshake)) {
+		n = s->internal->handshake_func(s);
 		if (n < 0)
 			return (n);
 		if (n == 0) {

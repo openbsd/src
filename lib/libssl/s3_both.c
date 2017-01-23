@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.51 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.52 2017/01/23 04:55:26 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,10 +150,10 @@ ssl3_do_write(SSL *s, int type)
 		    (unsigned char *)&s->init_buf->data[s->init_off], ret);
 
 	if (ret == s->init_num) {
-		if (s->msg_callback)
-			s->msg_callback(1, s->version, type, s->init_buf->data,
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(1, s->version, type, s->init_buf->data,
 			    (size_t)(s->init_off + s->init_num), s,
-			    s->msg_callback_arg);
+			    s->internal->msg_callback_arg);
 		return (1);
 	}
 
@@ -461,10 +461,10 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 					s->init_num = 0;
 					skip_message = 1;
 
-					if (s->msg_callback)
-						s->msg_callback(0, s->version,
+					if (s->internal->msg_callback)
+						s->internal->msg_callback(0, s->version,
 						    SSL3_RT_HANDSHAKE, p, 4, s,
-						    s->msg_callback_arg);
+						    s->internal->msg_callback_arg);
 				}
 			}
 		} while (skip_message);
@@ -525,10 +525,10 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 	/* Feed this message into MAC computation. */
 	tls1_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num + 4);
-	if (s->msg_callback)
-		s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
+	if (s->internal->msg_callback)
+		s->internal->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
 		    s->init_buf->data, (size_t)s->init_num + 4, s,
-		    s->msg_callback_arg);
+		    s->internal->msg_callback_arg);
 
 	*ok = 1;
 	return (s->init_num);

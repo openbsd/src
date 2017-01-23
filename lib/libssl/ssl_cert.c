@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.55 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.56 2017/01/23 04:55:27 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -440,8 +440,8 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 	 */
 	X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
 
-	if (s->verify_callback)
-		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
+	if (s->internal->verify_callback)
+		X509_STORE_CTX_set_verify_cb(&ctx, s->internal->verify_callback);
 
 	if (s->ctx->internal->app_verify_callback != NULL)
 		ret = s->ctx->internal->app_verify_callback(&ctx,

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.144 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.145 2017/01/23 04:55:27 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -178,13 +178,13 @@ ssl3_accept(SSL *s)
 	ERR_clear_error();
 	errno = 0;
 
-	if (s->info_callback != NULL)
-		cb = s->info_callback;
+	if (s->internal->info_callback != NULL)
+		cb = s->internal->info_callback;
 	else if (s->ctx->internal->info_callback != NULL)
 		cb = s->ctx->internal->info_callback;
 
 	/* init things to blank */
-	s->in_handshake++;
+	s->internal->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s))
 		SSL_clear(s);
 
@@ -662,7 +662,7 @@ ssl3_accept(SSL *s)
 
 				s->ctx->internal->stats.sess_accept_good++;
 				/* s->server=1; */
-				s->handshake_func = ssl3_accept;
+				s->internal->handshake_func = ssl3_accept;
 
 				if (cb != NULL)
 					cb(s, SSL_CB_HANDSHAKE_DONE, 1);
@@ -699,7 +699,7 @@ ssl3_accept(SSL *s)
 end:
 	/* BIO_flush(s->wbio); */
 
-	s->in_handshake--;
+	s->internal->in_handshake--;
 	if (cb != NULL)
 		cb(s, SSL_CB_ACCEPT_EXIT, ret);
 	return (ret);
@@ -976,13 +976,13 @@ ssl3_get_client_hello(SSL *s)
 	 */
 	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
 
-	if (!s->hit && s->tls_session_secret_cb) {
+	if (!s->hit && s->internal->tls_session_secret_cb) {
 		SSL_CIPHER *pref_cipher = NULL;
 
 		s->session->master_key_length = sizeof(s->session->master_key);
-		if (s->tls_session_secret_cb(s, s->session->master_key,
+		if (s->internal->tls_session_secret_cb(s, s->session->master_key,
 		    &s->session->master_key_length, ciphers, &pref_cipher,
-		    s->tls_session_secret_cb_arg)) {
+		    s->internal->tls_session_secret_cb_arg)) {
 			s->hit = 1;
 			s->session->ciphers = ciphers;
 			s->session->verify_result = X509_V_OK;

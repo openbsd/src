@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.165 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.166 2017/01/23 04:55:26 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -183,12 +183,12 @@ ssl3_connect(SSL *s)
 	ERR_clear_error();
 	errno = 0;
 
-	if (s->info_callback != NULL)
-		cb = s->info_callback;
+	if (s->internal->info_callback != NULL)
+		cb = s->internal->info_callback;
 	else if (s->ctx->internal->info_callback != NULL)
 		cb = s->ctx->internal->info_callback;
 
-	s->in_handshake++;
+	s->internal->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s))
 		SSL_clear(s);
 
@@ -543,7 +543,7 @@ ssl3_connect(SSL *s)
 
 			ret = 1;
 			/* s->server=0; */
-			s->handshake_func = ssl3_connect;
+			s->internal->handshake_func = ssl3_connect;
 			s->ctx->internal->stats.sess_connect_good++;
 
 			if (cb != NULL)
@@ -578,7 +578,7 @@ ssl3_connect(SSL *s)
 	}
 
 end:
-	s->in_handshake--;
+	s->internal->in_handshake--;
 	if (cb != NULL)
 		cb(s, SSL_CB_CONNECT_EXIT, ret);
 
@@ -800,12 +800,12 @@ ssl3_get_server_hello(SSL *s)
 	 * Check if we want to resume the session based on external
 	 * pre-shared secret.
 	 */
-	if (s->tls_session_secret_cb) {
+	if (s->internal->tls_session_secret_cb) {
 		SSL_CIPHER *pref_cipher = NULL;
 		s->session->master_key_length = sizeof(s->session->master_key);
-		if (s->tls_session_secret_cb(s, s->session->master_key,
+		if (s->internal->tls_session_secret_cb(s, s->session->master_key,
 		    &s->session->master_key_length, NULL, &pref_cipher,
-		    s->tls_session_secret_cb_arg)) {
+		    s->internal->tls_session_secret_cb_arg)) {
 			s->session->cipher = pref_cipher ? pref_cipher :
 			    ssl3_get_cipher_by_value(cipher_suite);
 			s->s3->flags |= SSL3_FLAGS_CCS_OK;

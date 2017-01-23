@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.52 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.53 2017/01/23 04:55:26 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -596,7 +596,7 @@ again:
 	 * anything while listening.
 	 */
 	if (is_next_epoch) {
-		if ((SSL_in_init(s) || s->in_handshake) && !D1I(s)->listen) {
+		if ((SSL_in_init(s) || s->internal->in_handshake) && !D1I(s)->listen) {
 			if (dtls1_buffer_record(s, &(D1I(s)->unprocessed_rcds),
 			    rr->seq_num) < 0)
 				return (-1);
@@ -667,10 +667,10 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	/* Now D1I(s)->handshake_fragment_len == 0 if type == SSL3_RT_HANDSHAKE. */
 
-	if (!s->in_handshake && SSL_in_init(s))
+	if (!s->internal->in_handshake && SSL_in_init(s))
 	{
 		/* type == SSL3_RT_APPLICATION_DATA */
-		i = s->handshake_func(s);
+		i = s->internal->handshake_func(s);
 		if (i < 0)
 			return (i);
 		if (i == 0) {
@@ -875,9 +875,9 @@ start:
 
 		/* no need to check sequence number on HELLO REQUEST messages */
 
-		if (s->msg_callback)
-			s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-		D1I(s)->handshake_fragment, 4, s, s->msg_callback_arg);
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
+		D1I(s)->handshake_fragment, 4, s, s->internal->msg_callback_arg);
 
 		if (SSL_is_init_finished(s) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
@@ -886,7 +886,7 @@ start:
 			s->new_session = 1;
 			ssl3_renegotiate(s);
 			if (ssl3_renegotiate_check(s)) {
-				i = s->handshake_func(s);
+				i = s->internal->handshake_func(s);
 				if (i < 0)
 					return (i);
 				if (i == 0) {
@@ -922,12 +922,12 @@ start:
 
 		D1I(s)->alert_fragment_len = 0;
 
-		if (s->msg_callback)
-			s->msg_callback(0, s->version, SSL3_RT_ALERT,
-		D1I(s)->alert_fragment, 2, s, s->msg_callback_arg);
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(0, s->version, SSL3_RT_ALERT,
+		D1I(s)->alert_fragment, 2, s, s->internal->msg_callback_arg);
 
-		if (s->info_callback != NULL)
-			cb = s->info_callback;
+		if (s->internal->info_callback != NULL)
+			cb = s->internal->info_callback;
 		else if (s->ctx->internal->info_callback != NULL)
 			cb = s->ctx->internal->info_callback;
 
@@ -987,9 +987,9 @@ start:
 
 		rr->length = 0;
 
-		if (s->msg_callback)
-			s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC,
-		rr->data, 1, s, s->msg_callback_arg);
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC,
+		rr->data, 1, s, s->internal->msg_callback_arg);
 
 		/* We can't process a CCS now, because previous handshake
 		 * messages are still missing, so just drop it.
@@ -1012,7 +1012,7 @@ start:
 
 	/* Unexpected handshake message (Client Hello, or protocol violation) */
 	if ((D1I(s)->handshake_fragment_len >= DTLS1_HM_HEADER_LENGTH) &&
-	    !s->in_handshake) {
+	    !s->internal->in_handshake) {
 		struct hm_header_st msg_hdr;
 
 		/* this may just be a stale retransmit */
@@ -1041,7 +1041,7 @@ start:
 			s->renegotiate = 1;
 			s->new_session = 1;
 		}
-		i = s->handshake_func(s);
+		i = s->internal->handshake_func(s);
 		if (i < 0)
 			return (i);
 		if (i == 0) {
@@ -1081,7 +1081,7 @@ start:
 	case SSL3_RT_ALERT:
 	case SSL3_RT_HANDSHAKE:
 		/* we already handled all of these, with the possible exception
-		 * of SSL3_RT_HANDSHAKE when s->in_handshake is set, but that
+		 * of SSL3_RT_HANDSHAKE when s->internal->in_handshake is set, but that
 		 * should not happen when type != rr->type */
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_DTLS1_READ_BYTES, ERR_R_INTERNAL_ERROR);
@@ -1123,9 +1123,9 @@ dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
 {
 	int i;
 
-	if (SSL_in_init(s) && !s->in_handshake)
+	if (SSL_in_init(s) && !s->internal->in_handshake)
 	{
-		i = s->handshake_func(s);
+		i = s->internal->handshake_func(s);
 		if (i < 0)
 			return (i);
 		if (i == 0) {
@@ -1422,12 +1422,12 @@ dtls1_dispatch_alert(SSL *s)
 		)
 			(void)BIO_flush(s->wbio);
 
-		if (s->msg_callback)
-			s->msg_callback(1, s->version, SSL3_RT_ALERT,
-			    s->s3->send_alert, 2, s, s->msg_callback_arg);
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(1, s->version, SSL3_RT_ALERT,
+			    s->s3->send_alert, 2, s, s->internal->msg_callback_arg);
 
-		if (s->info_callback != NULL)
-			cb = s->info_callback;
+		if (s->internal->info_callback != NULL)
+			cb = s->internal->info_callback;
 		else if (s->ctx->internal->info_callback != NULL)
 			cb = s->ctx->internal->info_callback;
 

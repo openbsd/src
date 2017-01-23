@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.52 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.53 2017/01/23 04:55:26 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -129,12 +129,12 @@ ssl23_accept(SSL *s)
 	ERR_clear_error();
 	errno = 0;
 
-	if (s->info_callback != NULL)
-		cb = s->info_callback;
+	if (s->internal->info_callback != NULL)
+		cb = s->internal->info_callback;
 	else if (s->ctx->internal->info_callback != NULL)
 		cb = s->ctx->internal->info_callback;
 
-	s->in_handshake++;
+	s->internal->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s))
 		SSL_clear(s);
 
@@ -194,7 +194,7 @@ ssl23_accept(SSL *s)
 	}
 
 end:
-	s->in_handshake--;
+	s->internal->in_handshake--;
 	if (cb != NULL)
 		cb(s, SSL_CB_ACCEPT_EXIT, ret);
 
@@ -345,9 +345,9 @@ ssl23_get_client_hello(SSL *s)
 			return -1;
 
 		tls1_finish_mac(s, s->packet + 2, s->packet_length - 2);
-		if (s->msg_callback)
-			s->msg_callback(0, SSL2_VERSION, 0, s->packet + 2,
-			    s->packet_length - 2, s, s->msg_callback_arg);
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(0, SSL2_VERSION, 0, s->packet + 2,
+			    s->packet_length - 2, s, s->internal->msg_callback_arg);
 
 		p = s->packet;
 		p += 5;
@@ -450,7 +450,7 @@ ssl23_get_client_hello(SSL *s)
 			s->method = TLSv1_server_method();
 		else
 			goto unsupported;
-		s->handshake_func = s->method->ssl_accept;
+		s->internal->handshake_func = s->method->ssl_accept;
 	} else {
 		/* bad, very bad */
 		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);

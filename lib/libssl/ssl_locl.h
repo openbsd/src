@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.154 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.155 2017/01/23 04:55:27 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -527,6 +527,37 @@ typedef struct ssl_internal_st {
 	/* Client list of supported protocols in wire format. */
 	unsigned char *alpn_client_proto_list;
 	unsigned int alpn_client_proto_list_len;
+
+	/* XXX Callbacks */
+
+	/* true when we are actually in SSL_accept() or SSL_connect() */
+	int in_handshake;
+	int (*handshake_func)(SSL *);
+	/* callback that allows applications to peek at protocol messages */
+	void (*msg_callback)(int write_p, int version, int content_type,
+	    const void *buf, size_t len, SSL *ssl, void *arg);
+	void *msg_callback_arg;
+
+	/* Default generate session ID callback. */
+	GEN_SESSION_CB generate_session_id;
+
+	int (*verify_callback)(int ok,X509_STORE_CTX *ctx); /* fail if callback returns 0 */
+
+	void (*info_callback)(const SSL *ssl,int type,int val); /* optional informational callback */
+
+	/* TLS extension debug callback */
+	void (*tlsext_debug_cb)(SSL *s, int client_server, int type,
+	    unsigned char *data, int len, void *arg);
+	void *tlsext_debug_arg;
+
+	/* TLS Session Ticket extension callback */
+	tls_session_ticket_ext_cb_fn tls_session_ticket_ext_cb;
+	void *tls_session_ticket_ext_cb_arg;
+
+	/* TLS pre-shared secret session resumption */
+	tls_session_secret_cb_fn tls_session_secret_cb;
+	void *tls_session_secret_cb_arg;
+
 } SSL_INTERNAL;
 
 typedef struct ssl3_state_internal_st {
