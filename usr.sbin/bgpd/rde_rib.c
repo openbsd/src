@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.144 2017/01/23 11:43:40 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.145 2017/01/23 11:46:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -45,8 +45,8 @@ void rib_remove(struct rib_entry *);
 int rib_empty(struct rib_entry *);
 struct rib_entry *rib_restart(struct rib_context *);
 
-RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
-RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
+RB_PROTOTYPE(rib, rib_entry, rib_e, rib_compare);
+RB_GENERATE(rib, rib_entry, rib_e, rib_compare);
 
 
 /* RIB specific functions */
@@ -127,8 +127,8 @@ rib_free(struct rib_desc *rib)
 		}
 	}
 
-	for (re = RB_MIN(rib_tree, &rib->rib); re != NULL; re = xre) {
-		xre = RB_NEXT(rib_tree,  &rib->rib, re);
+	for (re = RB_MIN(rib, &rib->rib); re != NULL; re = xre) {
+		xre = RB_NEXT(rib,  &rib->rib, re);
 
 		/*
 		 * Removing the prefixes is tricky because the last one
@@ -172,7 +172,7 @@ rib_get(struct rib_desc *rib, struct bgpd_addr *prefix, int prefixlen)
 	bzero(&xre, sizeof(xre));
 	xre.prefix = pte;
 
-	return (RB_FIND(rib_tree, &rib->rib, &xre));
+	return (RB_FIND(rib, &rib->rib, &xre));
 }
 
 struct rib_entry *
@@ -222,7 +222,7 @@ rib_add(struct rib_desc *rib, struct bgpd_addr *prefix, int prefixlen)
 	re->flags = rib->flags;
 	re->ribid = rib->id;
 
-        if (RB_INSERT(rib_tree, &rib->rib, re) != NULL) {
+        if (RB_INSERT(rib, &rib->rib, re) != NULL) {
 		log_warnx("rib_add: insert failed");
 		free(re);
 		return (NULL);
@@ -249,7 +249,7 @@ rib_remove(struct rib_entry *re)
 	if (pt_empty(re->prefix))
 		pt_remove(re->prefix);
 
-	if (RB_REMOVE(rib_tree, &ribs[re->ribid].rib, re) == NULL)
+	if (RB_REMOVE(rib, &ribs[re->ribid].rib, re) == NULL)
 		log_warnx("rib_remove: remove failed.");
 
 	free(re);
@@ -284,12 +284,12 @@ rib_dump_r(struct rib_context *ctx)
 	unsigned int		 i;
 
 	if (ctx->ctx_re == NULL) {
-		re = RB_MIN(rib_tree, &ctx->ctx_rib->rib);
+		re = RB_MIN(rib, &ctx->ctx_rib->rib);
 		LIST_INSERT_HEAD(&rib_dump_h, ctx, entry);
 	} else
 		re = rib_restart(ctx);
 
-	for (i = 0; re != NULL; re = RB_NEXT(rib_tree, unused, re)) {
+	for (i = 0; re != NULL; re = RB_NEXT(rib, unused, re)) {
 		if (ctx->ctx_aid != AID_UNSPEC &&
 		    ctx->ctx_aid != re->prefix->aid)
 			continue;
@@ -320,7 +320,7 @@ rib_restart(struct rib_context *ctx)
 
 	/* find first non empty element */
 	while (re && rib_empty(re))
-		re = RB_NEXT(rib_tree, unused, re);
+		re = RB_NEXT(rib, unused, re);
 
 	/* free the previously locked rib element if empty */
 	if (rib_empty(ctx->ctx_re))

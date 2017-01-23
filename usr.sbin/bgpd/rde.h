@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.152 2017/01/23 11:43:40 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.153 2017/01/23 11:46:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -42,7 +42,7 @@ LIST_HEAD(rde_peer_head, rde_peer);
 LIST_HEAD(aspath_head, rde_aspath);
 RB_HEAD(uptree_prefix, update_prefix);
 RB_HEAD(uptree_attr, update_attr);
-RB_HEAD(rib_tree, rib_entry);
+RB_HEAD(rib, rib_entry);
 TAILQ_HEAD(uplist_prefix, update_prefix);
 TAILQ_HEAD(uplist_attr, update_attr);
 
@@ -286,7 +286,7 @@ struct rib_entry {
 
 struct rib_desc {
 	char			name[PEER_DESCR_LEN];
-	struct rib_tree		rib;
+	struct rib		rib;
 	struct filter_head	*in_rules;
 	struct filter_head	*in_rules_tmp;
 	u_int			rtableid;
