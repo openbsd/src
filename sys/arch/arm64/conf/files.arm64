@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.6 2017/01/23 12:34:06 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.7 2017/01/23 13:58:11 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -6,6 +6,7 @@ maxusers	2 8 64
 major	{wd = 16}
 major	{sd = 24}
 major	{cd = 26}
+major	{rd = 17}
 
 file	arch/arm64/arm64/autoconf.c
 file	arch/arm64/arm64/copy.S
