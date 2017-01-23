@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.137 2017/01/20 04:22:58 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.138 2017/01/23 09:10:06 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -123,10 +123,12 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	struct ifnet *encif;
 	u_int32_t spi;
 	u_int16_t cpi;
-	int s, error;
+	int error;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
+
+	splsoftassert(IPL_SOFTNET);
 
 	IPSEC_ISTAT(espstat.esps_input, ahstat.ahs_input,
 	    ipcompstat.ipcomps_input);
@@ -227,11 +229,9 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 		return EPFNOSUPPORT;
 	}
 
-	s = splsoftnet();
 	tdbp = gettdb(rtable_l2(m->m_pkthdr.ph_rtableid),
 	    spi, &dst_address, sproto);
 	if (tdbp == NULL) {
-		splx(s);
 		DPRINTF(("ipsec_common_input(): could not find SA for "
 		    "packet to %s, spi %08x\n",
 		    ipsp_address(&dst_address, buf, sizeof(buf)), ntohl(spi)));
@@ -242,7 +242,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (tdbp->tdb_flags & TDBF_INVALID) {
-		splx(s);
 		DPRINTF(("ipsec_common_input(): attempted to use invalid "
 		    "SA %s/%08x/%u\n", ipsp_address(&dst_address, buf,
 		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
@@ -253,7 +252,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (udpencap && !(tdbp->tdb_flags & TDBF_UDPENCAP)) {
-		splx(s);
 		DPRINTF(("ipsec_common_input(): attempted to use non-udpencap "
 		    "SA %s/%08x/%u\n", ipsp_address(&dst_address, buf,
 		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
@@ -263,7 +261,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (!udpencap && (tdbp->tdb_flags & TDBF_UDPENCAP)) {
-		splx(s);
 		DPRINTF(("ipsec_common_input(): attempted to use udpencap "
 		    "SA %s/%08x/%u\n", ipsp_address(&dst_address, buf,
 		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
@@ -273,7 +270,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (tdbp->tdb_xform == NULL) {
-		splx(s);
 		DPRINTF(("ipsec_common_input(): attempted to use uninitialized "
 		    "SA %s/%08x/%u\n", ipsp_address(&dst_address, buf,
 		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
@@ -286,7 +282,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	if (sproto != IPPROTO_IPCOMP) {
 		if ((encif = enc_getif(tdbp->tdb_rdomain,
 		    tdbp->tdb_tap)) == NULL) {
-			splx(s);
 			DPRINTF(("ipsec_common_input(): "
 			    "no enc%u interface for SA %s/%08x/%u\n",
 			    tdbp->tdb_tap, ipsp_address(&dst_address, buf,
@@ -319,7 +314,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	 * everything else.
 	 */
 	error = (*(tdbp->tdb_xform->xf_input))(m, tdbp, skip, protoff);
-	splx(s);
 	return error;
 }
 
