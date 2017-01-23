@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.353 2016/11/10 09:18:33 phessler Exp $ */
+/*	$OpenBSD: rde.c,v 1.354 2017/01/23 11:43:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2717,7 +2717,7 @@ rde_reload_done(void)
 void
 rde_softreconfig_in(struct rib_entry *re, void *ptr)
 {
-	struct rib		*rib = ptr;
+	struct rib_desc		*rib = ptr;
 	struct prefix		*p, *np;
 	struct pt_entry		*pt;
 	struct rde_peer		*peer;

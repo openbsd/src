@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.143 2016/08/27 01:26:22 guenther Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.144 2017/01/23 11:43:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -35,11 +35,11 @@
  * This is achieved by heavily linking the different parts together.
  */
 u_int16_t rib_size;
-struct rib *ribs;
+struct rib_desc *ribs;
 
 LIST_HEAD(, rib_context) rib_dump_h = LIST_HEAD_INITIALIZER(rib_dump_h);
 
-struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
+struct rib_entry *rib_add(struct rib_desc *, struct bgpd_addr *, int);
 int rib_compare(const struct rib_entry *, const struct rib_entry *);
 void rib_remove(struct rib_entry *);
 int rib_empty(struct rib_entry *);
@@ -53,7 +53,7 @@ RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
 u_int16_t
 rib_new(char *name, u_int rtableid, u_int16_t flags)
 {
-	struct rib	*xribs;
+	struct rib_desc	*xribs;
 	u_int16_t	id;
 
 	for (id = 0; id < rib_size; id++) {
@@ -66,7 +66,7 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 
 	if (id >= rib_size) {
 		if ((xribs = reallocarray(ribs, id + 1,
-		    sizeof(struct rib))) == NULL) {
+		    sizeof(struct rib_desc))) == NULL) {
 			/* XXX this is not clever */
 			fatal("rib_add");
 		}
@@ -74,7 +74,7 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 		rib_size = id + 1;
 	}
 
-	bzero(&ribs[id], sizeof(struct rib));
+	bzero(&ribs[id], sizeof(struct rib_desc));
 	strlcpy(ribs[id].name, name, sizeof(ribs[id].name));
 	RB_INIT(&ribs[id].rib);
 	ribs[id].state = RECONF_REINIT;
@@ -107,7 +107,7 @@ rib_find(char *name)
 }
 
 void
-rib_free(struct rib *rib)
+rib_free(struct rib_desc *rib)
 {
 	struct rib_context *ctx, *next;
 	struct rib_entry *re, *xre;
@@ -153,7 +153,7 @@ rib_free(struct rib *rib)
 	}
 	filterlist_free(rib->in_rules_tmp);
 	filterlist_free(rib->in_rules);
-	bzero(rib, sizeof(struct rib));
+	bzero(rib, sizeof(struct rib_desc));
 }
 
 int
@@ -163,7 +163,7 @@ rib_compare(const struct rib_entry *a, const struct rib_entry *b)
 }
 
 struct rib_entry *
-rib_get(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
+rib_get(struct rib_desc *rib, struct bgpd_addr *prefix, int prefixlen)
 {
 	struct rib_entry xre;
 	struct pt_entry	*pte;
@@ -176,7 +176,7 @@ rib_get(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 }
 
 struct rib_entry *
-rib_lookup(struct rib *rib, struct bgpd_addr *addr)
+rib_lookup(struct rib_desc *rib, struct bgpd_addr *addr)
 {
 	struct rib_entry *re;
 	int		 i;
@@ -205,7 +205,7 @@ rib_lookup(struct rib *rib, struct bgpd_addr *addr)
 
 
 struct rib_entry *
-rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
+rib_add(struct rib_desc *rib, struct bgpd_addr *prefix, int prefixlen)
 {
 	struct pt_entry	*pte;
 	struct rib_entry *re;
@@ -263,7 +263,7 @@ rib_empty(struct rib_entry *re)
 }
 
 void
-rib_dump(struct rib *rib, void (*upcall)(struct rib_entry *, void *),
+rib_dump(struct rib_desc *rib, void (*upcall)(struct rib_entry *, void *),
     void *arg, u_int8_t aid)
 {
 	struct rib_context	*ctx;
@@ -396,7 +396,7 @@ path_shutdown(void)
 }
 
 int
-path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
+path_update(struct rib_desc *rib, struct rde_peer *peer, struct rde_aspath *nasp,
     struct bgpd_addr *prefix, int prefixlen)
 {
 	struct rde_aspath	*asp;
@@ -680,7 +680,7 @@ static void		 prefix_unlink(struct prefix *);
  * search for specified prefix of a peer. Returns NULL if not found.
  */
 struct prefix *
-prefix_get(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
+prefix_get(struct rib_desc *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
     int prefixlen, u_int32_t flags)
 {
 	struct rib_entry	*re;
@@ -695,7 +695,7 @@ prefix_get(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
  * Adds or updates a prefix.
  */
 int
-prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
+prefix_add(struct rib_desc *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
     int prefixlen)
 
 {
@@ -782,7 +782,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
  * pt_entry -- become empty remove them too.
  */
 int
-prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
+prefix_remove(struct rib_desc *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
     int prefixlen, u_int32_t flags)
 {
 	struct prefix		*p;

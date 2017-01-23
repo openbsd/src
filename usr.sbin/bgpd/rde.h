@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.151 2016/10/27 08:21:58 phessler Exp $ */
+/*	$OpenBSD: rde.h,v 1.152 2017/01/23 11:43:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -266,7 +266,7 @@ struct pt_entry_vpn4 {
 struct rib_context {
 	LIST_ENTRY(rib_context)		 entry;
 	struct rib_entry		*ctx_re;
-	struct rib			*ctx_rib;
+	struct rib_desc			*ctx_rib;
 	void		(*ctx_upcall)(struct rib_entry *, void *);
 	void		(*ctx_done)(void *);
 	void		(*ctx_wait)(void *);
@@ -284,7 +284,7 @@ struct rib_entry {
 	u_int16_t		 flags;
 };
 
-struct rib {
+struct rib_desc {
 	char			name[PEER_DESCR_LEN];
 	struct rib_tree		rib;
 	struct filter_head	*in_rules;
@@ -421,14 +421,14 @@ int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
 
 /* rde_rib.c */
 extern u_int16_t	 rib_size;
-extern struct rib	*ribs;
+extern struct rib_desc	*ribs;
 
 u_int16_t	 rib_new(char *, u_int, u_int16_t);
 u_int16_t	 rib_find(char *);
-void		 rib_free(struct rib *);
-struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
-struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
-void		 rib_dump(struct rib *, void (*)(struct rib_entry *, void *),
+void		 rib_free(struct rib_desc *);
+struct rib_entry *rib_get(struct rib_desc *, struct bgpd_addr *, int);
+struct rib_entry *rib_lookup(struct rib_desc *, struct bgpd_addr *);
+void		 rib_dump(struct rib_desc *, void (*)(struct rib_entry *, void *),
 		     void *, u_int8_t);
 void		 rib_dump_r(struct rib_context *);
 void		 rib_dump_runner(void);
@@ -436,7 +436,7 @@ int		 rib_dump_pending(void);
 
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);
-int		 path_update(struct rib *, struct rde_peer *,
+int		 path_update(struct rib_desc *, struct rde_peer *,
 		     struct rde_aspath *, struct bgpd_addr *, int);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
@@ -449,12 +449,12 @@ struct rde_aspath *path_get(void);
 void		 path_put(struct rde_aspath *);
 
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
-struct prefix	*prefix_get(struct rib *, struct rde_peer *,
+struct prefix	*prefix_get(struct rib_desc *, struct rde_peer *,
 		    struct bgpd_addr *, int, u_int32_t);
-int		 prefix_add(struct rib *, struct rde_aspath *,
+int		 prefix_add(struct rib_desc *, struct rde_aspath *,
 		    struct bgpd_addr *, int);
 void		 prefix_move(struct rde_aspath *, struct prefix *);
-int		 prefix_remove(struct rib *, struct rde_peer *,
+int		 prefix_remove(struct rib_desc *, struct rde_peer *,
 		    struct bgpd_addr *, int, u_int32_t);
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t);
 int		 prefix_writebuf(struct ibuf *, struct bgpd_addr *, u_int8_t);
