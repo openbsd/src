@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.165 2015/09/09 18:23:55 deraadt Exp $ */
+/* $OpenBSD: mfi.c,v 1.166 2017/01/23 01:10:31 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -103,9 +103,9 @@ int		mfi_scsi_io(struct mfi_softc *sc, struct mfi_ccb *,
 		    struct scsi_xfer *, uint64_t, uint32_t);
 void		mfi_scsi_xs_done(struct mfi_softc *sc, struct mfi_ccb *);
 int		mfi_mgmt(struct mfi_softc *, uint32_t, uint32_t, uint32_t,
-		    void *, uint8_t *);
+		    void *, const union mfi_mbox *);
 int		mfi_do_mgmt(struct mfi_softc *, struct mfi_ccb * , uint32_t,
-		    uint32_t, uint32_t, void *, uint8_t *);
+		    uint32_t, uint32_t, void *, const union mfi_mbox *);
 void		mfi_empty_done(struct mfi_softc *, struct mfi_ccb *);
 
 #if NBIO > 0
@@ -1177,7 +1177,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	uint64_t		blockno;
 	uint32_t		blockcnt;
 	uint8_t			target = link->target;
-	uint8_t			mbox[MFI_MBOX_SIZE];
+	union mfi_mbox		mbox;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %#x\n",
 	    DEVNAME(sc), xs->cmd->opcode);
@@ -1225,9 +1225,9 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		break;
 
 	case SYNCHRONIZE_CACHE:
-		mbox[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
+		mbox.b[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
 		if (mfi_do_mgmt(sc, ccb, MR_DCMD_CTRL_CACHE_FLUSH,
-		    MFI_DATA_NONE, 0, NULL, mbox))
+		    MFI_DATA_NONE, 0, NULL, &mbox))
 			goto stuffup;
 
 		goto complete;
@@ -1338,7 +1338,7 @@ mfi_create_sgl(struct mfi_softc *sc, struct mfi_ccb *ccb, int flags)
 
 int
 mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
-    void *buf, uint8_t *mbox)
+    void *buf, const union mfi_mbox *mbox)
 {
 	struct mfi_ccb *ccb;
 	int rv;
@@ -1353,7 +1353,7 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 
 int
 mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
-    uint32_t dir, uint32_t len, void *buf, uint8_t *mbox)
+    uint32_t dir, uint32_t len, void *buf, const union mfi_mbox *mbox)
 {
 	struct mfi_dcmd_frame *dcmd;
 	uint8_t *dma_buf = NULL;
@@ -1366,7 +1366,7 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 		goto done;
 
 	dcmd = &ccb->ccb_frame->mfr_dcmd;
-	memset(dcmd->mdf_mbox, 0, MFI_MBOX_SIZE);
+	memset(&dcmd->mdf_mbox, 0, sizeof(dcmd->mdf_mbox));
 	dcmd->mdf_header.mfh_cmd = MFI_CMD_DCMD;
 	dcmd->mdf_header.mfh_timeout = 0;
 
@@ -1377,8 +1377,8 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 	ccb->ccb_frame_size = MFI_DCMD_FRAME_SIZE;
 
 	/* handle special opcodes */
-	if (mbox)
-		memcpy(dcmd->mdf_mbox, mbox, MFI_MBOX_SIZE);
+	if (mbox != NULL)
+		memcpy(&dcmd->mdf_mbox, &mbox, sizeof(dcmd->mdf_mbox));
 
 	if (dir != MFI_DATA_NONE) {
 		if (dir == MFI_DATA_OUT)
@@ -1448,7 +1448,7 @@ mfi_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 	struct mfi_softc	*sc = (struct mfi_softc *)link->adapter_softc;
 	int			 rv, wrenable, rdenable;
 	struct mfi_ld_prop	 ldp;
-	uint8_t			 mbox[MFI_MBOX_SIZE];
+	union mfi_mbox		 mbox;
 
 	if (mfi_get_info(sc)) {
 		rv = EIO;
@@ -1460,9 +1460,9 @@ mfi_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 		goto done;
 	}
 
-	mbox[0] = link->target;
+	mbox.b[0] = link->target;
 	if ((rv = mfi_mgmt(sc, MR_DCMD_LD_GET_PROPERTIES, MFI_DATA_IN,
-	    sizeof(ldp), &ldp, mbox)) != 0)
+	    sizeof(ldp), &ldp, &mbox)) != 0)
 		goto done;
 
 	if (sc->sc_info.mci_memory_size > 0) {
@@ -1486,9 +1486,9 @@ mfi_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 	    ((dc->rdcache) ? 1 : 0) == rdenable)
 		goto done;
 
-	mbox[0] = ldp.mlp_ld.mld_target;
-	mbox[1] = ldp.mlp_ld.mld_res;
-	*(uint16_t *)&mbox[2] = ldp.mlp_ld.mld_seq;
+	mbox.b[0] = ldp.mlp_ld.mld_target;
+	mbox.b[1] = ldp.mlp_ld.mld_res;
+	mbox.s[1] = ldp.mlp_ld.mld_seq;
 
 	if (sc->sc_info.mci_memory_size > 0) {
 		if (dc->rdcache)
@@ -1515,7 +1515,7 @@ mfi_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 	}
 
 	if ((rv = mfi_mgmt(sc, MR_DCMD_LD_SET_PROPERTIES, MFI_DATA_OUT,
-	    sizeof(ldp), &ldp, mbox)) != 0)
+	    sizeof(ldp), &ldp, &mbox)) != 0)
 		goto done;
 done:
 	return (rv);
@@ -1582,7 +1582,7 @@ int
 mfi_bio_getitall(struct mfi_softc *sc)
 {
 	int			i, d, size, rv = EINVAL;
-	uint8_t			mbox[MFI_MBOX_SIZE];
+	union mfi_mbox		mbox;
 	struct mfi_conf		*cfg = NULL;
 	struct mfi_ld_details	*ld_det = NULL;
 
@@ -1641,9 +1641,10 @@ mfi_bio_getitall(struct mfi_softc *sc)
 	/* find used physical disks */
 	size = sizeof(struct mfi_ld_details);
 	for (i = 0, d = 0; i < cfg->mfc_no_ld; i++) {
-		mbox[0] = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+		memset(&mbox, 0, sizeof(mbox));
+		mbox.b[0] = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
 		if (mfi_mgmt(sc, MR_DCMD_LD_GET_INFO, MFI_DATA_IN, size,
-		    &sc->sc_ld_details[i], mbox))
+		    &sc->sc_ld_details[i], &mbox))
 			goto done;
 
 		d += sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_no_drv_per_span *
@@ -1794,7 +1795,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	char			vend[8+16+4+1], *vendp;
 	int			rv = EINVAL;
 	int			arr, vol, disk, span;
-	uint8_t			mbox[MFI_MBOX_SIZE];
+	union mfi_mbox		mbox;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_disk %#x\n",
 	    DEVNAME(sc), bd->bd_diskid);
@@ -1863,9 +1864,10 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	}
 
 	/* get the remaining fields */
-	*((uint16_t *)&mbox) = ar[arr].pd[disk].mar_pd.mfp_id;
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.s[0] = ar[arr].pd[disk].mar_pd.mfp_id;
 	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
-	    sizeof *pd, pd, mbox)) {
+	    sizeof *pd, pd, &mbox)) {
 		/* disk is missing but succeed command */
 		rv = 0;
 		goto freeme;
@@ -1949,7 +1951,7 @@ int
 mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 {
 	int			i, found, rv = EINVAL;
-	uint8_t			mbox[MFI_MBOX_SIZE];
+	union mfi_mbox		mbox;
 	uint32_t		cmd;
 	struct mfi_pd_list	*pd;
 
@@ -1976,9 +1978,8 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	if (!found)
 		goto done;
 
-	memset(mbox, 0, sizeof mbox);
-
-	*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.s[0] = pd->mpl_address[i].mpa_pd_id;
 
 	switch (bb->bb_status) {
 	case BIOC_SBUNBLINK:
@@ -1997,7 +1998,7 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	}
 
 
-	if (mfi_mgmt(sc, cmd, MFI_DATA_NONE, 0, NULL, mbox))
+	if (mfi_mgmt(sc, cmd, MFI_DATA_NONE, 0, NULL, &mbox))
 		goto done;
 
 	rv = 0;
@@ -2012,7 +2013,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	struct mfi_pd_list	*pd;
 	struct mfi_pd_details	*info;
 	int			i, found, rv = EINVAL;
-	uint8_t			mbox[MFI_MBOX_SIZE];
+	union mfi_mbox		mbox;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_setstate %x\n", DEVNAME(sc),
 	    bs->bs_status);
@@ -2034,31 +2035,31 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	if (!found)
 		goto done;
 
-	memset(mbox, 0, sizeof mbox);
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.s[0] = pd->mpl_address[i].mpa_pd_id;
 
-	*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;
 	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
-	    sizeof *info, info, mbox))
+	    sizeof *info, info, &mbox))
 		goto done;
 
-	*((uint16_t *)&mbox[0]) = pd->mpl_address[i].mpa_pd_id;
-	*((uint16_t *)&mbox[2]) = info->mpd_pd.mfp_seq;
+	mbox.s[0] = pd->mpl_address[i].mpa_pd_id;
+	mbox.s[1] = info->mpd_pd.mfp_seq;
 
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
-		mbox[4] = MFI_PD_ONLINE;
+		mbox.b[4] = MFI_PD_ONLINE;
 		break;
 
 	case BIOC_SSOFFLINE:
-		mbox[4] = MFI_PD_OFFLINE;
+		mbox.b[4] = MFI_PD_OFFLINE;
 		break;
 
 	case BIOC_SSHOTSPARE:
-		mbox[4] = MFI_PD_HOTSPARE;
+		mbox.b[4] = MFI_PD_HOTSPARE;
 		break;
 
 	case BIOC_SSREBUILD:
-		mbox[4] = MFI_PD_REBUILD;
+		mbox.b[4] = MFI_PD_REBUILD;
 		break;
 
 	default:
@@ -2069,7 +2070,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 
 
 	if ((rv = mfi_mgmt(sc, MR_DCMD_PD_SET_STATE, MFI_DATA_NONE, 0, NULL,
-	    mbox)))
+	    &mbox)))
 		goto done;
 
 	rv = 0;
@@ -2227,7 +2228,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	char			vend[8+16+4+1], *vendp;
 	int			i, rv = EINVAL;
 	uint32_t		size;
-	uint8_t			mbox[MFI_MBOX_SIZE];
+	union mfi_mbox		mbox;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_vol_hs %d\n", DEVNAME(sc), volid);
 
@@ -2269,10 +2270,10 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	    cfg->mfc_no_hs, hs, cfg, hs[i].mhs_pd.mfp_id);
 
 	/* get pd fields */
-	memset(mbox, 0, sizeof mbox);
-	*((uint16_t *)&mbox) = hs[i].mhs_pd.mfp_id;
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.s[0] = hs[i].mhs_pd.mfp_id;
 	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
-	    sizeof *pd, pd, mbox)) {
+	    sizeof *pd, pd, &mbox)) {
 		DNPRINTF(MFI_D_IOCTL, "%s: mfi_vol_hs illegal PD\n",
 		    DEVNAME(sc));
 		goto freeme;
@@ -2728,7 +2729,7 @@ mfi_skinny_sgd_load(struct mfi_softc *sc, struct mfi_ccb *ccb)
 int
 mfi_pd_scsi_probe(struct scsi_link *link)
 {
-	uint8_t mbox[MFI_MBOX_SIZE];
+	union mfi_mbox mbox;
 	struct mfi_softc *sc = link->adapter_softc;
 	struct mfi_pd_link *pl = sc->sc_pd->pd_links[link->target];
 
@@ -2738,11 +2739,11 @@ mfi_pd_scsi_probe(struct scsi_link *link)
 	if (pl == NULL)
 		return (ENXIO);
 
-	bzero(mbox, sizeof(mbox));
-	memcpy(&mbox[0], &pl->pd_id, sizeof(pl->pd_id));
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.s[0] = pl->pd_id;
 
 	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
-	    sizeof(pl->pd_info), &pl->pd_info, mbox))
+	    sizeof(pl->pd_info), &pl->pd_info, &mbox))
 		return (EIO);
 
 	if (letoh16(pl->pd_info.mpd_fw_state) != MFI_PD_SYSTEM)

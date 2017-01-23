@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.45 2016/08/14 04:08:03 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.46 2017/01/23 01:10:31 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -168,6 +168,12 @@
 
 /* mailbox bytes in direct command */
 #define MFI_MBOX_SIZE				12
+
+union mfi_mbox {
+	uint8_t			b[MFI_MBOX_SIZE];
+	uint16_t		s[6];
+	uint32_t		w[3];
+} __packed __aligned(4);
 
 /* mfi completion codes */
 typedef enum {
@@ -377,7 +383,7 @@ struct mfi_pass_frame {
 struct mfi_dcmd_frame {
 	struct mfi_frame_header mdf_header;
 	uint32_t		mdf_opcode;
-	uint8_t			mdf_mbox[MFI_MBOX_SIZE];
+	union mfi_mbox		mdf_mbox;
 	union mfi_sgl		mdf_sgl;
 } __packed;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.28 2016/10/24 05:27:52 yasuoka Exp $ */
+/* $OpenBSD: mfii.c,v 1.29 2017/01/23 01:10:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -326,7 +326,8 @@ int			mfii_load_mfa(struct mfii_softc *, struct mfii_ccb *,
 int			mfii_mfa_poll(struct mfii_softc *, struct mfii_ccb *);
 
 int			mfii_mgmt(struct mfii_softc *, struct mfii_ccb *,
-			    u_int32_t, u_int8_t *, void *, size_t, int);
+			    u_int32_t, const union mfi_mbox *,
+			    void *, size_t, int);
 
 int			mfii_scsi_cmd_io(struct mfii_softc *,
 			    struct scsi_xfer *);
@@ -1040,7 +1041,8 @@ mfii_exec_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 
 int
 mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
-    u_int32_t opc, u_int8_t *mbox, void *buf, size_t len, int flags)
+    u_int32_t opc, const union mfi_mbox *mbox, void *buf, size_t len,
+    int flags)
 {
 	struct mfi_dcmd_frame *dcmd = ccb->ccb_request;
 	struct mfi_frame_header	*hdr = &dcmd->mdf_header;
@@ -1081,7 +1083,7 @@ mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	dcmd->mdf_opcode = opc;
 	/* handle special opcodes */
 	if (mbox != NULL)
-		memcpy(dcmd->mdf_mbox, mbox, MFI_MBOX_SIZE);
+		memcpy(&dcmd->mdf_mbox, mbox, sizeof(dcmd->mdf_mbox));
 
 	if (ISSET(flags, SCSI_NOSLEEP))
 		mfii_mfa_poll(sc, ccb);
@@ -1548,7 +1550,7 @@ int
 mfii_pd_scsi_probe(struct scsi_link *link)
 {
 	struct mfii_ccb *ccb;
-	uint8_t mbox[MFI_MBOX_SIZE];
+	union mfi_mbox mbox;
 	struct mfii_softc *sc = link->adapter_softc;
 	struct mfii_pd_link *pl = sc->sc_pd->pd_links[link->target];
 	int rv;
@@ -1559,11 +1561,11 @@ mfii_pd_scsi_probe(struct scsi_link *link)
 	if (pl == NULL)
 		return (ENXIO);
 
-	memset(mbox, 0, sizeof(mbox));
-	memcpy(&mbox[0], &pl->pd_id, sizeof(pl->pd_id));
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.s[0] = pl->pd_id;
 
 	ccb = scsi_io_get(&sc->sc_iopool, 0);
-	rv = mfii_mgmt(sc, ccb, MR_DCMD_PD_GET_INFO, mbox, &pl->pd_info,
+	rv = mfii_mgmt(sc, ccb, MR_DCMD_PD_GET_INFO, &mbox, &pl->pd_info,
 	    sizeof(pl->pd_info), SCSI_DATA_IN|SCSI_NOSLEEP);
 	scsi_io_put(&sc->sc_iopool, ccb);
 	if (rv != 0)
