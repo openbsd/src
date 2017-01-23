@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.5 2017/01/23 13:39:24 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.6 2017/01/23 13:43:50 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -401,6 +401,13 @@ create_pagetables:
 	mov	x6, x27		/* The initial page table */
 	mov	x7, #NORMAL_MEM // #NORMAL
 	mov	x9, x27
+	mov	x8, x9		/* VA start (== PA start) */
+	bl	build_section_pagetable
+
+	/* Create a mapping for the FDT */
+	mov	x6, x27		/* The initial page table */
+	mov	x7, #NORMAL_MEM // #NORMAL
+	mov	x9, x23
 	mov	x8, x9		/* VA start (== PA start) */
 	bl	build_section_pagetable
 
