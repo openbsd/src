@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.111 2016/10/06 16:29:17 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.112 2017/01/23 04:45:59 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -229,17 +229,13 @@ void
 interface_link_forceup(char *ifname)
 {
 	struct ifreq ifr;
-	int sock;
-
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		error("Can't create socket");
+	extern int sock;
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
 		note("interface_link_forceup: SIOCGIFFLAGS failed (%s)",
 		    strerror(errno));
-		close(sock);
 		return;
 	}
 
@@ -248,7 +244,6 @@ interface_link_forceup(char *ifname)
 	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
 		note("interface_link_forceup: SIOCSIFFLAGS DOWN failed (%s)",
 		    strerror(errno));
-		close(sock);
 		return;
 	}
 
@@ -256,11 +251,8 @@ interface_link_forceup(char *ifname)
 	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
 		note("interface_link_forceup: SIOCSIFFLAGS UP failed (%s)",
 		    strerror(errno));
-		close(sock);
 		return;
 	}
-
-	close(sock);
 }
 
 int
@@ -268,10 +260,7 @@ interface_status(struct interface_info *ifi)
 {
 	struct ifreq ifr;
 	struct ifmediareq ifmr;
-	int sock;
-
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		error("Can't create socket");
+	extern int sock;
 
 	/* Get interface flags. */
 	memset(&ifr, 0, sizeof(ifr));
@@ -313,10 +302,8 @@ interface_status(struct interface_info *ifi)
 	/* Assume 'active' if IFM_AVALID is not set. */
 
 active:
-	close(sock);
 	return (1);
 inactive:
-	close(sock);
 	return (0);
 }
 

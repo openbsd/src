@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.393 2016/11/25 14:46:57 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.394 2017/01/23 04:45:59 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -426,6 +426,8 @@ die:
 
 char **saved_argv;
 
+int sock;
+
 int
 main(int argc, char *argv[])
 {
@@ -439,7 +441,7 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	char *ignore_list = NULL;
 	ssize_t tailn;
-	int rtfilter, sock, tailfd;
+	int rtfilter, tailfd;
 
 	saved_argv = argv;
 
@@ -522,7 +524,6 @@ main(int argc, char *argv[])
 		memset(ifi->ssid, 0, sizeof(ifi->ssid));
 		memcpy(ifi->ssid, nwid.i_nwid, nwid.i_len);
 	}
-	close(sock);
 
 	/* Put us into the correct rdomain */
 	ifi->rdomain = get_rdomain(ifi->name);
