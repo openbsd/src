@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.61 2017/01/23 05:27:22 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.62 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -319,7 +319,7 @@ ssl_get_new_session(SSL *s, int session)
 		}
 
 		/* If RFC4507 ticket use empty session ID. */
-		if (s->tlsext_ticket_expected) {
+		if (s->internal->tlsext_ticket_expected) {
 			ss->session_id_length = 0;
 			goto sess_id_done;
 		}
@@ -411,7 +411,7 @@ sess_id_done:
  *   - If a session is found then s->session is pointed at it (after freeing
  *     an existing session if need be) and s->verify_result is set from the
  *     session.
- *   - Both for new and resumed sessions, s->tlsext_ticket_expected is set
+ *   - Both for new and resumed sessions, s->internal->tlsext_ticket_expected is set
  *     to 1 if the server should issue a new session ticket (to 0 otherwise).
  */
 int
@@ -431,7 +431,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	if (len == 0)
 		try_session_cache = 0;
 
-	/* Sets s->tlsext_ticket_expected. */
+	/* Sets s->internal->tlsext_ticket_expected. */
 	r = tls1_process_ticket(s, session_id, len, limit, &ret);
 	switch (r) {
 	case -1: /* Error during processing */
@@ -566,7 +566,7 @@ err:
 			 * The session was from a ticket, so we should
 			 * issue a ticket for the new session.
 			 */
-			s->tlsext_ticket_expected = 1;
+			s->internal->tlsext_ticket_expected = 1;
 		}
 	}
 	if (fatal)
@@ -869,24 +869,24 @@ int
 SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 {
 	if (s->version >= TLS1_VERSION) {
-		free(s->tlsext_session_ticket);
-		s->tlsext_session_ticket =
+		free(s->internal->tlsext_session_ticket);
+		s->internal->tlsext_session_ticket =
 		    malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
-		if (!s->tlsext_session_ticket) {
+		if (!s->internal->tlsext_session_ticket) {
 			SSLerr(SSL_F_SSL_SET_SESSION_TICKET_EXT,
 			    ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 
 		if (ext_data) {
-			s->tlsext_session_ticket->length = ext_len;
-			s->tlsext_session_ticket->data =
-			    s->tlsext_session_ticket + 1;
-			memcpy(s->tlsext_session_ticket->data,
+			s->internal->tlsext_session_ticket->length = ext_len;
+			s->internal->tlsext_session_ticket->data =
+			    s->internal->tlsext_session_ticket + 1;
+			memcpy(s->internal->tlsext_session_ticket->data,
 			    ext_data, ext_len);
 		} else {
-			s->tlsext_session_ticket->length = 0;
-			s->tlsext_session_ticket->data = NULL;
+			s->internal->tlsext_session_ticket->length = 0;
+			s->internal->tlsext_session_ticket->data = NULL;
 		}
 
 		return 1;
@@ -950,7 +950,7 @@ SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 int
 ssl_clear_bad_session(SSL *s)
 {
-	if ((s->session != NULL) && !(s->shutdown & SSL_SENT_SHUTDOWN) &&
+	if ((s->session != NULL) && !(s->internal->shutdown & SSL_SENT_SHUTDOWN) &&
 	    !(SSL_in_init(s) || SSL_in_before(s))) {
 		SSL_CTX_remove_session(s->ctx, s->session);
 		return (1);

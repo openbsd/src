@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.52 2017/01/23 04:55:26 beck Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.53 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,7 +158,7 @@ ssl23_connect(SSL *s)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
 
 			/* s->version=TLS1_VERSION; */
-			s->type = SSL_ST_CONNECT;
+			s->internal->type = SSL_ST_CONNECT;
 
 			if (!ssl3_setup_init_buffer(s)) {
 				ret = -1;
@@ -175,18 +175,18 @@ ssl23_connect(SSL *s)
 
 			s->state = SSL23_ST_CW_CLNT_HELLO_A;
 			s->ctx->internal->stats.sess_connect++;
-			s->init_num = 0;
+			s->internal->init_num = 0;
 			break;
 
 		case SSL23_ST_CW_CLNT_HELLO_A:
 		case SSL23_ST_CW_CLNT_HELLO_B:
 
-			s->shutdown = 0;
+			s->internal->shutdown = 0;
 			ret = ssl23_client_hello(s);
 			if (ret <= 0)
 				goto end;
 			s->state = SSL23_ST_CR_SRVR_HELLO_A;
-			s->init_num = 0;
+			s->internal->init_num = 0;
 
 			break;
 
@@ -205,7 +205,7 @@ ssl23_connect(SSL *s)
 			/* break; */
 		}
 
-		if (s->debug) {
+		if (s->internal->debug) {
 			(void)BIO_flush(s->wbio);
 		}
 
@@ -235,7 +235,7 @@ ssl23_client_hello(SSL *s)
 	size_t outlen;
 	int ret;
 
-	buf = (unsigned char *)s->init_buf->data;
+	buf = (unsigned char *)s->internal->init_buf->data;
 	if (s->state == SSL23_ST_CW_CLNT_HELLO_A) {
 		arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
@@ -319,14 +319,14 @@ ssl23_client_hello(SSL *s)
 		s2n((int)l, d);
 
 		/* number of bytes to write */
-		s->init_num = p - buf;
-		s->init_off = 0;
+		s->internal->init_num = p - buf;
+		s->internal->init_off = 0;
 
 		tls1_finish_mac(s, &(buf[SSL3_RT_HEADER_LENGTH]),
-		    s->init_num - SSL3_RT_HEADER_LENGTH);
+		    s->internal->init_num - SSL3_RT_HEADER_LENGTH);
 
 		s->state = SSL23_ST_CW_CLNT_HELLO_B;
-		s->init_off = 0;
+		s->internal->init_off = 0;
 	}
 
 	/* SSL3_ST_CW_CLNT_HELLO_B */
@@ -335,7 +335,7 @@ ssl23_client_hello(SSL *s)
 	if ((ret >= 2) && s->internal->msg_callback) {
 		/* Client Hello has been sent; tell msg_callback */
 		s->internal->msg_callback(1, s->client_version, SSL3_RT_HANDSHAKE,
-		    s->init_buf->data + 5, ret - 5, s, s->internal->msg_callback_arg);
+		    s->internal->init_buf->data + 5, ret - 5, s, s->internal->msg_callback_arg);
 	}
 
 	return ret;
@@ -353,7 +353,7 @@ ssl23_get_server_hello(SSL *s)
 
 	if (n != 7)
 		return (n);
-	p = s->packet;
+	p = s->internal->packet;
 
 	memcpy(buf, p, n);
 
@@ -409,7 +409,7 @@ ssl23_get_server_hello(SSL *s)
 				s->internal->msg_callback(0, s->version, SSL3_RT_ALERT,
 				    p + 5, 2, s, s->internal->msg_callback_arg);
 
-			s->rwstate = SSL_NOTHING;
+			s->internal->rwstate = SSL_NOTHING;
 			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,
 			    SSL_AD_REASON_OFFSET + p[6]);
 			goto err;
@@ -424,12 +424,12 @@ ssl23_get_server_hello(SSL *s)
 		/* put the 7 bytes we have read into the input buffer
 		 * for SSLv3 */
 		s->rstate = SSL_ST_READ_HEADER;
-		s->packet_length = n;
+		s->internal->packet_length = n;
 		if (s->s3->rbuf.buf == NULL)
 			if (!ssl3_setup_read_buffer(s))
 				goto err;
-		s->packet = &(s->s3->rbuf.buf[0]);
-		memcpy(s->packet, buf, n);
+		s->internal->packet = &(s->s3->rbuf.buf[0]);
+		memcpy(s->internal->packet, buf, n);
 		s->s3->rbuf.left = n;
 		s->s3->rbuf.offset = 0;
 
@@ -438,7 +438,7 @@ ssl23_get_server_hello(SSL *s)
 		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO, SSL_R_UNKNOWN_PROTOCOL);
 		goto err;
 	}
-	s->init_num = 0;
+	s->internal->init_num = 0;
 
 	/*
 	 * Since, if we are sending a ssl23 client hello, we are not

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.102 2017/01/23 05:13:02 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.103 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,7 +201,7 @@ tls1_free(SSL *s)
 	if (s == NULL)
 		return;
 
-	free(s->tlsext_session_ticket);
+	free(s->internal->tlsext_session_ticket);
 	ssl3_free(s);
 }
 
@@ -376,8 +376,8 @@ tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
 		return;
 	}
 
-	*pformats = s->tlsext_ecpointformatlist;
-	*pformatslen = s->tlsext_ecpointformatlist_length;
+	*pformats = s->internal->tlsext_ecpointformatlist;
+	*pformatslen = s->internal->tlsext_ecpointformatlist_length;
 	if (*pformats == NULL) {
 		*pformats = ecformats_default;
 		*pformatslen = sizeof(ecformats_default);
@@ -399,8 +399,8 @@ tls1_get_curvelist(SSL *s, int client_curves, const uint16_t **pcurves,
 		return;
 	}
 
-	*pcurves = s->tlsext_ellipticcurvelist;
-	*pcurveslen = s->tlsext_ellipticcurvelist_length;
+	*pcurves = s->internal->tlsext_ellipticcurvelist;
+	*pcurveslen = s->internal->tlsext_ellipticcurvelist_length;
 	if (*pcurves == NULL) {
 		*pcurves = eccurves_default;
 		*pcurveslen = sizeof(eccurves_default) / 2;
@@ -690,7 +690,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 
 	/* Add RI if renegotiating */
-	if (s->renegotiate) {
+	if (s->internal->renegotiate) {
 		int el;
 
 		if (!ssl_add_clienthello_renegotiate_ext(s, 0, &el, 0)) {
@@ -775,21 +775,21 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 
 	if (!(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
 		int ticklen;
-		if (!s->new_session && s->session && s->session->tlsext_tick)
+		if (!s->internal->new_session && s->session && s->session->tlsext_tick)
 			ticklen = s->session->tlsext_ticklen;
-		else if (s->session && s->tlsext_session_ticket &&
-		    s->tlsext_session_ticket->data) {
-			ticklen = s->tlsext_session_ticket->length;
+		else if (s->session && s->internal->tlsext_session_ticket &&
+		    s->internal->tlsext_session_ticket->data) {
+			ticklen = s->internal->tlsext_session_ticket->length;
 			s->session->tlsext_tick = malloc(ticklen);
 			if (!s->session->tlsext_tick)
 				return NULL;
 			memcpy(s->session->tlsext_tick,
-			    s->tlsext_session_ticket->data, ticklen);
+			    s->internal->tlsext_session_ticket->data, ticklen);
 			s->session->tlsext_ticklen = ticklen;
 		} else
 			ticklen = 0;
-		if (ticklen == 0 && s->tlsext_session_ticket &&
-		    s->tlsext_session_ticket->data == NULL)
+		if (ticklen == 0 && s->internal->tlsext_session_ticket &&
+		    s->internal->tlsext_session_ticket->data == NULL)
 			goto skip_ext;
 		/* Check for enough room 2 for extension type, 2 for len
  		 * rest for ticket
@@ -824,16 +824,16 @@ skip_ext:
 		OCSP_RESPID *id;
 
 		idlen = 0;
-		for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++) {
-			id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
+		for (i = 0; i < sk_OCSP_RESPID_num(s->internal->tlsext_ocsp_ids); i++) {
+			id = sk_OCSP_RESPID_value(s->internal->tlsext_ocsp_ids, i);
 			itmp = i2d_OCSP_RESPID(id, NULL);
 			if (itmp <= 0)
 				return NULL;
 			idlen += itmp + 2;
 		}
 
-		if (s->tlsext_ocsp_exts) {
-			extlen = i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, NULL);
+		if (s->internal->tlsext_ocsp_exts) {
+			extlen = i2d_X509_EXTENSIONS(s->internal->tlsext_ocsp_exts, NULL);
 			if (extlen < 0)
 				return NULL;
 		} else
@@ -847,10 +847,10 @@ skip_ext:
 		s2n(extlen + idlen + 5, ret);
 		*(ret++) = TLSEXT_STATUSTYPE_ocsp;
 		s2n(idlen, ret);
-		for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++) {
+		for (i = 0; i < sk_OCSP_RESPID_num(s->internal->tlsext_ocsp_ids); i++) {
 			/* save position of id len */
 			unsigned char *q = ret;
-			id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
+			id = sk_OCSP_RESPID_value(s->internal->tlsext_ocsp_ids, i);
 			/* skip over id len */
 			ret += 2;
 			itmp = i2d_OCSP_RESPID(id, &ret);
@@ -859,7 +859,7 @@ skip_ext:
 		}
 		s2n(extlen, ret);
 		if (extlen > 0)
-			i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
+			i2d_X509_EXTENSIONS(s->internal->tlsext_ocsp_exts, &ret);
 	}
 
 	if (s->ctx->internal->next_proto_select_cb &&
@@ -917,7 +917,7 @@ skip_ext:
 	 * extensions it MUST always appear last.
 	 */
 	if (s->options & SSL_OP_TLSEXT_PADDING) {
-		int hlen = ret - (unsigned char *)s->init_buf->data;
+		int hlen = ret - (unsigned char *)s->internal->init_buf->data;
 
 		/*
 		 * The code in s23_clnt.c to build ClientHello messages
@@ -964,7 +964,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (ret >= limit)
 		return NULL; /* this really never occurs, but ... */
 
-	if (!s->hit && s->servername_done == 1 &&
+	if (!s->internal->hit && s->internal->servername_done == 1 &&
 	    s->session->tlsext_hostname != NULL) {
 		if ((size_t)(limit - ret) < 4)
 			return NULL;
@@ -1030,7 +1030,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	 * extension.
 	 */
 
-	if (s->tlsext_ticket_expected &&
+	if (s->internal->tlsext_ticket_expected &&
 	    !(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
 		if ((size_t)(limit - ret) < 4)
 			return NULL;
@@ -1039,7 +1039,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		s2n(0, ret);
 	}
 
-	if (s->tlsext_status_expected) {
+	if (s->internal->tlsext_status_expected) {
 		if ((size_t)(limit - ret) < 4)
 			return NULL;
 
@@ -1048,7 +1048,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 
 #ifndef OPENSSL_NO_SRTP
-	if (SSL_IS_DTLS(s) && s->srtp_profile) {
+	if (SSL_IS_DTLS(s) && s->internal->srtp_profile) {
 		int el;
 
 		ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0);
@@ -1203,12 +1203,12 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 	int renegotiate_seen = 0;
 	int sigalg_seen = 0;
 
-	s->servername_done = 0;
+	s->internal->servername_done = 0;
 	s->tlsext_status_type = -1;
 	S3I(s)->next_proto_neg_seen = 0;
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;
-	s->srtp_profile = NULL;
+	s->internal->srtp_profile = NULL;
 
 	if (data == end)
 		goto ri_check;
@@ -1281,10 +1281,10 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 					*al = SSL_AD_DECODE_ERROR;
 					return 0;
 				}
-				if (s->servername_done == 0)
+				if (s->internal->servername_done == 0)
 					switch (servname_type) {
 					case TLSEXT_NAMETYPE_host_name:
-						if (!s->hit) {
+						if (!s->internal->hit) {
 							if (s->session->tlsext_hostname) {
 								*al = SSL_AD_DECODE_ERROR;
 								return 0;
@@ -1306,11 +1306,11 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 								*al = TLS1_AD_UNRECOGNIZED_NAME;
 								return 0;
 							}
-							s->servername_done = 1;
+							s->internal->servername_done = 1;
 
 
 						} else {
-							s->servername_done = s->session->tlsext_hostname &&
+							s->internal->servername_done = s->session->tlsext_hostname &&
 							    strlen(s->session->tlsext_hostname) == len &&
 							    strncmp(s->session->tlsext_hostname, (char *)sdata, len) == 0;
 						}
@@ -1345,7 +1345,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				return 0;
 			}
 
-			if (!s->hit) {
+			if (!s->internal->hit) {
 				free(SSI(s)->tlsext_ecpointformatlist);
 				SSI(s)->tlsext_ecpointformatlist = NULL;
 				SSI(s)->tlsext_ecpointformatlist_length = 0;
@@ -1377,7 +1377,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			}
 			curveslen /= 2;
 
-			if (!s->hit) {
+			if (!s->internal->hit) {
 				if (SSI(s)->tlsext_ellipticcurvelist) {
 					*al = TLS1_AD_DECODE_ERROR;
 					return 0;
@@ -1447,13 +1447,13 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				 * previous handshake to prevent
 				 * unbounded memory growth.
 				 */
-				sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids,
+				sk_OCSP_RESPID_pop_free(s->internal->tlsext_ocsp_ids,
 				    OCSP_RESPID_free);
-				s->tlsext_ocsp_ids = NULL;
+				s->internal->tlsext_ocsp_ids = NULL;
 				if (dsize > 0) {
-					s->tlsext_ocsp_ids =
+					s->internal->tlsext_ocsp_ids =
 					    sk_OCSP_RESPID_new_null();
-					if (s->tlsext_ocsp_ids == NULL) {
+					if (s->internal->tlsext_ocsp_ids == NULL) {
 						*al = SSL_AD_INTERNAL_ERROR;
 						return 0;
 					}
@@ -1487,7 +1487,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 						return 0;
 					}
 					if (!sk_OCSP_RESPID_push(
-					    s->tlsext_ocsp_ids, id)) {
+					    s->internal->tlsext_ocsp_ids, id)) {
 						OCSP_RESPID_free(id);
 						*al = SSL_AD_INTERNAL_ERROR;
 						return 0;
@@ -1507,15 +1507,15 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				}
 				sdata = data;
 				if (dsize > 0) {
-					if (s->tlsext_ocsp_exts) {
-						sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
+					if (s->internal->tlsext_ocsp_exts) {
+						sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
 						    X509_EXTENSION_free);
 					}
 
-					s->tlsext_ocsp_exts =
+					s->internal->tlsext_ocsp_exts =
 					    d2i_X509_EXTENSIONS(NULL,
 					    &sdata, dsize);
-					if (!s->tlsext_ocsp_exts ||
+					if (!s->internal->tlsext_ocsp_exts ||
 						    (data + dsize != sdata)) {
 						*al = SSL_AD_DECODE_ERROR;
 						return 0;
@@ -1534,7 +1534,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			/* We shouldn't accept this extension on a
 			 * renegotiation.
 			 *
-			 * s->new_session will be set on renegotiation, but we
+			 * s->internal->new_session will be set on renegotiation, but we
 			 * probably shouldn't rely that it couldn't be set on
 			 * the initial renegotation too in certain cases (when
 			 * there's some other reason to disallow resuming an
@@ -1580,7 +1580,7 @@ ri_check:
 
 	/* Need RI if renegotiating */
 
-	if (!renegotiate_seen && s->renegotiate) {
+	if (!renegotiate_seen && s->internal->renegotiate) {
 		*al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT,
 		    SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
@@ -1673,7 +1673,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 				return 0;
 			}
 
-			if (!s->hit) {
+			if (!s->internal->hit) {
 				free(SSI(s)->tlsext_ecpointformatlist);
 				SSI(s)->tlsext_ecpointformatlist = NULL;
 				SSI(s)->tlsext_ecpointformatlist_length = 0;
@@ -1699,7 +1699,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
 				return 0;
 			}
-			s->tlsext_ticket_expected = 1;
+			s->internal->tlsext_ticket_expected = 1;
 		}
 		else if (type == TLSEXT_TYPE_status_request &&
 		    s->version != DTLS1_VERSION) {
@@ -1711,7 +1711,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 				return 0;
 			}
 			/* Set flag to expect CertificateStatus message */
-			s->tlsext_status_expected = 1;
+			s->internal->tlsext_status_expected = 1;
 		}
 		else if (type == TLSEXT_TYPE_next_proto_neg &&
 		    S3I(s)->tmp.finish_md_len == 0) {
@@ -1804,7 +1804,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 		return 0;
 	}
 
-	if (!s->hit && tlsext_servername == 1) {
+	if (!s->internal->hit && tlsext_servername == 1) {
 		if (s->tlsext_hostname) {
 			if (s->session->tlsext_hostname == NULL) {
 				s->session->tlsext_hostname =
@@ -1874,7 +1874,7 @@ ssl_check_clienthello_tlsext_early(SSL *s)
 		ssl3_send_alert(s, SSL3_AL_WARNING, al);
 		return 1;
 	case SSL_TLSEXT_ERR_NOACK:
-		s->servername_done = 0;
+		s->internal->servername_done = 0;
 	default:
 		return 1;
 	}
@@ -1898,7 +1898,7 @@ ssl_check_clienthello_tlsext_late(SSL *s)
 		certpkey = ssl_get_server_send_pkey(s);
 		/* If no certificate can't return certificate status */
 		if (certpkey == NULL) {
-			s->tlsext_status_expected = 0;
+			s->internal->tlsext_status_expected = 0;
 			return 1;
 		}
 		/* Set current certificate to one we will use so
@@ -1910,14 +1910,14 @@ ssl_check_clienthello_tlsext_late(SSL *s)
 		switch (r) {
 			/* We don't want to send a status request response */
 		case SSL_TLSEXT_ERR_NOACK:
-			s->tlsext_status_expected = 0;
+			s->internal->tlsext_status_expected = 0;
 			break;
 			/* status request response should be sent */
 		case SSL_TLSEXT_ERR_OK:
-			if (s->tlsext_ocsp_resp)
-				s->tlsext_status_expected = 1;
+			if (s->internal->tlsext_ocsp_resp)
+				s->internal->tlsext_status_expected = 1;
 			else
-				s->tlsext_status_expected = 0;
+				s->internal->tlsext_status_expected = 0;
 			break;
 			/* something bad happened */
 		case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -1926,7 +1926,7 @@ ssl_check_clienthello_tlsext_late(SSL *s)
 			goto err;
 		}
 	} else
-		s->tlsext_status_expected = 0;
+		s->internal->tlsext_status_expected = 0;
 
 err:
 	switch (ret) {
@@ -1953,8 +1953,8 @@ ssl_check_serverhello_tlsext(SSL *s)
 	 */
 	unsigned long alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
 	unsigned long alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
-	if ((s->tlsext_ecpointformatlist != NULL) &&
-	    (s->tlsext_ecpointformatlist_length > 0) &&
+	if ((s->internal->tlsext_ecpointformatlist != NULL) &&
+	    (s->internal->tlsext_ecpointformatlist_length > 0) &&
 	    (SSI(s)->tlsext_ecpointformatlist != NULL) &&
 	    (SSI(s)->tlsext_ecpointformatlist_length > 0) &&
 	    ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
@@ -1986,15 +1986,15 @@ ssl_check_serverhello_tlsext(SSL *s)
 	/* If we've requested certificate status and we wont get one
  	 * tell the callback
  	 */
-	if ((s->tlsext_status_type != -1) && !(s->tlsext_status_expected) &&
+	if ((s->tlsext_status_type != -1) && !(s->internal->tlsext_status_expected) &&
 	    s->ctx && s->ctx->internal->tlsext_status_cb) {
 		int r;
 		/* Set resp to NULL, resplen to -1 so callback knows
  		 * there is no response.
  		 */
-		free(s->tlsext_ocsp_resp);
-		s->tlsext_ocsp_resp = NULL;
-		s->tlsext_ocsp_resplen = -1;
+		free(s->internal->tlsext_ocsp_resp);
+		s->internal->tlsext_ocsp_resp = NULL;
+		s->internal->tlsext_ocsp_resplen = -1;
 		r = s->ctx->internal->tlsext_status_cb(s,
 		    s->ctx->internal->tlsext_status_arg);
 		if (r == 0) {
@@ -2017,7 +2017,7 @@ ssl_check_serverhello_tlsext(SSL *s)
 
 		return 1;
 	case SSL_TLSEXT_ERR_NOACK:
-		s->servername_done = 0;
+		s->internal->servername_done = 0;
 	default:
 		return 1;
 	}
@@ -2037,7 +2037,7 @@ ssl_check_serverhello_tlsext(SSL *s)
  *
  * If s->internal->tls_session_secret_cb is set then we are expecting a pre-shared key
  * ciphersuite, in which case we have no use for session tickets and one will
- * never be decrypted, nor will s->tlsext_ticket_expected be set to 1.
+ * never be decrypted, nor will s->internal->tlsext_ticket_expected be set to 1.
  *
  * Returns:
  *   -1: fatal error, either from parsing or decrypting the ticket.
@@ -2049,12 +2049,12 @@ ssl_check_serverhello_tlsext(SSL *s)
  *    3: a ticket was successfully decrypted and *ret was set.
  *
  * Side effects:
- *   Sets s->tlsext_ticket_expected to 1 if the server will have to issue
+ *   Sets s->internal->tlsext_ticket_expected to 1 if the server will have to issue
  *   a new session ticket to the client because the client indicated support
  *   (and s->internal->tls_session_secret_cb is NULL) but the client either doesn't have
  *   a session ticket or we couldn't use the one it gave us, or if
  *   s->ctx->tlsext_ticket_key_cb asked to renew the client's ticket.
- *   Otherwise, s->tlsext_ticket_expected is set to 0.
+ *   Otherwise, s->internal->tlsext_ticket_expected is set to 0.
  */
 int
 tls1_process_ticket(SSL *s, const unsigned char *session, int session_len,
@@ -2064,7 +2064,7 @@ tls1_process_ticket(SSL *s, const unsigned char *session, int session_len,
 	CBS session_id, cookie, cipher_list, compress_algo, extensions;
 
 	*ret = NULL;
-	s->tlsext_ticket_expected = 0;
+	s->internal->tlsext_ticket_expected = 0;
 
 	/* If tickets disabled behave as if no ticket present
 	 * to permit stateful resumption.
@@ -2116,7 +2116,7 @@ tls1_process_ticket(SSL *s, const unsigned char *session, int session_len,
 			if (CBS_len(&ext_data) == 0) {
 				/* The client will accept a ticket but doesn't
 				 * currently have one. */
-				s->tlsext_ticket_expected = 1;
+				s->internal->tlsext_ticket_expected = 1;
 				return 1;
 			}
 			if (s->internal->tls_session_secret_cb) {
@@ -2133,12 +2133,12 @@ tls1_process_ticket(SSL *s, const unsigned char *session, int session_len,
 
 			switch (r) {
 			case 2: /* ticket couldn't be decrypted */
-				s->tlsext_ticket_expected = 1;
+				s->internal->tlsext_ticket_expected = 1;
 				return 2;
 			case 3: /* ticket was decrypted */
 				return r;
 			case 4: /* ticket decrypted but need to renew */
-				s->tlsext_ticket_expected = 1;
+				s->internal->tlsext_ticket_expected = 1;
 				return 3;
 			default: /* fatal error */
 				return -1;

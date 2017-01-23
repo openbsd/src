@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.89 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.90 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -461,13 +461,13 @@ tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
 	SSL_AEAD_CTX *aead_ctx;
 
 	if (is_read) {
-		if (!tls1_aead_ctx_init(&s->aead_read_ctx))
+		if (!tls1_aead_ctx_init(&s->internal->aead_read_ctx))
 			return 0;
-		aead_ctx = s->aead_read_ctx;
+		aead_ctx = s->internal->aead_read_ctx;
 	} else {
-		if (!tls1_aead_ctx_init(&s->aead_write_ctx))
+		if (!tls1_aead_ctx_init(&s->internal->aead_write_ctx))
 			return 0;
-		aead_ctx = s->aead_write_ctx;
+		aead_ctx = s->internal->aead_write_ctx;
 	}
 
 	if (!EVP_AEAD_CTX_init(&aead_ctx->ctx, aead, key, key_len,
@@ -532,26 +532,26 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 
 	if (is_read) {
 		if (S3I(s)->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
-			s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
+			s->internal->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
 		else
-			s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
+			s->internal->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
 
-		EVP_CIPHER_CTX_free(s->enc_read_ctx);
-		s->enc_read_ctx = NULL;
-		EVP_MD_CTX_destroy(s->read_hash);
-		s->read_hash = NULL;
+		EVP_CIPHER_CTX_free(s->internal->enc_read_ctx);
+		s->internal->enc_read_ctx = NULL;
+		EVP_MD_CTX_destroy(s->internal->read_hash);
+		s->internal->read_hash = NULL;
 
 		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
 			goto err;
-		s->enc_read_ctx = cipher_ctx;
+		s->internal->enc_read_ctx = cipher_ctx;
 		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
 			goto err;
-		s->read_hash = mac_ctx;
+		s->internal->read_hash = mac_ctx;
 	} else {
 		if (S3I(s)->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
-			s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
+			s->internal->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
 		else
-			s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
+			s->internal->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
 
 		/*
 		 * DTLS fragments retain a pointer to the compression, cipher
@@ -561,17 +561,17 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 		 * by DTLS when its frees a ChangeCipherSpec fragment.
 		 */
 		if (!SSL_IS_DTLS(s)) {
-			EVP_CIPHER_CTX_free(s->enc_write_ctx);
-			s->enc_write_ctx = NULL;
-			EVP_MD_CTX_destroy(s->write_hash);
-			s->write_hash = NULL;
+			EVP_CIPHER_CTX_free(s->internal->enc_write_ctx);
+			s->internal->enc_write_ctx = NULL;
+			EVP_MD_CTX_destroy(s->internal->write_hash);
+			s->internal->write_hash = NULL;
 		}
 		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
 			goto err;
-		s->enc_write_ctx = cipher_ctx;
+		s->internal->enc_write_ctx = cipher_ctx;
 		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
 			goto err;
-		s->write_hash = mac_ctx;
+		s->internal->write_hash = mac_ctx;
 	}
 
 	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE) {
@@ -833,11 +833,11 @@ tls1_enc(SSL *s, int send)
 	int bs, i, j, k, pad = 0, ret, mac_size = 0;
 
 	if (send) {
-		aead = s->aead_write_ctx;
+		aead = s->internal->aead_write_ctx;
 		rec = &S3I(s)->wrec;
 		seq = S3I(s)->write_sequence;
 	} else {
-		aead = s->aead_read_ctx;
+		aead = s->internal->aead_read_ctx;
 		rec = &S3I(s)->rrec;
 		seq = S3I(s)->read_sequence;
 	}
@@ -988,16 +988,16 @@ tls1_enc(SSL *s, int send)
 	}
 
 	if (send) {
-		if (EVP_MD_CTX_md(s->write_hash)) {
-			int n = EVP_MD_CTX_size(s->write_hash);
+		if (EVP_MD_CTX_md(s->internal->write_hash)) {
+			int n = EVP_MD_CTX_size(s->internal->write_hash);
 			OPENSSL_assert(n >= 0);
 		}
-		ds = s->enc_write_ctx;
-		if (s->enc_write_ctx == NULL)
+		ds = s->internal->enc_write_ctx;
+		if (s->internal->enc_write_ctx == NULL)
 			enc = NULL;
 		else {
 			int ivlen = 0;
-			enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
+			enc = EVP_CIPHER_CTX_cipher(s->internal->enc_write_ctx);
 			if (SSL_USE_EXPLICIT_IV(s) &&
 			    EVP_CIPHER_mode(enc) == EVP_CIPH_CBC_MODE)
 				ivlen = EVP_CIPHER_iv_length(enc);
@@ -1016,15 +1016,15 @@ tls1_enc(SSL *s, int send)
 			}
 		}
 	} else {
-		if (EVP_MD_CTX_md(s->read_hash)) {
-			int n = EVP_MD_CTX_size(s->read_hash);
+		if (EVP_MD_CTX_md(s->internal->read_hash)) {
+			int n = EVP_MD_CTX_size(s->internal->read_hash);
 			OPENSSL_assert(n >= 0);
 		}
-		ds = s->enc_read_ctx;
-		if (s->enc_read_ctx == NULL)
+		ds = s->internal->enc_read_ctx;
+		if (s->internal->enc_read_ctx == NULL)
 			enc = NULL;
 		else
-			enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
+			enc = EVP_CIPHER_CTX_cipher(s->internal->enc_read_ctx);
 	}
 
 	if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
@@ -1085,8 +1085,8 @@ tls1_enc(SSL *s, int send)
 		}
 
 		ret = 1;
-		if (EVP_MD_CTX_md(s->read_hash) != NULL)
-			mac_size = EVP_MD_CTX_size(s->read_hash);
+		if (EVP_MD_CTX_md(s->internal->read_hash) != NULL)
+			mac_size = EVP_MD_CTX_size(s->internal->read_hash);
 		if ((bs != 1) && !send)
 			ret = tls1_cbc_remove_padding(s, rec, bs, mac_size);
 		if (pad && !send)
@@ -1188,18 +1188,18 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	EVP_MD_CTX hmac, *mac_ctx;
 	unsigned char header[13];
 	int stream_mac = (send ?
-	    (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM) :
-	    (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM));
+	    (ssl->internal->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM) :
+	    (ssl->internal->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM));
 	int t;
 
 	if (send) {
 		rec = &(ssl->s3->internal->wrec);
 		seq = &(ssl->s3->internal->write_sequence[0]);
-		hash = ssl->write_hash;
+		hash = ssl->internal->write_hash;
 	} else {
 		rec = &(ssl->s3->internal->rrec);
 		seq = &(ssl->s3->internal->read_sequence[0]);
-		hash = ssl->read_hash;
+		hash = ssl->internal->read_hash;
 	}
 
 	t = EVP_MD_CTX_size(hash);
@@ -1232,7 +1232,7 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	header[12] = (rec->length) & 0xff;
 
 	if (!send &&
-	    EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
+	    EVP_CIPHER_CTX_mode(ssl->internal->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
 	    ssl3_cbc_record_digest_supported(mac_ctx)) {
 		/* This is a CBC-encrypted record. We must avoid leaking any
 		 * timing-side channel information about how many blocks of

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.157 2017/01/23 05:27:22 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.158 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -620,6 +620,112 @@ typedef struct ssl_internal_st {
 	tls_session_secret_cb_fn tls_session_secret_cb;
 	void *tls_session_secret_cb_arg;
 
+	/* XXX non-callback */
+
+	int type; /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
+
+	/* This holds a variable that indicates what we were doing
+	 * when a 0 or -1 is returned.  This is needed for
+	 * non-blocking IO so we know what request needs re-doing when
+	 * in SSL_accept or SSL_connect */
+	int rwstate;
+
+	/* Imagine that here's a boolean member "init" that is
+	 * switched as soon as SSL_set_{accept/connect}_state
+	 * is called for the first time, so that "state" and
+	 * "handshake_func" are properly initialized.  But as
+	 * handshake_func is == 0 until then, we use this
+	 * test instead of an "init" member.
+	 */
+
+	int new_session;/* Generate a new session or reuse an old one.
+			 * NB: For servers, the 'new' session may actually be a previously
+			 * cached session or even the previous session unless
+			 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
+	int quiet_shutdown;/* don't send shutdown packets */
+	int shutdown;	/* we have shut things down, 0x01 sent, 0x02
+			 * for received */
+	BUF_MEM *init_buf;	/* buffer used during init */
+	void *init_msg;		/* pointer to handshake message body, set by ssl3_get_message() */
+	int init_num;		/* amount read/written */
+	int init_off;		/* amount read/written */
+
+	/* used internally to point at a raw packet */
+	unsigned char *packet;
+	unsigned int packet_length;
+
+	int read_ahead;		/* Read as many input bytes as possible
+				 * (for non-blocking reads) */
+
+	int hit;		/* reusing a previous session */
+
+	/* crypto */
+	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
+
+	/* These are the ones being used, the ones in SSL_SESSION are
+	 * the ones to be 'copied' into these ones */
+	int mac_flags;
+
+	SSL_AEAD_CTX *aead_read_ctx;	/* AEAD context. If non-NULL, then
+					   enc_read_ctx and read_hash are
+					   ignored. */
+
+	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
+	EVP_MD_CTX *read_hash;			/* used for mac generation */
+
+	SSL_AEAD_CTX *aead_write_ctx;	/* AEAD context. If non-NULL, then
+					   enc_write_ctx and write_hash are
+					   ignored. */
+
+	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
+	EVP_MD_CTX *write_hash;			/* used for mac generation */
+
+	/* session info */
+
+	/* extra application data */
+	CRYPTO_EX_DATA ex_data;
+
+	/* client cert? */
+	/* for server side, keep the list of CA_dn we can use */
+	STACK_OF(X509_NAME) *client_CA;
+
+	/* set this flag to 1 and a sleep(1) is put into all SSL_read()
+	 * and SSL_write() calls, good for nbio debuging :-) */
+	int debug;
+	long max_cert_list;
+	int first_packet;
+
+	int servername_done;	/* no further mod of servername
+				   0 : call the servername extension callback.
+				   1 : prepare 2, allow last ack just after in server callback.
+				   2 : don't call servername callback, no ack in server hello
+				   */
+
+	/* Expect OCSP CertificateStatus message */
+	int tlsext_status_expected;
+	/* OCSP status request only */
+	STACK_OF(OCSP_RESPID) *tlsext_ocsp_ids;
+	X509_EXTENSIONS *tlsext_ocsp_exts;
+	/* OCSP response received or to be sent */
+	unsigned char *tlsext_ocsp_resp;
+	int tlsext_ocsp_resplen;
+
+	/* RFC4507 session ticket expected to be received or sent */
+	int tlsext_ticket_expected;
+	size_t tlsext_ecpointformatlist_length;
+	uint8_t *tlsext_ecpointformatlist; /* our list */
+	size_t tlsext_ellipticcurvelist_length;
+	uint16_t *tlsext_ellipticcurvelist; /* our list */
+
+	/* TLS Session Ticket extension override */
+	TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
+
+	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;	/* What we'll do */
+	SRTP_PROTECTION_PROFILE *srtp_profile;			/* What's been chosen */
+
+	int renegotiate;/* 1 if we are renegotiating.
+		 	 * 2 if we are a server and are inside a handshake
+	                 * (i.e. not just sending a HelloRequest) */
 } SSL_INTERNAL;
 
 typedef struct ssl3_state_internal_st {

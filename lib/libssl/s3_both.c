@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.52 2017/01/23 04:55:26 beck Exp $ */
+/* $OpenBSD: s3_both.c,v 1.53 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,7 +128,7 @@
 #include "bytestring.h"
 
 /*
- * Send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
+ * Send s->internal->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC).
  */
 int
@@ -136,8 +136,8 @@ ssl3_do_write(SSL *s, int type)
 {
 	int ret;
 
-	ret = ssl3_write_bytes(s, type, &s->init_buf->data[s->init_off],
-	    s->init_num);
+	ret = ssl3_write_bytes(s, type, &s->internal->init_buf->data[s->internal->init_off],
+	    s->internal->init_num);
 	if (ret < 0)
 		return (-1);
 
@@ -147,18 +147,18 @@ ssl3_do_write(SSL *s, int type)
 		 * we'll ignore the result anyway.
 		 */
 		tls1_finish_mac(s,
-		    (unsigned char *)&s->init_buf->data[s->init_off], ret);
+		    (unsigned char *)&s->internal->init_buf->data[s->internal->init_off], ret);
 
-	if (ret == s->init_num) {
+	if (ret == s->internal->init_num) {
 		if (s->internal->msg_callback)
-			s->internal->msg_callback(1, s->version, type, s->init_buf->data,
-			    (size_t)(s->init_off + s->init_num), s,
+			s->internal->msg_callback(1, s->version, type, s->internal->init_buf->data,
+			    (size_t)(s->internal->init_off + s->internal->init_num), s,
 			    s->internal->msg_callback_arg);
 		return (1);
 	}
 
-	s->init_off += ret;
-	s->init_num -= ret;
+	s->internal->init_off += ret;
+	s->internal->init_num -= ret;
 
 	return (0);
 }
@@ -179,7 +179,7 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		S3I(s)->tmp.finish_md_len = md_len;
 
 		/* Copy finished so we can use it for renegotiation checks. */
-		if (s->type == SSL_ST_CONNECT) {
+		if (s->internal->type == SSL_ST_CONNECT) {
 			memcpy(S3I(s)->previous_client_finished,
 			    S3I(s)->tmp.finish_md, md_len);
 			S3I(s)->previous_client_finished_len = md_len;
@@ -257,7 +257,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 		goto f_err;
 	}
 
-	CBS_init(&cbs, s->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, n);
 
 	if (S3I(s)->tmp.peer_finish_md_len != md_len ||
 	    CBS_len(&cbs) != md_len) {
@@ -274,7 +274,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 
 	/* Copy finished so we can use it for renegotiation checks. */
 	OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
-	if (s->type == SSL_ST_ACCEPT) {
+	if (s->internal->type == SSL_ST_ACCEPT) {
 		memcpy(S3I(s)->previous_client_finished,
 		    S3I(s)->tmp.peer_finish_md, md_len);
 		S3I(s)->previous_client_finished_len = md_len;
@@ -303,10 +303,10 @@ ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 	unsigned char *p;
 
 	if (s->state == a) {
-		p = (unsigned char *)s->init_buf->data;
+		p = (unsigned char *)s->internal->init_buf->data;
 		*p = SSL3_MT_CCS;
-		s->init_num = 1;
-		s->init_off = 0;
+		s->internal->init_num = 1;
+		s->internal->init_off = 0;
 
 		s->state = b;
 	}
@@ -425,28 +425,28 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			goto f_err;
 		}
 		*ok = 1;
-		s->init_msg = s->init_buf->data + 4;
-		s->init_num = (int)S3I(s)->tmp.message_size;
-		return s->init_num;
+		s->internal->init_msg = s->internal->init_buf->data + 4;
+		s->internal->init_num = (int)S3I(s)->tmp.message_size;
+		return s->internal->init_num;
 	}
 
-	p = (unsigned char *)s->init_buf->data;
+	p = (unsigned char *)s->internal->init_buf->data;
 
-	/* s->init_num < 4 */
+	/* s->internal->init_num < 4 */
 	if (s->state == st1) {
 		int skip_message;
 
 		do {
-			while (s->init_num < 4) {
+			while (s->internal->init_num < 4) {
 				i = s->method->ssl_read_bytes(s,
-				    SSL3_RT_HANDSHAKE, &p[s->init_num],
-				    4 - s->init_num, 0);
+				    SSL3_RT_HANDSHAKE, &p[s->internal->init_num],
+				    4 - s->internal->init_num, 0);
 				if (i <= 0) {
-					s->rwstate = SSL_READING;
+					s->internal->rwstate = SSL_READING;
 					*ok = 0;
 					return i;
 				}
-				s->init_num += i;
+				s->internal->init_num += i;
 			}
 
 			skip_message = 0;
@@ -458,7 +458,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 				 * correct.  Does not count for 'Finished' MAC.
 				 */
 				if (p[1] == 0 && p[2] == 0 &&p[3] == 0) {
-					s->init_num = 0;
+					s->internal->init_num = 0;
 					skip_message = 1;
 
 					if (s->internal->msg_callback)
@@ -469,7 +469,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			}
 		} while (skip_message);
 
-		/* s->init_num == 4 */
+		/* s->internal->init_num == 4 */
 
 		if ((mt >= 0) && (*p != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -492,46 +492,46 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			    SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto f_err;
 		}
-		if (l && !BUF_MEM_grow_clean(s->init_buf, l + 4)) {
+		if (l && !BUF_MEM_grow_clean(s->internal->init_buf, l + 4)) {
 			SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
 			goto err;
 		}
 		S3I(s)->tmp.message_size = l;
 		s->state = stn;
 
-		s->init_msg = s->init_buf->data + 4;
-		s->init_num = 0;
+		s->internal->init_msg = s->internal->init_buf->data + 4;
+		s->internal->init_num = 0;
 	}
 
 	/* next state (stn) */
-	p = s->init_msg;
-	n = S3I(s)->tmp.message_size - s->init_num;
+	p = s->internal->init_msg;
+	n = S3I(s)->tmp.message_size - s->internal->init_num;
 	while (n > 0) {
 		i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
-		    &p[s->init_num], n, 0);
+		    &p[s->internal->init_num], n, 0);
 		if (i <= 0) {
-			s->rwstate = SSL_READING;
+			s->internal->rwstate = SSL_READING;
 			*ok = 0;
 			return i;
 		}
-		s->init_num += i;
+		s->internal->init_num += i;
 		n -= i;
 	}
 
 	/* If receiving Finished, record MAC of prior handshake messages for
 	 * Finished verification. */
-	if (*s->init_buf->data == SSL3_MT_FINISHED)
+	if (*s->internal->init_buf->data == SSL3_MT_FINISHED)
 		ssl3_take_mac(s);
 
 	/* Feed this message into MAC computation. */
-	tls1_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num + 4);
+	tls1_finish_mac(s, (unsigned char *)s->internal->init_buf->data, s->internal->init_num + 4);
 	if (s->internal->msg_callback)
 		s->internal->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-		    s->init_buf->data, (size_t)s->init_num + 4, s,
+		    s->internal->init_buf->data, (size_t)s->internal->init_num + 4, s,
 		    s->internal->msg_callback_arg);
 
 	*ok = 1;
-	return (s->init_num);
+	return (s->internal->init_num);
 
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -636,7 +636,7 @@ ssl3_setup_init_buffer(SSL *s)
 {
 	BUF_MEM *buf = NULL;
 
-	if (s->init_buf != NULL)
+	if (s->internal->init_buf != NULL)
 		return (1);
 
 	if ((buf = BUF_MEM_new()) == NULL)
@@ -644,7 +644,7 @@ ssl3_setup_init_buffer(SSL *s)
 	if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH))
 		goto err;
 
-	s->init_buf = buf;
+	s->internal->init_buf = buf;
 	return (1);
 
 err:
@@ -674,7 +674,7 @@ ssl3_setup_read_buffer(SSL *s)
 		s->s3->rbuf.len = len;
 	}
 
-	s->packet = &(s->s3->rbuf.buf[0]);
+	s->internal->packet = &(s->s3->rbuf.buf[0]);
 	return 1;
 
 err:

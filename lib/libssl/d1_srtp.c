@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.16 2017/01/23 05:13:02 jsing Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.17 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -223,7 +223,7 @@ SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles)
 int
 SSL_set_tlsext_use_srtp(SSL *s, const char *profiles)
 {
-	return ssl_ctx_make_profiles(profiles, &s->srtp_profiles);
+	return ssl_ctx_make_profiles(profiles, &s->internal->srtp_profiles);
 }
 
 
@@ -231,8 +231,8 @@ STACK_OF(SRTP_PROTECTION_PROFILE) *
 SSL_get_srtp_profiles(SSL *s)
 {
 	if (s != NULL) {
-		if (s->srtp_profiles != NULL) {
-			return s->srtp_profiles;
+		if (s->internal->srtp_profiles != NULL) {
+			return s->internal->srtp_profiles;
 		} else if ((s->ctx != NULL) &&
 		    (s->ctx->internal->srtp_profiles != NULL)) {
 			return s->ctx->internal->srtp_profiles;
@@ -245,7 +245,7 @@ SSL_get_srtp_profiles(SSL *s)
 SRTP_PROTECTION_PROFILE *
 SSL_get_selected_srtp_profile(SSL *s)
 {
-	return s->srtp_profile;
+	return s->internal->srtp_profile;
 }
 
 /* Note: this function returns 0 length if there are no
@@ -360,7 +360,7 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, const unsigned char *d, int len,
 			cprof = sk_SRTP_PROTECTION_PROFILE_value(clnt, j);
 
 			if (cprof->id == sprof->id) {
-				s->srtp_profile = sprof;
+				s->internal->srtp_profile = sprof;
 				*al = 0;
 				ret = 0;
 				goto done;
@@ -387,13 +387,13 @@ ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int maxlen)
 			return 1;
 		}
 
-		if (s->srtp_profile == 0) {
+		if (s->internal->srtp_profile == 0) {
 			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT,
 			    SSL_R_USE_SRTP_NOT_NEGOTIATED);
 			return 1;
 		}
 		s2n(2, p);
-		s2n(s->srtp_profile->id, p);
+		s2n(s->internal->srtp_profile->id, p);
 		*p++ = 0;
 	}
 	*len = 5;
@@ -458,7 +458,7 @@ ssl_parse_serverhello_use_srtp_ext(SSL *s, const unsigned char *d, int len, int 
 		prof = sk_SRTP_PROTECTION_PROFILE_value(clnt, i);
 
 		if (prof->id == id) {
-			s->srtp_profile = prof;
+			s->internal->srtp_profile = prof;
 			*al = 0;
 			return 0;
 		}

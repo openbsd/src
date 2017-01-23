@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.57 2017/01/23 05:13:02 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.58 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -486,7 +486,7 @@ SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
 void
 SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
 {
-	set_client_CA_list(&(s->client_CA), name_list);
+	set_client_CA_list(&(s->internal->client_CA), name_list);
 }
 
 void
@@ -504,7 +504,7 @@ SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 STACK_OF(X509_NAME) *
 SSL_get_client_CA_list(const SSL *s)
 {
-	if (s->type == SSL_ST_CONNECT) {
+	if (s->internal->type == SSL_ST_CONNECT) {
 		/* We are in the client. */
 		if (((s->version >> 8) == SSL3_VERSION_MAJOR) &&
 		    (s->s3 != NULL))
@@ -512,8 +512,8 @@ SSL_get_client_CA_list(const SSL *s)
 		else
 			return (NULL);
 	} else {
-		if (s->client_CA != NULL)
-			return (s->client_CA);
+		if (s->internal->client_CA != NULL)
+			return (s->internal->client_CA);
 		else
 			return (s->ctx->internal->client_CA);
 	}
@@ -542,7 +542,7 @@ add_client_CA(STACK_OF(X509_NAME) **sk, X509 *x)
 int
 SSL_add_client_CA(SSL *ssl, X509 *x)
 {
-	return (add_client_CA(&(ssl->client_CA), x));
+	return (add_client_CA(&(ssl->internal->client_CA), x));
 }
 
 int

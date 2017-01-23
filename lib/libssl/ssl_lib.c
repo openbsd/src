@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.134 2017/01/23 05:13:02 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.135 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,31 +200,31 @@ SSL_clear(SSL *s)
 	}
 
 	s->error = 0;
-	s->hit = 0;
-	s->shutdown = 0;
+	s->internal->hit = 0;
+	s->internal->shutdown = 0;
 
-	if (s->renegotiate) {
+	if (s->internal->renegotiate) {
 		SSLerr(SSL_F_SSL_CLEAR, ERR_R_INTERNAL_ERROR);
 		return (0);
 	}
 
-	s->type = 0;
+	s->internal->type = 0;
 
 	s->state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
 
 	s->version = s->method->version;
 	s->client_version = s->version;
-	s->rwstate = SSL_NOTHING;
+	s->internal->rwstate = SSL_NOTHING;
 	s->rstate = SSL_ST_READ_HEADER;
 
-	BUF_MEM_free(s->init_buf);
-	s->init_buf = NULL;
+	BUF_MEM_free(s->internal->init_buf);
+	s->internal->init_buf = NULL;
 
 	ssl_clear_cipher_ctx(s);
-	ssl_clear_hash_ctx(&s->read_hash);
-	ssl_clear_hash_ctx(&s->write_hash);
+	ssl_clear_hash_ctx(&s->internal->read_hash);
+	ssl_clear_hash_ctx(&s->internal->write_hash);
 
-	s->first_packet = 0;
+	s->internal->first_packet = 0;
 
 	/*
 	 * Check to see if we were changed into a different method, if
@@ -286,7 +286,7 @@ SSL_new(SSL_CTX *ctx)
 
 	s->options = ctx->options;
 	s->mode = ctx->mode;
-	s->max_cert_list = ctx->internal->max_cert_list;
+	s->internal->max_cert_list = ctx->internal->max_cert_list;
 
 	if (ctx->internal->cert != NULL) {
 		/*
@@ -306,7 +306,7 @@ SSL_new(SSL_CTX *ctx)
 	} else
 		s->cert=NULL; /* Cannot really happen (see SSL_CTX_new) */
 
-	s->read_ahead = ctx->internal->read_ahead;
+	s->internal->read_ahead = ctx->internal->read_ahead;
 	s->internal->msg_callback = ctx->internal->msg_callback;
 	s->internal->msg_callback_arg = ctx->internal->msg_callback_arg;
 	s->verify_mode = ctx->verify_mode;
@@ -320,20 +320,20 @@ SSL_new(SSL_CTX *ctx)
 	if (!s->param)
 		goto err;
 	X509_VERIFY_PARAM_inherit(s->param, ctx->param);
-	s->quiet_shutdown = ctx->internal->quiet_shutdown;
+	s->internal->quiet_shutdown = ctx->internal->quiet_shutdown;
 	s->max_send_fragment = ctx->internal->max_send_fragment;
 
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	s->ctx = ctx;
 	s->internal->tlsext_debug_cb = 0;
 	s->internal->tlsext_debug_arg = NULL;
-	s->tlsext_ticket_expected = 0;
+	s->internal->tlsext_ticket_expected = 0;
 	s->tlsext_status_type = -1;
-	s->tlsext_status_expected = 0;
-	s->tlsext_ocsp_ids = NULL;
-	s->tlsext_ocsp_exts = NULL;
-	s->tlsext_ocsp_resp = NULL;
-	s->tlsext_ocsp_resplen = -1;
+	s->internal->tlsext_status_expected = 0;
+	s->internal->tlsext_ocsp_ids = NULL;
+	s->internal->tlsext_ocsp_exts = NULL;
+	s->internal->tlsext_ocsp_resp = NULL;
+	s->internal->tlsext_ocsp_resplen = -1;
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	s->initial_ctx = ctx;
 	s->internal->next_proto_negotiated = NULL;
@@ -362,7 +362,7 @@ SSL_new(SSL_CTX *ctx)
 
 	SSL_clear(s);
 
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->internal->ex_data);
 
 	return (s);
 
@@ -497,7 +497,7 @@ SSL_free(SSL *s)
 	if (s->param)
 		X509_VERIFY_PARAM_free(s->param);
 
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->internal->ex_data);
 
 	if (s->bbio != NULL) {
 		/* If the buffering BIO is in place, pop it off */
@@ -512,14 +512,14 @@ SSL_free(SSL *s)
 		BIO_free_all(s->rbio);
 	BIO_free_all(s->wbio);
 
-	if (s->init_buf != NULL)
-		BUF_MEM_free(s->init_buf);
+	if (s->internal->init_buf != NULL)
+		BUF_MEM_free(s->internal->init_buf);
 
 	/* add extra stuff */
 	if (s->cipher_list != NULL)
 		sk_SSL_CIPHER_free(s->cipher_list);
-	if (s->cipher_list_by_id != NULL)
-		sk_SSL_CIPHER_free(s->cipher_list_by_id);
+	if (s->internal->cipher_list_by_id != NULL)
+		sk_SSL_CIPHER_free(s->internal->cipher_list_by_id);
 
 	/* Make the next call work :-) */
 	if (s->session != NULL) {
@@ -528,8 +528,8 @@ SSL_free(SSL *s)
 	}
 
 	ssl_clear_cipher_ctx(s);
-	ssl_clear_hash_ctx(&s->read_hash);
-	ssl_clear_hash_ctx(&s->write_hash);
+	ssl_clear_hash_ctx(&s->internal->read_hash);
+	ssl_clear_hash_ctx(&s->internal->write_hash);
 
 	if (s->cert != NULL)
 		ssl_cert_free(s->cert);
@@ -537,17 +537,17 @@ SSL_free(SSL *s)
 
 	free(s->tlsext_hostname);
 	SSL_CTX_free(s->initial_ctx);
-	free(s->tlsext_ecpointformatlist);
-	free(s->tlsext_ellipticcurvelist);
-	if (s->tlsext_ocsp_exts)
-		sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
+	free(s->internal->tlsext_ecpointformatlist);
+	free(s->internal->tlsext_ellipticcurvelist);
+	if (s->internal->tlsext_ocsp_exts)
+		sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
 		    X509_EXTENSION_free);
-	if (s->tlsext_ocsp_ids)
-		sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
-	free(s->tlsext_ocsp_resp);
+	if (s->internal->tlsext_ocsp_ids)
+		sk_OCSP_RESPID_pop_free(s->internal->tlsext_ocsp_ids, OCSP_RESPID_free);
+	free(s->internal->tlsext_ocsp_resp);
 
-	if (s->client_CA != NULL)
-		sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
+	if (s->internal->client_CA != NULL)
+		sk_X509_NAME_pop_free(s->internal->client_CA, X509_NAME_free);
 
 	if (s->method != NULL)
 		s->method->ssl_free(s);
@@ -558,8 +558,8 @@ SSL_free(SSL *s)
 	free(s->internal->alpn_client_proto_list);
 
 #ifndef OPENSSL_NO_SRTP
-	if (s->srtp_profiles)
-		sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
+	if (s->internal->srtp_profiles)
+		sk_SRTP_PROTECTION_PROFILE_free(s->internal->srtp_profiles);
 #endif
 
 	free(s->internal);
@@ -779,13 +779,13 @@ SSL_set_verify_depth(SSL *s, int depth)
 void
 SSL_set_read_ahead(SSL *s, int yes)
 {
-	s->read_ahead = yes;
+	s->internal->read_ahead = yes;
 }
 
 int
 SSL_get_read_ahead(const SSL *s)
 {
-	return (s->read_ahead);
+	return (s->internal->read_ahead);
 }
 
 int
@@ -951,8 +951,8 @@ SSL_read(SSL *s, void *buf, int num)
 		return (-1);
 	}
 
-	if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
-		s->rwstate = SSL_NOTHING;
+	if (s->internal->shutdown & SSL_RECEIVED_SHUTDOWN) {
+		s->internal->rwstate = SSL_NOTHING;
 		return (0);
 	}
 	return (s->method->ssl_read(s, buf, num));
@@ -966,7 +966,7 @@ SSL_peek(SSL *s, void *buf, int num)
 		return (-1);
 	}
 
-	if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
+	if (s->internal->shutdown & SSL_RECEIVED_SHUTDOWN) {
 		return (0);
 	}
 	return (s->method->ssl_peek(s, buf, num));
@@ -980,8 +980,8 @@ SSL_write(SSL *s, const void *buf, int num)
 		return (-1);
 	}
 
-	if (s->shutdown & SSL_SENT_SHUTDOWN) {
-		s->rwstate = SSL_NOTHING;
+	if (s->internal->shutdown & SSL_SENT_SHUTDOWN) {
+		s->internal->rwstate = SSL_NOTHING;
 		SSLerr(SSL_F_SSL_WRITE, SSL_R_PROTOCOL_IS_SHUTDOWN);
 		return (-1);
 	}
@@ -1012,10 +1012,10 @@ SSL_shutdown(SSL *s)
 int
 SSL_renegotiate(SSL *s)
 {
-	if (s->renegotiate == 0)
-		s->renegotiate = 1;
+	if (s->internal->renegotiate == 0)
+		s->internal->renegotiate = 1;
 
-	s->new_session = 1;
+	s->internal->new_session = 1;
 
 	return (s->method->ssl_renegotiate(s));
 }
@@ -1023,10 +1023,10 @@ SSL_renegotiate(SSL *s)
 int
 SSL_renegotiate_abbreviated(SSL *s)
 {
-	if (s->renegotiate == 0)
-		s->renegotiate = 1;
+	if (s->internal->renegotiate == 0)
+		s->internal->renegotiate = 1;
 
-	s->new_session = 0;
+	s->internal->new_session = 0;
 
 	return (s->method->ssl_renegotiate(s));
 }
@@ -1038,7 +1038,7 @@ SSL_renegotiate_pending(SSL *s)
 	 * Becomes true when negotiation is requested;
 	 * false again once a handshake has finished.
 	 */
-	return (s->renegotiate != 0);
+	return (s->internal->renegotiate != 0);
 }
 
 long
@@ -1048,10 +1048,10 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	switch (cmd) {
 	case SSL_CTRL_GET_READ_AHEAD:
-		return (s->read_ahead);
+		return (s->internal->read_ahead);
 	case SSL_CTRL_SET_READ_AHEAD:
-		l = s->read_ahead;
-		s->read_ahead = larg;
+		l = s->internal->read_ahead;
+		s->internal->read_ahead = larg;
 		return (l);
 
 	case SSL_CTRL_SET_MSG_CALLBACK_ARG:
@@ -1067,10 +1067,10 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_CLEAR_MODE:
 		return (s->mode &=~larg);
 	case SSL_CTRL_GET_MAX_CERT_LIST:
-		return (s->max_cert_list);
+		return (s->internal->max_cert_list);
 	case SSL_CTRL_SET_MAX_CERT_LIST:
-		l = s->max_cert_list;
-		s->max_cert_list = larg;
+		l = s->internal->max_cert_list;
+		s->internal->max_cert_list = larg;
 		return (l);
 	case SSL_CTRL_SET_MTU:
 #ifndef OPENSSL_NO_DTLS1
@@ -1261,8 +1261,8 @@ STACK_OF(SSL_CIPHER) *
 ssl_get_ciphers_by_id(SSL *s)
 {
 	if (s != NULL) {
-		if (s->cipher_list_by_id != NULL) {
-			return (s->cipher_list_by_id);
+		if (s->internal->cipher_list_by_id != NULL) {
+			return (s->internal->cipher_list_by_id);
 		} else if ((s->ctx != NULL) &&
 		    (s->ctx->internal->cipher_list_by_id != NULL)) {
 			return (s->ctx->internal->cipher_list_by_id);
@@ -1322,7 +1322,7 @@ SSL_set_cipher_list(SSL *s, const char *str)
 	STACK_OF(SSL_CIPHER)	*sk;
 
 	sk = ssl_create_cipher_list(s->ctx->method, &s->cipher_list,
-	&s->cipher_list_by_id, str);
+	&s->internal->cipher_list_by_id, str);
 	/* see comment in SSL_CTX_set_cipher_list */
 	if (sk == NULL)
 		return (0);
@@ -1399,7 +1399,7 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
 	}
 
 	/* Add SCSV if there are other ciphers and we're not renegotiating. */
-	if (ciphers > 0 && !s->renegotiate) {
+	if (ciphers > 0 && !s->internal->renegotiate) {
 		if (!CBB_add_u16(&cbb, SSL3_CK_SCSV & SSL3_CK_VALUE_MASK))
 			goto err;
 	}
@@ -1456,7 +1456,7 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 			 * TLS_EMPTY_RENEGOTIATION_INFO_SCSV is fatal if
 			 * renegotiating.
 			 */
-			if (s->renegotiate) {
+			if (s->internal->renegotiate) {
 				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
 				    SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
 				ssl3_send_alert(s, SSL3_AL_FATAL,
@@ -2274,7 +2274,7 @@ ssl_update_cache(SSL *s, int mode)
 		return;
 
 	i = s->session_ctx->internal->session_cache_mode;
-	if ((i & mode) && (!s->hit) && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE)
+	if ((i & mode) && (!s->internal->hit) && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE)
 	    || SSL_CTX_add_session(s->session_ctx, s->session))
 	    && (s->session_ctx->internal->new_session_cb != NULL)) {
 		CRYPTO_add(&s->session->references, 1, CRYPTO_LOCK_SSL_SESSION);
@@ -2354,7 +2354,7 @@ SSL_get_error(const SSL *s, int i)
 			 * try to write to the rbio, and an application
 			 * program where rbio and wbio are separate couldn't
 			 * even know what it should wait for.  However if we
-			 * ever set s->rwstate incorrectly (so that we have
+			 * ever set s->internal->rwstate incorrectly (so that we have
 			 * SSL_want_read(s) instead of SSL_want_write(s))
 			 * and rbio and wbio *are* the same, this test works
 			 * around that bug; so it might be safer to keep it.
@@ -2396,7 +2396,7 @@ SSL_get_error(const SSL *s, int i)
 	}
 
 	if (i == 0) {
-		if ((s->shutdown & SSL_RECEIVED_SHUTDOWN) &&
+		if ((s->internal->shutdown & SSL_RECEIVED_SHUTDOWN) &&
 		    (S3I(s)->warn_alert == SSL_AD_CLOSE_NOTIFY))
 		return (SSL_ERROR_ZERO_RETURN);
 	}
@@ -2429,26 +2429,26 @@ void
 SSL_set_accept_state(SSL *s)
 {
 	s->server = 1;
-	s->shutdown = 0;
+	s->internal->shutdown = 0;
 	s->state = SSL_ST_ACCEPT|SSL_ST_BEFORE;
 	s->internal->handshake_func = s->method->ssl_accept;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
-	ssl_clear_hash_ctx(&s->read_hash);
-	ssl_clear_hash_ctx(&s->write_hash);
+	ssl_clear_hash_ctx(&s->internal->read_hash);
+	ssl_clear_hash_ctx(&s->internal->write_hash);
 }
 
 void
 SSL_set_connect_state(SSL *s)
 {
 	s->server = 0;
-	s->shutdown = 0;
+	s->internal->shutdown = 0;
 	s->state = SSL_ST_CONNECT|SSL_ST_BEFORE;
 	s->internal->handshake_func = s->method->ssl_connect;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
-	ssl_clear_hash_ctx(&s->read_hash);
-	ssl_clear_hash_ctx(&s->write_hash);
+	ssl_clear_hash_ctx(&s->internal->read_hash);
+	ssl_clear_hash_ctx(&s->internal->write_hash);
 }
 
 int
@@ -2609,7 +2609,7 @@ SSL_dup(SSL *s)
 		return (NULL);
 
 	ret->version = s->version;
-	ret->type = s->type;
+	ret->internal->type = s->internal->type;
 	ret->method = s->method;
 
 	if (s->session != NULL) {
@@ -2653,11 +2653,11 @@ SSL_dup(SSL *s)
 
 	SSL_set_info_callback(ret, SSL_get_info_callback(s));
 
-	ret->debug = s->debug;
+	ret->internal->debug = s->internal->debug;
 
 	/* copy app data, a little dangerous perhaps */
 	if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL,
-	    &ret->ex_data, &s->ex_data))
+	    &ret->internal->ex_data, &s->internal->ex_data))
 		goto err;
 
 	/* setup rbio, and wbio */
@@ -2672,14 +2672,14 @@ SSL_dup(SSL *s)
 		} else
 			ret->wbio = ret->rbio;
 	}
-	ret->rwstate = s->rwstate;
+	ret->internal->rwstate = s->internal->rwstate;
 	ret->internal->in_handshake = s->internal->in_handshake;
 	ret->internal->handshake_func = s->internal->handshake_func;
 	ret->server = s->server;
-	ret->renegotiate = s->renegotiate;
-	ret->new_session = s->new_session;
-	ret->quiet_shutdown = s->quiet_shutdown;
-	ret->shutdown = s->shutdown;
+	ret->internal->renegotiate = s->internal->renegotiate;
+	ret->internal->new_session = s->internal->new_session;
+	ret->internal->quiet_shutdown = s->internal->quiet_shutdown;
+	ret->internal->shutdown = s->internal->shutdown;
 	/* SSL_dup does not really work at any state, though */
 	ret->state=s->state;
 	ret->rstate = s->rstate;
@@ -2688,9 +2688,9 @@ SSL_dup(SSL *s)
 	 * Would have to copy ret->init_buf, ret->init_msg, ret->init_num,
 	 * ret->init_off
 	 */
-	ret->init_num = 0;
+	ret->internal->init_num = 0;
 
-	ret->hit = s->hit;
+	ret->internal->hit = s->internal->hit;
 
 	X509_VERIFY_PARAM_inherit(ret->param, s->param);
 
@@ -2700,16 +2700,16 @@ SSL_dup(SSL *s)
 		    sk_SSL_CIPHER_dup(s->cipher_list)) == NULL)
 			goto err;
 	}
-	if (s->cipher_list_by_id != NULL) {
-		if ((ret->cipher_list_by_id =
-		    sk_SSL_CIPHER_dup(s->cipher_list_by_id)) == NULL)
+	if (s->internal->cipher_list_by_id != NULL) {
+		if ((ret->internal->cipher_list_by_id =
+		    sk_SSL_CIPHER_dup(s->internal->cipher_list_by_id)) == NULL)
 			goto err;
 	}
 
 	/* Dup the client_CA list */
-	if (s->client_CA != NULL) {
-		if ((sk = sk_X509_NAME_dup(s->client_CA)) == NULL) goto err;
-			ret->client_CA = sk;
+	if (s->internal->client_CA != NULL) {
+		if ((sk = sk_X509_NAME_dup(s->internal->client_CA)) == NULL) goto err;
+			ret->internal->client_CA = sk;
 		for (i = 0; i < sk_X509_NAME_num(sk); i++) {
 			xn = sk_X509_NAME_value(sk, i);
 			if (sk_X509_NAME_set(sk, i,
@@ -2732,20 +2732,20 @@ err:
 void
 ssl_clear_cipher_ctx(SSL *s)
 {
-	EVP_CIPHER_CTX_free(s->enc_read_ctx);
-	s->enc_read_ctx = NULL;
-	EVP_CIPHER_CTX_free(s->enc_write_ctx);
-	s->enc_write_ctx = NULL;
+	EVP_CIPHER_CTX_free(s->internal->enc_read_ctx);
+	s->internal->enc_read_ctx = NULL;
+	EVP_CIPHER_CTX_free(s->internal->enc_write_ctx);
+	s->internal->enc_write_ctx = NULL;
 
-	if (s->aead_read_ctx != NULL) {
-		EVP_AEAD_CTX_cleanup(&s->aead_read_ctx->ctx);
-		free(s->aead_read_ctx);
-		s->aead_read_ctx = NULL;
+	if (s->internal->aead_read_ctx != NULL) {
+		EVP_AEAD_CTX_cleanup(&s->internal->aead_read_ctx->ctx);
+		free(s->internal->aead_read_ctx);
+		s->internal->aead_read_ctx = NULL;
 	}
-	if (s->aead_write_ctx != NULL) {
-		EVP_AEAD_CTX_cleanup(&s->aead_write_ctx->ctx);
-		free(s->aead_write_ctx);
-		s->aead_write_ctx = NULL;
+	if (s->internal->aead_write_ctx != NULL) {
+		EVP_AEAD_CTX_cleanup(&s->internal->aead_write_ctx->ctx);
+		free(s->internal->aead_write_ctx);
+		s->internal->aead_write_ctx = NULL;
 	}
 
 }
@@ -2852,25 +2852,25 @@ SSL_CTX_get_quiet_shutdown(const SSL_CTX *ctx)
 void
 SSL_set_quiet_shutdown(SSL *s, int mode)
 {
-	s->quiet_shutdown = mode;
+	s->internal->quiet_shutdown = mode;
 }
 
 int
 SSL_get_quiet_shutdown(const SSL *s)
 {
-	return (s->quiet_shutdown);
+	return (s->internal->quiet_shutdown);
 }
 
 void
 SSL_set_shutdown(SSL *s, int mode)
 {
-	s->shutdown = mode;
+	s->internal->shutdown = mode;
 }
 
 int
 SSL_get_shutdown(const SSL *s)
 {
-	return (s->shutdown);
+	return (s->internal->shutdown);
 }
 
 int
@@ -2973,13 +2973,13 @@ SSL_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 int
 SSL_set_ex_data(SSL *s, int idx, void *arg)
 {
-	return (CRYPTO_set_ex_data(&s->ex_data, idx, arg));
+	return (CRYPTO_set_ex_data(&s->internal->ex_data, idx, arg));
 }
 
 void *
 SSL_get_ex_data(const SSL *s, int idx)
 {
-	return (CRYPTO_get_ex_data(&s->ex_data, idx));
+	return (CRYPTO_get_ex_data(&s->internal->ex_data, idx));
 }
 
 int
@@ -3025,7 +3025,7 @@ SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
 int
 SSL_want(const SSL *s)
 {
-	return (s->rwstate);
+	return (s->internal->rwstate);
 }
 
 void
@@ -3098,13 +3098,13 @@ ssl_clear_hash_ctx(EVP_MD_CTX **hash)
 void
 SSL_set_debug(SSL *s, int debug)
 {
-	s->debug = debug;
+	s->internal->debug = debug;
 }
 
 int
 SSL_cache_hit(SSL *s)
 {
-	return (s->hit);
+	return (s->internal->hit);
 }
 
 

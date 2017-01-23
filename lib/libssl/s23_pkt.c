@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_pkt.c,v 1.9 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: s23_pkt.c,v 1.10 2017/01/23 06:45:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,18 +70,18 @@ ssl23_write_bytes(SSL *s)
 	int i, num, tot;
 	char *buf;
 
-	buf = s->init_buf->data;
-	tot = s->init_off;
-	num = s->init_num;
+	buf = s->internal->init_buf->data;
+	tot = s->internal->init_off;
+	num = s->internal->init_num;
 	for (;;) {
-		s->rwstate = SSL_WRITING;
+		s->internal->rwstate = SSL_WRITING;
 		i = BIO_write(s->wbio, &(buf[tot]), num);
 		if (i <= 0) {
-			s->init_off = tot;
-			s->init_num = num;
+			s->internal->init_off = tot;
+			s->internal->init_num = num;
 			return (i);
 		}
-		s->rwstate = SSL_NOTHING;
+		s->internal->rwstate = SSL_NOTHING;
 		if (i == num)
 			return (tot + i);
 
@@ -97,19 +97,19 @@ ssl23_read_bytes(SSL *s, int n)
 	unsigned char *p;
 	int j;
 
-	if (s->packet_length < (unsigned int)n) {
-		p = s->packet;
+	if (s->internal->packet_length < (unsigned int)n) {
+		p = s->internal->packet;
 
 		for (;;) {
-			s->rwstate = SSL_READING;
-			j = BIO_read(s->rbio, (char *)&(p[s->packet_length]),
-			    n - s->packet_length);
+			s->internal->rwstate = SSL_READING;
+			j = BIO_read(s->rbio, (char *)&(p[s->internal->packet_length]),
+			    n - s->internal->packet_length);
 			if (j <= 0)
 				return (j);
-			s->rwstate = SSL_NOTHING;
-			s->packet_length += j;
-			if (s->packet_length >= (unsigned int)n)
-				return (s->packet_length);
+			s->internal->rwstate = SSL_NOTHING;
+			s->internal->packet_length += j;
+			if (s->internal->packet_length >= (unsigned int)n)
+				return (s->internal->packet_length);
 		}
 	}
 	return (n);
