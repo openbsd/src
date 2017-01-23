@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.154 2017/01/23 00:12:52 krw Exp $	*/
+/*	$OpenBSD: route.h,v 1.155 2017/01/23 00:16:31 krw Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ struct rtentry {
 #define	rt_locks	rt_rmx.rmx_locks
 #define	rt_mtu		rt_rmx.rmx_mtu
 
+/* bitmask values for rtm_flags */
 #define	RTF_UP		0x1		/* route usable */
 #define	RTF_GATEWAY	0x2		/* destination is a gateway */
 #define	RTF_HOST	0x4		/* host entry (net otherwise) */
