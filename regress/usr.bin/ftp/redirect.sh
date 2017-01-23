@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: redirect.sh,v 1.4 2017/01/23 22:03:46 bluhm Exp $
+#	$OpenBSD: redirect.sh,v 1.5 2017/01/23 22:26:19 bluhm Exp $
 
 : ${FTP:=ftp}
 
@@ -20,12 +20,13 @@ echo "HTTP/1.0 302 Found\r\nLocation: $loc\r\n\r" | \
 
 # Wait for the "server" to start
 until fstat | egrep 'nc[ ]+.*tcp 0x[0-9a-f]* \*:9000' > /dev/null; do
-sleep .1
+	sleep .1
 done
 
 unset ftp_proxy
 
-res=$(${FTP} -4 -o/dev/null $req1 2>&1 | sed '/^Redirected to /{s///;x;};$!d;x')
+res=$(${FTP} -4 -o/dev/null -v $req1 2>&1 | \
+    sed '/^Redirected to /{s///;x;};$!d;x')
 
 if [ X"$res" != X"$req2" ]; then
 	echo "*** Fail; expected \"$req2\", got \"$res\""
