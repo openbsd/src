@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.217 2017/01/23 00:10:07 krw Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.218 2017/01/23 01:26:09 dlg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1268,7 +1268,7 @@ rt_ifmsg(struct ifnet *ifp)
 	ifm->ifm_tableid = ifp->if_rdomain;
 	ifm->ifm_flags = ifp->if_flags;
 	ifm->ifm_xflags = ifp->if_xflags;
-	ifm->ifm_data = ifp->if_data;
+	if_data(ifp, &ifm->ifm_data);
 	ifm->ifm_addrs = 0;
 	route_input(m, AF_UNSPEC);
 }
@@ -1473,7 +1473,7 @@ sysctl_iflist(int af, struct walkarg *w)
 			ifm->ifm_index = ifp->if_index;
 			ifm->ifm_tableid = ifp->if_rdomain;
 			ifm->ifm_flags = ifp->if_flags;
-			ifm->ifm_data = ifp->if_data;
+			if_data(ifp, &ifm->ifm_data);
 			ifm->ifm_addrs = info.rti_addrs;
 			error = copyout(ifm, w->w_where, len);
 			if (error)
