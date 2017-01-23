@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.111 2017/01/23 04:55:27 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.112 2017/01/23 05:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -689,23 +689,8 @@ struct ssl_ctx_st {
 	const SSL_METHOD *method;
 
 	STACK_OF(SSL_CIPHER) *cipher_list;
-	/* same as above but sorted for lookup */
-	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
 
 	struct x509_store_st /* X509_STORE */ *cert_store;
-	struct lhash_st_SSL_SESSION *sessions;
-	/* Most session-ids that will be cached, default is
-	 * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited. */
-	unsigned long session_cache_size;
-	struct ssl_session_st *session_cache_head;
-	struct ssl_session_st *session_cache_tail;
-
-	/* This can have one of 2 values, ored together,
-	 * SSL_SESS_CACHE_CLIENT,
-	 * SSL_SESS_CACHE_SERVER,
-	 * Default is SSL_SESSION_CACHE_SERVER, which means only
-	 * SSL_accept which cache SSL_SESSIONS. */
-	int session_cache_mode;
 
 	/* If timeout is not 0, it is the default timeout value set
 	 * when SSL_new() is called.  This has been put in to make
@@ -714,54 +699,18 @@ struct ssl_ctx_st {
 
 	int references;
 
-	CRYPTO_EX_DATA ex_data;
-
-	const EVP_MD *md5;	/* For SSLv3/TLSv1 'ssl3-md5' */
-	const EVP_MD *sha1;	/* For SSLv3/TLSv1 'ssl3-sha1' */
-
-	STACK_OF(X509) *extra_certs;
-
-	/* Default values used when no per-SSL value is defined follow */
-
-	/* what we put in client cert requests */
-	STACK_OF(X509_NAME) *client_CA;
-
 	/* Default values to use in SSL structures follow (these are copied by SSL_new) */
 
 	unsigned long options;
 	unsigned long mode;
-	long max_cert_list;
 
-	struct cert_st /* CERT */ *cert;
-	int read_ahead;
+	STACK_OF(X509) *extra_certs;
 
 	int verify_mode;
 	unsigned int sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
 	X509_VERIFY_PARAM *param;
-
-	int quiet_shutdown;
-
-	/* Maximum amount of data to send in one fragment.
-	 * actual record size can be more than this due to
-	 * padding and MAC overheads.
-	 */
-	unsigned int max_send_fragment;
-
-#ifndef OPENSSL_NO_ENGINE
-	/* Engine to pass requests for client certs to
-	 */
-	ENGINE *client_cert_engine;
-#endif
-
-	/* RFC 4507 session ticket keys */
-	unsigned char tlsext_tick_key_name[16];
-	unsigned char tlsext_tick_hmac_key[16];
-	unsigned char tlsext_tick_aes_key[16];
-
-	/* SRTP profiles we are willing to do from RFC 5764 */
-	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
 
 	struct ssl_ctx_internal_st *internal;
 };

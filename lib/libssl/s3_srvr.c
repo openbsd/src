@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.145 2017/01/23 04:55:27 beck Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.146 2017/01/23 05:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1129,7 +1129,7 @@ ssl3_send_server_hello(SSL *s)
 		 * so the following won't overwrite an ID that we're supposed
 		 * to send back.
 		 */
-		if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
+		if (!(s->ctx->internal->session_cache_mode & SSL_SESS_CACHE_SERVER)
 		    && !s->hit)
 			s->session->session_id_length = 0;
 
@@ -1553,8 +1553,8 @@ ssl3_send_server_key_exchange(SSL *s)
 				j = 0;
 				for (num = 2; num > 0; num--) {
 					if (!EVP_DigestInit_ex(&md_ctx,
-					    (num == 2) ? s->ctx->md5 :
-					    s->ctx->sha1, NULL))
+					    (num == 2) ? s->ctx->internal->md5 :
+					    s->ctx->internal->sha1, NULL))
 						goto err;
 					EVP_DigestUpdate(&md_ctx,
 					    s->s3->client_random,
@@ -2751,10 +2751,10 @@ ssl3_send_newsession_ticket(SSL *s)
 		} else {
 			arc4random_buf(iv, 16);
 			EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-			    tctx->tlsext_tick_aes_key, iv);
-			HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
-			    tlsext_tick_md(), NULL);
-			memcpy(key_name, tctx->tlsext_tick_key_name, 16);
+			    tctx->internal->tlsext_tick_aes_key, iv);
+			HMAC_Init_ex(&hctx, tctx->internal->tlsext_tick_hmac_key,
+			    16, tlsext_tick_md(), NULL);
+			memcpy(key_name, tctx->internal->tlsext_tick_key_name, 16);
 		}
 
 		/*

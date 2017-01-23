@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.15 2015/07/31 00:35:06 doug Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.16 2017/01/23 05:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -217,7 +217,7 @@ ssl_ctx_make_profiles(const char *profiles_string,
 int
 SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles)
 {
-	return ssl_ctx_make_profiles(profiles, &ctx->srtp_profiles);
+	return ssl_ctx_make_profiles(profiles, &ctx->internal->srtp_profiles);
 }
 
 int
@@ -234,8 +234,8 @@ SSL_get_srtp_profiles(SSL *s)
 		if (s->srtp_profiles != NULL) {
 			return s->srtp_profiles;
 		} else if ((s->ctx != NULL) &&
-		    (s->ctx->srtp_profiles != NULL)) {
-			return s->ctx->srtp_profiles;
+		    (s->ctx->internal->srtp_profiles != NULL)) {
+			return s->ctx->internal->srtp_profiles;
 		}
 	}
 

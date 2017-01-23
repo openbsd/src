@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.123 2017/01/23 04:55:26 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.124 2017/01/23 05:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2195,7 +2195,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
 	CERT	*cert;
 
-	cert = ctx->cert;
+	cert = ctx->internal->cert;
 
 	switch (cmd) {
 	case SSL_CTRL_NEED_TMP_RSA:
@@ -2225,7 +2225,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return (0);
 
 	case SSL_CTRL_SET_DH_AUTO:
-		ctx->cert->dh_tmp_auto = larg;
+		ctx->internal->cert->dh_tmp_auto = larg;
 		return (1);
 
 	case SSL_CTRL_SET_TMP_ECDH:
@@ -2279,16 +2279,16 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 				return 0;
 			}
 			if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
-				memcpy(ctx->tlsext_tick_key_name, keys, 16);
-				memcpy(ctx->tlsext_tick_hmac_key,
+				memcpy(ctx->internal->tlsext_tick_key_name, keys, 16);
+				memcpy(ctx->internal->tlsext_tick_hmac_key,
 				    keys + 16, 16);
-				memcpy(ctx->tlsext_tick_aes_key, keys + 32, 16);
+				memcpy(ctx->internal->tlsext_tick_aes_key, keys + 32, 16);
 			} else {
-				memcpy(keys, ctx->tlsext_tick_key_name, 16);
+				memcpy(keys, ctx->internal->tlsext_tick_key_name, 16);
 				memcpy(keys + 16,
-				    ctx->tlsext_tick_hmac_key, 16);
+				    ctx->internal->tlsext_tick_hmac_key, 16);
 				memcpy(keys + 32,
-				    ctx->tlsext_tick_aes_key, 16);
+				    ctx->internal->tlsext_tick_aes_key, 16);
 			}
 			return 1;
 		}
@@ -2299,7 +2299,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		break;
 
 	case SSL_CTRL_SET_ECDH_AUTO:
-		ctx->cert->ecdh_tmp_auto = larg;
+		ctx->internal->cert->ecdh_tmp_auto = larg;
 		return 1;
 
 		/* A Thawte special :-) */
@@ -2333,7 +2333,7 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 {
 	CERT	*cert;
 
-	cert = ctx->cert;
+	cert = ctx->internal->cert;
 
 	switch (cmd) {
 	case SSL_CTRL_SET_TMP_RSA_CB:

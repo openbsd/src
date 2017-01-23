@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.166 2017/01/23 04:55:26 beck Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.167 2017/01/23 05:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1484,8 +1484,8 @@ ssl3_get_server_key_exchange(SSL *s)
 			q = md_buf;
 			for (num = 2; num > 0; num--) {
 				if (!EVP_DigestInit_ex(&md_ctx,
-				    (num == 2) ?  s->ctx->md5 : s->ctx->sha1,
-				    NULL)) {
+				    (num == 2) ? s->ctx->internal->md5 :
+				    s->ctx->internal->sha1, NULL)) {
 					al = SSL_AD_INTERNAL_ERROR;
 					goto f_err;
 				}
@@ -2755,10 +2755,10 @@ ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 	int	i = 0;
 
 #ifndef OPENSSL_NO_ENGINE
-	if (s->ctx->client_cert_engine) {
-		i = ENGINE_load_ssl_client_cert(s->ctx->client_cert_engine, s,
-		SSL_get_client_CA_list(s),
-		px509, ppkey, NULL, NULL, NULL);
+	if (s->ctx->internal->client_cert_engine) {
+		i = ENGINE_load_ssl_client_cert(
+		    s->ctx->internal->client_cert_engine, s,
+		    SSL_get_client_CA_list(s), px509, ppkey, NULL, NULL, NULL);
 		if (i != 0)
 			return (i);
 	}

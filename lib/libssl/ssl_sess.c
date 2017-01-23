@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.59 2017/01/23 04:55:27 beck Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.60 2017/01/23 05:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -449,7 +449,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	}
 
 	if (try_session_cache && ret == NULL &&
-	    !(s->session_ctx->session_cache_mode &
+	    !(s->session_ctx->internal->session_cache_mode &
 	     SSL_SESS_CACHE_NO_INTERNAL_LOOKUP)) {
 		SSL_SESSION data;
 		data.ssl_version = s->version;
@@ -457,7 +457,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 		memcpy(data.session_id, session_id, len);
 
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-		ret = lh_SSL_SESSION_retrieve(s->session_ctx->sessions, &data);
+		ret = lh_SSL_SESSION_retrieve(s->session_ctx->internal->sessions, &data);
 		if (ret != NULL) {
 			/* Don't allow other threads to steal it. */
 			CRYPTO_add(&ret->references, 1,
@@ -493,7 +493,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 			 * Add the externally cached session to the internal
 			 * cache as well if and only if we are supposed to.
 			 */
-			if (!(s->session_ctx->session_cache_mode &
+			if (!(s->session_ctx->internal->session_cache_mode &
 			    SSL_SESS_CACHE_NO_INTERNAL_STORE))
 				/*
 				 * The following should not return 1,
@@ -593,12 +593,12 @@ SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 	 * later.
 	 */
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-	s = lh_SSL_SESSION_insert(ctx->sessions, c);
+	s = lh_SSL_SESSION_insert(ctx->internal->sessions, c);
 
 	/*
 	 * s != NULL iff we already had a session with the given PID.
 	 * In this case, s == c should hold (then we did not really modify
-	 * ctx->sessions), or we're in trouble.
+	 * ctx->internal->sessions), or we're in trouble.
 	 */
 	if (s != NULL && s != c) {
 		/* We *are* in trouble ... */
@@ -638,7 +638,7 @@ SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 			while (SSL_CTX_sess_number(ctx) >
 			    SSL_CTX_sess_get_cache_size(ctx)) {
 				if (!remove_session_lock(ctx,
-				    ctx->session_cache_tail, 0))
+				    ctx->internal->session_cache_tail, 0))
 					break;
 				else
 					ctx->internal->stats.sess_cache_full++;
@@ -664,9 +664,9 @@ remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 	if ((c != NULL) && (c->session_id_length != 0)) {
 		if (lck)
 			CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-		if ((r = lh_SSL_SESSION_retrieve(ctx->sessions, c)) == c) {
+		if ((r = lh_SSL_SESSION_retrieve(ctx->internal->sessions, c)) == c) {
 			ret = 1;
-			r = lh_SSL_SESSION_delete(ctx->sessions, c);
+			r = lh_SSL_SESSION_delete(ctx->internal->sessions, c);
 			SSL_SESSION_list_remove(ctx, c);
 		}
 		if (lck)
@@ -934,7 +934,7 @@ SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	TIMEOUT_PARAM tp;
 
 	tp.ctx = s;
-	tp.cache = s->sessions;
+	tp.cache = s->internal->sessions;
 	if (tp.cache == NULL)
 		return;
 	tp.time = t;
@@ -965,23 +965,23 @@ SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s)
 	if ((s->next == NULL) || (s->prev == NULL))
 		return;
 
-	if (s->next == (SSL_SESSION *)&(ctx->session_cache_tail)) {
+	if (s->next == (SSL_SESSION *)&(ctx->internal->session_cache_tail)) {
 		/* last element in list */
-		if (s->prev == (SSL_SESSION *)&(ctx->session_cache_head)) {
+		if (s->prev == (SSL_SESSION *)&(ctx->internal->session_cache_head)) {
 			/* only one element in list */
-			ctx->session_cache_head = NULL;
-			ctx->session_cache_tail = NULL;
+			ctx->internal->session_cache_head = NULL;
+			ctx->internal->session_cache_tail = NULL;
 		} else {
-			ctx->session_cache_tail = s->prev;
+			ctx->internal->session_cache_tail = s->prev;
 			s->prev->next =
-			    (SSL_SESSION *)&(ctx->session_cache_tail);
+			    (SSL_SESSION *)&(ctx->internal->session_cache_tail);
 		}
 	} else {
-		if (s->prev == (SSL_SESSION *)&(ctx->session_cache_head)) {
+		if (s->prev == (SSL_SESSION *)&(ctx->internal->session_cache_head)) {
 			/* first element in list */
-			ctx->session_cache_head = s->next;
+			ctx->internal->session_cache_head = s->next;
 			s->next->prev =
-			    (SSL_SESSION *)&(ctx->session_cache_head);
+			    (SSL_SESSION *)&(ctx->internal->session_cache_head);
 		} else {
 			/* middle of list */
 			s->next->prev = s->prev;
@@ -997,16 +997,16 @@ SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s)
 	if ((s->next != NULL) && (s->prev != NULL))
 		SSL_SESSION_list_remove(ctx, s);
 
-	if (ctx->session_cache_head == NULL) {
-		ctx->session_cache_head = s;
-		ctx->session_cache_tail = s;
-		s->prev = (SSL_SESSION *)&(ctx->session_cache_head);
-		s->next = (SSL_SESSION *)&(ctx->session_cache_tail);
+	if (ctx->internal->session_cache_head == NULL) {
+		ctx->internal->session_cache_head = s;
+		ctx->internal->session_cache_tail = s;
+		s->prev = (SSL_SESSION *)&(ctx->internal->session_cache_head);
+		s->next = (SSL_SESSION *)&(ctx->internal->session_cache_tail);
 	} else {
-		s->next = ctx->session_cache_head;
+		s->next = ctx->internal->session_cache_head;
 		s->next->prev = s;
-		s->prev = (SSL_SESSION *)&(ctx->session_cache_head);
-		ctx->session_cache_head = s;
+		s->prev = (SSL_SESSION *)&(ctx->internal->session_cache_head);
+		ctx->internal->session_cache_head = s;
 	}
 }
 
@@ -1091,7 +1091,7 @@ SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
 		ENGINE_finish(e);
 		return 0;
 	}
-	ctx->client_cert_engine = e;
+	ctx->internal->client_cert_engine = e;
 	return 1;
 }
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.133 2017/01/23 04:55:27 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.134 2017/01/23 05:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -251,7 +251,7 @@ SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 	ctx->method = meth;
 
 	sk = ssl_create_cipher_list(ctx->method, &(ctx->cipher_list),
-	    &(ctx->cipher_list_by_id), SSL_DEFAULT_CIPHER_LIST);
+	    &(ctx->internal->cipher_list_by_id), SSL_DEFAULT_CIPHER_LIST);
 	if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
 		SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION,
 		    SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
@@ -286,9 +286,9 @@ SSL_new(SSL_CTX *ctx)
 
 	s->options = ctx->options;
 	s->mode = ctx->mode;
-	s->max_cert_list = ctx->max_cert_list;
+	s->max_cert_list = ctx->internal->max_cert_list;
 
-	if (ctx->cert != NULL) {
+	if (ctx->internal->cert != NULL) {
 		/*
 		 * Earlier library versions used to copy the pointer to
 		 * the CERT, not its contents; only when setting new
@@ -300,13 +300,13 @@ SSL_new(SSL_CTX *ctx)
 		 * Now we don't look at the SSL_CTX's CERT after having
 		 * duplicated it once.
 		*/
-		s->cert = ssl_cert_dup(ctx->cert);
+		s->cert = ssl_cert_dup(ctx->internal->cert);
 		if (s->cert == NULL)
 			goto err;
 	} else
 		s->cert=NULL; /* Cannot really happen (see SSL_CTX_new) */
 
-	s->read_ahead = ctx->read_ahead;
+	s->read_ahead = ctx->internal->read_ahead;
 	s->internal->msg_callback = ctx->internal->msg_callback;
 	s->internal->msg_callback_arg = ctx->internal->msg_callback_arg;
 	s->verify_mode = ctx->verify_mode;
@@ -320,8 +320,8 @@ SSL_new(SSL_CTX *ctx)
 	if (!s->param)
 		goto err;
 	X509_VERIFY_PARAM_inherit(s->param, ctx->param);
-	s->quiet_shutdown = ctx->quiet_shutdown;
-	s->max_send_fragment = ctx->max_send_fragment;
+	s->quiet_shutdown = ctx->internal->quiet_shutdown;
+	s->max_send_fragment = ctx->internal->max_send_fragment;
 
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	s->ctx = ctx;
@@ -441,7 +441,7 @@ SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 	memcpy(r.session_id, id, id_len);
 
 	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-	p = lh_SSL_SESSION_retrieve(ssl->ctx->sessions, &r);
+	p = lh_SSL_SESSION_retrieve(ssl->ctx->internal->sessions, &r);
 	CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 	return (p != NULL);
 }
@@ -876,19 +876,19 @@ SSL_copy_session_id(SSL *t, const SSL *f)
 int
 SSL_CTX_check_private_key(const SSL_CTX *ctx)
 {
-	if ((ctx == NULL) || (ctx->cert == NULL) ||
-	    (ctx->cert->key->x509 == NULL)) {
+	if ((ctx == NULL) || (ctx->internal->cert == NULL) ||
+	    (ctx->internal->cert->key->x509 == NULL)) {
 		SSLerr(SSL_F_SSL_CTX_CHECK_PRIVATE_KEY,
 		    SSL_R_NO_CERTIFICATE_ASSIGNED);
 		return (0);
 	}
-	if (ctx->cert->key->privatekey == NULL) {
+	if (ctx->internal->cert->key->privatekey == NULL) {
 		SSLerr(SSL_F_SSL_CTX_CHECK_PRIVATE_KEY,
 		    SSL_R_NO_PRIVATE_KEY_ASSIGNED);
 		return (0);
 	}
-	return (X509_check_private_key(ctx->cert->key->x509,
-	    ctx->cert->key->privatekey));
+	return (X509_check_private_key(ctx->internal->cert->key->x509,
+	    ctx->internal->cert->key->privatekey));
 }
 
 /* Fix this function so that it takes an optional type parameter */
@@ -1114,7 +1114,7 @@ SSL_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 struct lhash_st_SSL_SESSION *
 SSL_CTX_sessions(SSL_CTX *ctx)
 {
-	return (ctx->sessions);
+	return (ctx->internal->sessions);
 }
 
 long
@@ -1124,10 +1124,10 @@ SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 	switch (cmd) {
 	case SSL_CTRL_GET_READ_AHEAD:
-		return (ctx->read_ahead);
+		return (ctx->internal->read_ahead);
 	case SSL_CTRL_SET_READ_AHEAD:
-		l = ctx->read_ahead;
-		ctx->read_ahead = larg;
+		l = ctx->internal->read_ahead;
+		ctx->internal->read_ahead = larg;
 		return (l);
 
 	case SSL_CTRL_SET_MSG_CALLBACK_ARG:
@@ -1135,27 +1135,27 @@ SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return (1);
 
 	case SSL_CTRL_GET_MAX_CERT_LIST:
-		return (ctx->max_cert_list);
+		return (ctx->internal->max_cert_list);
 	case SSL_CTRL_SET_MAX_CERT_LIST:
-		l = ctx->max_cert_list;
-		ctx->max_cert_list = larg;
+		l = ctx->internal->max_cert_list;
+		ctx->internal->max_cert_list = larg;
 		return (l);
 
 	case SSL_CTRL_SET_SESS_CACHE_SIZE:
-		l = ctx->session_cache_size;
-		ctx->session_cache_size = larg;
+		l = ctx->internal->session_cache_size;
+		ctx->internal->session_cache_size = larg;
 		return (l);
 	case SSL_CTRL_GET_SESS_CACHE_SIZE:
-		return (ctx->session_cache_size);
+		return (ctx->internal->session_cache_size);
 	case SSL_CTRL_SET_SESS_CACHE_MODE:
-		l = ctx->session_cache_mode;
-		ctx->session_cache_mode = larg;
+		l = ctx->internal->session_cache_mode;
+		ctx->internal->session_cache_mode = larg;
 		return (l);
 	case SSL_CTRL_GET_SESS_CACHE_MODE:
-		return (ctx->session_cache_mode);
+		return (ctx->internal->session_cache_mode);
 
 	case SSL_CTRL_SESS_NUMBER:
-		return (lh_SSL_SESSION_num_items(ctx->sessions));
+		return (lh_SSL_SESSION_num_items(ctx->internal->sessions));
 	case SSL_CTRL_SESS_CONNECT:
 		return (ctx->internal->stats.sess_connect);
 	case SSL_CTRL_SESS_CONNECT_GOOD:
@@ -1189,7 +1189,7 @@ SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
 		if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
 			return (0);
-		ctx->max_send_fragment = larg;
+		ctx->internal->max_send_fragment = larg;
 		return (1);
 	default:
 		return (ctx->method->ssl_ctx_ctrl(ctx, cmd, larg, parg));
@@ -1264,8 +1264,8 @@ ssl_get_ciphers_by_id(SSL *s)
 		if (s->cipher_list_by_id != NULL) {
 			return (s->cipher_list_by_id);
 		} else if ((s->ctx != NULL) &&
-		    (s->ctx->cipher_list_by_id != NULL)) {
-			return (s->ctx->cipher_list_by_id);
+		    (s->ctx->internal->cipher_list_by_id != NULL)) {
+			return (s->ctx->internal->cipher_list_by_id);
 		}
 	}
 	return (NULL);
@@ -1296,14 +1296,14 @@ SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 	STACK_OF(SSL_CIPHER)	*sk;
 
 	sk = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
-	    &ctx->cipher_list_by_id, str);
+	    &ctx->internal->cipher_list_by_id, str);
 	/*
 	 * ssl_create_cipher_list may return an empty stack if it
 	 * was unable to find a cipher matching the given rule string
 	 * (for example if the rule string specifies a cipher which
 	 * has been disabled). This is not an error as far as
 	 * ssl_create_cipher_list is concerned, and hence
-	 * ctx->cipher_list and ctx->cipher_list_by_id has been
+	 * ctx->cipher_list and ctx->internal->cipher_list_by_id has been
 	 * updated.
 	 */
 	if (sk == NULL)
@@ -1823,10 +1823,10 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->method = meth;
 
 	ret->cert_store = NULL;
-	ret->session_cache_mode = SSL_SESS_CACHE_SERVER;
-	ret->session_cache_size = SSL_SESSION_CACHE_MAX_SIZE_DEFAULT;
-	ret->session_cache_head = NULL;
-	ret->session_cache_tail = NULL;
+	ret->internal->session_cache_mode = SSL_SESS_CACHE_SERVER;
+	ret->internal->session_cache_size = SSL_SESSION_CACHE_MAX_SIZE_DEFAULT;
+	ret->internal->session_cache_head = NULL;
+	ret->internal->session_cache_tail = NULL;
 
 	/* We take the system default */
 	ret->session_timeout = meth->get_timeout();
@@ -1839,21 +1839,21 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	memset((char *)&ret->internal->stats, 0, sizeof(ret->internal->stats));
 
 	ret->references = 1;
-	ret->quiet_shutdown = 0;
+	ret->internal->quiet_shutdown = 0;
 
 	ret->internal->info_callback = NULL;
 
 	ret->internal->app_verify_callback = 0;
 	ret->internal->app_verify_arg = NULL;
 
-	ret->max_cert_list = SSL_MAX_CERT_LIST_DEFAULT;
-	ret->read_ahead = 0;
+	ret->internal->max_cert_list = SSL_MAX_CERT_LIST_DEFAULT;
+	ret->internal->read_ahead = 0;
 	ret->internal->msg_callback = 0;
 	ret->internal->msg_callback_arg = NULL;
 	ret->verify_mode = SSL_VERIFY_NONE;
 	ret->sid_ctx_length = 0;
 	ret->internal->default_verify_callback = NULL;
-	if ((ret->cert = ssl_cert_new()) == NULL)
+	if ((ret->internal->cert = ssl_cert_new()) == NULL)
 		goto err;
 
 	ret->internal->default_passwd_callback = 0;
@@ -1862,15 +1862,15 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->internal->app_gen_cookie_cb = 0;
 	ret->internal->app_verify_cookie_cb = 0;
 
-	ret->sessions = lh_SSL_SESSION_new();
-	if (ret->sessions == NULL)
+	ret->internal->sessions = lh_SSL_SESSION_new();
+	if (ret->internal->sessions == NULL)
 		goto err;
 	ret->cert_store = X509_STORE_new();
 	if (ret->cert_store == NULL)
 		goto err;
 
 	ssl_create_cipher_list(ret->method, &ret->cipher_list,
-	    &ret->cipher_list_by_id, SSL_DEFAULT_CIPHER_LIST);
+	    &ret->internal->cipher_list_by_id, SSL_DEFAULT_CIPHER_LIST);
 	if (ret->cipher_list == NULL ||
 	    sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
 		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_LIBRARY_HAS_NO_CIPHERS);
@@ -1881,41 +1881,42 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	if (!ret->param)
 		goto err;
 
-	if ((ret->md5 = EVP_get_digestbyname("ssl3-md5")) == NULL) {
+	if ((ret->internal->md5 = EVP_get_digestbyname("ssl3-md5")) == NULL) {
 		SSLerr(SSL_F_SSL_CTX_NEW,
 		    SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
 		goto err2;
 	}
-	if ((ret->sha1 = EVP_get_digestbyname("ssl3-sha1")) == NULL) {
+	if ((ret->internal->sha1 = EVP_get_digestbyname("ssl3-sha1")) == NULL) {
 		SSLerr(SSL_F_SSL_CTX_NEW,
 		    SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
 		goto err2;
 	}
 
-	if ((ret->client_CA = sk_X509_NAME_new_null()) == NULL)
+	if ((ret->internal->client_CA = sk_X509_NAME_new_null()) == NULL)
 		goto err;
 
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->internal->ex_data);
 
 	ret->extra_certs = NULL;
 
-	ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
+	ret->internal->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
 	ret->internal->tlsext_servername_callback = 0;
 	ret->internal->tlsext_servername_arg = NULL;
 
 	/* Setup RFC4507 ticket keys */
-	arc4random_buf(ret->tlsext_tick_key_name, 16);
-	arc4random_buf(ret->tlsext_tick_hmac_key, 16);
-	arc4random_buf(ret->tlsext_tick_aes_key, 16);
+	arc4random_buf(ret->internal->tlsext_tick_key_name, 16);
+	arc4random_buf(ret->internal->tlsext_tick_hmac_key, 16);
+	arc4random_buf(ret->internal->tlsext_tick_aes_key, 16);
 
 	ret->internal->tlsext_status_cb = 0;
 	ret->internal->tlsext_status_arg = NULL;
 
 	ret->internal->next_protos_advertised_cb = 0;
 	ret->internal->next_proto_select_cb = 0;
+
 #ifndef OPENSSL_NO_ENGINE
-	ret->client_cert_engine = NULL;
+	ret->internal->client_cert_engine = NULL;
 #ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
 #define eng_strx(x)	#x
 #define eng_str(x)	eng_strx(x)
@@ -1972,35 +1973,35 @@ SSL_CTX_free(SSL_CTX *a)
 	 * free ex_data, then finally free the cache.
 	 * (See ticket [openssl.org #212].)
 	 */
-	if (a->sessions != NULL)
+	if (a->internal->sessions != NULL)
 		SSL_CTX_flush_sessions(a, 0);
 
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->internal->ex_data);
 
-	if (a->sessions != NULL)
-		lh_SSL_SESSION_free(a->sessions);
+	if (a->internal->sessions != NULL)
+		lh_SSL_SESSION_free(a->internal->sessions);
 
 	if (a->cert_store != NULL)
 		X509_STORE_free(a->cert_store);
 	if (a->cipher_list != NULL)
 		sk_SSL_CIPHER_free(a->cipher_list);
-	if (a->cipher_list_by_id != NULL)
-		sk_SSL_CIPHER_free(a->cipher_list_by_id);
-	if (a->cert != NULL)
-		ssl_cert_free(a->cert);
-	if (a->client_CA != NULL)
-		sk_X509_NAME_pop_free(a->client_CA, X509_NAME_free);
+	if (a->internal->cipher_list_by_id != NULL)
+		sk_SSL_CIPHER_free(a->internal->cipher_list_by_id);
+	if (a->internal->cert != NULL)
+		ssl_cert_free(a->internal->cert);
+	if (a->internal->client_CA != NULL)
+		sk_X509_NAME_pop_free(a->internal->client_CA, X509_NAME_free);
 	if (a->extra_certs != NULL)
 		sk_X509_pop_free(a->extra_certs, X509_free);
 
 #ifndef OPENSSL_NO_SRTP
-	if (a->srtp_profiles)
-		sk_SRTP_PROTECTION_PROFILE_free(a->srtp_profiles);
+	if (a->internal->srtp_profiles)
+		sk_SRTP_PROTECTION_PROFILE_free(a->internal->srtp_profiles);
 #endif
 
 #ifndef OPENSSL_NO_ENGINE
-	if (a->client_cert_engine)
-		ENGINE_finish(a->client_cert_engine);
+	if (a->internal->client_cert_engine)
+		ENGINE_finish(a->internal->client_cert_engine);
 #endif
 
 	free(a->internal->alpn_client_proto_list);
@@ -2272,7 +2273,7 @@ ssl_update_cache(SSL *s, int mode)
 	if (s->session->session_id_length == 0)
 		return;
 
-	i = s->session_ctx->session_cache_mode;
+	i = s->session_ctx->internal->session_cache_mode;
 	if ((i & mode) && (!s->hit) && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE)
 	    || SSL_CTX_add_session(s->session_ctx, s->session))
 	    && (s->session_ctx->internal->new_session_cb != NULL)) {
@@ -2839,13 +2840,13 @@ ssl_free_wbio_buffer(SSL *s)
 void
 SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx, int mode)
 {
-	ctx->quiet_shutdown = mode;
+	ctx->internal->quiet_shutdown = mode;
 }
 
 int
 SSL_CTX_get_quiet_shutdown(const SSL_CTX *ctx)
 {
-	return (ctx->quiet_shutdown);
+	return (ctx->internal->quiet_shutdown);
 }
 
 void
@@ -2893,7 +2894,7 @@ SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 		return (ssl->ctx);
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
-	ssl->cert = ssl_cert_dup(ctx->cert);
+	ssl->cert = ssl_cert_dup(ctx->internal->cert);
 	if (ocert != NULL) {
 		int i;
 		/* Copy negotiated digests from original certificate. */
@@ -2992,13 +2993,13 @@ SSL_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 int
 SSL_CTX_set_ex_data(SSL_CTX *s, int idx, void *arg)
 {
-	return (CRYPTO_set_ex_data(&s->ex_data, idx, arg));
+	return (CRYPTO_set_ex_data(&s->internal->ex_data, idx, arg));
 }
 
 void *
 SSL_CTX_get_ex_data(const SSL_CTX *s, int idx)
 {
-	return (CRYPTO_get_ex_data(&s->ex_data, idx));
+	return (CRYPTO_get_ex_data(&s->internal->ex_data, idx));
 }
 
 int

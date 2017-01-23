@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.22 2017/01/23 04:15:28 jsing Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.23 2017/01/23 05:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -353,11 +353,11 @@ SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE, ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
-	if (!ssl_cert_inst(&ctx->cert)) {
+	if (!ssl_cert_inst(&ctx->internal->cert)) {
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
-	return (ssl_set_cert(ctx->cert, x));
+	return (ssl_set_cert(ctx->internal->cert, x));
 }
 
 static int
@@ -486,7 +486,7 @@ SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 		SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
-	if (!ssl_cert_inst(&ctx->cert)) {
+	if (!ssl_cert_inst(&ctx->internal->cert)) {
 		SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
@@ -498,7 +498,7 @@ SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 	RSA_up_ref(rsa);
 	EVP_PKEY_assign_RSA(pkey, rsa);
 
-	ret = ssl_set_pkey(ctx->cert, pkey);
+	ret = ssl_set_pkey(ctx->internal->cert, pkey);
 	EVP_PKEY_free(pkey);
 	return (ret);
 }
@@ -569,11 +569,11 @@ SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 		    ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
-	if (!ssl_cert_inst(&ctx->cert)) {
+	if (!ssl_cert_inst(&ctx->internal->cert)) {
 		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
-	return (ssl_set_pkey(ctx->cert, pkey));
+	return (ssl_set_pkey(ctx->internal->cert, pkey));
 }
 
 int
