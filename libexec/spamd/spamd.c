@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.149 2017/01/23 09:09:15 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.150 2017/01/23 09:21:04 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1099,9 +1099,9 @@ handler(struct con *cp)
 
 		if (n == 0)
 			closecon(cp);
-		if (errno == EAGAIN)
-			return;
 		else if (n == -1) {
+			if (errno == EAGAIN)
+				return;
 			if (debug > 0)
 				warn("read");
 			closecon(cp);
