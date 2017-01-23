@@ -1,6 +1,6 @@
 define(MACHINE,arm64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.1 2017/01/11 17:05:29 patrick Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.2 2017/01/23 12:43:48 kettenis Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -87,7 +87,7 @@ ramdisk)
 	;;
 
 _std(1, 2, 50, 7)
-	M xf86		c 2 4 600
+	M openprom	c 70 0 600
 	;;
 
 dnl
