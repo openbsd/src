@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.37 2016/09/04 10:51:23 naddy Exp $	*/
+/*	$OpenBSD: conf.c,v 1.38 2017/01/23 08:37:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -233,12 +233,6 @@ struct bdevsw bdevsw[] = {
 	bdev_notdef(),			/* 96: */
 	bdev_notdef(),			/* 97: */
 };
-
-/* Character devices */
-#define ptstty          ptytty
-#define ptsioctl        ptyioctl
-#define ptctty          ptytty
-#define ptcioctl        ptyioctl
 
 #include "hotplug.h"
 #include "scif.h"

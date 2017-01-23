@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.49 2016/09/04 10:51:23 naddy Exp $	*/
+/*	$OpenBSD: conf.c,v 1.50 2017/01/23 08:37:08 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -246,12 +246,6 @@ struct bdevsw bdevsw[] = {
 	bdev_notdef(),			/* 96: */
 	bdev_notdef(),			/* 97: */
 };
-
-/* Character devices */
-#define ptstty          ptytty
-#define ptsioctl        ptyioctl
-#define ptctty          ptytty
-#define ptcioctl        ptyioctl
 
 #include "hotplug.h"
 #include "vscsi.h"
