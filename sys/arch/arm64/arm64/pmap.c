@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.10 2017/01/21 09:23:19 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.11 2017/01/23 08:23:41 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2215,6 +2215,9 @@ pmap_map_stolen(vaddr_t kernel_start)
 			/* XXX - Do we care about KDB ? */
 			pa = mp->start + e;
 			va = pa - pmap_avail_kvo;
+			if (va < VM_MIN_KERNEL_ADDRESS ||
+			    va >= VM_MAX_KERNEL_ADDRESS)
+				continue;
 			if ((vaddr_t)va >= (vaddr_t)kernel_start &&
 			    (vaddr_t)va < (vaddr_t)&etext) {
 				prot = PROT_READ|PROT_WRITE|
