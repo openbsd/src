@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.7 2013/10/27 03:06:25 aalm Exp $
+# $OpenBSD: Makefile,v 1.8 2017/01/23 03:12:25 jsg Exp $
 
-.if	(${MACHINE} == "i386" || ${MACHINE} == "macppc" || \
-	 ${MACHINE} == "amd64" || ${MACHINE} == "armv7")
+.if ${MACHINE} == "amd64" || ${MACHINE} == "arm64" || \
+    ${MACHINE} == "armv7" || ${MACHINE} == "i386" || \
+    ${MACHINE} == "macppc"
 
 PROG=	gpioctl
 SRCS=	gpioctl.c
