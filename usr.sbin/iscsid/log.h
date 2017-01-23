@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.4 2016/09/02 16:22:31 benno Exp $ */
+/*	$OpenBSD: log.h,v 1.5 2017/01/23 08:40:07 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,6 +22,8 @@
 #include <stdarg.h>
 #include <sys/cdefs.h>
 
+extern const char	*log_procname;
+
 void	 log_init(int);
 void	 log_verbose(int);
 void	 logit(int, const char *, ...)
@@ -36,8 +38,8 @@ void	 log_info(const char *, ...)
 		__attribute__((__format__ (printf, 1, 2)));
 void	 log_debug(const char *, ...)
 		__attribute__((__format__ (printf, 1, 2)));
-void	 fatal(const char *) __dead
-		__attribute__((__format__ (printf, 1, 0)));
+void	 fatal(const char *, ...) __dead
+		__attribute__((__format__ (printf, 1, 2)));
 void	 fatalx(const char *) __dead
 		__attribute__((__format__ (printf, 1, 0)));
 

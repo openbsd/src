@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.19 2016/08/16 18:41:57 tedu Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.20 2017/01/23 08:40:07 benno Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -70,6 +70,8 @@ main(int argc, char *argv[])
 	char *vscsidev = ISCSID_DEVICE;
 	int name[] = { CTL_KERN, KERN_PROC_NOBROADCASTKILL, 0 };
 	int ch, debug = 0, verbose = 0, nobkill = 1;
+
+	log_procname = getprogname();
 
 	log_init(1);    /* log to stderr until daemonized */
 	log_verbose(1);
