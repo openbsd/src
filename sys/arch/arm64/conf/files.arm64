@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.5 2017/01/23 08:05:47 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.6 2017/01/23 12:34:06 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -39,6 +39,9 @@ file	arch/arm64/dev/arm64_bus_space.c
 file	arch/arm64/arm64/db_disasm.c		ddb
 file	arch/arm64/arm64/db_interface.c		ddb
 file	arch/arm64/arm64/db_trace.c		ddb
+
+pseudo-device	openprom
+file	arch/arm/arm/openprom.c			openprom needs-flag
 
 define	fdt {[early = 0]}
 

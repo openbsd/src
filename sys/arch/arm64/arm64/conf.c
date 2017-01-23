@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2017/01/23 03:04:57 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 2017/01/23 12:34:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -142,6 +142,7 @@ cdev_decl(pci);
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
+#include "openprom.h"
 #include "gpio.h"
 #include "switch.h"
 
@@ -221,7 +222,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE,	/* 68: mice */
 	    wsmouse),
 	cdev_mouse_init(NWSMUX, wsmux),	/* 69: ws multiplexor */
-	cdev_notdef(),			/* 70: was: /dev/crypto */
+	cdev_openprom_init(NOPENPROM,openprom),	/* 70: /dev/openprom */
 	cdev_notdef(),			/* 71: was: Cyclades-Z serial port */
 #ifdef USER_PCICONF
 	cdev_pci_init(NPCI,pci),        /* 72: PCI user */

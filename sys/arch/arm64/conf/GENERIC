@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.4 2017/01/23 08:05:47 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.5 2017/01/23 12:34:06 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -197,6 +197,7 @@ owtemp*		at onewire?		# Temperature
 owctr*		at onewire?		# Counter device
 
 # Pseudo-Devices
+pseudo-device	openprom
 pseudo-device	hotplug		1	# devices hot plugging
 
 # mouse & keyboard multiplexor pseudo-devices

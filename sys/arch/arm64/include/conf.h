@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2017/01/23 12:34:06 kettenis Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -39,6 +39,14 @@
 #define	mmwrite	mmrw
 cdev_decl(mm);
 
+/* open, close, ioctl */
+#define cdev_openprom_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_mmap((*))) enodev }
+
+cdev_decl(openprom);
 
 /*
  * These numbers have to be in sync with bdevsw/cdevsw.
