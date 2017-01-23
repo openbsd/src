@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile,v 1.446 2016/11/20 11:00:19 tb Exp $
+#	$OpenBSD: Makefile,v 1.447 2017/01/23 23:54:01 tb Exp $
+
+.include <bsd.own.mk>
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -15,8 +17,9 @@ KERNELS = GENERIC bsd
 .for CONF K in ${KERNELS}
 .  if !target($K)
 $K:
-	cd ../sys/arch/${MACHINE}/compile/${CONF} && ${MAKE} config && \
-	    ${MAKE} clean && exec ${MAKE}
+	cd ../sys/arch/${MACHINE}/compile/${CONF} && \
+		{ [[ -n "${KEEPKERNELS}" ]] || ${MAKE} cleandir; } && \
+		${MAKE} config && ${MAKE} clean && exec ${MAKE};
 .  endif
 ALL_KERNELS += $K
 .endfor
@@ -238,7 +241,6 @@ release:
 	@echo setenv RELEASEDIR before building a release.
 	@false
 .else
-
 release:
 	umask ${WOBJUMASK}; exec ${MAKE} do-release
 
