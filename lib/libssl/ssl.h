@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.108 2017/01/23 01:04:23 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.109 2017/01/23 01:22:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -464,28 +464,23 @@ struct ssl_session_st {
 
 	int master_key_length;
 	unsigned char master_key[SSL_MAX_MASTER_KEY_LENGTH];
+
 	/* session_id - valid? */
 	unsigned int session_id_length;
 	unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
+
 	/* this is used to determine whether the session is being reused in
 	 * the appropriate context. It is up to the application to set this,
 	 * via SSL_new */
 	unsigned int sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
-	/* Used to indicate that session resumption is not allowed.
-	 * Applications can also set this bit for a new session via
-	 * not_resumable_session_cb to disable session caching and tickets. */
-	int not_resumable;
-
-	/* The cert is the certificate used to establish this connection */
-	struct sess_cert_st /* SESS_CERT */ *sess_cert;
-
 	/* This is the cert for the other end.
 	 * On clients, it will be the same as sess_cert->peer_key->x509
 	 * (the latter is not enough as sess_cert is not retained
 	 * in the external representation of sessions, see ssl_asn1.c). */
 	X509 *peer;
+
 	/* when app_verify_callback accepts a session where the peer's certificate
 	 * is not ok, we must remember the error for session reuse: */
 	long verify_result; /* only for servers */

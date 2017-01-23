@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.130 2017/01/23 00:12:54 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.131 2017/01/23 01:22:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -826,10 +826,10 @@ SSL_get_peer_cert_chain(const SSL *s)
 	STACK_OF(X509)	*r;
 
 	if ((s == NULL) || (s->session == NULL) ||
-	    (s->session->sess_cert == NULL))
+	    (SSI(s)->sess_cert == NULL))
 		r = NULL;
 	else
-		r = s->session->sess_cert->cert_chain;
+		r = SSI(s)->sess_cert->cert_chain;
 
 	/*
 	 * If we are a client, cert_chain includes the peer's own

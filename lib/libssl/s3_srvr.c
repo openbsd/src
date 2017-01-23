@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.142 2017/01/23 00:12:54 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.143 2017/01/23 01:22:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2593,17 +2593,17 @@ ssl3_get_client_certificate(SSL *s)
 	 * With the current implementation, sess_cert will always be NULL
 	 * when we arrive here
 	 */
-	if (s->session->sess_cert == NULL) {
-		s->session->sess_cert = ssl_sess_cert_new();
-		if (s->session->sess_cert == NULL) {
+	if (SSI(s)->sess_cert == NULL) {
+		SSI(s)->sess_cert = ssl_sess_cert_new();
+		if (SSI(s)->sess_cert == NULL) {
 			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,
 			    ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
-	if (s->session->sess_cert->cert_chain != NULL)
-		sk_X509_pop_free(s->session->sess_cert->cert_chain, X509_free);
-	s->session->sess_cert->cert_chain = sk;
+	if (SSI(s)->sess_cert->cert_chain != NULL)
+		sk_X509_pop_free(SSI(s)->sess_cert->cert_chain, X509_free);
+	SSI(s)->sess_cert->cert_chain = sk;
 
 	/*
 	 * Inconsistency alert: cert_chain does *not* include the

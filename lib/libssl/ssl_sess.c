@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.56 2017/01/23 00:12:55 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.57 2017/01/23 01:22:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -673,7 +673,7 @@ remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 			CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 
 		if (ret) {
-			r->not_resumable = 1;
+			r->internal->not_resumable = 1;
 			if (ctx->remove_session_cb != NULL)
 				ctx->remove_session_cb(ctx, r);
 			SSL_SESSION_free(r);
@@ -699,8 +699,8 @@ SSL_SESSION_free(SSL_SESSION *ss)
 
 	explicit_bzero(ss->master_key, sizeof ss->master_key);
 	explicit_bzero(ss->session_id, sizeof ss->session_id);
-	if (ss->sess_cert != NULL)
-		ssl_sess_cert_free(ss->sess_cert);
+	if (ss->internal->sess_cert != NULL)
+		ssl_sess_cert_free(ss->internal->sess_cert);
 	X509_free(ss->peer);
 	if (ss->ciphers != NULL)
 		sk_SSL_CIPHER_free(ss->ciphers);
@@ -910,7 +910,7 @@ timeout_doall_arg(SSL_SESSION *s, TIMEOUT_PARAM *p)
 		 * save on locking overhead */
 		(void)lh_SSL_SESSION_delete(p->cache, s);
 		SSL_SESSION_list_remove(p->ctx, s);
-		s->not_resumable = 1;
+		s->internal->not_resumable = 1;
 		if (p->ctx->remove_session_cb != NULL)
 			p->ctx->remove_session_cb(p->ctx, s);
 		SSL_SESSION_free(s);

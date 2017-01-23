@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.120 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.121 2017/01/23 01:22:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1928,10 +1928,10 @@ ssl_ctrl_get_server_tmp_key(SSL *s, EVP_PKEY **pkey_tmp)
 
 	if (s->server != 0)
 		return 0;
-	if (s->session == NULL || s->session->sess_cert == NULL)
+	if (s->session == NULL || SSI(s)->sess_cert == NULL)
 		return 0;
 
-	sc = s->session->sess_cert;
+	sc = SSI(s)->sess_cert;
 
 	if ((pkey = EVP_PKEY_new()) == NULL)
 		return 0;
