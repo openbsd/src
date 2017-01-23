@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.356 2017/01/23 22:47:59 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.357 2017/01/23 22:53:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2188,7 +2188,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	rib.prefixlen = p->prefix->prefixlen;
 	rib.origin = asp->origin;
 	rib.flags = 0;
-	if (p->rib->active == p)
+	if (p->re->active == p)
 		rib.flags |= F_PREF_ACTIVE;
 	if (!asp->peer->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
@@ -2280,11 +2280,11 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 		    !community_large_match(p->aspath, req->large_community.as,
 		    req->large_community.ld1, req->large_community.ld2))
 			return;
-		if ((req->flags & F_CTL_ACTIVE) && p->rib->active != p)
+		if ((req->flags & F_CTL_ACTIVE) && p->re->active != p)
 			return;
 		rde_dump_rib_as(p, p->aspath, req->pid, req->flags);
 	} else if (req->flags & F_CTL_ADJ_OUT) {
-		if (p->rib->active != p)
+		if (p->re->active != p)
 			/* only consider active prefix */
 			return;
 		if (req->peerid) {

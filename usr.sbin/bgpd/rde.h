@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.156 2017/01/23 22:47:59 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.157 2017/01/23 22:53:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -305,7 +305,7 @@ struct prefix {
 	LIST_ENTRY(prefix)		 rib_l, path_l;
 	struct rde_aspath		*aspath;
 	struct pt_entry			*prefix;
-	struct rib_entry		*rib;	/* NULL for Adj-RIB-In */
+	struct rib_entry		*re;
 	time_t				 lastchange;
 };
 

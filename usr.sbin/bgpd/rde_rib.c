@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.148 2017/01/23 22:47:59 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.149 2017/01/23 22:53:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -547,7 +547,7 @@ path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 		}
 
 		/* only count Adj-RIB-In */
-		if (p->rib->rib == &ribs[0].rib)
+		if (p->re->rib == &ribs[0].rib)
 			rprefixes++;
 
 		prefix_destroy(p);
@@ -740,7 +740,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	np->aspath = asp;
 	/* peer and prefix pointers are still equal */
 	np->prefix = p->prefix;
-	np->rib = p->rib;
+	np->re = p->re;
 	np->lastchange = time(NULL);
 
 	/* add to new as path */
@@ -760,7 +760,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	 * is noticed by prefix_evaluate().
 	 */
 	LIST_REMOVE(p, rib_l);
-	prefix_evaluate(np, np->rib);
+	prefix_evaluate(np, np->re);
 
 	/* remove old prefix node */
 	oasp = p->aspath;
@@ -771,7 +771,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* destroy all references to other objects and free the old prefix */
 	p->aspath = NULL;
 	p->prefix = NULL;
-	p->rib = NULL;
+	p->re = NULL;
 	prefix_free(p);
 
 	/* destroy old path if empty */
@@ -904,7 +904,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 		/*
 		 * skip non local-RIBs or RIBs that are flagged as noeval.
 		 */
-		if (p->rib->rib->flags & F_RIB_NOEVALUATE)
+		if (p->re->rib->flags & F_RIB_NOEVALUATE)
 			continue;
 
 		if (oldstate == state && state == NEXTHOP_REACH) {
@@ -914,9 +914,9 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 			 * or other internal infos. This will not change
 			 * the routing decision so shortcut here.
 			 */
-			if ((p->rib->rib->flags & F_RIB_NOFIB) == 0 &&
-			    p == p->rib->active)
-				rde_send_kroute(p, NULL, p->rib->rib->id);
+			if ((p->re->rib->flags & F_RIB_NOFIB) == 0 &&
+			    p == p->re->active)
+				rde_send_kroute(p, NULL, p->re->rib->id);
 			continue;
 		}
 
@@ -930,9 +930,9 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 		 * prefix_evaluate() will generate no update because
 		 * the nexthop is unreachable or ineligible.
 		 */
-		if (p == p->rib->active)
-			prefix_evaluate(NULL, p->rib);
-		prefix_evaluate(p, p->rib);
+		if (p == p->re->active)
+			prefix_evaluate(NULL, p->re);
+		prefix_evaluate(p, p->re);
 	}
 }
 
@@ -985,7 +985,7 @@ prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp)
 	PREFIX_COUNT(asp, 1);
 
 	pref->aspath = asp;
-	pref->rib = re;
+	pref->re = re;
 	pref->prefix = re->prefix;
 	pt_ref(pref->prefix);
 	pref->lastchange = time(NULL);
@@ -1000,7 +1000,7 @@ prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp)
 static void
 prefix_unlink(struct prefix *pref)
 {
-	struct rib_entry	*re = pref->rib;
+	struct rib_entry	*re = pref->re;
 
 	/* make route decision */
 	LIST_REMOVE(pref, rib_l);
@@ -1018,7 +1018,7 @@ prefix_unlink(struct prefix *pref)
 	/* destroy all references to other objects */
 	pref->aspath = NULL;
 	pref->prefix = NULL;
-	pref->rib = NULL;
+	pref->re = NULL;
 
 	/*
 	 * It's the caller's duty to remove empty aspath structures.
