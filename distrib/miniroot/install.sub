@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.955 2017/01/23 02:11:30 rpe Exp $
+#	$OpenBSD: install.sub,v 1.956 2017/01/23 02:14:45 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1424,6 +1424,12 @@ install_files() {
 
 		if ! $_srclocal; then
 			if [[ -d $_tmpfs ]]; then
+				# Try to clean up from previous runs, assuming
+				# the _tmpfs selection yields the same mount
+				# point.
+				for _tmpsrc in $_tmpfs/sets.+([0-9]).+([0-9]); do
+					[[ -d $_tmpsrc ]] && rm -r $_tmpsrc
+				done
 				! _tmpsrc=$(tmpdir "$_tmpfs/sets") &&
 				_issue="Cannot create prefetch area" && break
 			else
