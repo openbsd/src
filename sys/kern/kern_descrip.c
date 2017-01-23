@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.137 2017/01/23 22:34:10 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.138 2017/01/23 23:22:00 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -835,6 +835,16 @@ fdexpand(struct proc *p)
 		nfiles = 2 * fdp->fd_nfiles;
 
 	newofile = mallocarray(nfiles, OFILESIZE, M_FILEDESC, M_WAITOK);
+	/*
+	 * Allocate all required chunks before calling free(9) to make
+	 * sure that ``fd_ofiles'' stays valid if we go to sleep.
+	 */
+	if (NDHISLOTS(nfiles) > NDHISLOTS(fdp->fd_nfiles)) {
+		newhimap = mallocarray(NDHISLOTS(nfiles), sizeof(u_int),
+		    M_FILEDESC, M_WAITOK);
+		newlomap = mallocarray(NDLOSLOTS(nfiles), sizeof(u_int),
+		    M_FILEDESC, M_WAITOK);
+	}
 	newofileflags = (char *) &newofile[nfiles];
 
 	/*
@@ -853,11 +863,6 @@ fdexpand(struct proc *p)
 		free(fdp->fd_ofiles, M_FILEDESC, fdp->fd_nfiles * OFILESIZE);
 
 	if (NDHISLOTS(nfiles) > NDHISLOTS(fdp->fd_nfiles)) {
-		newhimap = mallocarray(NDHISLOTS(nfiles), sizeof(u_int),
-		    M_FILEDESC, M_WAITOK);
-		newlomap = mallocarray(NDLOSLOTS(nfiles), sizeof(u_int),
-		    M_FILEDESC, M_WAITOK);
-
 		copylen = NDHISLOTS(fdp->fd_nfiles) * sizeof(u_int);
 		memcpy(newhimap, fdp->fd_himap, copylen);
 		memset((char *)newhimap + copylen, 0,
