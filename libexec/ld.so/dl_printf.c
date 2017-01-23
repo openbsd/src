@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.17 2012/12/05 23:20:06 deraadt Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.18 2017/01/23 13:00:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -59,7 +59,7 @@
 #include "syscall.h"
 #include "util.h"
 
-int lastfd = -1;
+static int lastfd = -1;
 #define OUTBUFSIZE 128
 static char outbuf[OUTBUFSIZE];
 static char *outptr = outbuf;

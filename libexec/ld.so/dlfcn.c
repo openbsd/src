@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.95 2016/03/21 01:52:45 guenther Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.96 2017/01/23 13:00:09 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,10 +40,10 @@
 #include "sod.h"
 
 int _dl_errno;
-int _dl_tracelib;
+static int _dl_tracelib;
 
-int _dl_real_close(void *handle);
-void (*_dl_thread_fnc)(int) = NULL;
+static int _dl_real_close(void *handle);
+static void (*_dl_thread_fnc)(int) = NULL;
 static elf_object_t *obj_from_addr(const void *addr);
 
 void *
