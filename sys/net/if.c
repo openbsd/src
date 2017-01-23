@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.476 2017/01/23 01:26:09 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.477 2017/01/23 07:27:21 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1792,8 +1792,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCGIFDATA: {
 		struct if_data ifdata;
-		if_data(ifp, &ifdata);
-		error = copyout(&ifdata, &ifr->ifr_data, sizeof(ifdata));
+		if_getdata(ifp, &ifdata);
+		error = copyout(&ifdata, ifr->ifr_data, sizeof(ifdata));
 		break;
 	}
 
@@ -2163,7 +2163,7 @@ ifconf(u_long cmd, caddr_t data)
 }
 
 void
-if_data(struct ifnet *ifp, struct if_data *data)
+if_getdata(struct ifnet *ifp, struct if_data *data)
 {
 	struct ifqueue *ifq;
 	uint64_t opackets = 0;
