@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2017/01/21 08:45:45 patrick Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 2017/01/23 03:04:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -142,6 +142,8 @@ cdev_decl(pci);
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
+#include "gpio.h"
+#include "switch.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -241,11 +243,16 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 85 */
 	cdev_notdef(),			/* 86 */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */
-	cdev_notdef(),			/* 88 */
+	cdev_gpio_init(NGPIO,gpio),	/* 88: GPIO interface */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 89: vscsi */
 	cdev_disk_init(1,diskmap),	/* 90: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),     /* 91: pppx */
 	cdev_fuse_init(NFUSE,fuse),	/* 92: fuse */
+	cdev_notdef(),			/* 93 */
+	cdev_notdef(),			/* 94 */
+	cdev_notdef(),			/* 95 */
+	cdev_notdef(),			/* 96 */
+	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
 };
 int	nchrdev = nitems(cdevsw);
 
