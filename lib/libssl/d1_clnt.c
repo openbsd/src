@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.62 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.63 2017/01/23 00:12:54 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -205,7 +205,7 @@ dtls1_connect(SSL *s)
 		case SSL_ST_RENEGOTIATE:
 			s->renegotiate = 1;
 			s->state = SSL_ST_CONNECT;
-			s->ctx->stats.sess_connect_renegotiate++;
+			s->ctx->internal->stats.sess_connect_renegotiate++;
 			/* break */
 		case SSL_ST_BEFORE:
 		case SSL_ST_CONNECT:
@@ -242,7 +242,7 @@ dtls1_connect(SSL *s)
 			/* don't push the buffering BIO quite yet */
 
 			s->state = SSL3_ST_CW_CLNT_HELLO_A;
-			s->ctx->stats.sess_connect++;
+			s->ctx->internal->stats.sess_connect++;
 			s->init_num = 0;
 			/* mark client_random uninitialized */
 			memset(s->s3->client_random, 0,
@@ -555,12 +555,12 @@ dtls1_connect(SSL *s)
 
 			ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
 			if (s->hit)
-				s->ctx->stats.sess_hit++;
+				s->ctx->internal->stats.sess_hit++;
 
 			ret = 1;
 			/* s->server=0; */
 			s->handshake_func = dtls1_connect;
-			s->ctx->stats.sess_connect_good++;
+			s->ctx->internal->stats.sess_connect_good++;
 
 			if (cb != NULL)
 				cb(s, SSL_CB_HANDSHAKE_DONE, 1);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.151 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.152 2017/01/23 00:12:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -384,6 +384,25 @@ typedef struct ssl_ctx_internal_st {
 	uint16_t min_version;
 	uint16_t max_version;
 
+	struct {
+		int sess_connect;	/* SSL new conn - started */
+		int sess_connect_renegotiate;/* SSL reneg - requested */
+		int sess_connect_good;	/* SSL new conne/reneg - finished */
+		int sess_accept;	/* SSL new accept - started */
+		int sess_accept_renegotiate;/* SSL reneg - requested */
+		int sess_accept_good;	/* SSL accept/reneg - finished */
+		int sess_miss;		/* session lookup misses  */
+		int sess_timeout;	/* reuse attempt on timeouted session */
+		int sess_cache_full;	/* session removed due to full cache */
+		int sess_hit;		/* session reuse actually done */
+		int sess_cb_hit;	/* session-id that was not
+					 * in the cache was
+					 * passed back via the callback.  This
+					 * indicates that the application is
+					 * supplying session-id's from other
+					 * processes - spooky :-) */
+	} stats;
+
 	/* Next protocol negotiation information */
 	/* (for experimental NPN extension). */
 
@@ -422,7 +441,6 @@ typedef struct ssl_ctx_internal_st {
 	/* Client list of supported protocols in wire format. */
 	unsigned char *alpn_client_proto_list;
 	unsigned int alpn_client_proto_list_len;
-
 } SSL_CTX_INTERNAL;
 
 typedef struct ssl_internal_st {

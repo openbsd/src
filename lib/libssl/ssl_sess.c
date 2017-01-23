@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.55 2017/01/22 05:14:42 beck Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.56 2017/01/23 00:12:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -466,7 +466,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 
 		if (ret == NULL)
-			s->session_ctx->stats.sess_miss++;
+			s->session_ctx->internal->stats.sess_miss++;
 	}
 
 	if (try_session_cache && ret == NULL &&
@@ -475,7 +475,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 
 		if ((ret = s->session_ctx->get_session_cb(s, session_id,
 		    len, &copy))) {
-			s->session_ctx->stats.sess_cb_hit++;
+			s->session_ctx->internal->stats.sess_cb_hit++;
 
 			/*
 			 * Increment reference count now if the session
@@ -542,7 +542,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 
 	if (ret->timeout < (time(NULL) - ret->time)) {
 		/* timeout */
-		s->session_ctx->stats.sess_timeout++;
+		s->session_ctx->internal->stats.sess_timeout++;
 		if (try_session_cache) {
 			/* session was from the cache, so remove it */
 			SSL_CTX_remove_session(s->session_ctx, ret);
@@ -550,7 +550,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 		goto err;
 	}
 
-	s->session_ctx->stats.sess_hit++;
+	s->session_ctx->internal->stats.sess_hit++;
 
 	if (s->session != NULL)
 		SSL_SESSION_free(s->session);
@@ -641,7 +641,7 @@ SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 				    ctx->session_cache_tail, 0))
 					break;
 				else
-					ctx->stats.sess_cache_full++;
+					ctx->internal->stats.sess_cache_full++;
 			}
 		}
 	}

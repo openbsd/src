@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.49 2017/01/03 16:57:15 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.50 2017/01/23 00:12:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -174,7 +174,7 @@ ssl23_connect(SSL *s)
 			}
 
 			s->state = SSL23_ST_CW_CLNT_HELLO_A;
-			s->ctx->stats.sess_connect++;
+			s->ctx->internal->stats.sess_connect++;
 			s->init_num = 0;
 			break;
 

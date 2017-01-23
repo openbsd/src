@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.129 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.130 2017/01/23 00:12:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1157,27 +1157,27 @@ SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	case SSL_CTRL_SESS_NUMBER:
 		return (lh_SSL_SESSION_num_items(ctx->sessions));
 	case SSL_CTRL_SESS_CONNECT:
-		return (ctx->stats.sess_connect);
+		return (ctx->internal->stats.sess_connect);
 	case SSL_CTRL_SESS_CONNECT_GOOD:
-		return (ctx->stats.sess_connect_good);
+		return (ctx->internal->stats.sess_connect_good);
 	case SSL_CTRL_SESS_CONNECT_RENEGOTIATE:
-		return (ctx->stats.sess_connect_renegotiate);
+		return (ctx->internal->stats.sess_connect_renegotiate);
 	case SSL_CTRL_SESS_ACCEPT:
-		return (ctx->stats.sess_accept);
+		return (ctx->internal->stats.sess_accept);
 	case SSL_CTRL_SESS_ACCEPT_GOOD:
-		return (ctx->stats.sess_accept_good);
+		return (ctx->internal->stats.sess_accept_good);
 	case SSL_CTRL_SESS_ACCEPT_RENEGOTIATE:
-		return (ctx->stats.sess_accept_renegotiate);
+		return (ctx->internal->stats.sess_accept_renegotiate);
 	case SSL_CTRL_SESS_HIT:
-		return (ctx->stats.sess_hit);
+		return (ctx->internal->stats.sess_hit);
 	case SSL_CTRL_SESS_CB_HIT:
-		return (ctx->stats.sess_cb_hit);
+		return (ctx->internal->stats.sess_cb_hit);
 	case SSL_CTRL_SESS_MISSES:
-		return (ctx->stats.sess_miss);
+		return (ctx->internal->stats.sess_miss);
 	case SSL_CTRL_SESS_TIMEOUTS:
-		return (ctx->stats.sess_timeout);
+		return (ctx->internal->stats.sess_timeout);
 	case SSL_CTRL_SESS_CACHE_FULL:
-		return (ctx->stats.sess_cache_full);
+		return (ctx->internal->stats.sess_cache_full);
 	case SSL_CTRL_OPTIONS:
 		return (ctx->options|=larg);
 	case SSL_CTRL_CLEAR_OPTIONS:
@@ -1836,7 +1836,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->get_session_cb = 0;
 	ret->generate_session_id = 0;
 
-	memset((char *)&ret->stats, 0, sizeof(ret->stats));
+	memset((char *)&ret->internal->stats, 0, sizeof(ret->internal->stats));
 
 	ret->references = 1;
 	ret->quiet_shutdown = 0;
@@ -2285,8 +2285,8 @@ ssl_update_cache(SSL *s, int mode)
 	if ((!(i & SSL_SESS_CACHE_NO_AUTO_CLEAR)) &&
 	    ((i & mode) == mode)) {
 		if ((((mode & SSL_SESS_CACHE_CLIENT) ?
-		    s->session_ctx->stats.sess_connect_good :
-		    s->session_ctx->stats.sess_accept_good) & 0xff) == 0xff) {
+		    s->session_ctx->internal->stats.sess_connect_good :
+		    s->session_ctx->internal->stats.sess_accept_good) & 0xff) == 0xff) {
 			SSL_CTX_flush_sessions(s->session_ctx, time(NULL));
 		}
 	}

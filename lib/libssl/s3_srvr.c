@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.141 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.142 2017/01/23 00:12:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -246,7 +246,7 @@ ssl3_accept(SSL *s)
 				}
 
 				s->state = SSL3_ST_SR_CLNT_HELLO_A;
-				s->ctx->stats.sess_accept++;
+				s->ctx->internal->stats.sess_accept++;
 			} else if (!S3I(s)->send_connection_binding) {
 				/*
 				 * Server attempting to renegotiate with
@@ -264,7 +264,7 @@ ssl3_accept(SSL *s)
 				 * s->state == SSL_ST_RENEGOTIATE,
 				 * we will just send a HelloRequest
 				 */
-				s->ctx->stats.sess_accept_renegotiate++;
+				s->ctx->internal->stats.sess_accept_renegotiate++;
 				s->state = SSL3_ST_SW_HELLO_REQ_A;
 			}
 			break;
@@ -660,7 +660,7 @@ ssl3_accept(SSL *s)
 
 				ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
-				s->ctx->stats.sess_accept_good++;
+				s->ctx->internal->stats.sess_accept_good++;
 				/* s->server=1; */
 				s->handshake_func = ssl3_accept;
 

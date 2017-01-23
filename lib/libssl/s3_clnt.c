@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.162 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.163 2017/01/23 00:12:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -199,7 +199,7 @@ ssl3_connect(SSL *s)
 		case SSL_ST_RENEGOTIATE:
 			s->renegotiate = 1;
 			s->state = SSL_ST_CONNECT;
-			s->ctx->stats.sess_connect_renegotiate++;
+			s->ctx->internal->stats.sess_connect_renegotiate++;
 			/* break */
 		case SSL_ST_BEFORE:
 		case SSL_ST_CONNECT:
@@ -241,7 +241,7 @@ ssl3_connect(SSL *s)
 			}
 
 			s->state = SSL3_ST_CW_CLNT_HELLO_A;
-			s->ctx->stats.sess_connect++;
+			s->ctx->internal->stats.sess_connect++;
 			s->init_num = 0;
 			break;
 
@@ -539,12 +539,12 @@ ssl3_connect(SSL *s)
 
 			ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
 			if (s->hit)
-				s->ctx->stats.sess_hit++;
+				s->ctx->internal->stats.sess_hit++;
 
 			ret = 1;
 			/* s->server=0; */
 			s->handshake_func = ssl3_connect;
-			s->ctx->stats.sess_connect_good++;
+			s->ctx->internal->stats.sess_connect_good++;
 
 			if (cb != NULL)
 				cb(s, SSL_CB_HANDSHAKE_DONE, 1);

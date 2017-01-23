@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.72 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.73 2017/01/23 00:12:54 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -259,11 +259,11 @@ dtls1_accept(SSL *s)
 				}
 
 				s->state = SSL3_ST_SR_CLNT_HELLO_A;
-				s->ctx->stats.sess_accept++;
+				s->ctx->internal->stats.sess_accept++;
 			} else {
 				/* s->state == SSL_ST_RENEGOTIATE,
 				 * we will just send a HelloRequest */
-				s->ctx->stats.sess_accept_renegotiate++;
+				s->ctx->internal->stats.sess_accept_renegotiate++;
 				s->state = SSL3_ST_SW_HELLO_REQ_A;
 			}
 
@@ -641,7 +641,7 @@ dtls1_accept(SSL *s)
 
 				ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
-				s->ctx->stats.sess_accept_good++;
+				s->ctx->internal->stats.sess_accept_good++;
 				/* s->server=1; */
 				s->handshake_func = dtls1_accept;
 
