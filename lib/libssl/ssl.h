@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.107 2017/01/23 00:12:54 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.108 2017/01/23 01:04:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1135,14 +1135,6 @@ struct ssl_st {
 
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;	/* What we'll do */
 	SRTP_PROTECTION_PROFILE *srtp_profile;			/* What's been chosen */
-
-	unsigned int tlsext_heartbeat;	/* Is use of the Heartbeat extension negotiated?
-					   0: disabled
-					   1: enabled
-					   2: enabled, but not allowed to send Requests
-					   */
-	unsigned int tlsext_hb_pending; /* Indicates if a HeartbeatRequest is in flight */
-	unsigned int tlsext_hb_seq;	/* HeartbeatRequest sequence number */
 
 	int renegotiate;/* 1 if we are renegotiating.
 		 	 * 2 if we are a server and are inside a handshake
