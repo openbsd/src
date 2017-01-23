@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.5 2017/01/23 12:34:06 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.6 2017/01/23 13:01:06 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -56,6 +56,9 @@ vio*		at virtio?
 vioblk*		at virtio?
 viomb*		at virtio?
 viornd*		at virtio?
+
+simplefb*	at fdt?
+wsdisplay*	at simplefb?
 
 # Raspberry Pi 3
 bcmintc*	at fdt?
