@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.162 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.163 2017/01/23 22:34:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -453,12 +453,6 @@ typedef struct ssl_ctx_internal_st {
 	/* if defined, these override the X509_verify_cert() calls */
 	int (*app_verify_callback)(X509_STORE_CTX *, void *);
 	    void *app_verify_arg;
-
-	/* Default password callback. */
-	pem_password_cb *default_passwd_callback;
-
-	/* Default password callback user data. */
-	void *default_passwd_callback_userdata;
 
 	/* get client cert callback */
 	int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey);

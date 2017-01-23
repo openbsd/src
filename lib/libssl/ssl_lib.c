@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.140 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.141 2017/01/23 22:34:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1858,8 +1858,8 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	if ((ret->internal->cert = ssl_cert_new()) == NULL)
 		goto err;
 
-	ret->internal->default_passwd_callback = 0;
-	ret->internal->default_passwd_callback_userdata = NULL;
+	ret->default_passwd_callback = 0;
+	ret->default_passwd_callback_userdata = NULL;
 	ret->internal->client_cert_cb = 0;
 	ret->internal->app_gen_cookie_cb = 0;
 	ret->internal->app_verify_cookie_cb = 0;
@@ -2015,13 +2015,13 @@ SSL_CTX_free(SSL_CTX *a)
 void
 SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
 {
-	ctx->internal->default_passwd_callback = cb;
+	ctx->default_passwd_callback = cb;
 }
 
 void
 SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u)
 {
-	ctx->internal->default_passwd_callback_userdata = u;
+	ctx->default_passwd_callback_userdata = u;
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.23 2017/01/23 05:13:02 jsing Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.24 2017/01/23 22:34:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,8 +108,8 @@ SSL_use_certificate_file(SSL *ssl, const char *file, int type)
 	} else if (type == SSL_FILETYPE_PEM) {
 		j = ERR_R_PEM_LIB;
 		x = PEM_read_bio_X509(in, NULL,
-		    ssl->ctx->internal->default_passwd_callback,
-		    ssl->ctx->internal->default_passwd_callback_userdata);
+		    ssl->ctx->default_passwd_callback,
+		    ssl->ctx->default_passwd_callback_userdata);
 	} else {
 		SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE, SSL_R_BAD_SSL_FILETYPE);
 		goto end;
@@ -236,8 +236,8 @@ SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
 	} else if (type == SSL_FILETYPE_PEM) {
 		j = ERR_R_PEM_LIB;
 		rsa = PEM_read_bio_RSAPrivateKey(in, NULL,
-		    ssl->ctx->internal->default_passwd_callback,
-		    ssl->ctx->internal->default_passwd_callback_userdata);
+		    ssl->ctx->default_passwd_callback,
+		    ssl->ctx->default_passwd_callback_userdata);
 	} else {
 		SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
 		goto end;
@@ -308,8 +308,8 @@ SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
 	if (type == SSL_FILETYPE_PEM) {
 		j = ERR_R_PEM_LIB;
 		pkey = PEM_read_bio_PrivateKey(in, NULL,
-		    ssl->ctx->internal->default_passwd_callback,
-		    ssl->ctx->internal->default_passwd_callback_userdata);
+		    ssl->ctx->default_passwd_callback,
+		    ssl->ctx->default_passwd_callback_userdata);
 	} else if (type == SSL_FILETYPE_ASN1) {
 		j = ERR_R_ASN1_LIB;
 		pkey = d2i_PrivateKey_bio(in, NULL);
@@ -440,8 +440,8 @@ SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
 		x = d2i_X509_bio(in, NULL);
 	} else if (type == SSL_FILETYPE_PEM) {
 		j = ERR_R_PEM_LIB;
-		x = PEM_read_bio_X509(in, NULL, ctx->internal->default_passwd_callback,
-		    ctx->internal->default_passwd_callback_userdata);
+		x = PEM_read_bio_X509(in, NULL, ctx->default_passwd_callback,
+		    ctx->default_passwd_callback_userdata);
 	} else {
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, SSL_R_BAD_SSL_FILETYPE);
 		goto end;
@@ -526,8 +526,8 @@ SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 	} else if (type == SSL_FILETYPE_PEM) {
 		j = ERR_R_PEM_LIB;
 		rsa = PEM_read_bio_RSAPrivateKey(in, NULL,
-		    ctx->internal->default_passwd_callback,
-		    ctx->internal->default_passwd_callback_userdata);
+		    ctx->default_passwd_callback,
+		    ctx->default_passwd_callback_userdata);
 	} else {
 		SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
 		goto end;
@@ -596,8 +596,8 @@ SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 	if (type == SSL_FILETYPE_PEM) {
 		j = ERR_R_PEM_LIB;
 		pkey = PEM_read_bio_PrivateKey(in, NULL,
-		    ctx->internal->default_passwd_callback,
-		    ctx->internal->default_passwd_callback_userdata);
+		    ctx->default_passwd_callback,
+		    ctx->default_passwd_callback_userdata);
 	} else if (type == SSL_FILETYPE_ASN1) {
 		j = ERR_R_ASN1_LIB;
 		pkey = d2i_PrivateKey_bio(in, NULL);
@@ -650,8 +650,8 @@ ssl_ctx_use_certificate_chain_bio(SSL_CTX *ctx, BIO *in)
 
 	ERR_clear_error(); /* clear error stack for SSL_CTX_use_certificate() */
 
-	x = PEM_read_bio_X509_AUX(in, NULL, ctx->internal->default_passwd_callback,
-	    ctx->internal->default_passwd_callback_userdata);
+	x = PEM_read_bio_X509_AUX(in, NULL, ctx->default_passwd_callback,
+	    ctx->default_passwd_callback_userdata);
 	if (x == NULL) {
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_PEM_LIB);
 		goto end;
@@ -677,8 +677,8 @@ ssl_ctx_use_certificate_chain_bio(SSL_CTX *ctx, BIO *in)
 		}
 
 		while ((ca = PEM_read_bio_X509(in, NULL,
-		    ctx->internal->default_passwd_callback,
-		    ctx->internal->default_passwd_callback_userdata)) != NULL) {
+		    ctx->default_passwd_callback,
+		    ctx->default_passwd_callback_userdata)) != NULL) {
 			r = SSL_CTX_add_extra_chain_cert(ctx, ca);
 			if (!r) {
 				X509_free(ca);

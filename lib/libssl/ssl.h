@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.119 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.120 2017/01/23 22:34:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -679,6 +679,17 @@ struct ssl_ctx_st {
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
 	X509_VERIFY_PARAM *param;
+
+	/*
+	 * XXX
+	 * default_passwd_cb used by python and openvpn, need to keep it until we
+	 * add an accessor
+	 */
+	/* Default password callback. */
+	pem_password_cb *default_passwd_callback;
+
+	/* Default password callback user data. */
+	void *default_passwd_callback_userdata;
 
 	struct ssl_ctx_internal_st *internal;
 };
