@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.4 2016/12/04 14:33:04 jsing Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.5 2017/01/23 06:49:31 beck Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -38,6 +38,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include "ssl_locl.h"
 
 #include "tests.h"
 
@@ -128,7 +130,7 @@ ssl_list_to_bytes_no_scsv(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 	buf[buflen - 1] = 0xab;
 
 	/* Set renegotiate so it doesn't add SCSV */
-	s->renegotiate = 1;
+	s->internal->renegotiate = 1;
 
 	CHECK(ssl_cipher_list_to_bytes(s, *ciphers, buf, buflen, &outlen));
 
