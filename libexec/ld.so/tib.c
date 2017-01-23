@@ -34,6 +34,7 @@
 /* If we need the syscall, use our local syscall definition */
 #define	__set_tcb(tcb)	_dl_set_tcb(tcb)
 
+__dso_hidden void *allocate_tib(size_t);
 
 static int	static_tls_size;
 
@@ -46,7 +47,7 @@ int		_dl_tib_static_done;
  * for variant 2.  If non-zero, tib_thread is set to point to that area.
  */
 void *
-_dl_allocate_tib(size_t extra)
+allocate_tib(size_t extra)
 {
 	char *base;
 	struct tib *tib;
@@ -98,6 +99,7 @@ _dl_allocate_tib(size_t extra)
 
 	return (tib);
 }
+__strong_alias(_dl_allocate_tib, allocate_tib);
 
 void
 _dl_free_tib(void *tib, size_t extra)
@@ -183,7 +185,7 @@ _dl_allocate_first_tib(void)
 {
 	struct tib *tib;
 
-	tib = _dl_allocate_tib(0);
+	tib = allocate_tib(0);
 	tib->tib_tid = _dl_getthrid();
 
 	TCB_SET(TIB_TO_TCB(tib));
