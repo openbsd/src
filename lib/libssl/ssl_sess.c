@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.60 2017/01/23 05:13:02 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.61 2017/01/23 05:27:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -185,13 +185,13 @@ SSL_SESSION_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 int
 SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
 {
-	return (CRYPTO_set_ex_data(&s->ex_data, idx, arg));
+	return (CRYPTO_set_ex_data(&s->internal->ex_data, idx, arg));
 }
 
 void *
 SSL_SESSION_get_ex_data(const SSL_SESSION *s, int idx)
 {
-	return (CRYPTO_get_ex_data(&s->ex_data, idx));
+	return (CRYPTO_get_ex_data(&s->internal->ex_data, idx));
 }
 
 SSL_SESSION *
@@ -213,8 +213,8 @@ SSL_SESSION_new(void)
 	ss->references = 1;
 	ss->timeout=60*5+4; /* 5 minute timeout by default */
 	ss->time = time(NULL);
-	ss->prev = NULL;
-	ss->next = NULL;
+	ss->internal->prev = NULL;
+	ss->internal->next = NULL;
 	ss->tlsext_hostname = NULL;
 
 	ss->internal->tlsext_ecpointformatlist_length = 0;
@@ -222,7 +222,7 @@ SSL_SESSION_new(void)
 	ss->internal->tlsext_ellipticcurvelist_length = 0;
 	ss->internal->tlsext_ellipticcurvelist = NULL;
 
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->internal->ex_data);
 
 	return (ss);
 }
@@ -695,7 +695,7 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	if (i > 0)
 		return;
 
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->internal->ex_data);
 
 	explicit_bzero(ss->master_key, sizeof ss->master_key);
 	explicit_bzero(ss->session_id, sizeof ss->session_id);
@@ -962,50 +962,50 @@ ssl_clear_bad_session(SSL *s)
 static void
 SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s)
 {
-	if ((s->next == NULL) || (s->prev == NULL))
+	if ((s->internal->next == NULL) || (s->internal->prev == NULL))
 		return;
 
-	if (s->next == (SSL_SESSION *)&(ctx->internal->session_cache_tail)) {
+	if (s->internal->next == (SSL_SESSION *)&(ctx->internal->session_cache_tail)) {
 		/* last element in list */
-		if (s->prev == (SSL_SESSION *)&(ctx->internal->session_cache_head)) {
+		if (s->internal->prev == (SSL_SESSION *)&(ctx->internal->session_cache_head)) {
 			/* only one element in list */
 			ctx->internal->session_cache_head = NULL;
 			ctx->internal->session_cache_tail = NULL;
 		} else {
-			ctx->internal->session_cache_tail = s->prev;
-			s->prev->next =
+			ctx->internal->session_cache_tail = s->internal->prev;
+			s->internal->prev->internal->next =
 			    (SSL_SESSION *)&(ctx->internal->session_cache_tail);
 		}
 	} else {
-		if (s->prev == (SSL_SESSION *)&(ctx->internal->session_cache_head)) {
+		if (s->internal->prev == (SSL_SESSION *)&(ctx->internal->session_cache_head)) {
 			/* first element in list */
-			ctx->internal->session_cache_head = s->next;
-			s->next->prev =
+			ctx->internal->session_cache_head = s->internal->next;
+			s->internal->next->internal->prev =
 			    (SSL_SESSION *)&(ctx->internal->session_cache_head);
 		} else {
 			/* middle of list */
-			s->next->prev = s->prev;
-			s->prev->next = s->next;
+			s->internal->next->internal->prev = s->internal->prev;
+			s->internal->prev->internal->next = s->internal->next;
 		}
 	}
-	s->prev = s->next = NULL;
+	s->internal->prev = s->internal->next = NULL;
 }
 
 static void
 SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s)
 {
-	if ((s->next != NULL) && (s->prev != NULL))
+	if ((s->internal->next != NULL) && (s->internal->prev != NULL))
 		SSL_SESSION_list_remove(ctx, s);
 
 	if (ctx->internal->session_cache_head == NULL) {
 		ctx->internal->session_cache_head = s;
 		ctx->internal->session_cache_tail = s;
-		s->prev = (SSL_SESSION *)&(ctx->internal->session_cache_head);
-		s->next = (SSL_SESSION *)&(ctx->internal->session_cache_tail);
+		s->internal->prev = (SSL_SESSION *)&(ctx->internal->session_cache_head);
+		s->internal->next = (SSL_SESSION *)&(ctx->internal->session_cache_tail);
 	} else {
-		s->next = ctx->internal->session_cache_head;
-		s->next->prev = s;
-		s->prev = (SSL_SESSION *)&(ctx->internal->session_cache_head);
+		s->internal->next = ctx->internal->session_cache_head;
+		s->internal->next->internal->prev = s;
+		s->internal->prev = (SSL_SESSION *)&(ctx->internal->session_cache_head);
 		ctx->internal->session_cache_head = s;
 	}
 }

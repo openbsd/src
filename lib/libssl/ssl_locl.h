@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.156 2017/01/23 05:13:02 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.157 2017/01/23 05:27:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -373,6 +373,12 @@ __BEGIN_HIDDEN_DECLS
 #define NAMED_CURVE_TYPE           3
 
 typedef struct ssl_session_internal_st {
+	CRYPTO_EX_DATA ex_data; /* application specific data */
+
+	/* These are used to make removal of session-ids more
+	 * efficient and to implement a maximum cache size. */
+	struct ssl_session_st *prev, *next;
+
 	/* Used to indicate that session resumption is not allowed.
 	 * Applications can also set this bit for a new session via
 	 * not_resumable_session_cb to disable session caching and tickets. */

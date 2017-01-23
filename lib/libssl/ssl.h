@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.112 2017/01/23 05:13:02 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.113 2017/01/23 05:27:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -496,11 +496,6 @@ struct ssl_session_st {
 
 	STACK_OF(SSL_CIPHER) *ciphers; /* shared ciphers? */
 
-	CRYPTO_EX_DATA ex_data; /* application specific data */
-
-	/* These are used to make removal of session-ids more
-	 * efficient and to implement a maximum cache size. */
-	struct ssl_session_st *prev, *next;
 	char *tlsext_hostname;
 
 	/* RFC4507 info */
