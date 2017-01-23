@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.23 2017/01/17 17:19:21 stefan Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.24 2017/01/23 01:10:10 patrick Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -81,19 +81,6 @@ struct uaddr_pivot_state {
 	/* List of pivots. The pointers point to after the last allocation. */
 	struct uaddr_pivot		 up_pivots[NUM_PIVOTS];
 };
-
-/*
- * Free space comparison.
- * Compares smaller free-space before larger free-space.
- */
-static inline int
-uvm_mapent_fspace_cmp(const struct vm_map_entry *e1,
-    const struct vm_map_entry *e2)
-{
-	if (e1->fspace != e2->fspace)
-		return (e1->fspace < e2->fspace ? -1 : 1);
-	return (e1->start < e2->start ? -1 : e1->start > e2->start);
-}
 
 /* Forward declaration (see below). */
 extern const struct uvm_addr_functions uaddr_kernel_functions;
@@ -1435,6 +1422,19 @@ uaddr_stack_brk_create(vaddr_t minaddr, vaddr_t maxaddr)
 
 
 #ifndef SMALL_KERNEL
+/*
+ * Free space comparison.
+ * Compares smaller free-space before larger free-space.
+ */
+static inline int
+uvm_mapent_fspace_cmp(const struct vm_map_entry *e1,
+    const struct vm_map_entry *e2)
+{
+	if (e1->fspace != e2->fspace)
+		return (e1->fspace < e2->fspace ? -1 : 1);
+	return (e1->start < e2->start ? -1 : e1->start > e2->start);
+}
+
 RBT_GENERATE(uaddr_free_rbtree, vm_map_entry, dfree.rbtree,
     uvm_mapent_fspace_cmp);
 #endif /* !SMALL_KERNEL */
