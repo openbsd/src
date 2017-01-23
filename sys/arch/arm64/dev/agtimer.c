@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.2 2017/01/05 21:25:52 patrick Exp $ */
+/* $OpenBSD: agtimer.c,v 1.3 2017/01/23 10:15:53 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -137,7 +137,8 @@ agtimer_match(struct device *parent, void *cfdata, void *aux)
 {
 	struct fdt_attach_args *faa = (struct fdt_attach_args *)aux;
 
-	return OF_is_compatible(faa->fa_node, "arm,armv8-timer");
+	return (OF_is_compatible(faa->fa_node, "arm,armv7-timer") ||
+	    OF_is_compatible(faa->fa_node, "arm,armv8-timer"));
 }
 
 void
