@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.106 2016/12/27 09:15:16 jca Exp $ */
+/*	$OpenBSD: rde.c,v 1.107 2017/01/23 00:12:36 jca Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1342,9 +1342,7 @@ orig_asext_lsa(struct kroute *kr, u_int32_t ls_id, u_int16_t age)
 	 * neighbors on the particular segment, we skip that check.
 	 */
 	iface = rde_asext_lookup(kr->nexthop.s_addr, -1);
-	if (kr->flags & F_FORCED_NEXTHOP)
-		lsa->data.asext.fw_addr = kr->nexthop.s_addr;
-	else if (kr->flags & F_CONNECTED)
+	if (kr->flags & F_CONNECTED)
 		lsa->data.asext.fw_addr = 0;
 	else if (iface && (iface->type == IF_TYPE_BROADCAST ||
 	    iface->type == IF_TYPE_NBMA))

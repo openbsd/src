@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.95 2016/09/02 14:02:48 benno Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.96 2017/01/23 00:12:36 jca Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -59,7 +59,6 @@
 #define	F_REJECT		0x0040
 #define	F_BLACKHOLE		0x0080
 #define	F_REDISTRIBUTED		0x0100
-#define	F_FORCED_NEXTHOP	0x0200
 
 static const char * const log_procnames[] = {
 	"parent",
