@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2016/09/02 14:02:48 benno Exp $ */
+/*	$OpenBSD: log.c,v 1.10 2017/01/23 08:40:45 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,7 +23,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "log.h"
 #include "ospfd.h"
@@ -137,23 +136,27 @@ log_debug(const char *emsg, ...)
 }
 
 void
-fatal(const char *emsg)
+fatal(const char *emsg, ...)
 {
+	char	 s[1024];
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	vsnprintf(s, sizeof(s), emsg, ap);
+	va_end(ap);
+
 	if (emsg == NULL)
 		logit(LOG_CRIT, "fatal in %s: %s", log_procname,
 		    strerror(errno));
 	else
 		if (errno)
 			logit(LOG_CRIT, "fatal in %s: %s: %s",
-			    log_procname, emsg, strerror(errno));
+			    log_procname, s, strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal in %s: %s",
-			    log_procname, emsg);
+			    log_procname, s);
 
-	if (ospfd_process == PROC_MAIN)
-		exit(1);
-	else				/* parent copes via SIGCHLD */
-		_exit(1);
+	exit(1);
 }
 
 void
