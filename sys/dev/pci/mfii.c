@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.29 2017/01/23 01:10:31 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.30 2017/01/23 04:25:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -51,6 +51,7 @@
 
 #define MFII_REQ_MFA(_a)	htole64((_a) | MFII_REQ_TYPE_MFA)
 
+#define MFII_FUNCTION_PASSTHRU_IO			(0xf0)
 #define MFII_FUNCTION_LDIO_REQUEST			(0xf1)
 
 struct mfii_request_descr {
