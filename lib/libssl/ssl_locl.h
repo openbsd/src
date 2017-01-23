@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.159 2017/01/23 08:08:06 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.160 2017/01/23 08:48:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -723,6 +723,10 @@ typedef struct ssl_internal_st {
 	int renegotiate;/* 1 if we are renegotiating.
 		 	 * 2 if we are a server and are inside a handshake
 	                 * (i.e. not just sending a HelloRequest) */
+
+	int state;	/* where we are */
+	int rstate;	/* where we are when reading */
+
 } SSL_INTERNAL;
 
 typedef struct ssl3_state_internal_st {

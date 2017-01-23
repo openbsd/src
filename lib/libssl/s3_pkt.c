@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.65 2017/01/23 08:08:06 beck Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.66 2017/01/23 08:48:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -290,7 +290,7 @@ ssl3_get_record(SSL *s)
 
 again:
 	/* check if we have the header */
-	if ((s->rstate != SSL_ST_READ_BODY) ||
+	if ((s->internal->rstate != SSL_ST_READ_BODY) ||
 	    (s->internal->packet_length < SSL3_RT_HEADER_LENGTH)) {
 		CBS header;
 		uint16_t len, ssl_version;
@@ -299,7 +299,7 @@ again:
 		n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH, s->s3->rbuf.len, 0);
 		if (n <= 0)
 			return(n); /* error or non-blocking */
-		s->rstate = SSL_ST_READ_BODY;
+		s->internal->rstate = SSL_ST_READ_BODY;
 
 		CBS_init(&header, s->internal->packet, n);
 
@@ -340,10 +340,10 @@ again:
 			goto f_err;
 		}
 
-		/* now s->rstate == SSL_ST_READ_BODY */
+		/* now s->internal->rstate == SSL_ST_READ_BODY */
 	}
 
-	/* s->rstate == SSL_ST_READ_BODY, get and decode the data */
+	/* s->internal->rstate == SSL_ST_READ_BODY, get and decode the data */
 
 	if (rr->length > s->internal->packet_length - SSL3_RT_HEADER_LENGTH) {
 		/* now s->internal->packet_length == SSL3_RT_HEADER_LENGTH */
@@ -355,7 +355,7 @@ again:
 		 * and s->internal->packet_length == SSL3_RT_HEADER_LENGTH + rr->length */
 	}
 
-	s->rstate=SSL_ST_READ_HEADER; /* set state for later operations */
+	s->internal->rstate=SSL_ST_READ_HEADER; /* set state for later operations */
 
 	/* At this point, s->internal->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
 	 * and we have that many bytes in s->internal->packet
@@ -666,7 +666,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	/* Some servers hang if iniatial client hello is larger than 256
 	 * bytes and record version number > TLS 1.0
 	 */
-	if (s->state == SSL3_ST_CW_CLNT_HELLO_B && !s->internal->renegotiate &&
+	if (s->internal->state == SSL3_ST_CW_CLNT_HELLO_B && !s->internal->renegotiate &&
 	    TLS1_get_version(s) > TLS1_VERSION)
 		*(p++) = 0x1;
 	else
@@ -929,7 +929,7 @@ start:
 	rr = &(S3I(s)->rrec);
 
 	/* get new packet if necessary */
-	if ((rr->length == 0) || (s->rstate == SSL_ST_READ_BODY)) {
+	if ((rr->length == 0) || (s->internal->rstate == SSL_ST_READ_BODY)) {
 		ret = ssl3_get_record(s);
 		if (ret <= 0)
 			return (ret);
@@ -981,7 +981,7 @@ start:
 			rr->length -= n;
 			rr->off += n;
 			if (rr->length == 0) {
-				s->rstate = SSL_ST_READ_HEADER;
+				s->internal->rstate = SSL_ST_READ_HEADER;
 				rr->off = 0;
 				if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
 				    s->s3->rbuf.left == 0)
@@ -1215,9 +1215,9 @@ start:
 
 	/* Unexpected handshake message (Client Hello, or protocol violation) */
 	if ((S3I(s)->handshake_fragment_len >= 4) && !s->internal->in_handshake) {
-		if (((s->state&SSL_ST_MASK) == SSL_ST_OK) &&
+		if (((s->internal->state&SSL_ST_MASK) == SSL_ST_OK) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-			s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+			s->internal->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
 			s->internal->renegotiate = 1;
 			s->internal->new_session = 1;
 		}
@@ -1280,12 +1280,12 @@ start:
 		 */
 		if (S3I(s)->in_read_app_data &&
 		    (S3I(s)->total_renegotiations != 0) &&
-		    (((s->state & SSL_ST_CONNECT) &&
-		    (s->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
-		    (s->state <= SSL3_ST_CR_SRVR_HELLO_A)) ||
-		    ((s->state & SSL_ST_ACCEPT) &&
-		    (s->state <= SSL3_ST_SW_HELLO_REQ_A) &&
-		    (s->state >= SSL3_ST_SR_CLNT_HELLO_A)))) {
+		    (((s->internal->state & SSL_ST_CONNECT) &&
+		    (s->internal->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
+		    (s->internal->state <= SSL3_ST_CR_SRVR_HELLO_A)) ||
+		    ((s->internal->state & SSL_ST_ACCEPT) &&
+		    (s->internal->state <= SSL3_ST_SW_HELLO_REQ_A) &&
+		    (s->internal->state >= SSL3_ST_SR_CLNT_HELLO_A)))) {
 			S3I(s)->in_read_app_data = 2;
 			return (-1);
 		} else {
@@ -1309,7 +1309,7 @@ ssl3_do_change_cipher_spec(SSL *s)
 	const char *sender;
 	int slen;
 
-	if (s->state & SSL_ST_ACCEPT)
+	if (s->internal->state & SSL_ST_ACCEPT)
 		i = SSL3_CHANGE_CIPHER_SERVER_READ;
 	else
 		i = SSL3_CHANGE_CIPHER_CLIENT_READ;
@@ -1333,7 +1333,7 @@ ssl3_do_change_cipher_spec(SSL *s)
 	/* we have to record the message digest at
 	 * this point so we can get it before we read
 	 * the finished message */
-	if (s->state & SSL_ST_CONNECT) {
+	if (s->internal->state & SSL_ST_CONNECT) {
 		sender = s->method->ssl3_enc->server_finished_label;
 		slen = s->method->ssl3_enc->server_finished_label_len;
 	} else {

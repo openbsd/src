@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.136 2017/01/23 08:08:06 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.137 2017/01/23 08:48:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -210,12 +210,12 @@ SSL_clear(SSL *s)
 
 	s->internal->type = 0;
 
-	s->state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
+	s->internal->state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
 
 	s->version = s->method->version;
 	s->client_version = s->version;
 	s->internal->rwstate = SSL_NOTHING;
-	s->rstate = SSL_ST_READ_HEADER;
+	s->internal->rstate = SSL_ST_READ_HEADER;
 
 	BUF_MEM_free(s->internal->init_buf);
 	s->internal->init_buf = NULL;
@@ -2430,7 +2430,7 @@ SSL_set_accept_state(SSL *s)
 {
 	s->server = 1;
 	s->internal->shutdown = 0;
-	s->state = SSL_ST_ACCEPT|SSL_ST_BEFORE;
+	s->internal->state = SSL_ST_ACCEPT|SSL_ST_BEFORE;
 	s->internal->handshake_func = s->method->ssl_accept;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
@@ -2443,7 +2443,7 @@ SSL_set_connect_state(SSL *s)
 {
 	s->server = 0;
 	s->internal->shutdown = 0;
-	s->state = SSL_ST_CONNECT|SSL_ST_BEFORE;
+	s->internal->state = SSL_ST_CONNECT|SSL_ST_BEFORE;
 	s->internal->handshake_func = s->method->ssl_connect;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
@@ -2681,8 +2681,8 @@ SSL_dup(SSL *s)
 	ret->internal->quiet_shutdown = s->internal->quiet_shutdown;
 	ret->internal->shutdown = s->internal->shutdown;
 	/* SSL_dup does not really work at any state, though */
-	ret->state=s->state;
-	ret->rstate = s->rstate;
+	ret->internal->state = s->internal->state;
+	ret->internal->rstate = s->internal->rstate;
 
 	/*
 	 * Would have to copy ret->init_buf, ret->init_msg, ret->init_num,
@@ -2941,13 +2941,13 @@ void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl, int type, int val)
 int
 SSL_state(const SSL *ssl)
 {
-	return (ssl->state);
+	return (ssl->internal->state);
 }
 
 void
 SSL_set_state(SSL *ssl, int state)
 {
-	ssl->state = state;
+	ssl->internal->state = state;
 }
 
 void

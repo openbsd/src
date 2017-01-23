@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.53 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.54 2017/01/23 08:48:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,9 +140,9 @@ ssl23_connect(SSL *s)
 		SSL_clear(s);
 
 	for (;;) {
-		state = s->state;
+		state = s->internal->state;
 
-		switch (s->state) {
+		switch (s->internal->state) {
 		case SSL_ST_BEFORE:
 		case SSL_ST_CONNECT:
 		case SSL_ST_BEFORE|SSL_ST_CONNECT:
@@ -173,7 +173,7 @@ ssl23_connect(SSL *s)
 				goto end;
 			}
 
-			s->state = SSL23_ST_CW_CLNT_HELLO_A;
+			s->internal->state = SSL23_ST_CW_CLNT_HELLO_A;
 			s->ctx->internal->stats.sess_connect++;
 			s->internal->init_num = 0;
 			break;
@@ -185,7 +185,7 @@ ssl23_connect(SSL *s)
 			ret = ssl23_client_hello(s);
 			if (ret <= 0)
 				goto end;
-			s->state = SSL23_ST_CR_SRVR_HELLO_A;
+			s->internal->state = SSL23_ST_CR_SRVR_HELLO_A;
 			s->internal->init_num = 0;
 
 			break;
@@ -209,11 +209,11 @@ ssl23_connect(SSL *s)
 			(void)BIO_flush(s->wbio);
 		}
 
-		if ((cb != NULL) && (s->state != state)) {
-			new_state = s->state;
-			s->state = state;
+		if ((cb != NULL) && (s->internal->state != state)) {
+			new_state = s->internal->state;
+			s->internal->state = state;
 			cb(s, SSL_CB_CONNECT_LOOP, 1);
-			s->state = new_state;
+			s->internal->state = new_state;
 		}
 	}
 
@@ -236,7 +236,7 @@ ssl23_client_hello(SSL *s)
 	int ret;
 
 	buf = (unsigned char *)s->internal->init_buf->data;
-	if (s->state == SSL23_ST_CW_CLNT_HELLO_A) {
+	if (s->internal->state == SSL23_ST_CW_CLNT_HELLO_A) {
 		arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
 		if (ssl_enabled_version_range(s, NULL, &version) != 1) {
@@ -325,7 +325,7 @@ ssl23_client_hello(SSL *s)
 		tls1_finish_mac(s, &(buf[SSL3_RT_HEADER_LENGTH]),
 		    s->internal->init_num - SSL3_RT_HEADER_LENGTH);
 
-		s->state = SSL23_ST_CW_CLNT_HELLO_B;
+		s->internal->state = SSL23_ST_CW_CLNT_HELLO_B;
 		s->internal->init_off = 0;
 	}
 
@@ -419,11 +419,11 @@ ssl23_get_server_hello(SSL *s)
 			goto err;
 
 		/* we are in this state */
-		s->state = SSL3_ST_CR_SRVR_HELLO_A;
+		s->internal->state = SSL3_ST_CR_SRVR_HELLO_A;
 
 		/* put the 7 bytes we have read into the input buffer
 		 * for SSLv3 */
-		s->rstate = SSL_ST_READ_HEADER;
+		s->internal->rstate = SSL_ST_READ_HEADER;
 		s->internal->packet_length = n;
 		if (s->s3->rbuf.buf == NULL)
 			if (!ssl3_setup_read_buffer(s))

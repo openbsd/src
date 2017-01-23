@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.115 2017/01/23 08:08:06 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.116 2017/01/23 08:48:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -845,9 +845,6 @@ struct ssl_st {
 	char *bbio;
 #endif
 	int server;	/* are we the server side? - mostly used by SSL_clear*/
-
-	int state;	/* where we are */
-	int rstate;	/* where we are when reading */
 
 	struct ssl3_state_st *s3; /* SSLv3 variables */
 	struct dtls1_state_st *d1; /* DTLSv1 variables */

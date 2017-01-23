@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.44 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: d1_both.c,v 1.45 2017/01/23 08:48:44 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -856,7 +856,7 @@ again:
 		goto f_err;
 
 	/* XDTLS:  ressurect this when restart is in place */
-	s->state = stn;
+	s->internal->state = stn;
 
 	if (frag_len > 0) {
 		unsigned char *p = (unsigned char *)s->internal->init_buf->data + DTLS1_HM_HEADER_LENGTH;
@@ -915,7 +915,7 @@ dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 {
 	unsigned char *p;
 
-	if (s->state == a) {
+	if (s->internal->state == a) {
 		p = (unsigned char *)s->internal->init_buf->data;
 		*p++=SSL3_MT_CCS;
 		D1I(s)->handshake_write_seq = D1I(s)->next_handshake_write_seq;
@@ -929,7 +929,7 @@ dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 		/* buffer the message to handle re-xmits */
 		dtls1_buffer_message(s, 1);
 
-		s->state = b;
+		s->internal->state = b;
 	}
 
 	/* SSL3_ST_CW_CHANGE_B */

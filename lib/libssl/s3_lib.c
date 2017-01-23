@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.125 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.126 2017/01/23 08:48:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1678,7 +1678,7 @@ ssl3_cipher_get_value(const SSL_CIPHER *c)
 int
 ssl3_pending(const SSL *s)
 {
-	if (s->rstate == SSL_ST_READ_BODY)
+	if (s->internal->rstate == SSL_ST_READ_BODY)
 		return 0;
 
 	return (S3I(s)->rrec.type == SSL3_RT_APPLICATION_DATA) ?
@@ -2505,7 +2505,7 @@ ssl3_shutdown(SSL *s)
 	 * Don't do anything much if we have not done the handshake or
 	 * we don't want to send messages :-)
 	 */
-	if ((s->internal->quiet_shutdown) || (s->state == SSL_ST_BEFORE)) {
+	if ((s->internal->quiet_shutdown) || (s->internal->state == SSL_ST_BEFORE)) {
 		s->internal->shutdown = (SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 		return (1);
 	}
@@ -2669,7 +2669,7 @@ ssl3_renegotiate_check(SSL *s)
 			 * to SSL_ST_ACCEPT.
 			 */
 			/* SSL_ST_ACCEPT */
-			s->state = SSL_ST_RENEGOTIATE;
+			s->internal->state = SSL_ST_RENEGOTIATE;
 			S3I(s)->renegotiate = 0;
 			S3I(s)->num_renegotiations++;
 			S3I(s)->total_renegotiations++;

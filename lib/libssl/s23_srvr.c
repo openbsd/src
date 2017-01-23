@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.54 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.55 2017/01/23 08:48:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,9 +139,9 @@ ssl23_accept(SSL *s)
 		SSL_clear(s);
 
 	for (;;) {
-		state = s->state;
+		state = s->internal->state;
 
-		switch (s->state) {
+		switch (s->internal->state) {
 		case SSL_ST_BEFORE:
 		case SSL_ST_ACCEPT:
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
@@ -163,7 +163,7 @@ ssl23_accept(SSL *s)
 				goto end;
 			}
 
-			s->state = SSL23_ST_SR_CLNT_HELLO_A;
+			s->internal->state = SSL23_ST_SR_CLNT_HELLO_A;
 			s->ctx->internal->stats.sess_accept++;
 			s->internal->init_num = 0;
 			break;
@@ -185,11 +185,11 @@ ssl23_accept(SSL *s)
 			/* break; */
 		}
 
-		if ((cb != NULL) && (s->state != state)) {
-			new_state = s->state;
-			s->state = state;
+		if ((cb != NULL) && (s->internal->state != state)) {
+			new_state = s->internal->state;
+			s->internal->state = state;
 			cb(s, SSL_CB_ACCEPT_LOOP, 1);
-			s->state = new_state;
+			s->internal->state = new_state;
 		}
 	}
 
@@ -228,7 +228,7 @@ ssl23_get_client_hello(SSL *s)
 	int n = 0, j;
 	int type = 0;
 
-	if (s->state ==	SSL23_ST_SR_CLNT_HELLO_A) {
+	if (s->internal->state == SSL23_ST_SR_CLNT_HELLO_A) {
 		/* read the initial header */
 		if (!ssl3_setup_buffers(s))
 			return -1;
@@ -252,7 +252,7 @@ ssl23_get_client_hello(SSL *s)
 				goto unsupported;
 
 			s->version = shared_version;
-			s->state = SSL23_ST_SR_CLNT_HELLO_B;
+			s->internal->state = SSL23_ST_SR_CLNT_HELLO_B;
 		} else if ((p[0] == SSL3_RT_HANDSHAKE) &&
 		    (p[1] == SSL3_VERSION_MAJOR) &&
 		    (p[5] == SSL3_MT_CLIENT_HELLO) &&
@@ -301,7 +301,7 @@ ssl23_get_client_hello(SSL *s)
 		}
 	}
 
-	if (s->state == SSL23_ST_SR_CLNT_HELLO_B) {
+	if (s->internal->state == SSL23_ST_SR_CLNT_HELLO_B) {
 		/* we have SSLv3/TLSv1 in an SSLv2 header
 		 * (other cases skip this state) */
 
@@ -413,7 +413,7 @@ ssl23_get_client_hello(SSL *s)
 	}
 
 	/* imaginary new state (for program structure): */
-	/* s->state = SSL23_SR_CLNT_HELLO_C */
+	/* s->internal->state = SSL23_SR_CLNT_HELLO_C */
 
 	if (type == 2 || type == 3) {
 		/* we have SSLv3/TLSv1 (type 2: SSL2 style, type 3: SSL3/TLS style) */
@@ -422,12 +422,12 @@ ssl23_get_client_hello(SSL *s)
 			return -1;
 
 		/* we are in this state */
-		s->state = SSL3_ST_SR_CLNT_HELLO_A;
+		s->internal->state = SSL3_ST_SR_CLNT_HELLO_A;
 
 		if (type == 3) {
 			/* put the 'n' bytes we have read into the input buffer
 			 * for SSLv3 */
-			s->rstate = SSL_ST_READ_HEADER;
+			s->internal->rstate = SSL_ST_READ_HEADER;
 			s->internal->packet_length = n;
 			if (s->s3->rbuf.buf == NULL)
 				if (!ssl3_setup_read_buffer(s))

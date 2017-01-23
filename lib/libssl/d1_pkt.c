@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.55 2017/01/23 08:08:06 beck Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.56 2017/01/23 08:48:44 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -495,7 +495,7 @@ again:
 	}
 
 	/* check if we have the header */
-	if ((s->rstate != SSL_ST_READ_BODY) ||
+	if ((s->internal->rstate != SSL_ST_READ_BODY) ||
 	    (s->internal->packet_length < DTLS1_RT_HEADER_LENGTH)) {
 		CBS header, seq_no;
 		uint16_t epoch, len, ssl_version;
@@ -510,7 +510,7 @@ again:
 		if (s->internal->packet_length != DTLS1_RT_HEADER_LENGTH)
 			goto again;
 
-		s->rstate = SSL_ST_READ_BODY;
+		s->internal->rstate = SSL_ST_READ_BODY;
 
 		CBS_init(&header, s->internal->packet, s->internal->packet_length);
 
@@ -547,11 +547,11 @@ again:
 		if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH)
 			goto again;
 
-		/* now s->rstate == SSL_ST_READ_BODY */
+		/* now s->internal->rstate == SSL_ST_READ_BODY */
 		p = (unsigned char *)CBS_data(&header);
 	}
 
-	/* s->rstate == SSL_ST_READ_BODY, get and decode the data */
+	/* s->internal->rstate == SSL_ST_READ_BODY, get and decode the data */
 
 	if (rr->length > s->internal->packet_length - DTLS1_RT_HEADER_LENGTH) {
 		/* now s->internal->packet_length == DTLS1_RT_HEADER_LENGTH */
@@ -567,7 +567,7 @@ again:
 		/* now n == rr->length,
 		 * and s->internal->packet_length == DTLS1_RT_HEADER_LENGTH + rr->length */
 	}
-	s->rstate = SSL_ST_READ_HEADER; /* set state for later operations */
+	s->internal->rstate = SSL_ST_READ_HEADER; /* set state for later operations */
 
 	/* match epochs.  NULL means the packet is dropped on the floor */
 	bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
@@ -692,7 +692,7 @@ start:
 	 * so process data buffered during the last handshake
 	 * in advance, if any.
 	 */
-	if (s->state == SSL_ST_OK && rr->length == 0) {
+	if (s->internal->state == SSL_ST_OK && rr->length == 0) {
 		pitem *item;
 		item = pqueue_pop(D1I(s)->buffered_app_data.q);
 		if (item) {
@@ -709,7 +709,7 @@ start:
 		goto start;
 
 	/* get new packet if necessary */
-	if ((rr->length == 0) || (s->rstate == SSL_ST_READ_BODY)) {
+	if ((rr->length == 0) || (s->internal->rstate == SSL_ST_READ_BODY)) {
 		ret = dtls1_get_record(s);
 		if (ret <= 0) {
 			ret = dtls1_read_failed(s, ret);
@@ -778,7 +778,7 @@ start:
 			rr->length -= n;
 			rr->off += n;
 			if (rr->length == 0) {
-				s->rstate = SSL_ST_READ_HEADER;
+				s->internal->rstate = SSL_ST_READ_HEADER;
 				rr->off = 0;
 			}
 		}
@@ -840,7 +840,7 @@ start:
 				 */
 				FIX ME
 #endif
-				s->rstate = SSL_ST_READ_HEADER;
+				s->internal->rstate = SSL_ST_READ_HEADER;
 				rr->length = 0;
 				goto start;
 			}
@@ -1035,9 +1035,9 @@ start:
 			goto start;
 		}
 
-		if (((s->state&SSL_ST_MASK) == SSL_ST_OK) &&
+		if (((s->internal->state&SSL_ST_MASK) == SSL_ST_OK) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-			s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+			s->internal->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
 			s->internal->renegotiate = 1;
 			s->internal->new_session = 1;
 		}
@@ -1096,12 +1096,12 @@ start:
 		 */
 		if (S3I(s)->in_read_app_data &&
 		    (S3I(s)->total_renegotiations != 0) &&
-		    (((s->state & SSL_ST_CONNECT) &&
-		    (s->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
-		    (s->state <= SSL3_ST_CR_SRVR_HELLO_A)) || (
-		    (s->state & SSL_ST_ACCEPT) &&
-		    (s->state <= SSL3_ST_SW_HELLO_REQ_A) &&
-		    (s->state >= SSL3_ST_SR_CLNT_HELLO_A)))) {
+		    (((s->internal->state & SSL_ST_CONNECT) &&
+		    (s->internal->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
+		    (s->internal->state <= SSL3_ST_CR_SRVR_HELLO_A)) || (
+		    (s->internal->state & SSL_ST_ACCEPT) &&
+		    (s->internal->state <= SSL3_ST_SW_HELLO_REQ_A) &&
+		    (s->internal->state >= SSL3_ST_SR_CLNT_HELLO_A)))) {
 			S3I(s)->in_read_app_data = 2;
 			return (-1);
 		} else {
