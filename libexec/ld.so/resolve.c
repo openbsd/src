@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.77 2017/01/23 13:00:09 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.78 2017/01/23 13:13:12 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -327,6 +327,8 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 		object->Dyn.info[DT_SONAME] += object->Dyn.info[DT_STRTAB];
 	if (object->Dyn.info[DT_RPATH])
 		object->Dyn.info[DT_RPATH] += object->Dyn.info[DT_STRTAB];
+	if (object->Dyn.info[DT_RUNPATH])
+		object->Dyn.info[DT_RUNPATH] += object->Dyn.info[DT_STRTAB];
 	if (object->Dyn.info[DT_REL])
 		object->Dyn.info[DT_REL] += obase;
 	if (object->Dyn.info[DT_INIT])
