@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.145 2017/01/23 11:46:02 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.146 2017/01/23 12:25:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,7 @@ RB_GENERATE(rib, rib_entry, rib_e, rib_compare);
 
 
 /* RIB specific functions */
-u_int16_t
+struct rib_desc *
 rib_new(char *name, u_int rtableid, u_int16_t flags)
 {
 	struct rib_desc	*xribs;
@@ -60,9 +60,6 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 		if (*ribs[id].name == '\0')
 			break;
 	}
-
-	if (id == RIB_FAILED)
-		fatalx("rib_new: trying to use reserved id");
 
 	if (id >= rib_size) {
 		if ((xribs = reallocarray(ribs, id + 1,
@@ -87,23 +84,23 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 		fatal(NULL);
 	TAILQ_INIT(ribs[id].in_rules);
 
-	return (id);
+	return (&ribs[id]);
 }
 
-u_int16_t
+struct rib_desc *
 rib_find(char *name)
 {
 	u_int16_t id;
 
 	if (name == NULL || *name == '\0')
-		return (1);	/* no name returns the Loc-RIB */
+		return (&ribs[1]);	/* no name returns the Loc-RIB */
 
 	for (id = 0; id < rib_size; id++) {
 		if (!strcmp(ribs[id].name, name))
-			return (id);
+			return (&ribs[id]);
 	}
 
-	return (RIB_FAILED);
+	return (NULL);
 }
 
 void

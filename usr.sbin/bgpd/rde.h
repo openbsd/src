@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.153 2017/01/23 11:46:02 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.154 2017/01/23 12:25:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -38,6 +38,7 @@ enum peer_state {
  * How do we identify peers between the session handler and the rde?
  * Currently I assume that we can do that with the neighbor_ip...
  */
+struct rib_desc;
 LIST_HEAD(rde_peer_head, rde_peer);
 LIST_HEAD(aspath_head, rde_aspath);
 RB_HEAD(uptree_prefix, update_prefix);
@@ -73,7 +74,7 @@ struct rde_peer {
 	u_int32_t			 up_nlricnt;
 	u_int32_t			 up_wcnt;
 	enum peer_state			 state;
-	u_int16_t			 ribid;
+	struct rib_desc			*rib;
 	u_int16_t			 short_as;
 	u_int16_t			 mrt_idx;
 	u_int8_t			 reconf_out;	/* out filter changed */
@@ -295,8 +296,6 @@ struct rib_desc {
 	enum reconf_action 	state;
 };
 
-#define RIB_FAILED		0xffff
-
 struct prefix {
 	LIST_ENTRY(prefix)		 rib_l, path_l;
 	struct rde_aspath		*aspath;
@@ -423,8 +422,8 @@ int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
 extern u_int16_t	 rib_size;
 extern struct rib_desc	*ribs;
 
-u_int16_t	 rib_new(char *, u_int, u_int16_t);
-u_int16_t	 rib_find(char *);
+struct rib_desc	 *rib_new(char *, u_int, u_int16_t);
+struct rib_desc	 *rib_find(char *);
 void		 rib_free(struct rib_desc *);
 struct rib_entry *rib_get(struct rib_desc *, struct bgpd_addr *, int);
 struct rib_entry *rib_lookup(struct rib_desc *, struct bgpd_addr *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.354 2017/01/23 11:43:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.355 2017/01/23 12:25:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -628,6 +628,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct filter_rule	*r;
 	struct filter_set	*s;
 	struct nexthop		*nh;
+	struct rib_desc		*rib;
 	int			 n, fd;
 	u_int16_t		 rid;
 
@@ -718,12 +719,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			    sizeof(struct rde_rib))
 				fatalx("IMSG_RECONF_RIB bad len");
 			memcpy(&rn, imsg.data, sizeof(rn));
-			rid = rib_find(rn.name);
-			if (rid == RIB_FAILED)
-				rib_new(rn.name, rn.rtableid, rn.flags);
-			else if (ribs[rid].rtableid != rn.rtableid ||
-			    (ribs[rid].flags & F_RIB_HASNOFIB) !=
-			    (rn.flags & F_RIB_HASNOFIB)) {
+			rib = rib_find(rn.name);
+			if (rib == NULL)
+				rib = rib_new(rn.name, rn.rtableid, rn.flags);
+			else if (rib->rtableid != rn.rtableid ||
+			    (rib->flags & F_RIB_HASNOFIB) !=
+			    (rib->flags & F_RIB_HASNOFIB)) {
 				struct filter_head	*in_rules;
 				/*
 				 * Big hammer in the F_RIB_HASNOFIB case but
@@ -731,13 +732,13 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				 * Need to save the filters so that they're not
 				 * lost.
 				 */
-				in_rules = ribs[rid].in_rules;
-				ribs[rid].in_rules = NULL;
-				rib_free(&ribs[rid]);
-				rib_new(rn.name, rn.rtableid, rn.flags);
-				ribs[rid].in_rules = in_rules;
+				in_rules = rib->in_rules;
+				rib->in_rules = NULL;
+				rib_free(rib);
+				rib = rib_new(rn.name, rn.rtableid, rn.flags);
+				rib->in_rules = in_rules;
 			} else
-				ribs[rid].state = RECONF_KEEP;
+				rib->state = RECONF_KEEP;
 			break;
 		case IMSG_RECONF_FILTER:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -747,23 +748,24 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatal(NULL);
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
 			TAILQ_INIT(&r->set);
-			if ((r->peer.ribid = rib_find(r->rib)) == RIB_FAILED) {
+			if ((rib = rib_find(r->rib)) == NULL) {
 				log_warnx("IMSG_RECONF_FILTER: filter rule "
 				    "for nonexistent rib %s", r->rib);
 				parent_set = NULL;
 				free(r);
 				break;
 			}
+			r->peer.ribid = rib->id;
 			parent_set = &r->set;
 			if (r->dir == DIR_IN) {
-				nr = ribs[r->peer.ribid].in_rules_tmp;
+				nr = rib->in_rules_tmp;
 				if (nr == NULL) {
 					nr = calloc(1,
 					    sizeof(struct filter_head));
 					if (nr == NULL)
 						fatal(NULL);
 					TAILQ_INIT(nr);
-					ribs[r->peer.ribid].in_rules_tmp = nr;
+					rib->in_rules_tmp = nr;
 				}
 				TAILQ_INSERT_TAIL(nr, r, entry);
 			} else
@@ -2327,9 +2329,9 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
     enum imsg_type type)
 {
 	struct rde_dump_ctx	*ctx;
+	struct rib_desc		*rib;
 	struct rib_entry	*re;
 	u_int			 error;
-	u_int16_t		 id;
 	u_int8_t		 hostplen;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
@@ -2339,7 +2341,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		    sizeof(error));
 		return;
 	}
-	if ((id = rib_find(req->rib)) == RIB_FAILED) {
+	if ((rib = rib_find(req->rib)) == NULL) {
 		log_warnx("rde_dump_ctx_new: no such rib %s", req->rib);
 		error = CTL_RES_NOSUCHPEER;
 		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1, &error,
@@ -2352,7 +2354,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	ctx->req.pid = pid;
 	ctx->req.type = type;
 	ctx->ribctx.ctx_count = RDE_RUNNER_ROUNDS;
-	ctx->ribctx.ctx_rib = &ribs[id];
+	ctx->ribctx.ctx_rib = rib;
 	switch (ctx->req.type) {
 	case IMSG_CTL_SHOW_NETWORK:
 		ctx->ribctx.ctx_upcall = network_dump_upcall;
@@ -2380,9 +2382,9 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			fatalx("rde_dump_ctx_new: unknown af");
 		}
 		if (req->prefixlen == hostplen)
-			re = rib_lookup(&ribs[id], &req->prefix);
+			re = rib_lookup(rib, &req->prefix);
 		else
-			re = rib_get(&ribs[id], &req->prefix, req->prefixlen);
+			re = rib_get(rib, &req->prefix, req->prefixlen);
 		if (re)
 			rde_dump_upcall(re, ctx);
 		rde_dump_done(ctx);
@@ -2410,7 +2412,7 @@ void
 rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 {
 	struct rde_mrt_ctx	*ctx;
-	u_int16_t		 id;
+	struct rib_desc		*rib;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
 		log_warn("rde_dump_mrt_new");
@@ -2420,8 +2422,8 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 	TAILQ_INIT(&ctx->mrt.wbuf.bufs);
 	ctx->mrt.wbuf.fd = fd;
 	ctx->mrt.state = MRT_STATE_RUNNING;
-	id = rib_find(ctx->mrt.rib);
-	if (id == RIB_FAILED) {
+	rib = rib_find(ctx->mrt.rib);
+	if (rib == NULL) {
 		log_warnx("non existing RIB %s for mrt dump", ctx->mrt.rib);
 		free(ctx);
 		return;
@@ -2431,7 +2433,7 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 		mrt_dump_v2_hdr(&ctx->mrt, conf, &peerlist);
 
 	ctx->ribctx.ctx_count = RDE_RUNNER_ROUNDS;
-	ctx->ribctx.ctx_rib = &ribs[id];
+	ctx->ribctx.ctx_rib = rib;
 	ctx->ribctx.ctx_upcall = mrt_dump_upcall;
 	ctx->ribctx.ctx_done = mrt_done;
 	ctx->ribctx.ctx_arg = &ctx->mrt;
@@ -2644,11 +2646,11 @@ rde_reload_done(void)
 			continue;
 		peer->reconf_out = 0;
 		peer->reconf_rib = 0;
-		if (peer->ribid != rib_find(peer->conf.rib)) {
-			rib_dump(&ribs[peer->ribid],
+		if (peer->rib != rib_find(peer->conf.rib)) {
+			rib_dump(peer->rib,
 			    rde_softreconfig_unload_peer, peer, AID_UNSPEC);
-			peer->ribid = rib_find(peer->conf.rib);
-			if (peer->ribid == RIB_FAILED)
+			peer->rib = rib_find(peer->conf.rib);
+			if (peer->rib == NULL)
 				fatalx("King Bula's peer met an unknown RIB");
 			peer->reconf_rib = 1;
 			continue;
@@ -2693,7 +2695,7 @@ rde_reload_done(void)
 	}
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->reconf_out)
-			rib_dump(&ribs[peer->ribid], rde_softreconfig_out,
+			rib_dump(peer->rib, rde_softreconfig_out,
 			    peer, AID_UNSPEC);
 		else if (peer->reconf_rib)
 			/* dump the full table to neighbors that changed rib */
@@ -2865,7 +2867,7 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 {
 	struct rde_peer		*peer = ptr;
 
-	if (re->ribid != peer->ribid)
+	if (re->ribid != peer->rib->id)
 		fatalx("King Bula: monstrous evil horror.");
 	if (re->active == NULL)
 		return;
@@ -2888,7 +2890,7 @@ rde_generate_updates(u_int16_t ribid, struct prefix *new, struct prefix *old)
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->conf.id == 0)
 			continue;
-		if (peer->ribid != ribid)
+		if (peer->rib->id != ribid)
 			continue;
 		if (peer->state != PEER_UP)
 			continue;
@@ -3141,8 +3143,8 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	LIST_INIT(&peer->path_h);
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
 	peer->remote_bgpid = 0;
-	peer->ribid = rib_find(peer->conf.rib);
-	if (peer->ribid == RIB_FAILED)
+	peer->rib = rib_find(peer->conf.rib);
+	if (peer->rib == NULL)
 		fatalx("King Bula's new peer met an unknown RIB");
 	peer->state = PEER_NONE;
 	up_init(peer);
@@ -3359,7 +3361,7 @@ peer_dump(u_int32_t id, u_int8_t aid)
 	if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
 		up_generate_default(out_rules, peer, aid);
 	else
-		rib_dump(&ribs[peer->ribid], rde_up_dump_upcall, peer, aid);
+		rib_dump(peer->rib, rde_up_dump_upcall, peer, aid);
 	if (peer->capa.grestart.restart)
 		up_generate_marker(peer, aid);
 }
