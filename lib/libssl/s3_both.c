@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.55 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.56 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -352,7 +352,7 @@ ssl3_output_cert_chain(SSL *s, CBB *cbb, X509 *x)
 	if (!CBB_add_u24_length_prefixed(cbb, &cert_list))
 		goto err;
 
-	if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || s->ctx->extra_certs)
+	if ((s->internal->mode & SSL_MODE_NO_AUTO_CHAIN) || s->ctx->extra_certs)
 		no_chain = 1;
 
 	/* TLSv1 sends a chain with nothing in it, instead of an alert. */
@@ -698,7 +698,7 @@ ssl3_setup_write_buffer(SSL *s)
 	if (s->s3->wbuf.buf == NULL) {
 		len = s->max_send_fragment +
 		    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
-		if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+		if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
 			len += headerlen + align +
 			    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 

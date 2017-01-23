@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.105 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.106 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -435,7 +435,7 @@ tls1_get_shared_curve(SSL *s)
 		return (NID_undef);
 
 	/* Return first preference shared curve. */
-	server_pref = (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE);
+	server_pref = (s->internal->options & SSL_OP_CIPHER_SERVER_PREFERENCE);
 	tls1_get_curvelist(s, (server_pref == 0), &pref, &preflen);
 	tls1_get_curvelist(s, (server_pref != 0), &supp, &supplen);
 
@@ -916,7 +916,7 @@ skip_ext:
 	 * NB: because this code works out the length of all existing
 	 * extensions it MUST always appear last.
 	 */
-	if (s->options & SSL_OP_TLSEXT_PADDING) {
+	if (s->internal->options & SSL_OP_TLSEXT_PADDING) {
 		int hlen = ret - (unsigned char *)s->internal->init_buf->data;
 
 		/*
@@ -1832,7 +1832,8 @@ ri_check:
 	 * which doesn't support RI so for the immediate future tolerate RI
 	 * absence on initial connect only.
 	 */
-	if (!renegotiate_seen && !(s->options & SSL_OP_LEGACY_SERVER_CONNECT)) {
+	if (!renegotiate_seen &&
+	    !(s->internal->options & SSL_OP_LEGACY_SERVER_CONNECT)) {
 		*al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
 		    SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);

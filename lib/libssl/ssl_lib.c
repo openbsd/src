@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.139 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.140 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -284,8 +284,8 @@ SSL_new(SSL_CTX *ctx)
 		return (NULL);
 	}
 
-	s->options = ctx->options;
-	s->mode = ctx->mode;
+	s->internal->options = ctx->internal->options;
+	s->internal->mode = ctx->internal->mode;
 	s->internal->max_cert_list = ctx->internal->max_cert_list;
 
 	if (ctx->internal->cert != NULL) {
@@ -1059,13 +1059,13 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return (1);
 
 	case SSL_CTRL_OPTIONS:
-		return (s->options|=larg);
+		return (s->internal->options|=larg);
 	case SSL_CTRL_CLEAR_OPTIONS:
-		return (s->options&=~larg);
+		return (s->internal->options&=~larg);
 	case SSL_CTRL_MODE:
-		return (s->mode|=larg);
+		return (s->internal->mode|=larg);
 	case SSL_CTRL_CLEAR_MODE:
-		return (s->mode &=~larg);
+		return (s->internal->mode &=~larg);
 	case SSL_CTRL_GET_MAX_CERT_LIST:
 		return (s->internal->max_cert_list);
 	case SSL_CTRL_SET_MAX_CERT_LIST:
@@ -1181,13 +1181,13 @@ SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	case SSL_CTRL_SESS_CACHE_FULL:
 		return (ctx->internal->stats.sess_cache_full);
 	case SSL_CTRL_OPTIONS:
-		return (ctx->options|=larg);
+		return (ctx->internal->options|=larg);
 	case SSL_CTRL_CLEAR_OPTIONS:
-		return (ctx->options&=~larg);
+		return (ctx->internal->options&=~larg);
 	case SSL_CTRL_MODE:
-		return (ctx->mode|=larg);
+		return (ctx->internal->mode|=larg);
 	case SSL_CTRL_CLEAR_MODE:
-		return (ctx->mode&=~larg);
+		return (ctx->internal->mode&=~larg);
 	case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
 		if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
 			return (0);
@@ -1941,7 +1941,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	 * Default is to connect to non-RI servers. When RI is more widely
 	 * deployed might change this.
 	 */
-	ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
+	ret->internal->options |= SSL_OP_LEGACY_SERVER_CONNECT;
 
 	return (ret);
 err:
@@ -2516,18 +2516,18 @@ ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 	min_version = 0;
 	max_version = TLS1_2_VERSION;
 
-	if ((s->options & SSL_OP_NO_TLSv1) == 0)
+	if ((s->internal->options & SSL_OP_NO_TLSv1) == 0)
 		min_version = TLS1_VERSION;
-	else if ((s->options & SSL_OP_NO_TLSv1_1) == 0)
+	else if ((s->internal->options & SSL_OP_NO_TLSv1_1) == 0)
 		min_version = TLS1_1_VERSION;
-	else if ((s->options & SSL_OP_NO_TLSv1_2) == 0)
+	else if ((s->internal->options & SSL_OP_NO_TLSv1_2) == 0)
 		min_version = TLS1_2_VERSION;
 
-	if ((s->options & SSL_OP_NO_TLSv1_2) && min_version < TLS1_2_VERSION)
+	if ((s->internal->options & SSL_OP_NO_TLSv1_2) && min_version < TLS1_2_VERSION)
 		max_version = TLS1_1_VERSION;
-	if ((s->options & SSL_OP_NO_TLSv1_1) && min_version < TLS1_1_VERSION)
+	if ((s->internal->options & SSL_OP_NO_TLSv1_1) && min_version < TLS1_1_VERSION)
 		max_version = TLS1_VERSION;
-	if ((s->options & SSL_OP_NO_TLSv1) && min_version < TLS1_VERSION)
+	if ((s->internal->options & SSL_OP_NO_TLSv1) && min_version < TLS1_VERSION)
 		max_version = 0;
 
 	/* Everything has been disabled... */
@@ -2586,13 +2586,13 @@ ssl_max_server_version(SSL *s)
 	if (SSL_IS_DTLS(s))
 		return (DTLS1_VERSION);
 
-	if ((s->options & SSL_OP_NO_TLSv1_2) == 0 &&
+	if ((s->internal->options & SSL_OP_NO_TLSv1_2) == 0 &&
 	    max_version >= TLS1_2_VERSION)
 		return (TLS1_2_VERSION);
-	if ((s->options & SSL_OP_NO_TLSv1_1) == 0 &&
+	if ((s->internal->options & SSL_OP_NO_TLSv1_1) == 0 &&
 	    max_version >= TLS1_1_VERSION)
 		return (TLS1_1_VERSION);
-	if ((s->options & SSL_OP_NO_TLSv1) == 0 &&
+	if ((s->internal->options & SSL_OP_NO_TLSv1) == 0 &&
 	    max_version >= TLS1_VERSION)
 		return (TLS1_VERSION);
 
@@ -2642,8 +2642,8 @@ SSL_dup(SSL *s)
 		s->sid_ctx, s->sid_ctx_length);
 	}
 
-	ret->options = s->options;
-	ret->mode = s->mode;
+	ret->internal->options = s->internal->options;
+	ret->internal->mode = s->internal->mode;
 	SSL_set_max_cert_list(ret, SSL_get_max_cert_list(s));
 	SSL_set_read_ahead(ret, SSL_get_read_ahead(s));
 	ret->internal->msg_callback = s->internal->msg_callback;

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.127 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.128 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2056,7 +2056,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 				return (ret);
 			}
 			ecdh = (EC_KEY *)parg;
-			if (!(s->options & SSL_OP_SINGLE_ECDH_USE)) {
+			if (!(s->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
 				if (!EC_KEY_generate_key(ecdh)) {
 					EC_KEY_free(ecdh);
 					SSLerr(SSL_F_SSL3_CTRL,
@@ -2243,7 +2243,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 				    ERR_R_EC_LIB);
 				return 0;
 			}
-			if (!(ctx->options & SSL_OP_SINGLE_ECDH_USE)) {
+			if (!(ctx->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
 				if (!EC_KEY_generate_key(ecdh)) {
 					EC_KEY_free(ecdh);
 					SSLerr(SSL_F_SSL3_CTX_CTRL,
@@ -2413,7 +2413,7 @@ ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	 * but would have to pay with the price of sk_SSL_CIPHER_dup().
 	 */
 
-	if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+	if (s->internal->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
 		prio = srvr;
 		allow = clnt;
 	} else {

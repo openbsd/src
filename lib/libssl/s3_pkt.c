@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.67 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.68 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -238,7 +238,7 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 
 		if (i <= 0) {
 			rb->left = left;
-			if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
+			if (s->internal->mode & SSL_MODE_RELEASE_BUFFERS &&
 			    !SSL_IS_DTLS(s)) {
 				if (len + left == 0)
 					ssl3_release_read_buffer(s);
@@ -540,7 +540,7 @@ ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 		}
 
 		if ((i == (int)n) || (type == SSL3_RT_APPLICATION_DATA &&
-		    (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE))) {
+		    (s->internal->mode & SSL_MODE_ENABLE_PARTIAL_WRITE))) {
 			/*
 			 * Next chunk of data should get another prepended
 			 * empty fragment in ciphersuites with known-IV
@@ -770,7 +770,7 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 
 	/* XXXX */
 	if ((S3I(s)->wpend_tot > (int)len) || ((S3I(s)->wpend_buf != buf) &&
-	    !(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)) ||
+	    !(s->internal->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)) ||
 	    (S3I(s)->wpend_type != type)) {
 		SSLerr(SSL_F_SSL3_WRITE_PENDING, SSL_R_BAD_WRITE_RETRY);
 		return (-1);
@@ -790,7 +790,7 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		if (i == wb->left) {
 			wb->left = 0;
 			wb->offset += i;
-			if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
+			if (s->internal->mode & SSL_MODE_RELEASE_BUFFERS &&
 			    !SSL_IS_DTLS(s))
 				ssl3_release_write_buffer(s);
 			s->internal->rwstate = SSL_NOTHING;
@@ -983,7 +983,7 @@ start:
 			if (rr->length == 0) {
 				s->internal->rstate = SSL_ST_READ_HEADER;
 				rr->off = 0;
-				if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
+				if (s->internal->mode & SSL_MODE_RELEASE_BUFFERS &&
 				    s->s3->rbuf.left == 0)
 					ssl3_release_read_buffer(s);
 			}
@@ -1068,7 +1068,7 @@ start:
 					return (-1);
 				}
 
-				if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
+				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
 					if (s->s3->rbuf.left == 0) {
 						/* no read-ahead left? */
 			/* In the case where we try to read application data,
@@ -1230,7 +1230,7 @@ start:
 			return (-1);
 		}
 
-		if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
+		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
 			if (s->s3->rbuf.left == 0) { /* no read-ahead left? */
 				BIO *bio;
 				/* In the case where we try to read application data,

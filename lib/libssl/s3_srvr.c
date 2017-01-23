@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.149 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.150 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -824,7 +824,7 @@ ssl3_get_client_hello(SSL *s)
 	 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION setting will be
 	 * ignored.
 	 */
-	if ((s->internal->new_session && (s->options &
+	if ((s->internal->new_session && (s->internal->options &
 	    SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION))) {
 		if (!ssl_get_new_session(s, 1))
 			goto err;
@@ -1315,7 +1315,7 @@ ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 
 	if ((EC_KEY_get0_public_key(ecdh) == NULL) ||
 	    (EC_KEY_get0_private_key(ecdh) == NULL) ||
-	    (s->options & SSL_OP_SINGLE_ECDH_USE)) {
+	    (s->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
 		if (!EC_KEY_generate_key(ecdh)) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
 			    ERR_R_ECDH_LIB);
@@ -1769,7 +1769,7 @@ ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 		 * If SSL_OP_TLS_ROLLBACK_BUG is set, tolerate such
 		 * clients.
 		 */
-		if (!((s->options & SSL_OP_TLS_ROLLBACK_BUG) &&
+		if (!((s->internal->options & SSL_OP_TLS_ROLLBACK_BUG) &&
 		    (p[0] == (s->version >> 8)) &&
 		    (p[1] == (s->version & 0xff)))) {
 			al = SSL_AD_DECODE_ERROR;

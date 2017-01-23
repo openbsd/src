@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.161 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.162 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -434,6 +434,9 @@ typedef struct ssl_ctx_internal_st {
 	uint16_t min_version;
 	uint16_t max_version;
 
+	unsigned long options;
+	unsigned long mode;
+
 	/* If this callback is not null, it will be called each
 	 * time a session id is added to the cache.  If this function
 	 * returns 1, it means that the callback will do a
@@ -611,6 +614,9 @@ typedef struct ssl_ctx_internal_st {
 typedef struct ssl_internal_st {
 	uint16_t min_version;
 	uint16_t max_version;
+
+	unsigned long options; /* protocol behaviour */
+	unsigned long mode; /* API behaviour */
 
 	/* Next protocol negotiation. For the client, this is the protocol that
 	 * we sent in NextProtocol and is set when handling ServerHello

@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.55 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.56 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -372,15 +372,15 @@ ssl23_get_server_hello(SSL *s)
 		/* we have sslv3 or tls1 (server hello or alert) */
 
 		if ((p[2] == TLS1_VERSION_MINOR) &&
-		    !(s->options & SSL_OP_NO_TLSv1)) {
+		    !(s->internal->options & SSL_OP_NO_TLSv1)) {
 			s->version = TLS1_VERSION;
 			s->method = TLSv1_client_method();
 		} else if ((p[2] == TLS1_1_VERSION_MINOR) &&
-		    !(s->options & SSL_OP_NO_TLSv1_1)) {
+		    !(s->internal->options & SSL_OP_NO_TLSv1_1)) {
 			s->version = TLS1_1_VERSION;
 			s->method = TLSv1_1_client_method();
 		} else if ((p[2] == TLS1_2_VERSION_MINOR) &&
-		    !(s->options & SSL_OP_NO_TLSv1_2)) {
+		    !(s->internal->options & SSL_OP_NO_TLSv1_2)) {
 			s->version = TLS1_2_VERSION;
 			s->method = TLSv1_2_client_method();
 		} else {

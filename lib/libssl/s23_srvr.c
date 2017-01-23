@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.56 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.57 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -279,7 +279,7 @@ ssl23_get_client_hello(SSL *s)
 
 			if (!ssl_max_shared_version(s, client_version,
 			    &shared_version)) {
-				if (s->options & SSL_OP_NO_TLSv1)
+				if (s->internal->options & SSL_OP_NO_TLSv1)
 					goto unsupported;
 				/*
 				 * We won't be able to use TLS of course,
@@ -310,7 +310,7 @@ ssl23_get_client_hello(SSL *s)
 		 * only to "backward" versions of TLS. If we have moved
 		 * on to modernity, just say no.
 		 */
-		if (s->options & SSL_OP_NO_TLSv1)
+		if (s->internal->options & SSL_OP_NO_TLSv1)
 			goto unsupported;
 
 		type = 2;

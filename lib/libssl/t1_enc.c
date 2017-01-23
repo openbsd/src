@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.92 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.93 2017/01/23 14:35:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -783,7 +783,7 @@ tls1_setup_key_block(SSL *s)
 	if (!tls1_generate_key_block(s, key_block, tmp_block, key_block_len))
 		goto err;
 
-	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
+	if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
 	    s->method->internal->version <= TLS1_VERSION) {
 		/*
 		 * Enable vulnerability countermeasure for CBC ciphers with

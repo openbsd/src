@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.57 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.58 2017/01/23 14:35:42 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -894,7 +894,7 @@ start:
 					return (-1);
 				}
 
-				if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
+				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
 					if (s->s3->rbuf.left == 0) /* no read-ahead left? */
 					{
 						BIO *bio;
@@ -1049,7 +1049,7 @@ start:
 			return (-1);
 		}
 
-		if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
+		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
 			if (s->s3->rbuf.left == 0) /* no read-ahead left? */
 			{
 				BIO *bio;
@@ -1258,7 +1258,7 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	 * (this is a bit of a boundary violation, but what the heck).
 	 */
 	if (s->internal->enc_write_ctx &&
-	    (EVP_CIPHER_mode( s->internal->enc_write_ctx->cipher ) & EVP_CIPH_CBC_MODE))
+	    (EVP_CIPHER_mode(s->internal->enc_write_ctx->cipher) & EVP_CIPH_CBC_MODE))
 		bs = EVP_CIPHER_block_size(s->internal->enc_write_ctx->cipher);
 	else
 		bs = 0;
