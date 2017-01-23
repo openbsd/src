@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.3 2012/03/21 04:28:45 matthew Exp $	*/
+/*	$OpenBSD: dir.h,v 1.4 2017/01/23 11:04:19 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,6 +31,8 @@
 
 typedef struct _dl_dirdesc _dl_DIR;
 
+__BEGIN_HIDDEN_DECLS
 _dl_DIR *_dl_opendir(const char *name);
 int _dl_closedir(_dl_DIR *dirp);
 struct dirent *_dl_readdir(_dl_DIR *dirp);
+__END_HIDDEN_DECLS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.h,v 1.1 2013/03/20 21:49:59 kurt Exp $	*/
+/*	$OpenBSD: path.h,v 1.2 2017/01/23 11:04:19 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Kurt Miller <kurt@intricatesoftware.com>
@@ -19,7 +19,9 @@
 #ifndef __DL_PATH_H__
 #define __DL_PATH_H__
 
+__BEGIN_HIDDEN_DECLS
 char ** _dl_split_path(const char *searchpath);
 void _dl_free_path(char **path);
+__END_HIDDEN_DECLS
 
 #endif /*__DL_PATH_H__*/
