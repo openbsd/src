@@ -463,6 +463,7 @@
 ./usr/bin/nm
 ./usr/bin/nohup
 ./usr/bin/od
+./usr/bin/opencvs
 ./usr/bin/openssl
 ./usr/bin/otp-md5
 ./usr/bin/otp-rmd160

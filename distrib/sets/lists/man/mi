@@ -2032,6 +2032,7 @@
 ./usr/share/man/man5/ypldap.conf.5
 ./usr/share/man/man5/ypserv.acl.5
 ./usr/share/man/man7/ascii.7
+./usr/share/man/man7/cvsintro.7
 ./usr/share/man/man7/editline.7
 ./usr/share/man/man7/environ.7
 ./usr/share/man/man7/eqn.7
