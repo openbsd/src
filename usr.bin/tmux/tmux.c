@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.175 2017/01/15 20:48:41 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.176 2017/01/23 10:09:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,6 +43,7 @@ struct hooks	*global_hooks;
 
 struct timeval	 start_time;
 const char	*socket_path;
+int		 ptm_fd = -1;
 
 static __dead void	 usage(void);
 static char		*make_label(const char *);
@@ -258,6 +259,8 @@ main(int argc, char **argv)
 	if (shellcmd != NULL && argc != 0)
 		usage();
 
+	if (pty_open(&ptm_fd) != 0)
+		errx(1, "open(\"/dev/ptm\"");
 	if (pledge("stdio rpath wpath cpath flock fattr unix getpw sendfd "
 	    "recvfd proc exec tty ps", NULL) != 0)
 		err(1, "pledge");

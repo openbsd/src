@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.701 2017/01/18 10:08:05 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.702 2017/01/23 10:09:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1501,6 +1501,7 @@ extern struct options	*global_w_options;
 extern struct environ	*global_environ;
 extern struct timeval	 start_time;
 extern const char	*socket_path;
+extern int		 ptm_fd;
 int		 areshell(const char *);
 void		 setblocking(int, int);
 const char	*find_home(void);
@@ -2328,5 +2329,9 @@ void		 style_apply_update(struct grid_cell *, struct options *,
 		     const char *);
 int		 style_equal(const struct grid_cell *,
 		     const struct grid_cell *);
+
+/* pty.c */
+int		 pty_open(int *);
+pid_t		 pty_fork(int, int *, char *, size_t, struct winsize *);
 
 #endif /* TMUX_H */
