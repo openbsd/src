@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.61 2016/09/02 14:00:29 benno Exp $ */
+/*	$OpenBSD: log.c,v 1.62 2017/01/23 08:38:09 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -138,7 +138,7 @@ void
 fatal(const char *emsg, ...)
 {
 	char	 s[1024];
-	va_list  ap;
+	va_list	 ap;
 
 	va_start(ap, emsg);
 	vsnprintf(s, sizeof(s), emsg, ap);
