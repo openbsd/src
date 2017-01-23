@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.78 2017/01/19 23:16:47 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.79 2017/01/23 11:37:29 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = NULL;
 	ifp->if_mtu = LOMTU;
 	ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_rtrequest = lortrequest;
 	ifp->if_ioctl = loioctl;
 	ifp->if_output = looutput;

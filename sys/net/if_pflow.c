@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.69 2017/01/20 00:51:56 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.70 2017/01/23 11:37:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -235,6 +235,7 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = pflowioctl;
 	ifp->if_output = pflow_output;
 	ifp->if_start = NULL;
+	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_type = IFT_PFLOW;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	ifp->if_hdrlen = PFLOW_HDRLEN;

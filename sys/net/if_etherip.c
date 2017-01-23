@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.11 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.12 2017/01/23 11:37:29 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -118,6 +118,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = etherip_ioctl;
 	ifp->if_start = etherip_start;
+	ifp->if_xflags = IFXF_CLONED;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

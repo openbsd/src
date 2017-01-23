@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.16 2016/12/20 12:18:44 mpi Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.17 2017/01/23 11:37:29 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -92,6 +92,7 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_POINTOPOINT;
+	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_ioctl = mpw_ioctl;
 	ifp->if_output = mpw_output;
 	ifp->if_start = mpw_start;

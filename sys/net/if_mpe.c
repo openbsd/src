@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.56 2016/12/20 12:18:44 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.57 2017/01/23 11:37:29 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -89,6 +89,7 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	ifp = &mpeif->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "mpe%d", unit);
 	ifp->if_flags = IFF_POINTOPOINT;
+	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_softc = mpeif;
 	ifp->if_mtu = MPE_MTU;
 	ifp->if_ioctl = mpeioctl;

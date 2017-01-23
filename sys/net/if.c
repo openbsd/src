@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.477 2017/01/23 07:27:21 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.478 2017/01/23 11:37:29 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -817,7 +817,8 @@ if_input_process(void *xifidx)
 	if (ml_empty(&ml))
 		goto out;
 
-	add_net_randomness(ml_len(&ml));
+	if (!ISSET(ifp->if_xflags, IFXF_CLONED))
+		add_net_randomness(ml_len(&ml));
 
 	s = splnet();
 	while ((m = ml_dequeue(&ml)) != NULL) {
@@ -1775,7 +1776,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCGIFXFLAGS:
-		ifr->ifr_flags = ifp->if_xflags & ~IFXF_MPSAFE;
+		ifr->ifr_flags = ifp->if_xflags & ~(IFXF_MPSAFE|IFXF_CLONED);
 		break;
 
 	case SIOCGIFMETRIC:

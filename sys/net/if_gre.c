@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.82 2016/12/19 15:50:18 mpi Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.83 2017/01/23 11:37:29 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -136,6 +136,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_hdrlen = 24; /* IP + GRE */
 	sc->sc_if.if_mtu = GREMTU;
 	sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
+	sc->sc_if.if_xflags = IFXF_CLONED;
 	sc->sc_if.if_output = gre_output;
 	sc->sc_if.if_ioctl = gre_ioctl;
 	sc->sc_if.if_rtrequest = p2p_rtrequest;

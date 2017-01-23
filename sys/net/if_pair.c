@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.9 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.10 2017/01/23 11:37:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -120,6 +120,7 @@ pair_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = pairioctl;
 	ifp->if_start = pairstart;
+	ifp->if_xflags = IFXF_CLONED;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.241 2017/01/20 03:56:46 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.242 2017/01/23 11:37:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -328,6 +328,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	ifp->if_hdrlen = sizeof(struct pfsync_header);
 	ifp->if_mtu = ETHERMTU;
+	ifp->if_xflags = IFXF_CLONED;
 	timeout_set_proc(&sc->sc_tmo, pfsync_timeout, sc);
 	timeout_set_proc(&sc->sc_bulk_tmo, pfsync_bulk_update, sc);
 	timeout_set_proc(&sc->sc_bulkfail_tmo, pfsync_bulk_fail, sc);

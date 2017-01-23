@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.168 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.169 2017/01/23 11:37:29 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -174,7 +174,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	refcnt_init(&ifv->ifv_refcnt);
 
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_CLONED|IFXF_MPSAFE;
 	ifp->if_start = vlan_start;
 	ifp->if_ioctl = vlan_ioctl;
 	ifp->if_hardmtu = 0xffff;
