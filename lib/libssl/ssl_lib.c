@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.131 2017/01/23 01:22:08 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.132 2017/01/23 04:15:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -307,14 +307,14 @@ SSL_new(SSL_CTX *ctx)
 		s->cert=NULL; /* Cannot really happen (see SSL_CTX_new) */
 
 	s->read_ahead = ctx->read_ahead;
-	s->msg_callback = ctx->msg_callback;
-	s->msg_callback_arg = ctx->msg_callback_arg;
+	s->msg_callback = ctx->internal->msg_callback;
+	s->msg_callback_arg = ctx->internal->msg_callback_arg;
 	s->verify_mode = ctx->verify_mode;
 	s->sid_ctx_length = ctx->sid_ctx_length;
 	OPENSSL_assert(s->sid_ctx_length <= sizeof s->sid_ctx);
 	memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
-	s->verify_callback = ctx->default_verify_callback;
-	s->generate_session_id = ctx->generate_session_id;
+	s->verify_callback = ctx->internal->default_verify_callback;
+	s->generate_session_id = ctx->internal->generate_session_id;
 
 	s->param = X509_VERIFY_PARAM_new();
 	if (!s->param)
@@ -406,7 +406,7 @@ int
 SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb)
 {
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-	ctx->generate_session_id = cb;
+	ctx->internal->generate_session_id = cb;
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 	return (1);
 }
@@ -758,7 +758,7 @@ SSL_CTX_get_verify_depth(const SSL_CTX *ctx)
 
 int (*SSL_CTX_get_verify_callback(const SSL_CTX *ctx))(int, X509_STORE_CTX *)
 {
-	return (ctx->default_verify_callback);
+	return (ctx->internal->default_verify_callback);
 }
 
 void
@@ -1131,7 +1131,7 @@ SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return (l);
 
 	case SSL_CTRL_SET_MSG_CALLBACK_ARG:
-		ctx->msg_callback_arg = parg;
+		ctx->internal->msg_callback_arg = parg;
 		return (1);
 
 	case SSL_CTRL_GET_MAX_CERT_LIST:
@@ -1201,7 +1201,7 @@ SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 {
 	switch (cmd) {
 	case SSL_CTRL_SET_MSG_CALLBACK:
-		ctx->msg_callback = (void (*)(int write_p, int version,
+		ctx->internal->msg_callback = (void (*)(int write_p, int version,
 		    int content_type, const void *buf, size_t len, SSL *ssl,
 		    void *arg))(fp);
 		return (1);
@@ -1831,36 +1831,36 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	/* We take the system default */
 	ret->session_timeout = meth->get_timeout();
 
-	ret->new_session_cb = 0;
-	ret->remove_session_cb = 0;
-	ret->get_session_cb = 0;
-	ret->generate_session_id = 0;
+	ret->internal->new_session_cb = 0;
+	ret->internal->remove_session_cb = 0;
+	ret->internal->get_session_cb = 0;
+	ret->internal->generate_session_id = 0;
 
 	memset((char *)&ret->internal->stats, 0, sizeof(ret->internal->stats));
 
 	ret->references = 1;
 	ret->quiet_shutdown = 0;
 
-	ret->info_callback = NULL;
+	ret->internal->info_callback = NULL;
 
-	ret->app_verify_callback = 0;
-	ret->app_verify_arg = NULL;
+	ret->internal->app_verify_callback = 0;
+	ret->internal->app_verify_arg = NULL;
 
 	ret->max_cert_list = SSL_MAX_CERT_LIST_DEFAULT;
 	ret->read_ahead = 0;
-	ret->msg_callback = 0;
-	ret->msg_callback_arg = NULL;
+	ret->internal->msg_callback = 0;
+	ret->internal->msg_callback_arg = NULL;
 	ret->verify_mode = SSL_VERIFY_NONE;
 	ret->sid_ctx_length = 0;
-	ret->default_verify_callback = NULL;
+	ret->internal->default_verify_callback = NULL;
 	if ((ret->cert = ssl_cert_new()) == NULL)
 		goto err;
 
-	ret->default_passwd_callback = 0;
-	ret->default_passwd_callback_userdata = NULL;
-	ret->client_cert_cb = 0;
-	ret->app_gen_cookie_cb = 0;
-	ret->app_verify_cookie_cb = 0;
+	ret->internal->default_passwd_callback = 0;
+	ret->internal->default_passwd_callback_userdata = NULL;
+	ret->internal->client_cert_cb = 0;
+	ret->internal->app_gen_cookie_cb = 0;
+	ret->internal->app_verify_cookie_cb = 0;
 
 	ret->sessions = lh_SSL_SESSION_new();
 	if (ret->sessions == NULL)
@@ -1901,16 +1901,16 @@ SSL_CTX_new(const SSL_METHOD *meth)
 
 	ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
-	ret->tlsext_servername_callback = 0;
-	ret->tlsext_servername_arg = NULL;
+	ret->internal->tlsext_servername_callback = 0;
+	ret->internal->tlsext_servername_arg = NULL;
 
 	/* Setup RFC4507 ticket keys */
 	arc4random_buf(ret->tlsext_tick_key_name, 16);
 	arc4random_buf(ret->tlsext_tick_hmac_key, 16);
 	arc4random_buf(ret->tlsext_tick_aes_key, 16);
 
-	ret->tlsext_status_cb = 0;
-	ret->tlsext_status_arg = NULL;
+	ret->internal->tlsext_status_cb = 0;
+	ret->internal->tlsext_status_arg = NULL;
 
 	ret->internal->next_protos_advertised_cb = 0;
 	ret->internal->next_proto_select_cb = 0;
@@ -2012,28 +2012,28 @@ SSL_CTX_free(SSL_CTX *a)
 void
 SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
 {
-	ctx->default_passwd_callback = cb;
+	ctx->internal->default_passwd_callback = cb;
 }
 
 void
 SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u)
 {
-	ctx->default_passwd_callback_userdata = u;
+	ctx->internal->default_passwd_callback_userdata = u;
 }
 
 void
 SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx, int (*cb)(X509_STORE_CTX *,
     void *), void *arg)
 {
-	ctx->app_verify_callback = cb;
-	ctx->app_verify_arg = arg;
+	ctx->internal->app_verify_callback = cb;
+	ctx->internal->app_verify_arg = arg;
 }
 
 void
 SSL_CTX_set_verify(SSL_CTX *ctx, int mode, int (*cb)(int, X509_STORE_CTX *))
 {
 	ctx->verify_mode = mode;
-	ctx->default_verify_callback = cb;
+	ctx->internal->default_verify_callback = cb;
 }
 
 void
@@ -2275,9 +2275,9 @@ ssl_update_cache(SSL *s, int mode)
 	i = s->session_ctx->session_cache_mode;
 	if ((i & mode) && (!s->hit) && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE)
 	    || SSL_CTX_add_session(s->session_ctx, s->session))
-	    && (s->session_ctx->new_session_cb != NULL)) {
+	    && (s->session_ctx->internal->new_session_cb != NULL)) {
 		CRYPTO_add(&s->session->references, 1, CRYPTO_LOCK_SSL_SESSION);
-		if (!s->session_ctx->new_session_cb(s, s->session))
+		if (!s->session_ctx->internal->new_session_cb(s, s->session))
 			SSL_SESSION_free(s->session);
 	}
 

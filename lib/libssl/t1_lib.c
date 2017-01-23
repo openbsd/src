@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.99 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.100 2017/01/23 04:15:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1859,10 +1859,12 @@ ssl_check_clienthello_tlsext_early(SSL *s)
 	 * ssl3_choose_cipher in s3_lib.c.
 	 */
 
-	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
-		ret = s->ctx->tlsext_servername_callback(s, &al, s->ctx->tlsext_servername_arg);
-	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0)
-		ret = s->initial_ctx->tlsext_servername_callback(s, &al, s->initial_ctx->tlsext_servername_arg);
+	if (s->ctx != NULL && s->ctx->internal->tlsext_servername_callback != 0)
+		ret = s->ctx->internal->tlsext_servername_callback(s, &al,
+		    s->ctx->internal->tlsext_servername_arg);
+	else if (s->initial_ctx != NULL && s->initial_ctx->internal->tlsext_servername_callback != 0)
+		ret = s->initial_ctx->internal->tlsext_servername_callback(s, &al,
+		    s->initial_ctx->internal->tlsext_servername_arg);
 
 	switch (ret) {
 	case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -1890,7 +1892,7 @@ ssl_check_clienthello_tlsext_late(SSL *s)
 	 * has been chosen because this may influence which certificate is sent
  	 */
 	if ((s->tlsext_status_type != -1) &&
-	    s->ctx && s->ctx->tlsext_status_cb) {
+	    s->ctx && s->ctx->internal->tlsext_status_cb) {
 		int r;
 		CERT_PKEY *certpkey;
 		certpkey = ssl_get_server_send_pkey(s);
@@ -1903,7 +1905,8 @@ ssl_check_clienthello_tlsext_late(SSL *s)
 		 * SSL_get_certificate et al can pick it up.
 		 */
 		s->cert->key = certpkey;
-		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+		r = s->ctx->internal->tlsext_status_cb(s,
+		    s->ctx->internal->tlsext_status_arg);
 		switch (r) {
 			/* We don't want to send a status request response */
 		case SSL_TLSEXT_ERR_NOACK:
@@ -1973,16 +1976,18 @@ ssl_check_serverhello_tlsext(SSL *s)
 	}
 	ret = SSL_TLSEXT_ERR_OK;
 
-	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
-		ret = s->ctx->tlsext_servername_callback(s, &al, s->ctx->tlsext_servername_arg);
-	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0)
-		ret = s->initial_ctx->tlsext_servername_callback(s, &al, s->initial_ctx->tlsext_servername_arg);
+	if (s->ctx != NULL && s->ctx->internal->tlsext_servername_callback != 0)
+		ret = s->ctx->internal->tlsext_servername_callback(s, &al,
+		    s->ctx->internal->tlsext_servername_arg);
+	else if (s->initial_ctx != NULL && s->initial_ctx->internal->tlsext_servername_callback != 0)
+		ret = s->initial_ctx->internal->tlsext_servername_callback(s, &al,
+		    s->initial_ctx->internal->tlsext_servername_arg);
 
 	/* If we've requested certificate status and we wont get one
  	 * tell the callback
  	 */
 	if ((s->tlsext_status_type != -1) && !(s->tlsext_status_expected) &&
-	    s->ctx && s->ctx->tlsext_status_cb) {
+	    s->ctx && s->ctx->internal->tlsext_status_cb) {
 		int r;
 		/* Set resp to NULL, resplen to -1 so callback knows
  		 * there is no response.
@@ -1990,7 +1995,8 @@ ssl_check_serverhello_tlsext(SSL *s)
 		free(s->tlsext_ocsp_resp);
 		s->tlsext_ocsp_resp = NULL;
 		s->tlsext_ocsp_resplen = -1;
-		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+		r = s->ctx->internal->tlsext_status_cb(s,
+		    s->ctx->internal->tlsext_status_arg);
 		if (r == 0) {
 			al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
 			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -2182,10 +2188,10 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	/* Initialize session ticket encryption and HMAC contexts */
 	HMAC_CTX_init(&hctx);
 	EVP_CIPHER_CTX_init(&ctx);
-	if (tctx->tlsext_ticket_key_cb) {
+	if (tctx->internal->tlsext_ticket_key_cb) {
 		unsigned char *nctick = (unsigned char *)etick;
-		int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
-		    &ctx, &hctx, 0);
+		int rv = tctx->internal->tlsext_ticket_key_cb(s,
+		    nctick, nctick + 16, &ctx, &hctx, 0);
 		if (rv < 0) {
 			HMAC_CTX_cleanup(&hctx);
 			EVP_CIPHER_CTX_cleanup(&ctx);

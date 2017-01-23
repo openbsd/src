@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.50 2017/01/23 00:12:54 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.51 2017/01/23 04:15:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,8 +132,8 @@ ssl23_connect(SSL *s)
 
 	if (s->info_callback != NULL)
 		cb = s->info_callback;
-	else if (s->ctx->info_callback != NULL)
-		cb = s->ctx->info_callback;
+	else if (s->ctx->internal->info_callback != NULL)
+		cb = s->ctx->internal->info_callback;
 
 	s->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s))
@@ -396,8 +396,8 @@ ssl23_get_server_hello(SSL *s)
 
 			if (s->info_callback != NULL)
 				cb = s->info_callback;
-			else if (s->ctx->info_callback != NULL)
-				cb = s->ctx->info_callback;
+			else if (s->ctx->internal->info_callback != NULL)
+				cb = s->ctx->internal->info_callback;
 
 			i = p[5];
 			if (cb != NULL) {

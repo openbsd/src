@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.143 2017/01/23 01:22:08 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.144 2017/01/23 04:15:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,8 +180,8 @@ ssl3_accept(SSL *s)
 
 	if (s->info_callback != NULL)
 		cb = s->info_callback;
-	else if (s->ctx->info_callback != NULL)
-		cb = s->ctx->info_callback;
+	else if (s->ctx->internal->info_callback != NULL)
+		cb = s->ctx->internal->info_callback;
 
 	/* init things to blank */
 	s->in_handshake++;
@@ -870,8 +870,8 @@ ssl3_get_client_hello(SSL *s)
 		    cookie_len > 0) {
 			memcpy(D1I(s)->rcvd_cookie, p, cookie_len);
 
-			if (s->ctx->app_verify_cookie_cb != NULL) {
-				if (s->ctx->app_verify_cookie_cb(s,
+			if (s->ctx->internal->app_verify_cookie_cb != NULL) {
+				if (s->ctx->internal->app_verify_cookie_cb(s,
 				    D1I(s)->rcvd_cookie, cookie_len) == 0) {
 					al = SSL_AD_HANDSHAKE_FAILURE;
 					SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
@@ -2742,9 +2742,9 @@ ssl3_send_newsession_ticket(SSL *s)
 		 * it does all the work otherwise use generated values
 		 * from parent ctx.
 		 */
-		if (tctx->tlsext_ticket_key_cb) {
-			if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
-			    &hctx, 1) < 0) {
+		if (tctx->internal->tlsext_ticket_key_cb) {
+			if (tctx->internal->tlsext_ticket_key_cb(s,
+			    key_name, iv, &ctx, &hctx, 1) < 0) {
 				EVP_CIPHER_CTX_cleanup(&ctx);
 				goto err;
 			}

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.153 2017/01/23 01:22:08 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.154 2017/01/23 04:15:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -391,6 +391,65 @@ typedef struct ssl_session_internal_st {
 typedef struct ssl_ctx_internal_st {
 	uint16_t min_version;
 	uint16_t max_version;
+
+	/* If this callback is not null, it will be called each
+	 * time a session id is added to the cache.  If this function
+	 * returns 1, it means that the callback will do a
+	 * SSL_SESSION_free() when it has finished using it.  Otherwise,
+	 * on 0, it means the callback has finished with it.
+	 * If remove_session_cb is not null, it will be called when
+	 * a session-id is removed from the cache.  After the call,
+	 * OpenSSL will SSL_SESSION_free() it. */
+	int (*new_session_cb)(struct ssl_st *ssl, SSL_SESSION *sess);
+	void (*remove_session_cb)(struct ssl_ctx_st *ctx, SSL_SESSION *sess);
+	SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl,
+	    unsigned char *data, int len, int *copy);
+
+	/* if defined, these override the X509_verify_cert() calls */
+	int (*app_verify_callback)(X509_STORE_CTX *, void *);
+	    void *app_verify_arg;
+
+	/* Default password callback. */
+	pem_password_cb *default_passwd_callback;
+
+	/* Default password callback user data. */
+	void *default_passwd_callback_userdata;
+
+	/* get client cert callback */
+	int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
+
+	/* cookie generate callback */
+	int (*app_gen_cookie_cb)(SSL *ssl, unsigned char *cookie,
+	    unsigned int *cookie_len);
+
+	/* verify cookie callback */
+	int (*app_verify_cookie_cb)(SSL *ssl, unsigned char *cookie,
+	    unsigned int cookie_len);
+
+	void (*info_callback)(const SSL *ssl,int type,int val); /* used if SSL's info_callback is NULL */
+
+	/* callback that allows applications to peek at protocol messages */
+	void (*msg_callback)(int write_p, int version, int content_type,
+	    const void *buf, size_t len, SSL *ssl, void *arg);
+	void *msg_callback_arg;
+
+	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx); /* called 'verify_callback' in the SSL */
+
+	/* Default generate session ID callback. */
+	GEN_SESSION_CB generate_session_id;
+
+	/* TLS extensions servername callback */
+	int (*tlsext_servername_callback)(SSL*, int *, void *);
+	void *tlsext_servername_arg;
+
+	/* Callback to support customisation of ticket key setting */
+	int (*tlsext_ticket_key_cb)(SSL *ssl, unsigned char *name,
+	    unsigned char *iv, EVP_CIPHER_CTX *ectx, HMAC_CTX *hctx, int enc);
+
+	/* certificate status request info */
+	/* Callback for status request */
+	int (*tlsext_status_cb)(SSL *ssl, void *arg);
+	void *tlsext_status_arg;
 
 	struct {
 		int sess_connect;	/* SSL new conn - started */

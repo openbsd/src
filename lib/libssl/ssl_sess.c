@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.57 2017/01/23 01:22:08 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.58 2017/01/23 04:15:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -328,8 +328,8 @@ ssl_get_new_session(SSL *s, int session)
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 		if (s->generate_session_id)
 			cb = s->generate_session_id;
-		else if (s->session_ctx->generate_session_id)
-			cb = s->session_ctx->generate_session_id;
+		else if (s->session_ctx->internal->generate_session_id)
+			cb = s->session_ctx->internal->generate_session_id;
 		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 
 		/* Choose a session ID. */
@@ -470,11 +470,11 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	}
 
 	if (try_session_cache && ret == NULL &&
-	    s->session_ctx->get_session_cb != NULL) {
+	    s->session_ctx->internal->get_session_cb != NULL) {
 		int copy = 1;
 
-		if ((ret = s->session_ctx->get_session_cb(s, session_id,
-		    len, &copy))) {
+		if ((ret = s->session_ctx->internal->get_session_cb(s,
+		    session_id, len, &copy))) {
 			s->session_ctx->internal->stats.sess_cb_hit++;
 
 			/*
@@ -674,8 +674,8 @@ remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 
 		if (ret) {
 			r->internal->not_resumable = 1;
-			if (ctx->remove_session_cb != NULL)
-				ctx->remove_session_cb(ctx, r);
+			if (ctx->internal->remove_session_cb != NULL)
+				ctx->internal->remove_session_cb(ctx, r);
 			SSL_SESSION_free(r);
 		}
 	} else
@@ -911,8 +911,8 @@ timeout_doall_arg(SSL_SESSION *s, TIMEOUT_PARAM *p)
 		(void)lh_SSL_SESSION_delete(p->cache, s);
 		SSL_SESSION_list_remove(p->ctx, s);
 		s->internal->not_resumable = 1;
-		if (p->ctx->remove_session_cb != NULL)
-			p->ctx->remove_session_cb(p->ctx, s);
+		if (p->ctx->internal->remove_session_cb != NULL)
+			p->ctx->internal->remove_session_cb(p->ctx, s);
 		SSL_SESSION_free(s);
 	}
 }
@@ -1013,67 +1013,67 @@ SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s)
 void
 SSL_CTX_sess_set_new_cb(SSL_CTX *ctx,
     int (*cb)(struct ssl_st *ssl, SSL_SESSION *sess)) {
-	ctx->new_session_cb = cb;
+	ctx->internal->new_session_cb = cb;
 }
 
 int
 (*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))(SSL *ssl, SSL_SESSION *sess)
 {
-	return ctx->new_session_cb;
+	return ctx->internal->new_session_cb;
 }
 
 void
 SSL_CTX_sess_set_remove_cb(SSL_CTX *ctx,
     void (*cb)(SSL_CTX *ctx, SSL_SESSION *sess))
 {
-	ctx->remove_session_cb = cb;
+	ctx->internal->remove_session_cb = cb;
 }
 
 void
 (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))(SSL_CTX * ctx, SSL_SESSION *sess)
 {
-	return ctx->remove_session_cb;
+	return ctx->internal->remove_session_cb;
 }
 
 void
 SSL_CTX_sess_set_get_cb(SSL_CTX *ctx, SSL_SESSION *(*cb)(struct ssl_st *ssl,
     unsigned char *data, int len, int *copy))
 {
-	ctx->get_session_cb = cb;
+	ctx->internal->get_session_cb = cb;
 }
 
 SSL_SESSION *
 (*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(SSL *ssl, unsigned char *data,
     int len, int *copy)
 {
-	return ctx->get_session_cb;
+	return ctx->internal->get_session_cb;
 }
 
 void
 SSL_CTX_set_info_callback(SSL_CTX *ctx,
     void (*cb)(const SSL *ssl, int type, int val))
 {
-	ctx->info_callback = cb;
+	ctx->internal->info_callback = cb;
 }
 
 void
 (*SSL_CTX_get_info_callback(SSL_CTX *ctx))(const SSL *ssl, int type, int val)
 {
-	return ctx->info_callback;
+	return ctx->internal->info_callback;
 }
 
 void
 SSL_CTX_set_client_cert_cb(SSL_CTX *ctx,
     int (*cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey))
 {
-	ctx->client_cert_cb = cb;
+	ctx->internal->client_cert_cb = cb;
 }
 
 int
 (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL * ssl, X509 ** x509,
     EVP_PKEY **pkey)
 {
-	return ctx->client_cert_cb;
+	return ctx->internal->client_cert_cb;
 }
 
 #ifndef OPENSSL_NO_ENGINE
@@ -1100,14 +1100,14 @@ void
 SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
     int (*cb)(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len))
 {
-	ctx->app_gen_cookie_cb = cb;
+	ctx->internal->app_gen_cookie_cb = cb;
 }
 
 void
 SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
     int (*cb)(SSL *ssl, unsigned char *cookie, unsigned int cookie_len))
 {
-	ctx->app_verify_cookie_cb = cb;
+	ctx->internal->app_verify_cookie_cb = cb;
 }
 
 int

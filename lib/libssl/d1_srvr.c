@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.73 2017/01/23 00:12:54 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.74 2017/01/23 04:15:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -190,8 +190,8 @@ dtls1_accept(SSL *s)
 
 	if (s->info_callback != NULL)
 		cb = s->info_callback;
-	else if (s->ctx->info_callback != NULL)
-		cb = s->ctx->info_callback;
+	else if (s->ctx->internal->info_callback != NULL)
+		cb = s->ctx->internal->info_callback;
 
 	listen = D1I(s)->listen;
 
@@ -704,9 +704,9 @@ dtls1_send_hello_verify_request(SSL *s)
 		*(p++) = s->version >> 8;
 		*(p++) = s->version & 0xFF;
 
-		if (s->ctx->app_gen_cookie_cb == NULL ||
-		    s->ctx->app_gen_cookie_cb(s, D1I(s)->cookie,
-			&(D1I(s)->cookie_len)) == 0) {
+		if (s->ctx->internal->app_gen_cookie_cb == NULL ||
+		    s->ctx->internal->app_gen_cookie_cb(s,
+			D1I(s)->cookie, &(D1I(s)->cookie_len)) == 0) {
 			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
 			    ERR_R_INTERNAL_ERROR);
 			return 0;

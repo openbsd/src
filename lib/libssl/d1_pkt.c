@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.51 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.52 2017/01/23 04:15:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -928,8 +928,8 @@ start:
 
 		if (s->info_callback != NULL)
 			cb = s->info_callback;
-		else if (s->ctx->info_callback != NULL)
-			cb = s->ctx->info_callback;
+		else if (s->ctx->internal->info_callback != NULL)
+			cb = s->ctx->internal->info_callback;
 
 		if (cb != NULL) {
 			j = (alert_level << 8) | alert_descr;
@@ -1428,8 +1428,8 @@ dtls1_dispatch_alert(SSL *s)
 
 		if (s->info_callback != NULL)
 			cb = s->info_callback;
-		else if (s->ctx->info_callback != NULL)
-			cb = s->ctx->info_callback;
+		else if (s->ctx->internal->info_callback != NULL)
+			cb = s->ctx->internal->info_callback;
 
 		if (cb != NULL) {
 			j = (s->s3->send_alert[0]<<8)|s->s3->send_alert[1];

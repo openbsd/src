@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.164 2017/01/23 01:22:08 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.165 2017/01/23 04:15:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -185,8 +185,8 @@ ssl3_connect(SSL *s)
 
 	if (s->info_callback != NULL)
 		cb = s->info_callback;
-	else if (s->ctx->info_callback != NULL)
-		cb = s->ctx->info_callback;
+	else if (s->ctx->internal->info_callback != NULL)
+		cb = s->ctx->internal->info_callback;
 
 	s->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s))
@@ -1886,9 +1886,10 @@ ssl3_get_cert_status(SSL *s)
  	}
 	s->tlsext_ocsp_resplen = (int)stow_len;
 
-	if (s->ctx->tlsext_status_cb) {
+	if (s->ctx->internal->tlsext_status_cb) {
 		int ret;
-		ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+		ret = s->ctx->internal->tlsext_status_cb(s,
+		    s->ctx->internal->tlsext_status_arg);
 		if (ret == 0) {
 			al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
 			SSLerr(SSL_F_SSL3_GET_CERT_STATUS,
@@ -2762,7 +2763,7 @@ ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 			return (i);
 	}
 #endif
-	if (s->ctx->client_cert_cb)
-		i = s->ctx->client_cert_cb(s, px509, ppkey);
+	if (s->ctx->internal->client_cert_cb)
+		i = s->ctx->internal->client_cert_cb(s, px509, ppkey);
 	return (i);
 }

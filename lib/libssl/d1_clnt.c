@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.63 2017/01/23 00:12:54 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.64 2017/01/23 04:15:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -190,8 +190,8 @@ dtls1_connect(SSL *s)
 
 	if (s->info_callback != NULL)
 		cb = s->info_callback;
-	else if (s->ctx->info_callback != NULL)
-		cb = s->ctx->info_callback;
+	else if (s->ctx->internal->info_callback != NULL)
+		cb = s->ctx->internal->info_callback;
 
 	s->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s))

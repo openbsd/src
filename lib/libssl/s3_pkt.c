@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.61 2017/01/22 09:02:07 jsing Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.62 2017/01/23 04:15:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1115,8 +1115,8 @@ start:
 
 		if (s->info_callback != NULL)
 			cb = s->info_callback;
-		else if (s->ctx->info_callback != NULL)
-			cb = s->ctx->info_callback;
+		else if (s->ctx->internal->info_callback != NULL)
+			cb = s->ctx->internal->info_callback;
 
 		if (cb != NULL) {
 			j = (alert_level << 8) | alert_descr;
@@ -1397,8 +1397,8 @@ ssl3_dispatch_alert(SSL *s)
 
 		if (s->info_callback != NULL)
 			cb = s->info_callback;
-		else if (s->ctx->info_callback != NULL)
-			cb = s->ctx->info_callback;
+		else if (s->ctx->internal->info_callback != NULL)
+			cb = s->ctx->internal->info_callback;
 
 		if (cb != NULL) {
 			j = (s->s3->send_alert[0]<<8)|s->s3->send_alert[1];
