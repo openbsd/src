@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ocspcheck.8,v 1.2 2017/01/24 08:54:23 beck Exp $
+.\"	$OpenBSD: ocspcheck.8,v 1.3 2017/01/24 09:39:43 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Bob Beck <beck@openbsd.org>
 .\"
@@ -19,18 +19,18 @@
 .Os
 .Sh NAME
 .Nm ocspcheck
-.Nd Check a certificate for validity against its OSCP responder
+.Nd check a certificate for validity against its OSCP responder
 .Sh SYNOPSIS
 .Nm
-.Op Fl vN
-.Op Fl o Ar staplefile
+.Op Fl Nv
 .Op Fl C Ar CAfile
+.Op Fl o Ar staplefile
 .Ar file
 .Sh DESCRIPTION
 The
 .Nm
 utility validates a PEM format certificate against the OCSP responder
-encoded in the certificate that is specified by the
+encoded in the certificate specified by the
 .Ar file
 argument.
 Normally it should be used for checking server certificates
@@ -39,20 +39,12 @@ and maintaining saved OCSP responses to be used for OCSP stapling.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl C Ar CAfile
-Specify a PEM formatted root certificate bundle to use for the validation of
+Specify a PEM format root certificate bundle to use for the validation of
 requests.
 By default no certificates are used beyond those in the
 certificate chain provided by the
 .Ar file
 argument.
-.It Fl o Ar staplefile
-Specify an output filename where the DER encoded response from the
-OCSP server will be written, if the OCSP response validates.
-A filename
-of
-.Ar -
-will write the response to standard output. By default the response
-is not saved.
 .It Fl N
 Do not use a nonce value in the OCSP request, or validate that the
 nonce was returned in the OCSP response.
@@ -61,28 +53,35 @@ The use of this flag is a security risk as it will allow OCSP
 responses to be replayed.
 It should not be used unless the OCSP server does not support the
 use of OCSP nonces.
+.It Fl o Ar staplefile
+Specify an output filename where the DER encoded response from the
+OCSP server will be written, if the OCSP response validates.
+A filename
+of
+.Sq -
+will write the response to standard output.
+By default the response is not saved.
 .It Fl v
 Increase verbosity.
 This flag may be specified multiple times to get more verbose output.
 The default behaviour is to be silent unless something goes wrong.
+.El
 .Sh EXIT STATUS
+The
 .Nm
-exits 0 if the OCSP response validates for the
-certificate in
+utility exits 0 if the OCSP response validates for the certificate in
 .Ar file
-and all output is successfully written out.
-Otherwise
-.Nm
-will exit >0.
+and all output is successfully written out,
+and >0 if an error occurs.
 .Sh SEE ALSO
-.Xr httpd 8 ,
 .Xr nc 1 ,
-.Xr tls_config_set_ocsp_staple_mem 3 ,
 .Xr tls_config_set_ocsp_staple_file 3 ,
-.Sh BUGS
+.Xr tls_config_set_ocsp_staple_mem 3 ,
+.Xr httpd 8
+.Sh AUTHORS
 .Nm
-will create the output file if it does not exist.
-On failure a newly created output file will not be removed.
+was written by
+.An Bob Beck .
 .Sh CAVEATS
 While
 .Nm
@@ -91,7 +90,7 @@ certificates seen on client connections, this is almost always a bad
 idea.
 God kills a kitten every time you make an OCSP query from the
 client side of a TLS connection.
-.Sh AUTHORS
+.Sh BUGS
 .Nm
-was written by
-.An Bob Beck
+will create the output file if it does not exist.
+On failure a newly created output file will not be removed.
