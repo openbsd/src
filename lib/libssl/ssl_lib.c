@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.142 2017/01/24 01:44:00 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.143 2017/01/24 01:46:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -531,7 +531,6 @@ SSL_free(SSL *s)
 
 	if (s->cert != NULL)
 		ssl_cert_free(s->cert);
-	/* Free up if allocated */
 
 	free(s->tlsext_hostname);
 	SSL_CTX_free(s->initial_ctx);
