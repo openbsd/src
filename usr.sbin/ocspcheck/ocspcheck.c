@@ -86,7 +86,7 @@ host_dns(const char *s, struct addr vec[MAX_SERVERS_DNS])
 	}
 
 	for (vecsz = 0, res = res0;
-	    NULL != res && vecsz < MAX_SERVERS_DNS;
+	    res != NULL && vecsz < MAX_SERVERS_DNS;
 	    res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
 		    res->ai_family != AF_INET6)
@@ -94,7 +94,7 @@ host_dns(const char *s, struct addr vec[MAX_SERVERS_DNS])
 
 		sa = res->ai_addr;
 
-		if (AF_INET == res->ai_family) {
+		if (res->ai_family == AF_INET) {
 			vec[vecsz].family = 4;
 			inet_ntop(AF_INET,
 			    &(((struct sockaddr_in *)sa)->sin_addr),
@@ -127,15 +127,15 @@ url2host(const char *host, short *port, char **path)
 
 	/* We only understand HTTP and HTTPS. */
 
-	if (0 == strncmp(host, "https://", 8)) {
+	if (strncmp(host, "https://", 8) == 0) {
 		*port = 443;
-		if (NULL == (url = strdup(host + 8))) {
+		if ((url = strdup(host + 8)) == NULL) {
 			warn("strdup");
 			return (NULL);
 		}
-	} else if (0 == strncmp(host, "http://", 7)) {
+	} else if (strncmp(host, "http://", 7) == 0) {
 		*port = 80;
-		if (NULL == (url = strdup(host + 7))) {
+		if ((url = strdup(host + 7)) == NULL) {
 			warn("strdup");
 			return (NULL);
 		}
@@ -146,13 +146,13 @@ url2host(const char *host, short *port, char **path)
 
 	/* Terminate path part. */
 
-	if (NULL != (ep = strchr(url, '/'))) {
+	if ((ep = strchr(url, '/')) != NULL) {
 		*path = strdup(ep);
 		*ep = '\0';
 	} else
 		*path = strdup("");
 
-	if (NULL == *path) {
+	if (*path == NULL) {
 		warn("strdup");
 		free(url);
 		return (NULL);
@@ -227,23 +227,21 @@ read_fullchain(const char *file, int *count)
 	*count = 0;
 
 	if ((bio = BIO_new_file(file, "r")) == NULL) {
-		warnx("Error opening %s\n", file);
-		ERR_print_errors_fp(stderr);
+		warnx("Unable to read a certificate from %s", file);
 		return NULL;
 	}
 	if ((xis = PEM_X509_INFO_read_bio(bio, NULL, NULL, NULL)) == NULL) {
-		warnx("Unable to read PEM format from %s\n", file);
-		ERR_print_errors_fp(stderr);
+		warnx("Unable to read PEM format from %s", file);
 		return NULL;
 	}
 	BIO_free(bio);
 
 	if (sk_X509_INFO_num(xis) <= 0) {
-		warnx("No certificates in file %s\n", file);
+		warnx("No certificates in file %s", file);
 		goto end;
 	}
 	if ((rv = sk_X509_new_null()) == NULL) {
-		ERR_print_errors_fp(stderr);
+		warnx("malloc failed");
 		goto end;
 	}
 
@@ -252,7 +250,7 @@ read_fullchain(const char *file, int *count)
 		if (xi->x509 == NULL)
 		    continue;
 		if (!sk_X509_push(rv, xi->x509)) {
-			ERR_print_errors_fp(stderr);
+			warnx("unable to build x509 chain");
 			sk_X509_pop_free(rv, X509_free);
 			rv = NULL;
 			goto end;
@@ -337,12 +335,10 @@ ocsp_request_new_from_cert(char *file, int nonce)
 	cert_id_md = EVP_sha1(); /* XXX. This sucks but OCSP is poopy */
 	if ((id = OCSP_cert_to_id(cert_id_md, cert, issuer)) == NULL) {
 		warnx("Unable to get certificate id from cert in %s", file);
-			ERR_print_errors_fp(stderr);
 			return NULL;
 	}
 	if (OCSP_request_add0_id(request->req, id) == NULL) {
 		warnx("Unable to add certificate id to request");
-		ERR_print_errors_fp(stderr);
 		return NULL;
 	}
 
@@ -402,7 +398,6 @@ validate_response(char *buf, size_t size, ocsp_request *request,
 
 	if (OCSP_basic_verify(bresp, request->fullchain, store,
 		OCSP_TRUSTOTHER) != 1) {
-		ERR_print_errors_fp(stderr);
 		warnx("OCSP verify failed from %s", host);
 		return 0;
 	}
@@ -606,7 +601,6 @@ main (int argc, char **argv)
 	/*
 	 * Validate the OCSP response we got back
 	 */
-	ERR_load_crypto_strings();
 	OPENSSL_add_all_algorithms_noconf();
 	if (!validate_response(hget->bodypart, hget->bodypartsz,
 		request, castore, host, certfile))

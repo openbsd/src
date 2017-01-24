@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.1 2017/01/24 08:50:57 beck Exp $ */
+/*	$Id: http.c,v 1.2 2017/01/24 09:59:45 beck Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -95,7 +95,7 @@ dotlsread(char *buf, size_t sz, const struct http *http)
 
 	do {
 		rc = tls_read(http->ctx, buf, sz);
-	} while (TLS_WANT_POLLIN == rc || TLS_WANT_POLLOUT == rc);
+	} while (rc == TLS_WANT_POLLIN || rc == TLS_WANT_POLLOUT);
 
 	if (rc < 0)
 		warnx("%s: tls_read: %s", http->src.ip,
@@ -110,7 +110,7 @@ dotlswrite(const void *buf, size_t sz, const struct http *http)
 
 	do {
 		rc = tls_write(http->ctx, buf, sz);
-	} while (TLS_WANT_POLLIN == rc || TLS_WANT_POLLOUT == rc);
+	} while (rc == TLS_WANT_POLLIN || rc == TLS_WANT_POLLOUT);
 
 	if (rc < 0)
 		warnx("%s: tls_write: %s", http->src.ip,
@@ -121,21 +121,21 @@ dotlswrite(const void *buf, size_t sz, const struct http *http)
 int
 http_init()
 {
-	if (NULL != tlscfg)
+	if (tlscfg != NULL)
 		return (0);
 
-	if (-1 == tls_init()) {
+	if (tls_init() == -1) {
 		warn("tls_init");
 		goto err;
 	}
 
 	tlscfg = tls_config_new();
-	if (NULL == tlscfg) {
+	if (tlscfg == NULL) {
 		warn("tls_config_new");
 		goto err;
 	}
 
-	if (-1 == tls_config_set_ca_file(tlscfg, DEFAULT_CA_FILE)) {
+	if (tls_config_set_ca_file(tlscfg, DEFAULT_CA_FILE) == -1) {
 		warn("tls_config_set_ca_file: %s", tls_config_error(tlscfg));
 		goto err;
 	}
@@ -158,7 +158,7 @@ http_read(char *buf, size_t sz, const struct http *http)
 	do {
 		if ((ssz = http->reader(buf, sz, http)) < 0)
 			return (-1);
-		if (0 == ssz)
+		if (ssz == 0)
 			break;
 		xfer += ssz;
 		sz -= ssz;
@@ -188,11 +188,11 @@ http_disconnect(struct http *http)
 {
 	int rc;
 
-	if (NULL != http->ctx) {
+	if (http->ctx != NULL) {
 		/* TLS connection. */
 		do {
 			rc = tls_close(http->ctx);
-		} while (TLS_WANT_POLLIN == rc || TLS_WANT_POLLOUT == rc);
+		} while (rc == TLS_WANT_POLLIN || rc == TLS_WANT_POLLOUT);
 
 		if (rc < 0)
 			warnx("%s: tls_close: %s", http->src.ip,
@@ -200,8 +200,8 @@ http_disconnect(struct http *http)
 
 		tls_free(http->ctx);
 	}
-	if (-1 != http->fd) {
-		if (-1 == close(http->fd))
+	if (http->fd != -1) {
+		if (close(http->fd) == -1)
 			warn("%s: close", http->src.ip);
 	}
 
@@ -213,7 +213,7 @@ void
 http_free(struct http *http)
 {
 
-	if (NULL == http)
+	if (http == NULL)
 		return;
 	http_disconnect(http);
 	free(http->host);
@@ -242,14 +242,14 @@ again:
 
 	memset(&ss, 0, sizeof(struct sockaddr_storage));
 
-	if (4 == addrs[cur].family) {
+	if (addrs[cur].family == 4) {
 		family = PF_INET;
 		((struct sockaddr_in *)&ss)->sin_family = AF_INET;
 		((struct sockaddr_in *)&ss)->sin_port = htons(port);
 		c = inet_pton(AF_INET, addrs[cur].ip,
 		    &((struct sockaddr_in *)&ss)->sin_addr);
 		len = sizeof(struct sockaddr_in);
-	} else if (6 == addrs[cur].family) {
+	} else if (addrs[cur].family == 6) {
 		family = PF_INET6;
 		((struct sockaddr_in6 *)&ss)->sin6_family = AF_INET6;
 		((struct sockaddr_in6 *)&ss)->sin6_port = htons(port);
@@ -264,7 +264,7 @@ again:
 	if (c < 0) {
 		warn("%s: inet_ntop", addrs[cur].ip);
 		goto again;
-	} else if (0 == c) {
+	} else if (c == 0) {
 		warnx("%s: inet_ntop", addrs[cur].ip);
 		goto again;
 	}
@@ -272,10 +272,10 @@ again:
 	/* Create socket and connect. */
 
 	fd = socket(family, SOCK_STREAM, 0);
-	if (-1 == fd) {
+	if (fd == -1) {
 		warn("%s: socket", addrs[cur].ip);
 		goto again;
-	} else if (-1 == connect(fd, (struct sockaddr *)&ss, len)) {
+	} else if (connect(fd, (struct sockaddr *)&ss, len) == -1) {
 		warn("%s: connect", addrs[cur].ip);
 		close(fd);
 		goto again;
@@ -284,7 +284,7 @@ again:
 	/* Allocate the communicator. */
 
 	http = calloc(1, sizeof(struct http));
-	if (NULL == http) {
+	if (http == NULL) {
 		warn("calloc");
 		close(fd);
 		return (NULL);
@@ -295,14 +295,14 @@ again:
 	http->src.ip = strdup(addrs[cur].ip);
 	http->host = strdup(host);
 	http->path = strdup(path);
-	if (NULL == http->src.ip || NULL == http->host || NULL == http->path) {
+	if (http->src.ip == NULL || http->host == NULL || http->path == NULL) {
 		warn("strdup");
 		goto err;
 	}
 
 	/* If necessary, do our TLS setup. */
 
-	if (443 != port) {
+	if (port != 443) {
 		http->writer = dosyswrite;
 		http->reader = dosysread;
 		return (http);
@@ -311,16 +311,16 @@ again:
 	http->writer = dotlswrite;
 	http->reader = dotlsread;
 
-	if (NULL == (http->ctx = tls_client())) {
+	if ((http->ctx = tls_client()) == NULL) {
 		warn("tls_client");
 		goto err;
-	} else if (-1 == tls_configure(http->ctx, tlscfg)) {
+	} else if (tls_configure(http->ctx, tlscfg) == -1) {
 		warnx("%s: tls_configure: %s",
 			http->src.ip, tls_error(http->ctx));
 		goto err;
 	}
 
-	if (0 != tls_connect_socket(http->ctx, http->fd, http->host)) {
+	if (tls_connect_socket(http->ctx, http->fd, http->host) != 0) {
 		warnx("%s: tls_connect_socket: %s, %s", http->src.ip,
 		    http->host, tls_error(http->ctx));
 		goto err;
@@ -339,7 +339,7 @@ http_open(const struct http *http, const void *p, size_t psz)
 	int		 c;
 	struct httpxfer	*trans;
 
-	if (NULL == p) {
+	if (p == NULL) {
 		c = asprintf(&req,
 		    "GET %s HTTP/1.0\r\n"
 		    "Host: %s\r\n"
@@ -355,13 +355,13 @@ http_open(const struct http *http, const void *p, size_t psz)
 		    "\r\n",
 		    http->path, http->host, psz);
 	}
-	if (-1 == c) {
+	if (c == -1) {
 		warn("asprintf");
 		return (NULL);
 	} else if (!http_write(req, c, http)) {
 		free(req);
 		return (NULL);
-	} else if (NULL != p && ! http_write(p, psz, http)) {
+	} else if (p != NULL && !http_write(p, psz, http)) {
 		free(req);
 		return (NULL);
 	}
@@ -369,7 +369,7 @@ http_open(const struct http *http, const void *p, size_t psz)
 	free(req);
 
 	trans = calloc(1, sizeof(struct httpxfer));
-	if (NULL == trans)
+	if (trans == NULL)
 		warn("calloc");
 	return (trans);
 }
@@ -378,7 +378,7 @@ void
 http_close(struct httpxfer *x)
 {
 
-	if (NULL == x)
+	if (x == NULL)
 		return;
 	free(x->hbuf);
 	free(x->bbuf);
@@ -402,7 +402,7 @@ http_body_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 	void		*pp;
 	size_t		 szp;
 
-	if (NULL == sz)
+	if (sz == NULL)
 		sz = &szp;
 
 	/* Have we already parsed this? */
@@ -420,10 +420,10 @@ http_body_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 		/* If less than sizeof(buf), at EOF. */
 		if ((ssz = http_read(buf, sizeof(buf), http)) < 0)
 			return (NULL);
-		else if (0 == ssz)
+		else if (ssz == 0)
 			break;
 		pp = realloc(trans->bbuf, trans->bbufsz + ssz);
-		if (NULL == pp) {
+		if (pp == NULL) {
 			warn("realloc");
 			return (NULL);
 		}
@@ -461,7 +461,7 @@ http_head_status(const struct http *http, struct httphead *h, size_t sz)
 	unsigned int	 code;
 	struct httphead *st;
 
-	if (NULL == (st = http_head_get("Status", h, sz))) {
+	if ((st = http_head_get("Status", h, sz)) == NULL) {
 		warnx("%s: no status header", http->src.ip);
 		return (-1);
 	}
@@ -470,7 +470,7 @@ http_head_status(const struct http *http, struct httphead *h, size_t sz)
 	if (rc < 0) {
 		warn("sscanf");
 		return (-1);
-	} else if (1 != rc) {
+	} else if (rc != 1) {
 		warnx("%s: cannot convert status header", http->src.ip);
 		return (-1);
 	}
@@ -496,7 +496,7 @@ http_head_parse(const struct http *http, struct httpxfer *trans, size_t *sz)
 	struct httphead	*h;
 	char		*cp, *ep, *ccp, *buf;
 
-	if (NULL == sz)
+	if (sz == NULL)
 		sz = &szp;
 
 	/*
@@ -505,13 +505,13 @@ http_head_parse(const struct http *http, struct httpxfer *trans, size_t *sz)
 	 * If we have errors on the stream, return NULL now.
 	 */
 
-	if (NULL != trans->head) {
+	if (trans->head != NULL) {
 		*sz = trans->headsz;
 		return (trans->head);
 	} else if (trans->headok <= 0)
 		return (NULL);
 
-	if (NULL == (buf = strdup(trans->hbuf))) {
+	if ((buf = strdup(trans->hbuf)) == NULL) {
 		warn("strdup");
 		return (NULL);
 	}
@@ -519,10 +519,10 @@ http_head_parse(const struct http *http, struct httpxfer *trans, size_t *sz)
 	cp = buf;
 
 	do {
-		if (NULL != (cp = strstr(cp, "\r\n")))
+		if ((cp = strstr(cp, "\r\n")) != NULL)
 			cp += 2;
 		hsz++;
-	} while (NULL != cp);
+	} while (cp != NULL);
 
 	/*
 	 * Allocate headers, then step through the data buffer, parsing
@@ -532,7 +532,7 @@ http_head_parse(const struct http *http, struct httpxfer *trans, size_t *sz)
 	 */
 
 	h = calloc(hsz, sizeof(struct httphead));
-	if (NULL == h) {
+	if (h == NULL) {
 		warn("calloc");
 		free(buf);
 		return (NULL);
@@ -543,18 +543,18 @@ http_head_parse(const struct http *http, struct httpxfer *trans, size_t *sz)
 	cp = buf;
 
 	do {
-		if (NULL != (ep = strstr(cp, "\r\n"))) {
+		if ((ep = strstr(cp, "\r\n")) != NULL) {
 			*ep = '\0';
 			ep += 2;
 		}
-		if (0 == hsz) {
+		if (hsz == 0) {
 			h[hsz].key = "Status";
 			h[hsz++].val = cp;
 			continue;
 		}
 
 		/* Skip bad headers. */
-		if (NULL == (ccp = strchr(cp, ':'))) {
+		if ((ccp = strchr(cp, ':')) == NULL) {
 			warnx("%s: header without separator", http->src.ip);
 			continue;
 		}
@@ -564,7 +564,7 @@ http_head_parse(const struct http *http, struct httpxfer *trans, size_t *sz)
 			ccp++;
 		h[hsz].key = cp;
 		h[hsz++].val = ccp;
-	} while (NULL != (cp = ep));
+	} while ((cp = ep) != NULL);
 
 	trans->headbuf = buf;
 	trans->head = h;
@@ -588,7 +588,7 @@ http_head_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 	void		*pp;
 	size_t		 szp;
 
-	if (NULL == sz)
+	if (sz == NULL)
 		sz = &szp;
 
 	/* Have we already parsed this? */
@@ -614,10 +614,10 @@ http_head_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 		/* If less than sizeof(buf), at EOF. */
 		if ((ssz = http_read(buf, sizeof(buf), http)) < 0)
 			return (NULL);
-		else if (0 == ssz)
+		else if (ssz == 0)
 			break;
 		pp = realloc(trans->hbuf, trans->hbufsz + ssz);
-		if (NULL == pp) {
+		if (pp == NULL) {
 			warn("realloc");
 			return (NULL);
 		}
@@ -626,9 +626,9 @@ http_head_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 		trans->hbufsz += ssz;
 		/* Search for end of headers marker. */
 		ep = memmem(trans->hbuf, trans->hbufsz, "\r\n\r\n", 4);
-	} while (NULL == ep && sizeof(buf) == ssz);
+	} while (ep == NULL && ssz == sizeof(buf));
 
-	if (NULL == ep) {
+	if (ep == NULL) {
 		warnx("%s: partial transfer", http->src.ip);
 		return (NULL);
 	}
@@ -653,7 +653,7 @@ http_head_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 	ep += 4;
 	trans->bbufsz = (trans->hbuf + trans->hbufsz) - ep;
 	trans->bbuf = malloc(trans->bbufsz);
-	if (NULL == trans->bbuf) {
+	if (trans->bbuf == NULL) {
 		warn("malloc");
 		return (NULL);
 	}
@@ -668,7 +668,7 @@ void
 http_get_free(struct httpget *g)
 {
 
-	if (NULL == g)
+	if (g == NULL)
 		return;
 	http_close(g->xfer);
 	http_free(g->http);
@@ -688,17 +688,17 @@ http_get(const struct source *addrs, size_t addrsz, const char *domain,
 	char		*bod, *headr;
 
 	h = http_alloc(addrs, addrsz, domain, port, path);
-	if (NULL == h)
+	if (h == NULL)
 		return (NULL);
 
-	if (NULL == (x = http_open(h, post, postsz))) {
+	if ((x = http_open(h, post, postsz)) == NULL) {
 		http_free(h);
 		return (NULL);
-	} else if (NULL == (headr = http_head_read(h, x, &headrsz))) {
+	} else if ((headr = http_head_read(h, x, &headrsz)) == NULL) {
 		http_close(x);
 		http_free(h);
 		return (NULL);
-	} else if (NULL == (bod = http_body_read(h, x, &bodsz))) {
+	} else if ((bod = http_body_read(h, x, &bodsz)) == NULL) {
 		http_close(x);
 		http_free(h);
 		return (NULL);
@@ -706,7 +706,7 @@ http_get(const struct source *addrs, size_t addrsz, const char *domain,
 
 	http_disconnect(h);
 
-	if (NULL == (head = http_head_parse(h, x, &headsz))) {
+	if ((head = http_head_parse(h, x, &headsz)) == NULL) {
 		http_close(x);
 		http_free(h);
 		return (NULL);
@@ -716,7 +716,7 @@ http_get(const struct source *addrs, size_t addrsz, const char *domain,
 		return (NULL);
 	}
 
-	if (NULL == (g = calloc(1, sizeof(struct httpget)))) {
+	if ((g = calloc(1, sizeof(struct httpget))) == NULL) {
 		warn("calloc");
 		http_close(x);
 		http_free(h);
@@ -767,7 +767,7 @@ main(void)
 	    NULL, 0);
 #endif
 
-	if (NULL == g)
+	if (g == NULL)
 		errx(EXIT_FAILURE, "http_get");
 
 	httph = http_head_parse(g->http, g->xfer, &httphsz);
