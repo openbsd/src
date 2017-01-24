@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.30 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: s_client.c,v 1.31 2017/01/24 09:07:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -245,6 +245,7 @@ sc_usage(void)
 	BIO_printf(bio_err, " -no_ticket        - disable use of RFC4507bis session tickets\n");
 	BIO_printf(bio_err, " -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
 	BIO_printf(bio_err, " -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)\n");
+	BIO_printf(bio_err, " -groups arg       - specify EC curve groups (colon-separated list)\n");
 #ifndef OPENSSL_NO_SRTP
 	BIO_printf(bio_err, " -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
 #endif
@@ -357,6 +358,7 @@ s_client_main(int argc, char **argv)
 	{NULL, 0};
 	const char *next_proto_neg_in = NULL;
 	const char *alpn_in = NULL;
+	const char *groups_in = NULL;
 	char *sess_in = NULL;
 	char *sess_out = NULL;
 	struct sockaddr peer;
@@ -527,19 +529,20 @@ s_client_main(int argc, char **argv)
 			off |= SSL_OP_NO_SSLv2;
 		else if (strcmp(*argv, "-no_comp") == 0) {
 			off |= SSL_OP_NO_COMPRESSION;
-		}
-		else if (strcmp(*argv, "-no_ticket") == 0) {
+		} else if (strcmp(*argv, "-no_ticket") == 0) {
 			off |= SSL_OP_NO_TICKET;
-		}
-		else if (strcmp(*argv, "-nextprotoneg") == 0) {
+		} else if (strcmp(*argv, "-nextprotoneg") == 0) {
 			if (--argc < 1)
 				goto bad;
 			next_proto_neg_in = *(++argv);
-		}
-		else if (strcmp(*argv, "-alpn") == 0) {
+		} else if (strcmp(*argv, "-alpn") == 0) {
 			if (--argc < 1)
 				goto bad;
 			alpn_in = *(++argv);
+		} else if (strcmp(*argv, "-groups") == 0) {
+			if (--argc < 1)
+				goto bad;
+			groups_in = *(++argv);
 		} else if (strcmp(*argv, "-serverpref") == 0)
 			off |= SSL_OP_CIPHER_SERVER_PREFERENCE;
 		else if (strcmp(*argv, "-legacy_renegotiation") == 0)
@@ -713,6 +716,13 @@ bad:
 		}
 		SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len);
 		free(alpn);
+	}
+	if (groups_in != NULL) {
+		if (SSL_CTX_set1_groups_list(ctx, groups_in) != 1) {
+			BIO_printf(bio_err, "Failed to set groups '%s'\n",
+			    groups_in);
+			goto end;
+		}
 	}
 
 	if (state)
