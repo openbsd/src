@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.204 2016/11/21 01:44:06 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.205 2017/01/24 09:54:41 mpi Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -513,7 +513,7 @@ pool_get(struct pool *pp, int flags)
 	}
 	mtx_leave(&pp->pr_mtx);
 
-	if (slowdown && ISSET(flags, PR_WAITOK))
+	if ((slowdown || pool_debug == 2) && ISSET(flags, PR_WAITOK))
 		yield();
 
 	if (v == NULL) {
