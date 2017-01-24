@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.30 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: main.c,v 1.31 2017/01/24 12:38:41 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 		goto usage;
 
 	if ((domain = domain_find(conf, argv[0])) == NULL)
-		errx(EXIT_FAILURE, "domain %s not found\n", argv[0]);
+		errx(EXIT_FAILURE, "domain %s not found", argv[0]);
 
 	argc--;
 	argv++;
@@ -151,11 +151,11 @@ main(int argc, char *argv[])
 		/* use the first authority from the config as default XXX */
 		authority = authority_find0(conf);
 		if (authority == NULL)
-			errx(EXIT_FAILURE, "no authorities configured\n");
+			errx(EXIT_FAILURE, "no authorities configured");
 	} else {
 		authority = authority_find(conf, auth);
 		if (authority == NULL)
-			errx(EXIT_FAILURE, "authority %s not found\n", auth);
+			errx(EXIT_FAILURE, "authority %s not found", auth);
 	}
 
 	agreement = authority->agreement;
