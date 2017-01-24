@@ -1,4 +1,4 @@
-/* $OpenBSD: environ.c,v 1.16 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: environ.c,v 1.17 2017/01/24 20:15:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -169,25 +169,27 @@ environ_unset(struct environ *env, const char *name)
 	free(envent);
 }
 
-/*
- * Copy a space-separated list of variables from a destination into a source
- * environment.
- */
+/* Copy variables from a destination into a source * environment. */
 void
-environ_update(const char *vars, struct environ *srcenv,
-    struct environ *dstenv)
+environ_update(struct options *oo, struct environ *src, struct environ *dst)
 {
 	struct environ_entry	*envent;
-	char			*copyvars, *var, *next;
+	struct options_entry	*o;
+	u_int			 size, idx;
+	const char		*value;
 
-	copyvars = next = xstrdup(vars);
-	while ((var = strsep(&next, " ")) != NULL) {
-		if ((envent = environ_find(srcenv, var)) == NULL)
-			environ_clear(dstenv, var);
+	o = options_get(oo, "update-environment");
+	if (o == NULL || options_array_size(o, &size) == -1)
+		return;
+	for (idx = 0; idx < size; idx++) {
+		value = options_array_get(o, idx);
+		if (value == NULL)
+			continue;
+		if ((envent = environ_find(src, value)) == NULL)
+			environ_clear(dst, value);
 		else
-			environ_set(dstenv, envent->name, "%s", envent->value);
+			environ_set(dst, envent->name, "%s", envent->value);
 	}
-	free(copyvars);
 }
 
 /* Push environment into the real environment - use after fork(). */
