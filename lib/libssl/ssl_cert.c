@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.59 2017/01/24 14:57:31 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.60 2017/01/24 15:04:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -610,12 +610,12 @@ err:
 		sk_X509_NAME_pop_free(ret, X509_NAME_free);
 		ret = NULL;
 	}
-	if (sk != NULL)
-		sk_X509_NAME_free(sk);
+	sk_X509_NAME_free(sk);
 	BIO_free(in);
 	X509_free(x);
 	if (ret != NULL)
 		ERR_clear_error();
+
 	return (ret);
 }
 

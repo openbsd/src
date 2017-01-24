@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.172 2017/01/24 14:57:31 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.173 2017/01/24 15:04:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1099,6 +1099,7 @@ err:
 	EVP_PKEY_free(pkey);
 	X509_free(x);
 	sk_X509_pop_free(sk, X509_free);
+
 	return (ret);
 }
 

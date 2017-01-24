@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.147 2017/01/24 14:57:31 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.148 2017/01/24 15:04:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -581,8 +581,7 @@ SSL_free(SSL *s)
 	free(s->internal->alpn_client_proto_list);
 
 #ifndef OPENSSL_NO_SRTP
-	if (s->internal->srtp_profiles)
-		sk_SRTP_PROTECTION_PROFILE_free(s->internal->srtp_profiles);
+	sk_SRTP_PROTECTION_PROFILE_free(s->internal->srtp_profiles);
 #endif
 
 	free(s->internal);
