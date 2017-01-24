@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.58 2017/01/17 16:54:40 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.59 2017/01/24 14:14:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1915,7 +1915,7 @@ int
 swofp_validate_oxm(struct ofp_ox_match *oxm, uint16_t *err)
 {
 	struct ofp_oxm_class	*handler;
-	int			 length, hasmask;
+	int			 hasmask;
 	int			 neededlen;
 
 	handler = swofp_lookup_oxm_handler(oxm);
@@ -1925,7 +1925,6 @@ swofp_validate_oxm(struct ofp_ox_match *oxm, uint16_t *err)
 	}
 
 	hasmask = OFP_OXM_GET_HASMASK(oxm);
-	length = oxm->oxm_length;
 
 	neededlen = (hasmask) ?
 	    (handler->oxm_len * 2) : (handler->oxm_len);
@@ -3904,7 +3903,6 @@ swofp_apply_set_field_ipv6(struct mbuf *m, int off,
 
 	if (m->m_len < hlen && ((m = m_pullup(m, hlen)) == NULL))
 		return (NULL);
-	ip6 = mtod(m, struct ip6_hdr *);
 
 	in6_proto_cksum_out(m, NULL);
 
@@ -5042,7 +5040,6 @@ int
 swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 {
 	struct swofp_ofs		*ofs = sc->sc_ofs;
-	struct ofp_header		*oh;
 	struct ofp_flow_mod		*ofm;
 	struct ofp_match		*om;
 	struct swofp_flow_entry		*swfe, *old_swfe;
@@ -5051,7 +5048,6 @@ swofp_flow_mod_cmd_add(struct switch_softc *sc, struct mbuf *m)
 	uint16_t			 error, etype;
 
 	etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
-	oh = mtod(m, struct ofp_header *);
 	ofm = mtod(m, struct ofp_flow_mod *);
 	om = &ofm->fm_match;
 
@@ -5165,7 +5161,6 @@ int
 swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
     int strict)
 {
-	struct ofp_header		*oh;
 	struct ofp_flow_mod		*ofm;
 	struct ofp_match		*om;
 	struct swofp_flow_entry		*swfe;
@@ -5175,7 +5170,6 @@ swofp_flow_mod_cmd_common_modify(struct switch_softc *sc, struct mbuf *m,
 
 	etype = OFP_ERRTYPE_FLOW_MOD_FAILED;
 
-	oh = mtod(m, struct ofp_header *);
 	ofm = mtod(m, struct ofp_flow_mod *);
 	om = &ofm->fm_match;
 
