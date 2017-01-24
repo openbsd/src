@@ -2257,6 +2257,7 @@
 ./usr/share/man/man8/nsd.8
 ./usr/share/man/man8/ntpctl.8
 ./usr/share/man/man8/ntpd.8
+./usr/share/man/man8/ocspcheck.8
 ./usr/share/man/man8/octeon/MAKEDEV.8
 ./usr/share/man/man8/octeon/eeprom.8
 ./usr/share/man/man8/ospf6ctl.8

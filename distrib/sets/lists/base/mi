@@ -2370,6 +2370,7 @@
 ./usr/sbin/nslookup
 ./usr/sbin/ntpctl
 ./usr/sbin/ntpd
+./usr/sbin/ocspcheck
 ./usr/sbin/ospf6ctl
 ./usr/sbin/ospf6d
 ./usr/sbin/ospfctl
