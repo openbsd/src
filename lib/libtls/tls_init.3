@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.81 2016/11/11 14:02:24 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.82 2017/01/24 00:00:12 claudio Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2016 $
+.Dd $Mdocdate: January 24 2017 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -367,16 +367,16 @@ otherwise):
 adds an additional public certificate and private key from the specified files,
 used as an alternative certificate for Server Name Indication (server only).
 .It
-.Fn tls_config_set_keypair_mem
+.Fn tls_config_add_keypair_mem
 adds an additional public certificate and private key from memory,
 used as an alternative certificate for Server Name Indication (server only).
 .It
 .Fn tls_config_set_ocsp_staple_mem
-adds a DER-encoded OCSP response to be stapled during the TLS handshake from
+sets a DER-encoded OCSP response to be stapled during the TLS handshake from
 memory.
 .It
 .Fn tls_config_set_ocsp_staple_file
-adds a DER-encoded OCSP response to be stapled during the TLS handshake from
+sets a DER-encoded OCSP response to be stapled during the TLS handshake from
 the specified file.
 .It
 .Fn tls_config_set_alpn
