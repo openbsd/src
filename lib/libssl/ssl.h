@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.120 2017/01/23 22:34:38 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.121 2017/01/24 02:56:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,9 +150,7 @@
 #include <openssl/pem.h>
 #include <openssl/safestack.h>
 
-#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
-#endif
 
 #ifndef OPENSSL_NO_DEPRECATED
 #include <openssl/buffer.h>
@@ -818,16 +816,10 @@ struct ssl_st {
 	 * same.  This is so data can be read and written to different
 	 * handlers */
 
-#ifndef OPENSSL_NO_BIO
 	BIO *rbio; /* used by SSL_read */
 	BIO *wbio; /* used by SSL_write */
 	BIO *bbio; /* used during session-id reuse to concatenate
 		    * messages */
-#else
-	char *rbio; /* used by SSL_read */
-	char *wbio; /* used by SSL_write */
-	char *bbio;
-#endif
 	int server;	/* are we the server side? - mostly used by SSL_clear*/
 
 	struct ssl3_state_st *s3; /* SSLv3 variables */
@@ -1187,14 +1179,12 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 #define SSL_get_server_tmp_key(s, pk) \
 	SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
 
-#ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);
 BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
 BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
 BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);
 int BIO_ssl_copy_session_id(BIO *to, BIO *from);
 void BIO_ssl_shutdown(BIO *ssl_bio);
-#endif
 
 int	SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
@@ -1227,11 +1217,9 @@ int	SSL_pending(const SSL *s);
 int	SSL_set_fd(SSL *s, int fd);
 int	SSL_set_rfd(SSL *s, int fd);
 int	SSL_set_wfd(SSL *s, int fd);
-#ifndef OPENSSL_NO_BIO
 void	SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio);
 BIO *	SSL_get_rbio(const SSL *s);
 BIO *	SSL_get_wbio(const SSL *s);
-#endif
 int	SSL_set_cipher_list(SSL *s, const char *str);
 void	SSL_set_read_ahead(SSL *s, int yes);
 int	SSL_get_verify_mode(const SSL *s);
@@ -1280,9 +1268,7 @@ const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
 	    unsigned int *len);
 unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s);
 int	SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *ses);
-#ifndef OPENSSL_NO_BIO
 int	SSL_SESSION_print(BIO *fp, const SSL_SESSION *ses);
-#endif
 void	SSL_SESSION_free(SSL_SESSION *ses);
 int	i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp);
 int	SSL_set_session(SSL *to, SSL_SESSION *session);
