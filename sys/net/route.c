@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.347 2017/01/20 08:10:54 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.348 2017/01/24 04:45:35 phessler Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1760,7 +1760,7 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 			 * new routes from a better source.
 			 */
 			if (ISSET(rt->rt_flags, RTF_CLONED|RTF_DYNAMIC) &&
-			    !ISSET(rt->rt_flags, RTF_CACHED)) {
+			    !ISSET(rt->rt_flags, RTF_CACHED|RTF_BFD)) {
 				int error;
 
 				if ((error = rtdeletemsg(rt, ifp, id)))
