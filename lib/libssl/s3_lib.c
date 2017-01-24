@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.130 2017/01/24 09:03:21 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.131 2017/01/24 14:57:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1838,8 +1838,7 @@ ssl3_free(SSL *s)
 		explicit_bzero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 	free(S3I(s)->tmp.x25519);
 
-	if (S3I(s)->tmp.ca_names != NULL)
-		sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
+	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 	BIO_free(S3I(s)->handshake_buffer);
 	tls1_free_digest_list(s);
 	free(S3I(s)->alpn_selected);
@@ -1861,8 +1860,7 @@ ssl3_clear(SSL *s)
 	size_t		 rlen, wlen;
 
 	tls1_cleanup_key_block(s);
-	if (S3I(s)->tmp.ca_names != NULL)
-		sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
+	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 
 	DH_free(S3I(s)->tmp.dh);
 	S3I(s)->tmp.dh = NULL;
@@ -2330,10 +2328,8 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		break;
 
 	case SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS:
-		if (ctx->extra_certs) {
-			sk_X509_pop_free(ctx->extra_certs, X509_free);
-			ctx->extra_certs = NULL;
-		}
+		sk_X509_pop_free(ctx->extra_certs, X509_free);
+		ctx->extra_certs = NULL;
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.171 2017/01/24 01:39:13 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.172 2017/01/24 14:57:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1723,8 +1723,7 @@ ssl3_get_certificate_request(SSL *s)
 	/* we should setup a certificate to return.... */
 	S3I(s)->tmp.cert_req = 1;
 	S3I(s)->tmp.ctype_num = ctype_num;
-	if (S3I(s)->tmp.ca_names != NULL)
-		sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
+	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 	S3I(s)->tmp.ca_names = ca_sk;
 	ca_sk = NULL;
 
@@ -1736,8 +1735,7 @@ truncated:
 	}
 err:
 	X509_NAME_free(xn);
-	if (ca_sk != NULL)
-		sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
+	sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
 	return (ret);
 }
 

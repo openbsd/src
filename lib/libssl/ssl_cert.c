@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.58 2017/01/23 06:45:30 beck Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.59 2017/01/24 14:57:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -395,9 +395,7 @@ ssl_sess_cert_free(SESS_CERT *sc)
 	if (i > 0)
 		return;
 
-	/* i == 0 */
-	if (sc->cert_chain != NULL)
-		sk_X509_pop_free(sc->cert_chain, X509_free);
+	sk_X509_pop_free(sc->cert_chain, X509_free);
 	for (i = 0; i < SSL_PKEY_NUM; i++)
 		X509_free(sc->peer_pkeys[i].x509);
 
@@ -459,9 +457,7 @@ static void
 set_client_CA_list(STACK_OF(X509_NAME) **ca_list,
     STACK_OF(X509_NAME) *name_list)
 {
-	if (*ca_list != NULL)
-		sk_X509_NAME_pop_free(*ca_list, X509_NAME_free);
-
+	sk_X509_NAME_pop_free(*ca_list, X509_NAME_free);
 	*ca_list = name_list;
 }
 
@@ -611,8 +607,7 @@ SSL_load_client_CA_file(const char *file)
 
 	if (0) {
 err:
-		if (ret != NULL)
-			sk_X509_NAME_pop_free(ret, X509_NAME_free);
+		sk_X509_NAME_pop_free(ret, X509_NAME_free);
 		ret = NULL;
 	}
 	if (sk != NULL)

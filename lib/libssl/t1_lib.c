@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.110 2017/01/24 12:24:07 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.111 2017/01/24 14:57:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1593,10 +1593,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				}
 				sdata = data;
 				if (dsize > 0) {
-					if (s->internal->tlsext_ocsp_exts) {
-						sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
-						    X509_EXTENSION_free);
-					}
+					sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
+					    X509_EXTENSION_free);
 
 					s->internal->tlsext_ocsp_exts =
 					    d2i_X509_EXTENSIONS(NULL,

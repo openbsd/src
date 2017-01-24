@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.24 2017/01/23 22:34:38 beck Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.25 2017/01/24 14:57:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -671,10 +671,8 @@ ssl_ctx_use_certificate_chain_bio(SSL_CTX *ctx, BIO *in)
 		int r;
 		unsigned long err;
 
-		if (ctx->extra_certs != NULL) {
-			sk_X509_pop_free(ctx->extra_certs, X509_free);
-			ctx->extra_certs = NULL;
-		}
+		sk_X509_pop_free(ctx->extra_certs, X509_free);
+		ctx->extra_certs = NULL;
 
 		while ((ca = PEM_read_bio_X509(in, NULL,
 		    ctx->default_passwd_callback,

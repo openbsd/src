@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.146 2017/01/24 13:34:26 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.147 2017/01/24 14:57:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -561,17 +561,16 @@ SSL_free(SSL *s)
 
 	free(s->tlsext_hostname);
 	SSL_CTX_free(s->initial_ctx);
+
 	free(s->internal->tlsext_ecpointformatlist);
 	free(s->internal->tlsext_supportedgroups);
-	if (s->internal->tlsext_ocsp_exts)
-		sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
-		    X509_EXTENSION_free);
-	if (s->internal->tlsext_ocsp_ids)
-		sk_OCSP_RESPID_pop_free(s->internal->tlsext_ocsp_ids, OCSP_RESPID_free);
+
+	sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
+	    X509_EXTENSION_free);
+	sk_OCSP_RESPID_pop_free(s->internal->tlsext_ocsp_ids, OCSP_RESPID_free);
 	free(s->internal->tlsext_ocsp_resp);
 
-	if (s->internal->client_CA != NULL)
-		sk_X509_NAME_pop_free(s->internal->client_CA, X509_NAME_free);
+	sk_X509_NAME_pop_free(s->internal->client_CA, X509_NAME_free);
 
 	if (s->method != NULL)
 		s->method->internal->ssl_free(s);
@@ -2011,10 +2010,8 @@ SSL_CTX_free(SSL_CTX *ctx)
 	sk_SSL_CIPHER_free(ctx->cipher_list);
 	sk_SSL_CIPHER_free(ctx->internal->cipher_list_by_id);
 	ssl_cert_free(ctx->internal->cert);
-	if (ctx->internal->client_CA != NULL)
-		sk_X509_NAME_pop_free(ctx->internal->client_CA, X509_NAME_free);
-	if (ctx->extra_certs != NULL)
-		sk_X509_pop_free(ctx->extra_certs, X509_free);
+	sk_X509_NAME_pop_free(ctx->internal->client_CA, X509_NAME_free);
+	sk_X509_pop_free(ctx->extra_certs, X509_free);
 
 #ifndef OPENSSL_NO_SRTP
 	if (ctx->internal->srtp_profiles)

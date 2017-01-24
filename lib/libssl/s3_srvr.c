@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.152 2017/01/24 12:22:23 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.153 2017/01/24 14:57:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2595,8 +2595,7 @@ ssl3_get_client_certificate(SSL *s)
 			goto err;
 		}
 	}
-	if (SSI(s)->sess_cert->cert_chain != NULL)
-		sk_X509_pop_free(SSI(s)->sess_cert->cert_chain, X509_free);
+	sk_X509_pop_free(SSI(s)->sess_cert->cert_chain, X509_free);
 	SSI(s)->sess_cert->cert_chain = sk;
 
 	/*
@@ -2617,8 +2616,8 @@ f_err:
 	}
 err:
 	X509_free(x);
-	if (sk != NULL)
-		sk_X509_pop_free(sk, X509_free);
+	sk_X509_pop_free(sk, X509_free);
+
 	return (ret);
 }
 
