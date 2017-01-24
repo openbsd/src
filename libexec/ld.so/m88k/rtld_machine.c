@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.17 2016/09/16 02:20:08 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.18 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -87,10 +87,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	if (relas == NULL)
 		return(0);
 
-	if (relrela > numrela) {
-		_dl_printf("relacount > numrel: %d > %d\n", relrela, numrela);
-		_dl_exit(20);
-	}
+	if (relrela > numrela)
+		_dl_die("relacount > numrel: %d > %d", relrela, numrela);
 
 	/*
 	 * Change protection of all write protected segments in the object
@@ -221,13 +219,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		case RELOC_DISP26:
 			newval = prev_ooff + addend;
 			newval -= (Elf_Addr)r_addr;
-			if ((newval >> 28) != 0 && (newval >> 28) != 0x0f) {
-				_dl_printf("%s: %s: out of range DISP26"
+			if ((newval >> 28) != 0 && (newval >> 28) != 0x0f)
+				_dl_die("%s: out of range DISP26"
 				    " relocation to '%s' at %x\n",
-				    __progname, object->load_name, symn,
-				    r_addr);
-				_dl_exit(1);
-			}
+				    object->load_name, symn, r_addr);
 			*r_addr = (*r_addr & 0xfc000000) |
 			    (((int32_t)newval >> 2) & 0x03ffffff);
 			_dl_cacheflush((unsigned long)r_addr, 4);
@@ -241,10 +236,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			*r_addr = newval;
 			break;
 		default:
-			_dl_printf("%s:"
-			    " %s: unsupported relocation '%s' %d at %x\n",
-			    __progname, object->load_name, symn, type, r_addr);
-			_dl_exit(1);
+			_dl_die("%s: unsupported relocation '%s' %d at %x\n",
+			    object->load_name, symn, type, r_addr);
 		}
 	}
 
@@ -381,10 +374,8 @@ _dl_bind(elf_object_t *object, int reloff)
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL | SYM_WARNNOTFOUND | SYM_PLT, sym, object, &sobj);
-	if (this == NULL) {
-		_dl_printf("lazy binding failed!\n");
-		*(volatile int *)0 = 0;		/* XXX */
-	}
+	if (this == NULL)
+		_dl_die("lazy binding failed!");
 
 	buf.newval = ooff + this->st_value;
 

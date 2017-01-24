@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.59 2016/06/21 15:25:36 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.60 2017/01/24 07:48:37 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -69,10 +69,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	if (relas == NULL)
 		return(0);
 
-	if (relrel > numrela) {
-		_dl_printf("relacount > numrel: %ld > %ld\n", relrel, numrela);
-		_dl_exit(20);
-	}
+	if (relrel > numrela)
+		_dl_die("relacount > numrel: %ld > %ld", relrel, numrela);
 
 	/*
 	 * unprotect some segments if we need it.
@@ -93,10 +91,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		Elf_Addr *r_addr;
 
 #ifdef DEBUG
-		if (ELF64_R_TYPE(relas->r_info) != R_TYPE(RELATIVE)) {
-			_dl_printf("RELACOUNT wrong\n");
-			_dl_exit(20);
-		}
+		if (ELF64_R_TYPE(relas->r_info) != R_TYPE(RELATIVE))
+			_dl_die("RELACOUNT wrong");
 #endif
 
 		r_addr = (Elf64_Addr *)(relas->r_offset + loff);
@@ -180,11 +176,9 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 		case R_TYPE(NONE):
 			break;
 		default:
-			_dl_printf("%s:"
-			    " %s: unsupported relocation '%s' %d at %lx\n",
-			    __progname, object->load_name, symn,
+			_dl_die("%s: unsupported relocation '%s' %d at %lx",
+			    object->load_name, symn,
 			    ELF64_R_TYPE(relas->r_info), r_addr );
-			_dl_exit(1);
 		}
 		continue;
 resolve_failed:
@@ -230,10 +224,8 @@ _dl_bind(elf_object_t *object, int reloff)
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL) {
-		_dl_printf("lazy binding failed!\n");
-		*(volatile int *)0 = 0;		/* XXX */
-	}
+	if (this == NULL)
+		_dl_die("lazy binding failed!");
 
 	buf.newval = ooff + this->st_value + rela->r_addend;
 

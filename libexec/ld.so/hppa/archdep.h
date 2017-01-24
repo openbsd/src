@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.14 2017/01/21 01:15:00 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.15 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -49,7 +49,6 @@ RELOC_JMPREL(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v,
 		p[0] = v + s->st_value + r->r_addend;
 		p[1] = (Elf_Addr)pltgot;
 	} else {
-		_dl_printf("unknown bootstrap relocation\n");
 		_dl_exit(5);
 	}
 }
@@ -65,7 +64,6 @@ RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	} else if (ELF_R_TYPE(r->r_info) == RELOC_PLABEL32) {
 		*p = v + s->st_value + r->r_addend;
 	} else {
-		_dl_printf("unknown bootstrap relocation\n");
 		_dl_exit(6);
 	}
 }

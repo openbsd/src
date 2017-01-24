@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.23 2016/08/28 06:15:32 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.24 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -190,6 +190,7 @@ DL_SYSCALL(pledge)
 DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL(sysctl)
 DL_SYSCALL(getdents)
+DL_SYSCALL(thrkill)
 
 ENTRY(_dl_cerror)
 	jmp.n	%r1

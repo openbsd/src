@@ -169,25 +169,10 @@ hash(void *p)
 	return sum;
 }
 
-static void
+static __dead void
 wrterror(char *msg)
 {
-	char		*q = " error: ";
-	struct iovec	iov[4];
-
-	iov[0].iov_base = g_pool->func;
-	iov[0].iov_len = _dl_strlen(g_pool->func);
-	iov[1].iov_base = q;
-	iov[1].iov_len = _dl_strlen(q);
-	iov[2].iov_base = msg;
-	iov[2].iov_len = _dl_strlen(msg);
-	iov[3].iov_base = "\n";
-	iov[3].iov_len = 1;
-	_dl_write(STDERR_FILENO, iov[0].iov_base, iov[0].iov_len);
-	_dl_write(STDERR_FILENO, iov[1].iov_base, iov[1].iov_len);
-	_dl_write(STDERR_FILENO, iov[2].iov_base, iov[2].iov_len);
-	_dl_write(STDERR_FILENO, iov[3].iov_base, iov[3].iov_len);
-	_dl_exit(7);
+	_dl_die("%s error: %s", g_pool->func, msg);
 }
 
 static void

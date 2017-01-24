@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.43 2016/08/12 20:39:01 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.44 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -55,7 +55,7 @@ __stack_smash_handler(char func[], int damaged)
 	_dl_strlcat(message, func, sizeof message);
 
 	_dl_sendsyslog(message, _dl_strlen(message), LOG_CONS);
-	_dl_exit(127);
+	_dl_diedie();
 }
 
 char *
@@ -82,7 +82,7 @@ _dl_arc4randombuf(void *v, size_t buflen)
 	while (buflen != 0) {
 		if (reserve == 0) {
 			if (_dl_getentropy(bytes, sizeof(bytes)) != 0)
-				_dl_exit(8);
+				_dl_die("no entropy");
 			reserve = sizeof(bytes);
 		}
 		if (buflen > reserve)

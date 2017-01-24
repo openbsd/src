@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.29 2017/01/23 11:04:19 guenther Exp $	*/
+/*	$OpenBSD: util.h,v 1.30 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -56,6 +56,10 @@ char *_dl_realpath(const char *path, char *resolved);
 int _dl_uname(struct utsname *name);
 
 long _dl_strtol(const char *nptr, char **endptr, int base);
+
+__dead void _dl_oom(void);
+__dead void _dl_die(const char *, ...) __attribute__((format (printf, 1, 2)));
+#define _dl_diedie()	_dl_thrkill(0, 9, NULL)
 __END_HIDDEN_DECLS
 
 #define	_dl_round_page(x)	(((x) + (__LDPGSZ - 1)) & ~(__LDPGSZ - 1))
@@ -64,17 +68,6 @@ __END_HIDDEN_DECLS
  *	The following functions are declared inline so they can
  *	be used before bootstrap linking has been finished.
  */
-static inline void
-_dl_wrstderr(const char *s)
-{
-	const char *p = s;
-	size_t n = 0;
-
-	while (*p++)
-		n++;
-	_dl_write(2, s, n);
-}
-
 static inline void *
 _dl_memset(void *dst, const int c, size_t n)
 {

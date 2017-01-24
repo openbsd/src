@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.46 2017/01/22 01:20:36 guenther Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.47 2017/01/24 07:48:36 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -320,7 +320,7 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags)
 		char *lpath, *lname;
 		lpath = _dl_strdup(libname);
 		if (lpath == NULL)
-			_dl_exit(5);
+			_dl_oom();
 		lname = _dl_strrchr(lpath, '/');
 		if (lname == NULL) {
 			_dl_free(lpath);
@@ -437,7 +437,7 @@ _dl_link_dlopen(elf_object_t *dep)
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
-		_dl_exit(5);
+		_dl_oom();
 
 	n->data = dep;
 	TAILQ_INSERT_TAIL(&_dlopened_child_list, n, next_sib);
@@ -500,7 +500,7 @@ _dl_link_grpref(elf_object_t *load_group, elf_object_t *load_object)
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
-		_dl_exit(7);
+		_dl_oom();
 	n->data = load_group;
 	TAILQ_INSERT_TAIL(&load_object->grpref_list, n, next_sib);
 	load_group->grprefcount++;
@@ -513,7 +513,7 @@ _dl_link_child(elf_object_t *dep, elf_object_t *p)
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
-		_dl_exit(7);
+		_dl_oom();
 	n->data = dep;
 	TAILQ_INSERT_TAIL(&p->child_list, n, next_sib);
 
@@ -544,7 +544,7 @@ _dl_link_grpsym(elf_object_t *object, int checklist)
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
-		_dl_exit(8);
+		_dl_oom();
 	n->data = object;
 	TAILQ_INSERT_TAIL(&_dl_loading_object->grpsym_list, n, next_sib);
 }

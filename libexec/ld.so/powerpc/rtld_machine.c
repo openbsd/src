@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.60 2017/01/23 10:30:58 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.61 2017/01/24 07:48:37 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -111,10 +111,8 @@ _dl_printf("object relocation size %x, numrela %x\n",
 	if (relas == NULL)
 		return(0);
 
-	if (relrel > numrela) {
-		_dl_printf("relcount > numrel: %ld > %d\n", relrel, numrela);
-		_dl_exit(20);
-	}
+	if (relrel > numrela)
+		_dl_die("relcount > numrel: %ld > %d", relrel, numrela);
 
 	pltresolve = NULL;
 	pltcall = NULL;
@@ -192,18 +190,14 @@ _dl_printf("object relocation size %x, numrela %x\n",
 #ifdef DEBUG
 		const Elf32_Sym *sym;
 
-		if (ELF32_R_TYPE(relas->r_info) != RELOC_RELATIVE) {
-			_dl_printf("RELCOUNT wrong\n");
-			_dl_exit(20);
-		}
+		if (ELF32_R_TYPE(relas->r_info) != RELOC_RELATIVE)
+			_dl_die("RELCOUNT wrong");
 		sym = object->dyn.symtab;
 		sym += ELF32_R_SYM(relas->r_info);
 		if (ELF32_ST_BIND(sym->st_info) != STB_LOCAL ||
 		    (ELF32_ST_TYPE(sym->st_info) != STT_SECTION &&
-		    ELF32_ST_TYPE(sym->st_info) != STT_NOTYPE)) {
-			_dl_printf("RELATIVE relocation against symbol\n");
-			_dl_exit(20);
-		}
+		    ELF32_ST_TYPE(sym->st_info) != STT_NOTYPE))
+			_dl_die("RELATIVE relocation against symbol");
 #endif
 		r_addr = (Elf_Addr *)(relas->r_offset + loff);
 		*r_addr = loff + relas->r_addend;
@@ -344,9 +338,11 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 		    {
 			Elf32_Addr val = ooff + prev_value +
 			    relas->r_addend - (Elf32_Addr)r_addr;
-			if (!B24_VALID_RANGE(val)){
+			if (!B24_VALID_RANGE(val)) {
 				/* invalid offset */
-				_dl_exit(20);
+				_dl_die("%s: invalid %s offset %x at %p",
+				    object->load_name, "REL24", val,
+				    (char *)r_addr);
 			}
 			val &= ~0xfc000003;
 			val |= (*r_addr & 0xfc000003);
@@ -402,7 +398,9 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 			if (((val & 0xffff8000) != 0) &&
 			    ((val & 0xffff8000) != 0xffff8000)) {
 				/* invalid offset */
-				_dl_exit(20);
+				_dl_die("%s: invalid %s offset %x at %p",
+				    object->load_name, "REL14", val,
+				    (char *)r_addr);
 			}
 			val &= ~0xffff0003;
 			val |= (*r_addr & 0xffff0003);
@@ -458,11 +456,9 @@ _dl_printf(" found other symbol at %x size %d\n",
 			break;
 
 		default:
-			_dl_printf("%s:"
-			    " %s: unsupported relocation '%s' %d at %p\n",
-			    __progname, object->load_name, symn,
+			_dl_die("%s: unsupported relocation '%s' %d at %p\n",
+			    object->load_name, symn,
 			    ELF32_R_TYPE(relas->r_info), (char *)r_addr );
-			_dl_exit(1);
 		}
 	}
 
@@ -615,10 +611,8 @@ _dl_bind(elf_object_t *object, int reloff)
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL) {
-		_dl_printf("lazy binding failed!\n");
-		*(volatile int *)0 = 0;		/* XXX */
-	}
+	if (this == NULL)
+		_dl_die("lazy binding failed!");
 
 	value = ooff + this->st_value;
 

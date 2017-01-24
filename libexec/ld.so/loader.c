@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.168 2017/01/09 22:51:04 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.169 2017/01/24 07:48:36 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -189,19 +189,14 @@ _dl_dopreload(char *paths)
 	elf_object_t	*shlib;
 
 	dp = paths = _dl_strdup(paths);
-	if (dp == NULL) {
-		_dl_printf("preload: out of memory");
-		_dl_exit(1);
-	}
+	if (dp == NULL)
+		_dl_oom();
 
 	while ((cp = _dl_strsep(&dp, ":")) != NULL) {
 		shlib = _dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB,
 		_dl_objects->obj_flags);
-		if (shlib == NULL) {
-			_dl_printf("%s: can't preload library '%s'\n",
-			    __progname, cp);
-			_dl_exit(4);
-		}
+		if (shlib == NULL)
+			_dl_die("can't preload library '%s'", cp);
 		_dl_add_object(shlib);
 		_dl_link_child(shlib, _dl_objects);
 	}
@@ -308,7 +303,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 			    sizeof(int));
 
 			if (liblist == NULL || randomlist == NULL)
-				_dl_exit(5);
+				_dl_oom();
 
 			for (dynp = dynobj->load_dyn, loop = 0; dynp->d_tag;
 			    dynp++)
@@ -341,17 +336,15 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 				    OBJTYPE_LIB, depflags);
 				if (depobj == 0) {
 					if (booting) {
-						_dl_printf(
-						    "%s: can't load library '%s'\n",
-						    __progname, libname);
-						_dl_exit(4);
-					} else  {
-						DL_DEB(("dlopen: failed to open %s\n",
-						    libname));
-						_dl_free(liblist);
-						_dl_free(randomlist);
-						return (1);
+						_dl_die(
+						    "can't load library '%s'",
+						    libname);
 					}
+					DL_DEB(("dlopen: failed to open %s\n",
+					    libname));
+					_dl_free(liblist);
+					_dl_free(randomlist);
+					return (1);
 				}
 				liblist[randomlist[loop]].depobj = depobj;
 			}
@@ -458,7 +451,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 
 			next_load = _dl_calloc(1, sizeof(struct load_list));
 			if (next_load == NULL)
-				_dl_exit(5);
+				_dl_oom();
 			next_load->next = load_list;
 			load_list = next_load;
 			next_load->start = (char *)TRUNC_PG(phdp->p_vaddr) + exe_loff;
@@ -466,11 +459,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			next_load->prot = PFLAGS(phdp->p_flags);
 			break;
 		case PT_TLS:
-			if (phdp->p_filesz > phdp->p_memsz) {
-				_dl_printf("%s: invalid tls data.\n",
-				    __progname);
-				_dl_exit(5);
-			}
+			if (phdp->p_filesz > phdp->p_memsz)
+				_dl_die("invalid tls data");
 			ptls = phdp;
 			break;
 		case PT_GNU_RELRO:
@@ -491,7 +481,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
-		_dl_exit(5);
+		_dl_oom();
 	n->data = exe_obj;
 	TAILQ_INSERT_TAIL(&_dlopened_child_list, n, next_sib);
 	exe_obj->opencount++;
@@ -545,7 +535,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	if (map_link) {
 		debug_map = _dl_malloc(sizeof(*debug_map));
 		if (debug_map == NULL)
-			_dl_exit(5);
+			_dl_oom();
 		debug_map->r_version = 1;
 		debug_map->r_map = (struct link_map *)_dl_objects;
 		debug_map->r_brk = (Elf_Addr)_dl_debug_state;
@@ -585,7 +575,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	    (failed == 0) ? "success":"failed"));
 
 	if (failed != 0)
-		_dl_exit(1);
+		_dl_die("relocation failed");
 
 	if (_dl_traceld)
 		_dl_exit(0);

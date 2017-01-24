@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.58 2016/06/21 15:25:38 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.59 2017/01/24 07:48:37 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -225,10 +225,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	if (relas == NULL)
 		return(0);
 
-	if (relrel > numrela) {
-		_dl_printf("relacount > numrel: %ld > %ld\n", relrel, numrela);
-		_dl_exit(20);
-	}
+	if (relrel > numrela)
+		_dl_die("relacount > numrel: %ld > %ld", relrel, numrela);
 
 	/*
 	 * unprotect some segments if we need it.
@@ -246,10 +244,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		Elf_Addr *where;
 
 #ifdef DEBUG
-		if (ELF_R_TYPE(relas->r_info) != R_TYPE(RELATIVE)) {
-			_dl_printf("RELACOUNT wrong\n");
-			_dl_exit(20);
-		}
+		if (ELF_R_TYPE(relas->r_info) != R_TYPE(RELATIVE))
+			_dl_die("RELACOUNT wrong");
 #endif
 		where = (Elf_Addr *)(relas->r_offset + loff);
 		*where = relas->r_addend + loff;
@@ -639,10 +635,8 @@ _dl_bind(elf_object_t *object, int index)
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL) {
-		_dl_printf("lazy binding failed!\n");
-		*(volatile int *)0 = 0;		/* XXX */
-	}
+	if (this == NULL)
+		_dl_die("lazy binding failed!");
 
 	newvalue = ooff + this->st_value;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.23 2017/01/23 10:30:58 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.24 2017/01/24 07:48:37 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -141,9 +141,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			break;
 
 		default:
-			_dl_printf("%s: unsupported relocation '%d'\n",
-			    __progname, ELF64_R_TYPE(relocs->r_info));
-			_dl_exit(1);
+			_dl_die("unsupported relocation '%d'",
+			    ELF64_R_TYPE(relocs->r_info));
 		}
 	}
 	DL_DEB(("done %d fails\n", fails));
@@ -284,10 +283,8 @@ _dl_bind(elf_object_t *object, int symidx)
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL) {
-		_dl_printf("lazy binding failed\n");
-		*(volatile int *)0 = 0;		/* XXX */
-	}
+	if (this == NULL)
+		_dl_die("lazy binding failed!");
 
 	buf.newval = ooff + this->st_value;
 

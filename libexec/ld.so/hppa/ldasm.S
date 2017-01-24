@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.22 2016/08/28 06:15:32 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.23 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -283,5 +283,11 @@ ENTRY(_dl_pledge,0)
 	bv	r0(rp)
 	nop
 EXIT(_dl_pledge)
+
+ENTRY(_dl_thrkill,0)
+	SYSCALL(thrkill)
+	bv	r0(rp)
+	nop
+EXIT(_dl_thrkill)
 
 	.end

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.33 2015/10/29 13:07:41 deraadt Exp $	*/
+/*	$OpenBSD: sod.c,v 1.34 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -65,7 +65,7 @@ _dl_build_sod(const char *name, struct sod *sodp)
 	/* default is an absolute or relative path */
 	sodp->sod_name = (long)_dl_strdup(name);    /* strtok is destructive */
 	if (sodp->sod_name == 0)
-		_dl_exit(7);
+		_dl_oom();
 	sodp->sod_library = 0;
 	sodp->sod_major = sodp->sod_minor = 0;
 
@@ -124,7 +124,7 @@ _dl_build_sod(const char *name, struct sod *sodp)
 	cp = (char *)sodp->sod_name;
 	sodp->sod_name = (long)_dl_strdup(realname);
 	if (sodp->sod_name == 0)
-		_dl_exit(7);
+		_dl_oom();
 	_dl_free(cp);
 	sodp->sod_library = 1;
 	sodp->sod_major = major;
@@ -135,7 +135,7 @@ backout:
 	_dl_free((char *)sodp->sod_name);
 	sodp->sod_name = (long)_dl_strdup(name);
 	if (sodp->sod_name == 0)
-		_dl_exit(7);
+		_dl_oom();
 }
 
 void
@@ -225,16 +225,10 @@ _dl_findhint(char *name, int major, int minor, char *preferred_path)
 
 	while (1) {
 		/* Sanity check */
-		if (bp->hi_namex >= hheader->hh_strtab_sz) {
-			_dl_printf("Bad name index: %#x\n", bp->hi_namex);
-			_dl_exit(7);
-			break;
-		}
-		if (bp->hi_pathx >= hheader->hh_strtab_sz) {
-			_dl_printf("Bad path index: %#x\n", bp->hi_pathx);
-			_dl_exit(7);
-			break;
-		}
+		if (bp->hi_namex >= hheader->hh_strtab_sz)
+			_dl_die("bad name index: %#x", bp->hi_namex);
+		if (bp->hi_pathx >= hheader->hh_strtab_sz)
+			_dl_die("bad path index: %#x", bp->hi_pathx);
 
 		if (_dl_strcmp(name, hstrtab + bp->hi_namex) == 0) {
 			/* It's `name', check version numbers */

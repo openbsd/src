@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.3 2015/01/16 16:18:07 deraadt Exp $	*/
+/*	$OpenBSD: trace.c,v 1.4 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -136,7 +136,7 @@ _dl_trace_parse_spec(const char *var, struct tracespec *spec)
 	if (end != start) {
 		spec->spec = _dl_malloc(1 + end - start);
 		if (spec->spec == NULL)
-			_dl_exit(8);
+			_dl_oom();
 
 		_dl_bcopy(start, spec->spec, end - start);
 		spec->spec[end - start] = '\0';

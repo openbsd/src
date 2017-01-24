@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.27 2016/08/31 13:18:57 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.28 2017/01/24 07:48:37 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -149,6 +149,7 @@ __CONCAT(_dl_,n):					;\
 	rts						;\
 	 nop
 
+#define DL_SYSCALL_NOERR(n) DL_SYSCALL2_NOERR(n,n)
 #define DL_SYSCALL2_NOERR(n,c)				\
 	.global		__CONCAT(_dl_,n)		;\
 	.type		__CONCAT(_dl_,n)%function	;\
@@ -171,8 +172,9 @@ _dl_exit:
 	bra 1b
 	 nop
 
-DL_SYSCALL(issetugid)
-DL_SYSCALL(getthrid)
+DL_SYSCALL_NOERR(issetugid)
+DL_SYSCALL_NOERR(getthrid)
+DL_SYSCALL(thrkill)
 DL_SYSCALL2(_syscall,__syscall)
 DL_SYSCALL(munmap)
 DL_SYSCALL(mprotect)

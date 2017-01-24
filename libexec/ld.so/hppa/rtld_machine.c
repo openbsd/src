@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.35 2017/01/09 22:51:04 kettenis Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.36 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -91,7 +91,7 @@ _dl_md_plabel(Elf_Addr pc, Elf_Addr *sl)
 	if (p == NULL) {
 		p = _dl_malloc(sizeof(*p));
 		if (p == NULL)
-			_dl_exit(5);
+			_dl_oom();
 		p->pc = pc;
 		p->sl = sl;
 		SPLAY_INSERT(_dl_md_plabels, &_dl_md_plabel_root, p);
@@ -462,10 +462,8 @@ _dl_bind(elf_object_t *object, int reloff)
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL) {
-		_dl_printf("lazy binding failed!\n");
-		*(volatile int *)0 = 0;		/* XXX */
-	}
+	if (this == NULL)
+		_dl_die("lazy binding failed!");
 
 	value = ooff + this->st_value + rela->r_addend;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.27 2017/01/23 10:30:58 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.28 2017/01/24 07:48:37 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -188,10 +188,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	if (rels == NULL)
 		return(0);
 
-	if (relrel > numrel) {
-		_dl_printf("relacount > numrel: %ld > %ld\n", relrel, numrel);
-		_dl_exit(20);
-	}
+	if (relrel > numrel)
+		_dl_die("relacount > numrel: %ld > %ld", relrel, numrel);
 
 	/*
 	 * unprotect some segments if we need it.
@@ -209,10 +207,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		Elf_Addr *where;
 
 #ifdef DEBUG
-		if (ELF_R_TYPE(rels->r_info) != R_TYPE(RELATIVE)) {
-			_dl_printf("RELACOUNT wrong\n");
-			_dl_exit(20);
-		}
+		if (ELF_R_TYPE(rels->r_info) != R_TYPE(RELATIVE))
+			_dl_die("RELACOUNT wrong");
 #endif
 		where = (Elf_Addr *)(rels->r_offset + loff);
 		*where = rels->r_addend + loff;
@@ -225,10 +221,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 		type = ELF_R_TYPE(rels->r_info);
 
-		if (RELOC_ERROR(type)) {
-			_dl_printf("relocation error %d idx %ld\n", type, i);
-			_dl_exit(20);
-		}
+		if (RELOC_ERROR(type))
+			_dl_die("relocation error %d idx %ld", type, i);
 
 		if (type == R_TYPE(NONE))
 			continue;
@@ -362,10 +356,8 @@ _dl_bind(elf_object_t *object, int index)
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL) {
-		_dl_printf("lazy binding failed!\n");
-		*(volatile int *)0 = 0;		/* XXX */
-	}
+	if (this == NULL)
+		_dl_die("lazy binding failed!");
 
 	buf.newval = ooff + this->st_value + rel->r_addend;
 

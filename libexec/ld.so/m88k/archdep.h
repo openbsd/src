@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2017/01/20 10:40:30 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.5 2017/01/24 07:48:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -49,8 +49,6 @@ RELOC_DYN(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 	if (ELF32_R_TYPE(r->r_info) == RELOC_BBASED_32) {
 		*p = v + r->r_addend;
 	} else {
-		/* _dl_printf("Unexpected bootstrap relocation (%d).\n",
-		    ELF32_R_TYPE(r->r_info)); */
 		_dl_exit(6);
 	}
 }

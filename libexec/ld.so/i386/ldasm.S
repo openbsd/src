@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.28 2016/08/28 06:15:32 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.29 2017/01/24 07:48:37 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -97,6 +97,17 @@ __CONCAT(_dl_,n):						;\
 	jb	.L_cerr						;\
 	ret
 
+#define DL_SYSCALL(n) DL_SYSCALL2(n,n)
+#define DL_SYSCALL2(n,c)					\
+	.section	".text"					;\
+	.align		4					;\
+	.global		__CONCAT(_dl_,n)			;\
+	.type		__CONCAT(_dl_,n),@function		;\
+__CONCAT(_dl_,n):						;\
+	__DO_SYSCALL(c)						;\
+	jb	.L_cerr						;\
+	ret
+
 DL_SYSCALL(close)
 
 	.section	".text"
@@ -107,7 +118,6 @@ _dl_exit:
 	mov	$SYS_exit, %eax
 	int	$0x80
 	ret
-
 
 DL_SYSCALL(issetugid)
 DL_SYSCALL(getthrid)
@@ -127,6 +137,7 @@ DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL(sysctl)
 DL_SYSCALL(getdents)
 DL_SYSCALL2(set_tcb,__set_tcb)
+DL_SYSCALL(thrkill)
 
 .L_cerr:
 	/* error: result = -errno; - handled here. */

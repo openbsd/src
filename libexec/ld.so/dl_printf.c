@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.18 2017/01/23 13:00:09 guenther Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.19 2017/01/24 07:48:36 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -56,6 +56,7 @@
 
 #include <sys/types.h>
 #include <stdarg.h>
+#include "resolve.h"		/* for __progname */
 #include "syscall.h"
 #include "util.h"
 
@@ -132,8 +133,10 @@ kdoprnt(int fd, const char *fmt, va_list ap)
 
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
-			if (ch == '\0')
+			if (ch == '\0') {
+				_dl_flushbuf();
 				return;
+			}
 			putcharfd(ch, fd);
 		}
 		lflag = 0;
@@ -221,7 +224,6 @@ reswitch:
 			putcharfd(ch, fd);
 		}
 	}
-	_dl_flushbuf();
 }
 
 static void
@@ -237,4 +239,31 @@ kprintn(int fd, unsigned long ul, int base)
 	do {
 		putcharfd(*--p, fd);
 	} while (p > buf);
+}
+
+static char ldso[] = "ld.so: ";
+
+__dead void
+_dl_die(const char *fmt, ...)
+{
+	va_list ap;
+
+	_dl_printf("%s%s: ", ldso, __progname);
+	va_start(ap, fmt);
+	kdoprnt(2, fmt, ap);
+	_dl_write(2, "\n", 1);
+	va_end(ap);
+
+	_dl_diedie();
+}
+
+__dead void
+_dl_oom(void)
+{
+	static const char oom[] = ": out of memory\n";
+
+	_dl_write(2, ldso, sizeof(ldso) - 1);
+	_dl_write(2, __progname, _dl_strlen(__progname));
+	_dl_write(2, oom, sizeof(oom) - 1);
+	_dl_diedie();
 }
