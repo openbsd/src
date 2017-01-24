@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.19 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.20 2017/01/24 22:40:09 deraadt Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -33,7 +33,6 @@
 #include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/time.h>
 #include <sys/signal.h>
-#include <sys/proc.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>
 
