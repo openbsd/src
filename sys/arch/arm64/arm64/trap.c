@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.4 2017/01/11 13:00:49 patrick Exp $ */
+/* $OpenBSD: trap.c,v 1.5 2017/01/24 10:23:11 patrick Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -62,8 +62,6 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/trap.c 281654 2015-04-17 12:58:09Z andr
 #ifdef DDB
 #include <ddb/db_output.h>
 #endif
-
-extern register_t fsu_intr_fault;
 
 /* Called from exception.S */
 void do_el1h_sync(struct trapframe *);
@@ -142,15 +140,6 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 
 	pcb = curcpu()->ci_curpcb;
 	p = curcpu()->ci_curproc;
-
-	/*
-	 * Special case for fuswintr and suswintr. These can't sleep so
-	 * handle them early on in the trap handler.
-	 */
-	if (__predict_false(pcb->pcb_onfault == (char *)&fsu_intr_fault)) {
-		frame->tf_elr = (register_t)pcb->pcb_onfault;
-		return;
-	}
 
 	far = READ_SPECIALREG(far_el1);
 
