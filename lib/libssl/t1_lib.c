@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.106 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.107 2017/01/24 03:41:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -256,7 +256,7 @@ static const uint16_t eccurves_default[] = {
 	14,			/* sect571r1 (14) */
 	13,			/* sect571k1 (13) */
 	25,			/* secp521r1 (25) */
-	28,			/* brainpool512r1 (28) */
+	28,			/* brainpoolP512r1 (28) */
 	11,			/* sect409k1 (11) */
 	12,			/* sect409r1 (12) */
 	27,			/* brainpoolP384r1 (27) */
