@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ocspcheck.8,v 1.1 2017/01/24 08:50:57 beck Exp $
+.\"	$OpenBSD: ocspcheck.8,v 1.2 2017/01/24 08:54:23 beck Exp $
 .\"
 .\" Copyright (c) 2017 Bob Beck <beck@openbsd.org>
 .\"
@@ -81,7 +81,7 @@ will exit >0.
 .Xr tls_config_set_ocsp_staple_file 3 ,
 .Sh BUGS
 .Nm
-will create the output file if it does not exit.
+will create the output file if it does not exist.
 On failure a newly created output file will not be removed.
 .Sh CAVEATS
 While
