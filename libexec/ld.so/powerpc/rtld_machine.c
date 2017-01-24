@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.61 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.62 2017/01/24 10:59:10 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -342,7 +342,7 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 				/* invalid offset */
 				_dl_die("%s: invalid %s offset %x at %p",
 				    object->load_name, "REL24", val,
-				    (char *)r_addr);
+				    (void *)r_addr);
 			}
 			val &= ~0xfc000003;
 			val |= (*r_addr & 0xfc000003);
@@ -400,7 +400,7 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 				/* invalid offset */
 				_dl_die("%s: invalid %s offset %x at %p",
 				    object->load_name, "REL14", val,
-				    (char *)r_addr);
+				    (void *)r_addr);
 			}
 			val &= ~0xffff0003;
 			val |= (*r_addr & 0xffff0003);
@@ -458,7 +458,7 @@ _dl_printf(" found other symbol at %x size %d\n",
 		default:
 			_dl_die("%s: unsupported relocation '%s' %d at %p\n",
 			    object->load_name, symn,
-			    ELF32_R_TYPE(relas->r_info), (char *)r_addr );
+			    ELF32_R_TYPE(relas->r_info), (void *)r_addr );
 		}
 	}
 
