@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.19 2017/01/24 07:48:36 guenther Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.20 2017/01/24 23:37:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -241,7 +241,7 @@ kprintn(int fd, unsigned long ul, int base)
 	} while (p > buf);
 }
 
-static char ldso[] = "ld.so: ";
+static const char ldso[] = "ld.so: ";
 
 __dead void
 _dl_die(const char *fmt, ...)
