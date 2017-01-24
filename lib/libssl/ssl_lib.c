@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.148 2017/01/24 15:04:12 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.149 2017/01/24 15:11:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -522,8 +522,7 @@ SSL_free(SSL *s)
 	if (i > 0)
 		return;
 
-	if (s->param)
-		X509_VERIFY_PARAM_free(s->param);
+	X509_VERIFY_PARAM_free(s->param);
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->internal->ex_data);
 
@@ -540,8 +539,7 @@ SSL_free(SSL *s)
 		BIO_free_all(s->rbio);
 	BIO_free_all(s->wbio);
 
-	if (s->internal->init_buf != NULL)
-		BUF_MEM_free(s->internal->init_buf);
+	BUF_MEM_free(s->internal->init_buf);
 
 	/* add extra stuff */
 	sk_SSL_CIPHER_free(s->cipher_list);
@@ -1984,8 +1982,7 @@ SSL_CTX_free(SSL_CTX *ctx)
 	if (i > 0)
 		return;
 
-	if (ctx->param)
-		X509_VERIFY_PARAM_free(ctx->param);
+	X509_VERIFY_PARAM_free(ctx->param);
 
 	/*
 	 * Free internal session cache. However: the remove_cb() may reference
@@ -2001,11 +1998,9 @@ SSL_CTX_free(SSL_CTX *ctx)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ctx, &ctx->internal->ex_data);
 
-	if (ctx->internal->sessions != NULL)
-		lh_SSL_SESSION_free(ctx->internal->sessions);
+	lh_SSL_SESSION_free(ctx->internal->sessions);
 
-	if (ctx->cert_store != NULL)
-		X509_STORE_free(ctx->cert_store);
+	X509_STORE_free(ctx->cert_store);
 	sk_SSL_CIPHER_free(ctx->cipher_list);
 	sk_SSL_CIPHER_free(ctx->internal->cipher_list_by_id);
 	ssl_cert_free(ctx->internal->cert);
@@ -3036,8 +3031,7 @@ SSL_CTX_get_cert_store(const SSL_CTX *ctx)
 void
 SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
 {
-	if (ctx->cert_store != NULL)
-		X509_STORE_free(ctx->cert_store);
+	X509_STORE_free(ctx->cert_store);
 	ctx->cert_store = store;
 }
 
