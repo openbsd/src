@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.150 2017/01/13 18:00:10 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.151 2017/01/24 14:07:41 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ main(int argc, char *argv[])
 	long l;
 	uid_t ouid, uid;
 	gid_t gid;
-	u_int rtableid;
+	u_int rtableid = 0;
 	socklen_t len;
 
 	rcvsock4 = rcvsock6 = sndsock4 = sndsock6 = -1;
@@ -772,6 +772,10 @@ main(int argc, char *argv[])
 			nxt.sin6_port = htons(DUMMY_PORT);
 			if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 				err(1, "socket");
+			if (rtableid > 0 &&
+			    setsockopt(dummy, SOL_SOCKET, SO_RTABLE, &rtableid,
+			    sizeof(rtableid)) < 0)
+				err(1, "setsockopt(SO_RTABLE)");
 			if (connect(dummy, (struct sockaddr *)&nxt,
 			    nxt.sin6_len) < 0)
 				err(1, "connect");
