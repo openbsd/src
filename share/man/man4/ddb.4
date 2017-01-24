@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.84 2017/01/24 04:50:48 mpi Exp $
+.\"	$OpenBSD: ddb.4,v 1.85 2017/01/24 05:32:00 mpi Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -849,7 +849,7 @@ Shows non-idle threads that were on CPU when ddb was entered.
 Information printed includes thread ID, process ID, UID, process flags,
 thread flags, current CPU, and command name.
 .It Cm /w
-Shows each thread's ID, command, system call emulation,
+Shows each thread's ID, command, process group,
 wait channel address, and wait channel message.
 .El
 .\" --------------------

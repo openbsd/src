@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.74 2017/01/24 04:50:48 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.75 2017/01/24 05:32:00 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -467,7 +467,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	switch (*mode) {
 
 	case 'a':
-		db_printf("   TID  %-10s  %18s  %18s  %18s\n",
+		db_printf("    TID  %-9s  %18s  %18s  %18s\n",
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'n':
@@ -475,12 +475,12 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		    "TID", "PPID", "UID", "FLAGS", "WAIT", "COMMAND");
 		break;
 	case 'w':
-		db_printf("   TID  %-16s  %-8s  %18s  %s\n",
-		    "COMMAND", "EMUL", "WAIT-CHANNEL", "WAIT-MSG");
+		db_printf("    TID  %-15s  %-5s  %18s  %s\n",
+		    "COMMAND", "PGRP", "WAIT-CHANNEL", "WAIT-MSG");
 		break;
 	case 'o':
 		skipzomb = 1;
-		db_printf("   TID  %5s  %5s  %10s %10s  %3s  %-31s\n",
+		db_printf("    TID  %5s  %5s  %10s %10s  %3s  %-30s\n",
 		    "PID", "UID", "PRFLAGS", "PFLAGS", "CPU", "COMMAND");
 		break;
 	}
@@ -509,7 +509,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 				switch (*mode) {
 
 				case 'a':
-					db_printf("%-10.10s  %18p  %18p  %18p\n",
+					db_printf("%-9.9s  %18p  %18p  %18p\n",
 					    pr->ps_comm, p, p->p_addr, p->p_vmspace);
 					break;
 
@@ -524,9 +524,11 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 					break;
 
 				case 'w':
-					db_printf("%-16s  %-8s  %18p  %s\n", pr->ps_comm,
-					    pr->ps_emul->e_name, p->p_wchan,
-					    (p->p_wchan && p->p_wmesg) ? 
+					db_printf("%-15s  %-5d  %18p  %s\n",
+					    pr->ps_comm, (pr->ps_pgrp ?
+						pr->ps_pgrp->pg_id : -1),
+					    p->p_wchan,
+					    (p->p_wchan && p->p_wmesg) ?
 						p->p_wmesg : "");
 					break;
 
