@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.84 2017/01/24 19:59:19 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.85 2017/01/24 20:05:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -122,11 +122,12 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "terminal-overrides",
-	  .type = OPTIONS_TABLE_STRING,
+	  .type = OPTIONS_TABLE_ARRAY,
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .default_str = "xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007"
 	                 ":Cs=\\E]12;%p1%s\\007:Cr=\\E]112\\007"
-			 ":Ss=\\E[%p1%d q:Se=\\E[2 q,screen*:XT"
+			 ":Ss=\\E[%p1%d q:Se=\\E[2 q,screen*:XT",
+	  .separator = ","
 	},
 
 	{ .name = "assume-paste-time",
