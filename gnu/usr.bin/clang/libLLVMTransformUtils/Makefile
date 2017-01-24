@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2017/01/24 08:44:47 patrick Exp $
 
 LIB=	LLVMTransformUtils
 NOPIC=
@@ -20,17 +20,22 @@ SRCS=	ASanStackFrameLayout.cpp \
 	CodeExtractor.cpp \
 	CtorUtils.cpp \
 	DemoteRegToStack.cpp \
+	EscapeEnumerator.cpp \
 	Evaluator.cpp \
 	FlattenCFG.cpp \
+	FunctionComparator.cpp \
 	FunctionImportUtils.cpp \
 	GlobalStatus.cpp \
+	ImportedFunctionsInliningStatistics.cpp \
 	InlineFunction.cpp \
 	InstructionNamer.cpp \
 	IntegerDivision.cpp \
 	LCSSA.cpp \
+	LibCallsShrinkWrap.cpp \
 	Local.cpp \
 	LoopSimplify.cpp \
 	LoopUnroll.cpp \
+	LoopUnrollPeel.cpp \
 	LoopUnrollRuntime.cpp \
 	LoopUtils.cpp \
 	LoopVersioning.cpp \
@@ -40,7 +45,7 @@ SRCS=	ASanStackFrameLayout.cpp \
 	MemorySSA.cpp \
 	MetaRenamer.cpp \
 	ModuleUtils.cpp \
-	NameAnonFunctions.cpp \
+	NameAnonGlobals.cpp \
 	PromoteMemoryToRegister.cpp \
 	SSAUpdater.cpp \
 	SanitizerStats.cpp \

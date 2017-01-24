@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.5 2017/01/14 20:12:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2017/01/24 08:44:47 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			3.9.1
+LLVM_V=			4.0.0
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 .PATH:	${.CURDIR}/../../../../../llvm/tools/clang/lib/Headers

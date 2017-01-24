@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.2 2016/09/08 18:05:30 pascal Exp $
+# $OpenBSD: Makefile,v 1.3 2017/01/24 08:44:47 patrick Exp $
 
 .include <bsd.own.mk>
 
 LLVM_SRCS=	${.CURDIR}/../../../../../llvm
 
-DEFS=	Attributes.inc Intrinsics.gen
+DEFS=	Attributes.gen Intrinsics.gen
 
 all: ${DEFS}
 
@@ -17,7 +17,7 @@ depend:
 clean cleandir:
 	rm -f ${DEFS}
 
-Attributes.inc: ${LLVM_SRCS}/include/llvm/IR/Attributes.td
+Attributes.gen: ${LLVM_SRCS}/include/llvm/IR/Attributes.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-attrs \
 		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
 		-I${LLVM_SRCS}/include \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2017/01/24 08:44:47 patrick Exp $
 
 LIB=	LLVMCodeGen
 NOPIC=
@@ -14,10 +14,12 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	AtomicExpandPass.cpp \
 	BasicTargetTransformInfo.cpp \
 	BranchFolding.cpp \
+	BranchRelaxation.cpp \
 	CalcSpillWeights.cpp \
 	CallingConvLower.cpp \
 	CodeGen.cpp \
 	CodeGenPrepare.cpp \
+	CountingFunctionInserter.cpp \
 	CriticalAntiDepBreaker.cpp \
 	DFAPacketizer.cpp \
 	DeadMachineInstructionElim.cpp \
@@ -56,6 +58,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	LiveStackAnalysis.cpp \
 	LiveVariables.cpp \
 	LocalStackSlotAllocation.cpp \
+	LowLevelType.cpp \
 	LowerEmuTLS.cpp \
 	MachineBasicBlock.cpp \
 	MachineBlockFrequencyInfo.cpp \
@@ -67,7 +70,6 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	MachineDominators.cpp \
 	MachineDominanceFrontier.cpp \
 	MachineFunction.cpp \
-	MachineFunctionAnalysis.cpp \
 	MachineFunctionPass.cpp \
 	MachineFunctionPrinterPass.cpp \
 	MachineInstr.cpp \
@@ -77,6 +79,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	MachineModuleInfo.cpp \
 	MachineModuleInfoImpls.cpp \
 	MachinePassRegistry.cpp \
+	MachinePipeliner.cpp \
 	MachinePostDominators.cpp \
 	MachineRegisterInfo.cpp \
 	MachineRegionInfo.cpp \
@@ -112,6 +115,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	RegisterScavenging.cpp \
 	RegisterUsageInfo.cpp \
 	RenameIndependentSubregs.cpp \
+	ResetMachineFunctionPass.cpp \
 	SafeStack.cpp \
 	SafeStackColoring.cpp \
 	SafeStackLayout.cpp \
@@ -140,6 +144,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	TargetPassConfig.cpp \
 	TargetRegisterInfo.cpp \
 	TargetSchedule.cpp \
+	TargetSubtargetInfo.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
 	VirtRegMap.cpp \

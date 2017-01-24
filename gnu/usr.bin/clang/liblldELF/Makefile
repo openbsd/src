@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2017/01/22 03:13:07 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/24 08:44:47 patrick Exp $
 
 LIB=	lldELF
 NOPROFILE=
@@ -10,19 +10,21 @@ SRCS=	Driver.cpp \
 	DriverUtils.cpp \
 	EhFrame.cpp \
 	Error.cpp \
+	GdbIndex.cpp \
 	ICF.cpp \
 	InputFiles.cpp \
 	InputSection.cpp \
 	LinkerScript.cpp \
 	LTO.cpp \
 	MarkLive.cpp \
+	Mips.cpp \
 	OutputSections.cpp \
 	Relocations.cpp \
 	ScriptParser.cpp \
 	Strings.cpp \
-	SymbolListFile.cpp \
 	SymbolTable.cpp \
 	Symbols.cpp \
+	SyntheticSections.cpp \
 	Target.cpp \
 	Thunks.cpp \
 	Writer.cpp

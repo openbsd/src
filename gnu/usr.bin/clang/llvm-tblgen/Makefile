@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/01/22 03:56:33 jsg Exp $
+# $OpenBSD: Makefile,v 1.4 2017/01/24 08:44:47 patrick Exp $
 
 PROG=	llvm-tblgen
 NOMAN=
@@ -28,6 +28,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	DisassemblerEmitter.cpp \
 	FastISelEmitter.cpp \
 	FixedLenDecoderEmitter.cpp \
+	GlobalISelEmitter.cpp \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
 	OptParserEmitter.cpp \
@@ -35,7 +36,9 @@ SRCS=	AsmMatcherEmitter.cpp \
 	RegisterInfoEmitter.cpp \
 	SearchableTableEmitter.cpp \
 	SubtargetEmitter.cpp \
+	SubtargetFeatureInfo.cpp \
 	TableGen.cpp \
+	Types.cpp \
 	X86DisassemblerTables.cpp \
 	X86ModRMFilters.cpp \
 	X86RecognizableInstr.cpp \

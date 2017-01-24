@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2017/01/22 03:13:07 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/24 08:44:47 patrick Exp $
 
 LIB=	lldCore
 NOPROFILE=
@@ -11,6 +11,7 @@ SRCS=	DefinedAtom.cpp \
 	File.cpp \
 	LinkingContext.cpp \
 	Reader.cpp \
+	Reproduce.cpp \
 	Resolver.cpp \
 	SymbolTable.cpp \
 	Writer.cpp

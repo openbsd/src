@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2017/01/24 08:44:47 patrick Exp $
 
 LIB=	LLVMAnalysis
 NOPIC=
@@ -46,14 +46,15 @@ SRCS=	AliasAnalysis.cpp \
 	IntervalPartition.cpp \
 	IteratedDominanceFrontier.cpp \
 	LazyBlockFrequencyInfo.cpp \
+	LazyBranchProbabilityInfo.cpp \
 	LazyCallGraph.cpp \
 	LazyValueInfo.cpp \
 	Lint.cpp \
 	Loads.cpp \
 	LoopAccessAnalysis.cpp \
+	LoopAnalysisManager.cpp \
 	LoopInfo.cpp \
 	LoopPass.cpp \
-	LoopPassManager.cpp \
 	LoopUnrollAnalyzer.cpp \
 	MemDepPrinter.cpp \
 	MemDerefPrinter.cpp \

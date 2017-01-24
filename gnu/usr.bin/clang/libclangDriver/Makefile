@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:50 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/24 08:44:47 patrick Exp $
 
 LIB=	clangDriver
 NOPIC=
@@ -10,6 +10,7 @@ CPPFLAGS+=	${CLANG_INCLUDES}
 SRCS=	Action.cpp \
 	Compilation.cpp \
 	CrossWindowsToolChain.cpp \
+	Distro.cpp \
 	Driver.cpp \
 	DriverOptions.cpp \
 	Job.cpp \

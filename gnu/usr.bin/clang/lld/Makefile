@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/01/22 07:16:36 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2017/01/24 08:44:47 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -20,9 +20,9 @@ CPPFLAGS+=	-I${.CURDIR}/../../../llvm/tools/lld/include
 depend:
 	# Nothing here so far ...
 
-LLVM_LIBDEPS=	lldCore \
-		lldELF \
+LLVM_LIBDEPS=	lldELF \
 		lldConfig \
+		lldCore \
 		LLVMLTO \
 		LLVMPasses \
 		LLVMOption \
@@ -44,8 +44,12 @@ LLVM_LIBDEPS=	lldCore \
 		LLVMProfileData \
 		LLVMCoverage \
 		LLVMDebugInfoCodeView \
+		LLVMDebugInfoDWARF \
+		LLVMDebugInfoMSF \
 		LLVMGlobalISel \
 		LLVMTransformUtils \
+		LLVMCoroutines \
+		LLVMDemangle \
 		LLVMBitWriter \
 		LLVMAnalysis \
 		${BACKEND_DESC} \

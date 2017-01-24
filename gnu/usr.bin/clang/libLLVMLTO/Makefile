@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2017/01/22 03:13:07 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2017/01/24 08:44:47 patrick Exp $
 
 LIB=	LLVMLTO
 NOPIC=
@@ -8,8 +8,9 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/LTO
 
 .include <bsd.own.mk>
 SRCS=	LTO.cpp \
-	LTOModule.cpp \
+	LTOBackend.cpp \
 	LTOCodeGenerator.cpp \
+	LTOModule.cpp \
 	UpdateCompilerUsed.cpp \
 	ThinLTOCodeGenerator.cpp
 
