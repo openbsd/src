@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.144 2016/12/29 12:12:43 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.145 2017/01/24 05:44:09 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp, *headfp;
-	struct mbuf *nam;
+	struct mbuf *nam = NULL;
 	socklen_t namelen;
 	int error, s, tmpfd;
 	struct socket *head, *so;
@@ -277,19 +277,30 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		return (error);
 
 	headfp = fp;
+
+	fdplock(fdp);
+	error = falloc(p, &fp, &tmpfd);
+	if (!error && (flags & SOCK_CLOEXEC))
+		fdp->fd_ofileflags[tmpfd] |= UF_EXCLOSE;
+	fdpunlock(fdp);
+	if (error) {
+		FRELE(headfp, p);
+		return (error);
+	}
+
 redo:
 	NET_LOCK(s);
 	head = headfp->f_data;
 	if (isdnssocket(head) || (head->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
-		goto bad;
+		goto out;
 	}
 	if ((head->so_state & SS_NBIO) && head->so_qlen == 0) {
 		if (head->so_state & SS_CANTRCVMORE)
 			error = ECONNABORTED;
 		else
 			error = EWOULDBLOCK;
-		goto bad;
+		goto out;
 	}
 	while (head->so_qlen == 0 && head->so_error == 0) {
 		if (head->so_state & SS_CANTRCVMORE) {
@@ -298,48 +309,30 @@ redo:
 		}
 		error = tsleep(&head->so_timeo, PSOCK | PCATCH,
 		    "netcon", 0);
-		if (error) {
-			goto bad;
-		}
+		if (error)
+			goto out;
 	}
 	if (head->so_error) {
 		error = head->so_error;
 		head->so_error = 0;
-		goto bad;
+		goto out;
 	}
 
 	/* Figure out whether the new socket should be non-blocking. */
 	nflag = flags & SOCK_NONBLOCK_INHERIT ? (headfp->f_flag & FNONBLOCK)
 	    : (flags & SOCK_NONBLOCK ? FNONBLOCK : 0);
 
-	fdplock(fdp);
-	error = falloc(p, &fp, &tmpfd);
-	if (error == 0 && (flags & SOCK_CLOEXEC))
-		fdp->fd_ofileflags[tmpfd] |= UF_EXCLOSE;
-	fdpunlock(fdp);
-	if (error != 0) {
-		/*
-		 * Probably ran out of file descriptors.  Wakeup
-		 * so some other process might have a chance at it.
-		 */
-		wakeup_one(&head->so_timeo);
-		goto bad;
-	}
-
 	nam = m_get(M_WAIT, MT_SONAME);
 
 	/*
-	 * Check whether the queue emptied while we slept: falloc() or
-	 * m_get() may have blocked, allowing the connection to be reset
-	 * or another thread or process to accept it.  If so, start over.
+	 * Check whether the queue emptied while we slept: m_get() may have
+	 * blocked, allowing the connection to be reset or another thread or
+	 * process to accept it.  If so, start over.
 	 */
 	if (head->so_qlen == 0) {
 		NET_UNLOCK(s);
 		m_freem(nam);
-		fdplock(fdp);
-		fdremove(fdp, tmpfd);
-		closef(fp, p);
-		fdpunlock(fdp);
+		nam = NULL;
 		goto redo;
 	}
 
@@ -360,24 +353,20 @@ redo:
 	error = soaccept(so, nam);
 	if (!error && name != NULL)
 		error = copyaddrout(p, nam, name, namelen, anamelen);
-
+	if (!error) {
+		(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&nflag, p);
+		FILE_SET_MATURE(fp, p);
+		*retval = tmpfd;
+	}
+out:
+	NET_UNLOCK(s);
+	m_freem(nam);
 	if (error) {
-		/* if an error occurred, free the file descriptor */
-		NET_UNLOCK(s);
-		m_freem(nam);
 		fdplock(fdp);
 		fdremove(fdp, tmpfd);
 		closef(fp, p);
 		fdpunlock(fdp);
-		goto out;
 	}
-	(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&nflag, p);
-	FILE_SET_MATURE(fp, p);
-	*retval = tmpfd;
-	m_freem(nam);
-bad:
-	NET_UNLOCK(s);
-out:
 	FRELE(headfp, p);
 	return (error);
 }
