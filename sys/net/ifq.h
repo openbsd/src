@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.7 2017/01/22 04:48:23 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.8 2017/01/24 03:57:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -25,6 +25,18 @@ struct ifq_ops;
 
 struct ifqueue {
 	struct ifnet		*ifq_if;
+	union {
+		void			*_ifq_softc;
+		/*
+		 * a rings sndq is found by looking up an array of pointers.
+		 * by default we only have one sndq and the default drivers
+		 * dont use ifq_softc, so we can borrow it for the map until
+		 * we need to allocate a proper map.
+		 */
+		struct ifqueue		*_ifq_ifqs[1];
+	} _ifq_ptr;
+#define ifq_softc		 _ifq_ptr._ifq_softc
+#define ifq_ifqs		 _ifq_ptr._ifq_ifqs
 
 	/* mbuf handling */
 	struct mutex		 ifq_mtx;
@@ -49,7 +61,9 @@ struct ifqueue {
 	struct task		 ifq_start;
 	struct task		 ifq_restart;
 
+	/* properties */
 	unsigned int		 ifq_maxlen;
+	unsigned int		 ifq_idx;
 };
 
 #ifdef _KERNEL
@@ -308,21 +322,23 @@ struct ifqueue {
  */
 
 struct ifq_ops {
-	void			*(*ifqop_alloc)(void *);
-	void			 (*ifqop_free)(void *);
+	unsigned int		 (*ifqop_idx)(unsigned int,
+				    const struct mbuf *);
 	int			 (*ifqop_enq)(struct ifqueue *, struct mbuf *);
 	struct mbuf		*(*ifqop_deq_begin)(struct ifqueue *, void **);
 	void			 (*ifqop_deq_commit)(struct ifqueue *,
 				    struct mbuf *, void *);
 	void			 (*ifqop_purge)(struct ifqueue *,
 				    struct mbuf_list *);
+	void			*(*ifqop_alloc)(unsigned int, void *);
+	void			 (*ifqop_free)(unsigned int, void *);
 };
 
 /*
  * Interface send queues.
  */
 
-void		 ifq_init(struct ifqueue *, struct ifnet *);
+void		 ifq_init(struct ifqueue *, struct ifnet *, unsigned int);
 void		 ifq_attach(struct ifqueue *, const struct ifq_ops *, void *);
 void		 ifq_destroy(struct ifqueue *);
 int		 ifq_enqueue_try(struct ifqueue *, struct mbuf *);
@@ -370,6 +386,12 @@ static inline void
 ifq_restart(struct ifqueue *ifq)
 {
 	ifq_serialize(ifq, &ifq->ifq_restart);
+}
+
+static inline unsigned int
+ifq_idx(struct ifqueue *ifq, unsigned int nifqs, const struct mbuf *m)
+{
+	return ((*ifq->ifq_ops->ifqop_idx)(nifqs, m));
 }
 
 #define IFQ_ASSERT_SERIALIZED(_ifq)	KASSERT(ifq_is_serialized(_ifq))

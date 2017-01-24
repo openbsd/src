@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.478 2017/01/23 11:37:29 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.479 2017/01/24 03:57:35 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ void	if_attach_common(struct ifnet *);
 int	if_setrdomain(struct ifnet *, int);
 void	if_slowtimo(void *);
 
-void	if_detached_start(struct ifnet *);
+void	if_detached_qstart(struct ifqueue *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 
 int	if_getgroup(caddr_t, struct ifnet *);
@@ -161,7 +161,7 @@ void	if_netisr(void *);
 void	ifa_print_all(void);
 #endif
 
-void	if_start_locked(struct ifnet *);
+void	if_qstart_compat(struct ifqueue *);
 
 /*
  * interface index map
@@ -527,12 +527,53 @@ if_attach(struct ifnet *ifp)
 }
 
 void
+if_attach_queues(struct ifnet *ifp, unsigned int nqs)
+{
+	struct ifqueue **map;
+	struct ifqueue *ifq;
+	int i;
+
+	KASSERT(ifp->if_ifqs == ifp->if_snd.ifq_ifqs);
+	KASSERT(nqs != 0);
+
+	map = mallocarray(sizeof(*map), nqs, M_DEVBUF, M_WAITOK);
+
+	ifp->if_snd.ifq_softc = NULL;
+	map[0] = &ifp->if_snd;
+
+	for (i = 1; i < nqs; i++) {
+		ifq = malloc(sizeof(*ifq), M_DEVBUF, M_WAITOK|M_ZERO);
+		ifq_set_maxlen(ifq, ifp->if_snd.ifq_maxlen);
+		ifq_init(ifq, ifp, i);
+		map[i] = ifq;
+	}
+
+	ifp->if_ifqs = map;
+	ifp->if_nifqs = nqs;
+}
+
+void
 if_attach_common(struct ifnet *ifp)
 {
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INIT(&ifp->if_maddrlist);
 
-	ifq_init(&ifp->if_snd, ifp);
+	if (!ISSET(ifp->if_xflags, IFXF_MPSAFE)) {
+		KASSERTMSG(ifp->if_qstart == NULL,
+		    "%s: if_qstart set without MPSAFE set", ifp->if_xname);
+		ifp->if_qstart = if_qstart_compat;
+	} else {
+		KASSERTMSG(ifp->if_start == NULL,
+		    "%s: if_start set with MPSAFE set", ifp->if_xname);
+		KASSERTMSG(ifp->if_qstart != NULL,
+		    "%s: if_qstart not set with MPSAFE set", ifp->if_xname);
+	}
+
+	ifq_init(&ifp->if_snd, ifp, 0);
+
+	ifp->if_snd.ifq_ifqs[0] = &ifp->if_snd;
+	ifp->if_ifqs = ifp->if_snd.ifq_ifqs;
+	ifp->if_nifqs = 1;
 
 	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
 	    M_TEMP, M_WAITOK);
@@ -560,22 +601,44 @@ if_attach_common(struct ifnet *ifp)
 }
 
 void
-if_start(struct ifnet *ifp)
+if_attach_ifq(struct ifnet *ifp, const struct ifq_ops *newops, void *args)
 {
-	if (ISSET(ifp->if_xflags, IFXF_MPSAFE))
-		ifq_start(&ifp->if_snd);
-	else
-		if_start_locked(ifp);
+	/*
+	 * only switch the ifq_ops on the first ifq on an interface.
+	 *
+	 * the only ifq_ops we provide priq and hfsc, and hfsc only
+	 * works on a single ifq. because the code uses the ifq_ops
+	 * on the first ifq (if_snd) to select a queue for an mbuf,
+	 * by switching only the first one we change both the algorithm
+	 * and force the routing of all new packets to it.
+	 */
+	ifq_attach(&ifp->if_snd, newops, args);
 }
 
 void
-if_start_locked(struct ifnet *ifp)
+if_start(struct ifnet *ifp)
 {
+	KASSERT(ifp->if_qstart == if_qstart_compat);
+	if_qstart_compat(&ifp->if_snd);
+}
+void
+if_qstart_compat(struct ifqueue *ifq)
+{
+	struct ifnet *ifp = ifq->ifq_if;
 	int s;
+
+	/*
+	 * the stack assumes that an interface can have multiple
+	 * transmit rings, but a lot of drivers are still written
+	 * so that interfaces and send rings have a 1:1 mapping.
+	 * this provides compatability between the stack and the older
+	 * drivers by translating from the only queue they have
+	 * (ifp->if_snd) back to the interface and calling if_start.
+ 	 */
 
 	KERNEL_LOCK();
 	s = splnet();
-	ifp->if_start(ifp);
+	(*ifp->if_start)(ifp);
 	splx(s);
 	KERNEL_UNLOCK();
 }
@@ -583,7 +646,9 @@ if_start_locked(struct ifnet *ifp)
 int
 if_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
-	int error = 0;
+	unsigned int idx;
+	struct ifqueue *ifq;
+	int error;
 
 #if NBRIDGE > 0
 	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0) {
@@ -599,14 +664,17 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 #endif	/* NPF > 0 */
 
 	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
+	 * use the operations on the first ifq to pick which of the array
+	 * gets this mbuf.
 	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, error);
+	idx = ifq_idx(&ifp->if_snd, ifp->if_nifqs, m);
+	ifq = ifp->if_ifqs[idx];
+
+	error = ifq_enqueue(ifq, m);
 	if (error)
 		return (error);
 
-	if_start(ifp);
+	ifq_start(ifq);
 
 	return (0);
 }
@@ -943,7 +1011,7 @@ if_detach(struct ifnet *ifp)
 	/* Other CPUs must not have a reference before we start destroying. */
 	if_idxmap_remove(ifp);
 
-	ifp->if_start = if_detached_start;
+	ifp->if_qstart = if_detached_qstart;
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = NULL;
 
@@ -1017,7 +1085,16 @@ if_detach(struct ifnet *ifp)
 	splx(s2);
 	NET_UNLOCK(s);
 
-	ifq_destroy(&ifp->if_snd);
+	for (i = 0; i < ifp->if_nifqs; i++)
+		ifq_destroy(ifp->if_ifqs[i]);
+	if (ifp->if_ifqs != ifp->if_snd.ifq_ifqs) {
+		for (i = 1; i < ifp->if_nifqs; i++) {
+			free(ifp->if_ifqs[i], M_DEVBUF,
+			    sizeof(struct ifqueue));
+		}
+		free(ifp->if_ifqs, M_DEVBUF,
+		    sizeof(struct ifqueue *) * ifp->if_nifqs);
+	}
 }
 
 /*
@@ -2166,21 +2243,24 @@ ifconf(u_long cmd, caddr_t data)
 void
 if_getdata(struct ifnet *ifp, struct if_data *data)
 {
+	unsigned int i;
 	struct ifqueue *ifq;
 	uint64_t opackets = 0;
 	uint64_t obytes = 0;
 	uint64_t omcasts = 0;
 	uint64_t oqdrops = 0;
 
-	ifq = &ifp->if_snd;
+	for (i = 0; i < ifp->if_nifqs; i++) {
+		ifq = ifp->if_ifqs[i];
 
-	mtx_enter(&ifq->ifq_mtx);
-	opackets += ifq->ifq_packets;
-	obytes += ifq->ifq_bytes;
-	oqdrops += ifq->ifq_qdrops;
-	omcasts += ifq->ifq_mcasts;
-	/* ifq->ifq_errors */
-	mtx_leave(&ifq->ifq_mtx);
+		mtx_enter(&ifq->ifq_mtx);
+		opackets += ifq->ifq_packets;
+		obytes += ifq->ifq_bytes;
+		oqdrops += ifq->ifq_qdrops;
+		omcasts += ifq->ifq_mcasts;
+		mtx_leave(&ifq->ifq_mtx);
+		/* ifq->ifq_errors */
+	}
 
 	*data = ifp->if_data;
 	data->ifi_opackets += opackets;
@@ -2195,9 +2275,9 @@ if_getdata(struct ifnet *ifp, struct if_data *data)
  * fiddle with the if during detach.
  */
 void
-if_detached_start(struct ifnet *ifp)
+if_detached_qstart(struct ifqueue *ifq)
 {
-	IFQ_PURGE(&ifp->if_snd);
+	ifq_purge(ifq);
 }
 
 int

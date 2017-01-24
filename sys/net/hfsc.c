@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.34 2017/01/22 04:48:23 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.35 2017/01/24 03:57:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -259,20 +259,22 @@ struct pool	hfsc_class_pl, hfsc_internal_sc_pl;
  * ifqueue glue.
  */
 
-void		*hfsc_alloc(void *);
-void		 hfsc_free(void *);
+unsigned int	 hfsc_idx(unsigned int, const struct mbuf *);
 int		 hfsc_enq(struct ifqueue *, struct mbuf *);
 struct mbuf	*hfsc_deq_begin(struct ifqueue *, void **);
 void		 hfsc_deq_commit(struct ifqueue *, struct mbuf *, void *);
 void		 hfsc_purge(struct ifqueue *, struct mbuf_list *);
+void		*hfsc_alloc(unsigned int, void *);
+void		 hfsc_free(unsigned int, void *);
 
 const struct ifq_ops hfsc_ops = {
-	hfsc_alloc,
-	hfsc_free,
+	hfsc_idx,
 	hfsc_enq,
 	hfsc_deq_begin,
 	hfsc_deq_commit,
 	hfsc_purge,
+	hfsc_alloc,
+	hfsc_free,
 };
 
 const struct ifq_ops * const ifq_hfsc_ops = &hfsc_ops;
@@ -414,13 +416,26 @@ hfsc_pf_qstats(struct pf_queuespec *q, void *ubuf, int *nbytes)
 void
 hfsc_pf_free(struct hfsc_if *hif)
 {
-	hfsc_free(hif);
+	hfsc_free(0, hif);
+}
+
+unsigned int
+hfsc_idx(unsigned int nqueues, const struct mbuf *m)
+{
+	/*
+	 * hfsc can only function on a single ifq and the stack understands
+	 * this. when the first ifq on an interface is switched to hfsc,
+	 * this gets used to map all mbufs to the first and only ifq that
+	 * is set up for hfsc.
+	 */
+	return (0);
 }
 
 void *
-hfsc_alloc(void *q)
+hfsc_alloc(unsigned int idx, void *q)
 {
 	struct hfsc_if *hif = q;
+	KASSERT(idx == 0); /* when hfsc is enabled we only use the first ifq */
 	KASSERT(hif != NULL);
 
 	timeout_add(&hif->hif_defer, 1);
@@ -428,12 +443,13 @@ hfsc_alloc(void *q)
 }
 
 void
-hfsc_free(void *q)
+hfsc_free(unsigned int idx, void *q)
 {
 	struct hfsc_if *hif = q;
 	int i;
 
 	KERNEL_ASSERT_LOCKED();
+	KASSERT(idx == 0); /* when hfsc is enabled we only use the first ifq */
 
 	timeout_del(&hif->hif_defer);
 
@@ -758,18 +774,16 @@ void
 hfsc_deferred(void *arg)
 {
 	struct ifnet *ifp = arg;
+	struct ifqueue *ifq = &ifp->if_snd;
 	struct hfsc_if *hif;
-	int s;
 
 	KERNEL_ASSERT_LOCKED();
-	KASSERT(HFSC_ENABLED(&ifp->if_snd));
+	KASSERT(HFSC_ENABLED(ifq));
 
-	s = splnet();
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		if_start(ifp);
-	splx(s);
+	if (!ifq_empty(ifq))
+		(*ifp->if_qstart)(ifq);
 
-	hif = ifp->if_snd.ifq_q;
+	hif = ifq->ifq_q;
 
 	/* XXX HRTIMER nearest virtual/fit time is likely less than 1/HZ. */
 	timeout_add(&hif->hif_defer, 1);

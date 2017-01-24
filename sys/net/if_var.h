@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.79 2017/01/21 01:32:19 patrick Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.80 2017/01/24 03:57:35 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -157,7 +157,12 @@ struct ifnet {				/* and the entries */
 					/* timer routine */
 	void	(*if_watchdog)(struct ifnet *);
 	int	(*if_wol)(struct ifnet *, int);
-	struct	ifqueue if_snd;		/* output queue */
+
+	struct	ifqueue if_snd;		/* transmit queue */
+	struct	ifqueue **if_ifqs;	/* pointer to an array of sndqs */
+	void	(*if_qstart)(struct ifqueue *);
+	unsigned int if_nifqs;
+
 	struct sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 
 	void	*if_afdata[AF_MAX];

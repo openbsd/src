@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.200 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.201 2017/01/24 03:57:34 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -161,7 +161,7 @@ int	re_tx_list_init(struct rl_softc *);
 int	re_rxeof(struct rl_softc *);
 int	re_txeof(struct rl_softc *);
 void	re_tick(void *);
-void	re_start(struct ifnet *);
+void	re_start(struct ifqueue *);
 void	re_txstart(void *);
 int	re_ioctl(struct ifnet *, u_long, caddr_t);
 void	re_watchdog(struct ifnet *);
@@ -1005,7 +1005,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = re_ioctl;
-	ifp->if_start = re_start;
+	ifp->if_qstart = re_start;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_hardmtu = sc->rl_max_mtu;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->rl_ldata.rl_tx_desc_cnt);
@@ -1776,8 +1776,9 @@ re_txstart(void *xsc)
  */
 
 void
-re_start(struct ifnet *ifp)
+re_start(struct ifqueue *ifq)
 {
+	struct ifnet	*ifp = ifq->ifq_if;
 	struct rl_softc	*sc = ifp->if_softc;
 	struct mbuf	*m;
 	unsigned int	idx;
@@ -1785,7 +1786,7 @@ re_start(struct ifnet *ifp)
 	int		post = 0;
 
 	if (!ISSET(sc->rl_flags, RL_FLAG_LINK)) {
-		IFQ_PURGE(&ifp->if_snd);
+		ifq_purge(ifq);
 		return;
 	}
 
@@ -1797,11 +1798,11 @@ re_start(struct ifnet *ifp)
 
 	for (;;) {
 		if (sc->rl_ldata.rl_tx_ndescs >= free + 2) {
-			ifq_set_oactive(&ifp->if_snd);
+			ifq_set_oactive(ifq);
 			break;
 		}
 
-		m = ifq_dequeue(&ifp->if_snd);
+		m = ifq_dequeue(ifq);
 		if (m == NULL)
 			break;
 
@@ -1831,7 +1832,7 @@ re_start(struct ifnet *ifp)
 
 	ifp->if_timer = 5;
 	sc->rl_ldata.rl_txq_prodidx = idx;
-	ifq_serialize(&ifp->if_snd, &sc->rl_start);
+	ifq_serialize(ifq, &sc->rl_start);
 }
 
 int

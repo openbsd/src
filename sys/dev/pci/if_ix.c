@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.149 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.150 2017/01/24 03:57:35 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -93,7 +93,7 @@ const struct pci_matchid ixgbe_devices[] = {
 int	ixgbe_probe(struct device *, void *, void *);
 void	ixgbe_attach(struct device *, struct device *, void *);
 int	ixgbe_detach(struct device *, int);
-void	ixgbe_start(struct ifnet *);
+void	ixgbe_start(struct ifqueue *);
 int	ixgbe_ioctl(struct ifnet *, u_long, caddr_t);
 int	ixgbe_rxrinfo(struct ix_softc *, struct if_rxrinfo *);
 void	ixgbe_watchdog(struct ifnet *);
@@ -379,14 +379,15 @@ ixgbe_detach(struct device *self, int flags)
  **********************************************************************/
 
 void
-ixgbe_start(struct ifnet * ifp)
+ixgbe_start(struct ifqueue *ifq)
 {
+	struct ifnet		*ifp = ifq->ifq_if;
 	struct ix_softc		*sc = ifp->if_softc;
 	struct tx_ring		*txr = sc->tx_rings;
 	struct mbuf  		*m_head;
 	int			 post = 0;
 
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(ifq))
 		return;
 	if (!sc->link_up)
 		return;
@@ -398,11 +399,11 @@ ixgbe_start(struct ifnet * ifp)
 	for (;;) {
 		/* Check that we have the minimal number of TX descriptors. */
 		if (txr->tx_avail <= IXGBE_TX_OP_THRESHOLD) {
-			ifq_set_oactive(&ifp->if_snd);
+			ifq_set_oactive(ifq);
 			break;
 		}
 
-		m_head = ifq_dequeue(&ifp->if_snd);
+		m_head = ifq_dequeue(ifq);
 		if (m_head == NULL)
 			break;
 
@@ -1612,7 +1613,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = ixgbe_ioctl;
-	ifp->if_start = ixgbe_start;
+	ifp->if_qstart = ixgbe_start;
 	ifp->if_timer = 0;
 	ifp->if_watchdog = ixgbe_watchdog;
 	ifp->if_hardmtu = IXGBE_MAX_FRAME_SIZE -

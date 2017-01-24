@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.123 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.124 2017/01/24 03:57:35 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -366,7 +366,7 @@ void	bnx_free_tx_chain(struct bnx_softc *);
 void	bnx_rxrefill(void *);
 
 int	bnx_tx_encap(struct bnx_softc *, struct mbuf *, int *);
-void	bnx_start(struct ifnet *);
+void	bnx_start(struct ifqueue *);
 int	bnx_ioctl(struct ifnet *, u_long, caddr_t);
 void	bnx_watchdog(struct ifnet *);
 int	bnx_ifmedia_upd(struct ifnet *);
@@ -873,7 +873,7 @@ bnx_attachhook(struct device *self)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = bnx_ioctl;
-	ifp->if_start = bnx_start;
+	ifp->if_qstart = bnx_start;
 	ifp->if_watchdog = bnx_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD - 1);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
@@ -4865,15 +4865,16 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m, int *used)
 /*   Nothing.                                                               */
 /****************************************************************************/
 void
-bnx_start(struct ifnet *ifp)
+bnx_start(struct ifqueue *ifq)
 {
+	struct ifnet		*ifp = ifq->ifq_if;
 	struct bnx_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
 	int			used;
 	u_int16_t		tx_prod, tx_chain_prod;
 
 	if (!sc->bnx_link) {
-		ifq_purge(&ifp->if_snd);
+		ifq_purge(ifq);
 		goto bnx_start_exit;
 	}
 
@@ -4895,11 +4896,11 @@ bnx_start(struct ifnet *ifp)
 			DBPRINT(sc, BNX_INFO_SEND, "TX chain is closed for "
 			    "business! Total tx_bd used = %d\n",
 			    sc->used_tx_bd + used);
-			ifq_set_oactive(&ifp->if_snd);
+			ifq_set_oactive(ifq);
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_head = ifq_dequeue(ifq);
 		if (m_head == NULL)
 			break;
 
@@ -5149,11 +5150,8 @@ bnx_intr(void *xsc)
 
 		/* Start moving packets again */
 		if (ifp->if_flags & IFF_RUNNING &&
-		    !IFQ_IS_EMPTY(&ifp->if_snd)) {
-			KERNEL_LOCK();
-			bnx_start(ifp);
-			KERNEL_UNLOCK();
-		}
+		    !IFQ_IS_EMPTY(&ifp->if_snd))
+			ifq_start(&ifp->if_snd);
 	}
 
 out:
@@ -5486,8 +5484,8 @@ bnx_tick(void *xsc)
 	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 		sc->bnx_link++;
 		/* Now that link is up, handle any outstanding TX traffic. */
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			bnx_start(ifp);
+		if (!ifq_empty(&ifp->if_snd))
+			ifq_start(&ifp->if_snd);
 	}
 
 bnx_tick_exit:

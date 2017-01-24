@@ -179,7 +179,7 @@ void	hvn_media_status(struct ifnet *, struct ifmediareq *);
 int	hvn_iff(struct hvn_softc *);
 void	hvn_init(struct hvn_softc *);
 void	hvn_stop(struct hvn_softc *);
-void	hvn_start(struct ifnet *);
+void	hvn_start(struct ifqueue *);
 int	hvn_encap(struct hvn_softc *, struct mbuf *, struct hvn_tx_desc **);
 void	hvn_decap(struct hvn_softc *, struct hvn_tx_desc *);
 void	hvn_txeof(struct hvn_softc *, uint64_t);
@@ -266,7 +266,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = hvn_ioctl;
-	ifp->if_start = hvn_start;
+	ifp->if_qstart = hvn_start;
 	ifp->if_softc = sc;
 
 	ifp->if_capabilities = IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
@@ -320,7 +320,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 	hvn_rx_ring_destroy(sc);
 	hvn_tx_ring_destroy(sc);
 	hvn_nvs_detach(sc);
-	if (ifp->if_start)
+	if (ifp->if_qstart)
 		if_detach(ifp);
 }
 
@@ -441,23 +441,21 @@ hvn_stop(struct hvn_softc *sc)
 }
 
 void
-hvn_start(struct ifnet *ifp)
+hvn_start(struct ifqueue *ifq)
 {
+	struct ifnet *ifp = ifq->ifq_if;
 	struct hvn_softc *sc = ifp->if_softc;
 	struct hvn_tx_desc *txd;
 	struct mbuf *m;
 
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
-		return;
-
 	for (;;) {
 		if (!sc->sc_tx_avail) {
 			/* transient */
-			ifq_set_oactive(&ifp->if_snd);
+			ifq_set_oactive(ifq);
 			break;
 		}
 
-		m = ifq_dequeue(&ifp->if_snd);
+		m = ifq_dequeue(ifq);
 		if (m == NULL)
 			break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.100 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.101 2017/01/24 03:57:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -201,7 +201,7 @@ void	 myx_up(struct myx_softc *);
 void	 myx_iff(struct myx_softc *);
 void	 myx_down(struct myx_softc *);
 
-void	 myx_start(struct ifnet *);
+void	 myx_start(struct ifqueue *);
 void	 myx_write_txd_tail(struct myx_softc *, struct myx_slot *, u_int8_t,
 	    u_int32_t, u_int);
 int	 myx_load_mbuf(struct myx_softc *, struct myx_slot *, struct mbuf *);
@@ -510,7 +510,7 @@ myx_attachhook(struct device *self)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = myx_ioctl;
-	ifp->if_start = myx_start;
+	ifp->if_qstart = myx_start;
 	ifp->if_watchdog = myx_watchdog;
 	ifp->if_hardmtu = MYX_RXBIG_SIZE;
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
@@ -1200,10 +1200,9 @@ myx_up(struct myx_softc *sc)
 		goto empty_rx_ring_big;
 	}
 
-	ifq_clr_oactive(&ifp->if_snd);
-	SET(ifp->if_flags, IFF_RUNNING);
 	myx_iff(sc);
-	if_start(ifp);
+	SET(ifp->if_flags, IFF_RUNNING);
+	ifq_restart(&ifp->if_snd);
 
 	return;
 
@@ -1422,8 +1421,9 @@ myx_write_txd_tail(struct myx_softc *sc, struct myx_slot *ms, u_int8_t flags,
 }
 
 void
-myx_start(struct ifnet *ifp)
+myx_start(struct ifqueue *ifq)
 {
+	struct ifnet			*ifp = ifq->ifq_if;
 	struct myx_tx_desc		txd;
 	struct myx_softc		*sc = ifp->if_softc;
 	struct myx_slot			*ms;
@@ -1448,11 +1448,11 @@ myx_start(struct ifnet *ifp)
 
 	for (;;) {
 		if (used + sc->sc_tx_nsegs + 1 > free) {
-			ifq_set_oactive(&ifp->if_snd);
+			ifq_set_oactive(ifq);
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(ifq);
 		if (m == NULL)
 			break;
 

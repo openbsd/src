@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.61 2016/11/05 05:14:18 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.62 2017/01/24 03:57:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -138,7 +138,7 @@ int	octeon_eth_ioctl(struct ifnet *, u_long, caddr_t);
 void	octeon_eth_watchdog(struct ifnet *);
 int	octeon_eth_init(struct ifnet *);
 int	octeon_eth_stop(struct ifnet *, int);
-void	octeon_eth_start(struct ifnet *);
+void	octeon_eth_start(struct ifqueue *);
 
 int	octeon_eth_send_cmd(struct octeon_eth_softc *, uint64_t, uint64_t);
 uint64_t octeon_eth_send_makecmd_w1(int, paddr_t);
@@ -303,7 +303,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = octeon_eth_ioctl;
-	ifp->if_start = octeon_eth_start;
+	ifp->if_qstart = octeon_eth_start;
 	ifp->if_watchdog = octeon_eth_watchdog;
 	ifp->if_hardmtu = OCTEON_ETH_MAX_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
@@ -704,8 +704,6 @@ octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 	}
 
-	if_start(ifp);
-
 	splx(s);
 	return (error);
 }
@@ -923,13 +921,14 @@ done:
 }
 
 void
-octeon_eth_start(struct ifnet *ifp)
+octeon_eth_start(struct ifqueue *ifq)
 {
+	struct ifnet *ifp = ifq->ifq_if;
 	struct octeon_eth_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 
 	if (__predict_false(!cn30xxgmx_link_status(sc->sc_gmx_port))) {
-		ifq_purge(&ifp->if_snd);
+		ifq_purge(ifq);
 		return;
 	}
 
@@ -948,12 +947,12 @@ octeon_eth_start(struct ifnet *ifp)
 		 * and bail out.
 		 */
 		if (octeon_eth_send_queue_is_full(sc)) {
-			ifq_set_oactive(&ifp->if_snd);
+			ifq_set_oactive(ifq);
 			timeout_add(&sc->sc_tick_free_ch, 1);
 			return;
 		}
 
-		m = ifq_dequeue(&ifp->if_snd);
+		m = ifq_dequeue(ifq);
 		if (m == NULL)
 			return;
 
@@ -1320,6 +1319,7 @@ octeon_eth_free_task(void *arg)
 {
 	struct octeon_eth_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifqueue *ifq = &ifp->if_snd;
 	int resched = 1;
 	int timeout;
 
@@ -1329,13 +1329,14 @@ octeon_eth_free_task(void *arg)
 		octeon_eth_send_queue_flush(sc);
 	}
 
-	if (ifq_is_oactive(&ifp->if_snd)) {
-		ifq_clr_oactive(&ifp->if_snd);
-		octeon_eth_start(ifp);
+	if (ifq_is_oactive(ifq)) {
+		ifq_clr_oactive(ifq);
+		octeon_eth_start(ifq);
 
-		if (ifq_is_oactive(&ifp->if_snd))
+		if (ifq_is_oactive(ifq)) {
 			/* The start routine did rescheduling already. */
 			resched = 0;
+		}
 	}
 
 	if (resched) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.169 2017/01/23 11:37:29 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.170 2017/01/24 03:57:35 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -85,7 +85,7 @@ int	vlan_clone_create(struct if_clone *, int);
 int	vlan_clone_destroy(struct ifnet *);
 
 int	vlan_input(struct ifnet *, struct mbuf *, void *);
-void	vlan_start(struct ifnet *ifp);
+void	vlan_start(struct ifqueue *ifq);
 int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
 
 int	vlan_up(struct ifvlan *);
@@ -175,7 +175,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED|IFXF_MPSAFE;
-	ifp->if_start = vlan_start;
+	ifp->if_qstart = vlan_start;
 	ifp->if_ioctl = vlan_ioctl;
 	ifp->if_hardmtu = 0xffff;
 	ifp->if_link_state = LINK_STATE_DOWN;
@@ -238,8 +238,9 @@ vlan_mplstunnel(int ifidx)
 }
 
 void
-vlan_start(struct ifnet *ifp)
+vlan_start(struct ifqueue *ifq)
 {
+	struct ifnet	*ifp = ifq->ifq_if;
 	struct ifvlan   *ifv;
 	struct ifnet	*ifp0;
 	struct mbuf	*m;
@@ -249,15 +250,11 @@ vlan_start(struct ifnet *ifp)
 	ifp0 = if_get(ifv->ifv_ifp0);
 	if (ifp0 == NULL || (ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
-		ifq_purge(&ifp->if_snd);
+		ifq_purge(ifq);
 		goto leave;
 	}
 
-	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == NULL)
-			break;
-
+	while ((m = ifq_dequeue(ifq)) != NULL) {
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
@@ -296,6 +293,7 @@ vlan_start(struct ifnet *ifp)
 
 		if (if_enqueue(ifp0, m)) {
 			ifp->if_oerrors++;
+			ifq->ifq_errors++;
 			continue;
 		}
 	}

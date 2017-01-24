@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.47 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.48 2017/01/24 03:57:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -199,7 +199,7 @@ void	xnf_media_status(struct ifnet *, struct ifmediareq *);
 int	xnf_iff(struct xnf_softc *);
 void	xnf_init(struct xnf_softc *);
 void	xnf_stop(struct xnf_softc *);
-void	xnf_start(struct ifnet *);
+void	xnf_start(struct ifqueue *);
 int	xnf_encap(struct xnf_softc *, struct mbuf *, uint32_t *);
 void	xnf_intr(void *);
 void	xnf_watchdog(struct ifnet *);
@@ -292,7 +292,7 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = xnf_ioctl;
-	ifp->if_start = xnf_start;
+	ifp->if_qstart = xnf_start;
 	ifp->if_watchdog = xnf_watchdog;
 	ifp->if_softc = sc;
 
@@ -477,16 +477,14 @@ xnf_stop(struct xnf_softc *sc)
 }
 
 void
-xnf_start(struct ifnet *ifp)
+xnf_start(struct ifqueue *ifq)
 {
+	struct ifnet *ifp = ifq->ifq_if;
 	struct xnf_softc *sc = ifp->if_softc;
 	struct xnf_tx_ring *txr = sc->sc_tx_ring;
 	struct mbuf *m;
 	int pkts = 0;
 	uint32_t prod, oprod;
-
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
-		return;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 	    BUS_DMASYNC_POSTREAD);
@@ -497,10 +495,11 @@ xnf_start(struct ifnet *ifp)
 		if ((XNF_TX_DESC - (prod - sc->sc_tx_cons)) <
 		    sc->sc_tx_frags) {
 			/* transient */
-			ifq_set_oactive(&ifp->if_snd);
+			ifq_set_oactive(ifq);
 			break;
 		}
-		m = ifq_dequeue(&ifp->if_snd);
+
+		m = ifq_dequeue(ifq);
 		if (m == NULL)
 			break;
 
