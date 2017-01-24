@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.93 2016/09/28 14:39:52 krw Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.94 2017/01/24 04:24:25 benno Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/sysctl.h>
+#include <syslog.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -117,11 +118,11 @@ main(int argc, char *argv[])
 
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
-	log_procname = log_procnames[ospfd_process];
 	sockname = OSPFD_SOCKET;
 
-	log_init(1);	/* log to stderr until daemonized */
-	log_verbose(1);
+	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
+	log_procinit(log_procnames[ospfd_process]);
+	log_setverbose(1);
 
 	while ((ch = getopt(argc, argv, "cdD:f:ns:v")) != -1) {
 		switch (ch) {
@@ -202,8 +203,8 @@ main(int argc, char *argv[])
 	if (getpwnam(OSPFD_USER) == NULL)
 		errx(1, "unknown user %s", OSPFD_USER);
 
-	log_init(debug);
-	log_verbose(ospfd_conf->opts & OSPFD_OPT_VERBOSE);
+	log_init(debug, LOG_DAEMON);
+	log_setverbose(ospfd_conf->opts & OSPFD_OPT_VERBOSE);
 
 	if (!debug)
 		daemon(1, 0);
@@ -391,7 +392,7 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 		case IMSG_CTL_LOG_VERBOSE:
 			/* already checked by ospfe */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			log_setverbose(verbose);
 			break;
 		default:
 			log_debug("main_dispatch_ospfe: error handling imsg %d",
