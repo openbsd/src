@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.12 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: fileproc.c,v 1.13 2017/01/24 12:53:52 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,7 +45,7 @@ serialise(const char *tmp, const char *real,
 		warnx("%s", tmp);
 		close(fd);
 		return (0);
-	} else if (v2 != NULL && (ssize_t)v2sz != write(fd, v2, v2sz)) {
+	} else if (v2 != NULL && write(fd, v2, v2sz) != (ssize_t)v2sz) {
 		warnx("%s", tmp);
 		close(fd);
 		return (0);

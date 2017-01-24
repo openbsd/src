@@ -1,4 +1,4 @@
-/*	$Id: util.c,v 1.7 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: util.c,v 1.8 2017/01/24 12:53:52 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -225,7 +225,7 @@ writebuf(int fd, enum comm comm, const void *v, size_t sz)
 		warnx("short write: %s length", comms[comm]);
 	else if ((ssz = write(fd, v, sz)) < 0)
 		warn("write: %s", comms[comm]);
-	else if ((size_t)ssz != sz)
+	else if (sz != (size_t)ssz)
 		warnx("short write: %s", comms[comm]);
 	else
 		rc = 1;

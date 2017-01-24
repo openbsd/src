@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.31 2017/01/24 12:38:41 deraadt Exp $ */
+/*	$Id: main.c,v 1.32 2017/01/24 12:53:52 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -431,7 +431,7 @@ main(int argc, char *argv[])
 
 	free(alts);
 	return (rc != COMP__MAX ? EXIT_FAILURE :
-		(c == 2 ? EXIT_SUCCESS : 2));
+	    (c == 2 ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr,
 	    "usage: acme-client [-ADFnrv] [-f configfile] domain\n");

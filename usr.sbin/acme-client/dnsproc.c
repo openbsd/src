@@ -1,4 +1,4 @@
-/*	$Id: dnsproc.c,v 1.7 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: dnsproc.c,v 1.8 2017/01/24 12:53:52 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -75,7 +75,7 @@ host_dns(const char *s, struct addr *vec)
 
 	if (error) {
 		warnx("%s: parse error: %s",
-			s, gai_strerror(error));
+		    s, gai_strerror(error));
 		return(-1);
 	}
 
@@ -138,10 +138,10 @@ dnsproc(int nfd)
 		else if (lval == DNS_LOOKUP)
 			op = lval;
 
-		if (DNS__MAX == op) {
+		if (op == DNS__MAX) {
 			warnx("unknown operation from netproc");
 			goto out;
-		} else if (DNS_STOP == op)
+		} else if (op == DNS_STOP)
 			break;
 
 		if ((look = readstr(nfd, COMM_DNSQ)) == NULL)

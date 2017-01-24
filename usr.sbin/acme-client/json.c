@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.7 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: json.c,v 1.8 2017/01/24 12:53:52 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -383,7 +383,7 @@ json_parse_capaths(struct jsmnn *n, struct capaths *p)
 	p->revokecert = json_getstr(n, "revoke-cert");
 
 	return (p->newauthz != NULL && p->newcert != NULL &&
-		p->newreg != NULL && p->revokecert != NULL);
+	    p->newreg != NULL && p->revokecert != NULL);
 }
 
 /*

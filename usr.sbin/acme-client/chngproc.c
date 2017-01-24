@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.10 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: chngproc.c,v 1.11 2017/01/24 12:53:52 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -61,13 +61,13 @@ chngproc(int netsock, const char *root)
 		else if (lval == CHNG_SYN)
 			op = lval;
 
-		if (CHNG__MAX == op) {
+		if (op == CHNG__MAX) {
 			warnx("unknown operation from netproc");
 			goto out;
-		} else if (CHNG_STOP == op)
+		} else if (op == CHNG_STOP)
 			break;
 
-		assert(CHNG_SYN == op);
+		assert(op == CHNG_SYN);
 
 		/*
 		 * Read the thumbprint and token.

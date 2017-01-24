@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.10 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: revokeproc.c,v 1.11 2017/01/24 12:53:52 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -143,7 +143,7 @@ revokeproc(int fd, const char *certdir, const char *certfile, int force,
 		warnx("%s/%s: no certificate found", certdir, certfile);
 		(void)writeop(fd, COMM_REVOKE_RESP, REVOKE_OK);
 		goto out;
-	} else if (f == NULL && ! revocate) {
+	} else if (f == NULL && !revocate) {
 		if (writeop(fd, COMM_REVOKE_RESP, REVOKE_EXP) >= 0)
 			rc = 1;
 		goto out;
@@ -292,7 +292,7 @@ revokeproc(int fd, const char *certdir, const char *certfile, int force,
 
 	rop = time(NULL) >= (t - RENEW_ALLOW) ? REVOKE_EXP : REVOKE_OK;
 
-	if (REVOKE_EXP == rop)
+	if (rop == REVOKE_EXP)
 		dodbg("%s/%s: certificate renewable: %lld days left",
 		    certdir, certfile,
 		    (long long)(t - time(NULL)) / 24 / 60 / 60);
@@ -301,7 +301,7 @@ revokeproc(int fd, const char *certdir, const char *certfile, int force,
 		    certdir, certfile,
 		    (long long)(t - time(NULL)) / 24 / 60 / 60);
 
-	if (REVOKE_OK == rop && force) {
+	if (rop == REVOKE_OK && force) {
 		warnx("%s/%s: forcing renewal", certdir, certfile);
 		rop = REVOKE_EXP;
 	}
@@ -322,10 +322,10 @@ revokeproc(int fd, const char *certdir, const char *certfile, int force,
 	else if (lval == REVOKE_CHECK)
 		op = lval;
 
-	if (REVOKE__MAX == op) {
+	if (op == REVOKE__MAX) {
 		warnx("unknown operation from netproc");
 		goto out;
-	} else if (REVOKE_STOP == op) {
+	} else if (op == REVOKE_STOP) {
 		rc = 1;
 		goto out;
 	}
