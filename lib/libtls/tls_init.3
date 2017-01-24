@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.82 2017/01/24 00:00:12 claudio Exp $
+.\" $OpenBSD: tls_init.3,v 1.83 2017/01/24 00:28:31 claudio Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -371,14 +371,6 @@ used as an alternative certificate for Server Name Indication (server only).
 adds an additional public certificate and private key from memory,
 used as an alternative certificate for Server Name Indication (server only).
 .It
-.Fn tls_config_set_ocsp_staple_mem
-sets a DER-encoded OCSP response to be stapled during the TLS handshake from
-memory.
-.It
-.Fn tls_config_set_ocsp_staple_file
-sets a DER-encoded OCSP response to be stapled during the TLS handshake from
-the specified file.
-.It
 .Fn tls_config_set_alpn
 sets the ALPN protocols that are supported.
 The alpn string is a comma separated list of protocols, in order of preference.
@@ -428,6 +420,14 @@ sets the files from which the public certificate and private key will be read.
 .It
 .Fn tls_config_set_keypair_mem
 directly sets the public certificate and private key from memory.
+.It
+.Fn tls_config_set_ocsp_staple_file
+sets a DER-encoded OCSP response to be stapled during the TLS handshake from
+the specified file.
+.It
+.Fn tls_config_set_ocsp_staple_mem
+sets a DER-encoded OCSP response to be stapled during the TLS handshake from
+memory.
 .It
 .Fn tls_config_set_protocols
 sets which versions of the protocol may be used.
