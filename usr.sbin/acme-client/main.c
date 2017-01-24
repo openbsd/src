@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.29 2017/01/21 15:53:15 jmc Exp $ */
+/*	$Id: main.c,v 1.30 2017/01/24 12:05:14 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -56,10 +56,10 @@ main(int argc, char *argv[])
 	struct domain_c		*domain = NULL;
 	struct altname_c	*ac;
 
-	while (-1 != (c = getopt(argc, argv, "FADrvnf:")))
+	while ((c = getopt(argc, argv, "FADrvnf:")) != -1)
 		switch (c) {
 		case 'f':
-			if (NULL == (conffile = strdup(optarg)))
+			if ((conffile = strdup(optarg)) == NULL)
 				err(EXIT_FAILURE, "strdup");
 			break;
 		case 'F':
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
-	if (1 != argc)
+	if (argc != 1)
 		goto usage;
 
 	if ((domain = domain_find(conf, argv[0])) == NULL)
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 	agreement = authority->agreement;
 	acctkey = authority->account;
 
-	if (NULL == acctkey) {
+	if (acctkey == NULL) {
 		/* XXX replace with existance check in parse.y */
 		err(EXIT_FAILURE, "no account key in config?");
 	}
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 	else
 		chngdir = domain->challengedir;
 
-	if (NULL == chngdir)
+	if (chngdir == NULL)
 		err(EXIT_FAILURE, "strdup");
 
 	/*
@@ -182,28 +182,28 @@ main(int argc, char *argv[])
 
 	ne = 0;
 
-	if (-1 == access(certdir, R_OK)) {
+	if (access(certdir, R_OK) == -1) {
 		warnx("%s: cert directory must exist", certdir);
 		ne++;
 	}
 
-	if (!(popts & ACME_OPT_NEWDKEY) && -1 == access(domain->key, R_OK)) {
+	if (!(popts & ACME_OPT_NEWDKEY) && access(domain->key, R_OK) == -1) {
 		warnx("%s: domain key file must exist", domain->key);
 		ne++;
-	} else if ((popts & ACME_OPT_NEWDKEY) && -1 != access(domain->key, R_OK)) {
+	} else if ((popts & ACME_OPT_NEWDKEY) && access(domain->key, R_OK) != -1) {
 		dodbg("%s: domain key exists (not creating)", domain->key);
 		popts &= ~ACME_OPT_NEWDKEY;
 	}
 
-	if (-1 == access(chngdir, R_OK)) {
+	if (access(chngdir, R_OK) == -1) {
 		warnx("%s: challenge directory must exist", chngdir);
 		ne++;
 	}
 
-	if (!(popts & ACME_OPT_NEWACCT) && -1 == access(acctkey, R_OK)) {
+	if (!(popts & ACME_OPT_NEWACCT) && access(acctkey, R_OK) == -1) {
 		warnx("%s: account key file must exist", acctkey);
 		ne++;
-	} else if ((popts & ACME_OPT_NEWACCT) && -1 != access(acctkey, R_OK)) {
+	} else if ((popts & ACME_OPT_NEWACCT) && access(acctkey, R_OK) != -1) {
 		dodbg("%s: account key exists (not creating)", acctkey);
 		popts &= ~ACME_OPT_NEWACCT;
 	}
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 	/* Set the zeroth altname as our domain. */
 	altsz = domain->altname_count + 1;
 	alts = calloc(altsz, sizeof(char *));
-	if (NULL == alts)
+	if (alts == NULL)
 		err(EXIT_FAILURE, "calloc");
 	alts[0] = domain->domain;
 	i = 1;
@@ -229,27 +229,27 @@ main(int argc, char *argv[])
 	 * Open channels between our components.
 	 */
 
-	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, 0, key_fds))
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, key_fds) == -1)
 		err(EXIT_FAILURE, "socketpair");
-	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, 0, acct_fds))
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, acct_fds) == -1)
 		err(EXIT_FAILURE, "socketpair");
-	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, 0, chng_fds))
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, chng_fds) == -1)
 		err(EXIT_FAILURE, "socketpair");
-	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, 0, cert_fds))
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, cert_fds) == -1)
 		err(EXIT_FAILURE, "socketpair");
-	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, 0, file_fds))
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, file_fds) == -1)
 		err(EXIT_FAILURE, "socketpair");
-	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, 0, dns_fds))
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, dns_fds) == -1)
 		err(EXIT_FAILURE, "socketpair");
-	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, 0, rvk_fds))
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, rvk_fds) == -1)
 		err(EXIT_FAILURE, "socketpair");
 
 	/* Start with the network-touching process. */
 
-	if (-1 == (pids[COMP_NET] = fork()))
+	if ((pids[COMP_NET] = fork()) == -1)
 		err(EXIT_FAILURE, "fork");
 
-	if (0 == pids[COMP_NET]) {
+	if (pids[COMP_NET] == 0) {
 		proccomp = COMP_NET;
 		close(key_fds[0]);
 		close(acct_fds[0]);
@@ -278,10 +278,10 @@ main(int argc, char *argv[])
 
 	/* Now the key-touching component. */
 
-	if (-1 == (pids[COMP_KEY] = fork()))
+	if ((pids[COMP_KEY] = fork()) == -1)
 		err(EXIT_FAILURE, "fork");
 
-	if (0 == pids[COMP_KEY]) {
+	if (pids[COMP_KEY] == 0) {
 		proccomp = COMP_KEY;
 		close(cert_fds[0]);
 		close(dns_fds[0]);
@@ -300,10 +300,10 @@ main(int argc, char *argv[])
 
 	/* The account-touching component. */
 
-	if (-1 == (pids[COMP_ACCOUNT] = fork()))
+	if ((pids[COMP_ACCOUNT] = fork()) == -1)
 		err(EXIT_FAILURE, "fork");
 
-	if (0 == pids[COMP_ACCOUNT]) {
+	if (pids[COMP_ACCOUNT] == 0) {
 		proccomp = COMP_ACCOUNT;
 		free(alts);
 		close(cert_fds[0]);
@@ -320,10 +320,10 @@ main(int argc, char *argv[])
 
 	/* The challenge-accepting component. */
 
-	if (-1 == (pids[COMP_CHALLENGE] = fork()))
+	if ((pids[COMP_CHALLENGE] = fork()) == -1)
 		err(EXIT_FAILURE, "fork");
 
-	if (0 == pids[COMP_CHALLENGE]) {
+	if (pids[COMP_CHALLENGE] == 0) {
 		proccomp = COMP_CHALLENGE;
 		free(alts);
 		close(cert_fds[0]);
@@ -339,10 +339,10 @@ main(int argc, char *argv[])
 
 	/* The certificate-handling component. */
 
-	if (-1 == (pids[COMP_CERT] = fork()))
+	if ((pids[COMP_CERT] = fork()) == -1)
 		err(EXIT_FAILURE, "fork");
 
-	if (0 == pids[COMP_CERT]) {
+	if (pids[COMP_CERT] == 0) {
 		proccomp = COMP_CERT;
 		free(alts);
 		close(dns_fds[0]);
@@ -357,10 +357,10 @@ main(int argc, char *argv[])
 
 	/* The certificate-handling component. */
 
-	if (-1 == (pids[COMP_FILE] = fork()))
+	if ((pids[COMP_FILE] = fork()) == -1)
 		err(EXIT_FAILURE, "fork");
 
-	if (0 == pids[COMP_FILE]) {
+	if (pids[COMP_FILE] == 0) {
 		proccomp = COMP_FILE;
 		free(alts);
 		close(dns_fds[0]);
@@ -378,10 +378,10 @@ main(int argc, char *argv[])
 
 	/* The DNS lookup component. */
 
-	if (-1 == (pids[COMP_DNS] = fork()))
+	if ((pids[COMP_DNS] = fork()) == -1)
 		err(EXIT_FAILURE, "fork");
 
-	if (0 == pids[COMP_DNS]) {
+	if (pids[COMP_DNS] == 0) {
 		proccomp = COMP_DNS;
 		free(alts);
 		close(rvk_fds[0]);
@@ -393,10 +393,10 @@ main(int argc, char *argv[])
 
 	/* The expiration component. */
 
-	if (-1 == (pids[COMP_REVOKE] = fork()))
+	if ((pids[COMP_REVOKE] = fork()) == -1)
 		err(EXIT_FAILURE, "fork");
 
-	if (0 == pids[COMP_REVOKE]) {
+	if (pids[COMP_REVOKE] == 0) {
 		proccomp = COMP_REVOKE;
 		c = revokeproc(rvk_fds[0], certdir,
 		    certfile != NULL ? certfile : fullchainfile,
@@ -430,8 +430,8 @@ main(int argc, char *argv[])
 	    checkexit(pids[COMP_REVOKE], COMP_REVOKE);
 
 	free(alts);
-	return (COMP__MAX != rc ? EXIT_FAILURE :
-	    (2 == c ? EXIT_SUCCESS : 2));
+	return (rc != COMP__MAX ? EXIT_FAILURE :
+		(c == 2 ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr,
 	    "usage: acme-client [-ADFnrv] [-f configfile] domain\n");

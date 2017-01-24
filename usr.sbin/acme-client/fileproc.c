@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.11 2017/01/24 07:59:54 deraadt Exp $ */
+/*	$Id: fileproc.c,v 1.12 2017/01/24 12:05:14 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -38,21 +38,21 @@ serialise(const char *tmp, const char *real,
 	 */
 
 	fd = open(tmp, O_WRONLY|O_CREAT|O_TRUNC, 0444);
-	if (-1 == fd) {
+	if (fd == -1) {
 		warn("%s", tmp);
 		return (0);
 	} else if ((ssize_t)vsz != write(fd, v, vsz)) {
 		warnx("%s", tmp);
 		close(fd);
 		return (0);
-	} else if (NULL != v2 && (ssize_t)v2sz != write(fd, v2, v2sz)) {
+	} else if (v2 != NULL && (ssize_t)v2sz != write(fd, v2, v2sz)) {
 		warnx("%s", tmp);
 		close(fd);
 		return (0);
-	} else if (-1 == close(fd)) {
+	} else if (close(fd) == -1) {
 		warn("%s", tmp);
 		return (0);
-	} else if (-1 == rename(tmp, real)) {
+	} else if (rename(tmp, real) == -1) {
 		warn("%s", real);
 		return (0);
 	}
@@ -95,9 +95,9 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 	/* Read our operation. */
 
 	op = FILE__MAX;
-	if (0 == (lval = readop(certsock, COMM_CHAIN_OP)))
+	if ((lval = readop(certsock, COMM_CHAIN_OP)) == 0)
 		op = FILE_STOP;
-	else if (FILE_CREATE == lval || FILE_REMOVE == lval)
+	else if (lval == FILE_CREATE || lval == FILE_REMOVE)
 		op = lval;
 
 	if (FILE_STOP == op) {
@@ -116,7 +116,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 
 	if (FILE_REMOVE == op) {
 		if (certfile) {
-			if (-1 == unlink(certfile) && ENOENT != errno) {
+			if (unlink(certfile) == -1 && errno != ENOENT) {
 				warn("%s/%s", certdir, certfile);
 				goto out;
 			} else
@@ -124,7 +124,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 		}
 
 		if (chainfile) {
-			if (-1 == unlink(chainfile) && ENOENT != errno) {
+			if (unlink(chainfile) == -1 && errno != ENOENT) {
 				warn("%s/%s", certdir, chainfile);
 				goto out;
 			} else
@@ -132,7 +132,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 		}
 
 		if (fullchainfile) {
-			if (-1 == unlink(fullchainfile) && ENOENT != errno) {
+			if (unlink(fullchainfile) == -1 && errno != ENOENT) {
 				warn("%s/%s", certdir, fullchainfile);
 				goto out;
 			} else
@@ -169,7 +169,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 			goto out;
 		}
 
-	if (NULL == (ch = readbuf(certsock, COMM_CHAIN, &chsz)))
+	if ((ch = readbuf(certsock, COMM_CHAIN, &chsz)) == NULL)
 		goto out;
 
 	if (chainfile) {
@@ -186,7 +186,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 	 * just keep downloading.
 	 */
 
-	if (NULL == (csr = readbuf(certsock, COMM_CSR, &csz)))
+	if ((csr = readbuf(certsock, COMM_CSR, &csz)) == NULL)
 		goto out;
 
 	if (certfile) {

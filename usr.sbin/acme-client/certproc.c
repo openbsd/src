@@ -1,4 +1,4 @@
-/*	$Id: certproc.c,v 1.8 2017/01/24 07:59:54 deraadt Exp $ */
+/*	$Id: certproc.c,v 1.9 2017/01/24 12:05:14 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -44,7 +44,7 @@ x509buf(X509 *x, size_t *sz)
 
 	/* Convert X509 to PEM in BIO. */
 
-	if (NULL == (bio = BIO_new(BIO_s_mem()))) {
+	if ((bio = BIO_new(BIO_s_mem())) == NULL) {
 		warnx("BIO_new");
 		return (NULL);
 	} else if (!PEM_write_bio_X509(bio, x)) {
@@ -58,7 +58,7 @@ x509buf(X509 *x, size_t *sz)
 	 * Make into NUL-terminated, just in case.
 	 */
 
-	if (NULL == (p = calloc(1, bio->num_write + 1))) {
+	if ((p = calloc(1, bio->num_write + 1)) == NULL) {
 		warn("calloc");
 		BIO_free(bio);
 		return (NULL);
@@ -104,9 +104,9 @@ certproc(int netsock, int filesock)
 	/* Read what the netproc wants us to do. */
 
 	op = CERT__MAX;
-	if (0 == (lval = readop(netsock, COMM_CSR_OP)))
+	if ((lval = readop(netsock, COMM_CSR_OP)) == 0)
 		op = CERT_STOP;
-	else if (CERT_REVOKE == lval || CERT_UPDATE == lval)
+	else if (lval == CERT_REVOKE || lval == CERT_UPDATE)
 		op = lval;
 
 	if (CERT_STOP == op) {
@@ -134,12 +134,12 @@ certproc(int netsock, int filesock)
 	 * Then convert the DER encoding into an X509 certificate.
 	 */
 
-	if (NULL == (csr = readbuf(netsock, COMM_CSR, &csrsz)))
+	if ((csr = readbuf(netsock, COMM_CSR, &csrsz)) == NULL)
 		goto out;
 
 	csrcp = (u_char *)csr;
 	x = d2i_X509(NULL, (const u_char **)&csrcp, csrsz);
-	if (NULL == x) {
+	if (x == NULL) {
 		warnx("d2i_X509");
 		goto out;
 	}
@@ -150,18 +150,18 @@ certproc(int netsock, int filesock)
 	 */
 
 	idx = X509_get_ext_by_NID(x, NID_info_access, idx);
-	if (idx >= 0 && NULL != (ext = X509_get_ext(x, idx)))
+	if (idx >= 0 && (ext = X509_get_ext(x, idx)) != NULL)
 		method = (X509V3_EXT_METHOD *)X509V3_EXT_get(ext);
 
 	entries = X509_get_ext_d2i(x, NID_info_access, 0, 0);
-	if (NULL != method && NULL != entries) {
+	if (method != NULL && entries != NULL) {
 		val = method->i2v(method, entries, 0);
 		for (i = 0; i < sk_CONF_VALUE_num(val); i++) {
 			nval = sk_CONF_VALUE_value(val, i);
 			if (strcmp(nval->name, "CA Issuers - URI"))
 				continue;
 			url = strdup(nval->value);
-			if (NULL == url) {
+			if (url == NULL) {
 				warn("strdup");
 				goto out;
 			}
@@ -169,7 +169,7 @@ certproc(int netsock, int filesock)
 		}
 	}
 
-	if (NULL == url) {
+	if (url == NULL) {
 		warnx("no CA issuer registered with certificate");
 		goto out;
 	}
@@ -181,7 +181,7 @@ certproc(int netsock, int filesock)
 
 	/* Read the full-chain back from the netsock. */
 
-	if (NULL == (chain = readbuf(netsock, COMM_CHAIN, &chainsz)))
+	if ((chain = readbuf(netsock, COMM_CHAIN, &chainsz)) == NULL)
 		goto out;
 
 	/*
@@ -196,22 +196,22 @@ certproc(int netsock, int filesock)
 	    strncmp(chain, MARKER, strlen(MARKER))) {
 		chaincp = (u_char *)chain;
 		chainx = d2i_X509(NULL, (const u_char **)&chaincp, chainsz);
-		if (NULL == chainx) {
+		if (chainx == NULL) {
 			warnx("d2i_X509");
 			goto out;
 		}
 		free(chain);
-		if (NULL == (chain = x509buf(chainx, &chainsz)))
+		if ((chain = x509buf(chainx, &chainsz)) == NULL)
 			goto out;
 	}
 
 	/* Allow reader termination to just push us out. */
 
-	if (0 == (cc = writeop(filesock, COMM_CHAIN_OP, FILE_CREATE)))
+	if ((cc = writeop(filesock, COMM_CHAIN_OP, FILE_CREATE)) == 0)
 		rc = 1;
 	if (cc <= 0)
 		goto out;
-	if (0 == (cc = writebuf(filesock, COMM_CHAIN, chain, chainsz)))
+	if ((cc = writebuf(filesock, COMM_CHAIN, chain, chainsz)) == 0)
 		rc = 1;
 	if (cc <= 0)
 		goto out;
@@ -222,7 +222,7 @@ certproc(int netsock, int filesock)
 	 */
 
 	free(chain);
-	if (NULL == (chain = x509buf(x, &chainsz)))
+	if ((chain = x509buf(x, &chainsz)) == NULL)
 		goto out;
 	if (writebuf(filesock, COMM_CSR, chain, chainsz) < 0)
 		goto out;
@@ -231,9 +231,9 @@ certproc(int netsock, int filesock)
 out:
 	close(netsock);
 	close(filesock);
-	if (NULL != x)
+	if (x != NULL)
 		X509_free(x);
-	if (NULL != chainx)
+	if (chainx != NULL)
 		X509_free(chainx);
 	free(csr);
 	free(url);
