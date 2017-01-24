@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.38 2017/01/18 10:08:05 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.39 2017/01/24 19:11:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -92,11 +92,20 @@ cmd_show_options_print(struct cmd *self, struct cmdq_item *item,
 	const char	*name;
 	const char	*value;
 	char		*tmp, *escaped;
+	u_int		 size, i;
 
 	if (idx != -1) {
 		xasprintf(&tmp, "%s[%d]", options_name(o), idx);
 		name = tmp;
 	} else {
+		if (options_array_size(o, &size) != -1) {
+			for (i = 0; i < size; i++) {
+				if (options_array_get(o, i) == NULL)
+					continue;
+				cmd_show_options_print(self, item, o, i);
+			}
+			return;
+		}
 		tmp = NULL;
 		name = options_name(o);
 	}
