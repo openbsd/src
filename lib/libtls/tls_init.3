@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.83 2017/01/24 00:28:31 claudio Exp $
+.\" $OpenBSD: tls_init.3,v 1.84 2017/01/24 01:16:26 claudio Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -446,6 +446,10 @@ Additionally, the values
 (all supported protocols) and
 .Dv TLS_PROTOCOLS_DEFAULT
 (TLSv1.2 only) may be used.
+.It
+.Fn tls_config_set_verify_depth
+limits the number of intermediate certificates that will be followed during
+certificate validation.
 .It
 .Fn tls_config_prefer_ciphers_client
 prefers ciphers in the client's cipher list when selecting a cipher suite
