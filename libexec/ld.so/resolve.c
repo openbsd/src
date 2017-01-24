@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.79 2017/01/23 16:20:35 naddy Exp $ */
+/*	$OpenBSD: resolve.c,v 1.80 2017/01/24 02:37:10 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -233,11 +233,13 @@ _dl_origin_subst(elf_object_t *object)
 		return;
 
 	/* perform path substitutions on each segment of runpath and rpath */
-	for (pp = object->runpath; *pp != NULL; pp++) {
-		_dl_origin_subst_path(object, origin_path, pp);
+	if (object->runpath != NULL) {
+		for (pp = object->runpath; *pp != NULL; pp++)
+			_dl_origin_subst_path(object, origin_path, pp);
 	}
-	for (pp = object->rpath; *pp != NULL; pp++) {
-		_dl_origin_subst_path(object, origin_path, pp);
+	if (object->rpath != NULL) {
+		for (pp = object->rpath; *pp != NULL; pp++)
+			_dl_origin_subst_path(object, origin_path, pp);
 	}
 }
 
