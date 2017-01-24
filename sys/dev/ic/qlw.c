@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.30 2015/09/17 17:59:15 miod Exp $ */
+/*	$OpenBSD: qlw.c,v 1.31 2017/01/24 02:28:17 visa Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
@@ -29,7 +30,6 @@
 #include <sys/sensors.h>
 #include <sys/queue.h>
 
-#include <machine/atomic.h>
 #include <machine/bus.h>
 
 #include <scsi/scsi_all.h>

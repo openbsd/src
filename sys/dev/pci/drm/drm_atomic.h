@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_atomic.h,v 1.14 2016/04/05 08:17:34 kettenis Exp $ */
+/* $OpenBSD: drm_atomic.h,v 1.15 2017/01/24 02:28:17 visa Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -30,7 +30,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <machine/atomic.h>
+#include <sys/atomic.h>
 
 typedef uint32_t atomic_t;
 

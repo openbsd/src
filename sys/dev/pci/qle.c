@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.38 2015/09/11 10:19:05 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.39 2017/01/24 02:28:17 visa Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -20,13 +20,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/sensors.h>
 #include <sys/rwlock.h>
 #include <sys/task.h>
 
-#include <machine/atomic.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
