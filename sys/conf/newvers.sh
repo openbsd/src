@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.149 2016/10/16 17:31:36 tb Exp $
+#	$OpenBSD: newvers.sh,v 1.150 2017/01/24 11:59:41 tb Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -38,7 +38,7 @@ then
 fi
 
 touch version
-v=`cat version` u=${USER-root} d=${PWD%/obj} h=`hostname` t=`date`
+v=`cat version` u=`logname` d=${PWD%/obj} h=`hostname` t=`date`
 id=`basename "${d}"`
 
 # additional things which need version number upgrades:
