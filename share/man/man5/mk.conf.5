@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mk.conf.5,v 1.36 2016/11/19 14:26:25 tb Exp $
+.\"	$OpenBSD: mk.conf.5,v 1.37 2017/01/24 07:57:14 tb Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 19 2016 $
+.Dd $Mdocdate: January 24 2017 $
 .Dt MK.CONF 5
 .Os
 .Sh NAME
@@ -183,6 +183,9 @@ Reduces redundant tests.
 Be careful!
 Redundant tests may not be redundant when installing substantially
 updated GNU programs.
+.It Ev KEEPKERNELS
+If set to "yes", the kernel object directories will not be cleaned out
+during "make build".
 .It Ev NOPIC
 Do not build shared libraries.
 .It Ev NOPIE
