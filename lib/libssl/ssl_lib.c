@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.143 2017/01/24 01:46:12 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.144 2017/01/24 01:47:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -529,8 +529,7 @@ SSL_free(SSL *s)
 	ssl_clear_hash_ctx(&s->read_hash);
 	ssl_clear_hash_ctx(&s->internal->write_hash);
 
-	if (s->cert != NULL)
-		ssl_cert_free(s->cert);
+	ssl_cert_free(s->cert);
 
 	free(s->tlsext_hostname);
 	SSL_CTX_free(s->initial_ctx);
@@ -864,8 +863,7 @@ SSL_copy_session_id(SSL *t, const SSL *f)
 		t->cert = f->cert;
 	} else
 		t->cert = NULL;
-	if (tmp != NULL)
-		ssl_cert_free(tmp);
+	ssl_cert_free(tmp);
 	SSL_set_session_id_context(t, f->sid_ctx, f->sid_ctx_length);
 }
 
@@ -1984,8 +1982,7 @@ SSL_CTX_free(SSL_CTX *a)
 		X509_STORE_free(a->cert_store);
 	sk_SSL_CIPHER_free(a->cipher_list);
 	sk_SSL_CIPHER_free(a->internal->cipher_list_by_id);
-	if (a->internal->cert != NULL)
-		ssl_cert_free(a->internal->cert);
+	ssl_cert_free(a->internal->cert);
 	if (a->internal->client_CA != NULL)
 		sk_X509_NAME_pop_free(a->internal->client_CA, X509_NAME_free);
 	if (a->extra_certs != NULL)
@@ -2625,9 +2622,7 @@ SSL_dup(SSL *s)
 		ret->method->internal->ssl_new(ret);
 
 		if (s->cert != NULL) {
-			if (ret->cert != NULL) {
-				ssl_cert_free(ret->cert);
-			}
+			ssl_cert_free(ret->cert);
 			ret->cert = ssl_cert_dup(s->cert);
 			if (ret->cert == NULL)
 				goto err;
