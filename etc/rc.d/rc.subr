@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.116 2016/09/07 13:12:42 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.117 2017/01/24 01:11:11 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -99,7 +99,7 @@ _rc_wait() {
 _rc_quirks() {
 	# special care needed for spamlogd to avoid starting it up and failing
 	# all the time
-	if [  X"${spamd_flags}" = X"NO" -o X"${spamd_black}" != X"NO" ]; then
+	if [ X"${spamd_flags}" = X"NO" -o X"${spamd_black}" != X"NO" ]; then
 		spamlogd_flags=NO
 	fi
 
@@ -201,7 +201,7 @@ rc_cmd() {
 		fi
 		[ -z "${INRC}" ] && _rc_do rc_check && exit 0
 		echo $_n "${INRC:+ }${_name}"
-		while true; do  # no real loop, only needed to break
+		while true; do # no real loop, only needed to break
 			if type rc_pre >/dev/null; then
 				_rc_do rc_pre || break
 			fi
