@@ -23,15 +23,35 @@
 
 #define N 1000
 
-size_t size(void)
+size_t
+size(void)
 {
 	int p = arc4random_uniform(13) + 3;
 	return arc4random_uniform(1 << p);
 }
 
-void *a[N];
+struct { void *p; size_t sz; } a[N];
 
 extern char *malloc_options;
+
+void
+fill(u_char *p, size_t sz)
+{
+	size_t i;
+
+	for (i = 0; i < sz; i++)
+		p[i] = i % 256;
+}
+
+void
+check(u_char *p, size_t sz)
+{
+	size_t i;
+
+	for (i = 0; i < sz; i++)
+		if (p[i] != i % 256)
+			errx(1, "check");
+}
 
 int
 main(int argc, char *argv[])
@@ -54,43 +74,51 @@ main(int argc, char *argv[])
 		i = arc4random_uniform(N);
 		switch (p) {
 		case 0:
-			if (a[i]) {
+			if (a[i].p) {
 #ifdef VERBOSE
-				printf("F %p\n", a[i]);
+				printf("F %p\n", a[i].p);
 #endif
-				free(a[i]);
-				a[i] = NULL;
+				if (a[i].p)
+					check(a[i].p, a[i].sz);
+				free(a[i].p);
+				a[i].p = NULL;
 			}
 			sz = size();
 #ifdef VERBOSE
 			printf("M %zu=", sz);
 #endif
-			a[i] = malloc(sz);
+			a[i].p = malloc(sz);
+			a[i].sz = sz;
 #ifdef VERBOSE
-			printf("%p\n", a[i]);
+			printf("%p\n", a[i].p);
 #endif
-			if (a[i])
-				memset(a[i], 0xff, sz);
+			if (a[i].p)
+				fill(a[i].p, sz);
 			break;
 		case 1:
 			sz = size();
 #ifdef VERBOSE
-			printf("R %p %zu=", a[i], sz);
+			printf("R %p %zu=", a[i].p, sz);
 #endif
-			q = realloc(a[i], sz);
+			q = realloc(a[i].p, sz);
 #ifdef VERBOSE
 			printf("%p\n", q);
 #endif
+			if (a[i].p && q)
+				check(q, a[i].sz < sz ? a[i].sz : sz);
 			if (q) {
-				a[i]= q;
-				if (a[i])
-					memset(a[i], 0xff, sz);
+				a[i].p = q;
+				a[i].sz = sz;
+				fill(a[i].p, sz);
 			}
 			break;
 		}
 	}
-	for (i = 0; i < N; i++)
-		free(a[i]);
+	for (i = 0; i < N; i++) {
+		if (a[i].p)
+			check(a[i].p, a[i].sz);
+		free(a[i].p);
+	}
 	printf("\n");
 	return 0;
 }
