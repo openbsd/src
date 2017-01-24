@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.121 2016/12/29 12:12:44 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.122 2017/01/24 08:09:05 kettenis Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -321,6 +321,16 @@ int dk_mountroot(void);
 extern int (*mountroot)(void);
 
 #include <lib/libkern/libkern.h>
+
+#define bzero(b, n)		__builtin_bzero((b), (n))
+#define memcmp(b1, b2, n)	__builtin_memcmp((b1), (b2), (n))
+#define memcpy(d, s, n)		__builtin_memcpy((d), (s), (n))
+#define memset(b, c, n)		__builtin_memset((b), (c), (n))
+#if !defined(__clang__) && (defined(__GNUC__) && __GNUC__ >= 4)
+#define bcmp(b1, b2, n)		__builtin_bcmp((b1), (b2), (n))
+#define bcopy(s, d, n)		__builtin_bcopy((s), (d), (n))
+#define memmove(d, s, n)	__builtin_memmove((d), (s), (n))
+#endif
 
 #if defined(DDB) || defined(KGDB)
 /* debugger entry points */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.c,v 1.7 2014/06/10 04:16:57 deraadt Exp $	*/
+/*	$OpenBSD: memset.c,v 1.8 2017/01/24 08:09:05 kettenis Exp $	*/
 /*	$NetBSD: memset.c,v 1.6 1998/03/27 05:35:47 cgd Exp $	*/
 
 /*-
@@ -38,6 +38,9 @@
 #include <sys/limits.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
+
+#undef bzero
+#undef memset
 
 #define	wsize	sizeof(u_int)
 #define	wmask	(wsize - 1)

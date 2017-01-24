@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcmp.c,v 1.6 2014/06/10 04:16:57 deraadt Exp $	*/
+/*	$OpenBSD: memcmp.c,v 1.7 2017/01/24 08:09:05 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,6 +33,8 @@
  */
 
 #include <lib/libkern/libkern.h>
+
+#undef memcmp
 
 /*
  * Compare memory regions.

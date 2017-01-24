@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcmp.c,v 1.10 2014/06/10 04:16:57 deraadt Exp $	*/
+/*	$OpenBSD: bcmp.c,v 1.11 2017/01/24 08:09:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -30,6 +30,8 @@
  */
 
 #include <lib/libkern/libkern.h>
+
+#undef bcmp
 
 /*
  * bcmp -- vax cmpc3 instruction

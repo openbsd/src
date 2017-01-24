@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.c,v 1.3 2013/06/12 16:44:22 deraadt Exp $	*/
+/*	$OpenBSD: memcpy.c,v 1.4 2017/01/24 08:09:05 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,6 +31,8 @@
 
 #include <sys/types.h>
 #include <sys/systm.h>
+
+#undef memcpy
 
 /*
  * This is designed to be small, not fast.
