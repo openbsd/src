@@ -13,7 +13,7 @@ pid=os.getpid()
 uport=pid & 0xffff
 # inetd ignores UDP packets from privileged port or nfs
 if uport < 1024 or uport == 2049:
-	port+=1024
+	uport+=1024
 payload="ABCDEFGHIJKLMNOP"
 packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/UDP(sport=uport, dport=7)/payload
 frag=[]

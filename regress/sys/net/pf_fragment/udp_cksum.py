@@ -9,7 +9,7 @@ dstaddr=sys.argv[1]
 uport=os.getpid() & 0xffff
 # inetd ignores UDP packets from privileged port or nfs
 if uport < 1024 or uport == 2049:
-	port+=1024
+	uport+=1024
 payload="a" * 1472
 p=(Ether(src=SRC_MAC, dst=PF_MAC)/IP(flags="DF", src=SRC_OUT, dst=dstaddr)/
     UDP(sport=uport, dport=9)/payload)
