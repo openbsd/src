@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.85 2017/01/13 18:59:12 phessler Exp $ */
+/*	$OpenBSD: control.c,v 1.86 2017/01/24 04:22:42 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,7 @@
 
 #include "bgpd.h"
 #include "session.h"
+#include "log.h"
 
 #define	CONTROL_BACKLOG	5
 
@@ -499,7 +500,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			log_setverbose(verbose);
 			break;
 		default:
 			break;

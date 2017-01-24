@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2017/01/23 23:30:43 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.24 2017/01/24 04:22:42 benno Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -28,6 +28,7 @@
 
 #include "bgpd.h"
 #include "rde.h"
+#include "log.h"
 
 const char	*aspath_delim(u_int8_t, int);
 

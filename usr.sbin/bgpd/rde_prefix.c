@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.32 2010/03/26 15:41:04 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.33 2017/01/24 04:22:42 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include "bgpd.h"
 #include "rde.h"
+#include "log.h"
 
 /*
  * Prefix Table functions:

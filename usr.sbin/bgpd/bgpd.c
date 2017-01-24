@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.187 2016/09/03 16:22:17 renato Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.188 2017/01/24 04:22:42 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,11 +30,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "bgpd.h"
 #include "mrt.h"
 #include "session.h"
+#include "log.h"
 
 void		sighdlr(int);
 __dead void	usage(void);
@@ -112,10 +114,10 @@ main(int argc, char *argv[])
 
 	conffile = CONFFILE;
 	bgpd_process = PROC_MAIN;
-	log_procname = log_procnames[bgpd_process];
 
-	log_init(1);		/* log to stderr until daemonized */
-	log_verbose(1);
+	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
+	log_procinit(log_procnames[bgpd_process]);
+	log_setverbose(1);
 
 	saved_argv0 = argv[0];
 	if (saved_argv0 == NULL)
@@ -147,7 +149,6 @@ main(int argc, char *argv[])
 			if (cmd_opts & BGPD_OPT_VERBOSE)
 				cmd_opts |= BGPD_OPT_VERBOSE2;
 			cmd_opts |= BGPD_OPT_VERBOSE;
-			log_verbose(1);
 			break;
 		case 'R':
 			rflag = 1;
@@ -189,8 +190,8 @@ main(int argc, char *argv[])
 	if (getpwnam(BGPD_USER) == NULL)
 		errx(1, "unknown user %s", BGPD_USER);
 
-	log_init(debug);
-	log_verbose(cmd_opts & BGPD_OPT_VERBOSE);
+	log_init(debug, LOG_DAEMON);
+	log_setverbose(cmd_opts & BGPD_OPT_VERBOSE);
 
 	if (!debug)
 		daemon(1, 0);
@@ -700,7 +701,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 		case IMSG_CTL_LOG_VERBOSE:
 			/* already checked by SE */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			log_setverbose(verbose);
 			break;
 		case IMSG_RECONF_DONE:
 			if (reconfpending == 0)

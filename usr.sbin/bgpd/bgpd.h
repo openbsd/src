@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.298 2017/01/13 18:59:12 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.299 2017/01/24 04:22:42 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,8 +32,6 @@
 #include <stdarg.h>
 
 #include <imsg.h>
-
-#include "log.h"
 
 #define	BGP_VERSION			4
 #define	BGP_PORT			179
@@ -1014,28 +1012,10 @@ int		 kr_reload(void);
 struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
 
 /* log.c */
-void		 log_init(int);
-void		 log_verbose(int);
-void		 logit(int, const char *, ...)
-			__attribute__((__format__ (printf, 2, 3)));
-void		 vlog(int, const char *, va_list)
-			__attribute__((__format__ (printf, 2, 0)));
 void		 log_peer_warn(const struct peer_config *, const char *, ...)
 			__attribute__((__format__ (printf, 2, 3)));
 void		 log_peer_warnx(const struct peer_config *, const char *, ...)
 			__attribute__((__format__ (printf, 2, 3)));
-void		 log_warn(const char *, ...)
-			__attribute__((__format__ (printf, 1, 2)));
-void		 log_warnx(const char *, ...)
-			__attribute__((__format__ (printf, 1, 2)));
-void		 log_info(const char *, ...)
-			__attribute__((__format__ (printf, 1, 2)));
-void		 log_debug(const char *, ...)
-			__attribute__((__format__ (printf, 1, 2)));
-void		 fatal(const char *, ...) __dead
-			__attribute__((__format__ (printf, 1, 2)));
-void		 fatalx(const char *) __dead
-			__attribute__((__format__ (printf, 1, 0)));
 
 /* mrt.c */
 void		 mrt_clear_seq(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.357 2017/01/13 18:59:12 phessler Exp $ */
+/*	$OpenBSD: session.c,v 1.358 2017/01/24 04:22:42 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -40,11 +40,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "bgpd.h"
 #include "mrt.h"
 #include "session.h"
+#include "log.h"
 
 #define PFD_PIPE_MAIN		0
 #define PFD_PIPE_ROUTE		1
@@ -203,11 +205,11 @@ session_main(int debug, int verbose)
 	void			*newp;
 	short			 events;
 
-	bgpd_process = PROC_SE;
-	log_procname = log_procnames[bgpd_process];
+	log_init(debug, LOG_DAEMON);
+	log_setverbose(verbose);
 
-	log_init(debug);
-	log_verbose(verbose);
+	bgpd_process = PROC_SE;
+	log_procinit(log_procnames[bgpd_process]);
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal(NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.99 2016/10/14 16:05:36 phessler Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.100 2017/01/24 04:22:42 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,7 @@
 #include "mrt.h"
 #include "session.h"
 #include "rde.h"
+#include "log.h"
 
 void		 print_op(enum comp_ops);
 void		 print_community(int, int);

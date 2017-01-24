@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.8 2015/12/05 18:28:04 benno Exp $ */
+/*	$OpenBSD: carp.c,v 1.9 2017/01/24 04:22:42 benno Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,7 @@
 
 #include "bgpd.h"
 #include "session.h"
+#include "log.h"
 
 struct carpgroup {
 	TAILQ_ENTRY(carpgroup)	 entry;

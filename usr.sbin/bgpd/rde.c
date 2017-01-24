@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.357 2017/01/23 22:53:52 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.358 2017/01/24 04:22:42 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <err.h>
 
@@ -38,6 +39,7 @@
 #include "mrt.h"
 #include "rde.h"
 #include "session.h"
+#include "log.h"
 
 #define PFD_PIPE_MAIN		0
 #define PFD_PIPE_SESSION	1
@@ -170,11 +172,11 @@ rde_main(int debug, int verbose)
 	int			 timeout;
 	u_int8_t		 aid;
 
-	bgpd_process = PROC_RDE;
-	log_procname = log_procnames[bgpd_process];
+	log_init(debug, LOG_DAEMON);
+	log_setverbose(verbose);
 
-	log_init(debug);
-	log_verbose(verbose);
+	bgpd_process = PROC_RDE;
+	log_procinit(log_procnames[bgpd_process]);
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal("getpwnam");
@@ -607,7 +609,7 @@ badnet:
 		case IMSG_CTL_LOG_VERBOSE:
 			/* already checked by SE */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			log_setverbose(verbose);
 			break;
 		default:
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.81 2015/12/30 12:06:56 benno Exp $ */
+/*	$OpenBSD: mrt.c,v 1.82 2017/01/24 04:22:42 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -32,6 +32,7 @@
 #include "session.h"
 
 #include "mrt.h"
+#include "log.h"
 
 int mrt_attr_dump(struct ibuf *, struct rde_aspath *, struct bgpd_addr *, int);
 int mrt_dump_entry_mp(struct mrt *, struct prefix *, u_int16_t,
