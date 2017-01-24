@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.38 2016/10/12 09:07:58 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.39 2017/01/24 13:28:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -163,8 +163,10 @@ paste_add(char *data, size_t size)
 	struct paste_buffer	*pb, *pb1;
 	u_int			 limit;
 
-	if (size == 0)
+	if (size == 0) {
+		free(data);
 		return;
+	}
 
 	limit = options_get_number(global_options, "buffer-limit");
 	RB_FOREACH_REVERSE_SAFE(pb, paste_time_tree, &paste_by_time, pb1) {
