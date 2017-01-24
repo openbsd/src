@@ -2299,3 +2299,142 @@ TEST(YAMLIO, TestWrapFlow) {
     out.clear();
   }
 }
+
+struct MappingContext {
+  int A = 0;
+};
+struct SimpleMap {
+  int B = 0;
+  int C = 0;
+};
+
+struct NestedMap {
+  NestedMap(MappingContext &Context) : Context(Context) {}
+  SimpleMap Simple;
+  MappingContext &Context;
+};
+
+namespace llvm {
+namespace yaml {
+template <> struct MappingContextTraits<SimpleMap, MappingContext> {
+  static void mapping(IO &io, SimpleMap &sm, MappingContext &Context) {
+    io.mapRequired("B", sm.B);
+    io.mapRequired("C", sm.C);
+    ++Context.A;
+    io.mapRequired("Context", Context.A);
+  }
+};
+
+template <> struct MappingTraits<NestedMap> {
+  static void mapping(IO &io, NestedMap &nm) {
+    io.mapRequired("Simple", nm.Simple, nm.Context);
+  }
+};
+}
+}
+
+TEST(YAMLIO, TestMapWithContext) {
+  MappingContext Context;
+  NestedMap Nested(Context);
+  std::string out;
+  llvm::raw_string_ostream ostr(out);
+
+  Output yout(ostr, nullptr, 15);
+
+  yout << Nested;
+  ostr.flush();
+  EXPECT_EQ(1, Context.A);
+  EXPECT_EQ("---\n"
+            "Simple:          \n"
+            "  B:               0\n"
+            "  C:               0\n"
+            "  Context:         1\n"
+            "...\n",
+            out);
+
+  out.clear();
+
+  Nested.Simple.B = 2;
+  Nested.Simple.C = 3;
+  yout << Nested;
+  ostr.flush();
+  EXPECT_EQ(2, Context.A);
+  EXPECT_EQ("---\n"
+            "Simple:          \n"
+            "  B:               2\n"
+            "  C:               3\n"
+            "  Context:         2\n"
+            "...\n",
+            out);
+  out.clear();
+}
+
+LLVM_YAML_IS_STRING_MAP(int)
+
+TEST(YAMLIO, TestCustomMapping) {
+  std::map<std::string, int> x;
+  x["foo"] = 1;
+  x["bar"] = 2;
+
+  std::string out;
+  llvm::raw_string_ostream ostr(out);
+  Output xout(ostr, nullptr, 0);
+
+  xout << x;
+  ostr.flush();
+  EXPECT_EQ("---\n"
+            "bar:             2\n"
+            "foo:             1\n"
+            "...\n",
+            out);
+
+  Input yin(out);
+  std::map<std::string, int> y;
+  yin >> y;
+  EXPECT_EQ(2ul, y.size());
+  EXPECT_EQ(1, y["foo"]);
+  EXPECT_EQ(2, y["bar"]);
+}
+
+LLVM_YAML_IS_STRING_MAP(FooBar)
+
+TEST(YAMLIO, TestCustomMappingStruct) {
+  std::map<std::string, FooBar> x;
+  x["foo"].foo = 1;
+  x["foo"].bar = 2;
+  x["bar"].foo = 3;
+  x["bar"].bar = 4;
+
+  std::string out;
+  llvm::raw_string_ostream ostr(out);
+  Output xout(ostr, nullptr, 0);
+
+  xout << x;
+  ostr.flush();
+  EXPECT_EQ("---\n"
+            "bar:             \n"
+            "  foo:             3\n"
+            "  bar:             4\n"
+            "foo:             \n"
+            "  foo:             1\n"
+            "  bar:             2\n"
+            "...\n",
+            out);
+
+  Input yin(out);
+  std::map<std::string, FooBar> y;
+  yin >> y;
+  EXPECT_EQ(2ul, y.size());
+  EXPECT_EQ(1, y["foo"].foo);
+  EXPECT_EQ(2, y["foo"].bar);
+  EXPECT_EQ(3, y["bar"].foo);
+  EXPECT_EQ(4, y["bar"].bar);
+}
+
+TEST(YAMLIO, InvalidInput) {
+  // polluting 1 value in the sequence
+  Input yin("---\n- foo:  3\n  bar:  5\n1\n- foo:  3\n  bar:  5\n...\n");
+  std::vector<FooBar> Data;
+  yin >> Data;
+  EXPECT_TRUE((bool)yin.error());
+}

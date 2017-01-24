@@ -1,5 +1,6 @@
 set(LLVM_LINK_COMPONENTS
   DebugInfoCodeView
+  DebugInfoMSF
   DebugInfoPDB
   Object
   Support
@@ -7,18 +8,20 @@ set(LLVM_LINK_COMPONENTS
 
 add_llvm_tool(llvm-pdbdump
   llvm-pdbdump.cpp
-  BuiltinDumper.cpp
-  ClassDefinitionDumper.cpp
-  CompilandDumper.cpp
-  EnumDumper.cpp
-  ExternalSymbolDumper.cpp
-  FunctionDumper.cpp
+  YamlSymbolDumper.cpp
+  YamlTypeDumper.cpp
   LinePrinter.cpp
   LLVMOutputStyle.cpp
   PdbYaml.cpp
-  TypeDumper.cpp
-  TypedefDumper.cpp
-  VariableDumper.cpp
+  PrettyBuiltinDumper.cpp
+  PrettyClassDefinitionDumper.cpp
+  PrettyCompilandDumper.cpp
+  PrettyEnumDumper.cpp
+  PrettyExternalSymbolDumper.cpp
+  PrettyFunctionDumper.cpp
+  PrettyTypeDumper.cpp
+  PrettyTypedefDumper.cpp
+  PrettyVariableDumper.cpp
   YAMLOutputStyle.cpp
   )
 
