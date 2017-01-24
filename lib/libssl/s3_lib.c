@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.128 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.129 2017/01/24 03:00:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2296,7 +2296,6 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
 		ctx->internal->tlsext_status_arg = parg;
 		return 1;
-		break;
 
 	case SSL_CTRL_SET_ECDH_AUTO:
 		ctx->internal->cert->ecdh_tmp_auto = larg;
