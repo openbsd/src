@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.82 2016/09/01 12:24:56 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.83 2017/01/24 01:01:33 mpi Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: January 24 2017 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -542,7 +542,7 @@ The
 .Cm /p
 modifier interprets the
 .Ar frameaddr
-argument as the PID of a process and shows the stack trace of
+argument as the TID of a process and shows the stack trace of
 that process.
 The
 .Cm /p
@@ -832,7 +832,7 @@ Display information on all processes.
 (Default) Show process information in a
 .Xr ps 1 Ns \&-like
 format.
-Information printed includes thread ID, parent
+Information printed includes process ID, thread ID, parent
 process ID, process group, UID, process status, process flags, process
 command name, and process wait channel message.
 .It Cm /a
@@ -928,7 +928,7 @@ A synonym for the
 .Ic show all callout
 command.
 .\" --------------------
-.It Ic ps Op Cm /anw
+.It Ic ps Op Cm /anow
 A synonym for
 .Ic show all procs .
 .\" --------------------
