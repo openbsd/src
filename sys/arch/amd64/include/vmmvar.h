@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.29 2017/01/19 23:18:55 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.30 2017/01/24 09:50:54 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -516,7 +516,7 @@ struct vmcb {
 			uint64_t	v_exitcode;		/* 070h */
 			uint64_t	v_exitinfo1;		/* 078h */
 			uint64_t	v_exitinfo2;		/* 080h */
-			uint64_t	v_extintinfo;		/* 088h */
+			uint64_t	v_exitintinfo;		/* 088h */
 			uint64_t	v_np_enable;		/* 090h */
 			uint64_t	v_avic_apic_bar;	/* 098h */
 			uint64_t	v_pad4;			/* 0A0h */

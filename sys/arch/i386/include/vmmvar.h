@@ -506,7 +506,7 @@ struct vmcb {
 			uint64_t	v_exitcode;		/* 070h */
 			uint64_t	v_exitinfo1;		/* 078h */
 			uint64_t	v_exitinfo2;		/* 080h */
-			uint64_t	v_extintinfo;		/* 088h */
+			uint64_t	v_exitintinfo;		/* 088h */
 			uint64_t	v_np_enable;		/* 090h */
 			uint64_t	v_avic_apic_bar;	/* 098h */
 			uint64_t	v_pad4;			/* 0A0h */
