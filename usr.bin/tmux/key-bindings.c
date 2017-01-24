@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.71 2017/01/16 14:52:25 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.72 2017/01/24 19:53:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -383,7 +383,7 @@ key_bindings_init(void)
 	for (i = 0; i < nitems(defaults); i++) {
 		cmdlist = cmd_string_parse(defaults[i], "<default>", i, &cause);
 		if (cmdlist == NULL)
-			fatalx("bad default key");
+			fatalx("bad default key: %s", defaults[i]);
 		cmdq_append(NULL, cmdq_get_command(cmdlist, NULL, NULL, 0));
 		cmd_list_free(cmdlist);
 	}

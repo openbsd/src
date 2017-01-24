@@ -1,4 +1,4 @@
-/* $OpenBSD: pty.c,v 1.1 2017/01/23 10:09:43 nicm Exp $ */
+/* $OpenBSD: pty.c,v 1.2 2017/01/24 19:53:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -45,7 +45,7 @@ pty_fork(int ptmfd, int *fd, char *name, size_t namelen, struct winsize *ws)
 	struct ptmget	ptm;
 	pid_t		pid;
 
-	if ((ioctl(ptmfd, PTMGET, &ptm) == -1))
+	if (ioctl(ptmfd, PTMGET, &ptm) == -1)
 		return (-1);
 
 	strlcpy(name, ptm.sn, namelen);

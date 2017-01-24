@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.119 2017/01/23 10:09:43 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.120 2017/01/24 19:53:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -252,16 +252,13 @@ client_main(struct event_base *base, int argc, char **argv, int flags,
 		 * flag.
 		 */
 		cmdlist = cmd_list_parse(argc, argv, NULL, 0, &cause);
-		if (cmdlist == NULL) {
-			fprintf(stderr, "%s\n", cause);
-			return (1);
+		if (cmdlist != NULL) {
+			TAILQ_FOREACH(cmd, &cmdlist->list, qentry) {
+				if (cmd->entry->flags & CMD_STARTSERVER)
+					cmdflags |= CMD_STARTSERVER;
+			}
+			cmd_list_free(cmdlist);
 		}
-		cmdflags &= ~CMD_STARTSERVER;
-		TAILQ_FOREACH(cmd, &cmdlist->list, qentry) {
-			if (cmd->entry->flags & CMD_STARTSERVER)
-				cmdflags |= CMD_STARTSERVER;
-		}
-		cmd_list_free(cmdlist);
 	}
 
 	/* Create client process structure (starts logging). */
