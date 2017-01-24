@@ -493,7 +493,12 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->NoUndefinedVersion = Args.hasArg(OPT_no_undefined_version);
   Config->Nostdlib = Args.hasArg(OPT_nostdlib);
   Config->OMagic = Args.hasArg(OPT_omagic);
+#ifdef __OpenBSD__
+  Config->Pie = getArg(Args, OPT_pie, OPT_nopie,
+      !Args.hasArg(OPT_shared) && !Args.hasArg(OPT_relocatable));
+#else
   Config->Pie = getArg(Args, OPT_pie, OPT_nopie, false);
+#endif
   Config->PrintGcSections = Args.hasArg(OPT_print_gc_sections);
   Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->DefineCommon = getArg(Args, OPT_define_common, OPT_no_define_common,
