@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.145 2017/01/24 09:03:21 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.146 2017/01/24 13:34:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1975,19 +1975,19 @@ err2:
 }
 
 void
-SSL_CTX_free(SSL_CTX *a)
+SSL_CTX_free(SSL_CTX *ctx)
 {
 	int	i;
 
-	if (a == NULL)
+	if (ctx == NULL)
 		return;
 
-	i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_SSL_CTX);
+	i = CRYPTO_add(&ctx->references, -1, CRYPTO_LOCK_SSL_CTX);
 	if (i > 0)
 		return;
 
-	if (a->param)
-		X509_VERIFY_PARAM_free(a->param);
+	if (ctx->param)
+		X509_VERIFY_PARAM_free(ctx->param);
 
 	/*
 	 * Free internal session cache. However: the remove_cb() may reference
@@ -1998,41 +1998,41 @@ SSL_CTX_free(SSL_CTX *a)
 	 * free ex_data, then finally free the cache.
 	 * (See ticket [openssl.org #212].)
 	 */
-	if (a->internal->sessions != NULL)
-		SSL_CTX_flush_sessions(a, 0);
+	if (ctx->internal->sessions != NULL)
+		SSL_CTX_flush_sessions(ctx, 0);
 
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->internal->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ctx, &ctx->internal->ex_data);
 
-	if (a->internal->sessions != NULL)
-		lh_SSL_SESSION_free(a->internal->sessions);
+	if (ctx->internal->sessions != NULL)
+		lh_SSL_SESSION_free(ctx->internal->sessions);
 
-	if (a->cert_store != NULL)
-		X509_STORE_free(a->cert_store);
-	sk_SSL_CIPHER_free(a->cipher_list);
-	sk_SSL_CIPHER_free(a->internal->cipher_list_by_id);
-	ssl_cert_free(a->internal->cert);
-	if (a->internal->client_CA != NULL)
-		sk_X509_NAME_pop_free(a->internal->client_CA, X509_NAME_free);
-	if (a->extra_certs != NULL)
-		sk_X509_pop_free(a->extra_certs, X509_free);
+	if (ctx->cert_store != NULL)
+		X509_STORE_free(ctx->cert_store);
+	sk_SSL_CIPHER_free(ctx->cipher_list);
+	sk_SSL_CIPHER_free(ctx->internal->cipher_list_by_id);
+	ssl_cert_free(ctx->internal->cert);
+	if (ctx->internal->client_CA != NULL)
+		sk_X509_NAME_pop_free(ctx->internal->client_CA, X509_NAME_free);
+	if (ctx->extra_certs != NULL)
+		sk_X509_pop_free(ctx->extra_certs, X509_free);
 
 #ifndef OPENSSL_NO_SRTP
-	if (a->internal->srtp_profiles)
-		sk_SRTP_PROTECTION_PROFILE_free(a->internal->srtp_profiles);
+	if (ctx->internal->srtp_profiles)
+		sk_SRTP_PROTECTION_PROFILE_free(ctx->internal->srtp_profiles);
 #endif
 
 #ifndef OPENSSL_NO_ENGINE
-	if (a->internal->client_cert_engine)
-		ENGINE_finish(a->internal->client_cert_engine);
+	if (ctx->internal->client_cert_engine)
+		ENGINE_finish(ctx->internal->client_cert_engine);
 #endif
 
-	free(a->internal->tlsext_ecpointformatlist);
-	free(a->internal->tlsext_supportedgroups);
+	free(ctx->internal->tlsext_ecpointformatlist);
+	free(ctx->internal->tlsext_supportedgroups);
 
-	free(a->internal->alpn_client_proto_list);
+	free(ctx->internal->alpn_client_proto_list);
 
-	free(a->internal);
-	free(a);
+	free(ctx->internal);
+	free(ctx);
 }
 
 void
