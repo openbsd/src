@@ -19,6 +19,8 @@ the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
 #define REGISTER_PREFIX "%"
+#undef ASM_COMMENT_START
+#define ASM_COMMENT_START "|"
 
 /* #define CTORS_SECTION_ASM_OP	"\t.section\t .ctors" */
 /* #define DTORS_SECTION_ASM_OP	"\t.section\t .dtors" */

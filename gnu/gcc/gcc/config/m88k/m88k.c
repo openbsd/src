@@ -63,7 +63,6 @@ rtx m88k_compare_op1;		/* cmpsi operand 1 */
 
 enum processor_type m88k_cpu;	/* target cpu */
 
-static void m88k_frame_related (rtx, rtx, int);
 static void m88k_maybe_dead (rtx);
 static void m88k_output_function_epilogue (FILE *, HOST_WIDE_INT);
 static rtx m88k_struct_value_rtx (tree, int);
@@ -501,9 +500,6 @@ static const enum machine_mode mode_from_align[] =
 			       VOIDmode, VOIDmode, VOIDmode, DImode};
 
 static void block_move_sequence (rtx, rtx, rtx, rtx, int, int);
-#ifndef USE_GAS
-static void output_short_branch_defs (FILE *);
-#endif
 
 /* Emit code to perform a block move.  Choose the best method.
 
@@ -672,20 +668,10 @@ output_xor (rtx operands[])
 }
 
 /* Output a call.  Normally this is just bsr or jsr, but this also deals with
-   accomplishing a branch after the call by incrementing r1.  This requires
-   that various assembler bugs be accommodated.  The 4.30 DG/UX assembler
-   requires that forward references not occur when computing the difference of
-   two labels.  The [version?] Motorola assembler computes a word difference.
-   No doubt there's more to come!
+   accomplishing a branch after the call by incrementing r1.
 
    It would seem the same idea could be used to tail call, but in this case,
    the epilogue will be non-null.  */
-
-#ifndef USE_GAS
-static rtx sb_name = NULL_RTX;
-static rtx sb_high = NULL_RTX;
-static rtx sb_low = NULL_RTX;
-#endif
 
 const char *
 output_call (rtx operands[], rtx addr)
@@ -704,9 +690,6 @@ output_call (rtx operands[], rtx addr)
       jump = XVECEXP (final_sequence, 0, 1);
       if (GET_CODE (jump) == JUMP_INSN)
 	{
-#ifndef USE_GAS
-	  rtx low, high;
-#endif
 	  const char *last;
 	  rtx dest = XEXP (SET_SRC (PATTERN (jump)), 0);
 	  int delta = 4 * (INSN_ADDRESSES (INSN_UID (dest))
@@ -749,32 +732,10 @@ output_call (rtx operands[], rtx addr)
 			    : (flag_pic ? "bsr.n %0#plt" : "bsr.n %0")),
 			   operands);
 
-#ifdef USE_GAS
 	  last = (delta < 0
 		  ? "subu %#r1,%#r1,.-%l0+4"
 		  : "addu %#r1,%#r1,%l0-.-4");
 	  operands[0] = dest;
-#else
-	  operands[0] = gen_label_rtx ();
-	  operands[1] = gen_label_rtx ();
-	  if (delta < 0)
-	    {
-	      low = dest;
-	      high = operands[1];
-	      last = "subu %#r1,%#r1,%l0\n%l1:";
-	    }
-	  else
-	    {
-	      low = operands[1];
-	      high = dest;
-	      last = "addu %#r1,%#r1,%l0\n%l1:";
-	    }
-
-	  /* Record the values to be computed later as "def name,high-low".  */
-	  sb_name = gen_rtx_EXPR_LIST (VOIDmode, operands[0], sb_name);
-	  sb_high = gen_rtx_EXPR_LIST (VOIDmode, high, sb_high);
-	  sb_low = gen_rtx_EXPR_LIST (VOIDmode, low, sb_low);
-#endif /* Don't USE_GAS */
 
 	  return last;
 	}
@@ -783,31 +744,6 @@ output_call (rtx operands[], rtx addr)
 	  ? "jsr%. %0"
 	  : (flag_pic ? "bsr%. %0#plt" : "bsr%. %0"));
 }
-
-#ifndef USE_GAS
-static void
-output_short_branch_defs (FILE *stream)
-{
-  char name[256], high[256], low[256];
-
-  for (; sb_name && sb_high && sb_low;
-       sb_name = XEXP (sb_name, 1),
-       sb_high = XEXP (sb_high, 1),
-       sb_low = XEXP (sb_low, 1))
-    {
-      ASM_GENERATE_INTERNAL_LABEL
-	(name, "L", CODE_LABEL_NUMBER (XEXP (sb_name, 0)));
-      ASM_GENERATE_INTERNAL_LABEL
-	(high, "L", CODE_LABEL_NUMBER (XEXP (sb_high, 0)));
-      ASM_GENERATE_INTERNAL_LABEL
-	(low, "L", CODE_LABEL_NUMBER (XEXP (sb_low, 0)));
-      /* This will change as the assembler requirements become known.  */
-      fprintf (stream, "%s%s,%s-%s\n",
-	       SET_ASM_OP, &name[1], &high[1], &low[1]);
-    }
-  gcc_assert (sb_name == NULL_RTX && sb_high == NULL_RTX && sb_low == NULL_RTX);
-}
-#endif
 
 /* Return truth value of the statement that this conditional branch is likely
    to fall through.  CONDITION, is the condition that JUMP_INSN is testing.  */
@@ -1253,47 +1189,6 @@ null_prologue (void)
 	  && m88k_stack_size == 0);
 }
 
-/* Add to 'insn' a note which is PATTERN (INSN) but with REG replaced
-   with (plus:P (reg 31) VAL).  It would be nice if dwarf2out_frame_debug_expr
-   could deduce these equivalences by itself so it wasn't necessary to hold
-   its hand so much.  */
-
-static void
-m88k_frame_related (rtx insn, rtx reg, int val)
-{
-  rtx real, set, temp;
-
-  real = copy_rtx (PATTERN (insn));
-
-  real = replace_rtx (real, reg, 
-		      gen_rtx_PLUS (Pmode, gen_rtx_REG (Pmode,
-							STACK_POINTER_REGNUM),
-				    GEN_INT (val)));
-  
-  /* We expect that 'real' is a SET.  */
-
-  gcc_assert (GET_CODE (real) == SET);
-  set = real;
-      
-  temp = simplify_rtx (SET_SRC (set));
-  if (temp)
-    SET_SRC (set) = temp;
-  temp = simplify_rtx (SET_DEST (set));
-  if (temp)
-    SET_DEST (set) = temp;
-  if (GET_CODE (SET_DEST (set)) == MEM)
-    {
-      temp = simplify_rtx (XEXP (SET_DEST (set), 0));
-      if (temp)
-	XEXP (SET_DEST (set), 0) = temp;
-    }
-  
-  RTX_FRAME_RELATED_P (insn) = 1;
-  REG_NOTES (insn) = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR,
-					real,
-					REG_NOTES (insn));
-}
-
 static void
 m88k_maybe_dead (rtx insn)
 {
@@ -1319,7 +1214,7 @@ m88k_expand_prologue (void)
 
       /* If the stack pointer adjustment has required a temporary register,
 	 tell the DWARF code how to understand this sequence.  */
-      if (! SMALL_INTVAL (m88k_stack_size))
+      if (! ADD_INTVAL (m88k_stack_size))
 	REG_NOTES (insn)
 	  = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR,
 			       gen_rtx_SET (VOIDmode, stack_pointer_rtx,
@@ -1333,6 +1228,9 @@ m88k_expand_prologue (void)
 
   if (frame_pointer_needed)
     {
+      /* Be sure to emit this instruction after all register saves, DWARF
+	 information depends on this.  */
+      emit_insn (gen_blockage ());
       insn = emit_add (frame_pointer_rtx, stack_pointer_rtx, m88k_fp_offset);
       RTX_FRAME_RELATED_P (insn) = 1;
     }
@@ -1363,36 +1261,7 @@ m88k_expand_prologue (void)
 static void
 m88k_output_function_epilogue (FILE *stream,
 			       HOST_WIDE_INT size ATTRIBUTE_UNUSED)
-{
-  rtx insn = get_last_insn ();
-
-  /* If the last insn isn't a BARRIER, we must write a return insn.  This
-     should only happen if the function has no prologue and no body.  */
-  if (GET_CODE (insn) == NOTE)
-    insn = prev_nonnote_insn (insn);
-  if (insn == NULL_RTX || GET_CODE (insn) != BARRIER)
-    asm_fprintf (stream, "\tjmp\t %R%s\n", reg_names[1]);
-
-#if 0
-  /* If the last insn is a barrier, and the insn before that is a call,
-     then add a nop instruction so that tdesc can walk the stack correctly
-     even though there is no epilogue. (Otherwise, the label for the
-     end of the tdesc region ends up at the start of the next function. */
-  if (insn && GET_CODE (insn) == BARRIER)
-    {
-      insn = prev_nonnote_insn (insn);
-      if (insn && GET_CODE (insn) == CALL_INSN)
-        asm_fprintf (stream, "\tor\t %R%s,%R%s,%R%s\n",
-		     reg_names[0], reg_names[0], reg_names[0]);
-    }
-#endif
-
-#ifndef USE_GAS
-  output_short_branch_defs (stream);
-#endif
-
-  fprintf (stream, "\n");
-
+{ 
   frame_laid_out = 0;
 }
 
@@ -1408,18 +1277,16 @@ m88k_expand_epilogue (void)
   if (nregs || nxregs)
     preserve_registers (m88k_fp_offset + 4, 0);
 
+  emit_insn (gen_blockage ());
+
   if (m88k_stack_size)
     {
-      emit_insn (gen_blockage ());
       emit_add (stack_pointer_rtx, stack_pointer_rtx, m88k_stack_size);
     }
 
-  /* This should not be necessary, but when there are several epilogues
-     in the function after the optimizer shuffles things around, the
-     extra epilogues will lack this extremely important instruction if
-     it is not explicitly generated. */
-  emit_insn (gen_blockage ());
   emit_insn (gen_indirect_jump (INCOMING_RETURN_ADDR_RTX));
+
+  emit_insn (gen_blockage ());
 }
 
 /* Emit insns to set DSTREG to SRCREG + AMOUNT during the prologue or
@@ -1566,7 +1433,7 @@ emit_ldst (int store_p, int regno, enum machine_mode mode, int offset)
   if (store_p)
     {
       insn = emit_move_insn (mem, reg);
-      m88k_frame_related (insn, stack_pointer_rtx, offset);
+      RTX_FRAME_RELATED_P (insn) = 1;
     }
   else
     emit_move_insn (reg, mem);
@@ -2221,15 +2088,11 @@ print_operand (FILE *file, rtx x, int code)
 		   && rtx_equal_p (XEXP (XEXP (x, 0), 1), last_addr)))
 	    asm_fprintf (file,
 #if 0
-#ifdef AS_BUG_FLDCR
-			 "fldcr\t %R%s,%Rcr63\n\t",
-#else
 			 "fldcr\t %R%s,%Rfcr63\n\t",
-#endif
-			 reg_names[0]);
 #else /* 0 */
-			 "tb1\t 1,%R%s,0xff\n\t", reg_names[0]);
+			 "tb1\t 1,%R%s,0xff\n\t",
 #endif /* 0 */
+			 reg_names[0]);
 	  m88k_volatile_code = code;
 	  last_addr = (GET_CODE (XEXP (x, 0)) == LO_SUM
 		       ? XEXP (XEXP (x, 0), 1) : 0);
@@ -2708,4 +2571,11 @@ m88k_override_options (void)
      The m88110 cache is small, so align to an 8 byte boundary.  */
   if (align_functions == 0)
     align_functions = TARGET_88100 ? 16 : 8;
+
+  /* XXX -freorder-blocks (enabled at -O2) does not work with -fdelayed-branch
+     yet.  */
+  if (flag_delayed_branch)
+    {
+      flag_reorder_blocks = flag_reorder_blocks_and_partition = 0;
+    }
 }

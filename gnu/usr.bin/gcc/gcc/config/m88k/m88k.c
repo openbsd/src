@@ -60,7 +60,6 @@ rtx m88k_compare_op1;		/* cmpsi operand 1 */
 
 enum processor_type m88k_cpu;	/* target cpu */
 
-static void m88k_frame_related PARAMS ((rtx, rtx, HOST_WIDE_INT));
 static void m88k_maybe_dead PARAMS ((rtx));
 static void m88k_output_function_epilogue PARAMS ((FILE *, HOST_WIDE_INT));
 static int m88k_adjust_cost PARAMS ((rtx, rtx, rtx, int));
@@ -1793,54 +1792,6 @@ null_prologue ()
 	  && m88k_stack_size == 0);
 }
 
-/* Add to 'insn' a note which is PATTERN (INSN) but with REG replaced
-   with (plus:P (reg 31) VAL).  It would be nice if dwarf2out_frame_debug_expr
-   could deduce these equivalences by itself so it wasn't necessary to hold
-   its hand so much.  */
-
-static void
-m88k_frame_related (insn, reg, val)
-     rtx insn;
-     rtx reg;
-     HOST_WIDE_INT val;
-{
-  rtx real, temp;
-
-  real = copy_rtx (PATTERN (insn));
-
-  real = replace_rtx (real, reg, 
-		      gen_rtx_PLUS (Pmode, gen_rtx_REG (Pmode,
-							STACK_POINTER_REGNUM),
-				    GEN_INT (val)));
-  
-  /* We expect that 'real' is a SET.  */
-
-  if (GET_CODE (real) == SET)
-    {
-      rtx set = real;
-      
-      temp = simplify_rtx (SET_SRC (set));
-      if (temp)
-	SET_SRC (set) = temp;
-      temp = simplify_rtx (SET_DEST (set));
-      if (temp)
-	SET_DEST (set) = temp;
-      if (GET_CODE (SET_DEST (set)) == MEM)
-	{
-	  temp = simplify_rtx (XEXP (SET_DEST (set), 0));
-	  if (temp)
-	    XEXP (SET_DEST (set), 0) = temp;
-	}
-    }
-  else
-    abort ();
-  
-  RTX_FRAME_RELATED_P (insn) = 1;
-  REG_NOTES (insn) = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR,
-					real,
-					REG_NOTES (insn));
-}
-
 static void
 m88k_maybe_dead (insn)
      rtx insn;
@@ -1867,7 +1818,7 @@ m88k_expand_prologue ()
 
       /* If the stack pointer adjustment has required a temporary register,
 	 tell the DWARF code how to understand this sequence.  */
-      if (! SMALL_INTVAL (m88k_stack_size))
+      if (! ADD_INTVAL (m88k_stack_size))
 	REG_NOTES (insn)
 	  = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR,
 			       gen_rtx_SET (VOIDmode, stack_pointer_rtx,
@@ -1881,6 +1832,9 @@ m88k_expand_prologue ()
 
   if (frame_pointer_needed)
     {
+      /* Be sure to emit this instruction after all register saves, DWARF
+	 information depends on this.  */
+      emit_insn (gen_blockage ());
       insn = emit_add (frame_pointer_rtx, stack_pointer_rtx, m88k_fp_offset);
       RTX_FRAME_RELATED_P (insn) = 1;
     }
@@ -1964,6 +1918,8 @@ m88k_expand_epilogue ()
 
   if (nregs || nxregs)
     preserve_registers (m88k_fp_offset + 4, 0);
+
+  emit_insn (gen_blockage ());
 
   if (m88k_stack_size)
     emit_add (stack_pointer_rtx, stack_pointer_rtx, m88k_stack_size);
@@ -2122,7 +2078,7 @@ emit_ldst (store_p, regno, mode, offset)
   if (store_p)
     {
       insn = emit_move_insn (mem, reg);
-      m88k_frame_related (insn, stack_pointer_rtx, offset);
+      RTX_FRAME_RELATED_P (insn) = 1;
     }
   else
     emit_move_insn (reg, mem);
