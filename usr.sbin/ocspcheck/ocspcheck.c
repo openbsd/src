@@ -227,7 +227,7 @@ read_fullchain(const char *file, int *count)
 	*count = 0;
 
 	if ((bio = BIO_new_file(file, "r")) == NULL) {
-		warnx("Unable to read a certificate from %s", file);
+		warn("Unable to read a certificate from %s", file);
 		return NULL;
 	}
 	if ((xis = PEM_X509_INFO_read_bio(bio, NULL, NULL, NULL)) == NULL) {
