@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.11 2017/01/24 12:53:52 deraadt Exp $ */
+/*	$Id: revokeproc.c,v 1.12 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -57,7 +57,7 @@ X509expires(X509 *x)
 	if (atim->type == V_ASN1_UTCTIME) {
 		if (atim->length <= 2) {
 			warnx("invalid ASN1_TIME");
-			return ((time_t)-1);
+			return (time_t)-1;
 		}
 		t.tm_year = (str[0] - '0') * 10 + (str[1] - '0');
 		if (t.tm_year < 70)
@@ -66,7 +66,7 @@ X509expires(X509 *x)
 	} else if (atim->type == V_ASN1_GENERALIZEDTIME) {
 		if (atim->length <= 4) {
 			warnx("invalid ASN1_TIME");
-			return ((time_t)-1);
+			return (time_t)-1;
 		}
 		t.tm_year = (str[0] - '0') * 1000 + (str[1] - '0') * 100 +
 		    (str[2] - '0') * 10 + (str[3] - '0');
@@ -78,7 +78,7 @@ X509expires(X509 *x)
 
 	if (atim->length <= (int)i + 10) {
 		warnx("invalid ASN1_TIME");
-		return ((time_t)-1);
+		return (time_t)-1;
 	}
 
 	t.tm_mon = ((str[i + 0] - '0') * 10 + (str[i + 1] - '0')) - 1;
@@ -87,7 +87,7 @@ X509expires(X509 *x)
 	t.tm_min  = (str[i + 6] - '0') * 10 + (str[i + 7] - '0');
 	t.tm_sec  = (str[i + 8] - '0') * 10 + (str[i + 9] - '0');
 
-	return (mktime(&t));
+	return mktime(&t);
 }
 
 int
@@ -346,5 +346,5 @@ out:
 	free(der64);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
-	return (rc);
+	return rc;
 }

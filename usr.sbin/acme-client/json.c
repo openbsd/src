@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.8 2017/01/24 12:53:52 deraadt Exp $ */
+/*	$Id: json.c,v 1.9 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -76,7 +76,7 @@ build(struct parse *parse, struct jsmnn **np,
 	ssize_t		 tmp;
 
 	if (sz == 0)
-		return (0);
+		return 0;
 
 	assert(parse->cur < parse->max);
 	n = *np = &parse->nodes[parse->cur++];
@@ -93,7 +93,7 @@ build(struct parse *parse, struct jsmnn **np,
 			 t->end - t->start);
 		if (n->d.str == NULL)
 			break;
-		return (1);
+		return 1;
 	case JSMN_OBJECT:
 		n->fields = t->size;
 		n->d.obj = calloc(n->fields,
@@ -116,7 +116,7 @@ build(struct parse *parse, struct jsmnn **np,
 		}
 		if (i < (size_t)t->size)
 			break;
-		return (j + 1);
+		return j + 1;
 	case JSMN_ARRAY:
 		n->fields = t->size;
 		n->d.array = calloc(n->fields,
@@ -133,12 +133,12 @@ build(struct parse *parse, struct jsmnn **np,
 		}
 		if (i < (size_t)t->size)
 			break;
-		return (j + 1);
+		return j + 1;
 	default:
 		break;
 	}
 
-	return (-1);
+	return -1;
 }
 
 /*
@@ -187,17 +187,17 @@ jsmntree_alloc(jsmntok_t *t, const char *js, size_t sz)
 	struct parse	*p;
 
 	if (sz == 0)
-		return (NULL);
+		return NULL;
 
 	p = calloc(1, sizeof(struct parse));
 	if (p == NULL)
-		return (NULL);
+		return NULL;
 
 	p->max = sz;
 	p->nodes = calloc(p->max, sizeof(struct jsmnn));
 	if (p->nodes == NULL) {
 		free(p);
-		return (NULL);
+		return NULL;
 	}
 
 	if (build(p, &first, t, js, sz) < 0) {
@@ -205,7 +205,7 @@ jsmntree_alloc(jsmntok_t *t, const char *js, size_t sz)
 		first = NULL;
 	}
 
-	return (first);
+	return first;
 }
 
 /*
@@ -226,7 +226,7 @@ static struct jsmnn *
 json_getarrayobj(struct jsmnn *n)
 {
 
-	return (n->type != JSMN_OBJECT ? NULL : n);
+	return n->type != JSMN_OBJECT ? NULL : n;
 }
 
 /*
@@ -240,7 +240,7 @@ json_getarray(struct jsmnn *n, const char *name)
 	size_t		 i;
 
 	if (n->type != JSMN_OBJECT)
-		return (NULL);
+		return NULL;
 	for (i = 0; i < n->fields; i++) {
 		if (n->d.obj[i].lhs->type != JSMN_STRING &&
 		    n->d.obj[i].lhs->type != JSMN_PRIMITIVE)
@@ -250,10 +250,10 @@ json_getarray(struct jsmnn *n, const char *name)
 		break;
 	}
 	if (i == n->fields)
-		return (NULL);
+		return NULL;
 	if (n->d.obj[i].rhs->type != JSMN_ARRAY)
-		return (NULL);
-	return (n->d.obj[i].rhs);
+		return NULL;
+	return n->d.obj[i].rhs;
 }
 
 /*
@@ -268,7 +268,7 @@ json_getstr(struct jsmnn *n, const char *name)
 	char		*cp;
 
 	if (n->type != JSMN_OBJECT)
-		return (NULL);
+		return NULL;
 	for (i = 0; i < n->fields; i++) {
 		if (n->d.obj[i].lhs->type != JSMN_STRING &&
 		    n->d.obj[i].lhs->type != JSMN_PRIMITIVE)
@@ -278,15 +278,15 @@ json_getstr(struct jsmnn *n, const char *name)
 		break;
 	}
 	if (i == n->fields)
-		return (NULL);
+		return NULL;
 	if (n->d.obj[i].rhs->type != JSMN_STRING &&
 	    n->d.obj[i].rhs->type != JSMN_PRIMITIVE)
-		return (NULL);
+		return NULL;
 
 	cp = strdup(n->d.obj[i].rhs->d.str);
 	if (cp == NULL)
 		warn("strdup");
-	return (cp);
+	return cp;
 }
 
 /*
@@ -312,9 +312,9 @@ json_parse_response(struct jsmnn *n)
 	int		 rc;
 
 	if (n == NULL)
-		return (-1);
+		return -1;
 	if ((resp = json_getstr(n, "status")) == NULL)
-		return (-1);
+		return -1;
 
 	if (strcmp(resp, "valid") == 0)
 		rc = 1;
@@ -324,7 +324,7 @@ json_parse_response(struct jsmnn *n)
 		rc = -1;
 
 	free(resp);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -341,11 +341,11 @@ json_parse_challenge(struct jsmnn *n, struct chng *p)
 	char		*type;
 
 	if (n == NULL)
-		return (0);
+		return 0;
 
 	array = json_getarray(n, "challenges");
 	if (array == NULL)
-		return (0);
+		return 0;
 
 	for (i = 0; i < array->fields; i++) {
 		obj = json_getarrayobj(array->d.array[i]);
@@ -360,10 +360,10 @@ json_parse_challenge(struct jsmnn *n, struct chng *p)
 			continue;
 		p->uri = json_getstr(obj, "uri");
 		p->token = json_getstr(obj, "token");
-		return (p->uri != NULL && p->token != NULL);
+		return p->uri != NULL && p->token != NULL;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -375,15 +375,15 @@ json_parse_capaths(struct jsmnn *n, struct capaths *p)
 {
 
 	if (n == NULL)
-		return (0);
+		return 0;
 
 	p->newauthz = json_getstr(n, "new-authz");
 	p->newcert = json_getstr(n, "new-cert");
 	p->newreg = json_getstr(n, "new-reg");
 	p->revokecert = json_getstr(n, "revoke-cert");
 
-	return (p->newauthz != NULL && p->newcert != NULL &&
-	    p->newreg != NULL && p->revokecert != NULL);
+	return p->newauthz != NULL && p->newcert != NULL &&
+	    p->newreg != NULL && p->revokecert != NULL;
 }
 
 /*
@@ -421,7 +421,7 @@ again:
 	tok = calloc(tokcount, sizeof(jsmntok_t));
 	if (tok == NULL) {
 		warn("calloc");
-		return (NULL);
+		return NULL;
 	}
 
 	/* Actually try to parse the JSON into the tokens. */
@@ -434,14 +434,14 @@ again:
 	} else if (r < 0) {
 		warnx("jsmn_parse: %d", r);
 		free(tok);
-		return (NULL);
+		return NULL;
 	}
 
 	/* Now parse the tokens into a tree. */
 
 	n = jsmntree_alloc(tok, buf, r);
 	free(tok);
-	return (n);
+	return n;
 }
 
 /*
@@ -462,7 +462,7 @@ json_fmt_newreg(const char *license)
 		warn("asprintf");
 		p = NULL;
 	}
-	return (p);
+	return p;
 }
 
 /*
@@ -484,7 +484,7 @@ json_fmt_newauthz(const char *domain)
 		warn("asprintf");
 		p = NULL;
 	}
-	return (p);
+	return p;
 }
 
 /*
@@ -505,7 +505,7 @@ json_fmt_challenge(const char *token, const char *thumb)
 		warn("asprintf");
 		p = NULL;
 	}
-	return (p);
+	return p;
 }
 
 /*
@@ -526,7 +526,7 @@ json_fmt_revokecert(const char *cert)
 		warn("asprintf");
 		p = NULL;
 	}
-	return (p);
+	return p;
 }
 
 /*
@@ -547,7 +547,7 @@ json_fmt_newcert(const char *cert)
 		warn("asprintf");
 		p = NULL;
 	}
-	return (p);
+	return p;
 }
 
 /*
@@ -569,7 +569,7 @@ json_fmt_header_rsa(const char *exp, const char *mod)
 		warn("asprintf");
 		p = NULL;
 	}
-	return (p);
+	return p;
 }
 
 /*
@@ -592,7 +592,7 @@ json_fmt_protected_rsa(const char *exp, const char *mod, const char *nce)
 		warn("asprintf");
 		p = NULL;
 	}
-	return (p);
+	return p;
 }
 
 /*
@@ -616,7 +616,7 @@ json_fmt_signed(const char *header, const char *protected,
 		warn("asprintf");
 		p = NULL;
 	}
-	return (p);
+	return p;
 }
 
 /*
@@ -639,5 +639,5 @@ json_fmt_thumb_rsa(const char *exp, const char *mod)
 		warn("asprintf");
 		p = NULL;
 	}
-	return (p);
+	return p;
 }

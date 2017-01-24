@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.11 2017/01/24 12:53:52 deraadt Exp $ */
+/*	$Id: chngproc.c,v 1.12 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -147,5 +147,5 @@ out:
 	free(fmt);
 	free(th);
 	free(tok);
-	return(rc);
+	return rc;
 }

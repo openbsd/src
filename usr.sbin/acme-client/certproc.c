@@ -1,4 +1,4 @@
-/*	$Id: certproc.c,v 1.9 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: certproc.c,v 1.10 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -46,11 +46,11 @@ x509buf(X509 *x, size_t *sz)
 
 	if ((bio = BIO_new(BIO_s_mem())) == NULL) {
 		warnx("BIO_new");
-		return (NULL);
+		return NULL;
 	} else if (!PEM_write_bio_X509(bio, x)) {
 		warnx("PEM_write_bio_X509");
 		BIO_free(bio);
-		return (NULL);
+		return NULL;
 	}
 
 	/*
@@ -61,19 +61,19 @@ x509buf(X509 *x, size_t *sz)
 	if ((p = calloc(1, bio->num_write + 1)) == NULL) {
 		warn("calloc");
 		BIO_free(bio);
-		return (NULL);
+		return NULL;
 	}
 
 	ssz = BIO_read(bio, p, bio->num_write);
 	if (ssz < 0 || (unsigned)ssz != bio->num_write) {
 		warnx("BIO_read");
 		BIO_free(bio);
-		return (NULL);
+		return NULL;
 	}
 
 	*sz = ssz;
 	BIO_free(bio);
-	return (p);
+	return p;
 }
 
 int
@@ -240,5 +240,5 @@ out:
 	free(chain);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
-	return (rc);
+	return rc;
 }

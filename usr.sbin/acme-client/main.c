@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.32 2017/01/24 12:53:52 deraadt Exp $ */
+/*	$Id: main.c,v 1.33 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -430,10 +430,9 @@ main(int argc, char *argv[])
 	    checkexit(pids[COMP_REVOKE], COMP_REVOKE);
 
 	free(alts);
-	return (rc != COMP__MAX ? EXIT_FAILURE :
-	    (c == 2 ? EXIT_SUCCESS : 2));
+	return rc != COMP__MAX ? EXIT_FAILURE : (c == 2 ? EXIT_SUCCESS : 2);
 usage:
 	fprintf(stderr,
 	    "usage: acme-client [-ADFnrv] [-f configfile] domain\n");
-	return (EXIT_FAILURE);
+	return EXIT_FAILURE;
 }

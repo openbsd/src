@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.10 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: acctproc.c,v 1.11 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -47,11 +47,11 @@ bn2string(const BIGNUM *bn)
 	len = BN_num_bytes(bn);
 	if ((buf = malloc(len)) == NULL) {
 		warn("malloc");
-		return (NULL);
+		return NULL;
 	} else if (len != BN_bn2bin(bn, (unsigned char *)buf)) {
 		warnx("BN_bn2bin");
 		free(buf);
-		return (NULL);
+		return NULL;
 	}
 
 	/* Convert to base64url. */
@@ -59,11 +59,11 @@ bn2string(const BIGNUM *bn)
 	if ((bbuf = base64buf_url(buf, len)) == NULL) {
 		warnx("base64buf_url");
 		free(buf);
-		return (NULL);
+		return NULL;
 	}
 
 	free(buf);
-	return (bbuf);
+	return bbuf;
 }
 
 /*
@@ -87,7 +87,7 @@ op_thumb_rsa(EVP_PKEY *pkey)
 
 	free(exp);
 	free(mod);
-	return (json);
+	return json;
 }
 
 /*
@@ -150,7 +150,7 @@ out:
 	free(thumb);
 	free(dig);
 	free(dig64);
-	return (rc);
+	return rc;
 }
 
 static int
@@ -184,7 +184,7 @@ op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
 
 	free(exp);
 	free(mod);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -296,7 +296,7 @@ out:
 	free(dig);
 	free(dig64);
 	free(fin);
-	return (rc);
+	return rc;
 }
 
 int
@@ -397,5 +397,5 @@ out:
 		EVP_PKEY_free(pkey);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
-	return (rc);
+	return rc;
 }

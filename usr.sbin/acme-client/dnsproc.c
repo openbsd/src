@@ -1,4 +1,4 @@
-/*	$Id: dnsproc.c,v 1.8 2017/01/24 12:53:52 deraadt Exp $ */
+/*	$Id: dnsproc.c,v 1.9 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,12 +71,12 @@ host_dns(const char *s, struct addr *vec)
 	    error == EAI_NODATA ||
 #endif
 	    error == EAI_NONAME)
-		return(0);
+		return 0;
 
 	if (error) {
 		warnx("%s: parse error: %s",
 		    s, gai_strerror(error));
-		return(-1);
+		return -1;
 	}
 
 	for (vecsz = 0, res = res0;
@@ -106,7 +106,7 @@ host_dns(const char *s, struct addr *vec)
 	}
 
 	freeaddrinfo(res0);
-	return(vecsz);
+	return vecsz;
 }
 
 int
@@ -182,5 +182,5 @@ out:
 	close(nfd);
 	free(look);
 	free(last);
-	return(rc);
+	return rc;
 }

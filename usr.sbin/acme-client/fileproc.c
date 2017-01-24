@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.13 2017/01/24 12:53:52 deraadt Exp $ */
+/*	$Id: fileproc.c,v 1.14 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,24 +40,24 @@ serialise(const char *tmp, const char *real,
 	fd = open(tmp, O_WRONLY|O_CREAT|O_TRUNC, 0444);
 	if (fd == -1) {
 		warn("%s", tmp);
-		return (0);
+		return 0;
 	} else if ((ssize_t)vsz != write(fd, v, vsz)) {
 		warnx("%s", tmp);
 		close(fd);
-		return (0);
+		return 0;
 	} else if (v2 != NULL && write(fd, v2, v2sz) != (ssize_t)v2sz) {
 		warnx("%s", tmp);
 		close(fd);
-		return (0);
+		return 0;
 	} else if (close(fd) == -1) {
 		warn("%s", tmp);
-		return (0);
+		return 0;
 	} else if (rename(tmp, real) == -1) {
 		warn("%s", real);
-		return (0);
+		return 0;
 	}
 
-	return (1);
+	return 1;
 }
 
 int
@@ -218,5 +218,5 @@ out:
 	free(certfile_bak);
 	free(chainfile_bak);
 	free(fullchainfile_bak);
-	return (rc);
+	return rc;
 }

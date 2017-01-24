@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.12 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: netproc.c,v 1.13 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -98,17 +98,17 @@ url2host(const char *host, short *port, char **path)
 		*port = 443;
 		if ((url = strdup(host + 8)) == NULL) {
 			warn("strdup");
-			return (NULL);
+			return NULL;
 		}
 	} else if (strncmp(host, "http://", 7) == 0) {
 		*port = 80;
 		if ((url = strdup(host + 7)) == NULL) {
 			warn("strdup");
-			return (NULL);
+			return NULL;
 		}
 	} else {
 		warnx("%s: unknown schema", host);
-		return (NULL);
+		return NULL;
 	}
 
 	/* Terminate path part. */
@@ -122,10 +122,10 @@ url2host(const char *host, short *port, char **path)
 	if (*path == NULL) {
 		warn("strdup");
 		free(url);
-		return (NULL);
+		return NULL;
 	}
 
-	return (url);
+	return url;
 }
 
 /*
@@ -142,11 +142,11 @@ urlresolve(int fd, const char *host, struct source *v)
 	long		 lval;
 
 	if (writeop(fd, COMM_DNS, DNS_LOOKUP) <= 0)
-		return (-1);
+		return -1;
 	else if (writestr(fd, COMM_DNSQ, host) <= 0)
-		return (-1);
+		return -1;
 	else if ((lval = readop(fd, COMM_DNSLEN)) < 0)
-		return (-1);
+		return -1;
 
 	sz = lval;
 	assert(sz <= MAX_SERVERS_DNS);
@@ -163,11 +163,11 @@ urlresolve(int fd, const char *host, struct source *v)
 		v[i].ip = addr;
 	}
 
-	return (sz);
+	return sz;
 err:
 	for (i = 0; i < sz; i++)
 		free(v[i].ip);
-	return (-1);
+	return -1;
 }
 
 /*
@@ -187,12 +187,12 @@ nreq(struct conn *c, const char *addr)
 	long		 code;
 
 	if ((host = url2host(addr, &port, &path)) == NULL)
-		return (-1);
+		return -1;
 
 	if ((ssz = urlresolve(c->dfd, host, src)) < 0) {
 		free(host);
 		free(path);
-		return (-1);
+		return -1;
 	}
 	srcsz = ssz;
 
@@ -200,7 +200,7 @@ nreq(struct conn *c, const char *addr)
 	free(host);
 	free(path);
 	if (g == NULL)
-		return (-1);
+		return -1;
 
 	code = g->code;
 
@@ -213,9 +213,9 @@ nreq(struct conn *c, const char *addr)
 	http_get_free(g);
 	if (c->buf.buf == NULL) {
 		warn("malloc");
-		return (-1);
+		return -1;
 	}
-	return (code);
+	return code;
 }
 
 /*
@@ -235,29 +235,29 @@ sreq(struct conn *c, const char *addr, const char *req)
 	long		 code;
 
 	if ((host = url2host(c->na, &port, &path)) == NULL)
-		return (-1);
+		return -1;
 
 	if ((ssz = urlresolve(c->dfd, host, src)) < 0) {
 		free(host);
 		free(path);
-		return (-1);
+		return -1;
 	}
 
 	g = http_get(src, (size_t)ssz, host, port, path, NULL, 0);
 	free(host);
 	free(path);
 	if (g == NULL)
-		return (-1);
+		return -1;
 
 	h = http_head_get("Replay-Nonce", g->head, g->headsz);
 	if (h == NULL) {
 		warnx("%s: no replay nonce", c->na);
 		http_get_free(g);
-		return (-1);
+		return -1;
 	} else if ((nonce = strdup(h->val)) == NULL) {
 		warn("strdup");
 		http_get_free(g);
-		return (-1);
+		return -1;
 	}
 	http_get_free(g);
 
@@ -268,31 +268,31 @@ sreq(struct conn *c, const char *addr, const char *req)
 
 	if (writeop(c->fd, COMM_ACCT, ACCT_SIGN) <= 0) {
 		free(nonce);
-		return (-1);
+		return -1;
 	} else if (writestr(c->fd, COMM_PAY, req) <= 0) {
 		free(nonce);
-		return (-1);
+		return -1;
 	} else if (writestr(c->fd, COMM_NONCE, nonce) <= 0) {
 		free(nonce);
-		return (-1);
+		return -1;
 	}
 	free(nonce);
 
 	/* Now read back the signed payload. */
 
 	if ((reqsn = readstr(c->fd, COMM_REQ)) == NULL)
-		return (-1);
+		return -1;
 
 	/* Now send the signed payload to the CA. */
 
 	if ((host = url2host(addr, &port, &path)) == NULL) {
 		free(reqsn);
-		return (-1);
+		return -1;
 	} else if ((ssz = urlresolve(c->dfd, host, src)) < 0) {
 		free(host);
 		free(path);
 		free(reqsn);
-		return (-1);
+		return -1;
 	}
 
 	g = http_get(src, (size_t)ssz, host, port, path, reqsn, strlen(reqsn));
@@ -301,7 +301,7 @@ sreq(struct conn *c, const char *addr, const char *req)
 	free(path);
 	free(reqsn);
 	if (g == NULL)
-		return (-1);
+		return -1;
 
 	/* Stuff response into parse buffer. */
 
@@ -314,9 +314,9 @@ sreq(struct conn *c, const char *addr, const char *req)
 	http_get_free(g);
 	if (c->buf.buf == NULL) {
 		warn("malloc");
-		return (-1);
+		return -1;
 	}
-	return (code);
+	return code;
 }
 
 /*
@@ -347,7 +347,7 @@ donewreg(struct conn *c, const char *agreement, const struct capaths *p)
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
 	free(req);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -383,7 +383,7 @@ dochngreq(struct conn *c, const char *alt, struct chng *chng,
 		buf_dump(&c->buf);
 	json_free(j);
 	free(req);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -410,7 +410,7 @@ dochngresp(struct conn *c, const struct chng *chng, const char *th)
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
 	free(req);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -429,25 +429,25 @@ dochngcheck(struct conn *c, struct chng *chng)
 
 	if ((lc = nreq(c, chng->uri)) < 0) {
 		warnx("%s: bad comm", chng->uri);
-		return (0);
+		return 0;
 	} else if (lc != 200 && lc != 201 && lc != 202) {
 		warnx("%s: bad HTTP: %ld", chng->uri, lc);
 		buf_dump(&c->buf);
-		return (0);
+		return 0;
 	} else if ((j = json_parse(c->buf.buf, c->buf.sz)) == NULL) {
 		warnx("%s: bad JSON object", chng->uri);
 		buf_dump(&c->buf);
-		return (0);
+		return 0;
 	} else if ((cc = json_parse_response(j)) == -1) {
 		warnx("%s: bad response", chng->uri);
 		buf_dump(&c->buf);
 		json_free(j);
-		return (0);
+		return 0;
 	} else if (cc > 0)
 		chng->status = 1;
 
 	json_free(j);
-	return (1);
+	return 1;
 }
 
 static int
@@ -474,7 +474,7 @@ dorevoke(struct conn *c, const char *addr, const char *cert)
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
 	free(req);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -504,7 +504,7 @@ docert(struct conn *c, const char *addr, const char *cert)
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
 	free(req);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -533,7 +533,7 @@ dodirs(struct conn *c, const char *addr, struct capaths *paths)
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
 	json_free(j);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -556,7 +556,7 @@ dofullchain(struct conn *c, const char *addr)
 
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -791,5 +791,5 @@ out:
 			json_free_challenge(&chngs[i]);
 	free(chngs);
 	json_free_capaths(&paths);
-	return (rc);
+	return rc;
 }

@@ -1,4 +1,4 @@
-/*	$Id: util.c,v 1.8 2017/01/24 12:53:52 deraadt Exp $ */
+/*	$Id: util.c,v 1.9 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -93,14 +93,14 @@ readop(int fd, enum comm comm)
 	ssz = read(fd, &op, sizeof(long));
 	if (ssz < 0) {
 		warn("read: %s", comms[comm]);
-		return (LONG_MAX);
+		return LONG_MAX;
 	} else if (ssz && ssz != sizeof(long)) {
 		warnx("short read: %s", comms[comm]);
-		return (LONG_MAX);
+		return LONG_MAX;
 	} else if (ssz == 0)
-		return (0);
+		return 0;
 
-	return (op);
+	return op;
 }
 
 char *
@@ -108,7 +108,7 @@ readstr(int fd, enum comm comm)
 {
 	size_t	 sz;
 
-	return (readbuf(fd, comm, &sz));
+	return readbuf(fd, comm, &sz);
 }
 
 /*
@@ -126,16 +126,16 @@ readbuf(int fd, enum comm comm, size_t *sz)
 
 	if ((ssz = read(fd, sz, sizeof(size_t))) < 0) {
 		warn("read: %s length", comms[comm]);
-		return (NULL);
+		return NULL;
 	} else if ((size_t)ssz != sizeof(size_t)) {
 		warnx("short read: %s length", comms[comm]);
-		return (NULL);
+		return NULL;
 	} else if (*sz > SIZE_MAX - 1) {
 		warnx("integer overflow");
-		return (NULL);
+		return NULL;
 	} else if ((p = calloc(1, *sz + 1)) == NULL) {
 		warn("malloc");
-		return (NULL);
+		return NULL;
 	}
 
 	/* Catch this over several reads. */
@@ -156,10 +156,10 @@ readbuf(int fd, enum comm comm, size_t *sz)
 	if (lsz) {
 		warnx("couldn't read buffer: %s", comms[comm]);
 		free(p);
-		return (NULL);
+		return NULL;
 	}
 
-	return (p);
+	return p;
 }
 
 /*
@@ -179,17 +179,17 @@ writeop(int fd, enum comm comm, long op)
 		if ((er = errno) != EPIPE)
 			warn("write: %s", comms[comm]);
 		signal(SIGPIPE, sigfp);
-		return (er == EPIPE ? 0 : -1);
+		return er == EPIPE ? 0 : -1;
 	}
 
 	signal(SIGPIPE, sigfp);
 
 	if ((size_t)ssz != sizeof(long)) {
 		warnx("short write: %s", comms[comm]);
-		return (-1);
+		return -1;
 	}
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -216,7 +216,7 @@ writebuf(int fd, enum comm comm, const void *v, size_t sz)
 		if ((er = errno) != EPIPE)
 			warn("write: %s length", comms[comm]);
 		signal(SIGPIPE, sigfp);
-		return (er == EPIPE ? 0 : -1);
+		return er == EPIPE ? 0 : -1;
 	}
 
 	/* Now write errors cause us to bail. */
@@ -231,14 +231,14 @@ writebuf(int fd, enum comm comm, const void *v, size_t sz)
 		rc = 1;
 
 	signal(SIGPIPE, sigfp);
-	return (rc);
+	return rc;
 }
 
 int
 writestr(int fd, enum comm comm, const char *v)
 {
 
-	return (writebuf(fd, comm, v, strlen(v)));
+	return writebuf(fd, comm, v, strlen(v));
 }
 
 /*
@@ -254,21 +254,21 @@ checkexit(pid_t pid, enum comp comp)
 
 	if (waitpid(pid, &c, 0) == -1) {
 		warn("waitpid");
-		return (0);
+		return 0;
 	} else if (!WIFEXITED(c) && WIFSIGNALED(c)) {
 		cp = strsignal(WTERMSIG(c));
 		warnx("signal: %s(%u): %s", comps[comp], pid, cp);
-		return (0);
+		return 0;
 	} else if (!WIFEXITED(c)) {
 		warnx("did not exit: %s(%u)", comps[comp], pid);
-		return (0);
+		return 0;
 	} else if (WEXITSTATUS(c) != EXIT_SUCCESS) {
 		cc = WEXITSTATUS(c);
 		dodbg("bad exit: %s(%u): %d", comps[comp], pid, cc);
-		return (0);
+		return 0;
 	}
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -287,23 +287,23 @@ checkexit_ext(int *rc, pid_t pid, enum comp comp)
 
 	if (waitpid(pid, &c, 0) == -1) {
 		warn("waitpid");
-		return (0);
+		return 0;
 	}
 
 	if (!WIFEXITED(c) && WIFSIGNALED(c)) {
 		cp = strsignal(WTERMSIG(c));
 		warnx("signal: %s(%u): %s", comps[comp], pid, cp);
-		return (0);
+		return 0;
 	} else if (!WIFEXITED(c)) {
 		warnx("did not exit: %s(%u)", comps[comp], pid);
-		return (0);
+		return 0;
 	}
 
 	/* Now check extended status. */
 
 	if ((*rc = WEXITSTATUS(c)) != EXIT_SUCCESS && *rc != 2) {
 		dodbg("bad exit: %s(%u): %d", comps[comp], pid, *rc);
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
