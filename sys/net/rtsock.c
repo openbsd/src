@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.219 2017/01/23 07:27:21 dlg Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.220 2017/01/24 00:17:14 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -459,30 +459,94 @@ route_input(struct mbuf *m0, sa_family_t sa_family)
 		m_freem(m);
 }
 
-int
-route_output(struct mbuf *m, ...)
+struct rt_msghdr *
+rt_report(struct rtentry *rt, u_char type, int seq, int tableid)
 {
-	struct rt_msghdr	*rtm = NULL;
-	struct rtentry		*rt = NULL;
-	struct rtentry		*saved_nrt = NULL;
+	struct rt_msghdr	*rtm;
 	struct rt_addrinfo	 info;
-	int			 plen, len, newgate = 0, error = 0;
-	struct ifnet		*ifp = NULL;
-	struct ifaddr		*ifa = NULL;
-	struct socket		*so;
-	struct rawcb		*rp = NULL;
 	struct sockaddr_rtlabel	 sa_rl;
 	struct sockaddr_in6	 sa_mask;
 #ifdef BFD
 	struct sockaddr_bfd	 sa_bfd;
 #endif
 #ifdef MPLS
-	struct sockaddr_mpls	 sa_mpls, *psa_mpls;
+	struct sockaddr_mpls	 sa_mpls;
+#endif
+	struct ifnet		*ifp = NULL;
+	int			 len;
+
+	bzero(&info, sizeof(info));
+	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
+#ifdef BFD
+	if (rt->rt_flags & RTF_BFD)
+		info.rti_info[RTAX_BFD] = bfd2sa(rt, &sa_bfd);
+#endif
+#ifdef MPLS
+	if (rt->rt_flags & RTF_MPLS) {
+		bzero(&sa_mpls, sizeof(sa_mpls));
+		sa_mpls.smpls_family = AF_MPLS;
+		sa_mpls.smpls_len = sizeof(sa_mpls);
+		sa_mpls.smpls_label = ((struct rt_mpls *)
+		    rt->rt_llinfo)->mpls_label;
+		info.rti_info[RTAX_SRC] = (struct sockaddr *)&sa_mpls;
+		info.rti_mpls = ((struct rt_mpls *)
+		    rt->rt_llinfo)->mpls_operation;
+	}
+#endif
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp != NULL) {
+		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
+		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+		if (ifp->if_flags & IFF_POINTOPOINT)
+			info.rti_info[RTAX_BRD] = rt->rt_ifa->ifa_dstaddr;
+	}
+	if_put(ifp);
+	/* RTAX_GENMASK, RTAX_AUTHOR, RTAX_SRCMASK ignored */
+
+	/* build new route message */
+	len = rt_msg2(type, RTM_VERSION, &info, NULL, NULL);
+	/* XXX why can't we wait? Should be process context... */
+	rtm = malloc(len, M_RTABLE, M_NOWAIT | M_ZERO);
+	if (rtm == NULL)
+		return NULL;
+
+	rt_msg2(type, RTM_VERSION, &info, (caddr_t)rtm, NULL);
+	rtm->rtm_type = type;
+	rtm->rtm_index = rt->rt_ifidx;
+	rtm->rtm_tableid = tableid;
+	rtm->rtm_priority = rt->rt_priority & RTP_MASK;
+	rtm->rtm_flags = rt->rt_flags;
+	rtm->rtm_pid = curproc->p_p->ps_pid;
+	rtm->rtm_seq = seq;
+	rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
+	rtm->rtm_addrs = info.rti_addrs;
+#ifdef MPLS
+	rtm->rtm_mpls = info.rti_mpls;
+#endif
+	return rtm;
+}
+
+int
+route_output(struct mbuf *m, ...)
+{
+	struct rt_msghdr	*rtm = NULL;
+	struct rtentry		*rt = NULL;
+	struct rt_addrinfo	 info;
+	int			 plen, len, seq, newgate = 0, error = 0;
+	struct ifnet		*ifp = NULL;
+	struct ifaddr		*ifa = NULL;
+	struct socket		*so;
+	struct rawcb		*rp = NULL;
+#ifdef MPLS
+	struct sockaddr_mpls	*psa_mpls;
 #endif
 	va_list			 ap;
 	u_int			 tableid;
 	u_int8_t		 prio;
-	u_char			 vers;
+	u_char			 vers, type;
 
 	va_start(ap, m);
 	so = va_arg(ap, struct socket *);
@@ -639,16 +703,12 @@ route_output(struct mbuf *m, ...)
 		rtfree(rt);
 		rt = NULL;
 
-		error = rtrequest(RTM_ADD, &info, prio, &saved_nrt, tableid);
-		if (error == 0) {
+		error = rtrequest(RTM_ADD, &info, prio, &rt, tableid);
+		if (error == 0)
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
-			    &saved_nrt->rt_rmx);
-			/* write back the priority the kernel used */
-			rtm->rtm_priority = saved_nrt->rt_priority & RTP_MASK;
-			rtm->rtm_index = saved_nrt->rt_ifidx;
-			rtm->rtm_flags = saved_nrt->rt_flags;
-			rtfree(saved_nrt);
-		}
+			    &rt->rt_rmx);
+		else
+			goto flush;
 		break;
 	case RTM_DELETE:
 		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
@@ -668,7 +728,7 @@ route_output(struct mbuf *m, ...)
 			/* Reset the MTU of the gateway route. */
 			rtable_walk(tableid, rt_key(rt)->sa_family,
 			    route_cleargateway, rt);
-			goto report;
+			break;
 		}
 
 		/*
@@ -678,84 +738,15 @@ route_output(struct mbuf *m, ...)
 		if ((rt != NULL) &&
 		    ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST)) {
 			error = EINVAL;
-			goto report;
+			break;
 		}
 
 		rtfree(rt);
 		rt = NULL;
 
 		error = rtrequest(RTM_DELETE, &info, prio, &rt, tableid);
-		if (error == 0)
-			goto report;
-		break;
-	case RTM_GET:
-		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
-		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
-		    prio);
-		if (rt == NULL) {
-			error = ESRCH;
+		if (error != 0)
 			goto flush;
-		}
-
-report:
-		info.rti_info[RTAX_DST] = rt_key(rt);
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_info[RTAX_NETMASK] =
-		    rt_plen2mask(rt, &sa_mask);
-		info.rti_info[RTAX_LABEL] =
-		    rtlabel_id2sa(rt->rt_labelid, &sa_rl);
-#ifdef BFD
-		if (rt->rt_flags & RTF_BFD)
-			info.rti_info[RTAX_BFD] = bfd2sa(rt, &sa_bfd);
-#endif
-#ifdef MPLS
-		if (rt->rt_flags & RTF_MPLS) {
-			bzero(&sa_mpls, sizeof(sa_mpls));
-			sa_mpls.smpls_family = AF_MPLS;
-			sa_mpls.smpls_len = sizeof(sa_mpls);
-			sa_mpls.smpls_label = ((struct rt_mpls *)
-			    rt->rt_llinfo)->mpls_label;
-			info.rti_info[RTAX_SRC] =
-			    (struct sockaddr *)&sa_mpls;
-			info.rti_mpls = ((struct rt_mpls *)
-			    rt->rt_llinfo)->mpls_operation;
-			rtm->rtm_mpls = info.rti_mpls;
-		}
-#endif
-		info.rti_info[RTAX_IFP] = NULL;
-		info.rti_info[RTAX_IFA] = NULL;
-		ifp = if_get(rt->rt_ifidx);
-		if (ifp != NULL && rtm->rtm_addrs & (RTA_IFP|RTA_IFA)) {
-			info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-			info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
-			if (ifp->if_flags & IFF_POINTOPOINT)
-				info.rti_info[RTAX_BRD] =
-				    rt->rt_ifa->ifa_dstaddr;
-			else
-				info.rti_info[RTAX_BRD] = NULL;
-		}
-		if_put(ifp);
-		len = rt_msg2(rtm->rtm_type, RTM_VERSION, &info, NULL,
-		    NULL);
-		if (len > rtm->rtm_msglen) {
-			struct rt_msghdr	*new_rtm;
-			new_rtm = malloc(len, M_RTABLE, M_NOWAIT);
-			if (new_rtm == NULL) {
-				error = ENOBUFS;
-				goto flush;
-			}
-			memcpy(new_rtm, rtm, rtm->rtm_msglen);
-			free(rtm, M_RTABLE, 0);
-			rtm = new_rtm;
-		}
-		rt_msg2(rtm->rtm_type, RTM_VERSION, &info, (caddr_t)rtm,
-		    NULL);
-		rtm->rtm_flags = rt->rt_flags;
-		rtm->rtm_use = 0;
-		rtm->rtm_priority = rt->rt_priority & RTP_MASK;
-		rtm->rtm_index = rt->rt_ifidx;
-		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
-		rtm->rtm_addrs = info.rti_addrs;
 		break;
 	case RTM_CHANGE:
 	case RTM_LOCK:
@@ -907,9 +898,6 @@ change:
 
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
-			rtm->rtm_index = rt->rt_ifidx;
-			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
-			rtm->rtm_flags = rt->rt_flags;
 
 			ifp = if_get(rt->rt_ifidx);
 			KASSERT(ifp != NULL);
@@ -929,13 +917,43 @@ change:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
 			rt->rt_rmx.rmx_locks |=
 			    (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);
-			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 			break;
+		}
+		break;
+	case RTM_GET:
+		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
+		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
+		    prio);
+		if (rt == NULL) {
+			error = ESRCH;
+			goto flush;
 		}
 		break;
 	}
 
+	/*
+	 * From here on these vars need to be valid
+	 * rt, rtm, error, so, m, tableid, sa_family
+	 *
+	 * Other notes:
+	 * - to end up here previous calls passed OK, error is most probably 0
+	 * - error cases take the flush route or in bad cases fail
+	 * - fail does not report the message back but just fails the call
+	 *   if the message is not valid then fail should be used
+	 */
+
+	type = rtm->rtm_type;
+	seq = rtm->rtm_seq;
+	free(rtm, M_RTABLE, 0);
+	rtm = rt_report(rt, type, seq, tableid);
+	if (rtm == NULL) {
+		error = ENOBUFS;
+		goto fail;
+	}
+
 flush:
+	if (rt)
+		rtfree(rt);
 	if (rtm) {
 		if (error)
 			rtm->rtm_errno = error;
@@ -943,14 +961,13 @@ flush:
 			rtm->rtm_flags |= RTF_DONE;
 		}
 	}
-	if (rt)
-		rtfree(rt);
 
 	/*
 	 * Check to see if we don't want our own messages.
 	 */
 	if (!(so->so_options & SO_USELOOPBACK)) {
 		if (route_cb.any_count <= 1) {
+			/* no other listener and no loopback of messages */
 fail:
 			free(rtm, M_RTABLE, 0);
 			m_freem(m);
