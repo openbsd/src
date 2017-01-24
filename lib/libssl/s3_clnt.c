@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.170 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.171 2017/01/24 01:39:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1037,8 +1037,7 @@ ssl3_get_server_certificate(SSL *s)
 	sc = ssl_sess_cert_new();
 	if (sc == NULL)
 		goto err;
-	if (SSI(s)->sess_cert)
-		ssl_sess_cert_free(SSI(s)->sess_cert);
+	ssl_sess_cert_free(SSI(s)->sess_cert);
 	SSI(s)->sess_cert = sc;
 
 	sc->cert_chain = sk;

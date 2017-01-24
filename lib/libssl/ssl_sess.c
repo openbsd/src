@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.64 2017/01/24 01:34:09 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.65 2017/01/24 01:39:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -699,11 +699,14 @@ SSL_SESSION_free(SSL_SESSION *ss)
 
 	explicit_bzero(ss->master_key, sizeof ss->master_key);
 	explicit_bzero(ss->session_id, sizeof ss->session_id);
-	if (ss->internal->sess_cert != NULL)
-		ssl_sess_cert_free(ss->internal->sess_cert);
+
+	ssl_sess_cert_free(ss->internal->sess_cert);
+
 	X509_free(ss->peer);
+
 	if (ss->ciphers != NULL)
 		sk_SSL_CIPHER_free(ss->ciphers);
+
 	free(ss->tlsext_hostname);
 	free(ss->tlsext_tick);
 	free(ss->internal->tlsext_ecpointformatlist);
