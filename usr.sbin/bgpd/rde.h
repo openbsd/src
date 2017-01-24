@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.157 2017/01/23 22:53:52 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.158 2017/01/24 23:38:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
+#include <stdint.h>
 
 #include "bgpd.h"
 
@@ -280,10 +281,9 @@ struct rib_context {
 struct rib_entry {
 	RB_ENTRY(rib_entry)	 rib_e;
 	struct prefix_head	 prefix_h;
-	struct prefix		*active; /* for fast access */
+	struct prefix		*active;	/* for fast access */
 	struct pt_entry		*prefix;
-	struct rib		*rib;
-	u_int16_t		 flags;
+	struct rib		*__rib;		/* mangled pointer with flags */
 };
 
 struct rib {
@@ -438,6 +438,13 @@ void		 rib_dump_r(struct rib_context *);
 void		 rib_dump_runner(void);
 int		 rib_dump_pending(void);
 
+static inline struct rib *
+re_rib(struct rib_entry *re)
+{
+	return (struct rib *)((intptr_t)re->__rib & ~1);
+}
+
+void		 path_init(u_int32_t);
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);
 int		 path_update(struct rib *, struct rde_peer *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.150 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.151 2017/01/24 23:38:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -48,6 +48,24 @@ struct rib_entry *rib_restart(struct rib_context *);
 
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
 RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
+
+static inline void
+re_lock(struct rib_entry *re)
+{
+	re->__rib = (struct rib *)((intptr_t)re->__rib | 1);
+}
+
+static inline void
+re_unlock(struct rib_entry *re)
+{
+	re->__rib = (struct rib *)((intptr_t)re->__rib & ~1);
+}
+
+static inline int
+re_is_locked(struct rib_entry *re)
+{
+	return ((intptr_t)re->__rib & 1);
+}
 
 static inline struct rib_tree *
 rib_tree(struct rib *rib)
@@ -121,7 +139,7 @@ rib_free(struct rib_desc *rib)
 		next = LIST_NEXT(ctx, entry);
 		if (ctx->ctx_rib == &rib->rib) {
 			re = ctx->ctx_re;
-			re->flags &= ~F_RIB_ENTRYLOCK;
+			re_unlock(re);
 			LIST_REMOVE(ctx, entry);
 			if (ctx->ctx_done)
 				ctx->ctx_done(ctx->ctx_arg);
@@ -222,8 +240,7 @@ rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 
 	LIST_INIT(&re->prefix_h);
 	re->prefix = pte;
-	re->rib = rib;
-	re->flags = rib->flags;
+	re->__rib = rib;
 
         if (RB_INSERT(rib_tree, rib_tree(rib), re) != NULL) {
 		log_warnx("rib_add: insert failed");
@@ -244,7 +261,7 @@ rib_remove(struct rib_entry *re)
 	if (!rib_empty(re))
 		fatalx("rib_remove: entry not empty");
 
-	if (re->flags & F_RIB_ENTRYLOCK)
+	if (re_is_locked(re))
 		/* entry is locked, don't free it. */
 		return;
 
@@ -252,7 +269,7 @@ rib_remove(struct rib_entry *re)
 	if (pt_empty(re->prefix))
 		pt_remove(re->prefix);
 
-	if (RB_REMOVE(rib_tree, rib_tree(re->rib), re) == NULL)
+	if (RB_REMOVE(rib_tree, rib_tree(re_rib(re)), re) == NULL)
 		log_warnx("rib_remove: remove failed.");
 
 	free(re);
@@ -297,10 +314,10 @@ rib_dump_r(struct rib_context *ctx)
 		    ctx->ctx_aid != re->prefix->aid)
 			continue;
 		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
-		    (re->flags & F_RIB_ENTRYLOCK) == 0) {
+		    re_is_locked(re)) {
 			/* store and lock last element */
 			ctx->ctx_re = re;
-			re->flags |= F_RIB_ENTRYLOCK;
+			re_lock(re);
 			return;
 		}
 		ctx->ctx_upcall(re, ctx->ctx_arg);
@@ -319,7 +336,7 @@ rib_restart(struct rib_context *ctx)
 	struct rib_entry *re;
 
 	re = ctx->ctx_re;
-	re->flags &= ~F_RIB_ENTRYLOCK;
+	re_unlock(re);
 
 	/* find first non empty element */
 	while (re && rib_empty(re))
@@ -548,7 +565,7 @@ path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 		}
 
 		/* only count Adj-RIB-In */
-		if (p->re->rib == &ribs[0].rib)
+		if (re_rib(p->re) == &ribs[0].rib)
 			rprefixes++;
 
 		prefix_destroy(p);
@@ -905,7 +922,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 		/*
 		 * skip non local-RIBs or RIBs that are flagged as noeval.
 		 */
-		if (p->re->rib->flags & F_RIB_NOEVALUATE)
+		if (re_rib(p->re)->flags & F_RIB_NOEVALUATE)
 			continue;
 
 		if (oldstate == state && state == NEXTHOP_REACH) {
@@ -915,9 +932,9 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 			 * or other internal infos. This will not change
 			 * the routing decision so shortcut here.
 			 */
-			if ((p->re->rib->flags & F_RIB_NOFIB) == 0 &&
+			if ((re_rib(p->re)->flags & F_RIB_NOFIB) == 0 &&
 			    p == p->re->active)
-				rde_send_kroute(p, NULL, p->re->rib->id);
+				rde_send_kroute(p, NULL, re_rib(p->re)->id);
 			continue;
 		}
 
