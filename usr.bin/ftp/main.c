@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.118 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.119 2017/01/24 23:47:34 beck Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -98,6 +98,8 @@ char * const ssl_verify_opts[] = {
 	"depth",
 #define SSL_MUSTSTAPLE	6
 	"muststaple",
+#define SSL_NOVERIFYTIME	7
+	"noverifytime",
 	NULL
 };
 
@@ -151,6 +153,9 @@ process_ssl_options(char *cp)
 			break;
 		case SSL_MUSTSTAPLE:
 			tls_config_ocsp_require_stapling(tls_config);
+			break;
+		case SSL_NOVERIFYTIME:
+			tls_config_insecure_noverifytime(tls_config);
 			break;
 		default:
 			errx(1, "unknown -S suboption `%s'",
