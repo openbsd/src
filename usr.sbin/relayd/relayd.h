@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.237 2017/01/09 14:49:21 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.238 2017/01/24 10:49:14 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/time.h>
 
 #include <net/if.h>
+#include <net/pfvar.h>
 
 #include <stdarg.h>
 #include <limits.h>
@@ -1050,6 +1051,14 @@ struct relayd_config {
 	u_int32_t		 flags;
 };
 
+struct pfdata {
+	int			 dev;
+	struct pf_anchor	*anchor;
+	struct pfioc_trans	 pft;
+	struct pfioc_trans_e	 pfte;
+	u_int8_t		 pfused;
+};
+
 struct relayd {
 	struct relayd_config	 sc_conf;
 	const char		*sc_conffile;
@@ -1142,7 +1151,6 @@ int	 disable_table(struct ctl_conn *, struct ctl_id *);
 int	 disable_host(struct ctl_conn *, struct ctl_id *, struct host *);
 
 /* pfe_filter.c */
-void	 init_filter(struct relayd *, int);
 void	 init_tables(struct relayd *);
 void	 flush_table(struct relayd *, struct rdr *);
 void	 sync_table(struct relayd *, struct rdr *, struct table *);

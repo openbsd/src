@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.60 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.61 2017/01/24 10:49:14 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -39,41 +39,10 @@
 
 #include "relayd.h"
 
-struct pfdata {
-	int			 dev;
-	struct pf_anchor	*anchor;
-	struct pfioc_trans	 pft;
-	struct pfioc_trans_e	 pfte;
-	u_int8_t		 pfused;
-};
-
 int	 transaction_init(struct relayd *, const char *);
 int	 transaction_commit(struct relayd *);
 void	 kill_tables(struct relayd *);
 int	 kill_srcnodes(struct relayd *, struct table *);
-
-void
-init_filter(struct relayd *env, int s)
-{
-	struct pf_status	status;
-
-	if (!(env->sc_conf.flags & F_NEEDPF))
-		return;
-
-	if (s == -1)
-		fatalx("init_filter: invalid socket");
-	if (env->sc_pf == NULL) {
-		if ((env->sc_pf = calloc(1, sizeof(*(env->sc_pf)))) == NULL)
-			fatal("calloc");
-	} else
-		close(env->sc_pf->dev);
-	env->sc_pf->dev = s;
-	if (ioctl(env->sc_pf->dev, DIOCGETSTATUS, &status) == -1)
-		fatal("init_filter: DIOCGETSTATUS");
-	if (!status.running)
-		fatalx("init_filter: pf is disabled");
-	log_debug("%s: filter init done", __func__);
-}
 
 void
 init_tables(struct relayd *env)

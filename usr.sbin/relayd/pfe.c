@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.87 2016/09/02 16:14:09 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.88 2017/01/24 10:49:14 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -18,10 +18,15 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/uio.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <net/pfvar.h>
 
 #include <event.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -51,7 +56,24 @@ static struct privsep_proc procs[] = {
 void
 pfe(struct privsep *ps, struct privsep_proc *p)
 {
+	int 			s;
+	struct pf_status	status;
+
 	env = ps->ps_env;
+
+	if ((s = open(PF_SOCKET, O_RDWR)) == -1) {
+		fatal("%s: cannot open pf socket", __func__);
+	}
+	if (env->sc_pf == NULL) {
+		if ((env->sc_pf = calloc(1, sizeof(*(env->sc_pf)))) == NULL)
+			fatal("calloc");
+		env->sc_pf->dev = s;
+	}
+	if (ioctl(env->sc_pf->dev, DIOCGETSTATUS, &status) == -1)
+		fatal("init_filter: DIOCGETSTATUS");
+	if (!status.running)
+		fatalx("init_filter: pf is disabled");
+	log_debug("%s: filter init done", __func__);
 
 	proc_run(ps, p, procs, nitems(procs), pfe_init, NULL);
 }
@@ -203,7 +225,6 @@ pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(env, imsg);
-		init_filter(env, imsg->fd);
 		init_tables(env);
 		snmp_init(env, PROC_PARENT);
 		break;

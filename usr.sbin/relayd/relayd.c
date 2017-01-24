@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.164 2017/01/09 14:49:21 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.165 2017/01/24 10:49:14 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -279,7 +279,7 @@ parent_configure(struct relayd *env)
 	struct protocol		*proto;
 	struct relay		*rlay;
 	int			 id;
-	int			 s, ret = -1;
+	int			 ret = -1;
 
 	TAILQ_FOREACH(tb, env->sc_tables, entry)
 		config_settable(env, tb);
@@ -308,24 +308,12 @@ parent_configure(struct relayd *env)
 	for (id = 0; id < PROC_MAX; id++) {
 		if (id == privsep_process)
 			continue;
-
-		if ((env->sc_conf.flags & F_NEEDPF) && id == PROC_PFE) {
-			/* Send pf socket to the pf engine */
-			if ((s = open(PF_SOCKET, O_RDWR)) == -1) {
-				log_debug("%s: cannot open pf socket",
-				    __func__);
-				goto done;
-			}
-		} else
-			s = -1;
-
 		proc_compose_imsg(env->sc_ps, id, -1, IMSG_CFG_DONE, -1,
-		    s, &env->sc_conf, sizeof(env->sc_conf));
+		    -1, &env->sc_conf, sizeof(env->sc_conf));
 	}
 
 	ret = 0;
 
- done:
 	config_purge(env, CONFIG_ALL & ~CONFIG_RELAYS);
 	return (ret);
 }
