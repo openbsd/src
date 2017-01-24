@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.68 2016/09/10 16:53:30 natano Exp $	*/
+/*	$OpenBSD: mount.c,v 1.69 2017/01/24 23:41:44 tb Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ static struct opt {
 	{ MNT_RDONLY,		0,	"read-only",		"ro" },
 	{ MNT_ROOTFS,		1,	"root file system",	"" },
 	{ MNT_SYNCHRONOUS,	0,	"synchronous",		"sync" },
-	{ MNT_SOFTDEP,		0,	"softdep", 		"softdep" },
+	{ MNT_SOFTDEP,		0,	"softdep",		"softdep" },
 	{ 0,			0,	"",			"" }
 };
 
@@ -761,4 +761,3 @@ disklabelcheck(struct fstab *fs)
 	}
 	return (0);
 }
-
