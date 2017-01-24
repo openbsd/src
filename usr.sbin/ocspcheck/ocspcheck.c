@@ -494,7 +494,8 @@ validate_response(char *buf, size_t size, ocsp_request *request,
 static void
 usage(void)
 {
-	errx(1, "usage: %s [-Nv] [-C CAfile] [-o staplefile] file", getprogname());
+	errx(1, "usage: %s [-Nv] [-C CAfile] [-o staplefile] file",
+	    getprogname());
 }
 
 int
