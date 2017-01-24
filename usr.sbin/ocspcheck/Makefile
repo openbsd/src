@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1 2017/01/24 08:50:57 beck Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/01/24 09:25:27 deraadt Exp $
 
 PROG=	ocspcheck
+MAN=	ocspcheck.8
 
 LDADD=	-ltls -lssl -lcrypto
-DPADD=	 ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
-MAN= ocspcheck.8
+DPADD=	${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
 
 CFLAGS+= -Wall -Werror
 CFLAGS+= -Wformat
@@ -19,6 +19,5 @@ CFLAGS+= -Wunused
 CFLAGS+= -DLIBRESSL_INTERNAL
 
 SRCS=	ocspcheck.c http.c
-
 
 .include <bsd.prog.mk>
