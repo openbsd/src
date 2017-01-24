@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.89 2016/11/06 12:08:32 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.90 2017/01/24 01:44:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1516,11 +1516,9 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		sk_SSL_CIPHER_free(cipherstack);
 		return NULL;
 	}
-	if (*cipher_list != NULL)
-		sk_SSL_CIPHER_free(*cipher_list);
+	sk_SSL_CIPHER_free(*cipher_list);
 	*cipher_list = cipherstack;
-	if (*cipher_list_by_id != NULL)
-		sk_SSL_CIPHER_free(*cipher_list_by_id);
+	sk_SSL_CIPHER_free(*cipher_list_by_id);
 	*cipher_list_by_id = tmp_cipher_list;
 	(void)sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id,
 	    ssl_cipher_ptr_id_cmp);

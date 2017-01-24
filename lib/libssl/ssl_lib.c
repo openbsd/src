@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.141 2017/01/23 22:34:38 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.142 2017/01/24 01:44:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -516,10 +516,8 @@ SSL_free(SSL *s)
 		BUF_MEM_free(s->internal->init_buf);
 
 	/* add extra stuff */
-	if (s->cipher_list != NULL)
-		sk_SSL_CIPHER_free(s->cipher_list);
-	if (s->internal->cipher_list_by_id != NULL)
-		sk_SSL_CIPHER_free(s->internal->cipher_list_by_id);
+	sk_SSL_CIPHER_free(s->cipher_list);
+	sk_SSL_CIPHER_free(s->internal->cipher_list_by_id);
 
 	/* Make the next call work :-) */
 	if (s->session != NULL) {
@@ -1985,10 +1983,8 @@ SSL_CTX_free(SSL_CTX *a)
 
 	if (a->cert_store != NULL)
 		X509_STORE_free(a->cert_store);
-	if (a->cipher_list != NULL)
-		sk_SSL_CIPHER_free(a->cipher_list);
-	if (a->internal->cipher_list_by_id != NULL)
-		sk_SSL_CIPHER_free(a->internal->cipher_list_by_id);
+	sk_SSL_CIPHER_free(a->cipher_list);
+	sk_SSL_CIPHER_free(a->internal->cipher_list_by_id);
 	if (a->internal->cert != NULL)
 		ssl_cert_free(a->internal->cert);
 	if (a->internal->client_CA != NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.65 2017/01/24 01:39:13 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.66 2017/01/24 01:44:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -704,8 +704,7 @@ SSL_SESSION_free(SSL_SESSION *ss)
 
 	X509_free(ss->peer);
 
-	if (ss->ciphers != NULL)
-		sk_SSL_CIPHER_free(ss->ciphers);
+	sk_SSL_CIPHER_free(ss->ciphers);
 
 	free(ss->tlsext_hostname);
 	free(ss->tlsext_tick);

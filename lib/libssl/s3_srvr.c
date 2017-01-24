@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.150 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.151 2017/01/24 01:44:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1002,11 +1002,8 @@ ssl3_get_client_hello(SSL *s)
 
 			s->session->cipher = pref_cipher;
 
-			if (s->cipher_list)
-				sk_SSL_CIPHER_free(s->cipher_list);
-
-			if (s->internal->cipher_list_by_id)
-				sk_SSL_CIPHER_free(s->internal->cipher_list_by_id);
+			sk_SSL_CIPHER_free(s->cipher_list);
+			sk_SSL_CIPHER_free(s->internal->cipher_list_by_id);
 
 			s->cipher_list = sk_SSL_CIPHER_dup(s->session->ciphers);
 			s->internal->cipher_list_by_id =
@@ -1020,8 +1017,7 @@ ssl3_get_client_hello(SSL *s)
 	 */
 
 	if (!s->internal->hit) {
-		if (s->session->ciphers != NULL)
-			sk_SSL_CIPHER_free(s->session->ciphers);
+		sk_SSL_CIPHER_free(s->session->ciphers);
 		s->session->ciphers = ciphers;
 		if (ciphers == NULL) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
@@ -1081,8 +1077,8 @@ f_err:
 		ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	}
 err:
-	if (ciphers != NULL)
-		sk_SSL_CIPHER_free(ciphers);
+	sk_SSL_CIPHER_free(ciphers);
+
 	return (ret);
 }
 
