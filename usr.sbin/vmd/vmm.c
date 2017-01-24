@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.64 2017/01/17 21:51:01 krw Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.65 2017/01/24 09:58:00 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1486,6 +1486,7 @@ vcpu_exit(struct vm_run_params *vrp)
 	case VMX_EXIT_INT_WINDOW:
 	case VMX_EXIT_EXTINT:
 	case VMX_EXIT_EPT_VIOLATION:
+	case SVM_VMEXIT_NPF:
 		/*
 		 * We may be exiting to vmd to handle a pending interrupt but
 		 * at the same time the last exit type may have been one of
@@ -1495,9 +1496,11 @@ vcpu_exit(struct vm_run_params *vrp)
 		 */
 		break;
 	case VMX_EXIT_IO:
+	case SVM_VMEXIT_IOIO:
 		vcpu_exit_inout(vrp);
 		break;
 	case VMX_EXIT_HLT:
+	case SVM_VMEXIT_HLT:
 		ret = pthread_mutex_lock(&vcpu_run_mtx[vrp->vrp_vcpu_id]);
 		if (ret) {
 			log_warnx("%s: can't lock vcpu mutex (%d)",
@@ -1513,6 +1516,7 @@ vcpu_exit(struct vm_run_params *vrp)
 		}
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
+	case SVM_VMEXIT_SHUTDOWN:
 		/* XXX reset VM since we do not support reboot yet */
 		return (EAGAIN);
 	default:
