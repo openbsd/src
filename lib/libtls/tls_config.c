@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.33 2016/11/11 14:02:24 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.34 2017/01/24 01:48:05 claudio Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -177,6 +177,7 @@ struct tls_config *
 tls_config_new(void)
 {
 	struct tls_config *config;
+	unsigned char sid[TLS_MAX_SESSION_ID_LENGTH];
 
 	if ((config = calloc(1, sizeof(*config))) == NULL)
 		return (NULL);
@@ -198,6 +199,17 @@ tls_config_new(void)
 		goto err;
 	if (tls_config_set_verify_depth(config, 6) != 0)
 		goto err;
+
+	/*
+	 * Set session ID context to a random value.  For the simple case
+	 * of a single process server this is good enough. For multiprocess
+	 * servers the session ID needs to be set by the caller.
+	 */
+	arc4random_buf(sid, sizeof(sid));
+	if (tls_config_set_session_id(config, sid, sizeof(sid)) != 0)
+		goto err;
+	config->ticket_keyrev = arc4random();
+	config->ticket_autorekey = 1;
 
 	tls_config_prefer_ciphers_server(config);
 
@@ -660,4 +672,92 @@ int
 tls_config_set_ocsp_staple_mem(struct tls_config *config, char *staple, size_t len)
 {
 	return set_mem(&config->ocsp_staple, &config->ocsp_staple_len, staple, len);
+}
+
+int
+tls_config_set_session_id(struct tls_config *config,
+    const unsigned char *session_id, size_t len)
+{
+	if (len > TLS_MAX_SESSION_ID_LENGTH) {
+		tls_config_set_errorx(config, "session ID too large");
+		return (-1);
+	}
+	memset(config->session_id, 0, sizeof(config->session_id));
+	memcpy(config->session_id, session_id, len);
+	return (0);
+}
+
+int
+tls_config_set_session_lifetime(struct tls_config *config, int lifetime)
+{
+	if (lifetime > TLS_MAX_SESSION_TIMEOUT) {
+		tls_config_set_errorx(config, "session lifetime too large");
+		return (-1);
+	}
+	if (lifetime != 0 && lifetime < TLS_MIN_SESSION_TIMEOUT) {
+		tls_config_set_errorx(config, "session lifetime too small");
+		return (-1);
+	}
+
+	config->session_lifetime = lifetime;
+	return (0);
+}
+
+int
+tls_config_add_ticket_key(struct tls_config *config, uint32_t keyrev,
+    unsigned char *key, size_t keylen)
+{
+	struct tls_ticket_key newkey;
+	int i;
+
+	if (TLS_TICKET_KEY_SIZE != keylen ||
+	    sizeof(newkey.aes_key) + sizeof(newkey.hmac_key) > keylen) {
+		tls_config_set_errorx(config,
+		    "wrong amount of ticket key data");
+		return (-1);
+	}
+
+	keyrev = htonl(keyrev);
+	memset(&newkey, 0, sizeof(newkey));
+	memcpy(newkey.key_name, &keyrev, sizeof(keyrev));
+	memcpy(newkey.aes_key, key, sizeof(newkey.aes_key));
+	memcpy(newkey.hmac_key, key + sizeof(newkey.aes_key),
+	    sizeof(newkey.hmac_key));
+	newkey.time = time(NULL);
+
+	for (i = 0; i < TLS_NUM_TICKETS; i++) {
+		struct tls_ticket_key *tk = &config->ticket_keys[i];
+		if (memcmp(newkey.key_name, tk->key_name,
+		    sizeof(tk->key_name)) != 0)
+			continue;
+
+		/* allow re-entry of most recent key */
+		if (i == 0 && memcmp(newkey.aes_key, tk->aes_key,
+		    sizeof(tk->aes_key)) == 0 && memcmp(newkey.hmac_key,
+		    tk->hmac_key, sizeof(tk->hmac_key)) == 0)
+			return (0);
+		tls_config_set_errorx(config, "ticket key already present");
+		return (-1);
+	}
+
+	memmove(&config->ticket_keys[1], &config->ticket_keys[0],
+	    sizeof(config->ticket_keys) - sizeof(config->ticket_keys[0]));
+	config->ticket_keys[0] = newkey;
+
+	config->ticket_autorekey = 0;
+
+	return (0);
+}
+
+int
+tls_config_ticket_autorekey(struct tls_config *config)
+{
+	unsigned char key[TLS_TICKET_KEY_SIZE];
+	int rv;
+
+	arc4random_buf(key, sizeof(key));
+	rv = tls_config_add_ticket_key(config, config->ticket_keyrev++, key,
+	    sizeof(key));
+	config->ticket_autorekey = 1;
+	return (rv);
 }

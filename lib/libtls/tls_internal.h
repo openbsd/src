@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.50 2016/11/05 15:13:26 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.51 2017/01/24 01:48:05 claudio Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -53,6 +53,22 @@ struct tls_keypair {
 	size_t key_len;
 };
 
+#define TLS_MIN_SESSION_TIMEOUT (4)
+#define TLS_MAX_SESSION_TIMEOUT (24 * 60 * 60)
+
+#define TLS_NUM_TICKETS				4
+#define TLS_TICKET_NAME_SIZE			16
+#define TLS_TICKET_AES_SIZE			32
+#define TLS_TICKET_HMAC_SIZE			16
+
+struct tls_ticket_key {
+	/* The key_name must be 16 bytes according to -lssl */
+	unsigned char	key_name[TLS_TICKET_NAME_SIZE];
+	unsigned char	aes_key[TLS_TICKET_AES_SIZE];
+	unsigned char	hmac_key[TLS_TICKET_HMAC_SIZE];
+	time_t		time;
+};
+
 struct tls_config {
 	struct tls_error error;
 
@@ -70,6 +86,11 @@ struct tls_config {
 	char *ocsp_staple;
 	size_t ocsp_staple_len;
 	uint32_t protocols;
+	unsigned char session_id[TLS_MAX_SESSION_ID_LENGTH];
+	int session_lifetime;
+	struct tls_ticket_key ticket_keys[TLS_NUM_TICKETS];
+	uint32_t ticket_keyrev;
+	int ticket_autorekey;
 	int verify_cert;
 	int verify_client;
 	int verify_depth;
@@ -171,6 +192,7 @@ int tls_handshake_server(struct tls *ctx);
 
 int tls_config_load_file(struct tls_error *error, const char *filetype,
     const char *filename, char **buf, size_t *len);
+int tls_config_ticket_autorekey(struct tls_config *config);
 int tls_host_port(const char *hostport, char **host, char **port);
 
 int tls_set_cbs(struct tls *ctx,

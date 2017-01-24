@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.32 2017/01/12 16:15:58 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.33 2017/01/24 01:48:05 claudio Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -116,6 +116,77 @@ tls_servername_cb(SSL *ssl, int *al, void *arg)
 	return (SSL_TLSEXT_ERR_ALERT_FATAL);
 }
 
+static struct tls_ticket_key *
+tls_server_ticket_key(struct tls_config *config, unsigned char *keyname)
+{
+	struct tls_ticket_key *key = NULL;
+	time_t now;
+	int i;
+
+	now = time(NULL);
+	if (config->ticket_autorekey == 1) {
+		if (now - 3 * (config->session_lifetime / 4) >
+		    config->ticket_keys[0].time) {
+			if (tls_config_ticket_autorekey(config) == -1)
+				return (NULL);
+		}
+	}
+	for (i = 0; i < TLS_NUM_TICKETS; i++) {
+		struct tls_ticket_key *tk = &config->ticket_keys[i];
+		if (now - config->session_lifetime > tk->time)
+			continue;
+		if (keyname == NULL || timingsafe_memcmp(keyname,
+		    tk->key_name, sizeof(tk->key_name)) == 0) {
+			key = tk;
+			break;
+		}
+	}
+	return (key);
+}
+
+static int
+tls_server_ticket_cb(SSL *ssl, unsigned char *keyname, unsigned char *iv,
+    EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int mode)
+{
+	struct tls_ticket_key *key;
+	struct tls *tls_ctx;
+
+	if ((tls_ctx = SSL_get_app_data(ssl)) == NULL)
+		return (-1);
+
+	if (mode == 1) {
+		/* create new session */
+		key = tls_server_ticket_key(tls_ctx->config, NULL);
+		if (key == NULL) {
+			tls_set_errorx(tls_ctx, "no valid ticket key found");
+			return (-1);
+		}
+
+		memcpy(keyname, key->key_name, sizeof(key->key_name));
+		arc4random_buf(iv, EVP_MAX_IV_LENGTH);
+		EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
+		    key->aes_key, iv);
+		HMAC_Init_ex(hctx, key->hmac_key, sizeof(key->hmac_key),
+		    EVP_sha256(), NULL);
+		return (0);
+	} else {
+		/* get key by name */
+		key = tls_server_ticket_key(tls_ctx->config, keyname);
+		if (key == NULL)
+			return (0);
+
+		EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
+		    key->aes_key, iv);
+		HMAC_Init_ex(hctx, key->hmac_key, sizeof(key->hmac_key),
+		    EVP_sha256(), NULL);
+
+		/* time to renew the ticket? is it the primary key? */
+		if (key != &tls_ctx->config->ticket_keys[0])
+			return (2);
+		return (1);
+	}
+}
+
 static int
 tls_keypair_load_cert(struct tls_keypair *keypair, struct tls_error *error,
     X509 **cert)
@@ -157,7 +228,6 @@ static int
 tls_configure_server_ssl(struct tls *ctx, SSL_CTX **ssl_ctx,
     struct tls_keypair *keypair)
 {
-	unsigned char sid[SSL_MAX_SSL_SESSION_ID_LENGTH];
 	EC_KEY *ecdh_key;
 
 	SSL_CTX_free(*ssl_ctx);
@@ -219,14 +289,20 @@ tls_configure_server_ssl(struct tls *ctx, SSL_CTX **ssl_ctx,
 		goto err;
 	}
 
-	/*
-	 * Set session ID context to a random value.  We don't support
-	 * persistent caching of sessions so it is OK to set a temporary
-	 * session ID context that is valid during run time.
-	 */
-	arc4random_buf(sid, sizeof(sid));
-	if (SSL_CTX_set_session_id_context(*ssl_ctx, sid,
-	    sizeof(sid)) != 1) {
+	if (ctx->config->session_lifetime > 0) {
+		/* set the session lifetime and enable tickets */
+		SSL_CTX_set_timeout(*ssl_ctx, ctx->config->session_lifetime);
+		SSL_CTX_clear_options(*ssl_ctx, SSL_OP_NO_TICKET);
+		if (!SSL_CTX_set_tlsext_ticket_key_cb(*ssl_ctx,
+		    tls_server_ticket_cb)) {
+			tls_set_error(ctx,
+			    "failed to set the TLS ticket callback");
+			goto err;
+		}
+	}
+
+	if (SSL_CTX_set_session_id_context(*ssl_ctx, ctx->config->session_id,
+	    sizeof(ctx->config->session_id)) != 1) {
 		tls_set_error(ctx, "failed to set session id context");
 		goto err;
 	}

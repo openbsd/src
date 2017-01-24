@@ -5,6 +5,7 @@ tls_client
 tls_close
 tls_config_add_keypair_file
 tls_config_add_keypair_mem
+tls_config_add_ticket_key
 tls_config_clear_keys
 tls_config_error
 tls_config_free
@@ -32,6 +33,8 @@ tls_config_set_keypair_mem
 tls_config_set_ocsp_staple_mem
 tls_config_set_ocsp_staple_file
 tls_config_set_protocols
+tls_config_set_session_id
+tls_config_set_session_lifetime
 tls_config_set_verify_depth
 tls_config_verify
 tls_config_verify_client

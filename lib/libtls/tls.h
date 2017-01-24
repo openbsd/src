@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.44 2017/01/22 03:59:30 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.45 2017/01/24 01:48:05 claudio Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -66,6 +66,9 @@ extern "C" {
 #define TLS_CRL_REASON_PRIVILEGE_WITHDRAWN	9
 #define TLS_CRL_REASON_AA_COMPROMISE		10
 
+#define TLS_MAX_SESSION_ID_LENGTH		32
+#define TLS_TICKET_KEY_SIZE			48
+
 struct tls;
 struct tls_config;
 
@@ -127,6 +130,12 @@ void tls_config_verify_client_optional(struct tls_config *_config);
 
 void tls_config_clear_keys(struct tls_config *_config);
 int tls_config_parse_protocols(uint32_t *_protocols, const char *_protostr);
+
+int tls_config_set_session_id(struct tls_config *_config,
+    const unsigned char *_session_id, size_t _len);
+int tls_config_set_session_lifetime(struct tls_config *_config, int _lifetime);
+int tls_config_add_ticket_key(struct tls_config *_config, uint32_t _keyrev,
+    unsigned char *_key, size_t _keylen);
 
 struct tls *tls_client(void);
 struct tls *tls_server(void);

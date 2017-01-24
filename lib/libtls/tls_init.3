@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.84 2017/01/24 01:16:26 claudio Exp $
+.\" $OpenBSD: tls_init.3,v 1.85 2017/01/24 01:48:05 claudio Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -26,6 +26,7 @@
 .Nm tls_config_parse_protocols ,
 .Nm tls_config_add_keypair_file ,
 .Nm tls_config_add_keypair_mem ,
+.Nm tls_config_add_ticket_key ,
 .Nm tls_config_set_alpn ,
 .Nm tls_config_set_ca_file ,
 .Nm tls_config_set_ca_path ,
@@ -42,6 +43,8 @@
 .Nm tls_config_set_ocsp_staple_mem ,
 .Nm tls_config_set_ocsp_staple_file ,
 .Nm tls_config_set_protocols ,
+.Nm tls_config_set_session_id ,
+.Nm tls_config_set_session_lifetime ,
 .Nm tls_config_set_verify_depth ,
 .Nm tls_config_prefer_ciphers_client ,
 .Nm tls_config_prefer_ciphers_server ,
@@ -111,6 +114,8 @@
 .Ft "int"
 .Fn tls_config_add_keypair_mem "struct tls_config *config" "const uint8_t *cert" "size_t cert_len" "const uint8_t *key" "size_t key_len"
 .Ft "int"
+.Fn tls_config_add_ticket_key "struct tls_config *config" "uint32_t keyrev" "unsigned char *key" "size_t keylen"
+.Ft "int"
 .Fn tls_config_set_alpn "struct tls_config *config" "const char *alpn"
 .Ft "int"
 .Fn tls_config_set_ca_file "struct tls_config *config" "const char *ca_file"
@@ -142,6 +147,10 @@
 .Fn tls_config_set_ocsp_staple_file "struct tls_config *config" "const char *staple_file"
 .Ft "int"
 .Fn tls_config_set_protocols "struct tls_config *config" "uint32_t protocols"
+.Ft "int"
+.Fn tls_config_set_session_id "struct tls_config *config" "const unsigned char *session_id" "size_t len"
+.Ft "int"
+.Fn tls_config_set_session_lifetime "struct tls_config *config" "int lifetime"
 .Ft "int"
 .Fn tls_config_set_verify_depth "struct tls_config *config" "int verify_depth"
 .Ft "void"
@@ -371,6 +380,14 @@ used as an alternative certificate for Server Name Indication (server only).
 adds an additional public certificate and private key from memory,
 used as an alternative certificate for Server Name Indication (server only).
 .It
+.Fn tls_config_add_ticket_key
+adds a key used for the encryption and authentication of TLS tickets.
+By default keys are generated and rotated automatically based on their lifetime.
+This function should only be used to synchronise ticket encryption key accross
+multiple processes.
+Re-adding a known key will result in an error, unless it is the most recently
+added key.
+.It
 .Fn tls_config_set_alpn
 sets the ALPN protocols that are supported.
 The alpn string is a comma separated list of protocols, in order of preference.
@@ -446,6 +463,16 @@ Additionally, the values
 (all supported protocols) and
 .Dv TLS_PROTOCOLS_DEFAULT
 (TLSv1.2 only) may be used.
+.It
+.Fn tls_config_set_session_id
+sets the session identifier that will be used by the TLS server when
+sessions are enabled.
+By default a random value is used.
+.It
+.Fn tls_config_set_session_lifetime
+sets the lifetime to be used for TLS sessions.
+Session support is disabled if a lifetime of zero is specified, which is the
+default.
 .It
 .Fn tls_config_set_verify_depth
 limits the number of intermediate certificates that will be followed during
