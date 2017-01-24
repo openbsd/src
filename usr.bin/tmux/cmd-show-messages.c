@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.23 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.24 2017/01/24 19:59:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,17 +40,6 @@ const struct cmd_entry cmd_show_messages_entry = {
 	.usage = "[-JT] " CMD_TARGET_CLIENT_USAGE,
 
 	.tflag = CMD_CLIENT,
-
-	.flags = CMD_AFTERHOOK,
-	.exec = cmd_show_messages_exec
-};
-
-const struct cmd_entry cmd_server_info_entry = {
-	.name = "server-info",
-	.alias = "info",
-
-	.args = { "", 0, 0 },
-	.usage = "",
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_show_messages_exec
@@ -109,11 +98,11 @@ cmd_show_messages_exec(struct cmd *self, struct cmdq_item *item)
 	int			 done, blank;
 
 	done = blank = 0;
-	if (args_has(args, 'T') || self->entry == &cmd_server_info_entry) {
+	if (args_has(args, 'T')) {
 		blank = cmd_show_messages_terminals(item, blank);
 		done = 1;
 	}
-	if (args_has(args, 'J') || self->entry == &cmd_server_info_entry) {
+	if (args_has(args, 'J')) {
 		cmd_show_messages_jobs(item, blank);
 		done = 1;
 	}

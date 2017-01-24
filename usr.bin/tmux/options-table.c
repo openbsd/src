@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.83 2017/01/24 19:53:37 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.84 2017/01/24 19:59:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -69,7 +69,10 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_ARRAY,
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .default_str = "split-pane=split-window,"
-	                 "splitp=split-window"
+			 "splitp=split-window,"
+			 "server-info=show-messages -JT,"
+			 "info=show-messages -JT",
+	  .separator = ","
 	},
 
 	{ .name = "default-terminal",
