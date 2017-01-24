@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.50 2016/08/05 17:02:04 schwarze Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.51 2017/01/24 12:43:00 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: August 5 2016 $
+.Dd $Mdocdate: January 24 2017 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -255,7 +255,7 @@ non-EDNS0 DNS servers,
 so the option must be used only when all the servers listed in
 .Ic nameserver
 lines are able to handle the extension.
-By default on
+On
 .Ox
 this option does nothing.
 .\" .Pp
@@ -277,8 +277,9 @@ this option does nothing.
 Enables support for IPv6-only applications, by setting RES_USE_INET6 in
 _res.options (see
 .Xr resolver 3 ) .
-Use of this option is discouraged, and meaningless on
-.Ox .
+On
+.Ox
+this option does nothing.
 .It Cm insecure1
 Do not require IP source address on the reply packet to be equal to the
 server's address.
