@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.956 2017/01/23 02:14:45 rpe Exp $
+#	$OpenBSD: install.sub,v 1.957 2017/01/24 10:06:21 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2579,7 +2579,13 @@ __EOT
 do_install(){
 	# Ask for and set the system hostname and add the hostname specific
 	# siteXX set.
-	ask_until "System hostname? (short form, e.g. 'foo')" "$(hostname -s)"
+	while :; do
+		ask_until "System hostname? (short form, e.g. 'foo')" \
+			"$(hostname -s)"
+		[[ $resp != *+([[:cntrl:]]|[[:space:]])* ]] && break
+		echo "Invalid hostname."
+		$AUTO && exit 1
+	done
 	[[ ${resp%%.*} != $(hostname -s) ]] && hostname "$resp"
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
