@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.159 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.160 2017/01/24 22:40:55 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -624,9 +624,9 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 	if (d->bd_hdrcmplt && dst.ss_family == AF_UNSPEC)
 		dst.ss_family = pseudo_AF_HDRCMPLT;
 
-	s = splsoftnet();
+	NET_LOCK(s);
 	error = ifp->if_output(ifp, m, (struct sockaddr *)&dst, NULL);
-	splx(s);
+	NET_UNLOCK(s);
 
 out:
 	bpf_put(d);
