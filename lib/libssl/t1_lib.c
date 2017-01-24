@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.107 2017/01/24 03:41:43 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.108 2017/01/24 08:41:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -752,9 +752,9 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 			return NULL;
 
 		lenmax = limit - ret - 6;
-		if (curveslen > lenmax)
+		if (curveslen * 2 > lenmax)
 			return NULL;
-		if (curveslen > 65532) {
+		if (curveslen * 2 > 65532) {
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
 			    ERR_R_INTERNAL_ERROR);
 			return NULL;
