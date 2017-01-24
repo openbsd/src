@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.83 2017/01/24 01:01:33 mpi Exp $
+.\"	$OpenBSD: ddb.4,v 1.84 2017/01/24 04:50:48 mpi Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -833,8 +833,8 @@ Display information on all processes.
 .Xr ps 1 Ns \&-like
 format.
 Information printed includes process ID, thread ID, parent
-process ID, process group, UID, process status, process flags, process
-command name, and process wait channel message.
+process ID, UID, process status, process flags, process
+wait channel message and process command name.
 .It Cm /a
 Shows the kernel virtual addresses of each process'
 proc structure, u-area, and vmspace structure.
