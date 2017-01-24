@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.56 2017/01/24 02:52:36 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.57 2017/01/24 03:53:32 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -649,8 +649,10 @@ bfd_timeout_rx(void *v)
 {
 	struct bfd_config *bfd = v;
 
-	bfd_error(bfd);
-	rt_bfdmsg(bfd);
+	if (bfd->bc_state > BFD_STATE_DOWN) {
+		bfd_error(bfd);
+		rt_bfdmsg(bfd);
+	}
 
 	timeout_add_usec(&bfd->bc_timo_rx, bfd->bc_minrx);
 }
