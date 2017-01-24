@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.obj.mk,v 1.17 2017/01/21 06:55:52 tb Exp $
+#	$OpenBSD: bsd.obj.mk,v 1.18 2017/01/24 02:56:50 tb Exp $
 #	$NetBSD: bsd.obj.mk,v 1.9 1996/04/10 21:08:05 thorpej Exp $
 
 .if !target(obj)
@@ -53,7 +53,6 @@ obj! _SUBDIRUSE
 			fi; \
 		fi; \
 	else \
-		true ; \
 		dest=$$here/${__objdir} ; \
 		if test ! -d ${__objdir} ; then \
 			echo "making $$dest" ; \
