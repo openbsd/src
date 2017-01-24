@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.85 2017/01/24 01:48:05 claudio Exp $
+.\" $OpenBSD: tls_init.3,v 1.86 2017/01/24 07:57:39 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -383,7 +383,7 @@ used as an alternative certificate for Server Name Indication (server only).
 .Fn tls_config_add_ticket_key
 adds a key used for the encryption and authentication of TLS tickets.
 By default keys are generated and rotated automatically based on their lifetime.
-This function should only be used to synchronise ticket encryption key accross
+This function should only be used to synchronise ticket encryption key across
 multiple processes.
 Re-adding a known key will result in an error, unless it is the most recently
 added key.
