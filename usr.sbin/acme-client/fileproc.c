@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.10 2017/01/21 12:54:10 florian Exp $ */
+/*	$Id: fileproc.c,v 1.11 2017/01/24 07:59:54 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -146,7 +146,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 
 	/*
 	 * Start by downloading the chain PEM as a buffer.
-	 * This is not nil-terminated, but we're just going to guess
+	 * This is not NUL-terminated, but we're just going to guess
 	 * that it's well-formed and not actually touch the data.
 	 * Once downloaded, dump it into CHAIN_BAK.
 	 */

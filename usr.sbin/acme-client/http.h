@@ -1,4 +1,4 @@
-/*	$Id: http.h,v 1.3 2016/10/04 15:49:42 jsing Exp $ */
+/*	$Id: http.h,v 1.4 2017/01/24 07:59:54 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,7 +36,7 @@ typedef	ssize_t (*readfp)(char *, size_t, const struct http *);
 /*
  * HTTP/S header pair.
  * There's also a cooked-up pair, "Status", with the status code.
- * Both strings are nil-terminated.
+ * Both strings are NUL-terminated.
  */
 struct	httphead {
 	const char	*key;

@@ -1,4 +1,4 @@
-/*	$Id: util.c,v 1.5 2016/09/13 17:13:37 deraadt Exp $ */
+/*	$Id: util.c,v 1.6 2017/01/24 07:59:54 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -115,7 +115,7 @@ readstr(int fd, enum comm comm)
  * Read a buffer from the sender.
  * This consists of two parts: the lenght of the buffer, and the buffer
  * itself.
- * We allow the buffer to be binary, but nil-terminate it anyway.
+ * We allow the buffer to be binary, but NUL-terminate it anyway.
  */
 char *
 readbuf(int fd, enum comm comm, size_t *sz)

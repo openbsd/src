@@ -1,4 +1,4 @@
-/*	$Id: certproc.c,v 1.7 2016/09/13 17:13:37 deraadt Exp $ */
+/*	$Id: certproc.c,v 1.8 2017/01/24 07:59:54 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,7 +32,7 @@
 
 /*
  * Convert an X509 certificate to a buffer of "sz".
- * We don't guarantee that it's nil-terminated.
+ * We don't guarantee that it's NUL-terminated.
  * Returns NULL on failure.
  */
 static char *
@@ -55,7 +55,7 @@ x509buf(X509 *x, size_t *sz)
 
 	/*
 	 * Now convert bio to string.
-	 * Make into nil-terminated, just in case.
+	 * Make into NUL-terminated, just in case.
 	 */
 
 	if (NULL == (p = calloc(1, bio->num_write + 1))) {
