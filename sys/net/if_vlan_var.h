@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.36 2016/04/19 23:31:32 dlg Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.37 2017/01/24 10:08:30 krw Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -14,7 +14,7 @@
  * no representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied
  * warranty.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY M.I.T. ``AS IS''.  M.I.T. DISCLAIMS
  * ALL EXPRESS OR IMPLIED WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF

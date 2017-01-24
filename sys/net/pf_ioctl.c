@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.305 2016/11/16 08:46:05 mpi Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.306 2017/01/24 10:08:30 krw Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -540,11 +540,11 @@ pf_remove_queues(void)
 	struct pf_queuespec	*q;
 	struct ifnet		*ifp;
 
-	/* put back interfaces in normal queueing mode */	
+	/* put back interfaces in normal queueing mode */
 	TAILQ_FOREACH(q, pf_queues_active, entries) {
 		if (q->parent_qid != 0)
 			continue;
-			
+
 		ifp = q->kif->pfik_ifp;
 		if (ifp == NULL)
 			continue;
@@ -1123,7 +1123,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		break;
 	}
-	
+
 	case DIOCADDRULE: {
 		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
 		struct pf_ruleset	*ruleset;
@@ -1612,7 +1612,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bzero(pf_status.fcounters, sizeof(pf_status.fcounters));
 		bzero(pf_status.scounters, sizeof(pf_status.scounters));
 		pf_status.since = time_second;
-		
+
 		break;
 	}
 

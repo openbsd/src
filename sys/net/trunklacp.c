@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.28 2015/11/24 15:17:26 mpi Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.29 2017/01/24 10:08:30 krw Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -1704,7 +1704,7 @@ lacp_marker_input(struct lacp_port *lp, struct mbuf *m)
 
 		LACP_DPRINTF((lp, "marker response, port=%u, sys=%s, id=%u\n",
 		    ntohs(mdu->mdu_info.mi_rq_port),
-	    	    ether_sprintf(mdu->mdu_info.mi_rq_system),
+		    ether_sprintf(mdu->mdu_info.mi_rq_system),
 		    ntohl(mdu->mdu_info.mi_rq_xid)));
 
 		/* Verify that it is the last marker we sent out */

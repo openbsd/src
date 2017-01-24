@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dl.h,v 1.10 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: if_dl.h,v 1.11 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: if_dl.h,v 1.8 1995/03/26 20:30:13 jtc Exp $	*/
 
 /*
@@ -32,19 +32,19 @@
  *	@(#)if_dl.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * A Link-Level Sockaddr may specify the interface in one of two
  * ways: either by means of a system-provided index number (computed
  * anew and possibly differently on every reboot), or by a human-readable
  * string such as "il0" (for managerial convenience).
- * 
+ *
  * Census taking actions, such as something akin to SIOCGCONF would return
  * both the index and the human name.
- * 
+ *
  * High volume transactions (such as giving a link-level ``from'' address
  * in a recvfrom or recvmsg call) may be likely only to provide the indexed
  * form, (which requires fewer copy operations and less space).
- * 
+ *
  * The form and interpretation  of the link-level address is purely a matter
  * of convention between the device driver and its consumers; however, it is
  * expected that all drivers for an interface of a given if_type will agree.

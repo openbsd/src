@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.83 2017/01/23 11:37:29 mpi Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.84 2017/01/24 10:08:30 krw Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -100,7 +100,7 @@ struct if_clone mobileip_cloner =
  * control acceptance of WCCPv1-style GRE packets through the
  * net.inet.gre.wccp value, but be aware it depends upon normal GRE being
  * allowed as well.
- * 
+ *
  */
 int gre_allow = 0;
 int gre_wccp = 0;
@@ -149,7 +149,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_ka_state = GRE_STATE_UKNWN;
 
 	if (strcmp("gre", ifc->ifc_name) == 0) {
-		/* GRE encapsulation */	
+		/* GRE encapsulation */
 		sc->g_proto = IPPROTO_GRE;
 	} else {
 		/* Mobile IP encapsulation */

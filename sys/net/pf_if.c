@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.88 2016/12/12 13:30:05 mpi Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.89 2017/01/24 10:08:30 krw Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -214,7 +214,7 @@ pfi_kif_match(struct pfi_kif *rule_kif, struct pfi_kif *packet_kif)
 
 	if (rule_kif->pfik_flags & PFI_IFLAG_ANY && packet_kif->pfik_ifp &&
 	    !(packet_kif->pfik_ifp->if_flags & IFF_LOOPBACK))
-		return (1); 
+		return (1);
 
 	return (0);
 }

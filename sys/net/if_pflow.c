@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.70 2017/01/23 11:37:29 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.71 2017/01/24 10:08:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -592,11 +592,11 @@ pflow_setmtu(struct pflow_softc *sc, int mtu_req)
 		if (sc->sc_maxcount > PFLOW_MAXFLOWS)
 		    sc->sc_maxcount = PFLOW_MAXFLOWS;
 		sc->sc_if.if_mtu = sizeof(struct pflow_header) +
-		    sizeof(struct udpiphdr) + 
+		    sizeof(struct udpiphdr) +
 		    sc->sc_maxcount * sizeof(struct pflow_flow);
 		break;
 	case PFLOW_PROTO_10:
-		sc->sc_if.if_mtu = 
+		sc->sc_if.if_mtu =
 		    pflow_calc_mtu(sc, mtu, sizeof(struct pflow_v10_header));
 		break;
 	default: /* NOTREACHED */

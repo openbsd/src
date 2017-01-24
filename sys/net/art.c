@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.25 2017/01/23 01:02:11 claudio Exp $ */
+/*	$OpenBSD: art.c,v 1.26 2017/01/24 10:08:30 krw Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -184,7 +184,7 @@ int
 art_bindex(struct art_table *at, uint8_t *addr, int plen)
 {
 	uint8_t			boff, bend;
-	uint32_t 		k;
+	uint32_t		k;
 
 	if (plen < at->at_offset || plen > (at->at_offset + at->at_bits))
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.170 2017/01/24 03:57:35 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.171 2017/01/24 10:08:30 krw Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -14,7 +14,7 @@
  * no representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied
  * warranty.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY M.I.T. ``AS IS''.  M.I.T. DISCLAIMS
  * ALL EXPRESS OR IMPLIED WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -74,7 +74,7 @@
 #endif
 
 #define TAG_HASH_BITS		5
-#define TAG_HASH_SIZE		(1 << TAG_HASH_BITS) 
+#define TAG_HASH_SIZE		(1 << TAG_HASH_BITS)
 #define TAG_HASH_MASK		(TAG_HASH_SIZE - 1)
 #define TAG_HASH(tag)		(tag & TAG_HASH_MASK)
 SRPL_HEAD(, ifvlan) *vlan_tagh, *svlan_tagh;
@@ -986,7 +986,7 @@ vlan_multi_add(struct ifvlan *ifv, struct ifreq *ifr)
 	    (*ifp0->if_ioctl)(ifp0, SIOCADDMULTI, (caddr_t)ifr);
 	if_put(ifp0);
 
-	if (error != 0) 
+	if (error != 0)
 		goto ioctl_failed;
 
 	return (error);

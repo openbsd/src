@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.172 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.173 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -649,7 +649,7 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 		}
 		tp->tun_if.if_mtu = tunp->mtu;
 		tp->tun_if.if_type = tunp->type;
-		tp->tun_if.if_flags = 
+		tp->tun_if.if_flags =
 		    (tunp->flags & TUN_IFF_FLAGS) |
 		    (tp->tun_if.if_flags & ~TUN_IFF_FLAGS);
 		tp->tun_if.if_baudrate = tunp->baudrate;
@@ -729,7 +729,7 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 		break;
 	default:
 #ifdef PIPEX
-	    	if (!(tp->tun_flags & TUN_LAYER2)) {
+		if (!(tp->tun_flags & TUN_LAYER2)) {
 			int ret;
 			ret = pipex_ioctl(&tp->pipex_iface, cmd, data);
 			splx(s);

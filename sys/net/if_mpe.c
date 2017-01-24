@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.57 2017/01/23 11:37:29 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.58 2017/01/24 10:08:30 krw Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -53,7 +53,7 @@
 
 void	mpeattach(int);
 int	mpeoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
-	    	       struct rtentry *);
+		       struct rtentry *);
 int	mpeioctl(struct ifnet *, u_long, caddr_t);
 void	mpestart(struct ifnet *);
 int	mpe_clone_create(struct if_clone *, int);
@@ -78,7 +78,7 @@ mpeattach(int nmpe)
 int
 mpe_clone_create(struct if_clone *ifc, int unit)
 {
-	struct ifnet 		*ifp;
+	struct ifnet		*ifp;
 	struct mpe_softc	*mpeif;
 
 	if ((mpeif = malloc(sizeof(*mpeif),
@@ -138,7 +138,7 @@ struct sockaddr_storage	 mpedst;
 void
 mpestart(struct ifnet *ifp0)
 {
-	struct mbuf 		*m;
+	struct mbuf		*m;
 	struct sockaddr		*sa = (struct sockaddr *)&mpedst;
 	sa_family_t		 af;
 	struct rtentry		*rt;
@@ -386,7 +386,7 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
 	}
-	
+
 	/* new receive if and move into correct rtable */
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;

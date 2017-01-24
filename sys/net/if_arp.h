@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arp.h,v 1.6 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: if_arp.h,v 1.7 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: if_arp.h,v 1.8 1995/03/08 02:56:52 cgd Exp $	*/
 
 /*
@@ -46,9 +46,9 @@
  */
 struct	arphdr {
 	u_int16_t ar_hrd;	/* format of hardware address */
-#define ARPHRD_ETHER 	1	/* ethernet hardware format */
-#define ARPHRD_IEEE802 	6	/* IEEE 802 hardware format */
-#define ARPHRD_FRELAY 	15	/* frame relay hardware format */
+#define ARPHRD_ETHER	1	/* ethernet hardware format */
+#define ARPHRD_IEEE802	6	/* IEEE 802 hardware format */
+#define ARPHRD_FRELAY	15	/* frame relay hardware format */
 #define ARPHRD_IEEE1394	24	/* IEEE 1394 (FireWire) hardware format */
 	u_int16_t ar_pro;	/* format of protocol address */
 	u_int8_t  ar_hln;	/* length of hardware address */
@@ -58,7 +58,7 @@ struct	arphdr {
 #define	ARPOP_REPLY	2	/* response to previous request */
 #define	ARPOP_REVREQUEST 3	/* request protocol address given hardware */
 #define	ARPOP_REVREPLY	4	/* response giving protocol address */
-#define	ARPOP_INVREQUEST 8 	/* request to identify peer */
+#define	ARPOP_INVREQUEST 8	/* request to identify peer */
 #define	ARPOP_INVREPLY	9	/* response identifying peer */
 /*
  * The remaining fields are variable in size,

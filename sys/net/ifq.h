@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.8 2017/01/24 03:57:35 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.9 2017/01/24 10:08:30 krw Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -217,9 +217,9 @@ struct ifqueue {
  * A driver advertises it's ability to run its start routine by setting
  * the IFXF_MPSAFE flag in ifp->if_xflags before calling if_attach():
  *
- * 	ifp->if_xflags = IFXF_MPSAFE;
- * 	ifp->if_start = drv_start;
- * 	if_attach(ifp);
+ *	ifp->if_xflags = IFXF_MPSAFE;
+ *	ifp->if_start = drv_start;
+ *	if_attach(ifp);
  *
  * The network stack will then wrap its calls to ifp->if_start with
  * ifq_start() to guarantee there is only one instance of that function
@@ -246,56 +246,56 @@ struct ifqueue {
  * Drivers for hardware should use the following pattern to transmit
  * packets:
  *
- * 	void
- * 	drv_start(struct ifnet *ifp)
- * 	{
- * 		struct drv_softc *sc = ifp->if_softc;
- * 		struct mbuf *m;
- * 		int kick = 0;
+ *	void
+ *	drv_start(struct ifnet *ifp)
+ *	{
+ *		struct drv_softc *sc = ifp->if_softc;
+ *		struct mbuf *m;
+ *		int kick = 0;
  *
- * 		if (NO_LINK) {
- * 			ifq_purge(&ifp->if_snd);
- * 			return;
- * 		}
+ *		if (NO_LINK) {
+ *			ifq_purge(&ifp->if_snd);
+ *			return;
+ *		}
  *
- * 		for (;;) {
- * 			if (NO_SPACE) {
- * 				ifq_set_oactive(&ifp->if_snd);
- * 				break;
- * 			}
+ *		for (;;) {
+ *			if (NO_SPACE) {
+ *				ifq_set_oactive(&ifp->if_snd);
+ *				break;
+ *			}
  *
- * 			m = ifq_dequeue(&ifp->if_snd);
- * 			if (m == NULL)
- * 				break;
+ *			m = ifq_dequeue(&ifp->if_snd);
+ *			if (m == NULL)
+ *				break;
  *
- * 			if (drv_encap(sc, m) != 0) { // map and fill ring
- * 				m_freem(m);
- * 				continue;
- * 			}
+ *			if (drv_encap(sc, m) != 0) { // map and fill ring
+ *				m_freem(m);
+ *				continue;
+ *			}
  *
- * 			bpf_mtap();
- * 		}
+ *			bpf_mtap();
+ *		}
  *
- *  		drv_kick(sc); // notify hw of new descriptors on the ring
- * 	 }
+ *		drv_kick(sc); // notify hw of new descriptors on the ring
+ *	 }
  *
  * == Transmission completion
  *
  * The following pattern should be used for transmit queue interrupt
  * processing:
  *
- * 	void
- * 	drv_txeof(struct drv_softc *sc)
- * 	{
- * 		struct ifnet *ifp = &sc->sc_if;
+ *	void
+ *	drv_txeof(struct drv_softc *sc)
+ *	{
+ *		struct ifnet *ifp = &sc->sc_if;
  *
- * 		while (COMPLETED_PKTS) {
- * 			// unmap packets, m_freem() the mbufs.
- * 		}
+ *		while (COMPLETED_PKTS) {
+ *			// unmap packets, m_freem() the mbufs.
+ *		}
  *
- * 		if (ifq_is_oactive(&ifp->if_snd))
- * 			ifq_restart(&ifp->if_snd);
- * 	}
+ *		if (ifq_is_oactive(&ifp->if_snd))
+ *			ifq_restart(&ifp->if_snd);
+ *	}
  *
  * == Stop
  *
@@ -303,21 +303,21 @@ struct ifqueue {
  * should clear IFF_RUNNING in ifp->if_flags, and guarantee the start
  * routine is not running before freeing any resources it uses:
  *
- * 	void
- * 	drv_down(struct drv_softc *sc)
- * 	{
- * 		struct ifnet *ifp = &sc->sc_if;
+ *	void
+ *	drv_down(struct drv_softc *sc)
+ *	{
+ *		struct ifnet *ifp = &sc->sc_if;
  *
- * 		CLR(ifp->if_flags, IFF_RUNNING);
- * 		DISABLE_INTERRUPTS();
+ *		CLR(ifp->if_flags, IFF_RUNNING);
+ *		DISABLE_INTERRUPTS();
  *
- * 		ifq_barrier(&ifp->if_snd);
- * 		intr_barrier(sc->sc_ih);
+ *		ifq_barrier(&ifp->if_snd);
+ *		intr_barrier(sc->sc_ih);
  *
- * 		FREE_RESOURCES();
+ *		FREE_RESOURCES();
  *
- * 		ifq_clr_oactive();
- * 	}
+ *		ifq_clr_oactive();
+ *	}
  *
  */
 

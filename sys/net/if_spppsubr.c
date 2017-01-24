@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.161 2017/01/21 05:36:33 dlg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.162 2017/01/24 10:08:30 krw Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -70,8 +70,8 @@
 # define UNTIMEOUT(fun, arg, handle)	\
 	timeout_del(&(handle))
 
-#define LOOPALIVECNT     		3	/* loopback detection tries */
-#define MAXALIVECNT    			3	/* max. missed alive packets */
+#define LOOPALIVECNT			3	/* loopback detection tries */
+#define MAXALIVECNT			3	/* max. missed alive packets */
 #define	NORECV_TIME			15	/* before we get worried */
 
 /*
@@ -1539,7 +1539,7 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 		case STATE_STOPPING:
 			sppp_cp_send(sp, cp->proto, TERM_REQ, ++sp->pp_seq,
 				     0, 0);
-  			sppp_increasing_timeout (cp, sp);
+			sppp_increasing_timeout (cp, sp);
 			break;
 		case STATE_REQ_SENT:
 		case STATE_ACK_RCVD:
@@ -1548,7 +1548,7 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 			(cp->scr)(sp);
 			break;
 		case STATE_ACK_SENT:
-  			sppp_increasing_timeout (cp, sp);
+			sppp_increasing_timeout (cp, sp);
 			(cp->scr)(sp);
 			break;
 		}

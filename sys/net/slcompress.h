@@ -1,4 +1,4 @@
-/*	$OpenBSD: slcompress.h,v 1.9 2013/10/24 18:50:16 deraadt Exp $	*/
+/*	$OpenBSD: slcompress.h,v 1.10 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: slcompress.h,v 1.11 1997/05/17 21:12:11 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
  * sequence number changes, one change per bit set in the header
  * (there may be no changes and there are two special cases where
  * the receiver implicitly knows what changed -- see below).
- * 
+ *
  * There are 5 numbers which can change (they are always inserted
  * in the following order): TCP urgent pointer, window,
  * acknowledgement, sequence number and IP ID.  (The urgent pointer
@@ -158,10 +158,10 @@ struct slcompress {
 void	sl_compress_init(struct slcompress *);
 void	sl_compress_setup(struct slcompress *, int);
 u_int	sl_compress_tcp(struct mbuf *,
-  	    struct ip *, struct slcompress *, int);
+	    struct ip *, struct slcompress *, int);
 int	sl_uncompress_tcp(u_char **, int, u_int, struct slcompress *);
 int	sl_uncompress_tcp_core(u_char *, int, int, u_int,
-  	    struct slcompress *, u_char **, u_int *);
+	    struct slcompress *, u_char **, u_int *);
 #endif /* _KERNEL */
 
 #endif /* _NET_SLCOMPRESS_H_ */

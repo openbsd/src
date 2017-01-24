@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.56 2016/11/20 11:46:45 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.57 2017/01/24 10:08:30 krw Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -46,7 +46,7 @@
  *   ----------- `.       .---------.     .---------.
  *       ...	   `----> | rtable0 | ... | rtableN |	Array of pointers for
  *   -----------          '---------'     '---------'	IPv4 routing tables
- *   | AF_MPLS |            			 	indexed by ``rtableid''.
+ *   | AF_MPLS |					indexed by ``rtableid''.
  *   -----------
  */
 struct srp	  *afmap;
@@ -941,7 +941,7 @@ rtable_mpath_insert(struct art_node *an, struct rtentry *rt)
 		while (SRPL_NEXT_LOCKED(mrt, rt_next) != NULL) {
 			if (mrt->rt_priority > prio)
 				break;
-		    	prt = mrt;
+			prt = mrt;
 			mrt = SRPL_NEXT_LOCKED(mrt, rt_next);
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.446 2016/12/29 13:01:48 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.447 2017/01/24 10:08:30 krw Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,7 +61,7 @@ struct ip6_hdr;
 typedef struct refcnt	pf_refcnt_t;
 #define	PF_REF_INIT(_x)	refcnt_init(&(_x))
 #define	PF_REF_TAKE(_x)	refcnt_take(&(_x))
-#define	PF_REF_RELE(_x)	refcnt_rele(&(_x)) 
+#define	PF_REF_RELE(_x)	refcnt_rele(&(_x))
 
 enum	{ PF_INOUT, PF_IN, PF_OUT, PF_FWD };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,

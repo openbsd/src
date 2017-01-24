@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.18 2017/01/24 03:57:35 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.19 2017/01/24 10:08:30 krw Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -345,17 +345,17 @@ mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
 {
 	struct ifnet *ifp;
 	struct ifvlan *ifv;
- 
+
 	uint16_t type = ETHERTYPE_QINQ;
 	uint16_t tag = 0;
- 
+
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp != NULL && ifp->if_qstart == vlan_start &&
 	    ISSET(ifp->if_flags, IFF_RUNNING)) {
- 		ifv = ifp->if_softc;
+		ifv = ifp->if_softc;
 		type = ifv->ifv_type;
 		tag = ifv->ifv_tag;
- 	}
+	}
 	if_put(ifp);
 
 	return (vlan_inject(m, type, tag));
@@ -413,12 +413,12 @@ mpw_start(struct ifnet *ifp)
 			}
  #else
 			/* Ethernet tagged doesn't work without VLANs'*/
- 			m_freem(m);
- 			continue;
+			m_freem(m);
+			continue;
  #endif /* NVLAN */
 		}
- 
- 		if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
+
+		if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
 			M_PREPEND(m, sizeof(*shim), M_NOWAIT);
 			if (m == NULL)
 				continue;

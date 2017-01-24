@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.57 2017/01/24 03:53:32 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.58 2017/01/24 10:08:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -375,7 +375,7 @@ bfd_start_task(void *arg)
 	bfd->bc_sosend = bfd_sender(bfd, BFD_UDP_PORT_CONTROL);
 	if (bfd->bc_sosend) {
 		task_set(&bfd->bc_bfd_send_task, bfd_send_task, bfd);
-		task_add(bfdtq, &bfd->bc_bfd_send_task);	
+		task_add(bfdtq, &bfd->bc_bfd_send_task);
 	}
 
 	return;
@@ -484,7 +484,7 @@ bfd_listener(struct bfd_config *bfd, unsigned int port)
 struct socket *
 bfd_sender(struct bfd_config *bfd, unsigned int port)
 {
-	struct socket 		*so;
+	struct socket		*so;
 	struct rtentry		*rt = bfd->bc_rt;
 	struct proc		*p = curproc;
 	struct mbuf		*m = NULL, *mopt = NULL;
@@ -638,7 +638,7 @@ void
 bfd_timeout_tx(void *v)
 {
 	struct bfd_config *bfd = v;
-	task_add(bfdtq, &bfd->bc_bfd_send_task);	
+	task_add(bfdtq, &bfd->bc_bfd_send_task);
 }
 
 /*

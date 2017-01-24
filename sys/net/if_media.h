@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.38 2016/12/14 08:16:56 sthen Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.39 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -796,7 +796,7 @@ struct ifmedia_baudrate {
 	{ IFM_IEEE80211|IFM_IEEE80211_OFDM48, IF_Mbps(48) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_OFDM54, IF_Mbps(54) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_OFDM72, IF_Mbps(72) },		\
-	/* These HT rates correspond to 20 MHz channel with no SGI. */ 	\
+	/* These HT rates correspond to 20 MHz channel with no SGI. */	\
 	{ IFM_IEEE80211|IFM_IEEE80211_HT_MCS0, IF_Kbps(6500) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_HT_MCS1, IF_Mbps(13) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_HT_MCS2, IF_Kbps(19500) },	\

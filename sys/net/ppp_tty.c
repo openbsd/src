@@ -1,9 +1,9 @@
-/*	$OpenBSD: ppp_tty.c,v 1.45 2016/12/19 15:57:30 mpi Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.46 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
  * ppp_tty.c - Point-to-Point Protocol (PPP) driver for asynchronous
- * 	       tty devices.
+ *	       tty devices.
  *
  * Copyright (c) 1984-2000 Carnegie Mellon University. All rights reserved.
  *

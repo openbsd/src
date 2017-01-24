@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.292 2017/01/23 11:37:29 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.293 2017/01/24 10:08:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -738,7 +738,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct bridge_tunneltag *brtag;
 	int error;
 
-	/* ifp must be a member interface of the bridge. */ 
+	/* ifp must be a member interface of the bridge. */
 	if (ifp->if_bridgeport == NULL) {
 		m_freem(m);
 		return (EINVAL);
@@ -1092,12 +1092,12 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 		/*
-	 	 * Reserved destination MAC addresses (01:80:C2:00:00:0x)
+		 * Reserved destination MAC addresses (01:80:C2:00:00:0x)
 		 * should not be forwarded to bridge members according to
 		 * section 7.12.6 of the 802.1D-2004 specification.  The
 		 * STP destination address (as stored in bstp_etheraddr)
 		 * is the first of these.
-	 	 */
+		 */
 		if (bcmp(eh->ether_dhost, bstp_etheraddr, ETHER_ADDR_LEN - 1)
 		    == 0) {
 			if (eh->ether_dhost[ETHER_ADDR_LEN - 1] == 0) {
@@ -1116,11 +1116,11 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 		 */
 		if ((ifl->bif_flags & IFBIF_STP) &&
 		    (ifl->bif_state == BSTP_IFSTATE_DISCARDING))
-	    		goto reenqueue;
+			goto reenqueue;
 
 		mc = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
 		if (mc == NULL)
-	    		goto reenqueue;
+			goto reenqueue;
 
 		bridge_ifinput(ifp, mc);
 
@@ -1133,7 +1133,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	 */
 	if ((ifl->bif_flags & IFBIF_STP) &&
 	    (ifl->bif_state == BSTP_IFSTATE_DISCARDING))
-	    	goto reenqueue;
+		goto reenqueue;
 
 	/*
 	 * Unicast, make sure it's not for us.
@@ -1976,7 +1976,7 @@ bridge_tunnel(struct mbuf *m)
 struct bridge_tunneltag *
 bridge_tunneltag(struct mbuf *m)
 {
-	struct m_tag    	*mtag;
+	struct m_tag	*mtag;
 
 	if ((mtag = m_tag_find(m, PACKET_TAG_TUNNEL, NULL)) == NULL) {
 		mtag = m_tag_get(PACKET_TAG_TUNNEL,

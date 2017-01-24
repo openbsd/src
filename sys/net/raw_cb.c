@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.c,v 1.10 2016/09/05 16:07:01 claudio Exp $	*/
+/*	$OpenBSD: raw_cb.c,v 1.11 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <netinet/in.h>
 
 /*
- * Routines to manage the raw protocol control blocks. 
+ * Routines to manage the raw protocol control blocks.
  *
  * TODO:
  *	hash lookups by protocol family/protocol + address family

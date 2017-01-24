@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppvar.h,v 1.18 2015/11/06 09:04:36 dlg Exp $	*/
+/*	$OpenBSD: if_pppvar.h,v 1.19 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
@@ -124,7 +124,7 @@ struct ppp_softc {
 	struct	bpf_program sc_pass_filt; /* filter for packets to pass */
 	struct	bpf_program sc_active_filt; /* filter for "non-idle" packets */
 #ifdef	VJC
-	struct	slcompress *sc_comp; 	/* vjc control buffer */
+	struct	slcompress *sc_comp;	/* vjc control buffer */
 #endif
 
 	/* Device-dependent part for async lines. */
@@ -146,7 +146,7 @@ struct ppp_softc {
 
 struct ppp_pkt_hdr {
 	struct ppp_pkt		*ph_next; /* next in pkt chain */
-	struct ppp_pkt		*ph_pkt;  /* prev in chain or next in list */ 
+	struct ppp_pkt		*ph_pkt;  /* prev in chain or next in list */
 	uint16_t		ph_len;
 	uint16_t		ph_errmark;
 };

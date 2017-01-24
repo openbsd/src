@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.55 2016/11/14 08:54:19 mpi Exp $	*/
+/*	$OpenBSD: radix.c,v 1.56 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -92,18 +92,18 @@ static inline void rn_swap_nodes(struct radix_node *, struct radix_node *);
  * We define the index of a route to associated with the mask to be
  * the first bit number in the mask where 0 occurs (with bit number 0
  * representing the highest order bit).
- * 
+ *
  * We say a mask is normal if every bit is 0, past the index of the mask.
  * If a node n has a descendant (k, m) with index(m) == index(n) == rn_b,
  * and m is a normal mask, then the route applies to every descendant of n.
  * If the index(m) < rn_b, this implies the trailing last few bits of k
  * before bit b are all 0, (and hence consequently true of every descendant
  * of n), so the route applies to all descendants of the node as well.
- * 
+ *
  * Similar logic shows that a non-normal mask m such that
  * index(m) <= index(n) could potentially apply to many children of n.
  * Thus, for each non-host route, we attach its mask to a list at an internal
- * node as high in the tree as we can go. 
+ * node as high in the tree as we can go.
  *
  * The present version of the code makes use of normal routes in short-
  * circuiting an explicit mask and compare operation when testing whether
@@ -824,7 +824,7 @@ rn_del_radix_mask(struct radix_node *tt)
 		if (m->rm_leaf != tt) {
 			if (--m->rm_refs >= 0)
 				return (0);
-			else 
+			else
 				log(LOG_ERR, "rn_delete: "
 				    "inconsistent mklist refcount\n");
 		}

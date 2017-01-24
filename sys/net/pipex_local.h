@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.23 2015/11/14 14:53:13 miod Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.24 2017/01/24 10:08:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -47,7 +47,7 @@
 #endif
 #define PIPEX_HASH_DIV			8
 #define PIPEX_HASH_SIZE			(PIPEX_MAX_SESSION/PIPEX_HASH_DIV)
-#define PIPEX_HASH_MASK			(PIPEX_HASH_SIZE-1)	
+#define PIPEX_HASH_MASK			(PIPEX_HASH_SIZE-1)
 #define PIPEX_CLOSE_TIMEOUT		30
 #define	PIPEX_PPPMINLEN			5
 	/* minimum PPP header length is 1 and minimum ppp payload length is 4 */
@@ -84,7 +84,7 @@ struct pipex_pppoe_session {
 #ifdef PIPEX_PPTP
 struct pipex_pptp_session {
 	/* sequence number gap between pipex and userland */
-	int32_t	snd_gap;			/* gap of our sequence */ 
+	int32_t	snd_gap;			/* gap of our sequence */
 	int32_t rcv_gap;			/* gap of peer's sequence */
 	int32_t ul_snd_una;			/* userland send acked seq */
 
@@ -296,13 +296,13 @@ extern struct pipex_hash_head	pipex_id_hashtable[];
 	*(cp)++ = (u_char)(s);						\
 } while (0)
 
-#define GETSHORT(s, cp) do { 						\
+#define GETSHORT(s, cp) do {						\
 	(s) = *(cp)++ << 8;						\
 	(s) |= *(cp)++;							\
 } while (0)
 
 #define PUTSHORT(s, cp) do {						\
-	*(cp)++ = (u_char) ((s) >> 8); 					\
+	*(cp)++ = (u_char) ((s) >> 8);					\
 	*(cp)++ = (u_char) (s);						\
 } while (0)
 

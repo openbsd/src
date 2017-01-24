@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.122 2017/01/23 09:08:24 mpi Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.123 2017/01/24 10:08:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -379,7 +379,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	 *
 	 * one is O(N) and is better for large 'n'
 	 * one is O(n*LOG(N)) and is better for small 'n'
-	 * 
+	 *
 	 * following code try to decide which one is best.
 	 */
 	for (i = kt->pfrkt_cnt; i > 0; i >>= 1)
@@ -2478,9 +2478,9 @@ pfr_states_decrease(struct pfr_ktable *kt, struct pf_addr *addr, int af)
 	return ke->pfrke_counters->states;
 }
 
-/* 
+/*
  * Added for load balancing to find a kentry outside of the table.
- * We need to create a custom pfr_addr struct. 
+ * We need to create a custom pfr_addr struct.
  */
 struct pfr_kentry *
 pfr_kentry_byaddr(struct pfr_ktable *kt, struct pf_addr *addr, sa_family_t af,
@@ -2542,8 +2542,8 @@ pfr_dynaddr_update(struct pfr_ktable *kt, struct pfi_dynaddr *dyn)
 
 void
 pfr_ktable_winfo_update(struct pfr_ktable *kt, struct pfr_kentry *p) {
-	/* 
-	 * If cost flag is set, 
+	/*
+	 * If cost flag is set,
 	 * gcdweight is needed for round-robin.
 	 */
 	if (kt->pfrkt_refcntcost > 0) {

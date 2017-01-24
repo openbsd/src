@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.56 2016/09/15 02:00:18 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.57 2017/01/24 10:08:30 krw Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -903,7 +903,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 	ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
 	ia->ia_ifa.ifa_ifp = ifp;
-	
+
 	ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr;
 
 	error = in_ifinit(ifp, ia, &ifaddr, 1);

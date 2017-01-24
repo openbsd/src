@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.20 2015/12/05 16:09:09 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.21 2017/01/24 10:08:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -44,7 +44,7 @@
         { "outq", CTLTYPE_NODE }, \
 }
 
-#define PIPEX_PROTO_L2TP		1  	/* protocol L2TP */
+#define PIPEX_PROTO_L2TP		1	/* protocol L2TP */
 #define PIPEX_PROTO_PPTP		2	/* protocol PPTP */
 #define PIPEX_PROTO_PPPOE		3	/* protocol PPPoE */
 #define PIPEX_MAX_LISTREQ		128	/* list request size */
@@ -63,7 +63,7 @@ struct pipex_statistics {
 	uint32_t ipackets;      /* packets received from tunnel */
 	uint32_t ierrors;       /* error packets received from tunnel */
 	uint64_t ibytes;        /* number of received bytes from tunnel */
-	uint32_t opackets;      /* packets sent to tunnel */  
+	uint32_t opackets;      /* packets sent to tunnel */
 	uint32_t oerrors;       /* error packets on sending to tunnel */
 	uint64_t obytes;        /* number of sent bytes to tunnel */
 
@@ -88,8 +88,8 @@ struct pipex_session_req {
 #define	PIPEX_PPP_INGRESS_FILTER	0x0200	/* do ingress filter */
 	int8_t		pr_ccp_id;		/* CCP current packet id */
 	int		pr_ppp_id;		/* PPP Id. */
-	uint16_t	pr_peer_mru; 		/* Peer's MRU */
-	uint32_t	pr_timeout_sec; 	/* Idle Timer */
+	uint16_t	pr_peer_mru;		/* Peer's MRU */
+	uint32_t	pr_timeout_sec;		/* Idle Timer */
 
 	struct in_addr	pr_ip_srcaddr;		/* local framed IP-Address */
 	struct in_addr	pr_ip_address;		/* framed IP-Address */
@@ -119,7 +119,7 @@ struct pipex_session_req {
 			uint32_t ipsecflowinfo;	/* IPsec flow id for NAT-T */
 		} l2tp;
 		struct {
-			char over_ifname[IF_NAMESIZE]; 	/* ethernet ifname */
+			char over_ifname[IF_NAMESIZE];	/* ethernet ifname */
 		} pppoe;
 	} pr_proto;
 	struct sockaddr_storage  pr_peer_address;  /* peer address of tunnel */

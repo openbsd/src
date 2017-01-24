@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.29 2015/10/17 20:41:41 stsp Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.30 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@
  * Compile-time options:
  * IFMEDIA_DEBUG:
  *	turn on implementation-level debug printfs.
- * 	Useful for debugging newly-ported  drivers.
+ *	Useful for debugging newly-ported  drivers.
  */
 
 #ifdef IFMEDIA_DEBUG
@@ -163,7 +163,7 @@ ifmedia_list_add(struct ifmedia *ifm, struct ifmedia_entry *lp, int count)
 }
 
 /*
- * Set the default active media. 
+ * Set the default active media.
  *
  * Called by device-specific code which is assumed to have already
  * selected the default media in hardware.  We do _not_ call the
@@ -287,7 +287,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	/*
 	 * Get list of available media and current media on interface.
 	 */
-	case  SIOCGIFMEDIA: 
+	case  SIOCGIFMEDIA:
 	{
 		struct ifmediareq *ifmr = (struct ifmediareq *) ifr;
 		struct ifmedia_entry *ep;

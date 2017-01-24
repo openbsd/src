@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.h,v 1.13 2010/06/26 19:49:54 claudio Exp $ */
+/*      $OpenBSD: if_gre.h,v 1.14 2017/01/24 10:08:30 krw Exp $ */
 /*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
@@ -16,7 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *    
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -55,15 +55,15 @@ struct gre_softc {
 #define GRE_STATE_DOWN	1
 #define GRE_STATE_HOLD	2
 #define GRE_STATE_UP	3
-};	
+};
 
 
 struct gre_h {
 	u_int16_t flags;	/* GRE flags */
-	u_int16_t ptype;	/* protocol type of payload typically 
+	u_int16_t ptype;	/* protocol type of payload typically
                                Ether protocol type*/
-/* 
- *  from here on: fields are optional, presence indicated by flags 
+/*
+ *  from here on: fields are optional, presence indicated by flags
  *
 	u_int_16 checksum	 checksum (one-complements of GRE header
                              and payload
@@ -109,7 +109,7 @@ struct greip {
 struct gre_sre {
 	u_int16_t sre_family;	/* address family */
 	u_char  sre_offset;	/* offset to first octet of active entry */
-	u_char  sre_length;	/* number of octets in the SRE. 
+	u_char  sre_length;	/* number of octets in the SRE.
                                sre_lengthl==0 -> last entry. */
 	u_char  *sre_rtinfo;	/* the routing information */
 };
@@ -139,13 +139,13 @@ struct mobip_h {
 #define MOB_H_SBIT	0x0080
 
 
-/* 
- * ioctls needed to manipulate the interface 
+/*
+ * ioctls needed to manipulate the interface
  */
 
 #ifdef _KERNEL
 extern  LIST_HEAD(gre_softc_head, gre_softc) gre_softc_list;
-extern  int gre_allow;   
+extern  int gre_allow;
 extern  int gre_wccp;
 extern  int ip_mobile_allow;
 

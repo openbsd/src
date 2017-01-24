@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.158 2017/01/09 19:15:01 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.159 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -8,7 +8,7 @@
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence 
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
  * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without

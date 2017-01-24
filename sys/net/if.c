@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.479 2017/01/24 03:57:35 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.480 2017/01/24 10:08:30 krw Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1120,7 +1120,7 @@ if_isconnected(const struct ifnet *ifp0, unsigned int ifidx)
 #if NCARP > 0
 	if ((ifp0->if_type == IFT_CARP && ifp0->if_carpdev == ifp) ||
 	    (ifp->if_type == IFT_CARP && ifp->if_carpdev == ifp0))
-	    	connected = 1;
+		connected = 1;
 #endif
 
 	if_put(ifp);
