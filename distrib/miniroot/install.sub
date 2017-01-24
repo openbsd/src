@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.957 2017/01/24 10:06:21 rpe Exp $
+#	$OpenBSD: install.sub,v 1.958 2017/01/24 10:14:14 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -69,7 +69,7 @@ usage() {
 # Wait for the ftp process to finish, or be killed after the timeout and
 # extract various informations from the ftplist.cgi output.
 waitcgiinfo() {
-	local _l _key _val
+	local _l _s _key _val
 
 	# Wait for the ftp(1) process started in startcgiinfo() to end and
 	# ensure, there is actual data to extract info from.
@@ -81,9 +81,9 @@ waitcgiinfo() {
 		$CGI_INFO >$HTTP_LIST 2>/dev/null
 
 	# Extract the previously selected mirror server (first entry in the
-	# ftplist.cgi output).
-	read -r -- _l <$HTTP_LIST
-	: ${HTTP_SERVER:=${_l%%/*}}
+	# ftplist.cgi output, if that has no location info).
+	read -r -- _s _l <$HTTP_LIST
+	[[ -z $_l ]] && : ${HTTP_SERVER:=${_s%%/*}}
 
 	# Extract the previously used install method, timezone information
 	# and a reference timestamp.
