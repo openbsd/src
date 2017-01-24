@@ -557,10 +557,9 @@ main (int argc, char **argv)
 	 * we have been given to check.
 	 */
 	if ((castore = read_cacerts(cafile)) == NULL)
-		errx(EXIT_FAILURE, "Unable to load %s", cafile);
-
+		exit(EXIT_FAILURE);
 	if ((request = ocsp_request_new_from_cert(certfile, nonce)) == NULL)
-		errx(EXIT_FAILURE, "Unable to build OCSP request");
+		exit(EXIT_FAILURE);
 
 	if ((host = url2host(request->url, &port, &path)) == NULL)
 		errx(EXIT_FAILURE, "Invalid OCSP url %s from %s", request->url,
@@ -605,7 +604,7 @@ main (int argc, char **argv)
 	OPENSSL_add_all_algorithms_noconf();
 	if (!validate_response(hget->bodypart, hget->bodypartsz,
 		request, castore, host, certfile))
-		errx(EXIT_FAILURE, "Can not validate %s", certfile);
+		exit(EXIT_FAILURE);
 
 	/*
 	 * If we have been given a place to save a staple,
