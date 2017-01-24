@@ -16,6 +16,7 @@
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <err.h>
 #include <fcntl.h>
@@ -542,7 +543,8 @@ main (int argc, char **argv)
 		if (strcmp(outfile, "-") == 0)
 			staplefd = STDOUT_FILENO;
 		else
-			staplefd = open(outfile, O_WRONLY|O_CREAT);
+			staplefd = open(outfile, O_WRONLY|O_CREAT,
+			    S_IWUSR|S_IRUSR|S_IRGRP|S_IROTH);
 		if (staplefd < 0)
 			err(EXIT_FAILURE, "Unable to open output file %s",
 			    outfile);
@@ -611,7 +613,7 @@ main (int argc, char **argv)
 	 * write out the DER format response to the staplefd
 	 */
 	if (staplefd >= 0) {
-		ftruncate(staplefd, 0);
+		(void) ftruncate(staplefd, 0);
 		w = 0 ;
 		written = 0;
 		while (written < hget->bodypartsz) {
