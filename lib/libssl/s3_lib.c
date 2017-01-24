@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.129 2017/01/24 03:00:54 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.130 2017/01/24 09:03:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2154,7 +2154,22 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	default:
 		break;
 	}
+
 	return (ret);
+}
+
+int
+SSL_set1_groups(SSL *s, const int *groups, size_t groups_len)
+{
+	return tls1_set_groups(&s->internal->tlsext_supportedgroups,
+	    &s->internal->tlsext_supportedgroups_length, groups, groups_len);
+}
+
+int
+SSL_set1_groups_list(SSL *s, const char *groups)
+{
+	return tls1_set_groups_list(&s->internal->tlsext_supportedgroups,
+	    &s->internal->tlsext_supportedgroups_length, groups);
 }
 
 long
@@ -2325,6 +2340,20 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return (0);
 	}
 	return (1);
+}
+
+int
+SSL_CTX_set1_groups(SSL_CTX *ctx, const int *groups, size_t groups_len)
+{
+	return tls1_set_groups(&ctx->internal->tlsext_supportedgroups,
+	    &ctx->internal->tlsext_supportedgroups_length, groups, groups_len);
+}
+
+int
+SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *groups)
+{
+	return tls1_set_groups_list(&ctx->internal->tlsext_supportedgroups,
+	    &ctx->internal->tlsext_supportedgroups_length, groups);
 }
 
 long

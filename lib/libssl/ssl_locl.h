@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.163 2017/01/23 22:34:38 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.164 2017/01/24 09:03:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -425,8 +425,8 @@ typedef struct ssl_session_internal_st {
 
 	size_t tlsext_ecpointformatlist_length;
 	uint8_t *tlsext_ecpointformatlist; /* peer's list */
-	size_t tlsext_ellipticcurvelist_length;
-	uint16_t *tlsext_ellipticcurvelist; /* peer's list */
+	size_t tlsext_supportedgroups_length;
+	uint16_t *tlsext_supportedgroups; /* peer's list */
 } SSL_SESSION_INTERNAL;
 #define SSI(s) (s->session->internal)
 
@@ -603,6 +603,11 @@ typedef struct ssl_ctx_internal_st {
 	/* Client list of supported protocols in wire format. */
 	unsigned char *alpn_client_proto_list;
 	unsigned int alpn_client_proto_list_len;
+
+	size_t tlsext_ecpointformatlist_length;
+	uint8_t *tlsext_ecpointformatlist; /* our list */
+	size_t tlsext_supportedgroups_length;
+	uint16_t *tlsext_supportedgroups; /* our list */
 } SSL_CTX_INTERNAL;
 
 typedef struct ssl_internal_st {
@@ -745,10 +750,11 @@ typedef struct ssl_internal_st {
 
 	/* RFC4507 session ticket expected to be received or sent */
 	int tlsext_ticket_expected;
+
 	size_t tlsext_ecpointformatlist_length;
 	uint8_t *tlsext_ecpointformatlist; /* our list */
-	size_t tlsext_ellipticcurvelist_length;
-	uint16_t *tlsext_ellipticcurvelist; /* our list */
+	size_t tlsext_supportedgroups_length;
+	uint16_t *tlsext_supportedgroups; /* our list */
 
 	/* TLS Session Ticket extension override */
 	TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
@@ -1303,6 +1309,11 @@ int tls1_alert_code(int code);
 int ssl_ok(SSL *s);
 
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
+
+int tls1_set_groups(uint16_t **out_group_ids, size_t *out_group_ids_len,
+    const int *groups, size_t ngroups);
+int tls1_set_groups_list(uint16_t **out_group_ids, size_t *out_group_ids_len,
+    const char *groups);
 
 int tls1_ec_curve_id2nid(const uint16_t curve_id);
 uint16_t tls1_ec_nid2curve_id(const int nid);

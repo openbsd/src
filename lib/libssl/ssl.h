@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.121 2017/01/24 02:56:17 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.122 2017/01/24 09:03:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1168,6 +1168,19 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 	SSL_ctrl(s,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
 #define SSL_set_ecdh_auto(s, onoff) \
 	SSL_ctrl(s,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
+
+int SSL_CTX_set1_groups(SSL_CTX *ctx, const int *groups, size_t groups_len);
+int SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *groups);
+
+int SSL_set1_groups(SSL *ssl, const int *groups, size_t groups_len);
+int SSL_set1_groups_list(SSL *ssl, const char *groups);
+
+#ifndef LIBRESSL_INTERNAL
+#define SSL_CTX_set1_curves SSL_CTX_set1_groups
+#define SSL_CTX_set1_curves_list SSL_CTX_set1_groups_list
+#define SSL_set1_curves SSL_set1_groups
+#define SSL_set1_curves_list SSL_set1_groups_list
+#endif
 
 #define SSL_CTX_add_extra_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)

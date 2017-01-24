@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.66 2017/01/24 01:44:00 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.67 2017/01/24 09:03:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -219,8 +219,8 @@ SSL_SESSION_new(void)
 
 	ss->internal->tlsext_ecpointformatlist_length = 0;
 	ss->internal->tlsext_ecpointformatlist = NULL;
-	ss->internal->tlsext_ellipticcurvelist_length = 0;
-	ss->internal->tlsext_ellipticcurvelist = NULL;
+	ss->internal->tlsext_supportedgroups_length = 0;
+	ss->internal->tlsext_supportedgroups = NULL;
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->internal->ex_data);
 
@@ -709,7 +709,7 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	free(ss->tlsext_hostname);
 	free(ss->tlsext_tick);
 	free(ss->internal->tlsext_ecpointformatlist);
-	free(ss->internal->tlsext_ellipticcurvelist);
+	free(ss->internal->tlsext_supportedgroups);
 
 	explicit_bzero(ss->internal, sizeof(*ss->internal));
 	free(ss->internal);

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.108 2017/01/24 08:41:53 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.109 2017/01/24 09:03:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -245,13 +245,17 @@ static int nid_list[] = {
 	NID_X25519,		/* X25519 (29) */
 };
 
-static const uint8_t ecformats_default[] = {
+static const uint8_t ecformats_list[] = {
 	TLSEXT_ECPOINTFORMAT_uncompressed,
 	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
 	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
 
-static const uint16_t eccurves_default[] = {
+static const uint8_t ecformats_default[] = {
+	TLSEXT_ECPOINTFORMAT_uncompressed,
+};
+
+static const uint16_t eccurves_list[] = {
 	29,			/* X25519 (29) */
 	14,			/* sect571r1 (14) */
 	13,			/* sect571k1 (13) */
@@ -281,6 +285,12 @@ static const uint16_t eccurves_default[] = {
 	15,			/* secp160k1 (15) */
 	16,			/* secp160r1 (16) */
 	17,			/* secp160r2 (17) */
+};
+
+static const uint16_t eccurves_default[] = {
+	29,			/* X25519 (29) */
+	23,			/* secp256r1 (23) */
+	24,			/* secp384r1 (24) */
 };
 
 int
@@ -394,17 +404,91 @@ tls1_get_curvelist(SSL *s, int client_curves, const uint16_t **pcurves,
     size_t *pcurveslen)
 {
 	if (client_curves != 0) {
-		*pcurves = SSI(s)->tlsext_ellipticcurvelist;
-		*pcurveslen = SSI(s)->tlsext_ellipticcurvelist_length;
+		*pcurves = SSI(s)->tlsext_supportedgroups;
+		*pcurveslen = SSI(s)->tlsext_supportedgroups_length;
 		return;
 	}
 
-	*pcurves = s->internal->tlsext_ellipticcurvelist;
-	*pcurveslen = s->internal->tlsext_ellipticcurvelist_length;
+	*pcurves = s->internal->tlsext_supportedgroups;
+	*pcurveslen = s->internal->tlsext_supportedgroups_length;
 	if (*pcurves == NULL) {
 		*pcurves = eccurves_default;
 		*pcurveslen = sizeof(eccurves_default) / 2;
 	}
+}
+
+int
+tls1_set_groups(uint16_t **out_group_ids, size_t *out_group_ids_len,
+    const int *groups, size_t ngroups)
+{
+	uint16_t *group_ids;
+	size_t i;
+
+	group_ids = calloc(ngroups, sizeof(uint16_t));
+	if (group_ids == NULL)
+		return 0;
+
+	for (i = 0; i < ngroups; i++) {
+		group_ids[i] = tls1_ec_nid2curve_id(groups[i]);
+		if (group_ids[i] == 0) {
+			free(group_ids);
+			return 0;
+		}
+	}
+
+	free(*out_group_ids);
+	*out_group_ids = group_ids;
+	*out_group_ids_len = ngroups;
+
+	return 1;
+}
+
+int
+tls1_set_groups_list(uint16_t **out_group_ids, size_t *out_group_ids_len,
+    const char *groups)
+{
+	uint16_t *new_group_ids, *group_ids = NULL;
+	size_t ngroups = 0;
+	char *gs, *p, *q;
+	int nid;
+
+	if ((gs = strdup(groups)) == NULL)
+		return 0;
+
+	q = gs;
+	while ((p = strsep(&q, ":")) != NULL) {
+		nid = OBJ_sn2nid(p);
+		if (nid == NID_undef)
+			nid = OBJ_ln2nid(p);
+		if (nid == NID_undef)
+			nid = EC_curve_nist2nid(p);
+		if (nid == NID_undef)
+			goto err;
+
+		if ((new_group_ids = reallocarray(group_ids, ngroups + 1,
+		    sizeof(uint16_t))) == NULL)
+			goto err;
+		group_ids = new_group_ids;
+
+		group_ids[ngroups] = tls1_ec_nid2curve_id(nid);
+		if (group_ids[ngroups] == 0)
+			goto err;
+
+		ngroups++;
+	}
+
+	free(gs);
+	free(*out_group_ids);
+	*out_group_ids = group_ids;
+	*out_group_ids_len = ngroups;
+
+	return 1;
+
+ err:
+	free(gs);
+	free(group_ids);
+
+	return 0;
 }
 
 /* Check that a curve is one of our preferences. */
@@ -1378,11 +1462,11 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			curveslen /= 2;
 
 			if (!s->internal->hit) {
-				if (SSI(s)->tlsext_ellipticcurvelist) {
+				if (SSI(s)->tlsext_supportedgroups) {
 					*al = TLS1_AD_DECODE_ERROR;
 					return 0;
 				}
-				SSI(s)->tlsext_ellipticcurvelist_length = 0;
+				SSI(s)->tlsext_supportedgroups_length = 0;
 				if ((curves = reallocarray(NULL, curveslen,
 				    sizeof(uint16_t))) == NULL) {
 					*al = TLS1_AD_INTERNAL_ERROR;
@@ -1390,11 +1474,10 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				}
 				for (i = 0; i < curveslen; i++)
 					n2s(sdata, curves[i]);
-				SSI(s)->tlsext_ellipticcurvelist = curves;
-				SSI(s)->tlsext_ellipticcurvelist_length = curveslen;
+				SSI(s)->tlsext_supportedgroups = curves;
+				SSI(s)->tlsext_supportedgroups_length = curveslen;
 			}
-		}
-		else if (type == TLSEXT_TYPE_session_ticket) {
+		} else if (type == TLSEXT_TYPE_session_ticket) {
 			if (s->internal->tls_session_ticket_ext_cb &&
 			    !s->internal->tls_session_ticket_ext_cb(s, data, size, s->internal->tls_session_ticket_ext_cb_arg)) {
 				*al = TLS1_AD_INTERNAL_ERROR;

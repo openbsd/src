@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.144 2017/01/24 01:47:22 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.145 2017/01/24 09:03:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -336,6 +336,34 @@ SSL_new(SSL_CTX *ctx)
 	s->internal->tlsext_ocsp_resplen = -1;
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	s->initial_ctx = ctx;
+
+	if (ctx->internal->tlsext_ecpointformatlist != NULL) {
+		s->internal->tlsext_ecpointformatlist =
+		    calloc(ctx->internal->tlsext_ecpointformatlist_length,
+			sizeof(ctx->internal->tlsext_ecpointformatlist[0]));
+		if (s->internal->tlsext_ecpointformatlist == NULL)
+			goto err;
+		memcpy(s->internal->tlsext_ecpointformatlist,
+		    ctx->internal->tlsext_ecpointformatlist,
+		    ctx->internal->tlsext_ecpointformatlist_length *
+		    sizeof(ctx->internal->tlsext_ecpointformatlist[0]));
+		s->internal->tlsext_ecpointformatlist_length =
+		    ctx->internal->tlsext_ecpointformatlist_length;
+	}
+	if (ctx->internal->tlsext_supportedgroups != NULL) {
+		s->internal->tlsext_supportedgroups =
+		    calloc(ctx->internal->tlsext_supportedgroups_length,
+			sizeof(ctx->internal->tlsext_supportedgroups));
+		if (s->internal->tlsext_supportedgroups == NULL)
+			goto err;
+		memcpy(s->internal->tlsext_supportedgroups,
+		    ctx->internal->tlsext_supportedgroups,
+		    ctx->internal->tlsext_supportedgroups_length *
+		    sizeof(ctx->internal->tlsext_supportedgroups[0]));
+		s->internal->tlsext_supportedgroups_length =
+		    ctx->internal->tlsext_supportedgroups_length;
+	}
+
 	s->internal->next_proto_negotiated = NULL;
 
 	if (s->ctx->internal->alpn_client_proto_list != NULL) {
@@ -534,7 +562,7 @@ SSL_free(SSL *s)
 	free(s->tlsext_hostname);
 	SSL_CTX_free(s->initial_ctx);
 	free(s->internal->tlsext_ecpointformatlist);
-	free(s->internal->tlsext_ellipticcurvelist);
+	free(s->internal->tlsext_supportedgroups);
 	if (s->internal->tlsext_ocsp_exts)
 		sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
 		    X509_EXTENSION_free);
@@ -1997,6 +2025,9 @@ SSL_CTX_free(SSL_CTX *a)
 	if (a->internal->client_cert_engine)
 		ENGINE_finish(a->internal->client_cert_engine);
 #endif
+
+	free(a->internal->tlsext_ecpointformatlist);
+	free(a->internal->tlsext_supportedgroups);
 
 	free(a->internal->alpn_client_proto_list);
 
