@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.151 2017/01/24 01:44:00 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.152 2017/01/24 12:22:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1475,7 +1475,6 @@ ssl3_send_server_key_exchange(SSL *s)
 	int al, i;
 	unsigned long type;
 	int n;
-	CERT *cert;
 	int kn;
 	BUF_MEM *buf;
 	EVP_MD_CTX md_ctx;
@@ -1485,7 +1484,6 @@ ssl3_send_server_key_exchange(SSL *s)
 	EVP_MD_CTX_init(&md_ctx);
 	if (s->internal->state == SSL3_ST_SW_KEY_EXCH_A) {
 		type = S3I(s)->tmp.new_cipher->algorithm_mkey;
-		cert = s->cert;
 
 		buf = s->internal->init_buf;
 
