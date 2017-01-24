@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.98 2016/09/03 14:46:56 naddy Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.99 2017/01/24 00:58:55 mpi Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 	default:
 		/* check for clock from pthread_getcpuclockid() */
 		if (__CLOCK_TYPE(clock_id) == CLOCK_THREAD_CPUTIME_ID) {
-			q = pfind(__CLOCK_PTID(clock_id) - THREAD_PID_OFFSET);
+			q = tfind(__CLOCK_PTID(clock_id) - THREAD_PID_OFFSET);
 			if (q == NULL || q->p_p != p->p_p)
 				return (ESRCH);
 			*tp = q->p_tu.tu_runtime;
@@ -232,7 +232,7 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 	default:
 		/* check for clock from pthread_getcpuclockid() */
 		if (__CLOCK_TYPE(clock_id) == CLOCK_THREAD_CPUTIME_ID) {
-			q = pfind(__CLOCK_PTID(clock_id) - THREAD_PID_OFFSET);
+			q = tfind(__CLOCK_PTID(clock_id) - THREAD_PID_OFFSET);
 			if (q == NULL || q->p_p != p->p_p)
 				return (ESRCH);
 			ts.tv_sec = 0;

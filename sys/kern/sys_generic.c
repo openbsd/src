@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.113 2016/11/07 00:26:33 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.114 2017/01/24 00:58:55 mpi Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -783,7 +783,7 @@ selrecord(struct proc *selector, struct selinfo *sip)
 	mytid = selector->p_tid;
 	if (sip->si_seltid == mytid)
 		return;
-	if (sip->si_seltid && (p = pfind(sip->si_seltid)) &&
+	if (sip->si_seltid && (p = tfind(sip->si_seltid)) &&
 	    p->p_wchan == (caddr_t)&selwait)
 		sip->si_flags |= SI_COLL;
 	else
@@ -807,7 +807,7 @@ selwakeup(struct selinfo *sip)
 		sip->si_flags &= ~SI_COLL;
 		wakeup(&selwait);
 	}
-	p = pfind(sip->si_seltid);
+	p = tfind(sip->si_seltid);
 	sip->si_seltid = 0;
 	if (p != NULL) {
 		SCHED_LOCK(s);

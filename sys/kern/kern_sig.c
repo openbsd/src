@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.207 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.208 2017/01/24 00:58:55 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -617,7 +617,7 @@ sys_thrkill(struct proc *cp, void *v, register_t *retval)
 	if (((u_int)signum) >= NSIG)
 		return (EINVAL);
 	if (tid > THREAD_PID_OFFSET) {
-		if ((p = pfind(tid - THREAD_PID_OFFSET)) == NULL)
+		if ((p = tfind(tid - THREAD_PID_OFFSET)) == NULL)
 			return (ESRCH);
 
 		/* can only kill threads in the same process */

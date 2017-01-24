@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.72 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.73 2017/01/24 00:58:55 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ inferior(struct process *pr, struct process *parent)
  * Locate a proc (thread) by number
  */
 struct proc *
-pfind(pid_t tid)
+tfind(pid_t tid)
 {
 	struct proc *p;
 

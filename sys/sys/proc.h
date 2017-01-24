@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.229 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.230 2017/01/24 00:58:55 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -501,7 +501,7 @@ void	freepid(pid_t);
 
 struct process *prfind(pid_t);	/* Find process by id. */
 struct process *zombiefind(pid_t); /* Find zombie process by id. */
-struct proc *pfind(pid_t);	/* Find thread by id. */
+struct proc *tfind(pid_t);	/* Find thread by id. */
 struct pgrp *pgfind(pid_t);	/* Find process group by id. */
 void	proc_printit(struct proc *p, const char *modif,
     int (*pr)(const char *, ...));

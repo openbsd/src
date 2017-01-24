@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfind.9,v 1.7 2013/06/04 19:27:11 schwarze Exp $
+.\"	$OpenBSD: tfind.9,v 1.1 2017/01/24 00:58:55 mpi Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -23,29 +23,34 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
-.Dt PFIND 9
+.Dd $Mdocdate: January 24 2017 $
+.Dt TFIND 9
 .Os
 .Sh NAME
-.Nm pfind ,
+.Nm tfind ,
+.Nm prfind ,
 .Nm pgfind
-.Nd find process / process group by number
+.Nd find thread, process and process group by number
 .Sh SYNOPSIS
-.In sys/cdefs.h
+.In sys/types.h
+.In sys/signal.h
 .In sys/proc.h
 .Ft "struct proc *"
-.Fn pfind "pid_t pid"
+.Fn tfind "pid_t tid"
+.Ft "struct process *"
+.Fn prfind "pid_t pid"
 .Ft "struct pgrp *"
 .Fn pgfind "pid_t pgid"
 .Sh DESCRIPTION
 The
-.Fn pfind
+.Fn tfind ,
+.Fn prfind ,
 and
 .Fn pgfind
-functions retrieve process and progress group structures from process and
-process group IDs.
+functions retrieve thread, process and progress group structures from thread,
+process and process group IDs, respectively.
 .Pp
-Both functions return
+These functions return
 .Dv NULL
 if the requested ID can't be found.
 .Sh CODE REFERENCES
