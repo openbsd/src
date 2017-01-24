@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.109 2017/01/24 09:03:21 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.110 2017/01/24 12:24:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -212,7 +212,6 @@ tls1_clear(SSL *s)
 	s->version = s->method->internal->version;
 }
 
-
 static int nid_list[] = {
 	NID_sect163k1,		/* sect163k1 (1) */
 	NID_sect163r1,		/* sect163r1 (2) */
@@ -245,16 +244,19 @@ static int nid_list[] = {
 	NID_X25519,		/* X25519 (29) */
 };
 
+#if 0
 static const uint8_t ecformats_list[] = {
 	TLSEXT_ECPOINTFORMAT_uncompressed,
 	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
 	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
+#endif
 
 static const uint8_t ecformats_default[] = {
 	TLSEXT_ECPOINTFORMAT_uncompressed,
 };
 
+#if 0
 static const uint16_t eccurves_list[] = {
 	29,			/* X25519 (29) */
 	14,			/* sect571r1 (14) */
@@ -286,6 +288,7 @@ static const uint16_t eccurves_list[] = {
 	16,			/* secp160r1 (16) */
 	17,			/* secp160r2 (17) */
 };
+#endif
 
 static const uint16_t eccurves_default[] = {
 	29,			/* X25519 (29) */
