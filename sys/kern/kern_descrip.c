@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.138 2017/01/23 23:22:00 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.139 2017/01/24 04:09:59 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -611,7 +611,7 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 		FREF(oldfp);
 
 	fdp->fd_ofiles[new] = fp;
-	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
+	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~(UF_EXCLOSE|UF_PLEDGED);
 	fp->f_count++;
 	FRELE(fp, p);
 	if (dup2 && oldfp == NULL)
@@ -632,6 +632,7 @@ fdremove(struct filedesc *fdp, int fd)
 {
 	fdpassertlocked(fdp);
 	fdp->fd_ofiles[fd] = NULL;
+	fdp->fd_ofileflags[fd] = 0;
 	fd_unused(fdp, fd);
 }
 
@@ -805,6 +806,8 @@ restart:
 				fdp->fd_freefile = i;
 			*result = i;
 			fdp->fd_ofileflags[i] = 0;
+			if (ISSET(p->p_p->ps_flags, PS_PLEDGE))
+				fdp->fd_ofileflags[i] |= UF_PLEDGED;
 			return (0);
 		}
 	}
@@ -1299,6 +1302,8 @@ dupfdopen(struct proc *p, int indx, int mode)
 	fdp->fd_ofiles[indx] = wfp;
 	fdp->fd_ofileflags[indx] = (fdp->fd_ofileflags[indx] & UF_EXCLOSE) |
 	    (fdp->fd_ofileflags[dupfd] & ~UF_EXCLOSE);
+	if (ISSET(p->p_p->ps_flags, PS_PLEDGE))
+		fdp->fd_ofileflags[indx] |= UF_PLEDGED;
 	wfp->f_count++;
 	fd_used(fdp, indx);
 	return (0);
@@ -1314,9 +1319,11 @@ fdcloseexec(struct proc *p)
 	int fd;
 
 	fdplock(fdp);
-	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
+	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
+		fdp->fd_ofileflags[fd] &= ~UF_PLEDGED;
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
 			(void) fdrelease(p, fd);
+	}
 	fdpunlock(fdp);
 }
 

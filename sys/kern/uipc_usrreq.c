@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.110 2017/01/23 23:44:04 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.111 2017/01/24 04:09:59 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -58,6 +58,7 @@ LIST_HEAD(unp_head, unpcb) unp_head = LIST_HEAD_INITIALIZER(unp_head);
 
 struct fdpass {
 	struct file	*fp;
+	int		flags;
 };
 
 /*
@@ -759,6 +760,7 @@ restart:
 		 * in the loop below.
 		 */
 		p->p_fd->fd_ofiles[fdp[i]] = rp->fp;
+		p->p_fd->fd_ofileflags[fdp[i]] = (rp->flags & UF_PLEDGED);
 		rp++;
 
 		if (flags & MSG_CMSG_CLOEXEC)
@@ -873,6 +875,7 @@ morespace:
 			goto fail;
 		}
 		rp->fp = fp;
+		rp->flags = fdp->fd_ofileflags[fd] & UF_PLEDGED;
 		rp--;
 		fp->f_count++;
 		if ((unp = fptounp(fp)) != NULL) {
