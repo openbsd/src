@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2017/01/24 15:32:20 otto Exp $
+#	$OpenBSD: Makefile,v 1.3 2017/01/24 16:03:28 otto Exp $
 
 REGRESS_TARGETS=        t1 t2 t3 t4 t5 t6 t7
+PROG=			malloc_general
 
 .include <bsd.regress.mk>
 
