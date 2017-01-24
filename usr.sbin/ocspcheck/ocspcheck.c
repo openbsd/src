@@ -190,12 +190,12 @@ read_cacerts(char *file)
 	}
 	if ((lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file())) ==
 	    NULL) {
-		warnx("Unable to load CA certs from file %s\n", file);
+		warnx("Unable to load CA certs from file %s", file);
 		goto end;
 	}
 	if (file) {
 		if (!X509_LOOKUP_load_file(lookup, file, X509_FILETYPE_PEM)) {
-			warnx("Unable to load CA certs from file %s\n", file);
+			warnx("Unable to load CA certs from file %s", file);
 			goto end;
 		}
 	} else
@@ -203,7 +203,7 @@ read_cacerts(char *file)
 
 	if ((lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir())) ==
 	    NULL) {
-		warnx("Unable to load CA certs from file %s\n", file);
+		warnx("Unable to load CA certs from file %s", file);
 		goto end;
 	}
 	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
@@ -556,7 +556,7 @@ main (int argc, char **argv)
 	 * OSCP request based on the full certificate chain
 	 * we have been given to check.
 	 */
-	if ((castore = read_cacerts(NULL)) == NULL)
+	if ((castore = read_cacerts(cafile)) == NULL)
 		errx(EXIT_FAILURE, "Unable to load %s", cafile);
 
 	if ((request = ocsp_request_new_from_cert(certfile, nonce)) == NULL)
