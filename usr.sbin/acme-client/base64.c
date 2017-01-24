@@ -1,4 +1,4 @@
-/*	$Id: base64.c,v 1.7 2017/01/24 12:05:14 jsing Exp $ */
+/*	$Id: base64.c,v 1.8 2017/01/24 13:13:41 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,7 +30,7 @@ size_t
 base64len(size_t len)
 {
 
-	return (((len + 2) / 3 * 4) + 1);
+	return (len + 2) / 3 * 4 + 1;
 }
 
 /*
@@ -63,5 +63,5 @@ base64buf_url(const char *data, size_t len)
 			break;
 		}
 
-	return (buf);
+	return buf;
 }
