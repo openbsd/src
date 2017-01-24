@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.53 2017/01/19 23:17:19 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.54 2017/01/24 09:02:33 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -1171,6 +1171,7 @@
  * SVM
  */
 #define MSR_AMD_VM_CR			0xc0010114
+#define MSR_AMD_VM_HSAVE_PA		0xc0010117
 #define CPUID_AMD_SVM_CAP		0x8000000A
 #define AMD_SVMDIS			0x10
 #define AMD_SVM_NESTED_PAGING_CAP	(1 << 0)
