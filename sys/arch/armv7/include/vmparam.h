@@ -1,4 +1,4 @@
-/* 	$OpenBSD: vmparam.h,v 1.4 2015/06/24 21:35:01 miod Exp $	*/
+/* 	$OpenBSD: vmparam.h,v 1.5 2017/01/24 13:33:06 jca Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.23 2003/05/22 05:47:07 thorpej Exp $	*/
 
 /*
@@ -35,12 +35,18 @@
 
 #define	ARM_KERNEL_BASE		0xc0000000U
 
-/* Allow armv7 to have bigger DSIZ than generic arm, allow user to override */
+/* Allow armv7 to have bigger limits than generic arm, allow user to override */
 #ifndef	MAXDSIZ
 #define	MAXDSIZ		(1024*1024*1024)		/* max data size */
 #endif
 #ifndef BRKSIZ
 #define	BRKSIZ		MAXDSIZ			/* heap gap size */
+#endif
+#ifndef	DFLSSIZ
+#define	DFLSSIZ		(4*1024*1024)		/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ
+#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
 
 #include <arm/vmparam.h>
