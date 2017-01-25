@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.23 2016/08/03 17:33:50 jcs Exp $	*/
+/*	$OpenBSD: clock.c,v 1.24 2017/01/25 08:23:50 tom Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -505,25 +505,6 @@ inittodr(time_t base)
 	dt.dt_day = bcdtobin(rtclk[MC_DOM]);
 	dt.dt_mon = bcdtobin(rtclk[MC_MONTH]);
 	dt.dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
-
-	/*
-	 * If time_t is 32 bits, then the "End of Time" is
-	 * Mon Jan 18 22:14:07 2038 (US/Eastern)
-	 * This code copes with RTC's past the end of time if time_t
-	 * is an int32 or less. Needed because sometimes RTCs screw
-	 * up or are badly set, and that would cause the time to go
-	 * negative in the calculation below, which causes Very Bad
-	 * Mojo. This at least lets the user boot and fix the problem.
-	 * Note the code is self eliminating once time_t goes to 64 bits.
-	 */
-	if (sizeof(time_t) <= sizeof(int32_t)) {
-		if (dt.dt_year >= 2038) {
-			printf("WARNING: RTC time at or beyond 2038.\n");
-			dt.dt_year = 2037;
-			printf("WARNING: year set back to 2037.\n");
-			printf("WARNING: CHECK AND RESET THE DATE!\n");
-		}
-	}
 
 	ts.tv_sec = clock_ymdhms_to_secs(&dt) + tz.tz_minuteswest * 60;
 	if (tz.tz_dsttime)
