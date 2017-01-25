@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.184 2017/01/16 09:35:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.185 2017/01/25 09:23:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1096,7 +1096,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 		}
 		ieee80211_deliver_data(ic, m, ni, mcast);
 
-		if (n->m_len == 0) {
+		if (n->m_pkthdr.len == 0) {
 			m_freem(n);
 			break;
 		}
