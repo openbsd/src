@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.106 2017/01/24 23:47:34 beck Exp $
+.\"	$OpenBSD: ftp.1,v 1.107 2017/01/25 07:21:18 jmc Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: January 24 2017 $
+.Dd $Mdocdate: January 25 2017 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -252,7 +252,7 @@ Don't perform server certificate validation.
 .It Cm muststaple
 Require the server to present a valid OCSP stapling in the TLS handshake.
 .It Cm noverifytime
-Disable validation of cetificate times and OCSP validation.
+Disable validation of certificate times and OCSP validation.
 .El
 .Pp
 By default, server certificate validation is performed, and if it fails
