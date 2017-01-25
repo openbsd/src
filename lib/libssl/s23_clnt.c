@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.56 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.57 2017/01/25 10:54:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,12 +239,11 @@ ssl23_client_hello(SSL *s)
 	if (s->internal->state == SSL23_ST_CW_CLNT_HELLO_A) {
 		arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
-		if (ssl_enabled_version_range(s, NULL, &version) != 1) {
+		if (ssl_supported_version_range(s, NULL, &version) != 1) {
 			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
 			    SSL_R_NO_PROTOCOLS_AVAILABLE);
 			return (-1);
 		}
-
 		s->client_version = version;
 
 		/* create Client Hello in SSL 3.0/TLS 1.0 format */

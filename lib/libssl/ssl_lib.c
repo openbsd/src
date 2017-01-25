@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.149 2017/01/24 15:11:55 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.150 2017/01/25 10:54:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -283,6 +283,9 @@ SSL_new(SSL_CTX *ctx)
 		SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
+
+	s->internal->min_version = ctx->internal->min_version;
+	s->internal->max_version = ctx->internal->max_version;
 
 	s->internal->options = ctx->internal->options;
 	s->internal->mode = ctx->internal->mode;
@@ -1842,6 +1845,8 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	}
 
 	ret->method = meth;
+	ret->internal->min_version = meth->internal->min_version;
+	ret->internal->max_version = meth->internal->max_version;
 
 	ret->cert_store = NULL;
 	ret->internal->session_cache_mode = SSL_SESS_CACHE_SERVER;
@@ -2514,6 +2519,23 @@ SSL_get_version(const SSL *s)
 	return ssl_version_string(s->version);
 }
 
+static int
+ssl_clamp_version_range(uint16_t *min_ver, uint16_t *max_ver,
+    uint16_t clamp_min, uint16_t clamp_max)
+{
+	if (clamp_min > clamp_max || *min_ver > *max_ver)
+		return 0;
+	if (clamp_max < *min_ver || clamp_min > *max_ver)
+		return 0;
+
+	if (*min_ver < clamp_min)
+		*min_ver = clamp_min;
+	if (*max_ver > clamp_max)
+		*max_ver = clamp_max;
+
+	return 1;
+}
+
 int
 ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 {
@@ -2548,6 +2570,40 @@ ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 	if (min_version == 0 || max_version == 0)
 		return 0;
 
+	/* Limit to configured version range. */
+	if (!ssl_clamp_version_range(&min_version, &max_version,
+	    s->internal->min_version, s->internal->max_version))
+		return 0;
+
+	if (min_ver != NULL)
+		*min_ver = min_version;
+	if (max_ver != NULL)
+		*max_ver = max_version;
+
+	return 1;
+}
+
+int
+ssl_supported_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
+{
+	uint16_t min_version, max_version;
+
+	/* DTLS cannot currently be disabled... */
+	if (SSL_IS_DTLS(s)) {
+		min_version = max_version = DTLS1_VERSION;
+		goto done;
+	}
+
+	if (!ssl_enabled_version_range(s, &min_version, &max_version))
+		return 0;
+
+	/* Limit to the versions supported by this method. */
+	if (!ssl_clamp_version_range(&min_version, &max_version,
+	    s->method->internal->min_version,
+	    s->method->internal->max_version))
+		return 0;
+
+ done:
 	if (min_ver != NULL)
 		*min_ver = min_version;
 	if (max_ver != NULL)
@@ -2563,6 +2619,14 @@ ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 
 	*max_ver = 0;
 
+	if (SSL_IS_DTLS(s)) {
+		if (peer_ver >= DTLS1_VERSION) {
+			*max_ver = DTLS1_VERSION;
+			return 1;
+		}
+		return 0;
+	}
+
 	if (peer_ver >= TLS1_2_VERSION)
 		shared_version = TLS1_2_VERSION;
 	else if (peer_ver >= TLS1_1_VERSION)
@@ -2572,7 +2636,7 @@ ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 	else
 		return 0;
 
-	if (!ssl_enabled_version_range(s, &min_version, &max_version))
+	if (!ssl_supported_version_range(s, &min_version, &max_version))
 		return 0;
 
 	if (shared_version < min_version)
@@ -2589,28 +2653,25 @@ ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 uint16_t
 ssl_max_server_version(SSL *s)
 {
-	uint16_t max_version;
-
-	/*
-	 * The SSL method will be changed during version negotiation, as such
-	 * we want to use the SSL method from the context.
-	 */
-	max_version = s->ctx->method->internal->version;
+	uint16_t max_version, min_version = 0;
 
 	if (SSL_IS_DTLS(s))
 		return (DTLS1_VERSION);
 
-	if ((s->internal->options & SSL_OP_NO_TLSv1_2) == 0 &&
-	    max_version >= TLS1_2_VERSION)
-		return (TLS1_2_VERSION);
-	if ((s->internal->options & SSL_OP_NO_TLSv1_1) == 0 &&
-	    max_version >= TLS1_1_VERSION)
-		return (TLS1_1_VERSION);
-	if ((s->internal->options & SSL_OP_NO_TLSv1) == 0 &&
-	    max_version >= TLS1_VERSION)
-		return (TLS1_VERSION);
+	if (!ssl_enabled_version_range(s, &min_version, &max_version))
+		return 0;
 
-	return (0);
+	/*
+	 * Limit to the versions supported by this method. The SSL method
+	 * will be changed during version negotiation, as such we want to
+	 * use the SSL method from the context.
+	 */
+	if (!ssl_clamp_version_range(&min_version, &max_version,
+	    s->ctx->method->internal->min_version,
+	    s->ctx->method->internal->max_version))
+		return 0;
+
+	return (max_version);
 }
 
 SSL *
