@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.164 2017/01/24 09:03:21 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.165 2017/01/25 06:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1198,7 +1198,8 @@ long ssl23_default_timeout(void);
 
 long tls1_default_timeout(void);
 int dtls1_do_write(SSL *s, int type);
-int ssl3_read_n(SSL *s, int n, int max, int extend);
+int ssl3_packet_read(SSL *s, int plen);
+int ssl3_packet_extend(SSL *s, int plen);
 int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
     unsigned int len);

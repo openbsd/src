@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.58 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.59 2017/01/25 06:13:02 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -469,11 +469,11 @@ err:
 int
 dtls1_get_record(SSL *s)
 {
-	int i, n;
 	SSL3_RECORD *rr;
 	unsigned char *p = NULL;
 	DTLS1_BITMAP *bitmap;
 	unsigned int is_next_epoch;
+	int n;
 
 	rr = &(S3I(s)->rrec);
 
@@ -501,13 +501,12 @@ again:
 		uint16_t epoch, len, ssl_version;
 		uint8_t type;
 
-		n = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH, s->s3->rbuf.len, 0);
-		/* read timeout is handled by dtls1_read_bytes */
+		n = ssl3_packet_read(s, DTLS1_RT_HEADER_LENGTH);
 		if (n <= 0)
-			return(n); /* error or non-blocking */
+			return (n);
 
-		/* this packet contained a partial record, dump it */
-		if (s->internal->packet_length != DTLS1_RT_HEADER_LENGTH)
+		/* If this packet contained a partial record, dump it. */
+		if (n != DTLS1_RT_HEADER_LENGTH)
 			goto again;
 
 		s->internal->rstate = SSL_ST_READ_BODY;
@@ -553,20 +552,14 @@ again:
 
 	/* s->internal->rstate == SSL_ST_READ_BODY, get and decode the data */
 
-	if (rr->length > s->internal->packet_length - DTLS1_RT_HEADER_LENGTH) {
-		/* now s->internal->packet_length == DTLS1_RT_HEADER_LENGTH */
-		i = rr->length;
-		n = ssl3_read_n(s, i, i, 1);
-		if (n <= 0)
-			return(n); /* error or non-blocking io */
+	n = ssl3_packet_extend(s, DTLS1_RT_HEADER_LENGTH + rr->length);
+	if (n <= 0)
+		return (n);
 
-		/* this packet contained a partial record, dump it */
-		if (n != i)
-			goto again;
+	/* If this packet contained a partial record, dump it. */
+	if (n != DTLS1_RT_HEADER_LENGTH + rr->length)
+		goto again;
 
-		/* now n == rr->length,
-		 * and s->internal->packet_length == DTLS1_RT_HEADER_LENGTH + rr->length */
-	}
 	s->internal->rstate = SSL_ST_READ_HEADER; /* set state for later operations */
 
 	/* match epochs.  NULL means the packet is dropped on the floor */

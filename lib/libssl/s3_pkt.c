@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.68 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.69 2017/01/25 06:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,7 +130,7 @@ static int ssl3_get_record(SSL *s);
  * (If s->internal->read_ahead is set, 'max' bytes may be stored in rbuf
  * [plus s->internal->packet_length bytes if extend == 1].)
  */
-int
+static int
 ssl3_read_n(SSL *s, int n, int max, int extend)
 {
 	int i, len, left;
@@ -263,7 +263,40 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 	rb->left = left - n;
 	s->internal->packet_length += n;
 	s->internal->rwstate = SSL_NOTHING;
+
 	return (n);
+}
+
+int
+ssl3_packet_read(SSL *s, int plen)
+{
+	int n;
+
+	n = ssl3_read_n(s, plen, s->s3->rbuf.len, 0);
+	if (n <= 0)
+		return n;
+	if (s->internal->packet_length < plen)
+		return s->internal->packet_length;
+
+	return plen;
+}
+
+int
+ssl3_packet_extend(SSL *s, int plen)
+{
+	int rlen, n;
+
+	if (s->internal->packet_length >= plen)
+		return plen;
+	rlen = plen - s->internal->packet_length;
+
+	n = ssl3_read_n(s, rlen, rlen, 1);
+	if (n <= 0)
+		return n;
+	if (s->internal->packet_length < plen)
+		return s->internal->packet_length;
+
+	return plen;
 }
 
 /* Call this to get a new input record.
@@ -296,9 +329,10 @@ again:
 		uint16_t len, ssl_version;
 		uint8_t type;
 
-		n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH, s->s3->rbuf.len, 0);
+		n = ssl3_packet_read(s, SSL3_RT_HEADER_LENGTH);
 		if (n <= 0)
-			return(n); /* error or non-blocking */
+			return (n);
+
 		s->internal->rstate = SSL_ST_READ_BODY;
 
 		CBS_init(&header, s->internal->packet, n);
@@ -345,17 +379,13 @@ again:
 
 	/* s->internal->rstate == SSL_ST_READ_BODY, get and decode the data */
 
-	if (rr->length > s->internal->packet_length - SSL3_RT_HEADER_LENGTH) {
-		/* now s->internal->packet_length == SSL3_RT_HEADER_LENGTH */
-		i = rr->length;
-		n = ssl3_read_n(s, i, i, 1);
-		if (n <= 0)
-			return(n); /* error or non-blocking io */
-		/* now n == rr->length,
-		 * and s->internal->packet_length == SSL3_RT_HEADER_LENGTH + rr->length */
-	}
+	n = ssl3_packet_extend(s, SSL3_RT_HEADER_LENGTH + rr->length);
+	if (n <= 0)
+		return (n);
+	if (n != SSL3_RT_HEADER_LENGTH + rr->length)
+		return (n);
 
-	s->internal->rstate=SSL_ST_READ_HEADER; /* set state for later operations */
+	s->internal->rstate = SSL_ST_READ_HEADER; /* set state for later operations */
 
 	/* At this point, s->internal->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
 	 * and we have that many bytes in s->internal->packet
