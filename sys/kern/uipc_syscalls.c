@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.146 2017/01/25 06:15:50 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.147 2017/01/25 07:35:31 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -473,15 +473,25 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto free1;
 
+	if ((error = soconnect2(so1, so2)) != 0)
+		goto free2;
+
+	if ((SCARG(uap, type) & SOCK_TYPE_MASK) == SOCK_DGRAM) {
+		/*
+		 * Datagram socket connection is asymmetric.
+		 */
+		 if ((error = soconnect2(so2, so1)) != 0)
+			goto free2;
+	}
 	fdplock(fdp);
 	if ((error = falloc(p, &fp1, &sv[0])) != 0)
-		goto free2;
+		goto free3;
 	fp1->f_flag = fflag;
 	fp1->f_type = DTYPE_SOCKET;
 	fp1->f_ops = &socketops;
 	fp1->f_data = so1;
 	if ((error = falloc(p, &fp2, &sv[1])) != 0)
-		goto free3;
+		goto free4;
 	fp2->f_flag = fflag;
 	fp2->f_type = DTYPE_SOCKET;
 	fp2->f_ops = &socketops;
@@ -489,15 +499,6 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	if (flags & SOCK_CLOEXEC) {
 		fdp->fd_ofileflags[sv[0]] |= UF_EXCLOSE;
 		fdp->fd_ofileflags[sv[1]] |= UF_EXCLOSE;
-	}
-	if ((error = soconnect2(so1, so2)) != 0)
-		goto free4;
-	if ((SCARG(uap, type) & SOCK_TYPE_MASK) == SOCK_DGRAM) {
-		/*
-		 * Datagram socket connection is asymmetric.
-		 */
-		 if ((error = soconnect2(so2, so1)) != 0)
-			goto free4;
 	}
 	error = copyout(sv, SCARG(uap, rsv), 2 * sizeof (int));
 	if (error == 0) {
@@ -516,18 +517,18 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		fdpunlock(fdp);
 		return (0);
 	}
-free4:
 	fdremove(fdp, sv[1]);
 	closef(fp2, p);
 	so2 = NULL;
-free3:
+free4:
 	fdremove(fdp, sv[0]);
 	closef(fp1, p);
 	so1 = NULL;
+free3:
+	fdpunlock(fdp);
 free2:
 	if (so2 != NULL)
 		(void)soclose(so2);
-	fdpunlock(fdp);
 free1:
 	if (so1 != NULL)
 		(void)soclose(so1);
