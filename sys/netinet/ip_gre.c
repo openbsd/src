@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.60 2017/01/03 10:52:21 mpi Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.61 2017/01/25 17:34:31 bluhm Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -78,7 +78,7 @@
 #include <net/if_gre.h>
 
 struct gre_softc *gre_lookup(struct mbuf *, u_int8_t);
-int gre_input2(struct mbuf *, int, u_char);
+int gre_input2(struct mbuf *, int, int);
 
 /*
  * Decapsulate.
@@ -90,7 +90,7 @@ int gre_input2(struct mbuf *, int, u_char);
  */
 
 int
-gre_input2(struct mbuf *m, int hlen, u_char proto)
+gre_input2(struct mbuf *m, int hlen, int proto)
 {
 	struct greip *gip;
 	struct niqueue *ifq;
@@ -216,14 +216,9 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
  * IPPROTO_GRE and a local destination address).
  */
 void
-gre_input(struct mbuf *m, ...)
+gre_input(struct mbuf *m, int hlen, int proto)
 {
-	int hlen, ret;
-	va_list ap;
-
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	va_end(ap);
+	int ret;
 
 	if (!gre_allow) {
 	        m_freem(m);
@@ -241,7 +236,7 @@ gre_input(struct mbuf *m, ...)
 	}
 #endif
 
-	ret = gre_input2(m, hlen, IPPROTO_GRE);
+	ret = gre_input2(m, hlen, proto);
 	/*
 	 * ret == 0: packet not processed, but input from here
 	 * means no matching tunnel that is up is found.
@@ -250,7 +245,7 @@ gre_input(struct mbuf *m, ...)
 	 * but we're not set to accept them.
 	 */
 	if (!ret)
-		rip_input(m, hlen, IPPROTO_GRE);
+		rip_input(m, hlen, proto);
 }
 
 /*
@@ -261,26 +256,20 @@ gre_input(struct mbuf *m, ...)
  */
 
 void
-gre_mobile_input(struct mbuf *m, ...)
+gre_mobile_input(struct mbuf *m, int hlen, int proto)
 {
 	struct ip *ip;
 	struct mobip_h *mip;
 	struct gre_softc *sc;
-	int hlen;
-	va_list ap;
 	u_char osrc = 0;
 	int msiz;
-
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	va_end(ap);
 
 	if (!ip_mobile_allow) {
 	        m_freem(m);
 		return;
 	}
 
-	if ((sc = gre_lookup(m, IPPROTO_MOBILE)) == NULL) {
+	if ((sc = gre_lookup(m, proto)) == NULL) {
 		/* No matching tunnel or tunnel is down. */
 		m_freem(m);
 		return;

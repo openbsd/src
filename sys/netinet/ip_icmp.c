@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.159 2016/12/20 18:33:43 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.160 2017/01/25 17:34:31 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ int *icmpctl_vars[ICMPCTL_MAXID] = ICMPCTL_VARS;
 void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
 void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
-void icmp_input_if(struct ifnet *, struct mbuf *, int);
+void icmp_input_if(struct ifnet *, struct mbuf *, int, int);
 
 void
 icmp_init(void)
@@ -304,15 +304,9 @@ icmp_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
  * Process a received ICMP message.
  */
 void
-icmp_input(struct mbuf *m, ...)
+icmp_input(struct mbuf *m, int hlen, int proto)
 {
 	struct ifnet *ifp;
-	int hlen;
-	va_list ap;
-
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	va_end(ap);
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL) {
@@ -320,12 +314,12 @@ icmp_input(struct mbuf *m, ...)
 		return;
 	}
 
-	icmp_input_if(ifp, m, hlen);
+	icmp_input_if(ifp, m, hlen, proto);
 	if_put(ifp);
 }
 
 void
-icmp_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
+icmp_input_if(struct ifnet *ifp, struct mbuf *m, int hlen, int proto)
 {
 	struct icmp *icp;
 	struct ip *ip = mtod(m, struct ip *);
@@ -686,7 +680,7 @@ reflect:
 	}
 
 raw:
-	rip_input(m);
+	rip_input(m, hlen, proto);
 	return;
 
 freeit:

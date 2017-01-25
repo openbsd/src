@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.89 2017/01/23 11:37:29 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.90 2017/01/25 17:34:31 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -716,17 +716,11 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 }
 
 void
-in_gif_input(struct mbuf *m, ...)
+in_gif_input(struct mbuf *m, int off, int proto)
 {
-	int off;
 	struct gif_softc *sc;
 	struct ifnet *gifp = NULL;
 	struct ip *ip;
-	va_list ap;
-
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	va_end(ap);
 
 	/* IP-in-IP header is caused by tunnel mode, so skip gif lookup */
 	if (m->m_flags & M_TUNNEL) {
@@ -767,7 +761,7 @@ in_gif_input(struct mbuf *m, ...)
 	}
 
 inject:
-	ip4_input(m, off); /* No GIF interface was configured */
+	ip4_input(m, off, proto); /* No GIF interface was configured */
 	return;
 }
 

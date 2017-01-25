@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.69 2016/03/07 18:44:00 naddy Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.70 2017/01/25 17:34:31 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -110,11 +110,9 @@ ip4_input6(struct mbuf **mp, int *offp, int proto)
  * Really only a wrapper for ipip_input(), for use with IPv4.
  */
 void
-ip4_input(struct mbuf *m, ...)
+ip4_input(struct mbuf *m, int iphlen, int proto)
 {
 	struct ip *ip;
-	va_list ap;
-	int iphlen;
 
 	/* If we do not accept IP-in-IP explicitly, drop.  */
 	if (!ipip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0) {
@@ -123,10 +121,6 @@ ip4_input(struct mbuf *m, ...)
 		m_freem(m);
 		return;
 	}
-
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	va_end(ap);
 
 	ip = mtod(m, struct ip *);
 
@@ -611,7 +605,7 @@ ipe4_zeroize(struct tdb *tdbp)
 }
 
 void
-ipe4_input(struct mbuf *m, ...)
+ipe4_input(struct mbuf *m, int hlen, int proto)
 {
 	/* This is a rather serious mistake, so no conditional printing. */
 	printf("ipe4_input(): should never be called\n");

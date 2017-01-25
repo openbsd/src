@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.h,v 1.18 2014/07/14 12:18:30 deraadt Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.19 2017/01/25 17:34:31 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@adk.gr)
  *
@@ -72,7 +72,7 @@ struct etherip_header {
 struct tdb;
 
 int	etherip_output(struct mbuf *, struct tdb *, struct mbuf **, int);
-void	etherip_input(struct mbuf *, ...);
+void	etherip_input(struct mbuf *, int, int);
 #ifdef INET6
 int	etherip_input6(struct mbuf **, int *, int);
 #endif

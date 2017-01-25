@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.117 2016/11/16 08:50:33 mpi Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.118 2017/01/25 17:34:31 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -613,7 +613,7 @@ void	 tcp_init(void);
 #ifdef INET6
 int	 tcp6_input(struct mbuf **, int *, int);
 #endif
-void	 tcp_input(struct mbuf *, ...);
+void	 tcp_input(struct mbuf *, int, int);
 int	 tcp_mss(struct tcpcb *, int);
 void	 tcp_mss_update(struct tcpcb *);
 u_int	 tcp_hdrsz(struct tcpcb *);

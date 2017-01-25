@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.226 2016/12/19 15:47:19 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.227 2017/01/25 17:34:31 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -159,15 +159,14 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 #endif
 
 void
-udp_input(struct mbuf *m, ...)
+udp_input(struct mbuf *m, int iphlen, int proto)
 {
 	struct ip *ip;
 	struct udphdr *uh;
 	struct inpcb *inp = NULL;
 	struct mbuf *opts = NULL;
 	struct ip save_ip;
-	int iphlen, len;
-	va_list ap;
+	int len;
 	u_int16_t savesum;
 	union {
 		struct sockaddr sa;
@@ -188,10 +187,6 @@ udp_input(struct mbuf *m, ...)
 #if defined(IPSEC) || defined(PIPEX)
 	u_int32_t ipsecflowinfo = 0;
 #endif /* define(IPSEC) || defined(PIPEX) */
-
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	va_end(ap);
 
 	udpstat_inc(udps_ipackets);
 

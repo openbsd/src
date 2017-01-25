@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.335 2017/01/10 09:01:18 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.336 2017/01/25 17:34:31 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -367,7 +367,7 @@ tcp6_input(struct mbuf **mp, int *offp, int proto)
  * protocol specification dated September, 1981 very closely.
  */
 void
-tcp_input(struct mbuf *m, ...)
+tcp_input(struct mbuf *m, int iphlen, int proto)
 {
 	struct ip *ip;
 	struct inpcb *inp = NULL;
@@ -383,8 +383,6 @@ tcp_input(struct mbuf *m, ...)
 	tcp_seq iss, *reuse = NULL;
 	u_long tiwin;
 	struct tcp_opt_info opti;
-	int iphlen;
-	va_list ap;
 	struct tcphdr *th;
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
@@ -399,10 +397,6 @@ tcp_input(struct mbuf *m, ...)
 #ifdef TCP_ECN
 	u_char iptos;
 #endif
-
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	va_end(ap);
 
 	tcpstat.tcps_rcvtotal++;
 

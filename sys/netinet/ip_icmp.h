@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.27 2016/03/07 19:33:26 mmcc Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.28 2017/01/25 17:34:31 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ struct icmp_ext_obj_hdr {
 struct mbuf *
 	icmp_do_error(struct mbuf *, int, int, u_int32_t, int);
 void	icmp_error(struct mbuf *, int, int, u_int32_t, int);
-void	icmp_input(struct mbuf *, ...);
+void	icmp_input(struct mbuf *, int, int);
 void	icmp_init(void);
 int	icmp_reflect(struct mbuf *, struct mbuf **, struct in_ifaddr *);
 void	icmp_send(struct mbuf *, struct mbuf *);

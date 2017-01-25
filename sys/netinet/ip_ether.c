@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.81 2016/09/24 14:51:37 naddy Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.82 2017/01/25 17:34:31 bluhm Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -89,17 +89,11 @@ struct etheripstat etheripstat;
  * Only a wrapper for the IPv4 case.
  */
 void
-etherip_input(struct mbuf *m, ...)
+etherip_input(struct mbuf *m, int iphlen, int proto)
 {
 	struct ip *ip;
-	va_list ap;
-	int iphlen;
 
 	ip = mtod(m, struct ip *);
-
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	va_end(ap);
 
 	switch (ip->ip_p) {
 #if NBRIDGE > 0

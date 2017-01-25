@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.h,v 1.9 2010/01/12 23:33:24 yasuoka Exp $ */
+/*      $OpenBSD: ip_gre.h,v 1.10 2017/01/25 17:34:31 bluhm Exp $ */
 /*	$NetBSD: ip_gre.h,v 1.3 1998/10/07 23:33:02 thorpej Exp $ */
 
 /*
@@ -64,8 +64,8 @@
 }
 
 #ifdef _KERNEL
-void gre_input(struct mbuf *, ...);
-void gre_mobile_input(struct mbuf *, ...);
+void gre_input(struct mbuf *, int, int);
+void gre_mobile_input(struct mbuf *, int, int);
 
 int     ipmobile_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int     gre_sysctl(int *, u_int, void *, size_t *, void *, size_t);

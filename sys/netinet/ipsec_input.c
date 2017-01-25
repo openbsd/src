@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.138 2017/01/23 09:10:06 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.139 2017/01/25 17:34:31 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -697,15 +697,8 @@ ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 /* IPv4 AH wrapper. */
 void
-ah4_input(struct mbuf *m, ...)
+ah4_input(struct mbuf *m, int skip, int proto)
 {
-	int skip;
-
-	va_list ap;
-	va_start(ap, m);
-	skip = va_arg(ap, int);
-	va_end(ap);
-
 	ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
 	    IPPROTO_AH, 0);
 	return;
@@ -744,15 +737,8 @@ ah4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 
 /* IPv4 ESP wrapper. */
 void
-esp4_input(struct mbuf *m, ...)
+esp4_input(struct mbuf *m, int skip, int proto)
 {
-	int skip;
-
-	va_list ap;
-	va_start(ap, m);
-	skip = va_arg(ap, int);
-	va_end(ap);
-
 	ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
 	    IPPROTO_ESP, 0);
 }
@@ -777,14 +763,8 @@ esp4_input_cb(struct mbuf *m, ...)
 
 /* IPv4 IPCOMP wrapper */
 void
-ipcomp4_input(struct mbuf *m, ...)
+ipcomp4_input(struct mbuf *m, int skip, int proto)
 {
-	int skip;
-	va_list ap;
-	va_start(ap, m);
-	skip = va_arg(ap, int);
-	va_end(ap);
-
 	ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
 	    IPPROTO_IPCOMP, 0);
 }

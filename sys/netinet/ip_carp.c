@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.299 2017/01/23 11:37:29 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.300 2017/01/25 17:34:31 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -412,15 +412,9 @@ carp_hmac_verify(struct carp_vhost_entry *vhe, u_int32_t counter[2],
 }
 
 void
-carp_proto_input(struct mbuf *m, ...)
+carp_proto_input(struct mbuf *m, int hlen, int proto)
 {
 	struct ifnet *ifp;
-	int hlen;
-	va_list ap;
-
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	va_end(ap);
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL) {
