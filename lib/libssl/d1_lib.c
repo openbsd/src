@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.37 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.38 2017/01/25 06:38:01 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -87,7 +87,7 @@ SSL3_ENC_METHOD DTLSv1_enc_data = {
 	.server_finished_label_len = TLS_MD_SERVER_FINISH_CONST_SIZE,
 	.alert_value = tls1_alert_code,
 	.export_keying_material = tls1_export_keying_material,
-	.enc_flags = SSL_ENC_FLAG_DTLS|SSL_ENC_FLAG_EXPLICIT_IV,
+	.enc_flags = SSL_ENC_FLAG_EXPLICIT_IV,
 };
 
 long

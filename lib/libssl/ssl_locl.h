@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.165 2017/01/25 06:13:02 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.166 2017/01/25 06:38:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -328,7 +328,7 @@ __BEGIN_HIDDEN_DECLS
 
 /* Check if an SSL structure is using DTLS. */
 #define SSL_IS_DTLS(s) \
-	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
+	(s->method->internal->version == DTLS1_VERSION)
 
 /* See if we need explicit IV. */
 #define SSL_USE_EXPLICIT_IV(s) \
@@ -1048,9 +1048,6 @@ typedef struct ssl3_enc_method {
 
 /* Uses SHA256 default PRF. */
 #define SSL_ENC_FLAG_SHA256_PRF         (1 << 2)
-
-/* Is DTLS. */
-#define SSL_ENC_FLAG_DTLS               (1 << 3)
 
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_ENC_FLAG_TLS1_2_CIPHERS     (1 << 4)
