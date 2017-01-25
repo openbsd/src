@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.75 2017/01/24 00:58:55 mpi Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.76 2017/01/25 07:35:04 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -103,6 +103,9 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	int error, write;
 	int temp;
 	int req = SCARG(uap, req);
+	pid_t pid = SCARG(uap, pid);
+	caddr_t addr = SCARG(uap, addr);
+	int data = SCARG(uap, data);
 	int s;
 
 	/* "A foolish consistency..." XXX */
@@ -128,7 +131,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	case PT_DETACH:
 	default:
 		/* Find the process we're supposed to be operating on. */
-		if ((tr = prfind(SCARG(uap, pid))) == NULL)
+		if ((tr = prfind(pid)) == NULL)
 			return (ESRCH);
 		t = tr->ps_mainproc;	/* XXX */
 		break;
@@ -155,13 +158,13 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 #ifdef PT_SETXMMREGS
 	case PT_SETXMMREGS:
 #endif
-		if (SCARG(uap, pid) > THREAD_PID_OFFSET) {
-			t = tfind(SCARG(uap, pid) - THREAD_PID_OFFSET);
+		if (pid > THREAD_PID_OFFSET) {
+			t = tfind(pid - THREAD_PID_OFFSET);
 			if (t == NULL)
 				return (ESRCH);
 			tr = t->p_p;
 		} else {
-			if ((tr = prfind(SCARG(uap, pid))) == NULL)
+			if ((tr = prfind(pid)) == NULL)
 				return (ESRCH);
 			t = tr->ps_mainproc;	/* XXX */
 		}
@@ -308,11 +311,11 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 * Do the work here because the request isn't actually
 		 * associated with 't'
 		 */
-		if (SCARG(uap, data) != sizeof(pts))
+		if (data != sizeof(pts))
 			return (EINVAL);
 
 		if (req == PT_GET_THREAD_NEXT) {
-			error = copyin(SCARG(uap, addr), &pts, sizeof(pts));
+			error = copyin(addr, &pts, sizeof(pts));
 			if (error)
 				return (error);
 
@@ -330,7 +333,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			pts.pts_tid = -1;
 		else
 			pts.pts_tid = t->p_tid + THREAD_PID_OFFSET;
-		return (copyout(&pts, SCARG(uap, addr), sizeof(pts)));
+		return (copyout(&pts, addr, sizeof(pts)));
 
 	default:			/* It was not a legal request. */
 		return (EINVAL);
@@ -357,7 +360,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
 	case  PT_WRITE_D:
 		write = 1;
-		temp = SCARG(uap, data);
+		temp = data;
 	case  PT_READ_I:		/* XXX no separate I and D spaces */
 	case  PT_READ_D:
 		/* write = 0 done above. */
@@ -365,7 +368,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		iov.iov_len = sizeof(int);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(vaddr_t)SCARG(uap, addr);
+		uio.uio_offset = (off_t)(vaddr_t)addr;
 		uio.uio_resid = sizeof(int);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
@@ -376,7 +379,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			*retval = temp;
 		return (error);
 	case  PT_IO:
-		error = copyin(SCARG(uap, addr), &piod, sizeof(piod));
+		error = copyin(addr, &piod, sizeof(piod));
 		if (error)
 			return (error);
 		iov.iov_base = piod.piod_addr;
@@ -422,7 +425,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		}
 		error = process_domem(p, tr, &uio, req);
 		piod.piod_len -= uio.uio_resid;
-		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
+		(void) copyout(&piod, addr, sizeof(piod));
 		return (error);
 #ifdef PT_STEP
 	case  PT_STEP:
@@ -446,16 +449,16 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 * from where it stopped."
 		 */
 
-		if (SCARG(uap, pid) < THREAD_PID_OFFSET && tr->ps_single)
+		if (pid < THREAD_PID_OFFSET && tr->ps_single)
 			t = tr->ps_single;
 
 		/* Check that the data is a valid signal number or zero. */
-		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
+		if (data < 0 || data >= NSIG)
 			return (EINVAL);
 
 		/* If the address parameter is not (int *)1, set the pc. */
-		if ((int *)SCARG(uap, addr) != (int *)1)
-			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
+		if ((int *)addr != (int *)1)
+			if ((error = process_set_pc(t, addr)) != 0)
 				return error;
 
 #ifdef PT_STEP
@@ -481,11 +484,11 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 * from where it stopped."
 		 */
 
-		if (SCARG(uap, pid) < THREAD_PID_OFFSET && tr->ps_single)
+		if (pid < THREAD_PID_OFFSET && tr->ps_single)
 			t = tr->ps_single;
 
 		/* Check that the data is a valid signal number or zero. */
-		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
+		if (data < 0 || data >= NSIG)
 			return (EINVAL);
 
 #ifdef PT_STEP
@@ -514,23 +517,23 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
-			t->p_xstat = SCARG(uap, data);
+			t->p_xstat = data;
 			SCHED_LOCK(s);
 			setrunnable(t);
 			SCHED_UNLOCK(s);
 		} else {
-			if (SCARG(uap, data) != 0)
-				psignal(t, SCARG(uap, data));
+			if (data != 0)
+				psignal(t, data);
 		}
 
 		return (0);
 
 	case  PT_KILL:
-		if (SCARG(uap, pid) < THREAD_PID_OFFSET && tr->ps_single)
+		if (pid < THREAD_PID_OFFSET && tr->ps_single)
 			t = tr->ps_single;
 
 		/* just send the process a KILL signal. */
-		SCARG(uap, data) = SIGKILL;
+		data = SIGKILL;
 		goto sendsig;	/* in PT_CONTINUE, above. */
 
 	case  PT_ATTACH:
@@ -550,33 +553,32 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (tr->ps_ptstat == NULL)
 			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
 			    M_SUBPROC, M_WAITOK);
-		SCARG(uap, data) = SIGSTOP;
+		data = SIGSTOP;
 		goto sendsig;
 
 	case  PT_GET_EVENT_MASK:
-		if (SCARG(uap, data) != sizeof(pe))
+		if (data != sizeof(pe))
 			return (EINVAL);
 		memset(&pe, 0, sizeof(pe));
 		pe.pe_set_event = tr->ps_ptmask;
-		return (copyout(&pe, SCARG(uap, addr), sizeof(pe)));
+		return (copyout(&pe, addr, sizeof(pe)));
 	case  PT_SET_EVENT_MASK:
-		if (SCARG(uap, data) != sizeof(pe))
+		if (data != sizeof(pe))
 			return (EINVAL);
-		if ((error = copyin(SCARG(uap, addr), &pe, sizeof(pe))))
+		if ((error = copyin(addr, &pe, sizeof(pe))))
 			return (error);
 		tr->ps_ptmask = pe.pe_set_event;
 		return (0);
 
 	case  PT_GET_PROCESS_STATE:
-		if (SCARG(uap, data) != sizeof(*tr->ps_ptstat))
+		if (data != sizeof(*tr->ps_ptstat))
 			return (EINVAL);
 
 		if (tr->ps_single)
 			tr->ps_ptstat->pe_tid =
 			    tr->ps_single->p_tid + THREAD_PID_OFFSET;
 
-		return (copyout(tr->ps_ptstat, SCARG(uap, addr),
-		    sizeof(*tr->ps_ptstat)));
+		return (copyout(tr->ps_ptstat, addr, sizeof(*tr->ps_ptstat)));
 
 	case  PT_SETREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
@@ -584,7 +586,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			return (error);
 
 		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
-		error = copyin(SCARG(uap, addr), regs, sizeof(*regs));
+		error = copyin(addr, regs, sizeof(*regs));
 		if (error == 0) {
 			error = process_write_regs(t, regs);
 		}
@@ -598,8 +600,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
 		error = process_read_regs(t, regs);
 		if (error == 0)
-			error = copyout(regs,
-			    SCARG(uap, addr), sizeof (*regs));
+			error = copyout(regs, addr, sizeof (*regs));
 		free(regs, M_TEMP, sizeof(*regs));
 		return (error);
 #ifdef PT_SETFPREGS
@@ -609,7 +610,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			return (error);
 
 		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
-		error = copyin(SCARG(uap, addr), fpregs, sizeof(*fpregs));
+		error = copyin(addr, fpregs, sizeof(*fpregs));
 		if (error == 0) {
 			error = process_write_fpregs(t, fpregs);
 		}
@@ -625,8 +626,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
 		error = process_read_fpregs(t, fpregs);
 		if (error == 0)
-			error = copyout(fpregs,
-			    SCARG(uap, addr), sizeof(*fpregs));
+			error = copyout(fpregs, addr, sizeof(*fpregs));
 		free(fpregs, M_TEMP, sizeof(*fpregs));
 		return (error);
 #endif
@@ -637,7 +637,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			return (error);
 
 		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
-		error = copyin(SCARG(uap, addr), xmmregs, sizeof(*xmmregs));
+		error = copyin(addr, xmmregs, sizeof(*xmmregs));
 		if (error == 0) {
 			error = process_write_xmmregs(t, xmmregs);
 		}
@@ -653,16 +653,14 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
 		error = process_read_xmmregs(t, xmmregs);
 		if (error == 0)
-			error = copyout(xmmregs,
-			    SCARG(uap, addr), sizeof(*xmmregs));
+			error = copyout(xmmregs, addr, sizeof(*xmmregs));
 		free(xmmregs, M_TEMP, sizeof(*xmmregs));
 		return (error);
 #endif
 #ifdef PT_WCOOKIE
 	case  PT_WCOOKIE:
 		wcookie = process_get_wcookie (t);
-		return (copyout(&wcookie, SCARG(uap, addr),
-		    sizeof (register_t)));
+		return (copyout(&wcookie, addr, sizeof (register_t)));
 #endif
 	}
 
