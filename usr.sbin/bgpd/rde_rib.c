@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.152 2017/01/25 00:15:38 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.153 2017/01/25 03:21:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -74,7 +74,7 @@ rib_tree(struct rib *rib)
 }
 
 /* RIB specific functions */
-struct rib_desc *
+struct rib *
 rib_new(char *name, u_int rtableid, u_int16_t flags)
 {
 	struct rib_desc	*xribs;
@@ -108,36 +108,43 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 		fatal(NULL);
 	TAILQ_INIT(ribs[id].in_rules);
 
-	return (&ribs[id]);
+	return (&ribs[id].rib);
 }
 
-struct rib_desc *
+struct rib *
 rib_find(char *name)
 {
 	u_int16_t id;
 
 	if (name == NULL || *name == '\0')
-		return (&ribs[1]);	/* no name returns the Loc-RIB */
+		return (&ribs[1].rib);	/* no name returns the Loc-RIB */
 
 	for (id = 0; id < rib_size; id++) {
 		if (!strcmp(ribs[id].name, name))
-			return (&ribs[id]);
+			return (&ribs[id].rib);
 	}
 
 	return (NULL);
 }
 
+struct rib_desc *
+rib_desc(struct rib *rib)
+{
+	return (&ribs[rib->id]);
+}
+
 void
-rib_free(struct rib_desc *rib)
+rib_free(struct rib *rib)
 {
 	struct rib_context *ctx, *next;
+	struct rib_desc *rd;
 	struct rib_entry *re, *xre;
 	struct prefix *p, *np;
 
 	/* abort pending rib_dumps */
 	for (ctx = LIST_FIRST(&rib_dump_h); ctx != NULL; ctx = next) {
 		next = LIST_NEXT(ctx, entry);
-		if (ctx->ctx_rib == &rib->rib) {
+		if (ctx->ctx_rib == rib) {
 			re = ctx->ctx_re;
 			re_unlock(re);
 			LIST_REMOVE(ctx, entry);
@@ -148,8 +155,8 @@ rib_free(struct rib_desc *rib)
 		}
 	}
 
-	for (re = RB_MIN(rib_tree, rib_tree(&rib->rib)); re != NULL; re = xre) {
-		xre = RB_NEXT(rib_tree, rib_tree(&rib->rib), re);
+	for (re = RB_MIN(rib_tree, rib_tree(rib)); re != NULL; re = xre) {
+		xre = RB_NEXT(rib_tree, rib_tree(rib), re);
 
 		/*
 		 * Removing the prefixes is tricky because the last one
@@ -172,8 +179,9 @@ rib_free(struct rib_desc *rib)
 				break;
 		}
 	}
-	filterlist_free(rib->in_rules_tmp);
-	filterlist_free(rib->in_rules);
+	rd = &ribs[rib->id];
+	filterlist_free(rd->in_rules_tmp);
+	filterlist_free(rd->in_rules);
 	bzero(rib, sizeof(struct rib_desc));
 }
 

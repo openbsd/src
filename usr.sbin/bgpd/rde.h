@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.159 2017/01/25 00:15:38 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.160 2017/01/25 03:21:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -76,7 +76,7 @@ struct rde_peer {
 	u_int32_t			 up_nlricnt;
 	u_int32_t			 up_wcnt;
 	enum peer_state			 state;
-	struct rib_desc			*rib;
+	struct rib			*rib;
 	u_int16_t			 short_as;
 	u_int16_t			 mrt_idx;
 	u_int8_t			 reconf_out;	/* out filter changed */
@@ -427,9 +427,10 @@ int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
 extern u_int16_t	 rib_size;
 extern struct rib_desc	*ribs;
 
-struct rib_desc	 *rib_new(char *, u_int, u_int16_t);
-struct rib_desc	 *rib_find(char *);
-void		 rib_free(struct rib_desc *);
+struct rib	*rib_new(char *, u_int, u_int16_t);
+struct rib	*rib_find(char *);
+struct rib_desc	*rib_desc(struct rib *);
+void		 rib_free(struct rib *);
 struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
 struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
 void		 rib_dump(struct rib *, void (*)(struct rib_entry *, void *),
