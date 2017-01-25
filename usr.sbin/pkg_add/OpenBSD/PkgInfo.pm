@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.43 2016/10/04 10:10:19 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.44 2017/01/25 14:10:46 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -212,7 +212,7 @@ sub find_pkg_in
 			return 0;
 		} else {
 			for my $pkg (@$r) {
-				&$code($pkgname, $pkg);
+				&$code($pkg->name, $pkg);
 				$pkg->close_now;
 				$pkg->wipe_info;
 			}
