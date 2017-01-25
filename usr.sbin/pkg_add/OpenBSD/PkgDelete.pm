@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.35 2015/10/07 17:52:38 jmc Exp $
+# $OpenBSD: PkgDelete.pm,v 1.36 2017/01/25 14:12:33 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -356,6 +356,13 @@ sub process_set
 	if ($state->{do_automatic}) {
 		for my $pkg  ($set->older) {
 			$pkg->complete_old;
+			if (!defined $pkg->plist) {
+				$state->say("Corrupt set #1, run pkg_check",
+				    $set->print);
+				$set->cleanup(OpenBSD::Handle::CANT_DELETE);
+				$state->tracker->cant($set);
+				return ();
+			}
 			if ($pkg->plist->has('manual-installation')) {
 				$state->say("Won't delete manually installed #1",
 				    $set->print) if $state->verbose;
