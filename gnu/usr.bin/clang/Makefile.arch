@@ -1,5 +1,8 @@
-# $OpenBSD: Makefile.arch,v 1.2 2016/11/24 22:32:29 patrick Exp $
+# $OpenBSD: Makefile.arch,v 1.3 2017/01/25 07:29:30 patrick Exp $
 
+LLVM_ARCHS=AArch64 ARM PowerPC Sparc X86
+
+LLVM_ARCH?=
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 LLVM_ARCH=	X86
 .elif ${MACHINE_ARCH} == "powerpc"
@@ -14,17 +17,27 @@ LLVM_ARCH=	ARM
 LLVM_ARCH=	Mips
 .endif
 
-.if !(${LLVM_ARCH} == "X86" || ${LLVM_ARCH} == "AArch64")
-BACKEND_UTILS=
-.endif
+BACKEND_ASMPARSER?=
+BACKEND_ASMPRINTER?=
+BACKEND_CODEGEN?=
+BACKEND_DESC?=
+BACKEND_DISASSEMBLER?=
+BACKEND_INFO?=
+BACKEND_UTILS?=
 
-BACKEND_ASMPARSER?=	LLVM${LLVM_ARCH}AsmParser
-BACKEND_ASMPRINTER?=	LLVM${LLVM_ARCH}AsmPrinter
-BACKEND_CODEGEN?=	LLVM${LLVM_ARCH}CodeGen
-BACKEND_DESC?=		LLVM${LLVM_ARCH}Desc
-BACKEND_DISASSEMBLER?=	LLVM${LLVM_ARCH}Disassembler
-BACKEND_INFO?=		LLVM${LLVM_ARCH}Info
-BACKEND_UTILS?=		LLVM${LLVM_ARCH}Utils
+.for arch in ${LLVM_ARCHS}
+.if "${arch}" == ${LLVM_ARCH} || make(obj)
+BACKEND_ASMPARSER+=	LLVM${arch}AsmParser
+BACKEND_ASMPRINTER+=	LLVM${arch}AsmPrinter
+BACKEND_CODEGEN+=	LLVM${arch}CodeGen
+BACKEND_DESC+=		LLVM${arch}Desc
+BACKEND_DISASSEMBLER+=	LLVM${arch}Disassembler
+BACKEND_INFO+=		LLVM${arch}Info
+.if "${arch}" == "X86" || "${arch}" == "AArch64"
+BACKEND_UTILS+=		LLVM${arch}Utils
+.endif
+.endif
+.endfor
 
 BACKEND_LIBS+=		${BACKEND_ASMPARSER}
 BACKEND_LIBS+=		${BACKEND_ASMPRINTER}
