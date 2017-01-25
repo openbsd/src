@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.171 2016/12/29 12:12:43 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.172 2017/01/25 06:15:50 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ soclose(struct socket *so)
 			    (so->so_state & SS_NBIO))
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
-				error = tsleep(&so->so_timeo,
+				error = rwsleep(&so->so_timeo, &netlock,
 				    PSOCK | PCATCH, "netcls",
 				    so->so_linger * hz);
 				if (error)
@@ -614,8 +614,8 @@ sbsync(struct sockbuf *sb, struct mbuf *nextrecord)
  * must begin with an address if the protocol so specifies,
  * followed by an optional mbuf or mbufs containing ancillary data,
  * and then zero or more mbufs of data.
- * In order to avoid blocking network for the entire time here, we splx()
- * and release NET_LOCK() while doing the actual copy to user space.
+ * In order to avoid blocking network for the entire time here, we release
+ * the NET_LOCK() while doing the actual copy to user space.
  * Although the sockbuf is locked, new data may still be appended,
  * and thus we must maintain consistency of the sockbuf during that time.
  *
@@ -800,9 +800,13 @@ dontblock:
 			if (controlp) {
 				if (pr->pr_domain->dom_externalize &&
 				    mtod(cm, struct cmsghdr *)->cmsg_type ==
-				    SCM_RIGHTS)
-				   error = (*pr->pr_domain->dom_externalize)(cm,
-				       controllen, flags);
+				    SCM_RIGHTS) {
+					NET_UNLOCK(s);
+					error =
+					    (*pr->pr_domain->dom_externalize)
+					    (cm, controllen, flags);
+					NET_LOCK(s);
+				}
 				*controlp = cm;
 			} else {
 				/*
@@ -1039,7 +1043,7 @@ sorflush(struct socket *so)
 	struct sockbuf asb;
 
 	sb->sb_flags |= SB_NOINTR;
-	(void) sblock(sb, M_WAITOK, NULL);
+	(void) sblock(sb, M_WAITOK, &netlock);
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;
@@ -1528,7 +1532,10 @@ sorwakeup(struct socket *so)
 #endif
 	sowakeup(so, &so->so_rcv);
 	if (so->so_upcall) {
+		/* XXXSMP breaks atomicity */
+		rw_exit_write(&netlock);
 		(*(so->so_upcall))(so, so->so_upcallarg, M_DONTWAIT);
+		rw_enter_write(&netlock);
 	}
 }
 

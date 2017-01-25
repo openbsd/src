@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1010 2017/01/09 14:47:13 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.1011 2017/01/25 06:15:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1305,8 +1305,12 @@ pf_remove_state(struct pf_state *cur)
 	}
 	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
 #if NPFLOW > 0
-	if (cur->state_flags & PFSTATE_PFLOW)
+	if (cur->state_flags & PFSTATE_PFLOW) {
+		/* XXXSMP breaks atomicity */
+		rw_exit_write(&netlock);
 		export_pflow(cur);
+		rw_enter_write(&netlock);
+	}
 #endif	/* NPFLOW > 0 */
 #if NPFSYNC > 0
 	pfsync_delete_state(cur);

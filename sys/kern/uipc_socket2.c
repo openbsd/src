@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.70 2016/12/29 12:12:43 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.71 2017/01/25 06:15:50 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ sbwait(struct sockbuf *sb)
 	NET_ASSERT_LOCKED();
 
 	sb->sb_flagsintr |= SB_WAIT;
-	return (tsleep(&sb->sb_cc,
+	return (rwsleep(&sb->sb_cc, &netlock,
 	    (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH, "netio",
 	    sb->sb_timeo));
 }
