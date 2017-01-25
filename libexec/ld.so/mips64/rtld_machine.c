@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.24 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.25 2017/01/25 15:22:57 visa Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -141,7 +141,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			break;
 
 		default:
-			_dl_die("unsupported relocation '%d'",
+			_dl_die("unsupported relocation '%lld'",
 			    ELF64_R_TYPE(relocs->r_info));
 		}
 	}
