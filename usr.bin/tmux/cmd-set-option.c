@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.109 2017/01/24 20:24:54 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.110 2017/01/25 23:50:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -211,9 +211,11 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		if (o == NULL)
 			o = options_empty(oo, options_table_entry(parent));
-		if (idx == -1)
+		if (idx == -1) {
+			if (!append)
+				options_array_clear(o);
 			options_array_assign(o, value);
-		else if (options_array_set(o, idx, value, append) != 0) {
+		} else if (options_array_set(o, idx, value, append) != 0) {
 			cmdq_error(item, "invalid index: %s", args->argv[0]);
 			return (CMD_RETURN_ERROR);
 		}
