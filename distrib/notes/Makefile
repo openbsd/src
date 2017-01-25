@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2016/09/03 13:37:39 guenther Exp $
+#	$OpenBSD: Makefile,v 1.47 2017/01/25 03:10:40 patrick Exp $
 
 NOPROG=
 NOMAN=
@@ -18,9 +18,8 @@ all:	$(TARG)
 
 allarchs:
 	@cd $(.CURDIR); \
-	for arch in alpha amd64 armv7 hppa i386 landisk \
-	    loongson luna88k macppc octeon sgi socppc \
-	    sparc64; \
+	for arch in alpha amd64 arm64 armv7 hppa i386 landisk \
+	    loongson luna88k macppc octeon sgi socppc sparc64; \
 	do ${MAKE} M=$$arch; done
 
 $(TARG): $(DEP)
