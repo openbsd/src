@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_gen.c,v 1.20 2017/01/21 11:00:47 beck Exp $ */
+/* $OpenBSD: rsa_gen.c,v 1.21 2017/01/25 06:15:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -138,7 +138,7 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 			goto err;
 		if (!BN_sub(r2, rsa->p, BN_value_one()))
 			goto err;
-		if (!BN_gcd(r1, r2, rsa->e, ctx))
+		if (!BN_gcd_ct(r1, r2, rsa->e, ctx))
 			goto err;
 		if (BN_is_one(r1))
 			break;
@@ -168,7 +168,7 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 		}
 		if (!BN_sub(r2, rsa->q, BN_value_one()))
 			goto err;
-		if (!BN_gcd(r1, r2, rsa->e, ctx))
+		if (!BN_gcd_ct(r1, r2, rsa->e, ctx))
 			goto err;
 		if (BN_is_one(r1))
 			break;

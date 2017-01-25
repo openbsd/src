@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.35 2017/01/21 11:00:46 beck Exp $ */
+/* $OpenBSD: bn.h,v 1.36 2017/01/25 06:15:44 beck Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -452,7 +452,9 @@ char *	BN_bn2dec(const BIGNUM *a);
 int 	BN_hex2bn(BIGNUM **a, const char *str);
 int 	BN_dec2bn(BIGNUM **a, const char *str);
 int	BN_asc2bn(BIGNUM **a, const char *str);
+#ifndef LIBRESSL_INTERNAL
 int	BN_gcd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+#endif
 int	BN_kronecker(const BIGNUM *a,const BIGNUM *b,BN_CTX *ctx); /* returns -2 for error */
 #ifndef LIBRESSL_INTERNAL
 BIGNUM *BN_mod_inverse(BIGNUM *ret,

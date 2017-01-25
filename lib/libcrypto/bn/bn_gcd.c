@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.13 2017/01/21 23:02:53 beck Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.14 2017/01/25 06:15:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,6 +114,8 @@
 #include "bn_lcl.h"
 
 static BIGNUM *euclid(BIGNUM *a, BIGNUM *b);
+static BIGNUM *BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
+    BN_CTX *ctx);
 
 int
 BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
@@ -155,6 +157,21 @@ err:
 	bn_check_top(r);
 	return (ret);
 }
+
+int
+BN_gcd_ct(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
+{
+	if (BN_gcd_no_branch(r, in_a, in_b, ctx) == NULL)
+		return 0;
+	return 1;
+}
+
+int
+BN_gcd_nonct(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
+{
+	return BN_gcd(r, in_a, in_b, ctx);
+}
+
 
 static BIGNUM *
 euclid(BIGNUM *a, BIGNUM *b)
@@ -697,6 +714,145 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	}
 	ret = R;
 
+err:
+	if ((ret == NULL) && (in == NULL))
+		BN_free(R);
+	BN_CTX_end(ctx);
+	bn_check_top(ret);
+	return (ret);
+}
+
+/*
+ * BN_gcd_no_branch is a special version of BN_mod_inverse_no_branch.
+ * that returns the GCD.
+ */
+static BIGNUM *
+BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
+    BN_CTX *ctx)
+{
+	BIGNUM *A, *B, *X, *Y, *M, *D, *T, *R = NULL;
+	BIGNUM local_A, local_B;
+	BIGNUM *pA, *pB;
+	BIGNUM *ret = NULL;
+	int sign;
+
+	if (in == NULL)
+		goto err;
+	R = in;
+
+	bn_check_top(a);
+	bn_check_top(n);
+
+	BN_CTX_start(ctx);
+	if ((A = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((B = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((X = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((D = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((M = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((T = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	BN_one(X);
+	BN_zero(Y);
+	if (BN_copy(B, a) == NULL)
+		goto err;
+	if (BN_copy(A, n) == NULL)
+		goto err;
+	A->neg = 0;
+
+	if (B->neg || (BN_ucmp(B, A) >= 0)) {
+		/* Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
+	 	 * BN_div_no_branch will be called eventually.
+	 	 */
+		pB = &local_B;
+		BN_with_flags(pB, B, BN_FLG_CONSTTIME);
+		if (!BN_nnmod(B, pB, A, ctx))
+			goto err;
+	}
+	sign = -1;
+	/* From  B = a mod |n|,  A = |n|  it follows that
+	 *
+	 *      0 <= B < A,
+	 *     -sign*X*a  ==  B   (mod |n|),
+	 *      sign*Y*a  ==  A   (mod |n|).
+	 */
+
+	while (!BN_is_zero(B)) {
+		BIGNUM *tmp;
+
+		/*
+		 *      0 < B < A,
+		 * (*) -sign*X*a  ==  B   (mod |n|),
+		 *      sign*Y*a  ==  A   (mod |n|)
+		 */
+
+		/* Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
+	 	 * BN_div_no_branch will be called eventually.
+	 	 */
+		pA = &local_A;
+		BN_with_flags(pA, A, BN_FLG_CONSTTIME);
+
+		/* (D, M) := (A/B, A%B) ... */
+		if (!BN_div_ct(D, M, pA, B, ctx))
+			goto err;
+
+		/* Now
+		 *      A = D*B + M;
+		 * thus we have
+		 * (**)  sign*Y*a  ==  D*B + M   (mod |n|).
+		 */
+		tmp = A; /* keep the BIGNUM object, the value does not matter */
+
+		/* (A, B) := (B, A mod B) ... */
+		A = B;
+		B = M;
+		/* ... so we have  0 <= B < A  again */
+
+		/* Since the former  M  is now  B  and the former  B  is now  A,
+		 * (**) translates into
+		 *       sign*Y*a  ==  D*A + B    (mod |n|),
+		 * i.e.
+		 *       sign*Y*a - D*A  ==  B    (mod |n|).
+		 * Similarly, (*) translates into
+		 *      -sign*X*a  ==  A          (mod |n|).
+		 *
+		 * Thus,
+		 *   sign*Y*a + D*sign*X*a  ==  B  (mod |n|),
+		 * i.e.
+		 *        sign*(Y + D*X)*a  ==  B  (mod |n|).
+		 *
+		 * So if we set  (X, Y, sign) := (Y + D*X, X, -sign),  we arrive back at
+		 *      -sign*X*a  ==  B   (mod |n|),
+		 *       sign*Y*a  ==  A   (mod |n|).
+		 * Note that  X  and  Y  stay non-negative all the time.
+		 */
+
+		if (!BN_mul(tmp, D, X, ctx))
+			goto err;
+		if (!BN_add(tmp, tmp, Y))
+			goto err;
+
+		M = Y; /* keep the BIGNUM object, the value does not matter */
+		Y = X;
+		X = tmp;
+		sign = -sign;
+	}
+
+	/*
+	 * The while loop (Euclid's algorithm) ends when
+	 *      A == gcd(a,n);
+	 */
+
+	if (!BN_copy(R, A))
+		goto err;
+	ret = R;
 err:
 	if ((ret == NULL) && (in == NULL))
 		BN_free(R);
