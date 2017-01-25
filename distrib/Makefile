@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.50 2016/09/03 13:37:39 guenther Exp $
+#	$OpenBSD: Makefile,v 1.51 2017/01/25 03:18:58 deraadt Exp $
 
 SUBDIR=	special notes
 
 .if	make(obj)
-SUBDIR+=alpha amd64 armv7 hppa i386 \
+SUBDIR+=alpha amd64 armv7 arm64 hppa i386 \
 	landisk loongson luna88k macppc \
 	octeon sgi socppc sparc64
 .elif exists(${MACHINE})
