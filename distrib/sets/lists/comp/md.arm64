@@ -1,6 +1,7 @@
 ./usr/bin/clang
 ./usr/bin/clang++
 ./usr/bin/clang-cpp
+./usr/bin/ld.lld
 ./usr/bin/objcopy
 ./usr/include/arm64
 ./usr/include/arm64/_float.h
@@ -618,3 +619,8 @@
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
 ./usr/share/info/bfd.info
+./usr/share/man/man1/c++.1
+./usr/share/man/man1/cc.1
+./usr/share/man/man1/clang++.1
+./usr/share/man/man1/clang-cpp.1
+./usr/share/man/man1/clang.1
