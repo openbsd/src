@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.1 2017/01/25 02:29:25 patrick Exp $
+dnl	$OpenBSD: prep,v 1.2 2017/01/25 03:10:06 patrick Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -31,11 +31,6 @@ Booting from an SD card:
   When you have connected the BeagleBoard to you computer, a command such
   as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
   should connect you to the board's console.
-  
-  Note: By default the BeagleBone Black will boot from the internal emmc.
-  In order to make it boot from the micro SD card, you will need to hold down
-  the small button located by the SD card slot while powering on the board.
-  Once you have done this the board will boot from the SD card as the default.
 
 Running EFI payloads with U-Boot:
 
@@ -58,7 +53,7 @@ Install on systems without a supported miniroot:
   If a miniroot is not available for your system you will have to modify
   an existing image before booting it.
 
-  To do so first install the u-boot-arm and dtb packages.  Write one of the
+  To do so first install the u-boot-aarch64 and dtb packages.  Write one of the
   provided miniroot images to an SD card:
 
  	dd if=miniroot-beagle-{:--:}OSrev.fs of=/dev/rsdXc
@@ -66,20 +61,8 @@ Install on systems without a supported miniroot:
   Add a board specific DTB file:
 
  	mount /dev/sdXi /mnt
- 	cp /usr/local/share/dtb/arm/board.dtb /mnt/
+ 	cp /usr/local/share/dtb/arm64/board.dtb /mnt/
  	umount /mnt
-
-  For systems based on Texas Instruments OMAP and AMxxxx SoCs:
-
- 	mount /dev/sdXi /mnt
- 	cp /usr/local/share/u-boot/board/{MLO,u-boot.img} /mnt/
- 	umount /mnt
-
-  For systems based on Freescale/NXP i.MX SoCs:
-
- 	dd if=/usr/local/share/u-boot/board/SPL of=/dev/rsdXc bs=1024 seek=1
- 	dd if=/usr/local/share/u-boot/board/u-boot.img \
- 	    of=/dev/rsdXc bs=1024 seek=69
 
   For systems based on Allwinner Axx Socs:
 

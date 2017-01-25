@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.1 2017/01/25 02:29:25 patrick Exp $
+dnl	$OpenBSD: features,v 1.2 2017/01/25 03:10:06 patrick Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -11,7 +11,7 @@ dnl
 dnl ====
 dnl
 dnl architecture name (for the packages directory)
-define({:-MACHINE_ARCH-:},arm)dnl
+define({:-MACHINE_ARCH-:},aarch64)dnl
 dnl
 dnl define if /sbin/kbd exists on the media
 define({:-MDKBD-:},)dnl
