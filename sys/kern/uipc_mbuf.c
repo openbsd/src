@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.239 2016/11/29 10:22:30 jsg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.240 2017/01/25 09:41:45 mpi Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1013,6 +1013,12 @@ m_split(struct mbuf *m0, int len0, int wait)
 		n->m_pkthdr.len -= len0;
 		olen = m0->m_pkthdr.len;
 		m0->m_pkthdr.len = len0;
+		if (remain == 0) {
+			n->m_next = m->m_next;
+			m->m_next = NULL;
+			n->m_len = 0;
+			return (n);
+		}
 		if (m->m_flags & M_EXT)
 			goto extpacket;
 		if (remain > MHLEN) {
@@ -1023,8 +1029,10 @@ m_split(struct mbuf *m0, int len0, int wait)
 				(void) m_free(n);
 				m0->m_pkthdr.len = olen;
 				return (NULL);
-			} else
+			} else {
+				n->m_len = 0;
 				return (n);
+			}
 		} else
 			MH_ALIGN(n, remain);
 	} else if (remain == 0) {
