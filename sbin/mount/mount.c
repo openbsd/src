@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.69 2017/01/24 23:41:44 tb Exp $	*/
+/*	$OpenBSD: mount.c,v 1.70 2017/01/25 02:33:25 tb Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -164,7 +164,6 @@ main(int argc, char * const argv[])
 		case '?':
 		default:
 			usage();
-			/* NOTREACHED */
 		}
 	argc -= optind;
 	argv += optind;
@@ -212,7 +211,7 @@ main(int argc, char * const argv[])
 					continue;
 				prmount(&mntbuf[i]);
 			}
-			exit(rval);
+			return (rval);
 		}
 		break;
 	case 1:
@@ -235,9 +234,8 @@ main(int argc, char * const argv[])
 					    "can't find fstab entry for %s.",
 					    *argv);
 			} else {
-				fs = malloc(sizeof(*fs));
-				if (fs == NULL)
-					err(1, "malloc");
+				if ((fs = malloc(sizeof(*fs))) == NULL)
+					err(1, NULL);
 				fs->fs_vfstype = mntbuf->f_fstypename;
 				fs->fs_spec = mntbuf->f_mntfromname;
 			}
@@ -283,7 +281,6 @@ main(int argc, char * const argv[])
 		break;
 	default:
 		usage();
-		/* NOTREACHED */
 	}
 
 	/*
@@ -299,7 +296,7 @@ main(int argc, char * const argv[])
 		(void)fclose(mountdfp);
 	}
 
-	exit(rval);
+	return (rval);
 }
 
 int
@@ -310,7 +307,8 @@ hasopt(const char *mntopts, const char *option)
 
 	if (mntopts == NULL)
 		return (0);
-	optbuf = strdup(mntopts);
+	if ((optbuf = strdup(mntopts)) == NULL)
+		err(1, NULL);
 	found = 0;
 	for (opt = optbuf; !found && opt != NULL; strsep(&opt, ","))
 		found = !strncmp(opt, option, strlen(option));
@@ -340,6 +338,8 @@ int
 mountfs(const char *vfstype, const char *spec, const char *name,
     const char *options, const char *mntopts, int skipmounted)
 {
+	char *cp;
+
 	/* List of directories containing mount_xxx subcommands. */
 	static const char *edirs[] = {
 		_PATH_SBIN,
@@ -372,7 +372,9 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	}
 
 	/* options follows after mntopts, so they get priority over mntopts */
-	optbuf = catopt(strdup(mntopts), options);
+	if ((cp = strdup(mntopts)) == NULL)
+		err(1, NULL);
+	optbuf = catopt(cp, options);
 
 	if (strcmp(name, "/") == 0) {
 		if (!hasopt(optbuf, "update"))
@@ -401,7 +403,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 
 	argvsize = 64;
 	if((argv = reallocarray(NULL, argvsize, sizeof(char *))) == NULL)
-		err(1, "malloc");
+		err(1, NULL);
 	argc = 0;
 	argv[argc++] = NULL;	/* this should be a full path name */
 	mangle(optbuf, &argc, argv, argvsize - 4);
@@ -440,7 +442,6 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		if (errno == ENOENT)
 			warn("no mount helper program found for %s", vfstype);
 		_exit(1);
-		/* NOTREACHED */
 	default:				/* Parent. */
 		free(optbuf);
 		free(argv);
@@ -673,7 +674,7 @@ maketypelist(char *fslist)
 
 	/* Build an array of that many types. */
 	if ((av = typelist = reallocarray(NULL, i + 1, sizeof(char *))) == NULL)
-		err(1, "malloc");
+		err(1, NULL);
 	av[0] = fslist;
 	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')); i++) {
 		*nextcp = '\0';
@@ -691,8 +692,10 @@ catopt(char *s0, const char *s1)
 	if (s0 && *s0) {
 		if (asprintf(&cp, "%s,%s", s0, s1) == -1)
 			err(1, NULL);
-	} else
-		cp = strdup(s1);
+	} else {
+		if ((cp = strdup(s1)) == NULL)
+			err(1, NULL);
+	}
 
 	free(s0);
 	return cp;
@@ -724,10 +727,9 @@ mangle(char *options, int *argcp, const char **argv, int argcmax)
 	*argcp = argc;
 }
 
-void
+__dead void
 usage(void)
 {
-
 	(void)fprintf(stderr,
 	    "usage: mount [-AadfNruvw] [-t type]\n"
 	    "       mount [-dfrsuvw] special | node\n"
