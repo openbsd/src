@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.122 2017/01/24 09:03:21 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.123 2017/01/25 03:20:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1176,6 +1176,20 @@ int SSL_set1_groups(SSL *ssl, const int *groups, size_t groups_len);
 int SSL_set1_groups_list(SSL *ssl, const char *groups);
 
 #ifndef LIBRESSL_INTERNAL
+/*
+ * Preprocessor compatibility section.
+ *
+ * Historically, a number of APIs were implemented in OpenSSL as macros and
+ * constants to 'ctrl' functions. To avoid breaking #ifdefs in consumers, this
+ * section defines a number of legacy macros.
+ *
+ * Although using either the CTRL values or their wrapper macros in #ifdefs is
+ * still supported, the CTRL values may not be passed to SSL_ctrl and
+ * SSL_CTX_ctrl. Call the functions (previously wrapper macros) instead.
+ */
+#define SSL_CTRL_SET_CURVES doesnt_exist
+#define SSL_CTRL_SET_CURVES_LIST doesnt_exist
+
 #define SSL_CTX_set1_curves SSL_CTX_set1_groups
 #define SSL_CTX_set1_curves_list SSL_CTX_set1_groups_list
 #define SSL_set1_curves SSL_set1_groups
