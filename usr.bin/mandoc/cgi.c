@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.83 2017/01/21 01:20:29 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.84 2017/01/25 02:14:41 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
@@ -797,6 +797,7 @@ resp_format(const struct req *req, const char *file)
 
 	memset(&conf, 0, sizeof(conf));
 	conf.fragment = 1;
+	conf.style = mandoc_strdup(CSS_DIR "/mandoc.css");
 	usepath = strcmp(req->q.manpath, req->p[0]);
 	mandoc_asprintf(&conf.man, "/%s%s%%N.%%S",
 	    usepath ? req->q.manpath : "", usepath ? "/" : "");
@@ -824,6 +825,7 @@ resp_format(const struct req *req, const char *file)
 	mparse_free(mp);
 	mchars_free();
 	free(conf.man);
+	free(conf.style);
 }
 
 static void

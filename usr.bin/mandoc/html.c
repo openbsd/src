@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.70 2017/01/21 02:28:42 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.71 2017/01/25 02:14:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -564,8 +564,11 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			SCALE_VS_INIT(su, i);
 			break;
 		case 'w':
+		case 'W':
 			s = va_arg(ap, char *);
 			a2width(s, su);
+			if (fmt[-1] == 'W')
+				su->scale *= -1.0;
 			break;
 		default:
 			abort();

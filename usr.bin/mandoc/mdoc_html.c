@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.135 2017/01/21 02:09:49 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.136 2017/01/25 02:14:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -669,6 +669,7 @@ static int
 mdoc_it_pre(MDOC_ARGS)
 {
 	const struct roff_node	*bl;
+	struct tag		*t;
 	const char		*cattr;
 	enum mdoc_list		 type;
 
@@ -736,7 +737,6 @@ mdoc_it_pre(MDOC_ARGS)
 	case LIST_hang:
 	case LIST_inset:
 	case LIST_ohang:
-	case LIST_tag:
 		switch (n->type) {
 		case ROFFT_HEAD:
 			if (bl->norm->Bl.comp)
@@ -752,6 +752,41 @@ mdoc_it_pre(MDOC_ARGS)
 			else
 				print_otag(h, TAG_DD, "cswl", cattr,
 				    bl->norm->Bl.width);
+			break;
+		default:
+			break;
+		}
+		break;
+	case LIST_tag:
+		switch (n->type) {
+		case ROFFT_HEAD:
+			if (h->style != NULL && !bl->norm->Bl.comp &&
+			    (n->parent->prev == NULL ||
+			     n->parent->prev->body->child != NULL)) {
+				if (bl->norm->Bl.width == NULL)
+					t = print_otag(h, TAG_DT, "c", cattr);
+				else
+					t = print_otag(h, TAG_DT, "csWl",
+					    cattr, bl->norm->Bl.width);
+				print_text(h, "\\ ");
+				print_tagq(h, t);
+				t = print_otag(h, TAG_DD, "c", cattr);
+				print_text(h, "\\ ");
+				print_tagq(h, t);
+			}
+			if (bl->norm->Bl.width == NULL)
+				print_otag(h, TAG_DT, "c", cattr);
+			else
+				print_otag(h, TAG_DT, "csWl", cattr,
+				    bl->norm->Bl.width);
+			break;
+		case ROFFT_BODY:
+			if (n->child == NULL) {
+				print_otag(h, TAG_DD, "css?", cattr,
+				    "width", "auto");
+				print_text(h, "\\ ");
+			} else
+				print_otag(h, TAG_DD, "c", cattr);
 			break;
 		default:
 			break;
@@ -843,9 +878,16 @@ mdoc_bl_pre(MDOC_ARGS)
 		cattr = "Bl-ohang";
 		break;
 	case LIST_tag:
-		elemtype = TAG_DL;
 		cattr = "Bl-tag";
-		break;
+		if (n->norm->Bl.offs)
+			print_otag(h, TAG_DIV, "cswl", cattr,
+			    n->norm->Bl.offs);
+		if (n->norm->Bl.width == NULL)
+			print_otag(h, TAG_DL, "c", cattr);
+		else
+			print_otag(h, TAG_DL, "cswl", cattr,
+			    n->norm->Bl.width);
+		return 1;
 	case LIST_column:
 		elemtype = TAG_TABLE;
 		cattr = "Bl-column";
