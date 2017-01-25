@@ -1,0 +1,59 @@
+.\" $OpenBSD: tls_config_ocsp_require_stapling.3,v 1.1 2017/01/25 23:53:18 schwarze Exp $
+.\"
+.\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: January 25 2017 $
+.Dt TLS_CONFIG_OCSP_REQUIRE_STAPLING 3
+.Os
+.Sh NAME
+.Nm tls_config_ocsp_require_stapling ,
+.Nm tls_config_set_ocsp_staple_mem ,
+.Nm tls_config_set_ocsp_staple_file
+.Nd OCSP configuration for libtls
+.Sh SYNOPSIS
+.In tls.h
+.Ft void
+.Fn tls_config_ocsp_require_stapling "struct tls_config *config"
+.Ft int
+.Fo tls_config_set_ocsp_staple_mem
+.Fa "struct tls_config *config"
+.Fa "const char *staple"
+.Fa "size_t len"
+.Fc
+.Ft int
+.Fo tls_config_set_ocsp_staple_file
+.Fa "struct tls_config *config"
+.Fa "const char *staple_file"
+.Fc
+.Sh DESCRIPTION
+.Fn tls_config_ocsp_require_stapling
+requires that a valid stapled OCSP response be provided during the TLS handshake.
+.Pp
+.Fn tls_config_set_ocsp_staple_file
+sets a DER-encoded OCSP response to be stapled during the TLS handshake from
+the specified file.
+.Pp
+.Fn tls_config_set_ocsp_staple_mem
+sets a DER-encoded OCSP response to be stapled during the TLS handshake from
+memory.
+.Sh RETURN VALUES
+.Fn tls_config_set_ocsp_staple_mem
+and
+.Fn tls_config_set_ocsp_staple_file
+return 0 on success or -1 on error.
+.Sh SEE ALSO
+.Xr tls_handshake 3 ,
+.Xr tls_init 3 ,
+.Xr tls_ocsp_process_response 3

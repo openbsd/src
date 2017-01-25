@@ -1,0 +1,146 @@
+.\" $OpenBSD: tls_config_set_protocols.3,v 1.1 2017/01/25 23:53:18 schwarze Exp $
+.\"
+.\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: January 25 2017 $
+.Dt TLS_CONFIG_SET_PROTOCOLS 3
+.Os
+.Sh NAME
+.Nm tls_config_set_protocols ,
+.Nm tls_config_parse_protocols ,
+.Nm tls_config_set_alpn ,
+.Nm tls_config_set_ciphers ,
+.Nm tls_config_set_dheparams ,
+.Nm tls_config_set_ecdhecurve ,
+.Nm tls_config_prefer_ciphers_client ,
+.Nm tls_config_prefer_ciphers_server
+.Nd TLS protocol and cipher selection
+.Sh SYNOPSIS
+.In tls.h
+.Ft int
+.Fo tls_config_set_protocols
+.Fa "struct tls_config *config"
+.Fa "uint32_t protocols"
+.Fc
+.Ft int
+.Fo tls_config_parse_protocols
+.Fa "uint32_t *protocols"
+.Fa "const char *protostr"
+.Fc
+.Ft int
+.Fo tls_config_set_alpn
+.Fa "struct tls_config *config"
+.Fa "const char *alpn"
+.Fc
+.Ft int
+.Fo tls_config_set_ciphers
+.Fa "struct tls_config *config"
+.Fa "const char *ciphers"
+.Fc
+.Ft int
+.Fo tls_config_set_dheparams
+.Fa "struct tls_config *config"
+.Fa "const char *params"
+.Fc
+.Ft int
+.Fo tls_config_set_ecdhecurve
+.Fa "struct tls_config *config"
+.Fa "const char *name"
+.Fc
+.Ft void
+.Fn tls_config_prefer_ciphers_client "struct tls_config *config"
+.Ft void
+.Fn tls_config_prefer_ciphers_server "struct tls_config *config"
+.Sh DESCRIPTION
+These functions modify a configuration by setting parameters.
+The configuration options apply to both clients and servers, unless noted
+otherwise.
+.Pp
+.Fn tls_config_set_protocols
+specifies which versions of the TLS protocol may be used.
+Possible values are the bitwise OR of:
+.Pp
+.Bl -tag -width "TLS_PROTOCOL_TLSv1_2" -offset indent -compact
+.It Dv TLS_PROTOCOL_TLSv1_0
+.It Dv TLS_PROTOCOL_TLSv1_1
+.It Dv TLS_PROTOCOL_TLSv1_2
+.El
+.Pp
+Additionally, the values
+.Dv TLS_PROTOCOL_TLSv1
+(TLSv1.0, TLSv1.1 and TLSv1.2),
+.Dv TLS_PROTOCOLS_ALL
+(all supported protocols) and
+.Dv TLS_PROTOCOLS_DEFAULT
+(TLSv1.2 only) may be used.
+.Pp
+The
+.Fn tls_config_parse_protocols
+utility function parses a protocol string and returns the corresponding
+value via the
+.Ar protocols
+argument.
+This value can then be passed to the
+.Fn tls_config_set_protocols
+function.
+The protocol string is a comma or colon separated list of keywords.
+Valid keywords are tlsv1.0, tlsv1.1, tlsv1.2, all (all supported protocols),
+default (an alias for secure), legacy (an alias for all) and secure (currently
+TLSv1.2 only).
+If a value has a negative prefix (in the form of a leading exclamation mark)
+then it is removed from the list of available protocols, rather than being
+added to it.
+.Pp
+.Fn tls_config_set_alpn
+sets the ALPN protocols that are supported.
+The alpn string is a comma separated list of protocols, in order of preference.
+.Pp
+.Fn tls_config_set_ciphers
+sets the list of ciphers that may be used.
+Lists of ciphers are specified by name, and the
+permitted names are:
+.Pp
+.Bl -tag -width "insecure" -offset indent -compact
+.It Dv "secure" (or alias "default")
+.It Dv "compat"
+.It Dv "legacy"
+.It Dv "insecure" (or alias "all")
+.El
+.Pp
+Alternatively, libssl cipher strings can be specified.
+See the CIPHERS section of
+.Xr openssl 1
+for further information.
+.\" XXX tls_config_set_dheparams does what?
+.\" XXX tls_config_set_ecdhecurve does what?
+.Pp
+.Fn tls_config_prefer_ciphers_client
+prefers ciphers in the client's cipher list when selecting a cipher suite
+(server only).
+This is considered to be less secure than preferring the server's list.
+.Pp
+.Fn tls_config_prefer_ciphers_server
+prefers ciphers in the server's cipher list when selecting a cipher suite
+(server only).
+This is considered to be more secure than preferring the client's list and is
+the default.
+.Sh RETURN VALUES
+These functions return 0 on success or -1 on error.
+.Sh SEE ALSO
+.Xr tls_config_ocsp_require_stapling 3 ,
+.Xr tls_config_set_session_id 3 ,
+.Xr tls_config_verify 3 ,
+.Xr tls_init 3 ,
+.Xr tls_load_file 3

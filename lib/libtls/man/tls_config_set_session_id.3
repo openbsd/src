@@ -1,0 +1,70 @@
+.\" $OpenBSD: tls_config_set_session_id.3,v 1.1 2017/01/25 23:53:18 schwarze Exp $
+.\"
+.\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: January 25 2017 $
+.Dt TLS_CONFIG_SET_SESSION_ID 3
+.Os
+.Sh NAME
+.Nm tls_config_set_session_id ,
+.Nm tls_config_set_session_lifetime ,
+.Nm tls_config_add_ticket_key
+.Nd configure resuming of TLS handshakes
+.Sh SYNOPSIS
+.In tls.h
+.Ft int
+.Fo tls_config_set_session_id
+.Fa "struct tls_config *config"
+.Fa "const unsigned char *session_id"
+.Fa "size_t len"
+.Fc
+.Ft int
+.Fo tls_config_set_session_lifetime
+.Fa "struct tls_config *config"
+.Fa "int lifetime"
+.Fc
+.Ft int
+.Fo tls_config_add_ticket_key
+.Fa "struct tls_config *config"
+.Fa "uint32_t keyrev"
+.Fa "unsigned char *key"
+.Fa "size_t keylen"
+.Fc
+.Sh DESCRIPTION
+.Fn tls_config_set_session_id
+sets the session identifier that will be used by the TLS server when
+sessions are enabled.
+By default a random value is used.
+.Pp
+.Fn tls_config_set_session_lifetime
+sets the lifetime to be used for TLS sessions.
+Session support is disabled if a lifetime of zero is specified, which is the
+default.
+.Pp
+.Fn tls_config_add_ticket_key
+adds a key used for the encryption and authentication of TLS tickets.
+By default keys are generated and rotated automatically based on their lifetime.
+This function should only be used to synchronise ticket encryption key across
+multiple processes.
+Re-adding a known key will result in an error, unless it is the most recently
+added key.
+.Sh RETURN VALUES
+These functions return 0 on success or -1 on error.
+.Sh SEE ALSO
+.Xr tls_accept_socket 3 ,
+.Xr tls_config_set_protocols 3 ,
+.Xr tls_init 3 ,
+.Xr tls_load_file 3 ,
+.Xr tls_server 3
