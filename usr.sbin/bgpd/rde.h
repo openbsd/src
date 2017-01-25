@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.158 2017/01/24 23:38:12 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.159 2017/01/25 00:15:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -288,6 +288,7 @@ struct rib_entry {
 
 struct rib {
 	struct rib_tree		tree;
+	u_int			rtableid;
 	u_int16_t		flags;
 	u_int16_t		id;
 };
@@ -297,7 +298,6 @@ struct rib_desc {
 	struct rib		rib;
 	struct filter_head	*in_rules;
 	struct filter_head	*in_rules_tmp;
-	u_int			rtableid;
 	enum reconf_action 	state;
 };
 
@@ -313,24 +313,24 @@ extern struct rde_memstats rdemem;
 
 /* prototypes */
 /* mrt.c */
-int		 mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
+int		mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
 		    struct rde_peer_head *);
-void		 mrt_dump_upcall(struct rib_entry *, void *);
-void		 mrt_done(void *);
+void		mrt_dump_upcall(struct rib_entry *, void *);
+void		mrt_done(void *);
 
 /* rde.c */
-void		 rde_send_kroute(struct prefix *, struct prefix *, u_int16_t);
-void		 rde_send_nexthop(struct bgpd_addr *, int);
-void		 rde_send_pftable(u_int16_t, struct bgpd_addr *,
-		     u_int8_t, int);
-void		 rde_send_pftable_commit(void);
+void		rde_send_kroute(struct rib *, struct prefix *, struct prefix *);
+void		rde_send_nexthop(struct bgpd_addr *, int);
+void		rde_send_pftable(u_int16_t, struct bgpd_addr *,
+		    u_int8_t, int);
+void		rde_send_pftable_commit(void);
 
-void		 rde_generate_updates(u_int16_t, struct prefix *,
-		     struct prefix *);
-u_int32_t	 rde_local_as(void);
-int		 rde_noevaluate(void);
-int		 rde_decisionflags(void);
-int		 rde_as4byte(struct rde_peer *);
+void		rde_generate_updates(struct rib *, struct prefix *,
+		    struct prefix *);
+u_int32_t	rde_local_as(void);
+int		rde_noevaluate(void);
+int		rde_decisionflags(void);
+int		rde_as4byte(struct rde_peer *);
 
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,

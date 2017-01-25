@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.151 2017/01/24 23:38:12 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.152 2017/01/25 00:15:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -101,7 +101,7 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 	ribs[id].state = RECONF_REINIT;
 	ribs[id].rib.id = id;
 	ribs[id].rib.flags = flags;
-	ribs[id].rtableid = rtableid;
+	ribs[id].rib.rtableid = rtableid;
 
 	ribs[id].in_rules = calloc(1, sizeof(struct filter_head));
 	if (ribs[id].in_rules == NULL)
@@ -934,7 +934,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 			 */
 			if ((re_rib(p->re)->flags & F_RIB_NOFIB) == 0 &&
 			    p == p->re->active)
-				rde_send_kroute(p, NULL, re_rib(p->re)->id);
+				rde_send_kroute(re_rib(p->re), p, NULL);
 			continue;
 		}
 
