@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_bn2bin.3,v 1.5 2016/12/10 21:13:25 schwarze Exp $
+.\"	$OpenBSD: BN_bn2bin.3,v 1.6 2017/01/25 16:12:45 schwarze Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: January 25 2017 $
 .Dt BN_BN2BIN 3
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@
 .Nm BN_bn2dec ,
 .Nm BN_hex2bn ,
 .Nm BN_dec2bn ,
+.Nm BN_asc2bn ,
 .Nm BN_print ,
 .Nm BN_print_fp ,
 .Nm BN_bn2mpi ,
@@ -91,6 +92,11 @@
 .Fc
 .Ft int
 .Fo BN_dec2bn
+.Fa "BIGNUM **a"
+.Fa "const char *str"
+.Fc
+.Ft int
+.Fo BN_asc2bn
 .Fa "BIGNUM **a"
 .Fa "const char *str"
 .Fc
@@ -179,6 +185,20 @@ it only computes the number's length in hexadecimal digits.
 A "negative zero" is converted to zero.
 .Fn BN_dec2bn
 is the same using the decimal system.
+.Fn BN_asc2bn
+infers the number base from an optional prefix.
+If
+.Fa str
+starts with
+.Qq 0x
+or
+.Qq 0X ,
+it calls
+.Fn BN_hex2bn ,
+otherwise
+.Fn BN_dec2bn .
+If the number is negative, the minus sign can be given before or
+after the prefix.
 .Pp
 .Fn BN_print
 and
@@ -251,7 +271,11 @@ and
 return the number's length in hexadecimal or decimal digits
 or 0 on error, in which case no new
 .Vt BIGNUM
-will be created.
+is created.
+.Fn BN_asc2bn
+returns 1 on success or 0 on error, in which case no new
+.Vt BIGNUM
+is created.
 .Pp
 .Fn BN_print_fp
 and
