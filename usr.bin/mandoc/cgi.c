@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.84 2017/01/25 02:14:41 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.85 2017/01/25 03:19:56 deraadt Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
@@ -111,7 +111,7 @@ static	const char *const sec_names[] = {
 static	const int sec_MAX = sizeof(sec_names) / sizeof(char *);
 
 static	const char *const arch_names[] = {
-    "amd64",       "alpha",       "armv7",
+    "amd64",       "alpha",       "armv7",	"arm64",
     "hppa",        "i386",        "landisk",
     "loongson",    "luna88k",     "macppc",      "mips64",
     "octeon",      "sgi",         "socppc",      "sparc64",
