@@ -1,4 +1,4 @@
-/*	$OpenBSD: plrtc.c,v 1.1 2016/08/31 16:19:40 jsg Exp $	*/
+/*	$OpenBSD: plrtc.c,v 1.1 2017/01/25 10:14:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -23,7 +23,6 @@
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
-#include <armv7/armv7/armv7var.h>
 #include <dev/clock_subr.h>
 
 #include <dev/ofw/openfirm.h>

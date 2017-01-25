@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.30 2017/01/21 10:58:15 reyk Exp $
+#	$OpenBSD: files.armv7,v 1.31 2017/01/25 10:14:40 jsg Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -88,12 +88,3 @@ file	arch/armv7/dev/com_fdt.c		com_fdt
 device	pluart
 attach	pluart at fdt
 file	arch/armv7/dev/pluart.c			pluart
-
-# ARM PrimeCell PL031 Real-time clock
-device	plrtc
-attach	plrtc at fdt
-file	arch/armv7/dev/plrtc.c			plrtc
-
-device	psci
-attach	psci at fdt
-file	arch/armv7/dev/psci.c			psci

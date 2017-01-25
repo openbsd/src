@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.1 2016/10/09 23:46:23 jsg Exp $	*/
+/*	$OpenBSD: psci.c,v 1.1 2017/01/25 10:14:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -22,11 +22,12 @@
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
-#include <armv7/armv7/armv7var.h>
-#include <armv7/armv7/armv7_machdep.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
+
+extern void (*cpuresetfn)(void);
+extern void (*powerdownfn)(void);
 
 #define SYSTEM_OFF	0x84000008
 #define SYSTEM_RESET	0x84000009
