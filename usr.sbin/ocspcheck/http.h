@@ -1,4 +1,4 @@
-/*	$Id: http.h,v 1.2 2017/01/24 10:57:48 deraadt Exp $ */
+/*	$Id: http.h,v 1.3 2017/01/25 13:52:53 inoguchi Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -61,8 +61,6 @@ struct	httpget {
 	size_t		 bodypartsz; /* size of bodypart */
 };
 
-__BEGIN_DECLS
-
 int		 http_init(void);
 
 /* Convenience functions. */
@@ -90,7 +88,5 @@ int		 http_head_status(const struct http *,
 			struct httphead *, size_t);
 struct httphead	*http_head_get(const char *,
 			struct httphead *, size_t);
-
-__END_DECLS
 
 #endif /* HTTP_H */
