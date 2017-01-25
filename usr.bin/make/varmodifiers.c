@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.44 2016/10/02 17:42:31 tb Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.45 2017/01/25 14:17:45 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -876,7 +876,7 @@ VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 					rp++;
 				}
 
-				if (n > pat->nsub) {
+				if (n >= pat->nsub) {
 					Error("No subexpression %s",
 					    &errstr[0]);
 					subbuf = "";
