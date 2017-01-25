@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.138 2016/10/05 13:50:20 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.139 2017/01/25 14:07:36 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -239,6 +239,7 @@ sub open
 
 	# kill old files if too many
 	my $already = $self->make_room;
+	local $SIG{'PIPE'} = 'DEFAULT';
 	my $fh = $self->open_pipe($object);
 	if (!defined $fh) {
 		return;
