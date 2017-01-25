@@ -1,4 +1,4 @@
-/* $OpenBSD: support.S,v 1.4 2017/01/25 09:43:50 patrick Exp $ */
+/* $OpenBSD: support.S,v 1.5 2017/01/25 10:23:17 patrick Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * Copyright (c) 2014-2015 The FreeBSD Foundation
@@ -40,6 +40,7 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/support.S 297615 2016-04-06 14:08:10Z a
 
 #include "assym.h"
 
+#ifdef DDB
 ENTRY(setjmp)
 	/* Store the stack pointer */
 	mov	x8, sp
@@ -53,7 +54,7 @@ ENTRY(setjmp)
 	stp	x27, x28, [x0], #16
 	stp	x29, lr, [x0], #16
 
-	/* Return value */
+	/* Return zero */
 	mov	x0, #0
 	ret
 END(setjmp)
@@ -71,10 +72,11 @@ ENTRY(longjmp)
 	ldp	x27, x28, [x0], #16
 	ldp	x29, lr, [x0], #16
 
-	/* Load the return value */
-	mov	x0, x1
+	/* Return nonzero */
+	mov	x0, #1
 	ret
 END(longjmp)
+#endif
 
 /*
  * pagezero, simple implementation
