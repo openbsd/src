@@ -1,6 +1,8 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2016/10/03 21:24:40 natano Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2017/01/25 08:56:07 kettenis Exp $
 
 .include <bsd.own.mk>
+
+TARGET_ARCH?=	${MACHINE_ARCH}
 
 SUBDIRS=	opcodes bfd
 CONF_SUBDIRS=	opcodes bfd
@@ -23,12 +25,18 @@ MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
 ###INST_SUBDIRS+=      gdb
 ###MAN+=               gdb/gdb.1
 
-SUBDIRS+=	binutils ld gas
-CONF_SUBDIRS+=	binutils ld gas
-INST_SUBDIRS+=	binutils ld gas
+SUBDIRS+=	binutils
+CONF_SUBDIRS+=	binutils
+INST_SUBDIRS+=	binutils
 MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
-		binutils/doc/strings.1 binutils/doc/strip.1 \
-		gas/doc/as.1	ld/ld.1
+		binutils/doc/strings.1 binutils/doc/strip.1
+
+.if ${TARGET_ARCH} != "aarch64"
+SUBDIRS+=	ld gas
+CONF_SUBDIRS+=	ld gas
+INST_SUBDIRS+=	ld gas
+MAN+=		gas/doc/as.1	ld/ld.1
+.endif
 
 # Used by the GNU Makefile
 ALL_MODULES=${SUBDIRS:S/^/all-/g}
@@ -39,11 +47,11 @@ INSTALL_MODULES=${INST_SUBDIRS:S/^/install-/g}
 INFO_HOST_MODULES=${SUBDIRS:S/^/info-/g}
 INSTALL_INFO_HOST_MODULES=${INST_SUBDIRS:S/^/install-info-/g}
 
-# cross-compilation
-.if defined(TARGET_ARCH)
 CONFIGTARGET=--target=${TARGET_ARCH}-unknown-openbsd${OSREV}
-.else
-CONFIGTARGET=
+
+.if ${TARGET_ARCH} == "aarch64"
+CONFIGTARGET+=--without-gnu-ld
+CONFIGTARGET+=--without-gnu-as
 .endif
 
 all:	config.status

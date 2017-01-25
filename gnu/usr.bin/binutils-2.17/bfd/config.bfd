@@ -69,6 +69,7 @@ esac
 
 targ_cpu=`echo $targ | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
 case "${targ_cpu}" in
+aarch64)	 targ_archs=bfd_aarch64_arch ;;
 alpha*)		 targ_archs=bfd_alpha_arch ;;
 arm*)		 targ_archs=bfd_arm_arch ;;
 bfin*)		 targ_archs=bfd_bfin_arch ;;
@@ -134,6 +135,10 @@ case "${targ}" in
 
 # START OF targmatch.h
 #ifdef BFD64
+  aarch64-*-openbsd*)
+    targ_defvec=bfd_elf64_aarch64_vec
+    ;;
+
   alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu)
     targ_defvec=bfd_elf64_alpha_freebsd_vec
     targ_selvecs=ecoffalpha_little_vec

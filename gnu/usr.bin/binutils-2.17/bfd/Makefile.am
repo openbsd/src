@@ -539,6 +539,7 @@ BFD64_BACKENDS = \
 	demo64.lo \
 	efi-app-ia64.lo \
 	elf64-x86-64.lo \
+	elf64-aarch64.lo \
 	elf64-alpha.lo \
 	elf64-hppa.lo \
 	elf32-ia64.lo \
@@ -565,6 +566,7 @@ BFD64_BACKENDS_CFILES = \
 	demo64.c \
 	efi-app-ia64.c \
 	elf64-x86-64.c \
+	elf64-aarch64.c \
 	elf64-alpha.c \
 	elf64-hppa.c \
 	elf64-gen.c \
@@ -1739,6 +1741,9 @@ elf64-x86-64.lo: elf64-x86-64.c $(INCDIR)/filenames.h \
   $(INCDIR)/bfdlink.h $(INCDIR)/hashtab.h elf-bfd.h $(INCDIR)/elf/common.h \
   $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h $(INCDIR)/elf/x86-64.h \
   $(INCDIR)/elf/reloc-macros.h elf64-target.h
+elf64-aarch64.lo: elf64-aarch64.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \
+  elf-bfd.h $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h \
+  $(INCDIR)/elf/external.h $(INCDIR)/bfdlink.h elf64-target.h
 elf64-alpha.lo: elf64-alpha.c $(INCDIR)/filenames.h \
   $(INCDIR)/hashtab.h elf-bfd.h $(INCDIR)/elf/common.h \
   $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h $(INCDIR)/bfdlink.h \
