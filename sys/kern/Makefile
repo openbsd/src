@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.47 2016/09/03 13:37:45 guenther Exp $
+#	$OpenBSD: Makefile,v 1.48 2017/01/25 03:18:06 deraadt Exp $
 
 # Makefile for kernel tags files, init_sysent, etc.
 
-ARCH=	alpha amd64 armv7 \
+ARCH=	alpha amd64 armv7 arm64 \
 	hppa i386 landisk loongson \
 	luna88k macppc octeon sgi socppc \
 	sparc64
