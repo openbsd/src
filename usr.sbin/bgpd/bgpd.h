@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.299 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.300 2017/01/25 00:11:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -903,7 +903,7 @@ SIMPLEQ_HEAD(rib_names, rde_rib);
 extern struct rib_names ribnames;
 
 /* rde_rib flags */
-#define F_RIB_ENTRYLOCK		0x0001
+#define F_RIB_LOCAL		0x0001
 #define F_RIB_NOEVALUATE	0x0002
 #define F_RIB_NOFIB		0x0004
 #define F_RIB_NOFIBSYNC		0x0008
