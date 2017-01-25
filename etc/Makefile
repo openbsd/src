@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.447 2017/01/23 23:54:01 tb Exp $
+#	$OpenBSD: Makefile,v 1.448 2017/01/25 03:24:52 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -288,7 +288,7 @@ distrib:
 	release allarchs kernels release-sets m4 install-mtree \
 	bootblocks ${ALL_KERNELS}
 
-SUBDIR+= etc.alpha etc.amd64 etc.armv7
+SUBDIR+= etc.alpha etc.amd64 etc.arm64 etc.armv7
 SUBDIR+= etc.hppa etc.i386 etc.landisk etc.loongson etc.luna88k
 SUBDIR+= etc.macppc etc.octeon
 SUBDIR+= etc.sgi etc.socppc etc.sparc64
