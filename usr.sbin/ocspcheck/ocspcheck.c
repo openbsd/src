@@ -505,7 +505,7 @@ main (int argc, char **argv)
 {
 	char *host = NULL, *path = "/", *certfile = NULL, *outfile = NULL,
 	    *cafile = NULL;
-	struct addr addrs[MAX_SERVERS_DNS] = { };
+	struct addr addrs[MAX_SERVERS_DNS] = {0};
 	struct source sources[MAX_SERVERS_DNS];
 	int i, ch, staplefd = -1, nonce = 1;
 	ocsp_request *request = NULL;
