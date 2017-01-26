@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.8 2014/09/29 10:53:53 stsp Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.9 2017/01/26 12:26:20 stsp Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 29 2014 $
+.Dd $Mdocdate: January 26 2017 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -46,8 +46,8 @@ which must contain files created with the
 .Cm init-system
 command.
 The download is aborted if a configuration with the same name already exists.
-.It Cm dump Ar configuration
-Dump the specified configuration from non-volatile storage into the current
+.It Cm dump
+Dump the current configuration from non-volatile storage into the current
 working directory.
 .It Cm init-system Ar file
 Generates files describing a logical domain configuration.
@@ -104,6 +104,9 @@ For
 .Ox
 the default behaviour is to enter
 .Xr ddb 4 .
+.It Cm select Ar configuration
+Select the next logical domain configuration to use
+(after rebooting the primary domain).
 .It Cm start Ar domain
 Start a guest domain.
 .It Cm status Op Ar domain
