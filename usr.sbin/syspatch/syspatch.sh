@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.86 2017/01/19 23:41:57 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.87 2017/01/26 03:55:25 rpe Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -295,8 +295,8 @@ while getopts clr arg; do
 		*) usage;;
 	esac
 done
-shift $((OPTIND -1))
-[[ $# -ne 0 ]] && usage
+shift $((OPTIND - 1))
+(($# != 0)) && usage
 
 if ((OPTIND == 1)); then
 	for _PATCH in $(ls_missing); do
