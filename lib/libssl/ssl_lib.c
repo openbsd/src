@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.150 2017/01/25 10:54:23 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.151 2017/01/26 00:42:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,33 +158,6 @@
 #include "bytestring.h"
 
 const char *SSL_version_str = OPENSSL_VERSION_TEXT;
-
-SSL3_ENC_METHOD ssl3_undef_enc_method = {
-	/*
-	 * Evil casts, but these functions are only called if there's a
-	 * library bug.
-	 */
-	.enc = (int (*)(SSL *, int))ssl_undefined_function,
-	.mac = (int (*)(SSL *, unsigned char *, int))ssl_undefined_function,
-	.setup_key_block = ssl_undefined_function,
-	.generate_master_secret = (int (*)(SSL *, unsigned char *,
-	    unsigned char *, int))ssl_undefined_function,
-	.change_cipher_state = (int (*)(SSL*, int))ssl_undefined_function,
-	.final_finish_mac = (int (*)(SSL *,  const char*, int,
-	    unsigned char *))ssl_undefined_function,
-	.finish_mac_length = 0,
-	.cert_verify_mac = (int (*)(SSL *, int,
-	    unsigned char *))ssl_undefined_function,
-	.client_finished_label = NULL,
-	.client_finished_label_len = 0,
-	.server_finished_label = NULL,
-	.server_finished_label_len = 0,
-	.alert_value = (int (*)(int))ssl_undefined_function,
-	.export_keying_material = (int (*)(SSL *, unsigned char *, size_t,
-	    const char *, size_t, const unsigned char *, size_t,
-	    int use_context))ssl_undefined_function,
-	.enc_flags = 0,
-};
 
 int
 SSL_clear(SSL *s)

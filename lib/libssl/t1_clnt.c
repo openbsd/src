@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_clnt.c,v 1.22 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: t1_clnt.c,v 1.23 2017/01/26 00:42:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,7 +88,7 @@ static const SSL_METHOD_INTERNAL TLS_client_method_internal_data = {
 	.ssl_get_message = ssl3_get_message,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &ssl3_undef_enc_method,
+	.ssl3_enc = NULL,
 };
 
 static const SSL_METHOD TLS_client_method_data = {

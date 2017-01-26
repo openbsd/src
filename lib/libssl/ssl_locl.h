@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.167 2017/01/25 10:54:23 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.168 2017/01/26 00:42:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1074,7 +1074,6 @@ struct ssl_aead_ctx_st {
 	char variable_nonce_in_record;
 };
 
-extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 extern SSL_CIPHER ssl3_ciphers[];
 
 const char *ssl_version_string(int ver);
