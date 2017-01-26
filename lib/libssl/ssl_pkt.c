@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.2 2017/01/26 06:32:58 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.3 2017/01/26 06:39:08 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,6 +130,22 @@ static int ssl3_get_record(SSL *s);
  * (If s->internal->read_ahead is set, 'max' bytes may be stored in rbuf
  * [plus s->internal->packet_length bytes if extend == 1].)
  */
+
+/*
+ * Force a WANT_READ return for certain error conditions where
+ * we don't want to spin internally.
+ */
+static void
+ssl_force_want_read(SSL *s)
+{
+	BIO * bio;
+
+	bio = SSL_get_rbio(s);
+	BIO_clear_retry_flags(bio);
+	BIO_set_retry_read(bio);
+	s->internal->rwstate = SSL_READING;
+}
+
 static int
 ssl3_read_n(SSL *s, int n, int max, int extend)
 {
@@ -880,7 +896,6 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	int al, i, j, ret, rrcount = 0;
 	unsigned int n;
 	SSL3_RECORD *rr;
-	BIO *bio;
 
 	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_read_buffer(s))
@@ -945,13 +960,7 @@ start:
 	 * limited...
 	 */
 	if (rrcount++ >= 3) {
-		if ((bio = SSL_get_rbio(s)) == NULL) {
-			SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
-			return -1;
-		}
-		BIO_clear_retry_flags(bio);
-		BIO_set_retry_read(bio);
-		s->internal->rwstate = SSL_READING;
+		ssl_force_want_read(s);
 		return -1;
 	}
 
@@ -1112,10 +1121,7 @@ start:
 			 * but we trigger an SSL handshake, we return -1 with
 			 * the retry option set.  Otherwise renegotiation may
 			 * cause nasty problems in the blocking world */
-						s->internal->rwstate = SSL_READING;
-						bio = SSL_get_rbio(s);
-						BIO_clear_retry_flags(bio);
-						BIO_set_retry_read(bio);
+						ssl_force_want_read(s);
 						return (-1);
 					}
 				}
@@ -1269,15 +1275,11 @@ start:
 
 		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
 			if (s->s3->rbuf.left == 0) { /* no read-ahead left? */
-				BIO *bio;
 				/* In the case where we try to read application data,
 				 * but we trigger an SSL handshake, we return -1 with
 				 * the retry option set.  Otherwise renegotiation may
 				 * cause nasty problems in the blocking world */
-				s->internal->rwstate = SSL_READING;
-				bio = SSL_get_rbio(s);
-				BIO_clear_retry_flags(bio);
-				BIO_set_retry_read(bio);
+				ssl_force_want_read(s);
 				return (-1);
 			}
 		}
