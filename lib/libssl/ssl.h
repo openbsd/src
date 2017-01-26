@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.123 2017/01/25 03:20:27 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.124 2017/01/26 00:29:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -449,10 +449,7 @@ struct ssl_session_st {
 	unsigned int sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
-	/* This is the cert for the other end.
-	 * On clients, it will be the same as sess_cert->peer_key->x509
-	 * (the latter is not enough as sess_cert is not retained
-	 * in the external representation of sessions, see ssl_asn1.c). */
+	/* This is the cert for the other end. */
 	X509 *peer;
 
 	/* when app_verify_callback accepts a session where the peer's certificate
