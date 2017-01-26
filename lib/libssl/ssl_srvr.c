@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.4 2017/01/26 12:16:13 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.5 2017/01/26 12:28:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -719,8 +719,12 @@ ssl3_send_hello_request(SSL *s)
 int
 ssl3_get_client_hello(SSL *s)
 {
+	CBS cbs, client_random, session_id, cookie, cipher_suites;
+	CBS compression_methods;
+	uint16_t client_version;
+	uint8_t comp_method;
+	int comp_null;
 	int i, j, ok, al, ret = -1;
-	unsigned int cookie_len;
 	long n;
 	unsigned long id;
 	unsigned char *p, *d;
@@ -729,6 +733,7 @@ ssl3_get_client_hello(SSL *s)
 	unsigned long alg_k;
 	const SSL_METHOD *method;
 	uint16_t shared_version;
+	unsigned char *end;
 
 	/*
 	 * We do this so that we will respond with our native type.
@@ -745,23 +750,26 @@ ssl3_get_client_hello(SSL *s)
 	n = s->method->internal->ssl_get_message(s, SSL3_ST_SR_CLNT_HELLO_B,
 	    SSL3_ST_SR_CLNT_HELLO_C, SSL3_MT_CLIENT_HELLO,
 	    SSL3_RT_MAX_PLAIN_LENGTH, &ok);
-
 	if (!ok)
 		return ((int)n);
 	s->internal->first_packet = 0;
 
-	d = p = (unsigned char *)s->internal->init_msg;
+	if (n < 0)
+		goto err;
 
-	if (2 > n)
-		goto truncated;
+	d = p = (unsigned char *)s->internal->init_msg;
+	end = d + n;
+
+	CBS_init(&cbs, s->internal->init_msg, n);
+
 	/*
 	 * Use version from inside client hello, not from record header.
 	 * (may differ: see RFC 2246, Appendix E, second paragraph)
 	 */
-	s->client_version = (((int)p[0]) << 8)|(int)p[1];
-	p += 2;
+	if (!CBS_get_u16(&cbs, &client_version))
+		goto truncated;
 
-	if (ssl_max_shared_version(s, s->client_version, &shared_version) != 1) {
+	if (ssl_max_shared_version(s, client_version, &shared_version) != 1) {
 		SSLerror(SSL_R_WRONG_VERSION_NUMBER);
 		if ((s->client_version >> 8) == SSL3_VERSION_MAJOR &&
 		    !s->internal->enc_write_ctx && !s->internal->write_hash) {
@@ -774,6 +782,7 @@ ssl3_get_client_hello(SSL *s)
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto f_err;
 	}
+	s->client_version = client_version;
 	s->version = shared_version;
 
 	if ((method = tls1_get_server_method(shared_version)) == NULL)
@@ -784,39 +793,31 @@ ssl3_get_client_hello(SSL *s)
 	}
 	s->method = method;
 
+	if (!CBS_get_bytes(&cbs, &client_random, SSL3_RANDOM_SIZE))
+		goto truncated;
+	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
+		goto truncated;
+
 	/*
 	 * If we require cookies (DTLS) and this ClientHello doesn't
 	 * contain one, just return since we do not want to
 	 * allocate any memory yet. So check cookie length...
 	 */
-	if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
-		unsigned int session_length, cookie_length;
-
-		if (p - d + SSL3_RANDOM_SIZE + 1 >= n)
+	if (SSL_IS_DTLS(s)) {
+		if (!CBS_get_u8_length_prefixed(&cbs, &cookie))
 			goto truncated;
-		session_length = *(p + SSL3_RANDOM_SIZE);
-
-		if (p - d + SSL3_RANDOM_SIZE + session_length + 1 >= n)
-			goto truncated;
-		cookie_length = p[SSL3_RANDOM_SIZE + session_length + 1];
-
-		if (cookie_length == 0)
-			return (1);
+		if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
+			if (CBS_len(&cookie) == 0)
+				return (1);
+		}
 	}
 
-	if (p - d + SSL3_RANDOM_SIZE + 1 > n)
-		goto truncated;
-
-	/* load the client random */
-	memcpy(s->s3->client_random, p, SSL3_RANDOM_SIZE);
-	p += SSL3_RANDOM_SIZE;
-
-	/* get the session-id */
-	j= *(p++);
-	if (p - d + j > n)
-		goto truncated;
+	if (!CBS_write_bytes(&client_random, s->s3->client_random,
+	    sizeof(s->s3->client_random), NULL))
+		goto err;
 
 	s->internal->hit = 0;
+
 	/*
 	 * Versions before 0.9.7 always allow clients to resume sessions in
 	 * renegotiation. 0.9.7 and later allow this by default, but optionally
@@ -837,7 +838,10 @@ ssl3_get_client_hello(SSL *s)
 		if (!ssl_get_new_session(s, 1))
 			goto err;
 	} else {
-		i = ssl_get_prev_session(s, p, j, d + n);
+		/* XXX - pass CBS through instead... */
+		i = ssl_get_prev_session(s,
+		    (unsigned char *)CBS_data(&session_id),
+		    CBS_len(&session_id), end);
 		if (i == 1) { /* previous session */
 			s->internal->hit = 1;
 		} else if (i == -1)
@@ -849,33 +853,27 @@ ssl3_get_client_hello(SSL *s)
 		}
 	}
 
-	p += j;
-
 	if (SSL_IS_DTLS(s)) {
-		/* cookie stuff */
-		if (p - d + 1 > n)
-			goto truncated;
-		cookie_len = *(p++);
-
 		/*
-		 * The ClientHello may contain a cookie even if the
-		 * HelloVerify message has not been sent--make sure that it
-		 * does not cause an overflow.
+		 * The ClientHello may contain a cookie even if the HelloVerify
+		 * message has not been sent - make sure that it does not cause
+		 * an overflow.
 		 */
-		if (cookie_len > sizeof(D1I(s)->rcvd_cookie)) {
-			/* too much data */
+		if (CBS_len(&cookie) > sizeof(D1I(s)->rcvd_cookie)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(SSL_R_COOKIE_MISMATCH);
 			goto f_err;
 		}
 
-		if (p - d + cookie_len > n)
-			goto truncated;
-
-		/* verify the cookie if appropriate option is set. */
+		/* Verify the cookie if appropriate option is set. */
 		if ((SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
-		    cookie_len > 0) {
-			memcpy(D1I(s)->rcvd_cookie, p, cookie_len);
+		    CBS_len(&cookie) > 0) {
+			size_t cookie_len;
+
+			/* XXX - rcvd_cookie seems to only be used here... */
+			if (!CBS_write_bytes(&cookie, D1I(s)->rcvd_cookie,
+			    sizeof(D1I(s)->rcvd_cookie), &cookie_len))
+				goto err;
 
 			if (s->ctx->internal->app_verify_cookie_cb != NULL) {
 				if (s->ctx->internal->app_verify_cookie_cb(s,
@@ -885,39 +883,37 @@ ssl3_get_client_hello(SSL *s)
 					goto f_err;
 				}
 				/* else cookie verification succeeded */
-			} else if (timingsafe_memcmp(D1I(s)->rcvd_cookie, D1I(s)->cookie,
-			    D1I(s)->cookie_len) != 0) {
+			/* XXX - can d1->cookie_len > sizeof(rcvd_cookie) ? */
+			} else if (timingsafe_memcmp(D1I(s)->rcvd_cookie,
+			    D1I(s)->cookie, D1I(s)->cookie_len) != 0) {
 				/* default verification */
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerror(SSL_R_COOKIE_MISMATCH);
 				goto f_err;
 			}
-
 			ret = 2;
 		}
-
-		p += cookie_len;
 	}
 
-	if (p - d + 2 > n)
+	if (!CBS_get_u16_length_prefixed(&cbs, &cipher_suites))
 		goto truncated;
-	n2s(p, i);
-	if ((i == 0) && (j != 0)) {
+
+	/* XXX - This logic seems wrong... */
+	if (CBS_len(&cipher_suites) == 0 && CBS_len(&session_id) != 0) {
 		/* we need a cipher if we are not resuming a session */
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(SSL_R_NO_CIPHERS_SPECIFIED);
 		goto f_err;
 	}
-	if (p - d + i > n)
-		goto truncated;
-	if (i > 0) {
-		if ((ciphers = ssl_bytes_to_cipher_list(s, p, i)) == NULL)
+
+	if (CBS_len(&cipher_suites) > 0) {
+		if ((ciphers = ssl_bytes_to_cipher_list(s,
+		    CBS_data(&cipher_suites), CBS_len(&cipher_suites))) == NULL)
 			goto err;
 	}
-	p += i;
 
 	/* If it is a hit, check that the cipher is in the list */
-	if ((s->internal->hit) && (i > 0)) {
+	if (s->internal->hit && CBS_len(&cipher_suites) > 0) {
 		j = 0;
 		id = s->session->cipher->id;
 
@@ -939,24 +935,23 @@ ssl3_get_client_hello(SSL *s)
 		}
 	}
 
-	/* compression */
-	if (p - d + 1 > n)
+	if (!CBS_get_u8_length_prefixed(&cbs, &compression_methods))
 		goto truncated;
-	i= *(p++);
-	if (p - d + i > n)
-		goto truncated;
-	for (j = 0; j < i; j++) {
-		if (p[j] == 0)
-			break;
-	}
 
-	p += i;
-	if (j >= i) {
-		/* no compress */
+	comp_null = 0;
+	while (CBS_len(&compression_methods) > 0) {
+		if (!CBS_get_u8(&compression_methods, &comp_method))
+			goto truncated;
+		if (comp_method == 0)
+			comp_null = 1;
+	}
+	if (comp_null == 0) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(SSL_R_NO_COMPRESSION_SPECIFIED);
 		goto f_err;
 	}
+
+	p = (unsigned char *)CBS_data(&cbs);
 
 	/* TLS extensions*/
 	if (!ssl_parse_clienthello_tlsext(s, &p, d, n, &al)) {
