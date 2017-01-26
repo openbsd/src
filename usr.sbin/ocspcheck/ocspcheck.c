@@ -501,7 +501,7 @@ usage(void)
 }
 
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
 	char *host = NULL, *path = "/", *certfile = NULL, *outfile = NULL,
 	    *cafile = NULL;
