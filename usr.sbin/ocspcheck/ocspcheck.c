@@ -556,7 +556,7 @@ main(int argc, char **argv)
 
 	/*
 	 * Load our certificate and keystore, and build up an
-	 * OSCP request based on the full certificate chain
+	 * OCSP request based on the full certificate chain
 	 * we have been given to check.
 	 */
 	if ((castore = read_cacerts(cafile)) == NULL)
