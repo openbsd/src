@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.11 2017/01/08 05:48:27 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.12 2017/01/26 10:57:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2272,9 +2272,10 @@ rtwn_iq_calib_write_results(struct rtwn_softc *sc, uint16_t tx[2],
 	reg = rtwn_bb_read(sc, R92C_OFDM0_TXIQIMBALANCE(chain)); 
 	val = ((reg >> 22) & 0x3ff);
 	x = tx[0];
-	if (x & 0x0200)
-		x |= 0xfc00;
-	reg = (((x * val) >> 8) & 0x3ff);
+	if (x & 0x00000200)
+		x |= 0xfffffc00;
+	reg &= ~0x3ff;
+	reg |= (((x * val) >> 8) & 0x3ff);
 	rtwn_bb_write(sc, R92C_OFDM0_TXIQIMBALANCE(chain), reg);
 
 	reg = rtwn_bb_read(sc, R92C_OFDM0_ECCATHRESHOLD);
@@ -2289,11 +2290,13 @@ rtwn_iq_calib_write_results(struct rtwn_softc *sc, uint16_t tx[2],
 		y |= 0xfffffc00;
 	tx_c = (y * val) >> 8;
 	reg = rtwn_bb_read(sc, R92C_OFDM0_TXAFE(chain));
-	reg |= ((((tx_c & 0x3c0) >> 6) << 24) & 0xf0000000);
+	reg &= ~0xf0000000;
+	reg |= ((tx_c & 0x3c0) << 22);
 	rtwn_bb_write(sc, R92C_OFDM0_TXAFE(chain), reg);
 
 	reg = rtwn_bb_read(sc, R92C_OFDM0_TXIQIMBALANCE(chain)); 
-	reg |= (((tx_c & 0x3f) << 16) & 0x003F0000);
+	reg &= ~0x003f0000;
+	reg |= ((tx_c & 0x3f) << 16);
 	rtwn_bb_write(sc, R92C_OFDM0_TXIQIMBALANCE(chain), reg);
 
 	reg = rtwn_bb_read(sc, R92C_OFDM0_ECCATHRESHOLD);
@@ -2307,18 +2310,23 @@ rtwn_iq_calib_write_results(struct rtwn_softc *sc, uint16_t tx[2],
 		return;
 
 	reg = rtwn_bb_read(sc, R92C_OFDM0_RXIQIMBALANCE(chain));
+	reg &= ~0x3ff;
 	reg |= (rx[0] & 0x3ff);
 	rtwn_bb_write(sc, R92C_OFDM0_RXIQIMBALANCE(chain), reg);
-	reg |= (((rx[1] & 0x03f) << 8) & 0xFC00);
+
+	reg &= ~0xfc00;
+	reg |= ((rx[1] & 0x03f) << 10);
 	rtwn_bb_write(sc, R92C_OFDM0_RXIQIMBALANCE(chain), reg);
 
 	if (chain == 0) {
 		reg = rtwn_bb_read(sc, R92C_OFDM0_RXIQEXTANTA);
-		reg |= (((rx[1] & 0xf) >> 6) & 0x000f);
+		reg &= ~0xf0000000;
+		reg |= ((rx[1] & 0x3c0) << 22);
 		rtwn_bb_write(sc, R92C_OFDM0_RXIQEXTANTA, reg);
 	} else {
 		reg = rtwn_bb_read(sc, R92C_OFDM0_AGCRSSITABLE);
-		reg |= ((((rx[1] & 0xf) >> 6) << 12) & 0xf000);
+		reg &= ~0xf000;
+		reg |= ((rx[1] & 0x3c0) << 6);
 		rtwn_bb_write(sc, R92C_OFDM0_AGCRSSITABLE, reg);
 	}
 }
