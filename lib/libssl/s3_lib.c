@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.131 2017/01/24 14:57:31 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.132 2017/01/26 10:40:21 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1980,7 +1980,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	if (cmd == SSL_CTRL_SET_TMP_DH || cmd == SSL_CTRL_SET_TMP_DH_CB) {
 		if (!ssl_cert_inst(&s->cert)) {
-			SSLerr(SSL_F_SSL3_CTRL,
+			SSLerror(
 			    ERR_R_MALLOC_FAILURE);
 			return (0);
 		}
@@ -2010,18 +2010,18 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		break;
 	case SSL_CTRL_SET_TMP_RSA:
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		SSLerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		break;
 	case SSL_CTRL_SET_TMP_DH:
 		{
 			DH *dh = (DH *)parg;
 			if (dh == NULL) {
-				SSLerr(SSL_F_SSL3_CTRL,
+				SSLerror(
 				    ERR_R_PASSED_NULL_PARAMETER);
 				return (ret);
 			}
 			if ((dh = DHparams_dup(dh)) == NULL) {
-				SSLerr(SSL_F_SSL3_CTRL,
+				SSLerror(
 				    ERR_R_DH_LIB);
 				return (ret);
 			}
@@ -2032,7 +2032,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		break;
 
 	case SSL_CTRL_SET_TMP_DH_CB:
-		SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		SSLerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return (ret);
 
 	case SSL_CTRL_SET_DH_AUTO:
@@ -2044,12 +2044,12 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			EC_KEY *ecdh = NULL;
 
 			if (parg == NULL) {
-				SSLerr(SSL_F_SSL3_CTRL,
+				SSLerror(
 				    ERR_R_PASSED_NULL_PARAMETER);
 				return (ret);
 			}
 			if (!EC_KEY_up_ref((EC_KEY *)parg)) {
-				SSLerr(SSL_F_SSL3_CTRL,
+				SSLerror(
 				    ERR_R_ECDH_LIB);
 				return (ret);
 			}
@@ -2057,7 +2057,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			if (!(s->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
 				if (!EC_KEY_generate_key(ecdh)) {
 					EC_KEY_free(ecdh);
-					SSLerr(SSL_F_SSL3_CTRL,
+					SSLerror(
 					    ERR_R_ECDH_LIB);
 					return (ret);
 				}
@@ -2069,7 +2069,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		break;
 	case SSL_CTRL_SET_TMP_ECDH_CB:
 		{
-			SSLerr(SSL_F_SSL3_CTRL,
+			SSLerror(
 			    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 			return (ret);
 		}
@@ -2083,18 +2083,18 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			if (parg == NULL)
 				break;
 			if (strlen((char *)parg) > TLSEXT_MAXLEN_host_name) {
-				SSLerr(SSL_F_SSL3_CTRL,
+				SSLerror(
 				    SSL_R_SSL3_EXT_INVALID_SERVERNAME);
 				return 0;
 			}
 			if ((s->tlsext_hostname = strdup((char *)parg))
 			    == NULL) {
-				SSLerr(SSL_F_SSL3_CTRL,
+				SSLerror(
 				    ERR_R_INTERNAL_ERROR);
 				return 0;
 			}
 		} else {
-			SSLerr(SSL_F_SSL3_CTRL,
+			SSLerror(
 			    SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
 			return 0;
 		}
@@ -2177,7 +2177,7 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 
 	if (cmd == SSL_CTRL_SET_TMP_DH_CB) {
 		if (!ssl_cert_inst(&s->cert)) {
-			SSLerr(SSL_F_SSL3_CALLBACK_CTRL,
+			SSLerror(
 			    ERR_R_MALLOC_FAILURE);
 			return (0);
 		}
@@ -2185,7 +2185,7 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 
 	switch (cmd) {
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		SSLerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		break;
 	case SSL_CTRL_SET_TMP_DH_CB:
 		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
@@ -2215,7 +2215,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return (0);
 	case SSL_CTRL_SET_TMP_RSA:
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		SSLerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return (0);
 	case SSL_CTRL_SET_TMP_DH:
 		{
@@ -2223,7 +2223,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 			dh = (DH *)parg;
 			if ((new = DHparams_dup(dh)) == NULL) {
-				SSLerr(SSL_F_SSL3_CTX_CTRL,
+				SSLerror(
 				    ERR_R_DH_LIB);
 				return 0;
 			}
@@ -2234,7 +2234,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		/*break; */
 
 	case SSL_CTRL_SET_TMP_DH_CB:
-		SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		SSLerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return (0);
 
 	case SSL_CTRL_SET_DH_AUTO:
@@ -2246,20 +2246,20 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			EC_KEY *ecdh = NULL;
 
 			if (parg == NULL) {
-				SSLerr(SSL_F_SSL3_CTX_CTRL,
+				SSLerror(
 				    ERR_R_ECDH_LIB);
 				return 0;
 			}
 			ecdh = EC_KEY_dup((EC_KEY *)parg);
 			if (ecdh == NULL) {
-				SSLerr(SSL_F_SSL3_CTX_CTRL,
+				SSLerror(
 				    ERR_R_EC_LIB);
 				return 0;
 			}
 			if (!(ctx->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
 				if (!EC_KEY_generate_key(ecdh)) {
 					EC_KEY_free(ecdh);
-					SSLerr(SSL_F_SSL3_CTX_CTRL,
+					SSLerror(
 					    ERR_R_ECDH_LIB);
 					return 0;
 				}
@@ -2272,7 +2272,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		/* break; */
 	case SSL_CTRL_SET_TMP_ECDH_CB:
 		{
-			SSLerr(SSL_F_SSL3_CTX_CTRL,
+			SSLerror(
 			    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 			return (0);
 		}
@@ -2287,7 +2287,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			if (!keys)
 				return 48;
 			if (larg != 48) {
-				SSLerr(SSL_F_SSL3_CTX_CTRL,
+				SSLerror(
 				    SSL_R_INVALID_TICKET_KEYS_LENGTH);
 				return 0;
 			}
@@ -2361,7 +2361,7 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 
 	switch (cmd) {
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		SSLerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return (0);
 	case SSL_CTRL_SET_TMP_DH_CB:
 		cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;

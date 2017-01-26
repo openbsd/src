@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.93 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.94 2017/01/26 10:40:21 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -203,7 +203,7 @@ tls1_finish_mac(SSL *s, const unsigned char *buf, int len)
 		if (S3I(s)->handshake_dgst[i] == NULL)
 			continue;
 		if (!EVP_DigestUpdate(S3I(s)->handshake_dgst[i], buf, len)) {
-			SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_EVP_LIB);
+			SSLerror(ERR_R_EVP_LIB);
 			return 0;
 		}
 	}
@@ -223,12 +223,12 @@ tls1_digest_cached_records(SSL *s)
 
 	S3I(s)->handshake_dgst = calloc(SSL_MAX_DIGEST, sizeof(EVP_MD_CTX *));
 	if (S3I(s)->handshake_dgst == NULL) {
-		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
+		SSLerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	hdatalen = BIO_get_mem_data(S3I(s)->handshake_buffer, &hdata);
 	if (hdatalen <= 0) {
-		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS,
+		SSLerror(
 		    SSL_R_BAD_HANDSHAKE_LENGTH);
 		goto err;
 	}
@@ -240,17 +240,17 @@ tls1_digest_cached_records(SSL *s)
 
 		S3I(s)->handshake_dgst[i] = EVP_MD_CTX_create();
 		if (S3I(s)->handshake_dgst[i] == NULL) {
-			SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS,
+			SSLerror(
 			    ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		if (!EVP_DigestInit_ex(S3I(s)->handshake_dgst[i], md, NULL)) {
-			SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_EVP_LIB);
+			SSLerror(ERR_R_EVP_LIB);
 			goto err;
 		}
 		if (!EVP_DigestUpdate(S3I(s)->handshake_dgst[i], hdata,
 		    hdatalen)) {
-			SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_EVP_LIB);
+			SSLerror(ERR_R_EVP_LIB);
 			goto err;
 		}
 	}
@@ -385,7 +385,7 @@ tls1_PRF(long digest_mask, const void *seed1, int seed1_len, const void *seed2,
 			count++;
 	}
 	if (count == 0) {
-		SSLerr(SSL_F_TLS1_PRF,
+		SSLerror(
 		    SSL_R_SSL_HANDSHAKE_FAILURE);
 		goto err;
 	}
@@ -397,7 +397,7 @@ tls1_PRF(long digest_mask, const void *seed1, int seed1_len, const void *seed2,
 	for (idx = 0; ssl_get_handshake_digest(idx, &m, &md); idx++) {
 		if ((m << TLS1_PRF_DGST_SHIFT) & digest_mask) {
 			if (!md) {
-				SSLerr(SSL_F_TLS1_PRF,
+				SSLerror(
 				    SSL_R_UNSUPPORTED_DIGEST_TYPE);
 				goto err;
 			}
@@ -446,7 +446,7 @@ tls1_aead_ctx_init(SSL_AEAD_CTX **aead_ctx)
 
 	*aead_ctx = malloc(sizeof(SSL_AEAD_CTX));
 	if (*aead_ctx == NULL) {
-		SSLerr(SSL_F_TLS1_AEAD_CTX_INIT, ERR_R_MALLOC_FAILURE);
+		SSLerror(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 
@@ -474,7 +474,7 @@ tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
 	    EVP_AEAD_DEFAULT_TAG_LENGTH, NULL))
 		return (0);
 	if (iv_len > sizeof(aead_ctx->fixed_nonce)) {
-		SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_AEAD,
+		SSLerror(
 		    ERR_R_INTERNAL_ERROR);
 		return (0);
 	}
@@ -491,14 +491,14 @@ tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
 	if (aead_ctx->xor_fixed_nonce) {
 		if (aead_ctx->fixed_nonce_len != EVP_AEAD_nonce_length(aead) ||
 		    aead_ctx->variable_nonce_len > EVP_AEAD_nonce_length(aead)) {
-			SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_AEAD,
+			SSLerror(
 			    ERR_R_INTERNAL_ERROR);
 			return (0);
 		}
 	} else {
 		if (aead_ctx->variable_nonce_len + aead_ctx->fixed_nonce_len !=
 		    EVP_AEAD_nonce_length(aead)) {
-			SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_AEAD,
+			SSLerror(
 			    ERR_R_INTERNAL_ERROR);
 			return (0);
 		}
@@ -610,7 +610,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 	return (1);
 
 err:
-	SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_CIPHER, ERR_R_MALLOC_FAILURE);
+	SSLerror(ERR_R_MALLOC_FAILURE);
 	return (0);
 }
 
@@ -695,7 +695,7 @@ tls1_change_cipher_state(SSL *s, int which)
 	}
 
 	if (key_block - S3I(s)->tmp.key_block != S3I(s)->tmp.key_block_length) {
-		SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+		SSLerror(ERR_R_INTERNAL_ERROR);
 		goto err2;
 	}
 
@@ -736,7 +736,7 @@ tls1_setup_key_block(SSL *s)
 	if (s->session->cipher &&
 	    (s->session->cipher->algorithm2 & SSL_CIPHER_ALGORITHM2_AEAD)) {
 		if (!ssl_cipher_get_evp_aead(s->session, &aead)) {
-			SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,
+			SSLerror(
 			    SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 			return (0);
 		}
@@ -745,7 +745,7 @@ tls1_setup_key_block(SSL *s)
 	} else {
 		if (!ssl_cipher_get_evp(s->session, &cipher, &mac, &mac_type,
 		    &mac_secret_size)) {
-			SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,
+			SSLerror(
 			    SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 			return (0);
 		}
@@ -767,7 +767,7 @@ tls1_setup_key_block(SSL *s)
 
 	if ((key_block = reallocarray(NULL, mac_secret_size + key_len + iv_len,
 	    2)) == NULL) {
-		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
+		SSLerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	key_block_len = (mac_secret_size + key_len + iv_len) * 2;
@@ -776,7 +776,7 @@ tls1_setup_key_block(SSL *s)
 	S3I(s)->tmp.key_block = key_block;
 
 	if ((tmp_block = malloc(key_block_len)) == NULL) {
-		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
+		SSLerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -1114,7 +1114,7 @@ tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
 		}
 	}
 	if (d == NULL) {
-		SSLerr(SSL_F_TLS1_CERT_VERIFY_MAC, SSL_R_NO_REQUIRED_DIGEST);
+		SSLerror(SSL_R_NO_REQUIRED_DIGEST);
 		return 0;
 	}
 
@@ -1345,12 +1345,12 @@ tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 
 	goto ret;
 err1:
-	SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL,
+	SSLerror(
 	    SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
 	rv = 0;
 	goto ret;
 err2:
-	SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL, ERR_R_MALLOC_FAILURE);
+	SSLerror(ERR_R_MALLOC_FAILURE);
 	rv = 0;
 ret:
 	free(buff);

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.39 2017/01/26 06:32:58 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.40 2017/01/26 10:40:21 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -406,7 +406,7 @@ dtls1_check_timeout_num(SSL *s)
 
 	if (D1I(s)->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT) {
 		/* fail the connection, enough alerts have been sent */
-		SSLerr(SSL_F_DTLS1_CHECK_TIMEOUT_NUM, SSL_R_READ_TIMEOUT_EXPIRED);
+		SSLerror(SSL_R_READ_TIMEOUT_EXPIRED);
 		return -1;
 	}
 

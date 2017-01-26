@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.46 2017/01/23 13:36:12 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.47 2017/01/26 10:40:21 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -410,7 +410,7 @@ dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		S3I(s)->tmp.reuse_message = 0;
 		if ((mt >= 0) && (S3I(s)->tmp.message_type != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_DTLS1_GET_MESSAGE,
+			SSLerror(
 			    SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 		}
@@ -476,13 +476,13 @@ dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr, int max)
 
 	/* sanity checking */
 	if ((frag_off + frag_len) > msg_len) {
-		SSLerr(SSL_F_DTLS1_PREPROCESS_FRAGMENT,
+		SSLerror(
 		    SSL_R_EXCESSIVE_MESSAGE_SIZE);
 		return SSL_AD_ILLEGAL_PARAMETER;
 	}
 
 	if ((frag_off + frag_len) > (unsigned long)max) {
-		SSLerr(SSL_F_DTLS1_PREPROCESS_FRAGMENT,
+		SSLerror(
 		    SSL_R_EXCESSIVE_MESSAGE_SIZE);
 		return SSL_AD_ILLEGAL_PARAMETER;
 	}
@@ -495,7 +495,7 @@ dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr, int max)
 		 */
 		if (!BUF_MEM_grow_clean(s->internal->init_buf,
 		    msg_len + DTLS1_HM_HEADER_LENGTH)) {
-			SSLerr(SSL_F_DTLS1_PREPROCESS_FRAGMENT, ERR_R_BUF_LIB);
+			SSLerror(ERR_R_BUF_LIB);
 			return SSL_AD_INTERNAL_ERROR;
 		}
 
@@ -509,7 +509,7 @@ dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr, int max)
 		 * They must be playing with us! BTW, failure to enforce
 		 * upper limit would open possibility for buffer overrun.
 		 */
-		SSLerr(SSL_F_DTLS1_PREPROCESS_FRAGMENT,
+		SSLerror(
 		    SSL_R_EXCESSIVE_MESSAGE_SIZE);
 		return SSL_AD_ILLEGAL_PARAMETER;
 	}
@@ -803,7 +803,7 @@ again:
 	    /* parse the message fragment header */
 	    dtls1_get_message_header(wire, &msg_hdr) == 0) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,
+		SSLerror(
 		    SSL_R_UNEXPECTED_MESSAGE);
 		goto f_err;
 	}
@@ -846,7 +846,7 @@ again:
 		else /* Incorrectly formated Hello request */
 		{
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,
+			SSLerror(
 			    SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 		}
@@ -878,7 +878,7 @@ again:
 	 */
 	if (i != (int)frag_len) {
 		al = SSL3_AD_ILLEGAL_PARAMETER;
-		SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,
+		SSLerror(
 		    SSL3_AD_ILLEGAL_PARAMETER);
 		goto f_err;
 	}

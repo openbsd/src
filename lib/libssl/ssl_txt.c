@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.26 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.27 2017/01/26 10:40:21 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,7 +95,7 @@ SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file_internal())) == NULL) {
-		SSLerr(SSL_F_SSL_SESSION_PRINT_FP, ERR_R_BUF_LIB);
+		SSLerror(ERR_R_BUF_LIB);
 		return (0);
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);

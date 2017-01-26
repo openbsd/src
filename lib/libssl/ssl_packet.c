@@ -106,12 +106,12 @@ ssl_convert_sslv2_client_hello(SSL *s)
 		return -1;
 
 	if (record_length < 9) {
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
+		SSLerror(
 		    SSL_R_RECORD_LENGTH_MISMATCH);
 		return -1;
 	}
 	if (record_length > 4096) {
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_RECORD_TOO_LARGE);
+		SSLerror(SSL_R_RECORD_TOO_LARGE);
 		return -1;
 	}
 
@@ -150,7 +150,7 @@ ssl_convert_sslv2_client_hello(SSL *s)
 	if (!CBS_get_bytes(&cbs, &challenge, challenge_length))
 		return -1;
 	if (CBS_len(&cbs) != 0) {
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
+		SSLerror(
 		    SSL_R_RECORD_LENGTH_MISMATCH);
 		return -1;
 	}
@@ -236,7 +236,7 @@ ssl_server_legacy_first_packet(SSL *s)
 	if (ssl_is_sslv2_client_hello(&header) == 1) {
 		/* Only permit SSLv2 client hellos if TLSv1.0 is enabled. */
 		if (ssl_enabled_version_range(s, &min_version, NULL) != 1) {
-			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
+			SSLerror(
 			    SSL_R_NO_PROTOCOLS_AVAILABLE);
 			return -1;
 		}
@@ -244,7 +244,7 @@ ssl_server_legacy_first_packet(SSL *s)
 			return 1;
 
 		if (ssl_convert_sslv2_client_hello(s) != 1) {
-			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
+			SSLerror(
 			    SSL_R_BAD_PACKET_LENGTH);
 			return -1;
 		}
@@ -254,7 +254,7 @@ ssl_server_legacy_first_packet(SSL *s)
 
 	/* Ensure that we have SSL3_RT_HEADER_LENGTH (5 bytes) of the packet. */
 	if (CBS_len(&header) != SSL3_RT_HEADER_LENGTH) {
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+		SSLerror(ERR_R_INTERNAL_ERROR);
 		return -1;
 	}
 	data = (const char *)CBS_data(&header);
@@ -264,15 +264,15 @@ ssl_server_legacy_first_packet(SSL *s)
 	    strncmp("POST ", data, 5) == 0 ||
 	    strncmp("HEAD ", data, 5) == 0 ||
 	    strncmp("PUT ", data, 4) == 0) {
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_HTTP_REQUEST);
+		SSLerror(SSL_R_HTTP_REQUEST);
 		return -1;
 	}
 	if (strncmp("CONNE", data, 5) == 0) {
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_HTTPS_PROXY_REQUEST);
+		SSLerror(SSL_R_HTTPS_PROXY_REQUEST);
 		return -1;
 	}
 
-	SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
+	SSLerror(SSL_R_UNKNOWN_PROTOCOL);
 
 	return -1;
 }

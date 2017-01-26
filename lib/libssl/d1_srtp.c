@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.18 2017/01/24 15:04:12 jsing Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.19 2017/01/26 10:40:21 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,7 +187,7 @@ ssl_ctx_make_profiles(const char *profiles_string,
 	SRTP_PROTECTION_PROFILE *p;
 
 	if (!(profiles = sk_SRTP_PROTECTION_PROFILE_new_null())) {
-		SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,
+		SSLerror(
 		    SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
 		return 1;
 	}
@@ -199,7 +199,7 @@ ssl_ctx_make_profiles(const char *profiles_string,
 		    col ? col - ptr : (int)strlen(ptr))) {
 			sk_SRTP_PROTECTION_PROFILE_push(profiles, p);
 		} else {
-			SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,
+			SSLerror(
 			    SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
 			sk_SRTP_PROTECTION_PROFILE_free(profiles);
 			return 1;
@@ -264,13 +264,13 @@ ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int maxlen)
 
 	if (p) {
 		if (ct == 0) {
-			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_USE_SRTP_EXT,
+			SSLerror(
 			    SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST);
 			return 1;
 		}
 
 		if ((2 + ct * 2 + 1) > maxlen) {
-			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_USE_SRTP_EXT,
+			SSLerror(
 			    SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG);
 			return 1;
 		}
@@ -304,7 +304,7 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, const unsigned char *d, int len,
 	CBS cbs, ciphers, mki;
 
 	if (len < 0) {
-		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
+		SSLerror(
 		    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al = SSL_AD_DECODE_ERROR;
 		goto done;
@@ -314,7 +314,7 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, const unsigned char *d, int len,
 	/* Pull off the cipher suite list */
 	if (!CBS_get_u16_length_prefixed(&cbs, &ciphers) ||
 	    CBS_len(&ciphers) % 2) {
-		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
+		SSLerror(
 		    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al = SSL_AD_DECODE_ERROR;
 		goto done;
@@ -324,7 +324,7 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, const unsigned char *d, int len,
 
 	while (CBS_len(&ciphers) > 0) {
 		if (!CBS_get_u16(&ciphers, &id)) {
-			SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
+			SSLerror(
 			    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 			*al = SSL_AD_DECODE_ERROR;
 			goto done;
@@ -339,7 +339,7 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, const unsigned char *d, int len,
 	/* Extract the MKI value as a sanity check, but discard it for now. */
 	if (!CBS_get_u8_length_prefixed(&cbs, &mki) ||
 	    CBS_len(&cbs) != 0) {
-		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
+		SSLerror(
 		    SSL_R_BAD_SRTP_MKI_VALUE);
 		*al = SSL_AD_DECODE_ERROR;
 		goto done;
@@ -381,13 +381,13 @@ ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int maxlen)
 {
 	if (p) {
 		if (maxlen < 5) {
-			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT,
+			SSLerror(
 			    SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG);
 			return 1;
 		}
 
 		if (s->internal->srtp_profile == 0) {
-			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT,
+			SSLerror(
 			    SSL_R_USE_SRTP_NOT_NEGOTIATED);
 			return 1;
 		}
@@ -411,7 +411,7 @@ ssl_parse_serverhello_use_srtp_ext(SSL *s, const unsigned char *d, int len, int 
 	CBS cbs, profile_ids, mki;
 
 	if (len < 0) {
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT,
+		SSLerror(
 		    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al = SSL_AD_DECODE_ERROR;
 		return 1;
@@ -425,7 +425,7 @@ ssl_parse_serverhello_use_srtp_ext(SSL *s, const unsigned char *d, int len, int 
 	 */
 	if (!CBS_get_u16_length_prefixed(&cbs, &profile_ids) ||
 	    !CBS_get_u16(&profile_ids, &id) || CBS_len(&profile_ids) != 0) {
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT,
+		SSLerror(
 		    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al = SSL_AD_DECODE_ERROR;
 		return 1;
@@ -433,7 +433,7 @@ ssl_parse_serverhello_use_srtp_ext(SSL *s, const unsigned char *d, int len, int 
 
 	/* Must be no MKI, since we never offer one. */
 	if (!CBS_get_u8_length_prefixed(&cbs, &mki) || CBS_len(&mki) != 0) {
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT,
+		SSLerror(
 		    SSL_R_BAD_SRTP_MKI_VALUE);
 		*al = SSL_AD_ILLEGAL_PARAMETER;
 		return 1;
@@ -443,7 +443,7 @@ ssl_parse_serverhello_use_srtp_ext(SSL *s, const unsigned char *d, int len, int 
 
 	/* Throw an error if the server gave us an unsolicited extension. */
 	if (clnt == NULL) {
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT,
+		SSLerror(
 		    SSL_R_NO_SRTP_PROFILES);
 		*al = SSL_AD_DECODE_ERROR;
 		return 1;
@@ -463,7 +463,7 @@ ssl_parse_serverhello_use_srtp_ext(SSL *s, const unsigned char *d, int len, int 
 		}
 	}
 
-	SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT,
+	SSLerror(
 	    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 	*al = SSL_AD_DECODE_ERROR;
 	return 1;
