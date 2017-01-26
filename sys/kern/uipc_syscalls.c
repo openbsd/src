@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.147 2017/01/25 07:35:31 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.148 2017/01/26 01:58:00 dhill Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp, *headfp;
-	struct mbuf *nam = NULL;
+	struct mbuf *nam;
 	socklen_t namelen;
 	int error, s, tmpfd;
 	struct socket *head, *so;
@@ -288,7 +288,8 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		return (error);
 	}
 
-redo:
+	nam = m_get(M_WAIT, MT_SONAME);
+	
 	NET_LOCK(s);
 	head = headfp->f_data;
 	if (isdnssocket(head) || (head->so_options & SO_ACCEPTCONN) == 0) {
@@ -318,30 +319,16 @@ redo:
 		goto out;
 	}
 
-	/* Figure out whether the new socket should be non-blocking. */
-	nflag = flags & SOCK_NONBLOCK_INHERIT ? (headfp->f_flag & FNONBLOCK)
-	    : (flags & SOCK_NONBLOCK ? FNONBLOCK : 0);
-
-	nam = m_get(M_WAIT, MT_SONAME);
-
-	/*
-	 * Check whether the queue emptied while we slept: m_get() may have
-	 * blocked, allowing the connection to be reset or another thread or
-	 * process to accept it.  If so, start over.
-	 */
-	if (head->so_qlen == 0) {
-		NET_UNLOCK(s);
-		m_freem(nam);
-		nam = NULL;
-		goto redo;
-	}
-
 	/*
 	 * Do not sleep after we have taken the socket out of the queue.
 	 */
 	so = TAILQ_FIRST(&head->so_q);
 	if (soqremque(so, 1) == 0)
 		panic("accept");
+
+	/* Figure out whether the new socket should be non-blocking. */
+	nflag = flags & SOCK_NONBLOCK_INHERIT ? (headfp->f_flag & FNONBLOCK)
+	    : (flags & SOCK_NONBLOCK ? FNONBLOCK : 0);
 
 	/* connection has been removed from the listen queue */
 	KNOTE(&head->so_rcv.sb_sel.si_note, 0);
