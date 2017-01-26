@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_clnt.c,v 1.23 2017/01/26 00:42:44 jsing Exp $ */
+/* $OpenBSD: t1_clnt.c,v 1.24 2017/01/26 05:31:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,8 +64,6 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static const SSL_METHOD *tls1_get_client_method(int ver);
-
 static const SSL_METHOD_INTERNAL TLS_client_method_internal_data = {
 	.version = TLS1_2_VERSION,
 	.min_version = TLS1_VERSION,
@@ -74,21 +72,21 @@ static const SSL_METHOD_INTERNAL TLS_client_method_internal_data = {
 	.ssl_clear = tls1_clear,
 	.ssl_free = tls1_free,
 	.ssl_accept = ssl_undefined_function,
-	.ssl_connect = ssl23_connect,
-	.ssl_read = ssl23_read,
-	.ssl_peek = ssl23_peek,
-	.ssl_write = ssl23_write,
-	.ssl_shutdown = ssl_undefined_function,
-	.ssl_pending = ssl_undefined_const_function,
+	.ssl_connect = ssl3_connect,
+	.ssl_read = ssl3_read,
+	.ssl_peek = ssl3_peek,
+	.ssl_write = ssl3_write,
+	.ssl_shutdown = ssl3_shutdown,
+	.ssl_pending = ssl3_pending,
 	.get_ssl_method = tls1_get_client_method,
-	.get_timeout = ssl23_default_timeout,
+	.get_timeout = tls1_default_timeout,
 	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl_undefined_function,
 	.ssl_renegotiate_check = ssl_ok,
 	.ssl_get_message = ssl3_get_message,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = NULL,
+	.ssl3_enc = &TLSv1_2_enc_data,
 };
 
 static const SSL_METHOD TLS_client_method_data = {
@@ -202,7 +200,7 @@ static const SSL_METHOD TLSv1_2_client_method_data = {
 	.internal = &TLSv1_2_client_method_internal_data,
 };
 
-static const SSL_METHOD *
+const SSL_METHOD *
 tls1_get_client_method(int ver)
 {
 	if (ver == TLS1_2_VERSION)

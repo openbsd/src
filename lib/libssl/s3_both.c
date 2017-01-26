@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.56 2017/01/23 14:35:42 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.57 2017/01/26 05:31:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -524,11 +524,17 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		ssl3_take_mac(s);
 
 	/* Feed this message into MAC computation. */
-	tls1_finish_mac(s, (unsigned char *)s->internal->init_buf->data, s->internal->init_num + 4);
-	if (s->internal->msg_callback)
-		s->internal->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-		    s->internal->init_buf->data, (size_t)s->internal->init_num + 4, s,
-		    s->internal->msg_callback_arg);
+	if (s->internal->mac_packet) {
+		tls1_finish_mac(s, (unsigned char *)s->internal->init_buf->data,
+		    s->internal->init_num + 4);
+		s->internal->mac_packet = 0;
+
+		if (s->internal->msg_callback)
+			s->internal->msg_callback(0, s->version,
+			    SSL3_RT_HANDSHAKE, s->internal->init_buf->data,
+			    (size_t)s->internal->init_num + 4, s,
+			    s->internal->msg_callback_arg);
+	}
 
 	*ok = 1;
 	return (s->internal->init_num);

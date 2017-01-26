@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.69 2017/01/25 06:13:02 jsing Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.70 2017/01/26 05:31:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -333,9 +333,16 @@ again:
 		if (n <= 0)
 			return (n);
 
+		s->internal->mac_packet = 1;
 		s->internal->rstate = SSL_ST_READ_BODY;
 
-		CBS_init(&header, s->internal->packet, n);
+		if (s->server && s->internal->first_packet) {
+			if ((ret = ssl_server_legacy_first_packet(s)) != 1)
+				return (ret);
+			ret = -1;
+		}
+
+		CBS_init(&header, s->internal->packet, SSL3_RT_HEADER_LENGTH);
 
 		/* Pull apart the header into the SSL3_RECORD */
 		if (!CBS_get_u8(&header, &type) ||

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.153 2017/01/24 14:57:31 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.154 2017/01/26 05:31:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -730,6 +730,8 @@ ssl3_get_client_hello(SSL *s)
 	SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
 	unsigned long alg_k;
+	const SSL_METHOD *method;
+	uint16_t shared_version;
 
 	/*
 	 * We do this so that we will respond with our native type.
@@ -741,6 +743,7 @@ ssl3_get_client_hello(SSL *s)
 	if (s->internal->state == SSL3_ST_SR_CLNT_HELLO_A) {
 		s->internal->state = SSL3_ST_SR_CLNT_HELLO_B;
 	}
+
 	s->internal->first_packet = 1;
 	n = s->method->internal->ssl_get_message(s, SSL3_ST_SR_CLNT_HELLO_B,
 	    SSL3_ST_SR_CLNT_HELLO_C, SSL3_MT_CLIENT_HELLO,
@@ -749,6 +752,7 @@ ssl3_get_client_hello(SSL *s)
 	if (!ok)
 		return ((int)n);
 	s->internal->first_packet = 0;
+
 	d = p = (unsigned char *)s->internal->init_msg;
 
 	if (2 > n)
@@ -760,21 +764,28 @@ ssl3_get_client_hello(SSL *s)
 	s->client_version = (((int)p[0]) << 8)|(int)p[1];
 	p += 2;
 
-	if ((s->version == DTLS1_VERSION && s->client_version > s->version) ||
-	    (s->version != DTLS1_VERSION && s->client_version < s->version)) {
-		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
-		    SSL_R_WRONG_VERSION_NUMBER);
+	if (ssl_max_shared_version(s, s->client_version, &shared_version) != 1) {
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_WRONG_VERSION_NUMBER);
 		if ((s->client_version >> 8) == SSL3_VERSION_MAJOR &&
-			!s->internal->enc_write_ctx && !s->internal->write_hash) {
+		    !s->internal->enc_write_ctx && !s->internal->write_hash) {
 			/*
 			 * Similar to ssl3_get_record, send alert using remote
-			 * version number
+			 * version number.
 			 */
 			s->version = s->client_version;
 		}
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto f_err;
 	}
+	s->version = shared_version;
+
+	if ((method = tls1_get_server_method(shared_version)) == NULL)
+		method = dtls1_get_server_method(shared_version);
+	if (method == NULL) {
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+	s->method = method;
 
 	/*
 	 * If we require cookies (DTLS) and this ClientHello doesn't

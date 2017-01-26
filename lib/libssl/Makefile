@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.27 2016/11/05 15:32:19 schwarze Exp $
+# $OpenBSD: Makefile,v 1.28 2017/01/26 05:31:25 jsing Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -23,9 +23,8 @@ LDADD+= -L${BSDOBJDIR}/lib/libcrypto -lcrypto
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
 
-SRCS=\
+SRCS= \
 	s3_srvr.c s3_clnt.c s3_lib.c s3_pkt.c s3_both.c \
-	s23_srvr.c s23_clnt.c s23_lib.c s23_pkt.c \
 	t1_meth.c t1_srvr.c t1_clnt.c t1_lib.c t1_enc.c \
 	d1_meth.c d1_srvr.c d1_clnt.c d1_lib.c d1_pkt.c \
 	d1_both.c d1_enc.c d1_srtp.c \
@@ -33,7 +32,7 @@ SRCS=\
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
 	ssl_asn1.c ssl_txt.c ssl_algs.c \
 	bio_ssl.c ssl_err.c t1_reneg.c \
-	pqueue.c
+	ssl_packet.c pqueue.c
 SRCS+=	s3_cbc.c
 SRCS+=	bs_ber.c bs_cbb.c bs_cbs.c
 

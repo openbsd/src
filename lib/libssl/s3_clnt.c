@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.174 2017/01/24 15:11:55 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.175 2017/01/26 05:31:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -587,6 +587,7 @@ int
 ssl3_client_hello(SSL *s)
 {
 	unsigned char	*bufend, *p, *d;
+	uint16_t	 max_version;
 	size_t		 outlen;
 	int		 i;
 
@@ -594,6 +595,13 @@ ssl3_client_hello(SSL *s)
 
 	if (s->internal->state == SSL3_ST_CW_CLNT_HELLO_A) {
 		SSL_SESSION *sess = s->session;
+
+		if (ssl_supported_version_range(s, NULL, &max_version) != 1) {
+			SSLerr(SSL_F_SSL3_CLIENT_HELLO,
+			    SSL_R_NO_PROTOCOLS_AVAILABLE);
+			return (-1);
+		}
+		s->client_version = s->version = max_version;
 
 		if ((sess == NULL) ||
 		    (sess->ssl_version != s->version) ||
@@ -644,6 +652,7 @@ ssl3_client_hello(SSL *s)
 		 * client_version in client hello and not resetting it to
 		 * the negotiated version.
 		 */
+
 		*(p++) = s->client_version >> 8;
 		*(p++) = s->client_version & 0xff;
 
@@ -719,20 +728,23 @@ ssl3_get_server_hello(SSL *s)
 {
 	CBS cbs, server_random, session_id;
 	uint16_t server_version, cipher_suite;
+	uint16_t min_version, max_version;
 	uint8_t compression_method;
 	STACK_OF(SSL_CIPHER) *sk;
 	const SSL_CIPHER *cipher;
+	const SSL_METHOD *method;
 	unsigned char *p;
 	unsigned long alg_k;
 	size_t outlen;
 	int i, al, ok;
 	long n;
 
+	s->internal->first_packet = 1;
 	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
 	    SSL3_ST_CR_SRVR_HELLO_B, -1, 20000, /* ?? */ &ok);
-
 	if (!ok)
 		return ((int)n);
+	s->internal->first_packet = 0;
 
 	if (n < 0)
 		goto truncated;
@@ -764,12 +776,27 @@ ssl3_get_server_hello(SSL *s)
 	if (!CBS_get_u16(&cbs, &server_version))
 		goto truncated;
 
-	if (s->version != server_version) {
+	if (ssl_supported_version_range(s, &min_version, &max_version) != 1) {
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
+		    SSL_R_NO_PROTOCOLS_AVAILABLE);
+		goto err;
+	}
+
+	if (server_version < min_version || server_version > max_version) {
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
 		s->version = (s->version & 0xff00) | (server_version & 0xff);
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto f_err;
 	}
+	s->version = server_version;
+
+	if ((method = tls1_get_client_method(server_version)) == NULL)
+		method = dtls1_get_client_method(server_version);
+	if (method == NULL) {
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+	s->method = method;
 
 	/* Server random. */
 	if (!CBS_get_bytes(&cbs, &server_random, SSL3_RANDOM_SIZE))
@@ -836,6 +863,7 @@ ssl3_get_server_hello(SSL *s)
 				goto f_err;
 			}
 		}
+
 		/*
 		 * XXX - improve the handling for the case where there is a
 		 * zero length session identifier.
@@ -844,6 +872,8 @@ ssl3_get_server_hello(SSL *s)
 		    sizeof(s->session->session_id), &outlen))
 			goto err;
 		s->session->session_id_length = outlen;
+
+		s->session->ssl_version = s->version;
 	}
 
 	if ((cipher = ssl3_get_cipher_by_value(cipher_suite)) == NULL) {
