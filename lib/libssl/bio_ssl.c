@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.24 2017/01/23 13:36:12 jsing Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.25 2017/01/26 12:44:52 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -293,9 +293,11 @@ ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 	case BIO_CTRL_RESET:
 		SSL_shutdown(ssl);
 
-		if (ssl->internal->handshake_func == ssl->method->internal->ssl_connect)
+		if (ssl->internal->handshake_func ==
+		    ssl->method->internal->ssl_connect)
 			SSL_set_connect_state(ssl);
-		else if (ssl->internal->handshake_func == ssl->method->internal->ssl_accept)
+		else if (ssl->internal->handshake_func ==
+		    ssl->method->internal->ssl_accept)
 			SSL_set_accept_state(ssl);
 
 		SSL_clear(ssl);
@@ -378,7 +380,8 @@ ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 	case BIO_CTRL_PUSH:
 		if ((b->next_bio != NULL) && (b->next_bio != ssl->rbio)) {
 			SSL_set_bio(ssl, b->next_bio, b->next_bio);
-			CRYPTO_add(&b->next_bio->references, 1, CRYPTO_LOCK_BIO);
+			CRYPTO_add(&b->next_bio->references, 1,
+			    CRYPTO_LOCK_BIO);
 		}
 		break;
 	case BIO_CTRL_POP:
@@ -446,7 +449,8 @@ ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 		{
 			void (**fptr)(const SSL *xssl, int type, int val);
 
-			fptr = (void (**)(const SSL *xssl, int type, int val))ptr;
+			fptr = (void (**)(const SSL *xssl, int type, int val))
+			    ptr;
 			*fptr = SSL_get_info_callback(ssl);
 		}
 		break;
@@ -471,7 +475,8 @@ ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 		{
 		/* FIXME: setting this via a completely different prototype
 		   seems like a crap idea */
-			SSL_set_info_callback(ssl, (void (*)(const SSL *, int, int))fp);
+			SSL_set_info_callback(ssl,
+			    (void (*)(const SSL *, int, int))fp);
 		}
 		break;
 	default:
