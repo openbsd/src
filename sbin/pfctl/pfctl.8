@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.165 2015/06/15 08:48:23 sthen Exp $
+.\" $OpenBSD: pfctl.8,v 1.166 2017/01/26 08:24:34 benno Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 15 2015 $
+.Dd $Mdocdate: January 26 2017 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Op Fl S Ar statefile
 .Op Fl s Ar modifier Op Fl R Ar id
 .Op Fl t Ar table Fl T Ar command Op Ar address ...
+.Op Fl V Ar rdomain
 .Op Fl x Ar level
 .Ek
 .Sh DESCRIPTION
@@ -644,6 +645,10 @@ This flag is set when per-address counters are enabled on the table.
 .El
 .It Fl t Ar table
 Specify the name of the table.
+.It Fl V Ar rdomain
+Select the routing domain to be used for kill states by host or by label.
+The rdomain of a state is displayed in parentheses before the host by
+.Fl s Cm states .
 .It Fl v
 Produce more verbose output.
 A second use of

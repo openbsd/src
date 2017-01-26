@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.337 2016/09/03 21:30:49 jca Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.338 2017/01/26 08:24:34 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -69,9 +69,9 @@ int	 pfctl_clear_src_nodes(int, int);
 int	 pfctl_clear_states(int, const char *, int);
 void	 pfctl_addrprefix(char *, struct pf_addr *);
 int	 pfctl_kill_src_nodes(int, const char *, int);
-int	 pfctl_net_kill_states(int, const char *, int);
-int	 pfctl_label_kill_states(int, const char *, int);
-int	 pfctl_id_kill_states(int, const char *, int);
+int	 pfctl_net_kill_states(int, const char *, int, int);
+int	 pfctl_label_kill_states(int, const char *, int, int);
+int	 pfctl_id_kill_states(int, int);
 void	 pfctl_init_options(struct pfctl *);
 int	 pfctl_load_options(struct pfctl *);
 int	 pfctl_load_limit(struct pfctl *, unsigned int, unsigned int);
@@ -231,7 +231,7 @@ struct pf_qihead qspecs = TAILQ_HEAD_INITIALIZER(qspecs);
 struct pf_qihead rootqs = TAILQ_HEAD_INITIALIZER(rootqs);
 
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;
@@ -243,7 +243,7 @@ usage(void)
 	fprintf(stderr, "[-L statefile] [-o level] [-p device]\n");
 	fprintf(stderr, "\t[-S statefile] [-s modifier [-R id]] ");
 	fprintf(stderr, "[-t table -T command [address ...]]\n");
-	fprintf(stderr, "\t[-x level]\n");
+	fprintf(stderr, "\t[-V rdomain] [-x level]\n");
 	exit(1);
 }
 
@@ -512,7 +512,7 @@ pfctl_kill_src_nodes(int dev, const char *iface, int opts)
 }
 
 int
-pfctl_net_kill_states(int dev, const char *iface, int opts)
+pfctl_net_kill_states(int dev, const char *iface, int opts, int rdomain)
 {
 	struct pfioc_state_kill psk;
 	struct addrinfo *res[2], *resp[2];
@@ -530,6 +530,8 @@ pfctl_net_kill_states(int dev, const char *iface, int opts)
 	if (iface != NULL && strlcpy(psk.psk_ifname, iface,
 	    sizeof(psk.psk_ifname)) >= sizeof(psk.psk_ifname))
 		errx(1, "invalid interface: %s", iface);
+
+	psk.psk_rdomain = rdomain;
 
 	pfctl_addrprefix(state_kill[0], &psk.psk_src.addr.v.a.mask);
 
@@ -618,7 +620,7 @@ pfctl_net_kill_states(int dev, const char *iface, int opts)
 }
 
 int
-pfctl_label_kill_states(int dev, const char *iface, int opts)
+pfctl_label_kill_states(int dev, const char *iface, int opts, int rdomain)
 {
 	struct pfioc_state_kill psk;
 
@@ -635,6 +637,8 @@ pfctl_label_kill_states(int dev, const char *iface, int opts)
 	    sizeof(psk.psk_label))
 		errx(1, "label too long: %s", state_kill[1]);
 
+	psk.psk_rdomain = rdomain;
+
 	if (ioctl(dev, DIOCKILLSTATES, &psk))
 		err(1, "DIOCKILLSTATES");
 
@@ -645,7 +649,7 @@ pfctl_label_kill_states(int dev, const char *iface, int opts)
 }
 
 int
-pfctl_id_kill_states(int dev, const char *iface, int opts)
+pfctl_id_kill_states(int dev, int opts)
 {
 	struct pfioc_state_kill psk;
 
@@ -2107,6 +2111,7 @@ main(int argc, char *argv[])
 	int	 opts = 0;
 	int	 optimize = PF_OPTIMIZE_BASIC;
 	int	 level;
+	int	 rdomain = 0;
 	char	 anchorname[PATH_MAX];
 	int	 anchor_wildcard = 0;
 	char	*path;
@@ -2118,7 +2123,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:dD:eqf:F:ghi:k:K:L:no:Pp:R:rS:s:t:T:vx:z")) != -1) {
+	    "a:dD:eqf:F:ghi:k:K:L:no:Pp:R:rS:s:t:T:vV:x:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -2223,6 +2228,13 @@ main(int argc, char *argv[])
 			if (opts & PF_OPT_VERBOSE)
 				opts |= PF_OPT_VERBOSE2;
 			opts |= PF_OPT_VERBOSE;
+			break;
+		case 'V':
+			rdomain = strtonum(optarg, 0, RT_TABLEID_MAX, &errstr);
+			if (errstr) {
+				warnx("Invalid rdomain: %s", errstr);
+				usage();
+			}
 			break;
 		case 'x':
 			debugopt = pfctl_lookup_option(optarg, debugopt_list);
@@ -2412,11 +2424,11 @@ main(int argc, char *argv[])
 	}
 	if (state_killers) {
 		if (!strcmp(state_kill[0], "label"))
-			pfctl_label_kill_states(dev, ifaceopt, opts);
+			pfctl_label_kill_states(dev, ifaceopt, opts, rdomain);
 		else if (!strcmp(state_kill[0], "id"))
-			pfctl_id_kill_states(dev, ifaceopt, opts);
+			pfctl_id_kill_states(dev, opts);
 		else
-			pfctl_net_kill_states(dev, ifaceopt, opts);
+			pfctl_net_kill_states(dev, ifaceopt, opts, rdomain);
 	}
 
 	if (src_node_killers)
