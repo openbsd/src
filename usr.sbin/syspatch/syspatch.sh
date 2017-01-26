@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.89 2017/01/26 04:34:51 rpe Exp $
+# $OpenBSD: syspatch.sh,v 1.90 2017/01/26 04:38:27 rpe Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -282,7 +282,7 @@ _MIRROR="${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)"
 _PDIR="/var/syspatch"
 _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
 
-readonly _BSDMP _KERNV _MIRROR _OSrev _PDIR _REL _TMP
+readonly _BSDMP _KERNV _MIRROR _OSrev _PDIR _TMP
 
 trap 'set +e; rm -rf "${_TMP}"' EXIT
 trap exit HUP INT TERM
