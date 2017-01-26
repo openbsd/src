@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.173 2017/01/25 16:45:50 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.174 2017/01/26 00:08:50 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
-	NET_LOCK(s);
 	so = pool_get(&socket_pool, PR_WAITOK | PR_ZERO);
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
@@ -136,6 +135,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	so->so_egid = p->p_ucred->cr_gid;
 	so->so_cpid = p->p_p->ps_pid;
 	so->so_proto = prp;
+	NET_LOCK(s);
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, NULL,
 	    (struct mbuf *)(long)proto, NULL, p);
 	if (error) {
