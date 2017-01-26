@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.33 2017/01/24 01:48:05 claudio Exp $ */
+/* $OpenBSD: tls_server.c,v 1.34 2017/01/26 12:56:37 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -456,6 +456,8 @@ tls_handshake_server(struct tls *ctx)
 		tls_set_errorx(ctx, "not a server connection context");
 		goto err;
 	}
+
+	ctx->state |= TLS_SSL_NEEDS_SHUTDOWN;
 
 	ERR_clear_error();
 	if ((ssl_ret = SSL_accept(ctx->ssl_conn)) != 1) {

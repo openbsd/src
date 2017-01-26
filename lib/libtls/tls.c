@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.58 2017/01/22 08:27:50 claudio Exp $ */
+/* $OpenBSD: tls.c,v 1.59 2017/01/26 12:56:37 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -649,7 +649,7 @@ tls_close(struct tls *ctx)
 		goto out;
 	}
 
-	if (ctx->ssl_conn != NULL) {
+	if (ctx->state & TLS_SSL_NEEDS_SHUTDOWN) {
 		ERR_clear_error();
 		ssl_ret = SSL_shutdown(ctx->ssl_conn);
 		if (ssl_ret < 0) {
@@ -658,6 +658,7 @@ tls_close(struct tls *ctx)
 			if (rv == TLS_WANT_POLLIN || rv == TLS_WANT_POLLOUT)
 				goto out;
 		}
+		ctx->state &= ~TLS_SSL_NEEDS_SHUTDOWN;
 	}
 
 	if (ctx->socket != -1) {
