@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.30 2017/01/26 07:20:57 beck Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.31 2017/01/26 09:16:01 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -607,10 +607,18 @@ void
 ERR_load_SSL_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-
 	if (ERR_func_error_string(SSL_str_functs[0].error) == NULL) {
 		ERR_load_strings(0, SSL_str_functs);
 		ERR_load_strings(0, SSL_str_reasons);
 	}
+#endif
+}
+
+void
+SSL_load_error_strings(void)
+{
+#ifndef OPENSSL_NO_ERR
+	ERR_load_crypto_strings();
+	ERR_load_SSL_strings();
 #endif
 }
