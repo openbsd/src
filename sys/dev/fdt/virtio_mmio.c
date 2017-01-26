@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.6 2017/01/21 11:29:52 reyk Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.1 2017/01/26 01:46:19 jsg Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <dev/pv/virtiovar.h>
 
 #include <machine/fdt.h>
-#include <armv7/armv7/armv7var.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>

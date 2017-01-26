@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.7 2017/01/23 13:58:11 patrick Exp $
+# $OpenBSD: files.arm64,v 1.8 2017/01/26 01:46:19 jsg Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -130,6 +130,3 @@ file	arch/arm64/dev/bcm2836_intr.c		bcmintc
 include	"dev/usb/dwc2/files.dwc2"
 attach	dwctwo at fdt with bcmdwctwo
 file	arch/arm64/dev/bcm2835_dwctwo.c		bcmdwctwo	needs-flag
-
-attach	virtio at fdt with virtio_mmio
-file	arch/arm64/dev/virtio_mmio.c		virtio_mmio

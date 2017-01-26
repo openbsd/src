@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.4 2017/01/25 10:14:40 jsg Exp $
+#	$OpenBSD: files.fdt,v 1.5 2017/01/26 01:46:19 jsg Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -40,3 +40,5 @@ device	psci
 attach	psci at fdt
 file	dev/fdt/psci.c			psci
 
+attach	virtio at fdt with virtio_mmio
+file	dev/fdt/virtio_mmio.c		virtio_mmio
