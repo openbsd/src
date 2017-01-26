@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.169 2017/01/26 05:31:25 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.170 2017/01/26 06:32:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1012,28 +1012,8 @@ typedef struct sess_cert_st {
 /*#define SSL_DEBUG	*/
 /*#define RSA_DEBUG	*/
 
-/* This is for the SSLv3/TLSv1.0 differences in crypto/hash stuff
- * It is a bit of a mess of functions, but hell, think of it as
- * an opaque structure :-) */
 typedef struct ssl3_enc_method {
 	int (*enc)(SSL *, int);
-	int (*mac)(SSL *, unsigned char *, int);
-	int (*setup_key_block)(SSL *);
-	int (*generate_master_secret)(SSL *, unsigned char *,
-	    unsigned char *, int);
-	int (*change_cipher_state)(SSL *, int);
-	int (*final_finish_mac)(SSL *,  const char *, int, unsigned char *);
-	int finish_mac_length;
-	int (*cert_verify_mac)(SSL *, int, unsigned char *);
-	const char *client_finished_label;
-	int client_finished_label_len;
-	const char *server_finished_label;
-	int server_finished_label_len;
-	int (*alert_value)(int);
-	int (*export_keying_material)(SSL *, unsigned char *, size_t,
-	    const char *, size_t, const unsigned char *, size_t,
-	    int use_context);
-	/* Flags indicating protocol version requirements. */
 	unsigned int enc_flags;
 } SSL3_ENC_METHOD;
 

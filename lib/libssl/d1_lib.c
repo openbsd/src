@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.38 2017/01/25 06:38:01 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.39 2017/01/26 06:32:58 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -74,19 +74,6 @@ static int dtls1_listen(SSL *s, struct sockaddr *client);
 
 SSL3_ENC_METHOD DTLSv1_enc_data = {
 	.enc = dtls1_enc,
-	.mac = tls1_mac,
-	.setup_key_block = tls1_setup_key_block,
-	.generate_master_secret = tls1_generate_master_secret,
-	.change_cipher_state = tls1_change_cipher_state,
-	.final_finish_mac = tls1_final_finish_mac,
-	.finish_mac_length = TLS1_FINISH_MAC_LENGTH,
-	.cert_verify_mac = tls1_cert_verify_mac,
-	.client_finished_label = TLS_MD_CLIENT_FINISH_CONST,
-	.client_finished_label_len = TLS_MD_CLIENT_FINISH_CONST_SIZE,
-	.server_finished_label = TLS_MD_SERVER_FINISH_CONST,
-	.server_finished_label_len = TLS_MD_SERVER_FINISH_CONST_SIZE,
-	.alert_value = tls1_alert_code,
-	.export_keying_material = tls1_export_keying_material,
 	.enc_flags = SSL_ENC_FLAG_EXPLICIT_IV,
 };
 

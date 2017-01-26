@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.80 2017/01/26 05:31:25 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.81 2017/01/26 06:32:58 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -522,9 +522,9 @@ dtls1_accept(SSL *s)
 
 				/* We need to get hashes here so if there is
 				 * a client cert, it can be verified */
-				s->method->internal->ssl3_enc->cert_verify_mac(s,
+				tls1_cert_verify_mac(s,
 				    NID_md5, &(S3I(s)->tmp.cert_verify_md[0]));
-				s->method->internal->ssl3_enc->cert_verify_mac(s,
+				tls1_cert_verify_mac(s,
 				    NID_sha1,
 				    &(S3I(s)->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
 			}
@@ -582,7 +582,7 @@ dtls1_accept(SSL *s)
 		case SSL3_ST_SW_CHANGE_B:
 
 			s->session->cipher = S3I(s)->tmp.new_cipher;
-			if (!s->method->internal->ssl3_enc->setup_key_block(s)) {
+			if (!tls1_setup_key_block(s)) {
 				ret = -1;
 				goto end;
 			}
@@ -597,7 +597,7 @@ dtls1_accept(SSL *s)
 			s->internal->state = SSL3_ST_SW_FINISHED_A;
 			s->internal->init_num = 0;
 
-			if (!s->method->internal->ssl3_enc->change_cipher_state(s,
+			if (!tls1_change_cipher_state(s,
 				SSL3_CHANGE_CIPHER_SERVER_WRITE)) {
 				ret = -1;
 				goto end;
@@ -610,8 +610,8 @@ dtls1_accept(SSL *s)
 		case SSL3_ST_SW_FINISHED_B:
 			ret = ssl3_send_finished(s,
 			    SSL3_ST_SW_FINISHED_A, SSL3_ST_SW_FINISHED_B,
-			    s->method->internal->ssl3_enc->server_finished_label,
-			    s->method->internal->ssl3_enc->server_finished_label_len);
+			    TLS_MD_SERVER_FINISH_CONST,
+			    TLS_MD_SERVER_FINISH_CONST_SIZE);
 			if (ret <= 0)
 				goto end;
 			s->internal->state = SSL3_ST_SW_FLUSH;

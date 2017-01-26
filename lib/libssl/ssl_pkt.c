@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.1 2017/01/26 05:51:54 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.2 2017/01/26 06:32:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -475,7 +475,7 @@ again:
 			mac = &rr->data[rr->length];
 		}
 
-		i = s->method->internal->ssl3_enc->mac(s,md,0 /* not send */);
+		i = tls1_mac(s,md,0 /* not send */);
 		if (i < 0 || mac == NULL ||
 		    timingsafe_memcmp(md, mac, (size_t)mac_size) != 0)
 			enc_err = -1;
@@ -747,7 +747,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	 * wr->data still points in the wb->buf */
 
 	if (mac_size != 0) {
-		if (s->method->internal->ssl3_enc->mac(s,
+		if (tls1_mac(s,
 		    &(p[wr->length + eivlen]), 1) < 0)
 			goto err;
 		wr->length += mac_size;
@@ -1360,25 +1360,25 @@ ssl3_do_change_cipher_spec(SSL *s)
 		}
 
 		s->session->cipher = S3I(s)->tmp.new_cipher;
-		if (!s->method->internal->ssl3_enc->setup_key_block(s))
+		if (!tls1_setup_key_block(s))
 			return (0);
 	}
 
-	if (!s->method->internal->ssl3_enc->change_cipher_state(s, i))
+	if (!tls1_change_cipher_state(s, i))
 		return (0);
 
 	/* we have to record the message digest at
 	 * this point so we can get it before we read
 	 * the finished message */
 	if (s->internal->state & SSL_ST_CONNECT) {
-		sender = s->method->internal->ssl3_enc->server_finished_label;
-		slen = s->method->internal->ssl3_enc->server_finished_label_len;
+		sender = TLS_MD_SERVER_FINISH_CONST;
+		slen = TLS_MD_SERVER_FINISH_CONST_SIZE;
 	} else {
-		sender = s->method->internal->ssl3_enc->client_finished_label;
-		slen = s->method->internal->ssl3_enc->client_finished_label_len;
+		sender = TLS_MD_CLIENT_FINISH_CONST;
+		slen = TLS_MD_CLIENT_FINISH_CONST_SIZE;
 	}
 
-	i = s->method->internal->ssl3_enc->final_finish_mac(s, sender, slen,
+	i = tls1_final_finish_mac(s, sender, slen,
 	    S3I(s)->tmp.peer_finish_md);
 	if (i == 0) {
 		SSLerr(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
@@ -1393,7 +1393,7 @@ int
 ssl3_send_alert(SSL *s, int level, int desc)
 {
 	/* Map tls/ssl alert value to correct one */
-	desc = s->method->internal->ssl3_enc->alert_value(desc);
+	desc = tls1_alert_code(desc);
 	if (desc < 0)
 		return -1;
 	/* If a fatal one, remove from cache */

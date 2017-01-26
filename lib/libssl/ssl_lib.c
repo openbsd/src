@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.152 2017/01/26 06:01:44 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.153 2017/01/26 06:32:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1732,7 +1732,7 @@ SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     const char *label, size_t llen, const unsigned char *p, size_t plen,
     int use_context)
 {
-	return (s->method->internal->ssl3_enc->export_keying_material(s, out, olen,
+	return (tls1_export_keying_material(s, out, olen,
 	    label, llen, p, plen, use_context));
 }
 

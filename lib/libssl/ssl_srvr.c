@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.1 2017/01/26 05:51:54 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.2 2017/01/26 06:32:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -519,7 +519,7 @@ ssl3_accept(SSL *s)
 					if (S3I(s)->handshake_dgst[dgst_num]) {
 					int dgst_size;
 
-					s->method->internal->ssl3_enc->cert_verify_mac(s,
+					tls1_cert_verify_mac(s,
 					    EVP_MD_CTX_type(
 					    S3I(s)->handshake_dgst[dgst_num]),
 					    &(S3I(s)->tmp.cert_verify_md[offset]));
@@ -598,7 +598,7 @@ ssl3_accept(SSL *s)
 		case SSL3_ST_SW_CHANGE_B:
 
 			s->session->cipher = S3I(s)->tmp.new_cipher;
-			if (!s->method->internal->ssl3_enc->setup_key_block(s)) {
+			if (!tls1_setup_key_block(s)) {
 				ret = -1;
 				goto end;
 			}
@@ -611,7 +611,7 @@ ssl3_accept(SSL *s)
 			s->internal->state = SSL3_ST_SW_FINISHED_A;
 			s->internal->init_num = 0;
 
-			if (!s->method->internal->ssl3_enc->change_cipher_state(
+			if (!tls1_change_cipher_state(
 			    s, SSL3_CHANGE_CIPHER_SERVER_WRITE)) {
 				ret = -1;
 				goto end;
@@ -623,8 +623,8 @@ ssl3_accept(SSL *s)
 		case SSL3_ST_SW_FINISHED_B:
 			ret = ssl3_send_finished(s,
 			SSL3_ST_SW_FINISHED_A, SSL3_ST_SW_FINISHED_B,
-			s->method->internal->ssl3_enc->server_finished_label,
-			s->method->internal->ssl3_enc->server_finished_label_len);
+			TLS_MD_SERVER_FINISH_CONST,
+			TLS_MD_SERVER_FINISH_CONST_SIZE);
 			if (ret <= 0)
 				goto end;
 			s->internal->state = SSL3_ST_SW_FLUSH;
@@ -1808,7 +1808,7 @@ ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 	}
 
 	s->session->master_key_length =
-	    s->method->internal->ssl3_enc->generate_master_secret(s,
+	    tls1_generate_master_secret(s,
 	        s->session->master_key, p, i);
 
 	explicit_bzero(p, i);
@@ -1864,7 +1864,7 @@ ssl3_get_client_kex_dhe(SSL *s, unsigned char *p, long n)
 	}
 
 	s->session->master_key_length =
-	    s->method->internal->ssl3_enc->generate_master_secret(
+	    tls1_generate_master_secret(
 	        s, s->session->master_key, p, key_size);
 
 	explicit_bzero(p, key_size);
@@ -2018,7 +2018,7 @@ ssl3_get_client_kex_ecdhe_ecp(SSL *s, unsigned char *p, long n)
 
 	/* Compute the master secret */
 	s->session->master_key_length =
-	    s->method->internal->ssl3_enc->generate_master_secret(
+	    tls1_generate_master_secret(
 		s, s->session->master_key, p, i);
 
 	explicit_bzero(p, i);
@@ -2060,7 +2060,7 @@ ssl3_get_client_kex_ecdhe_ecx(SSL *s, unsigned char *p, long n)
 	S3I(s)->tmp.x25519 = NULL;
 
 	s->session->master_key_length =
-	    s->method->internal->ssl3_enc->generate_master_secret(
+	    tls1_generate_master_secret(
 		s, s->session->master_key, shared_key, X25519_KEY_LENGTH);
 
 	ret = 1;
@@ -2136,7 +2136,7 @@ ssl3_get_client_kex_gost(SSL *s, unsigned char *p, long n)
 	}
 	/* Generate master secret */
 	s->session->master_key_length =
-	    s->method->internal->ssl3_enc->generate_master_secret(
+	    tls1_generate_master_secret(
 		s, s->session->master_key, premaster_secret, 32);
 	/* Check if pubkey from client certificate was used */
 	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1,

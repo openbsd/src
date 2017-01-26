@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.1 2017/01/26 05:51:54 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.2 2017/01/26 06:32:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,10 +170,10 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 	int md_len;
 
 	if (s->internal->state == a) {
-		md_len = s->method->internal->ssl3_enc->finish_mac_length;
+		md_len = TLS1_FINISH_MAC_LENGTH;
 		OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
 
-		if (s->method->internal->ssl3_enc->final_finish_mac(s, sender, slen,
+		if (tls1_final_finish_mac(s, sender, slen,
 		    S3I(s)->tmp.finish_md) != md_len)
 			return (0);
 		S3I(s)->tmp.finish_md_len = md_len;
@@ -217,15 +217,15 @@ ssl3_take_mac(SSL *s)
 		return;
 
 	if (s->internal->state & SSL_ST_CONNECT) {
-		sender = s->method->internal->ssl3_enc->server_finished_label;
-		slen = s->method->internal->ssl3_enc->server_finished_label_len;
+		sender = TLS_MD_SERVER_FINISH_CONST;
+		slen = TLS_MD_SERVER_FINISH_CONST_SIZE;
 	} else {
-		sender = s->method->internal->ssl3_enc->client_finished_label;
-		slen = s->method->internal->ssl3_enc->client_finished_label_len;
+		sender = TLS_MD_CLIENT_FINISH_CONST;
+		slen = TLS_MD_CLIENT_FINISH_CONST_SIZE;
 	}
 
 	S3I(s)->tmp.peer_finish_md_len =
-	    s->method->internal->ssl3_enc->final_finish_mac(s, sender, slen,
+	    tls1_final_finish_mac(s, sender, slen,
 		S3I(s)->tmp.peer_finish_md);
 }
 
@@ -249,7 +249,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 	}
 	S3I(s)->change_cipher_spec = 0;
 
-	md_len = s->method->internal->ssl3_enc->finish_mac_length;
+	md_len = TLS1_FINISH_MAC_LENGTH;
 
 	if (n < 0) {
 		al = SSL_AD_DECODE_ERROR;
