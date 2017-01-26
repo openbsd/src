@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.40 2017/01/19 16:56:53 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.41 2017/01/26 18:28:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -127,5 +127,6 @@ void		  print_tblclose(struct html *);
 void		  print_tbl(struct html *, const struct tbl_span *);
 void		  print_eqn(struct html *, const struct eqn *);
 void		  print_paragraph(struct html *);
+void		  print_endline(struct html *);
 
 int		  html_strlen(const char *);

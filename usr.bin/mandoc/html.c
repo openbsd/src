@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.71 2017/01/25 02:14:41 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.72 2017/01/26 18:28:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -112,7 +112,6 @@ static	const char	*const roffscales[SCALE_MAX] = {
 
 static	void	 a2width(const char *, struct roffsu *);
 static	void	 print_byte(struct html *, char);
-static	void	 print_endline(struct html *);
 static	void	 print_endword(struct html *);
 static	void	 print_indent(struct html *);
 static	void	 print_word(struct html *, const char *);
@@ -810,7 +809,7 @@ print_byte(struct html *h, char c)
  * If something was printed on the current output line, end it.
  * Not to be called right after print_indent().
  */
-static void
+void
 print_endline(struct html *h)
 {
 	if (h->col == 0)

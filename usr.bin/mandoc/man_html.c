@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.82 2017/01/21 01:20:29 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.83 2017/01/26 18:28:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,7 +30,6 @@
 #include "html.h"
 #include "main.h"
 
-/* TODO: preserve ident widths. */
 /* FIXME: have PD set the default vspace width. */
 
 #define	INDENT		  5
@@ -41,8 +40,7 @@
 			  struct html *h
 
 struct	mhtml {
-	int		  fl;
-#define	MANH_LITERAL	 (1 << 0) /* literal context */
+	struct tag	 *nofill;
 };
 
 struct	htmlman {
@@ -70,9 +68,9 @@ static	int		  man_SS_pre(MAN_ARGS);
 static	int		  man_UR_pre(MAN_ARGS);
 static	int		  man_alt_pre(MAN_ARGS);
 static	int		  man_br_pre(MAN_ARGS);
+static	int		  man_fill_pre(MAN_ARGS);
 static	int		  man_ign_pre(MAN_ARGS);
 static	int		  man_in_pre(MAN_ARGS);
-static	int		  man_literal_pre(MAN_ARGS);
 static	void		  man_root_post(MAN_ARGS);
 static	void		  man_root_pre(MAN_ARGS);
 
@@ -99,8 +97,8 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_alt_pre, NULL }, /* IR */
 	{ man_alt_pre, NULL }, /* RI */
 	{ man_br_pre, NULL }, /* sp */
-	{ man_literal_pre, NULL }, /* nf */
-	{ man_literal_pre, NULL }, /* fi */
+	{ man_fill_pre, NULL }, /* nf */
+	{ man_fill_pre, NULL }, /* fi */
 	{ NULL, NULL }, /* RE */
 	{ man_RS_pre, NULL }, /* RS */
 	{ man_ign_pre, NULL }, /* DT */
@@ -110,8 +108,8 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_in_pre, NULL }, /* in */
 	{ man_ign_pre, NULL }, /* ft */
 	{ man_OP_pre, NULL }, /* OP */
-	{ man_literal_pre, NULL }, /* EX */
-	{ man_literal_pre, NULL }, /* EE */
+	{ man_fill_pre, NULL }, /* EX */
+	{ man_fill_pre, NULL }, /* EE */
 	{ man_UR_pre, NULL }, /* UR */
 	{ NULL, NULL }, /* UE */
 	{ man_ign_pre, NULL }, /* ll */
@@ -148,7 +146,7 @@ html_man(void *arg, const struct roff_man *man)
 	struct html	*h;
 	struct tag	*t;
 
-	memset(&mh, 0, sizeof(mh));
+	mh.nofill = NULL;
 	h = (struct html *)arg;
 
 	if ((h->oflags & HTML_FRAGMENT) == 0) {
@@ -198,6 +196,8 @@ print_man_node(MAN_ARGS)
 
 	child = 1;
 	t = h->tags.head;
+	if (t == mh->nofill)
+		t = t->next;
 
 	switch (n->type) {
 	case ROFFT_TEXT:
@@ -205,12 +205,11 @@ print_man_node(MAN_ARGS)
 			print_paragraph(h);
 			return;
 		}
-		if (n->flags & NODE_LINE && (*n->string == ' ' ||
-		    (n->prev != NULL && mh->fl & MANH_LITERAL &&
-		     ! (h->flags & HTML_NONEWLINE))))
+		if (mh->nofill == NULL &&
+		    n->flags & NODE_LINE && *n->string == ' ')
 			print_otag(h, TAG_BR, "");
 		print_text(h, n->string);
-		return;
+		break;
 	case ROFFT_EQN:
 		print_eqn(h, n->eqn);
 		break;
@@ -250,16 +249,15 @@ print_man_node(MAN_ARGS)
 		print_man_nodelist(man, n->child, mh, h);
 
 	/* This will automatically close out any font scope. */
-	print_stagq(h, t);
+	print_stagq(h, mh->nofill == NULL ? t : mh->nofill);
 
-	switch (n->type) {
-	case ROFFT_EQN:
-		break;
-	default:
-		if (mans[n->tok].post)
-			(*mans[n->tok].post)(man, n, mh, h);
-		break;
-	}
+	if (n->type != ROFFT_TEXT && n->type != ROFFT_EQN &&
+	    mans[n->tok].post != NULL)
+		(*mans[n->tok].post)(man, n, mh, h);
+
+	if (mh->nofill != NULL &&
+	    (n->next == NULL || n->next->flags & NODE_LINE))
+		print_endline(h);
 }
 
 static int
@@ -347,13 +345,11 @@ man_br_pre(MAN_ARGS)
 static int
 man_SH_pre(MAN_ARGS)
 {
-	if (n->type == ROFFT_BLOCK) {
-		mh->fl &= ~MANH_LITERAL;
-		return 1;
-	} else if (n->type == ROFFT_BODY)
-		return 1;
-
-	print_otag(h, TAG_H1, "c", "Sh");
+	if (n->type == ROFFT_BLOCK && mh->nofill != NULL) {
+		print_tagq(h, mh->nofill);
+		mh->nofill = NULL;
+	} else if (n->type == ROFFT_HEAD)
+		print_otag(h, TAG_H1, "c", "Sh");
 	return 1;
 }
 
@@ -361,17 +357,11 @@ static int
 man_alt_pre(MAN_ARGS)
 {
 	const struct roff_node	*nn;
-	int		 i, savelit;
+	int		 i;
 	enum htmltag	 fp;
 	struct tag	*t;
 
-	if ((savelit = mh->fl & MANH_LITERAL))
-		print_otag(h, TAG_BR, "");
-
-	mh->fl &= ~MANH_LITERAL;
-
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		t = NULL;
 		switch (n->tok) {
 		case MAN_BI:
 			fp = i % 2 ? TAG_I : TAG_B;
@@ -398,18 +388,14 @@ man_alt_pre(MAN_ARGS)
 		if (i)
 			h->flags |= HTML_NOSPACE;
 
-		if (TAG_MAX != fp)
+		if (fp != TAG_MAX)
 			t = print_otag(h, fp, "");
 
-		print_man_node(man, nn, mh, h);
+		print_text(h, nn->string);
 
-		if (t)
+		if (fp != TAG_MAX)
 			print_tagq(h, t);
 	}
-
-	if (savelit)
-		mh->fl |= MANH_LITERAL;
-
 	return 0;
 }
 
@@ -425,13 +411,11 @@ man_SM_pre(MAN_ARGS)
 static int
 man_SS_pre(MAN_ARGS)
 {
-	if (n->type == ROFFT_BLOCK) {
-		mh->fl &= ~MANH_LITERAL;
-		return 1;
-	} else if (n->type == ROFFT_BODY)
-		return 1;
-
-	print_otag(h, TAG_H2, "c", "Ss");
+	if (n->type == ROFFT_BLOCK && mh->nofill != NULL) {
+		print_tagq(h, mh->nofill);
+		mh->nofill = NULL;
+	} else if (n->type == ROFFT_HEAD)
+		print_otag(h, TAG_H2, "c", "Ss");
 	return 1;
 }
 
@@ -550,15 +534,20 @@ man_I_pre(MAN_ARGS)
 }
 
 static int
-man_literal_pre(MAN_ARGS)
+man_fill_pre(MAN_ARGS)
 {
-
 	if (MAN_fi == n->tok || MAN_EE == n->tok) {
-		print_otag(h, TAG_BR, "");
-		mh->fl &= ~MANH_LITERAL;
-	} else
-		mh->fl |= MANH_LITERAL;
-
+		if (mh->nofill != NULL) {
+			print_tagq(h, mh->nofill);
+			mh->nofill = NULL;
+		} else
+			print_otag(h, TAG_BR, "");
+	} else {
+		if (mh->nofill == NULL)
+			mh->nofill = print_otag(h, TAG_PRE, "");
+		else
+			print_otag(h, TAG_BR, "");
+	}
 	return 0;
 }
 
