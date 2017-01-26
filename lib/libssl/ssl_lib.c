@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.154 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.155 2017/01/26 12:16:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,8 +226,7 @@ SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 	sk = ssl_create_cipher_list(ctx->method, &(ctx->cipher_list),
 	    &(ctx->internal->cipher_list_by_id), SSL_DEFAULT_CIPHER_LIST);
 	if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
-		SSLerror(
-		    SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
+		SSLerror(SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
 		return (0);
 	}
 	return (1);
@@ -381,8 +380,7 @@ SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
     unsigned int sid_ctx_len)
 {
 	if (sid_ctx_len > sizeof ctx->sid_ctx) {
-		SSLerror(
-		    SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+		SSLerror(SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
 		return (0);
 	}
 	ctx->sid_ctx_length = sid_ctx_len;
@@ -396,8 +394,7 @@ SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
     unsigned int sid_ctx_len)
 {
 	if (sid_ctx_len > SSL_MAX_SID_CTX_LENGTH) {
-		SSLerror(
-		    SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+		SSLerror(SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
 		return (0);
 	}
 	ssl->sid_ctx_length = sid_ctx_len;
@@ -873,13 +870,11 @@ SSL_CTX_check_private_key(const SSL_CTX *ctx)
 {
 	if ((ctx == NULL) || (ctx->internal->cert == NULL) ||
 	    (ctx->internal->cert->key->x509 == NULL)) {
-		SSLerror(
-		    SSL_R_NO_CERTIFICATE_ASSIGNED);
+		SSLerror(SSL_R_NO_CERTIFICATE_ASSIGNED);
 		return (0);
 	}
 	if (ctx->internal->cert->key->privatekey == NULL) {
-		SSLerror(
-		    SSL_R_NO_PRIVATE_KEY_ASSIGNED);
+		SSLerror(SSL_R_NO_PRIVATE_KEY_ASSIGNED);
 		return (0);
 	}
 	return (X509_check_private_key(ctx->internal->cert->key->x509,
@@ -891,23 +886,19 @@ int
 SSL_check_private_key(const SSL *ssl)
 {
 	if (ssl == NULL) {
-		SSLerror(
-		    ERR_R_PASSED_NULL_PARAMETER);
+		SSLerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 	if (ssl->cert == NULL) {
-		SSLerror(
-		    SSL_R_NO_CERTIFICATE_ASSIGNED);
+		SSLerror(SSL_R_NO_CERTIFICATE_ASSIGNED);
 		return (0);
 	}
 	if (ssl->cert->key->x509 == NULL) {
-		SSLerror(
-		    SSL_R_NO_CERTIFICATE_ASSIGNED);
+		SSLerror(SSL_R_NO_CERTIFICATE_ASSIGNED);
 		return (0);
 	}
 	if (ssl->cert->key->privatekey == NULL) {
-		SSLerror(
-		    SSL_R_NO_PRIVATE_KEY_ASSIGNED);
+		SSLerror(SSL_R_NO_PRIVATE_KEY_ASSIGNED);
 		return (0);
 	}
 	return (X509_check_private_key(ssl->cert->key->x509,
@@ -1428,8 +1419,7 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 	 * RFC 5246 section 7.4.1.2 defines the interval as [2,2^16-2].
 	 */
 	if (num < 2 || num > 0x10000 - 2) {
-		SSLerror(
-		    SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
+		SSLerror(SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
 		return (NULL);
 	}
 
@@ -1441,8 +1431,7 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 	CBS_init(&cbs, p, num);
 	while (CBS_len(&cbs) > 0) {
 		if (!CBS_get_u16(&cbs, &cipher_value)) {
-			SSLerror(
-			    SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
+			SSLerror(SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
 			goto err;
 		}
 
@@ -1454,8 +1443,7 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 			 * renegotiating.
 			 */
 			if (s->internal->renegotiate) {
-				SSLerror(
-				    SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
+				SSLerror(SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
 				ssl3_send_alert(s, SSL3_AL_FATAL,
 				    SSL_AD_HANDSHAKE_FAILURE);
 
@@ -1474,8 +1462,7 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 			 */
 			max_version = ssl_max_server_version(s);
 			if (max_version == 0 || s->version < max_version) {
-				SSLerror(
-				    SSL_R_INAPPROPRIATE_FALLBACK);
+				SSLerror(SSL_R_INAPPROPRIATE_FALLBACK);
 				if (s->s3 != NULL)
 					ssl3_send_alert(s, SSL3_AL_FATAL,
 					    SSL_AD_INAPPROPRIATE_FALLBACK);
@@ -1486,8 +1473,7 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 
 		if ((c = ssl3_get_cipher_by_value(cipher_value)) != NULL) {
 			if (!sk_SSL_CIPHER_push(sk, c)) {
-				SSLerror(
-				    ERR_R_MALLOC_FAILURE);
+				SSLerror(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 		}
@@ -1812,8 +1798,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	}
 
 	if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0) {
-		SSLerror(
-		    SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
+		SSLerror(SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
 		goto err;
 	}
 
@@ -1881,13 +1866,11 @@ SSL_CTX_new(const SSL_METHOD *meth)
 		goto err;
 
 	if ((ret->internal->md5 = EVP_get_digestbyname("ssl3-md5")) == NULL) {
-		SSLerror(
-		    SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
+		SSLerror(SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
 		goto err2;
 	}
 	if ((ret->internal->sha1 = EVP_get_digestbyname("ssl3-sha1")) == NULL) {
-		SSLerror(
-		    SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
+		SSLerror(SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
 		goto err2;
 	}
 
@@ -2126,8 +2109,7 @@ ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 		/* Key usage, if present, must allow signing. */
 		if ((x->ex_flags & EXFLAG_KUSAGE) &&
 		    ((x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) == 0)) {
-			SSLerror(
-			    SSL_R_ECC_CERT_NOT_FOR_SIGNING);
+			SSLerror(SSL_R_ECC_CERT_NOT_FOR_SIGNING);
 			return (0);
 		}
 	}
@@ -2448,24 +2430,21 @@ SSL_set_connect_state(SSL *s)
 int
 ssl_undefined_function(SSL *s)
 {
-	SSLerror(
-	    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	SSLerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return (0);
 }
 
 int
 ssl_undefined_void_function(void)
 {
-	SSLerror(
-	    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	SSLerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return (0);
 }
 
 int
 ssl_undefined_const_function(const SSL *s)
 {
-	SSLerror(
-	    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	SSLerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return (0);
 }
 

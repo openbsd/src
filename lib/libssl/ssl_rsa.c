@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.26 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.27 2017/01/26 12:16:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -565,8 +565,7 @@ int
 SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 {
 	if (pkey == NULL) {
-		SSLerror(
-		    ERR_R_PASSED_NULL_PARAMETER);
+		SSLerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 	if (!ssl_cert_inst(&ctx->internal->cert)) {
@@ -602,8 +601,7 @@ SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 		j = ERR_R_ASN1_LIB;
 		pkey = d2i_PrivateKey_bio(in, NULL);
 	} else {
-		SSLerror(
-		    SSL_R_BAD_SSL_FILETYPE);
+		SSLerror(SSL_R_BAD_SSL_FILETYPE);
 		goto end;
 	}
 	if (pkey == NULL) {

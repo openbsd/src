@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.3 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.4 2017/01/26 12:16:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -365,8 +365,7 @@ ssl3_output_cert_chain(SSL *s, CBB *cbb, X509 *x)
 
 			if (!X509_STORE_CTX_init(&xs_ctx, s->ctx->cert_store,
 			    x, NULL)) {
-				SSLerror(
-				    ERR_R_X509_LIB);
+				SSLerror(ERR_R_X509_LIB);
 				goto err;
 			}
 			X509_verify_cert(&xs_ctx);
@@ -420,8 +419,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		S3I(s)->tmp.reuse_message = 0;
 		if ((mt >= 0) && (S3I(s)->tmp.message_type != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(
-			    SSL_R_UNEXPECTED_MESSAGE);
+			SSLerror(SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 		}
 		*ok = 1;
@@ -473,8 +471,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 		if ((mt >= 0) && (*p != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(
-			    SSL_R_UNEXPECTED_MESSAGE);
+			SSLerror(SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 		}
 
@@ -488,8 +485,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 		if (l > (unsigned long)max) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerror(
-			    SSL_R_EXCESSIVE_MESSAGE_SIZE);
+			SSLerror(SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto f_err;
 		}
 		if (l && !BUF_MEM_grow_clean(s->internal->init_buf, l + 4)) {

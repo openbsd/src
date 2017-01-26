@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.82 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.83 2017/01/26 12:16:13 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -506,8 +506,7 @@ dtls1_accept(SSL *s)
 				 * at this point and digest cached records.
 				 */
 				if (!S3I(s)->handshake_buffer) {
-					SSLerror(
-					    ERR_R_INTERNAL_ERROR);
+					SSLerror(ERR_R_INTERNAL_ERROR);
 					ret = -1;
 					goto end;
 				}
@@ -706,8 +705,7 @@ dtls1_send_hello_verify_request(SSL *s)
 		if (s->ctx->internal->app_gen_cookie_cb == NULL ||
 		    s->ctx->internal->app_gen_cookie_cb(s,
 			D1I(s)->cookie, &(D1I(s)->cookie_len)) == 0) {
-			SSLerror(
-			    ERR_R_INTERNAL_ERROR);
+			SSLerror(ERR_R_INTERNAL_ERROR);
 			return 0;
 		}
 

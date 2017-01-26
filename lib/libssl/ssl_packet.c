@@ -106,8 +106,7 @@ ssl_convert_sslv2_client_hello(SSL *s)
 		return -1;
 
 	if (record_length < 9) {
-		SSLerror(
-		    SSL_R_RECORD_LENGTH_MISMATCH);
+		SSLerror(SSL_R_RECORD_LENGTH_MISMATCH);
 		return -1;
 	}
 	if (record_length > 4096) {
@@ -150,8 +149,7 @@ ssl_convert_sslv2_client_hello(SSL *s)
 	if (!CBS_get_bytes(&cbs, &challenge, challenge_length))
 		return -1;
 	if (CBS_len(&cbs) != 0) {
-		SSLerror(
-		    SSL_R_RECORD_LENGTH_MISMATCH);
+		SSLerror(SSL_R_RECORD_LENGTH_MISMATCH);
 		return -1;
 	}
 
@@ -236,16 +234,14 @@ ssl_server_legacy_first_packet(SSL *s)
 	if (ssl_is_sslv2_client_hello(&header) == 1) {
 		/* Only permit SSLv2 client hellos if TLSv1.0 is enabled. */
 		if (ssl_enabled_version_range(s, &min_version, NULL) != 1) {
-			SSLerror(
-			    SSL_R_NO_PROTOCOLS_AVAILABLE);
+			SSLerror(SSL_R_NO_PROTOCOLS_AVAILABLE);
 			return -1;
 		}
 		if (min_version > TLS1_VERSION)
 			return 1;
 
 		if (ssl_convert_sslv2_client_hello(s) != 1) {
-			SSLerror(
-			    SSL_R_BAD_PACKET_LENGTH);
+			SSLerror(SSL_R_BAD_PACKET_LENGTH);
 			return -1;
 		}
 

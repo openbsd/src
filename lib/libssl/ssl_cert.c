@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.61 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.62 2017/01/26 12:16:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -587,8 +587,7 @@ SSL_load_client_CA_file(const char *file)
 		if (ret == NULL) {
 			ret = sk_X509_NAME_new_null();
 			if (ret == NULL) {
-				SSLerror(
-				    ERR_R_MALLOC_FAILURE);
+				SSLerror(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 		}
@@ -643,8 +642,7 @@ SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	in = BIO_new(BIO_s_file_internal());
 
 	if (in == NULL) {
-		SSLerror(
-		    ERR_R_MALLOC_FAILURE);
+		SSLerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 

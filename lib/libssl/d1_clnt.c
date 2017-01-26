@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.72 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.73 2017/01/26 12:16:13 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -216,8 +216,7 @@ dtls1_connect(SSL *s)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
 
 			if ((s->version & 0xff00 ) != (DTLS1_VERSION & 0xff00)) {
-				SSLerror(
-				    ERR_R_INTERNAL_ERROR);
+				SSLerror(ERR_R_INTERNAL_ERROR);
 				ret = -1;
 				goto end;
 			}

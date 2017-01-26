@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.6 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.7 2017/01/26 12:16:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -364,8 +364,7 @@ ssl3_get_record(SSL *s)
 		if (!CBS_get_u8(&header, &type) ||
 		    !CBS_get_u16(&header, &ssl_version) ||
 		    !CBS_get_u16(&header, &len)) {
-			SSLerror(
-			    SSL_R_BAD_PACKET_LENGTH);
+			SSLerror(SSL_R_BAD_PACKET_LENGTH);
 			goto err;
 		}
 
@@ -374,8 +373,7 @@ ssl3_get_record(SSL *s)
 
 		/* Lets check version */
 		if (!s->internal->first_packet && ssl_version != s->version) {
-			SSLerror(
-			    SSL_R_WRONG_VERSION_NUMBER);
+			SSLerror(SSL_R_WRONG_VERSION_NUMBER);
 			if ((s->version & 0xFF00) == (ssl_version & 0xFF00) &&
 			    !s->internal->enc_write_ctx && !s->internal->write_hash)
 				/* Send back error using their minor version number :-) */
@@ -385,15 +383,13 @@ ssl3_get_record(SSL *s)
 		}
 
 		if ((ssl_version >> 8) != SSL3_VERSION_MAJOR) {
-			SSLerror(
-			    SSL_R_WRONG_VERSION_NUMBER);
+			SSLerror(SSL_R_WRONG_VERSION_NUMBER);
 			goto err;
 		}
 
 		if (rr->length > s->s3->rbuf.len - SSL3_RT_HEADER_LENGTH) {
 			al = SSL_AD_RECORD_OVERFLOW;
-			SSLerror(
-			    SSL_R_PACKET_LENGTH_TOO_LONG);
+			SSLerror(SSL_R_PACKET_LENGTH_TOO_LONG);
 			goto f_err;
 		}
 
@@ -510,8 +506,7 @@ ssl3_get_record(SSL *s)
 		 * (e.g. via a logfile)
 		 */
 		al = SSL_AD_BAD_RECORD_MAC;
-		SSLerror(
-		    SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+		SSLerror(SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
 		goto f_err;
 	}
 
@@ -543,8 +538,7 @@ ssl3_get_record(SSL *s)
 		 * empty record without forcing want_read.
 		 */
 		if (s->internal->empty_record_count++ > SSL_MAX_EMPTY_RECORDS) {
-			SSLerror(
-			    SSL_R_PEER_BEHAVING_BADLY);
+			SSLerror(SSL_R_PEER_BEHAVING_BADLY);
 			return -1;
 		}
 		if (s->internal->empty_record_count > 1) {
@@ -588,8 +582,7 @@ ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 		if (i < 0)
 			return (i);
 		if (i == 0) {
-			SSLerror(
-			    SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerror(SSL_R_SSL_HANDSHAKE_FAILURE);
 			return -1;
 		}
 	}
@@ -698,8 +691,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			if (prefix_len >
 				(SSL3_RT_HEADER_LENGTH + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD)) {
 				/* insufficient space */
-				SSLerror(
-				    ERR_R_INTERNAL_ERROR);
+				SSLerror(ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
 		}
@@ -961,8 +953,7 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		if (i < 0)
 			return (i);
 		if (i == 0) {
-			SSLerror(
-			    SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerror(SSL_R_SSL_HANDSHAKE_FAILURE);
 			return (-1);
 		}
 	}
@@ -1004,8 +995,7 @@ start:
 	                               * reset by ssl3_get_finished */
 	    && (rr->type != SSL3_RT_HANDSHAKE)) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerror(
-		    SSL_R_DATA_BETWEEN_CCS_AND_FINISHED);
+		SSLerror(SSL_R_DATA_BETWEEN_CCS_AND_FINISHED);
 		goto f_err;
 	}
 
@@ -1025,8 +1015,7 @@ start:
 		if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA) &&
 			(s->enc_read_ctx == NULL)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(
-			    SSL_R_APP_DATA_IN_HANDSHAKE);
+			SSLerror(SSL_R_APP_DATA_IN_HANDSHAKE);
 			goto f_err;
 		}
 
@@ -1126,8 +1115,7 @@ start:
 				if (i < 0)
 					return (i);
 				if (i == 0) {
-					SSLerror(
-					    SSL_R_SSL_HANDSHAKE_FAILURE);
+					SSLerror(SSL_R_SSL_HANDSHAKE_FAILURE);
 					return (-1);
 				}
 
@@ -1200,15 +1188,13 @@ start:
 			 */
 			else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
 				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerror(
-				    SSL_R_NO_RENEGOTIATION);
+				SSLerror(SSL_R_NO_RENEGOTIATION);
 				goto f_err;
 			}
 		} else if (alert_level == SSL3_AL_FATAL) {
 			s->internal->rwstate = SSL_NOTHING;
 			S3I(s)->fatal_alert = alert_descr;
-			SSLerror(
-			    SSL_AD_REASON_OFFSET + alert_descr);
+			SSLerror(SSL_AD_REASON_OFFSET + alert_descr);
 			ERR_asprintf_error_data("SSL alert number %d",
 			    alert_descr);
 			s->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
@@ -1236,24 +1222,21 @@ start:
 		if ((rr->length != 1) || (rr->off != 0) ||
 			(rr->data[0] != SSL3_MT_CCS)) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerror(
-			    SSL_R_BAD_CHANGE_CIPHER_SPEC);
+			SSLerror(SSL_R_BAD_CHANGE_CIPHER_SPEC);
 			goto f_err;
 		}
 
 		/* Check we have a cipher to change to */
 		if (S3I(s)->tmp.new_cipher == NULL) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(
-			    SSL_R_CCS_RECEIVED_EARLY);
+			SSLerror(SSL_R_CCS_RECEIVED_EARLY);
 			goto f_err;
 		}
 
 		/* Check that we should be receiving a Change Cipher Spec. */
 		if (!(s->s3->flags & SSL3_FLAGS_CCS_OK)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(
-			    SSL_R_CCS_RECEIVED_EARLY);
+			SSLerror(SSL_R_CCS_RECEIVED_EARLY);
 			goto f_err;
 		}
 		s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
@@ -1285,8 +1268,7 @@ start:
 		if (i < 0)
 			return (i);
 		if (i == 0) {
-			SSLerror(
-			    SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerror(SSL_R_SSL_HANDSHAKE_FAILURE);
 			return (-1);
 		}
 
@@ -1373,8 +1355,7 @@ ssl3_do_change_cipher_spec(SSL *s)
 	if (S3I(s)->tmp.key_block == NULL) {
 		if (s->session == NULL || s->session->master_key_length == 0) {
 			/* might happen if dtls1_read_bytes() calls this */
-			SSLerror(
-			    SSL_R_CCS_RECEIVED_EARLY);
+			SSLerror(SSL_R_CCS_RECEIVED_EARLY);
 			return (0);
 		}
 

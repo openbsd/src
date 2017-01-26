@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.91 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.92 2017/01/26 12:16:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1162,8 +1162,7 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 				 * it is no command or separator nor
 				 * alphanumeric, so we call this an error.
 				 */
-				SSLerror(
-				    SSL_R_INVALID_COMMAND);
+				SSLerror(SSL_R_INVALID_COMMAND);
 				retval = found = 0;
 				l++;
 				break;
@@ -1309,8 +1308,7 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 			if ((buflen == 8) && !strncmp(buf, "STRENGTH", 8))
 				ok = ssl_cipher_strength_sort(head_p, tail_p);
 			else
-				SSLerror(
-				    SSL_R_INVALID_COMMAND);
+				SSLerror(SSL_R_INVALID_COMMAND);
 			if (ok == 0)
 				retval = 0;
 			/*
