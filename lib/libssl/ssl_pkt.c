@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.4 2017/01/26 07:20:57 beck Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.5 2017/01/26 08:19:43 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -538,7 +538,7 @@ ssl3_get_record(SSL *s)
 	if (rr->length == 0) {
 		/*
 		 * CBC countermeasures for known IV weaknesses
-		 * can legitimately insert single empty record,
+		 * can legitimately insert a single empty record,
 		 * so we allow ourselves to read once past a single
 		 * empty record without forcing want_read.
 		 */
