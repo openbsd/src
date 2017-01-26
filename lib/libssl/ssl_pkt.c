@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.3 2017/01/26 06:39:08 beck Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.4 2017/01/26 07:20:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -337,7 +337,7 @@ ssl3_get_record(SSL *s)
 	rr = &(S3I(s)->rrec);
 	sess = s->session;
 
-again:
+ again:
 	/* check if we have the header */
 	if ((s->internal->rstate != SSL_ST_READ_BODY) ||
 	    (s->internal->packet_length < SSL3_RT_HEADER_LENGTH)) {
@@ -535,9 +535,26 @@ again:
 	/* we have pulled in a full packet so zero things */
 	s->internal->packet_length = 0;
 
-	/* just read a 0 length packet */
-	if (rr->length == 0)
+	if (rr->length == 0) {
+		/*
+		 * CBC countermeasures for known IV weaknesses
+		 * can legitimately insert single empty record,
+		 * so we allow ourselves to read once past a single
+		 * empty record without forcing want_read.
+		 */
+		if (s->internal->empty_record_count++ > SSL_MAX_EMPTY_RECORDS) {
+			SSLerr(SSL_F_SSL3_GET_RECORD,
+			    SSL_R_PEER_BEHAVING_BADLY);
+			return -1;
+		}
+		if (s->internal->empty_record_count > 1) {
+			ssl_force_want_read(s);
+			return -1;
+		}
 		goto again;
+	} else {
+		s->internal->empty_record_count = 0;
+	}
 
 	return (1);
 

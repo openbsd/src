@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.170 2017/01/26 06:32:58 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.171 2017/01/26 07:20:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -351,6 +351,8 @@ __BEGIN_HIDDEN_DECLS
 #define SSL_PKEY_ECC            5
 #define SSL_PKEY_GOST01		6
 #define SSL_PKEY_NUM		7
+
+#define SSL_MAX_EMPTY_RECORDS	32
 
 /* SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
  * 	    <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)
@@ -770,6 +772,8 @@ typedef struct ssl_internal_st {
 	int rstate;	/* where we are when reading */
 
 	int mac_packet;
+
+	int empty_record_count;
 } SSL_INTERNAL;
 
 typedef struct ssl3_state_internal_st {

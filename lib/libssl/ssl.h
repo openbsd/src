@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.124 2017/01/26 00:29:04 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.125 2017/01/26 07:20:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2064,6 +2064,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_WRONG_VERSION_NUMBER			 267
 #define SSL_R_X509_LIB					 268
 #define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS		 269
+#define SSL_R_PEER_BEHAVING_BADLY			 666
 
 #ifdef  __cplusplus
 }
