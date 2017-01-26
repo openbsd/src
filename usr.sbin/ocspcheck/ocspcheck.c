@@ -306,7 +306,7 @@ ocsp_request_new_from_cert(char *file, int nonce)
 	request->fullchain = read_fullchain(file, &count);
 	/* Drop rpath from pledge, we don't need to read anymore */
 	if (pledge("stdio inet dns", NULL) == -1)
-		err(EXIT_FAILURE, "pledge");
+		err(1, "pledge");
 
 	if (request->fullchain == NULL)
 		return NULL;
@@ -547,12 +547,12 @@ main(int argc, char **argv)
 			staplefd = open(outfile, O_WRONLY|O_CREAT,
 			    S_IWUSR|S_IRUSR|S_IRGRP|S_IROTH);
 		if (staplefd < 0)
-			err(EXIT_FAILURE, "Unable to open output file %s",
+			err(1, "Unable to open output file %s",
 			    outfile);
 	}
 
 	if (pledge("stdio inet rpath dns", NULL) == -1)
-		err(EXIT_FAILURE, "pledge");
+		err(1, "pledge");
 
 	/*
 	 * Load our certificate and keystore, and build up an
@@ -560,12 +560,12 @@ main(int argc, char **argv)
 	 * we have been given to check.
 	 */
 	if ((castore = read_cacerts(cafile)) == NULL)
-		exit(EXIT_FAILURE);
+		exit(1);
 	if ((request = ocsp_request_new_from_cert(certfile, nonce)) == NULL)
-		exit(EXIT_FAILURE);
+		exit(1);
 
 	if ((host = url2host(request->url, &port, &path)) == NULL)
-		errx(EXIT_FAILURE, "Invalid OCSP url %s from %s", request->url,
+		errx(1, "Invalid OCSP url %s from %s", request->url,
 		    certfile);
 	dspew("Built an %ld byte ocsp request\n", request->size);
 	vspew("Using %s to host %s, port %d, path %s\n",
@@ -584,14 +584,14 @@ main(int argc, char **argv)
 	hget = http_get(sources, rescount, host, port, path,
 	    request->data, request->size);
 	if (hget == NULL)
-		errx(EXIT_FAILURE, "http_get");
+		errx(1, "http_get");
 	httph = http_head_parse(hget->http, hget->xfer, &httphsz);
 	dspew("Server at %s returns:\n", host);
 	for (i = 0; i < httphsz; i++)
 		dspew("	  [%s]=[%s]\n", httph[i].key, httph[i].val);
 	dspew("	  [Body]=[%ld bytes]\n", hget->bodypartsz);
 	if (hget->bodypartsz <= 0)
-		errx(EXIT_FAILURE, "No body in reply from %s", host);
+		errx(1, "No body in reply from %s", host);
 
 	/*
 	 * Pledge minimally before fiddling with libcrypto init routines
@@ -599,7 +599,7 @@ main(int argc, char **argv)
 	 */
 
 	if (pledge("stdio", NULL) == -1)
-		err(EXIT_FAILURE, "pledge");
+		err(1, "pledge");
 
 	/*
 	 * Validate the OCSP response we got back
@@ -607,7 +607,7 @@ main(int argc, char **argv)
 	OPENSSL_add_all_algorithms_noconf();
 	if (!validate_response(hget->bodypart, hget->bodypartsz,
 		request, castore, host, certfile))
-		exit(EXIT_FAILURE);
+		exit(1);
 
 	/*
 	 * If we have been given a place to save a staple,
@@ -628,5 +628,5 @@ main(int argc, char **argv)
 		}
 		close(staplefd);
 	}
-	exit(EXIT_SUCCESS);
+	exit(0);
 }
