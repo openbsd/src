@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.158 2017/01/10 09:01:18 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.159 2017/01/26 13:03:47 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -725,7 +725,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 }
 #endif
 
-void *
+void
 tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
 	struct ip *ip = v;
@@ -739,20 +739,20 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	int errno;
 
 	if (sa->sa_family != AF_INET)
-		return NULL;
+		return;
 	faddr = satosin(sa)->sin_addr;
 	if (faddr.s_addr == INADDR_ANY)
-		return NULL;
+		return;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return NULL;
+		return;
 	errno = inetctlerrmap[cmd];
 	if (cmd == PRC_QUENCH)
 		/* 
 		 * Don't honor ICMP Source Quench messages meant for
 		 * TCP connections.
 		 */
-		return NULL;
+		return;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
 	else if (cmd == PRC_MSGSIZE && ip_mtudisc && ip) {
@@ -779,7 +779,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			 */
 			mtu = (u_int)ntohs(icp->icmp_nextmtu);
 			if (mtu >= tp->t_pmtud_mtu_sent)
-				return NULL;
+				return;
 			if (mtu >= tcp_hdrsz(tp) + tp->t_pmtud_mss_acked) {
 				/* 
 				 * Calculate new MTU, and create corresponding
@@ -797,18 +797,18 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 				 */
 				if (tp->t_flags & TF_PMTUD_PEND) {
 					if (SEQ_LT(tp->t_pmtud_th_seq, seq))
-						return NULL;
+						return;
 				} else
 					tp->t_flags |= TF_PMTUD_PEND;
 				tp->t_pmtud_th_seq = seq;
 				tp->t_pmtud_nextmtu = icp->icmp_nextmtu;
 				tp->t_pmtud_ip_len = icp->icmp_ip.ip_len;
 				tp->t_pmtud_ip_hl = icp->icmp_ip.ip_hl;
-				return NULL;
+				return;
 			}
 		} else {
 			/* ignore if we don't have a matching connection */
-			return NULL;
+			return;
 		}
 		notify = tcp_mtudisc, ip = 0;
 	} else if (cmd == PRC_MTUINC)
@@ -816,7 +816,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if (errno == 0)
-		return NULL;
+		return;
 
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
@@ -844,8 +844,6 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		}
 	} else
 		in_pcbnotifyall(&tcbtable, sa, rdomain, errno, notify);
-
-	return NULL;
 }
 
 

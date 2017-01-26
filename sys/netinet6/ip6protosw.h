@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6protosw.h,v 1.10 2013/10/21 12:40:50 deraadt Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.11 2017/01/26 13:03:47 bluhm Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct ip6ctlparam {
 };
 
 struct ip6protosw {
-	short 	pr_type;		/* socket type used for */
+	short	pr_type;		/* socket type used for */
 	struct	domain *pr_domain;	/* domain protocol a member of */
 	short	pr_protocol;		/* protocol number */
 	short	pr_flags;		/* see below */
@@ -132,7 +132,6 @@ struct ip6protosw {
 
 /* utility hooks */
 	void	(*pr_init)(void);	/* initialization hook */
-
 	void	(*pr_fasttimo)(void);	/* fast timeout (200ms) */
 	void	(*pr_slowtimo)(void);	/* slow timeout (500ms) */
 	void	(*pr_drain)(void);	/* flush any excess space possible */

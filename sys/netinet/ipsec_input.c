@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.139 2017/01/25 17:34:31 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.140 2017/01/26 13:03:47 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -79,7 +79,7 @@
 
 #include "bpfilter.h"
 
-void *ipsec_common_ctlinput(u_int, int, struct sockaddr *, void *, int);
+void ipsec_common_ctlinput(u_int, int, struct sockaddr *, void *, int);
 int ah4_input_cb(struct mbuf *, ...);
 int esp4_input_cb(struct mbuf *, ...);
 int ipcomp4_input_cb(struct mbuf *, ...);
@@ -725,14 +725,14 @@ ah4_input_cb(struct mbuf *m, ...)
 
 
 /* XXX rdomain */
-void *
+void
 ah4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
 	if (sa->sa_family != AF_INET ||
 	    sa->sa_len != sizeof(struct sockaddr_in))
-		return (NULL);
+		return;
 
-	return (ipsec_common_ctlinput(rdomain, cmd, sa, v, IPPROTO_AH));
+	ipsec_common_ctlinput(rdomain, cmd, sa, v, IPPROTO_AH);
 }
 
 /* IPv4 ESP wrapper. */
@@ -786,7 +786,7 @@ ipcomp4_input_cb(struct mbuf *m, ...)
 	return 0;
 }
 
-void *
+void
 ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
     void *v, int proto)
 {
@@ -810,7 +810,7 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 		 * or the MTU is too small to be acceptable.
 		 */
 		if (mtu < 296)
-			return (NULL);
+			return;
 
 		memset(&dst, 0, sizeof(struct sockaddr_in));
 		dst.sin_family = AF_INET;
@@ -822,13 +822,13 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 		tdbp = gettdb(rdomain, spi, (union sockaddr_union *)&dst,
 		    proto);
 		if (tdbp == NULL || tdbp->tdb_flags & TDBF_INVALID)
-			return (NULL);
+			return;
 
 		/* Walk the chain backwards to the first tdb */
 		for (; tdbp; tdbp = tdbp->tdb_inext) {
 			if (tdbp->tdb_flags & TDBF_INVALID ||
 			    (adjust = ipsec_hdrsz(tdbp)) == -1)
-				return (NULL);
+				return;
 
 			mtu -= adjust;
 
@@ -842,11 +842,10 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 			    adjust));
 		}
 	}
-	return (NULL);
 }
 
 /* XXX rdomain */
-void *
+void
 udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
 	struct ip *ip = v;
@@ -867,7 +866,7 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	 * or the MTU is too small to be acceptable.
 	 */
 	if (mtu < 296)
-		return (NULL);
+		return;
 
 	memset(&dst, 0, sizeof(dst));
 	dst.sin_family = AF_INET;
@@ -900,18 +899,17 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			}
 		}
 	}
-	return (NULL);
 }
 
 /* XXX rdomain */
-void *
+void
 esp4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
 	if (sa->sa_family != AF_INET ||
 	    sa->sa_len != sizeof(struct sockaddr_in))
-		return (NULL);
+		return;
 
-	return (ipsec_common_ctlinput(rdomain, cmd, sa, v, IPPROTO_ESP));
+	ipsec_common_ctlinput(rdomain, cmd, sa, v, IPPROTO_ESP);
 }
 
 #ifdef INET6
