@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.18 2015/01/19 00:22:30 guenther Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.19 2017/01/26 04:45:46 benno Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -60,7 +60,8 @@ int
 main(int argc, char *argv[])
 {
 	struct msghdr msg;
-	int listensock, sock, pfd[2], fd, i;
+	int sock, pfd[2], fd, i;
+	int listensock = -1;
 	char fname[16], buf[64];
 	struct cmsghdr *cmp;
 	int *files = NULL;
@@ -98,7 +99,7 @@ main(int argc, char *argv[])
 		if ((fd = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == -1)
 			err(1, "open %s", fname);
 		(void) snprintf(buf, sizeof buf, "This is file %d.\n", i + 1);
-		if (write(fd, buf, strlen(buf)) != strlen(buf))
+		if (write(fd, buf, strlen(buf)) != (ssize_t) strlen(buf))
 			err(1, "write %s", fname);
 		(void) close(fd);
 	}
@@ -273,7 +274,7 @@ child(int sock, int type)
 	cmp->cmsg_type = SCM_RIGHTS;
 
 	/*
-	 * Open the files again, and pass them to the child over the socket.
+	 * Open the files again, and pass them to the parent over the socket.
 	 */
 	files = (int *)CMSG_DATA(cmp);
 	for (i = 0; i < 3; i++) {
