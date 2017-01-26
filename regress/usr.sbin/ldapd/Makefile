@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2016/09/28 18:00:01 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2017/01/26 02:06:37 jmatthew Exp $
 
 OUT=${.CURDIR}/out
 DIT=dc=example,dc=com
@@ -18,7 +18,7 @@ regress:
 	@echo SKIPPED
 .endif
 
-REGRESS_TARGETS = bootstrap connect import perl purge #cpan
+REGRESS_TARGETS = connect import perl purge #cpan
 
 bootstrap:
 	@[ -z "${SUDO}" ] || ${SUDO} true
@@ -27,30 +27,31 @@ bootstrap:
 	@${SUDO} ldapd -dvv -r ${.OBJDIR} -f ${.OBJDIR}/ldapd1.conf > ${.OBJDIR}/log 2>&1 &
 	@sleep 1
 	@grep -a startup ${.OBJDIR}/log |sed -e 's/.*\[// ; s/\].*//' > ${.OBJDIR}/ldapd.pid
-.END:
-	@[ -f ${.OBJDIR}/ldapd.pid ] && ${SUDO} kill $$(cat ${.OBJDIR}/ldapd.pid)
 
-connect:
+.END:
+	@[ -f ${.OBJDIR}/ldapd.pid ] && ${SUDO} kill $$(cat ${.OBJDIR}/ldapd.pid) && rm ${.OBJDIR}/ldapd.pid
+
+connect: bootstrap
 	-ldapsearch -x -H ldapi://%2ftmp%2fldapi | diff - ${OUT}/empty.log
 	-ldapsearch -x -p 6639 -h localhost 2>&1 | diff - ${OUT}/empty.log
 	-ldapsearch -x -p 6636 -h localhost 2>&1 | diff - ${OUT}/empty.log
 
-import:
+import: bootstrap
 	ldapadd -f ${.CURDIR}/dit-example.ldif -Dcn=admin,${DIT} -x -w secret -h localhost -p 6639 | diff - ${OUT}/adding.log
 	ldapsearch -x -b ${DIT} -h localhost -p 6639 | diff - ${OUT}/example.log
 	ldapsearch -x -D cn=admin,${DIT} -w secret -b ${DIT} -h localhost -p 6639 | diff - ${OUT}/example.log
 
-purge: import
+purge: bootstrap
 	ldapdelete -Dcn=admin,${DIT} -x -w secret -h localhost -p 6639 -r ${DIT}
 	-ldapsearch -x -p 6639 -h localhost 2>&1 | diff - ${OUT}/empty.log
 
-perl:
+perl: bootstrap
 	@-perl ${.CURDIR}/run-tests.pl
 
 # run tests from Net::LDAP
 # requires all of databases/p5-ldap RUN_DEPENDS
 # tests above 41 fail because ldapd doesnt handle uppercase namespaces
-cpan:
+cpan: bootstrap
 	tar -C ${.OBJDIR} -xzf /usr/ports/distfiles/perl-ldap-${NLV}.tar.gz
 	@${SUDO} install -m 600 -o root ${.CURDIR}/nldapd.conf ${.OBJDIR}/perl-ldap-${NLV}
 	cp common.pl ${.OBJDIR}/perl-ldap-${NLV}/t
