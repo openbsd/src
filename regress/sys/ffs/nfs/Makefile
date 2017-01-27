@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/01/18 11:56:10 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2017/01/27 13:35:14 bluhm Exp $
 
 TESTS=		chflags chmod chown link mkdir mkfifo open rename rmdir \
 		symlink truncate unlink
@@ -40,9 +40,12 @@ stamp-setup:
 	${.MAKE} -C ${.CURDIR} mount
 	date >$@
 
+${.OBJDIR}/../fstest:
+	${.MAKE} -C ${.CURDIR}/.. fstest
+
 .for t in ${TESTS}
 REGRESS_TARGETS+=	run-regress-${t}
-run-regress-${t}: stamp-setup
+run-regress-${t}: stamp-setup ${.OBJDIR}/../fstest
 	@echo '\n======== $@ ========'
 	cd /mnt/regress-nfs-client && env FSTEST=${.OBJDIR}/../fstest \
 	    /bin/sh ${.CURDIR}/../run ${.CURDIR}/../tests/${t}/*.t
