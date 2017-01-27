@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.87 2017/01/05 13:53:09 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.88 2017/01/27 07:03:27 tom Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -344,7 +344,7 @@ server		: SERVER optmatch STRING	{
 
 			if (server_tls_load_ocsp(srv) == -1) {
 				yyerror("server \"%s\": failed to load "
-				    "oscp staple", srv->srv_conf.name);
+				    "ocsp staple", srv->srv_conf.name);
 				serverconfig_free(srv_conf);
 				free(srv);
 				YYERROR;
@@ -2069,7 +2069,7 @@ server_inherit(struct server *src, struct server_config *alias,
 	}
 
 	if (server_tls_load_ocsp(dst) == -1) {
-		yyerror("failed to load oscp staple "
+		yyerror("failed to load ocsp staple "
 		    "for server %s", dst->srv_conf.name);
 		serverconfig_free(&dst->srv_conf);
 		free(dst);

@@ -847,7 +847,7 @@ ocsp_svr_pid=$!
 echo "ocsp server pid = [ $ocsp_svr_pid ]"
 sleep 1
 
-# send query to oscp server
+# send query to ocsp server
 start_message "ocsp ... send OCSP request to server"
 
 ocsp_qry=$user1_dir/ocsp_qry.der

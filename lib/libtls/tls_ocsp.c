@@ -356,7 +356,7 @@ tls_ocsp_stapling_cb(SSL *ssl, void *arg)
  * Public API
  */
 
-/* Retrieve OSCP URL from peer certificate, if present */
+/* Retrieve OCSP URL from peer certificate, if present */
 const char *
 tls_peer_ocsp_url(struct tls *ctx)
 {
