@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.174 2017/01/26 00:08:50 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.175 2017/01/27 20:31:42 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -415,7 +415,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		    mtod(control, struct cmsghdr *)->cmsg_type == SCM_RIGHTS)
 			clen = CMSG_SPACE(
 			    (clen - CMSG_ALIGN(sizeof(struct cmsghdr))) *
-			    (sizeof(struct file *) / sizeof(int)));
+			    (sizeof(struct fdpass) / sizeof(int)));
 	}
 
 #define	snderr(errno)	{ error = errno; NET_UNLOCK(s); goto release; }

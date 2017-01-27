@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.112 2017/01/25 06:15:50 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.113 2017/01/27 20:31:42 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -55,11 +55,6 @@ void	uipc_setaddr(const struct unpcb *, struct mbuf *);
 
 /* list of all UNIX domain sockets, for unp_gc() */
 LIST_HEAD(unp_head, unpcb) unp_head = LIST_HEAD_INITIALIZER(unp_head);
-
-struct fdpass {
-	struct file	*fp;
-	int		flags;
-};
 
 /*
  * Stack of sets of files that were passed over a socket but were
