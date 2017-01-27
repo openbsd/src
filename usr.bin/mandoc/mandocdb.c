@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.186 2017/01/11 17:39:45 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.187 2017/01/27 00:55:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1176,13 +1176,15 @@ mpages_merge(struct dba *dba, struct mparse *mp)
 		if (mpage->desc == NULL)
 			mpage->desc = mandoc_strdup(mpage->mlinks->name);
 
-		if (warnings && !use_all)
-			for (mlink = mpage->mlinks; mlink;
-			     mlink = mlink->next)
+		for (mlink = mpage->mlinks;
+		     mlink != NULL;
+		     mlink = mlink->next) {
+			putkey(mpage, mlink->name, NAME_FILE);
+			if (warnings && !use_all)
 				mlink_check(mpage, mlink);
+		}
 
 		dbadd(dba, mpage);
-		mlink = mpage->mlinks;
 
 nextpage:
 		ohash_delete(&strings);
