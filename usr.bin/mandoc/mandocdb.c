@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.187 2017/01/27 00:55:49 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.188 2017/01/27 01:04:13 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -829,6 +829,20 @@ filescan(const char *file)
 		say(start, "Filename too long");
 		free(mlink);
 		return;
+	}
+
+	/*
+	 * In test mode or when the original name is absolute
+	 * but outside our tree, guess the base directory.
+	 */
+
+	if (op == OP_TEST || (start == buf && *start == '/')) {
+		if (strncmp(buf, "man/", 4) == 0)
+			start = buf + 4;
+		else if ((start = strstr(buf, "/man/")) != NULL)
+			start += 5;
+		else
+			start = buf;
 	}
 
 	/*
