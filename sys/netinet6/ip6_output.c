@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.221 2017/01/19 14:49:19 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.222 2017/01/27 02:55:36 dhill Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ int ip6_insertfraghdr(struct mbuf *, struct mbuf *, int,
 int ip6_insert_jumboopt(struct ip6_exthdrs *, u_int32_t);
 int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 int ip6_getpmtu(struct rtentry *, struct ifnet *, u_long *);
-int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
+int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *);
 static __inline u_int16_t __attribute__((__unused__))
     in6_cksum_phdr(const struct in6_addr *, const struct in6_addr *,
     u_int32_t, u_int32_t);
@@ -1839,22 +1839,22 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 do {\
 	if (src->type) {\
 		size_t hlen = (((struct ip6_ext *)src->type)->ip6e_len + 1) << 3;\
-		dst->type = malloc(hlen, M_IP6OPT, canwait);\
-		if (dst->type == NULL && canwait == M_NOWAIT)\
+		dst->type = malloc(hlen, M_IP6OPT, M_NOWAIT);\
+		if (dst->type == NULL)\
 			goto bad;\
 		memcpy(dst->type, src->type, hlen);\
 	}\
 } while (/*CONSTCOND*/ 0)
 
 int
-copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src, int canwait)
+copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src)
 {
 	dst->ip6po_hlim = src->ip6po_hlim;
 	dst->ip6po_tclass = src->ip6po_tclass;
 	dst->ip6po_flags = src->ip6po_flags;
 	if (src->ip6po_pktinfo) {
 		dst->ip6po_pktinfo = malloc(sizeof(*dst->ip6po_pktinfo),
-		    M_IP6OPT, canwait);
+		    M_IP6OPT, M_NOWAIT);
 		if (dst->ip6po_pktinfo == NULL)
 			goto bad;
 		*dst->ip6po_pktinfo = *src->ip6po_pktinfo;
@@ -2256,7 +2256,7 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 		 * but we can allow this since this option should be rarely
 		 * used.
 		 */
-		if ((error = copypktopts(opt, stickyopt, M_NOWAIT)) != 0)
+		if ((error = copypktopts(opt, stickyopt)) != 0)
 			return (error);
 	}
 
