@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.188 2017/01/27 01:04:13 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.189 2017/01/27 01:09:02 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1113,6 +1113,7 @@ mpages_merge(struct dba *dba, struct mparse *mp)
 		if (mlink->dform != FORM_CAT || mlink->fform != FORM_CAT) {
 			mparse_readfd(mp, fd, mlink->file);
 			close(fd);
+			fd = -1;
 			mparse_result(mp, &man, &sodest);
 		}
 
@@ -1169,24 +1170,27 @@ mpages_merge(struct dba *dba, struct mparse *mp)
 			mpage->title = mandoc_strdup(man->meta.title);
 		} else if (man != NULL && man->macroset == MACROSET_MAN) {
 			man_validate(man);
-			mpage->form = FORM_SRC;
-			mpage->sec = mandoc_strdup(man->meta.msec);
-			mpage->arch = mandoc_strdup(mlink->arch);
-			mpage->title = mandoc_strdup(man->meta.title);
-		} else {
+			if (*man->meta.msec != '\0' ||
+			    *man->meta.msec != '\0') {
+				mpage->form = FORM_SRC;
+				mpage->sec = mandoc_strdup(man->meta.msec);
+				mpage->arch = mandoc_strdup(mlink->arch);
+				mpage->title = mandoc_strdup(man->meta.title);
+			} else
+				man = NULL;
+		}
+
+		assert(mpage->desc == NULL);
+		if (man == NULL) {
 			mpage->form = FORM_CAT;
 			mpage->sec = mandoc_strdup(mlink->dsec);
 			mpage->arch = mandoc_strdup(mlink->arch);
 			mpage->title = mandoc_strdup(mlink->name);
-		}
-
-		assert(mpage->desc == NULL);
-		if (man != NULL && man->macroset == MACROSET_MDOC)
-			parse_mdoc(mpage, &man->meta, man->first);
-		else if (man != NULL)
-			parse_man(mpage, &man->meta, man->first);
-		else
 			parse_cat(mpage, fd);
+		} else if (man->macroset == MACROSET_MDOC)
+			parse_mdoc(mpage, &man->meta, man->first);
+		else
+			parse_man(mpage, &man->meta, man->first);
 		if (mpage->desc == NULL)
 			mpage->desc = mandoc_strdup(mpage->mlinks->name);
 
