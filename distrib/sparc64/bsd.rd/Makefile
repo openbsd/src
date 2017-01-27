@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2016/10/14 18:44:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.30 2017/01/27 17:59:09 natano Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -8,37 +8,17 @@ CBIN?=		instbin
 LISTS?=		${.CURDIR}/list
 UTILS?=		${TOP}/../miniroot
 
-MOUNT_POINT=	/mnt
-
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CRDEV=	/dev/r${VND}c
-PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
-
 STRIP?=		strip
 GZIPCMD?=	gzip
 GZIPFLAGS?=	-9fn
 MTREE=		${UTILS}/mtree.conf
 
 RAMDISK=	RAMDISK
-BOOT?=		/usr/mdec/boot
-BOOTXX?=	/usr/mdec/bootxx
 
-CLEANFILES+=	bsd.rd_unz rdsetroot
+all: bsd.rd
 
-#.include "${TOP}/common/Makefile.inc"
-
-all: ${CBIN} bsd.rd
-
-DISKTYPE=       rdroot
-NBLKS=          5744
-
-# old format, minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS=	-t ffs -m 0 -o space
-NEWFSARGS_RD=	-i 4096 -c ${NBLKS}
-NEWFSARGS_FD=	-i 524288 -c 2880
+DISKTYPE=	rdroot
+MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 
 bsd.rd:	bsd.rd_unz
 	objcopy -Sg -R .comment bsd.rd_unz bsd.strip
@@ -54,55 +34,20 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
 	cp -p ${.CURDIR}/../../../sys/arch/sparc64/compile/${RAMDISK}/obj/bsd bsd
 
-${IMAGE}:	do_prep do_mount do_files do_umount
-	mv -f ${REALIMAGE} ${IMAGE}
+${IMAGE}: ${CBIN}
+	rm -rf $@.d
+	install -d -o root -g wheel $@.d
+	mtree -def ${MTREE} -p $@.d -u
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
+	    sh ${UTILS}/runlist.sh ${LISTS}
+	rm $@.d/${CBIN}
+	makefs ${MAKEFSARGS_RD} $@ $@.d
 
 rdsetroot:	${TOP}/../common/elfrdsetroot.c
 	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
 	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
 	    ${TOP}/../common/elf64.c
-
-do_prep:
-	dd if=/dev/zero of=${REALIMAGE} count=${NBLKS}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${DISKTYPE}
-	
-do_mount:
-	newfs ${NEWFSARGS} ${NEWFSARGS_RD} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-
-do_umount:
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-
-unconfig:
-	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-
-rd_setup: ${CBIN}
-	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	fsck ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-
-rd_teardown:
-	@df -i ${MOUNT_POINT}
-	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	cp ${REALIMAGE} ${IMAGE}
-	rm ${REALIMAGE}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
-
-.PRECIOUS:	${IMAGE}
 
 .ifdef RELEASEDIR
 install:
@@ -121,17 +66,11 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
-do_files:
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
-	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
-	rm ${MOUNT_POINT}/${CBIN}
-
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}*.cache \
 	    lib*.a lib*.olist ${CBIN}.map \
-	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs rdsetroot
+	    *.o *.lo *.c bsd bsd.rd{,_unz} bsd.gz bsd.strip floppy*.fs rdsetroot
+	/bin/rm -rf ${IMAGE}.d
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

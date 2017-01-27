@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2016/10/14 23:52:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 2017/01/27 17:59:09 natano Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -19,29 +19,17 @@ FLOPPYTYPE?=	floppy
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CRDEV=	/dev/r${VND}c
-PID!=		echo $$$$
 
 GZIPCMD?=	gzip
 GZIPFLAGS?=	-9nv
 GZIPEXT?=	.gz
 
-MOUNT_POINT?=	/mnt
-DISKTYPE=	rdroot
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
-IMAGE?=		ramdisk${REV}.fs
-IMAGESIZE?=	8192 # 4MB in 512 byte blocks
-NEWFS_WILL_FAIL?=false
-CRUNCHGENOPTS?=
 KERNEL?=	RAMDISKU5
-UTILS?=		${.CURDIR}/../miniroot
-STRIP?=		strip
 
-DISKTYPE=       rdroot
-NBLKS=          6144
-# minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -m 0 -o space -i 8192
+DISKTYPE=	rdroot
+MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=8192
 
 .ifndef DESTDIR
 all ${IMAGE}:
@@ -76,7 +64,15 @@ ${BSD_RD}: ${CBIN} ${IMAGE} bsd elfrdsetroot
 	cp bsd ${BSD_RD}
 	${.OBJDIR}/elfrdsetroot ${BSD_RD} < ${IMAGE}
 
-${IMAGE}: rd_setup do_files rd_teardown
+${IMAGE}: ${CBIN}
+	rm -rf $@.d
+	install -d -o root -g wheel $@.d
+	mtree -def ${MTREE} -p $@.d -u
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
+	    sh ${UTILS}/runlist.sh ${LISTS}
+	rm $@.d/${CBIN}
+	makefs ${MAKEFSARGS_RD} $@ $@.d
 
 .endif
 
@@ -84,19 +80,6 @@ bsd:
 	cd ${TOP}/../../sys/arch/sparc64/compile/${KERNEL} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
 	cp -p ${TOP}/../../sys/arch/sparc64/compile/${KERNEL}/obj/bsd bsd
-
-rd_setup:
-	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c ${VND} ${IMAGE}
-	disklabel -w ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	fsck ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-
-rd_teardown:
-	@df -i ${MOUNT_POINT}
-	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND}
 
 elfrdsetroot:	${TOP}/../common/elfrdsetroot.c
 	${HOSTCC} ${HOSTCFLAGS} -o elfrdsetroot \
@@ -107,8 +90,6 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 
-.PRECIOUS:	${IMAGE}
-
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
@@ -118,17 +99,11 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
-do_files:
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
-	    ARCHDIR=${.CURDIR}/.. TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
-	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
-	rm ${MOUNT_POINT}/${CBIN}
-
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	    lib*.a lib*.olist ${CBIN}.map \
 	    *.o *.lo *.c bsd ${BSD_RD} bsd.gz ${FLOPPY} elfrdsetroot
+	/bin/rm -rf ${IMAGE}.d
 
 .ifdef RELEASEDIR
 install:
