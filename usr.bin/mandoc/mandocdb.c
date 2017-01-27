@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.189 2017/01/27 01:09:02 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.190 2017/01/27 01:14:34 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1214,29 +1214,48 @@ static void
 parse_cat(struct mpage *mpage, int fd)
 {
 	FILE		*stream;
-	char		*line, *p, *title;
+	struct mlink	*mlink;
+	char		*line, *p, *title, *sec;
 	size_t		 linesz, plen, titlesz;
 	ssize_t		 len;
 	int		 offs;
 
-	stream = (-1 == fd) ?
-	    fopen(mpage->mlinks->file, "r") :
-	    fdopen(fd, "r");
-	if (NULL == stream) {
-		if (-1 != fd)
+	mlink = mpage->mlinks;
+	stream = fd == -1 ? fopen(mlink->file, "r") : fdopen(fd, "r");
+	if (stream == NULL) {
+		if (fd != -1)
 			close(fd);
 		if (warnings)
-			say(mpage->mlinks->file, "&fopen");
+			say(mlink->file, "&fopen");
 		return;
 	}
 
 	line = NULL;
 	linesz = 0;
 
+	/* Parse the section number from the header line. */
+
+	while (getline(&line, &linesz, stream) != -1) {
+		if (*line == '\n')
+			continue;
+		if ((sec = strchr(line, '(')) == NULL)
+			break;
+		if ((p = strchr(++sec, ')')) == NULL)
+			break;
+		free(mpage->sec);
+		mpage->sec = mandoc_strndup(sec, p - sec);
+		if (warnings && *mlink->dsec != '\0' &&
+		    strcasecmp(mpage->sec, mlink->dsec))
+			say(mlink->file,
+			    "Section \"%s\" manual in %s directory",
+			    mpage->sec, mlink->dsec);
+		break;
+	}
+
 	/* Skip to first blank line. */
 
-	while (getline(&line, &linesz, stream) != -1)
-		if (*line == '\n')
+	while (line == NULL || *line != '\n')
+		if (getline(&line, &linesz, stream) == -1)
 			break;
 
 	/*
@@ -1282,8 +1301,7 @@ parse_cat(struct mpage *mpage, int fd)
 
 	if (NULL == title || '\0' == *title) {
 		if (warnings)
-			say(mpage->mlinks->file,
-			    "Cannot find NAME section");
+			say(mlink->file, "Cannot find NAME section");
 		fclose(stream);
 		free(title);
 		return;
@@ -1302,8 +1320,7 @@ parse_cat(struct mpage *mpage, int fd)
 			/* Skip to next word. */ ;
 	} else {
 		if (warnings)
-			say(mpage->mlinks->file,
-			    "No dash in title line");
+			say(mlink->file, "No dash in title line");
 		p = title;
 	}
 
