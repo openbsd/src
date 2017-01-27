@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.182 2017/01/09 17:49:55 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.183 2017/01/27 13:47:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -117,6 +117,7 @@ main(int argc, char *argv[])
 	struct manpage	*res, *resp;
 	char		*conf_file, *defpaths;
 	const char	*sec;
+	const char	*thisarg;
 	size_t		 i, sz;
 	int		 prio, best_prio;
 	enum outmode	 outmode;
@@ -223,9 +224,14 @@ main(int argc, char *argv[])
 			break;
 		case 'O':
 			search.outkey = optarg;
-			while (optarg != NULL)
-				manconf_output(&conf.output,
-				    strsep(&optarg, ","));
+			while (optarg != NULL) {
+				thisarg = optarg;
+				if (manconf_output(&conf.output,
+				    strsep(&optarg, ","), 0) == 0)
+					continue;
+				warnx("-O %s: Bad argument", thisarg);
+				return (int)MANDOCLEVEL_BADARG;
+			}
 			break;
 		case 'S':
 			search.arch = optarg;
