@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.91 2017/01/20 05:00:53 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.92 2017/01/27 13:38:40 jsg Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -180,7 +180,6 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 	@touch ${CROSSINCLUDES}
 
 ${CROSSBINUTILS}:	${CROSSINCLUDES}
-.if ${TARGET_ARCH} != "aarch64"
 	(cd ${.CURDIR}/${BINUTILS_DIR}; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    PIE_DEFAULT=${PIE_DEFAULT} \
@@ -215,7 +214,6 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 		${CROSSDIR}/usr/bin/${TARGET_CANON}-$$cmd ;\
 	 fi ;\
 	done
-.endif
 	@touch ${CROSSBINUTILS}
 
 
