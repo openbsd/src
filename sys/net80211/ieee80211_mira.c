@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.9 2017/01/28 11:57:19 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.10 2017/01/28 16:01:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -135,6 +135,17 @@ mira_fp_sprintf(uint64_t fp)
 		return "ERR";
 
 	return buf;
+}
+
+void
+mira_print_driver_stats(struct ieee80211_mira_node *mn,
+    struct ieee80211_node *ni) {
+	DPRINTF(("%s driver stats:\n", ether_sprintf(ni->ni_macaddr)));
+	DPRINTF(("mn->frames = %u\n", mn->frames));
+	DPRINTF(("mn->retries = %u\n", mn->retries));
+	DPRINTF(("mn->txfail = %u\n", mn->txfail));
+	DPRINTF(("mn->ampdu_size = %u\n", mn->ampdu_size));
+	DPRINTF(("mn->agglen = %u\n", mn->agglen));
 }
 #endif /* MIRA_DEBUG */
 
@@ -428,12 +439,33 @@ ieee80211_mira_update_stats(struct ieee80211_mira_node *mn,
 
 	/* Compute Sub-Frame Error Rate (see section 2.2 in MiRA paper). */
 	sfer = (mn->frames * mn->retries + mn->txfail);
-	if ((sfer >> MIRA_FP_SHIFT) != 0)
-		panic("sfer overflow"); /* bug in wifi driver */
+	if ((sfer >> MIRA_FP_SHIFT) != 0) { /* bug in wifi driver */
+		if (ic->ic_if.if_flags & IFF_DEBUG) {
+#ifdef DIAGNOSTIC
+			printf("%s: mira sfer overflow\n",
+			    ether_sprintf(ni->ni_macaddr));
+#endif
+#ifdef MIRA_DEBUG
+			mira_print_driver_stats(mn, ni);
+#endif
+		}
+		ieee80211_mira_probe_done(mn);
+		return;
+	}
 	sfer <<= MIRA_FP_SHIFT; /* convert to fixed-point */
 	sfer /= ((mn->retries + 1) * mn->frames);
-	if (sfer > MIRA_FP_1)
-		panic("sfer > 1"); /* bug in wifi driver */
+	if (sfer > MIRA_FP_1) { /* bug in wifi driver */
+		if (ic->ic_if.if_flags & IFF_DEBUG) {
+#ifdef DIAGNOSTIC
+			printf("%s: mira sfer > 1\n",
+			    ether_sprintf(ni->ni_macaddr));
+#endif
+#ifdef MIRA_DEBUG
+			mira_print_driver_stats(mn, ni);
+#endif
+		}
+		sfer = MIRA_FP_1; /* round down */
+	}
 
 	/* Store current loss percentage SFER. */
 	g->loss = sfer * 100;
@@ -1004,13 +1036,10 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 	if (mn->valid_rates == 0)
 		mn->valid_rates = ieee80211_mira_valid_rates(ic, ni);
 
-	DPRINTFN(5, ("%s: driver stats:\n", __func__));
-	DPRINTFN(5, ("mn->frames = %u\n", mn->frames));
-	DPRINTFN(5, ("mn->retries = %u\n", mn->retries));
-	DPRINTFN(5, ("mn->txfail = %u\n", mn->txfail));
-	DPRINTFN(5, ("mn->ampdu_size = %u\n", mn->ampdu_size));
-	DPRINTFN(5, ("mn->agglen = %u\n", mn->agglen));
-
+#ifdef MIRA_DEBUG
+	if (mira_debug >= 5)
+		mira_print_driver_stats(mn, ni);
+#endif
 	ieee80211_mira_update_stats(mn, ic, ni);
 
 	if (mn->probing) {
