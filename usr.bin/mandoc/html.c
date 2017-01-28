@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.72 2017/01/26 18:28:04 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.73 2017/01/28 22:36:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -447,7 +447,7 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 	char		 numbuf[16];
 	struct tag	*t;
 	const char	*attr;
-	char		*s;
+	char		*arg1, *arg2;
 	double		 v;
 	int		 i, have_style, tflags;
 
@@ -492,12 +492,14 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 	have_style = 0;
 	while (*fmt != '\0') {
 		if (*fmt == 's') {
-			print_word(h, " style=\"");
 			have_style = 1;
 			fmt++;
 			break;
 		}
-		s = va_arg(ap, char *);
+
+		/* Parse a non-style attribute and its arguments. */
+
+		arg1 = va_arg(ap, char *);
 		switch (*fmt++) {
 		case 'c':
 			attr = "class";
@@ -509,23 +511,31 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			attr = "id";
 			break;
 		case '?':
-			attr = s;
-			s = va_arg(ap, char *);
+			attr = arg1;
+			arg1 = va_arg(ap, char *);
 			break;
 		default:
 			abort();
 		}
+		arg2 = NULL;
+		if (*fmt == 'M')
+			arg2 = va_arg(ap, char *);
+		if (arg1 == NULL)
+			continue;
+
+		/* Print the non-style attributes. */
+
 		print_byte(h, ' ');
 		print_word(h, attr);
 		print_byte(h, '=');
 		print_byte(h, '"');
 		switch (*fmt) {
 		case 'M':
-			print_href(h, s, va_arg(ap, char *), 1);
+			print_href(h, arg1, arg2, 1);
 			fmt++;
 			break;
 		case 'I':
-			print_href(h, s, NULL, 0);
+			print_href(h, arg1, NULL, 0);
 			fmt++;
 			break;
 		case 'R':
@@ -533,7 +543,7 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			fmt++;
 			/* FALLTHROUGH */
 		default:
-			print_encode(h, s, NULL, 1);
+			print_encode(h, arg1, NULL, 1);
 			break;
 		}
 		print_byte(h, '"');
@@ -541,31 +551,35 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 
 	/* Print out styles. */
 
-	s = NULL;
-	su = &mysu;
 	while (*fmt != '\0') {
+		arg1 = NULL;
+		su = NULL;
 
 		/* First letter: input argument type. */
 
 		switch (*fmt++) {
 		case 'h':
 			i = va_arg(ap, int);
+			su = &mysu;
 			SCALE_HS_INIT(su, i);
 			break;
 		case 's':
-			s = va_arg(ap, char *);
+			arg1 = va_arg(ap, char *);
 			break;
 		case 'u':
 			su = va_arg(ap, struct roffsu *);
 			break;
 		case 'v':
 			i = va_arg(ap, int);
+			su = &mysu;
 			SCALE_VS_INIT(su, i);
 			break;
 		case 'w':
 		case 'W':
-			s = va_arg(ap, char *);
-			a2width(s, su);
+			if ((arg2 = va_arg(ap, char *)) == NULL)
+				break;
+			su = &mysu;
+			a2width(arg2, su);
 			if (fmt[-1] == 'W')
 				su->scale *= -1.0;
 			break;
@@ -598,33 +612,37 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			attr = "min-width";
 			break;
 		case '?':
-			print_word(h, s);
-			print_byte(h, ':');
-			print_byte(h, ' ');
-			print_word(h, va_arg(ap, char *));
-			print_byte(h, ';');
-			if (*fmt != '\0')
-				print_byte(h, ' ');
-			continue;
+			attr = arg1;
+			arg1 = va_arg(ap, char *);
+			break;
 		default:
 			abort();
 		}
-		v = su->scale;
-		if (su->unit == SCALE_MM && (v /= 100.0) == 0.0)
-			v = 1.0;
-		else if (su->unit == SCALE_BU)
-			v /= 24.0;
+		if (su == NULL && arg1 == NULL)
+			continue;
+
+		if (have_style == 1)
+			print_word(h, " style=\"");
+		else
+			print_byte(h, ' ');
 		print_word(h, attr);
 		print_byte(h, ':');
 		print_byte(h, ' ');
-		(void)snprintf(numbuf, sizeof(numbuf), "%.2f", v);
-		print_word(h, numbuf);
-		print_word(h, roffscales[su->unit]);
+		if (su != NULL) {
+			v = su->scale;
+			if (su->unit == SCALE_MM && (v /= 100.0) == 0.0)
+				v = 1.0;
+			else if (su->unit == SCALE_BU)
+				v /= 24.0;
+			(void)snprintf(numbuf, sizeof(numbuf), "%.2f", v);
+			print_word(h, numbuf);
+			print_word(h, roffscales[su->unit]);
+		} else
+			print_word(h, arg1);
 		print_byte(h, ';');
-		if (*fmt != '\0')
-			print_byte(h, ' ');
+		have_style = 2;
 	}
-	if (have_style)
+	if (have_style == 2)
 		print_byte(h, '"');
 
 	va_end(ap);
