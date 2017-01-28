@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.95 2017/01/21 02:32:37 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.96 2017/01/28 23:26:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2017 $
+.Dd $Mdocdate: January 28 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1357,6 +1357,10 @@ it is hard to predict which tab stop position the tab will advance to.
 Whitespace at the end of input lines is almost never semantically
 significant \(em but in the odd case where it might be, it is
 extremely confusing when reviewing and maintaining documents.
+.It Sy "new sentence, new line"
+.Pq mdoc
+A new sentence starts in the middle of a text line.
+Start it on a new input line to help formatters produce correct spacing.
 .It Sy "bad comment style"
 .Pq roff
 Comment lines start with a dot, a backslash, and a double-quote character.

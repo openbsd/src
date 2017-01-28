@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc.c,v 1.147 2017/01/10 13:46:53 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.148 2017/01/28 23:26:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -310,6 +310,22 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 
 	if (mandoc_eos(buf+offs, (size_t)(end-buf-offs)))
 		mdoc->last->flags |= NODE_EOS;
+
+	for (c = buf + offs; c != NULL; c = strchr(c + 1, '.')) {
+		if (c - buf < offs + 2)
+			continue;
+		if (end - c < 4)
+			break;
+		if (isalpha((unsigned char)c[-2]) &&
+		    isalpha((unsigned char)c[-1]) &&
+		    c[1] == ' ' &&
+		    isupper((unsigned char)(c[2] == ' ' ? c[3] : c[2])) &&
+		    (c[-2] != 'n' || c[-1] != 'c') &&
+		    (c[-2] != 'v' || c[-1] != 's'))
+			mandoc_msg(MANDOCERR_EOS, mdoc->parse,
+			    line, (int)(c - buf), NULL);
+	}
+
 	return 1;
 }
 
