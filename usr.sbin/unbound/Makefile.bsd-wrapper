@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 2017/01/24 09:57:29 tb Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2017/01/28 12:38:42 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -89,16 +89,6 @@ clean cleandir:
 
 depend:
 	# Nothing here so far...
-
-# install-sh creates obj/util using 'install -d' without setting the mode
-# explicitly. Make sure it has the right owner and permissions.
-.if make(obj)
-.END:
-	@umask ${WOBJUMASK}; \
-	[[ `id -u` -eq 0 ]] && SETOWNER="chown -h ${BUILDUSER}" || SETOWNER=:; \
-	mkdir -p util; \
-	$$SETOWNER util;
-.endif
 
 tags:
 	# Nothing here so far...
