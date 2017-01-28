@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.46 2017/01/24 20:15:32 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.47 2017/01/28 16:11:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -108,7 +108,6 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 	if (c->session != NULL && c->session != s)
 		c->last_session = c->session;
 	c->session = s;
-	server_client_set_key_table(c, NULL);
 	status_timer_start(c);
 	session_update_activity(s, NULL);
 	gettimeofday(&s->last_attached_time, NULL);

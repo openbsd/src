@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.97 2017/01/24 20:15:32 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.98 2017/01/28 16:11:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -277,7 +277,6 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		} else if (c->session != NULL)
 			c->last_session = c->session;
 		c->session = s;
-		server_client_set_key_table(c, NULL);
 		status_timer_start(c);
 		notify_client("client-session-changed", c);
 		session_update_activity(s, NULL);

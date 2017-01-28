@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.66 2017/01/24 20:15:32 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.67 2017/01/28 16:11:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -98,7 +98,6 @@ cmd_attach_session(struct cmdq_item *item, int dflag, int rflag,
 			environ_update(s->options, c->environ, s->environ);
 
 		c->session = s;
-		server_client_set_key_table(c, NULL);
 		status_timer_start(c);
 		notify_client("client-session-changed", c);
 		session_update_activity(s, NULL);
