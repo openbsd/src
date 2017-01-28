@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.8 2017/01/12 18:06:57 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.9 2017/01/28 11:57:19 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -64,6 +64,7 @@ int	ieee80211_mira_prev_mcs(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
 int	ieee80211_mira_probe_valid(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
+void	ieee80211_mira_probe_done(struct ieee80211_mira_node *);
 int	ieee80211_mira_intra_mode_ra_finished(
 	    struct ieee80211_mira_node *, struct ieee80211_node *);
 void	ieee80211_mira_trigger_next_rateset(struct ieee80211_mira_node *mn,
@@ -706,6 +707,16 @@ ieee80211_mira_probe_valid(struct ieee80211_mira_node *mn,
 	    g->nprobe_bytes >= IEEE80211_MIRA_MIN_PROBE_BYTES);
 }
 
+void
+ieee80211_mira_probe_done(struct ieee80211_mira_node *mn)
+{
+	ieee80211_mira_cancel_timeouts(mn);
+	ieee80211_mira_reset_driver_stats(mn);
+	mn->probing = IEEE80211_MIRA_NOT_PROBING;
+	mn->probed_rates = 0;
+	mn->candidate_rates = 0;
+}
+
 int
 ieee80211_mira_intra_mode_ra_finished(struct ieee80211_mira_node *mn,
     struct ieee80211_node *ni)
@@ -1012,8 +1023,6 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 			DPRINTFN(4, ("probing MCS %d\n", ni->ni_txmcs));
 		} else if (ieee80211_mira_inter_mode_ra_finished(mn, ni)) {
 			int best = ieee80211_mira_best_rate(mn, ni);
-			mn->probing = IEEE80211_MIRA_NOT_PROBING;
-			mn->probed_rates = 0;
 			if (mn->best_mcs != best) {
 				mn->best_mcs = best;
 				ni->ni_txmcs = best;
@@ -1024,7 +1033,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 				mn->g[best].nprobe_bytes = 0;
 			} else
 				ni->ni_txmcs = mn->best_mcs;
-
+			ieee80211_mira_probe_done(mn);
 		}
 
 		splx(s);
@@ -1079,6 +1088,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 		/* Remain at current rate. */
 		mn->probing = IEEE80211_MIRA_NOT_PROBING;
 		mn->probed_rates = 0;
+		mn->candidate_rates = 0;
 	}
 
 	splx(s);
