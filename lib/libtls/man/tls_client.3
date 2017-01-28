@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_client.3,v 1.1 2017/01/25 23:53:18 schwarze Exp $
+.\" $OpenBSD: tls_client.3,v 1.2 2017/01/28 00:59:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2017 $
+.Dd $Mdocdate: January 28 2017 $
 .Dt TLS_CLIENT 3
 .Os
 .Sh NAME
@@ -85,3 +85,10 @@ returns 0 on success or -1 on error.
 .Xr tls_config_new 3 ,
 .Xr tls_connect 3 ,
 .Xr tls_init 3
+.Sh HISTORY
+These functions appeared in
+.Ox 5.6
+and got their final names in
+.Ox 5.7 .
+.Sh AUTHORS
+.An Joel Sing Aq Mt jsing@openbsd.org

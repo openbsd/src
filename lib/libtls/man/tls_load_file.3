@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_load_file.3,v 1.2 2017/01/27 20:19:51 schwarze Exp $
+.\" $OpenBSD: tls_load_file.3,v 1.3 2017/01/28 00:59:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2017 $
+.Dd $Mdocdate: January 28 2017 $
 .Dt TLS_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -198,3 +198,58 @@ The other functions return 0 on success or -1 on error.
 .Xr tls_config_set_session_id 3 ,
 .Xr tls_configure 3 ,
 .Xr tls_init 3
+.Sh HISTORY
+.Fn tls_config_set_ca_file ,
+.Fn tls_config_set_ca_path ,
+.Fn tls_config_set_cert_file ,
+.Fn tls_config_set_cert_mem ,
+.Fn tls_config_set_key_file ,
+.Fn tls_config_set_key_mem ,
+and
+.Fn tls_config_set_verify_depth
+appeared in
+.Ox 5.6
+and got their final names in
+.Ox 5.7 .
+.Pp
+.Fn tls_load_file ,
+.Fn tls_config_set_ca_mem ,
+and
+.Fn tls_config_clear_keys
+appeared in
+.Ox 5.7 .
+.Pp
+.Fn tls_config_verify_client
+and
+.Fn tls_config_verify_client_optional
+appeared in
+.Ox 5.9 .
+.Pp
+.Fn tls_config_set_keypair_file
+and
+.Fn tls_config_set_keypair_mem
+appeared in
+.Ox 6.0 ,
+and
+.Fn tls_config_add_keypair_file
+and
+.Fn tls_config_add_keypair_mem
+in
+.Ox 6.1 .
+.Sh AUTHORS
+.An Joel Sing Aq Mt jsing@openbsd.org
+with contibutions from
+.An Ted Unangst Aq Mt tedu@openbsd.org
+.Pp
+.An -nosplit
+.Fn tls_config_verify_client
+and
+.Fn tls_config_verify_client_optional
+were written by
+.An Bob Beck Aq Mt beck@openbsd.org .
+.Pp
+.Fn tls_load_file
+and
+.Fn tls_config_set_ca_mem
+were written by
+.An Reyk Floeter Aq Mt reyk@openbsd.org .
