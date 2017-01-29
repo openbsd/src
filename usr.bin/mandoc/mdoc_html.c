@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.138 2017/01/28 22:36:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.139 2017/01/29 14:02:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -347,7 +347,7 @@ print_mdoc_node(MDOC_ARGS)
 		return;
 
 	child = 1;
-	t = h->tags.head;
+	t = h->tag;
 	n->flags &= ~NODE_ENDED;
 
 	switch (n->type) {
@@ -387,7 +387,7 @@ print_mdoc_node(MDOC_ARGS)
 		 */
 		if (h->tblt != NULL) {
 			print_tblclose(h);
-			t = h->tags.head;
+			t = h->tag;
 		}
 		assert(h->tblt == NULL);
 		if (mdocs[n->tok].pre && (n->end == ENDBODY_NOT || n->child))

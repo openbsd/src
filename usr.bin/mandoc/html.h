@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.41 2017/01/26 18:28:04 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.42 2017/01/29 14:02:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -78,10 +78,6 @@ struct	tag {
 	enum htmltag	  tag;
 };
 
-struct tagq {
-	struct tag	 *head;
-};
-
 struct	html {
 	int		  flags;
 #define	HTML_NOSPACE	 (1 << 0) /* suppress next space */
@@ -100,7 +96,7 @@ struct	html {
 	size_t		  col; /* current output byte position */
 	size_t		  bufcol; /* current buf byte position */
 	char		  buf[80]; /* output buffer */
-	struct tagq	  tags; /* stack of open tags */
+	struct tag	 *tag; /* last open tag */
 	struct rofftbl	  tbl; /* current table */
 	struct tag	 *tblt; /* current open table scope */
 	char		 *base_man; /* base for manpage href */

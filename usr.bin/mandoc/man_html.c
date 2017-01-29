@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.83 2017/01/26 18:28:04 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.84 2017/01/29 14:02:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -195,7 +195,7 @@ print_man_node(MAN_ARGS)
 	struct tag	*t;
 
 	child = 1;
-	t = h->tags.head;
+	t = h->tag;
 	if (t == mh->nofill)
 		t = t->next;
 
@@ -238,7 +238,7 @@ print_man_node(MAN_ARGS)
 		 */
 		if (h->tblt) {
 			print_tblclose(h);
-			t = h->tags.head;
+			t = h->tag;
 		}
 		if (mans[n->tok].pre)
 			child = (*mans[n->tok].pre)(man, n, mh, h);
