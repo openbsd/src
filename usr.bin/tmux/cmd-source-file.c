@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.32 2017/01/09 19:29:12 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.33 2017/01/29 22:10:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -53,7 +53,7 @@ cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
 	struct cmdq_item	*new_item;
 	enum cmd_retval		 retval;
 	glob_t			 g;
-	int			 i;
+	u_int			 i;
 
 	quiet = args_has(args, 'q');
 	if (glob(args->argv[0], 0, NULL, &g) != 0) {
@@ -64,7 +64,7 @@ cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	retval = CMD_RETURN_NORMAL;
-	for (i = 0; i < g.gl_pathc; i++) {
+	for (i = 0; i < (u_int)g.gl_pathc; i++) {
 		if (load_cfg(g.gl_pathv[i], c, item, quiet) != 0)
 			retval = CMD_RETURN_ERROR;
 	}
