@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.131 2016/11/19 14:20:58 tb Exp $
+#	$OpenBSD: Makefile,v 1.132 2017/01/29 17:06:56 rpe Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -75,7 +75,8 @@ build:
 
 do-build:
 .ifdef GLOBAL_AUTOCONF_CACHE
-	cp /dev/null ${GLOBAL_AUTOCONF_CACHE}
+	${INSTALL} -c -o ${BUILDUSER} -g ${WOBJGROUP} -m 664 /dev/null \
+	    ${GLOBAL_AUTOCONF_CACHE}
 .endif
 	@if [[ `id -u` -ne 0 ]]; then \
 		echo $@ must be called by root >&2; \
