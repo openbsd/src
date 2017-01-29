@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.6 2015/09/18 13:04:41 bcook Exp $ */
+/* $OpenBSD: ech_key.c,v 1.7 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -106,7 +106,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 
 	if (outlen > INT_MAX) {
 		/* Sort of, anyway. */
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+		ECDHerror(ERR_R_MALLOC_FAILURE);
 		return -1;
 	}
 
@@ -120,19 +120,18 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 
 	priv_key = EC_KEY_get0_private_key(ecdh);
 	if (priv_key == NULL) {
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_NO_PRIVATE_VALUE);
+		ECDHerror(ECDH_R_NO_PRIVATE_VALUE);
 		goto err;
 	}
 
 	group = EC_KEY_get0_group(ecdh);
 	if ((tmp = EC_POINT_new(group)) == NULL) {
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+		ECDHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	if (!EC_POINT_mul(group, tmp, NULL, pub_key, priv_key, ctx)) {
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,
-		    ECDH_R_POINT_ARITHMETIC_FAILURE);
+		ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
 		goto err;
 	}
 
@@ -140,8 +139,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	    NID_X9_62_prime_field) {
 		if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, y,
 		    ctx)) {
-			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,
-			    ECDH_R_POINT_ARITHMETIC_FAILURE);
+			ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
 			goto err;
 		}
 	}
@@ -149,8 +147,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	else {
 		if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, y,
 		    ctx)) {
-			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,
-			    ECDH_R_POINT_ARITHMETIC_FAILURE);
+			ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
 			goto err;
 		}
 	}
@@ -159,28 +156,28 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	buflen = ECDH_size(ecdh);
 	len = BN_num_bytes(x);
 	if (len > buflen) {
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+		ECDHerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
 	if (KDF == NULL && outlen < buflen) {
 		/* The resulting key would be truncated. */
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_KEY_TRUNCATION);
+		ECDHerror(ECDH_R_KEY_TRUNCATION);
 		goto err;
 	}
 	if ((buf = malloc(buflen)) == NULL) {
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+		ECDHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	memset(buf, 0, buflen - len);
 	if (len != (size_t)BN_bn2bin(x, buf + buflen - len)) {
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_BN_LIB);
+		ECDHerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
 	if (KDF != NULL) {
 		if (KDF(buf, buflen, out, &outlen) == NULL) {
-			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_KDF_FAILED);
+			ECDHerror(ECDH_R_KDF_FAILED);
 			goto err;
 		}
 		ret = outlen;

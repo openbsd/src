@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_lib.c,v 1.11 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: eng_lib.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -72,7 +72,7 @@ ENGINE_new(void)
 
 	ret = malloc(sizeof(ENGINE));
 	if (ret == NULL) {
-		ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
+		ENGINEerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	memset(ret, 0, sizeof(ENGINE));
@@ -113,8 +113,7 @@ engine_free_util(ENGINE *e, int locked)
 	int i;
 
 	if (e == NULL) {
-		ENGINEerr(ENGINE_F_ENGINE_FREE_UTIL,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	if (locked)
@@ -245,8 +244,7 @@ int
 ENGINE_set_id(ENGINE *e, const char *id)
 {
 	if (id == NULL) {
-		ENGINEerr(ENGINE_F_ENGINE_SET_ID,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	e->id = id;
@@ -257,8 +255,7 @@ int
 ENGINE_set_name(ENGINE *e, const char *name)
 {
 	if (name == NULL) {
-		ENGINEerr(ENGINE_F_ENGINE_SET_NAME,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	e->name = name;

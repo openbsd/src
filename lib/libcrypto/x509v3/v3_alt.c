@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_alt.c,v 1.26 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_alt.c,v 1.27 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -279,7 +279,7 @@ v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	int i;
 
 	if ((gens = sk_GENERAL_NAME_new_null()) == NULL) {
-		X509V3err(X509V3_F_V2I_ISSUER_ALT, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
@@ -318,7 +318,7 @@ copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
 	if (ctx && (ctx->flags == CTX_TEST))
 		return 1;
 	if (!ctx || !ctx->issuer_cert) {
-		X509V3err(X509V3_F_COPY_ISSUER, X509V3_R_NO_ISSUER_DETAILS);
+		X509V3error(X509V3_R_NO_ISSUER_DETAILS);
 		goto err;
 	}
 	i = X509_get_ext_by_NID(ctx->issuer_cert, NID_subject_alt_name, -1);
@@ -326,14 +326,14 @@ copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
 		return 1;
 	if (!(ext = X509_get_ext(ctx->issuer_cert, i)) ||
 	    !(ialt = X509V3_EXT_d2i(ext))) {
-		X509V3err(X509V3_F_COPY_ISSUER, X509V3_R_ISSUER_DECODE_ERROR);
+		X509V3error(X509V3_R_ISSUER_DECODE_ERROR);
 		goto err;
 	}
 
 	for (i = 0; i < sk_GENERAL_NAME_num(ialt); i++) {
 		gen = sk_GENERAL_NAME_value(ialt, i);
 		if (!sk_GENERAL_NAME_push(gens, gen)) {
-			X509V3err(X509V3_F_COPY_ISSUER, ERR_R_MALLOC_FAILURE);
+			X509V3error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
@@ -355,7 +355,7 @@ v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	int i;
 
 	if (!(gens = sk_GENERAL_NAME_new_null())) {
-		X509V3err(X509V3_F_V2I_SUBJECT_ALT, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
@@ -401,7 +401,7 @@ copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 	if (ctx != NULL && ctx->flags == CTX_TEST)
 		return 1;
 	if (!ctx || (!ctx->subject_cert && !ctx->subject_req)) {
-		X509V3err(X509V3_F_COPY_EMAIL, X509V3_R_NO_SUBJECT_DETAILS);
+		X509V3error(X509V3_R_NO_SUBJECT_DETAILS);
 		goto err;
 	}
 	/* Find the subject name */
@@ -422,14 +422,14 @@ copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 			i--;
 		}
 		if (!email || !(gen = GENERAL_NAME_new())) {
-			X509V3err(X509V3_F_COPY_EMAIL, ERR_R_MALLOC_FAILURE);
+			X509V3error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		gen->d.ia5 = email;
 		email = NULL;
 		gen->type = GEN_EMAIL;
 		if (!sk_GENERAL_NAME_push(gens, gen)) {
-			X509V3err(X509V3_F_COPY_EMAIL, ERR_R_MALLOC_FAILURE);
+			X509V3error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		gen = NULL;
@@ -453,7 +453,7 @@ v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	int i;
 
 	if (!(gens = sk_GENERAL_NAME_new_null())) {
-		X509V3err(X509V3_F_V2I_GENERAL_NAMES, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
@@ -487,7 +487,7 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	GENERAL_NAME *gen = NULL;
 
 	if (!value) {
-		X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_MISSING_VALUE);
+		X509V3error(X509V3_R_MISSING_VALUE);
 		return NULL;
 	}
 
@@ -496,8 +496,7 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	else {
 		gen = GENERAL_NAME_new();
 		if (gen == NULL) {
-			X509V3err(X509V3_F_A2I_GENERAL_NAME,
-			    ERR_R_MALLOC_FAILURE);
+			X509V3error(ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
 	}
@@ -513,8 +512,7 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 		{
 			ASN1_OBJECT *obj;
 			if (!(obj = OBJ_txt2obj(value, 0))) {
-				X509V3err(X509V3_F_A2I_GENERAL_NAME,
-				    X509V3_R_BAD_OBJECT);
+				X509V3error(X509V3_R_BAD_OBJECT);
 				ERR_asprintf_error_data("value=%s", value);
 				goto err;
 			}
@@ -528,8 +526,7 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 		else
 			gen->d.ip = a2i_IPADDRESS(value);
 		if (gen->d.ip == NULL) {
-			X509V3err(X509V3_F_A2I_GENERAL_NAME,
-			    X509V3_R_BAD_IP_ADDRESS);
+			X509V3error(X509V3_R_BAD_IP_ADDRESS);
 			ERR_asprintf_error_data("value=%s", value);
 			goto err;
 		}
@@ -537,22 +534,20 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 
 	case GEN_DIRNAME:
 		if (!do_dirname(gen, value, ctx)) {
-			X509V3err(X509V3_F_A2I_GENERAL_NAME,
-			    X509V3_R_DIRNAME_ERROR);
+			X509V3error(X509V3_R_DIRNAME_ERROR);
 			goto err;
 		}
 		break;
 
 	case GEN_OTHERNAME:
 		if (!do_othername(gen, value, ctx)) {
-			X509V3err(X509V3_F_A2I_GENERAL_NAME,
-			    X509V3_R_OTHERNAME_ERROR);
+			X509V3error(X509V3_R_OTHERNAME_ERROR);
 			goto err;
 		}
 		break;
 
 	default:
-		X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_UNSUPPORTED_TYPE);
+		X509V3error(X509V3_R_UNSUPPORTED_TYPE);
 		goto err;
 	}
 
@@ -560,8 +555,7 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 		if (!(gen->d.ia5 = ASN1_IA5STRING_new()) ||
 		    !ASN1_STRING_set(gen->d.ia5, (unsigned char*)value,
 			strlen(value))) {
-			X509V3err(X509V3_F_A2I_GENERAL_NAME,
-			    ERR_R_MALLOC_FAILURE);
+			X509V3error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
@@ -587,7 +581,7 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	value = cnf->value;
 
 	if (!value) {
-		X509V3err(X509V3_F_V2I_GENERAL_NAME_EX, X509V3_R_MISSING_VALUE);
+		X509V3error(X509V3_R_MISSING_VALUE);
 		return NULL;
 	}
 
@@ -606,8 +600,7 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	else if (!name_cmp(name, "otherName"))
 		type = GEN_OTHERNAME;
 	else {
-		X509V3err(X509V3_F_V2I_GENERAL_NAME_EX,
-		    X509V3_R_UNSUPPORTED_OPTION);
+		X509V3error(X509V3_R_UNSUPPORTED_OPTION);
 		ERR_asprintf_error_data("name=%s", name);
 		return NULL;
 	}
@@ -655,7 +648,7 @@ do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
 		return 0;
 	sk = X509V3_get_section(ctx, value);
 	if (!sk) {
-		X509V3err(X509V3_F_DO_DIRNAME, X509V3_R_SECTION_NOT_FOUND);
+		X509V3error(X509V3_R_SECTION_NOT_FOUND);
 		ERR_asprintf_error_data("section=%s", value);
 		X509_NAME_free(nm);
 		return 0;

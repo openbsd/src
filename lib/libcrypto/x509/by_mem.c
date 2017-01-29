@@ -1,4 +1,4 @@
-/* $OpenBSD: by_mem.c,v 1.3 2015/02/05 01:33:22 reyk Exp $ */
+/* $OpenBSD: by_mem.c,v 1.4 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -129,7 +129,7 @@ by_mem_ctrl(X509_LOOKUP *lu, int cmd, const char *buf,
 	ok = count != 0;
  done:
 	if (count == 0)
-		X509err(X509_F_X509_LOAD_CERT_CRL_FILE,ERR_R_PEM_LIB);
+		X509error(ERR_R_PEM_LIB);
 	if (inf != NULL)
 		sk_X509_INFO_pop_free(inf, X509_INFO_free);
 	if (in != NULL)

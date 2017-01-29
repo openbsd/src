@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.30 2015/10/16 15:15:39 jsing Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.31 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -260,7 +260,7 @@ i2d_RSA_NET(const RSA *a, unsigned char **pp,
 
 	/* Since its RC4 encrypted length is actual length */
 	if ((zz = malloc(rsalen)) == NULL) {
-		ASN1err(ASN1_F_I2D_RSA_NET, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -269,12 +269,12 @@ i2d_RSA_NET(const RSA *a, unsigned char **pp,
 	i2d_RSAPrivateKey(a, &zz);
 
 	if ((zz = malloc(pkeylen)) == NULL) {
-		ASN1err(ASN1_F_I2D_RSA_NET, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	if (!ASN1_STRING_set(enckey->os, "private-key", -1)) {
-		ASN1err(ASN1_F_I2D_RSA_NET, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	enckey->enckey->digest->data = zz;
@@ -287,7 +287,7 @@ i2d_RSA_NET(const RSA *a, unsigned char **pp,
 		cb = EVP_read_pw_string;
 	i = cb((char *)buf, sizeof(buf), "Enter Private Key password:", 1);
 	if (i != 0) {
-		ASN1err(ASN1_F_I2D_RSA_NET, ASN1_R_BAD_PASSWORD_READ);
+		ASN1error(ASN1_R_BAD_PASSWORD_READ);
 		goto err;
 	}
 	i = strlen((char *)buf);
@@ -340,19 +340,18 @@ d2i_RSA_NET(RSA **a, const unsigned char **pp, long length,
 
 	enckey = d2i_NETSCAPE_ENCRYPTED_PKEY(NULL, &p, length);
 	if (!enckey) {
-		ASN1err(ASN1_F_D2I_RSA_NET, ASN1_R_DECODING_ERROR);
+		ASN1error(ASN1_R_DECODING_ERROR);
 		return NULL;
 	}
 
 	/* XXX 11 == strlen("private-key") */
 	if (enckey->os->length != 11 ||
 	    memcmp("private-key", enckey->os->data, 11) != 0) {
-		ASN1err(ASN1_F_D2I_RSA_NET, ASN1_R_PRIVATE_KEY_HEADER_MISSING);
+		ASN1error(ASN1_R_PRIVATE_KEY_HEADER_MISSING);
 		goto err;
 	}
 	if (OBJ_obj2nid(enckey->enckey->algor->algorithm) != NID_rc4) {
-		ASN1err(ASN1_F_D2I_RSA_NET,
-		    ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM);
+		ASN1error(ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM);
 		goto err;
 	}
 	if (cb == NULL)
@@ -384,7 +383,7 @@ d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 
 	i=cb((char *)buf, sizeof(buf), "Enter Private Key password:",0);
 	if (i != 0) {
-		ASN1err(ASN1_F_D2I_RSA_NET_2, ASN1_R_BAD_PASSWORD_READ);
+		ASN1error(ASN1_R_BAD_PASSWORD_READ);
 		goto err;
 	}
 
@@ -411,15 +410,14 @@ d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 	zz = os->data;
 
 	if ((pkey = d2i_NETSCAPE_PKEY(NULL, &zz, os->length)) == NULL) {
-		ASN1err(ASN1_F_D2I_RSA_NET_2,
-		    ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY);
+		ASN1error(ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY);
 		goto err;
 	}
 
 	zz = pkey->private_key->data;
 	if ((ret = d2i_RSAPrivateKey(a, &zz,
 	    pkey->private_key->length)) == NULL) {
-		ASN1err(ASN1_F_D2I_RSA_NET_2, ASN1_R_UNABLE_TO_DECODE_RSA_KEY);
+		ASN1error(ASN1_R_UNABLE_TO_DECODE_RSA_KEY);
 		goto err;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_none.c,v 1.10 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: rsa_none.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,14 +68,12 @@ RSA_padding_add_none(unsigned char *to, int tlen, const unsigned char *from,
     int flen)
 {
 	if (flen > tlen) {
-		RSAerr(RSA_F_RSA_PADDING_ADD_NONE,
-		    RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+		RSAerror(RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		return 0;
 	}
 
 	if (flen < tlen) {
-		RSAerr(RSA_F_RSA_PADDING_ADD_NONE,
-		    RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE);
+		RSAerror(RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE);
 		return 0;
 	}
 
@@ -88,7 +86,7 @@ RSA_padding_check_none(unsigned char *to, int tlen, const unsigned char *from,
     int flen, int num)
 {
 	if (flen > tlen) {
-		RSAerr(RSA_F_RSA_PADDING_CHECK_NONE, RSA_R_DATA_TOO_LARGE);
+		RSAerror(RSA_R_DATA_TOO_LARGE);
 		return -1;
 	}
 

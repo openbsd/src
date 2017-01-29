@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.30 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.31 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,7 +132,7 @@ RSA_new_method(ENGINE *engine)
 
 	ret = malloc(sizeof(RSA));
 	if (ret == NULL) {
-		RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+		RSAerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -140,7 +140,7 @@ RSA_new_method(ENGINE *engine)
 #ifndef OPENSSL_NO_ENGINE
 	if (engine) {
 		if (!ENGINE_init(engine)) {
-			RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+			RSAerror(ERR_R_ENGINE_LIB);
 			free(ret);
 			return NULL;
 		}
@@ -150,7 +150,7 @@ RSA_new_method(ENGINE *engine)
 	if (ret->engine) {
 		ret->meth = ENGINE_get_RSA(ret->engine);
 		if (!ret->meth) {
-			RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+			RSAerror(ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
 			return NULL;

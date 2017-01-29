@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_acpt.c,v 1.26 2015/07/18 22:09:30 beck Exp $ */
+/* $OpenBSD: bss_acpt.c,v 1.27 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,7 +201,7 @@ again:
 	switch (c->state) {
 	case ACPT_S_BEFORE:
 		if (c->param_addr == NULL) {
-			BIOerr(BIO_F_ACPT_STATE, BIO_R_NO_ACCEPT_PORT_SPECIFIED);
+			BIOerror(BIO_R_NO_ACCEPT_PORT_SPECIFIED);
 			return (-1);
 		}
 		s = BIO_get_accept_socket(c->param_addr, c->bind_mode);
@@ -211,7 +211,7 @@ again:
 		if (c->accept_nbio) {
 			if (!BIO_socket_nbio(s, 1)) {
 				close(s);
-				BIOerr(BIO_F_ACPT_STATE, BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET);
+				BIOerror(BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET);
 				return (-1);
 			}
 		}
@@ -248,7 +248,7 @@ again:
 
 		if (c->nbio) {
 			if (!BIO_socket_nbio(i, 1)) {
-				BIOerr(BIO_F_ACPT_STATE, BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET);
+				BIOerror(BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET);
 				goto err;
 			}
 		}

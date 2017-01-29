@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt.c,v 1.17 2016/11/08 20:01:06 miod Exp $ */
+/* $OpenBSD: p5_crpt.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -90,7 +90,7 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	/* Extract useful info from parameter */
 	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
 	    param->value.sequence == NULL) {
-		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
+		EVPerror(EVP_R_DECODE_ERROR);
 		return 0;
 	}
 
@@ -100,15 +100,14 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 
 	pbuf = param->value.sequence->data;
 	if (!(pbe = d2i_PBEPARAM(NULL, &pbuf, param->value.sequence->length))) {
-		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
+		EVPerror(EVP_R_DECODE_ERROR);
 		return 0;
 	}
 
 	if (!pbe->iter)
 		iter = 1;
 	else if ((iter = ASN1_INTEGER_get(pbe->iter)) <= 0) {
-		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN,
-		    EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
+		EVPerror(EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
 		return 0;
 	}
 	salt = pbe->salt->data;
@@ -138,12 +137,12 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 			goto err;
 	}
 	if ((size_t)EVP_CIPHER_key_length(cipher) > sizeof(md_tmp)) {
-		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_BAD_KEY_LENGTH);
+		EVPerror(EVP_R_BAD_KEY_LENGTH);
 		goto err;
 	}
 	memcpy(key, md_tmp, EVP_CIPHER_key_length(cipher));
 	if ((size_t)EVP_CIPHER_iv_length(cipher) > 16) {
-		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_IV_TOO_LARGE);
+		EVPerror(EVP_R_IV_TOO_LARGE);
 		goto err;
 	}
 	memcpy(iv, md_tmp + (16 - EVP_CIPHER_iv_length(cipher)),

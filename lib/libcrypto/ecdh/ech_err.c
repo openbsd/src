@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_err.c,v 1.5 2015/09/13 11:49:44 jsing Exp $ */
+/* $OpenBSD: ech_err.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -72,9 +72,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_ECDH,0,reason)
 
 static ERR_STRING_DATA ECDH_str_functs[]= {
-	{ERR_FUNC(ECDH_F_ECDH_CHECK),	"ECDH_CHECK"},
-	{ERR_FUNC(ECDH_F_ECDH_COMPUTE_KEY),	"ECDH_compute_key"},
-	{ERR_FUNC(ECDH_F_ECDH_DATA_NEW_METHOD),	"ECDH_DATA_new_method"},
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 

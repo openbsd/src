@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_ctx.c,v 1.14 2015/02/10 09:50:12 miod Exp $ */
+/* $OpenBSD: bn_ctx.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Ulf Moeller for the OpenSSL project. */
 /* ====================================================================
  * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
@@ -225,7 +225,7 @@ BN_CTX_new(void)
 {
 	BN_CTX *ret = malloc(sizeof(BN_CTX));
 	if (!ret) {
-		BNerr(BN_F_BN_CTX_NEW, ERR_R_MALLOC_FAILURE);
+		BNerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -274,7 +274,7 @@ BN_CTX_start(BN_CTX *ctx)
 		ctx->err_stack++;
 	/* (Try to) get a new frame pointer */
 	else if (!BN_STACK_push(&ctx->stack, ctx->used)) {
-		BNerr(BN_F_BN_CTX_START, BN_R_TOO_MANY_TEMPORARY_VARIABLES);
+		BNerror(BN_R_TOO_MANY_TEMPORARY_VARIABLES);
 		ctx->err_stack++;
 	}
 	CTXDBG_EXIT(ctx);
@@ -312,7 +312,7 @@ BN_CTX_get(BN_CTX *ctx)
 		/* Setting too_many prevents repeated "get" attempts from
 		 * cluttering the error stack. */
 		ctx->too_many = 1;
-		BNerr(BN_F_BN_CTX_GET, BN_R_TOO_MANY_TEMPORARY_VARIABLES);
+		BNerror(BN_R_TOO_MANY_TEMPORARY_VARIABLES);
 		return NULL;
 	}
 	/* OK, make sure the returned bignum is "zero" */

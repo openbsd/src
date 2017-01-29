@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.18 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,7 +125,7 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	int ret = 0, bit, bytes, mask;
 
 	if (rnd == NULL) {
-		BNerr(BN_F_BNRAND, ERR_R_PASSED_NULL_PARAMETER);
+		BNerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 
@@ -140,7 +140,7 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 
 	buf = malloc(bytes);
 	if (buf == NULL) {
-		BNerr(BN_F_BNRAND, ERR_R_MALLOC_FAILURE);
+		BNerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -224,7 +224,7 @@ bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
 	int count = 100;
 
 	if (range->neg || BN_is_zero(range)) {
-		BNerr(BN_F_BN_RAND_RANGE, BN_R_INVALID_RANGE);
+		BNerror(BN_R_INVALID_RANGE);
 		return 0;
 	}
 
@@ -254,8 +254,7 @@ bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
 			}
 
 			if (!--count) {
-				BNerr(BN_F_BN_RAND_RANGE,
-				    BN_R_TOO_MANY_ITERATIONS);
+				BNerror(BN_R_TOO_MANY_ITERATIONS);
 				return 0;
 			}
 
@@ -267,8 +266,7 @@ bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
 				return 0;
 
 			if (!--count) {
-				BNerr(BN_F_BN_RAND_RANGE,
-				    BN_R_TOO_MANY_ITERATIONS);
+				BNerror(BN_R_TOO_MANY_ITERATIONS);
 				return 0;
 			}
 		} while (BN_cmp(r, range) >= 0);

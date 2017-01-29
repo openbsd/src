@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.22 2016/09/03 14:37:00 bcook Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.23 2017/01/29 17:49:22 beck Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -470,7 +470,7 @@ BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
 	bn_check_top(p);
 	ret = BN_GF2m_poly2arr(p, arr, sizeof(arr) / sizeof(arr[0]));
 	if (!ret || ret > (int)(sizeof(arr) / sizeof(arr[0]))) {
-		BNerr(BN_F_BN_GF2M_MOD, BN_R_INVALID_LENGTH);
+		BNerror(BN_R_INVALID_LENGTH);
 		return 0;
 	}
 	ret = BN_GF2m_mod_arr(r, a, arr);
@@ -553,7 +553,7 @@ BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p,
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {
-		BNerr(BN_F_BN_GF2M_MOD_MUL, BN_R_INVALID_LENGTH);
+		BNerror(BN_R_INVALID_LENGTH);
 		goto err;
 	}
 	ret = BN_GF2m_mod_mul_arr(r, a, b, arr, ctx);
@@ -615,7 +615,7 @@ BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {
-		BNerr(BN_F_BN_GF2M_MOD_SQR, BN_R_INVALID_LENGTH);
+		BNerror(BN_R_INVALID_LENGTH);
 		goto err;
 	}
 	ret = BN_GF2m_mod_sqr_arr(r, a, arr, ctx);
@@ -1052,7 +1052,7 @@ BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p,
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {
-		BNerr(BN_F_BN_GF2M_MOD_EXP, BN_R_INVALID_LENGTH);
+		BNerror(BN_R_INVALID_LENGTH);
 		goto err;
 	}
 	ret = BN_GF2m_mod_exp_arr(r, a, b, arr, ctx);
@@ -1114,7 +1114,7 @@ BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {
-		BNerr(BN_F_BN_GF2M_MOD_SQRT, BN_R_INVALID_LENGTH);
+		BNerror(BN_R_INVALID_LENGTH);
 		goto err;
 	}
 	ret = BN_GF2m_mod_sqrt_arr(r, a, arr, ctx);
@@ -1206,8 +1206,7 @@ BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
 			count++;
 		} while (BN_is_zero(w) && (count < MAX_ITERATIONS));
 		if (BN_is_zero(w)) {
-			BNerr(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR,
-			    BN_R_TOO_MANY_ITERATIONS);
+			BNerror(BN_R_TOO_MANY_ITERATIONS);
 			goto err;
 		}
 	}
@@ -1217,7 +1216,7 @@ BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
 	if (!BN_GF2m_add(w, z, w))
 		goto err;
 	if (BN_GF2m_cmp(w, a)) {
-		BNerr(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR, BN_R_NO_SOLUTION);
+		BNerror(BN_R_NO_SOLUTION);
 		goto err;
 	}
 
@@ -1251,7 +1250,7 @@ BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {
-		BNerr(BN_F_BN_GF2M_MOD_SOLVE_QUAD, BN_R_INVALID_LENGTH);
+		BNerror(BN_R_INVALID_LENGTH);
 		goto err;
 	}
 	ret = BN_GF2m_mod_solve_quad_arr(r, a, arr, ctx);

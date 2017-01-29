@@ -1,4 +1,4 @@
-/* $OpenBSD: err.h,v 1.23 2017/01/26 12:07:06 beck Exp $ */
+/* $OpenBSD: err.h,v 1.24 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -199,6 +199,7 @@ typedef struct err_state_st {
 
 #define ERR_LIB_USER		128
 
+#ifndef LIBRESSL_INTERNAL
 #define SYSerr(f,r)  ERR_PUT_error(ERR_LIB_SYS,(f),(r),__FILE__,__LINE__)
 #define BNerr(f,r)   ERR_PUT_error(ERR_LIB_BN,(f),(r),__FILE__,__LINE__)
 #define RSAerr(f,r)  ERR_PUT_error(ERR_LIB_RSA,(f),(r),__FILE__,__LINE__)
@@ -232,8 +233,43 @@ typedef struct err_state_st {
 #define HMACerr(f,r) ERR_PUT_error(ERR_LIB_HMAC,(f),(r),__FILE__,__LINE__)
 #define JPAKEerr(f,r) ERR_PUT_error(ERR_LIB_JPAKE,(f),(r),__FILE__,__LINE__)
 #define GOSTerr(f,r) ERR_PUT_error(ERR_LIB_GOST,(f),(r),__FILE__,__LINE__)
-#ifndef LIBRESSL_INTERNAL
 #define SSLerr(f,r)  ERR_PUT_error(ERR_LIB_SSL,(f),(r),__FILE__,__LINE__)
+#endif
+
+#ifdef LIBRESSL_INTERNAL
+#define SYSerror(r)  ERR_PUT_error(ERR_LIB_SYS,(0xfff),(r),__FILE__,__LINE__)
+#define BNerror(r)   ERR_PUT_error(ERR_LIB_BN,(0xfff),(r),__FILE__,__LINE__)
+#define RSAerror(r)  ERR_PUT_error(ERR_LIB_RSA,(0xfff),(r),__FILE__,__LINE__)
+#define DHerror(r)   ERR_PUT_error(ERR_LIB_DH,(0xfff),(r),__FILE__,__LINE__)
+#define EVPerror(r)  ERR_PUT_error(ERR_LIB_EVP,(0xfff),(r),__FILE__,__LINE__)
+#define BUFerror(r)  ERR_PUT_error(ERR_LIB_BUF,(0xfff),(r),__FILE__,__LINE__)
+#define OBJerror(r)  ERR_PUT_error(ERR_LIB_OBJ,(0xfff),(r),__FILE__,__LINE__)
+#define PEMerror(r)  ERR_PUT_error(ERR_LIB_PEM,(0xfff),(r),__FILE__,__LINE__)
+#define DSAerror(r)  ERR_PUT_error(ERR_LIB_DSA,(0xfff),(r),__FILE__,__LINE__)
+#define X509error(r) ERR_PUT_error(ERR_LIB_X509,(0xfff),(r),__FILE__,__LINE__)
+#define ASN1error(r) ERR_PUT_error(ERR_LIB_ASN1,(0xfff),(r),__FILE__,__LINE__)
+#define CONFerror(r) ERR_PUT_error(ERR_LIB_CONF,(0xfff),(r),__FILE__,__LINE__)
+#define CRYPTOerror(r) ERR_PUT_error(ERR_LIB_CRYPTO,(0xfff),(r),__FILE__,__LINE__)
+#define ECerror(r)   ERR_PUT_error(ERR_LIB_EC,(0xfff),(r),__FILE__,__LINE__)
+#define BIOerror(r)  ERR_PUT_error(ERR_LIB_BIO,(0xfff),(r),__FILE__,__LINE__)
+#define PKCS7error(r) ERR_PUT_error(ERR_LIB_PKCS7,(0xfff),(r),__FILE__,__LINE__)
+#define X509V3error(r) ERR_PUT_error(ERR_LIB_X509V3,(0xfff),(r),__FILE__,__LINE__)
+#define PKCS12error(r) ERR_PUT_error(ERR_LIB_PKCS12,(0xfff),(r),__FILE__,__LINE__)
+#define RANDerror(r) ERR_PUT_error(ERR_LIB_RAND,(0xfff),(r),__FILE__,__LINE__)
+#define DSOerror(r) ERR_PUT_error(ERR_LIB_DSO,(0xfff),(r),__FILE__,__LINE__)
+#define ENGINEerror(r) ERR_PUT_error(ERR_LIB_ENGINE,(0xfff),(r),__FILE__,__LINE__)
+#define OCSPerror(r) ERR_PUT_error(ERR_LIB_OCSP,(0xfff),(r),__FILE__,__LINE__)
+#define UIerror(r) ERR_PUT_error(ERR_LIB_UI,(0xfff),(r),__FILE__,__LINE__)
+#define COMPerror(r) ERR_PUT_error(ERR_LIB_COMP,(0xfff),(r),__FILE__,__LINE__)
+#define ECDSAerror(r)  ERR_PUT_error(ERR_LIB_ECDSA,(0xfff),(r),__FILE__,__LINE__)
+#define ECDHerror(r)  ERR_PUT_error(ERR_LIB_ECDH,(0xfff),(r),__FILE__,__LINE__)
+#define STOREerror(r) ERR_PUT_error(ERR_LIB_STORE,(0xfff),(r),__FILE__,__LINE__)
+#define FIPSerror(r) ERR_PUT_error(ERR_LIB_FIPS,(0xfff),(r),__FILE__,__LINE__)
+#define CMSerror(r) ERR_PUT_error(ERR_LIB_CMS,(0xfff),(r),__FILE__,__LINE__)
+#define TSerror(r) ERR_PUT_error(ERR_LIB_TS,(0xfff),(r),__FILE__,__LINE__)
+#define HMACerror(r) ERR_PUT_error(ERR_LIB_HMAC,(0xfff),(r),__FILE__,__LINE__)
+#define JPAKEerror(r) ERR_PUT_error(ERR_LIB_JPAKE,(0xfff),(r),__FILE__,__LINE__)
+#define GOSTerror(r) ERR_PUT_error(ERR_LIB_GOST,(0xfff),(r),__FILE__,__LINE__)
 #endif
 
 #define ERR_PACK(l,f,r)		(((((unsigned long)l)&0xffL)<<24L)| \

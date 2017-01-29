@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.26 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: t_x509.c,v 1.27 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,7 +92,7 @@ X509_print_ex_fp(FILE *fp, X509 *x, unsigned long nmflag, unsigned long cflag)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		X509err(X509_F_X509_PRINT_EX_FP, ERR_R_BUF_LIB);
+		X509error(ERR_R_BUF_LIB);
 		return (0);
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -530,7 +530,7 @@ X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	ret = 1;
 	if (0) {
 err:
-		X509err(X509_F_X509_NAME_PRINT, ERR_R_BUF_LIB);
+		X509error(ERR_R_BUF_LIB);
 	}
 	free(b);
 	return (ret);

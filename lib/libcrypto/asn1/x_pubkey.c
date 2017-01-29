@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.25 2015/02/11 04:00:39 jsing Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.26 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,17 +149,15 @@ X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 	if (pkey->ameth) {
 		if (pkey->ameth->pub_encode) {
 			if (!pkey->ameth->pub_encode(pk, pkey)) {
-				X509err(X509_F_X509_PUBKEY_SET,
-				    X509_R_PUBLIC_KEY_ENCODE_ERROR);
+				X509error(X509_R_PUBLIC_KEY_ENCODE_ERROR);
 				goto error;
 			}
 		} else {
-			X509err(X509_F_X509_PUBKEY_SET,
-			    X509_R_METHOD_NOT_SUPPORTED);
+			X509error(X509_R_METHOD_NOT_SUPPORTED);
 			goto error;
 		}
 	} else {
-		X509err(X509_F_X509_PUBKEY_SET, X509_R_UNSUPPORTED_ALGORITHM);
+		X509error(X509_R_UNSUPPORTED_ALGORITHM);
 		goto error;
 	}
 
@@ -193,23 +191,22 @@ X509_PUBKEY_get(X509_PUBKEY *key)
 		goto error;
 
 	if ((ret = EVP_PKEY_new()) == NULL) {
-		X509err(X509_F_X509_PUBKEY_GET, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		goto error;
 	}
 
 	if (!EVP_PKEY_set_type(ret, OBJ_obj2nid(key->algor->algorithm))) {
-		X509err(X509_F_X509_PUBKEY_GET, X509_R_UNSUPPORTED_ALGORITHM);
+		X509error(X509_R_UNSUPPORTED_ALGORITHM);
 		goto error;
 	}
 
 	if (ret->ameth->pub_decode) {
 		if (!ret->ameth->pub_decode(ret, key)) {
-			X509err(X509_F_X509_PUBKEY_GET,
-			    X509_R_PUBLIC_KEY_DECODE_ERROR);
+			X509error(X509_R_PUBLIC_KEY_DECODE_ERROR);
 			goto error;
 		}
 	} else {
-		X509err(X509_F_X509_PUBKEY_GET, X509_R_METHOD_NOT_SUPPORTED);
+		X509error(X509_R_METHOD_NOT_SUPPORTED);
 		goto error;
 	}
 
@@ -304,7 +301,7 @@ i2d_RSA_PUBKEY(RSA *a, unsigned char **pp)
 		return 0;
 	pktmp = EVP_PKEY_new();
 	if (!pktmp) {
-		ASN1err(ASN1_F_I2D_RSA_PUBKEY, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	EVP_PKEY_set1_RSA(pktmp, a);
@@ -346,7 +343,7 @@ i2d_DSA_PUBKEY(DSA *a, unsigned char **pp)
 		return 0;
 	pktmp = EVP_PKEY_new();
 	if (!pktmp) {
-		ASN1err(ASN1_F_I2D_DSA_PUBKEY, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	EVP_PKEY_set1_DSA(pktmp, a);
@@ -387,7 +384,7 @@ i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
 	if (!a)
 		return (0);
 	if ((pktmp = EVP_PKEY_new()) == NULL) {
-		ASN1err(ASN1_F_I2D_EC_PUBKEY, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	EVP_PKEY_set1_EC_KEY(pktmp, a);

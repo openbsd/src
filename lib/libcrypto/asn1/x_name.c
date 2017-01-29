@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.32 2016/12/30 16:04:34 jsing Exp $ */
+/* $OpenBSD: x_name.c,v 1.33 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -257,7 +257,7 @@ x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 	return 1;
 
 memerr:
-	ASN1err(ASN1_F_X509_NAME_EX_NEW, ERR_R_MALLOC_FAILURE);
+	ASN1error(ERR_R_MALLOC_FAILURE);
 	if (ret) {
 		if (ret->entries)
 			sk_X509_NAME_ENTRY_free(ret->entries);
@@ -339,7 +339,7 @@ x509_name_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 err:
 	if (nm.x != NULL)
 		X509_NAME_free(nm.x);
-	ASN1err(ASN1_F_X509_NAME_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+	ASN1error(ERR_R_NESTED_ASN1_ERROR);
 	return 0;
 }
 
@@ -424,7 +424,7 @@ x509_name_encode(X509_NAME *a)
 memerr:
 	sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
 	    local_sk_X509_NAME_ENTRY_free);
-	ASN1err(ASN1_F_X509_NAME_ENCODE, ERR_R_MALLOC_FAILURE);
+	ASN1error(ERR_R_MALLOC_FAILURE);
 	return -1;
 }
 

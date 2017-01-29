@@ -1,4 +1,4 @@
-/* $OpenBSD: f_string.c,v 1.16 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: f_string.c,v 1.17 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,16 +146,14 @@ a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 		k = 0;
 		i -= again;
 		if (i % 2 != 0) {
-			ASN1err(ASN1_F_A2I_ASN1_STRING,
-			    ASN1_R_ODD_NUMBER_OF_CHARS);
+			ASN1error(ASN1_R_ODD_NUMBER_OF_CHARS);
 			goto err;
 		}
 		i /= 2;
 		if (num + i > slen) {
 			sp = realloc(s, num + i);
 			if (sp == NULL) {
-				ASN1err(ASN1_F_A2I_ASN1_STRING,
-				    ERR_R_MALLOC_FAILURE);
+				ASN1error(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 			s = sp;
@@ -171,8 +169,7 @@ a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 				else if ((m >= 'A') && (m <= 'F'))
 					m = m - 'A' + 10;
 				else {
-					ASN1err(ASN1_F_A2I_ASN1_STRING,
-					    ASN1_R_NON_HEX_CHARACTERS);
+					ASN1error(ASN1_R_NON_HEX_CHARACTERS);
 					goto err;
 				}
 				s[num + j] <<= 4;
@@ -190,7 +187,7 @@ a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 	return (1);
 
 err_sl:
-	ASN1err(ASN1_F_A2I_ASN1_STRING, ASN1_R_SHORT_LINE);
+	ASN1error(ASN1_R_SHORT_LINE);
 err:
 	free(s);
 	return (ret);

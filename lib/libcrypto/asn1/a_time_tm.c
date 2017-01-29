@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.10 2016/11/04 18:07:23 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.11 2017/01/29 17:49:22 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -267,8 +267,7 @@ ASN1_TIME_adj_internal(ASN1_TIME *s, time_t t, int offset_day, long offset_sec,
 		return (NULL);
 	}
 	if (p == NULL) {
-		ASN1err(ASN1_F_ASN1_GENERALIZEDTIME_ADJ,
-		    ASN1_R_ILLEGAL_TIME_VALUE);
+		ASN1error(ASN1_R_ILLEGAL_TIME_VALUE);
 		return (NULL);
 	}
 

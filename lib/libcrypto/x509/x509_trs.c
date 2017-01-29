@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.21 2016/11/06 10:31:34 beck Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.22 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -178,7 +178,7 @@ int
 X509_TRUST_set(int *t, int trust)
 {
 	if (X509_TRUST_get_by_id(trust) == -1) {
-		X509err(X509_F_X509_TRUST_SET, X509_R_INVALID_TRUST);
+		X509error(X509_R_INVALID_TRUST);
 		return 0;
 	}
 	*t = trust;
@@ -202,14 +202,14 @@ X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 	/* Need a new entry */
 	if (idx == -1) {
 		if (!(trtmp = malloc(sizeof(X509_TRUST)))) {
-			X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
+			X509error(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		trtmp->flags = X509_TRUST_DYNAMIC;
 	} else {
 		trtmp = X509_TRUST_get0(idx);
 		if (trtmp == NULL) {
-			X509err(X509_F_X509_TRUST_ADD, X509_R_INVALID_TRUST);
+			X509error(X509_R_INVALID_TRUST);
 			return 0;
 		}
 	}
@@ -246,7 +246,7 @@ err:
 	free(name_dup);
 	if (idx == -1)
 		free(trtmp);
-	X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
+	X509error(ERR_R_MALLOC_FAILURE);
 	return 0;
 }
 

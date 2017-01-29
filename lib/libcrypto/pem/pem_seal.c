@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_seal.c,v 1.23 2016/11/05 11:32:45 miod Exp $ */
+/* $OpenBSD: pem_seal.c,v 1.24 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,7 +97,7 @@ PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 
 	for (i = 0; i < npubk; i++) {
 		if (pubk[i]->type != EVP_PKEY_RSA) {
-			PEMerr(PEM_F_PEM_SEALINIT, PEM_R_PUBLIC_KEY_NO_RSA);
+			PEMerror(PEM_R_PUBLIC_KEY_NO_RSA);
 			goto err;
 		}
 		j = RSA_size(pubk[i]->pkey.rsa);
@@ -106,7 +106,7 @@ PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 	}
 	s = reallocarray(NULL, max, 2);
 	if (s == NULL) {
-		PEMerr(PEM_F_PEM_SEALINIT, ERR_R_MALLOC_FAILURE);
+		PEMerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -170,7 +170,7 @@ PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 	unsigned int i;
 
 	if (priv->type != EVP_PKEY_RSA) {
-		PEMerr(PEM_F_PEM_SEALFINAL, PEM_R_PUBLIC_KEY_NO_RSA);
+		PEMerror(PEM_R_PUBLIC_KEY_NO_RSA);
 		goto err;
 	}
 	i = RSA_size(priv->pkey.rsa);
@@ -178,7 +178,7 @@ PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 		i = 100;
 	s = reallocarray(NULL, i, 2);
 	if (s == NULL) {
-		PEMerr(PEM_F_PEM_SEALFINAL, ERR_R_MALLOC_FAILURE);
+		PEMerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 

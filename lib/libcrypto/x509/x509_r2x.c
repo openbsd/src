@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_r2x.c,v 1.10 2015/09/30 17:30:16 jsing Exp $ */
+/* $OpenBSD: x509_r2x.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 	X509_NAME *xn;
 
 	if ((ret = X509_new()) == NULL) {
-		X509err(X509_F_X509_REQ_TO_X509, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 

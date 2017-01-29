@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.14 2015/02/10 09:52:35 miod Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,8 +100,7 @@ EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	if (type != NULL) {
 		l = EVP_CIPHER_CTX_iv_length(c);
 		if (l > sizeof(c->iv)) {
-			EVPerr(EVP_F_EVP_CIPHER_GET_ASN1_IV,
-			     EVP_R_IV_TOO_LARGE);
+			EVPerror(EVP_R_IV_TOO_LARGE);
 			return 0;
 		}
 		i = ASN1_TYPE_get_octetstring(type, c->oiv, l);
@@ -122,8 +121,7 @@ EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	if (type != NULL) {
 		j = EVP_CIPHER_CTX_iv_length(c);
 		if (j > sizeof(c->iv)) {
-			EVPerr(EVP_F_EVP_CIPHER_SET_ASN1_IV,
-			     EVP_R_IV_TOO_LARGE);
+			EVPerror(EVP_R_IV_TOO_LARGE);
 			return 0;
 		}
 		i = ASN1_TYPE_set_octetstring(type, c->oiv, j);
@@ -291,7 +289,7 @@ int
 EVP_MD_size(const EVP_MD *md)
 {
 	if (!md) {
-		EVPerr(EVP_F_EVP_MD_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
+		EVPerror(EVP_R_MESSAGE_DIGEST_IS_NULL);
 		return -1;
 	}
 	return md->md_size;

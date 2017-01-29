@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_saos.c,v 1.19 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: rsa_saos.c,v 1.20 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,13 +80,12 @@ RSA_sign_ASN1_OCTET_STRING(int type, const unsigned char *m, unsigned int m_len,
 	i = i2d_ASN1_OCTET_STRING(&sig, NULL);
 	j = RSA_size(rsa);
 	if (i > (j - RSA_PKCS1_PADDING_SIZE)) {
-		RSAerr(RSA_F_RSA_SIGN_ASN1_OCTET_STRING,
-		    RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
+		RSAerror(RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
 		return 0;
 	}
 	s = malloc(j + 1);
 	if (s == NULL) {
-		RSAerr(RSA_F_RSA_SIGN_ASN1_OCTET_STRING, ERR_R_MALLOC_FAILURE);
+		RSAerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	p = s;
@@ -112,15 +111,13 @@ RSA_verify_ASN1_OCTET_STRING(int dtype, const unsigned char *m,
 	ASN1_OCTET_STRING *sig = NULL;
 
 	if (siglen != (unsigned int)RSA_size(rsa)) {
-		RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING,
-		    RSA_R_WRONG_SIGNATURE_LENGTH);
+		RSAerror(RSA_R_WRONG_SIGNATURE_LENGTH);
 		return 0;
 	}
 
 	s = malloc(siglen);
 	if (s == NULL) {
-		RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING,
-		    ERR_R_MALLOC_FAILURE);
+		RSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	i = RSA_public_decrypt((int)siglen, sigbuf, s, rsa, RSA_PKCS1_PADDING);
@@ -135,8 +132,7 @@ RSA_verify_ASN1_OCTET_STRING(int dtype, const unsigned char *m,
 
 	if ((unsigned int)sig->length != m_len ||
 	    memcmp(m, sig->data, m_len) != 0) {
-		RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING,
-		    RSA_R_BAD_SIGNATURE);
+		RSAerror(RSA_R_BAD_SIGNATURE);
 	} else
 		ret = 1;
 err:

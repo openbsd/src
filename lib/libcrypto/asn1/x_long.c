@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.10 2015/07/25 17:07:17 jsing Exp $ */
+/* $OpenBSD: x_long.c,v 1.11 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -173,7 +173,7 @@ long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 	unsigned long utmp = 0;
 	char *cp = (char *)pval;
 	if (len > (int)sizeof(long)) {
-		ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
+		ASN1error(ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
 		return 0;
 	}
 	/* Is it negative? */
@@ -195,7 +195,7 @@ long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 		ltmp = -ltmp;
 	}
 	if (ltmp == it->size) {
-		ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
+		ASN1error(ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
 		return 0;
 	}
 	memcpy(cp, &ltmp, sizeof(long));

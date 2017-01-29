@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nist.c,v 1.9 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ecp_nist.c,v 1.10 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -145,7 +145,7 @@ ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 	else if (BN_ucmp(BN_get0_nist_prime_521(), p) == 0)
 		group->field_mod_func = BN_nist_mod_521;
 	else {
-		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE, EC_R_NOT_A_NIST_PRIME);
+		ECerror(EC_R_NOT_A_NIST_PRIME);
 		goto err;
 	}
 
@@ -166,7 +166,7 @@ ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 	BN_CTX *ctx_new = NULL;
 
 	if (!group || !r || !a || !b) {
-		ECerr(EC_F_EC_GFP_NIST_FIELD_MUL, ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
 	if (!ctx)
@@ -193,7 +193,7 @@ ec_GFp_nist_field_sqr(const EC_GROUP * group, BIGNUM * r, const BIGNUM * a,
 	BN_CTX *ctx_new = NULL;
 
 	if (!group || !r || !a) {
-		ECerr(EC_F_EC_GFP_NIST_FIELD_SQR, EC_R_PASSED_NULL_PARAMETER);
+		ECerror(EC_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
 	if (!ctx)

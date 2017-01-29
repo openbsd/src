@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_gen.c,v 1.21 2017/01/25 06:15:44 beck Exp $ */
+/* $OpenBSD: rsa_gen.c,v 1.22 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,8 +162,7 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 		    ++degenerate < 3);
 		if (degenerate == 3) {
 			ok = 0; /* we set our own err */
-			RSAerr(RSA_F_RSA_BUILTIN_KEYGEN,
-			    RSA_R_KEY_SIZE_TOO_SMALL);
+			RSAerror(RSA_R_KEY_SIZE_TOO_SMALL);
 			goto err;
 		}
 		if (!BN_sub(r2, rsa->q, BN_value_one()))
@@ -219,7 +218,7 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	ok = 1;
 err:
 	if (ok == -1) {
-		RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, ERR_LIB_BN);
+		RSAerror(ERR_LIB_BN);
 		ok = 0;
 	}
 	if (ctx != NULL) {

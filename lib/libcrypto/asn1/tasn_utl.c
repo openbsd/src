@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_utl.c,v 1.11 2015/07/25 17:07:17 jsing Exp $ */
+/* $OpenBSD: tasn_utl.c,v 1.12 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -275,7 +275,6 @@ asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt, int nullerr)
 err:
 	/* FIXME: should log the value or OID of unsupported type */
 	if (nullerr)
-		ASN1err(ASN1_F_ASN1_DO_ADB,
-		    ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
+		ASN1error(ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
 	return NULL;
 }

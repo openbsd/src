@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_check.c,v 1.5 2015/02/08 22:25:03 miod Exp $ */
+/* $OpenBSD: ec_check.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -67,7 +67,7 @@ EC_GROUP_check(const EC_GROUP * group, BN_CTX * ctx)
 	if (ctx == NULL) {
 		ctx = new_ctx = BN_CTX_new();
 		if (ctx == NULL) {
-			ECerr(EC_F_EC_GROUP_CHECK, ERR_R_MALLOC_FAILURE);
+			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
@@ -77,16 +77,16 @@ EC_GROUP_check(const EC_GROUP * group, BN_CTX * ctx)
 
 	/* check the discriminant */
 	if (!EC_GROUP_check_discriminant(group, ctx)) {
-		ECerr(EC_F_EC_GROUP_CHECK, EC_R_DISCRIMINANT_IS_ZERO);
+		ECerror(EC_R_DISCRIMINANT_IS_ZERO);
 		goto err;
 	}
 	/* check the generator */
 	if (group->generator == NULL) {
-		ECerr(EC_F_EC_GROUP_CHECK, EC_R_UNDEFINED_GENERATOR);
+		ECerror(EC_R_UNDEFINED_GENERATOR);
 		goto err;
 	}
 	if (EC_POINT_is_on_curve(group, group->generator, ctx) <= 0) {
-		ECerr(EC_F_EC_GROUP_CHECK, EC_R_POINT_IS_NOT_ON_CURVE);
+		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
 	}
 	/* check the order of the generator */
@@ -95,13 +95,13 @@ EC_GROUP_check(const EC_GROUP * group, BN_CTX * ctx)
 	if (!EC_GROUP_get_order(group, order, ctx))
 		goto err;
 	if (BN_is_zero(order)) {
-		ECerr(EC_F_EC_GROUP_CHECK, EC_R_UNDEFINED_ORDER);
+		ECerror(EC_R_UNDEFINED_ORDER);
 		goto err;
 	}
 	if (!EC_POINT_mul(group, point, order, NULL, NULL, ctx))
 		goto err;
 	if (EC_POINT_is_at_infinity(group, point) <= 0) {
-		ECerr(EC_F_EC_GROUP_CHECK, EC_R_INVALID_GROUP_ORDER);
+		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
 	ret = 1;

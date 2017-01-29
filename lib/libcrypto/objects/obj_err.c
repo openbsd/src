@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_err.c,v 1.11 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: obj_err.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -72,13 +72,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_OBJ,0,reason)
 
 static ERR_STRING_DATA OBJ_str_functs[] = {
-	{ERR_FUNC(OBJ_F_OBJ_ADD_OBJECT),	"OBJ_add_object"},
-	{ERR_FUNC(OBJ_F_OBJ_CREATE),	"OBJ_create"},
-	{ERR_FUNC(OBJ_F_OBJ_DUP),	"OBJ_dup"},
-	{ERR_FUNC(OBJ_F_OBJ_NAME_NEW_INDEX),	"OBJ_NAME_new_index"},
-	{ERR_FUNC(OBJ_F_OBJ_NID2LN),	"OBJ_nid2ln"},
-	{ERR_FUNC(OBJ_F_OBJ_NID2OBJ),	"OBJ_nid2obj"},
-	{ERR_FUNC(OBJ_F_OBJ_NID2SN),	"OBJ_nid2sn"},
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 

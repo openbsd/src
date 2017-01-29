@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_lib.c,v 1.18 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dso_lib.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -111,13 +111,13 @@ DSO_new_method(DSO_METHOD *meth)
 		default_DSO_meth = DSO_METHOD_openssl();
 	ret = calloc(1, sizeof(DSO));
 	if (ret == NULL) {
-		DSOerr(DSO_F_DSO_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+		DSOerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	ret->meth_data = sk_void_new_null();
 	if (ret->meth_data == NULL) {
 		/* sk_new doesn't generate any errors so we do */
-		DSOerr(DSO_F_DSO_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+		DSOerror(ERR_R_MALLOC_FAILURE);
 		free(ret);
 		return (NULL);
 	}
@@ -139,7 +139,7 @@ DSO_free(DSO *dso)
 	int i;
 
 	if (dso == NULL) {
-		DSOerr(DSO_F_DSO_FREE, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 
@@ -148,12 +148,12 @@ DSO_free(DSO *dso)
 		return (1);
 
 	if ((dso->meth->dso_unload != NULL) && !dso->meth->dso_unload(dso)) {
-		DSOerr(DSO_F_DSO_FREE, DSO_R_UNLOAD_FAILED);
+		DSOerror(DSO_R_UNLOAD_FAILED);
 		return (0);
 	}
 
 	if ((dso->meth->finish != NULL) && !dso->meth->finish(dso)) {
-		DSOerr(DSO_F_DSO_FREE, DSO_R_FINISH_FAILED);
+		DSOerror(DSO_R_FINISH_FAILED);
 		return (0);
 	}
 
@@ -175,7 +175,7 @@ int
 DSO_up_ref(DSO *dso)
 {
 	if (dso == NULL) {
-		DSOerr(DSO_F_DSO_UP_REF, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 
@@ -192,40 +192,40 @@ DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
 	if (dso == NULL) {
 		ret = DSO_new_method(meth);
 		if (ret == NULL) {
-			DSOerr(DSO_F_DSO_LOAD, ERR_R_MALLOC_FAILURE);
+			DSOerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		allocated = 1;
 		/* Pass the provided flags to the new DSO object */
 		if (DSO_ctrl(ret, DSO_CTRL_SET_FLAGS, flags, NULL) < 0) {
-			DSOerr(DSO_F_DSO_LOAD, DSO_R_CTRL_FAILED);
+			DSOerror(DSO_R_CTRL_FAILED);
 			goto err;
 		}
 	} else
 		ret = dso;
 	/* Don't load if we're currently already loaded */
 	if (ret->filename != NULL) {
-		DSOerr(DSO_F_DSO_LOAD, DSO_R_DSO_ALREADY_LOADED);
+		DSOerror(DSO_R_DSO_ALREADY_LOADED);
 		goto err;
 	}
 	/* filename can only be NULL if we were passed a dso that already has
 	 * one set. */
 	if (filename != NULL)
 		if (!DSO_set_filename(ret, filename)) {
-		DSOerr(DSO_F_DSO_LOAD, DSO_R_SET_FILENAME_FAILED);
+		DSOerror(DSO_R_SET_FILENAME_FAILED);
 		goto err;
 	}
 	filename = ret->filename;
 	if (filename == NULL) {
-		DSOerr(DSO_F_DSO_LOAD, DSO_R_NO_FILENAME);
+		DSOerror(DSO_R_NO_FILENAME);
 		goto err;
 	}
 	if (ret->meth->dso_load == NULL) {
-		DSOerr(DSO_F_DSO_LOAD, DSO_R_UNSUPPORTED);
+		DSOerror(DSO_R_UNSUPPORTED);
 		goto err;
 	}
 	if (!ret->meth->dso_load(ret)) {
-		DSOerr(DSO_F_DSO_LOAD, DSO_R_LOAD_FAILED);
+		DSOerror(DSO_R_LOAD_FAILED);
 		goto err;
 	}
 	/* Load succeeded */
@@ -243,15 +243,15 @@ DSO_bind_var(DSO *dso, const char *symname)
 	void *ret = NULL;
 
 	if ((dso == NULL) || (symname == NULL)) {
-		DSOerr(DSO_F_DSO_BIND_VAR, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (NULL);
 	}
 	if (dso->meth->dso_bind_var == NULL) {
-		DSOerr(DSO_F_DSO_BIND_VAR, DSO_R_UNSUPPORTED);
+		DSOerror(DSO_R_UNSUPPORTED);
 		return (NULL);
 	}
 	if ((ret = dso->meth->dso_bind_var(dso, symname)) == NULL) {
-		DSOerr(DSO_F_DSO_BIND_VAR, DSO_R_SYM_FAILURE);
+		DSOerror(DSO_R_SYM_FAILURE);
 		return (NULL);
 	}
 	/* Success */
@@ -264,15 +264,15 @@ DSO_bind_func(DSO *dso, const char *symname)
 	DSO_FUNC_TYPE ret = NULL;
 
 	if ((dso == NULL) || (symname == NULL)) {
-		DSOerr(DSO_F_DSO_BIND_FUNC, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (NULL);
 	}
 	if (dso->meth->dso_bind_func == NULL) {
-		DSOerr(DSO_F_DSO_BIND_FUNC, DSO_R_UNSUPPORTED);
+		DSOerror(DSO_R_UNSUPPORTED);
 		return (NULL);
 	}
 	if ((ret = dso->meth->dso_bind_func(dso, symname)) == NULL) {
-		DSOerr(DSO_F_DSO_BIND_FUNC, DSO_R_SYM_FAILURE);
+		DSOerror(DSO_R_SYM_FAILURE);
 		return (NULL);
 	}
 	/* Success */
@@ -291,7 +291,7 @@ long
 DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
 {
 	if (dso == NULL) {
-		DSOerr(DSO_F_DSO_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (-1);
 	}
 	/* We should intercept certain generic commands and only pass control
@@ -310,7 +310,7 @@ DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
 		break;
 	}
 	if ((dso->meth == NULL) || (dso->meth->dso_ctrl == NULL)) {
-		DSOerr(DSO_F_DSO_CTRL, DSO_R_UNSUPPORTED);
+		DSOerror(DSO_R_UNSUPPORTED);
 		return (-1);
 	}
 	return (dso->meth->dso_ctrl(dso, cmd, larg, parg));
@@ -321,8 +321,7 @@ DSO_set_name_converter(DSO *dso, DSO_NAME_CONVERTER_FUNC cb,
     DSO_NAME_CONVERTER_FUNC *oldcb)
 {
 	if (dso == NULL) {
-		DSOerr(DSO_F_DSO_SET_NAME_CONVERTER,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 	if (oldcb)
@@ -335,7 +334,7 @@ const char *
 DSO_get_filename(DSO *dso)
 {
 	if (dso == NULL) {
-		DSOerr(DSO_F_DSO_GET_FILENAME, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (NULL);
 	}
 	return (dso->filename);
@@ -347,17 +346,17 @@ DSO_set_filename(DSO *dso, const char *filename)
 	char *copied;
 
 	if ((dso == NULL) || (filename == NULL)) {
-		DSOerr(DSO_F_DSO_SET_FILENAME, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 	if (dso->loaded_filename) {
-		DSOerr(DSO_F_DSO_SET_FILENAME, DSO_R_DSO_ALREADY_LOADED);
+		DSOerror(DSO_R_DSO_ALREADY_LOADED);
 		return (0);
 	}
 	/* We'll duplicate filename */
 	copied = strdup(filename);
 	if (copied == NULL) {
-		DSOerr(DSO_F_DSO_SET_FILENAME, ERR_R_MALLOC_FAILURE);
+		DSOerror(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	free(dso->filename);
@@ -371,7 +370,7 @@ DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
 	char *result = NULL;
 
 	if (dso == NULL || filespec1 == NULL) {
-		DSOerr(DSO_F_DSO_MERGE, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (NULL);
 	}
 	if ((dso->flags & DSO_FLAG_NO_NAME_TRANSLATION) == 0) {
@@ -390,13 +389,13 @@ DSO_convert_filename(DSO *dso, const char *filename)
 	char *result = NULL;
 
 	if (dso == NULL) {
-		DSOerr(DSO_F_DSO_CONVERT_FILENAME, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (NULL);
 	}
 	if (filename == NULL)
 		filename = dso->filename;
 	if (filename == NULL) {
-		DSOerr(DSO_F_DSO_CONVERT_FILENAME, DSO_R_NO_FILENAME);
+		DSOerror(DSO_R_NO_FILENAME);
 		return (NULL);
 	}
 	if ((dso->flags & DSO_FLAG_NO_NAME_TRANSLATION) == 0) {
@@ -408,8 +407,7 @@ DSO_convert_filename(DSO *dso, const char *filename)
 	if (result == NULL) {
 		result = strdup(filename);
 		if (result == NULL) {
-			DSOerr(DSO_F_DSO_CONVERT_FILENAME,
-			    ERR_R_MALLOC_FAILURE);
+			DSOerror(ERR_R_MALLOC_FAILURE);
 			return (NULL);
 		}
 	}
@@ -420,8 +418,7 @@ const char *
 DSO_get_loaded_filename(DSO *dso)
 {
 	if (dso == NULL) {
-		DSOerr(DSO_F_DSO_GET_LOADED_FILENAME,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (NULL);
 	}
 	return (dso->loaded_filename);
@@ -434,7 +431,7 @@ DSO_pathbyaddr(void *addr, char *path, int sz)
 	if (meth == NULL)
 		meth = DSO_METHOD_openssl();
 	if (meth->pathbyaddr == NULL) {
-		DSOerr(DSO_F_DSO_PATHBYADDR, DSO_R_UNSUPPORTED);
+		DSOerror(DSO_R_UNSUPPORTED);
 		return -1;
 	}
 	return (*meth->pathbyaddr)(addr, path, sz);
@@ -447,7 +444,7 @@ DSO_global_lookup(const char *name)
 	if (meth == NULL)
 		meth = DSO_METHOD_openssl();
 	if (meth->globallookup == NULL) {
-		DSOerr(DSO_F_DSO_GLOBAL_LOOKUP, DSO_R_UNSUPPORTED);
+		DSOerror(DSO_R_UNSUPPORTED);
 		return NULL;
 	}
 	return (*meth->globallookup)(name);

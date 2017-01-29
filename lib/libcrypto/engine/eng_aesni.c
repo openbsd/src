@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_aesni.c,v 1.9 2016/11/04 17:30:30 miod Exp $ */
+/* $OpenBSD: eng_aesni.c,v 1.10 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Support for Intel AES-NI intruction set
  *   Author: Huang Ying <ying.huang@intel.com>
@@ -411,7 +411,7 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *user_key,
 		ret = aesni_set_decrypt_key(user_key, ctx->key_len * 8, key);
 
 	if (ret < 0) {
-		EVPerr(EVP_F_AESNI_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
+		EVPerror(EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
 	}
 

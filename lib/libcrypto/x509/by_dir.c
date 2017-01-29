@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.37 2015/04/11 16:03:21 deraadt Exp $ */
+/* $OpenBSD: by_dir.c,v 1.38 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,7 +133,7 @@ dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 			ret = add_cert_dir(ld, X509_get_default_cert_dir(),
 			    X509_FILETYPE_PEM);
 			if (!ret) {
-				X509err(X509_F_DIR_CTRL, X509_R_LOADING_CERT_DIR);
+				X509error(X509_R_LOADING_CERT_DIR);
 			}
 		} else
 			ret = add_cert_dir(ld, argp, (int)argl);
@@ -205,7 +205,7 @@ add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 	ptrdiff_t len;
 
 	if (dir == NULL || !*dir) {
-		X509err(X509_F_ADD_CERT_DIR, X509_R_INVALID_DIRECTORY);
+		X509error(X509_R_INVALID_DIRECTORY);
 		return 0;
 	}
 
@@ -230,25 +230,25 @@ add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			if (ctx->dirs == NULL) {
 				ctx->dirs = sk_BY_DIR_ENTRY_new_null();
 				if (!ctx->dirs) {
-					X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
+					X509error(ERR_R_MALLOC_FAILURE);
 					return 0;
 				}
 			}
 			ent = malloc(sizeof(BY_DIR_ENTRY));
 			if (!ent) {
-				X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
+				X509error(ERR_R_MALLOC_FAILURE);
 				return 0;
 			}
 			ent->dir_type = type;
 			ent->hashes = sk_BY_DIR_HASH_new(by_dir_hash_cmp);
 			ent->dir = strndup(ss, (size_t)len);
 			if (!ent->dir || !ent->hashes) {
-				X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
+				X509error(ERR_R_MALLOC_FAILURE);
 				by_dir_entry_free(ent);
 				return 0;
 			}
 			if (!sk_BY_DIR_ENTRY_push(ctx->dirs, ent)) {
-				X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
+				X509error(ERR_R_MALLOC_FAILURE);
 				by_dir_entry_free(ent);
 				return 0;
 			}
@@ -294,12 +294,12 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 		stmp.data.crl = &data.crl.st_crl;
 		postfix="r";
 	} else {
-		X509err(X509_F_GET_CERT_BY_SUBJECT, X509_R_WRONG_LOOKUP_TYPE);
+		X509error(X509_R_WRONG_LOOKUP_TYPE);
 		goto finish;
 	}
 
 	if ((b = BUF_MEM_new()) == NULL) {
-		X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_BUF_LIB);
+		X509error(ERR_R_BUF_LIB);
 		goto finish;
 	}
 
@@ -313,7 +313,7 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 		ent = sk_BY_DIR_ENTRY_value(ctx->dirs, i);
 		j = strlen(ent->dir) + 1 + 8 + 6 + 1 + 1;
 		if (!BUF_MEM_grow(b, j)) {
-			X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_MALLOC_FAILURE);
+			X509error(ERR_R_MALLOC_FAILURE);
 			goto finish;
 		}
 		if (type == X509_LU_CRL && ent->hashes) {
@@ -381,7 +381,7 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			if (!hent) {
 				hent = malloc(sizeof(BY_DIR_HASH));
 				if (!hent) {
-					X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_MALLOC_FAILURE);
+					X509error(ERR_R_MALLOC_FAILURE);
 					CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 					ok = 0;
 					goto finish;
@@ -389,7 +389,7 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 				hent->hash = h;
 				hent->suffix = k;
 				if (!sk_BY_DIR_HASH_push(ent->hashes, hent)) {
-					X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_MALLOC_FAILURE);
+					X509error(ERR_R_MALLOC_FAILURE);
 					CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 					free(hent);
 					ok = 0;

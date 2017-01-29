@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.62 2016/12/20 23:14:37 beck Exp $ */
+/* $OpenBSD: b_sock.c,v 1.63 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,13 +89,12 @@ BIO_get_host_ip(const char *str, unsigned char *ip)
 	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
 	he = BIO_gethostbyname(str);
 	if (he == NULL) {
-		BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_BAD_HOSTNAME_LOOKUP);
+		BIOerror(BIO_R_BAD_HOSTNAME_LOOKUP);
 		goto err;
 	}
 
 	if (he->h_addrtype != AF_INET) {
-		BIOerr(BIO_F_BIO_GET_HOST_IP,
-		    BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
+		BIOerror(BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
 		goto err;
 	}
 	for (i = 0; i < 4; i++)
@@ -123,7 +122,7 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 	int error;
 
 	if (str == NULL) {
-		BIOerr(BIO_F_BIO_GET_PORT, BIO_R_NO_PORT_SPECIFIED);
+		BIOerror(BIO_R_NO_PORT_SPECIFIED);
 		return (0);
 	}
 
@@ -162,7 +161,7 @@ BIO_socket_ioctl(int fd, long type, void *arg)
 
 	ret = ioctl(fd, type, arg);
 	if (ret < 0)
-		SYSerr(SYS_F_IOCTLSOCKET, errno);
+		SYSerror(errno);
 	return (ret);
 }
 
@@ -258,10 +257,9 @@ BIO_get_accept_socket(char *host, int bind_mode)
 again:
 	s = socket(server.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 	if (s == -1) {
-		SYSerr(SYS_F_SOCKET, errno);
+		SYSerror(errno);
 		ERR_asprintf_error_data("port='%s'", host);
-		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,
-		    BIO_R_UNABLE_TO_CREATE_SOCKET);
+		BIOerror(BIO_R_UNABLE_TO_CREATE_SOCKET);
 		goto err;
 	}
 
@@ -301,17 +299,15 @@ again:
 			}
 			/* else error */
 		}
-		SYSerr(SYS_F_BIND, err_num);
+		SYSerror(err_num);
 		ERR_asprintf_error_data("port='%s'", host);
-		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,
-		    BIO_R_UNABLE_TO_BIND_SOCKET);
+		BIOerror(BIO_R_UNABLE_TO_BIND_SOCKET);
 		goto err;
 	}
 	if (listen(s, SOMAXCONN) == -1) {
-		SYSerr(SYS_F_BIND, errno);
+		SYSerror(errno);
 		ERR_asprintf_error_data("port='%s'", host);
-		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,
-		    BIO_R_UNABLE_TO_LISTEN_SOCKET);
+		BIOerror(BIO_R_UNABLE_TO_LISTEN_SOCKET);
 		goto err;
 	}
 	ret = 1;
@@ -347,8 +343,8 @@ BIO_accept(int sock, char **addr)
 	if (ret == -1) {
 		if (BIO_sock_should_retry(ret))
 			return -2;
-		SYSerr(SYS_F_ACCEPT, errno);
-		BIOerr(BIO_F_BIO_ACCEPT, BIO_R_ACCEPT_ERROR);
+		SYSerror(errno);
+		BIOerror(BIO_R_ACCEPT_ERROR);
 		goto end;
 	}
 
@@ -371,7 +367,7 @@ BIO_accept(int sock, char **addr)
 			ret = -1;
 			free(p);
 			*addr = NULL;
-			BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
+			BIOerror(ERR_R_MALLOC_FAILURE);
 			goto end;
 		}
 		p = tmp;
@@ -387,7 +383,7 @@ BIO_accept(int sock, char **addr)
 		if ((p = malloc(24)) == NULL) {
 			close(ret);
 			ret = -1;
-			BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
+			BIOerror(ERR_R_MALLOC_FAILURE);
 			goto end;
 		}
 		*addr = p;

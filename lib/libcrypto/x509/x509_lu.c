@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.22 2016/11/13 08:47:54 miod Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.23 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -349,7 +349,7 @@ X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 		return 0;
 	obj = malloc(sizeof(X509_OBJECT));
 	if (obj == NULL) {
-		X509err(X509_F_X509_STORE_ADD_CERT, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	obj->type = X509_LU_X509;
@@ -360,13 +360,11 @@ X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 	X509_OBJECT_up_ref_count(obj);
 
 	if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-		X509err(X509_F_X509_STORE_ADD_CERT,
-		    X509_R_CERT_ALREADY_IN_HASH_TABLE);
+		X509error(X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret = 0;
 	} else {
 		if (sk_X509_OBJECT_push(ctx->objs, obj) == 0) {
-			X509err(X509_F_X509_STORE_ADD_CERT,
-			    ERR_R_MALLOC_FAILURE);
+			X509error(ERR_R_MALLOC_FAILURE);
 			ret = 0;
 		}
 	}
@@ -394,7 +392,7 @@ X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 		return 0;
 	obj = malloc(sizeof(X509_OBJECT));
 	if (obj == NULL) {
-		X509err(X509_F_X509_STORE_ADD_CRL, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	obj->type = X509_LU_CRL;
@@ -405,13 +403,11 @@ X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 	X509_OBJECT_up_ref_count(obj);
 
 	if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-		X509err(X509_F_X509_STORE_ADD_CRL,
-		    X509_R_CERT_ALREADY_IN_HASH_TABLE);
+		X509error(X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret = 0;
 	} else {
 		if (sk_X509_OBJECT_push(ctx->objs, obj) == 0) {
-			X509err(X509_F_X509_STORE_ADD_CRL,
-			    ERR_R_MALLOC_FAILURE);
+			X509error(ERR_R_MALLOC_FAILURE);
 			ret = 0;
 		}
 	}
@@ -678,8 +674,7 @@ X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 	if (ok != X509_LU_X509) {
 		if (ok == X509_LU_RETRY) {
 			X509_OBJECT_free_contents(&obj);
-			X509err(X509_F_X509_STORE_CTX_GET1_ISSUER,
-			    X509_R_SHOULD_RETRY);
+			X509error(X509_R_SHOULD_RETRY);
 			return -1;
 		} else if (ok != X509_LU_FAIL) {
 			X509_OBJECT_free_contents(&obj);

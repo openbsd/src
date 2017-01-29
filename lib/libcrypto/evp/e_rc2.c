@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.11 2015/02/10 09:52:35 miod Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -171,7 +171,7 @@ rc2_magic_to_meth(int i)
 	else if (i == RC2_40_MAGIC)
 		return 40;
 	else {
-		EVPerr(EVP_F_RC2_MAGIC_TO_METH, EVP_R_UNSUPPORTED_KEY_SIZE);
+		EVPerror(EVP_R_UNSUPPORTED_KEY_SIZE);
 		return (0);
 	}
 }
@@ -188,8 +188,7 @@ rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	if (type != NULL) {
 		l = EVP_CIPHER_CTX_iv_length(c);
 		if (l > sizeof(iv)) {
-			EVPerr(EVP_F_RC2_GET_ASN1_TYPE_AND_IV,
-			    EVP_R_IV_TOO_LARGE);
+			EVPerror(EVP_R_IV_TOO_LARGE);
 			return -1;
 		}
 		i = ASN1_TYPE_get_int_octetstring(type, &num, iv, l);

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.14 2016/08/05 17:25:51 deraadt Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -94,7 +94,7 @@ LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
 
 	in = BIO_new_file(file, "rb");
 	if (in == NULL) {
-		CONFerr(CONF_F_CONF_LOAD, ERR_R_SYS_LIB);
+		CONFerror(ERR_R_SYS_LIB);
 		return NULL;
 	}
 
@@ -111,7 +111,7 @@ LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
 	LHASH_OF(CONF_VALUE) *ltmp;
 
 	if (!(btmp = BIO_new_fp(fp, BIO_NOCLOSE))) {
-		CONFerr(CONF_F_CONF_LOAD_FP, ERR_R_BUF_LIB);
+		CONFerror(ERR_R_BUF_LIB);
 		return NULL;
 	}
 	ltmp = CONF_load_bio(conf, btmp, eline);
@@ -196,7 +196,7 @@ CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
 	int ret;
 
 	if (!(btmp = BIO_new_fp(out, BIO_NOCLOSE))) {
-		CONFerr(CONF_F_CONF_DUMP_FP, ERR_R_BUF_LIB);
+		CONFerror(ERR_R_BUF_LIB);
 		return 0;
 	}
 	ret = CONF_dump_bio(conf, btmp);
@@ -229,7 +229,7 @@ NCONF_new(CONF_METHOD *meth)
 
 	ret = meth->create(meth);
 	if (ret == NULL) {
-		CONFerr(CONF_F_NCONF_NEW, ERR_R_MALLOC_FAILURE);
+		CONFerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 
@@ -256,7 +256,7 @@ int
 NCONF_load(CONF *conf, const char *file, long *eline)
 {
 	if (conf == NULL) {
-		CONFerr(CONF_F_NCONF_LOAD, CONF_R_NO_CONF);
+		CONFerror(CONF_R_NO_CONF);
 		return 0;
 	}
 
@@ -270,7 +270,7 @@ NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
 	int ret;
 
 	if (!(btmp = BIO_new_fp(fp, BIO_NOCLOSE))) {
-		CONFerr(CONF_F_NCONF_LOAD_FP, ERR_R_BUF_LIB);
+		CONFerror(ERR_R_BUF_LIB);
 		return 0;
 	}
 	ret = NCONF_load_bio(conf, btmp, eline);
@@ -282,7 +282,7 @@ int
 NCONF_load_bio(CONF *conf, BIO *bp, long *eline)
 {
 	if (conf == NULL) {
-		CONFerr(CONF_F_NCONF_LOAD_BIO, CONF_R_NO_CONF);
+		CONFerror(CONF_R_NO_CONF);
 		return 0;
 	}
 
@@ -293,12 +293,12 @@ STACK_OF(CONF_VALUE) *
 NCONF_get_section(const CONF *conf, const char *section)
 {
 	if (conf == NULL) {
-		CONFerr(CONF_F_NCONF_GET_SECTION, CONF_R_NO_CONF);
+		CONFerror(CONF_R_NO_CONF);
 		return NULL;
 	}
 
 	if (section == NULL) {
-		CONFerr(CONF_F_NCONF_GET_SECTION, CONF_R_NO_SECTION);
+		CONFerror(CONF_R_NO_SECTION);
 		return NULL;
 	}
 
@@ -316,11 +316,10 @@ NCONF_get_string(const CONF *conf, const char *group, const char *name)
 		return s;
 
 	if (conf == NULL) {
-		CONFerr(CONF_F_NCONF_GET_STRING,
-		    CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
+		CONFerror(CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
 		return NULL;
 	}
-	CONFerr(CONF_F_NCONF_GET_STRING, CONF_R_NO_VALUE);
+	CONFerror(CONF_R_NO_VALUE);
 	ERR_asprintf_error_data("group=%s name=%s",
 	    group ? group : "", name);
 	return NULL;
@@ -333,7 +332,7 @@ NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
 	char *str;
 
 	if (result == NULL) {
-		CONFerr(CONF_F_NCONF_GET_NUMBER_E, ERR_R_PASSED_NULL_PARAMETER);
+		CONFerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 
@@ -356,7 +355,7 @@ NCONF_dump_fp(const CONF *conf, FILE *out)
 	BIO *btmp;
 	int ret;
 	if (!(btmp = BIO_new_fp(out, BIO_NOCLOSE))) {
-		CONFerr(CONF_F_NCONF_DUMP_FP, ERR_R_BUF_LIB);
+		CONFerror(ERR_R_BUF_LIB);
 		return 0;
 	}
 	ret = NCONF_dump_bio(conf, btmp);
@@ -368,7 +367,7 @@ int
 NCONF_dump_bio(const CONF *conf, BIO *out)
 {
 	if (conf == NULL) {
-		CONFerr(CONF_F_NCONF_DUMP_BIO, CONF_R_NO_CONF);
+		CONFerror(CONF_R_NO_CONF);
 		return 0;
 	}
 

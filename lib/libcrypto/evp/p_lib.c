@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.16 2014/07/12 22:26:01 miod Exp $ */
+/* $OpenBSD: p_lib.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,14 +128,12 @@ int
 EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
 	if (to->type != from->type) {
-		EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS,
-		    EVP_R_DIFFERENT_KEY_TYPES);
+		EVPerror(EVP_R_DIFFERENT_KEY_TYPES);
 		goto err;
 	}
 
 	if (EVP_PKEY_missing_parameters(from)) {
-		EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS,
-		    EVP_R_MISSING_PARAMETERS);
+		EVPerror(EVP_R_MISSING_PARAMETERS);
 		goto err;
 	}
 	if (from->ameth && from->ameth->param_copy)
@@ -192,7 +190,7 @@ EVP_PKEY_new(void)
 
 	ret = malloc(sizeof(EVP_PKEY));
 	if (ret == NULL) {
-		EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
+		EVPerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	ret->type = EVP_PKEY_NONE;
@@ -240,7 +238,7 @@ pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 		ENGINE_finish(e);
 #endif
 	if (!ameth) {
-		EVPerr(EVP_F_PKEY_SET_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
+		EVPerror(EVP_R_UNSUPPORTED_ALGORITHM);
 		return 0;
 	}
 	if (pkey) {
@@ -294,7 +292,7 @@ RSA *
 EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 {
 	if (pkey->type != EVP_PKEY_RSA) {
-		EVPerr(EVP_F_EVP_PKEY_GET1_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
+		EVPerror(EVP_R_EXPECTING_AN_RSA_KEY);
 		return NULL;
 	}
 	RSA_up_ref(pkey->pkey.rsa);
@@ -316,7 +314,7 @@ DSA *
 EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 {
 	if (pkey->type != EVP_PKEY_DSA) {
-		EVPerr(EVP_F_EVP_PKEY_GET1_DSA, EVP_R_EXPECTING_A_DSA_KEY);
+		EVPerror(EVP_R_EXPECTING_A_DSA_KEY);
 		return NULL;
 	}
 	DSA_up_ref(pkey->pkey.dsa);
@@ -339,7 +337,7 @@ EC_KEY *
 EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 {
 	if (pkey->type != EVP_PKEY_EC) {
-		EVPerr(EVP_F_EVP_PKEY_GET1_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
+		EVPerror(EVP_R_EXPECTING_A_EC_KEY);
 		return NULL;
 	}
 	EC_KEY_up_ref(pkey->pkey.ec);
@@ -363,7 +361,7 @@ DH *
 EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 {
 	if (pkey->type != EVP_PKEY_DH) {
-		EVPerr(EVP_F_EVP_PKEY_GET1_DH, EVP_R_EXPECTING_A_DH_KEY);
+		EVPerror(EVP_R_EXPECTING_A_DH_KEY);
 		return NULL;
 	}
 	DH_up_ref(pkey->pkey.dh);

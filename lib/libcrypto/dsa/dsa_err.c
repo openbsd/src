@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_err.c,v 1.14 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: dsa_err.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -71,35 +71,10 @@
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_DSA,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_DSA,0,reason)
 
-static ERR_STRING_DATA DSA_str_functs[]=
-	{
-{ERR_FUNC(DSA_F_D2I_DSA_SIG),	"d2i_DSA_SIG"},
-{ERR_FUNC(DSA_F_DO_DSA_PRINT),	"DO_DSA_PRINT"},
-{ERR_FUNC(DSA_F_DSAPARAMS_PRINT),	"DSAparams_print"},
-{ERR_FUNC(DSA_F_DSAPARAMS_PRINT_FP),	"DSAparams_print_fp"},
-{ERR_FUNC(DSA_F_DSA_DO_SIGN),	"DSA_do_sign"},
-{ERR_FUNC(DSA_F_DSA_DO_VERIFY),	"DSA_do_verify"},
-{ERR_FUNC(DSA_F_DSA_GENERATE_KEY),	"DSA_generate_key"},
-{ERR_FUNC(DSA_F_DSA_GENERATE_PARAMETERS_EX),	"DSA_generate_parameters_ex"},
-{ERR_FUNC(DSA_F_DSA_NEW_METHOD),	"DSA_new_method"},
-{ERR_FUNC(DSA_F_DSA_PARAM_DECODE),	"DSA_PARAM_DECODE"},
-{ERR_FUNC(DSA_F_DSA_PRINT_FP),	"DSA_print_fp"},
-{ERR_FUNC(DSA_F_DSA_PRIV_DECODE),	"DSA_PRIV_DECODE"},
-{ERR_FUNC(DSA_F_DSA_PRIV_ENCODE),	"DSA_PRIV_ENCODE"},
-{ERR_FUNC(DSA_F_DSA_PUB_DECODE),	"DSA_PUB_DECODE"},
-{ERR_FUNC(DSA_F_DSA_PUB_ENCODE),	"DSA_PUB_ENCODE"},
-{ERR_FUNC(DSA_F_DSA_SIGN),	"DSA_sign"},
-{ERR_FUNC(DSA_F_DSA_SIGN_SETUP),	"DSA_sign_setup"},
-{ERR_FUNC(DSA_F_DSA_SIG_NEW),	"DSA_SIG_new"},
-{ERR_FUNC(DSA_F_DSA_SIG_PRINT),	"DSA_SIG_PRINT"},
-{ERR_FUNC(DSA_F_DSA_VERIFY),	"DSA_verify"},
-{ERR_FUNC(DSA_F_I2D_DSA_SIG),	"i2d_DSA_SIG"},
-{ERR_FUNC(DSA_F_OLD_DSA_PRIV_DECODE),	"OLD_DSA_PRIV_DECODE"},
-{ERR_FUNC(DSA_F_PKEY_DSA_CTRL),	"PKEY_DSA_CTRL"},
-{ERR_FUNC(DSA_F_PKEY_DSA_KEYGEN),	"PKEY_DSA_KEYGEN"},
-{ERR_FUNC(DSA_F_SIG_CB),	"SIG_CB"},
-{0,NULL}
-	};
+static ERR_STRING_DATA DSA_str_functs[]= {
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
+	{0, NULL}
+};
 
 static ERR_STRING_DATA DSA_str_reasons[]=
 	{

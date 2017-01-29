@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.25 2017/01/26 12:44:52 beck Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.26 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,7 +110,7 @@ ssl_new(BIO *bi)
 
 	bs = calloc(1, sizeof(BIO_SSL));
 	if (bs == NULL) {
-		BIOerr(BIO_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
+		SSLerror(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	bi->init = 0;

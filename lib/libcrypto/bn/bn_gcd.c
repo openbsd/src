@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.14 2017/01/25 06:15:44 beck Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -527,7 +527,7 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 				goto err;
 		}
 	} else {
-		BNerr(BN_F_BN_MOD_INVERSE, BN_R_NO_INVERSE);
+		BNerror(BN_R_NO_INVERSE);
 		goto err;
 	}
 	ret = R;
@@ -709,7 +709,7 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 				goto err;
 		}
 	} else {
-		BNerr(BN_F_BN_MOD_INVERSE_NO_BRANCH, BN_R_NO_INVERSE);
+		BNerror(BN_R_NO_INVERSE);
 		goto err;
 	}
 	ret = R;

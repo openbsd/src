@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.17 2016/11/05 15:19:07 miod Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -155,28 +155,27 @@ TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
 
 	/* Some sanity checks first. */
 	if (!token) {
-		TSerr(TS_F_TS_RESP_VERIFY_SIGNATURE, TS_R_INVALID_NULL_POINTER);
+		TSerror(TS_R_INVALID_NULL_POINTER);
 		goto err;
 	}
 
 	/* Check for the correct content type */
 	if (!PKCS7_type_is_signed(token)) {
-		TSerr(TS_F_TS_RESP_VERIFY_SIGNATURE, TS_R_WRONG_CONTENT_TYPE);
+		TSerror(TS_R_WRONG_CONTENT_TYPE);
 		goto err;
 	}
 
 	/* Check if there is one and only one signer. */
 	sinfos = PKCS7_get_signer_info(token);
 	if (!sinfos || sk_PKCS7_SIGNER_INFO_num(sinfos) != 1) {
-		TSerr(TS_F_TS_RESP_VERIFY_SIGNATURE,
-		    TS_R_THERE_MUST_BE_ONE_SIGNER);
+		TSerror(TS_R_THERE_MUST_BE_ONE_SIGNER);
 		goto err;
 	}
 	si = sk_PKCS7_SIGNER_INFO_value(sinfos, 0);
 
 	/* Check for no content: no data to verify signature. */
 	if (PKCS7_get_detached(token)) {
-		TSerr(TS_F_TS_RESP_VERIFY_SIGNATURE, TS_R_NO_CONTENT);
+		TSerror(TS_R_NO_CONTENT);
 		goto err;
 	}
 
@@ -206,7 +205,7 @@ TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
 	/* Verifying the signature. */
 	j = PKCS7_signatureVerify(p7bio, token, si, signer);
 	if (j <= 0) {
-		TSerr(TS_F_TS_RESP_VERIFY_SIGNATURE, TS_R_SIGNATURE_FAILURE);
+		TSerror(TS_R_SIGNATURE_FAILURE);
 		goto err;
 	}
 
@@ -241,7 +240,7 @@ TS_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted, X509 *signer,
 	/* chain is an out argument. */
 	*chain = NULL;
 	if (X509_STORE_CTX_init(&cert_ctx, store, signer, untrusted) == 0) {
-		TSerr(TS_F_TS_VERIFY_CERT, ERR_R_X509_LIB);
+		TSerror(ERR_R_X509_LIB);
 		goto err;
 	}
 	if (X509_STORE_CTX_set_purpose(&cert_ctx,
@@ -251,7 +250,7 @@ TS_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted, X509 *signer,
 	if (i <= 0) {
 		int j = X509_STORE_CTX_get_error(&cert_ctx);
 
-		TSerr(TS_F_TS_VERIFY_CERT, TS_R_CERTIFICATE_VERIFY_ERROR);
+		TSerror(TS_R_CERTIFICATE_VERIFY_ERROR);
 		ERR_asprintf_error_data("Verify error:%s",
 		    X509_verify_cert_error_string(j));
 		goto err;
@@ -298,8 +297,7 @@ TS_check_signing_certs(PKCS7_SIGNER_INFO *si, STACK_OF(X509) *chain)
 
 err:
 	if (!ret)
-		TSerr(TS_F_TS_CHECK_SIGNING_CERTS,
-		    TS_R_ESS_SIGNING_CERTIFICATE_ERROR);
+		TSerror(TS_R_ESS_SIGNING_CERTIFICATE_ERROR);
 	ESS_SIGNING_CERT_free(ss);
 	return ret;
 }
@@ -446,7 +444,7 @@ int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token,
 	/* Check version number of response. */
 	if ((ctx->flags & TS_VFY_VERSION) &&
 	    TS_TST_INFO_get_version(tst_info) != 1) {
-		TSerr(TS_F_INT_TS_RESP_VERIFY_TOKEN, TS_R_UNSUPPORTED_VERSION);
+		TSerror(TS_R_UNSUPPORTED_VERSION);
 		goto err;
 	}
 
@@ -476,14 +474,14 @@ int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token,
 	/* Check whether TSA name and signer certificate match. */
 	if ((ctx->flags & TS_VFY_SIGNER) &&
 	    tsa_name && !TS_check_signer_name(tsa_name, signer)) {
-		TSerr(TS_F_INT_TS_RESP_VERIFY_TOKEN, TS_R_TSA_NAME_MISMATCH);
+		TSerror(TS_R_TSA_NAME_MISMATCH);
 		goto err;
 	}
 
 	/* Check whether the TSA is the expected one. */
 	if ((ctx->flags & TS_VFY_TSA_NAME) &&
 	    !TS_check_signer_name(ctx->tsa_name, signer)) {
-		TSerr(TS_F_INT_TS_RESP_VERIFY_TOKEN, TS_R_TSA_UNTRUSTED);
+		TSerror(TS_R_TSA_UNTRUSTED);
 		goto err;
 	}
 
@@ -541,7 +539,7 @@ TS_check_status_info(TS_RESP *response)
 		strlcpy(failure_text, "unspecified", TS_STATUS_BUF_SIZE);
 
 	/* Making up the error string. */
-	TSerr(TS_F_TS_CHECK_STATUS_INFO, TS_R_NO_TIME_STAMP_TOKEN);
+	TSerror(TS_R_NO_TIME_STAMP_TOKEN);
 	ERR_asprintf_error_data
 	    ("status code: %s, status text: %s, failure codes: %s",
 	    status_text,
@@ -567,7 +565,7 @@ TS_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 	}
 	/* Allocate memory (closing '\0' included). */
 	if (!(result = malloc(length))) {
-		TSerr(TS_F_TS_GET_STATUS_TEXT, ERR_R_MALLOC_FAILURE);
+		TSerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	/* Concatenate the descriptions. */
@@ -587,7 +585,7 @@ TS_check_policy(ASN1_OBJECT *req_oid, TS_TST_INFO *tst_info)
 	ASN1_OBJECT *resp_oid = TS_TST_INFO_get_policy_id(tst_info);
 
 	if (OBJ_cmp(req_oid, resp_oid) != 0) {
-		TSerr(TS_F_TS_CHECK_POLICY, TS_R_POLICY_MISMATCH);
+		TSerror(TS_R_POLICY_MISMATCH);
 		return 0;
 	}
 
@@ -614,7 +612,7 @@ TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info, X509_ALGOR **md_alg,
 
 	/* Getting the MD object. */
 	if (!(md = EVP_get_digestbyobj((*md_alg)->algorithm))) {
-		TSerr(TS_F_TS_COMPUTE_IMPRINT, TS_R_UNSUPPORTED_MD_ALGORITHM);
+		TSerror(TS_R_UNSUPPORTED_MD_ALGORITHM);
 		goto err;
 	}
 
@@ -624,7 +622,7 @@ TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info, X509_ALGOR **md_alg,
 		goto err;
 	*imprint_len = length;
 	if (!(*imprint = malloc(*imprint_len))) {
-		TSerr(TS_F_TS_COMPUTE_IMPRINT, ERR_R_MALLOC_FAILURE);
+		TSerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -675,7 +673,7 @@ TS_check_imprints(X509_ALGOR *algor_a, unsigned char *imprint_a, unsigned len_a,
 
 err:
 	if (!ret)
-		TSerr(TS_F_TS_CHECK_IMPRINTS, TS_R_MESSAGE_IMPRINT_MISMATCH);
+		TSerror(TS_R_MESSAGE_IMPRINT_MISMATCH);
 	return ret;
 }
 
@@ -686,13 +684,13 @@ TS_check_nonces(const ASN1_INTEGER *a, TS_TST_INFO *tst_info)
 
 	/* Error if nonce is missing. */
 	if (!b) {
-		TSerr(TS_F_TS_CHECK_NONCES, TS_R_NONCE_NOT_RETURNED);
+		TSerror(TS_R_NONCE_NOT_RETURNED);
 		return 0;
 	}
 
 	/* No error if a nonce is returned without being requested. */
 	if (ASN1_INTEGER_cmp(a, b) != 0) {
-		TSerr(TS_F_TS_CHECK_NONCES, TS_R_NONCE_MISMATCH);
+		TSerror(TS_R_NONCE_MISMATCH);
 		return 0;
 	}
 

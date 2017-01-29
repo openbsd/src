@@ -1,4 +1,4 @@
-/* $OpenBSD: comp_err.c,v 1.9 2014/11/03 16:58:28 tedu Exp $ */
+/* $OpenBSD: comp_err.c,v 1.10 2017/01/29 17:49:22 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -67,10 +67,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_COMP,0,reason)
 
 static ERR_STRING_DATA COMP_str_functs[] = {
-	{ERR_FUNC(COMP_F_BIO_ZLIB_FLUSH),	"BIO_ZLIB_FLUSH"},
-	{ERR_FUNC(COMP_F_BIO_ZLIB_NEW),	"BIO_ZLIB_NEW"},
-	{ERR_FUNC(COMP_F_BIO_ZLIB_READ),	"BIO_ZLIB_READ"},
-	{ERR_FUNC(COMP_F_BIO_ZLIB_WRITE),	"BIO_ZLIB_WRITE"},
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 

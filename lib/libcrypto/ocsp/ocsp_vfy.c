@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_vfy.c,v 1.14 2016/11/05 13:27:53 miod Exp $ */
+/* $OpenBSD: ocsp_vfy.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -86,8 +86,7 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 
 	ret = ocsp_find_signer(&signer, bs, certs, st, flags);
 	if (!ret) {
-		OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
-		    OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
+		OCSPerror(OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
 		goto end;
 	}
 	if ((ret == 2) && (flags & OCSP_TRUSTOTHER))
@@ -101,8 +100,7 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 			EVP_PKEY_free(skey);
 		}
 		if (!skey || ret <= 0) {
-			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
-			    OCSP_R_SIGNATURE_FAILURE);
+			OCSPerror(OCSP_R_SIGNATURE_FAILURE);
 			goto end;
 		}
 	}
@@ -116,8 +114,7 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 			for (i = 0; i < sk_X509_num(certs); i++) {
 				if (!sk_X509_push(untrusted,
 					sk_X509_value(certs, i))) {
-					OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
-					    ERR_R_MALLOC_FAILURE);
+					OCSPerror(ERR_R_MALLOC_FAILURE);
 					goto end;
 				}
 			}
@@ -126,7 +123,7 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 		init_res = X509_STORE_CTX_init(&ctx, st, signer, untrusted);
 		if (!init_res) {
 			ret = -1;
-			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, ERR_R_X509_LIB);
+			OCSPerror(ERR_R_X509_LIB);
 			goto end;
 		}
 
@@ -141,8 +138,7 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 		X509_STORE_CTX_cleanup(&ctx);
 		if (ret <= 0) {
 			i = X509_STORE_CTX_get_error(&ctx);
-			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
-			    OCSP_R_CERTIFICATE_VERIFY_ERROR);
+			OCSPerror(OCSP_R_CERTIFICATE_VERIFY_ERROR);
 			ERR_asprintf_error_data("Verify error:%s",
 			    X509_verify_cert_error_string(i));
 			goto end;
@@ -169,8 +165,7 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 		x = sk_X509_value(chain, sk_X509_num(chain) - 1);
 		if (X509_check_trust(x, NID_OCSP_sign, 0) !=
 			X509_TRUST_TRUSTED) {
-			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
-			    OCSP_R_ROOT_CA_NOT_TRUSTED);
+			OCSPerror(OCSP_R_ROOT_CA_NOT_TRUSTED);
 			goto end;
 		}
 		ret = 1;
@@ -245,8 +240,7 @@ ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain,
 	sresp = bs->tbsResponseData->responses;
 
 	if (sk_X509_num(chain) <= 0) {
-		OCSPerr(OCSP_F_OCSP_CHECK_ISSUER,
-		    OCSP_R_NO_CERTIFICATES_IN_CHAIN);
+		OCSPerror(OCSP_R_NO_CERTIFICATES_IN_CHAIN);
 		return -1;
 	}
 
@@ -288,8 +282,7 @@ ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret)
 
 	idcount = sk_OCSP_SINGLERESP_num(sresp);
 	if (idcount <= 0) {
-		OCSPerr(OCSP_F_OCSP_CHECK_IDS,
-		    OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA);
+		OCSPerror(OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA);
 		return -1;
 	}
 
@@ -323,8 +316,7 @@ ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
 
 		if (!(dgst =
 		    EVP_get_digestbyobj(cid->hashAlgorithm->algorithm))) {
-			OCSPerr(OCSP_F_OCSP_MATCH_ISSUERID,
-			    OCSP_R_UNKNOWN_MESSAGE_DIGEST);
+			OCSPerror(OCSP_R_UNKNOWN_MESSAGE_DIGEST);
 			return -1;
 		}
 
@@ -365,7 +357,7 @@ ocsp_check_delegated(X509 *x, int flags)
 	X509_check_purpose(x, -1, 0);
 	if ((x->ex_flags & EXFLAG_XKUSAGE) && (x->ex_xkusage & XKU_OCSP_SIGN))
 		return 1;
-	OCSPerr(OCSP_F_OCSP_CHECK_DELEGATED, OCSP_R_MISSING_OCSPSIGNING_USAGE);
+	OCSPerror(OCSP_R_MISSING_OCSPSIGNING_USAGE);
 	return 0;
 }
 
@@ -384,20 +376,18 @@ OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store,
 	X509_STORE_CTX ctx;
 
 	if (!req->optionalSignature) {
-		OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, OCSP_R_REQUEST_NOT_SIGNED);
+		OCSPerror(OCSP_R_REQUEST_NOT_SIGNED);
 		return 0;
 	}
 	gen = req->tbsRequest->requestorName;
 	if (!gen || gen->type != GEN_DIRNAME) {
-		OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,
-		    OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE);
+		OCSPerror(OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE);
 		return 0;
 	}
 	nm = gen->d.directoryName;
 	ret = ocsp_req_find_signer(&signer, req, nm, certs, store, flags);
 	if (ret <= 0) {
-		OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,
-		    OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
+		OCSPerror(OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
 		return 0;
 	}
 	if ((ret == 2) && (flags & OCSP_TRUSTOTHER))
@@ -409,8 +399,7 @@ OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store,
 		ret = OCSP_REQUEST_verify(req, skey);
 		EVP_PKEY_free(skey);
 		if (ret <= 0) {
-			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,
-			    OCSP_R_SIGNATURE_FAILURE);
+			OCSPerror(OCSP_R_SIGNATURE_FAILURE);
 			return 0;
 		}
 	}
@@ -424,7 +413,7 @@ OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store,
 			init_res = X509_STORE_CTX_init(&ctx, store, signer,
 			    req->optionalSignature->certs);
 		if (!init_res) {
-			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, ERR_R_X509_LIB);
+			OCSPerror(ERR_R_X509_LIB);
 			return 0;
 		}
 
@@ -439,8 +428,7 @@ OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store,
 		X509_STORE_CTX_cleanup(&ctx);
 		if (ret <= 0) {
 			ret = X509_STORE_CTX_get_error(&ctx);
-			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,
-			    OCSP_R_CERTIFICATE_VERIFY_ERROR);
+			OCSPerror(OCSP_R_CERTIFICATE_VERIFY_ERROR);
 			ERR_asprintf_error_data("Verify error:%s",
 			    X509_verify_cert_error_string(ret));
 			return 0;

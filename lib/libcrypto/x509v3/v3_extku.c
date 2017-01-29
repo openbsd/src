@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_extku.c,v 1.14 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_extku.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -175,8 +175,7 @@ v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	int i;
 
 	if (!(extku = sk_ASN1_OBJECT_new_null())) {
-		X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE,
-		    ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -188,16 +187,14 @@ v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 			extval = val->name;
 		if (!(objtmp = OBJ_txt2obj(extval, 0))) {
 			sk_ASN1_OBJECT_pop_free(extku, ASN1_OBJECT_free);
-			X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE,
-			    X509V3_R_INVALID_OBJECT_IDENTIFIER);
+			X509V3error(X509V3_R_INVALID_OBJECT_IDENTIFIER);
 			X509V3_conf_err(val);
 			return NULL;
 		}
 		if (sk_ASN1_OBJECT_push(extku, objtmp) == 0) {
 			ASN1_OBJECT_free(objtmp);
 			sk_ASN1_OBJECT_pop_free(extku, ASN1_OBJECT_free);
-			X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE,
-			    ERR_R_MALLOC_FAILURE);
+			X509V3error(ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
 	}

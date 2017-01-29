@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_pmeth.c,v 1.9 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dh_pmeth.c,v 1.10 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -215,7 +215,7 @@ pkey_dh_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	DH *dh = NULL;
 
 	if (ctx->pkey == NULL) {
-		DHerr(DH_F_PKEY_DH_KEYGEN, DH_R_NO_PARAMETERS_SET);
+		DHerror(DH_R_NO_PARAMETERS_SET);
 		return 0;
 	}
 	dh = DH_new();
@@ -234,7 +234,7 @@ pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 	int ret;
 
 	if (!ctx->pkey || !ctx->peerkey) {
-		DHerr(DH_F_PKEY_DH_DERIVE, DH_R_KEYS_NOT_SET);
+		DHerror(DH_R_KEYS_NOT_SET);
 		return 0;
 	}
 	ret = DH_compute_key(key, ctx->peerkey->pkey.dh->pub_key,

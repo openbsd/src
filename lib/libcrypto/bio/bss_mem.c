@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.14 2015/03/21 08:05:20 doug Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -101,7 +101,7 @@ BIO_new_mem_buf(void *buf, int len)
 	size_t sz;
 
 	if (!buf) {
-		BIOerr(BIO_F_BIO_NEW_MEM_BUF, BIO_R_NULL_PARAMETER);
+		BIOerror(BIO_R_NULL_PARAMETER);
 		return NULL;
 	}
 	sz = (len < 0) ? strlen(buf) : (size_t)len;
@@ -183,12 +183,12 @@ mem_write(BIO *b, const char *in, int inl)
 
 	bm = (BUF_MEM *)b->ptr;
 	if (in == NULL) {
-		BIOerr(BIO_F_MEM_WRITE, BIO_R_NULL_PARAMETER);
+		BIOerror(BIO_R_NULL_PARAMETER);
 		goto end;
 	}
 
 	if (b->flags & BIO_FLAGS_MEM_RDONLY) {
-		BIOerr(BIO_F_MEM_WRITE, BIO_R_WRITE_TO_READ_ONLY_BIO);
+		BIOerror(BIO_R_WRITE_TO_READ_ONLY_BIO);
 		goto end;
 	}
 

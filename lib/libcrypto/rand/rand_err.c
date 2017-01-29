@@ -1,4 +1,4 @@
-/* $OpenBSD: rand_err.c,v 1.14 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: rand_err.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -72,9 +72,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_RAND,0,reason)
 
 static ERR_STRING_DATA RAND_str_functs[] = {
-	{ERR_FUNC(RAND_F_RAND_GET_RAND_METHOD),	"RAND_get_rand_method"},
-	{ERR_FUNC(RAND_F_RAND_INIT_FIPS),	"RAND_init_fips"},
-	{ERR_FUNC(RAND_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 

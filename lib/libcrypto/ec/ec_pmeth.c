@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.9 2015/06/20 14:19:39 jsing Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.10 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -132,7 +132,7 @@ pkey_ec_sign(EVP_PKEY_CTX * ctx, unsigned char *sig, size_t * siglen,
 		*siglen = ECDSA_size(ec);
 		return 1;
 	} else if (*siglen < (size_t) ECDSA_size(ec)) {
-		ECerr(EC_F_PKEY_EC_SIGN, EC_R_BUFFER_TOO_SMALL);
+		ECerror(EC_R_BUFFER_TOO_SMALL);
 		return 0;
 	}
 	if (dctx->md)
@@ -175,7 +175,7 @@ pkey_ec_derive(EVP_PKEY_CTX * ctx, unsigned char *key, size_t * keylen)
 	size_t outlen;
 	const EC_POINT *pubkey = NULL;
 	if (!ctx->pkey || !ctx->peerkey) {
-		ECerr(EC_F_PKEY_EC_DERIVE, EC_R_KEYS_NOT_SET);
+		ECerror(EC_R_KEYS_NOT_SET);
 		return 0;
 	}
 	if (!key) {
@@ -209,7 +209,7 @@ pkey_ec_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
 	case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
 		group = EC_GROUP_new_by_curve_name(p1);
 		if (group == NULL) {
-			ECerr(EC_F_PKEY_EC_CTRL, EC_R_INVALID_CURVE);
+			ECerror(EC_R_INVALID_CURVE);
 			return 0;
 		}
 		EC_GROUP_free(dctx->gen_group);
@@ -223,7 +223,7 @@ pkey_ec_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
 		    EVP_MD_type((const EVP_MD *) p2) != NID_sha256 &&
 		    EVP_MD_type((const EVP_MD *) p2) != NID_sha384 &&
 		    EVP_MD_type((const EVP_MD *) p2) != NID_sha512) {
-			ECerr(EC_F_PKEY_EC_CTRL, EC_R_INVALID_DIGEST_TYPE);
+			ECerror(EC_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
 		dctx->md = p2;
@@ -254,7 +254,7 @@ pkey_ec_ctrl_str(EVP_PKEY_CTX * ctx,
 		if (nid == NID_undef)
 			nid = OBJ_ln2nid(value);
 		if (nid == NID_undef) {
-			ECerr(EC_F_PKEY_EC_CTRL_STR, EC_R_INVALID_CURVE);
+			ECerror(EC_R_INVALID_CURVE);
 			return 0;
 		}
 		return EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid);
@@ -269,7 +269,7 @@ pkey_ec_paramgen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
 	EC_PKEY_CTX *dctx = ctx->data;
 	int ret = 0;
 	if (dctx->gen_group == NULL) {
-		ECerr(EC_F_PKEY_EC_PARAMGEN, EC_R_NO_PARAMETERS_SET);
+		ECerror(EC_R_NO_PARAMETERS_SET);
 		return 0;
 	}
 	ec = EC_KEY_new();
@@ -288,7 +288,7 @@ pkey_ec_keygen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
 {
 	EC_KEY *ec = NULL;
 	if (ctx->pkey == NULL) {
-		ECerr(EC_F_PKEY_EC_KEYGEN, EC_R_NO_PARAMETERS_SET);
+		ECerror(EC_R_NO_PARAMETERS_SET);
 		return 0;
 	}
 	ec = EC_KEY_new();

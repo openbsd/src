@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.38 2017/01/21 04:44:43 jsing Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.39 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -329,7 +329,7 @@ OBJ_add_object(const ASN1_OBJECT *obj)
 	return (o->nid);
 
 err2:
-	OBJerr(OBJ_F_OBJ_ADD_OBJECT, ERR_R_MALLOC_FAILURE);
+	OBJerror(ERR_R_MALLOC_FAILURE);
 err:
 	for (i = ADDED_DATA; i <= ADDED_NID; i++)
 		free(ao[i]);
@@ -345,7 +345,7 @@ OBJ_nid2obj(int n)
 
 	if ((n >= 0) && (n < NUM_NID)) {
 		if ((n != NID_undef) && (nid_objs[n].nid == NID_undef)) {
-			OBJerr(OBJ_F_OBJ_NID2OBJ, OBJ_R_UNKNOWN_NID);
+			OBJerror(OBJ_R_UNKNOWN_NID);
 			return (NULL);
 		}
 		return ((ASN1_OBJECT *)&(nid_objs[n]));
@@ -359,7 +359,7 @@ OBJ_nid2obj(int n)
 		if (adp != NULL)
 			return (adp->obj);
 		else {
-			OBJerr(OBJ_F_OBJ_NID2OBJ, OBJ_R_UNKNOWN_NID);
+			OBJerror(OBJ_R_UNKNOWN_NID);
 			return (NULL);
 		}
 	}
@@ -373,7 +373,7 @@ OBJ_nid2sn(int n)
 
 	if ((n >= 0) && (n < NUM_NID)) {
 		if ((n != NID_undef) && (nid_objs[n].nid == NID_undef)) {
-			OBJerr(OBJ_F_OBJ_NID2SN, OBJ_R_UNKNOWN_NID);
+			OBJerror(OBJ_R_UNKNOWN_NID);
 			return (NULL);
 		}
 		return (nid_objs[n].sn);
@@ -387,7 +387,7 @@ OBJ_nid2sn(int n)
 		if (adp != NULL)
 			return (adp->obj->sn);
 		else {
-			OBJerr(OBJ_F_OBJ_NID2SN, OBJ_R_UNKNOWN_NID);
+			OBJerror(OBJ_R_UNKNOWN_NID);
 			return (NULL);
 		}
 	}
@@ -401,7 +401,7 @@ OBJ_nid2ln(int n)
 
 	if ((n >= 0) && (n < NUM_NID)) {
 		if ((n != NID_undef) && (nid_objs[n].nid == NID_undef)) {
-			OBJerr(OBJ_F_OBJ_NID2LN, OBJ_R_UNKNOWN_NID);
+			OBJerror(OBJ_R_UNKNOWN_NID);
 			return (NULL);
 		}
 		return (nid_objs[n].ln);
@@ -415,7 +415,7 @@ OBJ_nid2ln(int n)
 		if (adp != NULL)
 			return (adp->obj->ln);
 		else {
-			OBJerr(OBJ_F_OBJ_NID2LN, OBJ_R_UNKNOWN_NID);
+			OBJerror(OBJ_R_UNKNOWN_NID);
 			return (NULL);
 		}
 	}
@@ -799,7 +799,7 @@ OBJ_create(const char *oid, const char *sn, const char *ln)
 		return (0);
 
 	if ((buf = malloc(i)) == NULL) {
-		OBJerr(OBJ_F_OBJ_CREATE, ERR_R_MALLOC_FAILURE);
+		OBJerror(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	i = a2d_ASN1_OBJECT(buf, i, oid, -1);

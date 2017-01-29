@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.22 2015/02/10 11:22:21 jsing Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.23 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,7 +71,7 @@ BIO_new(BIO_METHOD *method)
 
 	ret = malloc(sizeof(BIO));
 	if (ret == NULL) {
-		BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
+		BIOerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	if (!BIO_set(ret, method)) {
@@ -200,7 +200,7 @@ BIO_read(BIO *b, void *out, int outl)
 	long (*cb)(BIO *, int, const char *, int, long, long);
 
 	if ((b == NULL) || (b->method == NULL) || (b->method->bread == NULL)) {
-		BIOerr(BIO_F_BIO_READ, BIO_R_UNSUPPORTED_METHOD);
+		BIOerror(BIO_R_UNSUPPORTED_METHOD);
 		return (-2);
 	}
 
@@ -210,7 +210,7 @@ BIO_read(BIO *b, void *out, int outl)
 		return (i);
 
 	if (!b->init) {
-		BIOerr(BIO_F_BIO_READ, BIO_R_UNINITIALIZED);
+		BIOerror(BIO_R_UNINITIALIZED);
 		return (-2);
 	}
 
@@ -236,7 +236,7 @@ BIO_write(BIO *b, const void *in, int inl)
 
 	cb = b->callback;
 	if ((b->method == NULL) || (b->method->bwrite == NULL)) {
-		BIOerr(BIO_F_BIO_WRITE, BIO_R_UNSUPPORTED_METHOD);
+		BIOerror(BIO_R_UNSUPPORTED_METHOD);
 		return (-2);
 	}
 
@@ -245,7 +245,7 @@ BIO_write(BIO *b, const void *in, int inl)
 		return (i);
 
 	if (!b->init) {
-		BIOerr(BIO_F_BIO_WRITE, BIO_R_UNINITIALIZED);
+		BIOerror(BIO_R_UNINITIALIZED);
 		return (-2);
 	}
 
@@ -267,7 +267,7 @@ BIO_puts(BIO *b, const char *in)
 	long (*cb)(BIO *, int, const char *, int, long, long);
 
 	if ((b == NULL) || (b->method == NULL) || (b->method->bputs == NULL)) {
-		BIOerr(BIO_F_BIO_PUTS, BIO_R_UNSUPPORTED_METHOD);
+		BIOerror(BIO_R_UNSUPPORTED_METHOD);
 		return (-2);
 	}
 
@@ -278,7 +278,7 @@ BIO_puts(BIO *b, const char *in)
 		return (i);
 
 	if (!b->init) {
-		BIOerr(BIO_F_BIO_PUTS, BIO_R_UNINITIALIZED);
+		BIOerror(BIO_R_UNINITIALIZED);
 		return (-2);
 	}
 
@@ -299,7 +299,7 @@ BIO_gets(BIO *b, char *in, int inl)
 	long (*cb)(BIO *, int, const char *, int, long, long);
 
 	if ((b == NULL) || (b->method == NULL) || (b->method->bgets == NULL)) {
-		BIOerr(BIO_F_BIO_GETS, BIO_R_UNSUPPORTED_METHOD);
+		BIOerror(BIO_R_UNSUPPORTED_METHOD);
 		return (-2);
 	}
 
@@ -310,7 +310,7 @@ BIO_gets(BIO *b, char *in, int inl)
 		return (i);
 
 	if (!b->init) {
-		BIOerr(BIO_F_BIO_GETS, BIO_R_UNINITIALIZED);
+		BIOerror(BIO_R_UNINITIALIZED);
 		return (-2);
 	}
 
@@ -364,7 +364,7 @@ BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
 		return (0);
 
 	if ((b->method == NULL) || (b->method->ctrl == NULL)) {
-		BIOerr(BIO_F_BIO_CTRL, BIO_R_UNSUPPORTED_METHOD);
+		BIOerror(BIO_R_UNSUPPORTED_METHOD);
 		return (-2);
 	}
 
@@ -392,7 +392,7 @@ BIO_callback_ctrl(BIO *b, int cmd,
 		return (0);
 
 	if ((b->method == NULL) || (b->method->callback_ctrl == NULL)) {
-		BIOerr(BIO_F_BIO_CALLBACK_CTRL, BIO_R_UNSUPPORTED_METHOD);
+		BIOerror(BIO_R_UNSUPPORTED_METHOD);
 		return (-2);
 	}
 

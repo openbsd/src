@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_prn.c,v 1.5 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dh_prn.c,v 1.6 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,7 +69,7 @@ DHparams_print_fp(FILE *fp, const DH *x)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		DHerr(DH_F_DHPARAMS_PRINT_FP, ERR_R_BUF_LIB);
+		DHerror(ERR_R_BUF_LIB);
 		return 0;
 	}
 	BIO_set_fp(b,fp,BIO_NOCLOSE);

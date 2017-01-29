@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ncons.c,v 1.10 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_ncons.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -204,8 +204,7 @@ v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 			ptree = &ncons->excludedSubtrees;
 			tval.name = val->name + 9;
 		} else {
-			X509V3err(X509V3_F_V2I_NAME_CONSTRAINTS,
-			    X509V3_R_INVALID_SYNTAX);
+			X509V3error(X509V3_R_INVALID_SYNTAX);
 			goto err;
 		}
 		tval.value = val->value;
@@ -222,7 +221,7 @@ v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	return ncons;
 
 memerr:
-	X509V3err(X509V3_F_V2I_NAME_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
+	X509V3error(ERR_R_MALLOC_FAILURE);
 err:
 	if (ncons)
 		NAME_CONSTRAINTS_free(ncons);

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_dup.c,v 1.13 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_dup.c,v 1.14 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,7 +77,7 @@ ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x)
 	i = i2d(x, NULL);
 	b = malloc(i + 10);
 	if (b == NULL) {
-		ASN1err(ASN1_F_ASN1_DUP, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	p = b;
@@ -108,7 +108,7 @@ ASN1_item_dup(const ASN1_ITEM *it, void *x)
 
 	i = ASN1_item_i2d(x, &b, it);
 	if (b == NULL) {
-		ASN1err(ASN1_F_ASN1_ITEM_DUP, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	p = b;

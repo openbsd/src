@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pkey.c,v 1.21 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: pem_pkey.c,v 1.22 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,8 +116,7 @@ PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 		else
 			klen = PEM_def_callback(psbuf, PEM_BUFSIZE, 0, u);
 		if (klen <= 0) {
-			PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY,
-			    PEM_R_BAD_PASSWORD_READ);
+			PEMerror(PEM_R_BAD_PASSWORD_READ);
 			X509_SIG_free(p8);
 			goto err;
 		}
@@ -141,7 +140,7 @@ PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 
 p8err:
 	if (ret == NULL)
-		PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY, ERR_R_ASN1_LIB);
+		PEMerror(ERR_R_ASN1_LIB);
 err:
 	free(nm);
 	explicit_bzero(data, len);
@@ -199,7 +198,7 @@ PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 
 err:
 	if (ret == NULL)
-		PEMerr(PEM_F_PEM_READ_BIO_PARAMETERS, ERR_R_ASN1_LIB);
+		PEMerror(ERR_R_ASN1_LIB);
 	free(nm);
 	free(data);
 	return (ret);
@@ -226,7 +225,7 @@ PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 	EVP_PKEY *ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		PEMerr(PEM_F_PEM_READ_PRIVATEKEY, ERR_R_BUF_LIB);
+		PEMerror(ERR_R_BUF_LIB);
 		return (0);
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -243,7 +242,7 @@ PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
 	int ret;
 
 	if ((b = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
-		PEMerr(PEM_F_PEM_WRITE_PRIVATEKEY, ERR_R_BUF_LIB);
+		PEMerror(ERR_R_BUF_LIB);
 		return 0;
 	}
 	ret = PEM_write_bio_PrivateKey(b, x, enc, kstr, klen, cb, u);

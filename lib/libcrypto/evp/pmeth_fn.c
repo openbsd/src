@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_fn.c,v 1.5 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: pmeth_fn.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -76,7 +76,7 @@
 			} \
 		else if (*arglen < pksize) \
 			{ \
-			EVPerr(err, EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/\
+			EVPerror(EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/\
 			return 0; \
 			} \
 		}
@@ -87,8 +87,7 @@ EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->sign) {
-		EVPerr(EVP_F_EVP_PKEY_SIGN_INIT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	ctx->operation = EVP_PKEY_OP_SIGN;
@@ -105,12 +104,11 @@ EVP_PKEY_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     const unsigned char *tbs, size_t tbslen)
 {
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->sign) {
-		EVPerr(EVP_F_EVP_PKEY_SIGN,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	if (ctx->operation != EVP_PKEY_OP_SIGN) {
-		EVPerr(EVP_F_EVP_PKEY_SIGN, EVP_R_OPERATON_NOT_INITIALIZED);
+		EVPerror(EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 	}
 	M_check_autoarg(ctx, sig, siglen, EVP_F_EVP_PKEY_SIGN)
@@ -123,8 +121,7 @@ EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify) {
-		EVPerr(EVP_F_EVP_PKEY_VERIFY_INIT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	ctx->operation = EVP_PKEY_OP_VERIFY;
@@ -141,12 +138,11 @@ EVP_PKEY_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
     const unsigned char *tbs, size_t tbslen)
 {
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify) {
-		EVPerr(EVP_F_EVP_PKEY_VERIFY,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	if (ctx->operation != EVP_PKEY_OP_VERIFY) {
-		EVPerr(EVP_F_EVP_PKEY_VERIFY, EVP_R_OPERATON_NOT_INITIALIZED);
+		EVPerror(EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 	}
 	return ctx->pmeth->verify(ctx, sig, siglen, tbs, tbslen);
@@ -158,8 +154,7 @@ EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_recover) {
-		EVPerr(EVP_F_EVP_PKEY_VERIFY_RECOVER_INIT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	ctx->operation = EVP_PKEY_OP_VERIFYRECOVER;
@@ -176,13 +171,11 @@ EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx, unsigned char *rout, size_t *routlen,
     const unsigned char *sig, size_t siglen)
 {
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_recover) {
-		EVPerr(EVP_F_EVP_PKEY_VERIFY_RECOVER,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	if (ctx->operation != EVP_PKEY_OP_VERIFYRECOVER) {
-		EVPerr(EVP_F_EVP_PKEY_VERIFY_RECOVER,
-		    EVP_R_OPERATON_NOT_INITIALIZED);
+		EVPerror(EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 	}
 	M_check_autoarg(ctx, rout, routlen, EVP_F_EVP_PKEY_VERIFY_RECOVER)
@@ -195,8 +188,7 @@ EVP_PKEY_encrypt_init(EVP_PKEY_CTX *ctx)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->encrypt) {
-		EVPerr(EVP_F_EVP_PKEY_ENCRYPT_INIT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	ctx->operation = EVP_PKEY_OP_ENCRYPT;
@@ -213,12 +205,11 @@ EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
     const unsigned char *in, size_t inlen)
 {
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->encrypt) {
-		EVPerr(EVP_F_EVP_PKEY_ENCRYPT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	if (ctx->operation != EVP_PKEY_OP_ENCRYPT) {
-		EVPerr(EVP_F_EVP_PKEY_ENCRYPT, EVP_R_OPERATON_NOT_INITIALIZED);
+		EVPerror(EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 	}
 	M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_ENCRYPT)
@@ -231,8 +222,7 @@ EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->decrypt) {
-		EVPerr(EVP_F_EVP_PKEY_DECRYPT_INIT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	ctx->operation = EVP_PKEY_OP_DECRYPT;
@@ -249,12 +239,11 @@ EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
     const unsigned char *in, size_t inlen)
 {
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->decrypt) {
-		EVPerr(EVP_F_EVP_PKEY_DECRYPT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	if (ctx->operation != EVP_PKEY_OP_DECRYPT) {
-		EVPerr(EVP_F_EVP_PKEY_DECRYPT, EVP_R_OPERATON_NOT_INITIALIZED);
+		EVPerror(EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 	}
 	M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_DECRYPT)
@@ -267,8 +256,7 @@ EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->derive) {
-		EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	ctx->operation = EVP_PKEY_OP_DERIVE;
@@ -288,15 +276,13 @@ EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 	if (!ctx || !ctx->pmeth || !(ctx->pmeth->derive ||
 	    ctx->pmeth->encrypt || ctx->pmeth->decrypt) ||
 	    !ctx->pmeth->ctrl) {
-		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	if (ctx->operation != EVP_PKEY_OP_DERIVE &&
 	    ctx->operation != EVP_PKEY_OP_ENCRYPT &&
 	    ctx->operation != EVP_PKEY_OP_DECRYPT) {
-		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-		    EVP_R_OPERATON_NOT_INITIALIZED);
+		EVPerror(EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 	}
 
@@ -309,13 +295,12 @@ EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 		return 1;
 
 	if (!ctx->pkey) {
-		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, EVP_R_NO_KEY_SET);
+		EVPerror(EVP_R_NO_KEY_SET);
 		return -1;
 	}
 
 	if (ctx->pkey->type != peer->type) {
-		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-		    EVP_R_DIFFERENT_KEY_TYPES);
+		EVPerror(EVP_R_DIFFERENT_KEY_TYPES);
 		return -1;
 	}
 
@@ -326,8 +311,7 @@ EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 	 * -2 is OK for us here, as well as 1, so we can check for 0 only. */
 	if (!EVP_PKEY_missing_parameters(peer) &&
 	    !EVP_PKEY_cmp_parameters(ctx->pkey, peer)) {
-		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-		    EVP_R_DIFFERENT_PARAMETERS);
+		EVPerror(EVP_R_DIFFERENT_PARAMETERS);
 		return -1;
 	}
 
@@ -349,12 +333,11 @@ int
 EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
 {
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->derive) {
-		EVPerr(EVP_F_EVP_PKEY_DERIVE,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	if (ctx->operation != EVP_PKEY_OP_DERIVE) {
-		EVPerr(EVP_F_EVP_PKEY_DERIVE, EVP_R_OPERATON_NOT_INITIALIZED);
+		EVPerror(EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 	}
 	M_check_autoarg(ctx, key, pkeylen, EVP_F_EVP_PKEY_DERIVE)

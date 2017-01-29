@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.29 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.30 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -129,7 +129,7 @@ BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0) {
 		/* BN_FLG_CONSTTIME only supported by BN_mod_exp_mont() */
-		BNerr(BN_F_BN_EXP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		BNerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
 	}
 
@@ -263,7 +263,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 	if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0) {
 		/* BN_FLG_CONSTTIME only supported by BN_mod_exp_mont() */
-		BNerr(BN_F_BN_MOD_EXP_RECP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		BNerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
 	}
 
@@ -405,7 +405,7 @@ BN_mod_exp_mont_internal(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIG
 	bn_check_top(m);
 
 	if (!BN_is_odd(m)) {
-		BNerr(BN_F_BN_MOD_EXP_MONT, BN_R_CALLED_WITH_EVEN_MODULUS);
+		BNerror(BN_R_CALLED_WITH_EVEN_MODULUS);
 		return (0);
 	}
 
@@ -662,8 +662,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	bn_check_top(m);
 
 	if (!BN_is_odd(m)) {
-		BNerr(BN_F_BN_MOD_EXP_MONT_CONSTTIME,
-		    BN_R_CALLED_WITH_EVEN_MODULUS);
+		BNerror(BN_R_CALLED_WITH_EVEN_MODULUS);
 		return (0);
 	}
 
@@ -938,8 +937,7 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 
 	if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0) {
 		/* BN_FLG_CONSTTIME only supported by BN_mod_exp_mont() */
-		BNerr(BN_F_BN_MOD_EXP_MONT_WORD,
-		    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		BNerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
 	}
 
@@ -947,7 +945,7 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 	bn_check_top(m);
 
 	if (!BN_is_odd(m)) {
-		BNerr(BN_F_BN_MOD_EXP_MONT_WORD, BN_R_CALLED_WITH_EVEN_MODULUS);
+		BNerror(BN_R_CALLED_WITH_EVEN_MODULUS);
 		return (0);
 	}
 	if (m->top == 1)
@@ -1076,8 +1074,7 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 	if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0) {
 		/* BN_FLG_CONSTTIME only supported by BN_mod_exp_mont() */
-		BNerr(BN_F_BN_MOD_EXP_SIMPLE,
-		    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		BNerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
 	}
 

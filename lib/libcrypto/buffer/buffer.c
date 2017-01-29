@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.c,v 1.21 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: buffer.c,v 1.22 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,7 +75,7 @@ BUF_MEM_new(void)
 
 	ret = malloc(sizeof(BUF_MEM));
 	if (ret == NULL) {
-		BUFerr(BUF_F_BUF_MEM_NEW, ERR_R_MALLOC_FAILURE);
+		BUFerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	ret->length = 0;
@@ -114,13 +114,13 @@ BUF_MEM_grow(BUF_MEM *str, size_t len)
 	}
 	/* This limit is sufficient to ensure (len+3)/3*4 < 2**31 */
 	if (len > LIMIT_BEFORE_EXPANSION) {
-		BUFerr(BUF_F_BUF_MEM_GROW, ERR_R_MALLOC_FAILURE);
+		BUFerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	n = (len + 3) / 3 * 4;
 	ret = realloc(str->data, n);
 	if (ret == NULL) {
-		BUFerr(BUF_F_BUF_MEM_GROW, ERR_R_MALLOC_FAILURE);
+		BUFerror(ERR_R_MALLOC_FAILURE);
 		len = 0;
 	} else {
 		str->data = ret;
@@ -149,7 +149,7 @@ BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 	}
 	/* This limit is sufficient to ensure (len+3)/3*4 < 2**31 */
 	if (len > LIMIT_BEFORE_EXPANSION) {
-		BUFerr(BUF_F_BUF_MEM_GROW_CLEAN, ERR_R_MALLOC_FAILURE);
+		BUFerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	n = (len + 3) / 3 * 4;
@@ -161,7 +161,7 @@ BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 		free(str->data);
 	}
 	if (ret == NULL) {
-		BUFerr(BUF_F_BUF_MEM_GROW_CLEAN, ERR_R_MALLOC_FAILURE);
+		BUFerror(ERR_R_MALLOC_FAILURE);
 		len = 0;
 	} else {
 		str->data = ret;

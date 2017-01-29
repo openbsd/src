@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.21 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: pem_info.c,v 1.22 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,7 +83,7 @@ PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
 	STACK_OF(X509_INFO) *ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		PEMerr(PEM_F_PEM_X509_INFO_READ, ERR_R_BUF_LIB);
+		PEMerror(ERR_R_BUF_LIB);
 		return (0);
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -109,8 +109,7 @@ PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
 
 	if (sk == NULL) {
 		if ((ret = sk_X509_INFO_new_null()) == NULL) {
-			PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,
-			    ERR_R_MALLOC_FAILURE);
+			PEMerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 	} else
@@ -249,13 +248,11 @@ start:
 				if (ptype) {
 					if (!d2i_PrivateKey(ptype, pp, &p,
 					    len)) {
-						PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,
-						    ERR_R_ASN1_LIB);
+						PEMerror(ERR_R_ASN1_LIB);
 						goto err;
 					}
 				} else if (d2i(pp, &p, len) == NULL) {
-					PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,
-					    ERR_R_ASN1_LIB);
+					PEMerror(ERR_R_ASN1_LIB);
 					goto err;
 				}
 			} else { /* encrypted RSA data */
@@ -323,8 +320,7 @@ PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 	if (enc != NULL) {
 		objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
 		if (objstr == NULL) {
-			PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO,
-			    PEM_R_UNSUPPORTED_CIPHER);
+			PEMerror(PEM_R_UNSUPPORTED_CIPHER);
 			goto err;
 		}
 	}
@@ -337,8 +333,7 @@ PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 	if (xi->x_pkey != NULL) {
 		if ((xi->enc_data != NULL) && (xi->enc_len > 0) ) {
 			if (enc == NULL) {
-				PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO,
-				    PEM_R_CIPHER_IS_NULL);
+				PEMerror(PEM_R_CIPHER_IS_NULL);
 				goto err;
 			}
 
@@ -355,16 +350,14 @@ PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 			objstr = OBJ_nid2sn(
 			    EVP_CIPHER_nid(xi->enc_cipher.cipher));
 			if (objstr == NULL) {
-				PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO,
-				    PEM_R_UNSUPPORTED_CIPHER);
+				PEMerror(PEM_R_UNSUPPORTED_CIPHER);
 				goto err;
 			}
 
 			/* create the right magic header stuff */
 			if (strlen(objstr) + 23 + 2 * enc->iv_len + 13 >
 			    sizeof buf) {
-				PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO,
-				    ASN1_R_BUFFER_TOO_SMALL);
+				PEMerror(ASN1_R_BUFFER_TOO_SMALL);
 				goto err;
 			}
 			buf[0] = '\0';

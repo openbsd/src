@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_cnf.c,v 1.13 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: eng_cnf.c,v 1.14 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -115,8 +115,7 @@ int_engine_configure(char *name, char *value, const CONF *cnf)
 	ecmds = NCONF_get_section(cnf, value);
 
 	if (!ecmds) {
-		ENGINEerr(ENGINE_F_INT_ENGINE_CONFIGURE,
-		    ENGINE_R_ENGINE_SECTION_ERROR);
+		ENGINEerror(ENGINE_R_ENGINE_SECTION_ERROR);
 		return 0;
 	}
 
@@ -175,8 +174,7 @@ int_engine_configure(char *name, char *value, const CONF *cnf)
 					if (!int_engine_init(e))
 						goto err;
 				} else if (do_init != 0) {
-					ENGINEerr(ENGINE_F_INT_ENGINE_CONFIGURE,
-					    ENGINE_R_INVALID_INIT_VALUE);
+					ENGINEerror(ENGINE_R_INVALID_INIT_VALUE);
 					goto err;
 				}
 			}
@@ -196,8 +194,7 @@ int_engine_configure(char *name, char *value, const CONF *cnf)
 
 err:
 	if (ret != 1) {
-		ENGINEerr(ENGINE_F_INT_ENGINE_CONFIGURE,
-		    ENGINE_R_ENGINE_CONFIGURATION_ERROR);
+		ENGINEerror(ENGINE_R_ENGINE_CONFIGURATION_ERROR);
 		if (ecmd)
 			ERR_asprintf_error_data(
 			    "section=%s, name=%s, value=%s",
@@ -224,8 +221,7 @@ int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
 	elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
 
 	if (!elist) {
-		ENGINEerr(ENGINE_F_INT_ENGINE_MODULE_INIT,
-		    ENGINE_R_ENGINES_SECTION_ERROR);
+		ENGINEerror(ENGINE_R_ENGINES_SECTION_ERROR);
 		return 0;
 	}
 

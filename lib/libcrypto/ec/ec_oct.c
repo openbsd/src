@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.4 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.5 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -76,11 +76,11 @@ EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP * group, EC_POINT * point
 {
 	if (group->meth->point_set_compressed_coordinates == 0
 	    && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-		ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	if (group->meth->flags & EC_FLAGS_DEFAULT_OCT) {
@@ -90,7 +90,7 @@ EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP * group, EC_POINT * point
 		else
 #ifdef OPENSSL_NO_EC2M
 		{
-			ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP, EC_R_GF2M_NOT_SUPPORTED);
+			ECerror(EC_R_GF2M_NOT_SUPPORTED);
 			return 0;
 		}
 #else
@@ -108,11 +108,11 @@ EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP * group, EC_POINT * poin
 {
 	if (group->meth->point_set_compressed_coordinates == 0
 	    && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-		ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GF2M, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GF2M, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	if (group->meth->flags & EC_FLAGS_DEFAULT_OCT) {
@@ -134,11 +134,11 @@ EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
 {
 	if (group->meth->point2oct == 0
 	    && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-		ECerr(EC_F_EC_POINT_POINT2OCT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_POINT2OCT, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	if (group->meth->flags & EC_FLAGS_DEFAULT_OCT) {
@@ -148,7 +148,7 @@ EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
 		else
 #ifdef OPENSSL_NO_EC2M
 		{
-			ECerr(EC_F_EC_POINT_POINT2OCT, EC_R_GF2M_NOT_SUPPORTED);
+			ECerror(EC_R_GF2M_NOT_SUPPORTED);
 			return 0;
 		}
 #else
@@ -166,11 +166,11 @@ EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
 {
 	if (group->meth->oct2point == 0 &&
 	    !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-		ECerr(EC_F_EC_POINT_OCT2POINT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_OCT2POINT, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	if (group->meth->flags & EC_FLAGS_DEFAULT_OCT) {
@@ -180,7 +180,7 @@ EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
 		else
 #ifdef OPENSSL_NO_EC2M
 		{
-			ECerr(EC_F_EC_POINT_OCT2POINT, EC_R_GF2M_NOT_SUPPORTED);
+			ECerror(EC_R_GF2M_NOT_SUPPORTED);
 			return 0;
 		}
 #else

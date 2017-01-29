@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_sxnet.c,v 1.18 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_sxnet.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -258,8 +258,7 @@ SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen)
 	ASN1_INTEGER *izone = NULL;
 
 	if (!(izone = s2i_ASN1_INTEGER(NULL, zone))) {
-		X509V3err(X509V3_F_SXNET_ADD_ID_ASC,
-		    X509V3_R_ERROR_CONVERTING_ZONE);
+		X509V3error(X509V3_R_ERROR_CONVERTING_ZONE);
 		return 0;
 	}
 	return SXNET_add_id_INTEGER(psx, izone, user, userlen);
@@ -274,7 +273,7 @@ SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user, int userlen)
 
 	if (!(izone = ASN1_INTEGER_new()) ||
 	    !ASN1_INTEGER_set(izone, lzone)) {
-		X509V3err(X509V3_F_SXNET_ADD_ID_ULONG, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		ASN1_INTEGER_free(izone);
 		return 0;
 	}
@@ -293,15 +292,13 @@ SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user, int userlen)
 	SXNETID *id = NULL;
 
 	if (!psx || !zone || !user) {
-		X509V3err(X509V3_F_SXNET_ADD_ID_INTEGER,
-		    X509V3_R_INVALID_NULL_ARGUMENT);
+		X509V3error(X509V3_R_INVALID_NULL_ARGUMENT);
 		return 0;
 	}
 	if (userlen == -1)
 		userlen = strlen(user);
 	if (userlen > 64) {
-		X509V3err(X509V3_F_SXNET_ADD_ID_INTEGER,
-		    X509V3_R_USER_TOO_LONG);
+		X509V3error(X509V3_R_USER_TOO_LONG);
 		return 0;
 	}
 	if (!*psx) {
@@ -313,8 +310,7 @@ SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user, int userlen)
 	} else
 		sx = *psx;
 	if (SXNET_get_id_INTEGER(sx, zone)) {
-		X509V3err(X509V3_F_SXNET_ADD_ID_INTEGER,
-		    X509V3_R_DUPLICATE_ZONE_ID);
+		X509V3error(X509V3_R_DUPLICATE_ZONE_ID);
 		return 0;
 	}
 
@@ -331,7 +327,7 @@ SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user, int userlen)
 	return 1;
 
 err:
-	X509V3err(X509V3_F_SXNET_ADD_ID_INTEGER, ERR_R_MALLOC_FAILURE);
+	X509V3error(ERR_R_MALLOC_FAILURE);
 	SXNETID_free(id);
 	SXNET_free(sx);
 	*psx = NULL;
@@ -345,8 +341,7 @@ SXNET_get_id_asc(SXNET *sx, char *zone)
 	ASN1_OCTET_STRING *oct;
 
 	if (!(izone = s2i_ASN1_INTEGER(NULL, zone))) {
-		X509V3err(X509V3_F_SXNET_GET_ID_ASC,
-		    X509V3_R_ERROR_CONVERTING_ZONE);
+		X509V3error(X509V3_R_ERROR_CONVERTING_ZONE);
 		return NULL;
 	}
 	oct = SXNET_get_id_INTEGER(sx, izone);
@@ -362,7 +357,7 @@ SXNET_get_id_ulong(SXNET *sx, unsigned long lzone)
 
 	if (!(izone = ASN1_INTEGER_new()) ||
 	    !ASN1_INTEGER_set(izone, lzone)) {
-		X509V3err(X509V3_F_SXNET_GET_ID_ULONG, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		ASN1_INTEGER_free(izone);
 		return NULL;
 	}

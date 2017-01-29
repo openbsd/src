@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.62 2017/01/26 12:16:13 beck Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.63 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -709,7 +709,7 @@ SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack, const char *dir)
 		(void) closedir(dirp);
 	}
 	if (!ret) {
- 		SYSerr(SYS_F_OPENDIR, errno);
+ 		SYSerror(errno);
 		ERR_asprintf_error_data("opendir ('%s')", dir);
 		SSLerror(ERR_R_SYS_LIB);
 	}

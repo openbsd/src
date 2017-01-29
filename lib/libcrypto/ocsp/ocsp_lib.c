@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.19 2016/12/21 18:13:59 beck Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.20 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -115,7 +115,7 @@ OCSP_cert_id_new(const EVP_MD *dgst, X509_NAME *issuerName,
 	if (alg->algorithm != NULL)
 		ASN1_OBJECT_free(alg->algorithm);
 	if ((nid = EVP_MD_type(dgst)) == NID_undef) {
-		OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_UNKNOWN_NID);
+		OCSPerror(OCSP_R_UNKNOWN_NID);
 		goto err;
 	}
 	if (!(alg->algorithm = OBJ_nid2obj(nid)))
@@ -144,7 +144,7 @@ OCSP_cert_id_new(const EVP_MD *dgst, X509_NAME *issuerName,
 	return cid;
 
 digerr:
-	OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_DIGEST_ERR);
+	OCSPerror(OCSP_R_DIGEST_ERR);
 err:
 	if (cid)
 		OCSP_CERTID_free(cid);
@@ -193,11 +193,11 @@ OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
 	} else if (strncmp(url, "http://", 7) == 0)
 		host = strdup(url + 7);
 	else {
-		OCSPerr(OCSP_F_OCSP_PARSE_URL, OCSP_R_ERROR_PARSING_URL);
+		OCSPerror(OCSP_R_ERROR_PARSING_URL);
 		return 0;
 	}
 	if (host == NULL) {
-		OCSPerr(OCSP_F_OCSP_PARSE_URL, ERR_R_MALLOC_FAILURE);
+		OCSPerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 
@@ -221,7 +221,7 @@ OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
 		free(host);
 		free(path);
 		free(port);
-		OCSPerr(OCSP_F_OCSP_PARSE_URL, ERR_R_MALLOC_FAILURE);
+		OCSPerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bytes.c,v 1.18 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_bytes.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,7 +123,7 @@ d2i_ASN1_type_bytes(ASN1_STRING **a, const unsigned char **pp,
 	return (ret);
 
 err:
-	ASN1err(ASN1_F_D2I_ASN1_TYPE_BYTES, i);
+	ASN1error(i);
 	if (a == NULL || *a != ret)
 		ASN1_STRING_free(ret);
 	return (NULL);
@@ -235,7 +235,7 @@ d2i_ASN1_bytes(ASN1_STRING **a, const unsigned char **pp,
 err:
 	if (a == NULL || *a != ret)
 		ASN1_STRING_free(ret);
-	ASN1err(ASN1_F_D2I_ASN1_BYTES, i);
+	ASN1error(i);
 	return (NULL);
 }
 
@@ -299,7 +299,7 @@ asn1_collate_primitive(ASN1_STRING *a, ASN1_const_CTX *c)
 	return (1);
 
 err:
-	ASN1err(ASN1_F_ASN1_COLLATE_PRIMITIVE, c->error);
+	ASN1error(c->error);
 	ASN1_STRING_free(os);
 	free(b.data);
 	return (0);

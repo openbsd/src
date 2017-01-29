@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.5 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -72,8 +72,7 @@ EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->paramgen) {
-		EVPerr(EVP_F_EVP_PKEY_PARAMGEN_INIT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	ctx->operation = EVP_PKEY_OP_PARAMGEN;
@@ -91,13 +90,12 @@ EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->paramgen) {
-		EVPerr(EVP_F_EVP_PKEY_PARAMGEN,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 
 	if (ctx->operation != EVP_PKEY_OP_PARAMGEN) {
-		EVPerr(EVP_F_EVP_PKEY_PARAMGEN, EVP_R_OPERATON_NOT_INITIALIZED);
+		EVPerror(EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 	}
 
@@ -121,8 +119,7 @@ EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->keygen) {
-		EVPerr(EVP_F_EVP_PKEY_KEYGEN_INIT,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	ctx->operation = EVP_PKEY_OP_KEYGEN;
@@ -140,12 +137,11 @@ EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 	int ret;
 
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->keygen) {
-		EVPerr(EVP_F_EVP_PKEY_KEYGEN,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
 	if (ctx->operation != EVP_PKEY_OP_KEYGEN) {
-		EVPerr(EVP_F_EVP_PKEY_KEYGEN, EVP_R_OPERATON_NOT_INITIALIZED);
+		EVPerror(EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 	}
 

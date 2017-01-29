@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_moid.c,v 1.12 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: asn_moid.c,v 1.13 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -79,13 +79,13 @@ oid_module_init(CONF_IMODULE *md, const CONF *cnf)
 
 	oid_section = CONF_imodule_get_value(md);
 	if (!(sktmp = NCONF_get_section(cnf, oid_section))) {
-		ASN1err(ASN1_F_OID_MODULE_INIT, ASN1_R_ERROR_LOADING_SECTION);
+		ASN1error(ASN1_R_ERROR_LOADING_SECTION);
 		return 0;
 	}
 	for (i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
 		oval = sk_CONF_VALUE_value(sktmp, i);
 		if (!do_create(oval->value, oval->name)) {
-			ASN1err(ASN1_F_OID_MODULE_INIT, ASN1_R_ADDING_OBJECT);
+			ASN1error(ASN1_R_ADDING_OBJECT);
 			return 0;
 		}
 	}

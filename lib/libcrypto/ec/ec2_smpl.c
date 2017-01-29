@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.14 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -212,7 +212,7 @@ ec_GF2m_simple_group_set_curve(EC_GROUP * group,
 		goto err;
 	i = BN_GF2m_poly2arr(&group->field, group->poly, 6) - 1;
 	if ((i != 5) && (i != 3)) {
-		ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE, EC_R_UNSUPPORTED_FIELD);
+		ECerror(EC_R_UNSUPPORTED_FIELD);
 		goto err;
 	}
 	/* group->a */
@@ -286,7 +286,7 @@ ec_GF2m_simple_group_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 	if (ctx == NULL) {
 		ctx = new_ctx = BN_CTX_new();
 		if (ctx == NULL) {
-			ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT, ERR_R_MALLOC_FAILURE);
+			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
@@ -383,7 +383,7 @@ ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP * group, EC_POINT * p
 {
 	int ret = 0;
 	if (x == NULL || y == NULL) {
-		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES, ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	if (!BN_copy(&point->X, x))
@@ -413,11 +413,11 @@ ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
 	int ret = 0;
 
 	if (EC_POINT_is_at_infinity(group, point) > 0) {
-		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES, EC_R_POINT_AT_INFINITY);
+		ECerror(EC_R_POINT_AT_INFINITY);
 		return 0;
 	}
 	if (BN_cmp(&point->Z, BN_value_one())) {
-		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (x != NULL) {

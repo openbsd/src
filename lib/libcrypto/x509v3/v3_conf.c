@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_conf.c,v 1.20 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_conf.c,v 1.21 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -93,8 +93,7 @@ X509V3_EXT_nconf(CONF *conf, X509V3_CTX *ctx, char *name, char *value)
 		return v3_generic_extension(name, value, crit, ext_type, ctx);
 	ret = do_ext_nconf(conf, ctx, OBJ_sn2nid(name), crit, value);
 	if (!ret) {
-		X509V3err(X509V3_F_X509V3_EXT_NCONF,
-		    X509V3_R_ERROR_IN_EXTENSION);
+		X509V3error(X509V3_R_ERROR_IN_EXTENSION);
 		ERR_asprintf_error_data("name=%s, value=%s", name, value);
 	}
 	return ret;
@@ -125,12 +124,11 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value)
 	void *ext_struc;
 
 	if (ext_nid == NID_undef) {
-		X509V3err(X509V3_F_DO_EXT_NCONF,
-		    X509V3_R_UNKNOWN_EXTENSION_NAME);
+		X509V3error(X509V3_R_UNKNOWN_EXTENSION_NAME);
 		return NULL;
 	}
 	if (!(method = X509V3_EXT_get_nid(ext_nid))) {
-		X509V3err(X509V3_F_DO_EXT_NCONF, X509V3_R_UNKNOWN_EXTENSION);
+		X509V3error(X509V3_R_UNKNOWN_EXTENSION);
 		return NULL;
 	}
 	/* Now get internal extension representation based on type */
@@ -142,8 +140,7 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value)
 		else
 			nval = X509V3_parse_list(value);
 		if (sk_CONF_VALUE_num(nval) <= 0) {
-			X509V3err(X509V3_F_DO_EXT_NCONF,
-			    X509V3_R_INVALID_EXTENSION_STRING);
+			X509V3error(X509V3_R_INVALID_EXTENSION_STRING);
 			ERR_asprintf_error_data("name=%s,section=%s",
 			    OBJ_nid2sn(ext_nid), value);
 			if (*value != '@')
@@ -157,14 +154,12 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value)
 		ext_struc = method->s2i(method, ctx, value);
 	} else if (method->r2i) {
 		if (!ctx->db || !ctx->db_meth) {
-			X509V3err(X509V3_F_DO_EXT_NCONF,
-			    X509V3_R_NO_CONFIG_DATABASE);
+			X509V3error(X509V3_R_NO_CONFIG_DATABASE);
 			return NULL;
 		}
 		ext_struc = method->r2i(method, ctx, value);
 	} else {
-		X509V3err(X509V3_F_DO_EXT_NCONF,
-		    X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED);
+		X509V3error(X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED);
 		ERR_asprintf_error_data("name=%s", OBJ_nid2sn(ext_nid));
 		return NULL;
 	}
@@ -217,7 +212,7 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 
 merr:
 	ASN1_OCTET_STRING_free(ext_oct);
-	X509V3err(X509V3_F_DO_EXT_I2D, ERR_R_MALLOC_FAILURE);
+	X509V3error(ERR_R_MALLOC_FAILURE);
 	return NULL;
 
 }
@@ -230,7 +225,7 @@ X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc)
 	const X509V3_EXT_METHOD *method;
 
 	if (!(method = X509V3_EXT_get_nid(ext_nid))) {
-		X509V3err(X509V3_F_X509V3_EXT_I2D, X509V3_R_UNKNOWN_EXTENSION);
+		X509V3error(X509V3_R_UNKNOWN_EXTENSION);
 		return NULL;
 	}
 	return do_ext_i2d(method, ext_nid, crit, ext_struc);
@@ -284,8 +279,7 @@ v3_generic_extension(const char *ext, char *value, int crit, int gen_type,
 	X509_EXTENSION *extension = NULL;
 
 	if (!(obj = OBJ_txt2obj(ext, 0))) {
-		X509V3err(X509V3_F_V3_GENERIC_EXTENSION,
-		    X509V3_R_EXTENSION_NAME_ERROR);
+		X509V3error(X509V3_R_EXTENSION_NAME_ERROR);
 		ERR_asprintf_error_data("name=%s", ext);
 		goto err;
 	}
@@ -300,14 +294,13 @@ v3_generic_extension(const char *ext, char *value, int crit, int gen_type,
 	}
 
 	if (ext_der == NULL) {
-		X509V3err(X509V3_F_V3_GENERIC_EXTENSION,
-		    X509V3_R_EXTENSION_VALUE_ERROR);
+		X509V3error(X509V3_R_EXTENSION_VALUE_ERROR);
 		ERR_asprintf_error_data("value=%s", value);
 		goto err;
 	}
 
 	if (!(oct = ASN1_OCTET_STRING_new())) {
-		X509V3err(X509V3_F_V3_GENERIC_EXTENSION, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -414,8 +407,7 @@ char *
 X509V3_get_string(X509V3_CTX *ctx, char *name, char *section)
 {
 	if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_string) {
-		X509V3err(X509V3_F_X509V3_GET_STRING,
-		    X509V3_R_OPERATION_NOT_DEFINED);
+		X509V3error(X509V3_R_OPERATION_NOT_DEFINED);
 		return NULL;
 	}
 	if (ctx->db_meth->get_string)
@@ -427,8 +419,7 @@ STACK_OF(CONF_VALUE) *
 X509V3_get_section(X509V3_CTX *ctx, char *section)
 {
 	if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_section) {
-		X509V3err(X509V3_F_X509V3_GET_SECTION,
-		    X509V3_R_OPERATION_NOT_DEFINED);
+		X509V3error(X509V3_R_OPERATION_NOT_DEFINED);
 		return NULL;
 	}
 	if (ctx->db_meth->get_section)

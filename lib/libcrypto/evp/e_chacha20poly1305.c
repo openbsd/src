@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.14 2016/04/28 16:06:53 jsing Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
 
 /*
  * Copyright (c) 2015 Reyk Floter <reyk@openbsd.org>
@@ -59,7 +59,7 @@ aead_chacha20_poly1305_init(EVP_AEAD_CTX *ctx, const unsigned char *key,
 		tag_len = POLY1305_TAG_LEN;
 
 	if (tag_len > POLY1305_TAG_LEN) {
-		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_INIT, EVP_R_TOO_LARGE);
+		EVPerror(EVP_R_TOO_LARGE);
 		return 0;
 	}
 
@@ -142,18 +142,17 @@ aead_chacha20_poly1305_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	 * Casting to uint64_t inside the conditional is not sufficient to stop
 	 * the warning. */
 	if (in_len_64 >= (1ULL << 32) * 64 - 64) {
-		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_SEAL, EVP_R_TOO_LARGE);
+		EVPerror(EVP_R_TOO_LARGE);
 		return 0;
 	}
 
 	if (max_out_len < in_len + c20_ctx->tag_len) {
-		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_SEAL,
-		    EVP_R_BUFFER_TOO_SMALL);
+		EVPerror(EVP_R_BUFFER_TOO_SMALL);
 		return 0;
 	}
 
 	if (nonce_len != ctx->aead->nonce_len) {
-		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_SEAL, EVP_R_IV_TOO_LARGE);
+		EVPerror(EVP_R_IV_TOO_LARGE);
 		return 0;
 	}
 
@@ -216,7 +215,7 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	uint64_t ctr = 0;
 
 	if (in_len < c20_ctx->tag_len) {
-		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_BAD_DECRYPT);
+		EVPerror(EVP_R_BAD_DECRYPT);
 		return 0;
 	}
 
@@ -228,20 +227,19 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	 * Casting to uint64_t inside the conditional is not sufficient to stop
 	 * the warning. */
 	if (in_len_64 >= (1ULL << 32) * 64 - 64) {
-		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_TOO_LARGE);
+		EVPerror(EVP_R_TOO_LARGE);
 		return 0;
 	}
 
 	if (nonce_len != ctx->aead->nonce_len) {
-		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_IV_TOO_LARGE);
+		EVPerror(EVP_R_IV_TOO_LARGE);
 		return 0;
 	}
 
 	plaintext_len = in_len - c20_ctx->tag_len;
 
 	if (max_out_len < plaintext_len) {
-		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN,
-		    EVP_R_BUFFER_TOO_SMALL);
+		EVPerror(EVP_R_BUFFER_TOO_SMALL);
 		return 0;
 	}
 
@@ -276,7 +274,7 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	CRYPTO_poly1305_finish(&poly1305, mac);
 
 	if (timingsafe_memcmp(mac, in + plaintext_len, c20_ctx->tag_len) != 0) {
-		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_BAD_DECRYPT);
+		EVPerror(EVP_R_BAD_DECRYPT);
 		return 0;
 	}
 

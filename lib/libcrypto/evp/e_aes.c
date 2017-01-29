@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.31 2016/11/04 17:30:30 miod Exp $ */
+/* $OpenBSD: e_aes.c,v 1.32 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -225,7 +225,7 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	}
 
 	if (ret < 0) {
-		EVPerr(EVP_F_AESNI_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
+		EVPerror(EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
 	}
 
@@ -563,7 +563,7 @@ aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		}
 
 	if (ret < 0) {
-		EVPerr(EVP_F_AES_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
+		EVPerror(EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
 	}
 
@@ -1378,7 +1378,7 @@ aead_aes_gcm_init(EVP_AEAD_CTX *ctx, const unsigned char *key, size_t key_len,
 
 	/* EVP_AEAD_CTX_init should catch this. */
 	if (key_bits != 128 && key_bits != 256) {
-		EVPerr(EVP_F_AEAD_AES_GCM_INIT, EVP_R_BAD_KEY_LENGTH);
+		EVPerror(EVP_R_BAD_KEY_LENGTH);
 		return 0;
 	}
 
@@ -1386,7 +1386,7 @@ aead_aes_gcm_init(EVP_AEAD_CTX *ctx, const unsigned char *key, size_t key_len,
 		tag_len = EVP_AEAD_AES_GCM_TAG_LEN;
 
 	if (tag_len > EVP_AEAD_AES_GCM_TAG_LEN) {
-		EVPerr(EVP_F_AEAD_AES_GCM_INIT, EVP_R_TAG_TOO_LARGE);
+		EVPerror(EVP_R_TAG_TOO_LARGE);
 		return 0;
 	}
 
@@ -1432,7 +1432,7 @@ aead_aes_gcm_seal(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
 	size_t bulk = 0;
 
 	if (max_out_len < in_len + gcm_ctx->tag_len) {
-		EVPerr(EVP_F_AEAD_AES_GCM_SEAL, EVP_R_BUFFER_TOO_SMALL);
+		EVPerror(EVP_R_BUFFER_TOO_SMALL);
 		return 0;
 	}
 
@@ -1471,14 +1471,14 @@ aead_aes_gcm_open(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
 	size_t bulk = 0;
 
 	if (in_len < gcm_ctx->tag_len) {
-		EVPerr(EVP_F_AEAD_AES_GCM_OPEN, EVP_R_BAD_DECRYPT);
+		EVPerror(EVP_R_BAD_DECRYPT);
 		return 0;
 	}
 
 	plaintext_len = in_len - gcm_ctx->tag_len;
 
 	if (max_out_len < plaintext_len) {
-		EVPerr(EVP_F_AEAD_AES_GCM_OPEN, EVP_R_BUFFER_TOO_SMALL);
+		EVPerror(EVP_R_BUFFER_TOO_SMALL);
 		return 0;
 	}
 
@@ -1500,7 +1500,7 @@ aead_aes_gcm_open(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
 
 	CRYPTO_gcm128_tag(&gcm, tag, gcm_ctx->tag_len);
 	if (timingsafe_memcmp(tag, in + plaintext_len, gcm_ctx->tag_len) != 0) {
-		EVPerr(EVP_F_AEAD_AES_GCM_OPEN, EVP_R_BAD_DECRYPT);
+		EVPerror(EVP_R_BAD_DECRYPT);
 		return 0;
 	}
 

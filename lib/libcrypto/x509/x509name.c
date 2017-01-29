@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.13 2014/09/29 04:17:24 miod Exp $ */
+/* $OpenBSD: x509name.c,v 1.14 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -275,7 +275,7 @@ X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc, int set)
 		goto err;
 	new_name->set = set;
 	if (!sk_X509_NAME_ENTRY_insert(sk, new_name, loc)) {
-		X509err(X509_F_X509_NAME_ADD_ENTRY, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	if (inc) {
@@ -300,8 +300,7 @@ X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
 
 	obj = OBJ_txt2obj(field, 0);
 	if (obj == NULL) {
-		X509err(X509_F_X509_NAME_ENTRY_CREATE_BY_TXT,
-		    X509_R_INVALID_FIELD_NAME);
+		X509error(X509_R_INVALID_FIELD_NAME);
 		ERR_asprintf_error_data("name=%s", field);
 		return (NULL);
 	}
@@ -319,8 +318,7 @@ X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid, int type,
 
 	obj = OBJ_nid2obj(nid);
 	if (obj == NULL) {
-		X509err(X509_F_X509_NAME_ENTRY_CREATE_BY_NID,
-		    X509_R_UNKNOWN_NID);
+		X509error(X509_R_UNKNOWN_NID);
 		return (NULL);
 	}
 	nentry = X509_NAME_ENTRY_create_by_OBJ(ne, obj, type, bytes, len);
@@ -359,8 +357,7 @@ int
 X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne, ASN1_OBJECT *obj)
 {
 	if ((ne == NULL) || (obj == NULL)) {
-		X509err(X509_F_X509_NAME_ENTRY_SET_OBJECT,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		X509error(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 	ASN1_OBJECT_free(ne->object);

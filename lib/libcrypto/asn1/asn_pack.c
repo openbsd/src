@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_pack.c,v 1.15 2015/12/23 20:37:23 mmcc Exp $ */
+/* $OpenBSD: asn_pack.c,v 1.16 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -77,7 +77,7 @@ ASN1_seq_unpack(const unsigned char *buf, int len, d2i_of_void *d2i,
 	pbuf = buf;
 	if (!(sk = d2i_ASN1_SET(NULL, &pbuf, len, d2i, free_func,
 					V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL)))
-		ASN1err(ASN1_F_ASN1_SEQ_UNPACK,ASN1_R_DECODE_ERROR);
+		ASN1error(ASN1_R_DECODE_ERROR);
 	return sk;
 }
 
@@ -94,11 +94,11 @@ ASN1_seq_pack(STACK_OF(OPENSSL_BLOCK) *safes, i2d_of_void *i2d,
 
 	if (!(safelen = i2d_ASN1_SET(safes, NULL, i2d, V_ASN1_SEQUENCE,
 					      V_ASN1_UNIVERSAL, IS_SEQUENCE))) {
-		ASN1err(ASN1_F_ASN1_SEQ_PACK,ASN1_R_ENCODE_ERROR);
+		ASN1error(ASN1_R_ENCODE_ERROR);
 		return NULL;
 	}
 	if (!(safe = malloc(safelen))) {
-		ASN1err(ASN1_F_ASN1_SEQ_PACK,ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	p = safe;
@@ -121,7 +121,7 @@ ASN1_unpack_string(ASN1_STRING *oct, d2i_of_void *d2i)
 
 	p = oct->data;
 	if (!(ret = d2i(NULL, &p, oct->length)))
-		ASN1err(ASN1_F_ASN1_UNPACK_STRING,ASN1_R_DECODE_ERROR);
+		ASN1error(ASN1_R_DECODE_ERROR);
 	return ret;
 }
 
@@ -135,18 +135,18 @@ ASN1_pack_string(void *obj, i2d_of_void *i2d, ASN1_STRING **oct)
 
 	if (!oct || !*oct) {
 		if (!(octmp = ASN1_STRING_new())) {
-			ASN1err(ASN1_F_ASN1_PACK_STRING,ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
 	} else
 		octmp = *oct;
 		
 	if (!(octmp->length = i2d(obj, NULL))) {
-		ASN1err(ASN1_F_ASN1_PACK_STRING,ASN1_R_ENCODE_ERROR);
+		ASN1error(ASN1_R_ENCODE_ERROR);
 		goto err;
 	}
 	if (!(p = malloc (octmp->length))) {
-		ASN1err(ASN1_F_ASN1_PACK_STRING,ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	octmp->data = p;
@@ -174,7 +174,7 @@ ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 
 	if (!oct || !*oct) {
 		if (!(octmp = ASN1_STRING_new ())) {
-			ASN1err(ASN1_F_ASN1_ITEM_PACK, ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
 	} else
@@ -184,11 +184,11 @@ ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 	octmp->data = NULL;
 
 	if (!(octmp->length = ASN1_item_i2d(obj, &octmp->data, it))) {
-		ASN1err(ASN1_F_ASN1_ITEM_PACK, ASN1_R_ENCODE_ERROR);
+		ASN1error(ASN1_R_ENCODE_ERROR);
 		goto err;
 	}
 	if (!octmp->data) {
-		ASN1err(ASN1_F_ASN1_ITEM_PACK, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	if (oct)
@@ -210,6 +210,6 @@ ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it)
 
 	p = oct->data;
 	if (!(ret = ASN1_item_d2i(NULL, &p, oct->length, it)))
-		ASN1err(ASN1_F_ASN1_ITEM_UNPACK, ASN1_R_DECODE_ERROR);
+		ASN1error(ASN1_R_DECODE_ERROR);
 	return ret;
 }

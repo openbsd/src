@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.13 2015/01/08 01:44:29 doug Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.14 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -89,7 +89,7 @@ dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
 	if (ptype != V_ASN1_SEQUENCE) {
-		DHerr(DH_F_DH_PUB_DECODE, DH_R_PARAMETER_ENCODING_ERROR);
+		DHerror(DH_R_PARAMETER_ENCODING_ERROR);
 		goto err;
 	}
 
@@ -98,18 +98,18 @@ dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	pmlen = pstr->length;
 
 	if (!(dh = d2i_DHparams(NULL, &pm, pmlen))) {
-		DHerr(DH_F_DH_PUB_DECODE, DH_R_DECODE_ERROR);
+		DHerror(DH_R_DECODE_ERROR);
 		goto err;
 	}
 
 	if (!(public_key=d2i_ASN1_INTEGER(NULL, &p, pklen))) {
-		DHerr(DH_F_DH_PUB_DECODE, DH_R_DECODE_ERROR);
+		DHerror(DH_R_DECODE_ERROR);
 		goto err;
 	}
 
 	/* We have parameters now set public key */
 	if (!(dh->pub_key = ASN1_INTEGER_to_BN(public_key, NULL))) {
-		DHerr(DH_F_DH_PUB_DECODE, DH_R_BN_DECODE_ERROR);
+		DHerror(DH_R_BN_DECODE_ERROR);
 		goto err;
 	}
 
@@ -138,13 +138,13 @@ dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 
 	str = ASN1_STRING_new();
 	if (str == NULL) {
-		DHerr(DH_F_DH_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
+		DHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	str->length = i2d_DHparams(dh, &str->data);
 	if (str->length <= 0) {
-		DHerr(DH_F_DH_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
+		DHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	ptype = V_ASN1_SEQUENCE;
@@ -158,7 +158,7 @@ dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	ASN1_INTEGER_free(pub_key);
 
 	if (penclen <= 0) {
-		DHerr(DH_F_DH_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
+		DHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
@@ -209,7 +209,7 @@ dh_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 		goto decerr;
 	/* We have parameters now set private key */
 	if (!(dh->priv_key = ASN1_INTEGER_to_BN(privkey, NULL))) {
-		DHerr(DH_F_DH_PRIV_DECODE, DH_R_BN_ERROR);
+		DHerror(DH_R_BN_ERROR);
 		goto dherr;
 	}
 	/* Calculate public key */
@@ -223,7 +223,7 @@ dh_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	return 1;
 
 decerr:
-	DHerr(DH_F_DH_PRIV_DECODE, EVP_R_DECODE_ERROR);
+	DHerror(EVP_R_DECODE_ERROR);
 dherr:
 	DH_free(dh);
 	return 0;
@@ -240,13 +240,13 @@ dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 	params = ASN1_STRING_new();
 
 	if (!params) {
-		DHerr(DH_F_DH_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
+		DHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	params->length = i2d_DHparams(pkey->pkey.dh, &params->data);
 	if (params->length <= 0) {
-		DHerr(DH_F_DH_PRIV_ENCODE,ERR_R_MALLOC_FAILURE);
+		DHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	params->type = V_ASN1_SEQUENCE;
@@ -255,7 +255,7 @@ dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 	prkey = BN_to_ASN1_INTEGER(pkey->pkey.dh->priv_key, NULL);
 
 	if (!prkey) {
-		DHerr(DH_F_DH_PRIV_ENCODE, DH_R_BN_ERROR);
+		DHerror(DH_R_BN_ERROR);
 		goto err;
 	}
 
@@ -294,7 +294,7 @@ dh_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	DH *dh;
 
 	if (!(dh = d2i_DHparams(NULL, pder, derlen))) {
-		DHerr(DH_F_DH_PARAM_DECODE, ERR_R_DH_LIB);
+		DHerror(ERR_R_DH_LIB);
 		return 0;
 	}
 	EVP_PKEY_assign_DH(pkey, dh);
@@ -374,7 +374,7 @@ do_dh_print(BIO *bp, const DH *x, int indent, ASN1_PCTX *ctx, int ptype)
 	ret = 1;
 	if (0) {
 err:
-		DHerr(DH_F_DO_DH_PRINT,reason);
+		DHerror(reason);
 	}
 	free(m);
 	return(ret);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.16 2016/12/30 16:04:34 jsing Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.17 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -190,7 +190,7 @@ asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
 	return 1;
 
 memerr:
-	ASN1err(ASN1_F_ASN1_ITEM_EX_COMBINE_NEW, ERR_R_MALLOC_FAILURE);
+	ASN1error(ERR_R_MALLOC_FAILURE);
 #ifdef CRYPTO_MDEBUG
 	if (it->sname)
 		CRYPTO_pop_info();
@@ -198,7 +198,7 @@ memerr:
 	return 0;
 
 auxerr:
-	ASN1err(ASN1_F_ASN1_ITEM_EX_COMBINE_NEW, ASN1_R_AUX_ERROR);
+	ASN1error(ASN1_R_AUX_ERROR);
 	ASN1_item_ex_free(pval, it);
 #ifdef CRYPTO_MDEBUG
 	if (it->sname)
@@ -266,7 +266,7 @@ ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 		STACK_OF(ASN1_VALUE) *skval;
 		skval = sk_ASN1_VALUE_new_null();
 		if (!skval) {
-			ASN1err(ASN1_F_ASN1_TEMPLATE_NEW, ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			ret = 0;
 			goto done;
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: tb_asnmth.c,v 1.5 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: tb_asnmth.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -135,8 +135,7 @@ ENGINE_get_pkey_asn1_meth(ENGINE *e, int nid)
 	ENGINE_PKEY_ASN1_METHS_PTR fn = ENGINE_get_pkey_asn1_meths(e);
 
 	if (!fn || !fn(e, &ret, NULL, nid)) {
-		ENGINEerr(ENGINE_F_ENGINE_GET_PKEY_ASN1_METH,
-		    ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD);
+		ENGINEerror(ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD);
 		return NULL;
 	}
 	return ret;

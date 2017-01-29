@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.10 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: bn_add.c,v 1.11 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -182,7 +182,7 @@ BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
 	if (dif < 0)	/* hmm... should not be happening */
 	{
-		BNerr(BN_F_BN_USUB, BN_R_ARG2_LT_ARG3);
+		BNerror(BN_R_ARG2_LT_ARG3);
 		return (0);
 	}
 

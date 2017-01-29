@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.36 2016/03/15 20:50:22 krw Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.37 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -249,7 +249,7 @@ BN_new(void)
 	BIGNUM *ret;
 
 	if ((ret = malloc(sizeof(BIGNUM))) == NULL) {
-		BNerr(BN_F_BN_NEW, ERR_R_MALLOC_FAILURE);
+		BNerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	ret->flags = BN_FLG_MALLOCED;
@@ -273,17 +273,16 @@ bn_expand_internal(const BIGNUM *b, int words)
 	bn_check_top(b);
 
 	if (words > (INT_MAX/(4*BN_BITS2))) {
-		BNerr(BN_F_BN_EXPAND_INTERNAL, BN_R_BIGNUM_TOO_LONG);
+		BNerror(BN_R_BIGNUM_TOO_LONG);
 		return NULL;
 	}
 	if (BN_get_flags(b, BN_FLG_STATIC_DATA)) {
-		BNerr(BN_F_BN_EXPAND_INTERNAL,
-		    BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
+		BNerror(BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
 		return (NULL);
 	}
 	a = A = reallocarray(NULL, words, sizeof(BN_ULONG));
 	if (A == NULL) {
-		BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
+		BNerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 #if 1

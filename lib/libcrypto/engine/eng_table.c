@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_table.c,v 1.8 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: eng_table.c,v 1.9 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
  *
@@ -172,8 +172,7 @@ engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 		fnd->uptodate = 0;
 		if (setdefault) {
 			if (!engine_unlocked_init(e)) {
-				ENGINEerr(ENGINE_F_ENGINE_TABLE_REGISTER,
-				    ENGINE_R_INIT_FAILED);
+				ENGINEerror(ENGINE_R_INIT_FAILED);
 				goto end;
 			}
 			if (fnd->funct)

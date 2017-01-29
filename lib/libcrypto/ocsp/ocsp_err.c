@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_err.c,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ocsp_err.c,v 1.8 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -72,25 +72,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_OCSP,0,reason)
 
 static ERR_STRING_DATA OCSP_str_functs[]= {
-	{ERR_FUNC(OCSP_F_ASN1_STRING_ENCODE),	"ASN1_STRING_encode"},
-	{ERR_FUNC(OCSP_F_D2I_OCSP_NONCE),	"D2I_OCSP_NONCE"},
-	{ERR_FUNC(OCSP_F_OCSP_BASIC_ADD1_STATUS),	"OCSP_basic_add1_status"},
-	{ERR_FUNC(OCSP_F_OCSP_BASIC_SIGN),	"OCSP_basic_sign"},
-	{ERR_FUNC(OCSP_F_OCSP_BASIC_VERIFY),	"OCSP_basic_verify"},
-	{ERR_FUNC(OCSP_F_OCSP_CERT_ID_NEW),	"OCSP_cert_id_new"},
-	{ERR_FUNC(OCSP_F_OCSP_CHECK_DELEGATED),	"OCSP_CHECK_DELEGATED"},
-	{ERR_FUNC(OCSP_F_OCSP_CHECK_IDS),	"OCSP_CHECK_IDS"},
-	{ERR_FUNC(OCSP_F_OCSP_CHECK_ISSUER),	"OCSP_CHECK_ISSUER"},
-	{ERR_FUNC(OCSP_F_OCSP_CHECK_VALIDITY),	"OCSP_check_validity"},
-	{ERR_FUNC(OCSP_F_OCSP_MATCH_ISSUERID),	"OCSP_MATCH_ISSUERID"},
-	{ERR_FUNC(OCSP_F_OCSP_PARSE_URL),	"OCSP_parse_url"},
-	{ERR_FUNC(OCSP_F_OCSP_REQUEST_SIGN),	"OCSP_request_sign"},
-	{ERR_FUNC(OCSP_F_OCSP_REQUEST_VERIFY),	"OCSP_request_verify"},
-	{ERR_FUNC(OCSP_F_OCSP_RESPONSE_GET1_BASIC),	"OCSP_response_get1_basic"},
-	{ERR_FUNC(OCSP_F_OCSP_SENDREQ_BIO),	"OCSP_sendreq_bio"},
-	{ERR_FUNC(OCSP_F_OCSP_SENDREQ_NBIO),	"OCSP_sendreq_nbio"},
-	{ERR_FUNC(OCSP_F_PARSE_HTTP_LINE1),	"PARSE_HTTP_LINE1"},
-	{ERR_FUNC(OCSP_F_REQUEST_VERIFY),	"REQUEST_VERIFY"},
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 

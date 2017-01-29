@@ -1,4 +1,4 @@
-/* $OpenBSD: t_req.c,v 1.18 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: t_req.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,7 +81,7 @@ X509_REQ_print_fp(FILE *fp, X509_REQ *x)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		X509err(X509_F_X509_REQ_PRINT_FP, ERR_R_BUF_LIB);
+		X509error(ERR_R_BUF_LIB);
 		return (0);
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -256,7 +256,7 @@ get_next:
 	return (1);
 
 err:
-	X509err(X509_F_X509_REQ_PRINT_EX, ERR_R_BUF_LIB);
+	X509error(ERR_R_BUF_LIB);
 	return (0);
 }
 

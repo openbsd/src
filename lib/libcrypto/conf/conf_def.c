@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.31 2015/07/18 22:42:09 beck Exp $ */
+/* $OpenBSD: conf_def.c,v 1.32 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,9 +195,9 @@ def_load(CONF *conf, const char *name, long *line)
 	in = BIO_new_file(name, "rb");
 	if (in == NULL) {
 		if (ERR_GET_REASON(ERR_peek_last_error()) == BIO_R_NO_SUCH_FILE)
-			CONFerr(CONF_F_DEF_LOAD, CONF_R_NO_SUCH_FILE);
+			CONFerror(CONF_R_NO_SUCH_FILE);
 		else
-			CONFerr(CONF_F_DEF_LOAD, ERR_R_SYS_LIB);
+			CONFerror(ERR_R_SYS_LIB);
 		return 0;
 	}
 
@@ -224,25 +224,24 @@ def_load_bio(CONF *conf, BIO *in, long *line)
 	void *h = (void *)(conf->data);
 
 	if ((buff = BUF_MEM_new()) == NULL) {
-		CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_BUF_LIB);
+		CONFerror(ERR_R_BUF_LIB);
 		goto err;
 	}
 
 	section = strdup("default");
 	if (section == NULL) {
-		CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+		CONFerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	if (_CONF_new_data(conf) == 0) {
-		CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+		CONFerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	sv = _CONF_new_section(conf, section);
 	if (sv == NULL) {
-		CONFerr(CONF_F_DEF_LOAD_BIO,
-		    CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
+		CONFerror(CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
 		goto err;
 	}
 
@@ -250,7 +249,7 @@ def_load_bio(CONF *conf, BIO *in, long *line)
 	again = 0;
 	for (;;) {
 		if (!BUF_MEM_grow(buff, bufnum + CONFBUFSIZE)) {
-			CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_BUF_LIB);
+			CONFerror(ERR_R_BUF_LIB);
 			goto err;
 		}
 		p = &(buff->data[bufnum]);
@@ -316,8 +315,7 @@ again:
 					ss = p;
 					goto again;
 				}
-				CONFerr(CONF_F_DEF_LOAD_BIO,
-				    CONF_R_MISSING_CLOSE_SQUARE_BRACKET);
+				CONFerror(CONF_R_MISSING_CLOSE_SQUARE_BRACKET);
 				goto err;
 			}
 			*end = '\0';
@@ -326,8 +324,7 @@ again:
 			if ((sv = _CONF_get_section(conf, section)) == NULL)
 				sv = _CONF_new_section(conf, section);
 			if (sv == NULL) {
-				CONFerr(CONF_F_DEF_LOAD_BIO,
-				    CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
+				CONFerror(CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
 				goto err;
 			}
 			continue;
@@ -344,8 +341,7 @@ again:
 			}
 			p = eat_ws(conf, end);
 			if (*p != '=') {
-				CONFerr(CONF_F_DEF_LOAD_BIO,
-				    CONF_R_MISSING_EQUAL_SIGN);
+				CONFerror(CONF_R_MISSING_EQUAL_SIGN);
 				goto err;
 			}
 			*end = '\0';
@@ -360,8 +356,7 @@ again:
 			*p = '\0';
 
 			if (!(v = malloc(sizeof(CONF_VALUE)))) {
-				CONFerr(CONF_F_DEF_LOAD_BIO,
-				    ERR_R_MALLOC_FAILURE);
+				CONFerror(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 			if (psection == NULL)
@@ -369,8 +364,7 @@ again:
 			v->name = strdup(pname);
 			v->value = NULL;
 			if (v->name == NULL) {
-				CONFerr(CONF_F_DEF_LOAD_BIO,
-				    ERR_R_MALLOC_FAILURE);
+				CONFerror(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 			if (!str_copy(conf, psection, &(v->value), start))
@@ -381,16 +375,14 @@ again:
 					== NULL)
 					tv = _CONF_new_section(conf, psection);
 				if (tv == NULL) {
-					CONFerr(CONF_F_DEF_LOAD_BIO,
-					    CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
+					CONFerror(CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
 					goto err;
 				}
 			} else
 				tv = sv;
 
 			if (_CONF_add_string(conf, tv, v) == 0) {
-				CONFerr(CONF_F_DEF_LOAD_BIO,
-				    ERR_R_MALLOC_FAILURE);
+				CONFerror(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 			v = NULL;
@@ -549,8 +541,7 @@ str_copy(CONF *conf, char *section, char **pto, char *from)
 			rp = e;
 			if (q) {
 				if (r != q) {
-					CONFerr(CONF_F_STR_COPY,
-					    CONF_R_NO_CLOSE_BRACE);
+					CONFerror(CONF_R_NO_CLOSE_BRACE);
 					goto err;
 				}
 				e++;
@@ -569,14 +560,12 @@ str_copy(CONF *conf, char *section, char **pto, char *from)
 				*rrp = rr;
 			*rp = r;
 			if (p == NULL) {
-				CONFerr(CONF_F_STR_COPY,
-				    CONF_R_VARIABLE_HAS_NO_VALUE);
+				CONFerror(CONF_R_VARIABLE_HAS_NO_VALUE);
 				goto err;
 			}
 			if (!BUF_MEM_grow_clean(buf,
 				(strlen(p) + buf->length - (e - from)))) {
-				CONFerr(CONF_F_STR_COPY,
-				    CONF_R_MODULE_INITIALIZATION_ERROR);
+				CONFerror(CONF_R_MODULE_INITIALIZATION_ERROR);
 				goto err;
 			}
 			while (*p)

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.17 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.18 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,7 +173,7 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 		 * There are no prime numbers smaller than 2, and the smallest
 		 * safe prime (7) spans three bits.
 		 */
-		BNerr(BN_F_BN_GENERATE_PRIME_EX, BN_R_BITS_TOO_SMALL);
+		BNerror(BN_R_BITS_TOO_SMALL);
 		return 0;
 	}
 

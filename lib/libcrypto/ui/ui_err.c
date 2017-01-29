@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_err.c,v 1.8 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: ui_err.c,v 1.9 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -72,18 +72,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_UI,0,reason)
 
 static ERR_STRING_DATA UI_str_functs[] = {
-	{ERR_FUNC(UI_F_GENERAL_ALLOCATE_BOOLEAN), "GENERAL_ALLOCATE_BOOLEAN"},
-	{ERR_FUNC(UI_F_GENERAL_ALLOCATE_PROMPT), "GENERAL_ALLOCATE_PROMPT"},
-	{ERR_FUNC(UI_F_GENERAL_ALLOCATE_STRING), "GENERAL_ALLOCATE_STRING"},
-	{ERR_FUNC(UI_F_UI_CTRL), "UI_ctrl"},
-	{ERR_FUNC(UI_F_UI_DUP_ERROR_STRING), "UI_dup_error_string"},
-	{ERR_FUNC(UI_F_UI_DUP_INFO_STRING), "UI_dup_info_string"},
-	{ERR_FUNC(UI_F_UI_DUP_INPUT_BOOLEAN), "UI_dup_input_boolean"},
-	{ERR_FUNC(UI_F_UI_DUP_INPUT_STRING), "UI_dup_input_string"},
-	{ERR_FUNC(UI_F_UI_DUP_VERIFY_STRING), "UI_dup_verify_string"},
-	{ERR_FUNC(UI_F_UI_GET0_RESULT), "UI_get0_result"},
-	{ERR_FUNC(UI_F_UI_NEW_METHOD), "UI_new_method"},
-	{ERR_FUNC(UI_F_UI_SET_RESULT), "UI_set_result"},
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 

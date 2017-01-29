@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp2.c,v 1.11 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: bn_exp2.c,v 1.12 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,7 +137,7 @@ BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	bn_check_top(m);
 
 	if (!(m->d[0] & 1)) {
-		BNerr(BN_F_BN_MOD_EXP2_MONT, BN_R_CALLED_WITH_EVEN_MODULUS);
+		BNerror(BN_R_CALLED_WITH_EVEN_MODULUS);
 		return (0);
 	}
 	bits1 = BN_num_bits(p1);

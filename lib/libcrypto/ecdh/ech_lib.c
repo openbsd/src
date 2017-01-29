@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.11 2015/09/13 12:03:07 jsing Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -125,7 +125,7 @@ ECDH_DATA_new_method(ENGINE *engine)
 
 	ret = malloc(sizeof(ECDH_DATA));
 	if (ret == NULL) {
-		ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+		ECDHerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 
@@ -139,7 +139,7 @@ ECDH_DATA_new_method(ENGINE *engine)
 	if (ret->engine) {
 		ret->meth = ENGINE_get_ECDH(ret->engine);
 		if (!ret->meth) {
-			ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_ENGINE_LIB);
+			ECDHerror(ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
 			return NULL;

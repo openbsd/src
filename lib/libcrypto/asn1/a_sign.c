@@ -1,4 +1,4 @@
-/* $OpenBSD: a_sign.c,v 1.21 2015/09/10 15:56:24 jsing Exp $ */
+/* $OpenBSD: a_sign.c,v 1.22 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,8 +153,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	pkey = EVP_PKEY_CTX_get0_pkey(ctx->pctx);
 
 	if (!type || !pkey) {
-		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
-		    ASN1_R_CONTEXT_NOT_INITIALISED);
+		ASN1error(ASN1_R_CONTEXT_NOT_INITIALISED);
 		return 0;
 	}
 
@@ -170,7 +169,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		 *   3: ASN1 method sets algorithm identifiers: just sign.
 		 */
 		if (rv <= 0)
-			ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
+			ASN1error(ERR_R_EVP_LIB);
 		if (rv <= 1)
 			goto err;
 	} else
@@ -181,8 +180,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 			if (!pkey->ameth ||
 			    !OBJ_find_sigid_by_algs(&signid,
 				EVP_MD_nid(type), pkey->ameth->pkey_id)) {
-				ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
-				    ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+				ASN1error(ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
 				return 0;
 			}
 		} else
@@ -207,14 +205,14 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	buf_out = malloc(outl);
 	if ((buf_in == NULL) || (buf_out == NULL)) {
 		outl = 0;
-		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	if (!EVP_DigestSignUpdate(ctx, buf_in, inl) ||
 	    !EVP_DigestSignFinal(ctx, buf_out, &outl)) {
 		outl = 0;
-		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
+		ASN1error(ERR_R_EVP_LIB);
 		goto err;
 	}
 	free(signature->data);

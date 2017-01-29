@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_p8e.c,v 1.7 2016/12/30 15:34:35 jsing Exp $ */
+/* $OpenBSD: p12_p8e.c,v 1.8 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -70,7 +70,7 @@ PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher, const char *pass,
 	X509_ALGOR *pbe;
 
 	if (!(p8 = X509_SIG_new())) {
-		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, ERR_R_MALLOC_FAILURE);
+		PKCS12error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -79,7 +79,7 @@ PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher, const char *pass,
 	else
 		pbe = PKCS5_pbe_set(pbe_nid, iter, salt, saltlen);
 	if (!pbe) {
-		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, ERR_R_ASN1_LIB);
+		PKCS12error(ERR_R_ASN1_LIB);
 		goto err;
 	}
 	X509_ALGOR_free(p8->algor);
@@ -88,7 +88,7 @@ PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher, const char *pass,
 	p8->digest = PKCS12_item_i2d_encrypt(pbe,
 	    &PKCS8_PRIV_KEY_INFO_it, pass, passlen, p8inf, 1);
 	if (!p8->digest) {
-		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, PKCS12_R_ENCRYPT_ERROR);
+		PKCS12error(PKCS12_R_ENCRYPT_ERROR);
 		goto err;
 	}
 

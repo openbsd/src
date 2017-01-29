@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.22 2016/09/03 12:10:40 beck Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.23 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -78,16 +78,16 @@ EC_GROUP_new(const EC_METHOD * meth)
 	EC_GROUP *ret;
 
 	if (meth == NULL) {
-		ECerr(EC_F_EC_GROUP_NEW, EC_R_SLOT_FULL);
+		ECerror(EC_R_SLOT_FULL);
 		return NULL;
 	}
 	if (meth->group_init == 0) {
-		ECerr(EC_F_EC_GROUP_NEW, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return NULL;
 	}
 	ret = malloc(sizeof *ret);
 	if (ret == NULL) {
-		ECerr(EC_F_EC_GROUP_NEW, ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	ret->meth = meth;
@@ -166,11 +166,11 @@ EC_GROUP_copy(EC_GROUP * dest, const EC_GROUP * src)
 	EC_EXTRA_DATA *d;
 
 	if (dest->meth->group_copy == 0) {
-		ECerr(EC_F_EC_GROUP_COPY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (dest->meth != src->meth) {
-		ECerr(EC_F_EC_GROUP_COPY, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	if (dest == src)
@@ -262,7 +262,7 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     const BIGNUM *order, const BIGNUM *cofactor)
 {
 	if (generator == NULL) {
-		ECerr(EC_F_EC_GROUP_SET_GENERATOR, ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	if (group->generator == NULL) {
@@ -398,7 +398,7 @@ EC_GROUP_set_curve_GFp(EC_GROUP * group, const BIGNUM * p, const BIGNUM * a,
     const BIGNUM * b, BN_CTX * ctx)
 {
 	if (group->meth->group_set_curve == 0) {
-		ECerr(EC_F_EC_GROUP_SET_CURVE_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	return group->meth->group_set_curve(group, p, a, b, ctx);
@@ -410,7 +410,7 @@ EC_GROUP_get_curve_GFp(const EC_GROUP * group, BIGNUM * p, BIGNUM * a,
     BIGNUM * b, BN_CTX * ctx)
 {
 	if (group->meth->group_get_curve == 0) {
-		ECerr(EC_F_EC_GROUP_GET_CURVE_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	return group->meth->group_get_curve(group, p, a, b, ctx);
@@ -422,7 +422,7 @@ EC_GROUP_set_curve_GF2m(EC_GROUP * group, const BIGNUM * p, const BIGNUM * a,
     const BIGNUM * b, BN_CTX * ctx)
 {
 	if (group->meth->group_set_curve == 0) {
-		ECerr(EC_F_EC_GROUP_SET_CURVE_GF2M, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	return group->meth->group_set_curve(group, p, a, b, ctx);
@@ -434,7 +434,7 @@ EC_GROUP_get_curve_GF2m(const EC_GROUP * group, BIGNUM * p, BIGNUM * a,
     BIGNUM * b, BN_CTX * ctx)
 {
 	if (group->meth->group_get_curve == 0) {
-		ECerr(EC_F_EC_GROUP_GET_CURVE_GF2M, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	return group->meth->group_get_curve(group, p, a, b, ctx);
@@ -445,7 +445,7 @@ int
 EC_GROUP_get_degree(const EC_GROUP * group)
 {
 	if (group->meth->group_get_degree == 0) {
-		ECerr(EC_F_EC_GROUP_GET_DEGREE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	return group->meth->group_get_degree(group);
@@ -456,7 +456,7 @@ int
 EC_GROUP_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 {
 	if (group->meth->group_check_discriminant == 0) {
-		ECerr(EC_F_EC_GROUP_CHECK_DISCRIMINANT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	return group->meth->group_check_discriminant(group, ctx);
@@ -553,7 +553,7 @@ EC_EX_DATA_set_data(EC_EXTRA_DATA ** ex_data, void *data,
 	for (d = *ex_data; d != NULL; d = d->next) {
 		if (d->dup_func == dup_func && d->free_func == free_func &&
 		    d->clear_free_func == clear_free_func) {
-			ECerr(EC_F_EC_EX_DATA_SET_DATA, EC_R_SLOT_FULL);
+			ECerror(EC_R_SLOT_FULL);
 			return 0;
 		}
 	}
@@ -699,16 +699,16 @@ EC_POINT_new(const EC_GROUP * group)
 	EC_POINT *ret;
 
 	if (group == NULL) {
-		ECerr(EC_F_EC_POINT_NEW, ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
 	if (group->meth->point_init == 0) {
-		ECerr(EC_F_EC_POINT_NEW, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return NULL;
 	}
 	ret = malloc(sizeof *ret);
 	if (ret == NULL) {
-		ECerr(EC_F_EC_POINT_NEW, ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	ret->meth = group->meth;
@@ -752,11 +752,11 @@ int
 EC_POINT_copy(EC_POINT * dest, const EC_POINT * src)
 {
 	if (dest->meth->point_copy == 0) {
-		ECerr(EC_F_EC_POINT_COPY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (dest->meth != src->meth) {
-		ECerr(EC_F_EC_POINT_COPY, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	if (dest == src)
@@ -797,11 +797,11 @@ int
 EC_POINT_set_to_infinity(const EC_GROUP * group, EC_POINT * point)
 {
 	if (group->meth->point_set_to_infinity == 0) {
-		ECerr(EC_F_EC_POINT_SET_TO_INFINITY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_SET_TO_INFINITY, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->point_set_to_infinity(group, point);
@@ -813,11 +813,11 @@ EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
 {
 	if (group->meth->point_set_Jprojective_coordinates_GFp == 0) {
-		ECerr(EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->point_set_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
@@ -829,11 +829,11 @@ EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
     const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
 {
 	if (group->meth->point_get_Jprojective_coordinates_GFp == 0) {
-		ECerr(EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GFP, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->point_get_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
@@ -845,11 +845,11 @@ EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
 {
 	if (group->meth->point_set_affine_coordinates == 0) {
-		ECerr(EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->point_set_affine_coordinates(group, point, x, y, ctx);
@@ -861,11 +861,11 @@ EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
 {
 	if (group->meth->point_set_affine_coordinates == 0) {
-		ECerr(EC_F_EC_POINT_SET_AFFINE_COORDINATES_GF2M, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_SET_AFFINE_COORDINATES_GF2M, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->point_set_affine_coordinates(group, point, x, y, ctx);
@@ -877,11 +877,11 @@ EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point
     BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
 	if (group->meth->point_get_affine_coordinates == 0) {
-		ECerr(EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
@@ -893,11 +893,11 @@ EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group, const EC_POINT *poin
     BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
 	if (group->meth->point_get_affine_coordinates == 0) {
-		ECerr(EC_F_EC_POINT_GET_AFFINE_COORDINATES_GF2M, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_GET_AFFINE_COORDINATES_GF2M, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
@@ -909,11 +909,11 @@ EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
     const EC_POINT *b, BN_CTX *ctx)
 {
 	if (group->meth->add == 0) {
-		ECerr(EC_F_EC_POINT_ADD, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if ((group->meth != r->meth) || (r->meth != a->meth) || (a->meth != b->meth)) {
-		ECerr(EC_F_EC_POINT_ADD, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->add(group, r, a, b, ctx);
@@ -924,11 +924,11 @@ int
 EC_POINT_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 {
 	if (group->meth->dbl == 0) {
-		ECerr(EC_F_EC_POINT_DBL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if ((group->meth != r->meth) || (r->meth != a->meth)) {
-		ECerr(EC_F_EC_POINT_DBL, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->dbl(group, r, a, ctx);
@@ -939,11 +939,11 @@ int
 EC_POINT_invert(const EC_GROUP *group, EC_POINT *a, BN_CTX *ctx)
 {
 	if (group->meth->invert == 0) {
-		ECerr(EC_F_EC_POINT_INVERT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != a->meth) {
-		ECerr(EC_F_EC_POINT_INVERT, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->invert(group, a, ctx);
@@ -954,11 +954,11 @@ int
 EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 {
 	if (group->meth->is_at_infinity == 0) {
-		ECerr(EC_F_EC_POINT_IS_AT_INFINITY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_IS_AT_INFINITY, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->is_at_infinity(group, point);
@@ -969,11 +969,11 @@ int
 EC_POINT_is_on_curve(const EC_GROUP * group, const EC_POINT * point, BN_CTX * ctx)
 {
 	if (group->meth->is_on_curve == 0) {
-		ECerr(EC_F_EC_POINT_IS_ON_CURVE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_IS_ON_CURVE, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->is_on_curve(group, point, ctx);
@@ -985,11 +985,11 @@ EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
     BN_CTX * ctx)
 {
 	if (group->meth->point_cmp == 0) {
-		ECerr(EC_F_EC_POINT_CMP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
 	}
 	if ((group->meth != a->meth) || (a->meth != b->meth)) {
-		ECerr(EC_F_EC_POINT_CMP, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return -1;
 	}
 	return group->meth->point_cmp(group, a, b, ctx);
@@ -1000,11 +1000,11 @@ int
 EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 {
 	if (group->meth->make_affine == 0) {
-		ECerr(EC_F_EC_POINT_MAKE_AFFINE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	if (group->meth != point->meth) {
-		ECerr(EC_F_EC_POINT_MAKE_AFFINE, EC_R_INCOMPATIBLE_OBJECTS);
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	return group->meth->make_affine(group, point, ctx);
@@ -1018,12 +1018,12 @@ EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 	size_t i;
 
 	if (group->meth->points_make_affine == 0) {
-		ECerr(EC_F_EC_POINTS_MAKE_AFFINE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	for (i = 0; i < num; i++) {
 		if (group->meth != points[i]->meth) {
-			ECerr(EC_F_EC_POINTS_MAKE_AFFINE, EC_R_INCOMPATIBLE_OBJECTS);
+			ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 			return 0;
 		}
 	}

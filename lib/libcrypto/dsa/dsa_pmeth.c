@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.10 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.11 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -191,7 +191,7 @@ pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		case NID_sha256:
 			break;
 		default:
-			DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
+			DSAerror(DSA_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
 		dctx->md = p2;
@@ -208,7 +208,7 @@ pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		case NID_sha512:
 			break;
 		default:
-			DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
+			DSAerror(DSA_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
 		dctx->md = p2;
@@ -220,8 +220,7 @@ pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 		
 	case EVP_PKEY_CTRL_PEER_KEY:
-		DSAerr(DSA_F_PKEY_DSA_CTRL,
-		    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		DSAerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;	
 	default:
 		return -2;
@@ -303,7 +302,7 @@ pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	DSA *dsa = NULL;
 
 	if (ctx->pkey == NULL) {
-		DSAerr(DSA_F_PKEY_DSA_KEYGEN, DSA_R_NO_PARAMETERS_SET);
+		DSAerror(DSA_R_NO_PARAMETERS_SET);
 		return 0;
 	}
 	dsa = DSA_new();

@@ -1,4 +1,4 @@
-/* $OpenBSD: c_zlib.c,v 1.18 2015/12/23 20:37:23 mmcc Exp $ */
+/* $OpenBSD: c_zlib.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -257,7 +257,7 @@ bio_zlib_new(BIO *bi)
 
 	ctx = malloc(sizeof(BIO_ZLIB_CTX));
 	if (!ctx) {
-		COMPerr(COMP_F_BIO_ZLIB_NEW, ERR_R_MALLOC_FAILURE);
+		COMPerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	ctx->ibuf = NULL;
@@ -324,7 +324,7 @@ bio_zlib_read(BIO *b, char *out, int outl)
 	if (!ctx->ibuf) {
 		ctx->ibuf = malloc(ctx->ibufsize);
 		if (!ctx->ibuf) {
-			COMPerr(COMP_F_BIO_ZLIB_READ, ERR_R_MALLOC_FAILURE);
+			COMPerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		inflateInit(zin);
@@ -340,8 +340,7 @@ bio_zlib_read(BIO *b, char *out, int outl)
 		while (zin->avail_in) {
 			ret = inflate(zin, 0);
 			if ((ret != Z_OK) && (ret != Z_STREAM_END)) {
-				COMPerr(COMP_F_BIO_ZLIB_READ,
-				    COMP_R_ZLIB_INFLATE_ERROR);
+				COMPerror(COMP_R_ZLIB_INFLATE_ERROR);
 				ERR_asprintf_error_data("zlib error:%s",
 				    zError(ret));
 				return 0;
@@ -386,7 +385,7 @@ bio_zlib_write(BIO *b, const char *in, int inl)
 		ctx->obuf = malloc(ctx->obufsize);
 		/* Need error here */
 		if (!ctx->obuf) {
-			COMPerr(COMP_F_BIO_ZLIB_WRITE, ERR_R_MALLOC_FAILURE);
+			COMPerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		ctx->optr = ctx->obuf;
@@ -427,8 +426,7 @@ bio_zlib_write(BIO *b, const char *in, int inl)
 		/* Compress some more */
 		ret = deflate(zout, 0);
 		if (ret != Z_OK) {
-			COMPerr(COMP_F_BIO_ZLIB_WRITE,
-			    COMP_R_ZLIB_DEFLATE_ERROR);
+			COMPerror(COMP_R_ZLIB_DEFLATE_ERROR);
 			ERR_asprintf_error_data("zlib error:%s", zError(ret));
 			return 0;
 		}
@@ -477,8 +475,7 @@ bio_zlib_flush(BIO *b)
 		if (ret == Z_STREAM_END)
 			ctx->odone = 1;
 		else if (ret != Z_OK) {
-			COMPerr(COMP_F_BIO_ZLIB_FLUSH,
-			    COMP_R_ZLIB_DEFLATE_ERROR);
+			COMPerror(COMP_R_ZLIB_DEFLATE_ERROR);
 			ERR_asprintf_error_data("zlib error:%s", zError(ret));
 			return 0;
 		}

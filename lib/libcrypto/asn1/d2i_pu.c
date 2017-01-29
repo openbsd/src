@@ -1,4 +1,4 @@
-/* $OpenBSD: d2i_pu.c,v 1.13 2015/03/19 14:00:22 tedu Exp $ */
+/* $OpenBSD: d2i_pu.c,v 1.14 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,14 +83,14 @@ d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 
 	if ((a == NULL) || (*a == NULL)) {
 		if ((ret = EVP_PKEY_new()) == NULL) {
-			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_EVP_LIB);
+			ASN1error(ERR_R_EVP_LIB);
 			return (NULL);
 		}
 	} else
 		ret = *a;
 
 	if (!EVP_PKEY_set_type(ret, type)) {
-		ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_EVP_LIB);
+		ASN1error(ERR_R_EVP_LIB);
 		goto err;
 	}
 
@@ -99,7 +99,7 @@ d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 	case EVP_PKEY_RSA:
 		if ((ret->pkey.rsa = d2i_RSAPublicKey(NULL, pp, length)) ==
 		    NULL) {
-			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+			ASN1error(ERR_R_ASN1_LIB);
 			goto err;
 		}
 		break;
@@ -107,7 +107,7 @@ d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 #ifndef OPENSSL_NO_DSA
 	case EVP_PKEY_DSA:
 		if (!d2i_DSAPublicKey(&(ret->pkey.dsa), pp, length)) {
-			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+			ASN1error(ERR_R_ASN1_LIB);
 			goto err;
 		}
 		break;
@@ -115,13 +115,13 @@ d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 #ifndef OPENSSL_NO_EC
 	case EVP_PKEY_EC:
 		if (!o2i_ECPublicKey(&(ret->pkey.ec), pp, length)) {
-			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+			ASN1error(ERR_R_ASN1_LIB);
 			goto err;
 		}
 		break;
 #endif
 	default:
-		ASN1err(ASN1_F_D2I_PUBLICKEY, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
+		ASN1error(ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
 		goto err;
 		/* break; */
 	}

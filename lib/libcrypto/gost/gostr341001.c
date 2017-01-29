@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001.c,v 1.6 2017/01/21 11:00:47 beck Exp $ */
+/* $OpenBSD: gostr341001.c,v 1.7 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -109,14 +109,12 @@ gost2001_compute_public(GOST_KEY *ec)
 	int ok = 0;
 
 	if (group == NULL) {
-		GOSTerr(GOST_F_GOST2001_COMPUTE_PUBLIC,
-		    GOST_R_KEY_IS_NOT_INITIALIZED);
+		GOSTerror(GOST_R_KEY_IS_NOT_INITIALIZED);
 		return 0;
 	}
 	ctx = BN_CTX_new();
 	if (ctx == NULL) {
-		GOSTerr(GOST_F_GOST2001_COMPUTE_PUBLIC,
-		    ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	BN_CTX_start(ctx);
@@ -134,7 +132,7 @@ gost2001_compute_public(GOST_KEY *ec)
 
 	if (ok == 0) {
 err:
-		GOSTerr(GOST_F_GOST2001_COMPUTE_PUBLIC, ERR_R_EC_LIB);
+		GOSTerror(ERR_R_EC_LIB);
 	}
 	EC_POINT_free(pub_key);
 	if (ctx != NULL) {
@@ -158,13 +156,13 @@ gost2001_do_sign(BIGNUM *md, GOST_KEY *eckey)
 	int ok = 0;
 
 	if (ctx == NULL) {
-		GOSTerr(GOST_F_GOST2001_DO_SIGN, ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	BN_CTX_start(ctx);
 	newsig = ECDSA_SIG_new();
 	if (newsig == NULL) {
-		GOSTerr(GOST_F_GOST2001_DO_SIGN, ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	s = newsig->s;
@@ -190,8 +188,7 @@ gost2001_do_sign(BIGNUM *md, GOST_KEY *eckey)
 	do {
 		do {
 			if (!BN_rand_range(k, order)) {
-				GOSTerr(GOST_F_GOST2001_DO_SIGN,
-					GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
+				GOSTerror(GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
 				goto err;
 			}
 			/*
@@ -206,12 +203,12 @@ gost2001_do_sign(BIGNUM *md, GOST_KEY *eckey)
 					goto err;
 
 			if (EC_POINT_mul(group, C, k, NULL, NULL, ctx) == 0) {
-				GOSTerr(GOST_F_GOST2001_DO_SIGN, ERR_R_EC_LIB);
+				GOSTerror(ERR_R_EC_LIB);
 				goto err;
 			}
 			if (EC_POINT_get_affine_coordinates_GFp(group, C, X,
 			    NULL, ctx) == 0) {
-				GOSTerr(GOST_F_GOST2001_DO_SIGN, ERR_R_EC_LIB);
+				GOSTerror(ERR_R_EC_LIB);
 				goto err;
 			}
 			if (BN_nnmod(r, X, order, ctx) == 0)
@@ -285,8 +282,7 @@ gost2001_do_verify(BIGNUM *md, ECDSA_SIG *sig, GOST_KEY *ec)
 	pub_key = GOST_KEY_get0_public_key(ec);
 	if (BN_is_zero(sig->s) || BN_is_zero(sig->r) ||
 	    BN_cmp(sig->s, order) >= 1 || BN_cmp(sig->r, order) >= 1) {
-		GOSTerr(GOST_F_GOST2001_DO_VERIFY,
-		    GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q);
+		GOSTerror(GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q);
 		goto err;
 	}
 
@@ -305,17 +301,17 @@ gost2001_do_verify(BIGNUM *md, ECDSA_SIG *sig, GOST_KEY *ec)
 	if ((C = EC_POINT_new(group)) == NULL)
 		goto err;
 	if (EC_POINT_mul(group, C, z1, pub_key, z2, ctx) == 0) {
-		GOSTerr(GOST_F_GOST2001_DO_VERIFY, ERR_R_EC_LIB);
+		GOSTerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	if (EC_POINT_get_affine_coordinates_GFp(group, C, X, NULL, ctx) == 0) {
-		GOSTerr(GOST_F_GOST2001_DO_VERIFY, ERR_R_EC_LIB);
+		GOSTerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	if (BN_mod_ct(R, X, order, ctx) == 0)
 		goto err;
 	if (BN_cmp(R, sig->r) != 0) {
-		GOSTerr(GOST_F_GOST2001_DO_VERIFY, GOST_R_SIGNATURE_MISMATCH);
+		GOSTerror(GOST_R_SIGNATURE_MISMATCH);
 	} else {
 		ok = 1;
 	}
@@ -385,8 +381,7 @@ gost2001_keygen(GOST_KEY *ec)
 
 	do {
 		if (BN_rand_range(d, order) == 0) {
-			GOSTerr(GOST_F_GOST2001_KEYGEN,
-				GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
+			GOSTerror(GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
 			goto err;
 		}
 	} while (BN_is_zero(d));

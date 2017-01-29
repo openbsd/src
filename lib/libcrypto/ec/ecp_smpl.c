@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.16 2017/01/21 11:00:47 beck Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -180,7 +180,7 @@ ec_GFp_simple_group_set_curve(EC_GROUP * group,
 
 	/* p must be a prime > 3 */
 	if (BN_num_bits(p) <= 2 || !BN_is_odd(p)) {
-		ECerr(EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE, EC_R_INVALID_FIELD);
+		ECerror(EC_R_INVALID_FIELD);
 		return 0;
 	}
 	if (ctx == NULL) {
@@ -289,7 +289,7 @@ ec_GFp_simple_group_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 	if (ctx == NULL) {
 		ctx = new_ctx = BN_CTX_new();
 		if (ctx == NULL) {
-			ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK_DISCRIMINANT, ERR_R_MALLOC_FAILURE);
+			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
@@ -516,7 +516,7 @@ ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP * group, EC_POINT * po
 {
 	if (x == NULL || y == NULL) {
 		/* unlike for projective coordinates, we do not tolerate this */
-		ECerr(EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES, ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	return EC_POINT_set_Jprojective_coordinates_GFp(group, point, x, y, BN_value_one(), ctx);
@@ -533,7 +533,7 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP * group, const EC_POIN
 	int ret = 0;
 
 	if (EC_POINT_is_at_infinity(group, point) > 0) {
-		ECerr(EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES, EC_R_POINT_AT_INFINITY);
+		ECerror(EC_R_POINT_AT_INFINITY);
 		return 0;
 	}
 	if (ctx == NULL) {
@@ -583,7 +583,7 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP * group, const EC_POIN
 		}
 	} else {
 		if (!BN_mod_inverse_ct(Z_1, Z_, &group->field, ctx)) {
-			ECerr(EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES, ERR_R_BN_LIB);
+			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
 		if (group->meth->field_encode == 0) {
@@ -1210,7 +1210,7 @@ ec_GFp_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ctx
 	if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx))
 		goto err;
 	if (!point->Z_is_one) {
-		ECerr(EC_F_EC_GFP_SIMPLE_MAKE_AFFINE, ERR_R_INTERNAL_ERROR);
+		ECerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
 	ret = 1;
@@ -1313,7 +1313,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP * group, size_t num, EC_POINT * 
 	/* invert heap[1] */
 	if (!BN_is_zero(heap[1])) {
 		if (!BN_mod_inverse_ct(heap[1], heap[1], &group->field, ctx)) {
-			ECerr(EC_F_EC_GFP_SIMPLE_POINTS_MAKE_AFFINE, ERR_R_BN_LIB);
+			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
 	}

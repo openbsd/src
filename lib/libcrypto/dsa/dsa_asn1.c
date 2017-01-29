@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.18 2016/12/30 15:28:42 jsing Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -73,7 +73,7 @@ sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 
 		sig = malloc(sizeof(DSA_SIG));
 		if (!sig) {
-			DSAerr(DSA_F_SIG_CB, ERR_R_MALLOC_FAILURE);
+			DSAerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		sig->r = NULL;

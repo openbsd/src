@@ -1,4 +1,4 @@
-/* $OpenBSD: x509spki.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509spki.c,v 1.13 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -91,13 +91,12 @@ NETSCAPE_SPKI_b64_decode(const char *str, int len)
 	if (len <= 0)
 		len = strlen(str);
 	if (!(spki_der = malloc(len + 1))) {
-		X509err(X509_F_NETSCAPE_SPKI_B64_DECODE, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	spki_len = EVP_DecodeBlock(spki_der, (const unsigned char *)str, len);
 	if (spki_len < 0) {
-		X509err(X509_F_NETSCAPE_SPKI_B64_DECODE,
-		    X509_R_BASE64_DECODE_ERROR);
+		X509error(X509_R_BASE64_DECODE_ERROR);
 		free(spki_der);
 		return NULL;
 	}
@@ -119,7 +118,7 @@ NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
 	der_spki = malloc(der_len);
 	b64_str = reallocarray(NULL, der_len, 2);
 	if (!der_spki || !b64_str) {
-		X509err(X509_F_NETSCAPE_SPKI_B64_ENCODE, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		free(der_spki);
 		free(b64_str);
 		return NULL;

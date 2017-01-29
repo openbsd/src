@@ -1,4 +1,4 @@
-/* $OpenBSD: a_mbstr.c,v 1.22 2015/07/16 02:18:58 miod Exp $ */
+/* $OpenBSD: a_mbstr.c,v 1.23 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -113,8 +113,7 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 	switch (inform) {
 	case MBSTRING_BMP:
 		if (len & 1) {
-			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
-			    ASN1_R_INVALID_BMPSTRING_LENGTH);
+			ASN1error(ASN1_R_INVALID_BMPSTRING_LENGTH);
 			return -1;
 		}
 		nchar = len >> 1;
@@ -122,8 +121,7 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
 	case MBSTRING_UNIV:
 		if (len & 3) {
-			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
-			    ASN1_R_INVALID_UNIVERSALSTRING_LENGTH);
+			ASN1error(ASN1_R_INVALID_UNIVERSALSTRING_LENGTH);
 			return -1;
 		}
 		nchar = len >> 2;
@@ -134,8 +132,7 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 		/* This counts the characters and does utf8 syntax checking */
 		ret = traverse_string(in, len, MBSTRING_UTF8, in_utf8, &nchar);
 		if (ret < 0) {
-			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
-			    ASN1_R_INVALID_UTF8STRING);
+			ASN1error(ASN1_R_INVALID_UTF8STRING);
 			return -1;
 		}
 		break;
@@ -145,25 +142,25 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 		break;
 
 	default:
-		ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ASN1_R_UNKNOWN_FORMAT);
+		ASN1error(ASN1_R_UNKNOWN_FORMAT);
 		return -1;
 	}
 
 	if ((minsize > 0) && (nchar < minsize)) {
-		ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ASN1_R_STRING_TOO_SHORT);
+		ASN1error(ASN1_R_STRING_TOO_SHORT);
 		ERR_asprintf_error_data("minsize=%ld", minsize);
 		return -1;
 	}
 
 	if ((maxsize > 0) && (nchar > maxsize)) {
-		ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ASN1_R_STRING_TOO_LONG);
+		ASN1error(ASN1_R_STRING_TOO_LONG);
 		ERR_asprintf_error_data("maxsize=%ld", maxsize);
 		return -1;
 	}
 
 	/* Now work out minimal type (if any) */
 	if (traverse_string(in, len, inform, type_str, &mask) < 0) {
-		ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ASN1_R_ILLEGAL_CHARACTERS);
+		ASN1error(ASN1_R_ILLEGAL_CHARACTERS);
 		return -1;
 	}
 
@@ -201,8 +198,7 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 		free_out = 1;
 		dest = ASN1_STRING_type_new(str_type);
 		if (!dest) {
-			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
-			    ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			return -1;
 		}
 		*out = dest;
@@ -210,8 +206,7 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 	/* If both the same type just copy across */
 	if (inform == outform) {
 		if (!ASN1_STRING_set(dest, in, len)) {
-			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
-			    ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		return str_type;
@@ -237,15 +232,14 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 	case MBSTRING_UTF8:
 		outlen = 0;
 		if (traverse_string(in, len, inform, out_utf8, &outlen) < 0) {
-			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
-			    ASN1_R_ILLEGAL_CHARACTERS);
+			ASN1error(ASN1_R_ILLEGAL_CHARACTERS);
 			goto err;
 		}
 		cpyfunc = cpy_utf8;
 		break;
 	}
 	if (!(p = malloc(outlen + 1))) {
-		ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	dest->length = outlen;

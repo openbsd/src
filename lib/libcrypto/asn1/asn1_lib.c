@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.37 2016/03/06 18:05:00 beck Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.38 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,7 +140,7 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 		goto err;
 
 	if (*plength > (omax - (p - *pp))) {
-		ASN1err(ASN1_F_ASN1_GET_OBJECT, ASN1_R_TOO_LONG);
+		ASN1error(ASN1_R_TOO_LONG);
 		/* Set this so that even if things are not long enough
 		 * the values are set correctly */
 		ret |= 0x80;
@@ -149,7 +149,7 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 	return (ret | inf);
 
 err:
-	ASN1err(ASN1_F_ASN1_GET_OBJECT, ASN1_R_HEADER_TOO_LONG);
+	ASN1error(ASN1_R_HEADER_TOO_LONG);
 	return (0x80);
 }
 
@@ -385,7 +385,7 @@ ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 		unsigned char *tmp;
 		tmp = realloc(str->data, len + 1);
 		if (tmp == NULL) {
-			ASN1err(ASN1_F_ASN1_STRING_SET, ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			return (0);
 		}
 		str->data = tmp;
@@ -421,7 +421,7 @@ ASN1_STRING_type_new(int type)
 
 	ret = malloc(sizeof(ASN1_STRING));
 	if (ret == NULL) {
-		ASN1err(ASN1_F_ASN1_STRING_TYPE_NEW, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	ret->length = 0;

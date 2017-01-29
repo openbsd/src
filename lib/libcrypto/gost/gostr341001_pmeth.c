@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.13 2016/10/19 16:49:11 jsing Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.14 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -73,7 +73,7 @@ unpack_signature_cp(const unsigned char *sig, size_t siglen)
 
 	s = ECDSA_SIG_new();
 	if (s == NULL) {
-		GOSTerr(GOST_F_UNPACK_SIGNATURE_CP, ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	BN_bin2bn(sig, siglen / 2, s->s);
@@ -106,7 +106,7 @@ unpack_signature_le(const unsigned char *sig, size_t siglen)
 
 	s = ECDSA_SIG_new();
 	if (s == NULL) {
-		GOSTerr(GOST_F_UNPACK_SIGNATURE_LE, ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	GOST_le2bn(sig, siglen / 2, s->r);
@@ -190,7 +190,7 @@ pkey_gost01_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 	if (data->sign_param_nid == NID_undef ||
 	    data->digest_nid == NID_undef) {
-		GOSTerr(GOST_F_PKEY_GOST01_PARAMGEN, GOST_R_NO_PARAMETERS_SET);
+		GOSTerror(GOST_R_NO_PARAMETERS_SET);
 		return 0;
 	}
 
@@ -246,11 +246,11 @@ pkey_gost01_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 		*siglen = 2 * size;
 		return 1;
 	} else if (*siglen < 2 * size) {
-		GOSTerr(GOST_F_PKEY_GOST01_SIGN, EC_R_BUFFER_TOO_SMALL);
+		GOSTerror(EC_R_BUFFER_TOO_SMALL);
 		return 0;
 	}
 	if (tbs_len != 32 && tbs_len != 64) {
-		GOSTerr(GOST_F_PKEY_GOST01_SIGN, EVP_R_BAD_BLOCK_LENGTH);
+		GOSTerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
 	md = GOST_le2bn(tbs, tbs_len, NULL);
@@ -386,8 +386,7 @@ pkey_gost01_decrypt(EVP_PKEY_CTX *pctx, unsigned char *key, size_t *key_len,
 	}
 	gkt = d2i_GOST_KEY_TRANSPORT(NULL, (const unsigned char **)&p, in_len);
 	if (gkt == NULL) {
-		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-		    GOST_R_ERROR_PARSING_KEY_TRANSPORT_INFO);
+		GOSTerror(GOST_R_ERROR_PARSING_KEY_TRANSPORT_INFO);
 		return -1;
 	}
 
@@ -395,50 +394,44 @@ pkey_gost01_decrypt(EVP_PKEY_CTX *pctx, unsigned char *key, size_t *key_len,
 	eph_key = X509_PUBKEY_get(gkt->key_agreement_info->ephem_key);
 	if (eph_key != NULL) {
 		if (EVP_PKEY_derive_set_peer(pctx, eph_key) <= 0) {
-			GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-			    GOST_R_INCOMPATIBLE_PEER_KEY);
+			GOSTerror(GOST_R_INCOMPATIBLE_PEER_KEY);
 			goto err;
 		}
 	} else {
 		/* Set control "public key from client certificate used" */
 		if (EVP_PKEY_CTX_ctrl(pctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 3,
 		    NULL) <= 0) {
-			GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-			    GOST_R_CTRL_CALL_FAILED);
+			GOSTerror(GOST_R_CTRL_CALL_FAILED);
 			goto err;
 		}
 	}
 	peerkey = EVP_PKEY_CTX_get0_peerkey(pctx);
 	if (peerkey == NULL) {
-		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT, GOST_R_NO_PEER_KEY);
+		GOSTerror(GOST_R_NO_PEER_KEY);
 		goto err;
 	}
 
 	nid = OBJ_obj2nid(gkt->key_agreement_info->cipher);
 
 	if (gkt->key_agreement_info->eph_iv->length != 8) {
-		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-		    GOST_R_INVALID_IV_LENGTH);
+		GOSTerror(GOST_R_INVALID_IV_LENGTH);
 		goto err;
 	}
 	memcpy(wrappedKey, gkt->key_agreement_info->eph_iv->data, 8);
 	if (gkt->key_info->encrypted_key->length != 32) {
-		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-		    EVP_R_BAD_KEY_LENGTH);
+		GOSTerror(EVP_R_BAD_KEY_LENGTH);
 		goto err;
 	}
 	memcpy(wrappedKey + 8, gkt->key_info->encrypted_key->data, 32);
 	if (gkt->key_info->imit->length != 4) {
-		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-		    ERR_R_INTERNAL_ERROR);
+		GOSTerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
 	memcpy(wrappedKey + 40, gkt->key_info->imit->data, 4);
 	if (gost01_VKO_key(peerkey, priv, wrappedKey, sharedKey) <= 0)
 		goto err;
 	if (gost_key_unwrap_crypto_pro(nid, sharedKey, wrappedKey, key) == 0) {
-		GOSTerr(GOST_F_PKEY_GOST01_DECRYPT,
-		    GOST_R_ERROR_COMPUTING_SHARED_KEY);
+		GOSTerror(GOST_R_ERROR_COMPUTING_SHARED_KEY);
 		goto err;
 	}
 
@@ -462,7 +455,7 @@ pkey_gost01_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 
 	if (data->shared_ukm == NULL) {
-		GOSTerr(GOST_F_PKEY_GOST01_DERIVE, GOST_R_UKM_NOT_SET);
+		GOSTerror(GOST_R_UKM_NOT_SET);
 		return 0;
 	}
 
@@ -500,8 +493,7 @@ pkey_gost01_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_len,
 	if (sec_key) {
 		key_is_ephemeral = 0;
 		if (GOST_KEY_get0_private_key(sec_key->pkey.gost) == 0) {
-			GOSTerr(GOST_F_PKEY_GOST01_ENCRYPT,
-			    GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR);
+			GOSTerror(GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR);
 			goto err;
 		}
 	} else {
@@ -548,8 +540,7 @@ pkey_gost01_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_len,
 	if (key_is_ephemeral) {
 		if (X509_PUBKEY_set(&gkt->key_agreement_info->ephem_key,
 		    out != NULL ? sec_key : pubk) == 0) {
-			GOSTerr(GOST_F_PKEY_GOST01_ENCRYPT,
-			    GOST_R_CANNOT_PACK_EPHEMERAL_KEY);
+			GOSTerror(GOST_R_CANNOT_PACK_EPHEMERAL_KEY);
 			goto err;
 		}
 	}
@@ -561,8 +552,7 @@ pkey_gost01_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_len,
 		/* Set control "public key from client certificate used" */
 		if (EVP_PKEY_CTX_ctrl(pctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 3,
 		    NULL) <= 0) {
-			GOSTerr(GOST_F_PKEY_GOST01_ENCRYPT,
-			    GOST_R_CTRL_CALL_FAILED);
+			GOSTerror(GOST_R_CTRL_CALL_FAILED);
 			goto err;
 		}
 	}
@@ -588,8 +578,7 @@ pkey_gost01_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	case EVP_PKEY_CTRL_MD:
 		if (EVP_MD_type(p2) !=
 		    GostR3410_get_md_digest(pctx->digest_nid)) {
-			GOSTerr(GOST_F_PKEY_GOST01_CTRL,
-			    GOST_R_INVALID_DIGEST_TYPE);
+			GOSTerror(GOST_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
 		pctx->md = p2;
@@ -609,8 +598,7 @@ pkey_gost01_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		char *ukm = malloc(p1);
 
 		if (ukm == NULL) {
-			GOSTerr(GOST_F_PKEY_GOST01_CTRL,
-			    ERR_R_MALLOC_FAILURE);
+			GOSTerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		memcpy(ukm, p2, p1);

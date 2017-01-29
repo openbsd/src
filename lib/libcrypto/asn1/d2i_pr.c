@@ -1,4 +1,4 @@
-/* $OpenBSD: d2i_pr.c,v 1.14 2015/03/19 14:00:22 tedu Exp $ */
+/* $OpenBSD: d2i_pr.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,7 @@ d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 
 	if ((a == NULL) || (*a == NULL)) {
 		if ((ret = EVP_PKEY_new()) == NULL) {
-			ASN1err(ASN1_F_D2I_PRIVATEKEY, ERR_R_EVP_LIB);
+			ASN1error(ERR_R_EVP_LIB);
 			return (NULL);
 		}
 	} else {
@@ -94,7 +94,7 @@ d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 	}
 
 	if (!EVP_PKEY_set_type(ret, type)) {
-		ASN1err(ASN1_F_D2I_PRIVATEKEY, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
+		ASN1error(ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
 		goto err;
 	}
 
@@ -109,7 +109,7 @@ d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 			ret = EVP_PKCS82PKEY(p8);
 			PKCS8_PRIV_KEY_INFO_free(p8);
 		} else {
-			ASN1err(ASN1_F_D2I_PRIVATEKEY, ERR_R_ASN1_LIB);
+			ASN1error(ERR_R_ASN1_LIB);
 			goto err;
 		}
 	}
@@ -153,8 +153,7 @@ d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp, long length)
 
 		sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
 		if (!p8) {
-			ASN1err(ASN1_F_D2I_AUTOPRIVATEKEY,
-			    ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+			ASN1error(ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
 			return NULL;
 		}
 		ret = EVP_PKCS82PKEY(p8);

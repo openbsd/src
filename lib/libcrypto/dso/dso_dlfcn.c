@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_dlfcn.c,v 1.28 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: dso_dlfcn.c,v 1.29 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -119,7 +119,7 @@ dlfcn_load(DSO *dso)
 	int flags = RTLD_LAZY;
 
 	if (filename == NULL) {
-		DSOerr(DSO_F_DLFCN_LOAD, DSO_R_NO_FILENAME);
+		DSOerror(DSO_R_NO_FILENAME);
 		goto err;
 	}
 
@@ -127,13 +127,13 @@ dlfcn_load(DSO *dso)
 		flags |= RTLD_GLOBAL;
 	ptr = dlopen(filename, flags);
 	if (ptr == NULL) {
-		DSOerr(DSO_F_DLFCN_LOAD, DSO_R_LOAD_FAILED);
+		DSOerror(DSO_R_LOAD_FAILED);
 		ERR_asprintf_error_data("filename(%s): %s", filename,
 		    dlerror());
 		goto err;
 	}
 	if (!sk_void_push(dso->meth_data, (char *)ptr)) {
-		DSOerr(DSO_F_DLFCN_LOAD, DSO_R_STACK_ERROR);
+		DSOerror(DSO_R_STACK_ERROR);
 		goto err;
 	}
 	/* Success */
@@ -153,14 +153,14 @@ dlfcn_unload(DSO *dso)
 {
 	void *ptr;
 	if (dso == NULL) {
-		DSOerr(DSO_F_DLFCN_UNLOAD, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 	if (sk_void_num(dso->meth_data) < 1)
 		return (1);
 	ptr = sk_void_pop(dso->meth_data);
 	if (ptr == NULL) {
-		DSOerr(DSO_F_DLFCN_UNLOAD, DSO_R_NULL_HANDLE);
+		DSOerror(DSO_R_NULL_HANDLE);
 		/* Should push the value back onto the stack in
 		 * case of a retry. */
 		sk_void_push(dso->meth_data, ptr);
@@ -177,21 +177,21 @@ dlfcn_bind_var(DSO *dso, const char *symname)
 	void *ptr, *sym;
 
 	if ((dso == NULL) || (symname == NULL)) {
-		DSOerr(DSO_F_DLFCN_BIND_VAR, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (NULL);
 	}
 	if (sk_void_num(dso->meth_data) < 1) {
-		DSOerr(DSO_F_DLFCN_BIND_VAR, DSO_R_STACK_ERROR);
+		DSOerror(DSO_R_STACK_ERROR);
 		return (NULL);
 	}
 	ptr = sk_void_value(dso->meth_data, sk_void_num(dso->meth_data) - 1);
 	if (ptr == NULL) {
-		DSOerr(DSO_F_DLFCN_BIND_VAR, DSO_R_NULL_HANDLE);
+		DSOerror(DSO_R_NULL_HANDLE);
 		return (NULL);
 	}
 	sym = dlsym(ptr, symname);
 	if (sym == NULL) {
-		DSOerr(DSO_F_DLFCN_BIND_VAR, DSO_R_SYM_FAILURE);
+		DSOerror(DSO_R_SYM_FAILURE);
 		ERR_asprintf_error_data("symname(%s): %s", symname, dlerror());
 		return (NULL);
 	}
@@ -208,21 +208,21 @@ dlfcn_bind_func(DSO *dso, const char *symname)
 	} u;
 
 	if ((dso == NULL) || (symname == NULL)) {
-		DSOerr(DSO_F_DLFCN_BIND_FUNC, ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (NULL);
 	}
 	if (sk_void_num(dso->meth_data) < 1) {
-		DSOerr(DSO_F_DLFCN_BIND_FUNC, DSO_R_STACK_ERROR);
+		DSOerror(DSO_R_STACK_ERROR);
 		return (NULL);
 	}
 	ptr = sk_void_value(dso->meth_data, sk_void_num(dso->meth_data) - 1);
 	if (ptr == NULL) {
-		DSOerr(DSO_F_DLFCN_BIND_FUNC, DSO_R_NULL_HANDLE);
+		DSOerror(DSO_R_NULL_HANDLE);
 		return (NULL);
 	}
 	u.dlret = dlsym(ptr, symname);
 	if (u.dlret == NULL) {
-		DSOerr(DSO_F_DLFCN_BIND_FUNC, DSO_R_SYM_FAILURE);
+		DSOerror(DSO_R_SYM_FAILURE);
 		ERR_asprintf_error_data("symname(%s): %s", symname, dlerror());
 		return (NULL);
 	}
@@ -235,8 +235,7 @@ dlfcn_merger(DSO *dso, const char *filespec1, const char *filespec2)
 	char *merged;
 
 	if (!filespec1 && !filespec2) {
-		DSOerr(DSO_F_DLFCN_MERGER,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (NULL);
 	}
 	/* If the first file specification is a rooted path, it rules.
@@ -244,7 +243,7 @@ dlfcn_merger(DSO *dso, const char *filespec1, const char *filespec2)
 	if (!filespec2 || (filespec1 != NULL && filespec1[0] == '/')) {
 		merged = strdup(filespec1);
 		if (!merged) {
-			DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
+			DSOerror(ERR_R_MALLOC_FAILURE);
 			return (NULL);
 		}
 	}
@@ -252,7 +251,7 @@ dlfcn_merger(DSO *dso, const char *filespec1, const char *filespec2)
 	else if (!filespec1) {
 		merged = strdup(filespec2);
 		if (!merged) {
-			DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
+			DSOerror(ERR_R_MALLOC_FAILURE);
 			return (NULL);
 		}
 	} else
@@ -273,7 +272,7 @@ dlfcn_merger(DSO *dso, const char *filespec1, const char *filespec2)
 		}
 		merged = malloc(len + 2);
 		if (!merged) {
-			DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
+			DSOerror(ERR_R_MALLOC_FAILURE);
 			return (NULL);
 		}
 		strlcpy(merged, filespec2, len + 2);
@@ -306,8 +305,7 @@ dlfcn_name_converter(DSO *dso, const char *filename)
 	}
 
 	if (translated == NULL)
-		DSOerr(DSO_F_DLFCN_NAME_CONVERTER,
-		    DSO_R_NAME_TRANSLATION_FAILED);
+		DSOerror(DSO_R_NAME_TRANSLATION_FAILED);
 	return (translated);
 }
 

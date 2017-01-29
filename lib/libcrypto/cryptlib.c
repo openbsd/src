@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.39 2016/11/04 17:30:30 miod Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.40 2017/01/29 17:49:22 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -210,11 +210,11 @@ CRYPTO_get_new_lockid(char *name)
 
 	if ((app_locks == NULL) &&
 	    ((app_locks = sk_OPENSSL_STRING_new_null()) == NULL)) {
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
+		CRYPTOerror(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	if (name == NULL || (str = strdup(name)) == NULL) {
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
+		CRYPTOerror(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	i = sk_OPENSSL_STRING_push(app_locks, str);
@@ -238,32 +238,28 @@ CRYPTO_get_new_dynlockid(void)
 	CRYPTO_dynlock *pointer = NULL;
 
 	if (dynlock_create_callback == NULL) {
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,
-		    CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK);
+		CRYPTOerror(CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK);
 		return (0);
 	}
 	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
 	if ((dyn_locks == NULL) &&
 	    ((dyn_locks = sk_CRYPTO_dynlock_new_null()) == NULL)) {
 		CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,
-		    ERR_R_MALLOC_FAILURE);
+		CRYPTOerror(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
 	pointer = malloc(sizeof(CRYPTO_dynlock));
 	if (pointer == NULL) {
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,
-		    ERR_R_MALLOC_FAILURE);
+		CRYPTOerror(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	pointer->references = 1;
 	pointer->data = dynlock_create_callback(__FILE__, __LINE__);
 	if (pointer->data == NULL) {
 		free(pointer);
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,
-		    ERR_R_MALLOC_FAILURE);
+		CRYPTOerror(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 

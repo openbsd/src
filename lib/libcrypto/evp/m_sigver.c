@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.5 2015/12/14 03:37:27 beck Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -81,7 +81,7 @@ do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 	}
 
 	if (type == NULL) {
-		EVPerr(EVP_F_DO_SIGVER_INIT, EVP_R_NO_DEFAULT_DIGEST);
+		EVPerror(EVP_R_NO_DEFAULT_DIGEST);
 		return 0;
 	}
 

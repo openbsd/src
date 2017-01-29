@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.35 2016/09/09 00:03:22 bcook Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.36 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,8 +130,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 #ifndef OPENSSL_NO_ENGINE
 		if (impl) {
 			if (!ENGINE_init(impl)) {
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX,
-				    EVP_R_INITIALIZATION_ERROR);
+				EVPerror(EVP_R_INITIALIZATION_ERROR);
 				return 0;
 			}
 		} else
@@ -142,8 +141,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 			const EVP_CIPHER *c =
 			    ENGINE_get_cipher(impl, cipher->nid);
 			if (!c) {
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX,
-				    EVP_R_INITIALIZATION_ERROR);
+				EVPerror(EVP_R_INITIALIZATION_ERROR);
 				return 0;
 			}
 			/* We'll use the ENGINE's private cipher definition */
@@ -160,8 +158,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 		if (ctx->cipher->ctx_size) {
 			ctx->cipher_data = malloc(ctx->cipher->ctx_size);
 			if (!ctx->cipher_data) {
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX,
-				    ERR_R_MALLOC_FAILURE);
+				EVPerror(ERR_R_MALLOC_FAILURE);
 				return 0;
 			}
 		} else {
@@ -171,13 +168,12 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 		ctx->flags = 0;
 		if (ctx->cipher->flags & EVP_CIPH_CTRL_INIT) {
 			if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL)) {
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX,
-				    EVP_R_INITIALIZATION_ERROR);
+				EVPerror(EVP_R_INITIALIZATION_ERROR);
 				return 0;
 			}
 		}
 	} else if (!ctx->cipher) {
-		EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_NO_CIPHER_SET);
+		EVPerror(EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
 #ifndef OPENSSL_NO_ENGINE
@@ -187,7 +183,7 @@ skip_to_init:
 	if (ctx->cipher->block_size != 1 &&
 	    ctx->cipher->block_size != 8 &&
 	    ctx->cipher->block_size != 16) {
-		EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_BAD_BLOCK_LENGTH);
+		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
 
@@ -208,8 +204,7 @@ skip_to_init:
 
 			if ((size_t)EVP_CIPHER_CTX_iv_length(ctx) >
 			    sizeof(ctx->iv)) {
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX,
-				    EVP_R_IV_TOO_LARGE);
+				EVPerror(EVP_R_IV_TOO_LARGE);
 				return 0;
 			}
 			if (iv)
@@ -336,7 +331,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	i = ctx->buf_len;
 	bl = ctx->cipher->block_size;
 	if ((size_t)bl > sizeof(ctx->buf)) {
-		EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_BAD_BLOCK_LENGTH);
+		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		*outl = 0;
 		return 0;
 	}
@@ -401,7 +396,7 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 	b = ctx->cipher->block_size;
 	if (b > sizeof ctx->buf) {
-		EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_BAD_BLOCK_LENGTH);
+		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
 	if (b == 1) {
@@ -411,8 +406,7 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	bl = ctx->buf_len;
 	if (ctx->flags & EVP_CIPH_NO_PADDING) {
 		if (bl) {
-			EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX,
-			    EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
+			EVPerror(EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
 			return 0;
 		}
 		*outl = 0;
@@ -458,7 +452,7 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 	b = ctx->cipher->block_size;
 	if (b > sizeof ctx->final) {
-		EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_BAD_BLOCK_LENGTH);
+		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
 
@@ -519,8 +513,7 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	b = ctx->cipher->block_size;
 	if (ctx->flags & EVP_CIPH_NO_PADDING) {
 		if (ctx->buf_len) {
-			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,
-			    EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
+			EVPerror(EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
 			return 0;
 		}
 		*outl = 0;
@@ -528,24 +521,21 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	}
 	if (b > 1) {
 		if (ctx->buf_len || !ctx->final_used) {
-			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,
-			    EVP_R_WRONG_FINAL_BLOCK_LENGTH);
+			EVPerror(EVP_R_WRONG_FINAL_BLOCK_LENGTH);
 			return (0);
 		}
 		if (b > sizeof ctx->final) {
-			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,
-			    EVP_R_BAD_BLOCK_LENGTH);
+			EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 			return 0;
 		}
 		n = ctx->final[b - 1];
 		if (n == 0 || n > (int)b) {
-			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_BAD_DECRYPT);
+			EVPerror(EVP_R_BAD_DECRYPT);
 			return (0);
 		}
 		for (i = 0; i < n; i++) {
 			if (ctx->final[--b] != n) {
-				EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,
-				    EVP_R_BAD_DECRYPT);
+				EVPerror(EVP_R_BAD_DECRYPT);
 				return (0);
 			}
 		}
@@ -600,7 +590,7 @@ EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 		c->key_len = keylen;
 		return 1;
 	}
-	EVPerr(EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH, EVP_R_INVALID_KEY_LENGTH);
+	EVPerror(EVP_R_INVALID_KEY_LENGTH);
 	return 0;
 }
 
@@ -620,19 +610,18 @@ EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 	int ret;
 
 	if (!ctx->cipher) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
+		EVPerror(EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
 
 	if (!ctx->cipher->ctrl) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_CTRL_NOT_IMPLEMENTED);
+		EVPerror(EVP_R_CTRL_NOT_IMPLEMENTED);
 		return 0;
 	}
 
 	ret = ctx->cipher->ctrl(ctx, type, arg, ptr);
 	if (ret == -1) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL,
-		    EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
+		EVPerror(EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
 		return 0;
 	}
 	return ret;
@@ -651,13 +640,13 @@ int
 EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 {
 	if ((in == NULL) || (in->cipher == NULL)) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, EVP_R_INPUT_NOT_INITIALIZED);
+		EVPerror(EVP_R_INPUT_NOT_INITIALIZED);
 		return 0;
 	}
 #ifndef OPENSSL_NO_ENGINE
 	/* Make sure it's safe to copy a cipher context using an ENGINE */
 	if (in->engine && !ENGINE_init(in->engine)) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, ERR_R_ENGINE_LIB);
+		EVPerror(ERR_R_ENGINE_LIB);
 		return 0;
 	}
 #endif
@@ -668,7 +657,7 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 	if (in->cipher_data && in->cipher->ctx_size) {
 		out->cipher_data = malloc(in->cipher->ctx_size);
 		if (!out->cipher_data) {
-			EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, ERR_R_MALLOC_FAILURE);
+			EVPerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		memcpy(out->cipher_data, in->cipher_data, in->cipher->ctx_size);

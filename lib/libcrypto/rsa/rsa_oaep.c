@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.25 2015/06/20 12:01:14 jsing Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.26 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 
@@ -44,14 +44,12 @@ RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	unsigned char *dbmask, seedmask[SHA_DIGEST_LENGTH];
 
 	if (flen > emlen - 2 * SHA_DIGEST_LENGTH - 1) {
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP,
-		    RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+		RSAerror(RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		return 0;
 	}
 
 	if (emlen < 2 * SHA_DIGEST_LENGTH + 1) {
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP,
-		    RSA_R_KEY_SIZE_TOO_SMALL);
+		RSAerror(RSA_R_KEY_SIZE_TOO_SMALL);
 		return 0;
 	}
 
@@ -69,7 +67,7 @@ RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 
 	dbmask = malloc(emlen - SHA_DIGEST_LENGTH);
 	if (dbmask == NULL) {
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
+		RSAerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 
@@ -126,8 +124,7 @@ RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	dblen = num - SHA_DIGEST_LENGTH;
 	db = malloc(dblen + num);
 	if (db == NULL) {
-		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP,
-		    ERR_R_MALLOC_FAILURE);
+		RSAerror(ERR_R_MALLOC_FAILURE);
 		return -1;
 	}
 
@@ -167,8 +164,7 @@ RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 
 			mlen = dblen - ++i;
 			if (tlen < mlen) {
-				RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP,
-				    RSA_R_DATA_TOO_LARGE);
+				RSAerror(RSA_R_DATA_TOO_LARGE);
 				mlen = -1;
 			} else
 				memcpy(to, db + i, mlen);
@@ -182,7 +178,7 @@ decoding_err:
 	 * To avoid chosen ciphertext attacks, the error message should not
 	 * reveal which kind of decoding error happened
 	 */
-	RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
+	RSAerror(RSA_R_OAEP_DECODING_ERROR);
 	free(db);
 	return -1;
 }

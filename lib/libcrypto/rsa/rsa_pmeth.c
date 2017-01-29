@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.18 2016/10/19 16:49:11 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -170,8 +170,7 @@ pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 
 	if (rctx->md) {
 		if (tbslen != (size_t)EVP_MD_size(rctx->md)) {
-			RSAerr(RSA_F_PKEY_RSA_SIGN,
-			    RSA_R_INVALID_DIGEST_LENGTH);
+			RSAerror(RSA_R_INVALID_DIGEST_LENGTH);
 			return -1;
 		}
 
@@ -228,13 +227,11 @@ pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx, unsigned char *rout, size_t *routlen,
 			ret--;
 			if (rctx->tbuf[ret] !=
 				RSA_X931_hash_id(EVP_MD_type(rctx->md))) {
-				RSAerr(RSA_F_PKEY_RSA_VERIFYRECOVER,
-				    RSA_R_ALGORITHM_MISMATCH);
+				RSAerror(RSA_R_ALGORITHM_MISMATCH);
 				return 0;
 			}
 			if (ret != EVP_MD_size(rctx->md)) {
-				RSAerr(RSA_F_PKEY_RSA_VERIFYRECOVER,
-				    RSA_R_INVALID_DIGEST_LENGTH);
+				RSAerror(RSA_R_INVALID_DIGEST_LENGTH);
 				return 0;
 			}
 			if (rout)
@@ -342,14 +339,13 @@ check_padding_md(const EVP_MD *md, int padding)
 		return 1;
 
 	if (padding == RSA_NO_PADDING) {
-		RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_PADDING_MODE);
+		RSAerror(RSA_R_INVALID_PADDING_MODE);
 		return 0;
 	}
 
 	if (padding == RSA_X931_PADDING) {
 		if (RSA_X931_hash_id(EVP_MD_type(md)) == -1) {
-			RSAerr(RSA_F_CHECK_PADDING_MD,
-			    RSA_R_INVALID_X931_DIGEST);
+			RSAerror(RSA_R_INVALID_X931_DIGEST);
 			return 0;
 		}
 		return 1;
@@ -385,8 +381,7 @@ pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 			return 1;
 		}
 bad_pad:
-		RSAerr(RSA_F_PKEY_RSA_CTRL,
-		    RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+		RSAerror(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
 		return -2;
 
 	case EVP_PKEY_CTRL_GET_RSA_PADDING:
@@ -396,7 +391,7 @@ bad_pad:
 	case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
 	case EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN:
 		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING) {
-			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
+			RSAerror(RSA_R_INVALID_PSS_SALTLEN);
 			return -2;
 		}
 		if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN)
@@ -410,7 +405,7 @@ bad_pad:
 
 	case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
 		if (p1 < 256) {
-			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_KEYBITS);
+			RSAerror(RSA_R_INVALID_KEYBITS);
 			return -2;
 		}
 		rctx->nbits = p1;
@@ -431,7 +426,7 @@ bad_pad:
 	case EVP_PKEY_CTRL_RSA_MGF1_MD:
 	case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
 		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING) {
-			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_MGF1_MD);
+			RSAerror(RSA_R_INVALID_MGF1_MD);
 			return -2;
 		}
 		if (type == EVP_PKEY_CTRL_GET_RSA_MGF1_MD) {
@@ -449,8 +444,7 @@ bad_pad:
 	case EVP_PKEY_CTRL_PKCS7_SIGN:
 		return 1;
 	case EVP_PKEY_CTRL_PEER_KEY:
-		RSAerr(RSA_F_PKEY_RSA_CTRL,
-		    RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		RSAerror(RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 
 	default:
@@ -465,7 +459,7 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 	char *ep;
 
 	if (!value) {
-		RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_VALUE_MISSING);
+		RSAerror(RSA_R_VALUE_MISSING);
 		return 0;
 	}
 	if (!strcmp(type, "rsa_padding_mode")) {
@@ -485,8 +479,7 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		else if (!strcmp(value, "pss"))
 			pm = RSA_PKCS1_PSS_PADDING;
 		else {
-			RSAerr(RSA_F_PKEY_RSA_CTRL_STR,
-			    RSA_R_UNKNOWN_PADDING_TYPE);
+			RSAerror(RSA_R_UNKNOWN_PADDING_TYPE);
 			return -2;
 		}
 		return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);

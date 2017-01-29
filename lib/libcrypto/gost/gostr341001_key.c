@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.6 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.7 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -78,7 +78,7 @@ GOST_KEY_new(void)
 
 	ret = malloc(sizeof(GOST_KEY));
 	if (ret == NULL) {
-		GOSTerr(GOST_F_GOST_KEY_NEW, ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	ret->group = NULL;
@@ -118,11 +118,11 @@ GOST_KEY_check_key(const GOST_KEY *key)
 	EC_POINT *point = NULL;
 
 	if (key == NULL || key->group == NULL || key->pub_key == NULL) {
-		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
+		GOSTerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	if (EC_POINT_is_at_infinity(key->group, key->pub_key) != 0) {
-		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_POINT_AT_INFINITY);
+		GOSTerror(EC_R_POINT_AT_INFINITY);
 		goto err;
 	}
 	if ((ctx = BN_CTX_new()) == NULL)
@@ -132,23 +132,23 @@ GOST_KEY_check_key(const GOST_KEY *key)
 
 	/* testing whether the pub_key is on the elliptic curve */
 	if (EC_POINT_is_on_curve(key->group, key->pub_key, ctx) == 0) {
-		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_POINT_IS_NOT_ON_CURVE);
+		GOSTerror(EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
 	}
 	/* testing whether pub_key * order is the point at infinity */
 	if ((order = BN_new()) == NULL)
 		goto err;
 	if (EC_GROUP_get_order(key->group, order, ctx) == 0) {
-		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
+		GOSTerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
 	if (EC_POINT_mul(key->group, point, NULL, key->pub_key, order,
 	    ctx) == 0) {
-		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, ERR_R_EC_LIB);
+		GOSTerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	if (EC_POINT_is_at_infinity(key->group, point) == 0) {
-		GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
+		GOSTerror(EC_R_WRONG_ORDER);
 		goto err;
 	}
 	/*
@@ -157,17 +157,16 @@ GOST_KEY_check_key(const GOST_KEY *key)
 	 */
 	if (key->priv_key != NULL) {
 		if (BN_cmp(key->priv_key, order) >= 0) {
-			GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
+			GOSTerror(EC_R_WRONG_ORDER);
 			goto err;
 		}
 		if (EC_POINT_mul(key->group, point, key->priv_key, NULL, NULL,
 		    ctx) == 0) {
-			GOSTerr(GOST_F_GOST_KEY_CHECK_KEY, ERR_R_EC_LIB);
+			GOSTerror(ERR_R_EC_LIB);
 			goto err;
 		}
 		if (EC_POINT_cmp(key->group, point, key->pub_key, ctx) != 0) {
-			GOSTerr(GOST_F_GOST_KEY_CHECK_KEY,
-			    EC_R_INVALID_PRIVATE_KEY);
+			GOSTerror(EC_R_INVALID_PRIVATE_KEY);
 			goto err;
 		}
 	}
@@ -188,8 +187,7 @@ GOST_KEY_set_public_key_affine_coordinates(GOST_KEY *key, BIGNUM *x, BIGNUM *y)
 	int ok = 0;
 
 	if (key == NULL || key->group == NULL || x == NULL || y == NULL) {
-		GOSTerr(GOST_F_GOST_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		GOSTerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	ctx = BN_CTX_new();
@@ -215,8 +213,7 @@ GOST_KEY_set_public_key_affine_coordinates(GOST_KEY *key, BIGNUM *x, BIGNUM *y)
 	 * out of range.
 	 */
 	if (BN_cmp(x, tx) != 0 || BN_cmp(y, ty) != 0) {
-		GOSTerr(GOST_F_GOST_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
-		    EC_R_COORDINATES_OUT_OF_RANGE);
+		GOSTerror(EC_R_COORDINATES_OUT_OF_RANGE);
 		goto err;
 	}
 	if (GOST_KEY_set_public_key(key, point) == 0)

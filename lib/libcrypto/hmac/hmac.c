@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.22 2015/02/10 09:52:35 miod Exp $ */
+/* $OpenBSD: hmac.c,v 1.23 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,7 @@ HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md,
 		reset = 1;
 		j = EVP_MD_block_size(md);
 		if ((size_t)j > sizeof(ctx->key)) {
-			EVPerr(EVP_F_HMAC_INIT_EX, EVP_R_BAD_BLOCK_LENGTH);
+			EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 			goto err;
 		}
 		if (j < len) {
@@ -93,8 +93,7 @@ HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md,
 				goto err;
 		} else {
 			if ((size_t)len > sizeof(ctx->key)) {
-				EVPerr(EVP_F_HMAC_INIT_EX,
-				    EVP_R_BAD_KEY_LENGTH);
+				EVPerror(EVP_R_BAD_KEY_LENGTH);
 				goto err;
 			}
 			memcpy(ctx->key, key, len);

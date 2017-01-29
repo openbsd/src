@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ht.c,v 1.23 2016/11/05 15:21:20 miod Exp $ */
+/* $OpenBSD: ocsp_ht.c,v 1.24 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -207,8 +207,7 @@ parse_http_line1(char *line)
 	for (p = line; *p && !isspace((unsigned char)*p); p++)
 		continue;
 	if (!*p) {
-		OCSPerr(OCSP_F_PARSE_HTTP_LINE1,
-		    OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
+		OCSPerror(OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		return 0;
 	}
 
@@ -216,8 +215,7 @@ parse_http_line1(char *line)
 	while (*p && isspace((unsigned char)*p))
 		p++;
 	if (!*p) {
-		OCSPerr(OCSP_F_PARSE_HTTP_LINE1,
-		    OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
+		OCSPerror(OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		return 0;
 	}
 
@@ -225,8 +223,7 @@ parse_http_line1(char *line)
 	for (q = p; *q && !isspace((unsigned char)*q); q++)
 		continue;
 	if (!*q) {
-		OCSPerr(OCSP_F_PARSE_HTTP_LINE1,
-		    OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
+		OCSPerror(OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		return 0;
 	}
 
@@ -251,7 +248,7 @@ parse_http_line1(char *line)
 			*r = 0;
 	}
 	if (retcode != 200) {
-		OCSPerr(OCSP_F_PARSE_HTTP_LINE1, OCSP_R_SERVER_RESPONSE_ERROR);
+		OCSPerror(OCSP_R_SERVER_RESPONSE_ERROR);
 		if (!*q)
 			ERR_asprintf_error_data("Code=%s", p);
 		else

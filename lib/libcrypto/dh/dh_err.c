@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_err.c,v 1.15 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: dh_err.c,v 1.16 2017/01/29 17:49:22 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -71,27 +71,10 @@
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_DH,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_DH,0,reason)
 
-static ERR_STRING_DATA DH_str_functs[]=
-	{
-{ERR_FUNC(DH_F_COMPUTE_KEY),	"COMPUTE_KEY"},
-{ERR_FUNC(DH_F_DHPARAMS_PRINT_FP),	"DHparams_print_fp"},
-{ERR_FUNC(DH_F_DH_BUILTIN_GENPARAMS),	"DH_BUILTIN_GENPARAMS"},
-{ERR_FUNC(DH_F_DH_COMPUTE_KEY),	"DH_compute_key"},
-{ERR_FUNC(DH_F_DH_GENERATE_KEY),	"DH_generate_key"},
-{ERR_FUNC(DH_F_DH_GENERATE_PARAMETERS_EX),	"DH_generate_parameters_ex"},
-{ERR_FUNC(DH_F_DH_NEW_METHOD),	"DH_new_method"},
-{ERR_FUNC(DH_F_DH_PARAM_DECODE),	"DH_PARAM_DECODE"},
-{ERR_FUNC(DH_F_DH_PRIV_DECODE),	"DH_PRIV_DECODE"},
-{ERR_FUNC(DH_F_DH_PRIV_ENCODE),	"DH_PRIV_ENCODE"},
-{ERR_FUNC(DH_F_DH_PUB_DECODE),	"DH_PUB_DECODE"},
-{ERR_FUNC(DH_F_DH_PUB_ENCODE),	"DH_PUB_ENCODE"},
-{ERR_FUNC(DH_F_DO_DH_PRINT),	"DO_DH_PRINT"},
-{ERR_FUNC(DH_F_GENERATE_KEY),	"GENERATE_KEY"},
-{ERR_FUNC(DH_F_GENERATE_PARAMETERS),	"GENERATE_PARAMETERS"},
-{ERR_FUNC(DH_F_PKEY_DH_DERIVE),	"PKEY_DH_DERIVE"},
-{ERR_FUNC(DH_F_PKEY_DH_KEYGEN),	"PKEY_DH_KEYGEN"},
-{0,NULL}
-	};
+static ERR_STRING_DATA DH_str_functs[]=	{
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
+	{0, NULL}
+};
 
 static ERR_STRING_DATA DH_str_reasons[]=
 	{

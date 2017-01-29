@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.17 2017/01/21 11:00:47 beck Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,8 +187,7 @@ RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 	if (rsa->e == NULL) {
 		e = rsa_get_public_exp(rsa->d, rsa->p, rsa->q, ctx);
 		if (e == NULL) {
-			RSAerr(RSA_F_RSA_SETUP_BLINDING,
-			    RSA_R_NO_PUBLIC_EXPONENT);
+			RSAerror(RSA_R_NO_PUBLIC_EXPONENT);
 			goto err;
 		}
 	} else
@@ -201,7 +200,7 @@ RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 	    rsa->_method_mod_n);
 
 	if (ret == NULL) {
-		RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_BN_LIB);
+		RSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	CRYPTO_THREADID_current(BN_BLINDING_thread_id(ret));

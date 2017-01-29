@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.23 2015/09/29 13:54:40 jsing Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.24 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -176,7 +176,7 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 	return (ret);
 
 err:
-	ASN1err(ASN1_F_C2I_ASN1_BIT_STRING, i);
+	ASN1error(i);
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
 		ASN1_BIT_STRING_free(ret);
 	return (NULL);
@@ -206,7 +206,7 @@ ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 			return(1); /* Don't need to set */
 		c = OPENSSL_realloc_clean(a->data, a->length, w + 1);
 		if (c == NULL) {
-			ASN1err(ASN1_F_ASN1_BIT_STRING_SET_BIT, ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		if (w + 1 - a->length > 0)

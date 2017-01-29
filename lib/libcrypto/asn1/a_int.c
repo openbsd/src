@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.30 2015/09/30 17:30:15 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.31 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -266,7 +266,7 @@ c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp, long len)
 	return (ret);
 
 err:
-	ASN1err(ASN1_F_C2I_ASN1_INTEGER, i);
+	ASN1error(i);
 	if (a == NULL || *a != ret)
 		ASN1_INTEGER_free(ret);
 	return (NULL);
@@ -332,7 +332,7 @@ d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp, long length)
 	return (ret);
 
 err:
-	ASN1err(ASN1_F_D2I_ASN1_UINTEGER, i);
+	ASN1error(i);
 	if (a == NULL || *a != ret)
 		ASN1_INTEGER_free(ret);
 	return (NULL);
@@ -353,7 +353,7 @@ ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 		a->data = calloc(1, sizeof(long) + 1);
 	}
 	if (a->data == NULL) {
-		ASN1err(ASN1_F_ASN1_INTEGER_SET, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	d = v;
@@ -416,7 +416,7 @@ BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
 	else
 		ret = ai;
 	if (ret == NULL) {
-		ASN1err(ASN1_F_BN_TO_ASN1_INTEGER, ERR_R_NESTED_ASN1_ERROR);
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 	}
 	if (BN_is_negative(bn))
@@ -428,7 +428,7 @@ BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
 	if (ret->length < len + 4) {
 		unsigned char *new_data = realloc(ret->data, len + 4);
 		if (!new_data) {
-			ASN1err(ASN1_F_BN_TO_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		ret->data = new_data;
@@ -454,7 +454,7 @@ ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn)
 	BIGNUM *ret;
 
 	if ((ret = BN_bin2bn(ai->data, ai->length, bn)) == NULL)
-		ASN1err(ASN1_F_ASN1_INTEGER_TO_BN, ASN1_R_BN_LIB);
+		ASN1error(ASN1_R_BN_LIB);
 	else if (ai->type == V_ASN1_NEG_INTEGER)
 		BN_set_negative(ret, 1);
 	return (ret);

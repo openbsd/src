@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_pkey.c,v 1.6 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: eng_pkey.c,v 1.7 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -108,27 +108,23 @@ ENGINE_load_private_key(ENGINE *e, const char *key_id, UI_METHOD *ui_method,
 	EVP_PKEY *pkey;
 
 	if (e == NULL) {
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	if (e->funct_ref == 0) {
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
-		    ENGINE_R_NOT_INITIALISED);
+		ENGINEerror(ENGINE_R_NOT_INITIALISED);
 		return 0;
 	}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	if (!e->load_privkey) {
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
-		    ENGINE_R_NO_LOAD_FUNCTION);
+		ENGINEerror(ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 	}
 	pkey = e->load_privkey(e, key_id, ui_method, callback_data);
 	if (!pkey) {
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
-		    ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
+		ENGINEerror(ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
 		return 0;
 	}
 	return pkey;
@@ -141,27 +137,23 @@ ENGINE_load_public_key(ENGINE *e, const char *key_id, UI_METHOD *ui_method,
 	EVP_PKEY *pkey;
 
 	if (e == NULL) {
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	if (e->funct_ref == 0) {
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
-		    ENGINE_R_NOT_INITIALISED);
+		ENGINEerror(ENGINE_R_NOT_INITIALISED);
 		return 0;
 	}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	if (!e->load_pubkey) {
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
-		    ENGINE_R_NO_LOAD_FUNCTION);
+		ENGINEerror(ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 	}
 	pkey = e->load_pubkey(e, key_id, ui_method, callback_data);
 	if (!pkey) {
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
-		    ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
+		ENGINEerror(ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
 		return 0;
 	}
 	return pkey;
@@ -173,21 +165,18 @@ ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s, STACK_OF(X509_NAME) *ca_dn,
     UI_METHOD *ui_method, void *callback_data)
 {
 	if (e == NULL) {
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	if (e->funct_ref == 0) {
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
-		    ENGINE_R_NOT_INITIALISED);
+		ENGINEerror(ENGINE_R_NOT_INITIALISED);
 		return 0;
 	}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	if (!e->load_ssl_client_cert) {
-		ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
-		    ENGINE_R_NO_LOAD_FUNCTION);
+		ENGINEerror(ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 	}
 	return e->load_ssl_client_cert(e, s, ca_dn, pcert, ppkey, pother,

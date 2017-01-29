@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_req_utils.c,v 1.4 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: ts_req_utils.c,v 1.5 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -84,7 +84,7 @@ TS_REQ_set_msg_imprint(TS_REQ *a, TS_MSG_IMPRINT *msg_imprint)
 		return 1;
 	new_msg_imprint = TS_MSG_IMPRINT_dup(msg_imprint);
 	if (new_msg_imprint == NULL) {
-		TSerr(TS_F_TS_REQ_SET_MSG_IMPRINT, ERR_R_MALLOC_FAILURE);
+		TSerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	TS_MSG_IMPRINT_free(a->msg_imprint);
@@ -107,7 +107,7 @@ TS_MSG_IMPRINT_set_algo(TS_MSG_IMPRINT *a, X509_ALGOR *alg)
 		return 1;
 	new_alg = X509_ALGOR_dup(alg);
 	if (new_alg == NULL) {
-		TSerr(TS_F_TS_MSG_IMPRINT_SET_ALGO, ERR_R_MALLOC_FAILURE);
+		TSerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	X509_ALGOR_free(a->hash_algo);
@@ -142,7 +142,7 @@ TS_REQ_set_policy_id(TS_REQ *a, ASN1_OBJECT *policy)
 		return 1;
 	new_policy = OBJ_dup(policy);
 	if (new_policy == NULL) {
-		TSerr(TS_F_TS_REQ_SET_POLICY_ID, ERR_R_MALLOC_FAILURE);
+		TSerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	ASN1_OBJECT_free(a->policy_id);
@@ -165,7 +165,7 @@ TS_REQ_set_nonce(TS_REQ *a, const ASN1_INTEGER *nonce)
 		return 1;
 	new_nonce = ASN1_INTEGER_dup(nonce);
 	if (new_nonce == NULL) {
-		TSerr(TS_F_TS_REQ_SET_NONCE, ERR_R_MALLOC_FAILURE);
+		TSerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	ASN1_INTEGER_free(a->nonce);

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_set.c,v 1.17 2015/03/19 14:00:22 tedu Exp $ */
+/* $OpenBSD: a_set.c,v 1.18 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,7 +125,7 @@ i2d_ASN1_SET(STACK_OF(OPENSSL_BLOCK) *a, unsigned char **pp, i2d_of_void *i2d,
 	/* In this array we will store the SET blobs */
 	rgSetBlob = reallocarray(NULL, sk_OPENSSL_BLOCK_num(a), sizeof(MYBLOB));
 	if (rgSetBlob == NULL) {
-		ASN1err(ASN1_F_I2D_ASN1_SET, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 
@@ -146,7 +146,7 @@ i2d_ASN1_SET(STACK_OF(OPENSSL_BLOCK) *a, unsigned char **pp, i2d_of_void *i2d,
 	qsort(rgSetBlob, sk_OPENSSL_BLOCK_num(a), sizeof(MYBLOB), SetBlobCmp);
 	if ((pTempMem = malloc(totSize)) == NULL) {
 		free(rgSetBlob);
-		ASN1err(ASN1_F_I2D_ASN1_SET, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 
@@ -175,7 +175,7 @@ d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a, const unsigned char **pp, long length,
 
 	if (a == NULL || (*a) == NULL) {
 		if ((ret = sk_OPENSSL_BLOCK_new_null()) == NULL) {
-			ASN1err(ASN1_F_D2I_ASN1_SET, ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	} else
@@ -188,15 +188,15 @@ d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a, const unsigned char **pp, long length,
 	if (c.inf & 0x80)
 		goto err;
 	if (ex_class != c.xclass) {
-		ASN1err(ASN1_F_D2I_ASN1_SET, ASN1_R_BAD_CLASS);
+		ASN1error(ASN1_R_BAD_CLASS);
 		goto err;
 	}
 	if (ex_tag != c.tag) {
-		ASN1err(ASN1_F_D2I_ASN1_SET, ASN1_R_BAD_TAG);
+		ASN1error(ASN1_R_BAD_TAG);
 		goto err;
 	}
 	if (c.slen + c.p > c.max) {
-		ASN1err(ASN1_F_D2I_ASN1_SET, ASN1_R_LENGTH_ERROR);
+		ASN1error(ASN1_R_LENGTH_ERROR);
 		goto err;
 	}
 	/* check for infinite constructed - it can be as long
@@ -211,8 +211,7 @@ d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a, const unsigned char **pp, long length,
 		if (M_ASN1_D2I_end_sequence())
 			break;
 		if ((s = d2i(NULL, &c.p, c.slen)) == NULL) {
-			ASN1err(ASN1_F_D2I_ASN1_SET,
-			    ASN1_R_ERROR_PARSING_SET_ELEMENT);
+			ASN1error(ASN1_R_ERROR_PARSING_SET_ELEMENT);
 			asn1_add_error(*pp, (int)(c.p - *pp));
 			goto err;
 		}

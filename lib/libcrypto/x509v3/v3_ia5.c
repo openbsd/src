@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ia5.c,v 1.16 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_ia5.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -207,7 +207,7 @@ i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
 	if (!ia5 || !ia5->length)
 		return NULL;
 	if (!(tmp = malloc(ia5->length + 1))) {
-		X509V3err(X509V3_F_I2S_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	memcpy(tmp, ia5->data, ia5->length);
@@ -220,8 +220,7 @@ s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
 {
 	ASN1_IA5STRING *ia5;
 	if (!str) {
-		X509V3err(X509V3_F_S2I_ASN1_IA5STRING,
-		    X509V3_R_INVALID_NULL_ARGUMENT);
+		X509V3error(X509V3_R_INVALID_NULL_ARGUMENT);
 		return NULL;
 	}
 	if (!(ia5 = ASN1_IA5STRING_new()))
@@ -234,6 +233,6 @@ s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
 	return ia5;
 
 err:
-	X509V3err(X509V3_F_S2I_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
+	X509V3error(ERR_R_MALLOC_FAILURE);
 	return NULL;
 }

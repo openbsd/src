@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.20 2017/01/21 04:31:25 jsing Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.21 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -258,14 +258,13 @@ ASN1_STRING_TABLE_add(int nid, long minsize, long maxsize, unsigned long mask,
 	if (!stable)
 		stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp);
 	if (!stable) {
-		ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	if (!(tmp = ASN1_STRING_TABLE_get(nid))) {
 		tmp = malloc(sizeof(ASN1_STRING_TABLE));
 		if (!tmp) {
-			ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD,
-			    ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		tmp->flags = flags | STABLE_FLAGS_MALLOC;
@@ -280,8 +279,7 @@ ASN1_STRING_TABLE_add(int nid, long minsize, long maxsize, unsigned long mask,
 	if (new_nid) {
 		if (sk_ASN1_STRING_TABLE_push(stable, tmp) == 0) {
 			free(tmp);
-			ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD,
-			    ERR_R_MALLOC_FAILURE);
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 	}

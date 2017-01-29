@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.10 2015/02/13 00:46:03 beck Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -203,7 +203,7 @@ ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 	if (mont == NULL)
 		goto err;
 	if (!BN_MONT_CTX_set(mont, p, ctx)) {
-		ECerr(EC_F_EC_GFP_MONT_GROUP_SET_CURVE, ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	one = BN_new();
@@ -238,7 +238,7 @@ ec_GFp_mont_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
 	if (group->field_data1 == NULL) {
-		ECerr(EC_F_EC_GFP_MONT_FIELD_MUL, EC_R_NOT_INITIALIZED);
+		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
 	return BN_mod_mul_montgomery(r, a, b, group->field_data1, ctx);
@@ -250,7 +250,7 @@ ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
 	if (group->field_data1 == NULL) {
-		ECerr(EC_F_EC_GFP_MONT_FIELD_SQR, EC_R_NOT_INITIALIZED);
+		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
 	return BN_mod_mul_montgomery(r, a, a, group->field_data1, ctx);
@@ -262,7 +262,7 @@ ec_GFp_mont_field_encode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
 	if (group->field_data1 == NULL) {
-		ECerr(EC_F_EC_GFP_MONT_FIELD_ENCODE, EC_R_NOT_INITIALIZED);
+		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
 	return BN_to_montgomery(r, a, (BN_MONT_CTX *) group->field_data1, ctx);
@@ -274,7 +274,7 @@ ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
 	if (group->field_data1 == NULL) {
-		ECerr(EC_F_EC_GFP_MONT_FIELD_DECODE, EC_R_NOT_INITIALIZED);
+		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
 	return BN_from_montgomery(r, a, group->field_data1, ctx);
@@ -285,7 +285,7 @@ int
 ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
 {
 	if (group->field_data2 == NULL) {
-		ECerr(EC_F_EC_GFP_MONT_FIELD_SET_TO_ONE, EC_R_NOT_INITIALIZED);
+		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
 	if (!BN_copy(r, group->field_data2))

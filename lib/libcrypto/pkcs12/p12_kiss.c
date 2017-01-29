@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_kiss.c,v 1.18 2016/12/30 15:08:22 jsing Exp $ */
+/* $OpenBSD: p12_kiss.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -87,8 +87,7 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 	/* Check for NULL PKCS12 structure */
 
 	if (!p12) {
-		PKCS12err(PKCS12_F_PKCS12_PARSE,
-		    PKCS12_R_INVALID_NULL_PKCS12_POINTER);
+		PKCS12error(PKCS12_R_INVALID_NULL_PKCS12_POINTER);
 		return 0;
 	}
 
@@ -111,24 +110,23 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 		else if (PKCS12_verify_mac(p12, "", 0))
 			pass = "";
 		else {
-			PKCS12err(PKCS12_F_PKCS12_PARSE,
-			    PKCS12_R_MAC_VERIFY_FAILURE);
+			PKCS12error(PKCS12_R_MAC_VERIFY_FAILURE);
 			goto err;
 		}
 	} else if (!PKCS12_verify_mac(p12, pass, -1)) {
-		PKCS12err(PKCS12_F_PKCS12_PARSE, PKCS12_R_MAC_VERIFY_FAILURE);
+		PKCS12error(PKCS12_R_MAC_VERIFY_FAILURE);
 		goto err;
 	}
 
 	/* Allocate stack for other certificates */
 	ocerts = sk_X509_new_null();
 	if (!ocerts) {
-		PKCS12err(PKCS12_F_PKCS12_PARSE, ERR_R_MALLOC_FAILURE);
+		PKCS12error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 
 	if (!parse_pk12 (p12, pass, -1, pkey, ocerts)) {
-		PKCS12err(PKCS12_F_PKCS12_PARSE, PKCS12_R_PARSE_ERROR);
+		PKCS12error(PKCS12_R_PARSE_ERROR);
 		goto err;
 	}
 

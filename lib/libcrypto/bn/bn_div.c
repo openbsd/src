@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.24 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: bn_div.c,v 1.25 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -131,7 +131,7 @@ BN_div_internal(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor
 	 * in the case of 'num', so don't just rely on bn_check_top() for this one
 	 * (bn_check_top() works only for BN_DEBUG builds) */
 	if (num->top > 0 && num->d[num->top - 1] == 0) {
-		BNerr(BN_F_BN_DIV, BN_R_NOT_INITIALIZED);
+		BNerror(BN_R_NOT_INITIALIZED);
 		return 0;
 	}
 
@@ -146,7 +146,7 @@ BN_div_internal(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor
 	bn_check_top(divisor);
 
 	if (BN_is_zero(divisor)) {
-		BNerr(BN_F_BN_DIV, BN_R_DIV_BY_ZERO);
+		BNerror(BN_R_DIV_BY_ZERO);
 		return (0);
 	}
 

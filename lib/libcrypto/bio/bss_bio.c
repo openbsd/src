@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_bio.c,v 1.22 2015/12/23 20:37:23 mmcc Exp $ */
+/* $OpenBSD: bss_bio.c,v 1.23 2017/01/29 17:49:22 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
@@ -348,7 +348,7 @@ bio_write(BIO *bio, const char *buf, int num_)
 	b->request = 0;
 	if (b->closed) {
 		/* we already closed */
-		BIOerr(BIO_F_BIO_WRITE, BIO_R_BROKEN_PIPE);
+		BIOerror(BIO_R_BROKEN_PIPE);
 		return -1;
 	}
 
@@ -425,7 +425,7 @@ bio_nwrite0(BIO *bio, char **buf)
 
 	b->request = 0;
 	if (b->closed) {
-		BIOerr(BIO_F_BIO_NWRITE0, BIO_R_BROKEN_PIPE);
+		BIOerror(BIO_R_BROKEN_PIPE);
 		return -1;
 	}
 
@@ -491,10 +491,10 @@ bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
 	case BIO_C_SET_WRITE_BUF_SIZE:
 		if (b->peer) {
-			BIOerr(BIO_F_BIO_CTRL, BIO_R_IN_USE);
+			BIOerror(BIO_R_IN_USE);
 			ret = 0;
 		} else if (num == 0) {
-			BIOerr(BIO_F_BIO_CTRL, BIO_R_INVALID_ARGUMENT);
+			BIOerror(BIO_R_INVALID_ARGUMENT);
 			ret = 0;
 		} else {
 			size_t new_size = num;
@@ -679,14 +679,14 @@ bio_make_pair(BIO *bio1, BIO *bio2)
 	b2 = bio2->ptr;
 
 	if (b1->peer != NULL || b2->peer != NULL) {
-		BIOerr(BIO_F_BIO_MAKE_PAIR, BIO_R_IN_USE);
+		BIOerror(BIO_R_IN_USE);
 		return 0;
 	}
 
 	if (b1->buf == NULL) {
 		b1->buf = malloc(b1->size);
 		if (b1->buf == NULL) {
-			BIOerr(BIO_F_BIO_MAKE_PAIR, ERR_R_MALLOC_FAILURE);
+			BIOerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		b1->len = 0;
@@ -696,7 +696,7 @@ bio_make_pair(BIO *bio1, BIO *bio2)
 	if (b2->buf == NULL) {
 		b2->buf = malloc(b2->size);
 		if (b2->buf == NULL) {
-			BIOerr(BIO_F_BIO_MAKE_PAIR, ERR_R_MALLOC_FAILURE);
+			BIOerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		b2->len = 0;
@@ -822,7 +822,7 @@ BIO_nread0(BIO *bio, char **buf)
 	long ret;
 
 	if (!bio->init) {
-		BIOerr(BIO_F_BIO_NREAD0, BIO_R_UNINITIALIZED);
+		BIOerror(BIO_R_UNINITIALIZED);
 		return -2;
 	}
 
@@ -839,7 +839,7 @@ BIO_nread(BIO *bio, char **buf, int num)
 	int ret;
 
 	if (!bio->init) {
-		BIOerr(BIO_F_BIO_NREAD, BIO_R_UNINITIALIZED);
+		BIOerror(BIO_R_UNINITIALIZED);
 		return -2;
 	}
 
@@ -855,7 +855,7 @@ BIO_nwrite0(BIO *bio, char **buf)
 	long ret;
 
 	if (!bio->init) {
-		BIOerr(BIO_F_BIO_NWRITE0, BIO_R_UNINITIALIZED);
+		BIOerror(BIO_R_UNINITIALIZED);
 		return -2;
 	}
 
@@ -872,7 +872,7 @@ BIO_nwrite(BIO *bio, char **buf, int num)
 	int ret;
 
 	if (!bio->init) {
-		BIOerr(BIO_F_BIO_NWRITE, BIO_R_UNINITIALIZED);
+		BIOerror(BIO_R_UNINITIALIZED);
 		return -2;
 	}
 

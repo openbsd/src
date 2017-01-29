@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.13 2016/03/21 04:05:33 mmcc Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.14 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,7 +156,7 @@ X509v3_add_ext(STACK_OF(X509_EXTENSION) **x, X509_EXTENSION *ex, int loc)
 	STACK_OF(X509_EXTENSION) *sk = NULL;
 
 	if (x == NULL) {
-		X509err(X509_F_X509V3_ADD_EXT, ERR_R_PASSED_NULL_PARAMETER);
+		X509error(ERR_R_PASSED_NULL_PARAMETER);
 		goto err2;
 	}
 
@@ -181,7 +181,7 @@ X509v3_add_ext(STACK_OF(X509_EXTENSION) **x, X509_EXTENSION *ex, int loc)
 	return (sk);
 
 err:
-	X509err(X509_F_X509V3_ADD_EXT, ERR_R_MALLOC_FAILURE);
+	X509error(ERR_R_MALLOC_FAILURE);
 err2:
 	if (new_ex != NULL)
 		X509_EXTENSION_free(new_ex);
@@ -199,8 +199,7 @@ X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid, int crit,
 
 	obj = OBJ_nid2obj(nid);
 	if (obj == NULL) {
-		X509err(X509_F_X509_EXTENSION_CREATE_BY_NID,
-		    X509_R_UNKNOWN_NID);
+		X509error(X509_R_UNKNOWN_NID);
 		return (NULL);
 	}
 	ret = X509_EXTENSION_create_by_OBJ(ex, obj, crit, data);
@@ -217,8 +216,7 @@ X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex, ASN1_OBJECT *obj, int crit,
 
 	if ((ex == NULL) || (*ex == NULL)) {
 		if ((ret = X509_EXTENSION_new()) == NULL) {
-			X509err(X509_F_X509_EXTENSION_CREATE_BY_OBJ,
-			    ERR_R_MALLOC_FAILURE);
+			X509error(ERR_R_MALLOC_FAILURE);
 			return (NULL);
 		}
 	} else

@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_verify_ctx.c,v 1.8 2015/02/10 09:46:30 miod Exp $ */
+/* $OpenBSD: ts_verify_ctx.c,v 1.9 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2003.
  */
@@ -68,7 +68,7 @@ TS_VERIFY_CTX_new(void)
 	TS_VERIFY_CTX *ctx = calloc(1, sizeof(TS_VERIFY_CTX));
 
 	if (!ctx)
-		TSerr(TS_F_TS_VERIFY_CTX_NEW, ERR_R_MALLOC_FAILURE);
+		TSerror(ERR_R_MALLOC_FAILURE);
 
 	return ctx;
 }

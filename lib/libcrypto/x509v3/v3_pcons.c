@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pcons.c,v 1.10 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_pcons.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -150,8 +150,7 @@ v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	int i;
 
 	if (!(pcons = POLICY_CONSTRAINTS_new())) {
-		X509V3err(X509V3_F_V2I_POLICY_CONSTRAINTS,
-		    ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
@@ -163,15 +162,13 @@ v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 			if (!X509V3_get_value_int(val,
 			    &pcons->inhibitPolicyMapping)) goto err;
 		} else {
-			X509V3err(X509V3_F_V2I_POLICY_CONSTRAINTS,
-			    X509V3_R_INVALID_NAME);
+			X509V3error(X509V3_R_INVALID_NAME);
 			X509V3_conf_err(val);
 			goto err;
 		}
 	}
 	if (!pcons->inhibitPolicyMapping && !pcons->requireExplicitPolicy) {
-		X509V3err(X509V3_F_V2I_POLICY_CONSTRAINTS,
-		    X509V3_R_ILLEGAL_EMPTY_EXTENSION);
+		X509V3error(X509V3_R_ILLEGAL_EMPTY_EXTENSION);
 		goto err;
 	}
 

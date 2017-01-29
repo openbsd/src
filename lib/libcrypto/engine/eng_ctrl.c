@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_ctrl.c,v 1.10 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: eng_ctrl.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -125,8 +125,7 @@ int_ctrl_helper(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	    (cmd == ENGINE_CTRL_GET_NAME_FROM_CMD) ||
 	    (cmd == ENGINE_CTRL_GET_DESC_FROM_CMD)) {
 		if (s == NULL) {
-			ENGINEerr(ENGINE_F_INT_CTRL_HELPER,
-			    ERR_R_PASSED_NULL_PARAMETER);
+			ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 			return -1;
 		}
 	}
@@ -134,8 +133,7 @@ int_ctrl_helper(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	if (cmd == ENGINE_CTRL_GET_CMD_FROM_NAME) {
 		if ((e->cmd_defns == NULL) ||
 		    ((idx = int_ctrl_cmd_by_name(e->cmd_defns, s)) < 0)) {
-			ENGINEerr(ENGINE_F_INT_CTRL_HELPER,
-			    ENGINE_R_INVALID_CMD_NAME);
+			ENGINEerror(ENGINE_R_INVALID_CMD_NAME);
 			return -1;
 		}
 		return e->cmd_defns[idx].cmd_num;
@@ -144,8 +142,7 @@ int_ctrl_helper(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	 * valie command number - so we need to conduct a search. */
 	if ((e->cmd_defns == NULL) ||
 	    ((idx = int_ctrl_cmd_by_num(e->cmd_defns, (unsigned int)i)) < 0)) {
-		ENGINEerr(ENGINE_F_INT_CTRL_HELPER,
-		    ENGINE_R_INVALID_CMD_NUMBER);
+		ENGINEerror(ENGINE_R_INVALID_CMD_NUMBER);
 		return -1;
 	}
 	/* Now the logic splits depending on command type */
@@ -188,7 +185,7 @@ int_ctrl_helper(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	}
 
 	/* Shouldn't really be here ... */
-	ENGINEerr(ENGINE_F_INT_CTRL_HELPER, ENGINE_R_INTERNAL_LIST_ERROR);
+	ENGINEerror(ENGINE_R_INTERNAL_LIST_ERROR);
 	return -1;
 }
 
@@ -198,7 +195,7 @@ ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	int ctrl_exists, ref_exists;
 
 	if (e == NULL) {
-		ENGINEerr(ENGINE_F_ENGINE_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
@@ -206,7 +203,7 @@ ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	ctrl_exists = ((e->ctrl == NULL) ? 0 : 1);
 	if (!ref_exists) {
-		ENGINEerr(ENGINE_F_ENGINE_CTRL, ENGINE_R_NO_REFERENCE);
+		ENGINEerror(ENGINE_R_NO_REFERENCE);
 		return 0;
 	}
 	/* Intercept any "root-level" commands before trying to hand them on to
@@ -225,8 +222,7 @@ ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 		if (ctrl_exists && !(e->flags & ENGINE_FLAGS_MANUAL_CMD_CTRL))
 			return int_ctrl_helper(e, cmd, i, p, f);
 		if (!ctrl_exists) {
-			ENGINEerr(ENGINE_F_ENGINE_CTRL,
-			    ENGINE_R_NO_CONTROL_FUNCTION);
+			ENGINEerror(ENGINE_R_NO_CONTROL_FUNCTION);
 			/* For these cmd-related functions, failure is indicated
 			 * by a -1 return value (because 0 is used as a valid
 			 * return in some places). */
@@ -237,7 +233,7 @@ ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	}
 	/* Anything else requires a ctrl() handler to exist. */
 	if (!ctrl_exists) {
-		ENGINEerr(ENGINE_F_ENGINE_CTRL, ENGINE_R_NO_CONTROL_FUNCTION);
+		ENGINEerror(ENGINE_R_NO_CONTROL_FUNCTION);
 		return 0;
 	}
 	return e->ctrl(e, cmd, i, p, f);
@@ -250,8 +246,7 @@ ENGINE_cmd_is_executable(ENGINE *e, int cmd)
 
 	if ((flags = ENGINE_ctrl(e, ENGINE_CTRL_GET_CMD_FLAGS, cmd,
 	    NULL, NULL)) < 0) {
-		ENGINEerr(ENGINE_F_ENGINE_CMD_IS_EXECUTABLE,
-		    ENGINE_R_INVALID_CMD_NUMBER);
+		ENGINEerror(ENGINE_R_INVALID_CMD_NUMBER);
 		return 0;
 	}
 	if (!(flags & ENGINE_CMD_FLAG_NO_INPUT) &&
@@ -268,8 +263,7 @@ ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name, long i, void *p,
 	int num;
 
 	if ((e == NULL) || (cmd_name == NULL)) {
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	if ((e->ctrl == NULL) ||
@@ -285,7 +279,7 @@ ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name, long i, void *p,
 			ERR_clear_error();
 			return 1;
 		}
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD, ENGINE_R_INVALID_CMD_NAME);
+		ENGINEerror(ENGINE_R_INVALID_CMD_NAME);
 		return 0;
 	}
 
@@ -306,8 +300,7 @@ ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
 	char *ptr;
 
 	if ((e == NULL) || (cmd_name == NULL)) {
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	if ((e->ctrl == NULL) ||
@@ -323,29 +316,25 @@ ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
 			ERR_clear_error();
 			return 1;
 		}
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
-		    ENGINE_R_INVALID_CMD_NAME);
+		ENGINEerror(ENGINE_R_INVALID_CMD_NAME);
 		return 0;
 	}
 	if (!ENGINE_cmd_is_executable(e, num)) {
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
-		    ENGINE_R_CMD_NOT_EXECUTABLE);
+		ENGINEerror(ENGINE_R_CMD_NOT_EXECUTABLE);
 		return 0;
 	}
 	if ((flags = ENGINE_ctrl(e, ENGINE_CTRL_GET_CMD_FLAGS, num,
 	    NULL, NULL)) < 0) {
 		/* Shouldn't happen, given that ENGINE_cmd_is_executable()
 		 * returned success. */
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
-		    ENGINE_R_INTERNAL_LIST_ERROR);
+		ENGINEerror(ENGINE_R_INTERNAL_LIST_ERROR);
 		return 0;
 	}
 	/* If the command takes no input, there must be no input. And vice
 	 * versa. */
 	if (flags & ENGINE_CMD_FLAG_NO_INPUT) {
 		if (arg != NULL) {
-			ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
-			    ENGINE_R_COMMAND_TAKES_NO_INPUT);
+			ENGINEerror(ENGINE_R_COMMAND_TAKES_NO_INPUT);
 			return 0;
 		}
 		/* We deliberately force the result of ENGINE_ctrl() to 0 or 1
@@ -359,8 +348,7 @@ ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
 	}
 	/* So, we require input */
 	if (arg == NULL) {
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
-		    ENGINE_R_COMMAND_TAKES_INPUT);
+		ENGINEerror(ENGINE_R_COMMAND_TAKES_INPUT);
 		return 0;
 	}
 	/* If it takes string input, that's easy */
@@ -375,14 +363,12 @@ ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
 	 * should never happen though, because ENGINE_cmd_is_executable() was
 	 * used. */
 	if (!(flags & ENGINE_CMD_FLAG_NUMERIC)) {
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
-		    ENGINE_R_INTERNAL_LIST_ERROR);
+		ENGINEerror(ENGINE_R_INTERNAL_LIST_ERROR);
 		return 0;
 	}
 	l = strtol(arg, &ptr, 10);
 	if ((arg == ptr) || (*ptr != '\0')) {
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
-		    ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER);
+		ENGINEerror(ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER);
 		return 0;
 	}
 	/* Force the result of the control command to 0 or 1, for the reasons

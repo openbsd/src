@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_x931.c,v 1.9 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: rsa_x931.c,v 1.10 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -78,8 +78,7 @@ RSA_padding_add_X931(unsigned char *to, int tlen, const unsigned char *from,
 	j = tlen - flen - 2;
 
 	if (j < 0) {
-		RSAerr(RSA_F_RSA_PADDING_ADD_X931,
-		    RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+		RSAerror(RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		return -1;
 	}
 
@@ -110,7 +109,7 @@ RSA_padding_check_X931(unsigned char *to, int tlen, const unsigned char *from,
 	const unsigned char *p = from;
 
 	if (num != flen || (*p != 0x6A && *p != 0x6B)) {
-		RSAerr(RSA_F_RSA_PADDING_CHECK_X931, RSA_R_INVALID_HEADER);
+		RSAerror(RSA_R_INVALID_HEADER);
 		return -1;
 	}
 
@@ -121,15 +120,13 @@ RSA_padding_check_X931(unsigned char *to, int tlen, const unsigned char *from,
 			if (c == 0xBA)
 				break;
 			if (c != 0xBB) {
-				RSAerr(RSA_F_RSA_PADDING_CHECK_X931,
-				    RSA_R_INVALID_PADDING);
+				RSAerror(RSA_R_INVALID_PADDING);
 				return -1;
 			}
 		}
 
 		if (i == 0) {
-			RSAerr(RSA_F_RSA_PADDING_CHECK_X931,
-			    RSA_R_INVALID_PADDING);
+			RSAerror(RSA_R_INVALID_PADDING);
 			return -1;
 		}
 
@@ -138,7 +135,7 @@ RSA_padding_check_X931(unsigned char *to, int tlen, const unsigned char *from,
 		j = flen - 2;
 
 	if (j < 0 || p[j] != 0xCC) {
-		RSAerr(RSA_F_RSA_PADDING_CHECK_X931, RSA_R_INVALID_TRAILER);
+		RSAerror(RSA_R_INVALID_TRAILER);
 		return -1;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.11 2017/01/21 10:38:29 beck Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.12 2017/01/29 17:49:22 beck Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -278,7 +278,7 @@ BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)
 		/* max_shift >= 0 */
 
 		if (max_shift < 0) {
-			BNerr(BN_F_BN_MOD_LSHIFT_QUICK, BN_R_INPUT_NOT_REDUCED);
+			BNerror(BN_R_INPUT_NOT_REDUCED);
 			return 0;
 		}
 

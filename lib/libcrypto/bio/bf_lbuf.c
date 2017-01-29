@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_lbuf.c,v 1.13 2015/07/19 18:29:31 miod Exp $ */
+/* $OpenBSD: bf_lbuf.c,v 1.14 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -343,7 +343,7 @@ linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 	}
 	return (ret);
 malloc_error:
-	BIOerr(BIO_F_LINEBUFFER_CTRL, ERR_R_MALLOC_FAILURE);
+	BIOerror(ERR_R_MALLOC_FAILURE);
 	return (0);
 }
 

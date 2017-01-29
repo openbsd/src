@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.25 2016/09/03 11:56:33 beck Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.26 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -103,7 +103,7 @@ X509V3_add_value(const char *name, const char *value,
 	return 1;
 
 err:
-	X509V3err(X509V3_F_X509V3_ADD_VALUE, ERR_R_MALLOC_FAILURE);
+	X509V3error(ERR_R_MALLOC_FAILURE);
 	free(vtmp);
 	free(tname);
 	free(tvalue);
@@ -159,7 +159,7 @@ i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
 		return NULL;
 	if (!(bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) ||
 	    !(strtmp = BN_bn2dec(bntmp)))
-		X509V3err(X509V3_F_I2S_ASN1_ENUMERATED, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 	BN_free(bntmp);
 	return strtmp;
 }
@@ -174,7 +174,7 @@ i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
 		return NULL;
 	if (!(bntmp = ASN1_INTEGER_to_BN(a, NULL)) ||
 	    !(strtmp = BN_bn2dec(bntmp)))
-		X509V3err(X509V3_F_I2S_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 	BN_free(bntmp);
 	return strtmp;
 }
@@ -188,8 +188,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
 	int ret;
 
 	if (!value) {
-		X509V3err(X509V3_F_S2I_ASN1_INTEGER,
-		    X509V3_R_INVALID_NULL_VALUE);
+		X509V3error(X509V3_R_INVALID_NULL_VALUE);
 		return 0;
 	}
 	bn = BN_new();
@@ -212,7 +211,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
 
 	if (!ret || value[ret]) {
 		BN_free(bn);
-		X509V3err(X509V3_F_S2I_ASN1_INTEGER, X509V3_R_BN_DEC2BN_ERROR);
+		X509V3error(X509V3_R_BN_DEC2BN_ERROR);
 		return 0;
 	}
 
@@ -222,8 +221,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
 	aint = BN_to_ASN1_INTEGER(bn, NULL);
 	BN_free(bn);
 	if (!aint) {
-		X509V3err(X509V3_F_S2I_ASN1_INTEGER,
-		    X509V3_R_BN_TO_ASN1_INTEGER_ERROR);
+		X509V3error(X509V3_R_BN_TO_ASN1_INTEGER_ERROR);
 		return 0;
 	}
 	if (isneg)
@@ -267,8 +265,7 @@ X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
 	}
 
 err:
-	X509V3err(X509V3_F_X509V3_GET_VALUE_BOOL,
-	    X509V3_R_INVALID_BOOLEAN_STRING);
+	X509V3error(X509V3_R_INVALID_BOOLEAN_STRING);
 	X509V3_conf_err(value);
 	return 0;
 }
@@ -302,7 +299,7 @@ X509V3_parse_list(const char *line)
 
 	/* We are going to modify the line so copy it first */
 	if ((linebuf = strdup(line)) == NULL) {
-		X509V3err(X509V3_F_X509V3_PARSE_LIST, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	state = HDR_NAME;
@@ -319,8 +316,7 @@ X509V3_parse_list(const char *line)
 				*p = 0;
 				ntmp = strip_spaces(q);
 				if (!ntmp) {
-					X509V3err(X509V3_F_X509V3_PARSE_LIST,
-					    X509V3_R_INVALID_NULL_NAME);
+					X509V3error(X509V3_R_INVALID_NULL_NAME);
 					goto err;
 				}
 				q = p + 1;
@@ -329,8 +325,7 @@ X509V3_parse_list(const char *line)
 				ntmp = strip_spaces(q);
 				q = p + 1;
 				if (!ntmp) {
-					X509V3err(X509V3_F_X509V3_PARSE_LIST,
-					    X509V3_R_INVALID_NULL_NAME);
+					X509V3error(X509V3_R_INVALID_NULL_NAME);
 					goto err;
 				}
 				X509V3_add_value(ntmp, NULL, &values);
@@ -343,8 +338,7 @@ X509V3_parse_list(const char *line)
 				*p = 0;
 				vtmp = strip_spaces(q);
 				if (!vtmp) {
-					X509V3err(X509V3_F_X509V3_PARSE_LIST,
-					    X509V3_R_INVALID_NULL_VALUE);
+					X509V3error(X509V3_R_INVALID_NULL_VALUE);
 					goto err;
 				}
 				X509V3_add_value(ntmp, vtmp, &values);
@@ -358,16 +352,14 @@ X509V3_parse_list(const char *line)
 	if (state == HDR_VALUE) {
 		vtmp = strip_spaces(q);
 		if (!vtmp) {
-			X509V3err(X509V3_F_X509V3_PARSE_LIST,
-			    X509V3_R_INVALID_NULL_VALUE);
+			X509V3error(X509V3_R_INVALID_NULL_VALUE);
 			goto err;
 		}
 		X509V3_add_value(ntmp, vtmp, &values);
 	} else {
 		ntmp = strip_spaces(q);
 		if (!ntmp) {
-			X509V3err(X509V3_F_X509V3_PARSE_LIST,
-			    X509V3_R_INVALID_NULL_NAME);
+			X509V3error(X509V3_R_INVALID_NULL_NAME);
 			goto err;
 		}
 		X509V3_add_value(ntmp, NULL, &values);
@@ -420,7 +412,7 @@ hex_to_string(const unsigned char *buffer, long len)
 	if (!buffer || !len)
 		return NULL;
 	if (!(tmp = malloc(len * 3 + 1))) {
-		X509V3err(X509V3_F_HEX_TO_STRING, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	q = tmp;
@@ -443,8 +435,7 @@ string_to_hex(const char *str, long *len)
 	unsigned char *hexbuf, *q;
 	unsigned char ch, cl, *p;
 	if (!str) {
-		X509V3err(X509V3_F_STRING_TO_HEX,
-		    X509V3_R_INVALID_NULL_ARGUMENT);
+		X509V3error(X509V3_R_INVALID_NULL_ARGUMENT);
 		return NULL;
 	}
 	if (!(hexbuf = malloc(strlen(str) >> 1)))
@@ -455,8 +446,7 @@ string_to_hex(const char *str, long *len)
 			continue;
 		cl = *p++;
 		if (!cl) {
-			X509V3err(X509V3_F_STRING_TO_HEX,
-			    X509V3_R_ODD_NUMBER_OF_DIGITS);
+			X509V3error(X509V3_R_ODD_NUMBER_OF_DIGITS);
 			free(hexbuf);
 			return NULL;
 		}
@@ -487,12 +477,12 @@ string_to_hex(const char *str, long *len)
 
 err:
 	free(hexbuf);
-	X509V3err(X509V3_F_STRING_TO_HEX, ERR_R_MALLOC_FAILURE);
+	X509V3error(ERR_R_MALLOC_FAILURE);
 	return NULL;
 
 badhex:
 	free(hexbuf);
-	X509V3err(X509V3_F_STRING_TO_HEX, X509V3_R_ILLEGAL_HEX_DIGIT);
+	X509V3error(X509V3_R_ILLEGAL_HEX_DIGIT);
 	return NULL;
 }
 

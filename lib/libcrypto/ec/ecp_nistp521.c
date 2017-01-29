@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp521.c,v 1.17 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: ecp_nistp521.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -182,11 +182,11 @@ BN_to_felem(felem out, const BIGNUM * bn)
 	memset(b_out, 0, sizeof b_out);
 	num_bytes = BN_num_bytes(bn);
 	if (num_bytes > sizeof b_out) {
-		ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
+		ECerror(EC_R_BIGNUM_OUT_OF_RANGE);
 		return 0;
 	}
 	if (BN_is_negative(bn)) {
-		ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
+		ECerror(EC_R_BIGNUM_OUT_OF_RANGE);
 		return 0;
 	}
 	num_bytes = BN_bn2bin(bn, b_in);
@@ -1631,7 +1631,7 @@ nistp521_pre_comp_new()
 	NISTP521_PRE_COMP *ret = NULL;
 	ret = malloc(sizeof(NISTP521_PRE_COMP));
 	if (!ret) {
-		ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		return ret;
 	}
 	memset(ret->g_pre_comp, 0, sizeof(ret->g_pre_comp));
@@ -1717,8 +1717,7 @@ ec_GFp_nistp521_group_set_curve(EC_GROUP * group, const BIGNUM * p,
 	BN_bin2bn(nistp521_curve_params[2], sizeof(felem_bytearray), curve_b);
 	if ((BN_cmp(curve_p, p)) || (BN_cmp(curve_a, a)) ||
 	    (BN_cmp(curve_b, b))) {
-		ECerr(EC_F_EC_GFP_NISTP521_GROUP_SET_CURVE,
-		    EC_R_WRONG_CURVE_PARAMETERS);
+		ECerror(EC_R_WRONG_CURVE_PARAMETERS);
 		goto err;
 	}
 	group->field_mod_func = BN_nist_mod_521;
@@ -1739,8 +1738,7 @@ ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP * group,
 	largefelem tmp;
 
 	if (EC_POINT_is_at_infinity(group, point) > 0) {
-		ECerr(EC_F_EC_GFP_NISTP521_POINT_GET_AFFINE_COORDINATES,
-		    EC_R_POINT_AT_INFINITY);
+		ECerror(EC_R_POINT_AT_INFINITY);
 		return 0;
 	}
 	if ((!BN_to_felem(x_in, &point->X)) || (!BN_to_felem(y_in, &point->Y)) ||
@@ -1754,7 +1752,7 @@ ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP * group,
 	felem_contract(x_out, x_in);
 	if (x != NULL) {
 		if (!felem_to_BN(x, x_out)) {
-			ECerr(EC_F_EC_GFP_NISTP521_POINT_GET_AFFINE_COORDINATES, ERR_R_BN_LIB);
+			ECerror(ERR_R_BN_LIB);
 			return 0;
 		}
 	}
@@ -1765,7 +1763,7 @@ ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP * group,
 	felem_contract(y_out, y_in);
 	if (y != NULL) {
 		if (!felem_to_BN(y, y_out)) {
-			ECerr(EC_F_EC_GFP_NISTP521_POINT_GET_AFFINE_COORDINATES, ERR_R_BN_LIB);
+			ECerror(ERR_R_BN_LIB);
 			return 0;
 		}
 	}
@@ -1847,7 +1845,7 @@ ec_GFp_nistp521_points_mul(const EC_GROUP * group, EC_POINT * r,
 		if (!felem_to_BN(x, g_pre_comp[1][0]) ||
 		    !felem_to_BN(y, g_pre_comp[1][1]) ||
 		    !felem_to_BN(z, g_pre_comp[1][2])) {
-			ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
+			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
 		if (!EC_POINT_set_Jprojective_coordinates_GFp(group,
@@ -1880,7 +1878,7 @@ ec_GFp_nistp521_points_mul(const EC_GROUP * group, EC_POINT * r,
 			    (num_points * 17 + 1), sizeof(felem));
 		}
 		if ((secrets == NULL) || (pre_comp == NULL) || (mixed && (tmp_felems == NULL))) {
-			ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		/*
@@ -1911,7 +1909,7 @@ ec_GFp_nistp521_points_mul(const EC_GROUP * group, EC_POINT * r,
 					 * don't guarantee constant-timeness
 					 */
 					if (!BN_nnmod(tmp_scalar, p_scalar, &group->order, ctx)) {
-						ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
+						ECerror(ERR_R_BN_LIB);
 						goto err;
 					}
 					num_bytes = BN_bn2bin(tmp_scalar, tmp);
@@ -1953,7 +1951,7 @@ ec_GFp_nistp521_points_mul(const EC_GROUP * group, EC_POINT * r,
 			 * constant-timeness
 			 */
 			if (!BN_nnmod(tmp_scalar, scalar, &group->order, ctx)) {
-				ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
+				ECerror(ERR_R_BN_LIB);
 				goto err;
 			}
 			num_bytes = BN_bn2bin(tmp_scalar, tmp);
@@ -1977,7 +1975,7 @@ ec_GFp_nistp521_points_mul(const EC_GROUP * group, EC_POINT * r,
 	felem_contract(z_in, z_out);
 	if ((!felem_to_BN(x, x_in)) || (!felem_to_BN(y, y_in)) ||
 	    (!felem_to_BN(z, z_in))) {
-		ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	ret = EC_POINT_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);

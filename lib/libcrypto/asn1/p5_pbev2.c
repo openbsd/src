@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.24 2016/12/30 16:04:34 jsing Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.25 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -193,8 +193,7 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 
 	alg_nid = EVP_CIPHER_type(cipher);
 	if (alg_nid == NID_undef) {
-		ASN1err(ASN1_F_PKCS5_PBE2_SET_IV,
-		ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
+		ASN1error(ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
 		goto err;
 	}
 	obj = OBJ_nid2obj(alg_nid);
@@ -223,8 +222,7 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 	if (!EVP_CipherInit_ex(&ctx, cipher, NULL, NULL, iv, 0))
 		goto err;
 	if (EVP_CIPHER_param_to_asn1(&ctx, scheme->parameter) < 0) {
-		ASN1err(ASN1_F_PKCS5_PBE2_SET_IV,
-		ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
+		ASN1error(ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		goto err;
 	}
@@ -275,7 +273,7 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 	return ret;
 
 merr:
-	ASN1err(ASN1_F_PKCS5_PBE2_SET_IV, ERR_R_MALLOC_FAILURE);
+	ASN1error(ERR_R_MALLOC_FAILURE);
 
 err:
 	PBE2PARAM_free(pbe2);
@@ -367,7 +365,7 @@ PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen, int prf_nid,
 	return keyfunc;
 
 merr:
-	ASN1err(ASN1_F_PKCS5_PBKDF2_SET, ERR_R_MALLOC_FAILURE);
+	ASN1error(ERR_R_MALLOC_FAILURE);
 	PBKDF2PARAM_free(kdf);
 	X509_ALGOR_free(keyfunc);
 	return NULL;

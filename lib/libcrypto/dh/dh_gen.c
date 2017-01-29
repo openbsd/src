@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_gen.c,v 1.15 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: dh_gen.c,v 1.16 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,7 +127,7 @@ dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb)
 		goto err;
 	
 	if (generator <= 1) {
-		DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_BAD_GENERATOR);
+		DHerror(DH_R_BAD_GENERATOR);
 		goto err;
 	}
 	if (generator == DH_GENERATOR_2) {
@@ -167,7 +167,7 @@ dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb)
 	ok = 1;
 err:
 	if (ok == -1) {
-		DHerr(DH_F_DH_BUILTIN_GENPARAMS, ERR_R_BN_LIB);
+		DHerror(ERR_R_BN_LIB);
 		ok = 0;
 	}
 

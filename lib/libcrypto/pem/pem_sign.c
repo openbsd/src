@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_sign.c,v 1.12 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: pem_sign.c,v 1.13 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,7 +87,7 @@ PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 
 	m = malloc(EVP_PKEY_size(pkey) + 2);
 	if (m == NULL) {
-		PEMerr(PEM_F_PEM_SIGNFINAL, ERR_R_MALLOC_FAILURE);
+		PEMerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 

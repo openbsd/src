@@ -1,4 +1,4 @@
-/* $OpenBSD: e_gost2814789.c,v 1.3 2014/11/18 05:30:07 miod Exp $ */
+/* $OpenBSD: e_gost2814789.c,v 1.4 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -107,13 +107,12 @@ gost2814789_set_asn1_params(EVP_CIPHER_CTX *ctx, ASN1_TYPE *params)
 	GOST_CIPHER_PARAMS *gcp = GOST_CIPHER_PARAMS_new();
 
 	if (gcp == NULL) {
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS,
-		    ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	if (ASN1_OCTET_STRING_set(gcp->iv, ctx->iv, ctx->cipher->iv_len) == 0) {
 		GOST_CIPHER_PARAMS_free(gcp);
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_ASN1_LIB);
+		GOSTerror(ERR_R_ASN1_LIB);
 		return 0;
 	}
 	ASN1_OBJECT_free(gcp->enc_param_set);
@@ -123,8 +122,7 @@ gost2814789_set_asn1_params(EVP_CIPHER_CTX *ctx, ASN1_TYPE *params)
 	p = buf = malloc(len);
 	if (buf == NULL) {
 		GOST_CIPHER_PARAMS_free(gcp);
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS,
-		    ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	i2d_GOST_CIPHER_PARAMS(gcp, &p);
@@ -133,14 +131,13 @@ gost2814789_set_asn1_params(EVP_CIPHER_CTX *ctx, ASN1_TYPE *params)
 	os = ASN1_OCTET_STRING_new();
 	if (os == NULL) {
 		free(buf);
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS,
-		    ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	if (ASN1_OCTET_STRING_set(os, buf, len) == 0) {
 		ASN1_OCTET_STRING_free(os);
 		free(buf);
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_ASN1_LIB);
+		GOSTerror(ERR_R_ASN1_LIB);
 		return 0;
 	}
 	free(buf);
@@ -169,8 +166,7 @@ gost2814789_get_asn1_params(EVP_CIPHER_CTX *ctx, ASN1_TYPE *params)
 	len = gcp->iv->length;
 	if (len != ctx->cipher->iv_len) {
 		GOST_CIPHER_PARAMS_free(gcp);
-		GOSTerr(GOST_F_GOST89_GET_ASN1_PARAMETERS,
-		    GOST_R_INVALID_IV_LENGTH);
+		GOSTerror(GOST_R_INVALID_IV_LENGTH);
 		return -1;
 	}
 

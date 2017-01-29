@@ -1,4 +1,4 @@
-/* $OpenBSD: a_verify.c,v 1.22 2015/09/10 15:56:24 jsing Exp $ */
+/* $OpenBSD: a_verify.c,v 1.23 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,14 +82,13 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 	int mdnid, pknid;
 
 	if (!pkey) {
-		ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_PASSED_NULL_PARAMETER);
+		ASN1error(ERR_R_PASSED_NULL_PARAMETER);
 		return -1;
 	}
 
 	if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7)
 	{
-		ASN1err(ASN1_F_ASN1_VERIFY,
-		    ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
+		ASN1error(ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
 		return -1;
 	}
 
@@ -97,14 +96,12 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 
 	/* Convert signature OID into digest and public key OIDs */
 	if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->algorithm), &mdnid, &pknid)) {
-		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,
-		    ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
+		ASN1error(ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
 		goto err;
 	}
 	if (mdnid == NID_undef) {
 		if (!pkey->ameth || !pkey->ameth->item_verify) {
-			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,
-			    ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
+			ASN1error(ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
 			goto err;
 		}
 		ret = pkey->ameth->item_verify(&ctx, it, asn, a,
@@ -120,20 +117,18 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 		const EVP_MD *type;
 		type = EVP_get_digestbynid(mdnid);
 		if (type == NULL) {
-			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,
-			    ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
+			ASN1error(ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
 			goto err;
 		}
 
 		/* Check public key OID matches public key type */
 		if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id) {
-			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,
-			    ASN1_R_WRONG_PUBLIC_KEY_TYPE);
+			ASN1error(ASN1_R_WRONG_PUBLIC_KEY_TYPE);
 			goto err;
 		}
 
 		if (!EVP_DigestVerifyInit(&ctx, NULL, type, NULL, pkey)) {
-			ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_EVP_LIB);
+			ASN1error(ERR_R_EVP_LIB);
 			ret = 0;
 			goto err;
 		}
@@ -143,12 +138,12 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 	inl = ASN1_item_i2d(asn, &buf_in, it);
 
 	if (buf_in == NULL) {
-		ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	if (!EVP_DigestVerifyUpdate(&ctx, buf_in, inl)) {
-		ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_EVP_LIB);
+		ASN1error(ERR_R_EVP_LIB);
 		ret = 0;
 		goto err;
 	}
@@ -158,7 +153,7 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 
 	if (EVP_DigestVerifyFinal(&ctx, signature->data,
 	    (size_t)signature->length) <= 0) {
-		ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_EVP_LIB);
+		ASN1error(ERR_R_EVP_LIB);
 		ret = 0;
 		goto err;
 	}

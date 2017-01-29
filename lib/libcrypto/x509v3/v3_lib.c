@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_lib.c,v 1.16 2017/01/21 04:42:16 jsing Exp $ */
+/* $OpenBSD: v3_lib.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -75,11 +75,11 @@ int
 X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 {
 	if (!ext_list && !(ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp))) {
-		X509V3err(X509V3_F_X509V3_EXT_ADD, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	if (!sk_X509V3_EXT_METHOD_push(ext_list, ext)) {
-		X509V3err(X509V3_F_X509V3_EXT_ADD, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	return 1;
@@ -157,12 +157,11 @@ X509V3_EXT_add_alias(int nid_to, int nid_from)
 	X509V3_EXT_METHOD *tmpext;
 
 	if (!(ext = X509V3_EXT_get_nid(nid_from))) {
-		X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS,
-		    X509V3_R_EXTENSION_NOT_FOUND);
+		X509V3error(X509V3_R_EXTENSION_NOT_FOUND);
 		return 0;
 	}
 	if (!(tmpext = malloc(sizeof(X509V3_EXT_METHOD)))) {
-		X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	*tmpext = *ext;
@@ -331,8 +330,7 @@ X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 	ext = X509V3_EXT_i2d(nid, crit, value);
 
 	if (!ext) {
-		X509V3err(X509V3_F_X509V3_ADD1_I2D,
-		    X509V3_R_ERROR_CREATING_EXTENSION);
+		X509V3error(X509V3_R_ERROR_CREATING_EXTENSION);
 		return 0;
 	}
 
@@ -354,6 +352,6 @@ X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 
 err:
 	if (!(flags & X509V3_ADD_SILENT))
-		X509V3err(X509V3_F_X509V3_ADD1_I2D, errcode);
+		X509V3error(errcode);
 	return 0;
 }

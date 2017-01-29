@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.29 2017/01/21 11:00:46 beck Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.30 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -169,7 +169,7 @@ redo:
 	
 err:
 	if (!ret) {
-		DSAerr(DSA_F_DSA_DO_SIGN, reason);
+		DSAerror(reason);
 		BN_free(r);
 		BN_free(s);
 	}
@@ -188,7 +188,7 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	int ret = 0;
 
 	if (!dsa->p || !dsa->q || !dsa->g) {
-		DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PARAMETERS);
+		DSAerror(DSA_R_MISSING_PARAMETERS);
 		return 0;
 	}
 
@@ -259,7 +259,7 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	ret = 1;
 err:
 	if (!ret) {
-		DSAerr(DSA_F_DSA_SIGN_SETUP, ERR_R_BN_LIB);
+		DSAerror(ERR_R_BN_LIB);
 		BN_clear_free(r);
 	}
 	if (ctx_in == NULL)
@@ -277,19 +277,19 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 	int ret = -1, i;
 
 	if (!dsa->p || !dsa->q || !dsa->g) {
-		DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MISSING_PARAMETERS);
+		DSAerror(DSA_R_MISSING_PARAMETERS);
 		return -1;
 	}
 
 	i = BN_num_bits(dsa->q);
 	/* fips 186-3 allows only different sizes for q */
 	if (i != 160 && i != 224 && i != 256) {
-		DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_BAD_Q_VALUE);
+		DSAerror(DSA_R_BAD_Q_VALUE);
 		return -1;
 	}
 
 	if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
-		DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MODULUS_TOO_LARGE);
+		DSAerror(DSA_R_MODULUS_TOO_LARGE);
 		return -1;
 	}
 	BN_init(&u1);
@@ -363,7 +363,7 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 
 err:
 	if (ret < 0)
-		DSAerr(DSA_F_DSA_DO_VERIFY, ERR_R_BN_LIB);
+		DSAerror(ERR_R_BN_LIB);
 	BN_CTX_free(ctx);
 	BN_free(&u1);
 	BN_free(&u2);

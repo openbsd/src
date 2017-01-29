@@ -1,4 +1,4 @@
-/* $OpenBSD: t_crl.c,v 1.16 2014/07/12 16:33:25 miod Exp $ */
+/* $OpenBSD: t_crl.c,v 1.17 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -72,7 +72,7 @@ X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		X509err(X509_F_X509_CRL_PRINT_FP, ERR_R_BUF_LIB);
+		X509error(ERR_R_BUF_LIB);
 		return (0);
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);

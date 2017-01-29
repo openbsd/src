@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_conn.c,v 1.32 2014/11/26 05:37:26 bcook Exp $ */
+/* $OpenBSD: bss_conn.c,v 1.33 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -134,7 +134,7 @@ conn_state(BIO *b, BIO_CONNECT *c)
 		case BIO_CONN_S_BEFORE:
 			p = c->param_hostname;
 			if (p == NULL) {
-				BIOerr(BIO_F_CONN_STATE, BIO_R_NO_HOSTNAME_SPECIFIED);
+				BIOerror(BIO_R_NO_HOSTNAME_SPECIFIED);
 				goto exit_loop;
 			}
 			for (; *p != '\0'; p++) {
@@ -157,7 +157,7 @@ conn_state(BIO *b, BIO_CONNECT *c)
 			}
 
 			if (c->param_port == NULL) {
-				BIOerr(BIO_F_CONN_STATE, BIO_R_NO_PORT_SPECIFIED);
+				BIOerror(BIO_R_NO_PORT_SPECIFIED);
 				ERR_asprintf_error_data("host=%s",
 				    c->param_hostname);
 				goto exit_loop;
@@ -195,11 +195,10 @@ conn_state(BIO *b, BIO_CONNECT *c)
 
 			ret = socket(AF_INET, SOCK_STREAM, SOCKET_PROTOCOL);
 			if (ret == -1) {
-				SYSerr(SYS_F_SOCKET, errno);
+				SYSerror(errno);
 				ERR_asprintf_error_data("host=%s:%s",
 				    c->param_hostname, c->param_port);
-				BIOerr(BIO_F_CONN_STATE,
-				    BIO_R_UNABLE_TO_CREATE_SOCKET);
+				BIOerror(BIO_R_UNABLE_TO_CREATE_SOCKET);
 				goto exit_loop;
 			}
 			b->num = ret;
@@ -209,8 +208,7 @@ conn_state(BIO *b, BIO_CONNECT *c)
 		case BIO_CONN_S_NBIO:
 			if (c->nbio) {
 				if (!BIO_socket_nbio(b->num, 1)) {
-					BIOerr(BIO_F_CONN_STATE,
-					    BIO_R_ERROR_SETTING_NBIO);
+					BIOerror(BIO_R_ERROR_SETTING_NBIO);
 					ERR_asprintf_error_data("host=%s:%s",
 					    c->param_hostname, c->param_port);
 					goto exit_loop;
@@ -222,10 +220,10 @@ conn_state(BIO *b, BIO_CONNECT *c)
 			i = 1;
 			i = setsockopt(b->num, SOL_SOCKET, SO_KEEPALIVE, &i, sizeof(i));
 			if (i < 0) {
-				SYSerr(SYS_F_SOCKET, errno);
+				SYSerror(errno);
 				ERR_asprintf_error_data("host=%s:%s",
 				    c->param_hostname, c->param_port);
-				BIOerr(BIO_F_CONN_STATE, BIO_R_KEEPALIVE);
+				BIOerror(BIO_R_KEEPALIVE);
 				goto exit_loop;
 			}
 #endif
@@ -243,11 +241,10 @@ conn_state(BIO *b, BIO_CONNECT *c)
 					c->state = BIO_CONN_S_BLOCKED_CONNECT;
 					b->retry_reason = BIO_RR_CONNECT;
 				} else {
-					SYSerr(SYS_F_CONNECT, errno);
+					SYSerror(errno);
 					ERR_asprintf_error_data("host=%s:%s",
 					    c->param_hostname, c->param_port);
-					BIOerr(BIO_F_CONN_STATE,
-					    BIO_R_CONNECT_ERROR);
+					BIOerror(BIO_R_CONNECT_ERROR);
 				}
 				goto exit_loop;
 			} else
@@ -258,11 +255,10 @@ conn_state(BIO *b, BIO_CONNECT *c)
 			i = BIO_sock_error(b->num);
 			if (i) {
 				BIO_clear_retry_flags(b);
-				SYSerr(SYS_F_CONNECT, i);
+				SYSerror(i);
 				ERR_asprintf_error_data("host=%s:%s",
 				    c->param_hostname, c->param_port);
-				BIOerr(BIO_F_CONN_STATE,
-				    BIO_R_NBIO_CONNECT_ERROR);
+				BIOerror(BIO_R_NBIO_CONNECT_ERROR);
 				ret = 0;
 				goto exit_loop;
 			} else
@@ -533,7 +529,7 @@ conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 	case BIO_CTRL_SET_CALLBACK:
 		{
 #if 0 /* FIXME: Should this be used?  -- Richard Levitte */
-			BIOerr(BIO_F_CONN_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+			BIOerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 			ret = -1;
 #else
 			ret = 0;

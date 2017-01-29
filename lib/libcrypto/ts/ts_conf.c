@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_conf.c,v 1.9 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: ts_conf.c,v 1.10 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -245,8 +245,7 @@ TS_CONF_set_default_engine(const char *name)
 
 err:
 	if (!ret) {
-		TSerr(TS_F_TS_CONF_SET_DEFAULT_ENGINE,
-		    TS_R_COULD_NOT_SET_ENGINE);
+		TSerror(TS_R_COULD_NOT_SET_ENGINE);
 		ERR_asprintf_error_data("engine:%s", name);
 	}
 	if (e)

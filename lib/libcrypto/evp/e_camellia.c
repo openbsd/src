@@ -1,4 +1,4 @@
-/* $OpenBSD: e_camellia.c,v 1.7 2015/02/10 09:50:12 miod Exp $ */
+/* $OpenBSD: e_camellia.c,v 1.8 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -114,8 +114,7 @@ camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	ret = Camellia_set_key(key, ctx->key_len * 8, ctx->cipher_data);
 
 	if (ret < 0) {
-		EVPerr(EVP_F_CAMELLIA_INIT_KEY,
-		    EVP_R_CAMELLIA_KEY_SETUP_FAILED);
+		EVPerror(EVP_R_CAMELLIA_KEY_SETUP_FAILED);
 		return 0;
 	}
 

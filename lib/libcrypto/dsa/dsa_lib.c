@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.22 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.23 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,14 +126,14 @@ DSA_new_method(ENGINE *engine)
 
 	ret = malloc(sizeof(DSA));
 	if (ret == NULL) {
-		DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+		DSAerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	ret->meth = DSA_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
 	if (engine) {
 		if (!ENGINE_init(engine)) {
-			DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+			DSAerror(ERR_R_ENGINE_LIB);
 			free(ret);
 			return NULL;
 		}
@@ -143,7 +143,7 @@ DSA_new_method(ENGINE *engine)
 	if (ret->engine) {
 		ret->meth = ENGINE_get_DSA(ret->engine);
 		if (!ret->meth) {
-			DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+			DSAerror(ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
 			return NULL;

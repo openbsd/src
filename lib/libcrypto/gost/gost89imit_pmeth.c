@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89imit_pmeth.c,v 1.3 2014/11/13 20:29:55 miod Exp $ */
+/* $OpenBSD: gost89imit_pmeth.c,v 1.4 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -110,13 +110,13 @@ pkey_gost_mac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	unsigned char *keydata;
 
 	if (!data->key_set) {
-		GOSTerr(GOST_F_PKEY_GOST_MAC_KEYGEN, GOST_R_MAC_KEY_NOT_SET);
+		GOSTerror(GOST_R_MAC_KEY_NOT_SET);
 		return 0;
 	}
 
 	keydata = malloc(32);
 	if (keydata == NULL) {
-		GOSTerr(GOST_F_PKEY_GOST_MAC_KEYGEN, ERR_R_MALLOC_FAILURE);
+		GOSTerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	memcpy(keydata, data->key, 32);
@@ -133,8 +133,7 @@ pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	switch (type) {
 	case EVP_PKEY_CTRL_MD:
 		if (EVP_MD_type(p2) != NID_id_Gost28147_89_MAC) {
-			GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,
-			    GOST_R_INVALID_DIGEST_TYPE);
+			GOSTerror(GOST_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
 		data->md = p2;
@@ -142,8 +141,7 @@ pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
 	case EVP_PKEY_CTRL_SET_MAC_KEY:
 		if (p1 != 32) {
-			GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,
-			    GOST_R_INVALID_MAC_KEY_LENGTH);
+			GOSTerror(GOST_R_INVALID_MAC_KEY_LENGTH);
 			return 0;
 		}
 
@@ -159,14 +157,12 @@ pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		if (!data->key_set) {
 			EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
 			if (pkey == NULL) {
-				GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,
-				    GOST_R_MAC_KEY_NOT_SET);
+				GOSTerror(GOST_R_MAC_KEY_NOT_SET);
 				return 0;
 			}
 			key = EVP_PKEY_get0(pkey);
 			if (key == NULL) {
-				GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,
-				    GOST_R_MAC_KEY_NOT_SET);
+				GOSTerror(GOST_R_MAC_KEY_NOT_SET);
 				return 0;
 			}
 		} else {

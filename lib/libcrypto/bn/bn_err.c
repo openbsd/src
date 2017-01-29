@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_err.c,v 1.13 2015/10/21 19:02:22 miod Exp $ */
+/* $OpenBSD: bn_err.c,v 1.14 2017/01/29 17:49:22 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -72,47 +72,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_BN,0,reason)
 
 static ERR_STRING_DATA BN_str_functs[]= {
-	{ERR_FUNC(BN_F_BNRAND),	"BNRAND"},
-	{ERR_FUNC(BN_F_BN_BLINDING_CONVERT_EX),	"BN_BLINDING_convert_ex"},
-	{ERR_FUNC(BN_F_BN_BLINDING_CREATE_PARAM),	"BN_BLINDING_create_param"},
-	{ERR_FUNC(BN_F_BN_BLINDING_INVERT_EX),	"BN_BLINDING_invert_ex"},
-	{ERR_FUNC(BN_F_BN_BLINDING_NEW),	"BN_BLINDING_new"},
-	{ERR_FUNC(BN_F_BN_BLINDING_UPDATE),	"BN_BLINDING_update"},
-	{ERR_FUNC(BN_F_BN_BN2DEC),	"BN_bn2dec"},
-	{ERR_FUNC(BN_F_BN_BN2HEX),	"BN_bn2hex"},
-	{ERR_FUNC(BN_F_BN_CTX_GET),	"BN_CTX_get"},
-	{ERR_FUNC(BN_F_BN_CTX_NEW),	"BN_CTX_new"},
-	{ERR_FUNC(BN_F_BN_CTX_START),	"BN_CTX_start"},
-	{ERR_FUNC(BN_F_BN_DIV),	"BN_div"},
-	{ERR_FUNC(BN_F_BN_DIV_NO_BRANCH),	"BN_div_no_branch"},
-	{ERR_FUNC(BN_F_BN_DIV_RECP),	"BN_div_recp"},
-	{ERR_FUNC(BN_F_BN_EXP),	"BN_exp"},
-	{ERR_FUNC(BN_F_BN_EXPAND2),	"bn_expand2"},
-	{ERR_FUNC(BN_F_BN_EXPAND_INTERNAL),	"BN_EXPAND_INTERNAL"},
-	{ERR_FUNC(BN_F_BN_GENERATE_PRIME_EX),	"BN_generate_prime_ex"},
-	{ERR_FUNC(BN_F_BN_GF2M_MOD),	"BN_GF2m_mod"},
-	{ERR_FUNC(BN_F_BN_GF2M_MOD_EXP),	"BN_GF2m_mod_exp"},
-	{ERR_FUNC(BN_F_BN_GF2M_MOD_MUL),	"BN_GF2m_mod_mul"},
-	{ERR_FUNC(BN_F_BN_GF2M_MOD_SOLVE_QUAD),	"BN_GF2m_mod_solve_quad"},
-	{ERR_FUNC(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR),	"BN_GF2m_mod_solve_quad_arr"},
-	{ERR_FUNC(BN_F_BN_GF2M_MOD_SQR),	"BN_GF2m_mod_sqr"},
-	{ERR_FUNC(BN_F_BN_GF2M_MOD_SQRT),	"BN_GF2m_mod_sqrt"},
-	{ERR_FUNC(BN_F_BN_MOD_EXP2_MONT),	"BN_mod_exp2_mont"},
-	{ERR_FUNC(BN_F_BN_MOD_EXP_MONT),	"BN_mod_exp_mont"},
-	{ERR_FUNC(BN_F_BN_MOD_EXP_MONT_CONSTTIME),	"BN_mod_exp_mont_consttime"},
-	{ERR_FUNC(BN_F_BN_MOD_EXP_MONT_WORD),	"BN_mod_exp_mont_word"},
-	{ERR_FUNC(BN_F_BN_MOD_EXP_RECP),	"BN_mod_exp_recp"},
-	{ERR_FUNC(BN_F_BN_MOD_EXP_SIMPLE),	"BN_mod_exp_simple"},
-	{ERR_FUNC(BN_F_BN_MOD_INVERSE),	"BN_mod_inverse"},
-	{ERR_FUNC(BN_F_BN_MOD_INVERSE_NO_BRANCH),	"BN_mod_inverse_no_branch"},
-	{ERR_FUNC(BN_F_BN_MOD_LSHIFT_QUICK),	"BN_mod_lshift_quick"},
-	{ERR_FUNC(BN_F_BN_MOD_MUL_RECIPROCAL),	"BN_mod_mul_reciprocal"},
-	{ERR_FUNC(BN_F_BN_MOD_SQRT),	"BN_mod_sqrt"},
-	{ERR_FUNC(BN_F_BN_MPI2BN),	"BN_mpi2bn"},
-	{ERR_FUNC(BN_F_BN_NEW),	"BN_new"},
-	{ERR_FUNC(BN_F_BN_RAND),	"BN_rand"},
-	{ERR_FUNC(BN_F_BN_RAND_RANGE),	"BN_rand_range"},
-	{ERR_FUNC(BN_F_BN_USUB),	"BN_usub"},
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 

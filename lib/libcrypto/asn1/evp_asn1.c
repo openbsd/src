@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.18 2015/09/30 19:07:08 jsing Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,7 +87,7 @@ ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data, int max_len)
 
 	if ((a->type != V_ASN1_OCTET_STRING) ||
 	    (a->value.octet_string == NULL)) {
-		ASN1err(ASN1_F_ASN1_TYPE_GET_OCTETSTRING, ASN1_R_DATA_IS_WRONG);
+		ASN1error(ASN1_R_DATA_IS_WRONG);
 		return (-1);
 	}
 	p = ASN1_STRING_data(a->value.octet_string);
@@ -192,8 +192,7 @@ ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
 		memcpy(data, ASN1_STRING_data(os), n);
 	if (0) {
 err:
-		ASN1err(ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING,
-		    ASN1_R_DATA_IS_WRONG);
+		ASN1error(ASN1_R_DATA_IS_WRONG);
 	}
 	ASN1_OCTET_STRING_free(os);
 	ASN1_INTEGER_free(ai);

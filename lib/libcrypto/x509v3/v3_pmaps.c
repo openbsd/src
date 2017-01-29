@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pmaps.c,v 1.10 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_pmaps.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -174,7 +174,7 @@ v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	int i, rc;
 
 	if (!(pmaps = sk_POLICY_MAPPING_new_null())) {
-		X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -208,7 +208,7 @@ v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 err:
 	sk_POLICY_MAPPING_pop_free(pmaps, POLICY_MAPPING_free);
-	X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, rc);
+	X509V3error(rc);
 	if (rc == X509V3_R_INVALID_OBJECT_IDENTIFIER)
 		X509V3_conf_err(val);
 	ASN1_OBJECT_free(obj1);

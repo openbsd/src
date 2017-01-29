@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pkey.c,v 1.18 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: evp_pkey.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -77,13 +77,12 @@ EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 		return NULL;
 
 	if (!(pkey = EVP_PKEY_new())) {
-		EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_MALLOC_FAILURE);
+		EVPerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
 	if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(algoid))) {
-		EVPerr(EVP_F_EVP_PKCS82PKEY,
-		    EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
+		EVPerror(EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
 		i2t_ASN1_OBJECT(obj_tmp, 80, algoid);
 		ERR_asprintf_error_data("TYPE=%s", obj_tmp);
 		goto error;
@@ -91,12 +90,11 @@ EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 
 	if (pkey->ameth->priv_decode) {
 		if (!pkey->ameth->priv_decode(pkey, p8)) {
-			EVPerr(EVP_F_EVP_PKCS82PKEY,
-			    EVP_R_PRIVATE_KEY_DECODE_ERROR);
+			EVPerror(EVP_R_PRIVATE_KEY_DECODE_ERROR);
 			goto error;
 		}
 	} else {
-		EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_METHOD_NOT_SUPPORTED);
+		EVPerror(EVP_R_METHOD_NOT_SUPPORTED);
 		goto error;
 	}
 
@@ -121,7 +119,7 @@ EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 	PKCS8_PRIV_KEY_INFO *p8;
 
 	if (!(p8 = PKCS8_PRIV_KEY_INFO_new())) {
-		EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN, ERR_R_MALLOC_FAILURE);
+		EVPerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	p8->broken = broken;
@@ -129,18 +127,15 @@ EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 	if (pkey->ameth) {
 		if (pkey->ameth->priv_encode) {
 			if (!pkey->ameth->priv_encode(p8, pkey)) {
-				EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN,
-				    EVP_R_PRIVATE_KEY_ENCODE_ERROR);
+				EVPerror(EVP_R_PRIVATE_KEY_ENCODE_ERROR);
 				goto error;
 			}
 		} else {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN,
-			    EVP_R_METHOD_NOT_SUPPORTED);
+			EVPerror(EVP_R_METHOD_NOT_SUPPORTED);
 			goto error;
 		}
 	} else {
-		EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN,
-		    EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
+		EVPerror(EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
 		goto error;
 	}
 	return p8;
@@ -166,7 +161,7 @@ PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken)
 		break;
 
 	default:
-		EVPerr(EVP_F_PKCS8_SET_BROKEN, EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE);
+		EVPerror(EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE);
 		return NULL;
 	}
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.11 2016/12/30 15:38:13 jsing Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -71,8 +71,7 @@ PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
 {
 	ASN1_STRING *seq;
 	if (!(seq = ASN1_STRING_new())) {
-		PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP,
-		    ERR_R_MALLOC_FAILURE);
+		PKCS7error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	seq->length = ASN1_item_i2d((ASN1_VALUE *)cap, &seq->data,
@@ -103,7 +102,7 @@ PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
 	X509_ALGOR *alg;
 
 	if (!(alg = X509_ALGOR_new())) {
-		PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
+		PKCS7error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	ASN1_OBJECT_free(alg->algorithm);
@@ -127,7 +126,7 @@ PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
 	return 1;
 
 err:
-	PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
+	PKCS7error(ERR_R_MALLOC_FAILURE);
 	X509_ALGOR_free(alg);
 	return 0;
 }
@@ -147,8 +146,7 @@ int
 PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t)
 {
 	if (!t && !(t = X509_gmtime_adj(NULL, 0))) {
-		PKCS7err(PKCS7_F_PKCS7_ADD0_ATTRIB_SIGNING_TIME,
-		    ERR_R_MALLOC_FAILURE);
+		PKCS7error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	return PKCS7_add_signed_attribute(si, NID_pkcs9_signingTime,

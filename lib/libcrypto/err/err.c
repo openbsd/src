@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.41 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: err.c,v 1.42 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -566,7 +566,7 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
  * others will be displayed numerically by ERR_error_string.
  * It is crucial that we have something for each reason code
  * that occurs in ERR_str_reasons, or bogus reason strings
- * will be returned for SYSerr(), which always gets an errno
+ * will be returned for SYSerror(which always gets an errno
  * value and never one of those 'standard' reason codes. */
 
 static void

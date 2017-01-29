@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_aead.c,v 1.5 2014/06/21 15:30:36 jsing Exp $ */
+/* $OpenBSD: evp_aead.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -53,7 +53,7 @@ EVP_AEAD_CTX_init(EVP_AEAD_CTX *ctx, const EVP_AEAD *aead,
 {
 	ctx->aead = aead;
 	if (key_len != aead->key_len) {
-		EVPerr(EVP_F_EVP_AEAD_CTX_INIT, EVP_R_UNSUPPORTED_KEY_SIZE);
+		EVPerror(EVP_R_UNSUPPORTED_KEY_SIZE);
 		return 0;
 	}
 	return aead->init(ctx, key, key_len, tag_len);
@@ -96,12 +96,12 @@ EVP_AEAD_CTX_seal(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
 
 	/* Overflow. */
 	if (possible_out_len < in_len) {
-		EVPerr(EVP_F_AEAD_CTX_SEAL, EVP_R_TOO_LARGE);
+		EVPerror(EVP_R_TOO_LARGE);
 		goto error;
 	}
 
 	if (!check_alias(in, in_len, out)) {
-		EVPerr(EVP_F_AEAD_CTX_SEAL, EVP_R_OUTPUT_ALIASES_INPUT);
+		EVPerror(EVP_R_OUTPUT_ALIASES_INPUT);
 		goto error;
 	}
 
@@ -125,7 +125,7 @@ EVP_AEAD_CTX_open(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
     size_t ad_len)
 {
 	if (!check_alias(in, in_len, out)) {
-		EVPerr(EVP_F_AEAD_CTX_OPEN, EVP_R_OUTPUT_ALIASES_INPUT);
+		EVPerror(EVP_R_OUTPUT_ALIASES_INPUT);
 		goto error;
 	}
 

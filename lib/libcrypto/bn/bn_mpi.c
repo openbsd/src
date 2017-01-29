@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mpi.c,v 1.7 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_mpi.c,v 1.8 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,13 +98,13 @@ BN_mpi2bn(const unsigned char *d, int n, BIGNUM *a)
 	int neg = 0;
 
 	if (n < 4) {
-		BNerr(BN_F_BN_MPI2BN, BN_R_INVALID_LENGTH);
+		BNerror(BN_R_INVALID_LENGTH);
 		return (NULL);
 	}
 	len = ((long)d[0] << 24) | ((long)d[1] << 16) | ((int)d[2] << 8) |
 	    (int)d[3];
 	if ((len + 4) != n) {
-		BNerr(BN_F_BN_MPI2BN, BN_R_ENCODING_ERROR);
+		BNerror(BN_R_ENCODING_ERROR);
 		return (NULL);
 	}
 

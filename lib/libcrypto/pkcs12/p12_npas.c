@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.11 2016/12/30 15:08:22 jsing Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -81,20 +81,19 @@ PKCS12_newpass(PKCS12 *p12, char *oldpass, char *newpass)
 	/* Check for NULL PKCS12 structure */
 
 	if (!p12) {
-		PKCS12err(PKCS12_F_PKCS12_NEWPASS,
-		    PKCS12_R_INVALID_NULL_PKCS12_POINTER);
+		PKCS12error(PKCS12_R_INVALID_NULL_PKCS12_POINTER);
 		return 0;
 	}
 
 	/* Check the mac */
 
 	if (!PKCS12_verify_mac(p12, oldpass, -1)) {
-		PKCS12err(PKCS12_F_PKCS12_NEWPASS, PKCS12_R_MAC_VERIFY_FAILURE);
+		PKCS12error(PKCS12_R_MAC_VERIFY_FAILURE);
 		return 0;
 	}
 
 	if (!newpass_p12(p12, oldpass, newpass)) {
-		PKCS12err(PKCS12_F_PKCS12_NEWPASS, PKCS12_R_PARSE_ERROR);
+		PKCS12error(PKCS12_R_PARSE_ERROR);
 		return 0;
 	}
 

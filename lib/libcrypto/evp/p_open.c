@@ -1,4 +1,4 @@
-/* $OpenBSD: p_open.c,v 1.17 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: p_open.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,7 +86,7 @@ EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 		return 1;
 
 	if (priv->type != EVP_PKEY_RSA) {
-		EVPerr(EVP_F_EVP_OPENINIT, EVP_R_PUBLIC_KEY_NOT_RSA);
+		EVPerror(EVP_R_PUBLIC_KEY_NOT_RSA);
 		goto err;
 	}
 
@@ -94,7 +94,7 @@ EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 	key = malloc(size + 2);
 	if (key == NULL) {
 		/* ERROR */
-		EVPerr(EVP_F_EVP_OPENINIT, ERR_R_MALLOC_FAILURE);
+		EVPerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 

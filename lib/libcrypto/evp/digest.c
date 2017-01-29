@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.26 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: digest.c,v 1.27 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,8 +162,7 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			ENGINE_finish(ctx->engine);
 		if (impl) {
 			if (!ENGINE_init(impl)) {
-				EVPerr(EVP_F_EVP_DIGESTINIT_EX,
-				    EVP_R_INITIALIZATION_ERROR);
+				EVPerror(EVP_R_INITIALIZATION_ERROR);
 				return 0;
 			}
 		} else
@@ -174,8 +173,7 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			const EVP_MD *d = ENGINE_get_digest(impl, type->type);
 			if (!d) {
 				/* Same comment from evp_enc.c */
-				EVPerr(EVP_F_EVP_DIGESTINIT_EX,
-				    EVP_R_INITIALIZATION_ERROR);
+				EVPerror(EVP_R_INITIALIZATION_ERROR);
 				ENGINE_finish(impl);
 				return 0;
 			}
@@ -188,7 +186,7 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		} else
 			ctx->engine = NULL;
 	} else if (!ctx->digest) {
-		EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_NO_DIGEST_SET);
+		EVPerror(EVP_R_NO_DIGEST_SET);
 		return 0;
 	}
 #endif
@@ -206,8 +204,7 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			if (ctx->md_data == NULL) {
 				EVP_PKEY_CTX_free(ctx->pctx);
 				ctx->pctx = NULL;
-				EVPerr(EVP_F_EVP_DIGESTINIT_EX,
-				    ERR_R_MALLOC_FAILURE);
+				EVPerror(ERR_R_MALLOC_FAILURE);
 				return 0;
 			}
 		}
@@ -251,7 +248,7 @@ EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	int ret;
 
 	if ((size_t)ctx->digest->md_size > EVP_MAX_MD_SIZE) {
-		EVPerr(EVP_F_EVP_DIGESTFINAL_EX, EVP_R_TOO_LARGE);
+		EVPerror(EVP_R_TOO_LARGE);
 		return 0;
 	}
 	ret = ctx->digest->final(ctx, md);
@@ -278,13 +275,13 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	unsigned char *tmp_buf;
 
 	if ((in == NULL) || (in->digest == NULL)) {
-		EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_INPUT_NOT_INITIALIZED);
+		EVPerror(EVP_R_INPUT_NOT_INITIALIZED);
 		return 0;
 	}
 #ifndef OPENSSL_NO_ENGINE
 	/* Make sure it's safe to copy a digest context using an ENGINE */
 	if (in->engine && !ENGINE_init(in->engine)) {
-		EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, ERR_R_ENGINE_LIB);
+		EVPerror(ERR_R_ENGINE_LIB);
 		return 0;
 	}
 #endif
@@ -303,8 +300,7 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 		else {
 			out->md_data = malloc(out->digest->ctx_size);
 			if (!out->md_data) {
-				EVPerr(EVP_F_EVP_MD_CTX_COPY_EX,
-				    ERR_R_MALLOC_FAILURE);
+				EVPerror(ERR_R_MALLOC_FAILURE);
 				return 0;
 			}
 		}
@@ -386,19 +382,18 @@ EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
 	int ret;
 
 	if (!ctx->digest) {
-		EVPerr(EVP_F_EVP_MD_CTX_CTRL, EVP_R_NO_CIPHER_SET);
+		EVPerror(EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
 
 	if (!ctx->digest->md_ctrl) {
-		EVPerr(EVP_F_EVP_MD_CTX_CTRL, EVP_R_CTRL_NOT_IMPLEMENTED);
+		EVPerror(EVP_R_CTRL_NOT_IMPLEMENTED);
 		return 0;
 	}
 
 	ret = ctx->digest->md_ctrl(ctx, type, arg, ptr);
 	if (ret == -1) {
-		EVPerr(EVP_F_EVP_MD_CTX_CTRL,
-		    EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
+		EVPerror(EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
 		return 0;
 	}
 	return ret;

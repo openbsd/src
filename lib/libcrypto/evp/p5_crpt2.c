@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt2.c,v 1.22 2016/11/08 20:01:06 miod Exp $ */
+/* $OpenBSD: p5_crpt2.c,v 1.23 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -175,22 +175,21 @@ PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
 	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
 	    param->value.sequence == NULL) {
-		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
+		EVPerror(EVP_R_DECODE_ERROR);
 		goto err;
 	}
 
 	pbuf = param->value.sequence->data;
 	plen = param->value.sequence->length;
 	if (!(pbe2 = d2i_PBE2PARAM(NULL, &pbuf, plen))) {
-		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
+		EVPerror(EVP_R_DECODE_ERROR);
 		goto err;
 	}
 
 	/* See if we recognise the key derivation function */
 
 	if (OBJ_obj2nid(pbe2->keyfunc->algorithm) != NID_id_pbkdf2) {
-		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
-		    EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION);
+		EVPerror(EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION);
 		goto err;
 	}
 
@@ -200,8 +199,7 @@ PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	cipher = EVP_get_cipherbyobj(pbe2->encryption->algorithm);
 
 	if (!cipher) {
-		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
-		    EVP_R_UNSUPPORTED_CIPHER);
+		EVPerror(EVP_R_UNSUPPORTED_CIPHER);
 		goto err;
 	}
 
@@ -209,8 +207,7 @@ PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, en_de))
 		goto err;
 	if (EVP_CIPHER_asn1_to_param(ctx, pbe2->encryption->parameter) < 0) {
-		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
-		    EVP_R_CIPHER_PARAMETER_ERROR);
+		EVPerror(EVP_R_CIPHER_PARAMETER_ERROR);
 		goto err;
 	}
 	rv = PKCS5_v2_PBKDF2_keyivgen(ctx, pass, passlen,
@@ -235,19 +232,19 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	const EVP_MD *prfmd;
 
 	if (EVP_CIPHER_CTX_cipher(ctx) == NULL) {
-		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_NO_CIPHER_SET);
+		EVPerror(EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
 	keylen = EVP_CIPHER_CTX_key_length(ctx);
 	if (keylen > sizeof key) {
-		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_BAD_KEY_LENGTH);
+		EVPerror(EVP_R_BAD_KEY_LENGTH);
 		return 0;
 	}
 
 	/* Decode parameter */
 
 	if (!param || (param->type != V_ASN1_SEQUENCE)) {
-		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_DECODE_ERROR);
+		EVPerror(EVP_R_DECODE_ERROR);
 		return 0;
 	}
 
@@ -255,7 +252,7 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	plen = param->value.sequence->length;
 
 	if (!(kdf = d2i_PBKDF2PARAM(NULL, &pbuf, plen)) ) {
-		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_DECODE_ERROR);
+		EVPerror(EVP_R_DECODE_ERROR);
 		return 0;
 	}
 
@@ -263,8 +260,7 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
 	if (kdf->keylength &&
 	    (ASN1_INTEGER_get(kdf->keylength) != (int)keylen)){
-		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN,
-		    EVP_R_UNSUPPORTED_KEYLENGTH);
+		EVPerror(EVP_R_UNSUPPORTED_KEYLENGTH);
 		goto err;
 	}
 
@@ -274,19 +270,18 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		prf_nid = NID_hmacWithSHA1;
 
 	if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, prf_nid, NULL, &hmac_md_nid, 0)) {
-		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_UNSUPPORTED_PRF);
+		EVPerror(EVP_R_UNSUPPORTED_PRF);
 		goto err;
 	}
 
 	prfmd = EVP_get_digestbynid(hmac_md_nid);
 	if (prfmd == NULL) {
-		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_UNSUPPORTED_PRF);
+		EVPerror(EVP_R_UNSUPPORTED_PRF);
 		goto err;
 	}
 
 	if (kdf->salt->type != V_ASN1_OCTET_STRING) {
-		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN,
-		    EVP_R_UNSUPPORTED_SALT_TYPE);
+		EVPerror(EVP_R_UNSUPPORTED_SALT_TYPE);
 		goto err;
 	}
 
@@ -294,8 +289,7 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	salt = kdf->salt->value.octet_string->data;
 	saltlen = kdf->salt->value.octet_string->length;
 	if ((iter = ASN1_INTEGER_get(kdf->iter)) <= 0) {
-		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN,
-		    EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
+		EVPerror(EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
 		goto err;
 	}
 	if (!PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, prfmd,

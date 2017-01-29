@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_err.c,v 1.4 2015/02/08 13:35:07 jsing Exp $ */
+/* $OpenBSD: ecs_err.c,v 1.5 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -72,11 +72,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_ECDSA,0,reason)
 
 static ERR_STRING_DATA ECDSA_str_functs[]= {
-	{ERR_FUNC(ECDSA_F_ECDSA_CHECK),	"ECDSA_CHECK"},
-	{ERR_FUNC(ECDSA_F_ECDSA_DATA_NEW_METHOD),	"ECDSA_DATA_NEW_METHOD"},
-	{ERR_FUNC(ECDSA_F_ECDSA_DO_SIGN),	"ECDSA_do_sign"},
-	{ERR_FUNC(ECDSA_F_ECDSA_DO_VERIFY),	"ECDSA_do_verify"},
-	{ERR_FUNC(ECDSA_F_ECDSA_SIGN_SETUP),	"ECDSA_sign_setup"},
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 

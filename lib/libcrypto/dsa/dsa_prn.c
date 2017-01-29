@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_prn.c,v 1.5 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dsa_prn.c,v 1.6 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -69,7 +69,7 @@ DSA_print_fp(FILE *fp, const DSA *x, int off)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		DSAerr(DSA_F_DSA_PRINT_FP, ERR_R_BUF_LIB);
+		DSAerror(ERR_R_BUF_LIB);
 		return 0;
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -85,7 +85,7 @@ DSAparams_print_fp(FILE *fp, const DSA *x)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		DSAerr(DSA_F_DSAPARAMS_PRINT_FP, ERR_R_BUF_LIB);
+		DSAerror(ERR_R_BUF_LIB);
 		return 0;
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);

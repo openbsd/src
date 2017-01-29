@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_prn.c,v 1.6 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: rsa_prn.c,v 1.7 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -69,7 +69,7 @@ RSA_print_fp(FILE *fp, const RSA *x, int off)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		RSAerr(RSA_F_RSA_PRINT_FP, ERR_R_BUF_LIB);
+		RSAerror(ERR_R_BUF_LIB);
 		return 0;
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);

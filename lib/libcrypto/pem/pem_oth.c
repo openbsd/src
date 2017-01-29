@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_oth.c,v 1.7 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: pem_oth.c,v 1.8 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,7 +81,7 @@ PEM_ASN1_read_bio(d2i_of_void *d2i, const char *name, BIO *bp, void **x,
 	p = data;
 	ret = d2i(x, &p, len);
 	if (ret == NULL)
-		PEMerr(PEM_F_PEM_ASN1_READ_BIO, ERR_R_ASN1_LIB);
+		PEMerror(ERR_R_ASN1_LIB);
 	free(data);
 	return (ret);
 }

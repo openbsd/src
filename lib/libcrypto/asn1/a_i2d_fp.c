@@ -1,4 +1,4 @@
-/* $OpenBSD: a_i2d_fp.c,v 1.14 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_i2d_fp.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,7 +71,7 @@ ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, void *x)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		ASN1err(ASN1_F_ASN1_I2D_FP, ERR_R_BUF_LIB);
+		ASN1error(ERR_R_BUF_LIB);
 		return (0);
 	}
 	BIO_set_fp(b, out, BIO_NOCLOSE);
@@ -90,7 +90,7 @@ ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x)
 	n = i2d(x, NULL);
 	b = malloc(n);
 	if (b == NULL) {
-		ASN1err(ASN1_F_ASN1_I2D_BIO, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 
@@ -121,7 +121,7 @@ ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x)
 	int ret;
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		ASN1err(ASN1_F_ASN1_ITEM_I2D_FP, ERR_R_BUF_LIB);
+		ASN1error(ERR_R_BUF_LIB);
 		return (0);
 	}
 	BIO_set_fp(b, out, BIO_NOCLOSE);
@@ -138,7 +138,7 @@ ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x)
 
 	n = ASN1_item_i2d(x, &b, it);
 	if (b == NULL) {
-		ASN1err(ASN1_F_ASN1_ITEM_I2D_BIO, ERR_R_MALLOC_FAILURE);
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 

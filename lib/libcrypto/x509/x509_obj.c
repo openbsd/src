@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_obj.c,v 1.16 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509_obj.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,7 +172,7 @@ X509_NAME_oneline(X509_NAME *a, char *buf, int len)
 	return (p);
 
 err:
-	X509err(X509_F_X509_NAME_ONELINE, ERR_R_MALLOC_FAILURE);
+	X509error(ERR_R_MALLOC_FAILURE);
 	if (b != NULL)
 		BUF_MEM_free(b);
 	return (NULL);

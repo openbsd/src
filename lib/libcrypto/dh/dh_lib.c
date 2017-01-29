@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.21 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.22 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,7 +121,7 @@ DH_new_method(ENGINE *engine)
 
 	ret = malloc(sizeof(DH));
 	if (ret == NULL) {
-		DHerr(DH_F_DH_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+		DHerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -129,7 +129,7 @@ DH_new_method(ENGINE *engine)
 #ifndef OPENSSL_NO_ENGINE
 	if (engine) {
 		if (!ENGINE_init(engine)) {
-			DHerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
+			DHerror(ERR_R_ENGINE_LIB);
 			free(ret);
 			return NULL;
 		}
@@ -139,7 +139,7 @@ DH_new_method(ENGINE *engine)
 	if(ret->engine) {
 		ret->meth = ENGINE_get_DH(ret->engine);
 		if (!ret->meth) {
-			DHerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
+			DHerror(ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
 			return NULL;

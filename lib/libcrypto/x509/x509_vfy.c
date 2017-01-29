@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.59 2017/01/21 01:09:54 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.60 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -228,8 +228,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	STACK_OF(X509) *sktmp = NULL;
 
 	if (ctx->cert == NULL) {
-		X509err(X509_F_X509_VERIFY_CERT,
-		    X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
+		X509error(X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
 		ctx->error = X509_V_ERR_INVALID_CALL;
 		return -1;
 	}
@@ -238,8 +237,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		 * This X509_STORE_CTX has already been used to verify
 		 * a cert. We cannot do another one.
 		 */
-		X509err(X509_F_X509_VERIFY_CERT,
-		    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		ctx->error = X509_V_ERR_INVALID_CALL;
 		return -1;
 	}
@@ -247,8 +245,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		/*
 		 * This X509_STORE_CTX has not been properly initialized.
 		 */
-		X509err(X509_F_X509_VERIFY_CERT,
-		    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		ctx->error = X509_V_ERR_INVALID_CALL;
 		return -1;
 	}
@@ -262,7 +259,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	 */
 	ctx->chain = sk_X509_new_null();
 	if (ctx->chain == NULL || !sk_X509_push(ctx->chain, ctx->cert)) {
-		X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		ctx->error = X509_V_ERR_OUT_OF_MEM;
 		goto end;
 	}
@@ -272,7 +269,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	/* We use a temporary STACK so we can chop and hack at it */
 	if (ctx->untrusted != NULL &&
 	    (sktmp = sk_X509_dup(ctx->untrusted)) == NULL) {
-		X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		ctx->error = X509_V_ERR_OUT_OF_MEM;
 		goto end;
 	}
@@ -316,8 +313,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 			xtmp = find_issuer(ctx, sktmp, x);
 			if (xtmp != NULL) {
 				if (!sk_X509_push(ctx->chain, xtmp)) {
-					X509err(X509_F_X509_VERIFY_CERT,
-					    ERR_R_MALLOC_FAILURE);
+					X509error(ERR_R_MALLOC_FAILURE);
 					ctx->error = X509_V_ERR_OUT_OF_MEM;
 					ok = 0;
 					goto end;
@@ -415,8 +411,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 			x = xtmp;
 			if (!sk_X509_push(ctx->chain, x)) {
 				X509_free(xtmp);
-				X509err(X509_F_X509_VERIFY_CERT,
-				    ERR_R_MALLOC_FAILURE);
+				X509error(ERR_R_MALLOC_FAILURE);
 				ctx->error = X509_V_ERR_OUT_OF_MEM;
 				ok = 0;
 				goto end;
@@ -488,7 +483,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		} else {
 			if (!sk_X509_push(ctx->chain, chain_ss)) {
 				X509_free(chain_ss);
-				X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+				X509error(ERR_R_MALLOC_FAILURE);
 				return 0;
 			}
 			num++;
@@ -1669,7 +1664,7 @@ check_policy(X509_STORE_CTX *ctx)
 	ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
 	    ctx->param->policies, ctx->param->flags);
 	if (ret == 0) {
-		X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	/* Invalid or inconsistent extensions */
@@ -1941,8 +1936,7 @@ X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	for (i = 0; i < sk_X509_num(chain); i++) {
 		ktmp = X509_get_pubkey(sk_X509_value(chain, i));
 		if (ktmp == NULL) {
-			X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,
-			    X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
+			X509error(X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
 			return 0;
 		}
 		if (!EVP_PKEY_missing_parameters(ktmp))
@@ -1953,8 +1947,7 @@ X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 		}
 	}
 	if (ktmp == NULL) {
-		X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,
-		    X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
+		X509error(X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
 		return 0;
 	}
 
@@ -2109,16 +2102,14 @@ X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 		X509_PURPOSE *ptmp;
 		idx = X509_PURPOSE_get_by_id(purpose);
 		if (idx == -1) {
-			X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
-			    X509_R_UNKNOWN_PURPOSE_ID);
+			X509error(X509_R_UNKNOWN_PURPOSE_ID);
 			return 0;
 		}
 		ptmp = X509_PURPOSE_get0(idx);
 		if (ptmp->trust == X509_TRUST_DEFAULT) {
 			idx = X509_PURPOSE_get_by_id(def_purpose);
 			if (idx == -1) {
-				X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
-				    X509_R_UNKNOWN_PURPOSE_ID);
+				X509error(X509_R_UNKNOWN_PURPOSE_ID);
 				return 0;
 			}
 			ptmp = X509_PURPOSE_get0(idx);
@@ -2130,8 +2121,7 @@ X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 	if (trust) {
 		idx = X509_TRUST_get_by_id(trust);
 		if (idx == -1) {
-			X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
-			    X509_R_UNKNOWN_TRUST_ID);
+			X509error(X509_R_UNKNOWN_TRUST_ID);
 			return 0;
 		}
 	}
@@ -2150,7 +2140,7 @@ X509_STORE_CTX_new(void)
 
 	ctx = calloc(1, sizeof(X509_STORE_CTX));
 	if (!ctx) {
-		X509err(X509_F_X509_STORE_CTX_NEW, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	return ctx;
@@ -2258,7 +2248,7 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 
 	ctx->param = X509_VERIFY_PARAM_new();
 	if (!ctx->param) {
-		X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 
@@ -2275,13 +2265,13 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 		    X509_VERIFY_PARAM_lookup("default"));
 
 	if (param_ret == 0) {
-		X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 
 	if (CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
 	    &(ctx->ex_data)) == 0) {
-		X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+		X509error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	return 1;

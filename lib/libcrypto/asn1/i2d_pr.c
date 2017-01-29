@@ -1,4 +1,4 @@
-/* $OpenBSD: i2d_pr.c,v 1.10 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: i2d_pr.c,v 1.11 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,6 +76,6 @@ i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 		PKCS8_PRIV_KEY_INFO_free(p8);
 		return ret;
 	}
-	ASN1err(ASN1_F_I2D_PRIVATEKEY, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+	ASN1error(ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
 	return (-1);
 }

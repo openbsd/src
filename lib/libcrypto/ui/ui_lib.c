@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.31 2016/04/28 16:42:28 tedu Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.32 2017/01/29 17:49:23 beck Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -81,7 +81,7 @@ UI_new_method(const UI_METHOD *method)
 
 	ret = malloc(sizeof(UI));
 	if (ret == NULL) {
-		UIerr(UI_F_UI_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+		UIerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	if (method == NULL)
@@ -143,11 +143,10 @@ general_allocate_prompt(UI *ui, const char *prompt, int prompt_freeable,
 	UI_STRING *ret = NULL;
 
 	if (prompt == NULL) {
-		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		UIerror(ERR_R_PASSED_NULL_PARAMETER);
 	} else if ((type == UIT_PROMPT || type == UIT_VERIFY ||
 	    type == UIT_BOOLEAN) && result_buf == NULL) {
-		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT, UI_R_NO_RESULT_BUFFER);
+		UIerror(UI_R_NO_RESULT_BUFFER);
 	} else if ((ret = malloc(sizeof(UI_STRING)))) {
 		ret->out_string = prompt;
 		ret->flags = prompt_freeable ? OUT_STRING_FREEABLE : 0;
@@ -192,16 +191,13 @@ general_allocate_boolean(UI *ui, const char *prompt, const char *action_desc,
 	const char *p;
 
 	if (ok_chars == NULL) {
-		UIerr(UI_F_GENERAL_ALLOCATE_BOOLEAN,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		UIerror(ERR_R_PASSED_NULL_PARAMETER);
 	} else if (cancel_chars == NULL) {
-		UIerr(UI_F_GENERAL_ALLOCATE_BOOLEAN,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		UIerror(ERR_R_PASSED_NULL_PARAMETER);
 	} else {
 		for (p = ok_chars; *p; p++) {
 			if (strchr(cancel_chars, *p)) {
-				UIerr(UI_F_GENERAL_ALLOCATE_BOOLEAN,
-				    UI_R_COMMON_OK_AND_CANCEL_CHARACTERS);
+				UIerror(UI_R_COMMON_OK_AND_CANCEL_CHARACTERS);
 			}
 		}
 
@@ -247,7 +243,7 @@ UI_dup_input_string(UI *ui, const char *prompt, int flags, char *result_buf,
 	if (prompt) {
 		prompt_copy = strdup(prompt);
 		if (prompt_copy == NULL) {
-			UIerr(UI_F_UI_DUP_INPUT_STRING, ERR_R_MALLOC_FAILURE);
+			UIerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 	}
@@ -272,7 +268,7 @@ UI_dup_verify_string(UI *ui, const char *prompt, int flags,
 	if (prompt) {
 		prompt_copy = strdup(prompt);
 		if (prompt_copy == NULL) {
-			UIerr(UI_F_UI_DUP_VERIFY_STRING, ERR_R_MALLOC_FAILURE);
+			UIerror(ERR_R_MALLOC_FAILURE);
 			return -1;
 		}
 	}
@@ -300,28 +296,28 @@ UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
 	if (prompt) {
 		prompt_copy = strdup(prompt);
 		if (prompt_copy == NULL) {
-			UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
+			UIerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
 	if (action_desc) {
 		action_desc_copy = strdup(action_desc);
 		if (action_desc_copy == NULL) {
-			UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
+			UIerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
 	if (ok_chars) {
 		ok_chars_copy = strdup(ok_chars);
 		if (ok_chars_copy == NULL) {
-			UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
+			UIerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
 	if (cancel_chars) {
 		cancel_chars_copy = strdup(cancel_chars);
 		if (cancel_chars_copy == NULL) {
-			UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
+			UIerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
@@ -352,7 +348,7 @@ UI_dup_info_string(UI *ui, const char *text)
 	if (text) {
 		text_copy = strdup(text);
 		if (text_copy == NULL) {
-			UIerr(UI_F_UI_DUP_INFO_STRING, ERR_R_MALLOC_FAILURE);
+			UIerror(ERR_R_MALLOC_FAILURE);
 			return -1;
 		}
 	}
@@ -375,7 +371,7 @@ UI_dup_error_string(UI *ui, const char *text)
 	if (text) {
 		text_copy = strdup(text);
 		if (text_copy == NULL) {
-			UIerr(UI_F_UI_DUP_ERROR_STRING, ERR_R_MALLOC_FAILURE);
+			UIerror(ERR_R_MALLOC_FAILURE);
 			return -1;
 		}
 	}
@@ -426,11 +422,11 @@ const char *
 UI_get0_result(UI *ui, int i)
 {
 	if (i < 0) {
-		UIerr(UI_F_UI_GET0_RESULT, UI_R_INDEX_TOO_SMALL);
+		UIerror(UI_R_INDEX_TOO_SMALL);
 		return NULL;
 	}
 	if (i >= sk_UI_STRING_num(ui->strings)) {
-		UIerr(UI_F_UI_GET0_RESULT, UI_R_INDEX_TOO_LARGE);
+		UIerror(UI_R_INDEX_TOO_LARGE);
 		return NULL;
 	}
 	return UI_get0_result_string(sk_UI_STRING_value(ui->strings, i));
@@ -514,7 +510,7 @@ int
 UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void))
 {
 	if (ui == NULL) {
-		UIerr(UI_F_UI_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+		UIerror(ERR_R_PASSED_NULL_PARAMETER);
 		return -1;
 	}
 	switch (cmd) {
@@ -532,7 +528,7 @@ UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void))
 	default:
 		break;
 	}
-	UIerr(UI_F_UI_CTRL, UI_R_UNKNOWN_CONTROL_COMMAND);
+	UIerror(UI_R_UNKNOWN_CONTROL_COMMAND);
 	return -1;
 }
 
@@ -831,8 +827,7 @@ UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 	case UIT_VERIFY:
 		if (l < uis->_.string_data.result_minsize) {
 			ui->flags |= UI_FLAG_REDOABLE;
-			UIerr(UI_F_UI_SET_RESULT,
-			    UI_R_RESULT_TOO_SMALL);
+			UIerror(UI_R_RESULT_TOO_SMALL);
 			ERR_asprintf_error_data
 			    ("You must type in %d to %d characters",
 				uis->_.string_data.result_minsize,
@@ -841,8 +836,7 @@ UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 		}
 		if (l > uis->_.string_data.result_maxsize) {
 			ui->flags |= UI_FLAG_REDOABLE;
-			UIerr(UI_F_UI_SET_RESULT,
-			    UI_R_RESULT_TOO_LARGE);
+			UIerror(UI_R_RESULT_TOO_LARGE);
 			ERR_asprintf_error_data
 			    ("You must type in %d to %d characters",
 				uis->_.string_data.result_minsize,
@@ -850,7 +844,7 @@ UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 			return -1;
 		}
 		if (!uis->result_buf) {
-			UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
+			UIerror(UI_R_NO_RESULT_BUFFER);
 			return -1;
 		}
 		strlcpy(uis->result_buf, result,
@@ -861,7 +855,7 @@ UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 			const char *p;
 
 			if (!uis->result_buf) {
-				UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
+				UIerror(UI_R_NO_RESULT_BUFFER);
 				return -1;
 			}
 			uis->result_buf[0] = '\0';

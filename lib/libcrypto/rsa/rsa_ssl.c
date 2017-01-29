@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ssl.c,v 1.14 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: rsa_ssl.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,8 +72,7 @@ RSA_padding_add_SSLv23(unsigned char *to, int tlen, const unsigned char *from,
 	unsigned char *p;
 
 	if (flen > tlen - 11) {
-		RSAerr(RSA_F_RSA_PADDING_ADD_SSLV23,
-		    RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+		RSAerror(RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		return 0;
 	}
 
@@ -109,12 +108,11 @@ RSA_padding_check_SSLv23(unsigned char *to, int tlen, const unsigned char *from,
 
 	p = from;
 	if (flen < 10) {
-		RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, RSA_R_DATA_TOO_SMALL);
+		RSAerror(RSA_R_DATA_TOO_SMALL);
 		return -1;
 	}
 	if (num != flen + 1 || *(p++) != 02) {
-		RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23,
-		    RSA_R_BLOCK_TYPE_IS_NOT_02);
+		RSAerror(RSA_R_BLOCK_TYPE_IS_NOT_02);
 		return -1;
 	}
 
@@ -125,8 +123,7 @@ RSA_padding_check_SSLv23(unsigned char *to, int tlen, const unsigned char *from,
 			break;
 
 	if (i == j || i < 8) {
-		RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23,
-		    RSA_R_NULL_BEFORE_BLOCK_MISSING);
+		RSAerror(RSA_R_NULL_BEFORE_BLOCK_MISSING);
 		return -1;
 	}
 	for (k = -9; k < -1; k++) {
@@ -134,15 +131,14 @@ RSA_padding_check_SSLv23(unsigned char *to, int tlen, const unsigned char *from,
 			break;
 	}
 	if (k == -1) {
-		RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23,
-		    RSA_R_SSLV3_ROLLBACK_ATTACK);
+		RSAerror(RSA_R_SSLV3_ROLLBACK_ATTACK);
 		return -1;
 	}
 
 	i++; /* Skip over the '\0' */
 	j -= i;
 	if (j > tlen) {
-		RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, RSA_R_DATA_TOO_LARGE);
+		RSAerror(RSA_R_DATA_TOO_LARGE);
 		return -1;
 	}
 	memcpy(to, p, j);

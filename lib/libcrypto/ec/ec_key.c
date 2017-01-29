@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.12 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: ec_key.c,v 1.13 2017/01/29 17:49:23 beck Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -75,7 +75,7 @@ EC_KEY_new(void)
 
 	ret = malloc(sizeof(EC_KEY));
 	if (ret == NULL) {
-		ECerr(EC_F_EC_KEY_NEW, ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	ret->version = 1;
@@ -133,7 +133,7 @@ EC_KEY_copy(EC_KEY * dest, const EC_KEY * src)
 	EC_EXTRA_DATA *d;
 
 	if (dest == NULL || src == NULL) {
-		ECerr(EC_F_EC_KEY_COPY, ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
 	/* copy the parameters */
@@ -217,7 +217,7 @@ EC_KEY_generate_key(EC_KEY * eckey)
 	EC_POINT *pub_key = NULL;
 
 	if (!eckey || !eckey->group) {
-		ECerr(EC_F_EC_KEY_GENERATE_KEY, ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	if ((order = BN_new()) == NULL)
@@ -274,11 +274,11 @@ EC_KEY_check_key(const EC_KEY * eckey)
 	EC_POINT *point = NULL;
 
 	if (!eckey || !eckey->group || !eckey->pub_key) {
-		ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key) > 0) {
-		ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_POINT_AT_INFINITY);
+		ECerror(EC_R_POINT_AT_INFINITY);
 		goto err;
 	}
 	if ((ctx = BN_CTX_new()) == NULL)
@@ -288,21 +288,21 @@ EC_KEY_check_key(const EC_KEY * eckey)
 
 	/* testing whether the pub_key is on the elliptic curve */
 	if (EC_POINT_is_on_curve(eckey->group, eckey->pub_key, ctx) <= 0) {
-		ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_POINT_IS_NOT_ON_CURVE);
+		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
 	}
 	/* testing whether pub_key * order is the point at infinity */
 	order = &eckey->group->order;
 	if (BN_is_zero(order)) {
-		ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
+		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
 	if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx)) {
-		ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_EC_LIB);
+		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	if (EC_POINT_is_at_infinity(eckey->group, point) <= 0) {
-		ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
+		ECerror(EC_R_WRONG_ORDER);
 		goto err;
 	}
 	/*
@@ -311,17 +311,17 @@ EC_KEY_check_key(const EC_KEY * eckey)
 	 */
 	if (eckey->priv_key) {
 		if (BN_cmp(eckey->priv_key, order) >= 0) {
-			ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
+			ECerror(EC_R_WRONG_ORDER);
 			goto err;
 		}
 		if (!EC_POINT_mul(eckey->group, point, eckey->priv_key,
 			NULL, NULL, ctx)) {
-			ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_EC_LIB);
+			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 		if (EC_POINT_cmp(eckey->group, point, eckey->pub_key,
 			ctx) != 0) {
-			ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_INVALID_PRIVATE_KEY);
+			ECerror(EC_R_INVALID_PRIVATE_KEY);
 			goto err;
 		}
 	}
@@ -341,8 +341,7 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 	int ok = 0, tmp_nid, is_char_two = 0;
 
 	if (!key || !key->group || !x || !y) {
-		ECerr(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
-		    ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 	ctx = BN_CTX_new();
@@ -387,8 +386,7 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 	 * out of range.
 	 */
 	if (BN_cmp(x, tx) || BN_cmp(y, ty)) {
-		ECerr(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
-		    EC_R_COORDINATES_OUT_OF_RANGE);
+		ECerror(EC_R_COORDINATES_OUT_OF_RANGE);
 		goto err;
 	}
 	if (!EC_KEY_set_public_key(key, point))
