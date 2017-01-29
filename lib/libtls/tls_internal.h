@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.52 2017/01/26 12:56:37 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.53 2017/01/29 17:52:11 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -51,6 +51,8 @@ struct tls_keypair {
 	size_t cert_len;
 	char *key_mem;
 	size_t key_len;
+	char *ocsp_staple;
+	size_t ocsp_staple_len;
 };
 
 #define TLS_MIN_SESSION_TIMEOUT (4)
@@ -83,8 +85,6 @@ struct tls_config {
 	int ecdhecurve;
 	struct tls_keypair *keypair;
 	int ocsp_require_stapling;
-	char *ocsp_staple;
-	size_t ocsp_staple_len;
 	uint32_t protocols;
 	unsigned char session_id[TLS_MAX_SESSION_ID_LENGTH];
 	int session_lifetime;

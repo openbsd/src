@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.34 2017/01/24 01:48:05 claudio Exp $ */
+/* $OpenBSD: tls_config.c,v 1.35 2017/01/29 17:52:11 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -101,6 +101,22 @@ tls_keypair_set_key_mem(struct tls_keypair *keypair, const uint8_t *key,
 	return set_mem(&keypair->key_mem, &keypair->key_len, key, len);
 }
 
+static int
+tls_keypair_set_ocsp_staple_file(struct tls_keypair *keypair,
+    struct tls_error *error, const char *ocsp_file)
+{
+	return tls_config_load_file(error, "ocsp", ocsp_file,
+	    &keypair->ocsp_staple, &keypair->ocsp_staple_len);
+}
+
+static int
+tls_keypair_set_ocsp_staple_mem(struct tls_keypair *keypair,
+    const uint8_t *staple, size_t len)
+{
+	return set_mem(&keypair->ocsp_staple, &keypair->ocsp_staple_len, staple,
+	    len);
+}
+
 static void
 tls_keypair_clear(struct tls_keypair *keypair)
 {
@@ -118,6 +134,7 @@ tls_keypair_free(struct tls_keypair *keypair)
 
 	free(keypair->cert_mem);
 	free(keypair->key_mem);
+	free(keypair->ocsp_staple);
 
 	free(keypair);
 }
@@ -241,7 +258,6 @@ tls_config_free(struct tls_config *config)
 	free((char *)config->ca_mem);
 	free((char *)config->ca_path);
 	free((char *)config->ciphers);
-	free(config->ocsp_staple);
 
 	free(config);
 }
@@ -664,14 +680,14 @@ tls_config_verify_client_optional(struct tls_config *config)
 int
 tls_config_set_ocsp_staple_file(struct tls_config *config, const char *staple_file)
 {
-	return tls_config_load_file(&config->error, "OCSP", staple_file,
-	    &config->ocsp_staple, &config->ocsp_staple_len);
+	return tls_keypair_set_ocsp_staple_file(config->keypair, &config->error,
+	    staple_file);
 }
 
 int
 tls_config_set_ocsp_staple_mem(struct tls_config *config, char *staple, size_t len)
 {
-	return set_mem(&config->ocsp_staple, &config->ocsp_staple_len, staple, len);
+	return tls_keypair_set_ocsp_staple_mem(config->keypair, staple, len);
 }
 
 int
