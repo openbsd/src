@@ -1,0 +1,4 @@
+# .USE should be safeguarded against accidental usage
+# $OpenBSD: mk42,v 1.1 2017/01/29 10:03:09 espie Exp $
+
+a: .USE

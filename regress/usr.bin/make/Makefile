@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.43 2016/10/31 23:05:42 tb Exp $
+# $OpenBSD: Makefile,v 1.44 2017/01/29 10:03:09 espie Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 \
 	t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 \
 	t25 t26 t27 t28 t29 t30 t31 t32 t33 t34 t35 t36 \
-	t37 t38 t38j t39 t40 t41 t42 t43 t44 t45
+	t37 t38 t38j t39 t40 t41 t42 t43 t44 t45 t46
 
 MALLOC_OPTIONS?=J
 t1: t1.out
@@ -181,7 +181,15 @@ t44:
 t45:
 	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk41 2>/dev/null || test $$? -ge 128; then false; fi
 
-
+# this file should fail, but NOT segfault
+t46:
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk42 a 2>/dev/null; then \
+	    false; \
+	    else \
+		if test $$? -ge 1 -a $$? -lt 128; then \
+		    true; else \
+		    false; fi; \
+	    fi
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
