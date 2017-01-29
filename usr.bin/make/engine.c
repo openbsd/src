@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.51 2016/10/21 16:12:38 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.52 2017/01/29 10:04:13 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -299,6 +299,10 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 
 
 	assert(cgn->type & (OP_USE|OP_TRANSFORM));
+
+	if (pgn == NULL)
+		Fatal("Trying to apply .USE to '%s' without a parent",
+		    cgn->name);
 
 	if ((cgn->type & OP_USE) || Lst_IsEmpty(&pgn->commands)) {
 		/* .USE or transformation and target has no commands
