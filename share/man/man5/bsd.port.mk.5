@@ -1,5 +1,5 @@
 
-.\" $OpenBSD: bsd.port.mk.5,v 1.444 2017/01/23 11:13:11 zhuk Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.445 2017/01/29 20:53:20 danj Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 23 2017 $
+.Dd $Mdocdate: January 29 2017 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1266,8 +1266,10 @@ target will also clean dependencies.
 Can be overridden on a per-${PKGPATH} basis,
 by setting CLEANDEPENDS_${PKGPATH}.
 .It Ev COMMENT
-Short, one line description of the port, used for the package, and in the
-INDEX.
+Short (no more than 60 characters) description of the port, used for
+the package and the INDEX.
+It should not start with an uppercase letter unless semantically
+significant.
 .It Ev COMMENT-foo
 Same as COMMENT but used for sub package -foo in a multi-package setup.
 .It Ev COMMENT-vanilla
