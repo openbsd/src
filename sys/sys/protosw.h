@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.20 2017/01/26 13:03:47 bluhm Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.21 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@ struct protosw {
 
 /* protocol-protocol hooks */
 					/* input to protocol (from below) */
-	void	(*pr_input)(struct mbuf *, int, int);
+	int	(*pr_input)(struct mbuf **, int *, int);
 					/* output to protocol (from above) */
 	int	(*pr_output)(struct mbuf *, ...);
 					/* control input (from below) */

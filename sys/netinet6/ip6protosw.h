@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6protosw.h,v 1.11 2017/01/26 13:03:47 bluhm Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.12 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -109,39 +109,9 @@ struct ip6ctlparam {
 	u_int8_t ip6c_nxt;		/* final next header field */
 };
 
-struct ip6protosw {
-	short	pr_type;		/* socket type used for */
-	struct	domain *pr_domain;	/* domain protocol a member of */
-	short	pr_protocol;		/* protocol number */
-	short	pr_flags;		/* see below */
-
-/* protocol-protocol hooks */
-					/* input to protocol (from below) */
-	int	(*pr_input)(struct mbuf **, int *, int);
-					/* output to protocol (from above) */
-	int	(*pr_output)(struct mbuf *, ...);
-					/* control input (from below) */
-	void	(*pr_ctlinput)(int, struct sockaddr *, u_int, void *);
-					/* control output (from above) */
-	int	(*pr_ctloutput)(int, struct socket *, int, int, struct mbuf **);
-
-/* user-protocol hook */
-					/* user request: see list below */
-	int	(*pr_usrreq)(struct socket *, int, struct mbuf *,
-		    struct mbuf *, struct mbuf *, struct proc *);
-
-/* utility hooks */
-	void	(*pr_init)(void);	/* initialization hook */
-	void	(*pr_fasttimo)(void);	/* fast timeout (200ms) */
-	void	(*pr_slowtimo)(void);	/* slow timeout (500ms) */
-	void	(*pr_drain)(void);	/* flush any excess space possible */
-					/* sysctl for protocol */
-	int	(*pr_sysctl)(int *, u_int, void *, size_t *, void *, size_t);
-};
-
 #ifdef _KERNEL
 extern u_char ip6_protox[];
-extern struct ip6protosw inet6sw[];
+extern struct protosw inet6sw[];
 #endif
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */

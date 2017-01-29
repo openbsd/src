@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.243 2017/01/25 17:34:31 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.244 2017/01/29 19:58:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -634,16 +634,15 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	return (error);
 }
 
-void
-pfsync_input(struct mbuf *m, int iphlen, int proto)
+int
+pfsync_input(struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *n, *m = *mp;
 	struct pfsync_softc *sc = pfsyncif;
 	struct ip *ip = mtod(m, struct ip *);
-	struct mbuf *mp;
 	struct pfsync_header *ph;
 	struct pfsync_subheader subh;
-
-	int offset, offp, len, count, mlen, flags = 0;
+	int offset, noff, len, count, mlen, flags = 0;
 
 	pfsyncstats.pfsyncs_ipackets++;
 
@@ -668,12 +667,12 @@ pfsync_input(struct mbuf *m, int iphlen, int proto)
 	}
 
 	offset = ip->ip_hl << 2;
-	mp = m_pulldown(m, offset, sizeof(*ph), &offp);
-	if (mp == NULL) {
+	n = m_pulldown(m, offset, sizeof(*ph), &noff);
+	if (n == NULL) {
 		pfsyncstats.pfsyncs_hdrops++;
-		return;
+		return IPPROTO_DONE;
 	}
-	ph = (struct pfsync_header *)(mp->m_data + offp);
+	ph = (struct pfsync_header *)(n->m_data + noff);
 
 	/* verify the version */
 	if (ph->version != PFSYNC_VERSION) {
@@ -714,13 +713,13 @@ pfsync_input(struct mbuf *m, int iphlen, int proto)
 			goto done;
 		}
 
-		mp = m_pulldown(m, offset, mlen * count, &offp);
-		if (mp == NULL) {
+		n = m_pulldown(m, offset, mlen * count, &noff);
+		if (n == NULL) {
 			pfsyncstats.pfsyncs_badlen++;
-			return;
+			return IPPROTO_DONE;
 		}
 
-		if (pfsync_acts[subh.action].in(mp->m_data + offp,
+		if (pfsync_acts[subh.action].in(n->m_data + noff,
 		    mlen, count, flags) != 0)
 			goto done;
 
@@ -729,6 +728,7 @@ pfsync_input(struct mbuf *m, int iphlen, int proto)
 
 done:
 	m_freem(m);
+	return IPPROTO_DONE;
 }
 
 int

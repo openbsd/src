@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.42 2017/01/25 17:34:31 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.43 2017/01/29 19:58:47 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -69,12 +69,6 @@ void
 divert_init(void)
 {
 	in_pcbinit(&divbtable, divbhashsize);
-}
-
-void
-divert_input(struct mbuf *m, int iphlen, int proto)
-{
-	m_freem(m);
 }
 
 int

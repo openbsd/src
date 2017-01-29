@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.336 2017/01/25 17:34:31 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.337 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -351,24 +351,15 @@ tcp_flush_queue(struct tcpcb *tp)
 	return (flags);
 }
 
-#ifdef INET6
-int
-tcp6_input(struct mbuf **mp, int *offp, int proto)
-{
-	struct mbuf *m = *mp;
-
-	tcp_input(m, *offp, proto);
-	return IPPROTO_DONE;
-}
-#endif
-
 /*
  * TCP input routine, follows pages 65-76 of the
  * protocol specification dated September, 1981 very closely.
  */
-void
-tcp_input(struct mbuf *m, int iphlen, int proto)
+int
+tcp_input(struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
+	int iphlen = *offp;
 	struct ip *ip;
 	struct inpcb *inp = NULL;
 	u_int8_t *optp = NULL;
@@ -424,7 +415,7 @@ tcp_input(struct mbuf *m, int iphlen, int proto)
 		break;
 	default:
 		m_freem(m);
-		return;	/*EAFNOSUPPORT*/
+		return IPPROTO_DONE;
 	}
 
 	/*
@@ -436,7 +427,7 @@ tcp_input(struct mbuf *m, int iphlen, int proto)
 #ifdef DIAGNOSTIC
 		if (iphlen < sizeof(struct ip)) {
 			m_freem(m);
-			return;
+			return IPPROTO_DONE;
 		}
 #endif /* DIAGNOSTIC */
 		break;
@@ -445,20 +436,20 @@ tcp_input(struct mbuf *m, int iphlen, int proto)
 #ifdef DIAGNOSTIC
 		if (iphlen < sizeof(struct ip6_hdr)) {
 			m_freem(m);
-			return;
+			return IPPROTO_DONE;
 		}
 #endif /* DIAGNOSTIC */
 		break;
 #endif
 	default:
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	IP6_EXTHDR_GET(th, struct tcphdr *, m, iphlen, sizeof(*th));
 	if (!th) {
 		tcpstat.tcps_rcvshort++;
-		return;
+		return IPPROTO_DONE;
 	}
 
 	tlen = m->m_pkthdr.len - iphlen;
@@ -552,7 +543,7 @@ tcp_input(struct mbuf *m, int iphlen, int proto)
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, iphlen, off);
 		if (!th) {
 			tcpstat.tcps_rcvshort++;
-			return;
+			return IPPROTO_DONE;
 		}
 		optlen = off - sizeof(struct tcphdr);
 		optp = (u_int8_t *)(th + 1);
@@ -874,7 +865,7 @@ findpcb:
 					tcpstat.tcps_dropsyn++;
 					goto drop;
 				}
-				return;
+				return IPPROTO_DONE;
 			}
 		}
 	}
@@ -1067,7 +1058,7 @@ findpcb:
 				if (so->so_snd.sb_cc ||
 				    tp->t_flags & TF_NEEDOUTPUT)
 					(void) tcp_output(tp);
-				return;
+				return IPPROTO_DONE;
 			}
 		} else if (th->th_ack == tp->snd_una &&
 		    TAILQ_EMPTY(&tp->t_segq) &&
@@ -1114,7 +1105,7 @@ findpcb:
 			tp->t_flags &= ~TF_BLOCKOUTPUT;
 			if (tp->t_flags & (TF_ACKNOW|TF_NEEDOUTPUT))
 				(void) tcp_output(tp);
-			return;
+			return IPPROTO_DONE;
 		}
 	}
 
@@ -2167,7 +2158,7 @@ dodata:							/* XXX */
 	 */
 	if (tp->t_flags & (TF_ACKNOW|TF_NEEDOUTPUT))
 		(void) tcp_output(tp);
-	return;
+	return IPPROTO_DONE;
 
 badsyn:
 	/*
@@ -2195,7 +2186,7 @@ dropafterack:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
-	return;
+	return IPPROTO_DONE;
 
 dropwithreset_ratelim:
 	/*
@@ -2229,7 +2220,7 @@ dropwithreset:
 		    (tcp_seq)0, TH_RST|TH_ACK, m->m_pkthdr.ph_rtableid);
 	}
 	m_freem(m);
-	return;
+	return IPPROTO_DONE;
 
 drop:
 	/*
@@ -2251,7 +2242,7 @@ drop:
 	}
 
 	m_freem(m);
-	return;
+	return IPPROTO_DONE;
 }
 
 int

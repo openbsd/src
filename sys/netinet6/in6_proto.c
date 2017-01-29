@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.87 2016/12/22 11:04:44 rzalamena Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.88 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -121,7 +121,7 @@
  */
 u_char ip6_protox[IPPROTO_MAX];
 
-struct ip6protosw inet6sw[] = {
+struct protosw inet6sw[] = {
 { 0,		&inet6domain,	IPPROTO_IPV6,	0,
   0,		0,		0,		0,
   0,
@@ -129,13 +129,13 @@ struct ip6protosw inet6sw[] = {
   ip6_sysctl,
 },
 { SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR|PR_SPLICE,
-  udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
+  udp_input,	0,		udp6_ctlinput,	ip6_ctloutput,
   udp_usrreq,	0,
   0,		0,		0,
   udp_sysctl,
 },
 { SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS|PR_SPLICE,
-  tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
+  tcp_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
   0,		0,		0,		0,
   tcp_sysctl,
@@ -188,7 +188,7 @@ struct ip6protosw inet6sw[] = {
 #endif /* IPSEC */
 #if NGIF > 0
 { SOCK_RAW,	&inet6domain,	IPPROTO_ETHERIP,PR_ATOMIC|PR_ADDR,
-  etherip_input6, rip6_output,	0,		rip6_ctloutput,
+  etherip_input, rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,
   0,		0,		0,		0,		etherip_sysctl
 },
@@ -204,12 +204,12 @@ struct ip6protosw inet6sw[] = {
 },
 #else /* NGIF */
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  ip4_input6,	rip6_output,	0,		rip6_ctloutput,
+  ip4_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,	/* XXX */
   0,		0,		0,		0,		ipip_sysctl
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  ip4_input6,	rip6_output,	0,		rip6_ctloutput,
+  ip4_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,	/* XXX */
   0,		0,		0,		0,
 },
@@ -223,7 +223,7 @@ struct ip6protosw inet6sw[] = {
 #endif /* NCARP */
 #if NPF > 0
 { SOCK_RAW,	&inet6domain,	IPPROTO_DIVERT,	PR_ATOMIC|PR_ADDR,
-  divert6_input,	0,		0,	rip6_ctloutput,
+  0,		0,		0,	rip6_ctloutput,
   divert6_usrreq,
   divert6_init,	0,		0,		0,		divert6_sysctl
 },

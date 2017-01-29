@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.93 2017/01/25 17:34:31 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.94 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -115,9 +115,10 @@ rip_init(void)
 
 struct sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
 
-void
-rip_input(struct mbuf *m, int hlen, int proto)
+int
+rip_input(struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct inpcb *inp, *last = NULL;
 	struct mbuf *opts = NULL;
@@ -198,6 +199,7 @@ rip_input(struct mbuf *m, int hlen, int proto)
 		counters[ips_delivered]--;
 		counters_leave(&ref, ipcounters);
 	}
+	return IPPROTO_DONE;
 }
 
 /*

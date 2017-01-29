@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.61 2017/01/25 17:34:31 bluhm Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.62 2017/01/29 19:58:47 bluhm Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -215,14 +215,16 @@ gre_input2(struct mbuf *m, int hlen, int proto)
  * routine is called whenever IP gets a packet with proto type
  * IPPROTO_GRE and a local destination address).
  */
-void
-gre_input(struct mbuf *m, int hlen, int proto)
+int
+gre_input(struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
+	int hlen = *offp;
 	int ret;
 
 	if (!gre_allow) {
 	        m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 #ifdef PIPEX
@@ -231,7 +233,7 @@ gre_input(struct mbuf *m, int hlen, int proto)
 
 		if ((session = pipex_pptp_lookup_session(m)) != NULL) {
 			if (pipex_pptp_input(m, session) == NULL)
-				return;
+				return IPPROTO_DONE;
 		}
 	}
 #endif
@@ -245,7 +247,8 @@ gre_input(struct mbuf *m, int hlen, int proto)
 	 * but we're not set to accept them.
 	 */
 	if (!ret)
-		rip_input(m, hlen, proto);
+		return rip_input(mp, offp, proto);
+	return IPPROTO_DONE;
 }
 
 /*
@@ -255,9 +258,10 @@ gre_input(struct mbuf *m, int hlen, int proto)
  * between IP header and payload.
  */
 
-void
-gre_mobile_input(struct mbuf *m, int hlen, int proto)
+int
+gre_mobile_input(struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
 	struct ip *ip;
 	struct mobip_h *mip;
 	struct gre_softc *sc;
@@ -266,19 +270,19 @@ gre_mobile_input(struct mbuf *m, int hlen, int proto)
 
 	if (!ip_mobile_allow) {
 	        m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	if ((sc = gre_lookup(m, proto)) == NULL) {
 		/* No matching tunnel or tunnel is down. */
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	if (m->m_len < sizeof(*mip)) {
 		m = m_pullup(m, sizeof(*mip));
 		if (m == NULL)
-			return;
+			return IPPROTO_DONE;
 	}
 	ip = mtod(m, struct ip *);
 	mip = mtod(m, struct mobip_h *);
@@ -298,7 +302,7 @@ gre_mobile_input(struct mbuf *m, int hlen, int proto)
 	if (m->m_len < (ip->ip_hl << 2) + msiz) {
 		m = m_pullup(m, (ip->ip_hl << 2) + msiz);
 		if (m == NULL)
-			return;
+			return IPPROTO_DONE;
 		ip = mtod(m, struct ip *);
 		mip = mtod(m, struct mobip_h *);
 	}
@@ -308,7 +312,7 @@ gre_mobile_input(struct mbuf *m, int hlen, int proto)
 
 	if (gre_in_cksum((u_short *) &mip->mh, msiz) != 0) {
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	memmove(ip + (ip->ip_hl << 2), ip + (ip->ip_hl << 2) + msiz, 
@@ -331,6 +335,7 @@ gre_mobile_input(struct mbuf *m, int hlen, int proto)
 #endif
 
 	niq_enqueue(&ipintrq, m);
+	return IPPROTO_DONE;
 }
 
 /*

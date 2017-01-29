@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.140 2017/01/26 13:03:47 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.141 2017/01/29 19:58:47 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -148,7 +148,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	    (sproto == IPPROTO_IPCOMP && !ipcomp_enable)) {
 		switch (af) {
 		case AF_INET:
-			rip_input(m, skip, sproto);
+			rip_input(&m, &skip, sproto);
 			break;
 #ifdef INET6
 		case AF_INET6:
@@ -696,12 +696,12 @@ ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 }
 
 /* IPv4 AH wrapper. */
-void
-ah4_input(struct mbuf *m, int skip, int proto)
+int
+ah4_input(struct mbuf **mp, int *offp, int proto)
 {
-	ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
-	    IPPROTO_AH, 0);
-	return;
+	ipsec_common_input(*mp, *offp, offsetof(struct ip, ip_p), AF_INET,
+	    proto, 0);
+	return IPPROTO_DONE;
 }
 
 /* IPv4 AH callback. */
@@ -736,11 +736,12 @@ ah4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 }
 
 /* IPv4 ESP wrapper. */
-void
-esp4_input(struct mbuf *m, int skip, int proto)
+int
+esp4_input(struct mbuf **mp, int *offp, int proto)
 {
-	ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
-	    IPPROTO_ESP, 0);
+	ipsec_common_input(*mp, *offp, offsetof(struct ip, ip_p), AF_INET,
+	    proto, 0);
+	return IPPROTO_DONE;
 }
 
 /* IPv4 ESP callback. */
@@ -762,11 +763,12 @@ esp4_input_cb(struct mbuf *m, ...)
 }
 
 /* IPv4 IPCOMP wrapper */
-void
-ipcomp4_input(struct mbuf *m, int skip, int proto)
+int
+ipcomp4_input(struct mbuf **mp, int *offp, int proto)
 {
-	ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
-	    IPPROTO_IPCOMP, 0);
+	ipsec_common_input(*mp, *offp, offsetof(struct ip, ip_p), AF_INET,
+	    proto, 0);
+	return IPPROTO_DONE;
 }
 
 /* IPv4 IPCOMP callback */

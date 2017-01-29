@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.161 2017/01/26 13:03:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.162 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ int *icmpctl_vars[ICMPCTL_MAXID] = ICMPCTL_VARS;
 void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
 void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
-void icmp_input_if(struct ifnet *, struct mbuf *, int, int);
+int icmp_input_if(struct ifnet *, struct mbuf **, int *, int);
 
 void
 icmp_init(void)
@@ -303,24 +303,27 @@ icmp_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
 /*
  * Process a received ICMP message.
  */
-void
-icmp_input(struct mbuf *m, int hlen, int proto)
+int
+icmp_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct ifnet *ifp;
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	ifp = if_get((*mp)->m_pkthdr.ph_ifidx);
 	if (ifp == NULL) {
-		m_freem(m);
-		return;
+		m_freem(*mp);
+		return IPPROTO_DONE;
 	}
 
-	icmp_input_if(ifp, m, hlen, proto);
+	proto = icmp_input_if(ifp, mp, offp, proto);
 	if_put(ifp);
+	return proto;
 }
 
-void
-icmp_input_if(struct ifnet *ifp, struct mbuf *m, int hlen, int proto)
+int
+icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
+	int hlen = *offp;
 	struct icmp *icp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in sin;
@@ -351,7 +354,7 @@ icmp_input_if(struct ifnet *ifp, struct mbuf *m, int hlen, int proto)
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
 	if (m->m_len < i && (m = m_pullup(m, i)) == NULL) {
 		icmpstat.icps_tooshort++;
-		return;
+		return IPPROTO_DONE;
 	}
 	ip = mtod(m, struct ip *);
 	if (in4_cksum(m, 0, hlen, icmplen)) {
@@ -474,7 +477,7 @@ icmp_input_if(struct ifnet *ifp, struct mbuf *m, int hlen, int proto)
 				if ((m = m_pullup(m, (ip->ip_hl << 2) +
 				    ICMP_V6ADVLEN(icp))) == NULL) {
 					icmpstat.icps_tooshort++;
-					return;
+					return IPPROTO_DONE;
 				}
 				ip = mtod(m, struct ip *);
 				icp = (struct icmp *)
@@ -588,7 +591,7 @@ reflect:
 		icmpstat.icps_outhist[icp->icmp_type]++;
 		if (!icmp_reflect(m, &opts, NULL))
 			icmp_send(m, opts);
-		return;
+		return IPPROTO_DONE;
 
 	case ICMP_REDIRECT:
 	{
@@ -680,11 +683,11 @@ reflect:
 	}
 
 raw:
-	rip_input(m, hlen, proto);
-	return;
+	return rip_input(mp, offp, proto);
 
 freeit:
 	m_freem(m);
+	return IPPROTO_DONE;
 }
 
 /*

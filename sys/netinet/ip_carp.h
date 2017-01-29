@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.39 2017/01/25 17:34:31 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.40 2017/01/29 19:58:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -163,7 +163,7 @@ struct carpreq {
 
 #ifdef _KERNEL
 void		 carp_ifdetach (struct ifnet *);
-void		 carp_proto_input (struct mbuf *, int, int);
+int		 carp_proto_input(struct mbuf **, int *, int);
 void		 carp_carpdev_state(void *);
 void		 carp_group_demote_adj(struct ifnet *, int, char *);
 int		 carp6_proto_input(struct mbuf **, int *, int);

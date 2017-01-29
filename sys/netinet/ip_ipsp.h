@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.176 2017/01/26 13:03:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.177 2017/01/29 19:58:47 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -475,14 +475,10 @@ int	ipe4_attach(void);
 int	ipe4_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 int	ipe4_zeroize(struct tdb *);
 void	ipe4_input(struct mbuf *, int, int);
-void	ipip_input(struct mbuf *, int, struct ifnet *, int);
+int	ipip_input(struct mbuf **, int *, struct ifnet *, int);
 int	ipip_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 
-void	ip4_input(struct mbuf *, int, int);
-
-#ifdef INET6
-int	ip4_input6(struct mbuf **, int *, int);
-#endif /* INET6 */
+int	ip4_input(struct mbuf **, int *, int);
 
 /* XF_AH */
 int 	ah_attach(void);
@@ -492,7 +488,7 @@ int	ah_input(struct mbuf *, struct tdb *, int, int);
 int	ah_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	ah_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-void	ah4_input(struct mbuf *, int, int);
+int	ah4_input(struct mbuf **, int *, int);
 void	ah4_ctlinput(int, struct sockaddr *, u_int, void *);
 void	udpencap_ctlinput(int, struct sockaddr *, u_int, void *);
 
@@ -508,7 +504,7 @@ int	esp_input(struct mbuf *, struct tdb *, int, int);
 int	esp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-void	esp4_input(struct mbuf *, int, int);
+int	esp4_input(struct mbuf **, int *, int);
 void	esp4_ctlinput(int, struct sockaddr *, u_int, void *);
 
 #ifdef INET6
@@ -522,9 +518,7 @@ int	ipcomp_zeroize(struct tdb *);
 int	ipcomp_input(struct mbuf *, struct tdb *, int, int);
 int	ipcomp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	ipcomp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-
-void	ipcomp4_input(struct mbuf *, int, int);
-
+int	ipcomp4_input(struct mbuf **, int *, int);
 #ifdef INET6
 int	ipcomp6_input(struct mbuf **, int *, int);
 #endif /* INET6 */

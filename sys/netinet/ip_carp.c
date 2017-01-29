@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.300 2017/01/25 17:34:31 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.301 2017/01/29 19:58:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -214,7 +214,10 @@ int	carp_hmac_verify(struct carp_vhost_entry *, u_int32_t *,
 int	carp_input(struct ifnet *, struct mbuf *, void *);
 void	carp_proto_input_c(struct ifnet *, struct mbuf *,
 	    struct carp_header *, int, sa_family_t);
-void	carp_proto_input_if(struct ifnet *, struct mbuf *, int);
+int	carp_proto_input_if(struct ifnet *, struct mbuf **, int *, int);
+#ifdef INET6
+int	carp6_proto_input_if(struct ifnet *, struct mbuf **, int *, int);
+#endif
 void	carpattach(int);
 void	carpdetach(struct carp_softc *);
 int	carp_prepare_ad(struct mbuf *, struct carp_vhost_entry *,
@@ -411,19 +414,20 @@ carp_hmac_verify(struct carp_vhost_entry *vhe, u_int32_t counter[2],
 	return (1);
 }
 
-void
-carp_proto_input(struct mbuf *m, int hlen, int proto)
+int
+carp_proto_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct ifnet *ifp;
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	ifp = if_get((*mp)->m_pkthdr.ph_ifidx);
 	if (ifp == NULL) {
-		m_freem(m);
-		return;
+		m_freem(*mp);
+		return IPPROTO_DONE;
 	}
 
-	carp_proto_input_if(ifp, m, hlen);
+	proto = carp_proto_input_if(ifp, mp, offp, proto);
 	if_put(ifp);
+	return proto;
 }
 
 /*
@@ -431,9 +435,10 @@ carp_proto_input(struct mbuf *m, int hlen, int proto)
  * we have rearranged checks order compared to the rfc,
  * but it seems more efficient this way or not possible otherwise.
  */
-void
-carp_proto_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
+int
+carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct carp_softc *sc = NULL;
 	struct carp_header *ch;
@@ -443,7 +448,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	ismulti = IN_MULTICAST(ip->ip_dst.s_addr);
@@ -456,7 +461,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
 		    ("packet received on non-carp interface: %s",
 		     ifp->if_xname));
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	/* verify that the IP TTL is 255.  */
@@ -465,7 +470,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
 		CARP_LOG(LOG_NOTICE, sc, ("received ttl %d != %d on %s",
 		    ip->ip_ttl, CARP_DFLTTL, ifp->if_xname));
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	/*
@@ -479,12 +484,12 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
 		CARP_LOG(LOG_INFO, sc, ("packet too short %d on %s",
 		    m->m_pkthdr.len, ifp->if_xname));
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	if ((m = m_pullup(m, len)) == NULL) {
 		carpstats.carps_hdrops++;
-		return;
+		return IPPROTO_DONE;
 	}
 	ip = mtod(m, struct ip *);
 	ch = (struct carp_header *)(mtod(m, caddr_t) + iplen);
@@ -496,38 +501,35 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
 		CARP_LOG(LOG_INFO, sc, ("checksum failed on %s",
 		    ifp->if_xname));
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 	m->m_data -= iplen;
 
 	carp_proto_input_c(ifp, m, ch, ismulti, AF_INET);
+	return IPPROTO_DONE;
 }
 
 #ifdef INET6
-int	carp6_proto_input_if(struct ifnet *, struct mbuf *, int *);
-
 int
 carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 {
-	struct mbuf *m = *mp;
 	struct ifnet *ifp;
-	int rv;
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	ifp = if_get((*mp)->m_pkthdr.ph_ifidx);
 	if (ifp == NULL) {
-		m_freem(m);
-		return (IPPROTO_DONE);
+		m_freem(*mp);
+		return IPPROTO_DONE;
 	}
 
-	rv = carp6_proto_input_if(ifp, m, offp);
+	proto = carp6_proto_input_if(ifp, mp, offp, proto);
 	if_put(ifp);
-
-	return (rv);
+	return proto;
 }
 
 int
-carp6_proto_input_if(struct ifnet *ifp, struct mbuf *m, int *offp)
+carp6_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
 	struct carp_softc *sc = NULL;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct carp_header *ch;
@@ -537,7 +539,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf *m, int *offp)
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
 		m_freem(m);
-		return (IPPROTO_DONE);
+		return IPPROTO_DONE;
 	}
 
 	/* check if received on a valid carp interface */
@@ -546,7 +548,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf *m, int *offp)
 		CARP_LOG(LOG_INFO, sc, ("packet received on non-carp interface: %s",
 		    ifp->if_xname));
 		m_freem(m);
-		return (IPPROTO_DONE);
+		return IPPROTO_DONE;
 	}
 
 	/* verify that the IP TTL is 255 */
@@ -555,7 +557,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf *m, int *offp)
 		CARP_LOG(LOG_NOTICE, sc, ("received ttl %d != %d on %s",
 		    ip6->ip6_hlim, CARP_DFLTTL, ifp->if_xname));
 		m_freem(m);
-		return (IPPROTO_DONE);
+		return IPPROTO_DONE;
 	}
 
 	/* verify that we have a complete carp packet */
@@ -563,7 +565,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf *m, int *offp)
 	if ((m = m_pullup(m, *offp + sizeof(*ch))) == NULL) {
 		carpstats.carps_badlen++;
 		CARP_LOG(LOG_INFO, sc, ("packet size %u too small", len));
-		return (IPPROTO_DONE);
+		return IPPROTO_DONE;
 	}
 	ch = (struct carp_header *)(mtod(m, caddr_t) + *offp);
 
@@ -574,12 +576,12 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf *m, int *offp)
 		CARP_LOG(LOG_INFO, sc, ("checksum failed, on %s",
 		    ifp->if_xname));
 		m_freem(m);
-		return (IPPROTO_DONE);
+		return IPPROTO_DONE;
 	}
 	m->m_data -= *offp;
 
 	carp_proto_input_c(ifp, m, ch, 1, AF_INET6);
-	return (IPPROTO_DONE);
+	return IPPROTO_DONE;
 }
 #endif /* INET6 */
 

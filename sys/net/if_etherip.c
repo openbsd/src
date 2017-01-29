@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.13 2017/01/25 17:34:31 bluhm Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.14 2017/01/29 19:58:47 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -404,9 +404,10 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	return ip_output(m, NULL, NULL, IP_RAWOUTPUT, NULL, NULL, 0);
 }
 
-void
-ip_etherip_input(struct mbuf *m, int off, int proto)
+int
+ip_etherip_input(struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct etherip_softc *sc;
 	const struct ip *ip;
@@ -419,13 +420,13 @@ ip_etherip_input(struct mbuf *m, int off, int proto)
 	if (ip->ip_p != IPPROTO_ETHERIP) {
 		m_freem(m);
 		ipstat_inc(ips_noproto);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	if (!etherip_allow) {
 		m_freem(m);
 		etheripstat.etherip_pdrops++;
-		return;
+		return IPPROTO_DONE;
 	}
 
 	LIST_FOREACH(sc, &etherip_softc_list, sc_entry) {
@@ -452,26 +453,26 @@ ip_etherip_input(struct mbuf *m, int off, int proto)
 		 * This is tricky but the path will be removed soon when
 		 * implementation of etherip is removed from gif(4).
 		 */
-		etherip_input(m, off, proto);
+		return etherip_input(mp, offp, proto);
 #else
 		etheripstat.etherip_noifdrops++;
 		m_freem(m);
+		return IPPROTO_DONE;
 #endif /* NGIF */
-		return;
 	}
 
-	m_adj(m, off);
+	m_adj(m, *offp);
 	m = m_pullup(m, sizeof(struct etherip_header));
 	if (m == NULL) {
 		etheripstat.etherip_adrops++;
-		return;
+		return IPPROTO_DONE;
 	}
 
 	eip = mtod(m, struct etherip_header *);
 	if (eip->eip_ver != ETHERIP_VERSION || eip->eip_pad) {
 		etheripstat.etherip_adrops++;
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	etheripstat.etherip_ipackets++;
@@ -482,7 +483,7 @@ ip_etherip_input(struct mbuf *m, int off, int proto)
 	m = m_pullup(m, sizeof(struct ether_header));
 	if (m == NULL) {
 		etheripstat.etherip_adrops++;
-		return;
+		return IPPROTO_DONE;
 	}
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
@@ -492,6 +493,7 @@ ip_etherip_input(struct mbuf *m, int off, int proto)
 
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
+	return IPPROTO_DONE;
 }
 
 #ifdef INET6
@@ -569,7 +571,6 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	int off = *offp;
 	struct etherip_softc *sc;
 	const struct ip6_hdr *ip6;
 	struct etherip_header *eip;
@@ -612,7 +613,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 		 * This is tricky but the path will be removed soon when
 		 * implementation of etherip is removed from gif(4).
 		 */
-		return etherip_input6(mp, offp, proto);
+		return etherip_input(mp, offp, proto);
 #else
 		etheripstat.etherip_noifdrops++;
 		m_freem(m);
@@ -620,7 +621,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 #endif /* NGIF */
 	}
 
-	m_adj(m, off);
+	m_adj(m, *offp);
 	m = m_pullup(m, sizeof(struct etherip_header));
 	if (m == NULL) {
 		etheripstat.etherip_adrops++;
@@ -652,10 +653,8 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
-
 	return IPPROTO_DONE;
 }
-
 #endif /* INET6 */
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.71 2016/12/22 11:04:44 rzalamena Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.72 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ struct protosw inetsw[] = {
 #endif /* NPFSYNC > 0 */
 #if NPF > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_DIVERT,	PR_ATOMIC|PR_ADDR,
-  divert_input,	0,		0,		rip_ctloutput,
+  0,		0,		0,		rip_ctloutput,
   divert_usrreq,
   divert_init,	0,		0,		0,		divert_sysctl
 },

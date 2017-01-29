@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.228 2017/01/26 13:03:47 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.229 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -147,20 +147,11 @@ udp_init(void)
 	in_pcbinit(&udbtable, UDB_INITIAL_HASH_SIZE);
 }
 
-#ifdef INET6
 int
-udp6_input(struct mbuf **mp, int *offp, int proto)
+udp_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
-
-	udp_input(m, *offp, proto);
-	return IPPROTO_DONE;
-}
-#endif
-
-void
-udp_input(struct mbuf *m, int iphlen, int proto)
-{
+	int iphlen = *offp;
 	struct ip *ip;
 	struct udphdr *uh;
 	struct inpcb *inp = NULL;
@@ -218,7 +209,7 @@ udp_input(struct mbuf *m, int iphlen, int proto)
 	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
 	if (!uh) {
 		udpstat_inc(udps_hdrops);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	/* Check for illegal destination port 0 */
@@ -324,7 +315,7 @@ udp_input(struct mbuf *m, int iphlen, int proto)
 		if (m->m_pkthdr.len - skip < sizeof(u_int32_t)) {
 			/* packet too short */
 			m_freem(m);
-			return;
+			return IPPROTO_DONE;
 		}
 		m_copydata(m, skip, sizeof(u_int32_t), (caddr_t) &spi);
 		/*
@@ -334,7 +325,7 @@ udp_input(struct mbuf *m, int iphlen, int proto)
 		if (spi != 0) {
 			if ((m = m_pullup(m, skip)) == NULL) {
 				udpstat_inc(udps_hdrops);
-				return;
+				return IPPROTO_DONE;
 			}
 
 			/* remove the UDP header */
@@ -346,7 +337,7 @@ udp_input(struct mbuf *m, int iphlen, int proto)
 			espstat.esps_udpencin++;
 			ipsec_common_input(m, skip, protoff,
 			    srcsa.sa.sa_family, IPPROTO_ESP, 1);
-			return;
+			return IPPROTO_DONE;
 		}
 	}
 #endif
@@ -396,7 +387,7 @@ udp_input(struct mbuf *m, int iphlen, int proto)
 	    !(m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) &&
 #endif
 	    vxlan_lookup(m, uh, iphlen, &srcsa.sa, &dstsa.sa) != 0)
-		return;
+		return IPPROTO_DONE;
 #endif
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
@@ -548,7 +539,7 @@ udp_input(struct mbuf *m, int iphlen, int proto)
 			goto bad;
 		}
 		sorwakeup(last->inp_socket);
-		return;
+		return IPPROTO_DONE;
 	}
 	/*
 	 * Locate pcb for datagram.
@@ -601,7 +592,7 @@ udp_input(struct mbuf *m, int iphlen, int proto)
 				icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT,
 				    0, 0);
 			}
-			return;
+			return IPPROTO_DONE;
 		}
 	}
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
@@ -686,7 +677,8 @@ udp_input(struct mbuf *m, int iphlen, int proto)
 			if ((m = pipex_l2tp_input(m, off, session,
 			    ipsecflowinfo)) == NULL) {
 				m_freem(opts);
-				return; /* the packet is handled by PIPEX */
+				/* the packet is handled by PIPEX */
+				return IPPROTO_DONE;
 			}
 		}
 	}
@@ -699,10 +691,11 @@ udp_input(struct mbuf *m, int iphlen, int proto)
 		goto bad;
 	}
 	sorwakeup(inp->inp_socket);
-	return;
+	return IPPROTO_DONE;
 bad:
 	m_freem(m);
 	m_freem(opts);
+	return IPPROTO_DONE;
 }
 
 /*

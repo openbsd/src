@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.61 2017/01/25 17:34:31 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.62 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ void igmp_checktimer(struct ifnet *);
 void igmp_sendpkt(struct ifnet *, struct in_multi *, int, in_addr_t);
 int rti_fill(struct in_multi *);
 struct router_info * rti_find(struct ifnet *);
-void igmp_input_if(struct ifnet *, struct mbuf *, int, int);
+int igmp_input_if(struct ifnet *, struct mbuf **, int *, int);
 int igmp_sysctl_igmpstat(void *, size_t *, void *);
 
 void
@@ -208,26 +208,29 @@ rti_delete(struct ifnet *ifp)
 	}
 }
 
-void
-igmp_input(struct mbuf *m, int iphlen, int proto)
+int
+igmp_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct ifnet *ifp;
 
 	igmpstat_inc(igps_rcv_total);
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	ifp = if_get((*mp)->m_pkthdr.ph_ifidx);
 	if (ifp == NULL) {
-		m_freem(m);
-		return;
+		m_freem(*mp);
+		return IPPROTO_DONE;
 	}
 
-	igmp_input_if(ifp, m, iphlen, proto);
+	proto = igmp_input_if(ifp, mp, offp, proto);
 	if_put(ifp);
+	return proto;
 }
 
-void
-igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen, int proto)
+int
+igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
+	int iphlen = *offp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct igmp *igmp;
 	int igmplen;
@@ -246,13 +249,13 @@ igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen, int proto)
 	if (igmplen < IGMP_MINLEN) {
 		igmpstat_inc(igps_rcv_tooshort);
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 	minlen = iphlen + IGMP_MINLEN;
 	if ((m->m_flags & M_EXT || m->m_len < minlen) &&
 	    (m = m_pullup(m, minlen)) == NULL) {
 		igmpstat_inc(igps_rcv_tooshort);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	/*
@@ -264,7 +267,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen, int proto)
 	if (in_cksum(m, igmplen)) {
 		igmpstat_inc(igps_rcv_badsum);
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 	m->m_data -= iphlen;
 	m->m_len += iphlen;
@@ -282,7 +285,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen, int proto)
 			rti = rti_find(ifp);
 			if (rti == NULL) {
 				m_freem(m);
-				return;
+				return IPPROTO_DONE;
 			}
 			rti->rti_type = IGMP_v1_ROUTER;
 			rti->rti_age = 0;
@@ -290,7 +293,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen, int proto)
 			if (ip->ip_dst.s_addr != INADDR_ALLHOSTS_GROUP) {
 				igmpstat_inc(igps_rcv_badqueries);
 				m_freem(m);
-				return;
+				return IPPROTO_DONE;
 			}
 
 			/*
@@ -315,7 +318,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen, int proto)
 			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
 				igmpstat_inc(igps_rcv_badqueries);
 				m_freem(m);
-				return;
+				return IPPROTO_DONE;
 			}
 
 			timer = igmp->igmp_code * PR_FASTHZ / IGMP_TIMER_SCALE;
@@ -372,7 +375,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen, int proto)
 		    igmp->igmp_group.s_addr != ip->ip_dst.s_addr) {
 			igmpstat_inc(igps_rcv_badreports);
 			m_freem(m);
-			return;
+			return IPPROTO_DONE;
 		}
 
 		/*
@@ -438,7 +441,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen, int proto)
 		    igmp->igmp_group.s_addr != ip->ip_dst.s_addr) {
 			igmpstat_inc(igps_rcv_badreports);
 			m_freem(m);
-			return;
+			return IPPROTO_DONE;
 		}
 
 		/*
@@ -487,7 +490,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen, int proto)
 	 * Pass all valid IGMP packets up to any process(es) listening
 	 * on a raw IGMP socket.
 	 */
-	rip_input(m, iphlen, proto);
+	return rip_input(mp, offp, proto);
 }
 
 void

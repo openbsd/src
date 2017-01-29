@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.174 2016/12/27 18:45:01 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.175 2017/01/29 19:58:47 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -138,16 +138,16 @@ static struct task ip6send_task =
 void
 ip6_init(void)
 {
-	struct ip6protosw *pr;
+	struct protosw *pr;
 	int i;
 
-	pr = (struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
+	pr = pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
 	if (pr == NULL)
 		panic("ip6_init");
 	for (i = 0; i < IPPROTO_MAX; i++)
 		ip6_protox[i] = pr - inet6sw;
-	for (pr = (struct ip6protosw *)inet6domain.dom_protosw;
-	    pr < (struct ip6protosw *)inet6domain.dom_protoswNPROTOSW; pr++)
+	for (pr = inet6domain.dom_protosw;
+	    pr < inet6domain.dom_protoswNPROTOSW; pr++)
 		if (pr->pr_domain->dom_family == PF_INET6 &&
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW &&
 		    pr->pr_protocol < IPPROTO_MAX)
@@ -920,8 +920,8 @@ ip6_unknown_opt(u_int8_t *optp, struct mbuf *m, int off)
 /*
  * Create the "control" list for this pcb.
  *
- * The routine will be called from upper layer handlers like tcp6_input().
- * Thus the routine assumes that the caller (tcp6_input) have already
+ * The routine will be called from upper layer handlers like udp_input().
+ * Thus the routine assumes that the caller (udp_input) have already
  * called IP6_EXTHDR_CHECK() and all the extension headers are located in the
  * very first mbuf on the mbuf chain.
  * We may want to add some infinite loop prevention or sanity checks for safety.

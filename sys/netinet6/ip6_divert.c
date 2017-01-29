@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.43 2016/12/19 08:36:50 mpi Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.44 2017/01/29 19:58:47 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -71,14 +71,6 @@ void
 divert6_init(void)
 {
 	in_pcbinit(&divb6table, divb6hashsize);
-}
-
-int
-divert6_input(struct mbuf **mp, int *offp, int proto)
-{
-	m_freem(*mp);
-
-	return (0);
 }
 
 int
