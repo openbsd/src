@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.7 2017/01/26 12:16:13 beck Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.8 2017/01/29 15:31:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,14 +123,6 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     unsigned int len, int create_empty_fragment);
 static int ssl3_get_record(SSL *s);
 
-/* If extend == 0, obtain new n-byte packet; if extend == 1, increase
- * packet by another n bytes.
- * The packet will be in the sub-array of s->s3->rbuf.buf specified
- * by s->internal->packet and s->internal->packet_length.
- * (If s->internal->read_ahead is set, 'max' bytes may be stored in rbuf
- * [plus s->internal->packet_length bytes if extend == 1].)
- */
-
 /*
  * Force a WANT_READ return for certain error conditions where
  * we don't want to spin internally.
@@ -146,6 +138,14 @@ ssl_force_want_read(SSL *s)
 	s->internal->rwstate = SSL_READING;
 }
 
+/*
+ * If extend == 0, obtain new n-byte packet; if extend == 1, increase
+ * packet by another n bytes.
+ * The packet will be in the sub-array of s->s3->rbuf.buf specified
+ * by s->internal->packet and s->internal->packet_length.
+ * (If s->internal->read_ahead is set, 'max' bytes may be stored in rbuf
+ * [plus s->internal->packet_length bytes if extend == 1].)
+ */
 static int
 ssl3_read_n(SSL *s, int n, int max, int extend)
 {
