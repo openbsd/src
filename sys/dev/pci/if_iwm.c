@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.159 2017/01/29 09:41:36 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.160 2017/01/29 09:44:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -409,8 +409,6 @@ int	iwm_add_sta_cmd(struct iwm_softc *, struct iwm_node *, int);
 int	iwm_add_aux_sta(struct iwm_softc *);
 uint16_t iwm_scan_rx_chain(struct iwm_softc *);
 uint32_t iwm_scan_rate_n_flags(struct iwm_softc *, int, int);
-uint16_t iwm_get_active_dwell(struct iwm_softc *, int, int);
-uint16_t iwm_get_passive_dwell(struct iwm_softc *, int);
 uint8_t	iwm_lmac_scan_fill_channels(struct iwm_softc *,
 	    struct iwm_scan_channel_cfg_lmac *, int);
 int	iwm_fill_probe_req(struct iwm_softc *, struct iwm_scan_probe_req *);
@@ -4459,12 +4457,6 @@ iwm_add_aux_sta(struct iwm_softc *sc)
 	return err;
 }
 
-#define IWM_PLCP_QUIET_THRESH 1
-#define IWM_ACTIVE_QUIET_TIME 10
-#define LONG_OUT_TIME_PERIOD 600
-#define SHORT_OUT_TIME_PERIOD 200
-#define SUSPEND_TIME_PERIOD 100
-
 uint16_t
 iwm_scan_rx_chain(struct iwm_softc *sc)
 {
@@ -4500,30 +4492,6 @@ iwm_scan_rate_n_flags(struct iwm_softc *sc, int flags, int no_cck)
 				   tx_ant);
 	else
 		return htole32(IWM_RATE_6M_PLCP | tx_ant);
-}
-
-/*
- * If req->n_ssids > 0, it means we should do an active scan.
- * In case of active scan w/o directed scan, we receive a zero-length SSID
- * just to notify that this scan is active and not passive.
- * In order to notify the FW of the number of SSIDs we wish to scan (including
- * the zero-length one), we need to set the corresponding bits in chan->type,
- * one for each SSID, and set the active bit (first). If the first SSID is
- * already included in the probe template, so we need to set only
- * req->n_ssids - 1 bits in addition to the first bit.
- */
-uint16_t
-iwm_get_active_dwell(struct iwm_softc *sc, int flags, int n_ssids)
-{
-	if (flags & IEEE80211_CHAN_2GHZ)
-		return 30  + 3 * (n_ssids + 1);
-	return 20  + 2 * (n_ssids + 1);
-}
-
-uint16_t
-iwm_get_passive_dwell(struct iwm_softc *sc, int flags)
-{
-	return (flags & IEEE80211_CHAN_2GHZ) ? 100 + 20 : 100 + 10;
 }
 
 uint8_t
