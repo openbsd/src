@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.4 2017/01/26 12:16:13 beck Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.5 2017/01/29 15:20:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -523,7 +523,6 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	if (s->internal->mac_packet) {
 		tls1_finish_mac(s, (unsigned char *)s->internal->init_buf->data,
 		    s->internal->init_num + 4);
-		s->internal->mac_packet = 0;
 
 		if (s->internal->msg_callback)
 			s->internal->msg_callback(0, s->version,
