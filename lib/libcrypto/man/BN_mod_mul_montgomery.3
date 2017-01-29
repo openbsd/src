@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_mod_mul_montgomery.3,v 1.5 2016/12/10 21:13:25 schwarze Exp $
+.\"	$OpenBSD: BN_mod_mul_montgomery.3,v 1.6 2017/01/29 23:41:49 schwarze Exp $
 .\"	OpenSSL 6859cf74 Sep 25 13:33:28 2002 +0000
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: January 29 2017 $
 .Dt BN_MOD_MUL_MONTGOMERY 3
 .Os
 .Sh NAME
@@ -119,9 +119,12 @@ operations are to be performed using the same modulus.
 allocates and initializes a
 .Vt BN_MONT_CTX
 structure.
+.Pp
 .Fn BN_MONT_CTX_init
 initializes an existing uninitialized
 .Vt BN_MONT_CTX .
+It is deprecated and dangerous, see
+.Sx CAVEATS .
 .Pp
 .Fn BN_MONT_CTX_set
 sets up the
@@ -213,8 +216,7 @@ The error codes can be obtained by
 .Sh SEE ALSO
 .Xr BN_add 3 ,
 .Xr BN_CTX_new 3 ,
-.Xr BN_new 3 ,
-.Xr ERR_get_error 3
+.Xr BN_new 3
 .Sh HISTORY
 .Fn BN_MONT_CTX_new ,
 .Fn BN_MONT_CTX_free ,
@@ -229,3 +231,20 @@ are available in all versions of SSLeay and OpenSSL.
 and
 .Fn BN_MONT_CTX_copy
 were added in SSLeay 0.9.1b.
+.Sh CAVEATS
+.Fn BN_MONT_CTX_init
+must not be called on a context that was used previously, or
+memory used by the embedded
+.Vt BIGNUM
+structures is leaked immediately.
+Besides, it must not be called on a context created with
+.Fn BN_MONT_CTX_new ,
+or the context itself will likely be leaked later.
+It can only be used on a static
+.Vt BN_MONT_CTX
+structure, on one located on the stack, or on one
+.Xr malloc 3 Ap ed
+manually, but all these options are discouraged because they
+will no longer work once
+.Vt BN_MONT_CTX
+will be made opaque.
