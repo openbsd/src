@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.158 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.159 2017/01/29 09:41:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -525,6 +525,8 @@ iwm_firmware_store_section(struct iwm_softc *sc, enum iwm_ucode_type type,
 	return 0;
 }
 
+#define IWM_DEFAULT_SCAN_CHANNELS 40
+
 struct iwm_tlv_calib_data {
 	uint32_t ucode_type;
 	struct iwm_tlv_calib_ctrl calib;
@@ -588,7 +590,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	}
 
 	sc->sc_capaflags = 0;
-	sc->sc_capa_n_scan_channels = IWM_MAX_NUM_SCAN_CHANNELS;
+	sc->sc_capa_n_scan_channels = IWM_DEFAULT_SCAN_CHANNELS;
 	memset(sc->sc_enabled_capa, 0, sizeof(sc->sc_enabled_capa));
 	memset(sc->sc_fw_mcc, 0, sizeof(sc->sc_fw_mcc));
 
@@ -6636,7 +6638,6 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_PHY_CONTEXT_CMD:
 		case IWM_BINDING_CONTEXT_CMD:
 		case IWM_TIME_EVENT_CMD:
-		case IWM_SCAN_REQUEST_CMD:
 		case IWM_WIDE_ID(IWM_ALWAYS_LONG_GROUP, IWM_SCAN_CFG_CMD):
 		case IWM_WIDE_ID(IWM_ALWAYS_LONG_GROUP, IWM_SCAN_REQ_UMAC):
 		case IWM_SCAN_OFFLOAD_REQUEST_CMD:
