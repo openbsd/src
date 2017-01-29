@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.37 2016/12/18 11:15:02 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.38 2017/01/29 15:16:14 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -896,7 +896,7 @@ ieee80211_frame(struct ieee80211_frame *wh, u_int len)
 		case IEEE80211_FC0_SUBTYPE_BAR:
 		case IEEE80211_FC0_SUBTYPE_BA:
 			TCHECK2(*t, 2); /* Duration */
-			printf(", duration %dms", (t[0] | t[1] << 8));
+			printf(", duration %dus", (t[0] | t[1] << 8));
 			t += 2;
 			TCHECK2(*t, 6); /* RA */
 			printf(", ra %s", etheraddr_string(t));
@@ -927,7 +927,7 @@ ieee80211_frame(struct ieee80211_frame *wh, u_int len)
 		case IEEE80211_FC0_SUBTYPE_CTS:
 		case IEEE80211_FC0_SUBTYPE_ACK:
 			TCHECK2(*t, 2); /* Duration */
-			printf(", duration %dms", (t[0] | t[1] << 8));
+			printf(", duration %dus", (t[0] | t[1] << 8));
 			t += 2;
 			TCHECK2(*t, 6); /* RA */
 			printf(", ra %s", etheraddr_string(t));
