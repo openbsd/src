@@ -1,15 +1,17 @@
-#	$OpenBSD: Makefile,v 1.56 2015/06/01 17:36:19 miod Exp $
+#	$OpenBSD: Makefile,v 1.57 2017/01/29 03:48:08 jsg Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
 
 .if make(obj)
-SUBDIR+=	cc gcc
+SUBDIR+=	cc clang gcc
 .else
 .  if ${COMPILER_VERSION:L} == "gcc3"
 SUBDIR+=	gcc
-.  else
+.  elif ${COMPILER_VERSION:L} == "gcc4"
 SUBDIR+=	cc
+.  elif ${COMPILER_VERSION:L} == "clang"
+SUBDIR+=	clang
 .  endif
 .endif
 
