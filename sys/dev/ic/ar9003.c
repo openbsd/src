@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.43 2017/01/22 10:17:37 dlg Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.44 2017/01/30 09:42:14 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1600,7 +1600,9 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	ds->ds_ctl17 = SM(AR_TXC17_ENCR_TYPE, encrtype);
 
 	/* Check if frame must be protected using RTS/CTS or CTS-to-self. */
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	    IEEE80211_FC0_TYPE_DATA) {
 		/* NB: Group frames are sent using CCK in 802.11b/g. */
 		if (totlen > ic->ic_rtsthreshold) {
 			ds->ds_ctl11 |= AR_TXC11_RTS_ENABLE;

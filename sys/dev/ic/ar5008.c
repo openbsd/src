@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.39 2017/01/22 10:17:37 dlg Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.40 2017/01/30 09:42:14 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1500,7 +1500,9 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	ds->ds_ctl6 = SM(AR_TXC6_ENCR_TYPE, encrtype);
 
 	/* Check if frame must be protected using RTS/CTS or CTS-to-self. */
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	    IEEE80211_FC0_TYPE_DATA) {
 		enum ieee80211_htprot htprot;
 		
 		htprot = (ic->ic_bss->ni_htop1 & IEEE80211_HTOP1_PROT_MASK);
