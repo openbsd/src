@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.62 2016/05/17 03:12:39 deraadt Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.63 2017/01/30 09:54:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -399,8 +399,6 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 		goto fail;
 	case 0:
 		/* Connection is already finished */
-		evbuffer_free(evb);
-		evb = NULL;
 		goto done;
 	default:
 		break;
@@ -408,9 +406,6 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 
 	if (server_bufferevent_write_buffer(clt, evb) == -1)
 		goto fail;
-
-	evbuffer_free(evb);
-	evb = NULL;
 
 	bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
 	if (clt->clt_persist)
@@ -420,6 +415,7 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 	clt->clt_done = 0;
 
  done:
+	evbuffer_free(evb);
 	server_reset_http(clt);
 	return (0);
  fail:
@@ -427,6 +423,8 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 	bufferevent_free(clt->clt_bev);
 	clt->clt_bev = NULL;
  abort:
+	if (evb != NULL)
+		evbuffer_free(evb);
 	if (fd != -1)
 		close(fd);
 	if (errstr == NULL)
