@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.112 2017/01/07 00:45:04 schwarze Exp $
+# $OpenBSD: Makefile,v 1.113 2017/01/30 01:29:31 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,7 @@ MAN=	\
 	BN_num_bytes.3 \
 	BN_rand.3 \
 	BN_set_bit.3 \
+	BN_set_flags.3 \
 	BN_set_negative.3 \
 	BN_swap.3 \
 	BN_zero.3 \
