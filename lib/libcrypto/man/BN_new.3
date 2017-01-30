@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_new.3,v 1.8 2017/01/30 01:29:31 schwarze Exp $
+.\"	$OpenBSD: BN_new.3,v 1.9 2017/01/30 07:51:27 jmc Exp $
 .\"	OpenSSL doc/man3/BN_new.pod 2457c19d Mar 6 08:43:36 2004 +0000
 .\"	OpenSSL doc/man7/bn.pod 05ea606a May 20 20:52:46 2016 -0400
 .\"
@@ -106,7 +106,7 @@ structure.
 .Fn BN_init
 initializes an existing uninitialized
 .Vt BIGNUM .
-It is deprecated and dangerous, see
+It is deprecated and dangerous: see
 .Sx CAVEATS .
 .Pp
 .Fn BN_clear
@@ -190,4 +190,4 @@ structures
 manually, but all of these options are discouraged because they
 will no longer work once the
 .Vt BIGNUM
-data type will be made opaque.
+data type is made opaque.
