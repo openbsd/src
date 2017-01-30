@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.12 2017/01/26 10:57:37 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.13 2017/01/30 16:25:50 jca Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1439,14 +1439,15 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 {
 	const struct r92c_fw_hdr *hdr;
 	u_char *fw, *ptr;
-	size_t len;
+	size_t len0, len;
 	uint32_t reg;
 	int mlen, ntries, page, error;
 
 	/* Read firmware image from the filesystem. */
-	error = sc->sc_ops.load_firmware(sc->sc_ops.cookie, &fw, &len);
+	error = sc->sc_ops.load_firmware(sc->sc_ops.cookie, &fw, &len0);
 	if (error)
 		return (error);
+	len = len0;
 	if (len < sizeof(*hdr)) {
 		printf("%s: firmware too short\n", sc->sc_pdev->dv_xname);
 		error = EINVAL;
@@ -1537,7 +1538,7 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 		goto fail;
 	}
  fail:
-	free(fw, M_DEVBUF, len);
+	free(fw, M_DEVBUF, len0);
 	return (error);
 }
 
