@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.90 2017/01/26 04:38:27 rpe Exp $
+# $OpenBSD: syspatch.sh,v 1.91 2017/01/30 15:36:20 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -286,7 +286,6 @@ readonly _BSDMP _KERNV _MIRROR _OSrev _PDIR _TMP
 
 trap 'set +e; rm -rf "${_TMP}"' EXIT
 trap exit HUP INT TERM
-
 
 while getopts clr arg; do
 	case ${arg} in
