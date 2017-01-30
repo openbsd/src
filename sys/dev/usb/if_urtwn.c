@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.68 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.69 2017/01/30 21:54:30 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -326,6 +326,8 @@ void		urtwn_cancel_scan(void *);
 int		urtwn_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 void		urtwn_newstate_cb(struct urtwn_softc *, void *);
+void		urtwn_updateslot(struct ieee80211com *);
+void		urtwn_updateslot_cb(struct urtwn_softc *, void *);
 void		urtwn_updateedca(struct ieee80211com *);
 void		urtwn_updateedca_cb(struct urtwn_softc *, void *);
 int		urtwn_set_key(struct ieee80211com *, struct ieee80211_node *,
@@ -447,6 +449,7 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_sc.sc_ic.ic_if;
 	ifp->if_ioctl = urtwn_ioctl;
 
+	ic->ic_updateslot = urtwn_updateslot;
 	ic->ic_updateedca = urtwn_updateedca;
 #ifdef notyet
 	ic->ic_set_key = urtwn_set_key;
@@ -929,6 +932,26 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
 
 	rtwn_newstate(ic, cmd->state, cmd->arg);
+}
+
+void
+urtwn_updateslot(struct ieee80211com *ic)
+{
+	struct rtwn_softc *sc_sc = ic->ic_softc;
+	struct device *self = sc_sc->sc_pdev;
+	struct urtwn_softc *sc = (struct urtwn_softc *)self;
+
+	/* Do it in a process context. */
+	urtwn_do_async(sc, urtwn_updateslot_cb, NULL, 0);
+}
+
+/* ARGSUSED */
+void
+urtwn_updateslot_cb(struct urtwn_softc *sc, void *arg)
+{
+	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
+
+	rtwn_updateslot(ic);
 }
 
 void

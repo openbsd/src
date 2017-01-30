@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.7 2016/06/17 10:53:55 stsp Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.8 2017/01/30 21:54:30 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -110,6 +110,7 @@ void		rtwn_update_avgrssi(struct rtwn_softc *, int, int8_t);
 void		rtwn_calib(struct rtwn_softc *);
 void		rtwn_next_scan(struct rtwn_softc *);
 int		rtwn_newstate(struct ieee80211com *, enum ieee80211_state, int);
+void		rtwn_updateslot(struct ieee80211com *);
 void		rtwn_updateedca(struct ieee80211com *);
 int		rtwn_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
