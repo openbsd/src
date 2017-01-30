@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.13 2017/01/30 16:25:50 jca Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.14 2017/01/30 17:48:26 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -89,6 +89,8 @@ int		rtwn_r88e_ra_init(struct rtwn_softc *, u_int8_t, u_int32_t,
 		    int, uint32_t, int);
 void		rtwn_tsf_sync_enable(struct rtwn_softc *);
 void		rtwn_set_led(struct rtwn_softc *, int, int);
+void		rtwn_update_short_preamble(struct ieee80211com *);
+void		rtwn_updateslot(struct ieee80211com *);
 void		rtwn_updateedca(struct ieee80211com *);
 void		rtwn_update_avgrssi(struct rtwn_softc *, int, int8_t);
 int8_t		rtwn_r88e_get_rssi(struct rtwn_softc *, int, void *);
@@ -238,6 +240,7 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc, uint32_t chip_type)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+	ic->ic_updateslot = rtwn_updateslot;
 	ic->ic_updateedca = rtwn_updateedca;
 #ifdef notyet
 	ic->ic_set_key = rtwn_set_key;
@@ -905,6 +908,9 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		rtwn_write_4(sc, R92C_EDCA_BE_PARAM, 0x00105320);
 		rtwn_write_4(sc, R92C_EDCA_BK_PARAM, 0x0000a444);
 
+		rtwn_updateslot(ic);
+		rtwn_update_short_preamble(ic);
+
 		/* Disable 11b-only AP workaround (see rtwn_r88e_ra_init). */
 		sc->sc_flags &= ~RTWN_FLAG_FORCE_RAID_11B;
 	}
@@ -986,6 +992,9 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		else	/* 802.11b/g */
 			rtwn_write_1(sc, R92C_INIRTS_RATE_SEL, 3);
 
+		rtwn_updateslot(ic);
+		rtwn_update_short_preamble(ic);
+
 		/* Enable Rx of data frames. */
 		rtwn_write_2(sc, R92C_RXFLTMAP2, 0xffff);
 
@@ -1028,6 +1037,34 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	splx(s);
  
 	return (error);
+}
+
+void
+rtwn_update_short_preamble(struct ieee80211com *ic)
+{
+	struct rtwn_softc *sc = ic->ic_softc;
+	uint32_t reg;
+
+	reg = rtwn_read_4(sc, R92C_RRSR);
+	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+		reg |= R92C_RRSR_SHORT;
+	else
+		reg &= ~R92C_RRSR_SHORT;
+	rtwn_write_4(sc, R92C_RRSR, reg);
+}
+
+void
+rtwn_updateslot(struct ieee80211com *ic)
+{
+	struct rtwn_softc *sc = ic->ic_softc;
+	int s;
+	
+	s = splnet();
+	if (ic->ic_flags & IEEE80211_F_SHSLOT)
+		rtwn_write_1(sc, R92C_SLOT, 9);
+	else
+		rtwn_write_1(sc, R92C_SLOT, IEEE80211_DUR_DS_SLOT);
+	splx(s);
 }
 
 void
