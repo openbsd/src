@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.31 2017/01/24 19:11:46 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.32 2017/01/30 21:41:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -325,7 +325,7 @@ options_isstring(struct options_entry *o)
 }
 
 const char *
-options_tostring(struct options_entry *o, int idx)
+options_tostring(struct options_entry *o, int idx, int numeric)
 {
 	static char	 s[1024];
 	const char	*tmp;
@@ -355,7 +355,10 @@ options_tostring(struct options_entry *o, int idx)
 			tmp = attributes_tostring(o->number);
 			break;
 		case OPTIONS_TABLE_FLAG:
-			tmp = (o->number ? "on" : "off");
+			if (numeric)
+				xsnprintf(s, sizeof s, "%lld", o->number);
+			else
+				tmp = (o->number ? "on" : "off");
 			break;
 		case OPTIONS_TABLE_CHOICE:
 			tmp = o->tableentry->choices[o->number];

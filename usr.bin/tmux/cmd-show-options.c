@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.39 2017/01/24 19:11:46 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.40 2017/01/30 21:41:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -110,7 +110,7 @@ cmd_show_options_print(struct cmd *self, struct cmdq_item *item,
 		name = options_name(o);
 	}
 
-	value = options_tostring(o, idx);
+	value = options_tostring(o, idx, 0);
 	if (args_has(self->args, 'v'))
 		cmdq_print(item, "%s", value);
 	else if (options_isstring(o)) {

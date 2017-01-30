@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.708 2017/01/25 14:36:08 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.709 2017/01/30 21:41:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1562,7 +1562,7 @@ int		 options_array_set(struct options_entry *, u_int, const char *,
 int		 options_array_size(struct options_entry *, u_int *);
 void		 options_array_assign(struct options_entry *, const char *);
 int		 options_isstring(struct options_entry *);
-const char	*options_tostring(struct options_entry *, int);
+const char	*options_tostring(struct options_entry *, int, int);
 char		*options_parse(const char *, int *);
 struct options_entry *options_parse_get(struct options *, const char *, int *,
 		     int);
