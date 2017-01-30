@@ -441,6 +441,8 @@
 ./usr/libdata/perl5/aarch64-openbsd/5.20.3/threads/shared.pm
 ./usr/local/libdata/perl5/site_perl/aarch64-openbsd
 ./usr/mdec/BOOTAA64.EFI
+./usr/sbin/eeprom
 ./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
+./usr/sbin/mkuboot
 ./usr/sbin/wsconscfg
