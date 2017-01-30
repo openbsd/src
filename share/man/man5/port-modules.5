@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.212 2017/01/05 17:54:14 danj Exp $
+.\"	$OpenBSD: port-modules.5,v 1.213 2017/01/30 16:58:31 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 5 2017 $
+.Dd $Mdocdate: January 30 2017 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1032,6 +1032,7 @@ and
 and
 .Ev MODGO_FLAGS
 (source code build command and flags passed as its arguments),
+.Ev MODGO_LDFLAGS ,
 .Ev MODGO_BUILD_CMD
 and
 .Ev MODGO_TEST_CMD
