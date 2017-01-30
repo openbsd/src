@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.66 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.67 2017/01/30 05:00:31 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -386,7 +386,7 @@ typedef struct {
 #undef	ELF64_R_SYM
 #undef	ELF64_R_TYPE
 #undef	ELF64_R_INFO
-#define	ELF64_R_TYPE(info)	(swap32((info) >> 32))
+#define	ELF64_R_TYPE(info)	((__uint64_t)swap32((info) >> 32))
 #define	ELF64_R_SYM(info)	((info) & 0xFFFFFFFF)
 #define	ELF64_R_INFO(s,t)	(((__uint64_t)swap32(t) << 32) + (__uint32_t)(s))
 #endif	/* __mips64__ && __MIPSEL__ */
