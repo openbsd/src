@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.447 2017/01/24 10:08:30 krw Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.448 2017/01/30 17:41:34 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1614,9 +1614,9 @@ extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern void			 pf_purge_thread(void *);
-extern void			 pf_purge_expired_src_nodes(int);
+extern void			 pf_purge_expired_src_nodes();
 extern void			 pf_purge_expired_states(u_int32_t);
-extern void			 pf_purge_expired_rules(int);
+extern void			 pf_purge_expired_rules();
 extern void			 pf_remove_state(struct pf_state *);
 extern void			 pf_remove_divert_state(struct pf_state_key *);
 extern void			 pf_free_state(struct pf_state *);
@@ -1790,7 +1790,6 @@ int		 pf_addr_compare(struct pf_addr *, struct pf_addr *,
 
 extern struct pf_status	pf_status;
 extern struct pool	pf_frent_pl, pf_frag_pl;
-extern struct rwlock	pf_consistency_lock;
 
 struct pf_pool_limit {
 	void		*pp;
