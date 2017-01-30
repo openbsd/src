@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2017/01/30 18:25:11 reyk Exp $
+#	$OpenBSD: Makefile,v 1.7 2017/01/30 21:18:24 reyk Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -51,7 +51,7 @@ PERLPATH =	${.CURDIR}/
 .for a in ${ARGS}
 run-regress-$a: ${HTDOCS} $a ${HTDOCS_MD5}
 	@echo '\n======== $@ ========'
-	time SUDO=${SUDO} KTRACE=${KTRACE} HTTPD=${HTTPD} perl ${PERLINC} ${PERLPATH}httpd.pl ${HTDOCS} ${PERLPATH}$a
+	time SUDO=${SUDO} KTRACE=${KTRACE} HTTPD=${HTTPD} perl ${PERLINC} ${PERLPATH}httpd.pl ${.OBJDIR} ${PERLPATH}$a
 .endfor
 
 # htdocs

@@ -1,4 +1,4 @@
-#	$OpenBSD: Httpd.pm,v 1.1 2015/07/16 16:35:57 reyk Exp $
+#	$OpenBSD: Httpd.pm,v 1.2 2017/01/30 21:18:24 reyk Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -27,6 +27,7 @@ sub new {
 	my $class = shift;
 	my %args = @_;
 	$args{chroot} ||= ".";
+	$args{docroot} ||= "htdocs";
 	$args{logfile} ||= $args{chroot}."/httpd.log";
 	$args{up} ||= $args{dryrun} || "server_launch: ";
 	$args{down} ||= $args{dryrun} ? "httpd.conf:" : "parent terminating";
@@ -54,7 +55,7 @@ sub new {
 	my $listenport = $self->{listenport};
 
 	print $fh "prefork 1\n";  # only crashes of first child are observed
-	print $fh "chroot \"".$args{chroot}."\"\n";
+	print $fh "chroot \"".$args{docroot}."\"\n";
 	print $fh "logdir \"".$args{chroot}."\"\n";
 
 	my @http = @{$self->{http}};
