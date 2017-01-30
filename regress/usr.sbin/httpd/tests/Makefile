@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2017/01/30 18:19:53 reyk Exp $
+#	$OpenBSD: Makefile,v 1.6 2017/01/30 18:25:11 reyk Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -32,7 +32,7 @@ HTDOCS =		${.OBJDIR}/htdocs
 HTDOCS_FILES =		512 1048576 1073741824
 HTDOCS_MD5 =		${HTDOCS_FILES:S/^/${.OBJDIR}\/md5-/}
 HTDOCS_SPARSE =		yes
-CLEANFILES +=		${HTDOCS_FILES}
+CLEANFILES +=		${HTDOCS_FILES:S/^/${HTDOCS}\//} ${HTDOCS}/*.log
 
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
