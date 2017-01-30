@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2013/10/28 09:00:06 patrick Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/01/30 06:46:13 jsg Exp $
 
-.if ${MACHINE} == "armv7"
+.if ${MACHINE} == "arm64" || ${MACHINE} == "armv7
 
-BINDIR=	/usr/sbin
 PROG=	mkuboot
 SRCS=	mkuboot.c copy_elf32.c copy_elf64.c
 DPADD=	${LIBZ}
