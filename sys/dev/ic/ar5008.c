@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.40 2017/01/30 09:42:14 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.41 2017/01/30 10:57:00 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1511,7 +1511,7 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 			ds->ds_ctl0 |= AR_TXC0_RTS_ENABLE;
 		} else if (((ic->ic_flags & IEEE80211_F_USEPROT) &&
 		    athn_rates[ridx[0]].phy == IEEE80211_T_OFDM) ||
-		    ((ic->ic_flags & IEEE80211_F_HTON) &&
+		    ((ni->ni_flags & IEEE80211_NODE_HT) &&
 		    htprot != IEEE80211_HTPROT_NONE)) {
 			if (ic->ic_protmode == IEEE80211_PROT_RTSCTS)
 				ds->ds_ctl0 |= AR_TXC0_RTS_ENABLE;
