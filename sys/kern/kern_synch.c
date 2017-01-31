@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.137 2017/01/25 21:59:41 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.138 2017/01/31 12:16:20 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -111,11 +111,6 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 	int hold_count;
 #endif
 
-#if 1
-	extern int inifioctl;
-	if (!inifioctl)
-		NET_ASSERT_UNLOCKED();
-#endif
 	KASSERT((priority & ~(PRIMASK | PCATCH)) == 0);
 
 #ifdef MULTIPROCESSOR
@@ -175,11 +170,6 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	int hold_count;
 #endif
 
-#if 1
-	extern int inifioctl;
-	if (!inifioctl)
-		NET_ASSERT_UNLOCKED();
-#endif
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
 	KASSERT(mtx != NULL);
 
