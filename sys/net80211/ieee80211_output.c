@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.115 2017/01/30 18:21:13 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.116 2017/01/31 09:39:27 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -767,7 +767,7 @@ ieee80211_add_edca_params(u_int8_t *frm, struct ieee80211com *ic)
 	*frm++ = 0;	/* reserved */
 
 	/* setup AC Parameter Records */
-	edca = ieee80211_qap_edca_table[ic->ic_curmode];
+	edca = ieee80211_edca_table[ic->ic_curmode];
 	for (aci = 0; aci < EDCA_NUM_AC; aci++) {
 		const struct ieee80211_edca_ac_params *ac = &edca[aci];
 
@@ -867,7 +867,7 @@ ieee80211_add_wme_param(uint8_t *frm, struct ieee80211com *ic)
 	*frm++ = 0; /* reserved */
 
 	/* setup AC Parameter Records */
-	edca = ieee80211_qap_edca_table[ic->ic_curmode];
+	edca = ieee80211_edca_table[ic->ic_curmode];
 	for (aci = 0; aci < EDCA_NUM_AC; aci++) {
 		const struct ieee80211_edca_ac_params *ac = &edca[aci];
 
