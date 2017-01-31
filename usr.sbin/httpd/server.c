@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.103 2017/01/31 16:18:57 beck Exp $	*/
+/*	$OpenBSD: server.c,v 1.104 2017/01/31 17:25:05 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -244,7 +244,8 @@ server_tls_init(struct server *srv)
 	if (tls_config_set_keypair_ocsp_mem(srv->srv_tls_config,
 	    srv->srv_conf.tls_cert, srv->srv_conf.tls_cert_len,
 	    srv->srv_conf.tls_key, srv->srv_conf.tls_key_len,
-	    srv_conf->tls_ocsp_staple, srv_conf->tls_ocsp_staple_len) != 0) {
+	    srv->srv_conf.tls_ocsp_staple,
+	    srv->srv_conf.tls_ocsp_staple_len) != 0) {
 		log_warnx("%s: failed to set tls certificate/key: %s",
 		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
