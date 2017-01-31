@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.220 2017/01/24 00:17:14 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.221 2017/01/31 10:24:41 jca Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1640,7 +1640,7 @@ sysctl_rtable_rtstat(void *oldp, size_t *oldlenp, void *newp)
 	uint32_t *words = (uint32_t *)&rtstat;
 	int i;
 
-	KASSERT(sizeof(rtstat) == (nitems(counters) * sizeof(uint32_t)));
+	CTASSERT(sizeof(rtstat) == (nitems(counters) * sizeof(uint32_t)));
 
 	counters_read(rtcounters, counters, nitems(counters));
 
