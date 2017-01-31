@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.82 2017/01/20 09:11:18 claudio Exp $	*/
+/*	$OpenBSD: mib.c,v 1.83 2017/01/31 21:31:04 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -2662,7 +2662,7 @@ mib_sensorvalue(struct sensor *s)
 		break;
 	case SENSOR_PERCENT:
 	case SENSOR_HUMIDITY:
-		ret = asprintf(&v, "%.2f%%", s->value / 1000.0);
+		ret = asprintf(&v, "%.2f", s->value / 1000.0);
 		break;
 	case SENSOR_DISTANCE:
 	case SENSOR_PRESSURE:
