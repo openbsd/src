@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.6 2016/11/24 09:23:11 reyk Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.7 2017/01/31 05:53:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
 		}
 
 		to = &swc.swc_target;
-		memcpy(&to, &res->uri, sizeof(to));
+		memcpy(to, &res->uri, sizeof(*to));
 
 		imsg_compose(ibuf, IMSG_CTL_CONNECT, 0, 0, -1,
 		    &swc, sizeof(swc));
