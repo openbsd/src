@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.101 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.102 2017/01/31 12:20:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -861,7 +861,7 @@ server_write(struct bufferevent *bev, void *arg)
 
 	return;
  done:
-	(*bev->errorcb)(bev, EVBUFFER_WRITE|EVBUFFER_EOF, bev->cbarg);
+	(*bev->errorcb)(bev, EVBUFFER_WRITE, bev->cbarg);
 	return;
 }
 
@@ -906,7 +906,7 @@ server_read(struct bufferevent *bev, void *arg)
 
 	return;
  done:
-	(*bev->errorcb)(bev, EVBUFFER_READ|EVBUFFER_EOF, bev->cbarg);
+	(*bev->errorcb)(bev, EVBUFFER_READ, bev->cbarg);
 	return;
  fail:
 	server_close(clt, strerror(errno));
@@ -930,7 +930,11 @@ server_error(struct bufferevent *bev, short error, void *arg)
 		server_close(clt, "buffer event error");
 		return;
 	}
-	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
+	if (error & EVBUFFER_EOF) {
+		server_close(clt, "closed");
+		return;
+	}
+	if (error & (EVBUFFER_READ|EVBUFFER_WRITE)) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
 
 		clt->clt_done = 1;
