@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.16 2017/01/31 09:21:46 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.17 2017/01/31 15:15:13 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1068,6 +1068,7 @@ rtwn_updateedca(struct ieee80211com *ic)
 	};
 	struct ieee80211_edca_ac_params *ac;
 	int s, aci, aifs, slottime;
+	uint8_t acm = 0;
 
 	if (ic->ic_flags & IEEE80211_F_SHSLOT)
 		slottime = 9; /* XXX needs a macro in ieee80211.h */
@@ -1083,8 +1084,28 @@ rtwn_updateedca(struct ieee80211com *ic)
 		    SM(R92C_EDCA_PARAM_ECWMIN, ac->ac_ecwmin) |
 		    SM(R92C_EDCA_PARAM_ECWMAX, ac->ac_ecwmax) |
 		    SM(R92C_EDCA_PARAM_AIFS, aifs));
+
+		/* Is admission control mandatory for this queue? */
+		if (ac->ac_acm) {
+			switch (aci) {
+			case EDCA_AC_BE:
+				acm |= R92C_ACMHW_BEQEN;
+				break;
+			case EDCA_AC_VI:
+				acm |= R92C_ACMHW_VIQEN;
+				break;
+			case EDCA_AC_VO:
+				acm |= R92C_ACMHW_VOQEN;
+				break;
+			default:
+				break;
+			}
+		}
 	}
 	splx(s);
+
+	/* Enable hardware admission control. */
+	rtwn_write_1(sc, R92C_ACMHWCTRL, R92C_ACMHW_HWEN | acm);
 }
 
 int
@@ -1725,10 +1746,6 @@ rtwn_edca_init(struct rtwn_softc *sc)
 	rtwn_write_4(sc, R92C_FAST_EDCA_CTRL, 0x086666); /* linux magic */
 
 	rtwn_write_4(sc, R92C_EDCA_RANDOM_GEN, arc4random());
-
-	/* Enable hardware AC queue management. */
-	rtwn_write_1(sc, R92C_ACMHWCTRL, R92C_ACMHW_HWEN | R92C_ACMHW_BEQEN |
-	    R92C_ACMHW_VIQEN | R92C_ACMHW_VOQEN);
 }
 
 void
