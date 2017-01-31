@@ -17,8 +17,8 @@ our %args = (
 	    qr/ClientCertfile client.crt/ => 1,
 	    qr/ClientKeyfile client.key/ => 1,
 	    qr/syslogd: loghost .* connection error: /.
-		qr/handshake failed: error:.*/.
-		qr/SSL3_READ_BYTES:tlsv1 alert decrypt error/ => 2,
+		qr/handshake failed: error:.*:/.
+		qr/SSL_internal:tlsv1 alert decrypt error/ => 2,
 	    get_testgrep() => 1,
 	},
     },
@@ -30,8 +30,8 @@ our %args = (
 	exit => 255,
 	loggrep => {
 	    qr/Server IO::Socket::SSL socket accept failed: /.
-		qr/,SSL accept attempt failed error:.*/.
-		qr/SSL3_GET_CLIENT_CERTIFICATE:no certificate returned/ => 1.
+		qr/,SSL accept attempt failed error:.*:/.
+		qr/SSL_internal:no certificate returned/ => 1.
 	},
     },
 );
