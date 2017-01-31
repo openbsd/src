@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.35 2017/01/29 17:52:11 beck Exp $ */
+/* $OpenBSD: tls_config.c,v 1.36 2017/01/31 16:18:57 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -416,9 +416,9 @@ tls_config_set_alpn(struct tls_config *config, const char *alpn)
 	    &config->alpn_len);
 }
 
-int
-tls_config_add_keypair_file(struct tls_config *config,
-    const char *cert_file, const char *key_file)
+static int
+tls_config_add_keypair_file_internal(struct tls_config *config,
+    const char *cert_file, const char *key_file, const char *ocsp_file)
 {
 	struct tls_keypair *keypair;
 
@@ -427,6 +427,36 @@ tls_config_add_keypair_file(struct tls_config *config,
 	if (tls_keypair_set_cert_file(keypair, &config->error, cert_file) != 0)
 		goto err;
 	if (tls_keypair_set_key_file(keypair, &config->error, key_file) != 0)
+		goto err;
+	if (ocsp_file != NULL &&
+	    tls_keypair_set_ocsp_staple_file(keypair, &config->error,
+		ocsp_file) != 0)
+		goto err;
+
+	tls_config_keypair_add(config, keypair);
+
+	return (0);
+
+ err:
+	tls_keypair_free(keypair);
+	return (-1);
+}
+
+static int
+tls_config_add_keypair_mem_internal(struct tls_config *config, const uint8_t *cert,
+    size_t cert_len, const uint8_t *key, size_t key_len,
+    const uint8_t *staple, size_t staple_len)
+{
+	struct tls_keypair *keypair;
+
+	if ((keypair = tls_keypair_new()) == NULL)
+		return (-1);
+	if (tls_keypair_set_cert_mem(keypair, cert, cert_len) != 0)
+		goto err;
+	if (tls_keypair_set_key_mem(keypair, key, key_len) != 0)
+		goto err;
+	if (staple != NULL &&
+	    tls_keypair_set_ocsp_staple_mem(keypair, staple, staple_len) != 0)
 		goto err;
 
 	tls_config_keypair_add(config, keypair);
@@ -442,22 +472,33 @@ int
 tls_config_add_keypair_mem(struct tls_config *config, const uint8_t *cert,
     size_t cert_len, const uint8_t *key, size_t key_len)
 {
-	struct tls_keypair *keypair;
+	return tls_config_add_keypair_mem_internal(config, cert, cert_len, key,
+	    key_len, NULL, 0);
+}
 
-	if ((keypair = tls_keypair_new()) == NULL)
-		return (-1);
-	if (tls_keypair_set_cert_mem(keypair, cert, cert_len) != 0)
-		goto err;
-	if (tls_keypair_set_key_mem(keypair, key, key_len) != 0)
-		goto err;
+int
+tls_config_add_keypair_file(struct tls_config *config,
+    const char *cert_file, const char *key_file)
+{
+	return tls_config_add_keypair_file_internal(config, cert_file,
+	    key_file, NULL);
+}
 
-	tls_config_keypair_add(config, keypair);
+int
+tls_config_add_keypair_ocsp_mem(struct tls_config *config, const uint8_t *cert,
+    size_t cert_len, const uint8_t *key, size_t key_len, const uint8_t *staple,
+    size_t staple_len)
+{
+	return tls_config_add_keypair_mem_internal(config, cert, cert_len, key,
+	    key_len, staple, staple_len);
+}
 
-	return (0);
-
- err:
-	tls_keypair_free(keypair);
-	return (-1);
+int
+tls_config_add_keypair_ocsp_file(struct tls_config *config,
+    const char *cert_file, const char *key_file, const char *ocsp_file)
+{
+	return tls_config_add_keypair_file_internal(config, cert_file,
+	    key_file, ocsp_file);
 }
 
 int
@@ -581,29 +622,72 @@ tls_config_set_key_mem(struct tls_config *config, const uint8_t *key,
 	return tls_keypair_set_key_mem(config->keypair, key, len);
 }
 
-int
-tls_config_set_keypair_file(struct tls_config *config,
-    const char *cert_file, const char *key_file)
+static int
+tls_config_set_keypair_file_internal(struct tls_config *config,
+    const char *cert_file, const char *key_file, const char *ocsp_file)
 {
 	if (tls_config_set_cert_file(config, cert_file) != 0)
 		return (-1);
 	if (tls_config_set_key_file(config, key_file) != 0)
 		return (-1);
+	if (tls_config_set_key_file(config, key_file) != 0)
+		return (-1);
+	if (ocsp_file != NULL &&
+	    tls_config_set_ocsp_staple_file(config, ocsp_file) != 0)
+		return (-1);
 
 	return (0);
+}
+
+static int
+tls_config_set_keypair_mem_internal(struct tls_config *config, const uint8_t *cert,
+    size_t cert_len, const uint8_t *key, size_t key_len,
+    const uint8_t *staple, size_t staple_len)
+{
+	if (tls_config_set_cert_mem(config, cert, cert_len) != 0)
+		return (-1);
+	if (tls_config_set_key_mem(config, key, key_len) != 0)
+		return (-1);
+	if ((staple != NULL) &&
+	    (tls_config_set_ocsp_staple_mem(config, staple, staple_len) != 0))
+		return (-1);
+
+	return (0);
+}
+
+int
+tls_config_set_keypair_file(struct tls_config *config,
+    const char *cert_file, const char *key_file)
+{
+	return tls_config_set_keypair_file_internal(config, cert_file, key_file,
+	    NULL);
 }
 
 int
 tls_config_set_keypair_mem(struct tls_config *config, const uint8_t *cert,
     size_t cert_len, const uint8_t *key, size_t key_len)
 {
-	if (tls_config_set_cert_mem(config, cert, cert_len) != 0)
-		return (-1);
-	if (tls_config_set_key_mem(config, key, key_len) != 0)
-		return (-1);
-
-	return (0);
+	return tls_config_set_keypair_mem_internal(config, cert, cert_len,
+	    key, key_len, NULL, 0);
 }
+
+int
+tls_config_set_keypair_ocsp_file(struct tls_config *config,
+    const char *cert_file, const char *key_file, const char *ocsp_file)
+{
+	return tls_config_set_keypair_file_internal(config, cert_file, key_file,
+	    ocsp_file);
+}
+
+int
+tls_config_set_keypair_ocsp_mem(struct tls_config *config, const uint8_t *cert,
+    size_t cert_len, const uint8_t *key, size_t key_len,
+    const uint8_t *staple, size_t staple_len)
+{
+	return tls_config_set_keypair_mem_internal(config, cert, cert_len,
+	    key, key_len, staple, staple_len);
+}
+
 
 int
 tls_config_set_protocols(struct tls_config *config, uint32_t protocols)
@@ -685,7 +769,8 @@ tls_config_set_ocsp_staple_file(struct tls_config *config, const char *staple_fi
 }
 
 int
-tls_config_set_ocsp_staple_mem(struct tls_config *config, char *staple, size_t len)
+tls_config_set_ocsp_staple_mem(struct tls_config *config, const uint8_t *staple,
+    size_t len)
 {
 	return tls_keypair_set_ocsp_staple_mem(config->keypair, staple, len);
 }

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_load_file.3,v 1.3 2017/01/28 00:59:36 schwarze Exp $
+.\" $OpenBSD: tls_load_file.3,v 1.4 2017/01/31 16:18:57 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2017 $
+.Dd $Mdocdate: January 31 2017 $
 .Dt TLS_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -29,9 +29,15 @@
 .Nm tls_config_set_cert_mem ,
 .Nm tls_config_set_key_file ,
 .Nm tls_config_set_key_mem ,
+.Nm tls_config_set_ocsp_staple_mem ,
+.Nm tls_config_set_ocsp_staple_file
 .Nm tls_config_set_keypair_file ,
 .Nm tls_config_set_keypair_mem ,
+.Nm tls_config_set_keypair_ocsp_file ,
+.Nm tls_config_set_keypair_ocsp_mem ,
 .Nm tls_config_add_keypair_file ,
+.Nm tls_config_add_keypair_ocsp_mem ,
+.Nm tls_config_add_keypair_ocsp_file ,
 .Nm tls_config_add_keypair_mem ,
 .Nm tls_config_clear_keys ,
 .Nm tls_config_set_verify_depth ,
@@ -83,6 +89,17 @@
 .Fa "struct tls_config *config"
 .Fa "const uint8_t *key"
 .Fa "size_t len"
+.Ft int
+.Fc
+.Fo tls_config_set_ocsp_staple_mem
+.Fa "struct tls_config *config"
+.Fa "const uint8_t *staple"
+.Fa "size_t len"
+.Fc
+.Ft int
+.Fo tls_config_set_ocsp_staple_file
+.Fa "struct tls_config *config"
+.Fa "const uint8_t *staple_file"
 .Fc
 .Ft int
 .Fo tls_config_set_keypair_file
@@ -99,6 +116,23 @@
 .Fa "size_t key_len"
 .Fc
 .Ft int
+.Fo tls_config_set_keypair_ocsp_file
+.Fa "struct tls_config *config"
+.Fa "const char *cert_file"
+.Fa "const char *key_file"
+.Fa "const char *staple_file"
+.Fc
+.Ft int
+.Fo tls_config_set_keypair_ocsp_mem
+.Fa "struct tls_config *config"
+.Fa "const uint8_t *cert"
+.Fa "size_t cert_len"
+.Fa "const uint8_t *key"
+.Fa "size_t key_len"
+.Fa "const uint8_t *staple"
+.Fa "size_t staple_len"
+.Fc
+.Ft int
 .Fo tls_config_add_keypair_file
 .Fa "struct tls_config *config"
 .Fa "const char *cert_file"
@@ -111,6 +145,23 @@
 .Fa "size_t cert_len"
 .Fa "const uint8_t *key"
 .Fa "size_t key_len"
+.Fc
+.Ft int
+.Fo tls_config_add_keypair_ocsp_file
+.Fa "struct tls_config *config"
+.Fa "const char *cert_file"
+.Fa "const char *key_file"
+.Fa "const char *staple_file"
+.Fc
+.Ft int
+.Fo tls_config_add_keypair_ocsp_mem
+.Fa "struct tls_config *config"
+.Fa "const uint8_t *cert"
+.Fa "size_t cert_len"
+.Fa "const uint8_t *key"
+.Fa "size_t key_len"
+.Fa "const uint8_t *staple"
+.Fa "size_t staple_len"
 .Fc
 .Ft void
 .Fn tls_config_clear_keys "struct tls_config *config"
@@ -157,19 +208,46 @@ sets the file from which the private key will be read.
 .Fn tls_config_set_key_mem
 directly sets the private key from memory.
 .Pp
+.Fn tls_config_set_ocsp_staple_file
+sets a DER-encoded OCSP response to be stapled during the TLS handshake from
+the specified file.
+.Pp
+.Fn tls_config_set_ocsp_staple_mem
+sets a DER-encoded OCSP response to be stapled during the TLS handshake from
+memory.
+.Pp
 .Fn tls_config_set_keypair_file
-sets the files from which the public certificate and private key will be read.
+sets the files from which the public certificate, and private key will be read.
 .Pp
 .Fn tls_config_set_keypair_mem
-directly sets the public certificate and private key from memory.
+directly sets the public certificate, and private key from memory.
+.Pp
+.Fn tls_config_set_keypair_file
+sets the files from which the public certificate, private key, and DER encoded
+ocsp staple will be read.
+.Pp
+.Fn tls_config_set_keypair_ocsp_mem
+directly sets the public certificate, private key, and DER encoded OCSP staple
+from memory.
 .Pp
 .Fn tls_config_add_keypair_file
-adds an additional public certificate and private key from the specified files,
+adds an additional public certificate, and private key from the specified files,
 used as an alternative certificate for Server Name Indication (server only).
 .Pp
 .Fn tls_config_add_keypair_mem
-adds an additional public certificate and private key from memory,
-used as an alternative certificate for Server Name Indication (server only).
+adds an additional public certificate, and private key from memory, used as an
+alternative certificate for Server Name Indication (server only).
+.Pp
+.Pp
+.Fn tls_config_add_keypair_ocsp_file
+adds an additional public certificate, private key, and DER encoded OCSP staple
+from the specified files, used as an alternative certificate for Server Name
+Indication (server only).
+.Pp
+.Fn tls_config_add_keypair_ocsp_mem
+adds an additional public certificate, private key, and DER encoded OCSP staple
+from memory, used as an alternative certificate for Server Name Indication
+(server only).
 .Pp
 .Fn tls_config_clear_keys
 clears any secret keys from memory.
@@ -240,12 +318,7 @@ in
 .An Joel Sing Aq Mt jsing@openbsd.org
 with contibutions from
 .An Ted Unangst Aq Mt tedu@openbsd.org
-.Pp
-.An -nosplit
-.Fn tls_config_verify_client
 and
-.Fn tls_config_verify_client_optional
-were written by
 .An Bob Beck Aq Mt beck@openbsd.org .
 .Pp
 .Fn tls_load_file

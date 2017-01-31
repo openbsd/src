@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.102 2017/01/31 12:20:05 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.103 2017/01/31 16:18:57 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -241,9 +241,10 @@ server_tls_init(struct server *srv)
 		return (-1);
 	}
 
-	if (tls_config_set_keypair_mem(srv->srv_tls_config,
+	if (tls_config_set_keypair_ocsp_mem(srv->srv_tls_config,
 	    srv->srv_conf.tls_cert, srv->srv_conf.tls_cert_len,
-	    srv->srv_conf.tls_key, srv->srv_conf.tls_key_len) != 0) {
+	    srv->srv_conf.tls_key, srv->srv_conf.tls_key_len,
+	    srv_conf->tls_ocsp_staple, srv_conf->tls_ocsp_staple_len) != 0) {
 		log_warnx("%s: failed to set tls certificate/key: %s",
 		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
@@ -263,20 +264,12 @@ server_tls_init(struct server *srv)
 			continue;
 		log_debug("%s: adding keypair for server %s", __func__,
 		    srv->srv_conf.name);
-		if (tls_config_add_keypair_mem(srv->srv_tls_config,
+		if (tls_config_add_keypair_ocsp_mem(srv->srv_tls_config,
 		    srv_conf->tls_cert, srv_conf->tls_cert_len,
-		    srv_conf->tls_key, srv_conf->tls_key_len) != 0) {
+		    srv_conf->tls_key, srv_conf->tls_key_len,
+		    srv_conf->tls_ocsp_staple,
+		    srv_conf->tls_ocsp_staple_len) != 0) {
 			log_warnx("%s: failed to add tls keypair", __func__);
-			return (-1);
-		}
-		if (srv_conf->tls_ocsp_staple == NULL)
-			continue;
-		log_debug("%s: adding ocsp staple for server %s", __func__,
-		    srv->srv_conf.name);
-		if (tls_config_set_ocsp_staple_mem(srv->srv_tls_config,
-		    srv_conf->tls_ocsp_staple, srv_conf->tls_ocsp_staple_len)
-		    != 0 ) {
-			log_warnx("%s: failed to add ocsp staple", __func__);
 			return (-1);
 		}
 	}

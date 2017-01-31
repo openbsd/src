@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.46 2017/01/26 12:53:17 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.47 2017/01/31 16:18:57 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -89,7 +89,12 @@ int tls_config_add_keypair_file(struct tls_config *_config,
     const char *_cert_file, const char *_key_file);
 int tls_config_add_keypair_mem(struct tls_config *_config, const uint8_t *_cert,
     size_t _cert_len, const uint8_t *_key, size_t _key_len);
-
+int tls_config_add_keypair_ocsp_file(struct tls_config *_config,
+    const char *_cert_file, const char *_key_file,
+    const char *_ocsp_staple_file);
+int tls_config_add_keypair_ocsp_mem(struct tls_config *_config, const uint8_t *_cert,
+    size_t _cert_len, const uint8_t *_key, size_t _key_len,
+    const uint8_t *_staple, size_t _staple_len);
 int tls_config_set_alpn(struct tls_config *_config, const char *_alpn);
 int tls_config_set_ca_file(struct tls_config *_config, const char *_ca_file);
 int tls_config_set_ca_path(struct tls_config *_config, const char *_ca_path);
@@ -109,8 +114,13 @@ int tls_config_set_keypair_file(struct tls_config *_config,
     const char *_cert_file, const char *_key_file);
 int tls_config_set_keypair_mem(struct tls_config *_config, const uint8_t *_cert,
     size_t _cert_len, const uint8_t *_key, size_t _key_len);
-int tls_config_set_ocsp_staple_mem(struct tls_config *_config, char *_staple,
-    size_t _len);
+int tls_config_set_keypair_ocsp_file(struct tls_config *_config,
+    const char *_cert_file, const char *_key_file, const char *_staple_file);
+int tls_config_set_keypair_ocsp_mem(struct tls_config *_config, const uint8_t *_cert,
+    size_t _cert_len, const uint8_t *_key, size_t _key_len,
+    const uint8_t *_staple, size_t staple_len);
+int tls_config_set_ocsp_staple_mem(struct tls_config *_config,
+    const uint8_t *_staple, size_t _len);
 int tls_config_set_ocsp_staple_file(struct tls_config *_config,
     const char *_staple_file);
 int tls_config_set_protocols(struct tls_config *_config, uint32_t _protocols);
