@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.104 2017/01/31 17:25:05 beck Exp $	*/
+/*	$OpenBSD: server.c,v 1.105 2017/01/31 20:08:13 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -249,15 +249,6 @@ server_tls_init(struct server *srv)
 		log_warnx("%s: failed to set tls certificate/key: %s",
 		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
-	}
-
-	if (srv->srv_conf.tls_ocsp_staple != NULL) {
-		if (tls_config_set_ocsp_staple_mem(srv->srv_tls_config,
-		    srv->srv_conf.tls_ocsp_staple,
-		    srv->srv_conf.tls_ocsp_staple_len) != 0 ) {
-			log_warnx("%s: failed to add ocsp staple", __func__);
-			return (-1);
-		}
 	}
 
 	TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
