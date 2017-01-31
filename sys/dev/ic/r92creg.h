@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.4 2017/01/08 05:48:27 stsp Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.5 2017/01/31 09:21:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -218,8 +218,8 @@
 #define R92C_BSSID			0x618
 #define R92C_MAR			0x620
 #define R92C_MAC_SPEC_SIFS		0x63a
-#define R92C_R2T_SIFS			0x63c
-#define R92C_T2T_SIFS			0x63e
+#define R92C_RESP_SIFS_CCK		0x63c
+#define R92C_RESP_SIFS_OFDM		0x63e
 #define R92C_ACKTO			0x640
 #define R92C_CAMCMD			0x670
 #define R92C_CAMWRITE			0x674
@@ -505,6 +505,15 @@
 #define R92C_EDCA_PARAM_ECWMAX_S	12
 #define R92C_EDCA_PARAM_TXOP_M		0xffff0000
 #define R92C_EDCA_PARAM_TXOP_S		16
+
+/* Bits for R92C_ACMHWCTRL */
+#define R92C_ACMHW_HWEN			0x01
+#define R92C_ACMHW_BEQEN		0x02
+#define R92C_ACMHW_VIQEN		0x04
+#define R92C_ACMHW_VOQEN		0x08
+#define R92C_ACMHW_BEQSTATUS		0x10
+#define R92C_ACMHW_VIQSTATUS		0x20
+#define R92C_ACMHW_VOQSTATUS		0x40
 
 /* Bits for R92C_TXPAUSE. */
 #define R92C_TXPAUSE_AC_VO		0x01

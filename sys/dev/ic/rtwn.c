@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.15 2017/01/30 21:54:30 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.16 2017/01/31 09:21:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -901,10 +901,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		    R92C_BCN_CTRL_DIS_TSF_UDT0);
 
 		/* Reset EDCA parameters. */
-		rtwn_write_4(sc, R92C_EDCA_VO_PARAM, 0x002f3217);
-		rtwn_write_4(sc, R92C_EDCA_VI_PARAM, 0x005e4317);
-		rtwn_write_4(sc, R92C_EDCA_BE_PARAM, 0x00105320);
-		rtwn_write_4(sc, R92C_EDCA_BK_PARAM, 0x0000a444);
+		rtwn_edca_init(sc);
 
 		rtwn_updateslot(ic);
 		rtwn_update_short_preamble(ic);
@@ -1010,15 +1007,9 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/* Enable TSF synchronization. */
 		rtwn_tsf_sync_enable(sc);
 
-		rtwn_write_1(sc, R92C_SIFS_CCK + 1, 10);
-		rtwn_write_1(sc, R92C_SIFS_OFDM + 1, 10);
-		rtwn_write_1(sc, R92C_SPEC_SIFS + 1, 10);
-		rtwn_write_1(sc, R92C_MAC_SPEC_SIFS + 1, 10);
-		rtwn_write_1(sc, R92C_R2T_SIFS + 1, 10);
-		rtwn_write_1(sc, R92C_T2T_SIFS + 1, 10);
-
 		/* Intialize rate adaptation. */
 		rtwn_ra_init(sc);
+
 		/* Turn link LED on. */
 		rtwn_set_led(sc, RTWN_LED_LINK, 1);
 
@@ -1078,12 +1069,15 @@ rtwn_updateedca(struct ieee80211com *ic)
 	struct ieee80211_edca_ac_params *ac;
 	int s, aci, aifs, slottime;
 
+	if (ic->ic_flags & IEEE80211_F_SHSLOT)
+		slottime = 9; /* XXX needs a macro in ieee80211.h */
+	else
+		slottime = IEEE80211_DUR_DS_SLOT;
 	s = splnet();
-	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
 	for (aci = 0; aci < EDCA_NUM_AC; aci++) {
 		ac = &ic->ic_edca_ac[aci];
 		/* AIFS[AC] = AIFSN[AC] * aSlotTime + aSIFSTime. */
-		aifs = ac->ac_aifsn * slottime + 10;
+		aifs = ac->ac_aifsn * slottime + IEEE80211_DUR_DS_SIFS;
 		rtwn_write_4(sc, aci2reg[aci],
 		    SM(R92C_EDCA_PARAM_TXOP, ac->ac_txoplimit) |
 		    SM(R92C_EDCA_PARAM_ECWMIN, ac->ac_ecwmin) |
@@ -1708,26 +1702,33 @@ rtwn_rxfilter_init(struct rtwn_softc *sc)
 void
 rtwn_edca_init(struct rtwn_softc *sc)
 {
-	/* XXX Use the same values for PCI and USB? */
-	if (sc->chip & RTWN_CHIP_PCI) {
-		rtwn_write_2(sc, R92C_SPEC_SIFS, 0x1010);
-		rtwn_write_2(sc, R92C_MAC_SPEC_SIFS, 0x1010);
-		rtwn_write_2(sc, R92C_SIFS_CCK, 0x1010);
-		rtwn_write_2(sc, R92C_SIFS_OFDM, 0x0e0e);
-		rtwn_write_4(sc, R92C_EDCA_BE_PARAM, 0x005ea42b);
-		rtwn_write_4(sc, R92C_EDCA_BK_PARAM, 0x0000a44f);
-		rtwn_write_4(sc, R92C_EDCA_VI_PARAM, 0x005e4322);
-		rtwn_write_4(sc, R92C_EDCA_VO_PARAM, 0x002f3222);
-	} else if (sc->chip & RTWN_CHIP_USB) {
-		rtwn_write_2(sc, R92C_SPEC_SIFS, 0x100a);
-		rtwn_write_2(sc, R92C_MAC_SPEC_SIFS, 0x100a);
-		rtwn_write_2(sc, R92C_SIFS_CCK, 0x100a);
-		rtwn_write_2(sc, R92C_SIFS_OFDM, 0x100a);
-		rtwn_write_4(sc, R92C_EDCA_BE_PARAM, 0x005ea42b);
-		rtwn_write_4(sc, R92C_EDCA_BK_PARAM, 0x0000a44f);
-		rtwn_write_4(sc, R92C_EDCA_VI_PARAM, 0x005ea324);
-		rtwn_write_4(sc, R92C_EDCA_VO_PARAM, 0x002fa226);
-	}
+	struct ieee80211com *ic = &sc->sc_ic;
+	int mode, aci;
+
+	/* Set SIFS; 0x10 = 16 usec (SIFS 11g), 0x0a = 10 usec (SIFS 11b) */
+	rtwn_write_2(sc, R92C_SPEC_SIFS, 0x100a);
+	rtwn_write_2(sc, R92C_MAC_SPEC_SIFS, 0x100a);
+	rtwn_write_2(sc, R92C_SIFS_CCK, 0x100a);
+	rtwn_write_2(sc, R92C_SIFS_OFDM, 0x100a);
+	rtwn_write_2(sc, R92C_RESP_SIFS_CCK, 0x100a);
+	rtwn_write_2(sc, R92C_RESP_SIFS_OFDM, 0x100a);
+
+	if (ic->ic_curmode == IEEE80211_MODE_AUTO)
+		mode = IEEE80211_MODE_11G; /* XXX */
+	else
+		mode = ic->ic_curmode;
+	for (aci = 0; aci < EDCA_NUM_AC; aci++)
+		memcpy(&ic->ic_edca_ac[aci], &ieee80211_edca_table[mode][aci],
+		    sizeof(struct ieee80211_edca_ac_params));
+	rtwn_updateedca(ic);
+
+	rtwn_write_4(sc, R92C_FAST_EDCA_CTRL, 0x086666); /* linux magic */
+
+	rtwn_write_4(sc, R92C_EDCA_RANDOM_GEN, arc4random());
+
+	/* Enable hardware AC queue management. */
+	rtwn_write_1(sc, R92C_ACMHWCTRL, R92C_ACMHW_HWEN | R92C_ACMHW_BEQEN |
+	    R92C_ACMHW_VIQEN | R92C_ACMHW_VOQEN);
 }
 
 void
