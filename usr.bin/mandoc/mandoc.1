@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.96 2017/01/28 23:26:55 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.97 2017/01/31 19:43:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2017 $
+.Dd $Mdocdate: January 31 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1836,6 +1836,19 @@ as if they were a text line.
 .Xr mdoc 7 ,
 .Xr roff 7 ,
 .Xr tbl 7
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Ox 4.8 .
+The option
+.Fl I
+appeared in
+.Ox 5.2 ,
+and
+.Fl aCcfhKklMSsw
+in
+.Ox 5.7 .
 .Sh AUTHORS
 .An -nosplit
 The
