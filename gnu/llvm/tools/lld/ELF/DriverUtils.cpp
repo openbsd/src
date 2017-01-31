@@ -184,7 +184,8 @@ Optional<std::string> elf::searchLibrary(StringRef Name) {
       if (Optional<std::string> S = findFile(Dir, "lib" + Name + ".so"))
         return S;
 
-      const StringRef LibName = (Twine("lib") + Name + ".so.").str();
+      llvm::SmallString<128> Scratch;
+      const StringRef LibName = ("lib" + Name + ".so.").toStringRef(Scratch);
       int MaxMaj = -1, MaxMin = -1;
       std::error_code EC;
       for (fs::directory_iterator LI(Dir, EC), LE;
