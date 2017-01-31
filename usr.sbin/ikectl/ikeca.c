@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.40 2015/11/02 12:21:27 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.41 2017/01/31 21:35:07 sthen Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -101,11 +101,12 @@ const char *ca_env[][2] = {
 	{ "$ENV::CERT_ST", NULL },
 	{ "$ENV::EXTCERTUSAGE", NULL },
 	{ "$ENV::NSCERTTYPE", NULL },
+	{ "$ENV::REQ_EXT", NULL },
 	{ NULL }
 };
 
 int		 ca_sign(struct ca *, char *, int);
-int		 ca_request(struct ca *, char *);
+int		 ca_request(struct ca *, char *, int);
 void		 ca_newpass(char *, char *);
 char		*ca_readpass(char *, size_t *);
 int		 fcopy(char *, char *, mode_t);
@@ -198,12 +199,32 @@ ca_delkey(struct ca *ca, char *keyname)
 }
 
 int
-ca_request(struct ca *ca, char *keyname)
+ca_request(struct ca *ca, char *keyname, int type)
 {
 	char		cmd[PATH_MAX * 2];
+	char		hostname[HOST_NAME_MAX+1];
+	char		name[128];
 	char		path[PATH_MAX];
 
 	ca_setenv("$ENV::CERT_CN", keyname);
+
+	strlcpy(name, keyname, sizeof(name));
+
+	if (type == HOST_IPADDR) {
+		ca_setenv("$ENV::CERTIP", name);
+		ca_setenv("$ENV::REQ_EXT", "x509v3_IPAddr");
+	} else if (type == HOST_FQDN) {
+		if (!strcmp(keyname, "local")) {
+			if (gethostname(hostname, sizeof(hostname)))
+				err(1, "gethostname");
+			strlcpy(name, hostname, sizeof(name));
+		}
+		ca_setenv("$ENV::CERTFQDN", name);
+		ca_setenv("$ENV::REQ_EXT", "x509v3_FQDN");
+	} else {
+		errx(1, "unknown host type %d", type);
+	}
+
 	ca_setcnf(ca, keyname);
 
 	snprintf(path, sizeof(path), "%s/private/%s.csr", ca->sslpath, keyname);
@@ -222,22 +243,11 @@ int
 ca_sign(struct ca *ca, char *keyname, int type)
 {
 	char		cmd[PATH_MAX * 2];
-	char		hostname[HOST_NAME_MAX+1];
-	char		name[128];
 	const char	*extensions = NULL;
 
-	strlcpy(name, keyname, sizeof(name));
-
 	if (type == HOST_IPADDR) {
-		ca_setenv("$ENV::CERTIP", name);
 		extensions = "x509v3_IPAddr";
 	} else if (type == HOST_FQDN) {
-		if (!strcmp(keyname, "local")) {
-			if (gethostname(hostname, sizeof(hostname)))
-				err(1, "gethostname");
-			strlcpy(name, hostname, sizeof(name));
-		}
-		ca_setenv("$ENV::CERTFQDN", name);
 		extensions = "x509v3_FQDN";
 	} else {
 		errx(1, "unknown host type %d", type);
@@ -294,7 +304,7 @@ ca_certificate(struct ca *ca, char *keyname, int type, int action)
 	}
 
 	ca_key_create(ca, keyname);
-	ca_request(ca, keyname);
+	ca_request(ca, keyname, type);
 	ca_sign(ca, keyname, type);
 
 	return (0);

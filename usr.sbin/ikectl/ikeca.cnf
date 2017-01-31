@@ -1,4 +1,4 @@
-# $OpenBSD: ikeca.cnf,v 1.8 2015/11/02 12:21:27 jsg Exp $
+# $OpenBSD: ikeca.cnf,v 1.9 2017/01/31 21:35:07 sthen Exp $
 
 CERT_C			= DE
 CERT_ST			= Lower Saxony
@@ -24,6 +24,7 @@ NSCERTTYPE		= server,client
 #default_keyfile 	= privkey.pem
 distinguished_name	= req_distinguished_name
 #attributes		= req_attributes
+req_extensions		= $ENV::REQ_EXT
 
 [ req_distinguished_name ]
 countryName			= Country Name (2 letter code)
