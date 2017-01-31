@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.10 2016/09/23 14:35:15 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.11 2017/01/31 18:02:54 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -52,6 +52,7 @@ sub listen {
 	    Domain		=> $self->{listendomain},
 	    $self->{listenaddr}	? (LocalAddr => $self->{listenaddr}) : (),
 	    $self->{listenport}	? (LocalPort => $self->{listenport}) : (),
+	    SSL_server          => 1,
 	    SSL_key_file	=> "server.key",
 	    SSL_cert_file	=> "server.crt",
 	    SSL_ca_file		=> ($self->{sslca} || "ca.crt"),
