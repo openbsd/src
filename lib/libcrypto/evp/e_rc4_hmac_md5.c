@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4_hmac_md5.c,v 1.7 2016/11/05 10:47:57 miod Exp $ */
+/* $OpenBSD: e_rc4_hmac_md5.c,v 1.8 2017/01/31 13:17:21 inoguchi Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -262,6 +262,8 @@ rc4_hmac_md5_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 			unsigned int len = p[arg - 2] << 8 | p[arg - 1];
 
 			if (!ctx->encrypt) {
+				if (len < MD5_DIGEST_LENGTH)
+					return -1;
 				len -= MD5_DIGEST_LENGTH;
 				p[arg - 2] = len >> 8;
 				p[arg - 1] = len;
