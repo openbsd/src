@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.84 2016/09/24 18:40:29 tedu Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.85 2017/01/31 17:08:51 dhill Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -403,7 +403,7 @@ uao_free(struct uvm_aobj *aobj)
 				uvmexp.swpgonly--;
 			}
 		}
-		free(aobj->u_swslots, M_UVMAOBJ, 0);
+		free(aobj->u_swslots, M_UVMAOBJ, aobj->u_pages * sizeof(int));
 	}
 
 	/* finally free the aobj itself */
@@ -532,7 +532,7 @@ uao_shrink_array(struct uvm_object *uobj, int pages)
 	for (i = 0; i < pages; i++)
 		new_swslots[i] = aobj->u_swslots[i];
 
-	free(aobj->u_swslots, M_UVMAOBJ, 0);
+	free(aobj->u_swslots, M_UVMAOBJ, aobj->u_pages * sizeof(int));
 
 	aobj->u_swslots = new_swslots;
 	aobj->u_pages = pages;
@@ -585,7 +585,7 @@ uao_grow_array(struct uvm_object *uobj, int pages)
 	for (i = 0; i < aobj->u_pages; i++)
 		new_swslots[i] = aobj->u_swslots[i];
 
-	free(aobj->u_swslots, M_UVMAOBJ, 0);
+	free(aobj->u_swslots, M_UVMAOBJ, aobj->u_pages * sizeof(int));
 
 	aobj->u_swslots = new_swslots;
 	aobj->u_pages = pages;
@@ -664,7 +664,7 @@ uao_grow_convert(struct uvm_object *uobj, int pages)
 		}
 	}
 
-	free(old_swslots, M_UVMAOBJ, 0);
+	free(old_swslots, M_UVMAOBJ, aobj->u_pages * sizeof(int));
 	aobj->u_pages = pages;
 
 	return 0;

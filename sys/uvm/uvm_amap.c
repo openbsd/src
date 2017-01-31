@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.78 2016/10/08 16:19:44 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.79 2017/01/31 17:08:51 dhill Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -368,7 +368,7 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 	return(amap);
 
 fail1:
-	free(amap->am_buckets, M_UVMAMAP, 0);
+	free(amap->am_buckets, M_UVMAMAP, buckets * sizeof(*amap->am_buckets));
 	TAILQ_FOREACH_SAFE(chunk, &amap->am_chunks, ac_list, tmp)
 		pool_put(&uvm_amap_chunk_pool, chunk);
 	pool_put(&uvm_amap_pool, amap);
@@ -414,7 +414,7 @@ amap_free(struct vm_amap *amap)
 
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
-		free(amap->am_ppref, M_UVMAMAP, 0);
+		free(amap->am_ppref, M_UVMAMAP, amap->am_nslot * sizeof(int));
 #endif
 
 	if (UVM_AMAP_SMALL(amap))
