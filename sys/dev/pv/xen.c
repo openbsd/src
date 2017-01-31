@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.72 2017/01/20 16:57:38 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.73 2017/01/31 12:17:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1098,7 +1098,9 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 			    ge->ge_start, ge->ge_table[ref].domid);
 			return;
 		}
-		CPU_BUSY_CYCLE();
+#if (defined(__amd64__) || defined(__i386__))
+		__asm volatile("pause": : : "memory");
+#endif
 	}
 	ge->ge_table[ref].frame = 0xffffffff;
 }
