@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.110 2016/08/26 10:46:39 rzalamena Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.111 2017/01/31 12:21:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -216,7 +216,7 @@ server_read_http(struct bufferevent *bev, void *arg)
 		goto done;
 	}
 
-	while (!clt->clt_done && (line =
+	while (!clt->clt_headersdone && (line =
 	    evbuffer_readln(src, NULL, EVBUFFER_EOL_CRLF_STRICT)) != NULL) {
 		linelen = strlen(line);
 
@@ -225,7 +225,7 @@ server_read_http(struct bufferevent *bev, void *arg)
 		 * libevent already stripped the \r\n for us.
 		 */
 		if (!linelen) {
-			clt->clt_done = 1;
+			clt->clt_headersdone = 1;
 			free(line);
 			break;
 		}
@@ -360,7 +360,7 @@ server_read_http(struct bufferevent *bev, void *arg)
 
 		free(line);
 	}
-	if (clt->clt_done) {
+	if (clt->clt_headersdone) {
 		if (desc->http_method == HTTP_METHOD_NONE) {
 			server_abort_http(clt, 406, "no method");
 			return;
@@ -619,8 +619,9 @@ server_reset_http(struct client *clt)
 	server_httpdesc_free(clt->clt_descreq);
 	server_httpdesc_free(clt->clt_descresp);
 	clt->clt_headerlen = 0;
-	clt->clt_line = 0;
+	clt->clt_headersdone = 0;
 	clt->clt_done = 0;
+	clt->clt_line = 0;
 	clt->clt_chunk = 0;
 	free(clt->clt_remote_user);
 	clt->clt_remote_user = NULL;
