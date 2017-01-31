@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.8 2017/01/29 15:31:15 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.9 2017/01/31 15:35:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1135,6 +1135,14 @@ start:
 		/* we either finished a handshake or ignored the request,
 		 * now try again to obtain the (application) data we were asked for */
 		goto start;
+	}
+	/* Disallow client initiated renegotiation if configured. */
+	if (s->server && SSL_is_init_finished(s) &&
+	    S3I(s)->handshake_fragment_len >= 4 &&
+	    S3I(s)->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO &&
+	    (s->internal->options & SSL_OP_NO_CLIENT_RENEGOTIATION)) {
+		al = SSL_AD_NO_RENEGOTIATION;
+		goto f_err;
 	}
 	/* If we are a server and get a client hello when renegotiation isn't
 	 * allowed send back a no renegotiation alert and carry on.
