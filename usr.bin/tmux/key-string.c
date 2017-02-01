@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.43 2017/01/11 22:36:07 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.44 2017/02/01 09:55:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -255,6 +255,12 @@ key_string_lookup_key(key_code key)
 		return ("Mouse");
 	if (key == KEYC_DRAGGING)
 		return ("Dragging");
+	if (key == KEYC_MOUSEMOVE_PANE)
+		return ("MouseMovePane");
+	if (key == KEYC_MOUSEMOVE_STATUS)
+		return ("MouseMoveStatus");
+	if (key == KEYC_MOUSEMOVE_BORDER)
+		return ("MouseMoveBorder");
 
 	/*
 	 * Special case: display C-@ as C-Space. Could do this below in

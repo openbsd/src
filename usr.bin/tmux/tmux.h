@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.709 2017/01/30 21:41:17 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.710 2017/02/01 09:55:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -137,6 +137,7 @@ enum {
 	/* Mouse keys. */
 	KEYC_MOUSE, /* unclassified mouse event */
 	KEYC_DRAGGING, /* dragging in progress */
+	KEYC_MOUSE_KEY(MOUSEMOVE),
 	KEYC_MOUSE_KEY(MOUSEDOWN1),
 	KEYC_MOUSE_KEY(MOUSEDOWN2),
 	KEYC_MOUSE_KEY(MOUSEDOWN3),
@@ -488,8 +489,9 @@ struct msg_stderr_data {
 #define MODE_MOUSE_SGR 0x200
 #define MODE_BRACKETPASTE 0x400
 #define MODE_FOCUSON 0x800
+#define MODE_MOUSE_ALL 0x1000
 
-#define ALL_MOUSE_MODES (MODE_MOUSE_STANDARD|MODE_MOUSE_BUTTON)
+#define ALL_MOUSE_MODES (MODE_MOUSE_STANDARD|MODE_MOUSE_BUTTON|MODE_MOUSE_ALL)
 
 /*
  * A single UTF-8 character. UTF8_SIZE must be big enough to hold at least one

@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.118 2017/01/30 21:41:17 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.119 2017/02/01 09:55:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1280,11 +1280,13 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	    !!(wp->base.mode & MODE_WRAP));
 
 	format_add(ft, "mouse_any_flag", "%d",
-	    !!(wp->base.mode & (MODE_MOUSE_STANDARD|MODE_MOUSE_BUTTON)));
+	    !!(wp->base.mode & ALL_MOUSE_MODES));
 	format_add(ft, "mouse_standard_flag", "%d",
 	    !!(wp->base.mode & MODE_MOUSE_STANDARD));
 	format_add(ft, "mouse_button_flag", "%d",
 	    !!(wp->base.mode & MODE_MOUSE_BUTTON));
+	format_add(ft, "mouse_all_flag", "%d",
+	    !!(wp->base.mode & MODE_MOUSE_ALL));
 
 	format_add_cb(ft, "pane_tabs", format_cb_pane_tabs);
 }
