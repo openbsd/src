@@ -1,8 +1,9 @@
-/*	$OpenBSD: if_rtwn.c,v 1.25 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.26 2017/02/01 12:46:40 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2015 Stefan Sperling <stsp@openbsd.org>
+ * Copyright (c) 2015-2016 Andriy Voskoboinyk <avos@FreeBSD.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +50,7 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/pci/pcireg.h>
@@ -161,6 +163,9 @@ struct rtwn_pci_softc {
 	bus_size_t		sc_mapsize;
 	int			sc_cap_off;
 
+	struct ieee80211_amrr		amrr;
+	struct ieee80211_amrr_node	amn;
+
 #if NBPFILTER > 0
 	caddr_t				sc_drvbpf;
 
@@ -241,6 +246,8 @@ void		rtwn_scan_to(void *);
 void		rtwn_pci_next_scan(void *);
 void		rtwn_cancel_scan(void *);
 void		rtwn_wait_async(void *);
+void		rtwn_poll_c2h_events(struct rtwn_pci_softc *);
+void		rtwn_tx_report(struct rtwn_pci_softc *, uint8_t *, int);
 
 /* Aliases. */
 #define	rtwn_bb_write	rtwn_pci_write_4
@@ -336,6 +343,9 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	}
+
+	sc->amrr.amrr_min_success_threshold = 1;
+	sc->amrr.amrr_max_success_threshold = 15;
 
 	/* Attach the bus-agnostic driver. */
 	sc->sc_sc.sc_ops.cookie = sc;
@@ -989,6 +999,9 @@ rtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 		    SM(R92C_TXDW1_RAID, raid) |
 		    R92C_TXDW1_AGGBK);
 
+		/* Request TX status report for AMRR. */
+		txd->txdw2 |= htole32(R92C_TXDW2_CCX_RPT);
+
 		if (m->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold) {
 			txd->txdw4 |= htole32(R92C_TXDW4_RTSEN |
 			    R92C_TXDW4_HWRTSEN);
@@ -1001,13 +1014,17 @@ rtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 				    R92C_TXDW4_HWRTSEN);
 			}
 		}
-		/* Send RTS at OFDM24. */
-		txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE, 8));
-		txd->txdw5 |= htole32(SM(R92C_TXDW5_RTSRATE_FBLIMIT, 0xf));
-		/* Send data at OFDM54. */
-		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, 11));
-		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE_FBLIMIT, 0x1f));
 
+		if (ic->ic_curmode == IEEE80211_MODE_11B)
+			txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE, 0));
+		else
+			txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE, 3));
+		txd->txdw5 |= htole32(SM(R92C_TXDW5_RTSRATE_FBLIMIT, 0xf));
+
+		/* Use AMMR rate for data. */
+		txd->txdw4 |= htole32(R92C_TXDW4_DRVRATE);
+		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, ni->ni_txrate));
+		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE_FBLIMIT, 0x1f));
 	} else {
 		txd->txdw1 |= htole32(
 		    SM(R92C_TXDW1_MACID, 0) |
@@ -1128,6 +1145,8 @@ rtwn_tx_done(struct rtwn_pci_softc *sc, int qid)
 
 		sc->sc_sc.sc_tx_timer = 0;
 		tx_ring->queued--;
+
+		rtwn_poll_c2h_events(sc);
 	}
 
 	if (tx_ring->queued < (RTWN_TX_LIST_COUNT - 1))
@@ -1149,7 +1168,8 @@ rtwn_alloc_buffers(void *cookie)
 int
 rtwn_pci_init(void *cookie)
 {
-	/* nothing to do */
+	struct rtwn_pci_softc *sc = cookie;
+	ieee80211_amrr_node_init(&sc->amrr, &sc->amn);
 	return (0);
 }
 
@@ -1661,6 +1681,12 @@ void
 rtwn_calib_to(void *arg)
 {
 	struct rtwn_pci_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
+	int s;
+
+	s = splnet();
+	ieee80211_amrr_choose(&sc->amrr, ic->ic_bss, &sc->amn);
+	splx(s);
 
 	rtwn_calib(&sc->sc_sc);
 }
@@ -1711,4 +1737,60 @@ void
 rtwn_wait_async(void *cookie)
 {
 	/* nothing to do */
+}
+
+void
+rtwn_tx_report(struct rtwn_pci_softc *sc, uint8_t *buf, int len)
+{
+	struct r92c_c2h_tx_rpt *rpt = (struct r92c_c2h_tx_rpt *)buf;
+	int packets, tries, tx_ok, drop, expire, over;
+
+	if (len != sizeof(*rpt))
+		return;
+
+	packets = MS(rpt->rptb6, R92C_RPTB6_RPT_PKT_NUM);
+	tries = MS(rpt->rptb0, R92C_RPTB0_RETRY_CNT);
+	tx_ok = (rpt->rptb7 & R92C_RPTB7_PKT_OK);
+	drop = (rpt->rptb6 & R92C_RPTB6_PKT_DROP);
+	expire = (rpt->rptb6 & R92C_RPTB6_LIFE_EXPIRE);
+	over = (rpt->rptb6 & R92C_RPTB6_RETRY_OVER);
+
+	if (packets > 0) {
+		if (tx_ok)
+			sc->amn.amn_txcnt += packets;
+		if (tries > 1 || drop || expire || over)
+			sc->amn.amn_retrycnt++;
+	}
+}
+
+void
+rtwn_poll_c2h_events(struct rtwn_pci_softc *sc)
+{
+	const uint16_t off = R92C_C2HEVT_MSG + sizeof(struct r92c_c2h_evt);
+	uint8_t buf[R92C_C2H_MSG_MAX_LEN];
+	uint8_t id, len, status;
+	int i;
+
+	/* Read current status. */
+	status = rtwn_pci_read_1(sc, R92C_C2HEVT_CLEAR);
+	if (status == R92C_C2HEVT_HOST_CLOSE)
+		return;	/* nothing to do */
+
+	if (status == R92C_C2HEVT_FW_CLOSE) {
+		len = rtwn_pci_read_1(sc, R92C_C2HEVT_MSG);
+		id = MS(len, R92C_C2H_EVTB0_ID);
+		len = MS(len, R92C_C2H_EVTB0_LEN);
+
+		if (id == R92C_C2HEVT_TX_REPORT && len <= sizeof(buf)) {
+			memset(buf, 0, sizeof(buf));
+			for (i = 0; i < len; i++)
+				buf[i] = rtwn_pci_read_1(sc, off + i);
+			rtwn_tx_report(sc, buf, len);
+		} else
+			DPRINTF(("unhandled C2H event %d (%d bytes)\n",
+			    id, len));
+	}
+
+	/* Prepare for next event. */
+	rtwn_pci_write_1(sc, R92C_C2HEVT_CLEAR, R92C_C2HEVT_HOST_CLOSE);
 }

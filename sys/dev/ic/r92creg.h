@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.5 2017/01/31 09:21:46 stsp Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.6 2017/02/01 12:46:40 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -95,9 +95,9 @@
 #define R92C_MBIST_START		0x174
 #define R92C_MBIST_DONE			0x178
 #define R92C_MBIST_FAIL			0x17c
-#define R92C_C2HEVT_MSG_NORMAL		0x1a0
+#define R92C_C2HEVT_MSG			0x1a0
+#define R92C_C2HEVT_CLEAR		0x1af
 #define R92C_C2HEVT_MSG_TEST		0x1b8
-#define R92C_C2HEVT_CLEAR		0x1bf
 #define R92C_MCUTST_1			0x1c0
 #define R92C_FMETHR			0x1c8
 #define R92C_HMETFR			0x1cc
@@ -1268,6 +1268,71 @@ struct r92c_tx_desc_usb {
 #define R92C_TXDW5_DATA_RETRY_LIMIT_S	18
 #define R92C_TXDW5_AGGNUM_M		0xff000000
 #define R92C_TXDW5_AGGNUM_S		24
+
+/*
+ * C2H event structure.
+ */
+#define R92C_C2H_MSG_MAX_LEN		16
+
+struct r92c_c2h_evt {
+	uint8_t		evtb0;
+#define R92C_C2H_EVTB0_ID_M		0x0f
+#define R92C_C2H_EVTB0_ID_S		0
+#define R92C_C2H_EVTB0_LEN_M		0xf0
+#define R92C_C2H_EVTB0_LEN_S		4
+
+	uint8_t		seq;
+
+	/* Followed by payload (see below). */
+} __packed;
+
+/* Bits for R92C_C2HEVT_CLEAR. */
+#define R92C_C2HEVT_HOST_CLOSE		0x00
+#define R92C_C2HEVT_FW_CLOSE		0xff
+
+/*
+ * C2H event types.
+ */
+#define R92C_C2HEVT_DEBUG		0
+#define R92C_C2HEVT_TX_REPORT		3
+#define R92C_C2HEVT_EXT_RA_RPT		6
+
+/* Structure for R92C_C2H_EVT_TX_REPORT event. */
+struct r92c_c2h_tx_rpt {
+	uint8_t		rptb0;
+#define R92C_RPTB0_RETRY_CNT_M		0x3f
+#define R92C_RPTB0_RETRY_CNT_S		0
+
+	uint8_t		rptb1;		/* XXX junk */
+#define R92C_RPTB1_RTS_RETRY_CNT_M	0x3f
+#define R92C_RPTB1_RTS_RETRY_CNT_S	0
+
+	uint8_t		queue_time_low;
+	uint8_t		queue_time_high;
+	uint8_t		rptb4;
+#define R92C_RPTB4_MISSED_PKT_NUM_M	0x1f
+#define R92C_RPTB4_MISSED_PKT_NUM_S	0
+
+	uint8_t		rptb5;
+#define R92C_RPTB5_MACID_M		0x1f
+#define R92C_RPTB5_MACID_S		0
+#define R92C_RPTB5_DES1_FRAGSSN_M	0xe0
+#define R92C_RPTB5_DES1_FRAGSSN_S	5
+
+	uint8_t		rptb6;
+#define R92C_RPTB6_RPT_PKT_NUM_M	0x1f
+#define R92C_RPTB6_RPT_PKT_NUM_S	0
+#define R92C_RPTB6_PKT_DROP		0x20
+#define R92C_RPTB6_LIFE_EXPIRE		0x40
+#define R92C_RPTB6_RETRY_OVER		0x80
+
+	uint8_t		rptb7;
+#define R92C_RPTB7_EDCA_M		0x0f
+#define R92C_RPTB7_EDCA_S		0
+#define R92C_RPTB7_BMC			0x20
+#define R92C_RPTB7_PKT_OK		0x40
+#define R92C_RPTB7_INT_CCX		0x80
+} __packed;
 
 /*
  * MAC initialization values.

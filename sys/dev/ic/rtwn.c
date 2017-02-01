@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.17 2017/01/31 15:15:13 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.18 2017/02/01 12:46:40 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -642,7 +642,7 @@ rtwn_media_change(struct ifnet *ifp)
 }
 
 /*
- * Initialize rate adaptation in firmware.
+ * Initialize rate adaptation.
  */
 int
 rtwn_ra_init(struct rtwn_softc *sc)
@@ -686,11 +686,11 @@ rtwn_ra_init(struct rtwn_softc *sc)
 		/* Configure Automatic Rate Fallback Register. */
 		if (ic->ic_curmode == IEEE80211_MODE_11B) {
 			if (rates & 0x0c)
-				rtwn_write_4(sc, R92C_ARFR(0), rates & 0x0d);
+				rtwn_write_4(sc, R92C_ARFR(0), rates & 0x05);
 			else
-				rtwn_write_4(sc, R92C_ARFR(0), rates & 0x0f);
+				rtwn_write_4(sc, R92C_ARFR(0), rates & 0x07);
 		} else
-			rtwn_write_4(sc, R92C_ARFR(0), rates & 0x0ff5);
+			rtwn_write_4(sc, R92C_ARFR(0), rates & 0x07f5);
 	}
 
 	if (sc->chip & RTWN_CHIP_88E) {
@@ -699,14 +699,26 @@ rtwn_ra_init(struct rtwn_softc *sc)
 		/* We use AMRR with this chip. Start with the lowest rate. */
 		ni->ni_txrate = 0;
 	} else {
-		error = rtwn_r92c_ra_init(sc, mode, rates, maxrate,
-		    basicrates, maxbasicrate);
-		/* No AMRR support yet. Indicate highest supported rate. */
-		ni->ni_txrate = rs->rs_nrates - 1;
+		if (sc->chip & RTWN_CHIP_PCI) {
+			ni->ni_txrate = 0; /* AMRR will raise. */
+			/* Set initial MRR rates. */
+			rtwn_write_1(sc,
+			    R92C_INIDATA_RATE_SEL(R92C_MACID_BC), maxbasicrate);
+			rtwn_write_1(sc,
+			    R92C_INIDATA_RATE_SEL(R92C_MACID_BSS), 0);
+		} else {
+			error = rtwn_r92c_ra_init(sc, mode, rates, maxrate,
+			    basicrates, maxbasicrate);
+			/* No AMRR support. Indicate highest supported rate. */
+			ni->ni_txrate = rs->rs_nrates - 1;
+		}
 	}
 	return (error);
 }
 
+/*
+ * Initialize rate adaptation in firmware.
+ */
 int rtwn_r92c_ra_init(struct rtwn_softc *sc, u_int8_t mode, u_int32_t rates,
     int maxrate, uint32_t basicrates, int maxbasicrate)
 {
