@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.41 2017/01/30 10:57:00 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.42 2017/02/01 12:45:56 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -997,11 +997,17 @@ ar5008_tx_process(struct athn_softc *sc, int qid)
 	/*
 	 * NB: the data fail count contains the number of un-acked tries
 	 * for the final series used.  We must add the number of tries for
-	 * each series that was fully processed.
+	 * each series that was fully processed to punish transmit rates in
+	 * the earlier series which did not perform well.
+	 * If RTS/CTS was used, each series used the same transmit rate.
+	 * Ignore the series count in this case, since each series had
+	 * the same chance of success.
 	 */
 	failcnt  = MS(ds->ds_status1, AR_TXS1_DATA_FAIL_CNT);
-	/* NB: Assume two tries per series. */
-	failcnt += MS(ds->ds_status9, AR_TXS9_FINAL_IDX) * 2;
+	if (!(ds->ds_ctl0 & (AR_TXC0_RTS_ENABLE | AR_TXC0_CTS_ENABLE))) {
+		/* NB: Assume two tries per series. */
+		failcnt += MS(ds->ds_status9, AR_TXS9_FINAL_IDX) * 2;
+	}
 
 	/* Update rate control statistics. */
 	if (ni->ni_flags & IEEE80211_NODE_HT) {
