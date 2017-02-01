@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.142 2017/01/10 09:01:18 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.143 2017/02/01 20:59:47 dhill Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -449,29 +449,28 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 int
 tcp_ctloutput(int op, struct socket *so, int level, int optname,
-    struct mbuf **mp)
+    struct mbuf *m)
 {
 	int error = 0;
 	struct inpcb *inp;
 	struct tcpcb *tp;
-	struct mbuf *m;
 	int i;
 
 	inp = sotoinpcb(so);
 	if (inp == NULL) {
 		if (op == PRCO_SETOPT)
-			(void) m_free(*mp);
+			(void) m_free(m);
 		return (ECONNRESET);
 	}
 	if (level != IPPROTO_TCP) {
 		switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET6
 		case PF_INET6:
-			error = ip6_ctloutput(op, so, level, optname, mp);
+			error = ip6_ctloutput(op, so, level, optname, m);
 			break;
 #endif /* INET6 */
 		case PF_INET:
-			error = ip_ctloutput(op, so, level, optname, mp);
+			error = ip_ctloutput(op, so, level, optname, m);
 			break;
 		default:
 			error = EAFNOSUPPORT;	/*?*/
@@ -484,7 +483,6 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 	switch (op) {
 
 	case PRCO_SETOPT:
-		m = *mp;
 		switch (optname) {
 
 		case TCP_NODELAY:
@@ -573,7 +571,6 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 		break;
 
 	case PRCO_GETOPT:
-		*mp = m = m_get(M_WAIT, MT_SOOPTS);
 		m->m_len = sizeof(int);
 
 		switch (optname) {

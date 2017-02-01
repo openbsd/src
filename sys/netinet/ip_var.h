@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.67 2017/01/29 19:58:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.68 2017/02/01 20:59:47 dhill Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -219,13 +219,13 @@ extern struct pool ipqent_pool;
 struct route;
 struct inpcb;
 
-int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf *);
 void	 ip_drain(void);
 void	 ip_flush(void);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 void	 ip_freef(struct ipq *);
 void	 ip_freemoptions(struct ip_moptions *);
-int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf **);
+int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf *);
 void	 ip_init(void);
 struct mbuf*
 	 ip_insertoptions(struct mbuf *, struct mbuf *, int *);
@@ -250,7 +250,7 @@ void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 void	 ipintr(void);
 void	 ipv4_input(struct mbuf *);
 void	 ip_forward(struct mbuf *, struct ifnet *, struct rtentry *, int);
-int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf *);
 void	 rip_init(void);
 int	 rip_input(struct mbuf **, int *, int);
 int	 rip_output(struct mbuf *, ...);

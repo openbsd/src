@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.175 2017/01/27 20:31:42 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.176 2017/02/01 20:59:47 dhill Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1560,7 +1560,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		if (so->so_proto && so->so_proto->pr_ctloutput) {
 			NET_LOCK(s);
 			error = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
-			    level, optname, &m0);
+			    level, optname, m0);
 			NET_UNLOCK(s);
 			return (error);
 		}
@@ -1707,7 +1707,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				level = dom->dom_protosw->pr_protocol;
 				NET_LOCK(s);
 				error = (*so->so_proto->pr_ctloutput)
-				    (PRCO_SETOPT, so, level, optname, &m0);
+				    (PRCO_SETOPT, so, level, optname, m0);
 				NET_UNLOCK(s);
 				return (error);
 			}
@@ -1739,7 +1739,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		if (error == 0 && so->so_proto && so->so_proto->pr_ctloutput) {
 			NET_LOCK(s);
 			(*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
-			    level, optname, &m0);
+			    level, optname, m0);
 			NET_UNLOCK(s);
 			m = NULL;	/* freed by protocol */
 		}
@@ -1758,11 +1758,19 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 
 	if (level != SOL_SOCKET) {
 		if (so->so_proto && so->so_proto->pr_ctloutput) {
+			m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = 0;
+
 			NET_LOCK(s);
 			error = (*so->so_proto->pr_ctloutput)(PRCO_GETOPT, so,
-			    level, optname, mp);
+			    level, optname, m);
 			NET_UNLOCK(s);
-			return (error);
+			if (error) {
+				m_free(m);
+				return (error);
+			}
+			*mp = m;
+			return (0);
 		} else
 			return (ENOPROTOOPT);
 	} else {
@@ -1835,7 +1843,6 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		    }
 
 		case SO_RTABLE:
-			(void)m_free(m);
 			if (so->so_proto && so->so_proto->pr_domain &&
 			    so->so_proto->pr_domain->dom_protosw &&
 			    so->so_proto->pr_ctloutput) {
@@ -1844,12 +1851,16 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 				level = dom->dom_protosw->pr_protocol;
 				NET_LOCK(s);
 				error = (*so->so_proto->pr_ctloutput)
-				    (PRCO_GETOPT, so, level, optname, mp);
+				    (PRCO_GETOPT, so, level, optname, m);
 				NET_UNLOCK(s);
-				return (error);
+				if (error) {
+					(void)m_free(m);
+					return (error);
+				}
+				break;
 			}
+			(void)m_free(m);
 			return (ENOPROTOOPT);
-			break;
 
 #ifdef SOCKET_SPLICE
 		case SO_SPLICE:
@@ -1880,7 +1891,6 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 			}
 			(void)m_free(m);
 			return (EOPNOTSUPP);
-			break;
 
 		default:
 			(void)m_free(m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.107 2017/01/12 08:22:42 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.108 2017/02/01 20:59:47 dhill Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ mfc_find(struct ifnet *ifp, struct in_addr *origin, struct in_addr *group,
  * Handle MRT setsockopt commands to modify the multicast routing tables.
  */
 int
-ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
+ip_mrouter_set(struct socket *so, int optname, struct mbuf *m)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error;
@@ -184,32 +184,32 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
 	else
 		switch (optname) {
 		case MRT_INIT:
-			error = ip_mrouter_init(so, *mp);
+			error = ip_mrouter_init(so, m);
 			break;
 		case MRT_DONE:
 			error = ip_mrouter_done(so);
 			break;
 		case MRT_ADD_VIF:
-			error = add_vif(so, *mp);
+			error = add_vif(so, m);
 			break;
 		case MRT_DEL_VIF:
-			error = del_vif(so, *mp);
+			error = del_vif(so, m);
 			break;
 		case MRT_ADD_MFC:
-			error = add_mfc(so, *mp);
+			error = add_mfc(so, m);
 			break;
 		case MRT_DEL_MFC:
-			error = del_mfc(so, *mp);
+			error = del_mfc(so, m);
 			break;
 		case MRT_API_CONFIG:
-			error = set_api_config(so, *mp);
+			error = set_api_config(so, m);
 			break;
 		default:
 			error = ENOPROTOOPT;
 			break;
 		}
 
-	m_free(*mp);
+	m_free(m);
 	return (error);
 }
 
@@ -217,7 +217,7 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
  * Handle MRT getsockopt commands
  */
 int
-ip_mrouter_get(struct socket *so, int optname, struct mbuf **mp)
+ip_mrouter_get(struct socket *so, int optname, struct mbuf *m)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error;
@@ -225,25 +225,20 @@ ip_mrouter_get(struct socket *so, int optname, struct mbuf **mp)
 	if (so != ip_mrouter[inp->inp_rtableid])
 		error = ENOPROTOOPT;
 	else {
-		*mp = m_get(M_WAIT, MT_SOOPTS);
-
 		switch (optname) {
 		case MRT_VERSION:
-			error = get_version(*mp);
+			error = get_version(m);
 			break;
 		case MRT_API_SUPPORT:
-			error = get_api_support(*mp);
+			error = get_api_support(m);
 			break;
 		case MRT_API_CONFIG:
-			error = get_api_config(*mp);
+			error = get_api_config(m);
 			break;
 		default:
 			error = ENOPROTOOPT;
 			break;
 		}
-
-		if (error)
-			m_free(*mp);
 	}
 
 	return (error);

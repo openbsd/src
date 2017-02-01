@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.27 2017/01/12 08:22:42 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.28 2017/02/01 20:59:47 dhill Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -223,8 +223,8 @@ struct igmpmsg {
 	struct	  in_addr im_src, im_dst;
 };
 
-int	ip_mrouter_set(struct socket *, int, struct mbuf **);
-int	ip_mrouter_get(struct socket *, int, struct mbuf **);
+int	ip_mrouter_set(struct socket *, int, struct mbuf *);
+int	ip_mrouter_get(struct socket *, int, struct mbuf *);
 int	mrt_ioctl(struct socket *, u_long, caddr_t);
 int	mrt_sysctl_vif(void *, size_t *);
 int	mrt_sysctl_mfc(void *, size_t *);

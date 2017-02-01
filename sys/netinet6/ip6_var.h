@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.65 2016/12/02 11:16:04 mpi Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.66 2017/02/01 20:59:47 dhill Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ extern int ip6_auto_linklocal;
 struct in6pcb;
 struct inpcb;
 
-int	icmp6_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	icmp6_ctloutput(int, struct socket *, int, int, struct mbuf *);
 
 void	ip6_init(void);
 void	ip6intr(void);
@@ -264,8 +264,8 @@ void	ip6_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in6 *);
 int	ip6_output(struct mbuf *, struct ip6_pktopts *, struct route_in6 *, int,
 	    struct ip6_moptions *, struct inpcb *);
 int	ip6_fragment(struct mbuf *, int, u_char, u_long);
-int	ip6_ctloutput(int, struct socket *, int, int, struct mbuf **);
-int	ip6_raw_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	ip6_ctloutput(int, struct socket *, int, int, struct mbuf *);
+int	ip6_raw_ctloutput(int, struct socket *, int, int, struct mbuf *);
 void	ip6_initpktopts(struct ip6_pktopts *);
 int	ip6_setpktopts(struct mbuf *, struct ip6_pktopts *,
 	    struct ip6_pktopts *, int, int);
@@ -285,7 +285,7 @@ void	frag6_drain(void);
 void	rip6_init(void);
 int	rip6_input(struct mbuf **mp, int *offp, int proto);
 void	rip6_ctlinput(int, struct sockaddr *, u_int, void *);
-int	rip6_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	rip6_ctloutput(int, struct socket *, int, int, struct mbuf *);
 int	rip6_output(struct mbuf *, ...);
 int	rip6_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);

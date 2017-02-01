@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.221 2017/01/31 10:24:41 jca Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.222 2017/02/01 20:59:47 dhill Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ struct walkarg {
 	caddr_t	w_where, w_tmem;
 };
 
-int	route_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
 void	route_input(struct mbuf *m0, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
@@ -234,17 +234,16 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 int
 route_ctloutput(int op, struct socket *so, int level, int optname,
-    struct mbuf **mp)
+    struct mbuf *m)
 {
 	struct routecb *rop = sotoroutecb(so);
-	struct mbuf *m = *mp;
 	int error = 0;
 	unsigned int tid;
 
 	if (level != AF_ROUTE) {
 		error = EINVAL;
-		if (op == PRCO_SETOPT && *mp)
-			m_free(*mp);
+		if (op == PRCO_SETOPT && m)
+			m_free(m);
 		return (error);
 	}
 
@@ -277,12 +276,10 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 	case PRCO_GETOPT:
 		switch (optname) {
 		case ROUTE_MSGFILTER:
-			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(unsigned int);
 			*mtod(m, unsigned int *) = rop->msgfilter;
 			break;
 		case ROUTE_TABLEFILTER:
-			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(unsigned int);
 			*mtod(m, unsigned int *) = rop->rtableid;
 			break;
