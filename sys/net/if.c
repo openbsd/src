@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.484 2017/02/01 01:25:19 jsg Exp $	*/
+/*	$OpenBSD: if.c,v 1.485 2017/02/01 02:02:01 jsg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -513,8 +513,8 @@ if_attachhead(struct ifnet *ifp)
 {
 	int s;
 
-	NET_LOCK(s);
 	if_attach_common(ifp);
+	NET_LOCK(s);
 	TAILQ_INSERT_HEAD(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
 	NET_UNLOCK(s);
@@ -525,8 +525,8 @@ if_attach(struct ifnet *ifp)
 {
 	int s;
 
-	NET_LOCK(s);
 	if_attach_common(ifp);
+	NET_LOCK(s);
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
 	NET_UNLOCK(s);
