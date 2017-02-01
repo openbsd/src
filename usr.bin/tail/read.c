@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.17 2015/11/19 17:50:04 tedu Exp $	*/
+/*	$OpenBSD: read.c,v 1.18 2017/02/01 16:21:12 martijn Exp $	*/
 /*	$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $	*/
 
 /*-
@@ -141,20 +141,17 @@ lines(struct tailfile *tf, off_t off)
 		size_t blen;
 		size_t len;
 		char *l;
-	} *lines;
+	} *lines = NULL;
 	int ch, rc = 0;
 	char *p = NULL;
 	int wrap;
-	size_t cnt, recno, blen, newsize;
+	size_t cnt, lineno, nlineno, recno, blen, newsize;
 	char *sp = NULL, *newp = NULL;
 
 	if (off > SIZE_MAX)
 		errx(1, "offset too large");
 
-	if ((lines = calloc(off, sizeof(*lines))) == NULL)
-		err(1, NULL);
-
-	blen = cnt = recno = wrap = 0;
+	lineno = blen = cnt = recno = wrap = 0;
 
 	while ((ch = getc(tf->fp)) != EOF) {
 		if (++cnt > blen) {
@@ -166,6 +163,15 @@ lines(struct tailfile *tf, off_t off)
 			p = sp + cnt - 1;
 		}
 		*p++ = ch;
+		if (recno >= lineno) {
+			nlineno = (lineno + 1024) > off ?
+			    (size_t) off : lineno + 1024;
+			lines = reallocarray(lines, nlineno, sizeof(*lines));
+			if (lines == NULL)
+				err(1, NULL);
+			bzero(lines + recno, nlineno - lineno);
+			lineno = nlineno;
+		}
 		if (ch == '\n') {
 			if (lines[recno].blen < cnt) {
 				newsize = cnt + 256;
@@ -213,7 +219,7 @@ lines(struct tailfile *tf, off_t off)
 			WR(lines[cnt].l, lines[cnt].len);
 	}
 done:
-	for (cnt = 0; cnt < off; cnt++)
+	for (cnt = 0; cnt < lineno; cnt++)
 		free(lines[cnt].l);
 	free(sp);
 	free(lines);
