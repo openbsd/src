@@ -2297,6 +2297,7 @@
 ./usr/share/man/man3/fuse_main.3
 ./usr/share/man/man3/fwide.3
 ./usr/share/man/man3/gai_strerror.3
+./usr/share/man/man3/get_rfc3526_prime_8192.3
 ./usr/share/man/man3/getaddrinfo.3
 ./usr/share/man/man3/getbsize.3
 ./usr/share/man/man3/getc.3
