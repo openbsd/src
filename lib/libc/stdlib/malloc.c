@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.212 2017/01/21 07:47:42 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.213 2017/02/01 06:17:42 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1328,13 +1328,9 @@ ofree(struct dir_info *argpool, void *p)
 				    sz - mopts.malloc_guard,
 				    PAGEROUND(sz - mopts.malloc_guard));
 		} else {
-#if notyetbecause_of_realloc
 			/* shifted towards the end */
-			if (p != ((char *)r->p) + ((MALLOC_PAGESIZE -
-			    MALLOC_MINSIZE - sz - mopts.malloc_guard) &
-			    ~(MALLOC_MINSIZE-1))) {
-			}
-#endif
+			if (p != MALLOC_MOVE(r->p, sz))
+				wrterror(pool, "bogus moved pointer %p", p);
 			p = r->p;
 		}
 		if (mopts.malloc_guard) {
@@ -1474,7 +1470,7 @@ orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
 	if (gnewsz > MALLOC_MAXCHUNK)
 		gnewsz += mopts.malloc_guard;
 
-	if (newsz > MALLOC_MAXCHUNK && oldsz > MALLOC_MAXCHUNK && p == r->p &&
+	if (newsz > MALLOC_MAXCHUNK && oldsz > MALLOC_MAXCHUNK &&
 	    !mopts.malloc_realloc) {
 		/* First case: from n pages sized allocation to m pages sized
 		   allocation, no malloc_move in effect */
@@ -1484,7 +1480,7 @@ orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
 		if (rnewsz > roldsz) {
 			/* try to extend existing region */
 			if (!mopts.malloc_guard) {
-				void *hint = (char *)p + roldsz;
+				void *hint = (char *)r->p + roldsz;
 				size_t needed = rnewsz - roldsz;
 
 				STATS_INC(pool->cheap_realloc_tries);
@@ -1502,9 +1498,15 @@ gotit:
 					STATS_ADD(pool->malloc_used, needed);
 					if (mopts.malloc_junk == 2)
 						memset(q, SOME_JUNK, needed);
-					r->size = newsz;
+					r->size = gnewsz;
+					if (r->p != p) {
+						/* old pointer is moved */
+						memmove(r->p, p, oldsz);
+						p = r->p;
+					}
 					if (mopts.chunk_canaries)
-						fill_canary(p, newsz, PAGEROUND(newsz));
+						fill_canary(p, newsz,
+						    PAGEROUND(newsz));
 					STATS_SETF(r, f);
 					STATS_INC(pool->cheap_reallocs);
 					ret = p;
@@ -1517,30 +1519,45 @@ gotit:
 		} else if (rnewsz < roldsz) {
 			/* shrink number of pages */
 			if (mopts.malloc_guard) {
-				if (mprotect((char *)p + roldsz -
+				if (mprotect((char *)r->p + roldsz -
 				    mopts.malloc_guard, mopts.malloc_guard,
 				    PROT_READ | PROT_WRITE))
 					wrterror(pool, "mprotect");
-				if (mprotect((char *)p + rnewsz -
+				if (mprotect((char *)r->p + rnewsz -
 				    mopts.malloc_guard, mopts.malloc_guard,
 				    PROT_NONE))
 					wrterror(pool, "mprotect");
 			}
-			unmap(pool, (char *)p + rnewsz, roldsz - rnewsz);
+			unmap(pool, (char *)r->p + rnewsz, roldsz - rnewsz);
 			r->size = gnewsz;
-			if (mopts.chunk_canaries)
+			if (MALLOC_MOVE_COND(gnewsz)) {
+				void *pp = MALLOC_MOVE(r->p, gnewsz);
+				memmove(pp, p, newsz);
+				p = pp;
+			} else if (mopts.chunk_canaries)
 				fill_canary(p, newsz, PAGEROUND(newsz));
 			STATS_SETF(r, f);
 			ret = p;
 			goto done;
 		} else {
 			/* number of pages remains the same */
-			if (newsz > oldsz && mopts.malloc_junk == 2)
-				memset((char *)p + newsz, SOME_JUNK,
-				    rnewsz - mopts.malloc_guard - newsz);
+			void *pp = r->p;
+
 			r->size = gnewsz;
-			if (mopts.chunk_canaries)
-				fill_canary(p, newsz, PAGEROUND(newsz));
+			if (MALLOC_MOVE_COND(gnewsz))
+				pp = MALLOC_MOVE(r->p, gnewsz);
+			if (p != pp) {
+				memmove(pp, p, oldsz < newsz ? oldsz : newsz);
+				p = pp;
+			}
+			if (p == r->p) {
+				if (newsz > oldsz && mopts.malloc_junk == 2)
+					memset((char *)p + newsz, SOME_JUNK,
+					    rnewsz - mopts.malloc_guard -
+					    newsz);
+				if (mopts.chunk_canaries)
+					fill_canary(p, newsz, PAGEROUND(newsz));
+			}
 			STATS_SETF(r, f);
 			ret = p;
 			goto done;
