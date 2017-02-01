@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.35 2014/10/31 09:45:27 jsg Exp $	*/
+/*	$OpenBSD: cy.c,v 1.36 2017/02/01 16:46:57 bluhm Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -116,7 +116,7 @@ cy_probe_common(bus_space_tag_t memt, bus_space_handle_t memh, int bustype)
 			chip_offs -= (CY32_ADDR_FIX << bustype);
 
 #ifdef CY_DEBUG
-		printf("cy: probe chip %d offset 0x%lx ... ",
+		printf("cy: probe chip %d offset 0x%x ... ",
 		    cy_chip, chip_offs);
 #endif
 
@@ -446,7 +446,7 @@ cyread(dev, uio, flag)
 	struct tty *tp = cy->cy_tty;
 
 #ifdef CY_DEBUG
-	printf("%s read port %d uio 0x%x flag 0x%x\n", sc->sc_dev.dv_xname,
+	printf("%s read port %d uio %p flag 0x%x\n", sc->sc_dev.dv_xname,
 	    port, uio, flag);
 #endif
 
@@ -469,7 +469,7 @@ cywrite(dev, uio, flag)
 	struct tty *tp = cy->cy_tty;
 
 #ifdef CY_DEBUG
-	printf("%s write port %d uio 0x%x flag 0x%x\n", sc->sc_dev.dv_xname,
+	printf("%s write port %d uio %p flag 0x%x\n", sc->sc_dev.dv_xname,
 	    port, uio, flag);
 #endif
 
@@ -511,7 +511,7 @@ cyioctl(dev, cmd, data, flag, p)
 	int error;
 
 #ifdef CY_DEBUG
-	printf("%s port %d ioctl cmd 0x%x data 0x%x flag 0x%x\n",
+	printf("%s port %d ioctl cmd 0x%lx data %p flag 0x%x\n",
 	    sc->sc_dev.dv_xname, port, cmd, data, flag);
 #endif
 
@@ -596,7 +596,7 @@ cystart(tp)
 	int s;
 
 #ifdef CY_DEBUG
-	printf("%s port %d start, tty 0x%x\n", sc->sc_dev.dv_xname, port, tp);
+	printf("%s port %d start, tty %p\n", sc->sc_dev.dv_xname, port, tp);
 #endif
 
 	s = spltty();
@@ -633,7 +633,7 @@ cystop(tp, flag)
 	int s;
 
 #ifdef CY_DEBUG
-	printf("%s port %d stop tty 0x%x flag 0x%x\n", sc->sc_dev.dv_xname,
+	printf("%s port %d stop tty %p flag 0x%x\n", sc->sc_dev.dv_xname,
 	    port, tp, flag);
 #endif
 
@@ -670,7 +670,7 @@ cyparam(tp, t)
 	int s, opt;
 
 #ifdef CY_DEBUG
-	printf("%s port %d param tty 0x%x termios 0x%x\n", sc->sc_dev.dv_xname,
+	printf("%s port %d param tty %p termios %p\n", sc->sc_dev.dv_xname,
 	    port, tp, t);
 	printf("ispeed %d ospeed %d\n", t->c_ispeed, t->c_ospeed);
 #endif
@@ -1363,7 +1363,7 @@ cd1400_channel_cmd(cy, cmd)
 	u_int waitcnt = 5 * 8 * 1024; /* approx 5 ms */
 
 #ifdef CY_DEBUG
-	printf("c1400_channel_cmd cy 0x%x command 0x%x\n", cy, cmd);
+	printf("c1400_channel_cmd cy %p command 0x%x\n", cy, cmd);
 #endif
 
 	/* wait until cd1400 is ready to process a new command */
