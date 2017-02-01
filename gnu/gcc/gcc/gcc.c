@@ -6095,7 +6095,7 @@ main (int argc, char **argv)
   xmalloc_set_program_name (programname);
 
   if (pledge ("stdio rpath wpath cpath proc exec", NULL) == -1) {
-    error ("pledge", xstrerror (errno));
+    error ("pledge: %s", xstrerror (errno));
     exit (1);
   }
 
