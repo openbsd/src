@@ -3,7 +3,7 @@ Each test creates a special httpd.conf and starts those two processes.
 All processes write log files that are checked for certain messages.
 The test arguments are kept in the args-*.pl files.
 
-SUDO=sudo
+SUDO=doas
 As httpd needs root privileges either run the tests as root or set
 this variable and run make as a regular user.  Only the code that
 requires it, is run as root.
