@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.6 2016/05/03 19:13:04 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.7 2017/02/01 10:26:06 reyk Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -188,9 +188,12 @@ sub http_request {
 sub http_response {
 	my ($self, $len) = @_;
 	my $method = $self->{method} || "GET";
+	my $code = $self->{code} || "200 OK";
 
 	my $vers;
 	my $chunked = 0;
+	my $multipart = 0;
+	my $boundary;
 	{
 		local $/ = "\r\n";
 		local $_ = <STDIN>;
@@ -198,8 +201,8 @@ sub http_response {
 		    or die ref($self), " missing http $len response";
 		chomp;
 		print STDERR "<<< $_\n";
-		m{^HTTP/(\d\.\d) 200 OK$}
-		    or die ref($self), " http response not ok"
+		m{^HTTP/(\d\.\d) $code$}
+		    or die ref($self), " http response not $code"
 		    unless $self->{httpnok};
 		$vers = $1;
 		while (<STDIN>) {
@@ -207,7 +210,7 @@ sub http_response {
 			print STDERR "<<< $_\n";
 			last if /^$/;
 			if (/^Content-Length: (.*)/) {
-				if ($self->{httpnok}) {
+				if ($self->{httpnok} or $self->{multipart}) {
 					$len = $1;
 				} else {
 					$1 == $len or die ref($self),
@@ -217,9 +220,18 @@ sub http_response {
 			if (/^Transfer-Encoding: chunked$/) {
 				$chunked = 1;
 			}
+			if (/^Content-Type: multipart\/byteranges; boundary=(.*)$/) {
+				$multipart = 1;
+				$boundary = $1;
+			}
 		}
 	}
-	if ($chunked) {
+	die ref($self), " no multipart response"
+	    if ($self->{multipart} && $multipart == 0);
+
+	if ($multipart) {
+		read_multipart($self, $boundary);
+	} elsif ($chunked) {
 		read_chunked($self);
 	} else {
 		#$len = $vers eq "1.1" ? $len : undef;
@@ -263,6 +275,61 @@ sub read_chunked {
 		}
 		defined or die ref($self), " missing chunk trailer";
 	}
+}
+
+sub read_multipart {
+	my $self = shift;
+	my $boundary = shift;
+	my $ctx = Digest::MD5->new();
+	my $len = 0;
+
+	for (;;) {
+		my $part = 0;
+		{
+			local $/ = "\r\n";
+			local $_ = <STDIN>;
+			local $_ = <STDIN>;
+			defined or die ref($self), " missing boundary";
+			chomp;
+			print STDERR "<<< $_\n";
+			/^--$boundary(--)?$/
+			    or die ref($self), " boundary not found: $_";
+			if (not $1) {
+				while (<STDIN>) {
+					chomp;
+					if (/^Content-Length: (.*)/) {
+						$part = $1;
+					}
+					if (/^Content-Range: bytes (\d+)-(\d+)\/(\d+)$/) {
+						$part = $2 - $1 + 1;
+					}
+					print STDERR "<<< $_\n";
+					last if /^$/;
+				}
+			}
+		}
+		last unless $part > 0;
+
+		my $max = $part;
+		my $rlen = POSIX::BUFSIZ;
+		my $r;
+		do {
+			if ($rlen > $max) {
+				$rlen = $max;
+			}
+			$r = read(STDIN, my $buf, $rlen);
+			last if not $r;
+			$_ = $buf;
+			$ctx->add($_);
+			$max = $max - $r;
+		} while ($max && $r == $rlen);
+
+		$len = $len + $part;
+	}
+
+	print STDERR "LEN: ", $len, "\n";
+	print STDERR "MD5: ", $ctx->hexdigest, "\n";
+	
 }
 
 sub errignore {
