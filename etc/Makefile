@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.448 2017/01/25 03:24:52 patrick Exp $
+#	$OpenBSD: Makefile,v 1.449 2017/02/02 21:35:05 rpe Exp $
 
 .include <bsd.own.mk>
 
@@ -79,17 +79,14 @@ distribution-etc-root-var distribution distrib-dirs release:
 distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${MUTABLE} ${DESTDIR}/etc
 	sh ttys.pty | cat etc.${MACHINE}/ttys - > ${DESTDIR}/etc/ttys && \
-	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
-	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
+	    chown ${BINOWN}:${BINGRP} ${DESTDIR}/etc/ttys && \
 	    chmod 644 ${DESTDIR}/etc/ttys
 	cat examples/sysctl.conf etc.${MACHINE}/sysctl.conf > \
 	    ${DESTDIR}/etc/examples/sysctl.conf && \
-	    chown ${BINOWN} ${DESTDIR}/etc/examples/sysctl.conf && \
-	    chgrp ${BINGRP} ${DESTDIR}/etc/examples/sysctl.conf && \
+	    chown ${BINOWN}:${BINGRP} ${DESTDIR}/etc/examples/sysctl.conf && \
 	    chmod 644 ${DESTDIR}/etc/examples/sysctl.conf
 	cat fbtab.head etc.${MACHINE}/fbtab fbtab.tail > ${DESTDIR}/etc/fbtab && \
-	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
-	    chgrp ${BINGRP} ${DESTDIR}/etc/fbtab && \
+	    chown ${BINOWN}:${BINGRP} ${DESTDIR}/etc/fbtab && \
 	    chmod 644 ${DESTDIR}/etc/fbtab
 	${INSTALL} -c -o ${BINOWN} -g operator -m 664 motd ${DESTDIR}/etc
 	${INSTALL} -c -o root -g crontab -m 600 crontab ${DESTDIR}/var/cron/tabs/root
