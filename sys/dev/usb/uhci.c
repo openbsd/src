@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.139 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.140 2017/02/02 22:31:05 chl Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1647,7 +1647,6 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	struct uhci_soft_qh *sqh;
 	usbd_status err;
 	u_int len;
-	int endpt;
 	int s;
 
 	DPRINTFN(3, ("uhci_device_bulk_start: xfer=%p len=%u flags=%d ux=%p\n",
@@ -1662,7 +1661,6 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 #endif
 
 	len = xfer->length;
-	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
 	sqh = upipe->u.bulk.sqh;
 
 	err = uhci_alloc_std_chain(sc, len, xfer, &data, &dataend);
@@ -1875,7 +1873,6 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 	struct uhci_soft_td *data, *dataend;
 	struct uhci_soft_qh *sqh;
 	usbd_status err;
-	int endpt;
 	int i, s;
 
 	if (sc->sc_bus.dying)
@@ -1888,8 +1885,6 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 	if (xfer->rqflags & URQ_REQUEST)
 		panic("uhci_device_intr_start: a request");
 #endif
-
-	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
 
 	upipe->u.intr.isread = usbd_xfer_isread(xfer);
 
