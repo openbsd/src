@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.185 2017/01/25 09:23:08 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.186 2017/02/02 16:47:53 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -344,18 +344,16 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			if (ni->ni_pwrsave == IEEE80211_PS_AWAKE) {
 				/* turn on PS mode */
 				ni->ni_pwrsave = IEEE80211_PS_DOZE;
-				ic->ic_pssta++;
-				DPRINTF(("PS mode on for %s, count %d\n",
-				    ether_sprintf(wh->i_addr2), ic->ic_pssta));
+				DPRINTF(("PS mode on for %s\n",
+				    ether_sprintf(wh->i_addr2)));
 			}
 		} else if (ni->ni_pwrsave == IEEE80211_PS_DOZE) {
 			struct mbuf *m;
 
 			/* turn off PS mode */
 			ni->ni_pwrsave = IEEE80211_PS_AWAKE;
-			ic->ic_pssta--;
-			DPRINTF(("PS mode off for %s, count %d\n",
-			    ether_sprintf(wh->i_addr2), ic->ic_pssta));
+			DPRINTF(("PS mode off for %s\n",
+			    ether_sprintf(wh->i_addr2)));
 
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.117 2017/01/31 11:06:15 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.118 2017/02/02 16:47:53 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -787,6 +787,7 @@ u_int8_t *
 ieee80211_add_erp(u_int8_t *frm, struct ieee80211com *ic)
 {
 	u_int8_t erp;
+	int nonerpsta = 0;
 
 	*frm++ = IEEE80211_ELEMID_ERP;
 	*frm++ = 1;
@@ -795,7 +796,8 @@ ieee80211_add_erp(u_int8_t *frm, struct ieee80211com *ic)
 	 * The NonERP_Present bit shall be set to 1 when a NonERP STA
 	 * is associated with the BSS.
 	 */
-	if (ic->ic_nonerpsta != 0)
+	ieee80211_iterate_nodes(ic, ieee80211_count_nonerpsta, &nonerpsta);
+	if (nonerpsta != 0)
 		erp |= IEEE80211_ERP_NON_ERP_PRESENT;
 	/*
 	 * If one or more NonERP STAs are associated in the BSS, the
@@ -1890,6 +1892,7 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni)
 {
 	const struct ieee80211_frame *wh;
+	int pssta = 0;
 
 	KASSERT(ic->ic_opmode == IEEE80211_M_HOSTAP);
 	if (!(ic->ic_caps & IEEE80211_C_APPMGT))
@@ -1901,8 +1904,8 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct mbuf *m,
 		 * Buffer group addressed MSDUs with the Order bit clear
 		 * if any associated STAs are in PS mode.
 		 */
-		if ((wh->i_fc[1] & IEEE80211_FC1_ORDER) ||
-		    ic->ic_pssta == 0)
+		ieee80211_iterate_nodes(ic, ieee80211_count_pssta, &pssta);
+		if ((wh->i_fc[1] & IEEE80211_FC1_ORDER) || pssta == 0)
 			return 0;
 		ic->ic_tim_mcast_pending = 1;
 	} else {

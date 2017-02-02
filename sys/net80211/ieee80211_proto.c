@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.70 2016/12/26 23:25:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.71 2017/02/02 16:47:53 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -309,8 +309,6 @@ void
 ieee80211_reset_erp(struct ieee80211com *ic)
 {
 	ic->ic_flags &= ~IEEE80211_F_USEPROT;
-	ic->ic_nonerpsta = 0;
-	ic->ic_longslotsta = 0;
 
 	/*
 	 * Enable short slot time iff:
@@ -421,8 +419,6 @@ ieee80211_node_gtk_rekey(void *arg, struct ieee80211_node *ni)
 	ni->ni_flags |= IEEE80211_NODE_REKEY;
 	if (ieee80211_send_group_msg1(ic, ni) != 0)
 		ni->ni_flags &= ~IEEE80211_NODE_REKEY;
-	else
-		ic->ic_rsn_keydonesta++;
 }
 
 /*
@@ -457,7 +453,6 @@ ieee80211_setkeys(struct ieee80211com *ic)
 		arc4random_buf(k->k_key, k->k_len);
 	}
 
-	ic->ic_rsn_keydonesta = 0;
 	ieee80211_iterate_nodes(ic, ieee80211_node_gtk_rekey, ic);
 }
 

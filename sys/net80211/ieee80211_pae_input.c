@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.25 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.26 2017/02/02 16:47:53 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -989,10 +989,14 @@ ieee80211_recv_group_msg2(struct ieee80211com *ic,
 	timeout_del(&ni->ni_eapol_to);
 	ni->ni_rsn_gstate = RSNA_REKEYESTABLISHED;
 
-	if ((ni->ni_flags & IEEE80211_NODE_REKEY) &&
-	    --ic->ic_rsn_keydonesta == 0)
-		ieee80211_setkeysdone(ic);
-	ni->ni_flags &= ~IEEE80211_NODE_REKEY;
+	if (ni->ni_flags & IEEE80211_NODE_REKEY) {
+		int rekeysta = 0;
+		ni->ni_flags &= ~IEEE80211_NODE_REKEY;
+		ieee80211_iterate_nodes(ic,
+		    ieee80211_count_rekeysta, &rekeysta);
+		if (rekeysta == 0)
+			ieee80211_setkeysdone(ic);
+	}
 	ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
 
 	ni->ni_rsn_gstate = RSNA_IDLE;
