@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.218 2017/01/09 14:49:21 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.219 2017/02/02 08:24:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -74,7 +74,6 @@ void		 relay_input(struct rsession *);
 void		 relay_hash_addr(SIPHASH_CTX *, struct sockaddr_storage *, int);
 
 DH *		 relay_tls_get_dhparams(int);
-void		 relay_tls_callback_info(const SSL *, int, int);
 DH		*relay_tls_callback_dh(SSL *, int, int);
 SSL_CTX		*relay_tls_ctx_create(struct relay *);
 void		 relay_tls_transaction(struct rsession *,
@@ -1961,40 +1960,6 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	return (0);
 }
 
-void
-relay_tls_callback_info(const SSL *ssl, int where, int rc)
-{
-	struct ctl_relay_event *cre;
-	int tls_state;
-
-	cre = (struct ctl_relay_event *)SSL_get_app_data(ssl);
-
-	if (cre == NULL || cre->tlsreneg_state == TLSRENEG_ALLOW)
-		return;
-
-	tls_state = SSL_get_state(ssl);
-
-	/* Check renegotiations */
-	if ((where & SSL_CB_ACCEPT_LOOP) &&
-	    (cre->tlsreneg_state == TLSRENEG_DENY)) {
-		if ((tls_state == SSL3_ST_SR_CLNT_HELLO_A) ||
-		    (tls_state == SSL23_ST_SR_CLNT_HELLO_A)) {
-			/*
-			 * This is a client initiated renegotiation
-			 * that we do not allow
-			 */
-			cre->tlsreneg_state = TLSRENEG_ABORT;
-		}
-	} else if ((where & SSL_CB_HANDSHAKE_DONE) &&
-	    (cre->tlsreneg_state == TLSRENEG_INIT)) {
-		/*
-		 * This is right after the first handshake,
-		 * disallow any further negotiations.
-		 */
-		cre->tlsreneg_state = TLSRENEG_DENY;
-	}
-}
-
 DH *
 relay_tls_get_dhparams(int keylen)
 {
@@ -2103,6 +2068,8 @@ relay_tls_ctx_create(struct relay *rlay)
 	    SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
 	if (proto->tlsflags & TLSFLAG_CIPHER_SERVER_PREF)
 		SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+	if ((proto->tlsflags & TLSFLAG_CLIENT_RENEG) == 0)
+		SSL_CTX_set_options(ctx, SSL_OP_NO_CLIENT_RENEGOTIATION);
 
 	/* Set the allowed SSL protocols */
 	SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
@@ -2118,9 +2085,6 @@ relay_tls_ctx_create(struct relay *rlay)
 	SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_2);
 	if ((proto->tlsflags & TLSFLAG_TLSV1_2) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-
-	/* add the SSL info callback */
-	SSL_CTX_set_info_callback(ctx, relay_tls_callback_info);
 
 	if (proto->tlsecdhcurve > 0) {
 		/* Enable ECDHE support for TLS perfect forward secrecy */
@@ -2200,7 +2164,6 @@ void
 relay_tls_transaction(struct rsession *con, struct ctl_relay_event *cre)
 {
 	struct relay		*rlay = con->se_relay;
-	struct protocol	*proto = rlay->rl_proto;
 	SSL			*ssl;
 	const SSL_METHOD	*method;
 	void			(*cb)(int, short, void *);
@@ -2229,19 +2192,10 @@ relay_tls_transaction(struct rsession *con, struct ctl_relay_event *cre)
 	if (!SSL_set_fd(ssl, cre->s))
 		goto err;
 
-	if (cre->dir == RELAY_DIR_REQUEST) {
-		if ((proto->tlsflags & TLSFLAG_CLIENT_RENEG) == 0)
-			/* Only allow negotiation during the first handshake */
-			cre->tlsreneg_state = TLSRENEG_INIT;
-		else
-			/* Allow client initiated renegotiations */
-			cre->tlsreneg_state = TLSRENEG_ALLOW;
+	if (cre->dir == RELAY_DIR_REQUEST)
 		SSL_set_accept_state(ssl);
-	} else {
-		/* Always allow renegotiations if we're the client */
-		cre->tlsreneg_state = TLSRENEG_ALLOW;
+	else
 		SSL_set_connect_state(ssl);
-	}
 
 	SSL_set_app_data(ssl, cre);
 	cre->ssl = ssl;
@@ -2423,11 +2377,6 @@ relay_tls_readcb(int fd, short event, void *arg)
 		goto err;
 	}
 
-	if (cre->tlsreneg_state == TLSRENEG_ABORT) {
-		what |= EVBUFFER_ERROR;
-		goto err;
-	}
-
 	if (bufev->wm_read.high != 0)
 		howmuch = MINIMUM(sizeof(rbuf), bufev->wm_read.high);
 
@@ -2497,11 +2446,6 @@ relay_tls_writecb(int fd, short event, void *arg)
 
 	if (event == EV_TIMEOUT) {
 		what |= EVBUFFER_TIMEOUT;
-		goto err;
-	}
-
-	if (cre->tlsreneg_state == TLSRENEG_ABORT) {
-		what |= EVBUFFER_ERROR;
 		goto err;
 	}
 

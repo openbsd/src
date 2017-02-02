@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.238 2017/01/24 10:49:14 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.239 2017/02/02 08:24:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -176,13 +176,6 @@ enum direction {
 	RELAY_DIR_RESPONSE	=  2
 };
 
-enum tlsreneg_state {
-	TLSRENEG_INIT		= 0,	/* first/next negotiation is allowed */
-	TLSRENEG_ALLOW		= 1,	/* all (re-)negotiations are allowed */
-	TLSRENEG_DENY		= 2,	/* next renegotiation must be denied */
-	TLSRENEG_ABORT		= 3	/* the connection should be aborted */
-};
-
 enum relay_state {
 	STATE_INIT,
 	STATE_PENDING,
@@ -202,7 +195,6 @@ struct ctl_relay_event {
 	SSL			*ssl;	/* libssl object */
 
 	X509			*tlscert;
-	enum tlsreneg_state	 tlsreneg_state;
 
 	off_t			 splicelen;
 	off_t			 toread;
@@ -681,7 +673,7 @@ TAILQ_HEAD(relay_rules, relay_rule);
 #define TLSFLAG_CIPHER_SERVER_PREF		0x20
 #define TLSFLAG_CLIENT_RENEG			0x40
 #define TLSFLAG_DEFAULT				\
-	(TLSFLAG_TLSV1_2|TLSFLAG_CIPHER_SERVER_PREF|TLSFLAG_CLIENT_RENEG)
+	(TLSFLAG_TLSV1_2|TLSFLAG_CIPHER_SERVER_PREF)
 
 #define TLSFLAG_BITS						\
 	"\06\01sslv3\02tlsv1.0\03tlsv1.1\04tlsv1.2"	\

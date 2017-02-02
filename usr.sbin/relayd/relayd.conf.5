@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.173 2016/09/03 18:28:45 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.174 2017/02/02 08:24:16 reyk Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2016 $
+.Dd $Mdocdate: February 2 2017 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -927,6 +927,11 @@ will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
 for information about SSL/TLS cipher suites and preference lists.
+.It Ic client-renegotiation
+Allow client-initiated renegotiation.
+To mitigate a potential DoS risk,
+the default is
+.Ic no client-renegotiation .
 .It Ic ecdh Op Ic curve Ar name
 Set a named curve to use when generating EC keys for ECDHE-based
 cipher suites with Perfect Forward Secrecy (PFS).
@@ -955,10 +960,6 @@ The default is
 Prefer the client's cipher list over the server's preferences when
 choosing a cipher for the connection.
 The default is to prefer the server's cipher list.
-.It Ic no client-renegotiation
-Disallow client-initiated renegotiation,
-to mitigate a potential DoS risk.
-The default is to allow client-initiated renegotiation.
 .It Ic no session tickets
 Disable TLS session tickets.
 .Xr relayd 8
