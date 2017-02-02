@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.166 2017/01/23 01:10:31 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.167 2017/02/02 03:47:41 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1378,7 +1378,7 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 
 	/* handle special opcodes */
 	if (mbox != NULL)
-		memcpy(&dcmd->mdf_mbox, &mbox, sizeof(dcmd->mdf_mbox));
+		memcpy(&dcmd->mdf_mbox, mbox, sizeof(dcmd->mdf_mbox));
 
 	if (dir != MFI_DATA_NONE) {
 		if (dir == MFI_DATA_OUT)
@@ -1460,6 +1460,7 @@ mfi_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 		goto done;
 	}
 
+	memset(&mbox, 0, sizeof(mbox));
 	mbox.b[0] = link->target;
 	if ((rv = mfi_mgmt(sc, MR_DCMD_LD_GET_PROPERTIES, MFI_DATA_IN,
 	    sizeof(ldp), &ldp, &mbox)) != 0)
@@ -1486,6 +1487,7 @@ mfi_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 	    ((dc->rdcache) ? 1 : 0) == rdenable)
 		goto done;
 
+	memset(&mbox, 0, sizeof(mbox));
 	mbox.b[0] = ldp.mlp_ld.mld_target;
 	mbox.b[1] = ldp.mlp_ld.mld_res;
 	mbox.s[1] = ldp.mlp_ld.mld_seq;
