@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.127 2017/01/31 14:39:47 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.128 2017/02/02 22:19:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -342,6 +342,7 @@ struct client {
 	size_t			 clt_headerlen;
 	int			 clt_headersdone;
 	unsigned int		 clt_persist;
+	unsigned int		 clt_pipelining;
 	int			 clt_line;
 	int			 clt_done;
 	int			 clt_chunk;

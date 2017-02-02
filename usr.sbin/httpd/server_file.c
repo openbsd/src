@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.64 2017/01/31 14:39:47 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.65 2017/02/02 22:19:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -589,7 +589,7 @@ void
 server_file_error(struct bufferevent *bev, short error, void *arg)
 {
 	struct client		*clt = arg;
-	struct evbuffer		*dst;
+	struct evbuffer		*src, *dst;
 
 	if (error & EVBUFFER_TIMEOUT) {
 		server_close(clt, "buffer event timeout");
@@ -608,6 +608,12 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 
 		clt->clt_done = 1;
 
+		src = EVBUFFER_INPUT(clt->clt_bev);
+
+		/* Close the connection if a previous pipeline is empty */
+		if (clt->clt_pipelining && EVBUFFER_LENGTH(src) == 0)
+			clt->clt_persist = 0;
+
 		if (clt->clt_persist) {
 			/* Close input file and wait for next HTTP request */
 			if (clt->clt_fd != -1)
@@ -616,6 +622,12 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 			clt->clt_toread = TOREAD_HTTP_HEADER;
 			server_reset_http(clt);
 			bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
+
+			/* Start pipelining if the buffer is not empty */
+			if (EVBUFFER_LENGTH(src)) {
+				clt->clt_pipelining++;
+				server_read_http(clt->clt_bev, arg);
+			}
 			return;
 		}
 
