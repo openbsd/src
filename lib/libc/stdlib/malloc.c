@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.213 2017/02/01 06:17:42 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.214 2017/02/02 10:35:34 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1473,7 +1473,7 @@ orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
 	if (newsz > MALLOC_MAXCHUNK && oldsz > MALLOC_MAXCHUNK &&
 	    !mopts.malloc_realloc) {
 		/* First case: from n pages sized allocation to m pages sized
-		   allocation, no malloc_move in effect */
+		   allocation, m > n */
 		size_t roldsz = PAGEROUND(goldsz);
 		size_t rnewsz = PAGEROUND(gnewsz);
 
@@ -1587,12 +1587,9 @@ gotit:
 		ofree(pool, p);
 		ret = q;
 	} else {
-		/* > page size allocation didnt change */
-		if (mopts.chunk_canaries && oldsz <= MALLOC_MAXCHUNK) {
-			info->bits[info->offset + chunknum] = newsz;
-			if (info->size > 0)
-				fill_canary(p, newsz, info->size);
-		}	
+		/* oldsz == newsz */
+		if (newsz != 0)
+			wrterror(pool, "realloc internal inconsistency");
 		STATS_SETF(r, f);
 		ret = p;
 	}
