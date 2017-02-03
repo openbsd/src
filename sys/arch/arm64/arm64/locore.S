@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.7 2017/02/03 10:20:42 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.8 2017/02/03 10:34:21 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -438,17 +438,16 @@ link_l1_pagetable:
 	mov	x12, #L1_TABLE
 
 	/* Only use the output address bits */
-	lsr	x9, x9, #12
-	orr	x12, x12, x9, lsl #12
+	lsr	x9, x9, #PAGE_SHIFT
+	orr	x13, x12, x9, lsl #PAGE_SHIFT
 
 	/* Store the entry */
-	str	x12, [x6, x11, lsl #3]
+	str	x13, [x6, x11, lsl #3]
 
 	ret
 
 /*
  * Builds count 1 GiB page table entry
- *
  *  x6  = L1 table
  *  x7  = Type (0 = Device, 1 = Normal)
  *  x8  = VA start
