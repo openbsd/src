@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.70 2016/10/19 09:22:07 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.71 2017/02/03 21:01:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -130,6 +130,8 @@ session_create(const char *name, int argc, char **argv, const char *path,
 
 	s->options = options_create(global_s_options);
 	s->hooks = hooks_create(global_hooks);
+
+	status_update_saved(s);
 
 	s->tio = NULL;
 	if (tio != NULL) {

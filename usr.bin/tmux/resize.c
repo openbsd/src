@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.20 2016/10/16 22:06:40 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.21 2017/02/03 21:01:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -89,6 +89,8 @@ recalculate_sizes(void)
 
 		s->sx = ssx;
 		s->sy = ssy;
+
+		status_update_saved(s);
 	}
 
 	RB_FOREACH(w, windows, &windows) {

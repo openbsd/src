@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.711 2017/02/03 11:57:27 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.712 2017/02/03 21:01:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -545,7 +545,6 @@ struct grid_cell {
 	int			fg;
 	int			bg;
 	struct utf8_data	data;
-
 };
 struct grid_cell_entry {
 	u_char			flags;
@@ -935,6 +934,8 @@ struct session {
 	struct winlink	*curw;
 	struct winlink_stack lastw;
 	struct winlinks	 windows;
+
+	int		 statusat;
 
 	struct hooks	*hooks;
 	struct options	*options;
@@ -1864,6 +1865,7 @@ void	 server_unzoom_window(struct window *);
 /* status.c */
 void	 status_timer_start(struct client *);
 void	 status_timer_start_all(void);
+void	 status_update_saved(struct session *s);
 int	 status_at_line(struct client *);
 struct window *status_get_window_at(struct client *, u_int);
 int	 status_redraw(struct client *);
