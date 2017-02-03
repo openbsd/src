@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.27 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.28 2017/02/03 11:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -65,7 +65,7 @@ cmd_list_sessions_exec(struct cmd *self, struct cmdq_item *item)
 
 	n = 0;
 	RB_FOREACH(s, sessions, &sessions) {
-		ft = format_create(item, 0);
+		ft = format_create(item, FORMAT_NONE, 0);
 		format_add(ft, "line", "%u", n);
 		format_defaults(ft, NULL, s, NULL, NULL);
 

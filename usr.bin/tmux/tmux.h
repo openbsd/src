@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.710 2017/02/01 09:55:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.711 2017/02/03 11:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1503,8 +1503,11 @@ char		*paste_make_sample(struct paste_buffer *);
 #define FORMAT_STATUS 0x1
 #define FORMAT_FORCE 0x2
 #define FORMAT_NOJOBS 0x4
+#define FORMAT_NONE 0
+#define FORMAT_PANE 0x80000000U
+#define FORMAT_WINDOW 0x40000000U
 struct format_tree;
-struct format_tree *format_create(struct cmdq_item *, int);
+struct format_tree *format_create(struct cmdq_item *, int, int);
 void		 format_free(struct format_tree *);
 void printflike(3, 4) format_add(struct format_tree *, const char *,
 		     const char *, ...);

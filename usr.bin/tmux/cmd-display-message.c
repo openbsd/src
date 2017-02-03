@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.39 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.40 2017/02/03 11:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -73,7 +73,7 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 	if (template == NULL)
 		template = DISPLAY_MESSAGE_TEMPLATE;
 
-	ft = format_create(item, 0);
+	ft = format_create(item, FORMAT_NONE, 0);
 	format_defaults(ft, c, s, wl, wp);
 
 	msg = format_expand_time(ft, template, time(NULL));

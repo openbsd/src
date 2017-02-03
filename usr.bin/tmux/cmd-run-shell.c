@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.43 2016/11/12 19:05:53 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.44 2017/02/03 11:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -100,7 +100,7 @@ cmd_run_shell_exec(struct cmd *self, struct cmdq_item *item)
 	else
 		cwd = NULL;
 
-	ft = format_create(item, 0);
+	ft = format_create(item, FORMAT_NONE, 0);
 	format_defaults(ft, item->state.c, s, wl, wp);
 	shellcmd = format_expand(ft, args->argv[0]);
 	format_free(ft);

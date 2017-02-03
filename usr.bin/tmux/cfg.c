@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.53 2017/01/15 22:00:56 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.54 2017/02/03 11:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -123,7 +123,7 @@ load_cfg(const char *path, struct client *c, struct cmdq_item *item, int quiet)
 				    line);
 				continue;
 			}
-			ft = format_create(NULL, FORMAT_NOJOBS);
+			ft = format_create(NULL, FORMAT_NONE, FORMAT_NOJOBS);
 
 			s = p + 3;
 			while (isspace((u_char)*s))

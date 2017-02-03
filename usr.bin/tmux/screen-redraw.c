@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.42 2017/01/07 15:28:13 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.43 2017/02/03 11:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -280,7 +280,7 @@ screen_redraw_make_pane_status(struct client *c, struct window *w,
 
 	fmt = options_get_string(w->options, "pane-border-format");
 
-	ft = format_create(NULL, 0);
+	ft = format_create(NULL, FORMAT_PANE|wp->id, 0);
 	format_defaults(ft, c, NULL, NULL, wp);
 
 	memcpy(&old, &wp->status_screen, sizeof old);

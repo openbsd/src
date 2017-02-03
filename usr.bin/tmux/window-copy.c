@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.164 2017/01/07 15:28:13 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.165 2017/02/03 11:57:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1611,7 +1611,7 @@ window_copy_copy_pipe(struct window_pane *wp, struct session *sess,
 	if (buf == NULL)
 		return;
 
-	ft = format_create(NULL, 0);
+	ft = format_create(NULL, FORMAT_NONE, 0);
 	format_defaults(ft, NULL, sess, NULL, wp);
 	expanded = format_expand(ft, arg);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.76 2016/10/16 22:06:40 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.77 2017/02/03 11:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -92,7 +92,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 
 	to_free = NULL;
 	if (args_has(args, 'c')) {
-		ft = format_create(item, 0);
+		ft = format_create(item, FORMAT_NONE, 0);
 		format_defaults(ft, item->state.c, s, NULL, NULL);
 		to_free = cwd = format_expand(ft, args_get(args, 'c'));
 		format_free(ft);
@@ -169,7 +169,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		if ((template = args_get(args, 'F')) == NULL)
 			template = SPLIT_WINDOW_TEMPLATE;
 
-		ft = format_create(item, 0);
+		ft = format_create(item, FORMAT_NONE, 0);
 		format_defaults(ft, item->state.c, s, wl, new_wp);
 
 		cp = format_expand(ft, template);

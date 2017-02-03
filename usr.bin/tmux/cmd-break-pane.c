@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.41 2017/01/29 22:10:55 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.42 2017/02/03 11:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -107,7 +107,7 @@ cmd_break_pane_exec(struct cmd *self, struct cmdq_item *item)
 		if ((template = args_get(args, 'F')) == NULL)
 			template = BREAK_PANE_TEMPLATE;
 
-		ft = format_create(item, 0);
+		ft = format_create(item, FORMAT_NONE, 0);
 		format_defaults(ft, item->state.c, dst_s, wl, wp);
 
 		cp = format_expand(ft, template);

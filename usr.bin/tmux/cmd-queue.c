@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.47 2017/01/05 09:07:15 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.48 2017/02/03 11:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -268,7 +268,7 @@ cmdq_format(struct cmdq_item *item, const char *key, const char *fmt, ...)
 
 	for (loop = item; loop != NULL; loop = item->next) {
 		if (loop->formats == NULL)
-			loop->formats = format_create(NULL, 0);
+			loop->formats = format_create(NULL, FORMAT_NONE, 0);
 		format_add(loop->formats, key, "%s", value);
 	}
 
