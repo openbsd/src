@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.113 2017/02/02 16:47:53 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.114 2017/02/03 09:32:26 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -675,6 +675,12 @@ ieee80211_end_scan(struct ifnet *ifp)
 	ni = ic->ic_bss;
 
 	ic->ic_curmode = ieee80211_chan2mode(ic, ni->ni_chan);
+
+	/* Make sure we send valid rates in an association request. */
+	if (ic->ic_opmode == IEEE80211_M_STA)
+		ieee80211_fix_rate(ic, ni,
+		    IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
+		    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 
 	if (ic->ic_flags & IEEE80211_F_RSNON)
 		ieee80211_choose_rsnparams(ic);
