@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.9 2017/02/03 10:46:19 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.10 2017/02/03 13:39:49 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -423,6 +423,43 @@ create_pagetables:
 
 	/* Restore the Link register */
 	mov	x30, x5
+	ret
+
+/*
+ * Builds an L0 -> L1 table descriptor
+ *
+ * This is a link for a 512GiB block of memory with up to 1GiB regions mapped
+ * within it by build_l1_block_pagetable.
+ *
+ *  x6  = L0 table
+ *  x8  = Virtual Address
+ *  x9  = L1 PA (trashed)
+ *  x10 = Entry count
+ *  x11, x12 and x13 are trashed
+ */
+link_l0_pagetable:
+	/*
+	 * Link an L0 -> L1 table entry.
+	 */
+	/* Find the table index */
+	lsr	x11, x8, #L0_SHIFT
+	and	x11, x11, #Ln_ADDR_MASK
+
+	/* Build the L0 block entry */
+	mov	x12, #L0_TABLE
+
+	/* Only use the output address bits */
+	lsr	x9, x9, #PAGE_SHIFT
+1:	orr	x13, x12, x9, lsl #PAGE_SHIFT
+
+	/* Store the entry */
+	str	x13, [x6, x11, lsl #3]
+
+	sub	x10, x10, #1
+	add	x11, x11, #1
+	add	x9, x9, #1
+	cbnz	x10, 1b
+
 	ret
 
 /*
