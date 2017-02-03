@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.6 2017/01/23 13:43:50 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.7 2017/02/03 10:20:42 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -372,7 +372,7 @@ create_pagetables:
 	mov	x7, #NORMAL_MEM
 	add	x8, x28, x29
 	mov	x9, x28
-	bl	build_block_pagetable
+	bl	build_l2_block_pagetable
 
 	/* Move to the l1 table */
 	add	x26, x26, #PAGE_SIZE*2		// pagetable_l1_ttbr1:
@@ -382,81 +382,50 @@ create_pagetables:
 	mov	x6, x26
 	bl	link_l1_pagetable
 
-
 	/*
 	 * Build the TTBR0 maps.
 	 */
-	add	x27, x26, #PAGE_SIZE *2 	 // pagetable_l1_ttbr0:
+	add	x27, x26, #PAGE_SIZE * 2	// pagetable_l1_ttbr0:
 
+	mov	x6, x27		/* The initial page table */
 #if defined(SOCDEV_PA) && defined(SOCDEV_VA)
 	/* Create a table for the UART */
-	mov	x6, x27		/* The initial page table */
 	mov	x7, #DEVICE_MEM
 	mov	x8, #(SOCDEV_VA)	/* VA start */
 	mov	x9, #(SOCDEV_PA)	/* PA start */
-	bl	build_section_pagetable
+	mov	x10, #1
+	bl	build_l1_block_pagetable
 #endif
 
 	/* Create the VA = PA map */
-	mov	x6, x27		/* The initial page table */
 	mov	x7, #NORMAL_MEM // #NORMAL
 	mov	x9, x27
 	mov	x8, x9		/* VA start (== PA start) */
-	bl	build_section_pagetable
+	mov	x10, #1
+	bl	build_l1_block_pagetable
 
 	/* Create a mapping for the FDT */
-	mov	x6, x27		/* The initial page table */
 	mov	x7, #NORMAL_MEM // #NORMAL
 	mov	x9, x23
 	mov	x8, x9		/* VA start (== PA start) */
-	bl	build_section_pagetable
+	mov	x10, #1
+	bl	build_l1_block_pagetable
 
 	/* Restore the Link register */
 	mov	x30, x5
 	ret
 
 /*
- * Builds a 1 GiB page table entry
- *  x6 = L1 table
- *  x7 = Type (0 = Device, 1 = Normal)
- *  x8 = VA start
- *  x9 = PA start (trashed)
- *  x11, x12 and x13 are trashed
- */
-build_section_pagetable:
-	/*
-	 * Build the L1 table entry.
-	 */
-	/* Find the table index */
-	lsr	x11, x8, #L1_SHIFT
-	and	x11, x11, #Ln_ADDR_MASK
-
-	/* Build the L1 block entry */
-	lsl	x12, x7, #2
-	orr	x12, x12, #L1_BLOCK
-	orr	x12, x12, #(ATTR_AF)
-
-	/* Only use the output address bits */
-	lsr	x9, x9, #L1_SHIFT
-	orr	x12, x12, x9, lsl #L1_SHIFT
-
-	/* Store the entry */
-	str	x12, [x6, x11, lsl #3]
-
-	ret
-
-/*
  * Builds an L1 -> L2 table descriptor
  *
  * This is a link for a 1GiB block of memory with up to 2MiB regions mapped
- * within it by build_block_pagetable.
+ * within it by build_l2_block_pagetable.
  *
  *  x6  = L1 table
  *  x8  = Virtual Address
  *  x9  = L2 PA (trashed)
  *  x11, x12 and x13 are trashed
  */
-.global link_l1_pagetable
 link_l1_pagetable:
 	/*
 	 * Link an L1 -> L2 table entry.
@@ -478,16 +447,54 @@ link_l1_pagetable:
 	ret
 
 /*
+ * Builds count 1 GiB page table entry
+ *
+ *  x6  = L1 table
+ *  x7  = Type (0 = Device, 1 = Normal)
+ *  x8  = VA start
+ *  x9  = PA start (trashed)
+ *  x10 = Entry count
+ *  x11, x12 and x13 are trashed
+ */
+build_l1_block_pagetable:
+	/*
+	 * Build the L1 table entry.
+	 */
+	/* Find the table index */
+	lsr	x11, x8, #L1_SHIFT
+	and	x11, x11, #Ln_ADDR_MASK
+
+	/* Build the L1 block entry */
+	lsl	x12, x7, #2
+	orr	x12, x12, #L1_BLOCK
+	orr	x12, x12, #(ATTR_AF)
+
+	/* Only use the output address bits */
+	lsr	x9, x9, #L1_SHIFT
+
+	/* Set the physical address for this virtual address */
+1:	orr	x13, x12, x9, lsl #L1_SHIFT
+
+	/* Store the entry */
+	str	x13, [x6, x11, lsl #3]
+
+	sub	x10, x10, #1
+	add	x11, x11, #1
+	add	x9, x9, #1
+	cbnz	x10, 1b
+
+	ret
+
+/*
  * Builds count 2 MiB page table entry
  *  x6  = L2 table
  *  x7  = Type (0 = Device, 1 = Normal)
  *  x8  = VA start
  *  x9  = PA start (trashed)
- *  x10 = Entry count (TODO)
+ *  x10 = Entry count
  *  x11, x12 and x13 are trashed
  */
-.global build_block_pagetable
-build_block_pagetable:
+build_l2_block_pagetable:
 	/*
 	 * Build the L2 table entry.
 	 */
@@ -504,20 +511,16 @@ build_block_pagetable:
 	lsr	x9, x9, #L2_SHIFT
 
 	/* Set the physical address for this virtual address */
-1:	orr	x12, x12, x9, lsl #L2_SHIFT
+1:	orr	x13, x12, x9, lsl #L2_SHIFT
 
 	/* Store the entry */
-	str	x12, [x6, x11, lsl #3]
-
-	/* Clear the address bits */
-	and	x12, x12, #ATTR_MASK_L
+	str	x13, [x6, x11, lsl #3]
 
 	sub	x10, x10, #1
 	add	x11, x11, #1
 	add	x9, x9, #1
 	cbnz	x10, 1b
 
-2:
 	ret
 
 start_mmu:
