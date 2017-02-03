@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.8 2017/02/03 10:34:21 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.9 2017/02/03 10:46:19 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -74,6 +74,8 @@ _start:
 	msr	sctlr_el1, x2
 	isb
 
+	/* Set the context id */
+	msr	contextidr_el1, xzr
 
 	/* Get the virt -> phys offset */
 	bl	get_virt_delta
@@ -221,6 +223,14 @@ drop_to_el1:
 
 	/* Don't trap to EL2 for CP15 traps */
 	msr	hstr_el2, xzr
+
+	/* Enable access to the physical timers at EL1 */
+	mrs	x2, cnthctl_el2
+	orr	x2, x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
+	msr	cnthctl_el2, x2
+
+	/* Set the counter offset to a known value */
+	msr	cntvoff_el2, xzr
 
 	/* Hypervisor trap functions */
 	adr	x2, hyp_vectors
