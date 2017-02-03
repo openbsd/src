@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.11 2017/01/23 08:23:41 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.12 2017/02/03 09:45:05 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -581,10 +581,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap_pte_insert(pted);
 	}
 
-//	cpu_dcache_inv_range(va & PAGE_MASK, PAGE_SIZE);
-//	cpu_sdcache_inv_range(va & PAGE_MASK, pa & PAGE_MASK, PAGE_SIZE);
+//	cpu_dcache_inv_range(va & ~PAGE_MASK, PAGE_SIZE);
+//	cpu_sdcache_inv_range(va & ~PAGE_MASK, pa & ~PAGE_MASK, PAGE_SIZE);
 //	cpu_drain_writebuf();
-	ttlb_flush(pm, va & PTE_RPGN);
+	ttlb_flush(pm, va & ~PAGE_MASK);
 
 	if (prot & PROT_EXEC) {
 		if (pg != NULL) {
@@ -657,11 +657,11 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 	}
 
 	__asm __volatile("dsb sy");
-	//dcache_wbinv_poc(va & PTE_RPGN, pted->pted_pte & PTE_RPGN, PAGE_SIZE);
+	//dcache_wbinv_poc(va & ~PAGE_MASK, pted->pted_pte & PTE_RPGN, PAGE_SIZE);
 
 	pmap_pte_remove(pted, pm != pmap_kernel());
 
-	ttlb_flush(pm, pted->pted_va & PTE_RPGN);
+	ttlb_flush(pm, pted->pted_va & ~PAGE_MASK);
 
 	if (pted->pted_va & PTED_VA_EXEC_M) {
 		pted->pted_va &= ~PTED_VA_EXEC_M;
@@ -735,7 +735,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	 */
 	pmap_pte_insert(pted);
 
-	ttlb_flush(pm, va & PTE_RPGN);
+	ttlb_flush(pm, va & ~PAGE_MASK);
 
 	splx(s);
 }
@@ -783,7 +783,7 @@ pmap_kremove_pg(vaddr_t va)
 	 */
 	pmap_pte_remove(pted, 0);
 
-	ttlb_flush(pm, pted->pted_va & PTE_RPGN);
+	ttlb_flush(pm, pted->pted_va & ~PAGE_MASK);
 
 	if (pted->pted_va & PTED_VA_EXEC_M)
 		pted->pted_va &= ~PTED_VA_EXEC_M;
@@ -1371,7 +1371,7 @@ pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa)
 
 	dcache_wb_pou((vaddr_t)&pm->pm_vp.l0->l0[idx0], 8);
 
-	ttlb_flush_range(pm, va & PTE_RPGN, 1<<VP_IDX1_POS);
+	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX1_POS);
 }
 
 void
@@ -1406,7 +1406,7 @@ pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa)
 	__asm __volatile("dsb sy");
 	dcache_wb_pou((vaddr_t)&vp1->l1[idx1], 8);
 
-	ttlb_flush_range(pm, va & PTE_RPGN, 1<<VP_IDX2_POS);
+	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX2_POS);
 }
 
 void
@@ -1445,7 +1445,7 @@ pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3_pa)
 	__asm __volatile("dsb sy");
 	dcache_wb_pou((vaddr_t)&vp2->l2[idx2], 8);
 
-	ttlb_flush_range(pm, va & PTE_RPGN, 1<<VP_IDX3_POS);
+	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX3_POS);
 }
 
 /*
@@ -1540,7 +1540,7 @@ pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 	pted->pted_pte &= ~PROT_WRITE;
 	pmap_pte_update(pted, pl3);
 
-	ttlb_flush(pm, pted->pted_va & PTE_RPGN);
+	ttlb_flush(pm, pted->pted_va & ~PAGE_MASK);
 
 	return;
 }
@@ -1717,7 +1717,7 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 #if 0
 	__asm __volatile("dsb");
 	dcache_wb_pou((vaddr_t)&l2[VP_IDX2(pted->pted_va)], sizeof(l2[VP_IDX2(pted->pted_va)]));
-	//cpu_tlb_flushID_SE(pted->pted_va & PTE_RPGN);
+	//cpu_tlb_flushID_SE(pted->pted_va & ~PAGE_MASK);
 #endif
 	dcache_wb_pou((vaddr_t) pl3, 8);
 	__asm __volatile("dsb sy");
@@ -1823,7 +1823,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		pmap_pte_update(pted, pl3);
 
 		/* Flush tlb. */
-		ttlb_flush(pm, va & PTE_RPGN);
+		ttlb_flush(pm, va & ~PAGE_MASK);
 
 		return 1;
 	} else if ((ftype & PROT_EXEC) && /* fault caused by an exec */
@@ -1842,7 +1842,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		pmap_pte_update(pted, pl3);
 
 		/* Flush tlb. */
-		ttlb_flush(pm, va & PTE_RPGN);
+		ttlb_flush(pm, va & ~PAGE_MASK);
 
 		return 1;
 	} else if ((ftype & PROT_READ) && /* fault caused by a read */
@@ -1861,7 +1861,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		pmap_pte_update(pted, pl3);
 
 		/* Flush tlb. */
-		ttlb_flush(pm, pted->pted_va & PTE_RPGN);
+		ttlb_flush(pm, va & ~PAGE_MASK);
 
 		return 1;
 	}
@@ -1952,12 +1952,12 @@ int pmap_clear_modify(struct vm_page *pg)
 	pg->pg_flags &= ~PG_PMAP_MOD;
 
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-		if (pmap_vp_lookup(pted->pted_pmap, pted->pted_va & PTE_RPGN, &pl3) == NULL)
+		if (pmap_vp_lookup(pted->pted_pmap, pted->pted_va & ~PAGE_MASK, &pl3) == NULL)
 			panic("failed to look up pte\n");
 		*pl3  |= ATTR_AP(2);
 		pted->pted_pte &= ~PROT_WRITE;
 
-		ttlb_flush(pted->pted_pmap, pted->pted_va & PTE_RPGN);
+		ttlb_flush(pted->pted_pmap, pted->pted_va & ~PAGE_MASK);
 	}
 	splx(s);
 
@@ -1984,7 +1984,7 @@ int pmap_clear_reference(struct vm_page *pg)
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		pted->pted_pte &= ~PROT_MASK;
 		pmap_pte_insert(pted);
-		ttlb_flush(pted->pted_pmap, pted->pted_va & PTE_RPGN);
+		ttlb_flush(pted->pted_pmap, pted->pted_va & ~PAGE_MASK);
 	}
 	splx(s);
 
