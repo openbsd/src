@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.128 2017/02/02 22:19:59 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.129 2017/02/03 08:23:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/time.h>
 
 #include <net/if.h>
+#include <netinet/in.h>
 
 #include <stdarg.h>
 #include <limits.h>

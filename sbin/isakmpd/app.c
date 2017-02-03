@@ -1,4 +1,4 @@
-/* $OpenBSD: app.c,v 1.13 2014/01/22 03:09:31 deraadt Exp $	 */
+/* $OpenBSD: app.c,v 1.14 2017/02/03 08:23:46 guenther Exp $	 */
 /* $EOM: app.c,v 1.6 1999/05/01 20:21:06 niklas Exp $	 */
 
 /*
@@ -34,6 +34,8 @@
  * applications simultaneously but right now, we assume one system-dependent
  * one only.
  */
+
+#include <netinet/in.h>
 
 #include "app.h"
 #include "log.h"

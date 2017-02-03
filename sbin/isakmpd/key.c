@@ -1,4 +1,4 @@
-/* $OpenBSD: key.c,v 1.25 2007/03/05 20:11:40 moritz Exp $	 */
+/* $OpenBSD: key.c,v 1.26 2017/02/03 08:23:46 guenther Exp $	 */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -20,6 +20,7 @@
  * PURPOSE.
  */
 
+#include <netinet/in.h>
 #include <string.h>
 #include <stdlib.h>
 

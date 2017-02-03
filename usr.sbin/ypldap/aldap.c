@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.34 2016/10/22 03:37:13 deraadt Exp $ */
-/*	$OpenBSD: aldap.c,v 1.34 2016/10/22 03:37:13 deraadt Exp $ */
+/*	$Id: aldap.c,v 1.35 2017/02/03 08:23:46 guenther Exp $ */
+/*	$OpenBSD: aldap.c,v 1.35 2017/02/03 08:23:46 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -18,6 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>

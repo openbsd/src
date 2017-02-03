@@ -1,4 +1,4 @@
-/* $OpenBSD: attribute.c,v 1.12 2005/04/08 22:32:09 cloder Exp $	 */
+/* $OpenBSD: attribute.c,v 1.13 2017/02/03 08:23:46 guenther Exp $	 */
 /* $EOM: attribute.c,v 1.10 2000/02/20 19:58:36 niklas Exp $	 */
 
 /*
@@ -30,6 +30,7 @@
  */
 
 #include <sys/types.h>
+#include <netinet/in.h>
 #include <string.h>
 
 #include "attribute.h"
