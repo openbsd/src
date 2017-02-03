@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.2 2017/01/23 12:02:14 patrick Exp $	*/
+/*	$OpenBSD: exec.c,v 1.3 2017/02/03 13:06:20 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -64,15 +64,15 @@ run_loadfile(u_long *marks, int howto)
 
 	*cp++ = ' ';
 	*cp = '-';
-        if (howto & RB_ASKNAME)
-                *++cp = 'a';
-        if (howto & RB_CONFIG)
-                *++cp = 'c';
-        if (howto & RB_SINGLE)
-                *++cp = 's';
-        if (howto & RB_KDB)
-                *++cp = 'd';
-        if (*cp == '-')
+	if (howto & RB_ASKNAME)
+		*++cp = 'a';
+	if (howto & RB_CONFIG)
+		*++cp = 'c';
+	if (howto & RB_SINGLE)
+		*++cp = 's';
+	if (howto & RB_KDB)
+		*++cp = 'd';
+	if (*cp == '-')
 		*--cp = 0;
 	else
 		*++cp = 0;
