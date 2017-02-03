@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.60 2016/10/18 19:52:49 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.61 2017/02/03 20:53:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -291,6 +291,12 @@ grid_expand_line(struct grid *gd, u_int py, u_int sx, u_int bg)
 	gl = &gd->linedata[py];
 	if (sx <= gl->cellsize)
 		return;
+
+	if (sx < gd->sx) {
+		sx *= 2;
+		if (sx > gd->sx)
+			sx = gd->sx;
+	}
 
 	gl->celldata = xreallocarray(gl->celldata, sx, sizeof *gl->celldata);
 	for (xx = gl->cellsize; xx < sx; xx++)
