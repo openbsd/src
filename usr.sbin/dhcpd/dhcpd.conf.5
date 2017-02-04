@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.17 2015/06/11 12:48:32 schwarze Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.18 2017/02/04 22:21:57 jca Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: June 11 2015 $
+.Dd $Mdocdate: February 4 2017 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -219,7 +219,7 @@ option domain-name-servers ns1.isc.org, ns2.isc.org;
 .Ed
 .Pp
 As you can see in Example 2, it's legal to specify host addresses in
-parameters as domain names rather than as numeric IP addresses.
+parameters as hostnames rather than as numeric IP addresses.
 If a given hostname resolves to more than one IP address (for example, if
 that host has two Ethernet interfaces), both addresses are supplied to
 the client.
@@ -246,10 +246,10 @@ So for the first subnet, for example, there should be something like:
 .Dl option routers 204.254.239.1;
 .Pp
 Note that the address here is specified numerically.
-This is not required \- if you have a different domain name for each
-interface on your router, it's perfectly legitimate to use the domain name
+This is not required \- if you have a different hostname for each
+interface on your router, it's perfectly legitimate to use the hostname
 for that interface instead of the numeric address.
-However, in many cases there may be only one domain name for all of a router's
+However, in many cases there may be only one hostname for all of a router's
 IP addresses, and it would not be appropriate to use that name here.
 .Pp
 In Example 1 there is also a
@@ -358,7 +358,7 @@ client should boot.
 should be the name of the shared network.
 This name is used when printing debugging messages, so it should be
 descriptive for the shared network.
-The name may have the syntax of a valid domain name
+The name may have the syntax of a valid hostname
 (although it will never be used as such), or it may be any arbitrary
 name, enclosed in quotes.
 .Pp
@@ -649,7 +649,7 @@ the server from which the initial boot file (specified in the
 .Ic filename
 statement) is to be loaded.
 .Ar server-name
-should be a numeric IP address or a domain name.
+should be a numeric IP address or a hostname.
 If no
 .Ic next-server
 parameter applies to a given client, the DHCP server's IP address is used.
@@ -678,7 +678,7 @@ declaration containing that
 statement.
 Each
 .Ar address
-should be either an IP address or a domain name which resolves to one
+should be either an IP address or a hostname which resolves to one
 or more IP addresses.
 .Pp
 Clients with fixed addresses are not assigned DHCP leases,
@@ -753,7 +753,7 @@ The
 .Ic get-lease-hostnames
 statement is used to tell
 .Xr dhcpd 8
-whether or not to look up the domain name corresponding to the IP address of
+whether or not to look up the hostname corresponding to the IP address of
 each address in the lease pool and use that address for the DHCP
 .Ic hostname
 option.
