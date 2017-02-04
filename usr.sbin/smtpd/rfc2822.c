@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc2822.c,v 1.9 2016/10/13 15:47:32 gilles Exp $	*/
+/*	$OpenBSD: rfc2822.c,v 1.10 2017/02/04 19:25:24 guenther Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -97,13 +97,13 @@ parser_feed_header(struct rfc2822_parser *rp, char *line)
 	char			*pos;
 
 	/* new header */
-	if (!isspace(*line) && *line != '\0') {
+	if (!isspace((unsigned char)*line) && *line != '\0') {
 		rp->in_hdr = 1;
 		if ((pos = strchr(line, ':')) == NULL)
 			return 0;
 		memset(rp->header.name, 0, sizeof rp->header.name);
 		(void)memcpy(rp->header.name, line, pos - line);
-		if (isspace(*(pos + 1)))
+		if (isspace((unsigned char)pos[1]))
 			return parser_feed_header(rp, pos + 1);
 		else {
 			*pos = ' ';
@@ -185,7 +185,7 @@ rfc2822_parser_feed(struct rfc2822_parser *rp, const char *line)
 	char			buffer[RFC2822_MAX_LINE_SIZE+1];
 
 	/* in header and line is not a continuation, execute callback */
-	if (rp->in_hdr && (*line == '\0' || !isspace(*line)))
+	if (rp->in_hdr && (*line == '\0' || !isspace((unsigned char)*line)))
 		header_callback(rp);
 
 	/* no longer in headers */
