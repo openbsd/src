@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.240 2017/01/11 17:39:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.241 2017/02/04 11:56:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -256,6 +256,7 @@ terminal_mdoc(void *arg, const struct roff_man *mdoc)
 {
 	struct roff_node	*n;
 	struct termp		*p;
+	size_t			 save_defindent;
 
 	p = (struct termp *)arg;
 	p->overstep = 0;
@@ -276,6 +277,7 @@ terminal_mdoc(void *arg, const struct roff_man *mdoc)
 			n = n->next;
 		}
 	} else {
+		save_defindent = p->defindent;
 		if (p->defindent == 0)
 			p->defindent = 5;
 		term_begin(p, print_mdoc_head, print_mdoc_foot,
@@ -288,6 +290,7 @@ terminal_mdoc(void *arg, const struct roff_man *mdoc)
 			print_mdoc_nodelist(p, NULL, &mdoc->meta, n);
 		}
 		term_end(p);
+		p->defindent = save_defindent;
 	}
 }
 
