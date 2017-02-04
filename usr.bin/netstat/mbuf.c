@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.38 2016/10/28 05:46:14 dlg Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.39 2017/02/04 13:17:08 jsg Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/pool.h>
 #include <sys/sysctl.h>
 #include <net/if.h>
+#include <netinet/in.h>
 
 #include <errno.h>
 #include <limits.h>
