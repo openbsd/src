@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.h,v 1.20 2017/02/04 02:54:33 guenther Exp $	*/
+/*	$OpenBSD: inet.h,v 1.21 2017/02/04 19:16:25 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -69,6 +69,16 @@
 #define htonl(x)	__htobe32(x)
 #define ntohs(x)	__htobe16(x)
 #define ntohl(x)	__htobe32(x)
+#endif
+
+#ifndef	_UINT16_T_DEFINED_
+#define	_UINT16_T_DEFINED_
+typedef	__uint16_t	uint16_t;
+#endif
+
+#ifndef	_UINT32_T_DEFINED_
+#define	_UINT32_T_DEFINED_
+typedef	__uint32_t	uint32_t;
 #endif
 
 #ifndef	_SOCKLEN_T_DEFINED_
