@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.13 2017/02/04 19:12:54 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.14 2017/02/04 20:12:44 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -71,16 +71,41 @@ pmap_pa_is_mem(uint64_t pa)
 	return 0;
 }
 
+unsigned int
+dcache_line_size(void)
+{
+	uint64_t ctr;
+	unsigned int dcl_size;
+
+	/* Accessible from all security levels */
+	ctr = READ_SPECIALREG(ctr_el0);
+
+	/*
+	 * Relevant field [19:16] is LOG2
+	 * of the number of words in DCache line
+	 */
+	dcl_size = CTR_DLINE_SIZE(ctr);
+
+	/* Size of word shifted by cache line size */
+	return (sizeof(int) << dcl_size);
+}
+
 /* Write back D-cache to PoU */
 void
-dcache_wb_pou(vaddr_t va, vsize_t size)
+dcache_wb_pou(vaddr_t addr, vsize_t len)
 {
-	vsize_t off;
-	// XXX size.
-#define CACHE_LINE_SIZE 128
+	uint64_t cl_size;
+	vaddr_t end;
 
-	for (off = 0; off <size; off += CACHE_LINE_SIZE)
-		__asm __volatile("dc CVAU,%0"::"r"(va+off));
+	cl_size = dcache_line_size();
+
+	/* Calculate end address to clean */
+	end = addr + len;
+	/* Align start address to cache line */
+	addr = addr & ~(cl_size - 1);
+
+	for (; addr < end; addr += cl_size)
+		__asm __volatile("dc cvau, %x0" :: "r" (addr) : "memory");
 }
 
 #if 0
