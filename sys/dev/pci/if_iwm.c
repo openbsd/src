@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.161 2017/02/04 15:02:46 pirofti Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.162 2017/02/04 19:20:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -118,10 +118,10 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
+#include <sys/endian.h>
 
 #include <sys/task.h>
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>
