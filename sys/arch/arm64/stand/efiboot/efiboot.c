@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.3 2017/02/03 08:48:40 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.4 2017/02/04 22:43:46 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -275,13 +275,12 @@ machdep(void)
 	efi_heap_init();
 
 	/*
-	 * The kernel expects to be loaded at offset 0x00200000 into a
-	 * block of memory aligned on a 256MB boundary.  We allocate a
-	 * block of 32MB of memory, which gives us plenty of room for
-	 * growth.
+	 * The kernel expects to be loaded into a block of memory aligned
+	 * on a 2MB boundary.  We allocate a block of 64MB of memory, which
+	 * gives us plenty of room for growth.
 	 */
-	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(32 * 1024 * 1024),
-	    0x10000000, &addr) != EFI_SUCCESS)
+	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(64 * 1024 * 1024),
+	    0x200000, &addr) != EFI_SUCCESS)
 		printf("Can't allocate memory\n");
 	efi_loadaddr = addr;
 
