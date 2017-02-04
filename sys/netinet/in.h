@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.120 2016/12/22 11:04:44 rzalamena Exp $	*/
+/*	$OpenBSD: in.h,v 1.121 2017/02/04 02:54:33 guenther Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -57,6 +57,12 @@
 #define	_SA_FAMILY_T_DEFINED_
 typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 #endif /* _SA_FAMILY_T_DEFINED_ */
+
+#ifndef _IN_TYPES_DEFINED_
+#define _IN_TYPES_DEFINED_
+typedef __in_addr_t	in_addr_t;	/* base type for internet address */
+typedef __in_port_t	in_port_t;	/* IP port type */
+#endif
 
 /*
  * Protocols

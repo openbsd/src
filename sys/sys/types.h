@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.46 2016/09/12 19:41:20 guenther Exp $	*/
+/*	$OpenBSD: types.h,v 1.47 2017/02/04 02:54:33 guenther Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -150,17 +150,6 @@ typedef	__useconds_t	useconds_t;	/* microseconds */
 typedef	__suseconds_t	suseconds_t;	/* microseconds (signed) */
 typedef	__fsblkcnt_t	fsblkcnt_t;	/* file system block count */
 typedef	__fsfilcnt_t	fsfilcnt_t;	/* file system file count */
-
-/*
- * XPG4.2 states that inclusion of <netinet/in.h> must pull these
- * in and that inclusion of <sys/socket.h> must pull in sa_family_t.
- * We put these here because there are other headers that require
- * these types and <sys/socket.h> and <netinet/in.h> will indirectly
- * include <sys/types.h>.
- * XXX - now that we have protected versions these should move.
- */
-typedef __in_addr_t	in_addr_t;	/* base type for internet address */
-typedef __in_port_t	in_port_t;	/* IP port type */
 
 /*
  * The following types may be defined in multiple header files.
