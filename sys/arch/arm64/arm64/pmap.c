@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.12 2017/02/03 09:45:05 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.13 2017/02/04 19:12:54 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1164,7 +1164,6 @@ CTASSERT(sizeof(struct pmapvp0) == 8192);
 
 int mappings_allocated = 0;
 int pted_allocated = 0;
-void prt(char *fmt, ...);
 
 vaddr_t
 pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
@@ -1179,10 +1178,6 @@ pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
 	vaddr_t vstart;
 	int i, j, k;
 	int lb_idx2, ub_idx2;
-
-	prt("format string");
-	prt("does this %d work", 0);
-	prt("does this %d %d work", 5, 2);
 
 	pmap_setup_avail(ram_start, ram_end, kvo);
 

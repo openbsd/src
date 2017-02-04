@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.7 2017/01/23 14:02:02 jsg Exp $ */
+/* $OpenBSD: machdep.c,v 1.8 2017/02/04 19:12:54 patrick Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -761,8 +761,6 @@ install_coproc_handler()
 void	collect_kernel_args(char *);
 void	process_kernel_args(void);
 
-volatile int gdb_wc, gdb_w;
-
 void
 initarm(struct arm64_bootparams *abp)
 {
@@ -780,11 +778,6 @@ initarm(struct arm64_bootparams *abp)
 	int (*map_a4x_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 
-#if 0
-	gdb_w = 1;
-	while(gdb_w)
-		;
-#endif
 	// NOTE that 1GB of ram is mapped in by default in
 	// the bootstrap memory config, so nothing is necessary
 	// until pmap_bootstrap_finalize is called??
@@ -844,12 +837,6 @@ initarm(struct arm64_bootparams *abp)
 	printf("memsize %llx %llx bootargs [%s]\n", memstart, memsize, bootargs);
 	}
 	process_kernel_args();
-
-	if (gdb_wc >= 0) {
-		gdb_w = 1;
-		while(gdb_w)
-			;
-	}
 
 	// PCPU_SET(curthread, &thread0);
 
@@ -1036,11 +1023,6 @@ process_kernel_args(void)
 		case 's':
 			fl |= RB_SINGLE;
 			break;
-// hack
-		case 'g':
-			gdb_wc = 0;
-			break;
-// hack
 		case '1':
 			comcnspeed = B115200;
 			break;
@@ -1054,25 +1036,6 @@ process_kernel_args(void)
 		boothowto |= fl;
 	}
 }
-volatile int gdb_wc=-1;
-int gdb_c=0;
-void dbg(int index, long arg0, long arg1)
-{
-	if (gdb_wc > 0) {
-		gdb_wc--;
-	}
-	if (gdb_wc==-1) {
-		gdb_c++;
-	}
-	if (gdb_wc == 0)
-		gdb_w = 1;
-	while(gdb_w)
-		;
-}
-void prt(char *fmt, long arg0, long arg1, long arg2)
-{
-}
-
 
 /*
  * allow bootstrap to steal KVA after machdep has given it back to pmap.
