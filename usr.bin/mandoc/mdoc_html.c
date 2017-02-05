@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.142 2017/02/05 20:21:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.143 2017/02/05 20:34:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1467,7 +1467,7 @@ mdoc_bf_pre(MDOC_ARGS)
 	else if (FONT_Li == n->norm->Bf.font)
 		cattr = "Li";
 	else
-		cattr = "none";
+		cattr = "No";
 
 	/*
 	 * We want this to be inline-formatted, but needs to be div to
