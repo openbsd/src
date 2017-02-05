@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg.conf.5,v 1.9 2016/01/27 20:49:45 sthen Exp $
+.\"	$OpenBSD: pkg.conf.5,v 1.10 2017/02/05 14:07:45 rpe Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 27 2016 $
+.Dd $Mdocdate: February 5 2017 $
 .Dt PKG.CONF 5
 .Os
 .Sh NAME
@@ -36,14 +36,6 @@ The file
 contains system-wide options related to package handling, as a list of
 .Sq keyword=value
 lines.
-.Pp
-In particular, the base system
-.Dq installation-and-update
-shell scripts record the URL used for the installation as
-.Ar installpath .
-.Xr pkg_add 1
-can then add or replace packages from the same location straight after
-the install.
 .Pp
 Currently defined options are as follows:
 .Pp
@@ -66,7 +58,7 @@ Levels higher than
 .Ar 1
 may log more information in the future.
 .It Ar installpath
-URL to package repository updated during installation.
+URL to package repository.
 Used for accessing packages if the environment variable
 .Ev PKG_PATH
 is not defined and no further options are defined.
