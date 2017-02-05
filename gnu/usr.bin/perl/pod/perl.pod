@@ -34,7 +34,7 @@ For ease of access, the Perl manual has been split up into several sections.
 
 # This section is parsed by Porting/pod_lib.pl for use by pod/buildtoc etc
 
-flag =g  perluniprops perlmodlib perlapi perlintern
+flag =g  perlmodlib perlapi perlintern
 flag =go perltoc
 flag =ro perlcn perljp perlko perltw
 flag =   perlvms
