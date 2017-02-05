@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.148 2017/01/25 03:48:46 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.149 2017/02/05 22:30:16 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2017 $
+.Dd $Mdocdate: February 5 2017 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -3077,6 +3077,8 @@ For many macros, when the leading arguments are opening delimiters,
 these delimiters are put before the macro scope,
 and when the trailing arguments are closing delimiters,
 these delimiters are put after the macro scope.
+Spacing is suppressed after opening delimiters
+and before closing delimiters.
 For example,
 .Pp
 .D1 Pf \. \&Aq "( [ word ] ) ."
@@ -3133,7 +3135,7 @@ renders as:
 .D1 Fl a ( b | c \*(Ba d ) e
 .Pp
 This applies to both opening and closing delimiters,
-and also to the middle delimiter:
+and also to the middle delimiter, which does not suppress spacing:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It \&|
