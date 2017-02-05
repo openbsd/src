@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.960 2017/02/05 14:57:15 rpe Exp $
+#	$OpenBSD: install.sub,v 1.961 2017/02/05 15:39:52 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2816,7 +2816,7 @@ do_install(){
 		uline="${ADMIN}:${_encr}:1000:1000:staff:0:0:${ADMIN_NAME}:$_home:/bin/ksh"
 		echo "$uline" >>/mnt/etc/master.passwd
 		echo "${ADMIN}:*:1000:" >>/mnt/etc/group
-		echo ${ADMIN} >/mnt/root/.forward
+		echo $ADMIN >/mnt/root/.forward
 
 		_home=/mnt$_home
 		mkdir -p $_home
