@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.143 2017/02/05 20:34:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.144 2017/02/05 21:00:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -108,6 +108,7 @@ static	int		  mdoc_skip_pre(MDOC_ARGS);
 static	int		  mdoc_sm_pre(MDOC_ARGS);
 static	int		  mdoc_sp_pre(MDOC_ARGS);
 static	int		  mdoc_ss_pre(MDOC_ARGS);
+static	int		  mdoc_st_pre(MDOC_ARGS);
 static	int		  mdoc_sx_pre(MDOC_ARGS);
 static	int		  mdoc_sy_pre(MDOC_ARGS);
 static	int		  mdoc_va_pre(MDOC_ARGS);
@@ -153,7 +154,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_ft_pre, NULL}, /* Ot */
 	{mdoc_pa_pre, NULL}, /* Pa */
 	{mdoc_ex_pre, NULL}, /* Rv */
-	{NULL, NULL}, /* St */
+	{mdoc_st_pre, NULL}, /* St */
 	{mdoc_va_pre, NULL}, /* Va */
 	{mdoc_vt_pre, NULL}, /* Vt */
 	{mdoc_xr_pre, NULL}, /* Xr */
@@ -171,7 +172,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Ac */
 	{mdoc_quote_pre, mdoc_quote_post}, /* Ao */
 	{mdoc_quote_pre, mdoc_quote_post}, /* Aq */
-	{NULL, NULL}, /* At */
+	{mdoc_xx_pre, NULL}, /* At */
 	{NULL, NULL}, /* Bc */
 	{mdoc_bf_pre, NULL}, /* Bf */
 	{mdoc_quote_pre, mdoc_quote_post}, /* Bo */
@@ -889,6 +890,13 @@ mdoc_ex_pre(MDOC_ARGS)
 {
 	if (n->prev)
 		print_otag(h, TAG_BR, "");
+	return 1;
+}
+
+static int
+mdoc_st_pre(MDOC_ARGS)
+{
+	print_otag(h, TAG_SPAN, "c", "St");
 	return 1;
 }
 
