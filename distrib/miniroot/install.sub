@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.959 2017/02/05 14:40:16 rpe Exp $
+#	$OpenBSD: install.sub,v 1.960 2017/02/05 14:57:15 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2577,6 +2577,8 @@ __EOT
 }
 
 do_install(){
+	local _rootkey _rootpass
+
 	# Ask for and set the system hostname and add the hostname specific
 	# siteXX set.
 	while :; do
@@ -2608,10 +2610,10 @@ do_install(){
 	done
 
 	# Ask for the root user public ssh key during autoinstall.
-	rootkey=
+	_rootkey=
 	if $AUTO; then
 		ask "Public ssh key for root account?" none
-		[[ $resp != none ]] && rootkey=$resp
+		[[ $resp != none ]] && _rootkey=$resp
 	fi
 
 	# Ask user about daemon startup on boot, X Window usage and console
@@ -2838,10 +2840,10 @@ do_install(){
 	pwd_mkdb -p -d /mnt/etc /etc/master.passwd
 
 	# During autoinstall, add root user's public ssh key to authorized_keys.
-	[[ -n "$rootkey" ]] && (
+	[[ -n "$_rootkey" ]] && (
 		umask 077
 		mkdir /mnt/root/.ssh
-		print -r -- "$rootkey" >>/mnt/root/.ssh/authorized_keys
+		print -r -- "$_rootkey" >>/mnt/root/.ssh/authorized_keys
 	)
 
 	# Perform final steps common to both an install and an upgrade.
