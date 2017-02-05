@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.2 2017/01/19 03:09:18 patrick Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.3 2017/02/05 14:07:11 patrick Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -407,8 +407,6 @@ _dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 	bus_addr_t addr;
 	struct pglist mlist;
 	int curseg;
-	int success;
-	paddr_t pa;
 
 	/*
 	 * Build a list of pages to free back to the VM system.
@@ -418,8 +416,7 @@ _dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
-			success = pmap_extract (pmap_kernel(), addr, &pa);
-			m = PHYS_TO_VM_PAGE(pa);
+			m = PHYS_TO_VM_PAGE(addr);
 			TAILQ_INSERT_TAIL(&mlist, m, pageq);
 		}
 	}
