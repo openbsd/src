@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.2 2017/02/05 19:29:03 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.3 2017/02/05 20:21:17 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -134,7 +134,8 @@ table.Nm { }
 b.Nm {		font-style: normal; }
 b.Fl {		font-style: normal; }
 b.Cm {		font-style: normal; }
-i.Ar {		font-weight: normal; }
+var.Ar {	font-style: italic;
+		font-weight: normal; }
 span.Op { }
 b.Ic {		font-style: normal; }
 code.Ev {	font-style: normal;
@@ -148,11 +149,15 @@ span.Lb { }
 b.In {		font-style: normal; }
 a.In { }
 b.Fd {		font-style: normal; }
-i.Ft {		font-weight: normal; }
+var.Ft {	font-style: italic;
+		font-weight: normal; }
 b.Fn {		font-style: normal; }
-i.Fa {		font-weight: normal; }
-i.Vt {		font-weight: normal; }
-i.Va {		font-weight: normal; }
+var.Fa {	font-style: italic;
+		font-weight: normal; }
+var.Vt {	font-style: italic;
+		font-weight: normal; }
+var.Va {	font-style: italic;
+		font-weight: normal; }
 code.Dv {	font-style: normal;
 		font-weight: normal;
 		font-family: monospace; }

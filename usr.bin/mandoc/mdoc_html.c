@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.141 2017/02/05 19:29:03 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.142 2017/02/05 20:21:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -647,7 +647,7 @@ mdoc_ns_pre(MDOC_ARGS)
 static int
 mdoc_ar_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_I, "c", "Ar");
+	print_otag(h, TAG_VAR, "c", "Ar");
 	return 1;
 }
 
@@ -1086,12 +1086,12 @@ mdoc_fa_pre(MDOC_ARGS)
 	struct tag		*t;
 
 	if (n->parent->tok != MDOC_Fo) {
-		print_otag(h, TAG_I, "c", "Fa");
+		print_otag(h, TAG_VAR, "c", "Fa");
 		return 1;
 	}
 
 	for (nn = n->child; nn; nn = nn->next) {
-		t = print_otag(h, TAG_I, "c", "Fa");
+		t = print_otag(h, TAG_VAR, "c", "Fa");
 		print_text(h, nn->string);
 		print_tagq(h, t);
 		if (nn->next) {
@@ -1170,7 +1170,7 @@ mdoc_vt_pre(MDOC_ARGS)
 	} else if (n->type == ROFFT_HEAD)
 		return 0;
 
-	print_otag(h, TAG_I, "c", "Vt");
+	print_otag(h, TAG_VAR, "c", "Vt");
 	return 1;
 }
 
@@ -1178,7 +1178,7 @@ static int
 mdoc_ft_pre(MDOC_ARGS)
 {
 	synopsis_pre(h, n);
-	print_otag(h, TAG_I, "c", "Ft");
+	print_otag(h, TAG_VAR, "c", "Ft");
 	return 1;
 }
 
@@ -1199,7 +1199,7 @@ mdoc_fn_pre(MDOC_ARGS)
 
 	ep = strchr(sp, ' ');
 	if (NULL != ep) {
-		t = print_otag(h, TAG_I, "c", "Ft");
+		t = print_otag(h, TAG_VAR, "c", "Ft");
 
 		while (ep) {
 			sz = MIN((int)(ep - sp), BUFSIZ - 1);
@@ -1225,10 +1225,10 @@ mdoc_fn_pre(MDOC_ARGS)
 
 	for (n = n->child->next; n; n = n->next) {
 		if (NODE_SYNPRETTY & n->flags)
-			t = print_otag(h, TAG_I, "css?", "Fa",
+			t = print_otag(h, TAG_VAR, "css?", "Fa",
 			    "white-space", "nowrap");
 		else
-			t = print_otag(h, TAG_I, "c", "Fa");
+			t = print_otag(h, TAG_VAR, "c", "Fa");
 		print_text(h, n->string);
 		print_tagq(h, t);
 		if (n->next) {
@@ -1436,7 +1436,7 @@ mdoc_ic_pre(MDOC_ARGS)
 static int
 mdoc_va_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_I, "c", "Va");
+	print_otag(h, TAG_VAR, "c", "Va");
 	return 1;
 }
 
