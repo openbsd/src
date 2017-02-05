@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.130 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.131 2017/02/05 19:51:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -93,14 +93,6 @@
 #include <machine/reg.h>
 #include <machine/exec.h>
 
-struct ELFNAME(probe_entry) {
-	int (*func)(struct proc *, struct exec_package *, char *,
-	    u_long *);
-} ELFNAME(probes)[] = {
-	/* XXX - bogus, shouldn't be size independent.. */
-	{ NULL }
-};
-
 int ELFNAME(load_file)(struct proc *, char *, struct exec_package *,
 	struct elf_args *, Elf_Addr *);
 int ELFNAME(check_header)(Elf_Ehdr *);
@@ -125,7 +117,7 @@ extern char *syscallnames[];
 #define ELF_MAX_VALID_PHDR 32
 
 /*
- * This is the basic elf emul. elf_probe_funcs may change to other emuls.
+ * This is the OpenBSD ELF emul
  */
 struct emul ELFNAMEEND(emul) = {
 	"native",
@@ -595,22 +587,12 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	pos = ELFDEFNNAME(NO_ADDR);
 
 	/*
-	 * On the same architecture, we may be emulating different systems.
-	 * See which one will accept this executable.
-	 *
-	 * Probe functions would normally see if the interpreter (if any)
-	 * exists. Emulation packages may possibly replace the interpreter in
-	 * *interp with a changed path (/emul/xxx/<path>), and also
-	 * set the ep_emul field in the exec package structure.
+	 * Verify this is an OpenBSD executable.  If it's marked that way
+	 * via a PT_NOTE then also check for a PT_OPENBSD_WXNEEDED segment.
 	 */
 	if (eh->e_ident[EI_OSABI] != ELFOSABI_OPENBSD && (error =
 	    ELFNAME(os_pt_note)(p, epp, epp->ep_hdr, "OpenBSD", 8, 4)) != 0) {
-		if (error == EACCES)
-			goto bad;
-		for (i = 0; ELFNAME(probes)[i].func != NULL && error; i++)
-			error = (*ELFNAME(probes)[i].func)(p, epp, interp, &pos);
-		if (error)
-			goto bad;
+		goto bad;
 	}
 
 	/*
