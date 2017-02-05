@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.40 2016/10/03 13:58:09 espie Exp $
+# $OpenBSD: State.pm,v 1.41 2017/02/05 14:00:42 rpe Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -39,10 +39,10 @@ sub read_file
 		next if m/^\s*$/;
 		my ($cmd, $k, $v, $add);
 		my $h = $self;
-		if (($cmd, $k, $add, $v) = m/^\s*(.*?)\.(.*?)\s*(\+?)\=\s*(.*)\s*$/) {
+		if (($cmd, $k, $add, $v) = m/^\s*(.*?)\.(.*?)\s*(\+?)\=\s*(.*?)\s*$/) {
 			next unless $cmd eq $state->{cmd};
 			my $h = $self->{cmd} = {};
-		} elsif (($k, $add, $v) = m/^\s*(.*?)\s*(\+?)\=\s*(.*)\s*$/) {
+		} elsif (($k, $add, $v) = m/^\s*(.*?)\s*(\+?)\=\s*(.*?)\s*$/) {
 		} else {
 			# bad line: should we say so ?
 			$state->errsay("Bad line in #1: #2 (#3)",
