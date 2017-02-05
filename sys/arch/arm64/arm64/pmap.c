@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.14 2017/02/04 20:12:44 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.15 2017/02/05 12:59:32 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -90,9 +90,9 @@ dcache_line_size(void)
 	return (sizeof(int) << dcl_size);
 }
 
-/* Write back D-cache to PoU */
+/* Write back D-cache to PoC */
 void
-dcache_wb_pou(vaddr_t addr, vsize_t len)
+dcache_wb_poc(vaddr_t addr, vsize_t len)
 {
 	uint64_t cl_size;
 	vaddr_t end;
@@ -105,7 +105,8 @@ dcache_wb_pou(vaddr_t addr, vsize_t len)
 	addr = addr & ~(cl_size - 1);
 
 	for (; addr < end; addr += cl_size)
-		__asm __volatile("dc cvau, %x0" :: "r" (addr) : "memory");
+		__asm __volatile("dc cvac, %x0" :: "r" (addr) : "memory");
+	__asm __volatile("dsb ish");
 }
 
 #if 0
@@ -1389,7 +1390,7 @@ pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa)
 	pm->pm_vp.l0->l0[idx0] = pg_entry;
 	__asm __volatile("dsb sy");
 
-	dcache_wb_pou((vaddr_t)&pm->pm_vp.l0->l0[idx0], 8);
+	dcache_wb_poc((vaddr_t)&pm->pm_vp.l0->l0[idx0], 8);
 
 	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX1_POS);
 }
@@ -1424,7 +1425,7 @@ pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa)
 	vp1->l1[idx1] = pg_entry;
 
 	__asm __volatile("dsb sy");
-	dcache_wb_pou((vaddr_t)&vp1->l1[idx1], 8);
+	dcache_wb_poc((vaddr_t)&vp1->l1[idx1], 8);
 
 	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX2_POS);
 }
@@ -1463,7 +1464,7 @@ pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3_pa)
 	vp2->vp[idx2] = l3_va;
 	vp2->l2[idx2] = pg_entry;
 	__asm __volatile("dsb sy");
-	dcache_wb_pou((vaddr_t)&vp2->l2[idx2], 8);
+	dcache_wb_poc((vaddr_t)&vp2->l2[idx2], 8);
 
 	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX3_POS);
 }
@@ -1734,12 +1735,7 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
 
 	*pl3 = pte;
-#if 0
-	__asm __volatile("dsb");
-	dcache_wb_pou((vaddr_t)&l2[VP_IDX2(pted->pted_va)], sizeof(l2[VP_IDX2(pted->pted_va)]));
-	//cpu_tlb_flushID_SE(pted->pted_va & ~PAGE_MASK);
-#endif
-	dcache_wb_pou((vaddr_t) pl3, 8);
+	dcache_wb_poc((vaddr_t) pl3, 8);
 	__asm __volatile("dsb sy");
 }
 
@@ -1777,7 +1773,7 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 		vp3->vp[VP_IDX3(pted->pted_va)] = NULL;
 	__asm __volatile("dsb sy");
 
-	dcache_wb_pou((vaddr_t)&vp3->l3[VP_IDX3(pted->pted_va)], 8);
+	dcache_wb_poc((vaddr_t)&vp3->l3[VP_IDX3(pted->pted_va)], 8);
 
 	arm64_tlbi_asid(pted->pted_va, pm->pm_asid);
 }
