@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.227 2017/01/17 17:19:21 stefan Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.228 2017/02/05 01:08:31 guenther Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4163,10 +4163,6 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 	/*
 	 * Handle need-copy flag.
-	 * This may invalidate last, hence the re-initialization during the
-	 * loop.
-	 *
-	 * Also, perform clipping of last if not UVM_EXTRACT_QREF.
 	 */
 	for (entry = first; entry != NULL && entry->start < end;
 	    entry = RBT_NEXT(uvm_map_addr, entry)) {
