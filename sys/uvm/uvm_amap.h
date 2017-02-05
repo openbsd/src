@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.29 2016/05/26 13:37:26 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.30 2017/02/05 01:11:50 guenther Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -205,8 +205,8 @@ struct vm_amap {
  * 
  * for example, on the i386 at boot time we allocate two amaps for the stack 
  * of /sbin/init: 
- *  1. a 7680 slot amap at protection 0 (reserve space for stack)
- *  2. a 512 slot amap at protection 7 (top of stack)
+ *  1. a 7680 slot amap at protection PROT_NONE (reserve space for stack)
+ *  2. a 512 slot amap at protection PROT_READ|PROT_WRITE (top of stack)
  *
  * most of the array allocated for the amaps for this is never used.  
  * the amap interface provides a way for us to avoid this problem by
